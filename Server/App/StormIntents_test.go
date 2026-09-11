@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"CitadelDesktop/Server/AttackPresets"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/Outbound"
@@ -236,6 +237,76 @@ func TestStormAttackReplansWhenCommanderAvailabilityChanges(t *testing.T) {
 		t.Context(), Intent.PlanningContext{State: state, GameData: gameData}, resolverArguments,
 	); !errors.Is(err, Intent.ErrPlanStale) {
 		t.Fatalf("busy commander should make the Storm plan stale: %v", err)
+	}
+}
+
+func TestStormAttackResolverDoesNotExpandConcretePresetAndEnforcesTroopReserve(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],"effects":[],"effectCaps":[],
+		"units":[{"wodID":10}],
+		"isles":[{"IsleID":7,"type":"DUNGEON","dungeonlevel":40,"maxCountVictories":10,"countVictories":"0#1#2#3#4#5#6#7#8#9"}]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().UTC()
+	state := State.NewGameState()
+	state.Castles[40] = State.CastleState{
+		ID: 40, KingdomID: stormIntentKingdomID, X: 100, Y: 100, Focused: true,
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{10: 110}},
+	}
+	state.Commanders[43] = State.CommanderState{ID: 43, Available: true}
+	state.Map[stormIntentKingdomID] = map[string]State.MapObservation{
+		"101:102": {
+			KingdomID: stormIntentKingdomID, X: 101, Y: 102, TypeID: stormIntentFortMapTypeID,
+			StormIsleID: 7, ObservedAt: now,
+		},
+	}
+	state.AttackDialog = State.AttackDialogState{
+		SourceCastleID: 40, KingdomID: stormIntentKingdomID, ObservedAt: now,
+		Target: State.AttackDialogTarget{
+			TypeID: stormIntentFortMapTypeID, X: 101, Y: 102, StormIsleID: 7,
+		},
+	}
+	unitID := int64(10)
+	request := resolvedStormAttackRequest{
+		stormAttackRequest: stormAttackRequest{
+			SourceCastleID: 40, KingdomID: stormIntentKingdomID,
+			TargetTypeID: stormIntentFortMapTypeID, TargetX: 101, TargetY: 102, StormIsleID: 7,
+			Preset: AttackPresets.Preset{
+				ID: "concrete", Name: "Concrete", Waves: []AttackPresets.Wave{{
+					Middle: AttackPresets.Lane{Troops: []AttackPresets.Slot{{ItemID: &unitID, Quantity: 100}}},
+				}},
+			},
+			MinimumTroops: 10, HorseTravelBoostID: -1,
+		},
+		CommanderID: 43,
+	}
+	arguments, err := json.Marshal(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resolved, err := (&Application{}).resolveStormAttackStep(
+		t.Context(), Intent.PlanningContext{State: state, GameData: gameData}, arguments,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var body attackBody
+	if err := json.Unmarshal(resolved.Command.Payload, &body); err != nil {
+		t.Fatal(err)
+	}
+	if len(body.Waves) != 1 || body.Waves[0].Middle.Units[0] != (attackPair{10, 100}) {
+		t.Fatalf("post-ADI Storm formation expanded = %#v", body.Waves)
+	}
+
+	source := state.Castles[40]
+	source.Units.Stationed[10] = 109
+	state.Castles[40] = source
+	if _, err := (&Application{}).resolveStormAttackStep(
+		t.Context(), Intent.PlanningContext{State: state, GameData: gameData}, arguments,
+	); !errors.Is(err, Intent.ErrPlanStale) || !strings.Contains(err.Error(), "configured minimum 10") {
+		t.Fatalf("Storm reserve breach should make the launch stale: %v", err)
 	}
 }
 

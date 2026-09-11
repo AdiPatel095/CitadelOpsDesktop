@@ -34,9 +34,19 @@ func newMovementReducer(authoritative bool) Reducer {
 		if authoritative && !fullSnapshot {
 			return nil, false, fmt.Errorf("gam response does not contain a movement array")
 		}
+		parsed := make([]State.MovementState, 0, len(items))
+		completeSnapshot := true
+		for _, raw := range items {
+			movement, ok := parseMovement(raw, frame.ReceivedAt, gameData)
+			if !ok {
+				completeSnapshot = false
+				continue
+			}
+			parsed = append(parsed, movement)
+		}
 		before := gameState.MovementViewMap()
 		next := before
-		if authoritative {
+		if authoritative && completeSnapshot {
 			snapshotMu.Lock()
 			connectionGeneration := gameState.Session.ConnectionGeneration
 			freshBaseline := lastSnapshotFrame.IsZero() ||
@@ -69,27 +79,23 @@ func newMovementReducer(authoritative bool) Reducer {
 				}
 			}
 		}
-		for _, raw := range items {
-			movement, ok := parseMovement(raw, frame.ReceivedAt, gameData)
-			if !ok {
-				continue
-			}
+		for _, movement := range parsed {
 			discardSupersededCommanderMovements(gameState, next, movement)
 			next[movement.ID] = movement
 		}
-		khanChanged := reconcileKhanTaunts(gameState, next, frame.ReceivedAt, authoritative)
+		khanChanged := reconcileKhanTaunts(gameState, next, frame.ReceivedAt, authoritative && completeSnapshot)
 		movementChanged := gameState.ReplaceMovements(next)
-		if authoritative {
+		if authoritative && completeSnapshot {
 			gameState.MovementSnapshot.Version++
 			gameState.MovementSnapshot.ConnectionGeneration = gameState.Session.ConnectionGeneration
 			gameState.MovementSnapshot.ObservedAt = frame.ReceivedAt
 		}
-		if !movementChanged && !authoritative && !khanChanged {
+		if !movementChanged && (!authoritative || !completeSnapshot) && !khanChanged {
 			return nil, false, nil
 		}
 		syncCommanderAvailability(gameState)
 		domains := []string{"movements", "commanders"}
-		if authoritative {
+		if authoritative && completeSnapshot {
 			domains = append(domains, "movement-snapshot")
 		}
 		if khanChanged {
@@ -264,11 +270,11 @@ func movementItems(raw json.RawMessage) ([]json.RawMessage, bool, error) {
 	}
 	if rawItems, exists := root["M"]; exists {
 		var items []json.RawMessage
-		if json.Unmarshal(rawItems, &items) == nil {
+		if json.Unmarshal(rawItems, &items) == nil && items != nil {
 			return items, true, nil
 		}
 		var movement map[string]json.RawMessage
-		if json.Unmarshal(rawItems, &movement) == nil {
+		if json.Unmarshal(rawItems, &movement) == nil && movement != nil {
 			return []json.RawMessage{raw}, false, nil
 		}
 	}
@@ -278,7 +284,7 @@ func movementItems(raw json.RawMessage) ([]json.RawMessage, bool, error) {
 			continue
 		}
 		var movement map[string]json.RawMessage
-		if json.Unmarshal(wrapper, &movement) == nil {
+		if json.Unmarshal(wrapper, &movement) == nil && movement != nil {
 			return []json.RawMessage{wrapper}, false, nil
 		}
 	}
@@ -291,62 +297,103 @@ func parseMovement(raw json.RawMessage, observedAt time.Time, gameData *GameData
 		return State.MovementState{}, false
 	}
 	var details struct {
-		ID        wireInt64         `json:"MID"`
-		Progress  int               `json:"PT"`
-		Travel    int               `json:"TT"`
-		Direction int               `json:"D"`
+		ID        json.RawMessage   `json:"MID"`
+		Progress  json.RawMessage   `json:"PT"`
+		Travel    json.RawMessage   `json:"TT"`
+		Direction json.RawMessage   `json:"D"`
 		TypeID    int               `json:"T"`
-		KingdomID wireInt64         `json:"KID"`
-		OwnerID   wireInt64         `json:"OID"`
-		TargetID  wireInt64         `json:"TID"`
+		KingdomID json.RawMessage   `json:"KID"`
+		OwnerID   json.RawMessage   `json:"OID"`
+		TargetID  json.RawMessage   `json:"TID"`
 		Source    []json.RawMessage `json:"SA"`
 		Target    []json.RawMessage `json:"TA"`
 	}
-	if json.Unmarshal(item["M"], &details) != nil || details.ID <= 0 {
+	if json.Unmarshal(item["M"], &details) != nil {
+		return State.MovementState{}, false
+	}
+	id, idValid := rawJSONInt64(details.ID)
+	progress, progressValid := rawJSONInt64(details.Progress)
+	travel, travelValid := rawJSONInt64(details.Travel)
+	directionValue, directionValid := rawJSONInt64(details.Direction)
+	kingdomID, kingdomValid := rawJSONInt64(details.KingdomID)
+	if !idValid || id <= 0 || !progressValid || progress < 0 || int64(int(progress)) != progress ||
+		!travelValid || travel < 0 || int64(int(travel)) != travel ||
+		!directionValid || directionValue < 0 || directionValue > 1 ||
+		!kingdomValid || kingdomID < 0 || len(details.Source) < 4 || len(details.Target) < 4 {
+		return State.MovementState{}, false
+	}
+	ownerID, ownerValid := movementOptionalIdentity(details.OwnerID)
+	targetID, targetValid := movementOptionalIdentity(details.TargetID)
+	if !ownerValid || !targetValid {
+		return State.MovementState{}, false
+	}
+	sourceTypeID, sourceTypeValid := rowExactInt(details.Source, 0)
+	sourceX, sourceXValid := rowExactInt(details.Source, 1)
+	sourceY, sourceYValid := rowExactInt(details.Source, 2)
+	sourceCastleID, sourceCastleValid := rawJSONInt64(details.Source[3])
+	sourceOwnerID, sourceOwnerValid := int64(0), true
+	if len(details.Source) > 4 {
+		sourceOwnerID, sourceOwnerValid = rawJSONInt64(details.Source[4])
+	}
+	targetTypeID, targetTypeValid := rowExactInt(details.Target, 0)
+	targetX, targetXValid := rowExactInt(details.Target, 1)
+	targetY, targetYValid := rowExactInt(details.Target, 2)
+	targetCastleID, targetCastleValid := rawJSONInt64(details.Target[3])
+	targetOwnerID, targetOwnerValid := int64(0), true
+	if len(details.Target) > 4 {
+		targetOwnerID, targetOwnerValid = rawJSONInt64(details.Target[4])
+	}
+	if !sourceTypeValid || !sourceXValid || !sourceYValid || sourceX < 0 || sourceY < 0 ||
+		!sourceCastleValid || !sourceOwnerValid || !targetTypeValid || !targetXValid || !targetYValid ||
+		targetX < 0 || targetY < 0 || !targetCastleValid || !targetOwnerValid {
 		return State.MovementState{}, false
 	}
 	movement := State.MovementState{
-		ID: State.MovementID(details.ID), TypeID: details.TypeID, Direction: details.Direction,
-		OwnerPlayerID: State.PlayerID(details.OwnerID), TargetPlayerID: State.PlayerID(details.TargetID),
-		KingdomID: State.KingdomID(details.KingdomID), TravelSeconds: details.Travel,
-		ProgressSeconds: details.Progress, ObservedAt: observedAt.UTC(), Units: map[State.UnitID]int64{},
+		ID: State.MovementID(id), TypeID: details.TypeID, Direction: int(directionValue),
+		OwnerPlayerID: State.PlayerID(ownerID), TargetPlayerID: State.PlayerID(targetID),
+		KingdomID: State.KingdomID(kingdomID), TravelSeconds: int(travel),
+		ProgressSeconds: int(progress), ObservedAt: observedAt.UTC(), Units: map[State.UnitID]int64{},
 	}
-	movement.StartedAt = observedAt.UTC().Add(-time.Duration(max(0, details.Progress)) * time.Second)
+	movement.StartedAt = observedAt.UTC().Add(-time.Duration(progress) * time.Second)
 	var spyDetails struct {
 		Count int `json:"SC"`
 	}
 	if json.Unmarshal(item["S"], &spyDetails) == nil && spyDetails.Count > 0 {
 		movement.SpyCount = spyDetails.Count
 	}
-	if len(details.Source) > 4 {
-		movement.SourceTypeID = int(rowInt(details.Source, 0))
-		movement.SourceX = int(rowInt(details.Source, 1))
-		movement.SourceY = int(rowInt(details.Source, 2))
-		movement.SourceCastleID = State.CastleID(rowInt(details.Source, 3))
-		if movement.OwnerPlayerID == 0 {
-			movement.OwnerPlayerID = State.PlayerID(rowInt(details.Source, 4))
-		}
+	movement.SourceTypeID = sourceTypeID
+	movement.SourceX = sourceX
+	movement.SourceY = sourceY
+	movement.SourceCastleID = State.CastleID(sourceCastleID)
+	if movement.OwnerPlayerID == 0 {
+		movement.OwnerPlayerID = State.PlayerID(sourceOwnerID)
 	}
-	if len(details.Target) > 4 {
-		movement.TargetTypeID = int(rowInt(details.Target, 0))
-		movement.TargetX = int(rowInt(details.Target, 1))
-		movement.TargetY = int(rowInt(details.Target, 2))
-		movement.TargetCastleID = State.CastleID(rowInt(details.Target, 3))
-		if targetPlayerID := rowInt(details.Target, 4); targetPlayerID != 0 {
-			movement.TargetPlayerID = State.PlayerID(targetPlayerID)
-		}
+	movement.TargetTypeID = targetTypeID
+	movement.TargetX = targetX
+	movement.TargetY = targetY
+	movement.TargetCastleID = State.CastleID(targetCastleID)
+	if targetOwnerID != 0 {
+		movement.TargetPlayerID = State.PlayerID(targetOwnerID)
 	}
 	var unitMovement struct {
-		WaitSeconds int `json:"TWD"`
-		Leader      struct {
-			ID *wireInt64 `json:"ID"`
-		} `json:"L"`
+		WaitSeconds int                        `json:"TWD"`
+		Leader      map[string]json.RawMessage `json:"L"`
 	}
-	if json.Unmarshal(item["UM"], &unitMovement) == nil {
+	if rawUnitMovement, exists := item["UM"]; exists {
+		if json.Unmarshal(rawUnitMovement, &unitMovement) != nil {
+			return State.MovementState{}, false
+		}
 		movement.WaitSeconds = max(0, unitMovement.WaitSeconds)
-		if unitMovement.Leader.ID != nil && *unitMovement.Leader.ID >= 0 {
-			commanderID := State.CommanderID(*unitMovement.Leader.ID)
-			movement.CommanderID = &commanderID
+		if unitMovement.Leader != nil {
+			rawLeaderID, exists := unitMovement.Leader["ID"]
+			leaderID, valid := rawJSONInt64(rawLeaderID)
+			if !exists || !valid {
+				return State.MovementState{}, false
+			}
+			if leaderID >= 0 {
+				commanderID := State.CommanderID(leaderID)
+				movement.CommanderID = &commanderID
+			}
 		}
 	}
 	for id, amount := range decodeUnitCounts(item["A"]) {
@@ -373,13 +420,20 @@ func parseMovement(raw json.RawMessage, observedAt time.Time, gameData *GameData
 			})
 		}
 	}
-	completion := movement.StartedAt.Add(time.Duration(max(0, details.Travel)) * time.Second)
-	if details.Direction == 0 {
+	completion := movement.StartedAt.Add(time.Duration(travel) * time.Second)
+	if directionValue == 0 {
 		movement.ArrivesAt = &completion
 	} else {
 		movement.ReturnsAt = &completion
 	}
 	return movement, true
+}
+
+func movementOptionalIdentity(raw json.RawMessage) (int64, bool) {
+	if len(raw) == 0 {
+		return 0, true
+	}
+	return rawJSONInt64(raw)
 }
 
 func reconcileKhanTaunts(

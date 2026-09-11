@@ -304,6 +304,12 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		if len(launchCommanders) == 0 {
 			return nomadPresetWaiting(snapshot.Now, limitedPreset, source, snapshot.GameData, metrics), nil
 		}
+		if err := validateAutoNomadToolCompatibility(limitedPreset, snapshot.GameData, score, target); err != nil {
+			return Decision{
+				Status: "gated", Detail: err.Error(),
+				NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)), Metrics: metrics,
+			}, nil
+		}
 		return nomadAttackDecision(snapshot.Now, score, settings, source, preset, target, launchCommanders, "level", maximumVictoryCount, metrics), nil
 	}
 
@@ -380,8 +386,28 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	if len(launchCommanders) == 0 {
 		return nomadPresetWaiting(snapshot.Now, limitedPreset, source, snapshot.GameData, metrics), nil
 	}
+	if err := validateAutoNomadToolCompatibility(limitedPreset, snapshot.GameData, score, target); err != nil {
+		return Decision{
+			Status: "gated", Detail: err.Error(),
+			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)), Metrics: metrics,
+		}, nil
+	}
 	metrics["chainSize"] = float64(len(launchCommanders))
 	return nomadAttackDecision(snapshot.Now, score, settings, source, preset, target, launchCommanders, "chain", maximumVictoryCount, metrics), nil
+}
+
+func validateAutoNomadToolCompatibility(
+	preset AttackPresets.Preset,
+	gameData *GameData.Store,
+	score State.ScalableEventScore,
+	target nomadCampCandidate,
+) error {
+	return AttackPresets.ValidateToolCompatibility(preset, gameData, AttackPresets.ToolTarget{
+		KingdomID: int64(target.Observation.KingdomID),
+		TypeID:    target.Observation.TypeID,
+		EventID:   score.EventID,
+		Label:     nomadEventName(score.EventID) + " camps",
+	})
 }
 
 func activeNomadEventScore(gameState State.GameState, now time.Time) (State.ScalableEventScore, bool) {
@@ -827,6 +853,7 @@ func nomadAttackDecision(
 		"victoryCount": target.Observation.EventCampVictoryCount,
 		"preset":       preset, "commanderIds": commanderIDs,
 		"horseTravelBoostId": settings.HorseTravelBoostID, "dailyAttackLimit": settings.DailyAttackLimit,
+		"skipCooldowns": settings.SkipCooldowns, "timeSkipReserve": settings.TimeSkipReserve,
 	})
 	detail := fmt.Sprintf("Level camp %d:%d from victory count %d/%d with %s", target.Observation.X, target.Observation.Y,
 		target.Observation.EventCampVictoryCount, maximumVictoryCount, preset.Name)

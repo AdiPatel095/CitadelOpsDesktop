@@ -823,6 +823,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
                 <Switch
                   checked={castleSettings.enabled}
                   onChange={(checked) => updateCastleEnabled(castleId, checked)}
+                  ariaLabel={`${definition.featureLabel} for ${castle.name}`}
                 />
               </div>
             </div>
@@ -932,6 +933,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
                     ...previous,
                     recruitLevel10OnTitleLoss: checked,
                   }))}
+                  ariaLabel="Recruit level 10 if glory title is lost"
                 />
               </div>
             </SectionCard>
@@ -1002,6 +1004,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
                           <Switch
                             checked={castleSettings.enabled}
                             onChange={(checked) => updateCastleEnabled(castleId, checked)}
+                            ariaLabel={`${definition.featureLabel} for ${castle.name}`}
                           />
                         </div>
                       </CardHeader>

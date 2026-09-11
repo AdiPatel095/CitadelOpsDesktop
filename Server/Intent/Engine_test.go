@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -76,10 +78,53 @@ type admissionTestSender struct {
 
 type indeterminateSender struct{}
 
+type reductionErrorResponseSender struct {
+	frames chan Protocol.CommittedFrame
+}
+
+type preDispatchTestSender struct {
+	delegate   Sender
+	events     *[]string
+	err        error
+	send       func(context.Context, []byte) error
+	correlates bool
+}
+
+func (*preDispatchTestSender) Ready() bool                      { return true }
+func (*preDispatchTestSender) Namespace() string                { return "EmpireEx_21" }
+func (sender *preDispatchTestSender) CorrelatesResponses() bool { return sender.correlates }
+func (sender *preDispatchTestSender) Send(ctx context.Context, payload []byte) error {
+	*sender.events = append(*sender.events, "send")
+	if sender.err != nil {
+		return sender.err
+	}
+	if sender.send != nil {
+		return sender.send(ctx, payload)
+	}
+	if sender.delegate != nil {
+		return sender.delegate.Send(ctx, payload)
+	}
+	return nil
+}
+
 func (*indeterminateSender) Ready() bool       { return true }
 func (*indeterminateSender) Namespace() string { return "EmpireEx_21" }
 func (*indeterminateSender) Send(context.Context, []byte) error {
 	return Outbound.MarkIndeterminate(context.DeadlineExceeded)
+}
+
+func (*reductionErrorResponseSender) Ready() bool       { return true }
+func (*reductionErrorResponseSender) Namespace() string { return "EmpireEx_21" }
+func (sender *reductionErrorResponseSender) Send(context.Context, []byte) error {
+	code := 0
+	sender.frames <- Protocol.CommittedFrame{
+		Frame: Protocol.Frame{
+			Opcode: "bfs", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+			Payload: json.RawMessage(`{"unexpected":true}`), ReceivedAt: time.Now().UTC(),
+		},
+		ReduceError: "reduce bfs: changed response shape",
+	}
+	return nil
 }
 
 func (*admissionTestSender) Ready() bool                        { return true }
@@ -104,6 +149,16 @@ type rapidChainTransport struct {
 type pipelineResponseSender struct {
 	pipeline     *Ingest.Pipeline
 	responseCode int
+}
+
+type responseSequenceSender struct {
+	pipeline *Ingest.Pipeline
+	store    *State.Store
+
+	mu            sync.Mutex
+	responseCodes []int
+	sends         int
+	events        []string
 }
 
 type correlatingPipelineResponseSender struct {
@@ -247,6 +302,45 @@ func (sender *pipelineResponseSender) Send(_ context.Context, payload []byte) er
 	return nil
 }
 
+func (*responseSequenceSender) Ready() bool       { return true }
+func (*responseSequenceSender) Namespace() string { return "EmpireEx_21" }
+func (sender *responseSequenceSender) Send(_ context.Context, payload []byte) error {
+	request, err := Protocol.Decode(string(payload), Protocol.DirectionOutbound, time.Now().UTC())
+	if err != nil {
+		return err
+	}
+	sender.mu.Lock()
+	if sender.sends >= len(sender.responseCodes) {
+		sender.mu.Unlock()
+		return fmt.Errorf("unexpected send %d", sender.sends+1)
+	}
+	code := sender.responseCodes[sender.sends]
+	sender.sends++
+	sender.events = append(sender.events, "send:"+strconv.Itoa(code))
+	sender.mu.Unlock()
+	if code == 227 && sender.store != nil {
+		_, err = sender.store.Apply(func(gameState *State.GameState) ([]string, bool, error) {
+			gameState.Player.Resources[1] -= 10
+			return []string{"player"}, true, nil
+		})
+		if err != nil {
+			return err
+		}
+	}
+	observed := sender.pipeline.ObserveFrame(Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Namespace: request.Namespace,
+		Opcode: request.Opcode, ResponseCode: &code, ReceivedAt: time.Now().UTC(),
+	})
+	go func() { _, _ = sender.pipeline.CommitFrame(context.Background(), observed) }()
+	return nil
+}
+
+func (sender *responseSequenceSender) snapshot() (int, []string) {
+	sender.mu.Lock()
+	defer sender.mu.Unlock()
+	return sender.sends, append([]string(nil), sender.events...)
+}
+
 func TestExecuteStepClassifiesDeclaredResponseCodeAsStale(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Session = State.SessionState{
@@ -277,6 +371,473 @@ func TestExecuteStepClassifiesDeclaredResponseCodeAsStale(t *testing.T) {
 		receipt.Failure.GameCode == nil || *receipt.Failure.GameCode != 147 ||
 		receipt.Failure.Recovery == "" || receipt.Failure.Toast {
 		t.Fatalf("declared stale response projection = %#v", receipt.Failure)
+	}
+}
+
+func TestExecuteStepRoutesDefinitiveRetryAndStaleResponseActions(t *testing.T) {
+	for _, test := range []struct {
+		name       string
+		code       int
+		wantStale  bool
+		wantEvents string
+		retryable  bool
+	}{
+		{name: "definitive rejection", code: 91, wantEvents: "arm,release"},
+		{name: "stale cooldown", code: 95, wantStale: true, wantEvents: "arm,cooldown"},
+		{name: "declared retry remains armed", code: 227, wantEvents: "arm", retryable: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			gameState := State.NewGameState()
+			gameState.Session = State.SessionState{
+				Generation: 1, BaselineGeneration: 1, ConnectionGeneration: 1,
+				Status: "connected", LoggedIn: true, SocketReady: true, Namespace: "EmpireEx_21",
+			}
+			store := State.NewStore(gameState)
+			pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
+			engine := NewEngine(nil, store, nil, &pipelineResponseSender{pipeline: pipeline, responseCode: test.code}, pipeline)
+			events := []string{}
+			if err := engine.RegisterAction("test.arm-response", func(context.Context, json.RawMessage) error {
+				events = append(events, "arm")
+				return nil
+			}); err != nil {
+				t.Fatal(err)
+			}
+			if err := engine.RegisterAction("test.release-response", func(context.Context, json.RawMessage) error {
+				events = append(events, "release")
+				return nil
+			}); err != nil {
+				t.Fatal(err)
+			}
+			if err := engine.RegisterAction("test.cooldown-response", func(context.Context, json.RawMessage) error {
+				events = append(events, "cooldown")
+				return nil
+			}); err != nil {
+				t.Fatal(err)
+			}
+			step := Step{
+				Opcode: "cra", AwaitOpcode: "cra", TimeoutMillis: 1_000,
+				SuccessCodes: []int{0}, StaleCodes: []int{95},
+				Command:                         Protocol.Command{Opcode: "cra", Payload: json.RawMessage(`{}`)},
+				PreDispatchAction:               "test.arm-response",
+				DefinitiveResponseFailureAction: "test.release-response",
+				StaleResponseAction:             "test.cooldown-response",
+			}
+			if test.retryable {
+				step.ResponseRetry = &ResponseRetryPolicy{Codes: []int{test.code}, GuardAction: "unused", DelayMillis: 1}
+			}
+			_, err := engine.executeStep(t.Context(), store.Revision(), step)
+			if errors.Is(err, ErrPlanStale) != test.wantStale || strings.Join(events, ",") != test.wantEvents {
+				t.Fatalf("response error=%v events=%v, wantStale=%t wantEvents=%s", err, events, test.wantStale, test.wantEvents)
+			}
+		})
+	}
+}
+
+func TestEngineRetriesDeclaredResponseAfterPriorProgress(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Player.Resources[1] = 100
+	store := State.NewStore(gameState)
+	pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
+	sender := &responseSequenceSender{
+		pipeline: pipeline, store: store, responseCodes: []int{227, 227, 0},
+	}
+	registry := NewRegistry()
+	if err := registry.Register(Definition{
+		Name: "test.response-retry", Effect: EffectWrite,
+		Planner: func(context.Context, PlanningContext, json.RawMessage) (Plan, error) {
+			return Plan{Steps: []Step{
+				{Name: "Completed setup", Action: "test.setup"},
+				{
+					Name: "Enchant item", Opcode: "ere", AwaitOpcode: "ere", TimeoutMillis: 1_000,
+					SuccessCodes: []int{0}, Command: Protocol.Command{Opcode: "ere", Payload: json.RawMessage(`{"EID":1}`)},
+					ResponseRetry: &ResponseRetryPolicy{
+						Codes: []int{227}, GuardAction: "test.reserve", DelayMillis: 1,
+					},
+				},
+			}}, nil
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	engine := NewEngine(registry, store, nil, sender, pipeline)
+	if err := engine.RegisterAction("test.setup", func(context.Context, json.RawMessage) error { return nil }); err != nil {
+		t.Fatal(err)
+	}
+	guardPhases := []EffectPhase{}
+	if err := engine.RegisterAction("test.reserve", func(context.Context, json.RawMessage) error {
+		coins := int(store.ReadOnlyView().Player.Resources[1])
+		current, _ := engine.Operation("response-retry-operation")
+		guardPhases = append(guardPhases, current.Phase)
+		sender.mu.Lock()
+		sender.events = append(sender.events, "guard:"+strconv.Itoa(coins))
+		sender.mu.Unlock()
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	receipt := engine.Submit(t.Context(), Request{ID: "response-retry-operation", Name: "test.response-retry"})
+	if receipt.Status != StatusSucceeded {
+		t.Fatalf("retry receipt = %#v", receipt)
+	}
+	if receipt.Attempt != 3 {
+		t.Fatalf("dispatch attempts = %d, want 3", receipt.Attempt)
+	}
+	if got, want := receipt.CompletedStepIndexes, []int{0, 1}; !slices.Equal(got, want) {
+		t.Fatalf("completed step indexes = %v, want %v", got, want)
+	}
+	if len(receipt.Exchanges) != 3 {
+		t.Fatalf("captured exchanges = %d, want 3", len(receipt.Exchanges))
+	}
+	for index, wantCode := range []int{227, 227, 0} {
+		exchange := receipt.Exchanges[index]
+		if exchange.Response == nil || exchange.Response.ResponseCode == nil || *exchange.Response.ResponseCode != wantCode {
+			t.Fatalf("exchange %d = %#v, want response code %d", index, exchange, wantCode)
+		}
+	}
+	if receipt.Plan == nil || receipt.Plan.Steps[1].ResponseBarrier != ResponseBarrierCommitted ||
+		!receipt.Plan.Steps[1].CaptureResponse {
+		t.Fatalf("normalized retry step = %#v", receipt.Plan)
+	}
+	if sends, events := sender.snapshot(); sends != 3 ||
+		strings.Join(events, ",") != "send:227,guard:90,send:227,guard:80,send:0" {
+		t.Fatalf("retry events = %q with %d sends", strings.Join(events, ","), sends)
+	}
+	if !slices.Equal(guardPhases, []EffectPhase{EffectPhaseObserved, EffectPhaseObserved}) {
+		t.Fatalf("receipt phases seen by retry guards = %v, want observed twice", guardPhases)
+	}
+}
+
+func TestEngineResponseRetryPreservesEarlierSuccessfulWireStep(t *testing.T) {
+	store := State.NewStore(State.NewGameState())
+	pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
+	sender := &responseSequenceSender{pipeline: pipeline, responseCodes: []int{0, 227, 0}}
+	registry := NewRegistry()
+	if err := registry.Register(Definition{
+		Name: "test.response-retry-levels", Effect: EffectWrite,
+		Planner: func(context.Context, PlanningContext, json.RawMessage) (Plan, error) {
+			levelStep := func(level int) Step {
+				return Step{
+					Name: "Enchant to level " + strconv.Itoa(level), Opcode: "ere", AwaitOpcode: "ere", TimeoutMillis: 1_000,
+					SuccessCodes: []int{0}, Command: Protocol.Command{Opcode: "ere", Payload: json.RawMessage(`{}`)},
+					ResponseRetry: &ResponseRetryPolicy{Codes: []int{227}, GuardAction: "test.reserve", DelayMillis: 1},
+				}
+			}
+			return Plan{Steps: []Step{levelStep(2), levelStep(3)}}, nil
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	engine := NewEngine(registry, store, nil, sender, pipeline)
+	guardCalls := 0
+	if err := engine.RegisterAction("test.reserve", func(context.Context, json.RawMessage) error {
+		guardCalls++
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	receipt := engine.Submit(t.Context(), Request{Name: "test.response-retry-levels"})
+	if receipt.Status != StatusSucceeded || guardCalls != 1 || receipt.Attempt != 3 {
+		t.Fatalf("two-level retry receipt = %#v, guard calls = %d", receipt, guardCalls)
+	}
+	if !slices.Equal(receipt.CompletedStepIndexes, []int{0, 1}) || len(receipt.Exchanges) != 3 {
+		t.Fatalf("two-level completed/exchanges = %v/%#v", receipt.CompletedStepIndexes, receipt.Exchanges)
+	}
+	wantSteps := []string{"Enchant to level 2", "Enchant to level 3", "Enchant to level 3"}
+	for index, exchange := range receipt.Exchanges {
+		if exchange.Step != wantSteps[index] {
+			t.Fatalf("exchange step sequence = %#v, want %#v", receipt.Exchanges, wantSteps)
+		}
+	}
+}
+
+func TestEngineResponseRetryStopsWhenGuardFails(t *testing.T) {
+	store := State.NewStore(State.NewGameState())
+	pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
+	sender := &responseSequenceSender{pipeline: pipeline, responseCodes: []int{227, 0}}
+	registry := NewRegistry()
+	if err := registry.Register(Definition{
+		Name: "test.response-retry-guard", Effect: EffectWrite,
+		Planner: func(context.Context, PlanningContext, json.RawMessage) (Plan, error) {
+			return Plan{Steps: []Step{{
+				Name: "Enchant item", Opcode: "ere", AwaitOpcode: "ere", TimeoutMillis: 1_000,
+				SuccessCodes: []int{0}, Command: Protocol.Command{Opcode: "ere", Payload: json.RawMessage(`{}`)},
+				ResponseRetry: &ResponseRetryPolicy{Codes: []int{227}, GuardAction: "test.reserve", DelayMillis: 1},
+			}}}, nil
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	engine := NewEngine(registry, store, nil, sender, pipeline)
+	if err := engine.RegisterAction("test.reserve", func(context.Context, json.RawMessage) error {
+		return errors.New("coin reserve reached")
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	receipt := engine.Submit(t.Context(), Request{Name: "test.response-retry-guard"})
+	if receipt.Status != StatusFailed || !strings.Contains(receipt.Error, "coin reserve reached") {
+		t.Fatalf("guard failure receipt = %#v", receipt)
+	}
+	if sends, _ := sender.snapshot(); sends != 1 || len(receipt.Exchanges) != 1 ||
+		receipt.Exchanges[0].Response == nil || receipt.Exchanges[0].Response.ResponseCode == nil ||
+		*receipt.Exchanges[0].Response.ResponseCode != 227 {
+		t.Fatalf("guard failure sends/exchanges = %d/%#v", sends, receipt.Exchanges)
+	}
+}
+
+func TestEngineResponseRetryDoesNotRepeatOtherResponseCodes(t *testing.T) {
+	store := State.NewStore(State.NewGameState())
+	pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
+	sender := &responseSequenceSender{pipeline: pipeline, responseCodes: []int{226, 0}}
+	registry := NewRegistry()
+	if err := registry.Register(Definition{
+		Name: "test.response-retry-terminal", Effect: EffectWrite,
+		Planner: func(context.Context, PlanningContext, json.RawMessage) (Plan, error) {
+			return Plan{Steps: []Step{{
+				Name: "Enchant item", Opcode: "ere", AwaitOpcode: "ere", TimeoutMillis: 1_000,
+				SuccessCodes: []int{0}, Command: Protocol.Command{Opcode: "ere", Payload: json.RawMessage(`{}`)},
+				ResponseRetry: &ResponseRetryPolicy{Codes: []int{227}, GuardAction: "test.reserve", DelayMillis: 1},
+			}}}, nil
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	engine := NewEngine(registry, store, nil, sender, pipeline)
+	guardCalls := 0
+	if err := engine.RegisterAction("test.reserve", func(context.Context, json.RawMessage) error {
+		guardCalls++
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	receipt := engine.Submit(t.Context(), Request{Name: "test.response-retry-terminal"})
+	if receipt.Status != StatusFailed || guardCalls != 0 {
+		t.Fatalf("terminal response receipt = %#v, guard calls = %d", receipt, guardCalls)
+	}
+	if sends, _ := sender.snapshot(); sends != 1 || len(receipt.Exchanges) != 1 ||
+		receipt.Exchanges[0].Response == nil || receipt.Exchanges[0].Response.ResponseCode == nil ||
+		*receipt.Exchanges[0].Response.ResponseCode != 226 {
+		t.Fatalf("terminal response sends/exchanges = %d/%#v", sends, receipt.Exchanges)
+	}
+}
+
+func TestDeferredCommandDependenciesDoNotMakeRejectedWritePartiallySucceeded(t *testing.T) {
+	store := State.NewStore(State.NewGameState())
+	pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
+	sender := &responseSequenceSender{pipeline: pipeline, responseCodes: []int{0, 55}}
+	registry := NewRegistry()
+	if err := registry.Register(Definition{
+		Name: "test.deferred-write-rejection", Effect: EffectWrite,
+		Planner: func(context.Context, PlanningContext, json.RawMessage) (Plan, error) {
+			return Plan{Steps: []Step{{
+				Name: "Purchase", Resolver: "test.bfs.build", AwaitOpcode: "bfs", TimeoutMillis: 1_000,
+				SuccessCodes: []int{0}, CaptureResponse: true,
+				CommandDependencies: &CommandDependencyRequest{
+					Opcode: "bfs", Payload: json.RawMessage(`{"route":"purchase"}`),
+				},
+			}}}, nil
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	engine := NewEngine(registry, store, nil, sender, pipeline)
+	if err := engine.RegisterCommandDependencies("bfs", func(
+		context.Context, PlanningContext, Step,
+	) (CommandDependencyPlan, error) {
+		return CommandDependencyPlan{Key: "purchase", Steps: []Step{{
+			Name: "Refresh purchase context", Opcode: "fce", AwaitOpcode: "fce", TimeoutMillis: 1_000,
+			SuccessCodes: []int{0}, Command: Protocol.Command{Opcode: "fce", Payload: json.RawMessage(`{}`)},
+		}}}, nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := engine.RegisterStepResolver("test.bfs.build", func(
+		context.Context, PlanningContext, json.RawMessage,
+	) (Step, error) {
+		return Step{
+			Name: "Purchase", Opcode: "bfs", AwaitOpcode: "bfs", TimeoutMillis: 1_000,
+			SuccessCodes: []int{0}, CaptureResponse: true,
+			Command: Protocol.Command{Opcode: "bfs", Payload: json.RawMessage(`{"route":"purchase"}`)},
+		}, nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	receipt := engine.Submit(t.Context(), Request{
+		Name: "test.deferred-write-rejection", Actor: "automation:test",
+	})
+	if receipt.Status != StatusFailed || len(receipt.CompletedStepIndexes) != 0 || len(receipt.Exchanges) != 1 {
+		t.Fatalf("rejected deferred write receipt = %#v", receipt)
+	}
+	if receipt.Exchanges[0].Response == nil || receipt.Exchanges[0].Response.ResponseCode == nil ||
+		*receipt.Exchanges[0].Response.ResponseCode != 55 {
+		t.Fatalf("rejected deferred write response = %#v", receipt.Exchanges)
+	}
+}
+
+func TestEngineDoesNotReplayCompletedDeferredCommandDependenciesAfterPause(t *testing.T) {
+	store := State.NewStore(State.NewGameState())
+	pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
+	sender := &responseSequenceSender{pipeline: pipeline, responseCodes: []int{0, 0}}
+	registry := NewRegistry()
+	if err := registry.Register(Definition{
+		Name: "test.deferred-write-resume", Effect: EffectWrite,
+		Planner: func(context.Context, PlanningContext, json.RawMessage) (Plan, error) {
+			return Plan{Steps: []Step{
+				{
+					Name: "Purchase", Resolver: "test.bfs.build", AwaitOpcode: "bfs", TimeoutMillis: 1_000,
+					SuccessCodes: []int{0}, CaptureResponse: true,
+					CommandDependencies: &CommandDependencyRequest{
+						Opcode: "bfs", Payload: json.RawMessage(`{"route":"purchase"}`),
+					},
+				},
+				RebuildOnResume(Step{Name: "Verify purchase", Action: "test.purchase.verify"}),
+			}}, nil
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	engine := NewEngine(registry, store, nil, sender, pipeline)
+	var guardCalls atomic.Int32
+	if err := engine.RegisterAction("test.purchase.guard", func(context.Context, json.RawMessage) error {
+		if guardCalls.Add(1) > 1 {
+			return fmt.Errorf("%w: completed purchase guard replayed", ErrPlanStale)
+		}
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	var verifyCalls atomic.Int32
+	if err := engine.RegisterAction("test.purchase.verify", func(context.Context, json.RawMessage) error {
+		verifyCalls.Add(1)
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := engine.RegisterCommandDependencies("bfs", func(
+		context.Context, PlanningContext, Step,
+	) (CommandDependencyPlan, error) {
+		return CommandDependencyPlan{Key: "purchase", Steps: []Step{
+			{
+				Name: "Refresh purchase context", Opcode: "fce", AwaitOpcode: "fce", TimeoutMillis: 1_000,
+				SuccessCodes: []int{0}, Command: Protocol.Command{Opcode: "fce", Payload: json.RawMessage(`{}`)},
+			},
+			{Name: "Guard purchase", Action: "test.purchase.guard"},
+		}}, nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	var buildCalls atomic.Int32
+	if err := engine.RegisterStepResolver("test.bfs.build", func(
+		context.Context, PlanningContext, json.RawMessage,
+	) (Step, error) {
+		buildCalls.Add(1)
+		return Step{
+			Name: "Purchase", Opcode: "bfs", AwaitOpcode: "bfs", TimeoutMillis: 1_000,
+			SuccessCodes: []int{0}, CaptureResponse: true,
+			Command: Protocol.Command{Opcode: "bfs", Payload: json.RawMessage(`{"route":"purchase"}`)},
+		}, nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	resume := make(chan struct{})
+	var pauseInjected atomic.Bool
+	engine.SetExecutionGate(func(ctx context.Context, _ Request, _ Plan, point ExecutionPoint) error {
+		if point == ExecutionBeforeClaims && pauseInjected.Load() {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-resume:
+				return nil
+			}
+		}
+		if point != ExecutionBeforeStep {
+			return nil
+		}
+		sends, _ := sender.snapshot()
+		if sends == 2 && pauseInjected.CompareAndSwap(false, true) {
+			return Outbound.ErrAutomationLocked
+		}
+		return nil
+	})
+	updates, unsubscribe := engine.Subscribe(32)
+	defer unsubscribe()
+	result := make(chan Receipt, 1)
+	go func() {
+		result <- engine.Submit(context.Background(), Request{
+			ID: "deferred-write-resume", Name: "test.deferred-write-resume", Actor: "automation:test",
+		})
+	}()
+	waitForIntentStatus(t, updates, StatusPaused)
+	if sends, _ := sender.snapshot(); sends != 2 || guardCalls.Load() != 1 || buildCalls.Load() != 1 || verifyCalls.Load() != 0 {
+		t.Fatalf(
+			"paused execution sends/guard/build/verify = %d/%d/%d/%d, want 2/1/1/0",
+			sends, guardCalls.Load(), buildCalls.Load(), verifyCalls.Load(),
+		)
+	}
+	close(resume)
+	select {
+	case receipt := <-result:
+		if receipt.Status != StatusSucceeded || !slices.Equal(receipt.CompletedStepIndexes, []int{0}) {
+			t.Fatalf("resumed deferred write receipt = %#v", receipt)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("paused deferred write did not resume")
+	}
+	if sends, _ := sender.snapshot(); sends != 2 || guardCalls.Load() != 1 || buildCalls.Load() != 1 || verifyCalls.Load() != 1 {
+		t.Fatalf(
+			"completed execution sends/guard/build/verify = %d/%d/%d/%d, want 2/1/1/1",
+			sends, guardCalls.Load(), buildCalls.Load(), verifyCalls.Load(),
+		)
+	}
+}
+
+func TestEngineChecksExecutionGateBetweenResponseRetries(t *testing.T) {
+	store := State.NewStore(State.NewGameState())
+	pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
+	sender := &responseSequenceSender{pipeline: pipeline, responseCodes: []int{227, 0}}
+	registry := NewRegistry()
+	if err := registry.Register(Definition{
+		Name: "test.response-retry-gate", Effect: EffectWrite,
+		Planner: func(context.Context, PlanningContext, json.RawMessage) (Plan, error) {
+			return Plan{Steps: []Step{{
+				Name: "Enchant item", Opcode: "ere", AwaitOpcode: "ere", TimeoutMillis: 1_000,
+				SuccessCodes: []int{0}, Command: Protocol.Command{Opcode: "ere", Payload: json.RawMessage(`{}`)},
+				ResponseRetry: &ResponseRetryPolicy{Codes: []int{227}, GuardAction: "test.reserve", DelayMillis: 1},
+			}}}, nil
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	engine := NewEngine(registry, store, nil, sender, pipeline)
+	guardCalls := 0
+	if err := engine.RegisterAction("test.reserve", func(context.Context, json.RawMessage) error {
+		guardCalls++
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	gateCalls := 0
+	engine.SetExecutionGate(func(_ context.Context, _ Request, _ Plan, point ExecutionPoint) error {
+		if point != ExecutionBeforeStep {
+			return nil
+		}
+		gateCalls++
+		if gateCalls == 2 {
+			return Outbound.ErrAutomationLocked
+		}
+		return nil
+	})
+
+	receipt := engine.Submit(t.Context(), Request{Name: "test.response-retry-gate"})
+	if receipt.Status != StatusSucceeded || gateCalls != 3 || guardCalls != 1 {
+		t.Fatalf("gate-resumed receipt = %#v, gate calls = %d, guard calls = %d", receipt, gateCalls, guardCalls)
+	}
+	if sends, _ := sender.snapshot(); sends != 2 || len(receipt.Exchanges) != 2 {
+		t.Fatalf("gate-resumed sends/exchanges = %d/%d, want 2/2", sends, len(receipt.Exchanges))
 	}
 }
 
@@ -1010,6 +1571,53 @@ func TestNormalizePlanUsesWireBarriersOnlyForStaticCommandRuns(t *testing.T) {
 	}
 }
 
+func TestFinalizePlanRejectsAmbiguousResponseRetryPolicy(t *testing.T) {
+	tests := []struct {
+		name   string
+		mutate func(*Step)
+		want   string
+	}{
+		{
+			name: "success overlap",
+			mutate: func(step *Step) {
+				step.ResponseRetry.Codes = []int{0}
+			},
+			want: "also a success code",
+		},
+		{
+			name: "stale overlap",
+			mutate: func(step *Step) {
+				step.StaleCodes = []int{227}
+			},
+			want: "also a stale code",
+		},
+		{
+			name: "wire barrier",
+			mutate: func(step *Step) {
+				step.ResponseBarrier = ResponseBarrierWire
+			},
+			want: "requires a committed response barrier",
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			step := Step{
+				Name: "Enchant", Opcode: "ere", AwaitOpcode: "ere", SuccessCodes: []int{0},
+				ResponseRetry: &ResponseRetryPolicy{Codes: []int{227}, GuardAction: "test.reserve", DelayMillis: 1},
+				Command:       Protocol.Command{Opcode: "ere", Payload: json.RawMessage(`{}`)},
+			}
+			test.mutate(&step)
+			_, err := finalizePlan(
+				Definition{Name: "test.retry", Effect: EffectWrite},
+				PlanningContext{State: State.NewGameState()}, json.RawMessage(`{}`), Plan{Steps: []Step{step}},
+			)
+			if err == nil || !strings.Contains(err.Error(), test.want) {
+				t.Fatalf("response retry validation error = %v, want %q", err, test.want)
+			}
+		})
+	}
+}
+
 func TestEngineDispatchesStaticResponseChainBeforeSlowStateCommits(t *testing.T) {
 	transport := newRapidChainTransport()
 	gameState := State.NewGameState()
@@ -1183,6 +1791,9 @@ func TestEngineCommitsAcknowledgedWireStepBeforeCancellationReleasesClaims(t *te
 		if receipt.Status != StatusPartiallySucceeded {
 			t.Fatalf("partially completed wire receipt = %#v", receipt)
 		}
+		if len(receipt.CompletedStepIndexes) != 1 || receipt.CompletedStepIndexes[0] != 0 {
+			t.Fatalf("completed step indexes = %v, want [0]", receipt.CompletedStepIndexes)
+		}
 	case <-time.After(time.Second):
 		t.Fatal("operation did not finish after acknowledged state committed")
 	}
@@ -1208,6 +1819,196 @@ func TestEnginePreservesIndeterminateWriteOutcome(t *testing.T) {
 	}
 	if !strings.Contains(receipt.Error, Outbound.ErrIndeterminate.Error()) {
 		t.Fatalf("indeterminate error = %q", receipt.Error)
+	}
+}
+
+func TestEngineTreatsCommittedSuccessfulWriteReductionFailureAsIndeterminate(t *testing.T) {
+	for _, testCase := range []struct {
+		name          string
+		indeterminate bool
+		wantStatus    Status
+	}{
+		{name: "ordinary step", wantStatus: StatusFailed},
+		{name: "mutation acknowledgement", indeterminate: true, wantStatus: StatusIndeterminate},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			frames := make(chan Protocol.CommittedFrame, 1)
+			registry := NewRegistry()
+			if err := registry.Register(Definition{
+				Name: "test.reduction-error-" + testCase.name, Effect: EffectWrite,
+				Planner: func(context.Context, PlanningContext, json.RawMessage) (Plan, error) {
+					return Plan{Steps: []Step{{
+						Name: "Start feast", Opcode: "bfs", AwaitOpcode: "bfs", TimeoutMillis: 100,
+						SuccessCodes: []int{0}, Command: Protocol.Command{Opcode: "bfs", Payload: json.RawMessage(`{}`)},
+						ResponseProjectionFailureIndeterminate: testCase.indeterminate,
+					}}}, nil
+				},
+			}); err != nil {
+				t.Fatal(err)
+			}
+			engine := NewEngine(
+				registry, State.NewStore(State.NewGameState()), nil,
+				&reductionErrorResponseSender{frames: frames},
+				&blockingObserver{started: make(chan struct{}), frames: frames},
+			)
+			receipt := engine.Submit(t.Context(), Request{Name: "test.reduction-error-" + testCase.name})
+			if receipt.Status != testCase.wantStatus || !strings.Contains(receipt.Error, "response state reduction failed") {
+				t.Fatalf("reduction-error receipt = %#v", receipt)
+			}
+		})
+	}
+}
+
+func TestEngineRunsPreDispatchMarkerBeforeSendWithCorrelationMetadata(t *testing.T) {
+	store := State.NewStore(State.NewGameState())
+	pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
+	events := []string{}
+	sender := &preDispatchTestSender{
+		events: &events, correlates: true,
+	}
+	sender.send = func(ctx context.Context, payload []byte) error {
+		request, err := Protocol.Decode(string(payload), Protocol.DirectionOutbound, time.Now().UTC())
+		if err != nil {
+			return err
+		}
+		metadata := Outbound.MetadataFromContext(ctx)
+		code := 0
+		observed := pipeline.ObserveFrame(Protocol.Frame{
+			Direction: Protocol.DirectionInbound, Namespace: request.Namespace,
+			Opcode: request.Opcode, ResponseCode: &code, ReceivedAt: time.Now().UTC(),
+			ResponseToken: metadata.ResponseToken, CausationOperationID: metadata.OperationID,
+		})
+		go func() { _, _ = pipeline.CommitFrame(context.Background(), observed) }()
+		return nil
+	}
+	registry := NewRegistry()
+	if err := registry.Register(Definition{
+		Name: "test.pre-dispatch", Effect: EffectWrite,
+		Planner: func(context.Context, PlanningContext, json.RawMessage) (Plan, error) {
+			return Plan{Steps: []Step{{
+				Name: "Spend", Opcode: "bfs", AwaitOpcode: "bfs", TimeoutMillis: 1_000,
+				SuccessCodes: []int{0}, Command: Protocol.Command{Opcode: "bfs", Payload: json.RawMessage(`{}`)},
+				PreDispatchAction: "test.arm", PreDispatchArguments: json.RawMessage(`{"feast":0}`),
+			}}}, nil
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	engine := NewEngine(registry, store, nil, sender, pipeline)
+	if err := engine.RegisterAction("test.arm", func(ctx context.Context, arguments json.RawMessage) error {
+		metadata := Outbound.MetadataFromContext(ctx)
+		if metadata.OperationID != "pre-dispatch-operation" || metadata.ResponseToken == "" {
+			return fmt.Errorf("pre-dispatch metadata = %+v", metadata)
+		}
+		if string(arguments) != `{"feast":0}` {
+			return fmt.Errorf("pre-dispatch arguments = %s", arguments)
+		}
+		events = append(events, "arm")
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	receipt := engine.Submit(t.Context(), Request{ID: "pre-dispatch-operation", Name: "test.pre-dispatch"})
+	if receipt.Status != StatusSucceeded || strings.Join(events, ",") != "arm,send" {
+		t.Fatalf("pre-dispatch receipt = %#v events=%v", receipt, events)
+	}
+}
+
+func TestEngineCompensatesOnlyDefinitiveSendFailure(t *testing.T) {
+	for _, testCase := range []struct {
+		name       string
+		armErr     error
+		sendErr    error
+		wantStatus Status
+		wantEvents string
+	}{
+		{name: "pre-dispatch", armErr: errors.New("could not persist marker"), wantStatus: StatusFailed, wantEvents: "arm,disarm"},
+		{name: "definitive", sendErr: errors.New("socket rejected write"), wantStatus: StatusFailed, wantEvents: "arm,send,disarm"},
+		{name: "indeterminate", sendErr: Outbound.MarkIndeterminate(context.DeadlineExceeded), wantStatus: StatusIndeterminate, wantEvents: "arm,send"},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			events := []string{}
+			registry := NewRegistry()
+			if err := registry.Register(Definition{
+				Name: "test.compensation-" + testCase.name, Effect: EffectWrite,
+				Planner: func(context.Context, PlanningContext, json.RawMessage) (Plan, error) {
+					return Plan{Steps: []Step{{
+						Name: "Spend", Opcode: "bfs", Command: Protocol.Command{Opcode: "bfs", Payload: json.RawMessage(`{}`)},
+						PreDispatchAction: "test.arm", DefinitiveSendFailureAction: "test.disarm",
+					}}}, nil
+				},
+			}); err != nil {
+				t.Fatal(err)
+			}
+			sender := &preDispatchTestSender{events: &events, err: testCase.sendErr}
+			engine := NewEngine(registry, State.NewStore(State.NewGameState()), nil, sender, nil)
+			if err := engine.RegisterAction("test.arm", func(context.Context, json.RawMessage) error {
+				events = append(events, "arm")
+				return testCase.armErr
+			}); err != nil {
+				t.Fatal(err)
+			}
+			if err := engine.RegisterAction("test.disarm", func(context.Context, json.RawMessage) error {
+				events = append(events, "disarm")
+				return nil
+			}); err != nil {
+				t.Fatal(err)
+			}
+			receipt := engine.Submit(t.Context(), Request{Name: "test.compensation-" + testCase.name})
+			if receipt.Status != testCase.wantStatus || strings.Join(events, ",") != testCase.wantEvents {
+				t.Fatalf("compensation receipt = %#v events=%v", receipt, events)
+			}
+		})
+	}
+}
+
+func TestEngineTreatsMissingMutationResultCodeAsIndeterminate(t *testing.T) {
+	frames := make(chan Protocol.CommittedFrame, 1)
+	registry := NewRegistry()
+	if err := registry.Register(Definition{
+		Name: "test.missing-result", Effect: EffectWrite,
+		Planner: func(context.Context, PlanningContext, json.RawMessage) (Plan, error) {
+			return Plan{Steps: []Step{{
+				Name: "Start feast", Opcode: "bfs", AwaitOpcode: "bfs", TimeoutMillis: 100,
+				SuccessCodes: []int{0}, Command: Protocol.Command{Opcode: "bfs", Payload: json.RawMessage(`{}`)},
+				ResponseProjectionFailureIndeterminate: true,
+			}}}, nil
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	sender := &preDispatchTestSender{events: &[]string{}}
+	sender.send = func(context.Context, []byte) error {
+		frames <- Protocol.CommittedFrame{Frame: Protocol.Frame{
+			Opcode: "bfs", Direction: Protocol.DirectionInbound, Payload: json.RawMessage(`{"T":0,"RT":21600}`),
+		}}
+		return nil
+	}
+	engine := NewEngine(
+		registry, State.NewStore(State.NewGameState()), nil, sender,
+		&blockingObserver{started: make(chan struct{}), frames: frames},
+	)
+	receipt := engine.Submit(t.Context(), Request{Name: "test.missing-result"})
+	if receipt.Status != StatusIndeterminate || !strings.Contains(receipt.Error, "did not include a result code") {
+		t.Fatalf("missing-result receipt = %#v", receipt)
+	}
+}
+
+func TestStepResumeKeyIncludesNoReplaySemantics(t *testing.T) {
+	ordinary := Step{
+		Name: "Start feast", Opcode: "bfs", AwaitOpcode: "bfs",
+		ResponseBarrier: ResponseBarrierCommitted,
+	}
+	variants := []Step{ordinary, ordinary, ordinary}
+	variants[0].ResponseProjectionFailureIndeterminate = true
+	variants[1].PreDispatchAction = "test.arm"
+	variants[1].PreDispatchArguments = json.RawMessage(`{"id":1}`)
+	variants[2].DefinitiveSendFailureAction = "test.disarm"
+	variants[2].DefinitiveSendFailureArguments = json.RawMessage(`{"id":1}`)
+	for _, variant := range variants {
+		if stepResumeKey(ordinary) == stepResumeKey(variant) {
+			t.Fatalf("resume key reused across distinct no-replay semantics: %#v", variant)
+		}
 	}
 }
 

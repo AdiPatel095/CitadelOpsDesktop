@@ -99,7 +99,8 @@ func resolveCRACommanders(
 			}
 		}
 		if options.RequireAvailable && (!gameState.Commanders[id].Available ||
-			State.CommanderHasActiveMovementAt(gameState, id, now)) {
+			State.CommanderHasActiveMovementAt(gameState, id, now) ||
+			State.InvasionCommanderReserved(gameState, id)) {
 			continue
 		}
 		if options.Holds != nil && options.Holds.CommanderHeldAt(id, now) {

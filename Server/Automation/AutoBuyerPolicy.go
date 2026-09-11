@@ -18,6 +18,7 @@ const (
 	autoBuyerDefaultCheckIntervalSec = 30 * 60
 	autoBuyerDefaultRefreshSec       = 60 * 60
 	autoBuyerMinimumSpecialistDays   = 14
+	autoBuyerFeastPurchasePacing     = 30 * time.Second
 )
 
 type AutoBuyerPolicy struct{}
@@ -130,34 +131,31 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	metrics["availablePackageGoals"] = float64(availablePackageGoals)
 	metrics["ignoredUnavailableEventShops"] = float64(unavailableEventShopGoals)
 
-	var source State.CastleState
-	var sourceFound bool
-	if availablePackageGoals > 0 || settings.Feast.Enabled {
-		sourceCastleID := settings.SourceCastleID
-		if availablePackageGoals == 0 && settings.Feast.SourceCastleID > 0 {
-			sourceCastleID = settings.Feast.SourceCastleID
-		}
-		source, sourceFound = autoBuyerSourceCastle(snapshot.State, sourceCastleID)
-		if !sourceFound {
-			return autoBuyerWaiting(snapshot.Now, "Choose an owned Great Empire main castle for Auto Buyer", metrics), nil
-		}
-		metrics["sourceCastleId"] = float64(source.ID)
-	}
-
 	refreshAge := time.Duration(settings.HistoryRefreshSec) * time.Second
-	_, packageHistoryObservedAt, packageHistoryFound := snapshot.State.ConstructionOffersFor(source.ID, source.KingdomID)
-	if availablePackageGoals > 0 && (!packageHistoryFound || packageHistoryObservedAt.IsZero() ||
-		snapshot.Now.Sub(packageHistoryObservedAt) >= refreshAge) {
-		return autoBuyerRequestDecision(snapshot.Now, metrics, "Refresh shop stock and reset counters", "autoBuyer.package.history", map[string]any{
-			"sourceCastleId": source.ID,
-		}), nil
+	specialistContextStale := enabledSpecialists > 0 && !autoBuyerObservationFresh(
+		snapshot.State.Market.BoostersObservedAt, snapshot.Now, snapshot.State.Session.ChangedAt, refreshAge,
+	)
+	feastContextStale := settings.Feast.Enabled && !snapshot.State.Market.Feast.FreshAt(
+		snapshot.Now, snapshot.State.Session.ChangedAt, refreshAge,
+	)
+	if settings.Feast.Enabled {
+		feast, _ := snapshot.GameData.AutoBuyerFeast(settings.Feast.FeastID)
+		feastContextStale = feastContextStale || !feast.Price.Premium && !autoBuyerObservationFresh(
+			snapshot.State.Market.FeastCostReductionObservedAt,
+			snapshot.Now,
+			snapshot.State.Session.ChangedAt,
+			refreshAge,
+		)
 	}
-
-	if enabledSpecialists > 0 || settings.Feast.Enabled {
-		if snapshot.State.Market.BoostersObservedAt.IsZero() ||
-			snapshot.Now.Sub(snapshot.State.Market.BoostersObservedAt) >= refreshAge {
-			return autoBuyerRequestDecision(snapshot.Now, metrics, "Refresh specialist and feast timers", "autoBuyer.boosters.refresh", map[string]any{}), nil
+	if specialistContextStale || feastContextStale {
+		decision := autoBuyerRequestDecision(snapshot.Now, metrics, "Refresh specialist and feast context", "autoBuyer.boosters.refresh", map[string]any{
+			"feastContext": settings.Feast.Enabled,
+		})
+		if settings.Feast.Enabled {
+			decision.ReevaluateOnStale = false
+			decision.NextCheckAt = snapshot.Now.Add(30 * time.Second)
 		}
+		return decision, nil
 	}
 
 	blockedDetail := ""
@@ -168,20 +166,55 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		blockedDetail = detail
 	}
 
-	if decision, detail := evaluateAutoBuyerFeast(snapshot, settings, source, metrics); decision != nil {
-		return *decision, nil
-	} else if detail != "" {
-		metrics["feastBlocked"] = 1
-		if blockedDetail == "" {
-			blockedDetail = detail
+	var feastSource State.CastleState
+	if settings.Feast.Enabled {
+		feastSourceID := settings.Feast.SourceCastleID
+		if feastSourceID <= 0 {
+			feastSourceID = settings.SourceCastleID
+		}
+		var feastSourceFound bool
+		feastSource, feastSourceFound = autoBuyerSourceCastle(snapshot.State, feastSourceID)
+		if !feastSourceFound {
+			metrics["feastBlocked"] = 1
+			if blockedDetail == "" {
+				blockedDetail = "Choose an owned Great Empire main castle for the feast"
+			}
+		} else {
+			metrics["feastSourceCastleId"] = float64(feastSource.ID)
+			if availablePackageGoals == 0 {
+				metrics["sourceCastleId"] = float64(feastSource.ID)
+			}
+			if decision, detail := evaluateAutoBuyerFeast(snapshot, settings, feastSource, metrics); decision != nil {
+				return *decision, nil
+			} else if detail != "" {
+				metrics["feastBlocked"] = 1
+				if blockedDetail == "" {
+					blockedDetail = detail
+				}
+			}
 		}
 	}
 
-	if decision, detail := evaluateAutoBuyerPackages(snapshot, settings, source, metrics); decision != nil {
-		return *decision, nil
-	} else if detail != "" {
-		if blockedDetail == "" {
-			blockedDetail = detail
+	if availablePackageGoals > 0 {
+		packageSource, sourceFound := autoBuyerSourceCastle(snapshot.State, settings.SourceCastleID)
+		if !sourceFound {
+			if blockedDetail == "" {
+				blockedDetail = "Choose an owned Great Empire main castle for Auto Buyer packages"
+			}
+		} else {
+			metrics["sourceCastleId"] = float64(packageSource.ID)
+			_, packageHistoryObservedAt, packageHistoryFound := snapshot.State.ConstructionOffersFor(packageSource.ID, packageSource.KingdomID)
+			if !packageHistoryFound || packageHistoryObservedAt.IsZero() ||
+				snapshot.Now.Sub(packageHistoryObservedAt) >= refreshAge {
+				return autoBuyerRequestDecision(snapshot.Now, metrics, "Refresh shop stock and reset counters", "autoBuyer.package.history", map[string]any{
+					"sourceCastleId": packageSource.ID,
+				}), nil
+			}
+			if decision, detail := evaluateAutoBuyerPackages(snapshot, settings, packageSource, metrics); decision != nil {
+				return *decision, nil
+			} else if detail != "" && blockedDetail == "" {
+				blockedDetail = detail
+			}
 		}
 	}
 	if blockedDetail != "" {
@@ -280,6 +313,9 @@ func validateAutoBuyerRules(store *GameData.Store, settings autoBuyerSettings) s
 			settings.Feast.MinimumFoodReserve < 0 || settings.Feast.MaximumRubyCostPerPurchase < 0 {
 			return fmt.Sprintf("%s duration, reserve, or ruby ceiling is invalid", feast.Name)
 		}
+		if !feast.AutomaticPurchase.Supported {
+			return feast.AutomaticPurchase.Reason
+		}
 		if feast.Price.Premium && (!settings.Feast.AllowRubies || settings.Feast.MaximumRubyCostPerPurchase < feast.Price.Amount) {
 			return fmt.Sprintf("%s needs explicit ruby permission and a ceiling of at least %d", feast.Name, feast.Price.Amount)
 		}
@@ -350,6 +386,13 @@ func evaluateAutoBuyerFeast(
 	if !autoBuyerLevelEligible(snapshot.State.Player, feast.MinLevel, feast.MaxLevel, 0, 0) {
 		return nil, fmt.Sprintf("%s is not available at the current player level", feast.Name)
 	}
+	if !feast.AutomaticPurchase.Supported {
+		return nil, feast.AutomaticPurchase.Reason
+	}
+	if snapshot.State.Market.FeastPurchasePending {
+		metrics["feastReconciliationPending"] = 1
+		return nil, "A previous feast purchase is awaiting authoritative game reconciliation; Auto Buyer will not repeat it"
+	}
 	current := snapshot.State.Market.Feast
 	remaining := autoBuyerFeastRemaining(current, snapshot.Now)
 	metrics["feastRemainingSec"] = float64(remaining)
@@ -360,19 +403,48 @@ func evaluateAutoBuyerFeast(
 	if remaining >= floor {
 		return nil, ""
 	}
+	if !snapshot.State.Market.FeastLastPurchaseAt.IsZero() &&
+		!snapshot.State.Market.FeastLastPurchaseAt.After(snapshot.Now) {
+		nextPurchaseAt := snapshot.State.Market.FeastLastPurchaseAt.Add(autoBuyerFeastPurchasePacing)
+		if snapshot.Now.Before(nextPurchaseAt) {
+			return &Decision{
+				Status: "waiting", Detail: "Waiting briefly before extending the active feast again",
+				NextCheckAt: nextPurchaseAt, Metrics: metrics,
+			}, ""
+		}
+	}
 	balance, available := autoBuyerPriceBalance(snapshot.State, source, feast.Price)
 	if !available {
 		return nil, fmt.Sprintf("%s balance is unavailable", feast.Price.Name)
 	}
+	effectiveCost := feast.Price.Amount
+	if !feast.Price.Premium {
+		refreshAge := time.Duration(settings.HistoryRefreshSec) * time.Second
+		if !autoBuyerObservationFresh(
+			snapshot.State.Market.FeastCostReductionObservedAt,
+			snapshot.Now,
+			snapshot.State.Session.ChangedAt,
+			refreshAge,
+		) {
+			return nil, "Waiting for a fresh feast cost reduction before purchasing"
+		}
+		reductionPercent := snapshot.State.Market.FeastCostReductionPercent
+		if reductionPercent < 0 || reductionPercent > 100 {
+			return nil, "The current feast cost reduction is invalid"
+		}
+		effectiveCost = feast.EffectiveCost(reductionPercent)
+		metrics["feastCostReductionPercent"] = float64(reductionPercent)
+	}
+	metrics["feastEffectiveCost"] = float64(effectiveCost)
 	reserve := settings.Feast.MinimumFoodReserve
 	if feast.Price.Premium {
 		reserve = settings.MinimumRubyReserve
-		if !settings.Feast.AllowRubies || feast.Price.Amount > settings.Feast.MaximumRubyCostPerPurchase {
+		if !settings.Feast.AllowRubies || effectiveCost > settings.Feast.MaximumRubyCostPerPurchase {
 			return nil, fmt.Sprintf("%s exceeds the configured ruby ceiling", feast.Name)
 		}
 	}
-	if balance-reserve < feast.Price.Amount {
-		return nil, fmt.Sprintf("Waiting for %d %s above reserve to start or extend %s", feast.Price.Amount, feast.Price.Name, feast.Name)
+	if balance-reserve < effectiveCost {
+		return nil, fmt.Sprintf("Waiting for %d %s above reserve to start or extend %s", effectiveCost, feast.Price.Name, feast.Name)
 	}
 	arguments := map[string]any{
 		"feastId": feast.ID, "minimumRemainingHours": settings.Feast.MinimumRemainingHours,
@@ -383,12 +455,26 @@ func evaluateAutoBuyerFeast(
 		"expectedActiveFeastId":      current.ID,
 		"expectedExpiresAtUnix":      autoBuyerUnix(current.ExpiresAt),
 		"expectedBalanceBefore":      balance,
+		"expectedEffectiveCost":      effectiveCost,
+		"attemptAfter":               snapshot.Now,
 		"historyRefreshSec":          settings.HistoryRefreshSec,
 	}
 	decision := autoBuyerRequestDecision(snapshot.Now, metrics,
-		fmt.Sprintf("Start or extend %s toward the %d-hour floor", feast.Name, settings.Feast.MinimumRemainingHours),
+		fmt.Sprintf("Start or extend %s for %d %s toward the %d-hour floor", feast.Name, effectiveCost, feast.Price.Name, settings.Feast.MinimumRemainingHours),
 		"autoBuyer.feast.purchase", arguments)
+	decision.FailureFallback = &Intent.Request{
+		Name: "autoBuyer.feast.reconcile", Arguments: append(json.RawMessage(nil), decision.Request.Arguments...),
+	}
+	decision.FailureDetail = "Reconciled feast state after an incomplete or uncertain purchase"
+	decision.ReevaluateOnSuccess = false
+	decision.NextCheckAt = snapshot.Now.Add(autoBuyerFeastPurchasePacing)
 	return &decision, ""
+}
+
+func autoBuyerObservationFresh(observedAt, now, sessionChangedAt time.Time, maxAge time.Duration) bool {
+	return !observedAt.IsZero() && !observedAt.After(now) &&
+		(sessionChangedAt.IsZero() || !observedAt.Before(sessionChangedAt)) &&
+		maxAge > 0 && now.Sub(observedAt) < maxAge
 }
 
 func evaluateAutoBuyerPackages(
@@ -508,16 +594,27 @@ func autoBuyerLevelEligible(player State.PlayerState, minLevel, maxLevel, minLeg
 func autoBuyerPriceBalance(gameState State.GameState, source State.CastleState, price GameData.AutoBuyerPrice) (int64, bool) {
 	switch price.Scope {
 	case GameData.AutoBuyerPricePlayerResource:
-		return int64(math.Floor(gameState.Player.Resources[State.ResourceID(price.ResourceID)])), price.ResourceID > 0
+		balance, found := gameState.Player.Resources[State.ResourceID(price.ResourceID)]
+		amount, valid := autoBuyerBalanceAmount(balance)
+		return amount, found && price.ResourceID > 0 && valid
 	case GameData.AutoBuyerPriceCastleResource:
 		balance, found := source.Resources[State.ResourceID(price.ResourceID)]
-		return int64(math.Floor(balance.Amount)), found && price.ResourceID > 0
+		amount, valid := autoBuyerBalanceAmount(balance.Amount)
+		return amount, found && price.ResourceID > 0 && valid
 	case GameData.AutoBuyerPriceCurrency:
-		_, found := gameState.Player.Currencies[State.CurrencyID(price.CurrencyID)]
-		return int64(math.Floor(gameState.Player.Currencies[State.CurrencyID(price.CurrencyID)])), found && price.CurrencyID > 0
+		balance, found := gameState.Player.Currencies[State.CurrencyID(price.CurrencyID)]
+		amount, valid := autoBuyerBalanceAmount(balance)
+		return amount, found && price.CurrencyID > 0 && valid
 	default:
 		return 0, false
 	}
+}
+
+func autoBuyerBalanceAmount(value float64) (int64, bool) {
+	if math.IsNaN(value) || math.IsInf(value, 0) || value < 0 || value >= float64(math.MaxInt64) {
+		return 0, false
+	}
+	return int64(math.Floor(value)), true
 }
 
 func autoBuyerBoosterRemaining(booster State.MarketBoosterState, now time.Time) int64 {

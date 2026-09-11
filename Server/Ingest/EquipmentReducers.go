@@ -451,6 +451,7 @@ func parseEquipment(row []json.RawMessage, wearerKind string, wearerID int64, ga
 	item := State.EquipmentInstance{
 		ID: State.EquipmentInstanceID(id), DefinitionID: State.EquipmentID(definitionID),
 		Slot: int(rowInt(row, 1)), TypeID: int(rowInt(row, 2)), RarityID: int(rowInt(row, 3)),
+		Relic: len(row) >= 12 && rowInt(row, 11) == 3, RelicKnown: true,
 		SetID: rowInt(row, 7), Level: int(rowInt(row, 8)), WearerID: wearerID,
 		WearerKind: wearerKind, Effects: decodeEquipmentEffects(rowAt(row, 5), gameData, itemUsesRelicEffects(int(rowInt(row, 3)))),
 	}

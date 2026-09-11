@@ -66,7 +66,8 @@ func nextAvailableFeatureCommander(
 	}
 	for _, commanderID := range candidates {
 		if commander, exists := gameState.Commanders[commanderID]; exists && commander.Available &&
-			!State.CommanderHasActiveMovementAt(gameState, commanderID, now) {
+			!State.CommanderHasActiveMovementAt(gameState, commanderID, now) &&
+			!State.InvasionCommanderReserved(gameState, commanderID) {
 			return commanderID, true
 		}
 	}

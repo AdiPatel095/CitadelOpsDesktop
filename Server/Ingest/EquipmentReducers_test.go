@@ -45,6 +45,9 @@ func TestApplyLeadersNormalizesEquipmentAndCommanderZero(t *testing.T) {
 	if equipment.DefinitionID != 1375 || equipment.Level != 20 || equipment.SetID != 1086 {
 		t.Fatalf("unexpected equipment: %+v", equipment)
 	}
+	if !equipment.RelicKnown || equipment.Relic {
+		t.Fatalf("equipment relic discriminator = known %t relic %t, want known non-relic", equipment.RelicKnown, equipment.Relic)
+	}
 	if effect := equipment.Effects[0]; effect.WireID != 164 || effect.DefinitionID != 164 || effect.RollPercent == nil || *effect.RollPercent != 75 || len(effect.Values) != 1 || effect.Values[0] != 510 {
 		t.Fatalf("equipment effects = %#v", equipment.Effects)
 	}
@@ -122,11 +125,11 @@ func TestParseEquipmentResolvesWireEffectsThroughOfficialCatalog(t *testing.T) {
 		t.Fatal(err)
 	}
 	var relicRow []json.RawMessage
-	if err := json.Unmarshal([]byte(`[1001,1,2,5,0,[[121,50,[215,525]]],-1,-1,0,-1,-1,0]`), &relicRow); err != nil {
+	if err := json.Unmarshal([]byte(`[1001,1,2,5,0,[[121,50,[215,525]]],-1,-1,0,-1,-1,3]`), &relicRow); err != nil {
 		t.Fatal(err)
 	}
 	relic, _, ok := parseEquipment(relicRow, "", 0, store)
-	if !ok || relic.Effects[0].WireID != 121 || relic.Effects[0].DefinitionID != 2114 {
+	if !ok || !relic.RelicKnown || !relic.Relic || relic.Effects[0].WireID != 121 || relic.Effects[0].DefinitionID != 2114 {
 		t.Fatalf("relic effects = %#v", relic.Effects)
 	}
 	var normalRow []json.RawMessage
@@ -134,7 +137,7 @@ func TestParseEquipmentResolvesWireEffectsThroughOfficialCatalog(t *testing.T) {
 		t.Fatal(err)
 	}
 	normal, _, ok := parseEquipment(normalRow, "", 0, store)
-	if !ok || normal.Effects[0].WireID != 164 || normal.Effects[0].DefinitionID != 457 {
+	if !ok || !normal.RelicKnown || normal.Relic || normal.Effects[0].WireID != 164 || normal.Effects[0].DefinitionID != 457 {
 		t.Fatalf("normal effects = %#v", normal.Effects)
 	}
 }

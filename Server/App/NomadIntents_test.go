@@ -3,6 +3,7 @@ package App
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -81,8 +82,23 @@ func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
 	gameData, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],
 		"buildings":[],
-		"units":[{"wodID":77}],
+		"units":[
+			{"wodID":77},
+			{"wodID":244,"name":"Eventtool","type":"EmperorKhanChest","comment2":"EmperorKhanChest","slotTypes":"1","allowedToAttack":"0+27#0+35","usageEventID":"5,72"}
+		],
 		"effects":[],
+		"currencies":[
+			{"currencyID":1001,"JSONKey":"MS1"},{"currencyID":1002,"JSONKey":"MS2"},
+			{"currencyID":1003,"JSONKey":"MS3"},{"currencyID":1004,"JSONKey":"MS4"},
+			{"currencyID":1005,"JSONKey":"MS5"},{"currencyID":1006,"JSONKey":"MS6"},
+			{"currencyID":1007,"JSONKey":"MS7"}
+		],
+		"currencyMinutesSkipValues":[
+			{"currencyID":"1001","MinutesSkipValue":"1"},{"currencyID":"1002","MinutesSkipValue":"5"},
+			{"currencyID":"1003","MinutesSkipValue":"10"},{"currencyID":"1004","MinutesSkipValue":"30"},
+			{"currencyID":"1005","MinutesSkipValue":"60"},{"currencyID":"1006","MinutesSkipValue":"300"},
+			{"currencyID":"1007","MinutesSkipValue":"1440"}
+		],
 		"eventAutoScalingCamps":[{
 			"eventAutoScalingCampID":5001,"eventID":80,"difficultyID":201,"areaType":29,
 			"camplevel":90,"countVictory":9,"coolDown":3600,"skipCosts":9950,"maxTroopCapacityDefense":620
@@ -95,12 +111,13 @@ func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Castles[1] = State.CastleState{
 		ID: 1, KingdomID: 0, X: 100, Y: 100, Focused: true,
-		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{77: 1_000}},
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{77: 1_000, 244: 100}},
 	}
 	for commanderID := State.CommanderID(1); commanderID <= 3; commanderID++ {
 		gameState.Commanders[commanderID] = State.CommanderState{ID: commanderID, Available: true}
 	}
 	gameState.Player.LegendSkills.ObservedAt = now
+	gameState.Player.Currencies[1005] = 2
 	gameState.EventScores.ByEvent[80] = State.ScalableEventScore{
 		EventID: 80, DifficultyID: 201, PlayerScore: 100, RemainingSec: 7_200, ObservedAt: now,
 	}
@@ -124,6 +141,7 @@ func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
 			TargetTypeID: 29, TargetX: 101, TargetY: 100, EventCampID: 5001,
 		},
 		Mode: "chain", ScoreTarget: 100_000, MinimumRemainingSec: 1_800, VictoryCount: 9,
+		SkipCooldowns: true, TimeSkipReserve: map[string]int64{},
 		CommanderIDs: []State.CommanderID{1, 2, 3},
 		Preset: AttackPresets.Preset{ID: "camp", Name: "Camp", Waves: []AttackPresets.Wave{{
 			Middle: AttackPresets.Lane{Troops: []AttackPresets.Slot{{ItemID: &unitID, Quantity: 100}}},
@@ -137,10 +155,20 @@ func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
 	var launches []Intent.Step
 	var delays []Intent.Step
 	var arrivalGuards []Intent.Step
+	var launchIndexes []int
+	var skipIndexes []int
+	consumeSteps := 0
 	topLevelSetup := 0
-	for _, step := range plan.Steps {
+	for index, step := range plan.Steps {
 		if step.Resolver == "nomad.attack.build" {
 			launches = append(launches, step)
+			launchIndexes = append(launchIndexes, index)
+		}
+		if step.Opcode == "msd" {
+			skipIndexes = append(skipIndexes, index)
+		}
+		if step.Action == timeSkipConsumeAction {
+			consumeSteps++
 		}
 		if step.DelayMillis > 0 {
 			delays = append(delays, step)
@@ -155,6 +183,13 @@ func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
 	if len(launches) != 3 {
 		t.Fatalf("unexpected response-gated chain: %#v", launches)
 	}
+	if len(skipIndexes) != 2 || consumeSteps != 2 {
+		t.Fatalf("chain cooldown steps = skips %v consumes %d, want two of each", skipIndexes, consumeSteps)
+	}
+	if !(launchIndexes[0] < skipIndexes[0] && skipIndexes[0] < launchIndexes[1] &&
+		launchIndexes[1] < skipIndexes[1] && skipIndexes[1] < launchIndexes[2]) {
+		t.Fatalf("cooldown skips were not interleaved before each later CRA: launches=%v skips=%v", launchIndexes, skipIndexes)
+	}
 	if len(delays) != 0 {
 		t.Fatalf("chain added an artificial send delay: %#v", delays)
 	}
@@ -168,6 +203,28 @@ func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
 		if launch.CommandDependencies == nil || launch.CommandDependencies.Opcode != "cra" {
 			t.Fatalf("Nomad CRA does not declare sender-owned dependencies: %#v", launch)
 		}
+	}
+	withoutSkips := request
+	withoutSkips.SkipCooldowns = false
+	withoutSkipArguments, _ := json.Marshal(withoutSkips)
+	if _, err := planNomadCampAttack(
+		t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, withoutSkipArguments,
+	); err == nil || !strings.Contains(err.Error(), "require cooldown time skips") {
+		t.Fatalf("unsafe no-skip chain error = %v", err)
+	}
+	khanChestID := int64(244)
+	incompatible := request
+	incompatible.Preset = AttackPresets.Preset{ID: "sami", Name: "Sami's", Waves: []AttackPresets.Wave{{
+		Middle: AttackPresets.Lane{
+			Troops: []AttackPresets.Slot{{ItemID: &unitID, Quantity: 100}},
+			Tools:  []AttackPresets.Slot{{ItemID: &khanChestID, Quantity: 10}},
+		},
+	}}}
+	incompatibleArguments, _ := json.Marshal(incompatible)
+	if _, err := planNomadCampAttack(
+		t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, incompatibleArguments,
+	); err == nil || !strings.Contains(err.Error(), "Emperor Khan Chest") || !strings.Contains(err.Error(), "Samurai camps") {
+		t.Fatalf("authoritative incompatible-tool error = %v", err)
 	}
 	gameState.NomadCamps.Cooldowns["0:101:100"] = State.NomadCampCooldownState{
 		KingdomID: 0, X: 101, Y: 100, LastSuccessfulBattleAt: now, PendingCooldownRefresh: true,

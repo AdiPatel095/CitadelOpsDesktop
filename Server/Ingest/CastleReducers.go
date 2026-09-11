@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"reflect"
 	"strconv"
 	"strings"
@@ -122,12 +123,16 @@ func applyCastleDetails(raw json.RawMessage, gameState *State.GameState, gameDat
 			}
 			beforeKingdomID := castle.KingdomID
 			beforeResources := copyResourceBalances(castle.Resources)
+			beforeFoodBalanceObservedAt := castle.FoodBalanceObservedAt
 			beforeUnits := castle.Units
 			beforeUnitsObservedAt := castle.UnitsObservedAt
 			beforeOpenGateUntil := castle.Defense.OpenGateUntil
 			castle.KingdomID = State.KingdomID(kingdom.ID)
 			ensureCastleMaps(&castle)
 			applyCastleResourceValues(values, &castle, gameData)
+			if castleResourceValuePresent(values, gameData, "F") && !observedAt.IsZero() {
+				castle.FoodBalanceObservedAt = observedAt.UTC()
+			}
 			castle.Units = castleUnitsFromGroups(values["AC"], values["TU"], values["HI"], values["SHI"])
 			if remaining, present := rawInt64(values["OGT"]); present {
 				castle.Defense.OpenGateUntil = castleOpenGateUntil(remaining, observedAt)
@@ -136,6 +141,7 @@ func applyCastleDetails(raw json.RawMessage, gameState *State.GameState, gameDat
 				castle.UnitsObservedAt = observedAt.UTC()
 			}
 			if beforeKingdomID != castle.KingdomID || !reflect.DeepEqual(beforeResources, castle.Resources) ||
+				!beforeFoodBalanceObservedAt.Equal(castle.FoodBalanceObservedAt) ||
 				!reflect.DeepEqual(beforeUnits, castle.Units) || !beforeUnitsObservedAt.Equal(castle.UnitsObservedAt) ||
 				!reflect.DeepEqual(beforeOpenGateUntil, castle.Defense.OpenGateUntil) {
 				gameState.SetCastleParts(
@@ -574,7 +580,7 @@ func applyCastleResourceValues(values map[string]json.RawMessage, castle *State.
 			continue
 		}
 		amount, ok := rawFloat64(rawAmount)
-		if !ok {
+		if !ok || !validCastleResourceAmount(amount) {
 			continue
 		}
 		resourceID := State.ResourceID(definitionID)
@@ -583,6 +589,18 @@ func applyCastleResourceValues(values map[string]json.RawMessage, castle *State.
 		applyResourceProductionValues(&balance, jsonKey, production)
 		castle.Resources[resourceID] = balance
 	}
+}
+
+func castleResourceValuePresent(values map[string]json.RawMessage, gameData *GameData.Store, jsonKey string) bool {
+	if _, found := officialDefinitionID(gameData, "resources", "resourceID", jsonKey); !found {
+		return false
+	}
+	amount, numeric := rawFloat64(values[jsonKey])
+	return numeric && validCastleResourceAmount(amount)
+}
+
+func validCastleResourceAmount(amount float64) bool {
+	return !math.IsNaN(amount) && !math.IsInf(amount, 0) && amount >= 0 && amount < float64(math.MaxInt64)
 }
 
 func applyCastleProductionValues(raw json.RawMessage, castle *State.CastleState, gameData *GameData.Store) error {

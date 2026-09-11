@@ -394,6 +394,7 @@ func TestFeatureChannelForActorIncludesCurrentAutomations(t *testing.T) {
 		"automation:autoKhan:cooldown": ChannelAutoKhan,
 		"automation:autoKhan:rage":     ChannelAutoKhan,
 		"automation:autoBeriWorld":     ChannelAutoBeriWorld,
+		"automation:autoBuyer":         ChannelAutoBuyer,
 		"automation:autoStorm":         ChannelAutoStorm,
 		"ui:auto-equipment-cleanup":    ChannelAutoEquipment,
 	}
@@ -401,6 +402,23 @@ func TestFeatureChannelForActorIncludesCurrentAutomations(t *testing.T) {
 		if actual := featureChannelForActor(actor); actual != expected {
 			t.Errorf("featureChannelForActor(%q) = %q, want %q", actor, actual, expected)
 		}
+	}
+}
+
+func TestAutoBuyerActivityIsRecordedInDedicatedChannel(t *testing.T) {
+	store := NewStore(100)
+	store.RecordFeatureActivity(
+		"automation:autoBuyer",
+		"autoBuyer.feast.purchase",
+		"ERROR",
+		"PURCHASE",
+		"Could not purchase the configured feast",
+	)
+
+	lines := store.Tail(ChannelAutoBuyer, 10)
+	if len(lines) != 1 || !strings.Contains(lines[0], "[ERROR] [PURCHASE]") ||
+		!strings.Contains(lines[0], "Could not purchase the configured feast") {
+		t.Fatalf("Auto Buyer activity channel = %q", lines)
 	}
 }
 

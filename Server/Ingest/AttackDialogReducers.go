@@ -29,22 +29,34 @@ func reduceAttackDialog(
 	if err := json.Unmarshal(frame.Payload, &root); err != nil {
 		return nil, false, fmt.Errorf("decode attack dialog: %w", err)
 	}
+	sourceCastleID, sourceValid := rawJSONInt64(root["SCID"])
+	kingdomID, kingdomValid := rawJSONInt64(root["KID"])
+	if !sourceValid || sourceCastleID <= 0 || !kingdomValid || kingdomID < 0 {
+		return nil, false, nil
+	}
 	dialog := State.AttackDialogState{
-		SourceCastleID: State.CastleID(rawInteger(root["SCID"])),
-		KingdomID:      State.KingdomID(rawInteger(root["KID"])),
+		SourceCastleID: State.CastleID(sourceCastleID),
+		KingdomID:      State.KingdomID(kingdomID),
 		ActiveEffects:  parseAttackDialogEffects(root["AE"]),
 		ObservedAt:     frame.ReceivedAt,
 	}
 	var khanObservation *State.MapObservation
 	var stormObservation *State.MapObservation
+	var invasionObservation *State.MapObservation
 	if rawTarget, exists := root["gaa"]; exists {
 		var nested struct {
 			Node json.RawMessage `json:"AI"`
 		}
 		var row []json.RawMessage
 		if json.Unmarshal(rawTarget, &nested) == nil && json.Unmarshal(nested.Node, &row) == nil {
+			typeID, typeValid := rowExactInt(row, 0)
+			x, xValid := rowExactInt(row, 1)
+			y, yValid := rowExactInt(row, 2)
+			if !typeValid || !xValid || !yValid || x < 0 || y < 0 {
+				return nil, false, nil
+			}
 			dialog.Target = State.AttackDialogTarget{
-				TypeID: int(rowInt(row, 0)), X: int(rowInt(row, 1)), Y: int(rowInt(row, 2)), ObjectID: rowInt(row, 3),
+				TypeID: typeID, X: x, Y: y, ObjectID: rowInt(row, 3),
 			}
 			if len(row) >= 9 && !isRegularEventCampType(dialog.Target.TypeID) {
 				dialog.Target.OwnerID = State.PlayerID(rowInt(row, 4))
@@ -71,6 +83,17 @@ func reduceAttackDialog(
 				dialog.Target.EventCampID = observation.EventCampID
 				dialog.Target.EventCampCooldownRemaining = observation.EventCampCooldownRemaining
 				khanObservation = &observation
+			}
+			if isInvasionMapType(dialog.Target.TypeID) {
+				observation := State.MapObservation{
+					KingdomID: dialog.KingdomID, X: dialog.Target.X, Y: dialog.Target.Y,
+					TypeID: dialog.Target.TypeID, ObservedAt: frame.ReceivedAt,
+				}
+				populateInvasionObservation(&observation, row)
+				dialog.Target.ObjectID = observation.ObjectID
+				dialog.Target.InvasionAvailabilityKnown = observation.InvasionAvailabilityKnown
+				dialog.Target.InvasionProtected = observation.InvasionProtected
+				invasionObservation = &observation
 			}
 			if isStormMapType(dialog.Target.TypeID) {
 				observation := State.MapObservation{
@@ -123,6 +146,26 @@ func reduceAttackDialog(
 		if gameState.RefreshStormTargetObservation(*stormObservation) {
 			changed = true
 			domains = append(domains, "storm")
+		}
+	}
+	if invasionObservation != nil {
+		if gameState.SetMapObservation(*invasionObservation) {
+			changed = true
+			domains = append(domains, "map-invasion")
+		}
+		availabilityChanged := false
+		if invasionObservation.InvasionAvailabilityKnown && invasionObservation.InvasionProtected {
+			availabilityChanged = gameState.Invasion.MarkTargetUnavailable(
+				invasionObservation.KingdomID, invasionObservation.X, invasionObservation.Y, invasionObservation.ObservedAt,
+			)
+		} else if invasionObservation.InvasionAvailabilityKnown {
+			availabilityChanged = gameState.Invasion.MarkTargetAvailable(
+				invasionObservation.KingdomID, invasionObservation.X, invasionObservation.Y, invasionObservation.ObservedAt,
+			)
+		}
+		if availabilityChanged {
+			changed = true
+			domains = append(domains, "invasion")
 		}
 	}
 	if !changed {

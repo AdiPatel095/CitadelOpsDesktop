@@ -34,7 +34,6 @@ const (
 	autoStormPriorityFortPrefix    = "fort:"
 	autoStormPriorityIslandPrefix  = "island:"
 	autoStormTroopHistoryHours     = 24
-	autoStormTroopDemandMultiplier = 2
 )
 
 type AutoStormPolicy struct{}
@@ -1711,11 +1710,16 @@ func evaluateAutoStormCombat(
 			waitingDetail = importDetail
 			continue
 		}
+		minimumTroops := int64(0)
+		if settings.TroopImport.Enabled {
+			minimumTroops = settings.TroopImport.MinimumTroops
+		}
 		arguments := map[string]any{
 			"sourceCastleId": castle.ID, "kingdomId": castle.KingdomID,
 			"targetTypeId": candidate.Observation.TypeID, "targetX": candidate.Observation.X, "targetY": candidate.Observation.Y,
 			"stormIsleId": candidate.Observation.StormIsleID, "victoryCount": candidate.Observation.StormVictoryCount,
-			"preset":             preset,
+			"preset":             materializedPreset,
+			"minimumTroops":      minimumTroops,
 			"horseTravelBoostId": settings.HorseTravelBoostID,
 			"dailyAttackLimit":   settings.DailyAttackLimit,
 		}
@@ -1744,7 +1748,8 @@ func evaluateAutoStormCombat(
 		return &Decision{
 			Status: "ready", Detail: detail,
 			NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
-			Request: &Intent.Request{Name: "storm.attack", Arguments: payload}, ReevaluateOnSuccess: true,
+			Request:             &Intent.Request{Name: "storm.attack", Arguments: payload},
+			ReevaluateOnSuccess: true, ReevaluateOnStale: true,
 		}, "", nil
 	}
 	if waitingDetail != "" {
@@ -2160,22 +2165,22 @@ func autoStormTroopImportDecision(
 		return nil, fmt.Sprintf("Cannot calculate the Storm troop cap: %s", detail)
 	}
 	minimumTroops := capPreview.MinimumTroops
-	maximumTroops := max(
-		autoStormSaturatingAdd(perAttackTroops, minimumTroops),
-		capPreview.BufferedTroops,
-	)
-	historyHours := capPreview.HistoryHours
+	maximumTroops := capPreview.MaximumTroops
 	metrics["stormTroopsStationed"] = float64(stationedTroops)
 	metrics["stormTroopsCommitted"] = float64(committedTroops)
 	metrics["stormTroopsPerAttack"] = float64(perAttackTroops)
 	metrics["stormTroopMinimum"] = float64(minimumTroops)
 	metrics["stormTroopMaximum"] = float64(maximumTroops)
-	metrics["stormAttackHistoryHours"] = float64(historyHours)
-	metrics["stormAttacksInHistory"] = float64(capPreview.AttacksInHistory)
-	metrics["stormMeasuredAttacksInHistory"] = float64(capPreview.MeasuredAttacksInHistory)
-	metrics["stormTroopsSentInHistory"] = float64(capPreview.TroopsSentInHistory)
-	metrics["stormAverageTroopsPerHour"] = capPreview.AverageTroopsPerHour
-	metrics["stormBufferedTroops"] = float64(capPreview.BufferedTroops)
+	metrics["stormTroopBaseline"] = float64(capPreview.BaselineTroops)
+	metrics["stormEnabledPresetCount"] = float64(capPreview.EnabledPresetCount)
+	metrics["stormAveragePresetTroops"] = capPreview.AveragePresetTroops
+	metrics["stormResetSessionAvailable"] = 0
+	if capPreview.ResetSessionAvailable {
+		metrics["stormResetSessionAvailable"] = 1
+	}
+	metrics["stormAttacksSinceReset"] = float64(capPreview.AttacksSinceReset)
+	metrics["stormAverageAttacksPerHour"] = capPreview.AverageAttacksPerHour
+	metrics["stormRateBasedTroops"] = float64(capPreview.RateBasedTroops)
 
 	requested := map[State.UnitID]int64{}
 	reserve := map[State.UnitID]int64{}
@@ -2204,8 +2209,8 @@ func autoStormTroopImportDecision(
 	metrics["stormTroopImportHeadroom"] = float64(max(int64(0), headroom))
 	if headroom < requestedTotal {
 		return nil, fmt.Sprintf(
-			"Storm troop import is capped at %d troops from the rolling %d-hour troop-send rate; %d are committed and %d more are needed before launch",
-			maximumTroops, historyHours, committedTroops, requestedTotal,
+			"Storm troop import is capped at %d troops using the %s cap basis; %d are committed and %d more are needed before launch",
+			maximumTroops, strings.ReplaceAll(capPreview.CapBasis, "_", " "), committedTroops, requestedTotal,
 		)
 	}
 	mead, observed := autoStormMeadBalance(snapshot.GameData, castle)
@@ -2257,10 +2262,14 @@ func autoStormTroopImportDecision(
 			units = append(units, map[string]any{"unitId": unitID, "amount": selected[unitID]})
 		}
 		metrics["troopsSelectedForImport"] = float64(transferTotal)
-		return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Import %d guarded troops from %s", transferTotal, autoStormCastleName(donor)), "troops.kingdom.ship", map[string]any{
+		arguments := map[string]any{
 			"sourceCastleId": donor.ID, "targetCastleId": castle.ID, "targetKingdomId": castle.KingdomID,
 			"maximumTargetTroops": maximumTroops, "units": units,
-		}), ""
+		}
+		if capPreview.ResetSessionStartedAt != nil {
+			arguments["expectedDailyAttackSessionStartedAt"] = *capPreview.ResetSessionStartedAt
+		}
+		return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Import %d guarded troops from %s", transferTotal, autoStormCastleName(donor)), "troops.kingdom.ship", arguments), ""
 	}
 	if missingTools > 0 {
 		return nil, fmt.Sprintf("Selected donor castles cannot supply the missing Storm troops; %d preset tool stack(s) are also missing", missingTools)
@@ -2302,45 +2311,6 @@ func autoStormTroopInventory(snapshot Snapshot, castle State.CastleState) (int64
 		)
 	}
 	return stationed, committed
-}
-
-func autoStormAttackDemand(
-	state State.GameState,
-	now time.Time,
-) (int64, int64, int64, float64, int64) {
-	if now.IsZero() {
-		now = time.Now().UTC()
-	}
-	cutoff := now.Add(-autoStormTroopHistoryHours * time.Hour)
-	troopsByMovement := map[State.MovementID]int64{}
-	for _, records := range [][]State.AttackFeatureLaunch{
-		state.AttackAnalytics.RecentAutoStormLaunches,
-		state.AttackAnalytics.PendingAttacks,
-	} {
-		for _, record := range records {
-			if record.MovementID <= 0 || record.FeatureID != State.AttackFeatureAutoStorm ||
-				record.KingdomID != autoStormKingdomID || record.LaunchedAt.Before(cutoff) ||
-				record.LaunchedAt.After(now) {
-				continue
-			}
-			troopsByMovement[record.MovementID] = max(
-				troopsByMovement[record.MovementID],
-				max(int64(0), record.TroopCount),
-			)
-		}
-	}
-	troopsSent := int64(0)
-	measuredAttacks := int64(0)
-	for _, troopCount := range troopsByMovement {
-		if troopCount <= 0 {
-			continue
-		}
-		measuredAttacks++
-		troopsSent = autoStormSaturatingAdd(troopsSent, troopCount)
-	}
-	averageHourly := float64(troopsSent) / autoStormTroopHistoryHours
-	bufferedTroops := int64(math.Ceil(averageHourly * autoStormTroopDemandMultiplier))
-	return int64(len(troopsByMovement)), measuredAttacks, troopsSent, averageHourly, bufferedTroops
 }
 
 func autoStormTroopMapTotal(gameData *GameData.Store, units map[State.UnitID]int64) int64 {
@@ -2525,7 +2495,8 @@ func autoStormIntentDecision(
 	arguments, _ := json.Marshal(argumentsValue)
 	return &Decision{
 		Status: "ready", Detail: detail, NextCheckAt: now.Add(2 * time.Second), Metrics: metrics,
-		Request: &Intent.Request{Name: intentName, Arguments: arguments}, ReevaluateOnSuccess: true,
+		Request:             &Intent.Request{Name: intentName, Arguments: arguments},
+		ReevaluateOnSuccess: true, ReevaluateOnStale: true,
 	}
 }
 

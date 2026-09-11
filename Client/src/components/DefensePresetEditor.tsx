@@ -24,6 +24,7 @@ import {
   Modal,
   ModalTitle,
   QuantityAssetTile,
+  Switch,
 } from './ui';
 
 interface DefensePresetEditorProps {
@@ -254,13 +255,11 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
         <section aria-label="Courtyard and keep">
           <div className="rounded-global border border-border-base bg-bg-card/45 p-4">
             <label className="flex cursor-pointer items-start gap-3">
-              <input
-                type="checkbox"
-                className="mt-1 h-4 w-4 accent-primary"
+              <Switch
                 checked={draft.keep != null}
-                onChange={(event) => setDraft((current) => ({
+                onChange={(includeCourtyard) => setDraft((current) => ({
                   ...current,
-                  keep: event.target.checked
+                  keep: includeCourtyard
                     ? {
                       mauct: 0,
                       unitTypePercent: 50,
@@ -275,6 +274,9 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
                     }
                     : undefined,
                 }))}
+                size="sm"
+                className="mt-0.5 shrink-0"
+                ariaLabel="Include courtyard setup in this defense preset"
               />
               <span>
                 <span className="block text-sm font-black text-text-main">Include courtyard setup</span>

@@ -14,6 +14,7 @@ type Snapshot struct {
 	State                        State.GameState
 	Configuration                Configuration.Snapshot
 	GameData                     *GameData.Store
+	Telemetry                    AttackLaunchCountsProvider
 	Now                          time.Time
 	PolicyConfigurationChanged   bool
 	ConfigurationExternallyOwned bool
@@ -126,6 +127,10 @@ type ConfigurationDerivedStatePolicy interface {
 
 type GameDataProvider interface {
 	Current() (*GameData.Store, bool)
+}
+
+type AttackLaunchCountsProvider interface {
+	AttackLaunchCountsSince(time.Time, time.Time) (map[string]int, bool)
 }
 
 type IntentSubmitter interface {

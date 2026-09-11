@@ -1419,7 +1419,7 @@ const SettingsView: React.FC = () => {
             <div>
               <h3 className="text-sm font-semibold text-text-main mb-1">Upgrade Step Delay</h3>
               <p className="text-xs text-text-muted mb-4">
-                Pause between each <span className="font-mono">ere</span> command when bulk-upgrading equipment or gems (10–5000 ms).
+                Pause between each enchant command when bulk-upgrading equipment or gems (10–5000 ms).
               </p>
             </div>
 

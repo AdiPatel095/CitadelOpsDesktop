@@ -472,6 +472,7 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 		return engine.fail(receipt, fmt.Errorf("state store is unavailable"))
 	}
 	completedSteps := map[string]int{}
+	pendingResponseRetries := map[string]bool{}
 	var checkpointPlan *Plan
 	var admissionRelease func()
 	var admitted *Admission
@@ -713,7 +714,7 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 		flushWireCommits := func() error {
 			return wireCommits.flush(executionContext, engine.observer)
 		}
-		for _, step := range plan.Steps {
+		for stepIndex, step := range plan.Steps {
 			resumeKey := stepResumeKey(step)
 			if step.ResumePolicy != ResumeRebuild && completedThisAttempt[resumeKey] < completedSteps[resumeKey] {
 				completedThisAttempt[resumeKey]++
@@ -750,10 +751,37 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 				metadata.ConnectionGeneration = operationConnectionGeneration
 				stepContext = Outbound.WithMetadata(attemptContext, metadata)
 			}
-			exchange, err := engine.executeStep(stepContext, currentRevision, step)
-			if exchange != nil {
-				receipt.Exchanges = append(receipt.Exchanges, *exchange)
-				engine.update(receipt)
+			var err error
+			if pendingResponseRetries[resumeKey] {
+				err = engine.executeResponseRetryGuard(stepContext, step.ResponseRetry)
+				if err == nil {
+					delete(pendingResponseRetries, resumeKey)
+					currentRevision = engine.state.Revision()
+				}
+			}
+			for err == nil {
+				var exchange *CommandExchange
+				exchange, err = engine.executeStep(stepContext, currentRevision, step)
+				if exchange != nil {
+					receipt.Exchanges = append(receipt.Exchanges, *exchange)
+					engine.update(receipt)
+				}
+				if !retryableStepResponse(step, err) {
+					break
+				}
+				pendingResponseRetries[resumeKey] = true
+				// A retry is another resource-spending dispatch, so honor the
+				// runtime gate and the step's explicit guard before every resend.
+				// The original response is already committed and captured above;
+				// it is never counted as successful or completed progress.
+				if err = engine.awaitExecutionGate(executionContext, request, plan, ExecutionBeforeStep); err != nil {
+					break
+				}
+				if err = engine.executeResponseRetryGuard(stepContext, step.ResponseRetry); err != nil {
+					break
+				}
+				delete(pendingResponseRetries, resumeKey)
+				currentRevision = engine.state.Revision()
 			}
 			if err != nil {
 				if flushErr := flushWireCommits(); flushErr != nil {
@@ -774,6 +802,7 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 			if step.ResumePolicy != ResumeRebuild {
 				completedSteps[resumeKey]++
 				completedThisAttempt[resumeKey]++
+				receipt.CompletedStepIndexes = appendCompletedStepIndex(receipt.CompletedStepIndexes, stepIndex)
 			}
 			if step.ResponseBarrier != ResponseBarrierWire {
 				if err := flushWireCommits(); err != nil {
@@ -842,6 +871,15 @@ func completedAnyStep(completedSteps map[string]int) bool {
 		}
 	}
 	return false
+}
+
+func appendCompletedStepIndex(indexes []int, index int) []int {
+	for _, completed := range indexes {
+		if completed == index {
+			return indexes
+		}
+	}
+	return append(indexes, index)
 }
 
 func planUsesFocus(resources []ResourceKey) bool {
@@ -931,9 +969,20 @@ func stepResumeKey(step Step) string {
 		step.AwaitOpcode,
 		strings.Join(step.AwaitOpcodes, ","),
 		string(step.ResponseBarrier),
+		step.PreDispatchAction,
+		string(step.PreDispatchArguments),
+		step.DefinitiveSendFailureAction,
+		string(step.DefinitiveSendFailureArguments),
+		step.DefinitiveResponseFailureAction,
+		string(step.DefinitiveResponseFailureArguments),
+		step.StaleResponseAction,
+		string(step.StaleResponseArguments),
+		fmt.Sprint(step.ResponseProjectionFailureIndeterminate),
 		fmt.Sprint(step.TimeoutMillis),
 		fmt.Sprint(step.DelayMillis),
 		fmt.Sprint(step.SuccessCodes),
+		fmt.Sprint(step.StaleCodes),
+		responseRetryPolicyKey(step.ResponseRetry),
 		fmt.Sprint(step.CaptureResponse),
 		string(step.ExpectedResponsePayload),
 		fmt.Sprint(step.ResponseIdentity.PlayerID),
@@ -952,6 +1001,14 @@ func stepResumeKey(step Step) string {
 		fmt.Sprint(step.Command.Bare),
 		fmt.Sprint(step.Command.OmitNamespace),
 	}, "\x00")
+}
+
+func responseRetryPolicyKey(policy *ResponseRetryPolicy) string {
+	if policy == nil {
+		return ""
+	}
+	encoded, _ := json.Marshal(policy)
+	return string(encoded)
 }
 
 func (engine *Engine) Operation(id string) (Receipt, bool) {
@@ -1268,14 +1325,77 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 	if err := validateDispatchPermit(ctx, afterRevision); err != nil {
 		return nil, err
 	}
+	compensateDefinitiveSendFailure := func(primary error) error {
+		if step.DefinitiveSendFailureAction == "" {
+			return primary
+		}
+		engine.mu.RLock()
+		action := engine.actions[step.DefinitiveSendFailureAction]
+		engine.mu.RUnlock()
+		if action == nil {
+			return errors.Join(primary, fmt.Errorf("definitive-send-failure action %q is not registered", step.DefinitiveSendFailureAction))
+		}
+		if err := action(sendContext, step.DefinitiveSendFailureArguments); err != nil {
+			return errors.Join(primary, fmt.Errorf("definitive-send-failure action %q: %w", step.DefinitiveSendFailureAction, err))
+		}
+		return primary
+	}
+	compensateDefinitiveResponseFailure := func(primary error) error {
+		if step.DefinitiveResponseFailureAction == "" {
+			return primary
+		}
+		engine.mu.RLock()
+		action := engine.actions[step.DefinitiveResponseFailureAction]
+		engine.mu.RUnlock()
+		if action == nil {
+			return errors.Join(primary, fmt.Errorf(
+				"definitive-response-failure action %q is not registered",
+				step.DefinitiveResponseFailureAction,
+			))
+		}
+		if err := action(sendContext, step.DefinitiveResponseFailureArguments); err != nil {
+			return errors.Join(primary, fmt.Errorf(
+				"definitive-response-failure action %q: %w",
+				step.DefinitiveResponseFailureAction, err,
+			))
+		}
+		return primary
+	}
+	handleStaleResponse := func(primary error) error {
+		if step.StaleResponseAction == "" {
+			return primary
+		}
+		engine.mu.RLock()
+		action := engine.actions[step.StaleResponseAction]
+		engine.mu.RUnlock()
+		if action == nil {
+			return errors.Join(primary, fmt.Errorf("stale-response action %q is not registered", step.StaleResponseAction))
+		}
+		if err := action(sendContext, step.StaleResponseArguments); err != nil {
+			return errors.Join(primary, fmt.Errorf("stale-response action %q: %w", step.StaleResponseAction, err))
+		}
+		return primary
+	}
+	if step.PreDispatchAction != "" {
+		engine.mu.RLock()
+		action := engine.actions[step.PreDispatchAction]
+		engine.mu.RUnlock()
+		if action == nil {
+			return nil, fmt.Errorf("pre-dispatch action %q is not registered", step.PreDispatchAction)
+		}
+		if err := action(sendContext, step.PreDispatchArguments); err != nil {
+			return nil, compensateDefinitiveSendFailure(fmt.Errorf("pre-dispatch action %q: %w", step.PreDispatchAction, err))
+		}
+	}
 	if err := advanceEffectPhase(ctx, EffectPhaseDispatching); err != nil {
-		return nil, fmt.Errorf("persist dispatching effect: %w", err)
+		return nil, compensateDefinitiveSendFailure(fmt.Errorf("persist dispatching effect: %w", err))
 	}
 	if err := engine.sender.Send(sendContext, payload); err != nil {
 		if Outbound.IsIndeterminate(err) {
 			_ = advanceEffectPhase(ctx, EffectPhaseReconciliationRequired)
+			return nil, err
 		}
-		return nil, err
+		return nil, compensateDefinitiveSendFailure(err)
 	}
 	var exchange *CommandExchange
 	if step.CaptureResponse {
@@ -1338,16 +1458,34 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 			if (expectedConnection > 0 || sessionAtSend.Generation > 0) && sessionChanged() {
 				return exchange, Outbound.MarkIndeterminate(fmt.Errorf("game session changed while waiting for %s", strings.Join(awaitOpcodes, " or ")))
 			}
+			if exchange != nil {
+				response := frame.Frame
+				exchange.Response = &response
+			}
 			if len(step.SuccessCodes) > 0 {
 				if frame.Frame.ResponseCode == nil {
-					return exchange, fmt.Errorf("response did not include a result code")
+					responseErr := fmt.Errorf("response did not include a result code")
+					if step.ResponseProjectionFailureIndeterminate {
+						_ = advanceEffectPhase(ctx, EffectPhaseReconciliationRequired)
+						return exchange, Outbound.MarkIndeterminate(responseErr)
+					}
+					return exchange, responseErr
 				}
 				if !containsInt(step.SuccessCodes, *frame.Frame.ResponseCode) {
 					responseErr := engine.unsuccessfulResponseCode(frame.Frame.Opcode, *frame.Frame.ResponseCode)
-					if containsInt(step.StaleCodes, *frame.Frame.ResponseCode) {
-						return exchange, fmt.Errorf("%w: %w", ErrPlanStale, responseErr)
+					if step.ResponseRetry != nil && containsInt(step.ResponseRetry.Codes, *frame.Frame.ResponseCode) {
+						if err := advanceEffectPhase(ctx, EffectPhaseObserved); err != nil {
+							return exchange, Outbound.MarkIndeterminate(fmt.Errorf("persist observed retry response: %w", err))
+						}
+						// The response is definitive, but not terminal: the explicit
+						// retry policy will resend this same step. Keep its pre-dispatch
+						// marker armed across the guarded retry.
+						return exchange, responseErr
 					}
-					return exchange, responseErr
+					if containsInt(step.StaleCodes, *frame.Frame.ResponseCode) {
+						return exchange, handleStaleResponse(fmt.Errorf("%w: %w", ErrPlanStale, responseErr))
+					}
+					return exchange, compensateDefinitiveResponseFailure(responseErr)
 				}
 			}
 			if err := validateExpectedResponsePayload(step.ExpectedResponsePayload, frame.Frame.Payload); err != nil {
@@ -1370,7 +1508,12 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 				}
 			}
 			if frame.ReduceError != "" {
-				return exchange, fmt.Errorf("response state reduction failed: %s", frame.ReduceError)
+				reduceErr := fmt.Errorf("response state reduction failed: %s", frame.ReduceError)
+				if step.ResponseProjectionFailureIndeterminate {
+					_ = advanceEffectPhase(ctx, EffectPhaseReconciliationRequired)
+					return exchange, Outbound.MarkIndeterminate(reduceErr)
+				}
+				return exchange, reduceErr
 			}
 			if exchange != nil {
 				response := frame.Frame
@@ -1382,6 +1525,30 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 			return exchange, nil
 		}
 	}
+}
+
+func retryableStepResponse(step Step, err error) bool {
+	if err == nil || step.ResponseRetry == nil || errors.Is(err, ErrPlanStale) || Outbound.IsIndeterminate(err) {
+		return false
+	}
+	var responseError *ResponseCodeError
+	return errors.As(err, &responseError) && containsInt(step.ResponseRetry.Codes, responseError.Meaning.Code)
+}
+
+func (engine *Engine) executeResponseRetryGuard(ctx context.Context, policy *ResponseRetryPolicy) error {
+	if policy == nil {
+		return fmt.Errorf("response retry policy is unavailable")
+	}
+	guard := Step{
+		Name:            "Prepare response retry",
+		Action:          policy.GuardAction,
+		ActionArguments: append(json.RawMessage(nil), policy.GuardArguments...),
+		DelayMillis:     policy.DelayMillis,
+	}
+	if _, err := engine.executeStep(ctx, engine.state.Revision(), guard); err != nil {
+		return fmt.Errorf("response retry guard: %w", err)
+	}
+	return nil
 }
 
 func validateExpectedResponsePayload(expected json.RawMessage, actual json.RawMessage) error {
@@ -1685,7 +1852,41 @@ func normalizePlan(definition Definition, revision uint64, plan Plan) Plan {
 		plan.Steps[index].AwaitOpcode = strings.ToLower(plan.Steps[index].AwaitOpcode)
 		plan.Steps[index].AwaitOpcodes = normalizeAwaitOpcodes(plan.Steps[index].AwaitOpcodes)
 		plan.Steps[index].ResponseBarrier = ResponseBarrier(strings.ToLower(strings.TrimSpace(string(plan.Steps[index].ResponseBarrier))))
+		plan.Steps[index].PreDispatchAction = strings.TrimSpace(plan.Steps[index].PreDispatchAction)
+		plan.Steps[index].PreDispatchArguments = append(json.RawMessage(nil), plan.Steps[index].PreDispatchArguments...)
+		if plan.Steps[index].PreDispatchAction != "" && len(plan.Steps[index].PreDispatchArguments) == 0 {
+			plan.Steps[index].PreDispatchArguments = json.RawMessage(`{}`)
+		}
+		plan.Steps[index].DefinitiveSendFailureAction = strings.TrimSpace(plan.Steps[index].DefinitiveSendFailureAction)
+		plan.Steps[index].DefinitiveSendFailureArguments = append(json.RawMessage(nil), plan.Steps[index].DefinitiveSendFailureArguments...)
+		if plan.Steps[index].DefinitiveSendFailureAction != "" && len(plan.Steps[index].DefinitiveSendFailureArguments) == 0 {
+			plan.Steps[index].DefinitiveSendFailureArguments = json.RawMessage(`{}`)
+		}
+		plan.Steps[index].DefinitiveResponseFailureAction = strings.TrimSpace(plan.Steps[index].DefinitiveResponseFailureAction)
+		plan.Steps[index].DefinitiveResponseFailureArguments = append(json.RawMessage(nil), plan.Steps[index].DefinitiveResponseFailureArguments...)
+		if plan.Steps[index].DefinitiveResponseFailureAction != "" && len(plan.Steps[index].DefinitiveResponseFailureArguments) == 0 {
+			plan.Steps[index].DefinitiveResponseFailureArguments = json.RawMessage(`{}`)
+		}
+		plan.Steps[index].StaleResponseAction = strings.TrimSpace(plan.Steps[index].StaleResponseAction)
+		plan.Steps[index].StaleResponseArguments = append(json.RawMessage(nil), plan.Steps[index].StaleResponseArguments...)
+		if plan.Steps[index].StaleResponseAction != "" && len(plan.Steps[index].StaleResponseArguments) == 0 {
+			plan.Steps[index].StaleResponseArguments = json.RawMessage(`{}`)
+		}
 		plan.Steps[index].ExpectedResponsePayload = append(json.RawMessage(nil), plan.Steps[index].ExpectedResponsePayload...)
+		if policy := plan.Steps[index].ResponseRetry; policy != nil {
+			copy := *policy
+			copy.Codes = normalizeResponseCodes(copy.Codes)
+			copy.GuardAction = strings.TrimSpace(copy.GuardAction)
+			copy.GuardArguments = append(json.RawMessage(nil), copy.GuardArguments...)
+			if copy.GuardAction != "" && len(copy.GuardArguments) == 0 {
+				copy.GuardArguments = json.RawMessage(`{}`)
+			}
+			plan.Steps[index].ResponseRetry = &copy
+			plan.Steps[index].CaptureResponse = true
+			if plan.Steps[index].ResponseBarrier == "" {
+				plan.Steps[index].ResponseBarrier = ResponseBarrierCommitted
+			}
+		}
 		if dependency := plan.Steps[index].CommandDependencies; dependency != nil {
 			copy := *dependency
 			copy.Opcode = strings.ToLower(strings.TrimSpace(copy.Opcode))
@@ -1756,6 +1957,9 @@ func finalizePlan(
 	plan Plan,
 ) (Plan, error) {
 	plan = normalizePlan(definition, input.State.Revision, plan)
+	if err := validateResponseRetryPolicies(plan); err != nil {
+		return Plan{}, err
+	}
 	plan.CatalogVersion = currentCatalogVersion(input)
 	if definition.ReadSet != nil && input.Partitions.Available() {
 		keys, err := definition.ReadSet(input, arguments, plan)
@@ -1773,6 +1977,56 @@ func finalizePlan(
 		return Plan{}, fmt.Errorf("intent %q uses an unmapped legacy claim; declare a typed resource", definition.Name)
 	}
 	return plan, nil
+}
+
+func normalizeResponseCodes(codes []int) []int {
+	seen := make(map[int]struct{}, len(codes))
+	normalized := make([]int, 0, len(codes))
+	for _, code := range codes {
+		if _, duplicate := seen[code]; duplicate {
+			continue
+		}
+		seen[code] = struct{}{}
+		normalized = append(normalized, code)
+	}
+	return normalized
+}
+
+func validateResponseRetryPolicies(plan Plan) error {
+	for index, step := range plan.Steps {
+		policy := step.ResponseRetry
+		if policy == nil {
+			continue
+		}
+		label := stepLabel(step)
+		if len(policy.Codes) == 0 {
+			return fmt.Errorf("step %d (%s) response retry policy requires at least one code", index, label)
+		}
+		if policy.GuardAction == "" {
+			return fmt.Errorf("step %d (%s) response retry policy requires a guard action", index, label)
+		}
+		if policy.DelayMillis <= 0 {
+			return fmt.Errorf("step %d (%s) response retry policy requires a positive delay", index, label)
+		}
+		if len(stepAwaitOpcodes(step)) == 0 || len(step.SuccessCodes) == 0 {
+			return fmt.Errorf("step %d (%s) response retry policy requires an awaited response with success codes", index, label)
+		}
+		if step.ResponseBarrier != ResponseBarrierCommitted {
+			return fmt.Errorf("step %d (%s) response retry policy requires a committed response barrier", index, label)
+		}
+		for _, code := range policy.Codes {
+			if containsInt(step.SuccessCodes, code) {
+				return fmt.Errorf("step %d (%s) response retry code %d is also a success code", index, label, code)
+			}
+			if containsInt(step.StaleCodes, code) {
+				return fmt.Errorf("step %d (%s) response retry code %d is also a stale code", index, label, code)
+			}
+			if code < 1 {
+				return fmt.Errorf("step %d (%s) response retry code must be positive", index, label)
+			}
+		}
+	}
+	return nil
 }
 
 func currentCatalogVersion(input PlanningContext) string {

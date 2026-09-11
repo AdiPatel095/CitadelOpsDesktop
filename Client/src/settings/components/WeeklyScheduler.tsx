@@ -898,6 +898,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
                 size="sm"
                 checked={schedule.enabled}
                 onChange={(enabled) => commitSchedule({ ...schedule, enabled })}
+                ariaLabel="Use weekly schedule"
               />
             </div>
             {slotOptionsConfig && (
@@ -907,6 +908,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
                   size="sm"
                   checked={slotOptionsEnabled}
                   onChange={setSlotOptionsEnabled}
+                  ariaLabel={slotOptionsConfig.enabledLabel}
                 />
               </div>
             )}

@@ -2,6 +2,7 @@ package State
 
 import (
 	"encoding/json"
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -290,9 +291,13 @@ type CastleState struct {
 	Focused   bool      `json:"focused"`
 	// ContextSnapshotObservedAt is advanced only by an authoritative JAA
 	// castle-context snapshot (including the JAA returned by JCA).
-	ContextSnapshotObservedAt   time.Time                                 `json:"contextSnapshotObservedAt,omitempty"`
-	Resources                   map[ResourceID]ResourceBalance            `json:"resources"`
-	FoodStateObservedAt         time.Time                                 `json:"foodStateObservedAt,omitempty"`
+	ContextSnapshotObservedAt time.Time                      `json:"contextSnapshotObservedAt,omitempty"`
+	Resources                 map[ResourceID]ResourceBalance `json:"resources"`
+	FoodStateObservedAt       time.Time                      `json:"foodStateObservedAt,omitempty"`
+	// FoodBalanceObservedAt is an internal dispatch authority. It advances
+	// only when a castle-scoped response actually contains numeric Food and is
+	// intentionally not persisted, so a restart must refresh before spending.
+	FoodBalanceObservedAt       time.Time                                 `json:"-"`
 	Units                       CastleUnits                               `json:"units"`
 	UnitsObservedAt             time.Time                                 `json:"unitsObservedAt,omitempty"`
 	Defense                     CastleDefenseState                        `json:"defense"`
@@ -883,7 +888,9 @@ type EquipmentInstance struct {
 	DefinitionID EquipmentID         `json:"definitionId"`
 	Slot         int                 `json:"slot"`
 	TypeID       int                 `json:"typeId,omitempty"`
-	RarityID     int                 `json:"rarityId,omitempty"`
+	RarityID     int                 `json:"rarityId"`
+	Relic        bool                `json:"relic,omitempty"`
+	RelicKnown   bool                `json:"relicKnown,omitempty"`
 	SetID        int64               `json:"setId,omitempty"`
 	Level        int                 `json:"level,omitempty"`
 	WearerID     int64               `json:"wearerId,omitempty"`
@@ -1040,14 +1047,49 @@ func (feast MarketFeastState) ActiveAt(now time.Time) bool {
 	return feast.ID >= 0 && !feast.ExpiresAt.IsZero() && feast.ExpiresAt.After(now)
 }
 
+// FreshAt reports whether the feast value is a coherent observation from the
+// current session and is still within the caller's authority window. A zeroed
+// feast with a non-zero observation time is the normalized, explicitly
+// observed inactive state.
+func (feast MarketFeastState) FreshAt(now time.Time, sessionChangedAt time.Time, maxAge time.Duration) bool {
+	if now.IsZero() || maxAge <= 0 || feast.ObservedAt.IsZero() || feast.ObservedAt.After(now) ||
+		(!sessionChangedAt.IsZero() && feast.ObservedAt.Before(sessionChangedAt)) ||
+		now.Sub(feast.ObservedAt) >= maxAge {
+		return false
+	}
+	if feast.ExpiresAt.IsZero() {
+		return feast.ID == 0 && feast.RemainingSec == 0
+	}
+	if feast.ID < 0 || feast.RemainingSec <= 0 ||
+		int64(feast.RemainingSec) > int64(math.MaxInt64)/int64(time.Second) ||
+		!feast.ExpiresAt.After(feast.ObservedAt) {
+		return false
+	}
+	duration := time.Duration(feast.RemainingSec) * time.Second
+	return duration > 0 && feast.ExpiresAt.Equal(feast.ObservedAt.Add(duration))
+}
+
 type MarketState struct {
-	Castles            map[CastleID]MarketCastleState `json:"castles"`
-	Boosters           map[int]MarketBoosterState     `json:"boosters"`
-	Feast              MarketFeastState               `json:"feast"`
-	CaravanLevel       int                            `json:"caravanLevel,omitempty"`
-	CaravanLevelLoaded bool                           `json:"caravanLevelLoaded"`
-	ObservedAt         time.Time                      `json:"observedAt,omitempty"`
-	BoostersObservedAt time.Time                      `json:"boostersObservedAt,omitempty"`
+	Castles             map[CastleID]MarketCastleState `json:"castles"`
+	Boosters            map[int]MarketBoosterState     `json:"boosters"`
+	Feast               MarketFeastState               `json:"feast"`
+	FeastLastPurchaseAt time.Time                      `json:"feastLastPurchaseAt,omitempty"`
+	// FeastPurchasePending prevents a resource-spending BFS from being replayed
+	// after its outcome could not be reconciled. The latch is durable across
+	// restarts and is cleared only by an authoritative expected-feast result,
+	// an explicit game rejection, or expiry of the maximum possible effect.
+	FeastPurchasePending           bool      `json:"feastPurchasePending,omitempty"`
+	FeastPurchaseExpectedID        int64     `json:"feastPurchaseExpectedId,omitempty"`
+	FeastPurchasePendingSince      time.Time `json:"feastPurchasePendingSince,omitempty"`
+	FeastPurchaseExpectedExpiresAt time.Time `json:"feastPurchaseExpectedExpiresAt,omitempty"`
+	FeastPurchaseOperationID       string    `json:"feastPurchaseOperationId,omitempty"`
+	FeastPurchaseResponseToken     string    `json:"feastPurchaseResponseToken,omitempty"`
+	FeastCostReductionPercent      int       `json:"feastCostReductionPercent,omitempty"`
+	FeastCostReductionObservedAt   time.Time `json:"feastCostReductionObservedAt,omitempty"`
+	CaravanLevel                   int       `json:"caravanLevel,omitempty"`
+	CaravanLevelLoaded             bool      `json:"caravanLevelLoaded"`
+	ObservedAt                     time.Time `json:"observedAt,omitempty"`
+	BoostersObservedAt             time.Time `json:"boostersObservedAt,omitempty"`
 }
 
 type KingdomTransportUnlock struct {
@@ -1272,6 +1314,8 @@ type MapObservation struct {
 	Level                      int       `json:"level,omitempty"`
 	OwnerID                    PlayerID  `json:"ownerId,omitempty"`
 	ObjectID                   int64     `json:"objectId,omitempty"`
+	InvasionAvailabilityKnown  bool      `json:"invasionAvailabilityKnown,omitempty"`
+	InvasionProtected          bool      `json:"invasionProtected,omitempty"`
 	TowerVictoryCount          int64     `json:"towerVictoryCount,omitempty"`
 	TowerCooldownRemaining     int       `json:"towerCooldownRemaining,omitempty"`
 	EventCampID                int64     `json:"eventCampId,omitempty"`
@@ -1380,11 +1424,33 @@ type TowerQueueState struct {
 const TowerQueueCursorVersion = 1
 
 type InvasionState struct {
-	LastScannedAt        map[CastleID]time.Time `json:"lastScannedAt"`
-	FortifiedTargets     map[string]string      `json:"fortifiedTargets"`
-	FortifyCurrencies    []string               `json:"fortifyCurrencies"`
-	FortifyResourceCount int64                  `json:"fortifyResourceCount"`
-	FortifyRubyCount     int64                  `json:"fortifyRubyCount"`
+	LastScannedAt        map[CastleID]time.Time               `json:"lastScannedAt"`
+	FortifiedTargets     map[string]string                    `json:"fortifiedTargets"`
+	UnavailableTargets   map[string]time.Time                 `json:"unavailableTargets,omitempty"`
+	TargetReservations   map[string]InvasionTargetReservation `json:"targetReservations,omitempty"`
+	FortifyCurrencies    []string                             `json:"fortifyCurrencies"`
+	FortifyResourceCount int64                                `json:"fortifyResourceCount"`
+	FortifyRubyCount     int64                                `json:"fortifyRubyCount"`
+}
+
+type InvasionTargetReservation struct {
+	KingdomID           KingdomID   `json:"kingdomId"`
+	EventID             int64       `json:"eventId,omitempty"`
+	OccurrenceEndsAt    time.Time   `json:"occurrenceEndsAt,omitempty"`
+	TargetTypeID        int         `json:"targetTypeId,omitempty"`
+	X                   int         `json:"x"`
+	Y                   int         `json:"y"`
+	SourceCastleID      CastleID    `json:"sourceCastleId,omitempty"`
+	SourceX             int         `json:"sourceX,omitempty"`
+	SourceY             int         `json:"sourceY,omitempty"`
+	SourceKnown         bool        `json:"sourceKnown,omitempty"`
+	CommanderID         CommanderID `json:"commanderId,omitempty"`
+	CommanderKnown      bool        `json:"commanderKnown,omitempty"`
+	OperationID         string      `json:"operationId,omitempty"`
+	ReservedAt          time.Time   `json:"reservedAt"`
+	ReconcileAfter      time.Time   `json:"reconcileAfter,omitempty"`
+	ReconcileAttempts   int         `json:"reconcileAttempts,omitempty"`
+	RecoveryExhaustedAt time.Time   `json:"recoveryExhaustedAt,omitempty"`
 }
 
 func (state InvasionState) SupportsFortifyCurrency(currency string) bool {
@@ -1732,6 +1798,8 @@ type AttackDialogTarget struct {
 	Y                          int      `json:"y,omitempty"`
 	ObjectID                   int64    `json:"objectId,omitempty"`
 	OwnerID                    PlayerID `json:"ownerId,omitempty"`
+	InvasionAvailabilityKnown  bool     `json:"invasionAvailabilityKnown,omitempty"`
+	InvasionProtected          bool     `json:"invasionProtected,omitempty"`
 	TowerVictoryCount          int64    `json:"towerVictoryCount,omitempty"`
 	TowerCooldownRemaining     int      `json:"towerCooldownRemaining,omitempty"`
 	EventCampID                int64    `json:"eventCampId,omitempty"`
@@ -2009,7 +2077,9 @@ func NewGameState() GameState {
 			CapacityByCastle:          map[CastleID]TowerCapacityObservation{},
 		},
 		Invasion: InvasionState{
-			LastScannedAt: map[CastleID]time.Time{}, FortifiedTargets: map[string]string{}, FortifyCurrencies: []string{},
+			LastScannedAt: map[CastleID]time.Time{}, FortifiedTargets: map[string]string{},
+			UnavailableTargets: map[string]time.Time{}, TargetReservations: map[string]InvasionTargetReservation{},
+			FortifyCurrencies: []string{},
 		},
 		Storm: StormState{
 			LastScannedAt: map[CastleID]time.Time{},

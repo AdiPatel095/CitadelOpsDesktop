@@ -120,6 +120,31 @@ test('hedges observed game behavior and suppresses a routine automated CRA 256 r
   assert.match(partial.message, /completed only in part/);
 });
 
+test('recognizes official game client provenance for an expected enchantment failure', () => {
+  const raw = 'Upgrade relic equipment: response code 227 for ERE was not successful: The enchantment attempt failed, so the item did not gain a level. (official game client)';
+  const notification = operationFailureNotification(receipt({
+    plan: { intent: 'equipment.upgrade', effect: 'write', stateRevision: 1, steps: [], summary: 'Upgrade relic equipment' },
+    error: raw,
+  }));
+  assert.equal(notification.category, 'yellow');
+  assert.equal(notification.lines[0], 'The game says: The enchantment attempt failed, so the item did not gain a level.');
+  assert.match(notification.lines.join(' '), /Retry the same level/);
+  assert.match(notification.lines.at(-1), /Game error 227/);
+  assert.doesNotMatch(notification.lines.join(' '), /official game client|response code|ERE/);
+});
+
+test('shows shared CRA 91 incompatible-preset guidance for every attack lane', () => {
+  const raw = 'Build and launch attack: response code 91 for CRA was not successful: The selected attack preset has incompatible tools assigned for this attack. (inferred from captures)';
+  for (const actor of ['automation:autoNomad', 'automation:autoStorm', 'ui']) {
+    const notification = operationFailureNotification(receipt({ actor, error: raw }));
+    assert.equal(notification.category, 'red');
+    assert.match(notification.lines[0], /^Based on observed game behavior:/);
+    assert.match(notification.lines.join(' '), /incompatible tools/);
+    assert.match(notification.lines.join(' '), /Remove or replace/);
+    assert.match(notification.lines.at(-1), /Game error 91/);
+  }
+});
+
 test('does not invent a cause for an undocumented response', () => {
   const notification = operationFailureNotification(receipt({
     actor: 'automation:autoRecruit',

@@ -90,16 +90,21 @@ func TestAutoNomadPolicyLevelsFourThenLocksWeakestAndChainsCommanders(t *testing
 		t.Fatalf("chain decision: %#v err=%v", decision, err)
 	}
 	var chain struct {
-		Mode         string              `json:"mode"`
-		TargetX      int                 `json:"targetX"`
-		TargetY      int                 `json:"targetY"`
-		CommanderIDs []State.CommanderID `json:"commanderIds"`
+		Mode            string              `json:"mode"`
+		TargetX         int                 `json:"targetX"`
+		TargetY         int                 `json:"targetY"`
+		CommanderIDs    []State.CommanderID `json:"commanderIds"`
+		SkipCooldowns   bool                `json:"skipCooldowns"`
+		TimeSkipReserve map[string]int64    `json:"timeSkipReserve"`
 	}
 	if err := json.Unmarshal(decision.Request.Arguments, &chain); err != nil {
 		t.Fatal(err)
 	}
 	if chain.Mode != "chain" || chain.TargetX != 101 || chain.TargetY != 100 || len(chain.CommanderIDs) != 24 {
 		t.Fatalf("chain waited for an older hit instead of using all 24 currently available commanders: %#v", chain)
+	}
+	if !chain.SkipCooldowns || chain.TimeSkipReserve == nil {
+		t.Fatalf("chain request dropped the configured cooldown-skip policy: %#v", chain)
 	}
 	if decision.Metrics["committedCooldownSkips"] != 1 || decision.Metrics["usableCooldownSkips"] != 29 {
 		t.Fatalf("chain did not reserve a skip for the older in-flight hit: %#v", decision.Metrics)
@@ -346,6 +351,34 @@ func TestAutoNomadPolicySizesInventoryFromCapacityLimitedPreset(t *testing.T) {
 	}
 }
 
+func TestAutoNomadPolicyGatesToolThatOfficialCatalogRejectsForSamurai(t *testing.T) {
+	now := time.Date(2026, 7, 14, 13, 0, 0, 0, time.UTC)
+	snapshot := autoNomadPolicySnapshot(t, now)
+	snapshot.Configuration.Sections["attacks.presets"] = json.RawMessage(`{
+		"version":1,
+		"presets":[
+			{"id":"nomad-camp","name":"Nomad Camp","waves":[{"L":{"troops":[],"tools":[]},"M":{"troops":[{"itemId":77,"quantity":100}],"tools":[]},"R":{"troops":[],"tools":[]}}]},
+			{"id":"samurai-camp","name":"Sami's","waves":[{"L":{"troops":[],"tools":[]},"M":{"troops":[{"itemId":77,"quantity":100}],"tools":[{"itemId":244,"quantity":10}]},"R":{"troops":[],"tools":[]}}]}
+		]
+	}`)
+	source := snapshot.State.Castles[1]
+	source.Units.Stationed[244] = 100
+	snapshot.State.Castles[1] = source
+
+	decision, err := NewAutoNomadPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.Request != nil || decision.Status != "gated" {
+		t.Fatalf("incompatible Samurai tool decision = %#v", decision)
+	}
+	for _, expected := range []string{"Sami's", "Emperor Khan Chest", "Samurai camps", "remove or replace"} {
+		if !strings.Contains(decision.Detail, expected) {
+			t.Fatalf("compatibility detail %q does not contain %q", decision.Detail, expected)
+		}
+	}
+}
+
 func TestAutoNomadRBCTestSizesChainToResponseGatedSkipSequences(t *testing.T) {
 	now := time.Date(2026, 7, 14, 13, 0, 0, 0, time.UTC)
 	snapshot := autoNomadPolicySnapshot(t, now)
@@ -405,7 +438,10 @@ func autoNomadPolicySnapshot(t *testing.T, now time.Time) Snapshot {
 	gameData, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],
 		"buildings":[],
-		"units":[],
+		"units":[
+			{"wodID":77},
+			{"wodID":244,"name":"Eventtool","type":"EmperorKhanChest","comment2":"EmperorKhanChest","slotTypes":"1","allowedToAttack":"0+27#0+35","usageEventID":"5,72"}
+		],
 		"eventAutoScalingDifficulties":[
 			{"difficultyID":201,"eventID":80,"difficultyTypeID":1,"isLocked":0},
 			{"difficultyID":301,"eventID":72,"difficultyTypeID":1,"isLocked":0}

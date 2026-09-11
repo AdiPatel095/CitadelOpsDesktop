@@ -23,6 +23,8 @@ const (
 	AutoBuyerPricePlayerResource = "playerResource"
 	AutoBuyerPriceCastleResource = "castleResource"
 	AutoBuyerPriceCurrency       = "currency"
+
+	AutoBuyerRubyFeastUnsupportedReason = "Automatic ruby feast purchases are unavailable until the game provides a command-local ruby balance confirmation."
 )
 
 // AutoBuyerCatalog is the bounded, capture-backed subset of official shop data
@@ -94,14 +96,33 @@ type AutoBuyerSpecialist struct {
 }
 
 type AutoBuyerFeast struct {
-	ID                     int64          `json:"id"`
-	Name                   string         `json:"name"`
-	Type                   string         `json:"type,omitempty"`
-	DurationSec            int64          `json:"durationSec"`
-	ProductionBoostPercent int64          `json:"productionBoostPercent"`
-	MinLevel               int64          `json:"minLevel,omitempty"`
-	MaxLevel               int64          `json:"maxLevel,omitempty"`
-	Price                  AutoBuyerPrice `json:"price"`
+	ID                     int64               `json:"id"`
+	Name                   string              `json:"name"`
+	Type                   string              `json:"type,omitempty"`
+	DurationSec            int64               `json:"durationSec"`
+	ProductionBoostPercent int64               `json:"productionBoostPercent"`
+	MinLevel               int64               `json:"minLevel,omitempty"`
+	MaxLevel               int64               `json:"maxLevel,omitempty"`
+	Price                  AutoBuyerPrice      `json:"price"`
+	AutomaticPurchase      AutoBuyerCapability `json:"automaticPurchase"`
+}
+
+// EffectiveCost applies the game-reported feast cost reduction to food feasts.
+// Ruby feasts are never discounted by FRM. Rounding up keeps the automated
+// reserve check conservative if a future catalog introduces a price that is
+// not evenly divisible by 100.
+func (feast AutoBuyerFeast) EffectiveCost(reductionPercent int) int64 {
+	amount := feast.Price.Amount
+	if amount <= 0 || feast.Price.Premium || reductionPercent <= 0 {
+		return amount
+	}
+	if reductionPercent >= 100 {
+		return 0
+	}
+	factor := int64(100 - reductionPercent)
+	whole := amount / 100
+	remainder := amount % 100
+	return whole*factor + (remainder*factor+99)/100
 }
 
 type autoBuyerShopDefinition struct {
@@ -465,6 +486,13 @@ func (store *Store) loadAutoBuyerFeasts(
 		feast := AutoBuyerFeast{
 			ID: id, Name: name, Type: feastType, DurationSec: duration,
 			ProductionBoostPercent: boost, MinLevel: minLevel, MaxLevel: maxLevel, Price: price,
+			AutomaticPurchase: AutoBuyerCapability{Supported: true},
+		}
+		if price.Premium {
+			feast.AutomaticPurchase = AutoBuyerCapability{
+				Supported: false,
+				Reason:    AutoBuyerRubyFeastUnsupportedReason,
+			}
 		}
 		result = append(result, feast)
 		byID[id] = feast

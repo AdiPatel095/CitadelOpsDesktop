@@ -2,6 +2,7 @@ package Ingest
 
 import (
 	"encoding/json"
+	"reflect"
 	"slices"
 	"testing"
 	"time"
@@ -27,14 +28,62 @@ func TestReduceAttackDialogStoresSourceTargetAndActiveEffects(t *testing.T) {
 		t.Fatalf("attack dialog: changed=%t err=%v", changed, err)
 	}
 	dialog := gameState.AttackDialog
-	if dialog.SourceCastleID != 100 || dialog.KingdomID != 2 || dialog.Target.TypeID != 34 || dialog.Target.X != 205 || dialog.Target.Y != 938 || dialog.Target.ObjectID != 70 {
+	if dialog.SourceCastleID != 100 || dialog.KingdomID != 2 || dialog.Target.TypeID != 34 || dialog.Target.X != 205 || dialog.Target.Y != 938 || dialog.Target.ObjectID != 70 ||
+		!dialog.Target.InvasionAvailabilityKnown || dialog.Target.InvasionProtected {
 		t.Fatalf("unexpected dialog metadata: %#v", dialog)
+	}
+	observation := gameState.Map[2]["205:938"]
+	if observation.Level != 70 || !observation.InvasionAvailabilityKnown || observation.InvasionProtected {
+		t.Fatalf("attack dialog did not project invasion availability: %#v", observation)
 	}
 	if !dialog.ObservedAt.Equal(observedAt) || len(dialog.ActiveEffects) != 2 {
 		t.Fatalf("unexpected dialog effects: %#v", dialog)
 	}
 	if dialog.ActiveEffects[0].EffectID != 66 || dialog.ActiveEffects[0].Source != "CI" || len(dialog.ActiveEffects[0].Values) != 1 || dialog.ActiveEffects[0].Values[0] != 48 {
 		t.Fatalf("unexpected first effect: %#v", dialog.ActiveEffects[0])
+	}
+}
+
+func TestReduceAttackDialogMarksProtectedInvasionTarget(t *testing.T) {
+	gameState := State.NewGameState()
+	code := 0
+	observedAt := time.Date(2026, 9, 9, 12, 0, 0, 0, time.UTC)
+	domains, changed, err := reduceAttackDialog(t.Context(), Protocol.Frame{
+		Opcode: "adi", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
+		Payload: json.RawMessage(`{"KID":0,"SCID":100,"gaa":{"AI":[21,205,938,70,-1,1]},"AE":[]}`),
+	}, &gameState, nil)
+	if err != nil || !changed || !gameState.AttackDialog.Target.InvasionAvailabilityKnown ||
+		!gameState.AttackDialog.Target.InvasionProtected || !gameState.Invasion.TargetUnavailable(0, 205, 938) ||
+		!slices.Contains(domains, "map-invasion") || !slices.Contains(domains, "invasion") {
+		t.Fatalf("protected invasion ADI: domains=%v dialog=%#v invasion=%#v changed=%t err=%v",
+			domains, gameState.AttackDialog, gameState.Invasion, changed, err)
+	}
+}
+
+func TestReduceAttackDialogRejectsMalformedRequiredTargetFields(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.AttackDialog = State.AttackDialogState{
+		SourceCastleID: 100, KingdomID: 0, ObservedAt: time.Now().UTC().Add(-time.Minute),
+		Target: State.AttackDialogTarget{TypeID: State.MapTypeForeignLord, X: 205, Y: 938, ObjectID: 70},
+	}
+	code := 0
+	for _, row := range []string{
+		`[21.5,205,938,70,-1,0]`,
+		`[21,205.5,938,70,-1,0]`,
+		`[21,205,938.5,70,-1,0]`,
+		`[21,9223372036854775808,938,70,-1,0]`,
+	} {
+		before := gameState.AttackDialog
+		_, changed, err := reduceAttackDialog(t.Context(), Protocol.Frame{
+			Opcode: "adi", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: time.Now().UTC(),
+			Payload: json.RawMessage(`{"KID":0,"SCID":100,"gaa":{"AI":` + row + `},"AE":[]}`),
+		}, &gameState, nil)
+		if err != nil || changed || !reflect.DeepEqual(gameState.AttackDialog, before) {
+			t.Fatalf("malformed ADI target %s changed dialog: changed=%t err=%v dialog=%#v", row, changed, err, gameState.AttackDialog)
+		}
+	}
+	if _, found := gameState.LookupMapObservation(0, "0:938"); found {
+		t.Fatal("malformed ADI target created a zero-coordinate invasion observation")
 	}
 }
 

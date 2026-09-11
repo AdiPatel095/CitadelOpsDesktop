@@ -75,6 +75,11 @@ func (engine *Engine) failurePresentation(receipt Receipt, err error) *FailurePr
 	visible := engine.humanizeText(err.Error())
 	lower := strings.ToLower(strings.TrimSpace(err.Error()))
 	switch {
+	case Outbound.IsIndeterminate(err) || receipt.Status == StatusIndeterminate:
+		presentation.Kind = FailureIndeterminate
+		presentation.Severity = FailureSeverityWarning
+		presentation.Explanation = "The game did not confirm whether the action completed."
+		presentation.Recovery = "Check the game before retrying so a completed action is not duplicated."
 	case commanderAvailabilityFailure(lower):
 		presentation.Kind = FailureAvailability
 		presentation.Severity = FailureSeverityWarning
@@ -105,16 +110,28 @@ func (engine *Engine) failurePresentation(receipt Receipt, err error) *FailurePr
 		presentation.Kind = FailureInternal
 		presentation.Explanation = "The game returned a confirmation the app could not validate."
 		presentation.Recovery = "Refresh the feature before retrying. If it repeats, report the failed action."
+	case strings.Contains(lower, "omitted feast status"), strings.Contains(lower, "omitted feast cost reduction"):
+		presentation.Kind = FailureUnknown
+		presentation.Knowledge = FailureKnowledgeObserved
+		presentation.Explanation = "The game did not return the complete feast state, so Auto Buyer stopped before purchasing."
+		presentation.Recovery = "Auto Buyer will retry the read-only refresh and will not purchase until the response is complete."
+		presentation.Toast = !automationActor(receipt.Actor) || receipt.Status != StatusFailed
+	case strings.Contains(lower, "pending feast purchase") && strings.Contains(lower, "authoritative feast snapshot"):
+		presentation.Kind = FailureIndeterminate
+		presentation.Knowledge = FailureKnowledgeObserved
+		presentation.Severity = FailureSeverityWarning
+		presentation.Explanation = "The game has not yet confirmed whether the feast purchase completed."
+		presentation.Recovery = "Auto Buyer will keep another feast purchase blocked and retry read-only reconciliation."
+		presentation.Toast = !automationActor(receipt.Actor) || receipt.Status != StatusFailed
 	case errors.Is(err, ErrPlanStale) || strings.Contains(lower, "intent plan became stale"):
 		presentation.Kind = FailureStaleState
 		presentation.Severity = FailureSeverityWarning
 		presentation.Explanation = "The game state changed before the action finished."
 		presentation.Recovery = "Review the refreshed feature status before trying again."
-	case Outbound.IsIndeterminate(err) || receipt.Status == StatusIndeterminate:
-		presentation.Kind = FailureIndeterminate
-		presentation.Severity = FailureSeverityWarning
-		presentation.Explanation = "The game did not confirm whether the action completed."
-		presentation.Recovery = "Check the game before retrying so a completed action is not duplicated."
+		// A pre-mutation automation recheck is routine lane state, not an
+		// interruptive user error. Interactive requests and operations that already
+		// completed a write still need a visible warning.
+		presentation.Toast = !automationActor(receipt.Actor) || receipt.Status != StatusFailed
 	case strings.Contains(lower, "response state reduction failed"):
 		presentation.Kind = FailureInternal
 		presentation.Explanation = "The game confirmation could not be applied to the current feature state."
@@ -200,7 +217,7 @@ func failureKindForResponseCode(kind GameData.ResponseCodeKind) FailureKind {
 
 func failureKnowledgeForResponseCode(source GameData.ResponseCodeSource) FailureKnowledge {
 	switch source {
-	case GameData.ResponseCodeOfficial:
+	case GameData.ResponseCodeOfficial, GameData.ResponseCodeOfficialClient:
 		return FailureKnowledgeOfficial
 	case GameData.ResponseCodeObserved:
 		return FailureKnowledgeObserved

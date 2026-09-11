@@ -11,6 +11,14 @@ import (
 const attackAnalyticsReportMatchWindow = 45 * time.Minute
 
 func reconcileAttackFeatureBattleReport(gameState *State.GameState, capture *State.BattleReportCapture) (bool, error) {
+	return reconcileAttackFeatureBattleReportForMovement(gameState, capture, 0)
+}
+
+func reconcileAttackFeatureBattleReportForMovement(
+	gameState *State.GameState,
+	capture *State.BattleReportCapture,
+	movementID State.MovementID,
+) (bool, error) {
 	if gameState == nil || capture == nil || capture.AutomationFeature != "" || gameState.Player.ID <= 0 ||
 		len(capture.Summary) == 0 || len(capture.Details) == 0 {
 		return false, nil
@@ -22,26 +30,34 @@ func reconcileAttackFeatureBattleReport(gameState *State.GameState, capture *Sta
 	if !battleSummaryHasOwnAttacker(summary.Participants, gameState.Player.ID) {
 		return false, nil
 	}
+	kingdomID, targetTypeID, targetX, targetY, targetKnown := eventBattleTargetIdentity(summary)
+	if !targetKnown {
+		return false, nil
+	}
 	observedAt := battleCaptureOccurredAt(gameState, *capture)
 	bestIndex := -1
 	bestDistance := attackAnalyticsReportMatchWindow + time.Second
 	for index, record := range gameState.AttackAnalytics.PendingAttacks {
-		if record.KingdomID != State.KingdomID(summary.Target.KingdomID) ||
-			record.TargetX != summary.Target.X || record.TargetY != summary.Target.Y {
+		if movementID != 0 && record.MovementID != movementID ||
+			record.KingdomID != kingdomID || record.TargetX != targetX || record.TargetY != targetY {
 			continue
 		}
-		if record.TargetTypeID > 0 && summary.Target.TypeID > 0 && record.TargetTypeID != summary.Target.TypeID {
+		if record.TargetTypeID > 0 && record.TargetTypeID != targetTypeID {
 			continue
 		}
 		impactAt := record.ArrivesAt
 		if impactAt.IsZero() {
 			impactAt = record.LaunchedAt
 		}
-		distance := observedAt.Sub(impactAt)
+		delta := observedAt.Sub(impactAt)
+		if delta < -eventReportPreImpactSkew || delta > attackAnalyticsReportMatchWindow {
+			continue
+		}
+		distance := delta
 		if distance < 0 {
 			distance = -distance
 		}
-		if distance > attackAnalyticsReportMatchWindow || distance >= bestDistance {
+		if distance >= bestDistance {
 			continue
 		}
 		bestIndex, bestDistance = index, distance

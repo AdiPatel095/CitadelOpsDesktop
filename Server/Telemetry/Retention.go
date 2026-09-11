@@ -120,23 +120,46 @@ func (store *Store) pruneLogs(cutoff time.Time) (logRetentionResult, error) {
 	}
 
 	var cleanupErrors []error
+	channelIDs := make(map[string]bool, len(knownChannels))
 	for _, channel := range knownChannels {
-		legacyPath := filepath.Join(directory, channel.ID+".log")
-		if _, active := activePaths[filepath.Clean(legacyPath)]; !active {
-			removed, deleted, compacted, err := pruneLegacyLog(legacyPath, cutoff)
-			result.bytesRemoved += removed
-			if deleted {
-				result.filesDeleted++
+		channelIDs[channel.ID] = true
+	}
+	entries, err := os.ReadDir(directory)
+	if err != nil && !os.IsNotExist(err) {
+		cleanupErrors = append(cleanupErrors, fmt.Errorf("read %s: %w", directory, err))
+	}
+	for _, entry := range entries {
+		if entry.IsDir() && entry.Type()&os.ModeSymlink == 0 {
+			if _, known := channelIDs[entry.Name()]; !known {
+				channelIDs[entry.Name()] = false
 			}
-			if compacted {
-				result.filesCompacted++
-			}
-			if err != nil {
-				cleanupErrors = append(cleanupErrors, fmt.Errorf("prune %s: %w", legacyPath, err))
+		}
+	}
+	orderedChannelIDs := make([]string, 0, len(channelIDs))
+	for channelID := range channelIDs {
+		orderedChannelIDs = append(orderedChannelIDs, channelID)
+	}
+	sort.Strings(orderedChannelIDs)
+
+	for _, channelID := range orderedChannelIDs {
+		if channelIDs[channelID] {
+			legacyPath := filepath.Join(directory, channelID+".log")
+			if _, active := activePaths[filepath.Clean(legacyPath)]; !active {
+				removed, deleted, compacted, err := pruneLegacyLog(legacyPath, cutoff)
+				result.bytesRemoved += removed
+				if deleted {
+					result.filesDeleted++
+				}
+				if compacted {
+					result.filesCompacted++
+				}
+				if err != nil {
+					cleanupErrors = append(cleanupErrors, fmt.Errorf("prune %s: %w", legacyPath, err))
+				}
 			}
 		}
 
-		channelDirectory := filepath.Join(directory, channel.ID)
+		channelDirectory := filepath.Join(directory, channelID)
 		entries, err := os.ReadDir(channelDirectory)
 		if err != nil {
 			if !os.IsNotExist(err) {

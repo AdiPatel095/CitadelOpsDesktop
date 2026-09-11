@@ -58,6 +58,29 @@ func TestResolveCRACommandersRejectsActiveMovementWhenRosterSaysAvailable(t *tes
 	}
 }
 
+func TestResolveCRACommandersRejectsUnresolvedInvasionCommander(t *testing.T) {
+	reservedAt := time.Now().UTC()
+	gameState := State.NewGameState()
+	gameState.Commanders[7] = State.CommanderState{ID: 7, Available: true}
+	gameState.Commanders[9] = State.CommanderState{ID: 9, Available: true}
+	gameState.Invasion.ReserveTarget(State.InvasionTargetReservation{
+		KingdomID: 0, EventID: 71, OccurrenceEndsAt: reservedAt.Add(time.Hour),
+		TargetTypeID: State.MapTypeForeignLord, X: 101, Y: 102,
+		SourceCastleID: 1, CommanderID: 7, CommanderKnown: true,
+		OperationID: "indeterminate-cra", ReservedAt: reservedAt,
+	})
+
+	resolution, err := resolveCRACommanders(gameState, &craCommanderSelectionRequest{
+		Candidates: []State.CommanderID{7, 9}, Count: 1, Strategy: "lowest_id",
+	}, craCommanderSelectionOptions{DefaultCount: 1, RequireAvailable: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(resolution.Selected, []State.CommanderID{9}) {
+		t.Fatalf("selected = %#v, want commander 9 while commander 7 is reserved", resolution.Selected)
+	}
+}
+
 func TestResolveCRACommandersSupportsDeterministicIDStrategies(t *testing.T) {
 	gameState := State.NewGameState()
 	for _, id := range []State.CommanderID{9, 5, 7} {

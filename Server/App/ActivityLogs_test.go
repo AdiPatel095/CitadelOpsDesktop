@@ -47,6 +47,35 @@ func TestFeatureActivitiesRecordsEachAttackInChain(t *testing.T) {
 	}
 }
 
+func TestFeatureActivitiesKeepsConfirmedAttacksWhenLaterChainLaunchFails(t *testing.T) {
+	receipt := Intent.Receipt{
+		Intent: "nomad.camp.attack", Status: Intent.StatusPartiallySucceeded,
+		CompletedStepIndexes: []int{0, 1, 2},
+		Error:                "Build and launch camp attack with commander 7: the game rejected the action",
+		Plan: &Intent.Plan{
+			Effect: Intent.EffectLaunch, Summary: "Chain 3 attacks into locked camp 1166:1165",
+			Steps: []Intent.Step{
+				{Name: "Build and launch camp attack with commander 4", CommandDependencies: &Intent.CommandDependencyRequest{Opcode: "cra"}},
+				{Name: "Capture first launch", Action: "nomad.attack.capture"},
+				{Name: "Build and launch camp attack with commander 6", CommandDependencies: &Intent.CommandDependencyRequest{Opcode: "cra"}},
+				{Name: "Build and launch camp attack with commander 7", CommandDependencies: &Intent.CommandDependencyRequest{Opcode: "cra"}},
+			},
+		},
+	}
+	activities := featureActivities(receipt)
+	if len(activities) != 3 {
+		t.Fatalf("activities = %#v, want two confirmed attacks plus the chain failure", activities)
+	}
+	if activities[0].severity != "INFO" || activities[0].detail != "Launched camp attack with a commander (1 of 3)" ||
+		activities[1].severity != "INFO" || activities[1].detail != "Launched camp attack with a commander (2 of 3)" {
+		t.Fatalf("confirmed attack activities = %#v", activities[:2])
+	}
+	if activities[2].severity != "ERROR" || activities[2].event != "ATTACK" ||
+		!strings.Contains(activities[2].detail, "Could not launch 3 attacks") {
+		t.Fatalf("chain failure activity = %#v", activities[2])
+	}
+}
+
 func TestFeatureActivitiesSkipsLifecycleAndSupportWork(t *testing.T) {
 	for _, receipt := range []Intent.Receipt{
 		{Intent: "tower.attack", Status: Intent.StatusRunning},
@@ -91,6 +120,44 @@ func TestFeatureActivitiesRecordsOneUserFacingFailure(t *testing.T) {
 	}
 }
 
+func TestFeatureActivitiesRecordsFailedAutoBuyerRefreshButNotSuccess(t *testing.T) {
+	failed := Intent.Receipt{
+		Intent: "autoBuyer.boosters.refresh", Status: Intent.StatusFailed,
+		Error: "Verify Auto Buyer feast refresh: the game omitted feast status from the committed Auto Buyer refresh",
+		Plan: &Intent.Plan{
+			Effect: Intent.EffectRead, Summary: "Refresh Auto Buyer feast cost, castle resources, and timers",
+			Steps: []Intent.Step{{Opcode: "fce"}, {Opcode: "dcl"}, {Opcode: "boi"}},
+		},
+	}
+	activities := featureActivities(failed)
+	if len(activities) != 1 || activities[0].severity != "ERROR" || activities[0].event != "PURCHASE" ||
+		activities[0].detail != "Could not refresh Auto Buyer feast cost, castle resources, and timers: the game did not return feast status, so Auto Buyer stopped before purchasing" {
+		t.Fatalf("failed Auto Buyer refresh activities = %#v", activities)
+	}
+
+	failed.Status = Intent.StatusSucceeded
+	failed.Error = ""
+	if activities := featureActivities(failed); len(activities) != 0 {
+		t.Fatalf("successful Auto Buyer refresh activities = %#v, want none", activities)
+	}
+}
+
+func TestFeatureActivitiesRecordsFailedAutoBuyerFeastReconciliation(t *testing.T) {
+	receipt := Intent.Receipt{
+		Intent: "autoBuyer.feast.reconcile", Status: Intent.StatusFailed,
+		Error: "Reconcile feast timer after incomplete purchase: the game did not confirm the action in time",
+		Plan: &Intent.Plan{
+			Effect: Intent.EffectRead, Summary: "Reconcile an incomplete feast purchase before another attempt",
+			Steps: []Intent.Step{{Action: "auto_buyer.feast.reconcile.mark"}, {Opcode: "boi"}, {Opcode: "dcl"}},
+		},
+	}
+	activities := featureActivities(receipt)
+	if len(activities) != 1 || activities[0].severity != "ERROR" || activities[0].event != "PURCHASE" ||
+		!strings.Contains(activities[0].detail, "Could not reconcile an incomplete feast purchase") {
+		t.Fatalf("failed Auto Buyer feast reconciliation activities = %#v", activities)
+	}
+}
+
 func TestFeatureActivitiesMarksAttackInventoryGateAsWarning(t *testing.T) {
 	receipt := Intent.Receipt{
 		Intent: "storm.attack", Status: Intent.StatusFailed,
@@ -125,6 +192,15 @@ func TestFeatureActivitiesHidesResponseDiagnosticsFromFailure(t *testing.T) {
 	if strings.Contains(activities[0].detail, "SBP") || strings.Contains(activities[0].detail, "response code") ||
 		activities[0].detail != "Could not buy 2 x War horn from Luna for 5920 Aquamarine at Storm Castle: The shop offer expired." {
 		t.Fatalf("failure detail = %q", activities[0].detail)
+	}
+}
+
+func TestUserFacingFailureReasonStripsOfficialClientProvenance(t *testing.T) {
+	reason := userFacingFailureReason(
+		"Upgrade relic equipment: response code 227 for ERE was not successful: The enchantment attempt failed, so the item did not gain a level. (official game client)",
+	)
+	if reason != "The enchantment attempt failed, so the item did not gain a level." {
+		t.Fatalf("official-client failure reason = %q", reason)
 	}
 }
 
