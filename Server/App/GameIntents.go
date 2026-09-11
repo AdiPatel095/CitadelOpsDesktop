@@ -85,6 +85,9 @@ func (application *Application) registerGameIntents() error {
 			return err
 		}
 	}
+	if err := application.Intents.RegisterAction(timeSkipReserveGuardAction, application.guardTimeSkipReserve); err != nil {
+		return err
+	}
 	if err := application.Intents.RegisterAction("troops.kingdom.guard_target_cap", application.guardKingdomTroopTargetCap); err != nil {
 		return err
 	}
