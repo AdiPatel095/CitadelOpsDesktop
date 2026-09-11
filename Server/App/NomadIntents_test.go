@@ -119,6 +119,7 @@ func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
 	}
 	gameState.Player.LegendSkills.ObservedAt = now
 	gameState.Player.Currencies[1005] = 2
+	gameState.DailyAttacks = State.DailyAttackState{Count: 0, ObservedAt: now}
 	gameState.EventScores.ByEvent[80] = State.ScalableEventScore{
 		EventID: 80, DifficultyID: 201, PlayerScore: 100, RemainingSec: 7_200, ObservedAt: now,
 	}
@@ -142,7 +143,7 @@ func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
 			TargetTypeID: 29, TargetX: 101, TargetY: 100, EventCampID: 5001,
 		},
 		Mode: "chain", ScoreTarget: 100_000, MinimumRemainingSec: 1_800, VictoryCount: 9,
-		SkipCooldowns: true, TimeSkipReserve: map[string]int64{},
+		SkipCooldowns: true, TimeSkipReserve: map[string]int64{}, DailyAttackLimit: 100,
 		CommanderIDs: []State.CommanderID{1, 2, 3},
 		Preset: AttackPresets.Preset{ID: "camp", Name: "Camp", Waves: []AttackPresets.Wave{{
 			Middle: AttackPresets.Lane{Troops: []AttackPresets.Slot{{ItemID: &unitID, Quantity: 100}}},
@@ -166,15 +167,15 @@ func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
 			launchIndexes = append(launchIndexes, index)
 		}
 		if step.Opcode == "msd" {
-			if step.PreDispatchAction != timeSkipReserveGuardAction {
-				t.Fatalf("Nomad MSD is missing its dispatch-time reserve guard: %#v", step)
+			if step.PreDispatchAction != nomadCooldownSkipGuard {
+				t.Fatalf("Nomad MSD is missing its combined dispatch-time guard: %#v", step)
 			}
-			var guard timeSkipReserveGuardRequest
+			var guard nomadCooldownSkipDispatchGuardRequest
 			if err := json.Unmarshal(step.PreDispatchArguments, &guard); err != nil {
 				t.Fatal(err)
 			}
-			if guard.CurrencyID != 1005 || guard.MinimumRemaining != 0 {
-				t.Fatalf("Nomad MSD reserve guard = %#v", guard)
+			if guard.CurrencyID != 1005 || guard.MinimumRemaining != 0 || guard.DailyAttackLimit != 100 {
+				t.Fatalf("Nomad MSD dispatch guard = %#v", guard)
 			}
 			skipIndexes = append(skipIndexes, index)
 		}
@@ -210,9 +211,31 @@ func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
 	if topLevelSetup != 0 {
 		t.Fatalf("Auto Nomad still owns %d CRA setup command(s)", topLevelSetup)
 	}
+	gameState.AttackDialog = State.AttackDialogState{
+		SourceCastleID: 1, KingdomID: 0, ObservedAt: now,
+		Target: State.AttackDialogTarget{
+			TypeID: 29, X: 101, Y: 100, ObjectID: 5001, EventCampID: 5001, EventCampVictoryCount: 9,
+		},
+	}
 	for _, launch := range launches {
 		if launch.CommandDependencies == nil || launch.CommandDependencies.Opcode != "cra" {
 			t.Fatalf("Nomad CRA does not declare sender-owned dependencies: %#v", launch)
+		}
+		concrete, err := (&Application{}).resolveNomadCampAttackStep(
+			t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, launch.ResolverArguments,
+		)
+		if err != nil {
+			t.Fatalf("resolve concrete Nomad CRA: %v", err)
+		}
+		if concrete.PreDispatchAction != "nomad.attack.guard" || string(concrete.PreDispatchArguments) != string(launch.ResolverArguments) {
+			t.Fatalf("concrete Nomad CRA is missing its dispatch-time daily-limit guard: %#v", concrete)
+		}
+		blockedState := gameState
+		blockedState.DailyAttacks.Count = 100
+		if err := (&Application{State: State.NewStore(blockedState)}).guardNomadCampAttack(
+			t.Context(), concrete.PreDispatchArguments,
+		); !errors.Is(err, Intent.ErrPlanStale) || !strings.Contains(err.Error(), "100 / 100") {
+			t.Fatalf("concrete Nomad CRA guard accepted reached daily limit: %v", err)
 		}
 	}
 	withoutSkips := request
@@ -245,20 +268,29 @@ func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
 	}
 }
 
-func TestNomadTimeSkipReserveGuardRechecksInventoryBeforeDispatch(t *testing.T) {
+func TestNomadCooldownSkipGuardRechecksDailyLimitAndInventoryBeforeDispatch(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Player.Currencies[1005] = 2
+	gameState.DailyAttacks = State.DailyAttackState{Count: 99, ObservedAt: time.Now().UTC()}
 	application := &Application{State: State.NewStore(gameState)}
-	arguments, _ := json.Marshal(timeSkipReserveGuardRequest{
-		CurrencyID: 1005, MinimumRemaining: 1,
+	arguments, _ := json.Marshal(nomadCooldownSkipDispatchGuardRequest{
+		timeSkipReserveGuardRequest: timeSkipReserveGuardRequest{CurrencyID: 1005, MinimumRemaining: 1},
+		DailyAttackLimit:            100,
 	})
-	if err := application.guardTimeSkipReserve(t.Context(), arguments); err != nil {
+	if err := application.guardNomadCooldownSkipDispatch(t.Context(), arguments); err != nil {
 		t.Fatalf("available time skip rejected before dispatch: %v", err)
 	}
 
+	gameState.DailyAttacks.Count = 100
+	application.State = State.NewStore(gameState)
+	if err := application.guardNomadCooldownSkipDispatch(t.Context(), arguments); !errors.Is(err, Intent.ErrPlanStale) || !strings.Contains(err.Error(), "100 / 100") {
+		t.Fatalf("reached daily limit did not stale cooldown spending: %v", err)
+	}
+
+	gameState.DailyAttacks.Count = 99
 	gameState.Player.Currencies[1005] = 1
 	application.State = State.NewStore(gameState)
-	if err := application.guardTimeSkipReserve(t.Context(), arguments); !errors.Is(err, Intent.ErrPlanStale) {
+	if err := application.guardNomadCooldownSkipDispatch(t.Context(), arguments); !errors.Is(err, Intent.ErrPlanStale) {
 		t.Fatalf("spent time skip did not stale the planned dispatch: %v", err)
 	}
 }
