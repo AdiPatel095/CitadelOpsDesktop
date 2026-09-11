@@ -247,6 +247,9 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterAction("nomad.attack.guard", application.guardNomadCampAttack); err != nil {
 		return err
 	}
+	if err := application.Intents.RegisterAction(nomadCooldownSkipGuard, application.guardNomadCooldownSkipDispatch); err != nil {
+		return err
+	}
 	if err := application.Intents.RegisterAction("nomad.attack.inventory.guard", application.guardNomadAttackInventory); err != nil {
 		return err
 	}

@@ -25,6 +25,7 @@ const (
 	samuraiIntentCampTypeID = 29
 	nomadIntentCampCount    = 4
 	nomadIntentRadius       = 50
+	nomadCooldownSkipGuard  = "nomad.cooldown_skip.dispatch_guard"
 )
 
 type nomadMapScanRequest struct {
@@ -83,6 +84,11 @@ type plannedNomadChainTimeSkip struct {
 	Option           buildingTimeSkipOption
 	ExpectedBefore   float64
 	MinimumRemaining int64
+}
+
+type nomadCooldownSkipDispatchGuardRequest struct {
+	timeSkipReserveGuardRequest
+	DailyAttackLimit int64 `json:"dailyAttackLimit"`
 }
 
 type nomadCooldownSkipRequest struct {
@@ -267,11 +273,9 @@ func planNomadCampAttack(_ context.Context, input Intent.PlanningContext, argume
 	for index, commanderID := range resolution.Selected {
 		if index > 0 {
 			for _, planned := range chainTimeSkips[index-1] {
-				steps = appendDailyAttackLimitGuard(steps, request.DailyAttackLimit)
-				steps = append(steps, nomadChainCooldownSkipSteps(target, planned)...)
+				steps = append(steps, nomadChainCooldownSkipSteps(target, planned, request.DailyAttackLimit)...)
 			}
 		}
-		steps = appendDailyAttackLimitGuard(steps, request.DailyAttackLimit)
 		resolvedRequest := request
 		resolvedRequest.Preset = resolvedPresets[commanderID]
 		resolvedArguments, _ := json.Marshal(resolvedNomadCampAttackRequest{nomadCampAttackRequest: resolvedRequest, CommanderID: commanderID})
@@ -395,6 +399,7 @@ func planNomadChainCooldownSkips(
 func nomadChainCooldownSkipSteps(
 	target State.MapObservation,
 	planned plannedNomadChainTimeSkip,
+	dailyAttackLimit int64,
 ) []Intent.Step {
 	payload, _ := json.Marshal(struct {
 		MinuteSkip string `json:"MST"`
@@ -407,14 +412,17 @@ func nomadChainCooldownSkipSteps(
 		MinuteSkip: planned.Option.WireKey, KingdomID: strconv.FormatInt(int64(target.KingdomID), 10),
 		X: target.X, Y: target.Y, MapID: -1, NodeID: -1,
 	})
-	guardArguments, _ := json.Marshal(timeSkipReserveGuardRequest{
-		CurrencyID: planned.Option.CurrencyID, MinimumRemaining: planned.MinimumRemaining,
+	guardArguments, _ := json.Marshal(nomadCooldownSkipDispatchGuardRequest{
+		timeSkipReserveGuardRequest: timeSkipReserveGuardRequest{
+			CurrencyID: planned.Option.CurrencyID, MinimumRemaining: planned.MinimumRemaining,
+		},
+		DailyAttackLimit: dailyAttackLimit,
 	})
 	skip := commandStep(
 		fmt.Sprintf("Apply a %d-minute cooldown skip before the next camp attack", planned.Option.Minutes),
 		"msd", payload, "msd",
 	)
-	skip.PreDispatchAction = timeSkipReserveGuardAction
+	skip.PreDispatchAction = nomadCooldownSkipGuard
 	skip.PreDispatchArguments = guardArguments
 	return []Intent.Step{
 		skip,
@@ -634,7 +642,10 @@ func (application *Application) resolveNomadCampAttackStep(
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build camp CRA payload: %w", err)
 	}
-	return commandStep(fmt.Sprintf("Attack locked camp at %d:%d", target.X, target.Y), "cra", body, "cra"), nil
+	step := commandStep(fmt.Sprintf("Attack locked camp at %d:%d", target.X, target.Y), "cra", body, "cra")
+	step.PreDispatchAction = "nomad.attack.guard"
+	step.PreDispatchArguments = append(json.RawMessage(nil), arguments...)
+	return step, nil
 }
 
 func (application *Application) captureNomadCampLaunch(_ context.Context, arguments json.RawMessage) error {
@@ -752,7 +763,13 @@ func (application *Application) guardNomadCampAttack(_ context.Context, argument
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
+	if application == nil || application.State == nil {
+		return fmt.Errorf("game state is unavailable")
+	}
 	state := application.State.ReadOnlyView()
+	if err := guardDailyAttackLimitAtDispatch(state, request.DailyAttackLimit); err != nil {
+		return err
+	}
 	currentData, ready := application.GameData.Current()
 	if !ready {
 		return fmt.Errorf("official game data is unavailable")
@@ -774,6 +791,21 @@ func (application *Application) guardNomadCampAttack(_ context.Context, argument
 		return fmt.Errorf("authoritative ADI row no longer matches ready camp %d:%d", target.X, target.Y)
 	}
 	return nil
+}
+
+func (application *Application) guardNomadCooldownSkipDispatch(ctx context.Context, arguments json.RawMessage) error {
+	var request nomadCooldownSkipDispatchGuardRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	if application == nil || application.State == nil {
+		return fmt.Errorf("game state is unavailable")
+	}
+	if err := guardDailyAttackLimitAtDispatch(application.State.ReadOnlyView(), request.DailyAttackLimit); err != nil {
+		return err
+	}
+	reserveArguments, _ := json.Marshal(request.timeSkipReserveGuardRequest)
+	return application.guardTimeSkipReserve(ctx, reserveArguments)
 }
 
 func (application *Application) guardNomadAttackInventory(_ context.Context, arguments json.RawMessage) error {
