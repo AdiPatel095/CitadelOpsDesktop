@@ -1288,11 +1288,13 @@ func (transport *DirectWebSocketTransport) matchResponseToken(frame Protocol.Fra
 		oldestMatchedIndex := -1
 		smallestArea := int64(0)
 		ambiguous := false
+		matchedCount := 0
 		for index, pending := range transport.pending {
 			if _, expected := pending.opcodes[opcode]; !expected ||
 				!directResponseMatchesRequest(pending, frame) {
 				continue
 			}
+			matchedCount++
 			if oldestMatchedIndex < 0 {
 				oldestMatchedIndex = index
 			}
@@ -1303,14 +1305,16 @@ func (transport *DirectWebSocketTransport) matchResponseToken(frame Protocol.Fra
 				ambiguous = true
 			}
 		}
-		if !directGAAResponseHasCoordinates(frame) {
-			// Empty GAA replies and request-level rejections carry no coordinates.
+		hasCoordinates := directGAAResponseHasCoordinates(frame)
+		successfulScopeLess := frame.ResponseCode != nil && *frame.ResponseCode == 0 && !hasCoordinates
+		if successfulScopeLess {
+			// Empty successful GAA replies carry no coordinates.
 			// Websocket frames preserve dispatch order, so consume the oldest
 			// matching request instead of dropping a valid response when a map
 			// burst has several windows in flight.
 			matchedIndex, ambiguous = oldestMatchedIndex, false
 		}
-		if matchedIndex < 0 || ambiguous {
+		if matchedIndex < 0 || ambiguous || matchedCount > 1 && !hasCoordinates && !successfulScopeLess {
 			return ""
 		}
 		pending := transport.pending[matchedIndex]
