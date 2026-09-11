@@ -521,6 +521,12 @@ func TestStormMapGAABurstSerializesEachResponseSlot(t *testing.T) {
 	}
 }
 
+func TestStormMapGAABurstScalesDeadlineForSerializedWindows(t *testing.T) {
+	if got, want := stormMapBurstDeadline(stormMapBurstResponseTimeout, 25), 6*time.Minute+30*time.Second; got != want {
+		t.Fatalf("25-window Storm map deadline = %s, want %s", got, want)
+	}
+}
+
 func TestStormMapGAABurstPreservesCatalogResponseCodeMeaning(t *testing.T) {
 	language, err := GameData.DecodeLanguage(
 		[]byte(`{"errorCode_147":"This map request is already complete."}`),

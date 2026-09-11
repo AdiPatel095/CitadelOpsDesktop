@@ -1102,8 +1102,6 @@ func (application *Application) burstStormMapScan(ctx context.Context, arguments
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	burstContext, cancelBurst := context.WithTimeout(ctx, stormMapBurstResponseTimeout)
-	defer cancelBurst()
 
 	startedAt := stormScanStartedAt(request)
 	var language *GameData.LanguageStore
@@ -1112,12 +1110,8 @@ func (application *Application) burstStormMapScan(ctx context.Context, arguments
 	}
 	if request.Cooperative {
 		windows := stormCooperativeScanWindows(request.Windows)
-		timeout := stormMapBurstRemaining(burstContext)
-		if timeout <= 0 {
-			return fmt.Errorf("cooperative Storm scan exceeded the %s response deadline: %w", stormMapBurstResponseTimeout, burstContext.Err())
-		}
 		if err := runStormMapGAABurst(
-			burstContext, application.Session, application.Ingest, language, source.KingdomID, windows, timeout,
+			ctx, application.Session, application.Ingest, language, source.KingdomID, windows, stormMapBurstResponseTimeout,
 		); err != nil {
 			if application.WorldMaps != nil {
 				application.WorldMaps.ReleaseStormScan(application.AccountKey, request.LeaseID)
@@ -1134,12 +1128,8 @@ func (application *Application) burstStormMapScan(ctx context.Context, arguments
 				stormMapEdgeBuffer,
 			)
 		}
-		timeout := stormMapBurstRemaining(burstContext)
-		if timeout <= 0 {
-			return fmt.Errorf("Storm map concentric sweep exceeded the %s response deadline: %w", stormMapBurstResponseTimeout, burstContext.Err())
-		}
 		if err := runStormMapGAABurst(
-			burstContext, application.Session, application.Ingest, language, source.KingdomID, windows, timeout,
+			ctx, application.Session, application.Ingest, language, source.KingdomID, windows, stormMapBurstResponseTimeout,
 		); err != nil {
 			return fmt.Errorf("scan Storm map ring %d: %w", ring, err)
 		}
@@ -1157,6 +1147,10 @@ func stormMapBurstRemaining(ctx context.Context) time.Duration {
 	return stormMapBurstResponseTimeout
 }
 
+func stormMapBurstDeadline(responseTimeout time.Duration, windowCount int) time.Duration {
+	return responseTimeout * time.Duration(windowCount+1)
+}
+
 func runStormMapGAABurst(
 	ctx context.Context,
 	sender stormMapBurstSender,
@@ -1164,7 +1158,7 @@ func runStormMapGAABurst(
 	language *GameData.LanguageStore,
 	kingdomID State.KingdomID,
 	windows []towerMapWindow,
-	timeout time.Duration,
+	responseTimeout time.Duration,
 ) error {
 	if sender == nil || observer == nil {
 		return fmt.Errorf("Storm map burst sender and response observer are required")
@@ -1175,13 +1169,17 @@ func runStormMapGAABurst(
 	if len(windows) == 0 {
 		return fmt.Errorf("Storm map burst has no windows")
 	}
-	if timeout <= 0 {
+	if responseTimeout <= 0 {
 		return fmt.Errorf("Storm map burst timeout must be positive")
 	}
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	burstContext, cancelBurst := context.WithTimeout(ctx, timeout)
+	overallTimeout := stormMapBurstDeadline(responseTimeout, len(windows))
+	if overallTimeout <= 0 {
+		return fmt.Errorf("Storm map burst timeout exceeds the supported duration")
+	}
+	burstContext, cancelBurst := context.WithTimeout(ctx, overallTimeout)
 	defer cancelBurst()
 
 	operationID := strings.TrimSpace(Outbound.MetadataFromContext(ctx).OperationID)
@@ -1214,9 +1212,6 @@ func runStormMapGAABurst(
 	baseMetadata := Outbound.MetadataFromContext(burstContext)
 	for index, slot := range slots {
 		if err := func() error {
-			frames, cancel := observer.WatchWireResponse("gaa", slot.token)
-			defer cancel()
-
 			remaining := stormMapBurstRemaining(burstContext)
 			if remaining <= 0 {
 				deadlineErr := burstContext.Err()
@@ -1225,14 +1220,20 @@ func runStormMapGAABurst(
 				}
 				return fmt.Errorf(
 					"Storm map GAA burst received %d/%d responses before the %s deadline: %w",
-					index, len(slots), timeout, deadlineErr,
+					index, len(slots), overallTimeout, deadlineErr,
 				)
 			}
+			responseBudget := min(responseTimeout, remaining)
+			responseContext, cancelResponse := context.WithTimeout(burstContext, responseBudget)
+			defer cancelResponse()
+			frames, cancelWatch := observer.WatchWireResponse("gaa", slot.token)
+			defer cancelWatch()
+
 			metadata := baseMetadata
 			metadata.ResponseToken = slot.token
 			metadata.ResponseOpcodes = []string{"gaa"}
-			metadata.ResponseTimeoutMillis = max(1, int(remaining/time.Millisecond))
-			sendContext := Outbound.WithMetadata(burstContext, metadata)
+			metadata.ResponseTimeoutMillis = max(1, int(responseBudget/time.Millisecond))
+			sendContext := Outbound.WithMetadata(responseContext, metadata)
 			for {
 				err := sender.Send(sendContext, slot.wire)
 				if err == nil {
@@ -1241,7 +1242,7 @@ func runStormMapGAABurst(
 				if !errors.Is(err, Outbound.ErrAutomationLocked) || Outbound.IsIndeterminate(err) {
 					return fmt.Errorf("send Storm map window %d/%d: %w", index+1, len(slots), err)
 				}
-				if err := sender.WaitForAutomationUnlocked(burstContext); err != nil {
+				if err := sender.WaitForAutomationUnlocked(responseContext); err != nil {
 					return fmt.Errorf(
 						"Storm map GAA burst timed out while paused before window %d/%d: %w",
 						index+1, len(slots), err,
@@ -1251,10 +1252,10 @@ func runStormMapGAABurst(
 
 			var response Protocol.CommittedFrame
 			select {
-			case <-burstContext.Done():
+			case <-responseContext.Done():
 				return fmt.Errorf(
-					"Storm map GAA burst received %d/%d responses before the %s deadline: %w",
-					index, len(slots), timeout, burstContext.Err(),
+					"Storm map GAA burst received %d/%d responses before window %d exceeded the %s deadline: %w",
+					index, len(slots), index+1, responseBudget, responseContext.Err(),
 				)
 			case response = <-frames:
 			}
@@ -1262,7 +1263,7 @@ func runStormMapGAABurst(
 				observer.ForgetCommitted(response.IngressID)
 				return fmt.Errorf("Storm map GAA response token changed for window %d/%d", index+1, len(slots))
 			}
-			committed, err := observer.WaitCommitted(burstContext, response.IngressID)
+			committed, err := observer.WaitCommitted(responseContext, response.IngressID)
 			if err != nil {
 				observer.ForgetCommitted(response.IngressID)
 				return fmt.Errorf("commit Storm map window %d/%d: %w", index+1, len(slots), err)
