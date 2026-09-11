@@ -267,6 +267,7 @@ func planNomadCampAttack(_ context.Context, input Intent.PlanningContext, argume
 	for index, commanderID := range resolution.Selected {
 		if index > 0 {
 			for _, planned := range chainTimeSkips[index-1] {
+				steps = appendDailyAttackLimitGuard(steps, request.DailyAttackLimit)
 				steps = append(steps, nomadChainCooldownSkipSteps(target, planned)...)
 			}
 		}

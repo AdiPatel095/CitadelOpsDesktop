@@ -206,12 +206,12 @@ func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
 		launchIndexes[1] < skipIndexes[1] && skipIndexes[1] < launchIndexes[2]) {
 		t.Fatalf("cooldown skips were not interleaved before each later CRA: launches=%v skips=%v", launchIndexes, skipIndexes)
 	}
-	if len(dailyGuardIndexes) != len(launchIndexes) {
-		t.Fatalf("daily limit guards = %v, want one for every launch %v", dailyGuardIndexes, launchIndexes)
+	if len(dailyGuardIndexes) != len(launchIndexes)+len(skipIndexes) {
+		t.Fatalf("daily limit guards = %v, want one for every launch %v and skip %v", dailyGuardIndexes, launchIndexes, skipIndexes)
 	}
-	for index := range launchIndexes {
-		if dailyGuardIndexes[index]+1 != launchIndexes[index] {
-			t.Fatalf("daily limit guard is not immediately before launch %d: guards=%v launches=%v", index+1, dailyGuardIndexes, launchIndexes)
+	for _, guardedIndex := range append(append([]int(nil), skipIndexes...), launchIndexes...) {
+		if guardedIndex == 0 || plan.Steps[guardedIndex-1].Action != "attack.daily_limit.guard" {
+			t.Fatalf("daily limit guard is not immediately before step %d: guards=%v launches=%v skips=%v", guardedIndex, dailyGuardIndexes, launchIndexes, skipIndexes)
 		}
 	}
 	if len(delays) != 0 {
