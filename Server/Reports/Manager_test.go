@@ -87,7 +87,7 @@ func TestManagerArchivesBattleReportsWithoutBlockingIngest(t *testing.T) {
 	manager.Wait()
 }
 
-func TestManagerHoldsPossibleInvasionReportUntilReservationResolves(t *testing.T) {
+func TestManagerHoldsPossibleInvasionReportUntilRecoveryExhausts(t *testing.T) {
 	history, err := History.Open(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
@@ -148,8 +148,15 @@ func TestManagerHoldsPossibleInvasionReportUntilReservationResolves(t *testing.T
 	}
 
 	if _, err := state.ApplyComponents(State.Components(State.ComponentInvasion), func(current *State.GameState) ([]string, bool, error) {
-		changed := current.Invasion.ReleaseTargetReservation(0, 120, 121, "unresolved-cra")
-		return []string{"invasion"}, changed, nil
+		key := State.InvasionTargetKey(0, 120, 121)
+		reservation, exists := current.Invasion.TargetReservations[key]
+		if !exists {
+			return nil, false, fmt.Errorf("invasion reservation disappeared before exhaustion")
+		}
+		reservation.ReconcileAttempts = State.InvasionTargetReservationMaxReconcileAttempts
+		reservation.RecoveryExhaustedAt = now
+		current.Invasion.TargetReservations[key] = reservation
+		return []string{"invasion"}, true, nil
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -160,11 +167,14 @@ func TestManagerHoldsPossibleInvasionReportUntilReservationResolves(t *testing.T
 	for _, messageID := range []int64{101, 102} {
 		archivedNotice, archivedNoticeFound := archived.LookupReportNotice(messageID)
 		if !archivedNoticeFound || archivedNotice.Status != "archived" {
-			t.Fatalf("resolved invasion report %d = %#v found=%t", messageID, archivedNotice, archivedNoticeFound)
+			t.Fatalf("exhausted invasion report %d = %#v found=%t", messageID, archivedNotice, archivedNoticeFound)
 		}
 		if _, exists := archived.LookupBattleReportCapture(messageID); exists {
-			t.Fatalf("resolved invasion report %d was not archived", messageID)
+			t.Fatalf("exhausted invasion report %d was not archived", messageID)
 		}
+	}
+	if _, reserved := archived.Invasion.TargetReservation(0, 120, 121); !reserved {
+		t.Fatal("recovery exhaustion released the separate no-replay reservation")
 	}
 }
 
