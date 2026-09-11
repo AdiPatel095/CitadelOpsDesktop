@@ -142,6 +142,27 @@ func TestParseEquipmentResolvesWireEffectsThroughOfficialCatalog(t *testing.T) {
 	}
 }
 
+func TestParseEquipmentKeepsIncompleteRelicDiscriminatorUnknown(t *testing.T) {
+	rows := []string{
+		`[3001,1,2,5,0,[],1375]`,
+		`[3002,1,2,5,0,[],1375,-1,0,-1,-1,null]`,
+		`[3003,1,2,5,0,[],1375,-1,0,-1,-1,"unknown"]`,
+	}
+	for _, encoded := range rows {
+		var row []json.RawMessage
+		if err := json.Unmarshal([]byte(encoded), &row); err != nil {
+			t.Fatal(err)
+		}
+		equipment, _, ok := parseEquipment(row, "", 0, nil)
+		if !ok {
+			t.Fatalf("incomplete equipment row was discarded: %s", encoded)
+		}
+		if equipment.RelicKnown || equipment.Relic {
+			t.Fatalf("incomplete relic discriminator = known %t relic %t for %s", equipment.RelicKnown, equipment.Relic, encoded)
+		}
+	}
+}
+
 func TestConstructionInventoryUsesConstructionItemIDs(t *testing.T) {
 	gameState := State.NewGameState()
 	frame := testSuccessfulFrame("gii", `{"CI":[[42,3],[99,0]]}`)
