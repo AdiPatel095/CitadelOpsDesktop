@@ -319,11 +319,14 @@ func TestDirectWebSocketMatchesGAAResponseToExactPendingMapScope(t *testing.T) {
 
 	register("empty-a", `%xt%EmpireEx_21%gaa%1%{"KID":0,"AX1":0,"AY1":0,"AX2":10,"AY2":10}%`)
 	register("empty-b", `%xt%EmpireEx_21%gaa%1%{"KID":0,"AX1":100,"AY1":100,"AX2":110,"AY2":110}%`)
-	if token := transport.matchResponseToken(decode(`%xt%gaa%1%0%{"KID":0,"AI":[]}%`)); token != "" {
-		t.Fatalf("scope-less empty GAA consumed ambiguous token %q", token)
+	if token := transport.matchResponseToken(decode(`%xt%gaa%1%0%{"KID":0,"AI":[]}%`)); token != "empty-a" {
+		t.Fatalf("first empty GAA token = %q, want empty-a", token)
 	}
-	if len(transport.pending) != 2 {
-		t.Fatalf("ambiguous empty GAA changed pending responses: %#v", transport.pending)
+	if token := transport.matchResponseToken(decode(`%xt%gaa%1%0%{"KID":0,"AI":[]}%`)); token != "empty-b" {
+		t.Fatalf("second empty GAA token = %q, want empty-b", token)
+	}
+	if len(transport.pending) != 0 {
+		t.Fatalf("ordered empty GAA replies left pending responses: %#v", transport.pending)
 	}
 }
 
