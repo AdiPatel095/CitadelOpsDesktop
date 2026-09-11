@@ -72,16 +72,8 @@ type stormMapBurstObserver interface {
 }
 
 type stormMapBurstSlot struct {
-	window towerMapWindow
-	token  string
-	wire   []byte
-	frames <-chan Protocol.CommittedFrame
-	cancel func()
-}
-
-type stormMapBurstResult struct {
-	index int
-	frame Protocol.CommittedFrame
+	token string
+	wire  []byte
 }
 
 type stormDefenseUnit struct {
@@ -1198,13 +1190,6 @@ func runStormMapGAABurst(
 	}
 	tokenRoot := fmt.Sprintf("%s/storm-gaa/%d", operationID, time.Now().UTC().UnixNano())
 	slots := make([]stormMapBurstSlot, len(windows))
-	defer func() {
-		for _, slot := range slots {
-			if slot.cancel != nil {
-				slot.cancel()
-			}
-		}
-	}()
 	for index, window := range windows {
 		payload, err := json.Marshal(struct {
 			KingdomID State.KingdomID `json:"KID"`
@@ -1223,98 +1208,84 @@ func runStormMapGAABurst(
 			return fmt.Errorf("build Storm map window %d/%d: %w", index+1, len(windows), err)
 		}
 		token := fmt.Sprintf("%s/%d", tokenRoot, index+1)
-		frames, cancel := observer.WatchWireResponse("gaa", token)
-		slots[index] = stormMapBurstSlot{
-			window: window, token: token, wire: wire, frames: frames, cancel: cancel,
-		}
+		slots[index] = stormMapBurstSlot{token: token, wire: wire}
 	}
 
-	results := make(chan stormMapBurstResult, len(slots))
-	for index := range slots {
-		slot := slots[index]
-		go func() {
-			select {
-			case frame := <-slot.frames:
-				results <- stormMapBurstResult{index: index, frame: frame}
-			case <-burstContext.Done():
-			}
-		}()
-	}
-
-	timeoutMillis := int(timeout / time.Millisecond)
 	baseMetadata := Outbound.MetadataFromContext(burstContext)
 	for index, slot := range slots {
-		metadata := baseMetadata
-		metadata.ResponseToken = slot.token
-		metadata.ResponseOpcodes = []string{"gaa"}
-		metadata.ResponseTimeoutMillis = timeoutMillis
-		sendContext := Outbound.WithMetadata(burstContext, metadata)
-		for {
-			err := sender.Send(sendContext, slot.wire)
-			if err == nil {
-				break
-			}
-			if !errors.Is(err, Outbound.ErrAutomationLocked) || Outbound.IsIndeterminate(err) {
-				return fmt.Errorf("send Storm map window %d/%d: %w", index+1, len(slots), err)
-			}
-			if err := sender.WaitForAutomationUnlocked(burstContext); err != nil {
+		if err := func() error {
+			frames, cancel := observer.WatchWireResponse("gaa", slot.token)
+			defer cancel()
+
+			remaining := stormMapBurstRemaining(burstContext)
+			if remaining <= 0 {
+				deadlineErr := burstContext.Err()
+				if deadlineErr == nil {
+					deadlineErr = context.DeadlineExceeded
+				}
 				return fmt.Errorf(
-					"Storm map GAA burst timed out while paused before window %d/%d: %w",
-					index+1, len(slots), err,
+					"Storm map GAA burst received %d/%d responses before the %s deadline: %w",
+					index, len(slots), timeout, deadlineErr,
 				)
 			}
-		}
-	}
+			metadata := baseMetadata
+			metadata.ResponseToken = slot.token
+			metadata.ResponseOpcodes = []string{"gaa"}
+			metadata.ResponseTimeoutMillis = max(1, int(remaining/time.Millisecond))
+			sendContext := Outbound.WithMetadata(burstContext, metadata)
+			for {
+				err := sender.Send(sendContext, slot.wire)
+				if err == nil {
+					break
+				}
+				if !errors.Is(err, Outbound.ErrAutomationLocked) || Outbound.IsIndeterminate(err) {
+					return fmt.Errorf("send Storm map window %d/%d: %w", index+1, len(slots), err)
+				}
+				if err := sender.WaitForAutomationUnlocked(burstContext); err != nil {
+					return fmt.Errorf(
+						"Storm map GAA burst timed out while paused before window %d/%d: %w",
+						index+1, len(slots), err,
+					)
+				}
+			}
 
-	received := make([]Protocol.CommittedFrame, len(slots))
-	seen := make([]bool, len(slots))
-	pendingCommits := map[uint64]struct{}{}
-	defer func() {
-		for ingressID := range pendingCommits {
-			observer.ForgetCommitted(ingressID)
-		}
-	}()
-	for responseCount := 0; responseCount < len(slots); {
-		select {
-		case <-burstContext.Done():
-			return fmt.Errorf(
-				"Storm map GAA burst received %d/%d responses before the %s deadline: %w",
-				responseCount, len(slots), timeout, burstContext.Err(),
-			)
-		case result := <-results:
-			if result.index < 0 || result.index >= len(slots) || seen[result.index] {
-				return fmt.Errorf("Storm map GAA response aggregation received a duplicate or invalid slot")
+			var response Protocol.CommittedFrame
+			select {
+			case <-burstContext.Done():
+				return fmt.Errorf(
+					"Storm map GAA burst received %d/%d responses before the %s deadline: %w",
+					index, len(slots), timeout, burstContext.Err(),
+				)
+			case response = <-frames:
 			}
-			if result.frame.Frame.ResponseToken != slots[result.index].token {
-				return fmt.Errorf("Storm map GAA response token changed for window %d/%d", result.index+1, len(slots))
+			if response.Frame.ResponseToken != slot.token {
+				observer.ForgetCommitted(response.IngressID)
+				return fmt.Errorf("Storm map GAA response token changed for window %d/%d", index+1, len(slots))
 			}
-			seen[result.index] = true
-			received[result.index] = result.frame
-			pendingCommits[result.frame.IngressID] = struct{}{}
-			responseCount++
-		}
-	}
-	for index, response := range received {
-		committed, err := observer.WaitCommitted(burstContext, response.IngressID)
-		delete(pendingCommits, response.IngressID)
-		if err != nil {
-			return fmt.Errorf("commit Storm map window %d/%d: %w", index+1, len(slots), err)
-		}
-		if committed.Frame.ResponseCode == nil {
-			return fmt.Errorf("Storm map window %d/%d response did not include a result code", index+1, len(slots))
-		}
-		if *committed.Frame.ResponseCode != 0 {
-			return fmt.Errorf(
-				"Storm map window %d/%d: %w",
-				index+1, len(slots),
-				Intent.NewResponseCodeError(language, committed.Frame.Opcode, *committed.Frame.ResponseCode),
-			)
-		}
-		if committed.ReduceError != "" {
-			return fmt.Errorf(
-				"Storm map window %d/%d response state reduction failed: %s",
-				index+1, len(slots), committed.ReduceError,
-			)
+			committed, err := observer.WaitCommitted(burstContext, response.IngressID)
+			if err != nil {
+				observer.ForgetCommitted(response.IngressID)
+				return fmt.Errorf("commit Storm map window %d/%d: %w", index+1, len(slots), err)
+			}
+			if committed.Frame.ResponseCode == nil {
+				return fmt.Errorf("Storm map window %d/%d response did not include a result code", index+1, len(slots))
+			}
+			if *committed.Frame.ResponseCode != 0 {
+				return fmt.Errorf(
+					"Storm map window %d/%d: %w",
+					index+1, len(slots),
+					Intent.NewResponseCodeError(language, committed.Frame.Opcode, *committed.Frame.ResponseCode),
+				)
+			}
+			if committed.ReduceError != "" {
+				return fmt.Errorf(
+					"Storm map window %d/%d response state reduction failed: %s",
+					index+1, len(slots), committed.ReduceError,
+				)
+			}
+			return nil
+		}(); err != nil {
+			return err
 		}
 	}
 	return nil

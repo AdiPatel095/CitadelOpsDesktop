@@ -1285,7 +1285,6 @@ func (transport *DirectWebSocketTransport) matchResponseToken(frame Protocol.Fra
 	}
 	if opcode == "gaa" {
 		matchedIndex := -1
-		oldestMatchedIndex := -1
 		smallestArea := int64(0)
 		ambiguous := false
 		matchedCount := 0
@@ -1295,9 +1294,6 @@ func (transport *DirectWebSocketTransport) matchResponseToken(frame Protocol.Fra
 				continue
 			}
 			matchedCount++
-			if oldestMatchedIndex < 0 {
-				oldestMatchedIndex = index
-			}
 			area := int64(pending.gaaX2-pending.gaaX1+1) * int64(pending.gaaY2-pending.gaaY1+1)
 			if matchedIndex < 0 || area < smallestArea {
 				matchedIndex, smallestArea, ambiguous = index, area, false
@@ -1305,16 +1301,7 @@ func (transport *DirectWebSocketTransport) matchResponseToken(frame Protocol.Fra
 				ambiguous = true
 			}
 		}
-		hasCoordinates := directGAAResponseHasCoordinates(frame)
-		successfulScopeLess := frame.ResponseCode != nil && *frame.ResponseCode == 0 && !hasCoordinates
-		if successfulScopeLess {
-			// Empty successful GAA replies carry no coordinates.
-			// Websocket frames preserve dispatch order, so consume the oldest
-			// matching request instead of dropping a valid response when a map
-			// burst has several windows in flight.
-			matchedIndex, ambiguous = oldestMatchedIndex, false
-		}
-		if matchedIndex < 0 || ambiguous || matchedCount > 1 && !hasCoordinates && !successfulScopeLess {
+		if matchedIndex < 0 || ambiguous || matchedCount > 1 && !directGAAResponseHasCoordinates(frame) {
 			return ""
 		}
 		pending := transport.pending[matchedIndex]

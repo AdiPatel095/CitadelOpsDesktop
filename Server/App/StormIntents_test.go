@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"testing"
@@ -76,6 +77,12 @@ func (observer *stormMapBurstTestObserver) watcherCount() int {
 	return len(observer.watchers)
 }
 
+func (observer *stormMapBurstTestObserver) waitedCount() int {
+	observer.mu.Lock()
+	defer observer.mu.Unlock()
+	return len(observer.waited)
+}
+
 func (observer *stormMapBurstTestObserver) deliver(responseToken string, ingressID uint64, code int) {
 	frame := Protocol.CommittedFrame{
 		Frame: Protocol.Frame{
@@ -93,12 +100,13 @@ func (observer *stormMapBurstTestObserver) deliver(responseToken string, ingress
 }
 
 type stormMapBurstTestSender struct {
-	observer            *stormMapBurstTestObserver
-	expectedSends       int
-	watchersAtFirstSend int
-	metadata            []Outbound.Metadata
-	frames              []Protocol.Frame
-	responseCode        int
+	observer       *stormMapBurstTestObserver
+	expectedSends  int
+	watchersAtSend []int
+	waitedAtSend   []int
+	metadata       []Outbound.Metadata
+	frames         []Protocol.Frame
+	responseCode   int
 }
 
 func (*stormMapBurstTestSender) CorrelatesResponses() bool { return true }
@@ -112,16 +120,15 @@ func (sender *stormMapBurstTestSender) Send(ctx context.Context, payload []byte)
 	if err != nil {
 		return err
 	}
-	if len(sender.frames) == 0 {
-		sender.watchersAtFirstSend = sender.observer.watcherCount()
-	}
 	sender.frames = append(sender.frames, frame)
 	sender.metadata = append(sender.metadata, Outbound.MetadataFromContext(ctx))
-	if len(sender.frames) == sender.expectedSends {
-		for index := len(sender.metadata) - 1; index >= 0; index-- {
-			sender.observer.deliver(sender.metadata[index].ResponseToken, uint64(index+1), sender.responseCode)
-		}
+	if sender.expectedSends > 0 && len(sender.frames) > sender.expectedSends {
+		return fmt.Errorf("received %d Storm map sends, want at most %d", len(sender.frames), sender.expectedSends)
 	}
+	sender.watchersAtSend = append(sender.watchersAtSend, sender.observer.watcherCount())
+	sender.waitedAtSend = append(sender.waitedAtSend, sender.observer.waitedCount())
+	index := len(sender.metadata) - 1
+	sender.observer.deliver(sender.metadata[index].ResponseToken, uint64(index+1), sender.responseCode)
 	return nil
 }
 
@@ -461,7 +468,7 @@ func TestPlanCooperativeStormMapScanUsesOnlyLeasedWindows(t *testing.T) {
 	}
 }
 
-func TestStormMapGAABurstRegistersIndependentSlotsBeforeSending(t *testing.T) {
+func TestStormMapGAABurstSerializesEachResponseSlot(t *testing.T) {
 	windows := []towerMapWindow{
 		{X1: 0, Y1: 0, X2: 100, Y2: 100},
 		{X1: 101, Y1: 0, X2: 201, Y2: 100},
@@ -479,9 +486,6 @@ func TestStormMapGAABurstRegistersIndependentSlotsBeforeSending(t *testing.T) {
 	); err != nil {
 		t.Fatal(err)
 	}
-	if sender.watchersAtFirstSend != len(windows) {
-		t.Fatalf("watchers at first GAA send = %d, want %d", sender.watchersAtFirstSend, len(windows))
-	}
 	if observer.watcherCount() != 0 {
 		t.Fatalf("response watchers after burst = %d, want 0", observer.watcherCount())
 	}
@@ -490,11 +494,17 @@ func TestStormMapGAABurstRegistersIndependentSlotsBeforeSending(t *testing.T) {
 	}
 	tokens := map[string]struct{}{}
 	for index := range sender.frames {
+		if sender.watchersAtSend[index] != 1 || sender.waitedAtSend[index] != index {
+			t.Fatalf(
+				"GAA send %d observed %d watcher(s) and %d committed prior response(s), want 1 and %d",
+				index, sender.watchersAtSend[index], sender.waitedAtSend[index], index,
+			)
+		}
 		if sender.frames[index].Opcode != "gaa" {
 			t.Fatalf("burst opcode %d = %q", index, sender.frames[index].Opcode)
 		}
 		metadata := sender.metadata[index]
-		if metadata.ResponseTimeoutMillis != 15_000 || len(metadata.ResponseOpcodes) != 1 ||
+		if metadata.ResponseTimeoutMillis <= 0 || metadata.ResponseTimeoutMillis > 15_000 || len(metadata.ResponseOpcodes) != 1 ||
 			metadata.ResponseOpcodes[0] != "gaa" || metadata.ResponseToken == "" {
 			t.Fatalf("burst response metadata %d = %#v", index, metadata)
 		}
