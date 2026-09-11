@@ -119,6 +119,7 @@ func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
 	}
 	gameState.Player.LegendSkills.ObservedAt = now
 	gameState.Player.Currencies[1005] = 2
+	gameState.DailyAttacks = State.DailyAttackState{Count: 0, ObservedAt: now}
 	gameState.EventScores.ByEvent[80] = State.ScalableEventScore{
 		EventID: 80, DifficultyID: 201, PlayerScore: 100, RemainingSec: 7_200, ObservedAt: now,
 	}
@@ -142,7 +143,7 @@ func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
 			TargetTypeID: 29, TargetX: 101, TargetY: 100, EventCampID: 5001,
 		},
 		Mode: "chain", ScoreTarget: 100_000, MinimumRemainingSec: 1_800, VictoryCount: 9,
-		SkipCooldowns: true, TimeSkipReserve: map[string]int64{},
+		SkipCooldowns: true, TimeSkipReserve: map[string]int64{}, DailyAttackLimit: 100,
 		CommanderIDs: []State.CommanderID{1, 2, 3},
 		Preset: AttackPresets.Preset{ID: "camp", Name: "Camp", Waves: []AttackPresets.Wave{{
 			Middle: AttackPresets.Lane{Troops: []AttackPresets.Slot{{ItemID: &unitID, Quantity: 100}}},
@@ -158,6 +159,7 @@ func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
 	var arrivalGuards []Intent.Step
 	var launchIndexes []int
 	var skipIndexes []int
+	var dailyGuardIndexes []int
 	consumeSteps := 0
 	topLevelSetup := 0
 	for index, step := range plan.Steps {
@@ -181,6 +183,9 @@ func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
 		if step.Action == timeSkipConsumeAction {
 			consumeSteps++
 		}
+		if step.Action == "attack.daily_limit.guard" {
+			dailyGuardIndexes = append(dailyGuardIndexes, index)
+		}
 		if step.DelayMillis > 0 {
 			delays = append(delays, step)
 		}
@@ -200,6 +205,14 @@ func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
 	if !(launchIndexes[0] < skipIndexes[0] && skipIndexes[0] < launchIndexes[1] &&
 		launchIndexes[1] < skipIndexes[1] && skipIndexes[1] < launchIndexes[2]) {
 		t.Fatalf("cooldown skips were not interleaved before each later CRA: launches=%v skips=%v", launchIndexes, skipIndexes)
+	}
+	if len(dailyGuardIndexes) != len(launchIndexes) {
+		t.Fatalf("daily limit guards = %v, want one for every launch %v", dailyGuardIndexes, launchIndexes)
+	}
+	for index := range launchIndexes {
+		if dailyGuardIndexes[index]+1 != launchIndexes[index] {
+			t.Fatalf("daily limit guard is not immediately before launch %d: guards=%v launches=%v", index+1, dailyGuardIndexes, launchIndexes)
+		}
 	}
 	if len(delays) != 0 {
 		t.Fatalf("chain added an artificial send delay: %#v", delays)

@@ -265,12 +265,12 @@ func planNomadCampAttack(_ context.Context, input Intent.PlanningContext, argume
 		ActionArguments: mustMarshalNomadAttackRequest(request),
 	}))
 	for index, commanderID := range resolution.Selected {
-		steps = appendDailyAttackLimitGuard(steps, request.DailyAttackLimit)
 		if index > 0 {
 			for _, planned := range chainTimeSkips[index-1] {
 				steps = append(steps, nomadChainCooldownSkipSteps(target, planned)...)
 			}
 		}
+		steps = appendDailyAttackLimitGuard(steps, request.DailyAttackLimit)
 		resolvedRequest := request
 		resolvedRequest.Preset = resolvedPresets[commanderID]
 		resolvedArguments, _ := json.Marshal(resolvedNomadCampAttackRequest{nomadCampAttackRequest: resolvedRequest, CommanderID: commanderID})
