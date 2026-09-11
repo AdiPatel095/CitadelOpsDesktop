@@ -435,3 +435,67 @@ func TestCRASendGuardRejectsActiveMovementWhenRosterSaysAvailable(t *testing.T) 
 		t.Fatalf("active commander guard error = %v, want stale plan", err)
 	}
 }
+
+func TestCRASendGuardRejectsUnresolvedInvasionCommander(t *testing.T) {
+	now := time.Now().UTC()
+	commanderID := State.CommanderID(7)
+	state := State.NewGameState()
+	state.Castles[1] = State.CastleState{ID: 1, KingdomID: 0, X: 12, Y: 34}
+	state.Commanders[commanderID] = State.CommanderState{ID: commanderID, Available: true}
+	state.MovementSnapshot = State.MovementSnapshot{Version: 2, ObservedAt: now.Add(time.Second)}
+	state.AttackDialog = State.AttackDialogState{
+		SourceCastleID: 1, KingdomID: 0, ObservedAt: now.Add(time.Second),
+		Target: State.AttackDialogTarget{TypeID: State.MapTypeBloodcrow, X: 56, Y: 78},
+	}
+	state.Invasion.ReserveTarget(State.InvasionTargetReservation{
+		KingdomID: 0, EventID: 71, OccurrenceEndsAt: now.Add(time.Hour),
+		TargetTypeID: State.MapTypeForeignLord, X: 101, Y: 102,
+		SourceCastleID: 1, CommanderID: commanderID, CommanderKnown: true,
+		OperationID: "indeterminate-cra", ReservedAt: now,
+	})
+	application := &Application{State: State.NewStore(state)}
+	arguments, _ := json.Marshal(craSendGuardRequest{
+		SourceX: 12, SourceY: 34, TargetX: 56, TargetY: 78, KingdomID: 0, CommanderID: &commanderID,
+		DialogObservedAt: now, MovementsObservedAfter: now,
+	})
+	if err := application.guardCRASend(t.Context(), arguments); !errors.Is(err, Intent.ErrPlanStale) ||
+		!strings.Contains(err.Error(), "no longer available") {
+		t.Fatalf("reserved commander guard error = %v, want retryable stale plan", err)
+	}
+}
+
+func TestCRASendGuardRejectsNewInvasionTargetMovementAfterFreshGAM(t *testing.T) {
+	now := time.Now().UTC()
+	returnsAt := now.Add(10 * time.Minute)
+	commanderID := State.CommanderID(7)
+	state := State.NewGameState()
+	state.Castles[1] = State.CastleState{ID: 1, KingdomID: 0, X: 12, Y: 34}
+	state.Commanders[commanderID] = State.CommanderState{ID: commanderID, Available: true}
+	state.Movements[50] = State.MovementState{
+		ID: 50, Direction: 1, TypeID: 2, KingdomID: 0,
+		SourceTypeID: State.MapTypeBloodcrow, SourceX: 56, SourceY: 78,
+		TargetCastleID: 1, TargetX: 12, TargetY: 34, ReturnsAt: &returnsAt,
+	}
+	state.MovementSnapshot = State.MovementSnapshot{Version: 2, ObservedAt: now.Add(time.Second)}
+	state.AttackDialog = State.AttackDialogState{
+		SourceCastleID: 1, KingdomID: 0, ObservedAt: now.Add(time.Second),
+		Target: State.AttackDialogTarget{
+			TypeID: State.MapTypeBloodcrow, X: 56, Y: 78, ObjectID: 70, InvasionAvailabilityKnown: true,
+		},
+	}
+	state.Map[0] = map[string]State.MapObservation{
+		"56:78": {
+			KingdomID: 0, TypeID: State.MapTypeBloodcrow, X: 56, Y: 78,
+			Level: 70, InvasionAvailabilityKnown: true, ObservedAt: now,
+		},
+	}
+	application := &Application{State: State.NewStore(state)}
+	arguments, _ := json.Marshal(craSendGuardRequest{
+		SourceX: 12, SourceY: 34, TargetX: 56, TargetY: 78, KingdomID: 0, CommanderID: &commanderID,
+		DialogObservedAt: now, MovementsObservedAfter: now,
+	})
+	if err := application.guardCRASend(t.Context(), arguments); !errors.Is(err, Intent.ErrPlanStale) ||
+		!strings.Contains(err.Error(), "active movement") {
+		t.Fatalf("invasion target movement guard error = %v, want retryable stale plan", err)
+	}
+}

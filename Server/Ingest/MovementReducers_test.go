@@ -41,6 +41,86 @@ func TestMovementReducerRetainsForeignMovementsWithoutOccupyingOwnCommanders(t *
 	}
 }
 
+func TestMovementReducerDoesNotAdvanceAuthoritativeSnapshotForMalformedIdentity(t *testing.T) {
+	now := time.Date(2026, 9, 9, 12, 0, 0, 0, time.UTC)
+	gameState := State.NewGameState()
+	gameState.Player.ID = 10
+	gameState.MovementSnapshot = State.MovementSnapshot{Version: 4, ObservedAt: now.Add(-time.Minute)}
+	gameState.Invasion.ReserveTarget(State.InvasionTargetReservation{
+		KingdomID: 0, EventID: 71, OccurrenceEndsAt: now.Add(time.Hour),
+		TargetTypeID: State.MapTypeForeignLord, X: 101, Y: 102,
+		SourceCastleID: 1, SourceX: 100, SourceY: 100, SourceKnown: true,
+		CommanderID: 7, CommanderKnown: true, OperationID: "malformed-gam", ReservedAt: now.Add(-time.Second),
+	})
+	code := 0
+	_, changed, err := newMovementReducer(true)(t.Context(), Protocol.Frame{
+		Opcode: "gam", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now,
+		Payload: json.RawMessage(`{"M":[
+			{"M":{"MID":9,"PT":1,"TT":60,"D":0,"T":0,"KID":"0","OID":10,"TID":-1002,"SA":[2,100,100,1,10],"TA":[21,101,102,-1,-1002]},"UM":{"L":{"ID":7}}}
+		]}`),
+	}, &gameState, nil)
+	if err != nil || changed {
+		t.Fatalf("malformed GAM identity changed state: changed=%t err=%v", changed, err)
+	}
+	if gameState.MovementSnapshot.Version != 4 || !gameState.MovementSnapshot.ObservedAt.Equal(now.Add(-time.Minute)) ||
+		gameState.MovementCount() != 0 {
+		t.Fatalf("malformed GAM advanced authoritative state: marker=%#v movements=%#v", gameState.MovementSnapshot, gameState.Movements)
+	}
+	if _, reserved := gameState.Invasion.TargetReservation(0, 101, 102); !reserved {
+		t.Fatal("malformed GAM released invasion reservation")
+	}
+}
+
+func TestMovementReducerRejectsNullAuthoritativeArrayWithoutClearingState(t *testing.T) {
+	now := time.Date(2026, 9, 9, 12, 0, 0, 0, time.UTC)
+	arrivesAt := now.Add(time.Minute)
+	gameState := State.NewGameState()
+	gameState.MovementSnapshot = State.MovementSnapshot{Version: 4, ObservedAt: now.Add(-time.Minute)}
+	gameState.Movements[9] = State.MovementState{
+		ID: 9, Direction: 0, KingdomID: 0, TargetTypeID: State.MapTypeForeignLord,
+		TargetX: 101, TargetY: 102, ObservedAt: now.Add(-time.Minute), ArrivesAt: &arrivesAt,
+	}
+	code := 0
+	_, changed, err := newMovementReducer(true)(t.Context(), Protocol.Frame{
+		Opcode: "gam", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now,
+		Payload: json.RawMessage(`{"M":null}`),
+	}, &gameState, nil)
+	if err == nil || changed {
+		t.Fatalf("null GAM array: changed=%t err=%v", changed, err)
+	}
+	if gameState.MovementSnapshot.Version != 4 || !gameState.MovementSnapshot.ObservedAt.Equal(now.Add(-time.Minute)) ||
+		gameState.MovementCount() != 1 {
+		t.Fatalf("null GAM reset authoritative state: marker=%#v movements=%#v", gameState.MovementSnapshot, gameState.Movements)
+	}
+}
+
+func TestParseMovementRejectsUnknownOrNegativeTiming(t *testing.T) {
+	now := time.Date(2026, 9, 9, 12, 0, 0, 0, time.UTC)
+	for _, payload := range []json.RawMessage{
+		json.RawMessage(`{"M":{"MID":9,"TT":60,"D":0,"T":1,"KID":0,"OID":10,"TID":20,"SA":[2,100,100,1],"TA":[21,101,102,-1]}}`),
+		json.RawMessage(`{"M":{"MID":9,"PT":1,"TT":-1,"D":0,"T":1,"KID":0,"OID":10,"TID":20,"SA":[2,100,100,1],"TA":[21,101,102,-1]}}`),
+		json.RawMessage(`{"M":{"MID":9,"PT":"1","TT":60,"D":0,"T":1,"KID":0,"OID":10,"TID":20,"SA":[2,100,100,1],"TA":[21,101,102,-1]}}`),
+	} {
+		if movement, ok := parseMovement(payload, now, nil); ok {
+			t.Fatalf("malformed movement timing parsed as %#v from %s", movement, payload)
+		}
+	}
+}
+
+func TestParseMovementAcceptsFourFieldEndpointsAndTreatsNegativeLeaderAsSentinel(t *testing.T) {
+	now := time.Date(2026, 9, 9, 12, 0, 0, 0, time.UTC)
+	movement, ok := parseMovement(json.RawMessage(`{
+		"M":{"MID":9,"PT":1,"TT":60,"D":0,"T":1,"KID":0,"OID":10,"TID":20,"SA":[2,100,100,1],"TA":[21,101,102,-1]},
+		"UM":{"L":{"ID":-14}}
+	}`), now, nil)
+	if !ok || movement.ID != 9 || movement.SourceCastleID != 1 || movement.TargetTypeID != 21 {
+		t.Fatalf("four-field movement did not parse: %#v ok=%t", movement, ok)
+	}
+	if movement.CommanderID != nil {
+		t.Fatalf("negative leader sentinel became commander identity: %v", *movement.CommanderID)
+	}
+}
+
 func TestParseMovementKeepsGameReportedStationWaitActive(t *testing.T) {
 	observedAt := time.Date(2026, 7, 22, 16, 0, 0, 0, time.UTC)
 	movement, ok := parseMovement(json.RawMessage(`{

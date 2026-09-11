@@ -106,6 +106,12 @@ type directPendingResponse struct {
 	opcodes       map[string]struct{}
 	expiresAt     time.Time
 	requestOpcode string
+	gaaScopeKnown bool
+	gaaKingdomID  int64
+	gaaX1         int
+	gaaY1         int
+	gaaX2         int
+	gaaY2         int
 	requestID     int64
 	requestType   int
 	requestPlayer int64
@@ -1146,6 +1152,32 @@ func (transport *DirectWebSocketTransport) registerPending(
 	}
 	if request, err := Protocol.Decode(requestPayload, Protocol.DirectionOutbound, time.Now().UTC()); err == nil {
 		pending.requestOpcode = request.Opcode
+		if request.Opcode == "gaa" {
+			var scope struct {
+				KingdomID json.RawMessage `json:"KID"`
+				X1        json.RawMessage `json:"AX1"`
+				Y1        json.RawMessage `json:"AY1"`
+				X2        json.RawMessage `json:"AX2"`
+				Y2        json.RawMessage `json:"AY2"`
+			}
+			if json.Unmarshal(request.Payload, &scope) != nil {
+				return nil, fmt.Errorf("GAA dispatch requires a valid map scope")
+			}
+			kingdomID, kingdomKnown := directExactJSONInt(scope.KingdomID)
+			x1, x1Known := directExactJSONInt(scope.X1)
+			y1, y1Known := directExactJSONInt(scope.Y1)
+			x2, x2Known := directExactJSONInt(scope.X2)
+			y2, y2Known := directExactJSONInt(scope.Y2)
+			if !kingdomKnown || kingdomID < 0 || !x1Known || !y1Known || !x2Known || !y2Known ||
+				x1 > x2 || y1 > y2 || int64(int(x1)) != x1 || int64(int(y1)) != y1 ||
+				int64(int(x2)) != x2 || int64(int(y2)) != y2 {
+				return nil, fmt.Errorf("GAA dispatch requires integral kingdom and map bounds")
+			}
+			pending.gaaScopeKnown = true
+			pending.gaaKingdomID = kingdomID
+			pending.gaaX1, pending.gaaY1 = int(x1), int(y1)
+			pending.gaaX2, pending.gaaY2 = int(x2), int(y2)
+		}
 		if request.Opcode == "ahr" && len(request.Payload) > 0 {
 			var allianceHelpRequest struct {
 				ID   int64 `json:"ID"`
@@ -1251,6 +1283,31 @@ func (transport *DirectWebSocketTransport) matchResponseToken(frame Protocol.Fra
 		transport.pending = append(transport.pending[:matchedIndex], transport.pending[matchedIndex+1:]...)
 		return pending.token
 	}
+	if opcode == "gaa" {
+		matchedIndex := -1
+		smallestArea := int64(0)
+		ambiguous := false
+		matchedCount := 0
+		for index, pending := range transport.pending {
+			if _, expected := pending.opcodes[opcode]; !expected ||
+				!directResponseMatchesRequest(pending, frame) {
+				continue
+			}
+			matchedCount++
+			area := int64(pending.gaaX2-pending.gaaX1+1) * int64(pending.gaaY2-pending.gaaY1+1)
+			if matchedIndex < 0 || area < smallestArea {
+				matchedIndex, smallestArea, ambiguous = index, area, false
+			} else if area == smallestArea {
+				ambiguous = true
+			}
+		}
+		if matchedIndex < 0 || ambiguous || matchedCount > 1 && !directGAAResponseHasCoordinates(frame) {
+			return ""
+		}
+		pending := transport.pending[matchedIndex]
+		transport.pending = append(transport.pending[:matchedIndex], transport.pending[matchedIndex+1:]...)
+		return pending.token
+	}
 	for index, pending := range transport.pending {
 		if _, expected := pending.opcodes[opcode]; !expected {
 			continue
@@ -1299,6 +1356,9 @@ func allianceHelpContextTransitionOpcode(opcode string) bool {
 }
 
 func directResponseMatchesRequest(pending directPendingResponse, frame Protocol.Frame) bool {
+	if pending.requestOpcode == "gaa" && strings.EqualFold(frame.Opcode, "gaa") {
+		return directGAAResponseMatches(pending, frame)
+	}
 	if pending.requestOpcode == "lta" && frame.Opcode == "gam" {
 		return directKhanTauntResponseMatches(pending, frame)
 	}
@@ -1337,6 +1397,64 @@ func directResponseMatchesRequest(pending directPendingResponse, frame Protocol.
 	default:
 		return true
 	}
+}
+
+func directGAAResponseHasCoordinates(frame Protocol.Frame) bool {
+	if frame.ResponseCode == nil || *frame.ResponseCode != 0 {
+		return false
+	}
+	var response struct {
+		Rows [][]json.RawMessage `json:"AI"`
+	}
+	return json.Unmarshal(frame.Payload, &response) == nil && len(response.Rows) > 0
+}
+
+func directGAAResponseMatches(pending directPendingResponse, frame Protocol.Frame) bool {
+	if !pending.gaaScopeKnown || frame.ResponseCode == nil {
+		return false
+	}
+	if *frame.ResponseCode != 0 {
+		// A rejection carries no trustworthy request scope. It may only be
+		// correlated when the caller has a single unambiguous pending GAA; the
+		// selection logic above enforces that by rejecting equal-area matches.
+		return true
+	}
+	var response struct {
+		KingdomID json.RawMessage     `json:"KID"`
+		Rows      [][]json.RawMessage `json:"AI"`
+	}
+	if len(frame.Payload) == 0 || json.Unmarshal(frame.Payload, &response) != nil {
+		return false
+	}
+	kingdomID, kingdomKnown := directExactJSONInt(response.KingdomID)
+	if !kingdomKnown || kingdomID != pending.gaaKingdomID || response.Rows == nil {
+		return false
+	}
+	for _, row := range response.Rows {
+		if len(row) < 3 {
+			return false
+		}
+		x, xKnown := directExactJSONInt(row[1])
+		y, yKnown := directExactJSONInt(row[2])
+		if !xKnown || !yKnown || int64(int(x)) != x || int64(int(y)) != y ||
+			int(x) < pending.gaaX1 || int(x) > pending.gaaX2 ||
+			int(y) < pending.gaaY1 || int(y) > pending.gaaY2 {
+			return false
+		}
+	}
+	return true
+}
+
+func directExactJSONInt(raw json.RawMessage) (int64, bool) {
+	text := strings.TrimSpace(string(raw))
+	if text == "" || text == "null" || strings.HasPrefix(text, `"`) {
+		return 0, false
+	}
+	rational, ok := new(big.Rat).SetString(text)
+	if !ok || !rational.IsInt() || !rational.Num().IsInt64() {
+		return 0, false
+	}
+	return rational.Num().Int64(), true
 }
 
 // directKhanTauntResponseMatches prevents a periodic or manually requested GAM

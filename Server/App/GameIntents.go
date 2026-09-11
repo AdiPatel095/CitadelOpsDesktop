@@ -85,6 +85,9 @@ func (application *Application) registerGameIntents() error {
 			return err
 		}
 	}
+	if err := application.Intents.RegisterAction(timeSkipReserveGuardAction, application.guardTimeSkipReserve); err != nil {
+		return err
+	}
 	if err := application.Intents.RegisterAction("troops.kingdom.guard_target_cap", application.guardKingdomTroopTargetCap); err != nil {
 		return err
 	}
@@ -217,6 +220,18 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterAction("invasion.attack.capture", application.captureInvasionLaunch); err != nil {
 		return err
 	}
+	if err := application.Intents.RegisterAction("invasion.target.reserve", application.reserveInvasionTarget); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("invasion.target.release", application.releaseInvasionTarget); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("invasion.target.cooldown", application.cooldownInvasionTarget); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("invasion.target.reconcile", application.reconcileInvasionTargetReservation); err != nil {
+		return err
+	}
 	if err := application.Intents.RegisterAction("invasion.target.consume", application.consumeInvasionTarget); err != nil {
 		return err
 	}
@@ -230,6 +245,9 @@ func (application *Application) registerGameIntents() error {
 		return err
 	}
 	if err := application.Intents.RegisterAction("nomad.attack.guard", application.guardNomadCampAttack); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction(nomadCooldownSkipGuard, application.guardNomadCooldownSkipDispatch); err != nil {
 		return err
 	}
 	if err := application.Intents.RegisterAction("nomad.attack.inventory.guard", application.guardNomadAttackInventory); err != nil {
@@ -552,6 +570,10 @@ func (application *Application) registerGameIntents() error {
 		{
 			Name: "invasion.map.scan", Description: "Focus the configured castle and refresh nearby invasion-event targets", Effect: Intent.EffectRead,
 			Planner: planInvasionMapScan,
+		},
+		{
+			Name: "invasion.target.reconcile", Description: "Reconcile an unresolved invasion launch from fresh target and movement evidence", Effect: Intent.EffectRead,
+			Planner: planInvasionTargetReconcile,
 		},
 		{
 			Name: "invasion.attack", Description: "Launch a CitadelOps attack preset against a Foreign Lords or Bloodcrow castle", Effect: Intent.EffectLaunch,

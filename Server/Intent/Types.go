@@ -88,6 +88,18 @@ type Admission struct {
 	Deadline  time.Time      `json:"deadline,omitempty"`
 }
 
+// ResponseRetryPolicy authorizes a command step to repeat only for the listed
+// definitive game response codes. The guard runs after DelayMillis and before
+// every resend so callers can recheck resources or other mutable eligibility.
+// Retry responses remain unsuccessful attempts: they do not complete the step
+// and are not treated as stale-plan signals.
+type ResponseRetryPolicy struct {
+	Codes          []int           `json:"codes"`
+	GuardAction    string          `json:"guardAction"`
+	GuardArguments json.RawMessage `json:"guardArguments,omitempty"`
+	DelayMillis    int             `json:"delayMillis"`
+}
+
 type Step struct {
 	Name                    string                    `json:"name,omitempty"`
 	Action                  string                    `json:"action,omitempty"`
@@ -102,13 +114,37 @@ type Step struct {
 	DelayMillis             int                       `json:"delayMillis,omitempty"`
 	SuccessCodes            []int                     `json:"successCodes,omitempty"`
 	StaleCodes              []int                     `json:"staleCodes,omitempty"`
+	ResponseRetry           *ResponseRetryPolicy      `json:"responseRetry,omitempty"`
 	CaptureResponse         bool                      `json:"captureResponse,omitempty"`
 	ExpectedResponsePayload json.RawMessage           `json:"expectedResponsePayload,omitempty"`
 	ResponseIdentity        Outbound.ResponseIdentity `json:"responseIdentity,omitzero"`
 	ResponseBarrier         ResponseBarrier           `json:"responseBarrier,omitempty"`
-	ResumePolicy            ResumePolicy              `json:"resumePolicy,omitempty"`
-	CommandDependencies     *CommandDependencyRequest `json:"commandDependencies,omitempty"`
-	Command                 Protocol.Command          `json:"-"`
+	// PreDispatchAction runs after final command resolution, dependency refresh,
+	// readiness, and dispatch validation, but before the command can reach the
+	// transport. It supports durable no-replay markers around spending calls.
+	PreDispatchAction    string          `json:"preDispatchAction,omitempty"`
+	PreDispatchArguments json.RawMessage `json:"preDispatchArguments,omitempty"`
+	// DefinitiveSendFailureAction compensates PreDispatchAction only when the
+	// sender proves the command did not reach an indeterminate wire state.
+	DefinitiveSendFailureAction    string          `json:"definitiveSendFailureAction,omitempty"`
+	DefinitiveSendFailureArguments json.RawMessage `json:"definitiveSendFailureArguments,omitempty"`
+	// DefinitiveResponseFailureAction compensates PreDispatchAction when the
+	// game returned an explicit non-success code. StaleCodes intentionally do
+	// not run it because their marker can be the state that prevents replay.
+	DefinitiveResponseFailureAction    string          `json:"definitiveResponseFailureAction,omitempty"`
+	DefinitiveResponseFailureArguments json.RawMessage `json:"definitiveResponseFailureArguments,omitempty"`
+	// StaleResponseAction handles a declared StaleCodes response before the
+	// engine returns ErrPlanStale. It is separate from generic rejection
+	// compensation because a stale target may require a different state change.
+	StaleResponseAction    string          `json:"staleResponseAction,omitempty"`
+	StaleResponseArguments json.RawMessage `json:"staleResponseArguments,omitempty"`
+	// ResponseProjectionFailureIndeterminate marks a committed response whose
+	// missing result code or failed local state projection cannot prove that a
+	// mutating command was rejected. Read-only dependency steps leave this false.
+	ResponseProjectionFailureIndeterminate bool                      `json:"responseProjectionFailureIndeterminate,omitempty"`
+	ResumePolicy                           ResumePolicy              `json:"resumePolicy,omitempty"`
+	CommandDependencies                    *CommandDependencyRequest `json:"commandDependencies,omitempty"`
+	Command                                Protocol.Command          `json:"-"`
 }
 
 // CommandDependencyRequest declares the concrete opcode and route payload for
@@ -232,19 +268,22 @@ const (
 )
 
 type Receipt struct {
-	StreamSequence uint64               `json:"streamSequence,omitempty"`
-	StreamGap      bool                 `json:"streamGap,omitempty"`
-	ID             string               `json:"id"`
-	Intent         string               `json:"intent"`
-	Actor          string               `json:"actor"`
-	Priority       Outbound.Priority    `json:"priority"`
-	Status         Status               `json:"status"`
-	Phase          EffectPhase          `json:"phase,omitempty"`
-	Attempt        int                  `json:"attempt,omitempty"`
-	Plan           *Plan                `json:"plan,omitempty"`
-	Exchanges      []CommandExchange    `json:"exchanges,omitempty"`
-	Error          string               `json:"error,omitempty"`
-	Failure        *FailurePresentation `json:"failure,omitempty"`
+	StreamSequence uint64            `json:"streamSequence,omitempty"`
+	StreamGap      bool              `json:"streamGap,omitempty"`
+	ID             string            `json:"id"`
+	Intent         string            `json:"intent"`
+	Actor          string            `json:"actor"`
+	Priority       Outbound.Priority `json:"priority"`
+	Status         Status            `json:"status"`
+	Phase          EffectPhase       `json:"phase,omitempty"`
+	Attempt        int               `json:"attempt,omitempty"`
+	Plan           *Plan             `json:"plan,omitempty"`
+	Exchanges      []CommandExchange `json:"exchanges,omitempty"`
+	// CompletedStepIndexes preserves confirmed partial progress against Plan so
+	// downstream accounting can distinguish successful effects from the later failure.
+	CompletedStepIndexes []int                `json:"completedStepIndexes,omitempty"`
+	Error                string               `json:"error,omitempty"`
+	Failure              *FailurePresentation `json:"failure,omitempty"`
 	// RawError preserves the machine-oriented wording for in-process recovery
 	// and gating logic. It is never serialized or shown to users.
 	RawError    string     `json:"-"`

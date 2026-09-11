@@ -10,9 +10,10 @@ type ResponseCodeSource string
 type ResponseCodeKind string
 
 const (
-	ResponseCodeOfficial ResponseCodeSource = "official game text"
-	ResponseCodeObserved ResponseCodeSource = "inferred from captures"
-	ResponseCodeUnknown  ResponseCodeSource = "undocumented"
+	ResponseCodeOfficial       ResponseCodeSource = "official game text"
+	ResponseCodeOfficialClient ResponseCodeSource = "official game client"
+	ResponseCodeObserved       ResponseCodeSource = "inferred from captures"
+	ResponseCodeUnknown        ResponseCodeSource = "undocumented"
 
 	ResponseCodeAvailability ResponseCodeKind = "availability"
 	ResponseCodeCooldown     ResponseCodeKind = "cooldown"
@@ -40,8 +41,46 @@ var observedResponseCodes = map[int]ResponseCodeMeaning{
 	},
 }
 
+var officialClientEnchantResponseCodes = map[int]ResponseCodeMeaning{
+	226: {
+		Code:          226,
+		Message:       "The item's enchantment level is too high for another enchantment attempt.",
+		Source:        ResponseCodeOfficialClient,
+		Kind:          ResponseCodeStaleState,
+		Recovery:      "Refresh equipment and select an item below its maximum enchantment level.",
+		ExpectedState: true,
+	},
+	227: {
+		Code:          227,
+		Message:       "The enchantment attempt failed, so the item did not gain a level.",
+		Source:        ResponseCodeOfficialClient,
+		Recovery:      "Retry the same level after rechecking the remaining coins and, for relic upgrades, relic splinters.",
+		ExpectedState: true,
+	},
+	236: {
+		Code:          236,
+		Message:       "The selected item cannot be enchanted.",
+		Source:        ResponseCodeOfficialClient,
+		Kind:          ResponseCodeContext,
+		Recovery:      "Refresh equipment and select an item the game currently allows to be enchanted.",
+		ExpectedState: true,
+	},
+}
+
+var officialClientOpcodeResponseCodes = map[string]map[int]ResponseCodeMeaning{
+	"ere": officialClientEnchantResponseCodes,
+	"eqe": officialClientEnchantResponseCodes,
+}
+
 var observedOpcodeResponseCodes = map[string]map[int]ResponseCodeMeaning{
 	"cra": {
+		91: {
+			Code:     91,
+			Message:  "The selected attack preset has incompatible tools assigned for this attack.",
+			Source:   ResponseCodeObserved,
+			Kind:     ResponseCodeContext,
+			Recovery: "Remove or replace the incompatible tools in the selected attack preset, then retry.",
+		},
 		256: {
 			Code:          256,
 			Message:       "The selected commander is already assigned to an active movement or otherwise unavailable at launch time.",
@@ -109,6 +148,24 @@ var responseCodeGuidanceByOpcode = map[string]map[int]responseCodeGuidance{
 			recovery: "Refresh the troop selection before trying again.",
 		},
 	},
+	"ere": {
+		222: {
+			kind: ResponseCodeAvailability, expectedState: true,
+			recovery: "Wait for the commander or castellan carrying this item to return, then refresh equipment before retrying.",
+		},
+	},
+	"eqe": {
+		222: {
+			kind: ResponseCodeAvailability, expectedState: true,
+			recovery: "Wait for the commander or castellan carrying this item to return, then refresh equipment before retrying.",
+		},
+	},
+	"ebe": {
+		263: {
+			kind: ResponseCodeContext, expectedState: true,
+			recovery: "Choose a different expansion direction, then refresh the castle before retrying.",
+		},
+	},
 	"jaa": {
 		337: {
 			kind: ResponseCodeAvailability, expectedState: true,
@@ -162,18 +219,25 @@ func (store *LanguageStore) ResponseCodes() map[int]string {
 }
 
 // ResponseCodeMeanings combines the official language catalog with meanings
-// inferred from captures when the game does not publish text for a code.
+// published in the official game client and inferred from captures when the
+// game does not publish language text for a code.
 func (store *LanguageStore) ResponseCodeMeanings(opcode string) map[int]ResponseCodeMeaning {
 	meanings := make(map[int]ResponseCodeMeaning)
+	opcode = strings.ToLower(strings.TrimSpace(opcode))
 	for code := range store.ResponseCodes() {
 		meanings[code] = ResolveResponseCode(store, opcode, code)
+	}
+	for code := range officialClientOpcodeResponseCodes[opcode] {
+		if _, found := meanings[code]; !found {
+			meanings[code] = ResolveResponseCode(store, opcode, code)
+		}
 	}
 	for code := range observedResponseCodes {
 		if _, found := meanings[code]; !found {
 			meanings[code] = ResolveResponseCode(store, opcode, code)
 		}
 	}
-	for code := range observedOpcodeResponseCodes[strings.ToLower(strings.TrimSpace(opcode))] {
+	for code := range observedOpcodeResponseCodes[opcode] {
 		if _, found := meanings[code]; !found {
 			meanings[code] = ResolveResponseCode(store, opcode, code)
 		}
@@ -190,6 +254,8 @@ func ResolveResponseCode(store *LanguageStore, opcode string, code int) Response
 			Message: message,
 			Source:  ResponseCodeOfficial,
 		}
+	} else if officialClient, found := officialClientOpcodeResponseCodes[opcode][code]; found {
+		meaning = officialClient
 	} else if observed, found := observedOpcodeResponseCodes[opcode][code]; found {
 		meaning = observed
 	} else if observed, found := observedResponseCodes[code]; found {
@@ -208,7 +274,11 @@ func ResolveResponseCode(store *LanguageStore, opcode string, code int) Response
 		}
 	}
 	if meaning.Source == ResponseCodeOfficial {
-		if observed, found := observedOpcodeResponseCodes[opcode][code]; found {
+		if officialClient, found := officialClientOpcodeResponseCodes[opcode][code]; found {
+			meaning.Kind = officialClient.Kind
+			meaning.Recovery = officialClient.Recovery
+			meaning.ExpectedState = officialClient.ExpectedState
+		} else if observed, found := observedOpcodeResponseCodes[opcode][code]; found {
 			meaning.Kind = observed.Kind
 			meaning.Recovery = observed.Recovery
 			meaning.ExpectedState = observed.ExpectedState

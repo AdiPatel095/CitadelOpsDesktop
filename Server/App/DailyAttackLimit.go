@@ -41,6 +41,17 @@ func dailyAttackLimitPlan(gameState State.GameState, limit int64) (Intent.Plan, 
 	return Intent.Plan{Summary: detail}, true, nil
 }
 
+func guardDailyAttackLimitAtDispatch(gameState State.GameState, limit int64) error {
+	detail, blocked, err := dailyAttackLimitStatus(gameState, limit)
+	if err != nil {
+		return err
+	}
+	if blocked {
+		return fmt.Errorf("%w: %s", Intent.ErrPlanStale, detail)
+	}
+	return nil
+}
+
 func appendDailyAttackLimitGuard(steps []Intent.Step, limit int64) []Intent.Step {
 	if limit <= 0 {
 		return steps

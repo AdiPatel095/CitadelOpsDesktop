@@ -54,3 +54,19 @@ func TestUnsuccessfulResponseCodeLabelsObservedInference(t *testing.T) {
 		t.Fatalf("observed response guidance = %#v", responseError)
 	}
 }
+
+func TestUnsuccessfulResponseCodeLabelsOfficialClientMeaning(t *testing.T) {
+	engine := &Engine{}
+
+	err := engine.unsuccessfulResponseCode("ere", 227)
+	if err == nil || !strings.Contains(err.Error(), "enchantment attempt failed") ||
+		!strings.Contains(err.Error(), "official game client") {
+		t.Fatalf("response code error = %v", err)
+	}
+	var responseError *ResponseCodeError
+	if !errors.As(err, &responseError) || responseError.Opcode != "ere" ||
+		responseError.Meaning.Source != GameData.ResponseCodeOfficialClient ||
+		!responseError.Meaning.ExpectedState || responseError.Meaning.Recovery == "" {
+		t.Fatalf("official-client response code error = %#v", responseError)
+	}
+}

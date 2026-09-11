@@ -154,7 +154,8 @@ func TestResolveBuildingExpansionUsesCapturedResourceWireShape(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if step.Command.Opcode != "ebe" || string(step.Command.Payload) != `{"X":220,"Y":220,"R":1,"CT":1}` {
+	if step.Command.Opcode != "ebe" || string(step.Command.Payload) != `{"X":220,"Y":220,"R":1,"CT":1}` ||
+		len(step.SuccessCodes) != 1 || step.SuccessCodes[0] != 0 || len(step.StaleCodes) != 0 {
 		t.Fatalf("expansion command = %s %s", step.Command.Opcode, step.Command.Payload)
 	}
 }

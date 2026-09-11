@@ -11,11 +11,17 @@ import (
 
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
+	"CitadelDesktop/Server/Outbound"
 	"CitadelDesktop/Server/State"
 )
 
 type autoBuyerHistoryRequest struct {
 	SourceCastleID State.CastleID `json:"sourceCastleId"`
+}
+
+type autoBuyerBoostersRefreshRequest struct {
+	FeastContext      bool      `json:"feastContext"`
+	FeastRefreshAfter time.Time `json:"feastRefreshAfter,omitempty"`
 }
 
 type autoBuyerPackagePurchaseRequest struct {
@@ -53,11 +59,27 @@ type autoBuyerFeastPurchaseRequest struct {
 	MinimumRubyReserve         int64          `json:"minimumRubyReserve"`
 	ExpectedActiveFeastID      int64          `json:"expectedActiveFeastId"`
 	ExpectedExpiresAtUnix      int64          `json:"expectedExpiresAtUnix"`
-	ExpectedBalanceBefore      int64          `json:"expectedBalanceBefore"`
+	ExpectedBalanceBefore      *int64         `json:"expectedBalanceBefore,omitempty"`
+	ExpectedEffectiveCost      *int64         `json:"expectedEffectiveCost,omitempty"`
+	AttemptAfter               time.Time      `json:"attemptAfter,omitempty"`
+	FeastRefreshAfter          time.Time      `json:"feastRefreshAfter,omitempty"`
 	HistoryRefreshSec          int            `json:"historyRefreshSec"`
 }
 
+type autoBuyerFeastRoute struct {
+	FeastID   int64           `json:"T"`
+	CastleID  State.CastleID  `json:"CID"`
+	KingdomID State.KingdomID `json:"KID"`
+	Preflight bool            `json:"_citadelFeastPreflight,omitempty"`
+}
+
 func (application *Application) registerAutoBuyerIntents() error {
+	if err := application.Intents.RegisterCommandDependencies("bfs", application.resolveAutoBuyerFeastCommandDependencies); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterStepResolver("auto_buyer.feast.purchase.build", resolveAutoBuyerFeastPurchaseStep); err != nil {
+		return err
+	}
 	definitions := []Intent.Definition{
 		{
 			Name: "autoBuyer.package.history", Description: "Refresh server purchase counters used to detect shop stock resets",
@@ -79,6 +101,10 @@ func (application *Application) registerAutoBuyerIntents() error {
 			Name: "autoBuyer.feast.purchase", Description: "Start or extend one official feast within configured food or ruby reserves",
 			Effect: Intent.EffectWrite, ArgumentsExample: json.RawMessage(`{"feastId":0,"minimumRemainingHours":12,"sourceCastleId":123}`), Planner: planAutoBuyerFeastPurchase,
 		},
+		{
+			Name: "autoBuyer.feast.reconcile", Description: "Refresh feast state after an incomplete or uncertain purchase",
+			Effect: Intent.EffectRead, ArgumentsExample: json.RawMessage(`{"feastId":0,"sourceCastleId":123}`), Planner: planAutoBuyerFeastReconcile,
+		},
 	}
 	for _, definition := range definitions {
 		if err := application.Intents.Registry().Register(definition); err != nil {
@@ -86,12 +112,16 @@ func (application *Application) registerAutoBuyerIntents() error {
 		}
 	}
 	actions := map[string]Intent.Action{
-		"auto_buyer.package.guard":     application.guardAutoBuyerPackagePurchase,
-		"auto_buyer.package.verify":    application.verifyAutoBuyerPackagePurchase,
-		"auto_buyer.specialist.guard":  application.guardAutoBuyerSpecialistPurchase,
-		"auto_buyer.specialist.verify": application.verifyAutoBuyerSpecialistPurchase,
-		"auto_buyer.feast.guard":       application.guardAutoBuyerFeastPurchase,
-		"auto_buyer.feast.verify":      application.verifyAutoBuyerFeastPurchase,
+		"auto_buyer.package.guard":          application.guardAutoBuyerPackagePurchase,
+		"auto_buyer.package.verify":         application.verifyAutoBuyerPackagePurchase,
+		"auto_buyer.specialist.guard":       application.guardAutoBuyerSpecialistPurchase,
+		"auto_buyer.specialist.verify":      application.verifyAutoBuyerSpecialistPurchase,
+		"auto_buyer.feast.purchase.arm":     application.armAutoBuyerFeastPurchase,
+		"auto_buyer.feast.purchase.disarm":  application.disarmAutoBuyerFeastPurchase,
+		"auto_buyer.feast.reconcile.mark":   application.markAutoBuyerFeastReconciliation,
+		"auto_buyer.feast.reconcile.verify": application.verifyAutoBuyerFeastReconciliation,
+		"auto_buyer.feast.refresh.verify":   application.verifyAutoBuyerFeastRefresh,
+		"auto_buyer.feast.verify":           application.verifyAutoBuyerFeastPurchase,
 	}
 	for name, action := range actions {
 		if err := application.Intents.RegisterAction(name, action); err != nil {
@@ -120,15 +150,34 @@ func planAutoBuyerPackageHistory(_ context.Context, input Intent.PlanningContext
 }
 
 func planAutoBuyerBoostersRefresh(_ context.Context, _ Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
-	var request struct{}
+	var request autoBuyerBoostersRefreshRequest
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Plan{}, err
 	}
-	step := shopCommandStep("Refresh specialist and feast timers", "boi", json.RawMessage(`{}`), 0)
-	step.ResponseBarrier = Intent.ResponseBarrierCommitted
+	claims := []string{"shop", "market:boosters"}
+	steps := []Intent.Step{}
+	if request.FeastContext {
+		request.FeastRefreshAfter = time.Now().UTC()
+		costReduction := commandStep("Refresh feast cost reduction", "fce", json.RawMessage(`{}`), "fce")
+		costReduction.ResponseBarrier = Intent.ResponseBarrierCommitted
+		castleDetails := commandStep("Refresh feast castle resources", "dcl", json.RawMessage(`{"CD":1}`), "dcl")
+		castleDetails.ResponseBarrier = Intent.ResponseBarrierCommitted
+		steps = append(steps, Intent.RebuildOnResume(costReduction), Intent.RebuildOnResume(castleDetails))
+		claims = append(claims, "castle-directory", "account-resources")
+	}
+	boosters := shopCommandStep("Refresh specialist and feast timers", "boi", json.RawMessage(`{}`), 0)
+	boosters.ResponseBarrier = Intent.ResponseBarrierCommitted
+	steps = append(steps, Intent.RebuildOnResume(boosters))
+	summary := "Refresh Auto Buyer specialist timers"
+	if request.FeastContext {
+		summary = "Refresh Auto Buyer feast cost, castle resources, and timers"
+		resolved, _ := json.Marshal(request)
+		steps = append(steps, Intent.RebuildOnResume(Intent.Step{
+			Name: "Verify Auto Buyer feast refresh", Action: "auto_buyer.feast.refresh.verify", ActionArguments: resolved,
+		}))
+	}
 	return Intent.Plan{
-		Claims: []string{"shop", "market:boosters"}, Summary: "Refresh Auto Buyer specialist and feast timers",
-		Steps: []Intent.Step{step},
+		Claims: claims, Summary: summary, Steps: steps,
 	}, nil
 }
 
@@ -211,37 +260,136 @@ func planAutoBuyerSpecialistPurchase(_ context.Context, input Intent.PlanningCon
 }
 
 func planAutoBuyerFeastPurchase(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
-	request, source, feast, err := autoBuyerFeastPurchaseContext(input, arguments, time.Now().UTC())
+	plannedAt := time.Now().UTC()
+	request, source, feast, err := autoBuyerFeastPurchaseContext(input, arguments, plannedAt, false)
 	if err != nil {
 		return Intent.Plan{}, err
 	}
+	if request.AttemptAfter.IsZero() {
+		request.AttemptAfter = plannedAt
+	}
+	effectiveCost, err := autoBuyerIntentFeastCost(input.State, feast, request.HistoryRefreshSec, plannedAt)
+	if err != nil {
+		return Intent.Plan{}, err
+	}
+	balance, available := autoBuyerIntentPriceBalance(input.State, source, feast.Price)
+	if !available {
+		return Intent.Plan{}, fmt.Errorf("%s balance is unavailable", feast.Price.Name)
+	}
+	request.ExpectedBalanceBefore = &balance
+	request.ExpectedEffectiveCost = &effectiveCost
+	request.FeastRefreshAfter = plannedAt
 	resolved, _ := json.Marshal(request)
-	payload, _ := json.Marshal(map[string]any{
-		"T": feast.ID, "CID": source.ID, "KID": source.KingdomID, "PO": -1, "PWR": 0,
+	routePayload, _ := json.Marshal(autoBuyerFeastRoute{
+		FeastID: feast.ID, CastleID: source.ID, KingdomID: source.KingdomID, Preflight: true,
 	})
-	resourcePayload, _ := json.Marshal(map[string]any{"AID": source.ID, "KID": source.KingdomID})
-	resourceRefreshBefore := commandStep("Refresh feast source resources before purchase", "grc", resourcePayload, "grc")
-	resourceRefreshBefore.ResponseBarrier = Intent.ResponseBarrierCommitted
-	boosterRefreshBefore := shopCommandStep("Refresh feast timer before purchase", "boi", json.RawMessage(`{}`), 0)
-	boosterRefreshBefore.ResponseBarrier = Intent.ResponseBarrierCommitted
-	resourceRefreshAfter := commandStep("Refresh feast source resources after purchase", "grc", resourcePayload, "grc")
-	resourceRefreshAfter.ResponseBarrier = Intent.ResponseBarrierCommitted
 	boosterRefreshAfter := shopCommandStep("Refresh feast timer after purchase", "boi", json.RawMessage(`{}`), 0)
 	boosterRefreshAfter.ResponseBarrier = Intent.ResponseBarrierCommitted
+	castleRefreshAfter := commandStep("Refresh feast castle resources after purchase", "dcl", json.RawMessage(`{"CD":1}`), "dcl")
+	castleRefreshAfter.ResponseBarrier = Intent.ResponseBarrierCommitted
+	purchase := Intent.Step{
+		Name:     "Refresh feast context and start or extend " + feast.Name,
+		Resolver: "auto_buyer.feast.purchase.build", ResolverArguments: resolved,
+		AwaitOpcode: "bfs", TimeoutMillis: 10_000, SuccessCodes: []int{0}, CaptureResponse: true,
+		ResponseBarrier:                        Intent.ResponseBarrierCommitted,
+		ResponseProjectionFailureIndeterminate: true,
+		CommandDependencies:                    &Intent.CommandDependencyRequest{Opcode: "bfs", Payload: routePayload},
+	}
 	return Intent.Plan{
 		Claims: []string{
-			"shop", "market:boosters", "account-resources", "castle:" + strconv.FormatInt(int64(source.ID), 10),
+			"shop", "market:boosters", "castle-directory", "account-resources", "castle:" + strconv.FormatInt(int64(source.ID), 10),
 		},
-		Summary: fmt.Sprintf("Start or extend %s for %d %s", feast.Name, feast.Price.Amount, feast.Price.Name),
+		Summary: fmt.Sprintf("Start or extend %s for %d %s", feast.Name, effectiveCost, feast.Price.Name),
 		Steps: []Intent.Step{
-			resourceRefreshBefore,
-			boosterRefreshBefore,
-			Intent.RebuildOnResume(Intent.Step{Name: "Recheck feast purchase", Action: "auto_buyer.feast.guard", ActionArguments: resolved}),
-			shopCommandStep("Start or extend "+feast.Name, "bfs", payload, 0),
-			resourceRefreshAfter, boosterRefreshAfter,
+			purchase,
+			Intent.RebuildOnResume(boosterRefreshAfter), Intent.RebuildOnResume(castleRefreshAfter),
 			Intent.RebuildOnResume(Intent.Step{Name: "Verify feast purchase", Action: "auto_buyer.feast.verify", ActionArguments: resolved}),
 		},
 	}, nil
+}
+
+func planAutoBuyerFeastReconcile(_ context.Context, _ Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
+	var request autoBuyerFeastPurchaseRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return Intent.Plan{}, err
+	}
+	if request.FeastID < 0 || request.SourceCastleID <= 0 || request.AttemptAfter.IsZero() {
+		return Intent.Plan{}, fmt.Errorf("feast reconciliation boundary is invalid")
+	}
+	boosterRefresh := shopCommandStep("Reconcile feast timer after incomplete purchase", "boi", json.RawMessage(`{}`), 0)
+	boosterRefresh.ResponseBarrier = Intent.ResponseBarrierCommitted
+	castleRefresh := commandStep("Reconcile feast castle resources after incomplete purchase", "dcl", json.RawMessage(`{"CD":1}`), "dcl")
+	castleRefresh.ResponseBarrier = Intent.ResponseBarrierCommitted
+	return Intent.Plan{
+		Claims:  []string{"shop", "market:boosters", "castle-directory", "account-resources", "castle:" + strconv.FormatInt(int64(request.SourceCastleID), 10)},
+		Summary: "Reconcile an incomplete feast purchase before another attempt",
+		Steps: []Intent.Step{
+			Intent.RebuildOnResume(Intent.Step{
+				Name: "Preserve unresolved feast purchase", Action: "auto_buyer.feast.reconcile.mark", ActionArguments: arguments,
+			}),
+			Intent.RebuildOnResume(boosterRefresh), Intent.RebuildOnResume(castleRefresh),
+			Intent.RebuildOnResume(Intent.Step{
+				Name: "Verify feast purchase reconciliation", Action: "auto_buyer.feast.reconcile.verify", ActionArguments: arguments,
+			}),
+		},
+	}, nil
+}
+
+func (application *Application) resolveAutoBuyerFeastCommandDependencies(
+	_ context.Context,
+	_ Intent.PlanningContext,
+	step Intent.Step,
+) (Intent.CommandDependencyPlan, error) {
+	payload := step.Command.Payload
+	if len(payload) == 0 {
+		payload = step.Payload
+	}
+	var route autoBuyerFeastRoute
+	if err := json.Unmarshal(payload, &route); err != nil {
+		return Intent.CommandDependencyPlan{}, fmt.Errorf("decode feast purchase route: %w", err)
+	}
+	if route.FeastID < 0 || route.CastleID <= 0 {
+		return Intent.CommandDependencyPlan{}, fmt.Errorf("feast purchase route is invalid")
+	}
+	key := fmt.Sprintf("%d:%d:%d", route.KingdomID, route.CastleID, route.FeastID)
+	if !route.Preflight {
+		return Intent.CommandDependencyPlan{Key: key}, nil
+	}
+	costReduction := commandStep("Refresh feast cost reduction before purchase", "fce", json.RawMessage(`{}`), "fce")
+	costReduction.ResponseBarrier = Intent.ResponseBarrierCommitted
+	feastTimer := shopCommandStep("Refresh feast timer before purchase", "boi", json.RawMessage(`{}`), 0)
+	feastTimer.ResponseBarrier = Intent.ResponseBarrierCommitted
+	castleDetails := commandStep("Refresh feast castle resources immediately before purchase", "dcl", json.RawMessage(`{"CD":1}`), "dcl")
+	castleDetails.ResponseBarrier = Intent.ResponseBarrierCommitted
+	return Intent.CommandDependencyPlan{
+		Key: key,
+		Steps: []Intent.Step{
+			Intent.RebuildOnResume(feastTimer), Intent.RebuildOnResume(costReduction),
+			Intent.RebuildOnResume(castleDetails),
+		},
+	}, nil
+}
+
+func resolveAutoBuyerFeastPurchaseStep(
+	_ context.Context,
+	input Intent.PlanningContext,
+	arguments json.RawMessage,
+) (Intent.Step, error) {
+	_, source, feast, err := autoBuyerFeastPurchaseContext(input, arguments, time.Now().UTC(), true)
+	if err != nil {
+		return Intent.Step{}, err
+	}
+	payload, _ := json.Marshal(map[string]any{
+		"T": feast.ID, "CID": source.ID, "KID": source.KingdomID, "PO": -1, "PWR": 0,
+	})
+	step := shopCommandStep("Start or extend "+feast.Name, "bfs", payload, 0)
+	step.ResponseBarrier = Intent.ResponseBarrierCommitted
+	step.PreDispatchAction = "auto_buyer.feast.purchase.arm"
+	step.PreDispatchArguments = append(json.RawMessage(nil), arguments...)
+	step.DefinitiveSendFailureAction = "auto_buyer.feast.purchase.disarm"
+	step.DefinitiveSendFailureArguments = append(json.RawMessage(nil), arguments...)
+	step.ResponseProjectionFailureIndeterminate = true
+	return step, nil
 }
 
 func autoBuyerPackagePurchaseContext(
@@ -367,6 +515,7 @@ func autoBuyerFeastPurchaseContext(
 	input Intent.PlanningContext,
 	arguments json.RawMessage,
 	now time.Time,
+	requirePreflight bool,
 ) (autoBuyerFeastPurchaseRequest, State.CastleState, GameData.AutoBuyerFeast, error) {
 	var request autoBuyerFeastPurchaseRequest
 	if err := decodeIntentArguments(arguments, &request); err != nil {
@@ -374,7 +523,8 @@ func autoBuyerFeastPurchaseContext(
 	}
 	if request.MinimumRemainingHours <= 0 || request.MinimumRemainingHours > 24*30 || request.MinimumFoodReserve < 0 ||
 		request.MinimumRubyReserve < 0 || request.MaximumRubyCostPerPurchase < 0 || request.HistoryRefreshSec < 60 ||
-		request.HistoryRefreshSec > 3600 || request.ExpectedBalanceBefore < 0 {
+		request.HistoryRefreshSec > 3600 || request.ExpectedEffectiveCost != nil && *request.ExpectedEffectiveCost < 0 ||
+		request.ExpectedBalanceBefore != nil && *request.ExpectedBalanceBefore < 0 {
 		return request, State.CastleState{}, GameData.AutoBuyerFeast{}, fmt.Errorf("feast floor, balance, reserve, or ruby ceiling is invalid")
 	}
 	if input.GameData == nil {
@@ -388,13 +538,32 @@ func autoBuyerFeastPurchaseContext(
 	if !found {
 		return request, source, GameData.AutoBuyerFeast{}, fmt.Errorf("feast %d is not in the supported official catalog", request.FeastID)
 	}
+	if !feast.AutomaticPurchase.Supported {
+		return request, source, feast, fmt.Errorf("%s", feast.AutomaticPurchase.Reason)
+	}
+	if input.State.Market.FeastPurchasePending {
+		return request, source, feast, fmt.Errorf("%w: a previous feast purchase is still awaiting reconciliation", Intent.ErrPlanStale)
+	}
 	if !autoBuyerIntentLevelEligible(input.State.Player, feast.MinLevel, feast.MaxLevel, 0, 0) {
 		return request, source, feast, fmt.Errorf("%s is not available at the current player level", feast.Name)
 	}
-	if input.State.Market.BoostersObservedAt.IsZero() || now.Sub(input.State.Market.BoostersObservedAt) >= time.Duration(request.HistoryRefreshSec)*time.Second {
+	refreshAge := time.Duration(request.HistoryRefreshSec) * time.Second
+	if !input.State.Market.Feast.FreshAt(now, input.State.Session.ChangedAt, refreshAge) {
 		return request, source, feast, fmt.Errorf("%w: feast timer is stale", Intent.ErrPlanStale)
 	}
 	current := input.State.Market.Feast
+	if requirePreflight {
+		if request.FeastRefreshAfter.IsZero() || current.ObservedAt.Before(request.FeastRefreshAfter) {
+			return request, source, feast, fmt.Errorf("%w: feast timer was not refreshed immediately before purchase", Intent.ErrPlanStale)
+		}
+		if !feast.Price.Premium && input.State.Market.FeastCostReductionObservedAt.Before(request.FeastRefreshAfter) {
+			return request, source, feast, fmt.Errorf("%w: feast cost was not refreshed immediately before purchase", Intent.ErrPlanStale)
+		}
+		if source.FoodBalanceObservedAt.Before(request.FeastRefreshAfter) ||
+			!autoBuyerIntentObservationFresh(source.FoodBalanceObservedAt, now, input.State.Session.ChangedAt, refreshAge) {
+			return request, source, feast, fmt.Errorf("%w: feast food balance was not refreshed immediately before purchase", Intent.ErrPlanStale)
+		}
+	}
 	if current.ID != request.ExpectedActiveFeastID || !autoBuyerIntentExpiryMatches(current.ExpiresAt, request.ExpectedExpiresAtUnix) {
 		return request, source, feast, fmt.Errorf("%w: active feast changed", Intent.ErrPlanStale)
 	}
@@ -408,17 +577,53 @@ func autoBuyerFeastPurchaseContext(
 	if !available {
 		return request, source, feast, fmt.Errorf("%s balance is unavailable", feast.Price.Name)
 	}
+	effectiveCost, costErr := autoBuyerIntentFeastCost(input.State, feast, request.HistoryRefreshSec, now)
+	if costErr != nil {
+		return request, source, feast, costErr
+	}
+	if feast.Price.Premium && request.ExpectedBalanceBefore != nil && balance != *request.ExpectedBalanceBefore {
+		return request, source, feast, fmt.Errorf("%w: %s balance changed before feast purchase", Intent.ErrPlanStale, feast.Price.Name)
+	}
+	if request.ExpectedEffectiveCost != nil && effectiveCost != *request.ExpectedEffectiveCost {
+		return request, source, feast, fmt.Errorf("%w: effective feast cost changed before purchase", Intent.ErrPlanStale)
+	}
 	reserve := request.MinimumFoodReserve
 	if feast.Price.Premium {
 		reserve = request.MinimumRubyReserve
-		if !request.AllowRubies || request.MaximumRubyCostPerPurchase < feast.Price.Amount {
+		if !request.AllowRubies || request.MaximumRubyCostPerPurchase < effectiveCost {
 			return request, source, feast, fmt.Errorf("%s is not permitted within the configured ruby ceiling", feast.Name)
 		}
 	}
-	if balance-reserve < feast.Price.Amount {
-		return request, source, feast, fmt.Errorf("%w: %s requires %d %s above reserve", Intent.ErrPlanStale, feast.Name, feast.Price.Amount, feast.Price.Name)
+	if balance-reserve < effectiveCost {
+		return request, source, feast, fmt.Errorf("%w: %s requires %d %s above reserve", Intent.ErrPlanStale, feast.Name, effectiveCost, feast.Price.Name)
 	}
 	return request, source, feast, nil
+}
+
+func autoBuyerIntentFeastCost(
+	gameState State.GameState,
+	feast GameData.AutoBuyerFeast,
+	historyRefreshSec int,
+	now time.Time,
+) (int64, error) {
+	if feast.Price.Premium {
+		return feast.Price.Amount, nil
+	}
+	observedAt := gameState.Market.FeastCostReductionObservedAt
+	if !autoBuyerIntentObservationFresh(observedAt, now, gameState.Session.ChangedAt, time.Duration(historyRefreshSec)*time.Second) {
+		return 0, fmt.Errorf("%w: feast cost reduction is stale", Intent.ErrPlanStale)
+	}
+	percent := gameState.Market.FeastCostReductionPercent
+	if percent < 0 || percent > 100 {
+		return 0, fmt.Errorf("feast cost reduction is invalid")
+	}
+	return feast.EffectiveCost(percent), nil
+}
+
+func autoBuyerIntentObservationFresh(observedAt, now, sessionChangedAt time.Time, maxAge time.Duration) bool {
+	return !observedAt.IsZero() && !observedAt.After(now) &&
+		(sessionChangedAt.IsZero() || !observedAt.Before(sessionChangedAt)) &&
+		maxAge > 0 && now.Sub(observedAt) < maxAge
 }
 
 func (application *Application) guardAutoBuyerPackagePurchase(_ context.Context, arguments json.RawMessage) error {
@@ -515,31 +720,194 @@ func (application *Application) verifyAutoBuyerSpecialistPurchase(_ context.Cont
 	return nil
 }
 
-func (application *Application) guardAutoBuyerFeastPurchase(_ context.Context, arguments json.RawMessage) error {
-	input, err := application.autoBuyerPlanningContext()
-	if err != nil {
-		return err
-	}
-	_, _, _, err = autoBuyerFeastPurchaseContext(input, arguments, time.Now().UTC())
-	return err
+func (application *Application) armAutoBuyerFeastPurchase(ctx context.Context, arguments json.RawMessage) error {
+	return application.setAutoBuyerFeastReconciliation(ctx, arguments, true)
 }
 
-func (application *Application) verifyAutoBuyerFeastPurchase(_ context.Context, arguments json.RawMessage) error {
-	input, err := application.autoBuyerPlanningContext()
-	if err != nil {
-		return err
+func (application *Application) markAutoBuyerFeastReconciliation(ctx context.Context, arguments json.RawMessage) error {
+	return application.setAutoBuyerFeastReconciliation(ctx, arguments, false)
+}
+
+func (application *Application) verifyAutoBuyerFeastReconciliation(_ context.Context, arguments json.RawMessage) error {
+	if application == nil || application.State == nil {
+		return fmt.Errorf("Auto Buyer state is unavailable")
 	}
 	var request autoBuyerFeastPurchaseRequest
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
+	}
+	market := application.State.ReadOnlyView().Market
+	if market.FeastPurchasePending && market.FeastPurchaseExpectedID == request.FeastID {
+		return fmt.Errorf("the game has not yet resolved the pending feast purchase from an authoritative feast snapshot")
+	}
+	return nil
+}
+
+func (application *Application) disarmAutoBuyerFeastPurchase(ctx context.Context, arguments json.RawMessage) error {
+	if application == nil || application.State == nil {
+		return fmt.Errorf("Auto Buyer state is unavailable")
+	}
+	var request autoBuyerFeastPurchaseRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	event, err := application.State.ApplyComponents(State.Components(State.ComponentMarket), func(gameState *State.GameState) ([]string, bool, error) {
+		market := &gameState.Market
+		if !market.FeastPurchasePending || market.FeastPurchaseExpectedID != request.FeastID {
+			return nil, false, nil
+		}
+		metadata := Outbound.MetadataFromContext(ctx)
+		if market.FeastPurchaseOperationID != "" &&
+			market.FeastPurchaseOperationID != strings.TrimSpace(metadata.OperationID) {
+			return nil, false, nil
+		}
+		if market.FeastPurchaseResponseToken != "" &&
+			market.FeastPurchaseResponseToken != strings.TrimSpace(metadata.ResponseToken) {
+			return nil, false, nil
+		}
+		market.FeastPurchasePending = false
+		market.FeastPurchaseExpectedID = 0
+		market.FeastPurchasePendingSince = time.Time{}
+		market.FeastPurchaseExpectedExpiresAt = time.Time{}
+		market.FeastPurchaseOperationID = ""
+		market.FeastPurchaseResponseToken = ""
+		return []string{"boosters", "market"}, true, nil
+	})
+	if err != nil {
+		return err
+	}
+	return application.saveStateEvent(ctx, event)
+}
+
+func (application *Application) setAutoBuyerFeastReconciliation(ctx context.Context, arguments json.RawMessage, force bool) error {
+	if application == nil || application.State == nil || application.GameData == nil {
+		return fmt.Errorf("Auto Buyer state is unavailable")
+	}
+	var request autoBuyerFeastPurchaseRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	if request.FeastID < 0 || request.AttemptAfter.IsZero() || force && request.FeastRefreshAfter.IsZero() {
+		return fmt.Errorf("feast reconciliation boundary is invalid")
+	}
+	gameData, ready := application.GameData.Current()
+	if !ready || gameData == nil {
+		return fmt.Errorf("official game data is unavailable")
+	}
+	feast, found := gameData.AutoBuyerFeast(request.FeastID)
+	if !found || feast.DurationSec <= 0 || feast.DurationSec > int64(math.MaxInt64)/int64(time.Second) {
+		return fmt.Errorf("feast %d is unavailable for reconciliation", request.FeastID)
+	}
+	event, err := application.State.ApplyComponents(State.Components(State.ComponentMarket), func(gameState *State.GameState) ([]string, bool, error) {
+		market := &gameState.Market
+		if market.FeastPurchasePending {
+			return nil, false, nil
+		}
+		pendingSince := time.Now().UTC()
+		if !force {
+			if !market.FeastLastPurchaseAt.After(request.AttemptAfter) {
+				return nil, false, nil
+			}
+			pendingSince = market.FeastLastPurchaseAt
+		}
+		baseline := pendingSince
+		if request.ExpectedExpiresAtUnix > 0 {
+			oldExpiry := time.Unix(request.ExpectedExpiresAtUnix, 0).UTC()
+			if oldExpiry.After(baseline) {
+				baseline = oldExpiry
+			}
+		}
+		market.FeastPurchasePending = true
+		market.FeastPurchaseExpectedID = request.FeastID
+		market.FeastPurchasePendingSince = pendingSince
+		market.FeastPurchaseExpectedExpiresAt = baseline.Add(time.Duration(feast.DurationSec) * time.Second)
+		if force {
+			metadata := Outbound.MetadataFromContext(ctx)
+			market.FeastPurchaseOperationID = strings.TrimSpace(metadata.OperationID)
+			market.FeastPurchaseResponseToken = strings.TrimSpace(metadata.ResponseToken)
+		}
+		return []string{"boosters", "market"}, true, nil
+	})
+	if err != nil {
+		return err
+	}
+	return application.saveStateEvent(ctx, event)
+}
+
+func (application *Application) verifyAutoBuyerFeastRefresh(_ context.Context, arguments json.RawMessage) error {
+	input, err := application.autoBuyerPlanningContext()
+	if err != nil {
+		return err
+	}
+	return verifyAutoBuyerFeastRefreshContext(input, arguments)
+}
+
+func verifyAutoBuyerFeastRefreshContext(input Intent.PlanningContext, arguments json.RawMessage) error {
+	var request autoBuyerBoostersRefreshRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	if !request.FeastContext || request.FeastRefreshAfter.IsZero() {
+		return fmt.Errorf("feast refresh verification is missing its authority boundary")
+	}
+	feastObservedAt := input.State.Market.Feast.ObservedAt
+	costObservedAt := input.State.Market.FeastCostReductionObservedAt
+	sessionChangedAt := input.State.Session.ChangedAt
+	if feastObservedAt.Before(request.FeastRefreshAfter) ||
+		!sessionChangedAt.IsZero() && feastObservedAt.Before(sessionChangedAt) {
+		return fmt.Errorf("the game omitted feast status from the committed Auto Buyer refresh")
+	}
+	if costObservedAt.Before(request.FeastRefreshAfter) ||
+		!sessionChangedAt.IsZero() && costObservedAt.Before(sessionChangedAt) {
+		return fmt.Errorf("the game omitted feast cost reduction from the committed Auto Buyer refresh")
+	}
+	return nil
+}
+
+func (application *Application) verifyAutoBuyerFeastPurchase(ctx context.Context, arguments json.RawMessage) error {
+	input, err := application.autoBuyerPlanningContext()
+	if err != nil {
+		_ = application.setAutoBuyerFeastReconciliation(ctx, arguments, false)
+		return err
+	}
+	err = verifyAutoBuyerFeastPurchaseContext(input, arguments, time.Now().UTC())
+	if err != nil {
+		_ = application.setAutoBuyerFeastReconciliation(ctx, arguments, false)
+	}
+	return err
+}
+
+func verifyAutoBuyerFeastPurchaseContext(
+	input Intent.PlanningContext,
+	arguments json.RawMessage,
+	now time.Time,
+) error {
+	var request autoBuyerFeastPurchaseRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	if request.ExpectedBalanceBefore == nil || request.ExpectedEffectiveCost == nil || request.FeastRefreshAfter.IsZero() {
+		return fmt.Errorf("feast verification is missing its guarded balance, cost, or refresh boundary")
 	}
 	feast, found := input.GameData.AutoBuyerFeast(request.FeastID)
 	if !found {
 		return fmt.Errorf("feast %d disappeared from the official catalog", request.FeastID)
 	}
 	current := input.State.Market.Feast
+	refreshAge := time.Duration(request.HistoryRefreshSec) * time.Second
+	if !current.FreshAt(now, input.State.Session.ChangedAt, refreshAge) {
+		return fmt.Errorf("%s purchase was not confirmed by a current feast snapshot", feast.Name)
+	}
 	oldExpiry := time.Unix(request.ExpectedExpiresAtUnix, 0).UTC()
-	baseline := time.Now().UTC()
+	baseline := current.ObservedAt
+	if baseline.IsZero() {
+		baseline = now
+	}
+	if input.State.Market.FeastLastPurchaseAt.Before(request.FeastRefreshAfter) ||
+		!current.ObservedAt.After(input.State.Market.FeastLastPurchaseAt) {
+		return fmt.Errorf("%s purchase was not confirmed by a committed direct feast response", feast.Name)
+	}
+	baseline = input.State.Market.FeastLastPurchaseAt
 	if oldExpiry.After(baseline) {
 		baseline = oldExpiry
 	}
@@ -551,24 +919,53 @@ func (application *Application) verifyAutoBuyerFeastPurchase(_ context.Context, 
 	if sourceErr != nil {
 		return sourceErr
 	}
+	if !feast.Price.Premium &&
+		(source.FoodBalanceObservedAt.Before(input.State.Market.FeastLastPurchaseAt) ||
+			!autoBuyerIntentObservationFresh(source.FoodBalanceObservedAt, now, input.State.Session.ChangedAt, refreshAge)) {
+		return fmt.Errorf("%s purchase balance was not confirmed by a post-purchase castle refresh", feast.Name)
+	}
 	balance, available := autoBuyerIntentPriceBalance(input.State, source, feast.Price)
 	if !available {
 		return fmt.Errorf("%s balance is unavailable after feast purchase", feast.Price.Name)
 	}
+	return verifyAutoBuyerFeastBalance(request, feast, balance)
+}
+
+func verifyAutoBuyerFeastBalance(
+	request autoBuyerFeastPurchaseRequest,
+	feast GameData.AutoBuyerFeast,
+	balance int64,
+) error {
+	if request.ExpectedBalanceBefore == nil || request.ExpectedEffectiveCost == nil {
+		return fmt.Errorf("feast verification is missing its guarded balance or cost")
+	}
+	if !feast.Price.Premium {
+		// Food changes continuously while the round trips run. Its reserve is a
+		// dispatch-time guard against the immediately preceding DCL snapshot;
+		// exact post-purchase debit comparisons would reject valid purchases.
+		if balance < request.MinimumFoodReserve {
+			return fmt.Errorf("%s purchase left %s below the configured reserve", feast.Name, feast.Price.Name)
+		}
+		return nil
+	}
 	reserve := request.MinimumFoodReserve
-	ceiling := int64(0)
 	if feast.Price.Premium {
 		reserve = request.MinimumRubyReserve
-		ceiling = request.MaximumRubyCostPerPurchase
+		if !request.AllowRubies || *request.ExpectedEffectiveCost > request.MaximumRubyCostPerPurchase {
+			return fmt.Errorf("%s purchase exceeded the configured ruby ceiling", feast.Name)
+		}
 	}
 	if balance < reserve {
 		return fmt.Errorf("%s purchase left %s below the configured reserve", feast.Name, feast.Price.Name)
 	}
-	if request.ExpectedBalanceBefore > balance && request.ExpectedBalanceBefore-balance > feast.Price.Amount {
-		return fmt.Errorf("%s purchase consumed more %s than the official guarded cost", feast.Name, feast.Price.Name)
-	}
-	if ceiling > 0 && request.ExpectedBalanceBefore > balance && request.ExpectedBalanceBefore-balance > ceiling {
-		return fmt.Errorf("%s purchase exceeded the configured ruby ceiling", feast.Name)
+	if *request.ExpectedBalanceBefore > balance {
+		debited := *request.ExpectedBalanceBefore - balance
+		if feast.Price.Premium && debited > request.MaximumRubyCostPerPurchase {
+			return fmt.Errorf("%s purchase exceeded the configured ruby ceiling", feast.Name)
+		}
+		if debited > *request.ExpectedEffectiveCost {
+			return fmt.Errorf("%s purchase consumed more %s than the guarded effective cost", feast.Name, feast.Price.Name)
+		}
 	}
 	return nil
 }
@@ -596,16 +993,26 @@ func autoBuyerIntentPriceBalance(gameState State.GameState, source State.CastleS
 	switch price.Scope {
 	case GameData.AutoBuyerPricePlayerResource:
 		balance, found := gameState.Player.Resources[State.ResourceID(price.ResourceID)]
-		return int64(math.Floor(balance)), found && price.ResourceID > 0
+		amount, valid := autoBuyerIntentBalanceAmount(balance)
+		return amount, found && price.ResourceID > 0 && valid
 	case GameData.AutoBuyerPriceCastleResource:
 		balance, found := source.Resources[State.ResourceID(price.ResourceID)]
-		return int64(math.Floor(balance.Amount)), found && price.ResourceID > 0
+		amount, valid := autoBuyerIntentBalanceAmount(balance.Amount)
+		return amount, found && price.ResourceID > 0 && valid
 	case GameData.AutoBuyerPriceCurrency:
 		balance, found := gameState.Player.Currencies[State.CurrencyID(price.CurrencyID)]
-		return int64(math.Floor(balance)), found && price.CurrencyID > 0
+		amount, valid := autoBuyerIntentBalanceAmount(balance)
+		return amount, found && price.CurrencyID > 0 && valid
 	default:
 		return 0, false
 	}
+}
+
+func autoBuyerIntentBalanceAmount(value float64) (int64, bool) {
+	if math.IsNaN(value) || math.IsInf(value, 0) || value < 0 || value >= float64(math.MaxInt64) {
+		return 0, false
+	}
+	return int64(math.Floor(value)), true
 }
 
 func autoBuyerIntentLevelEligible(player State.PlayerState, minLevel, maxLevel, minLegend, maxLegend int64) bool {

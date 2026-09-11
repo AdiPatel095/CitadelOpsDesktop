@@ -53,6 +53,7 @@ import {
   type AutoStormResource,
   type AutoStormTargetPriority,
 } from '../AutoStormClientState';
+import { presentAutoStormTroopCap } from '../AutoStormTroopCapPresentation';
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
 import { DailyAttackLimitField } from './DailyAttackLimitField';
 
@@ -149,6 +150,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
   const [draggedTargetPriority, setDraggedTargetPriority] = useState<AutoStormTargetPriority | null>(null);
   const [targetPriorityDropTarget, setTargetPriorityDropTarget] = useState<AutoStormTargetPriority | null>(null);
   const initializedOpen = useRef(false);
+  const troopCap = useMemo(() => presentAutoStormTroopCap(troopCapPreview), [troopCapPreview]);
 
   const stormCastles = useMemo(() => Object.values(state?.castles ?? {})
     .filter((castle) => castle.kingdomId === 4)
@@ -325,6 +327,8 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
     configuration?.revision,
     draft.troopImport.enabled,
     isOpen,
+    state?.dailyAttacks?.observedAt,
+    state?.dailyAttacks?.sessionStartedAt,
     state?.automations?.autoStorm?.updatedAt,
     troopCapPreviewSettings,
     troopCapRefreshTick,
@@ -1150,7 +1154,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                       }))}
                     />
                   ) : <p className="text-xs text-text-muted">No non-Storm donor castles are currently observed.</p>}
-                  <div className="mt-3 grid gap-3 md:grid-cols-3">
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     <label>
                       <FieldLabel>Minimum troops kept after launch</FieldLabel>
                       <Input
@@ -1168,18 +1172,47 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                       <p className="mt-1 text-[11px] text-text-muted">Imports the current preset mix so this many attack troops remain stationed in Storm after the next launch.</p>
                     </label>
                     <label>
-                      <FieldLabel>Troop-use history</FieldLabel>
-                      <Input readOnly value={`Past ${AUTO_STORM_TROOP_HISTORY_HOURS} hours`} />
-                      <p className="mt-1 text-[11px] text-text-muted">Fixed rolling window used to calculate the average number of troops sent per hour.</p>
-                    </label>
-                    <label>
-                      <FieldLabel>Current maximum in Storm</FieldLabel>
+                      <FieldLabel>Average attacks since reset</FieldLabel>
                       <Input
                         readOnly
                         value={loadingTroopCapPreview
                           ? 'Calculating…'
-                          : troopCapPreview?.available
-                            ? Math.max(0, Math.trunc(troopCapPreview.maximumTroops)).toLocaleString()
+                          : troopCap.resetSessionAvailable && troopCap.averageAttacksPerHour != null
+                            ? `${troopCap.averageAttacksPerHour.toFixed(2)} attacks/hour`
+                            : 'Unavailable'}
+                        className="font-mono"
+                      />
+                      <p className="mt-1 text-[11px] text-text-muted">
+                        {troopCap.resetSessionAvailable && troopCap.attacksSinceReset != null
+                          ? `${troopCap.attacksSinceReset.toLocaleString()} confirmed Auto Storm attacks since reset ÷ 24.${troopCap.resetSessionStartedAt ? ` Reset began ${new Date(troopCap.resetSessionStartedAt).toLocaleString()}.` : ''}`
+                          : 'Waiting for a trustworthy server reset boundary and confirmed Auto Storm launch count.'}
+                      </p>
+                    </label>
+                    <label>
+                      <FieldLabel>Average enabled preset</FieldLabel>
+                      <Input
+                        readOnly
+                        value={loadingTroopCapPreview
+                          ? 'Calculating…'
+                          : troopCap.averagePresetTroops != null
+                            ? `${troopCap.averagePresetTroops.toFixed(1)} troops/attack`
+                            : 'Unavailable'}
+                        className="font-mono"
+                      />
+                      <p className="mt-1 text-[11px] text-text-muted">
+                        {troopCap.enabledPresetCount != null && troopCap.enabledPresetCount > 0
+                          ? `Average of ${troopCap.enabledPresetCount.toLocaleString()} enabled Storm ${troopCap.enabledPresetCount === 1 ? 'preset' : 'presets'}; tools are excluded and island defenders are included.`
+                          : 'Enable a target type and choose a valid attack preset to calculate its troop demand.'}
+                      </p>
+                    </label>
+                    <label>
+                      <FieldLabel>Storm committed-troop cap</FieldLabel>
+                      <Input
+                        readOnly
+                        value={loadingTroopCapPreview
+                          ? 'Calculating…'
+                          : troopCap.available && troopCap.maximumTroops != null
+                            ? troopCap.maximumTroops.toLocaleString()
                             : 'Unavailable'}
                         className="font-mono"
                       />
@@ -1188,13 +1221,21 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                           ? 'Calculating directly from the settings shown here.'
                           : troopCapPreviewError
                             ? troopCapPreviewError
-                            : troopCapPreview?.available
-                              ? `${troopCapPreview.troopsPerAttack.toLocaleString()} troops in the largest enabled attack · ${troopCapPreview.troopsSentInHistory.toLocaleString()} troops sent over ${troopCapPreview.historyHours} hours · ${troopCapPreview.averageTroopsPerHour.toFixed(1)} troops/hour · ${troopCapPreview.bufferedTroops.toLocaleString()} at 2× hourly demand.${troopCapPreview.measuredAttacksInHistory < troopCapPreview.attacksInHistory ? ` ${troopCapPreview.measuredAttacksInHistory.toLocaleString()} of ${troopCapPreview.attacksInHistory.toLocaleString()} launches include measured troop totals.` : ''}`
-                              : troopCapPreview?.detail ?? 'Enable a target type and choose its attack preset to calculate the cap.'}
+                            : troopCap.available && troopCap.maximumTroops != null
+                              ? troopCap.capBasis == null
+                                ? 'This runtime returned a legacy troop cap without reset-rate basis details.'
+                                : troopCap.capBasis === 'reset_rate'
+                                ? `Using the ${troopCap.rateBasedTroops?.toLocaleString() ?? troopCap.maximumTroops.toLocaleString()} rate-based requirement because it exceeds the ${troopCap.baselineTroops.toLocaleString()} baseline.`
+                                : troopCap.capBasis === 'reserve'
+                                  ? `Raised above the calculated demand so the largest enabled attack can preserve your configured castle reserve.`
+                                  : `Using the ${troopCap.baselineTroops.toLocaleString()} baseline${troopCap.rateBasedTroops != null ? ` because it exceeds the ${troopCap.rateBasedTroops.toLocaleString()} rate-based requirement` : ''}.`
+                              : troopCap.detail || 'Enable a target type and choose its attack preset to calculate the cap.'}
                       </p>
                     </label>
                   </div>
-                  <p className="mt-3 text-[11px] text-text-muted">The hard cap is the larger of the minimum reserve plus one largest enabled attack or twice the average troops sent per hour during the rolling past 24 hours. It counts troops stationed in Storm, away on active movements, waiting in transport, and ready to return from islands.</p>
+                  <p className="mt-3 text-[11px] text-text-muted">
+                    The cap is the largest of the 5,000 baseline, confirmed Auto Storm attacks since reset ÷ 24 × average enabled-preset troops, or the amount needed for the largest preset plus your castle reserve. It counts troops stationed in Storm, away on active movements, waiting in transport, and ready to return from islands.
+                  </p>
                   <p className="mt-2 text-[11px] text-text-muted">Donors are checked in the displayed order, and partial shortages can be filled across several transfers. Time skips use the construction-and-logistics reserve above. Attack tools must already be stationed in Storm.</p>
                   {!troopImportValid ? <p className="mt-2 text-xs text-error">Select at least one currently observed donor castle.</p> : null}
                 </div>

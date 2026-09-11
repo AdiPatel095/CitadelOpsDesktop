@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
+	"CitadelDesktop/Server/AttackPresets"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/Outbound"
@@ -75,6 +77,12 @@ func (observer *stormMapBurstTestObserver) watcherCount() int {
 	return len(observer.watchers)
 }
 
+func (observer *stormMapBurstTestObserver) waitedCount() int {
+	observer.mu.Lock()
+	defer observer.mu.Unlock()
+	return len(observer.waited)
+}
+
 func (observer *stormMapBurstTestObserver) deliver(responseToken string, ingressID uint64, code int) {
 	frame := Protocol.CommittedFrame{
 		Frame: Protocol.Frame{
@@ -92,12 +100,13 @@ func (observer *stormMapBurstTestObserver) deliver(responseToken string, ingress
 }
 
 type stormMapBurstTestSender struct {
-	observer            *stormMapBurstTestObserver
-	expectedSends       int
-	watchersAtFirstSend int
-	metadata            []Outbound.Metadata
-	frames              []Protocol.Frame
-	responseCode        int
+	observer       *stormMapBurstTestObserver
+	expectedSends  int
+	watchersAtSend []int
+	waitedAtSend   []int
+	metadata       []Outbound.Metadata
+	frames         []Protocol.Frame
+	responseCode   int
 }
 
 func (*stormMapBurstTestSender) CorrelatesResponses() bool { return true }
@@ -111,16 +120,15 @@ func (sender *stormMapBurstTestSender) Send(ctx context.Context, payload []byte)
 	if err != nil {
 		return err
 	}
-	if len(sender.frames) == 0 {
-		sender.watchersAtFirstSend = sender.observer.watcherCount()
-	}
 	sender.frames = append(sender.frames, frame)
 	sender.metadata = append(sender.metadata, Outbound.MetadataFromContext(ctx))
-	if len(sender.frames) == sender.expectedSends {
-		for index := len(sender.metadata) - 1; index >= 0; index-- {
-			sender.observer.deliver(sender.metadata[index].ResponseToken, uint64(index+1), sender.responseCode)
-		}
+	if sender.expectedSends > 0 && len(sender.frames) > sender.expectedSends {
+		return fmt.Errorf("received %d Storm map sends, want at most %d", len(sender.frames), sender.expectedSends)
 	}
+	sender.watchersAtSend = append(sender.watchersAtSend, sender.observer.watcherCount())
+	sender.waitedAtSend = append(sender.waitedAtSend, sender.observer.waitedCount())
+	index := len(sender.metadata) - 1
+	sender.observer.deliver(sender.metadata[index].ResponseToken, uint64(index+1), sender.responseCode)
 	return nil
 }
 
@@ -236,6 +244,76 @@ func TestStormAttackReplansWhenCommanderAvailabilityChanges(t *testing.T) {
 		t.Context(), Intent.PlanningContext{State: state, GameData: gameData}, resolverArguments,
 	); !errors.Is(err, Intent.ErrPlanStale) {
 		t.Fatalf("busy commander should make the Storm plan stale: %v", err)
+	}
+}
+
+func TestStormAttackResolverDoesNotExpandConcretePresetAndEnforcesTroopReserve(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],"effects":[],"effectCaps":[],
+		"units":[{"wodID":10}],
+		"isles":[{"IsleID":7,"type":"DUNGEON","dungeonlevel":40,"maxCountVictories":10,"countVictories":"0#1#2#3#4#5#6#7#8#9"}]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().UTC()
+	state := State.NewGameState()
+	state.Castles[40] = State.CastleState{
+		ID: 40, KingdomID: stormIntentKingdomID, X: 100, Y: 100, Focused: true,
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{10: 110}},
+	}
+	state.Commanders[43] = State.CommanderState{ID: 43, Available: true}
+	state.Map[stormIntentKingdomID] = map[string]State.MapObservation{
+		"101:102": {
+			KingdomID: stormIntentKingdomID, X: 101, Y: 102, TypeID: stormIntentFortMapTypeID,
+			StormIsleID: 7, ObservedAt: now,
+		},
+	}
+	state.AttackDialog = State.AttackDialogState{
+		SourceCastleID: 40, KingdomID: stormIntentKingdomID, ObservedAt: now,
+		Target: State.AttackDialogTarget{
+			TypeID: stormIntentFortMapTypeID, X: 101, Y: 102, StormIsleID: 7,
+		},
+	}
+	unitID := int64(10)
+	request := resolvedStormAttackRequest{
+		stormAttackRequest: stormAttackRequest{
+			SourceCastleID: 40, KingdomID: stormIntentKingdomID,
+			TargetTypeID: stormIntentFortMapTypeID, TargetX: 101, TargetY: 102, StormIsleID: 7,
+			Preset: AttackPresets.Preset{
+				ID: "concrete", Name: "Concrete", Waves: []AttackPresets.Wave{{
+					Middle: AttackPresets.Lane{Troops: []AttackPresets.Slot{{ItemID: &unitID, Quantity: 100}}},
+				}},
+			},
+			MinimumTroops: 10, HorseTravelBoostID: -1,
+		},
+		CommanderID: 43,
+	}
+	arguments, err := json.Marshal(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resolved, err := (&Application{}).resolveStormAttackStep(
+		t.Context(), Intent.PlanningContext{State: state, GameData: gameData}, arguments,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var body attackBody
+	if err := json.Unmarshal(resolved.Command.Payload, &body); err != nil {
+		t.Fatal(err)
+	}
+	if len(body.Waves) != 1 || body.Waves[0].Middle.Units[0] != (attackPair{10, 100}) {
+		t.Fatalf("post-ADI Storm formation expanded = %#v", body.Waves)
+	}
+
+	source := state.Castles[40]
+	source.Units.Stationed[10] = 109
+	state.Castles[40] = source
+	if _, err := (&Application{}).resolveStormAttackStep(
+		t.Context(), Intent.PlanningContext{State: state, GameData: gameData}, arguments,
+	); !errors.Is(err, Intent.ErrPlanStale) || !strings.Contains(err.Error(), "configured minimum 10") {
+		t.Fatalf("Storm reserve breach should make the launch stale: %v", err)
 	}
 }
 
@@ -390,7 +468,7 @@ func TestPlanCooperativeStormMapScanUsesOnlyLeasedWindows(t *testing.T) {
 	}
 }
 
-func TestStormMapGAABurstRegistersIndependentSlotsBeforeSending(t *testing.T) {
+func TestStormMapGAABurstSerializesEachResponseSlot(t *testing.T) {
 	windows := []towerMapWindow{
 		{X1: 0, Y1: 0, X2: 100, Y2: 100},
 		{X1: 101, Y1: 0, X2: 201, Y2: 100},
@@ -408,9 +486,6 @@ func TestStormMapGAABurstRegistersIndependentSlotsBeforeSending(t *testing.T) {
 	); err != nil {
 		t.Fatal(err)
 	}
-	if sender.watchersAtFirstSend != len(windows) {
-		t.Fatalf("watchers at first GAA send = %d, want %d", sender.watchersAtFirstSend, len(windows))
-	}
 	if observer.watcherCount() != 0 {
 		t.Fatalf("response watchers after burst = %d, want 0", observer.watcherCount())
 	}
@@ -419,11 +494,17 @@ func TestStormMapGAABurstRegistersIndependentSlotsBeforeSending(t *testing.T) {
 	}
 	tokens := map[string]struct{}{}
 	for index := range sender.frames {
+		if sender.watchersAtSend[index] != 1 || sender.waitedAtSend[index] != index {
+			t.Fatalf(
+				"GAA send %d observed %d watcher(s) and %d committed prior response(s), want 1 and %d",
+				index, sender.watchersAtSend[index], sender.waitedAtSend[index], index,
+			)
+		}
 		if sender.frames[index].Opcode != "gaa" {
 			t.Fatalf("burst opcode %d = %q", index, sender.frames[index].Opcode)
 		}
 		metadata := sender.metadata[index]
-		if metadata.ResponseTimeoutMillis != 15_000 || len(metadata.ResponseOpcodes) != 1 ||
+		if metadata.ResponseTimeoutMillis <= 0 || metadata.ResponseTimeoutMillis > 15_000 || len(metadata.ResponseOpcodes) != 1 ||
 			metadata.ResponseOpcodes[0] != "gaa" || metadata.ResponseToken == "" {
 			t.Fatalf("burst response metadata %d = %#v", index, metadata)
 		}
@@ -437,6 +518,12 @@ func TestStormMapGAABurstRegistersIndependentSlotsBeforeSending(t *testing.T) {
 	observer.mu.Unlock()
 	if len(waited) != 3 || waited[0] != 1 || waited[1] != 2 || waited[2] != 3 {
 		t.Fatalf("committed response slots = %v, want [1 2 3]", waited)
+	}
+}
+
+func TestStormMapGAABurstScalesDeadlineForSerializedWindows(t *testing.T) {
+	if got, want := stormMapBurstDeadline(stormMapBurstResponseTimeout, 25), 6*time.Minute+30*time.Second; got != want {
+		t.Fatalf("25-window Storm map deadline = %s, want %s", got, want)
 	}
 }
 

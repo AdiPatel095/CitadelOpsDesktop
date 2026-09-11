@@ -5,19 +5,17 @@ export interface SwitchProps {
   onChange: (checked: boolean) => void;
   disabled?: boolean;
   size?: 'sm' | 'md' | 'lg';
-  tone?: 'default' | 'feature';
   className?: string;
-  ariaLabel?: string;
+  ariaLabel: string;
 }
 
 export const Switch: React.FC<SwitchProps> = ({
   checked,
   onChange,
   disabled = false,
-  size = 'md',
-  tone = 'default',
+  size = 'sm',
   className = '',
-  ariaLabel = 'Toggle setting',
+  ariaLabel,
 }) => {
   return (
     <button
@@ -27,7 +25,7 @@ export const Switch: React.FC<SwitchProps> = ({
       aria-label={ariaLabel}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={`liquid-switch liquid-switch-${size} liquid-switch-tone-${tone} ${checked ? 'liquid-switch-on' : 'liquid-switch-off'} ${className}`}
+      className={`liquid-switch liquid-switch-${size} ${checked ? 'liquid-switch-on' : 'liquid-switch-off'} ${className}`}
     >
       <span className="sr-only">{ariaLabel}: {checked ? 'on' : 'off'}</span>
       <span aria-hidden="true" className="liquid-switch-rail" />

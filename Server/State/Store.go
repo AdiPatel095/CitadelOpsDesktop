@@ -1416,6 +1416,8 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 	if components.Has(ComponentInvasion) {
 		clone.Invasion.LastScannedAt = cloneMap(source.Invasion.LastScannedAt)
 		clone.Invasion.FortifiedTargets = cloneMap(source.Invasion.FortifiedTargets)
+		clone.Invasion.UnavailableTargets = cloneMap(source.Invasion.UnavailableTargets)
+		clone.Invasion.TargetReservations = cloneMap(source.Invasion.TargetReservations)
 		clone.Invasion.FortifyCurrencies = append([]string(nil), source.Invasion.FortifyCurrencies...)
 	}
 	if components.Has(ComponentStorm) {

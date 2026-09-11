@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Protocol"
 	"CitadelDesktop/Server/State"
 )
@@ -190,6 +191,42 @@ func TestCastleDetailsRefreshUpdatesExplicitDonorWithoutChangingFocus(t *testing
 	}
 	if !donor.ContextSnapshotObservedAt.Equal(contextObservedAt) {
 		t.Fatalf("DCL changed JAA/JCA context timestamp: %v", donor.ContextSnapshotObservedAt)
+	}
+}
+
+func TestCastleDetailsAdvancesFoodAuthorityOnlyForNumericFood(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":{"version":{"@value":"test"}},"buildings":[],"units":[],
+		"resources":[{"resourceID":5,"JSONKey":"F","name":"Food"}]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Date(2026, 9, 8, 20, 0, 0, 0, time.UTC)
+	gameState := State.NewGameState()
+	castle := newCastleState(100)
+	castle.Resources[5] = State.ResourceBalance{Amount: 50_000}
+	gameState.Castles[100] = castle
+	code := 0
+
+	_, changed, err := reduceCastleDetails(t.Context(), Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "dcl", ResponseCode: &code, ReceivedAt: now,
+		Payload: json.RawMessage(`{"C":[{"KID":0,"AI":[{"AID":100,"F":50000}]}]}`),
+	}, &gameState, gameData)
+	if err != nil || !changed || !gameState.Castles[100].FoodBalanceObservedAt.Equal(now) {
+		t.Fatalf("same-value DCL food authority: changed=%t castle=%+v err=%v", changed, gameState.Castles[100], err)
+	}
+
+	next := now.Add(time.Minute)
+	_, _, err = reduceCastleDetails(t.Context(), Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "dcl", ResponseCode: &code, ReceivedAt: next,
+		Payload: json.RawMessage(`{"C":[{"KID":0,"AI":[{"AID":100,"W":123}]}]}`),
+	}, &gameState, gameData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !gameState.Castles[100].FoodBalanceObservedAt.Equal(now) {
+		t.Fatalf("DCL without food advanced authority to %s", gameState.Castles[100].FoodBalanceObservedAt)
 	}
 }
 

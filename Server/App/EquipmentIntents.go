@@ -505,54 +505,167 @@ func (application *Application) planEquipmentUpgrade(_ context.Context, input In
 		return Intent.Plan{}, fmt.Errorf("targetLevel must be between 1 and %d", maxEquipmentUpgradeLevel)
 	}
 	currentLevel := 0
-	eqFlag := 0
-	awaitOpcodes := []string{"ere", "gsue", "guse"}
+	maximumLevel := maxEquipmentUpgradeLevel
+	upgradeOpcode := "ere"
+	relicUpgrade := true
+	var payload json.RawMessage
+	var wearerKind string
+	var wearerID int64
 	switch request.ItemKind {
 	case "equipment":
 		item, ok := input.State.Inventory.Equipment[State.EquipmentInstanceID(request.ItemID)]
 		if !ok || request.ItemID <= 0 {
 			return Intent.Plan{}, fmt.Errorf("equipment %d is not in current state", request.ItemID)
 		}
+		var supported bool
+		maximumLevel, relicUpgrade, supported = equipmentUpgradeLevelCap(item)
+		if !supported {
+			return Intent.Plan{}, fmt.Errorf("equipment %d has an unsupported or unverified enchantment type", request.ItemID)
+		}
 		currentLevel = item.Level
-		eqFlag = 1
-		awaitOpcodes = []string{"ere", "eqe"}
+		wearerKind, wearerID = item.WearerKind, item.WearerID
+		if relicUpgrade {
+			payload, _ = json.Marshal(struct {
+				CostMode  int   `json:"C2"`
+				ItemID    int64 `json:"RIID"`
+				Equipment int   `json:"EQ"`
+			}{0, request.ItemID, 1})
+		} else {
+			upgradeOpcode = "eqe"
+			payload, _ = json.Marshal(struct {
+				CostMode int   `json:"C2"`
+				ItemID   int64 `json:"EID"`
+			}{0, request.ItemID})
+		}
 	case "gem":
 		gem, ok := input.State.Inventory.Gems[State.GemInstanceID(request.ItemID)]
 		if !ok || request.ItemID <= 0 {
 			return Intent.Plan{}, fmt.Errorf("relic gem %d is not in current state", request.ItemID)
 		}
 		currentLevel = gem.Level
+		wearerKind, wearerID = gem.WearerKind, gem.WearerID
+		if wearerKind == "" && gem.EquipmentInstanceID != 0 {
+			carrier, found := input.State.Inventory.Equipment[gem.EquipmentInstanceID]
+			if !found {
+				return Intent.Plan{}, fmt.Errorf("relic gem %d references missing equipment %d", request.ItemID, gem.EquipmentInstanceID)
+			}
+			wearerKind, wearerID = carrier.WearerKind, carrier.WearerID
+		}
+		payload, _ = json.Marshal(struct {
+			CostMode  int   `json:"C2"`
+			ItemID    int64 `json:"RIID"`
+			Equipment int   `json:"EQ"`
+		}{0, request.ItemID, 0})
 	default:
 		return Intent.Plan{}, fmt.Errorf("itemKind must be equipment or gem")
 	}
+	if request.TargetLevel > maximumLevel {
+		return Intent.Plan{}, fmt.Errorf("targetLevel cannot exceed %d for this %s", maximumLevel, request.ItemKind)
+	}
 	if request.TargetLevel <= currentLevel {
 		return Intent.Plan{}, fmt.Errorf("targetLevel must be above current level %d", currentLevel)
+	}
+	claims, err := equipmentUpgradeClaims(input.State, request.ItemKind, request.ItemID, wearerKind, wearerID)
+	if err != nil {
+		return Intent.Plan{}, err
 	}
 	if err := application.verifyEquipmentCoinReserve(context.Background(), nil); err != nil {
 		return Intent.Plan{}, err
 	}
 	delay := application.equipmentUpgradeDelay()
-	steps := []Intent.Step{equipmentUpgradeContextStep()}
+	steps := make([]Intent.Step, 0, (request.TargetLevel-currentLevel)*2+4)
+	if relicUpgrade {
+		steps = append(steps, equipmentUpgradeContextStep())
+	}
 	for level := currentLevel + 1; level <= request.TargetLevel; level++ {
 		guard := Intent.Step{Name: "Verify coin reserve", Action: "equipment.verify_coin_reserve", DelayMillis: delay}
 		steps = append(steps, Intent.RebuildOnResume(guard))
-		payload, _ := json.Marshal(struct {
-			CostMode  int   `json:"C2"`
-			ItemID    int64 `json:"RIID"`
-			Equipment int   `json:"EQ"`
-		}{0, request.ItemID, eqFlag})
 		steps = append(steps, Intent.Step{
-			Name: fmt.Sprintf("Upgrade %s to level %d", request.ItemKind, level), Opcode: "ere", Payload: payload,
-			AwaitOpcodes: awaitOpcodes, TimeoutMillis: 8_000, SuccessCodes: []int{0},
-			Command: Protocol.Command{Opcode: "ere", Payload: payload},
+			Name: fmt.Sprintf("Upgrade %s to level %d", request.ItemKind, level), Opcode: upgradeOpcode, Payload: payload,
+			AwaitOpcode: upgradeOpcode, TimeoutMillis: 8_000, SuccessCodes: []int{0},
+			// The game commits its separate coin/currency updates before returning
+			// 227 for a consumed failed roll. Recheck the reserve, then repeat this
+			// exact level; never count the roll as successful or stale progress.
+			ResponseRetry: &Intent.ResponseRetryPolicy{
+				Codes: []int{227}, GuardAction: "equipment.verify_coin_reserve", DelayMillis: delay,
+			},
+			Command: Protocol.Command{Opcode: upgradeOpcode, Payload: payload},
 		})
 	}
 	steps = append(steps, equipmentRefreshSteps()...)
 	return Intent.Plan{
-		Claims:  []string{"game:equipment", request.ItemKind + ":" + strconv.FormatInt(request.ItemID, 10)},
+		Claims:  claims,
 		Summary: fmt.Sprintf("Upgrade %s %d from level %d to %d", request.ItemKind, request.ItemID, currentLevel, request.TargetLevel),
 		Steps:   steps,
 	}, nil
+}
+
+// equipmentUpgradeLevelCap mirrors the current official client eligibility
+// and limits. The parser retains the client's exact RelicEquipmentVO wire
+// discriminator separately from leader compatibility; no rarity-only guess is
+// allowed to select ERE. Ordinary heroes and appearance items are not
+// enchantable through EQE.
+func equipmentUpgradeLevelCap(item State.EquipmentInstance) (maximumLevel int, relic bool, supported bool) {
+	if !item.RelicKnown {
+		return 0, false, false
+	}
+	if item.Relic {
+		return maxEquipmentUpgradeLevel, true, true
+	}
+	if item.Slot < 1 || item.Slot > 4 {
+		return 0, false, false
+	}
+	switch item.RarityID {
+	case 0:
+		return 20, false, true
+	case 1:
+		return 3, false, true
+	case 2:
+		return 8, false, true
+	case 3:
+		return 12, false, true
+	case 4:
+		return 16, false, true
+	case 5:
+		return 50, false, true
+	default:
+		return 0, false, false
+	}
+}
+
+func equipmentUpgradeClaims(
+	gameState State.GameState,
+	itemKind string,
+	itemID int64,
+	wearerKind string,
+	wearerID int64,
+) ([]string, error) {
+	claims := []string{
+		"game:equipment",
+		itemKind + ":" + strconv.FormatInt(itemID, 10),
+		"account-resources",
+	}
+	wearerKind = strings.ToLower(strings.TrimSpace(wearerKind))
+	switch wearerKind {
+	case "":
+		return claims, nil
+	case "commander":
+		commander, found := gameState.Commanders[State.CommanderID(wearerID)]
+		if !found {
+			return nil, fmt.Errorf("%s %d is worn by commander %d, which is missing from current state", itemKind, itemID, wearerID)
+		}
+		if !commander.Available || State.CommanderHasActiveMovementAt(gameState, commander.ID, time.Now().UTC()) {
+			return nil, fmt.Errorf("%s %d cannot be upgraded while commander %d is travelling", itemKind, itemID, wearerID)
+		}
+	case "castellan":
+		if _, found := gameState.Castellans[State.CastellanID(wearerID)]; !found {
+			return nil, fmt.Errorf("%s %d is worn by castellan %d, which is missing from current state", itemKind, itemID, wearerID)
+		}
+	default:
+		return nil, fmt.Errorf("%s %d has unsupported wearer kind %q", itemKind, itemID, wearerKind)
+	}
+	claims = append(claims, "leader:"+wearerKind+":"+strconv.FormatInt(wearerID, 10))
+	return claims, nil
 }
 
 func planEquipmentSell(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {

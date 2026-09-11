@@ -17,9 +17,56 @@ const (
 	nomadCampMapTypeID   = State.MapTypeNomadCamp
 	samuraiCampMapTypeID = State.MapTypeSamuraiCamp
 	khanCampMapTypeID    = State.MapTypeKhanCamp
+	foreignLordMapTypeID = State.MapTypeForeignLord
+	bloodcrowMapTypeID   = State.MapTypeBloodcrow
 	stormIslandMapTypeID = State.MapTypeStormIsland
 	stormFortMapTypeID   = State.MapTypeStormFort
 )
+
+func reduceHiddenInvasionTargets(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	var payload struct {
+		Coordinates [][]json.RawMessage `json:"CP"`
+	}
+	if err := json.Unmarshal(frame.Payload, &payload); err != nil {
+		return nil, false, fmt.Errorf("decode hidden invasion targets: %w", err)
+	}
+	changed := false
+	for _, coordinate := range payload.Coordinates {
+		x, xKnown := rowExactInt(coordinate, 0)
+		y, yKnown := rowExactInt(coordinate, 1)
+		if !xKnown || !yKnown || x < 0 || y < 0 {
+			continue
+		}
+		if current, exists := gameState.LookupMapObservation(0, fmt.Sprintf("%d:%d", x, y)); exists &&
+			isInvasionMapType(current.TypeID) && current.InvasionAvailabilityKnown &&
+			!frame.ReceivedAt.After(current.ObservedAt) {
+			// A delayed/equal HAC must not relock a target after a newer GAA
+			// explicitly made the camp attackable again.
+			continue
+		}
+		if gameState.Invasion.MarkTargetUnavailable(0, x, y, frame.ReceivedAt) {
+			changed = true
+		}
+		// HAC can arrive for an accepted command whose CRA reply was lost. Keep
+		// its durable no-replay reservation; only exact movement evidence may
+		// attribute the launch, and scoped GAM omission must not release it.
+		if gameState.Invasion.ClearTargetFortification(0, x, y) {
+			changed = true
+		}
+	}
+	if !changed {
+		return nil, false, nil
+	}
+	return []string{"invasion", "map-invasion"}, true, nil
+}
 
 func reduceInvasionFortification(
 	_ context.Context,
@@ -105,26 +152,40 @@ func reduceMapSnapshot(
 		return nil, false, nil
 	}
 	var payload struct {
-		KingdomID wireInt64           `json:"KID"`
-		Nodes     [][]json.RawMessage `json:"AI"`
+		KingdomID json.RawMessage `json:"KID"`
+		Nodes     json.RawMessage `json:"AI"`
 	}
 	if err := json.Unmarshal(frame.Payload, &payload); err != nil {
 		return nil, false, fmt.Errorf("decode map snapshot: %w", err)
 	}
-	kingdomID := State.KingdomID(payload.KingdomID)
+	kingdomIDValue, kingdomValid := rawJSONInt64(payload.KingdomID)
+	if !kingdomValid || kingdomIDValue < 0 {
+		return nil, false, fmt.Errorf("map snapshot has an invalid kingdom id")
+	}
+	nodes, nodesValid := decodeRows(payload.Nodes)
+	if !nodesValid || nodes == nil {
+		return nil, false, fmt.Errorf("map snapshot does not contain a valid AI array")
+	}
+	for index, row := range nodes {
+		typeID, typeValid := rowExactInt(row, 0)
+		x, xValid := rowExactInt(row, 1)
+		y, yValid := rowExactInt(row, 2)
+		if !typeValid || !xValid || !yValid || typeID < 0 || x < 0 || y < 0 {
+			return nil, false, fmt.Errorf("map snapshot row %d has invalid required identity fields", index)
+		}
+	}
+	kingdomID := State.KingdomID(kingdomIDValue)
 	changed := false
 	changedMapKinds := map[State.MapProjectionKind]struct{}{}
 	cooldownChanged := false
 	eventCampChanged := false
 	stormChanged := false
 	beriChanged := false
-	for _, row := range payload.Nodes {
-		if len(row) < 3 {
-			continue
-		}
-		typeID := int(rowInt(row, 0))
-		x := int(rowInt(row, 1))
-		y := int(rowInt(row, 2))
+	invasionChanged := false
+	for _, row := range nodes {
+		typeID, _ := rowExactInt(row, 0)
+		x, _ := rowExactInt(row, 1)
+		y, _ := rowExactInt(row, 2)
 		observation := State.MapObservation{
 			KingdomID: kingdomID, X: x, Y: y, TypeID: typeID, ObservedAt: frame.ReceivedAt,
 		}
@@ -138,12 +199,14 @@ func reduceMapSnapshot(
 			populateEventCampObservation(&observation, row, gameData)
 		} else if typeID == khanCampMapTypeID {
 			populateKhanCampObservation(&observation, row, gameData)
+		} else if isInvasionMapType(typeID) {
+			populateInvasionObservation(&observation, row)
 		} else if isStormMapType(typeID) {
 			populateStormObservation(&observation, row, gameData)
 		} else if len(row) > 3 {
 			observation.ObjectID = rowInt(row, 3)
 		}
-		if len(row) == 20 {
+		if len(row) == 20 && !isInvasionMapType(typeID) {
 			observation.Level = int(rowInt(row, 5))
 		}
 		populateTowerObservation(&observation, row)
@@ -155,6 +218,15 @@ func reduceMapSnapshot(
 				}
 			}
 		}
+		previous, previousExists := gameState.LookupMapObservation(kingdomID, fmt.Sprintf("%d:%d", x, y))
+		if previousExists && previous.TypeID != typeID {
+			if kind, retained := State.MapProjectionKindForType(previous.TypeID); retained {
+				changedMapKinds[kind] = struct{}{}
+			}
+			if isInvasionMapType(previous.TypeID) && gameState.Invasion.ClearTargetFortification(kingdomID, x, y) {
+				invasionChanged = true
+			}
+		}
 		if State.RetainMapObservation(observation) {
 			if gameState.SetMapObservation(observation) {
 				changed = true
@@ -162,8 +234,7 @@ func reduceMapSnapshot(
 					changedMapKinds[kind] = struct{}{}
 				}
 			}
-		} else if previous, exists := gameState.LookupMapObservation(kingdomID, fmt.Sprintf("%d:%d", x, y)); exists &&
-			previous.TypeID != typeID {
+		} else if previousExists && previous.TypeID != typeID {
 			// The coordinate now holds something we do not track (e.g. a Foreign
 			// Lord castle defeated and reverted to a dynamic area). Keeping the
 			// old retained observation would leave a phantom target that every
@@ -187,8 +258,11 @@ func reduceMapSnapshot(
 		if invalidateUnavailableBeriTargetFromMap(gameState, observation, row) {
 			beriChanged = true
 		}
+		if refreshInvasionTargetAvailabilityFromMap(gameState, observation, row) {
+			invasionChanged = true
+		}
 	}
-	if cooldownChanged || eventCampChanged || stormChanged || beriChanged {
+	if cooldownChanged || eventCampChanged || stormChanged || beriChanged || invasionChanged {
 		changed = true
 	}
 	stormScanProgress := strings.Contains(frame.ResponseToken, "/storm-gaa/")
@@ -208,6 +282,9 @@ func reduceMapSnapshot(
 	}
 	if beriChanged {
 		domains = append(domains, "beri")
+	}
+	if invasionChanged {
+		domains = append(domains, "invasion")
 	}
 	return domains, changed, nil
 }
@@ -256,8 +333,65 @@ func isRegularEventCampType(typeID int) bool {
 	return typeID == nomadCampMapTypeID || typeID == samuraiCampMapTypeID
 }
 
+func isInvasionMapType(typeID int) bool {
+	return typeID == foreignLordMapTypeID || typeID == bloodcrowMapTypeID
+}
+
 func isStormMapType(typeID int) bool {
 	return typeID == stormIslandMapTypeID || typeID == stormFortMapTypeID
+}
+
+func populateInvasionObservation(observation *State.MapObservation, row []json.RawMessage) {
+	if observation == nil || !isInvasionMapType(observation.TypeID) || len(row) < 4 {
+		return
+	}
+	// AAlienInvasionMapobjectVO defines row 3 as the dungeon level for every
+	// alien-camp row shape, including captured rows with trailing fields.
+	observation.ObjectID = rowInt(row, 3)
+	observation.Level = int(rowInt(row, 3))
+	if protected, known := invasionPeaceMode(row); known {
+		observation.InvasionAvailabilityKnown = true
+		observation.InvasionProtected = protected
+	}
+}
+
+func refreshInvasionTargetAvailabilityFromMap(
+	gameState *State.GameState,
+	observation State.MapObservation,
+	row []json.RawMessage,
+) bool {
+	if gameState == nil || !isInvasionMapType(observation.TypeID) {
+		return false
+	}
+	peaceMode, known := invasionPeaceMode(row)
+	if !known {
+		return false
+	}
+	availabilityChanged := false
+	if peaceMode {
+		availabilityChanged = gameState.Invasion.MarkTargetUnavailable(
+			observation.KingdomID, observation.X, observation.Y, observation.ObservedAt,
+		)
+	} else {
+		availabilityChanged = gameState.Invasion.MarkTargetAvailable(
+			observation.KingdomID, observation.X, observation.Y, observation.ObservedAt,
+		)
+	}
+	return availabilityChanged
+}
+
+func invasionPeaceMode(row []json.RawMessage) (bool, bool) {
+	// Match AAlienInvasionMapobjectVO exactly: a present index 5 is authoritative
+	// and only numeric 1 means protected. Captured rows can contain other values;
+	// those remain attackable rather than becoming permanently unconfirmed.
+	if len(row) < 6 {
+		return false, false
+	}
+	value, known := rawJSONInt64(row[5])
+	if !known {
+		return false, false
+	}
+	return value == 1, true
 }
 
 func populateStormObservation(observation *State.MapObservation, row []json.RawMessage, gameData *GameData.Store) {

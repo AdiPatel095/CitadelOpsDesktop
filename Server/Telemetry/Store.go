@@ -27,6 +27,7 @@ const (
 	ChannelAutoRecruit     = "autorecruit"
 	ChannelAutoTool        = "autotool"
 	ChannelAutoSceatRes    = "autosceatres"
+	ChannelAutoBuyer       = "autobuyer"
 	ChannelAutoHospital    = "autohospital"
 	ChannelAutoTCI         = "autotci"
 	ChannelAutoBeriWorld   = "autoberiworld"
@@ -67,6 +68,7 @@ var knownChannels = []Channel{
 	{ID: ChannelAutoRecruit, Label: "Auto Recruit", Description: "Completed troop queues and problems requiring attention."},
 	{ID: ChannelAutoTool, Label: "Auto Tool", Description: "Completed tool queues and problems requiring attention."},
 	{ID: ChannelAutoSceatRes, Label: "Auto Sceat Resources", Description: "Completed crafting and resource actions and problems requiring attention."},
+	{ID: ChannelAutoBuyer, Label: "Auto Buyer", Description: "Completed purchases and purchase problems requiring attention."},
 	{ID: ChannelAutoHospital, Label: "Auto Hospital", Description: "Completed hospital actions and problems requiring attention."},
 	{ID: ChannelAutoTCI, Label: "Auto TCI", Description: "Completed construction-item equips, upgrades, and purchases and problems requiring attention."},
 	{ID: ChannelAutoBeriWorld, Label: "Auto Berimond World", Description: "Completed Berimond troop transfers, tower attacks, and problems requiring attention."},
@@ -960,6 +962,8 @@ func featureChannelForActor(actor string) string {
 		return ChannelAutoTool
 	case "autosceatres":
 		return ChannelAutoSceatRes
+	case "autobuyer":
+		return ChannelAutoBuyer
 	case "autohospital":
 		return ChannelAutoHospital
 	case "autotci":

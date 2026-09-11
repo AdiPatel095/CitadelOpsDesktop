@@ -34,6 +34,32 @@ func TestClientStateSnapshotKeepsOnlyDashboardMapKinds(t *testing.T) {
 	}
 }
 
+func TestClientStateSnapshotPreservesZeroEquipmentRarity(t *testing.T) {
+	state := NewGameState()
+	state.Inventory.Equipment[101] = EquipmentInstance{
+		ID: 101, Slot: 1, RarityID: 0, RelicKnown: true,
+	}
+	contents, err := json.Marshal(NewClientStateSnapshot(state))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var snapshot struct {
+		Inventory struct {
+			Equipment map[string]map[string]any `json:"equipment"`
+		} `json:"inventory"`
+	}
+	if err := json.Unmarshal(contents, &snapshot); err != nil {
+		t.Fatal(err)
+	}
+	item := snapshot.Inventory.Equipment["101"]
+	if rarity, found := item["rarityId"]; !found || rarity != float64(0) {
+		t.Fatalf("unique equipment rarity was omitted from client state: %#v", item)
+	}
+	if known, found := item["relicKnown"]; !found || known != true {
+		t.Fatalf("equipment relic classification was omitted from client state: %#v", item)
+	}
+}
+
 func TestClientEventPayloadReusesImmutableEncoding(t *testing.T) {
 	store := NewStore(NewGameState())
 	event, err := store.ApplyComponents(Components(ComponentSession), func(state *GameState) ([]string, bool, error) {
@@ -139,6 +165,98 @@ func TestClientProjectionPublishesAuthoritativeEventInventory(t *testing.T) {
 	}
 	if got := projected.Patch.EventScoreChanges.Inventory.ActiveByEvent[3]; got != availability {
 		t.Fatalf("client event inventory availability = %+v", got)
+	}
+}
+
+func TestClientProjectionPublishesFeastCostReduction(t *testing.T) {
+	observedAt := time.Date(2026, time.September, 8, 16, 0, 0, 0, time.UTC)
+	state := NewGameState()
+	state.Market.FeastCostReductionPercent = 25
+	state.Market.FeastCostReductionObservedAt = observedAt
+	state.Market.FeastPurchasePending = true
+	state.Market.FeastPurchaseExpectedID = 4
+	state.Market.FeastPurchaseOperationID = "private-operation"
+	state.Market.FeastPurchaseResponseToken = "private-token"
+
+	contents, err := json.Marshal(NewClientStateSnapshot(state))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var snapshot GameState
+	if err := json.Unmarshal(contents, &snapshot); err != nil {
+		t.Fatal(err)
+	}
+	if snapshot.Market.FeastCostReductionPercent != 25 ||
+		!snapshot.Market.FeastCostReductionObservedAt.Equal(observedAt) {
+		t.Fatalf("client feast cost reduction snapshot = %+v", snapshot.Market)
+	}
+	for _, backendOnly := range [][]byte{
+		[]byte("feastPurchasePending"),
+		[]byte("feastPurchaseExpectedId"),
+		[]byte("feastPurchaseOperationId"),
+		[]byte("feastPurchaseResponseToken"),
+		[]byte("private-operation"),
+		[]byte("private-token"),
+	} {
+		if bytes.Contains(contents, backendOnly) {
+			t.Fatalf("client feast projection leaked backend-only state %q: %s", backendOnly, contents)
+		}
+	}
+
+	store := NewStore(NewGameState())
+	event, err := store.ApplyComponents(Components(ComponentMarket), func(state *GameState) ([]string, bool, error) {
+		state.Market.FeastCostReductionPercent = 75
+		state.Market.FeastCostReductionObservedAt = observedAt.Add(time.Minute)
+		return []string{"market"}, true, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	projected := ClientEvent(event)
+	if projected.Patch == nil || projected.Patch.Market == nil ||
+		projected.Patch.Market.FeastCostReductionPercent == nil ||
+		*projected.Patch.Market.FeastCostReductionPercent != 75 ||
+		projected.Patch.Market.FeastCostReductionObservedAt == nil ||
+		!projected.Patch.Market.FeastCostReductionObservedAt.Equal(observedAt.Add(time.Minute)) {
+		t.Fatalf("client feast cost reduction event = %+v", projected.Patch)
+	}
+}
+
+func TestClientProjectionDistinguishesZeroFeastReductionFromUnknown(t *testing.T) {
+	marketJSON := func(state GameState) map[string]json.RawMessage {
+		t.Helper()
+		contents, err := json.Marshal(NewClientStateSnapshot(state))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var envelope struct {
+			Market map[string]json.RawMessage `json:"market"`
+		}
+		if err := json.Unmarshal(contents, &envelope); err != nil {
+			t.Fatal(err)
+		}
+		return envelope.Market
+	}
+
+	unknown := marketJSON(NewGameState())
+	if _, present := unknown["feastCostReductionPercent"]; present {
+		t.Fatalf("unknown reduction published a percentage: %s", unknown["feastCostReductionPercent"])
+	}
+	if _, present := unknown["feastCostReductionObservedAt"]; present {
+		t.Fatalf("unknown reduction published an observation: %s", unknown["feastCostReductionObservedAt"])
+	}
+
+	observedAt := time.Date(2026, time.September, 8, 16, 0, 0, 0, time.UTC)
+	state := NewGameState()
+	state.Market.FeastCostReductionObservedAt = observedAt
+	confirmedZero := marketJSON(state)
+	if got := string(confirmedZero["feastCostReductionPercent"]); got != "0" {
+		t.Fatalf("confirmed zero reduction = %s", got)
+	}
+	var publishedAt time.Time
+	if err := json.Unmarshal(confirmedZero["feastCostReductionObservedAt"], &publishedAt); err != nil ||
+		!publishedAt.Equal(observedAt) {
+		t.Fatalf("confirmed zero observation = %s, err=%v", publishedAt, err)
 	}
 }
 

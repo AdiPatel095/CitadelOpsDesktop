@@ -34,8 +34,22 @@ type ClientStateEvent struct {
 // overrides only edge projections that are derived for the dashboard.
 type ClientComponentPatch struct {
 	*ComponentPatch
-	Storm   *ClientStormState `json:"storm,omitempty"`
-	Reports *ReportState      `json:"reports,omitempty"`
+	Market  *ClientMarketState `json:"market,omitempty"`
+	Storm   *ClientStormState  `json:"storm,omitempty"`
+	Reports *ReportState       `json:"reports,omitempty"`
+}
+
+// ClientMarketState omits backend-only market data and uses pointers for
+// observation fields. This makes a confirmed zero-percent feast reduction
+// distinguishable from an observation that has not arrived yet.
+type ClientMarketState struct {
+	Castles                      map[CastleID]MarketCastleState `json:"castles"`
+	Boosters                     map[int]MarketBoosterState     `json:"boosters"`
+	Feast                        MarketFeastState               `json:"feast"`
+	FeastCostReductionPercent    *int                           `json:"feastCostReductionPercent,omitempty"`
+	FeastCostReductionObservedAt *time.Time                     `json:"feastCostReductionObservedAt,omitempty"`
+	CaravanLevelLoaded           bool                           `json:"caravanLevelLoaded"`
+	BoostersObservedAt           *time.Time                     `json:"boostersObservedAt,omitempty"`
 }
 
 type ClientStormState struct {
@@ -60,9 +74,13 @@ func (snapshot ClientStateSnapshot) MarshalJSON() ([]byte, error) {
 	storm := newClientStormState(snapshot.state, time.Now().UTC())
 	return json.Marshal(struct {
 		wireState
-		Map   WorldMap         `json:"map"`
-		Storm ClientStormState `json:"storm"`
-	}{wireState: wireState(projected), Map: snapshot.state.clientMapProjection(), Storm: storm})
+		Map    WorldMap          `json:"map"`
+		Market ClientMarketState `json:"market"`
+		Storm  ClientStormState  `json:"storm"`
+	}{
+		wireState: wireState(projected), Map: snapshot.state.clientMapProjection(),
+		Market: newClientMarket(snapshot.state.Market), Storm: storm,
+	})
 }
 
 // ClientEvent filters component deltas with the same consumer policy used by
@@ -86,6 +104,11 @@ func ClientEvent(source Event) ClientStateEvent {
 		value := clientReports(*source.generation.state)
 		reports = &value
 	}
+	var market *ClientMarketState
+	if source.Patch.Market != nil {
+		value := newClientMarket(*source.Patch.Market)
+		market = &value
+	}
 	patch := *source.Patch
 	projectClientComponentPatch(&patch)
 	if patch.Map != nil {
@@ -103,7 +126,7 @@ func ClientEvent(source Event) ClientStateEvent {
 		}
 	}
 	result.Components = components
-	result.Patch = &ClientComponentPatch{ComponentPatch: &patch, Storm: storm, Reports: reports}
+	result.Patch = &ClientComponentPatch{ComponentPatch: &patch, Market: market, Storm: storm, Reports: reports}
 	return result
 }
 
@@ -259,8 +282,7 @@ func projectClientComponentPatch(patch *ComponentPatch) {
 		patch.InventoryChanges = &value
 	}
 	if patch.Market != nil {
-		value := clientMarket(*patch.Market)
-		patch.Market = &value
+		patch.Market = nil
 	}
 	if patch.KingdomTransport != nil {
 		value := clientKingdomTransport(*patch.KingdomTransport)
@@ -380,7 +402,27 @@ func clientMarket(source MarketState) MarketState {
 	return MarketState{
 		Castles: map[CastleID]MarketCastleState{}, Boosters: source.Boosters,
 		Feast: source.Feast, BoostersObservedAt: source.BoostersObservedAt,
+		FeastCostReductionPercent:    source.FeastCostReductionPercent,
+		FeastCostReductionObservedAt: source.FeastCostReductionObservedAt,
 	}
+}
+
+func newClientMarket(source MarketState) ClientMarketState {
+	result := ClientMarketState{
+		Castles: map[CastleID]MarketCastleState{}, Boosters: source.Boosters, Feast: source.Feast,
+	}
+	if !source.BoostersObservedAt.IsZero() {
+		observedAt := source.BoostersObservedAt
+		result.BoostersObservedAt = &observedAt
+	}
+	if source.FeastCostReductionObservedAt.IsZero() {
+		return result
+	}
+	percent := source.FeastCostReductionPercent
+	observedAt := source.FeastCostReductionObservedAt
+	result.FeastCostReductionPercent = &percent
+	result.FeastCostReductionObservedAt = &observedAt
+	return result
 }
 
 func clientKingdomTransport(source KingdomTransportState) KingdomTransportState {

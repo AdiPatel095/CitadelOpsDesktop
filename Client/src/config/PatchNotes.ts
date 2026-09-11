@@ -57,6 +57,22 @@ export function sortPatchNoteItems(items: readonly PatchNoteItem[]): PatchNoteIt
 
 const PATCH_NOTES_RELEASES_UNSORTED: PatchNotesRelease[] = [
   {
+    version: '2.3.6',
+    subtitle: 'Reliable event attacks, Storm logistics, and feast upkeep',
+    date: '2026-09-10',
+    items: [
+      { kind: 'fixed', text: 'Auto Nomad and Samurai now apply saved cooldown skips before every later chained attack, preserve configured Time Skip reserves, recheck the daily limit for each launch, and retain every confirmed launch in attack-rate counts even if a later chain step fails' },
+      { kind: 'fixed', text: 'Attack failures now identify incompatible preset tools consistently, and Auto Nomad and Samurai validate official target and event restrictions before sending an attack' },
+      { kind: 'fixed', text: 'Equipment upgrades now use the correct ordinary or relic command, enforce official item-level caps, and retry consumed failed enchantment rolls after rechecking reserves without counting false level progress' },
+      { kind: 'fixed', text: 'Auto Storm now calculates its troop-import cap from a 5,000-troop baseline, confirmed attacks since reset, average enabled-preset demand, and the configured castle reserve, while the final attack rechecks that the reserve will remain stationed' },
+      { kind: 'fixed', text: 'Auto Buyer now makes its master run state visible in feast settings, preserves valid feast timers across partial refreshes, rechecks the current discount and paying-castle balance immediately before purchase, and reconciles uncertain outcomes without repeating a possible spend' },
+      { kind: 'fixed', text: 'Auto Buyer now limits automatic feast purchases to protocol-supported food feasts, clearly marks unsupported choices, and requires the refreshed game state to confirm the expected feast and duration after purchase' },
+      { kind: 'fixed', text: 'Auto Invasion now assigns one commander per distinct target, rotates past castles with inbound or outbound movements, reservations, protection, or cooldowns, and durably reconciles exact launches and battle reports without duplicate attacks' },
+      { kind: 'fixed', text: 'Telemetry retention now removes expired rotated logs from retired or previously unknown feature channels as well as current channels' },
+      { kind: 'changed', text: 'Every binary switch now uses the same accessible green-on and red-off styling across pages, settings, modals, pickers, schedulers, equipment, and defense presets' },
+    ],
+  },
+  {
     version: '2.3.5',
     subtitle: 'Reliable recruiting and complete Storm history',
     date: '2026-09-02',

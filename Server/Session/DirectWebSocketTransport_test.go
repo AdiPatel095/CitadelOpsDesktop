@@ -284,6 +284,49 @@ func TestDirectWebSocketInvalidatesAHRContextForEveryOutboundTransition(t *testi
 	}
 }
 
+func TestDirectWebSocketMatchesGAAResponseToExactPendingMapScope(t *testing.T) {
+	transport := &DirectWebSocketTransport{}
+	register := func(token, payload string) {
+		t.Helper()
+		pending, err := transport.registerPending(Outbound.Metadata{
+			ResponseToken: token, ResponseOpcodes: []string{"gaa"}, ResponseTimeoutMillis: 10_000,
+		}, payload)
+		if err != nil || pending == nil {
+			t.Fatalf("register GAA %q = (%v, %v)", token, pending, err)
+		}
+	}
+	decode := func(raw string) Protocol.Frame {
+		t.Helper()
+		frame, err := Protocol.Decode(raw, Protocol.DirectionInbound, time.Now().UTC())
+		if err != nil {
+			t.Fatal(err)
+		}
+		return frame
+	}
+	register("near-origin", `%xt%EmpireEx_21%gaa%1%{"KID":0,"AX1":0,"AY1":0,"AX2":10,"AY2":10}%`)
+	register("near-hundred", `%xt%EmpireEx_21%gaa%1%{"KID":0,"AX1":100,"AY1":100,"AX2":110,"AY2":110}%`)
+
+	if token := transport.matchResponseToken(decode(
+		`%xt%gaa%1%0%{"KID":0,"AI":[[21,101,102,70,0,70]]}%`,
+	)); token != "near-hundred" {
+		t.Fatalf("out-of-order GAA token = %q, want near-hundred", token)
+	}
+	if token := transport.matchResponseToken(decode(
+		`%xt%gaa%1%0%{"KID":0,"AI":[[21,2,3,70,0,70]]}%`,
+	)); token != "near-origin" {
+		t.Fatalf("remaining GAA token = %q, want near-origin", token)
+	}
+
+	register("empty-a", `%xt%EmpireEx_21%gaa%1%{"KID":0,"AX1":0,"AY1":0,"AX2":10,"AY2":10}%`)
+	register("empty-b", `%xt%EmpireEx_21%gaa%1%{"KID":0,"AX1":100,"AY1":100,"AX2":110,"AY2":110}%`)
+	if token := transport.matchResponseToken(decode(`%xt%gaa%1%0%{"KID":0,"AI":[]}%`)); token != "" {
+		t.Fatalf("scope-less empty GAA consumed ambiguous token %q", token)
+	}
+	if len(transport.pending) != 2 {
+		t.Fatalf("ambiguous empty GAA changed pending responses: %#v", transport.pending)
+	}
+}
+
 func TestDirectWebSocketLateAHRRejectionDoesNotMatchNewerRequest(t *testing.T) {
 	transport := &DirectWebSocketTransport{allianceHelpPlayerID: 501, allianceHelpCastleID: 77}
 	pending, err := transport.registerPending(Outbound.Metadata{

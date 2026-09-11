@@ -203,6 +203,8 @@ func (application *Application) resolveCRACommandDependencies(
 		TargetX              int                `json:"TX"`
 		TargetY              int                `json:"TY"`
 		KingdomID            State.KingdomID    `json:"KID"`
+		TargetTypeID         int                `json:"_citadelTargetTypeId"`
+		InvasionGuard        json.RawMessage    `json:"_citadelInvasionGuard"`
 		CommanderID          *State.CommanderID `json:"LID"`
 		TowerCapacityCapture json.RawMessage    `json:"towerCapacityCapture"`
 		ContextMode          string             `json:"_citadelContextMode"`
@@ -242,6 +244,37 @@ func (application *Application) resolveCRACommandDependencies(
 	if err != nil {
 		return Intent.CommandDependencyPlan{}, err
 	}
+	if fields.TargetTypeID == State.MapTypeForeignLord || fields.TargetTypeID == State.MapTypeBloodcrow {
+		if len(fields.InvasionGuard) == 0 {
+			return Intent.CommandDependencyPlan{}, fmt.Errorf("invasion CRA route is missing its occurrence-bound launch guard")
+		}
+		probeReservationArguments, err := invasionTargetOnlyReservationArguments(payload)
+		if err != nil {
+			return Intent.CommandDependencyPlan{}, err
+		}
+		guardedSetup := make([]Intent.Step, 0, len(setup)+1)
+		for _, dependency := range setup {
+			if dependency.Opcode == "adi" {
+				dependency.StaleCodes = []int{95}
+				dependency.PreDispatchAction = "invasion.target.reserve"
+				dependency.PreDispatchArguments = append(json.RawMessage(nil), probeReservationArguments...)
+				dependency.DefinitiveSendFailureAction = "invasion.target.release"
+				dependency.DefinitiveSendFailureArguments = append(json.RawMessage(nil), probeReservationArguments...)
+				dependency.DefinitiveResponseFailureAction = "invasion.target.release"
+				dependency.DefinitiveResponseFailureArguments = append(json.RawMessage(nil), probeReservationArguments...)
+				dependency.StaleResponseAction = "invasion.target.cooldown"
+				dependency.StaleResponseArguments = append(json.RawMessage(nil), probeReservationArguments...)
+				dependency.ResponseProjectionFailureIndeterminate = true
+				guardedSetup = append(guardedSetup, dependency, Intent.Step{
+					Name:   "Release confirmed invasion attack-dialog probe",
+					Action: "invasion.target.release", ActionArguments: append(json.RawMessage(nil), probeReservationArguments...),
+				})
+				continue
+			}
+			guardedSetup = append(guardedSetup, dependency)
+		}
+		setup = guardedSetup
+	}
 	guardedAt := time.Now().UTC()
 	target, towerTarget := input.State.LookupMapObservation(fields.KingdomID, fmt.Sprintf("%d:%d", fields.TargetX, fields.TargetY))
 	towerTarget = towerTarget && target.TypeID == kingdomTowerMapTypeID
@@ -265,11 +298,18 @@ func (application *Application) resolveCRACommandDependencies(
 		KingdomID: fields.KingdomID, CommanderID: fields.CommanderID,
 		DialogObservedAt: guardedAt, MovementsObservedAfter: movementsObservedAfter,
 	})
+	guards := []Intent.Step{{
+		Name: "Verify authoritative CRA target", Action: "attack.cra.send.guard", ActionArguments: guardArguments,
+	}}
+	if fields.TargetTypeID == State.MapTypeForeignLord || fields.TargetTypeID == State.MapTypeBloodcrow {
+		guards = append(guards, Intent.Step{
+			Name: "Verify active invasion occurrence and score boundary", Action: "invasion.attack.guard",
+			ActionArguments: append(json.RawMessage(nil), fields.InvasionGuard...),
+		})
+	}
 	return Intent.CommandDependencyPlan{
-		Key: routeKey,
-		Steps: append(setup, Intent.Step{
-			Name: "Verify authoritative CRA target", Action: "attack.cra.send.guard", ActionArguments: guardArguments,
-		}),
+		Key:   routeKey,
+		Steps: append(setup, guards...),
 	}, nil
 }
 
@@ -304,7 +344,8 @@ func (application *Application) guardCRASend(_ context.Context, arguments json.R
 		}
 		commander, found := state.Commanders[*request.CommanderID]
 		if !found || !commander.Available ||
-			State.CommanderHasActiveMovementAt(state, *request.CommanderID, time.Now().UTC()) {
+			State.CommanderHasActiveMovementAt(state, *request.CommanderID, time.Now().UTC()) ||
+			State.InvasionCommanderReserved(state, *request.CommanderID) {
 			return fmt.Errorf("%w: CRA commander %d is no longer available", Intent.ErrPlanStale, *request.CommanderID)
 		}
 	}
@@ -325,6 +366,43 @@ func (application *Application) guardCRASend(_ context.Context, arguments json.R
 		if cooldown, found := state.NomadCamps.Cooldowns[key]; found && cooldown.PendingCooldownRefresh {
 			return fmt.Errorf(
 				"%w: CRA target %d:%d is awaiting a post-victory cooldown refresh",
+				Intent.ErrPlanStale, request.TargetX, request.TargetY,
+			)
+		}
+	case State.MapTypeForeignLord, State.MapTypeBloodcrow:
+		if !dialog.Target.InvasionAvailabilityKnown || dialog.Target.ObjectID <= 0 {
+			return fmt.Errorf(
+				"%w: CRA invasion target %d:%d does not have confirmed attack availability",
+				Intent.ErrPlanStale, request.TargetX, request.TargetY,
+			)
+		}
+		if dialog.Target.InvasionProtected || state.Invasion.TargetUnavailable(request.KingdomID, request.TargetX, request.TargetY) {
+			return fmt.Errorf(
+				"%w: CRA invasion target %d:%d is hidden or protected",
+				Intent.ErrPlanStale, request.TargetX, request.TargetY,
+			)
+		}
+		if _, reserved := state.Invasion.TargetReservation(request.KingdomID, request.TargetX, request.TargetY); reserved {
+			return fmt.Errorf(
+				"%w: CRA invasion target %d:%d has an unresolved launch",
+				Intent.ErrPlanStale, request.TargetX, request.TargetY,
+			)
+		}
+		if State.AttackFeatureTargetPendingAt(
+			state, State.AttackFeatureAutoInvasion, request.KingdomID, dialog.Target.TypeID,
+			request.TargetX, request.TargetY, time.Now().UTC(),
+		) {
+			return fmt.Errorf(
+				"%w: CRA invasion target %d:%d has a prior attack awaiting settlement",
+				Intent.ErrPlanStale, request.TargetX, request.TargetY,
+			)
+		}
+		if State.AnyActiveMovementAtMapTarget(state, State.MapTargetKey{
+			KingdomID: request.KingdomID, TypeID: dialog.Target.TypeID,
+			X: request.TargetX, Y: request.TargetY,
+		}, time.Now().UTC()) {
+			return fmt.Errorf(
+				"%w: CRA invasion target %d:%d already has an active movement",
 				Intent.ErrPlanStale, request.TargetX, request.TargetY,
 			)
 		}

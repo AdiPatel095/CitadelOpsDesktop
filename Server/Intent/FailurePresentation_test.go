@@ -46,6 +46,40 @@ func TestExpectedInteractiveGameRejectionStillExplainsItself(t *testing.T) {
 	}
 }
 
+func TestOfficialClientEnchantFailureProjectsAsOfficialExpectedWarning(t *testing.T) {
+	engine := &Engine{}
+	receipt := Receipt{Actor: "ui", Status: StatusFailed, Plan: &Plan{Summary: "Upgrade relic equipment"}}
+	receipt = engine.withFailure(receipt, NewResponseCodeError(nil, "ere", 227))
+
+	if receipt.Failure == nil || !receipt.Failure.Toast || receipt.Failure.Kind != FailureGameRejected ||
+		receipt.Failure.Severity != FailureSeverityWarning || receipt.Failure.Knowledge != FailureKnowledgeOfficial ||
+		receipt.Failure.GameCode == nil || *receipt.Failure.GameCode != 227 ||
+		!strings.Contains(receipt.Failure.Explanation, "did not gain a level") ||
+		!strings.Contains(receipt.Failure.Recovery, "Retry the same level") {
+		t.Fatalf("official-client enchant failure = %#v", receipt.Failure)
+	}
+}
+
+func TestCRA91ExplainsIncompatiblePresetToolsAcrossAttackLanes(t *testing.T) {
+	engine := &Engine{}
+	for _, actor := range []string{"automation:autoNomad", "automation:autoStorm", "ui"} {
+		receipt := Receipt{
+			ID: actor, Actor: actor, Status: StatusFailed,
+			Plan: &Plan{Summary: "Launch an attack"},
+		}
+		err := NewResponseCodeError(nil, "cra", 91)
+		receipt = engine.withFailure(receipt, err)
+
+		if receipt.Failure == nil || !receipt.Failure.Toast || receipt.Failure.Kind != FailureAvailability ||
+			receipt.Failure.Severity != FailureSeverityError || receipt.Failure.Knowledge != FailureKnowledgeObserved ||
+			receipt.Failure.GameCode == nil || *receipt.Failure.GameCode != 91 ||
+			!strings.Contains(receipt.Failure.Explanation, "incompatible tools") ||
+			!strings.Contains(receipt.Failure.Recovery, "attack preset") {
+			t.Errorf("CRA 91 failure for %q = %#v", actor, receipt.Failure)
+		}
+	}
+}
+
 func TestPartialAutomationRejectionStillNotifies(t *testing.T) {
 	engine := &Engine{}
 	receipt := Receipt{Actor: "automation:autoStorm", Status: StatusPartiallySucceeded, Plan: &Plan{Summary: "Buy two Storm offers"}}
@@ -115,6 +149,60 @@ func TestExpectedRevisionConflictIsARecoverableStaleState(t *testing.T) {
 	}
 	if strings.Contains(receipt.Failure.Explanation, "revision") {
 		t.Fatalf("expected revision projection exposed internal state = %#v", receipt.Failure)
+	}
+}
+
+func TestAutomationPreflightStaleStateStaysOnLane(t *testing.T) {
+	engine := &Engine{}
+	receipt := engine.withFailure(
+		Receipt{Actor: "automation:autoBuyer", Status: StatusFailed},
+		fmt.Errorf("%w: feast cost reduction is stale", ErrPlanStale),
+	)
+	if receipt.Failure == nil || receipt.Failure.Kind != FailureStaleState ||
+		receipt.Failure.Severity != FailureSeverityWarning || receipt.Failure.Toast {
+		t.Fatalf("automation preflight stale projection = %#v", receipt.Failure)
+	}
+}
+
+func TestAutomationFeastRefreshProtocolGapStaysOnLaneAndLogs(t *testing.T) {
+	engine := &Engine{}
+	receipt := engine.withFailure(
+		Receipt{Actor: "automation:autoBuyer", Status: StatusFailed},
+		errorString("Verify Auto Buyer feast refresh: the game omitted feast status from the committed Auto Buyer refresh"),
+	)
+	if receipt.Failure == nil || receipt.Failure.Toast || receipt.Failure.Severity != FailureSeverityError ||
+		receipt.Failure.Knowledge != FailureKnowledgeObserved ||
+		!strings.Contains(receipt.Failure.Explanation, "stopped before purchasing") ||
+		!strings.Contains(receipt.Failure.Recovery, "read-only refresh") {
+		t.Fatalf("Auto Buyer feast refresh failure = %#v", receipt.Failure)
+	}
+}
+
+func TestPendingFeastReconciliationStaysVisibleOnAutomationLane(t *testing.T) {
+	engine := &Engine{}
+	receipt := engine.withFailure(
+		Receipt{Actor: "automation:autoBuyer", Status: StatusFailed},
+		errorString("the game has not yet resolved the pending feast purchase from an authoritative feast snapshot"),
+	)
+	if receipt.Failure == nil || receipt.Failure.Toast ||
+		receipt.Failure.Kind != FailureIndeterminate ||
+		receipt.Failure.Severity != FailureSeverityWarning ||
+		receipt.Failure.Knowledge != FailureKnowledgeObserved ||
+		!strings.Contains(receipt.Failure.Explanation, "not yet confirmed") ||
+		!strings.Contains(receipt.Failure.Recovery, "keep another feast purchase blocked") {
+		t.Fatalf("pending feast reconciliation projection = %#v", receipt.Failure)
+	}
+}
+
+func TestAutomationStaleStateAfterMutationStillWarnsUser(t *testing.T) {
+	engine := &Engine{}
+	receipt := engine.withFailure(
+		Receipt{Actor: "automation:autoBuyer", Status: StatusPartiallySucceeded},
+		fmt.Errorf("%w: feast timer did not refresh", ErrPlanStale),
+	)
+	if receipt.Failure == nil || receipt.Failure.Kind != FailureStaleState ||
+		receipt.Failure.Severity != FailureSeverityWarning || !receipt.Failure.Toast {
+		t.Fatalf("post-mutation stale projection = %#v", receipt.Failure)
 	}
 }
 

@@ -3,6 +3,7 @@ package Ingest
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"slices"
 	"testing"
 	"time"
@@ -31,6 +32,187 @@ func TestReduceMapSnapshotParsesKingdomTowerVictoryLevelAndCooldown(t *testing.T
 	ready := gameState.Map[0]["211:942"]
 	if ready.TowerVictoryCount != 845 || ready.Level != 81 || ready.TowerCooldownRemaining != 0 {
 		t.Fatalf("unexpected ready tower: %#v", ready)
+	}
+}
+
+func TestReduceMapSnapshotTracksInvasionLevelAndPeaceMode(t *testing.T) {
+	gameState := State.NewGameState()
+	code := 0
+	protectedAt := time.Date(2026, 9, 9, 12, 0, 0, 0, time.UTC)
+	domains, changed, err := reduceMapSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: protectedAt,
+		Payload: json.RawMessage(`{"KID":0,"AI":[[21,101,102,70,-1,1],[34,103,104,80,-1,1]]}`),
+	}, &gameState, nil)
+	if err != nil || !changed {
+		t.Fatalf("protected invasion map: changed=%t err=%v", changed, err)
+	}
+	for _, target := range []struct {
+		x, y  int
+		level int
+	}{{101, 102, 70}, {103, 104, 80}} {
+		observation := gameState.Map[0][fmt.Sprintf("%d:%d", target.x, target.y)]
+		if observation.Level != target.level || observation.ObjectID != int64(target.level) ||
+			!gameState.Invasion.TargetUnavailable(0, target.x, target.y) {
+			t.Fatalf("protected invasion target %d:%d = %#v, state=%#v", target.x, target.y, observation, gameState.Invasion)
+		}
+	}
+	if !slices.Contains(domains, "map-invasion") || !slices.Contains(domains, "invasion") {
+		t.Fatalf("protected invasion domains = %v", domains)
+	}
+
+	availableAt := protectedAt.Add(time.Minute)
+	domains, changed, err = reduceMapSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: availableAt,
+		Payload: json.RawMessage(`{"KID":0,"AI":[[21,101,102,70,-1,0],[34,103,104,80,-1,0]]}`),
+	}, &gameState, nil)
+	if err != nil || !changed || gameState.Invasion.TargetUnavailable(0, 101, 102) ||
+		gameState.Invasion.TargetUnavailable(0, 103, 104) || !slices.Contains(domains, "invasion") {
+		t.Fatalf("available invasion map: domains=%v state=%#v changed=%t err=%v", domains, gameState.Invasion, changed, err)
+	}
+
+	_, changed, err = reduceMapSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: availableAt.Add(time.Minute),
+		Payload: json.RawMessage(`{"KID":0,"AI":[
+			[21,105,106,70,-1,"bad"],[34,107,108,80],[21,109,110,70,-1,0.9],
+			[21,111,112,70,-1,"0"],[21,113,114,70,-1,"1"]
+		]}`),
+	}, &gameState, nil)
+	if err != nil || !changed {
+		t.Fatalf("unconfirmed invasion map: changed=%t err=%v", changed, err)
+	}
+	for _, key := range []string{"105:106", "107:108", "109:110", "111:112", "113:114"} {
+		if observation := gameState.Map[0][key]; observation.InvasionAvailabilityKnown {
+			t.Fatalf("malformed or missing peace mode became authoritative: %s=%#v", key, observation)
+		}
+	}
+
+	_, changed, err = reduceMapSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: availableAt.Add(2 * time.Minute),
+		Payload: json.RawMessage(`{"KID":0,"AI":[
+			[21.5,101,102,70,-1,1],[21,101.5,102,70,-1,1],[21,101,102.5,70,-1,1],
+			["bad",101,102,70,-1,1],[21,9223372036854775808,102,70,-1,1]
+		]}`),
+	}, &gameState, nil)
+	if err == nil || changed {
+		t.Fatalf("malformed required GAA fields were accepted: changed=%t err=%v", changed, err)
+	}
+	if observation, found := gameState.LookupMapObservation(0, "101:102"); !found ||
+		observation.TypeID != State.MapTypeForeignLord || observation.InvasionProtected ||
+		gameState.Invasion.TargetUnavailable(0, 101, 102) {
+		t.Fatalf("malformed GAA row replaced valid target: %#v found=%t", observation, found)
+	}
+	for _, key := range []string{"0:102", "101:0"} {
+		if _, found := gameState.LookupMapObservation(0, key); found {
+			t.Fatalf("malformed GAA row created coordinate %s", key)
+		}
+	}
+}
+
+func TestReduceMapSnapshotRejectsInvalidKingdomID(t *testing.T) {
+	code := 0
+	for _, test := range []struct {
+		name    string
+		payload json.RawMessage
+	}{
+		{name: "missing", payload: json.RawMessage(`{"AI":[[21,101,102,70,-1,0]]}`)},
+		{name: "null", payload: json.RawMessage(`{"KID":null,"AI":[[21,101,102,70,-1,0]]}`)},
+		{name: "string", payload: json.RawMessage(`{"KID":"0","AI":[[21,101,102,70,-1,0]]}`)},
+		{name: "fractional", payload: json.RawMessage(`{"KID":0.5,"AI":[[21,101,102,70,-1,0]]}`)},
+		{name: "overflow", payload: json.RawMessage(`{"KID":9223372036854775808,"AI":[[21,101,102,70,-1,0]]}`)},
+		{name: "negative", payload: json.RawMessage(`{"KID":-1,"AI":[[21,101,102,70,-1,0]]}`)},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			gameState := State.NewGameState()
+			_, changed, err := reduceMapSnapshot(t.Context(), Protocol.Frame{
+				Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+				ReceivedAt: time.Date(2026, 9, 9, 12, 0, 0, 0, time.UTC), Payload: test.payload,
+			}, &gameState, nil)
+			if err == nil || changed || len(gameState.Map) != 0 || len(gameState.Invasion.UnavailableTargets) != 0 {
+				t.Fatalf("invalid GAA kingdom was accepted or mutated state: changed=%t err=%v map=%#v invasion=%#v", changed, err, gameState.Map, gameState.Invasion)
+			}
+		})
+	}
+}
+
+func TestReduceMapSnapshotRejectsNullAIWithoutMutatingTargets(t *testing.T) {
+	observedAt := time.Date(2026, 9, 9, 12, 0, 0, 0, time.UTC)
+	prior := State.MapObservation{
+		KingdomID: 0, TypeID: State.MapTypeForeignLord, X: 101, Y: 102,
+		ObjectID: 70, Level: 70, InvasionAvailabilityKnown: true, ObservedAt: observedAt.Add(-time.Minute),
+	}
+	gameState := State.NewGameState()
+	gameState.Map[0] = map[string]State.MapObservation{"101:102": prior}
+	gameState.Invasion.LastScannedAt[1] = observedAt.Add(-time.Minute)
+	code := 0
+	_, changed, err := reduceMapSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
+		Payload: json.RawMessage(`{"KID":0,"AI":null}`),
+	}, &gameState, nil)
+	if err == nil || changed {
+		t.Fatalf("null GAA array: changed=%t err=%v", changed, err)
+	}
+	if retained, found := gameState.LookupMapObservation(0, "101:102"); !found || retained != prior {
+		t.Fatalf("null GAA mutated prior target: %#v found=%t", retained, found)
+	}
+	if !gameState.Invasion.LastScannedAt[1].Equal(observedAt.Add(-time.Minute)) {
+		t.Fatalf("null GAA advanced scan clock: %s", gameState.Invasion.LastScannedAt[1])
+	}
+}
+
+func TestReduceHiddenInvasionTargetsPersistsUntilNewerMapReappearance(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Invasion.FortifiedTargets[State.InvasionTargetKey(0, 101, 102)] = "STO"
+	code := 0
+	hiddenAt := time.Date(2026, 9, 9, 12, 0, 0, 0, time.UTC)
+	gameState.Invasion.ReserveTarget(State.InvasionTargetReservation{
+		KingdomID: 0, TargetTypeID: State.MapTypeForeignLord, X: 101, Y: 102,
+		OperationID: "cooldown-95", ReservedAt: hiddenAt.Add(-time.Second),
+	})
+	domains, changed, err := reduceHiddenInvasionTargets(t.Context(), Protocol.Frame{
+		Opcode: "hac", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: hiddenAt,
+		Payload: json.RawMessage(`{"CP":[[101,102],[103,104]]}`),
+	}, &gameState, nil)
+	if err != nil || !changed || !gameState.Invasion.TargetUnavailable(0, 101, 102) ||
+		!gameState.Invasion.TargetUnavailable(0, 103, 104) ||
+		len(gameState.Invasion.FortifiedTargets) != 0 ||
+		len(gameState.Invasion.TargetReservations) != 1 ||
+		!slices.Contains(domains, "invasion") || !slices.Contains(domains, "map-invasion") {
+		t.Fatalf("hac reduction: domains=%v state=%#v changed=%t err=%v", domains, gameState.Invasion, changed, err)
+	}
+
+	_, changed, err = reduceMapSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: hiddenAt.Add(time.Minute),
+		Payload: json.RawMessage(`{"KID":0,"AI":[[21,101,102,70,-1,0]]}`),
+	}, &gameState, nil)
+	if err != nil || !changed || gameState.Invasion.TargetUnavailable(0, 101, 102) ||
+		!gameState.Invasion.TargetUnavailable(0, 103, 104) || len(gameState.Invasion.TargetReservations) != 1 {
+		t.Fatalf("selective GAA restoration: state=%#v changed=%t err=%v", gameState.Invasion, changed, err)
+	}
+	if reservation, found := gameState.Invasion.TargetReservation(0, 101, 102); !found || reservation.OperationID != "cooldown-95" {
+		t.Fatalf("GAA alone cleared the no-replay reservation: %#v", reservation)
+	}
+
+	_, changed, err = reduceHiddenInvasionTargets(t.Context(), Protocol.Frame{
+		Opcode: "hac", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: hiddenAt.Add(30 * time.Second),
+		Payload: json.RawMessage(`{"CP":[[101,102]]}`),
+	}, &gameState, nil)
+	if err != nil || changed || gameState.Invasion.TargetUnavailable(0, 101, 102) {
+		t.Fatalf("older HAC overrode newer available GAA: changed=%t err=%v invasion=%#v", changed, err, gameState.Invasion)
+	}
+
+	_, changed, err = reduceHiddenInvasionTargets(t.Context(), Protocol.Frame{
+		Opcode: "hac", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: hiddenAt.Add(2 * time.Minute),
+		Payload: json.RawMessage(`{"CP":[["bad",102],[null,103],[104,"oops"],[-1,105],[101.9,102]]}`),
+	}, &gameState, nil)
+	if err != nil || changed || gameState.Invasion.TargetUnavailable(0, 0, 102) ||
+		gameState.Invasion.TargetUnavailable(0, 0, 103) || gameState.Invasion.TargetUnavailable(0, 104, 0) ||
+		gameState.Invasion.TargetUnavailable(0, 101, 102) {
+		t.Fatalf("malformed HAC coordinates mutated state: changed=%t err=%v invasion=%#v", changed, err, gameState.Invasion)
+	}
+
+	registry := NewRegistry()
+	if err := RegisterCoreReducers(registry); err != nil || !registry.HasInbound("hac") {
+		t.Fatalf("hac reducer registration: registered=%t err=%v", registry.HasInbound("hac"), err)
 	}
 }
 
@@ -340,9 +522,14 @@ func TestReduceMapSnapshotDropsRetainedObservationReplacedByUntrackedRow(t *test
 	}, &gameState, nil); err != nil || !changed {
 		t.Fatalf("initial invasion observation: changed=%t err=%v", changed, err)
 	}
-	if _, exists := gameState.LookupMapObservation(0, "1124:238"); !exists {
+	observed, exists := gameState.LookupMapObservation(0, "1124:238")
+	if !exists {
 		t.Fatal("foreign lord castle was not retained")
 	}
+	if observed.Level != 70 || !observed.InvasionAvailabilityKnown || observed.InvasionProtected {
+		t.Fatalf("captured trailing-field row did not retain official invasion semantics: %#v", observed)
+	}
+	gameState.Invasion.FortifiedTargets[State.InvasionTargetKey(0, 1124, 238)] = "STO"
 	// The castle is defeated; the coordinate now reports as AREA_TYPE_DYNAMIC
 	// (31), which is not a tracked map kind. The stale type-21 observation
 	// must go with it — otherwise it stays a phantom attack candidate that
@@ -357,7 +544,36 @@ func TestReduceMapSnapshotDropsRetainedObservationReplacedByUntrackedRow(t *test
 	if _, exists := gameState.LookupMapObservation(0, "1124:238"); exists {
 		t.Fatal("phantom foreign lord castle survived the dynamic-area row")
 	}
+	if _, exists := gameState.Invasion.FortifiedTargets[State.InvasionTargetKey(0, 1124, 238)]; exists {
+		t.Fatal("dynamic-area replacement retained stale invasion fortification")
+	}
 	if !slices.Contains(domains, "map-invasion") {
 		t.Fatalf("invasion domain did not wake on the deletion: %v", domains)
+	}
+}
+
+func TestReduceMapSnapshotClearsInvasionFortificationOnRetainedReplacement(t *testing.T) {
+	gameState := State.NewGameState()
+	code := 0
+	first := time.Date(2026, 9, 9, 12, 0, 0, 0, time.UTC)
+	if _, changed, err := reduceMapSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: first,
+		Payload: json.RawMessage(`{"KID":0,"AI":[[21,1124,238,70,-1,0]]}`),
+	}, &gameState, nil); err != nil || !changed {
+		t.Fatalf("initial invasion observation: changed=%t err=%v", changed, err)
+	}
+	gameState.Invasion.FortifiedTargets[State.InvasionTargetKey(0, 1124, 238)] = "STO"
+	domains, changed, err := reduceMapSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: first.Add(time.Minute),
+		Payload: json.RawMessage(`{"KID":0,"AI":[[2,1124,238,-1,845,0,0]]}`),
+	}, &gameState, nil)
+	observation, exists := gameState.LookupMapObservation(0, "1124:238")
+	if err != nil || !changed || !exists || observation.TypeID != 2 ||
+		!slices.Contains(domains, "map-invasion") ||
+		len(gameState.Invasion.FortifiedTargets) != 0 {
+		t.Fatalf(
+			"retained replacement: observation=%#v exists=%t domains=%v invasion=%#v changed=%t err=%v",
+			observation, exists, domains, gameState.Invasion, changed, err,
+		)
 	}
 }

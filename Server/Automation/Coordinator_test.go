@@ -13,6 +13,7 @@ import (
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
+	"CitadelDesktop/Server/Telemetry"
 )
 
 type coordinatorTestPolicy struct {
@@ -262,6 +263,24 @@ func TestNewCoordinatorSkipsTypedNilPolicies(t *testing.T) {
 	coordinator := NewCoordinator(nil, nil, nil, nil, policy)
 	if ids := coordinator.PolicyIDs(); len(ids) != 0 {
 		t.Fatalf("typed nil policy IDs = %v, want none", ids)
+	}
+}
+
+func TestCoordinatorSuppliesAttackLaunchTelemetryToPolicySnapshot(t *testing.T) {
+	provider := autoStormTestAttackLaunchCounts{attacks: 7, available: true}
+	policy := &coordinatorTestPolicy{
+		id: "telemetry-snapshot", decision: Decision{EventDriven: true}, snapshots: make(chan Snapshot, 1),
+	}
+	state := State.NewStore(coordinatorReadyState())
+	configuration := openCoordinatorTestConfiguration(t, policy.ID())
+	coordinator := NewCoordinator(state, configuration, nil, &coordinatorTestSubmitter{}, policy)
+	coordinator.SetTelemetry(provider)
+	coordinator.evaluate(t.Context(), map[string]*policyRuntime{policy.ID(): {}}, make(chan operationResult, 1))
+
+	snapshot := <-policy.snapshots
+	counts, available := snapshot.Telemetry.AttackLaunchCountsSince(time.Time{}, time.Time{})
+	if !available || counts[Telemetry.ChannelAutoStorm] != 7 {
+		t.Fatalf("policy telemetry snapshot = %#v available=%t", counts, available)
 	}
 }
 
@@ -1503,6 +1522,31 @@ func TestCoordinatorExpectedFailureUsesLaneStatusWithoutRawError(t *testing.T) {
 		!strings.Contains(automation.Detail, "reevaluate automatically") ||
 		strings.Contains(automation.Detail, "response code") || strings.Contains(automation.Detail, "CRA") {
 		t.Fatalf("expected lane-only failure state = %+v", automation)
+	}
+}
+
+func TestCoordinatorNonToastErrorUsesStructuredLaneDetail(t *testing.T) {
+	state := State.NewStore(coordinatorReadyState())
+	result := operationResult{
+		policyID: "autoBuyer",
+		receipt: Intent.Receipt{
+			ID: "feast-refresh", Status: Intent.StatusFailed,
+			Error: "Verify Auto Buyer feast refresh: the game omitted feast status from the committed Auto Buyer refresh",
+			Failure: &Intent.FailurePresentation{
+				Kind: Intent.FailureUnknown, Severity: Intent.FailureSeverityError, Toast: false,
+				Explanation: "The game did not return the complete feast state, so Auto Buyer stopped before purchasing.",
+				Recovery:    "Auto Buyer will retry the read-only refresh and will not purchase until the response is complete.",
+			},
+		},
+	}
+	NewCoordinator(state, nil, nil, nil).recordReceipt(result)
+	automation := state.Snapshot().Automations["autoBuyer"]
+	if automation.Status != "error" || automation.LastError != "" ||
+		!strings.Contains(automation.Detail, "stopped before purchasing") ||
+		!strings.Contains(automation.Detail, "read-only refresh") ||
+		strings.Contains(automation.Detail, "Automation operation failed") ||
+		strings.Contains(automation.Detail, "omitted feast status") {
+		t.Fatalf("structured non-toast error state = %+v", automation)
 	}
 }
 

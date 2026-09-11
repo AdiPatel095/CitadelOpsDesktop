@@ -1434,13 +1434,18 @@ select {
     border-radius: var(--md-sys-shape-corner-medium);
 }
 
-.m3-select-option:hover {
+.m3-select-option:not(:disabled):hover {
     background: var(--md-sys-color-surface-container-high);
 }
 
-.m3-select-option[aria-selected="true"] {
+.m3-select-option[aria-selected="true"]:not(:disabled) {
     background: var(--md-sys-color-primary-container);
     color: var(--md-sys-color-on-primary-container);
+}
+
+.m3-select-option:disabled {
+    cursor: not-allowed;
+    background: transparent;
 }
 
 .liquid-switch-rail {

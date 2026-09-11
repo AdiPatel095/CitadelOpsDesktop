@@ -69,6 +69,39 @@ func TestPruneLogsKeepsOnlyTheRollingWindow(t *testing.T) {
 	}
 }
 
+func TestPruneLogsCleansRotatedFilesFromUnknownChannelDirectories(t *testing.T) {
+	channelsDir := filepath.Join(t.TempDir(), "Logs", "channels")
+	unknownDirectory := filepath.Join(channelsDir, "future-feature")
+	if err := os.MkdirAll(unknownDirectory, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	cutoff := time.Date(2026, time.July, 29, 12, 0, 0, 0, time.Local)
+	expiredPath := filepath.Join(unknownDirectory, "2026-07-29-1.log")
+	contents := []byte(formatLine(cutoff.Add(-time.Hour), "ERROR", "ACTION", "expired future feature log") + "\n")
+	if err := os.WriteFile(expiredPath, contents, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chtimes(expiredPath, cutoff.Add(-time.Hour), cutoff.Add(-time.Hour)); err != nil {
+		t.Fatal(err)
+	}
+
+	store := NewStore(100)
+	store.fileMu.Lock()
+	store.channelsDir = channelsDir
+	store.fileMu.Unlock()
+	defer store.Close()
+	result, err := store.pruneLogs(cutoff)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.filesDeleted != 1 || result.bytesRemoved != int64(len(contents)) {
+		t.Fatalf("unknown-channel retention result = %#v", result)
+	}
+	if _, err := os.Stat(expiredPath); !os.IsNotExist(err) {
+		t.Fatalf("expired unknown-channel log still exists: %v", err)
+	}
+}
+
 func TestPersistentChannelsRotateAndTailAcrossFiles(t *testing.T) {
 	store := NewStore(100)
 	if err := store.SetDataDir(t.TempDir()); err != nil {

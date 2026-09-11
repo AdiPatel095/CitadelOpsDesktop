@@ -94,6 +94,53 @@ func TestComponentSnapshotWritesOnlyDirtyComponentsAfterBootstrap(t *testing.T) 
 	}
 }
 
+func TestInvasionAvailabilityAndReservationsPersistAcrossRestart(t *testing.T) {
+	directory := t.TempDir()
+	observedAt := time.Date(2026, 9, 9, 12, 0, 0, 0, time.UTC)
+	occurrenceEndsAt := observedAt.Add(2 * time.Hour)
+	reconcileAfter := observedAt.Add(time.Minute)
+	initial := NewGameState()
+	initial.Map[0] = map[string]MapObservation{
+		"101:102": {
+			KingdomID: 0, TypeID: MapTypeForeignLord, X: 101, Y: 102, Level: 70,
+			InvasionAvailabilityKnown: true, InvasionProtected: true, ObservedAt: observedAt,
+		},
+	}
+	initial.Invasion.MarkTargetUnavailable(0, 101, 102, observedAt)
+	initial.Invasion.ReserveTarget(InvasionTargetReservation{
+		KingdomID: 0, EventID: 71, OccurrenceEndsAt: occurrenceEndsAt,
+		TargetTypeID: MapTypeForeignLord, X: 101, Y: 102,
+		SourceCastleID: 1, SourceX: 100, SourceY: 100, SourceKnown: true,
+		CommanderID: 0, CommanderKnown: true,
+		OperationID: "indeterminate-cra", ReservedAt: observedAt.Add(time.Second), ReconcileAfter: reconcileAfter,
+	})
+	store := NewStore(initial)
+	event, err := store.ApplyComponents(Components(ComponentInvasion), func(state *GameState) ([]string, bool, error) {
+		state.Invasion.FortifyResourceCount = 1
+		return []string{"invasion"}, true, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := SaveComponentSnapshot(directory, event, Components(event.Components...)); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := LoadSnapshot(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	target := loaded.Map[0]["101:102"]
+	reservation, reserved := loaded.Invasion.TargetReservation(0, 101, 102)
+	if !target.InvasionAvailabilityKnown || !target.InvasionProtected ||
+		!loaded.Invasion.TargetUnavailable(0, 101, 102) || !reserved ||
+		reservation.OperationID != "indeterminate-cra" || reservation.EventID != 71 ||
+		!reservation.OccurrenceEndsAt.Equal(occurrenceEndsAt) || !reservation.ReconcileAfter.Equal(reconcileAfter) ||
+		reservation.SourceCastleID != 1 || !reservation.SourceKnown || reservation.SourceX != 100 || reservation.SourceY != 100 ||
+		!reservation.CommanderKnown || reservation.CommanderID != 0 {
+		t.Fatalf("restarted invasion state lost availability or reservation: target=%#v invasion=%#v", target, loaded.Invasion)
+	}
+}
+
 func TestComponentSnapshotWriterReusesLastDurableManifest(t *testing.T) {
 	directory := t.TempDir()
 	store := NewStore(NewGameState())
@@ -560,6 +607,55 @@ func TestSnapshotRoundTripResetsSession(t *testing.T) {
 	}
 	if info.Mode().Perm() != 0o600 {
 		t.Fatalf("snapshot permissions = %o", info.Mode().Perm())
+	}
+}
+
+func TestComponentSnapshotPersistsFeastCostReduction(t *testing.T) {
+	directory := t.TempDir()
+	observedAt := time.Date(2026, time.September, 8, 16, 0, 0, 0, time.UTC)
+	pendingSince := observedAt.Add(time.Minute)
+	expectedExpiry := pendingSince.Add(6 * time.Hour)
+	store := NewStore(NewGameState())
+	bootstrap, err := store.ApplyComponents(Components(ComponentPlayer), func(state *GameState) ([]string, bool, error) {
+		state.Player.Level = 1
+		return []string{"player"}, true, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := SaveComponentSnapshot(directory, bootstrap, Components(bootstrap.Components...)); err != nil {
+		t.Fatal(err)
+	}
+	event, err := store.ApplyComponents(Components(ComponentMarket), func(state *GameState) ([]string, bool, error) {
+		state.Market.FeastCostReductionPercent = 75
+		state.Market.FeastCostReductionObservedAt = observedAt
+		state.Market.FeastPurchasePending = true
+		state.Market.FeastPurchaseExpectedID = 4
+		state.Market.FeastPurchasePendingSince = pendingSince
+		state.Market.FeastPurchaseExpectedExpiresAt = expectedExpiry
+		state.Market.FeastPurchaseOperationID = "feast-operation"
+		state.Market.FeastPurchaseResponseToken = "feast-operation/1"
+		return []string{"market"}, true, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := SaveComponentSnapshot(directory, event, Components(event.Components...)); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := LoadSnapshot(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if loaded.Market.FeastCostReductionPercent != 75 ||
+		!loaded.Market.FeastCostReductionObservedAt.Equal(observedAt) ||
+		!loaded.Market.FeastPurchasePending ||
+		loaded.Market.FeastPurchaseExpectedID != 4 ||
+		!loaded.Market.FeastPurchasePendingSince.Equal(pendingSince) ||
+		!loaded.Market.FeastPurchaseExpectedExpiresAt.Equal(expectedExpiry) ||
+		loaded.Market.FeastPurchaseOperationID != "feast-operation" ||
+		loaded.Market.FeastPurchaseResponseToken != "feast-operation/1" {
+		t.Fatalf("persisted feast state = %+v", loaded.Market)
 	}
 }
 

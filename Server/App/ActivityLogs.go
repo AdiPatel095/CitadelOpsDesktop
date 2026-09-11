@@ -32,16 +32,18 @@ var userFacingTechnicalFailurePattern = regexp.MustCompile(
 )
 
 func featureActivities(receipt Intent.Receipt) []featureActivity {
-	if supportingFeatureIntent(receipt.Intent) {
+	if supportingFeatureIntent(receipt.Intent) && !recordSupportingFeatureFailure(receipt) {
 		return nil
 	}
 	switch receipt.Status {
 	case Intent.StatusSucceeded:
 		return completedFeatureActivities(receipt)
 	case Intent.StatusFailed, Intent.StatusPartiallySucceeded, Intent.StatusIndeterminate:
-		if receipt.Plan != nil && (receipt.Plan.Effect == Intent.EffectRead || !planHasGameCommand(receipt.Plan)) {
+		if receipt.Plan != nil &&
+			(receipt.Plan.Effect == Intent.EffectRead && !recordSupportingFeatureFailure(receipt) || !planHasGameCommand(receipt.Plan)) {
 			return nil
 		}
+		activities := completedAttackActivities(receipt)
 		summary := receiptSummary(receipt)
 		detail := "Could not " + attemptedActivityDetail(summary)
 		reason := userFacingFailureReason(receipt.Error)
@@ -54,9 +56,24 @@ func featureActivities(receipt Intent.Receipt) []featureActivity {
 			availabilityGateFailure(receipt.Error) {
 			severity = "WARN"
 		}
-		return []featureActivity{{severity: severity, event: featureActivityEvent(receipt.Intent), detail: userFacingActivityText(detail)}}
+		return append(activities, featureActivity{
+			severity: severity, event: featureActivityEvent(receipt.Intent), detail: userFacingActivityText(detail),
+		})
 	default:
 		return nil
+	}
+}
+
+func recordSupportingFeatureFailure(receipt Intent.Receipt) bool {
+	intent := strings.ToLower(strings.TrimSpace(receipt.Intent))
+	if intent != "autobuyer.boosters.refresh" && intent != "autobuyer.feast.reconcile" {
+		return false
+	}
+	switch receipt.Status {
+	case Intent.StatusFailed, Intent.StatusPartiallySucceeded, Intent.StatusIndeterminate:
+		return true
+	default:
+		return false
 	}
 }
 
@@ -81,6 +98,10 @@ func userFacingFailureReason(value string) string {
 	}
 	lower := strings.ToLower(reason)
 	switch {
+	case strings.Contains(lower, "omitted feast status"):
+		return "the game did not return feast status, so Auto Buyer stopped before purchasing"
+	case strings.Contains(lower, "omitted feast cost reduction"):
+		return "the game did not return the feast cost reduction, so Auto Buyer stopped before purchasing"
 	case strings.Contains(lower, "not enough troops"), strings.Contains(lower, "insufficient troops"),
 		strings.Contains(lower, " commander(s) require "), strings.Contains(lower, " attack formation requires "):
 		return "there were not enough eligible troops available"
@@ -101,7 +122,7 @@ func userFacingFailureReason(value string) string {
 		const unsuccessfulMarker = " was not successful: "
 		if marker := strings.Index(lower, unsuccessfulMarker); marker >= 0 {
 			officialReason := strings.TrimSpace(reason[marker+len(unsuccessfulMarker):])
-			for _, source := range []string{" (official game text)", " (inferred from captures)", " (undocumented)"} {
+			for _, source := range []string{" (official game text)", " (official game client)", " (inferred from captures)", " (undocumented)"} {
 				officialReason = strings.TrimSuffix(officialReason, source)
 			}
 			if officialReason != "" {
@@ -124,7 +145,7 @@ func userFacingFailureReason(value string) string {
 	const unsuccessfulMarker = " was not successful: "
 	if marker := strings.Index(lower, unsuccessfulMarker); marker >= 0 {
 		reason = strings.TrimSpace(reason[marker+len(unsuccessfulMarker):])
-		for _, source := range []string{" (official game text)", " (inferred from captures)", " (undocumented)"} {
+		for _, source := range []string{" (official game text)", " (official game client)", " (inferred from captures)", " (undocumented)"} {
 			reason = strings.TrimSuffix(reason, source)
 		}
 		if reason != "" {
@@ -164,6 +185,34 @@ func completedFeatureActivities(receipt Intent.Receipt) []featureActivity {
 	}}
 }
 
+func completedAttackActivities(receipt Intent.Receipt) []featureActivity {
+	if receipt.Plan == nil || featureActivityEvent(receipt.Intent) != "ATTACK" || len(receipt.CompletedStepIndexes) == 0 {
+		return nil
+	}
+	completed := make(map[int]struct{}, len(receipt.CompletedStepIndexes))
+	for _, index := range receipt.CompletedStepIndexes {
+		completed[index] = struct{}{}
+	}
+	launches := indexedAttackLaunchSteps(receipt.Plan.Steps)
+	activities := make([]featureActivity, 0, len(launches))
+	for ordinal, launch := range launches {
+		if _, confirmed := completed[launch.index]; !confirmed {
+			continue
+		}
+		detail := completedActivityDetail(launch.step.Name)
+		if strings.TrimSpace(launch.step.Name) == "" {
+			detail = completedActivityDetail(receiptSummary(receipt))
+		}
+		if len(launches) > 1 {
+			detail = fmt.Sprintf("%s (%d of %d)", detail, ordinal+1, len(launches))
+		}
+		activities = append(activities, featureActivity{
+			severity: "INFO", event: "ATTACK", detail: userFacingActivityText(detail),
+		})
+	}
+	return activities
+}
+
 func userFacingActivityText(value string) string {
 	value = (GameData.IdentifierLabels{}).Humanize(strings.TrimSpace(value))
 	for _, pattern := range userFacingActivityIdentifierPatterns {
@@ -190,8 +239,22 @@ func planHasGameCommand(plan *Intent.Plan) bool {
 }
 
 func attackLaunchSteps(steps []Intent.Step) []Intent.Step {
-	result := make([]Intent.Step, 0, len(steps))
-	for _, step := range steps {
+	indexed := indexedAttackLaunchSteps(steps)
+	result := make([]Intent.Step, 0, len(indexed))
+	for _, launch := range indexed {
+		result = append(result, launch.step)
+	}
+	return result
+}
+
+type indexedAttackLaunchStep struct {
+	index int
+	step  Intent.Step
+}
+
+func indexedAttackLaunchSteps(steps []Intent.Step) []indexedAttackLaunchStep {
+	result := make([]indexedAttackLaunchStep, 0, len(steps))
+	for index, step := range steps {
 		opcode := strings.ToLower(strings.TrimSpace(step.Opcode))
 		if opcode == "" {
 			opcode = strings.ToLower(strings.TrimSpace(step.Command.Opcode))
@@ -201,7 +264,7 @@ func attackLaunchSteps(steps []Intent.Step) []Intent.Step {
 			dependencyOpcode = strings.ToLower(strings.TrimSpace(step.CommandDependencies.Opcode))
 		}
 		if opcode == "cra" || dependencyOpcode == "cra" {
-			result = append(result, step)
+			result = append(result, indexedAttackLaunchStep{index: index, step: step})
 		}
 	}
 	return result
@@ -230,6 +293,8 @@ func featureActivityEvent(intent string) string {
 		intent == "beri.transfer", intent == "movement.recall", intent == "storm.island.return":
 		return "TRANSPORT"
 	case strings.Contains(intent, "purchase"), intent == "khan.defense_tools.replenish":
+		return "PURCHASE"
+	case intent == "autobuyer.boosters.refresh", intent == "autobuyer.feast.reconcile":
 		return "PURCHASE"
 	case strings.HasPrefix(intent, "construction."):
 		return "CONSTRUCTION"
@@ -308,6 +373,7 @@ func completedActivityDetail(summary string) string {
 		{"Rent ", "Rented "},
 		{"Complete ", "Completed "},
 		{"Request ", "Requested "},
+		{"Refresh ", "Refreshed "},
 		{"Update ", "Updated "},
 		{"Construct ", "Started construction of "},
 		{"Place ", "Placed "},
@@ -369,6 +435,8 @@ func attemptedActivityDetail(summary string) string {
 		{"Rent ", "rent "},
 		{"Complete ", "complete "},
 		{"Request ", "request "},
+		{"Refresh ", "refresh "},
+		{"Reconcile ", "reconcile "},
 		{"Update ", "update "},
 		{"Construct ", "construct "},
 		{"Place ", "place "},
