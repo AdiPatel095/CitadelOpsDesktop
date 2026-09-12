@@ -1,4 +1,4 @@
-# 2.3.6 automation rejection safety
+# Automation rejection safety
 
 This is a runtime policy, independent of error-message catalogs. Knowing what an
 error means is not permission to recover automatically.
@@ -9,14 +9,21 @@ error means is not permission to recover automatically.
 | ADI 95 | Existing target-cooldown recovery |
 | ERE 227 / EQE 227 | Existing failed-enchantment recovery, with reserve checks before retries |
 | BUP 87 | Existing recruitment rejection handling; no safety lane lock |
+| AHR 273 | Duplicate/multiple alliance-help rejection; failure remains visible without a new safety lane lock |
 | Any nonzero MSD rejection | Originating lane locked for 30 minutes; no early manual clear |
 | Any other nonzero rejection, including CRA 256 | Originating lane held until explicit review |
 
-These are the only four approved opcode/code pairs. Approval bypasses the safety
+These are the only five approved opcode/code pairs. Approval bypasses the safety
 lock, not rejection handling: errors remain failures unless their existing intent
 policy explicitly permits recovery. No other pair becomes safe because it shares
 a numeric code or has a known catalog description. Further exceptions require
 separate stress-test evidence and approval; no live stress testing is enabled here.
+
+AHR 273 was explicitly approved on 2026-09-12 after matching the official client
+constant `NO_MULTIPLE_ALLIANCEHELP` to a captured recruitment request. This narrow
+tenant hotfix is queued for the 2.4.0 desktop release. It adds no retry and does not
+declare the rejected operation successful. Existing persisted locks still require
+an explicit incident review and clear; deployment does not clear them.
 
 The coordinator supplies the exact policy ID separately from its shared actor.
 Main operations, follow-ups, dependencies and failure fallbacks retain that lane
