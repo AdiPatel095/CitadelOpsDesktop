@@ -370,6 +370,7 @@ func requestFingerprint(request Request) string {
 		expectedRevision = fmt.Sprint(*request.ExpectedRevision)
 	}
 	payload, _ := json.Marshal(struct {
+		AutomationLane   string `json:"automationLane,omitempty"`
 		Name             string `json:"name"`
 		Actor            string `json:"actor"`
 		Priority         int    `json:"priority"`
@@ -377,7 +378,8 @@ func requestFingerprint(request Request) string {
 		ExpectedRevision string `json:"expectedRevision"`
 		DryRun           bool   `json:"dryRun"`
 	}{
-		Name: request.Name, Actor: request.Actor, Priority: int(request.Priority), Arguments: string(arguments),
+		AutomationLane: request.AutomationLane,
+		Name:           request.Name, Actor: request.Actor, Priority: int(request.Priority), Arguments: string(arguments),
 		ExpectedRevision: expectedRevision, DryRun: request.DryRun,
 	})
 	hash := sha256.Sum256(payload)

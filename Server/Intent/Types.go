@@ -21,6 +21,8 @@ const (
 )
 
 type Request struct {
+	// Set only by runtime-owned callers; API JSON cannot forge lane identity.
+	AutomationLane   string            `json:"-"`
 	ID               string            `json:"id,omitempty"`
 	Name             string            `json:"name"`
 	Actor            string            `json:"actor,omitempty"`
@@ -232,14 +234,16 @@ const (
 // projection tells clients what happened, what the user can do, and whether an
 // expected automation-lane condition should interrupt them with a toast.
 type FailurePresentation struct {
-	Kind        FailureKind      `json:"kind"`
-	Message     string           `json:"message"`
-	Explanation string           `json:"explanation"`
-	Recovery    string           `json:"recovery,omitempty"`
-	Severity    FailureSeverity  `json:"severity"`
-	GameCode    *int             `json:"gameCode,omitempty"`
-	Knowledge   FailureKnowledge `json:"knowledge,omitempty"`
-	Toast       bool             `json:"toast"`
+	SafetyLock  *State.AutomationSafetyLock `json:"safetyLock,omitempty"`
+	GameOpcode  string                      `json:"gameOpcode,omitempty"`
+	Kind        FailureKind                 `json:"kind"`
+	Message     string                      `json:"message"`
+	Explanation string                      `json:"explanation"`
+	Recovery    string                      `json:"recovery,omitempty"`
+	Severity    FailureSeverity             `json:"severity"`
+	GameCode    *int                        `json:"gameCode,omitempty"`
+	Knowledge   FailureKnowledge            `json:"knowledge,omitempty"`
+	Toast       bool                        `json:"toast"`
 }
 
 const (

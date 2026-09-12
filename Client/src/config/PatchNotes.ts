@@ -69,6 +69,7 @@ const PATCH_NOTES_RELEASES_UNSORTED: PatchNotesRelease[] = [
       { kind: 'fixed', text: 'Auto Buyer now limits automatic feast purchases to protocol-supported food feasts, clearly marks unsupported choices, and requires the refreshed game state to confirm the expected feast and duration after purchase' },
       { kind: 'fixed', text: 'Auto Invasion now assigns one commander per distinct target, rotates past castles with inbound or outbound movements, reservations, protection, or cooldowns, and durably reconciles exact launches and battle reports without duplicate attacks' },
       { kind: 'fixed', text: 'Telemetry retention now removes expired rotated logs from retired or previously unknown feature channels as well as current channels' },
+      { kind: 'security', text: 'Automation now locks the originating lane on unapproved game opcode errors before retrying or continuing a chain. Locks retain the triggering operation across profile restarts and require explicit review; only ADI 95, ERE/EQE 227, and BUP 87 retain existing recovery behavior, while MSD rejections retain a 30-minute cooldown' },
       { kind: 'changed', text: 'Every binary switch now uses the same accessible green-on and red-off styling across pages, settings, modals, pickers, schedulers, equipment, and defense presets' },
     ],
   },

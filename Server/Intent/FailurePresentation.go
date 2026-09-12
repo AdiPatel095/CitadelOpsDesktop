@@ -32,6 +32,11 @@ func (engine *Engine) withFailure(receipt Receipt, err error) Receipt {
 }
 
 func (engine *Engine) failurePresentation(receipt Receipt, err error) *FailurePresentation {
+	var locked *LaneLockedError
+	if errors.As(err, &locked) {
+		lock := locked.Lock
+		return &FailurePresentation{Kind: FailureUnknown, Message: "Automation lane safety lock", Explanation: lock.Detail(), Recovery: "Review the triggering operation before clearing this lane lock.", Severity: FailureSeverityError, Toast: locked.Cause != nil, GameCode: &lock.Code, GameOpcode: lock.Opcode, SafetyLock: &lock}
+	}
 	presentation := &FailurePresentation{
 		Kind:        FailureUnknown,
 		Message:     failureHeadline(receipt),
@@ -46,6 +51,7 @@ func (engine *Engine) failurePresentation(receipt Receipt, err error) *FailurePr
 		code := meaning.Code
 		presentation.Kind = failureKindForResponseCode(meaning.Kind)
 		presentation.GameCode = &code
+		presentation.GameOpcode = responseError.Opcode
 		presentation.Knowledge = failureKnowledgeForResponseCode(meaning.Source)
 		presentation.Explanation = responseCodeExplanation(meaning)
 		presentation.Recovery = cleanFailureText(meaning.Recovery)
