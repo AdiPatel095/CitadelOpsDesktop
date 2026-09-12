@@ -68,6 +68,18 @@ var officialClientEnchantResponseCodes = map[int]ResponseCodeMeaning{
 }
 
 var officialClientOpcodeResponseCodes = map[string]map[int]ResponseCodeMeaning{
+	// Official client enum: NO_MULTIPLE_ALLIANCEHELP = 273.
+	// https://empire-html5.goodgamestudios.com/default/dll/ggs.dll.6644f9217d73e8ce169d.js
+	"ahr": {
+		273: {
+			Code:          273,
+			Message:       "The alliance-help request was rejected as a duplicate or multiple request.",
+			Source:        ResponseCodeOfficialClient,
+			Kind:          ResponseCodeStaleState,
+			Recovery:      "Wait for the existing alliance-help request to complete or refresh its state before requesting help again.",
+			ExpectedState: true,
+		},
+	},
 	"ere": officialClientEnchantResponseCodes,
 	"eqe": officialClientEnchantResponseCodes,
 }

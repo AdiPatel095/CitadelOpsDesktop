@@ -21,6 +21,9 @@ func TestLaneSafetyPolicyIsAnExactAllowlist(t *testing.T) {
 	}{
 		{"adi", 95, true}, {" ADI ", 95, true}, {"adi", 91, false},
 		{"ere", 227, true}, {" EQE ", 227, true}, {"bup", 87, true},
+		{"ahr", 273, true}, {" AHR ", 273, true},
+		{"ahr", 272, false}, {"ahr", 274, false}, {"ahh", 273, false},
+		{"aha", 273, false}, {"msd", 273, false}, {"future", 273, false},
 		{"cra", 95, false}, {"cra", 256, false}, {"msd", 311, false},
 		{"ere", 226, false}, {"ere", 236, false}, {"eqe", 222, false},
 		{"bup", 203, false}, {"bup", 227, false}, {"adi", 87, false},
@@ -130,11 +133,26 @@ func safetyContext(id, lane string) context.Context {
 	return context.WithValue(context.Background(), laneSafetyContextKey{}, Request{ID: id, Name: "test.action", Actor: "automation:shared", AutomationLane: lane})
 }
 
+func TestLaneSafetyNewAllowlistDoesNotClearExistingAHRLock(t *testing.T) {
+	store := State.NewStore(State.NewGameState())
+	engine := NewEngine(NewRegistry(), store, nil, nil, nil)
+	lock := State.AutomationSafetyLock{Lane: "autoRecruit", Opcode: "ahr", Code: 273,
+		OperationID: "existing-ahr-incident", ObservedAt: time.Now().UTC(), Reason: "unclassified_rejection"}
+	if err := engine.writeLaneLock(lock); err != nil {
+		t.Fatal(err)
+	}
+	err := engine.checkLaneSafety(Request{Actor: "automation:autoRecruit", AutomationLane: "autoRecruit"})
+	var locked *LaneLockedError
+	if !errors.As(err, &locked) || locked.Lock.OperationID != lock.OperationID {
+		t.Fatalf("allowlist change bypassed existing incident: %v", err)
+	}
+}
+
 func TestLaneSafetyAllowlistedRejectionsRemainFailuresWithoutLocking(t *testing.T) {
 	for _, pair := range []struct {
 		opcode string
 		code   int
-	}{{"adi", 95}, {"ere", 227}, {"eqe", 227}, {"bup", 87}} {
+	}{{"adi", 95}, {"ere", 227}, {"eqe", 227}, {"bup", 87}, {"ahr", 273}} {
 		t.Run(fmt.Sprintf("%s-%d", pair.opcode, pair.code), func(t *testing.T) {
 			store := State.NewStore(State.NewGameState())
 			pipeline := Ingest.NewPipeline(store, nil, Ingest.NewRegistry())

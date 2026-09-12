@@ -22,6 +22,8 @@ func rejectionAllowsRecovery(opcode string, code int) bool {
 		return code == 227
 	case "bup":
 		return code == 87
+	case "ahr":
+		return code == 273
 	default:
 		return false
 	}

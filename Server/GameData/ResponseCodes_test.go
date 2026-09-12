@@ -208,3 +208,16 @@ func TestResolveExpansionDirectionGuidanceKeepsOfficialLanguageText(t *testing.T
 		t.Fatalf("expansion-specific guidance leaked = %#v", unrelated)
 	}
 }
+
+func TestResolveAllianceHelpDuplicateIsOpcodeScoped(t *testing.T) {
+	meaning := ResolveResponseCode(nil, " AHR ", 273)
+	if meaning.Source != ResponseCodeOfficialClient || meaning.Kind != ResponseCodeStaleState ||
+		!meaning.ExpectedState || !strings.Contains(meaning.Message, "duplicate") {
+		t.Fatalf("official AHR mapping = %#v", meaning)
+	}
+	for _, opcode := range []string{"ahh", "aha", "msd", "future"} {
+		if got := ResolveResponseCode(nil, opcode, 273); got.Source != ResponseCodeUnknown || got.ExpectedState {
+			t.Fatalf("AHR mapping leaked to %s: %#v", opcode, got)
+		}
+	}
+}
