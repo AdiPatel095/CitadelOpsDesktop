@@ -42,6 +42,19 @@ const receipt = (overrides = {}) => ({
   ...overrides,
 });
 
+test('notifies once for a safety incident without repeating blocked partial-operation alerts', () => {
+  const failure = {
+    kind: 'unknown', message: 'Automation lane safety lock',
+    explanation: 'CRA 256 rejected this lane.', severity: 'error', toast: true,
+    gameCode: 256, gameOpcode: 'cra', safetyLock: { operationId: 'incident', lane: 'autoStorm' },
+  };
+  const coordinator = new OperationFailureNotificationCoordinator();
+  const incident = receipt({ id: 'incident', actor: 'automation:autoStorm', status: 'partially_succeeded', failure });
+  assert.equal(coordinator.next(incident).category, 'red');
+  assert.equal(coordinator.next(incident), null);
+  assert.equal(coordinator.next(receipt({ id: 'blocked', status: 'partially_succeeded', failure: { ...failure, toast: false } })), null);
+});
+
 test('renders official game knowledge as explanation, recovery, and a quiet reference', () => {
   const notification = operationFailureNotification(receipt({
     failure: {

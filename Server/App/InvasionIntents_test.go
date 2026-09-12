@@ -517,18 +517,19 @@ func TestInvasionTargetReservationLifecycleThroughIntentEngine(t *testing.T) {
 		wantPlannerCalls int
 		wantReserved     bool
 		wantUnavailable  bool
+		wantSafetyLock   bool
 	}{
 		{
 			name: "ADI code 95 releases reservation and marks target unavailable", opcode: "adi", responseCode: 95,
 			wantStatus: Intent.StatusFailed, wantPlannerCalls: 2, wantUnavailable: true,
 		},
 		{
-			name: "CRA code 95 releases commander and marks target unavailable", opcode: "cra", responseCode: 95,
-			wantStatus: Intent.StatusFailed, wantPlannerCalls: 3, wantUnavailable: true,
+			name: "CRA code 95 locks lane and retains reservation for review", opcode: "cra", responseCode: 95,
+			wantStatus: Intent.StatusFailed, wantPlannerCalls: 2, wantReserved: true, wantSafetyLock: true,
 		},
 		{
-			name: "CRA code 91 clears reservation", opcode: "cra", responseCode: 91,
-			wantStatus: Intent.StatusFailed, wantPlannerCalls: 2,
+			name: "CRA code 91 locks lane and retains reservation for review", opcode: "cra", responseCode: 91,
+			wantStatus: Intent.StatusFailed, wantPlannerCalls: 2, wantReserved: true, wantSafetyLock: true,
 		},
 		{
 			name: "definitive CRA send failure clears reservation", opcode: "cra", sendFailure: "definitive",
@@ -639,6 +640,7 @@ func TestInvasionTargetReservationLifecycleThroughIntentEngine(t *testing.T) {
 				t.Fatal(err)
 			}
 			engine := Intent.NewEngine(registry, stateStore, nil, sender, pipeline)
+			engine.SetLaneSafetyPersistence(application.saveStateEvent)
 			if err := engine.RegisterAction("invasion.target.reserve", application.reserveInvasionTarget); err != nil {
 				t.Fatal(err)
 			}
@@ -654,7 +656,7 @@ func TestInvasionTargetReservationLifecycleThroughIntentEngine(t *testing.T) {
 				operationID = fmt.Sprintf("invasion-lifecycle-%s-%d", test.opcode, test.responseCode)
 			}
 			receipt := engine.Submit(t.Context(), Intent.Request{
-				ID: operationID, Name: intentName, Actor: "automation:autoInvasion",
+				ID: operationID, Name: intentName, Actor: "automation:autoInvasion", AutomationLane: "autoInvasion",
 			})
 			if receipt.Status != test.wantStatus {
 				t.Fatalf("reservation lifecycle receipt = %#v", receipt)
@@ -662,7 +664,7 @@ func TestInvasionTargetReservationLifecycleThroughIntentEngine(t *testing.T) {
 			if plannerCalls != test.wantPlannerCalls {
 				t.Fatalf("planner calls = %d, want %d; receipt=%#v", plannerCalls, test.wantPlannerCalls, receipt)
 			}
-			if test.responseCode == 95 && (receipt.Failure == nil || receipt.Failure.Kind != Intent.FailureStaleState) {
+			if test.responseCode == 95 && !test.wantSafetyLock && (receipt.Failure == nil || receipt.Failure.Kind != Intent.FailureStaleState) {
 				t.Fatalf("code-95 failure = %#v, want stale state", receipt.Failure)
 			}
 			if test.responseCode == 91 && (receipt.Failure == nil || receipt.Failure.GameCode == nil || *receipt.Failure.GameCode != 91) {
@@ -687,6 +689,9 @@ func TestInvasionTargetReservationLifecycleThroughIntentEngine(t *testing.T) {
 				t.Fatal(err)
 			}
 			persistedReservation, persistedReserved := persisted.Invasion.TargetReservation(0, 1165, 1166)
+			if got := persisted.Automations["autoInvasion"].SafetyLock.Active(time.Now()); got != test.wantSafetyLock {
+				t.Fatalf("persisted safety lock=%t, want=%t", got, test.wantSafetyLock)
+			}
 			if inMemoryReserved != test.wantReserved || persistedReserved != test.wantReserved {
 				t.Fatalf(
 					"final reservation: memory=%t persisted=%t want=%t",

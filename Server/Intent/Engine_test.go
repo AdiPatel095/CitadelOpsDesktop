@@ -22,6 +22,7 @@ import (
 )
 
 type metadataSender struct {
+	pipeline   *Ingest.Pipeline
 	metadata   chan Outbound.Metadata
 	generation uint64
 }
@@ -40,8 +41,11 @@ func TestValidateExpectedResponsePayloadRequiresExactSemanticMatch(t *testing.T)
 func (*metadataSender) Ready() bool                         { return true }
 func (*metadataSender) Namespace() string                   { return "EmpireEx_21" }
 func (sender *metadataSender) ConnectionGeneration() uint64 { return sender.generation }
-func (sender *metadataSender) Send(ctx context.Context, _ []byte) error {
+func (sender *metadataSender) Send(ctx context.Context, payload []byte) error {
 	sender.metadata <- Outbound.MetadataFromContext(ctx)
+	if sender.pipeline != nil {
+		return (&pipelineResponseSender{pipeline: sender.pipeline}).Send(ctx, payload)
+	}
 	return nil
 }
 
@@ -666,7 +670,7 @@ func TestDeferredCommandDependenciesDoNotMakeRejectedWritePartiallySucceeded(t *
 		t.Fatal(err)
 	}
 	receipt := engine.Submit(t.Context(), Request{
-		Name: "test.deferred-write-rejection", Actor: "automation:test",
+		Name: "test.deferred-write-rejection", Actor: "automation:test", AutomationLane: "test",
 	})
 	if receipt.Status != StatusFailed || len(receipt.CompletedStepIndexes) != 0 || len(receipt.Exchanges) != 1 {
 		t.Fatalf("rejected deferred write receipt = %#v", receipt)
@@ -768,7 +772,7 @@ func TestEngineDoesNotReplayCompletedDeferredCommandDependenciesAfterPause(t *te
 	result := make(chan Receipt, 1)
 	go func() {
 		result <- engine.Submit(context.Background(), Request{
-			ID: "deferred-write-resume", Name: "test.deferred-write-resume", Actor: "automation:test",
+			ID: "deferred-write-resume", Name: "test.deferred-write-resume", Actor: "automation:test", AutomationLane: "test",
 		})
 	}()
 	waitForIntentStatus(t, updates, StatusPaused)
@@ -950,6 +954,7 @@ func (observer *wireCleanupObserver) forgotCommit(ingressID uint64) bool {
 }
 
 type yieldingStepSender struct {
+	pipeline *Ingest.Pipeline
 	mu       sync.Mutex
 	yieldID  string
 	yielded  bool
@@ -977,6 +982,9 @@ func (sender *yieldingStepSender) Send(_ context.Context, payload []byte) error 
 		sender.yielded = true
 		return Outbound.ErrAutomationLocked
 	}
+	if sender.pipeline != nil {
+		return (&pipelineResponseSender{pipeline: sender.pipeline}).Send(context.Background(), payload)
+	}
 	return nil
 }
 
@@ -997,7 +1005,7 @@ func TestWatchAnyWireCancellationForgetsBufferedExactCommit(t *testing.T) {
 		frames: make(chan Protocol.CommittedFrame, 1), forgot: map[uint64]bool{},
 	}
 	engine := &Engine{observer: observer}
-	merged, cancel := engine.watchAnyWire(t.Context(), observer, []string{"bup"}, "")
+	merged, cancel := engine.watchAnyWire(t.Context(), observer, []string{"bup"}, "", "")
 	observer.frames <- Protocol.CommittedFrame{IngressID: 42}
 	deadline := time.Now().Add(time.Second)
 	for len(merged) == 0 && time.Now().Before(deadline) {
@@ -2031,8 +2039,10 @@ func TestEnginePropagatesResolvedPriorityToOutboundSend(t *testing.T) {
 		Generation: 1, BaselineGeneration: 1, ConnectionGeneration: 7,
 		Status: "connected", LoggedIn: true, SocketReady: true,
 	}
-	engine := NewEngine(registry, State.NewStore(gameState), nil, sender, nil)
-	receipt := engine.Submit(context.Background(), Request{Name: "test.send", Actor: "automation:autoBird"})
+	store := State.NewStore(gameState)
+	sender.pipeline = Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
+	engine := NewEngine(registry, store, nil, sender, sender.pipeline)
+	receipt := engine.Submit(context.Background(), Request{Name: "test.send", Actor: "automation:autoBird", AutomationLane: "autoBird"})
 	if receipt.Status != StatusSucceeded {
 		t.Fatalf("receipt = %#v", receipt)
 	}
@@ -2118,7 +2128,7 @@ func TestEngineQueuesAttackAdmissionBeforeAcquiringClaims(t *testing.T) {
 	defer unsubscribe()
 	attackResult := make(chan Receipt, 1)
 	go func() {
-		attackResult <- engine.Submit(t.Context(), Request{ID: "queued-attack", Name: "test.attack", Actor: "automation:test"})
+		attackResult <- engine.Submit(t.Context(), Request{ID: "queued-attack", Name: "test.attack", Actor: "automation:test", AutomationLane: "test"})
 	}()
 	waitForIntentStatus(t, updates, StatusQueued)
 	interactive := engine.Submit(t.Context(), Request{ID: "focus", Name: "test.focus", Actor: "ui"})
@@ -2281,13 +2291,17 @@ func TestEngineResumesCheckpointAndRebuildsOnlyContextSteps(t *testing.T) {
 	if err := registry.Register(Definition{
 		Name: "test.interactive", Effect: EffectWrite,
 		Planner: func(context.Context, PlanningContext, json.RawMessage) (Plan, error) {
-			return Plan{Claims: []string{"shared-context"}, Steps: []Step{testCommandStep("interactive")}}, nil
+			step := testCommandStep("interactive")
+			step.AwaitOpcode = step.Opcode
+			return Plan{Claims: []string{"shared-context"}, Steps: []Step{step}}, nil
 		},
 	}); err != nil {
 		t.Fatal(err)
 	}
 	sender := &yieldingStepSender{yieldID: "effect-2", attempts: map[string]int{}}
-	engine := NewEngine(registry, State.NewStore(State.NewGameState()), nil, sender, nil)
+	store := State.NewStore(State.NewGameState())
+	sender.pipeline = Ingest.NewPipeline(store, nil, Ingest.NewRegistry())
+	engine := NewEngine(registry, store, nil, sender, sender.pipeline)
 	resume := make(chan struct{})
 	engine.SetExecutionGate(func(ctx context.Context, request Request, _ Plan, point ExecutionPoint) error {
 		if request.Actor != "automation:autoBird" || point != ExecutionBeforeClaims || !sender.hasYielded() {
@@ -2305,7 +2319,7 @@ func TestEngineResumesCheckpointAndRebuildsOnlyContextSteps(t *testing.T) {
 	result := make(chan Receipt, 1)
 	go func() {
 		result <- engine.Submit(context.Background(), Request{
-			ID: "resumable", Name: "test.resumable", Actor: "automation:autoBird",
+			ID: "resumable", Name: "test.resumable", Actor: "automation:autoBird", AutomationLane: "autoBird",
 		})
 	}()
 	waitForIntentStatus(t, updates, StatusPaused)

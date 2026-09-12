@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -94,13 +95,14 @@ func (collector *wireCommitCollector) flush(ctx context.Context, observer Observ
 }
 
 type Engine struct {
-	registry  *Registry
-	state     StateReader
-	gameData  GameDataProvider
-	sender    Sender
-	observer  Observer
-	claims    *claimManager
-	admission *admissionManager
+	laneSafety laneSafety
+	registry   *Registry
+	state      StateReader
+	gameData   GameDataProvider
+	sender     Sender
+	observer   Observer
+	claims     *claimManager
+	admission  *admissionManager
 	// commanderHolds is set once during composition, before planning begins.
 	commanderHolds CommanderHoldRegistry
 	labelsMu       sync.RWMutex
@@ -413,6 +415,7 @@ func (engine *Engine) prepare(ctx context.Context, request Request) (*preparedSu
 		return nil, engine.humanizeReceiptIdentifiers(reserved), true
 	}
 	executionContext, cancel := context.WithCancel(ctx)
+	executionContext = context.WithValue(executionContext, laneSafetyContextKey{}, request)
 	if !engine.registerActive(request.ID, cancel) {
 		cancel()
 		if existing, ok := engine.Operation(request.ID); ok {
@@ -470,6 +473,9 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 	}
 	if engine.state == nil {
 		return engine.fail(receipt, fmt.Errorf("state store is unavailable"))
+	}
+	if err := engine.checkLaneSafety(request); err != nil {
+		return engine.fail(receipt, err)
 	}
 	completedSteps := map[string]int{}
 	pendingResponseRetries := map[string]bool{}
@@ -675,6 +681,9 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 		expectedWorldID, expectedPlayerID := State.BoundAccount(currentInput.State)
 		expectedCatalogVersion := plan.CatalogVersion
 		attemptContext = context.WithValue(attemptContext, dispatchPermitContextKey{}, dispatchPermit(func(expectedRevision uint64) error {
+			if err := engine.checkLaneSafety(request); err != nil {
+				return err
+			}
 			view := engine.planningContext()
 			if dispatches == 0 {
 				if len(plan.Dependencies) > 0 && view.Partitions.Available() {
@@ -762,6 +771,7 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 			for err == nil {
 				var exchange *CommandExchange
 				exchange, err = engine.executeStep(stepContext, currentRevision, step)
+				err = engine.guardRejection(stepContext, err)
 				if exchange != nil {
 					receipt.Exchanges = append(receipt.Exchanges, *exchange)
 					engine.update(receipt)
@@ -930,6 +940,9 @@ func (engine *Engine) unregisterActive(id string) {
 }
 
 func (engine *Engine) awaitExecutionGate(ctx context.Context, request Request, plan Plan, point ExecutionPoint) error {
+	if err := engine.checkLaneSafety(request); err != nil {
+		return err
+	}
 	engine.mu.RLock()
 	gate := engine.executionGate
 	engine.mu.RUnlock()
@@ -1212,7 +1225,7 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 		if action == nil {
 			return nil, fmt.Errorf("action %q is not registered", step.Action)
 		}
-		return nil, action(ctx, step.ActionArguments)
+		return nil, engine.guardRejection(ctx, action(ctx, step.ActionArguments))
 	}
 	if engine.sender == nil {
 		return nil, fmt.Errorf("game websocket sender is unavailable")
@@ -1253,6 +1266,18 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 		return nil, err
 	}
 	awaitOpcodes := stepAwaitOpcodes(step)
+	errorOnlyOpcode := ""
+	if request, ok := ctx.Value(laneSafetyContextKey{}).(Request); ok && requestLane(request) != "" {
+		if len(awaitOpcodes) == 0 {
+			awaitOpcodes = normalizeAwaitOpcodes([]string{command.Opcode})
+		} else if !slices.Contains(awaitOpcodes, command.Opcode) {
+			errorOnlyOpcode = command.Opcode
+		}
+	}
+	observedOpcodes := append([]string(nil), awaitOpcodes...)
+	if errorOnlyOpcode != "" {
+		observedOpcodes = append(observedOpcodes, errorOnlyOpcode)
+	}
 	responseTimeoutMillis := step.TimeoutMillis
 	if responseTimeoutMillis <= 0 {
 		responseTimeoutMillis = 10_000
@@ -1282,14 +1307,14 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 					return nil, fmt.Errorf("correlated wire response observer is unavailable")
 				}
 			}
-			observed, cancelWatch = engine.watchAnyWire(ctx, wireObserver, awaitOpcodes, responseToken)
+			observed, cancelWatch = engine.watchAnyWire(ctx, wireObserver, observedOpcodes, responseToken, errorOnlyOpcode)
 		} else {
 			if responseToken != "" {
 				if _, ok := engine.observer.(CorrelatedObserver); !ok {
 					return nil, fmt.Errorf("correlated response observer is unavailable")
 				}
 			}
-			observed, cancelWatch = engine.watchAny(ctx, awaitOpcodes, afterRevision, responseToken)
+			observed, cancelWatch = engine.watchAny(ctx, observedOpcodes, afterRevision, responseToken, errorOnlyOpcode)
 		}
 	}
 	defer cancelWatch()
@@ -1455,12 +1480,20 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 				}
 				defer exactCommit.ForgetCommitted(frame.IngressID)
 			}
-			if (expectedConnection > 0 || sessionAtSend.Generation > 0) && sessionChanged() {
-				return exchange, Outbound.MarkIndeterminate(fmt.Errorf("game session changed while waiting for %s", strings.Join(awaitOpcodes, " or ")))
-			}
 			if exchange != nil {
 				response := frame.Frame
 				exchange.Response = &response
+			}
+			if frame.Frame.ResponseCode != nil && *frame.Frame.ResponseCode != 0 {
+				responseErr := engine.unsuccessfulResponseCode(frame.Frame.Opcode, *frame.Frame.ResponseCode)
+				guarded := engine.guardRejection(ctx, responseErr)
+				var locked *LaneLockedError
+				if errors.As(guarded, &locked) {
+					return exchange, guarded
+				}
+			}
+			if (expectedConnection > 0 || sessionAtSend.Generation > 0) && sessionChanged() {
+				return exchange, Outbound.MarkIndeterminate(fmt.Errorf("game session changed while waiting for %s", strings.Join(awaitOpcodes, " or ")))
 			}
 			if len(step.SuccessCodes) > 0 {
 				if frame.Frame.ResponseCode == nil {
@@ -1528,6 +1561,10 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 }
 
 func retryableStepResponse(step Step, err error) bool {
+	var locked *LaneLockedError
+	if errors.As(err, &locked) {
+		return false
+	}
 	if err == nil || step.ResponseRetry == nil || errors.Is(err, ErrPlanStale) || Outbound.IsIndeterminate(err) {
 		return false
 	}
@@ -2099,6 +2136,7 @@ func (engine *Engine) watchAny(
 	opcodes []string,
 	afterRevision uint64,
 	responseToken string,
+	errorOnlyOpcode string,
 ) (<-chan Protocol.CommittedFrame, func()) {
 	watchContext, stop := context.WithCancel(ctx)
 	merged := make(chan Protocol.CommittedFrame, 1)
@@ -2113,13 +2151,20 @@ func (engine *Engine) watchAny(
 		}
 		cancellations = append(cancellations, cancel)
 		go func(frames <-chan Protocol.CommittedFrame) {
-			select {
-			case frame := <-frames:
+			for {
 				select {
-				case merged <- frame:
+				case frame := <-frames:
+					if errorOnlyOpcode != "" && frame.Frame.Opcode == errorOnlyOpcode && (frame.Frame.ResponseCode == nil || *frame.Frame.ResponseCode == 0) {
+						continue
+					}
+					select {
+					case merged <- frame:
+					case <-watchContext.Done():
+					}
+					return
 				case <-watchContext.Done():
+					return
 				}
-			case <-watchContext.Done():
 			}
 		}(source)
 	}
@@ -2139,6 +2184,7 @@ func (engine *Engine) watchAnyWire(
 	observer WireObserver,
 	opcodes []string,
 	responseToken string,
+	errorOnlyOpcode string,
 ) (<-chan Protocol.CommittedFrame, func()) {
 	watchContext, stop := context.WithCancel(ctx)
 	merged := make(chan Protocol.CommittedFrame, 1)
@@ -2157,16 +2203,26 @@ func (engine *Engine) watchAnyWire(
 		watchers.Add(1)
 		go func(frames <-chan Protocol.CommittedFrame) {
 			defer watchers.Done()
-			select {
-			case frame := <-frames:
+			for {
 				select {
-				case merged <- frame:
-				case <-watchContext.Done():
-					if canForget {
-						commitObserver.ForgetCommitted(frame.IngressID)
+				case frame := <-frames:
+					if errorOnlyOpcode != "" && frame.Frame.Opcode == errorOnlyOpcode && (frame.Frame.ResponseCode == nil || *frame.Frame.ResponseCode == 0) {
+						if canForget {
+							commitObserver.ForgetCommitted(frame.IngressID)
+						}
+						continue
 					}
+					select {
+					case merged <- frame:
+					case <-watchContext.Done():
+						if canForget {
+							commitObserver.ForgetCommitted(frame.IngressID)
+						}
+					}
+					return
+				case <-watchContext.Done():
+					return
 				}
-			case <-watchContext.Done():
 			}
 		}(source)
 	}

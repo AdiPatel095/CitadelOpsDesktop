@@ -1910,17 +1910,18 @@ type DailyAttackState struct {
 }
 
 type AutomationState struct {
-	ID                 string             `json:"id"`
-	Enabled            bool               `json:"enabled"`
-	Status             string             `json:"status"`
-	Detail             string             `json:"detail,omitempty"`
-	NextCheckAt        *time.Time         `json:"nextCheckAt,omitempty"`
-	LastRunAt          *time.Time         `json:"lastRunAt,omitempty"`
-	LastOperationID    string             `json:"lastOperationId,omitempty"`
-	LastError          string             `json:"lastError,omitempty"`
-	Metrics            map[string]float64 `json:"metrics,omitempty"`
-	OperationalCursors map[string]int     `json:"operationalCursors,omitempty"`
-	UpdatedAt          time.Time          `json:"updatedAt"`
+	SafetyLock         AutomationSafetyLock `json:"safetyLock,omitempty"`
+	ID                 string               `json:"id"`
+	Enabled            bool                 `json:"enabled"`
+	Status             string               `json:"status"`
+	Detail             string               `json:"detail,omitempty"`
+	NextCheckAt        *time.Time           `json:"nextCheckAt,omitempty"`
+	LastRunAt          *time.Time           `json:"lastRunAt,omitempty"`
+	LastOperationID    string               `json:"lastOperationId,omitempty"`
+	LastError          string               `json:"lastError,omitempty"`
+	Metrics            map[string]float64   `json:"metrics,omitempty"`
+	OperationalCursors map[string]int       `json:"operationalCursors,omitempty"`
+	UpdatedAt          time.Time            `json:"updatedAt"`
 }
 
 type GameState struct {

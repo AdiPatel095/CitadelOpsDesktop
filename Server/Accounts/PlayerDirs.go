@@ -98,6 +98,9 @@ func savePlayerBindings(path string, bindings map[string]string) error {
 // installed credentials — win. Everything else defers to the corpus. The
 // staging directory is renamed aside afterwards so nothing is destroyed.
 func mergeStagingIntoPlayerDir(staging, player string, stamp string) error {
+	if err := mergeAutomationSafetyLocks(staging, player); err != nil {
+		return fmt.Errorf("carry automation safety locks: %w", err)
+	}
 	historyDir := filepath.Join(staging, "History")
 	entries, err := os.ReadDir(historyDir)
 	if err != nil && !os.IsNotExist(err) {

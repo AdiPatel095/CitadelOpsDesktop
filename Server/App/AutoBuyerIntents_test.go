@@ -220,7 +220,7 @@ func TestAutoBuyerFeastPurchaseArmsDurableMarkerBeforeBFSDispatch(t *testing.T) 
 	application, engine, sender, arguments := newAutoBuyerFeastIntegrationHarness(t, false)
 	receipt := engine.Submit(t.Context(), Intent.Request{
 		ID: "feast-arm-integration", Name: "autoBuyer.feast.purchase",
-		Actor: "automation:autoBuyer", Arguments: arguments,
+		Actor: "automation:autoBuyer", AutomationLane: "autoBuyer", Arguments: arguments,
 	})
 	if receipt.Status != Intent.StatusIndeterminate ||
 		!strings.Contains(receipt.Error, "simulated missing BFS acknowledgement") {
@@ -251,7 +251,7 @@ func TestAutoBuyerFeastPurchaseRunsFullRefreshBFSAndVerificationPath(t *testing.
 	application, engine, sender, arguments := newAutoBuyerFeastIntegrationHarness(t, true)
 	receipt := engine.Submit(t.Context(), Intent.Request{
 		ID: "feast-success-integration", Name: "autoBuyer.feast.purchase",
-		Actor: "automation:autoBuyer", Arguments: arguments,
+		Actor: "automation:autoBuyer", AutomationLane: "autoBuyer", Arguments: arguments,
 	})
 	if receipt.Status != Intent.StatusSucceeded {
 		t.Fatalf("successful BFS receipt = %#v", receipt)

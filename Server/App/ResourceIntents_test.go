@@ -860,7 +860,7 @@ func TestAutoFoodBalanceReceiptLogsActualDonorAndTargetCastles(t *testing.T) {
 	}
 	engine := Intent.NewEngine(registry, State.NewStore(gameState), resourceIntentGameDataProvider{store: gameData}, nil, nil)
 	receipt := engine.Submit(t.Context(), Intent.Request{
-		Name: "resource.ship", Actor: "automation:autoFoodBalance", DryRun: true,
+		Name: "resource.ship", Actor: "automation:autoFoodBalance", AutomationLane: "autoFoodBalance", DryRun: true,
 		Arguments: json.RawMessage(`{"sourceCastleId":10,"targetCastleId":20,"resourceId":3,"amount":12000}`),
 	})
 	if receipt.Status != Intent.StatusPlanned || receipt.Plan == nil {

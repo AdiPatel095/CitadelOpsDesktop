@@ -154,7 +154,7 @@ export function operationFailureNotification(receipt: IntentReceipt): OperationF
 	if (!isOperationFailureStatus(receipt.status)) return null;
 	const structured = validFailurePresentation(receipt.failure) ? receipt.failure : undefined;
 	if (structured) {
-		if (!structured.toast && receipt.status === 'failed') return null;
+		if (!structured.toast && (receipt.status === 'failed' || structured.safetyLock)) return null;
 		return notificationFromStructuredFailure(structured);
 	}
 	return legacyFailureNotification(receipt);
