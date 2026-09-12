@@ -235,6 +235,12 @@ func (coordinator *Coordinator) Run(ctx context.Context) {
 		resetPolicyTimer()
 	}
 	handleStateEvent := func(event State.Event) (bool, bool) {
+		if stateEventHasDomain(event, "automation-safety") {
+			for _, current := range runtime {
+				current.evaluationPending = true
+			}
+			return true, true
+		}
 		if !meaningfulStateEvent(event) {
 			return false, false
 		}
@@ -388,6 +394,15 @@ func (coordinator *Coordinator) evaluate(
 	for _, policy := range coordinator.policies {
 		current := runtime[policy.ID()]
 		if current == nil || current.running {
+			continue
+		}
+		if lock := state.Automations[policy.ID()].SafetyLock; lock.Active(now) {
+			current.evaluationPending = false
+			current.configurationRebuildPending = false
+			current.evaluatedSessionKnown = true
+			current.eventOnly = lock.Until.IsZero()
+			current.nextCheck = lock.Until
+			coordinator.recordDecision(policy.ID(), policyEnabled(policy, enabled, state), Decision{Status: "gated", Detail: lock.Detail(), NextCheckAt: lock.Until})
 			continue
 		}
 		if !policyEvaluationDue(current, configuration.Revision, sessionReady, state.Session.Generation, now) {
@@ -573,16 +588,19 @@ func (coordinator *Coordinator) evaluate(
 		current.rejectRepeatedDecision = false
 		request := *decision.Request
 		request.Actor = "automation:" + policyActorID(policy)
+		request.AutomationLane = policy.ID()
 		var followUp *Intent.Request
 		if decision.FollowUp != nil {
 			copy := *decision.FollowUp
 			copy.Actor = "automation:" + policyActorID(policy)
+			copy.AutomationLane = policy.ID()
 			followUp = &copy
 		}
 		var failureFallback *Intent.Request
 		if decision.FailureFallback != nil {
 			copy := *decision.FailureFallback
 			copy.Actor = "automation:" + policyActorID(policy)
+			copy.AutomationLane = policy.ID()
 			failureFallback = &copy
 		}
 		current.running = true
@@ -614,10 +632,10 @@ func (coordinator *Coordinator) evaluate(
 			receipt := coordinator.intents.Submit(operationContext, request)
 			var followUpReceipt *Intent.Receipt
 			var failureFallbackReceipt *Intent.Receipt
-			if receipt.Status == Intent.StatusSucceeded && followUp != nil {
+			if !receiptLocksLane(receipt) && receipt.Status == Intent.StatusSucceeded && followUp != nil {
 				result := coordinator.intents.Submit(operationContext, *followUp)
 				followUpReceipt = &result
-			} else if failureFallback != nil && shouldRunFailureFallback(receipt.Status, failureFallbackIndeterminateOnly) {
+			} else if !receiptLocksLane(receipt) && failureFallback != nil && shouldRunFailureFallback(receipt.Status, failureFallbackIndeterminateOnly) {
 				result := coordinator.intents.Submit(operationContext, *failureFallback)
 				failureFallbackReceipt = &result
 			}
@@ -1133,6 +1151,13 @@ func (coordinator *Coordinator) updateAutomation(id string, update func(State.Au
 		}
 		current := gameState.Automations[id]
 		next := update(current)
+		if lock := current.SafetyLock; lock.Active(time.Now().UTC()) {
+			next.Status = "gated"
+			next.Detail = lock.Detail()
+			next.LastError = next.Detail
+			next.LastOperationID = lock.OperationID
+			next.NextCheckAt = timePointer(lock.Until)
+		}
 		labels := GameData.NewIdentifierLabels(*gameState, gameData, language)
 		next.Detail = labels.Humanize(next.Detail)
 		next.LastError = labels.Humanize(next.LastError)

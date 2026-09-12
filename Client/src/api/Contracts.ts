@@ -1619,6 +1619,20 @@ export interface AllianceHelpRequestStateV2 {
 	lastHelpAllGeneration?: number;
 }
 
+export interface AutomationSafetyLockV2 {
+	lane: string;
+	opcode: string;
+	code: number;
+	operationId: string;
+	intent: string;
+	observedAt: string;
+	reason: string;
+	until?: string;
+	clearedAt?: string;
+	review?: string;
+	reviewedBy?: string;
+}
+
 export interface AutomationStateV2 {
 	id: string;
 	enabled: boolean;
@@ -1628,6 +1642,7 @@ export interface AutomationStateV2 {
 	lastRunAt?: string;
 	lastOperationId?: string;
 	lastError?: string;
+	safetyLock?: AutomationSafetyLockV2;
 	metrics?: Record<string, number>;
 	updatedAt: string;
 }
@@ -2378,6 +2393,8 @@ export interface IntentFailurePresentation {
 	recovery?: string;
 	severity: 'warning' | 'error';
 	gameCode?: number;
+	gameOpcode?: string;
+	safetyLock?: AutomationSafetyLockV2;
 	knowledge?: 'official' | 'observed' | 'unknown';
 	toast: boolean;
 }

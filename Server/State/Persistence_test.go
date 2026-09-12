@@ -96,7 +96,8 @@ func TestComponentSnapshotWritesOnlyDirtyComponentsAfterBootstrap(t *testing.T) 
 
 func TestInvasionAvailabilityAndReservationsPersistAcrossRestart(t *testing.T) {
 	directory := t.TempDir()
-	observedAt := time.Date(2026, 9, 9, 12, 0, 0, 0, time.UTC)
+	// Keep the fixture inside the production observation retention window.
+	observedAt := time.Now().UTC().Truncate(time.Second)
 	occurrenceEndsAt := observedAt.Add(2 * time.Hour)
 	reconcileAfter := observedAt.Add(time.Minute)
 	initial := NewGameState()

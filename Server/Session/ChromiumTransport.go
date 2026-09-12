@@ -2865,6 +2865,19 @@ const chromiumTransportInjection = `
         });
       }
       if (index < 0) {
+        // Success can have a different opcode; still correlate a unique
+        // rejection sent under the original command name.
+        const parts = typeof payload === 'string' ? payload.split('%') : [];
+        const code = parts.length > 4 ? Number(parts[4]) : Number.NaN;
+        if (Number.isFinite(code) && code !== 0) {
+          const aliases = record.pendingResponses.map((pending, candidateIndex) =>
+            pending.requestOpcode === opcode && !pending.opcodes.includes(opcode) ? candidateIndex : -1)
+            .filter((candidateIndex) => candidateIndex >= 0);
+          if (aliases.length > 1) return '';
+          if (aliases.length === 1) index = aliases[0];
+        }
+      }
+      if (index < 0) {
         index = record.pendingResponses.findIndex((pending) =>
           pending.opcodes.includes(opcode) && responseMatchesRequest(pending, opcode, payload));
       }

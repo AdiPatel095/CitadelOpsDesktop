@@ -35,6 +35,7 @@ import { CitadelAPI } from '../api/CitadelClient';
 import { useCitadelAPI } from '../api/ApiContext';
 import { parseAutoBeriWorldSettings } from '../settings/AutoBeriWorldClientState';
 import { configurationSection } from '../settings/Configuration';
+import { AutomationSafetyPanel } from '../components/AutomationSafetyPanel';
 
 interface AutomationViewProps {
   onOpenAutoTCISettings: () => void;
@@ -744,6 +745,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 
   return (
     <div className="mx-auto flex w-full max-w-[1800px] flex-col gap-4 pb-10">
+      <AutomationSafetyPanel states={automationStates} now={now} />
       <div className="automation-function-groups">
         {groupedFeatures.map((group) => {
           const GroupIcon = group.icon;

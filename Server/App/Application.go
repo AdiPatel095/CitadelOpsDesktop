@@ -204,7 +204,9 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	if recovered, recoveryErr := State.LoadSnapshot(config.DataDir); recoveryErr == nil {
 		initial = recovered
 	} else if !os.IsNotExist(recoveryErr) {
-		startupErr = errors.Join(startupErr, recoveryErr)
+		// An unreadable profile may contain an active safety lock. Never start
+		// automation from empty state and overwrite that evidence.
+		return nil, fmt.Errorf("recover durable account state: %w", recoveryErr)
 	}
 	if current, ready := gameData.Current(); ready {
 		initial.CatalogVersion = current.Metadata().ItemVersion
@@ -396,6 +398,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	if err := application.registerStormIntents(); err != nil {
 		return nil, err
 	}
+	application.Intents.SetLaneSafetyPersistence(application.saveStateEvent)
 	application.Automation = Automation.NewCoordinator(
 		state, configuration, gameData, intents,
 		Automation.NewSharedStormScanPolicy(application.AccountKey, config.WorldMaps),
@@ -882,9 +885,10 @@ func (application *Application) playerSamplesRetentionPolicy() History.PlayerSam
 
 func (application *Application) registerCoreIntents() error {
 	for name, action := range map[string]Intent.Action{
-		"session.start":     ignoreArguments(application.Session.Start),
-		"session.stop":      ignoreArguments(application.Session.Stop),
-		"session.reconnect": ignoreArguments(application.Session.Reconnect),
+		"automation.safety.clear": application.clearAutomationSafetyLock,
+		"session.start":           ignoreArguments(application.Session.Start),
+		"session.stop":            ignoreArguments(application.Session.Stop),
+		"session.reconnect":       ignoreArguments(application.Session.Reconnect),
 		"session.background.prepare": ignoreArguments(func(context.Context) error {
 			return application.Session.PrepareBackgroundMode(application.DataDir)
 		}),
@@ -921,6 +925,10 @@ func (application *Application) registerCoreIntents() error {
 	}
 
 	definitions := []Intent.Definition{
+		{
+			Name: "automation.safety.clear", Description: "Clear a reviewed lane safety incident", Effect: Intent.EffectWrite,
+			Planner: actionPlanner("automation.safety.clear", "automation-safety", "Clear reviewed lane safety lock"),
+		},
 		{
 			Name: "session.start", Description: "Start the configured game session adapter", Effect: Intent.EffectExternal,
 			Planner: actionPlanner("session.start", "session", "Start the game session"),

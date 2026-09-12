@@ -1308,8 +1308,22 @@ func (transport *DirectWebSocketTransport) matchResponseToken(frame Protocol.Fra
 		transport.pending = append(transport.pending[:matchedIndex], transport.pending[matchedIndex+1:]...)
 		return pending.token
 	}
+	// A command can reject under its request opcode even when its successful
+	// response uses an alias (for example JCA -> JAA). Match only an unambiguous
+	// rejection; a successful request-opcode acknowledgement is not completion.
+	aliasIndex := -1
+	if frame.ResponseCode != nil && *frame.ResponseCode != 0 {
+		for index, pending := range transport.pending {
+			if _, expected := pending.opcodes[opcode]; !expected && pending.requestOpcode == opcode {
+				if aliasIndex >= 0 {
+					return ""
+				}
+				aliasIndex = index
+			}
+		}
+	}
 	for index, pending := range transport.pending {
-		if _, expected := pending.opcodes[opcode]; !expected {
+		if _, expected := pending.opcodes[opcode]; !expected && index != aliasIndex {
 			continue
 		}
 		if !directResponseMatchesRequest(pending, frame) {
