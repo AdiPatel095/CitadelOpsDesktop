@@ -909,9 +909,7 @@ func equipmentMatchesSale(item State.EquipmentInstance, category string, sellLoo
 	case "relic1_equipment":
 		return item.RarityID == 5 && len(item.Effects) < 4
 	case "relic2_equipment":
-		standard := item.RarityID == 5 && len(item.Effects) == 4 && item.Slot != 6
-		hero := item.RarityID == 15 && len(item.Effects) == 6 && item.Slot == 6
-		return (standard || hero) && effectStars(item.Effects) < keepStars
+		return EquipmentDomain.IsRelic2Equipment(item) && effectStars(item.Effects) < keepStars
 	default:
 		return false
 	}

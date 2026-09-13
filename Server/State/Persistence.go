@@ -394,6 +394,9 @@ func normalizeStateMaps(state *GameState) {
 	if state.AttackAnalytics.RecentAutoStormLaunches == nil {
 		state.AttackAnalytics.RecentAutoStormLaunches = defaults.AttackAnalytics.RecentAutoStormLaunches
 	}
+	if state.AttackAnalytics.RecentTowerAdvisorTimeSkips == nil {
+		state.AttackAnalytics.RecentTowerAdvisorTimeSkips = defaults.AttackAnalytics.RecentTowerAdvisorTimeSkips
+	}
 	if state.EventScores.ByEvent == nil {
 		state.EventScores.ByEvent = defaults.EventScores.ByEvent
 	}

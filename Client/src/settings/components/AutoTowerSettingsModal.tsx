@@ -1,12 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { CalendarDays, Crosshair } from 'lucide-react';
+import { Bot, CalendarDays, Crosshair, FastForward, TicketCheck } from 'lucide-react';
 import UnitImage from '../../components/UnitImage';
 import { showTroopPicker } from '../../components/TroopPickerModal';
-import { Button, Card, Input, SettingsModal, Switch } from '../../components/ui';
+import { Button, Card, Input, SettingsModal, SettingsToggleRow, Switch } from '../../components/ui';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { castleOptionsFromState } from '../../api/Selectors';
 import {
+	AUTO_TOWER_MAXIMUM_DAILY_TIME_SKIPS,
 	clampMapRefreshInterval,
+	clampMaximumDailyTimeSkips,
 	clampRadius,
   defaultAutoTowerCastleSettings,
   defaultAutoTowerClientState,
@@ -31,6 +33,9 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
   const [mapRefreshIntervalSec, setMapRefreshIntervalSec] = useState(1800);
   const [dailyAttackLimit, setDailyAttackLimit] = useState(0);
   const [horseTravelBoostId, setHorseTravelBoostId] = useState<HorseTravelBoostID>(-1);
+  const [useAdvisor, setUseAdvisor] = useState(false);
+  const [autoActivateAdvisor, setAutoActivateAdvisor] = useState(false);
+  const [maximumDailyTimeSkips, setMaximumDailyTimeSkips] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
@@ -46,6 +51,9 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
     setMapRefreshIntervalSec(current.mapRefreshIntervalSec);
     setDailyAttackLimit(current.dailyAttackLimit);
     setHorseTravelBoostId(current.horseTravelBoostId);
+    setUseAdvisor(current.useAdvisor);
+    setAutoActivateAdvisor(current.autoActivateAdvisor);
+    setMaximumDailyTimeSkips(current.maximumDailyTimeSkips);
   }, [configuration?.sections, isOpen]);
 
   const settingsFor = useCallback((castleID: number): AutoTowerCastleSettings => (
@@ -75,7 +83,17 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
     setSaveError(null);
     const current = parseAutoTowerClientState(configuration?.sections['automation.autoTowers']);
     try {
-      await persistAutoTowerClientState({ ...current, version: 2, mapRefreshIntervalSec, dailyAttackLimit, horseTravelBoostId, castles: settings });
+      await persistAutoTowerClientState({
+        ...current,
+        version: 4,
+        mapRefreshIntervalSec,
+        dailyAttackLimit,
+        horseTravelBoostId,
+        useAdvisor,
+        autoActivateAdvisor,
+        maximumDailyTimeSkips,
+        castles: settings,
+      });
       onClose();
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'Could not save Auto Towers settings.');
@@ -137,12 +155,83 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
         </label>
       </div>
 
+      <section className="mb-4 rounded-global border border-primary/25 bg-primary/5 p-4">
+        <div className="mb-3 flex items-start gap-3">
+          <div className="rounded-xl bg-primary/10 p-2 text-primary" aria-hidden="true">
+            <Bot className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="text-sm font-black text-text-main">Robber Baron Advisor</h3>
+            <p className="mt-0.5 text-[11px] leading-relaxed text-text-muted">
+              Advisor mode runs native same-tower chains: hit one uses a daily attack, and every additional hit uses one Time Skip.
+            </p>
+          </div>
+        </div>
+        <div className="grid gap-2 lg:grid-cols-2">
+          <SettingsToggleRow
+            title="Use Advisor with Time Skips"
+            description="Send a native same-tower Advisor chain. The first hit uses one daily attack; each additional hit consumes one Time Skip covering the three-hour cooldown."
+            icon={<Bot className="h-4 w-4" />}
+            checked={useAdvisor}
+            onChange={setUseAdvisor}
+            ariaLabel="Use Robber Baron Advisor mode for Auto Towers"
+          />
+          <SettingsToggleRow
+            title="Auto-activate with token"
+            description="If the Advisor is inactive, consume one dedicated Baron Advisor token. This never buys a token or spends rubies."
+            icon={<TicketCheck className="h-4 w-4" />}
+            checked={autoActivateAdvisor}
+            onChange={setAutoActivateAdvisor}
+            disabled={!useAdvisor}
+            disabledReason="Enable Advisor mode first."
+            ariaLabel="Auto-activate the Robber Baron Advisor with an available token"
+          />
+        </div>
+        <div className="mt-3 rounded-xl border border-border-base bg-bg-card/60 p-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex min-w-0 items-start gap-2.5">
+              <FastForward className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+              <div>
+                <label htmlFor="auto-tower-daily-time-skips" className="text-xs font-bold text-text-main">Maximum daily Time Skips</label>
+                <p className="mt-0.5 text-[11px] leading-relaxed text-text-muted">
+                  Confirmed Advisor chains count against this cap until the game server&apos;s daily attack counter resets. Set 0 to pause Advisor launches.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Input
+                id="auto-tower-daily-time-skips"
+                type="number"
+                min={0}
+                max={AUTO_TOWER_MAXIMUM_DAILY_TIME_SKIPS}
+                value={maximumDailyTimeSkips}
+                disabled={!useAdvisor}
+                onChange={(event) => setMaximumDailyTimeSkips(clampMaximumDailyTimeSkips(event.target.value))}
+                className="w-28 text-center font-mono"
+              />
+              <span className="text-[11px] font-semibold text-text-muted">skips</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <div className="mb-4">
-        <DailyAttackLimitField value={dailyAttackLimit} onChange={setDailyAttackLimit} serverState={state?.dailyAttacks} />
+        <DailyAttackLimitField
+          value={dailyAttackLimit}
+          onChange={setDailyAttackLimit}
+          serverState={state?.dailyAttacks}
+          description="Stop Auto Towers when the server's account-wide daily attack count reaches this value. Regular attacks and the first hit of every Advisor chain both count; the feature resumes when the server count resets."
+        />
       </div>
 
       <div className="mb-4 rounded-global border border-border-base bg-bg-card/40 p-4">
-        <HorseTravelBoostSelect value={horseTravelBoostId} onChange={setHorseTravelBoostId} />
+        <HorseTravelBoostSelect
+          value={horseTravelBoostId}
+          onChange={setHorseTravelBoostId}
+          description={useAdvisor
+            ? 'Advisor chains repeat this explicitly selected travel option for each generated hit. Ruby tiers are used only when selected here.'
+            : undefined}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">

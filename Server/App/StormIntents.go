@@ -58,14 +58,14 @@ type stormMapScanRequest struct {
 	ScanStartedAt  time.Time              `json:"scanStartedAt"`
 }
 
-type stormMapBurstSender interface {
+type mapGAASender interface {
 	CorrelatesResponses() bool
 	Namespace() string
 	Send(context.Context, []byte) error
 	WaitForAutomationUnlocked(context.Context) error
 }
 
-type stormMapBurstObserver interface {
+type mapGAAObserver interface {
 	ForgetCommitted(uint64)
 	WaitCommitted(context.Context, uint64) (Protocol.CommittedFrame, error)
 	WatchWireResponse(string, string) (<-chan Protocol.CommittedFrame, func())
@@ -1153,8 +1153,8 @@ func stormMapBurstDeadline(responseTimeout time.Duration, windowCount int) time.
 
 func runStormMapGAABurst(
 	ctx context.Context,
-	sender stormMapBurstSender,
-	observer stormMapBurstObserver,
+	sender mapGAASender,
+	observer mapGAAObserver,
 	language *GameData.LanguageStore,
 	kingdomID State.KingdomID,
 	windows []towerMapWindow,

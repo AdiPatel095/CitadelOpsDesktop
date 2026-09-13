@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"CitadelDesktop/Server/Reports"
 	"CitadelDesktop/Server/Session"
 )
 
@@ -14,8 +15,8 @@ func TestLegacy138IntentAndAutomationParityManifest(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if application.BattleResearch != nil {
-		t.Fatal("retired Experimental Battle Research runtime was composed")
+	if _, exists := application.Configuration.Section(Reports.BattleResearchConfigurationSection); exists {
+		t.Fatal("retired Experimental Battle Research configuration was composed")
 	}
 	capabilities := map[string][]string{
 		"application": {"app.update.check", "app.update.install", "game_data.refresh"},
@@ -31,7 +32,7 @@ func TestLegacy138IntentAndAutomationParityManifest(t *testing.T) {
 		"construction": {"construction.equip", "construction.upgrade", "construction.shop", "construction.inventory.refresh", "construction.purchase"},
 		"crafting":     {"crafting.refresh", "crafting.start", "crafting.rent_slot", "crafting.skip", "resource.logistics.refresh", "resource.ship", "resource.market.ship", "resource.kingdom.ship", "resource.kingdom.skip", "resource.kingdom.settle"},
 		"rift":         {"rift.maiden_run.start", "rift.maiden_run.cancel", "rift.maiden_wave.launch", "rift.launch.replay", "rift.template.rename", "rift.template.delete"},
-		"towers":       {"tower.queue.scan", "tower.context.refresh", "tower.attack", "tower.launch"},
+		"towers":       {"tower.queue.scan", "tower.context.refresh", "tower.advisor.activate", "tower.attack", "tower.launch"},
 		"reports":      {"report.spy.fetch", "report.spy.share", "report.battle.summary", "report.battle.details"},
 		"beri":         {"beri.capacity.refresh", "beri.transfer", "beri.camp.open", "beri.target.find", "beri.tower.attack"},
 	}

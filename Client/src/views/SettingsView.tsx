@@ -40,6 +40,7 @@ interface AttackPriorityFeature {
 type GameConnectionMode = 'full' | 'background';
 
 const defaultAttackPriorityFeatures: AttackPriorityFeature[] = [
+	{ id: 'autoFortress', label: 'Auto Fortress', detail: 'Speed-first outer-kingdom fortress attacks', defaultWeight: 60 },
 	{ id: 'autoTowers', label: 'Auto Towers', detail: 'Robber-baron and kingdom tower attacks', defaultWeight: 50 },
 	{ id: 'riftMaiden', label: 'Rift Maiden Waves', detail: 'Shield-maiden probe and wave launches', defaultWeight: 50 },
 	{ id: 'riftReplay', label: 'Rift Replays', detail: 'Captured Rift attack templates', defaultWeight: 50 },

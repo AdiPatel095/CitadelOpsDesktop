@@ -8,6 +8,7 @@ import {
   type WeeklySchedule,
 } from '../SchedulerTypes';
 import { defaultAutoToolSettings, normalizeAutoToolSettings } from '../AutoToolClientState';
+import { parseAutoBirdClientState } from '../AutoBirdClientState';
 import { defaultRecruitTroopsSettings, normalizeRecruitTroopsSettings } from '../RecruitTroopsClientState';
 import {
   buildQueueableProductionCatalog,
@@ -138,6 +139,30 @@ export const FeatureScheduleModal: React.FC<FeatureScheduleModalProps> = ({
 
   const slotOptionsConfig: ScheduleSlotOptionsConfig | undefined = (() => {
     if (!featureID) return undefined;
+    if (featureID === 'autoBird') {
+      const autoBird = parseAutoBirdClientState(configuration?.sections['automation.autoBird']);
+      const presetChoices = autoBird.presets.presets.map((preset) => ({
+        value: preset.id,
+        label: preset.name,
+        searchText: preset.name,
+      }));
+      return {
+        enabledLabel: 'Specify Preset Per Period',
+        formTitle: 'Period Auto Bird Preset',
+        fields: [
+          {
+            id: 'presetId',
+            label: 'Preset',
+            type: 'text',
+            placeholder: presetChoices.length > 0
+              ? 'Choose an Auto Bird preset'
+              : 'Create an Auto Bird preset first',
+            required: true,
+            choices: presetChoices,
+          },
+        ],
+      };
+    }
     if (featureID === 'autoRecruit' || featureID.startsWith('autoRecruit:')) {
       return {
         enabledLabel: 'Specify Unit Per Period',

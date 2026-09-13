@@ -818,7 +818,6 @@ func (orchestrator *Orchestrator) handleConfigurationSync(writer http.ResponseWr
 	snapshot, changed, err := application.Configuration.ReplaceAllAuthoritative(
 		replacement,
 		History.PlayerSamplesConfigurationSection,
-		Reports.BattleResearchConfigurationSection,
 	)
 	if err != nil {
 		writeControlError(writer, http.StatusUnprocessableEntity, "configuration_apply_failed")

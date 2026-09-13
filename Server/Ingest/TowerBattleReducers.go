@@ -13,9 +13,12 @@ import (
 
 const towerMapTypeID = 2
 
+const fortressPersonalCooldown = 120 * time.Hour
+
 // reduceSuccessfulTowerBattle records confirmed player victories for kingdom
-// towers and Khan camps. The summary identifies the target, but not its
-// cooldown, so automation follows it with a one-tile map refresh.
+// towers, kingdom fortresses, and Khan camps. The summary identifies the
+// target, but not its cooldown, so automation follows it with a one-tile map
+// refresh.
 func reduceSuccessfulTowerBattle(
 	_ context.Context,
 	frame Protocol.Frame,
@@ -39,7 +42,7 @@ func reduceSuccessfulTowerBattle(
 	if err := json.Unmarshal(frame.Payload, &summary); err != nil {
 		return nil, false, fmt.Errorf("decode tower battle summary: %w", err)
 	}
-	if summary.Target.TypeID != towerMapTypeID && summary.Target.TypeID != khanCampMapTypeID ||
+	if summary.Target.TypeID != towerMapTypeID && summary.Target.TypeID != State.MapTypeKingdomFortress && summary.Target.TypeID != khanCampMapTypeID ||
 		!battleSummaryHasOwnAttacker(summary.Participants, gameState.Player.ID) ||
 		!battleSummaryAttackerWon(summary.Participants) {
 		return nil, false, nil
@@ -74,7 +77,15 @@ func reduceSuccessfulTowerBattle(
 	}
 	gameState.SetTowerCooldown(key, State.TowerCooldownState{
 		KingdomID: kingdomID, X: summary.Target.X, Y: summary.Target.Y,
-		ReportID: reportID, LastSuccessfulBattleAt: frame.ReceivedAt, PendingCooldownRefresh: true,
+		TargetTypeID: summary.Target.TypeID,
+		ReportID:     reportID, LastSuccessfulBattleAt: frame.ReceivedAt, PendingCooldownRefresh: true,
+		CooldownRemaining: func() int {
+			if summary.Target.TypeID == State.MapTypeKingdomFortress {
+				return int(fortressPersonalCooldown / time.Second)
+			}
+			return 0
+		}(),
+		CooldownObservedAt: frame.ReceivedAt,
 	})
 	domains := []string{"tower-cooldowns"}
 	if recordRBCTestVictory(gameState, kingdomID, summary.Target.X, summary.Target.Y, reportID) {
@@ -178,15 +189,16 @@ func battleSummaryAttackerWon(participants [][]json.RawMessage) bool {
 }
 
 func refreshTowerCooldownFromMap(gameState *State.GameState, observation State.MapObservation) bool {
-	if observation.TypeID != towerMapTypeID {
+	if observation.TypeID != towerMapTypeID && observation.TypeID != State.MapTypeKingdomFortress {
 		return false
 	}
 	key := towerCooldownKey(observation.KingdomID, observation.X, observation.Y)
 	current, exists := gameState.LookupTowerCooldown(key)
-	if !exists || current.LastSuccessfulBattleAt.After(observation.ObservedAt) {
+	if !exists || current.TargetTypeID > 0 && current.TargetTypeID != observation.TypeID || current.LastSuccessfulBattleAt.After(observation.ObservedAt) {
 		return false
 	}
 	next := current
+	next.TargetTypeID = observation.TypeID
 	next.CooldownRemaining = observation.TowerCooldownRemaining
 	next.CooldownObservedAt = observation.ObservedAt
 	next.PendingCooldownRefresh = false

@@ -202,6 +202,12 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterStepResolver("tower.attack.build", application.resolveTowerAttackStep); err != nil {
 		return err
 	}
+	if err := application.Intents.RegisterStepResolver("fortress.attack.build", application.resolveFortressAttackStep); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("fortress.scan.full", application.scanFullFortressMap); err != nil {
+		return err
+	}
 	if err := application.Intents.RegisterAction("invasion.scan.capture", application.captureInvasionScan); err != nil {
 		return err
 	}
@@ -554,7 +560,11 @@ func (application *Application) registerGameIntents() error {
 			Planner: planTowerContext,
 		},
 		{
-			Name: "tower.attack", Description: "Admit and atomically launch a contextual full-flank kingdom-tower attack", Effect: Intent.EffectLaunch,
+			Name: "tower.advisor.activate", Description: "Explicitly consume one available Baron Advisor token and refresh its subscription", Effect: Intent.EffectWrite,
+			Planner: planTowerAdvisorActivation,
+		},
+		{
+			Name: "tower.attack", Description: "Admit and atomically launch a regular or daily-budgeted Baron Advisor tower chain", Effect: Intent.EffectLaunch,
 			AttackModule: &Intent.AttackModuleDefinition{ID: "autoTowers", Label: "Auto Towers", Description: "Robber-baron and kingdom tower attacks", DefaultWeight: 50},
 			Planner:      planTowerAttack,
 		},
@@ -562,6 +572,19 @@ func (application *Application) registerGameIntents() error {
 			Name: "tower.launch", Description: "Launch a full-flank configured troop attack against a refreshed kingdom tower", Effect: Intent.EffectLaunch,
 			AttackModule: &Intent.AttackModuleDefinition{ID: "autoTowers", Label: "Auto Towers", Description: "Robber-baron and kingdom tower attacks", DefaultWeight: 50},
 			Planner:      planTowerLaunch,
+		},
+		{
+			Name: "fortress.map.scan", Description: "Focus an outer-kingdom main castle and discover every kingdom fortress across the populated map", Effect: Intent.EffectRead,
+			Planner: planFortressMapScan,
+		},
+		{
+			Name: "fortress.target.refresh", Description: "Refresh one known kingdom fortress immediately before attack", Effect: Intent.EffectRead,
+			Planner: planFortressTargetRefresh,
+		},
+		{
+			Name: "fortress.attack", Description: "Launch the guarded one-wave Direwolf flank formation against a ready kingdom fortress", Effect: Intent.EffectLaunch,
+			AttackModule: &Intent.AttackModuleDefinition{ID: "autoFortress", Label: "Auto Fortress", Description: "Fast outer-kingdom fortress attacks", DefaultWeight: 60},
+			Planner:      planFortressAttack,
 		},
 		{
 			Name: "invasion.difficulty.select", Description: "Select the configured difficulty for an active Foreign Lords or Bloodcrow event without premium spending", Effect: Intent.EffectWrite,

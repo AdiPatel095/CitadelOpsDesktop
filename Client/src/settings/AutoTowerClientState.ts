@@ -8,12 +8,17 @@ export interface AutoTowerCastleSettings {
   maidenOnly: boolean;
 }
 
-export interface AutoTowerClientStateV2 {
-  version: 2;
+export const AUTO_TOWER_MAXIMUM_DAILY_TIME_SKIPS = 9998;
+
+export interface AutoTowerClientStateV4 {
+  version: 4;
   checkIntervalSec: number;
   mapRefreshIntervalSec: number;
   dailyAttackLimit: number;
   horseTravelBoostId: HorseTravelBoostID;
+  useAdvisor: boolean;
+  autoActivateAdvisor: boolean;
+  maximumDailyTimeSkips: number;
   castles: Record<string, AutoTowerCastleSettings>;
 }
 
@@ -24,16 +29,19 @@ export const defaultAutoTowerCastleSettings = (): AutoTowerCastleSettings => ({
   maidenOnly: false,
 });
 
-export const defaultAutoTowerClientState = (): AutoTowerClientStateV2 => ({
-	version: 2,
+export const defaultAutoTowerClientState = (): AutoTowerClientStateV4 => ({
+	version: 4,
 	checkIntervalSec: 30,
 	mapRefreshIntervalSec: 1800,
   dailyAttackLimit: 0,
   horseTravelBoostId: -1,
+  useAdvisor: false,
+  autoActivateAdvisor: false,
+  maximumDailyTimeSkips: 0,
   castles: {},
 });
 
-export function parseAutoTowerClientState(raw: unknown): AutoTowerClientStateV2 {
+export function parseAutoTowerClientState(raw: unknown): AutoTowerClientStateV4 {
   const fallback = defaultAutoTowerClientState();
   if (raw == null || typeof raw !== 'object' || Array.isArray(raw)) return fallback;
   const document = raw as Record<string, unknown>;
@@ -51,17 +59,24 @@ export function parseAutoTowerClientState(raw: unknown): AutoTowerClientStateV2 
     }
   }
   return {
-    version: 2,
+    version: 4,
     checkIntervalSec: clampInterval(document.checkIntervalSec, fallback.checkIntervalSec),
 		mapRefreshIntervalSec: clampMapRefreshInterval(document.mapRefreshIntervalSec),
     dailyAttackLimit: positiveInteger(document.dailyAttackLimit),
     horseTravelBoostId: parseHorseTravelBoostID(document.horseTravelBoostId),
+    useAdvisor: document.useAdvisor === true,
+    autoActivateAdvisor: document.autoActivateAdvisor === true,
+    maximumDailyTimeSkips: clampMaximumDailyTimeSkips(document.maximumDailyTimeSkips),
     castles,
   };
 }
 
-export function persistAutoTowerClientState(state: AutoTowerClientStateV2) {
+export function persistAutoTowerClientState(state: AutoTowerClientStateV4) {
   return queueConfigurationUpdate('automation.autoTowers', state);
+}
+
+export function clampMaximumDailyTimeSkips(value: unknown): number {
+  return Math.min(AUTO_TOWER_MAXIMUM_DAILY_TIME_SKIPS, positiveInteger(value));
 }
 
 export function clampRadius(value: unknown): number {

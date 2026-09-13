@@ -62,20 +62,31 @@ func (snapshot *khanRageSnapshot) UnmarshalJSON(raw []byte) error {
 }
 
 type scalableEventSnapshot struct {
-	EventID           wireInt64         `json:"EID"`
-	RemainingSec      wireInt64         `json:"RS"`
-	DifficultyID      wireInt64         `json:"EDID"`
-	AutoScaling       wireInt64         `json:"EASE"`
-	PlayerProgress    eventPointScore   `json:"SP"`
-	AllianceProgress  eventPointScore   `json:"A"`
-	PackageIDs        string            `json:"PIDS"`
-	Packages          json.RawMessage   `json:"PID"`
-	AdvisorCurrency   wireInt64         `json:"ACI"`
-	AdvisorActive     wireInt64         `json:"AAA"`
-	AdvisorFree       wireInt64         `json:"AAF"`
-	FortifyCurrencies []string          `json:"RCKS"`
-	AllianceCamp      *khanRageSnapshot `json:"AC"`
+	EventID           wireInt64           `json:"EID"`
+	RemainingSec      wireInt64           `json:"RS"`
+	DifficultyID      wireInt64           `json:"EDID"`
+	AutoScaling       wireInt64           `json:"EASE"`
+	PlayerProgress    eventPointScore     `json:"SP"`
+	AllianceProgress  eventPointScore     `json:"A"`
+	PackageIDs        string              `json:"PIDS"`
+	Packages          json.RawMessage     `json:"PID"`
+	AdvisorCurrency   wireInt64           `json:"ACI"`
+	AdvisorActive     wireInt64           `json:"AAA"`
+	AdvisorFree       wireInt64           `json:"AAF"`
+	FortifyCurrencies []string            `json:"RCKS"`
+	AllianceCamp      *khanRageSnapshot   `json:"AC"`
+	GlobalEffects     [][]json.RawMessage `json:"GE"`
+	GlobalBoosters    []struct {
+		GlobalEffectID wireInt64 `json:"GEID"`
+		RubyCost       wireInt64 `json:"C2"`
+		BonusValue     wireInt64 `json:"BV"`
+	} `json:"GEB"`
 }
+
+const (
+	globalEffectsEventID        = 610
+	globalEffectBoostersEventID = 612
+)
 
 func reduceScalableEventSnapshot(
 	_ context.Context,
@@ -87,7 +98,7 @@ func reduceScalableEventSnapshot(
 		return nil, false, nil
 	}
 	changed, err := applyScalableEventSnapshot(frame.Payload, frame.ReceivedAt, gameState, gameData)
-	return []string{"events", "event-scores", "khan"}, changed, err
+	return []string{"events", "event-scores", "global-effects", "khan"}, changed, err
 }
 
 func applyScalableEventSnapshot(
@@ -104,6 +115,8 @@ func applyScalableEventSnapshot(
 	}
 	changed := false
 	activeByEvent := make(map[int64]State.EventAvailability, len(payload.Events))
+	globalEffects := map[int64]State.GlobalEffectAvailability{}
+	globalEffectBoosterOffers := map[int64]State.GlobalEffectBoosterOffer{}
 	for _, event := range payload.Events {
 		eventID := int64(event.EventID)
 		remainingSec := int64(event.RemainingSec)
@@ -114,10 +127,37 @@ func applyScalableEventSnapshot(
 			EventID: eventID,
 			EndsAt:  observedAt.Add(time.Duration(remainingSec) * time.Second).UTC().Truncate(time.Minute),
 		}
+		switch eventID {
+		case globalEffectsEventID:
+			for _, row := range event.GlobalEffects {
+				globalEffectID, effectRemainingSec, strength := rowInt(row, 0), rowInt(row, 1), rowInt(row, 2)
+				if globalEffectID <= 0 || effectRemainingSec <= 0 {
+					continue
+				}
+				globalEffects[globalEffectID] = State.GlobalEffectAvailability{
+					GlobalEffectID: globalEffectID, Strength: strength,
+					EndsAt: observedAt.Add(time.Duration(effectRemainingSec) * time.Second).UTC().Truncate(time.Minute),
+				}
+			}
+		case globalEffectBoostersEventID:
+			for _, offer := range event.GlobalBoosters {
+				globalEffectID := int64(offer.GlobalEffectID)
+				if globalEffectID <= 0 || int64(offer.RubyCost) <= 0 || int64(offer.BonusValue) <= 0 {
+					continue
+				}
+				globalEffectBoosterOffers[globalEffectID] = State.GlobalEffectBoosterOffer{
+					GlobalEffectID: globalEffectID, RubyCost: int64(offer.RubyCost), BonusValue: int64(offer.BonusValue),
+				}
+			}
+		}
 	}
+	previousInventory := gameState.EventScores.Inventory
 	if gameState.ReplaceEventInventory(State.EventInventoryState{
-		ObservedAt:    observedAt,
-		ActiveByEvent: activeByEvent,
+		ObservedAt: observedAt, ActiveByEvent: activeByEvent,
+		GlobalEffectsObservedAt: observedAt.UTC(), GlobalEffects: globalEffects,
+		GlobalEffectBoosterOffers:    globalEffectBoosterOffers,
+		GlobalEffectBoostsObservedAt: previousInventory.GlobalEffectBoostsObservedAt,
+		GlobalEffectBoosts:           previousInventory.GlobalEffectBoosts,
 	}) {
 		changed = true
 	}
@@ -209,6 +249,52 @@ func applyScalableEventSnapshot(
 		changed = true
 	}
 	return changed, nil
+}
+
+func reduceGlobalEffectBoosterInfo(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	var root map[string]json.RawMessage
+	if err := json.Unmarshal(frame.Payload, &root); err != nil {
+		return nil, false, fmt.Errorf("decode global-effect booster status: %w", err)
+	}
+	if nested := root["bie"]; len(nested) > 0 {
+		if err := json.Unmarshal(nested, &root); err != nil {
+			return nil, false, fmt.Errorf("decode nested global-effect booster status: %w", err)
+		}
+	}
+	var boostedIDs []wireInt64
+	if err := json.Unmarshal(root["GE"], &boostedIDs); err != nil {
+		return nil, false, fmt.Errorf("decode boosted global-effect ids: %w", err)
+	}
+	boosted := make(map[int64]struct{}, len(boostedIDs))
+	for _, id := range boostedIDs {
+		if id > 0 {
+			boosted[int64(id)] = struct{}{}
+		}
+	}
+	statuses := make(map[int64]State.GlobalEffectBoostState, len(gameState.EventScores.Inventory.GlobalEffects))
+	for globalEffectID, effect := range gameState.EventScores.Inventory.GlobalEffects {
+		if !effect.ActiveAt(frame.ReceivedAt) {
+			continue
+		}
+		_, active := boosted[globalEffectID]
+		statuses[globalEffectID] = State.GlobalEffectBoostState{
+			GlobalEffectID: globalEffectID, Boosted: active,
+			OccurrenceEndsAt: effect.EndsAt, ObservedAt: frame.ReceivedAt.UTC(),
+		}
+	}
+	inventory := gameState.EventScores.Inventory
+	inventory.GlobalEffectBoostsObservedAt = frame.ReceivedAt.UTC()
+	inventory.GlobalEffectBoosts = statuses
+	changed := gameState.ReplaceEventInventory(inventory)
+	return []string{"events", "event-scores", "global-effects"}, changed, nil
 }
 
 func applyKhanRageSnapshot(

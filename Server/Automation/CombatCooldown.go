@@ -20,6 +20,7 @@ import (
 var combatLaunchIntents = map[string]struct{}{
 	"tower.attack":            {},
 	"tower.launch":            {},
+	"fortress.attack":         {},
 	"storm.attack":            {},
 	"khan.attack":             {},
 	"nomad.camp.attack":       {},

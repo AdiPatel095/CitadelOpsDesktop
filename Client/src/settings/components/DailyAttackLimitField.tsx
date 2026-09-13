@@ -7,9 +7,10 @@ interface DailyAttackLimitFieldProps {
   value: number;
   onChange: (value: number) => void;
   serverState?: DailyAttackStateV2;
+  description?: React.ReactNode;
 }
 
-export const DailyAttackLimitField: React.FC<DailyAttackLimitFieldProps> = ({ value, onChange, serverState }) => {
+export const DailyAttackLimitField: React.FC<DailyAttackLimitFieldProps> = ({ value, onChange, serverState, description }) => {
   const synced = Boolean(serverState?.observedAt && !serverState.observedAt.startsWith('0001-01-01'));
   return (
     <Card variant="solid" className="p-4">
@@ -19,7 +20,9 @@ export const DailyAttackLimitField: React.FC<DailyAttackLimitFieldProps> = ({ va
             <Gauge className="h-4 w-4 text-primary" /> Daily normal-attack limit
           </div>
           <p className="mt-1 text-xs text-text-muted">
-            Stop this automation when the server&apos;s account-wide daily attack count reaches this value. It resumes automatically when the server count resets. Advisor attacks are exempt.
+            {description ?? (
+              <>Stop this automation when the server&apos;s account-wide daily attack count reaches this value. It resumes automatically when the server count resets. Advisor attacks are exempt.</>
+            )}
           </p>
           <p className="mt-2 text-[11px] text-text-muted">
             {synced

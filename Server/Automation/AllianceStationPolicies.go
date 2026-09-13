@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"CitadelDesktop/Server/Intent"
@@ -25,14 +26,34 @@ type reserveSetting struct {
 	Amount int64        `json:"amount"`
 }
 
+type autoBirdSettings struct {
+	Settings   map[string][]reserveSetting `json:"settings"`
+	MinDelay   int                         `json:"minDelay"`
+	MaxDelay   int                         `json:"maxDelay"`
+	MinSend    int64                       `json:"minSend"`
+	MinRPTDays int                         `json:"minRPTDays"`
+}
+
+type autoBirdPreset struct {
+	ID         string                      `json:"id"`
+	Name       string                      `json:"name"`
+	Settings   map[string][]reserveSetting `json:"settings"`
+	MinDelay   int                         `json:"minDelay"`
+	MaxDelay   int                         `json:"maxDelay"`
+	MinSend    int64                       `json:"minSend"`
+	MinRPTDays *int                        `json:"minRPTDays"`
+}
+
 type autoBirdConfiguration struct {
-	IgnoreSettings struct {
-		Settings   map[string][]reserveSetting `json:"settings"`
-		MinDelay   int                         `json:"minDelay"`
-		MaxDelay   int                         `json:"maxDelay"`
-		MinSend    int64                       `json:"minSend"`
-		MinRPTDays int                         `json:"minRPTDays"`
-	} `json:"ignoreSettings"`
+	Version        int              `json:"version"`
+	ActivePresetID string           `json:"activePresetId"`
+	IgnoreSettings autoBirdSettings `json:"ignoreSettings"`
+	Presets        struct {
+		Presets []autoBirdPreset `json:"presets"`
+	} `json:"presets"`
+
+	ResolvedPresetID string    `json:"-"`
+	PresetValidUntil time.Time `json:"-"`
 }
 
 type autoStationConfiguration struct {
@@ -58,7 +79,6 @@ func (*AutoBirdPolicy) WakeDomains() []string {
 func (*AutoBirdPolicy) WakeSections() []string { return []string{"automation.autoBird"} }
 
 func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision Decision, err error) {
-
 	if refresh, required := playerProtectionRefreshDecision(snapshot); required {
 		return withAutoBirdSchedule(snapshot, refresh, time.Time{}), nil
 	}
@@ -67,12 +87,48 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 			decision = capAtPlayerProtectionRefresh(snapshot, decision)
 		}
 	}()
-	settings := autoBirdConfiguration{}
-	settings.IgnoreSettings.Settings = map[string][]reserveSetting{}
-	settings.IgnoreSettings.MinDelay = 6
-	settings.IgnoreSettings.MaxDelay = 12
-	settings.IgnoreSettings.MinRPTDays = 3
+	settings := defaultAutoBirdConfiguration()
 	decodeSection(snapshot.Configuration, "automation.autoBird", &settings)
+	schedule := resolveWeeklySchedule(snapshot.Configuration, "autoBird", snapshot.Now)
+	if !schedule.Allowed {
+		next := schedule.Next
+		if next.IsZero() {
+			next = snapshot.Now.Add(allianceRosterRefreshInterval)
+		}
+		return withAutoBirdSchedule(snapshot, Decision{
+			Status: "scheduled", Detail: "Outside the configured weekly schedule", NextCheckAt: next,
+		}, time.Time{}), nil
+	}
+	selectedPresetID := strings.TrimSpace(settings.ActivePresetID)
+	if schedule.SlotOptionsEnabled {
+		var valid bool
+		selectedPresetID, valid = autoBirdSchedulePresetID(schedule.Options)
+		if !valid {
+			return withAutoBirdSchedule(snapshot, Decision{
+				Status: "waiting", Detail: "The active schedule period has no valid Auto Bird preset",
+				NextCheckAt: schedule.ValidUntil,
+			}, time.Time{}), nil
+		}
+	}
+	if selectedPresetID != "" {
+		preset, valid := findAutoBirdPreset(settings.Presets.Presets, selectedPresetID)
+		if !valid {
+			return withAutoBirdSchedule(snapshot, Decision{
+				Status: "waiting", Detail: "The selected Auto Bird preset no longer exists or is duplicated",
+				NextCheckAt: schedule.ValidUntil,
+			}, time.Time{}), nil
+		}
+		minimumRPTDays := 3
+		if preset.MinRPTDays != nil {
+			minimumRPTDays = *preset.MinRPTDays
+		}
+		settings.IgnoreSettings = autoBirdSettings{
+			Settings: preset.Settings, MinDelay: preset.MinDelay, MaxDelay: preset.MaxDelay,
+			MinSend: preset.MinSend, MinRPTDays: minimumRPTDays,
+		}
+	}
+	settings.ResolvedPresetID = selectedPresetID
+	settings.PresetValidUntil = schedule.ValidUntil
 	minimumDelay := clampInt(settings.IgnoreSettings.MinDelay, 1, 12)
 	maximumDelay := clampInt(settings.IgnoreSettings.MaxDelay, minimumDelay, 12)
 	if snapshot.State.Player.ProtectionMode.PreparingOrActive(snapshot.Now) {
@@ -119,6 +175,7 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 			snapshot.State.Alliance, castle, settings.IgnoreSettings.MinRPTDays,
 		)
 		targetStale := snapshot.PolicyConfigurationChanged ||
+			operation.PresetID != settings.ResolvedPresetID ||
 			operation.AllianceObservedAt.IsZero() ||
 			snapshot.Now.Sub(operation.AllianceObservedAt) > allianceRosterRefreshInterval ||
 			!targetAvailable || target.CastleID != operation.TargetCastleID
@@ -162,6 +219,7 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 			snapshot.State.Alliance, castle, settings.IgnoreSettings.MinRPTDays,
 		)
 		if snapshot.PolicyConfigurationChanged ||
+			operation.PresetID != settings.ResolvedPresetID ||
 			operation.AllianceObservedAt.IsZero() ||
 			snapshot.Now.Sub(operation.AllianceObservedAt) > allianceRosterRefreshInterval ||
 			!targetAvailable || target.CastleID != operation.TargetCastleID {
@@ -216,6 +274,11 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 					continue
 				}
 			case State.StationingPhaseWaiting:
+				if operation.PresetID != settings.ResolvedPresetID {
+					return withAutoBirdSchedule(snapshot, autoBirdDiscoverDecision(
+						castle, settings, snapshot.Now, "Restart after the Auto Bird preset changed",
+					), time.Time{}), nil
+				}
 				// AIN and JAA observations can advance while another castle runs its
 				// independent cycle. The explicit per-castle retry remains authoritative
 				// so those shared timestamps cannot restart this castle in a tight loop.
@@ -247,6 +310,39 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 		Status: "idle", Detail: "Each castle is independently waiting for troops, a target, or its bird return",
 		NextCheckAt: nextCheck,
 	}, time.Time{}), nil
+}
+
+func defaultAutoBirdConfiguration() autoBirdConfiguration {
+	settings := autoBirdConfiguration{}
+	settings.IgnoreSettings.Settings = map[string][]reserveSetting{}
+	settings.IgnoreSettings.MinDelay = 6
+	settings.IgnoreSettings.MaxDelay = 12
+	settings.IgnoreSettings.MinRPTDays = 3
+	return settings
+}
+
+func autoBirdSchedulePresetID(options map[string]any) (string, bool) {
+	raw, exists := options["presetId"]
+	if !exists {
+		return "", false
+	}
+	presetID, valid := raw.(string)
+	presetID = strings.TrimSpace(presetID)
+	return presetID, valid && presetID != ""
+}
+
+func findAutoBirdPreset(presets []autoBirdPreset, presetID string) (autoBirdPreset, bool) {
+	presetID = strings.TrimSpace(presetID)
+	var selected autoBirdPreset
+	matches := 0
+	for _, preset := range presets {
+		if strings.TrimSpace(preset.ID) != presetID {
+			continue
+		}
+		selected = preset
+		matches++
+	}
+	return selected, matches == 1
 }
 
 const autoBirdMovementRetryInterval = time.Minute
@@ -285,9 +381,10 @@ func autoBirdPrepareDecision(
 
 func autoBirdCycleArguments(castleID State.CastleID, settings autoBirdConfiguration) json.RawMessage {
 	reserves := settings.IgnoreSettings.Settings[strconv.FormatInt(int64(castleID), 10)]
-	arguments, _ := json.Marshal(map[string]any{
+	values := map[string]any{
 		"sourceCastleId":    castleID,
 		"trackingId":        autoBirdTrackingID(castleID),
+		"presetId":          settings.ResolvedPresetID,
 		"minimumRPTDays":    settings.IgnoreSettings.MinRPTDays,
 		"minimumDelayHours": clampInt(settings.IgnoreSettings.MinDelay, 1, 12),
 		"maximumDelayHours": clampInt(
@@ -297,7 +394,11 @@ func autoBirdCycleArguments(castleID State.CastleID, settings autoBirdConfigurat
 		),
 		"minimumSend": max(int64(0), settings.IgnoreSettings.MinSend),
 		"reserves":    stationReserveUnits(reserves),
-	})
+	}
+	if !settings.PresetValidUntil.IsZero() {
+		values["presetValidUntil"] = settings.PresetValidUntil.UTC()
+	}
+	arguments, _ := json.Marshal(values)
 	return arguments
 }
 
@@ -718,6 +819,11 @@ func withAutoBirdSchedule(snapshot Snapshot, decision Decision, notBefore time.T
 		if decision.NextCheckAt.IsZero() || wakeAt.Before(decision.NextCheckAt) {
 			decision.NextCheckAt = wakeAt
 		}
+	}
+	periodEndsAt := resolveWeeklySchedule(snapshot.Configuration, "autoBird", snapshot.Now).ValidUntil
+	if periodEndsAt.After(snapshot.Now) &&
+		(decision.NextCheckAt.IsZero() || periodEndsAt.Before(decision.NextCheckAt)) {
+		decision.NextCheckAt = periodEndsAt
 	}
 	return decision
 }

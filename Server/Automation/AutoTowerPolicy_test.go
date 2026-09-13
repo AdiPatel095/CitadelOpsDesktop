@@ -92,13 +92,18 @@ func TestAutoTowerPolicyScansStaleCastlesBeforeLaunchingQueue(t *testing.T) {
 		t.Fatalf("tower queue next check = %s, want immediate queue cadence", decision.NextCheckAt)
 	}
 	var attackArguments struct {
-		CommanderIDs []State.CommanderID `json:"commanderIds"`
+		CommanderIDs       []State.CommanderID `json:"commanderIds"`
+		AdvisorMode        bool                `json:"advisorMode"`
+		AdvisorAttackCount int                 `json:"advisorAttackCount"`
 	}
 	if err := json.Unmarshal(decision.Request.Arguments, &attackArguments); err != nil {
 		t.Fatal(err)
 	}
 	if len(attackArguments.CommanderIDs) != 1 || attackArguments.CommanderIDs[0] != 1 {
 		t.Fatalf("tower commander reservation = %#v", attackArguments.CommanderIDs)
+	}
+	if attackArguments.AdvisorMode || attackArguments.AdvisorAttackCount != 0 {
+		t.Fatalf("regular tower attack leaked Advisor options = %#v", attackArguments)
 	}
 }
 
@@ -786,6 +791,244 @@ func TestAutoTowerPolicyRefreshesCooldownAfterConfirmedBattle(t *testing.T) {
 	if string(decision.Request.Arguments) != `{"kingdomId":0,"x1":101,"x2":101,"y1":100,"y2":100}` {
 		t.Fatalf("cooldown map query = %s", decision.Request.Arguments)
 	}
+}
+
+func TestAutoTowerPolicyActivatesDedicatedBaronAdvisorTokenOnlyWhenEnabled(t *testing.T) {
+	now := time.Date(2026, 9, 2, 14, 0, 0, 0, time.UTC)
+	snapshot := readyAutoTowerAdvisorSnapshot(now, 5)
+	snapshot.Configuration.Sections["automation.autoTowers"] = json.RawMessage(`{
+		"useAdvisor":true,"autoActivateAdvisor":true,"maximumDailyTimeSkips":5,
+		"horseTravelBoostId":-1,"castles":{"1":{"enabled":true,"radius":1,"unitId":77}}
+	}`)
+	delete(snapshot.State.Subscriptions, autoTowerBaronSubscriptionTypeID)
+	snapshot.GameData = emptyAutoTowerGameData(t)
+	snapshot.State.Player.Currencies[79] = 1
+	snapshot.State.Player.Currencies[1006] = 1
+	castle := snapshot.State.Castles[1]
+	castle.Units.Stationed = map[State.UnitID]int64{77: 10_000}
+	snapshot.State.Castles[1] = castle
+
+	decision, err := NewAutoTowerPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "tower.advisor.activate" {
+		t.Fatalf("Baron Advisor activation decision = %#v err=%v", decision, err)
+	}
+	var request struct {
+		ConfirmedTokenSpend bool `json:"confirmedTokenSpend"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil || !request.ConfirmedTokenSpend {
+		t.Fatalf("Baron Advisor activation arguments = %#v err=%v", request, err)
+	}
+
+	snapshot.Configuration.Sections["automation.autoTowers"] = json.RawMessage(`{
+		"useAdvisor":true,"autoActivateAdvisor":false,"maximumDailyTimeSkips":5,
+		"horseTravelBoostId":-1,"castles":{"1":{"enabled":true,"radius":1,"unitId":77}}
+	}`)
+	decision, err = NewAutoTowerPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request != nil || decision.Status != "waiting" || !decision.EventDriven {
+		t.Fatalf("manual Baron Advisor activation decision = %#v err=%v", decision, err)
+	}
+}
+
+func TestAutoTowerPolicyDoesNotSpendAdvisorTokenBeforeTargetIsReady(t *testing.T) {
+	now := time.Date(2026, 9, 2, 14, 0, 0, 0, time.UTC)
+	snapshot := autoTowerPolicySnapshot(now)
+	snapshot.Configuration.Sections["automation.autoTowers"] = json.RawMessage(`{
+		"useAdvisor":true,"autoActivateAdvisor":true,"maximumDailyTimeSkips":5,
+		"horseTravelBoostId":-1,"castles":{"1":{"enabled":true,"radius":1,"unitId":77}}
+	}`)
+	snapshot.State.Player.Currencies[79] = 1
+
+	decision, err := NewAutoTowerPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "tower.queue.scan" {
+		t.Fatalf("pre-activation tower scan decision = %#v err=%v", decision, err)
+	}
+}
+
+func TestAutoTowerPolicyDoesNotSpendAdvisorTokenWithoutOfficialGameData(t *testing.T) {
+	now := time.Date(2026, 9, 2, 14, 0, 0, 0, time.UTC)
+	snapshot := readyAutoTowerAdvisorSnapshot(now, 5)
+	snapshot.Configuration.Sections["automation.autoTowers"] = json.RawMessage(`{
+		"useAdvisor":true,"autoActivateAdvisor":true,"maximumDailyTimeSkips":5,
+		"horseTravelBoostId":-1,"castles":{"1":{"enabled":true,"radius":1,"unitId":77}}
+	}`)
+	delete(snapshot.State.Subscriptions, autoTowerBaronSubscriptionTypeID)
+	snapshot.State.Player.Currencies[79] = 1
+	snapshot.State.Player.Currencies[1006] = 1
+
+	decision, err := NewAutoTowerPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request != nil || decision.Status != "waiting" ||
+		!strings.Contains(decision.Detail, "token will not be activated yet") {
+		t.Fatalf("missing-game-data Advisor activation decision = %#v err=%v", decision, err)
+	}
+}
+
+func TestAutoTowerPolicyAdvisorChainUsesDailyAttackAndTimeSkipBudgets(t *testing.T) {
+	now := time.Date(2026, 9, 2, 14, 0, 0, 0, time.UTC)
+	snapshot := readyAutoTowerAdvisorSnapshot(now, 5)
+	snapshot.State.Player.Currencies[1006] = 1
+	snapshot.State.DailyAttacks.Count = 1
+
+	decision, err := NewAutoTowerPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request != nil || decision.Status != "waiting" || !strings.Contains(decision.Detail, "1 / 1") {
+		t.Fatalf("daily-counted Baron Advisor decision = %#v err=%v", decision, err)
+	}
+
+	snapshot.State.DailyAttacks.Count = 0
+	decision, err = NewAutoTowerPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "tower.attack" {
+		t.Fatalf("budgeted Baron Advisor attack decision = %#v err=%v", decision, err)
+	}
+	var request struct {
+		AdvisorMode           bool  `json:"advisorMode"`
+		AdvisorAttackCount    int   `json:"advisorAttackCount"`
+		MaximumDailyTimeSkips int64 `json:"maximumDailyTimeSkips"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil {
+		t.Fatal(err)
+	}
+	if !request.AdvisorMode || request.AdvisorAttackCount != 2 || request.MaximumDailyTimeSkips != 5 {
+		t.Fatalf("budgeted Baron Advisor request = %#v", request)
+	}
+}
+
+func TestAutoTowerPolicyAdvisorChainIsBoundedByQualifyingTimeSkips(t *testing.T) {
+	now := time.Date(2026, 9, 2, 14, 0, 0, 0, time.UTC)
+	snapshot := readyAutoTowerAdvisorSnapshot(now, 10)
+	snapshot.State.Player.Currencies[1006] = 2
+
+	decision, err := NewAutoTowerPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "tower.attack" {
+		t.Fatalf("Baron Advisor chain decision = %#v err=%v", decision, err)
+	}
+	var request struct {
+		AdvisorAttackCount int `json:"advisorAttackCount"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil {
+		t.Fatal(err)
+	}
+	if request.AdvisorAttackCount != 3 {
+		t.Fatalf("Baron Advisor chain request = %#v", request)
+	}
+}
+
+func TestAutoTowerPolicyAdvisorChainIsBoundedByCompleteFormations(t *testing.T) {
+	now := time.Date(2026, 9, 2, 14, 0, 0, 0, time.UTC)
+	snapshot := readyAutoTowerAdvisorSnapshot(now, 10)
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"units":[],"buildings":[],"effects":[]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	snapshot.GameData = gameData
+	snapshot.State.Player.Currencies[1006] = 5
+	candidate := towerQueueCandidate{
+		Castle: snapshot.State.Castles[1], Plan: autoTowerCastle{Enabled: true, Radius: 1, UnitID: 77},
+		Entry: snapshot.State.TowerQueue.EntriesByCastle[1][0],
+	}
+	perAttack, err := autoTowerCapacityRequirement(snapshot, candidate, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	castle := snapshot.State.Castles[1]
+	castle.Units.Stationed = map[State.UnitID]int64{77: perAttack * 2}
+	snapshot.State.Castles[1] = castle
+
+	decision, err := NewAutoTowerPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "tower.attack" {
+		t.Fatalf("formation-bounded Baron Advisor chain = %#v err=%v", decision, err)
+	}
+	var request struct {
+		AdvisorAttackCount int `json:"advisorAttackCount"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil || request.AdvisorAttackCount != 2 {
+		t.Fatalf("formation-bounded attack count = %#v err=%v", request, err)
+	}
+}
+
+func TestAutoTowerPolicyCapsAdvisorChainByRemainingDailyTimeSkips(t *testing.T) {
+	now := time.Date(2026, 9, 2, 14, 0, 0, 0, time.UTC)
+	snapshot := readyAutoTowerAdvisorSnapshot(now, 3)
+	snapshot.State.Player.Currencies[1006] = 10
+	snapshot.State.AttackAnalytics.RecentTowerAdvisorTimeSkips = []State.TowerAdvisorTimeSkipUsage{
+		{MovementID: 700, TimeSkips: 2, UsedAt: now.Add(-time.Hour)},
+	}
+
+	decision, err := NewAutoTowerPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "tower.attack" {
+		t.Fatalf("remaining daily Time Skip decision = %#v err=%v", decision, err)
+	}
+	var request struct {
+		AdvisorAttackCount int `json:"advisorAttackCount"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil || request.AdvisorAttackCount != 2 {
+		t.Fatalf("daily-budgeted Advisor request = %#v err=%v", request, err)
+	}
+
+	snapshot.State.AttackAnalytics.RecentTowerAdvisorTimeSkips = append(
+		snapshot.State.AttackAnalytics.RecentTowerAdvisorTimeSkips,
+		State.TowerAdvisorTimeSkipUsage{MovementID: 701, TimeSkips: 1, UsedAt: now.Add(-time.Minute)},
+	)
+	decision, err = NewAutoTowerPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request != nil || decision.Status != "waiting" || !strings.Contains(decision.Detail, "3 / 3") {
+		t.Fatalf("exhausted daily Time Skip decision = %#v err=%v", decision, err)
+	}
+
+	snapshot.State.DailyAttacks.SessionStartedAt = now.Add(-30 * time.Second)
+	decision, err = NewAutoTowerPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "tower.attack" {
+		t.Fatalf("post-reset daily Time Skip decision = %#v err=%v", decision, err)
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil || request.AdvisorAttackCount != 4 {
+		t.Fatalf("post-reset Advisor request = %#v err=%v", request, err)
+	}
+}
+
+func TestAutoTowerPolicyAdvisorWaitsForAuthoritativeDailyReset(t *testing.T) {
+	now := time.Date(2026, 9, 2, 14, 0, 0, 0, time.UTC)
+	snapshot := readyAutoTowerAdvisorSnapshot(now, 3)
+	snapshot.State.Player.Currencies[1006] = 3
+	snapshot.State.DailyAttacks.SessionStartedAt = time.Time{}
+
+	decision, err := NewAutoTowerPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request != nil || decision.Status != "waiting" ||
+		!strings.Contains(decision.Detail, "authoritative server daily reset") {
+		t.Fatalf("unknown-reset Advisor decision = %#v err=%v", decision, err)
+	}
+}
+
+func readyAutoTowerAdvisorSnapshot(now time.Time, maximumDailyTimeSkips int64) Snapshot {
+	snapshot := autoTowerPolicySnapshot(now)
+	snapshot.Configuration.Sections["automation.autoTowers"] = json.RawMessage(fmt.Sprintf(`{
+		"checkIntervalSec":30,"mapRefreshIntervalSec":1800,"dailyAttackLimit":1,
+		"horseTravelBoostId":-1,"useAdvisor":true,"autoActivateAdvisor":false,"maximumDailyTimeSkips":%d,
+		"castles":{"1":{"enabled":true,"radius":1,"unitId":77,"maidenOnly":false}}
+	}`, maximumDailyTimeSkips))
+	snapshot.State.Subscriptions[4] = State.SubscriptionState{TypeID: 4, RemainingSec: 3600}
+	snapshot.State.DailyAttacks = State.DailyAttackState{
+		Count: 0, ServerThreshold: 3_500, SessionStartedAt: now.Add(-2 * time.Hour), ObservedAt: now,
+	}
+	fillTowerCoverage(&snapshot.State, 100, 100, now)
+	snapshot.State.Map[0]["101:100"] = State.MapObservation{
+		KingdomID: 0, X: 101, Y: 100, TypeID: kingdomTowerMapTypeID,
+		TowerVictoryCount: 845, Level: 81, ObservedAt: now,
+	}
+	snapshot.State.TowerQueue.LastScannedAt[1] = now
+	snapshot.State.TowerQueue.EntriesByCastle[1] = []State.TowerQueueEntry{{
+		KingdomID: 0, TargetX: 101, TargetY: 100, MapObservedAt: now, QueuedAt: now,
+	}}
+	return snapshot
+}
+
+func emptyAutoTowerGameData(t *testing.T) *GameData.Store {
+	t.Helper()
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"units":[],"buildings":[],"effects":[]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return gameData
 }
 
 func autoTowerPolicySnapshot(now time.Time) Snapshot {

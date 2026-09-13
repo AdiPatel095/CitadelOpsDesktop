@@ -45,6 +45,15 @@ func (server *Server) handleConfigurationUpdate(writer http.ResponseWriter, requ
 		return
 	}
 	section := request.PathValue("section")
+	if section == Reports.BattleResearchConfigurationSection {
+		writeError(
+			writer,
+			http.StatusGone,
+			"configuration_section_retired",
+			"Experimental Battle Research settings have been removed",
+		)
+		return
+	}
 	if section == History.PlayerSamplesConfigurationSection {
 		writeError(
 			writer,
@@ -54,8 +63,7 @@ func (server *Server) handleConfigurationUpdate(writer http.ResponseWriter, requ
 		)
 		return
 	}
-	if (server.config.BackgroundOnly || server.externalConfigurationAuthority.Load()) &&
-		section != Reports.BattleResearchConfigurationSection {
+	if server.config.BackgroundOnly || server.externalConfigurationAuthority.Load() {
 		writeError(writer, http.StatusConflict, "configuration_control_plane_owned", "Hosted account settings must be saved through the account control plane")
 		return
 	}

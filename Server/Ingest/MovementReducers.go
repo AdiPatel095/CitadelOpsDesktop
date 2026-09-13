@@ -376,14 +376,22 @@ func parseMovement(raw json.RawMessage, observedAt time.Time, gameData *GameData
 		movement.TargetPlayerID = State.PlayerID(targetOwnerID)
 	}
 	var unitMovement struct {
-		WaitSeconds int                        `json:"TWD"`
-		Leader      map[string]json.RawMessage `json:"L"`
+		WaitSeconds         int                        `json:"TWD"`
+		Leader              map[string]json.RawMessage `json:"L"`
+		AdvisorType         int                        `json:"AAT"`
+		AdvisorAttackNumber int                        `json:"AAN"`
+		AdvisorAttackCount  int                        `json:"AAC"`
+		AdvisorLaunchState  int                        `json:"AAL"`
 	}
 	if rawUnitMovement, exists := item["UM"]; exists {
 		if json.Unmarshal(rawUnitMovement, &unitMovement) != nil {
 			return State.MovementState{}, false
 		}
 		movement.WaitSeconds = max(0, unitMovement.WaitSeconds)
+		movement.AdvisorType = unitMovement.AdvisorType
+		movement.AdvisorAttackNumber = unitMovement.AdvisorAttackNumber
+		movement.AdvisorAttackCount = unitMovement.AdvisorAttackCount
+		movement.AdvisorLaunchState = unitMovement.AdvisorLaunchState
 		if unitMovement.Leader != nil {
 			// Premium leaders can use DLID instead of ID on any movement type.
 			// Retain both wire identities without inventing an owned commander.

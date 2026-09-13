@@ -83,11 +83,11 @@ func (observer *stormMapBurstTestObserver) waitedCount() int {
 	return len(observer.waited)
 }
 
-func (observer *stormMapBurstTestObserver) deliver(responseToken string, ingressID uint64, code int) {
+func (observer *stormMapBurstTestObserver) deliver(responseToken string, ingressID uint64, code int, payload json.RawMessage) {
 	frame := Protocol.CommittedFrame{
 		Frame: Protocol.Frame{
 			Direction: Protocol.DirectionInbound, Opcode: "gaa", ResponseCode: &code,
-			ResponseToken: responseToken, ReceivedAt: time.Now().UTC(),
+			ResponseToken: responseToken, ReceivedAt: time.Now().UTC(), Payload: payload,
 		},
 		IngressID: ingressID,
 		Revision:  ingressID,
@@ -100,13 +100,14 @@ func (observer *stormMapBurstTestObserver) deliver(responseToken string, ingress
 }
 
 type stormMapBurstTestSender struct {
-	observer       *stormMapBurstTestObserver
-	expectedSends  int
-	watchersAtSend []int
-	waitedAtSend   []int
-	metadata       []Outbound.Metadata
-	frames         []Protocol.Frame
-	responseCode   int
+	observer        *stormMapBurstTestObserver
+	expectedSends   int
+	watchersAtSend  []int
+	waitedAtSend    []int
+	metadata        []Outbound.Metadata
+	frames          []Protocol.Frame
+	responseCode    int
+	responsePayload json.RawMessage
 }
 
 func (*stormMapBurstTestSender) CorrelatesResponses() bool { return true }
@@ -128,7 +129,7 @@ func (sender *stormMapBurstTestSender) Send(ctx context.Context, payload []byte)
 	sender.watchersAtSend = append(sender.watchersAtSend, sender.observer.watcherCount())
 	sender.waitedAtSend = append(sender.waitedAtSend, sender.observer.waitedCount())
 	index := len(sender.metadata) - 1
-	sender.observer.deliver(sender.metadata[index].ResponseToken, uint64(index+1), sender.responseCode)
+	sender.observer.deliver(sender.metadata[index].ResponseToken, uint64(index+1), sender.responseCode, sender.responsePayload)
 	return nil
 }
 

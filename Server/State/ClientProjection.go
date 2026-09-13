@@ -233,6 +233,7 @@ func (state GameState) clientStateProjection() GameState {
 	projected.AttackPresets = []AttackPreset{}
 	projected.AttackAnalytics = AttackAnalyticsState{
 		LaunchIDs: []MovementID{}, PendingAttacks: []AttackFeatureLaunch{}, RecentAutoStormLaunches: []AttackFeatureLaunch{},
+		RecentTowerAdvisorTimeSkips: []TowerAdvisorTimeSkipUsage{},
 	}
 	projected.EventScores = clientEventScores(state)
 	projected.CommandContext = CommandContextState{}
@@ -531,6 +532,10 @@ func clientEventScoreState(source EventScoreState) EventScoreState {
 func clientEventInventory(source EventInventoryState) EventInventoryState {
 	return EventInventoryState{
 		ObservedAt: source.ObservedAt, ActiveByEvent: cloneMap(source.ActiveByEvent),
+		GlobalEffectsObservedAt: source.GlobalEffectsObservedAt, GlobalEffects: cloneMap(source.GlobalEffects),
+		GlobalEffectBoosterOffers:    cloneMap(source.GlobalEffectBoosterOffers),
+		GlobalEffectBoostsObservedAt: source.GlobalEffectBoostsObservedAt,
+		GlobalEffectBoosts:           cloneMap(source.GlobalEffectBoosts),
 	}
 }
 

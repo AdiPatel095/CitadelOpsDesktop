@@ -274,6 +274,23 @@ func TestCooperativeStormTileEmitsNonWakingProgressDomain(t *testing.T) {
 	}
 }
 
+func TestFullFortressSweepTileEmitsNonWakingProgressDomain(t *testing.T) {
+	gameState := State.NewGameState()
+	code := 0
+	domains, changed, err := reduceMapSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+		ResponseToken: "scan/fortress-gaa/20260902/4", ReceivedAt: time.Date(2026, time.September, 2, 12, 0, 0, 0, time.UTC),
+		Payload: json.RawMessage(`{"KID":1,"AI":[[11,610,610,0,45,3600,0,1]]}`),
+	}, &gameState, nil)
+	if err != nil || !changed {
+		t.Fatalf("full Fortress sweep tile: changed=%t err=%v", changed, err)
+	}
+	if !slices.Contains(domains, "fortress-scan-progress") || slices.Contains(domains, "map") ||
+		slices.Contains(domains, "map-fortress") {
+		t.Fatalf("full Fortress sweep domains = %v", domains)
+	}
+}
+
 func TestReduceNestedMapSnapshotParsesCapturedKhanCamp(t *testing.T) {
 	gameData, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],
@@ -575,5 +592,24 @@ func TestReduceMapSnapshotClearsInvasionFortificationOnRetainedReplacement(t *te
 			"retained replacement: observation=%#v exists=%t domains=%v invasion=%#v changed=%t err=%v",
 			observation, exists, domains, gameState.Invasion, changed, err,
 		)
+	}
+}
+
+func TestReduceMapSnapshotParsesPrivateKingdomFortressCooldown(t *testing.T) {
+	gameState := State.NewGameState()
+	code := 0
+	observedAt := time.Date(2026, 9, 2, 12, 0, 0, 0, time.UTC)
+	domains, changed, err := reduceMapSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
+		Payload: json.RawMessage(`{"KID":1,"AI":[[11,210,942,15,45,431999,1234,1]]}`),
+	}, &gameState, nil)
+	if err != nil || !changed || !slices.Contains(domains, "map-fortress") {
+		t.Fatalf("fortress map snapshot: domains=%v changed=%t err=%v", domains, changed, err)
+	}
+	fortress := gameState.Map[1]["210:942"]
+	if fortress.TypeID != State.MapTypeKingdomFortress || fortress.Level != 45 ||
+		fortress.TowerCooldownRemaining != 431999 || fortress.FortressDefeaterPlayerID != 1234 ||
+		!fortress.ObservedAt.Equal(observedAt) {
+		t.Fatalf("unexpected fortress observation: %#v", fortress)
 	}
 }

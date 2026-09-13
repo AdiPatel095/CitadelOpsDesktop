@@ -105,6 +105,23 @@ func TestReduceAttackDialogStoresAuthoritativeRBCTowerProgression(t *testing.T) 
 	}
 }
 
+func TestReduceAttackDialogStoresFortressCooldownAndDefeater(t *testing.T) {
+	gameState := State.NewGameState()
+	code := 0
+	_, changed, err := reduceAttackDialog(t.Context(), Protocol.Frame{
+		Opcode: "adi", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: time.Now().UTC(),
+		Payload: json.RawMessage(`{"KID":2,"SCID":100,"gaa":{"AI":[11,101,102,4,21,86400,321,2]},"AE":[[426,[60],"GE"]]}`),
+	}, &gameState, nil)
+	if err != nil || !changed {
+		t.Fatalf("fortress attack dialog: changed=%t err=%v", changed, err)
+	}
+	target := gameState.AttackDialog.Target
+	if target.TypeID != State.MapTypeKingdomFortress || target.Level != 21 ||
+		target.TowerCooldownRemaining != 86400 || target.FortressDefeaterPlayerID != 321 {
+		t.Fatalf("unexpected fortress dialog target: %#v", target)
+	}
+}
+
 func TestReduceAttackDialogStoresKhanCooldown(t *testing.T) {
 	gameState := State.NewGameState()
 	battleAt := time.Now().UTC().Add(-2 * time.Second)

@@ -334,3 +334,123 @@ func TestTowerAttackSkipsPendingSettlementAndKnownCooldownBeforeADI(t *testing.T
 		t.Fatalf("cooldown target plan = %#v err=%v", plan, err)
 	}
 }
+
+func TestTowerAdvisorActivationUsesDedicatedTypeAndRefreshesSubscription(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Player.Currencies[79] = 1
+
+	plan, err := planTowerAdvisorActivation(t.Context(), Intent.PlanningContext{State: gameState}, json.RawMessage(`{"confirmedTokenSpend":true}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Steps) != 2 || plan.Steps[0].Opcode != "aa" || string(plan.Steps[0].Command.Payload) != `{"AAT":4}` ||
+		plan.Steps[1].Opcode != "sie" || string(plan.Steps[1].Command.Payload) != `{}` {
+		t.Fatalf("Baron Advisor activation plan = %#v", plan.Steps)
+	}
+	if _, err := planTowerAdvisorActivation(t.Context(), Intent.PlanningContext{State: gameState}, json.RawMessage(`{}`)); err == nil {
+		t.Fatal("Baron Advisor activation accepted an unconfirmed token spend")
+	}
+}
+
+func TestTowerAdvisorAttackBuildsTimeSkipChainWithDailyGuard(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"units":[],"buildings":[],"effects":[]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().UTC()
+	gameState := State.NewGameState()
+	gameState.Castles[1] = State.CastleState{
+		ID: 1, KingdomID: 0, X: 100, Y: 100,
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{77: 100_000}},
+	}
+	gameState.Commanders[5] = State.CommanderState{ID: 5, Available: true}
+	gameState.Subscriptions[4] = State.SubscriptionState{TypeID: 4, RemainingSec: 3600}
+	gameState.DailyAttacks = State.DailyAttackState{
+		Count: 0, ServerThreshold: 3_500, SessionStartedAt: now.Add(-time.Hour), ObservedAt: now,
+	}
+	gameState.Map[0] = map[string]State.MapObservation{
+		"101:100": {KingdomID: 0, X: 101, Y: 100, TypeID: kingdomTowerMapTypeID, Level: 81, ObservedAt: now},
+	}
+	arguments := json.RawMessage(`{
+		"sourceCastleId":1,"kingdomId":0,"targetX":101,"targetY":100,"unitId":77,"commanderIds":[5],
+		"dailyAttackLimit":1,"advisorMode":true,"advisorAttackCount":2,"maximumDailyTimeSkips":5
+	}`)
+
+	plan, err := planTowerAttack(t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, arguments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var resolver Intent.Step
+	var capture attackFeatureCaptureRequest
+	dailyGuard := false
+	for _, step := range plan.Steps {
+		if step.Action == "attack.daily_limit.guard" {
+			dailyGuard = true
+		}
+		if step.Resolver == "tower.attack.build" {
+			resolver = step
+		}
+		if step.Action == "attack.analytics.capture" {
+			if err := json.Unmarshal(step.ActionArguments, &capture); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	if resolver.Resolver == "" || !dailyGuard || capture.AdvisorTimeSkipsUsed != 1 {
+		t.Fatalf("Advisor tower plan = %#v capture=%#v", plan.Steps, capture)
+	}
+
+	gameState.AttackDialog = State.AttackDialogState{
+		SourceCastleID: 1, KingdomID: 0,
+		Target:     State.AttackDialogTarget{TypeID: kingdomTowerMapTypeID, X: 101, Y: 100},
+		ObservedAt: now,
+	}
+	resolved, err := (&Application{}).resolveTowerAttackStep(
+		t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, resolver.ResolverArguments,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var body advisorAttackBody
+	if err := json.Unmarshal(resolved.Command.Payload, &body); err != nil {
+		t.Fatal(err)
+	}
+	if body.AdvisorType != 4 || body.AttackCount != 2 || body.Mode != 0 || len(body.Waves) != 1 {
+		t.Fatalf("Baron Advisor CRA body = %#v", body)
+	}
+	payload := string(resolved.Command.Payload)
+	for _, field := range []string{`"AAT":4`, `"AAC":2`, `"AASM":0`} {
+		if !strings.Contains(payload, field) {
+			t.Fatalf("Baron Advisor CRA payload %s is missing %s", payload, field)
+		}
+	}
+}
+
+func TestTowerAdvisorTimeSkipLimitUsesAuthoritativeDailyReset(t *testing.T) {
+	now := time.Now().UTC()
+	gameState := State.NewGameState()
+	gameState.DailyAttacks = State.DailyAttackState{
+		Count: 4, SessionStartedAt: now.Add(-2 * time.Hour), ObservedAt: now,
+	}
+	gameState.AttackAnalytics.RecentTowerAdvisorTimeSkips = []State.TowerAdvisorTimeSkipUsage{
+		{MovementID: 700, TimeSkips: 2, UsedAt: now.Add(-time.Hour)},
+	}
+	used, detail, blocked, err := towerAdvisorTimeSkipLimitStatus(gameState, 2, 1, now)
+	if err != nil || !blocked || used != 2 || !strings.Contains(detail, "2 / 2") {
+		t.Fatalf("exhausted Advisor Time Skip limit = used %d detail %q blocked %t err=%v", used, detail, blocked, err)
+	}
+
+	gameState.DailyAttacks.SessionStartedAt = now.Add(-30 * time.Minute)
+	used, detail, blocked, err = towerAdvisorTimeSkipLimitStatus(gameState, 2, 2, now)
+	if err != nil || blocked || used != 0 || detail != "" {
+		t.Fatalf("reset Advisor Time Skip limit = used %d detail %q blocked %t err=%v", used, detail, blocked, err)
+	}
+
+	gameState.DailyAttacks.SessionStartedAt = time.Time{}
+	if _, detail, blocked, err = towerAdvisorTimeSkipLimitStatus(gameState, 2, 1, now); err != nil || !blocked ||
+		!strings.Contains(detail, "authoritative server daily reset") {
+		t.Fatalf("unknown reset boundary = detail %q blocked %t err=%v", detail, blocked, err)
+	}
+}

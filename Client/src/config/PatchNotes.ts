@@ -57,6 +57,21 @@ export function sortPatchNoteItems(items: readonly PatchNoteItem[]): PatchNoteIt
 
 const PATCH_NOTES_RELEASES_UNSORTED: PatchNotesRelease[] = [
   {
+    version: '2.4.0-beta.2',
+    subtitle: 'Beta: Fortress, Booster, Tower Advisor and Bird presets',
+    date: '2026-09-13',
+    items: [
+      { kind: 'added', text: 'Auto Fortress can independently discover the complete populated map in Everwinter Glacier, Burning Sands, and Fire Peaks, cache every special fortress, and attack with a one-wave Direwolf formation across both flanks using only an available Relic 2.0 commander with the maxed fortress speed bonus' },
+      { kind: 'added', text: 'Auto Fortress can buy an exact multiple-of-100 Direwolf limit per Nomad shop session from lowest cost to highest, preserve a Khan-tablet reserve, and move the required shortfall from the Great Empire main castle through the dedicated kingdom troop-transfer route' },
+      { kind: 'added', text: 'Auto Booster independently purchases the daily global fortress-speed boost for exactly 2,500 rubies, using the current server offer and boosted-effect status while preserving a configurable ruby reserve' },
+      { kind: 'added', text: 'Auto Towers can use the seven-day Robber Baron Advisor, optionally activate it with one available dedicated token, and run same-tower chains bounded by qualifying Time Skips, complete troop formations, and a confirmed server-day Time Skip limit' },
+      { kind: 'added', text: 'Auto Bird ignored-troop configurations are now runtime-selectable presets that another feature can switch by stable ID, with a per-period preset selector in its weekly schedule and preset-bound fresh troop preparation at every transition' },
+      { kind: 'fixed', text: 'Fortress availability now combines the account-private server timer with a report-confirmed five-day personal lock, shows the next expected availability, schedules a targeted 1x1 cooldown refresh at that time, rechecks immediately before launch, and prevents another attack while a prior movement is unsettled' },
+      { kind: 'security', text: 'Auto Booster fails closed unless the current effect window is unboosted and the live quote remains exactly 2,500 rubies at dispatch; Auto Fortress no longer requires or performs that premium purchase and only recommends the independent feature' },
+      { kind: 'removed', text: 'The remaining retired Experimental Battle Research configuration and status surfaces have been removed; existing historical trial records remain untouched' },
+    ],
+  },
+  {
     version: '2.4.0-beta.1',
     subtitle: 'Beta: safer lanes, reliable logistics, and event history',
     date: '2026-09-13',

@@ -190,7 +190,8 @@ func reduceInitialState(
 		reducer Reducer
 	}{
 		{"sie", reduceSubscriptions}, {"upc", reduceSubscriptions},
-		{"boi", reduceMarketBooster}, {"cmi", reduceMarketInfo}, {"kpi", reduceKingdomTransport},
+		{"boi", reduceMarketBooster}, {"bie", reduceGlobalEffectBoosterInfo},
+		{"cmi", reduceMarketInfo}, {"kpi", reduceKingdomTransport},
 	} {
 		raw := root[embedded.opcode]
 		if len(raw) == 0 {

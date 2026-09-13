@@ -1,0 +1,200 @@
+import React, { useEffect, useMemo, useState } from 'react';
+import { CalendarDays, Clock3, Coins, ShieldCheck, Sparkles, Zap } from 'lucide-react';
+import { useCitadelAPI } from '../../api/ApiContext';
+import { Badge, Button, Card, Input, SettingsModal } from '../../components/ui';
+import {
+  AUTO_BOOSTER_GLOBAL_EFFECT_ID,
+  AUTO_BOOSTER_RUBY_COST,
+  AUTO_BOOSTER_SECTION,
+  defaultAutoBoosterClientState,
+  parseAutoBoosterClientState,
+  persistAutoBoosterClientState,
+  type AutoBoosterClientStateV1,
+} from '../AutoBoosterClientState';
+
+interface AutoBoosterSettingsModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onOpenFeatureSchedule: (featureID: string, featureLabel: string) => void;
+}
+
+function formatWindowEnd(value: string | undefined): string {
+  if (!value) return 'Waiting for daily window';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Waiting for daily window';
+  return `Current window ends ${date.toLocaleString([], {
+    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
+  })}`;
+}
+
+export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> = ({
+  isOpen,
+  onClose,
+  onOpenFeatureSchedule,
+}) => {
+  const { state, configuration } = useCitadelAPI();
+  const [settings, setSettings] = useState<AutoBoosterClientStateV1>(defaultAutoBoosterClientState);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setSaveError(null);
+      return;
+    }
+    setSettings(parseAutoBoosterClientState(configuration?.sections[AUTO_BOOSTER_SECTION]));
+  }, [configuration?.sections, isOpen]);
+
+  const live = useMemo(() => {
+    const key = String(AUTO_BOOSTER_GLOBAL_EFFECT_ID);
+    const inventory = state?.eventScores.inventory;
+    const effect = inventory?.globalEffects?.[key];
+    const offer = inventory?.globalEffectBoosterOffers?.[key];
+    const boost = inventory?.globalEffectBoosts?.[key];
+    const currentOccurrence = Boolean(
+      effect?.endsAt && boost?.occurrenceEndsAt && effect.endsAt === boost.occurrenceEndsAt,
+    );
+    return {
+      effect,
+      offer,
+      boosted: currentOccurrence && boost?.boosted === true,
+      statusKnown: currentOccurrence,
+    };
+  }, [state?.eventScores.inventory]);
+
+  const save = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
+    setSaveError(null);
+    try {
+      await persistAutoBoosterClientState(settings);
+      onClose();
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'Could not save Auto Booster settings.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <SettingsModal
+      isOpen={isOpen}
+      onClose={() => { if (!isSaving) onClose(); }}
+      maxWidth="lg"
+      title="Auto Booster"
+      icon={<Zap className="h-5 w-5" />}
+      description="A standalone daily purchase lane for the premium global fortress-speed boost. It never controls or blocks Auto Fortress."
+      titleTrailing={(
+        <Button
+          variant="outline"
+          size="sm"
+          className="shrink-0"
+          onClick={() => onOpenFeatureSchedule('autoBooster', 'Auto Booster')}
+          leftIcon={<CalendarDays className="h-4 w-4" />}
+        >
+          Calendar
+        </Button>
+      )}
+      onSave={save}
+      saveLabel="Save booster guard"
+      isSaving={isSaving}
+    >
+      {saveError && (
+        <div className="mb-4 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error" role="alert">
+          {saveError}
+        </div>
+      )}
+
+      <div className="mb-4 overflow-hidden rounded-global border border-amber-500/30 bg-gradient-to-br from-amber-500/15 via-bg-card to-primary/8 p-5 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-4">
+            <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-amber-500/30 bg-bg-app/70 text-amber-500 shadow-inner">
+              <Sparkles className="h-7 w-7" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-base font-black text-text-main">Daily fortress-speed boost</h3>
+                <Badge variant="warning">2,500 rubies</Badge>
+                <Badge variant={live.boosted ? 'success' : 'outline'}>
+                  {live.boosted ? 'Active' : live.statusKnown ? 'Not active' : 'Checking status'}
+                </Badge>
+              </div>
+              <p className="mt-1 max-w-xl text-xs leading-relaxed text-text-muted">
+                Auto Booster checks the current daily effect, its account-specific offer, and the server’s boosted list before it purchases once for that window.
+              </p>
+            </div>
+          </div>
+          <div className="rounded-xl border border-border-base bg-bg-app/70 px-3 py-2 text-right">
+            <div className="text-xs font-black text-text-main">
+              {live.offer ? `${live.offer.rubyCost.toLocaleString()} quoted` : 'No live quote yet'}
+            </div>
+            <div className="mt-0.5 text-[10px] uppercase tracking-wide text-text-muted">
+              {formatWindowEnd(live.effect?.endsAt)}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <Card variant="solid" className="p-4">
+          <div className="flex items-start gap-3">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+              <Coins className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-text-main">Ruby reserve</h3>
+              <p className="mt-0.5 text-xs text-text-muted">The purchase must leave at least this many rubies untouched.</p>
+            </div>
+          </div>
+          <label className="mt-4 block">
+            <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">Minimum rubies to keep</span>
+            <Input
+              type="number"
+              min={0}
+              value={settings.minimumRubyReserve}
+              onChange={(event) => setSettings((current) => ({
+                ...current,
+                minimumRubyReserve: Math.max(0, Math.trunc(Number(event.target.value) || 0)),
+              }))}
+              className="font-mono"
+            />
+          </label>
+          <div className="mt-3 rounded-xl border border-border-base bg-bg-app/55 px-3 py-2.5 text-[11px] text-text-muted">
+            Fixed spend ceiling: <strong className="text-text-main">{AUTO_BOOSTER_RUBY_COST.toLocaleString()} rubies</strong>. A different live price is rejected, even when the balance is sufficient.
+          </div>
+        </Card>
+
+        <Card variant="solid" className="p-4">
+          <div className="flex items-start gap-3">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-secondary/10 text-secondary">
+              <ShieldCheck className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-text-main">Dispatch safeguards</h3>
+              <p className="mt-0.5 text-xs text-text-muted">All checks are repeated immediately before premium spend.</p>
+            </div>
+          </div>
+          <div className="mt-4 space-y-2 text-[11px] text-text-muted">
+            <div className="flex items-start gap-2 rounded-xl border border-border-base bg-bg-app/55 px-3 py-2.5">
+              <Clock3 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+              The daily effect window and its exact end time must still match.
+            </div>
+            <div className="flex items-start gap-2 rounded-xl border border-border-base bg-bg-app/55 px-3 py-2.5">
+              <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-secondary" />
+              The server must report effect 2 as not yet boosted in this same window.
+            </div>
+            <div className="flex items-start gap-2 rounded-xl border border-border-base bg-bg-app/55 px-3 py-2.5">
+              <Coins className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+              The quote must remain exactly 2,500 and the current balance must preserve your reserve.
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      <div className="mt-4 flex items-start gap-3 rounded-global border border-primary/25 bg-primary/5 p-4 text-xs text-text-muted">
+        <Zap className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+        <p><strong className="text-text-main">Independent by design.</strong> Auto Booster only buys this one daily global effect. Auto Fortress can run without it, while enabling both is recommended for the fastest fortress marches.</p>
+      </div>
+    </SettingsModal>
+  );
+};

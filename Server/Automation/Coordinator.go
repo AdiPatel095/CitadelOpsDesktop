@@ -686,7 +686,7 @@ func policyEvaluationDue(
 
 func policyOperationContext(ctx context.Context, policyID string) (context.Context, context.CancelFunc) {
 	switch strings.TrimSpace(policyID) {
-	case "autoTowers", "autoBeriWorldAttack", "autoStorm", "sharedStormScan":
+	case "autoTowers", "autoFortress", "autoBeriWorldAttack", "autoStorm", "sharedStormScan":
 		// Bound attack orchestration, including any prerequisite castle or map
 		// refresh, so a lost protocol reply cannot leave the policy running forever.
 		return context.WithTimeout(ctx, boundedAttackIntentTTL)
@@ -1076,7 +1076,7 @@ func completePolicyRun(current *policyRuntime, result operationResult, now time.
 	} else {
 		retryAt := result.nextCheck
 		minimumRetryAt := now.Add(defaultRetry)
-		if retryAt.IsZero() || retryAt.Before(minimumRetryAt) || result.policyID == "autoInvasion" || result.policyID == "autoTowers" {
+		if retryAt.IsZero() || retryAt.Before(minimumRetryAt) || result.policyID == "autoInvasion" || result.policyID == "autoTowers" || result.policyID == "autoFortress" {
 			retryAt = minimumRetryAt
 		}
 		current.failureBlockedUntil = retryAt
@@ -1179,7 +1179,7 @@ func automationSessionReady(session State.SessionState) bool {
 func meaningfulStateEvent(event State.Event) bool {
 	for _, domain := range event.Domains {
 		normalized := strings.ToLower(strings.TrimSpace(domain))
-		if normalized != "protocol" && normalized != "automation" && normalized != "storm-scan-progress" {
+		if normalized != "protocol" && normalized != "automation" && normalized != "storm-scan-progress" && normalized != "fortress-scan-progress" {
 			return true
 		}
 	}

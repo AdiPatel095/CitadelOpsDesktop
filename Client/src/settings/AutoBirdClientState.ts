@@ -13,8 +13,9 @@ export interface AutoBirdStoredSettings {
   minRPTDays: number;
 }
 
-export interface AutoBirdClientStateV1 {
-  version: 1;
+export interface AutoBirdClientStateV2 {
+  version: 2;
+  activePresetId: string | null;
   ignoreSettings: AutoBirdStoredSettings;
   presets: PresetsFileV1;
 }
@@ -27,10 +28,11 @@ export const defaultAutoBirdSettings = (): AutoBirdStoredSettings => ({
   minRPTDays: 3,
 });
 
-export function parseAutoBirdClientState(raw: unknown): AutoBirdClientStateV1 {
+export function parseAutoBirdClientState(raw: unknown): AutoBirdClientStateV2 {
   if (raw == null || typeof raw !== 'object') {
     return {
-      version: 1,
+      version: 2,
+      activePresetId: null,
       ignoreSettings: defaultAutoBirdSettings(),
       presets: emptyPresetsFile(),
     };
@@ -47,16 +49,40 @@ export function parseAutoBirdClientState(raw: unknown): AutoBirdClientStateV1 {
     };
   }
   const presets = parsePresetsPayload(o.presets);
-  return { version: 1, ignoreSettings, presets };
+  const activePresetId = typeof o.activePresetId === 'string' && o.activePresetId.trim()
+    ? o.activePresetId.trim()
+    : null;
+  return { version: 2, activePresetId, ignoreSettings, presets };
 }
 
 export function buildAutoBirdClientState(
   ignoreSettings: AutoBirdStoredSettings,
-  presets: PresetsFileV1
-): AutoBirdClientStateV1 {
-  return { version: 1, ignoreSettings, presets };
+  presets: PresetsFileV1,
+  activePresetId: string | null = null,
+): AutoBirdClientStateV2 {
+  return {
+    version: 2,
+    activePresetId: typeof activePresetId === 'string' && activePresetId.trim()
+      ? activePresetId.trim()
+      : null,
+    ignoreSettings,
+    presets,
+  };
 }
 
-export function persistAutoBirdClientState(state: AutoBirdClientStateV1) {
+/**
+ * Returns a complete Auto Bird section with a different runtime preset.
+ * Other features can use this instead of copying the preset's troop reserves.
+ */
+export function activateAutoBirdPreset(raw: unknown, presetId: string | null): AutoBirdClientStateV2 {
+  const state = parseAutoBirdClientState(raw);
+  const normalizedID = typeof presetId === 'string' && presetId.trim() ? presetId.trim() : null;
+  if (normalizedID && !state.presets.presets.some((preset) => preset.id === normalizedID)) {
+    throw new Error(`Auto Bird preset ${normalizedID} does not exist.`);
+  }
+  return { ...state, activePresetId: normalizedID };
+}
+
+export function persistAutoBirdClientState(state: AutoBirdClientStateV2) {
   return queueConfigurationUpdate('automation.autoBird', state);
 }
