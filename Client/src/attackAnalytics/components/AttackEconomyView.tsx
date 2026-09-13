@@ -24,6 +24,7 @@ import {
 
 export const attackEconomyFeatureDefinitions = [
   { id: 'autoInvasion', label: 'Auto Invasion', description: 'Foreign Lord and Bloodcrow castles', color: '#f97316' },
+  { id: 'autoFortress', label: 'Auto Fortress', description: 'Outer-kingdom fortresses', color: '#0ea5e9' },
   { id: 'autoTowers', label: 'Auto Towers', description: 'Robber-baron and kingdom towers', color: '#f59e0b' },
   { id: 'autoStorm', label: 'Auto Storm', description: 'Storm forts and resource islands', color: '#38bdf8' },
   { id: 'autoNomad', label: 'Auto Nomad', description: 'Nomad and Samurai camps', color: '#ef4444' },
@@ -39,6 +40,7 @@ type RangeKey = '24h' | '7d' | '30d' | 'all';
 const gallantryMetricKey = '__gallantry__';
 const featureViewKeys: Record<AttackEconomyFeatureID, string> = {
   autoInvasion: 'invasion',
+  autoFortress: 'fortress',
   autoTowers: 'tower',
   autoStorm: 'storm',
   autoNomad: 'nomad',

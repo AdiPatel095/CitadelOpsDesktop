@@ -65,6 +65,11 @@ func reduceAttackDialog(
 				dialog.Target.TowerVictoryCount = rowInt(row, 4)
 				dialog.Target.TowerCooldownRemaining = boundedWireSeconds(rowInt(row, 5))
 			}
+			if dialog.Target.TypeID == State.MapTypeKingdomFortress && len(row) >= 8 {
+				dialog.Target.Level = int(rowInt(row, 4))
+				dialog.Target.TowerCooldownRemaining = boundedWireSeconds(rowInt(row, 5))
+				dialog.Target.FortressDefeaterPlayerID = State.PlayerID(rowInt(row, 6))
+			}
 			if isRegularEventCampType(dialog.Target.TypeID) {
 				observation := State.MapObservation{TypeID: dialog.Target.TypeID}
 				populateEventCampObservation(&observation, row, gameData)

@@ -19,9 +19,11 @@ type SettingsModalId =
   | 'station'
   | 'hospital'
   | 'tower'
+  | 'fortress'
   | 'invasion'
   | 'nomad'
   | 'advisor'
+  | 'booster'
   | 'buyer'
   | 'khan'
   | 'beri'
@@ -84,9 +86,11 @@ const settingsModals: Record<SettingsModalId, React.LazyExoticComponent<Componen
   station: lazySettingsModal(() => import('./settings/components/AutoStationSettingsModal'), 'AutoStationSettingsModal'),
   hospital: lazySettingsModal(() => import('./settings/components/AutoHospitalSettingsModal'), 'AutoHospitalSettingsModal'),
   tower: lazySettingsModal(() => import('./settings/components/AutoTowerSettingsModal'), 'AutoTowerSettingsModal'),
+  fortress: lazySettingsModal(() => import('./settings/components/AutoFortressSettingsModal'), 'AutoFortressSettingsModal'),
   invasion: lazySettingsModal(() => import('./settings/components/AutoInvasionSettingsModal'), 'AutoInvasionSettingsModal'),
   nomad: lazySettingsModal(() => import('./settings/components/AutoNomadSettingsModal'), 'AutoNomadSettingsModal'),
   advisor: lazySettingsModal(() => import('./settings/components/AutoAdvisorSettingsModal'), 'AutoAdvisorSettingsModal'),
+  booster: lazySettingsModal(() => import('./settings/components/AutoBoosterSettingsModal'), 'AutoBoosterSettingsModal'),
   buyer: lazySettingsModal(() => import('./settings/components/AutoBuyerSettingsModal'), 'AutoBuyerSettingsModal'),
   khan: lazySettingsModal(() => import('./settings/components/AutoKhanSettingsModal'), 'AutoKhanSettingsModal'),
   beri: lazySettingsModal(() => import('./settings/components/AutoBeriWorldSettingsModal'), 'AutoBeriWorldSettingsModal'),
@@ -135,9 +139,11 @@ const AppContent: React.FC = () => {
       onOpenAutoToolSettings={openSettings('tool')}
       onOpenAutoHospitalSettings={openSettings('hospital')}
       onOpenAutoTowerSettings={openSettings('tower')}
+      onOpenAutoFortressSettings={openSettings('fortress')}
       onOpenAutoInvasionSettings={openSettings('invasion')}
       onOpenAutoNomadSettings={openSettings('nomad')}
       onOpenAutoAdvisorSettings={openSettings('advisor')}
+      onOpenAutoBoosterSettings={openSettings('booster')}
       onOpenAutoBuyerSettings={openSettings('buyer')}
       onOpenAutoKhanSettings={openSettings('khan')}
       onOpenAutoBeriWorldSettings={openSettings('beri')}

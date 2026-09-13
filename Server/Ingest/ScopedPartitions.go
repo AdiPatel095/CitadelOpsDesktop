@@ -60,7 +60,7 @@ func scopedPartitionsForFrame(
 func containsMapIngestDomain(domains []string) bool {
 	for _, domain := range domains {
 		domain = strings.ToLower(strings.TrimSpace(domain))
-		if domain == "map" || strings.HasPrefix(domain, "map-") || domain == "storm-scan-progress" {
+		if domain == "map" || strings.HasPrefix(domain, "map-") || domain == "storm-scan-progress" || domain == "fortress-scan-progress" {
 			return true
 		}
 	}

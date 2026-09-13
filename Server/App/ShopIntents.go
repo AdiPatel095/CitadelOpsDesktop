@@ -12,6 +12,9 @@ import (
 )
 
 func (application *Application) registerShopIntents() error {
+	if err := application.registerAutoBoosterIntents(); err != nil {
+		return err
+	}
 	if err := application.registerAutoBuyerIntents(); err != nil {
 		return err
 	}

@@ -73,6 +73,9 @@ type AutoBuyerPackage struct {
 	RequiresEvent  bool           `json:"requiresEvent"`
 	PackageID      int64          `json:"packageId"`
 	PackageType    string         `json:"packageType,omitempty"`
+	UnitID         int64          `json:"unitId,omitempty"`
+	UnitAmount     int64          `json:"unitAmount,omitempty"`
+	SortOrder      int64          `json:"sortOrder,omitempty"`
 	Name           string         `json:"name"`
 	Detail         string         `json:"detail,omitempty"`
 	Stock          int64          `json:"stock"`
@@ -374,6 +377,9 @@ func decodeAutoBuyerPackage(
 		name = fmt.Sprintf("Package %d", packageID)
 	}
 	packageType := strings.TrimSpace(stringValue(record, "packageType"))
+	unitID, _ := record.Int64("unitID")
+	unitAmount, _ := record.Int64("unitAmount")
+	sortOrder, _ := record.Int64("sortOrder")
 	maxBuyPerClick, _ := record.Int64("maxBuyPerClick")
 	minLevel, _ := record.Int64("minLevel")
 	maxLevel, _ := record.Int64("maxLevel")
@@ -382,7 +388,8 @@ func decodeAutoBuyerPackage(
 	return AutoBuyerPackage{
 		ShopID: shop.id, ShopName: shop.name, ShopKind: shop.kind,
 		TableID: shop.tableID, RequiresEvent: shop.requiresEvent,
-		PackageID: packageID, PackageType: packageType, Name: name, Detail: detail,
+		PackageID: packageID, PackageType: packageType, UnitID: unitID,
+		UnitAmount: max(int64(0), unitAmount), SortOrder: sortOrder, Name: name, Detail: detail,
 		Stock: stock, MaxBuyPerClick: max(int64(0), maxBuyPerClick),
 		MinLevel: minLevel, MaxLevel: maxLevel,
 		MinLegendLevel: minLegendLevel, MaxLegendLevel: maxLegendLevel,

@@ -6,17 +6,18 @@ import "time"
 // The tenant store remains deliberately smaller than the game's full map: add
 // a policy here when a feature gains a real reader for another official type.
 const (
-	MapTypePlayerCastle  = 1
-	MapTypeKingdomTower  = 2
-	MapTypeBerimondTower = 17
-	MapTypeForeignLord   = 21
-	MapTypeStormIsland   = 24
-	MapTypeStormFort     = 25
-	MapTypeNomadCamp     = 27
-	MapTypeSamuraiCamp   = 29
-	MapTypeBloodcrow     = 34
-	MapTypeKhanCamp      = 35
-	MapTypeRift          = 43
+	MapTypePlayerCastle    = 1
+	MapTypeKingdomTower    = 2
+	MapTypeKingdomFortress = 11
+	MapTypeBerimondTower   = 17
+	MapTypeForeignLord     = 21
+	MapTypeStormIsland     = 24
+	MapTypeStormFort       = 25
+	MapTypeNomadCamp       = 27
+	MapTypeSamuraiCamp     = 29
+	MapTypeBloodcrow       = 34
+	MapTypeKhanCamp        = 35
+	MapTypeRift            = 43
 )
 
 type MapProjectionKind uint8
@@ -25,6 +26,7 @@ const (
 	MapProjectionNone MapProjectionKind = iota
 	MapProjectionPlayerCastle
 	MapProjectionTower
+	MapProjectionFortress
 	MapProjectionBerimond
 	MapProjectionInvasion
 	MapProjectionEventCamp
@@ -62,6 +64,8 @@ func MapDomainForKind(kind MapProjectionKind) (string, bool) {
 		return "map-player-castle", true
 	case MapProjectionTower:
 		return "map-tower", true
+	case MapProjectionFortress:
+		return "map-fortress", true
 	case MapProjectionBerimond:
 		return "map-berimond", true
 	case MapProjectionInvasion:
@@ -105,6 +109,11 @@ func MapProjectionFor(typeID int) (MapProjectionPolicy, bool) {
 		}
 	case MapTypeKingdomTower:
 		policy = MapProjectionPolicy{Kind: MapProjectionTower, MaxAge: 90 * 24 * time.Hour}
+	case MapTypeKingdomFortress:
+		// Fortress cooldowns are viewer-specific (24-hour global availability
+		// plus the attacker's five-day lockout), so these rows must remain in
+		// the private account projection.
+		policy = MapProjectionPolicy{Kind: MapProjectionFortress, MaxAge: 7 * 24 * time.Hour}
 	case MapTypeBerimondTower:
 		policy = MapProjectionPolicy{Kind: MapProjectionBerimond, MaxAge: 14 * 24 * time.Hour}
 	case MapTypeForeignLord, MapTypeBloodcrow:
@@ -156,6 +165,10 @@ func projectMapObservation(source MapObservation) (MapObservation, bool) {
 		projected.ObjectID = source.ObjectID
 		projected.TowerVictoryCount = source.TowerVictoryCount
 		projected.TowerCooldownRemaining = source.TowerCooldownRemaining
+	case MapProjectionFortress:
+		projected.Level = source.Level
+		projected.TowerCooldownRemaining = source.TowerCooldownRemaining
+		projected.FortressDefeaterPlayerID = source.FortressDefeaterPlayerID
 	case MapProjectionBerimond:
 		projected.Level = source.Level
 		projected.ObjectID = source.ObjectID

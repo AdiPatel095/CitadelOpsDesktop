@@ -34,9 +34,11 @@ const (
 	ChannelAutoFoodBalance = "autofoodbalance"
 	ChannelAutoEquipment   = "autoequipmentcleanup"
 	ChannelAutoTowers      = "autotowers"
+	ChannelAutoFortress    = "autofortress"
 	ChannelAutoInvasion    = "autoinvasion"
 	ChannelAutoNomad       = "autonomad"
 	ChannelAutoAdvisor     = "autoadvisor"
+	ChannelAutoBooster     = "autobooster"
 	ChannelAutoKhan        = "autokhan"
 	ChannelAutoStorm       = "autostorm"
 	ChannelRift            = "rift"
@@ -75,9 +77,11 @@ var knownChannels = []Channel{
 	{ID: ChannelAutoFoodBalance, Label: "Auto Food Balance", Description: "Completed food and mead shipments and problems requiring attention."},
 	{ID: ChannelAutoEquipment, Label: "Auto Equipment Cleanup", Description: "Completed equipment cleanup actions and problems requiring attention."},
 	{ID: ChannelAutoTowers, Label: "Auto Towers", Description: "Launched tower attacks and problems requiring attention."},
+	{ID: ChannelAutoFortress, Label: "Auto Fortress", Description: "Completed fortress supply, troop transports, attacks, and problems requiring attention."},
 	{ID: ChannelAutoInvasion, Label: "Auto Invasion", Description: "Launched Foreign Lords and Bloodcrow attacks and problems requiring attention."},
 	{ID: ChannelAutoNomad, Label: "Auto Nomad / Samurai", Description: "Launched Nomad and Samurai attacks and other completed event actions."},
 	{ID: ChannelAutoAdvisor, Label: "Auto Advisor", Description: "Launched advisor attacks and other completed advisor actions."},
+	{ID: ChannelAutoBooster, Label: "Auto Booster", Description: "Completed daily fortress-speed booster purchases and problems requiring attention."},
 	{ID: ChannelAutoKhan, Label: "Auto Khan", Description: "Completed Khan attacks, defense, and protection actions."},
 	{ID: ChannelAutoStorm, Label: "Auto Storm", Description: "Completed Storm attacks, construction, logistics, and shop purchases."},
 	{ID: ChannelRift, Label: "Rift", Description: "Launched Rift attacks and other completed Rift actions."},
@@ -101,6 +105,7 @@ var unsafeFeatureActivityDetail = regexp.MustCompile(
 
 var attackFeatureChannels = []string{
 	ChannelAutoTowers,
+	ChannelAutoFortress,
 	ChannelAutoInvasion,
 	ChannelAutoNomad,
 	ChannelAutoAdvisor,
@@ -976,12 +981,16 @@ func featureChannelForActor(actor string) string {
 		return ChannelAutoEquipment
 	case "autotowers":
 		return ChannelAutoTowers
+	case "autofortress":
+		return ChannelAutoFortress
 	case "autoinvasion":
 		return ChannelAutoInvasion
 	case "autonomad":
 		return ChannelAutoNomad
 	case "autoadvisor":
 		return ChannelAutoAdvisor
+	case "autobooster":
+		return ChannelAutoBooster
 	case "autokhan":
 		return ChannelAutoKhan
 	case "autostorm":

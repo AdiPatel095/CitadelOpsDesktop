@@ -25,6 +25,7 @@ func TestAttackLaunchRatesExposeHourlyAndDailyResetSessionCountsForEveryFeature(
 		featureID State.AttackFeatureID
 	}{
 		{actor: "automation:autoTowers", featureID: State.AttackFeatureAutoTowers},
+		{actor: "automation:autoFortress", featureID: State.AttackFeatureAutoFortress},
 		{actor: "automation:autoInvasion", featureID: State.AttackFeatureAutoInvasion},
 		{actor: "automation:autoNomad", featureID: State.AttackFeatureAutoNomad},
 		{actor: "automation:autoAdvisor", featureID: State.AttackFeatureAutoAdvisor},

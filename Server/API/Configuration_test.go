@@ -62,7 +62,7 @@ func TestConfigurationUpdatePersistsWithoutGameSession(t *testing.T) {
 	}
 }
 
-func TestHostedRuntimeRejectsPortableConfigurationWritesButKeepsLocalConsent(t *testing.T) {
+func TestHostedRuntimeRejectsPortableAndRetiredConfigurationWrites(t *testing.T) {
 	store, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{
 		"scheduler": json.RawMessage(`{"botLocked":false}`),
 		Reports.BattleResearchConfigurationSection: json.RawMessage(`{"enabled":false}`),
@@ -79,15 +79,24 @@ func TestHostedRuntimeRejectsPortableConfigurationWritesButKeepsLocalConsent(t *
 	if portableResult.Code != http.StatusConflict || !strings.Contains(portableResult.Body.String(), `"configuration_control_plane_owned"`) {
 		t.Fatalf("hosted portable update = %d %s", portableResult.Code, portableResult.Body.String())
 	}
-	consent := httptest.NewRequest(
+	retired := httptest.NewRequest(
 		http.MethodPut,
 		"/api/v2/config/"+Reports.BattleResearchConfigurationSection,
 		strings.NewReader(`{"value":{"enabled":true}}`),
 	)
-	consentResult := httptest.NewRecorder()
-	handler.ServeHTTP(consentResult, consent)
-	if consentResult.Code != http.StatusOK {
-		t.Fatalf("hosted installation consent = %d %s", consentResult.Code, consentResult.Body.String())
+	retiredResult := httptest.NewRecorder()
+	handler.ServeHTTP(retiredResult, retired)
+	if retiredResult.Code != http.StatusGone || !strings.Contains(retiredResult.Body.String(), `"configuration_section_retired"`) {
+		t.Fatalf("retired configuration update = %d %s", retiredResult.Code, retiredResult.Body.String())
+	}
+}
+
+func TestRetiredBattleResearchStatusRouteIsNotRegistered(t *testing.T) {
+	request := httptest.NewRequest(http.MethodGet, "/api/v2/battle-research", nil)
+	recorder := httptest.NewRecorder()
+	NewServer(Config{}).Handler().ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusNotFound {
+		t.Fatalf("retired battle research route = %d %s", recorder.Code, recorder.Body.String())
 	}
 }
 

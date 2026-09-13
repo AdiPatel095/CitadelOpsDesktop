@@ -29,6 +29,8 @@ const (
 type autoBirdCycleRequest struct {
 	SourceCastleID       State.CastleID       `json:"sourceCastleId"`
 	TrackingID           string               `json:"trackingId"`
+	PresetID             string               `json:"presetId,omitempty"`
+	PresetValidUntil     time.Time            `json:"presetValidUntil,omitempty"`
 	MinimumRPTDays       int                  `json:"minimumRPTDays"`
 	MinimumDelayHours    int                  `json:"minimumDelayHours"`
 	MaximumDelayHours    int                  `json:"maximumDelayHours"`
@@ -152,6 +154,9 @@ func planAutoBirdDiscover(
 		return Intent.Plan{}, err
 	}
 	now := time.Now().UTC()
+	if autoBirdPresetWindowExpired(request, now) {
+		return Intent.Plan{}, fmt.Errorf("%w: the selected Auto Bird preset period has ended", Intent.ErrPlanStale)
+	}
 	if input.State.Player.ProtectionMode.PreparingOrActive(now) {
 		return Intent.Plan{}, fmt.Errorf("Auto Bird target discovery is disabled while Protection Mode is preparing or active")
 	}
@@ -196,12 +201,16 @@ func planAutoBirdPrepare(
 		return Intent.Plan{}, err
 	}
 	now := time.Now().UTC()
+	if autoBirdPresetWindowExpired(request, now) {
+		return Intent.Plan{}, fmt.Errorf("%w: the selected Auto Bird preset period has ended", Intent.ErrPlanStale)
+	}
 	if input.State.Player.ProtectionMode.PreparingOrActive(now) {
 		return Intent.Plan{}, fmt.Errorf("Auto Bird troop preparation is disabled while Protection Mode is preparing or active")
 	}
 	operation, exists := input.State.Stationing[request.TrackingID]
 	if !exists || operation.Purpose != "autoBird" ||
 		operation.SourceCastleID != request.SourceCastleID ||
+		operation.PresetID != request.PresetID ||
 		operation.Phase != State.StationingPhaseTargetReady &&
 			operation.Phase != State.StationingPhaseDispatchReady {
 		return Intent.Plan{}, fmt.Errorf(
@@ -251,12 +260,16 @@ func planAutoBirdDispatch(
 		return Intent.Plan{}, err
 	}
 	now := time.Now().UTC()
+	if autoBirdPresetWindowExpired(request, now) {
+		return Intent.Plan{}, fmt.Errorf("%w: the selected Auto Bird preset period has ended", Intent.ErrPlanStale)
+	}
 	if input.State.Player.ProtectionMode.PreparingOrActive(now) {
 		return Intent.Plan{}, fmt.Errorf("Auto Bird dispatch is disabled while Protection Mode is preparing or active")
 	}
 	operation, exists := input.State.Stationing[request.TrackingID]
 	if !exists || operation.Purpose != "autoBird" ||
 		operation.SourceCastleID != request.SourceCastleID ||
+		operation.PresetID != request.PresetID ||
 		operation.Phase != State.StationingPhaseDispatchReady {
 		return Intent.Plan{}, fmt.Errorf("%w: castle %d has no prepared Auto Bird dispatch", Intent.ErrPlanStale, request.SourceCastleID)
 	}
@@ -363,6 +376,10 @@ func decodeAutoBirdCycleRequest(arguments json.RawMessage) (autoBirdCycleRequest
 		return autoBirdCycleRequest{}, fmt.Errorf("sourceCastleId must be positive")
 	}
 	request.TrackingID = strings.TrimSpace(request.TrackingID)
+	request.PresetID = strings.TrimSpace(request.PresetID)
+	if !request.PresetValidUntil.IsZero() {
+		request.PresetValidUntil = request.PresetValidUntil.UTC()
+	}
 	if request.TrackingID == "" {
 		request.TrackingID = "autoBird:" + strconv.FormatInt(int64(request.SourceCastleID), 10)
 	}
@@ -423,7 +440,8 @@ func discoveredAutoBirdOperation(
 ) State.StationingOperation {
 	next := State.StationingOperation{
 		ID: request.TrackingID, Purpose: "autoBird", SourceCastleID: request.SourceCastleID,
-		Units: map[State.UnitID]int64{}, CreatedAt: current.CreatedAt, UpdatedAt: now,
+		PresetID: request.PresetID,
+		Units:    map[State.UnitID]int64{}, CreatedAt: current.CreatedAt, UpdatedAt: now,
 		AllianceObservedAt: gameState.Alliance.ObservedAt,
 	}
 	if next.CreatedAt.IsZero() {
@@ -442,6 +460,9 @@ func discoveredAutoBirdOperation(
 			retryAt = now.Add(autoBirdFreshStateRetry)
 		}
 		return wait("Protection Mode is preparing or active", retryAt)
+	}
+	if autoBirdPresetWindowExpired(request, now) {
+		return wait("The selected Auto Bird preset period ended before target capture", now.Add(autoBirdFreshStateRetry))
 	}
 	source, exists := gameState.Castles[request.SourceCastleID]
 	if !exists || source.ID <= 0 {
@@ -499,6 +520,7 @@ func preparedAutoBirdManifest(
 ) State.StationingOperation {
 	if current.Purpose != "autoBird" ||
 		current.SourceCastleID != request.SourceCastleID ||
+		current.PresetID != request.PresetID ||
 		current.Phase != State.StationingPhaseTargetReady &&
 			current.Phase != State.StationingPhaseDispatchReady {
 		return current
@@ -526,6 +548,9 @@ func preparedAutoBirdManifest(
 			retryAt = now.Add(autoBirdFreshStateRetry)
 		}
 		return wait("Protection Mode is preparing or active", retryAt)
+	}
+	if autoBirdPresetWindowExpired(request, now) {
+		return wait("The selected Auto Bird preset period ended before troop preparation", now.Add(autoBirdFreshStateRetry))
 	}
 	source, exists := gameState.Castles[request.SourceCastleID]
 	if !exists || source.ID <= 0 {
@@ -584,11 +609,16 @@ func (application *Application) guardAutoBirdDispatch(
 		application.deferAutoBirdDispatch(request, "Protection Mode became active before Auto Bird dispatch", retryAt)
 		return fmt.Errorf("%w: Protection Mode became active before Auto Bird dispatch", Intent.ErrPlanStale)
 	}
+	if autoBirdPresetWindowExpired(request, now) {
+		application.deferAutoBirdDispatch(request, "The selected Auto Bird preset period ended before dispatch", now.Add(time.Second))
+		return fmt.Errorf("%w: the selected Auto Bird preset period ended before dispatch", Intent.ErrPlanStale)
+	}
 	contextReady := false
 	_, applyErr := application.State.ApplyComponents(State.Components(State.ComponentStationing), func(gameState *State.GameState) ([]string, bool, error) {
 		operation, exists := gameState.Stationing[request.TrackingID]
 		if !exists || operation.Purpose != "autoBird" ||
 			operation.SourceCastleID != request.SourceCastleID ||
+			operation.PresetID != request.PresetID ||
 			operation.Phase != State.StationingPhaseDispatchReady {
 			return nil, false, nil
 		}
@@ -643,9 +673,13 @@ func (application *Application) resolveAutoBirdDispatchStep(
 		application.deferAutoBirdDispatch(request, "Protection Mode became active before Auto Bird dispatch", retryAt)
 		return Intent.Step{}, fmt.Errorf("%w: Protection Mode became active before Auto Bird dispatch", Intent.ErrPlanStale)
 	}
+	if autoBirdPresetWindowExpired(request, now) {
+		return hold("the selected Auto Bird preset period ended before dispatch", time.Second)
+	}
 	operation, exists := input.State.Stationing[request.TrackingID]
 	if !exists || operation.Purpose != "autoBird" ||
 		operation.SourceCastleID != request.SourceCastleID ||
+		operation.PresetID != request.PresetID ||
 		operation.Phase != State.StationingPhaseDispatchReady {
 		return Intent.Step{}, fmt.Errorf("%w: castle %d is no longer prepared for Auto Bird", Intent.ErrPlanStale, request.SourceCastleID)
 	}
@@ -800,6 +834,10 @@ func randomAutoBirdDelayHours(minimum, maximum int) int {
 		return minimum
 	}
 	return minimum + rand.IntN(maximum-minimum+1)
+}
+
+func autoBirdPresetWindowExpired(request autoBirdCycleRequest, now time.Time) bool {
+	return !request.PresetValidUntil.IsZero() && !now.Before(request.PresetValidUntil)
 }
 
 func (application *Application) captureAutoBirdMovement(

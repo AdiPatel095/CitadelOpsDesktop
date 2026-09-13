@@ -47,8 +47,8 @@ func (server *Server) handleConfigurationExport(writer http.ResponseWriter, _ *h
 		return
 	}
 	snapshot := server.config.Configuration.Snapshot()
-	// Research consent is intentionally device-local. A portable settings file
-	// must never opt another installation into game actions or data upload.
+	// Keep the retired beta section out of exports from an older profile that
+	// has not yet been opened by the current application migration.
 	delete(snapshot.Sections, Reports.BattleResearchConfigurationSection)
 	// Player-history retention is installation-specific: a desktop disk may be
 	// unbounded while hosted storage has a server-enforced maximum.
@@ -112,8 +112,8 @@ func (server *Server) handleConfigurationImport(writer http.ResponseWriter, requ
 		)
 		return
 	}
-	// Ignore consent found in hand-edited or older bundles as well as omitting it
-	// from new exports. Each installation must obtain its own explicit opt-in.
+	// Ignore the retired beta section found in hand-edited or older bundles so
+	// importing settings cannot restore the removed surface.
 	delete(bundle.Configuration.Sections, Reports.BattleResearchConfigurationSection)
 	// Ignore an installation-specific storage policy from older or hand-edited
 	// bundles so an unlimited desktop choice cannot be carried onto a host.

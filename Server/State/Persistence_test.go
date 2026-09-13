@@ -21,6 +21,9 @@ func TestComponentSnapshotWritesOnlyDirtyComponentsAfterBootstrap(t *testing.T) 
 		Count: 42, ServerThreshold: 3500, SessionStartedAt: dailySessionStartedAt,
 		ObservedAt: dailySessionStartedAt.Add(time.Hour),
 	}
+	initial.AttackAnalytics.RecentTowerAdvisorTimeSkips = []TowerAdvisorTimeSkipUsage{{
+		MovementID: 700, TimeSkips: 3, UsedAt: dailySessionStartedAt.Add(30 * time.Minute),
+	}}
 	store := NewStore(initial)
 
 	playerEvent, err := store.ApplyComponents(Components(ComponentPlayer), func(state *GameState) ([]string, bool, error) {
@@ -91,6 +94,10 @@ func TestComponentSnapshotWritesOnlyDirtyComponentsAfterBootstrap(t *testing.T) 
 	}
 	if loaded.DailyAttacks.Count != 42 || !loaded.DailyAttacks.SessionStartedAt.Equal(dailySessionStartedAt) {
 		t.Fatalf("loaded daily attack session = %+v", loaded.DailyAttacks)
+	}
+	if usages := loaded.AttackAnalytics.RecentTowerAdvisorTimeSkips; len(usages) != 1 ||
+		usages[0].MovementID != 700 || usages[0].TimeSkips != 3 {
+		t.Fatalf("loaded Advisor Time Skip usage = %+v", usages)
 	}
 }
 

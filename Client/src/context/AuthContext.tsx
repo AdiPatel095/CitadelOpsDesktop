@@ -58,9 +58,11 @@ interface AuthContextType {
   autoTCIEnabled: boolean;
 	autoTCINextWakeUp: number;
 	autoTowerEnabled: boolean;
+	autoFortressEnabled: boolean;
 	autoInvasionEnabled: boolean;
 	autoNomadEnabled: boolean;
 	autoAdvisorEnabled: boolean;
+	autoBoosterEnabled: boolean;
 	autoBuyerEnabled: boolean;
 	autoKhanEnabled: boolean;
 	autoBeriWorldEnabled: boolean;
@@ -91,9 +93,11 @@ interface AuthContextType {
   toggleAutoHospital: () => void;
 	toggleAutoTCI: () => void;
 	toggleAutoTower: () => void;
+	toggleAutoFortress: () => void;
 	toggleAutoInvasion: () => void;
 	toggleAutoNomad: () => void;
 	toggleAutoAdvisor: () => void;
+	toggleAutoBooster: () => void;
 	toggleAutoBuyer: () => void;
 	toggleAutoKhan: () => void;
 	toggleAutoBeriWorld: () => void;
@@ -135,9 +139,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const autoHospitalEnabled = automationEnabledByKey.auto_hospital === true;
 	const autoTCIEnabled = automationEnabledByKey.auto_tci === true;
 	const autoTowerEnabled = automationEnabledByKey.auto_towers === true;
+	const autoFortressEnabled = automationEnabledByKey.auto_fortress === true;
 	const autoInvasionEnabled = automationEnabledByKey.auto_invasion === true;
 	const autoNomadEnabled = automationEnabledByKey.auto_nomad === true;
 	const autoAdvisorEnabled = automationEnabledByKey.auto_advisor === true;
+	const autoBoosterEnabled = automationEnabledByKey.auto_booster === true;
 	const autoBuyerEnabled = automationEnabledByKey.auto_buyer === true;
 	const autoKhanEnabled = automationEnabledByKey.auto_khan === true;
 	const autoBeriWorldEnabled = automationEnabledByKey.auto_beri_world === true;
@@ -242,9 +248,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     autoTCIEnabled,
 		autoTCINextWakeUp: automationWakeMillis(automationStates.autoTCI),
 		autoTowerEnabled,
+		autoFortressEnabled,
 		autoInvasionEnabled,
 		autoNomadEnabled,
 		autoAdvisorEnabled,
+		autoBoosterEnabled,
 		autoBuyerEnabled,
 		autoKhanEnabled,
 		autoBeriWorldEnabled,
@@ -274,9 +282,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	toggleAutoHospital: () => toggle('auto_hospital', autoHospitalEnabled),
 	toggleAutoTCI: () => toggle('auto_tci', autoTCIEnabled),
 		toggleAutoTower: () => toggle('auto_towers', autoTowerEnabled),
+		toggleAutoFortress: () => toggle('auto_fortress', autoFortressEnabled),
 		toggleAutoInvasion: () => toggle('auto_invasion', autoInvasionEnabled),
 		toggleAutoNomad: () => toggle('auto_nomad', autoNomadEnabled),
 		toggleAutoAdvisor: () => toggle('auto_advisor', autoAdvisorEnabled),
+		toggleAutoBooster: () => toggle('auto_booster', autoBoosterEnabled),
 		toggleAutoBuyer: () => toggle('auto_buyer', autoBuyerEnabled),
 		toggleAutoKhan: () => toggle('auto_khan', autoKhanEnabled),
 		toggleAutoBeriWorld: () => toggle('auto_beri_world', autoBeriWorldEnabled),
@@ -301,9 +311,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	autoStationState,
 		autoTCIEnabled,
 		autoTowerEnabled,
+		autoFortressEnabled,
 		autoInvasionEnabled,
 		autoNomadEnabled,
 		autoAdvisorEnabled,
+		autoBoosterEnabled,
 		autoBuyerEnabled,
 		autoKhanEnabled,
 		autoBeriWorldEnabled,

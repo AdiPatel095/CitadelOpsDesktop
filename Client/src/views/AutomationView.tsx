@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Bot,
+  Castle,
   Coins,
   Crosshair,
   Hammer,
@@ -12,6 +13,7 @@ import {
   Users,
   Wheat,
   Wrench,
+  Zap,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -45,9 +47,11 @@ interface AutomationViewProps {
   onOpenAutoToolSettings: () => void;
   onOpenAutoHospitalSettings: () => void;
   onOpenAutoTowerSettings: () => void;
+  onOpenAutoFortressSettings: () => void;
   onOpenAutoInvasionSettings: () => void;
   onOpenAutoNomadSettings: () => void;
   onOpenAutoAdvisorSettings: () => void;
+  onOpenAutoBoosterSettings: () => void;
   onOpenAutoBuyerSettings: () => void;
   onOpenAutoKhanSettings: () => void;
   onOpenAutoBeriWorldSettings: () => void;
@@ -290,9 +294,11 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   onOpenAutoToolSettings,
   onOpenAutoHospitalSettings,
   onOpenAutoTowerSettings,
+  onOpenAutoFortressSettings,
   onOpenAutoInvasionSettings,
   onOpenAutoNomadSettings,
   onOpenAutoAdvisorSettings,
+  onOpenAutoBoosterSettings,
   onOpenAutoBuyerSettings,
   onOpenAutoKhanSettings,
   onOpenAutoBeriWorldSettings,
@@ -314,10 +320,12 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     autoTCIEnabled,
     autoTCINextWakeUp,
     autoTowerEnabled,
+    autoFortressEnabled,
     autoInvasionEnabled,
-		autoNomadEnabled,
+    autoNomadEnabled,
     autoAdvisorEnabled,
-		autoBuyerEnabled,
+	autoBoosterEnabled,
+	autoBuyerEnabled,
     autoKhanEnabled,
     autoBeriWorldEnabled,
     autoStormEnabled,
@@ -328,9 +336,11 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     toggleAutoHospital,
     toggleAutoTCI,
 		toggleAutoTower,
+		toggleAutoFortress,
 		toggleAutoInvasion,
 		toggleAutoNomad,
 		toggleAutoAdvisor,
+		toggleAutoBooster,
 		toggleAutoBuyer,
 		toggleAutoKhan,
 		toggleAutoBeriWorld,
@@ -513,6 +523,21 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       onOpenSettings: onOpenAutoFoodBalanceSettings,
     },
     {
+      id: 'autoBooster',
+      enabledKey: 'auto_booster',
+      group: 'upkeep',
+      name: 'Auto Booster',
+      description: 'Buys only the 2,500-ruby daily global fortress-speed boost after a fresh exact-price and reserve check.',
+      enabled: autoBoosterEnabled,
+      detail: autoBoosterEnabled
+        ? automationStates.autoBooster?.detail ?? 'Waiting for the current daily global-effect window'
+        : 'Daily global fortress-speed purchases are paused',
+      status: automationStates.autoBooster?.status ?? (autoBoosterEnabled ? 'waiting' : 'disabled'),
+      icon: Zap,
+      onToggle: toggleAutoBooster,
+      onOpenSettings: onOpenAutoBoosterSettings,
+    },
+    {
       id: 'autoBuyer',
       enabledKey: 'auto_buyer',
       group: 'upkeep',
@@ -527,12 +552,12 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       onToggle: toggleAutoBuyer,
       onOpenSettings: onOpenAutoBuyerSettings,
     },
-    {
+	{
 		id: 'autoTowers',
 		enabledKey: 'auto_towers',
 		group: 'offense',
 		name: 'Auto Towers',
-		description: 'Attacks ready robber-baron towers with configured two-flank troop waves.',
+		description: 'Attacks ready robber-baron towers with regular waves or Baron Advisor chains bounded by a daily Time Skip budget.',
 		enabled: autoTowerEnabled,
 		detail: autoTowerEnabled
 			? automationStates.autoTowers?.detail ?? 'Waiting for tower map coverage'
@@ -541,6 +566,21 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 		icon: Crosshair,
 		onToggle: toggleAutoTower,
 		onOpenSettings: onOpenAutoTowerSettings,
+	},
+	{
+		id: 'autoFortress',
+		enabledKey: 'auto_fortress',
+		group: 'offense',
+		name: 'Auto Fortress',
+		description: 'Wins outer-kingdom fortresses with a speed-first Direwolf wave, guarded supply, and exact cooldown tracking.',
+		enabled: autoFortressEnabled,
+		detail: autoFortressEnabled
+			? automationStates.autoFortress?.detail ?? 'Waiting for fortress map coverage'
+			: 'Fortress attacks and Direwolf supply are paused',
+		status: automationStates.autoFortress?.status ?? (autoFortressEnabled ? 'waiting' : 'disabled'),
+		icon: Castle,
+		onToggle: toggleAutoFortress,
+		onOpenSettings: onOpenAutoFortressSettings,
 	},
 	{
       id: AUTO_EQUIPMENT_CLEANUP_FEATURE_ID,
@@ -681,9 +721,11 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     autoTCIEnabled,
     autoTCINextWakeUp,
     autoTowerEnabled,
+    autoFortressEnabled,
     autoInvasionEnabled,
 		autoNomadEnabled,
 		autoAdvisorEnabled,
+		autoBoosterEnabled,
 		autoBuyerEnabled,
     autoKhanEnabled,
     autoKhanAttackRuntime,
@@ -716,9 +758,11 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     onOpenAutoTCISettings,
     onOpenAutoToolSettings,
     onOpenAutoTowerSettings,
+    onOpenAutoFortressSettings,
     onOpenAutoInvasionSettings,
 		onOpenAutoNomadSettings,
 		onOpenAutoAdvisorSettings,
+		onOpenAutoBoosterSettings,
 		onOpenAutoBuyerSettings,
     onOpenAutoKhanSettings,
     onOpenAutoBeriWorldSettings,
@@ -729,9 +773,11 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
     toggleAutoFoodBalance,
     toggleAutoTCI,
     toggleAutoTower,
+    toggleAutoFortress,
     toggleAutoInvasion,
 		toggleAutoNomad,
 		toggleAutoAdvisor,
+		toggleAutoBooster,
 		toggleAutoBuyer,
     toggleAutoKhan,
     toggleAutoBeriWorld,

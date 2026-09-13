@@ -569,12 +569,11 @@ func TestOrchestratorFencesAndAcknowledgesAccountConfiguration(t *testing.T) {
 	if !exists || application == nil {
 		t.Fatal("configuration-gated runtime was not created")
 	}
-	localConsent := json.RawMessage(`{"enabled":true,"consentVersion":1,"spyCount":2}`)
 	localRetention := json.RawMessage(`{"version":1,"retention":"24h"}`)
 	legacySections := App.DefaultConfigurationSections()
 	legacySections["session.connection"] = json.RawMessage(`{"mode":"background"}`)
 	legacySections["legacy.runtime-only"] = json.RawMessage(`{"stale":true}`)
-	legacySections[Reports.BattleResearchConfigurationSection] = localConsent
+	legacySections[Reports.BattleResearchConfigurationSection] = json.RawMessage(`{"enabled":true,"consentVersion":1,"spyCount":2}`)
 	legacySections[History.PlayerSamplesConfigurationSection] = localRetention
 	if _, _, err := application.Configuration.ReplaceAllAuthoritative(legacySections); err != nil {
 		t.Fatal(err)
@@ -624,9 +623,8 @@ func TestOrchestratorFencesAndAcknowledgesAccountConfiguration(t *testing.T) {
 	if !bytes.Equal(connection, App.DefaultConfigurationSections()["session.connection"]) {
 		t.Fatalf("omitted portable section did not reset to default: %s", connection)
 	}
-	consent, _ := application.Configuration.Section(Reports.BattleResearchConfigurationSection)
-	if !bytes.Equal(consent, localConsent) {
-		t.Fatalf("installation-local consent changed during account sync: %s", consent)
+	if _, exists := application.Configuration.Section(Reports.BattleResearchConfigurationSection); exists {
+		t.Fatal("account sync retained retired Experimental Battle Research settings")
 	}
 	retention, _ := application.Configuration.Section(History.PlayerSamplesConfigurationSection)
 	if !bytes.Equal(retention, localRetention) {
@@ -718,11 +716,10 @@ func TestOrchestratorReappliesAcknowledgedConfigurationAfterApplicationReplaceme
 	if second == first {
 		t.Fatal("application replacement retained the old application identity")
 	}
-	localConsent := json.RawMessage(`{"enabled":true,"consentVersion":1}`)
 	stale := App.DefaultConfigurationSections()
 	stale["scheduler"] = json.RawMessage(`{"timezone":"Pacific/Honolulu"}`)
 	stale["legacy.player-profile"] = json.RawMessage(`true`)
-	stale[Reports.BattleResearchConfigurationSection] = localConsent
+	stale[Reports.BattleResearchConfigurationSection] = json.RawMessage(`{"enabled":true,"consentVersion":1}`)
 	if _, _, err := second.Configuration.ReplaceAllAuthoritative(stale); err != nil {
 		t.Fatal(err)
 	}
@@ -743,9 +740,8 @@ func TestOrchestratorReappliesAcknowledgedConfigurationAfterApplicationReplaceme
 	if _, exists := second.Configuration.Section("legacy.player-profile"); exists {
 		t.Fatal("replacement retained a stale player-profile section")
 	}
-	consent, _ := second.Configuration.Section(Reports.BattleResearchConfigurationSection)
-	if !bytes.Equal(consent, localConsent) {
-		t.Fatalf("replacement changed installation-local consent: %s", consent)
+	if _, exists := second.Configuration.Section(Reports.BattleResearchConfigurationSection); exists {
+		t.Fatal("replacement retained retired Experimental Battle Research settings")
 	}
 	status = orchestrator.Status().Runtimes[0]
 	if status.ConfigurationState != "ready" || status.AppliedConfigurationRevision != snapshot.Revision ||

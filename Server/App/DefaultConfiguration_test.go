@@ -9,6 +9,7 @@ import (
 	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/History"
 	"CitadelDesktop/Server/PrivateMetrics"
+	"CitadelDesktop/Server/Reports"
 	"CitadelDesktop/Server/RiftTemplates"
 )
 
@@ -56,6 +57,46 @@ func TestDefaultAutoKhanRageControlsAreDisabled(t *testing.T) {
 	}
 }
 
+func TestDefaultAutoTowerAdvisorControlsAreSafe(t *testing.T) {
+	var configuration struct {
+		Version               int   `json:"version"`
+		UseAdvisor            bool  `json:"useAdvisor"`
+		AutoActivateAdvisor   bool  `json:"autoActivateAdvisor"`
+		MaximumDailyTimeSkips int64 `json:"maximumDailyTimeSkips"`
+	}
+	if err := json.Unmarshal(defaultConfiguration()["automation.autoTowers"], &configuration); err != nil {
+		t.Fatalf("decode default Auto Towers configuration: %v", err)
+	}
+	if configuration.Version != 4 || configuration.UseAdvisor || configuration.AutoActivateAdvisor || configuration.MaximumDailyTimeSkips != 0 {
+		t.Fatalf("Auto Towers Advisor defaults = %+v", configuration)
+	}
+}
+
+func TestDefaultAutoBirdConfigurationSupportsRuntimePresetSelection(t *testing.T) {
+	var configuration struct {
+		Version        int     `json:"version"`
+		ActivePresetID *string `json:"activePresetId"`
+		IgnoreSettings struct {
+			MinDelay   int `json:"minDelay"`
+			MaxDelay   int `json:"maxDelay"`
+			MinRPTDays int `json:"minRPTDays"`
+		} `json:"ignoreSettings"`
+		Presets struct {
+			Version int               `json:"version"`
+			Presets []json.RawMessage `json:"presets"`
+		} `json:"presets"`
+	}
+	if err := json.Unmarshal(defaultConfiguration()["automation.autoBird"], &configuration); err != nil {
+		t.Fatalf("decode default Auto Bird configuration: %v", err)
+	}
+	if configuration.Version != 2 || configuration.ActivePresetID != nil ||
+		configuration.IgnoreSettings.MinDelay != 6 || configuration.IgnoreSettings.MaxDelay != 12 ||
+		configuration.IgnoreSettings.MinRPTDays != 3 || configuration.Presets.Version != 1 ||
+		len(configuration.Presets.Presets) != 0 {
+		t.Fatalf("Auto Bird defaults = %+v", configuration)
+	}
+}
+
 func TestDefaultPresetDocumentsAllowSectionScopedFirstSave(t *testing.T) {
 	for _, section := range []string{"attacks.presets", "defense.presets"} {
 		var document struct {
@@ -88,6 +129,36 @@ func TestDefaultPlayerSamplesRetention(t *testing.T) {
 	}
 	if configuration.Version != 1 || configuration.Retention != History.PlayerSamplesRetention30Days {
 		t.Fatalf("player samples retention defaults = %+v", configuration)
+	}
+}
+
+func TestRetiredBattleResearchConfigurationIsRemoved(t *testing.T) {
+	if _, exists := defaultConfiguration()[Reports.BattleResearchConfigurationSection]; exists {
+		t.Fatal("default configuration includes retired Experimental Battle Research settings")
+	}
+	dataDir := t.TempDir()
+	configuration, err := Configuration.Open(dataDir, map[string]json.RawMessage{
+		"scheduler": json.RawMessage(`{"botLocked":false}`),
+		Reports.BattleResearchConfigurationSection: json.RawMessage(`{"enabled":true,"consentVersion":1}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := removeRetiredBattleResearchConfiguration(configuration); err != nil {
+		t.Fatal(err)
+	}
+	if _, exists := configuration.Section(Reports.BattleResearchConfigurationSection); exists {
+		t.Fatal("retired Experimental Battle Research settings remain in memory")
+	}
+	if value, exists := configuration.Section("scheduler"); !exists || string(value) != `{"botLocked":false}` {
+		t.Fatalf("unrelated settings changed during retirement migration: %s, found = %t", value, exists)
+	}
+	reopened, err := Configuration.Open(dataDir, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, exists := reopened.Section(Reports.BattleResearchConfigurationSection); exists {
+		t.Fatal("retired Experimental Battle Research settings remain on disk")
 	}
 }
 

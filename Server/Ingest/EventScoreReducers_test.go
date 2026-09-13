@@ -117,6 +117,50 @@ func TestScalableEventSnapshotReplacesAuthoritativeAvailability(t *testing.T) {
 	}
 }
 
+func TestGlobalEffectSnapshotsBindLiveOfferAndBoostStatusToDailyWindow(t *testing.T) {
+	gameData := scalableEventTestGameData(t)
+	gameState := State.NewGameState()
+	observedAt := time.Date(2026, time.September, 2, 17, 0, 0, 0, time.UTC)
+	code := 0
+	_, changed, err := reduceScalableEventSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "sei", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
+		Payload: json.RawMessage(`{"E":[
+			{"EID":610,"RS":3600,"GE":[[2,1800,60]]},
+			{"EID":612,"RS":3600,"GEB":[{"GEID":2,"C2":2500,"BV":60}]}
+		]}`),
+	}, &gameState, gameData)
+	if err != nil || !changed {
+		t.Fatalf("global-effect SEI: changed=%t err=%v", changed, err)
+	}
+	wantEndsAt := observedAt.Add(30 * time.Minute).Truncate(time.Minute)
+	effect := gameState.EventScores.Inventory.GlobalEffects[2]
+	offer := gameState.EventScores.Inventory.GlobalEffectBoosterOffers[2]
+	if effect.GlobalEffectID != 2 || effect.Strength != 60 || !effect.EndsAt.Equal(wantEndsAt) ||
+		offer.GlobalEffectID != 2 || offer.RubyCost != 2500 || offer.BonusValue != 60 {
+		t.Fatalf("global-effect state = effect:%+v offer:%+v", effect, offer)
+	}
+
+	_, changed, err = reduceGlobalEffectBoosterInfo(t.Context(), Protocol.Frame{
+		Opcode: "bie", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+		ReceivedAt: observedAt.Add(time.Second), Payload: json.RawMessage(`{"GE":[]}`),
+	}, &gameState, gameData)
+	if err != nil || !changed {
+		t.Fatalf("unboosted BIE: changed=%t err=%v", changed, err)
+	}
+	status := gameState.EventScores.Inventory.GlobalEffectBoosts[2]
+	if status.Boosted || !status.OccurrenceEndsAt.Equal(wantEndsAt) {
+		t.Fatalf("unboosted status = %+v", status)
+	}
+
+	_, changed, err = reduceGlobalEffectBoosterInfo(t.Context(), Protocol.Frame{
+		Opcode: "bie", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+		ReceivedAt: observedAt.Add(2 * time.Second), Payload: json.RawMessage(`{"GE":[2]}`),
+	}, &gameState, gameData)
+	if err != nil || !changed || !gameState.EventScores.Inventory.GlobalEffectBoosts[2].Boosted {
+		t.Fatalf("boosted BIE: status=%+v changed=%t err=%v", gameState.EventScores.Inventory.GlobalEffectBoosts[2], changed, err)
+	}
+}
+
 func TestScalableEventSnapshotCachesFirstCurrenciesForEachOccurrence(t *testing.T) {
 	gameData := scalableEventTestGameData(t)
 	gameState := State.NewGameState()

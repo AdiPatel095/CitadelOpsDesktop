@@ -138,7 +138,8 @@ func kingdomResourceTransportWorkflow(
 
 // dailyAttackLimitAllowance returns -1 when the feature's cap is disabled.
 // A non-nil decision means no normal CRA may be queued until authoritative
-// server state changes. Advisor attacks intentionally do not call this helper.
+// server state changes. Every current CRA path, including Baron Advisor tower
+// chains, calls this helper because the first Advisor hit consumes one count.
 func dailyAttackLimitAllowance(
 	snapshot Snapshot,
 	limit int64,

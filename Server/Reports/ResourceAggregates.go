@@ -29,6 +29,7 @@ type ResourceViewKey string
 
 const (
 	ResourceViewTower      ResourceViewKey = "tower"
+	ResourceViewFortress   ResourceViewKey = "fortress"
 	ResourceViewStorm      ResourceViewKey = "storm"
 	ResourceViewInvasion   ResourceViewKey = "invasion"
 	ResourceViewNomad      ResourceViewKey = "nomad"
@@ -138,6 +139,8 @@ func ResourceViewKeyForFeature(featureID string) (ResourceViewKey, bool) {
 	switch State.AttackFeatureID(strings.TrimSpace(featureID)) {
 	case State.AttackFeatureAutoTowers:
 		return ResourceViewTower, true
+	case State.AttackFeatureAutoFortress:
+		return ResourceViewFortress, true
 	case State.AttackFeatureAutoStorm:
 		return ResourceViewStorm, true
 	case State.AttackFeatureAutoInvasion:
@@ -161,7 +164,7 @@ func ResourceViewKeyForFeature(featureID string) (ResourceViewKey, bool) {
 
 func ValidResourceViewKey(value ResourceViewKey) bool {
 	switch value {
-	case ResourceViewTower, ResourceViewStorm, ResourceViewInvasion,
+	case ResourceViewTower, ResourceViewFortress, ResourceViewStorm, ResourceViewInvasion,
 		ResourceViewNomad, ResourceViewAdvisor, ResourceViewKhan,
 		ResourceViewBerimond, ResourceViewRift, ResourceViewRiftReplay:
 		return true
@@ -172,7 +175,7 @@ func ValidResourceViewKey(value ResourceViewKey) bool {
 
 func ResourceViewKeys() []ResourceViewKey {
 	return []ResourceViewKey{
-		ResourceViewTower, ResourceViewStorm, ResourceViewInvasion,
+		ResourceViewTower, ResourceViewFortress, ResourceViewStorm, ResourceViewInvasion,
 		ResourceViewNomad, ResourceViewAdvisor, ResourceViewKhan,
 		ResourceViewBerimond, ResourceViewRift, ResourceViewRiftReplay,
 	}
@@ -182,6 +185,8 @@ func FeatureForResourceViewKey(viewKey ResourceViewKey) (State.AttackFeatureID, 
 	switch viewKey {
 	case ResourceViewTower:
 		return State.AttackFeatureAutoTowers, true
+	case ResourceViewFortress:
+		return State.AttackFeatureAutoFortress, true
 	case ResourceViewStorm:
 		return State.AttackFeatureAutoStorm, true
 	case ResourceViewInvasion:

@@ -17,7 +17,16 @@ Source: `Server/Automation/AllianceStationPolicies.go:49`.
 
 ## Settings
 
-Under `ignoreSettings`:
+`automation.autoBird` is a version 2 document. `ignoreSettings` remains the
+backward-compatible saved configuration, while named entries under
+`presets.presets` can now be selected at runtime:
+
+| Field | Meaning |
+|---|---|
+| `activePresetId` | Named preset used by default; `null` uses `ignoreSettings` |
+| `presets.presets[]` | Stable-ID named reserve, delay, minimum-send, and RPT configurations |
+
+Each preset and `ignoreSettings` contain:
 
 | Field | Meaning |
 |---|---|
@@ -29,6 +38,13 @@ Under `ignoreSettings`:
 The randomised delay is why the policy publishes `nextBirdUnixMs` and
 `nextBirdCastleId` metrics — the UI shows when the next send is due.
 
+Another feature can switch Auto Bird atomically by changing
+`activePresetId`; it does not need to copy the preset's reserve map. The Auto
+Bird weekly schedule can enable **Specify Preset Per Period**, which stores a
+required `presetId` in each slot. An active scheduled slot overrides
+`activePresetId`. A missing, deleted, or duplicated selected preset stops the
+policy instead of falling back to a different troop configuration.
+
 ## Wake triggers
 
 Domains: `alliance`, `movement-snapshot`, `movements`, `player-protection`,
@@ -38,10 +54,13 @@ Domains: `alliance`, `movement-snapshot`, `movements`, `player-protection`,
 
 1. **Protection Mode preparing or active** — `protected`; the game suppresses
    stationing, so the feature stands down entirely.
-2. **No protected alliance targets available** — `idle`.
-3. **A castle has sendable troops** — `troops.station`, sending from that castle
-   to a protected holding.
-4. **Everything reserved or already stationed** — `idle`.
+2. **Selected preset unavailable** — `waiting`; no stationing request is made.
+3. **No protected alliance targets available** — that castle receives its own
+   retry window without blocking another castle.
+4. **Castle is ready** — fresh `AIN` target discovery, then a castle-scoped
+   `JAA` inventory capture, then guarded `CDS` dispatch and `GAM` movement
+   reconciliation.
+5. **Everything reserved or already stationed** — `idle`.
 
 ## Guards
 
@@ -56,6 +75,12 @@ Domains: `alliance`, `movement-snapshot`, `movements`, `player-protection`,
   emitting a burst the moment troops appear.
 - **Per-castle return tracking.** `birdReturnUnixMs.<castle>` metrics track when
   troops come back, so a castle is not re-sent while a send is outstanding.
+- **Preset-bound manifests.** Target and prepared stationing state records the
+  selected preset ID. A default change or schedule-period transition invalidates
+  that preparation and forces a fresh target/inventory cycle.
+- **Period-bound dispatch.** Scheduled intent arguments carry the end of the
+  selected period, and planning plus the final dispatch guard reject a launch
+  after that instant.
 
 ## Relationship to Auto Station
 

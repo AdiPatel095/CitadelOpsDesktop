@@ -203,6 +203,8 @@ func reduceMapSnapshot(
 			populateInvasionObservation(&observation, row)
 		} else if isStormMapType(typeID) {
 			populateStormObservation(&observation, row, gameData)
+		} else if typeID == State.MapTypeKingdomFortress {
+			populateFortressObservation(&observation, row)
 		} else if len(row) > 3 {
 			observation.ObjectID = rowInt(row, 3)
 		}
@@ -266,7 +268,16 @@ func reduceMapSnapshot(
 		changed = true
 	}
 	stormScanProgress := strings.Contains(frame.ResponseToken, "/storm-gaa/")
-	domains := mapReducerDomains(changedMapKinds, stormScanProgress)
+	scanProgressDomain := ""
+	if stormScanProgress {
+		scanProgressDomain = "storm-scan-progress"
+	} else if strings.Contains(frame.ResponseToken, "/fortress-gaa/") {
+		scanProgressDomain = "fortress-scan-progress"
+	}
+	domains := mapReducerDomains(changedMapKinds, scanProgressDomain)
+	if scanProgressDomain != "" {
+		return []string{scanProgressDomain}, changed, nil
+	}
 	if cooldownChanged {
 		domains = append(domains, "tower-cooldowns")
 	}
@@ -274,11 +285,7 @@ func reduceMapSnapshot(
 		domains = append(domains, "nomad-camps")
 	}
 	if stormChanged {
-		if stormScanProgress {
-			domains = append(domains, "storm-scan-progress")
-		} else {
-			domains = append(domains, "storm")
-		}
+		domains = append(domains, "storm")
 	}
 	if beriChanged {
 		domains = append(domains, "beri")
@@ -289,20 +296,20 @@ func reduceMapSnapshot(
 	return domains, changed, nil
 }
 
-func mapReducerDomains(changedKinds map[State.MapProjectionKind]struct{}, stormScanProgress bool) []string {
+func mapReducerDomains(changedKinds map[State.MapProjectionKind]struct{}, scanProgressDomain string) []string {
 	if len(changedKinds) == 0 {
 		return nil
 	}
-	if stormScanProgress {
-		// The account still commits coordinate patches and contributes them to the
-		// shared world generation, but a cooperative sweep wakes policies once at
-		// lease completion instead of once for every returned tile.
-		return []string{"storm-scan-progress"}
+	if scanProgressDomain != "" {
+		// Long map sweeps still commit each coordinate patch immediately, but
+		// policies wake once at operation completion instead of once per window.
+		return []string{scanProgressDomain}
 	}
 	domains := make([]string, 0, len(changedKinds))
 	for _, kind := range []State.MapProjectionKind{
 		State.MapProjectionPlayerCastle,
 		State.MapProjectionTower,
+		State.MapProjectionFortress,
 		State.MapProjectionBerimond,
 		State.MapProjectionInvasion,
 		State.MapProjectionEventCamp,
@@ -488,6 +495,19 @@ func populateTowerObservation(observation *State.MapObservation, row []json.RawM
 		// Captured Berimond watchtower rows expose their target level at index 7.
 		observation.Level = int(rowInt(row, 7))
 	}
+}
+
+func populateFortressObservation(observation *State.MapObservation, row []json.RawMessage) {
+	if observation == nil || observation.TypeID != State.MapTypeKingdomFortress || len(row) < 8 {
+		return
+	}
+	// Captured boss-dungeon rows are
+	// [11, X, Y, lastSpyAge, dungeonLevel, effectiveCooldownSec,
+	//  lastDefeaterPlayerID, kingdomID]. The effective cooldown already reflects
+	// the viewer's personal five-day lockout after a successful defeat.
+	observation.Level = int(rowInt(row, 4))
+	observation.TowerCooldownRemaining = boundedWireSeconds(rowInt(row, 5))
+	observation.FortressDefeaterPlayerID = State.PlayerID(rowInt(row, 6))
 }
 
 func invalidateUnavailableBeriTargetFromMap(

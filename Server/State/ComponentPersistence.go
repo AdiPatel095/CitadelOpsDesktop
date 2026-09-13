@@ -1804,6 +1804,15 @@ func loadEventScoreComponent(
 	if state.Inventory.ActiveByEvent == nil {
 		state.Inventory.ActiveByEvent = map[int64]EventAvailability{}
 	}
+	if state.Inventory.GlobalEffects == nil {
+		state.Inventory.GlobalEffects = map[int64]GlobalEffectAvailability{}
+	}
+	if state.Inventory.GlobalEffectBoosterOffers == nil {
+		state.Inventory.GlobalEffectBoosterOffers = map[int64]GlobalEffectBoosterOffer{}
+	}
+	if state.Inventory.GlobalEffectBoosts == nil {
+		state.Inventory.GlobalEffectBoosts = map[int64]GlobalEffectBoostState{}
+	}
 	for _, eventID := range index.EventIDs {
 		filename := manifest.EventScoreFiles[strconv.FormatInt(eventID, 10)]
 		if !safeComponentFilename(filename) {

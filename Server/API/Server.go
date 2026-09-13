@@ -41,7 +41,6 @@ type Config struct {
 	Intents         *Intent.Engine
 	ReportAnalytics *Reports.SQLiteStore
 	CloudReports    *Reports.CloudClient
-	BattleResearch  *Reports.BattleResearchManager
 	AllianceTargets *AllianceTargets.Service
 	Updates         *AppUpdate.Manager
 	Diagnostics     *Diagnostics.Monitor
@@ -64,7 +63,7 @@ type Server struct {
 
 // SetExternalConfigurationAuthority makes the hosted account control plane
 // the only writer for portable configuration. Installation-scoped retention
-// and battle-research consent remain local by design.
+// remains local by design.
 func (server *Server) SetExternalConfigurationAuthority(enabled bool) {
 	if server != nil {
 		server.externalConfigurationAuthority.Store(enabled)
@@ -139,7 +138,6 @@ func (server *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/v2/history/battle-reports", server.handleBattleReportHistory)
 	mux.HandleFunc("GET /api/v2/analytics/battle-reports", server.handleBattleReportAnalytics)
 	mux.HandleFunc("GET /api/v2/analytics/resource-aggregates", server.handleResourceAggregates)
-	mux.HandleFunc("GET /api/v2/battle-research", server.handleBattleResearchStatus)
 	mux.HandleFunc("GET /api/v2/telemetry/channels", server.handleTelemetryChannels)
 	mux.HandleFunc("GET /api/v2/telemetry/attack-rates", server.handleAttackLaunchRates)
 	mux.HandleFunc("GET /api/v2/telemetry/{channel}", server.handleTelemetryTail)
@@ -150,14 +148,6 @@ func (server *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/v2/operations/{id}/cancel", server.handleOperationCancel)
 	mux.HandleFunc("GET /api/v2/events", server.handleEvents)
 	return mux
-}
-
-func (server *Server) handleBattleResearchStatus(writer http.ResponseWriter, _ *http.Request) {
-	if server.config.BattleResearch == nil {
-		writeError(writer, http.StatusServiceUnavailable, "battle_research_unavailable", "Battle research beta is unavailable")
-		return
-	}
-	writeJSON(writer, http.StatusOK, server.config.BattleResearch.Status())
 }
 
 func (server *Server) handleBrowsers(writer http.ResponseWriter, _ *http.Request) {

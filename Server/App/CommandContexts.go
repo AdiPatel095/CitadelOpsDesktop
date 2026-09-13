@@ -278,6 +278,15 @@ func (application *Application) resolveCRACommandDependencies(
 	guardedAt := time.Now().UTC()
 	target, towerTarget := input.State.LookupMapObservation(fields.KingdomID, fmt.Sprintf("%d:%d", fields.TargetX, fields.TargetY))
 	towerTarget = towerTarget && target.TypeID == kingdomTowerMapTypeID
+	if target.TypeID == State.MapTypeKingdomFortress && State.AttackFeatureTargetPendingAt(
+		input.State, State.AttackFeatureAutoFortress, fields.KingdomID, State.MapTypeKingdomFortress,
+		fields.TargetX, fields.TargetY, time.Now().UTC(),
+	) {
+		return Intent.CommandDependencyPlan{}, fmt.Errorf(
+			"%w: fortress target %d:%d has a prior Auto Fortress attack awaiting settlement",
+			Intent.ErrPlanStale, fields.TargetX, fields.TargetY,
+		)
+	}
 	var movementsObservedAfter time.Time
 	if fields.CommanderID != nil {
 		movementsObservedAfter = guardedAt
@@ -351,7 +360,7 @@ func (application *Application) guardCRASend(_ context.Context, arguments json.R
 	}
 	key := fmt.Sprintf("%d:%d:%d", request.KingdomID, request.TargetX, request.TargetY)
 	switch dialog.Target.TypeID {
-	case kingdomTowerMapTypeID:
+	case kingdomTowerMapTypeID, State.MapTypeKingdomFortress:
 		if request.CommanderID == nil {
 			return fmt.Errorf("CRA tower launch does not identify a commander")
 		}
@@ -414,6 +423,10 @@ func (application *Application) guardCRASend(_ context.Context, arguments json.R
 		case kingdomTowerMapTypeID:
 			if appDungeonCooldownRemaining(state, target, now) > 0 {
 				return fmt.Errorf("CRA target %d:%d is on cooldown", request.TargetX, request.TargetY)
+			}
+		case State.MapTypeKingdomFortress:
+			if fortressCooldownRemaining(state, target, now) > 0 {
+				return fmt.Errorf("CRA fortress target %d:%d is on cooldown", request.TargetX, request.TargetY)
 			}
 		case nomadIntentCampTypeID, samuraiIntentCampTypeID:
 			if nomadAppCooldownRemaining(state, target, now) > 0 {

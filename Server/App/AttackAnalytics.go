@@ -14,14 +14,15 @@ import (
 )
 
 type attackFeatureCaptureRequest struct {
-	FeatureID      State.AttackFeatureID `json:"featureId"`
-	SourceCastleID State.CastleID        `json:"sourceCastleId"`
-	CommanderID    State.CommanderID     `json:"commanderId"`
-	KingdomID      State.KingdomID       `json:"kingdomId"`
-	TargetTypeID   int                   `json:"targetTypeId,omitempty"`
-	TargetX        int                   `json:"targetX"`
-	TargetY        int                   `json:"targetY"`
-	RunID          string                `json:"runId,omitempty"`
+	FeatureID            State.AttackFeatureID `json:"featureId"`
+	SourceCastleID       State.CastleID        `json:"sourceCastleId"`
+	CommanderID          State.CommanderID     `json:"commanderId"`
+	KingdomID            State.KingdomID       `json:"kingdomId"`
+	TargetTypeID         int                   `json:"targetTypeId,omitempty"`
+	TargetX              int                   `json:"targetX"`
+	TargetY              int                   `json:"targetY"`
+	RunID                string                `json:"runId,omitempty"`
+	AdvisorTimeSkipsUsed int64                 `json:"advisorTimeSkipsUsed,omitempty"`
 }
 
 func attackFeatureCaptureStep(request attackFeatureCaptureRequest) Intent.Step {
@@ -134,6 +135,14 @@ func (application *Application) captureAttackFeatureLaunch(_ context.Context, ar
 	if request.SourceCastleID <= 0 || request.CommanderID < 0 {
 		return fmt.Errorf("attack analytics capture requires a source castle and commander")
 	}
+	if request.AdvisorTimeSkipsUsed < 0 {
+		return fmt.Errorf("Advisor Time Skip usage cannot be negative")
+	}
+	if request.AdvisorTimeSkipsUsed > 0 &&
+		(request.FeatureID != State.AttackFeatureAutoTowers || request.TargetTypeID != kingdomTowerMapTypeID ||
+			request.AdvisorTimeSkipsUsed >= int64(baronAdvisorMaximumAttackCount)) {
+		return fmt.Errorf("Advisor Time Skip usage is only valid for a bounded Auto Towers launch")
+	}
 	var gameData *GameData.Store
 	if application.GameData != nil {
 		gameData, _ = application.GameData.Current()
@@ -146,6 +155,12 @@ func (application *Application) captureAttackFeatureLaunch(_ context.Context, ar
 			if movement.Direction != 0 || movement.SourceCastleID != request.SourceCastleID ||
 				movement.KingdomID != request.KingdomID || movement.TargetX != request.TargetX || movement.TargetY != request.TargetY ||
 				movement.CommanderID == nil || *movement.CommanderID != request.CommanderID || movement.ArrivesAt == nil {
+				return true
+			}
+			if request.AdvisorTimeSkipsUsed > 0 &&
+				(movement.TargetTypeID != kingdomTowerMapTypeID || movement.AdvisorType != baronAdvisorTypeID ||
+					movement.AdvisorAttackNumber != 1 || movement.AdvisorAttackCount != int(request.AdvisorTimeSkipsUsed+1) ||
+					movement.AdvisorLaunchState != 0) {
 				return true
 			}
 			if selected.ID == 0 || movement.ObservedAt.After(selected.ObservedAt) ||
@@ -164,12 +179,19 @@ func (application *Application) captureAttackFeatureLaunch(_ context.Context, ar
 		if launchedAt.IsZero() {
 			launchedAt = time.Now().UTC()
 		}
-		changed := State.RecordAttackFeatureLaunch(gameState, State.AttackFeatureLaunch{
+		launchRecorded := State.RecordAttackFeatureLaunch(gameState, State.AttackFeatureLaunch{
 			MovementID: selected.ID, FeatureID: request.FeatureID, KingdomID: request.KingdomID,
 			TroopCount:   attackMovementTroopCount(gameData, selected.Units),
 			TargetTypeID: request.TargetTypeID, TargetX: request.TargetX, TargetY: request.TargetY,
 			LaunchedAt: launchedAt.UTC(), ArrivesAt: selected.ArrivesAt.UTC(),
 		})
+		usageRecorded := false
+		if request.AdvisorTimeSkipsUsed > 0 {
+			usageRecorded = State.RecordTowerAdvisorTimeSkipUsage(gameState, State.TowerAdvisorTimeSkipUsage{
+				MovementID: selected.ID, TimeSkips: request.AdvisorTimeSkipsUsed, UsedAt: launchedAt.UTC(),
+			}, launchedAt)
+		}
+		changed := launchRecorded || usageRecorded
 		domains := []string{"attack-analytics", "movements"}
 		if request.RunID != "" && request.FeatureID == State.AttackFeatureRiftMaiden {
 			run := gameState.Rift.MaidenRun
@@ -185,7 +207,7 @@ func (application *Application) captureAttackFeatureLaunch(_ context.Context, ar
 				domains = append(domains, "rift")
 			}
 		}
-		if changed && request.FeatureID == State.AttackFeatureAutoTowers {
+		if launchRecorded && request.FeatureID == State.AttackFeatureAutoTowers {
 			gameState.IncrementTowerQueueConfirmedLaunches(request.SourceCastleID)
 			domains = append(domains, "tower-queue")
 		}

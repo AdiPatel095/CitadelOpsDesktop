@@ -195,6 +195,147 @@ func TestAutoBirdPreparationCarriesConfiguredReservesAndLimits(t *testing.T) {
 	}
 }
 
+func TestAutoBirdResolvesRuntimePresetWithoutCopyingItIntoIgnoreSettings(t *testing.T) {
+	now := time.Date(2026, 9, 4, 12, 0, 0, 0, time.UTC)
+	gameState, gameData := autoBirdEligibleTestState(t, now)
+	configuration := Configuration.Snapshot{Sections: map[string]json.RawMessage{
+		"automation.autoBird": json.RawMessage(`{
+			"version":2,"activePresetId":"night",
+			"ignoreSettings":{"settings":{"10":[{"id":489,"amount":1}]},"minDelay":6,"maxDelay":12},
+			"presets":{"version":1,"presets":[{
+				"id":"night","name":"Night reserve","settings":{"10":[{"id":489,"amount":75}]},
+				"minDelay":4,"maxDelay":7,"minSend":50
+			}]}
+		}`),
+	}}
+	decision, err := NewAutoBirdPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, GameData: gameData, Configuration: configuration, Now: now,
+	})
+	if err != nil || decision.Request == nil || decision.Request.Name != "auto_bird.discover" {
+		t.Fatalf("preset Auto Bird decision = %#v err=%v", decision, err)
+	}
+	var request struct {
+		PresetID          string        `json:"presetId"`
+		MinimumRPTDays    int           `json:"minimumRPTDays"`
+		MinimumDelayHours int           `json:"minimumDelayHours"`
+		MaximumDelayHours int           `json:"maximumDelayHours"`
+		MinimumSend       int64         `json:"minimumSend"`
+		Reserves          []stationUnit `json:"reserves"`
+		PresetValidUntil  time.Time     `json:"presetValidUntil"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil {
+		t.Fatal(err)
+	}
+	if request.PresetID != "night" || request.MinimumRPTDays != 3 ||
+		request.MinimumDelayHours != 4 || request.MaximumDelayHours != 7 || request.MinimumSend != 50 ||
+		!request.PresetValidUntil.IsZero() {
+		t.Fatalf("resolved runtime preset = %+v", request)
+	}
+	if len(request.Reserves) != 1 || request.Reserves[0] != (stationUnit{UnitID: 489, Amount: 75}) {
+		t.Fatalf("resolved runtime reserves = %#v", request.Reserves)
+	}
+}
+
+func TestAutoBirdSchedulePeriodOverridesRuntimePresetAndCarriesExpiry(t *testing.T) {
+	now := time.Date(2026, 8, 6, 0, 30, 0, 0, time.UTC)
+	gameState, gameData := autoBirdEligibleTestState(t, now)
+	configuration := Configuration.Snapshot{Sections: map[string]json.RawMessage{
+		"automation.autoBird": json.RawMessage(`{
+			"version":2,"activePresetId":"default",
+			"presets":{"version":1,"presets":[
+				{"id":"default","name":"Default","settings":{"10":[{"id":489,"amount":5}]},"minDelay":6,"maxDelay":12,"minSend":1,"minRPTDays":3},
+				{"id":"scheduled","name":"Scheduled","settings":{"10":[{"id":489,"amount":80}]},"minDelay":2,"maxDelay":3,"minSend":10,"minRPTDays":4}
+			]}
+		}`),
+		"scheduler": json.RawMessage(`{
+			"featureSchedules":{"autoBird":{
+				"enabled":true,"timeZone":"America/New_York","slotOptionsEnabled":true,
+				"slots":[{"day":3,"startMinute":1200,"endMinute":1260,"options":{"presetId":"scheduled"}}]
+			}}
+		}`),
+	}}
+	decision, err := NewAutoBirdPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, GameData: gameData, Configuration: configuration, Now: now,
+	})
+	if err != nil || decision.Request == nil {
+		t.Fatalf("scheduled Auto Bird decision = %#v err=%v", decision, err)
+	}
+	var request struct {
+		PresetID         string        `json:"presetId"`
+		MinimumRPTDays   int           `json:"minimumRPTDays"`
+		Reserves         []stationUnit `json:"reserves"`
+		PresetValidUntil time.Time     `json:"presetValidUntil"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil {
+		t.Fatal(err)
+	}
+	wantUntil := time.Date(2026, 8, 6, 1, 0, 0, 0, time.UTC)
+	if request.PresetID != "scheduled" || request.MinimumRPTDays != 4 ||
+		len(request.Reserves) != 1 || request.Reserves[0].Amount != 80 ||
+		!request.PresetValidUntil.Equal(wantUntil) {
+		t.Fatalf("scheduled preset request = %+v", request)
+	}
+}
+
+func TestAutoBirdScheduleFailsClosedWhenPeriodPresetIsMissing(t *testing.T) {
+	now := time.Date(2026, 8, 6, 0, 30, 0, 0, time.UTC)
+	gameState, gameData := autoBirdEligibleTestState(t, now)
+	configuration := Configuration.Snapshot{Sections: map[string]json.RawMessage{
+		"automation.autoBird": json.RawMessage(`{"version":2,"presets":{"version":1,"presets":[]}}`),
+		"scheduler": json.RawMessage(`{
+			"featureSchedules":{"autoBird":{
+				"enabled":true,"timeZone":"America/New_York","slotOptionsEnabled":true,
+				"slots":[{"day":3,"startMinute":1200,"endMinute":1260,"options":{"presetId":"deleted"}}]
+			}}
+		}`),
+	}}
+	decision, err := NewAutoBirdPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, GameData: gameData, Configuration: configuration, Now: now,
+	})
+	if err != nil || decision.Request != nil || decision.Status != "waiting" ||
+		decision.Detail != "The selected Auto Bird preset no longer exists or is duplicated" {
+		t.Fatalf("missing scheduled preset decision = %#v err=%v", decision, err)
+	}
+}
+
+func TestAutoBirdRestartsPreparedCastleWhenPresetChangesAtScheduleBoundary(t *testing.T) {
+	now := time.Date(2026, 8, 6, 0, 30, 0, 0, time.UTC)
+	gameState, gameData := autoBirdEligibleTestState(t, now)
+	gameState.Castles[10] = State.CastleState{
+		ID: 10, KingdomID: 0, X: 10, Y: 10, Focused: true, UnitsObservedAt: now,
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{489: 100}},
+	}
+	gameState.Stationing["autoBird:10"] = State.StationingOperation{
+		ID: "autoBird:10", Purpose: "autoBird", Phase: State.StationingPhaseDispatchReady,
+		PresetID: "day", SourceCastleID: 10, TargetCastleID: 20,
+		Units: map[State.UnitID]int64{489: 90}, DelayHours: 8,
+		AllianceObservedAt: now, UnitsObservedAt: now, UpdatedAt: now,
+	}
+	configuration := Configuration.Snapshot{Sections: map[string]json.RawMessage{
+		"automation.autoBird": json.RawMessage(`{
+			"version":2,"activePresetId":"night","presets":{"version":1,"presets":[{
+				"id":"night","name":"Night","settings":{"10":[{"id":489,"amount":80}]},
+				"minDelay":6,"maxDelay":12,"minSend":1,"minRPTDays":3
+			}]}
+		}`),
+	}}
+	decision, err := NewAutoBirdPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, GameData: gameData, Configuration: configuration, Now: now,
+	})
+	if err != nil || decision.Request == nil || decision.Request.Name != "auto_bird.discover" {
+		t.Fatalf("preset-bound manifest was reused = %#v err=%v", decision, err)
+	}
+	var request struct {
+		PresetID string `json:"presetId"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil {
+		t.Fatal(err)
+	}
+	if request.PresetID != "night" {
+		t.Fatalf("restarted preset = %q, want night", request.PresetID)
+	}
+}
+
 func TestAutoBirdDispatchesOnlyAfterCastlePreparationIsFresh(t *testing.T) {
 	now := time.Date(2026, 7, 29, 14, 0, 0, 0, time.UTC)
 	gameState, gameData := autoBirdEligibleTestState(t, now)
@@ -478,6 +619,25 @@ func TestAutoBirdScheduleKeepsActualReturnWhenPolicyWakeIsLater(t *testing.T) {
 	}
 	if !decision.NextCheckAt.Equal(notBefore) {
 		t.Fatalf("policy wake = %s, want safety gate %s", decision.NextCheckAt, notBefore)
+	}
+}
+
+func TestAutoBirdScheduleWakesAtPresetPeriodBoundary(t *testing.T) {
+	now := time.Date(2026, 9, 4, 12, 5, 0, 0, time.UTC)
+	configuration := Configuration.Snapshot{Sections: map[string]json.RawMessage{
+		"scheduler": json.RawMessage(`{
+			"featureSchedules":{"autoBird":{
+				"enabled":true,"timeZone":"UTC","slotOptionsEnabled":true,
+				"slots":[{"day":5,"startMinute":720,"endMinute":735,"options":{"presetId":"day"}}]
+			}}
+		}`),
+	}}
+	decision := withAutoBirdSchedule(Snapshot{
+		State: State.NewGameState(), Configuration: configuration, Now: now,
+	}, Decision{NextCheckAt: now.Add(time.Hour)}, time.Time{})
+	want := time.Date(2026, 9, 4, 12, 15, 0, 0, time.UTC)
+	if !decision.NextCheckAt.Equal(want) {
+		t.Fatalf("Auto Bird preset boundary wake = %s, want %s", decision.NextCheckAt, want)
 	}
 }
 

@@ -17,8 +17,7 @@ func TestConfigurationSettingsBundleRoundTrip(t *testing.T) {
 	store, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{
 		"automation.enabled": json.RawMessage(`{"autoStorm":false}`),
 		"scheduler":          json.RawMessage(`{"minAttackDelay":4}`),
-		History.PlayerSamplesConfigurationSection:  json.RawMessage(`{"version":1,"retention":"30d"}`),
-		Reports.BattleResearchConfigurationSection: json.RawMessage(`{"enabled":false,"consentVersion":0}`),
+		History.PlayerSamplesConfigurationSection: json.RawMessage(`{"version":1,"retention":"30d"}`),
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -85,12 +84,10 @@ func TestConfigurationSettingsBundleRoundTrip(t *testing.T) {
 	if value, ok := store.Section("scheduler"); !ok || string(value) != `{"minAttackDelay":6}` {
 		t.Fatalf("imported scheduler section = %s, found = %t", value, ok)
 	}
-	value, ok := store.Section(Reports.BattleResearchConfigurationSection)
-	var consent Reports.BattleResearchConfiguration
-	if !ok || json.Unmarshal(value, &consent) != nil || consent.Enabled || consent.ConsentVersion != 0 {
-		t.Fatalf("import changed device-local battle research consent = %s, found = %t", value, ok)
+	if _, exists := store.Section(Reports.BattleResearchConfigurationSection); exists {
+		t.Fatal("import restored retired Experimental Battle Research settings")
 	}
-	value, ok = store.Section(History.PlayerSamplesConfigurationSection)
+	value, ok := store.Section(History.PlayerSamplesConfigurationSection)
 	if !ok || string(value) != `{"version":1,"retention":"30d"}` {
 		t.Fatalf("import changed installation-specific player history retention = %s, found = %t", value, ok)
 	}

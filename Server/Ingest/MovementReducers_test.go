@@ -142,6 +142,23 @@ func TestParseMovementKeepsGameReportedStationWaitActive(t *testing.T) {
 	}
 }
 
+func TestParseMovementKeepsBaronAdvisorChainIdentity(t *testing.T) {
+	observedAt := time.Date(2026, 9, 2, 16, 0, 0, 0, time.UTC)
+	movement, ok := parseMovement(json.RawMessage(`{
+		"M":{"MID":701,"PT":2,"TT":20,"D":0,"T":0,"KID":0,"SA":[1,10,11,100],"TA":[2,20,21,-1]},
+		"UM":{"AAT":4,"AAN":2,"AAC":2,"AAL":0,"L":{"ID":8}}
+	}`), observedAt, nil)
+	if !ok {
+		t.Fatal("Baron Advisor movement did not parse")
+	}
+	if movement.AdvisorType != 4 || movement.AdvisorAttackNumber != 2 || movement.AdvisorAttackCount != 2 ||
+		movement.AdvisorLaunchState != 0 || movement.CommanderID == nil || *movement.CommanderID != 8 ||
+		movement.SourceTypeID != 1 || movement.SourceCastleID != 100 || movement.SourceX != 10 || movement.SourceY != 11 ||
+		movement.TargetTypeID != 2 || movement.TargetCastleID != -1 || movement.TargetX != 20 || movement.TargetY != 21 {
+		t.Fatalf("Baron Advisor movement identity = %#v", movement)
+	}
+}
+
 func TestReconcileExpiredMovementsReleasesCompletedStationWait(t *testing.T) {
 	now := time.Now().UTC()
 	arrivedAt := now.Add(-2 * time.Hour)
