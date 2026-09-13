@@ -68,7 +68,8 @@ func TestParseMovementPreservesPremiumLeaderVariants(t *testing.T) {
 }
 
 func TestPremiumMovementAdvancesGAMSnapshotWithoutOccupyingOwnedCommander(t *testing.T) {
-	now := time.Date(2026, 9, 13, 12, 0, 0, 0, time.UTC)
+	// Commander availability is reconciled against the live clock.
+	now := time.Now().UTC()
 	for _, authoritative := range []bool{true, false} {
 		t.Run(fmt.Sprintf("authoritative-%t", authoritative), func(t *testing.T) {
 			state := State.NewGameState()

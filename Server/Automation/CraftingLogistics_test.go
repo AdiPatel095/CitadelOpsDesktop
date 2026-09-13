@@ -45,7 +45,7 @@ func TestCraftingPolicyWaitsForMarketBarrowReturnBeforeLogisticsRefresh(t *testi
 	gameState.Market.CaravanLevelLoaded = true
 	gameState.KingdomTransport.ObservedAt = now
 	gameState.Movements[50] = State.MovementState{
-		ID: 50, Direction: 1, OwnerPlayerID: 1, SourceCastleID: source.ID,
+		ID: 50, Direction: 1, OwnerPlayerID: 1, SourceCastleID: 20, TargetCastleID: source.ID,
 		MarketBarrows: 100, ReturnsAt: &returnsAt,
 	}
 	configuration := Configuration.Snapshot{Sections: map[string]json.RawMessage{

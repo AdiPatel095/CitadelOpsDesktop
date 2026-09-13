@@ -112,7 +112,7 @@ func TestResourceLogisticsRefreshSkipsMarketWhileBarrowsAreLeased(t *testing.T) 
 	gameState.Castles[20] = resourceIntentCastle(20, 0, 110, 215)
 	returnsAt := time.Now().UTC().Add(time.Hour)
 	gameState.Movements[50] = State.MovementState{
-		ID: 50, Direction: 1, OwnerPlayerID: 1, SourceCastleID: marketCastle.ID,
+		ID: 50, Direction: 1, OwnerPlayerID: 1, SourceCastleID: 20, TargetCastleID: marketCastle.ID,
 		MarketBarrows: 10, ReturnsAt: &returnsAt,
 	}
 
@@ -458,7 +458,7 @@ func TestMarketShipmentPlannerRejectsStaleAvailabilityReservedByMovement(t *test
 	gameState.Market.ObservedAt = time.Now().UTC()
 	returnsAt := time.Now().UTC().Add(time.Hour)
 	gameState.Movements[50] = State.MovementState{
-		ID: 50, Direction: 1, OwnerPlayerID: 1, SourceCastleID: source.ID,
+		ID: 50, Direction: 1, OwnerPlayerID: 1, SourceCastleID: target.ID, TargetCastleID: source.ID,
 		MarketBarrows: 10, ReturnsAt: &returnsAt,
 	}
 
