@@ -315,6 +315,13 @@ func (orchestrator *Orchestrator) Handler() http.Handler {
 			writeControlError(writer, http.StatusUnauthorized, "orchestrator_authentication_required")
 			return
 		}
+		parts := strings.Split(strings.Trim(request.URL.Path, "/"), "/")
+		if len(parts) >= 5 && parts[0] == "orchestrator" && parts[1] == "v1" && parts[2] == "runtimes" {
+			if _, fenced := orchestrator.supervisor.sourceFence(AccountID(parts[3])); fenced {
+				writeControlError(writer, http.StatusLocked, "runtime_handover_fenced")
+				return
+			}
+		}
 		mux.ServeHTTP(writer, request)
 	})
 }
@@ -369,6 +376,11 @@ func (orchestrator *Orchestrator) Reconcile(ctx context.Context, desired Reconci
 		return CellStatus{}, &orchestratorError{status: http.StatusConflict, code: "stale_desired_revision", err: fmt.Errorf("desired revision %d is older than %d", normalized.Revision, currentRevision)}
 	}
 	desiredByID := assignmentsByID(normalized.Runtimes)
+	for id := range desiredByID {
+		if _, fenced := orchestrator.supervisor.sourceFence(id); fenced {
+			return CellStatus{}, &orchestratorError{status: http.StatusLocked, code: "runtime_handover_fenced", err: errors.New("runtime is durably fenced for handover")}
+		}
+	}
 	if normalized.Revision == currentRevision && currentRevision != 0 {
 		if !sameAssignments(current, desiredByID) {
 			return CellStatus{}, &orchestratorError{status: http.StatusConflict, code: "desired_revision_conflict", err: errors.New("desired revision was reused with different assignments")}
