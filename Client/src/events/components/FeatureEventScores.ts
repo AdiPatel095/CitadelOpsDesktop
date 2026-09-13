@@ -1,5 +1,6 @@
 import type { EventInventoryStateV2, ScalableEventScoreV2, WorldIntelligenceEventScoreObservationV1 } from '../../api/Contracts';
 import { completedEventScoreFinals } from '../../worldIntelligence/components/WorldEventFinals';
+import { canonicalEventWorldID } from './FeatureEventWorld';
 
 // These are account event leaderboards, not automation-attributed totals.
 // Towers and Rift report analytics have no corresponding collected board.
@@ -38,9 +39,10 @@ export function featureEventFinals(
   playerId: number,
   now: number,
 ): WorldIntelligenceEventScoreObservationV1[] {
-  if (!worldId.trim() || !Number.isSafeInteger(playerId) || playerId <= 0) return [];
+  const world = canonicalEventWorldID(worldId);
+  if (!world || !Number.isSafeInteger(playerId) || playerId <= 0) return [];
   return completedEventScoreFinals(entries.filter((entry) => (
-    entry.playerId === playerId && entry.worldId?.toLowerCase() === worldId.trim().toLowerCase()
+    entry.playerId === playerId && typeof entry.worldId === 'string' && canonicalEventWorldID(entry.worldId) === world
     && Number.isFinite(Date.parse(entry.observedAt)) && Date.parse(entry.observedAt) <= now
     && typeof entry.score === 'number' && entry.score >= 0
   )), now);

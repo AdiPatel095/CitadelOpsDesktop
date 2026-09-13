@@ -57,6 +57,21 @@ export function sortPatchNoteItems(items: readonly PatchNoteItem[]): PatchNoteIt
 
 const PATCH_NOTES_RELEASES_UNSORTED: PatchNotesRelease[] = [
   {
+    version: '2.4.0-beta.1',
+    subtitle: 'Beta: safer lanes, reliable logistics, and event history',
+    date: '2026-09-13',
+    items: [
+      { kind: 'added', text: 'Feature Stats shows final known scores from completed event runs in their related tabs, with dates, ranks, filtering, and pagination; unknown scores and running events are never presented as finals' },
+      { kind: 'fixed', text: 'Previous event history recognizes canonical world names and websocket world addresses as the same world while keeping different players and nonstandard ports isolated' },
+      { kind: 'fixed', text: 'Expired cached events no longer appear as currently running, and open event views update at their end time' },
+      { kind: 'fixed', text: 'Premium-commander movements preserve their game-provided leader identity and negative sentinels without invalidating otherwise fresh movement snapshots or stalling Auto Towers' },
+      { kind: 'fixed', text: 'Auto Food restores the live marketplace castle context before requesting capacity, and returning trade carts remain reserved at their home castle until arrival' },
+      { kind: 'fixed', text: 'Auto Buyer isolates invalid shop and specialist goals from feast upkeep, prioritizes due feasts, and reconciles uncertain purchases with paced fresh observations while preserving reserves and spending safeguards' },
+      { kind: 'security', text: 'Non-whitelisted opcode rejections lock only their originating lane for 30 minutes from the original rejection; saved locks preserve evidence and expire across restarts without resetting their timers' },
+      { kind: 'changed', text: 'AHR 273 joins the known-safe rejection whitelist and does not create a lane lock or an automatic retry; startup refresh releases saved locks for whitelisted pairs' },
+    ],
+  },
+  {
     version: '2.3.6',
     subtitle: 'Reliable event attacks, Storm logistics, and feast upkeep',
     date: '2026-09-10',

@@ -5,11 +5,13 @@ import type { WorldIntelligenceEventScoreObservationV1 } from '../../api/Contrac
 import { Button, Card, CardContent, EmptyState, Select } from '../../components/ui';
 import { formatEventEndLocal } from '../../worldIntelligence/components/WorldEventFinals';
 import { featureEventFinals } from './FeatureEventScores';
+import { canonicalEventWorldID, featureHistoryMatchesScope } from './FeatureEventWorld';
 
 const pageSize = 10;
 const emptyHistory: WorldIntelligenceEventScoreObservationV1[] = [];
 
 export function useFeatureEventHistory(worldId: string, playerId: number) {
+  worldId = canonicalEventWorldID(worldId);
   const scope = `${worldId}:${playerId}`;
   const [result, setResult] = useState<{
     scope: string; entries: WorldIntelligenceEventScoreObservationV1[]; loading: boolean; error: string;
@@ -24,7 +26,7 @@ export function useFeatureEventHistory(worldId: string, playerId: number) {
       inFlight = true;
       try {
         const history = await CitadelAPI.getWorldIntelligencePlayerEventScores({ worldId, playerId, limit: 5_000 });
-        if (history.playerId !== playerId || history.worldId?.toLowerCase() !== worldId.toLowerCase() || !Array.isArray(history.history)) throw new Error('Event history identity mismatch');
+        if (!featureHistoryMatchesScope(history, worldId, playerId)) throw new Error('Event history identity mismatch');
         if (!cancelled) setResult({ scope, entries: history.history, loading: false, error: '' });
       } catch {
         if (!cancelled) setResult((previous) => ({
