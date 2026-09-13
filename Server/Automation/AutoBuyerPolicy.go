@@ -76,7 +76,7 @@ func (*AutoBuyerPolicy) WakeDomains() []string {
 
 func (*AutoBuyerPolicy) WakeSections() []string { return []string{autoBuyerSection} }
 
-func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
+func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result Decision, resultErr error) {
 	settings := autoBuyerSettings{
 		Version: 1, CheckIntervalSec: autoBuyerDefaultCheckIntervalSec,
 		HistoryRefreshSec: autoBuyerDefaultRefreshSec,
@@ -124,8 +124,18 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		return autoBuyerIdle(snapshot.Now, settings.CheckIntervalSec, "No Auto Buyer goals are enabled", metrics), nil
 	}
 
-	if detail := validateAutoBuyerRules(snapshot.GameData, settings); detail != "" {
-		return autoBuyerWaiting(snapshot.Now, detail, metrics), nil
+	settings, blockedDetail := isolateAutoBuyerRules(snapshot.GameData, settings, metrics)
+	invalidDetail := blockedDetail
+	defer func() {
+		if invalidDetail != "" && result.Detail != invalidDetail {
+			result.Detail += "; skipped invalid goal: " + invalidDetail
+		}
+	}()
+	enabledSpecialists = 0
+	for _, rule := range settings.Specialists {
+		if rule.Enabled {
+			enabledSpecialists++
+		}
 	}
 	availablePackageGoals, unavailableEventShopGoals := autoBuyerAvailablePackageGoals(snapshot, settings)
 	metrics["availablePackageGoals"] = float64(availablePackageGoals)
@@ -147,7 +157,24 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 			refreshAge,
 		)
 	}
-	if specialistContextStale || feastContextStale {
+	if settings.Feast.Enabled && snapshot.State.Market.FeastPurchasePending {
+		metrics["feastReconciliationPending"] = 1
+		next := time.Time{}
+		if lastRun := snapshot.State.Automations["autoBuyer"].LastRunAt; lastRun != nil {
+			next = lastRun.Add(autoBuyerFeastPurchasePacing)
+		}
+		if earliest := snapshot.State.Market.FeastPurchasePendingSince.Add(autoBuyerFeastPurchasePacing); next.Before(earliest) {
+			next = earliest
+		}
+		if snapshot.Now.Before(next) {
+			return Decision{Status: "waiting", Detail: "Waiting for the next read-only feast reconciliation check", NextCheckAt: next, Metrics: metrics}, nil
+		}
+		decision := autoBuyerRequestDecision(snapshot.Now, metrics, "Recheck unresolved feast purchase without spending", "autoBuyer.boosters.refresh", map[string]any{"feastContext": false})
+		decision.ReevaluateOnSuccess, decision.ReevaluateOnStale = false, false
+		decision.NextCheckAt = snapshot.Now.Add(autoBuyerFeastPurchasePacing)
+		return decision, nil
+	}
+	if feastContextStale {
 		decision := autoBuyerRequestDecision(snapshot.Now, metrics, "Refresh specialist and feast context", "autoBuyer.boosters.refresh", map[string]any{
 			"feastContext": settings.Feast.Enabled,
 		})
@@ -156,14 +183,6 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 			decision.NextCheckAt = snapshot.Now.Add(30 * time.Second)
 		}
 		return decision, nil
-	}
-
-	blockedDetail := ""
-	if decision, detail := evaluateAutoBuyerSpecialists(snapshot, settings, metrics); decision != nil {
-		return *decision, nil
-	} else if detail != "" {
-		metrics["specialistBlocked"] = 1
-		blockedDetail = detail
 	}
 
 	var feastSource State.CastleState
@@ -192,6 +211,18 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 					blockedDetail = detail
 				}
 			}
+		}
+	}
+
+	if specialistContextStale {
+		return autoBuyerRequestDecision(snapshot.Now, metrics, "Refresh specialist timers", "autoBuyer.boosters.refresh", map[string]any{"feastContext": false}), nil
+	}
+	if decision, detail := evaluateAutoBuyerSpecialists(snapshot, settings, metrics); decision != nil {
+		return *decision, nil
+	} else if detail != "" {
+		metrics["specialistBlocked"] = 1
+		if blockedDetail == "" {
+			blockedDetail = detail
 		}
 	}
 
@@ -232,6 +263,65 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	}
 
 	return autoBuyerIdle(snapshot.Now, settings.CheckIntervalSec, "All configured purchase floors and reset goals are currently satisfied", metrics), nil
+}
+
+// Disable invalid goals only in this evaluation, never in saved settings.
+// Duplicate identities disable every copy so ordering cannot select a spend.
+func isolateAutoBuyerRules(store *GameData.Store, settings autoBuyerSettings, metrics map[string]float64) (autoBuyerSettings, string) {
+	settings.Packages = append([]autoBuyerPackageRule(nil), settings.Packages...)
+	settings.Specialists = append([]autoBuyerSpecialistRule(nil), settings.Specialists...)
+	first := ""
+	blocked := func(detail string) {
+		metrics["invalidGoals"]++
+		if first == "" {
+			first = detail
+		}
+	}
+	packageCounts := map[string]int{}
+	for _, r := range settings.Packages {
+		if r.Enabled {
+			packageCounts[fmt.Sprintf("%s:%d", strings.TrimSpace(r.ShopID), r.PackageID)]++
+		}
+	}
+	for i, r := range settings.Packages {
+		if !r.Enabled {
+			continue
+		}
+		detail := validateAutoBuyerRules(store, autoBuyerSettings{Packages: []autoBuyerPackageRule{r}})
+		if packageCounts[fmt.Sprintf("%s:%d", strings.TrimSpace(r.ShopID), r.PackageID)] > 1 {
+			detail = fmt.Sprintf("Package %d is configured more than once for %s", r.PackageID, r.ShopID)
+		}
+		if detail != "" {
+			settings.Packages[i].Enabled = false
+			blocked(detail)
+		}
+	}
+	specialistCounts := map[int]int{}
+	for _, r := range settings.Specialists {
+		if r.Enabled {
+			specialistCounts[r.ID]++
+		}
+	}
+	for i, r := range settings.Specialists {
+		if !r.Enabled {
+			continue
+		}
+		detail := validateAutoBuyerRules(store, autoBuyerSettings{Specialists: []autoBuyerSpecialistRule{r}})
+		if specialistCounts[r.ID] > 1 {
+			detail = fmt.Sprintf("Specialist %d is configured more than once", r.ID)
+		}
+		if detail != "" {
+			settings.Specialists[i].Enabled = false
+			blocked(detail)
+		}
+	}
+	if settings.Feast.Enabled {
+		if detail := validateAutoBuyerRules(store, autoBuyerSettings{Feast: settings.Feast}); detail != "" {
+			settings.Feast.Enabled = false
+			blocked(detail)
+		}
+	}
+	return settings, first
 }
 
 func autoBuyerAvailablePackageGoals(snapshot Snapshot, settings autoBuyerSettings) (available int, unavailableEventShops int) {

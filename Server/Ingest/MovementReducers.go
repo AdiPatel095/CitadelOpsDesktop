@@ -385,13 +385,25 @@ func parseMovement(raw json.RawMessage, observedAt time.Time, gameData *GameData
 		}
 		movement.WaitSeconds = max(0, unitMovement.WaitSeconds)
 		if unitMovement.Leader != nil {
-			rawLeaderID, exists := unitMovement.Leader["ID"]
-			leaderID, valid := rawJSONInt64(rawLeaderID)
-			if !exists || !valid {
+			// Premium leaders can use DLID instead of ID on any movement type.
+			// Retain both wire identities without inventing an owned commander.
+			// A malformed supplied field must not be rescued by the other one.
+			for key, destination := range map[string]**int64{
+				"ID": &movement.LeaderID, "DLID": &movement.LeaderDLID,
+			} {
+				if raw, exists := unitMovement.Leader[key]; exists {
+					id, valid := rawJSONInt64(raw)
+					if !valid {
+						return State.MovementState{}, false
+					}
+					*destination = &id
+				}
+			}
+			if movement.LeaderID == nil && movement.LeaderDLID == nil {
 				return State.MovementState{}, false
 			}
-			if leaderID >= 0 {
-				commanderID := State.CommanderID(leaderID)
+			if movement.LeaderID != nil && *movement.LeaderID >= 0 {
+				commanderID := State.CommanderID(*movement.LeaderID)
 				movement.CommanderID = &commanderID
 			}
 		}

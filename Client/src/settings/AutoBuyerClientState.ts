@@ -1,3 +1,5 @@
+import type { AutoBuyerProjectionV1 } from '../api/Contracts';
+
 export const AUTO_BUYER_SECTION = 'automation.autoBuyer';
 export const AUTO_BUYER_MINIMUM_SPECIALIST_DAYS = 14;
 
@@ -120,6 +122,32 @@ export function parseAutoBuyerClientState(value: unknown): AutoBuyerClientStateV
       maximumRubyCostPerPurchase: clampAutoBuyerInteger(feast.maximumRubyCostPerPurchase, 0, Number.MAX_SAFE_INTEGER, 0),
     },
   };
+}
+
+// Catalog drift in an unchanged saved goal must not prevent editing feast
+// upkeep. New/changed spending goals and their shared limits still validate.
+export function autoBuyerOtherGoalsValid(
+  draft: AutoBuyerClientStateV1,
+  saved: AutoBuyerClientStateV1,
+  catalog: AutoBuyerProjectionV1,
+): boolean {
+  const packageLimitsUnchanged = draft.sourceCastleId === saved.sourceCastleId
+    && draft.allowRubyPackages === saved.allowRubyPackages
+    && draft.minimumRubyReserve === saved.minimumRubyReserve;
+  for (const rule of draft.packages.filter((candidate) => candidate.enabled)) {
+    const previous = saved.packages.find((candidate) => candidate.shopId === rule.shopId && candidate.packageId === rule.packageId);
+    if (packageLimitsUnchanged && previous && JSON.stringify(rule) === JSON.stringify(previous)) continue;
+    const product = catalog.packages.find((candidate) => candidate.shopId === rule.shopId && candidate.packageId === rule.packageId);
+    if (draft.sourceCastleId <= 0 || !product || rule.targetPurchasesPerReset < 1 || rule.targetPurchasesPerReset > product.stock) return false;
+    if (product.price.premium && (!draft.allowRubyPackages || rule.maximumRubySpendPerReset < product.price.amount)) return false;
+  }
+  for (const rule of draft.specialists.filter((candidate) => candidate.enabled)) {
+    const previous = saved.specialists.find((candidate) => candidate.id === rule.id);
+    if (draft.minimumRubyReserve === saved.minimumRubyReserve && previous && JSON.stringify(rule) === JSON.stringify(previous)) continue;
+    const specialist = catalog.specialists.find((candidate) => candidate.id === rule.id);
+    if (!specialist || rule.minimumDays < AUTO_BUYER_MINIMUM_SPECIALIST_DAYS || rule.maximumRubyCostPerPurchase < specialist.baseRubyCost) return false;
+  }
+  return true;
 }
 
 export function clampAutoBuyerInteger(value: unknown, minimum: number, maximum: number, fallback: number): number {

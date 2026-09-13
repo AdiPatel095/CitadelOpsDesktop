@@ -399,6 +399,9 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		return nil, err
 	}
 	application.Intents.SetLaneSafetyPersistence(application.saveStateEvent)
+	if err := application.Intents.RefreshAutomationLaneLocks(); err != nil {
+		return nil, err
+	}
 	application.Automation = Automation.NewCoordinator(
 		state, configuration, gameData, intents,
 		Automation.NewSharedStormScanPolicy(application.AccountKey, config.WorldMaps),

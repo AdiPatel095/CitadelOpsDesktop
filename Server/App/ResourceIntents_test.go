@@ -112,7 +112,7 @@ func TestResourceLogisticsRefreshSkipsMarketWhileBarrowsAreLeased(t *testing.T) 
 	gameState.Castles[20] = resourceIntentCastle(20, 0, 110, 215)
 	returnsAt := time.Now().UTC().Add(time.Hour)
 	gameState.Movements[50] = State.MovementState{
-		ID: 50, Direction: 1, OwnerPlayerID: 1, SourceCastleID: marketCastle.ID,
+		ID: 50, Direction: 1, OwnerPlayerID: 1, SourceCastleID: 20, TargetCastleID: marketCastle.ID,
 		MarketBarrows: 10, ReturnsAt: &returnsAt,
 	}
 
@@ -175,6 +175,70 @@ func TestResourceLogisticsRefreshUsesEligibleMarketCastleAndRestoresFocus(t *tes
 	}
 	if focusPayloads[1].X != dungeonCastle.X || focusPayloads[1].Y != dungeonCastle.Y || focusPayloads[1].KingdomID != dungeonCastle.KingdomID {
 		t.Fatalf("restore focus payload = %#v", focusPayloads[1])
+	}
+}
+
+func TestResourceLogisticsRefreshValidatesCastleSubcontext(t *testing.T) {
+	for _, test := range []struct {
+		name       string
+		focusedID  State.CastleID
+		subcontext State.FocusSubcontext
+		wantFocus  string
+	}{
+		{name: "map lookup after castle entry", focusedID: 10, subcontext: State.FocusSubcontextMap, wantFocus: "jca"},
+		{name: "unknown live context", focusedID: 10, subcontext: State.FocusSubcontextUnknown, wantFocus: "jca"},
+		{name: "already inside marketplace castle", focusedID: 10, subcontext: State.FocusSubcontextCastle},
+		{name: "protocol focus differs from cached flag", focusedID: 11, subcontext: State.FocusSubcontextCastle, wantFocus: "jaa"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			gameState := State.NewGameState()
+			marketCastle := resourceIntentCastle(10, 0, 100, 200)
+			marketCastle.Focused = true
+			marketCastle.Buildings[1] = State.Building{InstanceID: 1, DefinitionID: 137}
+			gameState.Castles[10] = marketCastle
+			gameState.Castles[11] = resourceIntentCastle(11, 0, 105, 205)
+			plan, err := planResourceLogisticsRefresh(t.Context(), Intent.PlanningContext{
+				State: gameState, GameData: resourceIntentGameData(t),
+				ProtocolContext: State.ProtocolContextState{
+					FocusEpoch: 2, FocusedCastleID: test.focusedID, FocusSubcontext: test.subcontext,
+				},
+			}, json.RawMessage(`{}`))
+			if err != nil {
+				t.Fatal(err)
+			}
+			wantOpcodes := []string{"kpi"}
+			if test.wantFocus != "" {
+				wantOpcodes = append(wantOpcodes, test.wantFocus)
+			}
+			wantOpcodes = append(wantOpcodes, "boi", "cmi")
+			var gotOpcodes []string
+			for _, step := range plan.Steps {
+				gotOpcodes = append(gotOpcodes, step.Opcode)
+			}
+			if !slices.Equal(gotOpcodes, wantOpcodes) {
+				t.Fatalf("market context steps = %v, want %v", gotOpcodes, wantOpcodes)
+			}
+			if !slices.Contains(plan.Claims, "castle-focus") {
+				t.Fatal("market refresh must hold castle focus")
+			}
+			if test.wantFocus != "" {
+				step := plan.Steps[1]
+				if step.ResponseBarrier != Intent.ResponseBarrierCommitted || step.ResumePolicy != Intent.ResumeRebuild || step.AwaitOpcode != "jaa" {
+					t.Fatalf("castle entry must commit and rebuild on resume: %#v", step)
+				}
+				wantPayload := `{"CID":10,"KID":0}`
+				if test.wantFocus == "jaa" {
+					wantPayload = `{"PX":100,"PY":200,"KID":0}`
+				}
+				if string(step.Command.Payload) != wantPayload {
+					t.Fatalf("castle entry payload = %s, want %s", step.Command.Payload, wantPayload)
+				}
+			}
+			market := plan.Steps[len(plan.Steps)-1]
+			if string(market.Command.Payload) != `{"S":1,"KID":-1}` || !slices.Equal(market.SuccessCodes, []int{0}) {
+				t.Fatalf("CMI payload or success policy changed: %#v", market)
+			}
+		})
 	}
 }
 
@@ -394,7 +458,7 @@ func TestMarketShipmentPlannerRejectsStaleAvailabilityReservedByMovement(t *test
 	gameState.Market.ObservedAt = time.Now().UTC()
 	returnsAt := time.Now().UTC().Add(time.Hour)
 	gameState.Movements[50] = State.MovementState{
-		ID: 50, Direction: 1, OwnerPlayerID: 1, SourceCastleID: source.ID,
+		ID: 50, Direction: 1, OwnerPlayerID: 1, SourceCastleID: target.ID, TargetCastleID: source.ID,
 		MarketBarrows: 10, ReturnsAt: &returnsAt,
 	}
 

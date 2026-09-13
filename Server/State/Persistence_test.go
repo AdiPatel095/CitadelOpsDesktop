@@ -636,6 +636,9 @@ func TestComponentSnapshotPersistsFeastCostReduction(t *testing.T) {
 		state.Market.FeastPurchaseExpectedExpiresAt = expectedExpiry
 		state.Market.FeastPurchaseOperationID = "feast-operation"
 		state.Market.FeastPurchaseResponseToken = "feast-operation/1"
+		state.Market.FeastPurchaseInactiveObservedAt = pendingSince.Add(time.Minute)
+		state.Market.FeastPurchaseInactiveResponseToken = "feast-poll/2"
+		state.Market.FeastPurchaseInactiveGeneration = 7
 		return []string{"market"}, true, nil
 	})
 	if err != nil {
@@ -655,7 +658,10 @@ func TestComponentSnapshotPersistsFeastCostReduction(t *testing.T) {
 		!loaded.Market.FeastPurchasePendingSince.Equal(pendingSince) ||
 		!loaded.Market.FeastPurchaseExpectedExpiresAt.Equal(expectedExpiry) ||
 		loaded.Market.FeastPurchaseOperationID != "feast-operation" ||
-		loaded.Market.FeastPurchaseResponseToken != "feast-operation/1" {
+		loaded.Market.FeastPurchaseResponseToken != "feast-operation/1" ||
+		!loaded.Market.FeastPurchaseInactiveObservedAt.Equal(pendingSince.Add(time.Minute)) ||
+		loaded.Market.FeastPurchaseInactiveResponseToken != "feast-poll/2" ||
+		loaded.Market.FeastPurchaseInactiveGeneration != 7 {
 		t.Fatalf("persisted feast state = %+v", loaded.Market)
 	}
 }

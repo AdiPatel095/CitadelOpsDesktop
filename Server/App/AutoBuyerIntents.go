@@ -771,6 +771,9 @@ func (application *Application) disarmAutoBuyerFeastPurchase(ctx context.Context
 		market.FeastPurchaseExpectedExpiresAt = time.Time{}
 		market.FeastPurchaseOperationID = ""
 		market.FeastPurchaseResponseToken = ""
+		market.FeastPurchaseInactiveObservedAt = time.Time{}
+		market.FeastPurchaseInactiveResponseToken = ""
+		market.FeastPurchaseInactiveGeneration = 0
 		return []string{"boosters", "market"}, true, nil
 	})
 	if err != nil {
@@ -818,6 +821,9 @@ func (application *Application) setAutoBuyerFeastReconciliation(ctx context.Cont
 			}
 		}
 		market.FeastPurchasePending = true
+		market.FeastPurchaseInactiveObservedAt = time.Time{}
+		market.FeastPurchaseInactiveResponseToken = ""
+		market.FeastPurchaseInactiveGeneration = 0
 		market.FeastPurchaseExpectedID = request.FeastID
 		market.FeastPurchasePendingSince = pendingSince
 		market.FeastPurchaseExpectedExpiresAt = baseline.Add(time.Duration(feast.DurationSec) * time.Second)

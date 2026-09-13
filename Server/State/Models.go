@@ -866,6 +866,10 @@ type MovementState struct {
 	Units           map[UnitID]int64       `json:"units"`
 	MarketBarrows   int                    `json:"marketBarrows,omitempty"`
 	MarketGoods     []KingdomTransportGood `json:"marketGoods,omitempty"`
+	// Preserve GAM's leader identities, including premium/sentinel values.
+	// Only a nonnegative UM.L.ID identifies an owned commander; DLID does not.
+	LeaderID   *int64 `json:"leaderId,omitempty"`
+	LeaderDLID *int64 `json:"leaderDlid,omitempty"`
 }
 
 func (movement MovementState) ProjectedCompletionAt() *time.Time {
@@ -1077,19 +1081,23 @@ type MarketState struct {
 	// FeastPurchasePending prevents a resource-spending BFS from being replayed
 	// after its outcome could not be reconciled. The latch is durable across
 	// restarts and is cleared only by an authoritative expected-feast result,
-	// an explicit game rejection, or expiry of the maximum possible effect.
-	FeastPurchasePending           bool      `json:"feastPurchasePending,omitempty"`
-	FeastPurchaseExpectedID        int64     `json:"feastPurchaseExpectedId,omitempty"`
-	FeastPurchasePendingSince      time.Time `json:"feastPurchasePendingSince,omitempty"`
-	FeastPurchaseExpectedExpiresAt time.Time `json:"feastPurchaseExpectedExpiresAt,omitempty"`
-	FeastPurchaseOperationID       string    `json:"feastPurchaseOperationId,omitempty"`
-	FeastPurchaseResponseToken     string    `json:"feastPurchaseResponseToken,omitempty"`
-	FeastCostReductionPercent      int       `json:"feastCostReductionPercent,omitempty"`
-	FeastCostReductionObservedAt   time.Time `json:"feastCostReductionObservedAt,omitempty"`
-	CaravanLevel                   int       `json:"caravanLevel,omitempty"`
-	CaravanLevelLoaded             bool      `json:"caravanLevelLoaded"`
-	ObservedAt                     time.Time `json:"observedAt,omitempty"`
-	BoostersObservedAt             time.Time `json:"boostersObservedAt,omitempty"`
+	// an explicit game rejection, two spaced current-session inactive replies,
+	// or expiry of the maximum possible effect.
+	FeastPurchasePending               bool      `json:"feastPurchasePending,omitempty"`
+	FeastPurchaseExpectedID            int64     `json:"feastPurchaseExpectedId,omitempty"`
+	FeastPurchasePendingSince          time.Time `json:"feastPurchasePendingSince,omitempty"`
+	FeastPurchaseExpectedExpiresAt     time.Time `json:"feastPurchaseExpectedExpiresAt,omitempty"`
+	FeastPurchaseOperationID           string    `json:"feastPurchaseOperationId,omitempty"`
+	FeastPurchaseResponseToken         string    `json:"feastPurchaseResponseToken,omitempty"`
+	FeastPurchaseInactiveObservedAt    time.Time `json:"feastPurchaseInactiveObservedAt,omitempty"`
+	FeastPurchaseInactiveResponseToken string    `json:"feastPurchaseInactiveResponseToken,omitempty"`
+	FeastPurchaseInactiveGeneration    uint64    `json:"feastPurchaseInactiveGeneration,omitempty"`
+	FeastCostReductionPercent          int       `json:"feastCostReductionPercent,omitempty"`
+	FeastCostReductionObservedAt       time.Time `json:"feastCostReductionObservedAt,omitempty"`
+	CaravanLevel                       int       `json:"caravanLevel,omitempty"`
+	CaravanLevelLoaded                 bool      `json:"caravanLevelLoaded"`
+	ObservedAt                         time.Time `json:"observedAt,omitempty"`
+	BoostersObservedAt                 time.Time `json:"boostersObservedAt,omitempty"`
 }
 
 type KingdomTransportUnlock struct {

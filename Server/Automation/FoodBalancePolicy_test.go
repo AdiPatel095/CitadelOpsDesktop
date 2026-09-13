@@ -200,7 +200,7 @@ func TestFoodBalancePolicyWaitsForMarketBarrowReturnBeforeLogisticsRefresh(t *te
 	state.Market.CaravanLevelLoaded = true
 	state.KingdomTransport.ObservedAt = now
 	state.Movements[50] = State.MovementState{
-		ID: 50, Direction: 1, OwnerPlayerID: 1, SourceCastleID: source.ID,
+		ID: 50, Direction: 1, OwnerPlayerID: 1, SourceCastleID: 20, TargetCastleID: source.ID,
 		MarketBarrows: 100, ReturnsAt: &returnsAt,
 	}
 
@@ -241,7 +241,7 @@ func TestFoodBalancePolicyContinuesWhileMarketBarrowsAreLeased(t *testing.T) {
 	}
 	returnsAt := now.Add(10 * time.Minute)
 	state.Movements[50] = State.MovementState{
-		ID: 50, Direction: 1, OwnerPlayerID: state.Player.ID, SourceCastleID: donor.ID,
+		ID: 50, Direction: 1, OwnerPlayerID: state.Player.ID, SourceCastleID: target.ID, TargetCastleID: donor.ID,
 		MarketBarrows: 75, ReturnsAt: &returnsAt,
 	}
 	state.Player.Resources[1] = 1_000_000

@@ -400,9 +400,9 @@ func (coordinator *Coordinator) evaluate(
 			current.evaluationPending = false
 			current.configurationRebuildPending = false
 			current.evaluatedSessionKnown = true
-			current.eventOnly = lock.Until.IsZero()
-			current.nextCheck = lock.Until
-			coordinator.recordDecision(policy.ID(), policyEnabled(policy, enabled, state), Decision{Status: "gated", Detail: lock.Detail(), NextCheckAt: lock.Until})
+			current.eventOnly = lock.ExpiresAt().IsZero()
+			current.nextCheck = lock.ExpiresAt()
+			coordinator.recordDecision(policy.ID(), policyEnabled(policy, enabled, state), Decision{Status: "gated", Detail: lock.Detail(), NextCheckAt: lock.ExpiresAt()})
 			continue
 		}
 		if !policyEvaluationDue(current, configuration.Revision, sessionReady, state.Session.Generation, now) {
@@ -1156,7 +1156,7 @@ func (coordinator *Coordinator) updateAutomation(id string, update func(State.Au
 			next.Detail = lock.Detail()
 			next.LastError = next.Detail
 			next.LastOperationID = lock.OperationID
-			next.NextCheckAt = timePointer(lock.Until)
+			next.NextCheckAt = timePointer(lock.ExpiresAt())
 		}
 		labels := GameData.NewIdentifierLabels(*gameState, gameData, language)
 		next.Detail = labels.Humanize(next.Detail)
