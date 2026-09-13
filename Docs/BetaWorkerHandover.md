@@ -30,11 +30,25 @@ the beta portal, loading this build, or calling the existing reconnect action.
   aliases of its player profile, rebinds onto that profile, stale per-runtime
   control calls, and higher-epoch reconciles. Corrupt/non-canonical fence journals
   fail startup rather than silently forgetting source ownership.
+- Controller fencing protocol v1: authenticated mutations carrying canonical
+  `X-Citadel-Control-Epoch` values are serialized under an interprocess file
+  lock. The cell persists its high-water epoch with atomic rename/fsync before
+  dispatch. Older and missing epochs are rejected after first activation;
+  corrupt journals fail startup. Status advertises `controlFenceSchema` and
+  `controlEpoch`. `POST /orchestrator/v1/control-fence` claims ownership without
+  changing any runtime, for the backend's all-cell takeover barrier.
+
+Controller fencing is backward-compatible only **before** its first positive
+epoch. It does not expire. Deploy support everywhere before enabling backend
+`HOSTED_CONTROL_FENCING=true`; afterward rollback must retain fencing support.
+Never delete/reset `Accounts/controller-fence.json` to make an old writer work.
+The backend still needs the complete handover executor/target adoption before
+account switching can be activated. These routes do not expose source archives.
 
 ## Still required before activation
 
-1. Durable backend operation/CAS and controller fencing across replicas; target
-   capacity reservation; canonical mutation freeze and stale-grant rejection.
+1. Deploy and verify the backend journal/CAS and controller fence support across
+   all replicas and cells; target capacity reservation and stale-grant rejection.
 2. Authenticated, bounded archive delivery bound to the persisted stop receipt.
    Archive bytes must not enter public storage, logs or portal responses.
 3. Target schema/identity/configuration verification, atomic adoption and the

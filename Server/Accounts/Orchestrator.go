@@ -11,9 +11,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"CitadelDesktop/Server/App"
@@ -192,19 +194,22 @@ type RuntimeStatus struct {
 }
 
 type CellStatus struct {
-	SchemaVersion   int             `json:"schemaVersion"`
-	Version         string          `json:"version"`
-	BuildRevision   string          `json:"buildRevision"`
-	BuildID         string          `json:"buildId"`
-	CellID          string          `json:"cellId"`
-	DesiredRevision uint64          `json:"desiredRevision"`
-	GameDataReady   bool            `json:"gameDataReady"`
-	Capacity        Capacity        `json:"capacity"`
-	Runtimes        []RuntimeStatus `json:"runtimes"`
-	ObservedAt      time.Time       `json:"observedAt"`
+	ControlFenceSchema int             `json:"controlFenceSchema"`
+	ControlEpoch       uint64          `json:"controlEpoch"`
+	SchemaVersion      int             `json:"schemaVersion"`
+	Version            string          `json:"version"`
+	BuildRevision      string          `json:"buildRevision"`
+	BuildID            string          `json:"buildId"`
+	CellID             string          `json:"cellId"`
+	DesiredRevision    uint64          `json:"desiredRevision"`
+	GameDataReady      bool            `json:"gameDataReady"`
+	Capacity           Capacity        `json:"capacity"`
+	Runtimes           []RuntimeStatus `json:"runtimes"`
+	ObservedAt         time.Time       `json:"observedAt"`
 }
 
 type Orchestrator struct {
+	controlEpoch  atomic.Uint64
 	cellID        string
 	tokenHash     [sha256.Size]byte
 	supervisor    *Supervisor
@@ -262,13 +267,19 @@ func NewOrchestrator(config OrchestratorConfig) (*Orchestrator, error) {
 	if now == nil {
 		now = func() time.Time { return time.Now().UTC() }
 	}
-	return &Orchestrator{
+	epoch, err := readControlFence(filepath.Join(config.Supervisor.config.DataRoot, "Accounts"), string(cellID))
+	if err != nil {
+		return nil, fmt.Errorf("load controller fence: %w", err)
+	}
+	orchestrator := &Orchestrator{
 		cellID: string(cellID), tokenHash: sha256.Sum256([]byte(config.Token)),
 		supervisor: config.Supervisor, dashboardAuth: config.DashboardAuth,
 		drainTimeout: drainTimeout, now: now,
 		runtimes: map[AccountID]RuntimeAssignment{}, configurationSyncs: map[AccountID]configurationSyncState{},
 		subscribers: map[chan CellStatus]struct{}{},
-	}, nil
+	}
+	orchestrator.controlEpoch.Store(epoch)
+	return orchestrator, nil
 }
 
 func (orchestrator *Orchestrator) Start(ctx context.Context) {
@@ -303,6 +314,13 @@ func (orchestrator *Orchestrator) Handler() http.Handler {
 	mux.HandleFunc("GET /orchestrator/v1/status", orchestrator.handleStatus)
 	mux.HandleFunc("GET /orchestrator/v1/events", orchestrator.handleEvents)
 	mux.HandleFunc("POST /orchestrator/v1/reconcile", orchestrator.handleReconcile)
+	mux.HandleFunc("POST /orchestrator/v1/control-fence", func(writer http.ResponseWriter, request *http.Request) {
+		if request.Header.Get(controlEpochHeader) == "" {
+			writeControlError(writer, http.StatusBadRequest, "control_epoch_required")
+			return
+		}
+		writeControlJSON(writer, http.StatusOK, orchestrator.Status())
+	})
 	mux.HandleFunc("PUT /orchestrator/v1/runtimes/{id}/dashboard-grant", orchestrator.handleDashboardGrant)
 	mux.HandleFunc("PUT /orchestrator/v1/runtimes/{id}/dashboard-bootstrap", orchestrator.handleDashboardBootstrap)
 	mux.HandleFunc("PUT /orchestrator/v1/runtimes/{id}/login", orchestrator.handleLoginCredential)
@@ -321,6 +339,10 @@ func (orchestrator *Orchestrator) Handler() http.Handler {
 				writeControlError(writer, http.StatusLocked, "runtime_handover_fenced")
 				return
 			}
+		}
+		if request.Method != http.MethodGet && request.Method != http.MethodHead {
+			orchestrator.withControlFence(writer, request, mux)
+			return
 		}
 		mux.ServeHTTP(writer, request)
 	})
@@ -1066,6 +1088,7 @@ func (orchestrator *Orchestrator) Status() CellStatus {
 	}
 	sort.Slice(runtimes, func(left, right int) bool { return runtimes[left].RuntimeID < runtimes[right].RuntimeID })
 	return CellStatus{
+		ControlFenceSchema: 1, ControlEpoch: orchestrator.controlEpoch.Load(),
 		SchemaVersion: OrchestratorSchemaVersion,
 		Version:       App.Version, BuildRevision: App.BuildRevision, BuildID: App.BuildID,
 		CellID:          orchestrator.cellID,
