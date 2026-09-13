@@ -104,13 +104,14 @@ type Supervisor struct {
 	ownsGameData   bool
 	startupErr     error
 
-	mu       sync.RWMutex
-	accounts map[AccountID]accountRuntime
-	stopping map[AccountID]accountRuntime
-	pending  map[AccountID]struct{}
-	dataDirs map[string]AccountID
-	closed   bool
-	addWG    sync.WaitGroup
+	mu           sync.RWMutex
+	accounts     map[AccountID]accountRuntime
+	stopping     map[AccountID]accountRuntime
+	pending      map[AccountID]struct{}
+	dataDirs     map[string]AccountID
+	sourceFences map[AccountID]SourceProfileFence
+	closed       bool
+	addWG        sync.WaitGroup
 
 	// playerBindings maps runtime IDs to the player-keyed profile directory
 	// under Players/ (see PlayerDirs.go). Guarded by mu; persisted next to the
@@ -140,6 +141,10 @@ func New(ctx context.Context, config Config) (*Supervisor, error) {
 		return nil, fmt.Errorf("resolve account data root: %w", err)
 	}
 	config.DataRoot = dataRoot
+	sourceFences, err := loadSourceFences(dataRoot)
+	if err != nil {
+		return nil, fmt.Errorf("load durable source fences: %w", err)
+	}
 	cacheDir := strings.TrimSpace(config.GameDataCacheDir)
 	if cacheDir == "" {
 		cacheDir = filepath.Join(dataRoot, "Shared", "GameData", "Items")
@@ -213,6 +218,7 @@ func New(ctx context.Context, config Config) (*Supervisor, error) {
 		ownsGameData: ownsGameData, startupErr: startupErr,
 		accounts: map[AccountID]accountRuntime{}, stopping: map[AccountID]accountRuntime{},
 		pending: map[AccountID]struct{}{}, dataDirs: map[string]AccountID{},
+		sourceFences:   sourceFences,
 		playerBindings: bindings, playerBindingsPath: bindingsPath,
 		identityOf: func(application *App.Application) (string, int64, bool) {
 			if application == nil || application.State == nil {
@@ -339,6 +345,10 @@ func (supervisor *Supervisor) AddAccount(ctx context.Context, config AccountConf
 		return nil, err
 	}
 	supervisor.mu.Lock()
+	if supervisor.sourceProfileFencedLocked(id, dataDir) {
+		supervisor.mu.Unlock()
+		return nil, fmt.Errorf("account profile is fenced for handover")
+	}
 	if supervisor.closed {
 		supervisor.mu.Unlock()
 		return nil, fmt.Errorf("account supervisor is closed")
@@ -655,6 +665,12 @@ func (supervisor *Supervisor) rebindAccount(id AccountID, runtime accountRuntime
 	key := playerKey(worldID, playerID)
 	staging := filepath.Join(supervisor.config.DataRoot, "Accounts", string(id))
 	playerDir := filepath.Join(supervisor.config.DataRoot, playerDirsName, key)
+	supervisor.mu.RLock()
+	fenced := supervisor.sourceProfileFencedLocked(id, playerDir) || supervisor.sourceProfileFencedLocked(id, staging)
+	supervisor.mu.RUnlock()
+	if fenced {
+		return fmt.Errorf("account profile is fenced for handover")
+	}
 	log.Printf("[accounts] rebinding %s onto player profile %s", id, key)
 
 	stopContext, cancel := context.WithTimeout(context.Background(), playerRebindStopTimeout)
