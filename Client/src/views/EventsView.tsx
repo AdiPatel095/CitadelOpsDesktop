@@ -6,6 +6,8 @@ import { PillSelector } from '../components/ui';
 import { useCitadelAPI } from '../api/ApiContext';
 import EventActivityCard from '../events/components/EventActivityCard';
 import EventRankingModal from '../events/components/EventRankingModal';
+import { FeatureEventHistory, useFeatureEventHistory } from '../events/components/FeatureEventHistory';
+import { featureEventIds, isFeatureEventRunning } from '../events/components/FeatureEventScores';
 import AttackEconomyView, {
   attackEconomyFeatureDefinitions,
   type AttackEconomyFeatureID,
@@ -16,23 +18,46 @@ type EventsAnalyticsView = 'events' | AttackEconomyFeatureID;
 const EventsView: React.FC = () => {
   const { gameLoggedIn } = useAuth();
   const { state, submitIntent } = useCitadelAPI();
-  const activeEventID = state?.eventScores.activeEventId ?? 0;
-  const event = activeEventID > 0 ? state?.eventScores.byEvent[String(activeEventID)] : undefined;
-  const ranking = activeEventID > 0 ? state?.eventScores.rankingByEvent?.[String(activeEventID)] : undefined;
+  const [now, setNow] = useState(() => Date.now());
+  const worldId = state?.account.worldId ?? '';
+  const playerId = state?.account.playerId === state?.player.id ? state?.player.id ?? 0 : 0;
+  const history = useFeatureEventHistory(worldId, playerId);
   const [rankingOpen, setRankingOpen] = useState(false);
   const [rankingLoading, setRankingLoading] = useState(false);
   const [rankingError, setRankingError] = useState('');
   const [analyticsView, setAnalyticsView] = useState<EventsAnalyticsView>('events');
   const selectedAnalyticsView = analyticsView;
+  const selectedEventIds = featureEventIds[selectedAnalyticsView];
+  const liveEvents = Object.values(state?.eventScores.byEvent ?? {}).filter((score) => (
+    isFeatureEventRunning(score, state?.eventScores.inventory, now, state?.session.changedAt)
+    && (selectedAnalyticsView === 'events' || selectedEventIds?.includes(score.eventId))
+  ));
+  const event = liveEvents.find((score) => score.eventId === 72) ?? liveEvents[0];
+  const ranking = event ? state?.eventScores.rankingByEvent?.[String(event.eventId)] : undefined;
   const analyticsOptions = [
-    { value: 'events', label: 'Active Event' },
+    { value: 'events', label: 'Events' },
     ...attackEconomyFeatureDefinitions.map(({ id, label }) => ({ value: id, label })),
   ];
 
   useEffect(() => {
+    setNow(Date.now());
+  }, [state?.eventScores, history.entries]);
+
+  useEffect(() => {
+    const boundaries = [
+      ...Object.values(state?.eventScores.byEvent ?? {}).map((score) => Date.parse(score.observedAt) + (score.remainingSec ?? 0) * 1000),
+      ...Object.values(state?.eventScores.inventory?.activeByEvent ?? {}).map((entry) => Date.parse(entry.endsAt)),
+      ...history.entries.map((entry) => Date.parse(entry.eventEndsAt)),
+    ].filter((end) => Number.isFinite(end) && end > now);
+    if (boundaries.length === 0) return;
+    const timer = window.setTimeout(() => setNow(Date.now()), Math.min(Math.max(Math.min(...boundaries) - Date.now() + 25, 25), 2_147_483_647));
+    return () => window.clearTimeout(timer);
+  }, [state?.eventScores, history.entries, now]);
+
+  useEffect(() => {
     setRankingOpen(false);
     setRankingError('');
-  }, [activeEventID]);
+  }, [event?.eventId, selectedAnalyticsView]);
 
   const refreshRanking = useCallback(async () => {
     if (!event || !gameLoggedIn || event.eventId !== 72 || (event.allianceLeagueId ?? 0) <= 0 || rankingLoading) return;
@@ -65,11 +90,17 @@ const EventsView: React.FC = () => {
         size="header"
         className="w-full"
       />
+      <StaleSessionBanner />
+      {liveEvents.map((liveEvent) => <React.Fragment key={liveEvent.eventId}>
+        <EventScoreCard live={gameLoggedIn} event={liveEvent} onOpenRanking={liveEvent.eventId === event?.eventId ? openRanking : undefined} rankingLoading={rankingLoading} />
+        {selectedAnalyticsView === 'events' && <EventActivityCard event={liveEvent} />}
+      </React.Fragment>)}
+      {(selectedAnalyticsView === 'events' || selectedEventIds) && <FeatureEventHistory
+        key={`${worldId}:${playerId}:${selectedAnalyticsView}`}
+        {...history} worldId={worldId} playerId={playerId} now={now} eventIds={selectedEventIds}
+      />}
       {selectedAnalyticsView === 'events' ? (
         <>
-          <StaleSessionBanner />
-          <EventScoreCard key={activeEventID} live={gameLoggedIn} event={event} onOpenRanking={openRanking} rankingLoading={rankingLoading} />
-          <EventActivityCard key={activeEventID} event={event} />
           {isInvasionEvent(event?.eventId, event?.eventType, event?.name, event?.localizationKey) && (
             <AttackEconomyView
               selectedFeature="autoInvasion"
@@ -77,16 +108,6 @@ const EventsView: React.FC = () => {
               embedded
             />
           )}
-          <EventRankingModal
-            isOpen={rankingOpen}
-            eventName={eventDisplayName(event?.eventId, event?.name)}
-            ranking={ranking}
-            allianceId={state?.player.allianceId}
-            isRefreshing={rankingLoading}
-            error={rankingError}
-            onRefresh={() => void refreshRanking()}
-            onClose={() => setRankingOpen(false)}
-          />
         </>
       ) : (
         <AttackEconomyView
@@ -97,6 +118,16 @@ const EventsView: React.FC = () => {
           embedded
         />
       )}
+      <EventRankingModal
+        isOpen={rankingOpen && Boolean(event)}
+        eventName={eventDisplayName(event?.eventId, event?.name)}
+        ranking={ranking}
+        allianceId={state?.player.allianceId}
+        isRefreshing={rankingLoading}
+        error={rankingError}
+        onRefresh={() => void refreshRanking()}
+        onClose={() => setRankingOpen(false)}
+      />
     </div>
   );
 };
