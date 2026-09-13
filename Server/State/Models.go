@@ -866,6 +866,10 @@ type MovementState struct {
 	Units           map[UnitID]int64       `json:"units"`
 	MarketBarrows   int                    `json:"marketBarrows,omitempty"`
 	MarketGoods     []KingdomTransportGood `json:"marketGoods,omitempty"`
+	// Preserve GAM's leader identities, including premium/sentinel values.
+	// Only a nonnegative UM.L.ID identifies an owned commander; DLID does not.
+	LeaderID   *int64 `json:"leaderId,omitempty"`
+	LeaderDLID *int64 `json:"leaderDlid,omitempty"`
 }
 
 func (movement MovementState) ProjectedCompletionAt() *time.Time {
