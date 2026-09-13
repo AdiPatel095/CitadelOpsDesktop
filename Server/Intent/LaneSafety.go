@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -13,20 +14,9 @@ import (
 
 // This policy is deliberately independent of error text/ExpectedState. A known
 // meaning does not authorize automatic recovery. Add only reviewed opcode/code
-// pairs here; absence is a persistent lock, including for newly added commands.
+// pairs in the shared State policy; absence is a 30-minute originating-lane lock.
 func rejectionAllowsRecovery(opcode string, code int) bool {
-	switch strings.ToLower(strings.TrimSpace(opcode)) {
-	case "adi":
-		return code == 95
-	case "ere", "eqe":
-		return code == 227
-	case "bup":
-		return code == 87
-	case "ahr":
-		return code == 273
-	default:
-		return false
-	}
+	return State.AutomationRejectionWhitelisted(opcode, code)
 }
 
 type laneSafetyContextKey struct{}
@@ -48,6 +38,68 @@ func (err *LaneLockedError) Unwrap() error { return err.Cause }
 // part of the durable account profile, not the transient policy scheduler.
 func (engine *Engine) SetLaneSafetyPersistence(persist func(context.Context, State.Event) error) {
 	engine.laneSafety.persist = persist
+}
+
+// RefreshAutomationLaneLocks migrates saved incidents before automation starts.
+// Preserve the rejection receipt and original timer. Persist failure aborts startup.
+func (engine *Engine) RefreshAutomationLaneLocks() error {
+	engine.laneSafety.mu.Lock()
+	defer engine.laneSafety.mu.Unlock()
+	store, ok := engine.state.(interface {
+		ApplyComponents(State.ComponentSet, State.Mutation) (State.Event, error)
+	})
+	if !ok || engine.laneSafety.persist == nil {
+		return fmt.Errorf("automation safety refresh requires durable state")
+	}
+	now := time.Now().UTC()
+	event, err := store.ApplyComponents(State.Components(State.ComponentAutomations), func(state *State.GameState) ([]string, bool, error) {
+		changed := false
+		for lane, current := range state.Automations {
+			lock := current.SafetyLock
+			if lock.OperationID == "" || !lock.ClearedAt.IsZero() {
+				continue
+			}
+			if lock.ObservedAt.IsZero() {
+				if !lock.Until.IsZero() {
+					lock.ObservedAt = lock.Until.Add(-State.AutomationSafetyLockDuration)
+				} else {
+					// No trustworthy original time: start one durable bounded timer.
+					lock.ObservedAt = now
+				}
+			}
+			lock.Until = lock.ExpiresAt()
+			if State.AutomationRejectionWhitelisted(lock.Opcode, lock.Code) {
+				lock.ClearedAt, lock.ReviewedBy, lock.Review = now, "policy:whitelist", "Automatically exempted by the exact opcode/code whitelist."
+			} else if !now.Before(lock.Until) {
+				lock.ClearedAt, lock.ReviewedBy, lock.Review = lock.Until, "policy:expiry", "Original rejection is at least 30 minutes old."
+			}
+			next := current
+			next.SafetyLock = lock
+			if lock.Active(now) {
+				next.Status, next.Detail, next.LastError = "gated", lock.Detail(), lock.Detail()
+				next.NextCheckAt = &lock.Until
+			} else if current.Status == "gated" && strings.HasPrefix(current.Detail, "Safety lock after ") {
+				next.Status, next.Detail, next.LastError = "waiting", "Safety lock released by policy; waiting for normal prerequisites", ""
+				next.NextCheckAt = nil
+			}
+			if !reflect.DeepEqual(current, next) {
+				next.UpdatedAt = now
+				state.Automations[lane] = next
+				changed = true
+			}
+		}
+		return []string{"automation-safety"}, changed, nil
+	})
+	if err != nil || event.Patch == nil {
+		return err
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := engine.laneSafety.persist(ctx, event); err != nil {
+		engine.recordPersistenceFailure(err)
+		return fmt.Errorf("persist automation safety refresh: %w", err)
+	}
+	return nil
 }
 
 func requestLane(request Request) string {
@@ -94,11 +146,10 @@ func (engine *Engine) guardRejection(ctx context.Context, err error) error {
 		return &LaneLockedError{Lock: lock}
 	}
 	lock := State.AutomationSafetyLock{Lane: lane, Opcode: strings.ToLower(strings.TrimSpace(response.Opcode)), Code: response.Meaning.Code, OperationID: request.ID, Intent: request.Name, ObservedAt: time.Now().UTC(), Reason: "unclassified_rejection"}
-	// Preserve the emergency MSD policy. Other unknown rejections and CRA 256
-	// require review; no timer, setting change, or reconnect clears them.
+	lock.Until = lock.ObservedAt.Add(State.AutomationSafetyLockDuration)
+	// Classification is diagnostic; every non-whitelisted rejection has one TTL.
 	if lock.Opcode == "msd" {
 		lock.Reason = "msd_rejection"
-		lock.Until = lock.ObservedAt.Add(30 * time.Minute)
 	} else if lock.Opcode == "cra" && lock.Code == 256 {
 		lock.Reason = "hazardous_rejection"
 	}
@@ -161,8 +212,8 @@ func (engine *Engine) ClearAutomationLaneLock(lane, operationID, review, actor s
 	if lock.OperationID == "" || lock.OperationID != strings.TrimSpace(operationID) || !lock.ClearedAt.IsZero() {
 		return fmt.Errorf("the safety incident changed; refresh before reviewing it")
 	}
-	if !lock.Until.IsZero() && time.Now().Before(lock.Until) {
-		return fmt.Errorf("the mandatory MSD cooldown must expire before this lock can be cleared")
+	if lock.Active(time.Now().UTC()) {
+		return fmt.Errorf("the mandatory 30-minute lane cooldown must expire before this lock can be cleared")
 	}
 	original := lock
 	lock.ClearedAt = time.Now().UTC()

@@ -133,7 +133,7 @@ func safetyContext(id, lane string) context.Context {
 	return context.WithValue(context.Background(), laneSafetyContextKey{}, Request{ID: id, Name: "test.action", Actor: "automation:shared", AutomationLane: lane})
 }
 
-func TestLaneSafetyNewAllowlistDoesNotClearExistingAHRLock(t *testing.T) {
+func TestLaneSafetyWhitelistIgnoresExistingAHRLock(t *testing.T) {
 	store := State.NewStore(State.NewGameState())
 	engine := NewEngine(NewRegistry(), store, nil, nil, nil)
 	lock := State.AutomationSafetyLock{Lane: "autoRecruit", Opcode: "ahr", Code: 273,
@@ -142,9 +142,8 @@ func TestLaneSafetyNewAllowlistDoesNotClearExistingAHRLock(t *testing.T) {
 		t.Fatal(err)
 	}
 	err := engine.checkLaneSafety(Request{Actor: "automation:autoRecruit", AutomationLane: "autoRecruit"})
-	var locked *LaneLockedError
-	if !errors.As(err, &locked) || locked.Lock.OperationID != lock.OperationID {
-		t.Fatalf("allowlist change bypassed existing incident: %v", err)
+	if err != nil {
+		t.Fatalf("whitelisted legacy incident blocked lane: %v", err)
 	}
 }
 
@@ -255,8 +254,8 @@ func TestLaneSafetyDurableRestartReviewAndCooldown(t *testing.T) {
 	if after := engine.AutomationLaneLock("cooldown"); !after.Until.Equal(before.Until) {
 		t.Fatal("restart reset MSD timer")
 	}
-	if engine.AutomationLaneLock("attack").Active(time.Now().Add(7*24*time.Hour)) != true {
-		t.Fatal("unknown lock expired")
+	if engine.AutomationLaneLock("attack").Active(time.Now().Add(30 * time.Minute)) {
+		t.Fatal("unknown lock did not expire")
 	}
 	if before.Active(before.Until) {
 		t.Fatal("MSD timer did not expire")
@@ -268,7 +267,16 @@ func TestLaneSafetyDurableRestartReviewAndCooldown(t *testing.T) {
 			t.Fatalf("invalid review accepted: %+v", test)
 		}
 	}
-	if err := engine.ClearAutomationLaneLock("attack", "unknown-incident", "Game state checked; approve one new attempt", "api"); err != nil {
+	if err := engine.ClearAutomationLaneLock("attack", "unknown-incident", "try early", "api"); err == nil {
+		t.Fatal("review bypassed universal cooldown")
+	}
+	_, _ = engine.state.(*State.Store).ApplyComponents(State.Components(State.ComponentAutomations), func(state *State.GameState) ([]string, bool, error) {
+		current := state.Automations["attack"]
+		current.SafetyLock.ObservedAt = time.Now().Add(-31 * time.Minute)
+		state.Automations["attack"] = current
+		return []string{"automation-safety"}, true, nil
+	})
+	if err := engine.ClearAutomationLaneLock("attack", "unknown-incident", "Game state checked after expiry", "api"); err != nil {
 		t.Fatal(err)
 	}
 	loaded, err = State.LoadSnapshot(dir)
