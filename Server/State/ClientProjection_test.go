@@ -177,6 +177,9 @@ func TestClientProjectionPublishesFeastCostReduction(t *testing.T) {
 	state.Market.FeastPurchaseExpectedID = 4
 	state.Market.FeastPurchaseOperationID = "private-operation"
 	state.Market.FeastPurchaseResponseToken = "private-token"
+	state.Market.FeastPurchaseInactiveObservedAt = observedAt.Add(time.Minute)
+	state.Market.FeastPurchaseInactiveResponseToken = "private-poll-token"
+	state.Market.FeastPurchaseInactiveGeneration = 7
 
 	contents, err := json.Marshal(NewClientStateSnapshot(state))
 	if err != nil {
@@ -195,6 +198,8 @@ func TestClientProjectionPublishesFeastCostReduction(t *testing.T) {
 		[]byte("feastPurchaseExpectedId"),
 		[]byte("feastPurchaseOperationId"),
 		[]byte("feastPurchaseResponseToken"),
+		[]byte("feastPurchaseInactive"),
+		[]byte("private-poll-token"),
 		[]byte("private-operation"),
 		[]byte("private-token"),
 	} {

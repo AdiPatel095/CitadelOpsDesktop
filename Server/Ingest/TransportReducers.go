@@ -170,7 +170,7 @@ func reduceMarketBooster(
 		}
 		feastPresent = true
 	}
-	pendingChanged := feastPresent && reconcilePendingFeastSnapshot(gameState, feast, frame.ReceivedAt)
+	pendingChanged := feastPresent && reconcilePendingFeastSnapshot(gameState, feast, frame)
 	if gameState.Market.CaravanLevelLoaded && gameState.Market.CaravanLevel == level &&
 		reflect.DeepEqual(gameState.Market.Boosters, boosters) &&
 		reflect.DeepEqual(gameState.Market.Feast, feast) &&
@@ -231,8 +231,9 @@ func reduceMarketFeast(
 func reconcilePendingFeastSnapshot(
 	gameState *State.GameState,
 	feast State.MarketFeastState,
-	observedAt time.Time,
+	frame Protocol.Frame,
 ) bool {
+	observedAt := frame.ReceivedAt
 	market := &gameState.Market
 	if !market.FeastPurchasePending || market.FeastPurchasePendingSince.IsZero() ||
 		observedAt.Before(market.FeastPurchasePendingSince) {
@@ -245,6 +246,33 @@ func reconcilePendingFeastSnapshot(
 		}
 		clearPendingFeastPurchase(market)
 		return true
+	}
+	// Never infer failure from a timeout, an omitted BFS, or one early reply.
+	// Two distinct matched BOI responses in the same live connection must
+	// explicitly report inactivity, at least 30 seconds apart and after the
+	// dispatch settling period. Active/conflicting evidence starts over.
+	if feast.ActiveAt(observedAt) {
+		changed := !market.FeastPurchaseInactiveObservedAt.IsZero()
+		market.FeastPurchaseInactiveObservedAt = time.Time{}
+		market.FeastPurchaseInactiveResponseToken = ""
+		market.FeastPurchaseInactiveGeneration = 0
+		return changed
+	}
+	generation := gameState.Session.ConnectionGeneration
+	if generation > 0 && frame.ResponseToken != "" &&
+		!observedAt.Before(gameState.Session.ChangedAt) &&
+		!observedAt.Before(market.FeastPurchasePendingSince.Add(30*time.Second)) {
+		first := market.FeastPurchaseInactiveObservedAt
+		if first.IsZero() || market.FeastPurchaseInactiveGeneration != generation || first.Before(gameState.Session.ChangedAt) {
+			market.FeastPurchaseInactiveObservedAt = observedAt
+			market.FeastPurchaseInactiveResponseToken = frame.ResponseToken
+			market.FeastPurchaseInactiveGeneration = generation
+			return true
+		}
+		if frame.ResponseToken != market.FeastPurchaseInactiveResponseToken && !observedAt.Before(first.Add(30*time.Second)) {
+			clearPendingFeastPurchase(market)
+			return true
+		}
 	}
 	if feast.ActiveAt(observedAt) || market.FeastPurchaseExpectedExpiresAt.IsZero() ||
 		observedAt.Before(market.FeastPurchaseExpectedExpiresAt) {
@@ -271,6 +299,9 @@ func clearPendingFeastPurchase(market *State.MarketState) {
 	market.FeastPurchaseExpectedExpiresAt = time.Time{}
 	market.FeastPurchaseOperationID = ""
 	market.FeastPurchaseResponseToken = ""
+	market.FeastPurchaseInactiveObservedAt = time.Time{}
+	market.FeastPurchaseInactiveResponseToken = ""
+	market.FeastPurchaseInactiveGeneration = 0
 }
 
 func marketFeastFromRaw(raw json.RawMessage, observedAt time.Time) (State.MarketFeastState, error) {

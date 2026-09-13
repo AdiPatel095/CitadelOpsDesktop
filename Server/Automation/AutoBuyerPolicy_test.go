@@ -3,7 +3,6 @@ package Automation
 import (
 	"encoding/json"
 	"reflect"
-	"strings"
 	"testing"
 	"time"
 
@@ -414,7 +413,7 @@ func TestAutoBuyerUnreconciledFeastAcknowledgementCanOnlyRefresh(t *testing.T) {
 		State: gameState, GameData: gameData, Now: now,
 		Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{autoBuyerSection: settings}},
 	})
-	if err != nil || decision.Request != nil || !strings.Contains(decision.Detail, "awaiting authoritative game reconciliation") {
+	if err != nil || decision.Request == nil || decision.Request.Name != "autoBuyer.boosters.refresh" || decision.ReevaluateOnSuccess || decision.ReevaluateOnStale {
 		t.Fatalf("unreconciled feast acknowledgement decision = %#v err=%v", decision, err)
 	}
 }

@@ -15,6 +15,7 @@ import { useAuth } from '../../context/AuthContext';
 import {
   AUTO_BUYER_MINIMUM_SPECIALIST_DAYS,
   AUTO_BUYER_SECTION,
+  autoBuyerOtherGoalsValid,
   clampAutoBuyerInteger,
   defaultAutoBuyerClientState,
   parseAutoBuyerClientState,
@@ -36,10 +37,11 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
   const { autoBuyerEnabled, setAutomationEnabled } = useAuth();
   const autoBuyerConfiguration = configuration?.sections[AUTO_BUYER_SECTION];
   const autoBuyerConfigurationKey = JSON.stringify(autoBuyerConfiguration ?? null);
-  const savedFeast = useMemo(
-    () => parseAutoBuyerClientState(JSON.parse(autoBuyerConfigurationKey)).feast,
+  const savedSettings = useMemo(
+    () => parseAutoBuyerClientState(JSON.parse(autoBuyerConfigurationKey)),
     [autoBuyerConfigurationKey],
   );
+  const savedFeast = savedSettings.feast;
   const [draft, setDraft] = useState<AutoBuyerClientStateV1>(defaultAutoBuyerClientState);
   const [projection, setProjection] = useState<AutoBuyerProjectionV1 | null>(null);
   const [loadError, setLoadError] = useState('');
@@ -208,16 +210,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
   const enabledSpecialists = draft.specialists.filter((rule) => rule.enabled);
   const configurationValid = useMemo(() => {
     if (!projection) return false;
-    if (enabledPackages.length > 0 && draft.sourceCastleId <= 0) return false;
-    for (const rule of enabledPackages) {
-      const product = projection.packages.find((candidate) => candidate.shopId === rule.shopId && candidate.packageId === rule.packageId);
-      if (!product || rule.targetPurchasesPerReset < 1 || rule.targetPurchasesPerReset > product.stock) return false;
-      if (product.price.premium && (!draft.allowRubyPackages || rule.maximumRubySpendPerReset < product.price.amount)) return false;
-    }
-    for (const rule of enabledSpecialists) {
-      const specialist = projection.specialists.find((candidate) => candidate.id === rule.id);
-      if (!specialist || rule.minimumDays < AUTO_BUYER_MINIMUM_SPECIALIST_DAYS || rule.maximumRubyCostPerPurchase < specialist.baseRubyCost) return false;
-    }
+    if (!autoBuyerOtherGoalsValid(draft, savedSettings, projection)) return false;
     if (draft.feast.enabled) {
       if (!selectedFeast || (draft.feast.sourceCastleId || draft.sourceCastleId) <= 0 || draft.feast.minimumRemainingHours < 1) return false;
       if (!selectedFeastSupported && !preservingEnabledUnsupportedFeast) return false;
@@ -226,8 +219,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
     return true;
   }, [
     draft,
-    enabledPackages,
-    enabledSpecialists,
+    savedSettings,
     preservingEnabledUnsupportedFeast,
     projection,
     selectedFeast,
@@ -304,6 +296,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
             <div>
               <h3 className="text-sm font-black text-text-main">Account-wide safety limits</h3>
               <p className="mt-1 text-xs text-text-muted">Auto Buyer sends one bounded operation at a time, rechecks live state before spending, and verifies the server counter or timer afterward.</p>
+              <p className="mt-1 text-xs text-text-muted">Invalid saved shop or specialist goals are skipped individually and do not block feast upkeep. Unresolved feast purchases are checked without spending again until the outcome is reconciled.</p>
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
