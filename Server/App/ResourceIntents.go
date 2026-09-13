@@ -86,9 +86,9 @@ func planResourceLogisticsRefresh(_ context.Context, input Intent.PlanningContex
 	if marketRequired {
 		claims = append(claims, "castle-focus")
 		originalCastle, hadOriginalFocus := resourceLogisticsFocusedCastle(input.State)
-		if !marketCastle.Focused {
-			steps = append(steps, castleFocusStep(marketCastle))
-		}
+		// GAA retains the selected castle but leaves the session in map mode.
+		// CMI needs castle context even when the cached Focused flag is true.
+		steps = append(steps, castleContextSteps(input, marketCastle)...)
 		steps = append(steps,
 			commandStep("Refresh caravan boosters", "boi", json.RawMessage(`{}`), "boi"),
 			commandStep("Refresh market capacity", "cmi", json.RawMessage(`{"S":1,"KID":-1}`), "cmi"),
