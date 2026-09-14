@@ -42,12 +42,15 @@ const (
 )
 
 type OrchestratorConfig struct {
-	CellID        string
-	Token         string
-	Supervisor    *Supervisor
-	DashboardAuth *TenantAuthenticator
-	DrainTimeout  time.Duration
-	Now           func() time.Time
+	// Test/internal integration only. No CLI/env/deployment wiring until the
+	// complete backend executor and recovery path are independently reviewed.
+	EnableHandoverTransport bool
+	CellID                  string
+	Token                   string
+	Supervisor              *Supervisor
+	DashboardAuth           *TenantAuthenticator
+	DrainTimeout            time.Duration
+	Now                     func() time.Time
 }
 
 // RuntimeAssignment is one desired account runtime on this cell.
@@ -194,6 +197,7 @@ type RuntimeStatus struct {
 }
 
 type CellStatus struct {
+	HandoverSchema     int             `json:"handoverSchema,omitempty"`
 	ControlFenceSchema int             `json:"controlFenceSchema"`
 	ControlEpoch       uint64          `json:"controlEpoch"`
 	SchemaVersion      int             `json:"schemaVersion"`
@@ -209,13 +213,14 @@ type CellStatus struct {
 }
 
 type Orchestrator struct {
-	controlEpoch  atomic.Uint64
-	cellID        string
-	tokenHash     [sha256.Size]byte
-	supervisor    *Supervisor
-	dashboardAuth *TenantAuthenticator
-	drainTimeout  time.Duration
-	now           func() time.Time
+	handoverTransport bool
+	controlEpoch      atomic.Uint64
+	cellID            string
+	tokenHash         [sha256.Size]byte
+	supervisor        *Supervisor
+	dashboardAuth     *TenantAuthenticator
+	drainTimeout      time.Duration
+	now               func() time.Time
 
 	reconcileMu        sync.Mutex
 	mu                 sync.RWMutex
@@ -280,7 +285,8 @@ func NewOrchestrator(config OrchestratorConfig) (*Orchestrator, error) {
 		return nil, fmt.Errorf("load controller fence: %w", err)
 	}
 	orchestrator := &Orchestrator{
-		cellID: string(cellID), tokenHash: sha256.Sum256([]byte(config.Token)),
+		handoverTransport: config.EnableHandoverTransport,
+		cellID:            string(cellID), tokenHash: sha256.Sum256([]byte(config.Token)),
 		supervisor: config.Supervisor, dashboardAuth: config.DashboardAuth,
 		drainTimeout: drainTimeout, now: now,
 		runtimes: map[AccountID]RuntimeAssignment{}, configurationSyncs: map[AccountID]configurationSyncState{},
@@ -319,6 +325,12 @@ func (orchestrator *Orchestrator) run(ctx context.Context) {
 
 func (orchestrator *Orchestrator) Handler() http.Handler {
 	mux := http.NewServeMux()
+	if orchestrator.handoverTransport {
+		mux.HandleFunc("POST /orchestrator/v1/handovers/export", orchestrator.handleProfileExport)
+		mux.HandleFunc("POST /orchestrator/v1/handovers/download", orchestrator.handleProfileDownload)
+		mux.HandleFunc("POST /orchestrator/v1/handovers/restore", orchestrator.handleProfileRestore)
+		mux.HandleFunc("POST /orchestrator/v1/handovers/activate", orchestrator.handleProfileActivate)
+	}
 	mux.HandleFunc("GET /orchestrator/v1/status", orchestrator.handleStatus)
 	mux.HandleFunc("GET /orchestrator/v1/events", orchestrator.handleEvents)
 	mux.HandleFunc("POST /orchestrator/v1/reconcile", orchestrator.handleReconcile)
@@ -342,6 +354,16 @@ func (orchestrator *Orchestrator) Handler() http.Handler {
 			return
 		}
 		parts := strings.Split(strings.Trim(request.URL.Path, "/"), "/")
+		if strings.HasPrefix(request.URL.Path, "/orchestrator/v1/handovers/") {
+			if !orchestrator.handoverTransport {
+				writeControlError(writer, http.StatusNotFound, "handover_transport_disabled")
+				return
+			}
+			if request.Header.Get(controlEpochHeader) == "" {
+				writeControlError(writer, http.StatusPreconditionRequired, "control_epoch_required")
+				return
+			}
+		}
 		if len(parts) >= 5 && parts[0] == "orchestrator" && parts[1] == "v1" && parts[2] == "runtimes" {
 			if orchestrator.supervisor.runtimeHandoverFenced(AccountID(parts[3])) {
 				writeControlError(writer, http.StatusLocked, "runtime_handover_fenced")
@@ -1099,6 +1121,7 @@ func (orchestrator *Orchestrator) Status() CellStatus {
 	}
 	sort.Slice(runtimes, func(left, right int) bool { return runtimes[left].RuntimeID < runtimes[right].RuntimeID })
 	return CellStatus{
+		HandoverSchema:     orchestrator.handoverSchema(),
 		ControlFenceSchema: 1, ControlEpoch: orchestrator.controlEpoch.Load(),
 		SchemaVersion: OrchestratorSchemaVersion,
 		Version:       App.Version, BuildRevision: App.BuildRevision, BuildID: App.BuildID,

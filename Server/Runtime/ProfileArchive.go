@@ -30,6 +30,8 @@ const (
 	maxProfileBytes        int64 = 2 << 30
 	maxManifestBytes       int64 = 32 << 20
 	maxArchiveBytes        int64 = maxProfileBytes + maxManifestBytes + (128 << 20)
+	// MaxProfileArchiveBytes is the shared bound for private transfer transports.
+	MaxProfileArchiveBytes int64 = maxArchiveBytes
 )
 
 // ProfileTransferIdentity binds every archive to one operation and exact
