@@ -246,7 +246,7 @@ func (state GameState) movementChangeIDs() []MovementID {
 }
 
 func (operation StationingOperation) ActiveInState(state GameState, now time.Time) bool {
-	if operation.MovementID > 0 {
+	if operation.MovementID > 0 && len(operation.MovementIDs) == 0 {
 		movement, found := state.LookupMovement(operation.MovementID)
 		return found && operation.MatchesMovement(movement) && StationMovementActiveAt(movement, now)
 	}
@@ -260,6 +260,9 @@ func (operation StationingOperation) ActiveInState(state GameState, now time.Tim
 	})
 	if active {
 		return true
+	}
+	if len(operation.MovementIDs) > 0 {
+		return false
 	}
 	if operation.SuccessCooldownUntil != nil && operation.SuccessCooldownUntil.After(now) {
 		return true

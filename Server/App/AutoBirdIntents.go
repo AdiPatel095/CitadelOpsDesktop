@@ -507,6 +507,7 @@ func preparedAutoBirdManifest(
 	next.Phase = State.StationingPhaseTargetReady
 	next.Units = map[State.UnitID]int64{}
 	next.MovementID = 0
+	next.MovementIDs = nil
 	next.DispatchedAt = nil
 	next.ExpectedReturnAt = nil
 	next.NextAttemptAt = nil
@@ -693,33 +694,8 @@ func (application *Application) resolveAutoBirdDispatchStep(
 			autoBirdNoTroopsRetry,
 		)
 	}
-	unitIDs := make([]int64, 0, len(manifest))
-	for unitID := range manifest {
-		unitIDs = append(unitIDs, int64(unitID))
-	}
-	sort.Slice(unitIDs, func(left, right int) bool { return unitIDs[left] < unitIDs[right] })
-	wireUnits := make([][2]int64, 0, len(unitIDs))
-	for _, unitID := range unitIDs {
-		wireUnits = append(wireUnits, [2]int64{unitID, manifest[State.UnitID(unitID)]})
-	}
-	dispatch, _ := json.Marshal(struct {
-		SourceID State.CastleID `json:"SID"`
-		TargetX  int            `json:"TX"`
-		TargetY  int            `json:"TY"`
-		LeaderID int            `json:"LID"`
-		Wait     int            `json:"WT"`
-		Booster  int            `json:"HBW"`
-		Premium  int            `json:"BPC"`
-		Travel   int            `json:"PTT"`
-		Delay    int            `json:"SD"`
-		Units    [][2]int64     `json:"A"`
-	}{
-		source.ID, target.X, target.Y, stationLeaderID, operation.DelayHours,
-		-1, 1, 1, 0, wireUnits,
-	})
-	step := commandStep("Dispatch Auto Bird troops", "cds", dispatch, "cds")
-	step.ResponseBarrier = Intent.ResponseBarrierCommitted
-	return step, nil
+	return supportDispatchStep("Dispatch Auto Bird troops", source, target, operation.DelayHours, manifest,
+		Intent.Step{Name: "Track accepted Auto Bird batch", Action: "auto_bird.movement.capture", ActionArguments: arguments}), nil
 }
 
 func (application *Application) deferAutoBirdDispatch(
@@ -741,6 +717,7 @@ func (application *Application) deferAutoBirdDispatch(
 		next.Phase = State.StationingPhaseWaiting
 		next.Units = map[State.UnitID]int64{}
 		next.MovementID = 0
+		next.MovementIDs = nil
 		next.DispatchedAt = nil
 		next.ExpectedReturnAt = nil
 		next.SuccessCooldownUntil = nil
@@ -830,7 +807,8 @@ func (application *Application) captureAutoBirdMovement(
 			dispatchedAt = dispatchedAt.UTC()
 			next.DispatchedAt = &dispatchedAt
 		}
-		movement, found := findAutoBirdMovement(*gameState, next)
+		movements := findAutoBirdMovements(*gameState, next)
+		found := len(movements) > 0
 		if !found {
 			retryDelay := autoBirdMovementRetry
 			if next.DispatchedAt != nil {
@@ -848,26 +826,32 @@ func (application *Application) captureAutoBirdMovement(
 				retryDelay,
 			)
 		} else {
-			next.MovementID = movement.ID
-			if len(movement.Units) > 0 {
-				next.Units = cloneStationUnits(movement.Units)
+			next.MovementIDs = nil
+			next.Units = map[State.UnitID]int64{}
+			var expectedReturn time.Time
+			for _, movement := range movements {
+				next.MovementIDs = append(next.MovementIDs, movement.ID)
+				next.MovementID = movement.ID // legacy client summary
+				for id, amount := range movement.Units {
+					next.Units[id] += amount
+				}
+				wait := movement.WaitSeconds
+				if wait <= 0 {
+					wait = next.DelayHours * 3600
+				}
+				next.WaitSeconds = max(next.WaitSeconds, wait)
+				next.TravelSeconds = max(next.TravelSeconds, movement.TravelSeconds)
+				if returned := autoBirdMovementReturnAt(movement, next, now); returned.After(expectedReturn) {
+					expectedReturn = returned
+				}
 			}
-			next.WaitSeconds = movement.WaitSeconds
-			if next.WaitSeconds <= 0 {
-				next.WaitSeconds = next.DelayHours * 3600
-			}
-			next.TravelSeconds = max(0, movement.TravelSeconds)
-			expectedReturn := autoBirdMovementReturnAt(movement, next, now)
 			if !expectedReturn.IsZero() {
 				expectedReturn = expectedReturn.UTC()
 				next.ExpectedReturnAt = &expectedReturn
 				next.NextAttemptAt = &expectedReturn
 				next.SuccessCooldownUntil = &expectedReturn
 			}
-			next.StatusDetail = fmt.Sprintf(
-				"Auto Bird movement %d has %d seconds travel, %d seconds wait, and expected return %s",
-				movement.ID, next.TravelSeconds, next.WaitSeconds, formatAutoBirdTime(expectedReturn),
-			)
+			next.StatusDetail = fmt.Sprintf("Auto Bird tracks %d support movement(s); last expected return %s", len(movements), formatAutoBirdTime(expectedReturn))
 		}
 		if reflect.DeepEqual(current, next) {
 			return nil, false, nil
@@ -878,11 +862,11 @@ func (application *Application) captureAutoBirdMovement(
 	return err
 }
 
-func findAutoBirdMovement(
+func findAutoBirdMovements(
 	gameState State.GameState,
 	operation State.StationingOperation,
-) (State.MovementState, bool) {
-	var best State.MovementState
+) []State.MovementState {
+	var movements []State.MovementState
 	target, targetKnown := allianceHolding(gameState.Alliance, operation.TargetCastleID)
 	source, sourceKnown := gameState.Castles[operation.SourceCastleID]
 	gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
@@ -911,13 +895,14 @@ func findAutoBirdMovement(
 			movement.ObservedAt.Before(operation.DispatchedAt.Add(-time.Second)) {
 			return true
 		}
-		if best.ID == 0 || movement.ObservedAt.After(best.ObservedAt) ||
-			movement.ObservedAt.Equal(best.ObservedAt) && movement.ID > best.ID {
-			best = movement
+		if operation.DispatchedAt != nil && !movement.StartedAt.IsZero() && movement.Direction == 0 && movement.StartedAt.Before(operation.DispatchedAt.Add(-time.Second)) {
+			return true
 		}
+		movements = append(movements, movement)
 		return true
 	})
-	return best, best.ID > 0
+	sort.Slice(movements, func(i, j int) bool { return movements[i].ID < movements[j].ID })
+	return movements
 }
 
 func autoBirdMovementReturnAt(

@@ -810,3 +810,15 @@ func TestIncomingThreatsOnlyIncludeHostileAttacksOnOwnedCastles(t *testing.T) {
 		t.Fatalf("unexpected threats: count=%d threats=%#v earliest=%v latest=%v", count, threats, earliest, latest)
 	}
 }
+
+func TestTrackedStationRecallAdvancesThroughEveryBatch(t *testing.T) {
+	state := State.NewGameState()
+	op := State.StationingOperation{MovementID: 32, MovementIDs: []State.MovementID{30, 31, 32}}
+	state.Movements[30] = State.MovementState{ID: 30, Direction: 1}
+	state.Movements[31] = State.MovementState{ID: 31, Direction: 0}
+	state.Movements[32] = State.MovementState{ID: 32, Direction: 1}
+	movement, ok := trackedStationMovement(state, op)
+	if !ok || movement.ID != 31 {
+		t.Fatal("remaining outbound batch was not selected")
+	}
+}
