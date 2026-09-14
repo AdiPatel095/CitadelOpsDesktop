@@ -45,7 +45,11 @@ func TestSupportResolversBatchEveryTroopExactlyOnce(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			for _, resolved := range []Intent.Step{manual, bird} {
+			for _, variant := range []struct {
+				name string
+				step Intent.Step
+			}{{"manual", manual}, {"autoBird", bird}} {
+				resolved := variant.step
 				steps := resolved.Batch
 				if len(steps) == 0 {
 					steps = []Intent.Step{resolved}
@@ -75,6 +79,44 @@ func TestSupportResolversBatchEveryTroopExactlyOnce(t *testing.T) {
 					}
 					if len(payload.A) == 0 || len(payload.A) > 10 {
 						t.Fatalf("oversized/empty batch: %v", payload.A)
+					}
+					if variant.name == "autoBird" {
+						if step.PreDispatchAction != "auto_bird.batch.guard" {
+							t.Fatal("Auto Bird batch lost its final safety guard")
+						}
+						if err := app.guardAutoBirdBatch(t.Context(), step.PreDispatchArguments); err != nil {
+							t.Fatalf("valid %d-type Auto Bird batch rejected by its actual pre-dispatch guard: %v", len(payload.A), err)
+						}
+						var guard autoBirdBatchGuardRequest
+						if err := json.Unmarshal(step.PreDispatchArguments, &guard); err != nil {
+							t.Fatal(err)
+						}
+						if string(guard.Payload) != string(step.Command.Payload) || guard.Cycle.SourceCastleID != 10 || guard.Cycle.TrackingID != "autoBird:10" {
+							t.Fatal("Auto Bird guard does not carry the exact command and cycle")
+						}
+						for _, invalidation := range []string{"focus", "inventory", "pause", "control-revision"} {
+							changed := app.State.Snapshot()
+							castle := changed.Castles[10]
+							switch invalidation {
+							case "focus":
+								castle.Focused = false
+							case "inventory":
+								castle.Units.Stationed[State.UnitID(payload.A[0][0])] = payload.A[0][1] - 1
+							case "pause", "control-revision":
+								control := State.StationingOperation{ID: State.AutoBirdControlID(10), Purpose: "autoBirdControl", SourceCastleID: 10}
+								if invalidation == "pause" {
+									control.Paused = true
+								} else {
+									control.UpdatedAt = now
+								}
+								changed.Stationing[control.ID] = control
+							}
+							changed.Castles[10] = castle
+							rejected := &Application{State: State.NewStore(changed)}
+							if err := rejected.guardAutoBirdBatch(t.Context(), step.PreDispatchArguments); err == nil {
+								t.Fatalf("Auto Bird batch guard accepted changed %s", invalidation)
+							}
+						}
 					}
 					if payload.SID != 10 || payload.TX != 20 || payload.TY != 20 || payload.LID != -14 || payload.WT != 6 || payload.HBW != -1 || payload.BPC != 1 || payload.PTT != 1 || payload.SD != 0 {
 						t.Fatalf("route/options changed: %+v", payload)
