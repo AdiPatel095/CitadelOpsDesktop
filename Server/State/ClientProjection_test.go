@@ -130,9 +130,18 @@ func TestClientProjectionPublishesConnectionScopedMovementSnapshot(t *testing.T)
 func TestClientProjectionPublishesAuthoritativeEventInventory(t *testing.T) {
 	observedAt := time.Date(2026, time.August, 15, 15, 0, 0, 0, time.UTC)
 	availability := EventAvailability{EventID: 3, EndsAt: observedAt.Add(24 * time.Hour)}
+	effectEndsAt := observedAt.Add(time.Hour)
+	effect := GlobalEffectAvailability{GlobalEffectID: 2, Strength: 60, EndsAt: effectEndsAt}
+	offer := GlobalEffectBoosterOffer{GlobalEffectID: 2, RubyCost: 2500, BonusValue: 60}
+	boost := GlobalEffectBoostState{GlobalEffectID: 2, OccurrenceEndsAt: effectEndsAt, ObservedAt: observedAt}
 	state := NewGameState()
 	state.EventScores.Inventory = EventInventoryState{
 		ObservedAt: observedAt, ActiveByEvent: map[int64]EventAvailability{3: availability},
+		GlobalEffectsObservedAt:      observedAt,
+		GlobalEffects:                map[int64]GlobalEffectAvailability{2: effect},
+		GlobalEffectBoosterOffers:    map[int64]GlobalEffectBoosterOffer{2: offer},
+		GlobalEffectBoostsObservedAt: observedAt,
+		GlobalEffectBoosts:           map[int64]GlobalEffectBoostState{2: boost},
 	}
 
 	contents, err := json.Marshal(NewClientStateSnapshot(state))
@@ -147,11 +156,21 @@ func TestClientProjectionPublishesAuthoritativeEventInventory(t *testing.T) {
 		!snapshot.EventScores.Inventory.ObservedAt.Equal(observedAt) {
 		t.Fatalf("client event inventory = %+v", snapshot.EventScores.Inventory)
 	}
+	if snapshot.EventScores.Inventory.GlobalEffects[2] != effect ||
+		snapshot.EventScores.Inventory.GlobalEffectBoosterOffers[2] != offer ||
+		snapshot.EventScores.Inventory.GlobalEffectBoosts[2] != boost {
+		t.Fatalf("client global-effect inventory = %+v", snapshot.EventScores.Inventory)
+	}
 
 	store := NewStore(NewGameState())
 	event, err := store.ApplyComponents(Components(ComponentEventScores), func(state *GameState) ([]string, bool, error) {
 		changed := state.ReplaceEventInventory(EventInventoryState{
 			ObservedAt: observedAt, ActiveByEvent: map[int64]EventAvailability{3: availability},
+			GlobalEffectsObservedAt:      observedAt,
+			GlobalEffects:                map[int64]GlobalEffectAvailability{2: effect},
+			GlobalEffectBoosterOffers:    map[int64]GlobalEffectBoosterOffer{2: offer},
+			GlobalEffectBoostsObservedAt: observedAt,
+			GlobalEffectBoosts:           map[int64]GlobalEffectBoostState{2: boost},
 		})
 		return []string{"events"}, changed, nil
 	})
@@ -166,6 +185,9 @@ func TestClientProjectionPublishesAuthoritativeEventInventory(t *testing.T) {
 	if got := projected.Patch.EventScoreChanges.Inventory.ActiveByEvent[3]; got != availability {
 		t.Fatalf("client event inventory availability = %+v", got)
 	}
+	if got := projected.Patch.EventScoreChanges.Inventory.GlobalEffectBoosterOffers[2]; got != offer {
+		t.Fatalf("client global-effect offer = %+v", got)
+	}
 }
 
 func TestClientProjectionPublishesFeastCostReduction(t *testing.T) {
@@ -177,6 +199,9 @@ func TestClientProjectionPublishesFeastCostReduction(t *testing.T) {
 	state.Market.FeastPurchaseExpectedID = 4
 	state.Market.FeastPurchaseOperationID = "private-operation"
 	state.Market.FeastPurchaseResponseToken = "private-token"
+	state.Market.FeastPurchaseInactiveObservedAt = observedAt.Add(time.Minute)
+	state.Market.FeastPurchaseInactiveResponseToken = "private-poll-token"
+	state.Market.FeastPurchaseInactiveGeneration = 7
 
 	contents, err := json.Marshal(NewClientStateSnapshot(state))
 	if err != nil {
@@ -195,6 +220,8 @@ func TestClientProjectionPublishesFeastCostReduction(t *testing.T) {
 		[]byte("feastPurchaseExpectedId"),
 		[]byte("feastPurchaseOperationId"),
 		[]byte("feastPurchaseResponseToken"),
+		[]byte("feastPurchaseInactive"),
+		[]byte("private-poll-token"),
 		[]byte("private-operation"),
 		[]byte("private-token"),
 	} {
@@ -318,5 +345,23 @@ func TestClientEventDefersStormProjectionUntilSharedScanCompletes(t *testing.T) 
 	})
 	if completed.Patch.Storm == nil || completed.Patch.Storm.Map.TargetCount != 1 {
 		t.Fatalf("completed Storm projection = %+v", completed.Patch.Storm)
+	}
+}
+
+func TestClientStateSnapshotRedactsTowerAdvisorTimeSkipReceipts(t *testing.T) {
+	state := NewGameState()
+	state.AttackAnalytics.RecentTowerAdvisorTimeSkips = []TowerAdvisorTimeSkipUsage{{
+		MovementID: 700, TimeSkips: 3, UsedAt: time.Now().UTC(),
+	}}
+	contents, err := json.Marshal(NewClientStateSnapshot(state))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var projected GameState
+	if err := json.Unmarshal(contents, &projected); err != nil {
+		t.Fatal(err)
+	}
+	if len(projected.AttackAnalytics.RecentTowerAdvisorTimeSkips) != 0 {
+		t.Fatalf("client projection exposed backend Advisor Time Skip receipts: %+v", projected.AttackAnalytics)
 	}
 }
