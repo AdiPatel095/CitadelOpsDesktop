@@ -1,9 +1,8 @@
 package Accounts
 
-// Durable source fences are deliberately irreversible in this primitive.
-// A return-to-stable handover must restore the latest target profile before a
-// separate reviewed adoption protocol can release one. Neither a lease timeout
-// nor a higher placement epoch authorizes reusing a retired source profile.
+// Durable source fences never expire. Only an exact, explicitly activated
+// newer imported generation may supersede runtime ownership; retired source
+// directories remain blocked permanently, including after multiple returns.
 
 import (
 	"bytes"
@@ -134,8 +133,28 @@ func (supervisor *Supervisor) saveSourceFenceLocked(id AccountID, fence SourcePr
 }
 
 func (supervisor *Supervisor) sourceProfileFencedLocked(id AccountID, directory string) bool {
+	activeProfile, active := supervisor.activeProfileLocked(id)
+	if _, imported := supervisor.currentProfileLocked(id); imported {
+		if !active || directory != filepath.Join(supervisor.config.DataRoot, filepath.FromSlash(activeProfile.Directory)) {
+			return true
+		}
+	}
+	for retired := range supervisor.profileAdoptions.Retired {
+		full := filepath.Join(supervisor.config.DataRoot, filepath.FromSlash(retired))
+		if pathWithin(full, directory) || pathWithin(directory, full) {
+			return true
+		}
+	}
+	for _, profile := range supervisor.profileAdoptions.Operations {
+		full := filepath.Join(supervisor.config.DataRoot, filepath.FromSlash(profile.Directory))
+		if (pathWithin(full, directory) || pathWithin(directory, full)) &&
+			(!active || profile != activeProfile || directory != full) {
+			return true
+		}
+	}
 	for owner, fence := range supervisor.sourceFences {
-		if owner == id || filepath.Join(supervisor.config.DataRoot, filepath.FromSlash(fence.ProfileDirectory)) == directory {
+		full := filepath.Join(supervisor.config.DataRoot, filepath.FromSlash(fence.ProfileDirectory))
+		if (owner == id && !active) || pathWithin(full, directory) || pathWithin(directory, full) {
 			return true
 		}
 	}
@@ -161,13 +180,31 @@ func (orchestrator *Orchestrator) PrepareSourceHandover(ctx context.Context, ide
 	supervisor := orchestrator.supervisor
 	supervisor.rebindMu.Lock()
 	defer supervisor.rebindMu.Unlock()
+	supervisor.mu.RLock()
+	closed := supervisor.closed
+	supervisor.mu.RUnlock()
+	if closed {
+		return SourceProfileFence{}, errors.New("supervisor is closed")
+	}
 	id := AccountID(identity.RuntimeID)
 	fence, exists := supervisor.sourceFence(id)
-	if exists {
-		if fence.Identity != identity {
+	supervisor.mu.RLock()
+	imported, activeImport := supervisor.activeProfileLocked(id)
+	supervisor.mu.RUnlock()
+	if activeImport && (imported.TargetEpoch != identity.SourceEpoch || imported.Receipt.Identity.AccountID != identity.AccountID || imported.Receipt.Identity.TenantID != identity.TenantID) {
+		return SourceProfileFence{}, errors.New("handover does not own the current imported generation")
+	}
+	if exists && fence.Identity != identity {
+		supervisor.mu.RLock()
+		profile, active := supervisor.activeProfileLocked(id)
+		supervisor.mu.RUnlock()
+		if !active || profile.TargetEpoch != identity.SourceEpoch || profile.Receipt.Identity.AccountID != identity.AccountID ||
+			profile.Receipt.Identity.TenantID != identity.TenantID {
 			return SourceProfileFence{}, errors.New("profile is fenced by another handover")
 		}
-	} else {
+		exists = false // A new departure of the latest imported generation only.
+	}
+	if !exists {
 		orchestrator.mu.RLock()
 		assignment, present := orchestrator.runtimes[id]
 		orchestrator.mu.RUnlock()
