@@ -83,7 +83,7 @@ const Header: React.FC<HeaderProps> = ({
   const { theme } = useTheme();
 	const backgroundConnection = state?.session.mode === 'background';
 	const autoBirdStatus = automationStates.autoBird?.status ?? '';
-	const hasAutoBirdCycles = autoBirdCastleCycles.some((cycle) => cycle.nextCycleAtMs > 0);
+	const hasAutoBirdCycles = autoBirdCastleCycles.some((cycle) => cycle.nextCycleAtMs > 0 || !!cycle.pausedUntilMs);
   const [clearingAutoBirdTracking, setClearingAutoBirdTracking] = useState(false);
 
   const [nowTick, setNowTick] = useState(() => Date.now());
@@ -398,6 +398,7 @@ const Header: React.FC<HeaderProps> = ({
             <div className={`liquid-status-dock-item liquid-status-dock-action-group liquid-header-automation-pill ${autoBirdPill.on ? 'liquid-status-dock-item-success' : 'liquid-status-dock-item-muted'}`}>
               <AutoBirdHoverPopover
                 cycles={autoBirdCastleCycles}
+                canControl={dashboardConnectionStatus === 'Connected'}
                 enabled={autoBirdEnabled}
                 now={nowTick}
                 hint={autoBirdInteractionHint}
