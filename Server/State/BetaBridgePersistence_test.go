@@ -23,7 +23,15 @@ func TestStableBridgePreservesBetaStateThroughFullRewrite(t *testing.T) {
 	initial.Market.FeastPurchaseInactiveGeneration = 4
 	initial.Market.FeastPurchaseInactiveObservedAt = now
 	initial.Market.FeastPurchaseInactiveResponseToken = "inert-fixture"
-	initial.Stationing["pending"] = StationingOperation{ID: "pending", PresetID: "retained-preset", Units: map[UnitID]int64{216: 200}}
+	returnAt := now.Add(2 * time.Hour)
+	initial.Stationing["pending"] = StationingOperation{
+		ID: "pending", PresetID: "retained-preset", Units: map[UnitID]int64{216: 200},
+		MovementID: 51, MovementIDs: []MovementID{51, 52}, ExpectedReturnAt: &returnAt,
+	}
+	initial.Stationing[AutoBirdControlID(7)] = StationingOperation{
+		ID: AutoBirdControlID(7), SourceCastleID: 7, Paused: true,
+		PausedUntil: &returnAt, RescanRequested: true, Units: map[UnitID]int64{},
+	}
 	initial.Map[0] = map[string]MapObservation{"101:102": {KingdomID: 0, TypeID: MapTypeKingdomFortress, X: 101, Y: 102, Level: 80, FortressDefeaterPlayerID: 99, ObservedAt: now}}
 	initial.Movements[51] = MovementState{ID: 51, AdvisorType: 1, AdvisorAttackNumber: 2, AdvisorAttackCount: 3, AdvisorLaunchState: 4}
 	directory := t.TempDir()

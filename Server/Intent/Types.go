@@ -103,6 +103,10 @@ type ResponseRetryPolicy struct {
 }
 
 type Step struct {
+	// Batch is a resolver-only expansion, checkpointed as ordinary sequential steps
+	// before any command is sent. Children cannot contain deferred resolvers.
+	Batch []Step `json:"-"`
+
 	Name                    string                    `json:"name,omitempty"`
 	Action                  string                    `json:"action,omitempty"`
 	ActionArguments         json.RawMessage           `json:"arguments,omitempty"`

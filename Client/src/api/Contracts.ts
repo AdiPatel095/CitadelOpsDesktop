@@ -1696,6 +1696,9 @@ export interface MovementSnapshotV2 {
 }
 
 export interface StationingOperationV2 {
+ paused?: boolean;
+ pausedUntil?: string;
+ rescanRequested?: boolean;
 	id: string;
 	purpose: string;
 	phase?: 'target-ready' | 'dispatch-ready' | 'away' | 'waiting';

@@ -1280,6 +1280,8 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 		clone.Stationing = make(map[string]StationingOperation, len(source.Stationing))
 		for id, operation := range source.Stationing {
 			operation.Units = cloneMap(operation.Units)
+			operation.MovementIDs = append([]MovementID(nil), operation.MovementIDs...)
+			operation.PausedUntil = cloneTimePointer(operation.PausedUntil)
 			operation.DispatchedAt = cloneTimePointer(operation.DispatchedAt)
 			operation.ExpectedReturnAt = cloneTimePointer(operation.ExpectedReturnAt)
 			operation.NextAttemptAt = cloneTimePointer(operation.NextAttemptAt)

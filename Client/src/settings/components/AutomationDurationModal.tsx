@@ -8,6 +8,8 @@ interface AutomationDurationModalProps {
   featureKey: string;
   featureLabel: string;
   onClose: () => void;
+  onPauseFor?: (minutes: number) => Promise<void>;
+  pausedUntil?: number;
 }
 
 type DurationUnit = 'minutes' | 'hours' | 'days';
@@ -32,6 +34,8 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
   featureKey,
   featureLabel,
   onClose,
+  onPauseFor,
+  pausedUntil,
 }) => {
   const { enableAutomationFor, automationTimedUntilByKey } = useAuth();
   const [amount, setAmount] = useState('1');
@@ -54,7 +58,7 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
   }, [amount, unit]);
   const valid = durationMinutes >= 1 && durationMinutes <= 10_080;
   const turnsOffAt = valid ? new Date(Date.now() + durationMinutes * 60_000) : null;
-  const currentUntil = automationTimedUntilByKey[featureKey];
+  const currentUntil = onPauseFor ? pausedUntil : automationTimedUntilByKey[featureKey];
 
   const selectPreset = (minutes: number) => {
     if (minutes < 60) {
@@ -75,7 +79,8 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
     setSaving(true);
     setError('');
     try {
-      await enableAutomationFor(featureKey, durationMinutes);
+      if (onPauseFor) await onPauseFor(durationMinutes);
+      else await enableAutomationFor(featureKey, durationMinutes);
       onClose();
     } catch (value) {
       setError(value instanceof Error ? value.message : 'Could not save the timed automation duration');
@@ -88,11 +93,11 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
       isOpen={isOpen}
       onClose={onClose}
       maxWidth="md"
-      title={<ModalTitle icon={<TimerReset className="h-5 w-5" />}>Run {featureLabel} for a duration</ModalTitle>}
+      title={<ModalTitle icon={<TimerReset className="h-5 w-5" />}>{onPauseFor ? 'Pause' : 'Run'} {featureLabel} for a duration</ModalTitle>}
       footer={(
         <div className="flex w-full justify-end gap-2">
           <Button variant="ghost" onClick={onClose} disabled={saving}>Cancel</Button>
-          <Button onClick={() => void save()} disabled={!valid} isLoading={saving}>Turn on for this duration</Button>
+          <Button onClick={() => void save()} disabled={!valid} isLoading={saving}>{onPauseFor ? 'Pause for this duration' : 'Turn on for this duration'}</Button>
         </div>
       )}
     >
@@ -142,13 +147,13 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
         <div className="rounded-global border border-border-base bg-bg-app/40 px-4 py-3 text-xs leading-relaxed text-text-muted">
           {turnsOffAt ? (
             <p>
-              {featureLabel} turns on immediately and the server turns it off at{' '}
+              {featureLabel} {onPauseFor ? 'pauses immediately and resumes at' : 'turns on immediately and the server turns it off at'}{' '}
               <span className="font-semibold text-text-main">{turnsOffAt.toLocaleString()}</span>.
             </p>
           ) : null}
           <p className="mt-1">Weekly schedules and the global automation lock still apply during this window.</p>
           {currentUntil ? (
-            <p className="mt-2 text-primary">Current timed run ends {new Date(currentUntil).toLocaleString()}.</p>
+            <p className="mt-2 text-primary">{onPauseFor ? 'Current pause ends' : 'Current timed run ends'} {new Date(currentUntil).toLocaleString()}.</p>
           ) : null}
         </div>
 
