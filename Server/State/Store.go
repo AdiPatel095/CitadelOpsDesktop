@@ -1482,6 +1482,9 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 		clone.AttackAnalytics.RecentAutoStormLaunches = append(
 			[]AttackFeatureLaunch(nil), source.AttackAnalytics.RecentAutoStormLaunches...,
 		)
+		clone.AttackAnalytics.RecentTowerAdvisorTimeSkips = append(
+			[]TowerAdvisorTimeSkipUsage(nil), source.AttackAnalytics.RecentTowerAdvisorTimeSkips...,
+		)
 	}
 	if components.Has(ComponentEventScores) {
 		clone.EventScores = source.materializedEventScores()

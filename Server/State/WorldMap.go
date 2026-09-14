@@ -331,7 +331,7 @@ func worldMapDomains(proposed []string, changes []MapChange) []string {
 	for _, domain := range proposed {
 		normalized := strings.ToLower(strings.TrimSpace(domain))
 		switch normalized {
-		case "storm-scan-progress", "storm-scan":
+		case "storm-scan-progress", "fortress-scan-progress", "storm-scan":
 			return []string{normalized}
 		case "map":
 			genericMap = true

@@ -266,7 +266,7 @@ type PlanningView struct {
 
 func CapabilityForDomain(domain string) string {
 	normalized := strings.ToLower(strings.TrimSpace(domain))
-	if strings.HasPrefix(normalized, "map-") || normalized == "storm-scan-progress" || normalized == "storm-scan" {
+	if strings.HasPrefix(normalized, "map-") || normalized == "storm-scan-progress" || normalized == "fortress-scan-progress" || normalized == "storm-scan" {
 		return CapabilityWorldMap
 	}
 	switch normalized {

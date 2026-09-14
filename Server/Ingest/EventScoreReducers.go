@@ -115,9 +115,17 @@ func applyScalableEventSnapshot(
 			EndsAt:  observedAt.Add(time.Duration(remainingSec) * time.Second).UTC().Truncate(time.Minute),
 		}
 	}
+	// The stable bridge does not purchase beta boosters, but must retain their
+	// durable observations when refreshing the event fields this parser knows.
+	previousInventory := gameState.EventScores.Inventory
 	if gameState.ReplaceEventInventory(State.EventInventoryState{
-		ObservedAt:    observedAt,
-		ActiveByEvent: activeByEvent,
+		ObservedAt:                   observedAt,
+		ActiveByEvent:                activeByEvent,
+		GlobalEffectsObservedAt:      previousInventory.GlobalEffectsObservedAt,
+		GlobalEffects:                previousInventory.GlobalEffects,
+		GlobalEffectBoosterOffers:    previousInventory.GlobalEffectBoosterOffers,
+		GlobalEffectBoostsObservedAt: previousInventory.GlobalEffectBoostsObservedAt,
+		GlobalEffectBoosts:           previousInventory.GlobalEffectBoosts,
 	}) {
 		changed = true
 	}

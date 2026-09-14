@@ -868,8 +868,12 @@ type MovementState struct {
 	MarketGoods     []KingdomTransportGood `json:"marketGoods,omitempty"`
 	// Preserve GAM's leader identities, including premium/sentinel values.
 	// Only a nonnegative UM.L.ID identifies an owned commander; DLID does not.
-	LeaderID   *int64 `json:"leaderId,omitempty"`
-	LeaderDLID *int64 `json:"leaderDlid,omitempty"`
+	LeaderID            *int64 `json:"leaderId,omitempty"`
+	LeaderDLID          *int64 `json:"leaderDlid,omitempty"`
+	AdvisorType         int    `json:"advisorType,omitempty"`
+	AdvisorAttackNumber int    `json:"advisorAttackNumber,omitempty"`
+	AdvisorAttackCount  int    `json:"advisorAttackCount,omitempty"`
+	AdvisorLaunchState  int    `json:"advisorLaunchState,omitempty"`
 }
 
 func (movement MovementState) ProjectedCompletionAt() *time.Time {
@@ -1081,19 +1085,23 @@ type MarketState struct {
 	// FeastPurchasePending prevents a resource-spending BFS from being replayed
 	// after its outcome could not be reconciled. The latch is durable across
 	// restarts and is cleared only by an authoritative expected-feast result,
-	// an explicit game rejection, or expiry of the maximum possible effect.
-	FeastPurchasePending           bool      `json:"feastPurchasePending,omitempty"`
-	FeastPurchaseExpectedID        int64     `json:"feastPurchaseExpectedId,omitempty"`
-	FeastPurchasePendingSince      time.Time `json:"feastPurchasePendingSince,omitempty"`
-	FeastPurchaseExpectedExpiresAt time.Time `json:"feastPurchaseExpectedExpiresAt,omitempty"`
-	FeastPurchaseOperationID       string    `json:"feastPurchaseOperationId,omitempty"`
-	FeastPurchaseResponseToken     string    `json:"feastPurchaseResponseToken,omitempty"`
-	FeastCostReductionPercent      int       `json:"feastCostReductionPercent,omitempty"`
-	FeastCostReductionObservedAt   time.Time `json:"feastCostReductionObservedAt,omitempty"`
-	CaravanLevel                   int       `json:"caravanLevel,omitempty"`
-	CaravanLevelLoaded             bool      `json:"caravanLevelLoaded"`
-	ObservedAt                     time.Time `json:"observedAt,omitempty"`
-	BoostersObservedAt             time.Time `json:"boostersObservedAt,omitempty"`
+	// an explicit game rejection, two spaced current-session inactive replies,
+	// or expiry of the maximum possible effect.
+	FeastPurchasePending               bool      `json:"feastPurchasePending,omitempty"`
+	FeastPurchaseExpectedID            int64     `json:"feastPurchaseExpectedId,omitempty"`
+	FeastPurchasePendingSince          time.Time `json:"feastPurchasePendingSince,omitempty"`
+	FeastPurchaseExpectedExpiresAt     time.Time `json:"feastPurchaseExpectedExpiresAt,omitempty"`
+	FeastPurchaseOperationID           string    `json:"feastPurchaseOperationId,omitempty"`
+	FeastPurchaseResponseToken         string    `json:"feastPurchaseResponseToken,omitempty"`
+	FeastPurchaseInactiveObservedAt    time.Time `json:"feastPurchaseInactiveObservedAt,omitempty"`
+	FeastPurchaseInactiveResponseToken string    `json:"feastPurchaseInactiveResponseToken,omitempty"`
+	FeastPurchaseInactiveGeneration    uint64    `json:"feastPurchaseInactiveGeneration,omitempty"`
+	FeastCostReductionPercent          int       `json:"feastCostReductionPercent,omitempty"`
+	FeastCostReductionObservedAt       time.Time `json:"feastCostReductionObservedAt,omitempty"`
+	CaravanLevel                       int       `json:"caravanLevel,omitempty"`
+	CaravanLevelLoaded                 bool      `json:"caravanLevelLoaded"`
+	ObservedAt                         time.Time `json:"observedAt,omitempty"`
+	BoostersObservedAt                 time.Time `json:"boostersObservedAt,omitempty"`
 }
 
 type KingdomTransportUnlock struct {
@@ -1203,6 +1211,7 @@ type StationingOperation struct {
 	ID                   string           `json:"id"`
 	Purpose              string           `json:"purpose"`
 	Phase                StationingPhase  `json:"phase,omitempty"`
+	PresetID             string           `json:"presetId,omitempty"`
 	SourceCastleID       CastleID         `json:"sourceCastleId"`
 	TargetCastleID       CastleID         `json:"targetCastleId"`
 	MovementID           MovementID       `json:"movementId,omitempty"`
@@ -1322,6 +1331,7 @@ type MapObservation struct {
 	InvasionProtected          bool      `json:"invasionProtected,omitempty"`
 	TowerVictoryCount          int64     `json:"towerVictoryCount,omitempty"`
 	TowerCooldownRemaining     int       `json:"towerCooldownRemaining,omitempty"`
+	FortressDefeaterPlayerID   PlayerID  `json:"fortressDefeaterPlayerId,omitempty"`
 	EventCampID                int64     `json:"eventCampId,omitempty"`
 	EventCampVictoryCount      int64     `json:"eventCampVictoryCount,omitempty"`
 	EventCampCooldownRemaining int       `json:"eventCampCooldownRemaining,omitempty"`
@@ -1389,6 +1399,7 @@ func (observation MapObservation) StormExpiresAt(globalCooldownSec int64) time.T
 // creates this state because it only confirms the troop movement was started.
 type TowerCooldownState struct {
 	KingdomID              KingdomID `json:"kingdomId"`
+	TargetTypeID           int       `json:"targetTypeId,omitempty"`
 	X                      int       `json:"x"`
 	Y                      int       `json:"y"`
 	ReportID               int64     `json:"reportId,omitempty"`
@@ -1800,12 +1811,14 @@ type AttackDialogTarget struct {
 	TypeID                     int      `json:"typeId,omitempty"`
 	X                          int      `json:"x,omitempty"`
 	Y                          int      `json:"y,omitempty"`
+	Level                      int      `json:"level,omitempty"`
 	ObjectID                   int64    `json:"objectId,omitempty"`
 	OwnerID                    PlayerID `json:"ownerId,omitempty"`
 	InvasionAvailabilityKnown  bool     `json:"invasionAvailabilityKnown,omitempty"`
 	InvasionProtected          bool     `json:"invasionProtected,omitempty"`
 	TowerVictoryCount          int64    `json:"towerVictoryCount,omitempty"`
 	TowerCooldownRemaining     int      `json:"towerCooldownRemaining,omitempty"`
+	FortressDefeaterPlayerID   PlayerID `json:"fortressDefeaterPlayerId,omitempty"`
 	EventCampID                int64    `json:"eventCampId,omitempty"`
 	EventCampVictoryCount      int64    `json:"eventCampVictoryCount,omitempty"`
 	EventCampCooldownRemaining int      `json:"eventCampCooldownRemaining,omitempty"`
@@ -2104,11 +2117,15 @@ func NewGameState() GameState {
 		AttackPresets: []AttackPreset{},
 		AttackAnalytics: AttackAnalyticsState{
 			LaunchIDs: []MovementID{}, PendingAttacks: []AttackFeatureLaunch{}, RecentAutoStormLaunches: []AttackFeatureLaunch{},
+			RecentTowerAdvisorTimeSkips: []TowerAdvisorTimeSkipUsage{},
 		},
 		EventScores: EventScoreState{
 			ByEvent: map[int64]ScalableEventScore{}, ShopByPackage: map[PackageID]EventShopRoute{},
 			ActivityByEvent: map[int64]EventActivityState{}, RankingByEvent: map[int64]EventRankingState{},
-			Inventory: EventInventoryState{ActiveByEvent: map[int64]EventAvailability{}},
+			Inventory: EventInventoryState{
+				ActiveByEvent: map[int64]EventAvailability{}, GlobalEffects: map[int64]GlobalEffectAvailability{},
+				GlobalEffectBoosterOffers: map[int64]GlobalEffectBoosterOffer{}, GlobalEffectBoosts: map[int64]GlobalEffectBoostState{},
+			},
 		},
 		Automations: map[string]AutomationState{},
 		Reports: ReportState{

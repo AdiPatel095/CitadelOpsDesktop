@@ -357,8 +357,29 @@ func (state *GameState) ReplaceEventInventory(inventory EventInventoryState) boo
 	} else {
 		inventory.ActiveByEvent = cloneMap(inventory.ActiveByEvent)
 	}
+	if inventory.GlobalEffects == nil {
+		inventory.GlobalEffects = map[int64]GlobalEffectAvailability{}
+	} else {
+		inventory.GlobalEffects = cloneMap(inventory.GlobalEffects)
+	}
+	if inventory.GlobalEffectBoosterOffers == nil {
+		inventory.GlobalEffectBoosterOffers = map[int64]GlobalEffectBoosterOffer{}
+	} else {
+		inventory.GlobalEffectBoosterOffers = cloneMap(inventory.GlobalEffectBoosterOffers)
+	}
+	if inventory.GlobalEffectBoosts == nil {
+		inventory.GlobalEffectBoosts = map[int64]GlobalEffectBoostState{}
+	} else {
+		inventory.GlobalEffectBoosts = cloneMap(inventory.GlobalEffectBoosts)
+	}
 	current := state.EventScores.Inventory
-	if current.ObservedAt.Equal(inventory.ObservedAt) && maps.Equal(current.ActiveByEvent, inventory.ActiveByEvent) {
+	if current.ObservedAt.Equal(inventory.ObservedAt) &&
+		current.GlobalEffectsObservedAt.Equal(inventory.GlobalEffectsObservedAt) &&
+		current.GlobalEffectBoostsObservedAt.Equal(inventory.GlobalEffectBoostsObservedAt) &&
+		maps.Equal(current.ActiveByEvent, inventory.ActiveByEvent) &&
+		maps.Equal(current.GlobalEffects, inventory.GlobalEffects) &&
+		maps.Equal(current.GlobalEffectBoosterOffers, inventory.GlobalEffectBoosterOffers) &&
+		maps.Equal(current.GlobalEffectBoosts, inventory.GlobalEffectBoosts) {
 		return false
 	}
 	state.EventScores.Inventory = inventory
@@ -385,6 +406,9 @@ func (state *GameState) ReplaceEventScores(value EventScoreState) {
 	}
 	state.EventScores = value
 	state.EventScores.Inventory.ActiveByEvent = cloneMap(value.Inventory.ActiveByEvent)
+	state.EventScores.Inventory.GlobalEffects = cloneMap(value.Inventory.GlobalEffects)
+	state.EventScores.Inventory.GlobalEffectBoosterOffers = cloneMap(value.Inventory.GlobalEffectBoosterOffers)
+	state.EventScores.Inventory.GlobalEffectBoosts = cloneMap(value.Inventory.GlobalEffectBoosts)
 	state.eventScoreRecords = eventScoreGenerationFromState(value)
 	state.EventScores.ByEvent = nil
 	state.EventScores.ActivityByEvent = nil
@@ -404,8 +428,13 @@ func (state GameState) materializedEventScores() EventScoreState {
 		ByEvent:       map[int64]ScalableEventScore{}, ShopByPackage: cloneMap(state.EventScores.ShopByPackage),
 		ActivityByEvent: map[int64]EventActivityState{}, RankingByEvent: map[int64]EventRankingState{},
 		Inventory: EventInventoryState{
-			ObservedAt:    state.EventScores.Inventory.ObservedAt,
-			ActiveByEvent: cloneMap(state.EventScores.Inventory.ActiveByEvent),
+			ObservedAt:                   state.EventScores.Inventory.ObservedAt,
+			ActiveByEvent:                cloneMap(state.EventScores.Inventory.ActiveByEvent),
+			GlobalEffectsObservedAt:      state.EventScores.Inventory.GlobalEffectsObservedAt,
+			GlobalEffects:                cloneMap(state.EventScores.Inventory.GlobalEffects),
+			GlobalEffectBoosterOffers:    cloneMap(state.EventScores.Inventory.GlobalEffectBoosterOffers),
+			GlobalEffectBoostsObservedAt: state.EventScores.Inventory.GlobalEffectBoostsObservedAt,
+			GlobalEffectBoosts:           cloneMap(state.EventScores.Inventory.GlobalEffectBoosts),
 		},
 	}
 	state.rangeEventScoreRecords(func(eventID int64, record eventScoreRecord) bool {
