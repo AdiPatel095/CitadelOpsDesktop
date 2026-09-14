@@ -220,6 +220,9 @@ func (orchestrator *Orchestrator) PrepareSourceHandover(ctx context.Context, ide
 			return SourceProfileFence{}, err
 		}
 		fence = SourceProfileFence{Identity: identity, ProfileDirectory: filepath.ToSlash(relative)}
+		if err := Runtime.InspectProfileArchive(ctx, application.DataDir); err != nil {
+			return SourceProfileFence{}, err
+		}
 	}
 	// Retry journal persistence even for an existing in-memory fence. A previous
 	// fsync/rename failure must never be turned into an acknowledged stop.

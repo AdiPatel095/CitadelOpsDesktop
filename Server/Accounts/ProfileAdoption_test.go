@@ -67,7 +67,7 @@ func startAdoptionParked(t *testing.T, o *Orchestrator, profile TargetProfile, r
 	assignment := testAssignment("alpha", "tenant-one", profile.TargetEpoch, o.now().Add(10*time.Minute))
 	assignment.DesiredConfigurationRevision = profile.Receipt.Identity.ConfigurationRevision
 	assignment.DesiredConfigurationDigest = profile.Receipt.Identity.ConfigurationDigest
-	if _, err := o.Reconcile(t.Context(), ReconcileRequest{1, revision, []RuntimeAssignment{assignment}}); err != nil {
+	if _, err := o.Reconcile(t.Context(), ReconcileRequest{SchemaVersion: 1, Revision: revision, Runtimes: []RuntimeAssignment{assignment}}); err != nil {
 		t.Fatal(err)
 	}
 	server := httptest.NewServer(o.Handler())
@@ -140,7 +140,7 @@ func TestProfileAdoptionPreservesExactStateAndRequiresActivation(t *testing.T) {
 		case "config-digest":
 			wrong.DesiredConfigurationDigest = strings.Repeat("a", 64)
 		}
-		if _, err := o.Reconcile(t.Context(), ReconcileRequest{1, 2, []RuntimeAssignment{wrong}}); err == nil {
+		if _, err := o.Reconcile(t.Context(), ReconcileRequest{SchemaVersion: 1, Revision: 2, Runtimes: []RuntimeAssignment{wrong}}); err == nil {
 			t.Fatalf("accepted %s", change)
 		}
 	}
@@ -348,7 +348,7 @@ func TestProfileAdoptionMissingIdentityNeverCreatesFreshProfile(t *testing.T) {
 	}
 	assignment := testAssignment("alpha", "tenant-one", 5, o.now().Add(time.Minute))
 	assignment.DesiredConfigurationRevision, assignment.DesiredConfigurationDigest = 39, receipt.Identity.ConfigurationDigest
-	if _, err := o.Reconcile(t.Context(), ReconcileRequest{1, 1, []RuntimeAssignment{assignment}}); err == nil {
+	if _, err := o.Reconcile(t.Context(), ReconcileRequest{SchemaVersion: 1, Revision: 1, Runtimes: []RuntimeAssignment{assignment}}); err == nil {
 		t.Fatal("lost profile was recreated")
 	}
 	if _, err := os.Stat(identityPath); !os.IsNotExist(err) {
