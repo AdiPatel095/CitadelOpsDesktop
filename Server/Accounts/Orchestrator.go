@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/shirou/gopsutil/v3/disk"
 	"io"
 	"net/http"
 	"path/filepath"
@@ -86,6 +87,10 @@ type ReconcileRequest struct {
 	SchemaVersion int                 `json:"schemaVersion"`
 	Revision      uint64              `json:"revision"`
 	Runtimes      []RuntimeAssignment `json:"runtimes"`
+	// PreserveRuntimes excludes these handover-owned identities from this
+	// ordinary full-set pass. Existing assignments are retained without starting,
+	// stopping or renewing them; absent identities are never reconstructed.
+	PreserveRuntimes []string `json:"preserveRuntimes,omitempty"`
 }
 
 type DashboardGrantRequest struct {
@@ -197,19 +202,20 @@ type RuntimeStatus struct {
 }
 
 type CellStatus struct {
-	HandoverSchema     int             `json:"handoverSchema,omitempty"`
-	ControlFenceSchema int             `json:"controlFenceSchema"`
-	ControlEpoch       uint64          `json:"controlEpoch"`
-	SchemaVersion      int             `json:"schemaVersion"`
-	Version            string          `json:"version"`
-	BuildRevision      string          `json:"buildRevision"`
-	BuildID            string          `json:"buildId"`
-	CellID             string          `json:"cellId"`
-	DesiredRevision    uint64          `json:"desiredRevision"`
-	GameDataReady      bool            `json:"gameDataReady"`
-	Capacity           Capacity        `json:"capacity"`
-	Runtimes           []RuntimeStatus `json:"runtimes"`
-	ObservedAt         time.Time       `json:"observedAt"`
+	ProfileAvailableBytes uint64          `json:"profileAvailableBytes,omitempty"`
+	HandoverSchema        int             `json:"handoverSchema,omitempty"`
+	ControlFenceSchema    int             `json:"controlFenceSchema"`
+	ControlEpoch          uint64          `json:"controlEpoch"`
+	SchemaVersion         int             `json:"schemaVersion"`
+	Version               string          `json:"version"`
+	BuildRevision         string          `json:"buildRevision"`
+	BuildID               string          `json:"buildId"`
+	CellID                string          `json:"cellId"`
+	DesiredRevision       uint64          `json:"desiredRevision"`
+	GameDataReady         bool            `json:"gameDataReady"`
+	Capacity              Capacity        `json:"capacity"`
+	Runtimes              []RuntimeStatus `json:"runtimes"`
+	ObservedAt            time.Time       `json:"observedAt"`
 }
 
 type Orchestrator struct {
@@ -327,6 +333,7 @@ func (orchestrator *Orchestrator) Handler() http.Handler {
 	mux := http.NewServeMux()
 	if orchestrator.handoverTransport {
 		mux.HandleFunc("POST /orchestrator/v1/handovers/export", orchestrator.handleProfileExport)
+		mux.HandleFunc("POST /orchestrator/v1/handovers/preflight", orchestrator.handleProfilePreflight)
 		mux.HandleFunc("POST /orchestrator/v1/handovers/download", orchestrator.handleProfileDownload)
 		mux.HandleFunc("POST /orchestrator/v1/handovers/restore", orchestrator.handleProfileRestore)
 		mux.HandleFunc("POST /orchestrator/v1/handovers/activate", orchestrator.handleProfileActivate)
@@ -400,6 +407,10 @@ func (orchestrator *Orchestrator) handleReconcile(writer http.ResponseWriter, re
 	if err := decodeControlJSON(writer, request, &desired); err != nil {
 		return
 	}
+	if len(desired.PreserveRuntimes) > 0 && (!orchestrator.handoverTransport || request.Header.Get(controlEpochHeader) == "") {
+		writeControlError(writer, http.StatusForbidden, "handover_transport_required")
+		return
+	}
 	status, err := orchestrator.Reconcile(request.Context(), desired)
 	if err != nil {
 		writeOrchestratorError(writer, err)
@@ -428,7 +439,25 @@ func (orchestrator *Orchestrator) Reconcile(ctx context.Context, desired Reconci
 		return CellStatus{}, &orchestratorError{status: http.StatusConflict, code: "stale_desired_revision", err: fmt.Errorf("desired revision %d is older than %d", normalized.Revision, currentRevision)}
 	}
 	desiredByID := assignmentsByID(normalized.Runtimes)
+	preserved := make(map[AccountID]bool, len(desired.PreserveRuntimes))
+	for _, raw := range desired.PreserveRuntimes {
+		id, err := ParseAccountID(raw)
+		_, assigned := desiredByID[id]
+		if err != nil || string(id) != raw || preserved[id] || assigned || !orchestrator.handoverTransport {
+			return CellStatus{}, &orchestratorError{status: http.StatusBadRequest, code: "invalid_preserved_runtime", err: errors.New("invalid handover-preserved runtime")}
+		}
+		preserved[id] = true
+		if previous, exists := current[id]; exists {
+			desiredByID[id] = previous
+		}
+	}
+	if maximum := orchestrator.supervisor.Capacity().Max; maximum > 0 && len(desiredByID) > maximum {
+		return CellStatus{}, &orchestratorError{status: http.StatusUnprocessableEntity, code: "runtime_limit_exceeded", err: errors.New("combined runtime count exceeds capacity")}
+	}
 	for id, assignment := range desiredByID {
+		if preserved[id] {
+			continue
+		}
 		orchestrator.supervisor.mu.RLock()
 		adoptionErr := orchestrator.supervisor.validateAdoptedAssignmentLocked(id, &assignment)
 		orchestrator.supervisor.mu.RUnlock()
@@ -443,6 +472,9 @@ func (orchestrator *Orchestrator) Reconcile(ctx context.Context, desired Reconci
 		return orchestrator.Status(), nil
 	}
 	for id, assignment := range desiredByID {
+		if preserved[id] {
+			continue
+		}
 		if existing, exists := current[id]; exists {
 			if existing.TenantID != assignment.TenantID {
 				return CellStatus{}, &orchestratorError{status: http.StatusConflict, code: "runtime_owner_conflict", err: fmt.Errorf("runtime %q cannot change tenant ownership", id)}
@@ -455,6 +487,9 @@ func (orchestrator *Orchestrator) Reconcile(ctx context.Context, desired Reconci
 
 	added := make([]AccountID, 0)
 	for id, assignment := range desiredByID {
+		if preserved[id] {
+			continue
+		}
 		if _, exists := current[id]; exists {
 			continue
 		}
@@ -488,6 +523,9 @@ func (orchestrator *Orchestrator) Reconcile(ctx context.Context, desired Reconci
 	// Reconcile and sync share reconcileMu, so no acknowledgement can cross
 	// this transition.
 	for id, assignment := range desiredByID {
+		if preserved[id] {
+			continue
+		}
 		if application, exists := orchestrator.supervisor.Application(id); exists && application != nil {
 			application.SetControlConfigurationReady(
 				assignment.DesiredConfigurationRevision > 0,
@@ -499,6 +537,9 @@ func (orchestrator *Orchestrator) Reconcile(ctx context.Context, desired Reconci
 	orchestrator.revision = normalized.Revision
 	orchestrator.runtimes = desiredByID
 	for id, assignment := range desiredByID {
+		if preserved[id] {
+			continue
+		}
 		if assignment.DesiredConfigurationRevision == 0 {
 			delete(orchestrator.configurationSyncs, id)
 		}
@@ -508,6 +549,9 @@ func (orchestrator *Orchestrator) Reconcile(ctx context.Context, desired Reconci
 	}
 	orchestrator.mu.Unlock()
 	for id, assignment := range desiredByID {
+		if preserved[id] {
+			continue
+		}
 		if err := orchestrator.supervisor.SetPrivateMetricsPlacement(
 			id, orchestrator.privateMetricsPlacement(assignment, normalized.Revision),
 		); err != nil {
@@ -522,6 +566,9 @@ func (orchestrator *Orchestrator) Reconcile(ctx context.Context, desired Reconci
 		orchestrator.drainRuntime(id)
 	}
 	for id, assignment := range desiredByID {
+		if preserved[id] {
+			continue
+		}
 		application, exists := orchestrator.supervisor.Application(id)
 		if !exists || application == nil {
 			continue
@@ -1121,9 +1168,16 @@ func (orchestrator *Orchestrator) Status() CellStatus {
 		runtimes = append(runtimes, status)
 	}
 	sort.Slice(runtimes, func(left, right int) bool { return runtimes[left].RuntimeID < runtimes[right].RuntimeID })
+	var profileAvailable uint64
+	if orchestrator.handoverTransport {
+		if usage, err := disk.Usage(orchestrator.supervisor.config.DataRoot); err == nil {
+			profileAvailable = usage.Free
+		}
+	}
 	return CellStatus{
-		HandoverSchema:     orchestrator.handoverSchema(),
-		ControlFenceSchema: 1, ControlEpoch: orchestrator.controlEpoch.Load(),
+		ProfileAvailableBytes: profileAvailable,
+		HandoverSchema:        orchestrator.handoverSchema(),
+		ControlFenceSchema:    1, ControlEpoch: orchestrator.controlEpoch.Load(),
 		SchemaVersion: OrchestratorSchemaVersion,
 		Version:       App.Version, BuildRevision: App.BuildRevision, BuildID: App.BuildID,
 		CellID:          orchestrator.cellID,
