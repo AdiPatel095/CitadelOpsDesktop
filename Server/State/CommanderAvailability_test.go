@@ -101,7 +101,8 @@ func TestOutboundLegReleaseCoversTheReturnTripPlusGrace(t *testing.T) {
 		t.Fatalf("outbound release = %v, want %s", release, want)
 	}
 	station := MovementState{ID: 3, Direction: 0, WaitSeconds: 60, CommanderID: &commander, ArrivesAt: &arrives}
-	if CommanderMovementReleaseAt(station) != nil || !CommanderMovementActiveAt(station, arrives.Add(time.Hour)) {
-		t.Fatal("a stationed movement holds its commander until the game says otherwise")
+	wantStation := arrives.Add(time.Minute + CommanderMovementReturnGrace)
+	if release := CommanderMovementReleaseAt(station); release == nil || !release.Equal(wantStation) || CommanderMovementActiveAt(station, arrives.Add(time.Hour)) {
+		t.Fatal("completed support must not hold its commander forever")
 	}
 }

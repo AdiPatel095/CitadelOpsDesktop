@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"CitadelDesktop/Server/Intent"
@@ -65,6 +66,16 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 	defer func() {
 		if err == nil {
 			decision = capAtPlayerProtectionRefresh(snapshot, decision)
+			if decision.Request != nil && strings.HasPrefix(decision.Request.Name, "auto_bird.") {
+				var args map[string]json.RawMessage
+				if json.Unmarshal(decision.Request.Arguments, &args) == nil {
+					var id State.CastleID
+					if json.Unmarshal(args["sourceCastleId"], &id) == nil && id > 0 {
+						args["controlRevision"], _ = json.Marshal(snapshot.State.AutoBirdControl(id).UpdatedAt)
+						decision.Request.Arguments, _ = json.Marshal(args)
+					}
+				}
+			}
 		}
 	}()
 	settings := autoBirdConfiguration{}
@@ -103,6 +114,17 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 	}
 	allianceHoldings := protectedHoldings(snapshot.State.Alliance, 0)
 	var nextCheck time.Time
+	eligibleCastles := make([]State.CastleID, 0, len(castleIDs))
+	for _, castleID := range castleIDs {
+		if snapshot.State.AutoBirdPaused(castleID, snapshot.Now) {
+			if until := snapshot.State.AutoBirdControl(castleID).PausedUntil; until != nil {
+				nextCheck = earlierTime(nextCheck, *until)
+			}
+			continue
+		}
+		eligibleCastles = append(eligibleCastles, castleID)
+	}
+	castleIDs = eligibleCastles
 
 	for _, castleID := range castleIDs {
 		castle := snapshot.State.Castles[castleID]
@@ -112,7 +134,7 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 			continue
 		}
 		if _, threatened := threats[castle.ID]; threatened ||
-			hasActiveAllianceStationMovement(snapshot.State, castle.ID, allianceHoldings) {
+			(!snapshot.State.AutoBirdControl(castle.ID).RescanRequested && hasActiveAllianceStationMovement(snapshot.State, castle.ID, allianceHoldings, snapshot.Now)) {
 			continue
 		}
 		target, targetAvailable := SelectAutoBirdHolding(
@@ -155,7 +177,7 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 			continue
 		}
 		if _, threatened := threats[castle.ID]; threatened ||
-			hasActiveAllianceStationMovement(snapshot.State, castle.ID, allianceHoldings) {
+			(!snapshot.State.AutoBirdControl(castle.ID).RescanRequested && hasActiveAllianceStationMovement(snapshot.State, castle.ID, allianceHoldings, snapshot.Now)) {
 			continue
 		}
 		target, targetAvailable := SelectAutoBirdHolding(
@@ -203,7 +225,7 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 			continue
 		}
 		operation, tracked := snapshot.State.Stationing[autoBirdTrackingID(castle.ID)]
-		if hasActiveAllianceStationMovement(snapshot.State, castle.ID, allianceHoldings) ||
+		if (!snapshot.State.AutoBirdControl(castle.ID).RescanRequested && hasActiveAllianceStationMovement(snapshot.State, castle.ID, allianceHoldings, snapshot.Now)) ||
 			tracked && operation.Purpose == "autoBird" && operation.Phase == "" &&
 				operation.ActiveInState(snapshot.State, snapshot.Now) {
 			continue
@@ -831,13 +853,24 @@ func autoBirdStationActive(gameState State.GameState, castleID State.CastleID, n
 	return operation.ActiveInState(gameState, now)
 }
 
-func hasActiveAllianceStationMovement(gameState State.GameState, castleID State.CastleID, holdings []State.AllianceHolding) bool {
+func hasActiveAllianceStationMovement(gameState State.GameState, castleID State.CastleID, holdings []State.AllianceHolding, now time.Time) bool {
 	targets := make(map[State.CastleID]struct{}, len(holdings))
 	for _, holding := range holdings {
 		targets[holding.CastleID] = struct{}{}
 	}
 	active := false
 	gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
+		// Cached support can outlive the list entry. Unknown timing remains
+		// conservative, but a known completed return cannot block another cycle.
+		release := State.StationMovementReleaseAt(movement)
+		if movement.CommanderID != nil {
+			if commanderRelease := State.CommanderMovementReleaseAt(movement); commanderRelease != nil && (release == nil || commanderRelease.After(*release)) {
+				release = commanderRelease
+			}
+		}
+		if release != nil && !release.After(now) {
+			return true
+		}
 		_, outgoingTarget := targets[movement.TargetCastleID]
 		_, returningSource := targets[movement.SourceCastleID]
 		if (movement.Direction == 0 && movement.SourceCastleID == castleID && outgoingTarget) ||

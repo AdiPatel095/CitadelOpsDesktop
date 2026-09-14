@@ -25,6 +25,9 @@ export type GameConnectionState =
 export type DashboardConnectionStatus = 'Disconnected' | 'Connecting' | 'Connected';
 
 export interface AutoBirdCastleCycle {
+ paused?: boolean;
+ pausedUntilMs?: number;
+ rescanRequested?: boolean;
 	castleId: number;
 	castleName: string;
 	kingdomId: number;
@@ -154,10 +157,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		return Object.values(state?.castles ?? {})
 			.map((castle) => {
 				const operation = state?.stationing?.[`autoBird:${castle.id}`];
+ const control = state?.stationing?.[`autoBirdControl:${castle.id}`];
 				const metricReturn = automationMetricMillis(autoBirdState, `birdReturnUnixMs.${castle.id}`);
 				const recordedReturn = Date.parse(operation?.expectedReturnAt ?? '');
 				return {
 					castleId: castle.id,
+ paused: control?.paused,
+ pausedUntilMs: Date.parse(control?.pausedUntil ?? '') || 0,
+ rescanRequested: control?.rescanRequested,
 					castleName: castle.name?.trim() || `Castle ${castle.id}`,
 					kingdomId: castle.kingdomId,
 					nextCycleAtMs: metricReturn > 0

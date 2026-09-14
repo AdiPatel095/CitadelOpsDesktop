@@ -27,6 +27,7 @@ const (
 )
 
 type autoBirdCycleRequest struct {
+	ControlRevision      time.Time            `json:"controlRevision,omitempty"`
 	SourceCastleID       State.CastleID       `json:"sourceCastleId"`
 	TrackingID           string               `json:"trackingId"`
 	MinimumRPTDays       int                  `json:"minimumRPTDays"`
@@ -41,6 +42,13 @@ type autoBirdCycleRequest struct {
 }
 
 func (application *Application) registerAutoBirdIntents() error {
+	if err := application.Intents.RegisterAction("auto_bird.castle.control", application.controlAutoBirdCastle); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("auto_bird.batch.guard", application.guardAutoBirdBatch); err != nil {
+		return err
+	}
+
 	if err := application.Intents.RegisterAction("auto_bird.tracking.clear", application.clearAutoBirdTracking); err != nil {
 		return err
 	}
@@ -60,6 +68,7 @@ func (application *Application) registerAutoBirdIntents() error {
 		return err
 	}
 	for _, definition := range []Intent.Definition{
+		{Name: "auto_bird.castle_control", Description: "Pause, resume, or rescan one castle without editing its settings", Effect: Intent.EffectWrite, Planner: planAutoBirdCastleControl},
 		{
 			Name: "auto_bird.clear_tracking", Description: "Clear persisted Auto Bird cycle tracking without changing movements, settings, or Auto Station", Effect: Intent.EffectWrite,
 			Planner: planAutoBirdClearTracking,
@@ -403,6 +412,9 @@ func (application *Application) captureAutoBirdTarget(
 	delayHours := randomAutoBirdDelayHours(request.MinimumDelayHours, request.MaximumDelayHours)
 	_, err = application.State.ApplyComponents(State.Components(State.ComponentStationing), func(gameState *State.GameState) ([]string, bool, error) {
 		now := time.Now().UTC()
+		if err := validateAutoBirdControl(*gameState, request, now); err != nil {
+			return nil, false, err
+		}
 		current := gameState.Stationing[request.TrackingID]
 		next := discoveredAutoBirdOperation(*gameState, current, request, delayHours, now)
 		if reflect.DeepEqual(current, next) {
@@ -479,6 +491,9 @@ func (application *Application) captureAutoBirdManifest(
 	}
 	_, err = application.State.ApplyComponents(State.Components(State.ComponentStationing), func(gameState *State.GameState) ([]string, bool, error) {
 		now := time.Now().UTC()
+		if err := validateAutoBirdControl(*gameState, request, now); err != nil {
+			return nil, false, err
+		}
 		current := gameState.Stationing[request.TrackingID]
 		next := preparedAutoBirdManifest(*gameState, gameData, current, request, now)
 		if reflect.DeepEqual(current, next) {
@@ -577,6 +592,9 @@ func (application *Application) guardAutoBirdDispatch(
 		return fmt.Errorf("%w: Auto Bird state is unavailable", Intent.ErrPlanStale)
 	}
 	snapshot := application.State.ReadOnlyView()
+	if err := validateAutoBirdControl(snapshot, request, now); err != nil {
+		return err
+	}
 	if snapshot.Player.ProtectionMode.PreparingOrActive(now) {
 		retryAt := snapshot.Player.ProtectionMode.Until().Add(time.Second)
 		if !retryAt.After(now) {
@@ -632,6 +650,9 @@ func (application *Application) resolveAutoBirdDispatchStep(
 		return Intent.Step{}, err
 	}
 	now := time.Now().UTC()
+	if err := validateAutoBirdControl(input.State, request, now); err != nil {
+		return Intent.Step{}, err
+	}
 	hold := func(detail string, retry time.Duration) (Intent.Step, error) {
 		application.deferAutoBirdDispatch(request, detail, now.Add(retry))
 		return Intent.Step{}, fmt.Errorf("%w: %s", Intent.ErrPlanStale, detail)
@@ -694,8 +715,24 @@ func (application *Application) resolveAutoBirdDispatchStep(
 			autoBirdNoTroopsRetry,
 		)
 	}
-	return supportDispatchStep("Dispatch Auto Bird troops", source, target, operation.DelayHours, manifest,
-		Intent.Step{Name: "Track accepted Auto Bird batch", Action: "auto_bird.movement.capture", ActionArguments: arguments}), nil
+	step := supportDispatchStep("Dispatch Auto Bird troops", source, target, operation.DelayHours, manifest,
+		Intent.Step{Name: "Track accepted Auto Bird batch", Action: "auto_bird.movement.capture", ActionArguments: arguments})
+	guard := func(step *Intent.Step) {
+		if step.Opcode != "cds" {
+			return
+		}
+		guardArguments, _ := json.Marshal(autoBirdBatchGuardRequest{Cycle: request, Payload: step.Payload})
+		step.PreDispatchAction = "auto_bird.batch.guard"
+		step.PreDispatchArguments = guardArguments
+	}
+	if len(step.Batch) == 0 {
+		guard(&step)
+	} else {
+		for i := range step.Batch {
+			guard(&step.Batch[i])
+		}
+	}
+	return step, nil
 }
 
 func (application *Application) deferAutoBirdDispatch(
@@ -788,6 +825,13 @@ func (application *Application) captureAutoBirdMovement(
 		return err
 	}
 	_, err = application.State.ApplyComponents(State.Components(State.ComponentStationing), func(gameState *State.GameState) ([]string, bool, error) {
+		// An acknowledgement from an older cycle must not replace a requested
+		// rescan. The movement reducer still retains the actual game movement.
+		control := gameState.AutoBirdControl(request.SourceCastleID)
+		if !control.UpdatedAt.Equal(request.ControlRevision) {
+			return nil, false, nil
+		}
+
 		current, exists := gameState.Stationing[request.TrackingID]
 		if !exists || current.Purpose != "autoBird" ||
 			current.SourceCastleID != request.SourceCastleID ||
@@ -808,6 +852,11 @@ func (application *Application) captureAutoBirdMovement(
 			next.DispatchedAt = &dispatchedAt
 		}
 		movements := findAutoBirdMovements(*gameState, next)
+		if len(movements) > 0 && control.RescanRequested {
+			control.RescanRequested = false
+			gameState.Stationing[State.AutoBirdControlID(request.SourceCastleID)] = control
+		}
+
 		found := len(movements) > 0
 		if !found {
 			retryDelay := autoBirdMovementRetry

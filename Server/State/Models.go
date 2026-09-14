@@ -1200,6 +1200,12 @@ const (
 )
 
 type StationingOperation struct {
+	// Runtime castle controls use a separate autoBirdControl record so clearing
+	// cycle tracking cannot accidentally remove a user's pause.
+	Paused          bool       `json:"paused,omitempty"`
+	PausedUntil     *time.Time `json:"pausedUntil,omitempty"`
+	RescanRequested bool       `json:"rescanRequested,omitempty"`
+
 	ID                   string           `json:"id"`
 	Purpose              string           `json:"purpose"`
 	Phase                StationingPhase  `json:"phase,omitempty"`
