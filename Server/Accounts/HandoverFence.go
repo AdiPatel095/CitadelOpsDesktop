@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"CitadelDesktop/Server/Runtime"
+	"CitadelDesktop/Server/State"
 )
 
 const sourceFenceFile = "source-handover-fences.json"
@@ -133,6 +134,16 @@ func (supervisor *Supervisor) saveSourceFenceLocked(id AccountID, fence SourcePr
 }
 
 func (supervisor *Supervisor) sourceProfileFencedLocked(id AccountID, directory string) bool {
+	if local, ok := supervisor.localProfiles[id]; ok {
+		_, active := supervisor.activeLocalProfileLocked(id)
+		return !active || directory != filepath.Join(supervisor.config.DataRoot, filepath.FromSlash(local.Directory))
+	}
+	for _, local := range supervisor.localProfiles {
+		full := filepath.Join(supervisor.config.DataRoot, filepath.FromSlash(local.Directory))
+		if pathWithin(full, directory) || pathWithin(directory, full) {
+			return true
+		}
+	}
 	activeProfile, active := supervisor.activeProfileLocked(id)
 	if _, imported := supervisor.currentProfileLocked(id); imported {
 		if !active || directory != filepath.Join(supervisor.config.DataRoot, filepath.FromSlash(activeProfile.Directory)) {
@@ -172,6 +183,10 @@ func (supervisor *Supervisor) sourceFence(id AccountID) (SourceProfileFence, boo
 // executor must freeze canonical writes and reserve a compatible target before
 // calling it. The source is persistently fenced before stopping any goroutine.
 func (orchestrator *Orchestrator) PrepareSourceHandover(ctx context.Context, identity Runtime.ProfileTransferIdentity) (SourceProfileFence, error) {
+	return orchestrator.prepareSourceHandover(ctx, identity, true)
+}
+
+func (orchestrator *Orchestrator) prepareSourceHandover(ctx context.Context, identity Runtime.ProfileTransferIdentity, archive bool) (SourceProfileFence, error) {
 	if err := ctx.Err(); err != nil {
 		return SourceProfileFence{}, err
 	}
@@ -190,16 +205,25 @@ func (orchestrator *Orchestrator) PrepareSourceHandover(ctx context.Context, ide
 	fence, exists := supervisor.sourceFence(id)
 	supervisor.mu.RLock()
 	imported, activeImport := supervisor.activeProfileLocked(id)
+	local, activeLocal := supervisor.activeLocalProfileLocked(id)
+	_, hasLocal := supervisor.localProfiles[id]
 	supervisor.mu.RUnlock()
-	if activeImport && (imported.TargetEpoch != identity.SourceEpoch || imported.Receipt.Identity.AccountID != identity.AccountID || imported.Receipt.Identity.TenantID != identity.TenantID) {
+	if archive && hasLocal {
+		return SourceProfileFence{}, errors.New("settings-only profiles cannot use the archive switch")
+	}
+	if activeLocal && (local.TargetEpoch != identity.SourceEpoch || local.Identity.AccountID != identity.AccountID || local.Identity.TenantID != identity.TenantID) {
+		return SourceProfileFence{}, errors.New("handover does not own the current local profile")
+	}
+	if !hasLocal && activeImport && (imported.TargetEpoch != identity.SourceEpoch || imported.Receipt.Identity.AccountID != identity.AccountID || imported.Receipt.Identity.TenantID != identity.TenantID) {
 		return SourceProfileFence{}, errors.New("handover does not own the current imported generation")
 	}
 	if exists && fence.Identity != identity {
 		supervisor.mu.RLock()
 		profile, active := supervisor.activeProfileLocked(id)
 		supervisor.mu.RUnlock()
-		if !active || profile.TargetEpoch != identity.SourceEpoch || profile.Receipt.Identity.AccountID != identity.AccountID ||
-			profile.Receipt.Identity.TenantID != identity.TenantID {
+		localOwns := activeLocal && local.TargetEpoch == identity.SourceEpoch && local.Identity.AccountID == identity.AccountID && local.Identity.TenantID == identity.TenantID
+		if !localOwns && (!active || profile.TargetEpoch != identity.SourceEpoch || profile.Receipt.Identity.AccountID != identity.AccountID ||
+			profile.Receipt.Identity.TenantID != identity.TenantID) {
 			return SourceProfileFence{}, errors.New("profile is fenced by another handover")
 		}
 		exists = false // A new departure of the latest imported generation only.
@@ -220,8 +244,19 @@ func (orchestrator *Orchestrator) PrepareSourceHandover(ctx context.Context, ide
 			return SourceProfileFence{}, err
 		}
 		fence = SourceProfileFence{Identity: identity, ProfileDirectory: filepath.ToSlash(relative)}
-		if err := Runtime.InspectProfileArchive(ctx, application.DataDir); err != nil {
-			return SourceProfileFence{}, err
+		if !archive {
+			// Independent histories must not turn a channel change into a way
+			// around an account's live suspension-prevention cooldown.
+			for _, automation := range application.State.ReadOnlyView().Automations {
+				if automation.SafetyLock.Active(orchestrator.now()) {
+					return SourceProfileFence{}, errors.New("active safety lock must expire before a settings-only switch")
+				}
+			}
+		}
+		if archive {
+			if err := Runtime.InspectProfileArchive(ctx, application.DataDir); err != nil {
+				return SourceProfileFence{}, err
+			}
 		}
 	}
 	// Retry journal persistence even for an existing in-memory fence. A previous
@@ -268,6 +303,21 @@ func (orchestrator *Orchestrator) PrepareSourceHandover(ctx context.Context, ide
 	if lease.ProfileID != strings.TrimSpace(string(rawID)) {
 		_ = lease.Close()
 		return SourceProfileFence{}, errors.New("source profile identity changed during stop verification")
+	}
+	if !archive {
+		// A final in-flight response can create a lock during shutdown. Check
+		// the flushed state too; retries stay stopped until the lock expires.
+		snapshot, readErr := State.LoadSnapshot(profile)
+		if readErr != nil && !os.IsNotExist(readErr) {
+			_ = lease.Close()
+			return SourceProfileFence{}, readErr
+		}
+		for _, automation := range snapshot.Automations {
+			if automation.SafetyLock.Active(orchestrator.now()) {
+				_ = lease.Close()
+				return SourceProfileFence{}, errors.New("flushed safety lock must expire before destination starts")
+			}
+		}
 	}
 	fence.SourceStopped, fence.ProfileID = true, lease.ProfileID
 	if err := lease.Close(); err != nil {
