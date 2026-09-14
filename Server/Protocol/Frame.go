@@ -83,6 +83,9 @@ type Command struct {
 	OmitNamespace bool            `json:"omitNamespace,omitempty"`
 }
 
+// MaximumSupportUnitTypes is the number of slots in a support movement.
+const MaximumSupportUnitTypes = 10
+
 func Encode(command Command) ([]byte, error) {
 	namespace := strings.TrimSpace(command.Namespace)
 	if command.OmitNamespace {
@@ -115,6 +118,11 @@ func Encode(command Command) ([]byte, error) {
 	if !json.Valid(payload) {
 		return nil, fmt.Errorf("command payload is not valid JSON")
 	}
+	if opcode == "cds" {
+		if err := ValidateSupportArmy(payload); err != nil {
+			return nil, err
+		}
+	}
 	if namespace == "" {
 		if route != "" {
 			return []byte(fmt.Sprintf("%%xt%%%s%%%s%%%s%%%s%%", opcode, sequence, route, payload)), nil
@@ -130,4 +138,18 @@ type CommittedFrame struct {
 	Revision    uint64   `json:"revision"`
 	Domains     []string `json:"domains,omitempty"`
 	ReduceError string   `json:"-"`
+}
+
+// ValidateSupportArmy also protects callers supplying pre-encoded wire frames.
+func ValidateSupportArmy(payload json.RawMessage) error {
+	var support struct {
+		Army []json.RawMessage `json:"A"`
+	}
+	if err := json.Unmarshal(payload, &support); err != nil {
+		return fmt.Errorf("invalid CDS army: %w", err)
+	}
+	if len(support.Army) > MaximumSupportUnitTypes {
+		return fmt.Errorf("CDS army has %d unit types; maximum is %d", len(support.Army), MaximumSupportUnitTypes)
+	}
+	return nil
 }

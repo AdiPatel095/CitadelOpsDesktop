@@ -810,3 +810,85 @@ func TestIncomingThreatsOnlyIncludeHostileAttacksOnOwnedCastles(t *testing.T) {
 		t.Fatalf("unexpected threats: count=%d threats=%#v earliest=%v latest=%v", count, threats, earliest, latest)
 	}
 }
+
+func TestTrackedStationRecallAdvancesThroughEveryBatch(t *testing.T) {
+	state := State.NewGameState()
+	op := State.StationingOperation{MovementID: 32, MovementIDs: []State.MovementID{30, 31, 32}}
+	state.Movements[30] = State.MovementState{ID: 30, Direction: 1}
+	state.Movements[31] = State.MovementState{ID: 31, Direction: 0}
+	state.Movements[32] = State.MovementState{ID: 32, Direction: 1}
+	movement, ok := trackedStationMovement(state, op)
+	if !ok || movement.ID != 31 {
+		t.Fatal("remaining outbound batch was not selected")
+	}
+}
+
+func TestAutoBirdCastlePauseSkipsEveryPhaseAndResumesAtExpiry(t *testing.T) {
+	now := time.Now().UTC()
+	until := now.Add(time.Minute)
+	for _, phase := range []State.StationingPhase{"", State.StationingPhaseTargetReady, State.StationingPhaseDispatchReady, State.StationingPhaseAway, State.StationingPhaseWaiting} {
+		game := State.NewGameState()
+		game.Player.ProtectionMode.ObservedAt = now
+		game.Alliance.ID = 9
+		game.Castles[10] = State.CastleState{ID: 10}
+		game.Stationing["autoBird:10"] = State.StationingOperation{Purpose: "autoBird", SourceCastleID: 10, Phase: phase}
+		game.Stationing[State.AutoBirdControlID(10)] = State.StationingOperation{Paused: true, PausedUntil: &until, UpdatedAt: now}
+		decision, err := NewAutoBirdPolicy().Evaluate(t.Context(), Snapshot{State: game, Now: now})
+		if err != nil || decision.Request != nil || decision.NextCheckAt.After(until) {
+			t.Fatalf("paused phase %s: %#v, %v", phase, decision, err)
+		}
+		game.Castles[11] = State.CastleState{ID: 11}
+		decision, err = NewAutoBirdPolicy().Evaluate(t.Context(), Snapshot{State: game, Now: now})
+		if err != nil || decision.Request == nil {
+			t.Fatalf("paused castle blocked another: %#v %v", decision, err)
+		}
+	}
+	game := State.NewGameState()
+	game.Alliance.ID = 9
+	game.Player.ProtectionMode.ObservedAt = until
+	game.Castles[10] = State.CastleState{ID: 10}
+	game.Stationing[State.AutoBirdControlID(10)] = State.StationingOperation{Paused: true, PausedUntil: &until, UpdatedAt: now}
+	decision, err := NewAutoBirdPolicy().Evaluate(t.Context(), Snapshot{State: game, Now: until})
+	if err != nil || decision.Request == nil || decision.Request.Name != "auto_bird.discover" {
+		t.Fatalf("did not resume: %#v %v", decision, err)
+	}
+	var args struct {
+		ControlRevision time.Time `json:"controlRevision"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &args); err != nil || !args.ControlRevision.Equal(now) {
+		t.Fatal("request missing control revision")
+	}
+}
+
+func TestAutoBirdIgnoresExpiredManualSupportAndRescanBypassesActiveSupport(t *testing.T) {
+	now := time.Now().UTC()
+	game := State.NewGameState()
+	game.Player.ID = 1
+	game.Player.ProtectionMode.ObservedAt = now
+	game.Alliance.ID = 9
+	game.Castles[10] = State.CastleState{ID: 10, X: 10, Y: 10}
+	game.Alliance.Members = []State.AllianceMember{{PlayerID: 2, ReturnProtectionSec: 4 * 86400}}
+	game.Alliance.Holdings = []State.AllianceHolding{{CastleID: 20, PlayerID: 2, SlotType: 1, X: 20, Y: 20}}
+	commander := State.CommanderID(0)
+	arrival := now.Add(-time.Hour)
+	game.Movements[50] = State.MovementState{ID: 50, OwnerPlayerID: 1, SourceCastleID: 10, TargetCastleID: 20, SourceX: 10, SourceY: 10, TargetX: 20, TargetY: 20, CommanderID: &commander, Direction: 0, TravelSeconds: 60, WaitSeconds: 60, ArrivesAt: &arrival}
+	evaluate := func() Decision {
+		t.Helper()
+		decision, err := NewAutoBirdPolicy().Evaluate(t.Context(), Snapshot{State: game, Now: now})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return decision
+	}
+	if decision := evaluate(); decision.Request == nil || decision.Request.Name != "auto_bird.discover" {
+		t.Fatalf("expired support blocked cleared cycle: %#v", decision)
+	}
+	arrival = now
+	if decision := evaluate(); decision.Request != nil {
+		t.Fatalf("ordinary cycle duplicated active support: %#v", decision)
+	}
+	game.Stationing[State.AutoBirdControlID(10)] = State.StationingOperation{RescanRequested: true, UpdatedAt: now}
+	if decision := evaluate(); decision.Request == nil || decision.Request.Name != "auto_bird.discover" {
+		t.Fatalf("rescan did not start fresh AIN: %#v", decision)
+	}
+}

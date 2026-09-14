@@ -103,3 +103,16 @@ func TestMovementClockUsesMarketBarrowReturnLease(t *testing.T) {
 		t.Fatalf("market movement completion = %s, want return %s", next, want)
 	}
 }
+
+func TestMovementClockSchedulesRegularSupportCommanderGrace(t *testing.T) {
+	now := time.Now().UTC()
+	commander := State.CommanderID(0)
+	game := State.NewGameState()
+	game.Player.ID = 1
+	game.Castles[100] = State.CastleState{ID: 100}
+	game.Movements[50] = State.MovementState{ID: 50, Direction: 0, OwnerPlayerID: 1, SourceCastleID: 100, CommanderID: &commander, TravelSeconds: 60, WaitSeconds: 120, ArrivesAt: &now}
+	want := now.Add(180*time.Second + State.CommanderMovementReturnGrace)
+	if got := nextMovementCompletion(game); !got.Equal(want) {
+		t.Fatalf("clock release %s, want %s", got, want)
+	}
+}

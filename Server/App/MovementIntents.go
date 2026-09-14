@@ -29,6 +29,7 @@ type stationRequest struct {
 	Purpose                 string               `json:"purpose,omitempty"`
 	TrackingID              string               `json:"trackingId,omitempty"`
 	SafeAfterUnix           int64                `json:"safeAfterUnix,omitempty"`
+	DispatchStartedAt       time.Time            `json:"dispatchStartedAt,omitempty"`
 	FreshManifest           bool                 `json:"freshManifest,omitempty"`
 	FreshUnitsObservedAfter time.Time            `json:"freshUnitsObservedAfter,omitempty"`
 	MinimumSend             int64                `json:"minimumSend,omitempty"`
@@ -124,6 +125,7 @@ func planTroopsStation(_ context.Context, input Intent.PlanningContext, argument
 	if request.FreshManifest {
 		request.FreshUnitsObservedAfter = now
 	}
+	request.DispatchStartedAt = now
 	resolverArguments, _ := json.Marshal(request)
 	steps := []Intent.Step{stationCastleContextStep(source)}
 	steps = append(steps, stationRouteContextSteps(source, target)...)
@@ -220,28 +222,11 @@ func resolveTroopsStationStep(_ context.Context, input Intent.PlanningContext, a
 	if len(amounts) == 0 {
 		return Intent.Step{}, fmt.Errorf("no requested troops remain stationed at castle %d", source.ID)
 	}
-	unitIDs := make([]int64, 0, len(amounts))
-	for unitID := range amounts {
-		unitIDs = append(unitIDs, int64(unitID))
+	after := Intent.Step{}
+	if request.Purpose != "" {
+		after = Intent.Step{Name: "Track accepted support batch", Action: "movement.track_station", ActionArguments: arguments}
 	}
-	sort.Slice(unitIDs, func(left, right int) bool { return unitIDs[left] < unitIDs[right] })
-	wireUnits := make([][2]int64, 0, len(unitIDs))
-	for _, unitID := range unitIDs {
-		wireUnits = append(wireUnits, [2]int64{unitID, amounts[State.UnitID(unitID)]})
-	}
-	dispatch, _ := json.Marshal(struct {
-		SourceID State.CastleID `json:"SID"`
-		TargetX  int            `json:"TX"`
-		TargetY  int            `json:"TY"`
-		LeaderID int            `json:"LID"`
-		Wait     int            `json:"WT"`
-		Booster  int            `json:"HBW"`
-		Premium  int            `json:"BPC"`
-		Travel   int            `json:"PTT"`
-		Delay    int            `json:"SD"`
-		Units    [][2]int64     `json:"A"`
-	}{source.ID, target.X, target.Y, stationLeaderID, request.DelayHours, -1, 1, 1, 0, wireUnits})
-	return commandStep("Station troops", "cds", dispatch, "cds"), nil
+	return supportDispatchStep("Station troops", source, target, request.DelayHours, amounts, after), nil
 }
 
 func freshAutoBirdStationAmounts(
@@ -322,7 +307,11 @@ func (application *Application) trackStationMovement(_ context.Context, argument
 			next.SafeAfter = &safeAfter
 		}
 		target, _ := allianceHolding(gameState.Alliance, request.TargetCastleID)
+		next.Units = map[State.UnitID]int64{}
 		gameState.RangeMovements(func(id State.MovementID, movement State.MovementState) bool {
+			if !request.DispatchStartedAt.IsZero() && !movement.StartedAt.IsZero() && movement.StartedAt.Before(request.DispatchStartedAt.Add(-time.Second)) {
+				return true
+			}
 			if movement.SourceCastleID != request.SourceCastleID || movement.Direction != 0 ||
 				movement.TargetX != target.X || movement.TargetY != target.Y ||
 				(!request.FreshManifest && !stationMovementUnitsWithinRequest(movement.Units, units)) {
@@ -330,7 +319,10 @@ func (application *Application) trackStationMovement(_ context.Context, argument
 			}
 			if id > next.MovementID {
 				next.MovementID = id
-				next.Units = cloneStationUnits(movement.Units)
+			}
+			next.MovementIDs = append(next.MovementIDs, id)
+			for unitID, amount := range movement.Units {
+				next.Units[unitID] += amount
 			}
 			if releasesAt := State.StationMovementReleaseAt(movement); releasesAt != nil &&
 				releasesAt.After(*next.SuccessCooldownUntil) {
@@ -339,6 +331,10 @@ func (application *Application) trackStationMovement(_ context.Context, argument
 			}
 			return true
 		})
+		if len(next.MovementIDs) == 0 {
+			next.Units = units
+		}
+		sort.Slice(next.MovementIDs, func(i, j int) bool { return next.MovementIDs[i] < next.MovementIDs[j] })
 		if reflect.DeepEqual(current, next) {
 			return nil, false, nil
 		}
