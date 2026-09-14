@@ -962,6 +962,14 @@ func activeTrackedStation(gameState State.GameState, castleID State.CastleID, no
 }
 
 func trackedStationMovement(gameState State.GameState, operation State.StationingOperation) (State.MovementState, bool) {
+	if len(operation.MovementIDs) > 0 {
+		for _, id := range operation.MovementIDs {
+			if movement, exists := gameState.LookupMovement(id); exists && movement.Direction == 0 {
+				return movement, true
+			}
+		}
+		return State.MovementState{}, false
+	}
 	if operation.MovementID <= 0 {
 		return State.MovementState{}, false
 	}
