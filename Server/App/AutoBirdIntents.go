@@ -755,7 +755,8 @@ func (application *Application) resolveAutoBirdDispatchStep(
 		if step.Opcode != "cds" {
 			return
 		}
-		guardArguments, _ := json.Marshal(autoBirdBatchGuardRequest{Cycle: request, Payload: step.Payload})
+		// commandStep stores the wire payload on Command before normalization.
+		guardArguments, _ := json.Marshal(autoBirdBatchGuardRequest{Cycle: request, Payload: step.Command.Payload})
 		step.PreDispatchAction = "auto_bird.batch.guard"
 		step.PreDispatchArguments = guardArguments
 	}
