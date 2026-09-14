@@ -1,8 +1,9 @@
 # Beta worker handover implementation status
 
 This is worker-side groundwork, **not an enabled account-switch feature**.
-No new handover route is registered. No runtime channel is changed by visiting
-the beta portal, loading this build, or calling the existing reconnect action.
+Handover routes are disabled in the deployed/CLI composition. No runtime channel
+is changed by visiting the beta portal, loading this build, or calling the
+existing reconnect action.
 
 ## Implemented here
 
@@ -25,7 +26,8 @@ the beta portal, loading this build, or calling the existing reconnect action.
   canonical configuration, persists the source fence before stopping, revokes
   dashboard access, waits for shutdown/profile release, and verifies the durable
   profile identity before acknowledging the stop. Retries bind to the same
-  operation and exact configuration. It is not exposed over HTTP yet.
+  operation and exact configuration. Only the gated internal transfer transport
+  calls it over HTTP; no CLI/env/deployment setting enables that transport yet.
 - Fences survive supervisor/process recreation. They block the retired runtime,
   aliases of its player profile, rebinds onto that profile, stale per-runtime
   control calls, and arbitrary higher-epoch reconciles. A verified, explicitly
@@ -59,6 +61,21 @@ the beta portal, loading this build, or calling the existing reconnect action.
   different generations. Clean shutdown releases it only after account and
   shared-store shutdown; failed shutdown retains ownership until retry/exit.
   Rollback must retain this lease/adoption support once transfers are used.
+- Private transport schema v1 is available only to the explicit internal
+  `EnableHandoverTransport` composition used by integration tests. It registers
+  authenticated POST export/download/restore/activate routes under
+  `/orchestrator/v1/handovers/`. Every route requires a positive controller epoch
+  and shares the full-request persisted controller fence. Capability is absent
+  from ordinary status when disabled; disabled requests cannot mint an epoch.
+- Source export captures one immutable archive after acknowledged stop and
+  publishes the tar plus compact receipt using private files, fsync and atomic
+  directory rename. Exact retries re-hash the saved file, never re-capture later
+  source mutations. Downloads bind identity, receipt, whole-file SHA and length.
+  Corrupt exports fail closed; they are not replaced automatically.
+- Target restore accepts bounded multipart metadata/archive parts, validates the
+  complete archive and pinned configuration, and returns only a stopped restore
+  receipt. Activation is separate. Responses are no-store, errors contain no
+  raw archive/configuration/credential content, and no public archive URL exists.
 - Controller fencing protocol v1: authenticated mutations carrying canonical
   `X-Citadel-Control-Epoch` values are serialized under an interprocess file
   lock. The cell persists its high-water epoch with atomic rename/fsync before
@@ -72,14 +89,16 @@ epoch. It does not expire. Deploy support everywhere before enabling backend
 `HOSTED_CONTROL_FENCING=true`; afterward rollback must retain fencing support.
 Never delete/reset `Accounts/controller-fence.json` to make an old writer work.
 The backend still needs the complete handover executor before
-account switching can be activated. These routes do not expose source archives.
+account switching can be activated. No deployed route exposes source archives.
 
 ## Still required before activation
 
 1. Deploy and verify the backend journal/CAS and controller fence support across
    all replicas and cells; target capacity reservation and stale-grant rejection.
-2. Authenticated, bounded archive delivery bound to the persisted stop receipt.
-   Archive bytes must not enter public storage, logs or portal responses.
+2. Review and integrate the gated bounded archive transport with the complete
+   executor before adding any deployment enablement. Backend-to-worker real
+   offline HTTP integration tests cover forward/reverse transfer, but do not
+   prove production placement commits or game readiness.
 3. Integrate the internal restore/activation primitives with backend phase CAS,
    an authenticated transfer transport, and immutable build/schema compatibility
    checks. These primitives are tested locally, not a deployed transfer API.
@@ -110,3 +129,11 @@ private `.profile-transfer-*` stages; do not delete them during an unresolved
 handover. The executor/deployment gate must reserve disk space and define audited
 orphan-stage cleanup before activation. The source/target archive schema alone
 does not prove a future runtime data schema is downgrade-compatible.
+
+Exports live at `Transfers/Exports/<operation>/` outside account/player roots.
+Interrupted captures can leave private `.export-*` stages. Retain exports and
+source profiles until an audited retention/recovery policy is implemented. The
+backend relay streams directly between private worker connections; it does not
+spool archives to SQL, public storage or frontend responses. Its client rejects
+redirects, bounds responses/streams and requires the all-cell controller fence
+to be already acknowledged before issuing transfer commands.
