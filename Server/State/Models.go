@@ -1208,6 +1208,12 @@ const (
 )
 
 type StationingOperation struct {
+	// Runtime castle controls use a separate autoBirdControl record so clearing
+	// cycle tracking cannot accidentally remove a user's pause.
+	Paused          bool       `json:"paused,omitempty"`
+	PausedUntil     *time.Time `json:"pausedUntil,omitempty"`
+	RescanRequested bool       `json:"rescanRequested,omitempty"`
+
 	ID                   string           `json:"id"`
 	Purpose              string           `json:"purpose"`
 	Phase                StationingPhase  `json:"phase,omitempty"`
@@ -1215,6 +1221,7 @@ type StationingOperation struct {
 	SourceCastleID       CastleID         `json:"sourceCastleId"`
 	TargetCastleID       CastleID         `json:"targetCastleId"`
 	MovementID           MovementID       `json:"movementId,omitempty"`
+	MovementIDs          []MovementID     `json:"movementIds,omitempty"`
 	Units                map[UnitID]int64 `json:"units"`
 	DelayHours           int              `json:"delayHours,omitempty"`
 	WaitSeconds          int              `json:"waitSeconds,omitempty"`
@@ -1232,6 +1239,14 @@ type StationingOperation struct {
 }
 
 func (operation StationingOperation) MatchesMovement(movement MovementState) bool {
+	if len(operation.MovementIDs) > 0 {
+		for _, id := range operation.MovementIDs {
+			if movement.ID == id {
+				return true
+			}
+		}
+		return false
+	}
 	if operation.MovementID > 0 {
 		return movement.ID == operation.MovementID
 	}
@@ -1249,7 +1264,7 @@ func (operation StationingOperation) ActiveAt(movements map[MovementID]MovementS
 			return true
 		}
 	}
-	if operation.MovementID > 0 {
+	if operation.MovementID > 0 || len(operation.MovementIDs) > 0 {
 		return false
 	}
 	if operation.SuccessCooldownUntil != nil && operation.SuccessCooldownUntil.After(now) {

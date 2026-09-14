@@ -723,7 +723,9 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 		flushWireCommits := func() error {
 			return wireCommits.flush(executionContext, engine.observer)
 		}
-		for stepIndex, step := range plan.Steps {
+	stepsLoop:
+		for stepIndex := 0; stepIndex < len(plan.Steps); stepIndex++ {
+			step := plan.Steps[stepIndex]
 			resumeKey := stepResumeKey(step)
 			if step.ResumePolicy != ResumeRebuild && completedThisAttempt[resumeKey] < completedSteps[resumeKey] {
 				completedThisAttempt[resumeKey]++
@@ -771,6 +773,22 @@ func (engine *Engine) execute(prepared *preparedSubmission) Receipt {
 			for err == nil {
 				var exchange *CommandExchange
 				exchange, err = engine.executeStep(stepContext, currentRevision, step)
+				var expansion *stepExpansion
+				if errors.As(err, &expansion) {
+					expanded := append([]Step(nil), plan.Steps[:stepIndex]...)
+					expanded = append(expanded, expansion.steps...)
+					expanded = append(expanded, plan.Steps[stepIndex+1:]...)
+					plan.Steps = expanded
+					checkpoint := plan
+					checkpointPlan = &checkpoint
+					receipt.Plan = &plan
+					if persistErr := engine.update(receipt); persistErr != nil {
+						release()
+						return engine.persistenceFailure(receipt, fmt.Errorf("persist resolved command batches: %w", persistErr))
+					}
+					stepIndex--
+					continue stepsLoop
+				}
 				err = engine.guardRejection(stepContext, err)
 				if exchange != nil {
 					receipt.Exchanges = append(receipt.Exchanges, *exchange)
@@ -1166,6 +1184,12 @@ func (engine *Engine) Subscribe(buffer int) (<-chan Receipt, func()) {
 	}
 }
 
+// stepExpansion never reaches the wire: the operation loop persists and executes
+// each child separately, preserving normal gates, receipts and resume checkpoints.
+type stepExpansion struct{ steps []Step }
+
+func (*stepExpansion) Error() string { return "resolved sequential command batches" }
+
 func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, step Step) (*CommandExchange, error) {
 	if step.DelayMillis > 0 {
 		timer := time.NewTimer(time.Duration(step.DelayMillis) * time.Millisecond)
@@ -1207,6 +1231,32 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 		resolved, err := resolver(ctx, planningInput, step.ResolverArguments)
 		if err != nil {
 			return nil, err
+		}
+		if len(resolved.Batch) > 0 {
+			if step.CommandDependencies != nil {
+				return nil, fmt.Errorf("batch resolver cannot cache command dependencies")
+			}
+			batch := normalizePlan(Definition{}, current.Revision, Plan{Steps: resolved.Batch}).Steps
+			commands := 0
+			for _, child := range batch {
+				if child.Resolver != "" || len(child.Batch) > 0 || child.ResumePolicy == ResumeRebuild {
+					return nil, fmt.Errorf("batch resolver must return concrete resumable steps")
+				}
+				if child.Action != "" {
+					if child.Opcode != "" || len(stepAwaitOpcodes(child)) > 0 {
+						return nil, fmt.Errorf("batch action cannot declare a command")
+					}
+					continue
+				}
+				if child.Opcode == "" || !sameStrings(stepAwaitOpcodes(step), stepAwaitOpcodes(child)) {
+					return nil, fmt.Errorf("batch resolver changed its declared response claims")
+				}
+				commands++
+			}
+			if commands == 0 {
+				return nil, fmt.Errorf("batch resolver returned no commands")
+			}
+			return nil, &stepExpansion{steps: batch}
 		}
 		if strings.TrimSpace(resolved.Resolver) != "" || strings.TrimSpace(resolved.Action) != "" {
 			return nil, fmt.Errorf("step resolver %q must return one concrete command step", step.Resolver)
@@ -1732,7 +1782,7 @@ func (engine *Engine) fail(receipt Receipt, err error) Receipt {
 	if Outbound.IsIndeterminate(err) && (receipt.Plan == nil || receipt.Plan.Effect != EffectRead) {
 		receipt.Status = StatusIndeterminate
 		receipt.Phase = EffectPhaseReconciliationRequired
-	} else if errors.Is(err, context.Canceled) || errors.Is(err, Outbound.ErrCDSPaused) {
+	} else if errors.Is(err, context.Canceled) {
 		receipt.Status = StatusCancelled
 	}
 	receipt = engine.withFailure(receipt, err)
@@ -1743,10 +1793,6 @@ func (engine *Engine) fail(receipt Receipt, err error) Receipt {
 }
 
 func (engine *Engine) failAfterProgress(receipt Receipt, err error, completedSteps map[string]int) Receipt {
-	// An operator pause must not trigger failure fallbacks such as opening gates.
-	if errors.Is(err, Outbound.ErrCDSPaused) {
-		return engine.fail(receipt, err)
-	}
 	if Outbound.IsIndeterminate(err) || receipt.Plan == nil || receipt.Plan.Effect == EffectRead {
 		return engine.fail(receipt, err)
 	}

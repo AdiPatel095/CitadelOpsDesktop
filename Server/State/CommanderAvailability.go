@@ -42,9 +42,6 @@ func MovementOwnedByCurrentPlayer(gameState GameState, movement MovementState) b
 }
 
 func CommanderMovementActiveAt(movement MovementState, now time.Time) bool {
-	if movement.Direction == 0 && movement.WaitSeconds > 0 {
-		return true
-	}
 	completion := CommanderMovementReleaseAt(movement)
 	return completion == nil || completion.IsZero() || completion.After(now)
 }
@@ -58,9 +55,6 @@ func CommanderMovementActiveAt(movement MovementState, now time.Time) bool {
 // pushed to that sighting plus the grace, so the commander stays busy until a
 // later reply drops the movement — bounded, so a stalled poll cannot pin him.
 func CommanderMovementReleaseAt(movement MovementState) *time.Time {
-	if movement.Direction == 0 && movement.WaitSeconds > 0 {
-		return nil
-	}
 	nominal := commanderMovementNominalEndAt(movement)
 	if nominal == nil {
 		return nil
@@ -78,6 +72,11 @@ func CommanderMovementReleaseAt(movement MovementState) *time.Time {
 // far as we can tell: the return time when known, else arrival plus the return
 // trip for an outbound leg, else the projected completion.
 func commanderMovementNominalEndAt(movement MovementState) *time.Time {
+	// Support with a regular commander occupies that commander through the
+	// wait and return trip, not forever when a later GAM omits the movement.
+	if movement.Direction == 0 && movement.WaitSeconds > 0 {
+		return StationMovementReleaseAt(movement)
+	}
 	if movement.ReturnsAt != nil && !movement.ReturnsAt.IsZero() {
 		nominal := movement.ReturnsAt.UTC()
 		return &nominal

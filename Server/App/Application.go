@@ -888,6 +888,7 @@ func (application *Application) playerSamplesRetentionPolicy() History.PlayerSam
 func (application *Application) registerCoreIntents() error {
 	for name, action := range map[string]Intent.Action{
 		"automation.safety.clear": application.clearAutomationSafetyLock,
+		"support.batch.guard":     application.guardSupportBatch,
 		"session.start":           ignoreArguments(application.Session.Start),
 		"session.stop":            ignoreArguments(application.Session.Stop),
 		"session.reconnect":       ignoreArguments(application.Session.Reconnect),

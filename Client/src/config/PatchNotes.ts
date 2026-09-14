@@ -57,6 +57,17 @@ export function sortPatchNoteItems(items: readonly PatchNoteItem[]): PatchNoteIt
 
 const PATCH_NOTES_RELEASES_UNSORTED: PatchNotesRelease[] = [
   {
+    version: '2.4.0',
+    subtitle: 'Upcoming: castle bird controls and reliable support',
+    items: [
+      { kind: 'added', text: 'Auto Bird castle rows can be clicked to pause or resume that castle without changing its settings or presets; right-click or use the timer to pause for a selected duration, with automatic resume and pauses preserved across restarts' },
+      { kind: 'added', text: 'Each Auto Bird castle has a resend button that clears only its cycle tracking and scans a fresh target and troop inventory; existing game movements continue and automation settings, schedules, and locks still apply' },
+      { kind: 'fixed', text: 'Expired support movements with regular commanders no longer remain cached indefinitely or prevent Auto Bird from retrying after its tracking list is cleared; active movements retain their wait, return trip, and commander settle grace' },
+      { kind: 'fixed', text: 'Support commands send at most 10 troop types per command, splitting larger fresh manifests into sequential acknowledged batches and stopping when a batch is rejected or its outcome is uncertain' },
+      { kind: 'fixed', text: 'Changing a castle pause or requesting a resend invalidates older Auto Bird target captures and prepared support commands, with pause and freshness checks before each batch' },
+    ],
+  },
+  {
     version: '2.4.0-beta.2',
     subtitle: 'Beta: Fortress, Booster, Tower Advisor and Bird presets',
     date: '2026-09-13',

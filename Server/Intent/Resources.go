@@ -127,6 +127,8 @@ func legacyClaimResource(
 		// concurrently, while an unqualified "khan-lane" claim covers every lane
 		// and lets the protection intents exclude all of them at once.
 		return accountKey("combat", "khan-lane", value)
+	case "auto-bird-control":
+		return accountKey("stationing", "auto-bird-control", value)
 	case "auto-bird-cycle":
 		// Each castle owns an independent Auto Bird cycle. The clear intent uses
 		// the wildcard form so it waits for every cycle without blocking other
