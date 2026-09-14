@@ -22,6 +22,7 @@ var (
 	ErrQueueFull         = errors.New("outbound lane queue is full")
 	ErrReset             = errors.New("outbound queue was reset")
 	ErrConnectionChanged = errors.New("game websocket connection changed before dispatch")
+	ErrCDSPaused         = errors.New("CDS troop dispatch is temporarily paused pending protocol review")
 )
 
 type SendFunc func(context.Context, []byte) error
@@ -112,6 +113,12 @@ func (router *Router) Send(ctx context.Context, payload []byte) error {
 	frame, err := Protocol.Decode(string(payload), Protocol.DirectionOutbound, time.Now().UTC())
 	if err != nil {
 		return fmt.Errorf("route outbound payload: %w", err)
+	}
+	// Temporary safety pause (2026-09-14): verify the current CDS payload before
+	// re-enabling stationing and Storm island returns. Reject every caller here
+	// before enqueueing so no CDS packet or successful movement is recorded.
+	if frame.Opcode == "cds" {
+		return ErrCDSPaused
 	}
 	lane := LaneCommand
 	if frame.Opcode == "cra" {
