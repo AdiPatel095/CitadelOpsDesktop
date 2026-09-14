@@ -1,7 +1,8 @@
 # Beta worker handover implementation status
 
-This is worker-side groundwork, **not an enabled account-switch feature**.
-Handover routes are disabled in the deployed/CLI composition. No runtime channel
+This implements the worker half of the gated account-switch feature; it is
+**not a deployment receipt**. Handover routes default off and require explicit
+`CITADEL_ENABLE_HANDOVER_TRANSPORT=true`. No runtime channel
 is changed by visiting the beta portal, loading this build, or calling the
 existing reconnect action.
 
@@ -18,7 +19,7 @@ existing reconnect action.
   content, unsupported schemas and mismatched operations. Failed stages are
   removed; existing destinations are never overwritten. Files use mode 0600,
   directories 0700, with file and directory synchronization before success.
-- Limits are 100,000 entries, 2 GiB of file content, a 32 MiB manifest and bounded
+- Limits are 100,000 entries, 16 GiB of file content, a 32 MiB manifest and bounded
   archive overhead. Oversized profiles fail closed. Capture currently requires
   Unix link-count metadata, matching hosted Linux workers; Windows is not an
   enabled profile-capture target.
@@ -27,7 +28,8 @@ existing reconnect action.
   dashboard access, waits for shutdown/profile release, and verifies the durable
   profile identity before acknowledging the stop. Retries bind to the same
   operation and exact configuration. Only the gated internal transfer transport
-  calls it over HTTP; no CLI/env/deployment setting enables that transport yet.
+  calls it over HTTP. Metadata preflight rejects known oversize or unsafe profiles
+  before source fencing, with a 256 MiB shutdown-growth margin.
 - Fences survive supervisor/process recreation. They block the retired runtime,
   aliases of its player profile, rebinds onto that profile, stale per-runtime
   control calls, and arbitrary higher-epoch reconciles. A verified, explicitly
@@ -61,9 +63,9 @@ existing reconnect action.
   different generations. Clean shutdown releases it only after account and
   shared-store shutdown; failed shutdown retains ownership until retry/exit.
   Rollback must retain this lease/adoption support once transfers are used.
-- Private transport schema v1 is available only to the explicit internal
-  `EnableHandoverTransport` composition used by integration tests. It registers
-  authenticated POST export/download/restore/activate routes under
+- Private transport schema v1 requires the explicit `EnableHandoverTransport`
+  composition or its opt-in CLI environment flag. It registers authenticated
+  POST preflight/export/download/restore/activate routes under
   `/orchestrator/v1/handovers/`. Every route requires a positive controller epoch
   and shares the full-request persisted controller fence. Capability is absent
   from ordinary status when disabled; disabled requests cannot mint an epoch.
@@ -83,31 +85,37 @@ existing reconnect action.
   corrupt journals fail startup. Status advertises `controlFenceSchema` and
   `controlEpoch`. `POST /orchestrator/v1/control-fence` claims ownership without
   changing any runtime, for the backend's all-cell takeover barrier.
+- Fenced reconciliation supports explicit `preserveRuntimes` IDs. It preserves
+  their current assignments without creating absent Apps, changing grants or
+  reviving stopped/fenced sources. Other siblings still reconcile normally.
+- Enabled status reports available profile-volume bytes for controller admission.
+  The controller requires two maximum-archive budgets free on both cells before
+  accepting a move and permits only one pending fleet transfer. This is an
+  admission check, not a filesystem quota or a guarantee against other writers.
 
 Controller fencing is backward-compatible only **before** its first positive
 epoch. It does not expire. Deploy support everywhere before enabling backend
 `HOSTED_CONTROL_FENCING=true`; afterward rollback must retain fencing support.
 Never delete/reset `Accounts/controller-fence.json` to make an old writer work.
-The backend still needs the complete handover executor before
-account switching can be activated. No deployed route exposes source archives.
+The paired backend executor must be deployed and explicitly enabled before
+account switching can be activated. Source archives remain private to workers.
 
 ## Still required before activation
 
 1. Deploy and verify the backend journal/CAS and controller fence support across
    all replicas and cells; target capacity reservation and stale-grant rejection.
-2. Review and integrate the gated bounded archive transport with the complete
-   executor before adding any deployment enablement. Backend-to-worker real
-   offline HTTP integration tests cover forward/reverse transfer, but do not
-   prove production placement commits or game readiness.
-3. Integrate the internal restore/activation primitives with backend phase CAS,
-   an authenticated transfer transport, and immutable build/schema compatibility
-   checks. These primitives are tested locally, not a deployed transfer API.
+2. Review the paired backend executor and opt-in transport. Real offline HTTP
+   integration covers complete profile preservation and executor placement CAS,
+   activation, settings and credential installation while parked. It does not
+   prove live game readiness.
+3. Deploy exact immutable stable/beta build manifests with an explicitly reviewed
+   profile-compatibility attestation; archive schema alone is insufficient.
 4. Placement/grant transfer at a higher epoch, target startup and exact readiness
    checks (login/socket, generations, config, checkpoints, metrics, no failure).
 5. End-to-end reverse execution using the latest beta state. Local synthetic
    stable/beta round trips cover generation adoption, retained history, restarts,
    stale requests and interrupted restores; live reverse readiness still needs
-   the backend executor, publications and non-spending rehearsals.
+   real worker publications and a controlled live rehearsal.
 6. Server-enforced frontend/channel compatibility and authenticated switch UI.
 7. Reviewed compatible stable and beta worker builds through Cloud Build, source
    and artifact provenance, rollback receipts, dedicated beta capacity, and

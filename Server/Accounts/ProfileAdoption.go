@@ -52,7 +52,7 @@ func validateTargetProfile(profile TargetProfile) error {
 		profile.Directory != "Accounts/transfer-"+i.OperationID || profile.Receipt.SchemaVersion != 1 ||
 		profile.Directory == "Accounts/"+i.RuntimeID ||
 		!validConfigurationDigest(profile.Receipt.SHA256) || profile.Receipt.ProfileID == "" || len(profile.Receipt.ProfileID) > 128 ||
-		profile.Receipt.Files < 1 || profile.Receipt.Files > 100000 || profile.Receipt.Bytes < 1 || profile.Receipt.Bytes > 2<<30 {
+		profile.Receipt.Files < 1 || profile.Receipt.Files > 100000 || profile.Receipt.Bytes < 1 || profile.Receipt.Bytes > 16<<30 {
 		return errors.New("invalid target profile receipt or placement")
 	}
 	if profile.State != "reserved" && profile.State != "restored" && profile.State != "active" {

@@ -1732,7 +1732,7 @@ func (engine *Engine) fail(receipt Receipt, err error) Receipt {
 	if Outbound.IsIndeterminate(err) && (receipt.Plan == nil || receipt.Plan.Effect != EffectRead) {
 		receipt.Status = StatusIndeterminate
 		receipt.Phase = EffectPhaseReconciliationRequired
-	} else if errors.Is(err, context.Canceled) {
+	} else if errors.Is(err, context.Canceled) || errors.Is(err, Outbound.ErrCDSPaused) {
 		receipt.Status = StatusCancelled
 	}
 	receipt = engine.withFailure(receipt, err)
@@ -1743,6 +1743,10 @@ func (engine *Engine) fail(receipt Receipt, err error) Receipt {
 }
 
 func (engine *Engine) failAfterProgress(receipt Receipt, err error, completedSteps map[string]int) Receipt {
+	// An operator pause must not trigger failure fallbacks such as opening gates.
+	if errors.Is(err, Outbound.ErrCDSPaused) {
+		return engine.fail(receipt, err)
+	}
 	if Outbound.IsIndeterminate(err) || receipt.Plan == nil || receipt.Plan.Effect == EffectRead {
 		return engine.fail(receipt, err)
 	}

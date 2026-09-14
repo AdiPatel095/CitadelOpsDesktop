@@ -27,7 +27,7 @@ const (
 	profileArchiveSchema         = 1
 	profileArchiveManifest       = "citadelops-profile-manifest.json"
 	maxProfileFiles              = 100000
-	maxProfileBytes        int64 = 2 << 30
+	maxProfileBytes        int64 = 16 << 30
 	maxManifestBytes       int64 = 32 << 20
 	maxArchiveBytes        int64 = maxProfileBytes + maxManifestBytes + (128 << 20)
 	// MaxProfileArchiveBytes is the shared bound for private transfer transports.
@@ -131,6 +131,48 @@ func archiveRegularFile(info fs.FileInfo) bool {
 	}
 	links := value.FieldByName("Nlink")
 	return links.IsValid() && links.CanUint() && links.Uint() == 1
+}
+
+// InspectProfileArchive rejects known size/path problems before a live source
+// is stopped. It is only admission evidence: export revalidates and hashes the
+// flushed profile under its exclusive lease. Leave growth margin for shutdown.
+func InspectProfileArchive(ctx context.Context, directory string) error {
+	var count int
+	var size int64
+	return filepath.WalkDir(directory, func(full string, entry fs.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		relative, err := filepath.Rel(directory, full)
+		if err != nil {
+			return err
+		}
+		name := filepath.ToSlash(relative)
+		if name == "." || name == "Runtime/Profile.lock" {
+			return nil
+		}
+		if !archiveNameValid(name) {
+			return errors.New("unsupported profile path")
+		}
+		info, err := entry.Info()
+		if err != nil {
+			return err
+		}
+		count++
+		if !info.IsDir() {
+			if !archiveRegularFile(info) {
+				return errors.New("unsupported profile file")
+			}
+			size += info.Size()
+		}
+		if count > maxProfileFiles-1024 || size > maxProfileBytes-(256<<20) {
+			return errors.New("profile exceeds safe transfer admission budget")
+		}
+		return nil
+	})
 }
 
 func profileManifest(ctx context.Context, directory string, root *os.Root, identity ProfileTransferIdentity, profileID string) (profileArchiveDocument, error) {
