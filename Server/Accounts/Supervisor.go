@@ -115,6 +115,7 @@ type Supervisor struct {
 	dataDirs         map[string]AccountID
 	sourceFences     map[AccountID]SourceProfileFence
 	profileAdoptions profileAdoptionDocument
+	localProfiles    map[AccountID]LocalProfileBinding
 	closed           bool
 	addWG            sync.WaitGroup
 
@@ -170,6 +171,10 @@ func New(ctx context.Context, config Config) (*Supervisor, error) {
 	profileAdoptions, err := loadProfileAdoptions(dataRoot)
 	if err != nil {
 		return nil, fmt.Errorf("load durable profile adoptions: %w", err)
+	}
+	localProfiles, err := loadLocalProfileBindings(dataRoot)
+	if err != nil {
+		return nil, fmt.Errorf("load local profile bindings: %w", err)
 	}
 	cacheDir := strings.TrimSpace(config.GameDataCacheDir)
 	if cacheDir == "" {
@@ -248,6 +253,7 @@ func New(ctx context.Context, config Config) (*Supervisor, error) {
 		pending: map[AccountID]struct{}{}, dataDirs: map[string]AccountID{},
 		sourceFences:     sourceFences,
 		profileAdoptions: profileAdoptions,
+		localProfiles:    localProfiles,
 		playerBindings:   bindings, playerBindingsPath: bindingsPath,
 		identityOf: func(application *App.Application) (string, int64, bool) {
 			if application == nil || application.State == nil {
@@ -673,6 +679,10 @@ func (supervisor *Supervisor) rebindSweep() {
 	}
 	candidates := make([]candidate, 0, len(supervisor.accounts))
 	for id, runtime := range supervisor.accounts {
+		if _, local := supervisor.localProfiles[id]; local {
+			// Each cell retains its own profile; switching never rebinds/merges it.
+			continue
+		}
 		if _, imported := supervisor.currentProfileLocked(id); imported {
 			// Imported generations must never merge with an older player corpus.
 			continue
@@ -788,11 +798,14 @@ func (supervisor *Supervisor) accountDataDir(id AccountID, requested string) (st
 	if dataDir == "" {
 		supervisor.mu.RLock()
 		profile, imported := supervisor.currentProfileLocked(id)
+		local, locallyBound := supervisor.localProfiles[id]
 		supervisor.mu.RUnlock()
 		// Profiles are keyed by game identity once it is known: a bound
 		// runtime lands on the shared player directory, an unbound one stages
 		// under its runtime ID until the first login reveals the player.
-		if imported {
+		if locallyBound {
+			dataDir = filepath.Join(supervisor.config.DataRoot, filepath.FromSlash(local.Directory))
+		} else if imported {
 			dataDir = filepath.Join(supervisor.config.DataRoot, filepath.FromSlash(profile.Directory))
 		} else if key := supervisor.playerBindingFor(string(id)); key != "" {
 			dataDir = filepath.Join(supervisor.config.DataRoot, playerDirsName, key)

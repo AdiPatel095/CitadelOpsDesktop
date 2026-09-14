@@ -155,10 +155,11 @@ const (
 )
 
 type RuntimeStatus struct {
-	RuntimeID      string    `json:"runtimeId"`
-	TenantID       string    `json:"tenantId"`
-	PlacementEpoch uint64    `json:"placementEpoch"`
-	LeaseExpiresAt time.Time `json:"leaseExpiresAt"`
+	ActiveSafetyLock bool      `json:"activeSafetyLock"`
+	RuntimeID        string    `json:"runtimeId"`
+	TenantID         string    `json:"tenantId"`
+	PlacementEpoch   uint64    `json:"placementEpoch"`
+	LeaseExpiresAt   time.Time `json:"leaseExpiresAt"`
 	// PlacementLease is "active" while the lease is current and "lapsed" once
 	// it expired without renewal. The runtime keeps running either way.
 	PlacementLease       string `json:"placementLease"`
@@ -202,6 +203,7 @@ type RuntimeStatus struct {
 }
 
 type CellStatus struct {
+	SettingsSwitchSchema  int             `json:"settingsSwitchSchema,omitempty"`
 	ProfileAvailableBytes uint64          `json:"profileAvailableBytes,omitempty"`
 	HandoverSchema        int             `json:"handoverSchema,omitempty"`
 	ControlFenceSchema    int             `json:"controlFenceSchema"`
@@ -337,6 +339,9 @@ func (orchestrator *Orchestrator) Handler() http.Handler {
 		mux.HandleFunc("POST /orchestrator/v1/handovers/download", orchestrator.handleProfileDownload)
 		mux.HandleFunc("POST /orchestrator/v1/handovers/restore", orchestrator.handleProfileRestore)
 		mux.HandleFunc("POST /orchestrator/v1/handovers/activate", orchestrator.handleProfileActivate)
+		mux.HandleFunc("POST /orchestrator/v1/handovers/local/stop", orchestrator.handleLocalProfileStop)
+		mux.HandleFunc("POST /orchestrator/v1/handovers/local/prepare", orchestrator.handleLocalProfilePrepare)
+		mux.HandleFunc("POST /orchestrator/v1/handovers/local/activate", orchestrator.handleLocalProfileActivate)
 	}
 	mux.HandleFunc("GET /orchestrator/v1/status", orchestrator.handleStatus)
 	mux.HandleFunc("GET /orchestrator/v1/events", orchestrator.handleEvents)
@@ -1113,6 +1118,9 @@ func (orchestrator *Orchestrator) Status() CellStatus {
 		if applicationExists && application != nil {
 			status.Lifecycle = "running"
 			if application.State != nil {
+				for _, automation := range application.State.ReadOnlyView().Automations {
+					status.ActiveSafetyLock = status.ActiveSafetyLock || automation.SafetyLock.Active(now)
+				}
 				session := application.State.Session()
 				status.SessionState = session.Status
 				status.LoggedIn = session.LoggedIn
@@ -1175,6 +1183,7 @@ func (orchestrator *Orchestrator) Status() CellStatus {
 		}
 	}
 	return CellStatus{
+		SettingsSwitchSchema:  orchestrator.handoverSchema(),
 		ProfileAvailableBytes: profileAvailable,
 		HandoverSchema:        orchestrator.handoverSchema(),
 		ControlFenceSchema:    1, ControlEpoch: orchestrator.controlEpoch.Load(),

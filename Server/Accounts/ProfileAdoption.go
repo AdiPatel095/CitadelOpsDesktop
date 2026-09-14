@@ -169,7 +169,27 @@ func (s *Supervisor) currentProfileLocked(id AccountID) (TargetProfile, bool) {
 
 func (s *Supervisor) reservedProfileSlotsLocked(exclude AccountID) int {
 	count := 0
+	for id := range s.localProfiles {
+		if id == exclude {
+			continue
+		}
+		if _, ok := s.accounts[id]; ok {
+			continue
+		}
+		if _, ok := s.pending[id]; ok {
+			continue
+		}
+		if _, ok := s.stopping[id]; ok {
+			continue
+		}
+		if _, active := s.activeLocalProfileLocked(id); active || s.localProfiles[id].State == "reserved" {
+			count++
+		}
+	}
 	for id := range s.profileAdoptions.Current {
+		if _, local := s.localProfiles[id]; local {
+			continue
+		}
 		if id == exclude {
 			continue
 		}
@@ -222,6 +242,10 @@ func (s *Supervisor) activeProfileLocked(id AccountID) (TargetProfile, bool) {
 func (s *Supervisor) runtimeHandoverFenced(id AccountID) bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+	if _, local := s.localProfiles[id]; local {
+		_, active := s.activeLocalProfileLocked(id)
+		return !active
+	}
 	if _, active := s.activeProfileLocked(id); active {
 		return false
 	}
@@ -231,6 +255,9 @@ func (s *Supervisor) runtimeHandoverFenced(id AccountID) bool {
 }
 
 func (s *Supervisor) validateAdoptedAssignmentLocked(id AccountID, assignment *RuntimeAssignment) error {
+	if _, local := s.localProfiles[id]; local {
+		return s.validateLocalAssignmentLocked(id, assignment)
+	}
 	profile, imported := s.currentProfileLocked(id)
 	if !imported {
 		return nil
@@ -394,6 +421,9 @@ func (o *Orchestrator) RestoreTargetProfile(ctx context.Context, receipt Runtime
 // Caller holds reconcileMu, rebindMu and supervisor.mu.
 func (o *Orchestrator) reserveTargetProfileLocked(id AccountID, profile TargetProfile) error {
 	s := o.supervisor
+	if _, local := s.localProfiles[id]; local {
+		return errors.New("settings-only profile cannot import an archive")
+	}
 	if s.closed {
 		return errors.New("supervisor is closed")
 	}
