@@ -1,5 +1,35 @@
 # Beta worker handover implementation status
 
+## Settings-only switching (current model)
+
+Stable and beta remain separate VMs with separate persistent profile disks.
+New channel switches use `settings-only`: stop/fence the source, reserve the
+destination's existing local profile (create one only on its first visit),
+commit the placement, and start the destination parked until it acknowledges
+the latest canonical settings revision and digest. Settings are never seeded
+from the destination's older local revision. The account, license, canonical
+database and cloud history remain shared. Local logs, operation databases,
+history and game-state files do NOT move or merge between the two VMs.
+
+`Accounts/local-profile-bindings.json` retains the per-cell directory and its
+durable ProfileID across returns and restarts. The source fence and exact next
+epoch remain mandatory. A switch waits for active rejection safety locks to
+expire rather than allowing a different local profile to bypass them. Source
+and target builds advertise `settingsSwitchSchema: 1`; no automatic archive
+fallback is used for new requests. Readiness requires fresh game state, exact
+settings and published canonical metrics/checkpoints; repeated polling does
+not reset an already-current worker publication state.
+
+The archive implementation below is retained ONLY to safely finish operations
+already accepted under the old protocol. Do not reset those journals or
+overwrite profiles. Amos's already-restored beta profile remains on beta, and
+his stable profile remains on stable. Rollback after activating a local binding
+must retain settings-only binding and fencing support.
+
+This document describes implementation, not a live deployment receipt.
+
+## Legacy full-profile transfer
+
 This implements the worker half of the gated account-switch feature; it is
 **not a deployment receipt**. Handover routes default off and require explicit
 `CITADEL_ENABLE_HANDOVER_TRANSPORT=true`. No runtime channel
