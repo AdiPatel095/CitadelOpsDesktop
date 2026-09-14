@@ -259,6 +259,14 @@ func NewOrchestrator(config OrchestratorConfig) (*Orchestrator, error) {
 	if config.Supervisor == nil || config.DashboardAuth == nil {
 		return nil, fmt.Errorf("orchestrator needs a supervisor and dashboard authenticator")
 	}
+	config.Supervisor.mu.RLock()
+	for _, profile := range config.Supervisor.profileAdoptions.Operations {
+		if profile.TargetCellID != string(cellID) {
+			config.Supervisor.mu.RUnlock()
+			return nil, errors.New("profile adoption journal belongs to another cell")
+		}
+	}
+	config.Supervisor.mu.RUnlock()
 	drainTimeout := config.DrainTimeout
 	if drainTimeout <= 0 {
 		drainTimeout = defaultRuntimeDrainTimeout
@@ -335,7 +343,7 @@ func (orchestrator *Orchestrator) Handler() http.Handler {
 		}
 		parts := strings.Split(strings.Trim(request.URL.Path, "/"), "/")
 		if len(parts) >= 5 && parts[0] == "orchestrator" && parts[1] == "v1" && parts[2] == "runtimes" {
-			if _, fenced := orchestrator.supervisor.sourceFence(AccountID(parts[3])); fenced {
+			if orchestrator.supervisor.runtimeHandoverFenced(AccountID(parts[3])) {
 				writeControlError(writer, http.StatusLocked, "runtime_handover_fenced")
 				return
 			}
@@ -398,8 +406,11 @@ func (orchestrator *Orchestrator) Reconcile(ctx context.Context, desired Reconci
 		return CellStatus{}, &orchestratorError{status: http.StatusConflict, code: "stale_desired_revision", err: fmt.Errorf("desired revision %d is older than %d", normalized.Revision, currentRevision)}
 	}
 	desiredByID := assignmentsByID(normalized.Runtimes)
-	for id := range desiredByID {
-		if _, fenced := orchestrator.supervisor.sourceFence(id); fenced {
+	for id, assignment := range desiredByID {
+		orchestrator.supervisor.mu.RLock()
+		adoptionErr := orchestrator.supervisor.validateAdoptedAssignmentLocked(id, &assignment)
+		orchestrator.supervisor.mu.RUnlock()
+		if adoptionErr != nil || orchestrator.supervisor.runtimeHandoverFenced(id) {
 			return CellStatus{}, &orchestratorError{status: http.StatusLocked, code: "runtime_handover_fenced", err: errors.New("runtime is durably fenced for handover")}
 		}
 	}
@@ -427,6 +438,7 @@ func (orchestrator *Orchestrator) Reconcile(ctx context.Context, desired Reconci
 		}
 		if _, err := orchestrator.supervisor.AddAccount(ctx, AccountConfig{
 			ID: string(id), BackgroundOnly: true, StartSession: false,
+			handoverAssignment:           &assignment,
 			ControlConfigurationRequired: assignment.DesiredConfigurationRevision > 0,
 			ControlConfigurationReady:    false,
 			PrivateMetricsPlacement:      orchestrator.privateMetricsPlacement(assignment, normalized.Revision),

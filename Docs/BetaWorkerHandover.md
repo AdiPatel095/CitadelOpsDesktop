@@ -28,8 +28,37 @@ the beta portal, loading this build, or calling the existing reconnect action.
   operation and exact configuration. It is not exposed over HTTP yet.
 - Fences survive supervisor/process recreation. They block the retired runtime,
   aliases of its player profile, rebinds onto that profile, stale per-runtime
-  control calls, and higher-epoch reconciles. Corrupt/non-canonical fence journals
-  fail startup rather than silently forgetting source ownership.
+  control calls, and arbitrary higher-epoch reconciles. A verified, explicitly
+  activated imported generation can supersede runtime ownership; retired
+  directories remain permanently fenced. Corrupt/non-canonical journals fail
+  startup rather than silently forgetting ownership.
+- `Accounts.RestoreTargetProfile` reserves capacity and fences the target before
+  accepting an archive. It restores into a newly-created private stage and
+  verifies the exact receipt, durable ProfileID and every pinned canonical
+  configuration section without opening/migrating the settings store. Local
+  settings revision and unknown/local sections are preserved byte-for-byte at
+  restore; they are not substituted for the backend's canonical revision.
+- Every incoming operation gets a new `Accounts/transfer-<operation>` directory.
+  Atomic rename plus file/directory synchronization precedes the durable
+  `restored` receipt. A retry after an interrupted rename re-hashes the existing
+  generation; it never copies retry bytes over it. Ordinary accounts cannot
+  consume reserved capacity or open/alias/rebind onto these directories.
+- `Accounts.ActivateTargetProfile` only publishes the durable profile pointer.
+  Its trusted caller must first commit the backend target placement. Activation
+  itself creates no App, grants, login or game connection. Reconcile must then
+  name the exact target epoch and tenant, and configuration/login follow the
+  existing parked-runtime acknowledgement gates. Missing durable ProfileID
+  fails closed instead of creating a fresh profile after restart.
+- Reverse transfers use a new operation and the latest stopped profile. The
+  adoption journal retains every generation and retired directory. Old source
+  stop requests, activation retries after departure, older epochs and arbitrary
+  epoch increases cannot resurrect or stop a different generation. Imported
+  profiles bypass player-directory rebind/merge entirely.
+- A supervisor holds an exclusive process-root lease before reading ownership
+  journals. Per-profile leases alone cannot prevent two supervisors selecting
+  different generations. Clean shutdown releases it only after account and
+  shared-store shutdown; failed shutdown retains ownership until retry/exit.
+  Rollback must retain this lease/adoption support once transfers are used.
 - Controller fencing protocol v1: authenticated mutations carrying canonical
   `X-Citadel-Control-Epoch` values are serialized under an interprocess file
   lock. The cell persists its high-water epoch with atomic rename/fsync before
@@ -42,7 +71,7 @@ Controller fencing is backward-compatible only **before** its first positive
 epoch. It does not expire. Deploy support everywhere before enabling backend
 `HOSTED_CONTROL_FENCING=true`; afterward rollback must retain fencing support.
 Never delete/reset `Accounts/controller-fence.json` to make an old writer work.
-The backend still needs the complete handover executor/target adoption before
+The backend still needs the complete handover executor before
 account switching can be activated. These routes do not expose source archives.
 
 ## Still required before activation
@@ -51,13 +80,15 @@ account switching can be activated. These routes do not expose source archives.
    all replicas and cells; target capacity reservation and stale-grant rejection.
 2. Authenticated, bounded archive delivery bound to the persisted stop receipt.
    Archive bytes must not enter public storage, logs or portal responses.
-3. Target schema/identity/configuration verification, atomic adoption and the
-   correct player-directory binding. Restore currently creates only a stage.
+3. Integrate the internal restore/activation primitives with backend phase CAS,
+   an authenticated transfer transport, and immutable build/schema compatibility
+   checks. These primitives are tested locally, not a deployed transfer API.
 4. Placement/grant transfer at a higher epoch, target startup and exact readiness
    checks (login/socket, generations, config, checkpoints, metrics, no failure).
-5. An explicit reverse protocol using the latest beta state. These source fences
-   intentionally have no generic unlock or timeout expiry; restoring an old
-   backup or merely increasing an epoch must not restart an obsolete source.
+5. End-to-end reverse execution using the latest beta state. Local synthetic
+   stable/beta round trips cover generation adoption, retained history, restarts,
+   stale requests and interrupted restores; live reverse readiness still needs
+   the backend executor, publications and non-spending rehearsals.
 6. Server-enforced frontend/channel compatibility and authenticated switch UI.
 7. Reviewed compatible stable and beta worker builds through Cloud Build, source
    and artifact provenance, rollback receipts, dedicated beta capacity, and
@@ -67,3 +98,15 @@ The canonical account, ownership, license, history and settings row/revision
 must remain the same. A source fence is not proof of a completed transfer, and
 an archive receipt is not proof that a target may start. Do not expose the source
 stop method until the complete executor and recovery path are reviewed.
+
+## Operational recovery boundaries
+
+There is no unlock, expiry, overwrite or automatic deletion of old profiles.
+`Accounts/profile-adoptions.json` is a bounded schema-v1 journal containing only
+identities, receipts, generation pointers and retired paths. Reservations remain
+closed after failure and require an exact retry; they do not time out into an
+empty profile. A disk-full journal fails closed. Interrupted processes can leave
+private `.profile-transfer-*` stages; do not delete them during an unresolved
+handover. The executor/deployment gate must reserve disk space and define audited
+orphan-stage cleanup before activation. The source/target archive schema alone
+does not prove a future runtime data schema is downgrade-compatible.
