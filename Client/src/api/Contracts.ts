@@ -847,11 +847,13 @@ export interface EquipmentOptimizeRequest {
 	leaderId: number;
 	combatMode: 'pvp' | 'pve';
 	priorities: EquipmentPriorityV2[];
+	resultCount?: number;
 }
 
 export interface EquipmentEffectTotalV2 {
 	definitionId: number;
 	value: number;
+	capId?: number;
 	cap?: number;
 	capped: boolean;
 }
@@ -867,8 +869,10 @@ export interface EquipmentOptimizeResponse {
 	leaderKind: 'commander' | 'castellan';
 	leaderId: number;
 	stateRevision: number;
+	snapshotFingerprint: string;
 	current: EquipmentLoadoutV2;
 	proposed: EquipmentLoadoutV2;
+	alternatives: EquipmentLoadoutV2[];
 	candidates: {
 		equipmentBySlot: Record<string, number>;
 		gems: number;

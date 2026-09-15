@@ -103,6 +103,9 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterAction("equipment.verify_coin_reserve", application.verifyEquipmentCoinReserve); err != nil {
 		return err
 	}
+	if err := application.Intents.RegisterAction("equipment.reconfigure.verify", application.verifyEquipmentReconfigure); err != nil {
+		return err
+	}
 	if err := application.Intents.RegisterAction("alliance.verify_inspection", application.verifyAllianceInspection); err != nil {
 		return err
 	}
@@ -400,7 +403,7 @@ func (application *Application) registerGameIntents() error {
 		},
 		{
 			Name: "equipment.reconfigure", Description: "Apply a validated optimizer loadout to one commander or castellan", Effect: Intent.EffectWrite,
-			Planner: planEquipmentReconfigure,
+			Planner: planEquipmentReconfigure, ReadSet: equipmentReconfigureReadSet,
 		},
 		{
 			Name: "equipment.event.apply", Description: "Replace a commander's base equipment with one coherent owned event set", Effect: Intent.EffectWrite,

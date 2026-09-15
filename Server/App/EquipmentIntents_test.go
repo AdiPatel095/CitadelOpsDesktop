@@ -3,6 +3,8 @@ package App
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"maps"
 	"slices"
 	"strconv"
 	"strings"
@@ -10,9 +12,17 @@ import (
 	"time"
 
 	"CitadelDesktop/Server/Configuration"
+	EquipmentDomain "CitadelDesktop/Server/Equipment"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
 )
+
+type equipmentTestCommanderHolds struct{ held State.CommanderID }
+
+func (holds equipmentTestCommanderHolds) HoldCommanders([]State.CommanderID, time.Time) {}
+func (holds equipmentTestCommanderHolds) CommanderHeldAt(id State.CommanderID, _ time.Time) bool {
+	return id == holds.held
+}
 
 func TestPlanEquipmentReconfigureUsesCanonicalLeaderAndInstanceIDs(t *testing.T) {
 	gameState := State.NewGameState()
@@ -44,7 +54,7 @@ func TestPlanEquipmentReconfigureUsesCanonicalLeaderAndInstanceIDs(t *testing.T)
 	for _, step := range plan.Steps {
 		opcodes = append(opcodes, step.Opcode)
 	}
-	want := []string{"eeq", "eeq", "eeq", "eeq", "eeq", "ege", "eeq", "eeq", "eeq", "eeq", "eeq", "bge", "ggm", "gei", "gli"}
+	want := []string{"eeq", "eeq", "eeq", "eeq", "eeq", "ege", "eeq", "eeq", "eeq", "eeq", "eeq", "bge", "ggm", "gei", "gli", ""}
 	if len(opcodes) != len(want) {
 		t.Fatalf("opcodes = %#v", opcodes)
 	}
@@ -52,6 +62,9 @@ func TestPlanEquipmentReconfigureUsesCanonicalLeaderAndInstanceIDs(t *testing.T)
 		if opcodes[index] != want[index] {
 			t.Fatalf("opcode %d = %q, want %q (%#v)", index, opcodes[index], want[index], opcodes)
 		}
+	}
+	if action := plan.Steps[len(plan.Steps)-1].Action; action != "equipment.reconfigure.verify" {
+		t.Fatalf("final action = %q", action)
 	}
 }
 
@@ -72,13 +85,16 @@ func TestPlanEquipmentReconfigureSkipsMatchingEquipment(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 3 {
+	if len(plan.Steps) != 4 {
 		t.Fatalf("steps = %#v", plan.Steps)
 	}
 	for index, opcode := range []string{"ggm", "gei", "gli"} {
 		if plan.Steps[index].Opcode != opcode {
 			t.Fatalf("opcode %d = %q, want %q", index, plan.Steps[index].Opcode, opcode)
 		}
+	}
+	if plan.Steps[3].Action != "equipment.reconfigure.verify" {
+		t.Fatalf("final action = %q", plan.Steps[3].Action)
 	}
 }
 
@@ -101,13 +117,16 @@ func TestPlanEquipmentReconfigureDetachesGemWithoutRemountingRetainedEquipment(t
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 5 {
+	if len(plan.Steps) != 6 {
 		t.Fatalf("steps = %#v", plan.Steps)
 	}
 	for index, opcode := range []string{"ege", "bge", "ggm", "gei", "gli"} {
 		if plan.Steps[index].Opcode != opcode {
 			t.Fatalf("opcode %d = %q, want %q", index, plan.Steps[index].Opcode, opcode)
 		}
+	}
+	if plan.Steps[5].Action != "equipment.reconfigure.verify" {
+		t.Fatalf("final action = %q", plan.Steps[5].Action)
 	}
 }
 
@@ -135,7 +154,7 @@ func TestPlanEquipmentReconfigureTemporarilyClearsRetainedSlotForAnotherGemCarri
 	for _, step := range plan.Steps {
 		opcodes = append(opcodes, step.Opcode)
 	}
-	want := []string{"eeq", "eeq", "ege", "eeq", "eeq", "ege", "eeq", "eeq", "bge", "ggm", "gei", "gli"}
+	want := []string{"eeq", "eeq", "ege", "eeq", "eeq", "ege", "eeq", "eeq", "bge", "ggm", "gei", "gli", ""}
 	if len(opcodes) != len(want) {
 		t.Fatalf("opcodes = %#v", opcodes)
 	}
@@ -143,6 +162,83 @@ func TestPlanEquipmentReconfigureTemporarilyClearsRetainedSlotForAnotherGemCarri
 		if opcodes[index] != opcode {
 			t.Fatalf("opcode %d = %q, want %q (%#v)", index, opcodes[index], opcode, opcodes)
 		}
+	}
+}
+
+func TestPlanEquipmentReconfigureFingerprintIgnoresUnrelatedAndRejectsRelevantChange(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Player.ID = 44
+	leader := State.CommanderState{ID: 0, Available: true, Equipment: map[string]State.EquipmentInstanceID{}, Gems: map[string]State.GemInstanceID{}}
+	for slot := 1; slot <= 4; slot++ {
+		id := State.EquipmentInstanceID(100 + slot)
+		leader.Equipment[strconv.Itoa(slot)] = id
+		gameState.Inventory.Equipment[id] = State.EquipmentInstance{ID: id, Slot: slot, TypeID: 2, WearerKind: "commander", WearerID: 0, Effects: State.EquipmentEffects{{DefinitionID: 9001, Values: []float64{10}}}}
+	}
+	gameState.Commanders[0] = leader
+	fingerprint, err := EquipmentDomain.SnapshotFingerprint(gameState, nil, "commander", 0, "pvp")
+	if err != nil {
+		t.Fatal(err)
+	}
+	arguments, _ := json.Marshal(map[string]any{
+		"leaderKind": "commander", "leaderId": 0, "combatMode": "pvp", "snapshotFingerprint": fingerprint,
+		"equipment": leader.Equipment, "gems": map[string]State.GemInstanceID{},
+	})
+	unrelated := gameState
+	unrelated.Revision++
+	unrelated.Player.Level++
+	if _, err := planEquipmentReconfigure(context.Background(), Intent.PlanningContext{State: unrelated}, arguments); err != nil {
+		t.Fatalf("unrelated update invalidated preview: %v", err)
+	}
+	relevant := gameState
+	relevant.Inventory.Equipment = maps.Clone(gameState.Inventory.Equipment)
+	item := relevant.Inventory.Equipment[101]
+	item.Level++
+	relevant.Inventory.Equipment[101] = item
+	if _, err := planEquipmentReconfigure(context.Background(), Intent.PlanningContext{State: relevant}, arguments); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("relevant update error = %v, want stale plan", err)
+	}
+}
+
+func TestPlanEquipmentReconfigureRejectsReservedCommander(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Commanders[7] = State.CommanderState{ID: 7, Available: true, Equipment: map[string]State.EquipmentInstanceID{}, Gems: map[string]State.GemInstanceID{}}
+	_, err := planEquipmentReconfigure(context.Background(), Intent.PlanningContext{
+		State: gameState, CommanderHolds: equipmentTestCommanderHolds{held: 7},
+	}, json.RawMessage(`{"leaderKind":"commander","leaderId":7,"equipment":{},"gems":{}}`))
+	if err == nil || !strings.Contains(err.Error(), "travelling or reserved") {
+		t.Fatalf("reserved commander error = %v", err)
+	}
+}
+
+func TestVerifyEquipmentReconfigureAcceptsNormalGemReidentificationAndRejectsMismatch(t *testing.T) {
+	gameState := State.NewGameState()
+	leader := State.CommanderState{ID: 0, Available: true, Equipment: map[string]State.EquipmentInstanceID{}, Gems: map[string]State.GemInstanceID{"1": -999}}
+	for slot := 1; slot <= 4; slot++ {
+		id := State.EquipmentInstanceID(100 + slot)
+		leader.Equipment[strconv.Itoa(slot)] = id
+		gameState.Inventory.Equipment[id] = State.EquipmentInstance{ID: id, Slot: slot, TypeID: 2, WearerKind: "commander", WearerID: 0}
+	}
+	gameState.Commanders[0] = leader
+	gameState.Inventory.Gems[-999] = State.GemInstance{ID: -999, DefinitionID: 55, EquipmentInstanceID: 101, WearerKind: "commander", WearerID: 0}
+	application := &Application{State: State.NewStore(gameState)}
+	arguments, _ := json.Marshal(equipmentReconfigureVerification{
+		LeaderKind: "commander", LeaderID: 0, Equipment: leader.Equipment,
+		Gems: map[string]equipmentReconfigureGemVerification{"1": {InstanceID: -501, DefinitionID: 55, Normal: true}},
+	})
+	if err := application.verifyEquipmentReconfigure(context.Background(), arguments); err != nil {
+		t.Fatalf("normal gem reidentification failed: %v", err)
+	}
+	_, err := application.State.Apply(func(state *State.GameState) ([]string, bool, error) {
+		commander := state.Commanders[0]
+		commander.Equipment["1"] = 102
+		state.Commanders[0] = commander
+		return []string{"equipment"}, true, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := application.verifyEquipmentReconfigure(context.Background(), arguments); err == nil {
+		t.Fatal("mismatched authoritative state unexpectedly verified")
 	}
 }
 
