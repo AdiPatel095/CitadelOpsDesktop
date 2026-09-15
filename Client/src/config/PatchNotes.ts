@@ -57,6 +57,19 @@ export function sortPatchNoteItems(items: readonly PatchNoteItem[]): PatchNoteIt
 
 const PATCH_NOTES_RELEASES_UNSORTED: PatchNotesRelease[] = [
   {
+    version: '2.4.0-beta.3',
+    subtitle: 'Beta: safer upkeep, confirmed boosts, and equipment choices',
+    date: '2026-09-15',
+    items: [
+      { kind: 'added', text: 'Equipment Reconfigure returns up to 10 ranked, distinct loadouts for one selected commander or castellan, keeps generated choices available for immediate comparison, and applies only the explicitly selected result' },
+      { kind: 'fixed', text: 'Auto Buyer maintains the type-8 feast strictly above its saved duration floor from the currently focused eligible castle, rechecking its identity, food, reserves, timer, and resources before any sequential purchase' },
+      { kind: 'fixed', text: 'Auto Buyer renews all supported overseers and specialists one week at a time at or below their saved duration floors, with validated ruby maximums, fresh balance and timer guards, durable no-replay recovery, and visible per-item outcomes' },
+      { kind: 'fixed', text: 'Auto Booster confirms the daily fortress-speed boost from occurrence-bound status even when notification and empty acknowledgement arrive in either order, preserves event expiry, and prevents repeat spending for the same occurrence' },
+      { kind: 'fixed', text: 'Equipment previews remain usable across unrelated live updates, identify stale results when relevant inventory changes, show meaningful item and grouped-stat comparisons, and reject obsolete or repeated apply requests' },
+      { kind: 'security', text: 'Premium automation revalidates current-session resource authority, prices, reserves, settings, timers, and occurrence state after queue and transport waits, while durable purchase records prevent blind replay after uncertain outcomes' },
+    ],
+  },
+  {
     version: '2.4.0-beta.2',
     subtitle: 'Beta: Fortress, Booster, Tower Advisor and Bird presets',
     date: '2026-09-13',
@@ -69,7 +82,6 @@ const PATCH_NOTES_RELEASES_UNSORTED: PatchNotesRelease[] = [
       { kind: 'added', text: 'Auto Booster independently purchases the daily global fortress-speed boost for exactly 2,500 rubies, using the current server offer and boosted-effect status while preserving a configurable ruby reserve' },
       { kind: 'added', text: 'Auto Towers can use the seven-day Robber Baron Advisor, optionally activate it with one available dedicated token, and run same-tower chains bounded by qualifying Time Skips, complete troop formations, and a confirmed server-day Time Skip limit' },
       { kind: 'added', text: 'Auto Bird ignored-troop configurations are now runtime-selectable presets that another feature can switch by stable ID, with a per-period preset selector in its weekly schedule and preset-bound fresh troop preparation at every transition' },
-	  { kind: 'fixed', text: 'Auto Buyer renews all supported overseers and specialists one week at a time at or below their saved duration floors, with validated ruby maximums, fresh balance and timer guards, durable no-replay recovery, and visible per-item outcomes' },
       { kind: 'fixed', text: 'Fortress availability now combines the account-private server timer with a report-confirmed five-day personal lock, shows the next expected availability, schedules a targeted 1x1 cooldown refresh at that time, rechecks immediately before launch, and prevents another attack while a prior movement is unsettled' },
       { kind: 'fixed', text: 'Expired support movements with regular commanders no longer remain cached indefinitely or prevent Auto Bird from retrying after its tracking list is cleared; active movements retain their wait, return trip, and commander settle grace' },
       { kind: 'fixed', text: 'Support commands send at most 10 troop types per command, splitting larger fresh manifests into sequential acknowledged batches and stopping when a batch is rejected or its outcome is uncertain' },
