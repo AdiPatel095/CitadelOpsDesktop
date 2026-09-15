@@ -383,8 +383,28 @@ func (store *Store) publishLocked(event Event) {
 }
 
 func Validate(section string, value json.RawMessage) error {
-	_, err := canonicalSection(section, value)
-	return err
+	if _, err := canonicalSection(section, value); err != nil {
+		return err
+	}
+	if section == "automation.autoBuyer" {
+		var settings struct {
+			Version int `json:"version"`
+			Feast   struct {
+				Enabled               bool `json:"enabled"`
+				MinimumRemainingHours int  `json:"minimumRemainingHours"`
+			} `json:"feast"`
+		}
+		if err := json.Unmarshal(value, &settings); err != nil {
+			return fmt.Errorf("decode Auto Buyer settings: %w", err)
+		}
+		if settings.Version != 1 {
+			return fmt.Errorf("Auto Buyer settings version must be 1")
+		}
+		if settings.Feast.Enabled && (settings.Feast.MinimumRemainingHours < 1 || settings.Feast.MinimumRemainingHours > 720) {
+			return fmt.Errorf("feast minimum remaining hours must be a whole number from 1 to 720")
+		}
+	}
+	return nil
 }
 
 func (store *Store) Subscribe(buffer int) (<-chan Event, func()) {

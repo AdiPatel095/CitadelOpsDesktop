@@ -794,6 +794,27 @@ export interface MarketStateV2 {
 		expiresAt?: string;
 		observedAt?: string;
 	};
+	latestFeastPurchase?: {
+		outcome: string;
+		feastId: number;
+		chargedCastleId: number;
+		chargedKingdomId: number;
+		attemptedAt: string;
+		updatedAt: string;
+		expectedEffectiveCost: number;
+		foodBefore?: number;
+		foodBeforeKnown: boolean;
+		foodBeforeObservedAt?: string;
+		foodAfter?: number;
+		foodAfterKnown: boolean;
+		foodAfterObservedAt?: string;
+		debitVerification: string;
+		activationConfirmed: boolean;
+		confirmedRemainingSec?: number;
+		confirmedExpiresAt?: string;
+		activationConfirmedAt?: string;
+		detail?: string;
+	};
 	feastCostReductionPercent?: number;
 	feastCostReductionObservedAt?: string;
 	caravanLevel?: number;
@@ -2227,7 +2248,8 @@ export interface AutoBuyerProjectionV1 {
   packages: AutoBuyerPackageV1[];
   specialists: AutoBuyerSpecialistV1[];
   feasts: AutoBuyerFeastV1[];
-  timedOffers: AutoBuyerCapabilityV1;
+	timedOffers: AutoBuyerCapabilityV1;
+	feastAutomaticSource?: AutoBuyerCapabilityV1;
 }
 
 export interface LanguageMetadata {

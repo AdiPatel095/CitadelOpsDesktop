@@ -198,6 +198,9 @@ func reduceMarketFeast(
 		if gameState.Market.FeastPurchasePending &&
 			!frame.ReceivedAt.Before(gameState.Market.FeastPurchasePendingSince) &&
 			pendingFeastResponseMatches(gameState.Market, frame) {
+			gameState.Market.LatestFeastPurchase.Outcome = "rejected"
+			gameState.Market.LatestFeastPurchase.UpdatedAt = frame.ReceivedAt
+			gameState.Market.LatestFeastPurchase.Detail = fmt.Sprintf("The game rejected the feast purchase with response code %d", *frame.ResponseCode)
 			clearPendingFeastPurchase(&gameState.Market)
 			return []string{"boosters", "market"}, true, nil
 		}
@@ -210,17 +213,27 @@ func reduceMarketFeast(
 	if !feast.ActiveAt(frame.ReceivedAt) {
 		return nil, false, fmt.Errorf("decode purchased feast: successful response did not contain an active feast")
 	}
-	if gameState.Market.FeastPurchasePending &&
-		(feast.ID != gameState.Market.FeastPurchaseExpectedID ||
+	if gameState.Market.FeastPurchasePending {
+		if !pendingFeastResponseMatches(gameState.Market, frame) ||
+			feast.ID != gameState.Market.FeastPurchaseExpectedID ||
 			frame.ReceivedAt.Before(gameState.Market.FeastPurchasePendingSince) ||
-			!pendingFeastExpiryConfirmed(gameState.Market, feast.ExpiresAt)) {
-		return nil, false, fmt.Errorf("decode purchased feast: response did not confirm the expected feast")
+			!pendingFeastTimerIncreased(gameState.Market, feast.ExpiresAt) {
+			return nil, false, fmt.Errorf("decode purchased feast: correlated response did not confirm an increased expected feast timer")
+		}
+		gameState.Market.Feast = feast
+		gameState.Market.FeastLastPurchaseAt = frame.ReceivedAt
+		gameState.Market.FeastPurchaseResponseConfirmedAt = frame.ReceivedAt
+		gameState.Market.FeastPurchaseResponseExpiresAt = feast.ExpiresAt
+		gameState.Market.LatestFeastPurchase.Outcome = "verifying"
+		gameState.Market.LatestFeastPurchase.UpdatedAt = frame.ReceivedAt
+		gameState.Market.LatestFeastPurchase.ConfirmedRemainingSec = feast.RemainingSec
+		gameState.Market.LatestFeastPurchase.ConfirmedExpiresAt = feast.ExpiresAt
+		gameState.Market.LatestFeastPurchase.Detail = "Correlated purchase response received; waiting for an authoritative timer refresh"
+		return []string{"boosters", "market"}, true, nil
 	}
 	lastPurchaseAt := frame.ReceivedAt
-	pendingChanged := gameState.Market.FeastPurchasePending
-	clearPendingFeastPurchase(&gameState.Market)
 	if reflect.DeepEqual(gameState.Market.Feast, feast) &&
-		gameState.Market.FeastLastPurchaseAt.Equal(lastPurchaseAt) && !pendingChanged {
+		gameState.Market.FeastLastPurchaseAt.Equal(lastPurchaseAt) {
 		return nil, false, nil
 	}
 	gameState.Market.Feast = feast
@@ -239,11 +252,18 @@ func reconcilePendingFeastSnapshot(
 		observedAt.Before(market.FeastPurchasePendingSince) {
 		return false
 	}
-	if feast.ActiveAt(observedAt) && feast.ID == market.FeastPurchaseExpectedID &&
-		pendingFeastExpiryConfirmed(*market, feast.ExpiresAt) {
-		if market.FeastLastPurchaseAt.Before(market.FeastPurchasePendingSince) {
-			market.FeastLastPurchaseAt = market.FeastPurchasePendingSince
-		}
+	if !market.FeastPurchaseResponseConfirmedAt.IsZero() &&
+		!observedAt.Before(market.FeastPurchaseResponseConfirmedAt) &&
+		feast.ActiveAt(observedAt) && feast.ID == market.FeastPurchaseExpectedID &&
+		pendingFeastTimerIncreased(*market, feast.ExpiresAt) &&
+		!feast.ExpiresAt.Before(market.FeastPurchaseResponseExpiresAt.Add(-5*time.Second)) {
+		market.LatestFeastPurchase.Outcome = "confirmed"
+		market.LatestFeastPurchase.UpdatedAt = observedAt
+		market.LatestFeastPurchase.ActivationConfirmed = true
+		market.LatestFeastPurchase.ConfirmedRemainingSec = feast.RemainingSec
+		market.LatestFeastPurchase.ConfirmedExpiresAt = feast.ExpiresAt
+		market.LatestFeastPurchase.ActivationConfirmedAt = observedAt
+		market.LatestFeastPurchase.Detail = "Activation confirmed by the correlated purchase response and refreshed feast timer"
 		clearPendingFeastPurchase(market)
 		return true
 	}
@@ -270,6 +290,9 @@ func reconcilePendingFeastSnapshot(
 			return true
 		}
 		if frame.ResponseToken != market.FeastPurchaseInactiveResponseToken && !observedAt.Before(first.Add(30*time.Second)) {
+			market.LatestFeastPurchase.Outcome = "not-confirmed"
+			market.LatestFeastPurchase.UpdatedAt = observedAt
+			market.LatestFeastPurchase.Detail = "Two authoritative reconciliation checks reported no active feast"
 			clearPendingFeastPurchase(market)
 			return true
 		}
@@ -278,13 +301,19 @@ func reconcilePendingFeastSnapshot(
 		observedAt.Before(market.FeastPurchaseExpectedExpiresAt) {
 		return false
 	}
+	market.LatestFeastPurchase.Outcome = "not-confirmed"
+	market.LatestFeastPurchase.UpdatedAt = observedAt
+	market.LatestFeastPurchase.Detail = "The bounded reconciliation window ended without a confirmed activation"
 	clearPendingFeastPurchase(market)
 	return true
 }
 
-func pendingFeastExpiryConfirmed(market State.MarketState, expiresAt time.Time) bool {
-	return !market.FeastPurchaseExpectedExpiresAt.IsZero() &&
-		!expiresAt.Before(market.FeastPurchaseExpectedExpiresAt.Add(-time.Minute))
+func pendingFeastTimerIncreased(market State.MarketState, expiresAt time.Time) bool {
+	baseline := market.FeastPurchasePreviousExpiresAt
+	if baseline.IsZero() {
+		baseline = market.FeastPurchasePendingSince
+	}
+	return !baseline.IsZero() && expiresAt.After(baseline)
 }
 
 func pendingFeastResponseMatches(market State.MarketState, frame Protocol.Frame) bool {
@@ -297,8 +326,11 @@ func clearPendingFeastPurchase(market *State.MarketState) {
 	market.FeastPurchaseExpectedID = 0
 	market.FeastPurchasePendingSince = time.Time{}
 	market.FeastPurchaseExpectedExpiresAt = time.Time{}
+	market.FeastPurchasePreviousExpiresAt = time.Time{}
 	market.FeastPurchaseOperationID = ""
 	market.FeastPurchaseResponseToken = ""
+	market.FeastPurchaseResponseConfirmedAt = time.Time{}
+	market.FeastPurchaseResponseExpiresAt = time.Time{}
 	market.FeastPurchaseInactiveObservedAt = time.Time{}
 	market.FeastPurchaseInactiveResponseToken = ""
 	market.FeastPurchaseInactiveGeneration = 0

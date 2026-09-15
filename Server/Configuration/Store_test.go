@@ -96,6 +96,47 @@ func TestStoreRejectsInvalidSections(t *testing.T) {
 	}
 }
 
+func TestValidateAutoBuyerFeastFloorAtWriteBoundary(t *testing.T) {
+	valid := json.RawMessage(`{"version":1,"feast":{"enabled":true,"minimumRemainingHours":720}}`)
+	if err := Validate("automation.autoBuyer", valid); err != nil {
+		t.Fatalf("valid feast floor rejected: %v", err)
+	}
+	for _, value := range []json.RawMessage{
+		json.RawMessage(`{"version":1,"feast":{"enabled":true,"minimumRemainingHours":0}}`),
+		json.RawMessage(`{"version":1,"feast":{"enabled":true,"minimumRemainingHours":721}}`),
+		json.RawMessage(`{"version":1,"feast":{"enabled":true,"minimumRemainingHours":1.5}}`),
+	} {
+		if err := Validate("automation.autoBuyer", value); err == nil ||
+			!strings.Contains(err.Error(), "whole number from 1 to 720") && !strings.Contains(err.Error(), "cannot unmarshal") {
+			t.Fatalf("invalid feast floor %s error = %v", value, err)
+		}
+	}
+	if err := Validate("automation.autoBuyer", json.RawMessage(`{
+		"version":1,"feast":{"enabled":false,"minimumRemainingHours":0}
+	}`)); err != nil {
+		t.Fatalf("disabled legacy feast blocked unrelated settings edit: %v", err)
+	}
+}
+
+func TestOpenKeepsLegacyInvalidAutoBuyerFeastReadable(t *testing.T) {
+	dataDir := t.TempDir()
+	path := filepath.Join(dataDir, "Config", "Settings.json")
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	contents := `{"schemaVersion":1,"revision":4,"sections":{"automation.autoBuyer":{"version":1,"feast":{"enabled":true,"minimumRemainingHours":0}}}}`
+	if err := os.WriteFile(path, []byte(contents), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	store, err := Open(dataDir, nil)
+	if err != nil {
+		t.Fatalf("legacy invalid feast prevented profile open: %v", err)
+	}
+	if _, found := store.Section("automation.autoBuyer"); !found {
+		t.Fatal("legacy Auto Buyer settings disappeared during open")
+	}
+}
+
 func TestStoreNoOpKeepsRevision(t *testing.T) {
 	store, err := Open(t.TempDir(), map[string]json.RawMessage{"feature": json.RawMessage(`{"enabled":false}`)})
 	if err != nil {

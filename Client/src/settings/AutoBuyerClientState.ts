@@ -42,10 +42,10 @@ export interface AutoBuyerClientStateV1 {
 }
 
 export function defaultAutoBuyerClientState(): AutoBuyerClientStateV1 {
-	return {
-		version: 1,
-		checkIntervalSec: 1800,
-		historyRefreshSec: 3600,
+  return {
+    version: 1,
+    checkIntervalSec: 1800,
+    historyRefreshSec: 3600,
     sourceCastleId: 0,
     minimumRubyReserve: 0,
     allowRubyPackages: false,
@@ -53,7 +53,7 @@ export function defaultAutoBuyerClientState(): AutoBuyerClientStateV1 {
     specialists: [],
     feast: {
       enabled: false,
-      feastId: 0,
+      feastId: 8,
       minimumRemainingHours: 12,
       sourceCastleId: 0,
       minimumFoodReserve: 0,
