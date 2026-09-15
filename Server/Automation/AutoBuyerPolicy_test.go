@@ -44,13 +44,12 @@ func TestAutoBuyerSpecialistRequiresFourteenDayFloorAndRenewsOneWeekAtATime(t *t
 		t.Fatalf("specialist decision = %#v err=%v", decision, err)
 	}
 	var request struct {
-		SpecialistID          int   `json:"specialistId"`
-		MinimumDays           int   `json:"minimumDays"`
-		ExpectedRubyBalance   int64 `json:"expectedRubyBalance"`
-		ExpectedPurchaseCount int   `json:"expectedPurchaseCount"`
+		SpecialistID        int   `json:"specialistId"`
+		MinimumDays         int   `json:"minimumDays"`
+		ExpectedRubyBalance int64 `json:"expectedRubyBalance"`
 	}
 	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil || request.SpecialistID != 0 ||
-		request.MinimumDays != 14 || request.ExpectedRubyBalance != 5000 || request.ExpectedPurchaseCount != 1 {
+		request.MinimumDays != 14 || request.ExpectedRubyBalance != 5000 {
 		t.Fatalf("specialist request = %#v err=%v", request, err)
 	}
 
@@ -74,6 +73,42 @@ func TestAutoBuyerSpecialistRequiresFourteenDayFloorAndRenewsOneWeekAtATime(t *t
 	})
 	if err != nil || decision.Request != nil || decision.Status != "waiting" {
 		t.Fatalf("unsafe floor decision = %#v err=%v", decision, err)
+	}
+}
+
+func TestAutoBuyerSpecialistStrictFloorNeedsThreeInactiveTopupsAndIgnoresPC(t *testing.T) {
+	gameData := autoBuyerPolicyTestStore(t)
+	now := time.Date(2026, 9, 15, 12, 0, 0, 250_000_000, time.UTC)
+	state := autoBuyerPolicyTestState(now)
+	state.Player.Resources[2] = 20_000
+	settings := json.RawMessage(`{"version":1,"checkIntervalSec":60,"historyRefreshSec":900,"minimumRubyReserve":1000,"packages":[],"specialists":[{"enabled":true,"id":0,"minimumDays":14,"maximumRubyCostPerPurchase":625}],"feast":{"enabled":false}}`)
+	evaluate := func() Decision {
+		decision, err := NewAutoBuyerPolicy().Evaluate(t.Context(), Snapshot{State: state, GameData: gameData, Now: now, Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{autoBuyerSection: settings}}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return decision
+	}
+	for purchase := 0; purchase < 3; purchase++ {
+		if decision := evaluate(); decision.Request == nil || decision.Request.Name != "autoBuyer.specialist.purchase" {
+			t.Fatalf("purchase %d decision = %#v", purchase+1, decision)
+		}
+		baseline := now
+		if state.Market.Boosters[0].ExpiresAt.After(baseline) {
+			baseline = state.Market.Boosters[0].ExpiresAt
+		}
+		state.Market.Boosters[0] = State.MarketBoosterState{ID: 0, ExpiresAt: baseline.Add(7 * 24 * time.Hour), ContinuousPurchaseCount: 0}
+	}
+	if decision := evaluate(); decision.Request != nil || decision.Status != "idle" {
+		t.Fatalf("three-topup decision = %#v", decision)
+	}
+	state.Market.Boosters[0] = State.MarketBoosterState{ID: 0, ExpiresAt: now.Add(14*24*time.Hour + 500*time.Millisecond)}
+	if decision := evaluate(); decision.Request != nil {
+		t.Fatalf("fractionally above floor purchased: %#v", decision)
+	}
+	state.Market.Boosters[0] = State.MarketBoosterState{ID: 0, Permanent: true, Level: 1}
+	if decision := evaluate(); decision.Request != nil {
+		t.Fatalf("permanent specialist purchased: %#v", decision)
 	}
 }
 
@@ -613,6 +648,52 @@ func TestAutoBuyerPacesRepeatedFeastPurchases(t *testing.T) {
 	}
 }
 
+func TestAutoBuyerPacesSpecialistReconciliationAndDoesNotStarveFoodFeast(t *testing.T) {
+	gameData := autoBuyerPolicyTestStore(t)
+	now := time.Date(2026, 9, 15, 12, 0, 0, 0, time.UTC)
+	gameState := autoBuyerPolicyTestState(now)
+	gameState.Market.SpecialistPurchasePending = true
+	gameState.Market.SpecialistPurchasePendingSince = now.Add(-10 * time.Second)
+	gameState.Market.SpecialistPurchaseExpectedID = 0
+	gameState.Market.LatestSpecialistPurchase = State.SpecialistPurchaseEvidence{SpecialistID: 0, AttemptedAt: now.Add(-10 * time.Second)}
+	settings := json.RawMessage(`{"version":1,"checkIntervalSec":1800,"historyRefreshSec":3600,"sourceCastleId":10,"minimumRubyReserve":1000,"packages":[],"specialists":[{"enabled":true,"id":0,"minimumDays":14,"maximumRubyCostPerPurchase":625}],"feast":{"enabled":false}}`)
+	evaluate := func(at time.Time, raw json.RawMessage) Decision {
+		t.Helper()
+		decision, err := NewAutoBuyerPolicy().Evaluate(t.Context(), Snapshot{State: gameState, GameData: gameData, Now: at, Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{autoBuyerSection: raw}}})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return decision
+	}
+	decision := evaluate(now, settings)
+	if decision.Request != nil || decision.Status != "waiting" || !decision.NextCheckAt.Equal(now.Add(20*time.Second)) {
+		t.Fatalf("early specialist reconciliation = %#v", decision)
+	}
+	lastRun := now.Add(25 * time.Second)
+	automation := gameState.Automations["autoBuyer"]
+	automation.LastRunAt = &lastRun
+	gameState.Automations["autoBuyer"] = automation
+	decision = evaluate(now.Add(31*time.Second), settings)
+	if decision.Request != nil || !decision.NextCheckAt.Equal(lastRun.Add(30*time.Second)) {
+		t.Fatalf("last-run pacing = %#v", decision)
+	}
+	decision = evaluate(lastRun.Add(31*time.Second), settings)
+	if decision.Request == nil || decision.Request.Name != "autoBuyer.specialist.reconcile" || decision.ReevaluateOnSuccess {
+		t.Fatalf("paced specialist reconciliation = %#v", decision)
+	}
+
+	castle := gameState.Castles[10]
+	castle.Resources[5] = autoBuyerPolicyFoodBalance(200000)
+	gameState.Castles[10] = castle
+	gameState.Market.Feast = State.MarketFeastState{ObservedAt: lastRun.Add(31 * time.Second)}
+	gameState.Market.FeastCostReductionObservedAt = lastRun.Add(31 * time.Second)
+	foodSettings := json.RawMessage(`{"version":1,"checkIntervalSec":1800,"historyRefreshSec":3600,"sourceCastleId":10,"minimumRubyReserve":1000,"packages":[],"specialists":[{"enabled":true,"id":0,"minimumDays":14,"maximumRubyCostPerPurchase":625}],"feast":{"enabled":true,"feastId":0,"minimumRemainingHours":12,"sourceCastleId":0,"minimumFoodReserve":30000,"allowRubies":false,"maximumRubyCostPerPurchase":0}}`)
+	decision = evaluate(lastRun.Add(31*time.Second), foodSettings)
+	if decision.Request == nil || decision.Request.Name != "autoBuyer.feast.purchase" {
+		t.Fatalf("pending specialist starved food feast = %#v", decision)
+	}
+}
+
 func TestAutoBuyerRubyPackageRequiresOptInCeilingAndReserve(t *testing.T) {
 	gameData := autoBuyerPolicyTestStore(t)
 	now := time.Date(2026, 8, 10, 12, 0, 0, 0, time.UTC)
@@ -697,6 +778,8 @@ func autoBuyerPolicyTestState(now time.Time) State.GameState {
 	gameState.Session.SocketReady = true
 	gameState.Session.Generation = 1
 	gameState.Session.BaselineGeneration = 1
+	gameState.Session.ConnectionGeneration = 1
+	gameState.Player.ResourceObservations[2] = State.PlayerResourceObservation{ObservedAt: now, ConnectionGeneration: 1}
 	gameState.Player.Level = 70
 	gameState.Player.LegendLevel = 950
 	production, consumption := 100.0, 10.0
@@ -708,6 +791,7 @@ func autoBuyerPolicyTestState(now time.Time) State.GameState {
 		},
 	}
 	gameState.Market.BoostersObservedAt = now
+	gameState.Market.BoostersObservedGeneration = 1
 	gameState.Market.Feast = State.MarketFeastState{ObservedAt: now}
 	gameState.Market.FeastCostReductionObservedAt = now
 	return gameState

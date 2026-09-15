@@ -13,12 +13,16 @@ import { Notifications } from '../../components/Notifications';
 import { Badge, Button, Card, Input, Select, SettingsModal, Switch } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import {
+  AUTO_BUYER_MAXIMUM_SPECIALIST_DAYS,
   AUTO_BUYER_MINIMUM_SPECIALIST_DAYS,
   AUTO_BUYER_SECTION,
   autoBuyerOtherGoalsValid,
+  autoBuyerSpecialistRuntimeStatus,
   clampAutoBuyerInteger,
   defaultAutoBuyerClientState,
   parseAutoBuyerClientState,
+  specialistMinimumDaysError,
+  specialistRubyCeilingError,
   type AutoBuyerClientStateV1,
   type AutoBuyerPackageRuleV1,
   type AutoBuyerSpecialistRuleV1,
@@ -31,6 +35,7 @@ interface AutoBuyerSettingsModalProps {
 
 type AutoBuyerSection = 'shops' | 'specialists' | 'feast';
 const ALL_AUTO_BUYER_CURRENCIES = 'all';
+const AUTO_BUYER_PROJECTION_REFRESH_MS = 15_000;
 
 export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ isOpen, onClose }) => {
   const { state, configuration, updateConfiguration } = useCitadelAPI();
@@ -77,12 +82,29 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
   useEffect(() => {
     if (!isOpen) return;
     let cancelled = false;
+    let refreshTimer: number | undefined;
     setProjection(null);
     setLoadError('');
-    void CitadelAPI.getProjection<AutoBuyerProjectionV1>('auto-buyer')
-      .then((catalog) => {
+    const refreshProjection = async () => {
+      try {
+        const catalog = await CitadelAPI.getProjection<AutoBuyerProjectionV1>('auto-buyer');
         if (cancelled) return;
+        const completeCatalog = Boolean(
+          catalog
+          && Array.isArray(catalog.shops)
+          && Array.isArray(catalog.packages)
+          && Array.isArray(catalog.specialists)
+          && Array.isArray(catalog.feasts)
+          && catalog.timedOffers
+          && typeof catalog.timedOffers === 'object',
+        );
+        if (!completeCatalog) {
+          setProjection(null);
+          setLoadError('This runtime did not return a complete Auto Buyer catalog. Refresh after the runtime is updated.');
+          return;
+        }
         setProjection(catalog);
+        setLoadError('');
         setSelectedShopId((current) => (
           catalog.shops.some((shop) => shop.id === current) ? current : (catalog.shops[0]?.id ?? '')
         ));
@@ -93,11 +115,17 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
             ? current
             : { ...current, feast: { ...current.feast, feastId: firstSupportedFeast.id } };
         });
-      })
-      .catch((error) => {
+      } catch (error) {
         if (!cancelled) setLoadError(error instanceof Error ? error.message : 'Could not load the official Auto Buyer catalog.');
-      });
-    return () => { cancelled = true; };
+      } finally {
+        if (!cancelled) refreshTimer = window.setTimeout(refreshProjection, AUTO_BUYER_PROJECTION_REFRESH_MS);
+      }
+    };
+    void refreshProjection();
+    return () => {
+      cancelled = true;
+      if (refreshTimer !== undefined) window.clearTimeout(refreshTimer);
+    };
   }, [isOpen]);
 
   const packageRules = useMemo(
@@ -110,6 +138,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
   );
   const selectedFeast = projection?.feasts.find((feast) => feast.id === draft.feast.feastId) ?? null;
   const automaticFeastSourceSupported = projection?.feastAutomaticSource?.supported === true;
+	const specialistUpkeepSupported = projection?.specialistUpkeep?.supported === true;
   const selectedFeastSupported = selectedFeast?.automaticPurchase?.supported !== false;
   const preservingEnabledUnsupportedFeast = Boolean(
     !selectedFeastSupported && savedFeast.enabled && savedFeast.feastId === draft.feast.feastId,
@@ -181,7 +210,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
         enabled: false,
         id: specialist.id,
         minimumDays: AUTO_BUYER_MINIMUM_SPECIALIST_DAYS,
-        maximumRubyCostPerPurchase: specialist.baseRubyCost,
+        maximumRubyCostPerPurchase: specialist.validatedMaximumRubyCost ?? 0,
       };
       const next = { ...existing, ...update };
       const present = current.specialists.some((rule) => rule.id === specialist.id);
@@ -203,8 +232,8 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
         return {
           enabled,
           id: specialist.id,
-          minimumDays: Math.max(AUTO_BUYER_MINIMUM_SPECIALIST_DAYS, existing?.minimumDays ?? AUTO_BUYER_MINIMUM_SPECIALIST_DAYS),
-          maximumRubyCostPerPurchase: Math.max(specialist.baseRubyCost, existing?.maximumRubyCostPerPurchase ?? 0),
+          minimumDays: existing?.minimumDays ?? AUTO_BUYER_MINIMUM_SPECIALIST_DAYS,
+          maximumRubyCostPerPurchase: existing?.maximumRubyCostPerPurchase ?? (specialist.validatedMaximumRubyCost ?? 0),
         };
       }),
     }));
@@ -222,6 +251,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
   const selectedSourceID = autoBuyerRuntime?.metrics?.feastSourceCastleId;
   const selectedSource = allCastles.find((castle) => castle.id === selectedSourceID);
   const latestFeastPurchase = state?.market.latestFeastPurchase;
+  const latestSpecialistPurchase = state?.market.latestSpecialistPurchase;
   const configurationValid = useMemo(() => {
     if (!projection) return false;
     if (!autoBuyerOtherGoalsValid(draft, savedSettings, projection)) return false;
@@ -527,11 +557,12 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border-base p-4">
               <div>
                 <h3 className="text-sm font-black text-text-main">Specialist renewal floors</h3>
-                <p className="mt-1 text-xs text-text-muted">Enabled floors are clamped to at least 14 days. Renewals happen one 7-day purchase at a time so the active rebuy discount remains eligible.</p>
+				<p className="mt-1 text-xs text-text-muted">Enabled floors stay between 14 and 365 days. Auto Buyer purchases one 7-day activation at a time and rechecks the authoritative timer and ruby balance.</p>
+				{!specialistUpkeepSupported ? <p className="mt-2 text-xs text-amber-300">{projection.specialistUpkeep?.reason || 'This runtime cannot safely automate specialist purchases yet. Saved goals can be disabled.'}</p> : null}
               </div>
               <div className="flex gap-2">
                 <Button variant="ghost" onClick={() => setAllSpecialists(false)}>Disable all</Button>
-                <Button variant="secondary" onClick={() => setAllSpecialists(true)}>Enable all at 14 days</Button>
+				<Button variant="secondary" disabled={!specialistUpkeepSupported} onClick={() => setAllSpecialists(true)}>Enable all at 14 days</Button>
               </div>
             </div>
             <div className="divide-y divide-border-base">
@@ -539,6 +570,19 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                 const rule = specialistRules.get(specialist.id);
                 const enabled = rule?.enabled === true;
                 const current = state?.market.boosters?.[String(specialist.id)];
+                const safeMaximum = specialist.validatedMaximumRubyCost ?? 0;
+                const latest = latestSpecialistPurchase?.specialistId === specialist.id ? latestSpecialistPurchase : null;
+                const status = autoBuyerSpecialistRuntimeStatus(
+                  rule,
+                  current,
+                  latest,
+                  safeMaximum,
+                  draft.minimumRubyReserve,
+                  projection.specialistRuntime,
+                  draft.historyRefreshSec,
+                );
+                const minimumDaysError = enabled ? specialistMinimumDaysError(rule?.minimumDays ?? Number.NaN) : '';
+                const rubyCeilingError = enabled ? specialistRubyCeilingError(rule?.maximumRubyCostPerPurchase ?? Number.NaN, safeMaximum) : '';
                 return (
                   <div key={specialist.id} className="p-4">
                     <div className="flex items-start justify-between gap-4">
@@ -546,33 +590,40 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="font-bold text-text-main">{specialist.name}</span>
                           {specialist.bonusPercent ? <Badge variant="secondary">+{specialist.bonusPercent}%</Badge> : null}
-                          <Badge variant="outline">{formatRemaining(current?.expiresAt)}</Badge>
+                          <Badge variant="outline">{current?.permanent ? 'Permanent' : formatRemaining(current?.expiresAt)}</Badge>
+						  {enabled ? <Badge variant="outline">{status}</Badge> : null}
                         </div>
-                        <p className="mt-1 text-xs text-text-muted">7 days · safe maximum {specialist.baseRubyCost.toLocaleString()} rubies per renewal</p>
+						<p className="mt-1 text-xs text-text-muted">7 days · validated conservative maximum {safeMaximum > 0 ? safeMaximum.toLocaleString() : 'unavailable'} rubies; discounts may reduce the charge</p>
+						{latest ? <p className="mt-1 text-xs text-text-muted">{latest.outcome} · timer {formatObservedTimer(latest.timerBefore)} → {formatObservedTimer(latest.timerAfter)} · rubies {latest.rubyBeforeKnown ? (latest.rubyBefore ?? 0).toLocaleString() : 'unknown'} → {latest.rubyAfterKnown ? (latest.rubyAfter ?? 0).toLocaleString() : 'unknown'} · {latest.debitVerification}</p> : null}
                       </div>
                       <Switch
                         checked={enabled}
                         onChange={(value) => updateSpecialist(specialist, {
                           enabled: value,
-                          minimumDays: Math.max(AUTO_BUYER_MINIMUM_SPECIALIST_DAYS, rule?.minimumDays ?? 0),
-                          maximumRubyCostPerPurchase: Math.max(specialist.baseRubyCost, rule?.maximumRubyCostPerPurchase ?? 0),
+                          minimumDays: rule?.minimumDays ?? AUTO_BUYER_MINIMUM_SPECIALIST_DAYS,
+                          maximumRubyCostPerPurchase: rule?.maximumRubyCostPerPurchase ?? safeMaximum,
                         })}
+						disabled={!specialistUpkeepSupported && !enabled}
                         ariaLabel={`Maintain ${specialist.name}`}
                       />
                     </div>
-                    {enabled ? (
+					{enabled && specialistUpkeepSupported ? (
                       <div className="mt-3 grid gap-3 border-t border-border-base pt-3 md:grid-cols-2">
                         <NumberField
                           label="Minimum remaining days"
                           value={rule?.minimumDays ?? AUTO_BUYER_MINIMUM_SPECIALIST_DAYS}
                           minimum={AUTO_BUYER_MINIMUM_SPECIALIST_DAYS}
-                          maximum={365}
+                          maximum={AUTO_BUYER_MAXIMUM_SPECIALIST_DAYS}
+                          error={minimumDaysError}
+                          preserveRawValue
                           onChange={(minimumDays) => updateSpecialist(specialist, { minimumDays })}
                         />
                         <NumberField
                           label="Max rubies per 7-day renewal"
-                          value={rule?.maximumRubyCostPerPurchase ?? specialist.baseRubyCost}
-                          minimum={specialist.baseRubyCost}
+                          value={rule?.maximumRubyCostPerPurchase ?? safeMaximum}
+                          minimum={0}
+                          error={rubyCeilingError}
+                          preserveRawValue
                           onChange={(maximumRubyCostPerPurchase) => updateSpecialist(specialist, { maximumRubyCostPerPurchase })}
                         />
                       </div>
@@ -749,12 +800,16 @@ function NumberField({
   value,
   minimum,
   maximum = Number.MAX_SAFE_INTEGER,
+  error = '',
+  preserveRawValue = false,
   onChange,
 }: {
   label: string;
   value: number;
   minimum: number;
   maximum?: number;
+  error?: string;
+  preserveRawValue?: boolean;
   onChange: (value: number) => void;
 }) {
   return (
@@ -764,9 +819,14 @@ function NumberField({
         type="number"
         min={minimum}
         max={maximum}
+        step={1}
         value={value}
-        onChange={(event) => onChange(clampAutoBuyerInteger(event.target.value, minimum, maximum, minimum))}
+        aria-invalid={Boolean(error) || undefined}
+        onChange={(event) => onChange(preserveRawValue
+          ? Number(event.target.value)
+          : clampAutoBuyerInteger(event.target.value, minimum, maximum, minimum))}
       />
+      {error ? <span className="mt-1 block text-xs text-red-300">{error}</span> : null}
     </label>
   );
 }
@@ -815,6 +875,10 @@ function formatRemaining(expiresAt: string | undefined): string {
   const hours = Math.ceil(remainingMs / 3_600_000);
   const days = Math.floor(hours / 24);
   return days > 0 ? `${days}d ${hours % 24}h left` : `${hours}h left`;
+}
+
+function formatObservedTimer(expiresAt: string | undefined): string {
+  return expiresAt ? formatRemaining(expiresAt) : 'unavailable';
 }
 
 function formatMetric(value: number | undefined): string {

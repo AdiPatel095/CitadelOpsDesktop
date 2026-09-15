@@ -3,6 +3,9 @@ package Intent
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strings"
+	"sync"
 	"time"
 
 	"CitadelDesktop/Server/GameData"
@@ -130,6 +133,10 @@ type Step struct {
 	// transport. It supports durable no-replay markers around spending calls.
 	PreDispatchAction    string          `json:"preDispatchAction,omitempty"`
 	PreDispatchArguments json.RawMessage `json:"preDispatchArguments,omitempty"`
+	// FinalDispatchAction is repeated by the outbound router after queue waits
+	// and immediately before the transport can send the command.
+	FinalDispatchAction    string          `json:"finalDispatchAction,omitempty"`
+	FinalDispatchArguments json.RawMessage `json:"finalDispatchArguments,omitempty"`
 	// DefinitiveSendFailureAction compensates PreDispatchAction only when the
 	// sender proves the command did not reach an indeterminate wire state.
 	DefinitiveSendFailureAction    string          `json:"definitiveSendFailureAction,omitempty"`
@@ -276,17 +283,18 @@ const (
 )
 
 type Receipt struct {
-	StreamSequence uint64            `json:"streamSequence,omitempty"`
-	StreamGap      bool              `json:"streamGap,omitempty"`
-	ID             string            `json:"id"`
-	Intent         string            `json:"intent"`
-	Actor          string            `json:"actor"`
-	Priority       Outbound.Priority `json:"priority"`
-	Status         Status            `json:"status"`
-	Phase          EffectPhase       `json:"phase,omitempty"`
-	Attempt        int               `json:"attempt,omitempty"`
-	Plan           *Plan             `json:"plan,omitempty"`
-	Exchanges      []CommandExchange `json:"exchanges,omitempty"`
+	StreamSequence uint64              `json:"streamSequence,omitempty"`
+	StreamGap      bool                `json:"streamGap,omitempty"`
+	ID             string              `json:"id"`
+	Intent         string              `json:"intent"`
+	Actor          string              `json:"actor"`
+	Priority       Outbound.Priority   `json:"priority"`
+	Status         Status              `json:"status"`
+	Phase          EffectPhase         `json:"phase,omitempty"`
+	Attempt        int                 `json:"attempt,omitempty"`
+	Plan           *Plan               `json:"plan,omitempty"`
+	Exchanges      []CommandExchange   `json:"exchanges,omitempty"`
+	Evidence       []OperationEvidence `json:"evidence,omitempty"`
 	// CompletedStepIndexes preserves confirmed partial progress against Plan so
 	// downstream accounting can distinguish successful effects from the later failure.
 	CompletedStepIndexes []int                `json:"completedStepIndexes,omitempty"`
@@ -298,6 +306,45 @@ type Receipt struct {
 	SubmittedAt time.Time  `json:"submittedAt"`
 	StartedAt   *time.Time `json:"startedAt,omitempty"`
 	CompletedAt *time.Time `json:"completedAt,omitempty"`
+}
+
+type OperationEvidence struct {
+	Kind       string          `json:"kind"`
+	ObservedAt time.Time       `json:"observedAt"`
+	Data       json.RawMessage `json:"data"`
+}
+
+type operationEvidenceContextKey struct{}
+
+type operationEvidenceBuffer struct {
+	mu    sync.Mutex
+	items []OperationEvidence
+}
+
+func (buffer *operationEvidenceBuffer) drain() []OperationEvidence {
+	if buffer == nil {
+		return nil
+	}
+	buffer.mu.Lock()
+	defer buffer.mu.Unlock()
+	items := append([]OperationEvidence(nil), buffer.items...)
+	buffer.items = nil
+	return items
+}
+
+func RecordOperationEvidence(ctx context.Context, kind string, value any) error {
+	buffer, _ := ctx.Value(operationEvidenceContextKey{}).(*operationEvidenceBuffer)
+	if buffer == nil {
+		return nil
+	}
+	data, err := json.Marshal(value)
+	if err != nil {
+		return fmt.Errorf("encode operation evidence: %w", err)
+	}
+	buffer.mu.Lock()
+	buffer.items = append(buffer.items, OperationEvidence{Kind: strings.TrimSpace(kind), ObservedAt: time.Now().UTC(), Data: data})
+	buffer.mu.Unlock()
+	return nil
 }
 
 // Terminal reports whether the operation has finished. Every completion path

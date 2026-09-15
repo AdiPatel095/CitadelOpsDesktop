@@ -396,6 +396,11 @@ func (router *Router) dispatch(command *queuedCommand) error {
 	if router.config.Ready != nil && !router.config.Ready() {
 		return ErrNotReady
 	}
+	if command.metadata.FinalDispatchValidation != nil {
+		if err := command.metadata.FinalDispatchValidation(command.ctx); err != nil {
+			return err
+		}
+	}
 	if router.config.Send == nil {
 		return ErrClosed
 	}

@@ -110,8 +110,10 @@ func TestAutoBuyerSpecialistsAreFixedSevenDayRubyRenewals(t *testing.T) {
 	if len(specialists) != 9 {
 		t.Fatalf("specialists = %#v", specialists)
 	}
+	wantMaximum := map[int]int64{0: 625, 1: 625, 2: 625, 3: 625, 4: 625, 5: 4900, 6: 990, 8: 750, 10: 990}
 	for _, specialist := range specialists {
-		if specialist.DurationSec != 7*24*60*60 || specialist.BaseRubyCost <= 0 || specialist.Opcode == "" {
+		if specialist.DurationSec != 7*24*60*60 || specialist.BaseRubyCost <= 0 || specialist.Opcode == "" ||
+			specialist.ValidatedMaximumRubyCost != wantMaximum[specialist.ID] || specialist.PriceProvenance != "official-client-2026-09-15" {
 			t.Fatalf("invalid specialist = %#v", specialist)
 		}
 	}
