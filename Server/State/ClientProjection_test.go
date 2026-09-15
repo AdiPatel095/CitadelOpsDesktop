@@ -262,6 +262,16 @@ func TestClientProjectionPublishesFeastCostReduction(t *testing.T) {
 	}
 }
 
+func TestClientProjectionOmitsAbsentFeastPurchaseEvidence(t *testing.T) {
+	contents, err := json.Marshal(NewClientStateSnapshot(NewGameState()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(contents, []byte(`"latestFeastPurchase"`)) {
+		t.Fatalf("empty feast purchase evidence leaked into client state: %s", contents)
+	}
+}
+
 func TestClientProjectionDistinguishesZeroFeastReductionFromUnknown(t *testing.T) {
 	marketJSON := func(state GameState) map[string]json.RawMessage {
 		t.Helper()

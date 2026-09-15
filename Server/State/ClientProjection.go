@@ -46,7 +46,7 @@ type ClientMarketState struct {
 	Castles                      map[CastleID]MarketCastleState `json:"castles"`
 	Boosters                     map[int]MarketBoosterState     `json:"boosters"`
 	Feast                        MarketFeastState               `json:"feast"`
-	LatestFeastPurchase          FeastPurchaseEvidence          `json:"latestFeastPurchase,omitempty"`
+	LatestFeastPurchase          *FeastPurchaseEvidence         `json:"latestFeastPurchase,omitempty"`
 	FeastCostReductionPercent    *int                           `json:"feastCostReductionPercent,omitempty"`
 	FeastCostReductionObservedAt *time.Time                     `json:"feastCostReductionObservedAt,omitempty"`
 	CaravanLevelLoaded           bool                           `json:"caravanLevelLoaded"`
@@ -404,7 +404,6 @@ func clientMarket(source MarketState) MarketState {
 	return MarketState{
 		Castles: map[CastleID]MarketCastleState{}, Boosters: source.Boosters,
 		Feast: source.Feast, BoostersObservedAt: source.BoostersObservedAt,
-		LatestFeastPurchase:          source.LatestFeastPurchase,
 		FeastCostReductionPercent:    source.FeastCostReductionPercent,
 		FeastCostReductionObservedAt: source.FeastCostReductionObservedAt,
 	}
@@ -413,7 +412,10 @@ func clientMarket(source MarketState) MarketState {
 func newClientMarket(source MarketState) ClientMarketState {
 	result := ClientMarketState{
 		Castles: map[CastleID]MarketCastleState{}, Boosters: source.Boosters, Feast: source.Feast,
-		LatestFeastPurchase: source.LatestFeastPurchase,
+	}
+	if !source.LatestFeastPurchase.AttemptedAt.IsZero() {
+		evidence := source.LatestFeastPurchase
+		result.LatestFeastPurchase = &evidence
 	}
 	if !source.BoostersObservedAt.IsZero() {
 		observedAt := source.BoostersObservedAt
