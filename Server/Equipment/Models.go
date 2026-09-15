@@ -9,15 +9,17 @@ type Priority struct {
 }
 
 type OptimizeRequest struct {
-	LeaderKind string     `json:"leaderKind"`
-	LeaderID   int64      `json:"leaderId"`
-	CombatMode string     `json:"combatMode"`
-	Priorities []Priority `json:"priorities"`
+	LeaderKind  string     `json:"leaderKind"`
+	LeaderID    int64      `json:"leaderId"`
+	CombatMode  string     `json:"combatMode"`
+	Priorities  []Priority `json:"priorities"`
+	ResultCount int        `json:"resultCount,omitempty"`
 }
 
 type EffectTotal struct {
 	DefinitionID int64    `json:"definitionId"`
 	Value        float64  `json:"value"`
+	CapID        int64    `json:"capId,omitempty"`
 	Cap          *float64 `json:"cap,omitempty"`
 	Capped       bool     `json:"capped"`
 }
@@ -35,10 +37,12 @@ type CandidateCounts struct {
 }
 
 type OptimizeResponse struct {
-	LeaderKind    string          `json:"leaderKind"`
-	LeaderID      int64           `json:"leaderId"`
-	StateRevision uint64          `json:"stateRevision"`
-	Current       Loadout         `json:"current"`
-	Proposed      Loadout         `json:"proposed"`
-	Candidates    CandidateCounts `json:"candidates"`
+	LeaderKind          string          `json:"leaderKind"`
+	LeaderID            int64           `json:"leaderId"`
+	StateRevision       uint64          `json:"stateRevision"`
+	SnapshotFingerprint string          `json:"snapshotFingerprint"`
+	Current             Loadout         `json:"current"`
+	Proposed            Loadout         `json:"proposed"`
+	Alternatives        []Loadout       `json:"alternatives"`
+	Candidates          CandidateCounts `json:"candidates"`
 }
