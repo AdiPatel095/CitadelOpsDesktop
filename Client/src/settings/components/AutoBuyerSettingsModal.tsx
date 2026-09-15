@@ -51,9 +51,11 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
   const [selectedShopId, setSelectedShopId] = useState('');
   const [selectedCurrencyKey, setSelectedCurrencyKey] = useState(ALL_AUTO_BUYER_CURRENCIES);
   const [query, setQuery] = useState('');
+  const [feastHoursInput, setFeastHoursInput] = useState('12');
+  const allCastles = useMemo(() => castleOptionsFromState(state), [state]);
   const castles = useMemo(
-    () => castleOptionsFromState(state).filter((castle) => castle.kingdomId === 0 && castle.type === 'Slot 1'),
-    [state],
+    () => allCastles.filter((castle) => castle.kingdomId === 0 && castle.type === 'Slot 1'),
+    [allCastles],
   );
   const defaultCastleID = castles[0]?.id ?? 0;
 
@@ -63,8 +65,9 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
     setDraft({
       ...parsed,
       sourceCastleId: parsed.sourceCastleId || defaultCastleID,
-      feast: { ...parsed.feast, sourceCastleId: parsed.feast.sourceCastleId || parsed.sourceCastleId || defaultCastleID },
+      feast: { ...parsed.feast },
     });
+    setFeastHoursInput(String(parsed.feast.minimumRemainingHours));
     setSection('shops');
     setSelectedShopId(parsed.packages.find((rule) => rule.enabled)?.shopId ?? '');
     setSelectedCurrencyKey(ALL_AUTO_BUYER_CURRENCIES);
@@ -106,6 +109,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
     [draft.specialists],
   );
   const selectedFeast = projection?.feasts.find((feast) => feast.id === draft.feast.feastId) ?? null;
+  const automaticFeastSourceSupported = projection?.feastAutomaticSource?.supported === true;
   const selectedFeastSupported = selectedFeast?.automaticPurchase?.supported !== false;
   const preservingEnabledUnsupportedFeast = Boolean(
     !selectedFeastSupported && savedFeast.enabled && savedFeast.feastId === draft.feast.feastId,
@@ -208,19 +212,33 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
 
   const enabledPackages = draft.packages.filter((rule) => rule.enabled);
   const enabledSpecialists = draft.specialists.filter((rule) => rule.enabled);
+  const feastHours = Number(feastHoursInput);
+  const feastHoursValid = Number.isInteger(feastHours) && feastHours >= 1 && feastHours <= 720;
+  const preservingLegacyRuntimeFeast = Boolean(
+    !automaticFeastSourceSupported && savedFeast.enabled && draft.feast.enabled &&
+    JSON.stringify(draft.feast) === JSON.stringify(savedFeast) && feastHours === savedFeast.minimumRemainingHours,
+  );
+  const autoBuyerRuntime = state?.automations.autoBuyer;
+  const selectedSourceID = autoBuyerRuntime?.metrics?.feastSourceCastleId;
+  const selectedSource = allCastles.find((castle) => castle.id === selectedSourceID);
+  const latestFeastPurchase = state?.market.latestFeastPurchase;
   const configurationValid = useMemo(() => {
     if (!projection) return false;
     if (!autoBuyerOtherGoalsValid(draft, savedSettings, projection)) return false;
     if (draft.feast.enabled) {
-      if (!selectedFeast || (draft.feast.sourceCastleId || draft.sourceCastleId) <= 0 || draft.feast.minimumRemainingHours < 1) return false;
+      if (!selectedFeast || !feastHoursValid) return false;
+      if (!automaticFeastSourceSupported && !preservingLegacyRuntimeFeast) return false;
       if (!selectedFeastSupported && !preservingEnabledUnsupportedFeast) return false;
       if (selectedFeastSupported && selectedFeast.price.premium && (!draft.feast.allowRubies || draft.feast.maximumRubyCostPerPurchase < selectedFeast.price.amount)) return false;
     }
     return true;
   }, [
     draft,
+    automaticFeastSourceSupported,
+    feastHoursValid,
     savedSettings,
     preservingEnabledUnsupportedFeast,
+    preservingLegacyRuntimeFeast,
     projection,
     selectedFeast,
     selectedFeastSupported,
@@ -245,7 +263,11 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
     try {
       const normalized = parseAutoBuyerClientState({
         ...draft,
-        feast: { ...draft.feast, sourceCastleId: draft.feast.sourceCastleId || draft.sourceCastleId },
+        feast: {
+          ...draft.feast,
+          minimumRemainingHours: feastHours,
+          sourceCastleId: automaticFeastSourceSupported ? 0 : savedFeast.sourceCastleId,
+        },
       });
       await updateConfiguration(AUTO_BUYER_SECTION, normalized);
       Notifications.success('Auto Buyer settings saved.');
@@ -310,13 +332,13 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                 menuGrowToViewport
               />
             </label>
-			<NumberField
-			  label="Check every (minutes)"
-			  value={Math.round(draft.checkIntervalSec / 60)}
-			  minimum={30}
-			  maximum={60}
-			  onChange={(minutes) => setDraft((current) => ({ ...current, checkIntervalSec: minutes * 60 }))}
-			/>
+            <NumberField
+              label="Check every (minutes)"
+              value={Math.round(draft.checkIntervalSec / 60)}
+              minimum={30}
+              maximum={60}
+              onChange={(minutes) => setDraft((current) => ({ ...current, checkIntervalSec: minutes * 60 }))}
+            />
             <NumberField
               label="Keep at least rubies"
               value={draft.minimumRubyReserve}
@@ -568,15 +590,19 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h3 className="text-sm font-black text-text-main">Maintain a food production feast</h3>
-                  <p className="mt-1 text-xs text-text-muted">The selected feast is started or extended one official duration at a time. Auto Buyer waits for a different active feast to finish.</p>
+                  <p className="mt-1 text-xs text-text-muted">
+                    {automaticFeastSourceSupported
+                      ? 'The selected feast is started or extended one purchase at a time. Auto Buyer chooses the owned positive-net castle with the most food stored.'
+                      : 'This runtime does not expose the automatic feast-source and purchase-evidence contract required by these controls.'}
+                  </p>
                 </div>
                 <Switch
                   checked={draft.feast.enabled}
                   onChange={(enabled) => {
-                    if (enabled && !selectedFeastSupported && !preservingEnabledUnsupportedFeast) return;
+                    if (enabled && (!automaticFeastSourceSupported || !selectedFeastSupported) && !preservingEnabledUnsupportedFeast) return;
                     setDraft((current) => ({ ...current, feast: { ...current.feast, enabled } }));
                   }}
-                  disabled={!draft.feast.enabled && !selectedFeastSupported && !preservingEnabledUnsupportedFeast}
+                  disabled={!draft.feast.enabled && (!automaticFeastSourceSupported || !selectedFeastSupported) && !preservingEnabledUnsupportedFeast}
                   ariaLabel="Maintain a feast"
                 />
               </div>
@@ -607,26 +633,38 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                         disabled: feast.automaticPurchase?.supported === false,
                       }))}
                       placeholder="Choose an official feast"
+                      disabled={!automaticFeastSourceSupported}
                       menuGrowToViewport
                     />
                   </label>
-                  <NumberField
-                    label="Minimum remaining hours"
-                    value={draft.feast.minimumRemainingHours}
-                    minimum={1}
-                    maximum={24 * 30}
-                    onChange={(minimumRemainingHours) => setDraft((current) => ({ ...current, feast: { ...current.feast, minimumRemainingHours } }))}
-                  />
                   <label className="block">
-                    <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">Pay from castle</span>
-                    <Select
-                      value={String(draft.feast.sourceCastleId || draft.sourceCastleId || '')}
-                      onChange={(value) => setDraft((current) => ({ ...current, feast: { ...current.feast, sourceCastleId: Number(value) || 0 } }))}
-                      options={castles.map((castle) => ({ value: String(castle.id), label: `${castle.name} · ${castle.x}:${castle.y}` }))}
-                      placeholder="Choose the main castle"
-                      menuGrowToViewport
+                    <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">Minimum remaining hours</span>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={720}
+                      step={1}
+                      value={feastHoursInput}
+                      disabled={!automaticFeastSourceSupported}
+                      onChange={(event) => setFeastHoursInput(event.target.value)}
+                      error={feastHoursValid ? undefined : 'Enter a whole number from 1 to 720 hours.'}
                     />
                   </label>
+                  <div className="rounded-xl border border-border-base bg-bg-subtle p-3">
+                    <div className="text-[10px] font-black uppercase tracking-wider text-text-muted">Automatic food source</div>
+                    {automaticFeastSourceSupported ? (
+                      <>
+                        <div className="mt-1 text-sm font-bold text-text-main">
+                          {selectedSource ? `${selectedSource.name} · K${selectedSource.kingdomId} · ${selectedSource.x}:${selectedSource.y}` : 'Waiting for fresh eligible castle data'}
+                        </div>
+                        <p className="mt-1 text-xs text-text-muted">
+                          {selectedSourceID
+                            ? `${formatMetric(autoBuyerRuntime?.metrics?.feastSourceFood)} food stored · ${formatMetric(autoBuyerRuntime?.metrics?.feastSourceNetFoodPerHour)} net food/hour`
+                            : 'Selection waits for fresh stored-food and economy data from every usable owned castle; only positive-net castles qualify.'}
+                        </p>
+                      </>
+                    ) : <p className="mt-1 text-xs text-warning">Update the account runtime before changing or enabling feast upkeep. You can still disable the saved feast goal.</p>}
+                  </div>
                   {!selectedFeastSupported ? (
                     <div className="rounded-xl border border-warning/30 bg-warning/5 p-3 md:col-span-2">
                       <div className="text-sm font-bold text-text-main">Automatic purchase unavailable</div>
@@ -667,8 +705,26 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                   )}
                 </div>
               ) : null}
-              <div className="mt-3 flex items-center gap-2 text-xs text-text-muted">
-                <Clock3 className="h-3.5 w-3.5" /> Current feast: {formatRemaining(state?.market.feast?.expiresAt)}
+              <div className="mt-3 space-y-2 text-xs text-text-muted">
+                <div className="flex items-center gap-2">
+                  <Clock3 className="h-3.5 w-3.5" /> Current feast: {formatRemaining(state?.market.feast?.expiresAt)} · configured minimum {feastHoursValid ? `${feastHours}h` : 'invalid'}
+                </div>
+                {autoBuyerRuntime?.detail ? <div><span className="font-bold text-text-main">Status:</span> {autoBuyerRuntime.detail}</div> : null}
+                {latestFeastPurchase?.attemptedAt ? (
+                  <div className="rounded-xl border border-border-base bg-bg-subtle p-3">
+                    <div className="font-bold text-text-main">Latest purchase: {formatEvidenceOutcome(latestFeastPurchase.outcome)}</div>
+                    <div className="mt-1">
+                      Charged castle {latestFeastPurchase.chargedCastleId} in kingdom {latestFeastPurchase.chargedKingdomId} · expected cost {latestFeastPurchase.expectedEffectiveCost.toLocaleString()}
+                    </div>
+                    <div className="mt-1">
+                      Food {latestFeastPurchase.foodBeforeKnown ? (latestFeastPurchase.foodBefore ?? 0).toLocaleString() : 'unavailable'} → {latestFeastPurchase.foodAfterKnown ? (latestFeastPurchase.foodAfter ?? 0).toLocaleString() : 'awaiting refresh'} · debit {latestFeastPurchase.debitVerification || 'unverified'}
+                    </div>
+                    <div className="mt-1">
+                      Timer {latestFeastPurchase.activationConfirmed ? 'confirmed' : 'not attributed'}{latestFeastPurchase.confirmedExpiresAt ? ` · ${formatRemaining(latestFeastPurchase.confirmedExpiresAt)}` : ''}
+                    </div>
+                    {latestFeastPurchase.detail ? <div className="mt-1">{latestFeastPurchase.detail}</div> : null}
+                  </div>
+                ) : null}
               </div>
             </Card>
 
@@ -759,6 +815,14 @@ function formatRemaining(expiresAt: string | undefined): string {
   const hours = Math.ceil(remainingMs / 3_600_000);
   const days = Math.floor(hours / 24);
   return days > 0 ? `${days}d ${hours % 24}h left` : `${hours}h left`;
+}
+
+function formatMetric(value: number | undefined): string {
+  return Number.isFinite(value) ? Math.floor(value ?? 0).toLocaleString() : 'unknown';
+}
+
+function formatEvidenceOutcome(outcome: string): string {
+  return outcome.trim().replaceAll('-', ' ') || 'unknown';
 }
 
 export default AutoBuyerSettingsModal;

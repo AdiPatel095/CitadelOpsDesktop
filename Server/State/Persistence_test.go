@@ -641,11 +641,18 @@ func TestComponentSnapshotPersistsFeastCostReduction(t *testing.T) {
 		state.Market.FeastPurchaseExpectedID = 4
 		state.Market.FeastPurchasePendingSince = pendingSince
 		state.Market.FeastPurchaseExpectedExpiresAt = expectedExpiry
+		state.Market.FeastPurchasePreviousExpiresAt = observedAt
 		state.Market.FeastPurchaseOperationID = "feast-operation"
 		state.Market.FeastPurchaseResponseToken = "feast-operation/1"
+		state.Market.FeastPurchaseResponseConfirmedAt = pendingSince.Add(time.Second)
+		state.Market.FeastPurchaseResponseExpiresAt = expectedExpiry
 		state.Market.FeastPurchaseInactiveObservedAt = pendingSince.Add(time.Minute)
 		state.Market.FeastPurchaseInactiveResponseToken = "feast-poll/2"
 		state.Market.FeastPurchaseInactiveGeneration = 7
+		state.Market.LatestFeastPurchase = FeastPurchaseEvidence{
+			Outcome: "verifying", FeastID: 4, ChargedCastleID: 12, ChargedKingdomID: 2,
+			AttemptedAt: pendingSince, ExpectedEffectiveCost: 150000,
+		}
 		return []string{"market"}, true, nil
 	})
 	if err != nil {
@@ -664,11 +671,16 @@ func TestComponentSnapshotPersistsFeastCostReduction(t *testing.T) {
 		loaded.Market.FeastPurchaseExpectedID != 4 ||
 		!loaded.Market.FeastPurchasePendingSince.Equal(pendingSince) ||
 		!loaded.Market.FeastPurchaseExpectedExpiresAt.Equal(expectedExpiry) ||
+		!loaded.Market.FeastPurchasePreviousExpiresAt.Equal(observedAt) ||
 		loaded.Market.FeastPurchaseOperationID != "feast-operation" ||
 		loaded.Market.FeastPurchaseResponseToken != "feast-operation/1" ||
+		!loaded.Market.FeastPurchaseResponseConfirmedAt.Equal(pendingSince.Add(time.Second)) ||
+		!loaded.Market.FeastPurchaseResponseExpiresAt.Equal(expectedExpiry) ||
 		!loaded.Market.FeastPurchaseInactiveObservedAt.Equal(pendingSince.Add(time.Minute)) ||
 		loaded.Market.FeastPurchaseInactiveResponseToken != "feast-poll/2" ||
-		loaded.Market.FeastPurchaseInactiveGeneration != 7 {
+		loaded.Market.FeastPurchaseInactiveGeneration != 7 ||
+		loaded.Market.LatestFeastPurchase.Outcome != "verifying" ||
+		loaded.Market.LatestFeastPurchase.ChargedCastleID != 12 {
 		t.Fatalf("persisted feast state = %+v", loaded.Market)
 	}
 }

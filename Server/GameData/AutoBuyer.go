@@ -31,11 +31,12 @@ const (
 // that Auto Buyer may use. Packages with ambiguous prices or unknown table
 // ownership are intentionally omitted.
 type AutoBuyerCatalog struct {
-	Shops       []AutoBuyerShop       `json:"shops"`
-	Packages    []AutoBuyerPackage    `json:"packages"`
-	Specialists []AutoBuyerSpecialist `json:"specialists"`
-	Feasts      []AutoBuyerFeast      `json:"feasts"`
-	TimedOffers AutoBuyerCapability   `json:"timedOffers"`
+	Shops                []AutoBuyerShop       `json:"shops"`
+	Packages             []AutoBuyerPackage    `json:"packages"`
+	Specialists          []AutoBuyerSpecialist `json:"specialists"`
+	Feasts               []AutoBuyerFeast      `json:"feasts"`
+	TimedOffers          AutoBuyerCapability   `json:"timedOffers"`
+	FeastAutomaticSource AutoBuyerCapability   `json:"feastAutomaticSource"`
 }
 
 type AutoBuyerCapability struct {
@@ -250,6 +251,10 @@ func (store *Store) loadAutoBuyerCatalog() (
 		TimedOffers: AutoBuyerCapability{
 			Supported: false,
 			Reason:    "Timed offers require a server-quoted confirmation and are not enabled for unattended purchases yet.",
+		},
+		FeastAutomaticSource: AutoBuyerCapability{
+			Supported: true,
+			Reason:    "Uses the most stored food among owned castles with fresh positive net food production and exposes correlated purchase evidence.",
 		},
 	}
 	byPackage := map[string]map[int64]AutoBuyerPackage{}

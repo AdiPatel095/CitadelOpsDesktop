@@ -58,6 +58,12 @@ func enabledFeatures(snapshot Configuration.Snapshot, now time.Time) map[string]
 	return result
 }
 
+// FeatureEnabledAt exposes the coordinator's canonical persisted control
+// semantics to final command dispatch guards.
+func FeatureEnabledAt(snapshot Configuration.Snapshot, feature string, now time.Time) bool {
+	return enabledFeatures(snapshot, now)[strings.TrimSpace(feature)]
+}
+
 func configuredEnabledFeatures(snapshot Configuration.Snapshot) map[string]bool {
 	result := map[string]bool{}
 	for feature, control := range automationEnabledControls(snapshot) {
