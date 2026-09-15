@@ -96,15 +96,16 @@ func representativeEquipmentOptimizeFixture(t testing.TB, kind string, equipment
 		equipmentType = 1
 	}
 	currentEquipment := map[string]State.EquipmentInstanceID{}
+	slots := []int{1, 2, 3, 4, 6}
 	for index := 0; index < equipmentCount; index++ {
-		slot := index%4 + 1
+		slot := slots[index%len(slots)]
 		id := State.EquipmentInstanceID(1000 + index)
 		effects := State.EquipmentEffects{
 			{WireID: int64(index%8 + 1), DefinitionID: int64(9001 + index%8), Values: []float64{float64(index%37 + 1)}},
 			{WireID: int64((index+3)%8 + 1), DefinitionID: int64(9001 + (index+3)%8), Values: []float64{float64(index%19 + 1)}},
 		}
 		gameState.Inventory.Equipment[id] = State.EquipmentInstance{ID: id, DefinitionID: State.EquipmentID(3000 + index), Slot: slot, TypeID: equipmentType, SetID: int64(index % 12), Effects: effects}
-		if index < 4 {
+		if index < len(slots) {
 			currentEquipment[fmt.Sprint(slot)] = id
 		}
 	}

@@ -40,10 +40,12 @@ import {
 	type EquipmentTargetProfile,
 } from './EquipmentOptimizerState';
 import {
-	equipmentOptimizerScopeKey,
+	equipmentOptimizerInitializationChange,
 	equipmentOptimizerSnapshotKey,
 	equipmentPriorityCatalogKey,
 	equipmentPriorityProfileKey,
+	equipmentOptimizerEffectSummary,
+	equipmentSharedCapLabel,
 } from './EquipmentOptimizerLifecycle';
 
 type Tier = 1 | 2;
@@ -71,6 +73,7 @@ interface PreviewEnvelope {
 interface ItemDescription {
 	name: string;
 	detail: string;
+	effectDetail: string;
 	unknown: boolean;
 }
 
@@ -257,7 +260,10 @@ function EquipmentOptimizerEditor({
 	const priorityRef = useRef<EquipmentPriorityProfile>({ tier1: [], tier2: [] });
 	const optimisticProfiles = useRef<Record<string, EquipmentPriorityProfile>>({});
 	const optimizeRequest = useRef(0);
-	const initializedScope = useRef('');
+	const initializedSection = useRef<string | null | undefined>(undefined);
+	const initializedCatalogKey = useRef('');
+	const initializedProfileKey = useRef('');
+	const optimizeInFlight = useRef(false);
 	const applyInFlight = useRef(false);
 	const canApply = state?.session.loggedIn === true && state.session.socketReady === true;
 	const candidateEffectKey = candidateEffectIDs.join(',');
@@ -307,7 +313,6 @@ function EquipmentOptimizerEditor({
 		() => inferredEquipmentPriorityProfile(priorityGroups, leader?.kind),
 		[leader?.kind, priorityGroups],
 	);
-	const scopeKey = equipmentOptimizerScopeKey(prioritySection, priorityGroups);
 	const priorityCatalogKey = equipmentPriorityCatalogKey(priorityGroups);
 	const currentSnapshotKey = useMemo(() => `${equipmentOptimizerSnapshotKey(
 		state, leader, target.combatMode.toLowerCase() as 'pvp' | 'pve',
@@ -324,16 +329,26 @@ function EquipmentOptimizerEditor({
 				?? inferredProfile
 			: { tier1: [], tier2: [] };
 		const next = normalizeEquipmentPriorityProfile(initial, priorityGroups);
-		if (initializedScope.current === scopeKey && equipmentPriorityProfileKey(next) === equipmentPriorityProfileKey(priorityRef.current)) return;
-		initializedScope.current = scopeKey;
-		optimizeRequest.current += 1;
-		setOptimizing(false);
+		const nextProfileKey = equipmentPriorityProfileKey(next);
+		const change = equipmentOptimizerInitializationChange(
+			initializedSection.current, prioritySection,
+			initializedCatalogKey.current, priorityCatalogKey,
+			initializedProfileKey.current, nextProfileKey,
+		);
+		if (change === 'unchanged') return;
+		initializedSection.current = prioritySection;
+		initializedCatalogKey.current = priorityCatalogKey;
+		initializedProfileKey.current = nextProfileKey;
 		priorityRef.current = next;
 		setPriorityProfile(next);
+		if (change === 'retain-preview') return;
+		optimizeRequest.current += 1;
+		optimizeInFlight.current = false;
+		setOptimizing(false);
 		setPreview(null);
 		setOptimizeError(null);
 		setApplyError(null);
-	}, [effects, inferredProfile, legacyProfileJSON, legacySections, legacyStoredProfile, priorityGroups, prioritySection, scopeKey, storedProfile, storedProfileJSON]);
+	}, [effects, inferredProfile, legacyProfileJSON, legacySections, legacyStoredProfile, priorityCatalogKey, priorityGroups, prioritySection, storedProfile, storedProfileJSON]);
 
 	const tier1 = priorityProfile.tier1;
 	const tier2 = priorityProfile.tier2;
@@ -368,7 +383,9 @@ function EquipmentOptimizerEditor({
 		const next = normalizeEquipmentPriorityProfile(change(priorityRef.current), priorityGroups);
 		priorityRef.current = next;
 		setPriorityProfile(next);
+		initializedProfileKey.current = equipmentPriorityProfileKey(next);
 		optimizeRequest.current += 1;
+		optimizeInFlight.current = false;
 		setOptimizing(false);
 		setPreview(null);
 		setSelectedAlternative(0);
@@ -439,7 +456,8 @@ function EquipmentOptimizerEditor({
 	], [groupsByKey, tier1, tier2]);
 
 	const optimize = async () => {
-		if (!leader || priorities.length === 0) return;
+		if (!leader || priorities.length === 0 || optimizeInFlight.current) return;
+		optimizeInFlight.current = true;
 		const requestID = ++optimizeRequest.current;
 		const requestSnapshotKey = currentSnapshotKey;
 		setOptimizing(true);
@@ -461,8 +479,37 @@ function EquipmentOptimizerEditor({
 			if (requestID !== optimizeRequest.current) return;
 			setOptimizeError(error instanceof Error ? error.message : 'Could not optimize this loadout. Try again.');
 		} finally {
-			if (requestID === optimizeRequest.current) setOptimizing(false);
+			if (requestID === optimizeRequest.current) {
+				optimizeInFlight.current = false;
+				setOptimizing(false);
+			}
 		}
+	};
+	const cancelPendingOptimize = () => {
+		optimizeRequest.current += 1;
+		optimizeInFlight.current = false;
+		setOptimizing(false);
+	};
+	const closeEditor = () => {
+		if (applying) return;
+		cancelPendingOptimize();
+		setPreview(null);
+		setOptimizeError(null);
+		setApplyError(null);
+		onClose();
+	};
+	const changeTarget = () => {
+		cancelPendingOptimize();
+		setPreview(null);
+		setOptimizeError(null);
+		setApplyError(null);
+		onBack();
+	};
+	const closePreview = () => {
+		if (applying) return;
+		cancelPendingOptimize();
+		setPreview(null);
+		setOptimizeError(null);
 	};
 
 	const apply = async () => {
@@ -495,7 +542,7 @@ function EquipmentOptimizerEditor({
 		<>
 			<Modal
 				isOpen={isOpen}
-				onClose={onClose}
+				onClose={closeEditor}
 				title={(
 					<ModalTitle
 						icon={<Activity className="h-5 w-5" />}
@@ -507,7 +554,7 @@ function EquipmentOptimizerEditor({
 				maxWidth="5xl"
 				footer={(
 					<>
-						<Button variant="ghost" onClick={onClose}>Cancel</Button>
+						<Button variant="ghost" onClick={closeEditor}>Cancel</Button>
 						<Button
 							onClick={optimize}
 							disabled={disabled || !leader || priorities.length === 0}
@@ -532,7 +579,7 @@ function EquipmentOptimizerEditor({
 					)}
 					<div className="grid gap-3 rounded-global border border-border-base bg-bg-app/45 p-3 sm:grid-cols-[minmax(0,1fr)_auto]">
 						<div className="flex min-w-0 items-start gap-2">
-							<Button size="icon" variant="ghost" onClick={onBack} aria-label="Change reconfiguration target" title="Change target">
+							<Button size="icon" variant="ghost" onClick={changeTarget} aria-label="Change reconfiguration target" title="Change target">
 								<ArrowLeft className="h-4 w-4" />
 							</Button>
 							<div className="min-w-0 flex-1">
@@ -641,17 +688,19 @@ function EquipmentOptimizerEditor({
 				preview={preview?.response ?? null}
 				priorityGroups={selectedGroups}
 				getEffectName={(id) => effectName(id, getEffect)}
-				getEquipmentDescription={(id) => equipmentDescription(id, state?.inventory.equipment[String(id)], getEquipment(state?.inventory.equipment[String(id)]?.definitionId ?? 0))}
-				getGemDescription={(id) => gemDescription(id, state?.inventory.gems[String(id)], getGem(state?.inventory.gems[String(id)]?.definitionId ?? 0))}
+				getEquipmentDescription={(id) => equipmentDescription(id, state?.inventory.equipment[String(id)], getEquipment(state?.inventory.equipment[String(id)]?.definitionId ?? 0), (effectID) => effectName(effectID, getEffect))}
+				getGemDescription={(id) => gemDescription(id, state?.inventory.gems[String(id)], getGem(state?.inventory.gems[String(id)]?.definitionId ?? 0), (effectID) => effectName(effectID, getEffect))}
 				selectedAlternative={selectedAlternative}
 				onSelectAlternative={(index) => { setSelectedAlternative(index); setApplyError(null); }}
-				onClose={() => { if (!applying) setPreview(null); }}
+				onClose={closePreview}
 				onApply={apply}
 				onRegenerate={optimize}
 				applying={applying}
 				applyDisabled={!canApply || previewStale}
 				stale={previewStale}
 				applyError={applyError}
+				optimizing={optimizing}
+				optimizeError={optimizeError}
 			/>
 		</>
 	);
@@ -760,6 +809,8 @@ function OptimizerPreview({
 	applyDisabled,
 	stale,
 	applyError,
+	optimizing,
+	optimizeError,
 }: {
 	preview: EquipmentOptimizeResponse | null;
 	priorityGroups: EquipmentPriorityGroup[];
@@ -775,6 +826,8 @@ function OptimizerPreview({
 	applyDisabled: boolean;
 	stale: boolean;
 	applyError: string | null;
+	optimizing: boolean;
+	optimizeError: string | null;
 }) {
 	const selected = preview?.alternatives[selectedAlternative] ?? preview?.proposed ?? null;
 	const effectRows = (() => {
@@ -826,9 +879,10 @@ function OptimizerPreview({
 					{stale && (
 						<div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-global border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning">
 							<span>Equipment or official metadata changed after this batch was generated. Review a fresh preview before applying.</span>
-							<Button size="sm" variant="outline" onClick={onRegenerate} disabled={applying}>Regenerate</Button>
+							<Button size="sm" variant="outline" onClick={onRegenerate} disabled={applying || optimizing} isLoading={optimizing}>Regenerate</Button>
 						</div>
 					)}
+					{optimizeError && <p role="alert" className="rounded-global border border-error/30 bg-error/10 px-3 py-2 text-sm text-error">{optimizeError}</p>}
 					{applyError && <p role="alert" className="rounded-global border border-error/30 bg-error/10 px-3 py-2 text-sm text-error">{applyError}</p>}
 					{unavailableGroups.length > 0 && (
 						<p className="rounded-global border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning">
@@ -869,7 +923,7 @@ function OptimizerPreview({
 						<div className="max-h-64 overflow-y-auto custom-scrollbar">
 							{groupedRows.map((row) => (
 								<div key={row.key} className="grid grid-cols-[minmax(0,1fr)_5rem_5rem_5rem] border-t border-border-base/50 px-3 py-2 text-xs">
-									<span className="min-w-0 text-text-main"><span className="block truncate">{row.label}</span><span className="block truncate text-[10px] text-text-muted">{row.category}{row.caps.length ? ` · ${row.caps.length} official cap${row.caps.length === 1 ? '' : 's'}` : ''}</span></span>
+									<span className="min-w-0 text-text-main"><span className="block truncate">{row.label}</span><span className="block truncate text-[10px] text-text-muted">{row.category}{row.caps.length ? ` · Official ${equipmentSharedCapLabel(row.caps)}` : ''}</span></span>
 									<span className="text-right font-mono text-text-muted">{formatNumber(row.current)}</span>
 									<span className="text-right font-mono font-semibold text-text-main">{formatNumber(row.proposed)}</span>
 									<span className={`text-right font-mono font-semibold ${row.proposed >= row.current ? 'text-success' : 'text-warning'}`}>{formatSignedNumber(row.proposed - row.current)}</span>
@@ -880,7 +934,7 @@ function OptimizerPreview({
 					<details className="rounded-global border border-border-base bg-bg-app/30">
 						<summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-text-muted">Detailed official effects</summary>
 						<div className="max-h-52 overflow-y-auto border-t border-border-base custom-scrollbar">
-							{effectRows.filter((row) => row.current !== row.proposed).map((row) => (
+							{effectRows.filter((row) => row.current !== row.proposed || row.cap != null).map((row) => (
 								<div key={row.id} className="grid grid-cols-[minmax(0,1fr)_5rem_5rem] px-3 py-2 text-xs odd:bg-bg-card/35">
 									<span className="truncate text-text-main">{getEffectName(row.id)}{row.cap ? ` · cap ${formatNumber(row.cap)}` : ''}</span>
 									<span className="text-right font-mono text-text-muted">{formatNumber(row.current)}</span>
@@ -922,7 +976,9 @@ function LoadoutColumn({
 						<div key={slot} className="rounded-lg border border-border-base/60 bg-bg-card/50 px-3 py-2">
 							<p className="truncate text-xs font-medium text-text-main">{slotLabel(slot)} · {item?.name ?? 'Empty'}</p>
 							{item && <p className={`mt-0.5 truncate text-[10px] ${item.unknown ? 'text-warning' : 'text-text-muted'}`}>{item.detail}</p>}
-							{gem && <p className={`mt-1 truncate text-[10px] ${gem.unknown ? 'text-warning' : 'text-purple-300'}`}>Gem · {gem.name} · {gem.detail}</p>}
+							{item && <p className="mt-1 break-words text-[10px] leading-relaxed text-text-muted">{item.effectDetail}</p>}
+							{gem && <p className={`mt-1 text-[10px] ${gem.unknown ? 'text-warning' : 'text-purple-300'}`}>Gem · {gem.name} · {gem.detail}</p>}
+							{gem && <p className="mt-1 break-words text-[10px] leading-relaxed text-purple-300">{gem.effectDetail}</p>}
 						</div>
 					);
 				})}
@@ -982,8 +1038,9 @@ function assignmentKey(loadout: EquipmentLoadoutV2): string {
 
 function equipmentDescription(
 	id: number,
-	instance: { definitionId: number; level?: number; rarityId?: number; setId?: number } | undefined,
+	instance: { definitionId: number; level?: number; rarityId?: number; setId?: number; effects: Array<{ definitionId: number; values: number[] }> } | undefined,
 	metadata: { name?: string } | undefined,
+	getEffectName: (id: number) => string,
 ): ItemDescription {
 	const catalogName = metadata?.name?.trim() ?? '';
 	const unknown = !catalogName || /^Equipment \d+$/i.test(catalogName);
@@ -992,14 +1049,16 @@ function equipmentDescription(
 	return {
 		name: unknown ? 'Unknown equipment' : catalogName,
 		detail: `${unknown ? 'Catalog name unavailable · ' : ''}${traits.join(' · ')}`,
+		effectDetail: equipmentOptimizerEffectSummary(instance?.effects, getEffectName),
 		unknown,
 	};
 }
 
 function gemDescription(
 	id: number,
-	instance: { definitionId: number; level?: number; setId?: number; combatMode?: string } | undefined,
+	instance: { definitionId: number; level?: number; setId?: number; combatMode?: string; effects: Array<{ definitionId: number; values: number[] }> } | undefined,
 	metadata: { name?: string } | undefined,
+	getEffectName: (id: number) => string,
 ): ItemDescription {
 	const catalogName = metadata?.name?.trim() ?? '';
 	const unknown = !catalogName || /^Gem \d+$/i.test(catalogName);
@@ -1007,6 +1066,7 @@ function gemDescription(
 	return {
 		name: unknown ? 'Unknown gem' : catalogName,
 		detail: `${unknown ? 'Catalog name unavailable · ' : ''}${traits.join(' · ')}`,
+		effectDetail: equipmentOptimizerEffectSummary(instance?.effects, getEffectName),
 		unknown,
 	};
 }

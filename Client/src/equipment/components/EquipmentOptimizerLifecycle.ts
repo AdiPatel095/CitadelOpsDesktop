@@ -10,11 +10,37 @@ export function equipmentPriorityProfileKey(profile: EquipmentPriorityProfile): 
 	return `1:${profile.tier1.join(',')}|2:${profile.tier2.join(',')}`;
 }
 
-export function equipmentOptimizerScopeKey(
-	prioritySection: string | null,
-	groups: readonly EquipmentPriorityGroup[],
+export function equipmentOptimizerInitializationChange(
+	previousSection: string | null | undefined,
+	nextSection: string | null,
+	previousCatalogKey: string,
+	nextCatalogKey: string,
+	previousProfileKey: string,
+	nextProfileKey: string,
+): 'unchanged' | 'retain-preview' | 'invalidate' {
+	if (previousSection === undefined) return 'invalidate';
+	if (previousSection !== nextSection) return 'invalidate';
+	if (previousCatalogKey !== nextCatalogKey) return 'retain-preview';
+	return previousProfileKey === nextProfileKey ? 'unchanged' : 'invalidate';
+}
+
+export function equipmentSharedCapLabel(caps: readonly number[]): string {
+	if (caps.length === 0) return '';
+	return caps.map((cap) => `max ${Number.isInteger(cap) ? cap.toLocaleString() : cap.toLocaleString(undefined, { maximumFractionDigits: 1 })}`).join(' · ');
+}
+
+export function equipmentOptimizerEffectSummary(
+	effects: readonly { definitionId: number; values: number[] }[] | undefined,
+	getEffectName: (id: number) => string,
 ): string {
-	return `${prioritySection ?? 'none'}|${equipmentPriorityCatalogKey(groups)}`;
+	if (!effects?.length) return 'Effects unavailable';
+	return effects.slice(0, 2).map((effect) => {
+		const catalogName = getEffectName(effect.definitionId).trim();
+		const unknown = !catalogName || /^Effect \d+$/i.test(catalogName);
+		const name = unknown ? `Unknown effect (effect ${effect.definitionId})` : catalogName;
+		const value = effect.values.at(-1);
+		return value == null || !Number.isFinite(value) ? name : `${name} ${value > 0 ? '+' : ''}${value.toLocaleString(undefined, { maximumFractionDigits: 1 })}`;
+	}).join(' · ');
 }
 
 export function equipmentOptimizerSnapshotKey(
@@ -35,7 +61,7 @@ export function equipmentOptimizerSnapshotKey(
 		.map(equipmentSnapshot);
 	const gems = Object.values(state.inventory.gems)
 		.filter((gem) => gemEligible(state, gem, leader.kind, leader.id, expectedType))
-		.filter((gem) => gemMatchesMode(gem, leader.kind, combatMode))
+		.filter((gem) => Boolean(gem.equipmentInstanceId) || gemMatchesMode(gem, leader.kind, combatMode))
 		.sort((left, right) => left.id - right.id)
 		.map(gemSnapshot);
 	return JSON.stringify({

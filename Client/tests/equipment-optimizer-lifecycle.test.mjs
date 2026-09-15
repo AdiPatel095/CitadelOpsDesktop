@@ -45,12 +45,40 @@ test('v1-v4 profiles migrate to official groups and retain an unavailable invent
 	);
 });
 
-test('semantic initialization scope survives candidate identity changes within the same official groups', () => {
+test('semantic initialization survives recreated groups with the same official catalog identity', () => {
 	const section = 'equipment.optimizerPriorities.v2.44.commander.0.pvp';
-	const before = lifecycle.equipmentOptimizerScopeKey(section, groups);
+	const before = lifecycle.equipmentPriorityCatalogKey(groups);
 	const recreatedGroups = groups.map((group) => ({ ...group, effectIDs: [...group.effectIDs] }));
-	assert.equal(lifecycle.equipmentOptimizerScopeKey(section, recreatedGroups), before);
+	const after = lifecycle.equipmentPriorityCatalogKey(recreatedGroups);
+	assert.equal(after, before);
+	assert.equal(lifecycle.equipmentOptimizerInitializationChange(section, section, before, after, '1:|2:official-group-1-2', '1:|2:official-group-1-2'), 'unchanged');
 	assert.equal(lifecycle.equipmentPriorityProfileKey({ tier1: [], tier2: ['official-group-1-2'] }), '1:|2:official-group-1-2');
+});
+
+test('catalog-only initialization changes retain the preview while preference changes invalidate it', () => {
+	const section = 'equipment.optimizerPriorities.v2.44.commander.0.pvp';
+	const profile = '1:|2:official-group-1-2';
+	assert.equal(lifecycle.equipmentOptimizerInitializationChange(undefined, section, '', 'catalog-a', '', profile), 'invalidate');
+	assert.equal(lifecycle.equipmentOptimizerInitializationChange(section, section, 'catalog-a', 'catalog-a', profile, profile), 'unchanged');
+	assert.equal(lifecycle.equipmentOptimizerInitializationChange(section, section, 'catalog-a', 'catalog-b', profile, profile), 'retain-preview');
+	assert.equal(lifecycle.equipmentOptimizerInitializationChange(section, section, 'catalog-a', 'catalog-b', profile, '1:official-group-3-4|2:'), 'retain-preview');
+	assert.equal(lifecycle.equipmentOptimizerInitializationChange(section, section, 'catalog-a', 'catalog-a', profile, '1:official-group-3-4|2:'), 'invalidate');
+});
+
+test('shared cap labels render actual maxima', () => {
+	assert.equal(lifecycle.equipmentSharedCapLabel([]), '');
+	assert.equal(lifecycle.equipmentSharedCapLabel([90]), 'max 90');
+	assert.equal(lifecycle.equipmentSharedCapLabel([90, 120]), 'max 90 · max 120');
+});
+
+test('unnamed same-level items remain distinguishable by readable rolled effects', () => {
+	const names = (id) => id === 61 ? 'Melee soldiers combat strength' : `Effect ${id}`;
+	const first = lifecycle.equipmentOptimizerEffectSummary([{ definitionId: 61, values: [60] }], names);
+	const second = lifecycle.equipmentOptimizerEffectSummary([{ definitionId: 61, values: [72.5] }], names);
+	assert.equal(first, 'Melee soldiers combat strength +60');
+	assert.equal(second, 'Melee soldiers combat strength +72.5');
+	assert.notEqual(first, second);
+	assert.equal(lifecycle.equipmentOptimizerEffectSummary([{ definitionId: 999, values: [4] }], names), 'Unknown effect (effect 999) +4');
 });
 
 test('relevant snapshot ignores unrelated revision and catches equipment or catalog changes', () => {
@@ -66,6 +94,12 @@ test('relevant snapshot ignores unrelated revision and catches equipment or cata
 	const leader = { kind: 'commander', id: 0 };
 	const baseline = lifecycle.equipmentOptimizerSnapshotKey(state, leader, 'pvp');
 	assert.equal(lifecycle.equipmentOptimizerSnapshotKey({ ...state, revision: 2, player: { ...state.player, level: 71 } }, leader, 'pvp'), baseline);
+	const looseOffMode = structuredClone(state);
+	looseOffMode.inventory.gems['501'] = { id: 501, definitionId: 77, compatibleWearerId: 2, combatMode: 'pve', effects: [] };
+	assert.equal(lifecycle.equipmentOptimizerSnapshotKey(looseOffMode, leader, 'pvp'), baseline);
+	const attachedOffMode = structuredClone(looseOffMode);
+	attachedOffMode.inventory.gems['501'].equipmentInstanceId = 101;
+	assert.notEqual(lifecycle.equipmentOptimizerSnapshotKey(attachedOffMode, leader, 'pvp'), baseline);
 	const changed = structuredClone(state);
 	changed.inventory.equipment['101'].effects[0].values[0] = 61;
 	assert.notEqual(lifecycle.equipmentOptimizerSnapshotKey(changed, leader, 'pvp'), baseline);

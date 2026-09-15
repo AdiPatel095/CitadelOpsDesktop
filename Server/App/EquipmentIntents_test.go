@@ -189,6 +189,12 @@ func TestPlanEquipmentReconfigureFingerprintIgnoresUnrelatedAndRejectsRelevantCh
 	if _, err := planEquipmentReconfigure(context.Background(), Intent.PlanningContext{State: unrelated}, arguments); err != nil {
 		t.Fatalf("unrelated update invalidated preview: %v", err)
 	}
+	offModeSocket := gameState
+	offModeSocket.Inventory.Gems = maps.Clone(gameState.Inventory.Gems)
+	offModeSocket.Inventory.Gems[501] = State.GemInstance{ID: 501, DefinitionID: 77, CompatibleWearerID: 2, CombatMode: "pve", EquipmentInstanceID: 101}
+	if _, err := planEquipmentReconfigure(context.Background(), Intent.PlanningContext{State: offModeSocket}, arguments); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("new off-mode socket error = %v, want stale plan before detach", err)
+	}
 	relevant := gameState
 	relevant.Inventory.Equipment = maps.Clone(gameState.Inventory.Equipment)
 	item := relevant.Inventory.Equipment[101]

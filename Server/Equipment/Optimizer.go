@@ -264,7 +264,7 @@ func SnapshotFingerprint(gameState State.GameState, gameData *GameData.Store, ki
 
 	gemIDs := make([]int64, 0, len(gameState.Inventory.Gems))
 	for id, gem := range gameState.Inventory.Gems {
-		if gemEligibleForLeader(gameState, gem, kind, leaderID) && gemMatchesMode(gem, kind, combatMode) {
+		if gemEligibleForLeader(gameState, gem, kind, leaderID) && (gem.EquipmentInstanceID != 0 || gemMatchesMode(gem, kind, combatMode)) {
 			gemIDs = append(gemIDs, int64(id))
 		}
 	}

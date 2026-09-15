@@ -1,6 +1,7 @@
 package Equipment
 
 import (
+	"maps"
 	"reflect"
 	"strconv"
 	"testing"
@@ -169,6 +170,28 @@ func TestSnapshotFingerprintIgnoresUnrelatedStateAndTracksRelevantChanges(t *tes
 	}
 	if unchanged != baseline {
 		t.Fatal("unrelated player/revision update changed equipment fingerprint")
+	}
+	looseOffMode := gameState
+	looseOffMode.Inventory.Gems = maps.Clone(gameState.Inventory.Gems)
+	looseOffMode.Inventory.Gems[501] = State.GemInstance{ID: 501, CompatibleWearerID: 2, CombatMode: "pve", DefinitionID: 77}
+	looseFingerprint, err := SnapshotFingerprint(looseOffMode, nil, "commander", 0, "pvp")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if looseFingerprint != baseline {
+		t.Fatal("loose off-mode gem changed PvP fingerprint")
+	}
+	attachedOffMode := looseOffMode
+	attachedOffMode.Inventory.Gems = maps.Clone(looseOffMode.Inventory.Gems)
+	gem := attachedOffMode.Inventory.Gems[501]
+	gem.EquipmentInstanceID = 101
+	attachedOffMode.Inventory.Gems[501] = gem
+	attachedFingerprint, err := SnapshotFingerprint(attachedOffMode, nil, "commander", 0, "pvp")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if attachedFingerprint == baseline {
+		t.Fatal("off-mode socket on an eligible carrier did not change fingerprint")
 	}
 	relevant := gameState
 	item := relevant.Inventory.Equipment[101]
