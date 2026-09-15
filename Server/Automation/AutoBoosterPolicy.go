@@ -66,11 +66,19 @@ func (*AutoBoosterPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 		"minimumRubyReserve": float64(settings.MinimumRubyReserve),
 	}
 	inventory := snapshot.State.EventScores.Inventory
-	if inventory.GlobalEffectsObservedAt.IsZero() || snapshot.Now.Before(inventory.GlobalEffectsObservedAt) ||
-		snapshot.Now.Sub(inventory.GlobalEffectsObservedAt) >= autoBoosterOfferFreshness {
+	if inventory.GlobalEffectReadObservedAt.IsZero() || snapshot.Now.Before(inventory.GlobalEffectReadObservedAt) ||
+		snapshot.Now.Sub(inventory.GlobalEffectReadObservedAt) >= autoBoosterOfferFreshness ||
+		inventory.GlobalEffectReadGeneration != snapshot.State.Session.ConnectionGeneration ||
+		(!snapshot.State.Session.ChangedAt.IsZero() && inventory.GlobalEffectReadObservedAt.Before(snapshot.State.Session.ChangedAt)) {
 		return autoBoosterRequest(snapshot.Now, settings.CheckIntervalSec, metrics,
-			"Refresh the current daily global-effect offer", "autoBooster.refresh", map[string]any{}), nil
+			"Refresh the current daily effect, boost status, and ruby balance", "autoBooster.refresh", map[string]any{}), nil
 	}
+	if !inventory.GlobalEffectBaselineObservedAt.Equal(inventory.GlobalEffectReadObservedAt) ||
+		inventory.GlobalEffectBaselineGeneration != snapshot.State.Session.ConnectionGeneration {
+		return autoBoosterWaiting(snapshot.Now, settings.CheckIntervalSec,
+			"The latest account snapshot did not contain valid boost-status and ruby-balance data", metrics), nil
+	}
+	metrics["baselineObservedAtUnix"] = float64(inventory.GlobalEffectBaselineObservedAt.Unix())
 
 	effect, effectAvailable := inventory.GlobalEffects[contract.DailyGlobalEffectID]
 	if !effectAvailable || !effect.ActiveAt(snapshot.Now) {
@@ -78,6 +86,7 @@ func (*AutoBoosterPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 			"The daily fortress-speed global effect is not currently available", metrics), nil
 	}
 	metrics["effectEndsAtUnix"] = float64(effect.EndsAt.Unix())
+	metrics["effectRemainingSec"] = effect.EndsAt.Sub(snapshot.Now).Seconds()
 	if effect.EndsAt.Sub(snapshot.Now) <= autoBoosterMinimumEffectWindow {
 		return Decision{
 			Status: "idle", Detail: "Waiting for the next daily fortress-speed effect window",
@@ -85,16 +94,30 @@ func (*AutoBoosterPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 		}, nil
 	}
 
-	if cursor, found := operationalCursor(snapshot.State, "autoBooster", autoBoosterCursorKey); found && int64(cursor) == effect.EndsAt.Unix() {
-		metrics["boosted"] = 1
+	if record, found := inventory.GlobalEffectPurchases[contract.DailyGlobalEffectID]; found &&
+		State.SameEventOccurrence(record.OccurrenceEndsAt, effect.EndsAt) {
+		switch record.Outcome {
+		case State.GlobalEffectPurchaseConfirmed:
+			metrics["boosted"] = 1
+			return Decision{Status: "idle", Detail: "Daily fortress-speed boost is active until the current event ends", NextCheckAt: effect.EndsAt.Add(time.Second), Metrics: metrics}, nil
+		case State.GlobalEffectPurchaseAccepted:
+			return autoBoosterWaiting(snapshot.Now, settings.CheckIntervalSec, "Boost purchase accepted; awaiting current active-state confirmation", metrics), nil
+		case State.GlobalEffectPurchaseUnresolved:
+			return autoBoosterWaiting(snapshot.Now, settings.CheckIntervalSec, "Boost purchase outcome is unresolved; waiting for an authoritative account snapshot", metrics), nil
+		}
+	}
+	if cursor, found := operationalCursor(snapshot.State, "autoBooster", autoBoosterCursorKey); found &&
+		State.SameEventOccurrence(time.Unix(int64(cursor), 0).UTC(), effect.EndsAt) {
 		return Decision{
-			Status: "idle", Detail: "Daily fortress-speed boost was accepted for the current effect window",
-			NextCheckAt: effect.EndsAt.Add(time.Second), Metrics: metrics,
+			Status: "waiting", Detail: "Daily fortress-speed boost purchase was accepted; awaiting current active-state confirmation",
+			NextCheckAt: snapshot.Now.Add(time.Duration(settings.CheckIntervalSec) * time.Second), Metrics: metrics,
 		}, nil
 	}
 	boost, boostKnown := inventory.GlobalEffectBoosts[contract.DailyGlobalEffectID]
 	boostKnown = boostKnown && boost.GlobalEffectID == contract.DailyGlobalEffectID &&
-		boost.OccurrenceEndsAt.Equal(effect.EndsAt) && !boost.ObservedAt.IsZero()
+		State.SameEventOccurrence(boost.OccurrenceEndsAt, effect.EndsAt) && !boost.ObservedAt.IsZero() &&
+		boost.ObservedAt.Equal(inventory.GlobalEffectBaselineObservedAt) &&
+		boost.ConnectionGeneration == snapshot.State.Session.ConnectionGeneration
 	if boostKnown && boost.Boosted {
 		metrics["boosted"] = 1
 		return Decision{
@@ -119,8 +142,12 @@ func (*AutoBoosterPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 			fmt.Sprintf("Server quote is not the approved 2,500-ruby fortress-speed offer (quoted %d); no purchase was sent", offer.RubyCost), metrics), nil
 	}
 	rubies, balanceAvailable := autoBoosterRubyBalance(snapshot.State, snapshot.GameData)
-	if !balanceAvailable {
-		return autoBoosterWaiting(snapshot.Now, settings.CheckIntervalSec, "Ruby balance is unavailable", metrics), nil
+	resourceID, resourceFound := snapshot.GameData.ResourceIDForJSONKey("C2")
+	resourceObservation := snapshot.State.Player.ResourceObservations[State.ResourceID(resourceID)]
+	if !balanceAvailable || !resourceFound || resourceID <= 0 || resourceObservation.ObservedAt.IsZero() ||
+		!resourceObservation.ObservedAt.Equal(inventory.GlobalEffectBaselineObservedAt) ||
+		resourceObservation.ConnectionGeneration != snapshot.State.Session.ConnectionGeneration {
+		return autoBoosterWaiting(snapshot.Now, settings.CheckIntervalSec, "A fresh current-session ruby balance is unavailable", metrics), nil
 	}
 	metrics["rubyBalance"] = float64(rubies)
 	if rubies-settings.MinimumRubyReserve < offer.RubyCost {
@@ -131,7 +158,12 @@ func (*AutoBoosterPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 	arguments, _ := json.Marshal(map[string]any{
 		"globalEffectId": contract.DailyGlobalEffectID, "expectedEndsAtUnix": effect.EndsAt.Unix(),
 		"expectedRubyCost": offer.RubyCost, "expectedBonusValue": offer.BonusValue,
-		"minimumRubyReserve": settings.MinimumRubyReserve, "expectedRubyBalance": rubies,
+		"minimumRubyReserve": settings.MinimumRubyReserve, "expectedCheckIntervalSec": settings.CheckIntervalSec,
+		"expectedRubyBalance":        rubies,
+		"expectedBaselineObservedAt": inventory.GlobalEffectBaselineObservedAt,
+		"expectedRubyObservedAt":     resourceObservation.ObservedAt,
+		"expectedSessionGeneration":  snapshot.State.Session.ConnectionGeneration,
+		"expectedRubyResourceId":     resourceID,
 	})
 	return Decision{
 		Status: "ready", Detail: "Purchase the current daily fortress-speed boost for 2,500 rubies",

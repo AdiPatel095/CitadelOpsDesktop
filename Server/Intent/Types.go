@@ -130,6 +130,10 @@ type Step struct {
 	// transport. It supports durable no-replay markers around spending calls.
 	PreDispatchAction    string          `json:"preDispatchAction,omitempty"`
 	PreDispatchArguments json.RawMessage `json:"preDispatchArguments,omitempty"`
+	// FinalDispatchAction is repeated by the outbound router after queue waits
+	// and immediately before the transport can send the command.
+	FinalDispatchAction    string          `json:"finalDispatchAction,omitempty"`
+	FinalDispatchArguments json.RawMessage `json:"finalDispatchArguments,omitempty"`
 	// DefinitiveSendFailureAction compensates PreDispatchAction only when the
 	// sender proves the command did not reach an indeterminate wire state.
 	DefinitiveSendFailureAction    string          `json:"definitiveSendFailureAction,omitempty"`

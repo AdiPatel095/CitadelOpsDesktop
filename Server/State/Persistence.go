@@ -115,6 +115,7 @@ func normalizeStateMaps(state *GameState) {
 	if state.Player.Resources == nil {
 		state.Player.Resources = defaults.Player.Resources
 	}
+	state.Player.ResourceObservations = map[ResourceID]PlayerResourceObservation{}
 	if state.Player.Currencies == nil {
 		state.Player.Currencies = defaults.Player.Currencies
 	}

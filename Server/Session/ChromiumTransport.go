@@ -575,6 +575,9 @@ func (transport *ChromiumTransport) Send(ctx context.Context, payload []byte) er
 		return err
 	}
 	defer transport.releaseSendGate()
+	if err := Outbound.ValidateFinalDispatch(ctx); err != nil {
+		return err
+	}
 	metadata := Outbound.MetadataFromContext(ctx)
 	transport.mu.RLock()
 	gameContext := transport.gameContext
