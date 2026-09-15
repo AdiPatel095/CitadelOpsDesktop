@@ -96,25 +96,45 @@ func TestStoreRejectsInvalidSections(t *testing.T) {
 	}
 }
 
-func TestValidateAutoBuyerFeastFloorAtWriteBoundary(t *testing.T) {
-	valid := json.RawMessage(`{"version":1,"feast":{"enabled":true,"minimumRemainingHours":720}}`)
-	if err := Validate("automation.autoBuyer", valid); err != nil {
-		t.Fatalf("valid feast floor rejected: %v", err)
+func TestAutoBuyerFeastFloorValidatedAtMutationBoundary(t *testing.T) {
+	legacy := json.RawMessage(`{"version":1,"checkIntervalSec":1800,"feast":{"enabled":true,"minimumRemainingHours":0}}`)
+	store, err := Open(t.TempDir(), map[string]json.RawMessage{"automation.autoBuyer": legacy})
+	if err != nil {
+		t.Fatal(err)
 	}
 	for _, value := range []json.RawMessage{
-		json.RawMessage(`{"version":1,"feast":{"enabled":true,"minimumRemainingHours":0}}`),
-		json.RawMessage(`{"version":1,"feast":{"enabled":true,"minimumRemainingHours":721}}`),
-		json.RawMessage(`{"version":1,"feast":{"enabled":true,"minimumRemainingHours":1.5}}`),
+		json.RawMessage(`{"version":1,"checkIntervalSec":1800,"feast":{"enabled":true,"minimumRemainingHours":721}}`),
+		json.RawMessage(`{"version":1,"checkIntervalSec":1800,"feast":{"enabled":true,"minimumRemainingHours":1.5}}`),
 	} {
-		if err := Validate("automation.autoBuyer", value); err == nil ||
-			!strings.Contains(err.Error(), "whole number from 1 to 720") && !strings.Contains(err.Error(), "cannot unmarshal") {
-			t.Fatalf("invalid feast floor %s error = %v", value, err)
+		if _, err := store.Update("automation.autoBuyer", value); !errors.Is(err, ErrInvalidUpdate) ||
+			!strings.Contains(err.Error(), "whole number from 1 to 720") {
+			t.Fatalf("invalid changed feast floor %s error = %v", value, err)
 		}
 	}
-	if err := Validate("automation.autoBuyer", json.RawMessage(`{
-		"version":1,"feast":{"enabled":false,"minimumRemainingHours":0}
+	if _, err := store.Update("automation.autoBuyer", json.RawMessage(`{
+		"version":1,"checkIntervalSec":3600,"feast":{"minimumRemainingHours":0,"enabled":true}
 	}`)); err != nil {
-		t.Fatalf("disabled legacy feast blocked unrelated settings edit: %v", err)
+		t.Fatalf("unchanged invalid legacy feast blocked unrelated edit: %v", err)
+	}
+	if _, err := store.Update("automation.autoBuyer", json.RawMessage(`{
+		"version":1,"checkIntervalSec":3600,"feast":{"enabled":false,"minimumRemainingHours":0}
+	}`)); err != nil {
+		t.Fatalf("disabled legacy feast was rejected: %v", err)
+	}
+	if _, err := store.Update("automation.autoBuyer", json.RawMessage(`{
+		"version":1,"checkIntervalSec":3600,"feast":{"enabled":true,"minimumRemainingHours":720}
+	}`)); err != nil {
+		t.Fatalf("corrected feast floor was rejected: %v", err)
+	}
+
+	fresh, err := Open(t.TempDir(), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := fresh.UpdateMany(map[string]json.RawMessage{
+		"automation.autoBuyer": json.RawMessage(`{"version":1,"feast":{"enabled":true,"minimumRemainingHours":0}}`),
+	}); !errors.Is(err, ErrInvalidUpdate) {
+		t.Fatalf("invalid imported feast floor error = %v", err)
 	}
 }
 

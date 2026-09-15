@@ -313,7 +313,7 @@ func pendingFeastTimerIncreased(market State.MarketState, expiresAt time.Time) b
 	if baseline.IsZero() {
 		baseline = market.FeastPurchasePendingSince
 	}
-	return !baseline.IsZero() && expiresAt.After(baseline)
+	return State.FeastTimerProgressed(baseline, expiresAt)
 }
 
 func pendingFeastResponseMatches(market State.MarketState, frame Protocol.Frame) bool {

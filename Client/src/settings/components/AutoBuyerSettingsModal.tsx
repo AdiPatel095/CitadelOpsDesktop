@@ -660,7 +660,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                         <p className="mt-1 text-xs text-text-muted">
                           {selectedSourceID
                             ? `${formatMetric(autoBuyerRuntime?.metrics?.feastSourceFood)} food stored · ${formatMetric(autoBuyerRuntime?.metrics?.feastSourceNetFoodPerHour)} net food/hour`
-                            : 'Selection requires fresh stored food and positive net production for every usable owned castle.'}
+                            : 'Selection waits for fresh stored-food and economy data from every usable owned castle; only positive-net castles qualify.'}
                         </p>
                       </>
                     ) : <p className="mt-1 text-xs text-warning">Update the account runtime before changing or enabling feast upkeep. You can still disable the saved feast goal.</p>}
@@ -717,7 +717,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                       Charged castle {latestFeastPurchase.chargedCastleId} in kingdom {latestFeastPurchase.chargedKingdomId} · expected cost {latestFeastPurchase.expectedEffectiveCost.toLocaleString()}
                     </div>
                     <div className="mt-1">
-                      Food {latestFeastPurchase.foodBeforeKnown ? latestFeastPurchase.foodBefore?.toLocaleString() : 'unavailable'} → {latestFeastPurchase.foodAfterKnown ? latestFeastPurchase.foodAfter?.toLocaleString() : 'awaiting refresh'} · debit {latestFeastPurchase.debitVerification || 'unverified'}
+                      Food {latestFeastPurchase.foodBeforeKnown ? (latestFeastPurchase.foodBefore ?? 0).toLocaleString() : 'unavailable'} → {latestFeastPurchase.foodAfterKnown ? (latestFeastPurchase.foodAfter ?? 0).toLocaleString() : 'awaiting refresh'} · debit {latestFeastPurchase.debitVerification || 'unverified'}
                     </div>
                     <div className="mt-1">
                       Timer {latestFeastPurchase.activationConfirmed ? 'confirmed' : 'not attributed'}{latestFeastPurchase.confirmedExpiresAt ? ` · ${formatRemaining(latestFeastPurchase.confirmedExpiresAt)}` : ''}

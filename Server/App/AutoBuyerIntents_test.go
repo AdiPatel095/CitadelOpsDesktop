@@ -220,6 +220,47 @@ func TestPlanAutoBuyerFeastRefreshesResourcesAndTimer(t *testing.T) {
 	}
 }
 
+func TestResolveAutoBuyerFeastRoutesNumericOwnedOuterKingdomSource(t *testing.T) {
+	gameData := autoBuyerIntentTestStore(t)
+	now := time.Now().UTC().Add(-time.Second).Truncate(time.Millisecond)
+	gameState := autoBuyerIntentTestState(now)
+	mainCastle := gameState.Castles[10]
+	mainCastle.Resources[5] = autoBuyerIntentFoodBalance(120000)
+	gameState.Castles[10] = mainCastle
+	outerCastle := mainCastle
+	outerCastle.ID = 20
+	outerCastle.KingdomID = 2
+	outerCastle.Name = "Fire Peaks"
+	outerCastle.Resources = map[State.ResourceID]State.ResourceBalance{5: autoBuyerIntentFoodBalance(200000)}
+	gameState.Castles[20] = outerCastle
+	gameState.Market.FeastCostReductionPercent = 25
+	expectedBalance, expectedCost := int64(200000), int64(60000)
+	arguments, err := json.Marshal(autoBuyerFeastPurchaseRequest{
+		FeastID: 0, MinimumRemainingHours: 12, SourceCastleID: 20, ExpectedSourceKingdomID: 2,
+		MinimumFoodReserve: 30000, ExpectedBalanceBefore: &expectedBalance, ExpectedEffectiveCost: &expectedCost,
+		AttemptAfter: now, FeastRefreshAfter: now, HistoryRefreshSec: 900,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	step, err := resolveAutoBuyerFeastPurchaseStep(
+		t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, arguments,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var payload map[string]json.RawMessage
+	if err := json.Unmarshal(step.Command.Payload, &payload); err != nil {
+		t.Fatal(err)
+	}
+	if got := string(payload["CID"]); got != "20" {
+		t.Fatalf("BFS CID = %s, want numeric 20", got)
+	}
+	if got := string(payload["KID"]); got != "2" {
+		t.Fatalf("BFS KID = %s, want numeric 2", got)
+	}
+}
+
 func TestAutoBuyerFeastPurchaseArmsDurableMarkerBeforeBFSDispatch(t *testing.T) {
 	application, engine, sender, arguments := newAutoBuyerFeastIntegrationHarness(t, false)
 	receipt := engine.Submit(t.Context(), Intent.Request{
@@ -244,6 +285,11 @@ func TestAutoBuyerFeastPurchaseArmsDurableMarkerBeforeBFSDispatch(t *testing.T) 
 	}
 
 	assertAutoBuyerFeastPendingMarker(t, application.State.ReadOnlyView().Market, sender.bfsMetadata)
+	armed := application.State.ReadOnlyView()
+	if evidence := armed.Market.LatestFeastPurchase; !evidence.FoodBeforeKnown || evidence.FoodBefore != 130000 ||
+		!evidence.FoodBeforeObservedAt.Equal(armed.Castles[10].FoodBalanceObservedAt) {
+		t.Fatalf("atomic pre-dispatch food evidence = %+v, castle observed at %s", evidence, armed.Castles[10].FoodBalanceObservedAt)
+	}
 	persisted, err := State.LoadSnapshot(application.DataDir)
 	if err != nil {
 		t.Fatal(err)
@@ -315,6 +361,8 @@ func newAutoBuyerFeastIntegrationHarness(
 			"feast":{"enabled":true,"feastId":0,"minimumRemainingHours":12,"sourceCastleId":0,
 				"minimumFoodReserve":30000,"allowRubies":false,"maximumRubyCostPerPurchase":0}
 		}`),
+		"automation.enabled": json.RawMessage(`{"auto_buyer":true}`),
+		"scheduler":          json.RawMessage(`{"botLocked":false}`),
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -404,7 +452,7 @@ func (sender *autoBuyerFeastArmIntegrationSender) Send(ctx context.Context, payl
 	case "fce":
 		response.Payload = json.RawMessage(`{"FRM":25}`)
 	case "dcl":
-		food := 120000
+		food := 130000
 		if sender.purchaseCompleted {
 			food = 60000
 		}
@@ -485,11 +533,24 @@ func TestAutoBuyerFeastReconciliationRequiresTimerProgressAndFreshChargedCastle(
 		t.Fatalf("pending reconciliation error = %v", err)
 	}
 
+	jitterObservedAt := attemptedAt.Add(900 * time.Millisecond)
+	gameState.Market.Feast = State.MarketFeastState{
+		ID: 0, RemainingSec: 60 * 60, ExpiresAt: jitterObservedAt.Add(time.Hour), ObservedAt: jitterObservedAt,
+	}
+	castle := gameState.Castles[10]
+	castle.FoodBalanceObservedAt = jitterObservedAt
+	gameState.Castles[10] = castle
+	application.State = State.NewStore(gameState)
+	if err := application.verifyAutoBuyerFeastReconciliation(t.Context(), arguments); err == nil ||
+		!strings.Contains(err.Error(), "authoritative increased timer") || !application.State.ReadOnlyView().Market.FeastPurchasePending {
+		t.Fatalf("fractional timer jitter reconciliation error = %v market=%+v", err, application.State.ReadOnlyView().Market)
+	}
+
 	refreshedAt := time.Now().UTC()
 	gameState.Market.Feast = State.MarketFeastState{
 		ID: 0, RemainingSec: 6 * 60 * 60, ExpiresAt: refreshedAt.Add(6 * time.Hour), ObservedAt: refreshedAt,
 	}
-	castle := gameState.Castles[10]
+	castle = gameState.Castles[10]
 	castle.FoodBalanceObservedAt = refreshedAt
 	castle.Resources[5] = autoBuyerIntentFoodBalance(60000)
 	gameState.Castles[10] = castle
@@ -584,6 +645,35 @@ func TestResolveAutoBuyerFeastRequiresImmediateDCLFoodAuthority(t *testing.T) {
 		t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, plan.Steps[0].ResolverArguments,
 	); err != nil {
 		t.Fatalf("fresh DCL food authority rejected: %v", err)
+	}
+}
+
+func TestAutoBuyerFeastPreflightAcceptsFractionalBOITimerSamplingDrift(t *testing.T) {
+	gameData := autoBuyerIntentTestStore(t)
+	observedAt := time.Date(2026, time.September, 15, 14, 0, 0, 900000000, time.UTC)
+	gameState := autoBuyerIntentTestState(observedAt)
+	castle := gameState.Castles[10]
+	castle.Resources[5] = autoBuyerIntentFoodBalance(120000)
+	gameState.Castles[10] = castle
+	gameState.Market.FeastCostReductionPercent = 25
+	gameState.Market.Feast = State.MarketFeastState{
+		ID: 0, RemainingSec: 6 * 60 * 60, ObservedAt: observedAt, ExpiresAt: observedAt.Add(6 * time.Hour),
+	}
+	expectedExpiry := gameState.Market.Feast.ExpiresAt.Add(-100 * time.Millisecond)
+	expectedBalance, expectedCost := int64(120000), int64(60000)
+	arguments, err := json.Marshal(autoBuyerFeastPurchaseRequest{
+		FeastID: 0, MinimumRemainingHours: 12, SourceCastleID: 10, ExpectedSourceKingdomID: 0,
+		MinimumFoodReserve: 30000, ExpectedActiveFeastID: 0, ExpectedExpiresAtUnix: expectedExpiry.Unix(),
+		ExpectedExpiresAt: expectedExpiry, ExpectedBalanceBefore: &expectedBalance, ExpectedEffectiveCost: &expectedCost,
+		AttemptAfter: observedAt.Add(-time.Second), FeastRefreshAfter: observedAt, HistoryRefreshSec: 900,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, _, err := autoBuyerFeastPurchaseContext(
+		Intent.PlanningContext{State: gameState, GameData: gameData}, arguments, observedAt.Add(100*time.Millisecond), true,
+	); err != nil {
+		t.Fatalf("fractional BOI sampling drift rejected: %v", err)
 	}
 }
 
@@ -721,6 +811,12 @@ func TestVerifyAutoBuyerFeastUsesDispatchBoundCostAfterDelayedResume(t *testing.
 		Outcome: "confirmed", FeastID: 0, ChargedCastleID: 10, ChargedKingdomID: 0,
 		ActivationConfirmed: true, ActivationConfirmedAt: verifiedAt,
 	}
+	richerCastle := gameState.Castles[10]
+	richerCastle.ID = 20
+	richerCastle.KingdomID = 2
+	richerCastle.Name = "Fire Peaks"
+	richerCastle.Resources = map[State.ResourceID]State.ResourceBalance{5: autoBuyerIntentFoodBalance(500000)}
+	gameState.Castles[20] = richerCastle
 	gameState.Market.FeastCostReductionObservedAt = dispatchedAt.Add(-time.Hour)
 	expectedBalance, expectedCost := int64(200000), int64(60000)
 	arguments, _ := json.Marshal(autoBuyerFeastPurchaseRequest{
@@ -732,6 +828,110 @@ func TestVerifyAutoBuyerFeastUsesDispatchBoundCostAfterDelayedResume(t *testing.
 		Intent.PlanningContext{State: gameState, GameData: gameData}, arguments, verifiedAt,
 	); err != nil {
 		t.Fatalf("delayed feast verification rejected its dispatch-bound quote: %v", err)
+	}
+}
+
+func TestValidateAutoBuyerFeastDispatchFailsClosedAtFinalBoundary(t *testing.T) {
+	now := time.Now().UTC().Add(-time.Second).Truncate(time.Millisecond)
+	expectedBalance, expectedCost := int64(120000), int64(60000)
+	request := autoBuyerFeastPurchaseRequest{
+		FeastID: 0, MinimumRemainingHours: 12, SourceCastleID: 10, ExpectedSourceKingdomID: 0,
+		MinimumFoodReserve: 30000, ExpectedBalanceBefore: &expectedBalance, ExpectedEffectiveCost: &expectedCost,
+		AttemptAfter: now, FeastRefreshAfter: now, HistoryRefreshSec: 900,
+	}
+	arguments, err := json.Marshal(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	tests := []struct {
+		name      string
+		mutate    func(*State.GameState)
+		settings  string
+		enabled   string
+		scheduler string
+		wantError string
+	}{
+		{name: "current state"},
+		{name: "saved automation master disabled", enabled: `{"auto_buyer":false}`, wantError: "disabled before feast dispatch"},
+		{name: "saved timed automation master expired", enabled: fmt.Sprintf(
+			`{"auto_buyer":{"enabled":true,"expiresAt":%q}}`, now.Add(-time.Second).Format(time.RFC3339Nano),
+		), wantError: "disabled before feast dispatch"},
+		{name: "scheduler Bot Lock active", scheduler: `{"botLocked":true}`, wantError: "scheduler Bot Lock is active"},
+		{name: "lane safety lock active", mutate: func(state *State.GameState) {
+			state.Automations["autoBuyer"] = State.AutomationState{ID: "autoBuyer", Enabled: true, SafetyLock: State.AutomationSafetyLock{
+				OperationID: "rejected-operation", Opcode: "bfs", Code: 99, ObservedAt: now,
+			}}
+		}, wantError: "lane safety lock is active"},
+		{name: "session unavailable", mutate: func(state *State.GameState) {
+			state.Session.SocketReady = false
+		}, wantError: "game session is unavailable"},
+		{name: "saved goal changed", settings: `{
+			"version":1,"checkIntervalSec":1800,"historyRefreshSec":900,"minimumRubyReserve":0,
+			"packages":[],"specialists":[],
+			"feast":{"enabled":true,"feastId":0,"minimumRemainingHours":13,"sourceCastleId":0,
+				"minimumFoodReserve":30000,"allowRubies":false,"maximumRubyCostPerPurchase":0}
+		}`, wantError: "saved feast settings changed before dispatch"},
+		{name: "automatic source changed", mutate: func(state *State.GameState) {
+			castle := state.Castles[10]
+			castle.ID = 20
+			castle.KingdomID = 2
+			castle.Name = "Fire Peaks"
+			castle.Resources = map[State.ResourceID]State.ResourceBalance{5: autoBuyerIntentFoodBalance(200000)}
+			state.Castles[20] = castle
+		}, wantError: "automatic feast source changed to castle 20"},
+	}
+
+	for _, testCase := range tests {
+		t.Run(testCase.name, func(t *testing.T) {
+			gameState := autoBuyerIntentTestState(now)
+			castle := gameState.Castles[10]
+			castle.Resources[5] = autoBuyerIntentFoodBalance(float64(expectedBalance))
+			gameState.Castles[10] = castle
+			gameState.Market.FeastCostReductionPercent = 25
+			gameState.Automations["autoBuyer"] = State.AutomationState{ID: "autoBuyer", Enabled: true}
+			if testCase.mutate != nil {
+				testCase.mutate(&gameState)
+			}
+			settings := testCase.settings
+			if settings == "" {
+				settings = `{
+					"version":1,"checkIntervalSec":1800,"historyRefreshSec":900,"minimumRubyReserve":0,
+					"packages":[],"specialists":[],
+					"feast":{"enabled":true,"feastId":0,"minimumRemainingHours":12,"sourceCastleId":0,
+						"minimumFoodReserve":30000,"allowRubies":false,"maximumRubyCostPerPurchase":0}
+				}`
+			}
+			enabled := testCase.enabled
+			if enabled == "" {
+				enabled = `{"auto_buyer":true}`
+			}
+			scheduler := testCase.scheduler
+			if scheduler == "" {
+				scheduler = `{"botLocked":false}`
+			}
+			configuration, openErr := Configuration.Open(t.TempDir(), map[string]json.RawMessage{
+				"automation.autoBuyer": json.RawMessage(settings),
+				"automation.enabled":   json.RawMessage(enabled),
+				"scheduler":            json.RawMessage(scheduler),
+			})
+			if openErr != nil {
+				t.Fatal(openErr)
+			}
+			application := &Application{
+				State: State.NewStore(gameState), GameData: autoBuyerIntentTestManager(t), Configuration: configuration,
+			}
+			dispatchErr := application.validateAutoBuyerFeastDispatch(arguments, now.Add(time.Second))
+			if testCase.wantError == "" {
+				if dispatchErr != nil {
+					t.Fatalf("current guarded dispatch rejected: %v", dispatchErr)
+				}
+				return
+			}
+			if dispatchErr == nil || !strings.Contains(dispatchErr.Error(), testCase.wantError) {
+				t.Fatalf("dispatch error = %v, want %q", dispatchErr, testCase.wantError)
+			}
+		})
 	}
 }
 

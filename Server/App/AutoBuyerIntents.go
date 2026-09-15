@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
@@ -61,6 +62,7 @@ type autoBuyerFeastPurchaseRequest struct {
 	MinimumRubyReserve         int64           `json:"minimumRubyReserve"`
 	ExpectedActiveFeastID      int64           `json:"expectedActiveFeastId"`
 	ExpectedExpiresAtUnix      int64           `json:"expectedExpiresAtUnix"`
+	ExpectedExpiresAt          time.Time       `json:"expectedExpiresAt,omitempty"`
 	ExpectedBalanceBefore      *int64          `json:"expectedBalanceBefore,omitempty"`
 	ExpectedEffectiveCost      *int64          `json:"expectedEffectiveCost,omitempty"`
 	AttemptAfter               time.Time       `json:"attemptAfter,omitempty"`
@@ -280,6 +282,7 @@ func planAutoBuyerFeastPurchase(_ context.Context, input Intent.PlanningContext,
 	}
 	request.ExpectedBalanceBefore = &balance
 	request.ExpectedEffectiveCost = &effectiveCost
+	request.ExpectedExpiresAt = input.State.Market.Feast.ExpiresAt
 	request.FeastRefreshAfter = plannedAt
 	resolved, _ := json.Marshal(request)
 	routePayload, _ := json.Marshal(autoBuyerFeastRoute{
@@ -590,7 +593,7 @@ func autoBuyerFeastPurchaseContext(
 			return request, source, feast, fmt.Errorf("%w: feast source economy was not refreshed immediately before purchase", Intent.ErrPlanStale)
 		}
 	}
-	if current.ID != request.ExpectedActiveFeastID || !autoBuyerIntentExpiryMatches(current.ExpiresAt, request.ExpectedExpiresAtUnix) {
+	if current.ID != request.ExpectedActiveFeastID || !autoBuyerFeastExpectedExpiryMatches(current.ExpiresAt, request) {
 		return request, source, feast, fmt.Errorf("%w: active feast changed", Intent.ErrPlanStale)
 	}
 	if current.ActiveAt(now) && current.ID != feast.ID {
@@ -782,7 +785,7 @@ func (application *Application) verifyAutoBuyerFeastReconciliation(ctx context.C
 		}
 		if !feast.FreshAt(now, gameState.Session.ChangedAt, refreshAge) ||
 			!feast.ObservedAt.After(market.FeastPurchasePendingSince) || feast.ID != request.FeastID ||
-			!feast.ExpiresAt.After(baseline) {
+			!State.FeastTimerProgressed(baseline, feast.ExpiresAt) {
 			return nil, false, fmt.Errorf("the unresolved feast purchase has no authoritative increased timer")
 		}
 		source, sourceErr := autoBuyerIntentOwnedFeastCastle(*gameState, request.SourceCastleID, request.ExpectedSourceKingdomID)
@@ -913,13 +916,16 @@ func (application *Application) setAutoBuyerFeastReconciliation(ctx context.Cont
 		if !force {
 			return nil, false, nil
 		}
+		_, source, _, contextErr := autoBuyerFeastPurchaseContext(
+			Intent.PlanningContext{State: *gameState, GameData: gameData}, arguments, time.Now().UTC(), true,
+		)
+		if contextErr != nil {
+			return nil, false, contextErr
+		}
 		pendingSince := time.Now().UTC()
 		baseline := pendingSince
-		if request.ExpectedExpiresAtUnix > 0 {
-			oldExpiry := time.Unix(request.ExpectedExpiresAtUnix, 0).UTC()
-			if oldExpiry.After(baseline) {
-				baseline = oldExpiry
-			}
+		if market.Feast.ExpiresAt.After(baseline) {
+			baseline = market.Feast.ExpiresAt
 		}
 		market.FeastPurchasePending = true
 		market.FeastPurchaseInactiveObservedAt = time.Time{}
@@ -928,14 +934,9 @@ func (application *Application) setAutoBuyerFeastReconciliation(ctx context.Cont
 		market.FeastPurchaseExpectedID = request.FeastID
 		market.FeastPurchasePendingSince = pendingSince
 		market.FeastPurchaseExpectedExpiresAt = baseline.Add(time.Duration(feast.DurationSec) * time.Second)
-		if request.ExpectedExpiresAtUnix > 0 {
-			market.FeastPurchasePreviousExpiresAt = time.Unix(request.ExpectedExpiresAtUnix, 0).UTC()
-		} else {
-			market.FeastPurchasePreviousExpiresAt = time.Time{}
-		}
+		market.FeastPurchasePreviousExpiresAt = market.Feast.ExpiresAt
 		market.FeastPurchaseResponseConfirmedAt = time.Time{}
 		market.FeastPurchaseResponseExpiresAt = time.Time{}
-		source := gameState.Castles[request.SourceCastleID]
 		evidence := State.FeastPurchaseEvidence{
 			Outcome: "pending", FeastID: request.FeastID,
 			ChargedCastleID: request.SourceCastleID, ChargedKingdomID: request.ExpectedSourceKingdomID,
@@ -945,8 +946,14 @@ func (application *Application) setAutoBuyerFeastReconciliation(ctx context.Cont
 		if request.ExpectedEffectiveCost != nil {
 			evidence.ExpectedEffectiveCost = *request.ExpectedEffectiveCost
 		}
-		if request.ExpectedBalanceBefore != nil {
-			evidence.FoodBefore = *request.ExpectedBalanceBefore
+		if !feast.Price.Premium {
+			foodID, found := gameData.ResourceIDForJSONKey("F")
+			balance, exists := source.Resources[State.ResourceID(foodID)]
+			amount, valid := autoBuyerIntentBalanceAmount(balance.Amount)
+			if !found || foodID <= 0 || !exists || !valid || source.FoodBalanceObservedAt.IsZero() {
+				return nil, false, fmt.Errorf("food balance is unavailable while arming feast reconciliation")
+			}
+			evidence.FoodBefore = amount
 			evidence.FoodBeforeKnown = true
 			evidence.FoodBeforeObservedAt = source.FoodBalanceObservedAt
 		}
@@ -972,7 +979,8 @@ func (application *Application) validateAutoBuyerFeastDispatch(arguments json.Ra
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
-	raw, found := application.Configuration.Snapshot().Sections["automation.autoBuyer"]
+	configuration := application.Configuration.Snapshot()
+	raw, found := configuration.Sections["automation.autoBuyer"]
 	if !found {
 		return fmt.Errorf("%w: Auto Buyer settings are unavailable", Intent.ErrPlanStale)
 	}
@@ -999,11 +1007,14 @@ func (application *Application) validateAutoBuyerFeastDispatch(arguments json.Ra
 	if !state.Session.LoggedIn || !state.Session.SocketReady || state.Session.Generation == 0 {
 		return fmt.Errorf("%w: game session is unavailable", Intent.ErrPlanStale)
 	}
-	if !automation.Enabled {
+	if !Automation.FeatureEnabledAt(configuration, "auto_buyer", now) {
 		return fmt.Errorf("%w: Auto Buyer was disabled before feast dispatch", Intent.ErrPlanStale)
 	}
+	if application.automationLocked() {
+		return fmt.Errorf("%w: scheduler Bot Lock is active", Intent.ErrPlanStale)
+	}
 	if automation.SafetyLock.Active(now) {
-		return fmt.Errorf("%w: Auto Buyer Bot Lock is active", Intent.ErrPlanStale)
+		return fmt.Errorf("%w: Auto Buyer lane safety lock is active", Intent.ErrPlanStale)
 	}
 	if current.Version != 1 || !current.Feast.Enabled || current.Feast.FeastID != request.FeastID ||
 		current.Feast.MinimumRemainingHours != request.MinimumRemainingHours ||
@@ -1091,13 +1102,14 @@ func verifyAutoBuyerFeastPurchaseContext(
 		return fmt.Errorf("%s purchase was not confirmed by a committed direct feast response", feast.Name)
 	}
 	baseline := input.State.Market.FeastLastPurchaseAt
-	if request.ExpectedExpiresAtUnix > 0 {
-		oldExpiry := time.Unix(request.ExpectedExpiresAtUnix, 0).UTC()
-		if oldExpiry.After(baseline) {
-			baseline = oldExpiry
-		}
+	expectedExpiry := request.ExpectedExpiresAt
+	if expectedExpiry.IsZero() && request.ExpectedExpiresAtUnix > 0 {
+		expectedExpiry = time.Unix(request.ExpectedExpiresAtUnix, 0).UTC()
 	}
-	if current.ID != feast.ID || !current.ExpiresAt.After(baseline) {
+	if expectedExpiry.After(baseline) {
+		baseline = expectedExpiry
+	}
+	if current.ID != feast.ID || !State.FeastTimerProgressed(baseline, current.ExpiresAt) {
 		return fmt.Errorf("%s purchase was not confirmed by an increased refreshed feast timer", feast.Name)
 	}
 	evidence := input.State.Market.LatestFeastPurchase
@@ -1300,4 +1312,15 @@ func autoBuyerIntentExpiryMatches(actual time.Time, expectedUnix int64) bool {
 	}
 	delta := actual.Unix() - expectedUnix
 	return delta >= -5 && delta <= 5
+}
+
+func autoBuyerFeastExpectedExpiryMatches(actual time.Time, request autoBuyerFeastPurchaseRequest) bool {
+	if !request.ExpectedExpiresAt.IsZero() {
+		if actual.IsZero() {
+			return false
+		}
+		delta := actual.Sub(request.ExpectedExpiresAt)
+		return delta >= -time.Second && delta <= time.Second
+	}
+	return autoBuyerIntentExpiryMatches(actual, request.ExpectedExpiresAtUnix)
 }

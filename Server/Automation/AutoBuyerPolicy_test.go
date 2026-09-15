@@ -443,7 +443,7 @@ func TestAutoBuyerUsesFeastSpecificFreshness(t *testing.T) {
 	}
 }
 
-func TestAutoBuyerUnreconciledFeastAcknowledgementCanOnlyRefresh(t *testing.T) {
+func TestAutoBuyerUnreconciledFeastRetriesFullReadOnlyReconciliationAfterRestart(t *testing.T) {
 	gameData := autoBuyerPolicyTestStore(t)
 	now := time.Date(2026, 8, 10, 12, 0, 31, 0, time.UTC)
 	acknowledgedAt := now.Add(-31 * time.Second)
@@ -455,6 +455,10 @@ func TestAutoBuyerUnreconciledFeastAcknowledgementCanOnlyRefresh(t *testing.T) {
 	gameState.Market.FeastPurchaseExpectedID = 0
 	gameState.Market.FeastPurchasePendingSince = acknowledgedAt.Add(-time.Second)
 	gameState.Market.FeastPurchaseExpectedExpiresAt = acknowledgedAt.Add(6 * time.Hour)
+	gameState.Market.LatestFeastPurchase = State.FeastPurchaseEvidence{
+		Outcome: "uncertain", FeastID: 0, ChargedCastleID: 10, ChargedKingdomID: 0,
+		AttemptedAt: acknowledgedAt.Add(-time.Second),
+	}
 	store := State.NewStore(gameState)
 	registry := Ingest.NewRegistry()
 	if err := Ingest.RegisterCoreReducers(registry); err != nil {
@@ -487,8 +491,37 @@ func TestAutoBuyerUnreconciledFeastAcknowledgementCanOnlyRefresh(t *testing.T) {
 		State: gameState, GameData: gameData, Now: now,
 		Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{autoBuyerSection: settings}},
 	})
-	if err != nil || decision.Request == nil || decision.Request.Name != "autoBuyer.boosters.refresh" || decision.ReevaluateOnSuccess || decision.ReevaluateOnStale {
+	if err != nil || decision.Request == nil || decision.Request.Name != "autoBuyer.feast.reconcile" || decision.ReevaluateOnSuccess || decision.ReevaluateOnStale {
 		t.Fatalf("unreconciled feast acknowledgement decision = %#v err=%v", decision, err)
+	}
+	var request struct {
+		FeastID                 int64           `json:"feastId"`
+		SourceCastleID          State.CastleID  `json:"sourceCastleId"`
+		ExpectedSourceKingdomID State.KingdomID `json:"expectedSourceKingdomId"`
+		AttemptAfter            time.Time       `json:"attemptAfter"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil || request.FeastID != 0 ||
+		request.SourceCastleID != 10 || request.ExpectedSourceKingdomID != 0 ||
+		!request.AttemptAfter.Equal(acknowledgedAt.Add(-time.Second)) {
+		t.Fatalf("durable reconciliation request = %#v err=%v", request, err)
+	}
+	// A failed first refresh leaves the persisted latch and evidence unchanged.
+	// A restarted worker must therefore schedule the full BOI+DCL+verify path again.
+	restartedDecision, err := NewAutoBuyerPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, GameData: gameData, Now: now.Add(autoBuyerFeastPurchasePacing),
+		Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{autoBuyerSection: settings}},
+	})
+	if err != nil || restartedDecision.Request == nil || restartedDecision.Request.Name != "autoBuyer.feast.reconcile" {
+		t.Fatalf("restart reconciliation retry = %#v err=%v", restartedDecision, err)
+	}
+	legacyState := gameState
+	legacyState.Market.LatestFeastPurchase = State.FeastPurchaseEvidence{}
+	legacyDecision, err := NewAutoBuyerPolicy().Evaluate(t.Context(), Snapshot{
+		State: legacyState, GameData: gameData, Now: now,
+		Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{autoBuyerSection: settings}},
+	})
+	if err != nil || legacyDecision.Request == nil || legacyDecision.Request.Name != "autoBuyer.boosters.refresh" {
+		t.Fatalf("legacy pending marker timer fallback = %#v err=%v", legacyDecision, err)
 	}
 }
 

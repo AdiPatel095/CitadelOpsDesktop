@@ -206,7 +206,7 @@ func TestClientProjectionPublishesFeastCostReduction(t *testing.T) {
 	state.Market.FeastPurchaseInactiveGeneration = 7
 	state.Market.LatestFeastPurchase = FeastPurchaseEvidence{
 		Outcome: "confirmed", FeastID: 4, ChargedCastleID: 12, ChargedKingdomID: 2,
-		AttemptedAt: observedAt, ActivationConfirmed: true,
+		AttemptedAt: observedAt, ActivationConfirmed: true, FoodBeforeKnown: true, FoodAfterKnown: true,
 	}
 
 	contents, err := json.Marshal(NewClientStateSnapshot(state))
@@ -222,7 +222,8 @@ func TestClientProjectionPublishesFeastCostReduction(t *testing.T) {
 		t.Fatalf("client feast cost reduction snapshot = %+v", snapshot.Market)
 	}
 	if snapshot.Market.LatestFeastPurchase.Outcome != "confirmed" ||
-		snapshot.Market.LatestFeastPurchase.ChargedCastleID != 12 {
+		snapshot.Market.LatestFeastPurchase.ChargedCastleID != 12 ||
+		!bytes.Contains(contents, []byte(`"foodBefore":0`)) || !bytes.Contains(contents, []byte(`"foodAfter":0`)) {
 		t.Fatalf("sanitized feast receipt = %+v", snapshot.Market.LatestFeastPurchase)
 	}
 	for _, backendOnly := range [][]byte{

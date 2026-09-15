@@ -132,6 +132,60 @@ func TestConfigurationUpdateExpectedValueIgnoresUnrelatedRevisionButRejectsSameS
 	}
 }
 
+func TestConfigurationUpdateCanPreserveDisableOrCorrectInvalidLegacyFeast(t *testing.T) {
+	legacy := json.RawMessage(`{"version":1,"checkIntervalSec":1800,"feast":{"enabled":true,"minimumRemainingHours":0}}`)
+	newHandler := func(t *testing.T) (http.Handler, *Configuration.Store) {
+		t.Helper()
+		store, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{"automation.autoBuyer": legacy})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return NewServer(Config{Configuration: store}).Handler(), store
+	}
+	request := func(t *testing.T, handler http.Handler, value json.RawMessage, expected any) *httptest.ResponseRecorder {
+		t.Helper()
+		payload, err := json.Marshal(map[string]any{"value": value, "expectedValue": expected})
+		if err != nil {
+			t.Fatal(err)
+		}
+		result := httptest.NewRecorder()
+		handler.ServeHTTP(result, httptest.NewRequest(http.MethodPut, "/api/v2/config/automation.autoBuyer", strings.NewReader(string(payload))))
+		return result
+	}
+
+	handler, _ := newHandler(t)
+	preserved := request(t, handler, json.RawMessage(`{
+		"version":1,"checkIntervalSec":3600,"feast":{"enabled":true,"minimumRemainingHours":0}
+	}`), legacy)
+	if preserved.Code != http.StatusOK {
+		t.Fatalf("unrelated legacy edit = %d %s", preserved.Code, preserved.Body.String())
+	}
+
+	handler, _ = newHandler(t)
+	disabled := request(t, handler, json.RawMessage(`{
+		"version":1,"checkIntervalSec":1800,"feast":{"enabled":false,"minimumRemainingHours":0}
+	}`), legacy)
+	if disabled.Code != http.StatusOK {
+		t.Fatalf("legacy feast disable = %d %s", disabled.Code, disabled.Body.String())
+	}
+
+	handler, _ = newHandler(t)
+	corrected := request(t, handler, json.RawMessage(`{
+		"version":1,"checkIntervalSec":1800,"feast":{"enabled":true,"minimumRemainingHours":12}
+	}`), legacy)
+	if corrected.Code != http.StatusOK {
+		t.Fatalf("legacy feast correction = %d %s", corrected.Code, corrected.Body.String())
+	}
+
+	handler, _ = newHandler(t)
+	invalid := request(t, handler, json.RawMessage(`{
+		"version":1,"checkIntervalSec":1800,"feast":{"enabled":true,"minimumRemainingHours":721}
+	}`), nil)
+	if invalid.Code != http.StatusUnprocessableEntity || !strings.Contains(invalid.Body.String(), "whole number from 1 to 720") {
+		t.Fatalf("changed invalid feast = %d %s", invalid.Code, invalid.Body.String())
+	}
+}
+
 func TestConfigurationUpdateRoutesPlayerHistoryRetentionThroughDurableEndpoint(t *testing.T) {
 	store, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{
 		History.PlayerSamplesConfigurationSection: json.RawMessage(`{"version":1,"retention":"30d"}`),

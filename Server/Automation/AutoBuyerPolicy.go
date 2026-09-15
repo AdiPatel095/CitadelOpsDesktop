@@ -120,6 +120,37 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 		"enabledSpecialists": float64(enabledSpecialists),
 		"feastEnabled":       boolMetric(settings.Feast.Enabled),
 	}
+	if snapshot.State.Market.FeastPurchasePending {
+		metrics["feastReconciliationPending"] = 1
+		evidence := snapshot.State.Market.LatestFeastPurchase
+		next := time.Time{}
+		if lastRun := snapshot.State.Automations["autoBuyer"].LastRunAt; lastRun != nil {
+			next = lastRun.Add(autoBuyerFeastPurchasePacing)
+		}
+		if earliest := snapshot.State.Market.FeastPurchasePendingSince.Add(autoBuyerFeastPurchasePacing); next.Before(earliest) {
+			next = earliest
+		}
+		if snapshot.Now.Before(next) {
+			return Decision{Status: "waiting", Detail: "Waiting for the next read-only feast reconciliation check", NextCheckAt: next, Metrics: metrics}, nil
+		}
+		if evidence.ChargedCastleID <= 0 || evidence.AttemptedAt.IsZero() ||
+			evidence.FeastID != snapshot.State.Market.FeastPurchaseExpectedID {
+			decision := autoBuyerRequestDecision(snapshot.Now, metrics, "Recheck legacy unresolved feast timer without spending", "autoBuyer.boosters.refresh", map[string]any{"feastContext": false})
+			decision.ReevaluateOnSuccess, decision.ReevaluateOnStale = false, false
+			decision.NextCheckAt = snapshot.Now.Add(autoBuyerFeastPurchasePacing)
+			return decision, nil
+		}
+		decision := autoBuyerRequestDecision(snapshot.Now, metrics, "Recheck unresolved feast purchase without spending", "autoBuyer.feast.reconcile", map[string]any{
+			"feastId":                 snapshot.State.Market.FeastPurchaseExpectedID,
+			"sourceCastleId":          evidence.ChargedCastleID,
+			"expectedSourceKingdomId": evidence.ChargedKingdomID,
+			"attemptAfter":            evidence.AttemptedAt,
+			"historyRefreshSec":       settings.HistoryRefreshSec,
+		})
+		decision.ReevaluateOnSuccess, decision.ReevaluateOnStale = false, false
+		decision.NextCheckAt = snapshot.Now.Add(autoBuyerFeastPurchasePacing)
+		return decision, nil
+	}
 	if enabledPackages == 0 && enabledSpecialists == 0 && !settings.Feast.Enabled {
 		return autoBuyerIdle(snapshot.Now, settings.CheckIntervalSec, "No Auto Buyer goals are enabled", metrics), nil
 	}
@@ -156,23 +187,6 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 			snapshot.State.Session.ChangedAt,
 			refreshAge,
 		)
-	}
-	if settings.Feast.Enabled && snapshot.State.Market.FeastPurchasePending {
-		metrics["feastReconciliationPending"] = 1
-		next := time.Time{}
-		if lastRun := snapshot.State.Automations["autoBuyer"].LastRunAt; lastRun != nil {
-			next = lastRun.Add(autoBuyerFeastPurchasePacing)
-		}
-		if earliest := snapshot.State.Market.FeastPurchasePendingSince.Add(autoBuyerFeastPurchasePacing); next.Before(earliest) {
-			next = earliest
-		}
-		if snapshot.Now.Before(next) {
-			return Decision{Status: "waiting", Detail: "Waiting for the next read-only feast reconciliation check", NextCheckAt: next, Metrics: metrics}, nil
-		}
-		decision := autoBuyerRequestDecision(snapshot.Now, metrics, "Recheck unresolved feast purchase without spending", "autoBuyer.boosters.refresh", map[string]any{"feastContext": false})
-		decision.ReevaluateOnSuccess, decision.ReevaluateOnStale = false, false
-		decision.NextCheckAt = snapshot.Now.Add(autoBuyerFeastPurchasePacing)
-		return decision, nil
 	}
 	if feastContextStale {
 		decision := autoBuyerRequestDecision(snapshot.Now, metrics, "Refresh specialist and feast context", "autoBuyer.boosters.refresh", map[string]any{
@@ -570,6 +584,7 @@ func evaluateAutoBuyerFeast(
 		"minimumRubyReserve":         settings.MinimumRubyReserve,
 		"expectedActiveFeastId":      current.ID,
 		"expectedExpiresAtUnix":      autoBuyerUnix(current.ExpiresAt),
+		"expectedExpiresAt":          current.ExpiresAt,
 		"expectedBalanceBefore":      balance,
 		"expectedEffectiveCost":      effectiveCost,
 		"attemptAfter":               snapshot.Now,

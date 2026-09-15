@@ -1068,10 +1068,10 @@ type FeastPurchaseEvidence struct {
 	AttemptedAt           time.Time `json:"attemptedAt"`
 	UpdatedAt             time.Time `json:"updatedAt"`
 	ExpectedEffectiveCost int64     `json:"expectedEffectiveCost"`
-	FoodBefore            int64     `json:"foodBefore,omitempty"`
+	FoodBefore            int64     `json:"foodBefore"`
 	FoodBeforeKnown       bool      `json:"foodBeforeKnown"`
 	FoodBeforeObservedAt  time.Time `json:"foodBeforeObservedAt,omitempty"`
-	FoodAfter             int64     `json:"foodAfter,omitempty"`
+	FoodAfter             int64     `json:"foodAfter"`
 	FoodAfterKnown        bool      `json:"foodAfterKnown"`
 	FoodAfterObservedAt   time.Time `json:"foodAfterObservedAt,omitempty"`
 	DebitVerification     string    `json:"debitVerification"`
@@ -1084,6 +1084,12 @@ type FeastPurchaseEvidence struct {
 
 func (feast MarketFeastState) ActiveAt(now time.Time) bool {
 	return feast.ID >= 0 && !feast.ExpiresAt.IsZero() && feast.ExpiresAt.After(now)
+}
+
+// FeastTimerProgressed ignores sub-second drift introduced when an integer
+// remaining duration is combined with a fractional response timestamp.
+func FeastTimerProgressed(previous, current time.Time) bool {
+	return !previous.IsZero() && current.After(previous.Add(time.Second))
 }
 
 // FreshAt reports whether the feast value is a coherent observation from the

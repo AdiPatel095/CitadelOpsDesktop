@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"sort"
 	"strings"
 	"sync"
@@ -19,6 +20,7 @@ const (
 )
 
 var ErrExternalAuthority = errors.New("configuration is owned by an external authority")
+var ErrInvalidUpdate = errors.New("configuration update is invalid")
 
 type Snapshot struct {
 	SchemaVersion int                        `json:"schemaVersion"`
@@ -196,6 +198,10 @@ func (store *Store) UpdateMany(sections map[string]json.RawMessage) (Snapshot, [
 	next := cloneSnapshot(store.snapshot)
 	for _, section := range names {
 		value := canonical[section]
+		if err := ValidateUpdate(section, value, store.snapshot.Sections[section]); err != nil {
+			store.mu.Unlock()
+			return Snapshot{}, nil, err
+		}
 		if current, exists := store.snapshot.Sections[section]; exists && bytes.Equal(current, value) {
 			continue
 		}
@@ -329,6 +335,10 @@ func (store *Store) UpdateConditional(
 		store.mu.Unlock()
 		return Snapshot{}, fmt.Errorf("configuration section %q changed", section)
 	}
+	if err := ValidateUpdate(section, canonical, current); err != nil {
+		store.mu.Unlock()
+		return Snapshot{}, err
+	}
 	if exists && bytes.Equal(current, canonical) {
 		snapshot := cloneSnapshot(store.snapshot)
 		store.mu.Unlock()
@@ -386,25 +396,48 @@ func Validate(section string, value json.RawMessage) error {
 	if _, err := canonicalSection(section, value); err != nil {
 		return err
 	}
-	if section == "automation.autoBuyer" {
-		var settings struct {
-			Version int `json:"version"`
-			Feast   struct {
-				Enabled               bool `json:"enabled"`
-				MinimumRemainingHours int  `json:"minimumRemainingHours"`
-			} `json:"feast"`
-		}
-		if err := json.Unmarshal(value, &settings); err != nil {
-			return fmt.Errorf("decode Auto Buyer settings: %w", err)
-		}
-		if settings.Version != 1 {
-			return fmt.Errorf("Auto Buyer settings version must be 1")
-		}
-		if settings.Feast.Enabled && (settings.Feast.MinimumRemainingHours < 1 || settings.Feast.MinimumRemainingHours > 720) {
-			return fmt.Errorf("feast minimum remaining hours must be a whole number from 1 to 720")
-		}
-	}
 	return nil
+}
+
+// ValidateUpdate applies user-write policy relative to the current saved
+// value. Existing invalid feast settings remain loadable and can be preserved
+// during unrelated edits or disabled, while newly enabled or changed feast
+// goals must carry a safe whole-hour target.
+func ValidateUpdate(section string, proposed, current json.RawMessage) error {
+	if section != "automation.autoBuyer" {
+		return nil
+	}
+	type feastSettings struct {
+		Enabled               bool            `json:"enabled"`
+		MinimumRemainingHours json.RawMessage `json:"minimumRemainingHours"`
+	}
+	var proposedDocument struct {
+		Feast json.RawMessage `json:"feast"`
+	}
+	if err := json.Unmarshal(proposed, &proposedDocument); err != nil {
+		return fmt.Errorf("%w: decode Auto Buyer settings: %v", ErrInvalidUpdate, err)
+	}
+	var proposedFeast feastSettings
+	if len(proposedDocument.Feast) == 0 || json.Unmarshal(proposedDocument.Feast, &proposedFeast) != nil || !proposedFeast.Enabled {
+		return nil
+	}
+	var hours int
+	if err := json.Unmarshal(proposedFeast.MinimumRemainingHours, &hours); err == nil && hours >= 1 && hours <= 720 {
+		return nil
+	}
+	var currentDocument struct {
+		Feast json.RawMessage `json:"feast"`
+	}
+	if len(current) > 0 && json.Unmarshal(current, &currentDocument) == nil &&
+		jsonValuesEqual(proposedDocument.Feast, currentDocument.Feast) {
+		return nil
+	}
+	return fmt.Errorf("%w: feast minimum remaining hours must be a whole number from 1 to 720", ErrInvalidUpdate)
+}
+
+func jsonValuesEqual(left, right json.RawMessage) bool {
+	var leftValue, rightValue any
+	return json.Unmarshal(left, &leftValue) == nil && json.Unmarshal(right, &rightValue) == nil && reflect.DeepEqual(leftValue, rightValue)
 }
 
 func (store *Store) Subscribe(buffer int) (<-chan Event, func()) {

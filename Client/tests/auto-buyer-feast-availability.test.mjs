@@ -23,6 +23,9 @@ test('Auto Buyer exposes and enforces feast automatic-purchase capability', asyn
   assert.match(modal, /owned positive-net castle with the most food stored/);
   assert.match(modal, /Enter a whole number from 1 to 720 hours/);
   assert.match(modal, /latestFeastPurchase\.activationConfirmed/);
+  assert.match(modal, /\(latestFeastPurchase\.foodBefore \?\? 0\)\.toLocaleString\(\)/);
+  assert.match(modal, /\(latestFeastPurchase\.foodAfter \?\? 0\)\.toLocaleString\(\)/);
+  assert.match(modal, /only positive-net castles qualify/);
   assert.doesNotMatch(modal, /Pay from castle/);
 
   assert.match(select, /disabled\?: boolean/);

@@ -312,6 +312,16 @@ func TestPendingFeastRequiresExpectedExtensionBeforeClearing(t *testing.T) {
 	}
 
 	state = newPendingState()
+	state.Market.FeastPurchasePreviousExpiresAt = dispatchedAt.Add(time.Minute + 800*time.Millisecond)
+	_, changed, err = reduceMarketFeast(t.Context(), Protocol.Frame{
+		Opcode: "bfs", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+		ReceivedAt: dispatchedAt.Add(900 * time.Millisecond), ResponseToken: "expected-token", Payload: json.RawMessage(`{"T":0,"RT":60}`),
+	}, &state, nil)
+	if err == nil || changed || !state.Market.FeastPurchasePending {
+		t.Fatalf("fractional unchanged timer jitter cleared pending: changed=%t err=%v market=%+v", changed, err, state.Market)
+	}
+
+	state = newPendingState()
 	_, changed, err = reduceMarketFeast(t.Context(), Protocol.Frame{
 		Opcode: "bfs", Direction: Protocol.DirectionInbound, ResponseCode: &code,
 		ReceivedAt: dispatchedAt, ResponseToken: "other-token", Payload: json.RawMessage(`{"T":0,"RT":21600}`),
