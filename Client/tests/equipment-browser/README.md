@@ -15,11 +15,11 @@ Open `http://127.0.0.1:41733/`.
 
 The fixed control dock stays above production modal portals. It exposes commander/castellan inventories, fewer/no candidates, HTTP error, 1.5-second delayed success, and 9-second timeout, unrelated background updates, candidate ID churn within the same semantic groups, relevant equipment and off-mode socket changes, catalog addition/digest change, v1-v4 stored-profile seeds, and simulated apply outcomes.
 
-`Run 5 warm full-path samples` clicks the production Preview button five times. Each sample starts inside the fixture API provider immediately before its fetch, then a `MutationObserver` waits for all ten real alternative buttons and two animation frames. HTTP time and click-handler-to-painted-results time remain visible in the DOM. Initial Vite/catalog/component loading is outside the measured window. These are synthetic local regression measurements, not live account or production latency evidence.
+`Run 5 warm full-path samples` clicks the production Preview button five times. A capture-phase document listener records the production button click before its React handler runs; the fixture API provider records the HTTP completion, then a `MutationObserver` waits for all ten real alternative buttons and two animation frames. HTTP time and click-handler-to-painted-results time remain visible in the DOM. Initial Vite/catalog/component loading is outside the measured window. These are synthetic local regression measurements, not live account or production latency evidence.
 
 ## Recorded review evidence
 
-On 2026-09-15, the mounted fixture was exercised through browser clicks against the production HTTP handler and optimizer:
+On 2026-09-15, the mounted fixture was exercised in local Chrome on an Apple M4 machine through browser clicks against the production HTTP handler and optimizer. The sample lists below are rounded to the nearest millisecond:
 
 - Commander, 334 equipment and 16 gems: 10 warm click-to-ten-results samples were 100, 79, 68, 80, 67, 81, 89, 91, 90, and 69 ms; exact maximum and p95 were 99.7 ms.
 - Castellan, 253 equipment and no PvP gems: 10 warm samples were 74, 76, 82, 82, 39, 40, 55, 73, 95, and 76 ms; exact maximum and p95 were 94.8 ms.
