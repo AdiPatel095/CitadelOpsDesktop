@@ -300,6 +300,154 @@ func TestMarketBoosterPreservesFeastWhenBFSOmitted(t *testing.T) {
 	}
 }
 
+func TestMarketBoosterRequiresCompleteCoherentAuthoritativeArray(t *testing.T) {
+	base := time.Date(2026, 9, 15, 12, 0, 0, 250_000_000, time.UTC)
+	code := 0
+	for _, testCase := range []struct {
+		name    string
+		payload json.RawMessage
+	}{
+		{"missing", json.RawMessage(`{}`)}, {"null", json.RawMessage(`{"BO":null}`)},
+		{"malformed-id", json.RawMessage(`{"BO":[{"ID":null,"RT":0}]}`)},
+		{"fractional-duration", json.RawMessage(`{"BO":[{"ID":0,"RT":1.5}]}`)},
+		{"duplicate", json.RawMessage(`{"BO":[{"ID":0,"RT":1},{"ID":0,"RT":2}]}`)},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			state := State.NewGameState()
+			state.Session.ConnectionGeneration = 7
+			state.Market.BoostersObservedAt = base
+			state.Market.BoostersObservedGeneration = 7
+			state.Market.Boosters[0] = State.MarketBoosterState{ID: 0, RemainingSec: 3600, ExpiresAt: base.Add(time.Hour)}
+			_, _, err := reduceMarketBooster(t.Context(), Protocol.Frame{Opcode: "boi", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: base.Add(time.Second), Payload: testCase.payload}, &state, nil)
+			if (testCase.name == "missing" || testCase.name == "null") && err != nil {
+				t.Fatalf("optional BO error = %v", err)
+			}
+			if testCase.name != "missing" && testCase.name != "null" && err == nil {
+				t.Fatal("malformed authoritative BO accepted")
+			}
+			if state.Market.Boosters[0].RemainingSec != 3600 || !state.Market.BoostersObservedAt.Equal(base) {
+				t.Fatalf("invalid BO changed authority: %#v", state.Market)
+			}
+		})
+	}
+	state := State.NewGameState()
+	state.Session.ConnectionGeneration = 7
+	state.Market.Boosters[0] = State.MarketBoosterState{ID: 0, RemainingSec: 3600, ExpiresAt: base.Add(time.Hour)}
+	_, changed, err := reduceMarketBooster(t.Context(), Protocol.Frame{Opcode: "boi", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: base, Payload: json.RawMessage(`{"BO":[]}`)}, &state, nil)
+	if err != nil || !changed || len(state.Market.Boosters) != 0 || state.Market.BoostersObservedGeneration != 7 {
+		t.Fatalf("explicit empty BO = %#v err=%v", state.Market, err)
+	}
+	state.Market.Boosters[0] = State.MarketBoosterState{ID: 0, RemainingSec: 3600, ExpiresAt: base.Add(time.Hour)}
+	state.Market.BoostersObservedAt = base
+	_, _, _ = reduceMarketBooster(t.Context(), Protocol.Frame{Opcode: "boi", Direction: Protocol.DirectionInbound, ReceivedAt: base.Add(time.Second), Payload: json.RawMessage(`{"BO":[]}`)}, &state, nil)
+	if len(state.Market.Boosters) != 1 || !state.Market.BoostersObservedAt.Equal(base) {
+		t.Fatalf("missing result code changed BO authority: %#v", state.Market)
+	}
+	_, changed, err = reduceMarketBooster(t.Context(), Protocol.Frame{Opcode: "boi", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: base.Add(2 * time.Second), Payload: json.RawMessage(`{"BO":[{"ID":99,"RT":2147483647,"L":1},{"ID":0,"RT":4000000000,"PC":0}]}`)}, &state, nil)
+	if err != nil || !changed || !state.Market.Boosters[99].Permanent || state.Market.Boosters[0].RemainingSec != 4_000_000_000 || state.Market.Boosters[0].ContinuousPurchaseCount != 0 {
+		t.Fatalf("ordered unrelated/permanent/large BO rows = %#v err=%v", state.Market.Boosters, err)
+	}
+}
+
+func TestGlobalRubyObservationRequiresExplicitCurrentC2(t *testing.T) {
+	gameData, decodeErr := GameData.DecodeStore([]byte(`{"versionInfo":[],"buildings":[],"units":[],"resources":[{"resourceID":1,"JSONKey":"C1"},{"resourceID":2,"JSONKey":"C2"}],"currencies":[]}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if decodeErr != nil {
+		t.Fatal(decodeErr)
+	}
+	state := State.NewGameState()
+	state.Session.ConnectionGeneration = 9
+	base := time.Date(2026, 9, 15, 12, 0, 0, 0, time.UTC)
+	code := 0
+	_, _, err := reduceGlobalResources(t.Context(), Protocol.Frame{Opcode: "gcu", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: base, Payload: json.RawMessage(`{"C2":0}`)}, &state, gameData)
+	if err != nil || state.Player.Resources[2] != 0 || !state.Player.ResourceObservations[2].ObservedAt.Equal(base) {
+		t.Fatalf("zero ruby authority = %#v err=%v", state.Player, err)
+	}
+	_, _, _ = reduceGlobalResources(t.Context(), Protocol.Frame{Opcode: "gcu", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: base.Add(time.Second), Payload: json.RawMessage(`{"C1":50}`)}, &state, gameData)
+	if !state.Player.ResourceObservations[2].ObservedAt.Equal(base) {
+		t.Fatal("missing C2 refreshed ruby authority")
+	}
+	_, _, _ = reduceGlobalResources(t.Context(), Protocol.Frame{Opcode: "gcu", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: base.Add(2 * time.Second), Payload: json.RawMessage(`{"C2":null}`)}, &state, gameData)
+	if !state.Player.ResourceObservations[2].ObservedAt.Equal(base) {
+		t.Fatal("malformed C2 refreshed ruby authority")
+	}
+	_, _, _ = reduceGlobalResources(t.Context(), Protocol.Frame{Opcode: "gcu", Direction: Protocol.DirectionInbound, ReceivedAt: base.Add(3 * time.Second), Payload: json.RawMessage(`{"C2":500}`)}, &state, gameData)
+	if state.Player.Resources[2] != 0 || !state.Player.ResourceObservations[2].ObservedAt.Equal(base) {
+		t.Fatalf("missing result code changed ruby amount under old authority: %#v", state.Player)
+	}
+	for _, invalid := range []json.RawMessage{json.RawMessage(`{"C2":-1}`), json.RawMessage(`{"C2":1.5}`), json.RawMessage(`{"C2":"NaN"}`), json.RawMessage(`{"C2":9223372036854775808}`)} {
+		_, _, _ = reduceGlobalResources(t.Context(), Protocol.Frame{Opcode: "gcu", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: base.Add(4 * time.Second), Payload: invalid}, &state, gameData)
+		if state.Player.Resources[2] != 0 || !state.Player.ResourceObservations[2].ObservedAt.Equal(base) {
+			t.Fatalf("invalid C2 %s changed ruby authority: %#v", invalid, state.Player)
+		}
+	}
+}
+
+func TestSpecialistResponseKeepsRubyAndBoosterAuthorityAtomic(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{"versionInfo":[],"buildings":[],"units":[],"resources":[{"resourceID":2,"JSONKey":"C2"},{"resourceID":5,"JSONKey":"F"}],"currencies":[]}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	state := State.NewGameState()
+	state.Session.ConnectionGeneration = 3
+	base := time.Now().UTC().Add(-time.Minute).Truncate(time.Second)
+	state.Player.Resources[2] = 1000
+	state.Player.ResourceObservations[2] = State.PlayerResourceObservation{ObservedAt: base, ConnectionGeneration: 3}
+	state.Market.Boosters = map[int]State.MarketBoosterState{0: {ID: 0, RemainingSec: 3600, ExpiresAt: base.Add(time.Hour)}}
+	state.Market.BoostersObservedAt = base
+	state.Market.BoostersObservedGeneration = 3
+	state.Castles[100] = newCastleState(100)
+	castle := state.Castles[100]
+	castle.Focused = true
+	state.Castles[100] = castle
+	registry := NewRegistry()
+	if err := RegisterCoreReducers(registry); err != nil {
+		t.Fatal(err)
+	}
+	store := State.NewStore(state)
+	_, err = store.ApplyComponents(State.Components(State.ComponentPlayer), func(current *State.GameState) ([]string, bool, error) {
+		current.Player.ResourceObservations[2] = State.PlayerResourceObservation{ObservedAt: base, ConnectionGeneration: 3}
+		return []string{"resources"}, true, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	pipeline := NewPipeline(store, staticGameDataProvider{store: gameData}, registry)
+	code := 0
+	_, err = pipeline.HandleFrame(t.Context(), Protocol.Frame{Opcode: "ovs", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: base.Add(time.Second), Payload: json.RawMessage(`{"gcu":{"C2":900},"boi":{"BO":[{"ID":null,"RT":604800}]}}`)})
+	if err == nil {
+		t.Fatal("malformed specialist BO response was accepted")
+	}
+	afterError := store.ReadOnlyView()
+	if afterError.Player.Resources[2] != 1000 || !afterError.Player.ResourceObservations[2].ObservedAt.Equal(base) || afterError.Market.Boosters[0].RemainingSec != 3600 || !afterError.Market.BoostersObservedAt.Equal(base) {
+		t.Fatalf("ingest error partially refreshed authority: player=%+v market=%+v", afterError.Player, afterError.Market)
+	}
+	_, err = pipeline.HandleFrame(t.Context(), Protocol.Frame{Opcode: "ovs", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: base.Add(2 * time.Second), Payload: json.RawMessage(`{"gcu":{"C2":900}}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	afterOptional := store.ReadOnlyView()
+	if afterOptional.Player.Resources[2] != 900 || !afterOptional.Player.ResourceObservations[2].ObservedAt.Equal(base.Add(2*time.Second)) || afterOptional.Market.Boosters[0].RemainingSec != 3600 || !afterOptional.Market.BoostersObservedAt.Equal(base) {
+		t.Fatalf("optional missing BO did not preserve independent authority: player=%+v market=%+v", afterOptional.Player, afterOptional.Market)
+	}
+	_, err = pipeline.HandleFrame(t.Context(), Protocol.Frame{Opcode: "btx", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: base.Add(3 * time.Second), Payload: json.RawMessage(`{"gcu":{"C2":800},"boi":{"BO":[{"ID":8,"RT":604800,"PC":0}]},"txi":{"TX":{"RT":1}}}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	afterTax := store.ReadOnlyView()
+	if afterTax.Market.Boosters[8].RemainingSec != 604800 || afterTax.Market.Boosters[8].ExpiresAt.Sub(base.Add(3*time.Second)) != 7*24*time.Hour {
+		t.Fatalf("tax-cycle RT replaced tax specialist timer: %+v", afterTax.Market.Boosters[8])
+	}
+	_, err = pipeline.HandleFrame(t.Context(), Protocol.Frame{Opcode: "bis", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: base.Add(4 * time.Second), Payload: json.RawMessage(`{"gcu":{"C2":700},"gpa":{"DF":500,"DFC":120},"boi":{"BO":[{"ID":10,"RT":604800,"PC":0},{"ID":8,"RT":604799,"PC":0}]}}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	afterDrill := store.ReadOnlyView()
+	food := afterDrill.Castles[100].Resources[5]
+	if afterDrill.Market.Boosters[10].RemainingSec != 604800 || food.ProductionPerHour == nil || *food.ProductionPerHour != 50 || food.ConsumptionPerHour == nil || *food.ConsumptionPerHour != 12 {
+		t.Fatalf("drill response lost nested BO/GPA: booster=%+v food=%+v", afterDrill.Market.Boosters[10], food)
+	}
+}
+
 func TestBeriCapacityReducerKeepsUnitIdentity(t *testing.T) {
 	gameState := State.NewGameState()
 	code := 0

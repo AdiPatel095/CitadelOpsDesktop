@@ -41,6 +41,7 @@ func LoadSnapshot(dataDir string) (GameState, error) {
 
 func prepareLoadedState(state GameState) GameState {
 	normalizeStateMaps(&state)
+	state.Market.BoostersObservedGeneration = 0
 	pruneIrrelevantMapObservations(&state)
 	lastServerURL := state.Session.ServerURL
 	lastGeneration := state.Session.Generation
@@ -115,6 +116,8 @@ func normalizeStateMaps(state *GameState) {
 	if state.Player.Resources == nil {
 		state.Player.Resources = defaults.Player.Resources
 	}
+	// Live resource observations are never restored as dispatch authority.
+	state.Player.ResourceObservations = map[ResourceID]PlayerResourceObservation{}
 	if state.Player.Currencies == nil {
 		state.Player.Currencies = defaults.Player.Currencies
 	}

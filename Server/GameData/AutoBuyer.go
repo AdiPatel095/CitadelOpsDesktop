@@ -37,6 +37,7 @@ type AutoBuyerCatalog struct {
 	Feasts               []AutoBuyerFeast      `json:"feasts"`
 	TimedOffers          AutoBuyerCapability   `json:"timedOffers"`
 	FeastAutomaticSource AutoBuyerCapability   `json:"feastAutomaticSource"`
+	SpecialistUpkeep     AutoBuyerCapability   `json:"specialistUpkeep"`
 }
 
 type AutoBuyerCapability struct {
@@ -89,14 +90,16 @@ type AutoBuyerPackage struct {
 }
 
 type AutoBuyerSpecialist struct {
-	ID           int    `json:"id"`
-	Key          string `json:"key"`
-	Name         string `json:"name"`
-	DurationSec  int64  `json:"durationSec"`
-	BaseRubyCost int64  `json:"baseRubyCost"`
-	BonusPercent int64  `json:"bonusPercent,omitempty"`
-	Opcode       string `json:"-"`
-	ResourceType int    `json:"-"`
+	ID                       int    `json:"id"`
+	Key                      string `json:"key"`
+	Name                     string `json:"name"`
+	DurationSec              int64  `json:"durationSec"`
+	BaseRubyCost             int64  `json:"baseRubyCost"`
+	ValidatedMaximumRubyCost int64  `json:"validatedMaximumRubyCost"`
+	PriceProvenance          string `json:"priceProvenance"`
+	BonusPercent             int64  `json:"bonusPercent,omitempty"`
+	Opcode                   string `json:"-"`
+	ResourceType             int    `json:"-"`
 }
 
 type AutoBuyerFeast struct {
@@ -256,6 +259,7 @@ func (store *Store) loadAutoBuyerCatalog() (
 			Supported: true,
 			Reason:    "Uses the most stored food among owned castles with fresh positive net food production and exposes correlated purchase evidence.",
 		},
+		SpecialistUpkeep: AutoBuyerCapability{Supported: true, Reason: "Uses current-session authoritative booster and ruby observations with durable no-replay reconciliation."},
 	}
 	byPackage := map[string]map[int64]AutoBuyerPackage{}
 	shopIndex := map[string]int{}
@@ -530,15 +534,15 @@ func decodeAutoBuyerFeastPrice(record Record, aliases map[string]autoBuyerPriceA
 func autoBuyerSpecialists() []AutoBuyerSpecialist {
 	const week = int64(7 * 24 * 60 * 60)
 	return []AutoBuyerSpecialist{
-		{ID: 0, Key: "wood-overseer", Name: "Wood overseer", DurationSec: week, BaseRubyCost: 625, BonusPercent: 25, Opcode: "ovs", ResourceType: 0},
-		{ID: 1, Key: "stone-overseer", Name: "Stone overseer", DurationSec: week, BaseRubyCost: 625, BonusPercent: 25, Opcode: "ovs", ResourceType: 1},
-		{ID: 2, Key: "food-overseer", Name: "Food overseer", DurationSec: week, BaseRubyCost: 625, BonusPercent: 25, Opcode: "ovs", ResourceType: 2},
-		{ID: 3, Key: "honey-overseer", Name: "Honey overseer", DurationSec: week, BaseRubyCost: 625, BonusPercent: 25, Opcode: "ovs", ResourceType: 3},
-		{ID: 4, Key: "mead-overseer", Name: "Mead overseer", DurationSec: week, BaseRubyCost: 625, BonusPercent: 25, Opcode: "ovs", ResourceType: 4},
-		{ID: 5, Key: "beef-overseer", Name: "Beef overseer", DurationSec: week, BaseRubyCost: 4900, BonusPercent: 125, Opcode: "ovs", ResourceType: 5},
-		{ID: 6, Key: "marauder", Name: "Marauder", DurationSec: week, BaseRubyCost: 990, BonusPercent: 90, Opcode: "bms"},
-		{ID: 8, Key: "tax-collector", Name: "Tax collector", DurationSec: week, BaseRubyCost: 750, BonusPercent: 20, Opcode: "btx"},
-		{ID: 10, Key: "drill-instructor", Name: "Drill instructor", DurationSec: week, BaseRubyCost: 990, BonusPercent: 80, Opcode: "bis"},
+		{ID: 0, Key: "wood-overseer", Name: "Wood overseer", DurationSec: week, BaseRubyCost: 625, ValidatedMaximumRubyCost: 625, PriceProvenance: "official-client-2026-09-15", BonusPercent: 25, Opcode: "ovs", ResourceType: 0},
+		{ID: 1, Key: "stone-overseer", Name: "Stone overseer", DurationSec: week, BaseRubyCost: 625, ValidatedMaximumRubyCost: 625, PriceProvenance: "official-client-2026-09-15", BonusPercent: 25, Opcode: "ovs", ResourceType: 1},
+		{ID: 2, Key: "food-overseer", Name: "Food overseer", DurationSec: week, BaseRubyCost: 625, ValidatedMaximumRubyCost: 625, PriceProvenance: "official-client-2026-09-15", BonusPercent: 25, Opcode: "ovs", ResourceType: 2},
+		{ID: 3, Key: "honey-overseer", Name: "Honey overseer", DurationSec: week, BaseRubyCost: 625, ValidatedMaximumRubyCost: 625, PriceProvenance: "official-client-2026-09-15", BonusPercent: 25, Opcode: "ovs", ResourceType: 3},
+		{ID: 4, Key: "mead-overseer", Name: "Mead overseer", DurationSec: week, BaseRubyCost: 625, ValidatedMaximumRubyCost: 625, PriceProvenance: "official-client-2026-09-15", BonusPercent: 25, Opcode: "ovs", ResourceType: 4},
+		{ID: 5, Key: "beef-overseer", Name: "Beef overseer", DurationSec: week, BaseRubyCost: 4900, ValidatedMaximumRubyCost: 4900, PriceProvenance: "official-client-2026-09-15", BonusPercent: 125, Opcode: "ovs", ResourceType: 5},
+		{ID: 6, Key: "marauder", Name: "Marauder", DurationSec: week, BaseRubyCost: 990, ValidatedMaximumRubyCost: 990, PriceProvenance: "official-client-2026-09-15", BonusPercent: 90, Opcode: "bms"},
+		{ID: 8, Key: "tax-collector", Name: "Tax collector", DurationSec: week, BaseRubyCost: 750, ValidatedMaximumRubyCost: 750, PriceProvenance: "official-client-2026-09-15", BonusPercent: 20, Opcode: "btx"},
+		{ID: 10, Key: "drill-instructor", Name: "Drill instructor", DurationSec: week, BaseRubyCost: 990, ValidatedMaximumRubyCost: 990, PriceProvenance: "official-client-2026-09-15", BonusPercent: 80, Opcode: "bis"},
 	}
 }
 

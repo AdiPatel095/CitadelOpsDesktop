@@ -685,6 +685,50 @@ func TestComponentSnapshotPersistsFeastCostReduction(t *testing.T) {
 	}
 }
 
+func TestSnapshotPersistsSpecialistRecoveryButDropsLiveRubyAuthority(t *testing.T) {
+	directory := t.TempDir()
+	now := time.Date(2026, time.September, 15, 12, 0, 0, 0, time.UTC)
+	state := NewGameState()
+	state.Session.ConnectionGeneration = 4
+	state.Player.Resources[2] = 9000
+	state.Player.ResourceObservations[2] = PlayerResourceObservation{ObservedAt: now, ConnectionGeneration: 4}
+	state.Market.SpecialistPurchasePending = true
+	state.Market.SpecialistPurchasePendingSince = now
+	state.Market.SpecialistPurchaseExpectedID = 8
+	state.Market.SpecialistPurchasePreviousExpiry = now.Add(time.Hour)
+	state.Market.SpecialistPurchaseMaximumExpiry = now.Add(7*24*time.Hour + time.Hour)
+	state.Market.SpecialistPurchaseOperationID = "specialist-operation"
+	state.Market.SpecialistPurchaseResponseToken = "specialist-operation/2"
+	state.Market.SpecialistPurchaseResponseConfirmedAt = now.Add(time.Second)
+	state.Market.SpecialistPurchaseResponseExpiresAt = now.Add(7*24*time.Hour + time.Hour)
+	state.Market.SpecialistPurchaseRubyResourceID = 2
+	state.Market.SpecialistPurchaseResponseRuby = 8250
+	state.Market.SpecialistPurchaseResponseRubyAt = now.Add(time.Second)
+	state.Market.BoostersObservedGeneration = 4
+	state.Market.LatestSpecialistPurchase = SpecialistPurchaseEvidence{Outcome: "verifying", SpecialistID: 8, AttemptedAt: now, UpdatedAt: now.Add(time.Second), RubyBefore: 9000, RubyBeforeKnown: true, RubyAfter: 8250, RubyAfterKnown: true}
+	if err := SaveSnapshot(directory, state); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := LoadSnapshot(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !loaded.Market.SpecialistPurchasePending || loaded.Market.SpecialistPurchaseExpectedID != 8 ||
+		loaded.Market.SpecialistPurchaseOperationID != "specialist-operation" || loaded.Market.SpecialistPurchaseResponseToken != "specialist-operation/2" ||
+		!loaded.Market.SpecialistPurchaseResponseConfirmedAt.Equal(now.Add(time.Second)) ||
+		!loaded.Market.SpecialistPurchaseResponseExpiresAt.Equal(now.Add(7*24*time.Hour+time.Hour)) ||
+		loaded.Market.SpecialistPurchaseRubyResourceID != 2 || loaded.Market.SpecialistPurchaseResponseRuby != 8250 ||
+		!loaded.Market.SpecialistPurchaseResponseRubyAt.Equal(now.Add(time.Second)) || loaded.Market.LatestSpecialistPurchase.Outcome != "verifying" {
+		t.Fatalf("persisted specialist recovery = %+v", loaded.Market)
+	}
+	if len(loaded.Player.ResourceObservations) != 0 {
+		t.Fatalf("snapshot restored live resource authority: %+v", loaded.Player.ResourceObservations)
+	}
+	if loaded.Market.BoostersObservedGeneration != 0 {
+		t.Fatalf("snapshot restored live booster authority: %d", loaded.Market.BoostersObservedGeneration)
+	}
+}
+
 func TestSnapshotLoadMovesInspectedAllianceOutOfOwnSlot(t *testing.T) {
 	directory := t.TempDir()
 	state := NewGameState()
