@@ -47,6 +47,13 @@ function App() {
 	const lastOptimizeClick = useRef<{ at: number; kind: 'preview' | 'regenerate'; existingAlternatives: number } | null>(null);
 
 	const inventoryMode = requestMode === 'few' || requestMode === 'no-gear' ? requestMode : 'normal';
+	const changeLeader = (nextKind: FixtureLeaderKind) => {
+		// Keep leader props and their backing state in the same React event batch.
+		setLeaderKind(nextKind);
+		setGameState(fixtureState(nextKind, inventoryMode));
+		setConfiguration(fixtureConfiguration(migrationSeed, nextKind));
+		setMountKey((value) => value + 1);
+	};
 	useEffect(() => {
 		setGameState(fixtureState(leaderKind, inventoryMode));
 		setConfiguration(fixtureConfiguration(migrationSeed, leaderKind));
@@ -212,7 +219,7 @@ function App() {
 				</main>
 				{createPortal(<aside className="fixture-controls" aria-label="CIT-6 fixture controls" data-testid="fixture-controls">
 					<h2>CIT-6 controls</h2>
-					<label>Leader<select value={leaderKind} onChange={(event) => setLeaderKind(event.target.value as FixtureLeaderKind)}><option value="commander">Commander · 334 gear · 16 gems</option><option value="castellan">Castellan · 253 gear · 0 PvP gems</option></select></label>
+					<label>Leader<select value={leaderKind} onChange={(event) => changeLeader(event.target.value as FixtureLeaderKind)}><option value="commander">Commander · 334 gear · 16 gems</option><option value="castellan">Castellan · 253 gear · 0 PvP gems</option></select></label>
 					<label>Request<select value={requestMode} onChange={(event) => setRequestMode(event.target.value as FixtureRequestMode)}><option value="normal">Normal full inventory</option><option value="few">Few alternatives</option><option value="no-gear">No eligible gear</option><option value="error">HTTP error</option><option value="delayed">1.5s delayed success</option><option value="timeout">9s timeout</option></select></label>
 					<label>Apply outcome<select value={applyMode} onChange={(event) => setApplyMode(event.target.value as FixtureApplyMode)}><option value="success">Terminal success</option><option value="authoritative-failure">Authoritative failure</option><option value="stale-rejection">Server stale rejection</option></select></label>
 					<label>Stored profile<select value={migrationSeed} onChange={(event) => setMigrationSeed(event.target.value as MigrationSeed)}><option value="empty">No profile</option><option value="v1">v1 effect IDs</option><option value="v2">v2 official groups</option><option value="v3">v3 effect types</option><option value="v4">v4 current</option></select></label>

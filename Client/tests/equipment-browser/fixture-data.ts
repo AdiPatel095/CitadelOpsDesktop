@@ -105,7 +105,10 @@ export function fixtureState(kind: FixtureLeaderKind, inventoryMode: 'normal' | 
 }
 
 export function fixtureLeader(state: GameStateV2, kind: FixtureLeaderKind): EquipmentLeader {
-	const source = kind === 'commander' ? state.commanders['0']! : state.castellans['0']!;
+	const source = kind === 'commander' ? state.commanders['0'] : state.castellans['0'];
+	if (!source) {
+		return { kind, id: 0, name: `Fixture ${kind}`, position: 0, available: true, equipment: {}, gems: {} };
+	}
 	return {
 		kind, id: 0, name: source.name ?? `Fixture ${kind}`, position: 0,
 		available: 'available' in source ? source.available : true,
