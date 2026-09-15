@@ -70,8 +70,8 @@ type Metadata struct {
 	ResponseOpcodes       []string
 	ResponseTimeoutMillis int
 	ResponseIdentity      ResponseIdentity
-	// FinalDispatchValidation runs in the outbound router after queue waits and
-	// immediately before transport send. It is process-local and never logged.
+	// FinalDispatchValidation runs after outbound queue and transport waits,
+	// immediately before each layer can send. It is process-local and never logged.
 	FinalDispatchValidation func(context.Context) error
 }
 

@@ -1873,6 +1873,33 @@ export interface GlobalEffectBoostStateV2 {
 	boosted: boolean;
 	occurrenceEndsAt: string;
 	observedAt: string;
+	connectionGeneration?: number;
+}
+
+export interface GlobalEffectPurchaseRecordV2 {
+	globalEffectId: number;
+	occurrenceEndsAt: string;
+	expiresAt: string;
+	quotedRubyCost: number;
+	quotedBonusValue: number;
+	minimumRubyReserve: number;
+	rubyBefore: number;
+	rubyBeforeObservedAt: string;
+	requestedAt: string;
+	dispatchedAt?: string;
+	requestOpcode: string;
+	connectionGeneration?: number;
+	operationId?: string;
+	resultCode?: number;
+	resultObservedAt?: string;
+	activationObservedAt?: string;
+	rubyAfter?: number;
+	rubyAfterKnown?: boolean;
+	rubyAfterObservedAt?: string;
+	observedRubyChange?: number;
+	debitUnverified: boolean;
+	outcome: 'unresolved' | 'accepted' | 'confirmed' | 'rejected';
+	detail?: string;
 }
 
 export interface EventInventoryStateV2 {
@@ -1883,6 +1910,7 @@ export interface EventInventoryStateV2 {
 	globalEffectBoosterOffers?: Record<string, GlobalEffectBoosterOfferV2> | null;
 	globalEffectBoostsObservedAt?: string;
 	globalEffectBoosts?: Record<string, GlobalEffectBoostStateV2> | null;
+	globalEffectPurchases?: Record<string, GlobalEffectPurchaseRecordV2> | null;
 }
 
 export interface EventScoreStateV2 {

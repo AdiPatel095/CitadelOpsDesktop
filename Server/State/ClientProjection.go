@@ -546,6 +546,7 @@ func clientEventInventory(source EventInventoryState) EventInventoryState {
 		GlobalEffectBoosterOffers:    cloneMap(source.GlobalEffectBoosterOffers),
 		GlobalEffectBoostsObservedAt: source.GlobalEffectBoostsObservedAt,
 		GlobalEffectBoosts:           cloneMap(source.GlobalEffectBoosts),
+		GlobalEffectPurchases:        cloneGlobalEffectPurchaseMap(source.GlobalEffectPurchases),
 	}
 }
 

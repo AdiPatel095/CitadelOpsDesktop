@@ -118,6 +118,54 @@ func TestRouterSerializesPhysicalSendsAcrossLanes(t *testing.T) {
 	}
 }
 
+func TestRouterRunsFinalValidationAfterDispatchGateBeforeSend(t *testing.T) {
+	release := make(chan struct{})
+	gateEntered := make(chan struct{})
+	validationErr := errors.New("queued authorization changed")
+	var mu sync.Mutex
+	order := []string{}
+	router := NewRouter(t.Context(), Config{
+		Ready: func() bool { return true },
+		Gate: func(context.Context, Metadata) error {
+			mu.Lock()
+			order = append(order, "gate")
+			mu.Unlock()
+			close(gateEntered)
+			<-release
+			return nil
+		},
+		Send: func(context.Context, []byte) error {
+			mu.Lock()
+			order = append(order, "send")
+			mu.Unlock()
+			return nil
+		},
+	})
+	defer router.Close()
+	ctx := WithFinalDispatchValidation(t.Context(), func(context.Context) error {
+		mu.Lock()
+		order = append(order, "validate")
+		mu.Unlock()
+		return validationErr
+	})
+	result := make(chan error, 1)
+	go func() { result <- router.Send(ctx, outboundTestPayload(t, "agb", "purchase")) }()
+	select {
+	case <-gateEntered:
+	case <-time.After(time.Second):
+		t.Fatal("command did not reach dispatch gate")
+	}
+	close(release)
+	if err := <-result; !errors.Is(err, validationErr) {
+		t.Fatalf("final validation error=%v", err)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if !reflect.DeepEqual(order, []string{"gate", "validate"}) {
+		t.Fatalf("dispatch order=%v", order)
+	}
+}
+
 func TestRouterComparesPriorityAcrossReadyLanes(t *testing.T) {
 	root, cancel := context.WithCancel(context.Background())
 	defer cancel()

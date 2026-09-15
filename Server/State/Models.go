@@ -201,7 +201,7 @@ type PlayerState struct {
 	GallantryTitleGen uint64                 `json:"gallantryTitleGeneration,omitempty"`
 	Resources         map[ResourceID]float64 `json:"resources"`
 	// ResourceObservations are live dispatch authority and are intentionally
-	// not persisted. A restart must observe a new current-session gcu value
+	// not persisted. A restart must observe a new current-session GCU snapshot
 	// before unattended premium spending resumes.
 	ResourceObservations map[ResourceID]PlayerResourceObservation `json:"-"`
 	Currencies           map[CurrencyID]float64                   `json:"currencies"`
@@ -2228,6 +2228,7 @@ func NewGameState() GameState {
 			Inventory: EventInventoryState{
 				ActiveByEvent: map[int64]EventAvailability{}, GlobalEffects: map[int64]GlobalEffectAvailability{},
 				GlobalEffectBoosterOffers: map[int64]GlobalEffectBoosterOffer{}, GlobalEffectBoosts: map[int64]GlobalEffectBoostState{},
+				GlobalEffectPurchases: map[int64]GlobalEffectPurchaseRecord{},
 			},
 		},
 		Automations: map[string]AutomationState{},
