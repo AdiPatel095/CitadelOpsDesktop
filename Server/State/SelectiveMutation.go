@@ -8,6 +8,7 @@ package State
 func (state *GameState) preparePlayerMutation(source GameState) {
 	state.Player = source.Player
 	state.Player.Resources = cloneMap(source.Player.Resources)
+	state.Player.ResourceObservations = cloneMap(source.Player.ResourceObservations)
 	state.Player.Currencies = cloneMap(source.Player.Currencies)
 }
 

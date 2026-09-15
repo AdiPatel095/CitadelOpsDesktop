@@ -19,6 +19,7 @@ const (
 	autoBuyerDefaultRefreshSec       = 60 * 60
 	autoBuyerMinimumSpecialistDays   = 14
 	autoBuyerFeastPurchasePacing     = 30 * time.Second
+	autoBuyerRubyFreshness           = 60 * time.Second
 )
 
 type AutoBuyerPolicy struct{}
@@ -120,6 +121,14 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 		"enabledSpecialists": float64(enabledSpecialists),
 		"feastEnabled":       boolMetric(settings.Feast.Enabled),
 	}
+	specialistPending := snapshot.State.Market.SpecialistPurchasePending
+	if specialistPending {
+		metrics["specialistReconciliationPending"] = 1
+		feast, feastFound := snapshot.GameData.AutoBuyerFeast(settings.Feast.FeastID)
+		if !settings.Feast.Enabled || !feastFound || feast.Price.Premium {
+			return autoBuyerSpecialistReconciliationDecision(snapshot, metrics), nil
+		}
+	}
 	if snapshot.State.Market.FeastPurchasePending {
 		metrics["feastReconciliationPending"] = 1
 		evidence := snapshot.State.Market.LatestFeastPurchase
@@ -176,6 +185,8 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 	specialistContextStale := enabledSpecialists > 0 && !autoBuyerObservationFresh(
 		snapshot.State.Market.BoostersObservedAt, snapshot.Now, snapshot.State.Session.ChangedAt, refreshAge,
 	)
+	specialistContextStale = specialistContextStale || enabledSpecialists > 0 &&
+		snapshot.State.Market.BoostersObservedGeneration != snapshot.State.Session.ConnectionGeneration
 	feastContextStale := settings.Feast.Enabled && !snapshot.State.Market.Feast.FreshAt(
 		snapshot.Now, snapshot.State.Session.ChangedAt, refreshAge,
 	)
@@ -259,6 +270,9 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 			}
 		}
 	}
+	if specialistPending {
+		return autoBuyerSpecialistReconciliationDecision(snapshot, metrics), nil
+	}
 
 	if specialistContextStale {
 		return autoBuyerRequestDecision(snapshot.Now, metrics, "Refresh specialist timers", "autoBuyer.boosters.refresh", map[string]any{"feastContext": false}), nil
@@ -309,6 +323,23 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 	}
 
 	return autoBuyerIdle(snapshot.Now, settings.CheckIntervalSec, "All configured purchase floors and reset goals are currently satisfied", metrics), nil
+}
+
+func autoBuyerSpecialistReconciliationDecision(snapshot Snapshot, metrics map[string]float64) Decision {
+	evidence := snapshot.State.Market.LatestSpecialistPurchase
+	next := snapshot.State.Market.SpecialistPurchasePendingSince.Add(autoBuyerFeastPurchasePacing)
+	if lastRun := snapshot.State.Automations["autoBuyer"].LastRunAt; lastRun != nil && next.Before(lastRun.Add(autoBuyerFeastPurchasePacing)) {
+		next = lastRun.Add(autoBuyerFeastPurchasePacing)
+	}
+	if snapshot.Now.Before(next) {
+		return Decision{Status: "waiting", Detail: "Waiting for the next read-only specialist reconciliation check", NextCheckAt: next, Metrics: metrics}
+	}
+	decision := autoBuyerRequestDecision(snapshot.Now, metrics, "Recheck unresolved specialist purchase without spending", "autoBuyer.specialist.reconcile", map[string]any{
+		"specialistId": evidence.SpecialistID,
+	})
+	decision.ReevaluateOnSuccess, decision.ReevaluateOnStale = false, false
+	decision.NextCheckAt = snapshot.Now.Add(autoBuyerFeastPurchasePacing)
+	return decision
 }
 
 // Disable invalid goals only in this evaluation, never in saved settings.
@@ -435,8 +466,8 @@ func validateAutoBuyerRules(store *GameData.Store, settings autoBuyerSettings) s
 		if rule.MinimumDays < autoBuyerMinimumSpecialistDays || rule.MinimumDays > 365 {
 			return fmt.Sprintf("%s floor must be between %d and 365 days", specialist.Name, autoBuyerMinimumSpecialistDays)
 		}
-		if rule.MaximumRubyCostPerPurchase < specialist.BaseRubyCost {
-			return fmt.Sprintf("%s ruby ceiling must cover its safe maximum cost of %d", specialist.Name, specialist.BaseRubyCost)
+		if specialist.ValidatedMaximumRubyCost <= 0 || rule.MaximumRubyCostPerPurchase < specialist.ValidatedMaximumRubyCost {
+			return fmt.Sprintf("%s ruby ceiling must cover its validated maximum cost of %d", specialist.Name, specialist.ValidatedMaximumRubyCost)
 		}
 	}
 
@@ -472,15 +503,23 @@ func evaluateAutoBuyerSpecialists(
 		specialist, _ := GameData.AutoBuyerSpecialistByID(rule.ID)
 		booster := snapshot.State.Market.Boosters[rule.ID]
 		remaining := autoBuyerBoosterRemaining(booster, snapshot.Now)
-		floor := int64(rule.MinimumDays) * 24 * 60 * 60
 		metrics[fmt.Sprintf("specialist.%d.remainingSec", rule.ID)] = float64(remaining)
-		if remaining >= floor {
+		if booster.Permanent || booster.ExpiresAt.After(snapshot.Now.Add(time.Duration(rule.MinimumDays)*24*time.Hour)) {
+			continue
+		}
+		resourceID, found := snapshot.GameData.ResourceIDForJSONKey("C2")
+		observation := snapshot.State.Player.ResourceObservations[State.ResourceID(resourceID)]
+		if !found || resourceID <= 0 || observation.ConnectionGeneration != snapshot.State.Session.ConnectionGeneration ||
+			!autoBuyerObservationFresh(observation.ObservedAt, snapshot.Now, snapshot.State.Session.ChangedAt, autoBuyerRubyFreshness) {
+			if firstBlocked == "" {
+				firstBlocked = fmt.Sprintf("Waiting for a fresh current-session ruby balance before renewing %s", specialist.Name)
+			}
 			continue
 		}
 		rubies := int64(math.Floor(playerResourceAmount(snapshot, "C2")))
-		if rubies-settings.MinimumRubyReserve < specialist.BaseRubyCost {
+		if rubies-settings.MinimumRubyReserve < specialist.ValidatedMaximumRubyCost {
 			if firstBlocked == "" {
-				firstBlocked = fmt.Sprintf("Waiting for %d rubies above reserve to renew %s", specialist.BaseRubyCost, specialist.Name)
+				firstBlocked = fmt.Sprintf("Waiting for %d rubies above reserve to renew %s", specialist.ValidatedMaximumRubyCost, specialist.Name)
 			}
 			continue
 		}
@@ -489,8 +528,9 @@ func evaluateAutoBuyerSpecialists(
 			"maximumRubyCostPerPurchase": rule.MaximumRubyCostPerPurchase,
 			"minimumRubyReserve":         settings.MinimumRubyReserve,
 			"expectedExpiresAtUnix":      autoBuyerUnix(booster.ExpiresAt),
-			"expectedPurchaseCount":      booster.ContinuousPurchaseCount,
 			"expectedRubyBalance":        rubies,
+			"expectedRubyObservedAt":     observation.ObservedAt,
+			"expectedSessionGeneration":  snapshot.State.Session.ConnectionGeneration,
 			"historyRefreshSec":          settings.HistoryRefreshSec,
 		}
 		decision := autoBuyerRequestDecision(snapshot.Now, metrics,

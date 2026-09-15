@@ -107,7 +107,7 @@ func reduceInitialState(
 		changed = changed || updated
 	}
 	if raw := root["gcu"]; len(raw) > 0 {
-		updated, err := applyPlayerResources(raw, gameState, gameData)
+		updated, err := applyPlayerResources(raw, gameState, gameData, frame.ReceivedAt, frame.ResponseCode != nil && *frame.ResponseCode == 0)
 		if err != nil {
 			return nil, false, err
 		}
@@ -646,7 +646,7 @@ func reduceGlobalResources(
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 		return nil, false, nil
 	}
-	changed, err := applyPlayerResources(frame.Payload, gameState, gameData)
+	changed, err := applyPlayerResources(frame.Payload, gameState, gameData, frame.ReceivedAt, frame.ResponseCode != nil && *frame.ResponseCode == 0)
 	return []string{"resources"}, changed, err
 }
 
@@ -885,16 +885,19 @@ func applyVIPInfo(raw json.RawMessage, gameState *State.GameState) (bool, error)
 	return true, nil
 }
 
-func applyPlayerResources(raw json.RawMessage, gameState *State.GameState, gameData *GameData.Store) (bool, error) {
+func applyPlayerResources(raw json.RawMessage, gameState *State.GameState, gameData *GameData.Store, observedAt time.Time, authoritative bool) (bool, error) {
 	var values map[string]json.RawMessage
 	if err := json.Unmarshal(raw, &values); err != nil {
 		return false, fmt.Errorf("decode player resources: %w", err)
 	}
 	if nested := values["gcu"]; len(nested) > 0 {
-		return applyPlayerResources(nested, gameState, gameData)
+		return applyPlayerResources(nested, gameState, gameData, observedAt, authoritative)
 	}
 	if gameState.Player.Resources == nil {
 		gameState.Player.Resources = map[State.ResourceID]float64{}
+	}
+	if gameState.Player.ResourceObservations == nil {
+		gameState.Player.ResourceObservations = map[State.ResourceID]State.PlayerResourceObservation{}
 	}
 	changed := false
 	for jsonKey, rawValue := range values {
@@ -902,13 +905,35 @@ func applyPlayerResources(raw json.RawMessage, gameState *State.GameState, gameD
 		if !ok {
 			continue
 		}
-		amount, ok := rawFloat64(rawValue)
-		if !ok {
-			continue
+		premium := strings.EqualFold(strings.TrimSpace(jsonKey), "C2")
+		var amount float64
+		if premium {
+			integer, valid := rawJSONInt64(rawValue)
+			if !authoritative || !valid || integer < 0 {
+				continue
+			}
+			amount = float64(integer)
+		} else {
+			var ok bool
+			amount, ok = rawFloat64(rawValue)
+			if !ok {
+				continue
+			}
 		}
 		id := State.ResourceID(definitionID)
+		if prior := gameState.Player.ResourceObservations[id]; !prior.ObservedAt.IsZero() && observedAt.Before(prior.ObservedAt) {
+			continue
+		}
 		if current, exists := gameState.Player.Resources[id]; !exists || current != amount {
 			gameState.Player.Resources[id] = amount
+			changed = true
+		}
+		if !authoritative {
+			continue
+		}
+		observation := State.PlayerResourceObservation{ObservedAt: observedAt, ConnectionGeneration: gameState.Session.ConnectionGeneration}
+		if current := gameState.Player.ResourceObservations[id]; current != observation {
+			gameState.Player.ResourceObservations[id] = observation
 			changed = true
 		}
 	}

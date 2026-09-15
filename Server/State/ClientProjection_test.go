@@ -272,6 +272,36 @@ func TestClientProjectionOmitsAbsentFeastPurchaseEvidence(t *testing.T) {
 	}
 }
 
+func TestClientProjectionPublishesSanitizedSpecialistEvidenceAndOmitsAbsent(t *testing.T) {
+	empty, err := json.Marshal(NewClientStateSnapshot(NewGameState()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(empty, []byte(`"latestSpecialistPurchase"`)) {
+		t.Fatalf("empty specialist evidence leaked into client state: %s", empty)
+	}
+	state := NewGameState()
+	now := time.Date(2026, time.September, 15, 12, 0, 0, 0, time.UTC)
+	state.Market.SpecialistPurchasePending = true
+	state.Market.SpecialistPurchaseOperationID = "private-specialist-operation"
+	state.Market.SpecialistPurchaseResponseToken = "private-specialist-token"
+	state.Market.SpecialistPurchaseResponseConfirmedAt = now.Add(time.Second)
+	state.Market.SpecialistPurchaseRubyResourceID = 2
+	state.Market.LatestSpecialistPurchase = SpecialistPurchaseEvidence{Outcome: "confirmed", SpecialistID: 0, Opcode: "ovs", AttemptedAt: now, UpdatedAt: now.Add(time.Second), RubyBefore: 625, RubyBeforeKnown: true, RubyAfter: 0, RubyAfterKnown: true, DebitVerification: "command-local-observed", ActivationConfirmed: true}
+	contents, err := json.Marshal(NewClientStateSnapshot(state))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Contains(contents, []byte(`"latestSpecialistPurchase"`)) || !bytes.Contains(contents, []byte(`"rubyAfter":0`)) {
+		t.Fatalf("known-zero specialist evidence missing: %s", contents)
+	}
+	for _, private := range [][]byte{[]byte("specialistPurchasePending"), []byte("specialistPurchaseOperationId"), []byte("specialistPurchaseResponseToken"), []byte("private-specialist-operation"), []byte("private-specialist-token"), []byte("specialistPurchaseRubyResourceId")} {
+		if bytes.Contains(contents, private) {
+			t.Fatalf("specialist projection leaked private field %q: %s", private, contents)
+		}
+	}
+}
+
 func TestClientProjectionDistinguishesZeroFeastReductionFromUnknown(t *testing.T) {
 	marketJSON := func(state GameState) map[string]json.RawMessage {
 		t.Helper()

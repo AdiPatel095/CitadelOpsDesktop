@@ -815,6 +815,29 @@ export interface MarketStateV2 {
 		activationConfirmedAt?: string;
 		detail?: string;
 	};
+	latestSpecialistPurchase?: {
+		outcome: string;
+		specialistId: number;
+		opcode: string;
+		attemptedAt: string;
+		updatedAt: string;
+		minimumDays: number;
+		validatedMaximumCost: number;
+		configuredRubyCeiling: number;
+		minimumRubyReserve: number;
+		timerBefore?: string;
+		timerAfter?: string;
+		timerAfterObservedAt?: string;
+		rubyBefore?: number;
+		rubyBeforeKnown: boolean;
+		rubyBeforeObservedAt?: string;
+		rubyAfter?: number;
+		rubyAfterKnown: boolean;
+		rubyAfterObservedAt?: string;
+		debitVerification: string;
+		activationConfirmed: boolean;
+		detail?: string;
+	};
 	feastCostReductionPercent?: number;
 	feastCostReductionObservedAt?: string;
 	caravanLevel?: number;
@@ -2222,6 +2245,8 @@ export interface AutoBuyerSpecialistV1 {
   name: string;
   durationSec: number;
   baseRubyCost: number;
+	validatedMaximumRubyCost?: number;
+	priceProvenance?: string;
   bonusPercent?: number;
 }
 
@@ -2250,6 +2275,14 @@ export interface AutoBuyerProjectionV1 {
   feasts: AutoBuyerFeastV1[];
 	timedOffers: AutoBuyerCapabilityV1;
 	feastAutomaticSource?: AutoBuyerCapabilityV1;
+	specialistUpkeep?: AutoBuyerCapabilityV1;
+	specialistRuntime?: {
+		timersObservedAt?: string;
+		timersCurrentSession: boolean;
+		rubyBalance?: number;
+		rubyObservedAt?: string;
+		rubyCurrentSession: boolean;
+	};
 }
 
 export interface LanguageMetadata {
@@ -2350,6 +2383,11 @@ export interface IntentReceipt {
   attempt?: number;
 	plan?: IntentPlan;
 	exchanges?: IntentCommandExchange[];
+	evidence?: Array<{
+		kind: string;
+		observedAt: string;
+		data: unknown;
+	}>;
 	completedStepIndexes?: number[];
 	error?: string;
 	failure?: IntentFailurePresentation;

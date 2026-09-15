@@ -12,7 +12,8 @@ const { autoBuyerOtherGoalsValid, parseAutoBuyerClientState } = await import(
 );
 const catalog = {
   packages: [{ shopId: 'shop', packageId: 1, stock: 10, price: { premium: true, amount: 100 } }],
-  specialists: [{ id: 0, baseRubyCost: 100 }],
+  specialists: [{ id: 0, baseRubyCost: 100, validatedMaximumRubyCost: 100 }],
+  specialistUpkeep: { supported: true },
 };
 const saved = () => parseAutoBuyerClientState({
   sourceCastleId: 10,
@@ -65,4 +66,23 @@ test('changed valid goals enforce ruby opt-in, stock, cost and specialist durati
     change(invalid);
     assert.equal(autoBuyerOtherGoalsValid(invalid, original, catalog), false);
   }
+});
+
+test('old runtimes preserve unchanged specialist goals and allow disablement, but block new enablement', () => {
+  const unsupportedCatalog = { ...catalog, specialistUpkeep: { supported: false } };
+  const original = parseAutoBuyerClientState({
+    specialists: [{ enabled: true, id: 0, minimumDays: 21, maximumRubyCostPerPurchase: 100 }],
+  });
+  const unchanged = structuredClone(original);
+  unchanged.feast.minimumFoodReserve = 1;
+  assert.equal(autoBuyerOtherGoalsValid(unchanged, original, unsupportedCatalog), true);
+
+  const disabled = structuredClone(original);
+  disabled.specialists[0].enabled = false;
+  assert.equal(autoBuyerOtherGoalsValid(disabled, original, unsupportedCatalog), true);
+
+  const newlyEnabled = parseAutoBuyerClientState({
+    specialists: [{ enabled: true, id: 0, minimumDays: 21, maximumRubyCostPerPurchase: 100 }],
+  });
+  assert.equal(autoBuyerOtherGoalsValid(newlyEnabled, parseAutoBuyerClientState({}), unsupportedCatalog), false);
 });
