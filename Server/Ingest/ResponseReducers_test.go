@@ -3,6 +3,7 @@ package Ingest
 import (
 	"encoding/json"
 	"testing"
+	"time"
 
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Protocol"
@@ -51,6 +52,41 @@ func TestCastleResourceValuesTrackFoodConsumptionAndPreserveRates(t *testing.T) 
 	food = castle.Resources[5]
 	if food.Amount != 900 || food.ProductionPerHour == nil || *food.ProductionPerHour != 50 || food.ConsumptionPerHour == nil || *food.ConsumptionPerHour != 12 || food.ConsumptionMultiplier == nil || *food.ConsumptionMultiplier != 0.6 {
 		t.Fatalf("resource update discarded economy rates: %#v", food)
+	}
+}
+
+func TestCastleDetailsDoesNotRefreshFoodEconomyWhenConsumptionIsOmitted(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[],"units":[],
+		"resources":[{"resourceID":5,"JSONKey":"F"}]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	gameState := State.NewGameState()
+	gameState.Castles[100] = newCastleState(100)
+	yesterday := time.Date(2026, time.September, 14, 12, 0, 0, 0, time.UTC)
+	today := yesterday.Add(24 * time.Hour)
+	_, err = applyCastleDetails(json.RawMessage(`{
+		"C":[{"KID":0,"AI":[{"AID":100,"F":1000,"gpa":{"DF":500,"DFC":20}}]}]
+	}`), &gameState, gameData, yesterday)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = applyCastleDetails(json.RawMessage(`{
+		"C":[{"KID":0,"AI":[{"AID":100,"F":1200,"gpa":{"DF":700}}]}]
+	}`), &gameState, gameData, today)
+	if err != nil {
+		t.Fatal(err)
+	}
+	castle := gameState.Castles[100]
+	food := castle.Resources[5]
+	if !castle.FoodBalanceObservedAt.Equal(today) || !castle.FoodEconomyObservedAt.Equal(yesterday) {
+		t.Fatalf("food authority clocks = balance %s economy %s", castle.FoodBalanceObservedAt, castle.FoodEconomyObservedAt)
+	}
+	if food.ProductionPerHour == nil || *food.ProductionPerHour != 70 ||
+		food.ConsumptionPerHour == nil || *food.ConsumptionPerHour != 2 {
+		t.Fatalf("retained partial food rates = %+v", food)
 	}
 }
 

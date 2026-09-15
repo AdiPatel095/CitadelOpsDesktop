@@ -84,6 +84,10 @@ func (server *Server) handleConfigurationUpdate(writer http.ResponseWriter, requ
 		input.ExpectedValue,
 	)
 	if err != nil {
+		if errors.Is(err, Configuration.ErrInvalidUpdate) {
+			writeError(writer, http.StatusUnprocessableEntity, "configuration_invalid", err.Error())
+			return
+		}
 		if errors.Is(err, Configuration.ErrExternalAuthority) {
 			writeError(writer, http.StatusConflict, "configuration_control_plane_owned", "Hosted account settings must be saved through the account control plane")
 			return

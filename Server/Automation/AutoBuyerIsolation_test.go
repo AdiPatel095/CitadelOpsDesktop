@@ -24,7 +24,7 @@ func TestAutoBuyerFeastIsolatedFromInvalidAndStaleOtherGoals(t *testing.T) {
 			now := time.Now().UTC()
 			state := autoBuyerPolicyTestState(now)
 			castle := state.Castles[10]
-			castle.Resources[5] = State.ResourceBalance{Amount: 200000}
+			castle.Resources[5] = autoBuyerPolicyFoodBalance(200000)
 			state.Castles[10] = castle
 			state.Market.BoostersObservedAt = time.Time{}
 			settings := json.RawMessage(`{"version":1,"sourceCastleId":10,"packages":` + tc.packages + `,"specialists":` + tc.specialists + `,"feast":{"enabled":true,"feastId":0,"minimumRemainingHours":12,"sourceCastleId":10,"minimumFoodReserve":30000}}`)

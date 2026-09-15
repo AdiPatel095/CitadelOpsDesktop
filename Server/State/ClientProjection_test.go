@@ -199,9 +199,15 @@ func TestClientProjectionPublishesFeastCostReduction(t *testing.T) {
 	state.Market.FeastPurchaseExpectedID = 4
 	state.Market.FeastPurchaseOperationID = "private-operation"
 	state.Market.FeastPurchaseResponseToken = "private-token"
+	state.Market.FeastPurchaseResponseConfirmedAt = observedAt.Add(30 * time.Second)
+	state.Market.FeastPurchaseResponseExpiresAt = observedAt.Add(6 * time.Hour)
 	state.Market.FeastPurchaseInactiveObservedAt = observedAt.Add(time.Minute)
 	state.Market.FeastPurchaseInactiveResponseToken = "private-poll-token"
 	state.Market.FeastPurchaseInactiveGeneration = 7
+	state.Market.LatestFeastPurchase = FeastPurchaseEvidence{
+		Outcome: "confirmed", FeastID: 4, ChargedCastleID: 12, ChargedKingdomID: 2,
+		AttemptedAt: observedAt, ActivationConfirmed: true, FoodBeforeKnown: true, FoodAfterKnown: true,
+	}
 
 	contents, err := json.Marshal(NewClientStateSnapshot(state))
 	if err != nil {
@@ -215,11 +221,18 @@ func TestClientProjectionPublishesFeastCostReduction(t *testing.T) {
 		!snapshot.Market.FeastCostReductionObservedAt.Equal(observedAt) {
 		t.Fatalf("client feast cost reduction snapshot = %+v", snapshot.Market)
 	}
+	if snapshot.Market.LatestFeastPurchase.Outcome != "confirmed" ||
+		snapshot.Market.LatestFeastPurchase.ChargedCastleID != 12 ||
+		!bytes.Contains(contents, []byte(`"foodBefore":0`)) || !bytes.Contains(contents, []byte(`"foodAfter":0`)) {
+		t.Fatalf("sanitized feast receipt = %+v", snapshot.Market.LatestFeastPurchase)
+	}
 	for _, backendOnly := range [][]byte{
 		[]byte("feastPurchasePending"),
 		[]byte("feastPurchaseExpectedId"),
 		[]byte("feastPurchaseOperationId"),
 		[]byte("feastPurchaseResponseToken"),
+		[]byte("feastPurchaseResponseConfirmedAt"),
+		[]byte("feastPurchaseResponseExpiresAt"),
 		[]byte("feastPurchaseInactive"),
 		[]byte("private-poll-token"),
 		[]byte("private-operation"),
@@ -246,6 +259,16 @@ func TestClientProjectionPublishesFeastCostReduction(t *testing.T) {
 		projected.Patch.Market.FeastCostReductionObservedAt == nil ||
 		!projected.Patch.Market.FeastCostReductionObservedAt.Equal(observedAt.Add(time.Minute)) {
 		t.Fatalf("client feast cost reduction event = %+v", projected.Patch)
+	}
+}
+
+func TestClientProjectionOmitsAbsentFeastPurchaseEvidence(t *testing.T) {
+	contents, err := json.Marshal(NewClientStateSnapshot(NewGameState()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(contents, []byte(`"latestFeastPurchase"`)) {
+		t.Fatalf("empty feast purchase evidence leaked into client state: %s", contents)
 	}
 }
 
