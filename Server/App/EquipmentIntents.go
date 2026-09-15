@@ -30,6 +30,19 @@ type resolvedLeader struct {
 	gems      map[string]State.GemInstanceID
 }
 
+type equipmentReconfigureGemVerification struct {
+	InstanceID   State.GemInstanceID `json:"instanceId"`
+	DefinitionID State.GemID         `json:"definitionId"`
+	Normal       bool                `json:"normal,omitempty"`
+}
+
+type equipmentReconfigureVerification struct {
+	LeaderKind string                                         `json:"leaderKind"`
+	LeaderID   int64                                          `json:"leaderId"`
+	Equipment  map[string]State.EquipmentInstanceID           `json:"equipment"`
+	Gems       map[string]equipmentReconfigureGemVerification `json:"gems"`
+}
+
 func planEquipmentRefresh(_ context.Context, _ Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
 	var request struct{}
 	if err := decodeIntentArguments(arguments, &request); err != nil {
@@ -270,10 +283,12 @@ func planEquipmentSwap(_ context.Context, input Intent.PlanningContext, argument
 
 func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
 	var request struct {
-		LeaderKind string                               `json:"leaderKind"`
-		LeaderID   int64                                `json:"leaderId"`
-		Equipment  map[string]State.EquipmentInstanceID `json:"equipment"`
-		Gems       map[string]State.GemInstanceID       `json:"gems"`
+		LeaderKind          string                               `json:"leaderKind"`
+		LeaderID            int64                                `json:"leaderId"`
+		CombatMode          string                               `json:"combatMode,omitempty"`
+		SnapshotFingerprint string                               `json:"snapshotFingerprint,omitempty"`
+		Equipment           map[string]State.EquipmentInstanceID `json:"equipment"`
+		Gems                map[string]State.GemInstanceID       `json:"gems"`
 	}
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Plan{}, err
@@ -284,6 +299,25 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 	}
 	if !leader.available {
 		return Intent.Plan{}, fmt.Errorf("commander %d is busy", leader.id)
+	}
+	if leader.kind == "commander" {
+		commanderID := State.CommanderID(leader.id)
+		now := time.Now().UTC()
+		if State.CommanderHasActiveMovementAt(input.State, commanderID, now) ||
+			input.CommanderHolds != nil && input.CommanderHolds.CommanderHeldAt(commanderID, now) {
+			return Intent.Plan{}, fmt.Errorf("commander %d is travelling or reserved for a launch", leader.id)
+		}
+	}
+	if request.SnapshotFingerprint != "" {
+		fingerprint, fingerprintErr := EquipmentDomain.SnapshotFingerprint(
+			input.State, input.GameData, leader.kind, leader.id, request.CombatMode,
+		)
+		if fingerprintErr != nil {
+			return Intent.Plan{}, fingerprintErr
+		}
+		if fingerprint != request.SnapshotFingerprint {
+			return Intent.Plan{}, fmt.Errorf("%w: equipment changed after this preview was generated", Intent.ErrPlanStale)
+		}
 	}
 	selectedEquipment := map[State.EquipmentInstanceID]struct{}{}
 	for _, slot := range []int{1, 2, 3, 4} {
@@ -314,14 +348,24 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 		selectedEquipment[id] = struct{}{}
 	}
 	selectedGems := map[State.GemInstanceID]struct{}{}
+	verification := equipmentReconfigureVerification{
+		LeaderKind: leader.kind, LeaderID: leader.id, Equipment: cloneEquipmentSelection(request.Equipment),
+		Gems: map[string]equipmentReconfigureGemVerification{},
+	}
 	for slot := 1; slot <= 4; slot++ {
-		id := request.Gems[strconv.Itoa(slot)]
+		key := strconv.Itoa(slot)
+		id := request.Gems[key]
 		if id == 0 {
 			continue
 		}
 		gem, ok := input.State.Inventory.Gems[id]
 		if !ok {
 			return Intent.Plan{}, fmt.Errorf("gem %d is not in current state", id)
+		}
+		if request.SnapshotFingerprint != "" && !EquipmentDomain.GemMatchesLeaderAndMode(
+			input.State, gem, leader.kind, leader.id, strings.ToLower(strings.TrimSpace(request.CombatMode)),
+		) {
+			return Intent.Plan{}, fmt.Errorf("gem %d is not compatible with this %s %s loadout", id, leader.kind, request.CombatMode)
 		}
 		if gem.WearerKind != "" && (gem.WearerKind != leader.kind || gem.WearerID != leader.id) {
 			return Intent.Plan{}, fmt.Errorf("gem %d is worn by another leader", id)
@@ -330,6 +374,9 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 			return Intent.Plan{}, fmt.Errorf("gem %d appears in more than one slot", id)
 		}
 		selectedGems[id] = struct{}{}
+		verification.Gems[key] = equipmentReconfigureGemVerification{
+			InstanceID: id, DefinitionID: gem.DefinitionID, Normal: id < 0,
+		}
 	}
 
 	// Index current sockets once. The previous planner scanned every stored gem
@@ -485,10 +532,63 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 		steps = append(steps, step)
 	}
 	steps = append(steps, equipmentRefreshSteps()...)
+	verificationArguments, err := json.Marshal(verification)
+	if err != nil {
+		return Intent.Plan{}, fmt.Errorf("encode optimized loadout verification: %w", err)
+	}
+	steps = append(steps, Intent.Step{
+		Name: "Verify optimized loadout", Action: "equipment.reconfigure.verify", ActionArguments: verificationArguments,
+	})
 	return Intent.Plan{
 		Claims:  equipmentLeaderClaims(leader),
 		Summary: fmt.Sprintf("Apply optimized loadout to %s %d", leader.kind, leader.id), Steps: steps,
 	}, nil
+}
+
+func (application *Application) verifyEquipmentReconfigure(_ context.Context, arguments json.RawMessage) error {
+	var request equipmentReconfigureVerification
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	leader, err := resolveLeader(application.State.ReadOnlyView(), request.LeaderKind, request.LeaderID)
+	if err != nil {
+		return err
+	}
+	for _, slot := range baseEquipmentSlots {
+		key := strconv.Itoa(slot)
+		if leader.equipment[key] != request.Equipment[key] {
+			return fmt.Errorf("%s %d equipment slot %d did not match the selected loadout", leader.kind, leader.id, slot)
+		}
+	}
+	for slot := 1; slot <= 4; slot++ {
+		key := strconv.Itoa(slot)
+		expected, hasExpected := request.Gems[key]
+		actualID := leader.gems[key]
+		if !hasExpected && actualID == 0 {
+			continue
+		}
+		if !hasExpected || actualID == 0 {
+			return fmt.Errorf("%s %d gem slot %d did not match the selected loadout", leader.kind, leader.id, slot)
+		}
+		if !expected.Normal && actualID == expected.InstanceID {
+			continue
+		}
+		actual, found := application.State.ReadOnlyView().Inventory.Gems[actualID]
+		if !expected.Normal || !found || actualID >= 0 || actual.DefinitionID != expected.DefinitionID ||
+			actual.EquipmentInstanceID != request.Equipment[key] ||
+			actual.WearerKind != leader.kind || actual.WearerID != leader.id {
+			return fmt.Errorf("%s %d gem slot %d did not match the selected loadout", leader.kind, leader.id, slot)
+		}
+	}
+	return nil
+}
+
+func cloneEquipmentSelection(source map[string]State.EquipmentInstanceID) map[string]State.EquipmentInstanceID {
+	result := make(map[string]State.EquipmentInstanceID, len(source))
+	for key, value := range source {
+		result[key] = value
+	}
+	return result
 }
 
 func (application *Application) planEquipmentUpgrade(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {

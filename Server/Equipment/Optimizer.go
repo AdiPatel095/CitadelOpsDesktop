@@ -1,7 +1,10 @@
 package Equipment
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"hash"
 	"math"
 	"sort"
 	"strconv"
@@ -18,6 +21,7 @@ const (
 	optimizerBeamWidth      = 512
 	optimizerSlotCount      = 5
 	gemSlotCount            = 4
+	maximumResultCount      = 10
 )
 
 var (
@@ -26,8 +30,13 @@ var (
 )
 
 type officialRules struct {
-	caps       map[int64]float64
+	caps       map[int64]effectCap
 	setBonuses map[int64][]setBonus
+}
+
+type effectCap struct {
+	id  int64
+	max float64
 }
 
 type setBonus struct {
@@ -87,9 +96,15 @@ func (tracker *coverageGroupTracker) finish() float64 {
 // complete effect catalogue or repeatedly build effect-total maps.
 type scoringRules struct {
 	priorityIndex map[int64]int
-	caps          []float64
+	caps          []effectCap
+	capGroups     []scoredCapGroup
 	setBonuses    map[int64][]scoredSetBonus
 	setPotential  map[int64]float64
+}
+
+type scoredCapGroup struct {
+	maximum float64
+	indexes []int
 }
 
 type scoredSetBonus struct {
@@ -119,6 +134,15 @@ func Optimize(gameState State.GameState, gameData *GameData.Store, request Optim
 	request.CombatMode = strings.ToLower(strings.TrimSpace(request.CombatMode))
 	if request.CombatMode != "pvp" && request.CombatMode != "pve" {
 		return OptimizeResponse{}, fmt.Errorf("combatMode must be pvp or pve")
+	}
+	if request.ResultCount < 0 {
+		return OptimizeResponse{}, fmt.Errorf("resultCount cannot be negative")
+	}
+	if request.ResultCount == 0 {
+		request.ResultCount = 1
+	}
+	if request.ResultCount > maximumResultCount {
+		request.ResultCount = maximumResultCount
 	}
 	currentEquipment, currentGems, err := currentLeaderLoadout(gameState, request.LeaderKind, request.LeaderID)
 	if err != nil {
@@ -163,13 +187,157 @@ func Optimize(gameState State.GameState, gameData *GameData.Store, request Optim
 	if len(beam) == 0 {
 		return OptimizeResponse{}, fmt.Errorf("equipment optimizer found no valid loadout")
 	}
-	best := beam[0]
-	proposedEquipment, proposedGems := best.assignments()
+	alternatives := make([]Loadout, 0, request.ResultCount)
+	seenAssignments := make(map[string]struct{}, request.ResultCount)
+	for _, candidate := range beam {
+		proposedEquipment, proposedGems := candidate.assignments()
+		assignmentKey := loadoutAssignmentKey(proposedEquipment, proposedGems)
+		if _, duplicate := seenAssignments[assignmentKey]; duplicate {
+			continue
+		}
+		seenAssignments[assignmentKey] = struct{}{}
+		alternatives = append(alternatives, buildLoadout(gameState, proposedEquipment, proposedGems, priorities, rules))
+		if len(alternatives) == request.ResultCount {
+			break
+		}
+	}
+	if len(alternatives) == 0 {
+		return OptimizeResponse{}, fmt.Errorf("equipment optimizer found no distinct loadout")
+	}
+	fingerprint, err := SnapshotFingerprint(gameState, gameData, request.LeaderKind, request.LeaderID, request.CombatMode)
+	if err != nil {
+		return OptimizeResponse{}, err
+	}
 	return OptimizeResponse{
-		LeaderKind: request.LeaderKind, LeaderID: request.LeaderID, StateRevision: gameState.Revision, Candidates: counts,
+		LeaderKind: request.LeaderKind, LeaderID: request.LeaderID, StateRevision: gameState.Revision,
+		SnapshotFingerprint: fingerprint, Candidates: counts,
 		Current:  buildLoadout(gameState, currentEquipment, currentGems, priorities, rules),
-		Proposed: buildLoadout(gameState, proposedEquipment, proposedGems, priorities, rules),
+		Proposed: alternatives[0], Alternatives: alternatives,
 	}, nil
+}
+
+// SnapshotFingerprint identifies only state that can change optimizer results
+// or make a selected assignment unsafe to apply. Global state revisions are
+// intentionally excluded so unrelated automation and UI updates do not expire
+// an otherwise current equipment preview.
+func SnapshotFingerprint(gameState State.GameState, gameData *GameData.Store, kind string, leaderID int64, combatMode string) (string, error) {
+	kind = strings.ToLower(strings.TrimSpace(kind))
+	combatMode = strings.ToLower(strings.TrimSpace(combatMode))
+	if combatMode != "pvp" && combatMode != "pve" {
+		return "", fmt.Errorf("combatMode must be pvp or pve")
+	}
+	equipment, gems, err := currentLeaderLoadout(gameState, kind, leaderID)
+	if err != nil {
+		return "", err
+	}
+	digest := sha256.New()
+	worldID, playerID := State.BoundAccount(gameState)
+	catalogVersion, catalogDigest := "", ""
+	if gameData != nil {
+		metadata := gameData.Metadata()
+		catalogVersion, catalogDigest = metadata.ItemVersion, metadata.DigestSHA256
+	}
+	fingerprintWrite(digest, "equipment-optimizer-v1", strings.TrimSpace(worldID), int64(playerID),
+		gameState.Session.Generation, gameState.Session.ConnectionGeneration, catalogVersion, catalogDigest,
+		kind, leaderID, combatMode)
+	available := true
+	if kind == "commander" {
+		available = gameState.Commanders[State.CommanderID(leaderID)].Available
+	}
+	fingerprintWrite(digest, available)
+	writeAssignmentFingerprint(digest, equipment, gems)
+
+	equipmentIDs := make([]int64, 0, len(gameState.Inventory.Equipment))
+	for id, item := range gameState.Inventory.Equipment {
+		if item.TypeID == optimizerEquipmentType(kind) && optimizerSlot(item.Slot) &&
+			(item.WearerKind == "" || item.WearerKind == kind && item.WearerID == leaderID) {
+			equipmentIDs = append(equipmentIDs, int64(id))
+		}
+	}
+	sort.Slice(equipmentIDs, func(left, right int) bool { return equipmentIDs[left] < equipmentIDs[right] })
+	for _, rawID := range equipmentIDs {
+		item := gameState.Inventory.Equipment[State.EquipmentInstanceID(rawID)]
+		fingerprintWrite(digest, "equipment", int64(item.ID), int64(item.DefinitionID), item.Slot, item.TypeID,
+			item.RarityID, item.Relic, item.RelicKnown, item.SetID, item.Level, item.WearerKind, item.WearerID)
+		writeEffectFingerprint(digest, item.Effects)
+	}
+
+	gemIDs := make([]int64, 0, len(gameState.Inventory.Gems))
+	for id, gem := range gameState.Inventory.Gems {
+		if gemEligibleForLeader(gameState, gem, kind, leaderID) && (gem.EquipmentInstanceID != 0 || gemMatchesMode(gem, kind, combatMode)) {
+			gemIDs = append(gemIDs, int64(id))
+		}
+	}
+	sort.Slice(gemIDs, func(left, right int) bool { return gemIDs[left] < gemIDs[right] })
+	for _, rawID := range gemIDs {
+		gem := gameState.Inventory.Gems[State.GemInstanceID(rawID)]
+		fingerprintWrite(digest, "gem", int64(gem.ID), int64(gem.DefinitionID), gem.TypeID,
+			gem.CompatibleWearerID, gem.CombatMode, gem.SetID, gem.Slot, gem.Level,
+			int64(gem.EquipmentInstanceID), gem.WearerKind, gem.WearerID)
+		writeEffectFingerprint(digest, gem.Effects)
+	}
+	return hex.EncodeToString(digest.Sum(nil)), nil
+}
+
+func writeAssignmentFingerprint(
+	digest hash.Hash,
+	equipment map[string]State.EquipmentInstanceID,
+	gems map[string]State.GemInstanceID,
+) {
+	for _, slot := range optimizerSlots {
+		key := strconv.Itoa(slot)
+		fingerprintWrite(digest, "equipped", slot, int64(equipment[key]))
+	}
+	for slot := 1; slot <= gemSlotCount; slot++ {
+		key := strconv.Itoa(slot)
+		fingerprintWrite(digest, "socketed", slot, int64(gems[key]))
+	}
+}
+
+func writeEffectFingerprint(digest hash.Hash, source State.EquipmentEffects) {
+	effects := append(State.EquipmentEffects(nil), source...)
+	sort.Slice(effects, func(left, right int) bool {
+		if effects[left].DefinitionID != effects[right].DefinitionID {
+			return effects[left].DefinitionID < effects[right].DefinitionID
+		}
+		if effects[left].WireID != effects[right].WireID {
+			return effects[left].WireID < effects[right].WireID
+		}
+		leftKey := fmt.Sprintf("%v:%v", effects[left].RollPercent, effects[left].Values)
+		rightKey := fmt.Sprintf("%v:%v", effects[right].RollPercent, effects[right].Values)
+		return leftKey < rightKey
+	})
+	for _, effect := range effects {
+		fingerprintWrite(digest, "effect", effect.DefinitionID, effect.WireID)
+		if effect.RollPercent == nil {
+			fingerprintWrite(digest, "roll:nil")
+		} else {
+			fingerprintWrite(digest, "roll", *effect.RollPercent)
+		}
+		for _, value := range effect.Values {
+			fingerprintWrite(digest, value)
+		}
+	}
+}
+
+func fingerprintWrite(digest hash.Hash, values ...any) {
+	for _, value := range values {
+		fmt.Fprintf(digest, "%T:%v\x00", value, value)
+	}
+}
+
+func loadoutAssignmentKey(
+	equipment map[string]State.EquipmentInstanceID,
+	gems map[string]State.GemInstanceID,
+) string {
+	var builder strings.Builder
+	for _, slot := range optimizerSlots {
+		fmt.Fprintf(&builder, "e%d=%d;", slot, equipment[strconv.Itoa(slot)])
+	}
+	for slot := 1; slot <= gemSlotCount; slot++ {
+		fmt.Fprintf(&builder, "g%d=%d;", slot, gems[strconv.Itoa(slot)])
+	}
+	return builder.String()
 }
 
 func currentLeaderLoadout(gameState State.GameState, kind string, id int64) (map[string]State.EquipmentInstanceID, map[string]State.GemInstanceID, error) {
@@ -238,7 +406,7 @@ func preparePriorities(gameData *GameData.Store, input []Priority) ([]weightedPr
 func buildScoringRules(priorities []weightedPriority, rules officialRules) scoringRules {
 	scoring := scoringRules{
 		priorityIndex: make(map[int64]int, len(priorities)),
-		caps:          make([]float64, len(priorities)),
+		caps:          make([]effectCap, len(priorities)),
 		setBonuses:    make(map[int64][]scoredSetBonus, len(rules.setBonuses)),
 		setPotential:  make(map[int64]float64, len(rules.setBonuses)),
 	}
@@ -246,6 +414,7 @@ func buildScoringRules(priorities []weightedPriority, rules officialRules) scori
 		scoring.priorityIndex[priority.effectID] = index
 		scoring.caps[index] = rules.caps[priority.effectID]
 	}
+	scoring.capGroups = buildScoredCapGroups(scoring.caps)
 	for setID, bonuses := range rules.setBonuses {
 		for _, bonus := range bonuses {
 			values := effectValues(bonus.effects, scoring.priorityIndex, len(priorities))
@@ -266,10 +435,7 @@ func buildScoringRules(priorities []weightedPriority, rules officialRules) scori
 }
 
 func candidateEquipment(gameState State.GameState, kind string, leaderID int64, priorities []weightedPriority, scoring scoringRules) map[int][]optimizerCandidate {
-	expectedType := 2
-	if kind == "castellan" {
-		expectedType = 1
-	}
+	expectedType := optimizerEquipmentType(kind)
 	result := map[int][]optimizerCandidate{}
 	for _, item := range gameState.Inventory.Equipment {
 		if item.TypeID != expectedType || !optimizerSlot(item.Slot) {
@@ -286,7 +452,7 @@ func candidateEquipment(gameState State.GameState, kind string, leaderID int64, 
 func candidateGems(gameState State.GameState, kind string, leaderID int64, combatMode string, priorities []weightedPriority, scoring scoringRules) []optimizerCandidate {
 	result := make([]optimizerCandidate, 0, len(gameState.Inventory.Gems))
 	for _, gem := range gameState.Inventory.Gems {
-		if gem.WearerKind != "" && (gem.WearerKind != kind || gem.WearerID != leaderID) {
+		if !gemEligibleForLeader(gameState, gem, kind, leaderID) {
 			continue
 		}
 		if !gemMatchesMode(gem, kind, combatMode) {
@@ -295,6 +461,34 @@ func candidateGems(gameState State.GameState, kind string, leaderID int64, comba
 		result = append(result, makeCandidate(int64(gem.ID), gem.SetID, gem.Effects, priorities, scoring))
 	}
 	return result
+}
+
+func optimizerEquipmentType(kind string) int {
+	if kind == "castellan" {
+		return 1
+	}
+	return 2
+}
+
+func gemEligibleForLeader(gameState State.GameState, gem State.GemInstance, kind string, leaderID int64) bool {
+	if gem.WearerKind != "" && (gem.WearerKind != kind || gem.WearerID != leaderID) {
+		return false
+	}
+	if gem.EquipmentInstanceID == 0 {
+		return true
+	}
+	carrier, found := gameState.Inventory.Equipment[gem.EquipmentInstanceID]
+	if !found || carrier.TypeID != optimizerEquipmentType(kind) || carrier.Slot < 1 || carrier.Slot > 4 {
+		return false
+	}
+	return carrier.WearerKind == "" || carrier.WearerKind == kind && carrier.WearerID == leaderID
+}
+
+// GemMatchesLeaderAndMode applies the same ownership, carrier and combat-mode
+// rules used by the optimizer. The reconfiguration planner calls it again so a
+// forged or stale client cannot apply a gem the preview would not select.
+func GemMatchesLeaderAndMode(gameState State.GameState, gem State.GemInstance, kind string, leaderID int64, combatMode string) bool {
+	return gemEligibleForLeader(gameState, gem, kind, leaderID) && gemMatchesMode(gem, kind, combatMode)
 }
 
 func makeCandidate(id int64, setID int64, effects State.EquipmentEffects, priorities []weightedPriority, scoring scoringRules) optimizerCandidate {
@@ -409,30 +603,31 @@ func scorePartial(loadout partialLoadout, priorities []weightedPriority, scoring
 		addCandidate(gem)
 	}
 
-	score := 0.0
-	coverage := newCoverageGroupTracker()
-	for priorityIndex, priority := range priorities {
-		value := 0.0
+	values := make([]float64, len(priorities))
+	for priorityIndex := range priorities {
 		for _, item := range loadout.equipment {
 			if item != nil {
-				value += item.values[priorityIndex]
+				values[priorityIndex] += item.values[priorityIndex]
 			}
 		}
 		for _, gem := range loadout.gems {
 			if gem != nil {
-				value += gem.values[priorityIndex]
+				values[priorityIndex] += gem.values[priorityIndex]
 			}
 		}
 		for index := 0; index < setLength; index++ {
 			for _, bonus := range scoring.setBonuses[setIDs[index]] {
 				if setCounts[index] >= bonus.neededItems {
-					value += bonus.values[priorityIndex]
+					values[priorityIndex] += bonus.values[priorityIndex]
 				}
 			}
 		}
-		if cap := scoring.caps[priorityIndex]; cap > 0 && value > cap {
-			value = cap
-		}
+	}
+	applyScoredCapGroups(values, scoring.capGroups)
+	score := 0.0
+	coverage := newCoverageGroupTracker()
+	for priorityIndex, priority := range priorities {
+		value := values[priorityIndex]
 		score += coverage.observe(priority, value)
 		score += value * priority.weight
 	}
@@ -583,32 +778,83 @@ func gemMatchesMode(gem State.GemInstance, kind string, combatMode string) bool 
 	return wireID >= 200 && wireID < 300
 }
 
-func scoreEffectTotals(totals map[int64]float64, priorities []weightedPriority, caps map[int64]float64) float64 {
+func scoreEffectTotals(totals map[int64]float64, priorities []weightedPriority, caps map[int64]effectCap) float64 {
+	values := make([]float64, len(priorities))
+	priorityCaps := make([]effectCap, len(priorities))
+	for index, priority := range priorities {
+		values[index] = totals[priority.effectID]
+		priorityCaps[index] = caps[priority.effectID]
+	}
+	applyScoredCapGroups(values, buildScoredCapGroups(priorityCaps))
+	return scoreCappedValues(values, priorities)
+}
+
+func scoreValues(values []float64, priorities []weightedPriority, caps []effectCap) float64 {
+	values = append([]float64(nil), values...)
+	applyScoredCapGroups(values, buildScoredCapGroups(caps))
+	return scoreCappedValues(values, priorities)
+}
+
+func scoreCappedValues(values []float64, priorities []weightedPriority) float64 {
 	score := 0.0
 	coverage := newCoverageGroupTracker()
-	for _, priority := range priorities {
-		value := totals[priority.effectID]
-		if capValue := caps[priority.effectID]; capValue > 0 && value > capValue {
-			value = capValue
-		}
+	for index, priority := range priorities {
+		value := values[index]
 		score += coverage.observe(priority, value)
 		score += value * priority.weight
 	}
 	return score + coverage.finish()
 }
 
-func scoreValues(values []float64, priorities []weightedPriority, caps []float64) float64 {
-	score := 0.0
-	coverage := newCoverageGroupTracker()
-	for index, priority := range priorities {
-		value := values[index]
-		if cap := caps[index]; cap > 0 && value > cap {
-			value = cap
+func buildScoredCapGroups(caps []effectCap) []scoredCapGroup {
+	groupIndexes := map[int64]int{}
+	groups := make([]scoredCapGroup, 0)
+	for index, cap := range caps {
+		if cap.id <= 0 || cap.max <= 0 {
+			continue
 		}
-		score += coverage.observe(priority, value)
-		score += value * priority.weight
+		groupIndex, found := groupIndexes[cap.id]
+		if !found {
+			groupIndex = len(groups)
+			groupIndexes[cap.id] = groupIndex
+			groups = append(groups, scoredCapGroup{})
+		}
+		groups[groupIndex].maximum = math.Max(groups[groupIndex].maximum, cap.max)
+		groups[groupIndex].indexes = append(groups[groupIndex].indexes, index)
 	}
-	return score + coverage.finish()
+	return groups
+}
+
+func applyScoredCapGroups(values []float64, groups []scoredCapGroup) {
+	for _, group := range groups {
+		total := 0.0
+		for _, index := range group.indexes {
+			total += values[index]
+		}
+		maximum := group.maximum
+		if total <= maximum && total >= -maximum || total == 0 {
+			continue
+		}
+		scale := maximum / math.Abs(total)
+		for _, index := range group.indexes {
+			values[index] *= scale
+		}
+	}
+}
+
+func cappedPriorityTotals(totals map[int64]float64, priorities []weightedPriority, caps map[int64]effectCap) map[int64]float64 {
+	values := make([]float64, len(priorities))
+	orderedCaps := make([]effectCap, len(priorities))
+	for index, priority := range priorities {
+		values[index] = totals[priority.effectID]
+		orderedCaps[index] = caps[priority.effectID]
+	}
+	applyScoredCapGroups(values, buildScoredCapGroups(orderedCaps))
+	result := cloneMap(totals)
+	for index, priority := range priorities {
+		result[priority.effectID] = values[index]
+	}
+	return result
 }
 
 func assignmentEffects(
@@ -691,19 +937,19 @@ func buildLoadout(
 ) Loadout {
 	totals := assignmentEffects(gameState, equipment, gems, rules)
 	effects := make([]EffectTotal, 0, len(totals))
+	effectiveTotals := cappedPriorityTotals(totals, priorities, rules.caps)
 	for definitionID, rawValue := range totals {
-		value := rawValue
+		value := effectiveTotals[definitionID]
 		var capPointer *float64
 		capped := false
-		if capValue := rules.caps[definitionID]; capValue > 0 {
-			capCopy := capValue
+		capID := int64(0)
+		if cap := rules.caps[definitionID]; cap.max > 0 {
+			capID = cap.id
+			capCopy := cap.max
 			capPointer = &capCopy
-			if value > capValue {
-				value = capValue
-				capped = true
-			}
+			capped = value != rawValue
 		}
-		effects = append(effects, EffectTotal{DefinitionID: definitionID, Value: value, Cap: capPointer, Capped: capped})
+		effects = append(effects, EffectTotal{DefinitionID: definitionID, Value: value, CapID: capID, Cap: capPointer, Capped: capped})
 	}
 	sort.Slice(effects, func(left, right int) bool { return effects[left].DefinitionID < effects[right].DefinitionID })
 	return Loadout{
@@ -714,7 +960,7 @@ func buildLoadout(
 
 func loadOfficialRules(gameData *GameData.Store) officialRules {
 	if gameData == nil {
-		return officialRules{caps: map[int64]float64{}, setBonuses: map[int64][]setBonus{}}
+		return officialRules{caps: map[int64]effectCap{}, setBonuses: map[int64][]setBonus{}}
 	}
 	if cached, found := officialRulesCache.Load(gameData); found {
 		return cached.(officialRules)
@@ -725,7 +971,7 @@ func loadOfficialRules(gameData *GameData.Store) officialRules {
 }
 
 func buildOfficialRules(gameData *GameData.Store) officialRules {
-	rules := officialRules{caps: map[int64]float64{}, setBonuses: map[int64][]setBonus{}}
+	rules := officialRules{caps: map[int64]effectCap{}, setBonuses: map[int64][]setBonus{}}
 	capByID := map[int64]float64{}
 	if catalog, err := gameData.Catalog("effectCaps"); err == nil {
 		for _, raw := range catalog.Rows() {
@@ -749,7 +995,7 @@ func buildOfficialRules(gameData *GameData.Store) officialRules {
 			effectID, effectOK := record.Int64("effectID")
 			capID, capOK := record.Int64("capID")
 			if effectOK && capOK && capByID[capID] > 0 {
-				rules.caps[effectID] = capByID[capID]
+				rules.caps[effectID] = effectCap{id: capID, max: capByID[capID]}
 			}
 		}
 	}

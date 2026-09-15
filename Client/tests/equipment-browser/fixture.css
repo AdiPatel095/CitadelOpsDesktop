@@ -1,0 +1,66 @@
+@import "../../src/index.css";
+@source "../../src";
+
+body {
+	min-height: 100vh;
+	margin: 0;
+	background: radial-gradient(circle at 20% 10%, color-mix(in srgb, var(--primary) 18%, transparent), transparent 36%), var(--bg-app);
+	color: var(--text-main);
+}
+
+.fixture-stage {
+	min-height: 100vh;
+	display: grid;
+	place-items: center;
+	padding: 3rem 25rem 3rem 3rem;
+}
+
+.fixture-stage section { max-width: 42rem; }
+.fixture-stage h1 { margin: .3rem 0 1rem; font-size: clamp(2rem, 5vw, 4.5rem); font-weight: 900; line-height: .98; }
+.fixture-stage p { color: var(--text-muted); }
+.fixture-kicker { color: var(--primary) !important; font-size: .75rem; font-weight: 900; letter-spacing: .15em; text-transform: uppercase; }
+
+.fixture-open, .fixture-series, .fixture-controls button {
+	border: 1px solid var(--border-base);
+	border-radius: .55rem;
+	background: var(--bg-card-hover);
+	color: var(--text-main);
+	padding: .5rem .7rem;
+	font-size: .75rem;
+	font-weight: 700;
+	cursor: pointer;
+}
+.fixture-open, .fixture-series { margin-top: 1rem; background: var(--primary); color: white; }
+.fixture-controls button:disabled { cursor: not-allowed; opacity: .45; }
+
+.fixture-controls {
+	position: fixed;
+	z-index: 240;
+	top: .75rem;
+	right: .75rem;
+	width: min(22rem, calc(100vw - 1.5rem));
+	max-height: calc(100vh - 1.5rem);
+	overflow: auto;
+	padding: .9rem;
+	border: 1px solid color-mix(in srgb, var(--primary) 45%, var(--border-base));
+	border-radius: .8rem;
+	background: color-mix(in srgb, var(--bg-card) 96%, transparent);
+	box-shadow: 0 20px 50px rgba(0, 0, 0, .4);
+}
+.fixture-controls h2 { margin: 0 0 .65rem; font-size: .9rem; }
+.fixture-controls label { display: grid; grid-template-columns: 7.2rem 1fr; align-items: center; gap: .5rem; margin-top: .4rem; color: var(--text-muted); font-size: .7rem; font-weight: 700; }
+.fixture-controls select { min-width: 0; border: 1px solid var(--border-base); border-radius: .45rem; background: var(--bg-input); color: var(--text-main); padding: .35rem; font-size: .7rem; }
+.fixture-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: .35rem; margin-top: .7rem; }
+.fixture-series { width: 100%; }
+.fixture-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: .35rem; margin: .7rem 0; }
+.fixture-metrics div { border: 1px solid var(--border-base); border-radius: .45rem; background: var(--bg-app); padding: .35rem; }
+.fixture-metrics dt { color: var(--text-muted); font-size: .58rem; text-transform: uppercase; }
+.fixture-metrics dd { margin: .1rem 0 0; font: 700 .7rem var(--font-mono-ui); overflow-wrap: anywhere; }
+.fixture-controls details { margin-top: .4rem; color: var(--text-muted); font-size: .65rem; }
+.fixture-controls pre { max-height: 7rem; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text-main); font-size: .58rem; }
+.fixture-state { margin: .6rem 0 0; color: var(--text-muted); font: .6rem var(--font-mono-ui); }
+
+@media (max-width: 900px) {
+	.fixture-stage { padding: 2rem; align-items: start; }
+	.fixture-controls { top: auto; bottom: .5rem; right: .5rem; max-height: 42vh; }
+}
