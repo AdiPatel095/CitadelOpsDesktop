@@ -1057,6 +1057,10 @@ func (transport *DirectWebSocketTransport) Send(ctx context.Context, payload []b
 		return err
 	}
 	transport.writeMu.Lock()
+	if err := Outbound.ValidateFinalDispatch(ctx); err != nil {
+		transport.writeMu.Unlock()
+		return err
+	}
 	transport.invalidateAllianceHelpContextForOutbound(string(payload))
 	pending, registerErr := transport.registerPending(metadata, string(payload))
 	if registerErr != nil {

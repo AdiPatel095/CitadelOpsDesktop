@@ -70,6 +70,22 @@ type Metadata struct {
 	ResponseOpcodes       []string
 	ResponseTimeoutMillis int
 	ResponseIdentity      ResponseIdentity
+	// FinalDispatchValidation runs after outbound queue waits and immediately
+	// before transport send. It is process-local and never logged.
+	FinalDispatchValidation func(context.Context) error
+}
+
+func WithFinalDispatchValidation(ctx context.Context, validate func(context.Context) error) context.Context {
+	metadata := MetadataFromContext(ctx)
+	metadata.FinalDispatchValidation = validate
+	return WithMetadata(ctx, metadata)
+}
+
+func ValidateFinalDispatch(ctx context.Context) error {
+	if validate := MetadataFromContext(ctx).FinalDispatchValidation; validate != nil {
+		return validate(ctx)
+	}
+	return nil
 }
 
 // ResponseIdentity binds a response wait to the player and castle that the

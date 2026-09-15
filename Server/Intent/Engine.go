@@ -1002,6 +1002,8 @@ func stepResumeKey(step Step) string {
 		string(step.ResponseBarrier),
 		step.PreDispatchAction,
 		string(step.PreDispatchArguments),
+		step.FinalDispatchAction,
+		string(step.FinalDispatchArguments),
 		step.DefinitiveSendFailureAction,
 		string(step.DefinitiveSendFailureArguments),
 		step.DefinitiveResponseFailureAction,
@@ -1461,6 +1463,18 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 		if err := action(sendContext, step.PreDispatchArguments); err != nil {
 			return nil, compensateDefinitiveSendFailure(fmt.Errorf("pre-dispatch action %q: %w", step.PreDispatchAction, err))
 		}
+	}
+	if step.FinalDispatchAction != "" {
+		engine.mu.RLock()
+		action := engine.actions[step.FinalDispatchAction]
+		engine.mu.RUnlock()
+		if action == nil {
+			return nil, compensateDefinitiveSendFailure(fmt.Errorf("final-dispatch action %q is not registered", step.FinalDispatchAction))
+		}
+		arguments := append(json.RawMessage(nil), step.FinalDispatchArguments...)
+		sendContext = Outbound.WithFinalDispatchValidation(sendContext, func(dispatchContext context.Context) error {
+			return action(dispatchContext, arguments)
+		})
 	}
 	if err := advanceEffectPhase(ctx, EffectPhaseDispatching); err != nil {
 		return nil, compensateDefinitiveSendFailure(fmt.Errorf("persist dispatching effect: %w", err))
@@ -1943,6 +1957,11 @@ func normalizePlan(definition Definition, revision uint64, plan Plan) Plan {
 		plan.Steps[index].PreDispatchArguments = append(json.RawMessage(nil), plan.Steps[index].PreDispatchArguments...)
 		if plan.Steps[index].PreDispatchAction != "" && len(plan.Steps[index].PreDispatchArguments) == 0 {
 			plan.Steps[index].PreDispatchArguments = json.RawMessage(`{}`)
+		}
+		plan.Steps[index].FinalDispatchAction = strings.TrimSpace(plan.Steps[index].FinalDispatchAction)
+		plan.Steps[index].FinalDispatchArguments = append(json.RawMessage(nil), plan.Steps[index].FinalDispatchArguments...)
+		if plan.Steps[index].FinalDispatchAction != "" && len(plan.Steps[index].FinalDispatchArguments) == 0 {
+			plan.Steps[index].FinalDispatchArguments = json.RawMessage(`{}`)
 		}
 		plan.Steps[index].DefinitiveSendFailureAction = strings.TrimSpace(plan.Steps[index].DefinitiveSendFailureAction)
 		plan.Steps[index].DefinitiveSendFailureArguments = append(json.RawMessage(nil), plan.Steps[index].DefinitiveSendFailureArguments...)

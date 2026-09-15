@@ -1233,6 +1233,7 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 	}
 	if components.Has(ComponentPlayer) {
 		clone.Player.Resources = cloneMap(source.Player.Resources)
+		clone.Player.ResourceObservations = cloneMap(source.Player.ResourceObservations)
 		clone.Player.Currencies = cloneMap(source.Player.Currencies)
 		clone.Player.Achievements.Completed = cloneMap(source.Player.Achievements.Completed)
 		clone.Player.Achievements.Progress = make(map[int64][]int64, len(source.Player.Achievements.Progress))

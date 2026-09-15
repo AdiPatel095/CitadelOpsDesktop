@@ -149,6 +149,54 @@ func TestInvasionAvailabilityAndReservationsPersistAcrossRestart(t *testing.T) {
 	}
 }
 
+func TestGlobalEffectPurchasePersistsButResourceFreshnessDoesNot(t *testing.T) {
+	directory := t.TempDir()
+	observedAt := time.Now().UTC().Truncate(time.Second)
+	endsAt := observedAt.Add(time.Hour)
+	initial := NewGameState()
+	initial.Session.Generation = 1
+	initial.Session.ConnectionGeneration = 11
+	initial.Player.Resources[2] = 7500
+	initial.Player.ResourceObservations[2] = PlayerResourceObservation{ObservedAt: observedAt, ConnectionGeneration: 11}
+	store := NewStore(initial)
+	event, err := store.ApplyComponents(Components(ComponentEventScores), func(state *GameState) ([]string, bool, error) {
+		inventory := state.EventScores.Inventory
+		inventory.GlobalEffectPurchases = cloneGlobalEffectPurchaseMap(inventory.GlobalEffectPurchases)
+		inventory.GlobalEffectPurchases[2] = GlobalEffectPurchaseRecord{
+			GlobalEffectID: 2, OccurrenceEndsAt: endsAt, ExpiresAt: endsAt,
+			QuotedRubyCost: 2500, QuotedBonusValue: 50, MinimumRubyReserve: 5000,
+			RubyBefore: 10000, RubyBeforeObservedAt: observedAt, RequestedAt: observedAt,
+			DispatchedAt: observedAt.Add(time.Second), RequestOpcode: "agb", OperationID: "op-1",
+			ResponseToken: "process-only-token", ConnectionGeneration: 11,
+			DebitUnverified: true, Outcome: GlobalEffectPurchaseUnresolved,
+			Detail: "awaiting authoritative reconciliation",
+		}
+		changed := state.ReplaceEventInventory(inventory)
+		return []string{"events", "event-scores", "global-effects"}, changed, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := SaveComponentSnapshot(directory, event, Components(event.Components...)); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := LoadSnapshot(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	record, found := loaded.EventScores.Inventory.GlobalEffectPurchases[2]
+	if !found || record.Outcome != GlobalEffectPurchaseUnresolved || record.OperationID != "op-1" ||
+		record.QuotedRubyCost != 2500 || !record.DispatchedAt.Equal(observedAt.Add(time.Second)) {
+		t.Fatalf("durable global-effect purchase=%+v found=%t", record, found)
+	}
+	if record.ResponseToken != "" {
+		t.Fatalf("process-local response token persisted: %q", record.ResponseToken)
+	}
+	if len(loaded.Player.ResourceObservations) != 0 {
+		t.Fatalf("stale resource freshness survived restart: %+v", loaded.Player.ResourceObservations)
+	}
+}
+
 func TestComponentSnapshotWriterReusesLastDurableManifest(t *testing.T) {
 	directory := t.TempDir()
 	store := NewStore(NewGameState())

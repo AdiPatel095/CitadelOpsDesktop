@@ -184,27 +184,36 @@ type AccountBindingState struct {
 }
 
 type PlayerState struct {
-	ID                PlayerID                  `json:"id"`
-	Name              string                    `json:"name,omitempty"`
-	AllianceID        AllianceID                `json:"allianceId,omitempty"`
-	Level             int                       `json:"level,omitempty"`
-	LegendLevel       int                       `json:"legendLevel,omitempty"`
-	Might             float64                   `json:"might,omitempty"`
-	Glory             float64                   `json:"glory,omitempty"`
-	GloryTitleID      int64                     `json:"gloryTitleId,omitempty"`
-	GloryTitleTopX    int                       `json:"gloryTitleTopX,omitempty"`
-	GloryTitleAt      time.Time                 `json:"gloryTitleObservedAt,omitempty"`
-	GloryTitleGen     uint64                    `json:"gloryTitleGeneration,omitempty"`
-	Gallantry         float64                   `json:"gallantry,omitempty"`
-	GallantryTitleID  int64                     `json:"gallantryTitleId,omitempty"`
-	GallantryTitleAt  time.Time                 `json:"gallantryTitleObservedAt,omitempty"`
-	GallantryTitleGen uint64                    `json:"gallantryTitleGeneration,omitempty"`
-	Resources         map[ResourceID]float64    `json:"resources"`
-	Currencies        map[CurrencyID]float64    `json:"currencies"`
-	VIP               VIPState                  `json:"vip"`
-	ProtectionMode    PlayerProtectionModeState `json:"protectionMode"`
-	Achievements      AchievementState          `json:"achievements"`
-	LegendSkills      LegendSkillState          `json:"legendSkills"`
+	ID                PlayerID               `json:"id"`
+	Name              string                 `json:"name,omitempty"`
+	AllianceID        AllianceID             `json:"allianceId,omitempty"`
+	Level             int                    `json:"level,omitempty"`
+	LegendLevel       int                    `json:"legendLevel,omitempty"`
+	Might             float64                `json:"might,omitempty"`
+	Glory             float64                `json:"glory,omitempty"`
+	GloryTitleID      int64                  `json:"gloryTitleId,omitempty"`
+	GloryTitleTopX    int                    `json:"gloryTitleTopX,omitempty"`
+	GloryTitleAt      time.Time              `json:"gloryTitleObservedAt,omitempty"`
+	GloryTitleGen     uint64                 `json:"gloryTitleGeneration,omitempty"`
+	Gallantry         float64                `json:"gallantry,omitempty"`
+	GallantryTitleID  int64                  `json:"gallantryTitleId,omitempty"`
+	GallantryTitleAt  time.Time              `json:"gallantryTitleObservedAt,omitempty"`
+	GallantryTitleGen uint64                 `json:"gallantryTitleGeneration,omitempty"`
+	Resources         map[ResourceID]float64 `json:"resources"`
+	// ResourceObservations are live dispatch authority and are intentionally
+	// not persisted. A restart must observe a current-session GCU snapshot
+	// before unattended premium spending resumes.
+	ResourceObservations map[ResourceID]PlayerResourceObservation `json:"-"`
+	Currencies           map[CurrencyID]float64                   `json:"currencies"`
+	VIP                  VIPState                                 `json:"vip"`
+	ProtectionMode       PlayerProtectionModeState                `json:"protectionMode"`
+	Achievements         AchievementState                         `json:"achievements"`
+	LegendSkills         LegendSkillState                         `json:"legendSkills"`
+}
+
+type PlayerResourceObservation struct {
+	ObservedAt           time.Time `json:"-"`
+	ConnectionGeneration uint64    `json:"-"`
 }
 
 // CurrentGloryTitle returns a title only when it was observed on the active
@@ -2064,7 +2073,7 @@ func NewGameState() GameState {
 		UpdatedAt:     now,
 		Session:       SessionState{Status: "stopped", Namespace: "EmpireEx_21", ChangedAt: now},
 		Player: PlayerState{
-			Resources: map[ResourceID]float64{}, Currencies: map[CurrencyID]float64{},
+			Resources: map[ResourceID]float64{}, ResourceObservations: map[ResourceID]PlayerResourceObservation{}, Currencies: map[CurrencyID]float64{},
 			Achievements: AchievementState{Completed: map[int64]bool{}, Progress: map[int64][]int64{}},
 			LegendSkills: LegendSkillState{ActiveIDs: []int64{}, SceatSkillIDs: []int64{}, SceatActivations: []SceatSkillActivation{}},
 		},
@@ -2140,6 +2149,7 @@ func NewGameState() GameState {
 			Inventory: EventInventoryState{
 				ActiveByEvent: map[int64]EventAvailability{}, GlobalEffects: map[int64]GlobalEffectAvailability{},
 				GlobalEffectBoosterOffers: map[int64]GlobalEffectBoosterOffer{}, GlobalEffectBoosts: map[int64]GlobalEffectBoostState{},
+				GlobalEffectPurchases: map[int64]GlobalEffectPurchaseRecord{},
 			},
 		},
 		Automations: map[string]AutomationState{},

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -31,6 +32,7 @@ func reduceInitialState(
 	changed := false
 	accountChanged := false
 	protectionLifecycleChanged := false
+	globalEffectPurchaseChanged := false
 	if raw := root["gpi"]; len(raw) > 0 {
 		player, err := decodePlayerInfo(raw)
 		if err != nil {
@@ -107,7 +109,7 @@ func reduceInitialState(
 		changed = changed || updated
 	}
 	if raw := root["gcu"]; len(raw) > 0 {
-		updated, err := applyPlayerResources(raw, gameState, gameData)
+		updated, err := applyPlayerResources(raw, gameState, gameData, frame.ReceivedAt, frame.ResponseCode != nil && *frame.ResponseCode == 0)
 		if err != nil {
 			return nil, false, err
 		}
@@ -200,11 +202,23 @@ func reduceInitialState(
 		nestedFrame := frame
 		nestedFrame.Opcode = embedded.opcode
 		nestedFrame.Payload = raw
-		_, updated, err := embedded.reducer(context.Background(), nestedFrame, gameState, gameData)
+		nestedDomains, updated, err := embedded.reducer(context.Background(), nestedFrame, gameState, gameData)
 		if err != nil {
+			if embedded.opcode == "bie" {
+				// A malformed booster section must not roll back unrelated GBD
+				// account hydration. The complete-baseline marker below remains
+				// invalid, so this snapshot cannot authorize premium spending.
+				continue
+			}
 			return nil, false, err
 		}
 		changed = changed || updated
+		if updated && slices.Contains(nestedDomains, globalEffectPurchaseDurabilityDomain) {
+			globalEffectPurchaseChanged = true
+		}
+	}
+	if updated := applyGlobalEffectGBDAuthority(root, frame, gameState, gameData); updated {
+		changed = true
 	}
 	domains := []string{
 		"player", "castles", "resources", "currencies", "alliance", "commanders", "castellans",
@@ -225,7 +239,51 @@ func reduceInitialState(
 	if protectionLifecycleChanged {
 		domains = append(domains, "player-protection")
 	}
+	if globalEffectPurchaseChanged {
+		domains = append(domains, globalEffectPurchaseDurabilityDomain)
+	}
 	return domains, changed, nil
+}
+
+func applyGlobalEffectGBDAuthority(
+	root map[string]json.RawMessage,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	gameData *GameData.Store,
+) bool {
+	if gameState == nil || !strings.EqualFold(frame.Opcode, "gbd") {
+		return false
+	}
+	inventory := gameState.EventScores.Inventory
+	observedAt := frame.ReceivedAt.UTC()
+	inventory.GlobalEffectReadObservedAt = observedAt
+	inventory.GlobalEffectReadGeneration = gameState.Session.ConnectionGeneration
+	_, bieValid := decodeGlobalEffectBoosterIDs(root["bie"])
+	complete := len(root["sei"]) > 0 && len(root["gcu"]) > 0 && bieValid == nil && gameData != nil
+	if complete {
+		resourceID, found := gameData.ResourceIDForJSONKey("C2")
+		observation := gameState.Player.ResourceObservations[State.ResourceID(resourceID)]
+		complete = found && resourceID > 0 &&
+			inventory.GlobalEffectsObservedAt.Equal(observedAt) && inventory.GlobalEffectBoostsObservedAt.Equal(observedAt) &&
+			observation.ObservedAt.Equal(observedAt) && observation.ConnectionGeneration == gameState.Session.ConnectionGeneration
+	}
+	if complete {
+		inventory.GlobalEffectBaselineObservedAt = observedAt
+		inventory.GlobalEffectBaselineGeneration = gameState.Session.ConnectionGeneration
+		inventory.GlobalEffectPurchases = cloneGlobalEffectPurchaseRecords(inventory.GlobalEffectPurchases)
+		if record, found := inventory.GlobalEffectPurchases[GameData.FortressDailyGlobalEffectID]; found {
+			if effect, effectFound := inventory.GlobalEffects[record.GlobalEffectID]; effectFound &&
+				State.SameEventOccurrence(record.OccurrenceEndsAt, effect.EndsAt) {
+				updateGlobalEffectPurchaseRubyEvidence(&record, gameState, gameData)
+				record.DebitUnverified = true
+				inventory.GlobalEffectPurchases[record.GlobalEffectID] = record
+			}
+		}
+	} else {
+		inventory.GlobalEffectBaselineObservedAt = time.Time{}
+		inventory.GlobalEffectBaselineGeneration = 0
+	}
+	return gameState.ReplaceEventInventory(inventory)
 }
 
 func resetInitialAccountState(gameState *State.GameState) {
@@ -646,7 +704,7 @@ func reduceGlobalResources(
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 		return nil, false, nil
 	}
-	changed, err := applyPlayerResources(frame.Payload, gameState, gameData)
+	changed, err := applyPlayerResources(frame.Payload, gameState, gameData, frame.ReceivedAt, frame.ResponseCode != nil && *frame.ResponseCode == 0)
 	return []string{"resources"}, changed, err
 }
 
@@ -885,16 +943,19 @@ func applyVIPInfo(raw json.RawMessage, gameState *State.GameState) (bool, error)
 	return true, nil
 }
 
-func applyPlayerResources(raw json.RawMessage, gameState *State.GameState, gameData *GameData.Store) (bool, error) {
+func applyPlayerResources(raw json.RawMessage, gameState *State.GameState, gameData *GameData.Store, observedAt time.Time, authoritative bool) (bool, error) {
 	var values map[string]json.RawMessage
 	if err := json.Unmarshal(raw, &values); err != nil {
 		return false, fmt.Errorf("decode player resources: %w", err)
 	}
 	if nested := values["gcu"]; len(nested) > 0 {
-		return applyPlayerResources(nested, gameState, gameData)
+		return applyPlayerResources(nested, gameState, gameData, observedAt, authoritative)
 	}
 	if gameState.Player.Resources == nil {
 		gameState.Player.Resources = map[State.ResourceID]float64{}
+	}
+	if gameState.Player.ResourceObservations == nil {
+		gameState.Player.ResourceObservations = map[State.ResourceID]State.PlayerResourceObservation{}
 	}
 	changed := false
 	for jsonKey, rawValue := range values {
@@ -902,14 +963,35 @@ func applyPlayerResources(raw json.RawMessage, gameState *State.GameState, gameD
 		if !ok {
 			continue
 		}
-		amount, ok := rawFloat64(rawValue)
-		if !ok {
-			continue
+		premium := strings.EqualFold(strings.TrimSpace(jsonKey), "C2")
+		var amount float64
+		if premium {
+			integer, valid := rawJSONInt64(rawValue)
+			if !authoritative || !valid || integer < 0 {
+				continue
+			}
+			amount = float64(integer)
+		} else {
+			var valid bool
+			amount, valid = rawFloat64(rawValue)
+			if !valid {
+				continue
+			}
 		}
 		id := State.ResourceID(definitionID)
+		if prior := gameState.Player.ResourceObservations[id]; !prior.ObservedAt.IsZero() && observedAt.Before(prior.ObservedAt) {
+			continue
+		}
 		if current, exists := gameState.Player.Resources[id]; !exists || current != amount {
 			gameState.Player.Resources[id] = amount
 			changed = true
+		}
+		if authoritative {
+			observation := State.PlayerResourceObservation{ObservedAt: observedAt.UTC(), ConnectionGeneration: gameState.Session.ConnectionGeneration}
+			if current := gameState.Player.ResourceObservations[id]; current != observation {
+				gameState.Player.ResourceObservations[id] = observation
+				changed = true
+			}
 		}
 	}
 	return changed, nil

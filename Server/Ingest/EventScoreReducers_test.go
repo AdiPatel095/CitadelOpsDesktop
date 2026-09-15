@@ -1,7 +1,11 @@
 package Ingest
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
+	"os"
+	"slices"
 	"testing"
 	"time"
 
@@ -161,6 +165,355 @@ func TestGlobalEffectSnapshotsBindLiveOfferAndBoostStatusToDailyWindow(t *testin
 	}
 }
 
+func TestGlobalEffectBoosterInfoRequiresExplicitCurrentCodeZeroArray(t *testing.T) {
+	gameData := scalableEventTestGameData(t)
+	observedAt := time.Date(2026, time.September, 15, 12, 0, 0, 0, time.UTC)
+	code := 0
+	base := State.NewGameState()
+	base.Session.ConnectionGeneration = 7
+	base.EventScores.Inventory.GlobalEffectsObservedAt = observedAt
+	base.EventScores.Inventory.GlobalEffects[2] = State.GlobalEffectAvailability{
+		GlobalEffectID: 2, Strength: 10, EndsAt: observedAt.Add(time.Hour),
+	}
+	base.EventScores.Inventory.GlobalEffectBoostsObservedAt = observedAt
+	base.EventScores.Inventory.GlobalEffectBoosts[2] = State.GlobalEffectBoostState{
+		GlobalEffectID: 2, Boosted: true, OccurrenceEndsAt: observedAt.Add(time.Hour),
+		ObservedAt: observedAt, ConnectionGeneration: 7,
+	}
+
+	for name, payload := range map[string]string{
+		"missing": `{}`,
+		"null":    `{"GE":null}`,
+		"object":  `{"GE":{}}`,
+		"string":  `{"GE":"2"}`,
+		"decimal": `{"GE":[2.5]}`,
+		"zero":    `{"GE":[0]}`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			gameState := base
+			gameState.EventScores.Inventory.GlobalEffects = cloneGlobalEffects(base.EventScores.Inventory.GlobalEffects)
+			gameState.EventScores.Inventory.GlobalEffectBoosts = cloneGlobalEffectBoosts(base.EventScores.Inventory.GlobalEffectBoosts)
+			_, changed, err := reduceGlobalEffectBoosterInfo(t.Context(), Protocol.Frame{
+				Opcode: "bie", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+				ReceivedAt: observedAt.Add(time.Second), Payload: json.RawMessage(payload),
+			}, &gameState, gameData)
+			if err == nil || changed || !gameState.EventScores.Inventory.GlobalEffectBoosts[2].Boosted {
+				t.Fatalf("invalid BIE changed authority: changed=%t err=%v state=%+v", changed, err, gameState.EventScores.Inventory.GlobalEffectBoosts[2])
+			}
+		})
+	}
+
+	gameState := base
+	_, changed, err := reduceGlobalEffectBoosterInfo(t.Context(), Protocol.Frame{
+		Opcode: "bie", Direction: Protocol.DirectionInbound, ReceivedAt: observedAt.Add(time.Second),
+		Payload: json.RawMessage(`{"GE":[]}`),
+	}, &gameState, gameData)
+	if err != nil || changed || !gameState.EventScores.Inventory.GlobalEffectBoosts[2].Boosted {
+		t.Fatalf("nil response code manufactured BIE authority: changed=%t err=%v", changed, err)
+	}
+
+	gameState = base
+	_, changed, err = reduceGlobalEffectBoosterInfo(t.Context(), Protocol.Frame{
+		Opcode: "bie", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+		ReceivedAt: observedAt.Add(-time.Second), Payload: json.RawMessage(`{"GE":[]}`),
+	}, &gameState, gameData)
+	if err != nil || changed || !gameState.EventScores.Inventory.GlobalEffectBoosts[2].Boosted {
+		t.Fatalf("older BIE rebound to newer occurrence: changed=%t err=%v", changed, err)
+	}
+}
+
+func TestGlobalEffectOccurrenceIdentitySurvivesCountdownJitterButRollsDaily(t *testing.T) {
+	gameData := scalableEventTestGameData(t)
+	gameState := State.NewGameState()
+	code := 0
+	firstAt := time.Date(2026, time.September, 15, 12, 0, 10, 0, time.UTC)
+	apply := func(at time.Time, remaining int) time.Time {
+		t.Helper()
+		_, _, err := reduceScalableEventSnapshot(t.Context(), Protocol.Frame{
+			Opcode: "sei", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: at,
+			Payload: json.RawMessage(fmt.Sprintf(`{"E":[{"EID":610,"RS":3600,"GE":[[2,%d,10]]}]}`, remaining)),
+		}, &gameState, gameData)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return gameState.EventScores.Inventory.GlobalEffects[2].EndsAt
+	}
+	firstEnd := apply(firstAt, 50)
+	jitteredEnd := apply(firstEnd.Add(10*time.Second), 50)
+	if !jitteredEnd.Equal(firstEnd) {
+		t.Fatalf("same occurrence changed after expiry jitter: first=%s next=%s", firstEnd, jitteredEnd)
+	}
+	nextEnd := apply(firstAt.Add(24*time.Hour), 50)
+	if nextEnd.Equal(firstEnd) || !nextEnd.After(firstEnd.Add(23*time.Hour)) {
+		t.Fatalf("daily rollover did not create a new occurrence: first=%s next=%s", firstEnd, nextEnd)
+	}
+}
+
+func TestGlobalEffectPurchaseEvidenceHandlesBothBIEAndAGBOrderings(t *testing.T) {
+	gameData := scalableEventTestGameData(t)
+	for _, bieFirst := range []bool{false, true} {
+		t.Run(fmt.Sprintf("bie-first-%t", bieFirst), func(t *testing.T) {
+			observedAt := time.Date(2026, time.September, 15, 12, 0, 0, 0, time.UTC)
+			endsAt := observedAt.Add(time.Hour)
+			gameState := State.NewGameState()
+			gameState.Session.ConnectionGeneration = 4
+			gameState.Player.Resources[2] = 7500
+			gameState.Player.ResourceObservations[2] = State.PlayerResourceObservation{ObservedAt: observedAt.Add(time.Second), ConnectionGeneration: 4}
+			gameState.EventScores.Inventory.GlobalEffectsObservedAt = observedAt
+			gameState.EventScores.Inventory.GlobalEffects[2] = State.GlobalEffectAvailability{GlobalEffectID: 2, Strength: 10, EndsAt: endsAt}
+			gameState.EventScores.Inventory.GlobalEffectPurchases[2] = State.GlobalEffectPurchaseRecord{
+				GlobalEffectID: 2, OccurrenceEndsAt: endsAt, ExpiresAt: endsAt,
+				QuotedRubyCost: 2500, RubyBefore: 10000, RubyBeforeObservedAt: observedAt,
+				RequestOpcode: "agb", OperationID: "op-current", ResponseToken: "token-current",
+				ConnectionGeneration: 4, DebitUnverified: true, Outcome: State.GlobalEffectPurchaseUnresolved,
+			}
+			code := 0
+			bie := func(at time.Time, payload string) {
+				t.Helper()
+				_, _, err := reduceGlobalEffectBoosterInfo(t.Context(), Protocol.Frame{
+					Opcode: "bie", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+					ReceivedAt: at, Payload: json.RawMessage(payload),
+				}, &gameState, gameData)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+			ack := func() {
+				t.Helper()
+				_, _, err := reduceGlobalEffectPurchaseAcknowledgement(t.Context(), Protocol.Frame{
+					Opcode: "agb", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+					ReceivedAt: observedAt.Add(2 * time.Second), ResponseToken: "token-current",
+				}, &gameState, gameData)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+			if bieFirst {
+				bie(observedAt.Add(time.Second), `{"GE":[2]}`)
+				ack()
+			} else {
+				ack()
+				if outcome := gameState.EventScores.Inventory.GlobalEffectPurchases[2].Outcome; outcome != State.GlobalEffectPurchaseAccepted {
+					t.Fatalf("empty code-zero AGB was not accepted: %q", outcome)
+				}
+				bie(observedAt.Add(3*time.Second), `{"GE":[2]}`)
+			}
+			record := gameState.EventScores.Inventory.GlobalEffectPurchases[2]
+			if record.Outcome != State.GlobalEffectPurchaseConfirmed || record.ResultCode == nil || *record.ResultCode != 0 ||
+				!record.RubyAfterKnown || record.ObservedRubyChange != 2500 || !record.DebitUnverified {
+				t.Fatalf("combined purchase evidence=%+v", record)
+			}
+			activationObservedAt := record.ActivationObservedAt
+			bie(observedAt.Add(4*time.Second), `{"GE":[]}`)
+			record = gameState.EventScores.Inventory.GlobalEffectPurchases[2]
+			if !gameState.EventScores.Inventory.GlobalEffectBoosts[2].Boosted || record.Outcome != State.GlobalEffectPurchaseConfirmed ||
+				!record.ActivationObservedAt.Equal(activationObservedAt) {
+				t.Fatal("later empty BIE erased positive confirmation for the same occurrence")
+			}
+		})
+	}
+}
+
+func TestGlobalEffectPurchaseAckMustMatchCurrentOperation(t *testing.T) {
+	gameState := State.NewGameState()
+	endsAt := time.Now().UTC().Add(time.Hour)
+	gameState.EventScores.Inventory.GlobalEffectPurchases[2] = State.GlobalEffectPurchaseRecord{
+		GlobalEffectID: 2, OccurrenceEndsAt: endsAt, OperationID: "new-op", ResponseToken: "new-token",
+		Outcome: State.GlobalEffectPurchaseUnresolved, DebitUnverified: true,
+	}
+	code := 0
+	_, changed, err := reduceGlobalEffectPurchaseAcknowledgement(t.Context(), Protocol.Frame{
+		Opcode: "agb", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+		ReceivedAt: time.Now().UTC(), ResponseToken: "old-token", CausationOperationID: "old-op",
+	}, &gameState, scalableEventTestGameData(t))
+	if err != nil || changed || gameState.EventScores.Inventory.GlobalEffectPurchases[2].Outcome != State.GlobalEffectPurchaseUnresolved {
+		t.Fatalf("late prior AGB bound to current record: changed=%t err=%v record=%+v", changed, err, gameState.EventScores.Inventory.GlobalEffectPurchases[2])
+	}
+}
+
+func TestGlobalEffectPurchaseExplicitRejectionIsDurableEvidence(t *testing.T) {
+	gameState := State.NewGameState()
+	endsAt := time.Now().UTC().Add(time.Hour)
+	gameState.EventScores.Inventory.GlobalEffectPurchases[2] = State.GlobalEffectPurchaseRecord{
+		GlobalEffectID: 2, OccurrenceEndsAt: endsAt, OperationID: "rejected-op", ResponseToken: "rejected-token",
+		Outcome: State.GlobalEffectPurchaseUnresolved, DebitUnverified: true,
+	}
+	code := 91
+	domains, changed, err := reduceGlobalEffectPurchaseAcknowledgement(t.Context(), Protocol.Frame{
+		Opcode: "agb", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+		ReceivedAt: time.Now().UTC(), ResponseToken: "rejected-token", CausationOperationID: "rejected-op",
+	}, &gameState, scalableEventTestGameData(t))
+	record := gameState.EventScores.Inventory.GlobalEffectPurchases[2]
+	if err != nil || !changed || record.Outcome != State.GlobalEffectPurchaseRejected || record.ResultCode == nil || *record.ResultCode != 91 ||
+		!slices.Contains(domains, globalEffectPurchaseDurabilityDomain) {
+		t.Fatalf("explicit rejection evidence: changed=%t domains=%v err=%v record=%+v", changed, domains, err, record)
+	}
+}
+
+func TestGlobalEffectPurchaseAcceptanceNeedsNewerBalanceEvidence(t *testing.T) {
+	observedAt := time.Now().UTC().Truncate(time.Second)
+	gameState := State.NewGameState()
+	gameState.Session.ConnectionGeneration = 3
+	gameState.Player.Resources[2] = 10000
+	gameState.Player.ResourceObservations[2] = State.PlayerResourceObservation{ObservedAt: observedAt, ConnectionGeneration: 3}
+	gameState.EventScores.Inventory.GlobalEffectPurchases[2] = State.GlobalEffectPurchaseRecord{
+		GlobalEffectID: 2, OccurrenceEndsAt: observedAt.Add(time.Hour), OperationID: "accepted-op",
+		ResponseToken: "accepted-token", RubyBefore: 10000, RubyBeforeObservedAt: observedAt,
+		DispatchedAt: observedAt, ConnectionGeneration: 3, Outcome: State.GlobalEffectPurchaseUnresolved,
+		DebitUnverified: true,
+	}
+	code := 0
+	_, changed, err := reduceGlobalEffectPurchaseAcknowledgement(t.Context(), Protocol.Frame{
+		Opcode: "agb", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+		ReceivedAt: observedAt.Add(time.Second), ResponseToken: "accepted-token", CausationOperationID: "accepted-op",
+	}, &gameState, scalableEventTestGameData(t))
+	record := gameState.EventScores.Inventory.GlobalEffectPurchases[2]
+	if err != nil || !changed || record.Outcome != State.GlobalEffectPurchaseAccepted || record.RubyAfterKnown || !record.DebitUnverified {
+		t.Fatalf("pre-purchase balance was presented as after evidence: changed=%t err=%v record=%+v", changed, err, record)
+	}
+}
+
+func TestGBDCapturedGlobalEffectBaselineAndMalformedBIEIsolation(t *testing.T) {
+	gameData := scalableEventTestGameData(t)
+	capturedFixture, err := os.ReadFile("testdata/global_effect_gbd_sanitized.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	registry := NewRegistry()
+	if err := RegisterCoreReducers(registry); err != nil {
+		t.Fatal(err)
+	}
+	for _, test := range []struct {
+		name         string
+		bie          string
+		wantBaseline bool
+	}{
+		{name: "captured empty GE is authoritative", bie: `{"GE":[]}`, wantBaseline: true},
+		{name: "null BIE preserves other hydration without authority", bie: `null`, wantBaseline: false},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			observedAt := time.Date(2026, time.September, 15, 12, 0, 0, 0, time.UTC)
+			rubyBalance := 10000
+			gameState := State.NewGameState()
+			gameState.Session.ConnectionGeneration = 9
+			if test.wantBaseline {
+				rubyBalance = 7500
+				gameState.EventScores.Inventory.GlobalEffectPurchases[2] = State.GlobalEffectPurchaseRecord{
+					GlobalEffectID: 2, OccurrenceEndsAt: observedAt.Add(30 * time.Minute),
+					RubyBefore: 10000, RubyBeforeObservedAt: observedAt.Add(-time.Minute),
+					ConnectionGeneration: 9, Outcome: State.GlobalEffectPurchaseAccepted,
+					DebitUnverified: true,
+				}
+			}
+			store := State.NewStore(gameState)
+			pipeline := NewPipeline(store, staticGameDataProvider{store: gameData}, registry)
+			code := 0
+			payload := fmt.Sprintf(`{
+				"gpi":{"UID":456,"PID":123,"PN":"Fixture Player"},
+				"sei":{"E":[
+					{"EID":610,"RS":3600,"GE":[[2,1800,10]]},
+					{"EID":612,"RS":3600,"GEB":[{"GEID":2,"C2":2500,"BV":50}]}
+				]},
+				"bie":%s,
+				"gcu":{"C2":%d}
+			}`, test.bie, rubyBalance)
+			if test.wantBaseline {
+				payload = string(capturedFixture)
+			}
+			_, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
+				Opcode: "gbd", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+				ReceivedAt: observedAt, Payload: json.RawMessage(payload),
+			})
+			if err != nil {
+				t.Fatalf("GBD pipeline rejected fixture: %v", err)
+			}
+			snapshot := store.Snapshot()
+			if snapshot.Player.ID != 123 || snapshot.Player.Resources[2] != float64(rubyBalance) ||
+				!snapshot.Player.ResourceObservations[2].ObservedAt.Equal(observedAt) {
+				t.Fatalf("valid GPI/GCU did not commit: player=%+v resources=%+v observations=%+v", snapshot.Player, snapshot.Player.Resources, snapshot.Player.ResourceObservations)
+			}
+			effect := snapshot.EventScores.Inventory.GlobalEffects[2]
+			offer := snapshot.EventScores.Inventory.GlobalEffectBoosterOffers[2]
+			if effect.Strength != 10 || offer.RubyCost != 2500 || offer.BonusValue != 50 ||
+				!snapshot.EventScores.Inventory.GlobalEffectReadObservedAt.Equal(observedAt) {
+				t.Fatalf("valid SEI/read did not commit: effect=%+v offer=%+v inventory=%+v", effect, offer, snapshot.EventScores.Inventory)
+			}
+			baseline := snapshot.EventScores.Inventory.GlobalEffectBaselineObservedAt
+			if test.wantBaseline != baseline.Equal(observedAt) {
+				t.Fatalf("baseline=%s want authoritative=%t", baseline, test.wantBaseline)
+			}
+			if test.wantBaseline {
+				status, found := snapshot.EventScores.Inventory.GlobalEffectBoosts[2]
+				if !found || status.Boosted || status.ConnectionGeneration != 9 {
+					t.Fatalf("captured BIE status=%+v found=%t", status, found)
+				}
+				record := snapshot.EventScores.Inventory.GlobalEffectPurchases[2]
+				if record.Outcome != State.GlobalEffectPurchaseAccepted || !record.RubyAfterKnown ||
+					record.RubyAfter != 7500 || record.ObservedRubyChange != 2500 || !record.DebitUnverified {
+					t.Fatalf("post-GBD accepted evidence=%+v", record)
+				}
+			}
+		})
+	}
+}
+
+func TestGBDNestedBIEConfirmationCrossesDurabilityFence(t *testing.T) {
+	gameData := scalableEventTestGameData(t)
+	registry := NewRegistry()
+	if err := RegisterCoreReducers(registry); err != nil {
+		t.Fatal(err)
+	}
+	observedAt := time.Date(2026, time.September, 15, 12, 0, 0, 0, time.UTC)
+	endsAt := observedAt.Add(30 * time.Minute)
+	gameState := State.NewGameState()
+	gameState.Session.ConnectionGeneration = 6
+	gameState.EventScores.Inventory.GlobalEffectPurchases[2] = State.GlobalEffectPurchaseRecord{
+		GlobalEffectID: 2, OccurrenceEndsAt: endsAt, ExpiresAt: endsAt,
+		OperationID: "missing-agb-ack", Outcome: State.GlobalEffectPurchaseUnresolved,
+		DebitUnverified: true,
+	}
+	store := State.NewStore(gameState)
+	pipeline := NewPipeline(store, staticGameDataProvider{store: gameData}, registry)
+	fenceCalls := 0
+	pipeline.SetDurabilityFence(func(_ context.Context, event State.Event) error {
+		fenceCalls++
+		if event.Patch == nil || store.ReadOnlyView().EventScores.Inventory.GlobalEffectPurchases[2].Outcome != State.GlobalEffectPurchaseConfirmed {
+			t.Fatalf("durability fence ran before confirmed state: event=%+v", event)
+		}
+		return nil
+	})
+	code := 0
+	_, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
+		Opcode: "gbd", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
+		Payload: json.RawMessage(`{
+			"sei":{"E":[
+				{"EID":610,"RS":3600,"GE":[[2,1800,10]]},
+				{"EID":612,"RS":3600,"GEB":[{"GEID":2,"C2":2500,"BV":50}]}
+			]},
+			"bie":{"GE":[2]},"gcu":{"C2":7500}
+		}`),
+	})
+	if err != nil || fenceCalls != 1 {
+		t.Fatalf("nested BIE durability fence calls=%d err=%v", fenceCalls, err)
+	}
+}
+
+func cloneGlobalEffects(input map[int64]State.GlobalEffectAvailability) map[int64]State.GlobalEffectAvailability {
+	result := make(map[int64]State.GlobalEffectAvailability, len(input))
+	for id, value := range input {
+		result[id] = value
+	}
+	return result
+}
+
+func cloneGlobalEffectBoosts(input map[int64]State.GlobalEffectBoostState) map[int64]State.GlobalEffectBoostState {
+	result := make(map[int64]State.GlobalEffectBoostState, len(input))
+	for id, value := range input {
+		result[id] = value
+	}
+	return result
+}
+
 func TestScalableEventSnapshotCachesFirstCurrenciesForEachOccurrence(t *testing.T) {
 	gameData := scalableEventTestGameData(t)
 	gameState := State.NewGameState()
@@ -210,6 +563,7 @@ func scalableEventTestGameData(t *testing.T) *GameData.Store {
 		"versionInfo":[],
 		"buildings":[{"wodID":1}],
 		"units":[{"wodID":1}],
+		"resources":[{"resourceID":2,"JSONKey":"C2","name":"Rubies"}],
 		"events":[{"eventID":"72","comment1":"AllianceNomad Invasion","eventType":"AllianceNomadInvasion"}],
 		"eventAutoScalingDifficulties":[{"difficultyID":"308","eventID":"72","difficultyTypeID":"8"}],
 		"eventAutoScalingDifficultyTypes":[{"difficultyTypeID":"8","name":"expertPlus","sortOrder":"8"}],

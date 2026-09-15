@@ -3,7 +3,6 @@ import { CalendarDays, Clock3, Coins, ShieldCheck, Sparkles, Zap } from 'lucide-
 import { useCitadelAPI } from '../../api/ApiContext';
 import { Badge, Button, Card, Input, SettingsModal } from '../../components/ui';
 import {
-  AUTO_BOOSTER_GLOBAL_EFFECT_ID,
   AUTO_BOOSTER_RUBY_COST,
   AUTO_BOOSTER_SECTION,
   defaultAutoBoosterClientState,
@@ -11,6 +10,13 @@ import {
   persistAutoBoosterClientState,
   type AutoBoosterClientStateV1,
 } from '../AutoBoosterClientState';
+import {
+  deriveAutoBoosterViewState,
+  formatAutoBoosterRemaining,
+  formatAutoBoosterRequestProgress,
+  formatObservedRubyChange,
+  hasMeaningfulAutoBoosterTime,
+} from '../AutoBoosterViewState';
 
 interface AutoBoosterSettingsModalProps {
   isOpen: boolean;
@@ -18,13 +24,11 @@ interface AutoBoosterSettingsModalProps {
   onOpenFeatureSchedule: (featureID: string, featureLabel: string) => void;
 }
 
-function formatWindowEnd(value: string | undefined): string {
-  if (!value) return 'Waiting for daily window';
+function formatReceiptTime(value: string | undefined): string {
+  if (!value) return 'Not observed';
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Waiting for daily window';
-  return `Current window ends ${date.toLocaleString([], {
-    month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit',
-  })}`;
+  if (!hasMeaningfulAutoBoosterTime(value)) return 'Not observed';
+  return date.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit' });
 }
 
 export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> = ({
@@ -36,6 +40,7 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
   const [settings, setSettings] = useState<AutoBoosterClientStateV1>(defaultAutoBoosterClientState);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     if (!isOpen) {
@@ -45,22 +50,26 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
     setSettings(parseAutoBoosterClientState(configuration?.sections[AUTO_BOOSTER_SECTION]));
   }, [configuration?.sections, isOpen]);
 
-  const live = useMemo(() => {
-    const key = String(AUTO_BOOSTER_GLOBAL_EFFECT_ID);
-    const inventory = state?.eventScores.inventory;
-    const effect = inventory?.globalEffects?.[key];
-    const offer = inventory?.globalEffectBoosterOffers?.[key];
-    const boost = inventory?.globalEffectBoosts?.[key];
-    const currentOccurrence = Boolean(
-      effect?.endsAt && boost?.occurrenceEndsAt && effect.endsAt === boost.occurrenceEndsAt,
-    );
-    return {
-      effect,
-      offer,
-      boosted: currentOccurrence && boost?.boosted === true,
-      statusKnown: currentOccurrence,
-    };
-  }, [state?.eventScores.inventory]);
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    setNow(Date.now());
+    const interval = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(interval);
+  }, [isOpen]);
+
+  const live = useMemo(() => deriveAutoBoosterViewState(
+    state?.eventScores.inventory,
+    now,
+    state?.automations.autoBooster?.detail,
+  ), [now, state?.automations.autoBooster?.detail, state?.eventScores.inventory]);
+
+  const statusVariant = live.status === 'active'
+    ? 'success'
+    : live.status === 'rejected'
+      ? 'danger'
+      : live.status === 'accepted' || live.status === 'unresolved'
+        ? 'warning'
+        : 'outline';
 
   const save = async () => {
     if (isSaving) return;
@@ -115,25 +124,54 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="text-base font-black text-text-main">Daily fortress-speed boost</h3>
                 <Badge variant="warning">2,500 rubies</Badge>
-                <Badge variant={live.boosted ? 'success' : 'outline'}>
-                  {live.boosted ? 'Active' : live.statusKnown ? 'Not active' : 'Checking status'}
-                </Badge>
+                <Badge variant={statusVariant}>{live.statusLabel}</Badge>
               </div>
               <p className="mt-1 max-w-xl text-xs leading-relaxed text-text-muted">
-                Auto Booster checks the current daily effect, its account-specific offer, and the server’s boosted list before it purchases once for that window.
+                {live.statusDetail}
               </p>
             </div>
           </div>
           <div className="rounded-xl border border-border-base bg-bg-app/70 px-3 py-2 text-right">
             <div className="text-xs font-black text-text-main">
-              {live.offer ? `${live.offer.rubyCost.toLocaleString()} quoted` : 'No live quote yet'}
+              {live.offer ? `${live.offer.rubyCost.toLocaleString()} rubies quoted` : 'No live quote yet'}
             </div>
             <div className="mt-0.5 text-[10px] uppercase tracking-wide text-text-muted">
-              {formatWindowEnd(live.effect?.endsAt)}
+              {formatAutoBoosterRemaining(live.expiresAt, now)}
             </div>
           </div>
         </div>
       </div>
+
+      {live.purchase && (
+        <Card variant="solid" className="mb-4 p-4" data-testid="auto-booster-purchase-record">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-black text-text-main">{live.purchaseHeading}</h3>
+              <p className="mt-1 text-xs text-text-muted">{live.purchase.detail ?? 'Waiting for purchase evidence from the game.'}</p>
+            </div>
+            <Badge variant={live.purchaseIsCurrent && live.purchase.outcome === 'confirmed' ? 'success' : live.purchaseIsCurrent && live.purchase.outcome === 'rejected' ? 'danger' : 'warning'}>
+              {!live.purchaseIsCurrent ? 'Historical' : live.purchase.outcome === 'confirmed' ? 'Covered' : live.purchase.outcome === 'accepted' ? 'Accepted' : live.purchase.outcome === 'unresolved' ? 'Unresolved' : 'Rejected'}
+            </Badge>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] md:grid-cols-4">
+            <div className="rounded-xl border border-border-base bg-bg-app/55 px-3 py-2"><span className="block text-text-muted">Event expiry</span><strong className="text-text-main">{formatAutoBoosterRemaining(live.purchase.expiresAt, now)}</strong><span className="mt-0.5 block text-[10px] text-text-muted">{formatReceiptTime(live.purchase.expiresAt)}</span></div>
+            <div className="rounded-xl border border-border-base bg-bg-app/55 px-3 py-2"><span className="block text-text-muted">Quote and reserve</span><strong className="text-text-main">{live.purchaseHasRequest ? `${live.purchase.quotedRubyCost.toLocaleString()} rubies` : 'No purchase quote'}</strong><span className="mt-0.5 block text-[10px] text-text-muted">{live.purchaseHasRequest ? `Keep ${live.purchase.minimumRubyReserve.toLocaleString()}` : 'Reserve not recorded'}</span></div>
+            <div className="rounded-xl border border-border-base bg-bg-app/55 px-3 py-2"><span className="block text-text-muted">Request and result</span><strong className="text-text-main">{live.purchaseHasRequest ? `${live.purchase.requestOpcode.toUpperCase()} · ${live.purchase.resultCode == null ? 'Awaiting result' : `Code ${live.purchase.resultCode}`}` : 'No automated request'}</strong><span className="mt-0.5 block text-[10px] text-text-muted">{live.purchaseHasRequest ? formatAutoBoosterRequestProgress(live.purchase) : 'Activation observed from game state'}</span></div>
+            <div className="rounded-xl border border-border-base bg-bg-app/55 px-3 py-2"><span className="block text-text-muted">Ruby observation</span><strong className="text-text-main">{live.purchaseHasRequest ? formatObservedRubyChange(live.purchase) : 'No purchase balance evidence'}</strong>{live.purchaseHasRequest && <span className="mt-0.5 block text-[10px] text-text-muted">{live.purchase.rubyBefore.toLocaleString()} before{live.purchase.rubyAfterKnown ? ` · ${(live.purchase.rubyAfter ?? 0).toLocaleString()} after` : ''}</span>}<span className="mt-0.5 block text-[10px] font-semibold text-text-main">{live.purchase.debitUnverified ? 'Purchase debit unverified' : 'Purchase debit verified'}</span></div>
+          </div>
+          <details className="mt-3 rounded-xl border border-border-base bg-bg-app/40 px-3 py-2 text-[11px] text-text-muted">
+            <summary className="cursor-pointer font-bold text-text-main">Receipt details</summary>
+            <dl className="mt-2 grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
+              <div><dt>Request prepared</dt><dd className="font-mono text-text-main">{live.purchaseHasRequest ? formatReceiptTime(live.purchase.requestedAt) : 'Unavailable'}</dd></div>
+              <div><dt>Request dispatched</dt><dd className="font-mono text-text-main">{live.purchaseHasRequest ? formatReceiptTime(live.purchase.dispatchedAt) : 'Unavailable'}</dd></div>
+              <div><dt>Acknowledgement observed</dt><dd className="font-mono text-text-main">{live.purchaseHasRequest ? formatReceiptTime(live.purchase.resultObservedAt) : 'Unavailable'}</dd></div>
+              <div><dt>Activation observed</dt><dd className="font-mono text-text-main">{formatReceiptTime(live.purchase.activationObservedAt)}</dd></div>
+              <div><dt>Quote bonus</dt><dd className="font-mono text-text-main">{live.purchaseHasRequest ? live.purchase.quotedBonusValue.toLocaleString() : 'Unavailable'}</dd></div>
+              <div><dt>Operation</dt><dd className="break-all font-mono text-text-main">{live.purchase.operationId || 'Unavailable'}</dd></div>
+            </dl>
+          </details>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <Card variant="solid" className="p-4">
