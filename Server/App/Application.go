@@ -1106,10 +1106,13 @@ func synchronizeGameDataStore(state *State.Store, gameData *GameData.Manager) er
 }
 
 func actionPlanner(action string, claim string, summary string) Intent.Planner {
-	return func(_ context.Context, _ Intent.PlanningContext, _ json.RawMessage) (Intent.Plan, error) {
+	return func(_ context.Context, _ Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
 		return Intent.Plan{
 			Claims: []string{claim}, Summary: summary,
-			Steps: []Intent.Step{{Name: summary, Action: action}},
+			Steps: []Intent.Step{{
+				Name: summary, Action: action,
+				ActionArguments: append(json.RawMessage(nil), arguments...),
+			}},
 		}, nil
 	}
 }
