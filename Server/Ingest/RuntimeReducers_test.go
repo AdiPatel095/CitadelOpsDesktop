@@ -200,6 +200,55 @@ func TestKingdomTroopWorkflowRejectsExactManualReplacementWithResetTimer(t *test
 	}
 }
 
+func TestKingdomTroopWorkflowRebindsOnlyVerifiedReconnectEvidence(t *testing.T) {
+	gameData := runtimeTestGameData(t)
+	now := time.Now().UTC().Add(-time.Minute)
+	code := 0
+	for _, test := range []struct {
+		name      string
+		workflow  State.KingdomTroopTransportWorkflow
+		payload   json.RawMessage
+		wantState string
+	}{
+		{
+			name: "persisted-pending-continuity",
+			workflow: State.KingdomTroopTransportWorkflow{
+				ID: "pending", Owner: "autoFortress", Status: "pending", KingdomID: 2,
+				Units: []State.KingdomTransportUnit{{UnitID: 277, Amount: 100}}, ArmedAt: now.Add(-time.Hour),
+				TransportObservedAt: now, RemainingSec: 3600,
+			},
+			payload:   json.RawMessage(`{"UL":[{"KID":2,"U":1}],"UT":[{"KID":2,"RS":3590,"I":[[277,100]]}]}`),
+			wantState: "pending",
+		},
+		{
+			name: "armed-authoritative-empty",
+			workflow: State.KingdomTroopTransportWorkflow{
+				ID: "armed", Owner: "autoFortress", Status: "armed", KingdomID: 2,
+				Units: []State.KingdomTransportUnit{{UnitID: 277, Amount: 100}}, ArmedAt: now.Add(-time.Hour),
+			},
+			payload:   json.RawMessage(`{"UL":[{"KID":2,"U":1}]}`),
+			wantState: "ownership_absent",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			state := State.NewGameState()
+			state.Session.ConnectionGeneration = 11
+			state.KingdomTransport.TroopWorkflows[2] = test.workflow
+			_, changed, err := reduceKingdomTransport(t.Context(), Protocol.Frame{
+				Opcode: "kpi", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+				ReceivedAt: now.Add(10 * time.Second), Payload: test.payload,
+			}, &state, gameData)
+			if err != nil || !changed {
+				t.Fatalf("reconnect reduction: changed=%t err=%v", changed, err)
+			}
+			workflow := state.KingdomTransport.TroopWorkflows[2]
+			if workflow.Status != test.wantState || workflow.SessionGeneration != 11 {
+				t.Fatalf("rebound workflow=%#v", workflow)
+			}
+		})
+	}
+}
+
 func TestKingdomTroopWorkflowPreservesSkipMarkerWhenTransportCompletes(t *testing.T) {
 	gameData := runtimeTestGameData(t)
 	gameState := State.NewGameState()

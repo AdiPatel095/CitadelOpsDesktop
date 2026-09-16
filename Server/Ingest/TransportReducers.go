@@ -787,13 +787,19 @@ func reconcileTroopTransportWorkflows(state *State.KingdomTransportState, observ
 				state.TroopWorkflows[kingdomID] = workflow
 				continue
 			}
+			workflow.SessionGeneration = connectionGeneration
 			workflow.Status = "pending"
 			workflow.RemainingSec = remaining
 			if workflow.LaunchedAt.IsZero() {
 				workflow.LaunchedAt = observedAt
 			}
 		} else {
-			workflow.Status = "awaiting_destination_refresh"
+			workflow.SessionGeneration = connectionGeneration
+			if workflow.Status == "armed" {
+				workflow.Status = "ownership_absent"
+			} else {
+				workflow.Status = "awaiting_destination_refresh"
+			}
 		}
 		state.TroopWorkflows[kingdomID] = workflow
 	}
