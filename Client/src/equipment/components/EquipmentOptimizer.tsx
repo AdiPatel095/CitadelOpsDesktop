@@ -16,7 +16,7 @@ import {
 	Target,
 	X,
 } from 'lucide-react';
-import type { EquipmentLoadoutV2, EquipmentOptimizeResponse, EquipmentPriorityV2 } from '../../api/Contracts';
+import type { EquipmentEffectTotalV2, EquipmentLoadoutV2, EquipmentOptimizeResponse, EquipmentPriorityV2 } from '../../api/Contracts';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { Notifications } from '../../components/Notifications';
 import { Badge, Button, Input, MetricTile, Modal, ModalTitle } from '../../components/ui';
@@ -46,8 +46,6 @@ import {
 	equipmentOptimizerSnapshotKey,
 	equipmentPriorityCatalogKey,
 	equipmentPriorityProfileKey,
-	equipmentOptimizerEffectSummary,
-	equipmentSharedCapLabel,
 } from './EquipmentOptimizerLifecycle';
 
 type Tier = 1 | 2;
@@ -70,13 +68,6 @@ interface DropTarget {
 interface PreviewEnvelope {
 	response: EquipmentOptimizeResponse;
 	localSnapshotKey: string;
-}
-
-interface ItemDescription {
-	name: string;
-	detail: string;
-	effectDetail: string;
-	unknown: boolean;
 }
 
 export default function EquipmentOptimizer({
@@ -246,7 +237,7 @@ function EquipmentOptimizerEditor({
 	disabled: boolean;
 }) {
 	const { state, catalogs, configuration, submitIntent, optimizeEquipment, updateConfiguration } = useCitadelAPI();
-	const { effects, getEffect, getEquipment, getGem } = useMetadata();
+	const { effects, troops, getEffect } = useMetadata();
 	const [priorityProfile, setPriorityProfile] = useState<EquipmentPriorityProfile>({ tier1: [], tier2: [] });
 	const [showPicker, setShowPicker] = useState(false);
 	const [showInfo, setShowInfo] = useState(false);
@@ -470,6 +461,7 @@ function EquipmentOptimizerEditor({
 				leaderKind: leader.kind,
 				leaderId: leader.id,
 				combatMode: target.combatMode.toLowerCase() as 'pvp' | 'pve',
+				targetAreaTypeIds: target.areaTypeIDs,
 				priorities,
 				resultCount: 10,
 			}), 8_000, 'The preview request expired. Check the connection and try again.');
@@ -692,8 +684,7 @@ function EquipmentOptimizerEditor({
 				preview={preview?.response ?? null}
 				priorityGroups={selectedGroups}
 				getEffectName={(id) => effectName(id, getEffect)}
-				getEquipmentDescription={(id) => equipmentDescription(id, state?.inventory.equipment[String(id)], getEquipment(state?.inventory.equipment[String(id)]?.definitionId ?? 0), (effectID) => effectName(effectID, getEffect))}
-				getGemDescription={(id) => gemDescription(id, state?.inventory.gems[String(id)], getGem(state?.inventory.gems[String(id)]?.definitionId ?? 0), (effectID) => effectName(effectID, getEffect))}
+				getArgumentName={(id) => troops[id]?.name?.trim() || `Unit ${id}`}
 				selectedAlternative={selectedAlternative}
 				onSelectAlternative={(index) => { setSelectedAlternative(index); setApplyError(null); }}
 				onClose={closePreview}
@@ -802,8 +793,7 @@ function OptimizerPreview({
 	preview,
 	priorityGroups,
 	getEffectName,
-	getEquipmentDescription,
-	getGemDescription,
+	getArgumentName,
 	selectedAlternative,
 	onSelectAlternative,
 	onClose,
@@ -819,8 +809,7 @@ function OptimizerPreview({
 	preview: EquipmentOptimizeResponse | null;
 	priorityGroups: EquipmentPriorityGroup[];
 	getEffectName: (id: number) => string;
-	getEquipmentDescription: (id: number) => ItemDescription;
-	getGemDescription: (id: number) => ItemDescription;
+	getArgumentName: (id: number) => string;
 	selectedAlternative: number;
 	onSelectAlternative: (index: number) => void;
 	onClose: () => void;
@@ -836,29 +825,45 @@ function OptimizerPreview({
 	const selected = preview?.alternatives[selectedAlternative] ?? preview?.proposed ?? null;
 	const effectRows = (() => {
 		if (!preview || !selected) return [];
-		const current = new Map(preview.current.effects.map((effect) => [effect.definitionId, effect]));
-		const proposed = new Map(selected.effects.map((effect) => [effect.definitionId, effect]));
-		const ids = Array.from(new Set([...current.keys(), ...proposed.keys()]));
-		return ids.map((id) => ({ id, current: current.get(id)?.value ?? 0, proposed: proposed.get(id)?.value ?? 0, capId: proposed.get(id)?.capId ?? current.get(id)?.capId, cap: proposed.get(id)?.cap ?? current.get(id)?.cap }))
-			.sort((left, right) => Math.abs(right.proposed - right.current) - Math.abs(left.proposed - left.current));
+		const keyFor = (effect: EquipmentEffectTotalV2) => effect.semanticKey || `${effect.definitionId}:${effect.argumentId ?? 0}`;
+		const current = new Map(preview.current.effects.map((effect) => [keyFor(effect), effect]));
+		const proposed = new Map(selected.effects.map((effect) => [keyFor(effect), effect]));
+		const keys = Array.from(new Set([...current.keys(), ...proposed.keys()]));
+		const rows = keys.map((key) => {
+			const before = current.get(key);
+			const after = proposed.get(key);
+			const definitionId = after?.definitionId ?? before?.definitionId ?? 0;
+			const argumentId = after?.argumentId ?? before?.argumentId;
+			const priorityIndex = priorityGroups.findIndex((group) => group.effectIDs.includes(definitionId));
+			const label = `${getEffectName(definitionId)}${argumentId ? ` · ${getArgumentName(argumentId)}` : ''}`;
+			return {
+				key, definitionId, label, priorityIndex,
+				current: before?.value ?? 0,
+				proposed: after?.value ?? 0,
+				unit: after?.unit ?? before?.unit ?? 'percent',
+				precision: after?.precision ?? before?.precision ?? 1,
+				categorical: Boolean(after?.categorical ?? before?.categorical),
+				argumentId,
+				cap: after?.cap ?? before?.cap,
+			};
+		});
+		for (let index = 0; index < priorityGroups.length; index += 1) {
+			const group = priorityGroups[index];
+			if (rows.some((row) => row.priorityIndex === index)) continue;
+			rows.push({ key: `priority:${group.key}`, definitionId: 0, label: group.label, priorityIndex: index, current: 0, proposed: 0, unit: 'percent', precision: 1, categorical: false, argumentId: undefined, cap: undefined });
+		}
+		return rows.sort((left, right) => (
+			(left.priorityIndex < 0 ? Number.MAX_SAFE_INTEGER : left.priorityIndex) - (right.priorityIndex < 0 ? Number.MAX_SAFE_INTEGER : right.priorityIndex)
+			|| left.label.localeCompare(right.label)
+			|| left.key.localeCompare(right.key)
+		));
 	})();
-	const groupedRows = priorityGroups.map((group) => {
-		const rows = effectRows.filter((row) => group.effectIDs.includes(row.id));
-		return {
-			key: group.key,
-			label: group.label,
-			category: group.categoryLabel,
-			current: rows.reduce((sum, row) => sum + row.current, 0),
-			proposed: rows.reduce((sum, row) => sum + row.proposed, 0),
-			caps: Array.from(new Map(rows.filter((row) => row.capId && row.cap != null).map((row) => [row.capId, row.cap as number])).values()),
-		};
-	});
 	const unavailableGroups = (() => {
 		if (!preview || !selected) return [];
-		const proposed = new Map(selected.effects.map((effect) => [effect.definitionId, effect.value]));
-		return priorityGroups.filter((group) => group.effectIDs.every((id) => (proposed.get(id) ?? 0) === 0));
+		return priorityGroups.filter((_, index) => effectRows.filter((row) => row.priorityIndex === index).every((row) => row.proposed === 0));
 	})();
 	const extractionNotices = selected ? equipmentExtractionCostNotices(selected.extractionCost) : [];
+	const pointlessApply = Boolean(preview && selected && (preview.noUsefulChange || assignmentKey(selected) === assignmentKey(preview.current)));
 	return (
 		<Modal
 			isOpen={preview != null}
@@ -871,7 +876,7 @@ function OptimizerPreview({
 					<Button
 						onClick={onApply}
 						isLoading={applying}
-						disabled={applyDisabled}
+						disabled={applyDisabled || pointlessApply}
 						title={stale ? 'Regenerate this preview before applying it' : applyDisabled ? 'Connect the game before applying this loadout' : undefined}
 					>
 						{selected ? equipmentExtractionApplyLabel(selectedAlternative + 1, selected.extractionCost) : `Apply Alternative ${selectedAlternative + 1}`}
@@ -898,15 +903,13 @@ function OptimizerPreview({
 							No eligible value was found for {unavailableGroups.map((group) => group.label).join(' · ')}. This is still the best available loadout.
 						</p>
 					)}
-					<div className="grid gap-3 sm:grid-cols-3">
-						<MetricTile className="p-3 [&_.ui-metric-value]:text-lg" label="Current score" value={formatNumber(preview.current.score)} />
-						<MetricTile className="border-primary/30 bg-primary/5 p-3 [&_.ui-metric-value]:text-lg" label={`Alternative ${selectedAlternative + 1} score`} value={formatNumber(selected.score)} tone="brand" />
-						<MetricTile className="border-primary/30 bg-primary/5 p-3 [&_.ui-metric-value]:text-lg" label="Difference" value={formatSignedNumber(selected.score - preview.current.score)} tone="brand" />
-					</div>
+					{pointlessApply && (
+						<p className="rounded-global border border-border-base bg-bg-app/40 px-3 py-2 text-sm text-text-muted">Your current loadout already has the strongest useful outcome for these priorities. Apply is disabled because this batch offers no useful stat or cost change.</p>
+					)}
 					<div>
 						<div className="mb-2 flex items-center justify-between gap-3">
 							<h4 className="text-xs font-bold uppercase tracking-wider text-text-muted">Ranked alternatives</h4>
-							<span className="text-xs text-text-muted">Generated together · switching is instant</span>
+							<span className="text-xs text-text-muted">{preview.alternatives.length} useful {preview.alternatives.length === 1 ? 'choice' : 'choices'} · switching is instant</span>
 						</div>
 						<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
 							{preview.alternatives.map((alternative, index) => (
@@ -918,81 +921,29 @@ function OptimizerPreview({
 									className={`rounded-global border px-3 py-2 text-left transition ${selectedAlternative === index ? 'border-primary bg-primary/10' : 'border-border-base bg-bg-app/40 hover:border-primary/40'}`}
 								>
 									<span className="block text-xs font-bold text-text-main">#{index + 1}</span>
-									<span className="block text-[11px] text-text-muted">{formatNumber(alternative.score)} · {formatSignedNumber(alternative.score - preview.current.score)}</span>
+									<span className="mt-0.5 block text-[11px] leading-snug text-text-muted">{alternativeReason(alternative, preview.alternatives[0], preview.current, getEffectName, getArgumentName)}</span>
 								</button>
 							))}
 						</div>
 					</div>
-					<div className="grid gap-4 lg:grid-cols-2">
-						<LoadoutColumn title="Current" equipment={preview.current.equipment} gems={preview.current.gems} getEquipmentDescription={getEquipmentDescription} getGemDescription={getGemDescription} />
-						<LoadoutColumn title={`Alternative ${selectedAlternative + 1}`} equipment={selected.equipment} gems={selected.gems} getEquipmentDescription={getEquipmentDescription} getGemDescription={getGemDescription} />
-					</div>
 					<div className="overflow-hidden rounded-global border border-border-base">
-						<div className="grid grid-cols-[minmax(0,1fr)_5rem_5rem_5rem] bg-bg-card-hover px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-text-muted"><span>Priority group</span><span className="text-right">Current</span><span className="text-right">Selected</span><span className="text-right">Difference</span></div>
-						<div className="max-h-64 overflow-y-auto custom-scrollbar">
-							{groupedRows.map((row) => (
-								<div key={row.key} className="grid grid-cols-[minmax(0,1fr)_5rem_5rem_5rem] border-t border-border-base/50 px-3 py-2 text-xs">
-									<span className="min-w-0 text-text-main"><span className="block truncate">{row.label}</span><span className="block truncate text-[10px] text-text-muted">{row.category}{row.caps.length ? ` · Official ${equipmentSharedCapLabel(row.caps)}` : ''}</span></span>
-									<span className="text-right font-mono text-text-muted">{formatNumber(row.current)}</span>
-									<span className="text-right font-mono font-semibold text-text-main">{formatNumber(row.proposed)}</span>
-									<span className={`text-right font-mono font-semibold ${row.proposed >= row.current ? 'text-success' : 'text-warning'}`}>{formatSignedNumber(row.proposed - row.current)}</span>
+						<div className="grid grid-cols-[minmax(0,1fr)_6rem_6rem_6rem] bg-bg-card-hover px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-text-muted"><span>Stat</span><span className="text-right">Current total</span><span className="text-right">New total</span><span className="text-right">Difference</span></div>
+						<div className="max-h-80 overflow-y-auto custom-scrollbar">
+							{effectRows.map((row) => (
+								<div key={row.key} className="grid grid-cols-[minmax(0,1fr)_6rem_6rem_6rem] border-t border-border-base/50 px-3 py-2 text-xs">
+									<span className="min-w-0 text-text-main"><span className="block truncate">{row.label}</span><span className="block truncate text-[10px] text-text-muted">{row.priorityIndex >= 0 ? `Priority ${row.priorityIndex + 1}` : 'Other applicable stat'}{row.cap ? ` · Official cap ${formatStatValue(row.cap, row.unit, row.precision)}` : ''}</span></span>
+									<span className="text-right font-mono text-text-muted">{formatStatValue(row.current, row.unit, row.precision, row.categorical, row.argumentId, getArgumentName)}</span>
+									<span className="text-right font-mono font-semibold text-text-main">{formatStatValue(row.proposed, row.unit, row.precision, row.categorical, row.argumentId, getArgumentName)}</span>
+									<span className={`text-right font-mono font-semibold ${row.proposed >= row.current ? 'text-success' : 'text-warning'}`}>{formatStatDifference(row.proposed - row.current, row.unit, row.precision, row.categorical)}</span>
 								</div>
 							))}
 						</div>
 					</div>
-					<details className="rounded-global border border-border-base bg-bg-app/30">
-						<summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-text-muted">Detailed official effects</summary>
-						<div className="max-h-52 overflow-y-auto border-t border-border-base custom-scrollbar">
-							{effectRows.filter((row) => row.current !== row.proposed || row.cap != null).map((row) => (
-								<div key={row.id} className="grid grid-cols-[minmax(0,1fr)_5rem_5rem] px-3 py-2 text-xs odd:bg-bg-card/35">
-									<span className="truncate text-text-main">{getEffectName(row.id)}{row.cap ? ` · cap ${formatNumber(row.cap)}` : ''}</span>
-									<span className="text-right font-mono text-text-muted">{formatNumber(row.current)}</span>
-									<span className="text-right font-mono text-text-main">{formatNumber(row.proposed)}</span>
-								</div>
-							))}
-						</div>
-					</details>
+					<p className="text-xs text-text-muted">Weighted priority score (secondary): {formatNumber(preview.current.score)} → {formatNumber(selected.score)} ({formatSignedNumber(selected.score - preview.current.score)}).</p>
 					<p className="text-xs text-text-muted">Candidates: {Object.entries(preview.candidates.equipmentBySlot).map(([slot, count]) => `slot ${slot}: ${count}`).join(' · ')} · gems: {preview.candidates.gems}</p>
 				</div>
 			)}
 		</Modal>
-	);
-}
-
-function LoadoutColumn({
-	title,
-	equipment,
-	gems,
-	getEquipmentDescription,
-	getGemDescription,
-}: {
-	title: string;
-	equipment: Record<string, number>;
-	gems: Record<string, number>;
-	getEquipmentDescription: (id: number) => ItemDescription;
-	getGemDescription: (id: number) => ItemDescription;
-}) {
-	return (
-		<div className="rounded-global border border-border-base bg-bg-app/40 p-3">
-			<h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-text-muted">{title}</h4>
-			<div className="space-y-2">
-				{[1, 2, 3, 4, 6].map((slot) => {
-					const equipmentID = equipment[String(slot)];
-					const gemID = gems[String(slot)];
-					const item = equipmentID ? getEquipmentDescription(equipmentID) : null;
-					const gem = gemID ? getGemDescription(gemID) : null;
-					return (
-						<div key={slot} className="rounded-lg border border-border-base/60 bg-bg-card/50 px-3 py-2">
-							<p className="truncate text-xs font-medium text-text-main">{slotLabel(slot)} · {item?.name ?? 'Empty'}</p>
-							{item && <p className={`mt-0.5 truncate text-[10px] ${item.unknown ? 'text-warning' : 'text-text-muted'}`}>{item.detail}</p>}
-							{item && <p className="mt-1 break-words text-[10px] leading-relaxed text-text-muted">{item.effectDetail}</p>}
-							{gem && <p className={`mt-1 text-[10px] ${gem.unknown ? 'text-warning' : 'text-purple-300'}`}>Gem · {gem.name} · {gem.detail}</p>}
-							{gem && <p className="mt-1 break-words text-[10px] leading-relaxed text-purple-300">{gem.effectDetail}</p>}
-						</div>
-					);
-				})}
-			</div>
-		</div>
 	);
 }
 
@@ -1027,10 +978,6 @@ function effectName(id: number, getEffect: (id: number) => { name?: string } | u
 	return getEffect(id)?.name?.trim() || `Effect ${id}`;
 }
 
-function slotLabel(slot: number): string {
-	return ({ 1: 'Armor', 2: 'Weapon', 3: 'Helmet', 4: 'Artifact', 6: 'Hero' } as Record<number, string>)[slot] ?? `Slot ${slot}`;
-}
-
 function formatNumber(value: number): string {
 	return Number.isInteger(value) ? value.toLocaleString() : value.toLocaleString(undefined, { maximumFractionDigits: 1 });
 }
@@ -1045,43 +992,50 @@ function assignmentKey(loadout: EquipmentLoadoutV2): string {
 		+ [1, 2, 3, 4].map((slot) => `|g${slot}:${loadout.gems[String(slot)] ?? 0}`).join('');
 }
 
-function equipmentDescription(
-	id: number,
-	instance: { definitionId: number; level?: number; rarityId?: number; setId?: number; effects: Array<{ definitionId: number; values: number[] }> } | undefined,
-	metadata: { name?: string } | undefined,
-	getEffectName: (id: number) => string,
-): ItemDescription {
-	const catalogName = metadata?.name?.trim() ?? '';
-	const unknown = !catalogName || /^Equipment \d+$/i.test(catalogName);
-	const rarity = equipmentRarityLabel(instance?.rarityId);
-	const traits = [instance?.level ? `Level ${instance.level}` : '', rarity, instance?.setId ? `Set ${instance.setId}` : '', `instance ${id}`].filter(Boolean);
-	return {
-		name: unknown ? 'Unknown equipment' : catalogName,
-		detail: `${unknown ? 'Catalog name unavailable · ' : ''}${traits.join(' · ')}`,
-		effectDetail: equipmentOptimizerEffectSummary(instance?.effects, getEffectName),
-		unknown,
-	};
+function formatStatValue(
+	value: number,
+	unit: EquipmentEffectTotalV2['unit'] | string,
+	precision: number,
+	categorical = false,
+	argumentId?: number,
+	getArgumentName: (id: number) => string = (id) => `Unit ${id}`,
+): string {
+	if (categorical || unit === 'categorical') return value === 0 ? '—' : argumentId ? getArgumentName(argumentId) : 'Present';
+	const formatted = value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: Math.max(0, precision) });
+	return `${formatted}${unit === 'percent' ? '%' : ''}`;
 }
 
-function gemDescription(
-	id: number,
-	instance: { definitionId: number; level?: number; setId?: number; combatMode?: string; effects: Array<{ definitionId: number; values: number[] }> } | undefined,
-	metadata: { name?: string } | undefined,
-	getEffectName: (id: number) => string,
-): ItemDescription {
-	const catalogName = metadata?.name?.trim() ?? '';
-	const unknown = !catalogName || /^Gem \d+$/i.test(catalogName);
-	const traits = [instance?.level ? `Level ${instance.level}` : '', instance?.combatMode?.toUpperCase(), instance?.setId ? `Set ${instance.setId}` : '', `instance ${id}`].filter(Boolean);
-	return {
-		name: unknown ? 'Unknown gem' : catalogName,
-		detail: `${unknown ? 'Catalog name unavailable · ' : ''}${traits.join(' · ')}`,
-		effectDetail: equipmentOptimizerEffectSummary(instance?.effects, getEffectName),
-		unknown,
-	};
+function formatStatDifference(value: number, unit: EquipmentEffectTotalV2['unit'] | string, precision: number, categorical = false): string {
+	if (categorical || unit === 'categorical') return value > 0 ? 'Gained' : value < 0 ? 'Lost' : '—';
+	const formatted = Math.abs(value).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: Math.max(0, precision) });
+	if (value === 0) return unit === 'percent' ? '0 pp' : '0';
+	return `${value > 0 ? '+' : '-'}${formatted}${unit === 'percent' ? ' pp' : ''}`;
 }
 
-function equipmentRarityLabel(rarityID: number | undefined): string {
-	return ({ 0: 'Unique', 1: 'Common', 2: 'Rare', 3: 'Epic', 4: 'Legendary', 5: 'Relic' } as Record<number, string>)[rarityID ?? -1] ?? '';
+function alternativeReason(
+	alternative: EquipmentLoadoutV2,
+	best: EquipmentLoadoutV2,
+	current: EquipmentLoadoutV2,
+	getEffectName: (id: number) => string,
+	getArgumentName: (id: number) => string,
+): string {
+	const baseline = alternative === best ? current : best;
+	const keyFor = (effect: EquipmentEffectTotalV2) => effect.semanticKey || `${effect.definitionId}:${effect.argumentId ?? 0}`;
+	const before = new Map(baseline.effects.map((effect) => [keyFor(effect), effect]));
+	const after = new Map(alternative.effects.map((effect) => [keyFor(effect), effect]));
+	const changes = Array.from(new Set([...before.keys(), ...after.keys()])).map((key) => {
+		const oldEffect = before.get(key);
+		const newEffect = after.get(key);
+		const effect = newEffect ?? oldEffect!;
+		const difference = (newEffect?.value ?? 0) - (oldEffect?.value ?? 0);
+		const name = `${getEffectName(effect.definitionId)}${effect.argumentId ? ` · ${getArgumentName(effect.argumentId)}` : ''}`;
+		return { name, difference, unit: effect.unit ?? 'percent', precision: effect.precision ?? 1, categorical: Boolean(effect.categorical) };
+	}).filter((change) => change.difference !== 0)
+		.sort((left, right) => Math.abs(right.difference) - Math.abs(left.difference) || left.name.localeCompare(right.name));
+	const parts = changes.slice(0, 2).map((change) => `${formatStatDifference(change.difference, change.unit, change.precision, change.categorical)} ${change.name}`);
+	const rubySaving = baseline.extractionCost.maximumRubySpend - alternative.extractionCost.maximumRubySpend;
+	if (rubySaving > 0) parts.push(`saves up to ${rubySaving.toLocaleString()} rubies`);
+	return parts.join(' · ') || alternative.reason || (alternative === best ? 'Strongest configured-priority result' : 'Distinct useful outcome');
 }
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {

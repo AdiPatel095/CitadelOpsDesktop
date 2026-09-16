@@ -9,16 +9,23 @@ type Priority struct {
 }
 
 type OptimizeRequest struct {
-	LeaderKind  string     `json:"leaderKind"`
-	LeaderID    int64      `json:"leaderId"`
-	CombatMode  string     `json:"combatMode"`
-	Priorities  []Priority `json:"priorities"`
-	ResultCount int        `json:"resultCount,omitempty"`
+	LeaderKind        string     `json:"leaderKind"`
+	LeaderID          int64      `json:"leaderId"`
+	CombatMode        string     `json:"combatMode"`
+	TargetAreaTypeIDs []int64    `json:"targetAreaTypeIds,omitempty"`
+	Priorities        []Priority `json:"priorities"`
+	ResultCount       int        `json:"resultCount,omitempty"`
 }
 
 type EffectTotal struct {
+	SemanticKey  string   `json:"semanticKey"`
 	DefinitionID int64    `json:"definitionId"`
+	ArgumentID   *int64   `json:"argumentId,omitempty"`
 	Value        float64  `json:"value"`
+	RawValue     float64  `json:"rawValue"`
+	Unit         string   `json:"unit"`
+	Precision    int      `json:"precision"`
+	Categorical  bool     `json:"categorical,omitempty"`
 	CapID        int64    `json:"capId,omitempty"`
 	Cap          *float64 `json:"cap,omitempty"`
 	Capped       bool     `json:"capped"`
@@ -30,6 +37,7 @@ type Loadout struct {
 	Effects        []EffectTotal                        `json:"effects"`
 	Score          float64                              `json:"score"`
 	ExtractionCost ExtractionQuote                      `json:"extractionCost"`
+	Reason         string                               `json:"reason,omitempty"`
 }
 
 type CandidateCounts struct {
@@ -46,4 +54,5 @@ type OptimizeResponse struct {
 	Proposed            Loadout         `json:"proposed"`
 	Alternatives        []Loadout       `json:"alternatives"`
 	Candidates          CandidateCounts `json:"candidates"`
+	NoUsefulChange      bool            `json:"noUsefulChange,omitempty"`
 }

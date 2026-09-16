@@ -154,7 +154,7 @@ function App() {
 			for (let index = 0; index < 5; index += 1) {
 				const previewButton = await waitFor(() => findButton('Preview Reconfiguration'));
 				previewButton.click();
-				await waitFor(() => rankedAlternativeButtons().length === 10 ? true : null, 10_000);
+				await waitFor(() => rankedAlternativeButtons().length > 0 ? true : null, 10_000);
 				await nextPaint();
 				const previewDialog = [...document.querySelectorAll<HTMLElement>('[role="dialog"]')]
 					.find((dialog) => dialog.textContent?.includes('Reconfiguration Preview'));

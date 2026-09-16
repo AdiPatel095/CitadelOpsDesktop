@@ -25,6 +25,18 @@ const effects = {
 	88: { effectTypeId: 88, sortCategory: 3, sortGroup: 4, effectGroupPassive: 'Wall strength' },
 };
 
+test('priority labels reject raw or generic group names and preserve semantic detail', () => {
+	const metadata = {
+		101: { effectTypeId: 10, effectTypeName: 'MeleeAttackPVP', sortCategory: 3, sortGroup: 7, effectGroupPassive: 'effect_group_3_7_passive', effectTemplate: '+{0}% melee attack strength' },
+		102: { effectTypeId: 11, effectTypeName: 'RangedAttackPVP', sortCategory: 3, sortGroup: 7, effectGroupPassive: 'Group 7', internalName: 'equipmentRangedAttackPVP' },
+		103: { effectTypeId: 12, sortCategory: 9, sortGroup: 9, effectGroupPassive: 'Official effect group 9.9' },
+	};
+	const grouped = stateHelpers.groupEquipmentPriorityEffects([103, 102, 101], metadata);
+	assert.equal(grouped[0].label, 'Melee attack strength / Ranged Attack');
+	assert.equal(grouped[1].label, 'Effect metadata unavailable');
+	assert.deepEqual(grouped[0].effectIDs, [101, 102]);
+});
+
 test('v1-v4 profiles migrate to official groups and retain an unavailable inventory choice', () => {
 	for (const [raw, expected] of [
 		[{ version: 1, tier1: [61], tier2: [88] }, { tier1: ['official-group-1-2'], tier2: ['official-group-3-4'] }],
