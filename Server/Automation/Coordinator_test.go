@@ -20,6 +20,7 @@ type coordinatorTestPolicy struct {
 	id        string
 	domains   []string
 	sections  []string
+	controls  []string
 	decision  Decision
 	snapshots chan Snapshot
 }
@@ -38,6 +39,8 @@ func (policy *coordinatorTestPolicy) Evaluate(_ context.Context, snapshot Snapsh
 func (policy *coordinatorTestPolicy) WakeDomains() []string { return policy.domains }
 
 func (policy *coordinatorTestPolicy) WakeSections() []string { return policy.sections }
+
+func (policy *coordinatorTestPolicy) WakeEnabledControls() []string { return policy.controls }
 
 type coordinatorTestDerivedStatePolicy struct {
 	coordinatorTestPolicy
@@ -432,6 +435,109 @@ func TestCoordinatorConfigurationFingerprintTracksOnlyRelevantSections(t *testin
 	}
 	if policyConfigurationFingerprint(beta, before) != policyConfigurationFingerprint(beta, after) {
 		t.Fatal("unrelated section change changed another policy fingerprint")
+	}
+}
+
+func TestCoordinatorConfigurationFingerprintTracksOnlyDeclaredEnabledControls(t *testing.T) {
+	policy := &coordinatorTestPolicy{
+		id: "autoBird", sections: []string{"automation.autoBird", "automation.autoFortress"},
+		controls: []string{"auto_fortress"},
+	}
+	before := Configuration.Snapshot{Sections: map[string]json.RawMessage{
+		"automation.enabled":      json.RawMessage(`{"autoBird":true,"auto_fortress":false,"auto_buyer":false}`),
+		"automation.autoBird":     json.RawMessage(`{"version":2}`),
+		"automation.autoFortress": json.RawMessage(`{"kingdoms":{"1":{"enabled":true}}}`),
+	}}
+	changed := func(section string, value json.RawMessage) Configuration.Snapshot {
+		after := before
+		after.Sections = map[string]json.RawMessage{}
+		for key, raw := range before.Sections {
+			after.Sections[key] = raw
+		}
+		after.Sections[section] = value
+		return after
+	}
+	if policyConfigurationFingerprint(policy, before) == policyConfigurationFingerprint(policy, changed(
+		"automation.enabled", json.RawMessage(`{"autoBird":true,"auto_fortress":true,"auto_buyer":false}`),
+	)) {
+		t.Fatal("Auto Fortress control change did not change the Auto Bird fingerprint")
+	}
+	if policyConfigurationFingerprint(policy, before) != policyConfigurationFingerprint(policy, changed(
+		"automation.enabled", json.RawMessage(`{"autoBird":true,"auto_fortress":false,"auto_buyer":true}`),
+	)) {
+		t.Fatal("unrelated enabled control changed the Auto Bird fingerprint")
+	}
+}
+
+func TestHostedRelatedEnabledControlExpirationWakesWaitingPolicy(t *testing.T) {
+	now := time.Now().UTC()
+	expiresAt := now.Add(-time.Second)
+	enabled, err := json.Marshal(map[string]any{
+		"autoBird":      true,
+		"auto_fortress": map[string]any{"enabled": true, "expiresAt": expiresAt},
+		"auto_buyer":    map[string]any{"enabled": true, "expiresAt": expiresAt},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	configuration, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{
+		"automation.enabled": enabled,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	policy := &coordinatorTestPolicy{
+		id: "autoBird", controls: []string{"auto_fortress"}, snapshots: make(chan Snapshot, 1),
+		decision: Decision{Status: "waiting", Detail: "No troops", NextCheckAt: now.Add(30 * time.Minute)},
+	}
+	state := State.NewStore(State.NewGameState())
+	coordinator := NewCoordinator(state, configuration, nil, nil, policy)
+	coordinator.SetExternalConfigurationAuthority(true)
+	snapshot := configuration.Snapshot()
+	runtime := map[string]*policyRuntime{"autoBird": {
+		nextCheck: now.Add(30 * time.Minute), evaluatedSessionKnown: true,
+		evaluatedSessionReady: false, evaluatedSessionGeneration: 0,
+		evaluatedConfigRevision: snapshot.Revision,
+		evaluatedConfiguration:  policyConfigurationFingerprint(policy, snapshot),
+	}}
+	recordPolicyEnabledControls(runtime["autoBird"], policy, snapshot, expiresAt.Add(-time.Second))
+
+	if !wakePoliciesForEnabledControlExpirations(runtime, coordinator.policies, snapshot, now) {
+		t.Fatal("expired related control did not wake Auto Bird")
+	}
+	coordinator.evaluate(t.Context(), runtime, make(chan operationResult, 1))
+	select {
+	case <-policy.snapshots:
+		t.Fatal("unavailable session unexpectedly evaluated Auto Bird")
+	default:
+	}
+	if !runtime["autoBird"].controlExpiryPending {
+		t.Fatal("unavailable session consumed the related expiry before Auto Bird could evaluate")
+	}
+	ready := coordinatorReadyState().Session
+	if _, err := state.ApplyComponents(State.Components(State.ComponentSession), func(gameState *State.GameState) ([]string, bool, error) {
+		gameState.Session = ready
+		return []string{"session"}, true, nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	coordinator.evaluate(t.Context(), runtime, make(chan operationResult, 1))
+	select {
+	case evaluated := <-policy.snapshots:
+		if !evaluated.PolicyConfigurationChanged {
+			t.Fatal("related effective expiry was not exposed as a policy configuration change")
+		}
+	default:
+		t.Fatal("related effective expiry did not evaluate Auto Bird")
+	}
+	if wakePoliciesForEnabledControlExpirations(runtime, coordinator.policies, snapshot, now.Add(time.Minute)) {
+		t.Fatal("retained hosted expiry restarted Auto Bird more than once")
+	}
+
+	unrelated := &coordinatorTestPolicy{id: "unrelated", controls: []string{"missing"}}
+	unrelatedRuntime := map[string]*policyRuntime{"unrelated": {nextCheck: now.Add(time.Hour)}}
+	if wakePoliciesForEnabledControlExpirations(unrelatedRuntime, []Policy{unrelated}, snapshot, now) {
+		t.Fatal("unrelated timed-control expiry woke a policy")
 	}
 }
 

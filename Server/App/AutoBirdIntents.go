@@ -516,7 +516,8 @@ func (application *Application) captureAutoBirdManifest(
 			return nil, false, err
 		}
 		current := gameState.Stationing[request.TrackingID]
-		next := preparedAutoBirdManifest(*gameState, gameData, current, request, now)
+		protectDirewolves := application.autoBirdDirewolvesProtected(*gameState, request.SourceCastleID, now)
+		next := preparedAutoBirdManifest(*gameState, gameData, current, request, now, protectDirewolves)
 		if reflect.DeepEqual(current, next) {
 			return nil, false, nil
 		}
@@ -532,6 +533,7 @@ func preparedAutoBirdManifest(
 	current State.StationingOperation,
 	request autoBirdCycleRequest,
 	now time.Time,
+	protectDirewolves bool,
 ) State.StationingOperation {
 	if current.Purpose != "autoBird" ||
 		current.SourceCastleID != request.SourceCastleID ||
@@ -582,7 +584,7 @@ func preparedAutoBirdManifest(
 		request.ExpectedTargetCastle != 0 && request.ExpectedTargetCastle != target.CastleID {
 		return wait("The AIN-selected bird target is no longer valid", now.Add(autoBirdFreshStateRetry))
 	}
-	manifest, total, manifestErr := autoBirdStationManifest(gameData, source, request.Reserves)
+	manifest, total, manifestErr := autoBirdStationManifest(gameData, source, request.Reserves, protectDirewolves)
 	if manifestErr != nil {
 		return wait("Could not read eligible troops from the fresh JAA: "+manifestErr.Error(), now.Add(autoBirdNoTroopsRetry))
 	}
@@ -727,7 +729,8 @@ func (application *Application) resolveAutoBirdDispatchStep(
 			autoBirdFreshStateRetry,
 		)
 	}
-	manifest, total, manifestErr := autoBirdStationManifest(input.GameData, source, request.Reserves)
+	protectDirewolves := application.autoBirdDirewolvesProtected(input.State, source.ID, now)
+	manifest, total, manifestErr := autoBirdStationManifest(input.GameData, source, request.Reserves, protectDirewolves)
 	if manifestErr != nil {
 		return hold(
 			"could not read eligible troops from the dispatch JAA: "+manifestErr.Error(),
@@ -759,6 +762,8 @@ func (application *Application) resolveAutoBirdDispatchStep(
 		guardArguments, _ := json.Marshal(autoBirdBatchGuardRequest{Cycle: request, Payload: step.Command.Payload})
 		step.PreDispatchAction = "auto_bird.batch.guard"
 		step.PreDispatchArguments = guardArguments
+		step.FinalDispatchAction = "auto_bird.batch.guard"
+		step.FinalDispatchArguments = guardArguments
 	}
 	if len(step.Batch) == 0 {
 		guard(&step)
@@ -809,6 +814,7 @@ func autoBirdStationManifest(
 	gameData *GameData.Store,
 	source State.CastleState,
 	reserves []stationUnitRequest,
+	protectDirewolves bool,
 ) (map[State.UnitID]int64, int64, error) {
 	if gameData == nil {
 		return nil, 0, fmt.Errorf("official game data is unavailable")
@@ -826,6 +832,9 @@ func autoBirdStationManifest(
 	amounts := make(map[State.UnitID]int64, len(source.Units.Stationed))
 	var total int64
 	for unitID, stationed := range source.Units.Stationed {
+		if protectDirewolves && unitID == GameData.DirewolfUnitID {
+			continue
+		}
 		if unitID <= 0 || stationed <= 0 || reserved[unitID] >= stationed {
 			continue
 		}
@@ -842,6 +851,23 @@ func autoBirdStationManifest(
 		total += amount
 	}
 	return amounts, total, nil
+}
+
+func (application *Application) autoBirdDirewolvesProtected(
+	state State.GameState,
+	castleID State.CastleID,
+	now time.Time,
+) bool {
+	if application == nil || application.Configuration == nil {
+		return false
+	}
+	castle, exists := state.Castles[castleID]
+	if !exists || castle.SlotType != 12 || castle.KingdomID < 1 || castle.KingdomID > 3 {
+		return false
+	}
+	configuration := application.Configuration.Snapshot()
+	return Automation.FeatureEnabledAt(configuration, "auto_fortress", now) &&
+		autoFortressKingdomEnabledInSnapshot(configuration, castle.KingdomID)
 }
 
 func randomAutoBirdDelayHours(minimum, maximum int) int {

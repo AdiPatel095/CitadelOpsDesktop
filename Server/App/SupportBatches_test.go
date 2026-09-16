@@ -81,8 +81,10 @@ func TestSupportResolversBatchEveryTroopExactlyOnce(t *testing.T) {
 						t.Fatalf("oversized/empty batch: %v", payload.A)
 					}
 					if variant.name == "autoBird" {
-						if step.PreDispatchAction != "auto_bird.batch.guard" {
-							t.Fatal("Auto Bird batch lost its final safety guard")
+						if step.PreDispatchAction != "auto_bird.batch.guard" ||
+							step.FinalDispatchAction != "auto_bird.batch.guard" ||
+							string(step.PreDispatchArguments) != string(step.FinalDispatchArguments) {
+							t.Fatal("Auto Bird batch lost its pre/final safety guard")
 						}
 						if err := app.guardAutoBirdBatch(t.Context(), step.PreDispatchArguments); err != nil {
 							t.Fatalf("valid %d-type Auto Bird batch rejected by its actual pre-dispatch guard: %v", len(payload.A), err)

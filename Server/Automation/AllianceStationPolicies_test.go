@@ -83,6 +83,34 @@ func TestAutoBirdWakesForEachCastleReturnAndUnitRefresh(t *testing.T) {
 	}
 }
 
+func TestAutoBirdDeclaresFortressConfigurationWakeDependencies(t *testing.T) {
+	policy := NewAutoBirdPolicy()
+	sections := policy.WakeSections()
+	if len(sections) != 2 || sections[0] != "automation.autoBird" || sections[1] != "automation.autoFortress" {
+		t.Fatalf("Auto Bird wake sections = %v", sections)
+	}
+	controls := policy.WakeEnabledControls()
+	if len(controls) != 1 || controls[0] != "auto_fortress" {
+		t.Fatalf("Auto Bird enabled-control wakes = %v", controls)
+	}
+}
+
+func TestAutoBirdRelevantConfigurationChangeReleasesLongNoTroopsWait(t *testing.T) {
+	now := time.Now().UTC()
+	gameState, gameData := autoBirdEligibleTestState(t, now)
+	retryAt := now.Add(30 * time.Minute)
+	gameState.Stationing["autoBird:10"] = State.StationingOperation{
+		ID: "autoBird:10", Purpose: "autoBird", Phase: State.StationingPhaseWaiting,
+		SourceCastleID: 10, NextAttemptAt: &retryAt, UpdatedAt: now,
+	}
+	decision, err := NewAutoBirdPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, GameData: gameData, Now: now, PolicyConfigurationChanged: true,
+	})
+	if err != nil || decision.Request == nil || decision.Request.Name != "auto_bird.discover" {
+		t.Fatalf("relevant configuration change did not restart waiting castle: decision=%#v err=%v", decision, err)
+	}
+}
+
 func TestStationPoliciesRefreshProtectionFromGameAfterToggleOrStaleObservation(t *testing.T) {
 	now := time.Date(2026, 7, 22, 13, 30, 0, 0, time.UTC)
 	for _, policy := range []Policy{NewAutoBirdPolicy(), NewAutoStationPolicy()} {

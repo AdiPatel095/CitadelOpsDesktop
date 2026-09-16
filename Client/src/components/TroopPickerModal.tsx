@@ -36,6 +36,8 @@ export interface TroopPickerOptions {
   preselectedQuantities?: Record<number, number>;
   /** Restrict the list to these unit ids (e.g. main castle troopsI). */
   allowedUnitIds?: number[];
+  /** Hide units that the calling workflow owns or reserves. */
+  excludedUnitIds?: number[];
   /** Optional in-castle stock counts shown on each unit card. */
   stockQuantities?: Record<number, number>;
 }
@@ -414,12 +416,15 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
     allowQuantity = false,
     preselectedQuantities = {},
     allowedUnitIds,
+    excludedUnitIds = [],
     stockQuantities,
   } = options;
   const { troops } = useMetadata();
 
   // Selection state
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set(preselected));
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(
+    new Set(preselected.filter((id) => !excludedUnitIds.includes(id)))
+  );
   const [quantities, setQuantities] = useState<Record<number, number>>(preselectedQuantities);
 
   // Filter state
@@ -466,6 +471,11 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
   // Filter units by all criteria
   const filteredUnits = useMemo(() => {
     let entries = Object.entries(definitions);
+
+    if (excludedUnitIds.length > 0) {
+      const excluded = new Set(excludedUnitIds);
+      entries = entries.filter(([id]) => !excluded.has(parseInt(id)));
+    }
 
     if (restrictToAllowed) {
       const allowed = new Set(allowedUnitIds ?? []);
@@ -526,7 +536,7 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
     }
 
     return entries;
-  }, [definitions, metadata, allowedUnitIds, restrictToAllowed, stockQuantities, searchQuery, typeFilter, roleFilter, foodFilter, quickAccessTab, favorites, frequentIds]);
+  }, [definitions, metadata, allowedUnitIds, excludedUnitIds, restrictToAllowed, stockQuantities, searchQuery, typeFilter, roleFilter, foodFilter, quickAccessTab, favorites, frequentIds]);
   const visibleUnitLabel = filteredUnits.length === 1 ? 'unit' : 'units';
 
   // Handle unit selection
