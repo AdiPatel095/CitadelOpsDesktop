@@ -184,27 +184,36 @@ type AccountBindingState struct {
 }
 
 type PlayerState struct {
-	ID                PlayerID                  `json:"id"`
-	Name              string                    `json:"name,omitempty"`
-	AllianceID        AllianceID                `json:"allianceId,omitempty"`
-	Level             int                       `json:"level,omitempty"`
-	LegendLevel       int                       `json:"legendLevel,omitempty"`
-	Might             float64                   `json:"might,omitempty"`
-	Glory             float64                   `json:"glory,omitempty"`
-	GloryTitleID      int64                     `json:"gloryTitleId,omitempty"`
-	GloryTitleTopX    int                       `json:"gloryTitleTopX,omitempty"`
-	GloryTitleAt      time.Time                 `json:"gloryTitleObservedAt,omitempty"`
-	GloryTitleGen     uint64                    `json:"gloryTitleGeneration,omitempty"`
-	Gallantry         float64                   `json:"gallantry,omitempty"`
-	GallantryTitleID  int64                     `json:"gallantryTitleId,omitempty"`
-	GallantryTitleAt  time.Time                 `json:"gallantryTitleObservedAt,omitempty"`
-	GallantryTitleGen uint64                    `json:"gallantryTitleGeneration,omitempty"`
-	Resources         map[ResourceID]float64    `json:"resources"`
-	Currencies        map[CurrencyID]float64    `json:"currencies"`
-	VIP               VIPState                  `json:"vip"`
-	ProtectionMode    PlayerProtectionModeState `json:"protectionMode"`
-	Achievements      AchievementState          `json:"achievements"`
-	LegendSkills      LegendSkillState          `json:"legendSkills"`
+	ID                PlayerID               `json:"id"`
+	Name              string                 `json:"name,omitempty"`
+	AllianceID        AllianceID             `json:"allianceId,omitempty"`
+	Level             int                    `json:"level,omitempty"`
+	LegendLevel       int                    `json:"legendLevel,omitempty"`
+	Might             float64                `json:"might,omitempty"`
+	Glory             float64                `json:"glory,omitempty"`
+	GloryTitleID      int64                  `json:"gloryTitleId,omitempty"`
+	GloryTitleTopX    int                    `json:"gloryTitleTopX,omitempty"`
+	GloryTitleAt      time.Time              `json:"gloryTitleObservedAt,omitempty"`
+	GloryTitleGen     uint64                 `json:"gloryTitleGeneration,omitempty"`
+	Gallantry         float64                `json:"gallantry,omitempty"`
+	GallantryTitleID  int64                  `json:"gallantryTitleId,omitempty"`
+	GallantryTitleAt  time.Time              `json:"gallantryTitleObservedAt,omitempty"`
+	GallantryTitleGen uint64                 `json:"gallantryTitleGeneration,omitempty"`
+	Resources         map[ResourceID]float64 `json:"resources"`
+	// ResourceObservations are live dispatch authority and are intentionally
+	// not persisted. A restart must observe a new current-session GCU snapshot
+	// before unattended premium spending resumes.
+	ResourceObservations map[ResourceID]PlayerResourceObservation `json:"-"`
+	Currencies           map[CurrencyID]float64                   `json:"currencies"`
+	VIP                  VIPState                                 `json:"vip"`
+	ProtectionMode       PlayerProtectionModeState                `json:"protectionMode"`
+	Achievements         AchievementState                         `json:"achievements"`
+	LegendSkills         LegendSkillState                         `json:"legendSkills"`
+}
+
+type PlayerResourceObservation struct {
+	ObservedAt           time.Time `json:"-"`
+	ConnectionGeneration uint64    `json:"-"`
 }
 
 // CurrentGloryTitle returns a title only when it was observed on the active
@@ -297,7 +306,12 @@ type CastleState struct {
 	// FoodBalanceObservedAt is an internal dispatch authority. It advances
 	// only when a castle-scoped response actually contains numeric Food and is
 	// intentionally not persisted, so a restart must refresh before spending.
-	FoodBalanceObservedAt       time.Time                                 `json:"-"`
+	FoodBalanceObservedAt time.Time `json:"-"`
+	// FoodEconomyObservedAt is the matching nonpersisted authority for a DCL
+	// observation that contained a numeric food-production rate. Feast source
+	// selection combines it with a fresh castle-context snapshot so persisted or
+	// partially omitted GPA values can never authorize unattended spending.
+	FoodEconomyObservedAt       time.Time                                 `json:"-"`
 	Units                       CastleUnits                               `json:"units"`
 	UnitsObservedAt             time.Time                                 `json:"unitsObservedAt,omitempty"`
 	Defense                     CastleDefenseState                        `json:"defense"`
@@ -1031,10 +1045,34 @@ type MarketBoosterState struct {
 	ID                      int       `json:"id"`
 	Level                   int       `json:"level,omitempty"`
 	BonusPercent            int       `json:"bonusPercent,omitempty"`
-	RemainingSec            int       `json:"remainingSec,omitempty"`
+	RemainingSec            int64     `json:"remainingSec,omitempty"`
 	ContinuousPurchaseCount int       `json:"continuousPurchaseCount,omitempty"`
 	ExpiresAt               time.Time `json:"expiresAt,omitempty"`
 	Permanent               bool      `json:"permanent,omitempty"`
+}
+
+type SpecialistPurchaseEvidence struct {
+	Outcome               string    `json:"outcome"`
+	SpecialistID          int       `json:"specialistId"`
+	Opcode                string    `json:"opcode"`
+	AttemptedAt           time.Time `json:"attemptedAt"`
+	UpdatedAt             time.Time `json:"updatedAt"`
+	MinimumDays           int       `json:"minimumDays"`
+	ValidatedMaximumCost  int64     `json:"validatedMaximumCost"`
+	ConfiguredRubyCeiling int64     `json:"configuredRubyCeiling"`
+	MinimumRubyReserve    int64     `json:"minimumRubyReserve"`
+	TimerBefore           time.Time `json:"timerBefore,omitempty"`
+	TimerAfter            time.Time `json:"timerAfter,omitempty"`
+	TimerAfterObservedAt  time.Time `json:"timerAfterObservedAt,omitempty"`
+	RubyBefore            int64     `json:"rubyBefore"`
+	RubyBeforeKnown       bool      `json:"rubyBeforeKnown"`
+	RubyBeforeObservedAt  time.Time `json:"rubyBeforeObservedAt,omitempty"`
+	RubyAfter             int64     `json:"rubyAfter"`
+	RubyAfterKnown        bool      `json:"rubyAfterKnown"`
+	RubyAfterObservedAt   time.Time `json:"rubyAfterObservedAt,omitempty"`
+	DebitVerification     string    `json:"debitVerification"`
+	ActivationConfirmed   bool      `json:"activationConfirmed"`
+	Detail                string    `json:"detail,omitempty"`
 }
 
 func (booster MarketBoosterState) ActiveAt(now time.Time) bool {
@@ -1051,8 +1089,40 @@ type MarketFeastState struct {
 	ObservedAt   time.Time `json:"observedAt,omitempty"`
 }
 
+// FeastPurchaseEvidence is the bounded, privacy-safe record of the most recent
+// automatic feast attempt. The charged castle is frozen at dispatch. Food
+// observations are useful context, but production can move the balance during
+// round trips, so DebitVerification remains independent from activation proof.
+type FeastPurchaseEvidence struct {
+	Outcome               string    `json:"outcome"`
+	FeastID               int64     `json:"feastId"`
+	ChargedCastleID       CastleID  `json:"chargedCastleId"`
+	ChargedKingdomID      KingdomID `json:"chargedKingdomId"`
+	AttemptedAt           time.Time `json:"attemptedAt"`
+	UpdatedAt             time.Time `json:"updatedAt"`
+	ExpectedEffectiveCost int64     `json:"expectedEffectiveCost"`
+	FoodBefore            int64     `json:"foodBefore"`
+	FoodBeforeKnown       bool      `json:"foodBeforeKnown"`
+	FoodBeforeObservedAt  time.Time `json:"foodBeforeObservedAt,omitempty"`
+	FoodAfter             int64     `json:"foodAfter"`
+	FoodAfterKnown        bool      `json:"foodAfterKnown"`
+	FoodAfterObservedAt   time.Time `json:"foodAfterObservedAt,omitempty"`
+	DebitVerification     string    `json:"debitVerification"`
+	ActivationConfirmed   bool      `json:"activationConfirmed"`
+	ConfirmedRemainingSec int       `json:"confirmedRemainingSec,omitempty"`
+	ConfirmedExpiresAt    time.Time `json:"confirmedExpiresAt,omitempty"`
+	ActivationConfirmedAt time.Time `json:"activationConfirmedAt,omitempty"`
+	Detail                string    `json:"detail,omitempty"`
+}
+
 func (feast MarketFeastState) ActiveAt(now time.Time) bool {
 	return feast.ID >= 0 && !feast.ExpiresAt.IsZero() && feast.ExpiresAt.After(now)
+}
+
+// FeastTimerProgressed ignores sub-second drift introduced when an integer
+// remaining duration is combined with a fractional response timestamp.
+func FeastTimerProgressed(previous, current time.Time) bool {
+	return !previous.IsZero() && current.After(previous.Add(time.Second))
 }
 
 // FreshAt reports whether the feast value is a coherent observation from the
@@ -1087,21 +1157,39 @@ type MarketState struct {
 	// restarts and is cleared only by an authoritative expected-feast result,
 	// an explicit game rejection, two spaced current-session inactive replies,
 	// or expiry of the maximum possible effect.
-	FeastPurchasePending               bool      `json:"feastPurchasePending,omitempty"`
-	FeastPurchaseExpectedID            int64     `json:"feastPurchaseExpectedId,omitempty"`
-	FeastPurchasePendingSince          time.Time `json:"feastPurchasePendingSince,omitempty"`
-	FeastPurchaseExpectedExpiresAt     time.Time `json:"feastPurchaseExpectedExpiresAt,omitempty"`
-	FeastPurchaseOperationID           string    `json:"feastPurchaseOperationId,omitempty"`
-	FeastPurchaseResponseToken         string    `json:"feastPurchaseResponseToken,omitempty"`
-	FeastPurchaseInactiveObservedAt    time.Time `json:"feastPurchaseInactiveObservedAt,omitempty"`
-	FeastPurchaseInactiveResponseToken string    `json:"feastPurchaseInactiveResponseToken,omitempty"`
-	FeastPurchaseInactiveGeneration    uint64    `json:"feastPurchaseInactiveGeneration,omitempty"`
-	FeastCostReductionPercent          int       `json:"feastCostReductionPercent,omitempty"`
-	FeastCostReductionObservedAt       time.Time `json:"feastCostReductionObservedAt,omitempty"`
-	CaravanLevel                       int       `json:"caravanLevel,omitempty"`
-	CaravanLevelLoaded                 bool      `json:"caravanLevelLoaded"`
-	ObservedAt                         time.Time `json:"observedAt,omitempty"`
-	BoostersObservedAt                 time.Time `json:"boostersObservedAt,omitempty"`
+	FeastPurchasePending                  bool                       `json:"feastPurchasePending,omitempty"`
+	FeastPurchaseExpectedID               int64                      `json:"feastPurchaseExpectedId,omitempty"`
+	FeastPurchasePendingSince             time.Time                  `json:"feastPurchasePendingSince,omitempty"`
+	FeastPurchaseExpectedExpiresAt        time.Time                  `json:"feastPurchaseExpectedExpiresAt,omitempty"`
+	FeastPurchasePreviousExpiresAt        time.Time                  `json:"feastPurchasePreviousExpiresAt,omitempty"`
+	FeastPurchaseOperationID              string                     `json:"feastPurchaseOperationId,omitempty"`
+	FeastPurchaseResponseToken            string                     `json:"feastPurchaseResponseToken,omitempty"`
+	FeastPurchaseResponseConfirmedAt      time.Time                  `json:"feastPurchaseResponseConfirmedAt,omitempty"`
+	FeastPurchaseResponseExpiresAt        time.Time                  `json:"feastPurchaseResponseExpiresAt,omitempty"`
+	FeastPurchaseInactiveObservedAt       time.Time                  `json:"feastPurchaseInactiveObservedAt,omitempty"`
+	FeastPurchaseInactiveResponseToken    string                     `json:"feastPurchaseInactiveResponseToken,omitempty"`
+	FeastPurchaseInactiveGeneration       uint64                     `json:"feastPurchaseInactiveGeneration,omitempty"`
+	LatestFeastPurchase                   FeastPurchaseEvidence      `json:"latestFeastPurchase,omitempty"`
+	SpecialistPurchasePending             bool                       `json:"specialistPurchasePending,omitempty"`
+	SpecialistPurchasePendingSince        time.Time                  `json:"specialistPurchasePendingSince,omitempty"`
+	SpecialistPurchaseExpectedID          int                        `json:"specialistPurchaseExpectedId,omitempty"`
+	SpecialistPurchasePreviousExpiry      time.Time                  `json:"specialistPurchasePreviousExpiry,omitempty"`
+	SpecialistPurchaseMaximumExpiry       time.Time                  `json:"specialistPurchaseMaximumExpiry,omitempty"`
+	SpecialistPurchaseOperationID         string                     `json:"specialistPurchaseOperationId,omitempty"`
+	SpecialistPurchaseResponseToken       string                     `json:"specialistPurchaseResponseToken,omitempty"`
+	SpecialistPurchaseResponseConfirmedAt time.Time                  `json:"specialistPurchaseResponseConfirmedAt,omitempty"`
+	SpecialistPurchaseResponseExpiresAt   time.Time                  `json:"specialistPurchaseResponseExpiresAt,omitempty"`
+	SpecialistPurchaseRubyResourceID      ResourceID                 `json:"specialistPurchaseRubyResourceId,omitempty"`
+	SpecialistPurchaseResponseRuby        int64                      `json:"specialistPurchaseResponseRuby,omitempty"`
+	SpecialistPurchaseResponseRubyAt      time.Time                  `json:"specialistPurchaseResponseRubyAt,omitempty"`
+	LatestSpecialistPurchase              SpecialistPurchaseEvidence `json:"latestSpecialistPurchase,omitempty"`
+	FeastCostReductionPercent             int                        `json:"feastCostReductionPercent,omitempty"`
+	FeastCostReductionObservedAt          time.Time                  `json:"feastCostReductionObservedAt,omitempty"`
+	CaravanLevel                          int                        `json:"caravanLevel,omitempty"`
+	CaravanLevelLoaded                    bool                       `json:"caravanLevelLoaded"`
+	ObservedAt                            time.Time                  `json:"observedAt,omitempty"`
+	BoostersObservedAt                    time.Time                  `json:"boostersObservedAt,omitempty"`
+	BoostersObservedGeneration            uint64                     `json:"boostersObservedGeneration,omitempty"`
 }
 
 type KingdomTransportUnlock struct {
@@ -2064,7 +2152,7 @@ func NewGameState() GameState {
 		UpdatedAt:     now,
 		Session:       SessionState{Status: "stopped", Namespace: "EmpireEx_21", ChangedAt: now},
 		Player: PlayerState{
-			Resources: map[ResourceID]float64{}, Currencies: map[CurrencyID]float64{},
+			Resources: map[ResourceID]float64{}, ResourceObservations: map[ResourceID]PlayerResourceObservation{}, Currencies: map[CurrencyID]float64{},
 			Achievements: AchievementState{Completed: map[int64]bool{}, Progress: map[int64][]int64{}},
 			LegendSkills: LegendSkillState{ActiveIDs: []int64{}, SceatSkillIDs: []int64{}, SceatActivations: []SceatSkillActivation{}},
 		},
@@ -2140,6 +2228,7 @@ func NewGameState() GameState {
 			Inventory: EventInventoryState{
 				ActiveByEvent: map[int64]EventAvailability{}, GlobalEffects: map[int64]GlobalEffectAvailability{},
 				GlobalEffectBoosterOffers: map[int64]GlobalEffectBoosterOffer{}, GlobalEffectBoosts: map[int64]GlobalEffectBoostState{},
+				GlobalEffectPurchases: map[int64]GlobalEffectPurchaseRecord{},
 			},
 		},
 		Automations: map[string]AutomationState{},

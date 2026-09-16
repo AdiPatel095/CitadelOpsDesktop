@@ -124,6 +124,7 @@ func applyCastleDetails(raw json.RawMessage, gameState *State.GameState, gameDat
 			beforeKingdomID := castle.KingdomID
 			beforeResources := copyResourceBalances(castle.Resources)
 			beforeFoodBalanceObservedAt := castle.FoodBalanceObservedAt
+			beforeFoodEconomyObservedAt := castle.FoodEconomyObservedAt
 			beforeUnits := castle.Units
 			beforeUnitsObservedAt := castle.UnitsObservedAt
 			beforeOpenGateUntil := castle.Defense.OpenGateUntil
@@ -132,6 +133,9 @@ func applyCastleDetails(raw json.RawMessage, gameState *State.GameState, gameDat
 			applyCastleResourceValues(values, &castle, gameData)
 			if castleResourceValuePresent(values, gameData, "F") && !observedAt.IsZero() {
 				castle.FoodBalanceObservedAt = observedAt.UTC()
+				if castleFoodProductionValuePresent(values) {
+					castle.FoodEconomyObservedAt = observedAt.UTC()
+				}
 			}
 			castle.Units = castleUnitsFromGroups(values["AC"], values["TU"], values["HI"], values["SHI"])
 			if remaining, present := rawInt64(values["OGT"]); present {
@@ -142,6 +146,7 @@ func applyCastleDetails(raw json.RawMessage, gameState *State.GameState, gameDat
 			}
 			if beforeKingdomID != castle.KingdomID || !reflect.DeepEqual(beforeResources, castle.Resources) ||
 				!beforeFoodBalanceObservedAt.Equal(castle.FoodBalanceObservedAt) ||
+				!beforeFoodEconomyObservedAt.Equal(castle.FoodEconomyObservedAt) ||
 				!reflect.DeepEqual(beforeUnits, castle.Units) || !beforeUnitsObservedAt.Equal(castle.UnitsObservedAt) ||
 				!reflect.DeepEqual(beforeOpenGateUntil, castle.Defense.OpenGateUntil) {
 				gameState.SetCastleParts(
@@ -597,6 +602,17 @@ func castleResourceValuePresent(values map[string]json.RawMessage, gameData *Gam
 	}
 	amount, numeric := rawFloat64(values[jsonKey])
 	return numeric && validCastleResourceAmount(amount)
+}
+
+func castleFoodProductionValuePresent(values map[string]json.RawMessage) bool {
+	var production map[string]json.RawMessage
+	if err := json.Unmarshal(values["gpa"], &production); err != nil {
+		return false
+	}
+	produced, productionFound := rawFloat64(production["DF"])
+	consumed, consumptionFound := rawFloat64(production["DFC"])
+	return productionFound && consumptionFound && produced >= 0 && consumed >= 0 &&
+		produced < float64(math.MaxInt64) && consumed < float64(math.MaxInt64)
 }
 
 func validCastleResourceAmount(amount float64) bool {

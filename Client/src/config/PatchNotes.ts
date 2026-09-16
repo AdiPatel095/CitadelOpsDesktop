@@ -57,6 +57,19 @@ export function sortPatchNoteItems(items: readonly PatchNoteItem[]): PatchNoteIt
 
 const PATCH_NOTES_RELEASES_UNSORTED: PatchNotesRelease[] = [
   {
+    version: '2.4.0-beta.3',
+    subtitle: 'Beta: safer upkeep, confirmed boosts, and equipment choices',
+    date: '2026-09-15',
+    items: [
+      { kind: 'added', text: 'Equipment Reconfigure returns up to 10 ranked, distinct loadouts for one selected commander or castellan, keeps generated choices available for immediate comparison, and applies only the explicitly selected result' },
+      { kind: 'fixed', text: 'Auto Buyer maintains the type-8 feast strictly above its saved duration floor from the currently focused eligible castle, rechecking its identity, food, reserves, timer, and resources before any sequential purchase' },
+      { kind: 'fixed', text: 'Auto Buyer renews all supported overseers and specialists one week at a time at or below their saved duration floors, with validated ruby maximums, fresh balance and timer guards, durable no-replay recovery, and visible per-item outcomes' },
+      { kind: 'fixed', text: 'Auto Booster confirms the daily fortress-speed boost from occurrence-bound status even when notification and empty acknowledgement arrive in either order, preserves event expiry, and prevents repeat spending for the same occurrence' },
+      { kind: 'fixed', text: 'Equipment previews remain usable across unrelated live updates, identify stale results when relevant inventory changes, show meaningful item and grouped-stat comparisons, and reject obsolete or repeated apply requests' },
+      { kind: 'security', text: 'Premium automation revalidates current-session resource authority, prices, reserves, settings, timers, and occurrence state after queue and transport waits, while durable purchase records prevent blind replay after uncertain outcomes' },
+    ],
+  },
+  {
     version: '2.4.0-beta.2',
     subtitle: 'Beta: Fortress, Booster, Tower Advisor and Bird presets',
     date: '2026-09-13',

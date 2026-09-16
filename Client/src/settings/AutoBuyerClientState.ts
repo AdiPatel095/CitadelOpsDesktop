@@ -2,6 +2,8 @@ import type { AutoBuyerProjectionV1 } from '../api/Contracts';
 
 export const AUTO_BUYER_SECTION = 'automation.autoBuyer';
 export const AUTO_BUYER_MINIMUM_SPECIALIST_DAYS = 14;
+export const AUTO_BUYER_MAXIMUM_SPECIALIST_DAYS = 365;
+export const AUTO_BUYER_RUBY_FRESHNESS_MS = 60_000;
 
 export interface AutoBuyerPackageRuleV1 {
   enabled: boolean;
@@ -17,6 +19,12 @@ export interface AutoBuyerSpecialistRuleV1 {
   id: number;
   minimumDays: number;
   maximumRubyCostPerPurchase: number;
+}
+
+export interface AutoBuyerSpecialistEvidenceStatusInput {
+  outcome: string;
+  attemptedAt: string;
+  updatedAt: string;
 }
 
 export interface AutoBuyerFeastSettingsV1 {
@@ -42,10 +50,10 @@ export interface AutoBuyerClientStateV1 {
 }
 
 export function defaultAutoBuyerClientState(): AutoBuyerClientStateV1 {
-	return {
-		version: 1,
-		checkIntervalSec: 1800,
-		historyRefreshSec: 3600,
+  return {
+    version: 1,
+    checkIntervalSec: 1800,
+    historyRefreshSec: 3600,
     sourceCastleId: 0,
     minimumRubyReserve: 0,
     allowRubyPackages: false,
@@ -53,7 +61,7 @@ export function defaultAutoBuyerClientState(): AutoBuyerClientStateV1 {
     specialists: [],
     feast: {
       enabled: false,
-      feastId: 0,
+      feastId: 8,
       minimumRemainingHours: 12,
       sourceCastleId: 0,
       minimumFoodReserve: 0,
@@ -142,12 +150,79 @@ export function autoBuyerOtherGoalsValid(
     if (product.price.premium && (!draft.allowRubyPackages || rule.maximumRubySpendPerReset < product.price.amount)) return false;
   }
   for (const rule of draft.specialists.filter((candidate) => candidate.enabled)) {
-    const previous = saved.specialists.find((candidate) => candidate.id === rule.id);
-    if (draft.minimumRubyReserve === saved.minimumRubyReserve && previous && JSON.stringify(rule) === JSON.stringify(previous)) continue;
-    const specialist = catalog.specialists.find((candidate) => candidate.id === rule.id);
-    if (!specialist || rule.minimumDays < AUTO_BUYER_MINIMUM_SPECIALIST_DAYS || rule.maximumRubyCostPerPurchase < specialist.baseRubyCost) return false;
+		const previous = saved.specialists.find((candidate) => candidate.id === rule.id);
+		if (catalog.specialistUpkeep?.supported !== true) {
+			if (draft.minimumRubyReserve === saved.minimumRubyReserve && previous && JSON.stringify(rule) === JSON.stringify(previous)) continue;
+			return false;
+		}
+		if (draft.minimumRubyReserve === saved.minimumRubyReserve && previous && JSON.stringify(rule) === JSON.stringify(previous)) continue;
+		const specialist = catalog.specialists.find((candidate) => candidate.id === rule.id);
+		const safeMaximum = specialist?.validatedMaximumRubyCost ?? 0;
+		if (!specialist || safeMaximum <= 0 || specialistMinimumDaysError(rule.minimumDays) || specialistRubyCeilingError(rule.maximumRubyCostPerPurchase, safeMaximum)) return false;
   }
   return true;
+}
+
+export function specialistMinimumDaysError(value: number): string {
+  if (!Number.isSafeInteger(value) || value < AUTO_BUYER_MINIMUM_SPECIALIST_DAYS || value > AUTO_BUYER_MAXIMUM_SPECIALIST_DAYS) {
+    return `Enter a whole number from ${AUTO_BUYER_MINIMUM_SPECIALIST_DAYS} to ${AUTO_BUYER_MAXIMUM_SPECIALIST_DAYS} days.`;
+  }
+  return '';
+}
+
+export function specialistRubyCeilingError(value: number, safeMaximum: number): string {
+  if (!Number.isSafeInteger(value) || value < 0) return 'Enter a whole, non-negative ruby ceiling.';
+  if (safeMaximum <= 0) return 'A validated ruby maximum is unavailable. Disable this specialist until pricing is supported.';
+  if (value < safeMaximum) return `Set at least ${safeMaximum.toLocaleString()} rubies or disable this specialist.`;
+  return '';
+}
+
+export function autoBuyerSpecialistRuntimeStatus(
+  rule: AutoBuyerSpecialistRuleV1 | undefined,
+  booster: { expiresAt?: string; permanent?: boolean } | undefined,
+  latest: AutoBuyerSpecialistEvidenceStatusInput | null,
+  safeMaximum: number,
+  minimumRubyReserve: number,
+  runtime: AutoBuyerProjectionV1['specialistRuntime'],
+  timerFreshnessSec: number,
+  now = Date.now(),
+): string {
+  if (!rule?.enabled) return 'Disabled';
+  const latestOutcome = latest?.outcome.trim().toLowerCase() ?? '';
+  if (latestOutcome === 'purchasing') return 'Purchasing';
+  if (latestOutcome === 'verifying') return 'Verifying';
+  if (latestOutcome === 'pending' || latestOutcome.includes('unresolved') || latestOutcome.includes('unconfirmed') || latestOutcome.includes('unverified')) {
+    return 'Unresolved';
+  }
+  if (!runtime?.timersObservedAt) return 'Waiting for timer data';
+  if (!runtime.timersCurrentSession) return 'Waiting for current-session timer data';
+  const timerObservedAt = Date.parse(runtime.timersObservedAt);
+  const timerFreshnessMs = timerFreshnessSec * 1000;
+  if (!Number.isFinite(timerObservedAt) || timerObservedAt > now || !Number.isFinite(timerFreshnessMs) || timerFreshnessMs <= 0 || now - timerObservedAt >= timerFreshnessMs) {
+    return 'Waiting for fresh timer data';
+  }
+  if (booster?.permanent) return 'Covered permanently';
+  const expiry = booster?.expiresAt ? Date.parse(booster.expiresAt) : Number.NaN;
+  if (Number.isFinite(expiry) && expiry > now + rule.minimumDays * 24 * 60 * 60 * 1000) return 'Covered';
+  const latestAt = latest ? Date.parse(latest.updatedAt || latest.attemptedAt) : Number.NaN;
+  if (latest && Number.isFinite(latestAt) && latestAt >= timerObservedAt) {
+    if (latestOutcome === 'rejected') return 'Rejected';
+    if (latestOutcome === 'not-sent') return 'Not sent · Waiting';
+  }
+  const inactive = !Number.isFinite(expiry) || expiry <= now;
+  const prefix = inactive ? 'Inactive · ' : '';
+  if (safeMaximum <= 0) return `${prefix}Waiting for validated price`;
+  if (!Number.isSafeInteger(rule.maximumRubyCostPerPurchase) || rule.maximumRubyCostPerPurchase < safeMaximum) {
+    return `${prefix}Waiting: ceiling below validated maximum`;
+  }
+  if (runtime.rubyBalance === undefined || !runtime.rubyObservedAt) return `${prefix}Waiting for ruby balance data`;
+  if (!runtime.rubyCurrentSession) return `${prefix}Waiting for current-session ruby balance`;
+  const rubyObservedAt = Date.parse(runtime.rubyObservedAt);
+  if (!Number.isFinite(rubyObservedAt) || rubyObservedAt > now || now - rubyObservedAt > AUTO_BUYER_RUBY_FRESHNESS_MS) {
+    return `${prefix}Waiting for fresh ruby balance`;
+  }
+  if (runtime.rubyBalance - minimumRubyReserve < safeMaximum) return `${prefix}Waiting for ruby reserve`;
+  return inactive ? 'Inactive · Ready to activate' : 'Ready to renew';
 }
 
 export function clampAutoBuyerInteger(value: unknown, minimum: number, maximum: number, fallback: number): number {

@@ -296,31 +296,51 @@ func TestPendingFeastRequiresExpectedExtensionBeforeClearing(t *testing.T) {
 		state.Market.FeastPurchaseExpectedID = 0
 		state.Market.FeastPurchasePendingSince = dispatchedAt
 		state.Market.FeastPurchaseExpectedExpiresAt = expectedExpiry
+		state.Market.FeastPurchasePreviousExpiresAt = dispatchedAt.Add(time.Minute)
+		state.Market.FeastPurchaseOperationID = "expected-operation"
+		state.Market.FeastPurchaseResponseToken = "expected-token"
 		return state
 	}
 
 	state := newPendingState()
 	_, changed, err := reduceMarketFeast(t.Context(), Protocol.Frame{
 		Opcode: "bfs", Direction: Protocol.DirectionInbound, ResponseCode: &code,
-		ReceivedAt: dispatchedAt.Add(time.Second), Payload: json.RawMessage(`{"T":0,"RT":60}`),
+		ReceivedAt: dispatchedAt, ResponseToken: "expected-token", Payload: json.RawMessage(`{"T":0,"RT":60}`),
 	}, &state, nil)
 	if err == nil || changed || !state.Market.FeastPurchasePending {
-		t.Fatalf("unchanged direct feast cleared pending: changed=%t err=%v market=%+v", changed, err, state.Market)
+		t.Fatalf("unchanged correlated feast cleared pending: changed=%t err=%v market=%+v", changed, err, state.Market)
 	}
 
 	state = newPendingState()
-	_, changed, err = reduceMarketBooster(t.Context(), Protocol.Frame{
-		Opcode: "boi", Direction: Protocol.DirectionInbound, ResponseCode: &code,
-		ReceivedAt: dispatchedAt.Add(time.Second), Payload: json.RawMessage(`{"BO":[],"bfs":{"T":0,"RT":60}}`),
+	state.Market.FeastPurchasePreviousExpiresAt = dispatchedAt.Add(time.Minute + 800*time.Millisecond)
+	_, changed, err = reduceMarketFeast(t.Context(), Protocol.Frame{
+		Opcode: "bfs", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+		ReceivedAt: dispatchedAt.Add(900 * time.Millisecond), ResponseToken: "expected-token", Payload: json.RawMessage(`{"T":0,"RT":60}`),
 	}, &state, nil)
-	if err != nil || !changed || !state.Market.FeastPurchasePending {
-		t.Fatalf("unchanged BOI feast cleared pending: changed=%t err=%v market=%+v", changed, err, state.Market)
+	if err == nil || changed || !state.Market.FeastPurchasePending {
+		t.Fatalf("fractional unchanged timer jitter cleared pending: changed=%t err=%v market=%+v", changed, err, state.Market)
 	}
 
 	state = newPendingState()
+	_, changed, err = reduceMarketFeast(t.Context(), Protocol.Frame{
+		Opcode: "bfs", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+		ReceivedAt: dispatchedAt, ResponseToken: "other-token", Payload: json.RawMessage(`{"T":0,"RT":21600}`),
+	}, &state, nil)
+	if err == nil || changed || !state.Market.FeastPurchasePending {
+		t.Fatalf("unrelated same-ID feast response was accepted: changed=%t err=%v market=%+v", changed, err, state.Market)
+	}
+
+	state = newPendingState()
+	_, changed, err = reduceMarketFeast(t.Context(), Protocol.Frame{
+		Opcode: "bfs", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+		ReceivedAt: dispatchedAt, ResponseToken: "expected-token", Payload: json.RawMessage(`{"T":0,"RT":21600}`),
+	}, &state, nil)
+	if err != nil || !changed || !state.Market.FeastPurchasePending || state.Market.FeastPurchaseResponseConfirmedAt.IsZero() {
+		t.Fatalf("correlated extension did not enter verification: changed=%t err=%v market=%+v", changed, err, state.Market)
+	}
 	_, changed, err = reduceMarketBooster(t.Context(), Protocol.Frame{
 		Opcode: "boi", Direction: Protocol.DirectionInbound, ResponseCode: &code,
-		ReceivedAt: dispatchedAt.Add(time.Second), Payload: json.RawMessage(`{"BO":[],"bfs":{"T":0,"RT":21600}}`),
+		ReceivedAt: dispatchedAt.Add(time.Second), ResponseToken: "boi-refresh", Payload: json.RawMessage(`{"BO":[],"bfs":{"T":0,"RT":21599}}`),
 	}, &state, nil)
 	if err != nil || !changed || state.Market.FeastPurchasePending {
 		t.Fatalf("confirmed BOI extension remained pending: changed=%t err=%v market=%+v", changed, err, state.Market)

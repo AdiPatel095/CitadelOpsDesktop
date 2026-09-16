@@ -199,9 +199,15 @@ func TestClientProjectionPublishesFeastCostReduction(t *testing.T) {
 	state.Market.FeastPurchaseExpectedID = 4
 	state.Market.FeastPurchaseOperationID = "private-operation"
 	state.Market.FeastPurchaseResponseToken = "private-token"
+	state.Market.FeastPurchaseResponseConfirmedAt = observedAt.Add(30 * time.Second)
+	state.Market.FeastPurchaseResponseExpiresAt = observedAt.Add(6 * time.Hour)
 	state.Market.FeastPurchaseInactiveObservedAt = observedAt.Add(time.Minute)
 	state.Market.FeastPurchaseInactiveResponseToken = "private-poll-token"
 	state.Market.FeastPurchaseInactiveGeneration = 7
+	state.Market.LatestFeastPurchase = FeastPurchaseEvidence{
+		Outcome: "confirmed", FeastID: 4, ChargedCastleID: 12, ChargedKingdomID: 2,
+		AttemptedAt: observedAt, ActivationConfirmed: true, FoodBeforeKnown: true, FoodAfterKnown: true,
+	}
 
 	contents, err := json.Marshal(NewClientStateSnapshot(state))
 	if err != nil {
@@ -215,11 +221,18 @@ func TestClientProjectionPublishesFeastCostReduction(t *testing.T) {
 		!snapshot.Market.FeastCostReductionObservedAt.Equal(observedAt) {
 		t.Fatalf("client feast cost reduction snapshot = %+v", snapshot.Market)
 	}
+	if snapshot.Market.LatestFeastPurchase.Outcome != "confirmed" ||
+		snapshot.Market.LatestFeastPurchase.ChargedCastleID != 12 ||
+		!bytes.Contains(contents, []byte(`"foodBefore":0`)) || !bytes.Contains(contents, []byte(`"foodAfter":0`)) {
+		t.Fatalf("sanitized feast receipt = %+v", snapshot.Market.LatestFeastPurchase)
+	}
 	for _, backendOnly := range [][]byte{
 		[]byte("feastPurchasePending"),
 		[]byte("feastPurchaseExpectedId"),
 		[]byte("feastPurchaseOperationId"),
 		[]byte("feastPurchaseResponseToken"),
+		[]byte("feastPurchaseResponseConfirmedAt"),
+		[]byte("feastPurchaseResponseExpiresAt"),
 		[]byte("feastPurchaseInactive"),
 		[]byte("private-poll-token"),
 		[]byte("private-operation"),
@@ -246,6 +259,46 @@ func TestClientProjectionPublishesFeastCostReduction(t *testing.T) {
 		projected.Patch.Market.FeastCostReductionObservedAt == nil ||
 		!projected.Patch.Market.FeastCostReductionObservedAt.Equal(observedAt.Add(time.Minute)) {
 		t.Fatalf("client feast cost reduction event = %+v", projected.Patch)
+	}
+}
+
+func TestClientProjectionOmitsAbsentFeastPurchaseEvidence(t *testing.T) {
+	contents, err := json.Marshal(NewClientStateSnapshot(NewGameState()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(contents, []byte(`"latestFeastPurchase"`)) {
+		t.Fatalf("empty feast purchase evidence leaked into client state: %s", contents)
+	}
+}
+
+func TestClientProjectionPublishesSanitizedSpecialistEvidenceAndOmitsAbsent(t *testing.T) {
+	empty, err := json.Marshal(NewClientStateSnapshot(NewGameState()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(empty, []byte(`"latestSpecialistPurchase"`)) {
+		t.Fatalf("empty specialist evidence leaked into client state: %s", empty)
+	}
+	state := NewGameState()
+	now := time.Date(2026, time.September, 15, 12, 0, 0, 0, time.UTC)
+	state.Market.SpecialistPurchasePending = true
+	state.Market.SpecialistPurchaseOperationID = "private-specialist-operation"
+	state.Market.SpecialistPurchaseResponseToken = "private-specialist-token"
+	state.Market.SpecialistPurchaseResponseConfirmedAt = now.Add(time.Second)
+	state.Market.SpecialistPurchaseRubyResourceID = 2
+	state.Market.LatestSpecialistPurchase = SpecialistPurchaseEvidence{Outcome: "confirmed", SpecialistID: 0, Opcode: "ovs", AttemptedAt: now, UpdatedAt: now.Add(time.Second), RubyBefore: 625, RubyBeforeKnown: true, RubyAfter: 0, RubyAfterKnown: true, DebitVerification: "command-local-observed", ActivationConfirmed: true}
+	contents, err := json.Marshal(NewClientStateSnapshot(state))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Contains(contents, []byte(`"latestSpecialistPurchase"`)) || !bytes.Contains(contents, []byte(`"rubyAfter":0`)) {
+		t.Fatalf("known-zero specialist evidence missing: %s", contents)
+	}
+	for _, private := range [][]byte{[]byte("specialistPurchasePending"), []byte("specialistPurchaseOperationId"), []byte("specialistPurchaseResponseToken"), []byte("private-specialist-operation"), []byte("private-specialist-token"), []byte("specialistPurchaseRubyResourceId")} {
+		if bytes.Contains(contents, private) {
+			t.Fatalf("specialist projection leaked private field %q: %s", private, contents)
+		}
 	}
 }
 

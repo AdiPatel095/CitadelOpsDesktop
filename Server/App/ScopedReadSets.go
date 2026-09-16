@@ -62,6 +62,18 @@ func constructionReadSet(
 	return keys, nil
 }
 
+func equipmentReconfigureReadSet(
+	input Intent.PlanningContext,
+	_ json.RawMessage,
+	_ Intent.Plan,
+) ([]State.PartitionKey, error) {
+	return []State.PartitionKey{
+		State.SessionPartition(input.State, State.CapabilitySessionContext),
+		State.AccountPartition(input.State, State.CapabilityLeaders),
+		State.AccountPartition(input.State, State.CapabilityEquipment),
+	}, nil
+}
+
 func riftMaidenReadSet(
 	input Intent.PlanningContext,
 	_ json.RawMessage,

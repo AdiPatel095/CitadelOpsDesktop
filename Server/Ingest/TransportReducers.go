@@ -116,39 +116,86 @@ func reduceMarketBooster(
 	gameState *State.GameState,
 	_ *GameData.Store,
 ) ([]string, bool, error) {
-	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+	if frame.ResponseCode != nil && *frame.ResponseCode != 0 {
+		market := &gameState.Market
+		if market.SpecialistPurchasePending && !frame.ReceivedAt.Before(market.SpecialistPurchasePendingSince) &&
+			pendingSpecialistResponseMatches(*market, frame) && specialistResponseOpcodeMatches(market.SpecialistPurchaseExpectedID, frame.Opcode) {
+			market.LatestSpecialistPurchase.Outcome = "rejected"
+			market.LatestSpecialistPurchase.UpdatedAt = frame.ReceivedAt
+			market.LatestSpecialistPurchase.Detail = fmt.Sprintf("The game rejected the specialist purchase with response code %d", *frame.ResponseCode)
+			clearPendingSpecialistResponse(market)
+			return []string{"boosters", "market"}, true, nil
+		}
 		return nil, false, nil
 	}
+	if frame.ResponseCode == nil || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	var outerRoot map[string]json.RawMessage
 	var root map[string]json.RawMessage
 	if err := json.Unmarshal(frame.Payload, &root); err != nil {
 		return nil, false, fmt.Errorf("decode market boosters: %w", err)
 	}
+	outerRoot = root
 	if nested := root["boi"]; len(nested) > 0 {
 		if err := json.Unmarshal(nested, &root); err != nil {
 			return nil, false, fmt.Errorf("decode nested market boosters: %w", err)
 		}
 	}
-	var rows []struct {
-		ID                      wireInt64 `json:"ID"`
-		Level                   int       `json:"L"`
-		Bonus                   wireInt64 `json:"B"`
-		RemainingSec            wireInt64 `json:"RT"`
-		ContinuousPurchaseCount wireInt64 `json:"PC"`
+	rawRows, present := root["BO"]
+	if !present || len(rawRows) == 0 || rawJSONNull(rawRows) {
+		return nil, false, nil
 	}
-	if err := json.Unmarshal(root["BO"], &rows); err != nil {
+	var rows []map[string]json.RawMessage
+	if err := json.Unmarshal(rawRows, &rows); err != nil || rows == nil {
 		return nil, false, fmt.Errorf("decode market booster rows: %w", err)
+	}
+	if frame.ReceivedAt.IsZero() || frame.ReceivedAt.After(time.Now().UTC().Add(5*time.Second)) ||
+		(!gameState.Market.BoostersObservedAt.IsZero() && frame.ReceivedAt.Before(gameState.Market.BoostersObservedAt)) {
+		return nil, false, nil
 	}
 	level := 0
 	boosters := make(map[int]State.MarketBoosterState, len(rows))
 	for _, row := range rows {
-		id := int(row.ID)
-		if id < 0 {
-			continue
+		rawID, hasID := row["ID"]
+		rawRemaining, hasRemaining := row["RT"]
+		idValue, idValid := rawJSONInt64(rawID)
+		remainingValue, remainingValid := rawJSONInt64(rawRemaining)
+		if !hasID || !hasRemaining || !idValid || !remainingValid ||
+			idValue < 0 || remainingValue < 0 || remainingValue > int64(math.MaxInt64)/int64(time.Second) {
+			return nil, false, fmt.Errorf("decode market booster rows: invalid ID or RT")
 		}
-		remainingSec := int(row.RemainingSec)
+		id := int(idValue)
+		if _, duplicate := boosters[id]; duplicate {
+			return nil, false, fmt.Errorf("decode market booster rows: duplicate ID %d", id)
+		}
+		var levelValue int
+		var bonusValue, purchaseCountValue int64
+		if raw := row["L"]; len(raw) > 0 {
+			parsed, valid := rawJSONInt64(raw)
+			levelValue = int(parsed)
+			if !valid || int64(levelValue) != parsed {
+				return nil, false, fmt.Errorf("decode market booster rows: invalid L for ID %d", id)
+			}
+		}
+		if raw := row["B"]; len(raw) > 0 {
+			var valid bool
+			bonusValue, valid = rawJSONInt64(raw)
+			if !valid {
+				return nil, false, fmt.Errorf("decode market booster rows: invalid B for ID %d", id)
+			}
+		}
+		if raw := row["PC"]; len(raw) > 0 {
+			var valid bool
+			purchaseCountValue, valid = rawJSONInt64(raw)
+			if !valid || purchaseCountValue < 0 {
+				return nil, false, fmt.Errorf("decode market booster rows: invalid PC for ID %d", id)
+			}
+		}
+		remainingSec := int64(remainingValue)
 		booster := State.MarketBoosterState{
-			ID: id, Level: row.Level, BonusPercent: int(row.Bonus), RemainingSec: remainingSec,
-			ContinuousPurchaseCount: int(row.ContinuousPurchaseCount),
+			ID: id, Level: levelValue, BonusPercent: int(bonusValue), RemainingSec: remainingSec,
+			ContinuousPurchaseCount: int(purchaseCountValue),
 		}
 		if remainingSec == permanentBoosterRemainingSec {
 			booster.Permanent = true
@@ -156,8 +203,8 @@ func reduceMarketBooster(
 			booster.ExpiresAt = frame.ReceivedAt.Add(time.Duration(remainingSec) * time.Second)
 		}
 		boosters[id] = booster
-		if row.ID == caravanOverloaderBoosterID {
-			level = row.Level
+		if idValue == int64(caravanOverloaderBoosterID) {
+			level = levelValue
 		}
 	}
 	feast := gameState.Market.Feast
@@ -171,6 +218,7 @@ func reduceMarketBooster(
 		feastPresent = true
 	}
 	pendingChanged := feastPresent && reconcilePendingFeastSnapshot(gameState, feast, frame)
+	pendingChanged = reconcilePendingSpecialistResponse(gameState, boosters, outerRoot, frame) || pendingChanged
 	if gameState.Market.CaravanLevelLoaded && gameState.Market.CaravanLevel == level &&
 		reflect.DeepEqual(gameState.Market.Boosters, boosters) &&
 		reflect.DeepEqual(gameState.Market.Feast, feast) &&
@@ -182,7 +230,91 @@ func reduceMarketBooster(
 	gameState.Market.Boosters = boosters
 	gameState.Market.Feast = feast
 	gameState.Market.BoostersObservedAt = frame.ReceivedAt
+	gameState.Market.BoostersObservedGeneration = gameState.Session.ConnectionGeneration
 	return []string{"boosters", "market"}, true, nil
+}
+
+func reconcilePendingSpecialistResponse(
+	gameState *State.GameState,
+	boosters map[int]State.MarketBoosterState,
+	root map[string]json.RawMessage,
+	frame Protocol.Frame,
+) bool {
+	market := &gameState.Market
+	if !market.SpecialistPurchasePending || frame.ResponseCode == nil || *frame.ResponseCode != 0 ||
+		frame.ReceivedAt.Before(market.SpecialistPurchasePendingSince) ||
+		!pendingSpecialistResponseMatches(*market, frame) {
+		return false
+	}
+	if !specialistResponseOpcodeMatches(market.SpecialistPurchaseExpectedID, frame.Opcode) {
+		return false
+	}
+	booster, present := boosters[market.SpecialistPurchaseExpectedID]
+	baseline := market.SpecialistPurchasePreviousExpiry
+	if baseline.Before(market.SpecialistPurchasePendingSince) {
+		baseline = market.SpecialistPurchasePendingSince
+	}
+	if !present || booster.Permanent || booster.ExpiresAt.Before(baseline.Add(7*24*time.Hour-time.Second)) {
+		return false
+	}
+	rawGCU, present := root["gcu"]
+	if !present || rawJSONNull(rawGCU) {
+		return false
+	}
+	var resources map[string]json.RawMessage
+	if json.Unmarshal(rawGCU, &resources) != nil || resources == nil {
+		return false
+	}
+	ruby, valid := rawJSONInt64(resources["C2"])
+	if !valid || ruby < 0 {
+		return false
+	}
+	observation := gameState.Player.ResourceObservations[market.SpecialistPurchaseRubyResourceID]
+	if market.SpecialistPurchaseRubyResourceID <= 0 || !observation.ObservedAt.Equal(frame.ReceivedAt) ||
+		observation.ConnectionGeneration == 0 || observation.ConnectionGeneration != gameState.Session.ConnectionGeneration {
+		return false
+	}
+	market.SpecialistPurchaseResponseConfirmedAt = frame.ReceivedAt
+	market.SpecialistPurchaseResponseExpiresAt = booster.ExpiresAt
+	market.SpecialistPurchaseResponseRuby = ruby
+	market.SpecialistPurchaseResponseRubyAt = observation.ObservedAt
+	market.LatestSpecialistPurchase.Outcome = "verifying"
+	market.LatestSpecialistPurchase.UpdatedAt = frame.ReceivedAt
+	market.LatestSpecialistPurchase.TimerAfter = booster.ExpiresAt
+	market.LatestSpecialistPurchase.TimerAfterObservedAt = frame.ReceivedAt
+	market.LatestSpecialistPurchase.RubyAfter = ruby
+	market.LatestSpecialistPurchase.RubyAfterKnown = true
+	market.LatestSpecialistPurchase.RubyAfterObservedAt = observation.ObservedAt
+	market.LatestSpecialistPurchase.Detail = "Correlated purchase response contained an increased timer and command-local ruby balance; waiting for a read-only timer refresh"
+	return true
+}
+
+func pendingSpecialistResponseMatches(market State.MarketState, frame Protocol.Frame) bool {
+	return market.SpecialistPurchaseResponseToken != "" && frame.ResponseToken == market.SpecialistPurchaseResponseToken ||
+		market.SpecialistPurchaseOperationID != "" && frame.CausationOperationID == market.SpecialistPurchaseOperationID
+}
+
+func specialistResponseOpcodeMatches(specialistID int, opcode string) bool {
+	expected := "ovs"
+	if specialistID == 6 {
+		expected = "bms"
+	} else if specialistID == 8 {
+		expected = "btx"
+	} else if specialistID == 10 {
+		expected = "bis"
+	}
+	return strings.EqualFold(opcode, expected)
+}
+
+func clearPendingSpecialistResponse(market *State.MarketState) {
+	market.SpecialistPurchasePending = false
+	market.SpecialistPurchaseOperationID = ""
+	market.SpecialistPurchaseResponseToken = ""
+	market.SpecialistPurchaseResponseConfirmedAt = time.Time{}
+	market.SpecialistPurchaseResponseExpiresAt = time.Time{}
+	market.SpecialistPurchaseRubyResourceID = 0
+	market.SpecialistPurchaseResponseRuby = 0
+	market.SpecialistPurchaseResponseRubyAt = time.Time{}
 }
 
 func reduceMarketFeast(
@@ -198,6 +330,9 @@ func reduceMarketFeast(
 		if gameState.Market.FeastPurchasePending &&
 			!frame.ReceivedAt.Before(gameState.Market.FeastPurchasePendingSince) &&
 			pendingFeastResponseMatches(gameState.Market, frame) {
+			gameState.Market.LatestFeastPurchase.Outcome = "rejected"
+			gameState.Market.LatestFeastPurchase.UpdatedAt = frame.ReceivedAt
+			gameState.Market.LatestFeastPurchase.Detail = fmt.Sprintf("The game rejected the feast purchase with response code %d", *frame.ResponseCode)
 			clearPendingFeastPurchase(&gameState.Market)
 			return []string{"boosters", "market"}, true, nil
 		}
@@ -210,17 +345,27 @@ func reduceMarketFeast(
 	if !feast.ActiveAt(frame.ReceivedAt) {
 		return nil, false, fmt.Errorf("decode purchased feast: successful response did not contain an active feast")
 	}
-	if gameState.Market.FeastPurchasePending &&
-		(feast.ID != gameState.Market.FeastPurchaseExpectedID ||
+	if gameState.Market.FeastPurchasePending {
+		if !pendingFeastResponseMatches(gameState.Market, frame) ||
+			feast.ID != gameState.Market.FeastPurchaseExpectedID ||
 			frame.ReceivedAt.Before(gameState.Market.FeastPurchasePendingSince) ||
-			!pendingFeastExpiryConfirmed(gameState.Market, feast.ExpiresAt)) {
-		return nil, false, fmt.Errorf("decode purchased feast: response did not confirm the expected feast")
+			!pendingFeastTimerIncreased(gameState.Market, feast.ExpiresAt) {
+			return nil, false, fmt.Errorf("decode purchased feast: correlated response did not confirm an increased expected feast timer")
+		}
+		gameState.Market.Feast = feast
+		gameState.Market.FeastLastPurchaseAt = frame.ReceivedAt
+		gameState.Market.FeastPurchaseResponseConfirmedAt = frame.ReceivedAt
+		gameState.Market.FeastPurchaseResponseExpiresAt = feast.ExpiresAt
+		gameState.Market.LatestFeastPurchase.Outcome = "verifying"
+		gameState.Market.LatestFeastPurchase.UpdatedAt = frame.ReceivedAt
+		gameState.Market.LatestFeastPurchase.ConfirmedRemainingSec = feast.RemainingSec
+		gameState.Market.LatestFeastPurchase.ConfirmedExpiresAt = feast.ExpiresAt
+		gameState.Market.LatestFeastPurchase.Detail = "Correlated purchase response received; waiting for an authoritative timer refresh"
+		return []string{"boosters", "market"}, true, nil
 	}
 	lastPurchaseAt := frame.ReceivedAt
-	pendingChanged := gameState.Market.FeastPurchasePending
-	clearPendingFeastPurchase(&gameState.Market)
 	if reflect.DeepEqual(gameState.Market.Feast, feast) &&
-		gameState.Market.FeastLastPurchaseAt.Equal(lastPurchaseAt) && !pendingChanged {
+		gameState.Market.FeastLastPurchaseAt.Equal(lastPurchaseAt) {
 		return nil, false, nil
 	}
 	gameState.Market.Feast = feast
@@ -239,11 +384,18 @@ func reconcilePendingFeastSnapshot(
 		observedAt.Before(market.FeastPurchasePendingSince) {
 		return false
 	}
-	if feast.ActiveAt(observedAt) && feast.ID == market.FeastPurchaseExpectedID &&
-		pendingFeastExpiryConfirmed(*market, feast.ExpiresAt) {
-		if market.FeastLastPurchaseAt.Before(market.FeastPurchasePendingSince) {
-			market.FeastLastPurchaseAt = market.FeastPurchasePendingSince
-		}
+	if !market.FeastPurchaseResponseConfirmedAt.IsZero() &&
+		!observedAt.Before(market.FeastPurchaseResponseConfirmedAt) &&
+		feast.ActiveAt(observedAt) && feast.ID == market.FeastPurchaseExpectedID &&
+		pendingFeastTimerIncreased(*market, feast.ExpiresAt) &&
+		!feast.ExpiresAt.Before(market.FeastPurchaseResponseExpiresAt.Add(-5*time.Second)) {
+		market.LatestFeastPurchase.Outcome = "confirmed"
+		market.LatestFeastPurchase.UpdatedAt = observedAt
+		market.LatestFeastPurchase.ActivationConfirmed = true
+		market.LatestFeastPurchase.ConfirmedRemainingSec = feast.RemainingSec
+		market.LatestFeastPurchase.ConfirmedExpiresAt = feast.ExpiresAt
+		market.LatestFeastPurchase.ActivationConfirmedAt = observedAt
+		market.LatestFeastPurchase.Detail = "Activation confirmed by the correlated purchase response and refreshed feast timer"
 		clearPendingFeastPurchase(market)
 		return true
 	}
@@ -270,6 +422,9 @@ func reconcilePendingFeastSnapshot(
 			return true
 		}
 		if frame.ResponseToken != market.FeastPurchaseInactiveResponseToken && !observedAt.Before(first.Add(30*time.Second)) {
+			market.LatestFeastPurchase.Outcome = "not-confirmed"
+			market.LatestFeastPurchase.UpdatedAt = observedAt
+			market.LatestFeastPurchase.Detail = "Two authoritative reconciliation checks reported no active feast"
 			clearPendingFeastPurchase(market)
 			return true
 		}
@@ -278,13 +433,19 @@ func reconcilePendingFeastSnapshot(
 		observedAt.Before(market.FeastPurchaseExpectedExpiresAt) {
 		return false
 	}
+	market.LatestFeastPurchase.Outcome = "not-confirmed"
+	market.LatestFeastPurchase.UpdatedAt = observedAt
+	market.LatestFeastPurchase.Detail = "The bounded reconciliation window ended without a confirmed activation"
 	clearPendingFeastPurchase(market)
 	return true
 }
 
-func pendingFeastExpiryConfirmed(market State.MarketState, expiresAt time.Time) bool {
-	return !market.FeastPurchaseExpectedExpiresAt.IsZero() &&
-		!expiresAt.Before(market.FeastPurchaseExpectedExpiresAt.Add(-time.Minute))
+func pendingFeastTimerIncreased(market State.MarketState, expiresAt time.Time) bool {
+	baseline := market.FeastPurchasePreviousExpiresAt
+	if baseline.IsZero() {
+		baseline = market.FeastPurchasePendingSince
+	}
+	return State.FeastTimerProgressed(baseline, expiresAt)
 }
 
 func pendingFeastResponseMatches(market State.MarketState, frame Protocol.Frame) bool {
@@ -297,8 +458,11 @@ func clearPendingFeastPurchase(market *State.MarketState) {
 	market.FeastPurchaseExpectedID = 0
 	market.FeastPurchasePendingSince = time.Time{}
 	market.FeastPurchaseExpectedExpiresAt = time.Time{}
+	market.FeastPurchasePreviousExpiresAt = time.Time{}
 	market.FeastPurchaseOperationID = ""
 	market.FeastPurchaseResponseToken = ""
+	market.FeastPurchaseResponseConfirmedAt = time.Time{}
+	market.FeastPurchaseResponseExpiresAt = time.Time{}
 	market.FeastPurchaseInactiveObservedAt = time.Time{}
 	market.FeastPurchaseInactiveResponseToken = ""
 	market.FeastPurchaseInactiveGeneration = 0

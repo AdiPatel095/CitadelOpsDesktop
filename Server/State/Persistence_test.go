@@ -149,6 +149,54 @@ func TestInvasionAvailabilityAndReservationsPersistAcrossRestart(t *testing.T) {
 	}
 }
 
+func TestGlobalEffectPurchasePersistsButResourceFreshnessDoesNot(t *testing.T) {
+	directory := t.TempDir()
+	observedAt := time.Now().UTC().Truncate(time.Second)
+	endsAt := observedAt.Add(time.Hour)
+	initial := NewGameState()
+	initial.Session.Generation = 1
+	initial.Session.ConnectionGeneration = 11
+	initial.Player.Resources[2] = 7500
+	initial.Player.ResourceObservations[2] = PlayerResourceObservation{ObservedAt: observedAt, ConnectionGeneration: 11}
+	store := NewStore(initial)
+	event, err := store.ApplyComponents(Components(ComponentEventScores), func(state *GameState) ([]string, bool, error) {
+		inventory := state.EventScores.Inventory
+		inventory.GlobalEffectPurchases = cloneGlobalEffectPurchaseMap(inventory.GlobalEffectPurchases)
+		inventory.GlobalEffectPurchases[2] = GlobalEffectPurchaseRecord{
+			GlobalEffectID: 2, OccurrenceEndsAt: endsAt, ExpiresAt: endsAt,
+			QuotedRubyCost: 2500, QuotedBonusValue: 50, MinimumRubyReserve: 5000,
+			RubyBefore: 10000, RubyBeforeObservedAt: observedAt, RequestedAt: observedAt,
+			DispatchedAt: observedAt.Add(time.Second), RequestOpcode: "agb", OperationID: "op-1",
+			ResponseToken: "process-only-token", ConnectionGeneration: 11,
+			DebitUnverified: true, Outcome: GlobalEffectPurchaseUnresolved,
+			Detail: "awaiting authoritative reconciliation",
+		}
+		changed := state.ReplaceEventInventory(inventory)
+		return []string{"events", "event-scores", "global-effects"}, changed, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := SaveComponentSnapshot(directory, event, Components(event.Components...)); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := LoadSnapshot(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	record, found := loaded.EventScores.Inventory.GlobalEffectPurchases[2]
+	if !found || record.Outcome != GlobalEffectPurchaseUnresolved || record.OperationID != "op-1" ||
+		record.QuotedRubyCost != 2500 || !record.DispatchedAt.Equal(observedAt.Add(time.Second)) {
+		t.Fatalf("durable global-effect purchase=%+v found=%t", record, found)
+	}
+	if record.ResponseToken != "" {
+		t.Fatalf("process-local response token persisted: %q", record.ResponseToken)
+	}
+	if len(loaded.Player.ResourceObservations) != 0 {
+		t.Fatalf("stale resource freshness survived restart: %+v", loaded.Player.ResourceObservations)
+	}
+}
+
 func TestComponentSnapshotWriterReusesLastDurableManifest(t *testing.T) {
 	directory := t.TempDir()
 	store := NewStore(NewGameState())
@@ -641,11 +689,18 @@ func TestComponentSnapshotPersistsFeastCostReduction(t *testing.T) {
 		state.Market.FeastPurchaseExpectedID = 4
 		state.Market.FeastPurchasePendingSince = pendingSince
 		state.Market.FeastPurchaseExpectedExpiresAt = expectedExpiry
+		state.Market.FeastPurchasePreviousExpiresAt = observedAt
 		state.Market.FeastPurchaseOperationID = "feast-operation"
 		state.Market.FeastPurchaseResponseToken = "feast-operation/1"
+		state.Market.FeastPurchaseResponseConfirmedAt = pendingSince.Add(time.Second)
+		state.Market.FeastPurchaseResponseExpiresAt = expectedExpiry
 		state.Market.FeastPurchaseInactiveObservedAt = pendingSince.Add(time.Minute)
 		state.Market.FeastPurchaseInactiveResponseToken = "feast-poll/2"
 		state.Market.FeastPurchaseInactiveGeneration = 7
+		state.Market.LatestFeastPurchase = FeastPurchaseEvidence{
+			Outcome: "verifying", FeastID: 4, ChargedCastleID: 12, ChargedKingdomID: 2,
+			AttemptedAt: pendingSince, ExpectedEffectiveCost: 150000,
+		}
 		return []string{"market"}, true, nil
 	})
 	if err != nil {
@@ -664,12 +719,61 @@ func TestComponentSnapshotPersistsFeastCostReduction(t *testing.T) {
 		loaded.Market.FeastPurchaseExpectedID != 4 ||
 		!loaded.Market.FeastPurchasePendingSince.Equal(pendingSince) ||
 		!loaded.Market.FeastPurchaseExpectedExpiresAt.Equal(expectedExpiry) ||
+		!loaded.Market.FeastPurchasePreviousExpiresAt.Equal(observedAt) ||
 		loaded.Market.FeastPurchaseOperationID != "feast-operation" ||
 		loaded.Market.FeastPurchaseResponseToken != "feast-operation/1" ||
+		!loaded.Market.FeastPurchaseResponseConfirmedAt.Equal(pendingSince.Add(time.Second)) ||
+		!loaded.Market.FeastPurchaseResponseExpiresAt.Equal(expectedExpiry) ||
 		!loaded.Market.FeastPurchaseInactiveObservedAt.Equal(pendingSince.Add(time.Minute)) ||
 		loaded.Market.FeastPurchaseInactiveResponseToken != "feast-poll/2" ||
-		loaded.Market.FeastPurchaseInactiveGeneration != 7 {
+		loaded.Market.FeastPurchaseInactiveGeneration != 7 ||
+		loaded.Market.LatestFeastPurchase.Outcome != "verifying" ||
+		loaded.Market.LatestFeastPurchase.ChargedCastleID != 12 {
 		t.Fatalf("persisted feast state = %+v", loaded.Market)
+	}
+}
+
+func TestSnapshotPersistsSpecialistRecoveryButDropsLiveRubyAuthority(t *testing.T) {
+	directory := t.TempDir()
+	now := time.Date(2026, time.September, 15, 12, 0, 0, 0, time.UTC)
+	state := NewGameState()
+	state.Session.ConnectionGeneration = 4
+	state.Player.Resources[2] = 9000
+	state.Player.ResourceObservations[2] = PlayerResourceObservation{ObservedAt: now, ConnectionGeneration: 4}
+	state.Market.SpecialistPurchasePending = true
+	state.Market.SpecialistPurchasePendingSince = now
+	state.Market.SpecialistPurchaseExpectedID = 8
+	state.Market.SpecialistPurchasePreviousExpiry = now.Add(time.Hour)
+	state.Market.SpecialistPurchaseMaximumExpiry = now.Add(7*24*time.Hour + time.Hour)
+	state.Market.SpecialistPurchaseOperationID = "specialist-operation"
+	state.Market.SpecialistPurchaseResponseToken = "specialist-operation/2"
+	state.Market.SpecialistPurchaseResponseConfirmedAt = now.Add(time.Second)
+	state.Market.SpecialistPurchaseResponseExpiresAt = now.Add(7*24*time.Hour + time.Hour)
+	state.Market.SpecialistPurchaseRubyResourceID = 2
+	state.Market.SpecialistPurchaseResponseRuby = 8250
+	state.Market.SpecialistPurchaseResponseRubyAt = now.Add(time.Second)
+	state.Market.BoostersObservedGeneration = 4
+	state.Market.LatestSpecialistPurchase = SpecialistPurchaseEvidence{Outcome: "verifying", SpecialistID: 8, AttemptedAt: now, UpdatedAt: now.Add(time.Second), RubyBefore: 9000, RubyBeforeKnown: true, RubyAfter: 8250, RubyAfterKnown: true}
+	if err := SaveSnapshot(directory, state); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := LoadSnapshot(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !loaded.Market.SpecialistPurchasePending || loaded.Market.SpecialistPurchaseExpectedID != 8 ||
+		loaded.Market.SpecialistPurchaseOperationID != "specialist-operation" || loaded.Market.SpecialistPurchaseResponseToken != "specialist-operation/2" ||
+		!loaded.Market.SpecialistPurchaseResponseConfirmedAt.Equal(now.Add(time.Second)) ||
+		!loaded.Market.SpecialistPurchaseResponseExpiresAt.Equal(now.Add(7*24*time.Hour+time.Hour)) ||
+		loaded.Market.SpecialistPurchaseRubyResourceID != 2 || loaded.Market.SpecialistPurchaseResponseRuby != 8250 ||
+		!loaded.Market.SpecialistPurchaseResponseRubyAt.Equal(now.Add(time.Second)) || loaded.Market.LatestSpecialistPurchase.Outcome != "verifying" {
+		t.Fatalf("persisted specialist recovery = %+v", loaded.Market)
+	}
+	if len(loaded.Player.ResourceObservations) != 0 {
+		t.Fatalf("snapshot restored live resource authority: %+v", loaded.Player.ResourceObservations)
+	}
+	if loaded.Market.BoostersObservedGeneration != 0 {
+		t.Fatalf("snapshot restored live booster authority: %d", loaded.Market.BoostersObservedGeneration)
 	}
 }
 

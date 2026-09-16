@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"slices"
 	"strconv"
 	"strings"
@@ -114,6 +115,7 @@ func applyScalableEventSnapshot(
 		return false, fmt.Errorf("decode event snapshot: %w", err)
 	}
 	changed := false
+	previousInventory := gameState.EventScores.Inventory
 	activeByEvent := make(map[int64]State.EventAvailability, len(payload.Events))
 	globalEffects := map[int64]State.GlobalEffectAvailability{}
 	globalEffectBoosterOffers := map[int64]State.GlobalEffectBoosterOffer{}
@@ -134,9 +136,14 @@ func applyScalableEventSnapshot(
 				if globalEffectID <= 0 || effectRemainingSec <= 0 {
 					continue
 				}
+				endsAt := observedAt.Add(time.Duration(effectRemainingSec) * time.Second).UTC().Truncate(time.Minute)
+				if previous, found := previousInventory.GlobalEffects[globalEffectID]; found &&
+					State.SameEventOccurrence(previous.EndsAt, endsAt) {
+					endsAt = previous.EndsAt
+				}
 				globalEffects[globalEffectID] = State.GlobalEffectAvailability{
 					GlobalEffectID: globalEffectID, Strength: strength,
-					EndsAt: observedAt.Add(time.Duration(effectRemainingSec) * time.Second).UTC().Truncate(time.Minute),
+					EndsAt: endsAt,
 				}
 			}
 		case globalEffectBoostersEventID:
@@ -151,13 +158,17 @@ func applyScalableEventSnapshot(
 			}
 		}
 	}
-	previousInventory := gameState.EventScores.Inventory
 	if gameState.ReplaceEventInventory(State.EventInventoryState{
 		ObservedAt: observedAt, ActiveByEvent: activeByEvent,
 		GlobalEffectsObservedAt: observedAt.UTC(), GlobalEffects: globalEffects,
-		GlobalEffectBoosterOffers:    globalEffectBoosterOffers,
-		GlobalEffectBoostsObservedAt: previousInventory.GlobalEffectBoostsObservedAt,
-		GlobalEffectBoosts:           previousInventory.GlobalEffectBoosts,
+		GlobalEffectBoosterOffers:      globalEffectBoosterOffers,
+		GlobalEffectBoostsObservedAt:   previousInventory.GlobalEffectBoostsObservedAt,
+		GlobalEffectBoosts:             previousInventory.GlobalEffectBoosts,
+		GlobalEffectReadObservedAt:     previousInventory.GlobalEffectReadObservedAt,
+		GlobalEffectReadGeneration:     previousInventory.GlobalEffectReadGeneration,
+		GlobalEffectBaselineObservedAt: previousInventory.GlobalEffectBaselineObservedAt,
+		GlobalEffectBaselineGeneration: previousInventory.GlobalEffectBaselineGeneration,
+		GlobalEffectPurchases:          previousInventory.GlobalEffectPurchases,
 	}) {
 		changed = true
 	}
@@ -255,29 +266,22 @@ func reduceGlobalEffectBoosterInfo(
 	_ context.Context,
 	frame Protocol.Frame,
 	gameState *State.GameState,
-	_ *GameData.Store,
+	gameData *GameData.Store,
 ) ([]string, bool, error) {
-	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+	if frame.ResponseCode == nil || *frame.ResponseCode != 0 || len(frame.Payload) == 0 {
 		return nil, false, nil
 	}
-	var root map[string]json.RawMessage
-	if err := json.Unmarshal(frame.Payload, &root); err != nil {
-		return nil, false, fmt.Errorf("decode global-effect booster status: %w", err)
+	if !gameState.EventScores.Inventory.GlobalEffectsObservedAt.IsZero() &&
+		frame.ReceivedAt.Before(gameState.EventScores.Inventory.GlobalEffectsObservedAt) {
+		return nil, false, nil
 	}
-	if nested := root["bie"]; len(nested) > 0 {
-		if err := json.Unmarshal(nested, &root); err != nil {
-			return nil, false, fmt.Errorf("decode nested global-effect booster status: %w", err)
-		}
+	boosted, err := decodeGlobalEffectBoosterIDs(frame.Payload)
+	if err != nil {
+		return nil, false, err
 	}
-	var boostedIDs []wireInt64
-	if err := json.Unmarshal(root["GE"], &boostedIDs); err != nil {
-		return nil, false, fmt.Errorf("decode boosted global-effect ids: %w", err)
-	}
-	boosted := make(map[int64]struct{}, len(boostedIDs))
-	for _, id := range boostedIDs {
-		if id > 0 {
-			boosted[int64(id)] = struct{}{}
-		}
+	if !gameState.EventScores.Inventory.GlobalEffectBoostsObservedAt.IsZero() &&
+		frame.ReceivedAt.Before(gameState.EventScores.Inventory.GlobalEffectBoostsObservedAt) {
+		return nil, false, nil
 	}
 	statuses := make(map[int64]State.GlobalEffectBoostState, len(gameState.EventScores.Inventory.GlobalEffects))
 	for globalEffectID, effect := range gameState.EventScores.Inventory.GlobalEffects {
@@ -285,16 +289,168 @@ func reduceGlobalEffectBoosterInfo(
 			continue
 		}
 		_, active := boosted[globalEffectID]
+		if previous, found := gameState.EventScores.Inventory.GlobalEffectBoosts[globalEffectID]; found &&
+			previous.Boosted && State.SameEventOccurrence(previous.OccurrenceEndsAt, effect.EndsAt) {
+			active = true
+		}
 		statuses[globalEffectID] = State.GlobalEffectBoostState{
 			GlobalEffectID: globalEffectID, Boosted: active,
 			OccurrenceEndsAt: effect.EndsAt, ObservedAt: frame.ReceivedAt.UTC(),
+			ConnectionGeneration: gameState.Session.ConnectionGeneration,
 		}
 	}
 	inventory := gameState.EventScores.Inventory
+	inventory.GlobalEffectPurchases = cloneGlobalEffectPurchaseRecords(inventory.GlobalEffectPurchases)
 	inventory.GlobalEffectBoostsObservedAt = frame.ReceivedAt.UTC()
 	inventory.GlobalEffectBoosts = statuses
+	purchaseEvidence := false
+	for globalEffectID, status := range statuses {
+		if globalEffectID != GameData.FortressDailyGlobalEffectID || !status.Boosted {
+			continue
+		}
+		_, explicitlyBoosted := boosted[globalEffectID]
+		previousStatus := gameState.EventScores.Inventory.GlobalEffectBoosts[globalEffectID]
+		record, found := inventory.GlobalEffectPurchases[globalEffectID]
+		if !found || !State.SameEventOccurrence(record.OccurrenceEndsAt, status.OccurrenceEndsAt) {
+			record = State.GlobalEffectPurchaseRecord{
+				GlobalEffectID: globalEffectID, OccurrenceEndsAt: status.OccurrenceEndsAt,
+				ExpiresAt: status.OccurrenceEndsAt, RequestOpcode: "agb",
+			}
+		}
+		record.Outcome = State.GlobalEffectPurchaseConfirmed
+		if explicitlyBoosted {
+			record.ActivationObservedAt = frame.ReceivedAt.UTC()
+		} else if record.ActivationObservedAt.IsZero() && previousStatus.Boosted {
+			record.ActivationObservedAt = previousStatus.ObservedAt
+		}
+		record.DebitUnverified = !updateGlobalEffectPurchaseRubyEvidence(&record, gameState, gameData)
+		if explicitlyBoosted {
+			record.Detail = "The server confirmed that the daily fortress-speed boost is active"
+		} else if record.Detail == "" {
+			record.Detail = "An earlier server confirmation remains authoritative for this daily fortress-speed occurrence"
+		}
+		if inventory.GlobalEffectPurchases == nil {
+			inventory.GlobalEffectPurchases = map[int64]State.GlobalEffectPurchaseRecord{}
+		}
+		inventory.GlobalEffectPurchases[globalEffectID] = record
+		purchaseEvidence = true
+	}
 	changed := gameState.ReplaceEventInventory(inventory)
-	return []string{"events", "event-scores", "global-effects"}, changed, nil
+	domains := []string{"events", "event-scores", "global-effects"}
+	if purchaseEvidence {
+		domains = append(domains, globalEffectPurchaseDurabilityDomain)
+	}
+	return domains, changed, nil
+}
+
+func decodeGlobalEffectBoosterIDs(raw json.RawMessage) (map[int64]struct{}, error) {
+	var root map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &root); err != nil {
+		return nil, fmt.Errorf("decode global-effect booster status: %w", err)
+	}
+	if nested := root["bie"]; len(nested) > 0 {
+		if err := json.Unmarshal(nested, &root); err != nil {
+			return nil, fmt.Errorf("decode nested global-effect booster status: %w", err)
+		}
+	}
+	rawIDs, present := root["GE"]
+	trimmed := bytes.TrimSpace(rawIDs)
+	if !present || len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) || trimmed[0] != '[' {
+		return nil, fmt.Errorf("decode boosted global-effect ids: GE must be an explicit array")
+	}
+	var boostedIDs []json.RawMessage
+	if err := json.Unmarshal(trimmed, &boostedIDs); err != nil {
+		return nil, fmt.Errorf("decode boosted global-effect ids: %w", err)
+	}
+	boosted := make(map[int64]struct{}, len(boostedIDs))
+	for _, rawID := range boostedIDs {
+		id, valid := rawJSONInt64(rawID)
+		if !valid || id <= 0 {
+			return nil, fmt.Errorf("decode boosted global-effect ids: GE contains a non-positive integer")
+		}
+		boosted[id] = struct{}{}
+	}
+	return boosted, nil
+}
+
+func reduceGlobalEffectPurchaseAcknowledgement(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	gameData *GameData.Store,
+) ([]string, bool, error) {
+	if gameState == nil || frame.ResponseCode == nil {
+		return nil, false, nil
+	}
+	inventory := gameState.EventScores.Inventory
+	inventory.GlobalEffectPurchases = cloneGlobalEffectPurchaseRecords(inventory.GlobalEffectPurchases)
+	record, found := inventory.GlobalEffectPurchases[GameData.FortressDailyGlobalEffectID]
+	if !found || !globalEffectPurchaseResponseMatches(record, frame) {
+		return nil, false, nil
+	}
+	code := *frame.ResponseCode
+	record.ResultCode = &code
+	record.ResultObservedAt = frame.ReceivedAt.UTC()
+	verifiedDebit := updateGlobalEffectPurchaseRubyEvidence(&record, gameState, gameData)
+	record.DebitUnverified = !verifiedDebit
+	if code == 0 {
+		if record.Outcome != State.GlobalEffectPurchaseConfirmed {
+			record.Outcome = State.GlobalEffectPurchaseAccepted
+			record.Detail = "The game accepted the boost purchase; awaiting current boosted-state confirmation"
+		}
+	} else {
+		record.Outcome = State.GlobalEffectPurchaseRejected
+		record.Detail = fmt.Sprintf("The game rejected the boost purchase with result code %d", code)
+	}
+	inventory.GlobalEffectPurchases[record.GlobalEffectID] = record
+	changed := gameState.ReplaceEventInventory(inventory)
+	return []string{"events", "event-scores", "global-effects", globalEffectPurchaseDurabilityDomain}, changed, nil
+}
+
+func cloneGlobalEffectPurchaseRecords(input map[int64]State.GlobalEffectPurchaseRecord) map[int64]State.GlobalEffectPurchaseRecord {
+	result := make(map[int64]State.GlobalEffectPurchaseRecord, len(input))
+	for id, record := range input {
+		if record.ResultCode != nil {
+			code := *record.ResultCode
+			record.ResultCode = &code
+		}
+		result[id] = record
+	}
+	return result
+}
+
+func globalEffectPurchaseResponseMatches(record State.GlobalEffectPurchaseRecord, frame Protocol.Frame) bool {
+	if record.ResponseToken != "" && frame.ResponseToken == record.ResponseToken {
+		return true
+	}
+	return record.OperationID != "" && frame.CausationOperationID == record.OperationID
+}
+
+func updateGlobalEffectPurchaseRubyEvidence(record *State.GlobalEffectPurchaseRecord, gameState *State.GameState, gameData *GameData.Store) bool {
+	if record == nil || gameState == nil || gameData == nil || record.RubyBeforeObservedAt.IsZero() {
+		return false
+	}
+	resourceID, found := gameData.ResourceIDForJSONKey("C2")
+	if !found || resourceID <= 0 {
+		return false
+	}
+	observation := gameState.Player.ResourceObservations[State.ResourceID(resourceID)]
+	value, found := gameState.Player.Resources[State.ResourceID(resourceID)]
+	minimumObservedAt := record.RubyBeforeObservedAt
+	if record.DispatchedAt.After(minimumObservedAt) {
+		minimumObservedAt = record.DispatchedAt
+	}
+	if !found || observation.ObservedAt.IsZero() || !observation.ObservedAt.After(minimumObservedAt) ||
+		observation.ConnectionGeneration != record.ConnectionGeneration {
+		return false
+	}
+	record.RubyAfter = int64(math.Floor(value))
+	record.RubyAfterKnown = true
+	record.RubyAfterObservedAt = observation.ObservedAt
+	record.ObservedRubyChange = record.RubyBefore - record.RubyAfter
+	// A matching aggregate balance change is useful evidence but cannot prove
+	// this command caused the debit; manual spending can occur between reads.
+	return false
 }
 
 func applyKhanRageSnapshot(

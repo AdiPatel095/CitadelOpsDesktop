@@ -794,6 +794,50 @@ export interface MarketStateV2 {
 		expiresAt?: string;
 		observedAt?: string;
 	};
+	latestFeastPurchase?: {
+		outcome: string;
+		feastId: number;
+		chargedCastleId: number;
+		chargedKingdomId: number;
+		attemptedAt: string;
+		updatedAt: string;
+		expectedEffectiveCost: number;
+		foodBefore?: number;
+		foodBeforeKnown: boolean;
+		foodBeforeObservedAt?: string;
+		foodAfter?: number;
+		foodAfterKnown: boolean;
+		foodAfterObservedAt?: string;
+		debitVerification: string;
+		activationConfirmed: boolean;
+		confirmedRemainingSec?: number;
+		confirmedExpiresAt?: string;
+		activationConfirmedAt?: string;
+		detail?: string;
+	};
+	latestSpecialistPurchase?: {
+		outcome: string;
+		specialistId: number;
+		opcode: string;
+		attemptedAt: string;
+		updatedAt: string;
+		minimumDays: number;
+		validatedMaximumCost: number;
+		configuredRubyCeiling: number;
+		minimumRubyReserve: number;
+		timerBefore?: string;
+		timerAfter?: string;
+		timerAfterObservedAt?: string;
+		rubyBefore?: number;
+		rubyBeforeKnown: boolean;
+		rubyBeforeObservedAt?: string;
+		rubyAfter?: number;
+		rubyAfterKnown: boolean;
+		rubyAfterObservedAt?: string;
+		debitVerification: string;
+		activationConfirmed: boolean;
+		detail?: string;
+	};
 	feastCostReductionPercent?: number;
 	feastCostReductionObservedAt?: string;
 	caravanLevel?: number;
@@ -847,11 +891,13 @@ export interface EquipmentOptimizeRequest {
 	leaderId: number;
 	combatMode: 'pvp' | 'pve';
 	priorities: EquipmentPriorityV2[];
+	resultCount?: number;
 }
 
 export interface EquipmentEffectTotalV2 {
 	definitionId: number;
 	value: number;
+	capId?: number;
 	cap?: number;
 	capped: boolean;
 }
@@ -867,8 +913,10 @@ export interface EquipmentOptimizeResponse {
 	leaderKind: 'commander' | 'castellan';
 	leaderId: number;
 	stateRevision: number;
+	snapshotFingerprint: string;
 	current: EquipmentLoadoutV2;
 	proposed: EquipmentLoadoutV2;
+	alternatives: EquipmentLoadoutV2[];
 	candidates: {
 		equipmentBySlot: Record<string, number>;
 		gems: number;
@@ -1829,6 +1877,33 @@ export interface GlobalEffectBoostStateV2 {
 	boosted: boolean;
 	occurrenceEndsAt: string;
 	observedAt: string;
+	connectionGeneration?: number;
+}
+
+export interface GlobalEffectPurchaseRecordV2 {
+	globalEffectId: number;
+	occurrenceEndsAt: string;
+	expiresAt: string;
+	quotedRubyCost: number;
+	quotedBonusValue: number;
+	minimumRubyReserve: number;
+	rubyBefore: number;
+	rubyBeforeObservedAt: string;
+	requestedAt: string;
+	dispatchedAt?: string;
+	requestOpcode: string;
+	connectionGeneration?: number;
+	operationId?: string;
+	resultCode?: number;
+	resultObservedAt?: string;
+	activationObservedAt?: string;
+	rubyAfter?: number;
+	rubyAfterKnown?: boolean;
+	rubyAfterObservedAt?: string;
+	observedRubyChange?: number;
+	debitUnverified: boolean;
+	outcome: 'unresolved' | 'accepted' | 'confirmed' | 'rejected';
+	detail?: string;
 }
 
 export interface EventInventoryStateV2 {
@@ -1839,6 +1914,7 @@ export interface EventInventoryStateV2 {
 	globalEffectBoosterOffers?: Record<string, GlobalEffectBoosterOfferV2> | null;
 	globalEffectBoostsObservedAt?: string;
 	globalEffectBoosts?: Record<string, GlobalEffectBoostStateV2> | null;
+	globalEffectPurchases?: Record<string, GlobalEffectPurchaseRecordV2> | null;
 }
 
 export interface EventScoreStateV2 {
@@ -2201,6 +2277,8 @@ export interface AutoBuyerSpecialistV1 {
   name: string;
   durationSec: number;
   baseRubyCost: number;
+	validatedMaximumRubyCost?: number;
+	priceProvenance?: string;
   bonusPercent?: number;
 }
 
@@ -2227,7 +2305,16 @@ export interface AutoBuyerProjectionV1 {
   packages: AutoBuyerPackageV1[];
   specialists: AutoBuyerSpecialistV1[];
   feasts: AutoBuyerFeastV1[];
-  timedOffers: AutoBuyerCapabilityV1;
+	timedOffers: AutoBuyerCapabilityV1;
+	feastAutomaticSource?: AutoBuyerCapabilityV1;
+	specialistUpkeep?: AutoBuyerCapabilityV1;
+	specialistRuntime?: {
+		timersObservedAt?: string;
+		timersCurrentSession: boolean;
+		rubyBalance?: number;
+		rubyObservedAt?: string;
+		rubyCurrentSession: boolean;
+	};
 }
 
 export interface LanguageMetadata {
@@ -2328,6 +2415,11 @@ export interface IntentReceipt {
   attempt?: number;
 	plan?: IntentPlan;
 	exchanges?: IntentCommandExchange[];
+	evidence?: Array<{
+		kind: string;
+		observedAt: string;
+		data: unknown;
+	}>;
 	completedStepIndexes?: number[];
 	error?: string;
 	failure?: IntentFailurePresentation;

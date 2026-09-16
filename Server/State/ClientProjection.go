@@ -46,6 +46,8 @@ type ClientMarketState struct {
 	Castles                      map[CastleID]MarketCastleState `json:"castles"`
 	Boosters                     map[int]MarketBoosterState     `json:"boosters"`
 	Feast                        MarketFeastState               `json:"feast"`
+	LatestFeastPurchase          *FeastPurchaseEvidence         `json:"latestFeastPurchase,omitempty"`
+	LatestSpecialistPurchase     *SpecialistPurchaseEvidence    `json:"latestSpecialistPurchase,omitempty"`
 	FeastCostReductionPercent    *int                           `json:"feastCostReductionPercent,omitempty"`
 	FeastCostReductionObservedAt *time.Time                     `json:"feastCostReductionObservedAt,omitempty"`
 	CaravanLevelLoaded           bool                           `json:"caravanLevelLoaded"`
@@ -412,6 +414,14 @@ func newClientMarket(source MarketState) ClientMarketState {
 	result := ClientMarketState{
 		Castles: map[CastleID]MarketCastleState{}, Boosters: source.Boosters, Feast: source.Feast,
 	}
+	if !source.LatestFeastPurchase.AttemptedAt.IsZero() {
+		evidence := source.LatestFeastPurchase
+		result.LatestFeastPurchase = &evidence
+	}
+	if !source.LatestSpecialistPurchase.AttemptedAt.IsZero() {
+		evidence := source.LatestSpecialistPurchase
+		result.LatestSpecialistPurchase = &evidence
+	}
 	if !source.BoostersObservedAt.IsZero() {
 		observedAt := source.BoostersObservedAt
 		result.BoostersObservedAt = &observedAt
@@ -536,6 +546,7 @@ func clientEventInventory(source EventInventoryState) EventInventoryState {
 		GlobalEffectBoosterOffers:    cloneMap(source.GlobalEffectBoosterOffers),
 		GlobalEffectBoostsObservedAt: source.GlobalEffectBoostsObservedAt,
 		GlobalEffectBoosts:           cloneMap(source.GlobalEffectBoosts),
+		GlobalEffectPurchases:        cloneGlobalEffectPurchaseMap(source.GlobalEffectPurchases),
 	}
 }
 
