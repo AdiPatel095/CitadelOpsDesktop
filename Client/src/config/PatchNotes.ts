@@ -57,6 +57,14 @@ export function sortPatchNoteItems(items: readonly PatchNoteItem[]): PatchNoteIt
 
 const PATCH_NOTES_RELEASES_UNSORTED: PatchNotesRelease[] = [
   {
+    version: '2.4.0-beta.4',
+    subtitle: 'Beta: reliable Auto Buyer and Auto Booster execution',
+    date: '2026-09-15',
+    items: [
+      { kind: 'fixed', text: 'Fixed Auto Buyer and Auto Booster actions stopping before execution because their resource claims were not recognized.' },
+    ],
+  },
+  {
     version: '2.4.0-beta.3',
     subtitle: 'Beta: safer upkeep, confirmed boosts, and equipment choices',
     date: '2026-09-15',

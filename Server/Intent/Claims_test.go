@@ -61,6 +61,50 @@ func TestAdvisorClaimsDeclareTypedResources(t *testing.T) {
 	}
 }
 
+func TestAutoBuyerAndBoosterClaimsDeclareTypedResources(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Session.ServerURL = "https://world.example"
+	gameState.Player.ID = 42
+	gameState.Castles[10] = State.CastleState{ID: 10, KingdomID: 0}
+
+	claimSets := map[string][]string{
+		"booster refresh":      {"shop", "events", "global-effect:2", "account-resources"},
+		"booster purchase":     {"shop", "events", "global-effect:2", "account-resources"},
+		"package history":      {"shop", "shop:purchase-history"},
+		"package purchase":     {"shop", "shop:table:2810", "shop:purchase-history", "account-resources"},
+		"buyer refresh":        {"shop", "market:boosters"},
+		"buyer feast refresh":  {"shop", "market:boosters", "castle-directory", "account-resources"},
+		"specialist purchase":  {"shop", "market:boosters", "account-resources", "specialist:10"},
+		"specialist reconcile": {"shop", "market:boosters", "account-resources"},
+		"feast purchase":       {"shop", "market:boosters", "castle-focus", "castle-directory", "account-resources", "castle:10"},
+		"feast reconcile":      {"shop", "market:boosters", "castle-directory", "account-resources", "castle:10"},
+	}
+	resources := make(map[string][]ResourceKey, len(claimSets))
+	for name, claims := range claimSets {
+		resources[name] = legacyClaimsToResources(gameState, claims)
+		if hasLegacyResource(resources[name]) {
+			t.Fatalf("%s retained an unmapped legacy claim: %#v", name, resources[name])
+		}
+	}
+
+	for _, pair := range [][2]string{
+		{"booster refresh", "booster purchase"},
+		{"buyer refresh", "specialist purchase"},
+		{"buyer feast refresh", "feast purchase"},
+		{"specialist purchase", "specialist reconcile"},
+		{"feast purchase", "feast reconcile"},
+	} {
+		if !resourcesOverlap(resources[pair[0]], resources[pair[1]]) {
+			t.Fatalf("%s does not overlap %s", pair[0], pair[1])
+		}
+	}
+
+	unknown := legacyClaimsToResources(gameState, []string{"buyer-unmapped-claim"})
+	if !hasLegacyResource(unknown) {
+		t.Fatalf("unknown claim stopped failing closed: %#v", unknown)
+	}
+}
+
 func TestAutoBirdCycleClaimsIsolateCastlesButYieldToClear(t *testing.T) {
 	gameState := State.NewGameState()
 	clear := legacyClaimsToResources(gameState, []string{"auto-bird-cycle"})

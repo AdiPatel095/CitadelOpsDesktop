@@ -206,7 +206,9 @@ func TestAutoBoosterEnginePipelinePurchasesOnceForBothResponseOrderings(t *testi
 			application := &Application{DataDir: dataDir, State: stateStore, GameData: manager, Configuration: configuration, Ingest: pipeline}
 			pipeline.SetDurabilityFence(application.saveStateEvent)
 			sender := &autoBoosterIntegrationSender{application: application, pipeline: pipeline, endsAt: endsAt, bieFirst: bieFirst}
-			engine := Intent.NewEngine(Intent.NewRegistry(), stateStore, manager, sender, pipeline)
+			intentRegistry := Intent.NewRegistry()
+			intentRegistry.EnforceResourceDeclarations()
+			engine := Intent.NewEngine(intentRegistry, stateStore, manager, sender, pipeline)
 			application.Intents = engine
 			if err := application.registerAutoBoosterIntents(); err != nil {
 				t.Fatal(err)
@@ -268,7 +270,9 @@ func TestAutoBoosterEnginePipelinePurchasesOnceForBothResponseOrderings(t *testi
 			}
 			restartedApplication := &Application{DataDir: dataDir, State: restartedStore, GameData: manager, Configuration: configuration, Ingest: restartedPipeline}
 			restartedSender := &autoBoosterIntegrationSender{application: restartedApplication, pipeline: restartedPipeline, endsAt: endsAt}
-			restartedEngine := Intent.NewEngine(Intent.NewRegistry(), restartedStore, manager, restartedSender, restartedPipeline)
+			restartedIntentRegistry := Intent.NewRegistry()
+			restartedIntentRegistry.EnforceResourceDeclarations()
+			restartedEngine := Intent.NewEngine(restartedIntentRegistry, restartedStore, manager, restartedSender, restartedPipeline)
 			restartedApplication.Intents = restartedEngine
 			if err := restartedApplication.registerAutoBoosterIntents(); err != nil {
 				t.Fatal(err)
@@ -281,6 +285,37 @@ func TestAutoBoosterEnginePipelinePurchasesOnceForBothResponseOrderings(t *testi
 				t.Fatalf("restart replayed purchase: receipt=%+v opcodes=%v", restartedReceipt, restartedSender.opcodes)
 			}
 		})
+	}
+}
+
+func TestAutoBoosterRefreshExecutesWithEnforcedResourceDeclarations(t *testing.T) {
+	now := time.Now().UTC().Add(-time.Second).Truncate(time.Second)
+	endsAt := now.Add(time.Hour).Truncate(time.Minute)
+	gameState := State.NewGameState()
+	gameState.Session.LoggedIn = true
+	gameState.Session.SocketReady = true
+	gameState.Session.ConnectionGeneration = 12
+	stateStore := State.NewStore(gameState)
+	manager := autoBoosterIntentGameDataManager(t)
+	registry := Ingest.NewRegistry()
+	if err := Ingest.RegisterCoreReducers(registry); err != nil {
+		t.Fatal(err)
+	}
+	pipeline := Ingest.NewPipeline(stateStore, manager, registry)
+	sender := &autoBoosterIndeterminateSender{pipeline: pipeline, endsAt: endsAt}
+	intentRegistry := Intent.NewRegistry()
+	intentRegistry.EnforceResourceDeclarations()
+	engine := Intent.NewEngine(intentRegistry, stateStore, manager, sender, pipeline)
+	application := &Application{State: stateStore, GameData: manager, Ingest: pipeline, Intents: engine}
+	if err := application.registerAutoBoosterIntents(); err != nil {
+		t.Fatal(err)
+	}
+	receipt := engine.Submit(t.Context(), Intent.Request{
+		ID: "auto-booster-refresh", Name: "autoBooster.refresh", Actor: "automation:autoBooster",
+		AutomationLane: "autoBooster", Arguments: json.RawMessage(`{}`),
+	})
+	if receipt.Status != Intent.StatusSucceeded || sender.gbdSends != 1 || sender.agbSends != 0 {
+		t.Fatalf("refresh receipt=%+v gbd=%d agb=%d", receipt, sender.gbdSends, sender.agbSends)
 	}
 }
 
@@ -315,7 +350,9 @@ func TestAutoBoosterIndeterminateDispatchStaysBlockedUntilTerminalGBDReconciliat
 	}
 	application := &Application{DataDir: t.TempDir(), State: stateStore, GameData: manager, Configuration: configuration, Ingest: pipeline}
 	sender := &autoBoosterIndeterminateSender{pipeline: pipeline, endsAt: endsAt}
-	engine := Intent.NewEngine(Intent.NewRegistry(), stateStore, manager, sender, pipeline)
+	intentRegistry := Intent.NewRegistry()
+	intentRegistry.EnforceResourceDeclarations()
+	engine := Intent.NewEngine(intentRegistry, stateStore, manager, sender, pipeline)
 	application.Intents = engine
 	if err := application.registerAutoBoosterIntents(); err != nil {
 		t.Fatal(err)
@@ -366,6 +403,7 @@ type autoBoosterIndeterminateSender struct {
 	pipeline       *Ingest.Pipeline
 	endsAt         time.Time
 	agbSends       int
+	gbdSends       int
 	lastResponseAt time.Time
 }
 
@@ -388,6 +426,7 @@ func (sender *autoBoosterIndeterminateSender) Send(ctx context.Context, payload 
 	if command.Opcode != "gbd" {
 		return fmt.Errorf("unexpected Auto Booster command %q", command.Opcode)
 	}
+	sender.gbdSends++
 	receivedAt := time.Now().UTC()
 	if !receivedAt.After(sender.lastResponseAt) {
 		receivedAt = sender.lastResponseAt.Add(time.Microsecond)

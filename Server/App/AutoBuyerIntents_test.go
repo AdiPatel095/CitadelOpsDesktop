@@ -173,6 +173,31 @@ func TestPlanAutoBuyerBoostersRefreshUsesOfficialFeastContextOrder(t *testing.T)
 	}
 }
 
+func TestAutoBuyerBoostersRefreshExecutesWithEnforcedResourceDeclarations(t *testing.T) {
+	t.Run("specialists", func(t *testing.T) {
+		_, engine, sender := newAutoBuyerSpecialistIntegrationHarness(t)
+		defer sender.router.Close()
+		receipt := engine.Submit(t.Context(), Intent.Request{
+			ID: "buyer-specialists-refresh", Name: "autoBuyer.boosters.refresh",
+			Actor: "automation:autoBuyer", AutomationLane: "autoBuyer", Arguments: json.RawMessage(`{}`),
+		})
+		if receipt.Status != Intent.StatusSucceeded || len(receipt.Exchanges) != 1 || receipt.Exchanges[0].Command.Opcode != "boi" {
+			t.Fatalf("specialist refresh receipt = %#v", receipt)
+		}
+	})
+
+	t.Run("feast", func(t *testing.T) {
+		_, engine, sender, _ := newAutoBuyerFeastIntegrationHarness(t, false)
+		receipt := engine.Submit(t.Context(), Intent.Request{
+			ID: "buyer-feast-refresh", Name: "autoBuyer.boosters.refresh",
+			Actor: "automation:autoBuyer", AutomationLane: "autoBuyer", Arguments: json.RawMessage(`{"feastContext":true}`),
+		})
+		if receipt.Status != Intent.StatusSucceeded || strings.Join(sender.opcodes, ",") != "fce,dcl,boi" {
+			t.Fatalf("feast refresh receipt = %#v opcodes=%v", receipt, sender.opcodes)
+		}
+	})
+}
+
 func TestVerifyAutoBuyerFeastRefreshRejectsOmittedBOIFeast(t *testing.T) {
 	cutoff := time.Now().UTC().Truncate(time.Second)
 	request, _ := json.Marshal(autoBuyerBoostersRefreshRequest{FeastContext: true, FeastRefreshAfter: cutoff})
@@ -660,7 +685,9 @@ func newAutoBuyerSpecialistIntegrationHarness(t *testing.T) (*Application, *Inte
 	application := &Application{DataDir: dataDir, State: store, GameData: gameData, Configuration: configuration, Ingest: pipeline}
 	sender := &autoBuyerSpecialistIntegrationSender{pipeline: pipeline, expires: map[int]time.Time{}, rubies: 100_000, sentByID: map[int]int{}}
 	sender.router = Outbound.NewRouter(t.Context(), Outbound.Config{Ready: func() bool { return true }, Send: func(ctx context.Context, payload []byte) error { return sender.dispatch(ctx, payload) }})
-	engine := Intent.NewEngine(Intent.NewRegistry(), store, gameData, sender, pipeline)
+	intentRegistry := Intent.NewRegistry()
+	intentRegistry.EnforceResourceDeclarations()
+	engine := Intent.NewEngine(intentRegistry, store, gameData, sender, pipeline)
 	application.Intents = engine
 	if err := application.registerAutoBuyerIntents(); err != nil {
 		t.Fatal(err)
@@ -871,7 +898,9 @@ func newAutoBuyerFeastIntegrationHarness(
 	sender := &autoBuyerFeastArmIntegrationSender{
 		application: application, pipeline: pipeline, completePurchase: completePurchase,
 	}
-	engine := Intent.NewEngine(Intent.NewRegistry(), stateStore, gameData, sender, pipeline)
+	intentRegistry := Intent.NewRegistry()
+	intentRegistry.EnforceResourceDeclarations()
+	engine := Intent.NewEngine(intentRegistry, stateStore, gameData, sender, pipeline)
 	application.Intents = engine
 	if err := application.registerAutoBuyerIntents(); err != nil {
 		t.Fatal(err)
