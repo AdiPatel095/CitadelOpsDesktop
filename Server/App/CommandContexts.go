@@ -207,6 +207,7 @@ func (application *Application) resolveCRACommandDependencies(
 		InvasionGuard        json.RawMessage    `json:"_citadelInvasionGuard"`
 		CommanderID          *State.CommanderID `json:"LID"`
 		TowerCapacityCapture json.RawMessage    `json:"towerCapacityCapture"`
+		FortressVerification json.RawMessage    `json:"_citadelFortressVerification"`
 		ContextMode          string             `json:"_citadelContextMode"`
 	}
 	if err := json.Unmarshal(payload, &fields); err != nil {
@@ -243,6 +244,23 @@ func (application *Application) resolveCRACommandDependencies(
 	setup, err := craSetupContextSteps(payload)
 	if err != nil {
 		return Intent.CommandDependencyPlan{}, err
+	}
+	if fields.TargetTypeID == State.MapTypeKingdomFortress {
+		if len(fields.FortressVerification) == 0 {
+			return Intent.CommandDependencyPlan{}, fmt.Errorf("fortress CRA route is missing its exact-target verification")
+		}
+		var verification fortressTargetVerificationRequest
+		if err := decodeIntentArguments(fields.FortressVerification, &verification); err != nil ||
+			verification.SourceCastleID <= 0 || verification.KingdomID != fields.KingdomID ||
+			verification.TargetX != fields.TargetX || verification.TargetY != fields.TargetY {
+			return Intent.CommandDependencyPlan{}, fmt.Errorf("fortress CRA route has invalid exact-target verification")
+		}
+		for index := range setup {
+			if setup[index].Opcode == "adi" {
+				setup[index].FinalDispatchAction = "fortress.target.verification.guard"
+				setup[index].FinalDispatchArguments = append(json.RawMessage(nil), fields.FortressVerification...)
+			}
+		}
 	}
 	if fields.TargetTypeID == State.MapTypeForeignLord || fields.TargetTypeID == State.MapTypeBloodcrow {
 		if len(fields.InvasionGuard) == 0 {

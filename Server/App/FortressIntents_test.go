@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -32,13 +33,16 @@ func TestFortressAttackBuildsOneFullDirewolfFlankWaveWithoutPremiumBooster(t *te
 		t.Fatalf("fortress admission = %#v", plan.Admission)
 	}
 	var deferred Intent.Step
-	gaaCount, gaaIndex, launchIndex := 0, -1, -1
+	gaaCount, gaaIndex, guardIndex, launchIndex := 0, -1, -1, -1
 	for index, step := range plan.Steps {
 		if step.Opcode == "gaa" {
 			gaaCount++
 			gaaIndex = index
 			if step.ResponseBarrier != Intent.ResponseBarrierCommitted {
 				t.Fatalf("fortress target refresh is not committed: %#v", step)
+			}
+			if step.FinalDispatchAction != "fortress.target.verification.arm" {
+				t.Fatalf("fortress target refresh does not arm exact-response proof: %#v", step)
 			}
 			var payload struct {
 				X1 int `json:"AX1"`
@@ -53,12 +57,15 @@ func TestFortressAttackBuildsOneFullDirewolfFlankWaveWithoutPremiumBooster(t *te
 				t.Fatalf("fortress pre-CRA refresh is not 1x1: %#v", payload)
 			}
 		}
+		if step.Action == "fortress.target.verification.guard" {
+			guardIndex = index
+		}
 		if step.Resolver == "fortress.attack.build" {
 			deferred = step
 			launchIndex = index
 		}
 	}
-	if gaaCount != 1 || gaaIndex < 0 || launchIndex < 0 || gaaIndex >= launchIndex {
+	if gaaCount != 1 || gaaIndex < 0 || guardIndex <= gaaIndex || launchIndex <= guardIndex {
 		t.Fatalf("fortress plan must commit one 1x1 GAA before CRA: %#v", plan.Steps)
 	}
 	if deferred.Resolver == "" || deferred.CommandDependencies == nil || deferred.CommandDependencies.Opcode != "cra" {
@@ -82,6 +89,9 @@ func TestFortressAttackBuildsOneFullDirewolfFlankWaveWithoutPremiumBooster(t *te
 	if resolved.Opcode != "cra" || body.Leader != 5 || len(body.Waves) != 1 {
 		t.Fatalf("fortress CRA body = %#v", body)
 	}
+	if resolved.FinalDispatchAction != "fortress.target.verification.guard" {
+		t.Fatalf("fortress CRA has no final exact-target guard: %#v", resolved)
+	}
 	wave := body.Waves[0]
 	if wave.Left.Units[0][0] != GameData.DirewolfUnitID || wave.Left.Units[0][1] <= 0 ||
 		wave.Right.Units[0][0] != GameData.DirewolfUnitID || wave.Right.Units[0][1] <= 0 ||
@@ -104,8 +114,11 @@ func TestFortressAttackEngineFinalizesOnlyWithAuthoritativeMovement(t *testing.T
 				t.Fatal(err)
 			}
 			pipeline := Ingest.NewPipeline(stateStore, beriIntentGameDataProvider{store: gameData}, ingestRegistry)
-			sender := &fortressEngineSender{pipeline: pipeline, projectMovement: projectMovement}
+			sender := &fortressEngineSender{
+				pipeline: pipeline, state: stateStore, projectMovement: projectMovement, connectionGeneration: 1,
+			}
 			intentRegistry := Intent.NewRegistry()
+			intentRegistry.EnforceResourceDeclarations()
 			engine := Intent.NewEngine(intentRegistry, stateStore, beriIntentGameDataProvider{store: gameData}, sender, pipeline)
 			application := &Application{State: stateStore, Intents: engine, Ingest: pipeline}
 			if err := intentRegistry.Register(Intent.Definition{Name: "fortress.attack", Effect: Intent.EffectLaunch, Planner: planFortressAttack}); err != nil {
@@ -117,10 +130,19 @@ func TestFortressAttackEngineFinalizesOnlyWithAuthoritativeMovement(t *testing.T
 			if err := engine.RegisterCommandDependencies("cra", application.resolveCRACommandDependencies); err != nil {
 				t.Fatal(err)
 			}
+			fortressGuard := func(ctx context.Context, arguments json.RawMessage) error {
+				if err := application.guardFortressTargetVerification(ctx, arguments); err != nil {
+					return err
+				}
+				sender.events = append(sender.events, "fortress:guard")
+				return nil
+			}
 			for name, action := range map[string]Intent.Action{
-				"game.ui.close":            func(context.Context, json.RawMessage) error { return nil },
-				"attack.cra.send.guard":    application.guardCRASend,
-				"attack.analytics.capture": application.captureAttackFeatureLaunch,
+				"game.ui.close":                      func(context.Context, json.RawMessage) error { return nil },
+				"attack.cra.send.guard":              application.guardCRASend,
+				"attack.analytics.capture":           application.captureAttackFeatureLaunch,
+				"fortress.target.verification.arm":   application.armFortressTargetVerification,
+				"fortress.target.verification.guard": fortressGuard,
 			} {
 				if err := engine.RegisterAction(name, action); err != nil {
 					t.Fatal(err)
@@ -130,6 +152,13 @@ func TestFortressAttackEngineFinalizesOnlyWithAuthoritativeMovement(t *testing.T
 				ID: "fortress-engine", Name: "fortress.attack", Actor: "automation:autoFortress", AutomationLane: "autoFortress",
 				Arguments: json.RawMessage(`{"sourceCastleId":10,"kingdomId":1,"targetX":101,"targetY":100,"commanderIds":[5],"horseTravelBoostId":-1,"minimumCommanderSpeedBonus":100}`),
 			})
+			committedIndex := slices.Index(sender.events, "gaa:committed")
+			guardIndex := slices.Index(sender.events, "fortress:guard")
+			adiIndex := slices.Index(sender.events, "adi")
+			craIndex := slices.Index(sender.events, "cra")
+			if committedIndex < 0 || guardIndex <= committedIndex || adiIndex <= guardIndex || craIndex <= adiIndex {
+				t.Fatalf("fortress dispatch order = %v", sender.events)
+			}
 			if projectMovement {
 				if receipt.Status != Intent.StatusSucceeded || sender.craSends != 1 {
 					t.Fatalf("confirmed engine receipt=%+v opcodes=%v", receipt, sender.opcodes)
@@ -179,26 +208,45 @@ func TestFortressAttackEngineFinalizesOnlyWithAuthoritativeMovement(t *testing.T
 }
 
 type fortressEngineSender struct {
-	pipeline        *Ingest.Pipeline
-	opcodes         []string
-	craSends        int
-	projectMovement bool
+	pipeline                *Ingest.Pipeline
+	state                   *State.Store
+	opcodes                 []string
+	events                  []string
+	craSends                int
+	projectMovement         bool
+	gaaPayload              json.RawMessage
+	gaaReceivedAt           time.Time
+	gaaCausationOperationID string
+	reconnectAfterGAA       bool
+	connectionGeneration    uint64
+	beforeFinalDispatch     func(string) error
 }
 
-func (*fortressEngineSender) Ready() bool                  { return true }
-func (*fortressEngineSender) Namespace() string            { return "EmpireEx_21" }
-func (*fortressEngineSender) CorrelatesResponses() bool    { return true }
-func (*fortressEngineSender) ConnectionGeneration() uint64 { return 1 }
+func (*fortressEngineSender) Ready() bool               { return true }
+func (*fortressEngineSender) Namespace() string         { return "EmpireEx_21" }
+func (*fortressEngineSender) CorrelatesResponses() bool { return true }
+func (sender *fortressEngineSender) ConnectionGeneration() uint64 {
+	if sender.connectionGeneration == 0 {
+		return 1
+	}
+	return sender.connectionGeneration
+}
 
 func (sender *fortressEngineSender) Send(ctx context.Context, payload []byte) error {
-	if err := Outbound.ValidateFinalDispatch(ctx); err != nil {
-		return err
-	}
 	command, err := Protocol.Decode(string(payload), Protocol.DirectionOutbound, time.Now().UTC())
 	if err != nil {
 		return err
 	}
+	if sender.beforeFinalDispatch != nil {
+		if err := sender.beforeFinalDispatch(command.Opcode); err != nil {
+			return err
+		}
+	}
+	if err := Outbound.ValidateFinalDispatch(ctx); err != nil {
+		return err
+	}
 	sender.opcodes = append(sender.opcodes, command.Opcode)
+	sender.events = append(sender.events, command.Opcode)
 	responseOpcode := command.Opcode
 	if command.Opcode == "jca" {
 		responseOpcode = "jaa"
@@ -211,7 +259,10 @@ func (sender *fortressEngineSender) Send(ctx context.Context, payload []byte) er
 	case "jaa", "jca":
 		responsePayload = json.RawMessage(`{"KID":1,"gca":{"A":[12,100,100,10,42,0,0,0,0,0,"Winter Keep"]},"gui":{"I":[[277,10000]],"TU":[],"HI":[],"SHI":[]}}`)
 	case "gaa":
-		responsePayload = json.RawMessage(`{"KID":1,"AI":[[11,101,100,-1,45,0,-1,0]]}`)
+		responsePayload = sender.gaaPayload
+		if len(responsePayload) == 0 {
+			responsePayload = json.RawMessage(`{"KID":1,"AI":[[11,101,100,-1,45,0,-1,0]]}`)
+		}
 	case "gam":
 		responsePayload = json.RawMessage(`{"M":[],"O":[]}`)
 	case "adi":
@@ -225,12 +276,254 @@ func (sender *fortressEngineSender) Send(ctx context.Context, payload []byte) er
 	}
 	metadata := Outbound.MetadataFromContext(ctx)
 	code := 0
+	receivedAt := time.Now().UTC()
+	if !sender.gaaReceivedAt.IsZero() && command.Opcode == "gaa" {
+		receivedAt = sender.gaaReceivedAt
+	}
+	causation := metadata.OperationID
+	if sender.gaaCausationOperationID != "" && command.Opcode == "gaa" {
+		causation = sender.gaaCausationOperationID
+	}
 	_, err = sender.pipeline.HandleFrame(ctx, Protocol.Frame{
 		Opcode: responseOpcode, Direction: Protocol.DirectionInbound, ResponseCode: &code,
-		ReceivedAt: time.Now().UTC(), Payload: responsePayload, ResponseToken: metadata.ResponseToken,
-		CausationOperationID: metadata.OperationID,
+		ReceivedAt: receivedAt, Payload: responsePayload, ResponseToken: metadata.ResponseToken,
+		CausationOperationID: causation,
 	})
+	if err == nil && command.Opcode == "gaa" {
+		sender.events = append(sender.events, "gaa:committed")
+		if sender.reconnectAfterGAA && sender.state != nil {
+			_, err = sender.state.ApplyComponents(State.Components(State.ComponentSession), func(gameState *State.GameState) ([]string, bool, error) {
+				gameState.Session.ConnectionGeneration++
+				return []string{"session"}, true, nil
+			})
+			sender.connectionGeneration++
+		}
+	}
 	return err
+}
+
+func runFortressEngineScenario(
+	t *testing.T,
+	configure func(*fortressEngineSender, *State.Store),
+) (Intent.Receipt, *fortressEngineSender, *State.Store) {
+	t.Helper()
+	now := time.Now().UTC()
+	gameData := fortressIntentGameData(t)
+	gameState := fortressIntentState(now)
+	gameState.Player.ID = 42
+	gameState.Session.ConnectionGeneration = 1
+	stateStore := State.NewStore(gameState)
+	ingestRegistry := Ingest.NewRegistry()
+	if err := Ingest.RegisterCoreReducers(ingestRegistry); err != nil {
+		t.Fatal(err)
+	}
+	pipeline := Ingest.NewPipeline(stateStore, beriIntentGameDataProvider{store: gameData}, ingestRegistry)
+	sender := &fortressEngineSender{
+		pipeline: pipeline, state: stateStore, projectMovement: true, connectionGeneration: 1,
+	}
+	if configure != nil {
+		configure(sender, stateStore)
+	}
+	intentRegistry := Intent.NewRegistry()
+	intentRegistry.EnforceResourceDeclarations()
+	engine := Intent.NewEngine(intentRegistry, stateStore, beriIntentGameDataProvider{store: gameData}, sender, pipeline)
+	application := &Application{State: stateStore, Intents: engine, Ingest: pipeline}
+	if err := intentRegistry.Register(Intent.Definition{Name: "fortress.attack", Effect: Intent.EffectLaunch, Planner: planFortressAttack}); err != nil {
+		t.Fatal(err)
+	}
+	if err := engine.RegisterStepResolver("fortress.attack.build", application.resolveFortressAttackStep); err != nil {
+		t.Fatal(err)
+	}
+	if err := engine.RegisterCommandDependencies("cra", application.resolveCRACommandDependencies); err != nil {
+		t.Fatal(err)
+	}
+	for name, action := range map[string]Intent.Action{
+		"game.ui.close":                      func(context.Context, json.RawMessage) error { return nil },
+		"attack.cra.send.guard":              application.guardCRASend,
+		"attack.analytics.capture":           application.captureAttackFeatureLaunch,
+		"fortress.target.verification.arm":   application.armFortressTargetVerification,
+		"fortress.target.verification.guard": application.guardFortressTargetVerification,
+	} {
+		if err := engine.RegisterAction(name, action); err != nil {
+			t.Fatal(err)
+		}
+	}
+	receipt := engine.Submit(t.Context(), Intent.Request{
+		ID: "fortress-engine-scenario", Name: "fortress.attack", Actor: "automation:autoFortress", AutomationLane: "autoFortress",
+		Arguments: json.RawMessage(`{"sourceCastleId":10,"kingdomId":1,"targetX":101,"targetY":100,"commanderIds":[5],"horseTravelBoostId":-1,"minimumCommanderSpeedBonus":100}`),
+	})
+	return receipt, sender, stateStore
+}
+
+func TestFortressAttackRejectsNonAuthoritativeExactTargetResponsesBeforeADI(t *testing.T) {
+	tests := []struct {
+		name      string
+		payload   json.RawMessage
+		configure func(*fortressEngineSender, *State.Store)
+	}{
+		{name: "captured cooldown 84430", payload: json.RawMessage(`{"KID":1,"AI":[[11,101,100,-1,55,84430,14722196,3]]}`)},
+		{name: "explicit empty", payload: json.RawMessage(`{"KID":1,"AI":[]}`)},
+		{name: "missing rows", payload: json.RawMessage(`{"KID":1}`)},
+		{name: "malformed row", payload: json.RawMessage(`{"KID":1,"AI":[[11,101,100]]}`)},
+		{name: "malformed cooldown", payload: json.RawMessage(`{"KID":1,"AI":[[11,101,100,-1,45,"bad",-1,0]]}`)},
+		{name: "wrong target", payload: json.RawMessage(`{"KID":1,"AI":[[11,102,100,-1,45,0,-1,0]]}`)},
+		{name: "changed target type", payload: json.RawMessage(`{"KID":1,"AI":[[2,101,100,-1,45,0,0]]}`)},
+		{name: "wrong kingdom", payload: json.RawMessage(`{"KID":2,"AI":[[11,101,100,-1,45,0,-1,0]]}`)},
+		{name: "unmatched operation", payload: json.RawMessage(`{"KID":1,"AI":[[11,101,100,-1,45,0,-1,0]]}`), configure: func(sender *fortressEngineSender, _ *State.Store) {
+			sender.gaaCausationOperationID = "previous-operation"
+		}},
+		{name: "stale response", payload: json.RawMessage(`{"KID":1,"AI":[[11,101,100,-1,45,0,-1,0]]}`), configure: func(sender *fortressEngineSender, _ *State.Store) {
+			sender.gaaReceivedAt = time.Now().UTC().Add(-time.Minute)
+		}},
+		{name: "reconnect", payload: json.RawMessage(`{"KID":1,"AI":[[11,101,100,-1,45,0,-1,0]]}`), configure: func(sender *fortressEngineSender, _ *State.Store) {
+			sender.reconnectAfterGAA = true
+		}},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			receipt, sender, stateStore := runFortressEngineScenario(t, func(sender *fortressEngineSender, store *State.Store) {
+				sender.gaaPayload = test.payload
+				if test.configure != nil {
+					test.configure(sender, store)
+				}
+			})
+			if receipt.Status == Intent.StatusSucceeded || slices.Contains(sender.opcodes, "adi") || slices.Contains(sender.opcodes, "cra") {
+				t.Fatalf("unsafe response launched attack: receipt=%+v opcodes=%v", receipt, sender.opcodes)
+			}
+			if test.name == "captured cooldown 84430" {
+				target, found := stateStore.ReadOnlyView().LookupMapObservation(1, "101:100")
+				if !found || target.TowerCooldownRemaining != 84_430 {
+					t.Fatalf("captured cooldown projection=%#v found=%t", target, found)
+				}
+			}
+			if test.name == "explicit empty" || test.name == "wrong target" {
+				if _, found := stateStore.ReadOnlyView().LookupMapObservation(1, "101:100"); found {
+					t.Fatal("authoritatively absent fortress remained eligible for another request")
+				}
+			}
+		})
+	}
+}
+
+func TestFortressAttackRechecksProofAtQueuedADIAndFinalCRA(t *testing.T) {
+	t.Run("queued ADI projection changed", func(t *testing.T) {
+		mutated := false
+		receipt, sender, _ := runFortressEngineScenario(t, func(sender *fortressEngineSender, store *State.Store) {
+			sender.beforeFinalDispatch = func(opcode string) error {
+				if opcode != "adi" || mutated {
+					return nil
+				}
+				mutated = true
+				_, err := store.ApplyComponents(State.Components(State.ComponentWorldMap), func(gameState *State.GameState) ([]string, bool, error) {
+					target, _ := gameState.LookupMapObservation(1, "101:100")
+					target.ObservedAt = time.Now().UTC().Add(time.Second)
+					gameState.SetMapObservation(target)
+					return []string{"map-fortress"}, true, nil
+				})
+				return err
+			}
+		})
+		if receipt.Status == Intent.StatusSucceeded || slices.Contains(sender.opcodes, "adi") || slices.Contains(sender.opcodes, "cra") {
+			t.Fatalf("queued ADI used invalidated proof: receipt=%+v opcodes=%v", receipt, sender.opcodes)
+		}
+	})
+
+	t.Run("queued ADI focus changed", func(t *testing.T) {
+		mutated := false
+		receipt, sender, _ := runFortressEngineScenario(t, func(sender *fortressEngineSender, store *State.Store) {
+			_, err := store.ApplyComponents(State.Components(State.ComponentCastles), func(gameState *State.GameState) ([]string, bool, error) {
+				gameState.SetCastle(20, State.CastleState{ID: 20, KingdomID: 1, SlotType: 12, X: 200, Y: 200})
+				return []string{"castles"}, true, nil
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			sender.beforeFinalDispatch = func(opcode string) error {
+				if opcode != "adi" || mutated {
+					return nil
+				}
+				mutated = true
+				code := 0
+				_, err := sender.pipeline.HandleFrame(t.Context(), Protocol.Frame{
+					Opcode: "jaa", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: time.Now().UTC(),
+					Payload: json.RawMessage(`{"KID":1,"gca":{"A":[12,200,200,20,42,0,0,0,0,0,"Other Keep"]},"gui":{"I":[],"TU":[],"HI":[],"SHI":[]}}`),
+				})
+				return err
+			}
+		})
+		if receipt.Status == Intent.StatusSucceeded || slices.Contains(sender.opcodes, "adi") || slices.Contains(sender.opcodes, "cra") {
+			t.Fatalf("queued ADI crossed focus change: receipt=%+v opcodes=%v", receipt, sender.opcodes)
+		}
+	})
+
+	t.Run("target unavailable at CRA transport", func(t *testing.T) {
+		mutated := false
+		receipt, sender, _ := runFortressEngineScenario(t, func(sender *fortressEngineSender, store *State.Store) {
+			sender.beforeFinalDispatch = func(opcode string) error {
+				if opcode != "cra" || mutated {
+					return nil
+				}
+				mutated = true
+				_, err := store.ApplyComponents(State.Components(State.ComponentAttackDialog), func(gameState *State.GameState) ([]string, bool, error) {
+					gameState.AttackDialog.Target.TowerCooldownRemaining = 90
+					return []string{"attack-dialog"}, true, nil
+				})
+				return err
+			}
+		})
+		if receipt.Status == Intent.StatusSucceeded || !slices.Contains(sender.opcodes, "adi") || slices.Contains(sender.opcodes, "cra") {
+			t.Fatalf("final CRA guard did not stop unavailable target: receipt=%+v opcodes=%v", receipt, sender.opcodes)
+		}
+	})
+}
+
+func TestFortressTargetVerificationRejectsPreviousAttemptResponseToken(t *testing.T) {
+	state := fortressIntentState(time.Now().UTC())
+	source := state.Castles[10]
+	source.Focused = true
+	state.Castles[10] = source
+	state.Session.ConnectionGeneration = 1
+	store := State.NewStore(state)
+	registry := Ingest.NewRegistry()
+	if err := Ingest.RegisterCoreReducers(registry); err != nil {
+		t.Fatal(err)
+	}
+	pipeline := Ingest.NewPipeline(store, nil, registry)
+	application := &Application{State: store, Ingest: pipeline}
+	arguments := json.RawMessage(`{"sourceCastleId":10,"kingdomId":1,"targetX":101,"targetY":100}`)
+	arm := func(token string) context.Context {
+		ctx := Outbound.WithMetadata(t.Context(), Outbound.Metadata{
+			OperationID: "same-operation", ResponseToken: token, ConnectionGeneration: 1,
+		})
+		if err := application.armFortressTargetVerification(ctx, arguments); err != nil {
+			t.Fatal(err)
+		}
+		return ctx
+	}
+	code := 0
+	commit := func(token string) {
+		if _, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
+			Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+			ReceivedAt: time.Now().UTC(), ResponseToken: token, CausationOperationID: "same-operation",
+			Payload: json.RawMessage(`{"KID":1,"AI":[[11,101,100,-1,45,0,-1,0]]}`),
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	oldContext := arm("old-token")
+	commit("old-token")
+	if err := application.guardFortressTargetVerification(oldContext, arguments); err != nil {
+		t.Fatal(err)
+	}
+	newContext := arm("new-token")
+	commit("old-token")
+	if err := application.guardFortressTargetVerification(newContext, arguments); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("previous response token authorized retry: %v", err)
+	}
+	commit("new-token")
+	if err := application.guardFortressTargetVerification(newContext, arguments); err != nil {
+		t.Fatalf("current response token did not authorize retry: %v", err)
+	}
 }
 
 func TestFortressPersonalCooldownSurvivesReadyGlobalMapRow(t *testing.T) {

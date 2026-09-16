@@ -259,7 +259,7 @@ func RegisterCoreReducers(registry *Registry) error {
 		return err
 	}
 	if err := registry.registerComponentSequence("gaa",
-		reducerStep{writes: worldMap, reducer: reduceMapSnapshot},
+		reducerStep{writes: worldMap.Union(components(State.ComponentSession)), reducer: reduceMapSnapshot},
 		reducerStep{writes: player, reducer: reducePlayerProtectionMode},
 	); err != nil {
 		return err

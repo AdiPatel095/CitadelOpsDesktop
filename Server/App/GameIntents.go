@@ -237,6 +237,12 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterStepResolver("fortress.attack.build", application.resolveFortressAttackStep); err != nil {
 		return err
 	}
+	if err := application.Intents.RegisterAction("fortress.target.verification.arm", application.armFortressTargetVerification); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("fortress.target.verification.guard", application.guardFortressTargetVerification); err != nil {
+		return err
+	}
 	if err := application.Intents.RegisterAction("fortress.scan.full", application.scanFullFortressMap); err != nil {
 		return err
 	}
