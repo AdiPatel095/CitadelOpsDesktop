@@ -76,7 +76,7 @@ func (*AutoBoosterPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 	if !inventory.GlobalEffectBaselineObservedAt.Equal(inventory.GlobalEffectReadObservedAt) ||
 		inventory.GlobalEffectBaselineGeneration != snapshot.State.Session.ConnectionGeneration {
 		return autoBoosterWaiting(snapshot.Now, settings.CheckIntervalSec,
-			"The latest account snapshot did not contain valid boost-status and ruby-balance data", metrics), nil
+			"The latest account snapshot did not contain valid trigger-event, boost-status, and ruby-balance data", metrics), nil
 	}
 	metrics["baselineObservedAtUnix"] = float64(inventory.GlobalEffectBaselineObservedAt.Unix())
 

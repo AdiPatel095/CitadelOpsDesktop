@@ -2,6 +2,7 @@ package Automation
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
@@ -135,6 +136,63 @@ func TestAutoBoosterWaitsConfiguredIntervalAfterIncompleteSuccessfulRead(t *test
 	})
 	if err != nil || decision.Request != nil || decision.Status != "waiting" {
 		t.Fatalf("complete GBD without offer started a refresh loop: decision=%+v err=%v", decision, err)
+	}
+}
+
+func TestAutoBoosterReportsDistinctAvailabilityAndPurchaseBlockers(t *testing.T) {
+	now := time.Date(2026, time.September, 16, 17, 0, 0, 0, time.UTC)
+	endsAt := now.Add(time.Hour)
+	for _, test := range []struct {
+		name          string
+		configuration string
+		mutate        func(*State.GameState)
+		wantDetail    string
+	}{
+		{name: "invalid snapshot", wantDetail: "valid trigger-event", mutate: func(state *State.GameState) {
+			state.EventScores.Inventory.GlobalEffectBaselineObservedAt = time.Time{}
+			state.EventScores.Inventory.GlobalEffectBaselineGeneration = 0
+		}},
+		{name: "unavailable", wantDetail: "not currently available", mutate: func(state *State.GameState) {
+			delete(state.EventScores.Inventory.GlobalEffects, 2)
+		}},
+		{name: "no offer", wantDetail: "not offered", mutate: func(state *State.GameState) {
+			delete(state.EventScores.Inventory.GlobalEffectBoosterOffers, 2)
+		}},
+		{name: "already active", wantDetail: "already active", mutate: func(state *State.GameState) {
+			boost := state.EventScores.Inventory.GlobalEffectBoosts[2]
+			boost.Boosted = true
+			state.EventScores.Inventory.GlobalEffectBoosts[2] = boost
+		}},
+		{name: "price rejected", wantDetail: "not the approved 2,500-ruby", mutate: func(state *State.GameState) {
+			offer := state.EventScores.Inventory.GlobalEffectBoosterOffers[2]
+			offer.RubyCost = 2600
+			state.EventScores.Inventory.GlobalEffectBoosterOffers[2] = offer
+		}},
+		{name: "reserve rejected", configuration: `{"version":1,"checkIntervalSec":60,"rubyCostCeiling":2500,"minimumRubyReserve":9000}`, wantDetail: "configured reserve", mutate: func(*State.GameState) {}},
+		{name: "unresolved", wantDetail: "outcome is unresolved", mutate: func(state *State.GameState) {
+			state.EventScores.Inventory.GlobalEffectPurchases[2] = State.GlobalEffectPurchaseRecord{
+				GlobalEffectID: 2, OccurrenceEndsAt: endsAt, Outcome: State.GlobalEffectPurchaseUnresolved,
+			}
+		}},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			gameState := autoBoosterPolicyState(now, endsAt, 2)
+			test.mutate(&gameState)
+			configuration := test.configuration
+			if configuration == "" {
+				configuration = `{"version":1,"checkIntervalSec":60,"rubyCostCeiling":2500,"minimumRubyReserve":0}`
+			}
+			decision, err := NewAutoBoosterPolicy().Evaluate(t.Context(), Snapshot{
+				State: gameState,
+				Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{
+					autoBoosterSection: json.RawMessage(configuration),
+				}},
+				GameData: autoFortressTestGameData(t), Now: now,
+			})
+			if err != nil || decision.Request != nil || !strings.Contains(decision.Detail, test.wantDetail) {
+				t.Fatalf("blocker detail=%q request=%+v err=%v", decision.Detail, decision.Request, err)
+			}
+		})
 	}
 }
 

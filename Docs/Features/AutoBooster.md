@@ -13,13 +13,20 @@ as a bare SmartFox extension command:
 %xt%<namespace>%gbd%<room>%
 ```
 
-The inspected official artifact is
-[`ggs.dll.593dc7f854f7e3d96d4d.js`](https://empire-html5.goodgamestudios.com/default/dll/ggs.dll.593dc7f854f7e3d96d4d.js).
-Its SHA-256 digest at inspection was
-`e9b0ca1440595f20c106051f28f9651bda5acdfb62a925808629bd6b7a0d42d2`.
-The official GBD handler reads scalable-event inventory (`sei`), boosted global
-effects (`bie`), and account resources (`gcu`). The official AGB success branch
-accepts response code `0` without requiring a JSON body.
+The official client parser and sanitized protocol captures place global-effect
+availability and quotes in trigger-event inventory (`tei.TE`), separate from
+scalable-event inventory (`sei.E`). Trigger `610` carries `GE` availability
+rows; each row's own remaining-seconds value determines its occurrence expiry.
+Trigger `612` carries `GEB` account quotes. Boosted global effects remain in
+`bie`, and the ruby balance remains in `gcu`. A complete GBD baseline must
+contain valid TEI, BIE, and GCU observations from the same response. The
+official AGB success branch accepts response code `0` without requiring a JSON
+body.
+
+Standalone TEI messages update only the trigger IDs they contain, while `tee`
+removes the named trigger. Either relevant update invalidates the prior
+purchase baseline until another complete GBD read arrives. Ordinary SEI updates
+do not erase global-effect availability or quotes.
 
 The repository fixture
 [`Server/Ingest/testdata/global_effect_gbd_sanitized.json`](../../Server/Ingest/testdata/global_effect_gbd_sanitized.json)
@@ -64,3 +71,8 @@ that AGB caused the debit.
 GBD response bodies are not copied into operation receipts because they are
 large private account snapshots. Only the scoped booster observations and
 purchase record are persisted and projected to the client.
+
+The sanitized regression proves GBD → policy → AGB acknowledgement → BIE
+activation in both response orders. It does not prove a live ruby purchase.
+The latest bounded acceptance environment was disconnected, so live automatic
+purchase and debit attribution remain pending.

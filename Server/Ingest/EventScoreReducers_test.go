@@ -121,20 +121,20 @@ func TestScalableEventSnapshotReplacesAuthoritativeAvailability(t *testing.T) {
 	}
 }
 
-func TestGlobalEffectSnapshotsBindLiveOfferAndBoostStatusToDailyWindow(t *testing.T) {
+func TestTriggerEventSnapshotsBindLiveOfferAndBoostStatusToDailyWindow(t *testing.T) {
 	gameData := scalableEventTestGameData(t)
 	gameState := State.NewGameState()
 	observedAt := time.Date(2026, time.September, 2, 17, 0, 0, 0, time.UTC)
 	code := 0
-	_, changed, err := reduceScalableEventSnapshot(t.Context(), Protocol.Frame{
-		Opcode: "sei", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
-		Payload: json.RawMessage(`{"E":[
-			{"EID":610,"RS":3600,"GE":[[2,1800,60]]},
-			{"EID":612,"RS":3600,"GEB":[{"GEID":2,"C2":2500,"BV":60}]}
+	_, changed, err := reduceGlobalEffectTriggerSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "tei", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
+		Payload: json.RawMessage(`{"TE":[
+			{"TRID":610,"GE":[[2,1800,60]],"SGE":[]},
+			{"TRID":612,"GEB":[{"GEID":2,"C2":2500,"BV":60}]}
 		]}`),
 	}, &gameState, gameData)
 	if err != nil || !changed {
-		t.Fatalf("global-effect SEI: changed=%t err=%v", changed, err)
+		t.Fatalf("global-effect TEI: changed=%t err=%v", changed, err)
 	}
 	wantEndsAt := observedAt.Add(30 * time.Minute).Truncate(time.Minute)
 	effect := gameState.EventScores.Inventory.GlobalEffects[2]
@@ -229,9 +229,9 @@ func TestGlobalEffectOccurrenceIdentitySurvivesCountdownJitterButRollsDaily(t *t
 	firstAt := time.Date(2026, time.September, 15, 12, 0, 10, 0, time.UTC)
 	apply := func(at time.Time, remaining int) time.Time {
 		t.Helper()
-		_, _, err := reduceScalableEventSnapshot(t.Context(), Protocol.Frame{
-			Opcode: "sei", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: at,
-			Payload: json.RawMessage(fmt.Sprintf(`{"E":[{"EID":610,"RS":3600,"GE":[[2,%d,10]]}]}`, remaining)),
+		_, _, err := reduceGlobalEffectTriggerSnapshot(t.Context(), Protocol.Frame{
+			Opcode: "tei", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: at,
+			Payload: json.RawMessage(fmt.Sprintf(`{"TE":[{"TRID":610,"GE":[[2,%d,10]],"SGE":[]}]}`, remaining)),
 		}, &gameState, gameData)
 		if err != nil {
 			t.Fatal(err)
@@ -246,6 +246,245 @@ func TestGlobalEffectOccurrenceIdentitySurvivesCountdownJitterButRollsDaily(t *t
 	nextEnd := apply(firstAt.Add(24*time.Hour), 50)
 	if nextEnd.Equal(firstEnd) || !nextEnd.After(firstEnd.Add(23*time.Hour)) {
 		t.Fatalf("daily rollover did not create a new occurrence: first=%s next=%s", firstEnd, nextEnd)
+	}
+}
+
+func TestScalableEventSnapshotDoesNotEraseTriggerGlobalEffects(t *testing.T) {
+	gameData := scalableEventTestGameData(t)
+	gameState := State.NewGameState()
+	observedAt := time.Date(2026, time.September, 16, 17, 0, 0, 0, time.UTC)
+	code := 0
+	_, _, err := reduceGlobalEffectTriggerSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "tei", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
+		Payload: json.RawMessage(`{"TE":[
+			{"TRID":610,"GE":[[2,1800,10]],"SGE":[]},
+			{"TRID":612,"GEB":[{"GEID":2,"C2":2500,"BV":50}]}
+		]}`),
+	}, &gameState, gameData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	effect := gameState.EventScores.Inventory.GlobalEffects[2]
+	offer := gameState.EventScores.Inventory.GlobalEffectBoosterOffers[2]
+	_, _, err = reduceScalableEventSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "sei", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt.Add(time.Second),
+		Payload: json.RawMessage(`{"E":[{"EID":72,"RS":3600,"EASE":1,"EDID":308}]}`),
+	}, &gameState, gameData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := gameState.EventScores.Inventory.GlobalEffects[2]; got != effect {
+		t.Fatalf("ordinary SEI replaced trigger effect: got=%+v want=%+v", got, effect)
+	}
+	if got := gameState.EventScores.Inventory.GlobalEffectBoosterOffers[2]; got != offer {
+		t.Fatalf("ordinary SEI replaced trigger offer: got=%+v want=%+v", got, offer)
+	}
+}
+
+func TestGlobalEffectTriggerSnapshotStrictShapesAndElapsedRows(t *testing.T) {
+	observedAt := time.Date(2026, time.September, 16, 17, 0, 0, 0, time.UTC)
+	for name, payload := range map[string]string{
+		"missing TE":       `{}`,
+		"null TE":          `{"TE":null}`,
+		"object TE":        `{"TE":{}}`,
+		"missing GE":       `{"TE":[{"TRID":610}]}`,
+		"null GE":          `{"TE":[{"TRID":610,"GE":null}]}`,
+		"malformed GE row": `{"TE":[{"TRID":610,"GE":[[2,"soon",10]]}]}`,
+		"overflow GE row":  `{"TE":[{"TRID":610,"GE":[[2,9223372036854775807,10]]}]}`,
+		"missing GEB":      `{"TE":[{"TRID":612}]}`,
+		"null GEB":         `{"TE":[{"TRID":612,"GEB":null}]}`,
+		"malformed offer":  `{"TE":[{"TRID":612,"GEB":[{"GEID":2,"C2":"2500","BV":50}]}]}`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			if _, err := decodeGlobalEffectTriggerSnapshot(json.RawMessage(payload), observedAt, nil); err == nil {
+				t.Fatalf("malformed trigger snapshot accepted: %s", payload)
+			}
+		})
+	}
+	for name, payload := range map[string]string{
+		"explicit empty TE": `{"TE":[]}`,
+		"empty effects":     `{"TE":[{"TRID":610,"GE":[]}]}`,
+		"empty offers":      `{"TE":[{"TRID":612,"GEB":[]}]}`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			if _, err := decodeGlobalEffectTriggerSnapshot(json.RawMessage(payload), observedAt, nil); err != nil {
+				t.Fatalf("valid explicit empty trigger snapshot rejected: %v", err)
+			}
+		})
+	}
+	snapshot, err := decodeGlobalEffectTriggerSnapshot(json.RawMessage(`{"TE":[
+		{"TRID":610,"GE":[[3,-1,-1],[2,1800,-1]]},
+		{"TRID":612,"GEB":[{"GEID":2,"C2":2500,"BV":50}]}
+	]}`), observedAt, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(snapshot.Effects) != 1 || snapshot.Effects[2].Strength != -1 || !snapshot.Effects[2].ActiveAt(observedAt) {
+		t.Fatalf("elapsed/sentinel rows decoded incorrectly: %+v", snapshot.Effects)
+	}
+}
+
+func TestGBDTriggerSnapshotAuthorityDistinguishesInvalidAbsentAndNoOffer(t *testing.T) {
+	gameData := scalableEventTestGameData(t)
+	observedAt := time.Date(2026, time.September, 16, 17, 0, 0, 0, time.UTC)
+	for _, test := range []struct {
+		name              string
+		payload           string
+		wantBaseline      bool
+		wantEffect2       bool
+		wantOffer2        bool
+		preservePriorData bool
+	}{
+		{name: "missing TEI", payload: `{"bie":{"GE":[]},"gcu":{"C2":10000}}`, preservePriorData: true},
+		{name: "null TEI", payload: `{"tei":null,"bie":{"GE":[]},"gcu":{"C2":10000}}`, preservePriorData: true},
+		{name: "malformed TE", payload: `{"tei":{"TE":null},"bie":{"GE":[]},"gcu":{"C2":10000}}`, preservePriorData: true},
+		{name: "malformed GE", payload: `{"tei":{"TE":[{"TRID":610,"GE":null}]},"bie":{"GE":[]},"gcu":{"C2":10000}}`, preservePriorData: true},
+		{name: "malformed GEB", payload: `{"tei":{"TE":[{"TRID":612,"GEB":{}}]},"bie":{"GE":[]},"gcu":{"C2":10000}}`, preservePriorData: true},
+		{name: "explicit empty TE", payload: `{"tei":{"TE":[]},"bie":{"GE":[]},"gcu":{"C2":10000}}`, wantBaseline: true},
+		{name: "effect 2 absent", payload: `{"tei":{"TE":[{"TRID":610,"GE":[[3,1800,5]]},{"TRID":612,"GEB":[{"GEID":3,"C2":500,"BV":5}]}]},"bie":{"GE":[]},"gcu":{"C2":10000}}`, wantBaseline: true},
+		{name: "offer missing", payload: `{"tei":{"TE":[{"TRID":610,"GE":[[2,1800,10]]}]},"bie":{"GE":[]},"gcu":{"C2":10000}}`, wantBaseline: true, wantEffect2: true},
+		{name: "available and offered", payload: `{"tei":{"TE":[{"TRID":610,"GE":[[2,1800,10]]},{"TRID":612,"GEB":[{"GEID":2,"C2":2500,"BV":50}]}]},"bie":{"GE":[]},"gcu":{"C2":10000}}`, wantBaseline: true, wantEffect2: true, wantOffer2: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			gameState := State.NewGameState()
+			gameState.Session.ConnectionGeneration = 11
+			priorAt := observedAt.Add(-time.Hour)
+			gameState.EventScores.Inventory.GlobalEffectsObservedAt = priorAt
+			gameState.EventScores.Inventory.GlobalEffectReadObservedAt = priorAt
+			gameState.EventScores.Inventory.GlobalEffectReadGeneration = 11
+			gameState.EventScores.Inventory.GlobalEffectBaselineObservedAt = priorAt
+			gameState.EventScores.Inventory.GlobalEffectBaselineGeneration = 11
+			gameState.EventScores.Inventory.GlobalEffects[2] = State.GlobalEffectAvailability{GlobalEffectID: 2, Strength: 9, EndsAt: observedAt.Add(time.Hour)}
+			gameState.EventScores.Inventory.GlobalEffectBoosterOffers[2] = State.GlobalEffectBoosterOffer{GlobalEffectID: 2, RubyCost: 2500, BonusValue: 49}
+			store := State.NewStore(gameState)
+			registry := NewRegistry()
+			if err := RegisterCoreReducers(registry); err != nil {
+				t.Fatal(err)
+			}
+			pipeline := NewPipeline(store, staticGameDataProvider{store: gameData}, registry)
+			code := 0
+			if _, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
+				Opcode: "gbd", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+				ReceivedAt: observedAt, Payload: json.RawMessage(test.payload),
+			}); err != nil {
+				t.Fatalf("GBD hydration failed: %v", err)
+			}
+			inventory := store.ReadOnlyView().EventScores.Inventory
+			if test.wantBaseline != inventory.GlobalEffectBaselineObservedAt.Equal(observedAt) ||
+				!inventory.GlobalEffectReadObservedAt.Equal(observedAt) {
+				t.Fatalf("authority baseline=%s read=%s", inventory.GlobalEffectBaselineObservedAt, inventory.GlobalEffectReadObservedAt)
+			}
+			_, effect2 := inventory.GlobalEffects[2]
+			_, offer2 := inventory.GlobalEffectBoosterOffers[2]
+			if test.preservePriorData {
+				if !effect2 || !offer2 || inventory.GlobalEffects[2].Strength != 9 || inventory.GlobalEffectBoosterOffers[2].BonusValue != 49 {
+					t.Fatalf("invalid TEI replaced prior trigger data: %+v", inventory)
+				}
+			} else if effect2 != test.wantEffect2 || offer2 != test.wantOffer2 {
+				t.Fatalf("effect2=%t offer2=%t inventory=%+v", effect2, offer2, inventory)
+			}
+		})
+	}
+}
+
+func TestIncrementalTEIAndTEEUpdateOnlyNamedGlobalTrigger(t *testing.T) {
+	registry := NewRegistry()
+	if err := RegisterCoreReducers(registry); err != nil || !registry.HasInbound("tei") || !registry.HasInbound("tee") {
+		t.Fatalf("trigger reducers registered tei=%t tee=%t err=%v", registry.HasInbound("tei"), registry.HasInbound("tee"), err)
+	}
+	gameState := State.NewGameState()
+	observedAt := time.Date(2026, time.September, 16, 17, 0, 0, 0, time.UTC)
+	gameState.EventScores.Inventory.GlobalEffectsObservedAt = observedAt
+	gameState.EventScores.Inventory.GlobalEffectReadObservedAt = observedAt
+	gameState.EventScores.Inventory.GlobalEffectBaselineObservedAt = observedAt
+	gameState.EventScores.Inventory.GlobalEffectBaselineGeneration = 4
+	gameState.EventScores.Inventory.GlobalEffects[2] = State.GlobalEffectAvailability{GlobalEffectID: 2, Strength: 10, EndsAt: observedAt.Add(time.Hour)}
+	gameState.EventScores.Inventory.GlobalEffectBoosterOffers[2] = State.GlobalEffectBoosterOffer{GlobalEffectID: 2, RubyCost: 2500, BonusValue: 50}
+	code := 0
+
+	_, changed, err := reduceGlobalEffectTriggerSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "tei", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt.Add(time.Second),
+		Payload: json.RawMessage(`{"TE":[{"TRID":601,"X":1}]}`),
+	}, &gameState, nil)
+	if err != nil || changed || !gameState.EventScores.Inventory.GlobalEffectBaselineObservedAt.Equal(observedAt) {
+		t.Fatalf("unrelated TEI invalidated global baseline: changed=%t err=%v inventory=%+v", changed, err, gameState.EventScores.Inventory)
+	}
+
+	_, changed, err = reduceGlobalEffectTriggerSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "tei", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt.Add(24 * time.Hour),
+		Payload: json.RawMessage(`{"TE":[{"TRID":610,"GE":[[2,1800,12]],"SGE":[]}]}`),
+	}, &gameState, nil)
+	if err != nil || !changed || gameState.EventScores.Inventory.GlobalEffects[2].Strength != 12 ||
+		gameState.EventScores.Inventory.GlobalEffectBoosterOffers[2].BonusValue != 50 ||
+		!gameState.EventScores.Inventory.GlobalEffectBaselineObservedAt.IsZero() {
+		t.Fatalf("incremental availability update=%+v changed=%t err=%v", gameState.EventScores.Inventory, changed, err)
+	}
+
+	baselineAt := observedAt.Add(24*time.Hour + time.Second)
+	gameState.EventScores.Inventory.GlobalEffectBaselineObservedAt = baselineAt
+	gameState.EventScores.Inventory.GlobalEffectBaselineGeneration = 4
+	_, changed, err = reduceGlobalEffectTriggerSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "tei", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: baselineAt,
+		Payload: json.RawMessage(`{"TE":[{"TRID":612,"GEB":[{"GEID":2,"C2":2500,"BV":55}]}]}`),
+	}, &gameState, nil)
+	if err != nil || !changed || gameState.EventScores.Inventory.GlobalEffects[2].Strength != 12 ||
+		gameState.EventScores.Inventory.GlobalEffectBoosterOffers[2].BonusValue != 55 {
+		t.Fatalf("incremental offer update=%+v changed=%t err=%v", gameState.EventScores.Inventory, changed, err)
+	}
+
+	gameState.EventScores.Inventory.GlobalEffectBaselineObservedAt = baselineAt
+	gameState.EventScores.Inventory.GlobalEffectBaselineGeneration = 4
+	_, changed, err = reduceGlobalEffectTriggerEnd(t.Context(), Protocol.Frame{
+		Opcode: "tee", Direction: Protocol.DirectionInbound, ReceivedAt: baselineAt.Add(time.Second),
+		Payload: json.RawMessage(`{"TRID":612}`),
+	}, &gameState, nil)
+	if err != nil || !changed || len(gameState.EventScores.Inventory.GlobalEffectBoosterOffers) != 0 ||
+		gameState.EventScores.Inventory.GlobalEffects[2].Strength != 12 ||
+		!gameState.EventScores.Inventory.GlobalEffectBaselineObservedAt.IsZero() {
+		t.Fatalf("TEE 612 removal=%+v changed=%t err=%v", gameState.EventScores.Inventory, changed, err)
+	}
+
+	_, changed, err = reduceGlobalEffectTriggerEnd(t.Context(), Protocol.Frame{
+		Opcode: "tee", Direction: Protocol.DirectionInbound, ReceivedAt: baselineAt.Add(2 * time.Second),
+		Payload: json.RawMessage(`{"TRID":601}`),
+	}, &gameState, nil)
+	if err != nil || changed || len(gameState.EventScores.Inventory.GlobalEffects) != 1 {
+		t.Fatalf("unrelated TEE changed global state: changed=%t err=%v inventory=%+v", changed, err, gameState.EventScores.Inventory)
+	}
+
+	_, changed, err = reduceGlobalEffectTriggerEnd(t.Context(), Protocol.Frame{
+		Opcode: "tee", Direction: Protocol.DirectionInbound, ReceivedAt: baselineAt.Add(3 * time.Second),
+		Payload: json.RawMessage(`{"TRID":610}`),
+	}, &gameState, nil)
+	if err != nil || !changed || len(gameState.EventScores.Inventory.GlobalEffects) != 0 {
+		t.Fatalf("TEE 610 removal=%+v changed=%t err=%v", gameState.EventScores.Inventory, changed, err)
+	}
+}
+
+func TestMalformedStandaloneTEIInvalidatesPurchaseBaselineWithoutReplacingData(t *testing.T) {
+	observedAt := time.Date(2026, time.September, 16, 17, 0, 0, 0, time.UTC)
+	for name, payload := range map[string]string{
+		"malformed root": `null`,
+		"malformed GE":   `{"TE":[{"TRID":610,"GE":null}]}`,
+		"malformed GEB":  `{"TE":[{"TRID":612,"GEB":[{"GEID":2,"C2":2500}]}]}`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			gameState := State.NewGameState()
+			gameState.EventScores.Inventory.GlobalEffectsObservedAt = observedAt
+			gameState.EventScores.Inventory.GlobalEffectBaselineObservedAt = observedAt
+			gameState.EventScores.Inventory.GlobalEffectBaselineGeneration = 4
+			gameState.EventScores.Inventory.GlobalEffects[2] = State.GlobalEffectAvailability{GlobalEffectID: 2, Strength: 10, EndsAt: observedAt.Add(time.Hour)}
+			gameState.EventScores.Inventory.GlobalEffectBoosterOffers[2] = State.GlobalEffectBoosterOffer{GlobalEffectID: 2, RubyCost: 2500, BonusValue: 50}
+			code := 0
+			_, changed, err := reduceGlobalEffectTriggerSnapshot(t.Context(), Protocol.Frame{
+				Opcode: "tei", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+				ReceivedAt: observedAt.Add(time.Second), Payload: json.RawMessage(payload),
+			}, &gameState, nil)
+			if err != nil || !changed || !gameState.EventScores.Inventory.GlobalEffectBaselineObservedAt.IsZero() ||
+				len(gameState.EventScores.Inventory.GlobalEffects) != 1 || len(gameState.EventScores.Inventory.GlobalEffectBoosterOffers) != 1 {
+				t.Fatalf("malformed incremental TEI state=%+v changed=%t err=%v", gameState.EventScores.Inventory, changed, err)
+			}
+		})
 	}
 }
 
@@ -399,7 +638,7 @@ func TestGBDCapturedGlobalEffectBaselineAndMalformedBIEIsolation(t *testing.T) {
 			if test.wantBaseline {
 				rubyBalance = 7500
 				gameState.EventScores.Inventory.GlobalEffectPurchases[2] = State.GlobalEffectPurchaseRecord{
-					GlobalEffectID: 2, OccurrenceEndsAt: observedAt.Add(30 * time.Minute),
+					GlobalEffectID: 2, OccurrenceEndsAt: observedAt.Add(47990 * time.Second).Truncate(time.Minute),
 					RubyBefore: 10000, RubyBeforeObservedAt: observedAt.Add(-time.Minute),
 					ConnectionGeneration: 9, Outcome: State.GlobalEffectPurchaseAccepted,
 					DebitUnverified: true,
@@ -410,9 +649,9 @@ func TestGBDCapturedGlobalEffectBaselineAndMalformedBIEIsolation(t *testing.T) {
 			code := 0
 			payload := fmt.Sprintf(`{
 				"gpi":{"UID":456,"PID":123,"PN":"Fixture Player"},
-				"sei":{"E":[
-					{"EID":610,"RS":3600,"GE":[[2,1800,10]]},
-					{"EID":612,"RS":3600,"GEB":[{"GEID":2,"C2":2500,"BV":50}]}
+					"tei":{"TE":[
+						{"TRID":610,"GE":[[2,1800,10]],"SGE":[]},
+						{"TRID":612,"GEB":[{"GEID":2,"C2":2500,"BV":50}]}
 				]},
 				"bie":%s,
 				"gcu":{"C2":%d}
@@ -436,7 +675,7 @@ func TestGBDCapturedGlobalEffectBaselineAndMalformedBIEIsolation(t *testing.T) {
 			offer := snapshot.EventScores.Inventory.GlobalEffectBoosterOffers[2]
 			if effect.Strength != 10 || offer.RubyCost != 2500 || offer.BonusValue != 50 ||
 				!snapshot.EventScores.Inventory.GlobalEffectReadObservedAt.Equal(observedAt) {
-				t.Fatalf("valid SEI/read did not commit: effect=%+v offer=%+v inventory=%+v", effect, offer, snapshot.EventScores.Inventory)
+				t.Fatalf("valid TEI/read did not commit: effect=%+v offer=%+v inventory=%+v", effect, offer, snapshot.EventScores.Inventory)
 			}
 			baseline := snapshot.EventScores.Inventory.GlobalEffectBaselineObservedAt
 			if test.wantBaseline != baseline.Equal(observedAt) {
@@ -486,9 +725,9 @@ func TestGBDNestedBIEConfirmationCrossesDurabilityFence(t *testing.T) {
 	_, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
 		Opcode: "gbd", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
 		Payload: json.RawMessage(`{
-			"sei":{"E":[
-				{"EID":610,"RS":3600,"GE":[[2,1800,10]]},
-				{"EID":612,"RS":3600,"GEB":[{"GEID":2,"C2":2500,"BV":50}]}
+			"tei":{"TE":[
+				{"TRID":610,"GE":[[2,1800,10]],"SGE":[]},
+				{"TRID":612,"GEB":[{"GEID":2,"C2":2500,"BV":50}]}
 			]},
 			"bie":{"GE":[2]},"gcu":{"C2":7500}
 		}`),

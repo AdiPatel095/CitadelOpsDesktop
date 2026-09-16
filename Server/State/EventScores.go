@@ -33,7 +33,8 @@ type EventScoreState struct {
 	ShopByPackage   map[PackageID]EventShopRoute `json:"shopByPackage"`
 	ActivityByEvent map[int64]EventActivityState `json:"activityByEvent"`
 	RankingByEvent  map[int64]EventRankingState  `json:"rankingByEvent"`
-	// Inventory is the last authoritative `sei` inventory for this account.
+	// Inventory combines the last authoritative scalable-event (`sei`) and
+	// trigger-event (`tei`) inventory for this account.
 	// It deliberately remains account-private: event and shop eligibility can
 	// vary by server, level, rollout, or account even when the public calendar
 	// is shared.
@@ -65,7 +66,7 @@ func (availability EventAvailability) ActiveAt(now time.Time) bool {
 }
 
 // GlobalEffectAvailability is one currently scheduled row from the official
-// global-effects event (SEI event 610). EndsAt identifies the daily occurrence
+// global-effects trigger event (TEI trigger 610). EndsAt identifies the daily occurrence
 // that an AGB purchase applies to.
 type GlobalEffectAvailability struct {
 	GlobalEffectID int64     `json:"globalEffectId"`
@@ -77,8 +78,8 @@ func (effect GlobalEffectAvailability) ActiveAt(now time.Time) bool {
 	return effect.GlobalEffectID > 0 && !effect.EndsAt.IsZero() && now.Before(effect.EndsAt)
 }
 
-// GlobalEffectBoosterOffer is a live account-specific GEB quote from SEI
-// event 612. RubyCost is deliberately never inferred from static catalogs.
+// GlobalEffectBoosterOffer is a live account-specific GEB quote from TEI
+// trigger 612. RubyCost is deliberately never inferred from static catalogs.
 type GlobalEffectBoosterOffer struct {
 	GlobalEffectID int64 `json:"globalEffectId"`
 	RubyCost       int64 `json:"rubyCost"`

@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Ingest"
@@ -213,14 +214,21 @@ func TestAutoBoosterEnginePipelinePurchasesOnceForBothResponseOrderings(t *testi
 			if err := application.registerAutoBoosterIntents(); err != nil {
 				t.Fatal(err)
 			}
-			arguments, _ := json.Marshal(autoBoosterPurchaseRequest{
-				GlobalEffectID: 2, ExpectedEndsAtUnix: endsAt.Unix(), ExpectedRubyCost: 2500,
-				ExpectedBonusValue: 50, MinimumRubyReserve: 0, ExpectedCheckIntervalSec: 60, ExpectedRubyBalance: 10000,
+			gameData, ready := manager.Current()
+			if !ready {
+				t.Fatal("game data unavailable")
+			}
+			decision, err := Automation.NewAutoBoosterPolicy().Evaluate(t.Context(), Automation.Snapshot{
+				State: stateStore.ReadOnlyView(), GameData: gameData, Configuration: configuration.Snapshot(), Now: now,
 			})
-			receipt := engine.Submit(t.Context(), Intent.Request{
-				ID: "auto-booster-engine-" + fmt.Sprint(bieFirst), Name: "autoBooster.purchase",
-				Actor: "automation:autoBooster", AutomationLane: "autoBooster", Arguments: arguments,
-			})
+			if err != nil || decision.Request == nil || decision.Request.Name != "autoBooster.purchase" {
+				t.Fatalf("sanitized TEI baseline policy decision=%+v err=%v", decision, err)
+			}
+			request := *decision.Request
+			request.ID = "auto-booster-engine-" + fmt.Sprint(bieFirst)
+			request.Actor = "automation:autoBooster"
+			request.AutomationLane = "autoBooster"
+			receipt := engine.Submit(t.Context(), request)
 			if receipt.Status != Intent.StatusSucceeded {
 				t.Fatalf("purchase receipt=%+v", receipt)
 			}
@@ -245,7 +253,7 @@ func TestAutoBoosterEnginePipelinePurchasesOnceForBothResponseOrderings(t *testi
 
 			second := engine.Submit(t.Context(), Intent.Request{
 				ID: "auto-booster-recheck-" + fmt.Sprint(bieFirst), Name: "autoBooster.purchase",
-				Actor: "automation:autoBooster", AutomationLane: "autoBooster", Arguments: arguments,
+				Actor: "automation:autoBooster", AutomationLane: "autoBooster", Arguments: request.Arguments,
 			})
 			if second.Status == Intent.StatusSucceeded || sender.agbSends != 1 {
 				t.Fatalf("re-evaluation replayed AGB: receipt=%+v sends=%d", second, sender.agbSends)
@@ -279,7 +287,7 @@ func TestAutoBoosterEnginePipelinePurchasesOnceForBothResponseOrderings(t *testi
 			}
 			restartedReceipt := restartedEngine.Submit(t.Context(), Intent.Request{
 				ID: "auto-booster-restart-" + fmt.Sprint(bieFirst), Name: "autoBooster.purchase",
-				Actor: "automation:autoBooster", AutomationLane: "autoBooster", Arguments: arguments,
+				Actor: "automation:autoBooster", AutomationLane: "autoBooster", Arguments: request.Arguments,
 			})
 			if restartedReceipt.Status == Intent.StatusSucceeded || restartedSender.agbSends != 0 || len(restartedSender.opcodes) != 0 {
 				t.Fatalf("restart replayed purchase: receipt=%+v opcodes=%v", restartedReceipt, restartedSender.opcodes)
@@ -523,13 +531,13 @@ func autoBoosterGBDFixture(t *testing.T, observedAt, endsAt time.Time, boosted b
 		boostedIDs = "[2]"
 	}
 	return json.RawMessage(fmt.Sprintf(`{
-		"gpi":{"UID":456,"PID":123,"PN":"Fixture Player"},
-		"sei":{"E":[
-			{"EID":610,"RS":%d,"GE":[[2,%d,10]]},
-			{"EID":612,"RS":%d,"GEB":[{"GEID":2,"C2":2500,"BV":50}]}
-		]},
-		"bie":{"GE":%s},"gcu":{"C2":%d}
-	}`, remaining, remaining, remaining, boostedIDs, rubyBalance))
+			"gpi":{"UID":456,"PID":123,"PN":"Fixture Player"},
+			"tei":{"TE":[
+				{"TRID":610,"GE":[[2,%d,10.0]],"SGE":[]},
+				{"TRID":612,"GEB":[{"GEID":2,"C2":2500,"BV":50.0}]}
+			]},
+			"bie":{"GE":%s},"gcu":{"C2":%d}
+		}`, remaining, boostedIDs, rubyBalance))
 }
 
 func TestAutoBoosterPurchaseGuardRejectsChangedQuoteBalanceAndBoostState(t *testing.T) {
