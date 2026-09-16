@@ -57,12 +57,20 @@ export function sortPatchNoteItems(items: readonly PatchNoteItem[]): PatchNoteIt
 
 const PATCH_NOTES_RELEASES_UNSORTED: PatchNotesRelease[] = [
   {
+    version: '2.4.0-beta.5',
+    subtitle: 'Beta: compatible equipment with priced extraction',
+    date: '2026-09-16',
+    items: [
+      { kind: 'fixed', text: 'Equipment Reconfigure now keeps ordinary and relic equipment, heroes, and gems in compatible loadouts and rejects incompatible selections before changing equipment.' },
+      { kind: 'security', text: 'Equipment Reconfigure shows each alternative’s ordinary-gem extraction count and maximum ruby charge, requires explicit consent to that selected ceiling, rechecks official prices before every ordinary-gem extraction and the live ruby balance before every paid extraction, and blocks uncertain paid attempts from repeating. Coin socketing and relic-fragment extraction costs are also disclosed.' },
+    ],
+  },
+  {
     version: '2.4.0-beta.4',
     subtitle: 'Beta: reliable Auto Buyer and Auto Booster execution',
     date: '2026-09-15',
     items: [
       { kind: 'fixed', text: 'Fixed Auto Buyer and Auto Booster actions stopping before execution because their resource claims were not recognized.' },
-      { kind: 'fixed', text: 'Equipment Reconfigure now keeps ordinary and relic equipment, heroes, and gems in compatible loadouts and rejects incompatible selections before changing equipment.' },
     ],
   },
   {
