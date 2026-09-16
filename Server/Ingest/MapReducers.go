@@ -550,8 +550,9 @@ func reduceFortressTargetVerification(
 	}
 	verification := gameState.Session.FortressTargetVerification
 	if verification.ResponseToken == "" || verification.OperationID == "" ||
+		frame.ResponseToken == "" ||
 		frame.ResponseToken != verification.ResponseToken ||
-		frame.CausationOperationID != verification.OperationID {
+		(frame.CausationOperationID != "" && frame.CausationOperationID != verification.OperationID) {
 		return false, false
 	}
 	verification.Complete = true

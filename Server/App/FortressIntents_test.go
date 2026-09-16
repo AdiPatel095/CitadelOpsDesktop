@@ -280,7 +280,7 @@ func (sender *fortressEngineSender) Send(ctx context.Context, payload []byte) er
 	if !sender.gaaReceivedAt.IsZero() && command.Opcode == "gaa" {
 		receivedAt = sender.gaaReceivedAt
 	}
-	causation := metadata.OperationID
+	causation := ""
 	if sender.gaaCausationOperationID != "" && command.Opcode == "gaa" {
 		causation = sender.gaaCausationOperationID
 	}
@@ -369,7 +369,7 @@ func TestFortressAttackRejectsNonAuthoritativeExactTargetResponsesBeforeADI(t *t
 		{name: "wrong target", payload: json.RawMessage(`{"KID":1,"AI":[[11,102,100,-1,45,0,-1,0]]}`)},
 		{name: "changed target type", payload: json.RawMessage(`{"KID":1,"AI":[[2,101,100,-1,45,0,0]]}`)},
 		{name: "wrong kingdom", payload: json.RawMessage(`{"KID":2,"AI":[[11,101,100,-1,45,0,-1,0]]}`)},
-		{name: "unmatched operation", payload: json.RawMessage(`{"KID":1,"AI":[[11,101,100,-1,45,0,-1,0]]}`), configure: func(sender *fortressEngineSender, _ *State.Store) {
+		{name: "conflicting nonempty causation", payload: json.RawMessage(`{"KID":1,"AI":[[11,101,100,-1,45,0,-1,0]]}`), configure: func(sender *fortressEngineSender, _ *State.Store) {
 			sender.gaaCausationOperationID = "previous-operation"
 		}},
 		{name: "stale response", payload: json.RawMessage(`{"KID":1,"AI":[[11,101,100,-1,45,0,-1,0]]}`), configure: func(sender *fortressEngineSender, _ *State.Store) {
@@ -477,7 +477,7 @@ func TestFortressAttackRechecksProofAtQueuedADIAndFinalCRA(t *testing.T) {
 	})
 }
 
-func TestFortressTargetVerificationRejectsPreviousAttemptResponseToken(t *testing.T) {
+func TestFortressTargetVerificationUsesTransportResponseCorrelation(t *testing.T) {
 	state := fortressIntentState(time.Now().UTC())
 	source := state.Castles[10]
 	source.Focused = true
@@ -500,29 +500,42 @@ func TestFortressTargetVerificationRejectsPreviousAttemptResponseToken(t *testin
 		}
 		return ctx
 	}
-	code := 0
-	commit := func(token string) {
-		if _, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
-			Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code,
-			ReceivedAt: time.Now().UTC(), ResponseToken: token, CausationOperationID: "same-operation",
-			Payload: json.RawMessage(`{"KID":1,"AI":[[11,101,100,-1,45,0,-1,0]]}`),
-		}); err != nil {
+	commit := func(token, causationOperationID string) {
+		observed, err := pipeline.DecodeTransportFrameAt(
+			`%xt%gaa%1%0%{"KID":1,"AI":[[11,101,100,-1,45,0,-1,0]]}%`,
+			Protocol.DirectionInbound,
+			time.Now().UTC(),
+			token,
+			causationOperationID,
+		)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := pipeline.CommitFrame(t.Context(), observed); err != nil {
 			t.Fatal(err)
 		}
 	}
 	oldContext := arm("old-token")
-	commit("old-token")
+	commit("old-token", "")
 	if err := application.guardFortressTargetVerification(oldContext, arguments); err != nil {
-		t.Fatal(err)
+		t.Fatalf("transport-realistic response did not authorize attempt: %v", err)
 	}
 	newContext := arm("new-token")
-	commit("old-token")
+	commit("old-token", "")
 	if err := application.guardFortressTargetVerification(newContext, arguments); !errors.Is(err, Intent.ErrPlanStale) {
 		t.Fatalf("previous response token authorized retry: %v", err)
 	}
-	commit("new-token")
+	commit("", "")
+	if err := application.guardFortressTargetVerification(newContext, arguments); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("missing response token authorized retry: %v", err)
+	}
+	commit("new-token", "different-operation")
+	if err := application.guardFortressTargetVerification(newContext, arguments); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("conflicting inbound causation authorized retry: %v", err)
+	}
+	commit("new-token", "")
 	if err := application.guardFortressTargetVerification(newContext, arguments); err != nil {
-		t.Fatalf("current response token did not authorize retry: %v", err)
+		t.Fatalf("current response token with empty inbound causation did not authorize retry: %v", err)
 	}
 }
 
