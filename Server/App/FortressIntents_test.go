@@ -96,12 +96,15 @@ func TestFortressAttackEngineFinalizesOnlyWithAuthoritativeMovement(t *testing.T
 			now := time.Now().UTC()
 			gameData := fortressIntentGameData(t)
 			gameState := fortressIntentState(now)
+			gameState.Player.ID = 42
 			gameState.Session.ConnectionGeneration = 1
 			stateStore := State.NewStore(gameState)
 			ingestRegistry := Ingest.NewRegistry()
-			registerFortressEngineReducers(t, ingestRegistry, projectMovement)
+			if err := Ingest.RegisterCoreReducers(ingestRegistry); err != nil {
+				t.Fatal(err)
+			}
 			pipeline := Ingest.NewPipeline(stateStore, beriIntentGameDataProvider{store: gameData}, ingestRegistry)
-			sender := &fortressEngineSender{pipeline: pipeline}
+			sender := &fortressEngineSender{pipeline: pipeline, projectMovement: projectMovement}
 			intentRegistry := Intent.NewRegistry()
 			engine := Intent.NewEngine(intentRegistry, stateStore, beriIntentGameDataProvider{store: gameData}, sender, pipeline)
 			application := &Application{State: stateStore, Intents: engine, Ingest: pipeline}
@@ -135,6 +138,16 @@ func TestFortressAttackEngineFinalizesOnlyWithAuthoritativeMovement(t *testing.T
 				if len(launches) != 1 || launches[0].FeatureID != State.AttackFeatureAutoFortress || launches[0].MovementID != 99 {
 					t.Fatalf("authoritative fortress launch=%#v", launches)
 				}
+				projected := stateStore.ReadOnlyView()
+				if movement, found := projected.LookupMovement(99); !found || movement.Units[GameData.DirewolfUnitID] != 100 {
+					t.Fatalf("production CRA movement=%#v found=%t", movement, found)
+				}
+				if donor := projected.Castles[10].Units.Stationed[GameData.DirewolfUnitID]; donor != 10_000 {
+					t.Fatalf("CRA launch rewrote authoritative donor stock: got=%d want=10000", donor)
+				}
+				if _, found := projected.LookupTowerCooldown("1:101:100"); found {
+					t.Fatal("CRA launch created a fortress victory cooldown before a battle report")
+				}
 			} else {
 				if receipt.Status == Intent.StatusSucceeded || sender.craSends != 1 || !strings.Contains(receipt.Error, "did not return") {
 					t.Fatalf("missing-movement receipt=%+v opcodes=%v", receipt, sender.opcodes)
@@ -145,9 +158,10 @@ func TestFortressAttackEngineFinalizesOnlyWithAuthoritativeMovement(t *testing.T
 }
 
 type fortressEngineSender struct {
-	pipeline *Ingest.Pipeline
-	opcodes  []string
-	craSends int
+	pipeline        *Ingest.Pipeline
+	opcodes         []string
+	craSends        int
+	projectMovement bool
 }
 
 func (*fortressEngineSender) Ready() bool                  { return true }
@@ -171,65 +185,31 @@ func (sender *fortressEngineSender) Send(ctx context.Context, payload []byte) er
 	if command.Opcode == "cra" {
 		sender.craSends++
 	}
+	responsePayload := json.RawMessage(`{}`)
+	switch command.Opcode {
+	case "jaa", "jca":
+		responsePayload = json.RawMessage(`{"KID":1,"gca":{"A":[12,100,100,10,42,0,0,0,0,0,"Winter Keep"]},"gui":{"I":[[277,10000]],"TU":[],"HI":[],"SHI":[]}}`)
+	case "gaa":
+		responsePayload = json.RawMessage(`{"KID":1,"AI":[[11,101,100,-1,45,0,-1,0]]}`)
+	case "gam":
+		responsePayload = json.RawMessage(`{"M":[],"O":[]}`)
+	case "adi":
+		responsePayload = json.RawMessage(`{"KID":1,"SCID":10,"gaa":{"AI":[11,101,100,-1,45,0,-1,0]},"AE":[]}`)
+	case "gas":
+		responsePayload = json.RawMessage(`{"S":[]}`)
+	case "cra":
+		if sender.projectMovement {
+			responsePayload = json.RawMessage(`{"M":{"MID":99,"PT":0,"TT":60,"D":0,"T":0,"KID":1,"OID":42,"TID":-1,"SA":[12,100,100,10,42],"TA":[11,101,100,-1,-1]},"UM":{"L":{"ID":5}},"A":[[277,100]]}`)
+		}
+	}
 	metadata := Outbound.MetadataFromContext(ctx)
 	code := 0
 	_, err = sender.pipeline.HandleFrame(ctx, Protocol.Frame{
 		Opcode: responseOpcode, Direction: Protocol.DirectionInbound, ResponseCode: &code,
-		ReceivedAt: time.Now().UTC(), Payload: json.RawMessage(`{}`), ResponseToken: metadata.ResponseToken,
+		ReceivedAt: time.Now().UTC(), Payload: responsePayload, ResponseToken: metadata.ResponseToken,
 		CausationOperationID: metadata.OperationID,
 	})
 	return err
-}
-
-func registerFortressEngineReducers(t *testing.T, registry *Ingest.Registry, projectMovement bool) {
-	t.Helper()
-	register := func(opcode string, reducer Ingest.Reducer) {
-		if err := registry.Register(opcode, reducer); err != nil {
-			t.Fatal(err)
-		}
-	}
-	register("jaa", func(_ context.Context, frame Protocol.Frame, state *State.GameState, _ *GameData.Store) ([]string, bool, error) {
-		castle := state.Castles[10]
-		castle.Focused = true
-		castle.UnitsObservedAt = frame.ReceivedAt
-		state.Castles[10] = castle
-		return []string{"castles", "units"}, true, nil
-	})
-	register("gaa", func(_ context.Context, frame Protocol.Frame, state *State.GameState, _ *GameData.Store) ([]string, bool, error) {
-		target := state.Map[1]["101:100"]
-		target.ObservedAt = frame.ReceivedAt
-		state.Map[1]["101:100"] = target
-		return []string{"map-fortress"}, true, nil
-	})
-	register("gam", func(_ context.Context, frame Protocol.Frame, state *State.GameState, _ *GameData.Store) ([]string, bool, error) {
-		state.MovementSnapshot.ObservedAt = frame.ReceivedAt
-		return []string{"movements"}, true, nil
-	})
-	register("adi", func(_ context.Context, frame Protocol.Frame, state *State.GameState, _ *GameData.Store) ([]string, bool, error) {
-		state.AttackDialog = State.AttackDialogState{
-			SourceCastleID: 10, KingdomID: 1, ObservedAt: frame.ReceivedAt,
-			Target: State.AttackDialogTarget{TypeID: State.MapTypeKingdomFortress, X: 101, Y: 100, Level: 45},
-		}
-		return []string{"attack_dialog"}, true, nil
-	})
-	for _, opcode := range []string{"gbl", "gas"} {
-		register(opcode, func(_ context.Context, _ Protocol.Frame, _ *State.GameState, _ *GameData.Store) ([]string, bool, error) {
-			return nil, false, nil
-		})
-	}
-	register("cra", func(_ context.Context, frame Protocol.Frame, state *State.GameState, _ *GameData.Store) ([]string, bool, error) {
-		if !projectMovement {
-			return nil, false, nil
-		}
-		commander := State.CommanderID(5)
-		arrivesAt := frame.ReceivedAt.Add(time.Minute)
-		state.Movements[99] = State.MovementState{
-			ID: 99, Direction: 0, SourceCastleID: 10, KingdomID: 1, TargetTypeID: State.MapTypeKingdomFortress,
-			TargetX: 101, TargetY: 100, CommanderID: &commander, ArrivesAt: &arrivesAt, ObservedAt: frame.ReceivedAt,
-			Units: map[State.UnitID]int64{GameData.DirewolfUnitID: 100},
-		}
-		return []string{"movements"}, true, nil
-	})
 }
 
 func TestFortressPersonalCooldownSurvivesReadyGlobalMapRow(t *testing.T) {

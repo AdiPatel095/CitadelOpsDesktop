@@ -169,8 +169,8 @@ func TestKingdomTroopWorkflowRequiresCurrentSessionContinuity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := gameState.KingdomTransport.TroopWorkflows[2].Status; got != "awaiting_destination_refresh" {
-		t.Fatalf("completed ambiguous transport status=%q", got)
+	if got := gameState.KingdomTransport.TroopWorkflows[2].Status; got != "ownership_uncertain" {
+		t.Fatalf("completed ambiguous transport lost durable ambiguity: status=%q", got)
 	}
 }
 
@@ -196,6 +196,32 @@ func TestKingdomTroopWorkflowRejectsExactManualReplacementWithResetTimer(t *test
 	}
 	if got := gameState.KingdomTransport.TroopWorkflows[2].Status; got != "awaiting_destination_refresh" {
 		t.Fatalf("exact lookalike with reset timer was adopted: status=%q", got)
+	}
+}
+
+func TestKingdomTroopWorkflowPreservesSkipMarkerWhenTransportCompletes(t *testing.T) {
+	gameData := runtimeTestGameData(t)
+	gameState := State.NewGameState()
+	now := time.Now().UTC().Add(-time.Minute)
+	gameState.Session.ConnectionGeneration = 8
+	gameState.KingdomTransport.TroopWorkflows[2] = State.KingdomTroopTransportWorkflow{
+		ID: "owned", Owner: "autoFortress", Status: "pending", KingdomID: 2,
+		Units: []State.KingdomTransportUnit{{UnitID: 277, Amount: 100}}, ArmedAt: now.Add(-time.Minute),
+		TransportObservedAt: now, RemainingSec: 3600, SessionGeneration: 8,
+		SkipCurrencyID: 1005, SkipWireKey: "MS5", SkipBalanceBefore: 2, SkipRemainingBefore: 3600,
+		SkipDurationSec: 3600, SkipRequestedAt: now.Add(time.Second),
+	}
+	code := 0
+	_, changed, err := reduceKingdomTransport(t.Context(), Protocol.Frame{
+		Opcode: "msk", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now.Add(2 * time.Second),
+		Payload: json.RawMessage(`{"kpi":{"UL":[{"KID":2,"U":1}]}}`),
+	}, &gameState, gameData)
+	if err != nil || !changed {
+		t.Fatalf("completed skip reduction: changed=%t err=%v", changed, err)
+	}
+	workflow := gameState.KingdomTransport.TroopWorkflows[2]
+	if workflow.SkipRequestedAt.IsZero() || workflow.Status != "pending" || workflow.RemainingSec != 0 {
+		t.Fatalf("completed transport discarded unresolved skip marker: %#v", workflow)
 	}
 }
 

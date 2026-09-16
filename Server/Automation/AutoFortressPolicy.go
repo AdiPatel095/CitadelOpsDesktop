@@ -73,7 +73,7 @@ func (*AutoFortressPolicy) ID() string         { return "autoFortress" }
 func (*AutoFortressPolicy) EnabledKey() string { return "auto_fortress" }
 
 func (*AutoFortressPolicy) WakeDomains() []string {
-	return []string{"attack_dialog", "attacks", "castles", "commanders", "construction-offers", "event-scores", "events", "kingdom-transport", "map-fortress", "movements", "tower-cooldowns", "units"}
+	return []string{"attack_dialog", "attacks", "castles", "commanders", "construction-offers", "currencies", "event-scores", "events", "kingdom-transport", "map-fortress", "movements", "tower-cooldowns", "units"}
 }
 
 func (*AutoFortressPolicy) WakeSections() []string {
@@ -532,15 +532,23 @@ func (policy *AutoFortressPolicy) autoFortressSupplyDecision(
 	metrics map[string]float64,
 	details map[string]string,
 ) *Decision {
+	configuredKingdoms := make([]int, 0, len(settings.Kingdoms))
 	for key, configured := range settings.Kingdoms {
 		if !configured.Enabled {
 			continue
 		}
 		kingdomID, _ := strconv.Atoi(key)
+		configuredKingdoms = append(configuredKingdoms, kingdomID)
+		metrics[fmt.Sprintf("stationedDirewolvesKingdom%d", kingdomID)] = 0
+		metrics[fmt.Sprintf("inboundDirewolvesKingdom%d", kingdomID)] = 0
+		metrics[fmt.Sprintf("allocatedDirewolvesKingdom%d", kingdomID)] = 0
+		metrics[fmt.Sprintf("outstandingDirewolvesKingdom%d", kingdomID)] = 0
 		if _, found := sourceForKingdom(sources, State.KingdomID(kingdomID)); !found {
 			details[fmt.Sprintf("supplyKingdom%d", kingdomID)] = "Main castle is unavailable or the kingdom is not unlocked"
 		}
 	}
+	sort.Ints(configuredKingdoms)
+
 	workflowKingdoms := make([]int, 0, len(snapshot.State.KingdomTransport.TroopWorkflows))
 	for kingdomID, workflow := range snapshot.State.KingdomTransport.TroopWorkflows {
 		if workflow.Owner == autoFortressTransportOwner {
@@ -548,6 +556,8 @@ func (policy *AutoFortressPolicy) autoFortressSupplyDecision(
 		}
 	}
 	sort.Ints(workflowKingdoms)
+	var workflowAction *Decision
+	donorUnreconciled := false
 	for _, value := range workflowKingdoms {
 		kingdomID := State.KingdomID(value)
 		workflow := snapshot.State.KingdomTransport.TroopWorkflows[kingdomID]
@@ -556,28 +566,39 @@ func (policy *AutoFortressPolicy) autoFortressSupplyDecision(
 			details[fmt.Sprintf("supplyKingdom%d", kingdomID)] = "Owned Direwolf transfer target is unavailable; reconciliation is paused"
 			continue
 		}
+		stationed := max(int64(0), target.Units.Stationed[State.UnitID(GameData.DirewolfUnitID)])
+		inbound, _ := autoFortressInboundDirewolves(snapshot.State, kingdomID)
+		metrics[fmt.Sprintf("stationedDirewolvesKingdom%d", kingdomID)] = float64(stationed)
+		metrics[fmt.Sprintf("inboundDirewolvesKingdom%d", kingdomID)] = float64(inbound)
+		metrics[fmt.Sprintf("allocatedDirewolvesKingdom%d", kingdomID)] = float64(stationed + inbound)
+		metrics[fmt.Sprintf("outstandingDirewolvesKingdom%d", kingdomID)] = 0
+		if workflow.SourceReconciledAt.IsZero() && !workflow.SourceDebitedLocally {
+			donorUnreconciled = true
+		}
 		enabled := settings.Kingdoms[strconv.Itoa(int(kingdomID))].Enabled
-		if decision := autoFortressWorkflowDecision(snapshot, settings, target, workflow, enabled, metrics, details); decision != nil {
-			return decision
+		if decision := policy.autoFortressWorkflowDecision(snapshot, settings, main, mainFound, target, workflow, enabled, metrics, details); decision != nil && workflowAction == nil {
+			workflowAction = decision
 		}
 	}
 	if !mainFound {
 		for _, source := range sources {
 			details[fmt.Sprintf("supplyKingdom%d", source.KingdomID)] = "Great Empire main castle is unavailable for Direwolf supply"
 		}
-		return nil
+		return workflowAction
 	}
+	var maintenance *Decision
 	if main.UnitsObservedAt.IsZero() || snapshot.Now.Sub(main.UnitsObservedAt) > autoFortressUnitFreshness {
 		decision := autoFortressRequest(snapshot, metrics, "Refresh purchased Direwolves at "+castleName(main), "game.focus_castle", map[string]any{"castleId": main.ID, "refresh": true})
-		return &decision
+		maintenance = &decision
 	}
 	if snapshot.State.KingdomTransport.ObservedAt.IsZero() || snapshot.Now.Sub(snapshot.State.KingdomTransport.ObservedAt) > autoFortressUnitFreshness {
 		decision := autoFortressRequest(snapshot, metrics, "Refresh kingdom troop transport availability", "troops.kingdom.refresh", map[string]any{})
-		return &decision
+		if maintenance == nil {
+			maintenance = &decision
+		}
 	}
 
 	destinations := make([]autoFortressSupplyDestination, 0, len(sources))
-	var maintenance *Decision
 	for _, source := range sources {
 		key := fmt.Sprintf("supplyKingdom%d", source.KingdomID)
 		unlock, observed := snapshot.State.KingdomTransport.Unlocks[source.KingdomID]
@@ -607,14 +628,19 @@ func (policy *AutoFortressPolicy) autoFortressSupplyDecision(
 	}
 
 	donor := max(int64(0), main.Units.Stationed[State.UnitID(GameData.DirewolfUnitID)])
+	if donorUnreconciled || main.UnitsObservedAt.IsZero() || snapshot.Now.Before(main.UnitsObservedAt) || snapshot.Now.Sub(main.UnitsObservedAt) > autoFortressUnitFreshness ||
+		snapshot.State.KingdomTransport.ObservedAt.IsZero() || snapshot.Now.Before(snapshot.State.KingdomTransport.ObservedAt) || snapshot.Now.Sub(snapshot.State.KingdomTransport.ObservedAt) > autoFortressUnitFreshness {
+		donor = 0
+	}
 	metrics["availableDonorDirewolves"] = float64(donor)
 	autoFortressBalanceAllocations(destinations, donor)
+	var shipmentAction *Decision
 	for index := range destinations {
 		destination := &destinations[index]
 		kingdomID := destination.castle.KingdomID
 		metrics[fmt.Sprintf("allocatedDirewolvesKingdom%d", kingdomID)] = float64(destination.committed + destination.allocation)
 		metrics[fmt.Sprintf("outstandingDirewolvesKingdom%d", kingdomID)] = float64(destination.allocation)
-		if destination.allocation <= 0 {
+		if destination.allocation <= 0 || shipmentAction != nil {
 			continue
 		}
 		if destination.pending {
@@ -634,7 +660,19 @@ func (policy *AutoFortressPolicy) autoFortressSupplyDecision(
 			"units": []map[string]any{{"unitId": GameData.DirewolfUnitID, "amount": amount}},
 		})
 		details[fmt.Sprintf("supplyKingdom%d", kingdomID)] = fmt.Sprintf("Allocating %d Direwolves from the Great Empire", amount)
-		return &decision
+		shipmentAction = &decision
+	}
+	if workflowAction != nil {
+		workflowAction.Metrics = metrics
+		return workflowAction
+	}
+	if maintenance != nil {
+		maintenance.Metrics = metrics
+		return maintenance
+	}
+	if shipmentAction != nil {
+		shipmentAction.Metrics = metrics
+		return shipmentAction
 	}
 	return maintenance
 }
@@ -700,8 +738,69 @@ func autoFortressBalanceAllocations(destinations []autoFortressSupplyDestination
 	}
 }
 
-func autoFortressWorkflowDecision(snapshot Snapshot, settings autoFortressSettings, target State.CastleState, workflow State.KingdomTroopTransportWorkflow, enabled bool, metrics map[string]float64, details map[string]string) *Decision {
+func (policy *AutoFortressPolicy) autoFortressWorkflowDecision(snapshot Snapshot, settings autoFortressSettings, main State.CastleState, mainFound bool, target State.CastleState, workflow State.KingdomTroopTransportWorkflow, enabled bool, metrics map[string]float64, details map[string]string) *Decision {
 	key := fmt.Sprintf("supplyKingdom%d", target.KingdomID)
+	if workflow.Status == "armed" || workflow.Status == "ownership_uncertain" {
+		details[key] = "Reconciling an uncertain Direwolf shipment before any replay"
+		if policy.supplyRefreshDue(workflow.KingdomID, snapshot.Now) {
+			policy.markSupplyRefreshRequested(workflow.KingdomID, snapshot.Now)
+			decision := autoFortressRequest(snapshot, metrics, "Refresh uncertain owned Direwolf shipment", "troops.kingdom.refresh", map[string]any{})
+			return &decision
+		}
+		return nil
+	}
+	if workflow.SourceReconciledAt.IsZero() && !workflow.SourceDebitedLocally {
+		if !mainFound {
+			details[key] = "Owned transfer donor inventory is unresolved; the Great Empire main castle is unavailable"
+			return nil
+		}
+		if main.UnitsObservedAt.IsZero() || !main.UnitsObservedAt.After(workflow.ArmedAt) {
+			details[key] = "Refreshing the donor after an ambiguous Direwolf dispatch"
+			decision := autoFortressRequest(snapshot, metrics, "Refresh Direwolf donor after ambiguous dispatch", "game.focus_castle", map[string]any{"castleId": main.ID, "refresh": true})
+			return &decision
+		}
+		details[key] = "Confirming the authoritative donor inventory after shipment"
+		decision := autoFortressRequest(snapshot, metrics, "Reconcile Direwolf donor after ambiguous dispatch", "troops.kingdom.reconcile_donor", map[string]any{
+			"owner": workflow.Owner, "workflowId": workflow.ID, "targetKingdomId": workflow.KingdomID,
+		})
+		return &decision
+	}
+	if !workflow.SkipRequestedAt.IsZero() {
+		if workflow.Status == "skip_inventory_pending" || workflow.Status == "skip_uncertain" {
+			observation := snapshot.State.Player.CurrencyObservations[workflow.SkipCurrencyID]
+			needsRefresh := !observation.ObservedAt.After(workflow.SkipRequestedAt) || observation.ConnectionGeneration != snapshot.State.Session.ConnectionGeneration ||
+				workflow.Status == "skip_uncertain" && !observation.ObservedAt.After(workflow.SkipInventoryObservedAt)
+			if needsRefresh {
+				details[key] = "Time-skip timer advanced; refreshing official skip inventory before another spend"
+				if policy.supplyRefreshDue(workflow.KingdomID, snapshot.Now) {
+					policy.markSupplyRefreshRequested(workflow.KingdomID, snapshot.Now)
+					decision := autoFortressRequest(snapshot, metrics, "Refresh official time-skip inventory", "account.inventory.refresh", map[string]any{})
+					return &decision
+				}
+				return nil
+			}
+			details[key] = "Reconciling official time-skip inventory consumption"
+			decision := autoFortressRequest(snapshot, metrics, "Reconcile confirmed time-skip inventory", "troops.kingdom.skip.reconcile_inventory", map[string]any{
+				"owner": workflow.Owner, "workflowId": workflow.ID, "targetKingdomId": workflow.KingdomID,
+			})
+			return &decision
+		}
+		if !workflow.TransportObservedAt.After(workflow.SkipRequestedAt) ||
+			!workflow.SkipTimerObservedAt.IsZero() && !workflow.TransportObservedAt.After(workflow.SkipTimerObservedAt) {
+			details[key] = "Reconciling an uncertain time-skip reply before another spend"
+			if policy.supplyRefreshDue(workflow.KingdomID, snapshot.Now) {
+				policy.markSupplyRefreshRequested(workflow.KingdomID, snapshot.Now)
+				decision := autoFortressRequest(snapshot, metrics, "Refresh owned Direwolf transfer after uncertain skip", "troops.kingdom.refresh", map[string]any{})
+				return &decision
+			}
+			return nil
+		}
+		details[key] = "Reconciling the owned transfer timer after a time skip"
+		decision := autoFortressRequest(snapshot, metrics, "Reconcile owned Direwolf transfer timer", "troops.kingdom.skip.reconcile_timer", map[string]any{
+			"owner": workflow.Owner, "workflowId": workflow.ID, "targetKingdomId": workflow.KingdomID,
+		})
+		return &decision
+	}
 	if workflow.Status == "awaiting_destination_refresh" {
 		if !target.UnitsObservedAt.After(workflow.TransportObservedAt) {
 			details[key] = "Transfer arrived; refreshing destination inventory before reuse"
@@ -712,36 +811,6 @@ func autoFortressWorkflowDecision(snapshot Snapshot, settings autoFortressSettin
 		decision := autoFortressRequest(snapshot, metrics, "Settle completed Direwolf transfer to "+castleName(target), "troops.kingdom.settle", map[string]any{
 			"owner": workflow.Owner, "workflowId": workflow.ID, "targetKingdomId": workflow.KingdomID,
 		})
-		return &decision
-	}
-	if !workflow.SkipRequestedAt.IsZero() {
-		if workflow.Status == "skip_inventory_pending" || workflow.Status == "skip_uncertain" {
-			observation := snapshot.State.Player.CurrencyObservations[workflow.SkipCurrencyID]
-			if !observation.ObservedAt.After(workflow.SkipRequestedAt) || observation.ConnectionGeneration != snapshot.State.Session.ConnectionGeneration {
-				details[key] = "Time-skip timer advanced; refreshing official skip inventory before another spend"
-				decision := autoFortressRequest(snapshot, metrics, "Refresh official time-skip inventory", "account.inventory.refresh", map[string]any{})
-				return &decision
-			}
-			details[key] = "Reconciling official time-skip inventory consumption"
-			decision := autoFortressRequest(snapshot, metrics, "Reconcile confirmed time-skip inventory", "troops.kingdom.skip.reconcile_inventory", map[string]any{
-				"owner": workflow.Owner, "workflowId": workflow.ID, "targetKingdomId": workflow.KingdomID,
-			})
-			return &decision
-		}
-		if !workflow.TransportObservedAt.After(workflow.SkipRequestedAt) {
-			details[key] = "Reconciling an uncertain time-skip reply before another spend"
-			decision := autoFortressRequest(snapshot, metrics, "Refresh owned Direwolf transfer after uncertain skip", "troops.kingdom.refresh", map[string]any{})
-			return &decision
-		}
-		details[key] = "Reconciling the owned transfer timer after a time skip"
-		decision := autoFortressRequest(snapshot, metrics, "Reconcile owned Direwolf transfer timer", "troops.kingdom.skip.reconcile_timer", map[string]any{
-			"owner": workflow.Owner, "workflowId": workflow.ID, "targetKingdomId": workflow.KingdomID,
-		})
-		return &decision
-	}
-	if workflow.Status == "armed" || workflow.Status == "ownership_uncertain" {
-		details[key] = "Reconciling an uncertain Direwolf shipment before any replay"
-		decision := autoFortressRequest(snapshot, metrics, "Refresh uncertain owned Direwolf shipment", "troops.kingdom.refresh", map[string]any{})
 		return &decision
 	}
 	if workflow.Status != "pending" {
@@ -756,26 +825,35 @@ func autoFortressWorkflowDecision(snapshot Snapshot, settings autoFortressSettin
 	if !settings.UseTimeSkips {
 		return nil
 	}
-	if snapshot.State.KingdomTransport.ObservedAt.IsZero() || snapshot.Now.Before(snapshot.State.KingdomTransport.ObservedAt) ||
-		snapshot.Now.Sub(snapshot.State.KingdomTransport.ObservedAt) > autoFortressUnitFreshness {
+	if workflow.TransportObservedAt.IsZero() || snapshot.Now.Before(workflow.TransportObservedAt) ||
+		snapshot.Now.Sub(workflow.TransportObservedAt) > autoFortressUnitFreshness {
 		details[key] = "Refreshing the owned Direwolf transfer before considering a time skip"
 		decision := autoFortressRequest(snapshot, metrics, "Refresh owned Direwolf transfer before a time skip", "troops.kingdom.refresh", map[string]any{})
 		return &decision
 	}
-	remaining, found := autoFortressOwnedPendingRemaining(snapshot.State, workflow)
+	remaining, found := autoFortressAgedOwnedPendingRemaining(snapshot.State, workflow, snapshot.Now)
 	if !found || remaining <= 0 {
 		return nil
 	}
 	option := autoFortressTimeSkipOption(snapshot, settings.TimeSkipReserve, remaining)
 	if option.WireKey == "" {
-		details[key] = "No official time skip is available above the configured reserves; waiting naturally"
+		if autoFortressSkipInventoryNeedsRefresh(snapshot, settings.TimeSkipReserve) {
+			details[key] = "Official time-skip inventory is stale; refreshing before reconsidering a spend"
+			if policy.supplyRefreshDue(workflow.KingdomID, snapshot.Now) {
+				policy.markSupplyRefreshRequested(workflow.KingdomID, snapshot.Now)
+				decision := autoFortressRequest(snapshot, metrics, "Refresh stale official time-skip inventory", "account.inventory.refresh", map[string]any{})
+				return &decision
+			}
+			return nil
+		}
+		details[key] = "No useful official time skip is available above the configured reserves; waiting naturally"
 		return nil
 	}
 	reserve := max(int64(0), settings.TimeSkipReserve[option.WireKey])
 	details[key] = fmt.Sprintf("Applying %s with minimal duration waste", option.WireKey)
 	decision := autoFortressRequest(snapshot, metrics, "Apply "+option.WireKey+" to the owned Direwolf transfer", "troops.kingdom.skip", map[string]any{
 		"targetKingdomId": workflow.KingdomID, "timeSkipId": option.WireKey, "minimumRemaining": reserve,
-		"owner": workflow.Owner, "workflowId": workflow.ID, "expectedRemaining": remaining,
+		"owner": workflow.Owner, "workflowId": workflow.ID, "expectedRemaining": remaining, "expectedDurationSec": option.Seconds,
 	})
 	return &decision
 }
@@ -806,6 +884,14 @@ func autoFortressOwnedPendingRemaining(gameState State.GameState, workflow State
 	return 0, false
 }
 
+func autoFortressAgedOwnedPendingRemaining(gameState State.GameState, workflow State.KingdomTroopTransportWorkflow, now time.Time) (int, bool) {
+	remaining, found := autoFortressOwnedPendingRemaining(gameState, workflow)
+	if !found || workflow.TransportObservedAt.IsZero() || !now.After(workflow.TransportObservedAt) {
+		return remaining, found
+	}
+	return max(0, remaining-int(now.Sub(workflow.TransportObservedAt)/time.Second)), true
+}
+
 func autoFortressTimeSkipOption(snapshot Snapshot, reserves map[string]int64, remaining int) GameData.TimeSkipOption {
 	options, err := snapshot.GameData.OfficialTimeSkips()
 	if err != nil {
@@ -826,21 +912,53 @@ func autoFortressTimeSkipOption(snapshot Snapshot, reserves map[string]int64, re
 		return GameData.TimeSkipOption{}
 	}
 	sort.Slice(available, func(left, right int) bool {
-		leftWaste := available[left].Seconds - int64(remaining)
-		rightWaste := available[right].Seconds - int64(remaining)
-		leftCovers, rightCovers := leftWaste >= 0, rightWaste >= 0
-		if leftCovers != rightCovers {
-			return leftCovers
+		leftUnder, rightUnder := available[left].Seconds <= int64(remaining), available[right].Seconds <= int64(remaining)
+		if leftUnder != rightUnder {
+			return leftUnder
 		}
-		if leftCovers && leftWaste != rightWaste {
-			return leftWaste < rightWaste
-		}
-		if !leftCovers && available[left].Seconds != available[right].Seconds {
+		if leftUnder && available[left].Seconds != available[right].Seconds {
 			return available[left].Seconds > available[right].Seconds
+		}
+		if !leftUnder && available[left].Seconds != available[right].Seconds {
+			return available[left].Seconds < available[right].Seconds
 		}
 		return available[left].WireKey < available[right].WireKey
 	})
-	return available[0]
+	selected := available[0]
+	if selected.Seconds > int64(remaining) && !autoFortressSkipUseful(selected.Seconds, remaining) {
+		return GameData.TimeSkipOption{}
+	}
+	return selected
+}
+
+func autoFortressSkipUseful(duration int64, remaining int) bool {
+	if duration <= 0 || remaining <= 0 {
+		return false
+	}
+	if duration <= int64(remaining) {
+		return true
+	}
+	maximumWaste := max(int64(60), min(int64(15*time.Minute/time.Second), int64(remaining)/4))
+	return duration-int64(remaining) <= maximumWaste
+}
+
+func autoFortressSkipInventoryNeedsRefresh(snapshot Snapshot, reserves map[string]int64) bool {
+	options, err := snapshot.GameData.OfficialTimeSkips()
+	if err != nil {
+		return false
+	}
+	for _, option := range options {
+		currencyID := State.CurrencyID(option.CurrencyID)
+		if snapshot.State.Player.Currencies[currencyID] < float64(max(int64(0), reserves[option.WireKey]))+1 {
+			continue
+		}
+		observation := snapshot.State.Player.CurrencyObservations[currencyID]
+		if observation.ConnectionGeneration == 0 || observation.ConnectionGeneration != snapshot.State.Session.ConnectionGeneration ||
+			observation.ObservedAt.IsZero() || snapshot.Now.Before(observation.ObservedAt) || snapshot.Now.Sub(observation.ObservedAt) > autoFortressUnitFreshness {
+			return true
+		}
+	}
+	return false
 }
 
 func (policy *AutoFortressPolicy) supplyRefreshDue(kingdomID State.KingdomID, now time.Time) bool {

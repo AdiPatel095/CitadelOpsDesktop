@@ -81,16 +81,17 @@ func (application *Application) registerGameIntents() error {
 		return err
 	}
 	for name, action := range map[string]Intent.Action{
-		"troops.kingdom.workflow.arm":          application.armKingdomTroopWorkflow,
-		"troops.kingdom.workflow.dispatch":     application.guardKingdomTroopWorkflowDispatch,
-		"troops.kingdom.workflow.disarm":       application.disarmKingdomTroopWorkflow,
-		"troops.kingdom.workflow.confirm":      application.confirmKingdomTroopWorkflow,
-		"troops.kingdom.workflow.settle":       application.settleKingdomTroopWorkflow,
-		"troops.kingdom.skip.arm":              application.armKingdomTroopSkip,
-		"troops.kingdom.skip.dispatch":         application.guardKingdomTroopSkipDispatch,
-		"troops.kingdom.skip.disarm":           application.disarmKingdomTroopSkip,
-		"troops.kingdom.skip.verify_timer":     application.verifyKingdomTroopSkipTimer,
-		"troops.kingdom.skip.verify_inventory": application.verifyKingdomTroopSkipInventory,
+		"troops.kingdom.workflow.arm":             application.armKingdomTroopWorkflow,
+		"troops.kingdom.workflow.dispatch":        application.guardKingdomTroopWorkflowDispatch,
+		"troops.kingdom.workflow.disarm":          application.disarmKingdomTroopWorkflow,
+		"troops.kingdom.workflow.confirm":         application.confirmKingdomTroopWorkflow,
+		"troops.kingdom.workflow.reconcile_donor": application.reconcileKingdomTroopDonor,
+		"troops.kingdom.workflow.settle":          application.settleKingdomTroopWorkflow,
+		"troops.kingdom.skip.arm":                 application.armKingdomTroopSkip,
+		"troops.kingdom.skip.dispatch":            application.guardKingdomTroopSkipDispatch,
+		"troops.kingdom.skip.disarm":              application.disarmKingdomTroopSkip,
+		"troops.kingdom.skip.verify_timer":        application.verifyKingdomTroopSkipTimer,
+		"troops.kingdom.skip.verify_inventory":    application.verifyKingdomTroopSkipInventory,
 	} {
 		if err := application.Intents.RegisterAction(name, action); err != nil {
 			return err
@@ -400,6 +401,10 @@ func (application *Application) registerGameIntents() error {
 		{
 			Name: "troops.kingdom.settle", Description: "Settle one completed owned kingdom troop transport after destination refresh", Effect: Intent.EffectWrite,
 			Planner: actionPlanner("troops.kingdom.workflow.settle", "troop-transport", "Settle completed owned kingdom troop transport"),
+		},
+		{
+			Name: "troops.kingdom.reconcile_donor", Description: "Confirm an authoritative donor inventory after an ambiguous kingdom troop dispatch", Effect: Intent.EffectWrite,
+			Planner: actionPlanner("troops.kingdom.workflow.reconcile_donor", "troop-transport", "Reconcile kingdom troop donor inventory"),
 		},
 		{
 			Name: "troops.kingdom.skip.reconcile_timer", Description: "Reconcile an owned kingdom troop transfer after an uncertain time-skip reply", Effect: Intent.EffectWrite,

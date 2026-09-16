@@ -1239,23 +1239,28 @@ type KingdomResourceTransportWorkflow struct {
 }
 
 type KingdomTroopTransportWorkflow struct {
-	ID                  string                 `json:"id"`
-	Owner               string                 `json:"owner"`
-	Status              string                 `json:"status"`
-	KingdomID           KingdomID              `json:"kingdomId"`
-	SourceCastleID      CastleID               `json:"sourceCastleId"`
-	TargetCastleID      CastleID               `json:"targetCastleId"`
-	Units               []KingdomTransportUnit `json:"units"`
-	ArmedAt             time.Time              `json:"armedAt"`
-	LaunchedAt          time.Time              `json:"launchedAt,omitempty"`
-	TransportObservedAt time.Time              `json:"transportObservedAt,omitempty"`
-	RemainingSec        int                    `json:"remainingSec,omitempty"`
-	SessionGeneration   uint64                 `json:"sessionGeneration,omitempty"`
-	SkipCurrencyID      CurrencyID             `json:"skipCurrencyId,omitempty"`
-	SkipWireKey         string                 `json:"skipWireKey,omitempty"`
-	SkipBalanceBefore   float64                `json:"skipBalanceBefore,omitempty"`
-	SkipRemainingBefore int                    `json:"skipRemainingBefore,omitempty"`
-	SkipRequestedAt     time.Time              `json:"skipRequestedAt,omitempty"`
+	ID                      string                 `json:"id"`
+	Owner                   string                 `json:"owner"`
+	Status                  string                 `json:"status"`
+	KingdomID               KingdomID              `json:"kingdomId"`
+	SourceCastleID          CastleID               `json:"sourceCastleId"`
+	TargetCastleID          CastleID               `json:"targetCastleId"`
+	Units                   []KingdomTransportUnit `json:"units"`
+	ArmedAt                 time.Time              `json:"armedAt"`
+	LaunchedAt              time.Time              `json:"launchedAt,omitempty"`
+	TransportObservedAt     time.Time              `json:"transportObservedAt,omitempty"`
+	SourceReconciledAt      time.Time              `json:"sourceReconciledAt,omitempty"`
+	SourceDebitedLocally    bool                   `json:"sourceDebitedLocally,omitempty"`
+	RemainingSec            int                    `json:"remainingSec,omitempty"`
+	SessionGeneration       uint64                 `json:"sessionGeneration,omitempty"`
+	SkipCurrencyID          CurrencyID             `json:"skipCurrencyId,omitempty"`
+	SkipWireKey             string                 `json:"skipWireKey,omitempty"`
+	SkipBalanceBefore       float64                `json:"skipBalanceBefore,omitempty"`
+	SkipRemainingBefore     int                    `json:"skipRemainingBefore,omitempty"`
+	SkipDurationSec         int64                  `json:"skipDurationSec,omitempty"`
+	SkipRequestedAt         time.Time              `json:"skipRequestedAt,omitempty"`
+	SkipTimerObservedAt     time.Time              `json:"skipTimerObservedAt,omitempty"`
+	SkipInventoryObservedAt time.Time              `json:"skipInventoryObservedAt,omitempty"`
 }
 
 type KingdomTransportUnit struct {

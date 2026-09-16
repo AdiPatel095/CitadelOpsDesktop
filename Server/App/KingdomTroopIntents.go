@@ -34,12 +34,13 @@ type kingdomTroopShipmentRequest struct {
 }
 
 type kingdomTroopSkipRequest struct {
-	TargetKingdomID   State.KingdomID `json:"targetKingdomId"`
-	TimeSkipID        string          `json:"timeSkipId"`
-	MinimumRemaining  int64           `json:"minimumRemaining,omitempty"`
-	Owner             string          `json:"owner,omitempty"`
-	WorkflowID        string          `json:"workflowId,omitempty"`
-	ExpectedRemaining int             `json:"expectedRemaining,omitempty"`
+	TargetKingdomID     State.KingdomID `json:"targetKingdomId"`
+	TimeSkipID          string          `json:"timeSkipId"`
+	MinimumRemaining    int64           `json:"minimumRemaining,omitempty"`
+	Owner               string          `json:"owner,omitempty"`
+	WorkflowID          string          `json:"workflowId,omitempty"`
+	ExpectedRemaining   int             `json:"expectedRemaining,omitempty"`
+	ExpectedDurationSec int64           `json:"expectedDurationSec,omitempty"`
 }
 
 func planKingdomTroopRefresh(_ context.Context, _ Intent.PlanningContext, _ json.RawMessage) (Intent.Plan, error) {
@@ -356,27 +357,43 @@ func (application *Application) consumeKingdomTroopSource(_ context.Context, arg
 		}
 		amounts[unit.UnitID] += unit.Amount
 	}
-	_, err := application.State.ApplyComponents(State.Components(State.ComponentCastles), func(gameState *State.GameState) ([]string, bool, error) {
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentCastles, State.ComponentKingdomTransport), func(gameState *State.GameState) ([]string, bool, error) {
+		workflow, workflowExists := gameState.KingdomTransport.TroopWorkflows[request.TargetKingdomID]
+		if workflowExists && workflow.ID == request.WorkflowID && workflow.Owner == request.Owner &&
+			(workflow.SourceDebitedLocally || !workflow.SourceReconciledAt.IsZero()) {
+			return nil, false, nil
+		}
 		source, found := gameState.MutableCastleParts(request.SourceCastleID, State.CastlePartUnits)
 		if !found {
 			return nil, false, fmt.Errorf("confirmed kingdom troop donor %d is unavailable", request.SourceCastleID)
 		}
+		authoritativeAfterResponse := workflowExists && workflow.ID == request.WorkflowID && workflow.Owner == request.Owner &&
+			!workflow.TransportObservedAt.IsZero() && source.UnitsObservedAt.After(workflow.TransportObservedAt)
 		for unitID, amount := range amounts {
-			if source.Units.Stationed[unitID] < amount {
+			if !authoritativeAfterResponse && source.Units.Stationed[unitID] < amount {
 				return nil, false, fmt.Errorf(
 					"confirmed kingdom troop donor %d has only %d of unit %d in state; %d were transferred",
 					source.ID, source.Units.Stationed[unitID], unitID, amount,
 				)
 			}
 		}
-		for unitID, amount := range amounts {
-			source.Units.Stationed[unitID] -= amount
-			if source.Units.Total[unitID] >= amount {
-				source.Units.Total[unitID] -= amount
+		if !authoritativeAfterResponse {
+			for unitID, amount := range amounts {
+				source.Units.Stationed[unitID] -= amount
+				if source.Units.Total[unitID] >= amount {
+					source.Units.Total[unitID] -= amount
+				}
 			}
+			gameState.SetCastleParts(source.ID, source, State.CastlePartUnits)
 		}
-		source.UnitsObservedAt = time.Now().UTC()
-		gameState.SetCastleParts(source.ID, source, State.CastlePartUnits)
+		if workflowExists && workflow.ID == request.WorkflowID && workflow.Owner == request.Owner {
+			if authoritativeAfterResponse {
+				workflow.SourceReconciledAt = source.UnitsObservedAt.UTC()
+			} else {
+				workflow.SourceDebitedLocally = true
+			}
+			gameState.KingdomTransport.TroopWorkflows[request.TargetKingdomID] = workflow
+		}
 		return []string{"castles", "units", "kingdom-transport"}, true, nil
 	})
 	return err
@@ -526,6 +543,12 @@ func (application *Application) settleKingdomTroopWorkflow(_ context.Context, ar
 		if workflow.Status != "awaiting_destination_refresh" {
 			return nil, false, fmt.Errorf("owned kingdom troop workflow is not ready to settle")
 		}
+		if !workflow.SkipRequestedAt.IsZero() {
+			return nil, false, fmt.Errorf("owned kingdom troop workflow still has an unresolved time skip")
+		}
+		if workflow.SourceReconciledAt.IsZero() && !workflow.SourceDebitedLocally {
+			return nil, false, fmt.Errorf("owned kingdom troop donor inventory is not reconciled")
+		}
 		target, exists := gameState.Castles[workflow.TargetCastleID]
 		if !exists || target.UnitsObservedAt.IsZero() || !target.UnitsObservedAt.After(workflow.TransportObservedAt) {
 			return nil, false, fmt.Errorf("destination inventory was not refreshed after transport completion")
@@ -536,8 +559,33 @@ func (application *Application) settleKingdomTroopWorkflow(_ context.Context, ar
 	return err
 }
 
+func (application *Application) reconcileKingdomTroopDonor(_ context.Context, arguments json.RawMessage) error {
+	var request struct {
+		Owner           string          `json:"owner"`
+		WorkflowID      string          `json:"workflowId"`
+		TargetKingdomID State.KingdomID `json:"targetKingdomId"`
+	}
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentKingdomTransport, State.ComponentCastles), func(gameState *State.GameState) ([]string, bool, error) {
+		workflow, exists := gameState.KingdomTransport.TroopWorkflows[request.TargetKingdomID]
+		if !exists || workflow.Owner != request.Owner || workflow.ID != request.WorkflowID {
+			return nil, false, fmt.Errorf("owned kingdom troop workflow changed before donor reconciliation")
+		}
+		source, exists := gameState.Castles[workflow.SourceCastleID]
+		if !exists || source.UnitsObservedAt.IsZero() || !source.UnitsObservedAt.After(workflow.ArmedAt) {
+			return nil, false, fmt.Errorf("donor inventory was not refreshed after the ambiguous troop dispatch")
+		}
+		workflow.SourceReconciledAt = source.UnitsObservedAt.UTC()
+		gameState.KingdomTransport.TroopWorkflows[request.TargetKingdomID] = workflow
+		return []string{"kingdom-transport"}, true, nil
+	})
+	return err
+}
+
 func (application *Application) armKingdomTroopSkip(ctx context.Context, arguments json.RawMessage) error {
-	request, workflow, currencyID, balance, err := application.validateOwnedKingdomTroopSkip(arguments, true)
+	request, workflow, currencyID, balance, remaining, duration, err := application.validateOwnedKingdomTroopSkip(arguments, true)
 	if err != nil {
 		return err
 	}
@@ -553,8 +601,11 @@ func (application *Application) armKingdomTroopSkip(ctx context.Context, argumen
 		current.SkipCurrencyID = currencyID
 		current.SkipWireKey = strings.ToUpper(strings.TrimSpace(request.TimeSkipID))
 		current.SkipBalanceBefore = balance
-		current.SkipRemainingBefore = request.ExpectedRemaining
+		current.SkipRemainingBefore = remaining
+		current.SkipDurationSec = duration
 		current.SkipRequestedAt = now
+		current.SkipTimerObservedAt = time.Time{}
+		current.SkipInventoryObservedAt = time.Time{}
 		gameState.KingdomTransport.TroopWorkflows[request.TargetKingdomID] = current
 		return []string{"kingdom-transport"}, true, nil
 	})
@@ -565,62 +616,103 @@ func (application *Application) armKingdomTroopSkip(ctx context.Context, argumen
 }
 
 func (application *Application) guardKingdomTroopSkipDispatch(_ context.Context, arguments json.RawMessage) error {
-	request, workflow, currencyID, balance, err := application.validateOwnedKingdomTroopSkip(arguments, false)
+	request, workflow, currencyID, balance, _, duration, err := application.validateOwnedKingdomTroopSkip(arguments, false)
 	if err != nil {
 		return err
 	}
 	if workflow.SkipCurrencyID != currencyID || workflow.SkipWireKey != strings.ToUpper(strings.TrimSpace(request.TimeSkipID)) ||
-		workflow.SkipBalanceBefore != balance || workflow.SkipRemainingBefore != request.ExpectedRemaining || workflow.SkipRequestedAt.IsZero() {
+		workflow.SkipBalanceBefore != balance || workflow.SkipDurationSec != duration || workflow.SkipRequestedAt.IsZero() {
 		return fmt.Errorf("%w: owned troop time-skip marker changed before dispatch", Intent.ErrPlanStale)
 	}
 	return nil
 }
 
-func (application *Application) validateOwnedKingdomTroopSkip(arguments json.RawMessage, beforeArm bool) (kingdomTroopSkipRequest, State.KingdomTroopTransportWorkflow, State.CurrencyID, float64, error) {
+func (application *Application) validateOwnedKingdomTroopSkip(arguments json.RawMessage, beforeArm bool) (kingdomTroopSkipRequest, State.KingdomTroopTransportWorkflow, State.CurrencyID, float64, int, int64, error) {
 	var request kingdomTroopSkipRequest
 	if err := decodeIntentArguments(arguments, &request); err != nil {
-		return request, State.KingdomTroopTransportWorkflow{}, 0, 0, err
+		return request, State.KingdomTroopTransportWorkflow{}, 0, 0, 0, 0, err
 	}
 	gameState := application.State.ReadOnlyView()
 	workflow, exists := gameState.KingdomTransport.TroopWorkflows[request.TargetKingdomID]
 	if !exists || workflow.ID != request.WorkflowID || workflow.Owner != request.Owner || workflow.Status != "pending" {
-		return request, workflow, 0, 0, fmt.Errorf("%w: owned troop workflow is no longer pending", Intent.ErrPlanStale)
+		return request, workflow, 0, 0, 0, 0, fmt.Errorf("%w: owned troop workflow is no longer pending", Intent.ErrPlanStale)
 	}
 	if workflow.SessionGeneration == 0 || workflow.SessionGeneration != gameState.Session.ConnectionGeneration {
-		return request, workflow, 0, 0, fmt.Errorf("%w: owned troop workflow requires current-session reconciliation", Intent.ErrPlanStale)
+		return request, workflow, 0, 0, 0, 0, fmt.Errorf("%w: owned troop workflow requires current-session reconciliation", Intent.ErrPlanStale)
 	}
 	useSkips, reserves, enabled := autoFortressSkipSettings(application, request.TargetKingdomID)
 	if !enabled || !useSkips {
-		return request, workflow, 0, 0, fmt.Errorf("%w: Auto Fortress time skips are disabled", Intent.ErrPlanStale)
-	}
-	remaining, exact := exactOwnedPendingRemaining(gameState, workflow)
-	if !exact || remaining <= 0 || remaining != request.ExpectedRemaining {
-		return request, workflow, 0, 0, fmt.Errorf("%w: owned troop transport timer changed before skip", Intent.ErrPlanStale)
+		return request, workflow, 0, 0, 0, 0, fmt.Errorf("%w: Auto Fortress time skips are disabled", Intent.ErrPlanStale)
 	}
 	now := time.Now().UTC()
-	if gameState.KingdomTransport.ObservedAt.IsZero() || now.Before(gameState.KingdomTransport.ObservedAt) ||
-		now.Sub(gameState.KingdomTransport.ObservedAt) > 5*time.Minute {
-		return request, workflow, 0, 0, fmt.Errorf("%w: owned troop transport timer is not current", Intent.ErrPlanStale)
+	if workflow.TransportObservedAt.IsZero() || now.Before(workflow.TransportObservedAt) ||
+		now.Sub(workflow.TransportObservedAt) > 5*time.Minute {
+		return request, workflow, 0, 0, 0, 0, fmt.Errorf("%w: owned troop transport timer is not current", Intent.ErrPlanStale)
+	}
+	remaining, exact := agedOwnedPendingRemaining(gameState, workflow, now)
+	if !exact || remaining <= 0 || request.ExpectedRemaining <= 0 || remaining > request.ExpectedRemaining || request.ExpectedRemaining-remaining > 10 {
+		return request, workflow, 0, 0, 0, 0, fmt.Errorf("%w: owned troop transport timer changed before skip", Intent.ErrPlanStale)
 	}
 	gameData := currentGameData(application)
 	currencyID, err := officialCurrencyID(gameData, request.TimeSkipID)
 	if err != nil {
-		return request, workflow, 0, 0, err
+		return request, workflow, 0, 0, 0, 0, err
+	}
+	duration, err := officialKingdomTroopSkipDuration(gameData, currencyID, request.TimeSkipID)
+	if err != nil || duration != request.ExpectedDurationSec || !kingdomTroopSkipUseful(duration, remaining) {
+		return request, workflow, 0, 0, 0, 0, fmt.Errorf("%w: queued time skip is no longer suitable for the owned transport", Intent.ErrPlanStale)
 	}
 	balance := gameState.Player.Currencies[currencyID]
 	observation := gameState.Player.CurrencyObservations[currencyID]
 	if observation.ObservedAt.IsZero() || observation.ConnectionGeneration == 0 ||
 		observation.ConnectionGeneration != gameState.Session.ConnectionGeneration || now.Before(observation.ObservedAt) || now.Sub(observation.ObservedAt) > 5*time.Minute {
-		return request, workflow, 0, balance, fmt.Errorf("%w: official time-skip inventory is not current", Intent.ErrPlanStale)
+		return request, workflow, 0, balance, 0, 0, fmt.Errorf("%w: official time-skip inventory is not current", Intent.ErrPlanStale)
 	}
 	reserve := max(int64(0), reserves[strings.ToUpper(strings.TrimSpace(request.TimeSkipID))])
 	if balance < float64(reserve)+1 {
-		return request, workflow, 0, balance, fmt.Errorf("%w: time-skip reserve is no longer satisfied", Intent.ErrPlanStale)
+		return request, workflow, 0, balance, 0, 0, fmt.Errorf("%w: time-skip reserve is no longer satisfied", Intent.ErrPlanStale)
 	}
 	if beforeArm && !workflow.SkipRequestedAt.IsZero() {
-		return request, workflow, 0, balance, fmt.Errorf("owned troop workflow already has an unresolved time skip")
+		return request, workflow, 0, balance, 0, 0, fmt.Errorf("owned troop workflow already has an unresolved time skip")
 	}
-	return request, workflow, currencyID, balance, nil
+	return request, workflow, currencyID, balance, remaining, duration, nil
+}
+
+func agedOwnedPendingRemaining(gameState State.GameState, workflow State.KingdomTroopTransportWorkflow, now time.Time) (int, bool) {
+	remaining, found := exactOwnedPendingRemaining(gameState, workflow)
+	if !found || workflow.TransportObservedAt.IsZero() || !now.After(workflow.TransportObservedAt) {
+		return remaining, found
+	}
+	elapsed := int(now.Sub(workflow.TransportObservedAt) / time.Second)
+	return max(0, remaining-elapsed), true
+}
+
+func officialKingdomTroopSkipDuration(gameData *GameData.Store, currencyID State.CurrencyID, wireKey string) (int64, error) {
+	if gameData == nil {
+		return 0, fmt.Errorf("official game data is unavailable")
+	}
+	options, err := gameData.OfficialTimeSkips()
+	if err != nil {
+		return 0, err
+	}
+	wanted := strings.ToUpper(strings.TrimSpace(wireKey))
+	for _, option := range options {
+		if State.CurrencyID(option.CurrencyID) == currencyID && option.WireKey == wanted && option.Seconds > 0 {
+			return option.Seconds, nil
+		}
+	}
+	return 0, fmt.Errorf("official time skip %s is unavailable", wanted)
+}
+
+func kingdomTroopSkipUseful(duration int64, remaining int) bool {
+	if duration <= 0 || remaining <= 0 {
+		return false
+	}
+	if duration <= int64(remaining) {
+		return true
+	}
+	maximumWaste := max(int64(60), min(int64(15*time.Minute/time.Second), int64(remaining)/4))
+	return duration-int64(remaining) <= maximumWaste
 }
 
 func exactOwnedPendingRemaining(gameState State.GameState, workflow State.KingdomTroopTransportWorkflow) (int, bool) {
@@ -703,8 +795,12 @@ func (application *Application) verifyKingdomTroopSkipTimer(_ context.Context, a
 			return nil, false, fmt.Errorf("time-skip response did not project current transport state")
 		}
 		remaining, pending := exactOwnedPendingRemaining(*gameState, workflow)
-		if pending && remaining >= workflow.SkipRemainingBefore {
-			return nil, false, fmt.Errorf("time-skip response did not advance the owned transport timer")
+		elapsed := int(workflow.TransportObservedAt.Sub(workflow.SkipRequestedAt) / time.Second)
+		expectedAfterSkip := max(0, workflow.SkipRemainingBefore-elapsed-int(workflow.SkipDurationSec))
+		if workflow.SkipDurationSec <= 0 || pending && remaining > expectedAfterSkip+5 || !pending && expectedAfterSkip > 5 {
+			workflow.SkipTimerObservedAt = workflow.TransportObservedAt.UTC()
+			gameState.KingdomTransport.TroopWorkflows[request.TargetKingdomID] = workflow
+			return nil, false, fmt.Errorf("owned transport timer changed only by natural countdown; time-skip progress is unconfirmed")
 		}
 		workflow.Status = "skip_inventory_pending"
 		workflow.RemainingSec = remaining
@@ -737,6 +833,7 @@ func (application *Application) verifyKingdomTroopSkipInventory(_ context.Contex
 				return nil, false, nil
 			}
 			current.Status = "skip_uncertain"
+			current.SkipInventoryObservedAt = observation.ObservedAt.UTC()
 			gameState.KingdomTransport.TroopWorkflows[request.TargetKingdomID] = current
 			return []string{"kingdom-transport"}, true, nil
 		})
@@ -768,7 +865,10 @@ func clearKingdomTroopSkip(workflow *State.KingdomTroopTransportWorkflow) {
 	workflow.SkipWireKey = ""
 	workflow.SkipBalanceBefore = 0
 	workflow.SkipRemainingBefore = 0
+	workflow.SkipDurationSec = 0
 	workflow.SkipRequestedAt = time.Time{}
+	workflow.SkipTimerObservedAt = time.Time{}
+	workflow.SkipInventoryObservedAt = time.Time{}
 }
 
 func normalizeKingdomTroopShipment(

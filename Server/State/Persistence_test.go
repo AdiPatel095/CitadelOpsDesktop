@@ -817,8 +817,31 @@ func TestSnapshotPersistsTroopWorkflowButClearsCurrencyAuthority(t *testing.T) {
 	if !found || workflow.ID != "owned" || len(workflow.Units) != 1 || workflow.Units[0].Amount != 100 {
 		t.Fatalf("persisted troop workflow=%#v found=%t", workflow, found)
 	}
+	if workflow.SessionGeneration != 0 {
+		t.Fatalf("snapshot restored socket generation authority: %#v", workflow)
+	}
 	if len(loaded.Player.CurrencyObservations) != 0 {
 		t.Fatalf("snapshot restored current-session currency authority: %#v", loaded.Player.CurrencyObservations)
+	}
+}
+
+func TestSnapshotLoadKeepsArmedTroopWorkflowAmbiguousAcrossGenerationReuse(t *testing.T) {
+	directory := t.TempDir()
+	state := NewGameState()
+	state.KingdomTransport.TroopWorkflows[2] = KingdomTroopTransportWorkflow{
+		ID: "armed", Owner: "autoFortress", Status: "armed", KingdomID: 2,
+		Units: []KingdomTransportUnit{{UnitID: 277, Amount: 100}}, SessionGeneration: 1,
+	}
+	if err := SaveSnapshot(directory, state); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := LoadSnapshot(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	workflow := loaded.KingdomTransport.TroopWorkflows[2]
+	if workflow.Status != "ownership_uncertain" || workflow.SessionGeneration != 0 {
+		t.Fatalf("restored armed workflow regained reused-generation authority: %#v", workflow)
 	}
 }
 

@@ -41,6 +41,13 @@ func LoadSnapshot(dataDir string) (GameState, error) {
 
 func prepareLoadedState(state GameState) GameState {
 	normalizeStateMaps(&state)
+	for kingdomID, workflow := range state.KingdomTransport.TroopWorkflows {
+		workflow.SessionGeneration = 0
+		if workflow.Status == "armed" {
+			workflow.Status = "ownership_uncertain"
+		}
+		state.KingdomTransport.TroopWorkflows[kingdomID] = workflow
+	}
 	state.Market.BoostersObservedGeneration = 0
 	pruneIrrelevantMapObservations(&state)
 	lastServerURL := state.Session.ServerURL
