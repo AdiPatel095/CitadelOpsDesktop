@@ -164,7 +164,7 @@ func TestAutoBirdTargetThenManifestRecordRandomWaitAndFreshTroops(t *testing.T) 
 	}
 	request.UnitsRefreshAt = now.Add(-time.Second)
 	request.ExpectedTargetCastle = 20
-	operation := preparedAutoBirdManifest(gameState, gameData, target, request, now)
+	operation := preparedAutoBirdManifest(gameState, gameData, target, request, now, false)
 	if operation.Phase != State.StationingPhaseDispatchReady ||
 		operation.PresetID != "night" ||
 		operation.TargetCastleID != 20 ||
@@ -255,7 +255,7 @@ func TestPreparedAutoBirdOperationWaitsOnlyThatCastleWhenNoTroopsAreEligible(t *
 	)
 	request.UnitsRefreshAt = now.Add(-time.Second)
 	request.ExpectedTargetCastle = 20
-	operation := preparedAutoBirdManifest(gameState, gameData, target, request, now)
+	operation := preparedAutoBirdManifest(gameState, gameData, target, request, now, false)
 	if operation.Phase != State.StationingPhaseWaiting ||
 		operation.NextAttemptAt == nil || !operation.NextAttemptAt.After(now) {
 		t.Fatalf("troop-less Auto Bird operation = %#v", operation)
@@ -453,7 +453,7 @@ func autoBirdIntentTestState(t *testing.T, now time.Time) (State.GameState, *Gam
 	t.Helper()
 	gameData, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],"buildings":[],"units":[
-			{"wodID":215},{"wodID":489},
+			{"wodID":215},{"wodID":277},{"wodID":489},
 			{"wodID":735,"toolCategory":"Premium","slotTypes":"1,2,9"}
 		]
 	}`), GameData.SourceMetadata{ItemVersion: "test"})

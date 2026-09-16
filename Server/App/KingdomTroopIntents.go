@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/Protocol"
@@ -524,7 +525,11 @@ func autoFortressKingdomEnabled(application *Application, kingdomID State.Kingdo
 	if application == nil || application.Configuration == nil {
 		return false
 	}
-	raw, found := application.Configuration.Section("automation.autoFortress")
+	return autoFortressKingdomEnabledInSnapshot(application.Configuration.Snapshot(), kingdomID)
+}
+
+func autoFortressKingdomEnabledInSnapshot(snapshot Configuration.Snapshot, kingdomID State.KingdomID) bool {
+	raw, found := snapshot.Sections["automation.autoFortress"]
 	if !found {
 		return false
 	}
