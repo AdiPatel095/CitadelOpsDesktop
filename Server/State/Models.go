@@ -57,6 +57,29 @@ type SessionState struct {
 	// the next status change and never contains credential material.
 	LoginFailure *LoginFailure `json:"loginFailure,omitempty"`
 	ChangedAt    time.Time     `json:"changedAt"`
+	// FortressTargetVerification is process-local dispatch authority. A reconnect
+	// rebuilds SessionState and clears it, while persistence and client snapshots
+	// never expose response-correlation tokens.
+	FortressTargetVerification FortressTargetVerification `json:"-"`
+}
+
+type FortressTargetVerification struct {
+	SourceCastleID       CastleID
+	KingdomID            KingdomID
+	TargetX              int
+	TargetY              int
+	OperationID          string
+	ResponseToken        string
+	SessionGeneration    uint64
+	ConnectionGeneration uint64
+	FocusEpoch           uint64
+	FocusSubcontext      FocusSubcontext
+	ArmedAt              time.Time
+	ObservedAt           time.Time
+	Complete             bool
+	Available            bool
+	CooldownRemaining    int
+	Failure              string
 }
 
 // LoginFailureClass is the sanitized classification of a failed game login.
@@ -1943,7 +1966,7 @@ func (cooldown CombatCooldownState) ActiveAt(now time.Time) bool {
 	return !cooldown.Until.IsZero() && now.Before(cooldown.Until)
 }
 
-// AttackDialogState is the current pre-attack context returned by ADI. Its
+// AttackDialogState is the current pre-attack context returned by ADI or ABI. Its
 // active effects are authoritative for the selected castle while the dialog
 // remains current; a planned attack can therefore include temporary effects
 // that are not represented by a building or inventory record.

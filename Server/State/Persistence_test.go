@@ -777,6 +777,26 @@ func TestSnapshotPersistsSpecialistRecoveryButDropsLiveRubyAuthority(t *testing.
 	}
 }
 
+func TestSnapshotDropsFortressTargetVerification(t *testing.T) {
+	directory := t.TempDir()
+	state := NewGameState()
+	state.Session.FortressTargetVerification = FortressTargetVerification{
+		SourceCastleID: 10, KingdomID: 1, TargetX: 101, TargetY: 100,
+		OperationID: "private-operation", ResponseToken: "private-response",
+		SessionGeneration: 3, ConnectionGeneration: 4, Complete: true, Available: true,
+	}
+	if err := SaveSnapshot(directory, state); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := LoadSnapshot(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if loaded.Session.FortressTargetVerification != (FortressTargetVerification{}) {
+		t.Fatalf("snapshot restored process-local fortress verification: %#v", loaded.Session.FortressTargetVerification)
+	}
+}
+
 func TestSnapshotLoadMovesInspectedAllianceOutOfOwnSlot(t *testing.T) {
 	directory := t.TempDir()
 	state := NewGameState()

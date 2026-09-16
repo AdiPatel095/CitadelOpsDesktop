@@ -705,6 +705,9 @@ func (controller *Controller) applyStatus(status Status) {
 			CooldownUntil: status.CooldownUntil, RetryAt: status.RetryAt, LoginFailure: status.LoginFailure,
 			ChangedAt: status.ChangedAt,
 		}
+		if wasReady && isReady && !connectionChanged {
+			next.FortressTargetVerification = gameState.Session.FortressTargetVerification
+		}
 		if gameState.Session == next {
 			return nil, false, nil
 		}

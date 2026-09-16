@@ -452,7 +452,7 @@ func frameMutatesWorldMap(frame Protocol.Frame) bool {
 		return false
 	}
 	switch strings.ToLower(strings.TrimSpace(frame.Opcode)) {
-	case "gaa", "fnm", "fnt", "ssi", "adi":
+	case "gaa", "fnm", "fnt", "ssi", "adi", "abi":
 		return true
 	default:
 		return false
