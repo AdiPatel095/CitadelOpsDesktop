@@ -80,6 +80,23 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterAction("troops.kingdom.consume_source", application.consumeKingdomTroopSource); err != nil {
 		return err
 	}
+	for name, action := range map[string]Intent.Action{
+		"troops.kingdom.workflow.arm":             application.armKingdomTroopWorkflow,
+		"troops.kingdom.workflow.dispatch":        application.guardKingdomTroopWorkflowDispatch,
+		"troops.kingdom.workflow.disarm":          application.disarmKingdomTroopWorkflow,
+		"troops.kingdom.workflow.confirm":         application.confirmKingdomTroopWorkflow,
+		"troops.kingdom.workflow.reconcile_donor": application.reconcileKingdomTroopDonor,
+		"troops.kingdom.workflow.settle":          application.settleKingdomTroopWorkflow,
+		"troops.kingdom.skip.arm":                 application.armKingdomTroopSkip,
+		"troops.kingdom.skip.dispatch":            application.guardKingdomTroopSkipDispatch,
+		"troops.kingdom.skip.disarm":              application.disarmKingdomTroopSkip,
+		"troops.kingdom.skip.verify_timer":        application.verifyKingdomTroopSkipTimer,
+		"troops.kingdom.skip.verify_inventory":    application.verifyKingdomTroopSkipInventory,
+	} {
+		if err := application.Intents.RegisterAction(name, action); err != nil {
+			return err
+		}
+	}
 	for _, name := range []string{timeSkipConsumeAction, "troops.kingdom.consume_time_skip"} {
 		if err := application.Intents.RegisterAction(name, application.consumeTimeSkip); err != nil {
 			return err
@@ -220,6 +237,12 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterStepResolver("fortress.attack.build", application.resolveFortressAttackStep); err != nil {
 		return err
 	}
+	if err := application.Intents.RegisterAction("fortress.target.verification.arm", application.armFortressTargetVerification); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("fortress.target.verification.guard", application.guardFortressTargetVerification); err != nil {
+		return err
+	}
 	if err := application.Intents.RegisterAction("fortress.scan.full", application.scanFullFortressMap); err != nil {
 		return err
 	}
@@ -357,6 +380,10 @@ func (application *Application) registerGameIntents() error {
 	}
 	definitions := []Intent.Definition{
 		{
+			Name: "account.inventory.refresh", Description: "Refresh authoritative account resource and currency inventory", Effect: Intent.EffectRead,
+			Planner: planAccountInventoryRefresh,
+		},
+		{
 			Name: "daily_attacks.refresh", Description: "Refresh the authoritative account-wide daily normal-attack count", Effect: Intent.EffectRead,
 			Planner: planDailyAttackRefresh,
 		},
@@ -376,6 +403,22 @@ func (application *Application) registerGameIntents() error {
 		{
 			Name: "troops.kingdom.refresh", Description: "Refresh pending kingdom troop transports", Effect: Intent.EffectRead,
 			Planner: planKingdomTroopRefresh,
+		},
+		{
+			Name: "troops.kingdom.settle", Description: "Settle one completed owned kingdom troop transport after destination refresh", Effect: Intent.EffectWrite,
+			Planner: actionPlanner("troops.kingdom.workflow.settle", "troop-transport", "Settle completed owned kingdom troop transport"),
+		},
+		{
+			Name: "troops.kingdom.reconcile_donor", Description: "Confirm an authoritative donor inventory after an ambiguous kingdom troop dispatch", Effect: Intent.EffectWrite,
+			Planner: actionPlanner("troops.kingdom.workflow.reconcile_donor", "troop-transport", "Reconcile kingdom troop donor inventory"),
+		},
+		{
+			Name: "troops.kingdom.skip.reconcile_timer", Description: "Reconcile an owned kingdom troop transfer after an uncertain time-skip reply", Effect: Intent.EffectWrite,
+			Planner: actionPlanner("troops.kingdom.skip.verify_timer", "troop-transport", "Reconcile owned kingdom troop timer"),
+		},
+		{
+			Name: "troops.kingdom.skip.reconcile_inventory", Description: "Reconcile authoritative time-skip inventory after an owned transfer timer advances", Effect: Intent.EffectWrite,
+			Planner: actionPlanner("troops.kingdom.skip.verify_inventory", "troop-transport", "Reconcile official time-skip inventory"),
 		},
 		{
 			Name: "troops.kingdom.ship", Description: "Transfer validated troop stacks from an owned donor castle to another kingdom", Effect: Intent.EffectLaunch,

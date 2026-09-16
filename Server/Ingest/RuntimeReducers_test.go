@@ -141,6 +141,214 @@ func TestKingdomTransportReducerClearsPendingFromSuccessfulMSKSnapshot(t *testin
 	}
 }
 
+func TestKingdomTroopWorkflowRequiresCurrentSessionContinuity(t *testing.T) {
+	gameData := runtimeTestGameData(t)
+	gameState := State.NewGameState()
+	now := time.Now().UTC().Add(-time.Minute)
+	gameState.Session.ConnectionGeneration = 8
+	gameState.KingdomTransport.TroopWorkflows[2] = State.KingdomTroopTransportWorkflow{
+		ID: "owned", Owner: "autoFortress", Status: "armed", KingdomID: 2,
+		Units:   []State.KingdomTransportUnit{{UnitID: 277, Amount: 100}},
+		ArmedAt: now, SessionGeneration: 7,
+	}
+	code := 0
+	_, changed, err := reduceKingdomTransport(t.Context(), Protocol.Frame{
+		Opcode: "kut", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now.Add(time.Second),
+		Payload: json.RawMessage(`{"kpi":{"UT":[{"KID":2,"RS":3600,"I":[[277,100]]}]}}`),
+	}, &gameState, gameData)
+	if err != nil || !changed {
+		t.Fatalf("transport reduction: changed=%t err=%v", changed, err)
+	}
+	if got := gameState.KingdomTransport.TroopWorkflows[2].Status; got != "ownership_uncertain" {
+		t.Fatalf("lookalike transport was adopted across sessions: status=%q", got)
+	}
+	_, _, err = reduceKingdomTransport(t.Context(), Protocol.Frame{
+		Opcode: "kpi", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now.Add(2 * time.Second),
+		Payload: json.RawMessage(`{"UL":[{"KID":2,"U":1}]}`),
+	}, &gameState, gameData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	workflow := gameState.KingdomTransport.TroopWorkflows[2]
+	if workflow.Status != "ownership_absent" || workflow.SessionGeneration != 8 || !workflow.TransportObservedAt.Equal(now.Add(2*time.Second)) {
+		t.Fatalf("completed ambiguous transport did not establish inventory reconciliation boundary: %#v", workflow)
+	}
+}
+
+func TestKingdomTroopWorkflowRejectsExactManualReplacementWithResetTimer(t *testing.T) {
+	gameData := runtimeTestGameData(t)
+	gameState := State.NewGameState()
+	now := time.Now().UTC().Add(-time.Minute)
+	gameState.Session.ConnectionGeneration = 8
+	gameState.KingdomTransport.ObservedAt = now
+	gameState.KingdomTransport.TroopWorkflows[2] = State.KingdomTroopTransportWorkflow{
+		ID: "owned", Owner: "autoFortress", Status: "pending", KingdomID: 2,
+		Units:   []State.KingdomTransportUnit{{UnitID: 277, Amount: 100}},
+		ArmedAt: now.Add(-time.Minute), LaunchedAt: now.Add(-time.Minute), TransportObservedAt: now,
+		RemainingSec: 100, SessionGeneration: 8,
+	}
+	code := 0
+	_, _, err := reduceKingdomTransport(t.Context(), Protocol.Frame{
+		Opcode: "kpi", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now.Add(20 * time.Second),
+		Payload: json.RawMessage(`{"UL":[{"KID":2,"U":1}],"UT":[{"KID":2,"RS":100,"I":[[277,100]]}]}`),
+	}, &gameState, gameData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := gameState.KingdomTransport.TroopWorkflows[2].Status; got != "awaiting_destination_refresh" {
+		t.Fatalf("exact lookalike with reset timer was adopted: status=%q", got)
+	}
+}
+
+func TestKingdomTroopWorkflowRebindsOnlyVerifiedReconnectEvidence(t *testing.T) {
+	gameData := runtimeTestGameData(t)
+	now := time.Now().UTC().Add(-time.Minute)
+	code := 0
+	for _, test := range []struct {
+		name      string
+		workflow  State.KingdomTroopTransportWorkflow
+		payload   json.RawMessage
+		wantState string
+	}{
+		{
+			name: "persisted-pending-continuity",
+			workflow: State.KingdomTroopTransportWorkflow{
+				ID: "pending", Owner: "autoFortress", Status: "pending", KingdomID: 2,
+				Units: []State.KingdomTransportUnit{{UnitID: 277, Amount: 100}}, ArmedAt: now.Add(-time.Hour),
+				TransportObservedAt: now, RemainingSec: 3600,
+			},
+			payload:   json.RawMessage(`{"UL":[{"KID":2,"U":1}],"UT":[{"KID":2,"RS":3590,"I":[[277,100]]}]}`),
+			wantState: "pending",
+		},
+		{
+			name: "armed-authoritative-empty",
+			workflow: State.KingdomTroopTransportWorkflow{
+				ID: "armed", Owner: "autoFortress", Status: "armed", KingdomID: 2,
+				Units: []State.KingdomTransportUnit{{UnitID: 277, Amount: 100}}, ArmedAt: now.Add(-time.Hour),
+			},
+			payload:   json.RawMessage(`{"UL":[{"KID":2,"U":1}]}`),
+			wantState: "ownership_absent",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			state := State.NewGameState()
+			state.Session.ConnectionGeneration = 11
+			state.KingdomTransport.TroopWorkflows[2] = test.workflow
+			_, changed, err := reduceKingdomTransport(t.Context(), Protocol.Frame{
+				Opcode: "kpi", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+				ReceivedAt: now.Add(10 * time.Second), Payload: test.payload,
+			}, &state, gameData)
+			if err != nil || !changed {
+				t.Fatalf("reconnect reduction: changed=%t err=%v", changed, err)
+			}
+			workflow := state.KingdomTransport.TroopWorkflows[2]
+			if workflow.Status != test.wantState || workflow.SessionGeneration != 11 {
+				t.Fatalf("rebound workflow=%#v", workflow)
+			}
+		})
+	}
+}
+
+func TestKingdomTroopWorkflowDoesNotAdoptManualTransferAfterOwnedAbsence(t *testing.T) {
+	gameData := runtimeTestGameData(t)
+	now := time.Now().UTC().Add(-time.Minute)
+	code := 0
+	state := State.NewGameState()
+	state.Session.ConnectionGeneration = 11
+	state.KingdomTransport.TroopWorkflows[2] = State.KingdomTroopTransportWorkflow{
+		ID: "armed", Owner: "autoFortress", Status: "armed", KingdomID: 2,
+		Units: []State.KingdomTransportUnit{{UnitID: 277, Amount: 100}}, ArmedAt: now.Add(-time.Hour),
+	}
+	for _, frame := range []Protocol.Frame{
+		{
+			Opcode: "kpi", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+			ReceivedAt: now, Payload: json.RawMessage(`{"UL":[{"KID":2,"U":1}]}`),
+		},
+		{
+			Opcode: "kpi", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+			ReceivedAt: now.Add(time.Second),
+			Payload:    json.RawMessage(`{"UL":[{"KID":2,"U":1}],"UT":[{"KID":2,"RS":3600,"I":[[277,100]]}]}`),
+		},
+	} {
+		if _, changed, err := reduceKingdomTransport(t.Context(), frame, &state, gameData); err != nil || !changed {
+			t.Fatalf("transport reduction: changed=%t err=%v", changed, err)
+		}
+	}
+	workflow := state.KingdomTransport.TroopWorkflows[2]
+	if workflow.Status != "ownership_absent" || workflow.RemainingSec != 0 || workflow.SessionGeneration != 11 {
+		t.Fatalf("manual replacement was adopted: %#v", workflow)
+	}
+}
+
+func TestKingdomTroopWorkflowPreservesSkipMarkerWhenTransportCompletes(t *testing.T) {
+	gameData := runtimeTestGameData(t)
+	gameState := State.NewGameState()
+	now := time.Now().UTC().Add(-time.Minute)
+	gameState.Session.ConnectionGeneration = 8
+	gameState.KingdomTransport.TroopWorkflows[2] = State.KingdomTroopTransportWorkflow{
+		ID: "owned", Owner: "autoFortress", Status: "pending", KingdomID: 2,
+		Units: []State.KingdomTransportUnit{{UnitID: 277, Amount: 100}}, ArmedAt: now.Add(-time.Minute),
+		TransportObservedAt: now, RemainingSec: 3600, SessionGeneration: 8,
+		SkipCurrencyID: 1005, SkipWireKey: "MS5", SkipBalanceBefore: 2, SkipRemainingBefore: 3600,
+		SkipDurationSec: 3600, SkipRequestedAt: now.Add(time.Second),
+	}
+	code := 0
+	_, changed, err := reduceKingdomTransport(t.Context(), Protocol.Frame{
+		Opcode: "msk", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now.Add(2 * time.Second),
+		Payload: json.RawMessage(`{"kpi":{"UL":[{"KID":2,"U":1}]}}`),
+	}, &gameState, gameData)
+	if err != nil || !changed {
+		t.Fatalf("completed skip reduction: changed=%t err=%v", changed, err)
+	}
+	workflow := gameState.KingdomTransport.TroopWorkflows[2]
+	if workflow.SkipRequestedAt.IsZero() || workflow.Status != "pending" || workflow.RemainingSec != 0 {
+		t.Fatalf("completed transport discarded unresolved skip marker: %#v", workflow)
+	}
+}
+
+func TestKingdomTransportRejectsMalformedAndOlderSnapshots(t *testing.T) {
+	gameData := runtimeTestGameData(t)
+	gameState := State.NewGameState()
+	now := time.Now().UTC().Add(-time.Minute)
+	gameState.KingdomTransport.ObservedAt = now
+	gameState.KingdomTransport.PendingUnits = []State.KingdomUnitTransport{{
+		KingdomID: 2, RemainingSec: 60, Units: []State.KingdomTransportUnit{{UnitID: 277, Amount: 100}},
+	}}
+	code := 0
+	_, changed, err := reduceKingdomTransport(t.Context(), Protocol.Frame{
+		Opcode: "kpi", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now.Add(time.Second),
+		Payload: json.RawMessage(`{"UL":[{"KID":2,"U":1}],"UT":null}`),
+	}, &gameState, gameData)
+	if err == nil || changed || len(gameState.KingdomTransport.PendingUnits) != 1 {
+		t.Fatalf("malformed snapshot replaced state: changed=%t pending=%#v err=%v", changed, gameState.KingdomTransport.PendingUnits, err)
+	}
+	_, changed, err = reduceKingdomTransport(t.Context(), Protocol.Frame{
+		Opcode: "kpi", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now.Add(-time.Second),
+		Payload: json.RawMessage(`{"UL":[{"KID":2,"U":1}]}`),
+	}, &gameState, gameData)
+	if err != nil || changed || len(gameState.KingdomTransport.PendingUnits) != 1 {
+		t.Fatalf("older snapshot replaced state: changed=%t pending=%#v err=%v", changed, gameState.KingdomTransport.PendingUnits, err)
+	}
+}
+
+func TestCurrencyAuthorityCannotFollowInvalidReplacement(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Session.ConnectionGeneration = 4
+	gameData := runtimeTestGameData(t)
+	now := time.Now().UTC()
+	changed, err := applyPlayerCurrencies(json.RawMessage(`[["STP",5]]`), &gameState, gameData, now, true)
+	if err != nil || !changed || gameState.Player.CurrencyObservations[2].ConnectionGeneration != 4 {
+		t.Fatalf("authoritative currency observation: changed=%t observation=%#v err=%v", changed, gameState.Player.CurrencyObservations[2], err)
+	}
+	changed, err = applyPlayerCurrencies(json.RawMessage(`[["STP",4]]`), &gameState, gameData, now.Add(2*time.Minute), true)
+	if err != nil || !changed || gameState.Player.Currencies[2] != 4 {
+		t.Fatalf("future replacement: changed=%t balance=%v err=%v", changed, gameState.Player.Currencies[2], err)
+	}
+	if observation := gameState.Player.CurrencyObservations[2]; !observation.ObservedAt.IsZero() {
+		t.Fatalf("future replacement retained stale authority: %#v", observation)
+	}
+}
+
 func TestRuntimeNestedResponseReducers(t *testing.T) {
 	gameData := runtimeTestGameData(t)
 	gameState := State.NewGameState()

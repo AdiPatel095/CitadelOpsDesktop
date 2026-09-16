@@ -555,23 +555,40 @@ function positiveMetadataInteger(value: unknown): number {
 }
 
 function cleanOfficialGroupingLabel(value: unknown): string {
-	const label = metadataString(value)
+	const raw = metadataString(value);
+	if (!usableOfficialGroupingLabel(raw)) return '';
+	const polarity = /^\s*-/.test(raw) ? 'penalty' : /^\s*\+/.test(raw) ? 'bonus' : '';
+	const context = /pvp/i.test(raw) ? 'PvP' : /pve/i.test(raw) ? 'PvE' : '';
+	const label = raw
 		.replace(/\{\d+\}/g, '')
+		.replace(/(?:PVP|PVE)/gi, '')
 		.replace(/^[+\-%\s:]+/, '')
 		.replace(/[+\-%\s:]+$/, '')
 		.replace(/\s+/g, ' ')
 		.trim();
-	return label ? label.charAt(0).toUpperCase() + label.slice(1) : '';
+	if (!usableOfficialGroupingLabel(label)) return '';
+	const suffixes = [polarity, context].filter(Boolean);
+	const semanticLabel = `${label}${suffixes.length ? ` ${suffixes.join(' ')}` : ''}`;
+	return semanticLabel.charAt(0).toUpperCase() + semanticLabel.slice(1);
 }
 
 function humanizeOfficialGroupingIdentifier(value: unknown): string {
-	const label = metadataString(value)
+	const raw = metadataString(value);
+	if (!usableOfficialGroupingLabel(raw)) return '';
+	const label = raw
 		.replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
 		.replace(/([a-z0-9])([A-Z])/g, '$1 $2')
 		.replace(/[_-]+/g, ' ')
 		.replace(/\s+/g, ' ')
 		.trim();
-	return label ? label.charAt(0).toUpperCase() + label.slice(1) : '';
+	return usableOfficialGroupingLabel(label) ? label.charAt(0).toUpperCase() + label.slice(1) : '';
+}
+
+function usableOfficialGroupingLabel(value: string): boolean {
+	const label = value.trim();
+	if (!label || /^(?:effect|unknown effect)\s*#?\s*\d+$/i.test(label)) return false;
+	if (/^group\s*\d*$/i.test(label) || /^official (?:effect )?(?:group|type)\b/i.test(label)) return false;
+	return !/^(?:effect_(?:name|category|group)|equip_effect_description|relicequip_effect_description|ci_effect)_/i.test(label);
 }
 
 function metadataNumber(value: unknown): number {

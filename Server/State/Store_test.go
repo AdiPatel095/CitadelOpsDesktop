@@ -63,6 +63,22 @@ func TestStoreSnapshotKeepsEquipmentEffectsAsArrays(t *testing.T) {
 	}
 }
 
+func TestStoreSnapshotIsolatesAutomationMetricsAndDetails(t *testing.T) {
+	initial := NewGameState()
+	initial.Automations["autoFortress"] = AutomationState{
+		Metrics: map[string]float64{"allocated": 100}, Details: map[string]string{"supply": "ready"},
+	}
+	store := NewStore(initial)
+	snapshot := store.Snapshot()
+	automation := snapshot.Automations["autoFortress"]
+	automation.Metrics["allocated"] = 999
+	automation.Details["supply"] = "mutated"
+	current := store.ReadOnlyView().Automations["autoFortress"]
+	if current.Metrics["allocated"] != 100 || current.Details["supply"] != "ready" {
+		t.Fatalf("snapshot maps alias store state: %#v", current)
+	}
+}
+
 func TestStoreCoalescesFullSubscriberBuffer(t *testing.T) {
 	store := NewStore(NewGameState())
 	events, unsubscribe := store.Subscribe(1)

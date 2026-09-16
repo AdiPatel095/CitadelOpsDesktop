@@ -24,11 +24,24 @@ import (
 const catalogJSON = `{
   "versionInfo": {}, "buildings": [], "units": [],
   "effectCaps": [{"capID":"23","maxTotalBonus":"90"}],
+  "effecttypes": [
+    {"effectTypeID":"101","name":"MeleeCombatStrength","sortCategory":"3","sortGroup":"1"},
+    {"effectTypeID":"102","name":"MeleeWallDamage","sortCategory":"3","sortGroup":"1"},
+    {"effectTypeID":"103","name":"RangedCombatStrength","sortCategory":"3","sortGroup":"2"},
+    {"effectTypeID":"104","name":"RangedWallDamage","sortCategory":"3","sortGroup":"2"},
+    {"effectTypeID":"105","name":"CourtyardCombatStrength","sortCategory":"5","sortGroup":"3"},
+    {"effectTypeID":"106","name":"UnitAmountYard","sortCategory":"5","sortGroup":"3"},
+    {"effectTypeID":"107","name":"WallProtectionReduction","sortCategory":"5","sortGroup":"4"},
+    {"effectTypeID":"108","name":"GateProtectionReduction","sortCategory":"5","sortGroup":"4"},
+    {"effectTypeID":"111","name":"MeleeCombatStrength","sortCategory":"3","sortGroup":"1"},
+    {"effectTypeID":"112","name":"MeleeCombatStrength","sortCategory":"3","sortGroup":"1"}
+  ],
   "effects": [
-    {"effectID":"9001","capID":"23"}, {"effectID":"9002","capID":"23"},
-    {"effectID":"9003","capID":"23"}, {"effectID":"9004"},
-    {"effectID":"9005"}, {"effectID":"9006"},
-    {"effectID":"9007"}, {"effectID":"9008"}, {"effectID":"9011"}, {"effectID":"9012"}
+    {"effectID":"9001","effectTypeID":"101","capID":"23"}, {"effectID":"9002","effectTypeID":"102","capID":"23"},
+    {"effectID":"9003","effectTypeID":"103","capID":"23"}, {"effectID":"9004","effectTypeID":"104"},
+    {"effectID":"9005","effectTypeID":"105"}, {"effectID":"9006","effectTypeID":"106"},
+    {"effectID":"9007","effectTypeID":"107"}, {"effectID":"9008","effectTypeID":"108"},
+    {"effectID":"9011","effectTypeID":"111"}, {"effectID":"9012","effectTypeID":"112"}
   ]
 }`
 
@@ -90,7 +103,7 @@ func main() {
 		ReadHeaderTimeout: 5 * time.Second,
 		IdleTimeout:       30 * time.Second,
 	}
-	log.Printf("CIT-6 synthetic fixture API on http://%s", *listen)
+	log.Printf("CIT-7 synthetic fixture API on http://%s", *listen)
 	log.Fatal(server.ListenAndServe())
 }
 
@@ -177,7 +190,7 @@ func syntheticState(kind string, equipmentCount, gemCount int) State.GameState {
 		id := State.EquipmentInstanceID(baseID + index)
 		state.Inventory.Equipment[id] = State.EquipmentInstance{
 			ID: id, DefinitionID: State.EquipmentID(3000 + baseID + index),
-			Slot: slot, TypeID: equipmentType, RarityID: index % 6, SetID: int64(index % 12), Level: index % 21,
+			Slot: slot, TypeID: equipmentType, RarityID: index % 6, SetID: int64(index % 12), Level: index % 21, RelicKnown: true,
 			Effects: State.EquipmentEffects{
 				{WireID: int64(index%8 + 1), DefinitionID: int64(9001 + index%8), Values: []float64{float64(index%37 + 1)}},
 				{WireID: int64((index+3)%8 + 1), DefinitionID: int64(9001 + (index+3)%8), Values: []float64{float64(index%19 + 1)}},

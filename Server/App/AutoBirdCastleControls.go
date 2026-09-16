@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
 )
@@ -115,6 +116,20 @@ func (application *Application) guardAutoBirdBatch(ctx context.Context, argument
 	}
 	if err := validateAutoBirdControl(application.State.Snapshot(), request.Cycle, time.Now().UTC()); err != nil {
 		return err
+	}
+	var payload struct {
+		SID State.CastleID `json:"SID"`
+		A   [][2]int64     `json:"A"`
+	}
+	if err := json.Unmarshal(request.Payload, &payload); err != nil {
+		return err
+	}
+	if application.autoBirdDirewolvesProtected(application.State.Snapshot(), payload.SID, time.Now().UTC()) {
+		for _, unit := range payload.A {
+			if State.UnitID(unit[0]) == GameData.DirewolfUnitID {
+				return fmt.Errorf("%w: Auto Fortress now reserves every Direwolf at castle %d; rebuild the Auto Bird manifest", Intent.ErrPlanStale, payload.SID)
+			}
+		}
 	}
 	return application.guardSupportBatch(ctx, request.Payload)
 }

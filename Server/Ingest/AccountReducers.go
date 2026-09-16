@@ -116,7 +116,7 @@ func reduceInitialState(
 		changed = changed || updated
 	}
 	if raw := root["sce"]; len(raw) > 0 {
-		updated, err := applyPlayerCurrencies(raw, gameState, gameData)
+		updated, err := applyPlayerCurrencies(raw, gameState, gameData, frame.ReceivedAt, frame.ResponseCode != nil && *frame.ResponseCode == 0)
 		if err != nil {
 			return nil, false, err
 		}
@@ -178,6 +178,12 @@ func reduceInitialState(
 		}
 		changed = changed || updated
 	}
+	if raw, found := root["tei"]; found {
+		updated, err := applyGlobalEffectTriggerSnapshot(raw, frame.ReceivedAt, gameState, true)
+		if err == nil {
+			changed = changed || updated
+		}
+	}
 	for section, field := range map[string]string{"gmu": "MP", "ufa": "CF", "ufp": "CFP"} {
 		if raw := root[section]; len(raw) > 0 {
 			updated, err := applyPlayerMetric(raw, field, section, gameState)
@@ -222,7 +228,7 @@ func reduceInitialState(
 	}
 	domains := []string{
 		"player", "castles", "resources", "currencies", "alliance", "commanders", "castellans",
-		"equipment", "generals", "general-skills", "reports", "subscriptions", "market", "kingdom-transport", "production", "events", "event-scores", "achievements", "legend-skills",
+		"equipment", "generals", "general-skills", "reports", "subscriptions", "market", "kingdom-transport", "production", "events", "event-scores", "global-effects", "achievements", "legend-skills",
 		"attacks",
 	}
 	if accountChanged {
@@ -258,8 +264,9 @@ func applyGlobalEffectGBDAuthority(
 	observedAt := frame.ReceivedAt.UTC()
 	inventory.GlobalEffectReadObservedAt = observedAt
 	inventory.GlobalEffectReadGeneration = gameState.Session.ConnectionGeneration
+	_, triggerValid := decodeGlobalEffectTriggerSnapshot(root["tei"], observedAt, inventory.GlobalEffects)
 	_, bieValid := decodeGlobalEffectBoosterIDs(root["bie"])
-	complete := len(root["sei"]) > 0 && len(root["gcu"]) > 0 && bieValid == nil && gameData != nil
+	complete := triggerValid == nil && len(root["gcu"]) > 0 && bieValid == nil && gameData != nil
 	if complete {
 		resourceID, found := gameData.ResourceIDForJSONKey("C2")
 		observation := gameState.Player.ResourceObservations[State.ResourceID(resourceID)]
@@ -717,7 +724,7 @@ func reducePlayerCurrencies(
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 		return nil, false, nil
 	}
-	changed, err := applyPlayerCurrencies(frame.Payload, gameState, gameData)
+	changed, err := applyPlayerCurrencies(frame.Payload, gameState, gameData, frame.ReceivedAt, frame.ResponseCode != nil && *frame.ResponseCode == 0)
 	return []string{"resources", "currencies"}, changed, err
 }
 
@@ -997,13 +1004,16 @@ func applyPlayerResources(raw json.RawMessage, gameState *State.GameState, gameD
 	return changed, nil
 }
 
-func applyPlayerCurrencies(raw json.RawMessage, gameState *State.GameState, gameData *GameData.Store) (bool, error) {
+func applyPlayerCurrencies(raw json.RawMessage, gameState *State.GameState, gameData *GameData.Store, observedAt time.Time, authoritative bool) (bool, error) {
 	rows, ok := decodeRows(raw)
 	if !ok {
 		return false, fmt.Errorf("decode player currencies: expected row array")
 	}
 	if gameState.Player.Currencies == nil {
 		gameState.Player.Currencies = map[State.CurrencyID]float64{}
+	}
+	if gameState.Player.CurrencyObservations == nil {
+		gameState.Player.CurrencyObservations = map[State.CurrencyID]State.PlayerResourceObservation{}
 	}
 	changed := false
 	for _, row := range rows {
@@ -1017,9 +1027,23 @@ func applyPlayerCurrencies(raw json.RawMessage, gameState *State.GameState, game
 			continue
 		}
 		id := State.CurrencyID(definitionID)
+		if prior := gameState.Player.CurrencyObservations[id]; !prior.ObservedAt.IsZero() && observedAt.Before(prior.ObservedAt) {
+			continue
+		}
+		validAuthority := authoritative && !observedAt.IsZero() && !observedAt.After(time.Now().UTC().Add(time.Minute))
 		if current, exists := gameState.Player.Currencies[id]; !exists || current != amount {
 			gameState.Player.Currencies[id] = amount
 			changed = true
+			if !validAuthority {
+				delete(gameState.Player.CurrencyObservations, id)
+			}
+		}
+		if validAuthority {
+			observation := State.PlayerResourceObservation{ObservedAt: observedAt.UTC(), ConnectionGeneration: gameState.Session.ConnectionGeneration}
+			if current := gameState.Player.CurrencyObservations[id]; current != observation {
+				gameState.Player.CurrencyObservations[id] = observation
+				changed = true
+			}
 		}
 	}
 	return changed, nil

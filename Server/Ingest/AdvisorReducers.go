@@ -156,21 +156,39 @@ func reduceAdvisorMovement(
 
 func advisorMovementEnvelopes(raw json.RawMessage) ([]advisorMovementEnvelope, error) {
 	var payload struct {
-		Attack    *advisorMovementEnvelope  `json:"AAM"`
-		Movement  *advisorMovementEnvelope  `json:"A"`
-		Movements []advisorMovementEnvelope `json:"M"`
+		Attack    *advisorMovementEnvelope `json:"AAM"`
+		Movement  json.RawMessage          `json:"A"`
+		Movements json.RawMessage          `json:"M"`
 	}
 	if err := json.Unmarshal(raw, &payload); err != nil {
 		return nil, err
 	}
-	result := make([]advisorMovementEnvelope, 0, len(payload.Movements)+2)
+	result := make([]advisorMovementEnvelope, 0, 3)
 	if payload.Attack != nil {
 		result = append(result, *payload.Attack)
 	}
-	if payload.Movement != nil {
-		result = append(result, *payload.Movement)
+	if len(payload.Movement) > 0 && payload.Movement[0] == '{' {
+		var movement advisorMovementEnvelope
+		if err := json.Unmarshal(payload.Movement, &movement); err != nil {
+			return nil, err
+		}
+		result = append(result, movement)
 	}
-	result = append(result, payload.Movements...)
+	if len(payload.Movements) > 0 && string(payload.Movements) != "null" {
+		var movements []advisorMovementEnvelope
+		if payload.Movements[0] == '[' {
+			if err := json.Unmarshal(payload.Movements, &movements); err != nil {
+				return nil, err
+			}
+		} else {
+			var movement advisorMovementEnvelope
+			if err := json.Unmarshal(payload.Movements, &movement); err != nil {
+				return nil, err
+			}
+			movements = append(movements, movement)
+		}
+		result = append(result, movements...)
+	}
 	return result, nil
 }
 

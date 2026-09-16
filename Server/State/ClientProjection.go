@@ -443,7 +443,7 @@ func clientKingdomTransport(source KingdomTransportState) KingdomTransportState 
 	}
 	return KingdomTransportState{
 		Unlocks: unlocks, Pending: []KingdomResourceTransport{}, PendingUnits: []KingdomUnitTransport{},
-		ResourceWorkflows: map[KingdomID]KingdomResourceTransportWorkflow{},
+		ResourceWorkflows: map[KingdomID]KingdomResourceTransportWorkflow{}, TroopWorkflows: map[KingdomID]KingdomTroopTransportWorkflow{},
 	}
 }
 

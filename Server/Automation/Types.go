@@ -38,6 +38,7 @@ type Decision struct {
 	// because another polling interval elapsed.
 	EventDriven       bool
 	Metrics           map[string]float64
+	Details           map[string]string
 	Request           *Intent.Request
 	FollowUp          *Intent.Request
 	OperationalCursor *OperationalCursorUpdate
@@ -113,6 +114,14 @@ type UrgentWakePolicy interface {
 // and top-level or per-castle schedules.
 type ConfigurationWakePolicy interface {
 	WakeSections() []string
+}
+
+// EnabledControlWakePolicy declares another automation control whose exact
+// configured value affects this policy. The coordinator already fans out
+// automation.enabled events; this keeps each policy's fingerprint limited to
+// the controls it actually consumes.
+type EnabledControlWakePolicy interface {
+	WakeEnabledControls() []string
 }
 
 // ConfigurationDerivedStatePolicy declares configuration sections whose

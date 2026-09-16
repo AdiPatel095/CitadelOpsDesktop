@@ -68,6 +68,14 @@ type fortressResolvedAttackRequest struct {
 	CommanderID State.CommanderID `json:"commanderId"`
 }
 
+type fortressTargetVerificationRequest struct {
+	SourceCastleID     State.CastleID  `json:"sourceCastleId"`
+	KingdomID          State.KingdomID `json:"kingdomId"`
+	TargetX            int             `json:"targetX"`
+	TargetY            int             `json:"targetY"`
+	RequireDialogReady bool            `json:"requireDialogReady,omitempty"`
+}
+
 func planFortressMapScan(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
 	request, source, err := fortressMapContext(input, arguments, false)
 	if err != nil {
@@ -425,9 +433,13 @@ func planFortressAttack(_ context.Context, input Intent.PlanningContext, argumen
 		return blockedPlan, nil
 	}
 	resolvedArguments, _ := json.Marshal(fortressResolvedAttackRequest{fortressAttackRequest: request, CommanderID: commander})
+	verificationArguments, _ := json.Marshal(fortressTargetVerificationRequest{
+		SourceCastleID: source.ID, KingdomID: target.KingdomID, TargetX: target.X, TargetY: target.Y,
+	})
 	contextPayload, _ := json.Marshal(map[string]any{
 		"SX": source.X, "SY": source.Y, "TX": target.X, "TY": target.Y,
-		"KID": target.KingdomID, "LID": commander,
+		"KID": target.KingdomID, "LID": commander, "_citadelTargetTypeId": target.TypeID,
+		"_citadelFortressVerification": json.RawMessage(verificationArguments),
 	})
 	targetRefreshPayload, _ := json.Marshal(map[string]any{
 		"KID": target.KingdomID, "AX1": target.X, "AY1": target.Y,
@@ -435,12 +447,15 @@ func planFortressAttack(_ context.Context, input Intent.PlanningContext, argumen
 	})
 	targetRefreshStep := contextCommandStep("Verify fortress cooldown immediately before launch", "gaa", targetRefreshPayload, "gaa")
 	targetRefreshStep.ResponseBarrier = Intent.ResponseBarrierCommitted
+	targetRefreshStep.FinalDispatchAction = "fortress.target.verification.arm"
+	targetRefreshStep.FinalDispatchArguments = verificationArguments
 	steps := make([]Intent.Step, 0, 7)
 	steps = append(steps, generalSkillsContextSteps(input.State, commander, time.Now().UTC())...)
 	steps = append(steps, attackCastleContextStep(source))
 	steps = appendDailyAttackLimitGuard(steps, request.DailyAttackLimit)
 	steps = append(steps,
 		targetRefreshStep,
+		Intent.Step{Name: "Require exact fortress availability", Action: "fortress.target.verification.guard", ActionArguments: verificationArguments},
 		deferredCRACommandStep("Build and launch fastest fortress attack", "fortress.attack.build", resolvedArguments, contextPayload),
 		attackFeatureCaptureStep(attackFeatureCaptureRequest{
 			FeatureID: State.AttackFeatureAutoFortress, SourceCastleID: source.ID, CommanderID: commander,
@@ -492,7 +507,110 @@ func buildFortressAttackStep(input Intent.PlanningContext, request fortressResol
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build fortress CRA payload: %w", err)
 	}
-	return commandStep(fmt.Sprintf("Attack fortress at %d:%d", target.X, target.Y), "cra", body, "cra"), nil
+	step := commandStep(fmt.Sprintf("Attack fortress at %d:%d", target.X, target.Y), "cra", body, "cra")
+	step.FinalDispatchAction = "fortress.target.verification.guard"
+	step.FinalDispatchArguments, _ = json.Marshal(fortressTargetVerificationRequest{
+		SourceCastleID: source.ID, KingdomID: target.KingdomID, TargetX: target.X, TargetY: target.Y,
+		RequireDialogReady: true,
+	})
+	return step, nil
+}
+
+func (application *Application) armFortressTargetVerification(ctx context.Context, arguments json.RawMessage) error {
+	if application == nil || application.State == nil {
+		return fmt.Errorf("fortress target verification state is unavailable")
+	}
+	var request fortressTargetVerificationRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	metadata := Outbound.MetadataFromContext(ctx)
+	operationID := strings.TrimSpace(metadata.OperationID)
+	responseToken := strings.TrimSpace(metadata.ResponseToken)
+	if operationID == "" || responseToken == "" || metadata.ConnectionGeneration == 0 {
+		return fmt.Errorf("fortress target verification requires correlated current-session transport metadata")
+	}
+	protocol := application.State.ProtocolContext()
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentSession), func(gameState *State.GameState) ([]string, bool, error) {
+		source, found := gameState.Castles[request.SourceCastleID]
+		if !found || !source.Focused || source.KingdomID != request.KingdomID || source.SlotType != 12 ||
+			protocol.FocusedCastleID != source.ID || protocol.ConnectionGeneration != gameState.Session.ConnectionGeneration ||
+			metadata.ConnectionGeneration != gameState.Session.ConnectionGeneration {
+			return nil, false, fmt.Errorf("%w: fortress source focus or session changed before exact target refresh", Intent.ErrPlanStale)
+		}
+		verification := State.FortressTargetVerification{
+			SourceCastleID: request.SourceCastleID, KingdomID: request.KingdomID,
+			TargetX: request.TargetX, TargetY: request.TargetY,
+			OperationID: operationID, ResponseToken: responseToken,
+			SessionGeneration:    gameState.Session.Generation,
+			ConnectionGeneration: gameState.Session.ConnectionGeneration,
+			FocusEpoch:           protocol.FocusEpoch, FocusSubcontext: protocol.FocusSubcontext,
+			ArmedAt: time.Now().UTC(),
+		}
+		gameState.Session.FortressTargetVerification = verification
+		return []string{"fortress-target-verification"}, true, nil
+	})
+	return err
+}
+
+func (application *Application) guardFortressTargetVerification(ctx context.Context, arguments json.RawMessage) error {
+	if application == nil || application.State == nil {
+		return fmt.Errorf("fortress target verification state is unavailable")
+	}
+	var request fortressTargetVerificationRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	now := time.Now().UTC()
+	state := application.State.ReadOnlyView()
+	proof := state.Session.FortressTargetVerification
+	protocol := application.State.ProtocolContext()
+	operationID := strings.TrimSpace(Outbound.MetadataFromContext(ctx).OperationID)
+	fail := func(reason string) error {
+		return fmt.Errorf("%w: fortress at %d:%d needs a new exact availability check: %s", Intent.ErrPlanStale, request.TargetX, request.TargetY, reason)
+	}
+	if operationID == "" || proof.OperationID != operationID || proof.ResponseToken == "" ||
+		proof.SourceCastleID != request.SourceCastleID || proof.KingdomID != request.KingdomID ||
+		proof.TargetX != request.TargetX || proof.TargetY != request.TargetY {
+		return fail("the response does not belong to this attack attempt")
+	}
+	if !proof.Complete || !proof.Available {
+		reason := proof.Failure
+		if reason == "" {
+			reason = "the exact response did not confirm availability"
+		}
+		return fail(reason)
+	}
+	expectedFocusEpoch := proof.FocusEpoch
+	if proof.FocusSubcontext != State.FocusSubcontextMap {
+		expectedFocusEpoch++
+	}
+	if proof.SessionGeneration != state.Session.Generation ||
+		proof.ConnectionGeneration == 0 || proof.ConnectionGeneration != state.Session.ConnectionGeneration ||
+		protocol.SessionGeneration != state.Session.Generation ||
+		protocol.ConnectionGeneration != state.Session.ConnectionGeneration ||
+		expectedFocusEpoch != protocol.FocusEpoch || protocol.FocusedCastleID != request.SourceCastleID ||
+		protocol.FocusSubcontext != State.FocusSubcontextMap {
+		return fail("the game session or castle focus changed")
+	}
+	if proof.ObservedAt.IsZero() || now.Before(proof.ObservedAt) || now.Sub(proof.ObservedAt) > fortressAttackDialogFreshness {
+		return fail("the exact response is stale")
+	}
+	target, found := state.LookupMapObservation(request.KingdomID, fmt.Sprintf("%d:%d", request.TargetX, request.TargetY))
+	if !found || target.TypeID != State.MapTypeKingdomFortress || !target.ObservedAt.Equal(proof.ObservedAt) {
+		return fail("the current target projection no longer matches the exact response")
+	}
+	if remaining := fortressCooldownRemaining(state, target, now); remaining > 0 {
+		return fail(fmt.Sprintf("the target is unavailable for %s", (time.Duration(remaining) * time.Second).Round(time.Second)))
+	}
+	if request.RequireDialogReady {
+		source, found := state.Castles[request.SourceCastleID]
+		if !found || !fortressAttackDialogFreshForTarget(state.AttackDialog, source, target, now) ||
+			state.AttackDialog.Target.TowerCooldownRemaining > 0 {
+			return fail("the attack dialog no longer confirms availability")
+		}
+	}
+	return nil
 }
 
 func fortressAttackContext(input Intent.PlanningContext, arguments json.RawMessage, now time.Time, requireFreshObservation bool) (fortressAttackRequest, State.CastleState, State.MapObservation, State.CommanderID, error) {

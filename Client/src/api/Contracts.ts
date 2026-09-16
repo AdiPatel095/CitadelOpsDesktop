@@ -890,13 +890,20 @@ export interface EquipmentOptimizeRequest {
 	leaderKind: 'commander' | 'castellan';
 	leaderId: number;
 	combatMode: 'pvp' | 'pve';
+	targetAreaTypeIds?: number[];
 	priorities: EquipmentPriorityV2[];
 	resultCount?: number;
 }
 
 export interface EquipmentEffectTotalV2 {
+	semanticKey: string;
 	definitionId: number;
+	argumentId?: number;
 	value: number;
+	rawValue: number;
+	unit: 'percent' | 'count' | 'number' | 'categorical';
+	precision: number;
+	categorical?: boolean;
 	capId?: number;
 	cap?: number;
 	capped: boolean;
@@ -908,6 +915,8 @@ export interface EquipmentLoadoutV2 {
 	effects: EquipmentEffectTotalV2[];
 	score: number;
 	extractionCost: EquipmentExtractionCostV2;
+	reason?: string;
+	useful?: boolean;
 }
 
 export interface EquipmentExtractionCostV2 {
@@ -930,6 +939,7 @@ export interface EquipmentOptimizeResponse {
 		equipmentBySlot: Record<string, number>;
 		gems: number;
 	};
+	noUsefulChange?: boolean;
 }
 
 export interface BuildingCostV2 {
@@ -1624,6 +1634,7 @@ export interface AutomationStateV2 {
 	lastError?: string;
 	safetyLock?: AutomationSafetyLockV2;
 	metrics?: Record<string, number>;
+	details?: Record<string, string>;
 	updatedAt: string;
 }
 

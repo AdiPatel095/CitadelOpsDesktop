@@ -103,6 +103,6 @@ export function FixtureAPIProvider({
 
 export function useCitadelAPI(): FixtureAPIContextValue {
 	const context = useContext(FixtureAPIContext);
-	if (!context) throw new Error('CIT-6 fixture API provider is missing');
+	if (!context) throw new Error('CIT-7 fixture API provider is missing');
 	return context;
 }

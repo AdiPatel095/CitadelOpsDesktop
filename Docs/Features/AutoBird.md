@@ -45,10 +45,19 @@ required `presetId` in each slot. An active scheduled slot overrides
 `activePresetId`. A missing, deleted, or duplicated selected preset stops the
 policy instead of falling back to a different troop configuration.
 
+When Auto Fortress and an outer kingdom are enabled, that kingdom's owned main
+castle shows a locked Direwolf reserve of **All**. This reserve is derived from
+the current Auto Fortress controls: it is never written into Auto Bird settings
+or presets, and any manual Direwolf quantity remains underneath it for use when
+Auto Fortress is disabled or expires.
+
 ## Wake triggers
 
 Domains: `alliance`, `movement-snapshot`, `movements`, `player-protection`,
-`stationing`, `units`. Section: `automation.autoBird`.
+`stationing`, `units`. Sections: `automation.autoBird`,
+`automation.autoFortress`. Auto Bird also fingerprints the exact
+`auto_fortress` enabled control so that enabling, disabling, or expiring it
+restarts a waiting castle without reacting to unrelated feature toggles.
 
 ## Decision ladder
 
@@ -68,6 +77,10 @@ Domains: `alliance`, `movement-snapshot`, `movements`, `player-protection`,
   preparing or active — the game would reject or mis-handle it.
 - **Reserves.** Per-castle unit reserves are subtracted before anything is
   considered sendable.
+- **Auto Fortress Direwolves.** Fresh inventory preparation and dispatch omit
+  every Direwolf from enabled outer main castles. Every frozen `CDS` batch
+  repeats the check immediately before transport, so a late Auto Fortress
+  enable rebuilds only a stale batch that still contains Direwolves.
 - **`minSend` floor.** Avoids a stream of tiny, pointless transfers.
 - **`minRPTDays`.** Destinations must keep protection long enough to be worth
   using.
