@@ -103,5 +103,16 @@ test('relevant snapshot ignores unrelated revision and catches equipment or cata
 	const changed = structuredClone(state);
 	changed.inventory.equipment['101'].effects[0].values[0] = 61;
 	assert.notEqual(lifecycle.equipmentOptimizerSnapshotKey(changed, leader, 'pvp'), baseline);
+	const appearance = structuredClone(state);
+	appearance.commanders['0'].equipment['5'] = 105;
+	appearance.inventory.equipment['105'] = { id: 105, definitionId: 5005, slot: 5, typeId: 2, relic: false, relicKnown: true, effects: [] };
+	const appearanceKey = lifecycle.equipmentOptimizerSnapshotKey(appearance, leader, 'pvp');
+	assert.notEqual(appearanceKey, baseline);
+	const gemmedAppearance = structuredClone(appearance);
+	gemmedAppearance.inventory.gems['-505'] = { id: -505, definitionId: 78, equipmentInstanceId: 105, effects: [] };
+	assert.notEqual(lifecycle.equipmentOptimizerSnapshotKey(gemmedAppearance, leader, 'pvp'), appearanceKey);
+	const changedAppearanceFamily = structuredClone(gemmedAppearance);
+	changedAppearanceFamily.inventory.equipment['105'].relic = true;
+	assert.notEqual(lifecycle.equipmentOptimizerSnapshotKey(changedAppearanceFamily, leader, 'pvp'), lifecycle.equipmentOptimizerSnapshotKey(gemmedAppearance, leader, 'pvp'));
 	assert.notEqual(`${baseline}|catalog:first`, `${baseline}|catalog:second`);
 });

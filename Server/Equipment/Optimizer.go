@@ -115,6 +115,7 @@ type scoredSetBonus struct {
 type optimizerCandidate struct {
 	id     int64
 	setID  int64
+	family LoadoutFamily
 	values []float64
 	rank   float64
 }
@@ -148,6 +149,10 @@ func Optimize(gameState State.GameState, gameData *GameData.Store, request Optim
 	if err != nil {
 		return OptimizeResponse{}, err
 	}
+	appearanceFamily, appearanceRestrictsFamily, err := RetainedAppearanceFamily(gameState, currentEquipment)
+	if err != nil {
+		return OptimizeResponse{}, err
+	}
 	priorities, err := preparePriorities(gameData, request.Priorities)
 	if err != nil {
 		return OptimizeResponse{}, err
@@ -157,36 +162,29 @@ func Optimize(gameState State.GameState, gameData *GameData.Store, request Optim
 
 	equipmentBySlot := candidateEquipment(gameState, request.LeaderKind, request.LeaderID, priorities, scoring)
 	counts := CandidateCounts{EquipmentBySlot: map[string]int{}}
-	beam := []partialLoadout{{}}
-	for slotIndex, slot := range optimizerSlots {
+	for _, slot := range optimizerSlots {
 		candidates := equipmentBySlot[slot]
 		counts.EquipmentBySlot[strconv.Itoa(slot)] = len(candidates)
 		if slot <= 4 && len(candidates) == 0 {
 			return OptimizeResponse{}, fmt.Errorf("no eligible %s equipment exists for slot %d", request.LeaderKind, slot)
 		}
-		candidates = limitCandidates(candidates, equipmentCandidateLimit, map[int64]struct{}{
-			int64(currentEquipment[strconv.Itoa(slot)]): {},
-		})
-		choices := candidatePointers(candidates, slot == 6)
-		beam = expandEquipmentBeam(beam, slotIndex, choices, int64(currentEquipment[strconv.Itoa(slot)]), priorities, scoring)
 	}
 
 	gemCandidates := candidateGems(gameState, request.LeaderKind, request.LeaderID, request.CombatMode, priorities, scoring)
 	counts.Gems = len(gemCandidates)
-	currentGemIDs := make(map[int64]struct{}, len(currentGems))
-	for _, id := range currentGems {
-		if id > 0 {
-			currentGemIDs[int64(id)] = struct{}{}
+	beam := make([]partialLoadout, 0, optimizerBeamWidth*2)
+	for _, family := range []LoadoutFamily{LoadoutFamilyOrdinary, LoadoutFamilyRelic} {
+		if appearanceRestrictsFamily && family != appearanceFamily {
+			continue
 		}
-	}
-	gemCandidates = limitCandidates(gemCandidates, gemCandidateLimit, currentGemIDs)
-	gemChoices := candidatePointers(gemCandidates, true)
-	for slotIndex := range gemSlotCount {
-		beam = expandGemBeam(beam, slotIndex, gemChoices, int64(currentGems[strconv.Itoa(slotIndex+1)]), priorities, scoring)
+		beam = append(beam, optimizeFamily(
+			equipmentBySlot, gemCandidates, family, currentEquipment, currentGems, priorities, scoring,
+		)...)
 	}
 	if len(beam) == 0 {
 		return OptimizeResponse{}, fmt.Errorf("equipment optimizer found no valid loadout")
 	}
+	sort.Slice(beam, func(left, right int) bool { return betterLoadout(beam[left], beam[right]) })
 	alternatives := make([]Loadout, 0, request.ResultCount)
 	seenAssignments := make(map[string]struct{}, request.ResultCount)
 	for _, candidate := range beam {
@@ -246,10 +244,11 @@ func SnapshotFingerprint(gameState State.GameState, gameData *GameData.Store, ki
 	}
 	fingerprintWrite(digest, available)
 	writeAssignmentFingerprint(digest, equipment, gems)
+	appearanceID := equipment["5"]
 
 	equipmentIDs := make([]int64, 0, len(gameState.Inventory.Equipment))
 	for id, item := range gameState.Inventory.Equipment {
-		if item.TypeID == optimizerEquipmentType(kind) && optimizerSlot(item.Slot) &&
+		if item.TypeID == optimizerEquipmentType(kind) && (optimizerSlot(item.Slot) || item.Slot == 5 && item.ID == appearanceID) &&
 			(item.WearerKind == "" || item.WearerKind == kind && item.WearerID == leaderID) {
 			equipmentIDs = append(equipmentIDs, int64(id))
 		}
@@ -264,7 +263,8 @@ func SnapshotFingerprint(gameState State.GameState, gameData *GameData.Store, ki
 
 	gemIDs := make([]int64, 0, len(gameState.Inventory.Gems))
 	for id, gem := range gameState.Inventory.Gems {
-		if gemEligibleForLeader(gameState, gem, kind, leaderID) && (gem.EquipmentInstanceID != 0 || gemMatchesMode(gem, kind, combatMode)) {
+		if gem.EquipmentInstanceID == appearanceID && appearanceID != 0 ||
+			gemEligibleForLeader(gameState, gem, kind, leaderID) && (gem.EquipmentInstanceID != 0 || gemMatchesMode(gem, kind, combatMode)) {
 			gemIDs = append(gemIDs, int64(id))
 		}
 	}
@@ -288,6 +288,7 @@ func writeAssignmentFingerprint(
 		key := strconv.Itoa(slot)
 		fingerprintWrite(digest, "equipped", slot, int64(equipment[key]))
 	}
+	fingerprintWrite(digest, "equipped", 5, int64(equipment["5"]))
 	for slot := 1; slot <= gemSlotCount; slot++ {
 		key := strconv.Itoa(slot)
 		fingerprintWrite(digest, "socketed", slot, int64(gems[key]))
@@ -441,10 +442,14 @@ func candidateEquipment(gameState State.GameState, kind string, leaderID int64, 
 		if item.TypeID != expectedType || !optimizerSlot(item.Slot) {
 			continue
 		}
+		family := EquipmentFamily(item)
+		if family == LoadoutFamilyUnknown {
+			continue
+		}
 		if item.WearerKind != "" && (item.WearerKind != kind || item.WearerID != leaderID) {
 			continue
 		}
-		result[item.Slot] = append(result[item.Slot], makeCandidate(int64(item.ID), item.SetID, item.Effects, priorities, scoring))
+		result[item.Slot] = append(result[item.Slot], makeCandidate(int64(item.ID), item.SetID, family, item.Effects, priorities, scoring))
 	}
 	return result
 }
@@ -458,7 +463,11 @@ func candidateGems(gameState State.GameState, kind string, leaderID int64, comba
 		if !gemMatchesMode(gem, kind, combatMode) {
 			continue
 		}
-		result = append(result, makeCandidate(int64(gem.ID), gem.SetID, gem.Effects, priorities, scoring))
+		family := GemFamily(gem)
+		if family == LoadoutFamilyUnknown {
+			continue
+		}
+		result = append(result, makeCandidate(int64(gem.ID), gem.SetID, family, gem.Effects, priorities, scoring))
 	}
 	return result
 }
@@ -491,12 +500,62 @@ func GemMatchesLeaderAndMode(gameState State.GameState, gem State.GemInstance, k
 	return gemEligibleForLeader(gameState, gem, kind, leaderID) && gemMatchesMode(gem, kind, combatMode)
 }
 
-func makeCandidate(id int64, setID int64, effects State.EquipmentEffects, priorities []weightedPriority, scoring scoringRules) optimizerCandidate {
+func makeCandidate(id int64, setID int64, family LoadoutFamily, effects State.EquipmentEffects, priorities []weightedPriority, scoring scoringRules) optimizerCandidate {
 	values := effectValues(effects, scoring.priorityIndex, len(priorities))
 	return optimizerCandidate{
-		id: id, setID: setID, values: values,
+		id: id, setID: setID, family: family, values: values,
 		rank: scoreValues(values, priorities, scoring.caps) + scoring.setPotential[setID],
 	}
+}
+
+func optimizeFamily(
+	equipmentBySlot map[int][]optimizerCandidate,
+	gemCandidates []optimizerCandidate,
+	family LoadoutFamily,
+	currentEquipment map[string]State.EquipmentInstanceID,
+	currentGems map[string]State.GemInstanceID,
+	priorities []weightedPriority,
+	scoring scoringRules,
+) []partialLoadout {
+	beam := []partialLoadout{{}}
+	for slotIndex, slot := range optimizerSlots {
+		candidates := candidatesInFamily(equipmentBySlot[slot], family)
+		if slot <= 4 && len(candidates) == 0 {
+			return nil
+		}
+		candidates = limitCandidates(candidates, equipmentCandidateLimit, map[int64]struct{}{
+			int64(currentEquipment[strconv.Itoa(slot)]): {},
+		})
+		beam = expandEquipmentBeam(
+			beam, slotIndex, candidatePointers(candidates, slot == 6),
+			int64(currentEquipment[strconv.Itoa(slot)]), priorities, scoring,
+		)
+	}
+
+	currentGemIDs := make(map[int64]struct{}, len(currentGems))
+	for _, id := range currentGems {
+		if id != 0 && GemFamily(State.GemInstance{ID: id}) == family {
+			currentGemIDs[int64(id)] = struct{}{}
+		}
+	}
+	gems := limitCandidates(candidatesInFamily(gemCandidates, family), gemCandidateLimit, currentGemIDs)
+	choices := candidatePointers(gems, true)
+	for slotIndex := range gemSlotCount {
+		beam = expandGemBeam(
+			beam, slotIndex, choices, int64(currentGems[strconv.Itoa(slotIndex+1)]), priorities, scoring,
+		)
+	}
+	return beam
+}
+
+func candidatesInFamily(candidates []optimizerCandidate, family LoadoutFamily) []optimizerCandidate {
+	result := make([]optimizerCandidate, 0, len(candidates))
+	for _, candidate := range candidates {
+		if candidate.family == family {
+			result = append(result, candidate)
+		}
+	}
+	return result
 }
 
 func effectValues(effects State.EquipmentEffects, priorityIndex map[int64]int, count int) []float64 {

@@ -54,20 +54,22 @@ export function equipmentOptimizerSnapshotKey(
 		: state.castellans[String(leader.id)];
 	if (!source) return 'missing';
 	const expectedType = leader.kind === 'commander' ? 2 : 1;
+	const appearanceID = source.equipment['5'] ?? 0;
 	const equipment = Object.values(state.inventory.equipment)
-		.filter((item) => item.typeId === expectedType && optimizerSlot(item.slot))
+		.filter((item) => item.typeId === expectedType && (optimizerSlot(item.slot) || item.slot === 5 && item.id === appearanceID))
 		.filter((item) => !item.wearerKind || item.wearerKind === leader.kind && item.wearerId === leader.id)
 		.sort((left, right) => left.id - right.id)
 		.map(equipmentSnapshot);
 	const gems = Object.values(state.inventory.gems)
-		.filter((gem) => gemEligible(state, gem, leader.kind, leader.id, expectedType))
-		.filter((gem) => Boolean(gem.equipmentInstanceId) || gemMatchesMode(gem, leader.kind, combatMode))
+		.filter((gem) => gem.equipmentInstanceId === appearanceID && appearanceID !== 0
+			|| gemEligible(state, gem, leader.kind, leader.id, expectedType)
+				&& (Boolean(gem.equipmentInstanceId) || gemMatchesMode(gem, leader.kind, combatMode)))
 		.sort((left, right) => left.id - right.id)
 		.map(gemSnapshot);
 	return JSON.stringify({
 		account: [state.account.worldId ?? state.session.serverUrl ?? '', state.account.playerId ?? state.player.id],
 		session: [state.session.generation, state.session.connectionGeneration],
-		leader: [leader.kind, leader.id, 'available' in source ? source.available : true, orderedSlots(source.equipment, [1, 2, 3, 4, 6]), orderedSlots(source.gems, [1, 2, 3, 4])],
+		leader: [leader.kind, leader.id, 'available' in source ? source.available : true, orderedSlots(source.equipment, [1, 2, 3, 4, 5, 6]), orderedSlots(source.gems, [1, 2, 3, 4])],
 		combatMode,
 		equipment,
 		gems,

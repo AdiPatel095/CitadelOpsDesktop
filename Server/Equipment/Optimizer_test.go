@@ -26,12 +26,12 @@ func TestOptimizeSelectsBestCanonicalEffectsBySlot(t *testing.T) {
 	}
 	for slot := 1; slot <= 2; slot++ {
 		id := State.GemInstanceID(300 + slot)
-		gameState.Inventory.Gems[id] = State.GemInstance{
-			ID: id, CompatibleWearerID: 2, CombatMode: "pvp",
+		gameState.Inventory.Gems[-id] = State.GemInstance{
+			ID: -id, CompatibleWearerID: 2, CombatMode: "pvp",
 			Effects: State.EquipmentEffects{{WireID: 301, DefinitionID: 9001, Values: []float64{5}}},
 		}
 		leader := gameState.Commanders[0]
-		leader.Gems[strconv.Itoa(slot)] = id
+		leader.Gems[strconv.Itoa(slot)] = -id
 		gameState.Commanders[0] = leader
 	}
 
@@ -132,7 +132,7 @@ func TestOptimizeRejectsGemOnAnotherLeadersCarrier(t *testing.T) {
 		id := State.EquipmentInstanceID(100 + slot)
 		gameState.Inventory.Equipment[id] = optimizerTestItem(id, slot, float64(slot))
 	}
-	gameState.Inventory.Equipment[901] = State.EquipmentInstance{ID: 901, Slot: 1, TypeID: 2, WearerKind: "commander", WearerID: 1}
+	gameState.Inventory.Equipment[901] = State.EquipmentInstance{ID: 901, Slot: 1, TypeID: 2, RelicKnown: true, WearerKind: "commander", WearerID: 1}
 	gameState.Inventory.Gems[501] = State.GemInstance{
 		ID: 501, EquipmentInstanceID: 901, CompatibleWearerID: 2, CombatMode: "pvp",
 		Effects: State.EquipmentEffects{{WireID: 301, DefinitionID: 9001, Values: []float64{1000}}},
@@ -146,6 +146,175 @@ func TestOptimizeRejectsGemOnAnotherLeadersCarrier(t *testing.T) {
 	}
 	if result.Candidates.Gems != 0 {
 		t.Fatalf("borrowed carrier gem counted as eligible: %#v", result.Candidates)
+	}
+}
+
+func TestOptimizeDoesNotPlaceNormalGemOnRelicEquipment(t *testing.T) {
+	gameState := optimizerFamilyTestState(LoadoutFamilyRelic)
+	gameState.Inventory.Gems[-501] = optimizerTestGem(-501, 10_000)
+	gameState.Inventory.Gems[601] = optimizerTestGem(601, 10)
+
+	result, err := Optimize(gameState, nil, OptimizeRequest{
+		LeaderKind: "commander", LeaderID: 0, CombatMode: "pvp", ResultCount: 10,
+		Priorities: []Priority{{EffectID: 9001, Tier: 1, Position: 0}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for index, alternative := range result.Alternatives {
+		for _, gemID := range alternative.Gems {
+			if gemID < 0 {
+				t.Fatalf("alternative %d placed normal gem %d on relic equipment: %#v", index, gemID, alternative)
+			}
+		}
+	}
+}
+
+func TestOptimizeDoesNotPlaceRelicGemOnOrdinaryEquipment(t *testing.T) {
+	gameState := optimizerFamilyTestState(LoadoutFamilyOrdinary)
+	gameState.Inventory.Gems[501] = optimizerTestGem(501, 10_000)
+	gameState.Inventory.Gems[-601] = optimizerTestGem(-601, 10)
+
+	result, err := Optimize(gameState, nil, OptimizeRequest{
+		LeaderKind: "commander", LeaderID: 0, CombatMode: "pvp", ResultCount: 10,
+		Priorities: []Priority{{EffectID: 9001, Tier: 1, Position: 0}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for index, alternative := range result.Alternatives {
+		for _, gemID := range alternative.Gems {
+			if gemID > 0 {
+				t.Fatalf("alternative %d placed relic gem %d on ordinary equipment: %#v", index, gemID, alternative)
+			}
+		}
+	}
+}
+
+func TestOptimizeExcludesMixedEquipmentAndKeepsBothFamilies(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Commanders[0] = State.CommanderState{
+		ID: 0, Available: true, Equipment: map[string]State.EquipmentInstanceID{}, Gems: map[string]State.GemInstanceID{},
+	}
+	for _, family := range []LoadoutFamily{LoadoutFamilyOrdinary, LoadoutFamilyRelic} {
+		for _, slot := range optimizerSlots {
+			id := State.EquipmentInstanceID(int(family)*1_000 + slot)
+			item := optimizerTestItem(id, slot, 10)
+			item.RarityID = 5
+			if slot == 6 {
+				item.RarityID = 15
+			}
+			item.Relic = family == LoadoutFamilyRelic
+			gameState.Inventory.Equipment[id] = item
+		}
+	}
+
+	result, err := Optimize(gameState, nil, OptimizeRequest{
+		LeaderKind: "commander", LeaderID: 0, CombatMode: "pvp", ResultCount: 10,
+		Priorities: []Priority{{EffectID: 9001, Tier: 1, Position: 0}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	seen := map[LoadoutFamily]bool{}
+	for index, alternative := range result.Alternatives {
+		family := LoadoutFamilyUnknown
+		for rawSlot, id := range alternative.Equipment {
+			item := gameState.Inventory.Equipment[id]
+			itemFamily := EquipmentFamily(item)
+			if family != LoadoutFamilyUnknown && family != itemFamily {
+				t.Fatalf("alternative %d mixes equipment families at slot %s: %#v", index, rawSlot, alternative)
+			}
+			family = itemFamily
+		}
+		seen[family] = true
+	}
+	if !seen[LoadoutFamilyOrdinary] || !seen[LoadoutFamilyRelic] {
+		t.Fatalf("alternatives did not retain both valid families: %#v", result.Alternatives)
+	}
+}
+
+func TestOptimizeKeepsGemmedAppearanceFamilyAndAllowsUngemmedAppearanceSwitch(t *testing.T) {
+	for _, test := range []struct {
+		name            string
+		appearanceRelic bool
+		gemID           State.GemInstanceID
+		wantFamilies    map[LoadoutFamily]bool
+	}{
+		{
+			name: "ordinary gemmed appearance", gemID: -501,
+			wantFamilies: map[LoadoutFamily]bool{LoadoutFamilyOrdinary: true},
+		},
+		{
+			name: "relic gemmed appearance", appearanceRelic: true, gemID: 501,
+			wantFamilies: map[LoadoutFamily]bool{LoadoutFamilyRelic: true},
+		},
+		{
+			name:         "ungemmed appearance",
+			wantFamilies: map[LoadoutFamily]bool{LoadoutFamilyOrdinary: true, LoadoutFamilyRelic: true},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			gameState := State.NewGameState()
+			gameState.Commanders[0] = State.CommanderState{
+				ID: 0, Available: true,
+				Equipment: map[string]State.EquipmentInstanceID{"5": 105},
+				Gems:      map[string]State.GemInstanceID{},
+			}
+			gameState.Inventory.Equipment[105] = State.EquipmentInstance{
+				ID: 105, Slot: 5, TypeID: 2, RelicKnown: true, Relic: test.appearanceRelic,
+				WearerKind: "commander", WearerID: 0,
+			}
+			if test.gemID != 0 {
+				gameState.Inventory.Gems[test.gemID] = State.GemInstance{
+					ID: test.gemID, EquipmentInstanceID: 105, WearerKind: "commander", WearerID: 0,
+				}
+			}
+			for _, family := range []LoadoutFamily{LoadoutFamilyOrdinary, LoadoutFamilyRelic} {
+				for slot := 1; slot <= 4; slot++ {
+					id := State.EquipmentInstanceID(int(family)*1_000 + slot)
+					item := optimizerTestItem(id, slot, 10)
+					item.Relic = family == LoadoutFamilyRelic
+					gameState.Inventory.Equipment[id] = item
+				}
+			}
+
+			result, err := Optimize(gameState, nil, OptimizeRequest{
+				LeaderKind: "commander", LeaderID: 0, CombatMode: "pvp", ResultCount: 10,
+				Priorities: []Priority{{EffectID: 9001, Tier: 1, Position: 0}},
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			seen := map[LoadoutFamily]bool{}
+			for _, alternative := range result.Alternatives {
+				seen[EquipmentFamily(gameState.Inventory.Equipment[alternative.Equipment["1"]])] = true
+			}
+			if !maps.Equal(seen, test.wantFamilies) {
+				t.Fatalf("families = %#v, want %#v", seen, test.wantFamilies)
+			}
+		})
+	}
+}
+
+func optimizerFamilyTestState(family LoadoutFamily) State.GameState {
+	gameState := State.NewGameState()
+	gameState.Commanders[0] = State.CommanderState{
+		ID: 0, Available: true, Equipment: map[string]State.EquipmentInstanceID{}, Gems: map[string]State.GemInstanceID{},
+	}
+	for slot := 1; slot <= 4; slot++ {
+		id := State.EquipmentInstanceID(100 + slot)
+		item := optimizerTestItem(id, slot, 10)
+		item.Relic = family == LoadoutFamilyRelic
+		gameState.Inventory.Equipment[id] = item
+	}
+	return gameState
+}
+
+func optimizerTestGem(id State.GemInstanceID, value float64) State.GemInstance {
+	return State.GemInstance{
+		ID: id, CompatibleWearerID: 2, CombatMode: "pvp",
+		Effects: State.EquipmentEffects{{WireID: 301, DefinitionID: 9001, Values: []float64{value}}},
 	}
 }
 
@@ -192,6 +361,33 @@ func TestSnapshotFingerprintIgnoresUnrelatedStateAndTracksRelevantChanges(t *tes
 	}
 	if attachedFingerprint == baseline {
 		t.Fatal("off-mode socket on an eligible carrier did not change fingerprint")
+	}
+	appearance := gameState
+	appearance.Commanders = maps.Clone(gameState.Commanders)
+	appearance.Inventory.Equipment = maps.Clone(gameState.Inventory.Equipment)
+	appearanceLeader := appearance.Commanders[0]
+	appearanceLeader.Equipment = maps.Clone(appearanceLeader.Equipment)
+	appearanceLeader.Equipment["5"] = 105
+	appearance.Commanders[0] = appearanceLeader
+	appearance.Inventory.Equipment[105] = State.EquipmentInstance{
+		ID: 105, Slot: 5, TypeID: 2, RelicKnown: true, WearerKind: "commander", WearerID: 0,
+	}
+	appearanceFingerprint, err := SnapshotFingerprint(appearance, nil, "commander", 0, "pvp")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if appearanceFingerprint == baseline {
+		t.Fatal("retained appearance did not change fingerprint")
+	}
+	gemmedAppearance := appearance
+	gemmedAppearance.Inventory.Gems = maps.Clone(appearance.Inventory.Gems)
+	gemmedAppearance.Inventory.Gems[-505] = State.GemInstance{ID: -505, EquipmentInstanceID: 105}
+	gemmedAppearanceFingerprint, err := SnapshotFingerprint(gemmedAppearance, nil, "commander", 0, "pvp")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if gemmedAppearanceFingerprint == appearanceFingerprint {
+		t.Fatal("retained appearance gem did not change fingerprint")
 	}
 	relevant := gameState
 	item := relevant.Inventory.Equipment[101]
@@ -252,7 +448,7 @@ func TestOptimizeResultCountBounds(t *testing.T) {
 
 func optimizerTestItem(id State.EquipmentInstanceID, slot int, value float64) State.EquipmentInstance {
 	return State.EquipmentInstance{
-		ID: id, Slot: slot, TypeID: 2,
+		ID: id, Slot: slot, TypeID: 2, RelicKnown: true,
 		Effects: State.EquipmentEffects{{WireID: 1, DefinitionID: 9001, Values: []float64{value}}},
 	}
 }
@@ -275,7 +471,7 @@ func TestOptimizeScoresOfficialSetBonusesDuringSearch(t *testing.T) {
 		if slot <= 2 {
 			gameState.Inventory.Equipment[State.EquipmentInstanceID(100+slot)] = optimizerTestItem(State.EquipmentInstanceID(100+slot), slot, 10)
 			gameState.Inventory.Equipment[State.EquipmentInstanceID(200+slot)] = State.EquipmentInstance{
-				ID: State.EquipmentInstanceID(200 + slot), Slot: slot, TypeID: 2, SetID: 77,
+				ID: State.EquipmentInstanceID(200 + slot), Slot: slot, TypeID: 2, RelicKnown: true, SetID: 77,
 			}
 			continue
 		}
@@ -319,9 +515,9 @@ func TestOptimizeCapsSharedEffectGroupIncludingSetBonus(t *testing.T) {
 	item := gameState.Inventory.Equipment[101]
 	item.SetID = 77
 	gameState.Inventory.Equipment[101] = item
-	gameState.Inventory.Equipment[102] = State.EquipmentInstance{ID: 102, Slot: 2, TypeID: 2, SetID: 77}
-	gameState.Inventory.Equipment[103] = State.EquipmentInstance{ID: 103, Slot: 3, TypeID: 2}
-	gameState.Inventory.Equipment[104] = State.EquipmentInstance{ID: 104, Slot: 4, TypeID: 2}
+	gameState.Inventory.Equipment[102] = State.EquipmentInstance{ID: 102, Slot: 2, TypeID: 2, RelicKnown: true, SetID: 77}
+	gameState.Inventory.Equipment[103] = State.EquipmentInstance{ID: 103, Slot: 3, TypeID: 2, RelicKnown: true}
+	gameState.Inventory.Equipment[104] = State.EquipmentInstance{ID: 104, Slot: 4, TypeID: 2, RelicKnown: true}
 	request := OptimizeRequest{
 		LeaderKind: "commander", LeaderID: 0, CombatMode: "pvp", ResultCount: 10,
 		Priorities: []Priority{{EffectID: 9001, Tier: 1, Position: 0}, {EffectID: 9002, Tier: 1, Position: 0}},
@@ -441,7 +637,7 @@ func largeOptimizerState(equipmentPerSlot int, gemCount int) State.GameState {
 		for index := 0; index < equipmentPerSlot; index++ {
 			id := State.EquipmentInstanceID(slot*1_000_000 + index)
 			gameState.Inventory.Equipment[id] = State.EquipmentInstance{
-				ID: id, Slot: slot, TypeID: 2,
+				ID: id, Slot: slot, TypeID: 2, RelicKnown: true,
 				Effects: State.EquipmentEffects{
 					{WireID: 1, DefinitionID: 9001, Values: []float64{float64(index % 101)}},
 					{WireID: 2, DefinitionID: 9002, Values: []float64{float64(index % 37)}},
@@ -456,7 +652,7 @@ func largeOptimizerState(equipmentPerSlot int, gemCount int) State.GameState {
 		}
 	}
 	for index := 0; index < gemCount; index++ {
-		id := State.GemInstanceID(10_000_000 + index)
+		id := -State.GemInstanceID(10_000_000 + index)
 		gameState.Inventory.Gems[id] = State.GemInstance{
 			ID: id, CompatibleWearerID: 2, CombatMode: "pvp",
 			Effects: State.EquipmentEffects{
