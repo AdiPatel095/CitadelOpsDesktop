@@ -425,6 +425,9 @@ func (coordinator *Coordinator) evaluate(
 		isEnabled := policyEnabled(policy, enabled, state)
 		configurationFingerprint := policyConfigurationFingerprint(policy, configuration)
 		derivedConfigurationFingerprint := policyDerivedConfigurationFingerprint(policy, configuration)
+		if consumePolicyEnabledControlExpirations(current, policy, configuration, now) {
+			current.controlExpiryPending = true
+		}
 		recordPolicyEnabledControls(current, policy, configuration, now)
 		previouslyEvaluated := current.evaluatedSessionKnown
 		if previouslyEvaluated && current.evaluatedDerivedConfiguration != derivedConfigurationFingerprint &&
@@ -1322,31 +1325,10 @@ func wakePoliciesForEnabledControlExpirations(
 	configuration Configuration.Snapshot,
 	now time.Time,
 ) bool {
-	controls := automationEnabledControls(configuration)
 	wokeIdle := false
 	for _, policy := range policies {
-		declared, ok := policy.(EnabledControlWakePolicy)
-		if !ok {
-			continue
-		}
 		current := runtime[policy.ID()]
-		if current == nil {
-			continue
-		}
-		expired := false
-		for _, value := range declared.WakeEnabledControls() {
-			key := strings.TrimSpace(value)
-			control := controls[key]
-			previous, observed := current.evaluatedControls[key]
-			if observed && previous.enabled && previous.timed && previous.expiresAt.Equal(control.ExpiresAt) &&
-				control.Enabled && control.Timed && !now.Before(control.ExpiresAt) {
-				current.evaluatedControls[key] = evaluatedEnabledControl{
-					enabled: false, timed: true, expiresAt: control.ExpiresAt,
-				}
-				expired = true
-			}
-		}
-		if !expired {
+		if !consumePolicyEnabledControlExpirations(current, policy, configuration, now) {
 			continue
 		}
 		current.controlExpiryPending = true
@@ -1363,6 +1345,33 @@ func wakePoliciesForEnabledControlExpirations(
 		wokeIdle = true
 	}
 	return wokeIdle
+}
+
+func consumePolicyEnabledControlExpirations(
+	current *policyRuntime,
+	policy Policy,
+	configuration Configuration.Snapshot,
+	now time.Time,
+) bool {
+	declared, ok := policy.(EnabledControlWakePolicy)
+	if current == nil || !ok {
+		return false
+	}
+	controls := automationEnabledControls(configuration)
+	expired := false
+	for _, value := range declared.WakeEnabledControls() {
+		key := strings.TrimSpace(value)
+		control := controls[key]
+		previous, observed := current.evaluatedControls[key]
+		if observed && previous.enabled && previous.timed && previous.expiresAt.Equal(control.ExpiresAt) &&
+			control.Enabled && control.Timed && !now.Before(control.ExpiresAt) {
+			current.evaluatedControls[key] = evaluatedEnabledControl{
+				enabled: false, timed: true, expiresAt: control.ExpiresAt,
+			}
+			expired = true
+		}
+	}
+	return expired
 }
 
 func recordPolicyEnabledControls(

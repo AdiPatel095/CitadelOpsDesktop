@@ -541,6 +541,51 @@ func TestHostedRelatedEnabledControlExpirationWakesWaitingPolicy(t *testing.T) {
 	}
 }
 
+func TestRelatedEnabledControlExpirySurvivesWakeBeforeTimer(t *testing.T) {
+	now := time.Now().UTC()
+	expiresAt := now.Add(-time.Second)
+	enabled, err := json.Marshal(map[string]any{
+		"autoBird":      true,
+		"auto_fortress": map[string]any{"enabled": true, "expiresAt": expiresAt},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	configuration, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{
+		"automation.enabled": enabled,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	policy := &coordinatorTestPolicy{
+		id: "autoBird", controls: []string{"auto_fortress"}, snapshots: make(chan Snapshot, 1),
+		decision: Decision{Status: "waiting", Detail: "No troops", NextCheckAt: now.Add(30 * time.Minute)},
+	}
+	state := State.NewStore(coordinatorReadyState())
+	coordinator := NewCoordinator(state, configuration, nil, nil, policy)
+	snapshot := configuration.Snapshot()
+	runtime := map[string]*policyRuntime{"autoBird": {
+		nextCheck: now.Add(30 * time.Minute), evaluationPending: true,
+		evaluatedSessionKnown: true, evaluatedSessionReady: true, evaluatedSessionGeneration: 1,
+		evaluatedConfigRevision: snapshot.Revision,
+		evaluatedConfiguration:  policyConfigurationFingerprint(policy, snapshot),
+	}}
+	recordPolicyEnabledControls(runtime["autoBird"], policy, snapshot, expiresAt.Add(-time.Second))
+
+	coordinator.evaluate(t.Context(), runtime, make(chan operationResult, 1))
+	select {
+	case evaluated := <-policy.snapshots:
+		if !evaluated.PolicyConfigurationChanged {
+			t.Fatal("wake immediately after expiry lost the related configuration transition")
+		}
+	default:
+		t.Fatal("wake immediately after expiry did not evaluate Auto Bird")
+	}
+	if wakePoliciesForEnabledControlExpirations(runtime, coordinator.policies, snapshot, now.Add(time.Minute)) {
+		t.Fatal("expiry timer repeated a transition already consumed by policy evaluation")
+	}
+}
+
 func TestCoordinatorPolicyLaneUsesItsSharedScheduleKey(t *testing.T) {
 	lane := &coordinatorTestScheduleLanePolicy{
 		coordinatorTestPolicy: coordinatorTestPolicy{id: "autoKhan:cooldown"},
