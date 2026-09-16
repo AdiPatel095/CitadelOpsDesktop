@@ -249,6 +249,37 @@ func TestKingdomTroopWorkflowRebindsOnlyVerifiedReconnectEvidence(t *testing.T) 
 	}
 }
 
+func TestKingdomTroopWorkflowDoesNotAdoptManualTransferAfterOwnedAbsence(t *testing.T) {
+	gameData := runtimeTestGameData(t)
+	now := time.Now().UTC().Add(-time.Minute)
+	code := 0
+	state := State.NewGameState()
+	state.Session.ConnectionGeneration = 11
+	state.KingdomTransport.TroopWorkflows[2] = State.KingdomTroopTransportWorkflow{
+		ID: "armed", Owner: "autoFortress", Status: "armed", KingdomID: 2,
+		Units: []State.KingdomTransportUnit{{UnitID: 277, Amount: 100}}, ArmedAt: now.Add(-time.Hour),
+	}
+	for _, frame := range []Protocol.Frame{
+		{
+			Opcode: "kpi", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+			ReceivedAt: now, Payload: json.RawMessage(`{"UL":[{"KID":2,"U":1}]}`),
+		},
+		{
+			Opcode: "kpi", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+			ReceivedAt: now.Add(time.Second),
+			Payload:    json.RawMessage(`{"UL":[{"KID":2,"U":1}],"UT":[{"KID":2,"RS":3600,"I":[[277,100]]}]}`),
+		},
+	} {
+		if _, changed, err := reduceKingdomTransport(t.Context(), frame, &state, gameData); err != nil || !changed {
+			t.Fatalf("transport reduction: changed=%t err=%v", changed, err)
+		}
+	}
+	workflow := state.KingdomTransport.TroopWorkflows[2]
+	if workflow.Status != "ownership_absent" || workflow.RemainingSec != 0 || workflow.SessionGeneration != 11 {
+		t.Fatalf("manual replacement was adopted: %#v", workflow)
+	}
+}
+
 func TestKingdomTroopWorkflowPreservesSkipMarkerWhenTransportCompletes(t *testing.T) {
 	gameData := runtimeTestGameData(t)
 	gameState := State.NewGameState()
