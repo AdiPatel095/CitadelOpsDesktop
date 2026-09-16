@@ -320,6 +320,8 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 		}
 	}
 	selectedEquipment := map[State.EquipmentInstanceID]struct{}{}
+	selectedItems := map[int]State.EquipmentInstance{}
+	selectedFamily := EquipmentDomain.LoadoutFamilyUnknown
 	for _, slot := range []int{1, 2, 3, 4} {
 		id := request.Equipment[strconv.Itoa(slot)]
 		if id <= 0 {
@@ -342,10 +344,26 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 		if item.WearerKind != "" && (item.WearerKind != leader.kind || item.WearerID != leader.id) {
 			return Intent.Plan{}, fmt.Errorf("equipment %d is worn by another leader", id)
 		}
+		family := EquipmentDomain.EquipmentFamily(item)
+		if family == EquipmentDomain.LoadoutFamilyUnknown {
+			return Intent.Plan{}, fmt.Errorf("equipment %d has no verified ordinary or relic classification", id)
+		}
+		if selectedFamily != EquipmentDomain.LoadoutFamilyUnknown && family != selectedFamily {
+			return Intent.Plan{}, fmt.Errorf("optimized loadout mixes ordinary and relic equipment")
+		}
+		selectedFamily = family
 		if _, duplicate := selectedEquipment[id]; duplicate {
 			return Intent.Plan{}, fmt.Errorf("equipment %d appears in more than one slot", id)
 		}
 		selectedEquipment[id] = struct{}{}
+		selectedItems[slot] = item
+	}
+	appearanceFamily, appearanceRestrictsFamily, err := EquipmentDomain.RetainedAppearanceFamily(input.State, leader.equipment)
+	if err != nil {
+		return Intent.Plan{}, err
+	}
+	if appearanceRestrictsFamily && appearanceFamily != selectedFamily {
+		return Intent.Plan{}, fmt.Errorf("gemmed appearance item prevents switching between ordinary and relic equipment")
 	}
 	selectedGems := map[State.GemInstanceID]struct{}{}
 	verification := equipmentReconfigureVerification{
@@ -366,6 +384,9 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 			input.State, gem, leader.kind, leader.id, strings.ToLower(strings.TrimSpace(request.CombatMode)),
 		) {
 			return Intent.Plan{}, fmt.Errorf("gem %d is not compatible with this %s %s loadout", id, leader.kind, request.CombatMode)
+		}
+		if !EquipmentDomain.GemMatchesEquipmentFamily(gem, selectedItems[slot]) {
+			return Intent.Plan{}, fmt.Errorf("gem %d does not match equipment %d's ordinary or relic family", id, selectedItems[slot].ID)
 		}
 		if gem.WearerKind != "" && (gem.WearerKind != leader.kind || gem.WearerID != leader.id) {
 			return Intent.Plan{}, fmt.Errorf("gem %d is worn by another leader", id)

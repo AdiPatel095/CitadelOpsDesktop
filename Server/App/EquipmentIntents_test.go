@@ -31,11 +31,11 @@ func TestPlanEquipmentReconfigureUsesCanonicalLeaderAndInstanceIDs(t *testing.T)
 		currentID := State.EquipmentInstanceID(10 + slot)
 		proposedID := State.EquipmentInstanceID(20 + slot)
 		leader.Equipment[strconv.Itoa(slot)] = currentID
-		gameState.Inventory.Equipment[currentID] = State.EquipmentInstance{ID: currentID, Slot: slot, TypeID: 2, WearerKind: "commander", WearerID: 0}
-		gameState.Inventory.Equipment[proposedID] = State.EquipmentInstance{ID: proposedID, Slot: slot, TypeID: 2}
+		gameState.Inventory.Equipment[currentID] = State.EquipmentInstance{ID: currentID, Slot: slot, TypeID: 2, Relic: true, RelicKnown: true, WearerKind: "commander", WearerID: 0}
+		gameState.Inventory.Equipment[proposedID] = State.EquipmentInstance{ID: proposedID, Slot: slot, TypeID: 2, Relic: true, RelicKnown: true}
 	}
 	gameState.Commanders[0] = leader
-	gameState.Inventory.Equipment[99] = State.EquipmentInstance{ID: 99, Slot: 1, TypeID: 2}
+	gameState.Inventory.Equipment[99] = State.EquipmentInstance{ID: 99, Slot: 1, TypeID: 2, Relic: true, RelicKnown: true}
 	gameState.Inventory.Gems[501] = State.GemInstance{ID: 501, EquipmentInstanceID: 99}
 
 	arguments := json.RawMessage(`{
@@ -74,7 +74,7 @@ func TestPlanEquipmentReconfigureSkipsMatchingEquipment(t *testing.T) {
 	for slot := 1; slot <= 4; slot++ {
 		id := State.EquipmentInstanceID(100 + slot)
 		leader.Equipment[strconv.Itoa(slot)] = id
-		gameState.Inventory.Equipment[id] = State.EquipmentInstance{ID: id, Slot: slot, TypeID: 2, WearerKind: "commander", WearerID: 0}
+		gameState.Inventory.Equipment[id] = State.EquipmentInstance{ID: id, Slot: slot, TypeID: 2, RelicKnown: true, WearerKind: "commander", WearerID: 0}
 	}
 	gameState.Commanders[0] = leader
 
@@ -104,7 +104,7 @@ func TestPlanEquipmentReconfigureDetachesGemWithoutRemountingRetainedEquipment(t
 	for slot := 1; slot <= 4; slot++ {
 		id := State.EquipmentInstanceID(100 + slot)
 		leader.Equipment[strconv.Itoa(slot)] = id
-		gameState.Inventory.Equipment[id] = State.EquipmentInstance{ID: id, Slot: slot, TypeID: 2, WearerKind: "commander", WearerID: 0}
+		gameState.Inventory.Equipment[id] = State.EquipmentInstance{ID: id, Slot: slot, TypeID: 2, Relic: true, RelicKnown: true, WearerKind: "commander", WearerID: 0}
 	}
 	gameState.Inventory.Gems[501] = State.GemInstance{ID: 501, EquipmentInstanceID: 101, WearerKind: "commander", WearerID: 0}
 	gameState.Inventory.Gems[502] = State.GemInstance{ID: 502}
@@ -136,9 +136,9 @@ func TestPlanEquipmentReconfigureTemporarilyClearsRetainedSlotForAnotherGemCarri
 	for slot := 1; slot <= 4; slot++ {
 		id := State.EquipmentInstanceID(100 + slot)
 		leader.Equipment[strconv.Itoa(slot)] = id
-		gameState.Inventory.Equipment[id] = State.EquipmentInstance{ID: id, Slot: slot, TypeID: 2, WearerKind: "commander", WearerID: 0}
+		gameState.Inventory.Equipment[id] = State.EquipmentInstance{ID: id, Slot: slot, TypeID: 2, Relic: true, RelicKnown: true, WearerKind: "commander", WearerID: 0}
 	}
-	gameState.Inventory.Equipment[201] = State.EquipmentInstance{ID: 201, Slot: 1, TypeID: 2}
+	gameState.Inventory.Equipment[201] = State.EquipmentInstance{ID: 201, Slot: 1, TypeID: 2, Relic: true, RelicKnown: true}
 	gameState.Inventory.Gems[501] = State.GemInstance{ID: 501, EquipmentInstanceID: 101, WearerKind: "commander", WearerID: 0}
 	gameState.Inventory.Gems[502] = State.GemInstance{ID: 502, EquipmentInstanceID: 201}
 	gameState.Commanders[0] = leader
@@ -172,7 +172,7 @@ func TestPlanEquipmentReconfigureFingerprintIgnoresUnrelatedAndRejectsRelevantCh
 	for slot := 1; slot <= 4; slot++ {
 		id := State.EquipmentInstanceID(100 + slot)
 		leader.Equipment[strconv.Itoa(slot)] = id
-		gameState.Inventory.Equipment[id] = State.EquipmentInstance{ID: id, Slot: slot, TypeID: 2, WearerKind: "commander", WearerID: 0, Effects: State.EquipmentEffects{{DefinitionID: 9001, Values: []float64{10}}}}
+		gameState.Inventory.Equipment[id] = State.EquipmentInstance{ID: id, Slot: slot, TypeID: 2, RelicKnown: true, WearerKind: "commander", WearerID: 0, Effects: State.EquipmentEffects{{DefinitionID: 9001, Values: []float64{10}}}}
 	}
 	gameState.Commanders[0] = leader
 	fingerprint, err := EquipmentDomain.SnapshotFingerprint(gameState, nil, "commander", 0, "pvp")
@@ -213,6 +213,99 @@ func TestPlanEquipmentReconfigureRejectsReservedCommander(t *testing.T) {
 	}, json.RawMessage(`{"leaderKind":"commander","leaderId":7,"equipment":{},"gems":{}}`))
 	if err == nil || !strings.Contains(err.Error(), "travelling or reserved") {
 		t.Fatalf("reserved commander error = %v", err)
+	}
+}
+
+func TestPlanEquipmentReconfigureRejectsMixedFamiliesBeforeCommands(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Commanders[0] = State.CommanderState{
+		ID: 0, Available: true, Equipment: map[string]State.EquipmentInstanceID{}, Gems: map[string]State.GemInstanceID{},
+	}
+	for slot := 1; slot <= 4; slot++ {
+		id := State.EquipmentInstanceID(100 + slot)
+		gameState.Inventory.Equipment[id] = State.EquipmentInstance{
+			ID: id, Slot: slot, TypeID: 2, RelicKnown: true, Relic: slot == 2,
+		}
+	}
+	plan, err := planEquipmentReconfigure(context.Background(), Intent.PlanningContext{State: gameState}, json.RawMessage(`{
+		"leaderKind":"commander","leaderId":0,
+		"equipment":{"1":101,"2":102,"3":103,"4":104},"gems":{}
+	}`))
+	if err == nil || !strings.Contains(err.Error(), "mixes ordinary and relic equipment") {
+		t.Fatalf("mixed family error = %v", err)
+	}
+	if len(plan.Steps) != 0 {
+		t.Fatalf("mixed family request produced command steps: %#v", plan.Steps)
+	}
+}
+
+func TestPlanEquipmentReconfigureRejectsGemFamilyMismatchBeforeCommands(t *testing.T) {
+	tests := []struct {
+		name      string
+		relicGear bool
+		gemID     State.GemInstanceID
+	}{
+		{name: "normal gem on relic equipment", relicGear: true, gemID: -501},
+		{name: "relic gem on ordinary equipment", relicGear: false, gemID: 501},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			gameState := State.NewGameState()
+			gameState.Commanders[0] = State.CommanderState{
+				ID: 0, Available: true, Equipment: map[string]State.EquipmentInstanceID{}, Gems: map[string]State.GemInstanceID{},
+			}
+			for slot := 1; slot <= 4; slot++ {
+				id := State.EquipmentInstanceID(100 + slot)
+				gameState.Inventory.Equipment[id] = State.EquipmentInstance{
+					ID: id, Slot: slot, TypeID: 2, RelicKnown: true, Relic: test.relicGear,
+				}
+			}
+			gameState.Inventory.Gems[test.gemID] = State.GemInstance{ID: test.gemID}
+			arguments, _ := json.Marshal(map[string]any{
+				"leaderKind": "commander", "leaderId": 0,
+				"equipment": map[string]State.EquipmentInstanceID{"1": 101, "2": 102, "3": 103, "4": 104},
+				"gems":      map[string]State.GemInstanceID{"1": test.gemID},
+			})
+			plan, err := planEquipmentReconfigure(context.Background(), Intent.PlanningContext{State: gameState}, arguments)
+			if err == nil || !strings.Contains(err.Error(), "ordinary or relic family") {
+				t.Fatalf("gem family error = %v", err)
+			}
+			if len(plan.Steps) != 0 {
+				t.Fatalf("gem family mismatch produced command steps: %#v", plan.Steps)
+			}
+		})
+	}
+}
+
+func TestPlanEquipmentReconfigureRejectsFamilySwitchWithGemmedAppearanceBeforeCommands(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Commanders[0] = State.CommanderState{
+		ID: 0, Available: true,
+		Equipment: map[string]State.EquipmentInstanceID{"5": 105},
+		Gems:      map[string]State.GemInstanceID{},
+	}
+	gameState.Inventory.Equipment[105] = State.EquipmentInstance{
+		ID: 105, Slot: 5, TypeID: 2, RelicKnown: true,
+		WearerKind: "commander", WearerID: 0,
+	}
+	gameState.Inventory.Gems[-501] = State.GemInstance{
+		ID: -501, EquipmentInstanceID: 105, WearerKind: "commander", WearerID: 0,
+	}
+	for slot := 1; slot <= 4; slot++ {
+		id := State.EquipmentInstanceID(200 + slot)
+		gameState.Inventory.Equipment[id] = State.EquipmentInstance{
+			ID: id, Slot: slot, TypeID: 2, RelicKnown: true, Relic: true,
+		}
+	}
+	plan, err := planEquipmentReconfigure(context.Background(), Intent.PlanningContext{State: gameState}, json.RawMessage(`{
+		"leaderKind":"commander","leaderId":0,
+		"equipment":{"1":201,"2":202,"3":203,"4":204},"gems":{}
+	}`))
+	if err == nil || !strings.Contains(err.Error(), "gemmed appearance item prevents switching") {
+		t.Fatalf("gemmed appearance family error = %v", err)
+	}
+	if len(plan.Steps) != 0 {
+		t.Fatalf("gemmed appearance family mismatch produced command steps: %#v", plan.Steps)
 	}
 }
 

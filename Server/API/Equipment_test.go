@@ -104,14 +104,14 @@ func representativeEquipmentOptimizeFixture(t testing.TB, kind string, equipment
 			{WireID: int64(index%8 + 1), DefinitionID: int64(9001 + index%8), Values: []float64{float64(index%37 + 1)}},
 			{WireID: int64((index+3)%8 + 1), DefinitionID: int64(9001 + (index+3)%8), Values: []float64{float64(index%19 + 1)}},
 		}
-		gameState.Inventory.Equipment[id] = State.EquipmentInstance{ID: id, DefinitionID: State.EquipmentID(3000 + index), Slot: slot, TypeID: equipmentType, SetID: int64(index % 12), Effects: effects}
+		gameState.Inventory.Equipment[id] = State.EquipmentInstance{ID: id, DefinitionID: State.EquipmentID(3000 + index), Slot: slot, TypeID: equipmentType, RelicKnown: true, SetID: int64(index % 12), Effects: effects}
 		if index < len(slots) {
 			currentEquipment[fmt.Sprint(slot)] = id
 		}
 	}
 	currentGems := map[string]State.GemInstanceID{}
 	for index := 0; index < gemCount; index++ {
-		id := State.GemInstanceID(5000 + index)
+		id := -State.GemInstanceID(5000 + index)
 		gameState.Inventory.Gems[id] = State.GemInstance{ID: id, DefinitionID: State.GemID(7000 + index), CompatibleWearerID: equipmentType, CombatMode: "pvp", Effects: State.EquipmentEffects{{WireID: 301, DefinitionID: int64(9001 + index%8), Values: []float64{float64(index%13 + 1)}}}}
 		if index < 4 {
 			currentGems[fmt.Sprint(index+1)] = id

@@ -62,6 +62,7 @@ const PATCH_NOTES_RELEASES_UNSORTED: PatchNotesRelease[] = [
     date: '2026-09-15',
     items: [
       { kind: 'fixed', text: 'Fixed Auto Buyer and Auto Booster actions stopping before execution because their resource claims were not recognized.' },
+      { kind: 'fixed', text: 'Equipment Reconfigure now keeps ordinary and relic equipment, heroes, and gems in compatible loadouts and rejects incompatible selections before changing equipment.' },
     ],
   },
   {
