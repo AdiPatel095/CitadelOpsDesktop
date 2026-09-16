@@ -109,6 +109,7 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"rae", components(State.ComponentInvasion), reduceInvasionFortification},
 		{"rce", components(State.ComponentInvasion), reduceInvasionFortificationCounters},
 		{"adi", worldMap.Union(components(State.ComponentAttackDialog)), reduceAttackDialog},
+		{"abi", worldMap.Union(components(State.ComponentAttackDialog)), reduceBossDungeonAttackDialog},
 		{"gas", components(State.ComponentAttackPresets), reduceAttackPresets},
 		{"sin", components(State.ComponentInventory), reduceStorageInventory},
 		{"gbc", components(State.ComponentInventory), reduceConstructionOffers},
@@ -259,7 +260,7 @@ func RegisterCoreReducers(registry *Registry) error {
 		return err
 	}
 	if err := registry.registerComponentSequence("gaa",
-		reducerStep{writes: worldMap, reducer: reduceMapSnapshot},
+		reducerStep{writes: worldMap.Union(components(State.ComponentSession)), reducer: reduceMapSnapshot},
 		reducerStep{writes: player, reducer: reducePlayerProtectionMode},
 	); err != nil {
 		return err

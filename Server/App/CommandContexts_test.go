@@ -210,6 +210,32 @@ func TestCRACommandDependenciesOwnSetupAndAuthoritativeGuard(t *testing.T) {
 	}
 }
 
+func TestFortressCRACommandDependenciesUseBossDungeonAttackDialog(t *testing.T) {
+	payload := json.RawMessage(`{
+		"SX":12,"SY":34,"TX":56,"TY":78,"KID":2,
+		"_citadelTargetTypeId":11,
+		"_citadelFortressVerification":{"sourceCastleId":10,"kingdomId":2,"targetX":56,"targetY":78}
+	}`)
+	dependencies, err := (&Application{}).resolveCRACommandDependencies(
+		t.Context(), Intent.PlanningContext{}, Intent.Step{Command: Protocol.Command{Opcode: "cra", Payload: payload}},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(dependencies.Steps) != 5 {
+		t.Fatalf("fortress CRA dependencies = %#v", dependencies.Steps)
+	}
+	attackDialog := dependencies.Steps[2]
+	if attackDialog.Opcode != "abi" || attackDialog.Command.Opcode != "abi" || attackDialog.AwaitOpcode != "abi" ||
+		attackDialog.FinalDispatchAction != "fortress.target.verification.guard" ||
+		attackDialog.ResumePolicy != Intent.ResumeRebuild {
+		t.Fatalf("fortress attack-dialog dependency = %#v", attackDialog)
+	}
+	if string(attackDialog.Command.Payload) != `{"SX":12,"SY":34,"TX":56,"TY":78,"KID":2}` {
+		t.Fatalf("fortress ABI wire payload = %s", attackDialog.Command.Payload)
+	}
+}
+
 func TestTowerCRACommandDependenciesRefreshMovementsBeforeSetup(t *testing.T) {
 	state := State.NewGameState()
 	state.Map[2] = map[string]State.MapObservation{

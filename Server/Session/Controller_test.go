@@ -545,6 +545,40 @@ func TestControllerAdvancesGenerationForReadySocketReplacement(t *testing.T) {
 	}
 }
 
+func TestControllerKeepsFortressVerificationOnlyWithinReadyConnection(t *testing.T) {
+	connectedAt := time.Now().UTC()
+	proof := State.FortressTargetVerification{
+		SourceCastleID: 10, KingdomID: 1, TargetX: 101, TargetY: 100,
+		OperationID: "operation", ResponseToken: "response", SessionGeneration: 4,
+		ConnectionGeneration: 7, FocusEpoch: 2, Complete: true, Available: true,
+	}
+	gameState := State.NewGameState()
+	gameState.Session = State.SessionState{
+		Generation: 4, BaselineGeneration: 4, ConnectionGeneration: 7,
+		Status: "connected", LoggedIn: true, SocketReady: true, ChangedAt: connectedAt,
+		FortressTargetVerification: proof,
+	}
+	state := State.NewStore(gameState)
+	controller := NewController(context.Background(), nil, nil, state)
+	defer controller.outbound.Close()
+
+	controller.applyStatus(Status{
+		State: "connected", LoggedIn: true, SocketReady: true,
+		ConnectionGeneration: 7, ChangedAt: connectedAt.Add(time.Second),
+	})
+	if retained := state.Snapshot().Session.FortressTargetVerification; retained != proof {
+		t.Fatalf("same ready connection cleared fortress proof: %#v", retained)
+	}
+
+	controller.applyStatus(Status{
+		State: "connected", LoggedIn: true, SocketReady: true,
+		ConnectionGeneration: 8, ChangedAt: connectedAt.Add(2 * time.Second),
+	})
+	if cleared := state.Snapshot().Session.FortressTargetVerification; cleared != (State.FortressTargetVerification{}) {
+		t.Fatalf("replacement connection retained fortress proof: %#v", cleared)
+	}
+}
+
 // parkableTransport reports whether its connection loop is running so the
 // controller can restart a transport that parked itself on a login failure
 // while leaving a still-running errored transport alone.

@@ -173,6 +173,11 @@ func reduceMapSnapshot(
 		if !typeValid || !xValid || !yValid || typeID < 0 || x < 0 || y < 0 {
 			return nil, false, fmt.Errorf("map snapshot row %d has invalid required identity fields", index)
 		}
+		if typeID == State.MapTypeKingdomFortress {
+			if err := validateFortressMapRow(row); err != nil {
+				return nil, false, fmt.Errorf("map snapshot row %d: %w", index, err)
+			}
+		}
 	}
 	kingdomID := State.KingdomID(kingdomIDValue)
 	changed := false
@@ -182,6 +187,15 @@ func reduceMapSnapshot(
 	stormChanged := false
 	beriChanged := false
 	invasionChanged := false
+	if verificationChanged, targetMissing := reduceFortressTargetVerification(frame, gameState, kingdomID, nodes); verificationChanged {
+		changed = true
+		if targetMissing {
+			verification := gameState.Session.FortressTargetVerification
+			if gameState.DeleteMapObservation(verification.KingdomID, fmt.Sprintf("%d:%d", verification.TargetX, verification.TargetY)) {
+				changedMapKinds[State.MapProjectionFortress] = struct{}{}
+			}
+		}
+	}
 	for _, row := range nodes {
 		typeID, _ := rowExactInt(row, 0)
 		x, _ := rowExactInt(row, 1)
@@ -508,6 +522,88 @@ func populateFortressObservation(observation *State.MapObservation, row []json.R
 	observation.Level = int(rowInt(row, 4))
 	observation.TowerCooldownRemaining = boundedWireSeconds(rowInt(row, 5))
 	observation.FortressDefeaterPlayerID = State.PlayerID(rowInt(row, 6))
+}
+
+func validateFortressMapRow(row []json.RawMessage) error {
+	if len(row) < 8 {
+		return fmt.Errorf("fortress row has %d fields; need 8", len(row))
+	}
+	level, levelValid := rowExactInt(row, 4)
+	cooldown, cooldownValid := rowExactInt(row, 5)
+	_, defeaterValid := rowExactInt(row, 6)
+	_, kingdomValid := rowExactInt(row, 7)
+	if !levelValid || level <= 0 || !cooldownValid || cooldown < 0 || !defeaterValid ||
+		!kingdomValid {
+		return fmt.Errorf("fortress row has invalid level, cooldown, defeater, or kingdom fields")
+	}
+	return nil
+}
+
+func reduceFortressTargetVerification(
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	kingdomID State.KingdomID,
+	nodes [][]json.RawMessage,
+) (changed bool, targetMissing bool) {
+	if gameState == nil {
+		return false, false
+	}
+	verification := gameState.Session.FortressTargetVerification
+	if verification.ResponseToken == "" || verification.OperationID == "" ||
+		frame.ResponseToken == "" ||
+		frame.ResponseToken != verification.ResponseToken ||
+		(frame.CausationOperationID != "" && frame.CausationOperationID != verification.OperationID) {
+		return false, false
+	}
+	verification.Complete = true
+	verification.Available = false
+	verification.ObservedAt = frame.ReceivedAt.UTC()
+	verification.CooldownRemaining = 0
+	verification.Failure = "fortress target response was not authoritative"
+	if verification.SessionGeneration != gameState.Session.Generation ||
+		verification.ConnectionGeneration != gameState.Session.ConnectionGeneration {
+		verification.Failure = "fortress target response crossed a game session boundary"
+	} else if frame.ReceivedAt.IsZero() || frame.ReceivedAt.Before(verification.ArmedAt) {
+		verification.Failure = "fortress target response was stale"
+	} else if kingdomID != verification.KingdomID {
+		verification.Failure = "fortress target response changed kingdoms"
+	} else {
+		matching := make([]json.RawMessage, 0)
+		matchCount := 0
+		for _, row := range nodes {
+			x, xValid := rowExactInt(row, 1)
+			y, yValid := rowExactInt(row, 2)
+			if xValid && yValid && x == verification.TargetX && y == verification.TargetY {
+				matching = row
+				matchCount++
+			}
+		}
+		rowType, rowTypeValid := rowExactInt(matching, 0)
+		switch {
+		case matchCount == 0:
+			verification.Failure = "fortress target was absent from the exact response"
+			targetMissing = true
+		case matchCount > 1:
+			verification.Failure = "fortress target response contained duplicate coordinates"
+		case !rowTypeValid || rowType != State.MapTypeKingdomFortress:
+			verification.Failure = "fortress target changed type"
+		case len(matching) < 8:
+			verification.Failure = "fortress target row was malformed"
+		default:
+			cooldown, valid := rowExactInt(matching, 5)
+			if !valid || cooldown < 0 {
+				verification.Failure = "fortress target cooldown was malformed"
+			} else if cooldown > 0 {
+				verification.CooldownRemaining = boundedWireSeconds(int64(cooldown))
+				verification.Failure = "fortress target is on cooldown"
+			} else {
+				verification.Available = true
+				verification.Failure = ""
+			}
+		}
+	}
+	gameState.Session.FortressTargetVerification = verification
+	return true, targetMissing
 }
 
 func invalidateUnavailableBeriTargetFromMap(
