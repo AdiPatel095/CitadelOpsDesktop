@@ -3,6 +3,7 @@ package App
 import (
 	"encoding/json"
 	"errors"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -15,6 +16,194 @@ import (
 	"CitadelDesktop/Server/Protocol"
 	"CitadelDesktop/Server/State"
 )
+
+func TestRegisteredKingdomTroopReconciliationIntentsRetainIdentityArguments(t *testing.T) {
+	for _, intentName := range []string{
+		"troops.kingdom.settle",
+		"troops.kingdom.reconcile_donor",
+		"troops.kingdom.skip.reconcile_timer",
+		"troops.kingdom.skip.reconcile_inventory",
+	} {
+		t.Run(intentName, func(t *testing.T) {
+			state, now := kingdomTroopReconciliationState(intentName)
+			if intentName == "troops.kingdom.settle" {
+				dataDir := t.TempDir()
+				if err := State.SaveSnapshot(dataDir, state); err != nil {
+					t.Fatal(err)
+				}
+				var err error
+				state, err = State.LoadSnapshot(dataDir)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			application, engine := newRegisteredKingdomTroopReconciliationEngine(t, state)
+			arguments := json.RawMessage(`{"owner":"autoFortress","workflowId":"owned-transport","targetKingdomId":2}`)
+			receipt := engine.Submit(t.Context(), Intent.Request{
+				ID: "valid-" + strings.ReplaceAll(intentName, ".", "-"), Name: intentName,
+				Actor: "automation:autoFortress", AutomationLane: "autoFortress", Arguments: arguments,
+			})
+			if receipt.Status != Intent.StatusSucceeded || receipt.Plan == nil {
+				view := application.State.ReadOnlyView()
+				t.Fatalf("registered %s receipt=%+v workflow=%#v observation=%#v session=%#v", intentName, receipt,
+					view.KingdomTransport.TroopWorkflows[2], view.Player.CurrencyObservations[1005], view.Session)
+			}
+			if len(receipt.Plan.Steps) != 1 || string(receipt.Plan.Steps[0].ActionArguments) != string(arguments) {
+				t.Fatalf("registered %s action arguments=%s plan=%#v", intentName, receipt.Plan.Steps[0].ActionArguments, receipt.Plan)
+			}
+			if len(receipt.Exchanges) != 0 {
+				t.Fatalf("registered %s sent game commands: %#v", intentName, receipt.Exchanges)
+			}
+
+			workflow, exists := application.State.ReadOnlyView().KingdomTransport.TroopWorkflows[2]
+			switch intentName {
+			case "troops.kingdom.settle":
+				if exists {
+					t.Fatalf("persisted completed workflow was not retired: %#v", workflow)
+				}
+			case "troops.kingdom.reconcile_donor":
+				if !exists || !workflow.SourceReconciledAt.Equal(now) {
+					t.Fatalf("donor reconciliation result=%#v exists=%t", workflow, exists)
+				}
+			case "troops.kingdom.skip.reconcile_timer":
+				if !exists || workflow.Status != "skip_inventory_pending" || workflow.RemainingSec != 0 {
+					t.Fatalf("timer reconciliation result=%#v exists=%t", workflow, exists)
+				}
+			case "troops.kingdom.skip.reconcile_inventory":
+				if !exists || workflow.Status != "awaiting_destination_refresh" || !workflow.SkipRequestedAt.IsZero() {
+					t.Fatalf("inventory reconciliation result=%#v exists=%t", workflow, exists)
+				}
+			}
+		})
+	}
+}
+
+func TestRegisteredKingdomTroopReconciliationIntentsRejectMissingOrWrongIdentity(t *testing.T) {
+	for _, intentName := range []string{
+		"troops.kingdom.settle",
+		"troops.kingdom.reconcile_donor",
+		"troops.kingdom.skip.reconcile_timer",
+		"troops.kingdom.skip.reconcile_inventory",
+	} {
+		for _, identity := range []struct {
+			name      string
+			arguments json.RawMessage
+		}{
+			{name: "missing", arguments: json.RawMessage(`{}`)},
+			{name: "wrong-owner", arguments: json.RawMessage(`{"owner":"anotherAutomation","workflowId":"owned-transport","targetKingdomId":2}`)},
+			{name: "wrong-workflow", arguments: json.RawMessage(`{"owner":"autoFortress","workflowId":"replacement","targetKingdomId":2}`)},
+		} {
+			t.Run(intentName+"/"+identity.name, func(t *testing.T) {
+				state, _ := kingdomTroopReconciliationState(intentName)
+				before := state.KingdomTransport.TroopWorkflows[2]
+				application, engine := newRegisteredKingdomTroopReconciliationEngine(t, state)
+				receipt := engine.Submit(t.Context(), Intent.Request{
+					ID: "invalid-" + identity.name + "-" + strings.ReplaceAll(intentName, ".", "-"), Name: intentName,
+					Actor: "automation:autoFortress", AutomationLane: "autoFortress", Arguments: identity.arguments,
+				})
+				if receipt.Status == Intent.StatusSucceeded {
+					t.Fatalf("registered %s accepted %s identity: %+v", intentName, identity.name, receipt)
+				}
+				after, exists := application.State.ReadOnlyView().KingdomTransport.TroopWorkflows[2]
+				if !exists || !reflect.DeepEqual(after, before) {
+					t.Fatalf("registered %s changed another workflow for %s identity: before=%#v after=%#v exists=%t", intentName, identity.name, before, after, exists)
+				}
+				if len(receipt.Exchanges) != 0 {
+					t.Fatalf("registered %s sent game commands for %s identity: %#v", intentName, identity.name, receipt.Exchanges)
+				}
+			})
+		}
+	}
+}
+
+func TestActionPlannerOwnsForwardedArguments(t *testing.T) {
+	arguments := json.RawMessage(`{"owner":"autoFortress"}`)
+	planner := actionPlanner("test.action", "troop-transport", "Test action")
+	plan, err := planner(t.Context(), Intent.PlanningContext{}, arguments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	arguments[10] = 'X'
+	if got := string(plan.Steps[0].ActionArguments); got != `{"owner":"autoFortress"}` {
+		t.Fatalf("action planner retained caller-owned arguments: %s", got)
+	}
+	empty, err := planner(t.Context(), Intent.PlanningContext{}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(empty.Steps[0].ActionArguments) != 0 {
+		t.Fatalf("empty action arguments = %q", empty.Steps[0].ActionArguments)
+	}
+}
+
+func newRegisteredKingdomTroopReconciliationEngine(t *testing.T, state State.GameState) (*Application, *Intent.Engine) {
+	t.Helper()
+	stateStore := State.NewStore(state)
+	if workflow := state.KingdomTransport.TroopWorkflows[2]; workflow.Status == "skip_inventory_pending" {
+		if _, err := stateStore.ApplyComponents(State.Components(State.ComponentPlayer), func(current *State.GameState) ([]string, bool, error) {
+			current.Player.Currencies[1005] = state.Player.Currencies[1005]
+			current.Player.CurrencyObservations[1005] = state.Player.CurrencyObservations[1005]
+			return []string{"currencies"}, true, nil
+		}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	registry := Intent.NewRegistry()
+	registry.EnforceResourceDeclarations()
+	engine := Intent.NewEngine(registry, stateStore, nil, nil, nil)
+	application := &Application{State: stateStore, Intents: engine}
+	if err := application.registerGameIntents(); err != nil {
+		t.Fatal(err)
+	}
+	return application, engine
+}
+
+func kingdomTroopReconciliationState(intentName string) (State.GameState, time.Time) {
+	now := time.Date(2026, time.September, 16, 12, 0, 0, 0, time.UTC)
+	state := State.NewGameState()
+	state.Session.ConnectionGeneration = 7
+	donor := kingdomTroopIntentCastle(10, 0, "Donor")
+	donor.UnitsObservedAt = now
+	target := kingdomTroopIntentCastle(20, 2, "Destination")
+	target.UnitsObservedAt = now
+	state.Castles[donor.ID] = donor
+	state.Castles[target.ID] = target
+	state.Player.Currencies[1005] = 1
+	state.Player.CurrencyObservations[1005] = State.PlayerResourceObservation{
+		ObservedAt: now, ConnectionGeneration: state.Session.ConnectionGeneration,
+	}
+	workflow := State.KingdomTroopTransportWorkflow{
+		ID: "owned-transport", Owner: "autoFortress", Status: "awaiting_destination_refresh", KingdomID: 2,
+		SourceCastleID: donor.ID, TargetCastleID: target.ID,
+		Units:               []State.KingdomTransportUnit{{UnitID: 10, Amount: 5}},
+		TransportObservedAt: now.Add(-time.Minute), SourceDebitedLocally: true, SessionGeneration: 7,
+	}
+	switch intentName {
+	case "troops.kingdom.reconcile_donor":
+		workflow.Status = "ownership_absent"
+		workflow.SourceDebitedLocally = false
+	case "troops.kingdom.skip.reconcile_timer":
+		workflow.Status = "pending"
+		workflow.TransportObservedAt = now
+		workflow.SkipCurrencyID = 1005
+		workflow.SkipWireKey = "MS5"
+		workflow.SkipBalanceBefore = 2
+		workflow.SkipRemainingBefore = 3600
+		workflow.SkipDurationSec = 3600
+		workflow.SkipRequestedAt = now.Add(-10 * time.Second)
+	case "troops.kingdom.skip.reconcile_inventory":
+		workflow.Status = "skip_inventory_pending"
+		workflow.SkipCurrencyID = 1005
+		workflow.SkipWireKey = "MS5"
+		workflow.SkipBalanceBefore = 2
+		workflow.SkipRemainingBefore = 3600
+		workflow.SkipDurationSec = 3600
+		workflow.SkipRequestedAt = now.Add(-10 * time.Second)
+	}
+	state.KingdomTransport.TroopWorkflows[2] = workflow
+	return state, now
+}
 
 func TestKingdomTroopShipmentUsesCapturedKutShape(t *testing.T) {
 	gameData := kingdomTroopIntentGameData(t)
