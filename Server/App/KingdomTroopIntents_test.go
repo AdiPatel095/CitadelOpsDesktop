@@ -8,8 +8,11 @@ import (
 	"testing"
 	"time"
 
+	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/GameData"
+	"CitadelDesktop/Server/Ingest"
 	"CitadelDesktop/Server/Intent"
+	"CitadelDesktop/Server/Protocol"
 	"CitadelDesktop/Server/State"
 )
 
@@ -40,6 +43,305 @@ func TestKingdomTroopShipmentUsesCapturedKutShape(t *testing.T) {
 	}
 	if got := string(plan.Steps[2].Command.Payload); got != `{"SCID":10,"SKID":0,"TKID":4,"CID":-1,"A":[[10,5],[20,7]]}` {
 		t.Fatalf("KUT payload = %s", got)
+	}
+}
+
+func TestOwnedKingdomTroopPlansArmBeforeDispatchAndUseGBDConfirmation(t *testing.T) {
+	gameData := kingdomTroopIntentGameData(t)
+	gameState := State.NewGameState()
+	donor := kingdomTroopIntentCastle(10, 0, "Donor")
+	donor.Focused = true
+	donor.Units.Stationed[10] = 20
+	target := kingdomTroopIntentCastle(40, 4, "Storm")
+	gameState.Castles[donor.ID] = donor
+	gameState.Castles[target.ID] = target
+	gameState.KingdomTransport.ObservedAt = time.Now().UTC()
+	gameState.KingdomTransport.Unlocks[4] = State.KingdomTransportUnlock{KingdomID: 4, Unlocked: true}
+
+	plan, err := planKingdomTroopShipment(t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, json.RawMessage(`{
+		"sourceCastleId":10,"targetCastleId":40,"targetKingdomId":4,"owner":"autoFortress","workflowId":"owned-1",
+		"units":[{"unitId":10,"amount":5}]
+	}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Steps) != 5 || plan.Steps[2].Opcode != "kut" ||
+		plan.Steps[2].PreDispatchAction != "troops.kingdom.workflow.arm" ||
+		plan.Steps[2].FinalDispatchAction != "troops.kingdom.workflow.dispatch" ||
+		plan.Steps[2].DefinitiveSendFailureAction != "troops.kingdom.workflow.disarm" ||
+		!plan.Steps[2].ResponseProjectionFailureIndeterminate ||
+		plan.Steps[3].Action != "troops.kingdom.workflow.confirm" ||
+		plan.Steps[4].Action != "troops.kingdom.consume_source" {
+		t.Fatalf("owned troop workflow steps=%#v", plan.Steps)
+	}
+
+	gameState.KingdomTransport.TroopWorkflows[4] = State.KingdomTroopTransportWorkflow{
+		ID: "owned-1", Owner: "autoFortress", Status: "pending", KingdomID: 4,
+		SourceCastleID: donor.ID, TargetCastleID: target.ID,
+		Units: []State.KingdomTransportUnit{{UnitID: 10, Amount: 5}},
+	}
+	gameState.KingdomTransport.PendingUnits = []State.KingdomUnitTransport{{
+		KingdomID: 4, RemainingSec: 3600, Units: []State.KingdomTransportUnit{{UnitID: 10, Amount: 5}},
+	}}
+	gameState.Player.Currencies[1005] = 2
+	skipPlan, err := planKingdomTroopSkip(t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, json.RawMessage(`{
+		"targetKingdomId":4,"timeSkipId":"MS5","owner":"autoFortress","workflowId":"owned-1","expectedRemaining":3600
+	}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(skipPlan.Steps) != 4 || skipPlan.Steps[0].PreDispatchAction != "troops.kingdom.skip.arm" ||
+		skipPlan.Steps[0].FinalDispatchAction != "troops.kingdom.skip.dispatch" ||
+		skipPlan.Steps[1].Action != "troops.kingdom.skip.verify_timer" || skipPlan.Steps[2].Opcode != "gbd" ||
+		!skipPlan.Steps[2].Command.Bare || skipPlan.Steps[3].Action != "troops.kingdom.skip.verify_inventory" {
+		t.Fatalf("owned troop skip steps=%#v", skipPlan.Steps)
+	}
+	for _, step := range skipPlan.Steps {
+		if step.Action == timeSkipConsumeAction {
+			t.Fatalf("owned troop skip used local currency decrement: %#v", skipPlan.Steps)
+		}
+	}
+}
+
+func TestOwnedKingdomTroopDispatchStopsWhenDestinationIsDisabled(t *testing.T) {
+	now := time.Now().UTC()
+	gameState := State.NewGameState()
+	gameState.Session.ConnectionGeneration = 3
+	gameState.KingdomTransport.Unlocks[2] = State.KingdomTransportUnlock{KingdomID: 2, Unlocked: true}
+	donor := kingdomTroopIntentCastle(10, 0, "Donor")
+	donor.UnitsObservedAt = now
+	donor.Units.Stationed[10] = 20
+	target := kingdomTroopIntentCastle(20, 2, "Sands")
+	gameState.Castles[donor.ID] = donor
+	gameState.Castles[target.ID] = target
+	gameState.KingdomTransport.TroopWorkflows[2] = State.KingdomTroopTransportWorkflow{
+		ID: "owned", Owner: "autoFortress", Status: "armed", KingdomID: 2,
+		SourceCastleID: donor.ID, TargetCastleID: target.ID, SessionGeneration: 3,
+		Units: []State.KingdomTransportUnit{{UnitID: 10, Amount: 5}},
+	}
+	configuration, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{
+		"automation.autoFortress": json.RawMessage(`{"kingdoms":{"2":{"enabled":false}}}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	application := &Application{State: State.NewStore(gameState), Configuration: configuration}
+	err = application.guardKingdomTroopWorkflowDispatch(t.Context(), json.RawMessage(`{
+		"sourceCastleId":10,"targetCastleId":20,"targetKingdomId":2,"owner":"autoFortress","workflowId":"owned",
+		"units":[{"unitId":10,"amount":5}]
+	}`))
+	if !errors.Is(err, Intent.ErrPlanStale) || !strings.Contains(err.Error(), "disabled") {
+		t.Fatalf("disabled final-dispatch guard=%v", err)
+	}
+}
+
+func TestOwnedKingdomTroopArmIsDurableBeforeDispatch(t *testing.T) {
+	state := State.NewGameState()
+	state.Session.ConnectionGeneration = 9
+	dataDir := t.TempDir()
+	application := &Application{DataDir: dataDir, State: State.NewStore(state)}
+	arguments := json.RawMessage(`{
+		"sourceCastleId":10,"targetCastleId":20,"targetKingdomId":2,"owner":"autoFortress","workflowId":"owned",
+		"units":[{"unitId":10,"amount":5}]
+	}`)
+	if err := application.armKingdomTroopWorkflow(t.Context(), arguments); err != nil {
+		t.Fatal(err)
+	}
+	persisted, err := State.LoadSnapshot(dataDir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	workflow, found := persisted.KingdomTransport.TroopWorkflows[2]
+	if !found || workflow.ID != "owned" || workflow.Status != "ownership_uncertain" || workflow.SessionGeneration != 0 {
+		t.Fatalf("durable owned workflow=%#v found=%t", workflow, found)
+	}
+}
+
+func TestOwnedKingdomTroopDonorConsumptionAvoidsAuthoritativeDoubleDebit(t *testing.T) {
+	now := time.Now().UTC()
+	for _, test := range []struct {
+		name             string
+		sourceObservedAt time.Time
+		wantUnits        int64
+		wantLocal        bool
+	}{
+		{name: "post-response-authority", sourceObservedAt: now, wantUnits: 90, wantLocal: false},
+		{name: "cached-source", sourceObservedAt: now.Add(-2 * time.Minute), wantUnits: 80, wantLocal: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			state := State.NewGameState()
+			source := kingdomTroopIntentCastle(10, 0, "Donor")
+			source.Units.Stationed[10], source.Units.Total[10], source.UnitsObservedAt = 90, 90, test.sourceObservedAt
+			state.Castles[10] = source
+			state.KingdomTransport.TroopWorkflows[2] = State.KingdomTroopTransportWorkflow{
+				ID: "owned", Owner: "autoFortress", Status: "pending", KingdomID: 2, SourceCastleID: 10,
+				TransportObservedAt: now.Add(-time.Minute), Units: []State.KingdomTransportUnit{{UnitID: 10, Amount: 10}},
+			}
+			application := &Application{State: State.NewStore(state)}
+			if err := application.consumeKingdomTroopSource(t.Context(), json.RawMessage(`{"sourceCastleId":10,"targetKingdomId":2,"owner":"autoFortress","workflowId":"owned","units":[{"unitId":10,"amount":10}]}`)); err != nil {
+				t.Fatal(err)
+			}
+			view := application.State.ReadOnlyView()
+			if got := view.Castles[10].Units.Stationed[10]; got != test.wantUnits {
+				t.Fatalf("donor units=%d want=%d", got, test.wantUnits)
+			}
+			workflow := view.KingdomTransport.TroopWorkflows[2]
+			if workflow.SourceDebitedLocally != test.wantLocal || (!test.wantLocal && workflow.SourceReconciledAt.IsZero()) {
+				t.Fatalf("donor evidence=%#v", workflow)
+			}
+			if test.wantLocal && !view.Castles[10].UnitsObservedAt.Equal(test.sourceObservedAt) {
+				t.Fatalf("local debit manufactured authority: %v", view.Castles[10].UnitsObservedAt)
+			}
+			if err := application.consumeKingdomTroopSource(t.Context(), json.RawMessage(`{"sourceCastleId":10,"targetKingdomId":2,"owner":"autoFortress","workflowId":"owned","units":[{"unitId":10,"amount":10}]}`)); err != nil {
+				t.Fatal(err)
+			}
+			if got := application.State.ReadOnlyView().Castles[10].Units.Stationed[10]; got != test.wantUnits {
+				t.Fatalf("repeated consume debited donor twice: got=%d want=%d", got, test.wantUnits)
+			}
+		})
+	}
+}
+
+func TestOwnedKingdomTroopReconnectEvidenceRestoresDonorReconciliation(t *testing.T) {
+	frameAt := time.Now().UTC().Add(-time.Second)
+	for _, test := range []struct {
+		name       string
+		workflow   State.KingdomTroopTransportWorkflow
+		payload    json.RawMessage
+		wantStatus string
+	}{
+		{
+			name: "lost-consume-pending-restart",
+			workflow: State.KingdomTroopTransportWorkflow{
+				ID: "pending", Owner: "autoFortress", Status: "pending", KingdomID: 2,
+				SourceCastleID: 10, TargetCastleID: 20, ArmedAt: frameAt.Add(-time.Hour),
+				TransportObservedAt: frameAt.Add(-10 * time.Second), RemainingSec: 3600,
+				Units: []State.KingdomTransportUnit{{UnitID: 10, Amount: 5}},
+			},
+			payload:    json.RawMessage(`{"UL":[{"KID":2,"U":1}],"UT":[{"KID":2,"RS":3590,"I":[[10,5]]}]}`),
+			wantStatus: "pending",
+		},
+		{
+			name: "armed-empty-reconnect",
+			workflow: State.KingdomTroopTransportWorkflow{
+				ID: "armed", Owner: "autoFortress", Status: "armed", KingdomID: 2,
+				SourceCastleID: 10, TargetCastleID: 20, ArmedAt: frameAt.Add(-time.Hour),
+				Units: []State.KingdomTransportUnit{{UnitID: 10, Amount: 5}},
+			},
+			payload:    json.RawMessage(`{"UL":[{"KID":2,"U":1}]}`),
+			wantStatus: "ownership_absent",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			state := State.NewGameState()
+			state.Session.ConnectionGeneration = 11
+			donor := kingdomTroopIntentCastle(10, 0, "Donor")
+			donor.Units.Stationed[10], donor.Units.Total[10] = 95, 95
+			state.Castles[10] = donor
+			state.Castles[20] = kingdomTroopIntentCastle(20, 2, "Sands")
+			state.KingdomTransport.TroopWorkflows[2] = test.workflow
+
+			store := State.NewStore(state)
+			registry := Ingest.NewRegistry()
+			if err := Ingest.RegisterCoreReducers(registry); err != nil {
+				t.Fatal(err)
+			}
+			pipeline := Ingest.NewPipeline(store, beriIntentGameDataProvider{store: kingdomTroopIntentGameData(t)}, registry)
+			code := 0
+			if _, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
+				Opcode: "kpi", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+				ReceivedAt: frameAt, Payload: test.payload,
+			}); err != nil {
+				t.Fatal(err)
+			}
+			rebound := store.ReadOnlyView().KingdomTransport.TroopWorkflows[2]
+			if rebound.Status != test.wantStatus || rebound.SessionGeneration != 11 || !rebound.TransportObservedAt.Equal(frameAt) {
+				t.Fatalf("rebound workflow=%#v", rebound)
+			}
+
+			freshAt := time.Now().UTC()
+			if _, err := store.ApplyComponents(State.Components(State.ComponentCastles), func(current *State.GameState) ([]string, bool, error) {
+				donor, found := current.MutableCastleParts(10, State.CastlePartUnits)
+				if !found {
+					return nil, false, errors.New("donor missing")
+				}
+				donor.UnitsObservedAt = freshAt
+				current.SetCastleParts(10, donor, State.CastlePartUnits)
+				return []string{"castles", "units"}, true, nil
+			}); err != nil {
+				t.Fatal(err)
+			}
+			application := &Application{State: store}
+			if err := application.reconcileKingdomTroopDonor(t.Context(), json.RawMessage(`{"owner":"autoFortress","workflowId":"`+test.workflow.ID+`","targetKingdomId":2}`)); err != nil {
+				t.Fatal(err)
+			}
+			reconciled := store.ReadOnlyView().KingdomTransport.TroopWorkflows[2]
+			if !reconciled.SourceReconciledAt.Equal(freshAt) || reconciled.SourceDebitedLocally {
+				t.Fatalf("reconciled workflow=%#v", reconciled)
+			}
+		})
+	}
+}
+
+func TestOwnedKingdomTroopSkipRequiresDurationProgressAndInventoryConsumption(t *testing.T) {
+	now := time.Now().UTC()
+	state := State.NewGameState()
+	state.Session.ConnectionGeneration = 5
+	state.Player.Currencies[1005] = 2
+	state.KingdomTransport.PendingUnits = []State.KingdomUnitTransport{{KingdomID: 2, RemainingSec: 3590, Units: []State.KingdomTransportUnit{{UnitID: 10, Amount: 5}}}}
+	state.KingdomTransport.TroopWorkflows[2] = State.KingdomTroopTransportWorkflow{
+		ID: "owned", Owner: "autoFortress", Status: "pending", KingdomID: 2,
+		Units: []State.KingdomTransportUnit{{UnitID: 10, Amount: 5}}, TransportObservedAt: now,
+		SkipCurrencyID: 1005, SkipWireKey: "MS5", SkipBalanceBefore: 2, SkipRemainingBefore: 3600,
+		SkipDurationSec: 3600, SkipRequestedAt: now.Add(-10 * time.Second),
+	}
+	application := &Application{State: State.NewStore(state)}
+	arguments := json.RawMessage(`{"targetKingdomId":2,"owner":"autoFortress","workflowId":"owned"}`)
+	if err := application.verifyKingdomTroopSkipTimer(t.Context(), arguments); err == nil || !strings.Contains(err.Error(), "natural countdown") {
+		t.Fatalf("natural countdown confirmed skip progress: %v", err)
+	}
+	if observed := application.State.ReadOnlyView().KingdomTransport.TroopWorkflows[2].SkipTimerObservedAt; !observed.Equal(now) {
+		t.Fatalf("natural-countdown failure marker was not committed: %v", observed)
+	}
+
+	_, err := application.State.ApplyComponents(State.Components(State.ComponentKingdomTransport), func(current *State.GameState) ([]string, bool, error) {
+		current.KingdomTransport.PendingUnits = nil
+		return []string{"kingdom-transport"}, true, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := application.verifyKingdomTroopSkipTimer(t.Context(), arguments); err != nil {
+		t.Fatal(err)
+	}
+	_, err = application.State.ApplyComponents(State.Components(State.ComponentPlayer), func(current *State.GameState) ([]string, bool, error) {
+		current.Player.CurrencyObservations[1005] = State.PlayerResourceObservation{ObservedAt: now.Add(time.Second), ConnectionGeneration: 5}
+		return []string{"currencies"}, true, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := application.verifyKingdomTroopSkipInventory(t.Context(), arguments); err == nil {
+		t.Fatal("unchanged authoritative inventory confirmed consumption")
+	}
+	uncertain := application.State.ReadOnlyView().KingdomTransport.TroopWorkflows[2]
+	if uncertain.Status != "skip_uncertain" || uncertain.SkipRequestedAt.IsZero() || uncertain.SkipInventoryObservedAt.IsZero() {
+		t.Fatalf("uncertain spend marker=%#v", uncertain)
+	}
+	_, err = application.State.ApplyComponents(State.Components(State.ComponentPlayer), func(current *State.GameState) ([]string, bool, error) {
+		current.Player.Currencies[1005] = 1
+		current.Player.CurrencyObservations[1005] = State.PlayerResourceObservation{ObservedAt: now.Add(2 * time.Second), ConnectionGeneration: 5}
+		return []string{"currencies"}, true, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := application.verifyKingdomTroopSkipInventory(t.Context(), arguments); err != nil {
+		t.Fatal(err)
+	}
+	confirmed := application.State.ReadOnlyView().KingdomTransport.TroopWorkflows[2]
+	if confirmed.Status != "awaiting_destination_refresh" || !confirmed.SkipRequestedAt.IsZero() {
+		t.Fatalf("confirmed spend=%#v", confirmed)
 	}
 }
 

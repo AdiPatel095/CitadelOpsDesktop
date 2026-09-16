@@ -9,8 +9,10 @@ import (
 	"time"
 
 	"CitadelDesktop/Server/GameData"
+	"CitadelDesktop/Server/Ingest"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/Outbound"
+	"CitadelDesktop/Server/Protocol"
 	"CitadelDesktop/Server/State"
 )
 
@@ -86,6 +88,149 @@ func TestFortressAttackBuildsOneFullDirewolfFlankWaveWithoutPremiumBooster(t *te
 		wave.Middle.Units[0] != (attackPair{-1, 0}) {
 		t.Fatalf("fortress formation is not one full Direwolf flank wave: %#v", wave)
 	}
+}
+
+func TestFortressAttackEngineFinalizesOnlyWithAuthoritativeMovement(t *testing.T) {
+	for _, projectMovement := range []bool{true, false} {
+		t.Run(map[bool]string{true: "confirmed", false: "missing-movement"}[projectMovement], func(t *testing.T) {
+			now := time.Now().UTC()
+			gameData := fortressIntentGameData(t)
+			gameState := fortressIntentState(now)
+			gameState.Player.ID = 42
+			gameState.Session.ConnectionGeneration = 1
+			stateStore := State.NewStore(gameState)
+			ingestRegistry := Ingest.NewRegistry()
+			if err := Ingest.RegisterCoreReducers(ingestRegistry); err != nil {
+				t.Fatal(err)
+			}
+			pipeline := Ingest.NewPipeline(stateStore, beriIntentGameDataProvider{store: gameData}, ingestRegistry)
+			sender := &fortressEngineSender{pipeline: pipeline, projectMovement: projectMovement}
+			intentRegistry := Intent.NewRegistry()
+			engine := Intent.NewEngine(intentRegistry, stateStore, beriIntentGameDataProvider{store: gameData}, sender, pipeline)
+			application := &Application{State: stateStore, Intents: engine, Ingest: pipeline}
+			if err := intentRegistry.Register(Intent.Definition{Name: "fortress.attack", Effect: Intent.EffectLaunch, Planner: planFortressAttack}); err != nil {
+				t.Fatal(err)
+			}
+			if err := engine.RegisterStepResolver("fortress.attack.build", application.resolveFortressAttackStep); err != nil {
+				t.Fatal(err)
+			}
+			if err := engine.RegisterCommandDependencies("cra", application.resolveCRACommandDependencies); err != nil {
+				t.Fatal(err)
+			}
+			for name, action := range map[string]Intent.Action{
+				"game.ui.close":            func(context.Context, json.RawMessage) error { return nil },
+				"attack.cra.send.guard":    application.guardCRASend,
+				"attack.analytics.capture": application.captureAttackFeatureLaunch,
+			} {
+				if err := engine.RegisterAction(name, action); err != nil {
+					t.Fatal(err)
+				}
+			}
+			receipt := engine.Submit(t.Context(), Intent.Request{
+				ID: "fortress-engine", Name: "fortress.attack", Actor: "automation:autoFortress", AutomationLane: "autoFortress",
+				Arguments: json.RawMessage(`{"sourceCastleId":10,"kingdomId":1,"targetX":101,"targetY":100,"commanderIds":[5],"horseTravelBoostId":-1,"minimumCommanderSpeedBonus":100}`),
+			})
+			if projectMovement {
+				if receipt.Status != Intent.StatusSucceeded || sender.craSends != 1 {
+					t.Fatalf("confirmed engine receipt=%+v opcodes=%v", receipt, sender.opcodes)
+				}
+				launches := stateStore.ReadOnlyView().AttackAnalytics.PendingAttacks
+				if len(launches) != 1 || launches[0].FeatureID != State.AttackFeatureAutoFortress || launches[0].MovementID != 99 {
+					t.Fatalf("authoritative fortress launch=%#v", launches)
+				}
+				projected := stateStore.ReadOnlyView()
+				if movement, found := projected.LookupMovement(99); !found || movement.Units[GameData.DirewolfUnitID] != 100 {
+					t.Fatalf("production CRA movement=%#v found=%t", movement, found)
+				}
+				if donor := projected.Castles[10].Units.Stationed[GameData.DirewolfUnitID]; donor != 10_000 {
+					t.Fatalf("CRA launch rewrote authoritative donor stock: got=%d want=10000", donor)
+				}
+				if !projected.Castles[10].UnitsObservedAt.IsZero() {
+					t.Fatal("confirmed launch left pre-launch donor stock authoritative")
+				}
+				if _, found := projected.LookupTowerCooldown("1:101:100"); found {
+					t.Fatal("CRA launch created a fortress victory cooldown before a battle report")
+				}
+				code := 0
+				for _, frame := range []Protocol.Frame{
+					{Opcode: "jaa", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: time.Now().UTC(), Payload: json.RawMessage(`{"KID":1,"gca":{"A":[12,100,100,10,42,0,0,0,0,0,"Winter Keep"]},"gui":{"I":[[277,9900]],"TU":[],"HI":[],"SHI":[]}}`)},
+					{Opcode: "bls", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: time.Now().UTC(), Payload: json.RawMessage(`{"MID":101,"LID":202,"PBI":[[42,0,1700,-10],[-220,1,135,-135]],"AI":{"AT":11,"K":1,"X":101,"Y":100}}`)},
+					{Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: time.Now().UTC(), Payload: json.RawMessage(`{"KID":1,"AI":[[11,101,100,0,45,431998,42,1]]}`)},
+				} {
+					if _, err := pipeline.HandleFrame(t.Context(), frame); err != nil {
+						t.Fatal(err)
+					}
+				}
+				final := stateStore.ReadOnlyView()
+				if donor := final.Castles[10].Units.Stationed[GameData.DirewolfUnitID]; donor != 9_900 || final.Castles[10].UnitsObservedAt.IsZero() {
+					t.Fatalf("authoritative post-launch donor stock=%d observed=%v", donor, final.Castles[10].UnitsObservedAt)
+				}
+				cooldown, found := final.LookupTowerCooldown("1:101:100")
+				if !found || cooldown.PendingCooldownRefresh || cooldown.CooldownRemaining != 431_998 || cooldown.LastSuccessfulBattleAt.IsZero() {
+					t.Fatalf("authoritative fortress victory cooldown=%#v found=%t", cooldown, found)
+				}
+			} else {
+				if receipt.Status == Intent.StatusSucceeded || sender.craSends != 1 || !strings.Contains(receipt.Error, "did not return") {
+					t.Fatalf("missing-movement receipt=%+v opcodes=%v", receipt, sender.opcodes)
+				}
+			}
+		})
+	}
+}
+
+type fortressEngineSender struct {
+	pipeline        *Ingest.Pipeline
+	opcodes         []string
+	craSends        int
+	projectMovement bool
+}
+
+func (*fortressEngineSender) Ready() bool                  { return true }
+func (*fortressEngineSender) Namespace() string            { return "EmpireEx_21" }
+func (*fortressEngineSender) CorrelatesResponses() bool    { return true }
+func (*fortressEngineSender) ConnectionGeneration() uint64 { return 1 }
+
+func (sender *fortressEngineSender) Send(ctx context.Context, payload []byte) error {
+	if err := Outbound.ValidateFinalDispatch(ctx); err != nil {
+		return err
+	}
+	command, err := Protocol.Decode(string(payload), Protocol.DirectionOutbound, time.Now().UTC())
+	if err != nil {
+		return err
+	}
+	sender.opcodes = append(sender.opcodes, command.Opcode)
+	responseOpcode := command.Opcode
+	if command.Opcode == "jca" {
+		responseOpcode = "jaa"
+	}
+	if command.Opcode == "cra" {
+		sender.craSends++
+	}
+	responsePayload := json.RawMessage(`{}`)
+	switch command.Opcode {
+	case "jaa", "jca":
+		responsePayload = json.RawMessage(`{"KID":1,"gca":{"A":[12,100,100,10,42,0,0,0,0,0,"Winter Keep"]},"gui":{"I":[[277,10000]],"TU":[],"HI":[],"SHI":[]}}`)
+	case "gaa":
+		responsePayload = json.RawMessage(`{"KID":1,"AI":[[11,101,100,-1,45,0,-1,0]]}`)
+	case "gam":
+		responsePayload = json.RawMessage(`{"M":[],"O":[]}`)
+	case "adi":
+		responsePayload = json.RawMessage(`{"KID":1,"SCID":10,"gaa":{"AI":[11,101,100,-1,45,0,-1,0]},"AE":[]}`)
+	case "gas":
+		responsePayload = json.RawMessage(`{"S":[]}`)
+	case "cra":
+		if sender.projectMovement {
+			responsePayload = json.RawMessage(`{"M":{"MID":99,"PT":0,"TT":60,"D":0,"T":0,"KID":1,"OID":42,"TID":-1,"SA":[12,100,100,10,42],"TA":[11,101,100,-1,-1]},"UM":{"L":{"ID":5}},"A":[[277,100]]}`)
+		}
+	}
+	metadata := Outbound.MetadataFromContext(ctx)
+	code := 0
+	_, err = sender.pipeline.HandleFrame(ctx, Protocol.Frame{
+		Opcode: responseOpcode, Direction: Protocol.DirectionInbound, ResponseCode: &code,
+		ReceivedAt: time.Now().UTC(), Payload: responsePayload, ResponseToken: metadata.ResponseToken,
+		CausationOperationID: metadata.OperationID,
+	})
+	return err
 }
 
 func TestFortressPersonalCooldownSurvivesReadyGlobalMapRow(t *testing.T) {

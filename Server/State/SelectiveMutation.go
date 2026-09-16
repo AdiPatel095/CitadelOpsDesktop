@@ -10,6 +10,7 @@ func (state *GameState) preparePlayerMutation(source GameState) {
 	state.Player.Resources = cloneMap(source.Player.Resources)
 	state.Player.ResourceObservations = cloneMap(source.Player.ResourceObservations)
 	state.Player.Currencies = cloneMap(source.Player.Currencies)
+	state.Player.CurrencyObservations = cloneMap(source.Player.CurrencyObservations)
 }
 
 func (state *GameState) prepareCommanderMutation(source GameState) {

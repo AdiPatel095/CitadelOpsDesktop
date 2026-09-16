@@ -34,6 +34,25 @@ func TestClientStateSnapshotKeepsOnlyDashboardMapKinds(t *testing.T) {
 	}
 }
 
+func TestClientStateSnapshotOmitsPrivateTroopWorkflows(t *testing.T) {
+	state := NewGameState()
+	state.KingdomTransport.TroopWorkflows[2] = KingdomTroopTransportWorkflow{
+		ID: "private-owned-transfer", Owner: "autoFortress", Status: "pending", KingdomID: 2,
+		Units: []KingdomTransportUnit{{UnitID: 277, Amount: 100}},
+	}
+	raw, err := json.Marshal(NewClientStateSnapshot(state))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var snapshot GameState
+	if err := json.Unmarshal(raw, &snapshot); err != nil {
+		t.Fatal(err)
+	}
+	if len(snapshot.KingdomTransport.TroopWorkflows) != 0 {
+		t.Fatalf("private troop workflows leaked into client projection: %#v", snapshot.KingdomTransport.TroopWorkflows)
+	}
+}
+
 func TestClientStateSnapshotPreservesZeroEquipmentRarity(t *testing.T) {
 	state := NewGameState()
 	state.Inventory.Equipment[101] = EquipmentInstance{

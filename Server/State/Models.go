@@ -205,6 +205,9 @@ type PlayerState struct {
 	// before unattended premium spending resumes.
 	ResourceObservations map[ResourceID]PlayerResourceObservation `json:"-"`
 	Currencies           map[CurrencyID]float64                   `json:"currencies"`
+	// CurrencyObservations are current-session authority for inventory spends
+	// and are intentionally discarded on restart like ResourceObservations.
+	CurrencyObservations map[CurrencyID]PlayerResourceObservation `json:"-"`
 	VIP                  VIPState                                 `json:"vip"`
 	ProtectionMode       PlayerProtectionModeState                `json:"protectionMode"`
 	Achievements         AchievementState                         `json:"achievements"`
@@ -1235,6 +1238,31 @@ type KingdomResourceTransportWorkflow struct {
 	LaunchedAt     time.Time              `json:"launchedAt"`
 }
 
+type KingdomTroopTransportWorkflow struct {
+	ID                      string                 `json:"id"`
+	Owner                   string                 `json:"owner"`
+	Status                  string                 `json:"status"`
+	KingdomID               KingdomID              `json:"kingdomId"`
+	SourceCastleID          CastleID               `json:"sourceCastleId"`
+	TargetCastleID          CastleID               `json:"targetCastleId"`
+	Units                   []KingdomTransportUnit `json:"units"`
+	ArmedAt                 time.Time              `json:"armedAt"`
+	LaunchedAt              time.Time              `json:"launchedAt,omitempty"`
+	TransportObservedAt     time.Time              `json:"transportObservedAt,omitempty"`
+	SourceReconciledAt      time.Time              `json:"sourceReconciledAt,omitempty"`
+	SourceDebitedLocally    bool                   `json:"sourceDebitedLocally,omitempty"`
+	RemainingSec            int                    `json:"remainingSec,omitempty"`
+	SessionGeneration       uint64                 `json:"sessionGeneration,omitempty"`
+	SkipCurrencyID          CurrencyID             `json:"skipCurrencyId,omitempty"`
+	SkipWireKey             string                 `json:"skipWireKey,omitempty"`
+	SkipBalanceBefore       float64                `json:"skipBalanceBefore,omitempty"`
+	SkipRemainingBefore     int                    `json:"skipRemainingBefore,omitempty"`
+	SkipDurationSec         int64                  `json:"skipDurationSec,omitempty"`
+	SkipRequestedAt         time.Time              `json:"skipRequestedAt,omitempty"`
+	SkipTimerObservedAt     time.Time              `json:"skipTimerObservedAt,omitempty"`
+	SkipInventoryObservedAt time.Time              `json:"skipInventoryObservedAt,omitempty"`
+}
+
 type KingdomTransportUnit struct {
 	UnitID UnitID `json:"unitId"`
 	Amount int64  `json:"amount"`
@@ -1251,6 +1279,7 @@ type KingdomTransportState struct {
 	Pending           []KingdomResourceTransport                     `json:"pending"`
 	PendingUnits      []KingdomUnitTransport                         `json:"pendingUnits"`
 	ResourceWorkflows map[KingdomID]KingdomResourceTransportWorkflow `json:"resourceWorkflows,omitempty"`
+	TroopWorkflows    map[KingdomID]KingdomTroopTransportWorkflow    `json:"troopWorkflows,omitempty"`
 	ObservedAt        time.Time                                      `json:"observedAt,omitempty"`
 }
 
@@ -2056,6 +2085,7 @@ type AutomationState struct {
 	LastOperationID    string               `json:"lastOperationId,omitempty"`
 	LastError          string               `json:"lastError,omitempty"`
 	Metrics            map[string]float64   `json:"metrics,omitempty"`
+	Details            map[string]string    `json:"details,omitempty"`
 	OperationalCursors map[string]int       `json:"operationalCursors,omitempty"`
 	UpdatedAt          time.Time            `json:"updatedAt"`
 }
@@ -2168,7 +2198,8 @@ func NewGameState() GameState {
 		UpdatedAt:     now,
 		Session:       SessionState{Status: "stopped", Namespace: "EmpireEx_21", ChangedAt: now},
 		Player: PlayerState{
-			Resources: map[ResourceID]float64{}, ResourceObservations: map[ResourceID]PlayerResourceObservation{}, Currencies: map[CurrencyID]float64{},
+			Resources: map[ResourceID]float64{}, ResourceObservations: map[ResourceID]PlayerResourceObservation{},
+			Currencies: map[CurrencyID]float64{}, CurrencyObservations: map[CurrencyID]PlayerResourceObservation{},
 			Achievements: AchievementState{Completed: map[int64]bool{}, Progress: map[int64][]int64{}},
 			LegendSkills: LegendSkillState{ActiveIDs: []int64{}, SceatSkillIDs: []int64{}, SceatActivations: []SceatSkillActivation{}},
 		},
@@ -2196,6 +2227,7 @@ func NewGameState() GameState {
 		KingdomTransport: KingdomTransportState{
 			Unlocks: map[KingdomID]KingdomTransportUnlock{}, Pending: []KingdomResourceTransport{},
 			PendingUnits: []KingdomUnitTransport{}, ResourceWorkflows: map[KingdomID]KingdomResourceTransportWorkflow{},
+			TroopWorkflows: map[KingdomID]KingdomTroopTransportWorkflow{},
 		},
 		Beri:      BeriState{TroopsByUnit: map[UnitID]int64{}},
 		Alliance:  AllianceState{Members: []AllianceMember{}, Holdings: []AllianceHolding{}},

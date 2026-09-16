@@ -282,7 +282,7 @@ func legacyClaimResource(
 			}
 			return kingdomKey(State.KingdomID(id), "combat", "target", targetID)
 		}
-	case "tower-target", "nomad-target", "storm-target", "invasion-target", "spy-target", "khan-target", "player-target":
+	case "tower-target", "fortress-target", "nomad-target", "storm-target", "invasion-target", "spy-target", "khan-target", "player-target":
 		if len(parts) >= 4 {
 			id, _ := strconv.ParseInt(parts[1], 10, 64)
 			return kingdomKey(State.KingdomID(id), "combat", "target", strings.Join(parts[2:], ":"))

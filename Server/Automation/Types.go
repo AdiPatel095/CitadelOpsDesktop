@@ -38,6 +38,7 @@ type Decision struct {
 	// because another polling interval elapsed.
 	EventDriven       bool
 	Metrics           map[string]float64
+	Details           map[string]string
 	Request           *Intent.Request
 	FollowUp          *Intent.Request
 	OperationalCursor *OperationalCursorUpdate

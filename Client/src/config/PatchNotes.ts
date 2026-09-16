@@ -62,6 +62,7 @@ const PATCH_NOTES_RELEASES_UNSORTED: PatchNotesRelease[] = [
     date: '2026-09-16',
     items: [
       { kind: 'fixed', text: 'Equipment Reconfigure now keeps ordinary and relic equipment, heroes, and gems in compatible loadouts and rejects incompatible selections before changing equipment.' },
+      { kind: 'fixed', text: 'Auto Fortress balances all available purchased Direwolves across enabled kingdom main castles, counts confirmed inbound troops, refreshes arrivals before reuse or attack, and can optionally apply guarded official time skips only to its own confirmed transfers.' },
       { kind: 'security', text: 'Equipment Reconfigure shows each alternative’s ordinary-gem extraction count and maximum ruby charge, requires explicit consent to that selected ceiling, rechecks official prices before every ordinary-gem extraction and the live ruby balance before every paid extraction, and blocks uncertain paid attempts from repeating. Coin socketing and relic-fragment extraction costs are also disclosed.' },
     ],
   },

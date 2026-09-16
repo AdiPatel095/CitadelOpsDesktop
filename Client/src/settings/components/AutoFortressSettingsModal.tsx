@@ -88,6 +88,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
 
   const enabledKingdomCount = Object.values(settings.kingdoms).filter((kingdom) => kingdom.enabled).length;
   const fortressMetrics = state?.automations?.autoFortress?.metrics ?? {};
+  const fortressDetails = state?.automations?.autoFortress?.details ?? {};
   const nextExpectedReady = fortressReadyLabel(fortressMetrics.nextReadyAtUnix);
   const update = (patch: Partial<AutoFortressClientStateV1>) => setSettings((current) => ({ ...current, ...patch }));
 
@@ -202,6 +203,11 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
             const knownFortresses = Math.max(0, Math.trunc(fortressMetrics[`knownFortressesKingdom${kingdom.id}`] ?? 0));
             const readyFortresses = Math.max(0, Math.trunc(fortressMetrics[`readyFortressesKingdom${kingdom.id}`] ?? 0));
             const expectedReady = fortressReadyLabel(fortressMetrics[`nextReadyAtKingdom${kingdom.id}Unix`]);
+            const stationed = Math.max(0, Math.trunc(fortressMetrics[`stationedDirewolvesKingdom${kingdom.id}`] ?? castle?.stationed ?? 0));
+            const inbound = Math.max(0, Math.trunc(fortressMetrics[`inboundDirewolvesKingdom${kingdom.id}`] ?? 0));
+            const allocated = Math.max(0, Math.trunc(fortressMetrics[`allocatedDirewolvesKingdom${kingdom.id}`] ?? stationed + inbound));
+            const outstanding = Math.max(0, Math.trunc(fortressMetrics[`outstandingDirewolvesKingdom${kingdom.id}`] ?? 0));
+            const supplyDetail = fortressDetails[`supplyKingdom${kingdom.id}`];
             return (
               <Card key={kingdom.id} variant="solid" className={`relative overflow-hidden bg-gradient-to-br ${kingdom.wash} p-4`}>
                 <div className="flex items-start justify-between gap-3">
@@ -223,10 +229,15 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
                 </div>
                 <div className="mt-4 rounded-xl border border-border-base bg-bg-app/65 px-3 py-2.5">
                   <div className="truncate text-xs font-bold text-text-main">{castle?.name ?? 'Main castle not detected'}</div>
-                  <div className="mt-1 flex items-center justify-between text-[11px] text-text-muted">
-                    <span>{castle ? `${castle.stationed.toLocaleString()} Direwolves ready` : 'Unlock kingdom first'}</span>
-                    <span>{castle ? 'Route checked at runtime' : 'Unavailable'}</span>
-                  </div>
+                  {castle ? (
+                    <div className="mt-2 grid grid-cols-2 gap-1.5 text-[10px]">
+                      <div className="rounded-lg bg-bg-card/70 px-2 py-1"><span className="block text-text-muted">Allocated</span><strong className="text-text-main">{allocated.toLocaleString()}</strong></div>
+                      <div className="rounded-lg bg-bg-card/70 px-2 py-1"><span className="block text-text-muted">Stationed</span><strong className="text-text-main">{stationed.toLocaleString()}</strong></div>
+                      <div className="rounded-lg bg-bg-card/70 px-2 py-1"><span className="block text-text-muted">Inbound</span><strong className="text-text-main">{inbound.toLocaleString()}</strong></div>
+                      <div className="rounded-lg bg-bg-card/70 px-2 py-1"><span className="block text-text-muted">Outstanding</span><strong className="text-text-main">{outstanding.toLocaleString()}</strong></div>
+                    </div>
+                  ) : <div className="mt-1 text-[11px] text-text-muted">Unlock kingdom first</div>}
+                  {supplyDetail && <div className="mt-2 text-[10px] font-semibold text-text-muted">{supplyDetail}</div>}
                   {castle && (
                     <div className="mt-2 flex items-center gap-1.5 border-t border-border-base/70 pt-2 text-[10px] font-semibold text-text-muted">
                       <Radar className="h-3.5 w-3.5 shrink-0 text-primary" />
@@ -293,7 +304,14 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
           </div>
           <div className="mt-3 flex items-start gap-2 rounded-xl border border-secondary/20 bg-secondary/5 px-3 py-2.5 text-[11px] text-text-muted">
             <Truck className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />
-            Purchases arrive at the Great Empire main castle. Only the kingdom troop-transfer route—not resource transport—moves the exact attack shortfall to an enabled kingdom.
+            Purchases arrive at the Great Empire main castle. The kingdom troop-transfer route distributes all available Direwolves across enabled kingdoms, balancing stationed and confirmed inbound stock.
+          </div>
+          <div className="mt-3 flex items-center justify-between gap-4 rounded-xl border border-border-base bg-bg-app/55 px-3 py-3">
+            <div>
+              <div className="text-xs font-black text-text-main">Use time skips for Direwolf transfers</div>
+              <p className="mt-0.5 text-[11px] text-text-muted">Off by default. When enabled, only confirmed Auto Fortress shipments can use official inventory above saved reserves.</p>
+            </div>
+            <Switch checked={settings.useTimeSkips} onChange={() => update({ useTimeSkips: !settings.useTimeSkips })} ariaLabel="Use time skips for Direwolf transfers" />
           </div>
         </Card>
 
