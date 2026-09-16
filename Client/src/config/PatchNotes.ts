@@ -70,7 +70,7 @@ const PATCH_NOTES_RELEASES_UNSORTED: PatchNotesRelease[] = [
     date: '2026-09-15',
     items: [
       { kind: 'added', text: 'Equipment Reconfigure returns up to 10 ranked, distinct loadouts for one selected commander or castellan, keeps generated choices available for immediate comparison, and applies only the explicitly selected result' },
-      { kind: 'fixed', text: 'Auto Buyer maintains the type-8 feast strictly above its saved duration floor from the currently focused eligible castle, rechecking its identity, food, reserves, timer, and resources before any sequential purchase' },
+      { kind: 'fixed', text: 'Auto Buyer maintains the type-8 feast strictly above its saved duration floor, automatically choosing the eligible owned positive-net castle with the most stored food and rechecking its identity, food, reserves, timer, and resources before any sequential purchase' },
       { kind: 'fixed', text: 'Auto Buyer renews all supported overseers and specialists one week at a time at or below their saved duration floors, with validated ruby maximums, fresh balance and timer guards, durable no-replay recovery, and visible per-item outcomes' },
       { kind: 'fixed', text: 'Auto Booster confirms the daily fortress-speed boost from occurrence-bound status even when notification and empty acknowledgement arrive in either order, preserves event expiry, and prevents repeat spending for the same occurrence' },
       { kind: 'fixed', text: 'Equipment previews remain usable across unrelated live updates, identify stale results when relevant inventory changes, show meaningful item and grouped-stat comparisons, and reject obsolete or repeated apply requests' },
