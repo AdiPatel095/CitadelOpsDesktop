@@ -116,8 +116,12 @@ func legacyClaimResource(
 		return ResourceKey{Scope: ResourceScopeApplication, Capability: "application-update", ResourceKind: "release", ResourceID: "*"}
 	case "event-difficulty":
 		return accountKey("events", "difficulty", "*")
+	case "events":
+		return accountKey(State.CapabilityEvents, "*", "*")
 	case "event":
-		return accountKey("events", "event", value)
+		return accountKey(State.CapabilityEvents, "event", value)
+	case "global-effect":
+		return accountKey(State.CapabilityEvents, "global-effect", value)
 	case "advisor":
 		return accountKey("combat", "advisor", value)
 	case "khan-protection":
@@ -163,6 +167,8 @@ func legacyClaimResource(
 		return accountKey("economy", "spendable", "*")
 	case "currency":
 		return accountKey("economy", "spendable", value)
+	case "market", "specialist":
+		return accountKey(State.CapabilityEconomy, prefix, value)
 	case "hall-of-legends":
 		return accountKey("economy", "spendable", "legend-skills")
 	case "construction-inventory":
@@ -249,6 +255,8 @@ func legacyClaimResource(
 		return accountKey("reports", "battle", value)
 	case "alliance-directory":
 		return accountKey("alliance", "directory", "*")
+	case "castle-directory":
+		return accountKey(State.CapabilityCastleDirectory, "directory", "*")
 	case "alliance-help":
 		return accountKey("alliance", "help", value)
 	case "alliance-holding":
