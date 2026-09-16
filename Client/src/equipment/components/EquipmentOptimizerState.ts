@@ -232,7 +232,7 @@ export function groupEquipmentPriorityEffects(
 	return [...groups.values()]
 		.map((group) => ({
 			key: group.key,
-			label: group.label,
+			label: descriptivePriorityGroupLabel(group, effects),
 			category: group.category,
 			categoryLabel: group.categoryLabel,
 			group: group.group,
@@ -244,6 +244,72 @@ export function groupEquipmentPriorityEffects(
 			|| left.label.localeCompare(right.label)
 			|| left.key.localeCompare(right.key)
 		));
+}
+
+function descriptivePriorityGroupLabel(
+	group: EquipmentPriorityGroup,
+	effects: Record<number, EquipmentEffectMetadata>,
+): string {
+	if (usablePriorityLabel(group.label)) {
+		const label = humanizePriorityLabel(group.label);
+		if (usablePriorityLabel(label)) return label;
+	}
+	const labels = Array.from(new Set(group.effectIDs.flatMap((id) => {
+		const effect = effects[id];
+		for (const value of [effect?.name, effect?.effectTemplate, effect?.effectTypeName, effect?.internalName]) {
+			if (!usablePriorityLabel(value)) continue;
+			const label = humanizePriorityLabel(value);
+			if (usablePriorityLabel(label)) return [label];
+		}
+		return [];
+	}))).sort((left, right) => left.localeCompare(right));
+	if (labels.length === 0) return 'Effect metadata unavailable';
+	if (labels.length === 1) return labels[0];
+	return labels.slice(0, 2).join(' / ');
+}
+
+function usablePriorityLabel(value: unknown): value is string {
+	if (typeof value !== 'string') return false;
+	const label = value.trim();
+	if (!label || /^group\s*\d*$/i.test(label) || /^official (?:effect )?(?:group|type)\b/i.test(label)) return false;
+	if (/^(?:effect|unknown effect)\s*#?\s*\d+$/i.test(label)) return false;
+	if (/^(?:effect_|equip_|relicequip_|ci_)[a-z0-9_]+$/i.test(label)) return false;
+	if (/^(?:effect_(?:name|category|group)|equip_effect_description|relicequip_effect_description|ci_effect)_/i.test(label)) return false;
+	return true;
+}
+
+function humanizePriorityLabel(value: unknown): string {
+	if (typeof value !== 'string') return '';
+	const source = value.trim();
+	const polarity = /^\s*-/.test(source) ? 'penalty' : /^\s*\+/.test(source) ? 'bonus' : '';
+	const context = /pvp/i.test(source) ? 'PvP' : /pve/i.test(source) ? 'PvE' : '';
+	const cleaned = value
+		.replace(/\{\d+\}/g, '')
+		.replace(/^(?:equipmentARE|equipment|relic)/i, '')
+		.replace(/(?:PVP|PVE)/gi, '')
+		.replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+		.replace(/[_-]+/g, ' ')
+		.replace(/^[+\-%\s:]+/, '')
+		.replace(/\bYard\b/gi, 'Courtyard')
+		.replace(/\bRange\b/gi, 'Ranged')
+		.replace(/\s+/g, ' ')
+		.trim();
+	if (!cleaned) return '';
+	const suffixes = [polarity, context].filter(Boolean);
+	const label = `${cleaned}${suffixes.length ? ` ${suffixes.join(' ')}` : ''}`;
+	return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+export function descriptiveEquipmentEffectLabel(
+	id: number,
+	effect: EquipmentEffectMetadata | undefined,
+): string {
+	for (const value of [effect?.name, effect?.effectTemplate, effect?.effectTypeName, effect?.internalName]) {
+		if (!usablePriorityLabel(value)) continue;
+		const label = humanizePriorityLabel(value);
+		if (usablePriorityLabel(label)) return label;
+	}
+	return `Effect metadata unavailable (ID ${id})`;
 }
 
 export function inferredEquipmentPriorityProfile(

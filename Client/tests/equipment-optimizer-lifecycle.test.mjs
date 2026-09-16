@@ -25,6 +25,25 @@ const effects = {
 	88: { effectTypeId: 88, sortCategory: 3, sortGroup: 4, effectGroupPassive: 'Wall strength' },
 };
 
+test('priority labels reject raw or generic group names and preserve semantic detail', () => {
+	const metadata = {
+		101: { name: 'effect_name_melee_strength', effectTypeId: 10, effectTypeName: 'MeleeAttackPVP', sortCategory: 3, sortGroup: 7, categoryName: 'effect_category_3', effectGroupPassive: 'effect_group_3_7_passive', effectTemplate: '+{0}% melee attack strength PVP' },
+		102: { effectTypeId: 11, effectTypeName: 'RangedAttackPVP', sortCategory: 3, sortGroup: 7, effectGroupPassive: 'Group 7', internalName: 'equipmentRangedAttackPVP' },
+		103: { effectTypeId: 12, name: 'Effect 1' },
+		201: { effectTypeId: 20, sortCategory: 3, sortGroup: 8, effectGroupPassive: '-{0}% melee combat strength PVE' },
+		202: { effectTypeId: 21, sortCategory: 3, sortGroup: 9, effectGroupPassive: '+{0}% melee combat strength PVP' },
+	};
+	const grouped = stateHelpers.groupEquipmentPriorityEffects([202, 103, 102, 201, 101], metadata);
+	assert.equal(grouped[0].label, 'Melee attack strength bonus PvP / Ranged Attack PvP');
+	assert.equal(grouped[0].categoryLabel, 'Attack effects');
+	assert.deepEqual(grouped[0].effectIDs, [101, 102]);
+	assert.equal(grouped[1].label, 'Melee combat strength penalty PvE');
+	assert.equal(grouped[2].label, 'Melee combat strength bonus PvP');
+	assert.equal(grouped[3].label, 'Effect metadata unavailable');
+	assert.equal(stateHelpers.descriptiveEquipmentEffectLabel(101, metadata[101]), 'Melee attack strength bonus PvP');
+	assert.equal(stateHelpers.descriptiveEquipmentEffectLabel(103, metadata[103]), 'Effect metadata unavailable (ID 103)');
+});
+
 test('v1-v4 profiles migrate to official groups and retain an unavailable inventory choice', () => {
 	for (const [raw, expected] of [
 		[{ version: 1, tier1: [61], tier2: [88] }, { tier1: ['official-group-1-2'], tier2: ['official-group-3-4'] }],
@@ -89,6 +108,15 @@ test('extraction presentation binds the selected ruby ceiling and discloses othe
 		'Coin socketing costs also apply.',
 		'Relic gem extraction costs also apply in relic fragments.',
 	]);
+});
+
+test('apply no-op state follows the selected alternative rather than the batch leader', () => {
+	const current = { equipment: { '1': 101 }, gems: {} };
+	const unchanged = { ...current, useful: false };
+	const tradeoff = { equipment: { '1': 201 }, gems: {}, useful: true };
+	assert.equal(lifecycle.equipmentAlternativeApplyDisabled(current, unchanged, false), true);
+	assert.equal(lifecycle.equipmentAlternativeApplyDisabled(current, tradeoff, false), false);
+	assert.equal(lifecycle.equipmentAlternativeApplyDisabled(current, tradeoff, true), false);
 });
 
 test('relevant snapshot ignores unrelated revision and catches equipment or catalog changes', () => {

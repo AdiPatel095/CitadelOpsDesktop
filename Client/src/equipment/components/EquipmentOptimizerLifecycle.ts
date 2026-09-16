@@ -1,4 +1,4 @@
-import type { EquipmentExtractionCostV2, EquipmentInstanceV2, GameStateV2, GemInstanceV2 } from '../../api/Contracts';
+import type { EquipmentExtractionCostV2, EquipmentInstanceV2, EquipmentLoadoutV2, GameStateV2, GemInstanceV2 } from '../../api/Contracts';
 import type { EquipmentPriorityGroup, EquipmentPriorityProfile } from './EquipmentOptimizerState';
 import type { EquipmentLeader } from './EquipmentTypes';
 
@@ -27,6 +27,21 @@ export function equipmentOptimizerInitializationChange(
 export function equipmentSharedCapLabel(caps: readonly number[]): string {
 	if (caps.length === 0) return '';
 	return caps.map((cap) => `max ${Number.isInteger(cap) ? cap.toLocaleString() : cap.toLocaleString(undefined, { maximumFractionDigits: 1 })}`).join(' · ');
+}
+
+export function equipmentAlternativeApplyDisabled(
+	current: Pick<EquipmentLoadoutV2, 'equipment' | 'gems'>,
+	selected: Pick<EquipmentLoadoutV2, 'equipment' | 'gems' | 'useful'>,
+	noUsefulChange = false,
+): boolean {
+	return selected.useful === false
+		|| equipmentAssignmentKey(selected) === equipmentAssignmentKey(current)
+		|| noUsefulChange && selected.useful !== true;
+}
+
+function equipmentAssignmentKey(loadout: Pick<EquipmentLoadoutV2, 'equipment' | 'gems'>): string {
+	return [1, 2, 3, 4, 6].map((slot) => `e${slot}:${loadout.equipment[String(slot)] ?? 0}`).join('|')
+		+ [1, 2, 3, 4].map((slot) => `|g${slot}:${loadout.gems[String(slot)] ?? 0}`).join('');
 }
 
 export function equipmentOptimizerEffectSummary(

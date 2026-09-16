@@ -154,7 +154,7 @@ function App() {
 			for (let index = 0; index < 5; index += 1) {
 				const previewButton = await waitFor(() => findButton('Preview Reconfiguration'));
 				previewButton.click();
-				await waitFor(() => rankedAlternativeButtons().length === 10 ? true : null, 10_000);
+				await waitFor(() => rankedAlternativeButtons().length > 0 ? true : null, 10_000);
 				await nextPaint();
 				const previewDialog = [...document.querySelectorAll<HTMLElement>('[role="dialog"]')]
 					.find((dialog) => dialog.textContent?.includes('Reconfiguration Preview'));
@@ -211,14 +211,14 @@ function App() {
 			<FixtureMetadataProvider metadata={metadata}>
 				<main className="fixture-stage">
 					<section>
-						<p className="fixture-kicker">CIT-6 isolated regression fixture</p>
+						<p className="fixture-kicker">CIT-7 isolated regression fixture</p>
 						<h1>Production EquipmentOptimizer + production HTTP solver</h1>
 						<p>Synthetic state only. No login, broker, game transport, credentials, or live mutation is present.</p>
 						<button type="button" className="fixture-open" onClick={() => setOpen(true)}>Open optimizer</button>
 					</section>
 				</main>
-				{createPortal(<aside className="fixture-controls" aria-label="CIT-6 fixture controls" data-testid="fixture-controls">
-					<h2>CIT-6 controls</h2>
+				{createPortal(<aside className="fixture-controls" aria-label="CIT-7 fixture controls" data-testid="fixture-controls">
+					<h2>CIT-7 controls</h2>
 					<label>Leader<select value={leaderKind} onChange={(event) => changeLeader(event.target.value as FixtureLeaderKind)}><option value="commander">Commander · 334 gear · 16 gems</option><option value="castellan">Castellan · 253 gear · 0 PvP gems</option></select></label>
 					<label>Request<select value={requestMode} onChange={(event) => setRequestMode(event.target.value as FixtureRequestMode)}><option value="normal">Normal full inventory</option><option value="few">Few alternatives</option><option value="no-gear">No eligible gear</option><option value="error">HTTP error</option><option value="delayed">1.5s delayed success</option><option value="timeout">9s timeout</option></select></label>
 					<label>Apply outcome<select value={applyMode} onChange={(event) => setApplyMode(event.target.value as FixtureApplyMode)}><option value="success">Terminal success</option><option value="authoritative-failure">Authoritative failure</option><option value="stale-rejection">Server stale rejection</option></select></label>

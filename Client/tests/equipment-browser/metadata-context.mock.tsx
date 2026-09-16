@@ -36,6 +36,6 @@ export function FixtureMetadataProvider({ children, metadata }: { children: Reac
 
 export function useMetadata(): FixtureMetadataValue {
 	const context = useContext(FixtureMetadataContext);
-	if (!context) throw new Error('CIT-6 fixture metadata provider is missing');
+	if (!context) throw new Error('CIT-7 fixture metadata provider is missing');
 	return context;
 }
