@@ -169,8 +169,9 @@ func TestKingdomTroopWorkflowRequiresCurrentSessionContinuity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := gameState.KingdomTransport.TroopWorkflows[2].Status; got != "ownership_uncertain" {
-		t.Fatalf("completed ambiguous transport lost durable ambiguity: status=%q", got)
+	workflow := gameState.KingdomTransport.TroopWorkflows[2]
+	if workflow.Status != "ownership_absent" || workflow.SessionGeneration != 8 || !workflow.TransportObservedAt.Equal(now.Add(2*time.Second)) {
+		t.Fatalf("completed ambiguous transport did not establish inventory reconciliation boundary: %#v", workflow)
 	}
 }
 

@@ -213,6 +213,7 @@ func TestAutoFortressBalanceCountsInboundAndUsesStableKingdomTieBreak(t *testing
 func TestAutoFortressTimeSkipUsesOfficialDurationsAndReserves(t *testing.T) {
 	now := time.Now().UTC()
 	state := State.NewGameState()
+	state.Session.ConnectionGeneration = 4
 	state.Session.ConnectionGeneration = 7
 	state.Player.Currencies[1004] = 1
 	state.Player.Currencies[1005] = 2
@@ -244,6 +245,7 @@ func TestAutoFortressTimeSkipUsesOfficialDurationsAndReserves(t *testing.T) {
 func TestAutoFortressAmbiguousDonorRequiresPostArmAuthority(t *testing.T) {
 	now := time.Now().UTC()
 	state := State.NewGameState()
+	state.Session.ConnectionGeneration = 4
 	main := State.CastleState{ID: 1, KingdomID: 0, SlotType: 1, UnitsObservedAt: now.Add(-time.Minute), Units: State.CastleUnits{Stationed: map[State.UnitID]int64{GameData.DirewolfUnitID: 400}}}
 	target := State.CastleState{ID: 22, KingdomID: 2, SlotType: 12, UnitsObservedAt: now}
 	state.Castles[1], state.Castles[22] = main, target
@@ -252,7 +254,7 @@ func TestAutoFortressAmbiguousDonorRequiresPostArmAuthority(t *testing.T) {
 	state.KingdomTransport.PendingUnits = []State.KingdomUnitTransport{{KingdomID: 2, RemainingSec: 300, Units: []State.KingdomTransportUnit{{UnitID: GameData.DirewolfUnitID, Amount: 100}}}}
 	state.KingdomTransport.TroopWorkflows[2] = State.KingdomTroopTransportWorkflow{
 		ID: "owned", Owner: autoFortressTransportOwner, Status: "pending", KingdomID: 2, SourceCastleID: 1, TargetCastleID: 22,
-		Units: []State.KingdomTransportUnit{{UnitID: GameData.DirewolfUnitID, Amount: 100}}, ArmedAt: now.Add(-30 * time.Second), TransportObservedAt: now,
+		Units: []State.KingdomTransportUnit{{UnitID: GameData.DirewolfUnitID, Amount: 100}}, ArmedAt: now.Add(-30 * time.Second), TransportObservedAt: now, SessionGeneration: 4,
 	}
 	settings := defaultAutoFortressSettings()
 	settings.Kingdoms["2"] = autoFortressKingdom{Enabled: true}
@@ -261,11 +263,79 @@ func TestAutoFortressAmbiguousDonorRequiresPostArmAuthority(t *testing.T) {
 	if decision == nil || decision.Request == nil || decision.Request.Name != "game.focus_castle" || metrics["availableDonorDirewolves"] != 0 {
 		t.Fatalf("ambiguous donor did not fail closed: decision=%#v metrics=%#v", decision, metrics)
 	}
-	main.UnitsObservedAt = now.Add(-20 * time.Second)
+	main.UnitsObservedAt = now.Add(time.Second)
 	state.Castles[1] = main
-	decision = NewAutoFortressPolicy().autoFortressSupplyDecision(Snapshot{State: state, GameData: autoFortressTestGameData(t), Now: now}, settings, []State.CastleState{target}, main, true, map[string]float64{}, map[string]string{})
+	decision = NewAutoFortressPolicy().autoFortressSupplyDecision(Snapshot{State: state, GameData: autoFortressTestGameData(t), Now: now.Add(2 * time.Second)}, settings, []State.CastleState{target}, main, true, map[string]float64{}, map[string]string{})
 	if decision == nil || decision.Request == nil || decision.Request.Name != "troops.kingdom.reconcile_donor" {
 		t.Fatalf("post-arm authoritative donor was not reconciled: %#v", decision)
+	}
+}
+
+func TestAutoFortressMissingTargetStillBlocksAndReconcilesDonor(t *testing.T) {
+	now := time.Now().UTC()
+	state := State.NewGameState()
+	state.Session.ConnectionGeneration = 6
+	main := State.CastleState{ID: 1, KingdomID: 0, SlotType: 1, UnitsObservedAt: now.Add(time.Second), Units: State.CastleUnits{Stationed: map[State.UnitID]int64{GameData.DirewolfUnitID: 400}}}
+	healthy := State.CastleState{ID: 33, KingdomID: 3, SlotType: 12, UnitsObservedAt: now.Add(time.Second)}
+	state.Castles[1], state.Castles[33] = main, healthy
+	state.KingdomTransport.ObservedAt = now
+	state.KingdomTransport.Unlocks[3] = State.KingdomTransportUnlock{KingdomID: 3, Unlocked: true}
+	state.KingdomTransport.TroopWorkflows[2] = State.KingdomTroopTransportWorkflow{
+		ID: "missing", Owner: autoFortressTransportOwner, Status: "ownership_absent", KingdomID: 2, SourceCastleID: 1, TargetCastleID: 22,
+		Units: []State.KingdomTransportUnit{{UnitID: GameData.DirewolfUnitID, Amount: 100}}, ArmedAt: now.Add(-time.Minute),
+		TransportObservedAt: now, SessionGeneration: 6,
+	}
+	settings := defaultAutoFortressSettings()
+	settings.Kingdoms["2"], settings.Kingdoms["3"] = autoFortressKingdom{Enabled: true}, autoFortressKingdom{Enabled: true}
+	metrics := map[string]float64{}
+	decision := NewAutoFortressPolicy().autoFortressSupplyDecision(Snapshot{State: state, GameData: autoFortressTestGameData(t), Now: now.Add(2 * time.Second)}, settings, []State.CastleState{healthy}, main, true, metrics, map[string]string{})
+	if decision == nil || decision.Request == nil || decision.Request.Name != "troops.kingdom.reconcile_donor" || metrics["availableDonorDirewolves"] != 0 {
+		t.Fatalf("missing target released ambiguous donor: decision=%#v metrics=%#v", decision, metrics)
+	}
+}
+
+func TestAutoFortressRestartedWorkflowRetiresAfterEmptyTransportAndFreshInventories(t *testing.T) {
+	now := time.Now().UTC()
+	state := State.NewGameState()
+	state.Session.ConnectionGeneration = 8
+	main := State.CastleState{ID: 1, KingdomID: 0, SlotType: 1, UnitsObservedAt: now.Add(-time.Minute), Units: State.CastleUnits{Stationed: map[State.UnitID]int64{GameData.DirewolfUnitID: 200}}}
+	target := State.CastleState{ID: 22, KingdomID: 2, SlotType: 12, UnitsObservedAt: now.Add(-time.Minute)}
+	healthy := State.CastleState{ID: 33, KingdomID: 3, SlotType: 12, UnitsObservedAt: now.Add(time.Second)}
+	state.Castles[1], state.Castles[22], state.Castles[33] = main, target, healthy
+	state.KingdomTransport.ObservedAt = now
+	state.KingdomTransport.Unlocks[2] = State.KingdomTransportUnlock{KingdomID: 2, Unlocked: true}
+	state.KingdomTransport.Unlocks[3] = State.KingdomTransportUnlock{KingdomID: 3, Unlocked: true}
+	state.KingdomTransport.TroopWorkflows[2] = State.KingdomTroopTransportWorkflow{
+		ID: "restarted", Owner: autoFortressTransportOwner, Status: "ownership_absent", KingdomID: 2, SourceCastleID: 1, TargetCastleID: 22,
+		Units: []State.KingdomTransportUnit{{UnitID: GameData.DirewolfUnitID, Amount: 100}}, ArmedAt: now.Add(-time.Hour),
+		TransportObservedAt: now, SessionGeneration: 8,
+	}
+	settings := defaultAutoFortressSettings()
+	settings.Kingdoms["2"], settings.Kingdoms["3"] = autoFortressKingdom{Enabled: true}, autoFortressKingdom{Enabled: true}
+	policy := NewAutoFortressPolicy()
+	decision := policy.autoFortressSupplyDecision(Snapshot{State: state, GameData: autoFortressTestGameData(t), Now: now.Add(2 * time.Second)}, settings, []State.CastleState{target, healthy}, main, true, map[string]float64{}, map[string]string{})
+	if decision == nil || decision.Request == nil || decision.Request.Name != "game.focus_castle" {
+		t.Fatalf("restart recovery did not refresh donor: %#v", decision)
+	}
+	main.UnitsObservedAt = now.Add(time.Second)
+	state.Castles[1] = main
+	workflow := state.KingdomTransport.TroopWorkflows[2]
+	workflow.SourceReconciledAt = main.UnitsObservedAt
+	state.KingdomTransport.TroopWorkflows[2] = workflow
+	decision = policy.autoFortressSupplyDecision(Snapshot{State: state, GameData: autoFortressTestGameData(t), Now: now.Add(2 * time.Second)}, settings, []State.CastleState{target, healthy}, main, true, map[string]float64{}, map[string]string{})
+	if decision == nil || decision.Request == nil || decision.Request.Name != "game.focus_castle" {
+		t.Fatalf("restart recovery did not refresh destination: %#v", decision)
+	}
+	target.UnitsObservedAt = now.Add(time.Second)
+	state.Castles[22] = target
+	decision = policy.autoFortressSupplyDecision(Snapshot{State: state, GameData: autoFortressTestGameData(t), Now: now.Add(2 * time.Second)}, settings, []State.CastleState{target, healthy}, main, true, map[string]float64{}, map[string]string{})
+	if decision == nil || decision.Request == nil || decision.Request.Name != "troops.kingdom.settle" {
+		t.Fatalf("restart recovery did not retire marker: %#v", decision)
+	}
+	delete(state.KingdomTransport.TroopWorkflows, 2)
+	decision = policy.autoFortressSupplyDecision(Snapshot{State: state, GameData: autoFortressTestGameData(t), Now: now.Add(2 * time.Second)}, settings, []State.CastleState{target, healthy}, main, true, map[string]float64{}, map[string]string{})
+	if decision == nil || decision.Request == nil || decision.Request.Name != "troops.kingdom.ship" {
+		t.Fatalf("healthy allocation did not resume after marker retirement: %#v", decision)
 	}
 }
 

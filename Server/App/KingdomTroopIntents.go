@@ -435,7 +435,7 @@ func (application *Application) armKingdomTroopWorkflow(ctx context.Context, arg
 	return application.saveStateEvent(ctx, event)
 }
 
-func (application *Application) guardKingdomTroopWorkflowDispatch(_ context.Context, arguments json.RawMessage) error {
+func (application *Application) guardKingdomTroopWorkflowDispatch(ctx context.Context, arguments json.RawMessage) error {
 	var request kingdomTroopShipmentRequest
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
@@ -462,8 +462,22 @@ func (application *Application) guardKingdomTroopWorkflowDispatch(_ context.Cont
 		now.Before(source.UnitsObservedAt) || now.Sub(source.UnitsObservedAt) > 5*time.Minute {
 		return fmt.Errorf("%w: kingdom troop castle inventory changed before dispatch", Intent.ErrPlanStale)
 	}
-	_, err := normalizeKingdomTroopShipment(currentGameData(application), source, request.Units)
-	return err
+	if _, err := normalizeKingdomTroopShipment(currentGameData(application), source, request.Units); err != nil {
+		return err
+	}
+	event, err := application.State.ApplyComponents(State.Components(State.ComponentKingdomTransport), func(current *State.GameState) ([]string, bool, error) {
+		workflow, found := current.KingdomTransport.TroopWorkflows[request.TargetKingdomID]
+		if !found || workflow.ID != request.WorkflowID || workflow.Owner != request.Owner || workflow.Status != "armed" {
+			return nil, false, fmt.Errorf("%w: owned kingdom troop workflow changed before dispatch", Intent.ErrPlanStale)
+		}
+		workflow.LaunchedAt = now
+		current.KingdomTransport.TroopWorkflows[request.TargetKingdomID] = workflow
+		return []string{"kingdom-transport"}, true, nil
+	})
+	if err != nil {
+		return err
+	}
+	return application.saveStateEvent(ctx, event)
 }
 
 func (application *Application) disarmKingdomTroopWorkflow(_ context.Context, arguments json.RawMessage) error {
@@ -540,7 +554,7 @@ func (application *Application) settleKingdomTroopWorkflow(_ context.Context, ar
 		if !exists || workflow.Owner != request.Owner || workflow.ID != request.WorkflowID {
 			return nil, false, fmt.Errorf("owned kingdom troop workflow changed before settlement")
 		}
-		if workflow.Status != "awaiting_destination_refresh" {
+		if workflow.Status != "awaiting_destination_refresh" && workflow.Status != "ownership_absent" {
 			return nil, false, fmt.Errorf("owned kingdom troop workflow is not ready to settle")
 		}
 		if !workflow.SkipRequestedAt.IsZero() {
@@ -573,8 +587,11 @@ func (application *Application) reconcileKingdomTroopDonor(_ context.Context, ar
 		if !exists || workflow.Owner != request.Owner || workflow.ID != request.WorkflowID {
 			return nil, false, fmt.Errorf("owned kingdom troop workflow changed before donor reconciliation")
 		}
+		if workflow.SessionGeneration == 0 || workflow.SessionGeneration != gameState.Session.ConnectionGeneration || workflow.TransportObservedAt.IsZero() {
+			return nil, false, fmt.Errorf("owned kingdom troop workflow lacks current-session transport authority")
+		}
 		source, exists := gameState.Castles[workflow.SourceCastleID]
-		if !exists || source.UnitsObservedAt.IsZero() || !source.UnitsObservedAt.After(workflow.ArmedAt) {
+		if !exists || source.UnitsObservedAt.IsZero() || !source.UnitsObservedAt.After(workflow.TransportObservedAt) {
 			return nil, false, fmt.Errorf("donor inventory was not refreshed after the ambiguous troop dispatch")
 		}
 		workflow.SourceReconciledAt = source.UnitsObservedAt.UTC()
@@ -786,6 +803,7 @@ func (application *Application) verifyKingdomTroopSkipTimer(_ context.Context, a
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return err
 	}
+	naturalCountdown := false
 	_, err := application.State.ApplyComponents(State.Components(State.ComponentKingdomTransport), func(gameState *State.GameState) ([]string, bool, error) {
 		workflow, exists := gameState.KingdomTransport.TroopWorkflows[request.TargetKingdomID]
 		if !exists || workflow.ID != request.WorkflowID || workflow.Owner != request.Owner || workflow.SkipRequestedAt.IsZero() {
@@ -800,14 +818,21 @@ func (application *Application) verifyKingdomTroopSkipTimer(_ context.Context, a
 		if workflow.SkipDurationSec <= 0 || pending && remaining > expectedAfterSkip+5 || !pending && expectedAfterSkip > 5 {
 			workflow.SkipTimerObservedAt = workflow.TransportObservedAt.UTC()
 			gameState.KingdomTransport.TroopWorkflows[request.TargetKingdomID] = workflow
-			return nil, false, fmt.Errorf("owned transport timer changed only by natural countdown; time-skip progress is unconfirmed")
+			naturalCountdown = true
+			return []string{"kingdom-transport"}, true, nil
 		}
 		workflow.Status = "skip_inventory_pending"
 		workflow.RemainingSec = remaining
 		gameState.KingdomTransport.TroopWorkflows[request.TargetKingdomID] = workflow
 		return []string{"kingdom-transport"}, true, nil
 	})
-	return err
+	if err != nil {
+		return err
+	}
+	if naturalCountdown {
+		return fmt.Errorf("owned transport timer changed only by natural countdown; time-skip progress is unconfirmed")
+	}
+	return nil
 }
 
 func (application *Application) verifyKingdomTroopSkipInventory(_ context.Context, arguments json.RawMessage) error {

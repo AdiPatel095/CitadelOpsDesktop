@@ -148,7 +148,7 @@ func (application *Application) captureAttackFeatureLaunch(_ context.Context, ar
 		gameData, _ = application.GameData.Current()
 	}
 	_, err := application.State.ApplyComponents(State.Components(
-		State.ComponentAttackAnalytics, State.ComponentRift, State.ComponentTowerQueue,
+		State.ComponentAttackAnalytics, State.ComponentRift, State.ComponentTowerQueue, State.ComponentCastles,
 	), func(gameState *State.GameState) ([]string, bool, error) {
 		var selected State.MovementState
 		gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
@@ -175,6 +175,10 @@ func (application *Application) captureAttackFeatureLaunch(_ context.Context, ar
 				request.CommanderID, request.FeatureID, request.TargetX, request.TargetY,
 			)
 		}
+		if source, found := gameState.MutableCastleParts(request.SourceCastleID, State.CastlePartUnits); found && !source.UnitsObservedAt.IsZero() {
+			source.UnitsObservedAt = time.Time{}
+			gameState.SetCastleParts(source.ID, source, State.CastlePartUnits)
+		}
 		launchedAt := selected.ObservedAt
 		if launchedAt.IsZero() {
 			launchedAt = time.Now().UTC()
@@ -192,7 +196,7 @@ func (application *Application) captureAttackFeatureLaunch(_ context.Context, ar
 			}, launchedAt)
 		}
 		changed := launchRecorded || usageRecorded
-		domains := []string{"attack-analytics", "movements"}
+		domains := []string{"attack-analytics", "movements", "castles", "units"}
 		if request.RunID != "" && request.FeatureID == State.AttackFeatureRiftMaiden {
 			run := gameState.Rift.MaidenRun
 			if run != nil && run.ID == request.RunID && run.Status == "running" && !movementIDPresent(run.LaunchIDs, selected.ID) {

@@ -145,8 +145,29 @@ func TestFortressAttackEngineFinalizesOnlyWithAuthoritativeMovement(t *testing.T
 				if donor := projected.Castles[10].Units.Stationed[GameData.DirewolfUnitID]; donor != 10_000 {
 					t.Fatalf("CRA launch rewrote authoritative donor stock: got=%d want=10000", donor)
 				}
+				if !projected.Castles[10].UnitsObservedAt.IsZero() {
+					t.Fatal("confirmed launch left pre-launch donor stock authoritative")
+				}
 				if _, found := projected.LookupTowerCooldown("1:101:100"); found {
 					t.Fatal("CRA launch created a fortress victory cooldown before a battle report")
+				}
+				code := 0
+				for _, frame := range []Protocol.Frame{
+					{Opcode: "jaa", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: time.Now().UTC(), Payload: json.RawMessage(`{"KID":1,"gca":{"A":[12,100,100,10,42,0,0,0,0,0,"Winter Keep"]},"gui":{"I":[[277,9900]],"TU":[],"HI":[],"SHI":[]}}`)},
+					{Opcode: "bls", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: time.Now().UTC(), Payload: json.RawMessage(`{"MID":101,"LID":202,"PBI":[[42,0,1700,-10],[-220,1,135,-135]],"AI":{"AT":11,"K":1,"X":101,"Y":100}}`)},
+					{Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: time.Now().UTC(), Payload: json.RawMessage(`{"KID":1,"AI":[[11,101,100,0,45,431998,42,1]]}`)},
+				} {
+					if _, err := pipeline.HandleFrame(t.Context(), frame); err != nil {
+						t.Fatal(err)
+					}
+				}
+				final := stateStore.ReadOnlyView()
+				if donor := final.Castles[10].Units.Stationed[GameData.DirewolfUnitID]; donor != 9_900 || final.Castles[10].UnitsObservedAt.IsZero() {
+					t.Fatalf("authoritative post-launch donor stock=%d observed=%v", donor, final.Castles[10].UnitsObservedAt)
+				}
+				cooldown, found := final.LookupTowerCooldown("1:101:100")
+				if !found || cooldown.PendingCooldownRefresh || cooldown.CooldownRemaining != 431_998 || cooldown.LastSuccessfulBattleAt.IsZero() {
+					t.Fatalf("authoritative fortress victory cooldown=%#v found=%t", cooldown, found)
 				}
 			} else {
 				if receipt.Status == Intent.StatusSucceeded || sender.craSends != 1 || !strings.Contains(receipt.Error, "did not return") {

@@ -217,6 +217,9 @@ func TestOwnedKingdomTroopSkipRequiresDurationProgressAndInventoryConsumption(t 
 	if err := application.verifyKingdomTroopSkipTimer(t.Context(), arguments); err == nil || !strings.Contains(err.Error(), "natural countdown") {
 		t.Fatalf("natural countdown confirmed skip progress: %v", err)
 	}
+	if observed := application.State.ReadOnlyView().KingdomTransport.TroopWorkflows[2].SkipTimerObservedAt; !observed.Equal(now) {
+		t.Fatalf("natural-countdown failure marker was not committed: %v", observed)
+	}
 
 	_, err := application.State.ApplyComponents(State.Components(State.ComponentKingdomTransport), func(current *State.GameState) ([]string, bool, error) {
 		current.KingdomTransport.PendingUnits = nil

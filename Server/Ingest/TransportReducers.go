@@ -749,9 +749,14 @@ func reconcileTroopTransportWorkflows(state *State.KingdomTransportState, observ
 			continue
 		}
 		pending := false
+		ambiguousMatch := false
 		remaining := 0
 		for _, transport := range state.PendingUnits {
 			if transport.KingdomID == kingdomID && kingdomTransportUnitsEqual(transport.Units, workflow.Units) {
+				if workflow.Status == "ownership_uncertain" {
+					ambiguousMatch = true
+					break
+				}
 				if workflow.SkipRequestedAt.IsZero() && (workflow.Status == "awaiting_destination_refresh" || workflow.Status == "ownership_uncertain") ||
 					!kingdomTransportTimerContinuous(workflow, transport.RemainingSec, observedAt) {
 					continue
@@ -763,6 +768,10 @@ func reconcileTroopTransportWorkflows(state *State.KingdomTransportState, observ
 		}
 		workflow.TransportObservedAt = observedAt
 		if workflow.Status == "ownership_uncertain" {
+			workflow.SessionGeneration = connectionGeneration
+			if !ambiguousMatch {
+				workflow.Status = "ownership_absent"
+			}
 			state.TroopWorkflows[kingdomID] = workflow
 			continue
 		}
@@ -774,6 +783,7 @@ func reconcileTroopTransportWorkflows(state *State.KingdomTransportState, observ
 		if pending {
 			if workflow.Status == "armed" && (workflow.SessionGeneration == 0 || workflow.SessionGeneration != connectionGeneration) {
 				workflow.Status = "ownership_uncertain"
+				workflow.SessionGeneration = connectionGeneration
 				state.TroopWorkflows[kingdomID] = workflow
 				continue
 			}

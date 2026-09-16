@@ -561,9 +561,27 @@ func (policy *AutoFortressPolicy) autoFortressSupplyDecision(
 	for _, value := range workflowKingdoms {
 		kingdomID := State.KingdomID(value)
 		workflow := snapshot.State.KingdomTransport.TroopWorkflows[kingdomID]
+		if workflow.SourceReconciledAt.IsZero() && !workflow.SourceDebitedLocally {
+			donorUnreconciled = true
+		}
 		target, found := snapshot.State.Castles[workflow.TargetCastleID]
 		if !found {
 			details[fmt.Sprintf("supplyKingdom%d", kingdomID)] = "Owned Direwolf transfer target is unavailable; reconciliation is paused"
+			if workflow.SourceReconciledAt.IsZero() && !workflow.SourceDebitedLocally && workflow.Status != "armed" && workflow.Status != "ownership_uncertain" && workflow.TransportObservedAt.After(workflow.ArmedAt) && mainFound {
+				if main.UnitsObservedAt.IsZero() || !main.UnitsObservedAt.After(workflow.TransportObservedAt) {
+					decision := autoFortressRequest(snapshot, metrics, "Refresh Direwolf donor after ambiguous dispatch", "game.focus_castle", map[string]any{"castleId": main.ID, "refresh": true})
+					if workflowAction == nil {
+						workflowAction = &decision
+					}
+				} else {
+					decision := autoFortressRequest(snapshot, metrics, "Reconcile Direwolf donor after ambiguous dispatch", "troops.kingdom.reconcile_donor", map[string]any{
+						"owner": workflow.Owner, "workflowId": workflow.ID, "targetKingdomId": workflow.KingdomID,
+					})
+					if workflowAction == nil {
+						workflowAction = &decision
+					}
+				}
+			}
 			continue
 		}
 		stationed := max(int64(0), target.Units.Stationed[State.UnitID(GameData.DirewolfUnitID)])
@@ -572,9 +590,6 @@ func (policy *AutoFortressPolicy) autoFortressSupplyDecision(
 		metrics[fmt.Sprintf("inboundDirewolvesKingdom%d", kingdomID)] = float64(inbound)
 		metrics[fmt.Sprintf("allocatedDirewolvesKingdom%d", kingdomID)] = float64(stationed + inbound)
 		metrics[fmt.Sprintf("outstandingDirewolvesKingdom%d", kingdomID)] = 0
-		if workflow.SourceReconciledAt.IsZero() && !workflow.SourceDebitedLocally {
-			donorUnreconciled = true
-		}
 		enabled := settings.Kingdoms[strconv.Itoa(int(kingdomID))].Enabled
 		if decision := policy.autoFortressWorkflowDecision(snapshot, settings, main, mainFound, target, workflow, enabled, metrics, details); decision != nil && workflowAction == nil {
 			workflowAction = decision
@@ -754,7 +769,16 @@ func (policy *AutoFortressPolicy) autoFortressWorkflowDecision(snapshot Snapshot
 			details[key] = "Owned transfer donor inventory is unresolved; the Great Empire main castle is unavailable"
 			return nil
 		}
-		if main.UnitsObservedAt.IsZero() || !main.UnitsObservedAt.After(workflow.ArmedAt) {
+		if workflow.SessionGeneration == 0 || workflow.SessionGeneration != snapshot.State.Session.ConnectionGeneration || workflow.TransportObservedAt.IsZero() {
+			details[key] = "Refreshing current-session transport authority before donor reconciliation"
+			if policy.supplyRefreshDue(workflow.KingdomID, snapshot.Now) {
+				policy.markSupplyRefreshRequested(workflow.KingdomID, snapshot.Now)
+				decision := autoFortressRequest(snapshot, metrics, "Refresh uncertain owned Direwolf shipment", "troops.kingdom.refresh", map[string]any{})
+				return &decision
+			}
+			return nil
+		}
+		if main.UnitsObservedAt.IsZero() || !main.UnitsObservedAt.After(workflow.TransportObservedAt) {
 			details[key] = "Refreshing the donor after an ambiguous Direwolf dispatch"
 			decision := autoFortressRequest(snapshot, metrics, "Refresh Direwolf donor after ambiguous dispatch", "game.focus_castle", map[string]any{"castleId": main.ID, "refresh": true})
 			return &decision
@@ -801,7 +825,7 @@ func (policy *AutoFortressPolicy) autoFortressWorkflowDecision(snapshot Snapshot
 		})
 		return &decision
 	}
-	if workflow.Status == "awaiting_destination_refresh" {
+	if workflow.Status == "awaiting_destination_refresh" || workflow.Status == "ownership_absent" {
 		if !target.UnitsObservedAt.After(workflow.TransportObservedAt) {
 			details[key] = "Transfer arrived; refreshing destination inventory before reuse"
 			decision := autoFortressRequest(snapshot, metrics, "Refresh arrived Direwolves at "+castleName(target), "game.focus_castle", map[string]any{"castleId": target.ID, "refresh": true})
