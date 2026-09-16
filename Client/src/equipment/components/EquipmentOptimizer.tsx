@@ -40,6 +40,8 @@ import {
 	type EquipmentTargetProfile,
 } from './EquipmentOptimizerState';
 import {
+	equipmentExtractionApplyLabel,
+	equipmentExtractionCostNotices,
 	equipmentOptimizerInitializationChange,
 	equipmentOptimizerSnapshotKey,
 	equipmentPriorityCatalogKey,
@@ -527,6 +529,8 @@ function EquipmentOptimizerEditor({
 				snapshotFingerprint: preview.response.snapshotFingerprint,
 				equipment: selected.equipment,
 				gems: selected.gems,
+				quoteFingerprint: selected.extractionCost.fingerprint,
+				maximumRubySpend: selected.extractionCost.maximumRubySpend,
 			});
 			Notifications.success(`Reconfigured ${leader?.name ?? preview.response.leaderKind}`);
 			setPreview(null);
@@ -854,6 +858,7 @@ function OptimizerPreview({
 		const proposed = new Map(selected.effects.map((effect) => [effect.definitionId, effect.value]));
 		return priorityGroups.filter((group) => group.effectIDs.every((id) => (proposed.get(id) ?? 0) === 0));
 	})();
+	const extractionNotices = selected ? equipmentExtractionCostNotices(selected.extractionCost) : [];
 	return (
 		<Modal
 			isOpen={preview != null}
@@ -869,13 +874,17 @@ function OptimizerPreview({
 						disabled={applyDisabled}
 						title={stale ? 'Regenerate this preview before applying it' : applyDisabled ? 'Connect the game before applying this loadout' : undefined}
 					>
-						Apply Alternative {selectedAlternative + 1}
+						{selected ? equipmentExtractionApplyLabel(selectedAlternative + 1, selected.extractionCost) : `Apply Alternative ${selectedAlternative + 1}`}
 					</Button>
 				</>
 			)}
 		>
 			{preview && selected && (
 				<div className="space-y-5">
+					<div className="rounded-global border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning">
+						<p className="font-semibold">Review extraction costs before applying.</p>
+						{extractionNotices.map((notice) => <p key={notice} className="mt-1 text-xs">{notice}</p>)}
+					</div>
 					{stale && (
 						<div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-global border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning">
 							<span>Equipment or official metadata changed after this batch was generated. Review a fresh preview before applying.</span>

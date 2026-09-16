@@ -81,6 +81,16 @@ test('unnamed same-level items remain distinguishable by readable rolled effects
 	assert.equal(lifecycle.equipmentOptimizerEffectSummary([{ definitionId: 999, values: [4] }], names), 'Unknown effect (effect 999) +4');
 });
 
+test('extraction presentation binds the selected ruby ceiling and discloses other game costs', () => {
+	const cost = { rubyExtractionCount: 2, maximumRubySpend: 400, relicExtractionCount: 1, socketInsertionCount: 3, fingerprint: 'quote' };
+	assert.equal(lifecycle.equipmentExtractionApplyLabel(4, cost), 'Apply Alternative 4 · up to 400 rubies');
+	assert.deepEqual(lifecycle.equipmentExtractionCostNotices(cost), [
+		'2 ordinary gem extractions · up to 400 rubies',
+		'Coin socketing costs also apply.',
+		'Relic gem extraction costs also apply in relic fragments.',
+	]);
+});
+
 test('relevant snapshot ignores unrelated revision and catches equipment or catalog changes', () => {
 	const state = {
 		revision: 1,

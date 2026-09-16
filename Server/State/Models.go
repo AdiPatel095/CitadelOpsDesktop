@@ -906,18 +906,34 @@ func (movement MovementState) ProjectedCompletionAt() *time.Time {
 }
 
 type EquipmentInstance struct {
-	ID           EquipmentInstanceID `json:"id"`
-	DefinitionID EquipmentID         `json:"definitionId"`
-	Slot         int                 `json:"slot"`
-	TypeID       int                 `json:"typeId,omitempty"`
-	RarityID     int                 `json:"rarityId"`
-	Relic        bool                `json:"relic,omitempty"`
-	RelicKnown   bool                `json:"relicKnown,omitempty"`
-	SetID        int64               `json:"setId,omitempty"`
-	Level        int                 `json:"level,omitempty"`
-	WearerID     int64               `json:"wearerId,omitempty"`
-	WearerKind   string              `json:"wearerKind,omitempty"`
-	Effects      EquipmentEffects    `json:"effects"`
+	ID           EquipmentInstanceID   `json:"id"`
+	DefinitionID EquipmentID           `json:"definitionId"`
+	Slot         int                   `json:"slot"`
+	TypeID       int                   `json:"typeId,omitempty"`
+	RarityID     int                   `json:"rarityId"`
+	Relic        bool                  `json:"relic,omitempty"`
+	RelicKnown   bool                  `json:"relicKnown,omitempty"`
+	SetID        int64                 `json:"setId,omitempty"`
+	Level        int                   `json:"level,omitempty"`
+	WearerID     int64                 `json:"wearerId,omitempty"`
+	WearerKind   string                `json:"wearerKind,omitempty"`
+	Effects      EquipmentEffects      `json:"effects"`
+	Extraction   *GemExtractionAttempt `json:"pendingGemExtraction,omitempty"`
+}
+
+// GemExtractionAttempt prevents replay when a ruby-charging extraction has
+// reached an uncertain wire state. A later authoritative equipment snapshot
+// clears it only after the gem is no longer socketed on this carrier.
+type GemExtractionAttempt struct {
+	GemID                GemInstanceID `json:"gemId"`
+	DefinitionID         GemID         `json:"definitionId"`
+	Level                int           `json:"level"`
+	RubyCost             int64         `json:"rubyCost"`
+	OperationID          string        `json:"operationId"`
+	ResponseToken        string        `json:"responseToken,omitempty"`
+	ConnectionGeneration uint64        `json:"connectionGeneration"`
+	ArmedAt              time.Time     `json:"armedAt"`
+	DispatchedAt         time.Time     `json:"dispatchedAt,omitempty"`
 }
 
 type EquipmentEffect struct {

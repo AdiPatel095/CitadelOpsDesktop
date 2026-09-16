@@ -113,6 +113,7 @@ func reduceEquipmentStorage(
 	for _, row := range rows {
 		equipment, gem, ok := parseEquipment(row, "", 0, gameData)
 		if ok {
+			preservePendingGemExtraction(gameState.Inventory.Equipment[equipment.ID], &equipment, gem)
 			next[equipment.ID] = equipment
 			if gem != nil {
 				nextGems[gem.ID] = *gem
@@ -224,6 +225,7 @@ func reduceEquipmentMutation(
 			current := gameState.Inventory.Equipment[id]
 			item, gem, ok := parseEquipment(row, current.WearerKind, current.WearerID, gameData)
 			if ok {
+				preservePendingGemExtraction(current, &item, gem)
 				if !reflect.DeepEqual(current, item) {
 					gameState.SetInventoryEquipment(id, item)
 					changed = true
@@ -250,6 +252,14 @@ func reduceEquipmentMutation(
 		changed = changed || updated
 	}
 	return []string{"commanders", "castellans", "equipment", "gems", "inventory", "resources"}, changed, nil
+}
+
+func preservePendingGemExtraction(current State.EquipmentInstance, next *State.EquipmentInstance, gem *State.GemInstance) {
+	if next == nil || current.Extraction == nil || gem == nil || gem.ID != current.Extraction.GemID || gem.EquipmentInstanceID != current.ID {
+		return
+	}
+	extraction := *current.Extraction
+	next.Extraction = &extraction
 }
 
 func reduceConstructionInventory(
@@ -329,7 +339,7 @@ func applyLeaders(raw json.RawMessage, gameState *State.GameState, gameData *Gam
 			Available: commanderAvailable(gameState, id), GeneralID: leader.GeneralID,
 			Equipment: map[string]State.EquipmentInstanceID{}, Gems: map[string]State.GemInstanceID{},
 		}
-		applyLeaderEquipment(leader.Equipment, "commander", leader.ID, commander.Equipment, commander.Gems, equipment, gems, gameData)
+		applyLeaderEquipment(leader.Equipment, "commander", leader.ID, commander.Equipment, commander.Gems, equipment, gems, gameState.Inventory.Equipment, gameData)
 		commanders[id] = commander
 	}
 
@@ -348,7 +358,7 @@ func applyLeaders(raw json.RawMessage, gameState *State.GameState, gameData *Gam
 			ID: id, CastleID: State.CastleID(leader.CastleID), Name: name,
 			Equipment: map[string]State.EquipmentInstanceID{}, Gems: map[string]State.GemInstanceID{},
 		}
-		applyLeaderEquipment(leader.Equipment, "castellan", leader.ID, castellan.Equipment, castellan.Gems, equipment, gems, gameData)
+		applyLeaderEquipment(leader.Equipment, "castellan", leader.ID, castellan.Equipment, castellan.Gems, equipment, gems, gameState.Inventory.Equipment, gameData)
 		castellans[id] = castellan
 	}
 
@@ -416,6 +426,7 @@ func applyLeaderEquipment(
 	leaderGems map[string]State.GemInstanceID,
 	equipment map[State.EquipmentInstanceID]State.EquipmentInstance,
 	gems map[State.GemInstanceID]State.GemInstance,
+	previousEquipment map[State.EquipmentInstanceID]State.EquipmentInstance,
 	gameData *GameData.Store,
 ) {
 	for _, row := range rows {
@@ -423,6 +434,7 @@ func applyLeaderEquipment(
 		if !ok {
 			continue
 		}
+		preservePendingGemExtraction(previousEquipment[item.ID], &item, gem)
 		slot := strconv.Itoa(item.Slot)
 		equipment[item.ID] = item
 		leaderEquipment[slot] = item.ID
