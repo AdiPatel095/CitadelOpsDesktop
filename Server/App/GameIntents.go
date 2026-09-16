@@ -107,11 +107,12 @@ func (application *Application) registerGameIntents() error {
 		return err
 	}
 	for name, action := range map[string]Intent.Action{
-		"equipment.reconfigure.extraction.arm":      application.armEquipmentExtraction,
-		"equipment.reconfigure.extraction.dispatch": application.finalizeEquipmentExtractionDispatch,
-		"equipment.reconfigure.extraction.disarm":   application.disarmEquipmentExtraction,
-		"equipment.reconfigure.extraction.reject":   application.rejectEquipmentExtraction,
-		"equipment.reconfigure.extraction.confirm":  application.confirmEquipmentExtraction,
+		"equipment.reconfigure.extraction.arm":           application.armEquipmentExtraction,
+		"equipment.reconfigure.extraction.dispatch":      application.finalizeEquipmentExtractionDispatch,
+		"equipment.reconfigure.extraction.free.dispatch": application.validateFreeEquipmentExtractionDispatch,
+		"equipment.reconfigure.extraction.disarm":        application.disarmEquipmentExtraction,
+		"equipment.reconfigure.extraction.reject":        application.rejectEquipmentExtraction,
+		"equipment.reconfigure.extraction.confirm":       application.confirmEquipmentExtraction,
 	} {
 		if err := application.Intents.RegisterAction(name, action); err != nil {
 			return err

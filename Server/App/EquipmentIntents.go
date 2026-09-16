@@ -80,6 +80,16 @@ type equipmentPaidExtraction struct {
 	RubyCost     int64                     `json:"rubyCost"`
 }
 
+type equipmentFreeExtractionDispatch struct {
+	LeaderKind            string                    `json:"leaderKind"`
+	LeaderID              int64                     `json:"leaderId"`
+	GemID                 State.GemInstanceID       `json:"gemId"`
+	CarrierID             State.EquipmentInstanceID `json:"carrierId"`
+	DefinitionID          State.GemID               `json:"definitionId"`
+	Level                 int                       `json:"level"`
+	ExpectedCatalogDigest string                    `json:"expectedCatalogDigest"`
+}
+
 func planEquipmentRefresh(_ context.Context, _ Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
 	var request struct{}
 	if err := decodeIntentArguments(arguments, &request); err != nil {
@@ -581,6 +591,16 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 				remainingRubySpend -= rubyCost
 				paidExtractionIndex++
 			} else {
+				dispatchArguments, encodeErr := json.Marshal(equipmentFreeExtractionDispatch{
+					LeaderKind: request.LeaderKind, LeaderID: request.LeaderID,
+					GemID: gem.ID, CarrierID: parent.ID, DefinitionID: gem.DefinitionID, Level: gem.Level,
+					ExpectedCatalogDigest: catalogDigest,
+				})
+				if encodeErr != nil {
+					return Intent.Plan{}, fmt.Errorf("encode free extraction guard: %w", encodeErr)
+				}
+				detachStep.FinalDispatchAction = "equipment.reconfigure.extraction.free.dispatch"
+				detachStep.FinalDispatchArguments = dispatchArguments
 				steps = append(steps, detachStep)
 			}
 		} else {
@@ -693,6 +713,46 @@ func (application *Application) verifyEquipmentReconfigure(_ context.Context, ar
 			actual.WearerKind != leader.kind || actual.WearerID != leader.id {
 			return fmt.Errorf("%s %d gem slot %d did not match the selected loadout", leader.kind, leader.id, slot)
 		}
+	}
+	return nil
+}
+
+func (application *Application) validateFreeEquipmentExtractionDispatch(_ context.Context, raw json.RawMessage) error {
+	var arguments equipmentFreeExtractionDispatch
+	if err := decodeIntentArguments(raw, &arguments); err != nil {
+		return err
+	}
+	if application == nil || application.State == nil || application.GameData == nil {
+		return fmt.Errorf("equipment extraction state is unavailable")
+	}
+	gameData, ready := application.GameData.Current()
+	if !ready || gameData == nil {
+		return fmt.Errorf("official game data is unavailable")
+	}
+	if arguments.ExpectedCatalogDigest == "" || gameData.Metadata().DigestSHA256 != arguments.ExpectedCatalogDigest {
+		return fmt.Errorf("%w: official gem removal prices changed", Intent.ErrPlanStale)
+	}
+	gameState := application.State.ReadOnlyView()
+	leader, err := resolveLeader(gameState, arguments.LeaderKind, arguments.LeaderID)
+	if err != nil {
+		return err
+	}
+	if !leader.available {
+		return fmt.Errorf("%w: commander became unavailable before gem extraction", Intent.ErrPlanStale)
+	}
+	gem, found := gameState.Inventory.Gems[arguments.GemID]
+	if !found || gem.EquipmentInstanceID != arguments.CarrierID || gem.DefinitionID != arguments.DefinitionID ||
+		gem.Level != arguments.Level || EquipmentDomain.GemFamily(gem) != EquipmentDomain.LoadoutFamilyOrdinary {
+		return fmt.Errorf("%w: normal gem %d is no longer on carrier %d", Intent.ErrPlanStale, arguments.GemID, arguments.CarrierID)
+	}
+	carrier, found := gameState.Inventory.Equipment[arguments.CarrierID]
+	if !found || carrier.WearerKind != leader.kind || carrier.WearerID != leader.id ||
+		leader.equipment[strconv.Itoa(carrier.Slot)] != carrier.ID {
+		return fmt.Errorf("%w: gem carrier %d is not mounted on the selected leader", Intent.ErrPlanStale, arguments.CarrierID)
+	}
+	cost, costErr := EquipmentDomain.NormalGemRemovalCost(gameData, gem)
+	if costErr != nil || cost != 0 {
+		return fmt.Errorf("%w: official removal price changed for gem %d", Intent.ErrPlanStale, gem.ID)
 	}
 	return nil
 }

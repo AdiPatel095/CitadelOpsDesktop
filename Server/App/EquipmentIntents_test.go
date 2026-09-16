@@ -425,14 +425,18 @@ func TestVerifyEquipmentReconfigureAcceptsNormalGemReidentificationAndRejectsMis
 }
 
 func equipmentExtractionGameDataManager(t *testing.T) *GameData.Manager {
+	return equipmentExtractionGameDataManagerWithCost(t, 200)
+}
+
+func equipmentExtractionGameDataManagerWithCost(t *testing.T, removalCost int64) *GameData.Manager {
 	t.Helper()
 	cacheDir := t.TempDir()
-	if err := os.WriteFile(filepath.Join(cacheDir, "Items-vtest.json"), []byte(`{
+	if err := os.WriteFile(filepath.Join(cacheDir, "Items-vtest.json"), []byte(fmt.Sprintf(`{
 		"versionInfo":{"version":{"@value":"test"}},"buildings":[],"units":[],
 		"resources":[{"resourceID":2,"JSONKey":"C2","name":"Rubies"}],
 		"gems":[{"gemID":494,"gemLevelID":0},{"gemID":490,"gemLevelID":0}],
-		"gemlevels":[{"gemLevelID":0,"removalCostC2":200}]
-	}`), 0o600); err != nil {
+		"gemlevels":[{"gemLevelID":0,"removalCostC2":%d}]
+	}`, removalCost)), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	manager := GameData.NewManager(GameData.UpdaterConfig{
@@ -693,39 +697,75 @@ func TestPlanEquipmentReconfigureRejectsChangedPaidAuthorityBeforeCommands(t *te
 }
 
 func TestPlanEquipmentReconfigurePreservesZeroRubyExtractionPath(t *testing.T) {
-	application, _, sender, _ := newEquipmentExtractionIntegrationHarness(t, nil)
+	gameData := equipmentExtractionGameDataManagerWithCost(t, 0)
+	_, engine, sender, arguments := newEquipmentExtractionIntegrationHarnessWithGameData(t, nil, gameData, 0)
 	defer sender.router.Close()
-	state := application.State.ReadOnlyView()
-	gameData := equipmentExtractionGameDataStore(t, 0, "zero-cost-catalog")
-	targetEquipment := map[string]State.EquipmentInstanceID{"1": 301, "2": 102, "3": 103, "4": 104}
-	targetGems := map[string]State.GemInstanceID{"1": -201}
-	snapshot, err := EquipmentDomain.SnapshotFingerprint(state, gameData, "commander", 0, "pvp")
-	if err != nil {
-		t.Fatal(err)
-	}
-	arguments, _ := json.Marshal(equipmentReconfigureRequest{
-		LeaderKind: "commander", LeaderID: 0, CombatMode: "pvp", SnapshotFingerprint: snapshot,
-		Equipment: targetEquipment, Gems: targetGems,
+	receipt := engine.Submit(t.Context(), Intent.Request{
+		ID: "equipment-zero-cost", Name: "equipment.reconfigure", Actor: "user", Arguments: arguments,
 	})
-	plan, err := planEquipmentReconfigure(t.Context(), Intent.PlanningContext{State: state, GameData: gameData}, arguments)
-	if err != nil {
-		t.Fatal(err)
+	if receipt.Status != Intent.StatusSucceeded || receipt.Plan == nil {
+		t.Fatalf("zero-ruby receipt = %#v", receipt)
 	}
-	if slices.Contains(plan.Claims, "currency:2") {
-		t.Fatalf("zero-ruby plan claims = %#v", plan.Claims)
+	if slices.Contains(receipt.Plan.Claims, "currency:2") {
+		t.Fatalf("zero-ruby plan claims = %#v", receipt.Plan.Claims)
 	}
 	extractions := 0
-	for _, step := range plan.Steps {
+	for _, step := range receipt.Plan.Steps {
 		if step.Opcode != "ege" {
 			continue
 		}
 		extractions++
-		if step.PreDispatchAction != "" || step.FinalDispatchAction != "" {
-			t.Fatalf("zero-ruby extraction gained a paid guard: %#v", step)
+		if step.PreDispatchAction != "" || step.FinalDispatchAction != "equipment.reconfigure.extraction.free.dispatch" {
+			t.Fatalf("zero-ruby extraction guard = %#v", step)
 		}
 	}
-	if extractions != 2 {
-		t.Fatalf("zero-ruby extraction count = %d, want 2", extractions)
+	if extractions != 2 || sender.extractionSends != 2 || sender.rubies != 1_000 {
+		t.Fatalf("zero-ruby extractions=%d sends=%d rubies=%d", extractions, sender.extractionSends, sender.rubies)
+	}
+}
+
+func TestEquipmentReconfigureFreeExtractionRejectsQueuedRubyRepricing(t *testing.T) {
+	entered := make(chan struct{})
+	release := make(chan struct{})
+	gate := func(_ context.Context, metadata Outbound.Metadata) error {
+		if metadata.FinalDispatchValidation == nil {
+			return nil
+		}
+		select {
+		case <-entered:
+		default:
+			close(entered)
+			<-release
+		}
+		return nil
+	}
+	var application *Application
+	var engine *Intent.Engine
+	var sender *equipmentExtractionIntegrationSender
+	var arguments json.RawMessage
+	application, engine, sender, arguments = newEquipmentExtractionIntegrationHarnessWithGameData(
+		t, gate, equipmentExtractionGameDataManagerWithCost(t, 0), 0,
+	)
+	defer sender.router.Close()
+	receipts := make(chan Intent.Receipt, 1)
+	go func() {
+		receipts <- engine.Submit(t.Context(), Intent.Request{
+			ID: "equipment-free-repriced", Name: "equipment.reconfigure", Actor: "user", Arguments: arguments,
+		})
+	}()
+	select {
+	case <-entered:
+	case <-time.After(5 * time.Second):
+		t.Fatal("free extraction did not reach the outbound queue gate")
+	}
+	application.GameData = equipmentExtractionGameDataManagerWithCost(t, 200)
+	close(release)
+	receipt := <-receipts
+	if receipt.Status == Intent.StatusSucceeded || !strings.Contains(receipt.DiagnosticError(), "removal prices changed") {
+		t.Fatalf("queued repricing receipt = %#v", receipt)
+	}
+	if sender.extractionSends != 0 {
+		t.Fatalf("repriced free extraction crossed transport: %v", sender.opcodes)
 	}
 }
 
@@ -736,6 +776,7 @@ type equipmentExtractionIntegrationSender struct {
 	equipped                map[int]State.EquipmentInstanceID
 	socketDefinition        map[State.EquipmentInstanceID]State.GemID
 	rubies                  int64
+	extractionRubyCost      int64
 	opcodes                 []string
 	extractionSends         int
 	indeterminateExtraction bool
@@ -785,7 +826,7 @@ func (sender *equipmentExtractionIntegrationSender) dispatch(ctx context.Context
 			return Outbound.MarkIndeterminate(fmt.Errorf("simulated uncertain paid extraction"))
 		}
 		delete(sender.socketDefinition, body.EquipmentID)
-		sender.rubies -= 200
+		sender.rubies -= sender.extractionRubyCost
 	case "bge":
 		sender.socketDefinition[body.EquipmentID] = body.GemID
 	}
@@ -848,6 +889,15 @@ func newEquipmentExtractionIntegrationHarness(
 	t *testing.T,
 	gate Outbound.DispatchGate,
 ) (*Application, *Intent.Engine, *equipmentExtractionIntegrationSender, json.RawMessage) {
+	return newEquipmentExtractionIntegrationHarnessWithGameData(t, gate, equipmentExtractionGameDataManager(t), 200)
+}
+
+func newEquipmentExtractionIntegrationHarnessWithGameData(
+	t *testing.T,
+	gate Outbound.DispatchGate,
+	gameData *GameData.Manager,
+	extractionRubyCost int64,
+) (*Application, *Intent.Engine, *equipmentExtractionIntegrationSender, json.RawMessage) {
 	t.Helper()
 	now := time.Now().UTC().Add(-time.Second)
 	gameState := State.NewGameState()
@@ -886,14 +936,13 @@ func newEquipmentExtractionIntegrationHarness(
 	}); err != nil {
 		t.Fatal(err)
 	}
-	gameData := equipmentExtractionGameDataManager(t)
 	registry := Ingest.NewRegistry()
 	if err := Ingest.RegisterCoreReducers(registry); err != nil {
 		t.Fatal(err)
 	}
 	pipeline := Ingest.NewPipeline(stateStore, gameData, registry)
 	sender := &equipmentExtractionIntegrationSender{
-		pipeline: pipeline, rubies: 1_000,
+		pipeline: pipeline, rubies: 1_000, extractionRubyCost: extractionRubyCost,
 		equipment:        map[State.EquipmentInstanceID]State.EquipmentInstance{},
 		equipped:         map[int]State.EquipmentInstanceID{1: 101, 2: 102, 3: 103, 4: 104},
 		socketDefinition: map[State.EquipmentInstanceID]State.GemID{201: 494, 301: 490},
