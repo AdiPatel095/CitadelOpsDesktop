@@ -116,6 +116,14 @@ type ConfigurationWakePolicy interface {
 	WakeSections() []string
 }
 
+// EnabledControlWakePolicy declares another automation control whose exact
+// configured value affects this policy. The coordinator already fans out
+// automation.enabled events; this keeps each policy's fingerprint limited to
+// the controls it actually consumes.
+type EnabledControlWakePolicy interface {
+	WakeEnabledControls() []string
+}
+
 // ConfigurationDerivedStatePolicy declares configuration sections whose
 // values are materialized into cached state. The coordinator invalidates that
 // state after in-flight work has stopped and before the policy is reevaluated.

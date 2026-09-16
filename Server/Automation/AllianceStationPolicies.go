@@ -76,10 +76,24 @@ func (*AutoBirdPolicy) WakeDomains() []string {
 	return []string{"alliance", "movement-snapshot", "movements", "player-protection", "stationing", "units"}
 }
 
-func (*AutoBirdPolicy) WakeSections() []string { return []string{"automation.autoBird"} }
+func (*AutoBirdPolicy) WakeSections() []string {
+	return []string{"automation.autoBird", "automation.autoFortress"}
+}
+
+func (*AutoBirdPolicy) WakeEnabledControls() []string { return []string{"auto_fortress"} }
 
 func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision Decision, err error) {
-	if refresh, required := playerProtectionRefreshDecision(snapshot); required {
+	releaseWaitingCastle := false
+	if snapshot.PolicyConfigurationChanged {
+		for _, operation := range snapshot.State.Stationing {
+			if operation.Purpose == "autoBird" && operation.Phase == State.StationingPhaseWaiting &&
+				operation.NextAttemptAt != nil && operation.NextAttemptAt.After(snapshot.Now) {
+				releaseWaitingCastle = true
+				break
+			}
+		}
+	}
+	if refresh, required := playerProtectionRefreshDecision(snapshot); required && !releaseWaitingCastle {
 		return withAutoBirdSchedule(snapshot, refresh, time.Time{}), nil
 	}
 	defer func() {
@@ -295,6 +309,11 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 					continue
 				}
 			case State.StationingPhaseWaiting:
+				if snapshot.PolicyConfigurationChanged {
+					return withAutoBirdSchedule(snapshot, autoBirdDiscoverDecision(
+						castle, settings, snapshot.Now, "Restart after relevant automation settings changed",
+					), time.Time{}), nil
+				}
 				if operation.PresetID != settings.ResolvedPresetID {
 					return withAutoBirdSchedule(snapshot, autoBirdDiscoverDecision(
 						castle, settings, snapshot.Now, "Restart after the Auto Bird preset changed",

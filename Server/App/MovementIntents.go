@@ -235,7 +235,7 @@ func freshAutoBirdStationAmounts(
 	reserves []stationUnitRequest,
 	minimumSend int64,
 ) (map[State.UnitID]int64, error) {
-	amounts, total, err := autoBirdStationManifest(gameData, source, reserves)
+	amounts, total, err := autoBirdStationManifest(gameData, source, reserves, false)
 	if err != nil {
 		return nil, err
 	}

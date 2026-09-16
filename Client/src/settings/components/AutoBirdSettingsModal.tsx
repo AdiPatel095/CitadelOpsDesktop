@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Bird, CalendarDays, Plus } from 'lucide-react';
+import { Bird, CalendarDays, LockKeyhole, Plus } from 'lucide-react';
 import { showTroopPicker } from '../../components/TroopPickerModal';
 import type { UnitWithQuantity } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
@@ -27,6 +27,13 @@ import {
 } from '../../components/ui';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { castleOptionsFromState } from '../../api/Selectors';
+import { useAuth } from '../../context/AuthContext';
+import { AUTO_FORTRESS_DIREWOLF_ID } from '../AutoFortressClientState';
+import {
+  autoFortressReservesDirewolves,
+  mergeAutoBirdPickerItems,
+  visibleAutoBirdReserveItems,
+} from '../AutoBirdFortressReserve';
 
 interface AutoBirdSettingsModalProps {
   isOpen: boolean;
@@ -46,6 +53,7 @@ function clampMinRPTDays(value: number): number {
 
 export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ isOpen, onClose, onOpenFeatureSchedule }) => {
   const { state, configuration } = useCitadelAPI();
+  const { autoFortressEnabled } = useAuth();
   const castles = castleOptionsFromState(state);
   const [settings, setSettings] = useState<Record<string, { id: number; amount: number }[]>>({});
   const [minDelay, setMinDelay] = useState(6);
@@ -120,8 +128,15 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
 
   const handleAddItem = async (castleId: string) => {
     const currentItems = settings[castleId] || [];
+    const castleState = state?.castles[castleId];
+    const fortressProtected = autoFortressReservesDirewolves(
+      autoFortressEnabled,
+      castleState,
+      configuration?.sections['automation.autoFortress'],
+    );
+    const editableItems = visibleAutoBirdReserveItems(currentItems, fortressProtected);
     const preselectedQuantities: Record<number, number> = {};
-    currentItems.forEach((item) => {
+    editableItems.forEach((item) => {
       if (item.id) preselectedQuantities[item.id] = item.amount;
     });
 
@@ -129,8 +144,9 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
       mode: 'multi',
       title: `Keep in castle (not sent on bird) — ${castles.find((c) => c.id === parseInt(castleId, 10))?.name ?? castleId}`,
       allowQuantity: true,
-      preselected: currentItems.map((i) => i.id),
+      preselected: editableItems.map((i) => i.id),
       preselectedQuantities,
+      excludedUnitIds: fortressProtected ? [AUTO_FORTRESS_DIREWOLF_ID] : undefined,
     });
 
     if (Array.isArray(result)) {
@@ -138,7 +154,10 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
         id: u.unitId,
         amount: u.quantity,
       }));
-      setSettings((prev) => ({ ...prev, [castleId]: newItems }));
+      setSettings((prev) => ({
+        ...prev,
+        [castleId]: mergeAutoBirdPickerItems(prev[castleId] || [], newItems, fortressProtected),
+      }));
     }
   };
 
@@ -422,12 +441,18 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
             {castles.map((castle) => {
               const cid = String(castle.id);
               const items = settings[cid] || [];
+              const fortressProtected = autoFortressReservesDirewolves(
+                autoFortressEnabled,
+                state?.castles[cid],
+                configuration?.sections['automation.autoFortress'],
+              );
+              const visibleItems = visibleAutoBirdReserveItems(items, fortressProtected);
               return (
                 <Card key={castle.id} variant="solid" className="flex flex-col bg-bg-card-hover/40 p-4 shadow-inner">
                   <div className="mb-3 flex flex-wrap items-center gap-2 border-b border-border-base pb-2">
                     <h3 className="text-sm font-bold text-primary">{castle.name}</h3>
                   </div>
-                  {items.length === 0 ? (
+                  {visibleItems.length === 0 && !fortressProtected ? (
                     <div className="flex flex-1 flex-col items-center justify-center gap-3 py-6">
                       <p className="text-center text-xs font-medium uppercase tracking-wider text-text-muted">No ignored units</p>
                       <Button
@@ -442,7 +467,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                     </div>
                   ) : (
                     <div className="flex flex-wrap justify-center gap-4">
-                      {items.map((item) => (
+                      {visibleItems.map((item) => (
                         <QuantityAssetTile
                           key={item.id}
                           visual={<UnitImage unitId={item.id} size={76} showLevel className="rounded-xl" />}
@@ -451,6 +476,22 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                           removeLabel="Remove unit"
                         />
                       ))}
+                      {fortressProtected && (
+                        <div className="relative flex w-[84px] shrink-0 flex-col items-center" aria-label="All Direwolves reserved by Auto Fortress">
+                          <div className="relative h-[76px] w-[76px]">
+                            <UnitImage unitId={AUTO_FORTRESS_DIREWOLF_ID} size={76} showLevel className="rounded-xl opacity-80" />
+                            <span className="absolute left-1 top-1 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white shadow-md" title="Reserved by Auto Fortress">
+                              <LockKeyhole className="h-3.5 w-3.5" />
+                            </span>
+                            <span className="absolute bottom-0 right-0 z-10 translate-x-1/4 translate-y-1/4 rounded-full bg-white px-2.5 py-0.5 text-center text-[10px] font-bold text-slate-900 shadow-md ring-1 ring-black/10">
+                              All
+                            </span>
+                          </div>
+                          <span className="mt-2 text-center text-[10px] font-semibold leading-tight text-text-muted">
+                            Reserved by Auto Fortress
+                          </span>
+                        </div>
+                      )}
                       <AddSlot
                         label="Add unit"
                         layout="icon"
