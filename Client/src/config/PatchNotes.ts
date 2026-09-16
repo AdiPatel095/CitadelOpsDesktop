@@ -57,12 +57,26 @@ export function sortPatchNoteItems(items: readonly PatchNoteItem[]): PatchNoteIt
 
 const PATCH_NOTES_RELEASES_UNSORTED: PatchNotesRelease[] = [
   {
+    version: '2.4.0-beta.6',
+    subtitle: 'Beta: fortress launch safety and protected Direwolves',
+    date: '2026-09-16',
+    items: [
+      { kind: 'added', text: 'Auto Bird shows a locked All Direwolves reserve for every enabled Auto Fortress kingdom main castle. The automatic reserve follows the current Fortress controls without changing saved Auto Bird quantities or presets.' },
+      { kind: 'fixed', text: 'Equipment Reconfigure compares complete capped combat totals across equipment, heroes, and gems, keeps distinct useful alternatives, and explains each option against the strongest result.' },
+      { kind: 'fixed', text: 'Auto Fortress balances all available purchased Direwolves across enabled kingdom main castles, counts confirmed inbound troops, refreshes arrivals before reuse or attack, and can optionally apply guarded official time skips only to its own confirmed transfers.' },
+      { kind: 'fixed', text: 'Auto Booster retains current global-effect availability and quotes delivered by trigger updates instead of letting a later partial snapshot erase them.' },
+      { kind: 'fixed', text: 'Auto Fortress now requires a fresh exact-target availability response, opens the kingdom-fortress attack dialog through the official route, and preserves the response, session, focus, and target binding through launch.' },
+      { kind: 'fixed', text: 'Kingdom troop reconciliation preserves the complete planned castle, kingdom, troop, and transfer expectations through rebuilt action steps.' },
+      { kind: 'fixed', text: 'Auto Bird excludes every current and future Direwolf from support batches for enabled Auto Fortress kingdom main castles, including batches prepared before the setting changed, while preserving manual reserves when Fortress is disabled.' },
+      { kind: 'security', text: 'Fortress attacks and Auto Bird support batches recheck authoritative target, session, configuration, and protected-troop state at the final transport boundary.' },
+    ],
+  },
+  {
     version: '2.4.0-beta.5',
     subtitle: 'Beta: compatible equipment with priced extraction',
     date: '2026-09-16',
     items: [
       { kind: 'fixed', text: 'Equipment Reconfigure now keeps ordinary and relic equipment, heroes, and gems in compatible loadouts and rejects incompatible selections before changing equipment.' },
-      { kind: 'fixed', text: 'Auto Fortress balances all available purchased Direwolves across enabled kingdom main castles, counts confirmed inbound troops, refreshes arrivals before reuse or attack, and can optionally apply guarded official time skips only to its own confirmed transfers.' },
       { kind: 'security', text: 'Equipment Reconfigure shows each alternative’s ordinary-gem extraction count and maximum ruby charge, requires explicit consent to that selected ceiling, rechecks official prices before every ordinary-gem extraction and the live ruby balance before every paid extraction, and blocks uncertain paid attempts from repeating. Coin socketing and relic-fragment extraction costs are also disclosed.' },
     ],
   },
