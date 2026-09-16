@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"math"
 	"slices"
 	"strconv"
@@ -63,25 +64,19 @@ func (snapshot *khanRageSnapshot) UnmarshalJSON(raw []byte) error {
 }
 
 type scalableEventSnapshot struct {
-	EventID           wireInt64           `json:"EID"`
-	RemainingSec      wireInt64           `json:"RS"`
-	DifficultyID      wireInt64           `json:"EDID"`
-	AutoScaling       wireInt64           `json:"EASE"`
-	PlayerProgress    eventPointScore     `json:"SP"`
-	AllianceProgress  eventPointScore     `json:"A"`
-	PackageIDs        string              `json:"PIDS"`
-	Packages          json.RawMessage     `json:"PID"`
-	AdvisorCurrency   wireInt64           `json:"ACI"`
-	AdvisorActive     wireInt64           `json:"AAA"`
-	AdvisorFree       wireInt64           `json:"AAF"`
-	FortifyCurrencies []string            `json:"RCKS"`
-	AllianceCamp      *khanRageSnapshot   `json:"AC"`
-	GlobalEffects     [][]json.RawMessage `json:"GE"`
-	GlobalBoosters    []struct {
-		GlobalEffectID wireInt64 `json:"GEID"`
-		RubyCost       wireInt64 `json:"C2"`
-		BonusValue     wireInt64 `json:"BV"`
-	} `json:"GEB"`
+	EventID           wireInt64         `json:"EID"`
+	RemainingSec      wireInt64         `json:"RS"`
+	DifficultyID      wireInt64         `json:"EDID"`
+	AutoScaling       wireInt64         `json:"EASE"`
+	PlayerProgress    eventPointScore   `json:"SP"`
+	AllianceProgress  eventPointScore   `json:"A"`
+	PackageIDs        string            `json:"PIDS"`
+	Packages          json.RawMessage   `json:"PID"`
+	AdvisorCurrency   wireInt64         `json:"ACI"`
+	AdvisorActive     wireInt64         `json:"AAA"`
+	AdvisorFree       wireInt64         `json:"AAF"`
+	FortifyCurrencies []string          `json:"RCKS"`
+	AllianceCamp      *khanRageSnapshot `json:"AC"`
 }
 
 const (
@@ -117,8 +112,6 @@ func applyScalableEventSnapshot(
 	changed := false
 	previousInventory := gameState.EventScores.Inventory
 	activeByEvent := make(map[int64]State.EventAvailability, len(payload.Events))
-	globalEffects := map[int64]State.GlobalEffectAvailability{}
-	globalEffectBoosterOffers := map[int64]State.GlobalEffectBoosterOffer{}
 	for _, event := range payload.Events {
 		eventID := int64(event.EventID)
 		remainingSec := int64(event.RemainingSec)
@@ -129,39 +122,12 @@ func applyScalableEventSnapshot(
 			EventID: eventID,
 			EndsAt:  observedAt.Add(time.Duration(remainingSec) * time.Second).UTC().Truncate(time.Minute),
 		}
-		switch eventID {
-		case globalEffectsEventID:
-			for _, row := range event.GlobalEffects {
-				globalEffectID, effectRemainingSec, strength := rowInt(row, 0), rowInt(row, 1), rowInt(row, 2)
-				if globalEffectID <= 0 || effectRemainingSec <= 0 {
-					continue
-				}
-				endsAt := observedAt.Add(time.Duration(effectRemainingSec) * time.Second).UTC().Truncate(time.Minute)
-				if previous, found := previousInventory.GlobalEffects[globalEffectID]; found &&
-					State.SameEventOccurrence(previous.EndsAt, endsAt) {
-					endsAt = previous.EndsAt
-				}
-				globalEffects[globalEffectID] = State.GlobalEffectAvailability{
-					GlobalEffectID: globalEffectID, Strength: strength,
-					EndsAt: endsAt,
-				}
-			}
-		case globalEffectBoostersEventID:
-			for _, offer := range event.GlobalBoosters {
-				globalEffectID := int64(offer.GlobalEffectID)
-				if globalEffectID <= 0 || int64(offer.RubyCost) <= 0 || int64(offer.BonusValue) <= 0 {
-					continue
-				}
-				globalEffectBoosterOffers[globalEffectID] = State.GlobalEffectBoosterOffer{
-					GlobalEffectID: globalEffectID, RubyCost: int64(offer.RubyCost), BonusValue: int64(offer.BonusValue),
-				}
-			}
-		}
 	}
 	if gameState.ReplaceEventInventory(State.EventInventoryState{
 		ObservedAt: observedAt, ActiveByEvent: activeByEvent,
-		GlobalEffectsObservedAt: observedAt.UTC(), GlobalEffects: globalEffects,
-		GlobalEffectBoosterOffers:      globalEffectBoosterOffers,
+		GlobalEffectsObservedAt:        previousInventory.GlobalEffectsObservedAt,
+		GlobalEffects:                  previousInventory.GlobalEffects,
+		GlobalEffectBoosterOffers:      previousInventory.GlobalEffectBoosterOffers,
 		GlobalEffectBoostsObservedAt:   previousInventory.GlobalEffectBoostsObservedAt,
 		GlobalEffectBoosts:             previousInventory.GlobalEffectBoosts,
 		GlobalEffectReadObservedAt:     previousInventory.GlobalEffectReadObservedAt,
@@ -260,6 +226,258 @@ func applyScalableEventSnapshot(
 		changed = true
 	}
 	return changed, nil
+}
+
+type globalEffectTriggerSnapshot struct {
+	EffectsSeen bool
+	OffersSeen  bool
+	Relevant    bool
+	Effects     map[int64]State.GlobalEffectAvailability
+	Offers      map[int64]State.GlobalEffectBoosterOffer
+}
+
+func reduceGlobalEffectTriggerSnapshot(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 || gameState == nil {
+		return nil, false, nil
+	}
+	changed, err := applyGlobalEffectTriggerSnapshot(frame.Payload, frame.ReceivedAt, gameState, false)
+	if err != nil {
+		changed = invalidateGlobalEffectBaseline(gameState)
+		return []string{"events", "event-scores", "global-effects"}, changed, nil
+	}
+	return []string{"events", "event-scores", "global-effects"}, changed, nil
+}
+
+func applyGlobalEffectTriggerSnapshot(
+	raw json.RawMessage,
+	observedAt time.Time,
+	gameState *State.GameState,
+	complete bool,
+) (bool, error) {
+	if gameState == nil {
+		return false, nil
+	}
+	previous := gameState.EventScores.Inventory
+	snapshot, err := decodeGlobalEffectTriggerSnapshot(raw, observedAt, previous.GlobalEffects)
+	if err != nil {
+		return false, err
+	}
+	if !complete && !snapshot.Relevant {
+		return false, nil
+	}
+	observedAt = observedAt.UTC()
+	if !previous.GlobalEffectsObservedAt.IsZero() && observedAt.Before(previous.GlobalEffectsObservedAt) {
+		return false, nil
+	}
+	next := previous
+	if complete {
+		next.GlobalEffects = snapshot.Effects
+		next.GlobalEffectBoosterOffers = snapshot.Offers
+	} else {
+		next.GlobalEffects = maps.Clone(previous.GlobalEffects)
+		next.GlobalEffectBoosterOffers = maps.Clone(previous.GlobalEffectBoosterOffers)
+		if snapshot.EffectsSeen {
+			next.GlobalEffects = snapshot.Effects
+		}
+		if snapshot.OffersSeen {
+			next.GlobalEffectBoosterOffers = snapshot.Offers
+		}
+		next.GlobalEffectBaselineObservedAt = time.Time{}
+		next.GlobalEffectBaselineGeneration = 0
+	}
+	next.GlobalEffectsObservedAt = observedAt
+	return gameState.ReplaceEventInventory(next), nil
+}
+
+func decodeGlobalEffectTriggerSnapshot(
+	raw json.RawMessage,
+	observedAt time.Time,
+	previousEffects map[int64]State.GlobalEffectAvailability,
+) (globalEffectTriggerSnapshot, error) {
+	result := globalEffectTriggerSnapshot{
+		Effects: map[int64]State.GlobalEffectAvailability{},
+		Offers:  map[int64]State.GlobalEffectBoosterOffer{},
+	}
+	raw = bytes.TrimSpace(raw)
+	if len(raw) == 0 || raw[0] != '{' {
+		return result, fmt.Errorf("decode trigger-event snapshot: payload must be an object")
+	}
+	var root map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &root); err != nil {
+		return result, fmt.Errorf("decode trigger-event snapshot: %w", err)
+	}
+	eventsRaw, found := root["TE"]
+	if !found || bytes.Equal(bytes.TrimSpace(eventsRaw), []byte("null")) {
+		return result, fmt.Errorf("decode trigger-event snapshot: TE must be present and non-null")
+	}
+	var events []json.RawMessage
+	if err := json.Unmarshal(eventsRaw, &events); err != nil || events == nil {
+		return result, fmt.Errorf("decode trigger-event snapshot: TE must be an array")
+	}
+	for index, eventRaw := range events {
+		var event map[string]json.RawMessage
+		if err := json.Unmarshal(eventRaw, &event); err != nil || event == nil {
+			return result, fmt.Errorf("decode trigger-event snapshot: TE[%d] must be an object", index)
+		}
+		triggerID, ok := rawJSONInt64(event["TRID"])
+		if !ok || triggerID < 0 {
+			return result, fmt.Errorf("decode trigger-event snapshot: TE[%d].TRID must be a non-negative integer", index)
+		}
+		switch triggerID {
+		case globalEffectsEventID:
+			if result.EffectsSeen {
+				return result, fmt.Errorf("decode trigger-event snapshot: duplicate TRID %d", triggerID)
+			}
+			result.EffectsSeen, result.Relevant = true, true
+			effects, err := decodeGlobalEffectRows(event["GE"], observedAt, previousEffects)
+			if err != nil {
+				return result, err
+			}
+			result.Effects = effects
+		case globalEffectBoostersEventID:
+			if result.OffersSeen {
+				return result, fmt.Errorf("decode trigger-event snapshot: duplicate TRID %d", triggerID)
+			}
+			result.OffersSeen, result.Relevant = true, true
+			offers, err := decodeGlobalEffectOfferRows(event["GEB"])
+			if err != nil {
+				return result, err
+			}
+			result.Offers = offers
+		}
+	}
+	return result, nil
+}
+
+func decodeGlobalEffectRows(
+	raw json.RawMessage,
+	observedAt time.Time,
+	previous map[int64]State.GlobalEffectAvailability,
+) (map[int64]State.GlobalEffectAvailability, error) {
+	raw = bytes.TrimSpace(raw)
+	if len(raw) == 0 || bytes.Equal(raw, []byte("null")) {
+		return nil, fmt.Errorf("decode trigger-event snapshot: TRID %d GE must be present and non-null", globalEffectsEventID)
+	}
+	var rows [][]json.RawMessage
+	if err := json.Unmarshal(raw, &rows); err != nil || rows == nil {
+		return nil, fmt.Errorf("decode trigger-event snapshot: TRID %d GE must be an array", globalEffectsEventID)
+	}
+	effects := make(map[int64]State.GlobalEffectAvailability, len(rows))
+	for index, row := range rows {
+		if len(row) < 3 {
+			return nil, fmt.Errorf("decode trigger-event snapshot: GE[%d] must contain effect, countdown, and strength", index)
+		}
+		globalEffectID, idOK := rawJSONInt64(row[0])
+		remainingSec, remainingOK := rawJSONInt64(row[1])
+		strength, strengthOK := rawJSONInt64(row[2])
+		if !idOK || globalEffectID <= 0 || !remainingOK || !strengthOK {
+			return nil, fmt.Errorf("decode trigger-event snapshot: GE[%d] has invalid effect, countdown, or strength", index)
+		}
+		if remainingSec <= 0 {
+			continue
+		}
+		if remainingSec > int64((1<<63-1)/int64(time.Second)) {
+			return nil, fmt.Errorf("decode trigger-event snapshot: GE[%d] countdown is out of range", index)
+		}
+		if _, duplicate := effects[globalEffectID]; duplicate {
+			return nil, fmt.Errorf("decode trigger-event snapshot: duplicate global effect %d", globalEffectID)
+		}
+		endsAt := observedAt.Add(time.Duration(remainingSec) * time.Second).UTC().Truncate(time.Minute)
+		if prior, found := previous[globalEffectID]; found && State.SameEventOccurrence(prior.EndsAt, endsAt) {
+			endsAt = prior.EndsAt
+		}
+		effects[globalEffectID] = State.GlobalEffectAvailability{
+			GlobalEffectID: globalEffectID,
+			Strength:       strength,
+			EndsAt:         endsAt,
+		}
+	}
+	return effects, nil
+}
+
+func decodeGlobalEffectOfferRows(raw json.RawMessage) (map[int64]State.GlobalEffectBoosterOffer, error) {
+	raw = bytes.TrimSpace(raw)
+	if len(raw) == 0 || bytes.Equal(raw, []byte("null")) {
+		return nil, fmt.Errorf("decode trigger-event snapshot: TRID %d GEB must be present and non-null", globalEffectBoostersEventID)
+	}
+	var rows []map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &rows); err != nil || rows == nil {
+		return nil, fmt.Errorf("decode trigger-event snapshot: TRID %d GEB must be an array", globalEffectBoostersEventID)
+	}
+	offers := make(map[int64]State.GlobalEffectBoosterOffer, len(rows))
+	for index, row := range rows {
+		globalEffectID, idOK := rawJSONInt64(row["GEID"])
+		rubyCost, costOK := rawJSONInt64(row["C2"])
+		bonusValue, bonusOK := rawJSONInt64(row["BV"])
+		if !idOK || globalEffectID <= 0 || !costOK || rubyCost <= 0 || !bonusOK || bonusValue <= 0 {
+			return nil, fmt.Errorf("decode trigger-event snapshot: GEB[%d] has invalid effect, cost, or bonus", index)
+		}
+		if _, duplicate := offers[globalEffectID]; duplicate {
+			return nil, fmt.Errorf("decode trigger-event snapshot: duplicate booster offer %d", globalEffectID)
+		}
+		offers[globalEffectID] = State.GlobalEffectBoosterOffer{
+			GlobalEffectID: globalEffectID,
+			RubyCost:       rubyCost,
+			BonusValue:     bonusValue,
+		}
+	}
+	return offers, nil
+}
+
+func reduceGlobalEffectTriggerEnd(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 || gameState == nil {
+		return nil, false, nil
+	}
+	var root map[string]json.RawMessage
+	if err := json.Unmarshal(frame.Payload, &root); err != nil || root == nil {
+		changed := invalidateGlobalEffectBaseline(gameState)
+		return []string{"events", "event-scores", "global-effects"}, changed, nil
+	}
+	triggerID, ok := rawJSONInt64(root["TRID"])
+	if !ok {
+		changed := invalidateGlobalEffectBaseline(gameState)
+		return []string{"events", "event-scores", "global-effects"}, changed, nil
+	}
+	if triggerID != globalEffectsEventID && triggerID != globalEffectBoostersEventID {
+		return nil, false, nil
+	}
+	inventory := gameState.EventScores.Inventory
+	if !inventory.GlobalEffectsObservedAt.IsZero() && frame.ReceivedAt.Before(inventory.GlobalEffectsObservedAt) {
+		return nil, false, nil
+	}
+	if triggerID == globalEffectsEventID {
+		inventory.GlobalEffects = map[int64]State.GlobalEffectAvailability{}
+	} else {
+		inventory.GlobalEffectBoosterOffers = map[int64]State.GlobalEffectBoosterOffer{}
+	}
+	inventory.GlobalEffectsObservedAt = frame.ReceivedAt.UTC()
+	inventory.GlobalEffectBaselineObservedAt = time.Time{}
+	inventory.GlobalEffectBaselineGeneration = 0
+	changed := gameState.ReplaceEventInventory(inventory)
+	return []string{"events", "event-scores", "global-effects"}, changed, nil
+}
+
+func invalidateGlobalEffectBaseline(gameState *State.GameState) bool {
+	if gameState == nil {
+		return false
+	}
+	inventory := gameState.EventScores.Inventory
+	if inventory.GlobalEffectBaselineObservedAt.IsZero() && inventory.GlobalEffectBaselineGeneration == 0 {
+		return false
+	}
+	inventory.GlobalEffectBaselineObservedAt = time.Time{}
+	inventory.GlobalEffectBaselineGeneration = 0
+	return gameState.ReplaceEventInventory(inventory)
 }
 
 func reduceGlobalEffectBoosterInfo(

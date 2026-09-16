@@ -178,6 +178,12 @@ func reduceInitialState(
 		}
 		changed = changed || updated
 	}
+	if raw, found := root["tei"]; found {
+		updated, err := applyGlobalEffectTriggerSnapshot(raw, frame.ReceivedAt, gameState, true)
+		if err == nil {
+			changed = changed || updated
+		}
+	}
 	for section, field := range map[string]string{"gmu": "MP", "ufa": "CF", "ufp": "CFP"} {
 		if raw := root[section]; len(raw) > 0 {
 			updated, err := applyPlayerMetric(raw, field, section, gameState)
@@ -222,7 +228,7 @@ func reduceInitialState(
 	}
 	domains := []string{
 		"player", "castles", "resources", "currencies", "alliance", "commanders", "castellans",
-		"equipment", "generals", "general-skills", "reports", "subscriptions", "market", "kingdom-transport", "production", "events", "event-scores", "achievements", "legend-skills",
+		"equipment", "generals", "general-skills", "reports", "subscriptions", "market", "kingdom-transport", "production", "events", "event-scores", "global-effects", "achievements", "legend-skills",
 		"attacks",
 	}
 	if accountChanged {
@@ -258,8 +264,9 @@ func applyGlobalEffectGBDAuthority(
 	observedAt := frame.ReceivedAt.UTC()
 	inventory.GlobalEffectReadObservedAt = observedAt
 	inventory.GlobalEffectReadGeneration = gameState.Session.ConnectionGeneration
+	_, triggerValid := decodeGlobalEffectTriggerSnapshot(root["tei"], observedAt, inventory.GlobalEffects)
 	_, bieValid := decodeGlobalEffectBoosterIDs(root["bie"])
-	complete := len(root["sei"]) > 0 && len(root["gcu"]) > 0 && bieValid == nil && gameData != nil
+	complete := triggerValid == nil && len(root["gcu"]) > 0 && bieValid == nil && gameData != nil
 	if complete {
 		resourceID, found := gameData.ResourceIDForJSONKey("C2")
 		observation := gameState.Player.ResourceObservations[State.ResourceID(resourceID)]
