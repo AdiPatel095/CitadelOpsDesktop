@@ -907,6 +907,15 @@ export interface EquipmentLoadoutV2 {
 	gems: Record<string, number>;
 	effects: EquipmentEffectTotalV2[];
 	score: number;
+	extractionCost: EquipmentExtractionCostV2;
+}
+
+export interface EquipmentExtractionCostV2 {
+	rubyExtractionCount: number;
+	maximumRubySpend: number;
+	relicExtractionCount: number;
+	socketInsertionCount: number;
+	fingerprint: string;
 }
 
 export interface EquipmentOptimizeResponse {

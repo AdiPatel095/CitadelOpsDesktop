@@ -25,10 +25,11 @@ type EffectTotal struct {
 }
 
 type Loadout struct {
-	Equipment map[string]State.EquipmentInstanceID `json:"equipment"`
-	Gems      map[string]State.GemInstanceID       `json:"gems"`
-	Effects   []EffectTotal                        `json:"effects"`
-	Score     float64                              `json:"score"`
+	Equipment      map[string]State.EquipmentInstanceID `json:"equipment"`
+	Gems           map[string]State.GemInstanceID       `json:"gems"`
+	Effects        []EffectTotal                        `json:"effects"`
+	Score          float64                              `json:"score"`
+	ExtractionCost ExtractionQuote                      `json:"extractionCost"`
 }
 
 type CandidateCounts struct {

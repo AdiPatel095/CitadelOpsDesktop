@@ -1,4 +1,4 @@
-import type { EquipmentInstanceV2, GameStateV2, GemInstanceV2 } from '../../api/Contracts';
+import type { EquipmentExtractionCostV2, EquipmentInstanceV2, GameStateV2, GemInstanceV2 } from '../../api/Contracts';
 import type { EquipmentPriorityGroup, EquipmentPriorityProfile } from './EquipmentOptimizerState';
 import type { EquipmentLeader } from './EquipmentTypes';
 
@@ -41,6 +41,17 @@ export function equipmentOptimizerEffectSummary(
 		const value = effect.values.at(-1);
 		return value == null || !Number.isFinite(value) ? name : `${name} ${value > 0 ? '+' : ''}${value.toLocaleString(undefined, { maximumFractionDigits: 1 })}`;
 	}).join(' · ');
+}
+
+export function equipmentExtractionApplyLabel(alternative: number, cost: EquipmentExtractionCostV2): string {
+	return `Apply Alternative ${alternative} · up to ${cost.maximumRubySpend.toLocaleString()} rubies`;
+}
+
+export function equipmentExtractionCostNotices(cost: EquipmentExtractionCostV2): string[] {
+	const notices = [`${cost.rubyExtractionCount.toLocaleString()} ordinary gem extraction${cost.rubyExtractionCount === 1 ? '' : 's'} · up to ${cost.maximumRubySpend.toLocaleString()} rubies`];
+	if (cost.socketInsertionCount > 0) notices.push('Coin socketing costs also apply.');
+	if (cost.relicExtractionCount > 0) notices.push('Relic gem extraction costs also apply in relic fragments.');
+	return notices;
 }
 
 export function equipmentOptimizerSnapshotKey(

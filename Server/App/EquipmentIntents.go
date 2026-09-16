@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -11,6 +12,7 @@ import (
 
 	EquipmentDomain "CitadelDesktop/Server/Equipment"
 	"CitadelDesktop/Server/Intent"
+	"CitadelDesktop/Server/Outbound"
 	"CitadelDesktop/Server/Protocol"
 	"CitadelDesktop/Server/State"
 )
@@ -18,6 +20,7 @@ import (
 const (
 	maxEquipmentUpgradeLevel  = 50
 	defaultEquipmentStepDelay = 50
+	equipmentRubyFreshness    = 2 * time.Minute
 )
 
 var baseEquipmentSlots = []int{1, 2, 3, 4, 6}
@@ -41,6 +44,50 @@ type equipmentReconfigureVerification struct {
 	LeaderID   int64                                          `json:"leaderId"`
 	Equipment  map[string]State.EquipmentInstanceID           `json:"equipment"`
 	Gems       map[string]equipmentReconfigureGemVerification `json:"gems"`
+}
+
+type equipmentReconfigureRequest struct {
+	LeaderKind          string                               `json:"leaderKind"`
+	LeaderID            int64                                `json:"leaderId"`
+	CombatMode          string                               `json:"combatMode,omitempty"`
+	SnapshotFingerprint string                               `json:"snapshotFingerprint,omitempty"`
+	QuoteFingerprint    string                               `json:"quoteFingerprint,omitempty"`
+	MaximumRubySpend    int64                                `json:"maximumRubySpend,omitempty"`
+	Equipment           map[string]State.EquipmentInstanceID `json:"equipment"`
+	Gems                map[string]State.GemInstanceID       `json:"gems"`
+}
+
+type equipmentExtractionDispatch struct {
+	Request                      equipmentReconfigureRequest     `json:"request"`
+	InitialQuote                 EquipmentDomain.ExtractionQuote `json:"initialQuote"`
+	GemID                        State.GemInstanceID             `json:"gemId"`
+	CarrierID                    State.EquipmentInstanceID       `json:"carrierId"`
+	RubyCost                     int64                           `json:"rubyCost"`
+	ExpectedRemainingRubySpend   int64                           `json:"expectedRemainingRubySpend"`
+	ExpectedConnectionGeneration uint64                          `json:"expectedConnectionGeneration"`
+	ExpectedCatalogDigest        string                          `json:"expectedCatalogDigest"`
+	RubyResourceID               State.ResourceID                `json:"rubyResourceId"`
+	PlanningRubyObservedAt       time.Time                       `json:"planningRubyObservedAt"`
+	RequireNewRubyObservation    bool                            `json:"requireNewRubyObservation,omitempty"`
+	RemainingPaidExtractions     []equipmentPaidExtraction       `json:"remainingPaidExtractions"`
+}
+
+type equipmentPaidExtraction struct {
+	GemID        State.GemInstanceID       `json:"gemId"`
+	CarrierID    State.EquipmentInstanceID `json:"carrierId"`
+	DefinitionID State.GemID               `json:"definitionId"`
+	Level        int                       `json:"level"`
+	RubyCost     int64                     `json:"rubyCost"`
+}
+
+type equipmentFreeExtractionDispatch struct {
+	LeaderKind            string                    `json:"leaderKind"`
+	LeaderID              int64                     `json:"leaderId"`
+	GemID                 State.GemInstanceID       `json:"gemId"`
+	CarrierID             State.EquipmentInstanceID `json:"carrierId"`
+	DefinitionID          State.GemID               `json:"definitionId"`
+	Level                 int                       `json:"level"`
+	ExpectedCatalogDigest string                    `json:"expectedCatalogDigest"`
 }
 
 func planEquipmentRefresh(_ context.Context, _ Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
@@ -282,16 +329,12 @@ func planEquipmentSwap(_ context.Context, input Intent.PlanningContext, argument
 }
 
 func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
-	var request struct {
-		LeaderKind          string                               `json:"leaderKind"`
-		LeaderID            int64                                `json:"leaderId"`
-		CombatMode          string                               `json:"combatMode,omitempty"`
-		SnapshotFingerprint string                               `json:"snapshotFingerprint,omitempty"`
-		Equipment           map[string]State.EquipmentInstanceID `json:"equipment"`
-		Gems                map[string]State.GemInstanceID       `json:"gems"`
-	}
+	var request equipmentReconfigureRequest
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Plan{}, err
+	}
+	if request.MaximumRubySpend < 0 {
+		return Intent.Plan{}, fmt.Errorf("maximumRubySpend cannot be negative")
 	}
 	leader, err := resolveLeader(input.State, request.LeaderKind, request.LeaderID)
 	if err != nil {
@@ -400,54 +443,50 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 		}
 	}
 
-	// Index current sockets once. The previous planner scanned every stored gem
-	// for each target slot, then rebuilt every equipment slot even when the
-	// preview already matched it.
-	gemsByEquipment := make(map[State.EquipmentInstanceID]State.GemInstance, len(input.State.Inventory.Gems))
-	for _, gem := range input.State.Inventory.Gems {
-		if gem.EquipmentInstanceID > 0 {
-			gemsByEquipment[gem.EquipmentInstanceID] = gem
-		}
+	transition, err := EquipmentDomain.BuildReconfigurationTransition(
+		input.State, leader.equipment, request.Equipment, request.Gems,
+	)
+	if err != nil {
+		return Intent.Plan{}, err
 	}
-	alreadyAttached := map[int]bool{}
-	gemsToDetach := map[State.GemInstanceID]State.GemInstance{}
-	for slot := 1; slot <= 4; slot++ {
-		gemID := request.Gems[strconv.Itoa(slot)]
-		destinationEquipmentID := request.Equipment[strconv.Itoa(slot)]
-		if attached, found := gemsByEquipment[destinationEquipmentID]; found && attached.ID != gemID {
-			gemsToDetach[attached.ID] = attached
-		}
-		if gemID == 0 {
-			continue
-		}
-		gem := input.State.Inventory.Gems[gemID]
-		if gem.EquipmentInstanceID == destinationEquipmentID {
-			alreadyAttached[slot] = true
-			continue
-		}
-		if gem.EquipmentInstanceID > 0 {
-			gemsToDetach[gem.ID] = gem
-		}
-	}
-
-	// Clear only slots that change. A detached gem can require an otherwise
-	// retained slot to be temporarily clear so its carrier can be mounted.
-	clearSlots := map[int]bool{}
-	detachCarrierCounts := map[int]int{}
-	for _, slot := range baseEquipmentSlots {
-		if leader.equipment[strconv.Itoa(slot)] != request.Equipment[strconv.Itoa(slot)] {
-			clearSlots[slot] = true
-		}
-	}
-	for _, gem := range gemsToDetach {
+	for _, gem := range transition.GemsToDetach {
 		parent, found := input.State.Inventory.Equipment[gem.EquipmentInstanceID]
 		if !found || parent.WearerKind != "" && (parent.WearerKind != leader.kind || parent.WearerID != leader.id) {
 			return Intent.Plan{}, fmt.Errorf("cannot detach gem %d from unavailable equipment %d", gem.ID, gem.EquipmentInstanceID)
 		}
-		parentSlot := strconv.Itoa(parent.Slot)
-		detachCarrierCounts[parent.Slot]++
-		if leader.equipment[parentSlot] == request.Equipment[parentSlot] && request.Equipment[parentSlot] != parent.ID {
-			clearSlots[parent.Slot] = true
+		if parent.Extraction != nil && parent.Extraction.GemID == gem.ID {
+			return Intent.Plan{}, fmt.Errorf("%w: gem %d has an unresolved prior ruby extraction attempt", Intent.ErrPlanStale, gem.ID)
+		}
+	}
+	quote, err := EquipmentDomain.QuoteReconfiguration(input.GameData, transition)
+	if err != nil {
+		return Intent.Plan{}, err
+	}
+	expectedQuoteFingerprint := EquipmentDomain.ReconfigurationQuoteFingerprint(
+		request.SnapshotFingerprint, request.Equipment, request.Gems, quote,
+	)
+	if request.QuoteFingerprint != "" && request.QuoteFingerprint != expectedQuoteFingerprint {
+		return Intent.Plan{}, fmt.Errorf("%w: the selected alternative or extraction quote changed", Intent.ErrPlanStale)
+	}
+	if quote.MaximumRubySpend > request.MaximumRubySpend {
+		return Intent.Plan{}, fmt.Errorf("ruby extraction quote %d exceeds approved maximumRubySpend %d", quote.MaximumRubySpend, request.MaximumRubySpend)
+	}
+	var rubyResourceID State.ResourceID
+	var planningRubyObservedAt time.Time
+	if quote.MaximumRubySpend > 0 {
+		if request.SnapshotFingerprint == "" || request.QuoteFingerprint == "" {
+			return Intent.Plan{}, fmt.Errorf("paid gem extraction requires the exact preview fingerprint and quote")
+		}
+		resourceID, found := input.GameData.ResourceIDForJSONKey("C2")
+		if !found || resourceID <= 0 {
+			return Intent.Plan{}, fmt.Errorf("official ruby resource is unavailable")
+		}
+		rubyResourceID = State.ResourceID(resourceID)
+		planningRubyObservedAt, err = validateEquipmentRubyAuthority(
+			input.State, rubyResourceID, quote.MaximumRubySpend, time.Now().UTC(), time.Time{},
+		)
+		if err != nil {
+			return Intent.Plan{}, err
 		}
 	}
 
@@ -458,7 +497,7 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 		if id <= 0 {
 			continue
 		}
-		if !clearSlots[slot] {
+		if !transition.ClearSlots[slot] {
 			mountedBySlot[slot] = id
 			continue
 		}
@@ -470,13 +509,36 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 		step := commandStep(fmt.Sprintf("Clear equipment slot %d", slot), "eeq", payload, "eeq")
 		steps = append(steps, step)
 	}
-	detachIDs := make([]State.GemInstanceID, 0, len(gemsToDetach))
-	for id := range gemsToDetach {
+	detachIDs := make([]State.GemInstanceID, 0, len(transition.GemsToDetach))
+	for id := range transition.GemsToDetach {
 		detachIDs = append(detachIDs, id)
 	}
 	sort.Slice(detachIDs, func(left, right int) bool { return detachIDs[left] < detachIDs[right] })
+	paidExtractions := make([]equipmentPaidExtraction, 0, quote.RubyExtractionCount)
 	for _, gemID := range detachIDs {
-		gem := gemsToDetach[gemID]
+		gem := transition.GemsToDetach[gemID]
+		if EquipmentDomain.GemFamily(gem) != EquipmentDomain.LoadoutFamilyOrdinary {
+			continue
+		}
+		rubyCost, costErr := EquipmentDomain.NormalGemRemovalCost(input.GameData, gem)
+		if costErr != nil {
+			return Intent.Plan{}, costErr
+		}
+		if rubyCost > 0 {
+			paidExtractions = append(paidExtractions, equipmentPaidExtraction{
+				GemID: gem.ID, CarrierID: gem.EquipmentInstanceID, DefinitionID: gem.DefinitionID,
+				Level: gem.Level, RubyCost: rubyCost,
+			})
+		}
+	}
+	remainingRubySpend := quote.MaximumRubySpend
+	paidExtractionIndex := 0
+	catalogDigest := ""
+	if input.GameData != nil {
+		catalogDigest = input.GameData.Metadata().DigestSHA256
+	}
+	for _, gemID := range detachIDs {
+		gem := transition.GemsToDetach[gemID]
 		parent := input.State.Inventory.Equipment[gem.EquipmentInstanceID]
 		if mountedBySlot[parent.Slot] != parent.ID {
 			if mountedBySlot[parent.Slot] != 0 {
@@ -496,8 +558,55 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 			LeaderID    int64                     `json:"LID"`
 		}{parent.ID, leader.id})
 		detachStep := commandStep(fmt.Sprintf("Detach gem %d", gem.ID), "ege", detachPayload, "ege")
-		steps = append(steps, detachStep)
-		if request.Equipment[strconv.Itoa(parent.Slot)] == parent.ID && detachCarrierCounts[parent.Slot] == 1 {
+		if EquipmentDomain.GemFamily(gem) == EquipmentDomain.LoadoutFamilyOrdinary {
+			rubyCost, costErr := EquipmentDomain.NormalGemRemovalCost(input.GameData, gem)
+			if costErr != nil {
+				return Intent.Plan{}, costErr
+			}
+			if rubyCost > 0 {
+				if paidExtractionIndex >= len(paidExtractions) || paidExtractions[paidExtractionIndex].GemID != gem.ID {
+					return Intent.Plan{}, fmt.Errorf("paid extraction schedule changed while planning gem %d", gem.ID)
+				}
+				dispatch := equipmentExtractionDispatch{
+					Request: request, InitialQuote: quote, GemID: gem.ID, CarrierID: parent.ID,
+					RubyCost: rubyCost, ExpectedRemainingRubySpend: remainingRubySpend,
+					ExpectedConnectionGeneration: input.State.Session.ConnectionGeneration,
+					ExpectedCatalogDigest:        catalogDigest, RubyResourceID: rubyResourceID,
+					PlanningRubyObservedAt:    planningRubyObservedAt,
+					RequireNewRubyObservation: paidExtractionIndex > 0,
+					RemainingPaidExtractions:  append([]equipmentPaidExtraction(nil), paidExtractions[paidExtractionIndex:]...),
+				}
+				dispatchArguments, encodeErr := json.Marshal(dispatch)
+				if encodeErr != nil {
+					return Intent.Plan{}, fmt.Errorf("encode ruby extraction guard: %w", encodeErr)
+				}
+				detachStep.PreDispatchAction, detachStep.PreDispatchArguments = "equipment.reconfigure.extraction.arm", dispatchArguments
+				detachStep.FinalDispatchAction, detachStep.FinalDispatchArguments = "equipment.reconfigure.extraction.dispatch", dispatchArguments
+				detachStep.DefinitiveSendFailureAction, detachStep.DefinitiveSendFailureArguments = "equipment.reconfigure.extraction.disarm", dispatchArguments
+				detachStep.DefinitiveResponseFailureAction, detachStep.DefinitiveResponseFailureArguments = "equipment.reconfigure.extraction.reject", dispatchArguments
+				detachStep.ResponseProjectionFailureIndeterminate = true
+				steps = append(steps, detachStep, Intent.Step{
+					Name: "Confirm paid gem extraction", Action: "equipment.reconfigure.extraction.confirm", ActionArguments: dispatchArguments,
+				})
+				remainingRubySpend -= rubyCost
+				paidExtractionIndex++
+			} else {
+				dispatchArguments, encodeErr := json.Marshal(equipmentFreeExtractionDispatch{
+					LeaderKind: request.LeaderKind, LeaderID: request.LeaderID,
+					GemID: gem.ID, CarrierID: parent.ID, DefinitionID: gem.DefinitionID, Level: gem.Level,
+					ExpectedCatalogDigest: catalogDigest,
+				})
+				if encodeErr != nil {
+					return Intent.Plan{}, fmt.Errorf("encode free extraction guard: %w", encodeErr)
+				}
+				detachStep.FinalDispatchAction = "equipment.reconfigure.extraction.free.dispatch"
+				detachStep.FinalDispatchArguments = dispatchArguments
+				steps = append(steps, detachStep)
+			}
+		} else {
+			steps = append(steps, detachStep)
+		}
+		if request.Equipment[strconv.Itoa(parent.Slot)] == parent.ID && transition.DetachCarrierCount[parent.Slot] == 1 {
 			continue
 		}
 		unequipPayload, _ := json.Marshal(struct {
@@ -532,7 +641,7 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 	}
 	for slot := 1; slot <= 4; slot++ {
 		gemID := request.Gems[strconv.Itoa(slot)]
-		if gemID == 0 || alreadyAttached[slot] {
+		if gemID == 0 || transition.AlreadyAttached[slot] {
 			continue
 		}
 		gem := input.State.Inventory.Gems[gemID]
@@ -560,8 +669,12 @@ func planEquipmentReconfigure(_ context.Context, input Intent.PlanningContext, a
 	steps = append(steps, Intent.Step{
 		Name: "Verify optimized loadout", Action: "equipment.reconfigure.verify", ActionArguments: verificationArguments,
 	})
+	claims := equipmentLeaderClaims(leader)
+	if quote.MaximumRubySpend > 0 {
+		claims = append(claims, "currency:"+strconv.FormatInt(int64(rubyResourceID), 10))
+	}
 	return Intent.Plan{
-		Claims:  equipmentLeaderClaims(leader),
+		Claims:  claims,
 		Summary: fmt.Sprintf("Apply optimized loadout to %s %d", leader.kind, leader.id), Steps: steps,
 	}, nil
 }
@@ -602,6 +715,271 @@ func (application *Application) verifyEquipmentReconfigure(_ context.Context, ar
 		}
 	}
 	return nil
+}
+
+func (application *Application) validateFreeEquipmentExtractionDispatch(_ context.Context, raw json.RawMessage) error {
+	var arguments equipmentFreeExtractionDispatch
+	if err := decodeIntentArguments(raw, &arguments); err != nil {
+		return err
+	}
+	if application == nil || application.State == nil || application.GameData == nil {
+		return fmt.Errorf("equipment extraction state is unavailable")
+	}
+	gameData, ready := application.GameData.Current()
+	if !ready || gameData == nil {
+		return fmt.Errorf("official game data is unavailable")
+	}
+	if arguments.ExpectedCatalogDigest == "" || gameData.Metadata().DigestSHA256 != arguments.ExpectedCatalogDigest {
+		return fmt.Errorf("%w: official gem removal prices changed", Intent.ErrPlanStale)
+	}
+	gameState := application.State.ReadOnlyView()
+	leader, err := resolveLeader(gameState, arguments.LeaderKind, arguments.LeaderID)
+	if err != nil {
+		return err
+	}
+	if !leader.available {
+		return fmt.Errorf("%w: commander became unavailable before gem extraction", Intent.ErrPlanStale)
+	}
+	gem, found := gameState.Inventory.Gems[arguments.GemID]
+	if !found || gem.EquipmentInstanceID != arguments.CarrierID || gem.DefinitionID != arguments.DefinitionID ||
+		gem.Level != arguments.Level || EquipmentDomain.GemFamily(gem) != EquipmentDomain.LoadoutFamilyOrdinary {
+		return fmt.Errorf("%w: normal gem %d is no longer on carrier %d", Intent.ErrPlanStale, arguments.GemID, arguments.CarrierID)
+	}
+	carrier, found := gameState.Inventory.Equipment[arguments.CarrierID]
+	if !found || carrier.WearerKind != leader.kind || carrier.WearerID != leader.id ||
+		leader.equipment[strconv.Itoa(carrier.Slot)] != carrier.ID {
+		return fmt.Errorf("%w: gem carrier %d is not mounted on the selected leader", Intent.ErrPlanStale, arguments.CarrierID)
+	}
+	cost, costErr := EquipmentDomain.NormalGemRemovalCost(gameData, gem)
+	if costErr != nil || cost != 0 {
+		return fmt.Errorf("%w: official removal price changed for gem %d", Intent.ErrPlanStale, gem.ID)
+	}
+	return nil
+}
+
+func validateEquipmentRubyAuthority(
+	gameState State.GameState,
+	resourceID State.ResourceID,
+	required int64,
+	now time.Time,
+	requireAfter time.Time,
+) (time.Time, error) {
+	if resourceID <= 0 || required < 0 {
+		return time.Time{}, fmt.Errorf("ruby extraction authority is invalid")
+	}
+	if !gameState.Session.LoggedIn || !gameState.Session.SocketReady || gameState.Session.ConnectionGeneration == 0 {
+		return time.Time{}, fmt.Errorf("%w: game session is unavailable for ruby extraction", Intent.ErrPlanStale)
+	}
+	observation, found := gameState.Player.ResourceObservations[resourceID]
+	if !found || observation.ObservedAt.IsZero() || observation.ConnectionGeneration != gameState.Session.ConnectionGeneration ||
+		!gameState.Session.ChangedAt.IsZero() && observation.ObservedAt.Before(gameState.Session.ChangedAt) ||
+		observation.ObservedAt.After(now.Add(5*time.Second)) || now.Sub(observation.ObservedAt) > equipmentRubyFreshness ||
+		!requireAfter.IsZero() && !observation.ObservedAt.After(requireAfter) {
+		return time.Time{}, fmt.Errorf("%w: a fresh current-session ruby balance is unavailable", Intent.ErrPlanStale)
+	}
+	value, found := gameState.Player.Resources[resourceID]
+	if !found || math.IsNaN(value) || math.IsInf(value, 0) || value < 0 {
+		return time.Time{}, fmt.Errorf("ruby balance is unavailable")
+	}
+	if int64(math.Floor(value)) < required {
+		return time.Time{}, fmt.Errorf("%w: ruby balance cannot cover the remaining %d-ruby extraction ceiling", Intent.ErrPlanStale, required)
+	}
+	return observation.ObservedAt, nil
+}
+
+func (application *Application) validateEquipmentExtractionDispatch(
+	arguments equipmentExtractionDispatch,
+	metadata Outbound.Metadata,
+	requireMarker bool,
+) error {
+	if application == nil || application.State == nil || application.GameData == nil {
+		return fmt.Errorf("equipment extraction state is unavailable")
+	}
+	gameData, ready := application.GameData.Current()
+	if !ready || gameData == nil {
+		return fmt.Errorf("official game data is unavailable")
+	}
+	if arguments.ExpectedCatalogDigest == "" || gameData.Metadata().DigestSHA256 != arguments.ExpectedCatalogDigest {
+		return fmt.Errorf("%w: official gem removal prices changed", Intent.ErrPlanStale)
+	}
+	quote := arguments.InitialQuote
+	quote.Fingerprint = ""
+	expectedQuoteFingerprint := EquipmentDomain.ReconfigurationQuoteFingerprint(
+		arguments.Request.SnapshotFingerprint, arguments.Request.Equipment, arguments.Request.Gems, quote,
+	)
+	if arguments.Request.QuoteFingerprint == "" || arguments.Request.QuoteFingerprint != expectedQuoteFingerprint ||
+		quote.MaximumRubySpend <= 0 || quote.MaximumRubySpend > arguments.Request.MaximumRubySpend {
+		return fmt.Errorf("%w: selected extraction quote is no longer authorized", Intent.ErrPlanStale)
+	}
+	if len(arguments.RemainingPaidExtractions) == 0 ||
+		arguments.RemainingPaidExtractions[0].GemID != arguments.GemID ||
+		arguments.RemainingPaidExtractions[0].CarrierID != arguments.CarrierID ||
+		arguments.RemainingPaidExtractions[0].RubyCost != arguments.RubyCost {
+		return fmt.Errorf("%w: paid extraction schedule changed", Intent.ErrPlanStale)
+	}
+	gameState := application.State.ReadOnlyView()
+	if arguments.ExpectedConnectionGeneration == 0 || gameState.Session.ConnectionGeneration != arguments.ExpectedConnectionGeneration {
+		return fmt.Errorf("%w: game session changed before ruby extraction", Intent.ErrPlanStale)
+	}
+	leader, err := resolveLeader(gameState, arguments.Request.LeaderKind, arguments.Request.LeaderID)
+	if err != nil {
+		return err
+	}
+	if !leader.available {
+		return fmt.Errorf("%w: commander became unavailable before ruby extraction", Intent.ErrPlanStale)
+	}
+	remaining := int64(0)
+	for index, expected := range arguments.RemainingPaidExtractions {
+		gem, found := gameState.Inventory.Gems[expected.GemID]
+		if !found || gem.EquipmentInstanceID != expected.CarrierID || gem.DefinitionID != expected.DefinitionID ||
+			gem.Level != expected.Level || EquipmentDomain.GemFamily(gem) != EquipmentDomain.LoadoutFamilyOrdinary {
+			return fmt.Errorf("%w: normal gem %d is no longer on carrier %d", Intent.ErrPlanStale, expected.GemID, expected.CarrierID)
+		}
+		carrier, found := gameState.Inventory.Equipment[expected.CarrierID]
+		if !found {
+			return fmt.Errorf("%w: gem carrier %d is unavailable", Intent.ErrPlanStale, expected.CarrierID)
+		}
+		if index == 0 {
+			if carrier.WearerKind != leader.kind || carrier.WearerID != leader.id ||
+				leader.equipment[strconv.Itoa(carrier.Slot)] != carrier.ID {
+				return fmt.Errorf("%w: current gem carrier %d is not mounted on the selected leader", Intent.ErrPlanStale, expected.CarrierID)
+			}
+		} else if carrier.WearerKind != "" && (carrier.WearerKind != leader.kind || carrier.WearerID != leader.id) {
+			return fmt.Errorf("%w: future gem carrier %d is unavailable", Intent.ErrPlanStale, expected.CarrierID)
+		}
+		cost, costErr := EquipmentDomain.NormalGemRemovalCost(gameData, gem)
+		if costErr != nil || cost != expected.RubyCost || remaining > math.MaxInt64-cost {
+			return fmt.Errorf("%w: official removal price changed for gem %d", Intent.ErrPlanStale, gem.ID)
+		}
+		remaining += cost
+	}
+	if remaining != arguments.ExpectedRemainingRubySpend || remaining <= 0 {
+		return fmt.Errorf("%w: remaining ruby extraction quote changed", Intent.ErrPlanStale)
+	}
+	currentCarrier := gameState.Inventory.Equipment[arguments.CarrierID]
+	operationID := strings.TrimSpace(metadata.OperationID)
+	responseToken := strings.TrimSpace(metadata.ResponseToken)
+	if operationID == "" {
+		return fmt.Errorf("ruby extraction operation identity is unavailable")
+	}
+	if requireMarker {
+		expected := arguments.RemainingPaidExtractions[0]
+		marker := currentCarrier.Extraction
+		if marker == nil || marker.GemID != arguments.GemID || marker.RubyCost != arguments.RubyCost ||
+			marker.DefinitionID != expected.DefinitionID || marker.Level != expected.Level ||
+			marker.OperationID != operationID || marker.ConnectionGeneration != arguments.ExpectedConnectionGeneration ||
+			marker.ResponseToken != responseToken {
+			return fmt.Errorf("%w: ruby extraction dispatch marker changed", Intent.ErrPlanStale)
+		}
+	} else if currentCarrier.Extraction != nil {
+		return fmt.Errorf("%w: gem %d has an unresolved prior ruby extraction attempt", Intent.ErrPlanStale, arguments.GemID)
+	}
+	requireAfter := time.Time{}
+	if arguments.RequireNewRubyObservation {
+		requireAfter = arguments.PlanningRubyObservedAt
+	}
+	_, err = validateEquipmentRubyAuthority(gameState, arguments.RubyResourceID, remaining, time.Now().UTC(), requireAfter)
+	return err
+}
+
+func (application *Application) armEquipmentExtraction(ctx context.Context, raw json.RawMessage) error {
+	var arguments equipmentExtractionDispatch
+	if err := decodeIntentArguments(raw, &arguments); err != nil {
+		return err
+	}
+	metadata := Outbound.MetadataFromContext(ctx)
+	if err := application.validateEquipmentExtractionDispatch(arguments, metadata, false); err != nil {
+		return err
+	}
+	operationID, responseToken := strings.TrimSpace(metadata.OperationID), strings.TrimSpace(metadata.ResponseToken)
+	now := time.Now().UTC()
+	event, err := application.State.ApplyComponents(State.Components(State.ComponentInventory), func(gameState *State.GameState) ([]string, bool, error) {
+		carrier, found := gameState.Inventory.Equipment[arguments.CarrierID]
+		gem, gemFound := gameState.Inventory.Gems[arguments.GemID]
+		if !found || !gemFound || gem.EquipmentInstanceID != carrier.ID || carrier.Extraction != nil {
+			return nil, false, fmt.Errorf("%w: gem carrier changed before ruby extraction", Intent.ErrPlanStale)
+		}
+		carrier.Extraction = &State.GemExtractionAttempt{
+			GemID: arguments.GemID, DefinitionID: arguments.RemainingPaidExtractions[0].DefinitionID,
+			Level: arguments.RemainingPaidExtractions[0].Level, RubyCost: arguments.RubyCost, OperationID: operationID,
+			ResponseToken: responseToken, ConnectionGeneration: arguments.ExpectedConnectionGeneration, ArmedAt: now,
+		}
+		gameState.SetInventoryEquipment(carrier.ID, carrier)
+		return []string{"inventory", "equipment"}, true, nil
+	})
+	if err != nil {
+		return err
+	}
+	return application.saveStateEvent(ctx, event)
+}
+
+func (application *Application) finalizeEquipmentExtractionDispatch(ctx context.Context, raw json.RawMessage) error {
+	var arguments equipmentExtractionDispatch
+	if err := decodeIntentArguments(raw, &arguments); err != nil {
+		return err
+	}
+	metadata := Outbound.MetadataFromContext(ctx)
+	if err := application.validateEquipmentExtractionDispatch(arguments, metadata, true); err != nil {
+		return err
+	}
+	operationID := strings.TrimSpace(metadata.OperationID)
+	now := time.Now().UTC()
+	event, err := application.State.ApplyComponents(State.Components(State.ComponentInventory), func(gameState *State.GameState) ([]string, bool, error) {
+		carrier := gameState.Inventory.Equipment[arguments.CarrierID]
+		if carrier.Extraction == nil || carrier.Extraction.OperationID != operationID {
+			return nil, false, fmt.Errorf("%w: ruby extraction dispatch marker changed", Intent.ErrPlanStale)
+		}
+		if !carrier.Extraction.DispatchedAt.IsZero() {
+			return nil, false, nil
+		}
+		marker := *carrier.Extraction
+		marker.DispatchedAt = now
+		carrier.Extraction = &marker
+		gameState.SetInventoryEquipment(carrier.ID, carrier)
+		return []string{"inventory", "equipment"}, true, nil
+	})
+	if err != nil {
+		return err
+	}
+	return application.saveStateEvent(ctx, event)
+}
+
+func (application *Application) disarmEquipmentExtraction(ctx context.Context, raw json.RawMessage) error {
+	return application.clearEquipmentExtractionMarker(ctx, raw, false)
+}
+
+func (application *Application) rejectEquipmentExtraction(ctx context.Context, raw json.RawMessage) error {
+	return application.clearEquipmentExtractionMarker(ctx, raw, false)
+}
+
+func (application *Application) confirmEquipmentExtraction(ctx context.Context, raw json.RawMessage) error {
+	return application.clearEquipmentExtractionMarker(ctx, raw, true)
+}
+
+func (application *Application) clearEquipmentExtractionMarker(ctx context.Context, raw json.RawMessage, requireDetached bool) error {
+	var arguments equipmentExtractionDispatch
+	if err := decodeIntentArguments(raw, &arguments); err != nil {
+		return err
+	}
+	operationID := strings.TrimSpace(Outbound.MetadataFromContext(ctx).OperationID)
+	event, err := application.State.ApplyComponents(State.Components(State.ComponentInventory), func(gameState *State.GameState) ([]string, bool, error) {
+		carrier, found := gameState.Inventory.Equipment[arguments.CarrierID]
+		if !found || carrier.Extraction == nil || carrier.Extraction.OperationID != operationID {
+			return nil, false, nil
+		}
+		if requireDetached {
+			if gem, gemFound := gameState.Inventory.Gems[arguments.GemID]; gemFound && gem.EquipmentInstanceID == carrier.ID {
+				return nil, false, fmt.Errorf("%w: paid gem extraction was not authoritatively observed", Intent.ErrPlanStale)
+			}
+		}
+		carrier.Extraction = nil
+		gameState.SetInventoryEquipment(carrier.ID, carrier)
+		return []string{"inventory", "equipment"}, true, nil
+	})
+	if err != nil {
+		return err
+	}
+	return application.saveStateEvent(ctx, event)
 }
 
 func cloneEquipmentSelection(source map[string]State.EquipmentInstanceID) map[string]State.EquipmentInstanceID {

@@ -194,7 +194,17 @@ func Optimize(gameState State.GameState, gameData *GameData.Store, request Optim
 			continue
 		}
 		seenAssignments[assignmentKey] = struct{}{}
-		alternatives = append(alternatives, buildLoadout(gameState, proposedEquipment, proposedGems, priorities, rules))
+		transition, transitionErr := BuildReconfigurationTransition(gameState, currentEquipment, proposedEquipment, proposedGems)
+		if transitionErr != nil {
+			return OptimizeResponse{}, transitionErr
+		}
+		quote, quoteErr := QuoteReconfiguration(gameData, transition)
+		if quoteErr != nil {
+			return OptimizeResponse{}, quoteErr
+		}
+		loadout := buildLoadout(gameState, proposedEquipment, proposedGems, priorities, rules)
+		loadout.ExtractionCost = quote
+		alternatives = append(alternatives, loadout)
 		if len(alternatives) == request.ResultCount {
 			break
 		}
@@ -205,6 +215,12 @@ func Optimize(gameState State.GameState, gameData *GameData.Store, request Optim
 	fingerprint, err := SnapshotFingerprint(gameState, gameData, request.LeaderKind, request.LeaderID, request.CombatMode)
 	if err != nil {
 		return OptimizeResponse{}, err
+	}
+	for index := range alternatives {
+		alternative := &alternatives[index]
+		alternative.ExtractionCost.Fingerprint = ReconfigurationQuoteFingerprint(
+			fingerprint, alternative.Equipment, alternative.Gems, alternative.ExtractionCost,
+		)
 	}
 	return OptimizeResponse{
 		LeaderKind: request.LeaderKind, LeaderID: request.LeaderID, StateRevision: gameState.Revision,

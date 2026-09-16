@@ -1319,6 +1319,10 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 		clone.Inventory.Equipment = make(map[EquipmentInstanceID]EquipmentInstance, len(source.Inventory.Equipment))
 		for id, item := range source.Inventory.Equipment {
 			item.Effects = cloneEquipmentEffects(item.Effects)
+			if item.Extraction != nil {
+				extraction := *item.Extraction
+				item.Extraction = &extraction
+			}
 			clone.Inventory.Equipment[id] = item
 		}
 		clone.Inventory.Gems = make(map[GemInstanceID]GemInstance, len(source.Inventory.Gems))
