@@ -154,10 +154,16 @@ func TestFortressAttackEngineFinalizesOnlyWithAuthoritativeMovement(t *testing.T
 			})
 			committedIndex := slices.Index(sender.events, "gaa:committed")
 			guardIndex := slices.Index(sender.events, "fortress:guard")
-			adiIndex := slices.Index(sender.events, "adi")
+			abiIndex := slices.Index(sender.events, "abi")
 			craIndex := slices.Index(sender.events, "cra")
-			if committedIndex < 0 || guardIndex <= committedIndex || adiIndex <= guardIndex || craIndex <= adiIndex {
+			if committedIndex < 0 || guardIndex <= committedIndex || abiIndex <= guardIndex || craIndex <= abiIndex || slices.Contains(sender.events, "adi") {
 				t.Fatalf("fortress dispatch order = %v", sender.events)
+			}
+			dialog := stateStore.ReadOnlyView().AttackDialog
+			if dialog.SourceCastleID != 10 || dialog.KingdomID != 1 || dialog.Target.TypeID != State.MapTypeKingdomFortress ||
+				dialog.Target.X != 101 || dialog.Target.Y != 100 || dialog.Target.TowerCooldownRemaining != 0 ||
+				len(dialog.ActiveEffects) != 1 || dialog.ActiveEffects[0].EffectID != 426 {
+				t.Fatalf("ABI attack dialog projection = %#v", dialog)
 			}
 			if projectMovement {
 				if receipt.Status != Intent.StatusSucceeded || sender.craSends != 1 {
@@ -267,6 +273,8 @@ func (sender *fortressEngineSender) Send(ctx context.Context, payload []byte) er
 		responsePayload = json.RawMessage(`{"M":[],"O":[]}`)
 	case "adi":
 		responsePayload = json.RawMessage(`{"KID":1,"SCID":10,"gaa":{"AI":[11,101,100,-1,45,0,-1,0]},"AE":[]}`)
+	case "abi":
+		responsePayload = json.RawMessage(`{"KID":1,"SCID":10,"gaa":{"AI":[11,101,100,-1,45,0,-1,1],"OI":[]},"AE":[[426,[60],"GE"]]}`)
 	case "gas":
 		responsePayload = json.RawMessage(`{"S":[]}`)
 	case "cra":
@@ -355,7 +363,7 @@ func runFortressEngineScenario(
 	return receipt, sender, stateStore
 }
 
-func TestFortressAttackRejectsNonAuthoritativeExactTargetResponsesBeforeADI(t *testing.T) {
+func TestFortressAttackRejectsNonAuthoritativeExactTargetResponsesBeforeABI(t *testing.T) {
 	tests := []struct {
 		name      string
 		payload   json.RawMessage
@@ -387,7 +395,8 @@ func TestFortressAttackRejectsNonAuthoritativeExactTargetResponsesBeforeADI(t *t
 					test.configure(sender, store)
 				}
 			})
-			if receipt.Status == Intent.StatusSucceeded || slices.Contains(sender.opcodes, "adi") || slices.Contains(sender.opcodes, "cra") {
+			if receipt.Status == Intent.StatusSucceeded || slices.Contains(sender.opcodes, "abi") ||
+				slices.Contains(sender.opcodes, "adi") || slices.Contains(sender.opcodes, "cra") {
 				t.Fatalf("unsafe response launched attack: receipt=%+v opcodes=%v", receipt, sender.opcodes)
 			}
 			if test.name == "captured cooldown 84430" {
@@ -405,12 +414,12 @@ func TestFortressAttackRejectsNonAuthoritativeExactTargetResponsesBeforeADI(t *t
 	}
 }
 
-func TestFortressAttackRechecksProofAtQueuedADIAndFinalCRA(t *testing.T) {
-	t.Run("queued ADI projection changed", func(t *testing.T) {
+func TestFortressAttackRechecksProofAtQueuedABIAndFinalCRA(t *testing.T) {
+	t.Run("queued ABI projection changed", func(t *testing.T) {
 		mutated := false
 		receipt, sender, _ := runFortressEngineScenario(t, func(sender *fortressEngineSender, store *State.Store) {
 			sender.beforeFinalDispatch = func(opcode string) error {
-				if opcode != "adi" || mutated {
+				if opcode != "abi" || mutated {
 					return nil
 				}
 				mutated = true
@@ -423,12 +432,13 @@ func TestFortressAttackRechecksProofAtQueuedADIAndFinalCRA(t *testing.T) {
 				return err
 			}
 		})
-		if receipt.Status == Intent.StatusSucceeded || slices.Contains(sender.opcodes, "adi") || slices.Contains(sender.opcodes, "cra") {
-			t.Fatalf("queued ADI used invalidated proof: receipt=%+v opcodes=%v", receipt, sender.opcodes)
+		if receipt.Status == Intent.StatusSucceeded || slices.Contains(sender.opcodes, "abi") ||
+			slices.Contains(sender.opcodes, "adi") || slices.Contains(sender.opcodes, "cra") {
+			t.Fatalf("queued ABI used invalidated proof: receipt=%+v opcodes=%v", receipt, sender.opcodes)
 		}
 	})
 
-	t.Run("queued ADI focus changed", func(t *testing.T) {
+	t.Run("queued ABI focus changed", func(t *testing.T) {
 		mutated := false
 		receipt, sender, _ := runFortressEngineScenario(t, func(sender *fortressEngineSender, store *State.Store) {
 			_, err := store.ApplyComponents(State.Components(State.ComponentCastles), func(gameState *State.GameState) ([]string, bool, error) {
@@ -439,7 +449,7 @@ func TestFortressAttackRechecksProofAtQueuedADIAndFinalCRA(t *testing.T) {
 				t.Fatal(err)
 			}
 			sender.beforeFinalDispatch = func(opcode string) error {
-				if opcode != "adi" || mutated {
+				if opcode != "abi" || mutated {
 					return nil
 				}
 				mutated = true
@@ -451,8 +461,9 @@ func TestFortressAttackRechecksProofAtQueuedADIAndFinalCRA(t *testing.T) {
 				return err
 			}
 		})
-		if receipt.Status == Intent.StatusSucceeded || slices.Contains(sender.opcodes, "adi") || slices.Contains(sender.opcodes, "cra") {
-			t.Fatalf("queued ADI crossed focus change: receipt=%+v opcodes=%v", receipt, sender.opcodes)
+		if receipt.Status == Intent.StatusSucceeded || slices.Contains(sender.opcodes, "abi") ||
+			slices.Contains(sender.opcodes, "adi") || slices.Contains(sender.opcodes, "cra") {
+			t.Fatalf("queued ABI crossed focus change: receipt=%+v opcodes=%v", receipt, sender.opcodes)
 		}
 	})
 
@@ -471,7 +482,8 @@ func TestFortressAttackRechecksProofAtQueuedADIAndFinalCRA(t *testing.T) {
 				return err
 			}
 		})
-		if receipt.Status == Intent.StatusSucceeded || !slices.Contains(sender.opcodes, "adi") || slices.Contains(sender.opcodes, "cra") {
+		if receipt.Status == Intent.StatusSucceeded || !slices.Contains(sender.opcodes, "abi") ||
+			slices.Contains(sender.opcodes, "adi") || slices.Contains(sender.opcodes, "cra") {
 			t.Fatalf("final CRA guard did not stop unavailable target: receipt=%+v opcodes=%v", receipt, sender.opcodes)
 		}
 	})

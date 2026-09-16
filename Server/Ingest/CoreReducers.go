@@ -109,6 +109,7 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"rae", components(State.ComponentInvasion), reduceInvasionFortification},
 		{"rce", components(State.ComponentInvasion), reduceInvasionFortificationCounters},
 		{"adi", worldMap.Union(components(State.ComponentAttackDialog)), reduceAttackDialog},
+		{"abi", worldMap.Union(components(State.ComponentAttackDialog)), reduceBossDungeonAttackDialog},
 		{"gas", components(State.ComponentAttackPresets), reduceAttackPresets},
 		{"sin", components(State.ComponentInventory), reduceStorageInventory},
 		{"gbc", components(State.ComponentInventory), reduceConstructionOffers},

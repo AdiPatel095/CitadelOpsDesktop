@@ -257,6 +257,10 @@ func (application *Application) resolveCRACommandDependencies(
 		}
 		for index := range setup {
 			if setup[index].Opcode == "adi" {
+				setup[index].Name = "Refresh fortress attack-dialog context"
+				setup[index].Opcode = "abi"
+				setup[index].AwaitOpcode = "abi"
+				setup[index].Command.Opcode = "abi"
 				setup[index].FinalDispatchAction = "fortress.target.verification.guard"
 				setup[index].FinalDispatchArguments = append(json.RawMessage(nil), fields.FortressVerification...)
 			}

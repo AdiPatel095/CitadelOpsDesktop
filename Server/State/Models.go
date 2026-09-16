@@ -1966,7 +1966,7 @@ func (cooldown CombatCooldownState) ActiveAt(now time.Time) bool {
 	return !cooldown.Until.IsZero() && now.Before(cooldown.Until)
 }
 
-// AttackDialogState is the current pre-attack context returned by ADI. Its
+// AttackDialogState is the current pre-attack context returned by ADI or ABI. Its
 // active effects are authoritative for the selected castle while the dialog
 // remains current; a planned attack can therefore include temporary effects
 // that are not represented by a building or inventory record.
