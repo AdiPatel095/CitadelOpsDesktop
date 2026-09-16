@@ -916,6 +916,7 @@ export interface EquipmentLoadoutV2 {
 	score: number;
 	extractionCost: EquipmentExtractionCostV2;
 	reason?: string;
+	useful?: boolean;
 }
 
 export interface EquipmentExtractionCostV2 {

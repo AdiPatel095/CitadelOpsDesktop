@@ -32,12 +32,15 @@ type EffectTotal struct {
 }
 
 type Loadout struct {
-	Equipment      map[string]State.EquipmentInstanceID `json:"equipment"`
-	Gems           map[string]State.GemInstanceID       `json:"gems"`
-	Effects        []EffectTotal                        `json:"effects"`
-	Score          float64                              `json:"score"`
-	ExtractionCost ExtractionQuote                      `json:"extractionCost"`
-	Reason         string                               `json:"reason,omitempty"`
+	Equipment           map[string]State.EquipmentInstanceID `json:"equipment"`
+	Gems                map[string]State.GemInstanceID       `json:"gems"`
+	Effects             []EffectTotal                        `json:"effects"`
+	Score               float64                              `json:"score"`
+	ExtractionCost      ExtractionQuote                      `json:"extractionCost"`
+	Reason              string                               `json:"reason,omitempty"`
+	Useful              bool                                 `json:"useful"`
+	priorityValues      map[int64]float64
+	semanticDefinitions map[string]map[int64]struct{}
 }
 
 type CandidateCounts struct {

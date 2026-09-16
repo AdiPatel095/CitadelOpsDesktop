@@ -31,19 +31,22 @@ var (
 )
 
 type officialRules struct {
-	caps       map[int64]effectCap
-	setBonuses map[int64][]setBonus
-	effects    map[int64]effectDefinition
+	caps          map[int64]effectCap
+	setBonuses    map[int64][]setBonus
+	effects       map[int64]effectDefinition
+	pvpAreaScores map[int64]int
+	pveAreaScores map[int64]int
 }
 
 type effectDefinition struct {
-	effectTypeID int64
-	name         string
-	unit         string
-	precision    int
-	categorical  bool
-	areaTypeIDs  []int64
-	scope        string
+	effectTypeID    int64
+	name            string
+	unit            string
+	precision       int
+	categorical     bool
+	areaTypeIDs     []int64
+	scope           string
+	structuredScope string
 }
 
 type semanticEffect struct {
@@ -208,7 +211,10 @@ func Optimize(gameState State.GameState, gameData *GameData.Store, request Optim
 			continue
 		}
 		beam = append(beam, optimizeFamily(
-			equipmentBySlot, gemCandidates, family, currentEquipment, currentGems, priorities, scoring,
+			equipmentBySlot, gemCandidates, family, currentEquipment, currentGems, priorities, scoring, true,
+		)...)
+		beam = append(beam, optimizeFamily(
+			equipmentBySlot, gemCandidates, family, currentEquipment, currentGems, priorities, scoring, false,
 		)...)
 	}
 	if len(beam) == 0 {
@@ -275,6 +281,9 @@ func Optimize(gameState State.GameState, gameData *GameData.Store, request Optim
 		if !useful {
 			continue
 		}
+		if len(alternatives) > 0 && isDominatedOutcome(candidate.loadout, alternatives[0], priorities) {
+			continue
+		}
 		nearExisting := false
 		for _, selected := range alternatives {
 			if !materiallyDifferent(candidate.loadout.Effects, selected.Effects) && candidate.loadout.ExtractionCost.MaximumRubySpend >= selected.ExtractionCost.MaximumRubySpend {
@@ -285,6 +294,7 @@ func Optimize(gameState State.GameState, gameData *GameData.Store, request Optim
 		if nearExisting {
 			continue
 		}
+		candidate.loadout.Useful = materiallyDifferent(current.Effects, candidate.loadout.Effects) || candidate.loadout.ExtractionCost.MaximumRubySpend < current.ExtractionCost.MaximumRubySpend
 		candidate.loadout.Reason = loadoutReason(current, alternatives, candidate.loadout)
 		alternatives = append(alternatives, candidate.loadout)
 		if len(alternatives) == request.ResultCount {
@@ -304,11 +314,18 @@ func Optimize(gameState State.GameState, gameData *GameData.Store, request Optim
 			fingerprint, alternative.Equipment, alternative.Gems, alternative.ExtractionCost,
 		)
 	}
+	noUsefulChange := true
+	for _, alternative := range alternatives {
+		if alternative.Useful {
+			noUsefulChange = false
+			break
+		}
+	}
 	return OptimizeResponse{
 		LeaderKind: request.LeaderKind, LeaderID: request.LeaderID, StateRevision: gameState.Revision,
 		SnapshotFingerprint: fingerprint, Candidates: counts,
 		Current: current, Proposed: alternatives[0], Alternatives: alternatives,
-		NoUsefulChange: !materiallyDifferent(current.Effects, alternatives[0].Effects) && alternatives[0].ExtractionCost.MaximumRubySpend >= current.ExtractionCost.MaximumRubySpend,
+		NoUsefulChange: noUsefulChange,
 	}, nil
 }
 
@@ -620,6 +637,7 @@ func makeCandidate(id int64, setID int64, family LoadoutFamily, effects State.Eq
 func semanticCandidateSignature(effects State.EquipmentEffects, rules officialRules, request OptimizeRequest) string {
 	totals := map[string]semanticEffect{}
 	addSemanticEffects(totals, effects, rules, request)
+	applySemanticCaps(totals)
 	keys := make([]string, 0, len(totals))
 	for key := range totals {
 		keys = append(keys, key)
@@ -627,9 +645,33 @@ func semanticCandidateSignature(effects State.EquipmentEffects, rules officialRu
 	sort.Strings(keys)
 	var builder strings.Builder
 	for _, key := range keys {
-		fmt.Fprintf(&builder, "%s=%g;", key, totals[key].rawValue)
+		fmt.Fprintf(&builder, "%s=%g;", key, materialBucket(totals[key]))
 	}
 	return builder.String()
+}
+
+func materialBucket(effect semanticEffect) float64 {
+	if effect.categorical {
+		return float64(effect.argumentID)
+	}
+	step := 1.0
+	switch effect.unit {
+	case "percent":
+		magnitude := math.Abs(effect.value)
+		if effect.cap.max > 0 {
+			step = math.Max(1, math.Abs(effect.cap.max)*0.01)
+		} else if magnitude > 0 {
+			step = math.Max(1, math.Pow(10, math.Floor(math.Log10(magnitude))-2))
+		}
+	case "count":
+		step = 1
+	default:
+		step = math.Pow10(-effect.precision)
+	}
+	if step <= 0 || math.IsNaN(step) || math.IsInf(step, 0) {
+		step = 1
+	}
+	return math.Floor(effect.value/step+1e-9) * step
 }
 
 func optimizeFamily(
@@ -640,6 +682,7 @@ func optimizeFamily(
 	currentGems map[string]State.GemInstanceID,
 	priorities []weightedPriority,
 	scoring scoringRules,
+	diversityLane bool,
 ) []partialLoadout {
 	beam := []partialLoadout{{}}
 	for slotIndex, slot := range optimizerSlots {
@@ -647,12 +690,17 @@ func optimizeFamily(
 		if slot <= 4 && len(candidates) == 0 {
 			return nil
 		}
-		candidates = limitCandidates(candidates, equipmentCandidateLimit, map[int64]struct{}{
+		retained := map[int64]struct{}{
 			int64(currentEquipment[strconv.Itoa(slot)]): {},
-		})
+		}
+		if diversityLane {
+			candidates = limitCandidates(candidates, equipmentCandidateLimit, 1, retained)
+		} else {
+			candidates = limitCandidatesByScore(candidates, equipmentCandidateLimit, retained)
+		}
 		beam = expandEquipmentBeam(
 			beam, slotIndex, candidatePointers(candidates, slot == 6),
-			int64(currentEquipment[strconv.Itoa(slot)]), priorities, scoring,
+			int64(currentEquipment[strconv.Itoa(slot)]), priorities, scoring, diversityLane,
 		)
 	}
 
@@ -662,11 +710,16 @@ func optimizeFamily(
 			currentGemIDs[int64(id)] = struct{}{}
 		}
 	}
-	gems := limitCandidates(candidatesInFamily(gemCandidates, family), gemCandidateLimit, currentGemIDs)
+	gems := candidatesInFamily(gemCandidates, family)
+	if diversityLane {
+		gems = limitCandidates(gems, gemCandidateLimit, gemSlotCount, currentGemIDs)
+	} else {
+		gems = limitCandidatesByScore(gems, gemCandidateLimit, currentGemIDs)
+	}
 	choices := candidatePointers(gems, true)
 	for slotIndex := range gemSlotCount {
 		beam = expandGemBeam(
-			beam, slotIndex, choices, int64(currentGems[strconv.Itoa(slotIndex+1)]), priorities, scoring,
+			beam, slotIndex, choices, int64(currentGems[strconv.Itoa(slotIndex+1)]), priorities, scoring, diversityLane,
 		)
 	}
 	return beam
@@ -692,25 +745,46 @@ func effectValues(effects State.EquipmentEffects, priorityIndex map[int64]int, c
 	return values
 }
 
-func limitCandidates(candidates []optimizerCandidate, limit int, retained map[int64]struct{}) []optimizerCandidate {
+func limitCandidates(candidates []optimizerCandidate, limit int, equivalentMultiplicity int, retained map[int64]struct{}) []optimizerCandidate {
 	sort.Slice(candidates, func(left, right int) bool {
 		if candidates[left].rank != candidates[right].rank {
 			return candidates[left].rank > candidates[right].rank
 		}
 		return candidates[left].id < candidates[right].id
 	})
-	seen := map[string]struct{}{}
+	if equivalentMultiplicity < 1 {
+		equivalentMultiplicity = 1
+	}
+	seen := map[string]int{}
 	result := make([]optimizerCandidate, 0, limit+len(retained))
 	for _, candidate := range candidates {
 		_, keep := retained[candidate.id]
-		_, equivalent := seen[candidate.signature]
-		if equivalent && !keep {
+		equivalentCount := seen[candidate.signature]
+		if equivalentCount >= equivalentMultiplicity && !keep {
 			continue
 		}
 		if len(result) >= limit && !keep {
 			continue
 		}
-		seen[candidate.signature] = struct{}{}
+		seen[candidate.signature] = equivalentCount + 1
+		result = append(result, candidate)
+	}
+	return result
+}
+
+func limitCandidatesByScore(candidates []optimizerCandidate, limit int, retained map[int64]struct{}) []optimizerCandidate {
+	sort.Slice(candidates, func(left, right int) bool {
+		if candidates[left].rank != candidates[right].rank {
+			return candidates[left].rank > candidates[right].rank
+		}
+		return candidates[left].id < candidates[right].id
+	})
+	result := make([]optimizerCandidate, 0, limit+len(retained))
+	for _, candidate := range candidates {
+		_, keep := retained[candidate.id]
+		if len(result) >= limit && !keep {
+			continue
+		}
 		result = append(result, candidate)
 	}
 	return result
@@ -727,8 +801,8 @@ func candidatePointers(candidates []optimizerCandidate, includeEmpty bool) []*op
 	return result
 }
 
-func expandEquipmentBeam(beam []partialLoadout, slotIndex int, choices []*optimizerCandidate, currentID int64, priorities []weightedPriority, scoring scoringRules) []partialLoadout {
-	builder := newBeamBuilder(optimizerBeamWidth)
+func expandEquipmentBeam(beam []partialLoadout, slotIndex int, choices []*optimizerCandidate, currentID int64, priorities []weightedPriority, scoring scoringRules, diversityLane bool) []partialLoadout {
+	builder := newBeamBuilder(optimizerBeamWidth, diversityLane)
 	for _, partial := range beam {
 		for _, item := range choices {
 			candidate := partial
@@ -741,8 +815,8 @@ func expandEquipmentBeam(beam []partialLoadout, slotIndex int, choices []*optimi
 	return builder.finish()
 }
 
-func expandGemBeam(beam []partialLoadout, slotIndex int, choices []*optimizerCandidate, currentID int64, priorities []weightedPriority, scoring scoringRules) []partialLoadout {
-	builder := newBeamBuilder(optimizerBeamWidth)
+func expandGemBeam(beam []partialLoadout, slotIndex int, choices []*optimizerCandidate, currentID int64, priorities []weightedPriority, scoring scoringRules, diversityLane bool) []partialLoadout {
+	builder := newBeamBuilder(optimizerBeamWidth, diversityLane)
 	for _, partial := range beam {
 		for _, gem := range choices {
 			if gem != nil && partial.hasGem(gem.id) {
@@ -852,18 +926,22 @@ type beamBuilder struct {
 	indexes   map[string]int
 	limit     int
 	heapified bool
+	diversity bool
 }
 
-func newBeamBuilder(limit int) beamBuilder {
-	return beamBuilder{values: make([]partialLoadout, 0, limit), keys: make([]string, 0, limit), indexes: make(map[string]int, limit), limit: limit}
+func newBeamBuilder(limit int, diversity bool) beamBuilder {
+	return beamBuilder{values: make([]partialLoadout, 0, limit), keys: make([]string, 0, limit), indexes: make(map[string]int, limit), limit: limit, diversity: diversity}
 }
 
 // offer retains only the strongest beam-width branches. Once full, this is a
 // worst-first heap, so expansion stays bounded rather than sorting every
 // candidate combination for each slot.
 func (builder *beamBuilder) offer(candidate partialLoadout) {
-	key := partialDiversityKey(candidate)
-	if index, found := builder.indexes[key]; found {
+	key := ""
+	if builder.diversity {
+		key = partialDiversityKey(candidate)
+	}
+	if index, found := builder.indexes[key]; builder.diversity && found {
 		if betterLoadout(candidate, builder.values[index]) {
 			builder.values[index] = candidate
 			if builder.heapified {
@@ -873,7 +951,9 @@ func (builder *beamBuilder) offer(candidate partialLoadout) {
 		return
 	}
 	if len(builder.values) < builder.limit {
-		builder.indexes[key] = len(builder.values)
+		if builder.diversity {
+			builder.indexes[key] = len(builder.values)
+		}
 		builder.values = append(builder.values, candidate)
 		builder.keys = append(builder.keys, key)
 		return
@@ -883,10 +963,14 @@ func (builder *beamBuilder) offer(candidate partialLoadout) {
 		builder.heapified = true
 	}
 	if betterLoadout(candidate, builder.values[0]) {
-		delete(builder.indexes, builder.keys[0])
+		if builder.diversity {
+			delete(builder.indexes, builder.keys[0])
+		}
 		builder.values[0] = candidate
 		builder.keys[0] = key
-		builder.indexes[key] = 0
+		if builder.diversity {
+			builder.indexes[key] = 0
+		}
 		builder.siftDown(0)
 	}
 }
@@ -944,8 +1028,10 @@ func (builder *beamBuilder) siftDown(index int) {
 		}
 		builder.values[index], builder.values[worst] = builder.values[worst], builder.values[index]
 		builder.keys[index], builder.keys[worst] = builder.keys[worst], builder.keys[index]
-		builder.indexes[builder.keys[index]] = index
-		builder.indexes[builder.keys[worst]] = worst
+		if builder.diversity {
+			builder.indexes[builder.keys[index]] = index
+			builder.indexes[builder.keys[worst]] = worst
+		}
 		index = worst
 	}
 }
@@ -1143,17 +1229,92 @@ func assignmentEffects(
 		}
 	}
 	applySemanticCaps(totals)
-	return totals
+	return mergeSemanticBuckets(totals)
+}
+
+func assignmentScoringMetadata(
+	gameState State.GameState,
+	equipment map[string]State.EquipmentInstanceID,
+	gems map[string]State.GemInstanceID,
+	rules officialRules,
+	request OptimizeRequest,
+) (map[int64]float64, map[string]map[int64]struct{}) {
+	totals := map[int64]float64{}
+	semanticDefinitions := map[string]map[int64]struct{}{}
+	setCounts := map[int64]int{}
+	add := func(effects State.EquipmentEffects) {
+		for _, effect := range effects {
+			definition := rules.effects[effect.DefinitionID]
+			if !effectAppliesToTarget(definition, rules, request) {
+				continue
+			}
+			totals[effect.DefinitionID] += effectMagnitude(effect.Values)
+			for _, resolved := range resolveSemanticValues(effect, definition, rules.caps[effect.DefinitionID]) {
+				key := semanticKey(resolved)
+				definitions := semanticDefinitions[key]
+				if definitions == nil {
+					definitions = map[int64]struct{}{}
+					semanticDefinitions[key] = definitions
+				}
+				definitions[effect.DefinitionID] = struct{}{}
+			}
+		}
+	}
+	for _, id := range equipment {
+		item, ok := gameState.Inventory.Equipment[id]
+		if !ok {
+			continue
+		}
+		add(item.Effects)
+		if item.SetID > 0 {
+			setCounts[item.SetID]++
+		}
+	}
+	seenGems := map[State.GemInstanceID]struct{}{}
+	for _, id := range gems {
+		gem, ok := gameState.Inventory.Gems[id]
+		if !ok {
+			continue
+		}
+		seenGems[id] = struct{}{}
+		add(gem.Effects)
+		if gem.SetID > 0 {
+			setCounts[gem.SetID]++
+		}
+	}
+	if appearanceID := equipment["5"]; appearanceID != 0 {
+		for id, gem := range gameState.Inventory.Gems {
+			if gem.EquipmentInstanceID != appearanceID {
+				continue
+			}
+			if _, exists := seenGems[id]; exists {
+				continue
+			}
+			seenGems[id] = struct{}{}
+			add(gem.Effects)
+			if gem.SetID > 0 {
+				setCounts[gem.SetID]++
+			}
+		}
+	}
+	for setID, count := range setCounts {
+		for _, bonus := range rules.setBonuses[setID] {
+			if count >= bonus.neededItems {
+				add(bonus.effects)
+			}
+		}
+	}
+	return totals, semanticDefinitions
 }
 
 func addSemanticEffects(totals map[string]semanticEffect, effects State.EquipmentEffects, rules officialRules, request OptimizeRequest) {
 	for _, effect := range effects {
 		definition := rules.effects[effect.DefinitionID]
-		if !effectAppliesToTarget(definition, request) {
+		if !effectAppliesToTarget(definition, rules, request) {
 			continue
 		}
 		for _, resolved := range resolveSemanticValues(effect, definition, rules.caps[effect.DefinitionID]) {
-			key := semanticKey(resolved)
+			key := semanticBucketKey(resolved)
 			current := totals[key]
 			if current.definitionID == 0 {
 				current = resolved
@@ -1286,8 +1447,102 @@ func loadoutReason(current Loadout, selected []Loadout, candidate Loadout) strin
 	return "Offers a material stat trade-off"
 }
 
+func isDominatedOutcome(candidate, stronger Loadout, priorities []weightedPriority) bool {
+	if candidate.ExtractionCost.MaximumRubySpend < stronger.ExtractionCost.MaximumRubySpend {
+		return false
+	}
+	priorityIDs := make(map[int64]struct{}, len(priorities))
+	for _, priority := range priorities {
+		priorityIDs[priority.effectID] = struct{}{}
+	}
+	strongerByKey := make(map[string]EffectTotal, len(stronger.Effects))
+	candidateByKey := make(map[string]EffectTotal, len(candidate.Effects))
+	keys := map[string]struct{}{}
+	for _, effect := range stronger.Effects {
+		strongerByKey[effect.SemanticKey] = effect
+		keys[effect.SemanticKey] = struct{}{}
+	}
+	for _, effect := range candidate.Effects {
+		candidateByKey[effect.SemanticKey] = effect
+		keys[effect.SemanticKey] = struct{}{}
+	}
+	for key := range keys {
+		left, leftOK := candidateByKey[key]
+		right, rightOK := strongerByKey[key]
+		if !materiallyDifferent(singleEffect(left, leftOK), singleEffect(right, rightOK)) {
+			continue
+		}
+		definitions := map[int64]struct{}{}
+		for definitionID := range candidate.semanticDefinitions[key] {
+			definitions[definitionID] = struct{}{}
+		}
+		for definitionID := range stronger.semanticDefinitions[key] {
+			definitions[definitionID] = struct{}{}
+		}
+		if len(definitions) == 0 {
+			return false
+		}
+		for definitionID := range definitions {
+			if _, knownDirection := priorityIDs[definitionID]; !knownDirection {
+				return false
+			}
+		}
+	}
+	worse := false
+	for _, priority := range priorities {
+		candidateValue := candidate.priorityValues[priority.effectID]
+		strongerValue := stronger.priorityValues[priority.effectID]
+		if candidateValue > strongerValue {
+			return false
+		}
+		if candidateValue < strongerValue {
+			worse = true
+		}
+	}
+	return worse
+}
+
+func singleEffect(effect EffectTotal, exists bool) []EffectTotal {
+	if !exists {
+		return nil
+	}
+	return []EffectTotal{effect}
+}
+
 func semanticKey(effect semanticEffect) string {
 	return fmt.Sprintf("%s:arg=%d", effect.identity, effect.argumentID)
+}
+
+func semanticBucketKey(effect semanticEffect) string {
+	return fmt.Sprintf("%s:cap=%d", semanticKey(effect), effect.cap.id)
+}
+
+func mergeSemanticBuckets(buckets map[string]semanticEffect) map[string]semanticEffect {
+	result := map[string]semanticEffect{}
+	keys := make([]string, 0, len(buckets))
+	for key := range buckets {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	for _, bucketKey := range keys {
+		bucket := buckets[bucketKey]
+		key := semanticKey(bucket)
+		current, found := result[key]
+		if !found {
+			result[key] = bucket
+			continue
+		}
+		current.value += bucket.value
+		current.rawValue += bucket.rawValue
+		if bucket.definitionID < current.definitionID {
+			current.definitionID = bucket.definitionID
+		}
+		if current.cap.id != bucket.cap.id {
+			current.cap = effectCap{}
+		}
+		result[key] = current
+	}
+	return result
 }
 
 func effectSemanticIdentity(definitionID int64, definition effectDefinition, value float64) string {
@@ -1370,8 +1625,9 @@ func buildLoadout(
 	request OptimizeRequest,
 ) Loadout {
 	totals := assignmentEffects(gameState, equipment, gems, rules, request)
+	scoreTotals, semanticDefinitions := assignmentScoringMetadata(gameState, equipment, gems, rules, request)
+	priorityValues := cappedPriorityTotals(scoreTotals, priorities, rules.caps)
 	effects := make([]EffectTotal, 0, len(totals))
-	scoreTotals := map[int64]float64{}
 	for key, semantic := range totals {
 		rawValue := semantic.rawValue
 		value := semantic.value
@@ -1390,20 +1646,18 @@ func buildLoadout(
 			argument = &copy
 		}
 		effects = append(effects, EffectTotal{SemanticKey: key, DefinitionID: semantic.definitionID, ArgumentID: argument, Value: value, RawValue: rawValue, Unit: semantic.unit, Precision: semantic.precision, Categorical: semantic.categorical, CapID: capID, Cap: capPointer, Capped: capped})
-		if !semantic.categorical {
-			scoreTotals[semantic.definitionID] += rawValue
-		}
 	}
 	sort.Slice(effects, func(left, right int) bool { return effects[left].SemanticKey < effects[right].SemanticKey })
 	return Loadout{
 		Equipment: cloneMap(equipment), Gems: cloneMap(gems), Effects: effects,
-		Score: scoreEffectTotals(scoreTotals, priorities, rules.caps),
+		Score:          scoreEffectTotals(scoreTotals, priorities, rules.caps),
+		priorityValues: priorityValues, semanticDefinitions: semanticDefinitions,
 	}
 }
 
 func loadOfficialRules(gameData *GameData.Store) officialRules {
 	if gameData == nil {
-		return officialRules{caps: map[int64]effectCap{}, setBonuses: map[int64][]setBonus{}, effects: map[int64]effectDefinition{}}
+		return officialRules{caps: map[int64]effectCap{}, setBonuses: map[int64][]setBonus{}, effects: map[int64]effectDefinition{}, pvpAreaScores: map[int64]int{}, pveAreaScores: map[int64]int{}}
 	}
 	if cached, found := officialRulesCache.Load(gameData); found {
 		return cached.(officialRules)
@@ -1414,7 +1668,7 @@ func loadOfficialRules(gameData *GameData.Store) officialRules {
 }
 
 func buildOfficialRules(gameData *GameData.Store) officialRules {
-	rules := officialRules{caps: map[int64]effectCap{}, setBonuses: map[int64][]setBonus{}, effects: map[int64]effectDefinition{}}
+	rules := officialRules{caps: map[int64]effectCap{}, setBonuses: map[int64][]setBonus{}, effects: map[int64]effectDefinition{}, pvpAreaScores: map[int64]int{}, pveAreaScores: map[int64]int{}}
 	capByID := map[int64]float64{}
 	effectTypes := map[int64]GameData.Record{}
 	if catalog, err := gameData.Catalog("effecttypes"); err == nil {
@@ -1458,12 +1712,13 @@ func buildOfficialRules(gameData *GameData.Store) officialRules {
 				if regexpCountEffect(typeName) {
 					unit, precision = "count", 0
 				}
+				structuredScope, scope := effectCatalogScopes(record, typeName+" "+name)
 				definition := effectDefinition{
 					effectTypeID: typeID, name: strings.TrimSpace(typeName + " " + name),
 					unit: unit, precision: precision,
 					categorical: typeID == 118 || strings.EqualFold(typeName, "strongerPeasant"),
 					areaTypeIDs: recordInt64List(record, "areaTypeID"),
-					scope:       effectCatalogScope(record, typeName+" "+name),
+					scope:       scope, structuredScope: structuredScope,
 				}
 				if definition.categorical {
 					definition.unit, definition.precision = "categorical", 0
@@ -1474,6 +1729,18 @@ func buildOfficialRules(gameData *GameData.Store) officialRules {
 			if effectOK && capOK && capByID[capID] > 0 {
 				rules.caps[effectID] = effectCap{id: capID, max: capByID[capID]}
 			}
+		}
+	}
+	for _, definition := range rules.effects {
+		if definition.scope == "always" || definition.scope == "" {
+			continue
+		}
+		scores := rules.pveAreaScores
+		if definition.scope == "pvp" {
+			scores = rules.pvpAreaScores
+		}
+		for _, areaTypeID := range definition.areaTypeIDs {
+			scores[areaTypeID]++
 		}
 	}
 	if catalog, err := gameData.Catalog("equipment_sets"); err == nil {
@@ -1539,39 +1806,51 @@ func recordInt64List(record GameData.Record, field string) []int64 {
 	return values
 }
 
-func effectCatalogScope(record GameData.Record, names string) string {
-	for field, positive := range map[string]string{"isPvPFight": "pvp", "isPvEFight": "pve"} {
-		raw, ok := record[field]
-		if !ok {
-			continue
+func effectCatalogScopes(record GameData.Record, names string) (string, string) {
+	if value, ok := recordOptionalBool(record, "isPvPFight"); ok {
+		if value {
+			return "pvp", "pvp"
 		}
-		var value any
-		if json.Unmarshal(raw, &value) == nil {
-			normalized := strings.ToLower(strings.TrimSpace(fmt.Sprint(value)))
-			if normalized == "true" || normalized == "1" {
-				return positive
-			}
-			if normalized == "false" || normalized == "0" {
-				if positive == "pvp" {
-					return "pve"
-				}
-				return "pvp"
-			}
+		return "pve", "pve"
+	}
+	if value, ok := recordOptionalBool(record, "isPvEFight"); ok {
+		if value {
+			return "pve", "pve"
 		}
+		return "pvp", "pvp"
 	}
 	normalized := strings.ToLower(names)
 	pvp := strings.Contains(normalized, "pvp") || strings.Contains(normalized, "castlelord")
 	pve := strings.Contains(normalized, "pve") || strings.Contains(normalized, "npc")
 	if pvp != pve {
 		if pvp {
-			return "pvp"
+			return "", "pvp"
 		}
-		return "pve"
+		return "", "pve"
 	}
-	return "always"
+	return "", "always"
 }
 
-func effectAppliesToTarget(definition effectDefinition, request OptimizeRequest) bool {
+func recordOptionalBool(record GameData.Record, field string) (bool, bool) {
+	raw, ok := record[field]
+	if !ok {
+		return false, false
+	}
+	var value any
+	if json.Unmarshal(raw, &value) != nil {
+		return false, false
+	}
+	switch strings.ToLower(strings.TrimSpace(fmt.Sprint(value))) {
+	case "true", "1":
+		return true, true
+	case "false", "0":
+		return false, true
+	default:
+		return false, false
+	}
+}
+
+func effectAppliesToTarget(definition effectDefinition, rules officialRules, request OptimizeRequest) bool {
 	if len(request.TargetAreaTypeIDs) > 0 {
 		if len(definition.areaTypeIDs) > 0 {
 			matched := false
@@ -1587,12 +1866,33 @@ func effectAppliesToTarget(definition effectDefinition, request OptimizeRequest)
 				return false
 			}
 		}
+		if definition.structuredScope != "" {
+			return definition.structuredScope == request.CombatMode
+		}
+		if len(definition.areaTypeIDs) > 0 {
+			return true
+		}
 		return definition.scope == "" || definition.scope == "always" || definition.scope == request.CombatMode
 	}
 	if len(definition.areaTypeIDs) > 0 && len(definition.areaTypeIDs) <= 5 {
 		return false
 	}
-	return definition.scope == "" || definition.scope == "always" || definition.scope == request.CombatMode
+	if definition.scope != "" && definition.scope != "always" {
+		return definition.scope == request.CombatMode
+	}
+	if len(definition.areaTypeIDs) == 0 {
+		return true
+	}
+	scores := rules.pveAreaScores
+	if request.CombatMode == "pvp" {
+		scores = rules.pvpAreaScores
+	}
+	for _, areaTypeID := range definition.areaTypeIDs {
+		if scores[areaTypeID] > 0 {
+			return true
+		}
+	}
+	return false
 }
 
 func officialNormalEffectID(gameData *GameData.Store, wireID int64) int64 {

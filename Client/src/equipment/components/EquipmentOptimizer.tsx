@@ -24,6 +24,7 @@ import { useMetadata } from '../../context/MetadataContext';
 import type { EquipmentLeader } from './EquipmentTypes';
 import {
 	cacheEquipmentPriorityProfile,
+	descriptiveEquipmentEffectLabel,
 	equipmentPrioritySection,
 	equipmentTargetProfiles,
 	groupEquipmentPriorityEffects,
@@ -41,6 +42,7 @@ import {
 } from './EquipmentOptimizerState';
 import {
 	equipmentExtractionApplyLabel,
+	equipmentAlternativeApplyDisabled,
 	equipmentExtractionCostNotices,
 	equipmentOptimizerInitializationChange,
 	equipmentOptimizerSnapshotKey,
@@ -237,7 +239,7 @@ function EquipmentOptimizerEditor({
 	disabled: boolean;
 }) {
 	const { state, catalogs, configuration, submitIntent, optimizeEquipment, updateConfiguration } = useCitadelAPI();
-	const { effects, troops, getEffect } = useMetadata();
+	const { effects, troops } = useMetadata();
 	const [priorityProfile, setPriorityProfile] = useState<EquipmentPriorityProfile>({ tier1: [], tier2: [] });
 	const [showPicker, setShowPicker] = useState(false);
 	const [showInfo, setShowInfo] = useState(false);
@@ -355,12 +357,12 @@ function EquipmentOptimizerEditor({
 			return group.label.toLowerCase().includes(query)
 				|| group.categoryLabel.toLowerCase().includes(query)
 				|| group.effectIDs.some((id) => {
-					const effect = getEffect(id);
+					const effect = effects[id];
 					return String(effect?.name ?? '').toLowerCase().includes(query)
 						|| String(effect?.internalName ?? '').toLowerCase().includes(query)
 						|| String(id).includes(query);
 				});
-		}), [availableGroupKeys, getEffect, priorityGroups, search, used]);
+		}), [availableGroupKeys, effects, priorityGroups, search, used]);
 	const pickerSections = useMemo(() => {
 		const sections = new Map<string, { label: string; category: number; groups: EquipmentPriorityGroup[] }>();
 		for (const group of availableGroups) {
@@ -683,7 +685,7 @@ function EquipmentOptimizerEditor({
 			<OptimizerPreview
 				preview={preview?.response ?? null}
 				priorityGroups={selectedGroups}
-				getEffectName={(id) => effectName(id, getEffect)}
+				getEffectName={(id) => descriptiveEquipmentEffectLabel(id, effects[id])}
 				getArgumentName={(id) => troops[id]?.name?.trim() || `Unit ${id}`}
 				selectedAlternative={selectedAlternative}
 				onSelectAlternative={(index) => { setSelectedAlternative(index); setApplyError(null); }}
@@ -863,7 +865,10 @@ function OptimizerPreview({
 		return priorityGroups.filter((_, index) => effectRows.filter((row) => row.priorityIndex === index).every((row) => row.proposed === 0));
 	})();
 	const extractionNotices = selected ? equipmentExtractionCostNotices(selected.extractionCost) : [];
-	const pointlessApply = Boolean(preview && selected && (preview.noUsefulChange || assignmentKey(selected) === assignmentKey(preview.current)));
+	const pointlessApply = Boolean(preview && selected && equipmentAlternativeApplyDisabled(preview.current, selected, preview.noUsefulChange));
+	const pointlessApplyMessage = preview?.noUsefulChange
+		? 'Your current loadout already has the strongest useful outcome for these priorities. Apply is disabled because this batch offers no useful stat or cost change.'
+		: 'This selected alternative matches your current loadout. Choose a different useful alternative to apply a change.';
 	return (
 		<Modal
 			isOpen={preview != null}
@@ -904,12 +909,12 @@ function OptimizerPreview({
 						</p>
 					)}
 					{pointlessApply && (
-						<p className="rounded-global border border-border-base bg-bg-app/40 px-3 py-2 text-sm text-text-muted">Your current loadout already has the strongest useful outcome for these priorities. Apply is disabled because this batch offers no useful stat or cost change.</p>
+						<p className="rounded-global border border-border-base bg-bg-app/40 px-3 py-2 text-sm text-text-muted">{pointlessApplyMessage}</p>
 					)}
 					<div>
 						<div className="mb-2 flex items-center justify-between gap-3">
 							<h4 className="text-xs font-bold uppercase tracking-wider text-text-muted">Ranked alternatives</h4>
-							<span className="text-xs text-text-muted">{preview.alternatives.length} useful {preview.alternatives.length === 1 ? 'choice' : 'choices'} · switching is instant</span>
+							<span className="text-xs text-text-muted">{preview.alternatives.filter((alternative) => alternative.useful !== false).length} useful {preview.alternatives.filter((alternative) => alternative.useful !== false).length === 1 ? 'choice' : 'choices'} · {preview.alternatives.length} shown · switching is instant</span>
 						</div>
 						<div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
 							{preview.alternatives.map((alternative, index) => (
@@ -972,10 +977,6 @@ function parseDragState(value: string): DragState | null {
 	const key = keyParts.join('|');
 	if ((tier !== '1' && tier !== '2') || !key) return null;
 	return { key, tier: Number(tier) as Tier };
-}
-
-function effectName(id: number, getEffect: (id: number) => { name?: string } | undefined): string {
-	return getEffect(id)?.name?.trim() || `Effect ${id}`;
 }
 
 function formatNumber(value: number): string {
