@@ -136,16 +136,16 @@ func TestAutoFortressTracksFarTargetsAndSchedulesTheirExpectedReadyTime(t *testi
 	}
 }
 
-func TestAutoFortressTransportShipsOnlyTheDirewolfShortfall(t *testing.T) {
+func TestAutoFortressTransportAllocatesAllAvailableDirewolvesToOneDestination(t *testing.T) {
 	now := time.Now().UTC()
 	gameState := State.NewGameState()
 	main := State.CastleState{
 		ID: 1, KingdomID: 0, SlotType: 1, UnitsObservedAt: now,
-		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{GameData.DirewolfUnitID: 2_000}},
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{GameData.DirewolfUnitID: 900}},
 	}
 	target := State.CastleState{
 		ID: 10, KingdomID: 1, SlotType: 12, UnitsObservedAt: now,
-		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{GameData.DirewolfUnitID: 150}},
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{GameData.DirewolfUnitID: 100}},
 	}
 	gameState.Castles[main.ID] = main
 	gameState.Castles[target.ID] = target
@@ -154,12 +154,14 @@ func TestAutoFortressTransportShipsOnlyTheDirewolfShortfall(t *testing.T) {
 		KingdomID: target.KingdomID, Unlocked: true,
 	}
 
-	decision, detail := autoFortressTransportDecision(
+	settings := defaultAutoFortressSettings()
+	settings.Kingdoms["1"] = autoFortressKingdom{Enabled: true}
+	decision := NewAutoFortressPolicy().autoFortressSupplyDecision(
 		Snapshot{State: gameState, GameData: autoFortressTestGameData(t), Now: now},
-		target, main, true, 350, map[string]float64{},
+		settings, []State.CastleState{target}, main, true, map[string]float64{}, map[string]string{},
 	)
-	if detail != "" || decision == nil || decision.Request == nil || decision.Request.Name != "troops.kingdom.ship" {
-		t.Fatalf("fortress troop transport = %#v detail=%q", decision, detail)
+	if decision == nil || decision.Request == nil || decision.Request.Name != "troops.kingdom.ship" {
+		t.Fatalf("fortress troop transport = %#v", decision)
 	}
 	var request struct {
 		SourceCastleID  State.CastleID  `json:"sourceCastleId"`
@@ -175,8 +177,98 @@ func TestAutoFortressTransportShipsOnlyTheDirewolfShortfall(t *testing.T) {
 	}
 	if request.SourceCastleID != main.ID || request.TargetCastleID != target.ID ||
 		request.TargetKingdomID != target.KingdomID || len(request.Units) != 1 ||
-		request.Units[0].UnitID != GameData.DirewolfUnitID || request.Units[0].Amount != 350 {
+		request.Units[0].UnitID != GameData.DirewolfUnitID || request.Units[0].Amount != 900 {
 		t.Fatalf("fortress troop transport request = %#v", request)
+	}
+}
+
+func TestAutoFortressBalanceCountsInboundAndUsesStableKingdomTieBreak(t *testing.T) {
+	destinations := []autoFortressSupplyDestination{
+		{castle: State.CastleState{KingdomID: 2}, stationed: 1, committed: 1},
+		{castle: State.CastleState{KingdomID: 1}, inbound: 0, committed: 0},
+	}
+	autoFortressBalanceAllocations(destinations, 4)
+	allocations := map[State.KingdomID]int64{}
+	for _, destination := range destinations {
+		allocations[destination.castle.KingdomID] = destination.allocation
+	}
+	if allocations[1] != 3 || allocations[2] != 1 {
+		t.Fatalf("stable four-unit allocation = %#v", allocations)
+	}
+
+	destinations = []autoFortressSupplyDestination{
+		{castle: State.CastleState{KingdomID: 1}, stationed: 100, inbound: 200, committed: 300},
+		{castle: State.CastleState{KingdomID: 2}, stationed: 200, inbound: 0, committed: 200},
+	}
+	autoFortressBalanceAllocations(destinations, 500)
+	allocations = map[State.KingdomID]int64{}
+	for _, destination := range destinations {
+		allocations[destination.castle.KingdomID] = destination.allocation
+	}
+	if allocations[1] != 200 || allocations[2] != 300 {
+		t.Fatalf("inbound-aware allocation = %#v", allocations)
+	}
+}
+
+func TestAutoFortressTimeSkipUsesOfficialDurationsAndReserves(t *testing.T) {
+	now := time.Now().UTC()
+	state := State.NewGameState()
+	state.Session.ConnectionGeneration = 7
+	state.Player.Currencies[1004] = 1
+	state.Player.Currencies[1005] = 2
+	state.Player.CurrencyObservations[1004] = State.PlayerResourceObservation{ObservedAt: now, ConnectionGeneration: 7}
+	state.Player.CurrencyObservations[1005] = State.PlayerResourceObservation{ObservedAt: now, ConnectionGeneration: 7}
+	snapshot := Snapshot{State: state, GameData: autoFortressTestGameData(t), Now: now}
+	option := autoFortressTimeSkipOption(snapshot, map[string]int64{"MS5": 2}, 1_900)
+	if option.WireKey != "MS4" || option.Seconds != 1_800 {
+		t.Fatalf("official minimal-waste option = %#v", option)
+	}
+	state.Player.Currencies[1004] = 0
+	snapshot.State = state
+	if option = autoFortressTimeSkipOption(snapshot, map[string]int64{"MS5": 2}, 1_900); option.WireKey != "" {
+		t.Fatalf("depleted/reserved skips should wait naturally: %#v", option)
+	}
+}
+
+func TestAutoFortressDisabledDestinationOnlyReconcilesOwnedTransfer(t *testing.T) {
+	now := time.Now().UTC()
+	state := State.NewGameState()
+	target := State.CastleState{ID: 22, KingdomID: 2, SlotType: 12, UnitsObservedAt: now}
+	state.Castles[target.ID] = target
+	state.KingdomTransport.TroopWorkflows[2] = State.KingdomTroopTransportWorkflow{
+		ID: "owned", Owner: autoFortressTransportOwner, Status: "pending", KingdomID: 2,
+		SourceCastleID: 1, TargetCastleID: target.ID,
+		Units: []State.KingdomTransportUnit{{UnitID: GameData.DirewolfUnitID, Amount: 100}},
+	}
+	state.KingdomTransport.PendingUnits = []State.KingdomUnitTransport{{
+		KingdomID: 2, RemainingSec: 120, Units: []State.KingdomTransportUnit{{UnitID: GameData.DirewolfUnitID, Amount: 100}},
+	}}
+	settings := defaultAutoFortressSettings()
+	settings.UseTimeSkips = true
+	settings.Kingdoms["2"] = autoFortressKingdom{Enabled: false}
+	details := map[string]string{}
+	decision := NewAutoFortressPolicy().autoFortressSupplyDecision(
+		Snapshot{State: state, GameData: autoFortressTestGameData(t), Now: now},
+		settings, nil, State.CastleState{}, false, map[string]float64{}, details,
+	)
+	if decision != nil {
+		t.Fatalf("disabled destination issued an action: %#v", decision)
+	}
+	if got := details["supplyKingdom2"]; !strings.Contains(got, "disabled") {
+		t.Fatalf("disabled destination reason=%q", got)
+	}
+
+	workflow := state.KingdomTransport.TroopWorkflows[2]
+	workflow.Status = "awaiting_destination_refresh"
+	workflow.TransportObservedAt = now
+	state.KingdomTransport.TroopWorkflows[2] = workflow
+	details = map[string]string{}
+	decision = NewAutoFortressPolicy().autoFortressSupplyDecision(
+		Snapshot{State: state, GameData: autoFortressTestGameData(t), Now: now},
+		settings, nil, State.CastleState{}, false, map[string]float64{}, details,
+	)
+	if decision == nil || decision.Request == nil || decision.Request.Name != "game.focus_castle" {
+		t.Fatalf("disabled completed destination was not refreshed: %#v", decision)
 	}
 }
 
@@ -197,7 +289,15 @@ func autoFortressTestGameData(t *testing.T) *GameData.Store {
 		"effectCaps":[{"capID":1006,"maxTotalBonus":100}],
 		"globalEffects":[{"ID":10,"globalEffectID":2,"name":"SpeedBoost","effects":"426&60","boostValue":60}],
 		"resources":[{"resourceID":2,"JSONKey":"C2","name":"Rubies"}],
-		"currencies":[{"currencyID":37,"JSONKey":"KT","Name":"KhanTablet"}],
+		"currencies":[
+			{"currencyID":37,"JSONKey":"KT","Name":"KhanTablet"},
+			{"currencyID":1004,"JSONKey":"MS4","Name":"30MinSkip"},
+			{"currencyID":1005,"JSONKey":"MS5","Name":"1HourSkip"}
+		],
+		"currencyMinutesSkipValues":[
+			{"currencyID":"1004","MinutesSkipValue":"30"},
+			{"currencyID":"1005","MinutesSkipValue":"60"}
+		],
 		"packages":[
 			{"packageID":3858,"packageType":"soldier","unitID":277,"unitAmount":100,"stock":50,"sortOrder":34,"costKhanTablet":4680,"comment1":"Nomad EDS Shop (2023) - Khan Tablets"},
 			{"packageID":3857,"packageType":"soldier","unitID":277,"unitAmount":100,"stock":50,"sortOrder":33,"costKhanTablet":2340,"comment1":"Nomad EDS Shop (2023) - Khan Tablets"}

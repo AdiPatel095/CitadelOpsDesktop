@@ -604,76 +604,208 @@ func reduceKingdomTransport(
 			return nil, false, fmt.Errorf("decode nested kingdom transport: %w", err)
 		}
 	}
-	if len(root["UL"]) == 0 && len(root["RT"]) == 0 && len(root["UT"]) == 0 {
+	rawUnlocks, hasUnlocks := root["UL"]
+	rawResources, hasResources := root["RT"]
+	rawUnits, hasUnits := root["UT"]
+	if !hasUnlocks && !hasResources && !hasUnits {
 		return nil, false, nil
 	}
-	next := State.KingdomTransportState{
-		Unlocks: map[State.KingdomID]State.KingdomTransportUnlock{},
-		Pending: []State.KingdomResourceTransport{}, PendingUnits: []State.KingdomUnitTransport{},
-		ResourceWorkflows: map[State.KingdomID]State.KingdomResourceTransportWorkflow{},
-		ObservedAt:        frame.ReceivedAt,
+	if frame.ReceivedAt.IsZero() || frame.ReceivedAt.After(time.Now().UTC().Add(5*time.Second)) ||
+		(!gameState.KingdomTransport.ObservedAt.IsZero() && frame.ReceivedAt.Before(gameState.KingdomTransport.ObservedAt)) {
+		return nil, false, nil
+	}
+	// UL is present on a validated full KPI snapshot even when no transport is
+	// active. KUT acknowledgements can instead carry only UT. Missing RT/UT on
+	// a full snapshot is authoritative empty; missing fields on a partial reply
+	// preserve the last observation.
+	fullSnapshot := hasUnlocks
+	next := cloneKingdomTransportState(gameState.KingdomTransport)
+	if fullSnapshot {
+		next.Unlocks = map[State.KingdomID]State.KingdomTransportUnlock{}
+		next.Pending = []State.KingdomResourceTransport{}
+		next.PendingUnits = []State.KingdomUnitTransport{}
+	}
+	next.ObservedAt = frame.ReceivedAt
+	if next.ResourceWorkflows == nil {
+		next.ResourceWorkflows = map[State.KingdomID]State.KingdomResourceTransportWorkflow{}
+	}
+	if next.TroopWorkflows == nil {
+		next.TroopWorkflows = map[State.KingdomID]State.KingdomTroopTransportWorkflow{}
 	}
 	for kingdomID, workflow := range gameState.KingdomTransport.ResourceWorkflows {
 		workflow.Goods = append([]State.KingdomTransportGood(nil), workflow.Goods...)
 		next.ResourceWorkflows[kingdomID] = workflow
 	}
-	var unlocks []map[string]json.RawMessage
-	_ = json.Unmarshal(root["UL"], &unlocks)
-	for _, row := range unlocks {
-		kingdomID := State.KingdomID(rawInteger(row["KID"]))
-		if kingdomID < 0 {
-			continue
+	if hasUnlocks {
+		var unlocks []map[string]json.RawMessage
+		if rawJSONNull(rawUnlocks) || json.Unmarshal(rawUnlocks, &unlocks) != nil {
+			return nil, false, fmt.Errorf("decode kingdom transport UL: expected an array")
 		}
-		next.Unlocks[kingdomID] = State.KingdomTransportUnlock{
-			KingdomID: kingdomID, Unlocked: rawInteger(row["U"]) != 0,
-			Created: rawInteger(row["C"]) != 0, Stage: int(rawInteger(row["SL"])),
-		}
-	}
-	var pending []map[string]json.RawMessage
-	_ = json.Unmarshal(root["RT"], &pending)
-	for _, row := range pending {
-		transport := State.KingdomResourceTransport{
-			KingdomID:    State.KingdomID(rawInteger(row["KID"])),
-			RemainingSec: int(rawInteger(row["RS"])), Goods: []State.KingdomTransportGood{},
-		}
-		var goods [][]json.RawMessage
-		_ = json.Unmarshal(row["G"], &goods)
-		for _, good := range goods {
-			jsonKey := rowString(good, 0)
-			definitionID, found := officialDefinitionID(gameData, "resources", "resourceID", jsonKey)
-			amount, exists := rawFloat64(rawAt(good, 1))
-			if !found || !exists || amount <= 0 {
+		for _, row := range unlocks {
+			kingdomID := State.KingdomID(rawInteger(row["KID"]))
+			if kingdomID < 0 {
 				continue
 			}
-			transport.Goods = append(transport.Goods, State.KingdomTransportGood{
-				ResourceID: State.ResourceID(definitionID), Amount: amount,
-			})
-		}
-		next.Pending = append(next.Pending, transport)
-	}
-	var pendingUnits []map[string]json.RawMessage
-	_ = json.Unmarshal(root["UT"], &pendingUnits)
-	for _, row := range pendingUnits {
-		transport := State.KingdomUnitTransport{
-			KingdomID:    State.KingdomID(rawInteger(row["KID"])),
-			RemainingSec: int(rawInteger(row["RS"])), Units: []State.KingdomTransportUnit{},
-		}
-		var units [][]json.RawMessage
-		_ = json.Unmarshal(row["I"], &units)
-		for _, unit := range units {
-			unitID, amount := State.UnitID(rowInt(unit, 0)), rowInt(unit, 1)
-			if unitID <= 0 || amount <= 0 {
-				continue
+			next.Unlocks[kingdomID] = State.KingdomTransportUnlock{
+				KingdomID: kingdomID, Unlocked: rawInteger(row["U"]) != 0,
+				Created: rawInteger(row["C"]) != 0, Stage: int(rawInteger(row["SL"])),
 			}
-			transport.Units = append(transport.Units, State.KingdomTransportUnit{UnitID: unitID, Amount: amount})
 		}
-		next.PendingUnits = append(next.PendingUnits, transport)
+	}
+	if hasResources {
+		var pending []map[string]json.RawMessage
+		if rawJSONNull(rawResources) || json.Unmarshal(rawResources, &pending) != nil {
+			return nil, false, fmt.Errorf("decode kingdom transport RT: expected an array")
+		}
+		next.Pending = []State.KingdomResourceTransport{}
+		for _, row := range pending {
+			transport := State.KingdomResourceTransport{
+				KingdomID:    State.KingdomID(rawInteger(row["KID"])),
+				RemainingSec: int(rawInteger(row["RS"])), Goods: []State.KingdomTransportGood{},
+			}
+			var goods [][]json.RawMessage
+			if raw := row["G"]; len(raw) > 0 && !rawJSONNull(raw) && json.Unmarshal(raw, &goods) != nil {
+				return nil, false, fmt.Errorf("decode kingdom transport RT goods: expected an array")
+			}
+			for _, good := range goods {
+				jsonKey := rowString(good, 0)
+				definitionID, found := officialDefinitionID(gameData, "resources", "resourceID", jsonKey)
+				amount, exists := rawFloat64(rawAt(good, 1))
+				if !found || !exists || amount <= 0 {
+					continue
+				}
+				transport.Goods = append(transport.Goods, State.KingdomTransportGood{
+					ResourceID: State.ResourceID(definitionID), Amount: amount,
+				})
+			}
+			next.Pending = append(next.Pending, transport)
+		}
+	}
+	if hasUnits {
+		var pendingUnits []map[string]json.RawMessage
+		if rawJSONNull(rawUnits) || json.Unmarshal(rawUnits, &pendingUnits) != nil {
+			return nil, false, fmt.Errorf("decode kingdom transport UT: expected an array")
+		}
+		next.PendingUnits = []State.KingdomUnitTransport{}
+		for _, row := range pendingUnits {
+			transport := State.KingdomUnitTransport{
+				KingdomID:    State.KingdomID(rawInteger(row["KID"])),
+				RemainingSec: int(rawInteger(row["RS"])), Units: []State.KingdomTransportUnit{},
+			}
+			var units [][]json.RawMessage
+			if raw := row["I"]; len(raw) == 0 || rawJSONNull(raw) || json.Unmarshal(raw, &units) != nil {
+				return nil, false, fmt.Errorf("decode kingdom transport UT units: expected an array")
+			}
+			for _, unit := range units {
+				unitID, amount := State.UnitID(rowInt(unit, 0)), rowInt(unit, 1)
+				if unitID <= 0 || amount <= 0 {
+					continue
+				}
+				transport.Units = append(transport.Units, State.KingdomTransportUnit{UnitID: unitID, Amount: amount})
+			}
+			next.PendingUnits = append(next.PendingUnits, transport)
+		}
+	}
+	if fullSnapshot || hasUnits {
+		reconcileTroopTransportWorkflows(&next, frame.ReceivedAt, gameState.Session.ConnectionGeneration)
 	}
 	if reflect.DeepEqual(gameState.KingdomTransport, next) {
 		return nil, false, nil
 	}
 	gameState.KingdomTransport = next
 	return []string{"kingdom-transport"}, true, nil
+}
+
+func cloneKingdomTransportState(source State.KingdomTransportState) State.KingdomTransportState {
+	clone := source
+	clone.Unlocks = make(map[State.KingdomID]State.KingdomTransportUnlock, len(source.Unlocks))
+	for key, value := range source.Unlocks {
+		clone.Unlocks[key] = value
+	}
+	clone.Pending = append([]State.KingdomResourceTransport(nil), source.Pending...)
+	for index := range clone.Pending {
+		clone.Pending[index].Goods = append([]State.KingdomTransportGood(nil), source.Pending[index].Goods...)
+	}
+	clone.PendingUnits = append([]State.KingdomUnitTransport(nil), source.PendingUnits...)
+	for index := range clone.PendingUnits {
+		clone.PendingUnits[index].Units = append([]State.KingdomTransportUnit(nil), source.PendingUnits[index].Units...)
+	}
+	clone.ResourceWorkflows = make(map[State.KingdomID]State.KingdomResourceTransportWorkflow, len(source.ResourceWorkflows))
+	for key, value := range source.ResourceWorkflows {
+		value.Goods = append([]State.KingdomTransportGood(nil), value.Goods...)
+		clone.ResourceWorkflows[key] = value
+	}
+	clone.TroopWorkflows = make(map[State.KingdomID]State.KingdomTroopTransportWorkflow, len(source.TroopWorkflows))
+	for key, value := range source.TroopWorkflows {
+		value.Units = append([]State.KingdomTransportUnit(nil), value.Units...)
+		clone.TroopWorkflows[key] = value
+	}
+	return clone
+}
+
+func reconcileTroopTransportWorkflows(state *State.KingdomTransportState, observedAt time.Time, connectionGeneration uint64) {
+	for kingdomID, workflow := range state.TroopWorkflows {
+		if !workflow.ArmedAt.IsZero() && observedAt.Before(workflow.ArmedAt) {
+			continue
+		}
+		pending := false
+		remaining := 0
+		for _, transport := range state.PendingUnits {
+			if transport.KingdomID == kingdomID && kingdomTransportUnitsEqual(transport.Units, workflow.Units) {
+				if workflow.Status == "awaiting_destination_refresh" || workflow.Status == "skip_inventory_pending" || workflow.Status == "ownership_uncertain" ||
+					!kingdomTransportTimerContinuous(workflow, transport.RemainingSec, observedAt) {
+					continue
+				}
+				pending = true
+				remaining = transport.RemainingSec
+				break
+			}
+		}
+		workflow.TransportObservedAt = observedAt
+		if pending {
+			if workflow.Status == "armed" && (workflow.SessionGeneration == 0 || workflow.SessionGeneration != connectionGeneration) {
+				workflow.Status = "ownership_uncertain"
+				state.TroopWorkflows[kingdomID] = workflow
+				continue
+			}
+			workflow.Status = "pending"
+			workflow.RemainingSec = remaining
+			if workflow.LaunchedAt.IsZero() {
+				workflow.LaunchedAt = observedAt
+			}
+		} else {
+			workflow.Status = "awaiting_destination_refresh"
+		}
+		state.TroopWorkflows[kingdomID] = workflow
+	}
+}
+
+func kingdomTransportTimerContinuous(workflow State.KingdomTroopTransportWorkflow, remainingSec int, observedAt time.Time) bool {
+	if workflow.RemainingSec <= 0 {
+		return true
+	}
+	maximum := workflow.RemainingSec
+	if !workflow.TransportObservedAt.IsZero() && observedAt.After(workflow.TransportObservedAt) {
+		elapsed := int(observedAt.Sub(workflow.TransportObservedAt) / time.Second)
+		maximum = max(0, maximum-elapsed+5)
+	}
+	return remainingSec <= maximum
+}
+
+func kingdomTransportUnitsEqual(observed, expected []State.KingdomTransportUnit) bool {
+	if len(observed) != len(expected) || len(expected) == 0 {
+		return false
+	}
+	amounts := make(map[State.UnitID]int64, len(observed))
+	for _, unit := range observed {
+		amounts[unit.UnitID] += unit.Amount
+	}
+	for _, unit := range expected {
+		if unit.Amount <= 0 || amounts[unit.UnitID] != unit.Amount {
+			return false
+		}
+	}
+	return len(amounts) == len(expected)
 }
 
 func reduceSubscriptions(

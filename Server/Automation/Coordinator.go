@@ -848,6 +848,7 @@ func (coordinator *Coordinator) recordDecision(id string, enabled bool, decision
 		current.Detail = decision.Detail
 		current.NextCheckAt = timePointer(decision.NextCheckAt)
 		current.Metrics = copyMetrics(decision.Metrics)
+		current.Details = copyDetails(decision.Details)
 		if current.Status != "blocked" {
 			current.LastError = ""
 		}
@@ -1586,7 +1587,8 @@ func passiveDecisionFingerprint(decision Decision) (string, bool) {
 		Status  string             `json:"status"`
 		Detail  string             `json:"detail,omitempty"`
 		Metrics map[string]float64 `json:"metrics,omitempty"`
-	}{Status: status, Detail: decision.Detail, Metrics: decision.Metrics}
+		Details map[string]string  `json:"details,omitempty"`
+	}{Status: status, Detail: decision.Detail, Metrics: decision.Metrics, Details: decision.Details}
 	encoded, err := json.Marshal(payload)
 	if err != nil {
 		// A non-finite metric should still be published through the existing
@@ -1609,6 +1611,17 @@ func copyMetrics(source map[string]float64) map[string]float64 {
 		return map[string]float64{}
 	}
 	clone := make(map[string]float64, len(source))
+	for key, value := range source {
+		clone[key] = value
+	}
+	return clone
+}
+
+func copyDetails(source map[string]string) map[string]string {
+	if len(source) == 0 {
+		return map[string]string{}
+	}
+	clone := make(map[string]string, len(source))
 	for key, value := range source {
 		clone[key] = value
 	}

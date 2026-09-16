@@ -34,7 +34,7 @@ func reduceResponseResources(
 		changed = changed || updated
 	}
 	if raw := root["sce"]; len(raw) > 0 {
-		updated, err := applyPlayerCurrencies(raw, gameState, gameData)
+		updated, err := applyPlayerCurrencies(raw, gameState, gameData, frame.ReceivedAt, frame.ResponseCode != nil && *frame.ResponseCode == 0)
 		if err != nil {
 			return nil, false, err
 		}

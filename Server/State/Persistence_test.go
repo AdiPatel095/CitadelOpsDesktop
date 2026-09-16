@@ -797,6 +797,31 @@ func TestSnapshotLoadMovesInspectedAllianceOutOfOwnSlot(t *testing.T) {
 	}
 }
 
+func TestSnapshotPersistsTroopWorkflowButClearsCurrencyAuthority(t *testing.T) {
+	directory := t.TempDir()
+	now := time.Now().UTC()
+	state := NewGameState()
+	state.KingdomTransport.TroopWorkflows[2] = KingdomTroopTransportWorkflow{
+		ID: "owned", Owner: "autoFortress", Status: "pending", KingdomID: 2,
+		Units: []KingdomTransportUnit{{UnitID: 277, Amount: 100}}, ArmedAt: now, SessionGeneration: 7,
+	}
+	state.Player.CurrencyObservations[1005] = PlayerResourceObservation{ObservedAt: now, ConnectionGeneration: 7}
+	if err := SaveSnapshot(directory, state); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := LoadSnapshot(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	workflow, found := loaded.KingdomTransport.TroopWorkflows[2]
+	if !found || workflow.ID != "owned" || len(workflow.Units) != 1 || workflow.Units[0].Amount != 100 {
+		t.Fatalf("persisted troop workflow=%#v found=%t", workflow, found)
+	}
+	if len(loaded.Player.CurrencyObservations) != 0 {
+		t.Fatalf("snapshot restored current-session currency authority: %#v", loaded.Player.CurrencyObservations)
+	}
+}
+
 func TestSnapshotLoadRemovesOwnKhanReturnsFromTauntHistory(t *testing.T) {
 	directory := t.TempDir()
 	now := time.Now().UTC()

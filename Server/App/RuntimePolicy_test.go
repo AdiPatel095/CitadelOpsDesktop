@@ -43,6 +43,44 @@ func TestRuntimeSchedulerSettingsDriveHarnessPolicies(t *testing.T) {
 	}
 }
 
+func TestSchedulerConfigurationEventsSynchronizeAutomationLock(t *testing.T) {
+	configuration, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{
+		"scheduler": json.RawMessage(`{"botLocked":false}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	controller := Session.NewController(context.Background(), Session.NewUnavailableTransport(), nil, nil)
+	application := &Application{Configuration: configuration, Session: controller}
+	events, unsubscribe := configuration.Subscribe(8)
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+	controller.SetAutomationLocked(application.automationLocked())
+	go application.syncAutomationLock(ctx, events, unsubscribe)
+
+	if _, err := configuration.Update("scheduler", json.RawMessage(`{"botLocked":true}`)); err != nil {
+		t.Fatal(err)
+	}
+	waitForAutomationLock(t, controller, true)
+	if _, _, err := configuration.UpdateMany(map[string]json.RawMessage{
+		"scheduler": json.RawMessage(`{"botLocked":false}`),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	waitForAutomationLock(t, controller, false)
+}
+
+func waitForAutomationLock(t *testing.T, controller *Session.Controller, expected bool) {
+	t.Helper()
+	deadline := time.Now().Add(time.Second)
+	for controller.AutomationLocked() != expected && time.Now().Before(deadline) {
+		time.Sleep(time.Millisecond)
+	}
+	if got := controller.AutomationLocked(); got != expected {
+		t.Fatalf("automation lock=%t, want %t", got, expected)
+	}
+}
+
 func TestRuntimeRelogDelayDefaultsAndClamps(t *testing.T) {
 	if delay := (&Application{}).relogDelay(); delay != 5*time.Minute {
 		t.Fatalf("default relog delay = %s", delay)

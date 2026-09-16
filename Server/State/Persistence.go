@@ -118,6 +118,7 @@ func normalizeStateMaps(state *GameState) {
 	}
 	// Live resource observations are never restored as dispatch authority.
 	state.Player.ResourceObservations = map[ResourceID]PlayerResourceObservation{}
+	state.Player.CurrencyObservations = map[CurrencyID]PlayerResourceObservation{}
 	if state.Player.Currencies == nil {
 		state.Player.Currencies = defaults.Player.Currencies
 	}
@@ -381,6 +382,15 @@ func normalizeStateMaps(state *GameState) {
 			workflow.Goods = []KingdomTransportGood{}
 		}
 		state.KingdomTransport.ResourceWorkflows[kingdomID] = workflow
+	}
+	if state.KingdomTransport.TroopWorkflows == nil {
+		state.KingdomTransport.TroopWorkflows = defaults.KingdomTransport.TroopWorkflows
+	}
+	for kingdomID, workflow := range state.KingdomTransport.TroopWorkflows {
+		if workflow.Units == nil {
+			workflow.Units = []KingdomTransportUnit{}
+		}
+		state.KingdomTransport.TroopWorkflows[kingdomID] = workflow
 	}
 	if state.Beri.TroopsByUnit == nil {
 		state.Beri.TroopsByUnit = defaults.Beri.TroopsByUnit

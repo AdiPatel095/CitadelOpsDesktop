@@ -1235,6 +1235,7 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 		clone.Player.Resources = cloneMap(source.Player.Resources)
 		clone.Player.ResourceObservations = cloneMap(source.Player.ResourceObservations)
 		clone.Player.Currencies = cloneMap(source.Player.Currencies)
+		clone.Player.CurrencyObservations = cloneMap(source.Player.CurrencyObservations)
 		clone.Player.Achievements.Completed = cloneMap(source.Player.Achievements.Completed)
 		clone.Player.Achievements.Progress = make(map[int64][]int64, len(source.Player.Achievements.Progress))
 		for id, progress := range source.Player.Achievements.Progress {
@@ -1365,6 +1366,11 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 		for kingdomID, workflow := range clone.KingdomTransport.ResourceWorkflows {
 			workflow.Goods = append([]KingdomTransportGood(nil), workflow.Goods...)
 			clone.KingdomTransport.ResourceWorkflows[kingdomID] = workflow
+		}
+		clone.KingdomTransport.TroopWorkflows = cloneMap(source.KingdomTransport.TroopWorkflows)
+		for kingdomID, workflow := range clone.KingdomTransport.TroopWorkflows {
+			workflow.Units = append([]KingdomTransportUnit(nil), workflow.Units...)
+			clone.KingdomTransport.TroopWorkflows[kingdomID] = workflow
 		}
 	}
 	if components.Has(ComponentBeri) {

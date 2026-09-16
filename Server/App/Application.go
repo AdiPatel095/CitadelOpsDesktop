@@ -470,6 +470,9 @@ func (application *Application) Start(ctx context.Context) {
 }
 
 func (application *Application) start(ctx context.Context) {
+	configurationEvents, unsubscribeConfiguration := application.Configuration.Subscribe(8)
+	application.Session.SetAutomationLocked(application.automationLocked())
+	go application.syncAutomationLock(ctx, configurationEvents, unsubscribeConfiguration)
 	persistenceReady := make(chan struct{})
 	go application.persistState(ctx, persistenceReady)
 	<-persistenceReady
@@ -532,6 +535,23 @@ func (application *Application) start(ctx context.Context) {
 	go application.Automation.Run(ctx)
 	go application.Reports.Run(ctx)
 	go application.Scheduler.Run(ctx)
+}
+
+func (application *Application) syncAutomationLock(ctx context.Context, events <-chan Configuration.Event, unsubscribe func()) {
+	defer unsubscribe()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case event, ok := <-events:
+			if !ok {
+				return
+			}
+			if event.Gap || event.Section == "scheduler" || event.Section == "*" {
+				application.Session.SetAutomationLocked(application.automationLocked())
+			}
+		}
+	}
 }
 
 // SetSessionReconnectPolicy tells the game transport whether to hold the
@@ -1169,7 +1189,7 @@ func defaultConfiguration() map[string]json.RawMessage {
 		"automation.autoFoodBalance":              json.RawMessage(`{"checkIntervalSec":60,"stateRefreshIntervalSec":900,"logisticsRefreshIntervalSec":300,"safetyHours":8,"sourceSafetyHours":24,"minimumShipmentSize":1000,"minimumStormShipmentSize":10000,"minimumSourceReserve":1000,"minimumCoinReserve":0,"autoKingdomTransport":true,"useKingdomTimeSkips":false,"allowedTimeSkips":[],"timeSkipReserve":{},"horseTravelBoostId":-1}`),
 		"automation.autoBird":                     json.RawMessage(`{"version":2,"activePresetId":null,"ignoreSettings":{"settings":{},"minDelay":6,"maxDelay":12,"minSend":0,"minRPTDays":3},"presets":{"version":1,"lastSelectedPresetId":null,"presets":[]}}`),
 		"automation.autoTowers":                   json.RawMessage(`{"version":4,"checkIntervalSec":30,"mapRefreshIntervalSec":1800,"dailyAttackLimit":0,"horseTravelBoostId":-1,"useAdvisor":false,"autoActivateAdvisor":false,"maximumDailyTimeSkips":0,"castles":{}}`),
-		"automation.autoFortress":                 json.RawMessage(`{"version":1,"checkIntervalSec":5,"mapRefreshIntervalSec":1800,"dailyAttackLimit":0,"horseTravelBoostId":1009,"minimumCommanderSpeedBonus":100,"direwolfPurchaseLimit":0,"minimumTabletReserve":0,"kingdoms":{"1":{"enabled":false},"2":{"enabled":false},"3":{"enabled":false}}}`),
+		"automation.autoFortress":                 json.RawMessage(`{"version":1,"checkIntervalSec":5,"mapRefreshIntervalSec":1800,"dailyAttackLimit":0,"horseTravelBoostId":1009,"minimumCommanderSpeedBonus":100,"direwolfPurchaseLimit":0,"minimumTabletReserve":0,"useTimeSkips":false,"timeSkipReserve":{},"kingdoms":{"1":{"enabled":false},"2":{"enabled":false},"3":{"enabled":false}}}`),
 		"automation.autoInvasion":                 json.RawMessage(`{"version":1,"sourceCastleId":0,"presetId":"","foreignLordsDifficultyId":0,"bloodcrowDifficultyId":0,"scoreTarget":0,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"dailyAttackLimit":0,"fortifyCurrency":"","horseTravelBoostId":-1}`),
 		"automation.autoNomad":                    json.RawMessage(`{"version":5,"sourceCastleId":0,"nomadPresetId":"","samuraiPresetId":"","nomadDifficultyId":0,"samuraiDifficultyId":0,"scoreTarget":0,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"dailyAttackLimit":0,"skipCooldowns":false,"timeSkipReserve":{},"rbcTest":{"enabled":false,"runId":"","targetX":0,"targetY":0},"horseTravelBoostId":-1}`),
 		"automation.autoAdvisor":                  json.RawMessage(`{"version":1,"sourceCastleId":0,"presetId":"","nomadDifficultyId":0,"samuraiDifficultyId":0,"maxAttackCount":9999,"minimumRemainingSec":1800,"coinCostPerAttack":500,"minimumCoinReserve":0,"rubyCostPerAttack":0,"minimumRubyReserve":0,"minimumFeatherReserve":0,"timeSkipReserve":{},"checkIntervalSec":30,"mapRefreshIntervalSec":300,"horseTravelBoostId":-1}`),

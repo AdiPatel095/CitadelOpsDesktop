@@ -1624,6 +1624,7 @@ export interface AutomationStateV2 {
 	lastError?: string;
 	safetyLock?: AutomationSafetyLockV2;
 	metrics?: Record<string, number>;
+	details?: Record<string, string>;
 	updatedAt: string;
 }
 

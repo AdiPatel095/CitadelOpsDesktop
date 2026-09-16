@@ -17,6 +17,8 @@ export interface AutoFortressClientStateV1 {
   minimumCommanderSpeedBonus: 100;
   direwolfPurchaseLimit: number;
   minimumTabletReserve: number;
+  useTimeSkips: boolean;
+  timeSkipReserve: Record<string, number>;
   kingdoms: Record<string, AutoFortressKingdomSettings>;
 }
 
@@ -29,6 +31,8 @@ export const defaultAutoFortressClientState = (): AutoFortressClientStateV1 => (
   minimumCommanderSpeedBonus: 100,
   direwolfPurchaseLimit: 0,
   minimumTabletReserve: 0,
+  useTimeSkips: false,
+  timeSkipReserve: {},
   kingdoms: {
     '1': { enabled: false },
     '2': { enabled: false },
@@ -50,6 +54,8 @@ export function parseAutoFortressClientState(raw: unknown): AutoFortressClientSt
     minimumCommanderSpeedBonus: 100,
     direwolfPurchaseLimit: clampHundreds(document.direwolfPurchaseLimit),
     minimumTabletReserve: clampInteger(document.minimumTabletReserve, 0, Number.MAX_SAFE_INTEGER, 0),
+    useTimeSkips: document.useTimeSkips === true,
+    timeSkipReserve: parseTimeSkipReserve(document.timeSkipReserve),
     kingdoms: Object.fromEntries(['1', '2', '3'].map((kingdomID) => [
       kingdomID,
       { enabled: isRecord(rawKingdoms[kingdomID]) && rawKingdoms[kingdomID].enabled === true },
@@ -79,4 +85,13 @@ function clampInteger(value: unknown, minimum: number, maximum: number, fallback
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value != null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function parseTimeSkipReserve(value: unknown): Record<string, number> {
+  if (!isRecord(value)) return {};
+  return Object.fromEntries(Object.entries(value).flatMap(([rawKey, rawAmount]) => {
+    const key = rawKey.trim().toUpperCase();
+    if (!/^MS\d+$/.test(key)) return [];
+    return [[key, clampInteger(rawAmount, 0, Number.MAX_SAFE_INTEGER, 0)]];
+  }));
 }

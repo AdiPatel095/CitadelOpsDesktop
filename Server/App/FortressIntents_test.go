@@ -9,8 +9,10 @@ import (
 	"time"
 
 	"CitadelDesktop/Server/GameData"
+	"CitadelDesktop/Server/Ingest"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/Outbound"
+	"CitadelDesktop/Server/Protocol"
 	"CitadelDesktop/Server/State"
 )
 
@@ -86,6 +88,148 @@ func TestFortressAttackBuildsOneFullDirewolfFlankWaveWithoutPremiumBooster(t *te
 		wave.Middle.Units[0] != (attackPair{-1, 0}) {
 		t.Fatalf("fortress formation is not one full Direwolf flank wave: %#v", wave)
 	}
+}
+
+func TestFortressAttackEngineFinalizesOnlyWithAuthoritativeMovement(t *testing.T) {
+	for _, projectMovement := range []bool{true, false} {
+		t.Run(map[bool]string{true: "confirmed", false: "missing-movement"}[projectMovement], func(t *testing.T) {
+			now := time.Now().UTC()
+			gameData := fortressIntentGameData(t)
+			gameState := fortressIntentState(now)
+			gameState.Session.ConnectionGeneration = 1
+			stateStore := State.NewStore(gameState)
+			ingestRegistry := Ingest.NewRegistry()
+			registerFortressEngineReducers(t, ingestRegistry, projectMovement)
+			pipeline := Ingest.NewPipeline(stateStore, beriIntentGameDataProvider{store: gameData}, ingestRegistry)
+			sender := &fortressEngineSender{pipeline: pipeline}
+			intentRegistry := Intent.NewRegistry()
+			engine := Intent.NewEngine(intentRegistry, stateStore, beriIntentGameDataProvider{store: gameData}, sender, pipeline)
+			application := &Application{State: stateStore, Intents: engine, Ingest: pipeline}
+			if err := intentRegistry.Register(Intent.Definition{Name: "fortress.attack", Effect: Intent.EffectLaunch, Planner: planFortressAttack}); err != nil {
+				t.Fatal(err)
+			}
+			if err := engine.RegisterStepResolver("fortress.attack.build", application.resolveFortressAttackStep); err != nil {
+				t.Fatal(err)
+			}
+			if err := engine.RegisterCommandDependencies("cra", application.resolveCRACommandDependencies); err != nil {
+				t.Fatal(err)
+			}
+			for name, action := range map[string]Intent.Action{
+				"game.ui.close":            func(context.Context, json.RawMessage) error { return nil },
+				"attack.cra.send.guard":    application.guardCRASend,
+				"attack.analytics.capture": application.captureAttackFeatureLaunch,
+			} {
+				if err := engine.RegisterAction(name, action); err != nil {
+					t.Fatal(err)
+				}
+			}
+			receipt := engine.Submit(t.Context(), Intent.Request{
+				ID: "fortress-engine", Name: "fortress.attack", Actor: "automation:autoFortress", AutomationLane: "autoFortress",
+				Arguments: json.RawMessage(`{"sourceCastleId":10,"kingdomId":1,"targetX":101,"targetY":100,"commanderIds":[5],"horseTravelBoostId":-1,"minimumCommanderSpeedBonus":100}`),
+			})
+			if projectMovement {
+				if receipt.Status != Intent.StatusSucceeded || sender.craSends != 1 {
+					t.Fatalf("confirmed engine receipt=%+v opcodes=%v", receipt, sender.opcodes)
+				}
+				launches := stateStore.ReadOnlyView().AttackAnalytics.PendingAttacks
+				if len(launches) != 1 || launches[0].FeatureID != State.AttackFeatureAutoFortress || launches[0].MovementID != 99 {
+					t.Fatalf("authoritative fortress launch=%#v", launches)
+				}
+			} else {
+				if receipt.Status == Intent.StatusSucceeded || sender.craSends != 1 || !strings.Contains(receipt.Error, "did not return") {
+					t.Fatalf("missing-movement receipt=%+v opcodes=%v", receipt, sender.opcodes)
+				}
+			}
+		})
+	}
+}
+
+type fortressEngineSender struct {
+	pipeline *Ingest.Pipeline
+	opcodes  []string
+	craSends int
+}
+
+func (*fortressEngineSender) Ready() bool                  { return true }
+func (*fortressEngineSender) Namespace() string            { return "EmpireEx_21" }
+func (*fortressEngineSender) CorrelatesResponses() bool    { return true }
+func (*fortressEngineSender) ConnectionGeneration() uint64 { return 1 }
+
+func (sender *fortressEngineSender) Send(ctx context.Context, payload []byte) error {
+	if err := Outbound.ValidateFinalDispatch(ctx); err != nil {
+		return err
+	}
+	command, err := Protocol.Decode(string(payload), Protocol.DirectionOutbound, time.Now().UTC())
+	if err != nil {
+		return err
+	}
+	sender.opcodes = append(sender.opcodes, command.Opcode)
+	responseOpcode := command.Opcode
+	if command.Opcode == "jca" {
+		responseOpcode = "jaa"
+	}
+	if command.Opcode == "cra" {
+		sender.craSends++
+	}
+	metadata := Outbound.MetadataFromContext(ctx)
+	code := 0
+	_, err = sender.pipeline.HandleFrame(ctx, Protocol.Frame{
+		Opcode: responseOpcode, Direction: Protocol.DirectionInbound, ResponseCode: &code,
+		ReceivedAt: time.Now().UTC(), Payload: json.RawMessage(`{}`), ResponseToken: metadata.ResponseToken,
+		CausationOperationID: metadata.OperationID,
+	})
+	return err
+}
+
+func registerFortressEngineReducers(t *testing.T, registry *Ingest.Registry, projectMovement bool) {
+	t.Helper()
+	register := func(opcode string, reducer Ingest.Reducer) {
+		if err := registry.Register(opcode, reducer); err != nil {
+			t.Fatal(err)
+		}
+	}
+	register("jaa", func(_ context.Context, frame Protocol.Frame, state *State.GameState, _ *GameData.Store) ([]string, bool, error) {
+		castle := state.Castles[10]
+		castle.Focused = true
+		castle.UnitsObservedAt = frame.ReceivedAt
+		state.Castles[10] = castle
+		return []string{"castles", "units"}, true, nil
+	})
+	register("gaa", func(_ context.Context, frame Protocol.Frame, state *State.GameState, _ *GameData.Store) ([]string, bool, error) {
+		target := state.Map[1]["101:100"]
+		target.ObservedAt = frame.ReceivedAt
+		state.Map[1]["101:100"] = target
+		return []string{"map-fortress"}, true, nil
+	})
+	register("gam", func(_ context.Context, frame Protocol.Frame, state *State.GameState, _ *GameData.Store) ([]string, bool, error) {
+		state.MovementSnapshot.ObservedAt = frame.ReceivedAt
+		return []string{"movements"}, true, nil
+	})
+	register("adi", func(_ context.Context, frame Protocol.Frame, state *State.GameState, _ *GameData.Store) ([]string, bool, error) {
+		state.AttackDialog = State.AttackDialogState{
+			SourceCastleID: 10, KingdomID: 1, ObservedAt: frame.ReceivedAt,
+			Target: State.AttackDialogTarget{TypeID: State.MapTypeKingdomFortress, X: 101, Y: 100, Level: 45},
+		}
+		return []string{"attack_dialog"}, true, nil
+	})
+	for _, opcode := range []string{"gbl", "gas"} {
+		register(opcode, func(_ context.Context, _ Protocol.Frame, _ *State.GameState, _ *GameData.Store) ([]string, bool, error) {
+			return nil, false, nil
+		})
+	}
+	register("cra", func(_ context.Context, frame Protocol.Frame, state *State.GameState, _ *GameData.Store) ([]string, bool, error) {
+		if !projectMovement {
+			return nil, false, nil
+		}
+		commander := State.CommanderID(5)
+		arrivesAt := frame.ReceivedAt.Add(time.Minute)
+		state.Movements[99] = State.MovementState{
+			ID: 99, Direction: 0, SourceCastleID: 10, KingdomID: 1, TargetTypeID: State.MapTypeKingdomFortress,
+			TargetX: 101, TargetY: 100, CommanderID: &commander, ArrivesAt: &arrivesAt, ObservedAt: frame.ReceivedAt,
+			Units: map[State.UnitID]int64{GameData.DirewolfUnitID: 100},
+		}
+		return []string{"movements"}, true, nil
+	})
 }
 
 func TestFortressPersonalCooldownSurvivesReadyGlobalMapRow(t *testing.T) {
