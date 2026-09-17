@@ -215,6 +215,29 @@ func TestResolveConstructionEquipFailsClosedForStaleOrMalformedSlotData(t *testi
 		}
 	})
 
+	t.Run("attached definition with negative slot type", func(t *testing.T) {
+		gameData, err := GameData.DecodeStore([]byte(`{
+			"versionInfo":[],"buildings":[],"units":[],
+			"constructionItems":[
+				{"constructionItemID":102,"duration":3600,"slotTypeID":0},
+				{"constructionItemID":104,"duration":3600,"slotTypeID":-1}
+			]
+		}`), GameData.SourceMetadata{ItemVersion: "test"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		gameState := constructionIntentState()
+		castle := gameState.Castles[10]
+		castle.ConstructionSlots[100] = []State.ConstructionSlot{{DefinitionID: 104, Slot: 0}}
+		gameState.Castles[10] = castle
+		step, err := resolveConstructionEquipStep(t.Context(), Intent.PlanningContext{
+			State: gameState, GameData: gameData,
+		}, json.RawMessage(`{"castleId":10,"buildingInstanceId":100,"constructionItemId":102,"slot":0}`))
+		if err == nil || !strings.Contains(err.Error(), "already has a construction item equipped") || step.Command.Opcode == "rpc" {
+			t.Fatalf("negative-slot resolver result: step=%+v err=%v", step, err)
+		}
+	})
+
 	t.Run("target without official slot type", func(t *testing.T) {
 		gameData, err := GameData.DecodeStore([]byte(`{
 			"versionInfo":[],"buildings":[],"units":[],

@@ -1295,7 +1295,10 @@ func hasEquippedConstructionItemInSlot(slots []State.ConstructionSlot, catalog *
 			return true
 		}
 		slotType, exists := item.Int64("slotTypeID")
-		if exists && int(slotType) != targetSlot {
+		if !exists || slotType < 0 {
+			return true
+		}
+		if int(slotType) != targetSlot {
 			continue
 		}
 		return true
