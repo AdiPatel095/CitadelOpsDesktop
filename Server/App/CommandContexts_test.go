@@ -350,6 +350,47 @@ func TestCRASendGuardRejectsPendingOrPositiveCooldown(t *testing.T) {
 	}
 }
 
+func TestCRASendGuardClassifiesNomadCooldownTransitionsAsStale(t *testing.T) {
+	now := time.Now().UTC()
+	state := State.NewGameState()
+	state.Castles[1] = State.CastleState{ID: 1, KingdomID: 0, X: 12, Y: 34}
+	state.Map[0] = map[string]State.MapObservation{
+		"56:78": {KingdomID: 0, TypeID: samuraiIntentCampTypeID, X: 56, Y: 78, ObservedAt: now},
+	}
+	state.AttackDialog = State.AttackDialogState{
+		SourceCastleID: 1, KingdomID: 0, ObservedAt: now.Add(time.Second),
+		Target: State.AttackDialogTarget{TypeID: samuraiIntentCampTypeID, X: 56, Y: 78, EventCampCooldownRemaining: 10},
+	}
+	application := &Application{State: State.NewStore(state)}
+	arguments, _ := json.Marshal(craSendGuardRequest{
+		SourceX: 12, SourceY: 34, TargetX: 56, TargetY: 78, KingdomID: 0, DialogObservedAt: now,
+	})
+	if err := application.guardCRASend(t.Context(), arguments); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("Nomad dialog cooldown error = %v, want ErrPlanStale", err)
+	}
+	_, _ = application.State.Apply(func(current *State.GameState) ([]string, bool, error) {
+		current.AttackDialog.Target.EventCampCooldownRemaining = 0
+		current.NomadCamps.Cooldowns["0:56:78"] = State.NomadCampCooldownState{
+			KingdomID: 0, X: 56, Y: 78, PendingCooldownRefresh: true,
+		}
+		return []string{"attack_dialog", "nomad-camps"}, true, nil
+	})
+	if err := application.guardCRASend(t.Context(), arguments); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("Nomad pending cooldown error = %v, want ErrPlanStale", err)
+	}
+	_, _ = application.State.Apply(func(current *State.GameState) ([]string, bool, error) {
+		delete(current.NomadCamps.Cooldowns, "0:56:78")
+		target := current.Map[0]["56:78"]
+		target.EventCampCooldownRemaining = 20
+		target.ObservedAt = time.Now().UTC()
+		current.Map[0]["56:78"] = target
+		return []string{"map-event-camp", "nomad-camps"}, true, nil
+	})
+	if err := application.guardCRASend(t.Context(), arguments); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("Nomad map cooldown error = %v, want ErrPlanStale", err)
+	}
+}
+
 func TestCRASendGuardTreatsKhanCooldownAsRetryableStaleState(t *testing.T) {
 	now := time.Now().UTC()
 	commanderID := State.CommanderID(17)

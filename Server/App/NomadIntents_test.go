@@ -1,6 +1,7 @@
 package App
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,6 +12,8 @@ import (
 	"CitadelDesktop/Server/AttackPresets"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
+	"CitadelDesktop/Server/Outbound"
+	"CitadelDesktop/Server/Protocol"
 	"CitadelDesktop/Server/State"
 )
 
@@ -240,8 +243,34 @@ func TestNomadChainLaunchesClearedCampWithoutSpeculativeCooldownSkips(t *testing
 		if err != nil {
 			t.Fatalf("resolve concrete Nomad CRA: %v", err)
 		}
-		if concrete.PreDispatchAction != "nomad.attack.guard" || string(concrete.PreDispatchArguments) != string(launch.ResolverArguments) {
+		if concrete.PreDispatchAction != "nomad.attack.guard" || string(concrete.PreDispatchArguments) != string(launch.ResolverArguments) ||
+			concrete.FinalDispatchAction != "nomad.attack.guard" || string(concrete.FinalDispatchArguments) != string(launch.ResolverArguments) {
 			t.Fatalf("concrete Nomad CRA is missing its dispatch-time daily-limit guard: %#v", concrete)
+		}
+		dependencies, err := (&Application{}).resolveCRACommandDependencies(
+			t.Context(), Intent.PlanningContext{State: gameState}, Intent.Step{
+				Command: Protocol.Command{Opcode: "cra", Payload: launch.CommandDependencies.Payload},
+			},
+		)
+		if err != nil {
+			t.Fatalf("resolve Nomad CRA dependencies: %v", err)
+		}
+		adiCount, gaaCount, msdCount := 0, 0, 0
+		for _, dependency := range dependencies.Steps {
+			switch dependency.Opcode {
+			case "adi":
+				adiCount++
+				if dependency.FinalDispatchAction != "nomad.attack.sequential_arrival.guard" {
+					t.Fatalf("ADI lacks sequential-arrival final guard: %#v", dependency)
+				}
+			case "gaa":
+				gaaCount++
+			case "msd":
+				msdCount++
+			}
+		}
+		if adiCount != 1 || gaaCount != 0 || msdCount != 0 {
+			t.Fatalf("safe CRA dependency wire counts: ADI=%d GAA=%d MSD=%d", adiCount, gaaCount, msdCount)
 		}
 		blockedState := gameState
 		blockedState.DailyAttacks.Count = 100
@@ -250,6 +279,61 @@ func TestNomadChainLaunchesClearedCampWithoutSpeculativeCooldownSkips(t *testing
 		); !errors.Is(err, Intent.ErrPlanStale) || !strings.Contains(err.Error(), "100 / 100") {
 			t.Fatalf("concrete Nomad CRA guard accepted reached daily limit: %v", err)
 		}
+	}
+	finalStep, err := (&Application{}).resolveNomadCampAttackStep(
+		t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, launches[0].ResolverArguments,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	finalStep.AwaitOpcode = ""
+	finalStep.SuccessCodes = nil
+	stateStore := State.NewStore(gameState)
+	manager := appTestGameDataManagerFromCatalog(t, nomadCooldownSkipCatalog)
+	sender := &nomadFinalDispatchSender{}
+	registry := Intent.NewRegistry()
+	if err := registry.Register(Intent.Definition{
+		Name: "test.nomad.final_dispatch", Effect: Intent.EffectLaunch,
+		Planner: func(context.Context, Intent.PlanningContext, json.RawMessage) (Intent.Plan, error) {
+			return Intent.Plan{Summary: "test Nomad final dispatch", Steps: []Intent.Step{finalStep}}, nil
+		},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	engine := Intent.NewEngine(registry, stateStore, manager, sender, nil)
+	applicationAtDispatch := &Application{State: stateStore, GameData: manager, Intents: engine}
+	if err := engine.RegisterAction("nomad.attack.guard", applicationAtDispatch.guardNomadCampAttack); err != nil {
+		t.Fatal(err)
+	}
+	if err := applicationAtDispatch.guardNomadCampAttack(t.Context(), finalStep.PreDispatchArguments); err != nil {
+		t.Fatalf("initial Nomad dispatch guard did not pass before queued mutation: %v", err)
+	}
+	finalHooks := 0
+	sender.beforeFinal = func() {
+		finalHooks++
+		arrival := time.Now().UTC().Add(time.Second)
+		_, applyErr := stateStore.ApplyComponents(
+			State.Components(State.ComponentEventScores, State.ComponentMovements),
+			func(current *State.GameState) ([]string, bool, error) {
+				current.SetMovement(999, State.MovementState{
+					ID: 999, Direction: 0, SourceCastleID: 1, KingdomID: 0, TargetTypeID: samuraiIntentCampTypeID,
+					TargetX: 101, TargetY: 100, ArrivesAt: &arrival, ObservedAt: time.Now().UTC(),
+				})
+				changed := State.RecordEventAttackLaunch(current, samuraiIntentEventID, State.EventAttackRecord{
+					MovementID: 999, Kind: State.EventActivityCamp, KingdomID: 0, TargetTypeID: samuraiIntentCampTypeID,
+					TargetX: 101, TargetY: 100, LaunchedAt: time.Now().UTC(), ArrivesAt: arrival,
+				})
+				return []string{"event-scores", "movements"}, changed, nil
+			},
+		)
+		if applyErr != nil {
+			t.Errorf("stage final-dispatch race: %v", applyErr)
+		}
+	}
+	receipt := engine.Submit(t.Context(), Intent.Request{Name: "test.nomad.final_dispatch", Arguments: json.RawMessage(`{}`)})
+	if receipt.Status == Intent.StatusSucceeded || finalHooks != 1 || sender.sends != 0 ||
+		!strings.Contains(receipt.Error, Intent.ErrPlanStale.Error()) {
+		t.Fatalf("final CRA guard missed newly pending arrival: receipt=%#v hooks=%d sends=%d", receipt, finalHooks, sender.sends)
 	}
 	var first, second, third resolvedNomadCampAttackRequest
 	if err := json.Unmarshal(launches[0].ResolverArguments, &first); err != nil {
@@ -339,6 +423,24 @@ func TestNomadChainLaunchesClearedCampWithoutSpeculativeCooldownSkips(t *testing
 	if err != nil || len(stalePlan.Steps) != 0 {
 		t.Fatalf("pending post-victory refresh did not yield for a safe replan: plan=%#v err=%v", stalePlan, err)
 	}
+}
+
+type nomadFinalDispatchSender struct {
+	beforeFinal func()
+	sends       int
+}
+
+func (*nomadFinalDispatchSender) Ready() bool       { return true }
+func (*nomadFinalDispatchSender) Namespace() string { return "EmpireEx_21" }
+func (sender *nomadFinalDispatchSender) Send(ctx context.Context, _ []byte) error {
+	if sender.beforeFinal != nil {
+		sender.beforeFinal()
+	}
+	if err := Outbound.ValidateFinalDispatch(ctx); err != nil {
+		return err
+	}
+	sender.sends++
+	return nil
 }
 
 func TestNomadLevelSelectsOneAvailableCommanderFromCandidatePool(t *testing.T) {

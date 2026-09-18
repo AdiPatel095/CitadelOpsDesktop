@@ -289,10 +289,96 @@ func TestAutoNomadPolicyClearsCooldownWhileLeveling(t *testing.T) {
 	target := snapshot.State.Map[0]["99:100"]
 	target.EventCampCooldownRemaining = 3600
 	snapshot.State.Map[0]["99:100"] = target
+	commanderID := State.CommanderID(1)
+	arrivesAt := now.Add(time.Second)
+	snapshot.State.Movements[9] = State.MovementState{
+		ID: 9, Direction: 0, SourceCastleID: 1, KingdomID: 0, TargetTypeID: samuraiCampTypeID,
+		TargetX: 99, TargetY: 100, CommanderID: &commanderID, ArrivesAt: &arrivesAt,
+	}
 
 	decision, err := NewAutoNomadPolicy().Evaluate(t.Context(), snapshot)
 	if err != nil || decision.Request == nil || decision.Request.Name != "nomad.cooldown.minute_skip" {
 		t.Fatalf("leveling cooldown decision: %#v err=%v", decision, err)
+	}
+}
+
+func TestAutoNomadPolicyStagesSequentialArrivalRecovery(t *testing.T) {
+	now := time.Date(2026, 7, 14, 13, 0, 0, 0, time.UTC)
+	snapshot := autoNomadPolicySnapshot(t, now)
+	arrival := now.Add(time.Second)
+	commanderID := State.CommanderID(1)
+	snapshot.State.Movements[10] = State.MovementState{
+		ID: 10, Direction: 0, SourceCastleID: 1, KingdomID: 0, TargetTypeID: samuraiCampTypeID,
+		TargetX: 99, TargetY: 100, CommanderID: &commanderID, ArrivesAt: &arrival,
+	}
+	if !State.RecordEventAttackLaunch(&snapshot.State, samuraiEventID, State.EventAttackRecord{
+		MovementID: 10, Kind: State.EventActivityCamp, KingdomID: 0, TargetTypeID: samuraiCampTypeID,
+		TargetX: 99, TargetY: 100, LaunchedAt: now.Add(-time.Minute), ArrivesAt: arrival,
+	}) {
+		t.Fatal("could not stage imminent launch")
+	}
+	decision, err := NewAutoNomadPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request != nil || decision.Status != "waiting" || !decision.NextCheckAt.Equal(arrival.Add(2*time.Second)) {
+		t.Fatalf("imminent arrival decision: %#v err=%v", decision, err)
+	}
+
+	arrival = now.Add(-10 * time.Second)
+	movement := snapshot.State.Movements[10]
+	movement.ArrivesAt = &arrival
+	snapshot.State.Movements[10] = movement
+	activity, _ := snapshot.State.MutableEventActivity(samuraiEventID)
+	activity.PendingAttacks[0].ArrivesAt = arrival
+	snapshot.State.SetEventActivity(samuraiEventID, activity)
+	target := snapshot.State.Map[0]["99:100"]
+	target.ObservedAt = now.Add(-20 * time.Second)
+	snapshot.State.Map[0]["99:100"] = target
+	snapshot.State.NomadCamps.LastScannedAt[1] = now.Add(-30 * time.Second)
+	decision, err = NewAutoNomadPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "map.query" || !decision.ReevaluateOnSuccess {
+		t.Fatalf("due unsettled arrival did not request one exact GAA: %#v err=%v", decision, err)
+	}
+
+	target.ObservedAt = now.Add(time.Second)
+	snapshot.State.Map[0]["99:100"] = target
+	snapshot.Now = now.Add(time.Second)
+	decision, err = NewAutoNomadPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "game.refresh_movements" {
+		t.Fatalf("fresh clear row repeated GAA instead of reconciling live movements: %#v err=%v", decision, err)
+	}
+
+	delete(snapshot.State.Movements, 10)
+	snapshot.State.MovementSnapshot.ObservedAt = now.Add(2 * time.Second)
+	snapshot.Now = now.Add(2 * time.Second)
+	decision, err = NewAutoNomadPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "nomad.camp.attack" {
+		t.Fatalf("fresh GAM disappearance and clear row did not reopen launch: %#v err=%v", decision, err)
+	}
+}
+
+func TestAutoNomadPolicyBoundsUnknownArrivalMovementRefresh(t *testing.T) {
+	now := time.Date(2026, 7, 14, 13, 0, 0, 0, time.UTC)
+	snapshot := autoNomadPolicySnapshot(t, now)
+	commanderID := State.CommanderID(1)
+	launchedAt := now.Add(-time.Second)
+	snapshot.State.Movements[11] = State.MovementState{
+		ID: 11, Direction: 0, SourceCastleID: 1, KingdomID: 0, TargetTypeID: samuraiCampTypeID,
+		TargetX: 99, TargetY: 100, CommanderID: &commanderID, ObservedAt: launchedAt,
+	}
+	if !State.RecordEventAttackLaunch(&snapshot.State, samuraiEventID, State.EventAttackRecord{
+		MovementID: 11, Kind: State.EventActivityCamp, KingdomID: 0, TargetTypeID: samuraiCampTypeID,
+		TargetX: 99, TargetY: 100, LaunchedAt: launchedAt,
+	}) {
+		t.Fatal("could not stage unknown-timing launch")
+	}
+	snapshot.State.MovementSnapshot.ObservedAt = now
+	decision, err := NewAutoNomadPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request != nil || decision.Status != "waiting" || !decision.NextCheckAt.Equal(now.Add(30*time.Second)) {
+		t.Fatalf("fresh unknown timing started a busy GAM loop: %#v err=%v", decision, err)
+	}
+	snapshot.Now = now.Add(2 * time.Second)
+	decision, err = NewAutoNomadPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request != nil || decision.Status != "waiting" {
+		t.Fatalf("unknown timing retried GAM after two seconds: %#v err=%v", decision, err)
 	}
 }
 
