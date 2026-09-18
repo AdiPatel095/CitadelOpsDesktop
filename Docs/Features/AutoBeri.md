@@ -35,6 +35,11 @@ start reading if you want the shape of a policy without the complexity.
 | `build.allowDemolition` | Allows exact-target removal of unmanaged destructible buildings |
 | `build.allowTimeSkips` | Allows construction skips above configured reserves |
 
+Premium spending, demolition, and time skips remain opt-in. The builder never
+changes those permissions. Resource and time-skip reserves are applied in every
+phase, so "use all resources" means all currently spendable resources above the
+user's explicit reserves.
+
 ## Default builder target
 
 With no custom blueprint active, the builder uses the built-in exact reference
@@ -51,6 +56,40 @@ already-higher Stable satisfies the built-in target and is retained. An
 explicitly active captured blueprint replaces the built-in target until the
 user switches back to the default. Terminal Large-tent steps that carry an
 official premium cost remain blocked unless `build.allowPremium` is enabled.
+
+## Builder phase order
+
+The builder recomputes its phase from each fresh castle snapshot and emits at
+most one action before reevaluating:
+
+1. Build or upgrade the selected Stable level in place. An existing higher
+   Stable is retained, and Stables are never stored or demolished, including
+   when an exact custom blueprint omits one.
+2. Buy every missing ground tile required by the active target, one confirmed
+   expansion at a time. If the next official resource expansion is not yet
+   affordable, the builder waits and saves returned loot. It does not spend on
+   later phases. A storage action is allowed here only when the official cost
+   cannot fit the observed capacity.
+3. For exact targets, remove buildings outside the target multiplicities.
+   Matching follows official upgrade paths, so a retained lower-level target
+   building is upgraded later rather than mistaken for an extra. Storeable
+   extra decorations are stored first. Other eligible extras require
+   `build.allowDemolition`; protected and Stable definitions are preserved.
+   Functional and layout custom targets keep their non-exact unmanaged-building
+   behavior.
+4. Move retained target buildings and decorations to their exact positions,
+   one confirmed move at a time. A collision or move cycle waits with a clear
+   blocker instead of deleting a retained building.
+5. Place or build every target decoration. An unavailable or unaffordable
+   decoration blocks this phase, even when a tent is already affordable.
+6. Construct and upgrade the remaining tents, camps, and fixed target
+   structures.
+
+An occupied construction queue, malformed target, unavailable permission,
+resource shortage, or blocked placement waits in the active phase. It never
+falls through to a cheaper later action. Restarting the service or changing the
+active blueprint is safe because no phase cursor is persisted; the next phase
+is derived from the latest authoritative layout, queue, and resource state.
 
 ## Wake triggers
 

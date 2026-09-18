@@ -107,9 +107,10 @@ func (*BeriBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		}, nil
 	}
 	effectiveStableLevel := settings.Build.StableLevel
-	if !customTarget {
-		effectiveStableLevel = preserveHigherBeriStableTarget(&target, castle, snapshot.GameData, effectiveStableLevel)
+	if customTarget {
+		effectiveStableLevel = beriTargetStableLevel(target, snapshot.GameData, effectiveStableLevel)
 	}
+	effectiveStableLevel = preserveHigherBeriStableTarget(&target, castle, snapshot.GameData, effectiveStableLevel)
 	metrics := map[string]float64{
 		"castleId":                    float64(castle.ID),
 		"wood":                        castle.Resources[State.ResourceID(3)].Amount,
@@ -131,7 +132,7 @@ func (*BeriBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		ResourceReserves: settings.Build.ResourceReserves, SourceResourceReserves: map[string]float64{},
 		TimeSkipReserve: settings.Build.TimeSkipReserve,
 	}
-	decision, complete, detail, err := evaluateAutoEventBuild(
+	decision, complete, detail, err := evaluateBeriEventBuild(
 		snapshot,
 		shared,
 		castle,
@@ -207,6 +208,23 @@ func preserveHigherBeriStableTarget(
 		}
 	}
 	return configuredLevel
+}
+
+func beriTargetStableLevel(target Buildings.TargetCaptureResult, gameData *GameData.Store, fallback int64) int64 {
+	if gameData == nil {
+		return fallback
+	}
+	catalog, err := gameData.BuildingCatalog()
+	if err != nil {
+		return fallback
+	}
+	for _, building := range target.Buildings {
+		definition, found := catalog.DefinitionView(int64(building.DefinitionID))
+		if found && isBeriStableDefinition(definition) {
+			return definition.Level
+		}
+	}
+	return fallback
 }
 
 func isBeriStableDefinition(definition GameData.BuildingDefinition) bool {
