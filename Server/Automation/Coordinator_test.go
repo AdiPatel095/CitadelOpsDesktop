@@ -1555,6 +1555,23 @@ func TestCoordinatorRetryableTowerStaleDoesNotPauseQueue(t *testing.T) {
 	}
 }
 
+func TestCoordinatorRetryableNomadStaleDoesNotPauseQueue(t *testing.T) {
+	now := time.Date(2026, time.September, 18, 12, 55, 51, 0, time.UTC)
+	current := &policyRuntime{running: true}
+	result, wakeImmediately := completePolicyRun(current, operationResult{
+		policyID: "autoNomad",
+		receipt: Intent.Receipt{
+			Status: Intent.StatusPartiallySucceeded,
+			Error:  "Build and launch camp attack: " + Intent.ErrPlanStale.Error() + ": camp 206:937 is awaiting an authoritative cooldown refresh",
+		},
+		nextCheck:         now.Add(2 * time.Second),
+		reevaluateOnStale: true,
+	}, now)
+	if !wakeImmediately || !result.nextCheck.IsZero() || !current.failureBlockedUntil.IsZero() || current.running {
+		t.Fatalf("retryable Nomad stale paused the queue: result=%+v runtime=%+v", result, current)
+	}
+}
+
 func TestCoordinatorNonStaleTowerFailureKeepsSafetyPause(t *testing.T) {
 	now := time.Date(2026, time.July, 22, 18, 45, 0, 0, time.UTC)
 	current := &policyRuntime{running: true}

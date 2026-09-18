@@ -2,6 +2,10 @@ package App
 
 import (
 	"encoding/json"
+	"errors"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -100,6 +104,209 @@ func TestDungeonMinuteSkipUsesOnePartialMS2PerPlan(t *testing.T) {
 	}
 }
 
+func TestDungeonMinuteSkipRequiresFreshPositiveCampCooldown(t *testing.T) {
+	gameData := dungeonMinuteSkipGameData(t)
+	now := time.Now().UTC()
+	gameState := State.NewGameState()
+	gameState.Player.Currencies[1004] = 1
+	gameState.Player.Currencies[1005] = 2
+	gameState.Map[0] = map[string]State.MapObservation{
+		"206:946": {
+			KingdomID: 0, TypeID: samuraiIntentCampTypeID, X: 206, Y: 946,
+			EventCampID: 5001, EventCampCooldownRemaining: 0, ObservedAt: now,
+		},
+	}
+	request := json.RawMessage(`{
+		"kingdomId":0,"targetTypeId":29,"targetX":206,"targetY":946,
+		"eventCampId":5001,"minimumRemaining":{"MS5":1}
+	}`)
+	gameState.NomadCamps.Cooldowns["0:206:946"] = State.NomadCampCooldownState{
+		KingdomID: 0, X: 206, Y: 946, LastSuccessfulBattleAt: now.Add(time.Second), PendingCooldownRefresh: true,
+	}
+	if _, err := planDungeonMinuteSkip(
+		t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, request,
+	); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("pending post-victory cooldown was not rejected as stale: %v", err)
+	}
+
+	refreshed := gameState.Map[0]["206:946"]
+	refreshed.EventCampCooldownRemaining = 2_465
+	refreshed.ObservedAt = now.Add(2 * time.Second)
+	gameState.Map[0]["206:946"] = refreshed
+	gameState.NomadCamps.Cooldowns["0:206:946"] = State.NomadCampCooldownState{
+		KingdomID: 0, X: 206, Y: 946, LastSuccessfulBattleAt: now.Add(time.Second),
+		CooldownRemaining: 2_465, CooldownObservedAt: refreshed.ObservedAt,
+	}
+	input := Intent.PlanningContext{State: gameState, GameData: gameData}
+	plan, err := planDungeonMinuteSkip(t.Context(), input, request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	step, err := resolveDungeonMinuteSkipStep(t.Context(), input, plan.Steps[0].ResolverArguments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var payload struct {
+		MinuteSkip string `json:"MST"`
+	}
+	if err := json.Unmarshal(step.Command.Payload, &payload); err != nil {
+		t.Fatal(err)
+	}
+	if payload.MinuteSkip != "MS5" {
+		t.Fatalf("2465-second cooldown chose %q, want the smallest sufficient available denomination MS5", payload.MinuteSkip)
+	}
+
+	cleared := gameState.Map[0]["206:946"]
+	cleared.EventCampCooldownRemaining = -1_150
+	cleared.ObservedAt = now.Add(3 * time.Second)
+	gameState.Map[0]["206:946"] = cleared
+	gameState.NomadCamps.Cooldowns["0:206:946"] = State.NomadCampCooldownState{
+		KingdomID: 0, X: 206, Y: 946, LastSuccessfulBattleAt: now.Add(time.Second),
+		CooldownRemaining: -1_150, CooldownObservedAt: cleared.ObservedAt,
+	}
+	if _, err := planDungeonMinuteSkip(
+		t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, request,
+	); !errors.Is(err, Intent.ErrPlanStale) || !strings.Contains(err.Error(), "no longer on cooldown") {
+		t.Fatalf("clear post-skip observation allowed a duplicate MSD: %v", err)
+	}
+	if _, err := resolveDungeonMinuteSkipStep(
+		t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, plan.Steps[0].ResolverArguments,
+	); !errors.Is(err, Intent.ErrPlanStale) || !strings.Contains(err.Error(), "no longer on cooldown") {
+		t.Fatalf("clear post-skip observation reached duplicate MSD dispatch: %v", err)
+	}
+
+	wrongTarget := json.RawMessage(`{
+		"kingdomId":0,"targetTypeId":29,"targetX":206,"targetY":947,
+		"eventCampId":5001,"minimumRemaining":{"MS5":1}
+	}`)
+	if _, err := planDungeonMinuteSkip(
+		t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, wrongTarget,
+	); !errors.Is(err, Intent.ErrPlanStale) || !strings.Contains(err.Error(), "does not match the current map row") {
+		t.Fatalf("wrong target allowed a cooldown skip: %v", err)
+	}
+}
+
+func TestDungeonMinuteSkipDispatchFreshnessAcrossAttackTargets(t *testing.T) {
+	gameData := dungeonMinuteSkipGameData(t)
+	manager := dungeonMinuteSkipGameDataManager(t)
+	now := time.Now().UTC()
+	for _, testCase := range []struct {
+		name         string
+		targetTypeID int
+		eventCampID  int64
+	}{
+		{name: "tower", targetTypeID: kingdomTowerMapTypeID},
+		{name: "nomad", targetTypeID: nomadIntentCampTypeID, eventCampID: 5001},
+		{name: "samurai", targetTypeID: samuraiIntentCampTypeID, eventCampID: 5001},
+		{name: "khan", targetTypeID: khanCampTypeID, eventCampID: 1146},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			gameState := State.NewGameState()
+			gameState.Player.Currencies[1005] = 2
+			observation := State.MapObservation{
+				KingdomID: 0, TypeID: testCase.targetTypeID, X: 206, Y: 946,
+				EventCampID: testCase.eventCampID, ObservedAt: now,
+			}
+			gameState.Map[0] = map[string]State.MapObservation{"206:946": observation}
+			setPendingDungeonCooldown(&gameState, observation, now.Add(time.Second))
+			arguments, _ := json.Marshal(dungeonMinuteSkipRequest{
+				KingdomID: 0, TargetTypeID: testCase.targetTypeID, TargetX: 206, TargetY: 946,
+				EventCampID: testCase.eventCampID, MinimumRemaining: map[string]int64{"MS5": 1},
+			})
+			if _, err := planDungeonMinuteSkip(
+				t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, arguments,
+			); !errors.Is(err, Intent.ErrPlanStale) {
+				t.Fatalf("pending cooldown reached MSD planning: %v", err)
+			}
+
+			observation.ObservedAt = now.Add(2 * time.Second)
+			setDungeonObservationRemaining(&observation, 2_465)
+			gameState.Map[0]["206:946"] = observation
+			setFreshDungeonCooldown(&gameState, observation, 2_465)
+			input := Intent.PlanningContext{State: gameState, GameData: gameData}
+			plan, err := planDungeonMinuteSkip(t.Context(), input, arguments)
+			if err != nil {
+				t.Fatalf("fresh positive cooldown rejected: %v", err)
+			}
+			step, err := resolveDungeonMinuteSkipStep(t.Context(), input, plan.Steps[0].ResolverArguments)
+			if err != nil {
+				t.Fatalf("fresh positive cooldown did not resolve: %v", err)
+			}
+			if step.PreDispatchAction != dungeonMinuteSkipDispatchGuard ||
+				step.FinalDispatchAction != dungeonMinuteSkipDispatchGuard {
+				t.Fatalf("MSD is missing final freshness guards: %#v", step)
+			}
+			application := &Application{State: State.NewStore(gameState), GameData: manager}
+
+			spent := gameState
+			spent.Player.Currencies[1005] = 1
+			application.State = State.NewStore(spent)
+			if err := application.guardDungeonMinuteSkipDispatch(t.Context(), step.PreDispatchArguments); !errors.Is(err, Intent.ErrPlanStale) {
+				t.Fatalf("spent exact denomination reached MSD dispatch: %v", err)
+			}
+			gameState.Player.Currencies[1005] = 2
+
+			pending := gameState
+			setPendingDungeonCooldown(&pending, observation, now.Add(3*time.Second))
+			application.State = State.NewStore(pending)
+			if err := application.guardDungeonMinuteSkipDispatch(t.Context(), step.FinalDispatchArguments); !errors.Is(err, Intent.ErrPlanStale) {
+				t.Fatalf("new victory pending refresh reached MSD dispatch: %v", err)
+			}
+
+			cleared := gameState
+			clearObservation := observation
+			clearObservation.ObservedAt = now.Add(4 * time.Second)
+			setDungeonObservationRemaining(&clearObservation, -1_150)
+			cleared.Map[0]["206:946"] = clearObservation
+			setFreshDungeonCooldown(&cleared, clearObservation, -1_150)
+			application.State = State.NewStore(cleared)
+			if err := application.guardDungeonMinuteSkipDispatch(t.Context(), step.FinalDispatchArguments); !errors.Is(err, Intent.ErrPlanStale) {
+				t.Fatalf("clear observation reached duplicate MSD dispatch: %v", err)
+			}
+		})
+	}
+}
+
+func setDungeonObservationRemaining(observation *State.MapObservation, remaining int) {
+	if observation.TypeID == kingdomTowerMapTypeID {
+		observation.TowerCooldownRemaining = remaining
+		return
+	}
+	observation.EventCampCooldownRemaining = remaining
+}
+
+func setPendingDungeonCooldown(gameState *State.GameState, observation State.MapObservation, battleAt time.Time) {
+	key := "0:206:946"
+	if observation.TypeID == kingdomTowerMapTypeID {
+		gameState.TowerCooldowns[key] = State.TowerCooldownState{
+			KingdomID: 0, TargetTypeID: observation.TypeID, X: observation.X, Y: observation.Y,
+			LastSuccessfulBattleAt: battleAt, PendingCooldownRefresh: true,
+		}
+		return
+	}
+	gameState.NomadCamps.Cooldowns[key] = State.NomadCampCooldownState{
+		KingdomID: 0, X: observation.X, Y: observation.Y,
+		LastSuccessfulBattleAt: battleAt, PendingCooldownRefresh: true,
+	}
+}
+
+func setFreshDungeonCooldown(gameState *State.GameState, observation State.MapObservation, remaining int) {
+	key := "0:206:946"
+	if observation.TypeID == kingdomTowerMapTypeID {
+		gameState.TowerCooldowns[key] = State.TowerCooldownState{
+			KingdomID: 0, TargetTypeID: observation.TypeID, X: observation.X, Y: observation.Y,
+			LastSuccessfulBattleAt: observation.ObservedAt.Add(-time.Second),
+			CooldownRemaining:      remaining, CooldownObservedAt: observation.ObservedAt,
+		}
+		return
+	}
+	gameState.NomadCamps.Cooldowns[key] = State.NomadCampCooldownState{
+		KingdomID: 0, X: observation.X, Y: observation.Y,
+		LastSuccessfulBattleAt: observation.ObservedAt.Add(-time.Second),
+		CooldownRemaining:      remaining, CooldownObservedAt: observation.ObservedAt,
+	}
+}
+
 func TestDungeonMinuteSkipAcceptsType35KhanTarget(t *testing.T) {
 	gameData := dungeonMinuteSkipGameData(t)
 	now := time.Now().UTC()
@@ -174,9 +381,7 @@ func TestKhanCooldownReportsAttachEveryMSDUntilCooldownClears(t *testing.T) {
 	}
 }
 
-func dungeonMinuteSkipGameData(t *testing.T) *GameData.Store {
-	t.Helper()
-	store, err := GameData.DecodeStore([]byte(`{
+const dungeonMinuteSkipCatalog = `{
 		"versionInfo":[],"buildings":[],"units":[],
 		"currencies":[
 			{"currencyID":1001,"JSONKey":"MS1"},{"currencyID":1002,"JSONKey":"MS2"},
@@ -190,9 +395,31 @@ func dungeonMinuteSkipGameData(t *testing.T) *GameData.Store {
 			{"currencyID":"1005","MinutesSkipValue":"60"},{"currencyID":"1006","MinutesSkipValue":"300"},
 			{"currencyID":"1007","MinutesSkipValue":"1440"}
 		]
-	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	}`
+
+func dungeonMinuteSkipGameData(t *testing.T) *GameData.Store {
+	t.Helper()
+	store, err := GameData.DecodeStore([]byte(dungeonMinuteSkipCatalog), GameData.SourceMetadata{ItemVersion: "test"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	return store
+}
+
+func dungeonMinuteSkipGameDataManager(t *testing.T) *GameData.Manager {
+	t.Helper()
+	return appTestGameDataManagerFromCatalog(t, dungeonMinuteSkipCatalog)
+}
+
+func appTestGameDataManagerFromCatalog(t *testing.T, catalog string) *GameData.Manager {
+	t.Helper()
+	cacheDir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(cacheDir, "Items-vtest.json"), []byte(catalog), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	manager := GameData.NewManager(GameData.UpdaterConfig{CacheDir: cacheDir, VersionURL: "offline://items-version"})
+	if err := manager.Initialize(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	return manager
 }

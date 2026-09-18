@@ -291,9 +291,6 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterAction("nomad.attack.guard", application.guardNomadCampAttack); err != nil {
 		return err
 	}
-	if err := application.Intents.RegisterAction(nomadCooldownSkipGuard, application.guardNomadCooldownSkipDispatch); err != nil {
-		return err
-	}
 	if err := application.Intents.RegisterAction("nomad.attack.inventory.guard", application.guardNomadAttackInventory); err != nil {
 		return err
 	}
@@ -310,6 +307,9 @@ func (application *Application) registerGameIntents() error {
 		return err
 	}
 	if err := application.Intents.RegisterAction("nomad.cooldown.minute_skip.verify", application.verifyDungeonMinuteSkip); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction(dungeonMinuteSkipDispatchGuard, application.guardDungeonMinuteSkipDispatch); err != nil {
 		return err
 	}
 	if err := application.Intents.RegisterStepResolver("nomad.cooldown.minute_skip.build", resolveDungeonMinuteSkipStep); err != nil {

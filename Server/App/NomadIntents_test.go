@@ -14,8 +14,7 @@ import (
 	"CitadelDesktop/Server/State"
 )
 
-func TestNomadCooldownSkipUsesLockedTargetAndOfficialRubyCeiling(t *testing.T) {
-	gameData, err := GameData.DecodeStore([]byte(`{
+const nomadCooldownSkipCatalog = `{
 		"versionInfo":[],
 		"buildings":[],
 		"units":[],
@@ -24,7 +23,10 @@ func TestNomadCooldownSkipUsesLockedTargetAndOfficialRubyCeiling(t *testing.T) {
 			"eventAutoScalingCampID":5001,"eventID":80,"difficultyID":201,"areaType":29,
 			"camplevel":90,"countVictory":9,"coolDown":3600,"skipCosts":9950,"maxTroopCapacityDefense":620
 		}]
-	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	}`
+
+func TestNomadCooldownSkipUsesLockedTargetAndOfficialRubyCeiling(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(nomadCooldownSkipCatalog), GameData.SourceMetadata{ItemVersion: "test"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -55,6 +57,7 @@ func TestNomadCooldownSkipUsesLockedTargetAndOfficialRubyCeiling(t *testing.T) {
 	}
 	if len(plan.Steps) != 3 || plan.Steps[0].Action != "nomad.cooldown.guard" ||
 		plan.Steps[1].Opcode != "sdc" || plan.Steps[1].AwaitOpcode != "sdc" ||
+		plan.Steps[1].FinalDispatchAction != "nomad.cooldown.guard" ||
 		plan.Steps[2].Action != "nomad.cooldown.verify" {
 		t.Fatalf("unexpected guarded cooldown plan: %#v", plan.Steps)
 	}
@@ -71,15 +74,42 @@ func TestNomadCooldownSkipUsesLockedTargetAndOfficialRubyCeiling(t *testing.T) {
 	if payload.KingdomID != 0 || payload.X != 101 || payload.Y != 102 || payload.MapID != -1 || payload.NodeID != -1 {
 		t.Fatalf("unexpected sdc payload: %#v", payload)
 	}
-
-	request.MaximumRubyCost = 9_000
-	arguments, _ = json.Marshal(request)
-	if _, err := planNomadCooldownSkip(t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, arguments); err == nil {
-		t.Fatal("cooldown reset ignored the configured ruby ceiling")
+	ceilingRequest := request
+	ceilingRequest.MaximumRubyCost = 9_000
+	ceilingArguments, _ := json.Marshal(ceilingRequest)
+	if _, err := planNomadCooldownSkip(
+		t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, ceilingArguments,
+	); err == nil || !strings.Contains(err.Error(), "above configured cap") {
+		t.Fatalf("cooldown reset ignored the configured ruby ceiling: %v", err)
 	}
+	application := &Application{
+		State: State.NewStore(gameState), GameData: appTestGameDataManagerFromCatalog(t, nomadCooldownSkipCatalog),
+	}
+	pending := gameState
+	pending.NomadCamps.Cooldowns["0:101:102"] = State.NomadCampCooldownState{
+		KingdomID: 0, X: 101, Y: 102, LastSuccessfulBattleAt: now.Add(time.Second), PendingCooldownRefresh: true,
+	}
+	application.State = State.NewStore(pending)
+	if err := application.guardNomadCooldownSkip(t.Context(), plan.Steps[1].FinalDispatchArguments); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("pending post-victory cooldown reached SDC dispatch: %v", err)
+	}
+	cleared := gameState
+	observation := cleared.Map[0]["101:102"]
+	observation.EventCampCooldownRemaining = 0
+	observation.ObservedAt = now.Add(2 * time.Second)
+	cleared.Map[0]["101:102"] = observation
+	cleared.NomadCamps.Cooldowns["0:101:102"] = State.NomadCampCooldownState{
+		KingdomID: 0, X: 101, Y: 102, LastSuccessfulBattleAt: now.Add(time.Second),
+		CooldownObservedAt: observation.ObservedAt,
+	}
+	application.State = State.NewStore(cleared)
+	if err := application.guardNomadCooldownSkip(t.Context(), plan.Steps[1].FinalDispatchArguments); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("clear camp reached duplicate SDC dispatch: %v", err)
+	}
+
 }
 
-func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
+func TestNomadChainLaunchesClearedCampWithoutSpeculativeCooldownSkips(t *testing.T) {
 	gameData, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],
 		"buildings":[],
@@ -118,7 +148,7 @@ func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
 		gameState.Commanders[commanderID] = State.CommanderState{ID: commanderID, Available: true}
 	}
 	gameState.Player.LegendSkills.ObservedAt = now
-	gameState.Player.Currencies[1005] = 2
+	gameState.Player.Currencies[1005] = 3
 	gameState.DailyAttacks = State.DailyAttackState{Count: 0, ObservedAt: now}
 	gameState.EventScores.ByEvent[80] = State.ScalableEventScore{
 		EventID: 80, DifficultyID: 201, PlayerScore: 100, RemainingSec: 7_200, ObservedAt: now,
@@ -157,27 +187,14 @@ func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
 	var launches []Intent.Step
 	var delays []Intent.Step
 	var arrivalGuards []Intent.Step
-	var launchIndexes []int
-	var skipIndexes []int
 	consumeSteps := 0
 	topLevelSetup := 0
-	for index, step := range plan.Steps {
+	for _, step := range plan.Steps {
 		if step.Resolver == "nomad.attack.build" {
 			launches = append(launches, step)
-			launchIndexes = append(launchIndexes, index)
 		}
 		if step.Opcode == "msd" {
-			if step.PreDispatchAction != nomadCooldownSkipGuard {
-				t.Fatalf("Nomad MSD is missing its combined dispatch-time guard: %#v", step)
-			}
-			var guard nomadCooldownSkipDispatchGuardRequest
-			if err := json.Unmarshal(step.PreDispatchArguments, &guard); err != nil {
-				t.Fatal(err)
-			}
-			if guard.CurrencyID != 1005 || guard.MinimumRemaining != 0 || guard.DailyAttackLimit != 100 {
-				t.Fatalf("Nomad MSD dispatch guard = %#v", guard)
-			}
-			skipIndexes = append(skipIndexes, index)
+			t.Fatalf("cleared-camp attack chain emitted a speculative MSD: %#v", step)
 		}
 		if step.Action == timeSkipConsumeAction {
 			consumeSteps++
@@ -195,12 +212,8 @@ func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
 	if len(launches) != 3 {
 		t.Fatalf("unexpected response-gated chain: %#v", launches)
 	}
-	if len(skipIndexes) != 2 || consumeSteps != 2 {
-		t.Fatalf("chain cooldown steps = skips %v consumes %d, want two of each", skipIndexes, consumeSteps)
-	}
-	if !(launchIndexes[0] < skipIndexes[0] && skipIndexes[0] < launchIndexes[1] &&
-		launchIndexes[1] < skipIndexes[1] && skipIndexes[1] < launchIndexes[2]) {
-		t.Fatalf("cooldown skips were not interleaved before each later CRA: launches=%v skips=%v", launchIndexes, skipIndexes)
+	if consumeSteps != 0 {
+		t.Fatalf("cleared-camp attack chain speculatively debited %d time skips", consumeSteps)
 	}
 	if len(delays) != 0 {
 		t.Fatalf("chain added an artificial send delay: %#v", delays)
@@ -238,6 +251,56 @@ func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
 			t.Fatalf("concrete Nomad CRA guard accepted reached daily limit: %v", err)
 		}
 	}
+	var first, second, third resolvedNomadCampAttackRequest
+	if err := json.Unmarshal(launches[0].ResolverArguments, &first); err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(launches[1].ResolverArguments, &second); err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal(launches[2].ResolverArguments, &third); err != nil {
+		t.Fatal(err)
+	}
+	arrival := now.Add(62 * time.Second)
+	gameState.Movements[86115613] = State.MovementState{
+		ID: 86115613, Direction: 0, SourceCastleID: 1, KingdomID: 0, TargetX: 101, TargetY: 100,
+		CommanderID: &first.CommanderID, ArrivesAt: &arrival, ObservedAt: now.Add(time.Second),
+	}
+	application := &Application{State: State.NewStore(gameState)}
+	if err := application.captureNomadCampLaunch(t.Context(), launches[0].ResolverArguments); err != nil {
+		t.Fatalf("capture accepted 62-second camp movement: %v", err)
+	}
+	gameState = application.State.Snapshot()
+	concrete, err := application.resolveNomadCampAttackStep(
+		t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, launches[1].ResolverArguments,
+	)
+	if err != nil || concrete.Opcode != "cra" || second.CommanderID == first.CommanderID {
+		t.Fatalf("clear camp did not advance to the next distinct CRA after accepted movement: step=%#v err=%v", concrete, err)
+	}
+	gameState.NomadCamps.Cooldowns["0:101:100"] = State.NomadCampCooldownState{
+		KingdomID: 0, X: 101, Y: 100, LastSuccessfulBattleAt: now.Add(63 * time.Second), PendingCooldownRefresh: true,
+	}
+	if _, err := application.resolveNomadCampAttackStep(
+		t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, launches[2].ResolverArguments,
+	); !errors.Is(err, Intent.ErrPlanStale) || third.CommanderID == first.CommanderID {
+		t.Fatalf("pending post-victory cooldown did not yield before the next distinct CRA: %v", err)
+	}
+	gameState.NomadCamps.Cooldowns["0:101:100"] = State.NomadCampCooldownState{
+		KingdomID: 0, X: 101, Y: 100, LastSuccessfulBattleAt: now.Add(63 * time.Second),
+		CooldownRemaining: 3_600, CooldownObservedAt: time.Now().UTC().Add(time.Second),
+	}
+	if _, err := application.resolveNomadCampAttackStep(
+		t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, launches[2].ResolverArguments,
+	); !errors.Is(err, Intent.ErrPlanStale) || !strings.Contains(err.Error(), "on cooldown") {
+		t.Fatalf("positive refreshed cooldown did not yield before the next CRA: %v", err)
+	}
+	delete(gameState.NomadCamps.Cooldowns, "0:101:100")
+	delete(gameState.Movements, 86115613)
+	for commanderID := State.CommanderID(1); commanderID <= 3; commanderID++ {
+		commander := gameState.Commanders[commanderID]
+		commander.Available = true
+		gameState.Commanders[commanderID] = commander
+	}
 	withoutSkips := request
 	withoutSkips.SkipCooldowns = false
 	withoutSkipArguments, _ := json.Marshal(withoutSkips)
@@ -246,6 +309,15 @@ func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
 	); err == nil || !strings.Contains(err.Error(), "require cooldown time skips") {
 		t.Fatalf("unsafe no-skip chain error = %v", err)
 	}
+	insufficientCapacity := request
+	gameState.Player.Currencies[1005] = 2
+	insufficientArguments, _ := json.Marshal(insufficientCapacity)
+	if _, err := planNomadCampAttack(
+		t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, insufficientArguments,
+	); err == nil || !strings.Contains(err.Error(), "cannot cover committed attack 3 of 3") {
+		t.Fatalf("direct chain caller bypassed committed cooldown capacity: %v", err)
+	}
+	gameState.Player.Currencies[1005] = 3
 	khanChestID := int64(244)
 	incompatible := request
 	incompatible.Preset = AttackPresets.Preset{ID: "sami", Name: "Sami's", Waves: []AttackPresets.Wave{{
@@ -263,35 +335,9 @@ func TestNomadChainDeclaresSendLevelCooldownDependencies(t *testing.T) {
 	gameState.NomadCamps.Cooldowns["0:101:100"] = State.NomadCampCooldownState{
 		KingdomID: 0, X: 101, Y: 100, LastSuccessfulBattleAt: now, PendingCooldownRefresh: true,
 	}
-	if _, err := planNomadCampAttack(t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, arguments); err == nil {
-		t.Fatal("chain planned while the camp was awaiting a post-victory cooldown refresh")
-	}
-}
-
-func TestNomadCooldownSkipGuardRechecksDailyLimitAndInventoryBeforeDispatch(t *testing.T) {
-	gameState := State.NewGameState()
-	gameState.Player.Currencies[1005] = 2
-	gameState.DailyAttacks = State.DailyAttackState{Count: 99, ObservedAt: time.Now().UTC()}
-	application := &Application{State: State.NewStore(gameState)}
-	arguments, _ := json.Marshal(nomadCooldownSkipDispatchGuardRequest{
-		timeSkipReserveGuardRequest: timeSkipReserveGuardRequest{CurrencyID: 1005, MinimumRemaining: 1},
-		DailyAttackLimit:            100,
-	})
-	if err := application.guardNomadCooldownSkipDispatch(t.Context(), arguments); err != nil {
-		t.Fatalf("available time skip rejected before dispatch: %v", err)
-	}
-
-	gameState.DailyAttacks.Count = 100
-	application.State = State.NewStore(gameState)
-	if err := application.guardNomadCooldownSkipDispatch(t.Context(), arguments); !errors.Is(err, Intent.ErrPlanStale) || !strings.Contains(err.Error(), "100 / 100") {
-		t.Fatalf("reached daily limit did not stale cooldown spending: %v", err)
-	}
-
-	gameState.DailyAttacks.Count = 99
-	gameState.Player.Currencies[1005] = 1
-	application.State = State.NewStore(gameState)
-	if err := application.guardNomadCooldownSkipDispatch(t.Context(), arguments); !errors.Is(err, Intent.ErrPlanStale) {
-		t.Fatalf("spent time skip did not stale the planned dispatch: %v", err)
+	stalePlan, err := planNomadCampAttack(t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, arguments)
+	if err != nil || len(stalePlan.Steps) != 0 {
+		t.Fatalf("pending post-victory refresh did not yield for a safe replan: plan=%#v err=%v", stalePlan, err)
 	}
 }
 

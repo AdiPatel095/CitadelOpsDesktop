@@ -25,7 +25,6 @@ const (
 	samuraiIntentCampTypeID = 29
 	nomadIntentCampCount    = 4
 	nomadIntentRadius       = 50
-	nomadCooldownSkipGuard  = "nomad.cooldown_skip.dispatch_guard"
 )
 
 type nomadMapScanRequest struct {
@@ -78,17 +77,6 @@ type nomadChainArrivalGuard struct {
 	TargetY           int               `json:"targetY"`
 	PreviousCommander State.CommanderID `json:"previousCommanderId"`
 	CurrentCommander  State.CommanderID `json:"currentCommanderId"`
-}
-
-type plannedNomadChainTimeSkip struct {
-	Option           buildingTimeSkipOption
-	ExpectedBefore   float64
-	MinimumRemaining int64
-}
-
-type nomadCooldownSkipDispatchGuardRequest struct {
-	timeSkipReserveGuardRequest
-	DailyAttackLimit int64 `json:"dailyAttackLimit"`
 }
 
 type nomadCooldownSkipRequest struct {
@@ -239,16 +227,16 @@ func planNomadCampAttack(_ context.Context, input Intent.PlanningContext, argume
 	if err != nil {
 		return Intent.Plan{}, fmt.Errorf("validate capacity-adjusted preset inventory: %w", err)
 	}
-	var chainTimeSkips [][]plannedNomadChainTimeSkip
-	if request.Mode == "chain" && len(resolution.Selected) > 1 {
-		if !request.SkipCooldowns {
-			return Intent.Plan{}, fmt.Errorf("chained Nomad/Samurai attacks require cooldown time skips before every later attack")
+	if request.Mode == "chain" {
+		if len(resolution.Selected) > 1 && !request.SkipCooldowns {
+			return Intent.Plan{}, fmt.Errorf("chained Nomad/Samurai attacks require cooldown time skips for every committed attack")
 		}
-		chainTimeSkips, err = planNomadChainCooldownSkips(
-			input, definition.CooldownSec, request.TimeSkipReserve, len(resolution.Selected)-1,
-		)
-		if err != nil {
-			return Intent.Plan{}, err
+		if request.SkipCooldowns {
+			if err := validateNomadChainCooldownSkipCapacity(
+				input, definition.CooldownSec, request.TimeSkipReserve, len(resolution.Selected),
+			); err != nil {
+				return Intent.Plan{}, err
+			}
 		}
 	}
 	contextPayload, _ := json.Marshal(struct {
@@ -271,11 +259,6 @@ func planNomadCampAttack(_ context.Context, input Intent.PlanningContext, argume
 		ActionArguments: mustMarshalNomadAttackRequest(request),
 	}))
 	for index, commanderID := range resolution.Selected {
-		if index > 0 {
-			for _, planned := range chainTimeSkips[index-1] {
-				steps = append(steps, nomadChainCooldownSkipSteps(target, planned, request.DailyAttackLimit)...)
-			}
-		}
 		resolvedRequest := request
 		resolvedRequest.Preset = resolvedPresets[commanderID]
 		resolvedArguments, _ := json.Marshal(resolvedNomadCampAttackRequest{nomadCampAttackRequest: resolvedRequest, CommanderID: commanderID})
@@ -302,19 +285,6 @@ func planNomadCampAttack(_ context.Context, input Intent.PlanningContext, argume
 		"castle-focus", "attack-context", "castle:" + castleID, "attack-inventory:" + castleID,
 		nomadTargetClaim(request.nomadTargetRequest),
 	}
-	if len(chainTimeSkips) > 0 {
-		claims = append(claims, "account-resources")
-		seenCurrencies := map[State.CurrencyID]struct{}{}
-		for _, sequence := range chainTimeSkips {
-			for _, planned := range sequence {
-				if _, duplicate := seenCurrencies[planned.Option.CurrencyID]; duplicate {
-					continue
-				}
-				seenCurrencies[planned.Option.CurrencyID] = struct{}{}
-				claims = append(claims, "currency:"+strconv.FormatInt(int64(planned.Option.CurrencyID), 10))
-			}
-		}
-	}
 	claims = append(claims, craCommanderClaims(resolution.Selected)...)
 	summary := fmt.Sprintf("Level camp %d:%d with commander %d", target.X, target.Y, resolution.Selected[0])
 	if request.Mode == "chain" {
@@ -327,39 +297,36 @@ func planNomadCampAttack(_ context.Context, input Intent.PlanningContext, argume
 	}, nil
 }
 
-func planNomadChainCooldownSkips(
+func validateNomadChainCooldownSkipCapacity(
 	input Intent.PlanningContext,
 	cooldownSec int64,
 	reserves map[string]int64,
-	transitionCount int,
-) ([][]plannedNomadChainTimeSkip, error) {
-	if transitionCount <= 0 {
-		return nil, nil
+	commitmentCount int,
+) error {
+	if commitmentCount <= 0 {
+		return nil
 	}
 	if cooldownSec <= 0 {
-		return nil, fmt.Errorf("official camp cooldown duration is unavailable for a chained attack")
+		return fmt.Errorf("official camp cooldown duration is unavailable for a chained attack")
 	}
 	minutes := []int{1, 5, 10, 30, 60, 300, 1440}
 	options := make([]buildingTimeSkipOption, 0, len(minutes))
 	available := map[State.CurrencyID]int64{}
-	expectedBalance := map[State.CurrencyID]float64{}
 	for _, minute := range minutes {
 		option, err := officialBuildingTimeSkipOption(input.GameData, minute)
 		if err != nil {
-			return nil, fmt.Errorf("validate official cooldown time skip: %w", err)
+			return fmt.Errorf("validate official cooldown time skip: %w", err)
 		}
 		reserve := timeSkipReserve(reserves, option.WireKey)
 		if reserve < 0 {
-			return nil, fmt.Errorf("%s time-skip reserve cannot be negative", option.WireKey)
+			return fmt.Errorf("%s time-skip reserve cannot be negative", option.WireKey)
 		}
 		balance := input.State.Player.Currencies[option.CurrencyID]
 		available[option.CurrencyID] = max(int64(0), int64(math.Floor(balance))-reserve)
-		expectedBalance[option.CurrencyID] = balance
 		options = append(options, option)
 	}
 
-	result := make([][]plannedNomadChainTimeSkip, transitionCount)
-	for transition := 0; transition < transitionCount; transition++ {
+	for commitment := 0; commitment < commitmentCount; commitment++ {
 		remaining := cooldownSec
 		for remaining > 0 {
 			selected := -1
@@ -378,56 +345,17 @@ func planNomadChainCooldownSkips(
 				}
 			}
 			if selected < 0 {
-				return nil, fmt.Errorf(
-					"available time skips cannot clear the official cooldown before attack %d of %d while preserving configured reserves",
-					transition+2, transitionCount+1,
+				return fmt.Errorf(
+					"available time skips cannot cover committed attack %d of %d while preserving configured reserves",
+					commitment+1, commitmentCount,
 				)
 			}
 			option := options[selected]
-			result[transition] = append(result[transition], plannedNomadChainTimeSkip{
-				Option: option, ExpectedBefore: expectedBalance[option.CurrencyID],
-				MinimumRemaining: timeSkipReserve(reserves, option.WireKey),
-			})
 			available[option.CurrencyID]--
-			expectedBalance[option.CurrencyID]--
 			remaining -= int64(option.Minutes) * 60
 		}
 	}
-	return result, nil
-}
-
-func nomadChainCooldownSkipSteps(
-	target State.MapObservation,
-	planned plannedNomadChainTimeSkip,
-	dailyAttackLimit int64,
-) []Intent.Step {
-	payload, _ := json.Marshal(struct {
-		MinuteSkip string `json:"MST"`
-		KingdomID  string `json:"KID"`
-		X          int    `json:"X"`
-		Y          int    `json:"Y"`
-		MapID      int    `json:"MID"`
-		NodeID     int    `json:"NID"`
-	}{
-		MinuteSkip: planned.Option.WireKey, KingdomID: strconv.FormatInt(int64(target.KingdomID), 10),
-		X: target.X, Y: target.Y, MapID: -1, NodeID: -1,
-	})
-	guardArguments, _ := json.Marshal(nomadCooldownSkipDispatchGuardRequest{
-		timeSkipReserveGuardRequest: timeSkipReserveGuardRequest{
-			CurrencyID: planned.Option.CurrencyID, MinimumRemaining: planned.MinimumRemaining,
-		},
-		DailyAttackLimit: dailyAttackLimit,
-	})
-	skip := commandStep(
-		fmt.Sprintf("Apply a %d-minute cooldown skip before the next camp attack", planned.Option.Minutes),
-		"msd", payload, "msd",
-	)
-	skip.PreDispatchAction = nomadCooldownSkipGuard
-	skip.PreDispatchArguments = guardArguments
-	return []Intent.Step{
-		skip,
-		timeSkipConsumeStepAtBalance(planned.Option.CurrencyID, planned.ExpectedBefore),
-	}
+	return nil
 }
 
 func planNomadCooldownSkip(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
@@ -448,12 +376,15 @@ func planNomadCooldownSkip(_ context.Context, input Intent.PlanningContext, argu
 		MapID     int             `json:"MID"`
 		NodeID    int             `json:"NID"`
 	}{request.KingdomID, request.TargetX, request.TargetY, -1, -1})
+	reset := commandStep("Reset locked camp cooldown", "sdc", payload, "sdc")
+	reset.FinalDispatchAction = "nomad.cooldown.guard"
+	reset.FinalDispatchArguments = append(json.RawMessage(nil), arguments...)
 	return Intent.Plan{
 		Claims:  []string{nomadTargetClaim(request.nomadTargetRequest), "account-resources"},
 		Summary: fmt.Sprintf("Reset %d-second cooldown on locked camp %d:%d for at most %d rubies", remaining, request.TargetX, request.TargetY, definition.SkipCost),
 		Steps: []Intent.Step{
 			{Name: "Verify locked camp cooldown and ruby reserve", Action: "nomad.cooldown.guard", ActionArguments: arguments},
-			commandStep("Reset locked camp cooldown", "sdc", payload, "sdc"),
+			reset,
 			{Name: "Verify returned zero-cooldown camp row", Action: "nomad.cooldown.verify", ActionArguments: verification},
 		},
 	}, nil
@@ -515,11 +446,11 @@ func nomadCampAttackContext(
 	key := fmt.Sprintf("%d:%d:%d", selected.Observation.KingdomID, selected.Observation.X, selected.Observation.Y)
 	if cooldown, found := input.State.NomadCamps.Cooldowns[key]; found && cooldown.PendingCooldownRefresh {
 		return nomadCampAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.EventCampDefinition{}, 0, fmt.Errorf(
-			"camp %d:%d is awaiting an authoritative cooldown refresh", request.TargetX, request.TargetY,
+			"%w: camp %d:%d is awaiting an authoritative cooldown refresh", Intent.ErrPlanStale, request.TargetX, request.TargetY,
 		)
 	}
 	if nomadAppCooldownRemaining(input.State, selected.Observation, time.Now().UTC()) > 0 {
-		return nomadCampAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.EventCampDefinition{}, 0, fmt.Errorf("camp %d:%d is on cooldown", request.TargetX, request.TargetY)
+		return nomadCampAttackRequest{}, State.CastleState{}, State.MapObservation{}, GameData.EventCampDefinition{}, 0, fmt.Errorf("%w: camp %d:%d is on cooldown", Intent.ErrPlanStale, request.TargetX, request.TargetY)
 	}
 	if request.Mode == "level" {
 		if selected.Observation.EventCampVictoryCount >= maximumVictoryCount {
@@ -793,21 +724,6 @@ func (application *Application) guardNomadCampAttack(_ context.Context, argument
 	return nil
 }
 
-func (application *Application) guardNomadCooldownSkipDispatch(ctx context.Context, arguments json.RawMessage) error {
-	var request nomadCooldownSkipDispatchGuardRequest
-	if err := decodeIntentArguments(arguments, &request); err != nil {
-		return err
-	}
-	if application == nil || application.State == nil {
-		return fmt.Errorf("game state is unavailable")
-	}
-	if err := guardDailyAttackLimitAtDispatch(application.State.ReadOnlyView(), request.DailyAttackLimit); err != nil {
-		return err
-	}
-	reserveArguments, _ := json.Marshal(request.timeSkipReserveGuardRequest)
-	return application.guardTimeSkipReserve(ctx, reserveArguments)
-}
-
 func (application *Application) guardNomadAttackInventory(_ context.Context, arguments json.RawMessage) error {
 	var request nomadCampAttackRequest
 	if err := decodeIntentArguments(arguments, &request); err != nil {
@@ -1012,7 +928,15 @@ func validateNomadCooldownSkip(
 	}
 	observation, exists := gameState.LookupMapObservation(request.KingdomID, fmt.Sprintf("%d:%d", request.TargetX, request.TargetY))
 	if !exists || observation.TypeID != request.TargetTypeID || observation.EventCampID != request.EventCampID {
-		return GameData.EventCampDefinition{}, 0, fmt.Errorf("locked camp %d:%d is unavailable", request.TargetX, request.TargetY)
+		return GameData.EventCampDefinition{}, 0, fmt.Errorf("%w: locked camp %d:%d is unavailable", Intent.ErrPlanStale, request.TargetX, request.TargetY)
+	}
+	key := fmt.Sprintf("%d:%d:%d", request.KingdomID, request.TargetX, request.TargetY)
+	if cooldown, found := gameState.NomadCamps.Cooldowns[key]; found &&
+		(cooldown.PendingCooldownRefresh || cooldown.LastSuccessfulBattleAt.After(observation.ObservedAt)) {
+		return GameData.EventCampDefinition{}, 0, fmt.Errorf(
+			"%w: locked camp %d:%d is awaiting a fresh post-victory cooldown row",
+			Intent.ErrPlanStale, request.TargetX, request.TargetY,
+		)
 	}
 	definition, found := gameData.EventCamp(request.EventCampID)
 	if !found || definition.EventID != request.EventID || definition.DifficultyID != request.DifficultyID ||
@@ -1021,7 +945,7 @@ func validateNomadCooldownSkip(
 	}
 	remaining := nomadAppCooldownRemaining(gameState, observation, now)
 	if remaining <= 0 {
-		return GameData.EventCampDefinition{}, 0, fmt.Errorf("locked camp is no longer on cooldown")
+		return GameData.EventCampDefinition{}, 0, fmt.Errorf("%w: locked camp is no longer on cooldown", Intent.ErrPlanStale)
 	}
 	if definition.SkipCost > request.MaximumRubyCost {
 		return GameData.EventCampDefinition{}, 0, fmt.Errorf("official reset may cost %d rubies, above configured cap %d", definition.SkipCost, request.MaximumRubyCost)

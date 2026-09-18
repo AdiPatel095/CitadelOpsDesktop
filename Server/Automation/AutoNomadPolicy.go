@@ -214,7 +214,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 					NextCheckAt: snapshot.Now.Add(time.Second), Metrics: metrics,
 					Request: &Intent.Request{
 						Name: "nomad.cooldown.minute_skip", Arguments: nomadMinuteSkipArguments(observation, settings.TimeSkipReserve),
-					}, ReevaluateOnSuccess: true,
+					}, ReevaluateOnSuccess: true, ReevaluateOnStale: true,
 				}, nil
 			}
 		}
@@ -283,7 +283,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 					NextCheckAt: snapshot.Now.Add(time.Second), Metrics: metrics,
 					Request: &Intent.Request{
 						Name: "nomad.cooldown.minute_skip", Arguments: nomadMinuteSkipArguments(target.Observation, settings.TimeSkipReserve),
-					}, ReevaluateOnSuccess: true,
+					}, ReevaluateOnSuccess: true, ReevaluateOnStale: true,
 				}, nil
 			}
 			return Decision{
@@ -348,7 +348,8 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		return Decision{
 			Status: "ready", Detail: fmt.Sprintf("Apply a time skip to locked camp %d:%d", target.Observation.X, target.Observation.Y),
 			NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
-			Request: &Intent.Request{Name: "nomad.cooldown.minute_skip", Arguments: arguments}, ReevaluateOnSuccess: true,
+			Request:             &Intent.Request{Name: "nomad.cooldown.minute_skip", Arguments: arguments},
+			ReevaluateOnSuccess: true, ReevaluateOnStale: true,
 		}, nil
 	}
 	if len(availableCommanders) == 0 {
@@ -862,7 +863,8 @@ func nomadAttackDecision(
 	}
 	return Decision{
 		Status: "ready", Detail: detail, NextCheckAt: now.Add(2 * time.Second), Metrics: metrics,
-		Request: &Intent.Request{Name: "nomad.camp.attack", Arguments: arguments}, ReevaluateOnSuccess: true,
+		Request:             &Intent.Request{Name: "nomad.camp.attack", Arguments: arguments},
+		ReevaluateOnSuccess: true, ReevaluateOnStale: true,
 	}
 }
 
@@ -922,7 +924,7 @@ func evaluateAutoNomadRBCTest(snapshot Snapshot, settings autoNomadSettings) (De
 			NextCheckAt: snapshot.Now.Add(time.Second), Metrics: metrics,
 			Request: &Intent.Request{
 				Name: "nomad.cooldown.minute_skip", Arguments: nomadMinuteSkipArguments(target, settings.TimeSkipReserve),
-			}, ReevaluateOnSuccess: true,
+			}, ReevaluateOnSuccess: true, ReevaluateOnStale: true,
 		}, nil
 	}
 	outstandingCooldownSkips := int64(0)
