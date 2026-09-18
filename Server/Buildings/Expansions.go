@@ -29,6 +29,9 @@ type ExpansionPreviewRequest struct {
 	X                      *int               `json:"x,omitempty"`
 	Y                      *int               `json:"y,omitempty"`
 	Direction              *int               `json:"direction,omitempty"`
+	// AllowedBuildingDefinitionIDs constrains storage-capacity prerequisites.
+	// Empty preserves the general planner's complete official candidate set.
+	AllowedBuildingDefinitionIDs []State.BuildingID `json:"allowedBuildingDefinitionIds,omitempty"`
 }
 
 type ExpansionCostStatus struct {
@@ -213,7 +216,7 @@ func PreviewExpansion(state State.GameState, gameData *GameData.Store, request E
 	capacityNeeds := expansionCapacityNeeds(result.Costs)
 	capacityBlocked := expansionCapacityBlocked(result.Costs)
 	if capacityBlocked && len(capacityNeeds) > 0 {
-		result.PendingStorageBuild, err = expansionPendingStorageBuild(castle, gameData, capacityNeeds)
+		result.PendingStorageBuild, err = expansionPendingStorageBuild(castle, gameData, capacityNeeds, request.AllowedBuildingDefinitionIDs)
 		if err != nil {
 			return ExpansionPreviewResult{}, err
 		}
@@ -371,6 +374,8 @@ func expansionStorageBuildingCandidates(
 	request ExpansionPreviewRequest,
 	needs map[string]float64,
 ) ([]Candidate, error) {
+	constrained := len(request.AllowedBuildingDefinitionIDs) > 0
+	allowed := allowedBuildingDefinitions(request.AllowedBuildingDefinitionIDs)
 	objectives := make([]Objective, 0, len(needs))
 	minimums := map[string]float64{}
 	current := map[string]float64{}
@@ -395,6 +400,11 @@ func expansionStorageBuildingCandidates(
 	}
 	result := make([]Candidate, 0)
 	for _, candidate := range preview.Candidates {
+		if constrained {
+			if _, found := allowed[State.BuildingID(candidate.Definition.ID)]; !found {
+				continue
+			}
+		}
 		useful := false
 		for metric := range needs {
 			if metricValue(candidate.DeltaValues, metric) > 0 {
@@ -495,12 +505,15 @@ func expansionPendingStorageBuild(
 	castle State.CastleState,
 	gameData *GameData.Store,
 	needs map[string]float64,
+	allowedDefinitionIDs []State.BuildingID,
 ) (*ExpansionPendingStorageBuild, error) {
 	catalog, err := gameData.BuildingCatalog()
 	if err != nil {
 		return nil, err
 	}
 	var best *ExpansionPendingStorageBuild
+	constrained := len(allowedDefinitionIDs) > 0
+	allowed := allowedBuildingDefinitions(allowedDefinitionIDs)
 	for _, slot := range castle.BuildingQueue.Slots {
 		if slot.Status != State.BuildingQueueSlotOccupied || slot.BuildingID <= 0 {
 			continue
@@ -532,6 +545,11 @@ func expansionPendingStorageBuild(
 		default:
 			continue
 		}
+		if constrained {
+			if _, found := allowed[State.BuildingID(target.ID)]; !found {
+				continue
+			}
+		}
 		covered := expansionCoveredCapacity(gain, needs)
 		if covered <= 0 {
 			continue
@@ -552,6 +570,19 @@ func expansionPendingStorageBuild(
 		}
 	}
 	return best, nil
+}
+
+func allowedBuildingDefinitions(ids []State.BuildingID) map[State.BuildingID]struct{} {
+	if len(ids) == 0 {
+		return nil
+	}
+	result := make(map[State.BuildingID]struct{}, len(ids))
+	for _, id := range ids {
+		if id > 0 {
+			result[id] = struct{}{}
+		}
+	}
+	return result
 }
 
 func expansionBuildingByID(castle State.CastleState, buildingID State.BuildingInstanceID) (State.Building, bool) {

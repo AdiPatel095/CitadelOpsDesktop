@@ -95,7 +95,6 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"gui", castles, reduceFocusedUnits},
 		{"etc", castles, reduceBuildingMutation},
 		{"emo", castles, reduceBuildingMutation},
-		{"sob", castles, reduceBuildingMutation},
 		{"ego", castles, reduceBuildingMutation},
 		{"scl", castles, reduceBuildingMutation},
 		{"ahh", components(State.ComponentAllianceHelp, State.ComponentCastles), reduceAllianceHelpRequest},
@@ -184,7 +183,13 @@ func RegisterCoreReducers(registry *Registry) error {
 		{[]string{"ebu"}, []reducerStep{
 			{writes: castles, reducer: reduceBuildingMutation},
 			{writes: components(State.ComponentInventory), reducer: reduceEmbeddedStorageInventory},
+			{writes: components(State.ComponentInventory), reducer: invalidateStorageObservationAfterMutation},
 			{writes: resources, reducer: reduceResponseResources},
+		}},
+		{[]string{"sob"}, []reducerStep{
+			{writes: castles, reducer: reduceBuildingMutation},
+			{writes: components(State.ComponentInventory), reducer: reduceEmbeddedStorageInventory},
+			{writes: components(State.ComponentInventory), reducer: invalidateStorageObservationAfterMutation},
 		}},
 		{[]string{"eup", "edo", "fco", "msb"}, []reducerStep{
 			{writes: castles, reducer: reduceBuildingMutation},

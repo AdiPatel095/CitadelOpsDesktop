@@ -121,6 +121,23 @@ func TestExpansionPreviewUsesApprovedTimeSkipForQueuedStorageUpgrade(t *testing.
 	}
 }
 
+func TestExpansionPreviewHonorsStorageBuildingAllowlist(t *testing.T) {
+	gameData := expansionTestGameData(t)
+	state := expansionTestState(8, 6800)
+	result, err := PreviewExpansion(state, gameData, ExpansionPreviewRequest{
+		CastleID: 10, AllowedBuildingDefinitionIDs: []State.BuildingID{133},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.RecommendedAction != nil || len(result.StorageBuildingCandidates) != 0 {
+		t.Fatalf("capacity planner escaped storage allowlist: action=%#v candidates=%#v", result.RecommendedAction, result.StorageBuildingCandidates)
+	}
+	if len(result.Blockers) == 0 || result.Blockers[0].Code != "storage_capacity" {
+		t.Fatalf("allowlisted capacity blockers=%#v", result.Blockers)
+	}
+}
+
 func expansionTestGameData(t *testing.T) *GameData.Store {
 	t.Helper()
 	store, err := GameData.DecodeStore([]byte(`{

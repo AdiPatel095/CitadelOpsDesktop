@@ -89,6 +89,29 @@ func TestResolveBuildingDemolitionTreatsQueuedRaceAsStale(t *testing.T) {
 	}
 }
 
+func TestResolveBuildingUpgradeTreatsMaximumLevelRaceAsStale(t *testing.T) {
+	gameState := buildingIntentState()
+	_, err := resolveBuildingUpgradeStep(context.Background(), Intent.PlanningContext{
+		State: gameState, GameData: buildingIntentGameData(t),
+	}, json.RawMessage(`{"request":{"castleId":10,"buildingInstanceId":42,"maximumLevel":1}}`))
+	if !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("maximum-level upgrade resolver error = %v", err)
+	}
+}
+
+func TestPlanBuildingUpgradeTreatsMaximumLevelRaceAsStaleBeforeRefresh(t *testing.T) {
+	gameState := buildingIntentState()
+	castle := gameState.Castles[10]
+	castle.Layout.ObservedAt = time.Time{}
+	gameState.Castles[10] = castle
+	_, err := planBuildingUpgrade(context.Background(), Intent.PlanningContext{
+		State: gameState, GameData: buildingIntentGameData(t),
+	}, json.RawMessage(`{"castleId":10,"buildingInstanceId":42,"maximumLevel":1}`))
+	if !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("maximum-level initial planner error = %v", err)
+	}
+}
+
 func TestBuildingUpgradeConfirmsExactPremiumQuoteForFixedHarbor(t *testing.T) {
 	gameState := buildingIntentState()
 	castle := gameState.Castles[10]

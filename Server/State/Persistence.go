@@ -344,6 +344,9 @@ func normalizeStateMaps(state *GameState) {
 	if state.Inventory.Items == nil {
 		state.Inventory.Items = defaults.Inventory.Items
 	}
+	if state.Inventory.ItemsObservedAt == nil {
+		state.Inventory.ItemsObservedAt = defaults.Inventory.ItemsObservedAt
+	}
 	if state.Subscriptions == nil {
 		state.Subscriptions = defaults.Subscriptions
 	}

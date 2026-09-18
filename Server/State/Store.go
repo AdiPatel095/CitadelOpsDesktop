@@ -1336,6 +1336,7 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 		for collection, items := range source.Inventory.Items {
 			clone.Inventory.Items[collection] = cloneMap(items)
 		}
+		clone.Inventory.ItemsObservedAt = cloneMap(source.Inventory.ItemsObservedAt)
 	}
 	if components.Has(ComponentSubscriptions) {
 		clone.Subscriptions = cloneMap(source.Subscriptions)

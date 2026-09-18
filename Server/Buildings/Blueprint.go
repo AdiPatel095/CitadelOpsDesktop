@@ -218,7 +218,8 @@ func NormalizeTargetCapture(target TargetCaptureResult, catalog *GameData.Buildi
 		if catalog != nil {
 			definition, found = catalog.DefinitionView(int64(building.DefinitionID))
 		}
-		if found && (strings.EqualFold(definition.GroundType, "DECO") || strings.EqualFold(definition.InternalName, "Deco")) {
+		if found && !strings.EqualFold(definition.InternalName, "Cargo") &&
+			(strings.EqualFold(definition.GroundType, "DECO") || strings.EqualFold(definition.InternalName, "Deco")) {
 			target.Summary.DecorationCount++
 		} else {
 			target.Summary.BuildingCount++

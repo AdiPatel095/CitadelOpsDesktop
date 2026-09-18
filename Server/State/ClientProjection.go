@@ -281,6 +281,7 @@ func projectClientComponentPatch(patch *ComponentPatch) {
 		value.ConstructionItems = nil
 		value.ConstructionItemsObservedAt = nil
 		value.Items = nil
+		value.ItemsObservedAt = nil
 		value.ItemChanges = nil
 		patch.InventoryChanges = &value
 	}
@@ -398,6 +399,7 @@ func clientInventory(source InventoryState) InventoryState {
 	projected.ConstructionItems = map[ConstructionItemID]int64{}
 	projected.ConstructionItemsObservedAt = time.Time{}
 	projected.Items = map[string]map[int64]int64{}
+	projected.ItemsObservedAt = map[string]time.Time{}
 	return projected
 }
 
