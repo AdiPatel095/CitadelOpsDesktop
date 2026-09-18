@@ -79,6 +79,14 @@ type nomadChainArrivalGuard struct {
 	CurrentCommander  State.CommanderID `json:"currentCommanderId"`
 }
 
+type nomadSequentialArrivalGuardRequest struct {
+	EventID      int64           `json:"eventId"`
+	KingdomID    State.KingdomID `json:"kingdomId"`
+	TargetTypeID int             `json:"targetTypeId"`
+	TargetX      int             `json:"targetX"`
+	TargetY      int             `json:"targetY"`
+}
+
 type nomadCooldownSkipRequest struct {
 	nomadTargetRequest
 	MaximumRubyCost    int64 `json:"maximumRubyCost"`
@@ -240,12 +248,17 @@ func planNomadCampAttack(_ context.Context, input Intent.PlanningContext, argume
 		}
 	}
 	contextPayload, _ := json.Marshal(struct {
-		SourceX   int             `json:"SX"`
-		SourceY   int             `json:"SY"`
-		TargetX   int             `json:"TX"`
-		TargetY   int             `json:"TY"`
-		KingdomID State.KingdomID `json:"KID"`
-	}{source.X, source.Y, target.X, target.Y, target.KingdomID})
+		SourceX         int             `json:"SX"`
+		SourceY         int             `json:"SY"`
+		TargetX         int             `json:"TX"`
+		TargetY         int             `json:"TY"`
+		KingdomID       State.KingdomID `json:"KID"`
+		TargetTypeID    int             `json:"_citadelTargetTypeId"`
+		SequentialGuard json.RawMessage `json:"_citadelNomadSequentialArrivalGuard"`
+	}{
+		source.X, source.Y, target.X, target.Y, target.KingdomID, target.TypeID,
+		mustMarshalNomadSequentialArrivalGuard(request.EventID, target),
+	})
 	steps := make([]Intent.Step, 0, len(resolution.Selected)*2+8)
 	if input.State.Player.LegendSkills.ObservedAt.IsZero() || time.Since(input.State.Player.LegendSkills.ObservedAt) >= 5*time.Minute {
 		steps = append(steps, contextCommandStep("Refresh Hall of Legends attack limits", "skl", json.RawMessage(`{}`), "skl"))
@@ -576,6 +589,8 @@ func (application *Application) resolveNomadCampAttackStep(
 	step := commandStep(fmt.Sprintf("Attack locked camp at %d:%d", target.X, target.Y), "cra", body, "cra")
 	step.PreDispatchAction = "nomad.attack.guard"
 	step.PreDispatchArguments = append(json.RawMessage(nil), arguments...)
+	step.FinalDispatchAction = "nomad.attack.guard"
+	step.FinalDispatchArguments = append(json.RawMessage(nil), arguments...)
 	return step, nil
 }
 
@@ -711,6 +726,9 @@ func (application *Application) guardNomadCampAttack(_ context.Context, argument
 	if err != nil {
 		return err
 	}
+	if err := guardNomadSequentialArrivalAt(state, mustMarshalNomadSequentialArrivalGuard(request.EventID, target), time.Now().UTC()); err != nil {
+		return err
+	}
 	commander, exists := state.Commanders[request.CommanderID]
 	if !exists || !commander.Available {
 		return fmt.Errorf("commander %d is no longer available", request.CommanderID)
@@ -718,8 +736,60 @@ func (application *Application) guardNomadCampAttack(_ context.Context, argument
 	dialog := state.AttackDialog
 	if dialog.SourceCastleID != source.ID || dialog.KingdomID != target.KingdomID || dialog.Target.TypeID != target.TypeID ||
 		dialog.Target.X != target.X || dialog.Target.Y != target.Y || dialog.Target.EventCampID != target.EventCampID ||
-		dialog.Target.EventCampVictoryCount != target.EventCampVictoryCount || dialog.Target.EventCampCooldownRemaining > 0 {
+		dialog.Target.EventCampVictoryCount != target.EventCampVictoryCount {
 		return fmt.Errorf("authoritative ADI row no longer matches ready camp %d:%d", target.X, target.Y)
+	}
+	if dialog.Target.EventCampCooldownRemaining > 0 {
+		return fmt.Errorf("%w: authoritative ADI row shows camp %d:%d on cooldown", Intent.ErrPlanStale, target.X, target.Y)
+	}
+	return nil
+}
+
+func mustMarshalNomadSequentialArrivalGuard(eventID int64, target State.MapObservation) json.RawMessage {
+	arguments, _ := json.Marshal(nomadSequentialArrivalGuardRequest{
+		EventID: eventID, KingdomID: target.KingdomID, TargetTypeID: target.TypeID, TargetX: target.X, TargetY: target.Y,
+	})
+	return arguments
+}
+
+func (application *Application) guardNomadSequentialArrival(_ context.Context, arguments json.RawMessage) error {
+	if application == nil || application.State == nil {
+		return fmt.Errorf("game state is unavailable")
+	}
+	return guardNomadSequentialArrivalAt(application.State.ReadOnlyView(), arguments, time.Now().UTC())
+}
+
+func guardNomadSequentialArrivalAt(gameState State.GameState, arguments json.RawMessage, now time.Time) error {
+	var request nomadSequentialArrivalGuardRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	if request.TargetTypeID != nomadIntentCampTypeID && request.TargetTypeID != samuraiIntentCampTypeID {
+		return fmt.Errorf("Nomad sequential-arrival guard requires a Nomad or Samurai target type")
+	}
+	key := fmt.Sprintf("%d:%d:%d", request.KingdomID, request.TargetX, request.TargetY)
+	if cooldown, found := gameState.NomadCamps.Cooldowns[key]; found && cooldown.PendingCooldownRefresh {
+		return fmt.Errorf(
+			"%w: camp %d:%d is awaiting an authoritative cooldown refresh",
+			Intent.ErrPlanStale, request.TargetX, request.TargetY,
+		)
+	}
+	if target, found := gameState.LookupMapObservation(request.KingdomID, fmt.Sprintf("%d:%d", request.TargetX, request.TargetY)); found && target.TypeID == request.TargetTypeID && nomadAppCooldownRemaining(gameState, target, now) > 0 {
+		return fmt.Errorf("%w: camp %d:%d is on cooldown", Intent.ErrPlanStale, request.TargetX, request.TargetY)
+	}
+	if block, found := State.NomadSequentialArrivalBlockAt(
+		gameState, request.EventID, request.KingdomID, request.TargetTypeID, request.TargetX, request.TargetY, now,
+	); found {
+		if block.Unknown {
+			return fmt.Errorf(
+				"%w: camp %d:%d has an earlier Auto Nomad/Samurai launch with unknown arrival timing",
+				Intent.ErrPlanStale, request.TargetX, request.TargetY,
+			)
+		}
+		return fmt.Errorf(
+			"%w: camp %d:%d has an earlier Auto Nomad/Samurai arrival at %s awaiting settlement",
+			Intent.ErrPlanStale, request.TargetX, request.TargetY, block.ArrivesAt.Format(time.RFC3339Nano),
+		)
 	}
 	return nil
 }
