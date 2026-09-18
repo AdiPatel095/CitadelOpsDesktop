@@ -109,6 +109,9 @@ func TestAutoNomadPolicyLevelsFourThenLocksWeakestAndChainsCommanders(t *testing
 	if decision.Metrics["committedCooldownSkips"] != 1 || decision.Metrics["usableCooldownSkips"] != 29 {
 		t.Fatalf("chain did not reserve a skip for the older in-flight hit: %#v", decision.Metrics)
 	}
+	if !decision.ReevaluateOnStale {
+		t.Fatal("chain attack does not immediately reevaluate a mid-batch cooldown race")
+	}
 }
 
 func TestAutoNomadPolicyUsesPresetForActiveEvent(t *testing.T) {

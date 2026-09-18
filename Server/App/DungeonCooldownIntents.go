@@ -3,6 +3,7 @@ package App
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -13,6 +14,8 @@ import (
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
 )
+
+const dungeonMinuteSkipDispatchGuard = "nomad.cooldown.minute_skip.dispatch_guard"
 
 type dungeonMinuteSkipRequest struct {
 	KingdomID        State.KingdomID       `json:"kingdomId"`
@@ -91,7 +94,10 @@ func resolveDungeonMinuteSkipStep(
 	requestArguments, _ := json.Marshal(verification.dungeonMinuteSkipRequest)
 	request, _, _, option, err := validatedDungeonMinuteSkip(input, requestArguments, time.Now().UTC())
 	if err != nil {
-		return Intent.Step{}, err
+		if errors.Is(err, Intent.ErrPlanStale) {
+			return Intent.Step{}, err
+		}
+		return Intent.Step{}, fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
 	}
 	if verification.MSDWireKey != "" && verification.MSDMinutes > 0 {
 		option, err = exactAvailableDungeonTimeSkip(
@@ -112,7 +118,29 @@ func resolveDungeonMinuteSkipStep(
 		MinuteSkip: option.WireKey, KingdomID: strconv.FormatInt(int64(request.KingdomID), 10),
 		X: request.TargetX, Y: request.TargetY, MapID: -1, NodeID: -1,
 	})
-	return commandStep(fmt.Sprintf("Apply %s to dungeon cooldown", option.WireKey), "msd", payload, "msd"), nil
+	step := commandStep(fmt.Sprintf("Apply %s to dungeon cooldown", option.WireKey), "msd", payload, "msd")
+	step.PreDispatchAction = dungeonMinuteSkipDispatchGuard
+	step.PreDispatchArguments = append(json.RawMessage(nil), arguments...)
+	step.FinalDispatchAction = dungeonMinuteSkipDispatchGuard
+	step.FinalDispatchArguments = append(json.RawMessage(nil), arguments...)
+	return step, nil
+}
+
+func (application *Application) guardDungeonMinuteSkipDispatch(
+	ctx context.Context,
+	arguments json.RawMessage,
+) error {
+	if application == nil || application.State == nil || application.GameData == nil {
+		return fmt.Errorf("game state or official game data is unavailable")
+	}
+	gameData, ready := application.GameData.Current()
+	if !ready {
+		return fmt.Errorf("official game data is unavailable")
+	}
+	_, err := resolveDungeonMinuteSkipStep(ctx, Intent.PlanningContext{
+		State: application.State.ReadOnlyView(), GameData: gameData,
+	}, arguments)
+	return err
 }
 
 func (application *Application) verifyDungeonMinuteSkip(_ context.Context, arguments json.RawMessage) error {
@@ -159,8 +187,11 @@ func validatedDungeonMinuteSkip(
 	if !exists || observation.TypeID != request.TargetTypeID ||
 		request.EventCampID > 0 && observation.EventCampID != request.EventCampID {
 		return dungeonMinuteSkipRequest{}, State.MapObservation{}, 0, buildingTimeSkipOption{}, fmt.Errorf(
-			"dungeon %d:%d does not match the current map row", request.TargetX, request.TargetY,
+			"%w: dungeon %d:%d does not match the current map row", Intent.ErrPlanStale, request.TargetX, request.TargetY,
 		)
+	}
+	if err := validateDungeonCooldownFreshness(input.State, request, observation); err != nil {
+		return dungeonMinuteSkipRequest{}, State.MapObservation{}, 0, buildingTimeSkipOption{}, err
 	}
 	if request.KhanGuard != nil {
 		if request.TargetTypeID != khanCampTypeID {
@@ -185,7 +216,7 @@ func validatedDungeonMinuteSkip(
 	remaining := appDungeonCooldownRemaining(input.State, observation, now)
 	if remaining <= 0 {
 		return dungeonMinuteSkipRequest{}, State.MapObservation{}, 0, buildingTimeSkipOption{}, fmt.Errorf(
-			"dungeon %d:%d is no longer on cooldown", request.TargetX, request.TargetY,
+			"%w: dungeon %d:%d is no longer on cooldown", Intent.ErrPlanStale, request.TargetX, request.TargetY,
 		)
 	}
 	option, err := fastestAvailableDungeonTimeSkip(input.State, input.GameData, remaining, request.MinimumRemaining)
@@ -193,6 +224,36 @@ func validatedDungeonMinuteSkip(
 		return dungeonMinuteSkipRequest{}, State.MapObservation{}, 0, buildingTimeSkipOption{}, err
 	}
 	return request, observation, remaining, option, nil
+}
+
+func validateDungeonCooldownFreshness(
+	gameState State.GameState,
+	request dungeonMinuteSkipRequest,
+	observation State.MapObservation,
+) error {
+	key := fmt.Sprintf("%d:%d:%d", request.KingdomID, request.TargetX, request.TargetY)
+	if request.TargetTypeID == kingdomTowerMapTypeID {
+		if cooldown, found := gameState.LookupTowerCooldown(key); found &&
+			(cooldown.TargetTypeID > 0 && cooldown.TargetTypeID != request.TargetTypeID ||
+				cooldown.PendingCooldownRefresh || cooldown.LastSuccessfulBattleAt.After(observation.ObservedAt)) {
+			return fmt.Errorf(
+				"%w: tower %d:%d is awaiting a fresh post-victory cooldown row",
+				Intent.ErrPlanStale, request.TargetX, request.TargetY,
+			)
+		}
+		return nil
+	}
+	if request.TargetTypeID == nomadIntentCampTypeID || request.TargetTypeID == samuraiIntentCampTypeID ||
+		request.TargetTypeID == khanCampTypeID {
+		if cooldown, found := gameState.NomadCamps.Cooldowns[key]; found &&
+			(cooldown.PendingCooldownRefresh || cooldown.LastSuccessfulBattleAt.After(observation.ObservedAt)) {
+			return fmt.Errorf(
+				"%w: camp %d:%d is awaiting a fresh post-victory cooldown row",
+				Intent.ErrPlanStale, request.TargetX, request.TargetY,
+			)
+		}
+	}
+	return nil
 }
 
 func validateKhanCooldownReports(
