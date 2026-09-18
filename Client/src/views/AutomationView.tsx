@@ -173,7 +173,7 @@ function stormMissingDecorationWarningLanes(
     id: 'builder-missing-decorations',
     label: 'Builder warning',
     status: 'warning',
-    detail: `${missingDecorations.toLocaleString()} target decorations unavailable in storage; skipped while the rest of the target continues.`,
+    detail: `${missingDecorations.toLocaleString()} target decoration${missingDecorations === 1 ? '' : 's'} unavailable in storage; skipped while the rest of the target continues.`,
   }];
 }
 
