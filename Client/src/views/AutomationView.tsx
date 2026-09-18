@@ -162,6 +162,21 @@ function automationStatusLane(
   };
 }
 
+function stormMissingDecorationWarningLanes(
+  runtime: AutomationStateV2 | undefined,
+  enabled: boolean,
+): AutomationStatusLane[] {
+  const missingDecorations = runtime?.metrics?.stormMissingDecorations;
+  if (!enabled || typeof missingDecorations !== 'number' || !Number.isFinite(missingDecorations) || missingDecorations <= 0) return [];
+
+  return [{
+    id: 'builder-missing-decorations',
+    label: 'Builder warning',
+    status: 'warning',
+    detail: `${missingDecorations.toLocaleString()} target decorations unavailable in storage; skipped while the rest of the target continues.`,
+  }];
+}
+
 function automationStatusTone(status: string): StatusTone {
   switch (status.toLowerCase()) {
     case 'complete':
@@ -174,6 +189,7 @@ function automationStatusTone(status: string): StatusTone {
     case 'blocked':
     case 'gated':
     case 'retrying':
+    case 'warning':
       return 'warning';
     case 'running':
       return 'info';
@@ -704,6 +720,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
         automationStatusLane('combat', 'Combat', autoStormRuntime, autoStormEnabled, 'Waiting for the Storm combat policy'),
         automationStatusLane('aquamarine-shop', 'Aquamarine shop', autoStormShopRuntime, autoStormEnabled, 'Waiting for the Aquamarine shop policy'),
         automationStatusLane('builder', 'Builder', autoStormBuildRuntime, autoStormEnabled, 'Waiting for the Storm builder policy'),
+        ...stormMissingDecorationWarningLanes(autoStormBuildRuntime, autoStormEnabled),
       ],
       icon: Crosshair,
       onToggle: toggleAutoStorm,
