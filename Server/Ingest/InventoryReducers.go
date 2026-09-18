@@ -1,6 +1,7 @@
 package Ingest
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -118,7 +119,7 @@ func reduceStorageInventory(
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 		return nil, false, nil
 	}
-	changed, err := applyStorageInventory(frame.Payload, gameState)
+	changed, err := applyStorageInventory(frame.Payload, gameState, frame.ReceivedAt)
 	return []string{"inventory", "storage"}, changed, err
 }
 
@@ -135,35 +136,99 @@ func reduceEmbeddedStorageInventory(
 	if json.Unmarshal(frame.Payload, &root) != nil || len(root["sin"]) == 0 {
 		return nil, false, nil
 	}
-	changed, err := applyStorageInventory(root["sin"], gameState)
+	changed, err := applyStorageInventory(root["sin"], gameState, frame.ReceivedAt)
 	return []string{"inventory", "storage"}, changed, err
 }
 
-func applyStorageInventory(raw json.RawMessage, gameState *State.GameState) (bool, error) {
+func invalidateStorageObservationAfterMutation(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) {
+		return nil, false, nil
+	}
+	var root map[string]json.RawMessage
+	if json.Unmarshal(frame.Payload, &root) == nil && validStorageSegment(root["sin"], 1) {
+		return []string{"inventory", "storage"}, false, nil
+	}
+	before := gameState.Inventory.ItemsObservedAt["storage:1"]
+	gameState.InvalidateInventoryItemsCollectionObservation("storage:1")
+	return []string{"inventory", "storage"}, !before.IsZero(), nil
+}
+
+func validStorageSegment(raw json.RawMessage, wanted int64) bool {
 	var segments []struct {
-		SegmentID wireInt64           `json:"SID"`
-		Rows      [][]json.RawMessage `json:"RD"`
+		SegmentID json.RawMessage `json:"SID"`
+		Rows      json.RawMessage `json:"RD"`
+	}
+	if len(raw) == 0 || json.Unmarshal(raw, &segments) != nil {
+		return false
+	}
+	for _, segment := range segments {
+		segmentID, ok := rawInt64(segment.SegmentID)
+		if !ok || segmentID != wanted {
+			continue
+		}
+		trimmedRows := bytes.TrimSpace(segment.Rows)
+		if len(trimmedRows) == 0 || trimmedRows[0] != '[' {
+			return false
+		}
+		var rows [][]json.RawMessage
+		if json.Unmarshal(trimmedRows, &rows) != nil {
+			return false
+		}
+		for _, row := range rows {
+			id, idOK := rowIntValue(row, 0)
+			amount, amountOK := rowIntValue(row, 1)
+			if !idOK || !amountOK || id <= 0 || amount < 0 {
+				return false
+			}
+		}
+		return true
+	}
+	return false
+}
+
+func applyStorageInventory(raw json.RawMessage, gameState *State.GameState, observedAt time.Time) (bool, error) {
+	var segments []struct {
+		SegmentID json.RawMessage `json:"SID"`
+		Rows      json.RawMessage `json:"RD"`
 	}
 	if err := json.Unmarshal(raw, &segments); err != nil {
 		return false, fmt.Errorf("decode storage inventory: %w", err)
 	}
 	changed := false
 	for _, segment := range segments {
-		if segment.SegmentID <= 0 {
+		segmentID, validSegmentID := rawInt64(segment.SegmentID)
+		if !validSegmentID || segmentID <= 0 {
+			continue
+		}
+		var rows [][]json.RawMessage
+		trimmedRows := bytes.TrimSpace(segment.Rows)
+		if len(trimmedRows) == 0 || trimmedRows[0] != '[' || json.Unmarshal(trimmedRows, &rows) != nil {
 			continue
 		}
 		next := map[int64]int64{}
-		for _, row := range segment.Rows {
-			id, amount := rowInt(row, 0), rowInt(row, 1)
-			if id > 0 && amount >= 0 {
-				next[id] += amount
+		valid := true
+		for _, row := range rows {
+			id, idOK := rowIntValue(row, 0)
+			amount, amountOK := rowIntValue(row, 1)
+			if !idOK || !amountOK || id <= 0 || amount < 0 {
+				valid = false
+				break
 			}
+			next[id] += amount
 		}
-		key := fmt.Sprintf("storage:%d", segment.SegmentID)
-		if reflect.DeepEqual(gameState.Inventory.Items[key], next) {
+		if !valid {
 			continue
 		}
-		gameState.SetInventoryItemsCollection(key, next)
+		key := fmt.Sprintf("storage:%d", segmentID)
+		if reflect.DeepEqual(gameState.Inventory.Items[key], next) && gameState.Inventory.ItemsObservedAt[key].Equal(observedAt) {
+			continue
+		}
+		gameState.SetInventoryItemsCollectionObserved(key, next, observedAt)
 		changed = true
 	}
 	return changed, nil

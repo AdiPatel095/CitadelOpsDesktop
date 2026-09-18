@@ -12,6 +12,7 @@ import (
 	"CitadelDesktop/Server/Buildings"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
+	"CitadelDesktop/Server/Protocol"
 	"CitadelDesktop/Server/State"
 )
 
@@ -75,6 +76,7 @@ type buildingUpgradeIntentRequest struct {
 	MapID              *int64                   `json:"mapId,omitempty"`
 	ResourceReserves   map[string]float64       `json:"resourceReserves,omitempty"`
 	AllowPremium       bool                     `json:"allowPremium,omitempty"`
+	MaximumLevel       int64                    `json:"maximumLevel,omitempty"`
 }
 
 type buildingUpgradeResolverArguments struct {
@@ -142,6 +144,10 @@ func (application *Application) registerBuildingIntents() error {
 			ArgumentsExample: json.RawMessage(`{"castleId":16326717}`), Planner: planBuildingRefresh, ReadSet: buildingReadSet,
 		},
 		{
+			Name: "building.storage.refresh", Description: "Refresh authoritative ordinary building and decoration storage", Effect: Intent.EffectRead,
+			Planner: planBuildingStorageRefresh,
+		},
+		{
 			Name: "building.expand", Description: "Buy the next official castle expansion at an exact captured position after validating cost and storage capacity", Effect: Intent.EffectWrite,
 			ArgumentsExample: json.RawMessage(`{"castleId":5358,"x":220,"y":220,"direction":1,"payment":"resources"}`),
 			Planner:          planBuildingExpansion, ReadSet: buildingReadSet,
@@ -198,6 +204,16 @@ func (application *Application) registerBuildingIntents() error {
 		}
 	}
 	return nil
+}
+
+func planBuildingStorageRefresh(_ context.Context, _ Intent.PlanningContext, _ json.RawMessage) (Intent.Plan, error) {
+	return Intent.Plan{
+		Claims: []string{"inventory:storage"}, Summary: "Refresh ordinary building storage",
+		Steps: []Intent.Step{Intent.RebuildOnResume(Intent.Step{
+			Name: "Refresh ordinary building storage", Opcode: "sin", AwaitOpcode: "sin", TimeoutMillis: 10_000,
+			SuccessCodes: []int{0}, Command: Protocol.Command{Opcode: "sin", Bare: true},
+		})},
+	}, nil
 }
 
 func planBuildingExpansion(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
@@ -885,6 +901,10 @@ func validatedBuildingUpgrade(
 	target, found := catalog.Definition(definition.UpgradeDefinitionID)
 	if !found || definition.UpgradeDefinitionID <= 0 {
 		return State.CastleState{}, State.Building{}, GameData.BuildingDefinition{}, fmt.Errorf("building %d has no next official upgrade", request.BuildingInstanceID)
+	}
+	if request.MaximumLevel > 0 && target.Level > request.MaximumLevel {
+		capErr := fmt.Errorf("building %d refreshed next level %d exceeds maximum level %d", request.BuildingInstanceID, target.Level, request.MaximumLevel)
+		return State.CastleState{}, State.Building{}, GameData.BuildingDefinition{}, fmt.Errorf("%w: %v", Intent.ErrPlanStale, capErr)
 	}
 	if !requireFresh {
 		return castle, building, target, nil

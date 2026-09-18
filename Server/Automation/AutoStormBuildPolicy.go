@@ -29,7 +29,7 @@ func (*AutoStormBuildPolicy) WakeDomains() []string {
 	// Their wire updates also publish the broad castles/inventory domains and
 	// previously rebuilt the complete target-layout diff many times per second.
 	// Structural build responses still wake this lane immediately.
-	return []string{"buildings", "construction-items", "construction-offers", "kingdom-transport"}
+	return []string{"buildings", "construction-items", "construction-offers", "kingdom-transport", "storage"}
 }
 
 func (*AutoStormBuildPolicy) WakeSections() []string {
@@ -91,6 +91,14 @@ func (*AutoStormBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Dec
 		Status: status, Detail: detail, Metrics: metrics,
 		NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)),
 	}
+	if complete && metrics["stormMissingDecorations"] > 0 {
+		refreshAt := snapshot.State.Inventory.ItemsObservedAt[stormDecorationStorageCollection].Add(stormDecorationStorageMaxAge)
+		if !refreshAt.After(snapshot.Now) {
+			refreshAt = snapshot.Now.Add(30 * time.Second)
+		}
+		result.NextCheckAt = refreshAt
+		return result, nil
+	}
 	// A completed blueprint or an exact target blocked only by an unmanaged
 	// building cannot become actionable merely because time passed. Buildings
 	// and configuration changes already wake this lane, so repeating the full
@@ -104,7 +112,15 @@ func (*AutoStormBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Dec
 }
 
 func autoStormBuildContinuation(decision Decision) Decision {
-	return autoEventBuildContinuation(decision, "Storm")
+	decision = autoEventBuildContinuation(decision, "Storm")
+	if decision.Request != nil && decision.Request.Name == "building.storage.refresh" {
+		// A successful sin receipt does not prove that segment 1 was present or
+		// well formed. A valid storage reducer wake resumes immediately; otherwise
+		// pace the retry instead of spinning on an unchanged snapshot.
+		decision.ReevaluateOnSuccess = false
+		decision.NextCheckAt = decision.NextCheckAt.Add(28 * time.Second)
+	}
+	return decision
 }
 
 func autoEventBuildContinuation(decision Decision, featureLabel string) Decision {

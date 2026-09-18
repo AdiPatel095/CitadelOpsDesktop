@@ -135,7 +135,8 @@ func CaptureTarget(state State.GameState, gameData *GameData.Store, request Targ
 		if !exists || !object.building.Placed || strings.EqualFold(definition.InternalName, "TreasureChest") {
 			continue
 		}
-		decoration := strings.EqualFold(definition.GroundType, "DECO") || strings.EqualFold(definition.InternalName, "Deco")
+		decoration := !strings.EqualFold(definition.InternalName, "Cargo") &&
+			(strings.EqualFold(definition.GroundType, "DECO") || strings.EqualFold(definition.InternalName, "Deco"))
 		if mode != TargetCaptureModeExact && decoration {
 			continue
 		}

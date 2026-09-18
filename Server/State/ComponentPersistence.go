@@ -1901,6 +1901,9 @@ func applyInventoryPersistencePart(inventory *InventoryState, part string, patch
 			return fmt.Errorf("inventory items state part has no value")
 		}
 		inventory.Items = *patch.Items
+		if patch.ItemsObservedAt != nil {
+			inventory.ItemsObservedAt = *patch.ItemsObservedAt
+		}
 	default:
 		return fmt.Errorf("unknown inventory state part %q", part)
 	}

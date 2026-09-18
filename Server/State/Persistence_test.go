@@ -247,6 +247,9 @@ func TestComponentSnapshotPersistsOnlyDirtyCastleAndInventoryPartitions(t *testi
 	initial.Castles[22] = CastleState{ID: 22, Name: "two", Resources: map[ResourceID]ResourceBalance{1: {Amount: 20}}}
 	initial.Inventory.ConstructionItems[101] = 3
 	initial.Inventory.Equipment[501] = EquipmentInstance{ID: 501, Level: 1, Effects: EquipmentEffects{}}
+	storageObservedAt := time.Date(2026, 9, 18, 10, 0, 0, 0, time.UTC)
+	initial.Inventory.Items["storage:1"] = map[int64]int64{600: 1}
+	initial.Inventory.ItemsObservedAt["storage:1"] = storageObservedAt
 	store := NewStore(initial)
 
 	bootstrap, err := store.ApplyComponents(Components(ComponentPlayer), func(state *GameState) ([]string, bool, error) {
@@ -303,6 +306,7 @@ func TestComponentSnapshotPersistsOnlyDirtyCastleAndInventoryPartitions(t *testi
 
 	inventoryEvent, err := store.ApplyComponents(Components(ComponentInventory), func(state *GameState) ([]string, bool, error) {
 		state.MutableInventoryConstructionItems()[101] = 2
+		state.SetInventoryItemsCollectionObserved("storage:1", map[int64]int64{600: 2}, storageObservedAt.Add(time.Minute))
 		return []string{"inventory", "construction-items"}, true, nil
 	})
 	if err != nil {
@@ -318,8 +322,11 @@ func TestComponentSnapshotPersistsOnlyDirtyCastleAndInventoryPartitions(t *testi
 	if second.InventoryFiles["construction-items"] == third.InventoryFiles["construction-items"] {
 		t.Fatal("dirty construction inventory part did not advance")
 	}
+	if second.InventoryFiles["items"] == third.InventoryFiles["items"] {
+		t.Fatal("dirty inventory items part did not advance")
+	}
 	for part, filename := range second.InventoryFiles {
-		if part != "construction-items" && third.InventoryFiles[part] != filename {
+		if part != "construction-items" && part != "items" && third.InventoryFiles[part] != filename {
 			t.Fatalf("clean inventory part %s was rewritten", part)
 		}
 	}
@@ -332,7 +339,8 @@ func TestComponentSnapshotPersistsOnlyDirtyCastleAndInventoryPartitions(t *testi
 		t.Fatal(err)
 	}
 	if loaded.Castles[11].Resources[1].Amount != 15 || loaded.Castles[22].Resources[1].Amount != 20 ||
-		loaded.Inventory.ConstructionItems[101] != 2 || loaded.Inventory.Equipment[501].Level != 1 {
+		loaded.Inventory.ConstructionItems[101] != 2 || loaded.Inventory.Equipment[501].Level != 1 ||
+		loaded.Inventory.Items["storage:1"][600] != 2 || !loaded.Inventory.ItemsObservedAt["storage:1"].Equal(storageObservedAt.Add(time.Minute)) {
 		t.Fatalf("partitioned snapshot round trip = castles %#v inventory %#v", loaded.Castles, loaded.Inventory)
 	}
 }

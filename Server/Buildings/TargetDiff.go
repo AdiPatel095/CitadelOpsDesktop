@@ -667,7 +667,7 @@ func targetDiffUnmanaged(
 		if !found {
 			continue
 		}
-		if ignoreDecorations && strings.EqualFold(definition.GroundType, "DECO") {
+		if ignoreDecorations && strings.EqualFold(definition.GroundType, "DECO") && !strings.EqualFold(definition.InternalName, "Cargo") {
 			continue
 		}
 		item := TargetUnmanagedBuilding{BuildingInstanceID: id, Definition: targetDefinitionRef(definition)}

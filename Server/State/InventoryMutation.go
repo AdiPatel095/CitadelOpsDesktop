@@ -176,10 +176,14 @@ func (state *GameState) ownedInventoryItems() map[string]map[int64]int64 {
 	}
 	if state.inventoryMutationCOW && state.mutableInventoryParts&inventoryItemsMutable == 0 {
 		state.Inventory.Items = cloneMap(state.Inventory.Items)
+		state.Inventory.ItemsObservedAt = cloneMap(state.Inventory.ItemsObservedAt)
 		state.mutableInventoryParts |= inventoryItemsMutable
 	}
 	if state.Inventory.Items == nil {
 		state.Inventory.Items = map[string]map[int64]int64{}
+	}
+	if state.Inventory.ItemsObservedAt == nil {
+		state.Inventory.ItemsObservedAt = map[string]time.Time{}
 	}
 	return state.Inventory.Items
 }
@@ -225,10 +229,28 @@ func (state *GameState) DeleteInventoryGem(id GemInstanceID) {
 }
 
 func (state *GameState) SetInventoryItemsCollection(collection string, items map[int64]int64) {
+	state.SetInventoryItemsCollectionObserved(collection, items, time.Time{})
+}
+
+func (state *GameState) SetInventoryItemsCollectionObserved(collection string, items map[int64]int64, observedAt time.Time) {
 	if state == nil || collection == "" {
 		return
 	}
 	state.ownedInventoryItems()[collection] = items
+	if !observedAt.IsZero() {
+		state.Inventory.ItemsObservedAt[collection] = observedAt.UTC()
+	}
+	if state.inventoryMutationCOW && !state.replaceInventoryItems {
+		state.pendingInventoryItemChanges[collection] = struct{}{}
+	}
+}
+
+func (state *GameState) InvalidateInventoryItemsCollectionObservation(collection string) {
+	if collection == "" || state.Inventory.ItemsObservedAt[collection].IsZero() {
+		return
+	}
+	state.ownedInventoryItems()
+	state.Inventory.ItemsObservedAt[collection] = time.Time{}
 	if state.inventoryMutationCOW && !state.replaceInventoryItems {
 		state.pendingInventoryItemChanges[collection] = struct{}{}
 	}

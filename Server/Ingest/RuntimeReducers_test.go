@@ -85,6 +85,64 @@ func TestRuntimeInventoryAndQueueableReducers(t *testing.T) {
 	}
 }
 
+func TestStorageInventoryFreshnessRequiresValidCollectionEvidence(t *testing.T) {
+	state := State.NewGameState()
+	code := 0
+	first := time.Date(2026, 9, 18, 12, 0, 0, 0, time.UTC)
+	apply := func(at time.Time, payload string) bool {
+		t.Helper()
+		_, changed, err := reduceStorageInventory(t.Context(), Protocol.Frame{
+			Opcode: "sin", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: at,
+			Payload: json.RawMessage(payload),
+		}, &state, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return changed
+	}
+	if !apply(first, `[{"SID":1,"RD":[[600,1]]}]`) || !state.Inventory.ItemsObservedAt["storage:1"].Equal(first) {
+		t.Fatalf("first storage observation = %#v", state.Inventory)
+	}
+	second := first.Add(time.Minute)
+	if !apply(second, `[{"SID":1,"RD":[[600,1]]}]`) || !state.Inventory.ItemsObservedAt["storage:1"].Equal(second) {
+		t.Fatalf("unchanged valid collection did not advance freshness: %#v", state.Inventory.ItemsObservedAt)
+	}
+	apply(second.Add(time.Minute), `[{"SID":2,"RD":[]}]`)
+	if !state.Inventory.ItemsObservedAt["storage:1"].Equal(second) {
+		t.Fatalf("SID2 incorrectly certified storage:1: %#v", state.Inventory.ItemsObservedAt)
+	}
+	for _, payload := range []string{`[{"SID":1,"RD":null}]`, `[{"SID":1}]`, `[{"SID":1,"RD":[[600,"bad"]]}]`} {
+		if apply(second.Add(time.Minute), payload) || !state.Inventory.ItemsObservedAt["storage:1"].Equal(second) {
+			t.Fatalf("payload %s incorrectly certified storage:1: %#v", payload, state.Inventory.ItemsObservedAt)
+		}
+	}
+	third := second.Add(2 * time.Minute)
+	if !apply(third, `[{"SID":1,"RD":[]}]`) || len(state.Inventory.Items["storage:1"]) != 0 || !state.Inventory.ItemsObservedAt["storage:1"].Equal(third) {
+		t.Fatalf("explicit empty collection was not authoritative: %#v", state.Inventory)
+	}
+}
+
+func TestStorageMutationInvalidatesOrReplacesCollectionFreshness(t *testing.T) {
+	state := State.NewGameState()
+	first := time.Date(2026, 9, 18, 12, 0, 0, 0, time.UTC)
+	state.SetInventoryItemsCollectionObserved("storage:1", map[int64]int64{600: 1}, first)
+	code := 0
+	frame := Protocol.Frame{Opcode: "ebu", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: first.Add(time.Minute), Payload: json.RawMessage(`{"NO":[]}`)}
+	_, changed, err := invalidateStorageObservationAfterMutation(t.Context(), frame, &state, nil)
+	if err != nil || !changed || !state.Inventory.ItemsObservedAt["storage:1"].IsZero() {
+		t.Fatalf("missing embedded storage did not invalidate freshness: changed=%t err=%v inventory=%#v", changed, err, state.Inventory)
+	}
+
+	frame.Payload = json.RawMessage(`{"sin":[{"SID":1,"RD":[[600,2]]}]}`)
+	if _, changed, err = reduceEmbeddedStorageInventory(t.Context(), frame, &state, nil); err != nil || !changed {
+		t.Fatalf("embedded storage reducer changed=%t err=%v", changed, err)
+	}
+	if _, changed, err = invalidateStorageObservationAfterMutation(t.Context(), frame, &state, nil); err != nil || changed ||
+		state.Inventory.Items["storage:1"][600] != 2 || !state.Inventory.ItemsObservedAt["storage:1"].Equal(frame.ReceivedAt) {
+		t.Fatalf("valid embedded storage was not retained: changed=%t err=%v inventory=%#v", changed, err, state.Inventory)
+	}
+}
+
 func TestKingdomTransportReducerPreservesAutomationWorkflowThroughSettlement(t *testing.T) {
 	gameData := runtimeTestGameData(t)
 	gameState := State.NewGameState()

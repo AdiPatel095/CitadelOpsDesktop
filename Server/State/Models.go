@@ -1039,6 +1039,7 @@ type InventoryState struct {
 	Gems                            map[GemInstanceID]GemInstance             `json:"gems"`
 	GemStacks                       map[GemID]int64                           `json:"gemStacks"`
 	Items                           map[string]map[int64]int64                `json:"items"`
+	ItemsObservedAt                 map[string]time.Time                      `json:"itemsObservedAt,omitempty"`
 }
 
 type SubscriptionState struct {
@@ -2242,6 +2243,7 @@ func NewGameState() GameState {
 			Gems:                       map[GemInstanceID]GemInstance{},
 			GemStacks:                  map[GemID]int64{},
 			Items:                      map[string]map[int64]int64{},
+			ItemsObservedAt:            map[string]time.Time{},
 		},
 		Subscriptions: map[int]SubscriptionState{},
 		Market: MarketState{
