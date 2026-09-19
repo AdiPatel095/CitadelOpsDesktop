@@ -22,6 +22,10 @@ type DefenseToolShopPackage struct {
 	PriceName      string `json:"priceName"`
 	Stock          int64  `json:"stock,omitempty"`
 	MaxBuyPerClick int64  `json:"maxBuyPerClick,omitempty"`
+	MinLevel       int64  `json:"minLevel,omitempty"`
+	MaxLevel       int64  `json:"maxLevel,omitempty"`
+	MinLegendLevel int64  `json:"minLegendLevel,omitempty"`
+	MaxLegendLevel int64  `json:"maxLegendLevel,omitempty"`
 	Name           string `json:"name"`
 }
 
@@ -182,7 +186,14 @@ func decodeDefenseToolShopPackage(
 	if notRebuyable > 0 {
 		stock = max(stock, int64(1))
 	}
-	maxBuyPerClick, _ := record.Int64("maxBuyPerClick")
+	maxBuyPerClick, hasMaxBuyPerClick := record.Int64("maxBuyPerClick")
+	if !hasMaxBuyPerClick {
+		maxBuyPerClick = 1_000
+	}
+	minLevel, _ := record.Int64("minLevel")
+	maxLevel, _ := record.Int64("maxLevel")
+	minLegendLevel, _ := record.Int64("minLegendLevel")
+	maxLegendLevel, _ := record.Int64("maxLegendLevel")
 	name := strings.TrimSpace(stringValue(record, "comment1"))
 	if name == "" {
 		name = fmt.Sprintf("tool %d", toolID)
@@ -193,6 +204,10 @@ func decodeDefenseToolShopPackage(
 	price.ToolAmount = toolAmount
 	price.Stock = max(int64(0), stock)
 	price.MaxBuyPerClick = max(int64(0), maxBuyPerClick)
+	price.MinLevel = minLevel
+	price.MaxLevel = maxLevel
+	price.MinLegendLevel = minLegendLevel
+	price.MaxLegendLevel = maxLegendLevel
 	price.Name = name
 	return price, true
 }

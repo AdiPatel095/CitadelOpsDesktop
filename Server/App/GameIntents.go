@@ -348,6 +348,9 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterAction("khan.taunt.accepted", application.recordKhanTauntAcceptance); err != nil {
 		return err
 	}
+	if err := application.Intents.RegisterAction("khan.taunt.guard", application.guardKhanTauntFinalDispatch); err != nil {
+		return err
+	}
 	if err := application.Intents.RegisterAction("khan.cooldown.reports.resolve", application.resolveKhanCooldownReports); err != nil {
 		return err
 	}

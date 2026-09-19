@@ -11,6 +11,7 @@ import (
 
 	"CitadelDesktop/Server/AttackPresets"
 	"CitadelDesktop/Server/GameData"
+	"CitadelDesktop/Server/Ingest"
 	"CitadelDesktop/Server/Intent"
 	KhanDomain "CitadelDesktop/Server/Khan"
 	"CitadelDesktop/Server/Outbound"
@@ -141,7 +142,8 @@ func TestPlanKhanTauntUsesLTAAndAllowsParallelRetaliations(t *testing.T) {
 		EventID: khanEventID, OccurrenceEndsAt: eventEndsAt, ObservedFrom: now.Add(-time.Hour),
 	}
 	gameState.Khan = State.KhanState{
-		RageCampID: 1147, PlayerRage: 1740, PlayerRageCap: 1740, PlayerTotalRage: 52140,
+		RageCampID: 1147, RageCampRevision: 1, RageBalanceCampRevision: 1,
+		PlayerRage: 1740, PlayerRageCap: 1740, PlayerTotalRage: 52140,
 		RageObservedAt: now, TauntsTriggered: 1, LastTauntTriggeredAt: now.Add(-time.Minute),
 		LastTauntTriggeredRage: 50400,
 		Taunts: map[State.MovementID]State.KhanTauntState{
@@ -151,7 +153,7 @@ func TestPlanKhanTauntUsesLTAAndAllowsParallelRetaliations(t *testing.T) {
 	}
 	arguments, _ := json.Marshal(khanTauntRequest{
 		EventID: khanEventID, EventEndsAt: eventEndsAt, MainCastleID: 1, TargetX: 939, TargetY: 1123,
-		RageCampID: 1147, PlayerTotalRage: 52140, RageObservedAt: now,
+		RageCampID: 1147, RageCampRevision: 1, PlayerRageCap: 1740, PlayerTotalRage: 52140, RageObservedAt: now,
 		KhanGuard: khanLaneGuardRequest{MainCastleID: 1},
 	})
 	plan, err := planKhanTaunt(t.Context(), Intent.PlanningContext{
@@ -307,11 +309,12 @@ func (observer *khanTauntResponseObserver) deliver(responseToken string, code in
 }
 
 type khanTauntResponseSender struct {
-	observer *khanTauntResponseObserver
-	mu       sync.Mutex
-	autoCode *int
-	metadata []Outbound.Metadata
-	sent     chan Outbound.Metadata
+	observer            *khanTauntResponseObserver
+	mu                  sync.Mutex
+	autoCode            *int
+	metadata            []Outbound.Metadata
+	sent                chan Outbound.Metadata
+	beforeFinalDispatch func()
 }
 
 func (*khanTauntResponseSender) Ready() bool                  { return true }
@@ -320,6 +323,16 @@ func (*khanTauntResponseSender) CorrelatesResponses() bool    { return true }
 func (*khanTauntResponseSender) ConnectionGeneration() uint64 { return 0 }
 
 func (sender *khanTauntResponseSender) Send(ctx context.Context, payload []byte) error {
+	sender.mu.Lock()
+	beforeFinalDispatch := sender.beforeFinalDispatch
+	sender.beforeFinalDispatch = nil
+	sender.mu.Unlock()
+	if beforeFinalDispatch != nil {
+		beforeFinalDispatch()
+	}
+	if err := Outbound.ValidateFinalDispatch(ctx); err != nil {
+		return err
+	}
 	frame, err := Protocol.Decode(string(payload), Protocol.DirectionOutbound, time.Now().UTC())
 	if err != nil {
 		return err
@@ -362,7 +375,7 @@ func (provider khanTauntGameDataProvider) Current() (*GameData.Store, bool) {
 
 func newKhanTauntExecutionHarness(
 	t *testing.T,
-) (*Intent.Engine, *Application, *khanTauntResponseSender, json.RawMessage) {
+) (*Intent.Engine, *Application, *khanTauntResponseSender, json.RawMessage, *GameData.Store) {
 	t.Helper()
 	now := time.Now().UTC()
 	gameData, err := GameData.DecodeStore([]byte(`{
@@ -370,6 +383,9 @@ func newKhanTauntExecutionHarness(
 		"eventAutoScalingCamps":[{
 			"eventAutoScalingCampID":"1147","eventID":"72","difficultyID":"310",
 			"areaType":"35","camplevel":"107","playerRageCap":"1740"
+		},{
+			"eventAutoScalingCampID":"1148","eventID":"72","difficultyID":"310",
+			"areaType":"35","camplevel":"108","playerRageCap":"1860"
 		}]
 	}`), GameData.SourceMetadata{ItemVersion: "test"})
 	if err != nil {
@@ -382,20 +398,21 @@ func newKhanTauntExecutionHarness(
 		"939:1123": {KingdomID: 0, TypeID: khanCampTypeID, X: 939, Y: 1123, EventCampID: 1147},
 	}
 	gameState.EventScores.ByEvent[khanEventID] = State.ScalableEventScore{
-		EventID: khanEventID, RemainingSec: 7_200, ObservedAt: now,
+		EventID: khanEventID, DifficultyID: 310, RemainingSec: 7_200, ObservedAt: now,
 	}
 	eventEndsAt := now.Add(7_200 * time.Second)
 	gameState.EventScores.ActivityByEvent[khanEventID] = State.EventActivityState{
 		EventID: khanEventID, OccurrenceEndsAt: eventEndsAt, ObservedFrom: now.Add(-time.Hour),
 	}
 	gameState.Khan = State.KhanState{
-		RageCampID: 1147, PlayerRage: 1740, PlayerRageCap: 1740,
+		RageCampID: 1147, RageCampRevision: 1, RageBalanceCampRevision: 1,
+		PlayerRage: 1740, PlayerRageCap: 1740,
 		PlayerTotalRage: 52_140, RageObservedAt: now,
 		Taunts: map[State.MovementID]State.KhanTauntState{},
 	}
 	arguments, _ := json.Marshal(khanTauntRequest{
 		EventID: khanEventID, EventEndsAt: eventEndsAt, MainCastleID: 1, TargetX: 939, TargetY: 1123,
-		RageCampID: 1147, PlayerTotalRage: 52_140, RageObservedAt: now,
+		RageCampID: 1147, RageCampRevision: 1, PlayerRageCap: 1740, PlayerTotalRage: 52_140, RageObservedAt: now,
 		KhanGuard: khanLaneGuardRequest{MainCastleID: 1},
 	})
 	stateStore := State.NewStore(gameState)
@@ -417,7 +434,39 @@ func newKhanTauntExecutionHarness(
 	if err := engine.RegisterAction("khan.taunt.accepted", application.recordKhanTauntAcceptance); err != nil {
 		t.Fatal(err)
 	}
-	return engine, application, sender, arguments
+	if err := engine.RegisterAction("khan.taunt.guard", func(_ context.Context, raw json.RawMessage) error {
+		var request khanTauntRequest
+		if err := decodeIntentArguments(raw, &request); err != nil {
+			return err
+		}
+		return validateKhanTauntContext(application.State.ReadOnlyView(), gameData, request, time.Now().UTC())
+	}); err != nil {
+		t.Fatal(err)
+	}
+	return engine, application, sender, arguments, gameData
+}
+
+func TestKhanTauntFinalDispatchRejectsQueuedCampUpgrade(t *testing.T) {
+	engine, application, sender, arguments, gameData := newKhanTauntExecutionHarness(t)
+	registry := Ingest.NewRegistry()
+	if err := Ingest.RegisterCoreReducers(registry); err != nil {
+		t.Fatal(err)
+	}
+	pipeline := Ingest.NewPipeline(application.State, khanTauntGameDataProvider{store: gameData}, registry)
+	sender.beforeFinalDispatch = func() {
+		code := 0
+		_, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
+			Opcode: "aic", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: time.Now().UTC(),
+			Payload: json.RawMessage(`{"AC":[{"X":939,"Y":1123,"AR":1182,"ACID":1148,"EID":72,"ACVC":1}]}`),
+		})
+		if err != nil {
+			t.Error(err)
+		}
+	}
+	receipt := engine.Submit(t.Context(), Intent.Request{Name: "khan.taunt", Arguments: arguments})
+	if receipt.Status == Intent.StatusSucceeded || sender.sendCount() != 0 {
+		t.Fatalf("queued stale LTA was sent: receipt=%#v sends=%d", receipt, sender.sendCount())
+	}
 }
 
 func TestKhanTauntRejectedOrDroppedGAMDoesNotConsumeCursorAndCanRetry(t *testing.T) {
@@ -429,7 +478,7 @@ func TestKhanTauntRejectedOrDroppedGAMDoesNotConsumeCursorAndCanRetry(t *testing
 		{name: "dropped"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			engine, application, sender, arguments := newKhanTauntExecutionHarness(t)
+			engine, application, sender, arguments, _ := newKhanTauntExecutionHarness(t)
 			sender.setAutoCode(test.code)
 			ctx := t.Context()
 			cancel := func() {}
@@ -466,7 +515,7 @@ func TestKhanTauntRejectedOrDroppedGAMDoesNotConsumeCursorAndCanRetry(t *testing
 }
 
 func TestKhanTauntClaimPreventsDuplicateWhileGAMIsPending(t *testing.T) {
-	engine, application, sender, arguments := newKhanTauntExecutionHarness(t)
+	engine, application, sender, arguments, _ := newKhanTauntExecutionHarness(t)
 	firstResult := make(chan Intent.Receipt, 1)
 	go func() {
 		firstResult <- engine.Submit(context.Background(), Intent.Request{Name: "khan.taunt", Arguments: arguments})
@@ -511,6 +560,7 @@ func TestKhanDefenseToolPurchasePassesProductionResourceAdmission(t *testing.T) 
 	now := time.Now().UTC()
 	gameData, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],"buildings":[{"wodID":1}],"units":[{"wodID":731}],"currencies":[],
+		"events":[{"eventID":72,"packageIDs":"10","kIDs":"0","areaTypes":"1"}],
 		"packages":[{
 			"packageID":10,"packageType":"tool","unitID":731,"unitAmount":1,"packagePriceC1":25
 		}]

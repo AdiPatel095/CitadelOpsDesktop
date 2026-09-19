@@ -11,6 +11,7 @@ func TestKhanTauntCursorIsScopedToEventOccurrence(t *testing.T) {
 	previousEnd := time.Date(2026, 8, 25, 7, 30, 0, 0, time.UTC)
 	occurrence := EventOccurrence{EndsAt: currentEnd, ObservedFrom: currentStart}
 	base := KhanState{
+		RageCampID: 1114, RageCampRevision: 1, RageBalanceCampRevision: 1,
 		PlayerRage: 1_500, PlayerRageCap: 1_500, PlayerTotalRage: 10_080,
 		RageObservedAt: currentStart.Add(time.Hour), LastTauntTriggeredAt: currentStart.Add(time.Minute),
 		LastTauntTriggeredRage: 10_080, LastTauntTriggeredEventEndsAt: currentEnd,

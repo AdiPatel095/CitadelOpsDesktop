@@ -1920,6 +1920,9 @@ type KhanState struct {
 	TargetX                       int                               `json:"targetX,omitempty"`
 	TargetY                       int                               `json:"targetY,omitempty"`
 	RageCampID                    int64                             `json:"rageCampId,omitempty"`
+	RageCampRevision              uint64                            `json:"rageCampRevision,omitempty"`
+	RageCampObservedAt            time.Time                         `json:"rageCampObservedAt,omitempty"`
+	RageBalanceCampRevision       uint64                            `json:"rageBalanceCampRevision,omitempty"`
 	PlayerRage                    int64                             `json:"playerRage,omitempty"`
 	PlayerRageCap                 int64                             `json:"playerRageCap,omitempty"`
 	PlayerTotalRage               int64                             `json:"playerTotalRage,omitempty"`

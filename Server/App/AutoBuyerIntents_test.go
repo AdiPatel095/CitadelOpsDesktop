@@ -30,7 +30,7 @@ func TestPlanAutoBuyerPackagePurchaseRefreshesGuardsAndVerifiesCounter(t *testin
 	gameState.Inventory.ConstructionOffersCastleID = 10
 	gameState.Inventory.ConstructionOffersKingdomID = 0
 	gameState.Inventory.ConstructionOffersObservedAt = now
-	gameState.EventScores.ShopByPackage[102] = State.EventShopRoute{EventID: 88, RemainingSec: 3600, ObservedAt: now}
+	gameState.EventScores.ShopByPackage[102] = State.EventShopRoute{EventID: 116, RemainingSec: 3600, ObservedAt: now}
 	arguments := json.RawMessage(`{
 		"sourceCastleId":10,"shopId":"rift","packageId":102,"amount":1,"targetPurchasesPerReset":1,
 		"minimumBalanceReserve":50,"allowRubyPackages":false,"maximumRubySpendPerReset":0,
@@ -40,8 +40,10 @@ func TestPlanAutoBuyerPackagePurchaseRefreshesGuardsAndVerifiesCounter(t *testin
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 5 || plan.Steps[0].Opcode != "gbc" || plan.Steps[1].Action != "auto_buyer.package.guard" ||
-		plan.Steps[2].Opcode != "sbp" || plan.Steps[3].Opcode != "gbc" || plan.Steps[4].Action != "auto_buyer.package.verify" {
+	if len(plan.Steps) != 6 || plan.Steps[0].Opcode != "jaa" || plan.Steps[1].Opcode != "gbc" ||
+		plan.Steps[2].Action != "auto_buyer.package.guard" || plan.Steps[3].Opcode != "sbp" ||
+		plan.Steps[3].FinalDispatchAction != "auto_buyer.package.guard" || plan.Steps[4].Opcode != "gbc" ||
+		plan.Steps[5].Action != "auto_buyer.package.verify" {
 		t.Fatalf("package steps = %#v", plan.Steps)
 	}
 	var payload struct {
@@ -51,15 +53,66 @@ func TestPlanAutoBuyerPackagePurchaseRefreshesGuardsAndVerifiesCounter(t *testin
 		BuyAll    int64 `json:"BA"`
 		Premium   int64 `json:"PC2"`
 	}
-	if err := json.Unmarshal(plan.Steps[2].Command.Payload, &payload); err != nil || payload.ProductID != 102 ||
+	if err := json.Unmarshal(plan.Steps[3].Command.Payload, &payload); err != nil || payload.ProductID != 102 ||
 		payload.TableID != GameData.AutoBuyerMasterBlacksmithTableID || payload.Amount != 1 || payload.BuyAll != 0 || payload.Premium != -1 {
 		t.Fatalf("SBP payload = %#v err=%v", payload, err)
 	}
 
 	gameState.Inventory.ConstructionOffers[102] = 1
-	_, _, _, err = autoBuyerPackagePurchaseContext(Intent.PlanningContext{State: gameState, GameData: gameData}, arguments, now, true)
+	castle := gameState.Castles[10]
+	castle.Focused = true
+	gameState.Castles[10] = castle
+	_, _, _, err = autoBuyerPackagePurchaseContext(Intent.PlanningContext{
+		State: gameState, GameData: gameData,
+		ProtocolContext: State.ProtocolContextState{
+			SessionGeneration: 1, ConnectionGeneration: 1, FocusedCastleID: 10,
+			FocusSubcontext: State.FocusSubcontextCastle, FocusEpoch: 1,
+		},
+	}, arguments, now, true)
 	if err == nil {
 		t.Fatal("fresh guard accepted a purchase after the server counter changed")
+	}
+}
+
+func TestEventBackedSBPDispatchRequiresExactLiveRouteAndCastleContext(t *testing.T) {
+	now := time.Now().UTC()
+	gameData := autoBuyerIntentTestStore(t)
+	base := autoBuyerIntentTestState(now)
+	castle := base.Castles[10]
+	castle.Focused = true
+	base.Castles[10] = castle
+	base.EventScores.ShopByPackage[102] = State.EventShopRoute{EventID: 116, RemainingSec: 3600, ObservedAt: now}
+	base.Inventory.ConstructionOffersCastleID = 10
+	base.Inventory.ConstructionOffersKingdomID = 0
+	base.Inventory.ConstructionOffersObservedAt = now
+	request := eventBackedSBPRequest{PackageID: 102, TableID: 116, Amount: 1, Stock: 1, MaxBuyPerClick: 1_000}
+	context := Intent.PlanningContext{
+		State: base, GameData: gameData,
+		ProtocolContext: State.ProtocolContextState{
+			SessionGeneration: 1, ConnectionGeneration: 1, FocusedCastleID: 10,
+			FocusSubcontext: State.FocusSubcontextCastle, FocusEpoch: 4,
+		},
+	}
+	if _, err := validateEventBackedSBP(context, castle, request, now, true); err != nil {
+		t.Fatalf("valid event-backed context rejected: %v", err)
+	}
+
+	mapContext := context
+	mapContext.ProtocolContext.FocusSubcontext = State.FocusSubcontextMap
+	if _, err := validateEventBackedSBP(mapContext, castle, request, now, true); err == nil {
+		t.Fatal("intervening map context was accepted")
+	}
+	mismatch := request
+	mismatch.TableID = 88
+	if _, err := validateEventBackedSBP(context, castle, mismatch, now, true); err == nil {
+		t.Fatal("mismatched package shop table was accepted")
+	}
+	expired := context
+	expired.State.EventScores.ShopByPackage = map[State.PackageID]State.EventShopRoute{
+		102: {EventID: 116, RemainingSec: 1, ObservedAt: now.Add(-time.Minute)},
+	}
+	if _, err := validateEventBackedSBP(expired, castle, request, now, true); err == nil {
+		t.Fatal("expired shop route was accepted")
 	}
 }
 
@@ -1501,6 +1554,7 @@ const autoBuyerIntentTestCatalog = `{
 		{"resourceID":12,"JSONKey":"MEAD","name":"Mead"},{"resourceID":13,"JSONKey":"BEEF","name":"Beef"}
 	],
 	"currencies":[{"currencyID":36,"JSONKey":"STO","Name":"SilverToken"},{"currencyID":70,"JSONKey":"RCO","Name":"RiftCoin"}],
+	"events":[{"eventID":116,"packageIDs":"100+101+102","kIDs":"0","areaTypes":"1"}],
 	"packages":[
 		{"packageID":100,"comment1":"Central Silver Shop","stock":5,"costSilverToken":10},
 		{"packageID":101,"comment1":"Master Blacksmith Ruby","stock":2,"packagePriceC2":150},

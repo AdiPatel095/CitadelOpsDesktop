@@ -86,6 +86,190 @@ func TestScalableEventScoresTrackSnapshotsAndPointUpdates(t *testing.T) {
 
 }
 
+func TestScalableEventShopRoutesMergeCatalogAndLivePackages(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[{"wodID":1}],"units":[{"wodID":1}],
+		"events":[{"eventID":22,"packageIDs":"1123+1124","kIDs":"0","areaTypes":"1"}]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	gameState := State.NewGameState()
+	observedAt := time.Date(2026, 9, 19, 22, 31, 32, 0, time.UTC)
+	changed, err := applyScalableEventSnapshot(json.RawMessage(`{"E":[{"EID":22,"RS":293248}]}`), observedAt, &gameState, gameData)
+	if err != nil || !changed {
+		t.Fatalf("event shop snapshot changed=%t err=%v", changed, err)
+	}
+	for _, packageID := range []State.PackageID{1123, 1124} {
+		route, active := gameState.ActiveShopForPackage(packageID, observedAt.Add(time.Minute))
+		if !active || route.EventID != 22 {
+			t.Fatalf("package %d route=%+v active=%t", packageID, route, active)
+		}
+	}
+	changed, err = applyScalableEventSnapshot(json.RawMessage(`{"E":[{"EID":22,"RS":293247,"PIDS":"2001"}]}`), observedAt.Add(time.Second), &gameState, gameData)
+	if err != nil || !changed {
+		t.Fatalf("event shop additions changed=%t err=%v", changed, err)
+	}
+	for _, packageID := range []State.PackageID{1123, 1124, 2001} {
+		route, active := gameState.ActiveShopForPackage(packageID, observedAt.Add(time.Minute))
+		if !active || route.EventID != 22 {
+			t.Fatalf("merged package %d route=%+v active=%t", packageID, route, active)
+		}
+	}
+}
+
+func TestAICCampUpgradeInvalidatesOldCapUntilCoherentRageUpdate(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],"buildings":[{"wodID":1}],"units":[{"wodID":1}],
+		"eventAutoScalingCamps":[
+			{"eventAutoScalingCampID":1114,"eventID":72,"difficultyID":310,"areaType":35,"playerRageCap":1620},
+			{"eventAutoScalingCampID":1115,"eventID":72,"difficultyID":310,"areaType":35,"playerRageCap":1740}
+		]
+	}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Date(2026, 9, 19, 19, 42, 13, 0, time.UTC)
+	endsAt := now.Add(time.Hour)
+	gameState := State.NewGameState()
+	gameState.EventScores.ByEvent[72] = State.ScalableEventScore{
+		EventID: 72, DifficultyID: 310, RemainingSec: 3600, ObservedAt: now,
+	}
+	gameState.EventScores.ActivityByEvent[72] = State.EventActivityState{
+		EventID: 72, OccurrenceEndsAt: endsAt, ObservedFrom: now.Add(-time.Hour),
+	}
+	gameState.Khan.TargetX = 216
+	gameState.Khan.TargetY = 932
+	gameState.Khan.RageCampID = 1114
+	gameState.Khan.RageCampRevision = 1
+	gameState.Khan.RageCampObservedAt = now.Add(-time.Second)
+	gameState.Khan.RageBalanceCampRevision = 1
+	gameState.Khan.PlayerRage = 1620
+	gameState.Khan.PlayerRageCap = 1620
+	gameState.Khan.PlayerTotalRage = 43539
+	gameState.Khan.RageObservedAt = now.Add(-time.Second)
+	store := State.NewStore(gameState)
+	registry := NewRegistry()
+	if err := RegisterCoreReducers(registry); err != nil || !registry.HasInbound("aic") {
+		t.Fatalf("AIC reducer registration: %v", err)
+	}
+	pipeline := NewPipeline(store, staticGameDataProvider{store: gameData}, registry)
+	code := 0
+	if _, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
+		Opcode: "aic", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now,
+		Payload: json.RawMessage(`{"AC":[{"X":216,"Y":932,"AR":1182,"ACID":1115,"EID":72,"ACVC":1}]}`),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	khan := store.ReadOnlyView().Khan
+	if khan.RageCampID != 1115 || khan.PlayerRageCap != 1740 || khan.PlayerRage != 1620 ||
+		khan.PlayerTotalRage != 43539 || khan.RageCampRevision != 2 || khan.RageBalanceCampRevision != 0 {
+		t.Fatalf("camp update = %+v", khan)
+	}
+	occurrence, _ := store.ReadOnlyView().LookupEventOccurrence(72)
+	if khan.FullRageTauntDue(occurrence) {
+		t.Fatal("old full-bar observation survived the camp upgrade")
+	}
+	if _, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
+		Opcode: "rpr", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now.Add(time.Millisecond),
+		Payload: json.RawMessage(`{"EID":72,"PCRP":1620,"PTRP":45422}`),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	khan = store.ReadOnlyView().Khan
+	if khan.PlayerRageCap != 1740 || khan.RageBalanceCampRevision != khan.RageCampRevision || khan.FullRageTauntDue(occurrence) {
+		t.Fatalf("1620 rage incorrectly became ready against upgraded cap: %+v", khan)
+	}
+	if _, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
+		Opcode: "rpr", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now.Add(2 * time.Millisecond),
+		Payload: json.RawMessage(`{"EID":72,"PCRP":1740,"PTRP":45542}`),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	khan = store.ReadOnlyView().Khan
+	if !khan.FullRageTauntDue(occurrence) {
+		t.Fatalf("coherent 1740 rage did not become ready: %+v", khan)
+	}
+	if _, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
+		Opcode: "aic", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now.Add(3 * time.Millisecond),
+		Payload: json.RawMessage(`{"AC":[{"X":216,"Y":932,"AR":1182,"ACID":1115,"EID":72,"ACVC":1}]}`),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	khan = store.ReadOnlyView().Khan
+	if khan.RageBalanceCampRevision != khan.RageCampRevision || !khan.FullRageTauntDue(occurrence) {
+		t.Fatalf("repeated same-camp AIC invalidated coherent rage: %+v", khan)
+	}
+	if _, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
+		Opcode: "aic", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now.Add(-time.Second),
+		Payload: json.RawMessage(`{"AC":[{"X":216,"Y":932,"AR":1182,"ACID":1114,"EID":72,"ACVC":0}]}`),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if got := store.ReadOnlyView().Khan.RageCampID; got != 1115 {
+		t.Fatalf("older AIC rolled camp back to %d", got)
+	}
+	if _, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
+		Opcode: "rpr", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now.Add(4 * time.Millisecond),
+		Payload: json.RawMessage(`{"EID":72,"PCRP":1740}`),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	khan = store.ReadOnlyView().Khan
+	if khan.PlayerRage != 1740 || khan.PlayerTotalRage != 45542 || khan.RageBalanceCampRevision != 0 {
+		t.Fatalf("missing RPR fields fabricated rage state: %+v", khan)
+	}
+	if _, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
+		Opcode: "sei", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now.Add(5 * time.Millisecond),
+		Payload: json.RawMessage(`{"E":[{"EID":72,"RS":3599,"EASE":1,"EDID":310,"AC":{"ACID":1115,"PCRP":1740,"PTRP":45542}}]}`),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	khan = store.ReadOnlyView().Khan
+	if khan.RageBalanceCampRevision != khan.RageCampRevision || !khan.FullRageTauntDue(occurrence) {
+		t.Fatalf("fresh SEI did not restore coherent rage: %+v", khan)
+	}
+	beforeOtherEvent := khan
+	if _, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
+		Opcode: "aic", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now.Add(6 * time.Millisecond),
+		Payload: json.RawMessage(`{"AC":[{"X":100,"Y":200,"ACID":9999,"EID":73,"ACVC":1}]}`),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	khan = store.ReadOnlyView().Khan
+	if khan.RageCampID != beforeOtherEvent.RageCampID || khan.RageCampRevision != beforeOtherEvent.RageCampRevision ||
+		khan.RageBalanceCampRevision != beforeOtherEvent.RageBalanceCampRevision {
+		t.Fatalf("unrelated camp event changed Khan rage state: before=%+v after=%+v", beforeOtherEvent, khan)
+	}
+	if _, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
+		Opcode: "aic", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now.Add(7 * time.Millisecond),
+		Payload: json.RawMessage(`{"AC":[{"X":216,"Y":932,"ACID":9999,"EID":72,"ACVC":1}]}`),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	khan = store.ReadOnlyView().Khan
+	if khan.RageCampID != 0 || khan.PlayerRageCap != 0 || khan.RageBalanceCampRevision != 0 ||
+		khan.PlayerRage != 1740 || khan.PlayerTotalRage != 45542 {
+		t.Fatalf("unknown camp did not fail closed while preserving rage amounts: %+v", khan)
+	}
+	if _, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
+		Opcode: "aic", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now.Add(8 * time.Millisecond),
+		Payload: json.RawMessage(`{"AC":[{"X":216,"Y":932,"ACID":1115,"EID":72,"ACVC":1}]}`),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pipeline.HandleFrame(t.Context(), Protocol.Frame{
+		Opcode: "rpr", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now.Add(9 * time.Millisecond),
+		Payload: json.RawMessage(`{"EID":72,"PCRP":1740,"PTRP":45542}`),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	khan = store.ReadOnlyView().Khan
+	if khan.RageCampID != 1115 || khan.RageBalanceCampRevision != khan.RageCampRevision || !khan.FullRageTauntDue(occurrence) {
+		t.Fatalf("valid AIC plus RPR did not recover rage readiness: %+v", khan)
+	}
+}
+
 func TestScalableEventSnapshotReplacesAuthoritativeAvailability(t *testing.T) {
 	gameState := State.NewGameState()
 	gameData := scalableEventTestGameData(t)

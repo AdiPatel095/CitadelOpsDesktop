@@ -67,6 +67,7 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"tee", components(State.ComponentEventScores), reduceGlobalEffectTriggerEnd},
 		{"bie", components(State.ComponentEventScores), reduceGlobalEffectBoosterInfo},
 		{"rpr", components(State.ComponentKhan), reduceKhanRagePoints},
+		{"aic", components(State.ComponentKhan), reduceKhanCampUpdate},
 		{"pep", components(State.ComponentEventScores), reduceEventPoints},
 		{"hgh", components(State.ComponentEventScores), reduceEventRanking},
 		{"dcl", castleSnapshot, reduceCastleDetails},

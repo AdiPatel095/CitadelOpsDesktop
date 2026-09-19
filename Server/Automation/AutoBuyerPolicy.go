@@ -412,11 +412,10 @@ func autoBuyerAvailablePackageGoals(snapshot Snapshot, settings autoBuyerSetting
 		) {
 			continue
 		}
-		if product.RequiresEvent {
-			if _, active := snapshot.State.ActiveShopForPackage(rule.PackageID, snapshot.Now); !active {
-				unavailableEventShops++
-				continue
-			}
+		route, active := snapshot.State.ActiveShopForPackage(rule.PackageID, snapshot.Now)
+		if !active || route.EventID != product.TableID {
+			unavailableEventShops++
+			continue
 		}
 		available++
 	}
@@ -667,10 +666,20 @@ func evaluateAutoBuyerPackages(
 			}
 			continue
 		}
-		if product.RequiresEvent {
-			if _, active := snapshot.State.ActiveShopForPackage(rule.PackageID, snapshot.Now); !active {
-				continue
+		route, active := snapshot.State.ActiveShopForPackage(rule.PackageID, snapshot.Now)
+		if !active || route.EventID != product.TableID {
+			if firstBlocked == "" {
+				firstBlocked = fmt.Sprintf("%s is not advertised by its current shop", product.Name)
 			}
+			continue
+		}
+		if err := snapshot.GameData.ValidateEventShopDestination(
+			product.PackageID, route.EventID, int64(source.KingdomID), source.SlotType,
+		); err != nil {
+			if firstBlocked == "" {
+				firstBlocked = fmt.Sprintf("%s is unavailable at %s: %v", product.Name, source.Name, err)
+			}
+			continue
 		}
 		purchased := offers[rule.PackageID]
 		target := min(rule.TargetPurchasesPerReset, product.Stock)
