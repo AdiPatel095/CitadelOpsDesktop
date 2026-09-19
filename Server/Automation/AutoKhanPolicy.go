@@ -258,7 +258,7 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 			NextCheckAt: next, Metrics: metrics,
 		}, nil
 	}
-	if autoKhanStationingActive(snapshot.State, snapshot.Now) {
+	if State.KhanAutoStationYieldActiveAt(snapshot.State, snapshot.Now) {
 		return Decision{
 			Status: "yielding", Detail: "Auto Station is moving troops; Khan attacks and defense changes are paused",
 			NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
@@ -976,7 +976,7 @@ func autoKhanAsyncLaneContext(
 		}
 		return autoKhanLaneContext{}, &decision, nil
 	}
-	if autoKhanStationingActive(snapshot.State, snapshot.Now) {
+	if State.KhanAutoStationYieldActiveAt(snapshot.State, snapshot.Now) {
 		decision := Decision{
 			Status: "yielding", Detail: "Auto Station is moving troops; Auto Khan lanes are paused",
 			NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
@@ -1491,21 +1491,6 @@ func autoKhanOutgoingMovementIDs(gameState State.GameState, now time.Time) []Sta
 	}
 	sort.Slice(result, func(left, right int) bool { return result[left] < result[right] })
 	return result
-}
-
-func autoKhanStationingActive(gameState State.GameState, now time.Time) bool {
-	for _, operation := range gameState.Stationing {
-		if operation.Purpose != "autoStation" {
-			continue
-		}
-		if operation.SafeAfter != nil && now.Before(operation.SafeAfter.Add(5*time.Second)) {
-			return true
-		}
-		if movement, found := trackedStationMovement(gameState, operation); found && towerMovementActiveAt(movement, now) {
-			return true
-		}
-	}
-	return false
 }
 
 func autoKhanEventEndsAt(score State.ScalableEventScore) time.Time {
