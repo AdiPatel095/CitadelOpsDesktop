@@ -97,6 +97,12 @@ func (engine *Engine) failurePresentation(receipt Receipt, err error) *FailurePr
 		presentation.Explanation = "There are not enough eligible troops available for this action."
 		presentation.Recovery = "The feature lane will reevaluate after troop availability changes."
 		presentation.Toast = !automationActor(receipt.Actor) || receipt.Status != StatusFailed
+	case errors.Is(err, ErrCoinUnavailable):
+		presentation.Kind = FailureAvailability
+		presentation.Severity = FailureSeverityWarning
+		presentation.Explanation = cleanFailureText(err.Error())
+		presentation.Recovery = "The feature lane will reevaluate after the authoritative coin balance changes."
+		presentation.Toast = !automationActor(receipt.Actor)
 	case strings.Contains(lower, "timed out waiting for") ||
 		(errors.Is(err, context.DeadlineExceeded) && !Outbound.IsIndeterminate(err) && receipt.Status != StatusIndeterminate):
 		presentation.Kind = FailureTimeout

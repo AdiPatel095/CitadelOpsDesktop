@@ -39,6 +39,7 @@ type kingdomResourceShipmentRequest struct {
 	TimeSkipID         string                        `json:"timeSkipId,omitempty"`
 	MinimumRemaining   int64                         `json:"minimumRemaining,omitempty"`
 	HorseTravelBoostID int                           `json:"horseTravelBoostId,omitempty"`
+	MinimumCoinReserve float64                       `json:"minimumCoinReserve,omitempty"`
 }
 
 type kingdomResourceSettlementRequest struct {
@@ -190,7 +191,7 @@ func planResourceShipment(ctx context.Context, input Intent.PlanningContext, arg
 			"sourceCastleId": source.ID, "targetCastleId": target.ID,
 			"resourceId": goods[0].ResourceID, "amount": goods[0].Amount,
 			"workflowOwner": request.WorkflowOwner, "enforceTargetCapacity": request.EnforceTargetCap,
-			"horseTravelBoostId": request.HorseTravelBoostID,
+			"horseTravelBoostId": request.HorseTravelBoostID, "minimumCoinReserve": request.MinimumCoinReserve,
 		})
 		return planMarketResourceShipment(ctx, input, marketArguments)
 	}
@@ -209,6 +210,7 @@ func planMarketResourceShipment(ctx context.Context, input Intent.PlanningContex
 		WorkflowOwner      string           `json:"workflowOwner,omitempty"`
 		EnforceTargetCap   bool             `json:"enforceTargetCapacity,omitempty"`
 		HorseTravelBoostID int              `json:"horseTravelBoostId,omitempty"`
+		MinimumCoinReserve float64          `json:"minimumCoinReserve,omitempty"`
 	}
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Plan{}, err
@@ -244,6 +246,9 @@ func planMarketResourceShipment(ctx context.Context, input Intent.PlanningContex
 	if request.Amount <= 0 {
 		return Intent.Plan{}, fmt.Errorf("amount must be positive")
 	}
+	if request.MinimumCoinReserve < 0 || math.IsNaN(request.MinimumCoinReserve) || math.IsInf(request.MinimumCoinReserve, 0) || request.MinimumCoinReserve >= math.Exp2(63) {
+		return Intent.Plan{}, fmt.Errorf("minimumCoinReserve is invalid")
+	}
 	if err := validateHorseTravelBoostID(request.HorseTravelBoostID); err != nil {
 		return Intent.Plan{}, err
 	}
@@ -263,8 +268,8 @@ func planMarketResourceShipment(ctx context.Context, input Intent.PlanningContex
 		}
 	}
 	market, observed := input.State.Market.Castles[source.ID]
-	if !observed || input.State.Market.ObservedAt.IsZero() ||
-		State.AvailableMarketBarrowsAt(input.State, market, time.Now().UTC()) <= 0 {
+	availableBarrows := State.AvailableMarketBarrowsAt(input.State, market, time.Now().UTC())
+	if !observed || input.State.Market.ObservedAt.IsZero() || availableBarrows <= 0 {
 		return Intent.Plan{}, fmt.Errorf("source castle %d has no observed available market barrows", source.ID)
 	}
 	payload, _ := json.Marshal(struct {
@@ -280,7 +285,13 @@ func planMarketResourceShipment(ctx context.Context, input Intent.PlanningContex
 		KingdomID: source.KingdomID, SourceID: source.ID, TargetX: target.X, TargetY: target.Y,
 		HorseWID: horseTravelBoostID, Goods: [][]any{{resourceKey, request.Amount}},
 	})
-	steps := []Intent.Step{commandStep("Start market shipment", "crm", payload, "crm")}
+	shipmentStep := commandStep("Start market shipment", "crm", payload, "crm")
+	if request.MinimumCoinReserve > 0 {
+		shipmentStep.CoinCost = &Intent.CoinCostRequirement{
+			Reserve: int64(math.Ceil(request.MinimumCoinReserve)), Source: "configured market coin reserve",
+		}
+	}
+	steps := []Intent.Step{shipmentStep}
 	if request.EnforceTargetCap {
 		guardArguments, _ := json.Marshal(resourceTargetCapacityGuard{
 			TargetCastleID: target.ID, Goods: goods, DeliveryRatio: 1,

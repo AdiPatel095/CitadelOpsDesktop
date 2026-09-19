@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 
@@ -834,6 +835,7 @@ func planCraftingStart(_ context.Context, input Intent.PlanningContext, argument
 		BuildingInstanceID State.BuildingInstanceID `json:"buildingInstanceId"`
 		RecipeID           int64                    `json:"recipeId"`
 		Power              int                      `json:"power,omitempty"`
+		MinimumCoinReserve int64                    `json:"minimumCoinReserve,omitempty"`
 	}
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Plan{}, err
@@ -881,7 +883,10 @@ func planCraftingStart(_ context.Context, input Intent.PlanningContext, argument
 			return Intent.Plan{}, fmt.Errorf("crafting recipe %d is not valid for building definition %d", request.RecipeID, building.DefinitionID)
 		}
 	}
-	if err := validateCraftingStartAvailability(input.State, input.GameData, castle, building, request.RecipeID); err != nil {
+	if request.MinimumCoinReserve < 0 {
+		return Intent.Plan{}, fmt.Errorf("minimumCoinReserve must not be negative")
+	}
+	if err := validateCraftingStartAvailability(input.State, input.GameData, castle, building, request.RecipeID, request.MinimumCoinReserve); err != nil {
 		return Intent.Plan{}, err
 	}
 	payload, _ := json.Marshal(struct {
@@ -891,6 +896,14 @@ func planCraftingStart(_ context.Context, input Intent.PlanningContext, argument
 		Power      int                      `json:"PWR"`
 		RecipeID   int64                    `json:"CRID"`
 	}{castle.KingdomID, castle.ID, building.InstanceID, request.Power, request.RecipeID})
+	startStep := commandStep("Queue crafting recipe", "crst", payload, "crst")
+	if costs, costErr := GameData.CraftingRecipeCosts(input.GameData, request.RecipeID); costErr == nil {
+		for _, cost := range costs {
+			if strings.EqualFold(cost.JSONKey, "C1") && cost.Amount > 0 && cost.Amount < math.Exp2(63) {
+				startStep.CoinCost = &Intent.CoinCostRequirement{Amount: int64(math.Ceil(cost.Amount)), Reserve: request.MinimumCoinReserve, Source: "official crafting recipe cost"}
+			}
+		}
+	}
 	return Intent.Plan{
 		Claims: []string{
 			"castle:" + strconv.FormatInt(int64(castle.ID), 10),
@@ -898,7 +911,7 @@ func planCraftingStart(_ context.Context, input Intent.PlanningContext, argument
 			"account-resources",
 		},
 		Summary: fmt.Sprintf("Queue crafting recipe %d at %s", request.RecipeID, castleLabel(castle)),
-		Steps:   []Intent.Step{commandStep("Queue crafting recipe", "crst", payload, "crst")},
+		Steps:   []Intent.Step{startStep},
 	}, nil
 }
 

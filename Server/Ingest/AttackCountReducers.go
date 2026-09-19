@@ -52,6 +52,7 @@ func applyDailyAttackCount(raw json.RawMessage, observedAt time.Time, gameState 
 	next := State.DailyAttackState{
 		Count: count, ServerThreshold: threshold, GrowthRate: float64(payload.GrowthRate),
 		SessionStartedAt: sessionStartedAt, ObservedAt: observedAt,
+		ConnectionGeneration: gameState.Session.ConnectionGeneration,
 	}
 	if reflect.DeepEqual(gameState.DailyAttacks, next) {
 		return false, nil

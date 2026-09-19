@@ -164,6 +164,17 @@ func TestAutomationPreflightStaleStateStaysOnLane(t *testing.T) {
 	}
 }
 
+func TestAutomationPartialCoinAvailabilityDoesNotToast(t *testing.T) {
+	engine := &Engine{}
+	receipt := engine.withFailure(
+		Receipt{Actor: "automation:autoRecruit", Status: StatusPartiallySucceeded},
+		&CoinUnavailableError{Required: 100, Reserve: 20, Observed: 90, Source: "official unit cost"},
+	)
+	if receipt.Failure == nil || receipt.Failure.Toast || receipt.Failure.Kind != FailureAvailability || receipt.Failure.Severity != FailureSeverityWarning {
+		t.Fatalf("partial coin availability projection = %#v", receipt.Failure)
+	}
+}
+
 func TestAutomationFeastRefreshProtocolGapStaysOnLaneAndLogs(t *testing.T) {
 	engine := &Engine{}
 	receipt := engine.withFailure(

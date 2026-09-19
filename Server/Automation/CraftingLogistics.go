@@ -45,10 +45,14 @@ func craftingRentalDecision(
 	if slotType == "" || slot <= 0 || cost <= 0 || playerResourceAmount(snapshot, "C1")-settings.MinimumCoinReserve < cost {
 		return Decision{}, false
 	}
-	arguments, _ := json.Marshal(map[string]any{
+	requestArguments := map[string]any{
 		"castleId": castle.ID, "buildingInstanceId": building.InstanceID,
 		"slotType": slotType, "slot": slot,
-	})
+	}
+	if settings.MinimumCoinReserve > 0 {
+		requestArguments["minimumCoinReserve"] = settings.MinimumCoinReserve
+	}
+	arguments, _ := json.Marshal(requestArguments)
 	return Decision{
 		Status:              "ready",
 		Detail:              fmt.Sprintf("Rent %s crafting slot %d at %s", slotType, slot, castleName(castle)),
@@ -475,7 +479,7 @@ func sameKingdomShipmentDecision(
 	}
 	arguments, _ := json.Marshal(map[string]any{
 		"sourceCastleId": best.ID, "targetCastleId": target.ID,
-		"resourceId": resourceID, "amount": int64(amount),
+		"resourceId": resourceID, "amount": int64(amount), "minimumCoinReserve": settings.MinimumCoinReserve,
 	})
 	return Decision{
 		Status:              "ready",

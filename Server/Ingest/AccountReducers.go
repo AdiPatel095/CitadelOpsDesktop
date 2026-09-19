@@ -970,9 +970,10 @@ func applyPlayerResources(raw json.RawMessage, gameState *State.GameState, gameD
 		if !ok {
 			continue
 		}
-		premium := strings.EqualFold(strings.TrimSpace(jsonKey), "C2")
+		resourceKey := strings.ToUpper(strings.TrimSpace(jsonKey))
+		spendAuthority := resourceKey == "C1" || resourceKey == "C2"
 		var amount float64
-		if premium {
+		if spendAuthority {
 			integer, valid := rawJSONInt64(rawValue)
 			if !authoritative || !valid || integer < 0 {
 				continue

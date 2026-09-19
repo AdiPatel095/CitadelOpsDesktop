@@ -12,6 +12,7 @@ import (
 
 func TestDailyAttackCountTracksStandaloneUpdatesAndServerReset(t *testing.T) {
 	gameState := State.NewGameState()
+	gameState.Session.ConnectionGeneration = 7
 	code := 0
 	observedAt := time.Date(2026, 7, 20, 15, 0, 0, 0, time.UTC)
 
@@ -23,7 +24,7 @@ func TestDailyAttackCountTracksStandaloneUpdatesAndServerReset(t *testing.T) {
 		t.Fatalf("daily attack update: domains=%v changed=%t err=%v", domains, changed, err)
 	}
 	if got := gameState.DailyAttacks; got.Count != 1000 || got.ServerThreshold != 3500 || got.GrowthRate != 0.007 ||
-		!got.SessionStartedAt.IsZero() || !got.ObservedAt.Equal(observedAt) {
+		!got.SessionStartedAt.IsZero() || !got.ObservedAt.Equal(observedAt) || got.ConnectionGeneration != 7 {
 		t.Fatalf("daily attack state = %#v", got)
 	}
 
