@@ -69,6 +69,7 @@ const PATCH_NOTES_RELEASES_UNSORTED: PatchNotesRelease[] = [
       { kind: 'added', text: 'Equipment Reconfigure returns up to 10 useful loadouts for one selected commander or castellan, compares complete capped combat totals, keeps equipment, heroes, and gems compatible, and shows the selected extraction costs and maximum ruby charge before Apply.' },
       { kind: 'fixed', text: 'Auto Bird resumes reliably after support troops return and handles castles with larger troop mixes.' },
       { kind: 'fixed', text: 'Premium commander movements no longer stall Auto Towers.' },
+      { kind: 'fixed', text: 'Auto Khan now captures validated NPC retaliation movements so active defenses, arrivals, and battle results stay visible in lane metrics and Feature Stats.' },
       { kind: 'fixed', text: 'Auto Food restores the live marketplace castle before requesting capacity and keeps returning trade carts reserved at their home castle until arrival.' },
       { kind: 'fixed', text: 'Auto Buyer isolates invalid goals from valid feast upkeep, prioritizes due feasts, and maintains supported feasts, overseers, and specialists from current timers, balances, prices, and reserves.' },
       { kind: 'removed', text: 'Retired Experimental Battle Research settings and status surfaces have been removed while existing historical trial records remain untouched.' },

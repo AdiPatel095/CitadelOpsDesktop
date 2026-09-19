@@ -208,6 +208,10 @@ func cloneMovementState(movement MovementState) MovementState {
 		id := *movement.LeaderDLID
 		movement.LeaderDLID = &id
 	}
+	if movement.LeaderWID != nil {
+		id := *movement.LeaderWID
+		movement.LeaderWID = &id
+	}
 	return movement
 }
 
