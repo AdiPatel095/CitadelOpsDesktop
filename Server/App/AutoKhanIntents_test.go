@@ -41,6 +41,38 @@ func TestKhanPresetShortageCancelsTheCRAAsStale(t *testing.T) {
 	}
 }
 
+func TestKhanFinalLaneGuardIgnoresSameRouteMovementOwnedByAutoBird(t *testing.T) {
+	now := time.Date(2026, 9, 19, 12, 0, 0, 0, time.UTC)
+	active := now.Add(time.Minute)
+	state := State.NewGameState()
+	state.Castles[1] = State.CastleState{ID: 1, KingdomID: 0, SlotType: 1}
+	state.Movements[11] = State.MovementState{
+		ID: 11, Direction: 0, SourceCastleID: 1, TargetCastleID: 900, ArrivesAt: &active,
+	}
+	safeAfter := now.Add(-10 * time.Second)
+	state.Stationing["autoStation:1"] = State.StationingOperation{
+		ID: "autoStation:1", Purpose: "autoStation", SourceCastleID: 1, TargetCastleID: 900,
+		MovementID: 10, SafeAfter: &safeAfter,
+	}
+	state.Stationing["autoBird:1"] = State.StationingOperation{
+		ID: "autoBird:1", Purpose: "autoBird", SourceCastleID: 1, TargetCastleID: 900,
+		MovementID: 11, MovementIDs: []State.MovementID{11},
+	}
+
+	if err := validateKhanLaneGuard(state, nil, khanLaneGuardRequest{MainCastleID: 1}, now); err != nil {
+		t.Fatalf("final Khan lane guard rejected unrelated Auto Bird movement: %v", err)
+	}
+	stationReturn := now.Add(time.Minute)
+	state.Movements[12] = State.MovementState{ID: 12, Direction: 1, ReturnsAt: &stationReturn}
+	station := state.Stationing["autoStation:1"]
+	station.MovementIDs = []State.MovementID{10, 12}
+	state.Stationing["autoStation:1"] = station
+	if err := validateKhanLaneGuard(state, nil, khanLaneGuardRequest{MainCastleID: 1}, now); err == nil ||
+		!strings.Contains(err.Error(), "Auto Station is moving troops") {
+		t.Fatalf("final Khan lane guard accepted tracked Auto Station return: %v", err)
+	}
+}
+
 func TestKhanAttackContextRechecksRageChainCapBeforeDeferredCRA(t *testing.T) {
 	now := time.Date(2026, 8, 29, 16, 30, 0, 0, time.UTC)
 	eventEndsAt := now.Add(72 * time.Hour)

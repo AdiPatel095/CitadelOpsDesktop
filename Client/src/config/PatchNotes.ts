@@ -71,6 +71,7 @@ const PATCH_NOTES_RELEASES_UNSORTED: PatchNotesRelease[] = [
       { kind: 'fixed', text: 'Premium commander movements no longer stall Auto Towers.' },
       { kind: 'fixed', text: 'Auto Food restores the live marketplace castle before requesting capacity and keeps returning trade carts reserved at their home castle until arrival.' },
       { kind: 'fixed', text: 'Auto Buyer isolates invalid goals from valid feast upkeep, prioritizes due feasts, and maintains supported feasts, overseers, and specialists from current timers, balances, prices, and reserves.' },
+      { kind: 'fixed', text: 'Auto Khan now yields only to movements authoritatively tracked by Auto Station, so unrelated support on the same route no longer pauses Khan defense or attacks.' },
       { kind: 'removed', text: 'Retired Experimental Battle Research settings and status surfaces have been removed while existing historical trial records remain untouched.' },
     ],
   },

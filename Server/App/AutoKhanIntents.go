@@ -498,7 +498,7 @@ func validateKhanLaneGuard(
 	if State.HasIncomingPlayerAttack(gameState, now) {
 		return fmt.Errorf("Auto Khan yielded to an incoming player attack for Auto Station")
 	}
-	if khanAutoStationActive(gameState, now) {
+	if State.KhanAutoStationYieldActiveAt(gameState, now) {
 		return fmt.Errorf("Auto Khan yielded while Auto Station is moving troops")
 	}
 	if main.Defense.OpenGateUntil != nil && main.Defense.OpenGateUntil.After(now) {
@@ -965,7 +965,7 @@ func (application *Application) guardKhanProtection(_ context.Context, arguments
 		return err
 	}
 	state := application.State.ReadOnlyView()
-	if State.HasIncomingPlayerAttack(state, time.Now().UTC()) || khanAutoStationActive(state, time.Now().UTC()) {
+	if State.HasIncomingPlayerAttack(state, time.Now().UTC()) || State.KhanAutoStationYieldActiveAt(state, time.Now().UTC()) {
 		return fmt.Errorf("Auto Khan yielded gate protection to Auto Station")
 	}
 	if castle.Defense.OpenGateUntil != nil && castle.Defense.OpenGateUntil.After(time.Now().UTC()) {
@@ -1062,32 +1062,6 @@ func (application *Application) khanProtectionContext(
 		return khanProtectionRequest{}, State.CastleState{}, KhanDomain.WallRisk{}, err
 	}
 	return request, castle, risk, nil
-}
-
-func khanAutoStationActive(gameState State.GameState, now time.Time) bool {
-	for _, operation := range gameState.Stationing {
-		if operation.Purpose != "autoStation" {
-			continue
-		}
-		if operation.SafeAfter != nil && now.Before(operation.SafeAfter.Add(5*time.Second)) {
-			return true
-		}
-		if movement, exists := gameState.LookupMovement(operation.MovementID); exists && khanMovementActive(movement, now) {
-			return true
-		}
-		active := false
-		gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
-			if movement.SourceCastleID == operation.SourceCastleID && movement.TargetCastleID == operation.TargetCastleID && khanMovementActive(movement, now) {
-				active = true
-				return false
-			}
-			return true
-		})
-		if active {
-			return true
-		}
-	}
-	return false
 }
 
 func khanMovementActive(movement State.MovementState, now time.Time) bool {
