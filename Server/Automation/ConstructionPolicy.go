@@ -101,7 +101,8 @@ func (*ConstructionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 		}
 		for _, target := range settings.Targets[castleKey] {
 			representative, exists := metadata.DefinitionView(target.ID)
-			if !exists || !representative.Temporary || representative.GroupID <= 0 || representative.VariantKey == "" {
+			if !exists || !representative.Temporary || representative.GroupID <= 0 ||
+				representative.VariantKey == "" || !representative.SlotKnown {
 				continue
 			}
 			tiers := metadata.TiersView(representative.VariantKey)
@@ -211,7 +212,10 @@ func (*ConstructionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 	if targets == 0 {
 		detail = "No valid official construction-item targets are configured"
 	} else if occupiedHost > 0 {
-		detail = fmt.Sprintf("%d construction-item target(s) are waiting for an occupied construction slot", occupiedHost)
+		detail = fmt.Sprintf(
+			"%d construction-item target(s) are waiting for an occupied construction slot; a refreshed slot snapshot must confirm removal before replacement",
+			occupiedHost,
+		)
 	} else if outOfRange > 0 {
 		detail = fmt.Sprintf("%d equipped construction-item target(s) are outside the configured level range", outOfRange)
 	} else if missingInventory > 0 {
@@ -244,8 +248,8 @@ func equippedConstructionForVariant(
 			if !exists || item.VariantKey != variantKey {
 				continue
 			}
-			occupied, remaining := occupiedConstructionSlot(slot, item, castle.ConstructionSlotsObservedAt, now)
-			if occupied {
+			active, remaining := activeConstructionEffect(slot, item, castle.ConstructionSlotsObservedAt, now)
+			if active {
 				slot.RemainingSec = remaining
 				return equippedConstruction{buildingID: buildingID, slot: slot, item: item}, true
 			}
@@ -429,7 +433,7 @@ func constructionHost(
 	metadata *GameData.ConstructionItemCatalog,
 	groupID int64,
 	targetSlot int,
-	now time.Time,
+	_ time.Time,
 ) (State.BuildingInstanceID, bool, time.Time) {
 	if store == nil {
 		return 0, false, time.Time{}
@@ -440,7 +444,6 @@ func constructionHost(
 	}
 	candidates := make([]State.BuildingInstanceID, 0)
 	compatible := false
-	var nextAvailable time.Time
 	for instanceID, building := range castle.Buildings {
 		definition, exists := buildings.DefinitionView(int64(building.DefinitionID))
 		if !exists {
@@ -451,47 +454,29 @@ func constructionHost(
 		}
 		compatible = true
 		occupied := false
-		availabilityKnown := true
-		var buildingAvailableAt time.Time
 		for _, slot := range castle.ConstructionSlots[instanceID] {
 			item, known := metadata.DefinitionView(int64(slot.DefinitionID))
-			if !known {
+			if !known || !item.SlotKnown {
 				occupied = true
-				availabilityKnown = false
 				continue
 			}
 			if item.Slot != targetSlot {
 				continue
 			}
-			active, remaining := occupiedConstructionSlot(slot, item, castle.ConstructionSlotsObservedAt, now)
-			if !active {
-				continue
-			}
 			occupied = true
-			if remaining == nil {
-				availabilityKnown = false
-				continue
-			}
-			candidate := now.Add(time.Duration(*remaining) * time.Second)
-			if buildingAvailableAt.IsZero() || candidate.After(buildingAvailableAt) {
-				buildingAvailableAt = candidate
-			}
 		}
 		if !occupied {
 			candidates = append(candidates, instanceID)
-		} else if availabilityKnown && !buildingAvailableAt.IsZero() &&
-			(nextAvailable.IsZero() || buildingAvailableAt.Before(nextAvailable)) {
-			nextAvailable = buildingAvailableAt
 		}
 	}
 	if len(candidates) == 0 {
-		return 0, compatible, nextAvailable
+		return 0, compatible, time.Time{}
 	}
 	sort.Slice(candidates, func(left, right int) bool { return candidates[left] < candidates[right] })
 	return candidates[0], true, time.Time{}
 }
 
-func occupiedConstructionSlot(
+func activeConstructionEffect(
 	slot State.ConstructionSlot,
 	item constructionMetadata,
 	observedAt time.Time,

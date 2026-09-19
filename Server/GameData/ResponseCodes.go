@@ -80,6 +80,20 @@ var officialClientOpcodeResponseCodes = map[string]map[int]ResponseCodeMeaning{
 			ExpectedState: true,
 		},
 	},
+	// Official client enum: NO_FREE_CONSTRUCTION_ITEM_SLOT = 374.
+	// The server can retain an expired temporary item as attached after its
+	// effect timer reaches zero, so RPC callers must refresh and wait for a
+	// snapshot that actually removes it before equipping a replacement.
+	"rpc": {
+		374: {
+			Code:          374,
+			Message:       "The selected building has no free construction-item slot.",
+			Source:        ResponseCodeOfficialClient,
+			Kind:          ResponseCodeStaleState,
+			Recovery:      "Refresh the castle's construction-item slots and wait until the attached item is removed before equipping another one.",
+			ExpectedState: true,
+		},
+	},
 	"ere": officialClientEnchantResponseCodes,
 	"eqe": officialClientEnchantResponseCodes,
 }

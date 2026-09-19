@@ -221,3 +221,15 @@ func TestResolveAllianceHelpDuplicateIsOpcodeScoped(t *testing.T) {
 		}
 	}
 }
+
+func TestResolveConstructionSlotOccupiedIsOpcodeScoped(t *testing.T) {
+	meaning := ResolveResponseCode(nil, " RPC ", 374)
+	if meaning.Source != ResponseCodeOfficialClient || meaning.Kind != ResponseCodeStaleState ||
+		!meaning.ExpectedState || !strings.Contains(meaning.Message, "no free construction-item slot") ||
+		!strings.Contains(meaning.Recovery, "attached item is removed") {
+		t.Fatalf("official RPC mapping = %#v", meaning)
+	}
+	if unrelated := ResolveResponseCode(nil, "future", 374); unrelated.Source != ResponseCodeUnknown || unrelated.ExpectedState {
+		t.Fatalf("RPC mapping leaked to another opcode = %#v", unrelated)
+	}
+}
