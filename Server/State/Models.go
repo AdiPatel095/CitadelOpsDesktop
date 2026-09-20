@@ -906,10 +906,11 @@ type MovementState struct {
 	Units           map[UnitID]int64       `json:"units"`
 	MarketBarrows   int                    `json:"marketBarrows,omitempty"`
 	MarketGoods     []KingdomTransportGood `json:"marketGoods,omitempty"`
-	// Preserve GAM's leader identities, including premium/sentinel values.
-	// Only a nonnegative UM.L.ID identifies an owned commander; DLID does not.
+	// Preserve GAM's leader identities, including premium/sentinel and NPC values.
+	// Only a nonnegative UM.L.ID identifies an owned commander; DLID and WID do not.
 	LeaderID            *int64 `json:"leaderId,omitempty"`
 	LeaderDLID          *int64 `json:"leaderDlid,omitempty"`
+	LeaderWID           *int64 `json:"leaderWid,omitempty"`
 	AdvisorType         int    `json:"advisorType,omitempty"`
 	AdvisorAttackNumber int    `json:"advisorAttackNumber,omitempty"`
 	AdvisorAttackCount  int    `json:"advisorAttackCount,omitempty"`
@@ -1920,6 +1921,9 @@ type KhanState struct {
 	TargetX                       int                               `json:"targetX,omitempty"`
 	TargetY                       int                               `json:"targetY,omitempty"`
 	RageCampID                    int64                             `json:"rageCampId,omitempty"`
+	RageCampRevision              uint64                            `json:"rageCampRevision,omitempty"`
+	RageCampObservedAt            time.Time                         `json:"rageCampObservedAt,omitempty"`
+	RageBalanceCampRevision       uint64                            `json:"rageBalanceCampRevision,omitempty"`
 	PlayerRage                    int64                             `json:"playerRage,omitempty"`
 	PlayerRageCap                 int64                             `json:"playerRageCap,omitempty"`
 	PlayerTotalRage               int64                             `json:"playerTotalRage,omitempty"`

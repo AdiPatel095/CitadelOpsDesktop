@@ -264,7 +264,7 @@ func TestConstructionPolicyWaitsForOccupiedTemporarySlotBeforeBuying(t *testing.
 	if decision.Request != nil || !strings.Contains(decision.Detail, "occupied construction slot") {
 		t.Fatalf("unexpected occupied-slot decision: %+v", decision)
 	}
-	if want := now.Add(600 * time.Second); !decision.NextCheckAt.Equal(want) {
+	if want := now.Add(constructionCheckInterval); !decision.NextCheckAt.Equal(want) {
 		t.Fatalf("next check = %v, want %v", decision.NextCheckAt, want)
 	}
 }
@@ -290,7 +290,7 @@ func TestConstructionPolicyUsesElapsedSlotTimeForUpgrade(t *testing.T) {
 	}
 }
 
-func TestConstructionPolicyRenewsExpiredTemporaryItem(t *testing.T) {
+func TestConstructionPolicyWaitsForAuthoritativeRemovalOfElapsedTemporaryItem(t *testing.T) {
 	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
 	gameState := constructionPolicyState(now)
 	gameState.Inventory.ConstructionItems[101] = 1
@@ -307,9 +307,175 @@ func TestConstructionPolicyRenewsExpiredTemporaryItem(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if decision.Request == nil || decision.Request.Name != "construction.equip" {
-		t.Fatalf("unexpected renewal decision: %+v", decision)
+	if decision.Request != nil || !strings.Contains(decision.Detail, "occupied construction slot") {
+		t.Fatalf("unexpected elapsed-item decision: %+v", decision)
 	}
+	if want := now.Add(constructionCheckInterval); !decision.NextCheckAt.Equal(want) {
+		t.Fatalf("next check = %v, want %v", decision.NextCheckAt, want)
+	}
+}
+
+func TestConstructionPolicyTreatsEveryAttachedTargetSlotAsOccupied(t *testing.T) {
+	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
+	zero := 0
+	tests := []struct {
+		name      string
+		itemID    State.ConstructionItemID
+		remaining *int
+	}{
+		{name: "permanent missing timer", itemID: 202},
+		{name: "permanent zero timer", itemID: 202, remaining: &zero},
+		{name: "temporary zero timer", itemID: 301, remaining: &zero},
+		{name: "unknown definition", itemID: 999999, remaining: &zero},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			gameState := constructionPolicyState(now)
+			gameState.Inventory.ConstructionItems[101] = 1
+			castle := gameState.Castles[10]
+			castle.ConstructionSlots[100] = []State.ConstructionSlot{{
+				DefinitionID: test.itemID, Slot: 0, RemainingSec: test.remaining,
+			}}
+			gameState.Castles[10] = castle
+
+			decision, err := NewConstructionPolicy().Evaluate(t.Context(), Snapshot{
+				State: gameState, Configuration: constructionPolicyConfiguration(),
+				GameData: constructionPolicyGameData(t), Now: now,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if decision.Request != nil || !strings.Contains(decision.Detail, "refreshed slot snapshot must confirm removal") {
+				t.Fatalf("attached-slot decision = %+v", decision)
+			}
+		})
+	}
+}
+
+func TestConstructionPolicyUsesAnotherGenuinelyFreeCompatibleBuilding(t *testing.T) {
+	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
+	zero := 0
+	gameState := constructionPolicyState(now)
+	gameState.Inventory.ConstructionItems[101] = 1
+	castle := gameState.Castles[10]
+	castle.Buildings[101] = State.Building{InstanceID: 101, DefinitionID: 200}
+	castle.ConstructionSlots[100] = []State.ConstructionSlot{{DefinitionID: 301, Slot: 0, RemainingSec: &zero}}
+	gameState.Castles[10] = castle
+
+	decision, err := NewConstructionPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, Configuration: constructionPolicyConfiguration(),
+		GameData: constructionPolicyGameData(t), Now: now,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if decision.Request == nil || decision.Request.Name != "construction.equip" ||
+		!strings.Contains(string(decision.Request.Arguments), `"buildingInstanceId":101`) {
+		t.Fatalf("alternate-host decision = %+v", decision)
+	}
+}
+
+func TestConstructionPolicyEquipsAfterRefreshedSnapshotConfirmsVacancy(t *testing.T) {
+	now := time.Date(2026, 7, 11, 12, 0, 0, 0, time.UTC)
+	zero := 0
+	gameState := constructionPolicyState(now)
+	gameState.Inventory.ConstructionItems[101] = 1
+	castle := gameState.Castles[10]
+	castle.ConstructionSlots[100] = []State.ConstructionSlot{{DefinitionID: 301, Slot: 0, RemainingSec: &zero}}
+	gameState.Castles[10] = castle
+
+	blocked, err := NewConstructionPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, Configuration: constructionPolicyConfiguration(),
+		GameData: constructionPolicyGameData(t), Now: now,
+	})
+	if err != nil || blocked.Request != nil {
+		t.Fatalf("pre-refresh decision = %+v, err = %v", blocked, err)
+	}
+
+	castle = gameState.Castles[10]
+	castle.ConstructionSlots[100] = nil
+	castle.ConstructionSlotsObservedAt = now.Add(time.Minute)
+	gameState.Castles[10] = castle
+	ready, err := NewConstructionPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, Configuration: constructionPolicyConfiguration(),
+		GameData: constructionPolicyGameData(t), Now: now.Add(time.Minute),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ready.Request == nil || ready.Request.Name != "construction.equip" {
+		t.Fatalf("post-refresh decision = %+v", ready)
+	}
+}
+
+func TestConstructionPolicyCapturedExpiredItemsNeverDispatchRPC(t *testing.T) {
+	now := time.Date(2026, 9, 16, 5, 32, 59, 0, time.UTC)
+	store := capturedConstructionPolicyGameData(t)
+	tests := []struct {
+		name       string
+		buildingID State.BuildingInstanceID
+		targetID   State.ConstructionItemID
+		slots      []State.ConstructionSlot
+	}{
+		{
+			name: "pirate market 30403 blocks 30401", buildingID: 4094, targetID: 30401,
+			slots: []State.ConstructionSlot{{DefinitionID: 214, Slot: 0}, {DefinitionID: 30403, Slot: 0, RemainingSec: intPointerForConstructionTest(0)}},
+		},
+		{
+			name: "pirates woodcutter 30482 blocks 30481", buildingID: 6875, targetID: 30481,
+			slots: []State.ConstructionSlot{{DefinitionID: 30482, Slot: 0, RemainingSec: intPointerForConstructionTest(0)}},
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			gameState := State.NewGameState()
+			gameState.Inventory.ConstructionItemsObservedAt = now
+			gameState.Inventory.ConstructionItems[test.targetID] = 1
+			gameState.Castles[10] = State.CastleState{
+				ID: 10, KingdomID: 0, SlotType: 1, Name: "Main",
+				Buildings: map[State.BuildingInstanceID]State.Building{
+					test.buildingID: {InstanceID: test.buildingID, DefinitionID: 200},
+				},
+				ConstructionSlots:           map[State.BuildingInstanceID][]State.ConstructionSlot{test.buildingID: test.slots},
+				ConstructionSlotsObservedAt: now,
+			}
+			configuration := Configuration.Snapshot{Sections: map[string]json.RawMessage{
+				"automation.constructionItems": json.RawMessage(fmt.Sprintf(`{"targets":{"10":[{"id":%d,"amount":4}]}}`, test.targetID)),
+			}}
+			decision, err := NewConstructionPolicy().Evaluate(t.Context(), Snapshot{
+				State: gameState, Configuration: configuration, GameData: store, Now: now,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if decision.Request != nil {
+				t.Fatalf("captured occupied state produced request: %+v", decision)
+			}
+		})
+	}
+}
+
+func intPointerForConstructionTest(value int) *int { return &value }
+
+func capturedConstructionPolicyGameData(t *testing.T) *GameData.Store {
+	t.Helper()
+	store, err := GameData.DecodeStore([]byte(`{
+		"versionInfo":[],
+		"buildings":[{"wodID":200,"constructionItemGroupIDs":"1"}],
+		"units":[{"wodID":1}],
+		"constructionItems":[
+			{"constructionItemID":214,"constructionItemGroupID":1,"name":"marketCarriages","level":1,"slotTypeID":1},
+			{"constructionItemID":30401,"constructionItemGroupID":1,"name":"pirateMarket","duration":345600,"level":2,"slotTypeID":0},
+			{"constructionItemID":30402,"constructionItemGroupID":1,"name":"pirateMarket","duration":345600,"level":3,"slotTypeID":0},
+			{"constructionItemID":30403,"constructionItemGroupID":1,"name":"pirateMarket","duration":345600,"level":4,"slotTypeID":0},
+			{"constructionItemID":30481,"constructionItemGroupID":1,"name":"piratesWoodcutter","duration":345600,"level":2,"slotTypeID":0},
+			{"constructionItemID":30482,"constructionItemGroupID":1,"name":"piratesWoodcutter","duration":345600,"level":3,"slotTypeID":0}
+		]
+	}`), GameData.SourceMetadata{ItemVersion: "786.03"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return store
 }
 
 func TestConstructionPolicyRefreshesUnobservedSlots(t *testing.T) {
@@ -363,6 +529,7 @@ func constructionPolicyGameData(t *testing.T) *GameData.Store {
 			{"constructionItemID":103,"constructionItemGroupID":1,"name":"Target","duration":3600,"level":3,"slotTypeID":0},
 			{"constructionItemID":104,"constructionItemGroupID":1,"name":"Target","duration":3600,"level":4,"slotTypeID":0},
 			{"constructionItemID":201,"constructionItemGroupID":1,"name":"Permanent","level":1,"slotTypeID":1},
+			{"constructionItemID":202,"constructionItemGroupID":1,"name":"PermanentTargetSlot","level":1,"slotTypeID":0},
 			{"constructionItemID":301,"constructionItemGroupID":1,"name":"OtherTemporary","duration":3600,"level":1,"slotTypeID":0}
 		],
 		"packages":[

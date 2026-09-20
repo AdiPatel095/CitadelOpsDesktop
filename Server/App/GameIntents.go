@@ -8,6 +8,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"time"
 
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
@@ -347,6 +348,9 @@ func (application *Application) registerGameIntents() error {
 		return err
 	}
 	if err := application.Intents.RegisterAction("khan.taunt.accepted", application.recordKhanTauntAcceptance); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("khan.taunt.guard", application.guardKhanTauntFinalDispatch); err != nil {
 		return err
 	}
 	if err := application.Intents.RegisterAction("khan.cooldown.reports.resolve", application.resolveKhanCooldownReports); err != nil {
@@ -1036,6 +1040,8 @@ type constructionEquipRequest struct {
 	Mode               int                      `json:"mode,omitempty"`
 }
 
+const constructionSlotSnapshotMaxAge = 15 * time.Minute
+
 func planConstructionEquip(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
 	var request constructionEquipRequest
 	if err := decodeIntentArguments(arguments, &request); err != nil {
@@ -1101,6 +1107,10 @@ func validatedConstructionEquipContext(input Intent.PlanningContext, request con
 	if request.Slot < 0 {
 		return State.CastleState{}, fmt.Errorf("slot cannot be negative")
 	}
+	slotType, slotTypeKnown := item.Int64("slotTypeID")
+	if !slotTypeKnown || slotType < 0 {
+		return State.CastleState{}, fmt.Errorf("construction item %d has no valid official slot type", request.DefinitionID)
+	}
 	groupID, _ := item.Int64("constructionItemGroupID")
 	if groupID > 0 {
 		building := castle.Buildings[request.BuildingInstanceID]
@@ -1119,9 +1129,12 @@ func validatedConstructionEquipContext(input Intent.PlanningContext, request con
 		input.State.Inventory.ConstructionItems[request.DefinitionID] <= 0 {
 		return State.CastleState{}, fmt.Errorf("construction item %d is not in observed inventory", request.DefinitionID)
 	}
-	targetSlot := request.Slot
-	if slotType, exists := item.Int64("slotTypeID"); exists {
-		targetSlot = int(slotType)
+	targetSlot := int(slotType)
+	if requireFreeSlot && (castle.ConstructionSlotsObservedAt.IsZero() ||
+		time.Since(castle.ConstructionSlotsObservedAt) >= constructionSlotSnapshotMaxAge) {
+		return State.CastleState{}, fmt.Errorf(
+			"construction-item slots for castle %d are stale; refresh the castle before equipping", castle.ID,
+		)
 	}
 	if requireFreeSlot && hasEquippedConstructionItemInSlot(
 		castle.ConstructionSlots[request.BuildingInstanceID], catalog, targetSlot,
@@ -1301,10 +1314,10 @@ func hasEquippedConstructionItemInSlot(slots []State.ConstructionSlot, catalog *
 			return true
 		}
 		slotType, exists := item.Int64("slotTypeID")
-		if exists && int(slotType) != targetSlot {
-			continue
+		if !exists || slotType < 0 {
+			return true
 		}
-		if GameData.ConstructionItemIsTemporary(item) && slot.RemainingSec != nil && *slot.RemainingSec <= 0 {
+		if int(slotType) != targetSlot {
 			continue
 		}
 		return true

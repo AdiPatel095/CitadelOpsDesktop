@@ -14,6 +14,7 @@ type ConstructionItemTier struct {
 	VariantKey     string
 	Level          int
 	Slot           int
+	SlotKnown      bool
 	Temporary      bool
 	StackSize      int64
 	LockRemoval    string
@@ -73,13 +74,14 @@ func buildConstructionItemCatalog(store *Store) (*ConstructionItemCatalog, error
 		id, _ := record.Int64("constructionItemID")
 		groupID, _ := record.Int64("constructionItemGroupID")
 		level, _ := record.Int64("level")
-		slot, _ := record.Int64("slotTypeID")
+		slot, slotKnown := record.Int64("slotTypeID")
 		if id <= 0 || groupID <= 0 {
 			continue
 		}
 		definition := ConstructionItemTier{
 			ID: id, GroupID: groupID, VariantKey: ConstructionItemVariantKey(record),
-			Level: int(level), Slot: int(slot), Temporary: ConstructionItemIsTemporary(record),
+			Level: int(level), Slot: int(slot), SlotKnown: slotKnown && slot >= 0,
+			Temporary: ConstructionItemIsTemporary(record),
 			StackSize: intValue(record, "stackSize"), LockRemoval: stringValue(record, "lockRemoval"),
 			InternalName: stringValue(record, "name"), Comment: stringValue(record, "comment2"),
 			DisplayNameKey: stringValue(record, "displayNameKey"),

@@ -24,7 +24,7 @@ func TestAutoBuyerCatalogOnlyExposesBoundedUnambiguousPurchases(t *testing.T) {
 			{"packageID":100,"comment1":"Central Silver Shop","comment2":"Weekly chest","stock":5,"costSilverToken":10},
 			{"packageID":101,"comment1":"Master Blacksmith - Ruby Shop","comment2":"Ruby chest","stock":2,"packagePriceC2":150},
 			{"packageID":102,"comment1":"ARE Blacksmith - Rift Coin Package","comment2":"Rift chest","stock":1,"costRiftCoin":25},
-			{"packageID":103,"comment1":"Nomad EDS Shop","comment2":"Nomad Invasion Vendor","stock":3,"costKhanTablet":40},
+			{"packageID":103,"comment1":"Nomad EDS Shop","comment2":"Nomad Invasion Vendor","stock":3,"costKhanTablet":40,"maxBuyPerClick":100000},
 			{"packageID":104,"comment1":"Merchant food","comment2":"Traveling Merchant weekly","stock":2,"packagePriceFood":500},
 			{"packageID":105,"comment1":"Master Blacksmith unlimited","stock":0,"costSilverToken":1},
 			{"packageID":106,"comment1":"Central Gold Shop","stock":1,"costSilverToken":1,"packagePriceC2":1},
@@ -49,7 +49,8 @@ func TestAutoBuyerCatalogOnlyExposesBoundedUnambiguousPurchases(t *testing.T) {
 	}
 	master, found := store.AutoBuyerPackage(AutoBuyerShopMasterBlacksmith, 100)
 	if !found || master.TableID != AutoBuyerMasterBlacksmithTableID || master.Price.Scope != AutoBuyerPriceCurrency ||
-		master.Price.CurrencyID != 36 || master.Price.Amount != 10 || master.RequiresEvent || master.Name != "Weekly chest" {
+		master.Price.CurrencyID != 36 || master.Price.Amount != 10 || master.RequiresEvent || master.Name != "Weekly chest" ||
+		master.MaxBuyPerClick != 1_000 {
 		t.Fatalf("Master Blacksmith package = %#v found=%t", master, found)
 	}
 	premium, found := store.AutoBuyerPackage(AutoBuyerShopMasterBlacksmith, 101)
@@ -61,7 +62,7 @@ func TestAutoBuyerCatalogOnlyExposesBoundedUnambiguousPurchases(t *testing.T) {
 		t.Fatalf("Rift package = %#v found=%t", rift, found)
 	}
 	nomad, found := store.AutoBuyerPackage(AutoBuyerShopNomad, 103)
-	if !found || !nomad.RequiresEvent || nomad.TableID != AutoBuyerNomadTableID {
+	if !found || !nomad.RequiresEvent || nomad.TableID != AutoBuyerNomadTableID || nomad.MaxBuyPerClick != 100_000 {
 		t.Fatalf("Nomad package = %#v found=%t", nomad, found)
 	}
 	merchant, found := store.AutoBuyerPackage(AutoBuyerShopTravelingMerchant, 104)

@@ -162,9 +162,13 @@ func planAutoBuyerPackageHistory(_ context.Context, input Intent.PlanningContext
 	payload, _ := json.Marshal(map[string]any{"CID": source.ID, "KID": source.KingdomID})
 	step := shopCommandStep("Refresh Auto Buyer package counters", "gbc", payload, 0)
 	step.ResponseBarrier = Intent.ResponseBarrierCommitted
+	steps := castleContextSteps(input, source)
+	steps = append(steps, step)
 	return Intent.Plan{
-		Claims:  []string{"shop", "shop:purchase-history"},
-		Summary: fmt.Sprintf("Refresh Auto Buyer stock counters from %s", castleLabel(source)), Steps: []Intent.Step{step},
+		Claims: []string{
+			"shop", "shop:purchase-history", "castle-focus", "castle:" + strconv.FormatInt(int64(source.ID), 10),
+		},
+		Summary: fmt.Sprintf("Refresh Auto Buyer stock counters from %s", castleLabel(source)), Steps: steps,
 	}, nil
 }
 
@@ -229,22 +233,26 @@ func planAutoBuyerPackagePurchase(_ context.Context, input Intent.PlanningContex
 		Power     int64           `json:"PWR"`
 		Position  int64           `json:"_PO"`
 	}{State.PackageID(product.PackageID), 0, product.TableID, request.Amount, purchaseKingdomID, purchaseCastleID, -1, 0, 0, -1})
-	steps := []Intent.Step{historyBefore}
+	steps := castleContextSteps(input, source)
+	steps = append(steps, historyBefore)
 	if product.Price.Scope == GameData.AutoBuyerPriceCastleResource {
 		resourcePayload, _ := json.Marshal(map[string]any{"AID": source.ID, "KID": source.KingdomID})
 		resourceRefresh := commandStep("Refresh package source resources before purchase", "grc", resourcePayload, "grc")
 		resourceRefresh.ResponseBarrier = Intent.ResponseBarrierCommitted
 		steps = append(steps, resourceRefresh)
 	}
+	purchase := shopCommandStep("Purchase "+product.Name, "sbp", payload, 0)
+	purchase.FinalDispatchAction = "auto_buyer.package.guard"
+	purchase.FinalDispatchArguments = append(json.RawMessage(nil), resolved...)
 	steps = append(steps,
 		Intent.RebuildOnResume(Intent.Step{Name: "Recheck Auto Buyer package purchase", Action: "auto_buyer.package.guard", ActionArguments: resolved}),
-		shopCommandStep("Purchase "+product.Name, "sbp", payload, 0),
-		historyAfter,
+		purchase, historyAfter,
 		Intent.RebuildOnResume(Intent.Step{Name: "Verify Auto Buyer package purchase", Action: "auto_buyer.package.verify", ActionArguments: resolved}),
 	)
 	return Intent.Plan{
 		Claims: []string{
 			"shop", "shop:table:" + strconv.FormatInt(product.TableID, 10), "shop:purchase-history", "account-resources",
+			"castle-focus", "castle:" + strconv.FormatInt(int64(source.ID), 10),
 		},
 		Summary: fmt.Sprintf("Buy %d x %s for %d %s", request.Amount, product.Name, request.Amount*product.Price.Amount, product.Price.Name),
 		Steps:   steps,
@@ -502,17 +510,14 @@ func autoBuyerPackagePurchaseContext(
 	if !autoBuyerIntentLevelEligible(input.State.Player, product.MinLevel, product.MaxLevel, product.MinLegendLevel, product.MaxLegendLevel) {
 		return request, source, product, fmt.Errorf("package %d is not available at the current player level", request.PackageID)
 	}
+	purchased, routeErr := validateEventBackedSBP(input, source, eventBackedSBPRequest{
+		PackageID: request.PackageID, TableID: product.TableID, Amount: request.Amount,
+		Stock: product.Stock, MaxBuyPerClick: product.MaxBuyPerClick,
+	}, now, requireFresh)
+	if routeErr != nil {
+		return request, source, product, routeErr
+	}
 	if requireFresh {
-		offers, observedAt, found := input.State.ConstructionOffersFor(source.ID, source.KingdomID)
-		if !found || observedAt.IsZero() || now.Sub(observedAt) > 2*time.Minute {
-			return request, source, product, fmt.Errorf("%w: package purchase counters are not fresh for castle %d", Intent.ErrPlanStale, source.ID)
-		}
-		if product.RequiresEvent {
-			if _, active := input.State.ActiveShopForPackage(request.PackageID, now); !active {
-				return request, source, product, fmt.Errorf("%w: the event shop for package %d is not active", Intent.ErrPlanStale, request.PackageID)
-			}
-		}
-		purchased := offers[request.PackageID]
 		if purchased != request.ExpectedPurchasedBefore {
 			return request, source, product, fmt.Errorf("%w: package %d purchase count changed from %d to %d", Intent.ErrPlanStale, request.PackageID, request.ExpectedPurchasedBefore, purchased)
 		}
@@ -1549,7 +1554,10 @@ func (application *Application) autoBuyerPlanningContext() (Intent.PlanningConte
 	if !ready {
 		return Intent.PlanningContext{}, fmt.Errorf("official game data is unavailable")
 	}
-	return Intent.PlanningContext{State: application.State.ReadOnlyView(), GameData: gameData}, nil
+	view := application.State.PlanningView()
+	return Intent.PlanningContext{
+		State: view.State, GameData: gameData, Partitions: view.Partitions, ProtocolContext: view.ProtocolContext,
+	}, nil
 }
 
 func autoBuyerIntentSourceCastle(gameState State.GameState, castleID State.CastleID) (State.CastleState, error) {
@@ -1599,13 +1607,7 @@ func autoBuyerIntentBalanceAmount(value float64) (int64, bool) {
 }
 
 func autoBuyerIntentLevelEligible(player State.PlayerState, minLevel, maxLevel, minLegend, maxLegend int64) bool {
-	if minLevel > 0 && int64(player.Level) < minLevel || maxLevel > 0 && int64(player.Level) > maxLevel {
-		return false
-	}
-	if minLegend > 0 && int64(player.LegendLevel) < minLegend || maxLegend > 0 && int64(player.LegendLevel) > maxLegend {
-		return false
-	}
-	return true
+	return GameData.PackageLevelEligible(player.Level, player.LegendLevel, minLevel, maxLevel, minLegend, maxLegend)
 }
 
 func autoBuyerIntentRemaining(expiresAt time.Time, now time.Time) int64 {

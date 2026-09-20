@@ -394,7 +394,9 @@ func parseMovement(raw json.RawMessage, observedAt time.Time, gameData *GameData
 		movement.AdvisorLaunchState = unitMovement.AdvisorLaunchState
 		if unitMovement.Leader != nil {
 			// Premium leaders can use DLID instead of ID on any movement type.
-			// Retain both wire identities without inventing an owned commander.
+			// Khan NPC retaliation leaders use WID instead of either player
+			// leader identity. Retain every supplied wire identity without
+			// inventing an owned commander from the NPC WID.
 			// A malformed supplied field must not be rescued by the other one.
 			for key, destination := range map[string]**int64{
 				"ID": &movement.LeaderID, "DLID": &movement.LeaderDLID,
@@ -407,8 +409,17 @@ func parseMovement(raw json.RawMessage, observedAt time.Time, gameData *GameData
 					*destination = &id
 				}
 			}
+			if raw, exists := unitMovement.Leader["WID"]; exists {
+				id, valid := rawJSONInt64(raw)
+				if !valid || id <= 0 {
+					return State.MovementState{}, false
+				}
+				movement.LeaderWID = &id
+			}
 			if movement.LeaderID == nil && movement.LeaderDLID == nil {
-				return State.MovementState{}, false
+				if movement.LeaderWID == nil || !khanNPCLeaderMovement(movement) {
+					return State.MovementState{}, false
+				}
 			}
 			if movement.LeaderID != nil && *movement.LeaderID >= 0 {
 				commanderID := State.CommanderID(*movement.LeaderID)
@@ -447,6 +458,20 @@ func parseMovement(raw json.RawMessage, observedAt time.Time, gameData *GameData
 		movement.ReturnsAt = &completion
 	}
 	return movement, true
+}
+
+// khanNPCLeaderMovement limits WID-only leaders to the captured inbound Khan
+// retaliation shape. WID is an NPC wire identity, never a player commander.
+func khanNPCLeaderMovement(movement State.MovementState) bool {
+	return movement.TypeID == khanTauntMovementTypeID &&
+		movement.SourceTypeID == khanCampMapTypeID &&
+		movement.TargetTypeID == State.MapTypePlayerCastle &&
+		movement.KingdomID == 0 &&
+		movement.Direction == 0 &&
+		movement.OwnerPlayerID < 0 &&
+		movement.TargetPlayerID > 0 &&
+		movement.SourceCastleID < 0 &&
+		movement.TargetCastleID > 0
 }
 
 func movementOptionalIdentity(raw json.RawMessage) (int64, bool) {

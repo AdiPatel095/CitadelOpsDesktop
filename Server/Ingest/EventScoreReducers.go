@@ -146,7 +146,13 @@ func applyScalableEventSnapshot(
 			continue
 		}
 		route := State.EventShopRoute{EventID: eventID, RemainingSec: remainingSec, ObservedAt: observedAt.UTC()}
-		for _, packageID := range eventShopPackageIDs(event) {
+		packageIDs := eventShopPackageIDs(event)
+		if gameData != nil {
+			if staticPackageIDs, err := gameData.EventShopPackageIDs(eventID); err == nil {
+				packageIDs = append(packageIDs, staticPackageIDs...)
+			}
+		}
+		for _, packageID := range packageIDs {
 			shopByPackage[State.PackageID(packageID)] = route
 		}
 	}
@@ -677,27 +683,149 @@ func applyKhanRageSnapshot(
 	snapshot khanRageSnapshot,
 	observedAt time.Time,
 ) bool {
+	observedAt = observedAt.UTC()
+	if !gameState.Khan.RageCampObservedAt.IsZero() && observedAt.Before(gameState.Khan.RageCampObservedAt) {
+		return false
+	}
 	campID := int64(snapshot.CampID)
 	definition, found := gameData.EventCamp(campID)
 	rageCap := int64(0)
-	if found && definition.EventID == 72 && definition.AreaTypeID == 35 {
+	validCamp := found && definition.EventID == 72 && definition.AreaTypeID == 35 && definition.PlayerRageCap > 0
+	if validCamp {
 		rageCap = definition.PlayerRageCap
 	}
 	playerRage := max(int64(0), int64(snapshot.PlayerRage))
 	totalRage := max(int64(0), int64(snapshot.PlayerTotalRage))
-	observedAt = observedAt.UTC()
+	revision := gameState.Khan.RageCampRevision
+	if revision == 0 || gameState.Khan.RageCampID != campID || gameState.Khan.PlayerRageCap != rageCap {
+		revision++
+	}
+	balanceRevision := revision
+	if !validCamp {
+		balanceRevision = 0
+	}
 	if gameState.Khan.RageCampID == campID &&
+		gameState.Khan.RageCampRevision == revision &&
+		gameState.Khan.RageBalanceCampRevision == balanceRevision &&
 		gameState.Khan.PlayerRage == playerRage &&
 		gameState.Khan.PlayerRageCap == rageCap &&
 		gameState.Khan.PlayerTotalRage == totalRage &&
-		!gameState.Khan.RageObservedAt.IsZero() {
+		gameState.Khan.RageCampObservedAt.Equal(observedAt) &&
+		gameState.Khan.RageObservedAt.Equal(observedAt) {
 		return false
 	}
 	gameState.Khan.RageCampID = campID
+	gameState.Khan.RageCampRevision = revision
+	gameState.Khan.RageCampObservedAt = observedAt
+	gameState.Khan.RageBalanceCampRevision = balanceRevision
 	gameState.Khan.PlayerRage = playerRage
 	gameState.Khan.PlayerRageCap = rageCap
 	gameState.Khan.PlayerTotalRage = totalRage
 	gameState.Khan.RageObservedAt = observedAt
+	return true
+}
+
+func reduceKhanCampUpdate(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	gameData *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || gameState == nil || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	type campUpdate struct {
+		CampID       wireInt64 `json:"ACID"`
+		EventID      wireInt64 `json:"EID"`
+		X            wireInt64 `json:"X"`
+		Y            wireInt64 `json:"Y"`
+		VictoryCount wireInt64 `json:"ACVC"`
+	}
+	var payload struct {
+		Camps []json.RawMessage `json:"AC"`
+	}
+	observedAt := frame.ReceivedAt.UTC()
+	if err := json.Unmarshal(frame.Payload, &payload); err != nil || payload.Camps == nil {
+		return []string{"khan"}, invalidateKhanCamp(gameState, observedAt), nil
+	}
+	if !gameState.Khan.RageCampObservedAt.IsZero() && observedAt.Before(gameState.Khan.RageCampObservedAt) {
+		return nil, false, nil
+	}
+	var update campUpdate
+	foundKhan := false
+	for _, raw := range payload.Camps {
+		var candidate campUpdate
+		if err := json.Unmarshal(raw, &candidate); err != nil {
+			return []string{"khan"}, invalidateKhanCamp(gameState, observedAt), nil
+		}
+		if int64(candidate.EventID) != 72 {
+			continue
+		}
+		if foundKhan {
+			return []string{"khan"}, invalidateKhanCamp(gameState, observedAt), nil
+		}
+		update = candidate
+		foundKhan = true
+	}
+	if !foundKhan {
+		return nil, false, nil
+	}
+	campID := int64(update.CampID)
+	x, y := int(update.X), int(update.Y)
+	definition, found := gameData.EventCamp(campID)
+	score, active := gameState.LookupScalableEventScore(72)
+	occurrence, occurrenceFound := gameState.LookupEventOccurrence(72)
+	activeOccurrence := active && score.RemainingSec > 0 && !score.ObservedAt.IsZero() &&
+		State.ScalableEventEndsAt(score).After(observedAt) && occurrenceFound && occurrence.EndsAt.After(observedAt)
+	validTarget := gameState.Khan.TargetX == x && gameState.Khan.TargetY == y && x > 0 && y > 0
+	if gameState.Khan.TargetX == 0 && gameState.Khan.TargetY == 0 && x > 0 && y > 0 {
+		observation, exists := gameState.LookupMapObservation(0, fmt.Sprintf("%d:%d", x, y))
+		validTarget = exists && observation.TypeID == 35
+	}
+	validCamp := found && definition.EventID == 72 && definition.AreaTypeID == 35 &&
+		definition.PlayerRageCap > 0 && score.DifficultyID > 0 && definition.DifficultyID == score.DifficultyID
+	if !activeOccurrence || !validTarget || !validCamp {
+		return []string{"khan"}, invalidateKhanCamp(gameState, observedAt), nil
+	}
+	revision := gameState.Khan.RageCampRevision
+	changedCamp := revision == 0 || gameState.Khan.RageCampID != campID ||
+		gameState.Khan.PlayerRageCap != definition.PlayerRageCap
+	if changedCamp {
+		revision++
+	}
+	changed := changedCamp || !gameState.Khan.RageCampObservedAt.Equal(observedAt)
+	gameState.Khan.RageCampID = campID
+	gameState.Khan.RageCampRevision = revision
+	gameState.Khan.RageCampObservedAt = observedAt
+	gameState.Khan.PlayerRageCap = definition.PlayerRageCap
+	if changedCamp {
+		gameState.Khan.RageBalanceCampRevision = 0
+	}
+	if gameState.Khan.TargetX == 0 && gameState.Khan.TargetY == 0 {
+		gameState.Khan.TargetX = x
+		gameState.Khan.TargetY = y
+		changed = true
+	}
+	return []string{"khan"}, changed, nil
+}
+
+func invalidateKhanCamp(gameState *State.GameState, observedAt time.Time) bool {
+	if gameState == nil {
+		return false
+	}
+	observedAt = observedAt.UTC()
+	if !gameState.Khan.RageCampObservedAt.IsZero() && observedAt.Before(gameState.Khan.RageCampObservedAt) {
+		return false
+	}
+	revision := gameState.Khan.RageCampRevision + 1
+	if revision == 0 {
+		revision = 1
+	}
+	gameState.Khan.RageCampID = 0
+	gameState.Khan.RageCampRevision = revision
+	gameState.Khan.RageCampObservedAt = observedAt
+	gameState.Khan.RageBalanceCampRevision = 0
+	gameState.Khan.PlayerRageCap = 0
 	return true
 }
 
@@ -710,38 +838,60 @@ func reduceKhanRagePoints(
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 		return nil, false, nil
 	}
-	var payload struct {
-		EventID         wireInt64 `json:"EID"`
-		PlayerRage      wireInt64 `json:"PCRP"`
-		PlayerTotalRage wireInt64 `json:"PTRP"`
-	}
+	var payload map[string]json.RawMessage
 	if err := json.Unmarshal(frame.Payload, &payload); err != nil {
-		return nil, false, fmt.Errorf("decode Khan rage update: %w", err)
+		return []string{"khan"}, invalidateKhanRageBalance(gameState), nil
 	}
-	if int64(payload.EventID) != 72 {
+	eventID, validEventID := rawJSONInt64(payload["EID"])
+	if validEventID && eventID != 72 {
+		return nil, false, nil
+	}
+	playerRageValue, validPlayerRage := rawJSONInt64(payload["PCRP"])
+	totalRageValue, validTotalRage := rawJSONInt64(payload["PTRP"])
+	if !validEventID || !validPlayerRage || !validTotalRage || playerRageValue < 0 || totalRageValue < 0 {
+		return []string{"khan"}, invalidateKhanRageBalance(gameState), nil
+	}
+	observedAt := frame.ReceivedAt.UTC()
+	if !gameState.Khan.RageCampObservedAt.IsZero() && observedAt.Before(gameState.Khan.RageCampObservedAt) {
 		return nil, false, nil
 	}
 	rageCap := gameState.Khan.PlayerRageCap
 	campID := gameState.Khan.RageCampID
+	validCamp := false
 	if definition, found := gameData.EventCamp(campID); !found ||
-		definition.EventID != 72 || definition.AreaTypeID != 35 {
+		definition.EventID != 72 || definition.AreaTypeID != 35 || definition.PlayerRageCap <= 0 {
 		rageCap = 0
 	} else {
 		rageCap = definition.PlayerRageCap
+		validCamp = gameState.Khan.RageCampRevision > 0 && rageCap == gameState.Khan.PlayerRageCap
 	}
-	playerRage := max(int64(0), int64(payload.PlayerRage))
-	totalRage := max(int64(0), int64(payload.PlayerTotalRage))
+	balanceRevision := uint64(0)
+	if validCamp {
+		balanceRevision = gameState.Khan.RageCampRevision
+	}
+	playerRage := playerRageValue
+	totalRage := totalRageValue
 	if gameState.Khan.PlayerRage == playerRage &&
 		gameState.Khan.PlayerRageCap == rageCap &&
+		gameState.Khan.RageBalanceCampRevision == balanceRevision &&
 		gameState.Khan.PlayerTotalRage == totalRage &&
-		!gameState.Khan.RageObservedAt.IsZero() {
+		gameState.Khan.RageObservedAt.Equal(observedAt) {
 		return nil, false, nil
 	}
 	gameState.Khan.PlayerRage = playerRage
 	gameState.Khan.PlayerRageCap = rageCap
+	gameState.Khan.RageBalanceCampRevision = balanceRevision
 	gameState.Khan.PlayerTotalRage = totalRage
-	gameState.Khan.RageObservedAt = frame.ReceivedAt.UTC()
+	gameState.Khan.RageObservedAt = observedAt
 	return []string{"khan"}, true, nil
+}
+
+func invalidateKhanRageBalance(gameState *State.GameState) bool {
+	if gameState == nil || gameState.Khan.RageBalanceCampRevision == 0 {
+		return false
+	}
+	gameState.Khan.RageBalanceCampRevision = 0
+	return true
 }
 
 func normalizedInvasionFortifyCurrencies(values []string) []string {
