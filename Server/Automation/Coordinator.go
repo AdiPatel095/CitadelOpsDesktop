@@ -80,6 +80,7 @@ type policyRuntime struct {
 	blockedDecisionFingerprint     string
 	failureBlockedUntil            time.Time
 	troopAvailabilityGate          *troopAvailabilityGate
+	coinAvailabilityGate           *coinAvailabilityGate
 	runningScheduleKey             string
 	runningSessionGeneration       uint64
 	allowedConfigurationChange     string
@@ -97,6 +98,12 @@ type troopAvailabilityGate struct {
 	castleID  State.CastleID
 	unitID    State.UnitID
 	available int64
+}
+
+type coinAvailabilityGate struct {
+	detail     string
+	observed   int64
+	observedAt time.Time
 }
 
 type operationResult struct {
@@ -254,9 +261,10 @@ func (coordinator *Coordinator) Run(ctx context.Context) {
 		}
 		// Only session and unit changes need an account-state read here. All
 		// other domains route directly through the policy wake index.
-		if stateEventHasDomain(event, "session") || stateEventHasDomain(event, "units") {
+		if stateEventHasDomain(event, "session") || stateEventHasDomain(event, "units") || stateEventHasDomain(event, "resources") {
 			state := coordinator.state.ReadOnlyView()
 			clearTroopAvailabilityGates(runtime, event, state)
+			clearCoinAvailabilityGates(runtime, event, state)
 			if stateEventHasDomain(event, "session") {
 				coordinator.cancelRunsForUnavailableSession(runtime, state)
 			}
@@ -467,6 +475,7 @@ func (coordinator *Coordinator) evaluate(
 			resetContinuation(current)
 			current.failureBlockedUntil = time.Time{}
 			current.troopAvailabilityGate = nil
+			current.coinAvailabilityGate = nil
 			current.nextCheck = time.Time{}
 			current.eventOnly = true
 			current.controlExpiryPending = false
@@ -484,9 +493,13 @@ func (coordinator *Coordinator) evaluate(
 			resetContinuation(current)
 			current.failureBlockedUntil = time.Time{}
 			current.troopAvailabilityGate = nil
+			current.coinAvailabilityGate = nil
 		}
 		if troopAvailabilityGateInventoryChanged(current.troopAvailabilityGate, state) {
 			current.troopAvailabilityGate = nil
+		}
+		if coinAvailabilityGateChanged(current.coinAvailabilityGate, state) {
+			current.coinAvailabilityGate = nil
 		}
 		current.evaluatedStateRevision = state.Revision
 		current.evaluatedConfigRevision = configuration.Revision
@@ -523,6 +536,12 @@ func (coordinator *Coordinator) evaluate(
 			current.eventOnly = true
 			coordinator.recordTroopAvailabilityGate(policy.ID(), *current.troopAvailabilityGate)
 			continue
+		}
+		if current.coinAvailabilityGate != nil {
+			if coinAvailabilityGateWaiting(current, now) {
+				coordinator.recordCoinAvailabilityGate(policy.ID(), *current.coinAvailabilityGate)
+				continue
+			}
 		}
 		if current.failureBlockedUntil.After(now) {
 			current.nextCheck = current.failureBlockedUntil
@@ -676,6 +695,20 @@ func (coordinator *Coordinator) evaluate(
 	}
 }
 
+func coinAvailabilityGateWaiting(current *policyRuntime, now time.Time) bool {
+	if current == nil || current.coinAvailabilityGate == nil {
+		return false
+	}
+	if current.nextCheck.After(now) {
+		current.eventOnly = false
+		return true
+	}
+	current.coinAvailabilityGate = nil
+	current.nextCheck = time.Time{}
+	current.eventOnly = false
+	return false
+}
+
 func policyEvaluationDue(
 	current *policyRuntime,
 	configurationRevision uint64,
@@ -780,6 +813,7 @@ func (coordinator *Coordinator) wakePoliciesForConfigurationEvent(
 		}
 		resetContinuation(current)
 		current.troopAvailabilityGate = nil
+		current.coinAvailabilityGate = nil
 		current.stateWakeNextCheck = time.Time{}
 		current.nextCheck = time.Time{}
 		current.evaluationPending = true
@@ -945,6 +979,18 @@ func (coordinator *Coordinator) recordTroopAvailabilityGate(id string, gate troo
 	})
 }
 
+func (coordinator *Coordinator) recordCoinAvailabilityGate(id string, gate coinAvailabilityGate) {
+	coordinator.updateAutomation(id, func(current State.AutomationState) State.AutomationState {
+		current.ID = id
+		current.Enabled = true
+		current.Status = "gated"
+		current.Detail = gate.detail
+		current.NextCheckAt = nil
+		current.LastError = ""
+		return current
+	})
+}
+
 func operationResultLaneStatusFailure(result operationResult) (Intent.FailurePresentation, bool) {
 	receipt := result.receipt
 	if result.followUp != nil && result.followUp.Status != Intent.StatusSucceeded {
@@ -1035,12 +1081,72 @@ func operationResultTroopAvailabilityGate(result operationResult) (troopAvailabi
 	return gate, true
 }
 
+func operationResultCoinAvailabilityGate(result operationResult) (coinAvailabilityGate, bool) {
+	receipt := result.receipt
+	if result.followUp != nil && result.followUp.Status != Intent.StatusSucceeded {
+		receipt = *result.followUp
+	}
+	if result.failureFallback != nil && result.failureFallback.Status != Intent.StatusSucceeded {
+		receipt = *result.failureFallback
+	}
+	if receipt.Status != Intent.StatusFailed && receipt.Status != Intent.StatusPartiallySucceeded {
+		return coinAvailabilityGate{}, false
+	}
+	raw := strings.TrimSpace(receipt.DiagnosticError())
+	if !strings.Contains(strings.ToLower(raw), Intent.ErrCoinUnavailable.Error()) {
+		return coinAvailabilityGate{}, false
+	}
+	gate := coinAvailabilityGate{detail: receipt.Error}
+	var required, reserve, available, observed, pending int64
+	marker := strings.Index(strings.ToLower(raw), Intent.ErrCoinUnavailable.Error())
+	if marker >= 0 {
+		raw = raw[marker:]
+	}
+	if _, err := fmt.Sscanf(raw,
+		"not enough coins for dispatch: %d needed plus %d reserved; %d available from %d observed after %d pending",
+		&required, &reserve, &available, &observed, &pending,
+	); err == nil {
+		gate.observed = observed
+	}
+	return gate, true
+}
+
 func troopAvailabilityGateInventoryChanged(gate *troopAvailabilityGate, state State.GameState) bool {
 	if gate == nil || gate.castleID <= 0 || gate.unitID <= 0 {
 		return false
 	}
 	castle, found := state.Castles[gate.castleID]
 	return !found || castle.Units.Stationed[gate.unitID] != gate.available
+}
+
+func coinAvailabilityGateChanged(gate *coinAvailabilityGate, state State.GameState) bool {
+	if gate == nil {
+		return false
+	}
+	observation := state.Player.ResourceObservations[State.ResourceID(1)]
+	return state.Player.Resources[State.ResourceID(1)] != float64(gate.observed) ||
+		(!gate.observedAt.IsZero() && observation.ObservedAt.After(gate.observedAt))
+}
+
+func clearCoinAvailabilityGates(runtime map[string]*policyRuntime, event State.Event, state State.GameState) {
+	sessionChanged := stateEventHasDomain(event, "session")
+	resourcesChanged := stateEventHasDomain(event, "resources")
+	if !sessionChanged && !resourcesChanged {
+		return
+	}
+	for _, current := range runtime {
+		if current == nil || current.coinAvailabilityGate == nil || event.Revision <= current.evaluatedStateRevision {
+			continue
+		}
+		if !sessionChanged && !coinAvailabilityGateChanged(current.coinAvailabilityGate, state) {
+			continue
+		}
+		current.coinAvailabilityGate = nil
+		resetContinuation(current)
+		current.nextCheck = time.Time{}
+		current.evaluationPending = true
+		current.eventOnly = false
+	}
 }
 
 func clearTroopAvailabilityGates(
@@ -1088,8 +1194,10 @@ func completePolicyRun(current *policyRuntime, result operationResult, now time.
 	succeeded := operationResultSucceeded(result)
 	retryableStale := operationResultRetryableStale(result)
 	troopGate, troopAvailabilityGated := operationResultTroopAvailabilityGate(result)
+	coinGate, coinAvailabilityGated := operationResultCoinAvailabilityGate(result)
 	current.troopAvailabilityGate = nil
-	if succeeded || retryableStale || troopAvailabilityGated {
+	current.coinAvailabilityGate = nil
+	if succeeded || retryableStale || troopAvailabilityGated || coinAvailabilityGated {
 		current.failureBlockedUntil = time.Time{}
 	} else {
 		retryAt := result.nextCheck
@@ -1107,6 +1215,16 @@ func completePolicyRun(current *policyRuntime, result operationResult, now time.
 		current.evaluationPending = false
 		current.eventOnly = true
 		result.nextCheck = time.Time{}
+		return result, false
+	}
+	if coinAvailabilityGated && !runtimeWakePending && !configurationWakePending {
+		coinGate.observedAt = now
+		current.coinAvailabilityGate = &coinGate
+		resetContinuation(current)
+		current.nextCheck = now.Add(defaultRetry)
+		current.evaluationPending = false
+		current.eventOnly = false
+		result.nextCheck = current.nextCheck
 		return result, false
 	}
 	authoritativeProgress := runtimeWakePending || stateProgressPending || configurationWakePending
@@ -1338,6 +1456,7 @@ func wakePoliciesForEnabledControlExpirations(
 		}
 		resetContinuation(current)
 		current.troopAvailabilityGate = nil
+		current.coinAvailabilityGate = nil
 		current.stateWakeNextCheck = time.Time{}
 		current.nextCheck = time.Time{}
 		current.evaluationPending = true
@@ -1628,6 +1747,7 @@ func wakePolicyIDsForConfigurationEvent(
 		}
 		resetContinuation(current)
 		current.troopAvailabilityGate = nil
+		current.coinAvailabilityGate = nil
 		current.stateWakeNextCheck = time.Time{}
 		current.nextCheck = time.Time{}
 		current.evaluationPending = true

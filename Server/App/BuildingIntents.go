@@ -365,7 +365,7 @@ func resolveBuildingPlacementStep(_ context.Context, input Intent.PlanningContex
 	if err := decodeIntentArguments(arguments, &resolver); err != nil {
 		return Intent.Step{}, err
 	}
-	_, _, err := validatedBuildingPlacement(input, resolver.Request, resolver.Kind, true)
+	_, definition, err := validatedBuildingPlacement(input, resolver.Request, resolver.Kind, true)
 	if err != nil {
 		return Intent.Step{}, err
 	}
@@ -382,7 +382,14 @@ func resolveBuildingPlacementStep(_ context.Context, input Intent.PlanningContex
 	if resolver.Kind == buildingMutationPlace {
 		name = "Place stored building"
 	}
-	return buildingMutationStep(name, "ebu", payload), nil
+	step := buildingMutationStep(name, "ebu", payload)
+	if resolver.Kind == buildingMutationConstruct {
+		step.CoinCost, err = buildingCoinCostRequirement(input.GameData, definition)
+		if err != nil {
+			return Intent.Step{}, err
+		}
+	}
+	return step, nil
 }
 
 func planBuildingMove(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
@@ -498,11 +505,26 @@ func resolveBuildingUpgradeStep(_ context.Context, input Intent.PlanningContext,
 		Offer      int                      `json:"PO"`
 	}{request.BuildingInstanceID, power, -1})
 	step := buildingMutationStep("Upgrade building", "eup", payload)
+	step.CoinCost, err = buildingCoinCostRequirement(input.GameData, target)
+	if err != nil {
+		return Intent.Step{}, err
+	}
 	if resolverArguments.PremiumMode == buildingPremiumModeQuote {
 		step.SuccessCodes = []int{440}
 		step.ExpectedResponsePayload = expectedBuildingPremiumQuote(request.BuildingInstanceID, premiumCost)
 	}
 	return step, nil
+}
+
+func buildingCoinCostRequirement(store *GameData.Store, definition GameData.BuildingDefinition) (*Intent.CoinCostRequirement, error) {
+	cost, known, err := officialNumberOrZero(store, "buildings", definition.ID, "costC1")
+	if err != nil || !known || cost < 0 || math.IsNaN(cost) || math.IsInf(cost, 0) || cost >= math.Exp2(63) {
+		return nil, fmt.Errorf("official building %d coin cost is missing or malformed", definition.ID)
+	}
+	if cost == 0 {
+		return nil, nil
+	}
+	return &Intent.CoinCostRequirement{Amount: int64(math.Ceil(cost)), Source: "official building definition cost"}, nil
 }
 
 func exactBuildingPremiumCost(definition GameData.BuildingDefinition) (int64, bool) {

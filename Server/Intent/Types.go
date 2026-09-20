@@ -157,7 +157,19 @@ type Step struct {
 	ResponseProjectionFailureIndeterminate bool                      `json:"responseProjectionFailureIndeterminate,omitempty"`
 	ResumePolicy                           ResumePolicy              `json:"resumePolicy,omitempty"`
 	CommandDependencies                    *CommandDependencyRequest `json:"commandDependencies,omitempty"`
-	Command                                Protocol.Command          `json:"-"`
+	// CoinCost carries an authoritative fixed or conservative upper-bound cost
+	// that cannot be recovered from the final wire payload alone. The shared
+	// final-dispatch validator still rechecks the latest account balance.
+	CoinCost *CoinCostRequirement `json:"coinCost,omitempty"`
+	Command  Protocol.Command     `json:"-"`
+}
+
+type CoinCostRequirement struct {
+	Amount     int64  `json:"amount"`
+	Reserve    int64  `json:"reserve,omitempty"`
+	Source     string `json:"source"`
+	UpperBound bool   `json:"upperBound,omitempty"`
+	Additive   bool   `json:"additive,omitempty"`
 }
 
 // CommandDependencyRequest declares the concrete opcode and route payload for
@@ -434,6 +446,20 @@ type CommandDependencyPlan struct {
 // immediately before a concrete opcode can be sent. Key identifies the route
 // so a deferred resolver cannot change the command after its dependencies run.
 type CommandDependencyResolver func(ctx context.Context, input PlanningContext, step Step) (CommandDependencyPlan, error)
+
+// FinalDispatchProvider runs against the fully resolved command after queue
+// waits and feature-specific dispatch guards, immediately before transport.
+// Lifecycle callbacks let a shared budget release definitive no-send/rejected
+// reservations while retaining uncertain sends until authoritative refresh.
+type FinalDispatchProvider interface {
+	Validate(ctx context.Context, input PlanningContext, step Step) error
+	DefinitiveFailure(ctx context.Context, step Step)
+	Indeterminate(ctx context.Context, step Step)
+	// Completed returns true when the response did not itself carry a
+	// command-correlated authoritative balance and the engine must refresh it
+	// before another coin-spending step can run under the same claims.
+	Completed(ctx context.Context, input PlanningContext, step Step, response Protocol.CommittedFrame) bool
+}
 
 type AdmissionWeightProvider func(request Request, admission Admission) int
 

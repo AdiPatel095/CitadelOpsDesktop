@@ -1072,6 +1072,7 @@ func (application *Application) planEquipmentUpgrade(_ context.Context, input In
 		return Intent.Plan{}, err
 	}
 	delay := application.equipmentUpgradeDelay()
+	coinReserve, _ := application.equipmentUpgradeSettings()
 	steps := make([]Intent.Step, 0, (request.TargetLevel-currentLevel)*2+4)
 	if relicUpgrade {
 		steps = append(steps, equipmentUpgradeContextStep())
@@ -1079,7 +1080,7 @@ func (application *Application) planEquipmentUpgrade(_ context.Context, input In
 	for level := currentLevel + 1; level <= request.TargetLevel; level++ {
 		guard := Intent.Step{Name: "Verify coin reserve", Action: "equipment.verify_coin_reserve", DelayMillis: delay}
 		steps = append(steps, Intent.RebuildOnResume(guard))
-		steps = append(steps, Intent.Step{
+		upgradeStep := Intent.Step{
 			Name: fmt.Sprintf("Upgrade %s to level %d", request.ItemKind, level), Opcode: upgradeOpcode, Payload: payload,
 			AwaitOpcode: upgradeOpcode, TimeoutMillis: 8_000, SuccessCodes: []int{0},
 			// The game commits its separate coin/currency updates before returning
@@ -1089,7 +1090,11 @@ func (application *Application) planEquipmentUpgrade(_ context.Context, input In
 				Codes: []int{227}, GuardAction: "equipment.verify_coin_reserve", DelayMillis: delay,
 			},
 			Command: Protocol.Command{Opcode: upgradeOpcode, Payload: payload},
-		})
+		}
+		if coinReserve > 0 {
+			upgradeStep.CoinCost = &Intent.CoinCostRequirement{Reserve: int64(math.Ceil(coinReserve)), Source: "configured equipment upgrade coin reserve"}
+		}
+		steps = append(steps, upgradeStep)
 	}
 	steps = append(steps, equipmentRefreshSteps()...)
 	return Intent.Plan{

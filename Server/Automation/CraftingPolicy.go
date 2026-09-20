@@ -168,7 +168,7 @@ func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 			recipeID := selection.RecipeID
 			arguments, _ := json.Marshal(map[string]any{
 				"castleId": castleID, "buildingInstanceId": building.InstanceID,
-				"recipeId": recipeID, "power": 0,
+				"recipeId": recipeID, "power": 0, "minimumCoinReserve": settings.MinimumCoinReserve,
 			})
 			nextCursor := (selection.Cursor + 1) % len(cycle)
 			var followUp *Intent.Request

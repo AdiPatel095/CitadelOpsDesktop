@@ -201,6 +201,14 @@ func khanNPCMovementState(now time.Time) State.GameState {
 	}
 	gameState.Khan.TargetX = 216
 	gameState.Khan.TargetY = 932
+	gameState.Khan.RageCampID = 1145
+	gameState.Khan.RageCampRevision = 1
+	gameState.Khan.RageCampObservedAt = now
+	gameState.Khan.RageBalanceCampRevision = 1
+	gameState.Khan.PlayerRage = 1_000
+	gameState.Khan.PlayerRageCap = 1_740
+	gameState.Khan.PlayerTotalRage = 1_000
+	gameState.Khan.RageObservedAt = now
 	gameState.EventScores.ActiveEventID = 72
 	gameState.EventScores.ByEvent[72] = State.ScalableEventScore{
 		EventID: 72, RemainingSec: 7_200, ObservedAt: now,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -194,7 +195,15 @@ func (application *Application) resolveAdvisorAttackStep(
 	if err := validateRepeatedAttackInventory(fields, source, request.AttackCount); err != nil {
 		return Intent.Step{}, fmt.Errorf("advisor inventory preflight: %w", err)
 	}
-	return commandStep(fmt.Sprintf("Launch advisor at %d:%d for %d attacks", target.X, target.Y, request.AttackCount), "cra", payload, "cra"), nil
+	step := commandStep(fmt.Sprintf("Launch advisor at %d:%d for %d attacks", target.X, target.Y, request.AttackCount), "cra", payload, "cra")
+	if request.CoinCostPerAttack > 0 && int64(request.AttackCount) > math.MaxInt64/request.CoinCostPerAttack {
+		return Intent.Step{}, fmt.Errorf("advisor coin budget overflowed")
+	}
+	step.CoinCost = &Intent.CoinCostRequirement{
+		Amount: request.CoinCostPerAttack * int64(request.AttackCount), Reserve: request.MinimumCoinReserve,
+		Source: "configured advisor coin budget", UpperBound: true,
+	}
+	return step, nil
 }
 
 func advisorAttackContext(
@@ -264,12 +273,14 @@ func advisorAttackContext(
 		return request, State.CastleState{}, State.MapObservation{}, GameData.EventCampDefinition{}, fmt.Errorf("advisor camp %d:%d is unavailable", request.TargetX, request.TargetY)
 	}
 	coins := int64(playerResourceByOfficialKey(input.State, input.GameData, "C1"))
+	if request.CoinCostPerAttack > math.MaxInt64/int64(request.AttackCount) {
+		return request, State.CastleState{}, State.MapObservation{}, GameData.EventCampDefinition{}, fmt.Errorf("advisor coin budget overflowed")
+	}
 	requiredCoins := request.CoinCostPerAttack * int64(request.AttackCount)
 	if coins-request.MinimumCoinReserve < requiredCoins {
-		return request, State.CastleState{}, State.MapObservation{}, GameData.EventCampDefinition{}, fmt.Errorf(
-			"advisor reserves %d coins and budgets %d per attack; %d attacks need %d with %d observed",
-			request.MinimumCoinReserve, request.CoinCostPerAttack, request.AttackCount, requiredCoins, coins,
-		)
+		return request, State.CastleState{}, State.MapObservation{}, GameData.EventCampDefinition{}, &Intent.CoinUnavailableError{
+			Required: requiredCoins, Reserve: request.MinimumCoinReserve, Observed: coins, Source: "configured advisor coin budget",
+		}
 	}
 	if advisorUsesRubyHorse(request.HorseTravelBoostID) {
 		rubies := int64(playerResourceByOfficialKey(input.State, input.GameData, "C2"))

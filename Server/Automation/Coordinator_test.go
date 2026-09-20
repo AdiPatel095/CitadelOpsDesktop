@@ -1646,6 +1646,52 @@ func TestCoordinatorTroopShortageIsAvailabilityGateWithoutSafetyPause(t *testing
 	}
 }
 
+func TestCoordinatorCoinShortageWaitsWithBoundedRetryAndWakesOnFreshBalance(t *testing.T) {
+	now := time.Date(2026, time.September, 19, 14, 0, 0, 0, time.UTC)
+	shortage := (&Intent.CoinUnavailableError{Required: 100, Reserve: 20, Observed: 90, Pending: 0, Source: "official test cost"}).Error()
+	shortage = "Recruit next stack: " + shortage
+	current := &policyRuntime{running: true, evaluatedStateRevision: 10}
+	result, immediate := completePolicyRun(current, operationResult{policyID: "autoRecruit", receipt: Intent.Receipt{
+		Status: Intent.StatusFailed, Error: "Waiting for 100 coins plus a 20-coin reserve", RawError: shortage,
+	}}, now)
+	if immediate || current.running || current.coinAvailabilityGate == nil || !current.failureBlockedUntil.IsZero() {
+		t.Fatalf("coin shortage entered failure/busy state: result=%+v runtime=%+v", result, current)
+	}
+	if current.eventOnly || !current.nextCheck.Equal(now.Add(defaultRetry)) || !result.nextCheck.Equal(current.nextCheck) {
+		t.Fatalf("coin shortage did not retain bounded recovery: result=%+v runtime=%+v", result, current)
+	}
+	gameState := coordinatorReadyState()
+	gameState.Player.Resources[1] = 90
+	gameState.Player.ResourceObservations[1] = State.PlayerResourceObservation{ObservedAt: now, ConnectionGeneration: 1}
+	runtime := map[string]*policyRuntime{"autoRecruit": current}
+	clearCoinAvailabilityGates(runtime, State.Event{Revision: 11, Domains: []string{"resources"}}, gameState)
+	if current.coinAvailabilityGate == nil {
+		t.Fatal("unchanged coin observation released the gate")
+	}
+	gameState.Player.Resources[1] = 120
+	gameState.Player.ResourceObservations[1] = State.PlayerResourceObservation{ObservedAt: now.Add(time.Second), ConnectionGeneration: 1}
+	clearCoinAvailabilityGates(runtime, State.Event{Revision: 12, Domains: []string{"resources"}}, gameState)
+	if current.coinAvailabilityGate != nil || !current.evaluationPending || !current.nextCheck.IsZero() {
+		t.Fatalf("fresh recovered balance did not wake lane: %+v", current)
+	}
+}
+
+func TestCoordinatorExpiredCoinGateBecomesImmediatelyDueOnce(t *testing.T) {
+	now := time.Date(2026, time.September, 19, 15, 0, 0, 0, time.UTC)
+	current := &policyRuntime{coinAvailabilityGate: &coinAvailabilityGate{observed: 10}, nextCheck: now.Add(time.Minute), evaluatedSessionKnown: true}
+	runtime := map[string]*policyRuntime{"autoRecruit": current}
+	if !coinAvailabilityGateWaiting(current, now) || !nextPolicyEvaluationAt(runtime, now).Equal(now.Add(time.Minute)) {
+		t.Fatalf("future coin gate schedule = %+v next=%s", current, nextPolicyEvaluationAt(runtime, now))
+	}
+	due := now.Add(time.Minute)
+	if coinAvailabilityGateWaiting(current, due) || current.coinAvailabilityGate != nil || !current.nextCheck.IsZero() {
+		t.Fatalf("expired coin gate retained past deadline: %+v", current)
+	}
+	if next := nextPolicyEvaluationAt(runtime, due); !next.Equal(due) {
+		t.Fatalf("expired gate next evaluation = %s, want %s", next, due)
+	}
+}
+
 func TestCoordinatorTroopGateParsesRawErrorAfterUserFacingLabeling(t *testing.T) {
 	raw := "castle 3849 has 0 of item 215; 1 commander(s) require 416"
 	visible := "Storm Keep has 0 of Veteran Swordsman; 1 commander(s) require 416"

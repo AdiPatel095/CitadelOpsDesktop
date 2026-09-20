@@ -102,6 +102,7 @@ type Application struct {
 	Checkpoints      *PrivateMetrics.CheckpointPublisher
 	BackgroundLogin  *Session.BackgroundLoginStore
 	StartupErr       error
+	coinGate         *coinDispatchGate
 
 	persistenceHealthMu       sync.RWMutex
 	statePersistenceErr       error
@@ -374,6 +375,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		shutdownDone:         make(chan struct{}),
 		statePersistence:     make(chan statePersistenceRequest),
 		statePersistenceDone: make(chan struct{}),
+		coinGate:             newCoinDispatchGate(),
 	}
 	ingest.SetDurabilityFence(application.saveStateEvent)
 	session.SetAttackDelayProvider(application.attackLaunchDelay)
@@ -383,6 +385,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	session.SetAutomationLocked(application.automationLocked())
 	intents.SetExecutionGate(application.executionGate)
 	intents.SetAdmissionWeightProvider(application.attackAdmissionWeight)
+	intents.SetFinalDispatchProvider(application.coinGate)
 	application.Scheduler = Scheduling.NewScheduler(state, intents)
 	if err := application.registerCoreIntents(); err != nil {
 		return nil, err

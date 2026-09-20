@@ -596,7 +596,7 @@ func foodBalanceMarketShipmentFromDonor(
 		"sourceCastleId": donor.projection.castle.ID, "targetCastleId": risk.target.castle.ID,
 		"resourceId": risk.resourceID, "amount": int64(amount),
 		"workflowOwner": autoFoodBalanceTransportOwner, "enforceTargetCapacity": true,
-		"horseTravelBoostId": settings.HorseTravelBoostID,
+		"horseTravelBoostId": settings.HorseTravelBoostID, "minimumCoinReserve": settings.MinimumCoinReserve,
 	})
 	return Decision{
 		Status:              "ready",

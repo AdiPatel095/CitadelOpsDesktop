@@ -74,6 +74,7 @@ const PATCH_NOTES_RELEASES_UNSORTED: PatchNotesRelease[] = [
       { kind: 'fixed', text: 'Auto Buyer and Auto Khan now bind event-shop purchases to the current live offer and intended castle, while Khan rage retaliation follows camp upgrades and waits for a matching rage update.' },
       { kind: 'fixed', text: 'Auto Buyer isolates invalid goals from valid feast upkeep, prioritizes due feasts, and maintains supported feasts, overseers, and specialists from current timers, balances, prices, and reserves.' },
       { kind: 'fixed', text: 'Auto Khan now yields only to movements authoritatively tracked by Auto Station, so unrelated support on the same route no longer pauses Khan defense or attacks.' },
+      { kind: 'fixed', text: 'Coin-spending commands now recheck the latest official balance, full command cost, saved reserve, and other in-flight spending immediately before dispatch, so ordinary shortages wait for recovery instead of triggering an automation safety lock.' },
       { kind: 'removed', text: 'Retired Experimental Battle Research settings and status surfaces have been removed while existing historical trial records remain untouched.' },
     ],
   },

@@ -30,6 +30,25 @@ const wireCommitCleanupTimeout = 10 * time.Second
 const maximumStaleReplans = 3
 
 var ErrPlanStale = errors.New("intent plan became stale before dispatch")
+var ErrCoinUnavailable = errors.New("not enough coins for dispatch")
+
+type CoinUnavailableError struct {
+	Required int64
+	Reserve  int64
+	Observed int64
+	Pending  int64
+	Source   string
+}
+
+func (err *CoinUnavailableError) Error() string {
+	available := max(int64(0), err.Observed-err.Pending)
+	return fmt.Sprintf(
+		"%v: %d needed plus %d reserved; %d available from %d observed after %d pending (%s)",
+		ErrCoinUnavailable, err.Required, err.Reserve, available, err.Observed, err.Pending, err.Source,
+	)
+}
+
+func (err *CoinUnavailableError) Unwrap() error { return ErrCoinUnavailable }
 
 type wireCommitCollectorContextKey struct{}
 
@@ -109,22 +128,23 @@ type Engine struct {
 	labels         GameData.IdentifierLabels
 	labelsReady    bool
 
-	mu                sync.RWMutex
-	actions           map[string]Action
-	resolvers         map[string]StepResolver
-	dependencies      map[string]CommandDependencyResolver
-	executionGate     ExecutionGate
-	admissionWeight   AdmissionWeightProvider
-	operationStore    OperationStore
-	active            map[string]context.CancelFunc
-	operations        map[string]Receipt
-	requestHashes     map[string]string
-	durableOperations map[string]struct{}
-	operationOrder    []string
-	operationIndex    map[string]struct{}
-	subscribers       map[uint64]chan Receipt
-	eventSequence     uint64
-	persistenceErr    error
+	mu                    sync.RWMutex
+	actions               map[string]Action
+	resolvers             map[string]StepResolver
+	dependencies          map[string]CommandDependencyResolver
+	executionGate         ExecutionGate
+	admissionWeight       AdmissionWeightProvider
+	finalDispatchProvider FinalDispatchProvider
+	operationStore        OperationStore
+	active                map[string]context.CancelFunc
+	operations            map[string]Receipt
+	requestHashes         map[string]string
+	durableOperations     map[string]struct{}
+	operationOrder        []string
+	operationIndex        map[string]struct{}
+	subscribers           map[uint64]chan Receipt
+	eventSequence         uint64
+	persistenceErr        error
 	// runtimeContext bounds detached executions. It belongs to the owning
 	// application, never to the API client that submitted the intent.
 	runtimeContext context.Context
@@ -215,6 +235,12 @@ func (engine *Engine) SetExecutionGate(gate ExecutionGate) {
 func (engine *Engine) SetAdmissionWeightProvider(provider AdmissionWeightProvider) {
 	engine.mu.Lock()
 	engine.admissionWeight = provider
+	engine.mu.Unlock()
+}
+
+func (engine *Engine) SetFinalDispatchProvider(provider FinalDispatchProvider) {
+	engine.mu.Lock()
+	engine.finalDispatchProvider = provider
 	engine.mu.Unlock()
 }
 
@@ -1013,6 +1039,7 @@ func stepResumeKey(step Step) string {
 		string(step.PreDispatchArguments),
 		step.FinalDispatchAction,
 		string(step.FinalDispatchArguments),
+		coinCostRequirementKey(step.CoinCost),
 		step.DefinitiveSendFailureAction,
 		string(step.DefinitiveSendFailureArguments),
 		step.DefinitiveResponseFailureAction,
@@ -1043,6 +1070,13 @@ func stepResumeKey(step Step) string {
 		fmt.Sprint(step.Command.Bare),
 		fmt.Sprint(step.Command.OmitNamespace),
 	}, "\x00")
+}
+
+func coinCostRequirementKey(requirement *CoinCostRequirement) string {
+	if requirement == nil {
+		return ""
+	}
+	return fmt.Sprintf("%d/%d/%s/%t/%t", requirement.Amount, requirement.Reserve, requirement.Source, requirement.UpperBound, requirement.Additive)
 }
 
 func responseRetryPolicyKey(policy *ResponseRetryPolicy) string {
@@ -1480,9 +1514,25 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 		if action == nil {
 			return nil, compensateDefinitiveSendFailure(fmt.Errorf("final-dispatch action %q is not registered", step.FinalDispatchAction))
 		}
+	}
+	engine.mu.RLock()
+	finalDispatchProvider := engine.finalDispatchProvider
+	engine.mu.RUnlock()
+	if step.FinalDispatchAction != "" || finalDispatchProvider != nil {
+		engine.mu.RLock()
+		action := engine.actions[step.FinalDispatchAction]
+		engine.mu.RUnlock()
 		arguments := append(json.RawMessage(nil), step.FinalDispatchArguments...)
 		sendContext = Outbound.WithFinalDispatchValidation(sendContext, func(dispatchContext context.Context) error {
-			return action(dispatchContext, arguments)
+			if action != nil {
+				if err := action(dispatchContext, arguments); err != nil {
+					return err
+				}
+			}
+			if finalDispatchProvider != nil {
+				return finalDispatchProvider.Validate(dispatchContext, engine.planningContext(), concrete)
+			}
+			return nil
 		})
 	}
 	if err := advanceEffectPhase(ctx, EffectPhaseDispatching); err != nil {
@@ -1490,16 +1540,37 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 	}
 	if err := engine.sender.Send(sendContext, payload); err != nil {
 		if Outbound.IsIndeterminate(err) {
+			if finalDispatchProvider != nil {
+				finalDispatchProvider.Indeterminate(sendContext, concrete)
+			}
 			_ = advanceEffectPhase(ctx, EffectPhaseReconciliationRequired)
 			return nil, err
 		}
+		if finalDispatchProvider != nil {
+			finalDispatchProvider.DefinitiveFailure(sendContext, concrete)
+		}
 		return nil, compensateDefinitiveSendFailure(err)
+	}
+	postSendOutcomeHandled := false
+	if finalDispatchProvider != nil {
+		// Every return after a successful send must leave the reservation in a
+		// reconcilable state. Response decoding, commit observation, and durable
+		// phase persistence can all fail before a normal terminal callback.
+		defer func() {
+			if !postSendOutcomeHandled {
+				finalDispatchProvider.Indeterminate(sendContext, concrete)
+			}
+		}()
 	}
 	var exchange *CommandExchange
 	if step.CaptureResponse {
 		exchange = &CommandExchange{Step: step.Name, Command: command}
 	}
 	if observed == nil {
+		if finalDispatchProvider != nil {
+			finalDispatchProvider.Indeterminate(sendContext, concrete)
+			postSendOutcomeHandled = true
+		}
 		if err := advanceEffectPhase(ctx, EffectPhaseSent); err != nil {
 			return exchange, Outbound.MarkIndeterminate(fmt.Errorf("persist sent effect: %w", err))
 		}
@@ -1529,14 +1600,27 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 	for {
 		select {
 		case <-ctx.Done():
+			if finalDispatchProvider != nil {
+				finalDispatchProvider.Indeterminate(sendContext, concrete)
+				postSendOutcomeHandled = true
+			}
 			return exchange, Outbound.MarkIndeterminate(ctx.Err())
 		case <-timer.C:
+			if finalDispatchProvider != nil {
+				finalDispatchProvider.Indeterminate(sendContext, concrete)
+				postSendOutcomeHandled = true
+			}
 			return exchange, Outbound.MarkIndeterminate(fmt.Errorf("timed out waiting for %s", strings.Join(awaitOpcodes, " or ")))
 		case <-sessionChanges:
 			if sessionChanged() {
+				if finalDispatchProvider != nil {
+					finalDispatchProvider.Indeterminate(sendContext, concrete)
+					postSendOutcomeHandled = true
+				}
 				return exchange, Outbound.MarkIndeterminate(fmt.Errorf("game session changed while waiting for %s", strings.Join(awaitOpcodes, " or ")))
 			}
 		case frame := <-observed:
+			coinRefreshRequired := false
 			if step.ResponseBarrier == ResponseBarrierWire {
 				if collector, _ := ctx.Value(wireCommitCollectorContextKey{}).(*wireCommitCollector); collector != nil {
 					collector.add(frame.IngressID)
@@ -1558,6 +1642,14 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 				exchange.Response = &response
 			}
 			if frame.Frame.ResponseCode != nil && *frame.Frame.ResponseCode != 0 {
+				if finalDispatchProvider != nil {
+					if step.ResponseRetry != nil && containsInt(step.ResponseRetry.Codes, *frame.Frame.ResponseCode) {
+						coinRefreshRequired = finalDispatchProvider.Completed(sendContext, engine.planningContext(), concrete, frame)
+					} else {
+						finalDispatchProvider.DefinitiveFailure(sendContext, concrete)
+					}
+					postSendOutcomeHandled = true
+				}
 				responseErr := engine.unsuccessfulResponseCode(frame.Frame.Opcode, *frame.Frame.ResponseCode)
 				guarded := engine.guardRejection(ctx, responseErr)
 				var locked *LaneLockedError
@@ -1582,6 +1674,11 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 					if step.ResponseRetry != nil && containsInt(step.ResponseRetry.Codes, *frame.Frame.ResponseCode) {
 						if err := advanceEffectPhase(ctx, EffectPhaseObserved); err != nil {
 							return exchange, Outbound.MarkIndeterminate(fmt.Errorf("persist observed retry response: %w", err))
+						}
+						if coinRefreshRequired {
+							if err := engine.refreshCoinsAfterDispatch(ctx); err != nil {
+								return exchange, Outbound.MarkIndeterminate(fmt.Errorf("refresh coins after consumed retry: %w", err))
+							}
 						}
 						// The response is definitive, but not terminal: the explicit
 						// retry policy will resend this same step. Keep its pre-dispatch
@@ -1614,6 +1711,10 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 				}
 			}
 			if frame.ReduceError != "" {
+				if finalDispatchProvider != nil && frame.Frame.ResponseCode != nil && *frame.Frame.ResponseCode == 0 {
+					coinRefreshRequired = finalDispatchProvider.Completed(sendContext, engine.planningContext(), concrete, frame)
+					postSendOutcomeHandled = true
+				}
 				reduceErr := fmt.Errorf("response state reduction failed: %s", frame.ReduceError)
 				if step.ResponseProjectionFailureIndeterminate {
 					_ = advanceEffectPhase(ctx, EffectPhaseReconciliationRequired)
@@ -1625,12 +1726,34 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 				response := frame.Frame
 				exchange.Response = &response
 			}
+			if finalDispatchProvider != nil {
+				coinRefreshRequired = finalDispatchProvider.Completed(sendContext, engine.planningContext(), concrete, frame)
+				postSendOutcomeHandled = true
+			}
 			if err := advanceEffectPhase(ctx, EffectPhaseObserved); err != nil {
 				return exchange, Outbound.MarkIndeterminate(fmt.Errorf("persist observed effect: %w", err))
+			}
+			if coinRefreshRequired {
+				if err := engine.refreshCoinsAfterDispatch(ctx); err != nil {
+					// The mutation is already confirmed. Keep its reservation for a
+					// later authoritative refresh, but never turn the completed step
+					// back into replayable work because reconciliation timed out.
+					_ = RecordOperationEvidence(ctx, "coin-reconciliation-pending", map[string]string{"error": err.Error()})
+				}
 			}
 			return exchange, nil
 		}
 	}
+}
+
+func (engine *Engine) refreshCoinsAfterDispatch(ctx context.Context) error {
+	step := Step{
+		Name: "Refresh authoritative coin balance", Opcode: "gbd", AwaitOpcode: "gbd",
+		TimeoutMillis: 10_000, SuccessCodes: []int{0}, ResponseBarrier: ResponseBarrierCommitted,
+		Command: Protocol.Command{Opcode: "gbd", Bare: true},
+	}
+	_, err := engine.executeStep(ctx, engine.state.Revision(), step)
+	return err
 }
 
 func retryableStepResponse(step Step, err error) bool {
@@ -1944,6 +2067,11 @@ func normalizePlan(definition Definition, revision uint64, plan Plan) Plan {
 	}
 	hasAttackLaunch := false
 	for index := range plan.Steps {
+		if plan.Steps[index].CoinCost != nil {
+			requirement := *plan.Steps[index].CoinCost
+			requirement.Source = strings.TrimSpace(requirement.Source)
+			plan.Steps[index].CoinCost = &requirement
+		}
 		plan.Steps[index].Action = strings.TrimSpace(plan.Steps[index].Action)
 		if plan.Steps[index].Action != "" && len(plan.Steps[index].ActionArguments) == 0 {
 			plan.Steps[index].ActionArguments = json.RawMessage(`{}`)

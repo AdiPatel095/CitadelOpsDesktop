@@ -624,7 +624,15 @@ func TestGlobalRubyObservationRequiresExplicitCurrentC2(t *testing.T) {
 	state.Session.ConnectionGeneration = 9
 	base := time.Date(2026, 9, 15, 12, 0, 0, 0, time.UTC)
 	code := 0
-	_, _, err := reduceGlobalResources(t.Context(), Protocol.Frame{Opcode: "gcu", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: base, Payload: json.RawMessage(`{"C2":0}`)}, &state, gameData)
+	_, _, err := reduceGlobalResources(t.Context(), Protocol.Frame{Opcode: "gcu", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: base, Payload: json.RawMessage(`{"C1":100}`)}, &state, gameData)
+	if err != nil || state.Player.Resources[1] != 100 || !state.Player.ResourceObservations[1].ObservedAt.Equal(base) {
+		t.Fatalf("coin authority = %#v err=%v", state.Player, err)
+	}
+	_, _, _ = reduceGlobalResources(t.Context(), Protocol.Frame{Opcode: "gcu", Direction: Protocol.DirectionInbound, ReceivedAt: base.Add(time.Second), Payload: json.RawMessage(`{"C1":999}`)}, &state, gameData)
+	if state.Player.Resources[1] != 100 || !state.Player.ResourceObservations[1].ObservedAt.Equal(base) {
+		t.Fatalf("non-authoritative gcu inflated coin authority: %#v", state.Player)
+	}
+	_, _, err = reduceGlobalResources(t.Context(), Protocol.Frame{Opcode: "gcu", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: base, Payload: json.RawMessage(`{"C2":0}`)}, &state, gameData)
 	if err != nil || state.Player.Resources[2] != 0 || !state.Player.ResourceObservations[2].ObservedAt.Equal(base) {
 		t.Fatalf("zero ruby authority = %#v err=%v", state.Player, err)
 	}
