@@ -60,15 +60,17 @@ type khanLaneGuardActionRequest struct {
 }
 
 type khanTauntRequest struct {
-	EventID         int64                `json:"eventId"`
-	EventEndsAt     time.Time            `json:"eventEndsAt"`
-	MainCastleID    State.CastleID       `json:"mainCastleId"`
-	TargetX         int                  `json:"targetX"`
-	TargetY         int                  `json:"targetY"`
-	RageCampID      int64                `json:"rageCampId"`
-	PlayerTotalRage int64                `json:"playerTotalRage"`
-	RageObservedAt  time.Time            `json:"rageObservedAt"`
-	KhanGuard       khanLaneGuardRequest `json:"khanGuard"`
+	EventID          int64                `json:"eventId"`
+	EventEndsAt      time.Time            `json:"eventEndsAt"`
+	MainCastleID     State.CastleID       `json:"mainCastleId"`
+	TargetX          int                  `json:"targetX"`
+	TargetY          int                  `json:"targetY"`
+	RageCampID       int64                `json:"rageCampId"`
+	RageCampRevision uint64               `json:"rageCampRevision"`
+	PlayerRageCap    int64                `json:"playerRageCap"`
+	PlayerTotalRage  int64                `json:"playerTotalRage"`
+	RageObservedAt   time.Time            `json:"rageObservedAt"`
+	KhanGuard        khanLaneGuardRequest `json:"khanGuard"`
 }
 
 type khanLaunchCapture struct {
@@ -161,7 +163,7 @@ func validateKhanTauntContext(
 	now time.Time,
 ) error {
 	if request.EventID != khanEventID || request.EventEndsAt.IsZero() || request.MainCastleID <= 0 ||
-		request.RageCampID <= 0 || request.RageObservedAt.IsZero() {
+		request.RageCampID <= 0 || request.RageCampRevision == 0 || request.PlayerRageCap <= 0 || request.RageObservedAt.IsZero() {
 		return fmt.Errorf("Khan taunt requires the active event occurrence, main castle, camp, and rage observation")
 	}
 	score, active := gameState.LookupScalableEventScore(khanEventID)
@@ -190,6 +192,9 @@ func validateKhanTauntContext(
 	}
 	khan := gameState.Khan
 	if khan.RageCampID != request.RageCampID ||
+		khan.RageCampRevision != request.RageCampRevision ||
+		khan.RageBalanceCampRevision != request.RageCampRevision ||
+		khan.PlayerRageCap != request.PlayerRageCap ||
 		khan.PlayerTotalRage != request.PlayerTotalRage ||
 		!khan.RageObservedAt.Equal(request.RageObservedAt) ||
 		khan.PlayerRage < khan.PlayerRageCap ||
@@ -229,7 +234,23 @@ func resolveKhanTauntStep(
 		ResponseIdentity: Outbound.ResponseIdentity{
 			PlayerID: int64(input.State.Player.ID), CastleID: int64(request.MainCastleID),
 		},
+		FinalDispatchAction: "khan.taunt.guard", FinalDispatchArguments: append(json.RawMessage(nil), arguments...),
 	}, nil
+}
+
+func (application *Application) guardKhanTauntFinalDispatch(_ context.Context, arguments json.RawMessage) error {
+	if application == nil || application.State == nil || application.GameData == nil {
+		return fmt.Errorf("Auto Khan state is unavailable")
+	}
+	gameData, ready := application.GameData.Current()
+	if !ready || gameData == nil {
+		return fmt.Errorf("official game data is unavailable")
+	}
+	var request khanTauntRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return err
+	}
+	return validateKhanTauntContext(application.State.ReadOnlyView(), gameData, request, time.Now().UTC())
 }
 
 func planKhanAttack(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
@@ -616,6 +637,9 @@ func (application *Application) captureKhanLaunch(_ context.Context, arguments j
 			observed, resolved, lastResolved := gameState.Khan.TauntsObserved, gameState.Khan.TauntsResolved, gameState.Khan.LastTauntResolvedAt
 			cooldownReports := gameState.Khan.CooldownReports
 			rageCampID := gameState.Khan.RageCampID
+			rageCampRevision := gameState.Khan.RageCampRevision
+			rageCampObservedAt := gameState.Khan.RageCampObservedAt
+			rageBalanceCampRevision := gameState.Khan.RageBalanceCampRevision
 			playerRage, playerRageCap := gameState.Khan.PlayerRage, gameState.Khan.PlayerRageCap
 			playerTotalRage, rageObservedAt := gameState.Khan.PlayerTotalRage, gameState.Khan.RageObservedAt
 			triggered, lastTriggered := gameState.Khan.TauntsTriggered, gameState.Khan.LastTauntTriggeredAt
@@ -626,7 +650,9 @@ func (application *Application) captureKhanLaunch(_ context.Context, arguments j
 				MainCastleID: request.MainCastleID, KingdomID: request.KingdomID, TargetX: request.TargetX,
 				TargetY: request.TargetY, Launches: []State.KhanLaunchState{}, Taunts: taunts, ResolvedTaunts: resolvedTaunts,
 				TauntsObserved: observed, TauntsResolved: resolved, LastTauntResolvedAt: lastResolved,
-				RageCampID: rageCampID, PlayerRage: playerRage, PlayerRageCap: playerRageCap,
+				RageCampID: rageCampID, RageCampRevision: rageCampRevision,
+				RageCampObservedAt: rageCampObservedAt, RageBalanceCampRevision: rageBalanceCampRevision,
+				PlayerRage: playerRage, PlayerRageCap: playerRageCap,
 				PlayerTotalRage: playerTotalRage, RageObservedAt: rageObservedAt,
 				TauntsTriggered: triggered, LastTauntTriggeredAt: lastTriggered,
 				LastTauntTriggeredRage: lastTriggeredRage, LastTauntTriggeredEventEndsAt: lastTriggeredEventEndsAt,
@@ -766,7 +792,7 @@ func planKhanDefenseToolReplenish(
 	arguments json.RawMessage,
 ) (Intent.Plan, error) {
 	request, main, item, purchaseCastleID, purchaseKingdomID, err := khanDefenseToolPurchaseContext(
-		input, arguments, time.Now().UTC(),
+		input, arguments, time.Now().UTC(), false,
 	)
 	if err != nil {
 		return Intent.Plan{}, err
@@ -783,12 +809,22 @@ func planKhanDefenseToolReplenish(
 		Power     int64           `json:"PWR"`
 		Position  int64           `json:"_PO"`
 	}{request.PackageID, 0, request.ShopTableID, request.Amount, purchaseKingdomID, purchaseCastleID, -1, 0, 0, -1})
-	steps := []Intent.Step{
-		{Name: "Recheck non-ruby defense-tool purchase", Action: "khan.defense_tools.guard", ActionArguments: arguments},
-		shopCommandStep(fmt.Sprintf("Purchase defense tool %d", request.ToolID), "sbp", payload, 0),
-		{Name: "Record defense-tool shop cadence", Action: "khan.defense_tools.purchased", ActionArguments: arguments},
+	steps := castleContextSteps(input, main)
+	if item.Stock > 0 {
+		historyPayload, _ := json.Marshal(map[string]any{"CID": main.ID, "KID": main.KingdomID})
+		history := shopCommandStep("Refresh defense-tool package counters", "gbc", historyPayload, 0)
+		history.ResponseBarrier = Intent.ResponseBarrierCommitted
+		steps = append(steps, history)
 	}
-	steps = append(steps, defenseRefreshSteps(main)...)
+	purchase := shopCommandStep(fmt.Sprintf("Purchase defense tool %d", request.ToolID), "sbp", payload, 0)
+	purchase.FinalDispatchAction = "khan.defense_tools.guard"
+	purchase.FinalDispatchArguments = append(json.RawMessage(nil), arguments...)
+	steps = append(steps,
+		Intent.Step{Name: "Recheck non-ruby defense-tool purchase", Action: "khan.defense_tools.guard", ActionArguments: arguments},
+		purchase,
+		Intent.Step{Name: "Record defense-tool shop cadence", Action: "khan.defense_tools.purchased", ActionArguments: arguments},
+		defenseContextStep(main),
+	)
 	claims := append(defenseClaims(main.ID),
 		"shop", "shop:table:"+strconv.FormatInt(request.ShopTableID, 10), "account-resources",
 		"unit:"+strconv.FormatInt(int64(request.ToolID), 10),
@@ -807,6 +843,7 @@ func khanDefenseToolPurchaseContext(
 	input Intent.PlanningContext,
 	arguments json.RawMessage,
 	now time.Time,
+	dispatchReady bool,
 ) (khanDefenseToolPurchaseRequest, State.CastleState, GameData.DefenseToolShopPackage, int64, State.KingdomID, error) {
 	var request khanDefenseToolPurchaseRequest
 	if err := decodeIntentArguments(arguments, &request); err != nil {
@@ -833,6 +870,12 @@ func khanDefenseToolPurchaseContext(
 		return request, main, GameData.DefenseToolShopPackage{}, 0, 0,
 			fmt.Errorf("package %d is not a supported non-ruby package for tool %d", request.PackageID, request.ToolID)
 	}
+	if !autoBuyerIntentLevelEligible(
+		input.State.Player, item.MinLevel, item.MaxLevel, item.MinLegendLevel, item.MaxLegendLevel,
+	) {
+		return request, main, item, 0, 0,
+			fmt.Errorf("package %d is not available at the current player level", request.PackageID)
+	}
 	route, active := input.State.ActiveShopForPackage(request.PackageID, now)
 	if !active && item.PriceScope == GameData.DefenseToolPriceCastleResource && item.PriceID == GameData.StormAquamarineID &&
 		input.State.Storm.LunaShopTableID > 0 && input.State.Storm.LunaShopTableID == request.ShopTableID {
@@ -842,6 +885,23 @@ func khanDefenseToolPurchaseContext(
 	if !active || route.EventID != request.ShopTableID {
 		return request, main, item, 0, 0,
 			fmt.Errorf("package %d is not advertised by active shop table %d", request.PackageID, request.ShopTableID)
+	}
+	if _, advertised := input.State.ActiveShopForPackage(request.PackageID, now); advertised {
+		if _, routeErr := validateEventBackedSBP(input, main, eventBackedSBPRequest{
+			PackageID: request.PackageID, TableID: request.ShopTableID, Amount: request.Amount,
+			Stock: item.Stock, MaxBuyPerClick: item.MaxBuyPerClick,
+		}, now, dispatchReady); routeErr != nil {
+			return request, main, item, 0, 0, routeErr
+		}
+	} else if dispatchReady {
+		protocol := input.ProtocolContext
+		if !main.Focused || protocol.SessionGeneration != input.State.Session.Generation ||
+			protocol.ConnectionGeneration != input.State.Session.ConnectionGeneration ||
+			protocol.FocusedCastleID != main.ID || protocol.FocusSubcontext != State.FocusSubcontextCastle ||
+			protocol.FocusEpoch == 0 {
+			return request, main, item, 0, 0,
+				fmt.Errorf("%w: defense-tool purchase lost current-session main-castle focus", Intent.ErrPlanStale)
+		}
 	}
 	deficit := KhanDomain.DefenseToolDeficits(main, request.DefensePreset)[request.ToolID]
 	if deficit <= 0 {
@@ -856,7 +916,11 @@ func khanDefenseToolPurchaseContext(
 		return request, main, item, 0, 0, fmt.Errorf("amount exceeds package %d per-click maximum %d", request.PackageID, item.MaxBuyPerClick)
 	}
 	if item.Stock > 0 {
-		offers, _, _ := input.State.ConstructionOffersFor(main.ID, main.KingdomID)
+		offers, observedAt, found := input.State.ConstructionOffersFor(main.ID, main.KingdomID)
+		if dispatchReady && (!found || observedAt.IsZero() || observedAt.After(now) || now.Sub(observedAt) >= shopPurchaseCounterMaximumAge) {
+			return request, main, item, 0, 0,
+				fmt.Errorf("%w: defense-tool package counters are not fresh for castle %d", Intent.ErrPlanStale, main.ID)
+		}
 		remaining := max(int64(0), item.Stock-offers[request.PackageID])
 		if request.Amount > remaining {
 			return request, main, item, 0, 0, fmt.Errorf("package %d has only %d purchase(s) remaining", request.PackageID, remaining)
@@ -916,8 +980,10 @@ func (application *Application) guardKhanDefenseToolPurchase(_ context.Context, 
 	if !ready {
 		return fmt.Errorf("official game data is unavailable")
 	}
+	view := application.State.PlanningView()
 	_, _, _, _, _, err := khanDefenseToolPurchaseContext(
-		Intent.PlanningContext{State: application.State.ReadOnlyView(), GameData: gameData}, arguments, time.Now().UTC(),
+		Intent.PlanningContext{State: view.State, GameData: gameData, Partitions: view.Partitions, ProtocolContext: view.ProtocolContext},
+		arguments, time.Now().UTC(), true,
 	)
 	return err
 }

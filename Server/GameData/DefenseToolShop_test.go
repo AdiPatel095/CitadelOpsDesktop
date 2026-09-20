@@ -13,7 +13,7 @@ func TestDefenseToolShopPackagesRejectRubyPricesAndDecodeNonPremiumCurrencies(t 
 		],
 		"packages":[
 			{"packageID":10,"packageType":"tool","unitID":731,"unitAmount":1,"packagePriceC1":25},
-			{"packageID":11,"packageType":"tool","unitID":731,"unitAmount":5,"costKhanTablet":20},
+			{"packageID":11,"packageType":"tool","unitID":731,"unitAmount":5,"costKhanTablet":20,"maxBuyPerClick":100000},
 			{"packageID":12,"packageType":"tool","unitID":731,"unitAmount":100,"costSilverToken":17,"notRebuyable":1},
 			{"packageID":13,"packageType":"tool","unitID":731,"unitAmount":1,"packagePriceC2":1},
 			{"packageID":14,"packageType":"tool","unitID":731,"unitAmount":1,"packagePriceC1":10,"packagePriceC2":2},
@@ -33,7 +33,10 @@ func TestDefenseToolShopPackagesRejectRubyPricesAndDecodeNonPremiumCurrencies(t 
 	if packages[0].PackageID != 10 || packages[0].PriceScope != DefenseToolPricePlayerResource || packages[0].PriceID != 1 {
 		t.Fatalf("coin package = %#v", packages[0])
 	}
-	if packages[1].PackageID != 11 || packages[1].PriceScope != DefenseToolPriceCurrency || packages[1].PriceID != 1 {
+	if packages[0].MaxBuyPerClick != 1_000 {
+		t.Fatalf("absent maxBuyPerClick = %d, want official default 1000", packages[0].MaxBuyPerClick)
+	}
+	if packages[1].PackageID != 11 || packages[1].PriceScope != DefenseToolPriceCurrency || packages[1].PriceID != 1 || packages[1].MaxBuyPerClick != 100_000 {
 		t.Fatalf("Khan package = %#v", packages[1])
 	}
 	if packages[2].PackageID != 12 || packages[2].PriceID != 36 || packages[2].Stock != 1 {

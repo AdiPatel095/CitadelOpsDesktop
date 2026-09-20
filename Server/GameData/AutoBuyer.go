@@ -114,6 +114,16 @@ type AutoBuyerFeast struct {
 	AutomaticPurchase      AutoBuyerCapability `json:"automaticPurchase"`
 }
 
+func PackageLevelEligible(level, legendLevel int, minLevel, maxLevel, minLegend, maxLegend int64) bool {
+	if minLevel > 0 && int64(level) < minLevel || maxLevel > 0 && int64(level) > maxLevel {
+		return false
+	}
+	if minLegend > 0 && int64(legendLevel) < minLegend || maxLegend > 0 && int64(legendLevel) > maxLegend {
+		return false
+	}
+	return true
+}
+
 // EffectiveCost applies the game-reported feast cost reduction to food feasts.
 // Ruby feasts are never discounted by FRM. Rounding up keeps the automated
 // reserve check conservative if a future catalog introduces a price that is
@@ -389,7 +399,10 @@ func decodeAutoBuyerPackage(
 	unitID, _ := record.Int64("unitID")
 	unitAmount, _ := record.Int64("unitAmount")
 	sortOrder, _ := record.Int64("sortOrder")
-	maxBuyPerClick, _ := record.Int64("maxBuyPerClick")
+	maxBuyPerClick, hasMaxBuyPerClick := record.Int64("maxBuyPerClick")
+	if !hasMaxBuyPerClick {
+		maxBuyPerClick = 1_000
+	}
 	minLevel, _ := record.Int64("minLevel")
 	maxLevel, _ := record.Int64("maxLevel")
 	minLegendLevel, _ := record.Int64("minLegendLevel")

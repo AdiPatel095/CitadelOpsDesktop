@@ -120,6 +120,7 @@ func TestAutoBuyerEventPackageWaitsForRouteAndUsesResetCounter(t *testing.T) {
 	gameState.Inventory.ConstructionOffersCastleID = 10
 	gameState.Inventory.ConstructionOffersKingdomID = 0
 	gameState.Inventory.ConstructionOffersObservedAt = now
+	delete(gameState.EventScores.ShopByPackage, 102)
 	settings := json.RawMessage(`{
 		"version":1,"checkIntervalSec":60,"historyRefreshSec":900,"sourceCastleId":10,
 		"packages":[{"enabled":true,"shopId":"rift","packageId":102,"targetPurchasesPerReset":1,"minimumBalanceReserve":50}],
@@ -133,7 +134,9 @@ func TestAutoBuyerEventPackageWaitsForRouteAndUsesResetCounter(t *testing.T) {
 		decision.Metrics["ignoredUnavailableEventShops"] != 1 {
 		t.Fatalf("inactive event decision = %#v err=%v", decision, err)
 	}
-	gameState.EventScores.ShopByPackage[102] = State.EventShopRoute{EventID: 88, RemainingSec: 3600, ObservedAt: now}
+	gameState.EventScores.ShopByPackage[102] = State.EventShopRoute{
+		EventID: GameData.AutoBuyerMasterBlacksmithTableID, RemainingSec: 3600, ObservedAt: now,
+	}
 	decision, err = NewAutoBuyerPolicy().Evaluate(t.Context(), Snapshot{
 		State: gameState, GameData: gameData, Now: now,
 		Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{autoBuyerSection: settings}},
@@ -160,6 +163,7 @@ func TestAutoBuyerIgnoresUnavailableEventShopAndContinuesOtherShopGoals(t *testi
 	gameState.Inventory.ConstructionOffersCastleID = 10
 	gameState.Inventory.ConstructionOffersKingdomID = 0
 	gameState.Inventory.ConstructionOffersObservedAt = now
+	delete(gameState.EventScores.ShopByPackage, 102)
 	settings := json.RawMessage(`{
 		"version":1,"checkIntervalSec":1800,"historyRefreshSec":3600,"sourceCastleId":10,
 		"packages":[
@@ -183,6 +187,41 @@ func TestAutoBuyerIgnoresUnavailableEventShopAndContinuesOtherShopGoals(t *testi
 	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil ||
 		request.ShopID != GameData.AutoBuyerShopMasterBlacksmith || request.PackageID != 100 {
 		t.Fatalf("mixed-shop request = %#v err=%v", request, err)
+	}
+}
+
+func TestAutoBuyerSkipsExpiredMerchantRouteAndSelectsNextLivePackage(t *testing.T) {
+	gameData := autoBuyerPolicyTestStore(t)
+	now := time.Date(2026, 9, 19, 21, 0, 0, 0, time.UTC)
+	gameState := autoBuyerPolicyTestState(now)
+	gameState.Player.Currencies[36] = 100
+	gameState.Player.Currencies[70] = 100
+	gameState.Inventory.ConstructionOffersCastleID = 10
+	gameState.Inventory.ConstructionOffersKingdomID = 0
+	gameState.Inventory.ConstructionOffersObservedAt = now
+	gameState.EventScores.ShopByPackage[100] = State.EventShopRoute{
+		EventID: GameData.AutoBuyerMasterBlacksmithTableID, RemainingSec: 60, ObservedAt: now.Add(-2 * time.Hour),
+	}
+	settings := json.RawMessage(`{
+		"version":1,"checkIntervalSec":1800,"historyRefreshSec":3600,"sourceCastleId":10,
+		"packages":[
+			{"enabled":true,"shopId":"master-blacksmith","packageId":100,"targetPurchasesPerReset":1,"minimumBalanceReserve":0},
+			{"enabled":true,"shopId":"rift","packageId":102,"targetPurchasesPerReset":1,"minimumBalanceReserve":0}
+		],
+		"specialists":[],"feast":{"enabled":false}
+	}`)
+	decision, err := NewAutoBuyerPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, GameData: gameData, Now: now,
+		Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{autoBuyerSection: settings}},
+	})
+	if err != nil || decision.Request == nil || decision.Request.Name != "autoBuyer.package.purchase" {
+		t.Fatalf("fallback package decision = %#v err=%v", decision, err)
+	}
+	var request struct {
+		PackageID State.PackageID `json:"packageId"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil || request.PackageID != 102 {
+		t.Fatalf("fallback package request = %#v err=%v", request, err)
 	}
 }
 
@@ -794,6 +833,15 @@ func autoBuyerPolicyTestState(now time.Time) State.GameState {
 	gameState.Market.BoostersObservedGeneration = 1
 	gameState.Market.Feast = State.MarketFeastState{ObservedAt: now}
 	gameState.Market.FeastCostReductionObservedAt = now
+	gameState.EventScores.ShopByPackage[100] = State.EventShopRoute{
+		EventID: GameData.AutoBuyerMasterBlacksmithTableID, RemainingSec: 3600, ObservedAt: now,
+	}
+	gameState.EventScores.ShopByPackage[101] = State.EventShopRoute{
+		EventID: GameData.AutoBuyerMasterBlacksmithTableID, RemainingSec: 3600, ObservedAt: now,
+	}
+	gameState.EventScores.ShopByPackage[102] = State.EventShopRoute{
+		EventID: GameData.AutoBuyerMasterBlacksmithTableID, RemainingSec: 3600, ObservedAt: now,
+	}
 	return gameState
 }
 
@@ -806,6 +854,7 @@ func autoBuyerPolicyTestStore(t *testing.T) *GameData.Store {
 	t.Helper()
 	store, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":{"version":{"@value":"test"}},"buildings":[],"units":[],
+		"events":[{"eventID":116,"packageIDs":"100+101+102","kIDs":"0","areaTypes":"1"}],
 		"resources":[
 			{"resourceID":1,"JSONKey":"C1","name":"Coins"},{"resourceID":2,"JSONKey":"C2","name":"Rubies"},
 			{"resourceID":5,"JSONKey":"F","name":"Food"},{"resourceID":11,"JSONKey":"HONEY","name":"Honey"},
