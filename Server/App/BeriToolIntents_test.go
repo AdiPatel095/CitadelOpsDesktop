@@ -130,6 +130,7 @@ func beriToolIntentGameData(t *testing.T) *GameData.Store {
 	gameData, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],
 		"buildings":[],
+		"resources":[{"resourceID":1,"JSONKey":"C1"}],
 		"units":[
 			{"wodID":611,"typ":"Attack"},
 			{"wodID":614,"typ":"Attack"},

@@ -5,8 +5,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
+	"time"
 
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
@@ -80,6 +82,23 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterAction("troops.kingdom.consume_source", application.consumeKingdomTroopSource); err != nil {
 		return err
 	}
+	for name, action := range map[string]Intent.Action{
+		"troops.kingdom.workflow.arm":             application.armKingdomTroopWorkflow,
+		"troops.kingdom.workflow.dispatch":        application.guardKingdomTroopWorkflowDispatch,
+		"troops.kingdom.workflow.disarm":          application.disarmKingdomTroopWorkflow,
+		"troops.kingdom.workflow.confirm":         application.confirmKingdomTroopWorkflow,
+		"troops.kingdom.workflow.reconcile_donor": application.reconcileKingdomTroopDonor,
+		"troops.kingdom.workflow.settle":          application.settleKingdomTroopWorkflow,
+		"troops.kingdom.skip.arm":                 application.armKingdomTroopSkip,
+		"troops.kingdom.skip.dispatch":            application.guardKingdomTroopSkipDispatch,
+		"troops.kingdom.skip.disarm":              application.disarmKingdomTroopSkip,
+		"troops.kingdom.skip.verify_timer":        application.verifyKingdomTroopSkipTimer,
+		"troops.kingdom.skip.verify_inventory":    application.verifyKingdomTroopSkipInventory,
+	} {
+		if err := application.Intents.RegisterAction(name, action); err != nil {
+			return err
+		}
+	}
 	for _, name := range []string{timeSkipConsumeAction, "troops.kingdom.consume_time_skip"} {
 		if err := application.Intents.RegisterAction(name, application.consumeTimeSkip); err != nil {
 			return err
@@ -102,6 +121,21 @@ func (application *Application) registerGameIntents() error {
 	}
 	if err := application.Intents.RegisterAction("equipment.verify_coin_reserve", application.verifyEquipmentCoinReserve); err != nil {
 		return err
+	}
+	if err := application.Intents.RegisterAction("equipment.reconfigure.verify", application.verifyEquipmentReconfigure); err != nil {
+		return err
+	}
+	for name, action := range map[string]Intent.Action{
+		"equipment.reconfigure.extraction.arm":           application.armEquipmentExtraction,
+		"equipment.reconfigure.extraction.dispatch":      application.finalizeEquipmentExtractionDispatch,
+		"equipment.reconfigure.extraction.free.dispatch": application.validateFreeEquipmentExtractionDispatch,
+		"equipment.reconfigure.extraction.disarm":        application.disarmEquipmentExtraction,
+		"equipment.reconfigure.extraction.reject":        application.rejectEquipmentExtraction,
+		"equipment.reconfigure.extraction.confirm":       application.confirmEquipmentExtraction,
+	} {
+		if err := application.Intents.RegisterAction(name, action); err != nil {
+			return err
+		}
 	}
 	if err := application.Intents.RegisterAction("alliance.verify_inspection", application.verifyAllianceInspection); err != nil {
 		return err
@@ -202,6 +236,18 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterStepResolver("tower.attack.build", application.resolveTowerAttackStep); err != nil {
 		return err
 	}
+	if err := application.Intents.RegisterStepResolver("fortress.attack.build", application.resolveFortressAttackStep); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("fortress.target.verification.arm", application.armFortressTargetVerification); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("fortress.target.verification.guard", application.guardFortressTargetVerification); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("fortress.scan.full", application.scanFullFortressMap); err != nil {
+		return err
+	}
 	if err := application.Intents.RegisterAction("invasion.scan.capture", application.captureInvasionScan); err != nil {
 		return err
 	}
@@ -247,13 +293,13 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterAction("nomad.attack.guard", application.guardNomadCampAttack); err != nil {
 		return err
 	}
-	if err := application.Intents.RegisterAction(nomadCooldownSkipGuard, application.guardNomadCooldownSkipDispatch); err != nil {
-		return err
-	}
 	if err := application.Intents.RegisterAction("nomad.attack.inventory.guard", application.guardNomadAttackInventory); err != nil {
 		return err
 	}
 	if err := application.Intents.RegisterAction("nomad.attack.arrival.guard", application.guardNomadChainArrival); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("nomad.attack.sequential_arrival.guard", application.guardNomadSequentialArrival); err != nil {
 		return err
 	}
 	if err := application.Intents.RegisterAction("nomad.attack.capture", application.captureNomadCampLaunch); err != nil {
@@ -266,6 +312,9 @@ func (application *Application) registerGameIntents() error {
 		return err
 	}
 	if err := application.Intents.RegisterAction("nomad.cooldown.minute_skip.verify", application.verifyDungeonMinuteSkip); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction(dungeonMinuteSkipDispatchGuard, application.guardDungeonMinuteSkipDispatch); err != nil {
 		return err
 	}
 	if err := application.Intents.RegisterStepResolver("nomad.cooldown.minute_skip.build", resolveDungeonMinuteSkipStep); err != nil {
@@ -299,6 +348,9 @@ func (application *Application) registerGameIntents() error {
 		return err
 	}
 	if err := application.Intents.RegisterAction("khan.taunt.accepted", application.recordKhanTauntAcceptance); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("khan.taunt.guard", application.guardKhanTauntFinalDispatch); err != nil {
 		return err
 	}
 	if err := application.Intents.RegisterAction("khan.cooldown.reports.resolve", application.resolveKhanCooldownReports); err != nil {
@@ -336,6 +388,10 @@ func (application *Application) registerGameIntents() error {
 	}
 	definitions := []Intent.Definition{
 		{
+			Name: "account.inventory.refresh", Description: "Refresh authoritative account resource and currency inventory", Effect: Intent.EffectRead,
+			Planner: planAccountInventoryRefresh,
+		},
+		{
 			Name: "daily_attacks.refresh", Description: "Refresh the authoritative account-wide daily normal-attack count", Effect: Intent.EffectRead,
 			Planner: planDailyAttackRefresh,
 		},
@@ -355,6 +411,22 @@ func (application *Application) registerGameIntents() error {
 		{
 			Name: "troops.kingdom.refresh", Description: "Refresh pending kingdom troop transports", Effect: Intent.EffectRead,
 			Planner: planKingdomTroopRefresh,
+		},
+		{
+			Name: "troops.kingdom.settle", Description: "Settle one completed owned kingdom troop transport after destination refresh", Effect: Intent.EffectWrite,
+			Planner: actionPlanner("troops.kingdom.workflow.settle", "troop-transport", "Settle completed owned kingdom troop transport"),
+		},
+		{
+			Name: "troops.kingdom.reconcile_donor", Description: "Confirm an authoritative donor inventory after an ambiguous kingdom troop dispatch", Effect: Intent.EffectWrite,
+			Planner: actionPlanner("troops.kingdom.workflow.reconcile_donor", "troop-transport", "Reconcile kingdom troop donor inventory"),
+		},
+		{
+			Name: "troops.kingdom.skip.reconcile_timer", Description: "Reconcile an owned kingdom troop transfer after an uncertain time-skip reply", Effect: Intent.EffectWrite,
+			Planner: actionPlanner("troops.kingdom.skip.verify_timer", "troop-transport", "Reconcile owned kingdom troop timer"),
+		},
+		{
+			Name: "troops.kingdom.skip.reconcile_inventory", Description: "Reconcile authoritative time-skip inventory after an owned transfer timer advances", Effect: Intent.EffectWrite,
+			Planner: actionPlanner("troops.kingdom.skip.verify_inventory", "troop-transport", "Reconcile official time-skip inventory"),
 		},
 		{
 			Name: "troops.kingdom.ship", Description: "Transfer validated troop stacks from an owned donor castle to another kingdom", Effect: Intent.EffectLaunch,
@@ -394,7 +466,7 @@ func (application *Application) registerGameIntents() error {
 		},
 		{
 			Name: "equipment.reconfigure", Description: "Apply a validated optimizer loadout to one commander or castellan", Effect: Intent.EffectWrite,
-			Planner: planEquipmentReconfigure,
+			Planner: planEquipmentReconfigure, ReadSet: equipmentReconfigureReadSet,
 		},
 		{
 			Name: "equipment.event.apply", Description: "Replace a commander's base equipment with one coherent owned event set", Effect: Intent.EffectWrite,
@@ -554,7 +626,11 @@ func (application *Application) registerGameIntents() error {
 			Planner: planTowerContext,
 		},
 		{
-			Name: "tower.attack", Description: "Admit and atomically launch a contextual full-flank kingdom-tower attack", Effect: Intent.EffectLaunch,
+			Name: "tower.advisor.activate", Description: "Explicitly consume one available Baron Advisor token and refresh its subscription", Effect: Intent.EffectWrite,
+			Planner: planTowerAdvisorActivation,
+		},
+		{
+			Name: "tower.attack", Description: "Admit and atomically launch a regular or daily-budgeted Baron Advisor tower chain", Effect: Intent.EffectLaunch,
 			AttackModule: &Intent.AttackModuleDefinition{ID: "autoTowers", Label: "Auto Towers", Description: "Robber-baron and kingdom tower attacks", DefaultWeight: 50},
 			Planner:      planTowerAttack,
 		},
@@ -562,6 +638,19 @@ func (application *Application) registerGameIntents() error {
 			Name: "tower.launch", Description: "Launch a full-flank configured troop attack against a refreshed kingdom tower", Effect: Intent.EffectLaunch,
 			AttackModule: &Intent.AttackModuleDefinition{ID: "autoTowers", Label: "Auto Towers", Description: "Robber-baron and kingdom tower attacks", DefaultWeight: 50},
 			Planner:      planTowerLaunch,
+		},
+		{
+			Name: "fortress.map.scan", Description: "Focus an outer-kingdom main castle and discover every kingdom fortress across the populated map", Effect: Intent.EffectRead,
+			Planner: planFortressMapScan,
+		},
+		{
+			Name: "fortress.target.refresh", Description: "Refresh one known kingdom fortress immediately before attack", Effect: Intent.EffectRead,
+			Planner: planFortressTargetRefresh,
+		},
+		{
+			Name: "fortress.attack", Description: "Launch the guarded one-wave Direwolf flank formation against a ready kingdom fortress", Effect: Intent.EffectLaunch,
+			AttackModule: &Intent.AttackModuleDefinition{ID: "autoFortress", Label: "Auto Fortress", Description: "Fast outer-kingdom fortress attacks", DefaultWeight: 60},
+			Planner:      planFortressAttack,
 		},
 		{
 			Name: "invasion.difficulty.select", Description: "Select the configured difficulty for an active Foreign Lords or Bloodcrow event without premium spending", Effect: Intent.EffectWrite,
@@ -750,6 +839,7 @@ func planCraftingStart(_ context.Context, input Intent.PlanningContext, argument
 		BuildingInstanceID State.BuildingInstanceID `json:"buildingInstanceId"`
 		RecipeID           int64                    `json:"recipeId"`
 		Power              int                      `json:"power,omitempty"`
+		MinimumCoinReserve int64                    `json:"minimumCoinReserve,omitempty"`
 	}
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Plan{}, err
@@ -797,7 +887,10 @@ func planCraftingStart(_ context.Context, input Intent.PlanningContext, argument
 			return Intent.Plan{}, fmt.Errorf("crafting recipe %d is not valid for building definition %d", request.RecipeID, building.DefinitionID)
 		}
 	}
-	if err := validateCraftingStartAvailability(input.State, input.GameData, castle, building, request.RecipeID); err != nil {
+	if request.MinimumCoinReserve < 0 {
+		return Intent.Plan{}, fmt.Errorf("minimumCoinReserve must not be negative")
+	}
+	if err := validateCraftingStartAvailability(input.State, input.GameData, castle, building, request.RecipeID, request.MinimumCoinReserve); err != nil {
 		return Intent.Plan{}, err
 	}
 	payload, _ := json.Marshal(struct {
@@ -807,6 +900,14 @@ func planCraftingStart(_ context.Context, input Intent.PlanningContext, argument
 		Power      int                      `json:"PWR"`
 		RecipeID   int64                    `json:"CRID"`
 	}{castle.KingdomID, castle.ID, building.InstanceID, request.Power, request.RecipeID})
+	startStep := commandStep("Queue crafting recipe", "crst", payload, "crst")
+	if costs, costErr := GameData.CraftingRecipeCosts(input.GameData, request.RecipeID); costErr == nil {
+		for _, cost := range costs {
+			if strings.EqualFold(cost.JSONKey, "C1") && cost.Amount > 0 && cost.Amount < math.Exp2(63) {
+				startStep.CoinCost = &Intent.CoinCostRequirement{Amount: int64(math.Ceil(cost.Amount)), Reserve: request.MinimumCoinReserve, Source: "official crafting recipe cost"}
+			}
+		}
+	}
 	return Intent.Plan{
 		Claims: []string{
 			"castle:" + strconv.FormatInt(int64(castle.ID), 10),
@@ -814,7 +915,7 @@ func planCraftingStart(_ context.Context, input Intent.PlanningContext, argument
 			"account-resources",
 		},
 		Summary: fmt.Sprintf("Queue crafting recipe %d at %s", request.RecipeID, castleLabel(castle)),
-		Steps:   []Intent.Step{commandStep("Queue crafting recipe", "crst", payload, "crst")},
+		Steps:   []Intent.Step{startStep},
 	}, nil
 }
 
@@ -939,6 +1040,8 @@ type constructionEquipRequest struct {
 	Mode               int                      `json:"mode,omitempty"`
 }
 
+const constructionSlotSnapshotMaxAge = 15 * time.Minute
+
 func planConstructionEquip(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
 	var request constructionEquipRequest
 	if err := decodeIntentArguments(arguments, &request); err != nil {
@@ -1004,6 +1107,10 @@ func validatedConstructionEquipContext(input Intent.PlanningContext, request con
 	if request.Slot < 0 {
 		return State.CastleState{}, fmt.Errorf("slot cannot be negative")
 	}
+	slotType, slotTypeKnown := item.Int64("slotTypeID")
+	if !slotTypeKnown || slotType < 0 {
+		return State.CastleState{}, fmt.Errorf("construction item %d has no valid official slot type", request.DefinitionID)
+	}
 	groupID, _ := item.Int64("constructionItemGroupID")
 	if groupID > 0 {
 		building := castle.Buildings[request.BuildingInstanceID]
@@ -1022,9 +1129,12 @@ func validatedConstructionEquipContext(input Intent.PlanningContext, request con
 		input.State.Inventory.ConstructionItems[request.DefinitionID] <= 0 {
 		return State.CastleState{}, fmt.Errorf("construction item %d is not in observed inventory", request.DefinitionID)
 	}
-	targetSlot := request.Slot
-	if slotType, exists := item.Int64("slotTypeID"); exists {
-		targetSlot = int(slotType)
+	targetSlot := int(slotType)
+	if requireFreeSlot && (castle.ConstructionSlotsObservedAt.IsZero() ||
+		time.Since(castle.ConstructionSlotsObservedAt) >= constructionSlotSnapshotMaxAge) {
+		return State.CastleState{}, fmt.Errorf(
+			"construction-item slots for castle %d are stale; refresh the castle before equipping", castle.ID,
+		)
 	}
 	if requireFreeSlot && hasEquippedConstructionItemInSlot(
 		castle.ConstructionSlots[request.BuildingInstanceID], catalog, targetSlot,
@@ -1204,10 +1314,10 @@ func hasEquippedConstructionItemInSlot(slots []State.ConstructionSlot, catalog *
 			return true
 		}
 		slotType, exists := item.Int64("slotTypeID")
-		if exists && int(slotType) != targetSlot {
-			continue
+		if !exists || slotType < 0 {
+			return true
 		}
-		if GameData.ConstructionItemIsTemporary(item) && slot.RemainingSec != nil && *slot.RemainingSec <= 0 {
+		if int(slotType) != targetSlot {
 			continue
 		}
 		return true

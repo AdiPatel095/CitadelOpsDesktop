@@ -75,6 +75,11 @@ export interface ScheduleSlotOptionField {
   max?: number;
   allowedUnitIds?: number[];
   allowedToolIds?: number[];
+  choices?: Array<{
+    value: string;
+    label: string;
+    searchText?: string;
+  }>;
   hidden?: boolean;
   unitRange?: {
     minOptionId: string;
@@ -222,6 +227,10 @@ function parseSlotFormOptions(
       continue;
     }
 
+    if (field.choices && !field.choices.some((choice) => choice.value === rawValue)) {
+      return { options: {}, error: `${field.label} is no longer available.` };
+    }
+
     options[field.id] = rawValue;
   }
 
@@ -234,7 +243,10 @@ function slotOptionsSummary(slot: WeeklyScheduleSlot, config?: ScheduleSlotOptio
     .filter((field) => !field.hidden)
     .map((field) => {
       const value = slot.options?.[field.id];
-      return value == null || value === '' ? '' : `${field.label} ${value}`;
+      if (value == null || value === '') return '';
+      const displayValue = field.choices?.find((choice) => choice.value === String(value))?.label
+        ?? String(value);
+      return `${field.label} ${displayValue}`;
     })
     .filter(Boolean);
   return parts.join(' · ');
@@ -1160,7 +1172,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
                   {slotOptionsConfig.fields.filter((field) => !field.hidden).map((field) => (
                     <div
                       key={field.id}
-                      className={`schedule-field${field.picker ? ' schedule-picker-field' : ''}`}
+                      className={`schedule-field${field.picker || field.choices ? ' schedule-picker-field' : ''}`}
                     >
                       <label>
                         {field.label}
@@ -1242,6 +1254,23 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
                             Choose
                           </Button>
                         </div>
+                      ) : field.choices ? (
+                        <Select
+                          value={editingSlot.options[field.id] ?? ''}
+                          options={field.choices}
+                          onChange={(value) => setEditingSlot({
+                            ...editingSlot,
+                            options: {
+                              ...editingSlot.options,
+                              [field.id]: value,
+                            },
+                            error: '',
+                          })}
+                          placeholder={field.placeholder ?? `Choose ${field.label.toLowerCase()}`}
+                          searchable={field.choices.length > 8}
+                          ariaLabel={`Choose ${field.label}`}
+                          disabled={field.choices.length === 0}
+                        />
                       ) : (
                         <Input
                           type={field.type}

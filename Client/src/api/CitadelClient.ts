@@ -10,7 +10,6 @@ import type {
 	AllianceTargetAttackPreviewV2,
 	ApplicationUpdateV2,
 	AttackLaunchRatesV2,
-	BattleResearchStatusV2,
 	AutoStormTroopCapPreviewRequest,
 	AutoStormTroopCapPreviewV2,
 	BuildingCatalogQuery,
@@ -187,10 +186,6 @@ class CitadelClient {
 
 	getAttackLaunchRates(): Promise<AttackLaunchRatesV2> {
 		return this.request<AttackLaunchRatesV2>('/api/v2/telemetry/attack-rates');
-	}
-
-	getBattleResearchStatus(): Promise<BattleResearchStatusV2> {
-		return this.request<BattleResearchStatusV2>('/api/v2/battle-research');
 	}
 
   getBrowsers(): Promise<BrowserInventory> {

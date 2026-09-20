@@ -91,7 +91,6 @@ type Application struct {
 	ProfileLease     *RuntimeKernel.ProfileLease
 	Automation       *Automation.Coordinator
 	Reports          *Reports.Manager
-	BattleResearch   *Reports.BattleResearchManager
 	ReportStore      *Reports.SQLiteStore
 	Scheduler        *Scheduling.Scheduler
 	API              *API.Server
@@ -103,6 +102,7 @@ type Application struct {
 	Checkpoints      *PrivateMetrics.CheckpointPublisher
 	BackgroundLogin  *Session.BackgroundLoginStore
 	StartupErr       error
+	coinGate         *coinDispatchGate
 
 	persistenceHealthMu       sync.RWMutex
 	statePersistenceErr       error
@@ -130,7 +130,6 @@ func (application *Application) SetControlConfigurationReady(required, ready boo
 			application.Configuration.SetExternalAuthority(
 				true,
 				History.PlayerSamplesConfigurationSection,
-				Reports.BattleResearchConfigurationSection,
 			)
 		}
 		if application.API != nil {
@@ -179,6 +178,9 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	configuration, err := Configuration.Open(config.DataDir, defaultConfiguration())
 	if err != nil {
 		return nil, err
+	}
+	if err := removeRetiredBattleResearchConfiguration(configuration); err != nil {
+		return nil, fmt.Errorf("remove retired Experimental Battle Research settings: %w", err)
 	}
 	history, err := History.Open(config.DataDir)
 	if err != nil {
@@ -373,6 +375,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		shutdownDone:         make(chan struct{}),
 		statePersistence:     make(chan statePersistenceRequest),
 		statePersistenceDone: make(chan struct{}),
+		coinGate:             newCoinDispatchGate(),
 	}
 	ingest.SetDurabilityFence(application.saveStateEvent)
 	session.SetAttackDelayProvider(application.attackLaunchDelay)
@@ -382,6 +385,7 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	session.SetAutomationLocked(application.automationLocked())
 	intents.SetExecutionGate(application.executionGate)
 	intents.SetAdmissionWeightProvider(application.attackAdmissionWeight)
+	intents.SetFinalDispatchProvider(application.coinGate)
 	application.Scheduler = Scheduling.NewScheduler(state, intents)
 	if err := application.registerCoreIntents(); err != nil {
 		return nil, err
@@ -399,6 +403,9 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		return nil, err
 	}
 	application.Intents.SetLaneSafetyPersistence(application.saveStateEvent)
+	if err := application.Intents.RefreshAutomationLaneLocks(); err != nil {
+		return nil, err
+	}
 	application.Automation = Automation.NewCoordinator(
 		state, configuration, gameData, intents,
 		Automation.NewSharedStormScanPolicy(application.AccountKey, config.WorldMaps),
@@ -420,9 +427,11 @@ func New(ctx context.Context, config Config) (*Application, error) {
 		Automation.NewFoodBalancePolicy(),
 		Automation.NewAutoTowerPolicy(),
 		Automation.NewInvasionRecoveryPolicy(),
+		Automation.NewAutoFortressPolicy(),
 		Automation.NewAutoInvasionPolicy(),
 		Automation.NewAutoNomadPolicy(),
 		Automation.NewAutoAdvisorPolicy(),
+		Automation.NewAutoBoosterPolicy(),
 		Automation.NewAutoBuyerPolicy(),
 		Automation.NewRiftMaidenRunPolicy(),
 		Automation.NewAutoKhanPolicy(),
@@ -438,14 +447,13 @@ func New(ctx context.Context, config Config) (*Application, error) {
 	application.Reports = Reports.NewManagerWithCloudClient(
 		state, history, intents, config.ReportsCloudClient, reportStore,
 	)
-	// Experimental Battle Research is intentionally no longer composed. Keep
-	// the implementation and existing local trial rows intact for rollback,
-	// while ensuring old saved consent cannot trigger spies or uploads.
+	// Historical Experimental Battle Research trial rows remain in report
+	// storage for compatibility, but no runtime or status API is composed.
 	application.API = API.NewServer(API.Config{
 		Version: Version, BuildRevision: BuildRevision, BuildID: BuildID,
 		State: state, GameData: gameData, Configuration: configuration, History: history, Telemetry: telemetry,
 		Intents: intents, ReportAnalytics: reportStore, Session: session, Updates: application.Updates, Diagnostics: application.Diagnostics,
-		CloudReports: application.Reports.CloudClient(), BattleResearch: application.BattleResearch,
+		CloudReports:    application.Reports.CloudClient(),
 		BackgroundLogin: application.BackgroundLogin, BackgroundOnly: config.BackgroundOnly, Persistence: application,
 		WorldIntel: application.WorldIntel,
 	})
@@ -465,6 +473,9 @@ func (application *Application) Start(ctx context.Context) {
 }
 
 func (application *Application) start(ctx context.Context) {
+	configurationEvents, unsubscribeConfiguration := application.Configuration.Subscribe(8)
+	application.Session.SetAutomationLocked(application.automationLocked())
+	go application.syncAutomationLock(ctx, configurationEvents, unsubscribeConfiguration)
 	persistenceReady := make(chan struct{})
 	go application.persistState(ctx, persistenceReady)
 	<-persistenceReady
@@ -477,9 +488,6 @@ func (application *Application) start(ctx context.Context) {
 		application.Telemetry.Close()
 		if application.Reports != nil {
 			application.Reports.Wait()
-		}
-		if application.BattleResearch != nil {
-			application.BattleResearch.Wait()
 		}
 		if application.Intents != nil {
 			// Detached operations were cancelled with the runtime context; give
@@ -530,6 +538,23 @@ func (application *Application) start(ctx context.Context) {
 	go application.Automation.Run(ctx)
 	go application.Reports.Run(ctx)
 	go application.Scheduler.Run(ctx)
+}
+
+func (application *Application) syncAutomationLock(ctx context.Context, events <-chan Configuration.Event, unsubscribe func()) {
+	defer unsubscribe()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case event, ok := <-events:
+			if !ok {
+				return
+			}
+			if event.Gap || event.Section == "scheduler" || event.Section == "*" {
+				application.Session.SetAutomationLocked(application.automationLocked())
+			}
+		}
+	}
 }
 
 // SetSessionReconnectPolicy tells the game transport whether to hold the
@@ -886,6 +911,7 @@ func (application *Application) playerSamplesRetentionPolicy() History.PlayerSam
 func (application *Application) registerCoreIntents() error {
 	for name, action := range map[string]Intent.Action{
 		"automation.safety.clear": application.clearAutomationSafetyLock,
+		"support.batch.guard":     application.guardSupportBatch,
 		"session.start":           ignoreArguments(application.Session.Start),
 		"session.stop":            ignoreArguments(application.Session.Stop),
 		"session.reconnect":       ignoreArguments(application.Session.Reconnect),
@@ -1083,10 +1109,13 @@ func synchronizeGameDataStore(state *State.Store, gameData *GameData.Manager) er
 }
 
 func actionPlanner(action string, claim string, summary string) Intent.Planner {
-	return func(_ context.Context, _ Intent.PlanningContext, _ json.RawMessage) (Intent.Plan, error) {
+	return func(_ context.Context, _ Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
 		return Intent.Plan{
 			Claims: []string{claim}, Summary: summary,
-			Steps: []Intent.Step{{Name: summary, Action: action}},
+			Steps: []Intent.Step{{
+				Name: summary, Action: action,
+				ActionArguments: append(json.RawMessage(nil), arguments...),
+			}},
 		}, nil
 	}
 }
@@ -1124,6 +1153,9 @@ func decodeConfigurationUpdate(arguments json.RawMessage) (configurationUpdate, 
 		return input, fmt.Errorf("decode configuration update: %w", err)
 	}
 	input.Section = strings.TrimSpace(input.Section)
+	if input.Section == Reports.BattleResearchConfigurationSection {
+		return input, fmt.Errorf("Experimental Battle Research settings have been removed")
+	}
 	if err := Configuration.Validate(input.Section, input.Value); err != nil {
 		return input, err
 	}
@@ -1135,32 +1167,47 @@ func decodeConfigurationUpdate(arguments json.RawMessage) (configurationUpdate, 
 	return input, nil
 }
 
+func removeRetiredBattleResearchConfiguration(configuration *Configuration.Store) error {
+	if configuration == nil {
+		return nil
+	}
+	snapshot := configuration.Snapshot()
+	if _, exists := snapshot.Sections[Reports.BattleResearchConfigurationSection]; !exists {
+		return nil
+	}
+	delete(snapshot.Sections, Reports.BattleResearchConfigurationSection)
+	_, _, err := configuration.ReplaceAllAuthoritative(snapshot.Sections)
+	return err
+}
+
 func defaultConfiguration() map[string]json.RawMessage {
 	return map[string]json.RawMessage{
-		"scheduler":          json.RawMessage(`{"minAttackDelay":4,"maxAttackDelay":6,"upgradeEreDelayMs":50,"upgradeCoinThreshold":0,"botLocked":false,"attackPriorities":{"autoTowers":50,"autoAdvisor":50,"autoBeriWorld":50,"autoStorm":50,"riftMaiden":50,"riftReplay":50},"featureSchedules":{}}`),
+		"scheduler":          json.RawMessage(`{"minAttackDelay":4,"maxAttackDelay":6,"upgradeEreDelayMs":50,"upgradeCoinThreshold":0,"botLocked":false,"attackPriorities":{"autoFortress":60,"autoTowers":50,"autoAdvisor":50,"autoBeriWorld":50,"autoStorm":50,"riftMaiden":50,"riftReplay":50},"featureSchedules":{}}`),
 		"session.connection": json.RawMessage(`{"mode":"full"}`),
 		"session.reconnect":  json.RawMessage(`{"relogDelaySec":300}`),
-		History.PlayerSamplesConfigurationSection:  json.RawMessage(`{"version":1,"retention":"30d"}`),
-		Reports.BattleResearchConfigurationSection: json.RawMessage(`{"enabled":false,"consentVersion":0,"spyCount":1}`),
-		"automation.enabled":                       json.RawMessage(`{}`),
-		"automation.autoEquipmentCleanup":          json.RawMessage(`{"version":1,"checkIntervalSec":60}`),
-		"automation.recruitTroops":                 json.RawMessage(`{"version":1,"mode":"global","checkIntervalSec":300,"recruitLevel10OnTitleLoss":false,"globalItems":[],"castles":{}}`),
-		"automation.autoBeriWorld":                 json.RawMessage(`{"minTroopsToTransfer":1,"beriCastleId":0,"transferTroopId":0,"sourceCastleId":0,"wireCastleId":-1,"troopSpaceCheckIntervalSec":30,"presetId":"","attackCheckIntervalSec":30,"dailyAttackLimit":0,"horseTravelBoostId":-1,"toolMinimums":{"611":0,"614":0,"620":0},"build":{"enabled":false,"stableLevel":5,"allowPremium":false,"allowDemolition":false,"allowTimeSkips":false,"resourceReserves":{},"timeSkipReserve":{}},"requireActiveGallantryBooster":false,"useTroopTransportTimeSkips":false,"troopTransportTimeSkipId":"MS5"}`),
-		"automation.autoBeriWorldBlueprints":       json.RawMessage(`{"version":1,"blueprints":{}}`),
-		"automation.commanderFeatures":             json.RawMessage(`{"version":2,"assignments":{},"requirements":{}}`),
-		"automation.autoFoodBalance":               json.RawMessage(`{"checkIntervalSec":60,"stateRefreshIntervalSec":900,"logisticsRefreshIntervalSec":300,"safetyHours":8,"sourceSafetyHours":24,"minimumShipmentSize":1000,"minimumStormShipmentSize":10000,"minimumSourceReserve":1000,"minimumCoinReserve":0,"autoKingdomTransport":true,"useKingdomTimeSkips":false,"allowedTimeSkips":[],"timeSkipReserve":{},"horseTravelBoostId":-1}`),
-		"automation.autoTowers":                    json.RawMessage(`{"version":2,"checkIntervalSec":30,"mapRefreshIntervalSec":1800,"dailyAttackLimit":0,"horseTravelBoostId":-1,"castles":{}}`),
-		"automation.autoInvasion":                  json.RawMessage(`{"version":1,"sourceCastleId":0,"presetId":"","foreignLordsDifficultyId":0,"bloodcrowDifficultyId":0,"scoreTarget":0,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"dailyAttackLimit":0,"fortifyCurrency":"","horseTravelBoostId":-1}`),
-		"automation.autoNomad":                     json.RawMessage(`{"version":5,"sourceCastleId":0,"nomadPresetId":"","samuraiPresetId":"","nomadDifficultyId":0,"samuraiDifficultyId":0,"scoreTarget":0,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"dailyAttackLimit":0,"skipCooldowns":false,"timeSkipReserve":{},"rbcTest":{"enabled":false,"runId":"","targetX":0,"targetY":0},"horseTravelBoostId":-1}`),
-		"automation.autoAdvisor":                   json.RawMessage(`{"version":1,"sourceCastleId":0,"presetId":"","nomadDifficultyId":0,"samuraiDifficultyId":0,"maxAttackCount":9999,"minimumRemainingSec":1800,"coinCostPerAttack":500,"minimumCoinReserve":0,"rubyCostPerAttack":0,"minimumRubyReserve":0,"minimumFeatherReserve":0,"timeSkipReserve":{},"checkIntervalSec":30,"mapRefreshIntervalSec":300,"horseTravelBoostId":-1}`),
-		"automation.autoBuyer":                     json.RawMessage(`{"version":1,"checkIntervalSec":1800,"historyRefreshSec":3600,"sourceCastleId":0,"minimumRubyReserve":0,"allowRubyPackages":false,"packages":[],"specialists":[],"feast":{"enabled":false,"feastId":0,"minimumRemainingHours":12,"sourceCastleId":0,"minimumFoodReserve":0,"allowRubies":false,"maximumRubyCostPerPurchase":0}}`),
-		"automation.autoKhan":                      json.RawMessage(`{"version":1,"sourceCastleId":0,"attackPresetId":"","defensePresetId":"","minimumRemainingSec":300,"checkIntervalSec":30,"defenseRefreshIntervalSec":30,"mapRefreshIntervalSec":30,"dailyAttackLimit":0,"attackLaunchesEnabled":true,"triggerRage":true,"skipCooldowns":true,"timeSkipReserve":{},"openGateProtection":true,"offensiveUnitThreshold":1000,"horseTravelBoostId":-1,"nomadPointThreshold":0,"replenishDefenseTools":false,"maxRageChain":0,"requireActiveRageBooster":false}`),
-		"attacks.presets":                          json.RawMessage(`{"version":1,"presets":[]}`),
-		"defense.presets":                          json.RawMessage(`{"version":1,"presets":[]}`),
-		"automation.autoStorm":                     json.RawMessage(`{"version":1,"unlock":{"enabled":false,"prebuiltCastleId":0},"decorationPresetCastleId":0,"decorationPresetId":"","build":{"allowPremium":false,"allowDemolition":false,"allowResourceTransport":true,"allowTimeSkips":false,"resourceReserves":{},"sourceResourceReserves":{},"timeSkipReserve":{}},"harbor":{"enabled":false,"targetLevel":1},"forts":{"enabled":false,"levels":[40,50,60,70,80],"minimumWins":0,"presetId":""},"islands":{"enabled":false,"resources":["wood","stone","aquamarine"],"sizes":["large","small"],"presetId":"","defenseUnits":[]},"troopImport":{"enabled":false,"donorCastleIds":[],"minimumTroops":0,"historyHours":24},"aquamarine":{"reserve":0,"shopTableId":0,"purchases":[]},"targetPriority":["fort:80","fort:70","fort:60","fort:50","fort:40","island:large","island:small"],"checkIntervalSec":30,"mapRefreshIntervalSec":7200,"dailyAttackLimit":0,"horseTravelBoostId":-1}`),
-		"automation.autoStormBlueprints":           json.RawMessage(`{"version":1,"blueprints":{}}`),
-		"rift.attackPreferences":                   json.RawMessage(`{"version":1,"replayHorseTravelBoostId":-1,"maidenHorseTravelBoostId":-1}`),
-		RiftTemplates.ConfigurationSection:         json.RawMessage(`{"version":1,"launches":{},"deletedLaunchIds":{}}`),
+		History.PlayerSamplesConfigurationSection: json.RawMessage(`{"version":1,"retention":"30d"}`),
+		"automation.enabled":                      json.RawMessage(`{}`),
+		"automation.autoEquipmentCleanup":         json.RawMessage(`{"version":1,"checkIntervalSec":60}`),
+		"automation.recruitTroops":                json.RawMessage(`{"version":1,"mode":"global","checkIntervalSec":300,"recruitLevel10OnTitleLoss":false,"globalItems":[],"castles":{}}`),
+		"automation.autoBeriWorld":                json.RawMessage(`{"minTroopsToTransfer":1,"beriCastleId":0,"transferTroopId":0,"sourceCastleId":0,"wireCastleId":-1,"troopSpaceCheckIntervalSec":30,"presetId":"","attackCheckIntervalSec":30,"dailyAttackLimit":0,"horseTravelBoostId":-1,"toolMinimums":{"611":0,"614":0,"620":0},"build":{"enabled":false,"stableLevel":5,"allowPremium":false,"allowDemolition":false,"allowTimeSkips":false,"resourceReserves":{},"timeSkipReserve":{}},"requireActiveGallantryBooster":false,"useTroopTransportTimeSkips":false,"troopTransportTimeSkipId":"MS5"}`),
+		"automation.autoBeriWorldBlueprints":      json.RawMessage(`{"version":1,"blueprints":{}}`),
+		"automation.commanderFeatures":            json.RawMessage(`{"version":2,"assignments":{},"requirements":{}}`),
+		"automation.autoFoodBalance":              json.RawMessage(`{"checkIntervalSec":60,"stateRefreshIntervalSec":900,"logisticsRefreshIntervalSec":300,"safetyHours":8,"sourceSafetyHours":24,"minimumShipmentSize":1000,"minimumStormShipmentSize":10000,"minimumSourceReserve":1000,"minimumCoinReserve":0,"autoKingdomTransport":true,"useKingdomTimeSkips":false,"allowedTimeSkips":[],"timeSkipReserve":{},"horseTravelBoostId":-1}`),
+		"automation.autoBird":                     json.RawMessage(`{"version":2,"activePresetId":null,"ignoreSettings":{"settings":{},"minDelay":6,"maxDelay":12,"minSend":0,"minRPTDays":3},"presets":{"version":1,"lastSelectedPresetId":null,"presets":[]}}`),
+		"automation.autoTowers":                   json.RawMessage(`{"version":4,"checkIntervalSec":30,"mapRefreshIntervalSec":1800,"dailyAttackLimit":0,"horseTravelBoostId":-1,"useAdvisor":false,"autoActivateAdvisor":false,"maximumDailyTimeSkips":0,"castles":{}}`),
+		"automation.autoFortress":                 json.RawMessage(`{"version":1,"checkIntervalSec":5,"mapRefreshIntervalSec":1800,"dailyAttackLimit":0,"horseTravelBoostId":1009,"minimumCommanderSpeedBonus":100,"direwolfPurchaseLimit":0,"minimumTabletReserve":0,"useTimeSkips":false,"timeSkipReserve":{},"kingdoms":{"1":{"enabled":false},"2":{"enabled":false},"3":{"enabled":false}}}`),
+		"automation.autoInvasion":                 json.RawMessage(`{"version":1,"sourceCastleId":0,"presetId":"","foreignLordsDifficultyId":0,"bloodcrowDifficultyId":0,"scoreTarget":0,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"dailyAttackLimit":0,"fortifyCurrency":"","horseTravelBoostId":-1}`),
+		"automation.autoNomad":                    json.RawMessage(`{"version":5,"sourceCastleId":0,"nomadPresetId":"","samuraiPresetId":"","nomadDifficultyId":0,"samuraiDifficultyId":0,"scoreTarget":0,"minimumRemainingSec":1800,"checkIntervalSec":30,"mapRefreshIntervalSec":300,"dailyAttackLimit":0,"skipCooldowns":false,"timeSkipReserve":{},"rbcTest":{"enabled":false,"runId":"","targetX":0,"targetY":0},"horseTravelBoostId":-1}`),
+		"automation.autoAdvisor":                  json.RawMessage(`{"version":1,"sourceCastleId":0,"presetId":"","nomadDifficultyId":0,"samuraiDifficultyId":0,"maxAttackCount":9999,"minimumRemainingSec":1800,"coinCostPerAttack":500,"minimumCoinReserve":0,"rubyCostPerAttack":0,"minimumRubyReserve":0,"minimumFeatherReserve":0,"timeSkipReserve":{},"checkIntervalSec":30,"mapRefreshIntervalSec":300,"horseTravelBoostId":-1}`),
+		"automation.autoBooster":                  json.RawMessage(`{"version":1,"checkIntervalSec":60,"rubyCostCeiling":2500,"minimumRubyReserve":0}`),
+		"automation.autoBuyer":                    json.RawMessage(`{"version":1,"checkIntervalSec":1800,"historyRefreshSec":3600,"sourceCastleId":0,"minimumRubyReserve":0,"allowRubyPackages":false,"packages":[],"specialists":[],"feast":{"enabled":false,"feastId":0,"minimumRemainingHours":12,"sourceCastleId":0,"minimumFoodReserve":0,"allowRubies":false,"maximumRubyCostPerPurchase":0}}`),
+		"automation.autoKhan":                     json.RawMessage(`{"version":1,"sourceCastleId":0,"attackPresetId":"","defensePresetId":"","minimumRemainingSec":300,"checkIntervalSec":30,"defenseRefreshIntervalSec":30,"mapRefreshIntervalSec":30,"dailyAttackLimit":0,"attackLaunchesEnabled":true,"triggerRage":true,"skipCooldowns":true,"timeSkipReserve":{},"openGateProtection":true,"offensiveUnitThreshold":1000,"horseTravelBoostId":-1,"nomadPointThreshold":0,"replenishDefenseTools":false,"maxRageChain":0,"requireActiveRageBooster":false}`),
+		"attacks.presets":                         json.RawMessage(`{"version":1,"presets":[]}`),
+		"defense.presets":                         json.RawMessage(`{"version":1,"presets":[]}`),
+		"automation.autoStorm":                    json.RawMessage(`{"version":1,"unlock":{"enabled":false,"prebuiltCastleId":0},"decorationPresetCastleId":0,"decorationPresetId":"","build":{"allowPremium":false,"allowDemolition":false,"allowResourceTransport":true,"allowTimeSkips":false,"resourceReserves":{},"sourceResourceReserves":{},"timeSkipReserve":{}},"harbor":{"enabled":false,"targetLevel":1},"forts":{"enabled":false,"levels":[40,50,60,70,80],"minimumWins":0,"presetId":""},"islands":{"enabled":false,"resources":["wood","stone","aquamarine"],"sizes":["large","small"],"presetId":"","defenseUnits":[]},"troopImport":{"enabled":false,"donorCastleIds":[],"minimumTroops":0,"historyHours":24},"aquamarine":{"reserve":0,"shopTableId":0,"purchases":[]},"targetPriority":["fort:80","fort:70","fort:60","fort:50","fort:40","island:large","island:small"],"checkIntervalSec":30,"mapRefreshIntervalSec":7200,"dailyAttackLimit":0,"horseTravelBoostId":-1}`),
+		"automation.autoStormBlueprints":          json.RawMessage(`{"version":1,"blueprints":{}}`),
+		"rift.attackPreferences":                  json.RawMessage(`{"version":1,"replayHorseTravelBoostId":-1,"maidenHorseTravelBoostId":-1}`),
+		RiftTemplates.ConfigurationSection:        json.RawMessage(`{"version":1,"launches":{},"deletedLaunchIds":{}}`),
 	}
 }
 

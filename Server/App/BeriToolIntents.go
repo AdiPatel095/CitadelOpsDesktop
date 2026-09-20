@@ -86,6 +86,9 @@ func planBeriToolPurchase(
 		shopCommandStep("Purchase "+item.Name+" from the Berimond armorer", "sbp", purchasePayload, 0),
 		attackCastleRefreshStep("Refresh Berimond tool inventory after purchase", castle),
 	}
+	steps[3].CoinCost = &Intent.CoinCostRequirement{
+		Amount: request.Amount * item.CoinPrice, Source: "official Berimond armorer package price",
+	}
 	castleID := strconv.FormatInt(int64(castle.ID), 10)
 	return Intent.Plan{
 		Claims: []string{
@@ -158,13 +161,15 @@ func beriToolPurchaseContext(
 		return request, castle, item, fmt.Errorf("Berimond tool purchase amount is too large")
 	}
 	requiredCoins := request.Amount * item.CoinPrice
-	availableCoins := int64(math.Floor(input.State.Player.Resources[State.ResourceID(1)]))
+	coinID, coinErr := officialResourceIDByJSONKey(input.GameData, coinResourceKey)
+	if coinErr != nil {
+		return request, castle, item, fmt.Errorf("coin affordability unavailable: %w", coinErr)
+	}
+	availableCoins := int64(math.Floor(input.State.Player.Resources[State.ResourceID(coinID)]))
 	if availableCoins < requiredCoins {
-		return request, castle, item,
-			fmt.Errorf(
-				"%w: Berimond tool purchase requires %d coins but only %d are available",
-				Intent.ErrPlanStale, requiredCoins, availableCoins,
-			)
+		return request, castle, item, &Intent.CoinUnavailableError{
+			Required: requiredCoins, Observed: availableCoins, Source: "official Berimond armorer package price",
+		}
 	}
 	return request, castle, item, nil
 }

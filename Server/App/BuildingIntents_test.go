@@ -34,6 +34,9 @@ func TestResolveBuildingPlacementAndStoreUseCapturedWireShapes(t *testing.T) {
 	if place.Command.Opcode != "ebu" || string(place.Command.Payload) != `{"WID":301,"X":5,"Y":5,"R":1,"PWR":0,"PO":-1,"DOID":-1}` {
 		t.Fatalf("placement command = %s %s", place.Command.Opcode, place.Command.Payload)
 	}
+	if place.CoinCost != nil {
+		t.Fatalf("stored placement was charged as construction: %#v", place.CoinCost)
+	}
 
 	store, err := resolveBuildingStoreStep(context.Background(), input, json.RawMessage(`{"castleId":10,"buildingInstanceId":42}`))
 	if err != nil {
@@ -55,6 +58,32 @@ func TestResolveBuildingPlacementAndStoreUseCapturedWireShapes(t *testing.T) {
 	}
 	if upgrade.Command.Opcode != "eup" || string(upgrade.Command.Payload) != `{"OID":42,"PWR":0,"PO":-1}` {
 		t.Fatalf("upgrade command = %s %s", upgrade.Command.Opcode, upgrade.Command.Payload)
+	}
+	if upgrade.CoinCost == nil || upgrade.CoinCost.Amount != 123 {
+		t.Fatalf("upgrade coin cost = %#v", upgrade.CoinCost)
+	}
+
+	constructArguments, _ := json.Marshal(buildingPlacementResolverArguments{
+		Kind:    buildingMutationConstruct,
+		Request: buildingPlacementIntentRequest{CastleID: 10, DefinitionID: 303, X: 6, Y: 6},
+	})
+	construct, err := resolveBuildingPlacementStep(context.Background(), input, constructArguments)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if construct.CoinCost == nil || construct.CoinCost.Amount != 456 {
+		t.Fatalf("construction coin cost = %#v", construct.CoinCost)
+	}
+	catalog, err := buildingCatalog(gameData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	malformed, found := catalog.Definition(304)
+	if !found {
+		t.Fatal("malformed building fixture is missing")
+	}
+	if _, err := buildingCoinCostRequirement(gameData, malformed); err == nil {
+		t.Fatal("malformed raw building costC1 was accepted as coin-free")
 	}
 
 	demolish, err := resolveBuildingDemolishStep(
@@ -86,6 +115,29 @@ func TestResolveBuildingDemolitionTreatsQueuedRaceAsStale(t *testing.T) {
 	}, json.RawMessage(`{"castleId":10,"buildingInstanceId":42}`))
 	if !errors.Is(err, Intent.ErrPlanStale) {
 		t.Fatalf("queued demolition resolver error = %v", err)
+	}
+}
+
+func TestResolveBuildingUpgradeTreatsMaximumLevelRaceAsStale(t *testing.T) {
+	gameState := buildingIntentState()
+	_, err := resolveBuildingUpgradeStep(context.Background(), Intent.PlanningContext{
+		State: gameState, GameData: buildingIntentGameData(t),
+	}, json.RawMessage(`{"request":{"castleId":10,"buildingInstanceId":42,"maximumLevel":1}}`))
+	if !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("maximum-level upgrade resolver error = %v", err)
+	}
+}
+
+func TestPlanBuildingUpgradeTreatsMaximumLevelRaceAsStaleBeforeRefresh(t *testing.T) {
+	gameState := buildingIntentState()
+	castle := gameState.Castles[10]
+	castle.Layout.ObservedAt = time.Time{}
+	gameState.Castles[10] = castle
+	_, err := planBuildingUpgrade(context.Background(), Intent.PlanningContext{
+		State: gameState, GameData: buildingIntentGameData(t),
+	}, json.RawMessage(`{"castleId":10,"buildingInstanceId":42,"maximumLevel":1}`))
+	if !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("maximum-level initial planner error = %v", err)
 	}
 }
 
@@ -342,6 +394,7 @@ func buildingIntentGameData(t *testing.T) *GameData.Store {
 		"versionInfo":{"version":"test"},
 		"units":[],
 		"resources":[
+			{"resourceID":"1","JSONKey":"C1","name":"coins"},
 			{"resourceID":"2","JSONKey":"C2","name":"currency2"},
 			{"resourceID":"3","JSONKey":"W","name":"wood"},
 			{"resourceID":"4","JSONKey":"S","name":"stone"}
@@ -355,7 +408,9 @@ func buildingIntentGameData(t *testing.T) *GameData.Store {
 			{"wodID":"46","name":"Harbor","group":"FixedPositionBuilding","level":"2","width":"14","height":"7","forcedPosition":"1","downgradeWodID":"45","costC2":"12300"},
 			{"wodID":"520","name":"TreasureChest","group":"Building","level":"1","width":"4","height":"4","movable":"0","destructable":"0"},
 			{"wodID":"301","name":"StoredBuilding","group":"Building","level":"1","width":"2","height":"2","rotateType":"1","upgradeWodID":"302","storeable":"1","movable":"1","destructable":"1"},
-			{"wodID":"302","name":"StoredBuilding","group":"Building","level":"2","width":"2","height":"2","rotateType":"1","downgradeWodID":"301","storeable":"1","movable":"1","destructable":"1"}
+			{"wodID":"302","name":"StoredBuilding","group":"Building","level":"2","width":"2","height":"2","rotateType":"1","downgradeWodID":"301","storeable":"1","movable":"1","destructable":"1","costC1":"123"},
+			{"wodID":"303","name":"CoinBuilding","group":"Building","shopCategory":"Civil","level":"1","width":"2","height":"2","rotateType":"1","storeable":"1","movable":"1","destructable":"1","costC1":"456"},
+			{"wodID":"304","name":"MalformedCoinBuilding","group":"Building","shopCategory":"Civil","level":"1","width":"2","height":"2","costC1":"broken"}
 		]
 	}`), GameData.SourceMetadata{ItemVersion: "test"})
 	if err != nil {
@@ -384,5 +439,6 @@ func buildingIntentState() State.GameState {
 	}
 	gameState.Inventory.Items["storage:1"] = map[int64]int64{301: 1}
 	gameState.Player.Currencies[1003] = 10
+	gameState.Player.Resources[1] = 1_000
 	return gameState
 }

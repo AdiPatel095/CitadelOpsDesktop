@@ -50,6 +50,7 @@ type attackLaunchDailySession struct {
 func attackLaunchCountsByFeature(counts map[string]int) map[string]int {
 	return map[string]int{
 		string(State.AttackFeatureAutoTowers):    counts[Telemetry.ChannelAutoTowers],
+		string(State.AttackFeatureAutoFortress):  counts[Telemetry.ChannelAutoFortress],
 		string(State.AttackFeatureAutoInvasion):  counts[Telemetry.ChannelAutoInvasion],
 		string(State.AttackFeatureAutoNomad):     counts[Telemetry.ChannelAutoNomad],
 		string(State.AttackFeatureAutoAdvisor):   counts[Telemetry.ChannelAutoAdvisor],

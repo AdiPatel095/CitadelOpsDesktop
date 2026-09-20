@@ -63,7 +63,11 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"grc", resources, reduceResponseResources},
 		{"gpa", resources, reduceResponseResources},
 		{"sei", components(State.ComponentEventScores, State.ComponentKhan, State.ComponentInvasion), reduceScalableEventSnapshot},
+		{"tei", components(State.ComponentEventScores), reduceGlobalEffectTriggerSnapshot},
+		{"tee", components(State.ComponentEventScores), reduceGlobalEffectTriggerEnd},
+		{"bie", components(State.ComponentEventScores), reduceGlobalEffectBoosterInfo},
 		{"rpr", components(State.ComponentKhan), reduceKhanRagePoints},
+		{"aic", components(State.ComponentKhan), reduceKhanCampUpdate},
 		{"pep", components(State.ComponentEventScores), reduceEventPoints},
 		{"hgh", components(State.ComponentEventScores), reduceEventRanking},
 		{"dcl", castleSnapshot, reduceCastleDetails},
@@ -74,6 +78,7 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"gpc", castles, reduceQueueableProduction},
 		{"boi", components(State.ComponentMarket), reduceMarketBooster},
 		{"fce", components(State.ComponentMarket), reduceFeastCostReduction},
+		{"agb", components(State.ComponentPlayer, State.ComponentEventScores), combineReducers(reduceResponseResources, reduceGlobalEffectPurchaseAcknowledgement)},
 		{"cmi", components(State.ComponentMarket, State.ComponentCastles), reduceMarketInfo},
 		{"kpi", components(State.ComponentKingdomTransport), reduceKingdomTransport},
 		{"kgt", components(State.ComponentKingdomTransport), reduceKingdomTransport},
@@ -91,7 +96,6 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"gui", castles, reduceFocusedUnits},
 		{"etc", castles, reduceBuildingMutation},
 		{"emo", castles, reduceBuildingMutation},
-		{"sob", castles, reduceBuildingMutation},
 		{"ego", castles, reduceBuildingMutation},
 		{"scl", castles, reduceBuildingMutation},
 		{"ahh", components(State.ComponentAllianceHelp, State.ComponentCastles), reduceAllianceHelpRequest},
@@ -107,6 +111,7 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"rae", components(State.ComponentInvasion), reduceInvasionFortification},
 		{"rce", components(State.ComponentInvasion), reduceInvasionFortificationCounters},
 		{"adi", worldMap.Union(components(State.ComponentAttackDialog)), reduceAttackDialog},
+		{"abi", worldMap.Union(components(State.ComponentAttackDialog)), reduceBossDungeonAttackDialog},
 		{"gas", components(State.ComponentAttackPresets), reduceAttackPresets},
 		{"sin", components(State.ComponentInventory), reduceStorageInventory},
 		{"gbc", components(State.ComponentInventory), reduceConstructionOffers},
@@ -179,7 +184,13 @@ func RegisterCoreReducers(registry *Registry) error {
 		{[]string{"ebu"}, []reducerStep{
 			{writes: castles, reducer: reduceBuildingMutation},
 			{writes: components(State.ComponentInventory), reducer: reduceEmbeddedStorageInventory},
+			{writes: components(State.ComponentInventory), reducer: invalidateStorageObservationAfterMutation},
 			{writes: resources, reducer: reduceResponseResources},
+		}},
+		{[]string{"sob"}, []reducerStep{
+			{writes: castles, reducer: reduceBuildingMutation},
+			{writes: components(State.ComponentInventory), reducer: reduceEmbeddedStorageInventory},
+			{writes: components(State.ComponentInventory), reducer: invalidateStorageObservationAfterMutation},
 		}},
 		{[]string{"eup", "edo", "fco", "msb"}, []reducerStep{
 			{writes: castles, reducer: reduceBuildingMutation},
@@ -257,7 +268,7 @@ func RegisterCoreReducers(registry *Registry) error {
 		return err
 	}
 	if err := registry.registerComponentSequence("gaa",
-		reducerStep{writes: worldMap, reducer: reduceMapSnapshot},
+		reducerStep{writes: worldMap.Union(components(State.ComponentSession)), reducer: reduceMapSnapshot},
 		reducerStep{writes: player, reducer: reducePlayerProtectionMode},
 	); err != nil {
 		return err

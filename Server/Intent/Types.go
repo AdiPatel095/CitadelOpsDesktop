@@ -3,6 +3,9 @@ package Intent
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strings"
+	"sync"
 	"time"
 
 	"CitadelDesktop/Server/GameData"
@@ -103,6 +106,10 @@ type ResponseRetryPolicy struct {
 }
 
 type Step struct {
+	// Batch is a resolver-only expansion, checkpointed as ordinary sequential steps
+	// before any command is sent. Children cannot contain deferred resolvers.
+	Batch []Step `json:"-"`
+
 	Name                    string                    `json:"name,omitempty"`
 	Action                  string                    `json:"action,omitempty"`
 	ActionArguments         json.RawMessage           `json:"arguments,omitempty"`
@@ -126,6 +133,10 @@ type Step struct {
 	// transport. It supports durable no-replay markers around spending calls.
 	PreDispatchAction    string          `json:"preDispatchAction,omitempty"`
 	PreDispatchArguments json.RawMessage `json:"preDispatchArguments,omitempty"`
+	// FinalDispatchAction is repeated by the outbound router after queue waits
+	// and immediately before the transport can send the command.
+	FinalDispatchAction    string          `json:"finalDispatchAction,omitempty"`
+	FinalDispatchArguments json.RawMessage `json:"finalDispatchArguments,omitempty"`
 	// DefinitiveSendFailureAction compensates PreDispatchAction only when the
 	// sender proves the command did not reach an indeterminate wire state.
 	DefinitiveSendFailureAction    string          `json:"definitiveSendFailureAction,omitempty"`
@@ -146,7 +157,19 @@ type Step struct {
 	ResponseProjectionFailureIndeterminate bool                      `json:"responseProjectionFailureIndeterminate,omitempty"`
 	ResumePolicy                           ResumePolicy              `json:"resumePolicy,omitempty"`
 	CommandDependencies                    *CommandDependencyRequest `json:"commandDependencies,omitempty"`
-	Command                                Protocol.Command          `json:"-"`
+	// CoinCost carries an authoritative fixed or conservative upper-bound cost
+	// that cannot be recovered from the final wire payload alone. The shared
+	// final-dispatch validator still rechecks the latest account balance.
+	CoinCost *CoinCostRequirement `json:"coinCost,omitempty"`
+	Command  Protocol.Command     `json:"-"`
+}
+
+type CoinCostRequirement struct {
+	Amount     int64  `json:"amount"`
+	Reserve    int64  `json:"reserve,omitempty"`
+	Source     string `json:"source"`
+	UpperBound bool   `json:"upperBound,omitempty"`
+	Additive   bool   `json:"additive,omitempty"`
 }
 
 // CommandDependencyRequest declares the concrete opcode and route payload for
@@ -272,17 +295,18 @@ const (
 )
 
 type Receipt struct {
-	StreamSequence uint64            `json:"streamSequence,omitempty"`
-	StreamGap      bool              `json:"streamGap,omitempty"`
-	ID             string            `json:"id"`
-	Intent         string            `json:"intent"`
-	Actor          string            `json:"actor"`
-	Priority       Outbound.Priority `json:"priority"`
-	Status         Status            `json:"status"`
-	Phase          EffectPhase       `json:"phase,omitempty"`
-	Attempt        int               `json:"attempt,omitempty"`
-	Plan           *Plan             `json:"plan,omitempty"`
-	Exchanges      []CommandExchange `json:"exchanges,omitempty"`
+	StreamSequence uint64              `json:"streamSequence,omitempty"`
+	StreamGap      bool                `json:"streamGap,omitempty"`
+	ID             string              `json:"id"`
+	Intent         string              `json:"intent"`
+	Actor          string              `json:"actor"`
+	Priority       Outbound.Priority   `json:"priority"`
+	Status         Status              `json:"status"`
+	Phase          EffectPhase         `json:"phase,omitempty"`
+	Attempt        int                 `json:"attempt,omitempty"`
+	Plan           *Plan               `json:"plan,omitempty"`
+	Exchanges      []CommandExchange   `json:"exchanges,omitempty"`
+	Evidence       []OperationEvidence `json:"evidence,omitempty"`
 	// CompletedStepIndexes preserves confirmed partial progress against Plan so
 	// downstream accounting can distinguish successful effects from the later failure.
 	CompletedStepIndexes []int                `json:"completedStepIndexes,omitempty"`
@@ -294,6 +318,45 @@ type Receipt struct {
 	SubmittedAt time.Time  `json:"submittedAt"`
 	StartedAt   *time.Time `json:"startedAt,omitempty"`
 	CompletedAt *time.Time `json:"completedAt,omitempty"`
+}
+
+type OperationEvidence struct {
+	Kind       string          `json:"kind"`
+	ObservedAt time.Time       `json:"observedAt"`
+	Data       json.RawMessage `json:"data"`
+}
+
+type operationEvidenceContextKey struct{}
+
+type operationEvidenceBuffer struct {
+	mu    sync.Mutex
+	items []OperationEvidence
+}
+
+func (buffer *operationEvidenceBuffer) drain() []OperationEvidence {
+	if buffer == nil {
+		return nil
+	}
+	buffer.mu.Lock()
+	defer buffer.mu.Unlock()
+	items := append([]OperationEvidence(nil), buffer.items...)
+	buffer.items = nil
+	return items
+}
+
+func RecordOperationEvidence(ctx context.Context, kind string, value any) error {
+	buffer, _ := ctx.Value(operationEvidenceContextKey{}).(*operationEvidenceBuffer)
+	if buffer == nil {
+		return nil
+	}
+	data, err := json.Marshal(value)
+	if err != nil {
+		return fmt.Errorf("encode operation evidence: %w", err)
+	}
+	buffer.mu.Lock()
+	buffer.items = append(buffer.items, OperationEvidence{Kind: strings.TrimSpace(kind), ObservedAt: time.Now().UTC(), Data: data})
+	buffer.mu.Unlock()
+	return nil
 }
 
 // Terminal reports whether the operation has finished. Every completion path
@@ -383,6 +446,20 @@ type CommandDependencyPlan struct {
 // immediately before a concrete opcode can be sent. Key identifies the route
 // so a deferred resolver cannot change the command after its dependencies run.
 type CommandDependencyResolver func(ctx context.Context, input PlanningContext, step Step) (CommandDependencyPlan, error)
+
+// FinalDispatchProvider runs against the fully resolved command after queue
+// waits and feature-specific dispatch guards, immediately before transport.
+// Lifecycle callbacks let a shared budget release definitive no-send/rejected
+// reservations while retaining uncertain sends until authoritative refresh.
+type FinalDispatchProvider interface {
+	Validate(ctx context.Context, input PlanningContext, step Step) error
+	DefinitiveFailure(ctx context.Context, step Step)
+	Indeterminate(ctx context.Context, step Step)
+	// Completed returns true when the response did not itself carry a
+	// command-correlated authoritative balance and the engine must refresh it
+	// before another coin-spending step can run under the same claims.
+	Completed(ctx context.Context, input PlanningContext, step Step, response Protocol.CommittedFrame) bool
+}
 
 type AdmissionWeightProvider func(request Request, admission Admission) int
 

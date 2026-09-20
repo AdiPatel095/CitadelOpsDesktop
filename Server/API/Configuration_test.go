@@ -62,7 +62,7 @@ func TestConfigurationUpdatePersistsWithoutGameSession(t *testing.T) {
 	}
 }
 
-func TestHostedRuntimeRejectsPortableConfigurationWritesButKeepsLocalConsent(t *testing.T) {
+func TestHostedRuntimeRejectsPortableAndRetiredConfigurationWrites(t *testing.T) {
 	store, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{
 		"scheduler": json.RawMessage(`{"botLocked":false}`),
 		Reports.BattleResearchConfigurationSection: json.RawMessage(`{"enabled":false}`),
@@ -79,15 +79,24 @@ func TestHostedRuntimeRejectsPortableConfigurationWritesButKeepsLocalConsent(t *
 	if portableResult.Code != http.StatusConflict || !strings.Contains(portableResult.Body.String(), `"configuration_control_plane_owned"`) {
 		t.Fatalf("hosted portable update = %d %s", portableResult.Code, portableResult.Body.String())
 	}
-	consent := httptest.NewRequest(
+	retired := httptest.NewRequest(
 		http.MethodPut,
 		"/api/v2/config/"+Reports.BattleResearchConfigurationSection,
 		strings.NewReader(`{"value":{"enabled":true}}`),
 	)
-	consentResult := httptest.NewRecorder()
-	handler.ServeHTTP(consentResult, consent)
-	if consentResult.Code != http.StatusOK {
-		t.Fatalf("hosted installation consent = %d %s", consentResult.Code, consentResult.Body.String())
+	retiredResult := httptest.NewRecorder()
+	handler.ServeHTTP(retiredResult, retired)
+	if retiredResult.Code != http.StatusGone || !strings.Contains(retiredResult.Body.String(), `"configuration_section_retired"`) {
+		t.Fatalf("retired configuration update = %d %s", retiredResult.Code, retiredResult.Body.String())
+	}
+}
+
+func TestRetiredBattleResearchStatusRouteIsNotRegistered(t *testing.T) {
+	request := httptest.NewRequest(http.MethodGet, "/api/v2/battle-research", nil)
+	recorder := httptest.NewRecorder()
+	NewServer(Config{}).Handler().ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusNotFound {
+		t.Fatalf("retired battle research route = %d %s", recorder.Code, recorder.Body.String())
 	}
 }
 
@@ -120,6 +129,60 @@ func TestConfigurationUpdateExpectedValueIgnoresUnrelatedRevisionButRejectsSameS
 	handler.ServeHTTP(staleResult, stale)
 	if staleResult.Code != http.StatusConflict || !strings.Contains(staleResult.Body.String(), `"configuration_conflict"`) {
 		t.Fatalf("same-section conflict = %d %s", staleResult.Code, staleResult.Body.String())
+	}
+}
+
+func TestConfigurationUpdateCanPreserveDisableOrCorrectInvalidLegacyFeast(t *testing.T) {
+	legacy := json.RawMessage(`{"version":1,"checkIntervalSec":1800,"feast":{"enabled":true,"minimumRemainingHours":0}}`)
+	newHandler := func(t *testing.T) (http.Handler, *Configuration.Store) {
+		t.Helper()
+		store, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{"automation.autoBuyer": legacy})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return NewServer(Config{Configuration: store}).Handler(), store
+	}
+	request := func(t *testing.T, handler http.Handler, value json.RawMessage, expected any) *httptest.ResponseRecorder {
+		t.Helper()
+		payload, err := json.Marshal(map[string]any{"value": value, "expectedValue": expected})
+		if err != nil {
+			t.Fatal(err)
+		}
+		result := httptest.NewRecorder()
+		handler.ServeHTTP(result, httptest.NewRequest(http.MethodPut, "/api/v2/config/automation.autoBuyer", strings.NewReader(string(payload))))
+		return result
+	}
+
+	handler, _ := newHandler(t)
+	preserved := request(t, handler, json.RawMessage(`{
+		"version":1,"checkIntervalSec":3600,"feast":{"enabled":true,"minimumRemainingHours":0}
+	}`), legacy)
+	if preserved.Code != http.StatusOK {
+		t.Fatalf("unrelated legacy edit = %d %s", preserved.Code, preserved.Body.String())
+	}
+
+	handler, _ = newHandler(t)
+	disabled := request(t, handler, json.RawMessage(`{
+		"version":1,"checkIntervalSec":1800,"feast":{"enabled":false,"minimumRemainingHours":0}
+	}`), legacy)
+	if disabled.Code != http.StatusOK {
+		t.Fatalf("legacy feast disable = %d %s", disabled.Code, disabled.Body.String())
+	}
+
+	handler, _ = newHandler(t)
+	corrected := request(t, handler, json.RawMessage(`{
+		"version":1,"checkIntervalSec":1800,"feast":{"enabled":true,"minimumRemainingHours":12}
+	}`), legacy)
+	if corrected.Code != http.StatusOK {
+		t.Fatalf("legacy feast correction = %d %s", corrected.Code, corrected.Body.String())
+	}
+
+	handler, _ = newHandler(t)
+	invalid := request(t, handler, json.RawMessage(`{
+		"version":1,"checkIntervalSec":1800,"feast":{"enabled":true,"minimumRemainingHours":721}
+	}`), nil)
+	if invalid.Code != http.StatusUnprocessableEntity || !strings.Contains(invalid.Body.String(), "whole number from 1 to 720") {
+		t.Fatalf("changed invalid feast = %d %s", invalid.Code, invalid.Body.String())
 	}
 }
 

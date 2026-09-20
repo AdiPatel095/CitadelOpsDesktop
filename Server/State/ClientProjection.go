@@ -46,6 +46,8 @@ type ClientMarketState struct {
 	Castles                      map[CastleID]MarketCastleState `json:"castles"`
 	Boosters                     map[int]MarketBoosterState     `json:"boosters"`
 	Feast                        MarketFeastState               `json:"feast"`
+	LatestFeastPurchase          *FeastPurchaseEvidence         `json:"latestFeastPurchase,omitempty"`
+	LatestSpecialistPurchase     *SpecialistPurchaseEvidence    `json:"latestSpecialistPurchase,omitempty"`
 	FeastCostReductionPercent    *int                           `json:"feastCostReductionPercent,omitempty"`
 	FeastCostReductionObservedAt *time.Time                     `json:"feastCostReductionObservedAt,omitempty"`
 	CaravanLevelLoaded           bool                           `json:"caravanLevelLoaded"`
@@ -233,6 +235,7 @@ func (state GameState) clientStateProjection() GameState {
 	projected.AttackPresets = []AttackPreset{}
 	projected.AttackAnalytics = AttackAnalyticsState{
 		LaunchIDs: []MovementID{}, PendingAttacks: []AttackFeatureLaunch{}, RecentAutoStormLaunches: []AttackFeatureLaunch{},
+		RecentTowerAdvisorTimeSkips: []TowerAdvisorTimeSkipUsage{},
 	}
 	projected.EventScores = clientEventScores(state)
 	projected.CommandContext = CommandContextState{}
@@ -278,6 +281,7 @@ func projectClientComponentPatch(patch *ComponentPatch) {
 		value.ConstructionItems = nil
 		value.ConstructionItemsObservedAt = nil
 		value.Items = nil
+		value.ItemsObservedAt = nil
 		value.ItemChanges = nil
 		patch.InventoryChanges = &value
 	}
@@ -395,6 +399,7 @@ func clientInventory(source InventoryState) InventoryState {
 	projected.ConstructionItems = map[ConstructionItemID]int64{}
 	projected.ConstructionItemsObservedAt = time.Time{}
 	projected.Items = map[string]map[int64]int64{}
+	projected.ItemsObservedAt = map[string]time.Time{}
 	return projected
 }
 
@@ -410,6 +415,14 @@ func clientMarket(source MarketState) MarketState {
 func newClientMarket(source MarketState) ClientMarketState {
 	result := ClientMarketState{
 		Castles: map[CastleID]MarketCastleState{}, Boosters: source.Boosters, Feast: source.Feast,
+	}
+	if !source.LatestFeastPurchase.AttemptedAt.IsZero() {
+		evidence := source.LatestFeastPurchase
+		result.LatestFeastPurchase = &evidence
+	}
+	if !source.LatestSpecialistPurchase.AttemptedAt.IsZero() {
+		evidence := source.LatestSpecialistPurchase
+		result.LatestSpecialistPurchase = &evidence
 	}
 	if !source.BoostersObservedAt.IsZero() {
 		observedAt := source.BoostersObservedAt
@@ -432,7 +445,7 @@ func clientKingdomTransport(source KingdomTransportState) KingdomTransportState 
 	}
 	return KingdomTransportState{
 		Unlocks: unlocks, Pending: []KingdomResourceTransport{}, PendingUnits: []KingdomUnitTransport{},
-		ResourceWorkflows: map[KingdomID]KingdomResourceTransportWorkflow{},
+		ResourceWorkflows: map[KingdomID]KingdomResourceTransportWorkflow{}, TroopWorkflows: map[KingdomID]KingdomTroopTransportWorkflow{},
 	}
 }
 
@@ -531,6 +544,11 @@ func clientEventScoreState(source EventScoreState) EventScoreState {
 func clientEventInventory(source EventInventoryState) EventInventoryState {
 	return EventInventoryState{
 		ObservedAt: source.ObservedAt, ActiveByEvent: cloneMap(source.ActiveByEvent),
+		GlobalEffectsObservedAt: source.GlobalEffectsObservedAt, GlobalEffects: cloneMap(source.GlobalEffects),
+		GlobalEffectBoosterOffers:    cloneMap(source.GlobalEffectBoosterOffers),
+		GlobalEffectBoostsObservedAt: source.GlobalEffectBoostsObservedAt,
+		GlobalEffectBoosts:           cloneMap(source.GlobalEffectBoosts),
+		GlobalEffectPurchases:        cloneGlobalEffectPurchaseMap(source.GlobalEffectPurchases),
 	}
 }
 

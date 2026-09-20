@@ -274,6 +274,23 @@ func TestCooperativeStormTileEmitsNonWakingProgressDomain(t *testing.T) {
 	}
 }
 
+func TestFullFortressSweepTileEmitsNonWakingProgressDomain(t *testing.T) {
+	gameState := State.NewGameState()
+	code := 0
+	domains, changed, err := reduceMapSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+		ResponseToken: "scan/fortress-gaa/20260902/4", ReceivedAt: time.Date(2026, time.September, 2, 12, 0, 0, 0, time.UTC),
+		Payload: json.RawMessage(`{"KID":1,"AI":[[11,610,610,0,45,3600,0,1]]}`),
+	}, &gameState, nil)
+	if err != nil || !changed {
+		t.Fatalf("full Fortress sweep tile: changed=%t err=%v", changed, err)
+	}
+	if !slices.Contains(domains, "fortress-scan-progress") || slices.Contains(domains, "map") ||
+		slices.Contains(domains, "map-fortress") {
+		t.Fatalf("full Fortress sweep domains = %v", domains)
+	}
+}
+
 func TestReduceNestedMapSnapshotParsesCapturedKhanCamp(t *testing.T) {
 	gameData, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],
@@ -575,5 +592,65 @@ func TestReduceMapSnapshotClearsInvasionFortificationOnRetainedReplacement(t *te
 			"retained replacement: observation=%#v exists=%t domains=%v invasion=%#v changed=%t err=%v",
 			observation, exists, domains, gameState.Invasion, changed, err,
 		)
+	}
+}
+
+func TestReduceMapSnapshotParsesPrivateKingdomFortressCooldown(t *testing.T) {
+	gameState := State.NewGameState()
+	code := 0
+	observedAt := time.Date(2026, 9, 2, 12, 0, 0, 0, time.UTC)
+	domains, changed, err := reduceMapSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
+		Payload: json.RawMessage(`{"KID":1,"AI":[[11,210,942,15,45,431999,1234,1]]}`),
+	}, &gameState, nil)
+	if err != nil || !changed || !slices.Contains(domains, "map-fortress") {
+		t.Fatalf("fortress map snapshot: domains=%v changed=%t err=%v", domains, changed, err)
+	}
+	fortress := gameState.Map[1]["210:942"]
+	if fortress.TypeID != State.MapTypeKingdomFortress || fortress.Level != 45 ||
+		fortress.TowerCooldownRemaining != 431999 || fortress.FortressDefeaterPlayerID != 1234 ||
+		!fortress.ObservedAt.Equal(observedAt) {
+		t.Fatalf("unexpected fortress observation: %#v", fortress)
+	}
+}
+
+func TestReduceMapSnapshotParsesCapturedFortressCooldown(t *testing.T) {
+	gameState := State.NewGameState()
+	code := 0
+	observedAt := time.Date(2026, 9, 16, 13, 9, 16, 10754000, time.UTC)
+	_, changed, err := reduceMapSnapshot(t.Context(), Protocol.Frame{
+		Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
+		Payload: json.RawMessage(`{"KID":3,"AI":[[11,321,750,-1,55,84430,14722196,3]]}`),
+	}, &gameState, nil)
+	fortress, found := gameState.LookupMapObservation(3, "321:750")
+	if err != nil || !changed || !found || fortress.TypeID != State.MapTypeKingdomFortress ||
+		fortress.Level != 55 || fortress.TowerCooldownRemaining != 84_430 ||
+		fortress.FortressDefeaterPlayerID != 14_722_196 || !fortress.ObservedAt.Equal(observedAt) {
+		t.Fatalf("captured fortress observation=%#v found=%t changed=%t err=%v", fortress, found, changed, err)
+	}
+}
+
+func TestReduceMapSnapshotRejectsMalformedFortressWithoutReplacingPriorObservation(t *testing.T) {
+	observedAt := time.Date(2026, 9, 16, 13, 9, 16, 0, time.UTC)
+	prior := State.MapObservation{
+		KingdomID: 3, X: 321, Y: 750, TypeID: State.MapTypeKingdomFortress,
+		Level: 55, TowerCooldownRemaining: 84_430, ObservedAt: observedAt,
+	}
+	code := 0
+	for _, payload := range []json.RawMessage{
+		json.RawMessage(`{"KID":3,"AI":[[11,321,750]]}`),
+		json.RawMessage(`{"KID":3,"AI":[[11,321,750,-1,55,"bad",14722196,3]]}`),
+		json.RawMessage(`{"KID":3,"AI":[[11,321,750,-1,55,-1,14722196,3]]}`),
+	} {
+		gameState := State.NewGameState()
+		gameState.Map[3] = map[string]State.MapObservation{"321:750": prior}
+		_, changed, err := reduceMapSnapshot(t.Context(), Protocol.Frame{
+			Opcode: "gaa", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+			ReceivedAt: observedAt.Add(time.Minute), Payload: payload,
+		}, &gameState, nil)
+		retained, found := gameState.LookupMapObservation(3, "321:750")
+		if err == nil || changed || !found || retained != prior {
+			t.Fatalf("malformed fortress replaced prior: payload=%s observation=%#v found=%t changed=%t err=%v", payload, retained, found, changed, err)
+		}
 	}
 }

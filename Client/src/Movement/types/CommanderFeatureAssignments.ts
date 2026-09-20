@@ -4,6 +4,7 @@ export const COMMANDER_FEATURE_SECTION = 'automation.commanderFeatures';
 
 export type CommanderFeatureID =
   | 'autoTowers'
+  | 'autoFortress'
   | 'autoInvasion'
   | 'autoNomad'
   | 'autoAdvisor'

@@ -258,7 +258,7 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 			NextCheckAt: next, Metrics: metrics,
 		}, nil
 	}
-	if autoKhanStationingActive(snapshot.State, snapshot.Now) {
+	if State.KhanAutoStationYieldActiveAt(snapshot.State, snapshot.Now) {
 		return Decision{
 			Status: "yielding", Detail: "Auto Station is moving troops; Khan attacks and defense changes are paused",
 			NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
@@ -324,12 +324,20 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 		return autoKhanDefenseRefresh(snapshot.Now, main, "Refresh main castle defense before continuing the Khan chain", metrics), nil
 	}
 	if settings.ReplenishDefenseTools {
-		purchase, missing, purchaseErr := autoKhanDefenseToolPurchase(snapshot, main, defensePreset)
+		purchase, missing, countersStale, purchaseErr := autoKhanDefenseToolPurchase(snapshot, main, defensePreset)
 		if purchaseErr != nil {
 			return Decision{}, purchaseErr
 		}
 		if missing > 0 {
 			metrics["missingDefenseTools"] = float64(missing)
+			if countersStale {
+				arguments, _ := json.Marshal(map[string]any{"sourceCastleId": main.ID})
+				return Decision{
+					Status: "replenishing", Detail: "Refresh finite defense-tool package counters before selecting a purchase",
+					NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
+					Request: &Intent.Request{Name: "autoBuyer.package.history", Arguments: arguments}, ReevaluateOnSuccess: true,
+				}, nil
+			}
 			if purchase == nil {
 				return Decision{
 					Status: "waiting", Detail: fmt.Sprintf(
@@ -806,6 +814,13 @@ func (*AutoKhanRagePolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 	lane.Metrics["playerRageCap"] = float64(snapshot.State.Khan.PlayerRageCap)
 	lane.Metrics["playerTotalRage"] = float64(snapshot.State.Khan.PlayerTotalRage)
 	lane.Metrics["activeTaunts"] = float64(len(snapshot.State.Khan.Taunts))
+	if snapshot.State.Khan.RageCampID <= 0 || snapshot.State.Khan.RageCampRevision == 0 ||
+		snapshot.State.Khan.RageBalanceCampRevision != snapshot.State.Khan.RageCampRevision ||
+		snapshot.State.Khan.PlayerRageCap <= 0 || snapshot.State.Khan.RageObservedAt.IsZero() {
+		return autoKhanWaiting(
+			snapshot.Now, "Waiting for an authoritative Khan camp and matching rage observation", 1, lane.Metrics,
+		), nil
+	}
 	occurrence, occurrenceFound := snapshot.State.LookupEventOccurrence(autoKhanEventID)
 	if !occurrenceFound {
 		return autoKhanWaiting(snapshot.Now, "Waiting for the authoritative Khan event occurrence", 1, lane.Metrics), nil
@@ -817,10 +832,12 @@ func (*AutoKhanRagePolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 		arguments, _ := json.Marshal(map[string]any{
 			"eventId": autoKhanEventID, "eventEndsAt": occurrence.EndsAt, "mainCastleId": lane.Main.ID,
 			"targetX": target.X, "targetY": target.Y,
-			"rageCampId":      snapshot.State.Khan.RageCampID,
-			"playerTotalRage": snapshot.State.Khan.PlayerTotalRage,
-			"rageObservedAt":  snapshot.State.Khan.RageObservedAt,
-			"khanGuard":       lane.Guard,
+			"rageCampId":       snapshot.State.Khan.RageCampID,
+			"rageCampRevision": snapshot.State.Khan.RageCampRevision,
+			"playerRageCap":    snapshot.State.Khan.PlayerRageCap,
+			"playerTotalRage":  snapshot.State.Khan.PlayerTotalRage,
+			"rageObservedAt":   snapshot.State.Khan.RageObservedAt,
+			"khanGuard":        lane.Guard,
 		})
 		return Decision{
 			Status: "taunting", Detail: fmt.Sprintf(
@@ -976,7 +993,7 @@ func autoKhanAsyncLaneContext(
 		}
 		return autoKhanLaneContext{}, &decision, nil
 	}
-	if autoKhanStationingActive(snapshot.State, snapshot.Now) {
+	if State.KhanAutoStationYieldActiveAt(snapshot.State, snapshot.Now) {
 		decision := Decision{
 			Status: "yielding", Detail: "Auto Station is moving troops; Auto Khan lanes are paused",
 			NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
@@ -1305,27 +1322,43 @@ func autoKhanDefenseToolPurchase(
 	snapshot Snapshot,
 	main State.CastleState,
 	preset KhanDomain.DefensePreset,
-) (*autoKhanDefenseToolPurchaseCandidate, int64, error) {
+) (*autoKhanDefenseToolPurchaseCandidate, int64, bool, error) {
 	deficits := KhanDomain.DefenseToolDeficits(main, preset)
 	var missing int64
 	for _, deficit := range deficits {
 		missing += deficit
 	}
 	if missing == 0 {
-		return nil, 0, nil
+		return nil, 0, false, nil
 	}
 
-	offers, _, _ := snapshot.State.ConstructionOffersFor(main.ID, main.KingdomID)
+	offers, offersObservedAt, offersFound := snapshot.State.ConstructionOffersFor(main.ID, main.KingdomID)
+	offersFresh := offersFound && !offersObservedAt.IsZero() && !offersObservedAt.After(snapshot.Now) &&
+		snapshot.Now.Sub(offersObservedAt) < 2*time.Minute
+	countersStale := false
 	candidates := make([]autoKhanDefenseToolPurchaseCandidate, 0)
 	for toolID, deficit := range deficits {
 		packages, err := snapshot.GameData.DefenseToolShopPackages(int64(toolID))
 		if err != nil {
-			return nil, missing, err
+			return nil, missing, false, err
 		}
 		for _, item := range packages {
+			if !GameData.PackageLevelEligible(
+				snapshot.State.Player.Level, snapshot.State.Player.LegendLevel,
+				item.MinLevel, item.MaxLevel, item.MinLegendLevel, item.MaxLegendLevel,
+			) {
+				continue
+			}
 			route, active := autoKhanDefenseToolShopRoute(snapshot.State, item, snapshot.Now)
 			if !active {
 				continue
+			}
+			if !(item.PriceScope == GameData.DefenseToolPriceCastleResource && item.PriceID == GameData.StormAquamarineID) {
+				if err := snapshot.GameData.ValidateEventShopDestination(
+					item.PackageID, route.EventID, int64(main.KingdomID), main.SlotType,
+				); err != nil {
+					continue
+				}
 			}
 			balance, available := autoKhanDefenseToolBalance(snapshot.State, main, item)
 			if !available || item.Price <= 0 || balance < item.Price {
@@ -1337,6 +1370,10 @@ func autoKhanDefenseToolPurchase(
 				amount = min(amount, item.MaxBuyPerClick)
 			}
 			if item.Stock > 0 {
+				if !offersFresh {
+					countersStale = true
+					continue
+				}
 				remaining := max(int64(0), item.Stock-offers[State.PackageID(item.PackageID)])
 				amount = min(amount, remaining)
 			}
@@ -1349,7 +1386,7 @@ func autoKhanDefenseToolPurchase(
 		}
 	}
 	if len(candidates) == 0 {
-		return nil, missing, nil
+		return nil, missing, countersStale, nil
 	}
 	sort.Slice(candidates, func(left, right int) bool {
 		leftPriority := autoKhanDefenseToolPricePriority(candidates[left].Package)
@@ -1367,7 +1404,7 @@ func autoKhanDefenseToolPurchase(
 		}
 		return candidates[left].Package.PackageID < candidates[right].Package.PackageID
 	})
-	return &candidates[0], missing, nil
+	return &candidates[0], missing, countersStale, nil
 }
 
 func autoKhanDefenseToolShopRoute(
@@ -1491,21 +1528,6 @@ func autoKhanOutgoingMovementIDs(gameState State.GameState, now time.Time) []Sta
 	}
 	sort.Slice(result, func(left, right int) bool { return result[left] < result[right] })
 	return result
-}
-
-func autoKhanStationingActive(gameState State.GameState, now time.Time) bool {
-	for _, operation := range gameState.Stationing {
-		if operation.Purpose != "autoStation" {
-			continue
-		}
-		if operation.SafeAfter != nil && now.Before(operation.SafeAfter.Add(5*time.Second)) {
-			return true
-		}
-		if movement, found := trackedStationMovement(gameState, operation); found && towerMovementActiveAt(movement, now) {
-			return true
-		}
-	}
-	return false
 }
 
 func autoKhanEventEndsAt(score State.ScalableEventScore) time.Time {

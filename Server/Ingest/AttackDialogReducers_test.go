@@ -105,6 +105,101 @@ func TestReduceAttackDialogStoresAuthoritativeRBCTowerProgression(t *testing.T) 
 	}
 }
 
+func TestReduceAttackDialogStoresFortressCooldownAndDefeater(t *testing.T) {
+	gameState := State.NewGameState()
+	code := 0
+	_, changed, err := reduceAttackDialog(t.Context(), Protocol.Frame{
+		Opcode: "adi", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: time.Now().UTC(),
+		Payload: json.RawMessage(`{"KID":2,"SCID":100,"gaa":{"AI":[11,101,102,4,21,86400,321,2]},"AE":[[426,[60],"GE"]]}`),
+	}, &gameState, nil)
+	if err != nil || !changed {
+		t.Fatalf("fortress attack dialog: changed=%t err=%v", changed, err)
+	}
+	target := gameState.AttackDialog.Target
+	if target.TypeID != State.MapTypeKingdomFortress || target.Level != 21 ||
+		target.TowerCooldownRemaining != 86400 || target.FortressDefeaterPlayerID != 321 {
+		t.Fatalf("unexpected fortress dialog target: %#v", target)
+	}
+}
+
+func TestReduceBossDungeonAttackDialogStoresAuthoritativeFortressContext(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Castles[100] = State.CastleState{ID: 100, KingdomID: 2, X: 10, Y: 20}
+	code := 0
+	observedAt := time.Date(2026, 9, 16, 18, 30, 0, 0, time.UTC)
+	domains, changed, err := reduceBossDungeonAttackDialog(t.Context(), Protocol.Frame{
+		Opcode: "abi", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: observedAt,
+		Payload: json.RawMessage(`{
+			"KID":2,"SCID":100,
+			"gaa":{"AI":[11,101,102,-1,21,86400,321,2],"OI":[]},
+			"AE":[[426,[60],"GE"]]
+		}`),
+	}, &gameState, nil)
+	if err != nil || !changed || !slices.Contains(domains, "attack_dialog") {
+		t.Fatalf("boss-dungeon attack dialog: domains=%v changed=%t err=%v", domains, changed, err)
+	}
+	dialog := gameState.AttackDialog
+	if dialog.SourceCastleID != 100 || dialog.KingdomID != 2 || dialog.Target.TypeID != State.MapTypeKingdomFortress ||
+		dialog.Target.X != 101 || dialog.Target.Y != 102 || dialog.Target.Level != 21 ||
+		dialog.Target.TowerCooldownRemaining != 86400 || dialog.Target.FortressDefeaterPlayerID != 321 ||
+		!dialog.ObservedAt.Equal(observedAt) || len(dialog.ActiveEffects) != 1 || dialog.ActiveEffects[0].EffectID != 426 {
+		t.Fatalf("boss-dungeon attack dialog projection = %#v", dialog)
+	}
+}
+
+func TestReduceBossDungeonAttackDialogRejectsNonAuthoritativeRows(t *testing.T) {
+	base := State.NewGameState()
+	base.Castles[100] = State.CastleState{ID: 100, KingdomID: 2, X: 10, Y: 20}
+	base.AttackDialog = State.AttackDialogState{
+		SourceCastleID: 100, KingdomID: 2, ObservedAt: time.Now().UTC().Add(-time.Minute),
+		Target: State.AttackDialogTarget{
+			TypeID: State.MapTypeKingdomFortress, X: 101, Y: 102, Level: 21, TowerCooldownRemaining: 60,
+		},
+	}
+	tests := []struct {
+		name    string
+		payload string
+	}{
+		{name: "missing target row", payload: `{"KID":2,"SCID":100,"gaa":{"OI":[]},"AE":[]}`},
+		{name: "short row", payload: `{"KID":2,"SCID":100,"gaa":{"AI":[11,101,102],"OI":[]},"AE":[]}`},
+		{name: "malformed cooldown", payload: `{"KID":2,"SCID":100,"gaa":{"AI":[11,101,102,-1,21,"bad",321,2],"OI":[]},"AE":[]}`},
+		{name: "wrong target type", payload: `{"KID":2,"SCID":100,"gaa":{"AI":[2,101,102,-1,21,0,321,2],"OI":[]},"AE":[]}`},
+		{name: "wrong row kingdom", payload: `{"KID":2,"SCID":100,"gaa":{"AI":[11,101,102,-1,21,0,321,3],"OI":[]},"AE":[]}`},
+		{name: "wrong source kingdom", payload: `{"KID":3,"SCID":100,"gaa":{"AI":[11,101,102,-1,21,0,321,3],"OI":[]},"AE":[]}`},
+		{name: "unknown source", payload: `{"KID":2,"SCID":101,"gaa":{"AI":[11,101,102,-1,21,0,321,2],"OI":[]},"AE":[]}`},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			gameState := base
+			before := gameState.AttackDialog
+			code := 0
+			_, changed, err := reduceBossDungeonAttackDialog(t.Context(), Protocol.Frame{
+				Opcode: "abi", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: time.Now().UTC(),
+				Payload: json.RawMessage(test.payload),
+			}, &gameState, nil)
+			if err != nil || changed || !reflect.DeepEqual(gameState.AttackDialog, before) {
+				t.Fatalf("non-authoritative ABI changed dialog: changed=%t err=%v dialog=%#v", changed, err, gameState.AttackDialog)
+			}
+		})
+	}
+}
+
+func TestBossDungeonAttackDialogReducerOwnsADIComponents(t *testing.T) {
+	registry := NewRegistry()
+	if err := RegisterCoreReducers(registry); err != nil {
+		t.Fatal(err)
+	}
+	abi := registry.registered("abi", Protocol.DirectionInbound)
+	adi := registry.registered("adi", Protocol.DirectionInbound)
+	if abi.reducer == nil || abi.writes != adi.writes || !abi.writes.Has(State.ComponentAttackDialog) ||
+		!abi.writes.Has(State.ComponentWorldMap) {
+		t.Fatalf("ABI reducer ownership = %v, ADI = %v", abi.writes.List(), adi.writes.List())
+	}
+	if !frameMutatesWorldMap(Protocol.Frame{Opcode: "abi", Direction: Protocol.DirectionInbound}) {
+		t.Fatal("ABI response bypasses world-map observation metadata")
+	}
+}
+
 func TestReduceAttackDialogStoresKhanCooldown(t *testing.T) {
 	gameState := State.NewGameState()
 	battleAt := time.Now().UTC().Add(-2 * time.Second)

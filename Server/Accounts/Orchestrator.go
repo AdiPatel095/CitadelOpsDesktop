@@ -9,11 +9,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/shirou/gopsutil/v3/disk"
 	"io"
 	"net/http"
+	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"CitadelDesktop/Server/App"
@@ -40,12 +43,15 @@ const (
 )
 
 type OrchestratorConfig struct {
-	CellID        string
-	Token         string
-	Supervisor    *Supervisor
-	DashboardAuth *TenantAuthenticator
-	DrainTimeout  time.Duration
-	Now           func() time.Time
+	// Test/internal integration only. No CLI/env/deployment wiring until the
+	// complete backend executor and recovery path are independently reviewed.
+	EnableHandoverTransport bool
+	CellID                  string
+	Token                   string
+	Supervisor              *Supervisor
+	DashboardAuth           *TenantAuthenticator
+	DrainTimeout            time.Duration
+	Now                     func() time.Time
 }
 
 // RuntimeAssignment is one desired account runtime on this cell.
@@ -81,6 +87,10 @@ type ReconcileRequest struct {
 	SchemaVersion int                 `json:"schemaVersion"`
 	Revision      uint64              `json:"revision"`
 	Runtimes      []RuntimeAssignment `json:"runtimes"`
+	// PreserveRuntimes excludes these handover-owned identities from this
+	// ordinary full-set pass. Existing assignments are retained without starting,
+	// stopping or renewing them; absent identities are never reconstructed.
+	PreserveRuntimes []string `json:"preserveRuntimes,omitempty"`
 }
 
 type DashboardGrantRequest struct {
@@ -145,10 +155,11 @@ const (
 )
 
 type RuntimeStatus struct {
-	RuntimeID      string    `json:"runtimeId"`
-	TenantID       string    `json:"tenantId"`
-	PlacementEpoch uint64    `json:"placementEpoch"`
-	LeaseExpiresAt time.Time `json:"leaseExpiresAt"`
+	ActiveSafetyLock bool      `json:"activeSafetyLock"`
+	RuntimeID        string    `json:"runtimeId"`
+	TenantID         string    `json:"tenantId"`
+	PlacementEpoch   uint64    `json:"placementEpoch"`
+	LeaseExpiresAt   time.Time `json:"leaseExpiresAt"`
 	// PlacementLease is "active" while the lease is current and "lapsed" once
 	// it expired without renewal. The runtime keeps running either way.
 	PlacementLease       string `json:"placementLease"`
@@ -192,25 +203,32 @@ type RuntimeStatus struct {
 }
 
 type CellStatus struct {
-	SchemaVersion   int             `json:"schemaVersion"`
-	Version         string          `json:"version"`
-	BuildRevision   string          `json:"buildRevision"`
-	BuildID         string          `json:"buildId"`
-	CellID          string          `json:"cellId"`
-	DesiredRevision uint64          `json:"desiredRevision"`
-	GameDataReady   bool            `json:"gameDataReady"`
-	Capacity        Capacity        `json:"capacity"`
-	Runtimes        []RuntimeStatus `json:"runtimes"`
-	ObservedAt      time.Time       `json:"observedAt"`
+	SettingsSwitchSchema  int             `json:"settingsSwitchSchema,omitempty"`
+	ProfileAvailableBytes uint64          `json:"profileAvailableBytes,omitempty"`
+	HandoverSchema        int             `json:"handoverSchema,omitempty"`
+	ControlFenceSchema    int             `json:"controlFenceSchema"`
+	ControlEpoch          uint64          `json:"controlEpoch"`
+	SchemaVersion         int             `json:"schemaVersion"`
+	Version               string          `json:"version"`
+	BuildRevision         string          `json:"buildRevision"`
+	BuildID               string          `json:"buildId"`
+	CellID                string          `json:"cellId"`
+	DesiredRevision       uint64          `json:"desiredRevision"`
+	GameDataReady         bool            `json:"gameDataReady"`
+	Capacity              Capacity        `json:"capacity"`
+	Runtimes              []RuntimeStatus `json:"runtimes"`
+	ObservedAt            time.Time       `json:"observedAt"`
 }
 
 type Orchestrator struct {
-	cellID        string
-	tokenHash     [sha256.Size]byte
-	supervisor    *Supervisor
-	dashboardAuth *TenantAuthenticator
-	drainTimeout  time.Duration
-	now           func() time.Time
+	handoverTransport bool
+	controlEpoch      atomic.Uint64
+	cellID            string
+	tokenHash         [sha256.Size]byte
+	supervisor        *Supervisor
+	dashboardAuth     *TenantAuthenticator
+	drainTimeout      time.Duration
+	now               func() time.Time
 
 	reconcileMu        sync.Mutex
 	mu                 sync.RWMutex
@@ -254,6 +272,14 @@ func NewOrchestrator(config OrchestratorConfig) (*Orchestrator, error) {
 	if config.Supervisor == nil || config.DashboardAuth == nil {
 		return nil, fmt.Errorf("orchestrator needs a supervisor and dashboard authenticator")
 	}
+	config.Supervisor.mu.RLock()
+	for _, profile := range config.Supervisor.profileAdoptions.Operations {
+		if profile.TargetCellID != string(cellID) {
+			config.Supervisor.mu.RUnlock()
+			return nil, errors.New("profile adoption journal belongs to another cell")
+		}
+	}
+	config.Supervisor.mu.RUnlock()
 	drainTimeout := config.DrainTimeout
 	if drainTimeout <= 0 {
 		drainTimeout = defaultRuntimeDrainTimeout
@@ -262,13 +288,20 @@ func NewOrchestrator(config OrchestratorConfig) (*Orchestrator, error) {
 	if now == nil {
 		now = func() time.Time { return time.Now().UTC() }
 	}
-	return &Orchestrator{
-		cellID: string(cellID), tokenHash: sha256.Sum256([]byte(config.Token)),
+	epoch, err := readControlFence(filepath.Join(config.Supervisor.config.DataRoot, "Accounts"), string(cellID))
+	if err != nil {
+		return nil, fmt.Errorf("load controller fence: %w", err)
+	}
+	orchestrator := &Orchestrator{
+		handoverTransport: config.EnableHandoverTransport,
+		cellID:            string(cellID), tokenHash: sha256.Sum256([]byte(config.Token)),
 		supervisor: config.Supervisor, dashboardAuth: config.DashboardAuth,
 		drainTimeout: drainTimeout, now: now,
 		runtimes: map[AccountID]RuntimeAssignment{}, configurationSyncs: map[AccountID]configurationSyncState{},
 		subscribers: map[chan CellStatus]struct{}{},
-	}, nil
+	}
+	orchestrator.controlEpoch.Store(epoch)
+	return orchestrator, nil
 }
 
 func (orchestrator *Orchestrator) Start(ctx context.Context) {
@@ -300,9 +333,26 @@ func (orchestrator *Orchestrator) run(ctx context.Context) {
 
 func (orchestrator *Orchestrator) Handler() http.Handler {
 	mux := http.NewServeMux()
+	if orchestrator.handoverTransport {
+		mux.HandleFunc("POST /orchestrator/v1/handovers/export", orchestrator.handleProfileExport)
+		mux.HandleFunc("POST /orchestrator/v1/handovers/preflight", orchestrator.handleProfilePreflight)
+		mux.HandleFunc("POST /orchestrator/v1/handovers/download", orchestrator.handleProfileDownload)
+		mux.HandleFunc("POST /orchestrator/v1/handovers/restore", orchestrator.handleProfileRestore)
+		mux.HandleFunc("POST /orchestrator/v1/handovers/activate", orchestrator.handleProfileActivate)
+		mux.HandleFunc("POST /orchestrator/v1/handovers/local/stop", orchestrator.handleLocalProfileStop)
+		mux.HandleFunc("POST /orchestrator/v1/handovers/local/prepare", orchestrator.handleLocalProfilePrepare)
+		mux.HandleFunc("POST /orchestrator/v1/handovers/local/activate", orchestrator.handleLocalProfileActivate)
+	}
 	mux.HandleFunc("GET /orchestrator/v1/status", orchestrator.handleStatus)
 	mux.HandleFunc("GET /orchestrator/v1/events", orchestrator.handleEvents)
 	mux.HandleFunc("POST /orchestrator/v1/reconcile", orchestrator.handleReconcile)
+	mux.HandleFunc("POST /orchestrator/v1/control-fence", func(writer http.ResponseWriter, request *http.Request) {
+		if request.Header.Get(controlEpochHeader) == "" {
+			writeControlError(writer, http.StatusBadRequest, "control_epoch_required")
+			return
+		}
+		writeControlJSON(writer, http.StatusOK, orchestrator.Status())
+	})
 	mux.HandleFunc("PUT /orchestrator/v1/runtimes/{id}/dashboard-grant", orchestrator.handleDashboardGrant)
 	mux.HandleFunc("PUT /orchestrator/v1/runtimes/{id}/dashboard-bootstrap", orchestrator.handleDashboardBootstrap)
 	mux.HandleFunc("PUT /orchestrator/v1/runtimes/{id}/login", orchestrator.handleLoginCredential)
@@ -313,6 +363,27 @@ func (orchestrator *Orchestrator) Handler() http.Handler {
 		setControlSecurityHeaders(writer)
 		if !orchestrator.authenticate(request) {
 			writeControlError(writer, http.StatusUnauthorized, "orchestrator_authentication_required")
+			return
+		}
+		parts := strings.Split(strings.Trim(request.URL.Path, "/"), "/")
+		if strings.HasPrefix(request.URL.Path, "/orchestrator/v1/handovers/") {
+			if !orchestrator.handoverTransport {
+				writeControlError(writer, http.StatusNotFound, "handover_transport_disabled")
+				return
+			}
+			if request.Header.Get(controlEpochHeader) == "" {
+				writeControlError(writer, http.StatusPreconditionRequired, "control_epoch_required")
+				return
+			}
+		}
+		if len(parts) >= 5 && parts[0] == "orchestrator" && parts[1] == "v1" && parts[2] == "runtimes" {
+			if orchestrator.supervisor.runtimeHandoverFenced(AccountID(parts[3])) {
+				writeControlError(writer, http.StatusLocked, "runtime_handover_fenced")
+				return
+			}
+		}
+		if request.Method != http.MethodGet && request.Method != http.MethodHead {
+			orchestrator.withControlFence(writer, request, mux)
 			return
 		}
 		mux.ServeHTTP(writer, request)
@@ -339,6 +410,10 @@ func (orchestrator *Orchestrator) handleStatus(writer http.ResponseWriter, _ *ht
 func (orchestrator *Orchestrator) handleReconcile(writer http.ResponseWriter, request *http.Request) {
 	var desired ReconcileRequest
 	if err := decodeControlJSON(writer, request, &desired); err != nil {
+		return
+	}
+	if len(desired.PreserveRuntimes) > 0 && (!orchestrator.handoverTransport || request.Header.Get(controlEpochHeader) == "") {
+		writeControlError(writer, http.StatusForbidden, "handover_transport_required")
 		return
 	}
 	status, err := orchestrator.Reconcile(request.Context(), desired)
@@ -369,6 +444,32 @@ func (orchestrator *Orchestrator) Reconcile(ctx context.Context, desired Reconci
 		return CellStatus{}, &orchestratorError{status: http.StatusConflict, code: "stale_desired_revision", err: fmt.Errorf("desired revision %d is older than %d", normalized.Revision, currentRevision)}
 	}
 	desiredByID := assignmentsByID(normalized.Runtimes)
+	preserved := make(map[AccountID]bool, len(desired.PreserveRuntimes))
+	for _, raw := range desired.PreserveRuntimes {
+		id, err := ParseAccountID(raw)
+		_, assigned := desiredByID[id]
+		if err != nil || string(id) != raw || preserved[id] || assigned || !orchestrator.handoverTransport {
+			return CellStatus{}, &orchestratorError{status: http.StatusBadRequest, code: "invalid_preserved_runtime", err: errors.New("invalid handover-preserved runtime")}
+		}
+		preserved[id] = true
+		if previous, exists := current[id]; exists {
+			desiredByID[id] = previous
+		}
+	}
+	if maximum := orchestrator.supervisor.Capacity().Max; maximum > 0 && len(desiredByID) > maximum {
+		return CellStatus{}, &orchestratorError{status: http.StatusUnprocessableEntity, code: "runtime_limit_exceeded", err: errors.New("combined runtime count exceeds capacity")}
+	}
+	for id, assignment := range desiredByID {
+		if preserved[id] {
+			continue
+		}
+		orchestrator.supervisor.mu.RLock()
+		adoptionErr := orchestrator.supervisor.validateAdoptedAssignmentLocked(id, &assignment)
+		orchestrator.supervisor.mu.RUnlock()
+		if adoptionErr != nil || orchestrator.supervisor.runtimeHandoverFenced(id) {
+			return CellStatus{}, &orchestratorError{status: http.StatusLocked, code: "runtime_handover_fenced", err: errors.New("runtime is durably fenced for handover")}
+		}
+	}
 	if normalized.Revision == currentRevision && currentRevision != 0 {
 		if !sameAssignments(current, desiredByID) {
 			return CellStatus{}, &orchestratorError{status: http.StatusConflict, code: "desired_revision_conflict", err: errors.New("desired revision was reused with different assignments")}
@@ -376,6 +477,9 @@ func (orchestrator *Orchestrator) Reconcile(ctx context.Context, desired Reconci
 		return orchestrator.Status(), nil
 	}
 	for id, assignment := range desiredByID {
+		if preserved[id] {
+			continue
+		}
 		if existing, exists := current[id]; exists {
 			if existing.TenantID != assignment.TenantID {
 				return CellStatus{}, &orchestratorError{status: http.StatusConflict, code: "runtime_owner_conflict", err: fmt.Errorf("runtime %q cannot change tenant ownership", id)}
@@ -388,11 +492,15 @@ func (orchestrator *Orchestrator) Reconcile(ctx context.Context, desired Reconci
 
 	added := make([]AccountID, 0)
 	for id, assignment := range desiredByID {
+		if preserved[id] {
+			continue
+		}
 		if _, exists := current[id]; exists {
 			continue
 		}
 		if _, err := orchestrator.supervisor.AddAccount(ctx, AccountConfig{
 			ID: string(id), BackgroundOnly: true, StartSession: false,
+			handoverAssignment:           &assignment,
 			ControlConfigurationRequired: assignment.DesiredConfigurationRevision > 0,
 			ControlConfigurationReady:    false,
 			PrivateMetricsPlacement:      orchestrator.privateMetricsPlacement(assignment, normalized.Revision),
@@ -420,6 +528,9 @@ func (orchestrator *Orchestrator) Reconcile(ctx context.Context, desired Reconci
 	// Reconcile and sync share reconcileMu, so no acknowledgement can cross
 	// this transition.
 	for id, assignment := range desiredByID {
+		if preserved[id] {
+			continue
+		}
 		if application, exists := orchestrator.supervisor.Application(id); exists && application != nil {
 			application.SetControlConfigurationReady(
 				assignment.DesiredConfigurationRevision > 0,
@@ -431,6 +542,9 @@ func (orchestrator *Orchestrator) Reconcile(ctx context.Context, desired Reconci
 	orchestrator.revision = normalized.Revision
 	orchestrator.runtimes = desiredByID
 	for id, assignment := range desiredByID {
+		if preserved[id] {
+			continue
+		}
 		if assignment.DesiredConfigurationRevision == 0 {
 			delete(orchestrator.configurationSyncs, id)
 		}
@@ -440,6 +554,9 @@ func (orchestrator *Orchestrator) Reconcile(ctx context.Context, desired Reconci
 	}
 	orchestrator.mu.Unlock()
 	for id, assignment := range desiredByID {
+		if preserved[id] {
+			continue
+		}
 		if err := orchestrator.supervisor.SetPrivateMetricsPlacement(
 			id, orchestrator.privateMetricsPlacement(assignment, normalized.Revision),
 		); err != nil {
@@ -454,6 +571,9 @@ func (orchestrator *Orchestrator) Reconcile(ctx context.Context, desired Reconci
 		orchestrator.drainRuntime(id)
 	}
 	for id, assignment := range desiredByID {
+		if preserved[id] {
+			continue
+		}
 		application, exists := orchestrator.supervisor.Application(id)
 		if !exists || application == nil {
 			continue
@@ -818,7 +938,6 @@ func (orchestrator *Orchestrator) handleConfigurationSync(writer http.ResponseWr
 	snapshot, changed, err := application.Configuration.ReplaceAllAuthoritative(
 		replacement,
 		History.PlayerSamplesConfigurationSection,
-		Reports.BattleResearchConfigurationSection,
 	)
 	if err != nil {
 		writeControlError(writer, http.StatusUnprocessableEntity, "configuration_apply_failed")
@@ -998,6 +1117,9 @@ func (orchestrator *Orchestrator) Status() CellStatus {
 		if applicationExists && application != nil {
 			status.Lifecycle = "running"
 			if application.State != nil {
+				for _, automation := range application.State.ReadOnlyView().Automations {
+					status.ActiveSafetyLock = status.ActiveSafetyLock || automation.SafetyLock.Active(now)
+				}
 				session := application.State.Session()
 				status.SessionState = session.Status
 				status.LoggedIn = session.LoggedIn
@@ -1053,7 +1175,17 @@ func (orchestrator *Orchestrator) Status() CellStatus {
 		runtimes = append(runtimes, status)
 	}
 	sort.Slice(runtimes, func(left, right int) bool { return runtimes[left].RuntimeID < runtimes[right].RuntimeID })
+	var profileAvailable uint64
+	if orchestrator.handoverTransport {
+		if usage, err := disk.Usage(orchestrator.supervisor.config.DataRoot); err == nil {
+			profileAvailable = usage.Free
+		}
+	}
 	return CellStatus{
+		SettingsSwitchSchema:  orchestrator.handoverSchema(),
+		ProfileAvailableBytes: profileAvailable,
+		HandoverSchema:        orchestrator.handoverSchema(),
+		ControlFenceSchema:    1, ControlEpoch: orchestrator.controlEpoch.Load(),
 		SchemaVersion: OrchestratorSchemaVersion,
 		Version:       App.Version, BuildRevision: App.BuildRevision, BuildID: App.BuildID,
 		CellID:          orchestrator.cellID,

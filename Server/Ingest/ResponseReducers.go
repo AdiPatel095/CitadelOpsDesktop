@@ -27,14 +27,14 @@ func reduceResponseResources(
 	}
 	changed := false
 	if raw := root["gcu"]; len(raw) > 0 {
-		updated, err := applyPlayerResources(raw, gameState, gameData)
+		updated, err := applyPlayerResources(raw, gameState, gameData, frame.ReceivedAt, frame.ResponseCode != nil && *frame.ResponseCode == 0)
 		if err != nil {
 			return nil, false, err
 		}
 		changed = changed || updated
 	}
 	if raw := root["sce"]; len(raw) > 0 {
-		updated, err := applyPlayerCurrencies(raw, gameState, gameData)
+		updated, err := applyPlayerCurrencies(raw, gameState, gameData, frame.ReceivedAt, frame.ResponseCode != nil && *frame.ResponseCode == 0)
 		if err != nil {
 			return nil, false, err
 		}

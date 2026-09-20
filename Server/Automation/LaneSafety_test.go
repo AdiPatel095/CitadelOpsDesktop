@@ -161,8 +161,8 @@ func TestCoordinatorRestoredLockSurvivesConfigurationAndSessionChanges(t *testin
 	if len(policy.snapshots) != 0 {
 		t.Fatal("locked policy evaluated")
 	}
-	if next := nextPolicyEvaluationAt(runtime, time.Now()); !next.IsZero() {
-		t.Fatalf("unknown lock polling at %v", next)
+	if next := nextPolicyEvaluationAt(runtime, time.Now()); !next.Equal(lock.ExpiresAt()) {
+		t.Fatalf("unknown lock wake=%v, want expiry %v", next, lock.ExpiresAt())
 	}
 	_, err := store.ApplyComponents(State.Components(State.ComponentAutomations), func(state *State.GameState) ([]string, bool, error) {
 		current := state.Automations["lane"]

@@ -35,7 +35,7 @@ func (engine *Engine) failurePresentation(receipt Receipt, err error) *FailurePr
 	var locked *LaneLockedError
 	if errors.As(err, &locked) {
 		lock := locked.Lock
-		return &FailurePresentation{Kind: FailureUnknown, Message: "Automation lane safety lock", Explanation: lock.Detail(), Recovery: "Review the triggering operation before clearing this lane lock.", Severity: FailureSeverityError, Toast: locked.Cause != nil, GameCode: &lock.Code, GameOpcode: lock.Opcode, SafetyLock: &lock}
+		return &FailurePresentation{Kind: FailureUnknown, Message: "Automation lane safety lock", Explanation: lock.Detail(), Recovery: "The lane automatically becomes eligible again 30 minutes after this rejection; normal session and feature prerequisites still apply.", Severity: FailureSeverityError, Toast: locked.Cause != nil, GameCode: &lock.Code, GameOpcode: lock.Opcode, SafetyLock: &lock}
 	}
 	presentation := &FailurePresentation{
 		Kind:        FailureUnknown,
@@ -97,6 +97,12 @@ func (engine *Engine) failurePresentation(receipt Receipt, err error) *FailurePr
 		presentation.Explanation = "There are not enough eligible troops available for this action."
 		presentation.Recovery = "The feature lane will reevaluate after troop availability changes."
 		presentation.Toast = !automationActor(receipt.Actor) || receipt.Status != StatusFailed
+	case errors.Is(err, ErrCoinUnavailable):
+		presentation.Kind = FailureAvailability
+		presentation.Severity = FailureSeverityWarning
+		presentation.Explanation = cleanFailureText(err.Error())
+		presentation.Recovery = "The feature lane will reevaluate after the authoritative coin balance changes."
+		presentation.Toast = !automationActor(receipt.Actor)
 	case strings.Contains(lower, "timed out waiting for") ||
 		(errors.Is(err, context.DeadlineExceeded) && !Outbound.IsIndeterminate(err) && receipt.Status != StatusIndeterminate):
 		presentation.Kind = FailureTimeout

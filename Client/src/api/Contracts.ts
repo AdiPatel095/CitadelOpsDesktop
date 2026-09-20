@@ -475,89 +475,6 @@ export interface WorldIntelligenceUpdateManifestV1 {
 	updatedAt?: string;
 }
 
-export interface BattleResearchPhasePredictionV2 {
-	winner: 'attacker' | 'defender';
-	attackerStarted: number;
-	defenderStarted: number;
-	attackerPower: number;
-	defenderPower: number;
-	attackerLost: number;
-	defenderLost: number;
-	attackerSurvivors: number;
-	defenderSurvivors: number;
-}
-
-export interface BattleResearchWavePredictionV2 {
-	wave: number;
-	left: BattleResearchPhasePredictionV2;
-	center: BattleResearchPhasePredictionV2;
-	right: BattleResearchPhasePredictionV2;
-}
-
-export interface BattleResearchPredictionV2 {
-	modelVersion: string;
-	generatedAt: string;
-	predictedResult: 'Victory' | 'Defeat';
-	attackWinProbability: number;
-	confidence: string;
-	attackerSent: number;
-	defenderObserved: number;
-	expectedAttackerLost: number;
-	expectedDefenderLost: number;
-	expectedAttackerSurvivors: number;
-	expectedDefenderSurvivors: number;
-	unitStatCoverage: number;
-	attackerMeleeBonusPercent?: number;
-	attackerRangeBonusPercent?: number;
-	wallReductionPercent?: number;
-	gateReductionPercent?: number;
-	moatReductionPercent?: number;
-	waves: BattleResearchWavePredictionV2[];
-	courtyard: BattleResearchPhasePredictionV2;
-	considered: string[];
-	recordedNotModeled: string[];
-	assumptions: string[];
-}
-
-export interface BattleResearchTrialSummaryV2 {
-	id: string;
-	phase: string;
-	movementID?: number;
-	targetX: number;
-	targetY: number;
-	kingdomID: number;
-	arrivesAt?: string;
-	createdAt: string;
-	updatedAt: string;
-	prediction?: BattleResearchPredictionV2;
-	actualResult?: string;
-	actualAttackerLost?: number;
-	actualDefenderLost?: number;
-	uploadState: string;
-	lastError?: string;
-}
-
-export interface BattleResearchStatusV2 {
-	beta: true;
-	enabled: boolean;
-	consentVersion: number;
-	requiredConsentVersion: number;
-	state: 'disabled' | 'consent-update-required' | 'waiting-for-session' | 'observing';
-	activeTrials: number;
-	completedTrials: number;
-	pendingUploads: number;
-	lastMovementPollAt?: string;
-	lastError?: string;
-	calculator: {
-		modelVersion: string;
-		maturity: string;
-		description: string;
-		considered: string[];
-		limitations: string[];
-	};
-	trials: BattleResearchTrialSummaryV2[];
-}
-
 export interface SceatSkillActivationV2 {
 	id: number;
 	remainingSec: number;
@@ -877,6 +794,50 @@ export interface MarketStateV2 {
 		expiresAt?: string;
 		observedAt?: string;
 	};
+	latestFeastPurchase?: {
+		outcome: string;
+		feastId: number;
+		chargedCastleId: number;
+		chargedKingdomId: number;
+		attemptedAt: string;
+		updatedAt: string;
+		expectedEffectiveCost: number;
+		foodBefore?: number;
+		foodBeforeKnown: boolean;
+		foodBeforeObservedAt?: string;
+		foodAfter?: number;
+		foodAfterKnown: boolean;
+		foodAfterObservedAt?: string;
+		debitVerification: string;
+		activationConfirmed: boolean;
+		confirmedRemainingSec?: number;
+		confirmedExpiresAt?: string;
+		activationConfirmedAt?: string;
+		detail?: string;
+	};
+	latestSpecialistPurchase?: {
+		outcome: string;
+		specialistId: number;
+		opcode: string;
+		attemptedAt: string;
+		updatedAt: string;
+		minimumDays: number;
+		validatedMaximumCost: number;
+		configuredRubyCeiling: number;
+		minimumRubyReserve: number;
+		timerBefore?: string;
+		timerAfter?: string;
+		timerAfterObservedAt?: string;
+		rubyBefore?: number;
+		rubyBeforeKnown: boolean;
+		rubyBeforeObservedAt?: string;
+		rubyAfter?: number;
+		rubyAfterKnown: boolean;
+		rubyAfterObservedAt?: string;
+		debitVerification: string;
+		activationConfirmed: boolean;
+		detail?: string;
+	};
 	feastCostReductionPercent?: number;
 	feastCostReductionObservedAt?: string;
 	caravanLevel?: number;
@@ -929,12 +890,21 @@ export interface EquipmentOptimizeRequest {
 	leaderKind: 'commander' | 'castellan';
 	leaderId: number;
 	combatMode: 'pvp' | 'pve';
+	targetAreaTypeIds?: number[];
 	priorities: EquipmentPriorityV2[];
+	resultCount?: number;
 }
 
 export interface EquipmentEffectTotalV2 {
+	semanticKey: string;
 	definitionId: number;
+	argumentId?: number;
 	value: number;
+	rawValue: number;
+	unit: 'percent' | 'count' | 'number' | 'categorical';
+	precision: number;
+	categorical?: boolean;
+	capId?: number;
 	cap?: number;
 	capped: boolean;
 }
@@ -944,18 +914,32 @@ export interface EquipmentLoadoutV2 {
 	gems: Record<string, number>;
 	effects: EquipmentEffectTotalV2[];
 	score: number;
+	extractionCost: EquipmentExtractionCostV2;
+	reason?: string;
+	useful?: boolean;
+}
+
+export interface EquipmentExtractionCostV2 {
+	rubyExtractionCount: number;
+	maximumRubySpend: number;
+	relicExtractionCount: number;
+	socketInsertionCount: number;
+	fingerprint: string;
 }
 
 export interface EquipmentOptimizeResponse {
 	leaderKind: 'commander' | 'castellan';
 	leaderId: number;
 	stateRevision: number;
+	snapshotFingerprint: string;
 	current: EquipmentLoadoutV2;
 	proposed: EquipmentLoadoutV2;
+	alternatives: EquipmentLoadoutV2[];
 	candidates: {
 		equipmentBySlot: Record<string, number>;
 		gems: number;
 	};
+	noUsefulChange?: boolean;
 }
 
 export interface BuildingCostV2 {
@@ -1571,6 +1555,9 @@ export interface MovementStateV2 {
 	targetCastleId?: number;
 	targetTypeId?: number;
 	commanderId?: number;
+	leaderId?: number;
+	leaderDlid?: number;
+	leaderWid?: number;
 	kingdomId: number;
 	sourceX?: number;
 	sourceY?: number;
@@ -1580,6 +1567,10 @@ export interface MovementStateV2 {
 	waitSeconds?: number;
 	progressSeconds?: number;
 	spyCount?: number;
+	advisorType?: number;
+	advisorAttackNumber?: number;
+	advisorAttackCount?: number;
+	advisorLaunchState?: number;
 	startedAt?: string;
 	arrivesAt?: string;
 	returnsAt?: string;
@@ -1644,6 +1635,7 @@ export interface AutomationStateV2 {
 	lastError?: string;
 	safetyLock?: AutomationSafetyLockV2;
 	metrics?: Record<string, number>;
+	details?: Record<string, string>;
 	updatedAt: string;
 }
 
@@ -1694,6 +1686,9 @@ export interface MovementSnapshotV2 {
 }
 
 export interface StationingOperationV2 {
+ paused?: boolean;
+ pausedUntil?: string;
+ rescanRequested?: boolean;
 	id: string;
 	purpose: string;
 	phase?: 'target-ready' | 'dispatch-ready' | 'away' | 'waiting';
@@ -1886,9 +1881,61 @@ export interface EventAvailabilityV2 {
 	endsAt: string;
 }
 
+export interface GlobalEffectAvailabilityV2 {
+	globalEffectId: number;
+	strength: number;
+	endsAt: string;
+}
+
+export interface GlobalEffectBoosterOfferV2 {
+	globalEffectId: number;
+	rubyCost: number;
+	bonusValue: number;
+}
+
+export interface GlobalEffectBoostStateV2 {
+	globalEffectId: number;
+	boosted: boolean;
+	occurrenceEndsAt: string;
+	observedAt: string;
+	connectionGeneration?: number;
+}
+
+export interface GlobalEffectPurchaseRecordV2 {
+	globalEffectId: number;
+	occurrenceEndsAt: string;
+	expiresAt: string;
+	quotedRubyCost: number;
+	quotedBonusValue: number;
+	minimumRubyReserve: number;
+	rubyBefore: number;
+	rubyBeforeObservedAt: string;
+	requestedAt: string;
+	dispatchedAt?: string;
+	requestOpcode: string;
+	connectionGeneration?: number;
+	operationId?: string;
+	resultCode?: number;
+	resultObservedAt?: string;
+	activationObservedAt?: string;
+	rubyAfter?: number;
+	rubyAfterKnown?: boolean;
+	rubyAfterObservedAt?: string;
+	observedRubyChange?: number;
+	debitUnverified: boolean;
+	outcome: 'unresolved' | 'accepted' | 'confirmed' | 'rejected';
+	detail?: string;
+}
+
 export interface EventInventoryStateV2 {
 	observedAt?: string;
 	activeByEvent?: Record<string, EventAvailabilityV2> | null;
+	globalEffectsObservedAt?: string;
+	globalEffects?: Record<string, GlobalEffectAvailabilityV2> | null;
+	globalEffectBoosterOffers?: Record<string, GlobalEffectBoosterOfferV2> | null;
+	globalEffectBoostsObservedAt?: string;
+	globalEffectBoosts?: Record<string, GlobalEffectBoostStateV2> | null;
+	globalEffectPurchases?: Record<string, GlobalEffectPurchaseRecordV2> | null;
 }
 
 export interface EventScoreStateV2 {
@@ -2251,6 +2298,8 @@ export interface AutoBuyerSpecialistV1 {
   name: string;
   durationSec: number;
   baseRubyCost: number;
+	validatedMaximumRubyCost?: number;
+	priceProvenance?: string;
   bonusPercent?: number;
 }
 
@@ -2277,7 +2326,16 @@ export interface AutoBuyerProjectionV1 {
   packages: AutoBuyerPackageV1[];
   specialists: AutoBuyerSpecialistV1[];
   feasts: AutoBuyerFeastV1[];
-  timedOffers: AutoBuyerCapabilityV1;
+	timedOffers: AutoBuyerCapabilityV1;
+	feastAutomaticSource?: AutoBuyerCapabilityV1;
+	specialistUpkeep?: AutoBuyerCapabilityV1;
+	specialistRuntime?: {
+		timersObservedAt?: string;
+		timersCurrentSession: boolean;
+		rubyBalance?: number;
+		rubyObservedAt?: string;
+		rubyCurrentSession: boolean;
+	};
 }
 
 export interface LanguageMetadata {
@@ -2376,8 +2434,13 @@ export interface IntentReceipt {
   status: IntentStatus;
   phase?: IntentEffectPhase;
   attempt?: number;
-  plan?: IntentPlan;
+	plan?: IntentPlan;
 	exchanges?: IntentCommandExchange[];
+	evidence?: Array<{
+		kind: string;
+		observedAt: string;
+		data: unknown;
+	}>;
 	completedStepIndexes?: number[];
 	error?: string;
 	failure?: IntentFailurePresentation;

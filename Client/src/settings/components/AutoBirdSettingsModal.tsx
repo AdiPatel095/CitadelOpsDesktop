@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Bird, CalendarDays, Plus } from 'lucide-react';
+import { Bird, CalendarDays, LockKeyhole, Plus } from 'lucide-react';
 import { showTroopPicker } from '../../components/TroopPickerModal';
 import type { UnitWithQuantity } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
@@ -27,6 +27,13 @@ import {
 } from '../../components/ui';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { castleOptionsFromState } from '../../api/Selectors';
+import { useAuth } from '../../context/AuthContext';
+import { AUTO_FORTRESS_DIREWOLF_ID } from '../AutoFortressClientState';
+import {
+  autoFortressReservesDirewolves,
+  mergeAutoBirdPickerItems,
+  visibleAutoBirdReserveItems,
+} from '../AutoBirdFortressReserve';
 
 interface AutoBirdSettingsModalProps {
   isOpen: boolean;
@@ -46,6 +53,7 @@ function clampMinRPTDays(value: number): number {
 
 export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ isOpen, onClose, onOpenFeatureSchedule }) => {
   const { state, configuration } = useCitadelAPI();
+  const { autoFortressEnabled } = useAuth();
   const castles = castleOptionsFromState(state);
   const [settings, setSettings] = useState<Record<string, { id: number; amount: number }[]>>({});
   const [minDelay, setMinDelay] = useState(6);
@@ -55,6 +63,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
   const [presetsState, setPresetsState] = useState(() => emptyPresetsFile());
   const [presetDropdownId, setPresetDropdownId] = useState('');
   const [appliedPresetId, setAppliedPresetId] = useState<string | null>(null);
+  const [activePresetId, setActivePresetId] = useState<string | null>(null);
   const [presetName, setPresetName] = useState('');
   const [presetError, setPresetError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -84,14 +93,20 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
   }, [configuration?.sections]);
 
   const applyFullClientState = useCallback((state: ReturnType<typeof parseAutoBirdClientState>) => {
-    const ig = state.ignoreSettings;
+    const activePreset = state.activePresetId
+      ? state.presets.presets.find((preset) => preset.id === state.activePresetId)
+      : undefined;
+    const ig = activePreset ? applyPresetToStoredShape(activePreset) : state.ignoreSettings;
     setSettings(ig.settings);
     setMinDelay(clampDelayHours(ig.minDelay));
     setMaxDelay(clampDelayHours(ig.maxDelay));
     setMinSend(ig.minSend);
     setMinRPTDays(clampMinRPTDays(ig.minRPTDays));
     setPresetsState(state.presets);
-    const last = state.presets.lastSelectedPresetId;
+    setActivePresetId(state.activePresetId);
+    setAppliedPresetId(activePreset?.id ?? null);
+    setPresetName(activePreset?.name ?? '');
+    const last = activePreset?.id ?? state.presets.lastSelectedPresetId;
     setPresetDropdownId(last && state.presets.presets.some((p) => p.id === last) ? last : '');
   }, []);
 
@@ -107,17 +122,21 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     if (loadedConfigurationSignature.current === signature) return;
     loadedConfigurationSignature.current = signature;
     applyFullClientState(parseAutoBirdClientState(rawState));
-
-    setAppliedPresetId(null);
-    setPresetName('');
     setPresetError('');
 
   }, [configuration?.sections, isOpen, applyFullClientState]);
 
   const handleAddItem = async (castleId: string) => {
     const currentItems = settings[castleId] || [];
+    const castleState = state?.castles[castleId];
+    const fortressProtected = autoFortressReservesDirewolves(
+      autoFortressEnabled,
+      castleState,
+      configuration?.sections['automation.autoFortress'],
+    );
+    const editableItems = visibleAutoBirdReserveItems(currentItems, fortressProtected);
     const preselectedQuantities: Record<number, number> = {};
-    currentItems.forEach((item) => {
+    editableItems.forEach((item) => {
       if (item.id) preselectedQuantities[item.id] = item.amount;
     });
 
@@ -125,8 +144,9 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
       mode: 'multi',
       title: `Keep in castle (not sent on bird) — ${castles.find((c) => c.id === parseInt(castleId, 10))?.name ?? castleId}`,
       allowQuantity: true,
-      preselected: currentItems.map((i) => i.id),
+      preselected: editableItems.map((i) => i.id),
       preselectedQuantities,
+      excludedUnitIds: fortressProtected ? [AUTO_FORTRESS_DIREWOLF_ID] : undefined,
     });
 
     if (Array.isArray(result)) {
@@ -134,7 +154,10 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
         id: u.unitId,
         amount: u.quantity,
       }));
-      setSettings((prev) => ({ ...prev, [castleId]: newItems }));
+      setSettings((prev) => ({
+        ...prev,
+        [castleId]: mergeAutoBirdPickerItems(prev[castleId] || [], newItems, fortressProtected),
+      }));
     }
   };
 
@@ -185,11 +208,12 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     };
     setIsSaving(true);
     try {
-      const snapshot = await persistAutoBirdClientState(buildAutoBirdClientState(currentIgnoreSettings(), presetsFile));
+      const snapshot = await persistAutoBirdClientState(buildAutoBirdClientState(currentIgnoreSettings(), presetsFile, id));
       loadedConfigurationSignature.current = JSON.stringify(snapshot.sections['automation.autoBird']);
       setPresetsState(presetsFile);
       setPresetDropdownId(id);
       setAppliedPresetId(id);
+      setActivePresetId(id);
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'Could not save the Auto Bird preset.');
     } finally {
@@ -208,12 +232,18 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
       lastSelectedPresetId:
         presetsState.lastSelectedPresetId === id ? null : presetsState.lastSelectedPresetId,
     };
+    const nextActivePresetId = activePresetId === id ? null : activePresetId;
     setIsSaving(true);
     setSaveError(null);
     try {
-      const snapshot = await persistAutoBirdClientState(buildAutoBirdClientState(currentIgnoreSettings(), presetsFile));
+      const snapshot = await persistAutoBirdClientState(buildAutoBirdClientState(
+        currentIgnoreSettings(),
+        presetsFile,
+        nextActivePresetId,
+      ));
       loadedConfigurationSignature.current = JSON.stringify(snapshot.sections['automation.autoBird']);
       setPresetsState(presetsFile);
+      setActivePresetId(nextActivePresetId);
       setPresetDropdownId('');
       if (appliedPresetId === id) {
         setAppliedPresetId(null);
@@ -248,9 +278,10 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     };
     setIsSaving(true);
     try {
-      const snapshot = await persistAutoBirdClientState(buildAutoBirdClientState(payload, presetsFile));
+      const snapshot = await persistAutoBirdClientState(buildAutoBirdClientState(payload, presetsFile, appliedPresetId));
       loadedConfigurationSignature.current = JSON.stringify(snapshot.sections['automation.autoBird']);
       setPresetsState(presetsFile);
+      setActivePresetId(appliedPresetId);
       onClose();
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'Could not save Auto Bird settings.');
@@ -264,9 +295,14 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
   };
 
   const presetOptions = [
-    { value: '', label: '— Saved configuration —' },
-    ...presetsState.presets.map((p) => ({ value: p.id, label: p.name })),
+    { value: '', label: activePresetId ? '— Saved configuration —' : '— Saved configuration (runtime default) —' },
+    ...presetsState.presets.map((p) => ({
+      value: p.id,
+      label: p.id === activePresetId ? `${p.name} (runtime default)` : p.name,
+    })),
   ];
+  const activePresetMissing = !!activePresetId &&
+    !presetsState.presets.some((preset) => preset.id === activePresetId);
 
   return (
     <SettingsModal
@@ -277,7 +313,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
       icon={<Bird className="h-5 w-5" />}
       description={(
             <>
-              Configure troops to keep (ignore) for each castle when auto-birding. These units will{' '}
+              Configure runtime-selectable presets of troops to keep in each castle. These units will{' '}
               <span className="font-bold text-text-main">not</span> be sent.
             </>
       )}
@@ -300,6 +336,11 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
         {saveError && (
           <div className="rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm font-semibold text-error" role="alert">
             {saveError}
+          </div>
+        )}
+        {activePresetMissing && (
+          <div className="rounded-global border border-warning/30 bg-warning/10 px-4 py-3 text-sm font-semibold text-warning" role="alert">
+            The selected runtime preset no longer exists. Saving the displayed configuration will safely clear that selection.
           </div>
         )}
         {/* Global settings bar */}
@@ -384,9 +425,9 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
           disabled={isSaving}
           help={(
             <>
-            Choose a preset and click <span className="font-semibold text-text-main">Apply</span> to load it into the grid.{' '}
-            <span className="font-semibold text-text-main">Save changes</span> writes Auto Bird settings and updates the applied preset
-            (including name). Data is stored next to decoration presets (see AutoBird.json).
+            Choose a preset and click <span className="font-semibold text-text-main">Apply</span> to make it the runtime default and load it into the grid.{' '}
+            <span className="font-semibold text-text-main">Save changes</span> persists that selection and updates the applied preset
+            (including its name). Another feature can switch the runtime default by preset ID, while Calendar periods can override it.
             </>
           )}
         />
@@ -400,12 +441,18 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
             {castles.map((castle) => {
               const cid = String(castle.id);
               const items = settings[cid] || [];
+              const fortressProtected = autoFortressReservesDirewolves(
+                autoFortressEnabled,
+                state?.castles[cid],
+                configuration?.sections['automation.autoFortress'],
+              );
+              const visibleItems = visibleAutoBirdReserveItems(items, fortressProtected);
               return (
                 <Card key={castle.id} variant="solid" className="flex flex-col bg-bg-card-hover/40 p-4 shadow-inner">
                   <div className="mb-3 flex flex-wrap items-center gap-2 border-b border-border-base pb-2">
                     <h3 className="text-sm font-bold text-primary">{castle.name}</h3>
                   </div>
-                  {items.length === 0 ? (
+                  {visibleItems.length === 0 && !fortressProtected ? (
                     <div className="flex flex-1 flex-col items-center justify-center gap-3 py-6">
                       <p className="text-center text-xs font-medium uppercase tracking-wider text-text-muted">No ignored units</p>
                       <Button
@@ -420,7 +467,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                     </div>
                   ) : (
                     <div className="flex flex-wrap justify-center gap-4">
-                      {items.map((item) => (
+                      {visibleItems.map((item) => (
                         <QuantityAssetTile
                           key={item.id}
                           visual={<UnitImage unitId={item.id} size={76} showLevel className="rounded-xl" />}
@@ -429,6 +476,22 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
                           removeLabel="Remove unit"
                         />
                       ))}
+                      {fortressProtected && (
+                        <div className="relative flex w-[84px] shrink-0 flex-col items-center" aria-label="All Direwolves reserved by Auto Fortress">
+                          <div className="relative h-[76px] w-[76px]">
+                            <UnitImage unitId={AUTO_FORTRESS_DIREWOLF_ID} size={76} showLevel className="rounded-xl opacity-80" />
+                            <span className="absolute left-1 top-1 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white shadow-md" title="Reserved by Auto Fortress">
+                              <LockKeyhole className="h-3.5 w-3.5" />
+                            </span>
+                            <span className="absolute bottom-0 right-0 z-10 translate-x-1/4 translate-y-1/4 rounded-full bg-white px-2.5 py-0.5 text-center text-[10px] font-bold text-slate-900 shadow-md ring-1 ring-black/10">
+                              All
+                            </span>
+                          </div>
+                          <span className="mt-2 text-center text-[10px] font-semibold leading-tight text-text-muted">
+                            Reserved by Auto Fortress
+                          </span>
+                        </div>
+                      )}
                       <AddSlot
                         label="Add unit"
                         layout="icon"

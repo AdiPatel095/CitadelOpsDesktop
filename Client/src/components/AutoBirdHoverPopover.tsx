@@ -1,10 +1,14 @@
 import React, { useCallback, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { RotateCw, Timer } from 'lucide-react';
+import { useCitadelAPI } from '../api/ApiContext';
+import { AutomationDurationModal } from '../settings/components/AutomationDurationModal';
 import { createPortal } from 'react-dom';
 import type { AutoBirdCastleCycle } from '../context/AuthContext';
 
 interface AutoBirdHoverPopoverProps {
 	cycles: AutoBirdCastleCycle[];
 	enabled: boolean;
+ canControl?: boolean;
 	now: number;
 	hint: string;
 	children: React.ReactNode;
@@ -49,11 +53,27 @@ function cyclePhaseLabel(cycle: AutoBirdCastleCycle): string {
 const AutoBirdHoverPopover: React.FC<AutoBirdHoverPopoverProps> = ({
 	cycles,
 	enabled,
+ canControl = false,
 	now,
 	hint,
 	children,
 }) => {
-	const tooltipId = useId();
+ const { submitIntent } = useCitadelAPI();
+ const [pending, setPending] = useState<number | null>(null);
+ const [error, setError] = useState('');
+ const [durationCastle, setDurationCastle] = useState<AutoBirdCastleCycle | null>(null);
+ const controlCastle = async (castleId: number, action: 'pause' | 'resume' | 'resend', durationMinutes = 0) => {
+  if (pending !== null) return;
+  setPending(castleId);
+  setError('');
+  try {
+   await submitIntent('auto_bird.castle_control', { sourceCastleId: castleId, action, durationMinutes }, { actor: 'ui:auto-bird' });
+  } catch (value) {
+   setError(value instanceof Error ? value.message : 'Could not update this castle.');
+   throw value;
+  } finally { setPending(null); }
+ };
+ const tooltipId = useId();
 	const triggerRef = useRef<HTMLSpanElement>(null);
 	const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const [open, setOpen] = useState(false);
@@ -97,8 +117,12 @@ const AutoBirdHoverPopover: React.FC<AutoBirdHoverPopoverProps> = ({
 
 	const scheduleHide = useCallback(() => {
 		clearHideTimer();
-		hideTimer.current = window.setTimeout(() => setOpen(false), HIDE_DELAY_MS);
-	}, [clearHideTimer]);
+		hideTimer.current = window.setTimeout(() => {
+   const focused = document.activeElement;
+   if (focused && document.getElementById(tooltipId)?.contains(focused)) return;
+   setOpen(false);
+  }, HIDE_DELAY_MS);
+	}, [clearHideTimer, tooltipId]);
 
 	useLayoutEffect(() => {
 		if (!open) return;
@@ -119,7 +143,11 @@ const AutoBirdHoverPopover: React.FC<AutoBirdHoverPopoverProps> = ({
 	const tooltip = open && typeof document !== 'undefined' && createPortal(
 		<div
 			id={tooltipId}
-			role="tooltip"
+			role="dialog"
+ aria-label="Auto Bird castle controls"
+ onFocusCapture={clearHideTimer}
+ onBlurCapture={scheduleHide}
+ onKeyDown={(event) => { if (event.key === 'Escape') { event.stopPropagation(); triggerRef.current?.querySelector('button')?.focus(); setOpen(false); } }}
 			onMouseEnter={clearHideTimer}
 			onMouseLeave={scheduleHide}
 			style={{
@@ -153,13 +181,22 @@ const AutoBirdHoverPopover: React.FC<AutoBirdHoverPopoverProps> = ({
 					<ul className="m-0 list-none space-y-1 p-0 marker:hidden">
 						{cycles.map((cycle) => {
 							const active = cycle.nextCycleAtMs > 0;
+       const paused = cycle.paused && (!cycle.pausedUntilMs || cycle.pausedUntilMs > now);
 							return (
 								<li
 									key={cycle.castleId}
 									className="flex items-center justify-between gap-3 rounded-global border border-transparent px-2 py-2 hover:border-border-base hover:bg-bg-tertiary/60"
 								>
-									<div className="flex min-w-0 items-center gap-2.5">
-										<span className={`h-2 w-2 shrink-0 rounded-full ${active ? 'bg-success shadow-[0_0_8px_var(--color-success)]' : 'bg-text-muted/35'}`} />
+									<button type="button"
+ disabled={!canControl || pending !== null}
+ aria-pressed={!!paused}
+ aria-label={`${cycle.castleName}: ${paused ? 'resume' : 'pause'} Auto Bird`}
+ title="Click to pause or resume. Right-click for a timed pause."
+ onClick={() => { void controlCastle(cycle.castleId, paused ? 'resume' : 'pause').catch(() => {}); }}
+ onContextMenu={(event) => { event.preventDefault(); if (canControl && pending === null) setDurationCastle(cycle); }}
+ className="flex min-w-0 flex-1 items-center gap-2.5 text-left disabled:opacity-50 focus-visible:outline focus-visible:outline-primary">
+
+										<span className={`h-2 w-2 shrink-0 rounded-full ${paused ? 'bg-warning' : active ? 'bg-success shadow-[0_0_8px_var(--color-success)]' : 'bg-text-muted/35'}`} />
 										<div className="min-w-0">
 											<div className="truncate font-semibold text-text-main">{cycle.castleName}</div>
 											<div className="truncate text-[10px] text-text-muted">{kingdomName(cycle.kingdomId)}</div>
@@ -169,14 +206,14 @@ const AutoBirdHoverPopover: React.FC<AutoBirdHoverPopoverProps> = ({
 												</div>
 											)}
 										</div>
-									</div>
-									<div className="shrink-0 text-right">
-										<div className={active ? 'font-mono font-semibold text-success' : 'text-text-muted'}>
-											{active ? formatBirdCycle(cycle.nextCycleAtMs - now) : cyclePhaseLabel(cycle)}
+         </button>
+         <div className="shrink-0 text-right">
+										<div className={paused ? 'font-semibold text-warning' : active ? 'font-mono font-semibold text-success' : 'text-text-muted'}>
+											{paused ? (cycle.pausedUntilMs ? `Paused ${formatBirdCycle(cycle.pausedUntilMs - now)}` : 'Paused') : cycle.rescanRequested ? 'Rescan queued' : active ? formatBirdCycle(cycle.nextCycleAtMs - now) : cyclePhaseLabel(cycle)}
 										</div>
 										{active && (
 											<div className="mt-0.5 text-[10px] text-text-muted">
-												{new Date(cycle.nextCycleAtMs).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+												Return {new Date(cycle.nextCycleAtMs).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
 											</div>
 										)}
 										{cycle.travelSeconds != null && cycle.travelSeconds > 0 && (
@@ -185,7 +222,11 @@ const AutoBirdHoverPopover: React.FC<AutoBirdHoverPopoverProps> = ({
 											</div>
 										)}
 									</div>
-								</li>
+         <div className="flex flex-col gap-1">
+          <button type="button" disabled={!canControl || pending !== null} title={`Pause ${cycle.castleName} for a duration`} aria-label={`Timed pause for ${cycle.castleName}`} className="rounded p-1 text-text-muted hover:text-primary disabled:opacity-40" onClick={() => setDurationCastle(cycle)}><Timer size={13} /></button>
+          <button type="button" disabled={!canControl || pending !== null || !!paused || !enabled} title={`Resend from ${cycle.castleName}: clear this cycle and scan fresh troops and a target`} aria-label={`Resend bird from ${cycle.castleName}`} className="rounded p-1 text-text-muted hover:text-primary disabled:opacity-40" onClick={() => { void controlCastle(cycle.castleId, 'resend').catch(() => {}); }}><RotateCw size={13} className={pending === cycle.castleId ? 'animate-spin' : ''} /></button>
+         </div>
+        </li>
 							);
 						})}
 					</ul>
@@ -193,7 +234,9 @@ const AutoBirdHoverPopover: React.FC<AutoBirdHoverPopoverProps> = ({
 			</div>
 
 			<div className="shrink-0 border-t border-border-base px-3.5 py-2 text-[10px] text-text-muted">
-				{hint}
+				Click a castle to pause or resume. Right-click or use the timer for a timed pause. Resend scans fresh troops and a target. Birds already away continue their journey.
+    {error && <div role="alert" className="mt-1 text-error">{error}</div>}
+    <div className="mt-1">{hint}</div>
 			</div>
 		</div>,
 		document.body,
@@ -210,12 +253,20 @@ const AutoBirdHoverPopover: React.FC<AutoBirdHoverPopoverProps> = ({
 				onBlurCapture={scheduleHide}
 				onKeyDown={(event) => {
 					if (event.key === 'Escape') setOpen(false);
+     if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      show();
+      window.requestAnimationFrame(() => document.getElementById(tooltipId)?.querySelector('button')?.focus());
+     }
 				}}
-				aria-describedby={open ? tooltipId : undefined}
+				aria-controls={open ? tooltipId : undefined}
+    aria-haspopup="dialog"
+    aria-expanded={open}
 			>
 				{children}
 			</span>
 			{tooltip}
+   {durationCastle && <AutomationDurationModal isOpen featureKey={`auto-bird-castle-${durationCastle.castleId}`} featureLabel={`${durationCastle.castleName} Auto Bird`} pausedUntil={durationCastle.pausedUntilMs} onClose={() => { setDurationCastle(null); triggerRef.current?.querySelector('button')?.focus(); }} onPauseFor={(minutes) => controlCastle(durationCastle.castleId, 'pause', minutes)} />}
 		</>
 	);
 };

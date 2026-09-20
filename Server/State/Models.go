@@ -57,6 +57,29 @@ type SessionState struct {
 	// the next status change and never contains credential material.
 	LoginFailure *LoginFailure `json:"loginFailure,omitempty"`
 	ChangedAt    time.Time     `json:"changedAt"`
+	// FortressTargetVerification is process-local dispatch authority. A reconnect
+	// rebuilds SessionState and clears it, while persistence and client snapshots
+	// never expose response-correlation tokens.
+	FortressTargetVerification FortressTargetVerification `json:"-"`
+}
+
+type FortressTargetVerification struct {
+	SourceCastleID       CastleID
+	KingdomID            KingdomID
+	TargetX              int
+	TargetY              int
+	OperationID          string
+	ResponseToken        string
+	SessionGeneration    uint64
+	ConnectionGeneration uint64
+	FocusEpoch           uint64
+	FocusSubcontext      FocusSubcontext
+	ArmedAt              time.Time
+	ObservedAt           time.Time
+	Complete             bool
+	Available            bool
+	CooldownRemaining    int
+	Failure              string
 }
 
 // LoginFailureClass is the sanitized classification of a failed game login.
@@ -184,27 +207,39 @@ type AccountBindingState struct {
 }
 
 type PlayerState struct {
-	ID                PlayerID                  `json:"id"`
-	Name              string                    `json:"name,omitempty"`
-	AllianceID        AllianceID                `json:"allianceId,omitempty"`
-	Level             int                       `json:"level,omitempty"`
-	LegendLevel       int                       `json:"legendLevel,omitempty"`
-	Might             float64                   `json:"might,omitempty"`
-	Glory             float64                   `json:"glory,omitempty"`
-	GloryTitleID      int64                     `json:"gloryTitleId,omitempty"`
-	GloryTitleTopX    int                       `json:"gloryTitleTopX,omitempty"`
-	GloryTitleAt      time.Time                 `json:"gloryTitleObservedAt,omitempty"`
-	GloryTitleGen     uint64                    `json:"gloryTitleGeneration,omitempty"`
-	Gallantry         float64                   `json:"gallantry,omitempty"`
-	GallantryTitleID  int64                     `json:"gallantryTitleId,omitempty"`
-	GallantryTitleAt  time.Time                 `json:"gallantryTitleObservedAt,omitempty"`
-	GallantryTitleGen uint64                    `json:"gallantryTitleGeneration,omitempty"`
-	Resources         map[ResourceID]float64    `json:"resources"`
-	Currencies        map[CurrencyID]float64    `json:"currencies"`
-	VIP               VIPState                  `json:"vip"`
-	ProtectionMode    PlayerProtectionModeState `json:"protectionMode"`
-	Achievements      AchievementState          `json:"achievements"`
-	LegendSkills      LegendSkillState          `json:"legendSkills"`
+	ID                PlayerID               `json:"id"`
+	Name              string                 `json:"name,omitempty"`
+	AllianceID        AllianceID             `json:"allianceId,omitempty"`
+	Level             int                    `json:"level,omitempty"`
+	LegendLevel       int                    `json:"legendLevel,omitempty"`
+	Might             float64                `json:"might,omitempty"`
+	Glory             float64                `json:"glory,omitempty"`
+	GloryTitleID      int64                  `json:"gloryTitleId,omitempty"`
+	GloryTitleTopX    int                    `json:"gloryTitleTopX,omitempty"`
+	GloryTitleAt      time.Time              `json:"gloryTitleObservedAt,omitempty"`
+	GloryTitleGen     uint64                 `json:"gloryTitleGeneration,omitempty"`
+	Gallantry         float64                `json:"gallantry,omitempty"`
+	GallantryTitleID  int64                  `json:"gallantryTitleId,omitempty"`
+	GallantryTitleAt  time.Time              `json:"gallantryTitleObservedAt,omitempty"`
+	GallantryTitleGen uint64                 `json:"gallantryTitleGeneration,omitempty"`
+	Resources         map[ResourceID]float64 `json:"resources"`
+	// ResourceObservations are live dispatch authority and are intentionally
+	// not persisted. A restart must observe a new current-session GCU snapshot
+	// before unattended premium spending resumes.
+	ResourceObservations map[ResourceID]PlayerResourceObservation `json:"-"`
+	Currencies           map[CurrencyID]float64                   `json:"currencies"`
+	// CurrencyObservations are current-session authority for inventory spends
+	// and are intentionally discarded on restart like ResourceObservations.
+	CurrencyObservations map[CurrencyID]PlayerResourceObservation `json:"-"`
+	VIP                  VIPState                                 `json:"vip"`
+	ProtectionMode       PlayerProtectionModeState                `json:"protectionMode"`
+	Achievements         AchievementState                         `json:"achievements"`
+	LegendSkills         LegendSkillState                         `json:"legendSkills"`
+}
+
+type PlayerResourceObservation struct {
+	ObservedAt           time.Time `json:"-"`
+	ConnectionGeneration uint64    `json:"-"`
 }
 
 // CurrentGloryTitle returns a title only when it was observed on the active
@@ -297,7 +332,12 @@ type CastleState struct {
 	// FoodBalanceObservedAt is an internal dispatch authority. It advances
 	// only when a castle-scoped response actually contains numeric Food and is
 	// intentionally not persisted, so a restart must refresh before spending.
-	FoodBalanceObservedAt       time.Time                                 `json:"-"`
+	FoodBalanceObservedAt time.Time `json:"-"`
+	// FoodEconomyObservedAt is the matching nonpersisted authority for a DCL
+	// observation that contained a numeric food-production rate. Feast source
+	// selection combines it with a fresh castle-context snapshot so persisted or
+	// partially omitted GPA values can never authorize unattended spending.
+	FoodEconomyObservedAt       time.Time                                 `json:"-"`
 	Units                       CastleUnits                               `json:"units"`
 	UnitsObservedAt             time.Time                                 `json:"unitsObservedAt,omitempty"`
 	Defense                     CastleDefenseState                        `json:"defense"`
@@ -866,6 +906,15 @@ type MovementState struct {
 	Units           map[UnitID]int64       `json:"units"`
 	MarketBarrows   int                    `json:"marketBarrows,omitempty"`
 	MarketGoods     []KingdomTransportGood `json:"marketGoods,omitempty"`
+	// Preserve GAM's leader identities, including premium/sentinel and NPC values.
+	// Only a nonnegative UM.L.ID identifies an owned commander; DLID and WID do not.
+	LeaderID            *int64 `json:"leaderId,omitempty"`
+	LeaderDLID          *int64 `json:"leaderDlid,omitempty"`
+	LeaderWID           *int64 `json:"leaderWid,omitempty"`
+	AdvisorType         int    `json:"advisorType,omitempty"`
+	AdvisorAttackNumber int    `json:"advisorAttackNumber,omitempty"`
+	AdvisorAttackCount  int    `json:"advisorAttackCount,omitempty"`
+	AdvisorLaunchState  int    `json:"advisorLaunchState,omitempty"`
 }
 
 func (movement MovementState) ProjectedCompletionAt() *time.Time {
@@ -884,18 +933,34 @@ func (movement MovementState) ProjectedCompletionAt() *time.Time {
 }
 
 type EquipmentInstance struct {
-	ID           EquipmentInstanceID `json:"id"`
-	DefinitionID EquipmentID         `json:"definitionId"`
-	Slot         int                 `json:"slot"`
-	TypeID       int                 `json:"typeId,omitempty"`
-	RarityID     int                 `json:"rarityId"`
-	Relic        bool                `json:"relic,omitempty"`
-	RelicKnown   bool                `json:"relicKnown,omitempty"`
-	SetID        int64               `json:"setId,omitempty"`
-	Level        int                 `json:"level,omitempty"`
-	WearerID     int64               `json:"wearerId,omitempty"`
-	WearerKind   string              `json:"wearerKind,omitempty"`
-	Effects      EquipmentEffects    `json:"effects"`
+	ID           EquipmentInstanceID   `json:"id"`
+	DefinitionID EquipmentID           `json:"definitionId"`
+	Slot         int                   `json:"slot"`
+	TypeID       int                   `json:"typeId,omitempty"`
+	RarityID     int                   `json:"rarityId"`
+	Relic        bool                  `json:"relic,omitempty"`
+	RelicKnown   bool                  `json:"relicKnown,omitempty"`
+	SetID        int64                 `json:"setId,omitempty"`
+	Level        int                   `json:"level,omitempty"`
+	WearerID     int64                 `json:"wearerId,omitempty"`
+	WearerKind   string                `json:"wearerKind,omitempty"`
+	Effects      EquipmentEffects      `json:"effects"`
+	Extraction   *GemExtractionAttempt `json:"pendingGemExtraction,omitempty"`
+}
+
+// GemExtractionAttempt prevents replay when a ruby-charging extraction has
+// reached an uncertain wire state. A later authoritative equipment snapshot
+// clears it only after the gem is no longer socketed on this carrier.
+type GemExtractionAttempt struct {
+	GemID                GemInstanceID `json:"gemId"`
+	DefinitionID         GemID         `json:"definitionId"`
+	Level                int           `json:"level"`
+	RubyCost             int64         `json:"rubyCost"`
+	OperationID          string        `json:"operationId"`
+	ResponseToken        string        `json:"responseToken,omitempty"`
+	ConnectionGeneration uint64        `json:"connectionGeneration"`
+	ArmedAt              time.Time     `json:"armedAt"`
+	DispatchedAt         time.Time     `json:"dispatchedAt,omitempty"`
 }
 
 type EquipmentEffect struct {
@@ -975,6 +1040,7 @@ type InventoryState struct {
 	Gems                            map[GemInstanceID]GemInstance             `json:"gems"`
 	GemStacks                       map[GemID]int64                           `json:"gemStacks"`
 	Items                           map[string]map[int64]int64                `json:"items"`
+	ItemsObservedAt                 map[string]time.Time                      `json:"itemsObservedAt,omitempty"`
 }
 
 type SubscriptionState struct {
@@ -1023,10 +1089,34 @@ type MarketBoosterState struct {
 	ID                      int       `json:"id"`
 	Level                   int       `json:"level,omitempty"`
 	BonusPercent            int       `json:"bonusPercent,omitempty"`
-	RemainingSec            int       `json:"remainingSec,omitempty"`
+	RemainingSec            int64     `json:"remainingSec,omitempty"`
 	ContinuousPurchaseCount int       `json:"continuousPurchaseCount,omitempty"`
 	ExpiresAt               time.Time `json:"expiresAt,omitempty"`
 	Permanent               bool      `json:"permanent,omitempty"`
+}
+
+type SpecialistPurchaseEvidence struct {
+	Outcome               string    `json:"outcome"`
+	SpecialistID          int       `json:"specialistId"`
+	Opcode                string    `json:"opcode"`
+	AttemptedAt           time.Time `json:"attemptedAt"`
+	UpdatedAt             time.Time `json:"updatedAt"`
+	MinimumDays           int       `json:"minimumDays"`
+	ValidatedMaximumCost  int64     `json:"validatedMaximumCost"`
+	ConfiguredRubyCeiling int64     `json:"configuredRubyCeiling"`
+	MinimumRubyReserve    int64     `json:"minimumRubyReserve"`
+	TimerBefore           time.Time `json:"timerBefore,omitempty"`
+	TimerAfter            time.Time `json:"timerAfter,omitempty"`
+	TimerAfterObservedAt  time.Time `json:"timerAfterObservedAt,omitempty"`
+	RubyBefore            int64     `json:"rubyBefore"`
+	RubyBeforeKnown       bool      `json:"rubyBeforeKnown"`
+	RubyBeforeObservedAt  time.Time `json:"rubyBeforeObservedAt,omitempty"`
+	RubyAfter             int64     `json:"rubyAfter"`
+	RubyAfterKnown        bool      `json:"rubyAfterKnown"`
+	RubyAfterObservedAt   time.Time `json:"rubyAfterObservedAt,omitempty"`
+	DebitVerification     string    `json:"debitVerification"`
+	ActivationConfirmed   bool      `json:"activationConfirmed"`
+	Detail                string    `json:"detail,omitempty"`
 }
 
 func (booster MarketBoosterState) ActiveAt(now time.Time) bool {
@@ -1043,8 +1133,40 @@ type MarketFeastState struct {
 	ObservedAt   time.Time `json:"observedAt,omitempty"`
 }
 
+// FeastPurchaseEvidence is the bounded, privacy-safe record of the most recent
+// automatic feast attempt. The charged castle is frozen at dispatch. Food
+// observations are useful context, but production can move the balance during
+// round trips, so DebitVerification remains independent from activation proof.
+type FeastPurchaseEvidence struct {
+	Outcome               string    `json:"outcome"`
+	FeastID               int64     `json:"feastId"`
+	ChargedCastleID       CastleID  `json:"chargedCastleId"`
+	ChargedKingdomID      KingdomID `json:"chargedKingdomId"`
+	AttemptedAt           time.Time `json:"attemptedAt"`
+	UpdatedAt             time.Time `json:"updatedAt"`
+	ExpectedEffectiveCost int64     `json:"expectedEffectiveCost"`
+	FoodBefore            int64     `json:"foodBefore"`
+	FoodBeforeKnown       bool      `json:"foodBeforeKnown"`
+	FoodBeforeObservedAt  time.Time `json:"foodBeforeObservedAt,omitempty"`
+	FoodAfter             int64     `json:"foodAfter"`
+	FoodAfterKnown        bool      `json:"foodAfterKnown"`
+	FoodAfterObservedAt   time.Time `json:"foodAfterObservedAt,omitempty"`
+	DebitVerification     string    `json:"debitVerification"`
+	ActivationConfirmed   bool      `json:"activationConfirmed"`
+	ConfirmedRemainingSec int       `json:"confirmedRemainingSec,omitempty"`
+	ConfirmedExpiresAt    time.Time `json:"confirmedExpiresAt,omitempty"`
+	ActivationConfirmedAt time.Time `json:"activationConfirmedAt,omitempty"`
+	Detail                string    `json:"detail,omitempty"`
+}
+
 func (feast MarketFeastState) ActiveAt(now time.Time) bool {
 	return feast.ID >= 0 && !feast.ExpiresAt.IsZero() && feast.ExpiresAt.After(now)
+}
+
+// FeastTimerProgressed ignores sub-second drift introduced when an integer
+// remaining duration is combined with a fractional response timestamp.
+func FeastTimerProgressed(previous, current time.Time) bool {
+	return !previous.IsZero() && current.After(previous.Add(time.Second))
 }
 
 // FreshAt reports whether the feast value is a coherent observation from the
@@ -1077,19 +1199,41 @@ type MarketState struct {
 	// FeastPurchasePending prevents a resource-spending BFS from being replayed
 	// after its outcome could not be reconciled. The latch is durable across
 	// restarts and is cleared only by an authoritative expected-feast result,
-	// an explicit game rejection, or expiry of the maximum possible effect.
-	FeastPurchasePending           bool      `json:"feastPurchasePending,omitempty"`
-	FeastPurchaseExpectedID        int64     `json:"feastPurchaseExpectedId,omitempty"`
-	FeastPurchasePendingSince      time.Time `json:"feastPurchasePendingSince,omitempty"`
-	FeastPurchaseExpectedExpiresAt time.Time `json:"feastPurchaseExpectedExpiresAt,omitempty"`
-	FeastPurchaseOperationID       string    `json:"feastPurchaseOperationId,omitempty"`
-	FeastPurchaseResponseToken     string    `json:"feastPurchaseResponseToken,omitempty"`
-	FeastCostReductionPercent      int       `json:"feastCostReductionPercent,omitempty"`
-	FeastCostReductionObservedAt   time.Time `json:"feastCostReductionObservedAt,omitempty"`
-	CaravanLevel                   int       `json:"caravanLevel,omitempty"`
-	CaravanLevelLoaded             bool      `json:"caravanLevelLoaded"`
-	ObservedAt                     time.Time `json:"observedAt,omitempty"`
-	BoostersObservedAt             time.Time `json:"boostersObservedAt,omitempty"`
+	// an explicit game rejection, two spaced current-session inactive replies,
+	// or expiry of the maximum possible effect.
+	FeastPurchasePending                  bool                       `json:"feastPurchasePending,omitempty"`
+	FeastPurchaseExpectedID               int64                      `json:"feastPurchaseExpectedId,omitempty"`
+	FeastPurchasePendingSince             time.Time                  `json:"feastPurchasePendingSince,omitempty"`
+	FeastPurchaseExpectedExpiresAt        time.Time                  `json:"feastPurchaseExpectedExpiresAt,omitempty"`
+	FeastPurchasePreviousExpiresAt        time.Time                  `json:"feastPurchasePreviousExpiresAt,omitempty"`
+	FeastPurchaseOperationID              string                     `json:"feastPurchaseOperationId,omitempty"`
+	FeastPurchaseResponseToken            string                     `json:"feastPurchaseResponseToken,omitempty"`
+	FeastPurchaseResponseConfirmedAt      time.Time                  `json:"feastPurchaseResponseConfirmedAt,omitempty"`
+	FeastPurchaseResponseExpiresAt        time.Time                  `json:"feastPurchaseResponseExpiresAt,omitempty"`
+	FeastPurchaseInactiveObservedAt       time.Time                  `json:"feastPurchaseInactiveObservedAt,omitempty"`
+	FeastPurchaseInactiveResponseToken    string                     `json:"feastPurchaseInactiveResponseToken,omitempty"`
+	FeastPurchaseInactiveGeneration       uint64                     `json:"feastPurchaseInactiveGeneration,omitempty"`
+	LatestFeastPurchase                   FeastPurchaseEvidence      `json:"latestFeastPurchase,omitempty"`
+	SpecialistPurchasePending             bool                       `json:"specialistPurchasePending,omitempty"`
+	SpecialistPurchasePendingSince        time.Time                  `json:"specialistPurchasePendingSince,omitempty"`
+	SpecialistPurchaseExpectedID          int                        `json:"specialistPurchaseExpectedId,omitempty"`
+	SpecialistPurchasePreviousExpiry      time.Time                  `json:"specialistPurchasePreviousExpiry,omitempty"`
+	SpecialistPurchaseMaximumExpiry       time.Time                  `json:"specialistPurchaseMaximumExpiry,omitempty"`
+	SpecialistPurchaseOperationID         string                     `json:"specialistPurchaseOperationId,omitempty"`
+	SpecialistPurchaseResponseToken       string                     `json:"specialistPurchaseResponseToken,omitempty"`
+	SpecialistPurchaseResponseConfirmedAt time.Time                  `json:"specialistPurchaseResponseConfirmedAt,omitempty"`
+	SpecialistPurchaseResponseExpiresAt   time.Time                  `json:"specialistPurchaseResponseExpiresAt,omitempty"`
+	SpecialistPurchaseRubyResourceID      ResourceID                 `json:"specialistPurchaseRubyResourceId,omitempty"`
+	SpecialistPurchaseResponseRuby        int64                      `json:"specialistPurchaseResponseRuby,omitempty"`
+	SpecialistPurchaseResponseRubyAt      time.Time                  `json:"specialistPurchaseResponseRubyAt,omitempty"`
+	LatestSpecialistPurchase              SpecialistPurchaseEvidence `json:"latestSpecialistPurchase,omitempty"`
+	FeastCostReductionPercent             int                        `json:"feastCostReductionPercent,omitempty"`
+	FeastCostReductionObservedAt          time.Time                  `json:"feastCostReductionObservedAt,omitempty"`
+	CaravanLevel                          int                        `json:"caravanLevel,omitempty"`
+	CaravanLevelLoaded                    bool                       `json:"caravanLevelLoaded"`
+	ObservedAt                            time.Time                  `json:"observedAt,omitempty"`
+	BoostersObservedAt                    time.Time                  `json:"boostersObservedAt,omitempty"`
+	BoostersObservedGeneration            uint64                     `json:"boostersObservedGeneration,omitempty"`
 }
 
 type KingdomTransportUnlock struct {
@@ -1119,6 +1263,31 @@ type KingdomResourceTransportWorkflow struct {
 	LaunchedAt     time.Time              `json:"launchedAt"`
 }
 
+type KingdomTroopTransportWorkflow struct {
+	ID                      string                 `json:"id"`
+	Owner                   string                 `json:"owner"`
+	Status                  string                 `json:"status"`
+	KingdomID               KingdomID              `json:"kingdomId"`
+	SourceCastleID          CastleID               `json:"sourceCastleId"`
+	TargetCastleID          CastleID               `json:"targetCastleId"`
+	Units                   []KingdomTransportUnit `json:"units"`
+	ArmedAt                 time.Time              `json:"armedAt"`
+	LaunchedAt              time.Time              `json:"launchedAt,omitempty"`
+	TransportObservedAt     time.Time              `json:"transportObservedAt,omitempty"`
+	SourceReconciledAt      time.Time              `json:"sourceReconciledAt,omitempty"`
+	SourceDebitedLocally    bool                   `json:"sourceDebitedLocally,omitempty"`
+	RemainingSec            int                    `json:"remainingSec,omitempty"`
+	SessionGeneration       uint64                 `json:"sessionGeneration,omitempty"`
+	SkipCurrencyID          CurrencyID             `json:"skipCurrencyId,omitempty"`
+	SkipWireKey             string                 `json:"skipWireKey,omitempty"`
+	SkipBalanceBefore       float64                `json:"skipBalanceBefore,omitempty"`
+	SkipRemainingBefore     int                    `json:"skipRemainingBefore,omitempty"`
+	SkipDurationSec         int64                  `json:"skipDurationSec,omitempty"`
+	SkipRequestedAt         time.Time              `json:"skipRequestedAt,omitempty"`
+	SkipTimerObservedAt     time.Time              `json:"skipTimerObservedAt,omitempty"`
+	SkipInventoryObservedAt time.Time              `json:"skipInventoryObservedAt,omitempty"`
+}
+
 type KingdomTransportUnit struct {
 	UnitID UnitID `json:"unitId"`
 	Amount int64  `json:"amount"`
@@ -1135,6 +1304,7 @@ type KingdomTransportState struct {
 	Pending           []KingdomResourceTransport                     `json:"pending"`
 	PendingUnits      []KingdomUnitTransport                         `json:"pendingUnits"`
 	ResourceWorkflows map[KingdomID]KingdomResourceTransportWorkflow `json:"resourceWorkflows,omitempty"`
+	TroopWorkflows    map[KingdomID]KingdomTroopTransportWorkflow    `json:"troopWorkflows,omitempty"`
 	ObservedAt        time.Time                                      `json:"observedAt,omitempty"`
 }
 
@@ -1196,12 +1366,20 @@ const (
 )
 
 type StationingOperation struct {
+	// Runtime castle controls use a separate autoBirdControl record so clearing
+	// cycle tracking cannot accidentally remove a user's pause.
+	Paused          bool       `json:"paused,omitempty"`
+	PausedUntil     *time.Time `json:"pausedUntil,omitempty"`
+	RescanRequested bool       `json:"rescanRequested,omitempty"`
+
 	ID                   string           `json:"id"`
 	Purpose              string           `json:"purpose"`
 	Phase                StationingPhase  `json:"phase,omitempty"`
+	PresetID             string           `json:"presetId,omitempty"`
 	SourceCastleID       CastleID         `json:"sourceCastleId"`
 	TargetCastleID       CastleID         `json:"targetCastleId"`
 	MovementID           MovementID       `json:"movementId,omitempty"`
+	MovementIDs          []MovementID     `json:"movementIds,omitempty"`
 	Units                map[UnitID]int64 `json:"units"`
 	DelayHours           int              `json:"delayHours,omitempty"`
 	WaitSeconds          int              `json:"waitSeconds,omitempty"`
@@ -1219,6 +1397,14 @@ type StationingOperation struct {
 }
 
 func (operation StationingOperation) MatchesMovement(movement MovementState) bool {
+	if len(operation.MovementIDs) > 0 {
+		for _, id := range operation.MovementIDs {
+			if movement.ID == id {
+				return true
+			}
+		}
+		return false
+	}
 	if operation.MovementID > 0 {
 		return movement.ID == operation.MovementID
 	}
@@ -1236,7 +1422,7 @@ func (operation StationingOperation) ActiveAt(movements map[MovementID]MovementS
 			return true
 		}
 	}
-	if operation.MovementID > 0 {
+	if operation.MovementID > 0 || len(operation.MovementIDs) > 0 {
 		return false
 	}
 	if operation.SuccessCooldownUntil != nil && operation.SuccessCooldownUntil.After(now) {
@@ -1318,6 +1504,7 @@ type MapObservation struct {
 	InvasionProtected          bool      `json:"invasionProtected,omitempty"`
 	TowerVictoryCount          int64     `json:"towerVictoryCount,omitempty"`
 	TowerCooldownRemaining     int       `json:"towerCooldownRemaining,omitempty"`
+	FortressDefeaterPlayerID   PlayerID  `json:"fortressDefeaterPlayerId,omitempty"`
 	EventCampID                int64     `json:"eventCampId,omitempty"`
 	EventCampVictoryCount      int64     `json:"eventCampVictoryCount,omitempty"`
 	EventCampCooldownRemaining int       `json:"eventCampCooldownRemaining,omitempty"`
@@ -1385,6 +1572,7 @@ func (observation MapObservation) StormExpiresAt(globalCooldownSec int64) time.T
 // creates this state because it only confirms the troop movement was started.
 type TowerCooldownState struct {
 	KingdomID              KingdomID `json:"kingdomId"`
+	TargetTypeID           int       `json:"targetTypeId,omitempty"`
 	X                      int       `json:"x"`
 	Y                      int       `json:"y"`
 	ReportID               int64     `json:"reportId,omitempty"`
@@ -1733,6 +1921,9 @@ type KhanState struct {
 	TargetX                       int                               `json:"targetX,omitempty"`
 	TargetY                       int                               `json:"targetY,omitempty"`
 	RageCampID                    int64                             `json:"rageCampId,omitempty"`
+	RageCampRevision              uint64                            `json:"rageCampRevision,omitempty"`
+	RageCampObservedAt            time.Time                         `json:"rageCampObservedAt,omitempty"`
+	RageBalanceCampRevision       uint64                            `json:"rageBalanceCampRevision,omitempty"`
 	PlayerRage                    int64                             `json:"playerRage,omitempty"`
 	PlayerRageCap                 int64                             `json:"playerRageCap,omitempty"`
 	PlayerTotalRage               int64                             `json:"playerTotalRage,omitempty"`
@@ -1780,7 +1971,7 @@ func (cooldown CombatCooldownState) ActiveAt(now time.Time) bool {
 	return !cooldown.Until.IsZero() && now.Before(cooldown.Until)
 }
 
-// AttackDialogState is the current pre-attack context returned by ADI. Its
+// AttackDialogState is the current pre-attack context returned by ADI or ABI. Its
 // active effects are authoritative for the selected castle while the dialog
 // remains current; a planned attack can therefore include temporary effects
 // that are not represented by a building or inventory record.
@@ -1796,12 +1987,14 @@ type AttackDialogTarget struct {
 	TypeID                     int      `json:"typeId,omitempty"`
 	X                          int      `json:"x,omitempty"`
 	Y                          int      `json:"y,omitempty"`
+	Level                      int      `json:"level,omitempty"`
 	ObjectID                   int64    `json:"objectId,omitempty"`
 	OwnerID                    PlayerID `json:"ownerId,omitempty"`
 	InvasionAvailabilityKnown  bool     `json:"invasionAvailabilityKnown,omitempty"`
 	InvasionProtected          bool     `json:"invasionProtected,omitempty"`
 	TowerVictoryCount          int64    `json:"towerVictoryCount,omitempty"`
 	TowerCooldownRemaining     int      `json:"towerCooldownRemaining,omitempty"`
+	FortressDefeaterPlayerID   PlayerID `json:"fortressDefeaterPlayerId,omitempty"`
 	EventCampID                int64    `json:"eventCampId,omitempty"`
 	EventCampVictoryCount      int64    `json:"eventCampVictoryCount,omitempty"`
 	EventCampCooldownRemaining int      `json:"eventCampCooldownRemaining,omitempty"`
@@ -1902,11 +2095,12 @@ type CommandContextState struct {
 }
 
 type DailyAttackState struct {
-	Count            int64     `json:"count"`
-	ServerThreshold  int64     `json:"serverThreshold"`
-	GrowthRate       float64   `json:"growthRate"`
-	SessionStartedAt time.Time `json:"sessionStartedAt,omitempty"`
-	ObservedAt       time.Time `json:"observedAt,omitempty"`
+	Count                int64     `json:"count"`
+	ServerThreshold      int64     `json:"serverThreshold"`
+	GrowthRate           float64   `json:"growthRate"`
+	SessionStartedAt     time.Time `json:"sessionStartedAt,omitempty"`
+	ObservedAt           time.Time `json:"observedAt,omitempty"`
+	ConnectionGeneration uint64    `json:"-"`
 }
 
 type AutomationState struct {
@@ -1920,6 +2114,7 @@ type AutomationState struct {
 	LastOperationID    string               `json:"lastOperationId,omitempty"`
 	LastError          string               `json:"lastError,omitempty"`
 	Metrics            map[string]float64   `json:"metrics,omitempty"`
+	Details            map[string]string    `json:"details,omitempty"`
 	OperationalCursors map[string]int       `json:"operationalCursors,omitempty"`
 	UpdatedAt          time.Time            `json:"updatedAt"`
 }
@@ -2032,7 +2227,8 @@ func NewGameState() GameState {
 		UpdatedAt:     now,
 		Session:       SessionState{Status: "stopped", Namespace: "EmpireEx_21", ChangedAt: now},
 		Player: PlayerState{
-			Resources: map[ResourceID]float64{}, Currencies: map[CurrencyID]float64{},
+			Resources: map[ResourceID]float64{}, ResourceObservations: map[ResourceID]PlayerResourceObservation{},
+			Currencies: map[CurrencyID]float64{}, CurrencyObservations: map[CurrencyID]PlayerResourceObservation{},
 			Achievements: AchievementState{Completed: map[int64]bool{}, Progress: map[int64][]int64{}},
 			LegendSkills: LegendSkillState{ActiveIDs: []int64{}, SceatSkillIDs: []int64{}, SceatActivations: []SceatSkillActivation{}},
 		},
@@ -2052,6 +2248,7 @@ func NewGameState() GameState {
 			Gems:                       map[GemInstanceID]GemInstance{},
 			GemStacks:                  map[GemID]int64{},
 			Items:                      map[string]map[int64]int64{},
+			ItemsObservedAt:            map[string]time.Time{},
 		},
 		Subscriptions: map[int]SubscriptionState{},
 		Market: MarketState{
@@ -2060,6 +2257,7 @@ func NewGameState() GameState {
 		KingdomTransport: KingdomTransportState{
 			Unlocks: map[KingdomID]KingdomTransportUnlock{}, Pending: []KingdomResourceTransport{},
 			PendingUnits: []KingdomUnitTransport{}, ResourceWorkflows: map[KingdomID]KingdomResourceTransportWorkflow{},
+			TroopWorkflows: map[KingdomID]KingdomTroopTransportWorkflow{},
 		},
 		Beri:      BeriState{TroopsByUnit: map[UnitID]int64{}},
 		Alliance:  AllianceState{Members: []AllianceMember{}, Holdings: []AllianceHolding{}},
@@ -2100,11 +2298,16 @@ func NewGameState() GameState {
 		AttackPresets: []AttackPreset{},
 		AttackAnalytics: AttackAnalyticsState{
 			LaunchIDs: []MovementID{}, PendingAttacks: []AttackFeatureLaunch{}, RecentAutoStormLaunches: []AttackFeatureLaunch{},
+			RecentTowerAdvisorTimeSkips: []TowerAdvisorTimeSkipUsage{},
 		},
 		EventScores: EventScoreState{
 			ByEvent: map[int64]ScalableEventScore{}, ShopByPackage: map[PackageID]EventShopRoute{},
 			ActivityByEvent: map[int64]EventActivityState{}, RankingByEvent: map[int64]EventRankingState{},
-			Inventory: EventInventoryState{ActiveByEvent: map[int64]EventAvailability{}},
+			Inventory: EventInventoryState{
+				ActiveByEvent: map[int64]EventAvailability{}, GlobalEffects: map[int64]GlobalEffectAvailability{},
+				GlobalEffectBoosterOffers: map[int64]GlobalEffectBoosterOffer{}, GlobalEffectBoosts: map[int64]GlobalEffectBoostState{},
+				GlobalEffectPurchases: map[int64]GlobalEffectPurchaseRecord{},
+			},
 		},
 		Automations: map[string]AutomationState{},
 		Reports: ReportState{

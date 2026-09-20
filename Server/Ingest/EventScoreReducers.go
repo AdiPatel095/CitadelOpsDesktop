@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
+	"math"
 	"slices"
 	"strconv"
 	"strings"
@@ -77,6 +79,11 @@ type scalableEventSnapshot struct {
 	AllianceCamp      *khanRageSnapshot `json:"AC"`
 }
 
+const (
+	globalEffectsEventID        = 610
+	globalEffectBoostersEventID = 612
+)
+
 func reduceScalableEventSnapshot(
 	_ context.Context,
 	frame Protocol.Frame,
@@ -87,7 +94,7 @@ func reduceScalableEventSnapshot(
 		return nil, false, nil
 	}
 	changed, err := applyScalableEventSnapshot(frame.Payload, frame.ReceivedAt, gameState, gameData)
-	return []string{"events", "event-scores", "khan"}, changed, err
+	return []string{"events", "event-scores", "global-effects", "khan"}, changed, err
 }
 
 func applyScalableEventSnapshot(
@@ -103,6 +110,7 @@ func applyScalableEventSnapshot(
 		return false, fmt.Errorf("decode event snapshot: %w", err)
 	}
 	changed := false
+	previousInventory := gameState.EventScores.Inventory
 	activeByEvent := make(map[int64]State.EventAvailability, len(payload.Events))
 	for _, event := range payload.Events {
 		eventID := int64(event.EventID)
@@ -116,8 +124,17 @@ func applyScalableEventSnapshot(
 		}
 	}
 	if gameState.ReplaceEventInventory(State.EventInventoryState{
-		ObservedAt:    observedAt,
-		ActiveByEvent: activeByEvent,
+		ObservedAt: observedAt, ActiveByEvent: activeByEvent,
+		GlobalEffectsObservedAt:        previousInventory.GlobalEffectsObservedAt,
+		GlobalEffects:                  previousInventory.GlobalEffects,
+		GlobalEffectBoosterOffers:      previousInventory.GlobalEffectBoosterOffers,
+		GlobalEffectBoostsObservedAt:   previousInventory.GlobalEffectBoostsObservedAt,
+		GlobalEffectBoosts:             previousInventory.GlobalEffectBoosts,
+		GlobalEffectReadObservedAt:     previousInventory.GlobalEffectReadObservedAt,
+		GlobalEffectReadGeneration:     previousInventory.GlobalEffectReadGeneration,
+		GlobalEffectBaselineObservedAt: previousInventory.GlobalEffectBaselineObservedAt,
+		GlobalEffectBaselineGeneration: previousInventory.GlobalEffectBaselineGeneration,
+		GlobalEffectPurchases:          previousInventory.GlobalEffectPurchases,
 	}) {
 		changed = true
 	}
@@ -129,7 +146,13 @@ func applyScalableEventSnapshot(
 			continue
 		}
 		route := State.EventShopRoute{EventID: eventID, RemainingSec: remainingSec, ObservedAt: observedAt.UTC()}
-		for _, packageID := range eventShopPackageIDs(event) {
+		packageIDs := eventShopPackageIDs(event)
+		if gameData != nil {
+			if staticPackageIDs, err := gameData.EventShopPackageIDs(eventID); err == nil {
+				packageIDs = append(packageIDs, staticPackageIDs...)
+			}
+		}
+		for _, packageID := range packageIDs {
 			shopByPackage[State.PackageID(packageID)] = route
 		}
 	}
@@ -211,33 +234,598 @@ func applyScalableEventSnapshot(
 	return changed, nil
 }
 
+type globalEffectTriggerSnapshot struct {
+	EffectsSeen bool
+	OffersSeen  bool
+	Relevant    bool
+	Effects     map[int64]State.GlobalEffectAvailability
+	Offers      map[int64]State.GlobalEffectBoosterOffer
+}
+
+func reduceGlobalEffectTriggerSnapshot(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 || gameState == nil {
+		return nil, false, nil
+	}
+	changed, err := applyGlobalEffectTriggerSnapshot(frame.Payload, frame.ReceivedAt, gameState, false)
+	if err != nil {
+		changed = invalidateGlobalEffectBaseline(gameState)
+		return []string{"events", "event-scores", "global-effects"}, changed, nil
+	}
+	return []string{"events", "event-scores", "global-effects"}, changed, nil
+}
+
+func applyGlobalEffectTriggerSnapshot(
+	raw json.RawMessage,
+	observedAt time.Time,
+	gameState *State.GameState,
+	complete bool,
+) (bool, error) {
+	if gameState == nil {
+		return false, nil
+	}
+	previous := gameState.EventScores.Inventory
+	snapshot, err := decodeGlobalEffectTriggerSnapshot(raw, observedAt, previous.GlobalEffects)
+	if err != nil {
+		return false, err
+	}
+	if !complete && !snapshot.Relevant {
+		return false, nil
+	}
+	observedAt = observedAt.UTC()
+	if !previous.GlobalEffectsObservedAt.IsZero() && observedAt.Before(previous.GlobalEffectsObservedAt) {
+		return false, nil
+	}
+	next := previous
+	if complete {
+		next.GlobalEffects = snapshot.Effects
+		next.GlobalEffectBoosterOffers = snapshot.Offers
+	} else {
+		next.GlobalEffects = maps.Clone(previous.GlobalEffects)
+		next.GlobalEffectBoosterOffers = maps.Clone(previous.GlobalEffectBoosterOffers)
+		if snapshot.EffectsSeen {
+			next.GlobalEffects = snapshot.Effects
+		}
+		if snapshot.OffersSeen {
+			next.GlobalEffectBoosterOffers = snapshot.Offers
+		}
+		next.GlobalEffectBaselineObservedAt = time.Time{}
+		next.GlobalEffectBaselineGeneration = 0
+	}
+	next.GlobalEffectsObservedAt = observedAt
+	return gameState.ReplaceEventInventory(next), nil
+}
+
+func decodeGlobalEffectTriggerSnapshot(
+	raw json.RawMessage,
+	observedAt time.Time,
+	previousEffects map[int64]State.GlobalEffectAvailability,
+) (globalEffectTriggerSnapshot, error) {
+	result := globalEffectTriggerSnapshot{
+		Effects: map[int64]State.GlobalEffectAvailability{},
+		Offers:  map[int64]State.GlobalEffectBoosterOffer{},
+	}
+	raw = bytes.TrimSpace(raw)
+	if len(raw) == 0 || raw[0] != '{' {
+		return result, fmt.Errorf("decode trigger-event snapshot: payload must be an object")
+	}
+	var root map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &root); err != nil {
+		return result, fmt.Errorf("decode trigger-event snapshot: %w", err)
+	}
+	eventsRaw, found := root["TE"]
+	if !found || bytes.Equal(bytes.TrimSpace(eventsRaw), []byte("null")) {
+		return result, fmt.Errorf("decode trigger-event snapshot: TE must be present and non-null")
+	}
+	var events []json.RawMessage
+	if err := json.Unmarshal(eventsRaw, &events); err != nil || events == nil {
+		return result, fmt.Errorf("decode trigger-event snapshot: TE must be an array")
+	}
+	for index, eventRaw := range events {
+		var event map[string]json.RawMessage
+		if err := json.Unmarshal(eventRaw, &event); err != nil || event == nil {
+			return result, fmt.Errorf("decode trigger-event snapshot: TE[%d] must be an object", index)
+		}
+		triggerID, ok := rawJSONInt64(event["TRID"])
+		if !ok || triggerID < 0 {
+			return result, fmt.Errorf("decode trigger-event snapshot: TE[%d].TRID must be a non-negative integer", index)
+		}
+		switch triggerID {
+		case globalEffectsEventID:
+			if result.EffectsSeen {
+				return result, fmt.Errorf("decode trigger-event snapshot: duplicate TRID %d", triggerID)
+			}
+			result.EffectsSeen, result.Relevant = true, true
+			effects, err := decodeGlobalEffectRows(event["GE"], observedAt, previousEffects)
+			if err != nil {
+				return result, err
+			}
+			result.Effects = effects
+		case globalEffectBoostersEventID:
+			if result.OffersSeen {
+				return result, fmt.Errorf("decode trigger-event snapshot: duplicate TRID %d", triggerID)
+			}
+			result.OffersSeen, result.Relevant = true, true
+			offers, err := decodeGlobalEffectOfferRows(event["GEB"])
+			if err != nil {
+				return result, err
+			}
+			result.Offers = offers
+		}
+	}
+	return result, nil
+}
+
+func decodeGlobalEffectRows(
+	raw json.RawMessage,
+	observedAt time.Time,
+	previous map[int64]State.GlobalEffectAvailability,
+) (map[int64]State.GlobalEffectAvailability, error) {
+	raw = bytes.TrimSpace(raw)
+	if len(raw) == 0 || bytes.Equal(raw, []byte("null")) {
+		return nil, fmt.Errorf("decode trigger-event snapshot: TRID %d GE must be present and non-null", globalEffectsEventID)
+	}
+	var rows [][]json.RawMessage
+	if err := json.Unmarshal(raw, &rows); err != nil || rows == nil {
+		return nil, fmt.Errorf("decode trigger-event snapshot: TRID %d GE must be an array", globalEffectsEventID)
+	}
+	effects := make(map[int64]State.GlobalEffectAvailability, len(rows))
+	for index, row := range rows {
+		if len(row) < 3 {
+			return nil, fmt.Errorf("decode trigger-event snapshot: GE[%d] must contain effect, countdown, and strength", index)
+		}
+		globalEffectID, idOK := rawJSONInt64(row[0])
+		remainingSec, remainingOK := rawJSONInt64(row[1])
+		strength, strengthOK := rawJSONInt64(row[2])
+		if !idOK || globalEffectID <= 0 || !remainingOK || !strengthOK {
+			return nil, fmt.Errorf("decode trigger-event snapshot: GE[%d] has invalid effect, countdown, or strength", index)
+		}
+		if remainingSec <= 0 {
+			continue
+		}
+		if remainingSec > int64((1<<63-1)/int64(time.Second)) {
+			return nil, fmt.Errorf("decode trigger-event snapshot: GE[%d] countdown is out of range", index)
+		}
+		if _, duplicate := effects[globalEffectID]; duplicate {
+			return nil, fmt.Errorf("decode trigger-event snapshot: duplicate global effect %d", globalEffectID)
+		}
+		endsAt := observedAt.Add(time.Duration(remainingSec) * time.Second).UTC().Truncate(time.Minute)
+		if prior, found := previous[globalEffectID]; found && State.SameEventOccurrence(prior.EndsAt, endsAt) {
+			endsAt = prior.EndsAt
+		}
+		effects[globalEffectID] = State.GlobalEffectAvailability{
+			GlobalEffectID: globalEffectID,
+			Strength:       strength,
+			EndsAt:         endsAt,
+		}
+	}
+	return effects, nil
+}
+
+func decodeGlobalEffectOfferRows(raw json.RawMessage) (map[int64]State.GlobalEffectBoosterOffer, error) {
+	raw = bytes.TrimSpace(raw)
+	if len(raw) == 0 || bytes.Equal(raw, []byte("null")) {
+		return nil, fmt.Errorf("decode trigger-event snapshot: TRID %d GEB must be present and non-null", globalEffectBoostersEventID)
+	}
+	var rows []map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &rows); err != nil || rows == nil {
+		return nil, fmt.Errorf("decode trigger-event snapshot: TRID %d GEB must be an array", globalEffectBoostersEventID)
+	}
+	offers := make(map[int64]State.GlobalEffectBoosterOffer, len(rows))
+	for index, row := range rows {
+		globalEffectID, idOK := rawJSONInt64(row["GEID"])
+		rubyCost, costOK := rawJSONInt64(row["C2"])
+		bonusValue, bonusOK := rawJSONInt64(row["BV"])
+		if !idOK || globalEffectID <= 0 || !costOK || rubyCost <= 0 || !bonusOK || bonusValue <= 0 {
+			return nil, fmt.Errorf("decode trigger-event snapshot: GEB[%d] has invalid effect, cost, or bonus", index)
+		}
+		if _, duplicate := offers[globalEffectID]; duplicate {
+			return nil, fmt.Errorf("decode trigger-event snapshot: duplicate booster offer %d", globalEffectID)
+		}
+		offers[globalEffectID] = State.GlobalEffectBoosterOffer{
+			GlobalEffectID: globalEffectID,
+			RubyCost:       rubyCost,
+			BonusValue:     bonusValue,
+		}
+	}
+	return offers, nil
+}
+
+func reduceGlobalEffectTriggerEnd(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	_ *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 || gameState == nil {
+		return nil, false, nil
+	}
+	var root map[string]json.RawMessage
+	if err := json.Unmarshal(frame.Payload, &root); err != nil || root == nil {
+		changed := invalidateGlobalEffectBaseline(gameState)
+		return []string{"events", "event-scores", "global-effects"}, changed, nil
+	}
+	triggerID, ok := rawJSONInt64(root["TRID"])
+	if !ok {
+		changed := invalidateGlobalEffectBaseline(gameState)
+		return []string{"events", "event-scores", "global-effects"}, changed, nil
+	}
+	if triggerID != globalEffectsEventID && triggerID != globalEffectBoostersEventID {
+		return nil, false, nil
+	}
+	inventory := gameState.EventScores.Inventory
+	if !inventory.GlobalEffectsObservedAt.IsZero() && frame.ReceivedAt.Before(inventory.GlobalEffectsObservedAt) {
+		return nil, false, nil
+	}
+	if triggerID == globalEffectsEventID {
+		inventory.GlobalEffects = map[int64]State.GlobalEffectAvailability{}
+	} else {
+		inventory.GlobalEffectBoosterOffers = map[int64]State.GlobalEffectBoosterOffer{}
+	}
+	inventory.GlobalEffectsObservedAt = frame.ReceivedAt.UTC()
+	inventory.GlobalEffectBaselineObservedAt = time.Time{}
+	inventory.GlobalEffectBaselineGeneration = 0
+	changed := gameState.ReplaceEventInventory(inventory)
+	return []string{"events", "event-scores", "global-effects"}, changed, nil
+}
+
+func invalidateGlobalEffectBaseline(gameState *State.GameState) bool {
+	if gameState == nil {
+		return false
+	}
+	inventory := gameState.EventScores.Inventory
+	if inventory.GlobalEffectBaselineObservedAt.IsZero() && inventory.GlobalEffectBaselineGeneration == 0 {
+		return false
+	}
+	inventory.GlobalEffectBaselineObservedAt = time.Time{}
+	inventory.GlobalEffectBaselineGeneration = 0
+	return gameState.ReplaceEventInventory(inventory)
+}
+
+func reduceGlobalEffectBoosterInfo(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	gameData *GameData.Store,
+) ([]string, bool, error) {
+	if frame.ResponseCode == nil || *frame.ResponseCode != 0 || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	if !gameState.EventScores.Inventory.GlobalEffectsObservedAt.IsZero() &&
+		frame.ReceivedAt.Before(gameState.EventScores.Inventory.GlobalEffectsObservedAt) {
+		return nil, false, nil
+	}
+	boosted, err := decodeGlobalEffectBoosterIDs(frame.Payload)
+	if err != nil {
+		return nil, false, err
+	}
+	if !gameState.EventScores.Inventory.GlobalEffectBoostsObservedAt.IsZero() &&
+		frame.ReceivedAt.Before(gameState.EventScores.Inventory.GlobalEffectBoostsObservedAt) {
+		return nil, false, nil
+	}
+	statuses := make(map[int64]State.GlobalEffectBoostState, len(gameState.EventScores.Inventory.GlobalEffects))
+	for globalEffectID, effect := range gameState.EventScores.Inventory.GlobalEffects {
+		if !effect.ActiveAt(frame.ReceivedAt) {
+			continue
+		}
+		_, active := boosted[globalEffectID]
+		if previous, found := gameState.EventScores.Inventory.GlobalEffectBoosts[globalEffectID]; found &&
+			previous.Boosted && State.SameEventOccurrence(previous.OccurrenceEndsAt, effect.EndsAt) {
+			active = true
+		}
+		statuses[globalEffectID] = State.GlobalEffectBoostState{
+			GlobalEffectID: globalEffectID, Boosted: active,
+			OccurrenceEndsAt: effect.EndsAt, ObservedAt: frame.ReceivedAt.UTC(),
+			ConnectionGeneration: gameState.Session.ConnectionGeneration,
+		}
+	}
+	inventory := gameState.EventScores.Inventory
+	inventory.GlobalEffectPurchases = cloneGlobalEffectPurchaseRecords(inventory.GlobalEffectPurchases)
+	inventory.GlobalEffectBoostsObservedAt = frame.ReceivedAt.UTC()
+	inventory.GlobalEffectBoosts = statuses
+	purchaseEvidence := false
+	for globalEffectID, status := range statuses {
+		if globalEffectID != GameData.FortressDailyGlobalEffectID || !status.Boosted {
+			continue
+		}
+		_, explicitlyBoosted := boosted[globalEffectID]
+		previousStatus := gameState.EventScores.Inventory.GlobalEffectBoosts[globalEffectID]
+		record, found := inventory.GlobalEffectPurchases[globalEffectID]
+		if !found || !State.SameEventOccurrence(record.OccurrenceEndsAt, status.OccurrenceEndsAt) {
+			record = State.GlobalEffectPurchaseRecord{
+				GlobalEffectID: globalEffectID, OccurrenceEndsAt: status.OccurrenceEndsAt,
+				ExpiresAt: status.OccurrenceEndsAt, RequestOpcode: "agb",
+			}
+		}
+		record.Outcome = State.GlobalEffectPurchaseConfirmed
+		if explicitlyBoosted {
+			record.ActivationObservedAt = frame.ReceivedAt.UTC()
+		} else if record.ActivationObservedAt.IsZero() && previousStatus.Boosted {
+			record.ActivationObservedAt = previousStatus.ObservedAt
+		}
+		record.DebitUnverified = !updateGlobalEffectPurchaseRubyEvidence(&record, gameState, gameData)
+		if explicitlyBoosted {
+			record.Detail = "The server confirmed that the daily fortress-speed boost is active"
+		} else if record.Detail == "" {
+			record.Detail = "An earlier server confirmation remains authoritative for this daily fortress-speed occurrence"
+		}
+		if inventory.GlobalEffectPurchases == nil {
+			inventory.GlobalEffectPurchases = map[int64]State.GlobalEffectPurchaseRecord{}
+		}
+		inventory.GlobalEffectPurchases[globalEffectID] = record
+		purchaseEvidence = true
+	}
+	changed := gameState.ReplaceEventInventory(inventory)
+	domains := []string{"events", "event-scores", "global-effects"}
+	if purchaseEvidence {
+		domains = append(domains, globalEffectPurchaseDurabilityDomain)
+	}
+	return domains, changed, nil
+}
+
+func decodeGlobalEffectBoosterIDs(raw json.RawMessage) (map[int64]struct{}, error) {
+	var root map[string]json.RawMessage
+	if err := json.Unmarshal(raw, &root); err != nil {
+		return nil, fmt.Errorf("decode global-effect booster status: %w", err)
+	}
+	if nested := root["bie"]; len(nested) > 0 {
+		if err := json.Unmarshal(nested, &root); err != nil {
+			return nil, fmt.Errorf("decode nested global-effect booster status: %w", err)
+		}
+	}
+	rawIDs, present := root["GE"]
+	trimmed := bytes.TrimSpace(rawIDs)
+	if !present || len(trimmed) == 0 || bytes.Equal(trimmed, []byte("null")) || trimmed[0] != '[' {
+		return nil, fmt.Errorf("decode boosted global-effect ids: GE must be an explicit array")
+	}
+	var boostedIDs []json.RawMessage
+	if err := json.Unmarshal(trimmed, &boostedIDs); err != nil {
+		return nil, fmt.Errorf("decode boosted global-effect ids: %w", err)
+	}
+	boosted := make(map[int64]struct{}, len(boostedIDs))
+	for _, rawID := range boostedIDs {
+		id, valid := rawJSONInt64(rawID)
+		if !valid || id <= 0 {
+			return nil, fmt.Errorf("decode boosted global-effect ids: GE contains a non-positive integer")
+		}
+		boosted[id] = struct{}{}
+	}
+	return boosted, nil
+}
+
+func reduceGlobalEffectPurchaseAcknowledgement(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	gameData *GameData.Store,
+) ([]string, bool, error) {
+	if gameState == nil || frame.ResponseCode == nil {
+		return nil, false, nil
+	}
+	inventory := gameState.EventScores.Inventory
+	inventory.GlobalEffectPurchases = cloneGlobalEffectPurchaseRecords(inventory.GlobalEffectPurchases)
+	record, found := inventory.GlobalEffectPurchases[GameData.FortressDailyGlobalEffectID]
+	if !found || !globalEffectPurchaseResponseMatches(record, frame) {
+		return nil, false, nil
+	}
+	code := *frame.ResponseCode
+	record.ResultCode = &code
+	record.ResultObservedAt = frame.ReceivedAt.UTC()
+	verifiedDebit := updateGlobalEffectPurchaseRubyEvidence(&record, gameState, gameData)
+	record.DebitUnverified = !verifiedDebit
+	if code == 0 {
+		if record.Outcome != State.GlobalEffectPurchaseConfirmed {
+			record.Outcome = State.GlobalEffectPurchaseAccepted
+			record.Detail = "The game accepted the boost purchase; awaiting current boosted-state confirmation"
+		}
+	} else {
+		record.Outcome = State.GlobalEffectPurchaseRejected
+		record.Detail = fmt.Sprintf("The game rejected the boost purchase with result code %d", code)
+	}
+	inventory.GlobalEffectPurchases[record.GlobalEffectID] = record
+	changed := gameState.ReplaceEventInventory(inventory)
+	return []string{"events", "event-scores", "global-effects", globalEffectPurchaseDurabilityDomain}, changed, nil
+}
+
+func cloneGlobalEffectPurchaseRecords(input map[int64]State.GlobalEffectPurchaseRecord) map[int64]State.GlobalEffectPurchaseRecord {
+	result := make(map[int64]State.GlobalEffectPurchaseRecord, len(input))
+	for id, record := range input {
+		if record.ResultCode != nil {
+			code := *record.ResultCode
+			record.ResultCode = &code
+		}
+		result[id] = record
+	}
+	return result
+}
+
+func globalEffectPurchaseResponseMatches(record State.GlobalEffectPurchaseRecord, frame Protocol.Frame) bool {
+	if record.ResponseToken != "" && frame.ResponseToken == record.ResponseToken {
+		return true
+	}
+	return record.OperationID != "" && frame.CausationOperationID == record.OperationID
+}
+
+func updateGlobalEffectPurchaseRubyEvidence(record *State.GlobalEffectPurchaseRecord, gameState *State.GameState, gameData *GameData.Store) bool {
+	if record == nil || gameState == nil || gameData == nil || record.RubyBeforeObservedAt.IsZero() {
+		return false
+	}
+	resourceID, found := gameData.ResourceIDForJSONKey("C2")
+	if !found || resourceID <= 0 {
+		return false
+	}
+	observation := gameState.Player.ResourceObservations[State.ResourceID(resourceID)]
+	value, found := gameState.Player.Resources[State.ResourceID(resourceID)]
+	minimumObservedAt := record.RubyBeforeObservedAt
+	if record.DispatchedAt.After(minimumObservedAt) {
+		minimumObservedAt = record.DispatchedAt
+	}
+	if !found || observation.ObservedAt.IsZero() || !observation.ObservedAt.After(minimumObservedAt) ||
+		observation.ConnectionGeneration != record.ConnectionGeneration {
+		return false
+	}
+	record.RubyAfter = int64(math.Floor(value))
+	record.RubyAfterKnown = true
+	record.RubyAfterObservedAt = observation.ObservedAt
+	record.ObservedRubyChange = record.RubyBefore - record.RubyAfter
+	// A matching aggregate balance change is useful evidence but cannot prove
+	// this command caused the debit; manual spending can occur between reads.
+	return false
+}
+
 func applyKhanRageSnapshot(
 	gameState *State.GameState,
 	gameData *GameData.Store,
 	snapshot khanRageSnapshot,
 	observedAt time.Time,
 ) bool {
+	observedAt = observedAt.UTC()
+	if !gameState.Khan.RageCampObservedAt.IsZero() && observedAt.Before(gameState.Khan.RageCampObservedAt) {
+		return false
+	}
 	campID := int64(snapshot.CampID)
 	definition, found := gameData.EventCamp(campID)
 	rageCap := int64(0)
-	if found && definition.EventID == 72 && definition.AreaTypeID == 35 {
+	validCamp := found && definition.EventID == 72 && definition.AreaTypeID == 35 && definition.PlayerRageCap > 0
+	if validCamp {
 		rageCap = definition.PlayerRageCap
 	}
 	playerRage := max(int64(0), int64(snapshot.PlayerRage))
 	totalRage := max(int64(0), int64(snapshot.PlayerTotalRage))
-	observedAt = observedAt.UTC()
+	revision := gameState.Khan.RageCampRevision
+	if revision == 0 || gameState.Khan.RageCampID != campID || gameState.Khan.PlayerRageCap != rageCap {
+		revision++
+	}
+	balanceRevision := revision
+	if !validCamp {
+		balanceRevision = 0
+	}
 	if gameState.Khan.RageCampID == campID &&
+		gameState.Khan.RageCampRevision == revision &&
+		gameState.Khan.RageBalanceCampRevision == balanceRevision &&
 		gameState.Khan.PlayerRage == playerRage &&
 		gameState.Khan.PlayerRageCap == rageCap &&
 		gameState.Khan.PlayerTotalRage == totalRage &&
-		!gameState.Khan.RageObservedAt.IsZero() {
+		gameState.Khan.RageCampObservedAt.Equal(observedAt) &&
+		gameState.Khan.RageObservedAt.Equal(observedAt) {
 		return false
 	}
 	gameState.Khan.RageCampID = campID
+	gameState.Khan.RageCampRevision = revision
+	gameState.Khan.RageCampObservedAt = observedAt
+	gameState.Khan.RageBalanceCampRevision = balanceRevision
 	gameState.Khan.PlayerRage = playerRage
 	gameState.Khan.PlayerRageCap = rageCap
 	gameState.Khan.PlayerTotalRage = totalRage
 	gameState.Khan.RageObservedAt = observedAt
+	return true
+}
+
+func reduceKhanCampUpdate(
+	_ context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	gameData *GameData.Store,
+) ([]string, bool, error) {
+	if !frameSucceeded(frame) || gameState == nil || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	type campUpdate struct {
+		CampID       wireInt64 `json:"ACID"`
+		EventID      wireInt64 `json:"EID"`
+		X            wireInt64 `json:"X"`
+		Y            wireInt64 `json:"Y"`
+		VictoryCount wireInt64 `json:"ACVC"`
+	}
+	var payload struct {
+		Camps []json.RawMessage `json:"AC"`
+	}
+	observedAt := frame.ReceivedAt.UTC()
+	if err := json.Unmarshal(frame.Payload, &payload); err != nil || payload.Camps == nil {
+		return []string{"khan"}, invalidateKhanCamp(gameState, observedAt), nil
+	}
+	if !gameState.Khan.RageCampObservedAt.IsZero() && observedAt.Before(gameState.Khan.RageCampObservedAt) {
+		return nil, false, nil
+	}
+	var update campUpdate
+	foundKhan := false
+	for _, raw := range payload.Camps {
+		var candidate campUpdate
+		if err := json.Unmarshal(raw, &candidate); err != nil {
+			return []string{"khan"}, invalidateKhanCamp(gameState, observedAt), nil
+		}
+		if int64(candidate.EventID) != 72 {
+			continue
+		}
+		if foundKhan {
+			return []string{"khan"}, invalidateKhanCamp(gameState, observedAt), nil
+		}
+		update = candidate
+		foundKhan = true
+	}
+	if !foundKhan {
+		return nil, false, nil
+	}
+	campID := int64(update.CampID)
+	x, y := int(update.X), int(update.Y)
+	definition, found := gameData.EventCamp(campID)
+	score, active := gameState.LookupScalableEventScore(72)
+	occurrence, occurrenceFound := gameState.LookupEventOccurrence(72)
+	activeOccurrence := active && score.RemainingSec > 0 && !score.ObservedAt.IsZero() &&
+		State.ScalableEventEndsAt(score).After(observedAt) && occurrenceFound && occurrence.EndsAt.After(observedAt)
+	validTarget := gameState.Khan.TargetX == x && gameState.Khan.TargetY == y && x > 0 && y > 0
+	if gameState.Khan.TargetX == 0 && gameState.Khan.TargetY == 0 && x > 0 && y > 0 {
+		observation, exists := gameState.LookupMapObservation(0, fmt.Sprintf("%d:%d", x, y))
+		validTarget = exists && observation.TypeID == 35
+	}
+	validCamp := found && definition.EventID == 72 && definition.AreaTypeID == 35 &&
+		definition.PlayerRageCap > 0 && score.DifficultyID > 0 && definition.DifficultyID == score.DifficultyID
+	if !activeOccurrence || !validTarget || !validCamp {
+		return []string{"khan"}, invalidateKhanCamp(gameState, observedAt), nil
+	}
+	revision := gameState.Khan.RageCampRevision
+	changedCamp := revision == 0 || gameState.Khan.RageCampID != campID ||
+		gameState.Khan.PlayerRageCap != definition.PlayerRageCap
+	if changedCamp {
+		revision++
+	}
+	changed := changedCamp || !gameState.Khan.RageCampObservedAt.Equal(observedAt)
+	gameState.Khan.RageCampID = campID
+	gameState.Khan.RageCampRevision = revision
+	gameState.Khan.RageCampObservedAt = observedAt
+	gameState.Khan.PlayerRageCap = definition.PlayerRageCap
+	if changedCamp {
+		gameState.Khan.RageBalanceCampRevision = 0
+	}
+	if gameState.Khan.TargetX == 0 && gameState.Khan.TargetY == 0 {
+		gameState.Khan.TargetX = x
+		gameState.Khan.TargetY = y
+		changed = true
+	}
+	return []string{"khan"}, changed, nil
+}
+
+func invalidateKhanCamp(gameState *State.GameState, observedAt time.Time) bool {
+	if gameState == nil {
+		return false
+	}
+	observedAt = observedAt.UTC()
+	if !gameState.Khan.RageCampObservedAt.IsZero() && observedAt.Before(gameState.Khan.RageCampObservedAt) {
+		return false
+	}
+	revision := gameState.Khan.RageCampRevision + 1
+	if revision == 0 {
+		revision = 1
+	}
+	gameState.Khan.RageCampID = 0
+	gameState.Khan.RageCampRevision = revision
+	gameState.Khan.RageCampObservedAt = observedAt
+	gameState.Khan.RageBalanceCampRevision = 0
+	gameState.Khan.PlayerRageCap = 0
 	return true
 }
 
@@ -250,38 +838,60 @@ func reduceKhanRagePoints(
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 		return nil, false, nil
 	}
-	var payload struct {
-		EventID         wireInt64 `json:"EID"`
-		PlayerRage      wireInt64 `json:"PCRP"`
-		PlayerTotalRage wireInt64 `json:"PTRP"`
-	}
+	var payload map[string]json.RawMessage
 	if err := json.Unmarshal(frame.Payload, &payload); err != nil {
-		return nil, false, fmt.Errorf("decode Khan rage update: %w", err)
+		return []string{"khan"}, invalidateKhanRageBalance(gameState), nil
 	}
-	if int64(payload.EventID) != 72 {
+	eventID, validEventID := rawJSONInt64(payload["EID"])
+	if validEventID && eventID != 72 {
+		return nil, false, nil
+	}
+	playerRageValue, validPlayerRage := rawJSONInt64(payload["PCRP"])
+	totalRageValue, validTotalRage := rawJSONInt64(payload["PTRP"])
+	if !validEventID || !validPlayerRage || !validTotalRage || playerRageValue < 0 || totalRageValue < 0 {
+		return []string{"khan"}, invalidateKhanRageBalance(gameState), nil
+	}
+	observedAt := frame.ReceivedAt.UTC()
+	if !gameState.Khan.RageCampObservedAt.IsZero() && observedAt.Before(gameState.Khan.RageCampObservedAt) {
 		return nil, false, nil
 	}
 	rageCap := gameState.Khan.PlayerRageCap
 	campID := gameState.Khan.RageCampID
+	validCamp := false
 	if definition, found := gameData.EventCamp(campID); !found ||
-		definition.EventID != 72 || definition.AreaTypeID != 35 {
+		definition.EventID != 72 || definition.AreaTypeID != 35 || definition.PlayerRageCap <= 0 {
 		rageCap = 0
 	} else {
 		rageCap = definition.PlayerRageCap
+		validCamp = gameState.Khan.RageCampRevision > 0 && rageCap == gameState.Khan.PlayerRageCap
 	}
-	playerRage := max(int64(0), int64(payload.PlayerRage))
-	totalRage := max(int64(0), int64(payload.PlayerTotalRage))
+	balanceRevision := uint64(0)
+	if validCamp {
+		balanceRevision = gameState.Khan.RageCampRevision
+	}
+	playerRage := playerRageValue
+	totalRage := totalRageValue
 	if gameState.Khan.PlayerRage == playerRage &&
 		gameState.Khan.PlayerRageCap == rageCap &&
+		gameState.Khan.RageBalanceCampRevision == balanceRevision &&
 		gameState.Khan.PlayerTotalRage == totalRage &&
-		!gameState.Khan.RageObservedAt.IsZero() {
+		gameState.Khan.RageObservedAt.Equal(observedAt) {
 		return nil, false, nil
 	}
 	gameState.Khan.PlayerRage = playerRage
 	gameState.Khan.PlayerRageCap = rageCap
+	gameState.Khan.RageBalanceCampRevision = balanceRevision
 	gameState.Khan.PlayerTotalRage = totalRage
-	gameState.Khan.RageObservedAt = frame.ReceivedAt.UTC()
+	gameState.Khan.RageObservedAt = observedAt
 	return []string{"khan"}, true, nil
+}
+
+func invalidateKhanRageBalance(gameState *State.GameState) bool {
+	if gameState == nil || gameState.Khan.RageBalanceCampRevision == 0 {
+		return false
+	}
+	gameState.Khan.RageBalanceCampRevision = 0
+	return true
 }
 
 func normalizedInvasionFortifyCurrencies(values []string) []string {

@@ -6,6 +6,7 @@ const (
 	attackAnalyticsLaunchIDs attackAnalyticsMutationPart = 1 << iota
 	attackAnalyticsPending
 	attackAnalyticsRecentStorm
+	attackAnalyticsTowerAdvisorTimeSkips
 )
 
 func (state *GameState) prepareAttackAnalyticsMutation(source GameState) {
@@ -76,5 +77,28 @@ func (state *GameState) SetRecentAutoStormLaunches(values []AttackFeatureLaunch)
 	state.AttackAnalytics.RecentAutoStormLaunches = values
 	if state.attackAnalyticsMutationCOW {
 		state.mutableAttackAnalyticsParts |= attackAnalyticsRecentStorm
+	}
+}
+
+func (state *GameState) MutableRecentTowerAdvisorTimeSkips() []TowerAdvisorTimeSkipUsage {
+	if state == nil {
+		return nil
+	}
+	if state.attackAnalyticsMutationCOW && state.mutableAttackAnalyticsParts&attackAnalyticsTowerAdvisorTimeSkips == 0 {
+		state.AttackAnalytics.RecentTowerAdvisorTimeSkips = append(
+			[]TowerAdvisorTimeSkipUsage(nil), state.AttackAnalytics.RecentTowerAdvisorTimeSkips...,
+		)
+		state.mutableAttackAnalyticsParts |= attackAnalyticsTowerAdvisorTimeSkips
+	}
+	return state.AttackAnalytics.RecentTowerAdvisorTimeSkips
+}
+
+func (state *GameState) SetRecentTowerAdvisorTimeSkips(values []TowerAdvisorTimeSkipUsage) {
+	if state == nil {
+		return
+	}
+	state.AttackAnalytics.RecentTowerAdvisorTimeSkips = values
+	if state.attackAnalyticsMutationCOW {
+		state.mutableAttackAnalyticsParts |= attackAnalyticsTowerAdvisorTimeSkips
 	}
 }

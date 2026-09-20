@@ -214,7 +214,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 					NextCheckAt: snapshot.Now.Add(time.Second), Metrics: metrics,
 					Request: &Intent.Request{
 						Name: "nomad.cooldown.minute_skip", Arguments: nomadMinuteSkipArguments(observation, settings.TimeSkipReserve),
-					}, ReevaluateOnSuccess: true,
+					}, ReevaluateOnSuccess: true, ReevaluateOnStale: true,
 				}, nil
 			}
 		}
@@ -283,13 +283,16 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 					NextCheckAt: snapshot.Now.Add(time.Second), Metrics: metrics,
 					Request: &Intent.Request{
 						Name: "nomad.cooldown.minute_skip", Arguments: nomadMinuteSkipArguments(target.Observation, settings.TimeSkipReserve),
-					}, ReevaluateOnSuccess: true,
+					}, ReevaluateOnSuccess: true, ReevaluateOnStale: true,
 				}, nil
 			}
 			return Decision{
 				Status: "waiting", Detail: fmt.Sprintf("Camp %d:%d is available in %d seconds", target.Observation.X, target.Observation.Y, remaining),
 				NextCheckAt: snapshot.Now.Add(time.Duration(remaining) * time.Second), Metrics: metrics,
 			}, nil
+		}
+		if decision, blocked := nomadSequentialArrivalDecision(snapshot, score.EventID, target.Observation, metrics, policyInterval(settings.CheckIntervalSec, 30)); blocked {
+			return decision, nil
 		}
 		launchCommanders, limitedPreset, err := availableNomadPresetCommanders(
 			snapshot, source, target, preset, availableCommanders, len(availableCommanders), false,
@@ -348,8 +351,12 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		return Decision{
 			Status: "ready", Detail: fmt.Sprintf("Apply a time skip to locked camp %d:%d", target.Observation.X, target.Observation.Y),
 			NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
-			Request: &Intent.Request{Name: "nomad.cooldown.minute_skip", Arguments: arguments}, ReevaluateOnSuccess: true,
+			Request:             &Intent.Request{Name: "nomad.cooldown.minute_skip", Arguments: arguments},
+			ReevaluateOnSuccess: true, ReevaluateOnStale: true,
 		}, nil
+	}
+	if decision, blocked := nomadSequentialArrivalDecision(snapshot, score.EventID, target.Observation, metrics, policyInterval(settings.CheckIntervalSec, 30)); blocked {
+		return decision, nil
 	}
 	if len(availableCommanders) == 0 {
 		return nomadCommanderWaiting(snapshot.Now, commandersRestricted, metrics), nil
@@ -394,6 +401,83 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	}
 	metrics["chainSize"] = float64(len(launchCommanders))
 	return nomadAttackDecision(snapshot.Now, score, settings, source, preset, target, launchCommanders, "chain", maximumVictoryCount, metrics), nil
+}
+
+func nomadSequentialArrivalDecision(
+	snapshot Snapshot,
+	eventID int64,
+	target State.MapObservation,
+	metrics map[string]float64,
+	retryInterval time.Duration,
+) (Decision, bool) {
+	block, blocked := State.NomadSequentialArrivalBlockAt(
+		snapshot.State, eventID, target.KingdomID, target.TypeID, target.X, target.Y, snapshot.Now,
+	)
+	if !blocked {
+		return Decision{}, false
+	}
+	if !block.ArrivesAt.IsZero() {
+		metrics["sequentialArrivalAt"] = float64(block.ArrivesAt.Unix())
+	}
+	refreshMovements := func(detail string) (Decision, bool) {
+		return Decision{
+			Status: "ready", Detail: detail,
+			NextCheckAt: snapshot.Now.Add(State.NomadSequentialArrivalGuardHorizon), Metrics: metrics,
+			Request: &Intent.Request{Name: "game.refresh_movements", Arguments: json.RawMessage(`{}`)}, ReevaluateOnSuccess: true,
+		}, true
+	}
+	refreshTarget := func(detail string) (Decision, bool) {
+		arguments, _ := json.Marshal(map[string]any{
+			"kingdomId": target.KingdomID, "x1": target.X, "y1": target.Y, "x2": target.X, "y2": target.Y,
+		})
+		return Decision{
+			Status: "ready", Detail: detail,
+			NextCheckAt: snapshot.Now.Add(State.NomadSequentialArrivalGuardHorizon), Metrics: metrics,
+			Request: &Intent.Request{Name: "map.query", Arguments: arguments}, ReevaluateOnSuccess: true,
+		}, true
+	}
+
+	if block.Unknown {
+		movementObservedAt := snapshot.State.MovementSnapshot.ObservedAt
+		if movementObservedAt.IsZero() || !block.LaunchedAt.IsZero() && movementObservedAt.Before(block.LaunchedAt) {
+			return refreshMovements(fmt.Sprintf("Refresh movements before resolving unknown arrival timing at camp %d:%d", target.X, target.Y))
+		}
+		if block.Live {
+			if snapshot.Now.Sub(movementObservedAt) >= retryInterval {
+				return refreshMovements(fmt.Sprintf("Recheck the unknown-timing movement approaching camp %d:%d", target.X, target.Y))
+			}
+			return Decision{
+				Status: "waiting", Detail: fmt.Sprintf("Camp %d:%d has an in-flight attack with unknown arrival timing", target.X, target.Y),
+				NextCheckAt: movementObservedAt.Add(retryInterval), Metrics: metrics,
+			}, true
+		}
+		return refreshTarget(fmt.Sprintf("Confirm camp %d:%d after its unknown-timing movement disappeared", target.X, target.Y))
+	}
+
+	settlementAt := block.ArrivesAt.Add(State.NomadSequentialArrivalGuardHorizon)
+	if snapshot.Now.Before(settlementAt) {
+		return Decision{
+			Status: "waiting", Detail: fmt.Sprintf("Wait for the prior camp %d:%d arrival to settle", target.X, target.Y),
+			NextCheckAt: settlementAt, Metrics: metrics,
+		}, true
+	}
+	key := fmt.Sprintf("%d:%d:%d", target.KingdomID, target.X, target.Y)
+	cooldown, found := snapshot.State.NomadCamps.Cooldowns[key]
+	settlementObservedAt := target.ObservedAt
+	if found && cooldown.CooldownObservedAt.After(settlementObservedAt) {
+		settlementObservedAt = cooldown.CooldownObservedAt
+	}
+	if settlementObservedAt.Before(settlementAt) {
+		return refreshTarget(fmt.Sprintf("Confirm camp %d:%d after the prior arrival", target.X, target.Y))
+	}
+	if block.Live && (snapshot.State.MovementSnapshot.ObservedAt.Before(settlementObservedAt) ||
+		snapshot.Now.Sub(snapshot.State.MovementSnapshot.ObservedAt) >= State.NomadSequentialArrivalGuardHorizon) {
+		return refreshMovements(fmt.Sprintf("Confirm the prior movement to camp %d:%d has cleared", target.X, target.Y))
+	}
+	return Decision{
+		Status: "waiting", Detail: fmt.Sprintf("Camp %d:%d is still settling after the prior arrival", target.X, target.Y),
+		NextCheckAt: snapshot.Now.Add(State.NomadSequentialArrivalGuardHorizon), Metrics: metrics,
+	}, true
 }
 
 func validateAutoNomadToolCompatibility(
@@ -862,7 +946,8 @@ func nomadAttackDecision(
 	}
 	return Decision{
 		Status: "ready", Detail: detail, NextCheckAt: now.Add(2 * time.Second), Metrics: metrics,
-		Request: &Intent.Request{Name: "nomad.camp.attack", Arguments: arguments}, ReevaluateOnSuccess: true,
+		Request:             &Intent.Request{Name: "nomad.camp.attack", Arguments: arguments},
+		ReevaluateOnSuccess: true, ReevaluateOnStale: true,
 	}
 }
 
@@ -922,7 +1007,7 @@ func evaluateAutoNomadRBCTest(snapshot Snapshot, settings autoNomadSettings) (De
 			NextCheckAt: snapshot.Now.Add(time.Second), Metrics: metrics,
 			Request: &Intent.Request{
 				Name: "nomad.cooldown.minute_skip", Arguments: nomadMinuteSkipArguments(target, settings.TimeSkipReserve),
-			}, ReevaluateOnSuccess: true,
+			}, ReevaluateOnSuccess: true, ReevaluateOnStale: true,
 		}, nil
 	}
 	outstandingCooldownSkips := int64(0)

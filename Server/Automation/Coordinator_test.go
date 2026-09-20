@@ -20,6 +20,7 @@ type coordinatorTestPolicy struct {
 	id        string
 	domains   []string
 	sections  []string
+	controls  []string
 	decision  Decision
 	snapshots chan Snapshot
 }
@@ -38,6 +39,8 @@ func (policy *coordinatorTestPolicy) Evaluate(_ context.Context, snapshot Snapsh
 func (policy *coordinatorTestPolicy) WakeDomains() []string { return policy.domains }
 
 func (policy *coordinatorTestPolicy) WakeSections() []string { return policy.sections }
+
+func (policy *coordinatorTestPolicy) WakeEnabledControls() []string { return policy.controls }
 
 type coordinatorTestDerivedStatePolicy struct {
 	coordinatorTestPolicy
@@ -432,6 +435,154 @@ func TestCoordinatorConfigurationFingerprintTracksOnlyRelevantSections(t *testin
 	}
 	if policyConfigurationFingerprint(beta, before) != policyConfigurationFingerprint(beta, after) {
 		t.Fatal("unrelated section change changed another policy fingerprint")
+	}
+}
+
+func TestCoordinatorConfigurationFingerprintTracksOnlyDeclaredEnabledControls(t *testing.T) {
+	policy := &coordinatorTestPolicy{
+		id: "autoBird", sections: []string{"automation.autoBird", "automation.autoFortress"},
+		controls: []string{"auto_fortress"},
+	}
+	before := Configuration.Snapshot{Sections: map[string]json.RawMessage{
+		"automation.enabled":      json.RawMessage(`{"autoBird":true,"auto_fortress":false,"auto_buyer":false}`),
+		"automation.autoBird":     json.RawMessage(`{"version":2}`),
+		"automation.autoFortress": json.RawMessage(`{"kingdoms":{"1":{"enabled":true}}}`),
+	}}
+	changed := func(section string, value json.RawMessage) Configuration.Snapshot {
+		after := before
+		after.Sections = map[string]json.RawMessage{}
+		for key, raw := range before.Sections {
+			after.Sections[key] = raw
+		}
+		after.Sections[section] = value
+		return after
+	}
+	if policyConfigurationFingerprint(policy, before) == policyConfigurationFingerprint(policy, changed(
+		"automation.enabled", json.RawMessage(`{"autoBird":true,"auto_fortress":true,"auto_buyer":false}`),
+	)) {
+		t.Fatal("Auto Fortress control change did not change the Auto Bird fingerprint")
+	}
+	if policyConfigurationFingerprint(policy, before) != policyConfigurationFingerprint(policy, changed(
+		"automation.enabled", json.RawMessage(`{"autoBird":true,"auto_fortress":false,"auto_buyer":true}`),
+	)) {
+		t.Fatal("unrelated enabled control changed the Auto Bird fingerprint")
+	}
+}
+
+func TestHostedRelatedEnabledControlExpirationWakesWaitingPolicy(t *testing.T) {
+	now := time.Now().UTC()
+	expiresAt := now.Add(-time.Second)
+	enabled, err := json.Marshal(map[string]any{
+		"autoBird":      true,
+		"auto_fortress": map[string]any{"enabled": true, "expiresAt": expiresAt},
+		"auto_buyer":    map[string]any{"enabled": true, "expiresAt": expiresAt},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	configuration, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{
+		"automation.enabled": enabled,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	policy := &coordinatorTestPolicy{
+		id: "autoBird", controls: []string{"auto_fortress"}, snapshots: make(chan Snapshot, 1),
+		decision: Decision{Status: "waiting", Detail: "No troops", NextCheckAt: now.Add(30 * time.Minute)},
+	}
+	state := State.NewStore(State.NewGameState())
+	coordinator := NewCoordinator(state, configuration, nil, nil, policy)
+	coordinator.SetExternalConfigurationAuthority(true)
+	snapshot := configuration.Snapshot()
+	runtime := map[string]*policyRuntime{"autoBird": {
+		nextCheck: now.Add(30 * time.Minute), evaluatedSessionKnown: true,
+		evaluatedSessionReady: false, evaluatedSessionGeneration: 0,
+		evaluatedConfigRevision: snapshot.Revision,
+		evaluatedConfiguration:  policyConfigurationFingerprint(policy, snapshot),
+	}}
+	recordPolicyEnabledControls(runtime["autoBird"], policy, snapshot, expiresAt.Add(-time.Second))
+
+	if !wakePoliciesForEnabledControlExpirations(runtime, coordinator.policies, snapshot, now) {
+		t.Fatal("expired related control did not wake Auto Bird")
+	}
+	coordinator.evaluate(t.Context(), runtime, make(chan operationResult, 1))
+	select {
+	case <-policy.snapshots:
+		t.Fatal("unavailable session unexpectedly evaluated Auto Bird")
+	default:
+	}
+	if !runtime["autoBird"].controlExpiryPending {
+		t.Fatal("unavailable session consumed the related expiry before Auto Bird could evaluate")
+	}
+	ready := coordinatorReadyState().Session
+	if _, err := state.ApplyComponents(State.Components(State.ComponentSession), func(gameState *State.GameState) ([]string, bool, error) {
+		gameState.Session = ready
+		return []string{"session"}, true, nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	coordinator.evaluate(t.Context(), runtime, make(chan operationResult, 1))
+	select {
+	case evaluated := <-policy.snapshots:
+		if !evaluated.PolicyConfigurationChanged {
+			t.Fatal("related effective expiry was not exposed as a policy configuration change")
+		}
+	default:
+		t.Fatal("related effective expiry did not evaluate Auto Bird")
+	}
+	if wakePoliciesForEnabledControlExpirations(runtime, coordinator.policies, snapshot, now.Add(time.Minute)) {
+		t.Fatal("retained hosted expiry restarted Auto Bird more than once")
+	}
+
+	unrelated := &coordinatorTestPolicy{id: "unrelated", controls: []string{"missing"}}
+	unrelatedRuntime := map[string]*policyRuntime{"unrelated": {nextCheck: now.Add(time.Hour)}}
+	if wakePoliciesForEnabledControlExpirations(unrelatedRuntime, []Policy{unrelated}, snapshot, now) {
+		t.Fatal("unrelated timed-control expiry woke a policy")
+	}
+}
+
+func TestRelatedEnabledControlExpirySurvivesWakeBeforeTimer(t *testing.T) {
+	now := time.Now().UTC()
+	expiresAt := now.Add(-time.Second)
+	enabled, err := json.Marshal(map[string]any{
+		"autoBird":      true,
+		"auto_fortress": map[string]any{"enabled": true, "expiresAt": expiresAt},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	configuration, err := Configuration.Open(t.TempDir(), map[string]json.RawMessage{
+		"automation.enabled": enabled,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	policy := &coordinatorTestPolicy{
+		id: "autoBird", controls: []string{"auto_fortress"}, snapshots: make(chan Snapshot, 1),
+		decision: Decision{Status: "waiting", Detail: "No troops", NextCheckAt: now.Add(30 * time.Minute)},
+	}
+	state := State.NewStore(coordinatorReadyState())
+	coordinator := NewCoordinator(state, configuration, nil, nil, policy)
+	snapshot := configuration.Snapshot()
+	runtime := map[string]*policyRuntime{"autoBird": {
+		nextCheck: now.Add(30 * time.Minute), evaluationPending: true,
+		evaluatedSessionKnown: true, evaluatedSessionReady: true, evaluatedSessionGeneration: 1,
+		evaluatedConfigRevision: snapshot.Revision,
+		evaluatedConfiguration:  policyConfigurationFingerprint(policy, snapshot),
+	}}
+	recordPolicyEnabledControls(runtime["autoBird"], policy, snapshot, expiresAt.Add(-time.Second))
+
+	coordinator.evaluate(t.Context(), runtime, make(chan operationResult, 1))
+	select {
+	case evaluated := <-policy.snapshots:
+		if !evaluated.PolicyConfigurationChanged {
+			t.Fatal("wake immediately after expiry lost the related configuration transition")
+		}
+	default:
+		t.Fatal("wake immediately after expiry did not evaluate Auto Bird")
+	}
+	if wakePoliciesForEnabledControlExpirations(runtime, coordinator.policies, snapshot, now.Add(time.Minute)) {
+		t.Fatal("expiry timer repeated a transition already consumed by policy evaluation")
 	}
 }
 
@@ -1404,6 +1555,23 @@ func TestCoordinatorRetryableTowerStaleDoesNotPauseQueue(t *testing.T) {
 	}
 }
 
+func TestCoordinatorRetryableNomadStaleDoesNotPauseQueue(t *testing.T) {
+	now := time.Date(2026, time.September, 18, 12, 55, 51, 0, time.UTC)
+	current := &policyRuntime{running: true}
+	result, wakeImmediately := completePolicyRun(current, operationResult{
+		policyID: "autoNomad",
+		receipt: Intent.Receipt{
+			Status: Intent.StatusPartiallySucceeded,
+			Error:  "Build and launch camp attack: " + Intent.ErrPlanStale.Error() + ": camp 206:937 is awaiting an authoritative cooldown refresh",
+		},
+		nextCheck:         now.Add(2 * time.Second),
+		reevaluateOnStale: true,
+	}, now)
+	if !wakeImmediately || !result.nextCheck.IsZero() || !current.failureBlockedUntil.IsZero() || current.running {
+		t.Fatalf("retryable Nomad stale paused the queue: result=%+v runtime=%+v", result, current)
+	}
+}
+
 func TestCoordinatorNonStaleTowerFailureKeepsSafetyPause(t *testing.T) {
 	now := time.Date(2026, time.July, 22, 18, 45, 0, 0, time.UTC)
 	current := &policyRuntime{running: true}
@@ -1475,6 +1643,52 @@ func TestCoordinatorTroopShortageIsAvailabilityGateWithoutSafetyPause(t *testing
 	clearTroopAvailabilityGates(runtime, State.Event{Revision: 12, Domains: []string{"units"}}, gameState)
 	if current.troopAvailabilityGate != nil {
 		t.Fatalf("changed authoritative troop inventory retained the gate: %+v", current.troopAvailabilityGate)
+	}
+}
+
+func TestCoordinatorCoinShortageWaitsWithBoundedRetryAndWakesOnFreshBalance(t *testing.T) {
+	now := time.Date(2026, time.September, 19, 14, 0, 0, 0, time.UTC)
+	shortage := (&Intent.CoinUnavailableError{Required: 100, Reserve: 20, Observed: 90, Pending: 0, Source: "official test cost"}).Error()
+	shortage = "Recruit next stack: " + shortage
+	current := &policyRuntime{running: true, evaluatedStateRevision: 10}
+	result, immediate := completePolicyRun(current, operationResult{policyID: "autoRecruit", receipt: Intent.Receipt{
+		Status: Intent.StatusFailed, Error: "Waiting for 100 coins plus a 20-coin reserve", RawError: shortage,
+	}}, now)
+	if immediate || current.running || current.coinAvailabilityGate == nil || !current.failureBlockedUntil.IsZero() {
+		t.Fatalf("coin shortage entered failure/busy state: result=%+v runtime=%+v", result, current)
+	}
+	if current.eventOnly || !current.nextCheck.Equal(now.Add(defaultRetry)) || !result.nextCheck.Equal(current.nextCheck) {
+		t.Fatalf("coin shortage did not retain bounded recovery: result=%+v runtime=%+v", result, current)
+	}
+	gameState := coordinatorReadyState()
+	gameState.Player.Resources[1] = 90
+	gameState.Player.ResourceObservations[1] = State.PlayerResourceObservation{ObservedAt: now, ConnectionGeneration: 1}
+	runtime := map[string]*policyRuntime{"autoRecruit": current}
+	clearCoinAvailabilityGates(runtime, State.Event{Revision: 11, Domains: []string{"resources"}}, gameState)
+	if current.coinAvailabilityGate == nil {
+		t.Fatal("unchanged coin observation released the gate")
+	}
+	gameState.Player.Resources[1] = 120
+	gameState.Player.ResourceObservations[1] = State.PlayerResourceObservation{ObservedAt: now.Add(time.Second), ConnectionGeneration: 1}
+	clearCoinAvailabilityGates(runtime, State.Event{Revision: 12, Domains: []string{"resources"}}, gameState)
+	if current.coinAvailabilityGate != nil || !current.evaluationPending || !current.nextCheck.IsZero() {
+		t.Fatalf("fresh recovered balance did not wake lane: %+v", current)
+	}
+}
+
+func TestCoordinatorExpiredCoinGateBecomesImmediatelyDueOnce(t *testing.T) {
+	now := time.Date(2026, time.September, 19, 15, 0, 0, 0, time.UTC)
+	current := &policyRuntime{coinAvailabilityGate: &coinAvailabilityGate{observed: 10}, nextCheck: now.Add(time.Minute), evaluatedSessionKnown: true}
+	runtime := map[string]*policyRuntime{"autoRecruit": current}
+	if !coinAvailabilityGateWaiting(current, now) || !nextPolicyEvaluationAt(runtime, now).Equal(now.Add(time.Minute)) {
+		t.Fatalf("future coin gate schedule = %+v next=%s", current, nextPolicyEvaluationAt(runtime, now))
+	}
+	due := now.Add(time.Minute)
+	if coinAvailabilityGateWaiting(current, due) || current.coinAvailabilityGate != nil || !current.nextCheck.IsZero() {
+		t.Fatalf("expired coin gate retained past deadline: %+v", current)
+	}
+	if next := nextPolicyEvaluationAt(runtime, due); !next.Equal(due) {
+		t.Fatalf("expired gate next evaluation = %s, want %s", next, due)
 	}
 }
 

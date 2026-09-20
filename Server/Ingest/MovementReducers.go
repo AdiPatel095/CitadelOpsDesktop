@@ -376,22 +376,53 @@ func parseMovement(raw json.RawMessage, observedAt time.Time, gameData *GameData
 		movement.TargetPlayerID = State.PlayerID(targetOwnerID)
 	}
 	var unitMovement struct {
-		WaitSeconds int                        `json:"TWD"`
-		Leader      map[string]json.RawMessage `json:"L"`
+		WaitSeconds         int                        `json:"TWD"`
+		Leader              map[string]json.RawMessage `json:"L"`
+		AdvisorType         int                        `json:"AAT"`
+		AdvisorAttackNumber int                        `json:"AAN"`
+		AdvisorAttackCount  int                        `json:"AAC"`
+		AdvisorLaunchState  int                        `json:"AAL"`
 	}
 	if rawUnitMovement, exists := item["UM"]; exists {
 		if json.Unmarshal(rawUnitMovement, &unitMovement) != nil {
 			return State.MovementState{}, false
 		}
 		movement.WaitSeconds = max(0, unitMovement.WaitSeconds)
+		movement.AdvisorType = unitMovement.AdvisorType
+		movement.AdvisorAttackNumber = unitMovement.AdvisorAttackNumber
+		movement.AdvisorAttackCount = unitMovement.AdvisorAttackCount
+		movement.AdvisorLaunchState = unitMovement.AdvisorLaunchState
 		if unitMovement.Leader != nil {
-			rawLeaderID, exists := unitMovement.Leader["ID"]
-			leaderID, valid := rawJSONInt64(rawLeaderID)
-			if !exists || !valid {
-				return State.MovementState{}, false
+			// Premium leaders can use DLID instead of ID on any movement type.
+			// Khan NPC retaliation leaders use WID instead of either player
+			// leader identity. Retain every supplied wire identity without
+			// inventing an owned commander from the NPC WID.
+			// A malformed supplied field must not be rescued by the other one.
+			for key, destination := range map[string]**int64{
+				"ID": &movement.LeaderID, "DLID": &movement.LeaderDLID,
+			} {
+				if raw, exists := unitMovement.Leader[key]; exists {
+					id, valid := rawJSONInt64(raw)
+					if !valid {
+						return State.MovementState{}, false
+					}
+					*destination = &id
+				}
 			}
-			if leaderID >= 0 {
-				commanderID := State.CommanderID(leaderID)
+			if raw, exists := unitMovement.Leader["WID"]; exists {
+				id, valid := rawJSONInt64(raw)
+				if !valid || id <= 0 {
+					return State.MovementState{}, false
+				}
+				movement.LeaderWID = &id
+			}
+			if movement.LeaderID == nil && movement.LeaderDLID == nil {
+				if movement.LeaderWID == nil || !khanNPCLeaderMovement(movement) {
+					return State.MovementState{}, false
+				}
+			}
+			if movement.LeaderID != nil && *movement.LeaderID >= 0 {
+				commanderID := State.CommanderID(*movement.LeaderID)
 				movement.CommanderID = &commanderID
 			}
 		}
@@ -427,6 +458,20 @@ func parseMovement(raw json.RawMessage, observedAt time.Time, gameData *GameData
 		movement.ReturnsAt = &completion
 	}
 	return movement, true
+}
+
+// khanNPCLeaderMovement limits WID-only leaders to the captured inbound Khan
+// retaliation shape. WID is an NPC wire identity, never a player commander.
+func khanNPCLeaderMovement(movement State.MovementState) bool {
+	return movement.TypeID == khanTauntMovementTypeID &&
+		movement.SourceTypeID == khanCampMapTypeID &&
+		movement.TargetTypeID == State.MapTypePlayerCastle &&
+		movement.KingdomID == 0 &&
+		movement.Direction == 0 &&
+		movement.OwnerPlayerID < 0 &&
+		movement.TargetPlayerID > 0 &&
+		movement.SourceCastleID < 0 &&
+		movement.TargetCastleID > 0
 }
 
 func movementOptionalIdentity(raw json.RawMessage) (int64, bool) {

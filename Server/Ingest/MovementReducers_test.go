@@ -142,6 +142,23 @@ func TestParseMovementKeepsGameReportedStationWaitActive(t *testing.T) {
 	}
 }
 
+func TestParseMovementKeepsBaronAdvisorChainIdentity(t *testing.T) {
+	observedAt := time.Date(2026, 9, 2, 16, 0, 0, 0, time.UTC)
+	movement, ok := parseMovement(json.RawMessage(`{
+		"M":{"MID":701,"PT":2,"TT":20,"D":0,"T":0,"KID":0,"SA":[1,10,11,100],"TA":[2,20,21,-1]},
+		"UM":{"AAT":4,"AAN":2,"AAC":2,"AAL":0,"L":{"ID":8}}
+	}`), observedAt, nil)
+	if !ok {
+		t.Fatal("Baron Advisor movement did not parse")
+	}
+	if movement.AdvisorType != 4 || movement.AdvisorAttackNumber != 2 || movement.AdvisorAttackCount != 2 ||
+		movement.AdvisorLaunchState != 0 || movement.CommanderID == nil || *movement.CommanderID != 8 ||
+		movement.SourceTypeID != 1 || movement.SourceCastleID != 100 || movement.SourceX != 10 || movement.SourceY != 11 ||
+		movement.TargetTypeID != 2 || movement.TargetCastleID != -1 || movement.TargetX != 20 || movement.TargetY != 21 {
+		t.Fatalf("Baron Advisor movement identity = %#v", movement)
+	}
+}
+
 func TestReconcileExpiredMovementsReleasesCompletedStationWait(t *testing.T) {
 	now := time.Now().UTC()
 	arrivedAt := now.Add(-2 * time.Hour)
@@ -590,5 +607,51 @@ func TestParseMovementCapturesOfficialMarketGoods(t *testing.T) {
 	}
 	if movement.MarketBarrows != 4 || len(movement.MarketGoods) != 1 || movement.MarketGoods[0].ResourceID != 3 || movement.MarketGoods[0].Amount != 2400 {
 		t.Fatalf("market movement = %+v", movement)
+	}
+}
+
+func TestRegularCommanderSupportExpiresAfterScopedGAMOmission(t *testing.T) {
+	now := time.Now().UTC()
+	game := State.NewGameState()
+	game.Player.ID = 1
+	game.Castles[100] = newCastleState(100)
+	game.Commanders[0] = State.CommanderState{ID: 0, Available: true}
+	reducer := newMovementReducer(true)
+	code := 0
+	receive := func(at time.Time, payload string) {
+		t.Helper()
+		_, _, err := reducer(context.Background(), Protocol.Frame{Opcode: "gam", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: at, Payload: json.RawMessage(payload)}, &game, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	receive(now, `{"M":[{"M":{"MID":50,"PT":2,"TT":60,"D":0,"T":0,"KID":0,"OID":1,"TID":99,"SA":[0,10,11,100,1],"TA":[0,20,21,300,99]},"UM":{"TWD":120,"L":{"ID":0}}}]}`)
+	if game.Movements[50].CommanderID == nil || game.Movements[50].WaitSeconds != 120 {
+		t.Fatal("support was not parsed")
+	}
+	receive(now.Add(time.Minute), `{"M":[],"O":[]}`)
+	if _, ok := game.Movements[50]; !ok {
+		t.Fatal("scoped GAM erased live support")
+	}
+	receive(now.Add(245*time.Second), `{"M":[],"O":[]}`)
+	if _, ok := game.Movements[50]; ok {
+		t.Fatal("expired support retained indefinitely")
+	}
+	if !game.Commanders[0].Available {
+		t.Fatal("commander zero remained occupied")
+	}
+}
+
+func TestClockReconcilesExpiredRegularCommanderSupport(t *testing.T) {
+	now := time.Now().UTC()
+	arrival := now.Add(-time.Hour)
+	commander := State.CommanderID(0)
+	game := State.NewGameState()
+	game.Player.ID = 1
+	game.Castles[100] = newCastleState(100)
+	game.Movements[50] = State.MovementState{ID: 50, Direction: 0, OwnerPlayerID: 1, SourceCastleID: 100, CommanderID: &commander, TravelSeconds: 60, WaitSeconds: 120, ArrivesAt: &arrival}
+	ReconcileExpiredMovements(&game, now)
+	if _, ok := game.Movements[50]; ok {
+		t.Fatal("clock retained expired support")
 	}
 }

@@ -113,6 +113,11 @@ func (router *Router) Send(ctx context.Context, payload []byte) error {
 	if err != nil {
 		return fmt.Errorf("route outbound payload: %w", err)
 	}
+	if frame.Opcode == "cds" {
+		if err := Protocol.ValidateSupportArmy(frame.Payload); err != nil {
+			return err
+		}
+	}
 	lane := LaneCommand
 	if frame.Opcode == "cra" {
 		lane = LaneAttackLaunch
@@ -212,7 +217,7 @@ func (router *Router) enqueue(ctx context.Context, lane Lane, payload []byte, me
 		len(router.queues[LaneCommand]) == 0 && len(router.queues[LaneAttackLaunch]) == 0 &&
 		!router.nextAllowed[lane].After(now)
 	router.nextID++
-	commandContext, cancel := context.WithCancel(ctx)
+	commandContext, cancel := context.WithCancel(WithMetadata(ctx, metadata))
 	command := &queuedCommand{
 		id: router.nextID, lane: lane, metadata: metadata,
 		payload: append([]byte(nil), payload...), ctx: commandContext, cancel: cancel, result: make(chan error, 1),
@@ -390,6 +395,9 @@ func (router *Router) dispatch(command *queuedCommand) error {
 	}
 	if router.config.Ready != nil && !router.config.Ready() {
 		return ErrNotReady
+	}
+	if err := ValidateFinalDispatch(command.ctx); err != nil {
+		return err
 	}
 	if router.config.Send == nil {
 		return ErrClosed

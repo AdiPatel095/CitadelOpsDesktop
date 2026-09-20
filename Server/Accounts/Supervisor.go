@@ -26,6 +26,7 @@ import (
 	"CitadelDesktop/Server/Session"
 	"CitadelDesktop/Server/State"
 	"CitadelDesktop/Server/WorldIntel"
+	"github.com/gofrs/flock"
 )
 
 var accountIDPattern = regexp.MustCompile(`^[a-z0-9][a-z0-9_-]{0,63}$`)
@@ -64,6 +65,8 @@ type Config struct {
 
 type AccountConfig struct {
 	ID string
+	// Internal proof supplied only by the exact-epoch orchestrator path.
+	handoverAssignment *RuntimeAssignment
 	// DataDir is reserved for the desktop N=1 composition, which must continue
 	// using its existing profile root. Hosted accounts omit it and are placed
 	// under DataRoot/Accounts/{id}.
@@ -103,14 +106,18 @@ type Supervisor struct {
 	ingest         *Ingest.Registry
 	ownsGameData   bool
 	startupErr     error
+	rootLease      *flock.Flock
 
-	mu       sync.RWMutex
-	accounts map[AccountID]accountRuntime
-	stopping map[AccountID]accountRuntime
-	pending  map[AccountID]struct{}
-	dataDirs map[string]AccountID
-	closed   bool
-	addWG    sync.WaitGroup
+	mu               sync.RWMutex
+	accounts         map[AccountID]accountRuntime
+	stopping         map[AccountID]accountRuntime
+	pending          map[AccountID]struct{}
+	dataDirs         map[string]AccountID
+	sourceFences     map[AccountID]SourceProfileFence
+	profileAdoptions profileAdoptionDocument
+	localProfiles    map[AccountID]LocalProfileBinding
+	closed           bool
+	addWG            sync.WaitGroup
 
 	// playerBindings maps runtime IDs to the player-keyed profile directory
 	// under Players/ (see PlayerDirs.go). Guarded by mu; persisted next to the
@@ -140,6 +147,35 @@ func New(ctx context.Context, config Config) (*Supervisor, error) {
 		return nil, fmt.Errorf("resolve account data root: %w", err)
 	}
 	config.DataRoot = dataRoot
+	// A profile lease alone cannot fence two supervisors choosing different
+	// imported generations. Own the entire root before loading any journals.
+	if err := os.MkdirAll(filepath.Join(dataRoot, "Accounts"), 0700); err != nil {
+		return nil, err
+	}
+	rootLease := flock.New(filepath.Join(dataRoot, "Accounts", "supervisor.lock"))
+	locked, err := rootLease.TryLock()
+	if err != nil || !locked {
+		_ = rootLease.Close()
+		return nil, errors.New("account data root is already owned or cannot be locked")
+	}
+	leaseTransferred := false
+	defer func() {
+		if !leaseTransferred {
+			_ = rootLease.Close()
+		}
+	}()
+	sourceFences, err := loadSourceFences(dataRoot)
+	if err != nil {
+		return nil, fmt.Errorf("load durable source fences: %w", err)
+	}
+	profileAdoptions, err := loadProfileAdoptions(dataRoot)
+	if err != nil {
+		return nil, fmt.Errorf("load durable profile adoptions: %w", err)
+	}
+	localProfiles, err := loadLocalProfileBindings(dataRoot)
+	if err != nil {
+		return nil, fmt.Errorf("load local profile bindings: %w", err)
+	}
 	cacheDir := strings.TrimSpace(config.GameDataCacheDir)
 	if cacheDir == "" {
 		cacheDir = filepath.Join(dataRoot, "Shared", "GameData", "Items")
@@ -205,15 +241,20 @@ func New(ctx context.Context, config Config) (*Supervisor, error) {
 		bindings = map[string]string{}
 	}
 
+	leaseTransferred = true
 	return &Supervisor{
 		config: config, ctx: runtimeContext, cancel: cancel,
 		gameData: gameData, worldMaps: worldMaps, updates: updates, worldIntel: worldIntel,
 		privateMetrics: config.PrivateMetricsClient,
 		reportsCloud:   reportsCloud, ingest: ingestRegistry,
 		ownsGameData: ownsGameData, startupErr: startupErr,
-		accounts: map[AccountID]accountRuntime{}, stopping: map[AccountID]accountRuntime{},
+		rootLease: rootLease,
+		accounts:  map[AccountID]accountRuntime{}, stopping: map[AccountID]accountRuntime{},
 		pending: map[AccountID]struct{}{}, dataDirs: map[string]AccountID{},
-		playerBindings: bindings, playerBindingsPath: bindingsPath,
+		sourceFences:     sourceFences,
+		profileAdoptions: profileAdoptions,
+		localProfiles:    localProfiles,
+		playerBindings:   bindings, playerBindingsPath: bindingsPath,
 		identityOf: func(application *App.Application) (string, int64, bool) {
 			if application == nil || application.State == nil {
 				return "", 0, false
@@ -339,6 +380,20 @@ func (supervisor *Supervisor) AddAccount(ctx context.Context, config AccountConf
 		return nil, err
 	}
 	supervisor.mu.Lock()
+	if err := supervisor.validateAdoptedAssignmentLocked(id, config.handoverAssignment); err != nil {
+		supervisor.mu.Unlock()
+		return nil, err
+	}
+	if supervisor.sourceProfileFencedLocked(id, dataDir) {
+		supervisor.mu.Unlock()
+		return nil, fmt.Errorf("account profile is fenced for handover")
+	}
+	if profile, imported := supervisor.currentProfileLocked(id); imported {
+		if err := verifyAdoptedProfileIdentity(dataDir, profile.Receipt.ProfileID); err != nil {
+			supervisor.mu.Unlock()
+			return nil, err
+		}
+	}
 	if supervisor.closed {
 		supervisor.mu.Unlock()
 		return nil, fmt.Errorf("account supervisor is closed")
@@ -356,7 +411,7 @@ func (supervisor *Supervisor) AddAccount(ctx context.Context, config AccountConf
 		return nil, fmt.Errorf("account %q is already starting", id)
 	}
 	if supervisor.config.MaxAccounts > 0 &&
-		len(supervisor.accounts)+len(supervisor.pending)+len(supervisor.stopping) >= supervisor.config.MaxAccounts {
+		len(supervisor.accounts)+len(supervisor.pending)+len(supervisor.stopping)+supervisor.reservedProfileSlotsLocked(id) >= supervisor.config.MaxAccounts {
 		supervisor.mu.Unlock()
 		return nil, fmt.Errorf("account process limit of %d has been reached", supervisor.config.MaxAccounts)
 	}
@@ -495,7 +550,7 @@ func (supervisor *Supervisor) Capacity() Capacity {
 	defer supervisor.mu.RUnlock()
 	return Capacity{
 		Max: supervisor.config.MaxAccounts, Active: len(supervisor.accounts),
-		Starting: len(supervisor.pending), Stopping: len(supervisor.stopping),
+		Starting: len(supervisor.pending) + supervisor.reservedProfileSlotsLocked(""), Stopping: len(supervisor.stopping),
 	}
 }
 
@@ -624,6 +679,14 @@ func (supervisor *Supervisor) rebindSweep() {
 	}
 	candidates := make([]candidate, 0, len(supervisor.accounts))
 	for id, runtime := range supervisor.accounts {
+		if _, local := supervisor.localProfiles[id]; local {
+			// Each cell retains its own profile; switching never rebinds/merges it.
+			continue
+		}
+		if _, imported := supervisor.currentProfileLocked(id); imported {
+			// Imported generations must never merge with an older player corpus.
+			continue
+		}
 		if runtime.config.DataDir != "" {
 			// Explicit profile roots (the desktop N=1 composition) are never
 			// migrated.
@@ -655,6 +718,12 @@ func (supervisor *Supervisor) rebindAccount(id AccountID, runtime accountRuntime
 	key := playerKey(worldID, playerID)
 	staging := filepath.Join(supervisor.config.DataRoot, "Accounts", string(id))
 	playerDir := filepath.Join(supervisor.config.DataRoot, playerDirsName, key)
+	supervisor.mu.RLock()
+	fenced := supervisor.sourceProfileFencedLocked(id, playerDir) || supervisor.sourceProfileFencedLocked(id, staging)
+	supervisor.mu.RUnlock()
+	if fenced {
+		return fmt.Errorf("account profile is fenced for handover")
+	}
 	log.Printf("[accounts] rebinding %s onto player profile %s", id, key)
 
 	stopContext, cancel := context.WithTimeout(context.Background(), playerRebindStopTimeout)
@@ -727,10 +796,18 @@ var supervisorNow = time.Now
 func (supervisor *Supervisor) accountDataDir(id AccountID, requested string) (string, error) {
 	dataDir := strings.TrimSpace(requested)
 	if dataDir == "" {
+		supervisor.mu.RLock()
+		profile, imported := supervisor.currentProfileLocked(id)
+		local, locallyBound := supervisor.localProfiles[id]
+		supervisor.mu.RUnlock()
 		// Profiles are keyed by game identity once it is known: a bound
 		// runtime lands on the shared player directory, an unbound one stages
 		// under its runtime ID until the first login reveals the player.
-		if key := supervisor.playerBindingFor(string(id)); key != "" {
+		if locallyBound {
+			dataDir = filepath.Join(supervisor.config.DataRoot, filepath.FromSlash(local.Directory))
+		} else if imported {
+			dataDir = filepath.Join(supervisor.config.DataRoot, filepath.FromSlash(profile.Directory))
+		} else if key := supervisor.playerBindingFor(string(id)); key != "" {
 			dataDir = filepath.Join(supervisor.config.DataRoot, playerDirsName, key)
 		} else {
 			dataDir = filepath.Join(supervisor.config.DataRoot, "Accounts", string(id))
@@ -766,6 +843,8 @@ func (supervisor *Supervisor) Close(ctx context.Context) error {
 	if supervisor == nil {
 		return nil
 	}
+	supervisor.rebindMu.Lock()
+	defer supervisor.rebindMu.Unlock()
 	supervisor.mu.Lock()
 	supervisor.closed = true
 	supervisor.mu.Unlock()
@@ -793,5 +872,14 @@ func (supervisor *Supervisor) Close(ctx context.Context) error {
 		}
 		supervisor.releaseStoppedAccount(id, runtime)
 	}
-	return errors.Join(closeErr, supervisor.worldMaps.Close(ctx))
+	closeErr = errors.Join(closeErr, supervisor.worldMaps.Close(ctx))
+	supervisor.mu.Lock()
+	defer supervisor.mu.Unlock()
+	if closeErr == nil && len(supervisor.accounts)+len(supervisor.stopping)+len(supervisor.pending) == 0 && supervisor.rootLease != nil {
+		closeErr = supervisor.rootLease.Close()
+		if closeErr == nil {
+			supervisor.rootLease = nil
+		}
+	}
+	return closeErr
 }

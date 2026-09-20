@@ -9,7 +9,7 @@ import (
 )
 
 // Adopting an older player corpus must never drop an active staging lock.
-// Existing indefinite locks win; otherwise retain the stricter/latest expiry.
+// Retain the stricter/latest effective expiry without resetting either timer.
 // Reviews from a different profile never implicitly clear an active lock.
 func mergeAutomationSafetyLocks(staging, player string) error {
 	source, err := State.LoadSnapshot(staging)
@@ -42,7 +42,7 @@ func mergeAutomationSafetyLocks(staging, player string) error {
 				continue
 			}
 			current := state.Automations[lane]
-			if current.SafetyLock.Active(now) && (current.SafetyLock.Until.IsZero() || (!lock.Until.IsZero() && !lock.Until.After(current.SafetyLock.Until))) {
+			if current.SafetyLock.Active(now) && (current.SafetyLock.ExpiresAt().IsZero() || (!lock.ExpiresAt().IsZero() && !lock.ExpiresAt().After(current.SafetyLock.ExpiresAt()))) {
 				continue
 			}
 			current.ID = lane

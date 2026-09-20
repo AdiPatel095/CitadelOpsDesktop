@@ -63,6 +63,22 @@ func TestStoreSnapshotKeepsEquipmentEffectsAsArrays(t *testing.T) {
 	}
 }
 
+func TestStoreSnapshotIsolatesAutomationMetricsAndDetails(t *testing.T) {
+	initial := NewGameState()
+	initial.Automations["autoFortress"] = AutomationState{
+		Metrics: map[string]float64{"allocated": 100}, Details: map[string]string{"supply": "ready"},
+	}
+	store := NewStore(initial)
+	snapshot := store.Snapshot()
+	automation := snapshot.Automations["autoFortress"]
+	automation.Metrics["allocated"] = 999
+	automation.Details["supply"] = "mutated"
+	current := store.ReadOnlyView().Automations["autoFortress"]
+	if current.Metrics["allocated"] != 100 || current.Details["supply"] != "ready" {
+		t.Fatalf("snapshot maps alias store state: %#v", current)
+	}
+}
+
 func TestStoreCoalescesFullSubscriberBuffer(t *testing.T) {
 	store := NewStore(NewGameState())
 	events, unsubscribe := store.Subscribe(1)
@@ -209,6 +225,8 @@ func TestApplyComponentsClonesOnlyMutableCastle(t *testing.T) {
 
 func TestApplyComponentsClonesOnlyMutableInventoryParts(t *testing.T) {
 	initial := NewGameState()
+	oldStorageObservedAt := time.Date(2026, 9, 18, 10, 0, 0, 0, time.UTC)
+	newStorageObservedAt := oldStorageObservedAt.Add(time.Minute)
 	initial.Inventory.ConstructionItems[1] = 4
 	initial.Inventory.Equipment[11] = EquipmentInstance{
 		ID: 11, Level: 1, Effects: EquipmentEffects{{WireID: 7, Values: []float64{1}}},
@@ -218,6 +236,7 @@ func TestApplyComponentsClonesOnlyMutableInventoryParts(t *testing.T) {
 	}
 	initial.Inventory.Items["storage:1"] = map[int64]int64{100: 3}
 	initial.Inventory.Items["storage:2"] = map[int64]int64{200: 5}
+	initial.Inventory.ItemsObservedAt["storage:1"] = oldStorageObservedAt
 	store := NewStore(initial)
 	before := store.PlanningView().State
 
@@ -227,7 +246,7 @@ func TestApplyComponentsClonesOnlyMutableInventoryParts(t *testing.T) {
 		item.Level = 3
 		item.Effects = EquipmentEffects{{WireID: 7, Values: []float64{9}}}
 		state.SetInventoryEquipment(11, item)
-		state.SetInventoryItemsCollection("storage:1", map[int64]int64{100: 2})
+		state.SetInventoryItemsCollectionObserved("storage:1", map[int64]int64{100: 2}, newStorageObservedAt)
 		return []string{"inventory"}, true, nil
 	})
 	if err != nil {
@@ -237,7 +256,7 @@ func TestApplyComponentsClonesOnlyMutableInventoryParts(t *testing.T) {
 		t.Fatalf("inventory delta patch = %#v", event.Patch)
 	}
 	changes := event.Patch.InventoryChanges
-	if changes.ConstructionItems == nil || changes.EquipmentChanges == nil || changes.ItemChanges == nil ||
+	if changes.ConstructionItems == nil || changes.EquipmentChanges == nil || changes.ItemChanges == nil || changes.ItemsObservedAt == nil ||
 		changes.Gems != nil || changes.GemStacks != nil || changes.ConstructionOffers != nil {
 		t.Fatalf("inventory part delta = %#v", changes)
 	}
@@ -246,6 +265,11 @@ func TestApplyComponentsClonesOnlyMutableInventoryParts(t *testing.T) {
 		t.Fatalf("inventory keyed delta = %#v", changes)
 	}
 	after := store.PlanningView().State
+	if !before.Inventory.ItemsObservedAt["storage:1"].Equal(oldStorageObservedAt) ||
+		!after.Inventory.ItemsObservedAt["storage:1"].Equal(newStorageObservedAt) ||
+		!(*changes.ItemsObservedAt)["storage:1"].Equal(newStorageObservedAt) {
+		t.Fatalf("storage freshness generations/delta = before %s after %s patch %#v", before.Inventory.ItemsObservedAt["storage:1"], after.Inventory.ItemsObservedAt["storage:1"], changes.ItemsObservedAt)
+	}
 
 	if before.Inventory.ConstructionItems[1] != 4 || after.Inventory.ConstructionItems[1] != 3 {
 		t.Fatalf("construction inventory generations = %d / %d", before.Inventory.ConstructionItems[1], after.Inventory.ConstructionItems[1])

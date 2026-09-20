@@ -12,15 +12,37 @@ import (
 )
 
 // reduceAttackDialog records the selected source, target map row, and active
-// effects supplied by the game's pre-attack dialog (ADI). The effect rows are
-// intentionally stored as delivered rather than inferred from static data:
-// ADI includes temporary and castle-context bonuses that may not have a local
-// state representation.
+// effects supplied by the game's ordinary pre-attack dialog (ADI). The effect
+// rows are intentionally stored as delivered rather than inferred from static
+// data: ADI includes temporary and castle-context bonuses that may not have a
+// local state representation.
 func reduceAttackDialog(
+	ctx context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	gameData *GameData.Store,
+) ([]string, bool, error) {
+	return reduceAttackDialogNode(ctx, frame, gameState, gameData, false)
+}
+
+// reduceBossDungeonAttackDialog handles the official boss-dungeon dialog
+// response (ABI). Unlike the broad ADI response, ABI is accepted only for a
+// complete fortress row owned by the stated source castle and kingdom.
+func reduceBossDungeonAttackDialog(
+	ctx context.Context,
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	gameData *GameData.Store,
+) ([]string, bool, error) {
+	return reduceAttackDialogNode(ctx, frame, gameState, gameData, true)
+}
+
+func reduceAttackDialogNode(
 	_ context.Context,
 	frame Protocol.Frame,
 	gameState *State.GameState,
 	gameData *GameData.Store,
+	requireFortress bool,
 ) ([]string, bool, error) {
 	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
 		return nil, false, nil
@@ -34,6 +56,12 @@ func reduceAttackDialog(
 	if !sourceValid || sourceCastleID <= 0 || !kingdomValid || kingdomID < 0 {
 		return nil, false, nil
 	}
+	if requireFortress {
+		source, exists := gameState.Castles[State.CastleID(sourceCastleID)]
+		if !exists || source.KingdomID != State.KingdomID(kingdomID) {
+			return nil, false, nil
+		}
+	}
 	dialog := State.AttackDialogState{
 		SourceCastleID: State.CastleID(sourceCastleID),
 		KingdomID:      State.KingdomID(kingdomID),
@@ -43,6 +71,7 @@ func reduceAttackDialog(
 	var khanObservation *State.MapObservation
 	var stormObservation *State.MapObservation
 	var invasionObservation *State.MapObservation
+	targetParsed := false
 	if rawTarget, exists := root["gaa"]; exists {
 		var nested struct {
 			Node json.RawMessage `json:"AI"`
@@ -55,6 +84,10 @@ func reduceAttackDialog(
 			if !typeValid || !xValid || !yValid || x < 0 || y < 0 {
 				return nil, false, nil
 			}
+			if requireFortress && !validBossDungeonAttackDialogRow(row, State.KingdomID(kingdomID)) {
+				return nil, false, nil
+			}
+			targetParsed = true
 			dialog.Target = State.AttackDialogTarget{
 				TypeID: typeID, X: x, Y: y, ObjectID: rowInt(row, 3),
 			}
@@ -64,6 +97,11 @@ func reduceAttackDialog(
 			if dialog.Target.TypeID == towerMapTypeID && len(row) >= 7 {
 				dialog.Target.TowerVictoryCount = rowInt(row, 4)
 				dialog.Target.TowerCooldownRemaining = boundedWireSeconds(rowInt(row, 5))
+			}
+			if dialog.Target.TypeID == State.MapTypeKingdomFortress && len(row) >= 8 {
+				dialog.Target.Level = int(rowInt(row, 4))
+				dialog.Target.TowerCooldownRemaining = boundedWireSeconds(rowInt(row, 5))
+				dialog.Target.FortressDefeaterPlayerID = State.PlayerID(rowInt(row, 6))
 			}
 			if isRegularEventCampType(dialog.Target.TypeID) {
 				observation := State.MapObservation{TypeID: dialog.Target.TypeID}
@@ -109,6 +147,9 @@ func reduceAttackDialog(
 				stormObservation = &observation
 			}
 		}
+	}
+	if requireFortress && !targetParsed {
+		return nil, false, nil
 	}
 	if dialog.SourceCastleID <= 0 {
 		return nil, false, nil
@@ -172,6 +213,22 @@ func reduceAttackDialog(
 		return nil, false, nil
 	}
 	return domains, true, nil
+}
+
+func validBossDungeonAttackDialogRow(row []json.RawMessage, kingdomID State.KingdomID) bool {
+	if len(row) != 8 {
+		return false
+	}
+	values := make([]int, len(row))
+	for index := range row {
+		value, valid := rowExactInt(row, index)
+		if !valid {
+			return false
+		}
+		values[index] = value
+	}
+	return values[0] == State.MapTypeKingdomFortress && values[1] >= 0 && values[2] >= 0 &&
+		values[4] > 0 && values[5] >= 0 && values[7] == int(kingdomID)
 }
 
 func parseAttackDialogEffects(raw json.RawMessage) []State.AttackDialogEffect {

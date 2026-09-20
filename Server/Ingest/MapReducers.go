@@ -173,6 +173,11 @@ func reduceMapSnapshot(
 		if !typeValid || !xValid || !yValid || typeID < 0 || x < 0 || y < 0 {
 			return nil, false, fmt.Errorf("map snapshot row %d has invalid required identity fields", index)
 		}
+		if typeID == State.MapTypeKingdomFortress {
+			if err := validateFortressMapRow(row); err != nil {
+				return nil, false, fmt.Errorf("map snapshot row %d: %w", index, err)
+			}
+		}
 	}
 	kingdomID := State.KingdomID(kingdomIDValue)
 	changed := false
@@ -182,6 +187,15 @@ func reduceMapSnapshot(
 	stormChanged := false
 	beriChanged := false
 	invasionChanged := false
+	if verificationChanged, targetMissing := reduceFortressTargetVerification(frame, gameState, kingdomID, nodes); verificationChanged {
+		changed = true
+		if targetMissing {
+			verification := gameState.Session.FortressTargetVerification
+			if gameState.DeleteMapObservation(verification.KingdomID, fmt.Sprintf("%d:%d", verification.TargetX, verification.TargetY)) {
+				changedMapKinds[State.MapProjectionFortress] = struct{}{}
+			}
+		}
+	}
 	for _, row := range nodes {
 		typeID, _ := rowExactInt(row, 0)
 		x, _ := rowExactInt(row, 1)
@@ -203,6 +217,8 @@ func reduceMapSnapshot(
 			populateInvasionObservation(&observation, row)
 		} else if isStormMapType(typeID) {
 			populateStormObservation(&observation, row, gameData)
+		} else if typeID == State.MapTypeKingdomFortress {
+			populateFortressObservation(&observation, row)
 		} else if len(row) > 3 {
 			observation.ObjectID = rowInt(row, 3)
 		}
@@ -266,7 +282,16 @@ func reduceMapSnapshot(
 		changed = true
 	}
 	stormScanProgress := strings.Contains(frame.ResponseToken, "/storm-gaa/")
-	domains := mapReducerDomains(changedMapKinds, stormScanProgress)
+	scanProgressDomain := ""
+	if stormScanProgress {
+		scanProgressDomain = "storm-scan-progress"
+	} else if strings.Contains(frame.ResponseToken, "/fortress-gaa/") {
+		scanProgressDomain = "fortress-scan-progress"
+	}
+	domains := mapReducerDomains(changedMapKinds, scanProgressDomain)
+	if scanProgressDomain != "" {
+		return []string{scanProgressDomain}, changed, nil
+	}
 	if cooldownChanged {
 		domains = append(domains, "tower-cooldowns")
 	}
@@ -274,11 +299,7 @@ func reduceMapSnapshot(
 		domains = append(domains, "nomad-camps")
 	}
 	if stormChanged {
-		if stormScanProgress {
-			domains = append(domains, "storm-scan-progress")
-		} else {
-			domains = append(domains, "storm")
-		}
+		domains = append(domains, "storm")
 	}
 	if beriChanged {
 		domains = append(domains, "beri")
@@ -289,20 +310,20 @@ func reduceMapSnapshot(
 	return domains, changed, nil
 }
 
-func mapReducerDomains(changedKinds map[State.MapProjectionKind]struct{}, stormScanProgress bool) []string {
+func mapReducerDomains(changedKinds map[State.MapProjectionKind]struct{}, scanProgressDomain string) []string {
 	if len(changedKinds) == 0 {
 		return nil
 	}
-	if stormScanProgress {
-		// The account still commits coordinate patches and contributes them to the
-		// shared world generation, but a cooperative sweep wakes policies once at
-		// lease completion instead of once for every returned tile.
-		return []string{"storm-scan-progress"}
+	if scanProgressDomain != "" {
+		// Long map sweeps still commit each coordinate patch immediately, but
+		// policies wake once at operation completion instead of once per window.
+		return []string{scanProgressDomain}
 	}
 	domains := make([]string, 0, len(changedKinds))
 	for _, kind := range []State.MapProjectionKind{
 		State.MapProjectionPlayerCastle,
 		State.MapProjectionTower,
+		State.MapProjectionFortress,
 		State.MapProjectionBerimond,
 		State.MapProjectionInvasion,
 		State.MapProjectionEventCamp,
@@ -488,6 +509,101 @@ func populateTowerObservation(observation *State.MapObservation, row []json.RawM
 		// Captured Berimond watchtower rows expose their target level at index 7.
 		observation.Level = int(rowInt(row, 7))
 	}
+}
+
+func populateFortressObservation(observation *State.MapObservation, row []json.RawMessage) {
+	if observation == nil || observation.TypeID != State.MapTypeKingdomFortress || len(row) < 8 {
+		return
+	}
+	// Captured boss-dungeon rows are
+	// [11, X, Y, lastSpyAge, dungeonLevel, effectiveCooldownSec,
+	//  lastDefeaterPlayerID, kingdomID]. The effective cooldown already reflects
+	// the viewer's personal five-day lockout after a successful defeat.
+	observation.Level = int(rowInt(row, 4))
+	observation.TowerCooldownRemaining = boundedWireSeconds(rowInt(row, 5))
+	observation.FortressDefeaterPlayerID = State.PlayerID(rowInt(row, 6))
+}
+
+func validateFortressMapRow(row []json.RawMessage) error {
+	if len(row) < 8 {
+		return fmt.Errorf("fortress row has %d fields; need 8", len(row))
+	}
+	level, levelValid := rowExactInt(row, 4)
+	cooldown, cooldownValid := rowExactInt(row, 5)
+	_, defeaterValid := rowExactInt(row, 6)
+	_, kingdomValid := rowExactInt(row, 7)
+	if !levelValid || level <= 0 || !cooldownValid || cooldown < 0 || !defeaterValid ||
+		!kingdomValid {
+		return fmt.Errorf("fortress row has invalid level, cooldown, defeater, or kingdom fields")
+	}
+	return nil
+}
+
+func reduceFortressTargetVerification(
+	frame Protocol.Frame,
+	gameState *State.GameState,
+	kingdomID State.KingdomID,
+	nodes [][]json.RawMessage,
+) (changed bool, targetMissing bool) {
+	if gameState == nil {
+		return false, false
+	}
+	verification := gameState.Session.FortressTargetVerification
+	if verification.ResponseToken == "" || verification.OperationID == "" ||
+		frame.ResponseToken == "" ||
+		frame.ResponseToken != verification.ResponseToken ||
+		(frame.CausationOperationID != "" && frame.CausationOperationID != verification.OperationID) {
+		return false, false
+	}
+	verification.Complete = true
+	verification.Available = false
+	verification.ObservedAt = frame.ReceivedAt.UTC()
+	verification.CooldownRemaining = 0
+	verification.Failure = "fortress target response was not authoritative"
+	if verification.SessionGeneration != gameState.Session.Generation ||
+		verification.ConnectionGeneration != gameState.Session.ConnectionGeneration {
+		verification.Failure = "fortress target response crossed a game session boundary"
+	} else if frame.ReceivedAt.IsZero() || frame.ReceivedAt.Before(verification.ArmedAt) {
+		verification.Failure = "fortress target response was stale"
+	} else if kingdomID != verification.KingdomID {
+		verification.Failure = "fortress target response changed kingdoms"
+	} else {
+		matching := make([]json.RawMessage, 0)
+		matchCount := 0
+		for _, row := range nodes {
+			x, xValid := rowExactInt(row, 1)
+			y, yValid := rowExactInt(row, 2)
+			if xValid && yValid && x == verification.TargetX && y == verification.TargetY {
+				matching = row
+				matchCount++
+			}
+		}
+		rowType, rowTypeValid := rowExactInt(matching, 0)
+		switch {
+		case matchCount == 0:
+			verification.Failure = "fortress target was absent from the exact response"
+			targetMissing = true
+		case matchCount > 1:
+			verification.Failure = "fortress target response contained duplicate coordinates"
+		case !rowTypeValid || rowType != State.MapTypeKingdomFortress:
+			verification.Failure = "fortress target changed type"
+		case len(matching) < 8:
+			verification.Failure = "fortress target row was malformed"
+		default:
+			cooldown, valid := rowExactInt(matching, 5)
+			if !valid || cooldown < 0 {
+				verification.Failure = "fortress target cooldown was malformed"
+			} else if cooldown > 0 {
+				verification.CooldownRemaining = boundedWireSeconds(int64(cooldown))
+				verification.Failure = "fortress target is on cooldown"
+			} else {
+				verification.Available = true
+				verification.Failure = ""
+			}
+		}
+	}
+	gameState.Session.FortressTargetVerification = verification
+	return true, targetMissing
 }
 
 func invalidateUnavailableBeriTargetFromMap(

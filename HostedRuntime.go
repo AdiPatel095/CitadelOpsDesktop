@@ -108,7 +108,8 @@ func runHosted(rootContext context.Context, listener net.Listener, options Hoste
 			return fmt.Errorf("hosted orchestrator token environment %q is not set", options.ControlTokenEnvironment)
 		}
 		orchestrator, err = Accounts.NewOrchestrator(Accounts.OrchestratorConfig{
-			CellID: options.CellID, Token: controlToken,
+			EnableHandoverTransport: os.Getenv("CITADEL_ENABLE_HANDOVER_TRANSPORT") == "true",
+			CellID:                  options.CellID, Token: controlToken,
 			Supervisor: supervisor, DashboardAuth: dashboardAuth,
 		})
 		if err != nil {

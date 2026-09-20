@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"sort"
 	"strconv"
 	"time"
@@ -19,6 +20,12 @@ const (
 	kingdomTowerMapTypeID                 = 2
 	autoTowerTargetVerificationAge        = 30 * time.Second
 	autoTowerCapacityObservationFreshness = time.Hour
+	autoTowerBaronAdvisorTypeID           = 4
+	autoTowerBaronSubscriptionTypeID      = 4
+	autoTowerBaronTokenCurrencyID         = State.CurrencyID(79)
+	autoTowerAdvisorMinimumAttackCount    = 2
+	autoTowerAdvisorMaximumAttackCount    = 9999
+	autoTowerAdvisorCooldownSeconds       = int64(3 * time.Hour / time.Second)
 )
 
 type AutoTowerPolicy struct{}
@@ -28,6 +35,9 @@ type autoTowerSettings struct {
 	MapRefreshIntervalSec int                        `json:"mapRefreshIntervalSec"`
 	DailyAttackLimit      int64                      `json:"dailyAttackLimit"`
 	HorseTravelBoostID    int                        `json:"horseTravelBoostId"`
+	UseAdvisor            bool                       `json:"useAdvisor"`
+	AutoActivateAdvisor   bool                       `json:"autoActivateAdvisor"`
+	MaximumDailyTimeSkips int64                      `json:"maximumDailyTimeSkips"`
 	Castles               map[string]autoTowerCastle `json:"castles"`
 }
 
@@ -51,7 +61,10 @@ func (*AutoTowerPolicy) ID() string { return "autoTowers" }
 func (*AutoTowerPolicy) EnabledKey() string { return "auto_towers" }
 
 func (*AutoTowerPolicy) WakeDomains() []string {
-	return []string{"attacks", "building-layout", "commanders", "map-tower", "movements", "tower-cooldowns", "tower-queue", "units"}
+	return []string{
+		"advisor", "attacks", "building-layout", "commanders", "currencies", "map-tower", "movements",
+		"subscriptions", "tower-cooldowns", "tower-queue", "units",
+	}
 }
 
 func (*AutoTowerPolicy) WakeSections() []string {
@@ -85,7 +98,8 @@ func (*AutoTowerPolicy) ResetConfigurationDerivedState(gameState *State.GameStat
 func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
 
 	settings := autoTowerSettings{CheckIntervalSec: 30, MapRefreshIntervalSec: 1800, HorseTravelBoostID: -1, Castles: map[string]autoTowerCastle{}}
-	if !decodeSection(snapshot.Configuration, "automation.autoTowers", &settings) || len(settings.Castles) == 0 {
+	settingsConfigured := decodeSection(snapshot.Configuration, "automation.autoTowers", &settings)
+	if !settingsConfigured || len(settings.Castles) == 0 {
 		return Decision{
 			Status: "waiting", Detail: "No tower castles are configured",
 			EventDriven: true,
@@ -93,6 +107,15 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	}
 	if !validHorseTravelBoostID(settings.HorseTravelBoostID) {
 		return Decision{Status: "waiting", Detail: "Choose a supported horse travel boost", EventDriven: true}, nil
+	}
+	if settings.MaximumDailyTimeSkips < 0 {
+		return Decision{Status: "waiting", Detail: "Maximum daily Advisor Time Skips cannot be negative", EventDriven: true}, nil
+	}
+	if settings.UseAdvisor && settings.MaximumDailyTimeSkips == 0 {
+		return Decision{
+			Status: "waiting", Detail: "Set a positive maximum daily Time Skip limit before using the Baron Advisor",
+			EventDriven: true,
+		}, nil
 	}
 	commanderIDs, commandersRestricted := commanderFeatureCandidates(
 		snapshot.State,
@@ -148,11 +171,34 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	metrics := map[string]float64{
 		"activeTowers": float64(activeCount), "queuedTowers": float64(len(candidates)),
 	}
+	maximumAdvisorAttacks := 1
+	if settings.UseAdvisor {
+		dailyTimeSkipAllowance, blocked := autoTowerAdvisorDailyTimeSkipAllowance(
+			snapshot, settings.MaximumDailyTimeSkips, policyInterval(settings.CheckIntervalSec, 30), metrics,
+		)
+		if blocked != nil {
+			return *blocked, nil
+		}
+		inventoryTimeSkips := oneCommandDungeonSkipCount(snapshot.State, nil, autoTowerAdvisorCooldownSeconds)
+		plannedTimeSkips := min(
+			int64(autoTowerAdvisorMaximumAttackCount-1), dailyTimeSkipAllowance, inventoryTimeSkips,
+		)
+		metrics["advisorTimeSkipInventoryCapacity"] = float64(inventoryTimeSkips)
+		metrics["plannedAdvisorTimeSkips"] = float64(plannedTimeSkips)
+		if plannedTimeSkips < 1 {
+			return Decision{
+				Status: "waiting", Detail: "Baron Advisor chaining needs at least one Time Skip that covers the three-hour tower cooldown",
+				EventDriven: true, Metrics: metrics,
+			}, nil
+		}
+		maximumAdvisorAttacks = 1 + int(plannedTimeSkips)
+	}
 	if unsupportedHorseCastles > 0 {
 		metrics["unsupportedHorseCastles"] = float64(unsupportedHorseCastles)
 	}
 	var selected towerQueueCandidate
 	var selectedCommanderID State.CommanderID
+	selectedAdvisorAttackCount := 0
 	var firstCapacityError error
 	firstTroopShortage := ""
 	for _, candidate := range candidates {
@@ -185,21 +231,40 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 			}
 			required += autoTowerCapacityCorrection(snapshot.State, candidate.Castle.ID, snapshot.Now)
 			available := max(int64(0), candidate.Castle.Units.Stationed[candidate.Plan.UnitID])
-			if available < required {
+			attackCount := 1
+			if settings.UseAdvisor {
+				attackCount = maximumAdvisorAttacks
+				if required > 0 {
+					attackCount = min(attackCount, int(available/required))
+				}
+			}
+			repeatedRequired, valid := autoTowerRepeatedUnitRequirement(required, attackCount)
+			if settings.UseAdvisor && attackCount < autoTowerAdvisorMinimumAttackCount {
+				repeatedRequired, _ = autoTowerRepeatedUnitRequirement(required, autoTowerAdvisorMinimumAttackCount)
+			}
+			if !valid || settings.UseAdvisor && attackCount < autoTowerAdvisorMinimumAttackCount || available < repeatedRequired {
 				if firstTroopShortage == "" {
 					firstTroopShortage = fmt.Sprintf(
-						"%s has %d of unit %d; its next full attack requires %d",
-						castleName(candidate.Castle), available, candidate.Plan.UnitID, required,
+						"%s has %d of unit %d; its next %d-hit tower launch requires %d",
+						castleName(candidate.Castle), available, candidate.Plan.UnitID, max(1, attackCount), repeatedRequired,
 					)
 				}
 				continue
 			}
+			if settings.UseAdvisor {
+				selectedAdvisorAttackCount = attackCount
+			}
+		} else if settings.UseAdvisor {
+			selectedAdvisorAttackCount = maximumAdvisorAttacks
 		}
 		selected = candidate
 		selectedCommanderID = commanderID
 		break
 	}
 	if selected.Castle.ID > 0 {
+		if settings.UseAdvisor {
+			metrics["plannedAdvisorAttacks"] = float64(selectedAdvisorAttackCount)
+		}
 		target, _ := snapshot.State.LookupMapObservation(selected.Entry.KingdomID, fmt.Sprintf("%d:%d", selected.Entry.TargetX, selected.Entry.TargetY))
 		if target.ObservedAt.IsZero() || snapshot.Now.Sub(target.ObservedAt) >= autoTowerTargetVerificationAge {
 			arguments, _ := json.Marshal(map[string]any{
@@ -224,6 +289,35 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		); blocked != nil {
 			return *blocked, nil
 		}
+		if settings.UseAdvisor && !autoTowerBaronAdvisorActive(snapshot.State) {
+			if snapshot.GameData == nil {
+				return Decision{
+					Status: "waiting", Detail: "Official game data is unavailable; the Baron Advisor token will not be activated yet",
+					NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)), Metrics: metrics,
+				}, nil
+			}
+			if settings.AutoActivateAdvisor && snapshot.State.Player.Currencies[autoTowerBaronTokenCurrencyID] >= 1 {
+				arguments, _ := json.Marshal(map[string]any{"confirmedTokenSpend": true})
+				return Decision{
+					Status:              "ready",
+					Detail:              fmt.Sprintf("Activate the Baron Advisor for ready tower %d:%d with one available token", selected.Entry.TargetX, selected.Entry.TargetY),
+					NextCheckAt:         snapshot.Now.Add(2 * time.Second),
+					Metrics:             metrics,
+					Request:             &Intent.Request{Name: "tower.advisor.activate", Arguments: arguments},
+					ScheduleKey:         towerCastleScheduleKey(selected.Castle.ID),
+					ReevaluateOnSuccess: true,
+					ReevaluateOnStale:   true,
+				}, nil
+			}
+			detail := "Baron Advisor mode is selected, but the Advisor is not active"
+			if settings.AutoActivateAdvisor {
+				detail += fmt.Sprintf(" and no Baron Advisor token (currency %d) is available", autoTowerBaronTokenCurrencyID)
+			}
+			return Decision{
+				Status: "waiting", Detail: detail, EventDriven: true, Metrics: metrics,
+				ScheduleKey: towerCastleScheduleKey(selected.Castle.ID),
+			}, nil
+		}
 		attackArguments := map[string]any{
 			"sourceCastleId": selected.Castle.ID, "kingdomId": selected.Entry.KingdomID,
 			"targetX": selected.Entry.TargetX, "targetY": selected.Entry.TargetY,
@@ -231,10 +325,15 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 			"horseTravelBoostId": settings.HorseTravelBoostID, "dailyAttackLimit": settings.DailyAttackLimit,
 			"commanderIds": []State.CommanderID{selectedCommanderID},
 		}
+		if settings.UseAdvisor {
+			attackArguments["advisorMode"] = true
+			attackArguments["advisorAttackCount"] = selectedAdvisorAttackCount
+			attackArguments["maximumDailyTimeSkips"] = settings.MaximumDailyTimeSkips
+		}
 		arguments, _ := json.Marshal(attackArguments)
 		return Decision{
 			Status:              "ready",
-			Detail:              fmt.Sprintf("Launch queued tower target %d:%d from %s", selected.Entry.TargetX, selected.Entry.TargetY, castleName(selected.Castle)),
+			Detail:              autoTowerLaunchDetail(settings, selected, selectedAdvisorAttackCount),
 			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 			Metrics:             metrics,
 			Request:             &Intent.Request{Name: "tower.attack", Arguments: arguments},
@@ -277,6 +376,56 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		Status: "idle", Detail: detail, NextCheckAt: nextCheck,
 		Metrics: metrics,
 	}, nil
+}
+
+func autoTowerAdvisorDailyTimeSkipAllowance(
+	snapshot Snapshot,
+	maximum int64,
+	interval time.Duration,
+	metrics map[string]float64,
+) (int64, *Decision) {
+	if interval <= 0 {
+		interval = 30 * time.Second
+	}
+	if metrics != nil {
+		metrics["maximumDailyAdvisorTimeSkips"] = float64(maximum)
+	}
+	if maximum <= 0 {
+		return 0, &Decision{
+			Status: "waiting", Detail: "Set a positive maximum daily Time Skip limit before using the Baron Advisor",
+			EventDriven: true, Metrics: metrics,
+		}
+	}
+	attacks := snapshot.State.DailyAttacks
+	if attacks.ObservedAt.IsZero() || attacks.SessionStartedAt.IsZero() {
+		return 0, &Decision{
+			Status: "waiting", Detail: "Waiting for the authoritative server daily reset before using Advisor Time Skips",
+			NextCheckAt: snapshot.Now.Add(interval), Metrics: metrics,
+		}
+	}
+	used, exact := State.TowerAdvisorTimeSkipsUsedSince(snapshot.State, attacks.SessionStartedAt, snapshot.Now)
+	if !exact {
+		return 0, &Decision{
+			Status: "waiting", Detail: "Cannot establish exact Auto Towers Advisor Time Skip usage for the current server day",
+			NextCheckAt: snapshot.Now.Add(interval), Metrics: metrics,
+		}
+	}
+	remaining := max(int64(0), maximum-used)
+	if metrics != nil {
+		metrics["advisorTimeSkipsUsedToday"] = float64(used)
+		metrics["advisorTimeSkipsRemainingToday"] = float64(remaining)
+	}
+	if remaining == 0 {
+		return 0, &Decision{
+			Status: "waiting",
+			Detail: fmt.Sprintf(
+				"Daily Auto Towers Advisor Time Skip limit reached: %d / %d; chaining resumes when the server daily attack count resets",
+				used, maximum,
+			),
+			NextCheckAt: snapshot.Now.Add(interval), Metrics: metrics,
+		}
+	}
+	return remaining, nil
 }
 
 func filterAutoTowerHorseTravelBoostCastles(
@@ -670,7 +819,7 @@ func towerMovementActiveAt(movement State.MovementState, now time.Time) bool {
 func pendingTowerCooldownRefresh(gameState State.GameState) (State.TowerCooldownState, bool) {
 	pending := make([]State.TowerCooldownState, 0)
 	gameState.RangeTowerCooldowns(func(_ string, cooldown State.TowerCooldownState) bool {
-		if cooldown.PendingCooldownRefresh {
+		if cooldown.PendingCooldownRefresh && (cooldown.TargetTypeID == 0 || cooldown.TargetTypeID == kingdomTowerMapTypeID) {
 			pending = append(pending, cooldown)
 		}
 		return true
@@ -708,4 +857,29 @@ func towerCooldownRemaining(target State.MapObservation, now time.Time) int {
 
 func towerTargetKey(kingdomID State.KingdomID, x, y int) string {
 	return fmt.Sprintf("%d:%d:%d", kingdomID, x, y)
+}
+
+func autoTowerBaronAdvisorActive(gameState State.GameState) bool {
+	subscription, exists := gameState.Subscriptions[autoTowerBaronSubscriptionTypeID]
+	return exists && subscription.TypeID == autoTowerBaronSubscriptionTypeID && subscription.RemainingSec > 0
+}
+
+func autoTowerRepeatedUnitRequirement(perAttack int64, count int) (int64, bool) {
+	if perAttack <= 0 || count <= 0 || perAttack > math.MaxInt64/int64(count) {
+		return math.MaxInt64, false
+	}
+	return perAttack * int64(count), true
+}
+
+func autoTowerLaunchDetail(settings autoTowerSettings, selected towerQueueCandidate, attackCount int) string {
+	if settings.UseAdvisor {
+		return fmt.Sprintf(
+			"Chain %d Baron Advisor hits using %d Time Skips on tower %d:%d from %s",
+			attackCount, attackCount-1, selected.Entry.TargetX, selected.Entry.TargetY, castleName(selected.Castle),
+		)
+	}
+	return fmt.Sprintf(
+		"Launch queued tower target %d:%d from %s",
+		selected.Entry.TargetX, selected.Entry.TargetY, castleName(selected.Castle),
+	)
 }

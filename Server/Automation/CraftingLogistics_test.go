@@ -45,7 +45,7 @@ func TestCraftingPolicyWaitsForMarketBarrowReturnBeforeLogisticsRefresh(t *testi
 	gameState.Market.CaravanLevelLoaded = true
 	gameState.KingdomTransport.ObservedAt = now
 	gameState.Movements[50] = State.MovementState{
-		ID: 50, Direction: 1, OwnerPlayerID: 1, SourceCastleID: source.ID,
+		ID: 50, Direction: 1, OwnerPlayerID: 1, SourceCastleID: 20, TargetCastleID: source.ID,
 		MarketBarrows: 100, ReturnsAt: &returnsAt,
 	}
 	configuration := Configuration.Snapshot{Sections: map[string]json.RawMessage{
@@ -148,7 +148,7 @@ func TestCraftingPolicyShipsMissingResourceWithinKingdomBelowKingdomMinimum(t *t
 		t.Fatal(err)
 	}
 	if decision.Request == nil || decision.Request.Name != "resource.ship" ||
-		string(decision.Request.Arguments) != `{"amount":9000,"resourceId":6,"sourceCastleId":10,"targetCastleId":20}` {
+		string(decision.Request.Arguments) != `{"amount":9000,"minimumCoinReserve":9999999,"resourceId":6,"sourceCastleId":10,"targetCastleId":20}` {
 		t.Fatalf("below-minimum market shortfall decision = %+v", decision)
 	}
 }
@@ -692,7 +692,7 @@ func TestCraftingPolicyRentsConfiguredSlotOnlyWhenNextRecipeIsAffordable(t *test
 	if err != nil {
 		t.Fatal(err)
 	}
-	if decision.Request == nil || decision.Request.Name != "crafting.rent_slot" || string(decision.Request.Arguments) != `{"buildingInstanceId":200,"castleId":20,"slot":1,"slotType":"queue"}` {
+	if decision.Request == nil || decision.Request.Name != "crafting.rent_slot" || string(decision.Request.Arguments) != `{"buildingInstanceId":200,"castleId":20,"minimumCoinReserve":100000,"slot":1,"slotType":"queue"}` {
 		t.Fatalf("unexpected rental decision: %+v", decision)
 	}
 }

@@ -150,7 +150,7 @@ func TestAutoBirdTargetThenManifestRecordRandomWaitAndFreshTroops(t *testing.T) 
 		}},
 	}
 	request := autoBirdCycleRequest{
-		SourceCastleID: 10, TrackingID: "autoBird:10", MinimumRPTDays: 3,
+		SourceCastleID: 10, TrackingID: "autoBird:10", PresetID: "night", MinimumRPTDays: 3,
 		MinimumDelayHours: 6, MaximumDelayHours: 12, MinimumSend: 50,
 		Reserves:          []stationUnitRequest{{UnitID: 489, Amount: 25}},
 		AllianceRefreshAt: now.Add(-time.Second),
@@ -159,13 +159,14 @@ func TestAutoBirdTargetThenManifestRecordRandomWaitAndFreshTroops(t *testing.T) 
 		gameState, State.StationingOperation{}, request, 8, now,
 	)
 	if target.Phase != State.StationingPhaseTargetReady ||
-		target.TargetCastleID != 20 || target.DelayHours != 8 || target.WaitSeconds != 8*3600 {
+		target.PresetID != "night" || target.TargetCastleID != 20 || target.DelayHours != 8 || target.WaitSeconds != 8*3600 {
 		t.Fatalf("discovered Auto Bird target = %#v", target)
 	}
 	request.UnitsRefreshAt = now.Add(-time.Second)
 	request.ExpectedTargetCastle = 20
-	operation := preparedAutoBirdManifest(gameState, gameData, target, request, now)
+	operation := preparedAutoBirdManifest(gameState, gameData, target, request, now, false)
 	if operation.Phase != State.StationingPhaseDispatchReady ||
+		operation.PresetID != "night" ||
 		operation.TargetCastleID != 20 ||
 		operation.DelayHours != 8 ||
 		operation.WaitSeconds != 8*3600 {
@@ -179,6 +180,41 @@ func TestAutoBirdTargetThenManifestRecordRandomWaitAndFreshTroops(t *testing.T) 
 			"fresh observation times = alliance %s units %s",
 			operation.AllianceObservedAt, operation.UnitsObservedAt,
 		)
+	}
+}
+
+func TestPlanAutoBirdDispatchRejectsExpiredOrDifferentPresetPreparation(t *testing.T) {
+	now := time.Now().UTC()
+	gameState, gameData := autoBirdIntentTestState(t, now)
+	gameState.Castles[10] = State.CastleState{
+		ID: 10, KingdomID: 0, X: 10, Y: 10, Focused: true, UnitsObservedAt: now,
+		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{489: 100}},
+	}
+	gameState.Stationing["autoBird:10"] = State.StationingOperation{
+		ID: "autoBird:10", Purpose: "autoBird", Phase: State.StationingPhaseDispatchReady,
+		PresetID: "night", SourceCastleID: 10, TargetCastleID: 20,
+		Units: map[State.UnitID]int64{489: 100}, DelayHours: 8, UnitsObservedAt: now, UpdatedAt: now,
+	}
+
+	for _, request := range []autoBirdCycleRequest{
+		{
+			SourceCastleID: 10, TrackingID: "autoBird:10", PresetID: "day",
+			MinimumDelayHours: 6, MaximumDelayHours: 12,
+		},
+		{
+			SourceCastleID: 10, TrackingID: "autoBird:10", PresetID: "night",
+			PresetValidUntil: now.Add(-time.Second), MinimumDelayHours: 6, MaximumDelayHours: 12,
+		},
+	} {
+		arguments, err := json.Marshal(request)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if plan, err := planAutoBirdDispatch(t.Context(), Intent.PlanningContext{
+			State: gameState, GameData: gameData,
+		}, arguments); err == nil {
+			t.Fatalf("unsafe preset preparation produced dispatch plan %#v", plan)
+		}
 	}
 }
 
@@ -219,7 +255,7 @@ func TestPreparedAutoBirdOperationWaitsOnlyThatCastleWhenNoTroopsAreEligible(t *
 	)
 	request.UnitsRefreshAt = now.Add(-time.Second)
 	request.ExpectedTargetCastle = 20
-	operation := preparedAutoBirdManifest(gameState, gameData, target, request, now)
+	operation := preparedAutoBirdManifest(gameState, gameData, target, request, now, false)
 	if operation.Phase != State.StationingPhaseWaiting ||
 		operation.NextAttemptAt == nil || !operation.NextAttemptAt.After(now) {
 		t.Fatalf("troop-less Auto Bird operation = %#v", operation)
@@ -417,7 +453,7 @@ func autoBirdIntentTestState(t *testing.T, now time.Time) (State.GameState, *Gam
 	t.Helper()
 	gameData, err := GameData.DecodeStore([]byte(`{
 		"versionInfo":[],"buildings":[],"units":[
-			{"wodID":215},{"wodID":489},
+			{"wodID":215},{"wodID":277},{"wodID":489},
 			{"wodID":735,"toolCategory":"Premium","slotTypes":"1,2,9"}
 		]
 	}`), GameData.SourceMetadata{ItemVersion: "test"})

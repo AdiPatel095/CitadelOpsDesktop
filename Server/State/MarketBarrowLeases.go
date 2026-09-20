@@ -39,7 +39,13 @@ func MarketBarrowLeaseAt(gameState GameState, castleID CastleID, now time.Time) 
 	}
 	lease := MarketBarrowLease{}
 	gameState.RangeMovements(func(_ MovementID, movement MovementState) bool {
-		if movement.SourceCastleID != castleID || movement.MarketBarrows <= 0 ||
+		// Return frames reverse SA/TA; the carts still belong to their home
+		// marketplace, which is now the movement's destination.
+		homeCastleID := movement.SourceCastleID
+		if movement.Direction == 1 {
+			homeCastleID = movement.TargetCastleID
+		}
+		if homeCastleID != castleID || movement.MarketBarrows <= 0 ||
 			!MovementOwnedByCurrentPlayer(gameState, movement) || !MarketBarrowMovementActiveAt(movement, now) {
 			return true
 		}

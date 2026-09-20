@@ -84,6 +84,61 @@ func TestAutoKhanPolicyYieldsToPlayerAttackAndAutoStationButNotKhanTaunt(t *test
 	}
 }
 
+func TestAutoKhanPolicyAppliesDefenseWithStaleStationAndSameRouteAutoBirdMovement(t *testing.T) {
+	now := time.Date(2026, 9, 19, 12, 0, 0, 0, time.UTC)
+	snapshot := autoKhanPolicySnapshot(t, now, 2)
+	active := now.Add(time.Minute)
+	snapshot.State.Movements[11] = State.MovementState{
+		ID: 11, Direction: 0, OwnerPlayerID: snapshot.State.Player.ID,
+		SourceCastleID: 1, TargetCastleID: 900, ArrivesAt: &active,
+	}
+	safeAfter := now.Add(-10 * time.Second)
+	snapshot.State.Stationing["autoStation:1"] = State.StationingOperation{
+		ID: "autoStation:1", Purpose: "autoStation", SourceCastleID: 1, TargetCastleID: 900,
+		MovementID: 10, SafeAfter: &safeAfter,
+	}
+	snapshot.State.Stationing["autoBird:1"] = State.StationingOperation{
+		ID: "autoBird:1", Purpose: "autoBird", SourceCastleID: 1, TargetCastleID: 900,
+		MovementID: 11, MovementIDs: []State.MovementID{11},
+	}
+	main := snapshot.State.Castles[1]
+	main.Defense.Wall.Left.UnitPercent++
+	snapshot.State.Castles[1] = main
+
+	decision, err := NewAutoKhanPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "defense.preset.apply" {
+		t.Fatalf("stale station with same-route Auto Bird decision: %#v err=%v", decision, err)
+	}
+}
+
+func TestAutoKhanDefensePolicyAppliesDefenseWithMissingStationMovement(t *testing.T) {
+	now := time.Date(2026, 9, 19, 12, 0, 0, 0, time.UTC)
+	snapshot := autoKhanPolicySnapshot(t, now, 2)
+	active := now.Add(time.Minute)
+	safeAfter := now.Add(-10 * time.Second)
+	snapshot.State.Movements[11] = State.MovementState{
+		ID: 11, Direction: 0, OwnerPlayerID: snapshot.State.Player.ID,
+		SourceCastleID: 1, TargetCastleID: 900, ArrivesAt: &active,
+	}
+	snapshot.State.Stationing["autoStation:1"] = State.StationingOperation{
+		ID: "autoStation:1", Purpose: "autoStation", SourceCastleID: 1, TargetCastleID: 900,
+		MovementID: 10, SafeAfter: &safeAfter,
+	}
+	snapshot.State.Stationing["autoBird:1"] = State.StationingOperation{
+		ID: "autoBird:1", Purpose: "autoBird", SourceCastleID: 1, TargetCastleID: 900,
+		MovementID: 11, MovementIDs: []State.MovementID{11},
+	}
+	main := snapshot.State.Castles[1]
+	main.Defense.ObservedAt = now.Add(-time.Minute)
+	snapshot.State.Castles[1] = main
+	snapshot.State.Khan.LastTauntTriggeredAt = now.Add(-30 * time.Second)
+
+	decision, err := NewAutoKhanDefensePolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "defense.preset.apply" {
+		t.Fatalf("async defense lane with stale station decision: %#v err=%v", decision, err)
+	}
+}
+
 func TestAutoKhanPolicyKeepsExpiredProtectionLockedUntilDefenseRecovers(t *testing.T) {
 	now := time.Date(2026, 7, 14, 15, 0, 0, 0, time.UTC)
 	snapshot := autoKhanPolicySnapshot(t, now, 1)
@@ -217,6 +272,74 @@ func TestAutoKhanDefenseToolShopRouteUsesCapturedLunaTable(t *testing.T) {
 	}, time.Now().UTC())
 	if !active || route.EventID != 14 {
 		t.Fatalf("Luna route = %#v active=%t", route, active)
+	}
+}
+
+func TestAutoKhanFiniteDefenseToolOffersRefreshStaleCountersButUnlimitedOffersDoNot(t *testing.T) {
+	now := time.Date(2026, 9, 19, 20, 0, 0, 0, time.UTC)
+	decodePreset := func(t *testing.T) KhanDomain.DefensePreset {
+		t.Helper()
+		preset, err := KhanDomain.DecodeDefensePreset(json.RawMessage(`{
+			"version":1,"presets":[{"id":"defense","name":"Defense","wall":{
+				"left":{"toolSlots":[{"definitionId":731,"amount":1}]},
+				"middle":{"toolSlots":[]},"right":{"toolSlots":[]}},
+				"moat":{"leftToolSlots":[],"middleToolSlots":[],"rightToolSlots":[]}}]
+		}`), "defense")
+		if err != nil {
+			t.Fatal(err)
+		}
+		return preset
+	}
+	makeSnapshot := func(t *testing.T, finite bool, minLevel int) Snapshot {
+		t.Helper()
+		stock := ""
+		if finite {
+			stock = `,"stock":1`
+		}
+		level := ""
+		if minLevel > 0 {
+			level = fmt.Sprintf(`,"minLevel":%d`, minLevel)
+		}
+		gameData, err := GameData.DecodeStore([]byte(`{
+			"versionInfo":[],"buildings":[],"units":[{"wodID":731}],
+			"currencies":[{"currencyID":1006,"JSONKey":"KT","Name":"KhanTablet"}],
+			"events":[{"eventID":94,"packageIDs":"3235","kIDs":"0","areaTypes":"1"}],
+			"packages":[{"packageID":3235,"packageType":"tool","unitID":731,"unitAmount":1,"costKhanTablet":25`+stock+level+`}]
+		}`), GameData.SourceMetadata{ItemVersion: "test"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		state := State.NewGameState()
+		state.Player.Level = 70
+		state.Player.Currencies[1006] = 100
+		state.EventScores.ShopByPackage[3235] = State.EventShopRoute{EventID: 94, RemainingSec: 3600, ObservedAt: now}
+		state.Castles[1] = State.CastleState{
+			ID: 1, KingdomID: 0, SlotType: 1,
+			Defense: State.CastleDefenseState{Inventory: map[State.UnitID]int64{}},
+		}
+		return Snapshot{State: state, GameData: gameData, Now: now}
+	}
+	preset := decodePreset(t)
+	finite := makeSnapshot(t, true, 0)
+	finite.State.Inventory.ConstructionOffersCastleID = 1
+	finite.State.Inventory.ConstructionOffersKingdomID = 0
+	finite.State.Inventory.ConstructionOffersObservedAt = now.Add(-3 * time.Minute)
+	finite.State.Inventory.ConstructionOffers[3235] = 1
+	if purchase, _, stale, err := autoKhanDefenseToolPurchase(finite, finite.State.Castles[1], preset); err != nil || purchase != nil || !stale {
+		t.Fatalf("stale finite counters purchase=%+v stale=%t err=%v", purchase, stale, err)
+	}
+	finite.State.Inventory.ConstructionOffersObservedAt = now
+	finite.State.Inventory.ConstructionOffers[3235] = 0
+	if purchase, _, stale, err := autoKhanDefenseToolPurchase(finite, finite.State.Castles[1], preset); err != nil || purchase == nil || stale {
+		t.Fatalf("refreshed finite counters purchase=%+v stale=%t err=%v", purchase, stale, err)
+	}
+	unlimited := makeSnapshot(t, false, 0)
+	if purchase, _, stale, err := autoKhanDefenseToolPurchase(unlimited, unlimited.State.Castles[1], preset); err != nil || purchase == nil || stale {
+		t.Fatalf("unlimited offer waited for GBC: purchase=%+v stale=%t err=%v", purchase, stale, err)
+	}
+	ineligible := makeSnapshot(t, false, 80)
+	if purchase, _, stale, err := autoKhanDefenseToolPurchase(ineligible, ineligible.State.Castles[1], preset); err != nil || purchase != nil || stale {
+		t.Fatalf("level-ineligible offer purchase=%+v stale=%t err=%v", purchase, stale, err)
 	}
 }
 
@@ -805,6 +928,9 @@ func autoKhanPolicySnapshot(t *testing.T, now time.Time, sourceCastleID State.Ca
 		Units: State.CastleUnits{Stationed: map[State.UnitID]int64{215: 3_000}, Traveling: map[State.UnitID]int64{}},
 	}
 	gameState := State.NewGameState()
+	gameState.Khan.RageCampRevision = 1
+	gameState.Khan.RageBalanceCampRevision = 1
+	gameState.Khan.RageCampObservedAt = now
 	gameState.Player.ID = 158
 	gameState.Player.Currencies[1006] = 10
 	gameState.Castles[1] = main

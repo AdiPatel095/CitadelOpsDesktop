@@ -10,10 +10,10 @@ import (
 	"CitadelDesktop/Server/State"
 )
 
-func TestMapFeatureWakesAreTargetedAndStormProgressIsSilent(t *testing.T) {
+func TestMapFeatureWakesAreTargetedAndLongScanProgressIsSilent(t *testing.T) {
 	worlds := State.NewWorldMapStore()
 	policies := []Policy{
-		NewAutoStormPolicy(), NewAutoTowerPolicy(), NewAutoNomadPolicy(), NewAutoInvasionPolicy(),
+		NewAutoStormPolicy(), NewAutoFortressPolicy(), NewAutoTowerPolicy(), NewAutoNomadPolicy(), NewAutoInvasionPolicy(),
 		NewBeriAttackPolicy(), NewRiftMaidenRunPolicy(), NewSharedStormScanPolicy("alpha", worlds),
 	}
 	indexed := indexPolicyWakeDomains(policies)
@@ -23,8 +23,15 @@ func TestMapFeatureWakesAreTargetedAndStormProgressIsSilent(t *testing.T) {
 	if meaningfulStateEvent(State.Event{Revision: 1, Domains: []string{"storm-scan-progress"}}) {
 		t.Fatal("intermediate Storm tile reached coordinator state handling")
 	}
+	if consumers := indexed["fortress-scan-progress"]; len(consumers) != 0 {
+		t.Fatalf("intermediate Fortress tiles wake policies: %v", consumers)
+	}
+	if meaningfulStateEvent(State.Event{Revision: 1, Domains: []string{"fortress-scan-progress"}}) {
+		t.Fatal("intermediate Fortress tile reached coordinator state handling")
+	}
 	for domain, expected := range map[string][]string{
 		"map-storm":    {"autoStorm"},
+		"map-fortress": {"autoFortress"},
 		"map-tower":    {"autoTowers"},
 		"map-invasion": {"autoInvasion"},
 		"map-berimond": {"autoBeriWorldAttack"},

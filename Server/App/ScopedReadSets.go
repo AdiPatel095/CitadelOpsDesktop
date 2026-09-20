@@ -62,6 +62,28 @@ func constructionReadSet(
 	return keys, nil
 }
 
+func equipmentReconfigureReadSet(
+	input Intent.PlanningContext,
+	_ json.RawMessage,
+	plan Intent.Plan,
+) ([]State.PartitionKey, error) {
+	keys := []State.PartitionKey{
+		State.SessionPartition(input.State, State.CapabilitySessionContext),
+		State.AccountPartition(input.State, State.CapabilityLeaders),
+		State.AccountPartition(input.State, State.CapabilityEquipment),
+	}
+	for _, claim := range plan.Claims {
+		if len(claim) > len("currency:") && claim[:len("currency:")] == "currency:" {
+			keys = append(keys,
+				State.AccountPartition(input.State, State.CapabilityAccountWallet),
+				State.AccountPartition(input.State, State.CapabilityEconomy),
+			)
+			break
+		}
+	}
+	return keys, nil
+}
+
 func riftMaidenReadSet(
 	input Intent.PlanningContext,
 	_ json.RawMessage,

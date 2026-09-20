@@ -41,6 +41,14 @@ func LoadSnapshot(dataDir string) (GameState, error) {
 
 func prepareLoadedState(state GameState) GameState {
 	normalizeStateMaps(&state)
+	for kingdomID, workflow := range state.KingdomTransport.TroopWorkflows {
+		workflow.SessionGeneration = 0
+		if workflow.Status == "armed" {
+			workflow.Status = "ownership_uncertain"
+		}
+		state.KingdomTransport.TroopWorkflows[kingdomID] = workflow
+	}
+	state.Market.BoostersObservedGeneration = 0
 	pruneIrrelevantMapObservations(&state)
 	lastServerURL := state.Session.ServerURL
 	lastGeneration := state.Session.Generation
@@ -115,6 +123,9 @@ func normalizeStateMaps(state *GameState) {
 	if state.Player.Resources == nil {
 		state.Player.Resources = defaults.Player.Resources
 	}
+	// Live resource observations are never restored as dispatch authority.
+	state.Player.ResourceObservations = map[ResourceID]PlayerResourceObservation{}
+	state.Player.CurrencyObservations = map[CurrencyID]PlayerResourceObservation{}
 	if state.Player.Currencies == nil {
 		state.Player.Currencies = defaults.Player.Currencies
 	}
@@ -333,6 +344,9 @@ func normalizeStateMaps(state *GameState) {
 	if state.Inventory.Items == nil {
 		state.Inventory.Items = defaults.Inventory.Items
 	}
+	if state.Inventory.ItemsObservedAt == nil {
+		state.Inventory.ItemsObservedAt = defaults.Inventory.ItemsObservedAt
+	}
 	if state.Subscriptions == nil {
 		state.Subscriptions = defaults.Subscriptions
 	}
@@ -379,6 +393,15 @@ func normalizeStateMaps(state *GameState) {
 		}
 		state.KingdomTransport.ResourceWorkflows[kingdomID] = workflow
 	}
+	if state.KingdomTransport.TroopWorkflows == nil {
+		state.KingdomTransport.TroopWorkflows = defaults.KingdomTransport.TroopWorkflows
+	}
+	for kingdomID, workflow := range state.KingdomTransport.TroopWorkflows {
+		if workflow.Units == nil {
+			workflow.Units = []KingdomTransportUnit{}
+		}
+		state.KingdomTransport.TroopWorkflows[kingdomID] = workflow
+	}
 	if state.Beri.TroopsByUnit == nil {
 		state.Beri.TroopsByUnit = defaults.Beri.TroopsByUnit
 	}
@@ -393,6 +416,9 @@ func normalizeStateMaps(state *GameState) {
 	}
 	if state.AttackAnalytics.RecentAutoStormLaunches == nil {
 		state.AttackAnalytics.RecentAutoStormLaunches = defaults.AttackAnalytics.RecentAutoStormLaunches
+	}
+	if state.AttackAnalytics.RecentTowerAdvisorTimeSkips == nil {
+		state.AttackAnalytics.RecentTowerAdvisorTimeSkips = defaults.AttackAnalytics.RecentTowerAdvisorTimeSkips
 	}
 	if state.EventScores.ByEvent == nil {
 		state.EventScores.ByEvent = defaults.EventScores.ByEvent

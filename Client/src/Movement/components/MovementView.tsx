@@ -47,6 +47,7 @@ type MovementMode = 'Functions' | 'Live Movements';
 
 const COMMANDER_FEATURES: Array<{ id: CommanderFeatureID; label: string }> = [
   { id: 'autoTowers', label: 'Auto Towers' },
+  { id: 'autoFortress', label: 'Auto Fortress' },
   { id: 'autoInvasion', label: 'Auto Invasion' },
   { id: 'autoNomad', label: 'Auto Nomad / Samurai' },
   { id: 'autoAdvisor', label: 'Auto Advisor' },

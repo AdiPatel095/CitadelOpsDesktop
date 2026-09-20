@@ -95,6 +95,38 @@ func TestKhanDefensePresetRechecksSafetyImmediatelyBeforeEachWrite(t *testing.T)
 	}
 }
 
+func TestKhanDefensePresetPlansWithMissingStationMovementAndSameRouteAutoBird(t *testing.T) {
+	now := time.Now().UTC()
+	gameState := defenseIntentState()
+	castle := gameState.Castles[10]
+	castle.SlotType = 1
+	gameState.Castles[10] = castle
+	active := now.Add(time.Minute)
+	gameState.Movements[101] = State.MovementState{
+		ID: 101, Direction: 0, SourceCastleID: 10, TargetCastleID: 900, ArrivesAt: &active,
+	}
+	safeAfter := now.Add(-10 * time.Second)
+	gameState.Stationing["autoStation:10"] = State.StationingOperation{
+		ID: "autoStation:10", Purpose: "autoStation", SourceCastleID: 10, TargetCastleID: 900,
+		MovementID: 100, SafeAfter: &safeAfter,
+	}
+	gameState.Stationing["autoBird:10"] = State.StationingOperation{
+		ID: "autoBird:10", Purpose: "autoBird", SourceCastleID: 10, TargetCastleID: 900,
+		MovementID: 101, MovementIDs: []State.MovementID{101},
+	}
+	request := defensePresetRequest(castle)
+	request.KhanGuard = &khanLaneGuardRequest{MainCastleID: castle.ID}
+	arguments, _ := json.Marshal(request)
+
+	plan, err := planDefensePresetApply(t.Context(), Intent.PlanningContext{State: gameState}, arguments)
+	if err != nil {
+		t.Fatalf("plan Khan defense preset with unrelated same-route movement: %v", err)
+	}
+	if len(plan.Steps) == 0 || plan.Steps[0].Action != "khan.lane.guard" {
+		t.Fatalf("planned Khan defense preset omitted final write guards: %#v", plan.Steps)
+	}
+}
+
 func TestResolveDefensePresetWallValidatesMoatBeforeFirstWrite(t *testing.T) {
 	gameState := defenseIntentState()
 	now := time.Now().UTC()

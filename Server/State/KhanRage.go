@@ -16,7 +16,9 @@ func (state GameState) KhanDefenseLaunchesForOccurrence(eventID int64, occurrenc
 // FullRageTauntDue reports whether the authoritative full rage bar belongs to
 // a fill that has not already dispatched a retaliation in this event occurrence.
 func (state KhanState) FullRageTauntDue(occurrence EventOccurrence) bool {
-	if state.PlayerRageCap <= 0 || state.PlayerRage < state.PlayerRageCap || state.RageObservedAt.IsZero() {
+	if state.RageCampID <= 0 || state.RageCampRevision == 0 ||
+		state.RageBalanceCampRevision != state.RageCampRevision ||
+		state.PlayerRageCap <= 0 || state.PlayerRage < state.PlayerRageCap || state.RageObservedAt.IsZero() {
 		return false
 	}
 	return !state.TauntCursorIncludes(state.PlayerTotalRage, occurrence)

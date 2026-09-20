@@ -24,6 +24,8 @@ var (
 
 const observationDecoderVersion = "xt-v1"
 
+const globalEffectPurchaseDurabilityDomain = "global-effect-purchase"
+
 type GameDataProvider interface {
 	Current() (*GameData.Store, bool)
 }
@@ -438,7 +440,7 @@ func (pipeline *Pipeline) CommitFrameGuarded(
 
 func requiresDurabilityFence(domains []string) bool {
 	for _, domain := range domains {
-		if domain == invasionLaunchDurabilityDomain {
+		if domain == invasionLaunchDurabilityDomain || domain == globalEffectPurchaseDurabilityDomain {
 			return true
 		}
 	}
@@ -450,7 +452,7 @@ func frameMutatesWorldMap(frame Protocol.Frame) bool {
 		return false
 	}
 	switch strings.ToLower(strings.TrimSpace(frame.Opcode)) {
-	case "gaa", "fnm", "fnt", "ssi", "adi":
+	case "gaa", "fnm", "fnt", "ssi", "adi", "abi":
 		return true
 	default:
 		return false

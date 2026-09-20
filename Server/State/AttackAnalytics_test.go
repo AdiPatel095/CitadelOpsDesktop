@@ -27,3 +27,37 @@ func TestMergeAutoStormLaunchHistoryPreservesLaunchTimeAndLargestTroopCount(t *t
 		t.Fatalf("merged launch = %#v", launches)
 	}
 }
+
+func TestTowerAdvisorTimeSkipUsageIsIdempotentAndResetScoped(t *testing.T) {
+	now := time.Date(2026, time.September, 3, 14, 0, 0, 0, time.UTC)
+	gameState := NewGameState()
+	first := TowerAdvisorTimeSkipUsage{MovementID: 10, TimeSkips: 4, UsedAt: now.Add(-2 * time.Hour)}
+	if !RecordTowerAdvisorTimeSkipUsage(&gameState, first, now) {
+		t.Fatal("first confirmed Advisor Time Skip usage was not recorded")
+	}
+	if RecordTowerAdvisorTimeSkipUsage(&gameState, first, now) {
+		t.Fatal("duplicate movement changed Advisor Time Skip usage")
+	}
+	if !RecordTowerAdvisorTimeSkipUsage(&gameState, TowerAdvisorTimeSkipUsage{
+		MovementID: 11, TimeSkips: 2, UsedAt: now.Add(-30 * time.Minute),
+	}, now) {
+		t.Fatal("second confirmed Advisor Time Skip usage was not recorded")
+	}
+
+	if used, exact := TowerAdvisorTimeSkipsUsedSince(gameState, now.Add(-3*time.Hour), now); !exact || used != 6 {
+		t.Fatalf("current server-day usage = %d exact=%t, want 6", used, exact)
+	}
+	if used, exact := TowerAdvisorTimeSkipsUsedSince(gameState, now.Add(-time.Hour), now); !exact || used != 2 {
+		t.Fatalf("post-reset usage = %d exact=%t, want 2", used, exact)
+	}
+	if _, exact := TowerAdvisorTimeSkipsUsedSince(gameState, now.Add(-TowerAdvisorTimeSkipUsageRetention-time.Second), now); exact {
+		t.Fatal("usage older than retained evidence was reported as exact")
+	}
+	gameState.AttackAnalytics.RecentTowerAdvisorTimeSkips = append(
+		gameState.AttackAnalytics.RecentTowerAdvisorTimeSkips,
+		TowerAdvisorTimeSkipUsage{MovementID: 12, TimeSkips: 1, UsedAt: now.Add(time.Minute)},
+	)
+	if _, exact := TowerAdvisorTimeSkipsUsedSince(gameState, now.Add(-3*time.Hour), now); exact {
+		t.Fatal("future Advisor Time Skip evidence was reported as exact")
+	}
+}

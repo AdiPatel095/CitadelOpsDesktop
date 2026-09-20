@@ -64,6 +64,34 @@ func TestApplyLeadersNormalizesEquipmentAndCommanderZero(t *testing.T) {
 	}
 }
 
+func TestApplyLeadersPreservesPendingExtractionWhileGemRemainsAttached(t *testing.T) {
+	gameState := State.NewGameState()
+	marker := &State.GemExtractionAttempt{
+		GemID: 457, RubyCost: 200, OperationID: "paid-extraction", ArmedAt: time.Now().UTC(),
+	}
+	gameState.Inventory.Equipment[1001] = State.EquipmentInstance{
+		ID: 1001, Slot: 1, WearerKind: "commander", Extraction: marker,
+	}
+	gameState.Inventory.Gems[457] = State.GemInstance{
+		ID: 457, EquipmentInstanceID: 1001, WearerKind: "commander",
+	}
+	payload := json.RawMessage(`{
+		"C":[{"ID":0,"VIS":0,"N":"Rift1","EQ":[[1001,1,2,5,0,[],1375,1086,20,-1,457,1,[1,0,0,[457,9,0,0,[]],12]]]}],
+		"B":[]
+	}`)
+	changed, err := applyLeaders(payload, &gameState, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !changed {
+		t.Fatal("leader payload did not change state")
+	}
+	got := gameState.Inventory.Equipment[1001].Extraction
+	if got == nil || got.OperationID != marker.OperationID || got.GemID != marker.GemID {
+		t.Fatalf("pending extraction marker = %#v, want preserved %#v", got, marker)
+	}
+}
+
 func TestReduceGeneralsCapturesActiveSkillIDs(t *testing.T) {
 	gameState := State.NewGameState()
 	observedAt := time.Date(2026, time.July, 14, 12, 0, 0, 0, time.UTC)

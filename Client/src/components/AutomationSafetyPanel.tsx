@@ -45,7 +45,7 @@ export function AutomationSafetyPanel({ states, now }: {
   return (
     <section className="rounded-xl border border-amber-500/50 bg-amber-500/5 p-4" aria-label="Automation safety locks">
       <h2 className="font-semibold text-text-main">Automation safety locks</h2>
-      <p className="mt-1 text-sm text-text-muted">These lanes have stopped after a game rejection. Review the operation and game state before allowing another attempt. Clearing a lock does not mark the error as safe.</p>
+      <p className="mt-1 text-sm text-text-muted">Non-whitelisted game rejections pause only their originating lane for 30 minutes. Lanes resume normal eligibility checks when the cooldown expires; whitelisted responses never create a lane lock.</p>
       {locked.map(([lane, state]) => {
         const lock = state.safetyLock!;
         const key = `${lane}:${lock.operationId}`;
@@ -53,7 +53,7 @@ export function AutomationSafetyPanel({ states, now }: {
           <div key={key} className="mt-4 space-y-2 border-t border-amber-500/20 pt-3">
             <p className="font-medium text-text-main">{lane} — {lock.opcode.toUpperCase()} {lock.code}</p>
             <p className="break-all text-sm text-text-muted">Operation {lock.operationId} · {lock.intent} · {new Date(lock.observedAt).toLocaleString()}</p>
-            <p className="text-sm text-text-muted">{timestamp(lock.until) ? `MSD cooldown ends ${new Date(lock.until!).toLocaleString()}.` : 'Held until explicitly reviewed and cleared.'}</p>
+            <p className="text-sm text-text-muted">{timestamp(lock.until) ? `Lane cooldown ends ${new Date(lock.until!).toLocaleString()}.` : 'Waiting for the runtime to refresh this legacy lock.'}</p>
             {!timestamp(lock.until) && <><label className="block text-sm text-text-main">
               Review and reason to resume
               <textarea className="mt-1 block w-full rounded border border-amber-500/30 bg-transparent p-2" maxLength={1000} rows={2}

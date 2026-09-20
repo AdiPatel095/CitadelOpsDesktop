@@ -95,6 +95,13 @@ func nextMovementCompletion(gameState State.GameState) time.Time {
 				completion = movement.ReturnsAt
 			}
 		}
+		// Expiry reconciliation also retains an owned commander through its
+		// settle grace. Schedule that boundary rather than spin on a past wait.
+		if owned && movement.CommanderID != nil && completion != nil {
+			if release := State.CommanderMovementReleaseAt(movement); release != nil && release.After(*completion) {
+				completion = release
+			}
+		}
 		if completion == nil || completion.IsZero() {
 			return true
 		}

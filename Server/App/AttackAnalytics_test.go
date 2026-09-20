@@ -117,19 +117,21 @@ func TestAttackMovementTroopCountExcludesTools(t *testing.T) {
 	}
 }
 
-func TestCaptureAutoTowerLaunchAdvancesCastleCursorCountOnlyOnce(t *testing.T) {
+func TestCaptureAutoTowerLaunchRecordsConfirmedAdvisorTimeSkipsOnlyOnce(t *testing.T) {
 	now := time.Date(2026, time.July, 23, 13, 0, 0, 0, time.UTC)
 	arrivesAt := now.Add(5 * time.Minute)
 	commanderID := State.CommanderID(7)
 	state := State.NewGameState()
 	state.Movements[321] = State.MovementState{
 		ID: 321, Direction: 0, SourceCastleID: 100, CommanderID: &commanderID,
-		KingdomID: 0, TargetX: 101, TargetY: 102, ArrivesAt: &arrivesAt, ObservedAt: now,
+		KingdomID: 0, TargetTypeID: 2, TargetX: 101, TargetY: 102, ArrivesAt: &arrivesAt, ObservedAt: now,
+		AdvisorType: 4, AdvisorAttackNumber: 1, AdvisorAttackCount: 4,
 	}
 	application := &Application{State: State.NewStore(state)}
 	arguments, err := json.Marshal(attackFeatureCaptureRequest{
 		FeatureID: State.AttackFeatureAutoTowers, SourceCastleID: 100, CommanderID: commanderID,
 		KingdomID: 0, TargetTypeID: 2, TargetX: 101, TargetY: 102,
+		AdvisorTimeSkipsUsed: 3,
 	})
 	if err != nil {
 		t.Fatal(err)
@@ -144,5 +146,37 @@ func TestCaptureAutoTowerLaunchAdvancesCastleCursorCountOnlyOnce(t *testing.T) {
 	snapshot := application.State.Snapshot()
 	if got := snapshot.TowerQueue.ConfirmedLaunchesByCastle[100]; got != 1 {
 		t.Fatalf("confirmed tower launches = %d, want 1", got)
+	}
+	usage := snapshot.AttackAnalytics.RecentTowerAdvisorTimeSkips
+	if len(usage) != 1 || usage[0].MovementID != 321 || usage[0].TimeSkips != 3 || !usage[0].UsedAt.Equal(now) {
+		t.Fatalf("tower Advisor Time Skip usage = %#v", usage)
+	}
+}
+
+func TestCaptureAutoTowerAdvisorTimeSkipsRejectsNonAdvisorMovement(t *testing.T) {
+	now := time.Date(2026, time.September, 2, 14, 0, 0, 0, time.UTC)
+	arrivesAt := now.Add(5 * time.Minute)
+	commanderID := State.CommanderID(7)
+	state := State.NewGameState()
+	state.Movements[321] = State.MovementState{
+		ID: 321, Direction: 0, SourceCastleID: 100, CommanderID: &commanderID,
+		KingdomID: 0, TargetTypeID: 2, TargetX: 101, TargetY: 102, ArrivesAt: &arrivesAt, ObservedAt: now,
+	}
+	application := &Application{State: State.NewStore(state)}
+	arguments, err := json.Marshal(attackFeatureCaptureRequest{
+		FeatureID: State.AttackFeatureAutoTowers, SourceCastleID: 100, CommanderID: commanderID,
+		KingdomID: 0, TargetTypeID: 2, TargetX: 101, TargetY: 102,
+		AdvisorTimeSkipsUsed: 1,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := application.captureAttackFeatureLaunch(context.Background(), arguments); err == nil {
+		t.Fatal("non-Advisor tower movement was accepted as confirmed Advisor Time Skip usage")
+	}
+	snapshot := application.State.Snapshot()
+	if len(snapshot.AttackAnalytics.PendingAttacks) != 0 || len(snapshot.AttackAnalytics.RecentTowerAdvisorTimeSkips) != 0 {
+		t.Fatalf("rejected movement changed attack analytics: %#v", snapshot.AttackAnalytics)
 	}
 }

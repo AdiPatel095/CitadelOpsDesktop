@@ -94,6 +94,7 @@ func planCraftingSlotRental(_ context.Context, input Intent.PlanningContext, arg
 		BuildingInstanceID State.BuildingInstanceID `json:"buildingInstanceId"`
 		SlotType           string                   `json:"slotType"`
 		Slot               int                      `json:"slot"`
+		MinimumCoinReserve int64                    `json:"minimumCoinReserve,omitempty"`
 	}
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Plan{}, err
@@ -126,8 +127,11 @@ func planCraftingSlotRental(_ context.Context, input Intent.PlanningContext, arg
 		return Intent.Plan{}, fmt.Errorf("slotType must be production or queue")
 	}
 	coins := playerResourceByOfficialKey(input.State, input.GameData, "C1")
-	if coins < cost {
-		return Intent.Plan{}, fmt.Errorf("crafting slot rental needs %.0f coins; %.0f are observed", cost, coins)
+	if request.MinimumCoinReserve < 0 {
+		return Intent.Plan{}, fmt.Errorf("minimumCoinReserve must not be negative")
+	}
+	if coins < cost+float64(request.MinimumCoinReserve) {
+		return Intent.Plan{}, &Intent.CoinUnavailableError{Required: int64(cost), Reserve: request.MinimumCoinReserve, Observed: int64(math.Floor(coins)), Source: "official crafting slot rental price"}
 	}
 	payload, _ := json.Marshal(struct {
 		KingdomID State.KingdomID          `json:"KID"`
@@ -136,13 +140,15 @@ func planCraftingSlotRental(_ context.Context, input Intent.PlanningContext, arg
 		Slots     []int                    `json:"S"`
 		SlotType  string                   `json:"ST"`
 	}{castle.KingdomID, castle.ID, building.InstanceID, []int{request.Slot}, request.SlotType})
+	rentalStep := commandStep("Rent crafting slot", "crun", payload, "crun")
+	rentalStep.CoinCost = &Intent.CoinCostRequirement{Amount: int64(cost), Reserve: request.MinimumCoinReserve, Source: "official crafting slot rental price"}
 	return Intent.Plan{
 		Claims: []string{
 			"castle:" + strconv.FormatInt(int64(castle.ID), 10),
 			"crafting-building:" + strconv.FormatInt(int64(building.InstanceID), 10), "account-resources",
 		},
 		Summary: fmt.Sprintf("Rent %s crafting slot %d at %s", request.SlotType, request.Slot, castleLabel(castle)),
-		Steps:   []Intent.Step{commandStep("Rent crafting slot", "crun", payload, "crun")},
+		Steps:   []Intent.Step{rentalStep},
 	}, nil
 }
 
@@ -175,6 +181,7 @@ func validateCraftingStartAvailability(
 	castle State.CastleState,
 	building State.CraftingBuilding,
 	recipeID int64,
+	minimumCoinReserve int64,
 ) error {
 	capacity := 2 + len(building.ActiveSlotRentals) + len(building.QueueSlotRentals)
 	occupied := len(building.Active) + len(building.Queued)
@@ -196,7 +203,14 @@ func validateCraftingStartAvailability(
 		case cost.CurrencyID > 0:
 			available = state.Player.Currencies[State.CurrencyID(cost.CurrencyID)]
 		}
-		if available < cost.Amount {
+		reserve := float64(0)
+		if strings.EqualFold(cost.JSONKey, "C1") {
+			reserve = float64(minimumCoinReserve)
+		}
+		if available-reserve < cost.Amount {
+			if strings.EqualFold(cost.JSONKey, "C1") {
+				return &Intent.CoinUnavailableError{Required: int64(math.Ceil(cost.Amount)), Reserve: minimumCoinReserve, Observed: int64(math.Floor(available)), Source: "official crafting recipe cost"}
+			}
 			label := strings.TrimSpace(cost.JSONKey)
 			if label == "" {
 				label = strings.TrimPrefix(cost.Field, "cost")

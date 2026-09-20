@@ -68,6 +68,32 @@ var officialClientEnchantResponseCodes = map[int]ResponseCodeMeaning{
 }
 
 var officialClientOpcodeResponseCodes = map[string]map[int]ResponseCodeMeaning{
+	// Official client enum: NO_MULTIPLE_ALLIANCEHELP = 273.
+	// https://empire-html5.goodgamestudios.com/default/dll/ggs.dll.6644f9217d73e8ce169d.js
+	"ahr": {
+		273: {
+			Code:          273,
+			Message:       "The alliance-help request was rejected as a duplicate or multiple request.",
+			Source:        ResponseCodeOfficialClient,
+			Kind:          ResponseCodeStaleState,
+			Recovery:      "Wait for the existing alliance-help request to complete or refresh its state before requesting help again.",
+			ExpectedState: true,
+		},
+	},
+	// Official client enum: NO_FREE_CONSTRUCTION_ITEM_SLOT = 374.
+	// The server can retain an expired temporary item as attached after its
+	// effect timer reaches zero, so RPC callers must refresh and wait for a
+	// snapshot that actually removes it before equipping a replacement.
+	"rpc": {
+		374: {
+			Code:          374,
+			Message:       "The selected building has no free construction-item slot.",
+			Source:        ResponseCodeOfficialClient,
+			Kind:          ResponseCodeStaleState,
+			Recovery:      "Refresh the castle's construction-item slots and wait until the attached item is removed before equipping another one.",
+			ExpectedState: true,
+		},
+	},
 	"ere": officialClientEnchantResponseCodes,
 	"eqe": officialClientEnchantResponseCodes,
 }

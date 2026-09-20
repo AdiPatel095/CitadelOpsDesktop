@@ -85,6 +85,64 @@ func TestRuntimeInventoryAndQueueableReducers(t *testing.T) {
 	}
 }
 
+func TestStorageInventoryFreshnessRequiresValidCollectionEvidence(t *testing.T) {
+	state := State.NewGameState()
+	code := 0
+	first := time.Date(2026, 9, 18, 12, 0, 0, 0, time.UTC)
+	apply := func(at time.Time, payload string) bool {
+		t.Helper()
+		_, changed, err := reduceStorageInventory(t.Context(), Protocol.Frame{
+			Opcode: "sin", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: at,
+			Payload: json.RawMessage(payload),
+		}, &state, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return changed
+	}
+	if !apply(first, `[{"SID":1,"RD":[[600,1]]}]`) || !state.Inventory.ItemsObservedAt["storage:1"].Equal(first) {
+		t.Fatalf("first storage observation = %#v", state.Inventory)
+	}
+	second := first.Add(time.Minute)
+	if !apply(second, `[{"SID":1,"RD":[[600,1]]}]`) || !state.Inventory.ItemsObservedAt["storage:1"].Equal(second) {
+		t.Fatalf("unchanged valid collection did not advance freshness: %#v", state.Inventory.ItemsObservedAt)
+	}
+	apply(second.Add(time.Minute), `[{"SID":2,"RD":[]}]`)
+	if !state.Inventory.ItemsObservedAt["storage:1"].Equal(second) {
+		t.Fatalf("SID2 incorrectly certified storage:1: %#v", state.Inventory.ItemsObservedAt)
+	}
+	for _, payload := range []string{`[{"SID":1,"RD":null}]`, `[{"SID":1}]`, `[{"SID":1,"RD":[[600,"bad"]]}]`} {
+		if apply(second.Add(time.Minute), payload) || !state.Inventory.ItemsObservedAt["storage:1"].Equal(second) {
+			t.Fatalf("payload %s incorrectly certified storage:1: %#v", payload, state.Inventory.ItemsObservedAt)
+		}
+	}
+	third := second.Add(2 * time.Minute)
+	if !apply(third, `[{"SID":1,"RD":[]}]`) || len(state.Inventory.Items["storage:1"]) != 0 || !state.Inventory.ItemsObservedAt["storage:1"].Equal(third) {
+		t.Fatalf("explicit empty collection was not authoritative: %#v", state.Inventory)
+	}
+}
+
+func TestStorageMutationInvalidatesOrReplacesCollectionFreshness(t *testing.T) {
+	state := State.NewGameState()
+	first := time.Date(2026, 9, 18, 12, 0, 0, 0, time.UTC)
+	state.SetInventoryItemsCollectionObserved("storage:1", map[int64]int64{600: 1}, first)
+	code := 0
+	frame := Protocol.Frame{Opcode: "ebu", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: first.Add(time.Minute), Payload: json.RawMessage(`{"NO":[]}`)}
+	_, changed, err := invalidateStorageObservationAfterMutation(t.Context(), frame, &state, nil)
+	if err != nil || !changed || !state.Inventory.ItemsObservedAt["storage:1"].IsZero() {
+		t.Fatalf("missing embedded storage did not invalidate freshness: changed=%t err=%v inventory=%#v", changed, err, state.Inventory)
+	}
+
+	frame.Payload = json.RawMessage(`{"sin":[{"SID":1,"RD":[[600,2]]}]}`)
+	if _, changed, err = reduceEmbeddedStorageInventory(t.Context(), frame, &state, nil); err != nil || !changed {
+		t.Fatalf("embedded storage reducer changed=%t err=%v", changed, err)
+	}
+	if _, changed, err = invalidateStorageObservationAfterMutation(t.Context(), frame, &state, nil); err != nil || changed ||
+		state.Inventory.Items["storage:1"][600] != 2 || !state.Inventory.ItemsObservedAt["storage:1"].Equal(frame.ReceivedAt) {
+		t.Fatalf("valid embedded storage was not retained: changed=%t err=%v inventory=%#v", changed, err, state.Inventory)
+	}
+}
+
 func TestKingdomTransportReducerPreservesAutomationWorkflowThroughSettlement(t *testing.T) {
 	gameData := runtimeTestGameData(t)
 	gameState := State.NewGameState()
@@ -138,6 +196,214 @@ func TestKingdomTransportReducerClearsPendingFromSuccessfulMSKSnapshot(t *testin
 	}
 	if workflow, exists := gameState.KingdomTransport.ResourceWorkflows[2]; !exists || workflow.Owner != "autoSceatRes" {
 		t.Fatalf("successful MSK lost settlement workflow: %#v exists=%t", workflow, exists)
+	}
+}
+
+func TestKingdomTroopWorkflowRequiresCurrentSessionContinuity(t *testing.T) {
+	gameData := runtimeTestGameData(t)
+	gameState := State.NewGameState()
+	now := time.Now().UTC().Add(-time.Minute)
+	gameState.Session.ConnectionGeneration = 8
+	gameState.KingdomTransport.TroopWorkflows[2] = State.KingdomTroopTransportWorkflow{
+		ID: "owned", Owner: "autoFortress", Status: "armed", KingdomID: 2,
+		Units:   []State.KingdomTransportUnit{{UnitID: 277, Amount: 100}},
+		ArmedAt: now, SessionGeneration: 7,
+	}
+	code := 0
+	_, changed, err := reduceKingdomTransport(t.Context(), Protocol.Frame{
+		Opcode: "kut", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now.Add(time.Second),
+		Payload: json.RawMessage(`{"kpi":{"UT":[{"KID":2,"RS":3600,"I":[[277,100]]}]}}`),
+	}, &gameState, gameData)
+	if err != nil || !changed {
+		t.Fatalf("transport reduction: changed=%t err=%v", changed, err)
+	}
+	if got := gameState.KingdomTransport.TroopWorkflows[2].Status; got != "ownership_uncertain" {
+		t.Fatalf("lookalike transport was adopted across sessions: status=%q", got)
+	}
+	_, _, err = reduceKingdomTransport(t.Context(), Protocol.Frame{
+		Opcode: "kpi", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now.Add(2 * time.Second),
+		Payload: json.RawMessage(`{"UL":[{"KID":2,"U":1}]}`),
+	}, &gameState, gameData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	workflow := gameState.KingdomTransport.TroopWorkflows[2]
+	if workflow.Status != "ownership_absent" || workflow.SessionGeneration != 8 || !workflow.TransportObservedAt.Equal(now.Add(2*time.Second)) {
+		t.Fatalf("completed ambiguous transport did not establish inventory reconciliation boundary: %#v", workflow)
+	}
+}
+
+func TestKingdomTroopWorkflowRejectsExactManualReplacementWithResetTimer(t *testing.T) {
+	gameData := runtimeTestGameData(t)
+	gameState := State.NewGameState()
+	now := time.Now().UTC().Add(-time.Minute)
+	gameState.Session.ConnectionGeneration = 8
+	gameState.KingdomTransport.ObservedAt = now
+	gameState.KingdomTransport.TroopWorkflows[2] = State.KingdomTroopTransportWorkflow{
+		ID: "owned", Owner: "autoFortress", Status: "pending", KingdomID: 2,
+		Units:   []State.KingdomTransportUnit{{UnitID: 277, Amount: 100}},
+		ArmedAt: now.Add(-time.Minute), LaunchedAt: now.Add(-time.Minute), TransportObservedAt: now,
+		RemainingSec: 100, SessionGeneration: 8,
+	}
+	code := 0
+	_, _, err := reduceKingdomTransport(t.Context(), Protocol.Frame{
+		Opcode: "kpi", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now.Add(20 * time.Second),
+		Payload: json.RawMessage(`{"UL":[{"KID":2,"U":1}],"UT":[{"KID":2,"RS":100,"I":[[277,100]]}]}`),
+	}, &gameState, gameData)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := gameState.KingdomTransport.TroopWorkflows[2].Status; got != "awaiting_destination_refresh" {
+		t.Fatalf("exact lookalike with reset timer was adopted: status=%q", got)
+	}
+}
+
+func TestKingdomTroopWorkflowRebindsOnlyVerifiedReconnectEvidence(t *testing.T) {
+	gameData := runtimeTestGameData(t)
+	now := time.Now().UTC().Add(-time.Minute)
+	code := 0
+	for _, test := range []struct {
+		name      string
+		workflow  State.KingdomTroopTransportWorkflow
+		payload   json.RawMessage
+		wantState string
+	}{
+		{
+			name: "persisted-pending-continuity",
+			workflow: State.KingdomTroopTransportWorkflow{
+				ID: "pending", Owner: "autoFortress", Status: "pending", KingdomID: 2,
+				Units: []State.KingdomTransportUnit{{UnitID: 277, Amount: 100}}, ArmedAt: now.Add(-time.Hour),
+				TransportObservedAt: now, RemainingSec: 3600,
+			},
+			payload:   json.RawMessage(`{"UL":[{"KID":2,"U":1}],"UT":[{"KID":2,"RS":3590,"I":[[277,100]]}]}`),
+			wantState: "pending",
+		},
+		{
+			name: "armed-authoritative-empty",
+			workflow: State.KingdomTroopTransportWorkflow{
+				ID: "armed", Owner: "autoFortress", Status: "armed", KingdomID: 2,
+				Units: []State.KingdomTransportUnit{{UnitID: 277, Amount: 100}}, ArmedAt: now.Add(-time.Hour),
+			},
+			payload:   json.RawMessage(`{"UL":[{"KID":2,"U":1}]}`),
+			wantState: "ownership_absent",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			state := State.NewGameState()
+			state.Session.ConnectionGeneration = 11
+			state.KingdomTransport.TroopWorkflows[2] = test.workflow
+			_, changed, err := reduceKingdomTransport(t.Context(), Protocol.Frame{
+				Opcode: "kpi", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+				ReceivedAt: now.Add(10 * time.Second), Payload: test.payload,
+			}, &state, gameData)
+			if err != nil || !changed {
+				t.Fatalf("reconnect reduction: changed=%t err=%v", changed, err)
+			}
+			workflow := state.KingdomTransport.TroopWorkflows[2]
+			if workflow.Status != test.wantState || workflow.SessionGeneration != 11 {
+				t.Fatalf("rebound workflow=%#v", workflow)
+			}
+		})
+	}
+}
+
+func TestKingdomTroopWorkflowDoesNotAdoptManualTransferAfterOwnedAbsence(t *testing.T) {
+	gameData := runtimeTestGameData(t)
+	now := time.Now().UTC().Add(-time.Minute)
+	code := 0
+	state := State.NewGameState()
+	state.Session.ConnectionGeneration = 11
+	state.KingdomTransport.TroopWorkflows[2] = State.KingdomTroopTransportWorkflow{
+		ID: "armed", Owner: "autoFortress", Status: "armed", KingdomID: 2,
+		Units: []State.KingdomTransportUnit{{UnitID: 277, Amount: 100}}, ArmedAt: now.Add(-time.Hour),
+	}
+	for _, frame := range []Protocol.Frame{
+		{
+			Opcode: "kpi", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+			ReceivedAt: now, Payload: json.RawMessage(`{"UL":[{"KID":2,"U":1}]}`),
+		},
+		{
+			Opcode: "kpi", Direction: Protocol.DirectionInbound, ResponseCode: &code,
+			ReceivedAt: now.Add(time.Second),
+			Payload:    json.RawMessage(`{"UL":[{"KID":2,"U":1}],"UT":[{"KID":2,"RS":3600,"I":[[277,100]]}]}`),
+		},
+	} {
+		if _, changed, err := reduceKingdomTransport(t.Context(), frame, &state, gameData); err != nil || !changed {
+			t.Fatalf("transport reduction: changed=%t err=%v", changed, err)
+		}
+	}
+	workflow := state.KingdomTransport.TroopWorkflows[2]
+	if workflow.Status != "ownership_absent" || workflow.RemainingSec != 0 || workflow.SessionGeneration != 11 {
+		t.Fatalf("manual replacement was adopted: %#v", workflow)
+	}
+}
+
+func TestKingdomTroopWorkflowPreservesSkipMarkerWhenTransportCompletes(t *testing.T) {
+	gameData := runtimeTestGameData(t)
+	gameState := State.NewGameState()
+	now := time.Now().UTC().Add(-time.Minute)
+	gameState.Session.ConnectionGeneration = 8
+	gameState.KingdomTransport.TroopWorkflows[2] = State.KingdomTroopTransportWorkflow{
+		ID: "owned", Owner: "autoFortress", Status: "pending", KingdomID: 2,
+		Units: []State.KingdomTransportUnit{{UnitID: 277, Amount: 100}}, ArmedAt: now.Add(-time.Minute),
+		TransportObservedAt: now, RemainingSec: 3600, SessionGeneration: 8,
+		SkipCurrencyID: 1005, SkipWireKey: "MS5", SkipBalanceBefore: 2, SkipRemainingBefore: 3600,
+		SkipDurationSec: 3600, SkipRequestedAt: now.Add(time.Second),
+	}
+	code := 0
+	_, changed, err := reduceKingdomTransport(t.Context(), Protocol.Frame{
+		Opcode: "msk", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now.Add(2 * time.Second),
+		Payload: json.RawMessage(`{"kpi":{"UL":[{"KID":2,"U":1}]}}`),
+	}, &gameState, gameData)
+	if err != nil || !changed {
+		t.Fatalf("completed skip reduction: changed=%t err=%v", changed, err)
+	}
+	workflow := gameState.KingdomTransport.TroopWorkflows[2]
+	if workflow.SkipRequestedAt.IsZero() || workflow.Status != "pending" || workflow.RemainingSec != 0 {
+		t.Fatalf("completed transport discarded unresolved skip marker: %#v", workflow)
+	}
+}
+
+func TestKingdomTransportRejectsMalformedAndOlderSnapshots(t *testing.T) {
+	gameData := runtimeTestGameData(t)
+	gameState := State.NewGameState()
+	now := time.Now().UTC().Add(-time.Minute)
+	gameState.KingdomTransport.ObservedAt = now
+	gameState.KingdomTransport.PendingUnits = []State.KingdomUnitTransport{{
+		KingdomID: 2, RemainingSec: 60, Units: []State.KingdomTransportUnit{{UnitID: 277, Amount: 100}},
+	}}
+	code := 0
+	_, changed, err := reduceKingdomTransport(t.Context(), Protocol.Frame{
+		Opcode: "kpi", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now.Add(time.Second),
+		Payload: json.RawMessage(`{"UL":[{"KID":2,"U":1}],"UT":null}`),
+	}, &gameState, gameData)
+	if err == nil || changed || len(gameState.KingdomTransport.PendingUnits) != 1 {
+		t.Fatalf("malformed snapshot replaced state: changed=%t pending=%#v err=%v", changed, gameState.KingdomTransport.PendingUnits, err)
+	}
+	_, changed, err = reduceKingdomTransport(t.Context(), Protocol.Frame{
+		Opcode: "kpi", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: now.Add(-time.Second),
+		Payload: json.RawMessage(`{"UL":[{"KID":2,"U":1}]}`),
+	}, &gameState, gameData)
+	if err != nil || changed || len(gameState.KingdomTransport.PendingUnits) != 1 {
+		t.Fatalf("older snapshot replaced state: changed=%t pending=%#v err=%v", changed, gameState.KingdomTransport.PendingUnits, err)
+	}
+}
+
+func TestCurrencyAuthorityCannotFollowInvalidReplacement(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Session.ConnectionGeneration = 4
+	gameData := runtimeTestGameData(t)
+	now := time.Now().UTC()
+	changed, err := applyPlayerCurrencies(json.RawMessage(`[["STP",5]]`), &gameState, gameData, now, true)
+	if err != nil || !changed || gameState.Player.CurrencyObservations[2].ConnectionGeneration != 4 {
+		t.Fatalf("authoritative currency observation: changed=%t observation=%#v err=%v", changed, gameState.Player.CurrencyObservations[2], err)
+	}
+	changed, err = applyPlayerCurrencies(json.RawMessage(`[["STP",4]]`), &gameState, gameData, now.Add(2*time.Minute), true)
+	if err != nil || !changed || gameState.Player.Currencies[2] != 4 {
+		t.Fatalf("future replacement: changed=%t balance=%v err=%v", changed, gameState.Player.Currencies[2], err)
+	}
+	if observation := gameState.Player.CurrencyObservations[2]; !observation.ObservedAt.IsZero() {
+		t.Fatalf("future replacement retained stale authority: %#v", observation)
 	}
 }
 
@@ -297,6 +563,162 @@ func TestMarketBoosterPreservesFeastWhenBFSOmitted(t *testing.T) {
 				t.Fatalf("booster observation time = %s, want %s", gameState.Market.BoostersObservedAt, receivedAt)
 			}
 		})
+	}
+}
+
+func TestMarketBoosterRequiresCompleteCoherentAuthoritativeArray(t *testing.T) {
+	base := time.Date(2026, 9, 15, 12, 0, 0, 250_000_000, time.UTC)
+	code := 0
+	for _, testCase := range []struct {
+		name    string
+		payload json.RawMessage
+	}{
+		{"missing", json.RawMessage(`{}`)}, {"null", json.RawMessage(`{"BO":null}`)},
+		{"malformed-id", json.RawMessage(`{"BO":[{"ID":null,"RT":0}]}`)},
+		{"fractional-duration", json.RawMessage(`{"BO":[{"ID":0,"RT":1.5}]}`)},
+		{"duplicate", json.RawMessage(`{"BO":[{"ID":0,"RT":1},{"ID":0,"RT":2}]}`)},
+	} {
+		t.Run(testCase.name, func(t *testing.T) {
+			state := State.NewGameState()
+			state.Session.ConnectionGeneration = 7
+			state.Market.BoostersObservedAt = base
+			state.Market.BoostersObservedGeneration = 7
+			state.Market.Boosters[0] = State.MarketBoosterState{ID: 0, RemainingSec: 3600, ExpiresAt: base.Add(time.Hour)}
+			_, _, err := reduceMarketBooster(t.Context(), Protocol.Frame{Opcode: "boi", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: base.Add(time.Second), Payload: testCase.payload}, &state, nil)
+			if (testCase.name == "missing" || testCase.name == "null") && err != nil {
+				t.Fatalf("optional BO error = %v", err)
+			}
+			if testCase.name != "missing" && testCase.name != "null" && err == nil {
+				t.Fatal("malformed authoritative BO accepted")
+			}
+			if state.Market.Boosters[0].RemainingSec != 3600 || !state.Market.BoostersObservedAt.Equal(base) {
+				t.Fatalf("invalid BO changed authority: %#v", state.Market)
+			}
+		})
+	}
+	state := State.NewGameState()
+	state.Session.ConnectionGeneration = 7
+	state.Market.Boosters[0] = State.MarketBoosterState{ID: 0, RemainingSec: 3600, ExpiresAt: base.Add(time.Hour)}
+	_, changed, err := reduceMarketBooster(t.Context(), Protocol.Frame{Opcode: "boi", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: base, Payload: json.RawMessage(`{"BO":[]}`)}, &state, nil)
+	if err != nil || !changed || len(state.Market.Boosters) != 0 || state.Market.BoostersObservedGeneration != 7 {
+		t.Fatalf("explicit empty BO = %#v err=%v", state.Market, err)
+	}
+	state.Market.Boosters[0] = State.MarketBoosterState{ID: 0, RemainingSec: 3600, ExpiresAt: base.Add(time.Hour)}
+	state.Market.BoostersObservedAt = base
+	_, _, _ = reduceMarketBooster(t.Context(), Protocol.Frame{Opcode: "boi", Direction: Protocol.DirectionInbound, ReceivedAt: base.Add(time.Second), Payload: json.RawMessage(`{"BO":[]}`)}, &state, nil)
+	if len(state.Market.Boosters) != 1 || !state.Market.BoostersObservedAt.Equal(base) {
+		t.Fatalf("missing result code changed BO authority: %#v", state.Market)
+	}
+	_, changed, err = reduceMarketBooster(t.Context(), Protocol.Frame{Opcode: "boi", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: base.Add(2 * time.Second), Payload: json.RawMessage(`{"BO":[{"ID":99,"RT":2147483647,"L":1},{"ID":0,"RT":4000000000,"PC":0}]}`)}, &state, nil)
+	if err != nil || !changed || !state.Market.Boosters[99].Permanent || state.Market.Boosters[0].RemainingSec != 4_000_000_000 || state.Market.Boosters[0].ContinuousPurchaseCount != 0 {
+		t.Fatalf("ordered unrelated/permanent/large BO rows = %#v err=%v", state.Market.Boosters, err)
+	}
+}
+
+func TestGlobalRubyObservationRequiresExplicitCurrentC2(t *testing.T) {
+	gameData, decodeErr := GameData.DecodeStore([]byte(`{"versionInfo":[],"buildings":[],"units":[],"resources":[{"resourceID":1,"JSONKey":"C1"},{"resourceID":2,"JSONKey":"C2"}],"currencies":[]}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if decodeErr != nil {
+		t.Fatal(decodeErr)
+	}
+	state := State.NewGameState()
+	state.Session.ConnectionGeneration = 9
+	base := time.Date(2026, 9, 15, 12, 0, 0, 0, time.UTC)
+	code := 0
+	_, _, err := reduceGlobalResources(t.Context(), Protocol.Frame{Opcode: "gcu", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: base, Payload: json.RawMessage(`{"C1":100}`)}, &state, gameData)
+	if err != nil || state.Player.Resources[1] != 100 || !state.Player.ResourceObservations[1].ObservedAt.Equal(base) {
+		t.Fatalf("coin authority = %#v err=%v", state.Player, err)
+	}
+	_, _, _ = reduceGlobalResources(t.Context(), Protocol.Frame{Opcode: "gcu", Direction: Protocol.DirectionInbound, ReceivedAt: base.Add(time.Second), Payload: json.RawMessage(`{"C1":999}`)}, &state, gameData)
+	if state.Player.Resources[1] != 100 || !state.Player.ResourceObservations[1].ObservedAt.Equal(base) {
+		t.Fatalf("non-authoritative gcu inflated coin authority: %#v", state.Player)
+	}
+	_, _, err = reduceGlobalResources(t.Context(), Protocol.Frame{Opcode: "gcu", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: base, Payload: json.RawMessage(`{"C2":0}`)}, &state, gameData)
+	if err != nil || state.Player.Resources[2] != 0 || !state.Player.ResourceObservations[2].ObservedAt.Equal(base) {
+		t.Fatalf("zero ruby authority = %#v err=%v", state.Player, err)
+	}
+	_, _, _ = reduceGlobalResources(t.Context(), Protocol.Frame{Opcode: "gcu", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: base.Add(time.Second), Payload: json.RawMessage(`{"C1":50}`)}, &state, gameData)
+	if !state.Player.ResourceObservations[2].ObservedAt.Equal(base) {
+		t.Fatal("missing C2 refreshed ruby authority")
+	}
+	_, _, _ = reduceGlobalResources(t.Context(), Protocol.Frame{Opcode: "gcu", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: base.Add(2 * time.Second), Payload: json.RawMessage(`{"C2":null}`)}, &state, gameData)
+	if !state.Player.ResourceObservations[2].ObservedAt.Equal(base) {
+		t.Fatal("malformed C2 refreshed ruby authority")
+	}
+	_, _, _ = reduceGlobalResources(t.Context(), Protocol.Frame{Opcode: "gcu", Direction: Protocol.DirectionInbound, ReceivedAt: base.Add(3 * time.Second), Payload: json.RawMessage(`{"C2":500}`)}, &state, gameData)
+	if state.Player.Resources[2] != 0 || !state.Player.ResourceObservations[2].ObservedAt.Equal(base) {
+		t.Fatalf("missing result code changed ruby amount under old authority: %#v", state.Player)
+	}
+	for _, invalid := range []json.RawMessage{json.RawMessage(`{"C2":-1}`), json.RawMessage(`{"C2":1.5}`), json.RawMessage(`{"C2":"NaN"}`), json.RawMessage(`{"C2":9223372036854775808}`)} {
+		_, _, _ = reduceGlobalResources(t.Context(), Protocol.Frame{Opcode: "gcu", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: base.Add(4 * time.Second), Payload: invalid}, &state, gameData)
+		if state.Player.Resources[2] != 0 || !state.Player.ResourceObservations[2].ObservedAt.Equal(base) {
+			t.Fatalf("invalid C2 %s changed ruby authority: %#v", invalid, state.Player)
+		}
+	}
+}
+
+func TestSpecialistResponseKeepsRubyAndBoosterAuthorityAtomic(t *testing.T) {
+	gameData, err := GameData.DecodeStore([]byte(`{"versionInfo":[],"buildings":[],"units":[],"resources":[{"resourceID":2,"JSONKey":"C2"},{"resourceID":5,"JSONKey":"F"}],"currencies":[]}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	state := State.NewGameState()
+	state.Session.ConnectionGeneration = 3
+	base := time.Now().UTC().Add(-time.Minute).Truncate(time.Second)
+	state.Player.Resources[2] = 1000
+	state.Player.ResourceObservations[2] = State.PlayerResourceObservation{ObservedAt: base, ConnectionGeneration: 3}
+	state.Market.Boosters = map[int]State.MarketBoosterState{0: {ID: 0, RemainingSec: 3600, ExpiresAt: base.Add(time.Hour)}}
+	state.Market.BoostersObservedAt = base
+	state.Market.BoostersObservedGeneration = 3
+	state.Castles[100] = newCastleState(100)
+	castle := state.Castles[100]
+	castle.Focused = true
+	state.Castles[100] = castle
+	registry := NewRegistry()
+	if err := RegisterCoreReducers(registry); err != nil {
+		t.Fatal(err)
+	}
+	store := State.NewStore(state)
+	_, err = store.ApplyComponents(State.Components(State.ComponentPlayer), func(current *State.GameState) ([]string, bool, error) {
+		current.Player.ResourceObservations[2] = State.PlayerResourceObservation{ObservedAt: base, ConnectionGeneration: 3}
+		return []string{"resources"}, true, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	pipeline := NewPipeline(store, staticGameDataProvider{store: gameData}, registry)
+	code := 0
+	_, err = pipeline.HandleFrame(t.Context(), Protocol.Frame{Opcode: "ovs", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: base.Add(time.Second), Payload: json.RawMessage(`{"gcu":{"C2":900},"boi":{"BO":[{"ID":null,"RT":604800}]}}`)})
+	if err == nil {
+		t.Fatal("malformed specialist BO response was accepted")
+	}
+	afterError := store.ReadOnlyView()
+	if afterError.Player.Resources[2] != 1000 || !afterError.Player.ResourceObservations[2].ObservedAt.Equal(base) || afterError.Market.Boosters[0].RemainingSec != 3600 || !afterError.Market.BoostersObservedAt.Equal(base) {
+		t.Fatalf("ingest error partially refreshed authority: player=%+v market=%+v", afterError.Player, afterError.Market)
+	}
+	_, err = pipeline.HandleFrame(t.Context(), Protocol.Frame{Opcode: "ovs", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: base.Add(2 * time.Second), Payload: json.RawMessage(`{"gcu":{"C2":900}}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	afterOptional := store.ReadOnlyView()
+	if afterOptional.Player.Resources[2] != 900 || !afterOptional.Player.ResourceObservations[2].ObservedAt.Equal(base.Add(2*time.Second)) || afterOptional.Market.Boosters[0].RemainingSec != 3600 || !afterOptional.Market.BoostersObservedAt.Equal(base) {
+		t.Fatalf("optional missing BO did not preserve independent authority: player=%+v market=%+v", afterOptional.Player, afterOptional.Market)
+	}
+	_, err = pipeline.HandleFrame(t.Context(), Protocol.Frame{Opcode: "btx", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: base.Add(3 * time.Second), Payload: json.RawMessage(`{"gcu":{"C2":800},"boi":{"BO":[{"ID":8,"RT":604800,"PC":0}]},"txi":{"TX":{"RT":1}}}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	afterTax := store.ReadOnlyView()
+	if afterTax.Market.Boosters[8].RemainingSec != 604800 || afterTax.Market.Boosters[8].ExpiresAt.Sub(base.Add(3*time.Second)) != 7*24*time.Hour {
+		t.Fatalf("tax-cycle RT replaced tax specialist timer: %+v", afterTax.Market.Boosters[8])
+	}
+	_, err = pipeline.HandleFrame(t.Context(), Protocol.Frame{Opcode: "bis", Direction: Protocol.DirectionInbound, ResponseCode: &code, ReceivedAt: base.Add(4 * time.Second), Payload: json.RawMessage(`{"gcu":{"C2":700},"gpa":{"DF":500,"DFC":120},"boi":{"BO":[{"ID":10,"RT":604800,"PC":0},{"ID":8,"RT":604799,"PC":0}]}}`)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	afterDrill := store.ReadOnlyView()
+	food := afterDrill.Castles[100].Resources[5]
+	if afterDrill.Market.Boosters[10].RemainingSec != 604800 || food.ProductionPerHour == nil || *food.ProductionPerHour != 50 || food.ConsumptionPerHour == nil || *food.ConsumptionPerHour != 12 {
+		t.Fatalf("drill response lost nested BO/GPA: booster=%+v food=%+v", afterDrill.Market.Boosters[10], food)
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"strconv"
 	"time"
 
@@ -15,23 +16,59 @@ import (
 const (
 	kingdomTowerMapTypeID              = 2
 	towerAttackDialogPlanningFreshness = 30 * time.Second
+	baronAdvisorTypeID                 = 4
+	baronAdvisorSubscriptionTypeID     = 4
+	baronAdvisorTokenCurrencyID        = State.CurrencyID(79)
+	baronAdvisorMinimumAttackCount     = 2
+	baronAdvisorMaximumAttackCount     = 9999
 )
 
 type towerLaunchRequest struct {
-	SourceCastleID     State.CastleID      `json:"sourceCastleId"`
-	KingdomID          State.KingdomID     `json:"kingdomId"`
-	TargetX            int                 `json:"targetX"`
-	TargetY            int                 `json:"targetY"`
-	UnitID             State.UnitID        `json:"unitId"`
-	MaidenOnly         bool                `json:"maidenOnly"`
-	CommanderIDs       []State.CommanderID `json:"commanderIds"`
-	HorseTravelBoostID int                 `json:"horseTravelBoostId"`
-	DailyAttackLimit   int64               `json:"dailyAttackLimit"`
+	SourceCastleID        State.CastleID      `json:"sourceCastleId"`
+	KingdomID             State.KingdomID     `json:"kingdomId"`
+	TargetX               int                 `json:"targetX"`
+	TargetY               int                 `json:"targetY"`
+	UnitID                State.UnitID        `json:"unitId"`
+	MaidenOnly            bool                `json:"maidenOnly"`
+	CommanderIDs          []State.CommanderID `json:"commanderIds"`
+	HorseTravelBoostID    int                 `json:"horseTravelBoostId"`
+	DailyAttackLimit      int64               `json:"dailyAttackLimit"`
+	AdvisorMode           bool                `json:"advisorMode"`
+	AdvisorAttackCount    int                 `json:"advisorAttackCount,omitempty"`
+	MaximumDailyTimeSkips int64               `json:"maximumDailyTimeSkips,omitempty"`
 }
 
 type towerResolvedAttackRequest struct {
 	towerLaunchRequest
 	CommanderID State.CommanderID `json:"commanderId"`
+}
+
+type towerAdvisorActivationRequest struct {
+	ConfirmedTokenSpend bool `json:"confirmedTokenSpend"`
+}
+
+func planTowerAdvisorActivation(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
+	var request towerAdvisorActivationRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return Intent.Plan{}, err
+	}
+	if !request.ConfirmedTokenSpend {
+		return Intent.Plan{}, fmt.Errorf("Baron Advisor activation consumes one dedicated token; confirmedTokenSpend=true is required")
+	}
+	if baronAdvisorActive(input.State) {
+		return Intent.Plan{}, fmt.Errorf("the Baron Advisor is already active")
+	}
+	if input.State.Player.Currencies[baronAdvisorTokenCurrencyID] < 1 {
+		return Intent.Plan{}, fmt.Errorf("Baron Advisor activation requires one token (currency %d)", baronAdvisorTokenCurrencyID)
+	}
+	return Intent.Plan{
+		Claims:  []string{"advisor:baron:activation", "account-resources", "subscriptions"},
+		Summary: "Activate the Baron Advisor with one dedicated token",
+		Steps: []Intent.Step{
+			commandStep("Consume one Baron Advisor token", "aa", json.RawMessage(`{"AAT":4}`), "aa"),
+			commandStep("Refresh Baron Advisor subscription", "sie", json.RawMessage(`{}`), "sie"),
+		},
+	}, nil
 }
 
 func planTowerContext(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
@@ -100,10 +137,22 @@ func planTowerAttack(_ context.Context, input Intent.PlanningContext, arguments 
 			"Skip tower attack: kingdom tower at %d:%d is on cooldown", target.X, target.Y,
 		)), nil
 	}
+	if request.AdvisorMode && !baronAdvisorActive(input.State) {
+		return Intent.Plan{}, fmt.Errorf("%w: the Baron Advisor is not active", Intent.ErrPlanStale)
+	}
 	if blockedPlan, blocked, err := dailyAttackLimitPlan(input.State, request.DailyAttackLimit); err != nil {
 		return Intent.Plan{}, err
 	} else if blocked {
 		return blockedPlan, nil
+	}
+	if request.AdvisorMode {
+		if _, detail, blocked, err := towerAdvisorTimeSkipLimitStatus(
+			input.State, request.MaximumDailyTimeSkips, int64(request.AdvisorAttackCount-1), now,
+		); err != nil {
+			return Intent.Plan{}, err
+		} else if blocked {
+			return Intent.Plan{Summary: detail}, nil
+		}
 	}
 	if input.GameData == nil {
 		return Intent.Plan{}, fmt.Errorf("official game data is unavailable")
@@ -117,9 +166,11 @@ func planTowerAttack(_ context.Context, input Intent.PlanningContext, arguments 
 	if err != nil {
 		return Intent.Plan{}, err
 	}
-	if err := requireTowerAttackUnits(
-		currentSource, request.UnitID, capacity.Capacity.Left+capacity.Capacity.Right,
-	); err != nil {
+	required, err := towerTotalRequiredUnits(capacity.Capacity.Left+capacity.Capacity.Right, request)
+	if err != nil {
+		return Intent.Plan{}, err
+	}
+	if err := requireTowerAttackUnits(currentSource, request.UnitID, required); err != nil {
 		return deferredSkipPlan("Skip tower attack: " + err.Error()), nil
 	}
 	resolvedArguments, _ := json.Marshal(towerResolvedAttackRequest{towerLaunchRequest: request, CommanderID: commander})
@@ -142,16 +193,21 @@ func planTowerAttack(_ context.Context, input Intent.PlanningContext, arguments 
 		attackFeatureCaptureStep(attackFeatureCaptureRequest{
 			FeatureID: State.AttackFeatureAutoTowers, SourceCastleID: source.ID, CommanderID: commander,
 			KingdomID: target.KingdomID, TargetTypeID: target.TypeID, TargetX: target.X, TargetY: target.Y,
+			AdvisorTimeSkipsUsed: int64(max(0, request.AdvisorAttackCount-1)),
 		}),
 	)
 	steps = append(steps, Intent.Step{Name: "Consume tower queue target", Action: "tower.queue.consume", ActionArguments: queueEntry})
+	claims := towerAttackClaims(source, target, commander, true)
+	if request.AdvisorMode {
+		claims = append(claims, "tower-advisor-time-skips")
+	}
 	return Intent.Plan{
-		Claims: towerAttackClaims(source, target, commander, true),
+		Claims: claims,
 		Admission: &Intent.Admission{
 			Class: Intent.AdmissionAttackLaunch, Module: "autoTowers",
 			Affinity: "castle:" + strconv.FormatInt(int64(source.ID), 10),
 		},
-		Summary: fmt.Sprintf("Attack kingdom tower at %d:%d from %s", target.X, target.Y, castleLabel(source)),
+		Summary: towerAttackSummary(request, source, target),
 		Steps:   steps,
 	}, nil
 }
@@ -182,7 +238,11 @@ func (application *Application) guardTowerAttackInventory(_ context.Context, arg
 	if err != nil {
 		return err
 	}
-	return requireFreshTowerAttackUnits(source, request.UnitID, capacity.Capacity.Left+capacity.Capacity.Right)
+	required, err := towerTotalRequiredUnits(capacity.Capacity.Left+capacity.Capacity.Right, request.towerLaunchRequest)
+	if err != nil {
+		return err
+	}
+	return requireFreshTowerAttackUnits(source, request.UnitID, required)
 }
 
 func (application *Application) captureTowerCapacity(_ context.Context, arguments json.RawMessage) error {
@@ -279,7 +339,22 @@ func buildTowerAttackStep(input Intent.PlanningContext, request towerLaunchReque
 	if err != nil {
 		return Intent.Step{}, err
 	}
-	required := capacity.Capacity.Left + capacity.Capacity.Right
+	if request.AdvisorMode && !baronAdvisorActive(input.State) {
+		return Intent.Step{}, fmt.Errorf("%w: the Baron Advisor is no longer active", Intent.ErrPlanStale)
+	}
+	if request.AdvisorMode {
+		if _, detail, blocked, err := towerAdvisorTimeSkipLimitStatus(
+			input.State, request.MaximumDailyTimeSkips, int64(request.AdvisorAttackCount-1), time.Now().UTC(),
+		); err != nil {
+			return Intent.Step{}, err
+		} else if blocked {
+			return Intent.Step{}, fmt.Errorf("%w: %s", Intent.ErrPlanStale, detail)
+		}
+	}
+	required, err := towerTotalRequiredUnits(capacity.Capacity.Left+capacity.Capacity.Right, request)
+	if err != nil {
+		return Intent.Step{}, err
+	}
 	if err := requireFreshTowerAttackUnits(source, request.UnitID, required); err != nil {
 		return Intent.Step{}, err
 	}
@@ -289,7 +364,13 @@ func buildTowerAttackStep(input Intent.PlanningContext, request towerLaunchReque
 	if err := applyCastleHorseTravelBoost(&attack, input.GameData, source, request.HorseTravelBoostID); err != nil {
 		return Intent.Step{}, fmt.Errorf("resolve tower horse travel boost: %w", err)
 	}
-	body, err := json.Marshal(attack)
+	var wireBody any = attack
+	if request.AdvisorMode {
+		wireBody = advisorAttackBody{
+			attackBody: attack, AttackCount: request.AdvisorAttackCount, Mode: 0, AdvisorType: baronAdvisorTypeID,
+		}
+	}
+	body, err := json.Marshal(wireBody)
 	if err != nil {
 		return Intent.Step{}, fmt.Errorf("build tower CRA payload: %w", err)
 	}
@@ -371,6 +452,21 @@ func towerLaunchContext(input Intent.PlanningContext, arguments json.RawMessage)
 	if err := validateHorseTravelBoostID(request.HorseTravelBoostID); err != nil {
 		return towerLaunchRequest{}, State.CastleState{}, State.MapObservation{}, err
 	}
+	if request.AdvisorMode {
+		if request.AdvisorAttackCount < baronAdvisorMinimumAttackCount || request.AdvisorAttackCount > baronAdvisorMaximumAttackCount {
+			return towerLaunchRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf(
+				"Baron Advisor attackCount must be between %d and %d",
+				baronAdvisorMinimumAttackCount, baronAdvisorMaximumAttackCount,
+			)
+		}
+		if request.MaximumDailyTimeSkips <= 0 || int64(request.AdvisorAttackCount-1) > request.MaximumDailyTimeSkips {
+			return towerLaunchRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf(
+				"Baron Advisor attack count exceeds the configured daily Time Skip limit",
+			)
+		}
+	} else if request.AdvisorAttackCount != 0 || request.MaximumDailyTimeSkips != 0 {
+		return towerLaunchRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("Advisor attack options require advisorMode=true")
+	}
 	if request.SourceCastleID <= 0 || request.UnitID <= 0 {
 		return towerLaunchRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("tower source castle and unit are required")
 	}
@@ -386,6 +482,67 @@ func towerLaunchContext(input Intent.PlanningContext, arguments json.RawMessage)
 		return towerLaunchRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("kingdom tower at %d:%d is not in the current map state", request.TargetX, request.TargetY)
 	}
 	return request, source, target, nil
+}
+
+func towerTotalRequiredUnits(perAttack int64, request towerLaunchRequest) (int64, error) {
+	count := int64(1)
+	if request.AdvisorMode {
+		count = int64(request.AdvisorAttackCount)
+	}
+	if perAttack <= 0 || count <= 0 || perAttack > math.MaxInt64/count {
+		return 0, fmt.Errorf("tower attack troop requirement is invalid")
+	}
+	return perAttack * count, nil
+}
+
+func towerAttackSummary(request towerLaunchRequest, source State.CastleState, target State.MapObservation) string {
+	if request.AdvisorMode {
+		return fmt.Sprintf(
+			"Chain %d Baron Advisor tower hits using %d Time Skips at %d:%d from %s",
+			request.AdvisorAttackCount, request.AdvisorAttackCount-1, target.X, target.Y, castleLabel(source),
+		)
+	}
+	return fmt.Sprintf("Attack kingdom tower at %d:%d from %s", target.X, target.Y, castleLabel(source))
+}
+
+func towerAdvisorTimeSkipLimitStatus(
+	gameState State.GameState,
+	maximum int64,
+	planned int64,
+	now time.Time,
+) (int64, string, bool, error) {
+	if maximum <= 0 {
+		return 0, "", false, fmt.Errorf("maximumDailyTimeSkips must be positive for Advisor mode")
+	}
+	if planned <= 0 || planned >= int64(baronAdvisorMaximumAttackCount) {
+		return 0, "", false, fmt.Errorf("planned Baron Advisor Time Skip usage is invalid")
+	}
+	attacks := gameState.DailyAttacks
+	if attacks.ObservedAt.IsZero() || attacks.SessionStartedAt.IsZero() {
+		return 0, "Waiting for the authoritative server daily reset before using Advisor Time Skips", true, nil
+	}
+	used, exact := State.TowerAdvisorTimeSkipsUsedSince(gameState, attacks.SessionStartedAt, now)
+	if !exact {
+		return 0, "Cannot establish exact Auto Towers Advisor Time Skip usage for the current server day", true, nil
+	}
+	if used >= maximum {
+		return used, fmt.Sprintf(
+			"Daily Auto Towers Advisor Time Skip limit reached: %d / %d; chaining resumes when the server daily attack count resets",
+			used, maximum,
+		), true, nil
+	}
+	if planned > maximum-used {
+		return used, fmt.Sprintf(
+			"Advisor chain needs %d Time Skips with %d / %d already used in the current server day",
+			planned, used, maximum,
+		), true, nil
+	}
+	return used, "", false, nil
+}
+
+func baronAdvisorActive(gameState State.GameState) bool {
+	subscription, exists := gameState.Subscriptions[baronAdvisorSubscriptionTypeID]
+	return exists && subscription.TypeID == baronAdvisorSubscriptionTypeID && subscription.RemainingSec > 0
 }
 
 func towerCommander(

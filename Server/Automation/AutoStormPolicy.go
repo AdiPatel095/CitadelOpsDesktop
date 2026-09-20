@@ -477,7 +477,7 @@ func evaluateAutoStormBuild(
 	castle State.CastleState,
 	metrics map[string]float64,
 ) (*Decision, bool, string, error) {
-	return evaluateAutoEventBuild(snapshot, settings, castle, metrics, autoStormBuildProfile())
+	return evaluateStrictAutoStormBuild(snapshot, settings, castle, metrics)
 }
 
 func evaluateAutoEventBuild(
@@ -831,11 +831,24 @@ func autoStormExpansionDecision(
 	metrics map[string]float64,
 	profile autoEventBuildProfile,
 ) (*Decision, string, error) {
+	return autoStormExpansionDecisionWithStorage(snapshot, settings, castle, missing, metrics, profile, nil)
+}
+
+func autoStormExpansionDecisionWithStorage(
+	snapshot Snapshot,
+	settings autoStormSettings,
+	castle State.CastleState,
+	missing []Buildings.TargetGround,
+	metrics map[string]float64,
+	profile autoEventBuildProfile,
+	allowedStorageDefinitions []State.BuildingID,
+) (*Decision, string, error) {
 	baseRequest := Buildings.ExpansionPreviewRequest{
 		CastleID: castle.ID, Payment: Buildings.ExpansionPaymentResources,
 		ResourceReserves: settings.Build.ResourceReserves, AllowPremium: settings.Build.AllowPremium,
-		SourceResourceReserves: settings.Build.SourceResourceReserves,
-		AllowTimeSkips:         settings.Build.AllowTimeSkips,
+		SourceResourceReserves:       settings.Build.SourceResourceReserves,
+		AllowTimeSkips:               settings.Build.AllowTimeSkips,
+		AllowedBuildingDefinitionIDs: allowedStorageDefinitions,
 	}
 	base, err := Buildings.PreviewExpansion(snapshot.State, snapshot.GameData, baseRequest)
 	if err != nil {
@@ -1128,6 +1141,9 @@ func autoStormTargetActionDecision(
 		}
 		arguments["buildingInstanceId"] = action.BuildingInstanceID
 		arguments["resourceReserves"], arguments["allowPremium"] = settings.Build.ResourceReserves, settings.Build.AllowPremium
+		if strings.EqualFold(action.Definition.InternalName, "Storehouse") && action.Definition.Level <= 7 {
+			arguments["maximumLevel"] = int64(7)
+		}
 	default:
 		return nil
 	}

@@ -57,6 +57,29 @@ export function sortPatchNoteItems(items: readonly PatchNoteItem[]): PatchNoteIt
 
 const PATCH_NOTES_RELEASES_UNSORTED: PatchNotesRelease[] = [
   {
+    version: '2.4.0',
+    subtitle: 'Fortress automation, castle controls, and clearer equipment choices',
+    date: '2026-09-20',
+    items: [
+      { kind: 'added', text: "Auto Fortress attacks freshly available outer-kingdom fortresses within saved limits, distributes purchased Direwolves across enabled castles, and can use guarded Time Skips for its own confirmed transfers." },
+      { kind: 'added', text: "Auto Booster optionally buys the daily fortress-speed offer while preserving your saved ruby reserve and confirming the active effect." },
+      { kind: 'added', text: "Auto Towers supports Robber Baron Advisor chains, optional activation with a dedicated token, and saved daily Time Skip limits." },
+      { kind: 'added', text: "Auto Bird adds per-castle pause, timed pause and resend controls, runtime preset selection and scheduled preset changes. Enabled Fortress castles keep their reserved Direwolves at home." },
+      { kind: 'added', text: "Feature Stats shows final known scores from completed collected events, with dates, ranks and filtering. Unknown scores stay unknown; account scores are not presented as points earned by automation." },
+      { kind: 'fixed', text: "Auto Bird resumes reliably after support troops return and handles larger troop mixes; premium commander movements no longer stall Auto Towers." },
+      { kind: 'fixed', text: "Auto Khan keeps retaliation movements and results visible, follows current camp and rage state, and avoids interference from unrelated support movements." },
+      { kind: 'fixed', text: "Auto Buyer and Khan purchases use the current offer and intended castle. Buyer keeps valid feast and specialist goals working independently, respects reserves, and checks uncertain purchases before trying again." },
+      { kind: 'fixed', text: "Food deliveries use the correct marketplace castle, and returning trade carts remain reserved until they arrive home." },
+      { kind: 'fixed', text: "Nomad cooldown skips use fresh cooldown information, and sequential attacks preserve their intended arrival order." },
+      { kind: 'fixed', text: "Auto TCI respects attached construction items even when their timers reach zero, and waits when slot information is stale or incomplete." },
+      { kind: 'fixed', text: "Coin spending waits until the latest confirmed balance covers the full command cost, saved reserve and other pending spending." },
+      { kind: 'fixed', text: "Hosted settings preserve in-progress drafts and preset save baselines through background updates; invalid drafts cannot start an action." },
+      { kind: 'changed', text: "Equipment Reconfigure compares up to 10 useful distinct alternatives with complete capped totals and compatible equipment, heroes and gems. Apply uses the selected extraction costs and maximum ruby charge you accepted." },
+      { kind: 'changed', text: "Storm and Berimond builders follow ordered construction phases. A blocked phase does not spend on later construction, and Storm warns when required stored decorations are missing." },
+      { kind: 'changed', text: "Automation safety pauses expire 30 minutes after the original rejection, including across restarts. Supported duplicate alliance-help responses no longer create unnecessary pauses." },
+    ],
+  },
+  {
     version: '2.3.6',
     subtitle: 'Reliable event attacks, Storm logistics, and feast upkeep',
     date: '2026-09-10',

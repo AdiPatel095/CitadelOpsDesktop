@@ -13,11 +13,16 @@ import { Notifications } from '../../components/Notifications';
 import { Badge, Button, Card, Input, Select, SettingsModal, Switch } from '../../components/ui';
 import { useAuth } from '../../context/AuthContext';
 import {
+  AUTO_BUYER_MAXIMUM_SPECIALIST_DAYS,
   AUTO_BUYER_MINIMUM_SPECIALIST_DAYS,
   AUTO_BUYER_SECTION,
+  autoBuyerOtherGoalsValid,
+  autoBuyerSpecialistRuntimeStatus,
   clampAutoBuyerInteger,
   defaultAutoBuyerClientState,
   parseAutoBuyerClientState,
+  specialistMinimumDaysError,
+  specialistRubyCeilingError,
   type AutoBuyerClientStateV1,
   type AutoBuyerPackageRuleV1,
   type AutoBuyerSpecialistRuleV1,
@@ -30,16 +35,18 @@ interface AutoBuyerSettingsModalProps {
 
 type AutoBuyerSection = 'shops' | 'specialists' | 'feast';
 const ALL_AUTO_BUYER_CURRENCIES = 'all';
+const AUTO_BUYER_PROJECTION_REFRESH_MS = 15_000;
 
 export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ isOpen, onClose }) => {
   const { state, configuration, updateConfiguration } = useCitadelAPI();
   const { autoBuyerEnabled, setAutomationEnabled } = useAuth();
   const autoBuyerConfiguration = configuration?.sections[AUTO_BUYER_SECTION];
   const autoBuyerConfigurationKey = JSON.stringify(autoBuyerConfiguration ?? null);
-  const savedFeast = useMemo(
-    () => parseAutoBuyerClientState(JSON.parse(autoBuyerConfigurationKey)).feast,
+  const savedSettings = useMemo(
+    () => parseAutoBuyerClientState(JSON.parse(autoBuyerConfigurationKey)),
     [autoBuyerConfigurationKey],
   );
+  const savedFeast = savedSettings.feast;
   const [draft, setDraft] = useState<AutoBuyerClientStateV1>(defaultAutoBuyerClientState);
   const [projection, setProjection] = useState<AutoBuyerProjectionV1 | null>(null);
   const [loadError, setLoadError] = useState('');
@@ -49,9 +56,11 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
   const [selectedShopId, setSelectedShopId] = useState('');
   const [selectedCurrencyKey, setSelectedCurrencyKey] = useState(ALL_AUTO_BUYER_CURRENCIES);
   const [query, setQuery] = useState('');
+  const [feastHoursInput, setFeastHoursInput] = useState('12');
+  const allCastles = useMemo(() => castleOptionsFromState(state), [state]);
   const castles = useMemo(
-    () => castleOptionsFromState(state).filter((castle) => castle.kingdomId === 0 && castle.type === 'Slot 1'),
-    [state],
+    () => allCastles.filter((castle) => castle.kingdomId === 0 && castle.type === 'Slot 1'),
+    [allCastles],
   );
   const defaultCastleID = castles[0]?.id ?? 0;
 
@@ -61,8 +70,9 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
     setDraft({
       ...parsed,
       sourceCastleId: parsed.sourceCastleId || defaultCastleID,
-      feast: { ...parsed.feast, sourceCastleId: parsed.feast.sourceCastleId || parsed.sourceCastleId || defaultCastleID },
+      feast: { ...parsed.feast },
     });
+    setFeastHoursInput(String(parsed.feast.minimumRemainingHours));
     setSection('shops');
     setSelectedShopId(parsed.packages.find((rule) => rule.enabled)?.shopId ?? '');
     setSelectedCurrencyKey(ALL_AUTO_BUYER_CURRENCIES);
@@ -72,12 +82,29 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
   useEffect(() => {
     if (!isOpen) return;
     let cancelled = false;
+    let refreshTimer: number | undefined;
     setProjection(null);
     setLoadError('');
-    void CitadelAPI.getProjection<AutoBuyerProjectionV1>('auto-buyer')
-      .then((catalog) => {
+    const refreshProjection = async () => {
+      try {
+        const catalog = await CitadelAPI.getProjection<AutoBuyerProjectionV1>('auto-buyer');
         if (cancelled) return;
+        const completeCatalog = Boolean(
+          catalog
+          && Array.isArray(catalog.shops)
+          && Array.isArray(catalog.packages)
+          && Array.isArray(catalog.specialists)
+          && Array.isArray(catalog.feasts)
+          && catalog.timedOffers
+          && typeof catalog.timedOffers === 'object',
+        );
+        if (!completeCatalog) {
+          setProjection(null);
+          setLoadError('This runtime did not return a complete Auto Buyer catalog. Refresh after the runtime is updated.');
+          return;
+        }
         setProjection(catalog);
+        setLoadError('');
         setSelectedShopId((current) => (
           catalog.shops.some((shop) => shop.id === current) ? current : (catalog.shops[0]?.id ?? '')
         ));
@@ -88,11 +115,17 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
             ? current
             : { ...current, feast: { ...current.feast, feastId: firstSupportedFeast.id } };
         });
-      })
-      .catch((error) => {
+      } catch (error) {
         if (!cancelled) setLoadError(error instanceof Error ? error.message : 'Could not load the official Auto Buyer catalog.');
-      });
-    return () => { cancelled = true; };
+      } finally {
+        if (!cancelled) refreshTimer = window.setTimeout(refreshProjection, AUTO_BUYER_PROJECTION_REFRESH_MS);
+      }
+    };
+    void refreshProjection();
+    return () => {
+      cancelled = true;
+      if (refreshTimer !== undefined) window.clearTimeout(refreshTimer);
+    };
   }, [isOpen]);
 
   const packageRules = useMemo(
@@ -104,6 +137,8 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
     [draft.specialists],
   );
   const selectedFeast = projection?.feasts.find((feast) => feast.id === draft.feast.feastId) ?? null;
+  const automaticFeastSourceSupported = projection?.feastAutomaticSource?.supported === true;
+	const specialistUpkeepSupported = projection?.specialistUpkeep?.supported === true;
   const selectedFeastSupported = selectedFeast?.automaticPurchase?.supported !== false;
   const preservingEnabledUnsupportedFeast = Boolean(
     !selectedFeastSupported && savedFeast.enabled && savedFeast.feastId === draft.feast.feastId,
@@ -175,7 +210,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
         enabled: false,
         id: specialist.id,
         minimumDays: AUTO_BUYER_MINIMUM_SPECIALIST_DAYS,
-        maximumRubyCostPerPurchase: specialist.baseRubyCost,
+        maximumRubyCostPerPurchase: specialist.validatedMaximumRubyCost ?? 0,
       };
       const next = { ...existing, ...update };
       const present = current.specialists.some((rule) => rule.id === specialist.id);
@@ -197,8 +232,8 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
         return {
           enabled,
           id: specialist.id,
-          minimumDays: Math.max(AUTO_BUYER_MINIMUM_SPECIALIST_DAYS, existing?.minimumDays ?? AUTO_BUYER_MINIMUM_SPECIALIST_DAYS),
-          maximumRubyCostPerPurchase: Math.max(specialist.baseRubyCost, existing?.maximumRubyCostPerPurchase ?? 0),
+          minimumDays: existing?.minimumDays ?? AUTO_BUYER_MINIMUM_SPECIALIST_DAYS,
+          maximumRubyCostPerPurchase: existing?.maximumRubyCostPerPurchase ?? (specialist.validatedMaximumRubyCost ?? 0),
         };
       }),
     }));
@@ -206,29 +241,34 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
 
   const enabledPackages = draft.packages.filter((rule) => rule.enabled);
   const enabledSpecialists = draft.specialists.filter((rule) => rule.enabled);
+  const feastHours = Number(feastHoursInput);
+  const feastHoursValid = Number.isInteger(feastHours) && feastHours >= 1 && feastHours <= 720;
+  const preservingLegacyRuntimeFeast = Boolean(
+    !automaticFeastSourceSupported && savedFeast.enabled && draft.feast.enabled &&
+    JSON.stringify(draft.feast) === JSON.stringify(savedFeast) && feastHours === savedFeast.minimumRemainingHours,
+  );
+  const autoBuyerRuntime = state?.automations.autoBuyer;
+  const selectedSourceID = autoBuyerRuntime?.metrics?.feastSourceCastleId;
+  const selectedSource = allCastles.find((castle) => castle.id === selectedSourceID);
+  const latestFeastPurchase = state?.market.latestFeastPurchase;
+  const latestSpecialistPurchase = state?.market.latestSpecialistPurchase;
   const configurationValid = useMemo(() => {
     if (!projection) return false;
-    if (enabledPackages.length > 0 && draft.sourceCastleId <= 0) return false;
-    for (const rule of enabledPackages) {
-      const product = projection.packages.find((candidate) => candidate.shopId === rule.shopId && candidate.packageId === rule.packageId);
-      if (!product || rule.targetPurchasesPerReset < 1 || rule.targetPurchasesPerReset > product.stock) return false;
-      if (product.price.premium && (!draft.allowRubyPackages || rule.maximumRubySpendPerReset < product.price.amount)) return false;
-    }
-    for (const rule of enabledSpecialists) {
-      const specialist = projection.specialists.find((candidate) => candidate.id === rule.id);
-      if (!specialist || rule.minimumDays < AUTO_BUYER_MINIMUM_SPECIALIST_DAYS || rule.maximumRubyCostPerPurchase < specialist.baseRubyCost) return false;
-    }
+    if (!autoBuyerOtherGoalsValid(draft, savedSettings, projection)) return false;
     if (draft.feast.enabled) {
-      if (!selectedFeast || (draft.feast.sourceCastleId || draft.sourceCastleId) <= 0 || draft.feast.minimumRemainingHours < 1) return false;
+      if (!selectedFeast || !feastHoursValid) return false;
+      if (!automaticFeastSourceSupported && !preservingLegacyRuntimeFeast) return false;
       if (!selectedFeastSupported && !preservingEnabledUnsupportedFeast) return false;
       if (selectedFeastSupported && selectedFeast.price.premium && (!draft.feast.allowRubies || draft.feast.maximumRubyCostPerPurchase < selectedFeast.price.amount)) return false;
     }
     return true;
   }, [
     draft,
-    enabledPackages,
-    enabledSpecialists,
+    automaticFeastSourceSupported,
+    feastHoursValid,
+    savedSettings,
     preservingEnabledUnsupportedFeast,
+    preservingLegacyRuntimeFeast,
     projection,
     selectedFeast,
     selectedFeastSupported,
@@ -253,7 +293,11 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
     try {
       const normalized = parseAutoBuyerClientState({
         ...draft,
-        feast: { ...draft.feast, sourceCastleId: draft.feast.sourceCastleId || draft.sourceCastleId },
+        feast: {
+          ...draft.feast,
+          minimumRemainingHours: feastHours,
+          sourceCastleId: automaticFeastSourceSupported ? 0 : savedFeast.sourceCastleId,
+        },
       });
       await updateConfiguration(AUTO_BUYER_SECTION, normalized);
       Notifications.success('Auto Buyer settings saved.');
@@ -304,6 +348,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
             <div>
               <h3 className="text-sm font-black text-text-main">Account-wide safety limits</h3>
               <p className="mt-1 text-xs text-text-muted">Auto Buyer sends one bounded operation at a time, rechecks live state before spending, and verifies the server counter or timer afterward.</p>
+              <p className="mt-1 text-xs text-text-muted">Invalid saved shop or specialist goals are skipped individually and do not block feast upkeep. Unresolved feast purchases are checked without spending again until the outcome is reconciled.</p>
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -317,13 +362,13 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                 menuGrowToViewport
               />
             </label>
-			<NumberField
-			  label="Check every (minutes)"
-			  value={Math.round(draft.checkIntervalSec / 60)}
-			  minimum={30}
-			  maximum={60}
-			  onChange={(minutes) => setDraft((current) => ({ ...current, checkIntervalSec: minutes * 60 }))}
-			/>
+            <NumberField
+              label="Check every (minutes)"
+              value={Math.round(draft.checkIntervalSec / 60)}
+              minimum={30}
+              maximum={60}
+              onChange={(minutes) => setDraft((current) => ({ ...current, checkIntervalSec: minutes * 60 }))}
+            />
             <NumberField
               label="Keep at least rubies"
               value={draft.minimumRubyReserve}
@@ -512,11 +557,12 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border-base p-4">
               <div>
                 <h3 className="text-sm font-black text-text-main">Specialist renewal floors</h3>
-                <p className="mt-1 text-xs text-text-muted">Enabled floors are clamped to at least 14 days. Renewals happen one 7-day purchase at a time so the active rebuy discount remains eligible.</p>
+				<p className="mt-1 text-xs text-text-muted">Enabled floors stay between 14 and 365 days. Auto Buyer purchases one 7-day activation at a time and rechecks the authoritative timer and ruby balance.</p>
+				{!specialistUpkeepSupported ? <p className="mt-2 text-xs text-amber-300">{projection.specialistUpkeep?.reason || 'This runtime cannot safely automate specialist purchases yet. Saved goals can be disabled.'}</p> : null}
               </div>
               <div className="flex gap-2">
                 <Button variant="ghost" onClick={() => setAllSpecialists(false)}>Disable all</Button>
-                <Button variant="secondary" onClick={() => setAllSpecialists(true)}>Enable all at 14 days</Button>
+				<Button variant="secondary" disabled={!specialistUpkeepSupported} onClick={() => setAllSpecialists(true)}>Enable all at 14 days</Button>
               </div>
             </div>
             <div className="divide-y divide-border-base">
@@ -524,6 +570,19 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                 const rule = specialistRules.get(specialist.id);
                 const enabled = rule?.enabled === true;
                 const current = state?.market.boosters?.[String(specialist.id)];
+                const safeMaximum = specialist.validatedMaximumRubyCost ?? 0;
+                const latest = latestSpecialistPurchase?.specialistId === specialist.id ? latestSpecialistPurchase : null;
+                const status = autoBuyerSpecialistRuntimeStatus(
+                  rule,
+                  current,
+                  latest,
+                  safeMaximum,
+                  draft.minimumRubyReserve,
+                  projection.specialistRuntime,
+                  draft.historyRefreshSec,
+                );
+                const minimumDaysError = enabled ? specialistMinimumDaysError(rule?.minimumDays ?? Number.NaN) : '';
+                const rubyCeilingError = enabled ? specialistRubyCeilingError(rule?.maximumRubyCostPerPurchase ?? Number.NaN, safeMaximum) : '';
                 return (
                   <div key={specialist.id} className="p-4">
                     <div className="flex items-start justify-between gap-4">
@@ -531,33 +590,40 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="font-bold text-text-main">{specialist.name}</span>
                           {specialist.bonusPercent ? <Badge variant="secondary">+{specialist.bonusPercent}%</Badge> : null}
-                          <Badge variant="outline">{formatRemaining(current?.expiresAt)}</Badge>
+                          <Badge variant="outline">{current?.permanent ? 'Permanent' : formatRemaining(current?.expiresAt)}</Badge>
+						  {enabled ? <Badge variant="outline">{status}</Badge> : null}
                         </div>
-                        <p className="mt-1 text-xs text-text-muted">7 days · safe maximum {specialist.baseRubyCost.toLocaleString()} rubies per renewal</p>
+						<p className="mt-1 text-xs text-text-muted">7 days · validated conservative maximum {safeMaximum > 0 ? safeMaximum.toLocaleString() : 'unavailable'} rubies; discounts may reduce the charge</p>
+						{latest ? <p className="mt-1 text-xs text-text-muted">{latest.outcome} · timer {formatObservedTimer(latest.timerBefore)} → {formatObservedTimer(latest.timerAfter)} · rubies {latest.rubyBeforeKnown ? (latest.rubyBefore ?? 0).toLocaleString() : 'unknown'} → {latest.rubyAfterKnown ? (latest.rubyAfter ?? 0).toLocaleString() : 'unknown'} · {latest.debitVerification}</p> : null}
                       </div>
                       <Switch
                         checked={enabled}
                         onChange={(value) => updateSpecialist(specialist, {
                           enabled: value,
-                          minimumDays: Math.max(AUTO_BUYER_MINIMUM_SPECIALIST_DAYS, rule?.minimumDays ?? 0),
-                          maximumRubyCostPerPurchase: Math.max(specialist.baseRubyCost, rule?.maximumRubyCostPerPurchase ?? 0),
+                          minimumDays: rule?.minimumDays ?? AUTO_BUYER_MINIMUM_SPECIALIST_DAYS,
+                          maximumRubyCostPerPurchase: rule?.maximumRubyCostPerPurchase ?? safeMaximum,
                         })}
+						disabled={!specialistUpkeepSupported && !enabled}
                         ariaLabel={`Maintain ${specialist.name}`}
                       />
                     </div>
-                    {enabled ? (
+					{enabled && specialistUpkeepSupported ? (
                       <div className="mt-3 grid gap-3 border-t border-border-base pt-3 md:grid-cols-2">
                         <NumberField
                           label="Minimum remaining days"
                           value={rule?.minimumDays ?? AUTO_BUYER_MINIMUM_SPECIALIST_DAYS}
                           minimum={AUTO_BUYER_MINIMUM_SPECIALIST_DAYS}
-                          maximum={365}
+                          maximum={AUTO_BUYER_MAXIMUM_SPECIALIST_DAYS}
+                          error={minimumDaysError}
+                          preserveRawValue
                           onChange={(minimumDays) => updateSpecialist(specialist, { minimumDays })}
                         />
                         <NumberField
                           label="Max rubies per 7-day renewal"
-                          value={rule?.maximumRubyCostPerPurchase ?? specialist.baseRubyCost}
-                          minimum={specialist.baseRubyCost}
+                          value={rule?.maximumRubyCostPerPurchase ?? safeMaximum}
+                          minimum={0}
+                          error={rubyCeilingError}
+                          preserveRawValue
                           onChange={(maximumRubyCostPerPurchase) => updateSpecialist(specialist, { maximumRubyCostPerPurchase })}
                         />
                       </div>
@@ -575,15 +641,19 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h3 className="text-sm font-black text-text-main">Maintain a food production feast</h3>
-                  <p className="mt-1 text-xs text-text-muted">The selected feast is started or extended one official duration at a time. Auto Buyer waits for a different active feast to finish.</p>
+                  <p className="mt-1 text-xs text-text-muted">
+                    {automaticFeastSourceSupported
+                      ? 'The selected feast is started or extended one purchase at a time. Auto Buyer chooses the owned positive-net castle with the most food stored.'
+                      : 'This runtime does not expose the automatic feast-source and purchase-evidence contract required by these controls.'}
+                  </p>
                 </div>
                 <Switch
                   checked={draft.feast.enabled}
                   onChange={(enabled) => {
-                    if (enabled && !selectedFeastSupported && !preservingEnabledUnsupportedFeast) return;
+                    if (enabled && (!automaticFeastSourceSupported || !selectedFeastSupported) && !preservingEnabledUnsupportedFeast) return;
                     setDraft((current) => ({ ...current, feast: { ...current.feast, enabled } }));
                   }}
-                  disabled={!draft.feast.enabled && !selectedFeastSupported && !preservingEnabledUnsupportedFeast}
+                  disabled={!draft.feast.enabled && (!automaticFeastSourceSupported || !selectedFeastSupported) && !preservingEnabledUnsupportedFeast}
                   ariaLabel="Maintain a feast"
                 />
               </div>
@@ -614,26 +684,38 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                         disabled: feast.automaticPurchase?.supported === false,
                       }))}
                       placeholder="Choose an official feast"
+                      disabled={!automaticFeastSourceSupported}
                       menuGrowToViewport
                     />
                   </label>
-                  <NumberField
-                    label="Minimum remaining hours"
-                    value={draft.feast.minimumRemainingHours}
-                    minimum={1}
-                    maximum={24 * 30}
-                    onChange={(minimumRemainingHours) => setDraft((current) => ({ ...current, feast: { ...current.feast, minimumRemainingHours } }))}
-                  />
                   <label className="block">
-                    <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">Pay from castle</span>
-                    <Select
-                      value={String(draft.feast.sourceCastleId || draft.sourceCastleId || '')}
-                      onChange={(value) => setDraft((current) => ({ ...current, feast: { ...current.feast, sourceCastleId: Number(value) || 0 } }))}
-                      options={castles.map((castle) => ({ value: String(castle.id), label: `${castle.name} · ${castle.x}:${castle.y}` }))}
-                      placeholder="Choose the main castle"
-                      menuGrowToViewport
+                    <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">Minimum remaining hours</span>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={720}
+                      step={1}
+                      value={feastHoursInput}
+                      disabled={!automaticFeastSourceSupported}
+                      onChange={(event) => setFeastHoursInput(event.target.value)}
+                      error={feastHoursValid ? undefined : 'Enter a whole number from 1 to 720 hours.'}
                     />
                   </label>
+                  <div className="rounded-xl border border-border-base bg-bg-subtle p-3">
+                    <div className="text-[10px] font-black uppercase tracking-wider text-text-muted">Automatic food source</div>
+                    {automaticFeastSourceSupported ? (
+                      <>
+                        <div className="mt-1 text-sm font-bold text-text-main">
+                          {selectedSource ? `${selectedSource.name} · K${selectedSource.kingdomId} · ${selectedSource.x}:${selectedSource.y}` : 'Waiting for fresh eligible castle data'}
+                        </div>
+                        <p className="mt-1 text-xs text-text-muted">
+                          {selectedSourceID
+                            ? `${formatMetric(autoBuyerRuntime?.metrics?.feastSourceFood)} food stored · ${formatMetric(autoBuyerRuntime?.metrics?.feastSourceNetFoodPerHour)} net food/hour`
+                            : 'Selection waits for fresh stored-food and economy data from every usable owned castle; only positive-net castles qualify.'}
+                        </p>
+                      </>
+                    ) : <p className="mt-1 text-xs text-warning">Update the account runtime before changing or enabling feast upkeep. You can still disable the saved feast goal.</p>}
+                  </div>
                   {!selectedFeastSupported ? (
                     <div className="rounded-xl border border-warning/30 bg-warning/5 p-3 md:col-span-2">
                       <div className="text-sm font-bold text-text-main">Automatic purchase unavailable</div>
@@ -674,8 +756,26 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                   )}
                 </div>
               ) : null}
-              <div className="mt-3 flex items-center gap-2 text-xs text-text-muted">
-                <Clock3 className="h-3.5 w-3.5" /> Current feast: {formatRemaining(state?.market.feast?.expiresAt)}
+              <div className="mt-3 space-y-2 text-xs text-text-muted">
+                <div className="flex items-center gap-2">
+                  <Clock3 className="h-3.5 w-3.5" /> Current feast: {formatRemaining(state?.market.feast?.expiresAt)} · configured minimum {feastHoursValid ? `${feastHours}h` : 'invalid'}
+                </div>
+                {autoBuyerRuntime?.detail ? <div><span className="font-bold text-text-main">Status:</span> {autoBuyerRuntime.detail}</div> : null}
+                {latestFeastPurchase?.attemptedAt ? (
+                  <div className="rounded-xl border border-border-base bg-bg-subtle p-3">
+                    <div className="font-bold text-text-main">Latest purchase: {formatEvidenceOutcome(latestFeastPurchase.outcome)}</div>
+                    <div className="mt-1">
+                      Charged castle {latestFeastPurchase.chargedCastleId} in kingdom {latestFeastPurchase.chargedKingdomId} · expected cost {latestFeastPurchase.expectedEffectiveCost.toLocaleString()}
+                    </div>
+                    <div className="mt-1">
+                      Food {latestFeastPurchase.foodBeforeKnown ? (latestFeastPurchase.foodBefore ?? 0).toLocaleString() : 'unavailable'} → {latestFeastPurchase.foodAfterKnown ? (latestFeastPurchase.foodAfter ?? 0).toLocaleString() : 'awaiting refresh'} · debit {latestFeastPurchase.debitVerification || 'unverified'}
+                    </div>
+                    <div className="mt-1">
+                      Timer {latestFeastPurchase.activationConfirmed ? 'confirmed' : 'not attributed'}{latestFeastPurchase.confirmedExpiresAt ? ` · ${formatRemaining(latestFeastPurchase.confirmedExpiresAt)}` : ''}
+                    </div>
+                    {latestFeastPurchase.detail ? <div className="mt-1">{latestFeastPurchase.detail}</div> : null}
+                  </div>
+                ) : null}
               </div>
             </Card>
 
@@ -700,12 +800,16 @@ function NumberField({
   value,
   minimum,
   maximum = Number.MAX_SAFE_INTEGER,
+  error = '',
+  preserveRawValue = false,
   onChange,
 }: {
   label: string;
   value: number;
   minimum: number;
   maximum?: number;
+  error?: string;
+  preserveRawValue?: boolean;
   onChange: (value: number) => void;
 }) {
   return (
@@ -715,9 +819,14 @@ function NumberField({
         type="number"
         min={minimum}
         max={maximum}
+        step={1}
         value={value}
-        onChange={(event) => onChange(clampAutoBuyerInteger(event.target.value, minimum, maximum, minimum))}
+        aria-invalid={Boolean(error) || undefined}
+        onChange={(event) => onChange(preserveRawValue
+          ? Number(event.target.value)
+          : clampAutoBuyerInteger(event.target.value, minimum, maximum, minimum))}
       />
+      {error ? <span className="mt-1 block text-xs text-red-300">{error}</span> : null}
     </label>
   );
 }
@@ -766,6 +875,18 @@ function formatRemaining(expiresAt: string | undefined): string {
   const hours = Math.ceil(remainingMs / 3_600_000);
   const days = Math.floor(hours / 24);
   return days > 0 ? `${days}d ${hours % 24}h left` : `${hours}h left`;
+}
+
+function formatObservedTimer(expiresAt: string | undefined): string {
+  return expiresAt ? formatRemaining(expiresAt) : 'unavailable';
+}
+
+function formatMetric(value: number | undefined): string {
+  return Number.isFinite(value) ? Math.floor(value ?? 0).toLocaleString() : 'unknown';
+}
+
+function formatEvidenceOutcome(outcome: string): string {
+  return outcome.trim().replaceAll('-', ' ') || 'unknown';
 }
 
 export default AutoBuyerSettingsModal;

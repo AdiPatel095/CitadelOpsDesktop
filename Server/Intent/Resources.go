@@ -116,8 +116,12 @@ func legacyClaimResource(
 		return ResourceKey{Scope: ResourceScopeApplication, Capability: "application-update", ResourceKind: "release", ResourceID: "*"}
 	case "event-difficulty":
 		return accountKey("events", "difficulty", "*")
+	case "events":
+		return accountKey(State.CapabilityEvents, "*", "*")
 	case "event":
-		return accountKey("events", "event", value)
+		return accountKey(State.CapabilityEvents, "event", value)
+	case "global-effect":
+		return accountKey(State.CapabilityEvents, "global-effect", value)
 	case "advisor":
 		return accountKey("combat", "advisor", value)
 	case "khan-protection":
@@ -127,6 +131,8 @@ func legacyClaimResource(
 		// concurrently, while an unqualified "khan-lane" claim covers every lane
 		// and lets the protection intents exclude all of them at once.
 		return accountKey("combat", "khan-lane", value)
+	case "auto-bird-control":
+		return accountKey("stationing", "auto-bird-control", value)
 	case "auto-bird-cycle":
 		// Each castle owns an independent Auto Bird cycle. The clear intent uses
 		// the wildcard form so it waits for every cycle without blocking other
@@ -161,6 +167,8 @@ func legacyClaimResource(
 		return accountKey("economy", "spendable", "*")
 	case "currency":
 		return accountKey("economy", "spendable", value)
+	case "market", "specialist":
+		return accountKey(State.CapabilityEconomy, prefix, value)
 	case "hall-of-legends":
 		return accountKey("economy", "spendable", "legend-skills")
 	case "construction-inventory":
@@ -247,6 +255,8 @@ func legacyClaimResource(
 		return accountKey("reports", "battle", value)
 	case "alliance-directory":
 		return accountKey("alliance", "directory", "*")
+	case "castle-directory":
+		return accountKey(State.CapabilityCastleDirectory, "directory", "*")
 	case "alliance-help":
 		return accountKey("alliance", "help", value)
 	case "alliance-holding":
@@ -272,7 +282,7 @@ func legacyClaimResource(
 			}
 			return kingdomKey(State.KingdomID(id), "combat", "target", targetID)
 		}
-	case "tower-target", "nomad-target", "storm-target", "invasion-target", "spy-target", "khan-target", "player-target":
+	case "tower-target", "fortress-target", "nomad-target", "storm-target", "invasion-target", "spy-target", "khan-target", "player-target":
 		if len(parts) >= 4 {
 			id, _ := strconv.ParseInt(parts[1], 10, 64)
 			return kingdomKey(State.KingdomID(id), "combat", "target", strings.Join(parts[2:], ":"))

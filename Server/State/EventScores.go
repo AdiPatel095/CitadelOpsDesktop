@@ -33,7 +33,8 @@ type EventScoreState struct {
 	ShopByPackage   map[PackageID]EventShopRoute `json:"shopByPackage"`
 	ActivityByEvent map[int64]EventActivityState `json:"activityByEvent"`
 	RankingByEvent  map[int64]EventRankingState  `json:"rankingByEvent"`
-	// Inventory is the last authoritative `sei` inventory for this account.
+	// Inventory combines the last authoritative scalable-event (`sei`) and
+	// trigger-event (`tei`) inventory for this account.
 	// It deliberately remains account-private: event and shop eligibility can
 	// vary by server, level, rollout, or account even when the public calendar
 	// is shared.
@@ -41,8 +42,18 @@ type EventScoreState struct {
 }
 
 type EventInventoryState struct {
-	ObservedAt    time.Time                   `json:"observedAt,omitempty"`
-	ActiveByEvent map[int64]EventAvailability `json:"activeByEvent"`
+	ObservedAt                     time.Time                            `json:"observedAt,omitempty"`
+	ActiveByEvent                  map[int64]EventAvailability          `json:"activeByEvent"`
+	GlobalEffectsObservedAt        time.Time                            `json:"globalEffectsObservedAt,omitempty"`
+	GlobalEffectReadObservedAt     time.Time                            `json:"globalEffectReadObservedAt,omitempty"`
+	GlobalEffectReadGeneration     uint64                               `json:"globalEffectReadGeneration,omitempty"`
+	GlobalEffectBaselineObservedAt time.Time                            `json:"globalEffectBaselineObservedAt,omitempty"`
+	GlobalEffectBaselineGeneration uint64                               `json:"globalEffectBaselineGeneration,omitempty"`
+	GlobalEffects                  map[int64]GlobalEffectAvailability   `json:"globalEffects"`
+	GlobalEffectBoosterOffers      map[int64]GlobalEffectBoosterOffer   `json:"globalEffectBoosterOffers"`
+	GlobalEffectBoostsObservedAt   time.Time                            `json:"globalEffectBoostsObservedAt,omitempty"`
+	GlobalEffectBoosts             map[int64]GlobalEffectBoostState     `json:"globalEffectBoosts"`
+	GlobalEffectPurchases          map[int64]GlobalEffectPurchaseRecord `json:"globalEffectPurchases"`
 }
 
 type EventAvailability struct {
@@ -52,6 +63,75 @@ type EventAvailability struct {
 
 func (availability EventAvailability) ActiveAt(now time.Time) bool {
 	return availability.EventID > 0 && !availability.EndsAt.IsZero() && now.Before(availability.EndsAt)
+}
+
+// GlobalEffectAvailability is one currently scheduled row from the official
+// global-effects trigger event (TEI trigger 610). EndsAt identifies the daily occurrence
+// that an AGB purchase applies to.
+type GlobalEffectAvailability struct {
+	GlobalEffectID int64     `json:"globalEffectId"`
+	Strength       int64     `json:"strength"`
+	EndsAt         time.Time `json:"endsAt"`
+}
+
+func (effect GlobalEffectAvailability) ActiveAt(now time.Time) bool {
+	return effect.GlobalEffectID > 0 && !effect.EndsAt.IsZero() && now.Before(effect.EndsAt)
+}
+
+// GlobalEffectBoosterOffer is a live account-specific GEB quote from TEI
+// trigger 612. RubyCost is deliberately never inferred from static catalogs.
+type GlobalEffectBoosterOffer struct {
+	GlobalEffectID int64 `json:"globalEffectId"`
+	RubyCost       int64 `json:"rubyCost"`
+	BonusValue     int64 `json:"bonusValue"`
+}
+
+// GlobalEffectBoostState associates the BIE boosted/not-boosted result with
+// the exact global-effect occurrence that was active when BIE was received.
+// This prevents a persisted status from authorizing or suppressing a purchase
+// in a later daily occurrence.
+type GlobalEffectBoostState struct {
+	GlobalEffectID       int64     `json:"globalEffectId"`
+	Boosted              bool      `json:"boosted"`
+	OccurrenceEndsAt     time.Time `json:"occurrenceEndsAt"`
+	ObservedAt           time.Time `json:"observedAt"`
+	ConnectionGeneration uint64    `json:"connectionGeneration,omitempty"`
+}
+
+const (
+	GlobalEffectPurchaseUnresolved = "unresolved"
+	GlobalEffectPurchaseAccepted   = "accepted"
+	GlobalEffectPurchaseConfirmed  = "confirmed"
+	GlobalEffectPurchaseRejected   = "rejected"
+)
+
+// GlobalEffectPurchaseRecord is the durable, user-visible receipt for one
+// occurrence. Accepted and confirmed records are never replayed.
+type GlobalEffectPurchaseRecord struct {
+	GlobalEffectID       int64     `json:"globalEffectId"`
+	OccurrenceEndsAt     time.Time `json:"occurrenceEndsAt"`
+	ExpiresAt            time.Time `json:"expiresAt"`
+	QuotedRubyCost       int64     `json:"quotedRubyCost"`
+	QuotedBonusValue     int64     `json:"quotedBonusValue"`
+	MinimumRubyReserve   int64     `json:"minimumRubyReserve"`
+	RubyBefore           int64     `json:"rubyBefore"`
+	RubyBeforeObservedAt time.Time `json:"rubyBeforeObservedAt"`
+	RequestedAt          time.Time `json:"requestedAt"`
+	DispatchedAt         time.Time `json:"dispatchedAt,omitempty"`
+	RequestOpcode        string    `json:"requestOpcode"`
+	ConnectionGeneration uint64    `json:"connectionGeneration,omitempty"`
+	OperationID          string    `json:"operationId,omitempty"`
+	ResponseToken        string    `json:"-"`
+	ResultCode           *int      `json:"resultCode,omitempty"`
+	ResultObservedAt     time.Time `json:"resultObservedAt,omitempty"`
+	ActivationObservedAt time.Time `json:"activationObservedAt,omitempty"`
+	RubyAfter            int64     `json:"rubyAfter,omitempty"`
+	RubyAfterKnown       bool      `json:"rubyAfterKnown,omitempty"`
+	RubyAfterObservedAt  time.Time `json:"rubyAfterObservedAt,omitempty"`
+	ObservedRubyChange   int64     `json:"observedRubyChange,omitempty"`
+	DebitUnverified      bool      `json:"debitUnverified"`
+	Outcome              string    `json:"outcome"`
+	Detail               string    `json:"detail,omitempty"`
 }
 
 func (state GameState) EventAvailable(eventID int64, now time.Time) (EventAvailability, bool) {

@@ -210,6 +210,32 @@ func TestCRACommandDependenciesOwnSetupAndAuthoritativeGuard(t *testing.T) {
 	}
 }
 
+func TestFortressCRACommandDependenciesUseBossDungeonAttackDialog(t *testing.T) {
+	payload := json.RawMessage(`{
+		"SX":12,"SY":34,"TX":56,"TY":78,"KID":2,
+		"_citadelTargetTypeId":11,
+		"_citadelFortressVerification":{"sourceCastleId":10,"kingdomId":2,"targetX":56,"targetY":78}
+	}`)
+	dependencies, err := (&Application{}).resolveCRACommandDependencies(
+		t.Context(), Intent.PlanningContext{}, Intent.Step{Command: Protocol.Command{Opcode: "cra", Payload: payload}},
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(dependencies.Steps) != 5 {
+		t.Fatalf("fortress CRA dependencies = %#v", dependencies.Steps)
+	}
+	attackDialog := dependencies.Steps[2]
+	if attackDialog.Opcode != "abi" || attackDialog.Command.Opcode != "abi" || attackDialog.AwaitOpcode != "abi" ||
+		attackDialog.FinalDispatchAction != "fortress.target.verification.guard" ||
+		attackDialog.ResumePolicy != Intent.ResumeRebuild {
+		t.Fatalf("fortress attack-dialog dependency = %#v", attackDialog)
+	}
+	if string(attackDialog.Command.Payload) != `{"SX":12,"SY":34,"TX":56,"TY":78,"KID":2}` {
+		t.Fatalf("fortress ABI wire payload = %s", attackDialog.Command.Payload)
+	}
+}
+
 func TestTowerCRACommandDependenciesRefreshMovementsBeforeSetup(t *testing.T) {
 	state := State.NewGameState()
 	state.Map[2] = map[string]State.MapObservation{
@@ -321,6 +347,47 @@ func TestCRASendGuardRejectsPendingOrPositiveCooldown(t *testing.T) {
 	})
 	if err := application.guardCRASend(context.Background(), arguments); err != nil {
 		t.Fatalf("CRA send guard rejected a freshly confirmed ready target: %v", err)
+	}
+}
+
+func TestCRASendGuardClassifiesNomadCooldownTransitionsAsStale(t *testing.T) {
+	now := time.Now().UTC()
+	state := State.NewGameState()
+	state.Castles[1] = State.CastleState{ID: 1, KingdomID: 0, X: 12, Y: 34}
+	state.Map[0] = map[string]State.MapObservation{
+		"56:78": {KingdomID: 0, TypeID: samuraiIntentCampTypeID, X: 56, Y: 78, ObservedAt: now},
+	}
+	state.AttackDialog = State.AttackDialogState{
+		SourceCastleID: 1, KingdomID: 0, ObservedAt: now.Add(time.Second),
+		Target: State.AttackDialogTarget{TypeID: samuraiIntentCampTypeID, X: 56, Y: 78, EventCampCooldownRemaining: 10},
+	}
+	application := &Application{State: State.NewStore(state)}
+	arguments, _ := json.Marshal(craSendGuardRequest{
+		SourceX: 12, SourceY: 34, TargetX: 56, TargetY: 78, KingdomID: 0, DialogObservedAt: now,
+	})
+	if err := application.guardCRASend(t.Context(), arguments); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("Nomad dialog cooldown error = %v, want ErrPlanStale", err)
+	}
+	_, _ = application.State.Apply(func(current *State.GameState) ([]string, bool, error) {
+		current.AttackDialog.Target.EventCampCooldownRemaining = 0
+		current.NomadCamps.Cooldowns["0:56:78"] = State.NomadCampCooldownState{
+			KingdomID: 0, X: 56, Y: 78, PendingCooldownRefresh: true,
+		}
+		return []string{"attack_dialog", "nomad-camps"}, true, nil
+	})
+	if err := application.guardCRASend(t.Context(), arguments); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("Nomad pending cooldown error = %v, want ErrPlanStale", err)
+	}
+	_, _ = application.State.Apply(func(current *State.GameState) ([]string, bool, error) {
+		delete(current.NomadCamps.Cooldowns, "0:56:78")
+		target := current.Map[0]["56:78"]
+		target.EventCampCooldownRemaining = 20
+		target.ObservedAt = time.Now().UTC()
+		current.Map[0]["56:78"] = target
+		return []string{"map-event-camp", "nomad-camps"}, true, nil
+	})
+	if err := application.guardCRASend(t.Context(), arguments); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("Nomad map cooldown error = %v, want ErrPlanStale", err)
 	}
 }
 

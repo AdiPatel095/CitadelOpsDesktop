@@ -179,6 +179,41 @@ func TestSuccessfulTowerBattleRefreshesCooldownFromFollowUpMapSnapshot(t *testin
 	}
 }
 
+func TestSuccessfulFortressBattleStartsFiveDayPersonalCooldown(t *testing.T) {
+	gameState := State.NewGameState()
+	gameState.Player.ID = 1
+	code := 0
+	battleAt := time.Date(2026, 9, 2, 16, 0, 0, 0, time.UTC)
+	summary := Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "bls", ResponseCode: &code, ReceivedAt: battleAt,
+		Payload: json.RawMessage(`{
+			"MID":101,"LID":202,"PBI":[[1,0,1700,-10],[-220,1,135,-135]],
+			"AI":{"AT":11,"K":1,"X":484,"Y":490}
+		}`),
+	}
+	if _, changed, err := reduceSuccessfulTowerBattle(t.Context(), summary, &gameState, nil); err != nil || !changed {
+		t.Fatalf("fortress battle: changed=%t err=%v", changed, err)
+	}
+	cooldown := gameState.TowerCooldowns["1:484:490"]
+	if cooldown.TargetTypeID != State.MapTypeKingdomFortress || !cooldown.PendingCooldownRefresh ||
+		cooldown.CooldownRemaining != 432000 || !cooldown.CooldownObservedAt.Equal(battleAt) {
+		t.Fatalf("unexpected pending fortress cooldown: %#v", cooldown)
+	}
+
+	observedAt := battleAt.Add(2 * time.Second)
+	mapFrame := Protocol.Frame{
+		Direction: Protocol.DirectionInbound, Opcode: "gaa", ResponseCode: &code, ReceivedAt: observedAt,
+		Payload: json.RawMessage(`{"KID":1,"AI":[[11,484,490,0,45,431998,1,1]]}`),
+	}
+	if _, changed, err := reduceMapSnapshot(t.Context(), mapFrame, &gameState, nil); err != nil || !changed {
+		t.Fatalf("fortress cooldown refresh: changed=%t err=%v", changed, err)
+	}
+	cooldown = gameState.TowerCooldowns["1:484:490"]
+	if cooldown.PendingCooldownRefresh || cooldown.CooldownRemaining != 431998 || !cooldown.CooldownObservedAt.Equal(observedAt) {
+		t.Fatalf("unexpected refreshed fortress cooldown: %#v", cooldown)
+	}
+}
+
 func TestSuccessfulType35KhanBattleCreatesLandingCooldownBoundary(t *testing.T) {
 	gameState := State.NewGameState()
 	gameState.Player.ID = 1

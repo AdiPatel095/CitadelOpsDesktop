@@ -103,7 +103,7 @@ func PreviewStorageDependency(
 		AllowTimeSkips: request.AllowTimeSkips,
 	}
 	var err error
-	result.PendingStorageBuild, err = expansionPendingStorageBuild(castle, gameData, result.CapacityNeeds)
+	result.PendingStorageBuild, err = expansionPendingStorageBuild(castle, gameData, result.CapacityNeeds, request.AllowedBuildingDefinitionIDs)
 	if err != nil {
 		return StorageDependencyResult{}, err
 	}

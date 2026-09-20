@@ -93,6 +93,7 @@ const fallbackChannelDescriptions: Record<string, string> = {
   autofoodbalance: 'Completed food and mead shipments and problems requiring attention.',
   autoequipmentcleanup: 'Completed equipment cleanup actions and problems requiring attention.',
   autotowers: 'Launched tower attacks and problems requiring attention.',
+  autofortress: 'Completed fortress supply, troop transports, attacks, and problems requiring attention.',
   autoinvasion: 'Launched Foreign Lords and Bloodcrow attacks and problems requiring attention.',
   autonomad: 'Launched Nomad and Samurai attacks and other completed event actions.',
   autoadvisor: 'Launched advisor attacks and other completed advisor actions.',

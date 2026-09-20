@@ -21,6 +21,9 @@ func TestComponentSnapshotWritesOnlyDirtyComponentsAfterBootstrap(t *testing.T) 
 		Count: 42, ServerThreshold: 3500, SessionStartedAt: dailySessionStartedAt,
 		ObservedAt: dailySessionStartedAt.Add(time.Hour),
 	}
+	initial.AttackAnalytics.RecentTowerAdvisorTimeSkips = []TowerAdvisorTimeSkipUsage{{
+		MovementID: 700, TimeSkips: 3, UsedAt: dailySessionStartedAt.Add(30 * time.Minute),
+	}}
 	store := NewStore(initial)
 
 	playerEvent, err := store.ApplyComponents(Components(ComponentPlayer), func(state *GameState) ([]string, bool, error) {
@@ -92,6 +95,10 @@ func TestComponentSnapshotWritesOnlyDirtyComponentsAfterBootstrap(t *testing.T) 
 	if loaded.DailyAttacks.Count != 42 || !loaded.DailyAttacks.SessionStartedAt.Equal(dailySessionStartedAt) {
 		t.Fatalf("loaded daily attack session = %+v", loaded.DailyAttacks)
 	}
+	if usages := loaded.AttackAnalytics.RecentTowerAdvisorTimeSkips; len(usages) != 1 ||
+		usages[0].MovementID != 700 || usages[0].TimeSkips != 3 {
+		t.Fatalf("loaded Advisor Time Skip usage = %+v", usages)
+	}
 }
 
 func TestInvasionAvailabilityAndReservationsPersistAcrossRestart(t *testing.T) {
@@ -139,6 +146,54 @@ func TestInvasionAvailabilityAndReservationsPersistAcrossRestart(t *testing.T) {
 		reservation.SourceCastleID != 1 || !reservation.SourceKnown || reservation.SourceX != 100 || reservation.SourceY != 100 ||
 		!reservation.CommanderKnown || reservation.CommanderID != 0 {
 		t.Fatalf("restarted invasion state lost availability or reservation: target=%#v invasion=%#v", target, loaded.Invasion)
+	}
+}
+
+func TestGlobalEffectPurchasePersistsButResourceFreshnessDoesNot(t *testing.T) {
+	directory := t.TempDir()
+	observedAt := time.Now().UTC().Truncate(time.Second)
+	endsAt := observedAt.Add(time.Hour)
+	initial := NewGameState()
+	initial.Session.Generation = 1
+	initial.Session.ConnectionGeneration = 11
+	initial.Player.Resources[2] = 7500
+	initial.Player.ResourceObservations[2] = PlayerResourceObservation{ObservedAt: observedAt, ConnectionGeneration: 11}
+	store := NewStore(initial)
+	event, err := store.ApplyComponents(Components(ComponentEventScores), func(state *GameState) ([]string, bool, error) {
+		inventory := state.EventScores.Inventory
+		inventory.GlobalEffectPurchases = cloneGlobalEffectPurchaseMap(inventory.GlobalEffectPurchases)
+		inventory.GlobalEffectPurchases[2] = GlobalEffectPurchaseRecord{
+			GlobalEffectID: 2, OccurrenceEndsAt: endsAt, ExpiresAt: endsAt,
+			QuotedRubyCost: 2500, QuotedBonusValue: 50, MinimumRubyReserve: 5000,
+			RubyBefore: 10000, RubyBeforeObservedAt: observedAt, RequestedAt: observedAt,
+			DispatchedAt: observedAt.Add(time.Second), RequestOpcode: "agb", OperationID: "op-1",
+			ResponseToken: "process-only-token", ConnectionGeneration: 11,
+			DebitUnverified: true, Outcome: GlobalEffectPurchaseUnresolved,
+			Detail: "awaiting authoritative reconciliation",
+		}
+		changed := state.ReplaceEventInventory(inventory)
+		return []string{"events", "event-scores", "global-effects"}, changed, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := SaveComponentSnapshot(directory, event, Components(event.Components...)); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := LoadSnapshot(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	record, found := loaded.EventScores.Inventory.GlobalEffectPurchases[2]
+	if !found || record.Outcome != GlobalEffectPurchaseUnresolved || record.OperationID != "op-1" ||
+		record.QuotedRubyCost != 2500 || !record.DispatchedAt.Equal(observedAt.Add(time.Second)) {
+		t.Fatalf("durable global-effect purchase=%+v found=%t", record, found)
+	}
+	if record.ResponseToken != "" {
+		t.Fatalf("process-local response token persisted: %q", record.ResponseToken)
+	}
+	if len(loaded.Player.ResourceObservations) != 0 {
+		t.Fatalf("stale resource freshness survived restart: %+v", loaded.Player.ResourceObservations)
 	}
 }
 
@@ -192,6 +247,9 @@ func TestComponentSnapshotPersistsOnlyDirtyCastleAndInventoryPartitions(t *testi
 	initial.Castles[22] = CastleState{ID: 22, Name: "two", Resources: map[ResourceID]ResourceBalance{1: {Amount: 20}}}
 	initial.Inventory.ConstructionItems[101] = 3
 	initial.Inventory.Equipment[501] = EquipmentInstance{ID: 501, Level: 1, Effects: EquipmentEffects{}}
+	storageObservedAt := time.Date(2026, 9, 18, 10, 0, 0, 0, time.UTC)
+	initial.Inventory.Items["storage:1"] = map[int64]int64{600: 1}
+	initial.Inventory.ItemsObservedAt["storage:1"] = storageObservedAt
 	store := NewStore(initial)
 
 	bootstrap, err := store.ApplyComponents(Components(ComponentPlayer), func(state *GameState) ([]string, bool, error) {
@@ -248,6 +306,7 @@ func TestComponentSnapshotPersistsOnlyDirtyCastleAndInventoryPartitions(t *testi
 
 	inventoryEvent, err := store.ApplyComponents(Components(ComponentInventory), func(state *GameState) ([]string, bool, error) {
 		state.MutableInventoryConstructionItems()[101] = 2
+		state.SetInventoryItemsCollectionObserved("storage:1", map[int64]int64{600: 2}, storageObservedAt.Add(time.Minute))
 		return []string{"inventory", "construction-items"}, true, nil
 	})
 	if err != nil {
@@ -263,8 +322,11 @@ func TestComponentSnapshotPersistsOnlyDirtyCastleAndInventoryPartitions(t *testi
 	if second.InventoryFiles["construction-items"] == third.InventoryFiles["construction-items"] {
 		t.Fatal("dirty construction inventory part did not advance")
 	}
+	if second.InventoryFiles["items"] == third.InventoryFiles["items"] {
+		t.Fatal("dirty inventory items part did not advance")
+	}
 	for part, filename := range second.InventoryFiles {
-		if part != "construction-items" && third.InventoryFiles[part] != filename {
+		if part != "construction-items" && part != "items" && third.InventoryFiles[part] != filename {
 			t.Fatalf("clean inventory part %s was rewritten", part)
 		}
 	}
@@ -277,7 +339,8 @@ func TestComponentSnapshotPersistsOnlyDirtyCastleAndInventoryPartitions(t *testi
 		t.Fatal(err)
 	}
 	if loaded.Castles[11].Resources[1].Amount != 15 || loaded.Castles[22].Resources[1].Amount != 20 ||
-		loaded.Inventory.ConstructionItems[101] != 2 || loaded.Inventory.Equipment[501].Level != 1 {
+		loaded.Inventory.ConstructionItems[101] != 2 || loaded.Inventory.Equipment[501].Level != 1 ||
+		loaded.Inventory.Items["storage:1"][600] != 2 || !loaded.Inventory.ItemsObservedAt["storage:1"].Equal(storageObservedAt.Add(time.Minute)) {
 		t.Fatalf("partitioned snapshot round trip = castles %#v inventory %#v", loaded.Castles, loaded.Inventory)
 	}
 }
@@ -634,8 +697,18 @@ func TestComponentSnapshotPersistsFeastCostReduction(t *testing.T) {
 		state.Market.FeastPurchaseExpectedID = 4
 		state.Market.FeastPurchasePendingSince = pendingSince
 		state.Market.FeastPurchaseExpectedExpiresAt = expectedExpiry
+		state.Market.FeastPurchasePreviousExpiresAt = observedAt
 		state.Market.FeastPurchaseOperationID = "feast-operation"
 		state.Market.FeastPurchaseResponseToken = "feast-operation/1"
+		state.Market.FeastPurchaseResponseConfirmedAt = pendingSince.Add(time.Second)
+		state.Market.FeastPurchaseResponseExpiresAt = expectedExpiry
+		state.Market.FeastPurchaseInactiveObservedAt = pendingSince.Add(time.Minute)
+		state.Market.FeastPurchaseInactiveResponseToken = "feast-poll/2"
+		state.Market.FeastPurchaseInactiveGeneration = 7
+		state.Market.LatestFeastPurchase = FeastPurchaseEvidence{
+			Outcome: "verifying", FeastID: 4, ChargedCastleID: 12, ChargedKingdomID: 2,
+			AttemptedAt: pendingSince, ExpectedEffectiveCost: 150000,
+		}
 		return []string{"market"}, true, nil
 	})
 	if err != nil {
@@ -654,9 +727,81 @@ func TestComponentSnapshotPersistsFeastCostReduction(t *testing.T) {
 		loaded.Market.FeastPurchaseExpectedID != 4 ||
 		!loaded.Market.FeastPurchasePendingSince.Equal(pendingSince) ||
 		!loaded.Market.FeastPurchaseExpectedExpiresAt.Equal(expectedExpiry) ||
+		!loaded.Market.FeastPurchasePreviousExpiresAt.Equal(observedAt) ||
 		loaded.Market.FeastPurchaseOperationID != "feast-operation" ||
-		loaded.Market.FeastPurchaseResponseToken != "feast-operation/1" {
+		loaded.Market.FeastPurchaseResponseToken != "feast-operation/1" ||
+		!loaded.Market.FeastPurchaseResponseConfirmedAt.Equal(pendingSince.Add(time.Second)) ||
+		!loaded.Market.FeastPurchaseResponseExpiresAt.Equal(expectedExpiry) ||
+		!loaded.Market.FeastPurchaseInactiveObservedAt.Equal(pendingSince.Add(time.Minute)) ||
+		loaded.Market.FeastPurchaseInactiveResponseToken != "feast-poll/2" ||
+		loaded.Market.FeastPurchaseInactiveGeneration != 7 ||
+		loaded.Market.LatestFeastPurchase.Outcome != "verifying" ||
+		loaded.Market.LatestFeastPurchase.ChargedCastleID != 12 {
 		t.Fatalf("persisted feast state = %+v", loaded.Market)
+	}
+}
+
+func TestSnapshotPersistsSpecialistRecoveryButDropsLiveRubyAuthority(t *testing.T) {
+	directory := t.TempDir()
+	now := time.Date(2026, time.September, 15, 12, 0, 0, 0, time.UTC)
+	state := NewGameState()
+	state.Session.ConnectionGeneration = 4
+	state.Player.Resources[2] = 9000
+	state.Player.ResourceObservations[2] = PlayerResourceObservation{ObservedAt: now, ConnectionGeneration: 4}
+	state.Market.SpecialistPurchasePending = true
+	state.Market.SpecialistPurchasePendingSince = now
+	state.Market.SpecialistPurchaseExpectedID = 8
+	state.Market.SpecialistPurchasePreviousExpiry = now.Add(time.Hour)
+	state.Market.SpecialistPurchaseMaximumExpiry = now.Add(7*24*time.Hour + time.Hour)
+	state.Market.SpecialistPurchaseOperationID = "specialist-operation"
+	state.Market.SpecialistPurchaseResponseToken = "specialist-operation/2"
+	state.Market.SpecialistPurchaseResponseConfirmedAt = now.Add(time.Second)
+	state.Market.SpecialistPurchaseResponseExpiresAt = now.Add(7*24*time.Hour + time.Hour)
+	state.Market.SpecialistPurchaseRubyResourceID = 2
+	state.Market.SpecialistPurchaseResponseRuby = 8250
+	state.Market.SpecialistPurchaseResponseRubyAt = now.Add(time.Second)
+	state.Market.BoostersObservedGeneration = 4
+	state.Market.LatestSpecialistPurchase = SpecialistPurchaseEvidence{Outcome: "verifying", SpecialistID: 8, AttemptedAt: now, UpdatedAt: now.Add(time.Second), RubyBefore: 9000, RubyBeforeKnown: true, RubyAfter: 8250, RubyAfterKnown: true}
+	if err := SaveSnapshot(directory, state); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := LoadSnapshot(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !loaded.Market.SpecialistPurchasePending || loaded.Market.SpecialistPurchaseExpectedID != 8 ||
+		loaded.Market.SpecialistPurchaseOperationID != "specialist-operation" || loaded.Market.SpecialistPurchaseResponseToken != "specialist-operation/2" ||
+		!loaded.Market.SpecialistPurchaseResponseConfirmedAt.Equal(now.Add(time.Second)) ||
+		!loaded.Market.SpecialistPurchaseResponseExpiresAt.Equal(now.Add(7*24*time.Hour+time.Hour)) ||
+		loaded.Market.SpecialistPurchaseRubyResourceID != 2 || loaded.Market.SpecialistPurchaseResponseRuby != 8250 ||
+		!loaded.Market.SpecialistPurchaseResponseRubyAt.Equal(now.Add(time.Second)) || loaded.Market.LatestSpecialistPurchase.Outcome != "verifying" {
+		t.Fatalf("persisted specialist recovery = %+v", loaded.Market)
+	}
+	if len(loaded.Player.ResourceObservations) != 0 {
+		t.Fatalf("snapshot restored live resource authority: %+v", loaded.Player.ResourceObservations)
+	}
+	if loaded.Market.BoostersObservedGeneration != 0 {
+		t.Fatalf("snapshot restored live booster authority: %d", loaded.Market.BoostersObservedGeneration)
+	}
+}
+
+func TestSnapshotDropsFortressTargetVerification(t *testing.T) {
+	directory := t.TempDir()
+	state := NewGameState()
+	state.Session.FortressTargetVerification = FortressTargetVerification{
+		SourceCastleID: 10, KingdomID: 1, TargetX: 101, TargetY: 100,
+		OperationID: "private-operation", ResponseToken: "private-response",
+		SessionGeneration: 3, ConnectionGeneration: 4, Complete: true, Available: true,
+	}
+	if err := SaveSnapshot(directory, state); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := LoadSnapshot(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if loaded.Session.FortressTargetVerification != (FortressTargetVerification{}) {
+		t.Fatalf("snapshot restored process-local fortress verification: %#v", loaded.Session.FortressTargetVerification)
 	}
 }
 
@@ -677,6 +822,54 @@ func TestSnapshotLoadMovesInspectedAllianceOutOfOwnSlot(t *testing.T) {
 	}
 	if loaded.Alliances[10].Name != "Inspected" {
 		t.Fatalf("alliance directory = %+v", loaded.Alliances)
+	}
+}
+
+func TestSnapshotPersistsTroopWorkflowButClearsCurrencyAuthority(t *testing.T) {
+	directory := t.TempDir()
+	now := time.Now().UTC()
+	state := NewGameState()
+	state.KingdomTransport.TroopWorkflows[2] = KingdomTroopTransportWorkflow{
+		ID: "owned", Owner: "autoFortress", Status: "pending", KingdomID: 2,
+		Units: []KingdomTransportUnit{{UnitID: 277, Amount: 100}}, ArmedAt: now, SessionGeneration: 7,
+	}
+	state.Player.CurrencyObservations[1005] = PlayerResourceObservation{ObservedAt: now, ConnectionGeneration: 7}
+	if err := SaveSnapshot(directory, state); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := LoadSnapshot(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	workflow, found := loaded.KingdomTransport.TroopWorkflows[2]
+	if !found || workflow.ID != "owned" || len(workflow.Units) != 1 || workflow.Units[0].Amount != 100 {
+		t.Fatalf("persisted troop workflow=%#v found=%t", workflow, found)
+	}
+	if workflow.SessionGeneration != 0 {
+		t.Fatalf("snapshot restored socket generation authority: %#v", workflow)
+	}
+	if len(loaded.Player.CurrencyObservations) != 0 {
+		t.Fatalf("snapshot restored current-session currency authority: %#v", loaded.Player.CurrencyObservations)
+	}
+}
+
+func TestSnapshotLoadKeepsArmedTroopWorkflowAmbiguousAcrossGenerationReuse(t *testing.T) {
+	directory := t.TempDir()
+	state := NewGameState()
+	state.KingdomTransport.TroopWorkflows[2] = KingdomTroopTransportWorkflow{
+		ID: "armed", Owner: "autoFortress", Status: "armed", KingdomID: 2,
+		Units: []KingdomTransportUnit{{UnitID: 277, Amount: 100}}, SessionGeneration: 1,
+	}
+	if err := SaveSnapshot(directory, state); err != nil {
+		t.Fatal(err)
+	}
+	loaded, err := LoadSnapshot(directory)
+	if err != nil {
+		t.Fatal(err)
+	}
+	workflow := loaded.KingdomTransport.TroopWorkflows[2]
+	if workflow.Status != "ownership_uncertain" || workflow.SessionGeneration != 0 {
+		t.Fatalf("restored armed workflow regained reused-generation authority: %#v", workflow)
 	}
 }
 

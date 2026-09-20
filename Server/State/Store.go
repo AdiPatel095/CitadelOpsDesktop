@@ -1233,7 +1233,9 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 	}
 	if components.Has(ComponentPlayer) {
 		clone.Player.Resources = cloneMap(source.Player.Resources)
+		clone.Player.ResourceObservations = cloneMap(source.Player.ResourceObservations)
 		clone.Player.Currencies = cloneMap(source.Player.Currencies)
+		clone.Player.CurrencyObservations = cloneMap(source.Player.CurrencyObservations)
 		clone.Player.Achievements.Completed = cloneMap(source.Player.Achievements.Completed)
 		clone.Player.Achievements.Progress = make(map[int64][]int64, len(source.Player.Achievements.Progress))
 		for id, progress := range source.Player.Achievements.Progress {
@@ -1280,6 +1282,8 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 		clone.Stationing = make(map[string]StationingOperation, len(source.Stationing))
 		for id, operation := range source.Stationing {
 			operation.Units = cloneMap(operation.Units)
+			operation.MovementIDs = append([]MovementID(nil), operation.MovementIDs...)
+			operation.PausedUntil = cloneTimePointer(operation.PausedUntil)
 			operation.DispatchedAt = cloneTimePointer(operation.DispatchedAt)
 			operation.ExpectedReturnAt = cloneTimePointer(operation.ExpectedReturnAt)
 			operation.NextAttemptAt = cloneTimePointer(operation.NextAttemptAt)
@@ -1316,6 +1320,10 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 		clone.Inventory.Equipment = make(map[EquipmentInstanceID]EquipmentInstance, len(source.Inventory.Equipment))
 		for id, item := range source.Inventory.Equipment {
 			item.Effects = cloneEquipmentEffects(item.Effects)
+			if item.Extraction != nil {
+				extraction := *item.Extraction
+				item.Extraction = &extraction
+			}
 			clone.Inventory.Equipment[id] = item
 		}
 		clone.Inventory.Gems = make(map[GemInstanceID]GemInstance, len(source.Inventory.Gems))
@@ -1328,6 +1336,7 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 		for collection, items := range source.Inventory.Items {
 			clone.Inventory.Items[collection] = cloneMap(items)
 		}
+		clone.Inventory.ItemsObservedAt = cloneMap(source.Inventory.ItemsObservedAt)
 	}
 	if components.Has(ComponentSubscriptions) {
 		clone.Subscriptions = cloneMap(source.Subscriptions)
@@ -1358,6 +1367,11 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 		for kingdomID, workflow := range clone.KingdomTransport.ResourceWorkflows {
 			workflow.Goods = append([]KingdomTransportGood(nil), workflow.Goods...)
 			clone.KingdomTransport.ResourceWorkflows[kingdomID] = workflow
+		}
+		clone.KingdomTransport.TroopWorkflows = cloneMap(source.KingdomTransport.TroopWorkflows)
+		for kingdomID, workflow := range clone.KingdomTransport.TroopWorkflows {
+			workflow.Units = append([]KingdomTransportUnit(nil), workflow.Units...)
+			clone.KingdomTransport.TroopWorkflows[kingdomID] = workflow
 		}
 	}
 	if components.Has(ComponentBeri) {
@@ -1482,6 +1496,9 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 		clone.AttackAnalytics.RecentAutoStormLaunches = append(
 			[]AttackFeatureLaunch(nil), source.AttackAnalytics.RecentAutoStormLaunches...,
 		)
+		clone.AttackAnalytics.RecentTowerAdvisorTimeSkips = append(
+			[]TowerAdvisorTimeSkipUsage(nil), source.AttackAnalytics.RecentTowerAdvisorTimeSkips...,
+		)
 	}
 	if components.Has(ComponentEventScores) {
 		clone.EventScores = source.materializedEventScores()
@@ -1496,6 +1513,7 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 			automation.NextCheckAt = cloneTimePointer(automation.NextCheckAt)
 			automation.LastRunAt = cloneTimePointer(automation.LastRunAt)
 			automation.Metrics = cloneMap(automation.Metrics)
+			automation.Details = cloneMap(automation.Details)
 			automation.OperationalCursors = cloneMap(automation.OperationalCursors)
 			clone.Automations[id] = automation
 		}

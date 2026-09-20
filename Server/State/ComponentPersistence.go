@@ -1804,6 +1804,18 @@ func loadEventScoreComponent(
 	if state.Inventory.ActiveByEvent == nil {
 		state.Inventory.ActiveByEvent = map[int64]EventAvailability{}
 	}
+	if state.Inventory.GlobalEffects == nil {
+		state.Inventory.GlobalEffects = map[int64]GlobalEffectAvailability{}
+	}
+	if state.Inventory.GlobalEffectBoosterOffers == nil {
+		state.Inventory.GlobalEffectBoosterOffers = map[int64]GlobalEffectBoosterOffer{}
+	}
+	if state.Inventory.GlobalEffectBoosts == nil {
+		state.Inventory.GlobalEffectBoosts = map[int64]GlobalEffectBoostState{}
+	}
+	if state.Inventory.GlobalEffectPurchases == nil {
+		state.Inventory.GlobalEffectPurchases = map[int64]GlobalEffectPurchaseRecord{}
+	}
 	for _, eventID := range index.EventIDs {
 		filename := manifest.EventScoreFiles[strconv.FormatInt(eventID, 10)]
 		if !safeComponentFilename(filename) {
@@ -1889,6 +1901,9 @@ func applyInventoryPersistencePart(inventory *InventoryState, part string, patch
 			return fmt.Errorf("inventory items state part has no value")
 		}
 		inventory.Items = *patch.Items
+		if patch.ItemsObservedAt != nil {
+			inventory.ItemsObservedAt = *patch.ItemsObservedAt
+		}
 	default:
 		return fmt.Errorf("unknown inventory state part %q", part)
 	}

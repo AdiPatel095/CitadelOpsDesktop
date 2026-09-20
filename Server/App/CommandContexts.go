@@ -204,9 +204,11 @@ func (application *Application) resolveCRACommandDependencies(
 		TargetY              int                `json:"TY"`
 		KingdomID            State.KingdomID    `json:"KID"`
 		TargetTypeID         int                `json:"_citadelTargetTypeId"`
+		NomadSequentialGuard json.RawMessage    `json:"_citadelNomadSequentialArrivalGuard"`
 		InvasionGuard        json.RawMessage    `json:"_citadelInvasionGuard"`
 		CommanderID          *State.CommanderID `json:"LID"`
 		TowerCapacityCapture json.RawMessage    `json:"towerCapacityCapture"`
+		FortressVerification json.RawMessage    `json:"_citadelFortressVerification"`
 		ContextMode          string             `json:"_citadelContextMode"`
 	}
 	if err := json.Unmarshal(payload, &fields); err != nil {
@@ -244,6 +246,44 @@ func (application *Application) resolveCRACommandDependencies(
 	if err != nil {
 		return Intent.CommandDependencyPlan{}, err
 	}
+	if fields.TargetTypeID == State.MapTypeKingdomFortress {
+		if len(fields.FortressVerification) == 0 {
+			return Intent.CommandDependencyPlan{}, fmt.Errorf("fortress CRA route is missing its exact-target verification")
+		}
+		var verification fortressTargetVerificationRequest
+		if err := decodeIntentArguments(fields.FortressVerification, &verification); err != nil ||
+			verification.SourceCastleID <= 0 || verification.KingdomID != fields.KingdomID ||
+			verification.TargetX != fields.TargetX || verification.TargetY != fields.TargetY {
+			return Intent.CommandDependencyPlan{}, fmt.Errorf("fortress CRA route has invalid exact-target verification")
+		}
+		for index := range setup {
+			if setup[index].Opcode == "adi" {
+				setup[index].Name = "Refresh fortress attack-dialog context"
+				setup[index].Opcode = "abi"
+				setup[index].AwaitOpcode = "abi"
+				setup[index].Command.Opcode = "abi"
+				setup[index].FinalDispatchAction = "fortress.target.verification.guard"
+				setup[index].FinalDispatchArguments = append(json.RawMessage(nil), fields.FortressVerification...)
+			}
+		}
+	}
+	if fields.TargetTypeID == nomadIntentCampTypeID || fields.TargetTypeID == samuraiIntentCampTypeID {
+		if len(fields.NomadSequentialGuard) == 0 {
+			return Intent.CommandDependencyPlan{}, fmt.Errorf("Nomad/Samurai CRA route is missing its sequential-arrival guard")
+		}
+		var guard nomadSequentialArrivalGuardRequest
+		if err := decodeIntentArguments(fields.NomadSequentialGuard, &guard); err != nil ||
+			guard.EventID <= 0 || guard.KingdomID != fields.KingdomID || guard.TargetTypeID != fields.TargetTypeID ||
+			guard.TargetX != fields.TargetX || guard.TargetY != fields.TargetY {
+			return Intent.CommandDependencyPlan{}, fmt.Errorf("Nomad/Samurai CRA route has an invalid sequential-arrival guard")
+		}
+		for index := range setup {
+			if setup[index].Opcode == "adi" {
+				setup[index].FinalDispatchAction = "nomad.attack.sequential_arrival.guard"
+				setup[index].FinalDispatchArguments = append(json.RawMessage(nil), fields.NomadSequentialGuard...)
+			}
+		}
+	}
 	if fields.TargetTypeID == State.MapTypeForeignLord || fields.TargetTypeID == State.MapTypeBloodcrow {
 		if len(fields.InvasionGuard) == 0 {
 			return Intent.CommandDependencyPlan{}, fmt.Errorf("invasion CRA route is missing its occurrence-bound launch guard")
@@ -278,6 +318,15 @@ func (application *Application) resolveCRACommandDependencies(
 	guardedAt := time.Now().UTC()
 	target, towerTarget := input.State.LookupMapObservation(fields.KingdomID, fmt.Sprintf("%d:%d", fields.TargetX, fields.TargetY))
 	towerTarget = towerTarget && target.TypeID == kingdomTowerMapTypeID
+	if target.TypeID == State.MapTypeKingdomFortress && State.AttackFeatureTargetPendingAt(
+		input.State, State.AttackFeatureAutoFortress, fields.KingdomID, State.MapTypeKingdomFortress,
+		fields.TargetX, fields.TargetY, time.Now().UTC(),
+	) {
+		return Intent.CommandDependencyPlan{}, fmt.Errorf(
+			"%w: fortress target %d:%d has a prior Auto Fortress attack awaiting settlement",
+			Intent.ErrPlanStale, fields.TargetX, fields.TargetY,
+		)
+	}
 	var movementsObservedAfter time.Time
 	if fields.CommanderID != nil {
 		movementsObservedAfter = guardedAt
@@ -332,7 +381,8 @@ func (application *Application) guardCRASend(_ context.Context, arguments json.R
 	}
 	if dialog.Target.TowerCooldownRemaining > 0 || dialog.Target.EventCampCooldownRemaining > 0 ||
 		stormAttackDialogUnavailable(dialog.Target) {
-		if dialog.Target.TypeID == khanCampTypeID {
+		if dialog.Target.TypeID == khanCampTypeID || dialog.Target.TypeID == nomadIntentCampTypeID ||
+			dialog.Target.TypeID == samuraiIntentCampTypeID {
 			return fmt.Errorf("%w: CRA target %d:%d is on cooldown", Intent.ErrPlanStale, request.TargetX, request.TargetY)
 		}
 		return fmt.Errorf("CRA target %d:%d is on cooldown", request.TargetX, request.TargetY)
@@ -351,7 +401,7 @@ func (application *Application) guardCRASend(_ context.Context, arguments json.R
 	}
 	key := fmt.Sprintf("%d:%d:%d", request.KingdomID, request.TargetX, request.TargetY)
 	switch dialog.Target.TypeID {
-	case kingdomTowerMapTypeID:
+	case kingdomTowerMapTypeID, State.MapTypeKingdomFortress:
 		if request.CommanderID == nil {
 			return fmt.Errorf("CRA tower launch does not identify a commander")
 		}
@@ -360,7 +410,7 @@ func (application *Application) guardCRASend(_ context.Context, arguments json.R
 		}
 	case nomadIntentCampTypeID, samuraiIntentCampTypeID:
 		if cooldown, found := state.NomadCamps.Cooldowns[key]; found && cooldown.PendingCooldownRefresh {
-			return fmt.Errorf("CRA target %d:%d is awaiting a post-victory cooldown refresh", request.TargetX, request.TargetY)
+			return fmt.Errorf("%w: CRA target %d:%d is awaiting a post-victory cooldown refresh", Intent.ErrPlanStale, request.TargetX, request.TargetY)
 		}
 	case khanCampTypeID:
 		if cooldown, found := state.NomadCamps.Cooldowns[key]; found && cooldown.PendingCooldownRefresh {
@@ -415,9 +465,13 @@ func (application *Application) guardCRASend(_ context.Context, arguments json.R
 			if appDungeonCooldownRemaining(state, target, now) > 0 {
 				return fmt.Errorf("CRA target %d:%d is on cooldown", request.TargetX, request.TargetY)
 			}
+		case State.MapTypeKingdomFortress:
+			if fortressCooldownRemaining(state, target, now) > 0 {
+				return fmt.Errorf("CRA fortress target %d:%d is on cooldown", request.TargetX, request.TargetY)
+			}
 		case nomadIntentCampTypeID, samuraiIntentCampTypeID:
 			if nomadAppCooldownRemaining(state, target, now) > 0 {
-				return fmt.Errorf("CRA target %d:%d is on cooldown", request.TargetX, request.TargetY)
+				return fmt.Errorf("%w: CRA target %d:%d is on cooldown", Intent.ErrPlanStale, request.TargetX, request.TargetY)
 			}
 		case khanCampTypeID:
 			if appDungeonCooldownRemaining(state, target, now) > 0 {
