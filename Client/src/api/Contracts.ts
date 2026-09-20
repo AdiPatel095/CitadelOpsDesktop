@@ -1557,6 +1557,7 @@ export interface MovementStateV2 {
 	commanderId?: number;
 	leaderId?: number;
 	leaderDlid?: number;
+	leaderWid?: number;
 	kingdomId: number;
 	sourceX?: number;
 	sourceY?: number;
