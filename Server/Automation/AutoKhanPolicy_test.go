@@ -84,6 +84,61 @@ func TestAutoKhanPolicyYieldsToPlayerAttackAndAutoStationButNotKhanTaunt(t *test
 	}
 }
 
+func TestAutoKhanPolicyAppliesDefenseWithStaleStationAndSameRouteAutoBirdMovement(t *testing.T) {
+	now := time.Date(2026, 9, 19, 12, 0, 0, 0, time.UTC)
+	snapshot := autoKhanPolicySnapshot(t, now, 2)
+	active := now.Add(time.Minute)
+	snapshot.State.Movements[11] = State.MovementState{
+		ID: 11, Direction: 0, OwnerPlayerID: snapshot.State.Player.ID,
+		SourceCastleID: 1, TargetCastleID: 900, ArrivesAt: &active,
+	}
+	safeAfter := now.Add(-10 * time.Second)
+	snapshot.State.Stationing["autoStation:1"] = State.StationingOperation{
+		ID: "autoStation:1", Purpose: "autoStation", SourceCastleID: 1, TargetCastleID: 900,
+		MovementID: 10, SafeAfter: &safeAfter,
+	}
+	snapshot.State.Stationing["autoBird:1"] = State.StationingOperation{
+		ID: "autoBird:1", Purpose: "autoBird", SourceCastleID: 1, TargetCastleID: 900,
+		MovementID: 11, MovementIDs: []State.MovementID{11},
+	}
+	main := snapshot.State.Castles[1]
+	main.Defense.Wall.Left.UnitPercent++
+	snapshot.State.Castles[1] = main
+
+	decision, err := NewAutoKhanPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "defense.preset.apply" {
+		t.Fatalf("stale station with same-route Auto Bird decision: %#v err=%v", decision, err)
+	}
+}
+
+func TestAutoKhanDefensePolicyAppliesDefenseWithMissingStationMovement(t *testing.T) {
+	now := time.Date(2026, 9, 19, 12, 0, 0, 0, time.UTC)
+	snapshot := autoKhanPolicySnapshot(t, now, 2)
+	active := now.Add(time.Minute)
+	safeAfter := now.Add(-10 * time.Second)
+	snapshot.State.Movements[11] = State.MovementState{
+		ID: 11, Direction: 0, OwnerPlayerID: snapshot.State.Player.ID,
+		SourceCastleID: 1, TargetCastleID: 900, ArrivesAt: &active,
+	}
+	snapshot.State.Stationing["autoStation:1"] = State.StationingOperation{
+		ID: "autoStation:1", Purpose: "autoStation", SourceCastleID: 1, TargetCastleID: 900,
+		MovementID: 10, SafeAfter: &safeAfter,
+	}
+	snapshot.State.Stationing["autoBird:1"] = State.StationingOperation{
+		ID: "autoBird:1", Purpose: "autoBird", SourceCastleID: 1, TargetCastleID: 900,
+		MovementID: 11, MovementIDs: []State.MovementID{11},
+	}
+	main := snapshot.State.Castles[1]
+	main.Defense.ObservedAt = now.Add(-time.Minute)
+	snapshot.State.Castles[1] = main
+	snapshot.State.Khan.LastTauntTriggeredAt = now.Add(-30 * time.Second)
+
+	decision, err := NewAutoKhanDefensePolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "defense.preset.apply" {
+		t.Fatalf("async defense lane with stale station decision: %#v err=%v", decision, err)
+	}
+}
+
 func TestAutoKhanPolicyKeepsExpiredProtectionLockedUntilDefenseRecovers(t *testing.T) {
 	now := time.Date(2026, 7, 14, 15, 0, 0, 0, time.UTC)
 	snapshot := autoKhanPolicySnapshot(t, now, 1)
