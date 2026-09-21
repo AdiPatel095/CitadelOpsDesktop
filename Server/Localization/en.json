@@ -2256,6 +2256,7 @@
   "server.automation.ship_p_resource_p.af0eeeb0": "Ship {p0} resource {p1} from {p2} to {p3}",
   "server.automation.source_castle_p_is.10eb5b8b": "Source castle {p0} is unavailable",
   "server.automation.stage_layout_blocker_p.02a77307": "Stage layout blocker {p0} in free space",
+  "server.automation.start_or_extend_feast": "Start or extend {feast} for {cost, number} {currency} toward the {hours, number}-hour floor",
   "server.automation.store_layout_blocker_p.9f4f73dd": "Store layout blocker {p0}",
   "server.automation.store_unmanaged_p_before.64960dea": "Store unmanaged {p0} before arranging the target layout",
   "server.automation.storm_build_lane_is.2933ec9b": "Storm build lane is waiting for its next state change",
