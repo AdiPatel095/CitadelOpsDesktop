@@ -217,7 +217,7 @@ const DecorationPresetsPanel: React.FC = () => {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleSave();
               }}
-              placeholder={localizeStatic("ui.components.decorationPresetsPanel.placeholder.preset.name.e534a666")}
+              placeholder={localizeStatic("common.presetName")}
               className="flex-1"
             />
             <Button
@@ -226,7 +226,7 @@ const DecorationPresetsPanel: React.FC = () => {
               leftIcon={<Save className="h-4 w-4" strokeWidth={2.25} />}
               className="shrink-0 shadow-none hover:shadow-none"
             >
-              <LocalizedText messageKey="ui.components.decorationPresetsPanel.save.preset.362a1376" /></Button>
+              <LocalizedText messageKey="common.savePreset" /></Button>
           </div>
           {!canUseCastle && (
             <div className="mt-3 text-xs font-medium text-warning">
@@ -272,7 +272,7 @@ const DecorationPresetsPanel: React.FC = () => {
                 leftIcon={<Trash2 className="h-3.5 w-3.5" strokeWidth={2.25} />}
                 className="shadow-none hover:shadow-none"
               >
-                <LocalizedText messageKey="ui.components.decorationPresetsPanel.delete.e2d0a549" /></Button>
+                <LocalizedText messageKey="game.delete" /></Button>
             </div>
           </div>
           {canUseCastle && !hasPresets && (

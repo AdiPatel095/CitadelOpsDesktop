@@ -1,0 +1,6 @@
+{
+  "server.api.official_game_data_is.c5e55e7e": "Τα επίσημα δεδομένα του παιχνιδιού δεν είναι διαθέσιμα",
+  "server.api.official_language_data_is.803160d4": "Τα επίσημα γλωσσικά δεδομένα δεν είναι διαθέσιμα",
+  "server.api.unsupported_locale": "Μη υποστηριζόμενη τοπική ρύθμιση: {locale}",
+  "server.automation.safety_pause_after_an.67451716": "Παύση ασφαλείας μετά από αποτυχία αυτοματοποιημένης ενέργειας"
+}

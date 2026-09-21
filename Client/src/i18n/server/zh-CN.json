@@ -1,0 +1,6 @@
+{
+  "server.api.official_game_data_is.c5e55e7e": "官方游戏数据不可用",
+  "server.api.official_language_data_is.803160d4": "官方语言数据不可用",
+  "server.api.unsupported_locale": "不支持的语言区域设置：{locale}",
+  "server.automation.safety_pause_after_an.67451716": "自动化操作失败后，已为安全起见暂停"
+}

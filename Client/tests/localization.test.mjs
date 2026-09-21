@@ -3,7 +3,7 @@ import test from 'node:test';
 import fs from 'node:fs';
 import ts from 'typescript';
 import { pathToFileURL } from 'node:url';
-const files = ['locales','formatMessage','gameMessage','officialKeys','sourceMessages'];
+const files = ['locales','formatMessage','gameMessage','officialKeys','sourceMessages','richMessages'];
 const modules = {};
 for (const file of files) {
  const target = new URL(`../node_modules/.localization-${file}.mjs`,import.meta.url);
@@ -34,7 +34,7 @@ test('official positional placeholders never recursively process inserted values
 test('authored locale subsets validate ICU and reject unknown keys; completeness belongs to the strict release gate',()=>{
  const source = fs.readFileSync(new URL('../src/i18n/messages.ts',import.meta.url),'utf8');
  const ast=ts.createSourceFile('messages.ts',source,ts.ScriptTarget.Latest,true);
- let english={...modules.sourceMessages.sourceMessages};
+ let english={...modules.sourceMessages.sourceMessages,...modules.richMessages.richMessages};
  function visit(node) { if(ts.isVariableDeclaration(node)&&node.name.getText(ast)==='messages') { const object=node.initializer.expression; english={...english,...Object.fromEntries(object.properties.filter(ts.isPropertyAssignment).map(property=>[property.name.text,property.initializer.text]))}; } ts.forEachChild(node,visit); }
  visit(ast);
  for (const key of Object.keys(modules.officialKeys.officialMessageKeys)) delete english[key];
@@ -91,5 +91,15 @@ test('source-assigned static messages render verbatim without accidental ICU par
  for(const [key,fallback] of Object.entries(modules.sourceMessages.sourceMessages)) {
   assert.deepEqual(modules.formatMessage.messageArguments(fallback),[],key);
   assert.equal(modules.formatMessage.formatMessage({key,fallback},'en',{}).text,fallback,key);
+ }
+});
+
+test('official numeric arguments preserve precision while string IDs and user braces remain literal',()=>{
+ const {formatMessage}=modules.formatMessage;
+ for(const locale of ['ar','de']) {
+  const descriptor={key:'game.example',fallback:'',officialKey:'example',officialParams:{0:1234.56789,1:'1234.56789',2:'Player {0}'}};
+  const game={values:{example:'{0} | {1} | {2}'},resolvedLocale:locale};
+  const isolate=value=>locale==='ar'?`\u2068${value}\u2069`:value;
+  assert.equal(formatMessage(descriptor,locale,{},game).text,[new Intl.NumberFormat(locale,{maximumSignificantDigits:21}).format(1234.56789),'1234.56789','Player {0}'].map(isolate).join(' | '));
  }
 });

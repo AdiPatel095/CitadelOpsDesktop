@@ -245,7 +245,7 @@ const WorldPlayerDetailView = ({ profile, onOpenAlliance }: WorldPlayerDetailVie
 						{selectedWindow && (
 							<div className="flex flex-wrap items-center gap-2">
 								<Badge variant="outline">{formatChartTime(selectedWindow.startUnix)} – {formatChartTime(selectedWindow.endUnix)}</Badge>
-								<Button variant="ghost" size="sm" onClick={() => setSelectedWindow(null)}><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.clear.selection.cea4d2e0" /></Button>
+								<Button variant="ghost" size="sm" onClick={() => setSelectedWindow(null)}><LocalizedText messageKey="common.clearSelection" /></Button>
 							</div>
 						)}
 					</div>

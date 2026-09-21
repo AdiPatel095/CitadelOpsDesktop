@@ -1121,7 +1121,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
         saveLabel="Save Slot"
         footerLeading={editingSlot?.id ? (
           <Button variant="danger" onClick={deleteEditingSlot} leftIcon={<Trash2 className="h-4 w-4" />}>
-            <LocalizedText messageKey="ui.settings.components.weeklyScheduler.delete.e2d0a549" /></Button>
+            <LocalizedText messageKey="game.delete" /></Button>
         ) : undefined}
       >
         {editingSlot && (

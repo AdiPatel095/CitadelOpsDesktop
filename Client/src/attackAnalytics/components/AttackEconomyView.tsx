@@ -212,7 +212,7 @@ const AttackEconomyView = ({
             onClick={() => void loadAggregates()}
             disabled={loading}
           >
-            <LocalizedText messageKey="ui.attackAnalytics.components.attackEconomyView.refresh.0e916101" /></Button>
+            <LocalizedText messageKey="common.refresh" /></Button>
         )}
         meta={(
           <div className="flex flex-wrap items-center gap-2">
@@ -293,7 +293,7 @@ const AttackEconomyView = ({
                   {formatDate(customWindow.startUnix)} – {formatDate(customWindow.endUnix)}
                 </Badge>
                 <Button variant="ghost" size="sm" onClick={() => setCustomWindow(null)}>
-                  <LocalizedText messageKey="ui.attackAnalytics.components.attackEconomyView.clear.selection.cea4d2e0" /></Button>
+                  <LocalizedText messageKey="common.clearSelection" /></Button>
               </div>
             )}
           </div>

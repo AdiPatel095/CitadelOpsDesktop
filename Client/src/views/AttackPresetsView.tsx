@@ -1,3 +1,4 @@
+import { LocalizedRichText } from "../i18n/LocalizedRichText";
 import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { LocalizedText } from "../i18n/LocalizedText";
 import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
@@ -386,7 +387,7 @@ const AttackPresetsView: React.FC = () => {
         )}
         footer={(
           <div className="flex w-full items-center justify-end gap-2">
-            <Button variant="ghost" onClick={() => setImportOpen(false)}><LocalizedText messageKey="ui.views.attackPresetsView.cancel.19766ed6" /></Button>
+            <Button variant="ghost" onClick={() => setImportOpen(false)}><LocalizedText messageKey="game.cancel" /></Button>
             <Button
               onClick={handleImport}
               disabled={!importValue.trim()}
@@ -397,12 +398,7 @@ const AttackPresetsView: React.FC = () => {
         )}
       >
         <div className="space-y-4">
-          <p className="text-sm leading-relaxed text-text-muted">
-            The CRA <span className="font-mono text-text-main">A</span> formation,
-            <span className="font-mono text-text-main"> RW</span> courtyard troops, and
-            <span className="font-mono text-text-main"> AST</span> Sceat tools are imported.
-            Commander, source, target, travel, and other account-specific fields are ignored.
-          </p>
+          <p className="text-sm leading-relaxed text-text-muted"><LocalizedRichText messageKey="ui.rich.views.attackPresetsView.the.cra.codetext0.formation.codetext1.courtyard.troops.96c662c9" params={{"protocolCode":"CRA","codeText0":"A","codeText1":"RW","codeText2":"AST"}} tags={{span0: children => <span className="font-mono text-text-main">{children}</span>, span1: children => <span className="font-mono text-text-main">{children}</span>, span2: children => <span className="font-mono text-text-main">{children}</span>}} /></p>
           <label className="grid gap-2 text-xs font-bold text-text-muted">
             CRA command or JSON payload
             <textarea
@@ -475,7 +471,7 @@ const PresetCard: React.FC<{
         <div className="grid grid-cols-3 gap-2">
           <MetricTile label={localizeStatic("ui.views.attackPresetsView.label.waves.ad5b8321")} value={summary.waves.toLocaleString()} />
           <MetricTile label={localizeStatic("ui.views.attackPresetsView.label.troops.5d47e163")} value={summary.troops.toLocaleString()} />
-          <MetricTile label={localizeStatic("ui.views.attackPresetsView.label.tools.ea93d6a2")} value={summary.tools.toLocaleString()} />
+          <MetricTile label={localizeStatic("game.tools")} value={summary.tools.toLocaleString()} />
         </div>
         {summary.courtyardTroops > 0 || summary.courtyardTools > 0 ? (
           <Badge variant="warning" className="w-fit normal-case tracking-normal">

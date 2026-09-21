@@ -354,7 +354,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
         title={<ModalTitle icon={<AlertTriangle className="h-5 w-5" />}>Activate {eventLabel} advisor</ModalTitle>}
         footer={(
           <>
-            <Button variant="ghost" disabled={activating} onClick={() => setActivationOpen(false)}><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.cancel.19766ed6" /></Button>
+            <Button variant="ghost" disabled={activating} onClick={() => setActivationOpen(false)}><LocalizedText messageKey="game.cancel" /></Button>
             <Button
               variant="danger"
               isLoading={activating}

@@ -1,0 +1,6 @@
+{
+  "server.api.official_game_data_is.c5e55e7e": "Oficiální herní data nejsou k dispozici",
+  "server.api.official_language_data_is.803160d4": "Oficiální jazyková data nejsou k dispozici",
+  "server.api.unsupported_locale": "Nepodporované národní prostředí: {locale}",
+  "server.automation.safety_pause_after_an.67451716": "Bezpečnostní pozastavení po selhání automatizované akce"
+}

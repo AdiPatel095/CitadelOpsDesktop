@@ -1,15 +1,19 @@
 import React from 'react';
+import { useLocale } from '../i18n/LocaleContext';
 import { useAuth } from '../context/AuthContext';
 import { Button, type ButtonProps } from './ui';
 
-const GameButton: React.FC<ButtonProps> = ({ children, className, disabled, ...props }) => {
+type GameButtonProps = ButtonProps & { loggedOutAction?: 'enable' | 'use' };
+const GameButton: React.FC<GameButtonProps> = ({ children, className, disabled, loggedOutAction = 'use', ...props }) => {
+  const { message } = useLocale();
+  const loggedOutMessage = message(loggedOutAction === 'enable' ? 'gameButton.startToEnable' : 'gameButton.startToUse');
   const { gameLoggedIn } = useAuth();
 
   const isDisabled = disabled || !gameLoggedIn;
 
   const buttonContent = !gameLoggedIn ? (
     <span className="flex items-center gap-2">
-      <span>Start Bot to {typeof children === 'string' ? 'Enable' : 'Use'}</span>
+      <span lang={loggedOutMessage.resolvedLocale}>{loggedOutMessage.text}</span>
     </span>
   ) : (
     children

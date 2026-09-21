@@ -78,7 +78,7 @@ export function EquipmentSellModal({
 			title={<PillSelector ariaLabel={localizeStatic("ui.equipment.components.equipmentModals.ariaLabel.equipment.category.d378a1be")} value={relicTab} onChange={(value) => setRelicTab(value as RelicTab)} options={['Non Relic', 'Relic 1.0', 'Relic 2.0']} size="header" fullWidth />}
 			footer={(
 				<>
-					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="ui.equipment.components.equipmentModals.cancel.19766ed6" /></Button>
+					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
 					<Button variant="danger" onClick={confirm} isLoading={busy}><LocalizedText messageKey="ui.equipment.components.equipmentModals.confirm.sell.827ff403" /></Button>
 				</>
 			)}
@@ -172,7 +172,7 @@ export function EquipmentSwapModal({
 			maxWidth="2xl"
 			footer={(
 				<>
-					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="ui.equipment.components.equipmentModals.cancel.19766ed6" /></Button>
+					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
 					<Button disabled={otherID == null} onClick={() => otherID != null && onConfirm(otherID)} isLoading={busy}><LocalizedText messageKey="ui.equipment.components.equipmentModals.swap.pieces.86121fb1" /></Button>
 				</>
 			)}
@@ -246,7 +246,7 @@ export function EquipmentEventModal({
 			maxWidth="2xl"
 			footer={(
 				<>
-					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="ui.equipment.components.equipmentModals.cancel.19766ed6" /></Button>
+					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
 					<Button
 						disabled={!canApply}
 						onClick={() => selectedEvent && onConfirm(selectedEvent, selectedTier ?? undefined)}
@@ -373,7 +373,7 @@ export function UnequipModal({
 			title={`Unequip ${kind === 'equipment' ? 'Equipment' : 'Gems'}`}
 			footer={(
 				<>
-					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="ui.equipment.components.equipmentModals.cancel.19766ed6" /></Button>
+					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
 					<Button disabled={selected.size === 0} onClick={() => onConfirm(Array.from(selected))} isLoading={busy}>Unequip {selected.size ? `(${selected.size})` : ''}</Button>
 				</>
 			)}
@@ -461,7 +461,7 @@ export function UpgradeModal({
 			title={`Upgrade ${kind === 'equipment' ? 'Equipment' : 'Gem'}`}
 			footer={(
 				<>
-					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="ui.equipment.components.equipmentModals.cancel.19766ed6" /></Button>
+					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
 					<Button
 						disabled={selectedID == null || selectedLevelCap == null || currentLevel >= selectedLevelCap || targetLevel <= currentLevel || targetLevel > selectedLevelCap || coinBlocked}
 						onClick={() => selectedID != null && onConfirm(selectedID, targetLevel)}

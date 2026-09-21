@@ -39,7 +39,7 @@ export const NamedPresetControls: React.FC<NamedPresetControlsProps> = ({
     <div className="mb-3 text-xs font-bold uppercase tracking-wider text-primary"><LocalizedText messageKey="ui.components.ui.namedPresetControls.presets.954f93fe" /></div>
     <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end">
       <label className="flex min-w-0 flex-1 flex-col gap-1.5 md:min-w-[220px]">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.components.ui.namedPresetControls.preset.name.e534a666" /></span>
+        <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="common.presetName" /></span>
         <Input
           type="text"
           placeholder="Name for new preset or rename on save"
@@ -55,7 +55,7 @@ export const NamedPresetControls: React.FC<NamedPresetControlsProps> = ({
           <div className="min-w-0 flex-1">
             <Select value={selectedID} onChange={onSelectedIDChange} options={options} ariaLabel="Load preset" disabled={disabled} />
           </div>
-          <Button variant="outline" onClick={onApply} disabled={disabled} className="w-full shrink-0 bg-bg-card md:w-auto"><LocalizedText messageKey="ui.components.ui.namedPresetControls.apply.31e392d1" /></Button>
+          <Button variant="outline" onClick={onApply} disabled={disabled} className="w-full shrink-0 bg-bg-card md:w-auto"><LocalizedText messageKey="common.apply" /></Button>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap">
@@ -68,7 +68,7 @@ export const NamedPresetControls: React.FC<NamedPresetControlsProps> = ({
         >
           <LocalizedText messageKey="ui.components.ui.namedPresetControls.save.as.new.84b113d1" /></Button>
         <Button variant="danger" disabled={disabled || !selectedID} onClick={onDelete} className="min-w-0 px-2 md:px-3" leftIcon={<Trash2 className="h-4 w-4" />}>
-          <LocalizedText messageKey="ui.components.ui.namedPresetControls.delete.e2d0a549" /></Button>
+          <LocalizedText messageKey="game.delete" /></Button>
       </div>
     </div>
     {help && <p className="mt-3 text-xs text-text-muted">{help}</p>}

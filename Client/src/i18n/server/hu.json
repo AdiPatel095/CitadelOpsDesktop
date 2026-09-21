@@ -1,0 +1,6 @@
+{
+  "server.api.official_game_data_is.c5e55e7e": "A hivatalos játékadatok nem érhetők el",
+  "server.api.official_language_data_is.803160d4": "A hivatalos nyelvi adatok nem érhetők el",
+  "server.api.unsupported_locale": "Nem támogatott területi beállítás: {locale}",
+  "server.automation.safety_pause_after_an.67451716": "Biztonsági szünet egy automatizált művelet sikertelensége után"
+}

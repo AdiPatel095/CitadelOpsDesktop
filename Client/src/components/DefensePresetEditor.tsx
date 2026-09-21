@@ -123,8 +123,8 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
       )}
       footer={
         <>
-          <Button variant="ghost" disabled={saving} onClick={onClose}><LocalizedText messageKey="ui.components.defensePresetEditor.cancel.19766ed6" /></Button>
-          <Button isLoading={saving} disabled={isMetadataLoading || unitsError != null} onClick={submit}><LocalizedText messageKey="ui.components.defensePresetEditor.save.preset.362a1376" /></Button>
+          <Button variant="ghost" disabled={saving} onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
+          <Button isLoading={saving} disabled={isMetadataLoading || unitsError != null} onClick={submit}><LocalizedText messageKey="common.savePreset" /></Button>
         </>
       }
     >
@@ -135,7 +135,7 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
 				</div>
 			) : null}
         <section className="rounded-global border border-border-base bg-bg-card/65 p-3 shadow-[var(--shadow-raised)]">
-          <label className="mb-2 block text-xs font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.components.defensePresetEditor.preset.name.e534a666" /></label>
+          <label className="mb-2 block text-xs font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="common.presetName" /></label>
           <Input
             autoFocus
             value={draft.name}

@@ -153,7 +153,7 @@ const WorldAllianceDetailView = ({ profile, onOpenPlayer }: WorldAllianceDetailV
 					</div>
 					<div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-text-muted">
 						<span><LocalizedText messageKey="ui.worldIntelligence.components.worldAllianceDetailView.hover.to.inspect.a.public.observation.drag.da1f1924" /></span>
-						{selectedWindow && <div className="flex flex-wrap items-center gap-2"><Badge variant="outline">{formatChartTime(selectedWindow.startUnix)} – {formatChartTime(selectedWindow.endUnix)}</Badge><Button variant="ghost" size="sm" onClick={() => setSelectedWindow(null)}><LocalizedText messageKey="ui.worldIntelligence.components.worldAllianceDetailView.clear.selection.cea4d2e0" /></Button></div>}
+						{selectedWindow && <div className="flex flex-wrap items-center gap-2"><Badge variant="outline">{formatChartTime(selectedWindow.startUnix)} – {formatChartTime(selectedWindow.endUnix)}</Badge><Button variant="ghost" size="sm" onClick={() => setSelectedWindow(null)}><LocalizedText messageKey="common.clearSelection" /></Button></div>}
 					</div>
 					<TrendChart
 						points={chartPoints}
@@ -197,7 +197,7 @@ const WorldAllianceDetailView = ({ profile, onOpenPlayer }: WorldAllianceDetailV
 				<CardContent className="pt-0">
 					<div className="max-h-[34rem] overflow-auto rounded-global border border-border-base custom-scrollbar">
 						<table className="w-full min-w-[40rem] text-sm">
-							<thead className="sticky top-0 z-10 bg-bg-card text-[10px] uppercase tracking-wide text-text-muted"><tr><th className="px-3 py-2 text-left"><LocalizedText messageKey="ui.worldIntelligence.components.worldAllianceDetailView.player.64aee8c6" /></th><th className="px-3 py-2 text-right"><LocalizedText messageKey="ui.worldIntelligence.components.worldAllianceDetailView.level.1709305c" /></th><th className="px-3 py-2 text-right"><LocalizedText messageKey="ui.worldIntelligence.components.worldAllianceDetailView.might.f68b032e" /></th></tr></thead>
+							<thead className="sticky top-0 z-10 bg-bg-card text-[10px] uppercase tracking-wide text-text-muted"><tr><th className="px-3 py-2 text-left"><LocalizedText messageKey="ui.worldIntelligence.components.worldAllianceDetailView.player.64aee8c6" /></th><th className="px-3 py-2 text-right"><LocalizedText messageKey="game.level" /></th><th className="px-3 py-2 text-right"><LocalizedText messageKey="ui.worldIntelligence.components.worldAllianceDetailView.might.f68b032e" /></th></tr></thead>
 							<tbody>{profile.members.map((member) => <tr key={member.playerId} className="border-t border-border-base hover:bg-bg-card-hover"><td className="px-3 py-2.5"><button type="button" className="font-bold text-text-main hover:text-primary" onClick={() => onOpenPlayer(member)}>{member.name}</button></td><td className="px-3 py-2.5 text-right text-text-muted">{member.legendLevel ? `Legend ${member.legendLevel}` : member.level ? `Level ${member.level}` : '—'}</td><td className="px-3 py-2.5 text-right font-mono font-bold text-text-main">{formatNumber(member.might)}</td></tr>)}</tbody>
 						</table>
 					</div>

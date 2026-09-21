@@ -676,7 +676,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
               onClick={() => onOpenFeatureSchedule(definition.featureID, definition.featureLabel)}
               leftIcon={<CalendarDays className="h-4 w-4" />}
             >
-              <LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.calendar.d5d0a30b" /></Button>
+              <LocalizedText messageKey="common.calendar" /></Button>
           </div>
         )}
       >
@@ -734,7 +734,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
             onClick={() => onOpenFeatureSchedule(definition.featureID, definition.featureLabel)}
             leftIcon={<CalendarDays className="h-4 w-4" />}
           >
-            <LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.calendar.d5d0a30b" /></Button>
+            <LocalizedText messageKey="common.calendar" /></Button>
         </div>
       )}
     >

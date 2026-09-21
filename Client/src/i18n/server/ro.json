@@ -1,0 +1,6 @@
+{
+  "server.api.official_game_data_is.c5e55e7e": "Datele oficiale ale jocului nu sunt disponibile",
+  "server.api.official_language_data_is.803160d4": "Datele lingvistice oficiale nu sunt disponibile",
+  "server.api.unsupported_locale": "Setare regională neacceptată: {locale}",
+  "server.automation.safety_pause_after_an.67451716": "Pauză de siguranță după eșecul unei acțiuni automatizate"
+}

@@ -51,7 +51,7 @@ const RiftCoordDisplay: React.FC = () => {
           title={gameLoggedIn ? 'Refresh Rift coords from game (GAA)' : 'Connect to refresh live map data'}
           leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
         >
-          <LocalizedText messageKey="ui.rift.components.riftCoordDisplay.refresh.0e916101" /></Button>
+          <LocalizedText messageKey="common.refresh" /></Button>
       )}
     >
       {!found || !rift ? (

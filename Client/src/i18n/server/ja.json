@@ -1,0 +1,6 @@
+{
+  "server.api.official_game_data_is.c5e55e7e": "公式ゲームデータを利用できません",
+  "server.api.official_language_data_is.803160d4": "公式言語データを利用できません",
+  "server.api.unsupported_locale": "未対応のロケールです：{locale}",
+  "server.automation.safety_pause_after_an.67451716": "自動化操作が失敗したため、安全のために一時停止しています"
+}

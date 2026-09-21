@@ -1,3 +1,4 @@
+import { LocalizedRichText } from "../../i18n/LocalizedRichText";
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
@@ -253,7 +254,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 						onClick={() => onOpenFeatureSchedule('autoBeriWorld', 'Auto Beri World')}
 						leftIcon={<CalendarDays className="h-4 w-4" />}
 					>
-						<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.calendar.d5d0a30b" /></Button>
+						<LocalizedText messageKey="common.calendar" /></Button>
 			)}
 			maxWidth="4xl"
 			onSave={save}
@@ -626,11 +627,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							menuGrowToViewport
 						/>
 					</label>
-					<p className="text-xs text-text-muted">
-						CitadelOps sends the exact <span className="font-mono"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.fuc.63ca2042" /></span> capacity with <span className="font-mono"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.kut.341e7a8f" /></span>.
-						When skipping is enabled, it applies the selected <span className="font-mono"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.msk.3521dbfc" /></span> immediately, then checks a still-travelling transfer once per minute.
-						The selection stays saved while skipping is off.
-					</p>
+					<p className="text-xs text-text-muted"><LocalizedRichText messageKey="ui.rich.settings.components.autoBeriWorldSettingsModal.citadelops.sends.the.exact.codetext0.capacity.with.9d6cf133" params={{"codeText0":"fuc","codeText1":"kut","codeText2":"msk"}} tags={{span0: children => <span className="font-mono">{children}</span>, span1: children => <span className="font-mono">{children}</span>, span2: children => <span className="font-mono">{children}</span>}} /></p>
 				</div>
 
 				<div className="space-y-1.5">
@@ -698,7 +695,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							wireCastleId: Number.isFinite(Number(event.target.value)) ? Math.trunc(Number(event.target.value)) : -1,
 						}))}
 					/>
-					<p className="text-xs text-text-muted">The game normally expects <span className="font-mono">-1</span>.</p>
+					<p className="text-xs text-text-muted"><LocalizedRichText messageKey="ui.rich.settings.components.autoBeriWorldSettingsModal.the.game.normally.expects.codetext0.c76ffaa1" params={{"codeText0":"-1"}} tags={{span0: children => <span className="font-mono">{children}</span>}} /></p>
 				</div>
 
 				{saveError && <p className="text-xs text-error">{saveError}</p>}

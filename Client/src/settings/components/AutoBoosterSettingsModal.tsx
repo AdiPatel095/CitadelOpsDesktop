@@ -1,3 +1,4 @@
+import { LocalizedRichText } from "../../i18n/LocalizedRichText";
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
@@ -104,7 +105,7 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
           onClick={() => onOpenFeatureSchedule('autoBooster', 'Auto Booster')}
           leftIcon={<CalendarDays className="h-4 w-4" />}
         >
-          <LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.calendar.d5d0a30b" /></Button>
+          <LocalizedText messageKey="common.calendar" /></Button>
       )}
       onSave={save}
       saveLabel="Save booster guard"
@@ -233,7 +234,7 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
 
       <div className="mt-4 flex items-start gap-3 rounded-global border border-primary/25 bg-primary/5 p-4 text-xs text-text-muted">
         <Zap className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-        <p><strong className="text-text-main"><LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.independent.by.design.c461f898" /></strong> Auto Booster only buys this one daily global effect. Auto Fortress can run without it, while enabling both is recommended for the fastest fortress marches.</p>
+        <p><LocalizedRichText messageKey="ui.rich.settings.components.autoBoosterSettingsModal.independent.by.design.auto.booster.only.buys.5ea3f461" params={{}} tags={{strong0: children => <strong className="text-text-main">{children}</strong>}} /></p>
       </div>
     </SettingsModal>
   );

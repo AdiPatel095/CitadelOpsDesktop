@@ -328,7 +328,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
               onClick={() => onOpenFeatureSchedule('autoBird', 'Auto Bird')}
               leftIcon={<CalendarDays className="h-4 w-4" />}
             >
-              <LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.calendar.d5d0a30b" /></Button>
+              <LocalizedText messageKey="common.calendar" /></Button>
       )}
       onSave={handleSave}
       saveLabel="Save changes"
@@ -422,8 +422,8 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
           disabled={isSaving}
           help={(
             <>
-            Choose a preset and click <span className="font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.apply.31e392d1" /></span> to make it the runtime default and load it into the grid.{' '}
-            <span className="font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBirdSettingsModal.save.changes.dd0ae7a5" /></span> persists that selection and updates the applied preset
+            Choose a preset and click <span className="font-semibold text-text-main"><LocalizedText messageKey="common.apply" /></span> to make it the runtime default and load it into the grid.{' '}
+            <span className="font-semibold text-text-main"><LocalizedText messageKey="common.saveChanges" /></span> persists that selection and updates the applied preset
             (including its name). Another feature can switch the runtime default by preset ID, while Calendar periods can override it.
             </>
           )}

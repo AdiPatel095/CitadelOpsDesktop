@@ -32,3 +32,24 @@ test('invalid caller tags never produce arbitrary markup',()=>{
  assert.equal(result.translated,false);
  assert.match(renderToStaticMarkup(result.content),/&lt;privacy&gt;/);
 });
+test('Arabic rich argument isolation preserves selector values and user braces',()=>{
+ const message={key:'x',fallback:'<name>{user}</name>: {kind, select, player {player} other {other}}',params:{user:'Player-7 {x}',kind:'player'}};
+ const result=renderRichMessage(message,'ar',{x:'<name>{user}</name>: {kind, select, player {لاعب} other {آخر}}'},{name:children=>createElement('b',null,...children)});
+ assert.equal(result.translated,true);
+ assert.match(renderToStaticMarkup(result.content),/\u2068Player-7 \{x\}\u2069/);
+ assert.match(renderToStaticMarkup(result.content),/لاعب/);
+});
+test('project rich source templates match explicit scalar and tag contracts',async()=>{
+ const {richMessages,richContracts}=await import('../src/i18n/richMessages.ts');
+ assert.deepEqual(validateRichMessageCatalog(richMessages,richMessages,richContracts),[]);
+ for(const [key,fallback] of Object.entries(richMessages)) {
+  const contract=richContracts[key];
+  const params=Object.fromEntries(contract.arguments.map(name=>[name,name === 'cost' ? 2500 : 'protocol_{unchanged}']));
+  const callbacks=Object.fromEntries(contract.tags.map(name=>[name,children=>createElement('b',{key:name},...children)]));
+  const result=renderRichMessage({key,fallback,params},'en',{},callbacks);
+  const html=renderToStaticMarkup(result.content);
+  assert.equal(result.translated,false);
+  if(contract.arguments.some(name=>name!=='cost'))assert.match(html,/protocol_\{unchanged\}/);
+  assert.equal(html.includes('&lt;span0&gt;'),false,key);
+ }
+});

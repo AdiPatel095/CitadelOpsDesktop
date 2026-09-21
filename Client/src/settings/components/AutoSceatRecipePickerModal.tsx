@@ -179,7 +179,7 @@ export const AutoSceatRecipePickerModal: React.FC<AutoSceatRecipePickerModalProp
         </div>
 
         <div className="flex justify-end">
-          <Button variant="ghost" onClick={onClose}><LocalizedText messageKey="ui.settings.components.autoSceatRecipePickerModal.close.7d9eb7ac" /></Button>
+          <Button variant="ghost" onClick={onClose}><LocalizedText messageKey="common.close" /></Button>
         </div>
       </div>
     </Modal>

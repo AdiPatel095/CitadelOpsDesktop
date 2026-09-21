@@ -1,3 +1,4 @@
+import { LocalizedRichText } from "../../i18n/LocalizedRichText";
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
@@ -136,7 +137,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
           onClick={() => onOpenFeatureSchedule('autoFortress', 'Auto Fortress')}
           leftIcon={<CalendarDays className="h-4 w-4" />}
         >
-          <LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.calendar.d5d0a30b" /></Button>
+          <LocalizedText messageKey="common.calendar" /></Button>
       )}
       onSave={save}
       saveLabel="Save fortress plan"
@@ -329,7 +330,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
           </div>
           <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-[11px] text-text-muted">
             <Zap className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-            <span><strong className="text-text-main"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.recommended.c2ab5611" /></strong> enable the separate Auto Booster feature to buy the 2,500-ruby daily global fortress-speed boost. Auto Fortress does not require, purchase, or spend rubies on that boost.</span>
+            <span><LocalizedRichText messageKey="ui.rich.settings.components.autoFortressSettingsModal.recommended.enable.the.separate.auto.booster.feature.13180338" params={{cost:2500}} tags={{strong0: children => <strong className="text-text-main">{children}</strong>}} /></span>
           </div>
           <div className="mt-4 rounded-xl border border-border-base bg-bg-app/55 p-3">
             <HorseTravelBoostSelect

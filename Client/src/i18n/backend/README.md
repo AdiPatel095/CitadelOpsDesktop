@@ -19,8 +19,8 @@ Coverage records must distinguish authored translations, fallback and review.
 - German uses informal singular `du` and imperative `Gib`/`Prüfe`. French uses
   polite `vous` and imperatives `Saisissez`/`Vérifiez`. Spanish uses informal
   singular `tú` and imperatives `Introduce`/`Revisa`. Italian uses informal
-  singular `tu` with `Inserisci`/`Controlla`. Portuguese uses European Portuguese
-  with polite imperative forms `Introduza`/`Verifique`.
+  singular `tu` with `Inserisci`/`Controlla`. Portuguese follows the official game’s Brazilian vocabulary/register
+  with `você`, `Digite`, `Salvar`, `senha` and `usuário`.
 - Runtime means an executing account instance; launch means a captured Rift
   launch record. Tombstone means a deletion marker, not an in-game grave.
 - A hosted tenant is an access-isolated account; it is not a player alliance.
@@ -46,3 +46,15 @@ Polish uses direct singular address. Official v4357 `battlelog` is Raport z bitw
 Variable maxima use neutral limit phrasing to avoid incorrect noun inflection;
 technical field names, strict positivity, non-negativity and byte limits remain
 unchanged in meaning.
+Turkish uses polite plural imperatives. Official v4357 `battlelog` is Savaş raporu.
+“Başlatma” denotes a captured launch record; “silme işareti” is a deletion marker.
+Russian uses polite plural imperatives. Official v4357 `battlelog` is Отчет о
+сражении, inflected in sentences. Attack validity is a captured-record validity
+value, not an expiry duration; sharing a spy report grants access and does not
+claim public publication.
+
+Portuguese terminology also checked against official v4357
+`generic_login_password`, `generic_login_loginname`,
+`dialog_battleLogDetail_wave` and `dialog_troopPreset_savePreset_selectSingleWave_tt`.
+Attack waves are ondas, not vagas. The public locale remains pt, matching the
+official service; no invented regional locale or game-language change is made.

@@ -84,7 +84,7 @@ const SpyReportsView = () => {
         title={localizeStatic("ui.spyReports.components.spyReportsView.title.spy.reports.a4541090")}
         description={localizeStatic("ui.spyReports.components.spyReportsView.description.review.successful.partial.and.failed.espionage.attempts.8d264ff4")}
         icon={<Binoculars className="h-6 w-6" />}
-        actions={<Button variant="secondary" onClick={() => void load()} isLoading={loading} leftIcon={<RefreshCw className="h-4 w-4" />}><LocalizedText messageKey="ui.spyReports.components.spyReportsView.refresh.0e916101" /></Button>}
+        actions={<Button variant="secondary" onClick={() => void load()} isLoading={loading} leftIcon={<RefreshCw className="h-4 w-4" />}><LocalizedText messageKey="common.refresh" /></Button>}
       />
 
       <Card>
@@ -92,7 +92,7 @@ const SpyReportsView = () => {
         <div className="overflow-x-auto">
           <table className="w-full min-w-[860px] text-left text-sm">
             <thead className="border-b border-border-base bg-bg-card/25 text-xs uppercase text-text-muted">
-              <tr><th className="px-5 py-3"><LocalizedText messageKey="ui.spyReports.components.spyReportsView.target.978354db" /></th><th className="px-4 py-3"><LocalizedText messageKey="ui.spyReports.components.spyReportsView.castle.419fb3b8" /></th><th className="px-4 py-3"><LocalizedText messageKey="ui.spyReports.components.spyReportsView.result.6e7d50e8" /></th><th className="px-4 py-3 text-right"><LocalizedText messageKey="ui.spyReports.components.spyReportsView.troops.seen.b3173fac" /></th><th className="px-4 py-3 text-right"><LocalizedText messageKey="ui.spyReports.components.spyReportsView.accuracy.ac991dd3" /></th><th className="px-5 py-3"><LocalizedText messageKey="ui.spyReports.components.spyReportsView.captured.8a03fa9a" /></th></tr>
+              <tr><th className="px-5 py-3"><LocalizedText messageKey="ui.spyReports.components.spyReportsView.target.978354db" /></th><th className="px-4 py-3"><LocalizedText messageKey="game.castle" /></th><th className="px-4 py-3"><LocalizedText messageKey="ui.spyReports.components.spyReportsView.result.6e7d50e8" /></th><th className="px-4 py-3 text-right"><LocalizedText messageKey="ui.spyReports.components.spyReportsView.troops.seen.b3173fac" /></th><th className="px-4 py-3 text-right"><LocalizedText messageKey="ui.spyReports.components.spyReportsView.accuracy.ac991dd3" /></th><th className="px-5 py-3"><LocalizedText messageKey="ui.spyReports.components.spyReportsView.captured.8a03fa9a" /></th></tr>
             </thead>
             <tbody className="divide-y divide-border-base/70">
               {reports.map((report) => (

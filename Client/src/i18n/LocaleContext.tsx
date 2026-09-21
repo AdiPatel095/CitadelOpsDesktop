@@ -1,3 +1,4 @@
+import { loadServerCatalog } from './serverCatalog';
 import { invalidateOfficialMessages } from './officialMessages';
 import { loadBackendCatalog } from './backendCatalog';
 import { officialMessageKeys } from './officialKeys';
@@ -33,7 +34,7 @@ export function LocaleProvider({children}: {children: React.ReactNode}) {
   const [loaded,setLoaded] = useState<{locale: Locale; catalog: Catalog}>({locale:'en',catalog:{}});
   useEffect(() => {
     let active = true;
-    void Promise.all([loadMessageCatalog(locale),loadBackendCatalog(locale)]).then(([custom,backend]) => { if (active) setLoaded({locale,catalog:{...backend,...custom}}); }).catch(() => { if (active) setLoaded({locale,catalog:{}}); });
+    void Promise.all([loadMessageCatalog(locale),loadBackendCatalog(locale),loadServerCatalog(locale)]).then(([custom,backend,server]) => { if (active) setLoaded({locale,catalog:{...server,...backend,...custom}}); }).catch(() => { if (active) setLoaded({locale,catalog:{}}); });
     return () => { active = false; };
   },[locale]);
   useEffect(() => {

@@ -1,3 +1,4 @@
+import { LocalizedRichText } from "../i18n/LocalizedRichText";
 import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
@@ -825,7 +826,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                 <span className="automation-function-group-rule" aria-hidden="true" />
                 <div className="automation-right-click-banner automation-right-click-inline" role="note">
                   <MousePointerClick aria-hidden="true" />
-                  <span><strong className="text-text-main"><LocalizedText messageKey="ui.views.automationView.right.click.58ca4ab7" /></strong> a toggle for temporary activation</span>
+                  <span><LocalizedRichText messageKey="ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee" params={{}} tags={{strong0: children => <strong className="text-text-main">{children}</strong>}} /></span>
                 </div>
               </div>
               <div className="automation-function-grid">
@@ -917,7 +918,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
         title={
           <ModalTitle icon={<Trash2 className="h-5 w-5" />}><LocalizedText messageKey="ui.views.automationView.auto.equipment.cleanup.4116a164" /></ModalTitle>
         }
-        footer={<Button variant="ghost" onClick={() => setIsEquipmentCleanupSettingsOpen(false)}><LocalizedText messageKey="ui.views.automationView.close.7d9eb7ac" /></Button>}
+        footer={<Button variant="ghost" onClick={() => setIsEquipmentCleanupSettingsOpen(false)}><LocalizedText messageKey="common.close" /></Button>}
       >
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-global border border-primary/20 bg-primary/5 p-4">

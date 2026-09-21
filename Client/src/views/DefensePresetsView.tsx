@@ -392,7 +392,7 @@ const PresetCard: React.FC<{
           <MetricTile label={localizeStatic("ui.views.defensePresetsView.label.left.58eb9032")} value={`${preset.wall.left.unitPercent}%`} />
           <MetricTile label={localizeStatic("ui.views.defensePresetsView.label.front.a6175902")} value={`${preset.wall.middle.unitPercent}%`} />
           <MetricTile label={localizeStatic("ui.views.defensePresetsView.label.right.883361d5")} value={`${preset.wall.right.unitPercent}%`} />
-          <MetricTile label={localizeStatic("ui.views.defensePresetsView.label.tools.ea93d6a2")} value={summary.toolAmount.toLocaleString()} />
+          <MetricTile label={localizeStatic("game.tools")} value={summary.toolAmount.toLocaleString()} />
         </div>
         <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
           <div className="rounded-global border border-border-base bg-bg-app/35 p-3">

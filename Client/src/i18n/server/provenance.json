@@ -1,0 +1,1367 @@
+{
+  "authoring": "Direct agent-authored translations; no native-speaker review claimed. Rejected local MT pilot output is not used.",
+  "entries": {
+    "ar": {
+      "server.api.official_game_data_is.c5e55e7e": {
+        "method": "agent-authored",
+        "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
+        "translationSha256": "acefc6c16c05099c0be7f64079495bba02dee8cac2112ec2fcf22288a8402f02"
+      },
+      "server.api.official_language_data_is.803160d4": {
+        "method": "agent-authored",
+        "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
+        "translationSha256": "41b8634aefd5d7488fa2a046fb3fc37d7ce812712093448a9becf2d447f7320a"
+      },
+      "server.api.unsupported_locale": {
+        "method": "agent-authored",
+        "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
+        "translationSha256": "5f7516702ca128d170cf3a2e9976d654206037253613eea53cbc764d78f30772"
+      },
+      "server.automation.safety_pause_after_an.67451716": {
+        "method": "agent-authored",
+        "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
+        "translationSha256": "fa16fd651ecb7b7b7018835913b063f3e8d1837a35b53bcc01adb1e6aeab6afd"
+      }
+    },
+    "bg": {
+      "server.api.official_game_data_is.c5e55e7e": {
+        "method": "agent-authored",
+        "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
+        "translationSha256": "8d53e3141f6cf88a0ffaf0a74c084e55002e5e72fa8524f3fbf6f072f0c10621"
+      },
+      "server.api.official_language_data_is.803160d4": {
+        "method": "agent-authored",
+        "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
+        "translationSha256": "c0b0d918a84f631af7fc53956e5446bb228dd18cbbca277be72a8e123d251f41"
+      },
+      "server.api.unsupported_locale": {
+        "method": "agent-authored",
+        "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
+        "translationSha256": "205b620e06078cd3a396d16ffd5550a079b11a21dd6fe508146f4b940d1fd7da"
+      },
+      "server.automation.safety_pause_after_an.67451716": {
+        "method": "agent-authored",
+        "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
+        "translationSha256": "0822220ab533133fc4fa41f25b3abab4a228d247cb34da8f91c65545c506cf28"
+      }
+    },
+    "cs": {
+      "server.api.official_game_data_is.c5e55e7e": {
+        "method": "agent-authored",
+        "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
+        "translationSha256": "2378a1e67b0e4d72e4dfadfd7df846a0300c1f5210465ded05b4a815067ca270"
+      },
+      "server.api.official_language_data_is.803160d4": {
+        "method": "agent-authored",
+        "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
+        "translationSha256": "1f72eddf6e79f8e15e1d4ee0f4b3cc995c3ce28e12a6d453004bcb332dd5c4b5"
+      },
+      "server.api.unsupported_locale": {
+        "method": "agent-authored",
+        "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
+        "translationSha256": "f6bac8dc1fcdc0be8249a91fe853f8bf2fae0a377cd654535357d2ce2a152292"
+      },
+      "server.automation.safety_pause_after_an.67451716": {
+        "method": "agent-authored",
+        "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
+        "translationSha256": "064f5ae5f829830bb69904e87f96d5786e68963b1d39c7273b56bc9ae5b80f47"
+      }
+    },
+    "da": {
+      "server.api.event_occurrence_id_is.3c0ae253": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.event_occurrence_id_is_invalid",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "3c0ae253fa0225afd286348edcde8c7e8c9dac41d833d90741ee71a5e63228c4",
+        "translationSha256": "99b30b034e44c7c19f9814514cd3987e649536561191a4390390bf7dd7b50bf1"
+      },
+      "server.api.eventkey_is_invalid.5fa0f899": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.eventkey_is_invalid",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
+        "translationSha256": "252d9b295b581546ea1f41b331ec543c4b911194c46ebbd022c5eb9367a31929"
+      },
+      "server.api.official_game_data_is.c5e55e7e": {
+        "method": "agent-authored",
+        "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
+        "translationSha256": "51f28e9bf35f9b4de6a18dd1db2ce718589d2956a51f46e8b3479a25fea518f2"
+      },
+      "server.api.official_language_data_is.803160d4": {
+        "method": "agent-authored",
+        "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
+        "translationSha256": "24c0108526940cb66418b479687f5c58a8d703bc4769559e12ee7b0b0d2cf0e4"
+      },
+      "server.api.ranking_metric_type_must.179bda7e": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.ranking_metric_type_must_be_players_or_alliances",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "179bda7e6a486e1d7861b4322965d405fcf25e162cf4604387953019aa63c08c",
+        "translationSha256": "acf6ba6c56289ee516971fab07f3386451d51c5476af495d4c69ca2580a835b5"
+      },
+      "server.api.ranking_type_must_be.ae1d21f5": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.ranking_type_must_be_players_or_alliances",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
+        "translationSha256": "07d9ac2b50ae5ee886b73e76da69c3c3341b30f2993b479bca212aeb565b1500"
+      },
+      "server.api.streaming_responses_are_unavailable.dbad8099": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.streaming_responses_are_unavailable",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
+        "translationSha256": "3db2dd101c2a2108ed33a7a5b4aaa36102c5b293519c55c0e402ff6dafa398ec"
+      },
+      "server.api.type_must_be_player.6c2ff66b": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.type_must_be_player_or_alliance",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
+        "translationSha256": "0b6b5bc8cc25cfe65dc8a6a6f0ef04592af70f0dd254fe4f47a4b0ba8072ea59"
+      },
+      "server.api.unsupported_locale": {
+        "method": "agent-authored",
+        "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
+        "translationSha256": "e90afbe0703d98321ba2a180e3399c5d76df5c2eedd1496991d7825e3063808a"
+      },
+      "server.app.cra_books_payload_must.7aa91e61": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_books_payload_must_be_an_empty_array",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "7aa91e61316a66affa876e779876195cdeb205080aea15d60002a9b973f1a0b5",
+        "translationSha256": "23115326b4b2da2fc7eebc3f5aed4097258c0d25d5103833c47f52c075db213a"
+      },
+      "server.app.cra_support_tools_contain.6615c823": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_support_tools_contain_an_invalid_item_id",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "6615c82355895557519353a8195c08667e84fdf18cbe205f4e066a04b538671f",
+        "translationSha256": "09700d8d3907cbb785bf1c6cf76623ceea3556a8d3b9c1daf05cb29cfde8f908"
+      },
+      "server.app.cra_support_troop_count.2d16227f": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_support_troop_count_is_outside_supported_bounds",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "2d16227f086d0faa7d43ecec40583517648b37fdd52d3cbafb4d2da72fcb7ef2",
+        "translationSha256": "e1380329909db7d2010695139309606dc7f8919e48fa484fa1821f02ad367525"
+      },
+      "server.automation.safety_pause_after_an.67451716": {
+        "method": "agent-authored",
+        "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
+        "translationSha256": "fe91a4a945d3ffaa3bb669eb378758af5c52a0e17c6ce3fee78d82a8957534df"
+      }
+    },
+    "de": {
+      "server.api.event_occurrence_id_is.3c0ae253": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.event_occurrence_id_is_invalid",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "3c0ae253fa0225afd286348edcde8c7e8c9dac41d833d90741ee71a5e63228c4",
+        "translationSha256": "8068709e9fac4b33084839f50be834c777c4d0d6cfee849b2afc5673dc65ae4b"
+      },
+      "server.api.eventkey_is_invalid.5fa0f899": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.eventkey_is_invalid",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
+        "translationSha256": "92ba942319b56c0cf1298182e4a04f5005bea1a8f0eeec447e860e88024d3409"
+      },
+      "server.api.official_game_data_is.c5e55e7e": {
+        "method": "agent-authored",
+        "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
+        "translationSha256": "bee7d4b034bb9990903fd786568a20ed85c63c2a8aa52b578eab42a6a3a07b0c"
+      },
+      "server.api.official_language_data_is.803160d4": {
+        "method": "agent-authored",
+        "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
+        "translationSha256": "888d1247142b1a423492d74ff89c14da1d38ec304d08d54d3a0cf2e756ef0116"
+      },
+      "server.api.ranking_metric_type_must.179bda7e": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.ranking_metric_type_must_be_players_or_alliances",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "179bda7e6a486e1d7861b4322965d405fcf25e162cf4604387953019aa63c08c",
+        "translationSha256": "8d026f5c55ddfb6f5d0a21f1c912d7fa5fb6afad13e5c86efa175bc41db658e7"
+      },
+      "server.api.ranking_type_must_be.ae1d21f5": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.ranking_type_must_be_players_or_alliances",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
+        "translationSha256": "0fcea529820be7d941ed28cbec3d2767aad84de528774e0b3bed097f57b046ff"
+      },
+      "server.api.streaming_responses_are_unavailable.dbad8099": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.streaming_responses_are_unavailable",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
+        "translationSha256": "bbeb748fd797b10b3bfa6450b5592256d5c104abae80efea69403e31f6258b99"
+      },
+      "server.api.type_must_be_player.6c2ff66b": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.type_must_be_player_or_alliance",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
+        "translationSha256": "a43d22d3dcd048b3010c9e769bcf487284d5e9e6c2c6e8b04e767aba46b6afc7"
+      },
+      "server.api.unsupported_locale": {
+        "method": "agent-authored",
+        "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
+        "translationSha256": "983068f9616906e9ec2337021de64ba96e3ab41250d440327d098c3ffa03c081"
+      },
+      "server.app.cra_books_payload_must.7aa91e61": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_books_payload_must_be_an_empty_array",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "7aa91e61316a66affa876e779876195cdeb205080aea15d60002a9b973f1a0b5",
+        "translationSha256": "dc4d3b7ed4a641d6589dd3f0db9d57ae8c196f3f6c92d6cf0213531e32f5a636"
+      },
+      "server.app.cra_support_tools_contain.6615c823": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_support_tools_contain_an_invalid_item_id",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "6615c82355895557519353a8195c08667e84fdf18cbe205f4e066a04b538671f",
+        "translationSha256": "a5ee1055e66c9d52049f9c13e597fd96f1be92916de37db42f38cc1f7558e6a2"
+      },
+      "server.app.cra_support_troop_count.2d16227f": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_support_troop_count_is_outside_supported_bounds",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "2d16227f086d0faa7d43ecec40583517648b37fdd52d3cbafb4d2da72fcb7ef2",
+        "translationSha256": "b4e4765c259afa4559210f27063e962b042dcc251582d4ee6a59164e9ad7c58c"
+      },
+      "server.automation.safety_pause_after_an.67451716": {
+        "method": "agent-authored",
+        "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
+        "translationSha256": "8601a1eacb9f0f60736a5d3b8f6935a64c1f90c7c2a0da64a66a01e6d2d7fee2"
+      }
+    },
+    "el": {
+      "server.api.official_game_data_is.c5e55e7e": {
+        "method": "agent-authored",
+        "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
+        "translationSha256": "959e572f558880c90033c591679eef5c8f2a9fc1a6293c547a2b84cb7255f62c"
+      },
+      "server.api.official_language_data_is.803160d4": {
+        "method": "agent-authored",
+        "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
+        "translationSha256": "8b55ec5f0c6c039484b98999df3cf6e4c53aedc041d23cd955c306f9dba11576"
+      },
+      "server.api.unsupported_locale": {
+        "method": "agent-authored",
+        "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
+        "translationSha256": "6221c12fbb1eee08884767c46d5cb701d0ece94664fba596826a5ab047f90fc8"
+      },
+      "server.automation.safety_pause_after_an.67451716": {
+        "method": "agent-authored",
+        "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
+        "translationSha256": "61916b5252d58e995b5bf9d561f279af6a159b8322acd247625fc023175d2185"
+      }
+    },
+    "es": {
+      "server.api.event_occurrence_id_is.3c0ae253": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.event_occurrence_id_is_invalid",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "3c0ae253fa0225afd286348edcde8c7e8c9dac41d833d90741ee71a5e63228c4",
+        "translationSha256": "268c191cc943792330315d52bc347d4ec53f196e7b18bcb4a188d2a312fe758b"
+      },
+      "server.api.eventkey_is_invalid.5fa0f899": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.eventkey_is_invalid",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
+        "translationSha256": "1ce2b9a360a6df134330836203aacf7789e80389294364dbaf50b35434388450"
+      },
+      "server.api.official_game_data_is.c5e55e7e": {
+        "method": "agent-authored",
+        "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
+        "translationSha256": "55e4dc2858c3eb541a950f535fcb50a662898b2047a2ce5f7a6d0f77e910e9a9"
+      },
+      "server.api.official_language_data_is.803160d4": {
+        "method": "agent-authored",
+        "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
+        "translationSha256": "ddae3e59c6e68efe8ff63bb4c4f4d77572d9c93eba14f6074c4c9787cfaaab2d"
+      },
+      "server.api.ranking_metric_type_must.179bda7e": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.ranking_metric_type_must_be_players_or_alliances",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "179bda7e6a486e1d7861b4322965d405fcf25e162cf4604387953019aa63c08c",
+        "translationSha256": "6415c05381d200fd172bac3efd40c774221b0b8d1bc03e1b65799062cf7266a1"
+      },
+      "server.api.ranking_type_must_be.ae1d21f5": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.ranking_type_must_be_players_or_alliances",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
+        "translationSha256": "b224375968204c952aa3b99549a97c14bf44cb9e56833e026993ae560eb91d1c"
+      },
+      "server.api.streaming_responses_are_unavailable.dbad8099": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.streaming_responses_are_unavailable",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
+        "translationSha256": "b5282206236e40b4648cde5b91ceb659b4d8856e2d6ab0e700914eb45d2a4318"
+      },
+      "server.api.type_must_be_player.6c2ff66b": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.type_must_be_player_or_alliance",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
+        "translationSha256": "ace66e24a35357ed56666d054cb1857b39d5db1e26258194f96eacad185e1505"
+      },
+      "server.api.unsupported_locale": {
+        "method": "agent-authored",
+        "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
+        "translationSha256": "69e78deffef0f1c693775134f4f22cee445aab4eb4ad05ee1e42c340c108faea"
+      },
+      "server.app.cra_books_payload_must.7aa91e61": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_books_payload_must_be_an_empty_array",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "7aa91e61316a66affa876e779876195cdeb205080aea15d60002a9b973f1a0b5",
+        "translationSha256": "05cf14c54aa8a5605c035f77a9b3c95f564a3f626be1cc0d101f3677ab2124ac"
+      },
+      "server.app.cra_support_tools_contain.6615c823": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_support_tools_contain_an_invalid_item_id",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "6615c82355895557519353a8195c08667e84fdf18cbe205f4e066a04b538671f",
+        "translationSha256": "65c784b638be4da6ba259138f265dc6d77591a3b458f7f0a5833694d221b01f1"
+      },
+      "server.app.cra_support_troop_count.2d16227f": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_support_troop_count_is_outside_supported_bounds",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "2d16227f086d0faa7d43ecec40583517648b37fdd52d3cbafb4d2da72fcb7ef2",
+        "translationSha256": "16f9106cbaa54f0efe502a0cd33f9444851c4bc8275796a95cdab124738f6f85"
+      },
+      "server.automation.safety_pause_after_an.67451716": {
+        "method": "agent-authored",
+        "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
+        "translationSha256": "5deb0d0e3669611a3ec52b422b069fd6d8ace6804a81c57b0999406657162d55"
+      }
+    },
+    "fi": {
+      "server.api.official_game_data_is.c5e55e7e": {
+        "method": "agent-authored",
+        "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
+        "translationSha256": "33b9e3bccaa2028cca667b29639a71d3fbf645a121c40409ea9d4856d796c647"
+      },
+      "server.api.official_language_data_is.803160d4": {
+        "method": "agent-authored",
+        "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
+        "translationSha256": "0831c1d12aea1425ffdbb7df0fccf50e1b3135b02792d8a1b5679153433dd8ea"
+      },
+      "server.api.unsupported_locale": {
+        "method": "agent-authored",
+        "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
+        "translationSha256": "75f1e537fafe75733c0cdbeb2f700480b560bef73e84fcd5aed84d9a0537b01d"
+      },
+      "server.automation.safety_pause_after_an.67451716": {
+        "method": "agent-authored",
+        "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
+        "translationSha256": "d6f1ac9f7917264e243ffa2254aa9926ad4719d95c17d5a9f99bca2cb8d89506"
+      }
+    },
+    "fr": {
+      "server.api.event_occurrence_id_is.3c0ae253": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.event_occurrence_id_is_invalid",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "3c0ae253fa0225afd286348edcde8c7e8c9dac41d833d90741ee71a5e63228c4",
+        "translationSha256": "584e6aafc91af1c1bc05691cea2dca6b5be698176735493eca61b9445308cd2b"
+      },
+      "server.api.eventkey_is_invalid.5fa0f899": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.eventkey_is_invalid",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
+        "translationSha256": "293ebd57477f99edeb77b1c58cfcaef40356adb6d22e69143c2f37bae73aa0b9"
+      },
+      "server.api.official_game_data_is.c5e55e7e": {
+        "method": "agent-authored",
+        "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
+        "translationSha256": "cd5310e28551b719d0522f3273d58fda30a07927645a6bec86a6390c304ca2fa"
+      },
+      "server.api.official_language_data_is.803160d4": {
+        "method": "agent-authored",
+        "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
+        "translationSha256": "2226995664b82fcf2ebc47b3d97114d0640b07a0fa23524f7b865ccb87536f84"
+      },
+      "server.api.ranking_metric_type_must.179bda7e": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.ranking_metric_type_must_be_players_or_alliances",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "179bda7e6a486e1d7861b4322965d405fcf25e162cf4604387953019aa63c08c",
+        "translationSha256": "9576b78cdd0745c90701b288f28dfe906daf7ae616de17b79c408df7ee12b15a"
+      },
+      "server.api.ranking_type_must_be.ae1d21f5": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.ranking_type_must_be_players_or_alliances",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
+        "translationSha256": "54f324b443b0b6e606ff174faaf722d2614718c6ae9a4beb62216a17754b746e"
+      },
+      "server.api.streaming_responses_are_unavailable.dbad8099": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.streaming_responses_are_unavailable",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
+        "translationSha256": "366b640e121b3f1e8ec3ddc10ac60086a1876287bd21f927ef0b8e70c42556c9"
+      },
+      "server.api.type_must_be_player.6c2ff66b": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.type_must_be_player_or_alliance",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
+        "translationSha256": "42ba58eaba949edf9631266057963d9ec2c763da073543e26860af1aa6246bba"
+      },
+      "server.api.unsupported_locale": {
+        "method": "agent-authored",
+        "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
+        "translationSha256": "9979eaca43504f52ec011727e53ab8bbbde24cd1d98b798ba5afaa6d441eac8f"
+      },
+      "server.app.cra_books_payload_must.7aa91e61": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_books_payload_must_be_an_empty_array",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "7aa91e61316a66affa876e779876195cdeb205080aea15d60002a9b973f1a0b5",
+        "translationSha256": "6c764546e831aad5475a63b2956a31eff8c9cfbbddd6f881a4b9855f2721d6bc"
+      },
+      "server.app.cra_support_tools_contain.6615c823": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_support_tools_contain_an_invalid_item_id",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "6615c82355895557519353a8195c08667e84fdf18cbe205f4e066a04b538671f",
+        "translationSha256": "664b8f03bbc8af9c7801148a35757698f3f49e6e0bcb937e50e36dd4f306863e"
+      },
+      "server.app.cra_support_troop_count.2d16227f": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_support_troop_count_is_outside_supported_bounds",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "2d16227f086d0faa7d43ecec40583517648b37fdd52d3cbafb4d2da72fcb7ef2",
+        "translationSha256": "a8f52fa543ac3a607ad66f7bfe2538a5855a35c67c9d3a6edaf3e78d8e312c4f"
+      },
+      "server.automation.safety_pause_after_an.67451716": {
+        "method": "agent-authored",
+        "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
+        "translationSha256": "7eb5fc9e6fc392863e6f92dbb91ed275cd987f0ba1519d56a569552c2cd18984"
+      }
+    },
+    "hu": {
+      "server.api.official_game_data_is.c5e55e7e": {
+        "method": "agent-authored",
+        "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
+        "translationSha256": "53af13ec3445a8769ae5054145210ab33ed69a794c7368b0bcff3d964d6df402"
+      },
+      "server.api.official_language_data_is.803160d4": {
+        "method": "agent-authored",
+        "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
+        "translationSha256": "07943c98314716d437842a33258740acde3b35037f8b66504b01ee9371987ec8"
+      },
+      "server.api.unsupported_locale": {
+        "method": "agent-authored",
+        "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
+        "translationSha256": "d40a46d2a3b830ea30062e0da299902621e290cbdef499fa81b210403b9fdd55"
+      },
+      "server.automation.safety_pause_after_an.67451716": {
+        "method": "agent-authored",
+        "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
+        "translationSha256": "cee72faa1a1174da22b130499bff701599d0205d37b324313654f3d836f9d3f2"
+      }
+    },
+    "it": {
+      "server.api.event_occurrence_id_is.3c0ae253": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.event_occurrence_id_is_invalid",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "3c0ae253fa0225afd286348edcde8c7e8c9dac41d833d90741ee71a5e63228c4",
+        "translationSha256": "44f431c11f1b1163dc1032f9255d642e52d58954fc40047a7b4306c6a6345036"
+      },
+      "server.api.eventkey_is_invalid.5fa0f899": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.eventkey_is_invalid",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
+        "translationSha256": "dff0dafe363629be42ba4d2cb6108de36bfe7ed1a7af8188e27ad4a0ba2ae49d"
+      },
+      "server.api.official_game_data_is.c5e55e7e": {
+        "method": "agent-authored",
+        "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
+        "translationSha256": "65db6579a74e752683f7d3dd3cd71873c132d7f715db78e9e1f9e7f07fe4c699"
+      },
+      "server.api.official_language_data_is.803160d4": {
+        "method": "agent-authored",
+        "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
+        "translationSha256": "9683c4d9ac02ce1ec244b407888ea882509d31d85fa611b70dc24d2d2ef12050"
+      },
+      "server.api.ranking_metric_type_must.179bda7e": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.ranking_metric_type_must_be_players_or_alliances",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "179bda7e6a486e1d7861b4322965d405fcf25e162cf4604387953019aa63c08c",
+        "translationSha256": "181f50659ffa73fd8c6427e82deca1d01e7630030f11f57ebea59f8400e828a9"
+      },
+      "server.api.ranking_type_must_be.ae1d21f5": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.ranking_type_must_be_players_or_alliances",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
+        "translationSha256": "79e8ef976defc04e0e77bc2335636ec864a4d402d5dc492cbf35c2979ef06724"
+      },
+      "server.api.streaming_responses_are_unavailable.dbad8099": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.streaming_responses_are_unavailable",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
+        "translationSha256": "3798ce01478091e318cb63eb7f52936a85010f3f267725c34df25e8671dacf93"
+      },
+      "server.api.type_must_be_player.6c2ff66b": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.type_must_be_player_or_alliance",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
+        "translationSha256": "beec796e022e65885a53f3d8bf08a93b8c331b6b8048c441e5a5c03fd1ee60bc"
+      },
+      "server.api.unsupported_locale": {
+        "method": "agent-authored",
+        "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
+        "translationSha256": "e80dec67a14e97feaf04efba6352f3724d7925ff52743f0689782206bbcd17ad"
+      },
+      "server.app.cra_books_payload_must.7aa91e61": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_books_payload_must_be_an_empty_array",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "7aa91e61316a66affa876e779876195cdeb205080aea15d60002a9b973f1a0b5",
+        "translationSha256": "0d7010b87751de2974488ae578a9f640b9fcc80314793a31b3c04b29577652fa"
+      },
+      "server.app.cra_support_tools_contain.6615c823": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_support_tools_contain_an_invalid_item_id",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "6615c82355895557519353a8195c08667e84fdf18cbe205f4e066a04b538671f",
+        "translationSha256": "7a174d8b81e18c9654cdebb455df344c9fba14c718afac7849dfc2d8b887b473"
+      },
+      "server.app.cra_support_troop_count.2d16227f": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_support_troop_count_is_outside_supported_bounds",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "2d16227f086d0faa7d43ecec40583517648b37fdd52d3cbafb4d2da72fcb7ef2",
+        "translationSha256": "06ab92ecf527b444f6c81f56066522e1771d18bc9077f64ce132bb9485df35d4"
+      },
+      "server.automation.safety_pause_after_an.67451716": {
+        "method": "agent-authored",
+        "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
+        "translationSha256": "2d1028f13b02fb3b8947aa365afbf6d03f44bb2d28ae8e8ad05091ec1de1e52f"
+      }
+    },
+    "ja": {
+      "server.api.official_game_data_is.c5e55e7e": {
+        "method": "agent-authored",
+        "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
+        "translationSha256": "e5ba51854199df78768d46f890233ad28458e89f8cf5fd63e4ae744a75095357"
+      },
+      "server.api.official_language_data_is.803160d4": {
+        "method": "agent-authored",
+        "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
+        "translationSha256": "64629b70910edb4f6d297b787530245f02edbb60f7ceffee1bcb5814fa299404"
+      },
+      "server.api.unsupported_locale": {
+        "method": "agent-authored",
+        "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
+        "translationSha256": "2997826966639baf1314416dd56fc6baed245c3bb3bf1256ac0ede7903e9f629"
+      },
+      "server.automation.safety_pause_after_an.67451716": {
+        "method": "agent-authored",
+        "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
+        "translationSha256": "2b8ceaabf7694429cdcb18938cc443180c0d4d4a65df09c410f72357f8bd4b27"
+      }
+    },
+    "ko": {
+      "server.api.official_game_data_is.c5e55e7e": {
+        "method": "agent-authored",
+        "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
+        "translationSha256": "a81691f5e168c3001d9b879665882eb224bded14581abafe7ade885989c71752"
+      },
+      "server.api.official_language_data_is.803160d4": {
+        "method": "agent-authored",
+        "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
+        "translationSha256": "cdcd0c13370352ae5d990dff64be01265392e61c12586595b31e6cce34a583aa"
+      },
+      "server.api.unsupported_locale": {
+        "method": "agent-authored",
+        "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
+        "translationSha256": "c9f4543eaee7c39c36c29b907e7bf93b10fc2799647d4821aa30d59643032bfc"
+      },
+      "server.automation.safety_pause_after_an.67451716": {
+        "method": "agent-authored",
+        "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
+        "translationSha256": "f4e7a1345b64c40a7e68cf9ffc018067c94d4231c4114518dacf977bec17e879"
+      }
+    },
+    "lt": {
+      "server.api.official_game_data_is.c5e55e7e": {
+        "method": "agent-authored",
+        "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
+        "translationSha256": "b9906e06f46cbaf51c33ef3bea286311f2123013cd2c259b7a2ffa9321dfb578"
+      },
+      "server.api.official_language_data_is.803160d4": {
+        "method": "agent-authored",
+        "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
+        "translationSha256": "1d63066158f59039c2fd4f92c32c535f8c1515d54bf8f90f786190ce3a8a350b"
+      },
+      "server.api.unsupported_locale": {
+        "method": "agent-authored",
+        "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
+        "translationSha256": "43782893b957cbfa4e88e7d1caf2bf1aab1f4c4f60d58ed86664470f6c56b3e0"
+      },
+      "server.automation.safety_pause_after_an.67451716": {
+        "method": "agent-authored",
+        "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
+        "translationSha256": "2691db80242ace6fd339bfa3641d9fa7d245dad30bc4b2dd5b9d3f09f0077246"
+      }
+    },
+    "nl": {
+      "server.api.event_occurrence_id_is.3c0ae253": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.event_occurrence_id_is_invalid",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "3c0ae253fa0225afd286348edcde8c7e8c9dac41d833d90741ee71a5e63228c4",
+        "translationSha256": "831c5863801e85b53a24a8f4c8656512ba86bec5b3186474119889f623a81aca"
+      },
+      "server.api.eventkey_is_invalid.5fa0f899": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.eventkey_is_invalid",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
+        "translationSha256": "bc71e8ce53417f411d8916d1544dd89fb91b16d3f30b6230ea3272f5e21ae793"
+      },
+      "server.api.official_game_data_is.c5e55e7e": {
+        "method": "agent-authored",
+        "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
+        "translationSha256": "9009915b16985fb622d101d02dc44cf0814c0007f3f92ce2a2c21009c580f1cf"
+      },
+      "server.api.official_language_data_is.803160d4": {
+        "method": "agent-authored",
+        "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
+        "translationSha256": "ff4b312f5d9faa8895e644db053db89942161caca3aaa43b95868599f49873b1"
+      },
+      "server.api.ranking_metric_type_must.179bda7e": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.ranking_metric_type_must_be_players_or_alliances",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "179bda7e6a486e1d7861b4322965d405fcf25e162cf4604387953019aa63c08c",
+        "translationSha256": "9cf506b8d40b80ec316309f6feda892c1ef44744063acb7f3cecd24b08173453"
+      },
+      "server.api.ranking_type_must_be.ae1d21f5": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.ranking_type_must_be_players_or_alliances",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
+        "translationSha256": "92216bbba38ecf669208254dec40f02c93e309f5881fab9234b7de012b5f8929"
+      },
+      "server.api.streaming_responses_are_unavailable.dbad8099": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.streaming_responses_are_unavailable",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
+        "translationSha256": "f3db50b3b62f075385a8f7fcb36a6736f2806d65ec786263b1d58073b05d471b"
+      },
+      "server.api.type_must_be_player.6c2ff66b": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.type_must_be_player_or_alliance",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
+        "translationSha256": "bc236adf9169051f92b85545235c3255b1cecab91950aba7e3353c9bb98fbd27"
+      },
+      "server.api.unsupported_locale": {
+        "method": "agent-authored",
+        "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
+        "translationSha256": "cf13132372b0fddec4aaf82a4e2e28d4348fa92ce71d9107dfc1727db6d19197"
+      },
+      "server.app.cra_books_payload_must.7aa91e61": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_books_payload_must_be_an_empty_array",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "7aa91e61316a66affa876e779876195cdeb205080aea15d60002a9b973f1a0b5",
+        "translationSha256": "ce25c4c63e262a584b9c272bfe498012e8f9760334258ec375770eb4bf3d4c4f"
+      },
+      "server.app.cra_support_tools_contain.6615c823": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_support_tools_contain_an_invalid_item_id",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "6615c82355895557519353a8195c08667e84fdf18cbe205f4e066a04b538671f",
+        "translationSha256": "c58943492bfc715bf637966dd7aaf15b01ca96a2d89b79f9387fc1692189c79d"
+      },
+      "server.app.cra_support_troop_count.2d16227f": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_support_troop_count_is_outside_supported_bounds",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "2d16227f086d0faa7d43ecec40583517648b37fdd52d3cbafb4d2da72fcb7ef2",
+        "translationSha256": "513ee1d83e39e90477d66dc6e9daff583617fc9bc9b7d2e683d5212f0e8ca2e0"
+      },
+      "server.automation.safety_pause_after_an.67451716": {
+        "method": "agent-authored",
+        "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
+        "translationSha256": "95cf3fdbc760a2dccd1240df575974fd91e6cbfae6ccc61a848a77eed5ac904c"
+      }
+    },
+    "no": {
+      "server.api.event_occurrence_id_is.3c0ae253": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.event_occurrence_id_is_invalid",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "3c0ae253fa0225afd286348edcde8c7e8c9dac41d833d90741ee71a5e63228c4",
+        "translationSha256": "001af59b1fbd14615903346b40d99340329d5b4c5afc793781b87af76ab2fa7d"
+      },
+      "server.api.eventkey_is_invalid.5fa0f899": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.eventkey_is_invalid",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
+        "translationSha256": "252d9b295b581546ea1f41b331ec543c4b911194c46ebbd022c5eb9367a31929"
+      },
+      "server.api.official_game_data_is.c5e55e7e": {
+        "method": "agent-authored",
+        "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
+        "translationSha256": "918bcfaccd570a18c1a59b0adf9e0c7a3eb518373ebcf1bd830e45f226c1e6ca"
+      },
+      "server.api.official_language_data_is.803160d4": {
+        "method": "agent-authored",
+        "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
+        "translationSha256": "84a934c8447f0d1ed46fb4cd9d2d9f7ddf2e8dad7d4338afb0e109aacd58e52c"
+      },
+      "server.api.ranking_metric_type_must.179bda7e": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.ranking_metric_type_must_be_players_or_alliances",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "179bda7e6a486e1d7861b4322965d405fcf25e162cf4604387953019aa63c08c",
+        "translationSha256": "0a7beaca00b24f266fc940c8d8788da96a27d624acff67f8ce5341e36bba38d9"
+      },
+      "server.api.ranking_type_must_be.ae1d21f5": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.ranking_type_must_be_players_or_alliances",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
+        "translationSha256": "1ba5991bea9131c9f66fb438d3bd971a019cf6f720037ad72f4ce3aa4411b636"
+      },
+      "server.api.streaming_responses_are_unavailable.dbad8099": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.streaming_responses_are_unavailable",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
+        "translationSha256": "06fa6de79cb2776b074b96a5023035a48eaa39f17207847fcc0920741526e6b2"
+      },
+      "server.api.type_must_be_player.6c2ff66b": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.type_must_be_player_or_alliance",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
+        "translationSha256": "c0e1eab9dd801f0db8daf0e995bc9f03f7af40430acc64f38f3b57b0c367a0ea"
+      },
+      "server.api.unsupported_locale": {
+        "method": "agent-authored",
+        "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
+        "translationSha256": "9185ebca4a831136b6f3ab324c5a628b14f878f84ef9549d8e3531ef972f68fb"
+      },
+      "server.app.cra_books_payload_must.7aa91e61": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_books_payload_must_be_an_empty_array",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "7aa91e61316a66affa876e779876195cdeb205080aea15d60002a9b973f1a0b5",
+        "translationSha256": "176582bb1ada4d97bf0d69c0af19558db7a6131a39b53860a6fcd5c6d617a512"
+      },
+      "server.app.cra_support_tools_contain.6615c823": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_support_tools_contain_an_invalid_item_id",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "6615c82355895557519353a8195c08667e84fdf18cbe205f4e066a04b538671f",
+        "translationSha256": "d1facefdd262efb92e1fc8b5bff34bdfe3f2e653e0d1e47631a843a260b3e3f0"
+      },
+      "server.app.cra_support_troop_count.2d16227f": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_support_troop_count_is_outside_supported_bounds",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "2d16227f086d0faa7d43ecec40583517648b37fdd52d3cbafb4d2da72fcb7ef2",
+        "translationSha256": "0621074d0067d577f1b5be1ea957d8fbcb23e9326638b5d967cc0c77f990b460"
+      },
+      "server.automation.safety_pause_after_an.67451716": {
+        "method": "agent-authored",
+        "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
+        "translationSha256": "1f4a6b594e6490e38d629ac54da573252ce9f738acf82d8b1916324e54eb121f"
+      }
+    },
+    "pl": {
+      "server.api.event_occurrence_id_is.3c0ae253": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.event_occurrence_id_is_invalid",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "3c0ae253fa0225afd286348edcde8c7e8c9dac41d833d90741ee71a5e63228c4",
+        "translationSha256": "9ddf066c9d30f63f06eb8124027a3d465492fa8dfec10d73290329265a760813"
+      },
+      "server.api.eventkey_is_invalid.5fa0f899": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.eventkey_is_invalid",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
+        "translationSha256": "35e30ca5e22e066b1d9bf635b90cedadfebe4944e46a8bbf56fead8472db50b8"
+      },
+      "server.api.official_game_data_is.c5e55e7e": {
+        "method": "agent-authored",
+        "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
+        "translationSha256": "56321cd560ad5a2dd615ee3a384b40e0f60803e746feca2134b39cc73cabf02d"
+      },
+      "server.api.official_language_data_is.803160d4": {
+        "method": "agent-authored",
+        "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
+        "translationSha256": "98bc8d028bd97cae0677a5a9919616fd15f3c0a7a610472683cc388b91379128"
+      },
+      "server.api.ranking_metric_type_must.179bda7e": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.ranking_metric_type_must_be_players_or_alliances",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "179bda7e6a486e1d7861b4322965d405fcf25e162cf4604387953019aa63c08c",
+        "translationSha256": "06f56f86a48c413f4f9dc054a1d0de1e6e001b5799fe98676356be74e66b5ae2"
+      },
+      "server.api.ranking_type_must_be.ae1d21f5": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.ranking_type_must_be_players_or_alliances",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
+        "translationSha256": "4edeb9a44ef421dba219e698570a4573ae1e41c18533ada781e88ca1eda01339"
+      },
+      "server.api.streaming_responses_are_unavailable.dbad8099": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.streaming_responses_are_unavailable",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
+        "translationSha256": "ca811586e21f341f4dd78963ee251eb7d489d094dec894e41e609a7f2ed2f1f1"
+      },
+      "server.api.type_must_be_player.6c2ff66b": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.type_must_be_player_or_alliance",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
+        "translationSha256": "9082eace99c33dc8e8612c90f4ca8b88adccfb3af4c490878fa2604d4a9176c9"
+      },
+      "server.api.unsupported_locale": {
+        "method": "agent-authored",
+        "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
+        "translationSha256": "164a60cd51ce4eafb4f74838b3997b312ec78e73db3d7d87143c65fa5e110e49"
+      },
+      "server.app.cra_books_payload_must.7aa91e61": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_books_payload_must_be_an_empty_array",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "7aa91e61316a66affa876e779876195cdeb205080aea15d60002a9b973f1a0b5",
+        "translationSha256": "b04dbde5ce03d32806d6f76f03ba47ffbab1b0433c56a04847be0ca92f1d8051"
+      },
+      "server.app.cra_support_tools_contain.6615c823": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_support_tools_contain_an_invalid_item_id",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "6615c82355895557519353a8195c08667e84fdf18cbe205f4e066a04b538671f",
+        "translationSha256": "10cb0b4871800ccf9720215e417184838099c70fa1d391d69c2fb3751c2c26d2"
+      },
+      "server.app.cra_support_troop_count.2d16227f": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_support_troop_count_is_outside_supported_bounds",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "2d16227f086d0faa7d43ecec40583517648b37fdd52d3cbafb4d2da72fcb7ef2",
+        "translationSha256": "25e155bfdb15dc61e3af4b6379c038d17343322cf44501cb45ca1fab4ec365e5"
+      },
+      "server.automation.safety_pause_after_an.67451716": {
+        "method": "agent-authored",
+        "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
+        "translationSha256": "94d459295301f2247eb7c3eecc0a306c563cb88fbc08b172eb31d902b1dcbeae"
+      }
+    },
+    "pt": {
+      "server.api.event_occurrence_id_is.3c0ae253": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.event_occurrence_id_is_invalid",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "3c0ae253fa0225afd286348edcde8c7e8c9dac41d833d90741ee71a5e63228c4",
+        "translationSha256": "fd4dcae767eda888913b635d72c3aed6fca209305638ad6d68b7163fc4f291d1"
+      },
+      "server.api.eventkey_is_invalid.5fa0f899": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.eventkey_is_invalid",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
+        "translationSha256": "8b4c1614443e7e2bcd64a89100507a5f13b09d05f33c7db072a8b56eae149328"
+      },
+      "server.api.official_game_data_is.c5e55e7e": {
+        "method": "agent-authored",
+        "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
+        "translationSha256": "1a48048b37dd9d5a4b7b0db8e4b0bb62dfc1035c7fa0ed361ae3337bc3ffdd83"
+      },
+      "server.api.official_language_data_is.803160d4": {
+        "method": "agent-authored",
+        "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
+        "translationSha256": "0da9fe73145c2c4f51d9df672f8ae650339d78c21e3046731497198f2d17a706"
+      },
+      "server.api.ranking_metric_type_must.179bda7e": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.ranking_metric_type_must_be_players_or_alliances",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "179bda7e6a486e1d7861b4322965d405fcf25e162cf4604387953019aa63c08c",
+        "translationSha256": "30029eff73ede6a51a666037d3c457514769eaefa3b6022a87263bbdc9751459"
+      },
+      "server.api.ranking_type_must_be.ae1d21f5": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.ranking_type_must_be_players_or_alliances",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
+        "translationSha256": "b1226bad2e5081475d86ccc5c455cea1f185f107921f141b3b2c6563bca83dd3"
+      },
+      "server.api.streaming_responses_are_unavailable.dbad8099": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.streaming_responses_are_unavailable",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
+        "translationSha256": "fb3c2ef9ccefd08b16e98610ead69ee0897c259d2cbd3223792296510eb85eec"
+      },
+      "server.api.type_must_be_player.6c2ff66b": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.type_must_be_player_or_alliance",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
+        "translationSha256": "223d9c75531e1e1f6819b8bf83e5ec9010b8ddc8ea43b9571ef51190d1d1ffc3"
+      },
+      "server.api.unsupported_locale": {
+        "method": "agent-authored",
+        "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
+        "translationSha256": "3b54fe7d07afe61c456bcd325d423a797c70373dfd7b3a1c70fee88441d05803"
+      },
+      "server.app.cra_books_payload_must.7aa91e61": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_books_payload_must_be_an_empty_array",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "7aa91e61316a66affa876e779876195cdeb205080aea15d60002a9b973f1a0b5",
+        "translationSha256": "a656f78e15d923e3a1ad6716bca0a09fe229b87842dcac3b2afa6ec1587a4d83"
+      },
+      "server.app.cra_support_tools_contain.6615c823": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_support_tools_contain_an_invalid_item_id",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "6615c82355895557519353a8195c08667e84fdf18cbe205f4e066a04b538671f",
+        "translationSha256": "853c8fc2cb91d36e6917dfe1770c50ead76578636e008bb106b9c931ad3e2a3e"
+      },
+      "server.app.cra_support_troop_count.2d16227f": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_support_troop_count_is_outside_supported_bounds",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "2d16227f086d0faa7d43ecec40583517648b37fdd52d3cbafb4d2da72fcb7ef2",
+        "translationSha256": "84a5f9d8587e7c8ba4e351e1d064f03f2b0758a68ecdb76b2a15276ff6c843d5"
+      },
+      "server.automation.safety_pause_after_an.67451716": {
+        "method": "agent-authored",
+        "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
+        "translationSha256": "166e2700f35ff1d5ae55a30c4acbd0e458ce9a07f18027cc1eb3d0b0f2e6c950"
+      }
+    },
+    "ro": {
+      "server.api.official_game_data_is.c5e55e7e": {
+        "method": "agent-authored",
+        "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
+        "translationSha256": "096b67615ca9d127bed65d18e0be86dc5b57664c976e636af72c664ad232a72b"
+      },
+      "server.api.official_language_data_is.803160d4": {
+        "method": "agent-authored",
+        "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
+        "translationSha256": "4db0620310bf029992713de5d70eee628f06d3b561d3a03880829382c757bc98"
+      },
+      "server.api.unsupported_locale": {
+        "method": "agent-authored",
+        "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
+        "translationSha256": "cacb200ae19c8a22bbfaa538a9630b501a3abf58290e8c0c11a5785fd226939e"
+      },
+      "server.automation.safety_pause_after_an.67451716": {
+        "method": "agent-authored",
+        "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
+        "translationSha256": "f3b6a5acf7654b07dda843cb35c8b48fd9e6ebc9a93b97e3b6fa44636086b19f"
+      }
+    },
+    "ru": {
+      "server.api.official_game_data_is.c5e55e7e": {
+        "method": "agent-authored",
+        "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
+        "translationSha256": "5a560ca5e8979c50b085417d3a05984192af86b72b649b5b218917635cb23efd"
+      },
+      "server.api.official_language_data_is.803160d4": {
+        "method": "agent-authored",
+        "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
+        "translationSha256": "9d4ccc71de7a9641d83d3c1b3886fdcd0acf5bceeed04e0f110e4940ecaca443"
+      },
+      "server.api.unsupported_locale": {
+        "method": "agent-authored",
+        "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
+        "translationSha256": "df8cb6396c6b566286c6202922910c99f27e8325522bc08abdd8061919f39636"
+      },
+      "server.automation.safety_pause_after_an.67451716": {
+        "method": "agent-authored",
+        "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
+        "translationSha256": "8e529872636baa3117a670e74f601a48a4089d75b93632fa105ca1339162ca8a"
+      }
+    },
+    "sk": {
+      "server.api.official_game_data_is.c5e55e7e": {
+        "method": "agent-authored",
+        "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
+        "translationSha256": "8b1d2da63892745c5984edf336b8ea6a5dddb9177a9541787091910ca8ed1637"
+      },
+      "server.api.official_language_data_is.803160d4": {
+        "method": "agent-authored",
+        "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
+        "translationSha256": "2b50649cfdc8736212030199fc6316cb327af23ace21ff656add8896d4518596"
+      },
+      "server.api.unsupported_locale": {
+        "method": "agent-authored",
+        "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
+        "translationSha256": "36e21de7a713027337bbc67c5aa2e12dee74c376fe37981fd3bf3a465588fccf"
+      },
+      "server.automation.safety_pause_after_an.67451716": {
+        "method": "agent-authored",
+        "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
+        "translationSha256": "5762028bda8aa7642d018d67633392000317486a5f9e03e67b2260e4e618af7a"
+      }
+    },
+    "sv": {
+      "server.api.event_occurrence_id_is.3c0ae253": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.event_occurrence_id_is_invalid",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "3c0ae253fa0225afd286348edcde8c7e8c9dac41d833d90741ee71a5e63228c4",
+        "translationSha256": "2cb5e008b626a821a7a1da7db92ae548f68a2010c26a285c3acd63def156a8e6"
+      },
+      "server.api.eventkey_is_invalid.5fa0f899": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.eventkey_is_invalid",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
+        "translationSha256": "4d4a5e6dc11c1c9f8cc4016f711f74b6b633191f29085438cac4e9d8adb0d398"
+      },
+      "server.api.official_game_data_is.c5e55e7e": {
+        "method": "agent-authored",
+        "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
+        "translationSha256": "6540fdf21221ca6e0bf0e84887a62adc89e143c9a5193ce5ed387681354f0f2c"
+      },
+      "server.api.official_language_data_is.803160d4": {
+        "method": "agent-authored",
+        "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
+        "translationSha256": "7d71d53ce0da6b3dcb304cec52ef3fdaa13ed2a706ab1765a4abd02bc014ee66"
+      },
+      "server.api.ranking_metric_type_must.179bda7e": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.ranking_metric_type_must_be_players_or_alliances",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "179bda7e6a486e1d7861b4322965d405fcf25e162cf4604387953019aa63c08c",
+        "translationSha256": "c3a42f193daf600d2e0d45ad77e96dcc112fc8215ac772166040b0c69ebe15f5"
+      },
+      "server.api.ranking_type_must_be.ae1d21f5": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.ranking_type_must_be_players_or_alliances",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
+        "translationSha256": "4ebf4f1cdd5713a90cd3128eb3f506408f517933a17076587253f1a09c9dec91"
+      },
+      "server.api.streaming_responses_are_unavailable.dbad8099": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.streaming_responses_are_unavailable",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
+        "translationSha256": "06f7c62042a6999d1574450bda98f541faf54d1256001eae4a2ec24beb677c23"
+      },
+      "server.api.type_must_be_player.6c2ff66b": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.worldintel.type_must_be_player_or_alliance",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
+        "translationSha256": "0ba14e78cd92af57a8ae8c3d3b4b7b35f3eac5bfbc09e82e3a5a995ecce45a7f"
+      },
+      "server.api.unsupported_locale": {
+        "method": "agent-authored",
+        "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
+        "translationSha256": "b545262058eb0e7aa34adf4275f5feb2dd29bae83b9ea637bf67bb176c12eb5e"
+      },
+      "server.app.cra_books_payload_must.7aa91e61": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_books_payload_must_be_an_empty_array",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "7aa91e61316a66affa876e779876195cdeb205080aea15d60002a9b973f1a0b5",
+        "translationSha256": "ffa5675f28da868c4ae7849cc2380573ab12d22c0b8b40adc89649e2f7988d5c"
+      },
+      "server.app.cra_support_tools_contain.6615c823": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_support_tools_contain_an_invalid_item_id",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "6615c82355895557519353a8195c08667e84fdf18cbe205f4e066a04b538671f",
+        "translationSha256": "a1849b43117690010f3ab663c6e02f816ea9fba6f026017f3c083aef3d3de809"
+      },
+      "server.app.cra_support_troop_count.2d16227f": {
+        "method": "authored-translation-memory-reuse",
+        "originKey": "backend.validation.cra_support_troop_count_is_outside_supported_bounds",
+        "originRepository": "CitadelOpsFrontend",
+        "originRevision": "fbc38b31300bed2e41b6c425c97a88661cd3eaa6",
+        "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
+        "sourceSha256": "2d16227f086d0faa7d43ecec40583517648b37fdd52d3cbafb4d2da72fcb7ef2",
+        "translationSha256": "225332e26db5e78478851512c98e16c71c12afd33d9e015ec44a467672f1d62b"
+      },
+      "server.automation.safety_pause_after_an.67451716": {
+        "method": "agent-authored",
+        "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
+        "translationSha256": "70f0889c9b6683151304c53e6a25b9733e9def5cc3857110efaa8acd6560bfcd"
+      }
+    },
+    "tr": {
+      "server.api.official_game_data_is.c5e55e7e": {
+        "method": "agent-authored",
+        "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
+        "translationSha256": "fff0787f2356d9aaa5cf10242b401236c3b38dbf679cf97ea686f5f1554b8e03"
+      },
+      "server.api.official_language_data_is.803160d4": {
+        "method": "agent-authored",
+        "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
+        "translationSha256": "daf0a042fdf0f28af50aaba4c9b5002dae11298b3939ac449524d43af3fd97cc"
+      },
+      "server.api.unsupported_locale": {
+        "method": "agent-authored",
+        "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
+        "translationSha256": "77a291ef485ed5b44590482a3657c83b9f56e5af8cc2b1cba82f1028803710a1"
+      },
+      "server.automation.safety_pause_after_an.67451716": {
+        "method": "agent-authored",
+        "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
+        "translationSha256": "5ec14d5b996292ddde099d0a95c0167692d699460edfe0bee80ca2c7aed0a94f"
+      }
+    },
+    "zh-CN": {
+      "server.api.official_game_data_is.c5e55e7e": {
+        "method": "agent-authored",
+        "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
+        "translationSha256": "d61ae6862296c9f3bfac11edab30a6cfec12c1ff07e7de3657c5450b7fe0a543"
+      },
+      "server.api.official_language_data_is.803160d4": {
+        "method": "agent-authored",
+        "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
+        "translationSha256": "9953be3a872563e941b54221d42a60a43816ea16a431217c2ad8265e4f27b523"
+      },
+      "server.api.unsupported_locale": {
+        "method": "agent-authored",
+        "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
+        "translationSha256": "f345bea2fca524a3ba240288176d6422eeebd32f2772e48833f0b51f14fa6d87"
+      },
+      "server.automation.safety_pause_after_an.67451716": {
+        "method": "agent-authored",
+        "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
+        "translationSha256": "4564fe0f7355e7708b0a5af8b4928aa0ea085c939ee8b4683b2ecd5c63122224"
+      }
+    },
+    "zh-TW": {
+      "server.api.official_game_data_is.c5e55e7e": {
+        "method": "agent-authored",
+        "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
+        "translationSha256": "f36a9eab799c93bfdf6edc99cd1baacc9d6f8871167b4d7930485ed96290c369"
+      },
+      "server.api.official_language_data_is.803160d4": {
+        "method": "agent-authored",
+        "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
+        "translationSha256": "36a40143ff6037599637e6d37342a7f318f7f061667ea0b5fa4b3c29c33b257f"
+      },
+      "server.api.unsupported_locale": {
+        "method": "agent-authored",
+        "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
+        "translationSha256": "46e29b7c34e2f1e207cc9d62ee6cdb5d4748668a9eba1170f97a4309fb6dc7a4"
+      },
+      "server.automation.safety_pause_after_an.67451716": {
+        "method": "agent-authored",
+        "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
+        "translationSha256": "0e30109d536d9fb712ab6266d41480a5369afaa2175c6d9085545bce0b8f4ce3"
+      }
+    }
+  },
+  "schemaVersion": 1,
+  "sourceRevision": "dcd82e6bdfad1f6d0eede4b141923f884f080886"
+}

@@ -396,7 +396,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
               onClick={() => onOpenFeatureSchedule('autoTCI', 'Auto TCI')}
               leftIcon={<CalendarDays className="h-4 w-4" />}
             >
-              <LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.calendar.d5d0a30b" /></Button>
+              <LocalizedText messageKey="common.calendar" /></Button>
       )}
       onSave={handleSave}
       saveLabel="Save changes"
@@ -424,8 +424,8 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
           disabled={isSaving}
           help={(
             <>
-            Choose a preset and click <span className="font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.apply.31e392d1" /></span> to load it into the grid.{' '}
-            <span className="font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.save.changes.dd0ae7a5" /></span> writes Auto TCI settings and updates the applied preset
+            Choose a preset and click <span className="font-semibold text-text-main"><LocalizedText messageKey="common.apply" /></span> to load it into the grid.{' '}
+            <span className="font-semibold text-text-main"><LocalizedText messageKey="common.saveChanges" /></span> writes Auto TCI settings and updates the applied preset
             (including name). Data is stored next to Auto Bird settings (see AutoTCI.json).
             </>
           )}

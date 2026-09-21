@@ -1,3 +1,4 @@
+import { LocalizedRichText } from "../i18n/LocalizedRichText";
 import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { LocalizedText } from "../i18n/LocalizedText";
 import { useLocalizedErrorState } from '../i18n/useLocalizedErrorState';
@@ -962,10 +963,7 @@ const SettingsView: React.FC = () => {
 					</div>
 				)}
 				{playerHistoryRetention && !playerHistoryRetention.hosted && (
-					<div className="rounded-global border border-cyan-400/20 bg-cyan-400/5 px-4 py-3 text-xs leading-relaxed text-text-muted">
-						Local desktop mode applies this policy directly to <code>History/PlayerSamples.jsonl</code>. Feature Stats aggregates remain in <code>Runtime/Reports.sqlite</code>.{' '}
-						Neither dataset is published to the hosted private-metrics backend; World Intelligence and report sharing remain separate features.
-					</div>
+					<div className="rounded-global border border-cyan-400/20 bg-cyan-400/5 px-4 py-3 text-xs leading-relaxed text-text-muted"><LocalizedRichText messageKey="ui.rich.views.settingsView.local.desktop.mode.applies.this.policy.directly.d237d204" params={{"codeText0":"History/PlayerSamples.jsonl","codeText1":"Runtime/Reports.sqlite"}} tags={{code0: children => <code>{children}</code>, code1: children => <code>{children}</code>}} /></div>
 				)}
 
 					<div className="grid gap-3 md:grid-cols-3">
@@ -995,14 +993,7 @@ const SettingsView: React.FC = () => {
 					</div>
 				</div>
 
-				<p className="text-[11px] leading-relaxed text-text-muted">
-					My Stats uses this profile's <code>History/PlayerSamples.jsonl</code> file, not SQLite. Estimates use saved rows or the current sample shape; troop and currency counts can change the actual size.{' '}
-					Finite-window maintenance rewrites the file safely and can briefly require roughly twice the displayed retained size.{' '}
-					Choosing a more frequent cadence affects future recordings; choosing a less-frequent cadence permanently compacts existing intermediate points.{' '}
-					Turning storage off removes saved history but keeps current live values available while CitadelOps is running.{' '}
-					Reducing the window permanently removes older points. Increasing it later cannot restore points already deleted.{' '}
-					This setting does not affect logs, reports, World Intelligence, or live game state.
-				</p>
+				<p className="text-[11px] leading-relaxed text-text-muted"><LocalizedRichText messageKey="ui.rich.views.settingsView.my.stats.uses.this.profile.s.codetext0.6d76bd61" params={{"codeText0":"History/PlayerSamples.jsonl"}} tags={{code0: children => <code>{children}</code>}} /></p>
 				{playerHistoryRetentionError && <p role="alert" className="text-xs font-medium text-error">{playerHistoryRetentionError}</p>}
 				{playerHistoryRetentionStatus && <p role="status" className="text-xs font-medium text-success">{playerHistoryRetentionStatus}</p>}
 			</SectionCard>

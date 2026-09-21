@@ -28,7 +28,7 @@ const StaleSessionBanner: React.FC = () => {
           onClick={() => startGame()}
           className="font-semibold text-primary underline underline-offset-2 hover:text-primary/90"
         >
-          <LocalizedText messageKey="ui.components.staleSessionBanner.start.bot.74a11ddb" /></button>{' '}
+          <LocalizedText messageKey="bot.start" /></button>{' '}
 		{backgroundConnection
 			? 'to reconnect directly and refresh live data.'
 			: 'to reload the game tab and refresh live data.'}

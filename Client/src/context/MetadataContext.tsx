@@ -1,6 +1,8 @@
+import { canonicalEffectReducer } from '../equipment/CanonicalEffectState';
+import { equipmentEffectTemplates } from '../equipment/EquipmentEffectLocalization';
 import { metadataName, translationValues } from '../i18n/officialMetadata';
 import { loadOfficialMessages, invalidateOfficialMessages } from '../i18n/officialMessages';
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, useReducer } from 'react';
 import { useCitadelAPI } from '../api/ApiContext';
 import { useLocale } from '../i18n/LocaleContext';
 import { CitadelAPI } from '../api/CitadelClient';
@@ -33,6 +35,7 @@ interface MetadataContextValue {
   isLoading: boolean;
   unitsLoading: boolean;
   unitsError: string | null;
+  effectsStatus: 'loading' | 'ready' | 'unavailable';
   getTroop: (id: number) => MetadataItem | undefined;
   getTool: (id: number) => MetadataItem | undefined;
 	getBuilding: (id: number) => MetadataItem | undefined;
@@ -48,6 +51,7 @@ const MetadataContext = createContext<MetadataContextValue | undefined>(undefine
 export function MetadataProvider({ children }: { children: React.ReactNode }) {
 	const { catalogs } = useCitadelAPI();
 	const { locale } = useLocale();
+	const canonicalCatalogKey = [CitadelAPI.runtimeScope(),catalogs?.metadata.digestSha256 ?? '',catalogs?.metadata.languageVersion ?? ''].join(':');
   const [troops, setTroops] = useState<Record<number, MetadataItem>>({});
   const [tools, setTools] = useState<Record<number, MetadataItem>>({});
 	const [buildings, setBuildings] = useState<Record<number, MetadataItem>>({});
@@ -56,7 +60,9 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 	const [currencies, setCurrencies] = useState<Record<number, MetadataItem>>({});
 	const [equipments, setEquipments] = useState<Record<number, MetadataItem>>({});
 	const [gems, setGems] = useState<Record<number, MetadataItem>>({});
-	const [effects, setEffects] = useState<Record<number, MetadataItem>>({});
+	const [canonicalEffects, dispatchEffects] = useReducer(canonicalEffectReducer,{scope:canonicalCatalogKey,status:'loading',values:{}});
+	const effects = canonicalEffects.scope === canonicalCatalogKey ? canonicalEffects.values : {};
+	const effectsStatus = canonicalEffects.scope === canonicalCatalogKey ? canonicalEffects.status : 'loading';
 	const [kingdoms, setKingdoms] = useState<Record<number, MetadataItem>>({});
 	const [craftingRecipes, setCraftingRecipes] = useState<Record<number, MetadataItem>>({});
 	const [unitsLoading, setUnitsLoading] = useState(true);
@@ -75,12 +81,13 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 	const localizeOptional = useCallback((keys: string[]) => bestEffortLocalization(keys, locale), [locale]);
 
   useEffect(() => { invalidateOfficialMessages(); }, [catalogKey]);
+  useEffect(() => { dispatchEffects({type:'scope',scope:canonicalCatalogKey}); },[canonicalCatalogKey]);
 
   useEffect(() => {
     // Do not display labels from a previous viewer locale while the next catalog loads.
     setTroops({}); setTools({}); setBuildings({}); setDecorations({});
     setResources({}); setCurrencies({}); setEquipments({}); setGems({});
-    setEffects({}); setKingdoms({}); setCraftingRecipes({});
+    setKingdoms({}); setCraftingRecipes({});
   }, [locale]);
 
   useEffect(() => {
@@ -143,6 +150,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 				optionalCatalogKey.current = catalogKey;
 				setOptionalLoading(true);
 			}
+			let canonicalFailed = false;
 			const results = await Promise.allSettled([
 				CitadelAPI.getCatalog<OfficialRecord>('buildings', locale),
 				CitadelAPI.getCatalog<OfficialRecord>('resources', locale),
@@ -229,14 +237,25 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 				setGems(definitionMetadata(gemsResult.value.items, 'gemID', translations, 'Gem'));
 			}
 			if (effectsResult.status === 'fulfilled' && effectTypesResult.status === 'fulfilled' && effectCapsResult.status === 'fulfilled') {
-				const translations = await localizeOptional([
+				const effectKeys = [
 					...localizationKeys([...effectsResult.value.items, ...effectTypesResult.value.items]),
 					...effectLocalizationKeys(effectsResult.value.items, effectTypesResult.value.items),
+				];
+				const [translations, canonicalTranslations] = await Promise.all([
+					localizeOptional(effectKeys), loadOfficialMessages(effectKeys, 'en').then(translationValues).catch(()=>null),
 				]);
 				if (cancelled) return;
-				setEffects(effectDefinitionMetadata(
-					effectsResult.value.items, effectTypesResult.value.items, effectCapsResult.value.items, translations,
-				));
+				if (canonicalTranslations === null) {
+					canonicalFailed = true;
+					dispatchEffects({type:'failed',scope:canonicalCatalogKey});
+				} else {
+					dispatchEffects({type:'resolved',scope:canonicalCatalogKey,values:effectDefinitionMetadata(
+						effectsResult.value.items, effectTypesResult.value.items, effectCapsResult.value.items, translations, canonicalTranslations, locale, String(catalogs?.metadata.languageVersion ?? ''),
+					)});
+				}
+			} else {
+				canonicalFailed = true;
+				dispatchEffects({type:'failed',scope:canonicalCatalogKey});
 			}
 			if (kingdomsResult.status === 'fulfilled') {
 				const translations = await localizeOptional(localizationKeys(kingdomsResult.value.items));
@@ -260,7 +279,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 				setCraftingRecipes(next);
 			}
 			setOptionalLoading(false);
-			if (results.some((result) => result.status === 'rejected')) {
+			if (canonicalFailed || results.some((result) => result.status === 'rejected')) {
 				retryTimer = setTimeout(() => setOptionalRetryNonce((current) => current + 1), 5_000);
 			}
 		};
@@ -269,7 +288,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 			cancelled = true;
 			if (retryTimer != null) clearTimeout(retryTimer);
 		};
-	}, [catalogKey, locale, localizeOptional, optionalRetryNonce]);
+	}, [canonicalCatalogKey, catalogKey, locale, localizeOptional, optionalRetryNonce]);
 
   const getTroop = useCallback((id: number) => troops[id], [troops]);
   const getTool = useCallback((id: number) => tools[id], [tools]);
@@ -294,6 +313,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
     isLoading,
 		unitsLoading,
 		unitsError,
+		effectsStatus,
     getTroop,
     getTool,
 		getBuilding,
@@ -325,6 +345,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 		troops,
 		unitsLoading,
 		unitsError,
+		effectsStatus,
 	]);
 
   return <MetadataContext.Provider value={value}>{children}</MetadataContext.Provider>;
@@ -561,6 +582,9 @@ function effectDefinitionMetadata(
 	effectTypeRows: OfficialRecord[],
 	effectCapRows: OfficialRecord[],
 	translations: Record<string, string>,
+	canonicalTranslations: Record<string, string>,
+	locale: string,
+	languageVersion: string,
 ): Record<number, MetadataItem> {
 	const effectTypes = new Map(effectTypeRows.map((row) => [String(row.effectTypeID ?? ''), row]));
 	const effectCaps = new Map(effectCapRows.map((row) => [String(row.capID ?? ''), row]));
@@ -577,12 +601,13 @@ function effectDefinitionMetadata(
 		const scope = officialScope === 'PvP' ? 'pvp' : officialScope === 'PvE' ? 'pve' : 'generic';
 		const category = metadataInteger(effectType?.sortCategory);
 		const group = metadataInteger(effectType?.sortGroup);
-		const effectTemplate = firstTranslation(translations, [
+		const localizedTemplates = equipmentEffectTemplates([
 			`relicequip_effect_description_${internalName}`,
 			`equip_effect_description_${internalName}`,
 			`ci_effect_${internalName}`,
 			`effect_name_${internalName}`,
-		]);
+		], translations, canonicalTranslations, locale, languageVersion);
+		const effectTemplate = localizedTemplates.effectTemplate;
 		const groupPrefix = category && group ? `effect_group_${category}_${group}` : '';
 		result[id] = {
 			...row,
@@ -600,7 +625,11 @@ function effectDefinitionMetadata(
 			sortCategory: category,
 			sortGroup: group,
 			categoryName: category ? translations[`effect_category_${category}`] : undefined,
-			effectTemplate,
+			...localizedTemplates,
+			semanticName: localizedTemplates.semanticTemplate ? humanizeEffectTemplate(localizedTemplates.semanticTemplate) : displayName(row, canonicalTranslations, internalName),
+			semanticCategoryName: category ? canonicalTranslations[`effect_category_${category}`] : undefined,
+			semanticEffectGroupPassive: groupPrefix ? canonicalTranslations[`${groupPrefix}_passive`] : undefined,
+			semanticEffectGroupActive: groupPrefix ? canonicalTranslations[`${groupPrefix}_active`] : undefined,
 			effectGroupPassive: groupPrefix ? translations[`${groupPrefix}_passive`] : undefined,
 			effectGroupActive: groupPrefix ? translations[`${groupPrefix}_active`] : undefined,
 			effectGroupActiveMalus: groupPrefix ? translations[`${groupPrefix}_active_malus`] : undefined,
@@ -619,17 +648,9 @@ function metadataIntegerList(value: unknown): number[] {
 	return Array.from(new Set(values.map(metadataInteger).filter((entry) => entry > 0)));
 }
 
-function firstTranslation(translations: Record<string, string>, keys: string[]): string | undefined {
-	for (const key of keys) {
-		const value = translations[key];
-		if (value?.trim() && !/lost its powers|seems to have run out/i.test(value)) return value.trim();
-	}
-	return undefined;
-}
-
 function humanizeEffectTemplate(value: string): string {
 	const label = value
-		.replace(/\{\d+\}/g, '')
+		.replace(/\{0\}/g, '')
 		.replace(/^[+\-\s%:]+/, '')
 		.replace(/\s+/g, ' ')
 		.replace(/\s+([,.;:])/g, '$1')

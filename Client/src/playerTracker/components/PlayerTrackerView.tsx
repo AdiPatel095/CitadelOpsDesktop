@@ -512,7 +512,7 @@ const PlayerTrackerView = () => {
                       {formatDate(customWindow.startUnix)} – {formatDate(customWindow.endUnix)}
                     </Badge>
                     <Button variant="ghost" size="sm" onClick={() => setCustomWindow(null)}>
-                      <LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.clear.selection.cea4d2e0" /></Button>
+                      <LocalizedText messageKey="common.clearSelection" /></Button>
                   </div>
                 )}
               </div>
@@ -684,7 +684,7 @@ const PlayerTrackerView = () => {
                       {formatDate(troopWindow.startUnix)} – {formatDate(troopWindow.endUnix)}
                     </Badge>
                     <Button variant="ghost" size="sm" onClick={() => setTroopWindow(null)}>
-                      <LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.clear.selection.cea4d2e0" /></Button>
+                      <LocalizedText messageKey="common.clearSelection" /></Button>
                   </div>
                 )}
               </div>

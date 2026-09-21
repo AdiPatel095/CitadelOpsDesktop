@@ -99,7 +99,7 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
       title={<ModalTitle icon={<TimerReset className="h-5 w-5" />}>{onPauseFor ? 'Pause' : 'Run'} {featureLabel} for a duration</ModalTitle>}
       footer={(
         <div className="flex w-full justify-end gap-2">
-          <Button variant="ghost" onClick={onClose} disabled={saving}><LocalizedText messageKey="ui.settings.components.automationDurationModal.cancel.19766ed6" /></Button>
+          <Button variant="ghost" onClick={onClose} disabled={saving}><LocalizedText messageKey="game.cancel" /></Button>
           <Button onClick={() => void save()} disabled={!valid} isLoading={saving}>{onPauseFor ? 'Pause for this duration' : 'Turn on for this duration'}</Button>
         </div>
       )}

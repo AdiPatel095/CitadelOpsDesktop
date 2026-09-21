@@ -361,7 +361,7 @@ const AllianceTargetsContent = memo(({
               isLoading={loading}
               leftIcon={<RefreshCw className="h-4 w-4" />}
             >
-              <LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.refresh.0e916101" /></Button>
+              <LocalizedText messageKey="common.refresh" /></Button>
           </div>
         )}
         contentClassName="overflow-hidden"
@@ -533,7 +533,7 @@ const TargetRow = memo(({ target, canSpy, sending, sendingBlocked, loadingIntel,
 		  onClick={() => onAttack(target)}
 		  leftIcon={<Swords className="h-4 w-4" />}
         >
-		  <LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.attack.4cd548f3" /></Button>
+		  <LocalizedText messageKey="game.attack" /></Button>
       </div>
     </td>
   </tr>
@@ -751,7 +751,7 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 						{blockReason || 'CRA-capped formation and live source inventory are ready.'}
 					</p>
 					<div className="flex items-center gap-2">
-						<Button variant="ghost" disabled={launching} onClick={onClose}><LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.cancel.19766ed6" /></Button>
+						<Button variant="ghost" disabled={launching} onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
 						<Button
 							variant="primary"
 							disabled={Boolean(blockReason) || launching}
@@ -759,7 +759,7 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 							onClick={() => void launch()}
 							leftIcon={<Swords className="h-4 w-4" />}
 						>
-							<LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.attack.4cd548f3" /></Button>
+							<LocalizedText messageKey="game.attack" /></Button>
 					</div>
 				</div>
 			)}

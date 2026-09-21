@@ -1,0 +1,15 @@
+{
+  "server.api.event_occurrence_id_is.3c0ae253": "O ID de ocorrência do evento é inválido",
+  "server.api.eventkey_is_invalid.5fa0f899": "eventKey é inválido",
+  "server.api.official_game_data_is.c5e55e7e": "Os dados oficiais do jogo estão indisponíveis",
+  "server.api.official_language_data_is.803160d4": "Os dados oficiais de idioma estão indisponíveis",
+  "server.api.ranking_metric_type_must.179bda7e": "O tipo de métrica de classificação deve ser players ou alliances",
+  "server.api.ranking_type_must_be.ae1d21f5": "O tipo de classificação deve ser players ou alliances",
+  "server.api.streaming_responses_are_unavailable.dbad8099": "As respostas em streaming estão indisponíveis",
+  "server.api.type_must_be_player.6c2ff66b": "type deve ser player ou alliance",
+  "server.api.unsupported_locale": "Configuração regional não suportada: {locale}",
+  "server.app.cra_books_payload_must.7aa91e61": "Os dados de livros CRA devem ser uma matriz vazia",
+  "server.app.cra_support_tools_contain.6615c823": "As ferramentas de apoio CRA contêm um ID de objeto inválido",
+  "server.app.cra_support_troop_count.2d16227f": "O número de tropas de apoio CRA está fora dos limites suportados",
+  "server.automation.safety_pause_after_an.67451716": "Pausa de segurança após a falha de uma ação automatizada"
+}

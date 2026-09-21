@@ -175,7 +175,7 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
                   onClick={() => onOpenFeatureSchedule('autoHospital', 'Auto Hospital')}
                   leftIcon={<CalendarDays className="h-4 w-4" />}
                 >
-                  <LocalizedText messageKey="ui.settings.components.autoHospitalSettingsModal.calendar.d5d0a30b" /></Button>
+                  <LocalizedText messageKey="common.calendar" /></Button>
               </div>
             )}
           >

@@ -295,7 +295,7 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
             )}
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" onClick={onClose} disabled={isSaving}><LocalizedText messageKey="ui.components.attackSetupModal.cancel.19766ed6" /></Button>
+            <Button variant="ghost" onClick={onClose} disabled={isSaving}><LocalizedText messageKey="game.cancel" /></Button>
             <Button variant="primary" onClick={handleSave} disabled={!canSave} isLoading={isSaving}>
               {isSaving ? 'Saving preset' : 'Save preset'}
             </Button>
@@ -343,7 +343,7 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
 
         <section className="grid gap-3 rounded-global border border-border-base bg-bg-card/65 p-3 shadow-[var(--shadow-raised)] lg:grid-cols-[minmax(15rem,1.4fr)_auto_auto] lg:items-end">
           <label className="block min-w-0">
-            <span className="mb-1.5 block text-[11px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.components.attackSetupModal.preset.name.e534a666" /></span>
+            <span className="mb-1.5 block text-[11px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="common.presetName" /></span>
             <Input
               value={draft.name}
               onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
@@ -389,7 +389,7 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
           <div className="grid grid-cols-3 gap-2">
             <MetricTile size="sm" className="min-w-[4.75rem]" label={localizeStatic("ui.components.attackSetupModal.label.waves.ad5b8321")} value={draft.waves.length.toLocaleString()} />
             <MetricTile size="sm" className="min-w-[4.75rem]" label={localizeStatic("ui.components.attackSetupModal.label.troops.5d47e163")} value={totals.troops.toLocaleString()} />
-            <MetricTile size="sm" className="min-w-[4.75rem]" label={localizeStatic("ui.components.attackSetupModal.label.tools.ea93d6a2")} value={totals.tools.toLocaleString()} />
+            <MetricTile size="sm" className="min-w-[4.75rem]" label={localizeStatic("game.tools")} value={totals.tools.toLocaleString()} />
           </div>
         </section>
 
@@ -675,7 +675,7 @@ const WaveEditorCard: React.FC<WaveEditorCardProps> = ({
           <div className="grid gap-1">
             <FormationRow
               kind="tool"
-              label={localizeStatic("ui.components.attackSetupModal.label.tools.ea93d6a2")}
+              label={localizeStatic("game.tools")}
               wave={wave}
               items={toolItems}
               stock={toolStock}
@@ -770,7 +770,7 @@ const CourtyardSupportCard: React.FC<CourtyardSupportCardProps> = ({
             size="header"
           />
           <MetricTile size="sm" className="min-w-[4.75rem]" label={localizeStatic("ui.components.attackSetupModal.label.troops.5d47e163")} value={troopTotal.toLocaleString()} />
-          <MetricTile size="sm" className="min-w-[4.75rem]" label={localizeStatic("ui.components.attackSetupModal.label.tools.ea93d6a2")} value={toolTotal.toLocaleString()} />
+          <MetricTile size="sm" className="min-w-[4.75rem]" label={localizeStatic("game.tools")} value={toolTotal.toLocaleString()} />
         </div>
       </CardHeader>
 

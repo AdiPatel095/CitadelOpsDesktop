@@ -7,16 +7,22 @@ export type MessageLeaf = {key: string; fallback: string; fallbackText?: string;
 export type LocalizedMessage = MessageLeaf & {context?: MessageLeaf[]};
 export type OfficialCatalog = {values: Readonly<Record<string,string>>; resolvedLocale: string; fallbackKeys?: readonly string[]};
 function officialText(template: string, params: Record<string, MessageValue> = {}, locale = 'en'): string {
-  return template.replace(/\{([A-Za-z0-9_]+)\}/g, (token, key: string) => Object.hasOwn(params,key) ? (/^ar(-|$)/.test(locale) ? `\u2068${String(params[key])}\u2069` : String(params[key])) : token);
+  return template.replace(/\{([A-Za-z0-9_]+)\}/g, (token, key: string) => {
+    if (!Object.hasOwn(params,key)) return token;
+    const value = params[key];
+    const text = typeof value === 'number' && Number.isFinite(value) ? new Intl.NumberFormat(locale,{maximumSignificantDigits:21}).format(value) : String(value);
+    return /^ar(-|$)/.test(locale) ? `\u2068${text}\u2069` : text;
+  });
 }
 function officialParametersComplete(template: string, params: Record<string, MessageValue> = {}): boolean {
   return [...template.matchAll(/\{([A-Za-z0-9_]+)\}/g)].every(match => Object.hasOwn(params,match[1]));
 }
 /** Isolate rendered arguments, never the selector input or stored user values. */
-function isolateArguments(elements: MessageFormatElement[]): MessageFormatElement[] {
+export function isolateMessageArguments(elements: MessageFormatElement[]): MessageFormatElement[] {
   return elements.flatMap<MessageFormatElement>(element=>{
-    if (element.type === TYPE.select || element.type === TYPE.plural) return [{...element,options:Object.fromEntries(Object.entries(element.options).map(([key,option])=>[key,{...option,value:isolateArguments(option.value)}]))}];
-    if (element.type === TYPE.literal || element.type === TYPE.tag) return [element];
+    if (element.type === TYPE.select || element.type === TYPE.plural) return [{...element,options:Object.fromEntries(Object.entries(element.options).map(([key,option])=>[key,{...option,value:isolateMessageArguments(option.value)}]))}];
+    if (element.type === TYPE.tag) return [{...element,children:isolateMessageArguments(element.children)}];
+    if (element.type === TYPE.literal) return [element];
     return [{type:TYPE.literal,value:'\u2068'},element,{type:TYPE.literal,value:'\u2069'}];
   });
 }
@@ -40,7 +46,7 @@ function formatSingleMessage(message: LocalizedMessage, locale: string, catalog:
   const translated = Object.hasOwn(catalog,message.key) && typeof catalog[message.key] === 'string';
   const params = Object.fromEntries(Object.entries({...message.params,...gameParams}).map(([key,value]) => [key, typeof value === 'boolean' ? String(value) : value]));
   const render = (template: string, language: string) => {
-    const source = /^ar(-|$)/.test(language) ? isolateArguments(parse(template,{ignoreTag:true})) : template;
+    const source = /^ar(-|$)/.test(language) ? isolateMessageArguments(parse(template,{ignoreTag:true})) : template;
     const result = new IntlMessageFormat(source,language,undefined,{ignoreTag:true}).format(params);
     return Array.isArray(result) ? result.join('') : String(result);
   };

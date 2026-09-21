@@ -40,8 +40,8 @@ const EventRankingModal: React.FC<EventRankingModalProps> = ({
 				<div className="flex w-full items-center justify-between gap-3">
 					<p className="text-xs text-text-muted"><LocalizedText messageKey="ui.events.components.eventRankingModal.live.data.returned.directly.by.the.gge.3b72fd0a" /></p>
 					<div className="flex gap-2">
-						<Button type="button" variant="ghost" onClick={onClose}><LocalizedText messageKey="ui.events.components.eventRankingModal.close.7d9eb7ac" /></Button>
-						<Button type="button" variant="primary" leftIcon={<RefreshCw className="h-4 w-4" />} isLoading={loading} onClick={onRefresh}><LocalizedText messageKey="ui.events.components.eventRankingModal.refresh.0e916101" /></Button>
+						<Button type="button" variant="ghost" onClick={onClose}><LocalizedText messageKey="common.close" /></Button>
+						<Button type="button" variant="primary" leftIcon={<RefreshCw className="h-4 w-4" />} isLoading={loading} onClick={onRefresh}><LocalizedText messageKey="common.refresh" /></Button>
 					</div>
 				</div>
 			)}

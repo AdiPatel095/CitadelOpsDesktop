@@ -1,3 +1,4 @@
+import { richMessages } from '../src/i18n/richMessages.ts';
 import { sourceMessages } from '../src/i18n/sourceMessages.ts';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -162,8 +163,8 @@ test('Settings route includes the My Stats storage control and required choices 
 	assert.match(settingsSource, /playerHistoryRecordingsPerDay/);
 	assert.ok(Object.entries(sourceMessages).some(([key, text]) => text.includes('does not send additional game scan commands') && settingsSource.includes(`messageKey="${key}"`)), 'Translated settings disclosure remains wired: '+'does not send additional game scan commands');
 	assert.match(settingsSource, /estimatedBytesPerRecording/);
-	assert.match(settingsSource, /Local desktop mode applies this policy directly/);
-	assert.match(settingsSource, /Neither dataset is published to the hosted private-metrics backend/);
+	assert.ok(Object.entries(richMessages).some(([key,text])=>text.includes('Local desktop mode applies this policy directly') && settingsSource.includes(`messageKey="${key}"`)));
+	assert.ok(Object.entries(richMessages).some(([key,text])=>text.includes('Neither dataset is published to the hosted private-metrics backend') && settingsSource.includes(`messageKey="${key}"`)));
 	assert.doesNotMatch(settingsSource, /title="Experimental Battle Research"/);
 	assert.match(settingsSource, /getPlayerHistoryRetention\(\)/);
 	assert.match(settingsSource, /applyPlayerHistoryRetention\(\s*nextRetention,\s*nextIntervalSeconds,\s*playerHistoryRetention\.revision/);

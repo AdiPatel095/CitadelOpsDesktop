@@ -1,5 +1,6 @@
 import { createElement, Fragment } from 'react';
 import type { ReactNode } from 'react';
+import { isolateMessageArguments } from './formatMessage.ts';
 import { IntlMessageFormat } from 'intl-messageformat';
 import { parse, TYPE } from '@formatjs/icu-messageformat-parser';
 import type { MessageFormatElement } from '@formatjs/icu-messageformat-parser';
@@ -46,7 +47,8 @@ export function renderRichMessage(message: LocalizedMessage, locale: string, cat
         const params = Object.fromEntries(Object.entries(message.params ?? {}).map(([key, value]) => [key, typeof value === 'boolean' ? String(value) : value]));
         // Each callback is supplied by application code and retains its own href,
         // rel, event handlers and accessibility behavior. Text stays React text.
-        const value = new IntlMessageFormat(template, language, undefined, { ignoreTag: false }).format<ReactNode>({ ...params, ...tags });
+        const parsed = parse(template, { ignoreTag: false });
+        const value = new IntlMessageFormat(/^ar(-|$)/.test(language) ? isolateMessageArguments(parsed) : parsed, language, undefined, { ignoreTag: false }).format<ReactNode>({ ...params, ...tags });
         return createElement(Fragment, null, ...(Array.isArray(value) ? value : [value]));
     };
     if (Object.hasOwn(catalog, message.key)) {

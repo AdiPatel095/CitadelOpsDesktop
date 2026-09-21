@@ -1,0 +1,6 @@
+{
+  "server.api.official_game_data_is.c5e55e7e": "官方遊戲資料無法使用",
+  "server.api.official_language_data_is.803160d4": "官方語言資料無法使用",
+  "server.api.unsupported_locale": "不支援的語言地區設定：{locale}",
+  "server.automation.safety_pause_after_an.67451716": "自動化操作失敗後，已基於安全考量暫停"
+}

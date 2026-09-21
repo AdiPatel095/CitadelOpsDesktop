@@ -1,0 +1,6 @@
+{
+  "server.api.official_game_data_is.c5e55e7e": "Официалните данни на играта не са достъпни",
+  "server.api.official_language_data_is.803160d4": "Официалните езикови данни не са достъпни",
+  "server.api.unsupported_locale": "Неподдържана локална настройка: {locale}",
+  "server.automation.safety_pause_after_an.67451716": "Предпазна пауза след неуспешно автоматизирано действие"
+}

@@ -1,0 +1,6 @@
+{
+  "server.api.official_game_data_is.c5e55e7e": "Resmî oyun verileri kullanılamıyor",
+  "server.api.official_language_data_is.803160d4": "Resmî dil verileri kullanılamıyor",
+  "server.api.unsupported_locale": "Desteklenmeyen yerel ayar: {locale}",
+  "server.automation.safety_pause_after_an.67451716": "Otomatik bir işlem başarısız olduktan sonra güvenlik duraklatması"
+}

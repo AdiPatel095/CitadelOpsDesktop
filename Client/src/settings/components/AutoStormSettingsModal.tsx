@@ -1051,7 +1051,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               {draft.islands.enabled ? (
                 <div className="mt-3 space-y-3 border-t border-border-base pt-3">
                   <div>
-                    <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.resources.e89b30aa" /></FieldLabel>
+                    <FieldLabel><LocalizedText messageKey="game.resources" /></FieldLabel>
                     <ChoiceChipGroup
                       ariaLabel={localizeStatic("ui.settings.components.autoStormSettingsModal.ariaLabel.storm.island.resources.cd7f09d0")}
                       options={RESOURCE_OPTIONS}

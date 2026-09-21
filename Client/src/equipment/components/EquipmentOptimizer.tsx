@@ -1,3 +1,4 @@
+import { LocalizedRichText } from "../../i18n/LocalizedRichText";
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from 'react';
@@ -453,7 +454,7 @@ function EquipmentOptimizerEditor({
 	], [groupsByKey, tier1, tier2]);
 
 	const optimize = async () => {
-		if (!leader || priorities.length === 0 || optimizeInFlight.current) return;
+		if (disabled || !leader || priorities.length === 0 || optimizeInFlight.current) return;
 		optimizeInFlight.current = true;
 		const requestID = ++optimizeRequest.current;
 		const requestSnapshotKey = currentSnapshotKey;
@@ -511,7 +512,7 @@ function EquipmentOptimizerEditor({
 	};
 
 	const apply = async () => {
-		if (!preview || previewStale || applyInFlight.current) return;
+		if (disabled || !preview || previewStale || applyInFlight.current) return;
 		const selected = preview.response.alternatives[selectedAlternative];
 		if (!selected) return;
 		applyInFlight.current = true;
@@ -553,7 +554,7 @@ function EquipmentOptimizerEditor({
 				maxWidth="5xl"
 				footer={(
 					<>
-						<Button variant="ghost" onClick={closeEditor}><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.cancel.19766ed6" /></Button>
+						<Button variant="ghost" onClick={closeEditor}><LocalizedText messageKey="game.cancel" /></Button>
 						<Button
 							onClick={optimize}
 							disabled={disabled || !leader || priorities.length === 0}
@@ -675,7 +676,7 @@ function EquipmentOptimizerEditor({
 				<div className="space-y-3 text-sm text-text-muted">
 						<p><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.each.draggable.row.is.the.same.official.8bf29a83" /></p>
 						<p><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.when.previewing.citadelops.expands.that.group.into.bc9f6b4c" /></p>
-					<p><span className="font-semibold text-error"><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.max.stat.f25df34f" /></span> groups receive the strongest position-decayed score. <span className="font-semibold text-primary"><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.have.in.random.slots.d286f8b3" /></span> groups receive a presence bonus and lower weighted score.</p>
+					<p><LocalizedRichText messageKey="ui.rich.equipment.components.equipmentOptimizer.max.stat.groups.receive.the.strongest.position.583645f6" params={{}} tags={{span0: children => <span className="font-semibold text-error">{children}</span>, span1: children => <span className="font-semibold text-primary">{children}</span>}} /></p>
 					<p><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.the.server.searches.storage.plus.the.selected.09fac1e7" /></p>
 				</div>
 			</Modal>
@@ -876,7 +877,7 @@ function OptimizerPreview({
 			maxWidth="5xl"
 			footer={(
 				<>
-					<Button variant="ghost" onClick={onClose} disabled={applying}><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.cancel.19766ed6" /></Button>
+					<Button variant="ghost" onClick={onClose} disabled={applying}><LocalizedText messageKey="game.cancel" /></Button>
 					<Button
 						onClick={onApply}
 						isLoading={applying}

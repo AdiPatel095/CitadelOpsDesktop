@@ -51,7 +51,7 @@ import {
 export default function EquipmentView() {
   const { t: localizeStatic } = useStaticLocale();
 	const { state, configuration, submitIntent } = useCitadelAPI();
-	const { effects, equipments, gems, troops } = useMetadata();
+	const { effects, equipments, gems, troops, effectsStatus } = useMetadata();
 	const [mode, setMode] = useState<EquipmentMode>('Commander');
 	const [targetID, setTargetID] = useState('castle-1');
 	const targetOptions = useMemo(() => equipmentTargets(), []);
@@ -243,11 +243,12 @@ export default function EquipmentView() {
 	const coins = Number(state?.player.resources['1'] ?? 0);
 	const coinBlocked = coinsUnderUpgradeReserve(coins, coinThreshold);
 	const controlsDisabled = !state?.session.loggedIn || busy || selected == null;
-	const reconfigureDisabled = busy || selected == null;
+	const reconfigureDisabled = busy || selected == null || effectsStatus !== 'ready';
 
 	return (
 		<div className="equipment-view-shell">
 			<StaleSessionBanner />
+      {effectsStatus !== 'ready' && <p role="status" className="text-sm text-warning"><LocalizedText messageKey={effectsStatus === 'loading' ? 'equipment.canonicalLoading' : 'equipment.canonicalUnavailable'} /></p>}
 			<Card className="liquid-prominent-header-card equipment-workspace-card h-full min-h-0 flex flex-col">
 				<CardHeader className="liquid-card-header-prominent flex flex-wrap items-center gap-4">
 					<PillSelector ariaLabel={localizeStatic("ui.equipment.components.equipmentView.ariaLabel.equipment.owner.type.8d4616c8")} value={mode} options={['Commander', 'Castellan']} onChange={(value) => setMode(value as EquipmentMode)} size="header" />
@@ -363,7 +364,7 @@ function EffectiveBattleReport({
 	targetOptions: EquipmentTarget[];
 	onTargetChange: (targetID: string) => void;
 }) {
-  const { t: localizeStatic } = useStaticLocale();
+  const { t: localizeStatic, locale } = useStaticLocale();
 	return (
 		<section className="flex h-full min-h-0 flex-col">
 			<div className="equipment-report-header">
@@ -400,7 +401,7 @@ function EffectiveBattleReport({
 							{effectProfile.showcase.map((effect) => (
 								<li key={effect.key} className="flex items-center justify-between gap-3 border-b border-border-base/60 px-3 py-2.5 last:border-b-0">
 									<span className="min-w-0 flex-1 truncate text-xs text-text-muted" title={effect.label}>{effect.label}</span>
-									<span className="shrink-0 font-mono text-sm font-semibold text-primary">{formatEquipmentEffectValue(effect, effect.value)}</span>
+									<span className="shrink-0 font-mono text-sm font-semibold text-primary">{formatEquipmentEffectValue(effect, effect.value, locale)}</span>
 								</li>
 							))}
 						</ul>
@@ -487,6 +488,7 @@ function EquipmentStatsPane({
 }
 
 function EquipmentEffectGroupRows({ group }: { group: EquipmentEffectGroup }) {
+  const {locale} = useStaticLocale();
 	if (group.rows.length === 1) {
 		return <EquipmentEffectDetailRow effect={group.rows[0]} includeCap />;
 	}
@@ -502,15 +504,15 @@ function EquipmentEffectGroupRows({ group }: { group: EquipmentEffectGroup }) {
 						</div>
 					</div>
 					<div className="shrink-0 text-right">
-						<div className="font-mono text-sm font-semibold text-primary">{formatEquipmentEffectValue(group, group.value)}</div>
-						{group.capped && <div className="font-mono text-[11px] text-text-muted">raw {formatEquipmentEffectValue(group, group.rawValue)}</div>}
+						<div className="font-mono text-sm font-semibold text-primary">{formatEquipmentEffectValue(group, group.value, locale)}</div>
+						{group.capped && <div className="font-mono text-[11px] text-text-muted">raw {formatEquipmentEffectValue(group, group.rawValue, locale)}</div>}
 					</div>
 				</div>
 			</div>
 			<div className="ml-3 border-l border-border-base pl-2">
 				{group.commonCaps.map((cap) => (
 					<div key={cap.capId} className="px-2 py-1.5 text-[11px] font-semibold text-text-muted">
-						{formatEquipmentCommonCap(group, cap.max)}
+						{formatEquipmentCommonCap(group, cap.max, locale)}
 					</div>
 				))}
 				{group.rows.map((effect) => (
@@ -532,22 +534,23 @@ function EquipmentEffectDetailRow({
 	effect: MappedEquipmentEffect;
 	includeCap: boolean;
 }) {
+  const {locale} = useStaticLocale();
 	return (
 		<div className="rounded px-2 py-2 transition-colors hover:bg-bg-card-hover">
 			<div className="flex items-start justify-between gap-3">
 				<div className="min-w-0">
 					<div className="flex flex-wrap items-center gap-2">
-						<span className="text-sm text-text-muted">{formatEquipmentEffectLabel(effect)}</span>
+						<span className="text-sm text-text-muted">{formatEquipmentEffectLabel(effect, locale)}</span>
 						<Badge variant={effectScopeBadge(effect.scope)} className="px-1.5 py-0 text-[9px]">{effect.scope}</Badge>
 						{effect.capped && <Badge variant="warning" className="px-1.5 py-0 text-[9px]"><LocalizedText messageKey="ui.equipment.components.equipmentView.capped.526b49dc" /></Badge>}
 					</div>
 					<div className="mt-1 text-[11px] text-text-muted/80">
-						{effect.sources.join(' · ')}{includeCap && effect.cap ? ` · max ${formatEquipmentEffectValue(effect, effect.cap)}` : ''}
+						{effect.sources.join(' · ')}{includeCap && effect.cap ? ` · max ${formatEquipmentEffectValue(effect, effect.cap, locale)}` : ''}
 					</div>
 				</div>
 				<div className="shrink-0 text-right">
-					<div className="font-mono text-sm font-semibold text-primary">{formatEquipmentEffectValue(effect, effect.value)}</div>
-					{effect.capped && <div className="font-mono text-[11px] text-text-muted">raw {formatEquipmentEffectValue(effect, effect.rawValue)}</div>}
+					<div className="font-mono text-sm font-semibold text-primary">{formatEquipmentEffectValue(effect, effect.value, locale)}</div>
+					{effect.capped && <div className="font-mono text-[11px] text-text-muted">raw {formatEquipmentEffectValue(effect, effect.rawValue, locale)}</div>}
 				</div>
 			</div>
 		</div>

@@ -1,0 +1,6 @@
+{
+  "server.api.official_game_data_is.c5e55e7e": "Viralliset pelitiedot eivät ole saatavilla",
+  "server.api.official_language_data_is.803160d4": "Viralliset kielitiedot eivät ole saatavilla",
+  "server.api.unsupported_locale": "Alueasetusta ei tueta: {locale}",
+  "server.automation.safety_pause_after_an.67451716": "Turvatauko automaatiotoiminnon epäonnistumisen jälkeen"
+}

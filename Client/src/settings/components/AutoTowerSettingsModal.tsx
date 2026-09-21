@@ -125,7 +125,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
               onClick={() => onOpenFeatureSchedule('autoTowers', 'Auto Towers')}
               leftIcon={<CalendarDays className="h-4 w-4" />}
             >
-              <LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.calendar.d5d0a30b" /></Button>
+              <LocalizedText messageKey="common.calendar" /></Button>
       )}
       onSave={save}
       saveLabel="Save changes"

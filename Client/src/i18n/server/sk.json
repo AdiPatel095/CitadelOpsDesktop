@@ -1,0 +1,6 @@
+{
+  "server.api.official_game_data_is.c5e55e7e": "Oficiálne herné údaje nie sú k dispozícii",
+  "server.api.official_language_data_is.803160d4": "Oficiálne jazykové údaje nie sú k dispozícii",
+  "server.api.unsupported_locale": "Nepodporované miestne nastavenie: {locale}",
+  "server.automation.safety_pause_after_an.67451716": "Bezpečnostné pozastavenie po zlyhaní automatizovanej akcie"
+}

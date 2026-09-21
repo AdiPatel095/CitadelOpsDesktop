@@ -406,7 +406,7 @@ const RiftAttackTemplate: React.FC = () => {
               <thead>
                 <tr className="border-b border-border-base bg-bg-card/50 text-left text-[10px] uppercase tracking-wider text-text-muted">
                   <th className="px-3 py-2 font-semibold"><LocalizedText messageKey="ui.rift.components.riftAttackTemplate.name.dcd1d522" /></th>
-                  <th className="px-3 py-2 font-semibold"><LocalizedText messageKey="ui.rift.components.riftAttackTemplate.commander.16af7be3" /></th>
+                  <th className="px-3 py-2 font-semibold"><LocalizedText messageKey="game.commander" /></th>
                   <th className="px-3 py-2 font-semibold"><LocalizedText messageKey="ui.rift.components.riftAttackTemplate.layout.a5119091" /></th>
                   <th className="px-3 py-2 font-semibold"><LocalizedText messageKey="ui.rift.components.riftAttackTemplate.travel.d2b98fb5" /></th>
                   <th className="px-3 py-2 font-semibold"><LocalizedText messageKey="ui.rift.components.riftAttackTemplate.captured.8a03fa9a" /></th>

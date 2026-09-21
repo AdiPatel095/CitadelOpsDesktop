@@ -1,0 +1,302 @@
+{
+  "ui.movement.components.commanderRequirementModal.cancel.19766ed6": {
+    "key": "game.cancel",
+    "source": "Cancel",
+    "reason": "reviewed identical official game concept"
+  },
+  "ui.movement.components.movementView.commander.16af7be3": {
+    "key": "game.commander",
+    "source": "Commander",
+    "reason": "reviewed identical official game concept"
+  },
+  "ui.movement.components.movementView.kingdom.f53639f9": {
+    "key": "game.kingdom",
+    "source": "Kingdom",
+    "reason": "reviewed identical official game concept"
+  },
+  "ui.rift.components.riftAttackTemplate.commander.16af7be3": {
+    "key": "game.commander",
+    "source": "Commander",
+    "reason": "reviewed identical official game concept"
+  },
+  "ui.rift.components.riftCoordDisplay.refresh.0e916101": {
+    "key": "common.refresh",
+    "source": "Refresh",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.allianceTargets.components.allianceTargetsView.refresh.0e916101": {
+    "key": "common.refresh",
+    "source": "Refresh",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.allianceTargets.components.allianceTargetsView.attack.4cd548f3": {
+    "key": "game.attack",
+    "source": "Attack",
+    "reason": "reviewed identical official game concept"
+  },
+  "ui.allianceTargets.components.allianceTargetsView.cancel.19766ed6": {
+    "key": "game.cancel",
+    "source": "Cancel",
+    "reason": "reviewed identical official game concept"
+  },
+  "ui.attackAnalytics.components.attackEconomyView.refresh.0e916101": {
+    "key": "common.refresh",
+    "source": "Refresh",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.attackAnalytics.components.attackEconomyView.clear.selection.cea4d2e0": {
+    "key": "common.clearSelection",
+    "source": "Clear selection",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.battleStats.components.battleStatsView.castle.419fb3b8": {
+    "key": "game.castle",
+    "source": "Castle",
+    "reason": "reviewed identical official game concept"
+  },
+  "ui.components.attackSetupModal.cancel.19766ed6": {
+    "key": "game.cancel",
+    "source": "Cancel",
+    "reason": "reviewed identical official game concept"
+  },
+  "ui.components.attackSetupModal.preset.name.e534a666": {
+    "key": "common.presetName",
+    "source": "Preset name",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.components.decorationPresetsPanel.save.preset.362a1376": {
+    "key": "common.savePreset",
+    "source": "Save preset",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.components.decorationPresetsPanel.delete.e2d0a549": {
+    "key": "game.delete",
+    "source": "Delete",
+    "reason": "reviewed identical official game concept"
+  },
+  "ui.components.defensePresetEditor.cancel.19766ed6": {
+    "key": "game.cancel",
+    "source": "Cancel",
+    "reason": "reviewed identical official game concept"
+  },
+  "ui.components.defensePresetEditor.save.preset.362a1376": {
+    "key": "common.savePreset",
+    "source": "Save preset",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.components.defensePresetEditor.preset.name.e534a666": {
+    "key": "common.presetName",
+    "source": "Preset name",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.components.header.command.center.2522f9d1": {
+    "key": "navigation.commandCenter",
+    "source": "Command center",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.components.staleSessionBanner.start.bot.74a11ddb": {
+    "key": "bot.start",
+    "source": "Start Bot",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.components.ui.catalogPickerModal.cancel.19766ed6": {
+    "key": "game.cancel",
+    "source": "Cancel",
+    "reason": "reviewed identical official game concept"
+  },
+  "ui.components.ui.namedPresetControls.preset.name.e534a666": {
+    "key": "common.presetName",
+    "source": "Preset name",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.components.ui.namedPresetControls.apply.31e392d1": {
+    "key": "common.apply",
+    "source": "Apply",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.components.ui.namedPresetControls.delete.e2d0a549": {
+    "key": "game.delete",
+    "source": "Delete",
+    "reason": "reviewed identical official game concept"
+  },
+  "ui.equipment.components.equipmentModals.cancel.19766ed6": {
+    "key": "game.cancel",
+    "source": "Cancel",
+    "reason": "reviewed identical official game concept"
+  },
+  "ui.equipment.components.equipmentOptimizer.cancel.19766ed6": {
+    "key": "game.cancel",
+    "source": "Cancel",
+    "reason": "reviewed identical official game concept"
+  },
+  "ui.events.components.eventRankingModal.close.7d9eb7ac": {
+    "key": "common.close",
+    "source": "Close",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.events.components.eventRankingModal.refresh.0e916101": {
+    "key": "common.refresh",
+    "source": "Refresh",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.playerTracker.components.playerTrackerView.clear.selection.cea4d2e0": {
+    "key": "common.clearSelection",
+    "source": "Clear selection",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.settings.components.autoAdvisorSettingsModal.cancel.19766ed6": {
+    "key": "game.cancel",
+    "source": "Cancel",
+    "reason": "reviewed identical official game concept"
+  },
+  "ui.settings.components.autoBeriWorldSettingsModal.calendar.d5d0a30b": {
+    "key": "common.calendar",
+    "source": "Calendar",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.settings.components.autoBirdSettingsModal.calendar.d5d0a30b": {
+    "key": "common.calendar",
+    "source": "Calendar",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.settings.components.autoBirdSettingsModal.apply.31e392d1": {
+    "key": "common.apply",
+    "source": "Apply",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.settings.components.autoBirdSettingsModal.save.changes.dd0ae7a5": {
+    "key": "common.saveChanges",
+    "source": "Save changes",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.settings.components.autoBoosterSettingsModal.calendar.d5d0a30b": {
+    "key": "common.calendar",
+    "source": "Calendar",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.settings.components.autoFortressSettingsModal.calendar.d5d0a30b": {
+    "key": "common.calendar",
+    "source": "Calendar",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.settings.components.autoHospitalSettingsModal.calendar.d5d0a30b": {
+    "key": "common.calendar",
+    "source": "Calendar",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.settings.components.autoSceatRecipePickerModal.close.7d9eb7ac": {
+    "key": "common.close",
+    "source": "Close",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.settings.components.autoStormSettingsModal.resources.e89b30aa": {
+    "key": "game.resources",
+    "source": "Resources",
+    "reason": "reviewed identical official game concept"
+  },
+  "ui.settings.components.autoTCISettingsModal.calendar.d5d0a30b": {
+    "key": "common.calendar",
+    "source": "Calendar",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.settings.components.autoTCISettingsModal.apply.31e392d1": {
+    "key": "common.apply",
+    "source": "Apply",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.settings.components.autoTCISettingsModal.save.changes.dd0ae7a5": {
+    "key": "common.saveChanges",
+    "source": "Save changes",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.settings.components.autoTowerSettingsModal.calendar.d5d0a30b": {
+    "key": "common.calendar",
+    "source": "Calendar",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.settings.components.automationDurationModal.cancel.19766ed6": {
+    "key": "game.cancel",
+    "source": "Cancel",
+    "reason": "reviewed identical official game concept"
+  },
+  "ui.settings.components.queueProductionSettingsModal.calendar.d5d0a30b": {
+    "key": "common.calendar",
+    "source": "Calendar",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.settings.components.weeklyScheduler.delete.e2d0a549": {
+    "key": "game.delete",
+    "source": "Delete",
+    "reason": "reviewed identical official game concept"
+  },
+  "ui.spyReports.components.spyReportsView.refresh.0e916101": {
+    "key": "common.refresh",
+    "source": "Refresh",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.spyReports.components.spyReportsView.castle.419fb3b8": {
+    "key": "game.castle",
+    "source": "Castle",
+    "reason": "reviewed identical official game concept"
+  },
+  "ui.views.attackPresetsView.cancel.19766ed6": {
+    "key": "game.cancel",
+    "source": "Cancel",
+    "reason": "reviewed identical official game concept"
+  },
+  "ui.views.automationView.close.7d9eb7ac": {
+    "key": "common.close",
+    "source": "Close",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.worldIntelligence.components.worldAllianceDetailView.clear.selection.cea4d2e0": {
+    "key": "common.clearSelection",
+    "source": "Clear selection",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.worldIntelligence.components.worldAllianceDetailView.level.1709305c": {
+    "key": "game.level",
+    "source": "Level",
+    "reason": "reviewed identical official game concept"
+  },
+  "ui.worldIntelligence.components.worldPlayerDetailView.clear.selection.cea4d2e0": {
+    "key": "common.clearSelection",
+    "source": "Clear selection",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.battleStats.components.battleStatsView.label.kingdom.f53639f9": {
+    "key": "game.kingdom",
+    "source": "Kingdom",
+    "reason": "reviewed identical official game concept"
+  },
+  "ui.battleStats.components.battleStatsView.label.commander.16af7be3": {
+    "key": "game.commander",
+    "source": "Commander",
+    "reason": "reviewed identical official game concept"
+  },
+  "ui.battleStats.components.battleStatsView.label.castellan.b8b6bc93": {
+    "key": "game.castellan",
+    "source": "Castellan",
+    "reason": "reviewed identical official game concept"
+  },
+  "ui.components.attackSetupModal.label.tools.ea93d6a2": {
+    "key": "game.tools",
+    "source": "Tools",
+    "reason": "reviewed identical official game concept"
+  },
+  "ui.components.decorationPresetsPanel.placeholder.preset.name.e534a666": {
+    "key": "common.presetName",
+    "source": "Preset name",
+    "reason": "reviewed repeated UI action or label"
+  },
+  "ui.views.attackPresetsView.label.tools.ea93d6a2": {
+    "key": "game.tools",
+    "source": "Tools",
+    "reason": "reviewed identical official game concept"
+  },
+  "ui.views.defensePresetsView.label.tools.ea93d6a2": {
+    "key": "game.tools",
+    "source": "Tools",
+    "reason": "reviewed identical official game concept"
+  }
+}

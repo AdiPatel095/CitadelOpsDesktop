@@ -62,7 +62,7 @@ export const CatalogPickerModal: React.FC<CatalogPickerModalProps> = ({
     )}
     footer={(
       <>
-        <Button variant="ghost" onClick={onClose} className="px-8"><LocalizedText messageKey="ui.components.ui.catalogPickerModal.cancel.19766ed6" /></Button>
+        <Button variant="ghost" onClick={onClose} className="px-8"><LocalizedText messageKey="game.cancel" /></Button>
         <Button
           variant="primary"
           onClick={onConfirm}

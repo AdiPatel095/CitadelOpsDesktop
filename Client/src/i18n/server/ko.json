@@ -1,0 +1,6 @@
+{
+  "server.api.official_game_data_is.c5e55e7e": "공식 게임 데이터를 사용할 수 없습니다",
+  "server.api.official_language_data_is.803160d4": "공식 언어 데이터를 사용할 수 없습니다",
+  "server.api.unsupported_locale": "지원하지 않는 로캘: {locale}",
+  "server.automation.safety_pause_after_an.67451716": "자동화 작업 실패 후 안전을 위해 일시 중지됨"
+}

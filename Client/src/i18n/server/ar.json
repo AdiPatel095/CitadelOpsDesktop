@@ -1,0 +1,6 @@
+{
+  "server.api.official_game_data_is.c5e55e7e": "بيانات اللعبة الرسمية غير متاحة",
+  "server.api.official_language_data_is.803160d4": "بيانات اللغة الرسمية غير متاحة",
+  "server.api.unsupported_locale": "الإعداد المحلي غير مدعوم: {locale}",
+  "server.automation.safety_pause_after_an.67451716": "توقف احترازي بعد فشل إجراء آلي"
+}

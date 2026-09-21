@@ -1,0 +1,6 @@
+{
+  "server.api.official_game_data_is.c5e55e7e": "Oficialūs žaidimo duomenys nepasiekiami",
+  "server.api.official_language_data_is.803160d4": "Oficialūs kalbos duomenys nepasiekiami",
+  "server.api.unsupported_locale": "Nepalaikoma lokalė: {locale}",
+  "server.automation.safety_pause_after_an.67451716": "Saugos pauzė po nesėkmingo automatizuoto veiksmo"
+}

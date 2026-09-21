@@ -1,0 +1,15 @@
+{
+  "server.api.event_occurrence_id_is.3c0ae253": "De ID van het evenementexemplaar is ongeldig",
+  "server.api.eventkey_is_invalid.5fa0f899": "eventKey is ongeldig",
+  "server.api.official_game_data_is.c5e55e7e": "De officiële spelgegevens zijn niet beschikbaar",
+  "server.api.official_language_data_is.803160d4": "De officiële taalgegevens zijn niet beschikbaar",
+  "server.api.ranking_metric_type_must.179bda7e": "Het type ranglijstmaatstaf moet players of alliances zijn",
+  "server.api.ranking_type_must_be.ae1d21f5": "Het ranglijsttype moet players of alliances zijn",
+  "server.api.streaming_responses_are_unavailable.dbad8099": "Streamingantwoorden zijn niet beschikbaar",
+  "server.api.type_must_be_player.6c2ff66b": "type moet player of alliance zijn",
+  "server.api.unsupported_locale": "Niet-ondersteunde landinstelling: {locale}",
+  "server.app.cra_books_payload_must.7aa91e61": "De CRA-boekgegevens moeten een lege array zijn",
+  "server.app.cra_support_tools_contain.6615c823": "De CRA-ondersteuningswerktuigen bevatten een ongeldige voorwerp-ID",
+  "server.app.cra_support_troop_count.2d16227f": "Het aantal CRA-ondersteuningstroepen valt buiten de ondersteunde grenzen",
+  "server.automation.safety_pause_after_an.67451716": "Veiligheidspauze na een mislukte automatiseringsactie"
+}

@@ -427,7 +427,7 @@ const BattleStatsView: React.FC = () => {
                     <th className="px-4 py-3 font-semibold"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.attacker.2969c659" /></th>
                     <th className="px-4 py-3 font-semibold"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.defender.157ddc59" /></th>
                     <th className="px-4 py-3 font-semibold"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.result.6e7d50e8" /></th>
-                    <th className="px-4 py-3 font-semibold"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.castle.419fb3b8" /></th>
+                    <th className="px-4 py-3 font-semibold"><LocalizedText messageKey="game.castle" /></th>
                     <th className="px-4 py-3 font-semibold text-right"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.attack.lost.8832fb51" /></th>
                     <th className="px-4 py-3 font-semibold text-right"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.def.lost.10bd5680" /></th>
                     <th className="px-3 py-3 font-semibold text-right w-12" aria-label={localizeStatic("ui.battleStats.components.battleStatsView.aria-label.open.details.67d16bb1")}></th>
@@ -812,7 +812,7 @@ const BattleDetailsHeader: React.FC<{ report: ParsedReport; outcome: string; onB
       <div className="battle-report-intel-strip">
         <BannerFact icon={<CalendarDays className="h-4 w-4" />} label={localizeStatic("ui.battleStats.components.battleStatsView.label.date.99c40ab4")} value={formatDate(report)} />
         <BannerFact icon={<MapPin className="h-4 w-4" />} label={localizeStatic("ui.battleStats.components.battleStatsView.label.coordinates.117c132e")} value={battleCoordinateLabel(report)} />
-		<BannerFact icon={<Shield className="h-4 w-4" />} label={localizeStatic("ui.battleStats.components.battleStatsView.label.kingdom.f53639f9")} value={kingdomLabel(report, kingdoms)} />
+		<BannerFact icon={<Shield className="h-4 w-4" />} label={localizeStatic("game.kingdom")} value={kingdomLabel(report, kingdoms)} />
       </div>
     </Card>
   );
@@ -1029,10 +1029,10 @@ const EffectComparison: React.FC<{
         <div className="overflow-x-auto">
           <div className="min-w-[44rem] space-y-4">
             <div className="grid grid-cols-[1fr_1.5fr_1fr] divide-x divide-border-base overflow-hidden rounded-global border border-border-base bg-bg-app">
-              <EffectComparisonHeader label={localizeStatic("ui.battleStats.components.battleStatsView.label.commander.16af7be3")} name={commanderName} tone="danger" />
+              <EffectComparisonHeader label={localizeStatic("game.commander")} name={commanderName} tone="danger" />
               <div className="flex min-w-0 items-center justify-center bg-bg-surface/45 px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wider text-text-muted">
                 <LocalizedText messageKey="ui.battleStats.components.battleStatsView.effect.2252d5cf" /></div>
-              <EffectComparisonHeader label={localizeStatic("ui.battleStats.components.battleStatsView.label.castellan.b8b6bc93")} name={castellanName} tone="info" />
+              <EffectComparisonHeader label={localizeStatic("game.castellan")} name={castellanName} tone="info" />
             </div>
 
             {groups.map((group) => (
