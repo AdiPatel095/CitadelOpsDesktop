@@ -1,3 +1,4 @@
+import {loadBundledOfficial,mergeOfficialCatalogs} from './bundledOfficial';
 import { loadServerCatalog } from './serverCatalog';
 import { invalidateOfficialMessages } from './officialMessages';
 import { loadBackendCatalog } from './backendCatalog';
@@ -31,6 +32,8 @@ export function LocaleProvider({children}: {children: React.ReactNode}) {
   const [connection,setConnection] = useState('Disconnected');
   useEffect(() => CitadelAPI.subscribeStatus(status => { invalidateOfficialMessages(); setConnection(status); }),[]);
   const [game,setGame] = useState<{locale: Locale; catalog: OfficialCatalog} | null>(null);
+  const [bundled,setBundled] = useState<{locale:Locale;catalog:OfficialCatalog}|null>(null);
+  useEffect(()=>{let active=true;void loadBundledOfficial(locale).then(catalog=>{if(active)setBundled({locale,catalog});}).catch(()=>{if(active)setBundled(null);});return ()=>{active=false;};},[locale]);
   const [loaded,setLoaded] = useState<{locale: Locale; catalog: Catalog}>({locale:'en',catalog:{}});
   useEffect(() => {
     let active = true;
@@ -50,7 +53,7 @@ export function LocaleProvider({children}: {children: React.ReactNode}) {
     document.documentElement.dataset.viewerLocale = locale;
     document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';
   },[locale]);
-  const value = useMemo(() => createValue(locale,setLocale,loaded.locale === locale ? loaded.catalog : {},game?.locale === locale ? game.catalog : undefined,connection),[locale,loaded,game,connection]);
+  const value = useMemo(() => createValue(locale,setLocale,loaded.locale === locale ? loaded.catalog : {},mergeOfficialCatalogs(locale,bundled?.locale===locale?bundled.catalog:undefined,game?.locale === locale ? game.catalog : undefined),connection),[locale,loaded,game,bundled,connection]);
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 }
 export function useLocale() { return useContext(LocaleContext); }

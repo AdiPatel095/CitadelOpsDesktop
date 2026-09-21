@@ -28,12 +28,15 @@
     "ui.battleStats.components.battleStatsView.title.defender.157ddc59": "dialog_battleLog_defender",
     "ui.components.defensePresetEditor.label.left.flank.95721338": "dialog_defence_leftFlank",
     "ui.components.defensePresetEditor.label.right.flank.51130f03": "dialog_defence_rightFlank",
-    "ui.worldIntelligence.components.worldEventHistory.label.rank.a4130d7d": "rank"
+    "ui.worldIntelligence.components.worldEventHistory.label.rank.a4130d7d": "rank",
+    "ui.components.ui.modal.aria-label.close.modal.207bd886": "generic_btn_close",
+    "ui.components.alerts.aria-label.dismiss.48845bff": "generic_btn_close"
   },
   "excludedFalseFriends": [
     "Battle result is not automatically a spy report result",
     "Complete is not instantBuild",
     "Travel is not entering another world",
     "General tab is not an alliance rank"
-  ]
+  ],
+  "closeActionScope": "Modal close and notification dismissal both close the current transient UI; official close label supplies accessible action name."
 }

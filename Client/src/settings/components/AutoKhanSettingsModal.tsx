@@ -1,3 +1,6 @@
+import {useLocalizedMessage} from '../../i18n/useLocalizedMessage';
+import {parseMessageDescriptor} from '../../i18n/messageDescriptor';
+import {messageLanguageAttributes} from '../../i18n/messageLanguage';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
@@ -68,6 +71,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
   const defenseSummary = selectedDefensePreset ? summarizeDefensePreset(selectedDefensePreset) : null;
   const sourceIsMain = mainCastle != null && draft.sourceCastleId === mainCastle.id;
   const protection = state?.khan?.protection;
+  const protectionReason = useLocalizedMessage(parseMessageDescriptor(protection?.reasonDescriptor),protection?.reason || 'Add defense units before the Khan chain can continue.');
   const rageBooster = state?.market?.boosters?.['27'];
   const rageBoosterExpiresAt = rageBooster?.expiresAt ? Date.parse(rageBooster.expiresAt) : 0;
   const rageBoosterActive = rageBooster?.permanent === true
@@ -135,7 +139,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
         {protection?.active ? (
           <div className="rounded-global border border-warning/30 bg-warning/10 p-4">
             <div className="flex items-center gap-2 text-sm font-black text-warning"><LockKeyhole className="h-4 w-4" /> Auto Khan is safety-locked</div>
-            <p className="mt-1 text-xs text-text-main">{protection.reason || 'Add defense units before the Khan chain can continue.'}</p>
+            <p className="mt-1 text-xs text-text-main" {...messageLanguageAttributes(protectionReason)}>{protectionReason.text}</p>
             <div className="mt-2 flex flex-wrap gap-2">
               <Badge variant="warning">{(protection.offensiveWallUnits ?? 0).toLocaleString()} offensive wall units</Badge>
               <Badge variant="outline">Threshold {(protection.offensiveUnitThreshold ?? 0).toLocaleString()}</Badge>

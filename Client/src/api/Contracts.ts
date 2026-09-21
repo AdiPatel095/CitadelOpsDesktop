@@ -2038,6 +2038,7 @@ export interface KhanTauntStateV2 {
 }
 
 export interface KhanProtectionStateV2 {
+	reasonDescriptor?: LocalizedMessage;
 	active: boolean;
 	castleId?: number;
 	offensiveWallUnits?: number;

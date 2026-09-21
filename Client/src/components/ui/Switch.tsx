@@ -27,7 +27,6 @@ export const Switch: React.FC<SwitchProps> = ({
       onClick={() => onChange(!checked)}
       className={`liquid-switch liquid-switch-${size} ${checked ? 'liquid-switch-on' : 'liquid-switch-off'} ${className}`}
     >
-      <span className="sr-only">{ariaLabel}: {checked ? 'on' : 'off'}</span>
       <span aria-hidden="true" className="liquid-switch-rail" />
       <span aria-hidden="true" className="liquid-switch-thumb" />
     </button>

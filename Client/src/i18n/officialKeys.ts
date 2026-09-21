@@ -30,6 +30,8 @@ export const officialMessageKeys = {
   "common.refresh": "generic_btn_refresh",
   "common.apply": "apply",
   "common.close": "generic_btn_close",
+  "ui.components.ui.modal.aria-label.close.modal.207bd886": "generic_btn_close",
+  "ui.components.alerts.aria-label.dismiss.48845bff": "generic_btn_close",
   "common.saveChanges": "dialog_button_saveChanges",
   "activity.search": "generic_btn_search",
   "bot.reconnect": "generic_btn_reconnect",
