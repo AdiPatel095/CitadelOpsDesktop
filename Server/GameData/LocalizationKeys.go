@@ -50,6 +50,19 @@ func (store *Store) DefinitionNameKey(language *LanguageStore, collection string
 				keys = append(keys, v+"_name", v)
 			}
 		}
+	case "resources", "currencies":
+		if collection == "resources" && strings.EqualFold(stringValue(record, "JSONKey"), "C2") {
+			keys = append(keys, "gold", "webshop_offer_hardCurrencyBundles_currency_rubies")
+		}
+		fields := []string{"name", "assetName", "JSONKey"}
+		if collection == "currencies" {
+			fields = []string{"Name", "name", "assetName", "JSONKey"}
+		}
+		for _, field := range fields {
+			if value := stringValue(record, field); value != "" {
+				keys = append(keys, "currency_name_"+value, value+"_name")
+			}
+		}
 	case "buildings":
 		keys = append(keys, buildingLocalizationKeys(record)...)
 	case "equipments":
