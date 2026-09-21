@@ -1,3 +1,4 @@
+import {messageLanguageAttributes} from '../i18n/messageLanguage';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Check, Copy, Pause, Play, RefreshCw, Search, X } from 'lucide-react';
@@ -492,7 +493,7 @@ export const LoggerDock = React.memo(function LoggerDock() {
                 </span>
                 <span className="min-w-0">
                   <span className="liquid-log-title">{t('activity.title')}</span>
-                  <span dir="auto" lang={localizedChannels[channelIndex * 2 + 1]?.resolvedLocale === 'mixed' ? undefined : localizedChannels[channelIndex * 2 + 1]?.resolvedLocale || 'en'} className="liquid-log-subtitle">{displayedDescription}</span>
+                  <span {...messageLanguageAttributes({resolvedLocale:localizedChannels[channelIndex * 2 + 1]?.resolvedLocale || 'en'})} className="liquid-log-subtitle">{displayedDescription}</span>
                 </span>
               </div>
               <div className="liquid-log-header-actions">
@@ -659,7 +660,7 @@ export const LoggerDock = React.memo(function LoggerDock() {
                           </div>
 
                           <div className="liquid-log-row-content">
-                            <span className="liquid-log-message" lang={line.messageLocale === 'mixed' ? undefined : line.messageLocale} dir="auto">
+                            <span className="liquid-log-message" {...messageLanguageAttributes({resolvedLocale:line.messageLocale})}>
                               {line.message}
                               {!line.translated && locale !== 'en' && <small lang={messageLocale} className="block opacity-60">{t('activity.untranslated')}</small>}
                             </span>

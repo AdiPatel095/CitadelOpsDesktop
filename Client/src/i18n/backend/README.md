@@ -58,3 +58,17 @@ Portuguese terminology also checked against official v4357
 `dialog_battleLogDetail_wave` and `dialog_troopPreset_savePreset_selectSingleWave_tt`.
 Attack waves are ondas, not vagas. The public locale remains pt, matching the
 official service; no invented regional locale or game-language change is made.
+Chinese variants are separately authored with Simplified/Traditional terminology.
+Official v4357 battlelog is 战报/戰報; dialog_openSpyReport_Tooltip confirms
+谍报/間諜報告. Attack support-tool and slot terms follow
+`dialog_attack_rework2022_slot_supportTools_tooltip` and its sibling slot keys
+(支援型武器栏位 / 支援武器欄位). Technical IDs and byte limits stay literal.
+Arabic uses Modern Standard Arabic UI imperatives. Variable counts use neutral
+count/limit phrasing where a fixed noun form would be incorrect. Explicitly
+positive values remain distinct from non-negative values. Catalogs contain no
+hand-authored bidi controls: the shared formatter isolates rendered arguments
+and complete context segments, leaving stored identifiers unchanged.
+
+Finnish uses direct imperatives and neutral technical validation wording. Official
+v4357 battlelog is Taisteluraportti. A runtime is a suoritusinstanssi and a
+tombstone is a poistomerkintä; neither denotes an in-game building.

@@ -1,3 +1,6 @@
+import {useLocalizedMessages} from '../../i18n/useLocalizedMessages';
+import {parseMessageDescriptor} from '../../i18n/messageDescriptor';
+import {messageLanguageAttributes} from '../../i18n/messageLanguage';
 import { LocalizedRichText } from "../../i18n/LocalizedRichText";
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
@@ -93,6 +96,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
   const enabledKingdomCount = Object.values(settings.kingdoms).filter((kingdom) => kingdom.enabled).length;
   const fortressMetrics = state?.automations?.autoFortress?.metrics ?? {};
   const fortressDetails = state?.automations?.autoFortress?.details ?? {};
+  const localizedSupplyDetails=useLocalizedMessages(KINGDOMS.map(kingdom=>({legacyText:fortressDetails[`supplyKingdom${kingdom.id}`] ?? '',descriptor:parseMessageDescriptor(state?.automations?.autoFortress?.detailsDescriptors?.[`supplyKingdom${kingdom.id}`])})));
   const nextExpectedReady = fortressReadyLabel(fortressMetrics.nextReadyAtUnix);
   const update = (patch: Partial<AutoFortressClientStateV1>) => setSettings((current) => ({ ...current, ...patch }));
 
@@ -198,7 +202,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
           </div>
         </div>
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-          {KINGDOMS.map((kingdom) => {
+          {KINGDOMS.map((kingdom,kingdomIndex) => {
             const Icon = kingdom.icon;
             const castle = castlesByKingdom.get(kingdom.id);
             const enabled = settings.kingdoms[String(kingdom.id)]?.enabled === true;
@@ -209,7 +213,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
             const inbound = Math.max(0, Math.trunc(fortressMetrics[`inboundDirewolvesKingdom${kingdom.id}`] ?? 0));
             const allocated = Math.max(0, Math.trunc(fortressMetrics[`allocatedDirewolvesKingdom${kingdom.id}`] ?? stationed + inbound));
             const outstanding = Math.max(0, Math.trunc(fortressMetrics[`outstandingDirewolvesKingdom${kingdom.id}`] ?? 0));
-            const supplyDetail = fortressDetails[`supplyKingdom${kingdom.id}`];
+            const supplyDetail = localizedSupplyDetails[kingdomIndex];
             return (
               <Card key={kingdom.id} variant="solid" className={`relative overflow-hidden bg-gradient-to-br ${kingdom.wash} p-4`}>
                 <div className="flex items-start justify-between gap-3">
@@ -239,7 +243,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
                       <div className="rounded-lg bg-bg-card/70 px-2 py-1"><span className="block text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.outstanding.e681b899" /></span><strong className="text-text-main">{outstanding.toLocaleString()}</strong></div>
                     </div>
                   ) : <div className="mt-1 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.unlock.kingdom.first.8f49a64e" /></div>}
-                  {supplyDetail && <div className="mt-2 text-[10px] font-semibold text-text-muted">{supplyDetail}</div>}
+                  {supplyDetail.text && <div className="mt-2 text-[10px] font-semibold text-text-muted" {...messageLanguageAttributes(supplyDetail)}>{supplyDetail.text}</div>}
                   {castle && (
                     <div className="mt-2 flex items-center gap-1.5 border-t border-border-base/70 pt-2 text-[10px] font-semibold text-text-muted">
                       <Radar className="h-3.5 w-3.5 shrink-0 text-primary" />

@@ -82,11 +82,26 @@ export function messageArguments(template: string): string[] {
   visit(parse(template,{ignoreTag:true}));
   return [...found].sort();
 }
+/** Select values are protocol enums; plural categories may vary by locale. */
+export function messageSelectOptions(template:string,ignoreTag=true):string[] {
+  const selectors=new Set<string>();
+  function visit(elements:MessageFormatElement[]) {
+    for(const element of elements) {
+      if(element.type===TYPE.select)selectors.add(`${element.value}:${Object.keys(element.options).sort().join(',')}`);
+      if(element.type===TYPE.select || element.type===TYPE.plural)for(const option of Object.values(element.options))visit(option.value);
+      if(element.type===TYPE.tag)visit(element.children);
+    }
+  }
+  visit(parse(template,{ignoreTag}));return [...selectors].sort();
+}
 export function validateMessageCatalog(source: Catalog, catalog: Catalog): string[] {
   const errors: string[] = [];
   for (const key of Object.keys(source)) {
     if (!Object.hasOwn(catalog,key) || !catalog[key].trim()) { errors.push(`Missing message: ${key}`); continue; }
-    try { if (JSON.stringify(messageArguments(source[key])) !== JSON.stringify(messageArguments(catalog[key]))) errors.push(`Argument mismatch: ${key}`); }
+    try {
+      if (JSON.stringify(messageArguments(source[key])) !== JSON.stringify(messageArguments(catalog[key]))) errors.push(`Argument mismatch: ${key}`);
+      if (JSON.stringify(messageSelectOptions(source[key])) !== JSON.stringify(messageSelectOptions(catalog[key]))) errors.push(`Select option mismatch: ${key}`);
+    }
     catch { errors.push(`Invalid ICU message: ${key}`); }
   }
   for (const key of Object.keys(catalog)) if (!Object.hasOwn(source,key)) errors.push(`Unknown message: ${key}`);

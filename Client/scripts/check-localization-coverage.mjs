@@ -1,3 +1,5 @@
+import {fileURLToPath} from 'node:url';
+import {readExternalCatalogSource} from './external-catalog-source.mjs';
 import fs from 'node:fs';
 import { richMessages, richContracts } from '../src/i18n/richMessages.ts';
 import { validateRichMessageCatalog } from '../src/i18n/RichMessage.ts';
@@ -29,8 +31,9 @@ for (const locale of localeCodes.filter(code=>code!=='en')) {
 const externalCoverage = {};
 let externalMissing = 0;
 for (const family of ['server','backend']) {
-  const baselinePath = new URL(`../src/i18n/${family}/en.json`,import.meta.url);
-  const baseline = fs.existsSync(baselinePath) ? JSON.parse(fs.readFileSync(baselinePath,'utf8')) : {};
+  let baseline;
+  try { baseline=readExternalCatalogSource(fileURLToPath(new URL(`../src/i18n/${family}`,import.meta.url)),family); }
+  catch(error) { errors.push(String(error));externalCoverage[family]={invalidSource:true};continue; }
   externalCoverage[family] = {};
   for (const locale of localeCodes.filter(code=>code!=='en')) {
     const packPath = new URL(`../src/i18n/${family}/${locale}.json`,import.meta.url);

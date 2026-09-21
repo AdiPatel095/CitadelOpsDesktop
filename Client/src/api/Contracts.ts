@@ -1637,6 +1637,7 @@ export interface AutomationStateV2 {
 	safetyLock?: AutomationSafetyLockV2;
 	metrics?: Record<string, number>;
 	details?: Record<string, string>;
+	detailsDescriptors?: Record<string, LocalizedMessage>;
 	updatedAt: string;
 }
 

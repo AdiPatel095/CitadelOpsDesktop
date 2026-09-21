@@ -1,11 +1,11 @@
 import { loadServerCatalog } from './serverCatalog';
 import { invalidateOfficialMessages } from './officialMessages';
 import { loadBackendCatalog } from './backendCatalog';
-import { officialMessageKeys } from './officialKeys';
+import { officialMessageKeys, officialMessageNouns } from './officialKeys';
 import { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { readViewerLocale, setViewerLocale, subscribeViewerLocale } from './viewerLocaleStore';
 import type { Locale } from './locales';
-import { messages } from './messages';
+import { describeMessage } from './messages';
 import { CitadelAPI } from '../api/CitadelClient';
 import { formatMessage } from './formatMessage';
 import type { Catalog, OfficialCatalog } from './formatMessage';
@@ -13,7 +13,7 @@ import { loadMessageCatalog } from './catalogs';
 import type { MessageKey, MessageParameters } from './messages';
 const officialKeys: Partial<Record<MessageKey,string>> = officialMessageKeys;
 function createValue(locale: Locale, setLocale: (locale: Locale) => void, catalog: Catalog = {}, game?: OfficialCatalog, runtimeStatus = 'Disconnected') {
-  const message = (key: MessageKey, parameters?: MessageParameters) => formatMessage({key,fallback:messages[key],params:parameters ? {...parameters} : undefined,officialKey:officialKeys[key]},locale,catalog,game);
+  const message = (key: MessageKey, parameters?: MessageParameters) => formatMessage(describeMessage(key,parameters),locale,catalog,game);
   return {
     message, catalog, runtimeStatus,
     locale, setLocale, direction: locale === 'ar' ? 'rtl' as const : 'ltr' as const,
@@ -39,7 +39,7 @@ export function LocaleProvider({children}: {children: React.ReactNode}) {
   },[locale]);
   useEffect(() => {
     let active = true;
-    void CitadelAPI.localizeCatalog(Object.values(officialKeys),locale).then(result => {
+    void CitadelAPI.localizeCatalog([...Object.values(officialKeys),...Object.values(officialMessageNouns).flatMap(nouns=>Object.values(nouns).map(noun=>noun.key))],locale).then(result => {
       if (active) setGame({locale,catalog:{values:result.values,resolvedLocale:result.locale?.resolvedLocale ?? 'en',fallbackKeys:result.locale?.fallbackKeys}});
     }).catch(() => { if (active) setGame(null); });
     return () => { active = false; };

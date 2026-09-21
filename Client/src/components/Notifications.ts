@@ -1,3 +1,4 @@
+import type { LocalizedMessage } from '../i18n/formatMessage';
 export type NotificationCategory = 'green' | 'yellow' | 'red';
 
 export const NOTIFICATION_DURATION_MS = 30_000;
@@ -11,10 +12,13 @@ export interface AppNotification {
   revision: number;
   category: NotificationCategory;
   message: string;
+  messageDescriptor?: LocalizedMessage;
+  lineDescriptors?: Array<LocalizedMessage | undefined>;
   lines?: string[];
   persistent?: boolean;
   action?: {
     label: string;
+    labelDescriptor?: LocalizedMessage;
     onClick: () => void;
   };
 }

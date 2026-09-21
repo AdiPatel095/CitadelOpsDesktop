@@ -1,0 +1,31 @@
+{
+  "itemsVersion": "786.03",
+  "languageVersion": "4357",
+  "eventTitleKey": "event_title_128",
+  "links": [
+    {
+      "setID": "1094",
+      "equipmentID": "1461",
+      "rewardID": "9653",
+      "tombolaID": "96",
+      "gachaID": "45",
+      "eventID": "128"
+    },
+    {
+      "setID": "1095",
+      "equipmentID": "1466",
+      "rewardID": "9686",
+      "tombolaID": "97",
+      "gachaID": "46",
+      "eventID": "128"
+    },
+    {
+      "setID": "1096",
+      "equipmentID": "1471",
+      "rewardID": "9716",
+      "tombolaID": "100",
+      "gachaID": "49",
+      "eventID": "128"
+    }
+  ]
+}

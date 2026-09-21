@@ -1,9 +1,41 @@
+import type { LocalizedMessage } from './formatMessage';
 import { richMessages } from './richMessages';
 import { sourceMessages } from './sourceMessages';
-import { officialMessageKeys } from './officialKeys';
+import { officialMessageKeys, officialMessageNouns } from './officialKeys';
 import { formatMessage, validateMessageCatalog } from './formatMessage';
 /** Add explicit descriptors here; never translate user names, IDs, or free-form input. */
 export const messages = {
+  'notification.gameSays':'The game says',
+  'notification.observedBehavior':'Based on observed game behavior',
+  'notification.gameErrorCode':'Game error {code}.',
+  "equipment.notification.cleaned": "Equipment storage cleanup completed",
+  "equipment.notification.swapped": "Equipment loadouts swapped",
+  "equipment.notification.eventApplied": "{tier, select, Bronze {Bronze event loadout applied} Silver {Silver event loadout applied} Gold {Gold event loadout applied} other {Event loadout applied}}",
+  "equipment.notification.unequipped": "{kind, select, equipment {Equipment unequipped} other {Gems unequipped}}",
+  "equipment.notification.upgraded": "{kind, select, equipment {Equipment upgraded} other {Gem upgraded}}",
+
+  "equipment.relicCategory": "{category, select, non {Non Relic} relic1 {Relic 1.0} other {Relic 2.0}}",
+  "equipment.sell.nonRelicEquipment": "Sell eligible non-relic equipment",
+  "equipment.sell.nonRelicGems": "Sell eligible non-relic gems",
+  "equipment.sell.relic1Equipment": "Sell all Relic 1.0 equipment",
+  "equipment.sell.relic1Gems": "Sell all Relic 1.0 gems",
+  "equipment.sell.relic2Equipment": "Sell Relic 2.0 equipment below {count, number} total stars",
+  "equipment.sell.relic2Gems": "Sell Relic 2.0 gems below {count, number} total stars",
+  "equipment.stars": "{count, plural, one {# star} other {# stars}}",
+  "equipment.sell.verification": "The server refreshes storage first, freezes the exact selection, and verifies every game response before reporting success.",
+  "equipment.busy": "Busy",
+  "equipment.equippedFraction": "{count, number}/{maximum, number}",
+  "equipment.unequip.title": "{kind, select, equipment {Unequip Equipment} other {Unequip Gems}}",
+  "equipment.unequip.action": "{count, plural, =0 {Unequip} other {Unequip (#)}}",
+  "equipment.unequip.empty": "{kind, select, equipment {No equipment is equipped.} other {No gems are equipped.}}",
+  "equipment.instanceId": "ID {id}",
+  "equipment.upgrade.title": "{kind, select, equipment {Upgrade Equipment} other {Upgrade Gem}}",
+  "equipment.upgrade.coinBlocked": "Coins under threshold",
+  "equipment.upgrade.action": "Upgrade to {level, number}",
+  "equipment.upgrade.unknownRarity": "Unknown rarity",
+  "equipment.upgrade.currentLevel": "Level {level, number} / {maximum, number}",
+  "equipment.upgrade.targetLevel": "Target level ({minimum, number}\u2013{maximum, number})",
+
   "equipment.event.nomad.label": "Nomad Invasion",
   "equipment.event.nomad.description": "Commander equipment built for Nomad and Khan camps.",
   "equipment.event.samurai.label": "Samurai Invasion",
@@ -12,7 +44,7 @@ export const messages = {
   "equipment.event.berimond.description": "Commander equipment built for Berimond camps and towers.",
   "equipment.event.foreign_lords.label": "Foreign Lords & Bloodcrows",
   "equipment.event.foreign_lords.description": "The Glory set for Foreign Lord and Bloodcrow castles.",
-  "equipment.event.hollow_moon_pvp.label": "Hollow Moon PvP",
+  "equipment.event.hollow_moon_pvp.label": "{event} — PvP",
   "equipment.event.hollow_moon_pvp.description": "Select one coherent Bronze, Silver, or Gold 2026 PvP set.",
   "equipment.event.tier": "{tier, select, Bronze {Bronze} Silver {Silver} Gold {Gold} other {Unspecified}}",
   "equipment.event.apply": "{tier, select, Bronze {Apply Bronze Event Set} Silver {Apply Silver Event Set} Gold {Apply Gold Event Set} other {Apply Event Set}}",
@@ -210,4 +242,9 @@ export function validateCatalog(catalog: Record<string, string>): string[] {
 }
 export function interpolate(template: string, parameters: MessageParameters = {}): string {
   return formatMessage({key: '', fallback: template, params: {...parameters}}, 'en', {}).text;
+}
+
+/** Explicit own-message descriptor; protocol values and user parameters remain untouched. */
+export function describeMessage(key:MessageKey,params?:MessageParameters):LocalizedMessage {
+  return {key,fallback:messages[key],params:params ? {...params} : undefined,officialKey:(officialMessageKeys as Partial<Record<MessageKey,string>>)[key],gameParams:(officialMessageNouns as Partial<Record<MessageKey,LocalizedMessage['gameParams']>>)[key]};
 }

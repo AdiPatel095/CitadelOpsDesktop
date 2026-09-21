@@ -1,6 +1,6 @@
 import { createElement, Fragment } from 'react';
 import type { ReactNode } from 'react';
-import { isolateMessageArguments } from './formatMessage.ts';
+import { isolateMessageArguments, messageSelectOptions } from './formatMessage.ts';
 import { IntlMessageFormat } from 'intl-messageformat';
 import { parse, TYPE } from '@formatjs/icu-messageformat-parser';
 import type { MessageFormatElement } from '@formatjs/icu-messageformat-parser';
@@ -32,6 +32,7 @@ export function validateRichMessageCatalog(source: Catalog, catalog: Catalog, co
         try {
             const baseline = richMessageContract(source[key]);
             const translated = richMessageContract(catalog[key]);
+            if (!matches(messageSelectOptions(source[key],false),messageSelectOptions(catalog[key],false))) errors.push(`Select option mismatch: ${key}`);
             if (!matches(baseline.arguments, contract.arguments) || !matches(baseline.tags, contract.tags)) errors.push(`Source contract mismatch: ${key}`);
             if (!matches(translated.arguments, contract.arguments) || !matches(translated.tags, contract.tags)) errors.push(`Translation contract mismatch: ${key}`);
         } catch { errors.push(`Invalid rich message: ${key}`); }
@@ -44,6 +45,7 @@ export function renderRichMessage(message: LocalizedMessage, locale: string, cat
         const source = richMessageContract(message.fallback);
         const candidate = richMessageContract(template);
         if (!matches(source.tags, Object.keys(tags)) || !matches(source.arguments, Object.keys(message.params ?? {})) || !matches(source.tags, candidate.tags) || !matches(source.arguments, candidate.arguments)) throw new Error('Rich message contract mismatch');
+        if (!matches(messageSelectOptions(message.fallback,false),messageSelectOptions(template,false))) throw new Error('Rich select options mismatch');
         const params = Object.fromEntries(Object.entries(message.params ?? {}).map(([key, value]) => [key, typeof value === 'boolean' ? String(value) : value]));
         // Each callback is supplied by application code and retains its own href,
         // rel, event handlers and accessibility behavior. Text stays React text.

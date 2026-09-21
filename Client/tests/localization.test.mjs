@@ -52,7 +52,7 @@ test('official game messages and nested nouns preserve exact user values and fal
 });
 
 test('navigation game terms use verified semantic official keys',()=>{
- assert.deepEqual(Object.fromEntries(Object.entries(modules.officialKeys.officialMessageKeys).filter(([key])=>key.startsWith('navigation.'))),{'navigation.castle':'castle','navigation.equipment':'dialog_equipment_title','navigation.movement':'dialog_recuit_generals','navigation.rift':'event_title_133'});
+ assert.deepEqual(Object.fromEntries(Object.entries(modules.officialKeys.officialMessageKeys).filter(([key])=>key.startsWith('navigation.'))),{'navigation.castle':'castle','navigation.equipment':'dialog_equipment_title','navigation.movement':'dialog_recuit_generals','navigation.rift':'event_title_133','navigation.settings':'settings'});
 });
 
 test('structured error context preserves scalar identifiers and reports missing context translation',()=>{
@@ -102,4 +102,10 @@ test('official numeric arguments preserve precision while string IDs and user br
   const isolate=value=>locale==='ar'?`\u2068${value}\u2069`:value;
   assert.equal(formatMessage(descriptor,locale,{},game).text,[new Intl.NumberFormat(locale,{maximumSignificantDigits:21}).format(1234.56789),'1234.56789','Player {0}'].map(isolate).join(' | '));
  }
+});
+
+test('catalog validation preserves select enums while permitting locale plural categories',()=>{
+ const {validateMessageCatalog}=modules.formatMessage;
+ assert.deepEqual(validateMessageCatalog({x:'{kind, select, equipment {Equipment} other {Gem}}'},{x:'{kind, select, ausruestung {Ausrüstung} other {Edelstein}}'}),['Select option mismatch: x']);
+ assert.deepEqual(validateMessageCatalog({x:'{count, plural, one {# item} other {# items}}'},{x:'{count, plural, one {# rzecz} few {# rzeczy} many {# rzeczy} other {# rzeczy}}'}),[]);
 });

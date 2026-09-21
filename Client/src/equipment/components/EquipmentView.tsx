@@ -1,3 +1,6 @@
+import { equipmentEventOptions } from '../EquipmentEventLoadouts';
+import { describeMessage, interpolate } from '../../i18n/messages';
+import type { LocalizedMessage } from '../../i18n/formatMessage';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -10,7 +13,6 @@ import { Badge, Button, Card, CardContent, CardHeader, CardTitle, PillSelector, 
 import { useMetadata } from '../../context/MetadataContext';
 import { coinsUnderUpgradeReserve } from '../../utils/UpgradeCoinReserve';
 import {
-	equipmentEventOptions,
 	resolveEquipmentEventAvailability,
 	type EquipmentEventKey,
 	type EquipmentEventTier,
@@ -161,11 +163,11 @@ export default function EquipmentView() {
 		};
 	}, [selected, state]);
 
-	const run = useCallback(async (work: () => Promise<unknown>, success?: string) => {
+	const run = useCallback(async (work: () => Promise<unknown>, success?: LocalizedMessage) => {
 		setBusy(true);
 		try {
 			await work();
-			if (success) Notifications.success(success);
+			if (success) Notifications.publish({category:'green',message:interpolate(success.fallback,success.params as Record<string,string|number>),messageDescriptor:success});
 			return true;
 		} catch {
 			return false;
@@ -184,7 +186,7 @@ export default function EquipmentView() {
 	const sell = (request: SaleRequest) => void run(async () => {
 		await submitIntent('equipment.refresh');
 		await submitIntent('equipment.sell', request as unknown as Record<string, unknown>);
-	}, 'Equipment storage cleanup completed').then((success) => success && setShowSell(false));
+	}, describeMessage('equipment.notification.cleaned')).then((success) => success && setShowSell(false));
 
 	const swap = (otherLeaderID: number) => {
 		if (!selected) return;
@@ -192,12 +194,13 @@ export default function EquipmentView() {
 			leaderKind: selected.kind,
 			firstLeaderId: selected.id,
 			secondLeaderId: otherLeaderID,
-		}), 'Equipment loadouts swapped').then((success) => success && setShowSwap(false));
+		}), describeMessage('equipment.notification.swapped')).then((success) => success && setShowSwap(false));
 	};
 
 	const applyEventLoadout = (event: EquipmentEventKey, tier?: EquipmentEventTier) => {
 		if (!selected || selected.kind !== 'commander') return;
-		const eventLabel = equipmentEventOptions.find((option) => option.value === event)?.label ?? 'Event';
+		const eventOption=equipmentEventOptions.find(option=>option.value===event);
+		const notification={...describeMessage('equipment.notification.eventApplied',{tier:tier ?? 'none'}),context:eventOption ? [describeMessage(eventOption.labelKey)] : undefined};
 		void run(async () => {
 			await submitIntent('equipment.refresh');
 			await submitIntent('equipment.event.apply', {

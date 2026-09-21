@@ -1,21 +1,10 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
-import test from 'node:test';
-import ts from 'typescript';
-
-async function importTypeScript(relativePath) {
-  const sourceUrl = new URL(relativePath, import.meta.url);
-  const source = await readFile(sourceUrl, 'utf8');
-  const compiled = ts.transpileModule(source, {
-    compilerOptions: {
-      module: ts.ModuleKind.ES2022,
-      target: ts.ScriptTarget.ES2022,
-    },
-    fileName: sourceUrl.pathname,
-  });
-  const compiledUrl = `data:text/javascript;base64,${Buffer.from(compiled.outputText).toString('base64')}`;
-  return import(compiledUrl);
-}
+import {after,test} from 'node:test';
+import {fileURLToPath} from 'node:url';
+import {createServer} from 'vite';
+const vite=await createServer({root:fileURLToPath(new URL('..',import.meta.url)),appType:'custom',logLevel:'silent',server:{middlewareMode:true}});
+after(()=>vite.close());
+async function importTypeScript(relativePath) {return vite.ssrLoadModule(fileURLToPath(new URL(relativePath,import.meta.url)));}
 
 const {
   OperationFailureNotificationCoordinator,
@@ -259,4 +248,15 @@ test('all non-persistent toasts remain for 30 seconds', () => {
   assert.equal(notificationDurationMs('yellow'), 30_000);
   assert.equal(notificationDurationMs('red'), 30_000);
   assert.equal(notificationDurationMs('green'), 30_000);
+});
+
+test('structured notification descriptors preserve aligned recovery and code while rejecting malformed inputs',()=>{
+ const value=receipt({status:'failed',failure:{severity:'error',toast:true,knowledge:'official',message:'Action failed',explanation:'Raw reason',recovery:'Retry later',gameCode:123,messageDescriptor:{key:'main',fallback:'Action failed'},explanationDescriptor:{key:'reason',fallback:'Reason {name}',params:{name:'Player {0}'}},recoveryDescriptor:{key:'retry',fallback:'Retry later'}}});
+ const notification=operationFailureNotification(value);
+ assert.equal(notification.messageDescriptor.key,'main');
+ assert.equal(notification.lineDescriptors[0].context[0].key,'notification.gameSays');
+ assert.equal(notification.lineDescriptors[0].fallbackText,'The game says: Raw reason');
+ assert.equal(notification.lineDescriptors[1].key,'retry');
+ assert.equal(notification.lineDescriptors[2].params.code,'123');
+ assert.doesNotThrow(()=>operationFailureNotification({...value,failure:{...value.failure,explanationDescriptor:{key:'bad',fallback:'Bad',context:{length:1}}}}));
 });

@@ -1,5 +1,9 @@
 /** Whole-sentence templates; only application-owned React callbacks render tags. */
 export const richMessages = {
+  "equipment.swap.description": "{kind, select, commander {Move base equipment and heroes between <leader>{name}</leader> and another commander. Socketed gems remain on their equipment.} castellan {Move base equipment and heroes between <leader>{name}</leader> and another castellan. Socketed gems remain on their equipment.} other {Move base equipment and heroes between <leader>{name}</leader> and another leader. Socketed gems remain on their equipment.}}",
+  "equipment.unequip.description": "{kind, select, equipment {Select equipment to remove from <leader>{name}</leader>.} other {Select gems to remove from <leader>{name}</leader>.}}",
+  "equipment.upgrade.description": "{kind, select, equipment {Choose one equipment item on <leader>{name}</leader>.} other {Choose one gem on <leader>{name}</leader>.}}",
+
   "equipment.event.chooseForLeader": "Choose the event loadout for <leader>{name}</leader>.",
   "ui.rich.equipment.components.equipmentOptimizer.max.stat.groups.receive.the.strongest.position.583645f6": "<span0>Max Stat</span0> groups receive the strongest position-decayed score. <span1>Have in Random Slots</span1> groups receive a presence bonus and lower weighted score.",
   "ui.rich.settings.components.autoBeriWorldSettingsModal.citadelops.sends.the.exact.codetext0.capacity.with.9d6cf133": "CitadelOps sends the exact <span0>{codeText0}</span0> capacity with <span1>{codeText1}</span1>. When skipping is enabled, it applies the selected <span2>{codeText2}</span2> immediately, then checks a still-travelling transfer once per minute. The selection stays saved while skipping is off.",
@@ -12,6 +16,10 @@ export const richMessages = {
   "ui.rich.views.settingsView.my.stats.uses.this.profile.s.codetext0.6d76bd61": "My Stats uses this profile's <code0>{codeText0}</code0> file, not SQLite. Estimates use saved rows or the current sample shape; troop and currency counts can change the actual size.  Finite-window maintenance rewrites the file safely and can briefly require roughly twice the displayed retained size.  Choosing a more frequent cadence affects future recordings; choosing a less-frequent cadence permanently compacts existing intermediate points.  Turning storage off removes saved history but keeps current live values available while CitadelOps is running.  Reducing the window permanently removes older points. Increasing it later cannot restore points already deleted.  This setting does not affect logs, reports, World Intelligence, or live game state."
 } as const;
 export const richContracts = {
+  "equipment.swap.description": {arguments:["kind", "name"],tags:["leader"]},
+  "equipment.unequip.description": {arguments:["kind", "name"],tags:["leader"]},
+  "equipment.upgrade.description": {arguments:["kind", "name"],tags:["leader"]},
+
   "equipment.event.chooseForLeader": {arguments:["name"],tags:["leader"]},
   "ui.rich.equipment.components.equipmentOptimizer.max.stat.groups.receive.the.strongest.position.583645f6": {
     "arguments": [],

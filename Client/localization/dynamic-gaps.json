@@ -9,7 +9,7 @@
     "id": "operation-notifications",
     "source": "api/OperationNotifications.ts",
     "status": "uncovered",
-    "reason": "Receipt message/explanation/recovery descriptor consumers and catalogs pending."
+    "reason": "Structured failure descriptors, aligned recovery/code lines and reactive Alerts are integrated. Legacy classifiers, unconverted producer strings and missing catalogs remain."
   },
   {
     "id": "api-errors",
@@ -27,7 +27,7 @@
     "id": "automation-status",
     "source": "context/AuthContext.tsx",
     "status": "uncovered",
-    "reason": "Consume detailDescriptor/statusDetailDescriptor with viewer locale."
+    "reason": "AutoFortress detailsDescriptors entries render reactively with original fallback metadata. Other detail/statusDetail consumers and catalogs remain."
   },
   {
     "id": "exported-activity",

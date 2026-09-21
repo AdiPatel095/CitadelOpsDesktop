@@ -43,7 +43,7 @@ export function EquipmentSellModal({
 	onConfirm: (request: SaleRequest) => void;
 	busy: boolean;
 }) {
-  const { t: localizeStatic } = useStaticLocale();
+  const { t: localizeStatic, number } = useStaticLocale();
 	const [relicTab, setRelicTab] = useState<RelicTab>('Non Relic');
 	const [sellLookItems, setSellLookItems] = useState(false);
 	const [sellPost2026, setSellPost2026] = useState(false);
@@ -76,7 +76,7 @@ export function EquipmentSellModal({
 		<Modal
 			isOpen={isOpen}
 			onClose={onClose}
-			title={<PillSelector ariaLabel={localizeStatic("ui.equipment.components.equipmentModals.ariaLabel.equipment.category.d378a1be")} value={relicTab} onChange={(value) => setRelicTab(value as RelicTab)} options={['Non Relic', 'Relic 1.0', 'Relic 2.0']} size="header" fullWidth />}
+			title={<PillSelector ariaLabel={localizeStatic("ui.equipment.components.equipmentModals.ariaLabel.equipment.category.d378a1be")} value={relicTab} onChange={(value) => setRelicTab(value as RelicTab)} options={[{value:'Non Relic',label:localizeStatic('equipment.relicCategory',{category:'non'})},{value:'Relic 1.0',label:localizeStatic('equipment.relicCategory',{category:'relic1'})},{value:'Relic 2.0',label:localizeStatic('equipment.relicCategory',{category:'relic2'})}]} size="header" fullWidth />}
 			footer={(
 				<>
 					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
@@ -90,11 +90,7 @@ export function EquipmentSellModal({
 				</div>
 				<div className="rounded-global border border-error/30 bg-error/10 p-4 text-center">
 					<p className="text-sm font-semibold text-text-main">
-						{relicTab === 'Non Relic'
-							? `Sell eligible non-relic ${itemType.toLowerCase()}`
-							: relicTab === 'Relic 1.0'
-								? `Sell all Relic 1.0 ${itemType.toLowerCase()}`
-								: `Sell Relic 2.0 ${itemType.toLowerCase()} below ${keepStars} total stars`}
+						{localizeStatic(relicTab === 'Non Relic' ? (itemType === 'Equipment' ? 'equipment.sell.nonRelicEquipment' : 'equipment.sell.nonRelicGems') : relicTab === 'Relic 1.0' ? (itemType === 'Equipment' ? 'equipment.sell.relic1Equipment' : 'equipment.sell.relic1Gems') : (itemType === 'Equipment' ? 'equipment.sell.relic2Equipment' : 'equipment.sell.relic2Gems'),{count:keepStars})}
 					</p>
 					<p className="mt-2 text-xs text-error"><LocalizedText messageKey="ui.equipment.components.equipmentModals.this.game.action.cannot.be.reversed.43e31498" /></p>
 				</div>
@@ -121,7 +117,7 @@ export function EquipmentSellModal({
 					<div className="rounded-global border border-border-base bg-bg-app/50 p-4">
 						<div className="mb-3 flex items-center justify-between">
 							<span className="text-sm font-medium text-text-main"><LocalizedText messageKey="ui.equipment.components.equipmentModals.keep.total.stars.and.above.21f1668e" /></span>
-							<Badge variant="warning">{keepStars} stars</Badge>
+							<Badge variant="warning">{localizeStatic('equipment.stars',{count:keepStars})}</Badge>
 						</div>
 						<input
 							type="range"
@@ -131,13 +127,13 @@ export function EquipmentSellModal({
 							onChange={(event) => setKeepStars(Number(event.target.value))}
 							className="w-full accent-primary"
 						/>
-						<div className="mt-1 flex justify-between text-[10px] text-text-muted"><span>4</span><span>42</span></div>
+						<div className="mt-1 flex justify-between text-[10px] text-text-muted"><span>{number(4)}</span><span>{number(42)}</span></div>
 					</div>
 				)}
 
 				<div className="flex items-start gap-2 text-xs text-text-muted">
 					<TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
-					The server refreshes storage first, freezes the exact selection, and verifies every game response before reporting success.
+					<LocalizedText messageKey="equipment.sell.verification" />
 				</div>
 			</div>
 		</Modal>
@@ -159,7 +155,7 @@ export function EquipmentSwapModal({
 	onConfirm: (otherLeaderID: number) => void;
 	busy: boolean;
 }) {
-  const { t: localizeStatic } = useStaticLocale();
+  const { t: localizeStatic, number } = useStaticLocale();
 	const [otherID, setOtherID] = useState<number | null>(null);
 	useEffect(() => {
 		if (isOpen) setOtherID(null);
@@ -181,7 +177,7 @@ export function EquipmentSwapModal({
 			<div className="space-y-4">
 				<div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary"><RefreshCw className="h-7 w-7" /></div>
 				<p className="text-center text-sm text-text-muted">
-					Move base equipment and heroes between <span className="font-semibold text-primary">{leader?.name}</span> and another {leader?.kind}. Socketed gems remain on their equipment.
+					<LocalizedRichText messageKey="equipment.swap.description" params={{kind:leader?.kind ?? 'other',name:leader?.name ?? ''}} tags={{leader:children=><span className="font-semibold text-text-main">{children}</span>}} />
 				</p>
 				<div className="max-h-[50vh] space-y-2 overflow-y-auto custom-scrollbar">
 					{available.map((candidate) => {
@@ -193,9 +189,9 @@ export function EquipmentSwapModal({
 								onClick={() => setOtherID(candidate.id)}
 								className={`flex w-full items-center gap-3 rounded-global border p-3 text-left ${otherID === candidate.id ? 'border-primary/50 bg-primary/10' : 'border-border-base bg-bg-app/50 hover:bg-bg-card-hover'}`}
 							>
-								<span className="flex h-7 w-7 items-center justify-center rounded-full bg-bg-card text-xs font-bold text-text-muted">{candidate.position}</span>
+								<span className="flex h-7 w-7 items-center justify-center rounded-full bg-bg-card text-xs font-bold text-text-muted">{number(candidate.position)}</span>
 								<span className="min-w-0 flex-1 truncate text-sm font-medium text-text-main">{candidate.name}</span>
-								<Badge variant={candidate.available ? 'success' : 'warning'}>{candidate.available ? `${equipped}/5` : 'Busy'}</Badge>
+								<Badge variant={candidate.available ? 'success' : 'warning'}>{candidate.available ? <bdi dir="ltr">{localizeStatic('equipment.equippedFraction',{count:equipped,maximum:5})}</bdi> : localizeStatic('equipment.busy')}</Badge>
 							</button>
 						);
 					})}
@@ -356,6 +352,7 @@ export function UnequipModal({
 	onConfirm: (slots: number[]) => void;
 	busy: boolean;
 }) {
+  const {t:localizeStatic} = useStaticLocale();
 	const [selected, setSelected] = useState<Set<number>>(new Set());
 	useEffect(() => {
 		if (isOpen) setSelected(new Set());
@@ -371,11 +368,11 @@ export function UnequipModal({
 		<Modal
 			isOpen={isOpen}
 			onClose={onClose}
-			title={`Unequip ${kind === 'equipment' ? 'Equipment' : 'Gems'}`}
+			title={localizeStatic('equipment.unequip.title',{kind})}
 			footer={(
 				<>
 					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
-					<Button disabled={selected.size === 0} onClick={() => onConfirm(Array.from(selected))} isLoading={busy}>Unequip {selected.size ? `(${selected.size})` : ''}</Button>
+					<Button disabled={selected.size === 0} onClick={() => onConfirm(Array.from(selected))} isLoading={busy}>{localizeStatic('equipment.unequip.action',{count:selected.size})}</Button>
 				</>
 			)}
 		>
@@ -383,7 +380,7 @@ export function UnequipModal({
 				<div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full ${kind === 'equipment' ? 'bg-primary/10 text-primary' : 'bg-purple-500/10 text-purple-300'}`}>
 					{kind === 'equipment' ? <Shield className="h-7 w-7" /> : <Gem className="h-7 w-7" />}
 				</div>
-				<p className="text-center text-sm text-text-muted">Select {kind} to remove from <span className="font-semibold text-text-main">{leader?.name}</span>.</p>
+				<p className="text-center text-sm text-text-muted"><LocalizedRichText messageKey="equipment.unequip.description" params={{kind:kind,name:leader?.name ?? ''}} tags={{leader:children=><span className="font-semibold text-text-main">{children}</span>}} /></p>
 				<div className="space-y-2">
 					{available.map((row) => {
 						const id = kind === 'equipment' ? row.item?.id : row.gem?.id;
@@ -396,11 +393,11 @@ export function UnequipModal({
 							>
 								<span className={`h-5 w-5 rounded border-2 ${selected.has(row.slot) ? 'border-primary bg-primary' : 'border-border-base'}`} />
 								<span className="flex-1 text-sm font-medium text-text-main">{row.label}</span>
-								<span className="font-mono text-xs text-text-muted">ID {id}</span>
+								<span className="font-mono text-xs text-text-muted">{localizeStatic('equipment.instanceId',{id:String(id ?? '')})}</span>
 							</button>
 						);
 					})}
-					{available.length === 0 && <p className="py-5 text-center text-sm text-text-muted">No {kind} are equipped.</p>}
+					{available.length === 0 && <p className="py-5 text-center text-sm text-text-muted">{localizeStatic('equipment.unequip.empty',{kind})}</p>}
 				</div>
 			</div>
 		</Modal>
@@ -426,6 +423,7 @@ export function UpgradeModal({
 	onConfirm: (itemID: number, targetLevel: number) => void;
 	busy: boolean;
 }) {
+  const {t:localizeStatic} = useStaticLocale();
 	const candidates = useMemo(() => rows.flatMap((row) => {
 		const item = kind === 'equipment' ? row.item : row.gem;
 		if (item == null) return [];
@@ -459,7 +457,7 @@ export function UpgradeModal({
 		<Modal
 			isOpen={isOpen}
 			onClose={onClose}
-			title={`Upgrade ${kind === 'equipment' ? 'Equipment' : 'Gem'}`}
+			title={localizeStatic('equipment.upgrade.title',{kind})}
 			footer={(
 				<>
 					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
@@ -468,7 +466,7 @@ export function UpgradeModal({
 						onClick={() => selectedID != null && onConfirm(selectedID, targetLevel)}
 						isLoading={busy}
 					>
-						{coinBlocked ? 'Coins under threshold' : `Upgrade to ${targetLevel}`}
+						{coinBlocked ? localizeStatic('equipment.upgrade.coinBlocked') : localizeStatic('equipment.upgrade.action',{level:targetLevel})}
 					</Button>
 				</>
 			)}
@@ -477,7 +475,7 @@ export function UpgradeModal({
 				<div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full ${kind === 'equipment' ? 'bg-primary/10 text-primary' : 'bg-purple-500/10 text-purple-300'}`}>
 					<ArrowUpCircle className="h-7 w-7" />
 				</div>
-				<p className="text-center text-sm text-text-muted">Choose one {kind} on <span className="font-semibold text-text-main">{leader?.name}</span>.</p>
+				<p className="text-center text-sm text-text-muted"><LocalizedRichText messageKey="equipment.upgrade.description" params={{kind:kind,name:leader?.name ?? ''}} tags={{leader:children=><span className="font-semibold text-text-main">{children}</span>}} /></p>
 				<div className="max-h-[42vh] space-y-2 overflow-y-auto custom-scrollbar">
 					{candidates.map(({ row, item, levelCap }) => {
 						const level = item.level ?? 0;
@@ -492,7 +490,7 @@ export function UpgradeModal({
 							>
 								<span className="flex-1 text-sm font-medium text-text-main">{row.label}</span>
 								<Badge variant={levelCap == null ? 'warning' : capped ? 'success' : 'secondary'}>
-									{levelCap == null ? 'Unknown rarity' : `Level ${level} / ${levelCap}`}
+									{levelCap == null ? localizeStatic('equipment.upgrade.unknownRarity') : localizeStatic('equipment.upgrade.currentLevel',{level,maximum:levelCap})}
 								</Badge>
 								<span className="font-mono text-[10px] text-text-muted">{item.id}</span>
 							</button>
@@ -501,7 +499,7 @@ export function UpgradeModal({
 				</div>
 				{selected && selectedLevelCap != null && currentLevel < selectedLevelCap && (
 					<div className="rounded-global border border-border-base bg-bg-app/50 p-4">
-						<label className="mb-2 block text-sm font-medium text-text-main">Target level ({currentLevel + 1}–{selectedLevelCap})</label>
+						<label className="mb-2 block text-sm font-medium text-text-main">{localizeStatic('equipment.upgrade.targetLevel',{minimum:currentLevel+1,maximum:selectedLevelCap})}</label>
 						<Input
 							type="number"
 							min={currentLevel + 1}
