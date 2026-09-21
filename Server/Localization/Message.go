@@ -179,11 +179,12 @@ func First(messages []*Message) *Message {
 }
 
 // WithGameParam attaches an official noun identity without mutating the source
-// descriptor. Empty keys retain the original primitive fallback unchanged.
+// descriptor. Missing official identity leaves the complete legacy message
+// explicitly untranslated instead of hiding an English noun in translated prose.
 func (message *Message) WithGameParam(parameter, officialKey, fallback string) *Message {
 	copy := Clone(message)
 	if copy == nil || parameter == "" || officialKey == "" {
-		return copy
+		return nil
 	}
 	if copy.GameParams == nil {
 		copy.GameParams = map[string]GameParam{}

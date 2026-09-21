@@ -60,7 +60,7 @@ func packagePurchaseDescriptor(input Intent.PlanningContext, product GameData.Au
 	message := Localization.New("server.app.buy_unit_packages", "Buy {amount, plural, one {# package} other {# packages}} of {unitAmount, number} {unit} for {cost, number} {currency}", Localization.Params{"amount": amount, "unitAmount": product.UnitAmount, "unit": unitName, "cost": amount * product.Price.Amount, "currency": product.Price.Name})
 	message = message.WithGameParam("unit", unitKey, unitName)
 	message = priceNameDescriptor(message, input, "currency", product.Price)
-	if message.GameParams["currency"].Key == "" {
+	if message == nil || message.GameParams["currency"].Key == "" {
 		return nil
 	}
 	return message

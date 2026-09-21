@@ -84,7 +84,7 @@ func planBeriToolPurchase(
 			Name: "Recheck Berimond armorer tool purchase", NameDescriptor: Localization.New("server.app.recheck_berimond_armorer_tool.abf3a716", "Recheck Berimond armorer tool purchase", nil), Action: "beri.tools.purchase.guard",
 			ActionArguments: resolvedArguments,
 		}),
-		shopCommandStep("Purchase "+item.Name+" from the Berimond armorer", "sbp", purchasePayload, 0),
+		shopCommandStep("Purchase "+item.Name+" from the Berimond armorer", "sbp", purchasePayload, 0).WithNameDescriptor(gameNameDescriptor(Localization.New("server.app.purchase_berimond_tool.step", "Purchase {tool} from the Berimond armorer", Localization.Params{"tool": item.Name}), input, "tool", "units", item.ToolID, item.Name)),
 		attackCastleRefreshStep("Refresh Berimond tool inventory after purchase", castle).WithNameDescriptor(Localization.New("server.app.refresh_berimond_tool_inventory.4175233d", "Refresh Berimond tool inventory after purchase", nil)),
 	}
 	steps[3].CoinCost = &Intent.CoinCostRequirement{

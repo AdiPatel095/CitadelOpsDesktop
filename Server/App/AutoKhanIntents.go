@@ -817,7 +817,7 @@ func planKhanDefenseToolReplenish(
 		history.ResponseBarrier = Intent.ResponseBarrierCommitted
 		steps = append(steps, history)
 	}
-	purchase := shopCommandStep(fmt.Sprintf("Purchase defense tool %d", request.ToolID), "sbp", payload, 0)
+	purchase := shopCommandStep(fmt.Sprintf("Purchase defense tool %d", request.ToolID), "sbp", payload, 0).WithNameDescriptor(Localization.New("server.app.purchase_defense_tool.step", "Purchase defense tool {id}", Localization.Params{"id": strconv.FormatInt(int64(request.ToolID), 10)}))
 	purchase.FinalDispatchAction = "khan.defense_tools.guard"
 	purchase.FinalDispatchArguments = append(json.RawMessage(nil), arguments...)
 	steps = append(steps,

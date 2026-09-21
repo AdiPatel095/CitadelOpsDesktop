@@ -867,7 +867,7 @@ func autoBuyerPolicyTestStore(t *testing.T) *GameData.Store {
 			{"packageID":102,"comment1":"ARE Blacksmith - Rift Coin Package","stock":1,"costRiftCoin":25}
 		],
 		"feasts":[
-			{"feastID":0,"comment":"Food feast","duration":21600,"productionBoost":80,"costFood":80000},
+			{"feastID":0,"type":"small","comment":"Food feast","duration":21600,"productionBoost":80,"costFood":80000},
 			{"feastID":1,"comment":"Ruby feast","duration":21600,"productionBoost":120,"costC2":250},
 			{"feastID":8,"comment":"King's feast","duration":21600,"productionBoost":400,"costFood":150000}
 		]
