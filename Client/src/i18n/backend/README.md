@@ -5,8 +5,8 @@ is extracted from CitadelOpsBackend PR95 at e8e34993 (282 explicit keys), not an
 independently edited translation. The server sends keys, scalar parameters and
 safe context descriptors; each viewer selects a pack locally.
 
-German, French, Spanish, Italian, Portuguese, Dutch and Swedish translations were authored by the implementation model in this
-task on 2026-09-20. No source was uploaded to a translation service. They have
+All 25 non-English backend packs were authored by the implementation model in
+this task on 2026-09-20. No source was uploaded to a translation service. They have
 key/ICU-argument validation; independent native-speaker review remains pending.
 Coverage records must distinguish authored translations, fallback and review.
 
@@ -72,3 +72,39 @@ and complete context segments, leaving stored identifiers unchanged.
 Finnish uses direct imperatives and neutral technical validation wording. Official
 v4357 battlelog is Taisteluraportti. A runtime is a suoritusinstanssi and a
 tombstone is a poistomerkintä; neither denotes an in-game building.
+
+Japanese uses polite UI instructions and concise validation statements. Official
+v4357 terminology: 戦闘結果, スパイ活動レポート, サポート兵器 and 波状攻撃.
+Launch records are 起動記録; deletion markers are 削除マーカー.
+
+Korean uses polite UI instructions and declarative validation messages. Official
+v4357 terminology: 전투 결과, 첩보 보고서, 지원 병기, and 공격 횟수. Unknown
+identifier endings use paired particles or label phrasing rather than modifying IDs.
+
+Czech uses informal singular instructions (Zadej/Zkontroluj). Official game
+terms include Záznam z bitvy, záznam ze špionáže and podpůrný nástroj. Variable
+counts use count/limit labels when a fixed noun form would depend on the value.
+
+Slovak uses informal singular instructions (Zadaj/Skontroluj), with official
+Správa o boji, správa o špionáži and nástroje na podporu. Launch records and
+deletion markers remain technical records, not game entities.
+
+Romanian uses informal singular instructions (Introdu/Verifică). Official
+Raport de luptă, raport de spionaj and unealtă de asistență guide game terms.
+A tenant is an isolated account, and a tombstone is a marcaj de ștergere.
+
+Greek uses informal singular instructions. Official Αναφορά μάχης, αναφορά
+κατασκοπείας, εργαλεία υποστήριξης and κύμα επιθέσεων guide game terms.
+Non-negative values (μη αρνητικές) stay distinct from positive values (θετικό).
+
+Hungarian uses informal singular instructions (Add meg/Ellenőrizd). Game prose
+uses the official csatáról szóló jelentés, kémjelentés and támogatási eszköz
+concepts; identifier parameters are not inflected or rewritten.
+
+Bulgarian uses informal singular instructions (Въведи/Провери). Official
+Отчет от битка, отчет от шпионаж and помощен инструмент guide game terms.
+Count labels avoid fixed plural forms, and positive/non-negative remain distinct.
+
+Lithuanian uses informal singular instructions (Įvesk/Patikrink). Official
+Mūšio ataskaita, šnipinėjimo ataskaita and paramos įrankiai guide game terms.
+Variable counts use count/limit phrasing; technical identifiers remain literal.

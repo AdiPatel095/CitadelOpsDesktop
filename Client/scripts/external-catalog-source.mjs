@@ -6,7 +6,7 @@ const hash=value=>createHash('sha256').update(value).digest('hex');
 export function readExternalCatalogSource(directory,family) {
  const read=name=>{const file=path.join(directory,name);if(!fs.existsSync(file))throw new Error(`${family}: missing ${name}`);return fs.readFileSync(file);};
  const bytes=read('en.json');const source=JSON.parse(bytes);
- if(!source || Array.isArray(source) || !Object.keys(source).length || Object.values(source).some(value=>typeof value!=='string'||!value.trim()))throw new Error(`${family}: empty or invalid source catalog`);
+ if(!source || typeof source!=='object' || Array.isArray(source) || !Object.keys(source).length || Object.values(source).some(value=>typeof value!=='string'||!value.trim()))throw new Error(`${family}: empty or invalid source catalog`);
  const provenanceBytes=read('provenance.json');const provenance=JSON.parse(provenanceBytes);
  if(family==='backend') {
   if(provenance.source?.keyCount!==Object.keys(source).length || provenance.source?.sha256!==hash(JSON.stringify(source)) || !provenance.source?.revision || !provenance.packs || !Object.keys(provenance.packs).length)throw new Error(`${family}: missing or stale source provenance`);

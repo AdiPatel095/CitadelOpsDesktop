@@ -9,8 +9,10 @@ for(const family of ['server','backend'])test(`external ${family} coverage rejec
  const temp=fs.mkdtempSync(path.join(os.tmpdir(),'cit-locale-source-'));
  try {
   assert.throws(()=>readExternalCatalogSource(temp,family),/missing en.json/);
-  fs.writeFileSync(path.join(temp,'en.json'),'{}');
-  assert.throws(()=>readExternalCatalogSource(temp,family),/empty or invalid source/);
+  for(const invalid of [{}, 'abc', 42, true, null, []]) {
+   fs.writeFileSync(path.join(temp,'en.json'),JSON.stringify(invalid));
+   assert.throws(()=>readExternalCatalogSource(temp,family),/empty or invalid source/);
+  }
   fs.writeFileSync(path.join(temp,'en.json'),'{"key":"Valid message"}');
   assert.throws(()=>readExternalCatalogSource(temp,family),/missing provenance/);
   fs.writeFileSync(path.join(temp,'provenance.json'),'{}');
