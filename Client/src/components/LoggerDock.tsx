@@ -4,16 +4,19 @@ import { Check, Copy, Pause, Play, RefreshCw, Search, X } from 'lucide-react';
 import { Icons } from './Icons';
 import { Notifications } from './Notifications';
 import { Button, Input, Select } from './ui';
+import { useLocale } from '../i18n/LocaleContext';
+import { useLocalizedMessages } from '../i18n/useLocalizedMessages';
+import { parseMessageDescriptor } from '../i18n/messageDescriptor';
+import { telemetryEntries } from '../i18n/telemetryMessages';
+import type { TelemetryEntry } from '../i18n/telemetryMessages';
+import type { LocalizedMessage } from '../i18n/formatMessage';
 import { runtimeFetch } from '../api/RuntimeURL';
 
-type ChannelMeta = { id: string; label: string; description?: string };
+type ChannelMeta = { id: string; label: string; description?: string; labelDescriptor?: LocalizedMessage; descriptionDescriptor?: LocalizedMessage };
 type LogTone = 'send' | 'recv' | 'info' | 'warn' | 'error' | 'debug' | 'plain';
 type LogFilter = 'all' | 'actions' | 'issues';
 
-type LogLineEntry = {
-  id: string;
-  raw: string;
-};
+type LogLineEntry = TelemetryEntry & { id: string };
 
 type LogTailState = {
   entries: LogLineEntry[];
@@ -21,7 +24,7 @@ type LogTailState = {
 };
 
 type LogTailAction =
-  | { type: 'replace'; lines: string[] }
+  | { type: 'replace'; lines: TelemetryEntry[] }
   | { type: 'clear' };
 
 type ParsedLogLine = {
@@ -49,7 +52,7 @@ const logTailReducer = (state: LogTailState, action: LogTailAction): LogTailStat
 
   if (
     state.entries.length === action.lines.length
-    && state.entries.every((entry, index) => entry.raw === action.lines[index])
+    && state.entries.every((entry, index) => entry.raw === action.lines[index].raw && JSON.stringify(entry.messageDescriptor) === JSON.stringify(action.lines[index].messageDescriptor))
   ) {
     return state;
   }
@@ -65,16 +68,17 @@ const logTailReducer = (state: LogTailState, action: LogTailAction): LogTailStat
   });
 
   let nextID = state.nextID;
-  const entries = action.lines.map((raw) => {
+  const entries = action.lines.map((entry) => {
+    const { raw } = entry;
     const available = availableIDs.get(raw);
     if (available && available.index < available.ids.length) {
       const id = available.ids[available.index];
       available.index += 1;
-      return { id, raw };
+      return { ...entry, id };
     }
 
     nextID += 1;
-    return { id: `log-line-${nextID}`, raw };
+    return { ...entry, id: `log-line-${nextID}` };
   });
 
   return { entries, nextID };
@@ -102,15 +106,13 @@ const fallbackChannelDescriptions: Record<string, string> = {
   rift: 'Launched Rift attacks and other completed Rift actions.',
 };
 
-const formatLogTime = (time: string) => {
+const formatLogTime = (time: string, locale: string) => {
   const [hourText, minute, second] = time.split(':');
   const hour = Number(hourText);
-  if (!Number.isInteger(hour) || hour < 0 || hour > 23 || !minute || !second) {
+  if (!Number.isInteger(hour) || hour < 0 || hour > 23 || !/^\d{2}$/.test(minute ?? '') || Number(minute) > 59 || !/^\d{2}$/.test(second ?? '') || Number(second) > 59) {
     return time;
   }
-  const suffix = hour >= 12 ? 'PM' : 'AM';
-  const hour12 = hour % 12 || 12;
-  return `${hour12}:${minute}:${second} ${suffix}`;
+  return new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: '2-digit', second: '2-digit', timeZone: 'UTC' }).format(new Date(Date.UTC(2000, 0, 1, hour, Number(minute), Number(second))));
 };
 
 const directionLabel = (value: string) => {
@@ -175,7 +177,7 @@ const writeClipboardText = async (value: string) => {
   }
 };
 
-const parseLogLine = (entry: LogLineEntry, index: number): ParsedLogLine => {
+const parseLogLine = (entry: LogLineEntry, index: number, locale: string): ParsedLogLine => {
   const rawLine = entry.raw;
   const raw = rawLine.trimEnd();
   const channelMatch = raw.match(channelLinePattern);
@@ -188,7 +190,7 @@ const parseLogLine = (entry: LogLineEntry, index: number): ParsedLogLine => {
       id: entry.id,
       index,
       raw,
-      timestamp: formatLogTime(time),
+      timestamp: formatLogTime(time, locale),
       direction,
       primary: directionLabel(direction),
       secondary: activityEventLabel(event),
@@ -206,7 +208,7 @@ const parseLogLine = (entry: LogLineEntry, index: number): ParsedLogLine => {
     direction: 'PLAIN',
     primary: '',
     secondary: 'Activity',
-    message: 'This activity entry is unavailable.',
+    message: raw,
     tone: 'plain',
     searchText: '',
   };
@@ -224,6 +226,7 @@ const matchesFilter = (line: ParsedLogLine, filter: LogFilter) => {
 };
 
 export const LoggerDock = React.memo(function LoggerDock() {
+  const { locale, t, messageLocale } = useLocale();
   const [open, setOpen] = useState(false);
   const [channels, setChannels] = useState<ChannelMeta[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -249,20 +252,30 @@ export const LoggerDock = React.memo(function LoggerDock() {
   const currentChannelDescription = currentChannel?.description
     || (activeId ? fallbackChannelDescriptions[activeId] : '')
     || 'Live application activity and command history.';
-  const parsedLines = useMemo(() => logTail.entries.map(parseLogLine), [logTail.entries]);
+  const originalLines = useMemo(() => logTail.entries.map((entry,index) => parseLogLine(entry,index,locale)), [logTail.entries,locale]);
+  const messageInputs = useMemo(() => logTail.entries.map((entry,index) => ({ descriptor: entry.messageDescriptor, legacyText: originalLines[index].message })), [logTail.entries,originalLines]);
+  const localizedLines = useLocalizedMessages(messageInputs);
+  const parsedLines = useMemo(() => originalLines.map((line,index) => ({ ...line, message: localizedLines[index].text, messageLocale: localizedLines[index].resolvedLocale, translated: localizedLines[index].translated, searchText: `${line.secondary} ${localizedLines[index].text}`.toLocaleLowerCase(locale) })), [originalLines,localizedLines,locale]);
+  const channelInputs = useMemo(() => channels.flatMap(channel => [
+    { descriptor: parseMessageDescriptor(channel.labelDescriptor), legacyText: channel.label },
+    { descriptor: parseMessageDescriptor(channel.descriptionDescriptor), legacyText: channel.description || fallbackChannelDescriptions[channel.id] || '' },
+  ]), [channels]);
+  const localizedChannels = useLocalizedMessages(channelInputs);
+  const channelIndex = channels.findIndex(channel => channel.id === activeId);
+  const displayedDescription = localizedChannels[channelIndex * 2 + 1]?.text || currentChannelDescription;
 
   const filteredLines = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase();
+    const query = searchQuery.trim().toLocaleLowerCase(locale);
     return parsedLines.filter((line) => matchesFilter(line, filter) && (!query || line.searchText.includes(query)));
-  }, [filter, parsedLines, searchQuery]);
+  }, [filter, parsedLines, searchQuery, locale]);
   const filterCounts = useMemo(() => ({
     all: parsedLines.length,
     actions: parsedLines.filter((line) => matchesFilter(line, 'actions')).length,
     issues: parsedLines.filter((line) => matchesFilter(line, 'issues')).length,
   }), [parsedLines]);
   const channelOptions = useMemo(
-    () => channels.map((channel) => ({ value: channel.id, label: channel.label, searchText: `${channel.label} ${channel.id}` })),
-    [channels],
+    () => channels.map((channel) => ({ value: channel.id, label: localizedChannels[channels.indexOf(channel) * 2]?.text || channel.label, searchText: `${localizedChannels[channels.indexOf(channel) * 2]?.text || channel.label} ${channel.id}` })),
+    [channels,localizedChannels],
   );
   const filterOptions = useMemo(() => [
     { value: 'all', label: `All activity · ${filterCounts.all.toLocaleString()}` },
@@ -346,12 +359,12 @@ export const LoggerDock = React.memo(function LoggerDock() {
     try {
       const res = await runtimeFetch(`/api/v2/telemetry/${encodeURIComponent(activeId)}?limit=${tailLimit}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = (await res.json()) as { lines?: string[] };
+      const data: unknown = await res.json();
       if (requestID !== fetchSequenceRef.current) return;
-      const nextLines = data.lines ?? [];
+      const nextLines = telemetryEntries(data);
       const currentEntries = logEntriesRef.current;
       const changed = currentEntries.length !== nextLines.length
-        || currentEntries.some((entry, index) => entry.raw !== nextLines[index]);
+        || currentEntries.some((entry, index) => entry.raw !== nextLines[index].raw || JSON.stringify(entry.messageDescriptor) !== JSON.stringify(nextLines[index].messageDescriptor));
       if (changed) {
         captureScrollAnchor();
         dispatchLogTail({ type: 'replace', lines: nextLines });
@@ -470,7 +483,7 @@ export const LoggerDock = React.memo(function LoggerDock() {
   return (
     <>
       {open && (
-        <div className="liquid-logger-panel animate-fade-in" role="region" aria-label="Citadel activity">
+        <div className="liquid-logger-panel animate-fade-in" role="region" aria-label={t('activity.open')}>
           <div className="liquid-logger-toolbar">
             <div className="liquid-logger-toolbar-main">
               <div className="liquid-log-heading">
@@ -478,8 +491,8 @@ export const LoggerDock = React.memo(function LoggerDock() {
                   <Icons.Activity className="h-5 w-5" />
                 </span>
                 <span className="min-w-0">
-                  <span className="liquid-log-title">Live activity</span>
-                  <span className="liquid-log-subtitle">{currentChannelDescription}</span>
+                  <span className="liquid-log-title">{t('activity.title')}</span>
+                  <span lang={localizedChannels[channelIndex * 2 + 1]?.resolvedLocale === 'mixed' ? undefined : localizedChannels[channelIndex * 2 + 1]?.resolvedLocale || 'en'} className="liquid-log-subtitle">{displayedDescription}</span>
                 </span>
               </div>
               <div className="liquid-log-header-actions">
@@ -492,8 +505,8 @@ export const LoggerDock = React.memo(function LoggerDock() {
                   size="icon"
                   onClick={() => setOpen(false)}
                   className="liquid-log-close-button"
-                  aria-label="Close activity"
-                  title="Close activity (Esc)"
+                  aria-label={t('activity.close')}
+                  title={`${t('activity.close')} (Esc)`}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -502,53 +515,53 @@ export const LoggerDock = React.memo(function LoggerDock() {
 
             <div className="liquid-logger-controls">
               <div className="liquid-log-control liquid-log-channel-control">
-                <span className="liquid-log-control-label">Channel</span>
+                <span className="liquid-log-control-label">{t('activity.channel')}</span>
                 <Select
                   value={activeId ?? ''}
                   onChange={setActiveId}
                   options={channelOptions}
-                  placeholder="No channels available"
+                  placeholder={t('activity.noChannels')}
                   className="liquid-log-shared-select"
-                  ariaLabel="Log channel"
+                  ariaLabel={t('activity.channel')}
                   searchable
-                  searchPlaceholder="Find a feature or channel"
+                  searchPlaceholder={t('activity.searchChannel')}
                   menuGrowToViewport
                   closeOnScroll={false}
                 />
               </div>
 
               <div className="liquid-log-control liquid-log-filter-control">
-                <span className="liquid-log-control-label">Show</span>
+                <span className="liquid-log-control-label">{t('activity.show')}</span>
                 <Select
                   value={filter}
                   onChange={(value) => setFilter(value as LogFilter)}
                   options={filterOptions}
                   className="liquid-log-shared-select"
-                  ariaLabel="Filter log activity"
+                  ariaLabel={t('activity.filter')}
                   closeOnScroll={false}
                 />
               </div>
 
               <div className="liquid-log-control liquid-log-search-control">
                 <span className="liquid-log-control-label">
-                  Search
+                  {t('activity.search')}
                   <span className="liquid-log-result-count">{filteredLines.length.toLocaleString()} of {logTail.entries.length.toLocaleString()}</span>
                 </span>
                 <Input
                   type="search"
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Action or issue"
+                  placeholder={t('activity.actionOrIssue')}
                   className="liquid-log-search-input"
                   leftIcon={<Search className="h-4 w-4" />}
-                  aria-label="Search log activity"
+                  aria-label={t('activity.searchActivity')}
                 />
               </div>
 
               <div className="liquid-log-toolbar-buttons">
                 {!isFollowingLive && (
                   <Button type="button" variant="outline" size="sm" onClick={jumpToLatest} leftIcon={<Icons.ArrowRight className="h-4 w-4 rotate-90" />}>
-                    Latest
+                    {t('activity.latest')}
                   </Button>
                 )}
                 <Button
@@ -560,8 +573,8 @@ export const LoggerDock = React.memo(function LoggerDock() {
                     if (liveUpdatesPaused) void fetchTail();
                     setLiveUpdatesPaused((current) => !current);
                   }}
-                  aria-label={liveUpdatesPaused ? 'Resume live log updates' : 'Pause live log updates'}
-                  title={liveUpdatesPaused ? 'Resume live updates' : 'Pause live updates'}
+                  aria-label={liveUpdatesPaused ? t('activity.resume') : t('activity.pause')}
+                  title={liveUpdatesPaused ? t('activity.resume') : t('activity.pause')}
                 >
                   {liveUpdatesPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
                 </Button>
@@ -575,7 +588,7 @@ export const LoggerDock = React.memo(function LoggerDock() {
                     filteredLines.map((line) => [line.timestamp, line.secondary, line.message].filter(Boolean).join(' · ')).join('\n'),
                   )}
                   disabled={filteredLines.length === 0}
-                  aria-label="Copy visible log lines"
+                  aria-label={t('activity.copy')}
                   title={`Copy ${filteredLines.length.toLocaleString()} visible log lines`}
                 >
                   {copiedTarget === 'visible-lines' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -587,8 +600,8 @@ export const LoggerDock = React.memo(function LoggerDock() {
                   className="liquid-log-toolbar-icon-button"
                   onClick={() => void fetchTail(true)}
                   disabled={isRefreshing}
-                  aria-label="Refresh logs"
-                  title="Refresh now"
+                  aria-label={t('activity.refresh')}
+                  title={t('activity.refreshNow')}
                 >
                   <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                 </Button>
@@ -646,8 +659,9 @@ export const LoggerDock = React.memo(function LoggerDock() {
                           </div>
 
                           <div className="liquid-log-row-content">
-                            <span className="liquid-log-message">
-                              {line.message || 'Citadel completed an action.'}
+                            <span className="liquid-log-message" lang={line.messageLocale === 'mixed' ? undefined : line.messageLocale} dir="auto">
+                              {line.message}
+                              {!line.translated && locale !== 'en' && <small lang={messageLocale} className="block opacity-60">{t('activity.untranslated')}</small>}
                             </span>
                           </div>
                         </article>
@@ -668,14 +682,14 @@ export const LoggerDock = React.memo(function LoggerDock() {
               type="button"
               onClick={() => setOpen(true)}
               className="liquid-surface-edge group flex h-32 w-10 shrink-0 flex-col items-center justify-center gap-2 rounded-l-[16px] border-r-0 text-text-muted transition-all duration-300 hover:border-primary/50 hover:text-primary"
-              title="Show Citadel activity"
+              title={t('activity.open')}
             >
               <Icons.Activity className="h-5 w-5 group-hover:animate-pulse" />
               <span
                 className="text-xs font-bold uppercase text-text-muted transition-colors group-hover:text-primary"
                 style={{ writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
               >
-                Activity
+                {t('activity.label')}
               </span>
             </button>
           </div>

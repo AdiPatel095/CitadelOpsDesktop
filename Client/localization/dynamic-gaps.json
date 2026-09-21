@@ -1,8 +1,38 @@
 [
-  {"id":"activity-tail","source":"components/LoggerDock.tsx","status":"uncovered","reason":"Raw historical lines require visible untranslated status; structured descriptor entries integration pending."},
-  {"id":"operation-notifications","source":"api/OperationNotifications.ts","status":"uncovered","reason":"Receipt message/explanation/recovery descriptor consumers and catalogs pending."},
-  {"id":"api-errors","source":"api/CitadelClient.ts","status":"uncovered","reason":"Preserve and render additive API message descriptors; legacy strings remain fallback."},
-  {"id":"event-history-names","source":"views/EventsView.tsx","status":"uncovered","reason":"Replace English ID overrides with explicit official localization keys; retained historic text requires provenance."},
-  {"id":"automation-status","source":"context/AuthContext.tsx","status":"uncovered","reason":"Consume detailDescriptor/statusDetailDescriptor with viewer locale."},
-  {"id":"exported-activity","source":"components/LoggerDock.tsx","status":"uncovered","reason":"Copied display content must use same locale descriptor rendering; raw technical export remains verbatim."}
+  {
+    "id": "activity-tail",
+    "source": "components/LoggerDock.tsx",
+    "status": "uncovered",
+    "reason": "Aligned structured descriptors integrated with batched official keys and visible untranslated history. Server catalogs, surrounding status/empty prose, event/direction labels remain."
+  },
+  {
+    "id": "operation-notifications",
+    "source": "api/OperationNotifications.ts",
+    "status": "uncovered",
+    "reason": "Receipt message/explanation/recovery descriptor consumers and catalogs pending."
+  },
+  {
+    "id": "api-errors",
+    "source": "api/CitadelClient.ts",
+    "status": "uncovered",
+    "reason": "Preserve and render additive API message descriptors; legacy strings remain fallback."
+  },
+  {
+    "id": "event-history-names",
+    "source": "views/EventsView.tsx",
+    "status": "uncovered",
+    "reason": "Replace English ID overrides with explicit official localization keys; retained historic text requires provenance."
+  },
+  {
+    "id": "automation-status",
+    "source": "context/AuthContext.tsx",
+    "status": "uncovered",
+    "reason": "Consume detailDescriptor/statusDetailDescriptor with viewer locale."
+  },
+  {
+    "id": "exported-activity",
+    "source": "components/LoggerDock.tsx",
+    "status": "uncovered",
+    "reason": "Copied message text shares locale rendering with display/search. Event/direction labels and server catalogs remain untranslated."
+  }
 ]

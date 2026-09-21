@@ -1,6 +1,6 @@
 # Desktop localization coverage ledger
 
-Status: partial foundation, not a translated release. Baseline: e77ed022c2f926ae3509527fdabf54dca9e22586. 69 custom shell/shared-control/settings/support/intent/daily-counter messages plus 4 verified official game-key labels have model-authored translations in all 25 non-English catalogs. Human linguistic review is pending. This small authored set is not full interface coverage. The full visible-text conversion remains open.
+Status: partial foundation, not a translated release. Baseline: e77ed022c2f926ae3509527fdabf54dca9e22586. 88 custom shell/shared-control/settings/support/intent/daily-counter/activity messages plus 4 verified official game-key labels have model-authored translations in all 25 non-English catalogs. Human linguistic review is pending. This small authored set is not full interface coverage. The full visible-text conversion remains open.
 
 ## Source inventory
 
@@ -15,9 +15,9 @@ Run `node scripts/inventory-localization.mjs` from Client. `source-inventory.jso
 | Automation/event views | views, events, attackAnalytics | Custom descriptors; official `localizationKey` first for event names | EventsView currently overrides event IDs with English names |
 | Units/buildings/decorations/equipment/gems/effects/currencies | MetadataContext, equipment components | Official keys via per-request viewer locale; custom generic fallback descriptors | Metadata locale invalidation implemented; display fallback provenance needs consumer presentation |
 | Dynamic server errors/operation notifications | CitadelClient, ApiContext, OperationNotifications | Adjacent `messageDescriptor` / `detailDescriptor`; legacy English fallback marked uncovered | APIError preserves validated descriptors and settings retains reactive errors; other consumers remain English |
-| Activity dock/channel names | LoggerDock | Structured server message descriptors, preserve timestamps/identities | Current tail is raw text parsed by regex; cannot reconstruct localization semantics safely |
+| Activity dock/channel names | LoggerDock | Structured server message descriptors, preserve timestamps/identities | Aligned structured descriptors render reactively with batched official keys; raw history explicitly marked untranslated; surrounding status/empty prose and catalogs remain |
 | Event/world history and rankings | WorldEventHistory, FeatureEventHistory, ranking components | Official event keys + typed summary descriptors; Intl values | Server-built names and historic English strings remain |
-| Exports/copy | LoggerDock, SettingsView, SettingsTransfer | Localized display copy; settings JSON keys and values remain machine/user data | Activity copy should use same localized descriptor rendering; settings filenames are product identifiers |
+| Exports/copy | LoggerDock, SettingsView, SettingsTransfer | Localized display copy; settings JSON keys and values remain machine/user data | Activity copy uses the rendered message text; untranslated event/direction labels remain; settings filenames are product identifiers |
 | Empty/loading/error/status states | All views/components | Explicit custom keys and ICU plural/select | Mostly uncovered |
 | Patch notes/support | config/PatchNotes, PatchNotesView, SupportView | Authored custom catalog content | All historic prose remains English |
 | Date/number/duration/count formatters | views, components, equipment, analytics | Intl formatter using viewer locale and ICU | Provider formatter available; legacy formatters remain |

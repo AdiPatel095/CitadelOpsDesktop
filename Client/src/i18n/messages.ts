@@ -2,6 +2,26 @@ import { officialMessageKeys } from './officialKeys';
 import { formatMessage, validateMessageCatalog } from './formatMessage';
 /** Add explicit descriptors here; never translate user names, IDs, or free-form input. */
 export const messages = {
+  "activity.title": "Live activity",
+  "activity.close": "Close activity",
+  "activity.channel": "Channel",
+  "activity.show": "Show",
+  "activity.search": "Search",
+  "activity.latest": "Latest",
+  "activity.resume": "Resume live updates",
+  "activity.pause": "Pause live updates",
+  "activity.copy": "Copy visible log lines",
+  "activity.refresh": "Refresh logs",
+  "activity.refreshNow": "Refresh now",
+  "activity.open": "Show Citadel activity",
+  "activity.label": "Activity",
+  "activity.noChannels": "No channels available",
+  "activity.searchChannel": "Find a feature or channel",
+  "activity.filter": "Filter log activity",
+  "activity.searchActivity": "Search log activity",
+  "activity.actionOrIssue": "Action or issue",
+
+  'activity.untranslated': 'Translation unavailable',
   "dailyAttacks.label": "Daily attacks",
   "dailyAttacks.observed": "The server’s account-wide normal-attack count is {count, number}. Last observed {observedAt, date, medium} at {observedAt, time, short}. Advisor attacks are exempt.",
   "dailyAttacks.waiting": "Waiting for the server daily attack counter.",
