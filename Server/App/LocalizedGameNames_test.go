@@ -55,13 +55,38 @@ func TestUnitPackageDescriptorKeepsBothQuantities(t *testing.T) {
 		t.Fatal(err)
 	}
 	input := Intent.PlanningContext{GameData: store, Language: language}
-	product := GameData.AutoBuyerPackage{UnitID: 489, UnitAmount: 25, Name: "Opaque package comment", Price: GameData.AutoBuyerPrice{ResourceID: 2, Name: "Rubies", Amount: 30}}
+	product := GameData.AutoBuyerPackage{PackageType: "soldier", UnitID: 489, UnitAmount: 25, Name: "Opaque package comment", Price: GameData.AutoBuyerPrice{ResourceID: 2, Name: "Rubies", Amount: 30}}
 	result := packagePurchaseDescriptor(input, product, 2)
 	if result == nil || result.Params["amount"] != int64(2) || result.Params["unitAmount"] != int64(25) || result.Params["cost"] != int64(60) || result.GameParams["unit"].Key != "elitecrossbowman_name" || result.GameParams["currency"].Key != "gold" {
 		t.Fatalf("lost package semantics: %+v", result)
 	}
+	for _, kind := range []string{"packagebundle", "unknown", ""} {
+		product.PackageType = kind
+		if packagePurchaseDescriptor(input, product, 2) != nil {
+			t.Fatalf("%q with unit fields presented as atomic", kind)
+		}
+	}
+	product.PackageType = "tool"
+	if packagePurchaseDescriptor(input, product, 2) == nil {
+		t.Fatal("supported tool package rejected")
+	}
 	product.UnitID = 0
 	if packagePurchaseDescriptor(input, product, 2) != nil {
 		t.Fatal("opaque bundle presented as translated")
+	}
+}
+
+func TestConstructionItemMissingKeyUsesExplicitIDTemplate(t *testing.T) {
+	for _, level := range []int64{0, 3} {
+		message := constructionPurchaseDescriptor(Intent.PlanningContext{}, 301, "Untranslated name", level, 2, "Castle {admin}")
+		if message == nil || message.Params["itemID"] != "301" || message.Params["castle"] != "Castle {admin}" || strings.Contains(message.Fallback, "{item}") {
+			t.Fatalf("missing-key noun hidden: %+v", message)
+		}
+		if _, ok := message.Params["item"]; ok {
+			t.Fatal("English noun retained in primitive params")
+		}
+		if level > 0 && message.Params["level"] != level {
+			t.Fatal("level omitted")
+		}
 	}
 }

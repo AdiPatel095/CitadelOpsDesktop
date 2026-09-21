@@ -309,6 +309,8 @@
   "server.app.buy_a_batch_of.8ecc9a26": "Buy a batch of {p0} {p1} for {p2} coins toward the Berimond minimum {p3}",
   "server.app.buy_castle_expansion.3fb31a21": "Buy castle expansion",
   "server.app.buy_construction_item.ab605286": "Buy construction item",
+  "server.app.buy_construction_item_id": "Buy {amount, number} x construction item {itemID} from {castle}",
+  "server.app.buy_construction_item_id_with_level": "Buy {amount, number} x construction item {itemID} (level {level, number}) from {castle}",
   "server.app.buy_construction_item_named": "Buy {amount, number} x {item} from {castle}",
   "server.app.buy_construction_item_with_level": "Buy {amount, number} x {item} (level {level, number}) from {castle}",
   "server.app.buy_expansion_level_p.2225253e": "Buy expansion level {p0} in {p1} with {p2}",
