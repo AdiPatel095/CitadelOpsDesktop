@@ -42,5 +42,10 @@
   "settings.browser": "浏览器",
   "settings.backgroundLogin": "保存后台登录",
   "settings.useExecutable": "使用可执行文件",
-  "settings.minimumCoins": "最低金币数"
+  "settings.minimumCoins": "最低金币数",
+  "support.title": "支持与社区",
+  "support.description": "获取帮助、报告问题或检查确定性的 2.0 操作。",
+  "support.discordTitle": "加入我们的 Discord",
+  "support.discordBody": "获取支持的最佳方式是加入我们的 Discord 服务器。我们的团队和社区成员都很活跃，随时准备帮助你解决问题和解答疑问。",
+  "support.discordJoin": "加入 Discord 服务器"
 }

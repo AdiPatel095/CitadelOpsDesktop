@@ -42,5 +42,10 @@
   "settings.browser": "Браузър",
   "settings.backgroundLogin": "Запази влизането във фонов режим",
   "settings.useExecutable": "Използвай изпълнимия файл",
-  "settings.minimumCoins": "Минимален брой монети"
+  "settings.minimumCoins": "Минимален брой монети",
+  "support.title": "Поддръжка и общност",
+  "support.description": "Получете помощ, съобщете за проблеми или разгледайте детерминистичните операции 2.0.",
+  "support.discordTitle": "Присъединете се към нашия Discord",
+  "support.discordBody": "Най-добрият начин да получите поддръжка е да се присъедините към нашия Discord сървър. Екипът и общността ни са активни и готови да помогнат при проблеми или въпроси.",
+  "support.discordJoin": "Присъединяване към Discord сървъра"
 }

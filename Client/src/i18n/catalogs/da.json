@@ -42,5 +42,10 @@
   "settings.browser": "Browser",
   "settings.backgroundLogin": "Gem baggrundslogin",
   "settings.useExecutable": "Brug programfil",
-  "settings.minimumCoins": "Mindste antal mønter"
+  "settings.minimumCoins": "Mindste antal mønter",
+  "support.title": "Hjælp og fællesskab",
+  "support.description": "Få hjælp, rapportér problemer, eller undersøg deterministiske 2.0-handlinger.",
+  "support.discordTitle": "Deltag i vores Discord",
+  "support.discordBody": "Den bedste måde at få hjælp på er at deltage i vores Discord-server. Vores team og fællesskab er aktive og klar til at hjælpe med problemer og spørgsmål.",
+  "support.discordJoin": "Deltag i Discord-server"
 }

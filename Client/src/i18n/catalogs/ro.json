@@ -42,5 +42,10 @@
   "settings.browser": "Browser",
   "settings.backgroundLogin": "Salvează autentificarea în fundal",
   "settings.useExecutable": "Folosește executabilul",
-  "settings.minimumCoins": "Număr minim de monede"
+  "settings.minimumCoins": "Număr minim de monede",
+  "support.title": "Asistență și comunitate",
+  "support.description": "Obține ajutor, raportează probleme sau inspectează operațiunile deterministe 2.0.",
+  "support.discordTitle": "Alătură-te comunității Discord",
+  "support.discordBody": "Cel mai bun mod de a primi asistență este să te alături serverului nostru Discord. Echipa și comunitatea noastră sunt active și pregătite să te ajute cu orice problemă sau întrebare.",
+  "support.discordJoin": "Alătură-te serverului Discord"
 }

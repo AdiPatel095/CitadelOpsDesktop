@@ -42,5 +42,10 @@
   "settings.browser": "Browser",
   "settings.backgroundLogin": "Achtergrondaanmelding opslaan",
   "settings.useExecutable": "Uitvoerbaar bestand gebruiken",
-  "settings.minimumCoins": "Minimum aantal munten"
+  "settings.minimumCoins": "Minimum aantal munten",
+  "support.title": "Ondersteuning en community",
+  "support.description": "Krijg hulp, meld problemen of bekijk deterministische 2.0-acties.",
+  "support.discordTitle": "Word lid van onze Discord",
+  "support.discordBody": "De beste manier om hulp te krijgen is lid worden van onze Discord-server. Ons team en onze actieve community staan klaar om je te helpen bij problemen of vragen.",
+  "support.discordJoin": "Lid worden van Discord-server"
 }

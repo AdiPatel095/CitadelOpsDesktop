@@ -1,3 +1,4 @@
+import type { LocalizedMessage } from '../i18n/formatMessage';
 export type APIConnectionStatus = 'Disconnected' | 'Connecting' | 'Connected';
 
 export interface ApplicationUpdateV2 {
@@ -2450,6 +2451,9 @@ export interface IntentReceipt {
 }
 
 export interface IntentFailurePresentation {
+	messageDescriptor?: LocalizedMessage;
+	explanationDescriptor?: LocalizedMessage;
+	recoveryDescriptor?: LocalizedMessage;
 	kind: 'game_rejected' | 'availability' | 'stale_state' | 'timeout' | 'connection' | 'indeterminate' | 'internal' | 'unknown';
 	message: string;
 	explanation: string;
@@ -2488,6 +2492,7 @@ export interface IntentCommandExchange {
 }
 
 export interface IntentDefinition {
+  descriptionDescriptor?: LocalizedMessage;
 	name: string;
 	description: string;
 	effect: 'read' | 'write' | 'launch' | 'external';

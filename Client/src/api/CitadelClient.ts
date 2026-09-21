@@ -1,3 +1,5 @@
+import type { LocalizedMessage } from '../i18n/formatMessage';
+import { responseMessageDescriptor, parseMessageDescriptor } from '../i18n/messageDescriptor';
 import { configurationBaseURL, configurationFetch, runtimeBasePath, runtimeFetch, runtimeURL } from './RuntimeURL';
 import { isOperationFailureStatus, operationFailureText } from './OperationNotifications';
 import { operationFailureReceiptFromHTTP } from './OperationHTTPFailure';
@@ -66,12 +68,14 @@ type WorldIntelligenceUpdateListener = (manifest: WorldIntelligenceUpdateManifes
 export class APIError extends Error {
   readonly status: number;
   readonly code?: string;
+  readonly messageDescriptor?: LocalizedMessage;
 
-  constructor(message: string, status: number, code?: string) {
+  constructor(message: string, status: number, code?: string, messageDescriptor?: LocalizedMessage) {
     super(message);
     this.name = 'APIError';
     this.status = status;
     this.code = code;
+    this.messageDescriptor = messageDescriptor;
   }
 }
 
@@ -79,7 +83,7 @@ export class OperationError extends APIError {
 	readonly receipt: IntentReceipt;
 
 	constructor(receipt: IntentReceipt) {
-		super(operationFailureText(receipt), 422, 'operation_failed');
+		super(operationFailureText(receipt), 422, 'operation_failed', parseMessageDescriptor(receipt.failure?.messageDescriptor));
 		this.name = 'OperationError';
 		this.receipt = receipt;
 	}
@@ -544,10 +548,10 @@ class CitadelClient {
     return (await this.localizeCatalog(keys,locale)).values;
   }
 
-  localizeCatalog(keys: string[], locale?: string): Promise<{values: Record<string,string>; locale?: {requestedLocale: string; resolvedLocale: string; fallback: boolean; fallbackKeys?: string[]}}> {
+  localizeCatalog(keys: string[], locale?: string, scope?: string): Promise<{values: Record<string,string>; locale?: {requestedLocale: string; resolvedLocale: string; fallback: boolean; fallbackKeys?: string[]}}> {
     return this.request(`/api/v2/game-data/localize${locale ? `?locale=${encodeURIComponent(locale)}` : ''}`, {
       method: 'POST', body: JSON.stringify({keys}),
-    });
+    }, scope);
   }
 
   getIntentDefinitions(): Promise<IntentDefinition[]> {
@@ -728,6 +732,7 @@ class CitadelClient {
         message,
         response.status,
         structuredError && typeof structuredError.code === 'string' ? structuredError.code : undefined,
+        responseMessageDescriptor(payload),
       );
     }
     return payload as T;

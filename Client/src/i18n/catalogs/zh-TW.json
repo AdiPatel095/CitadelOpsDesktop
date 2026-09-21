@@ -42,5 +42,10 @@
   "settings.browser": "瀏覽器",
   "settings.backgroundLogin": "儲存背景登入",
   "settings.useExecutable": "使用執行檔",
-  "settings.minimumCoins": "最低金幣數"
+  "settings.minimumCoins": "最低金幣數",
+  "support.title": "支援與社群",
+  "support.description": "取得協助、回報問題或檢查確定性的 2.0 操作。",
+  "support.discordTitle": "加入我們的 Discord",
+  "support.discordBody": "取得支援的最佳方式是加入我們的 Discord 伺服器。我們的團隊和社群成員都很活躍，隨時準備協助你解決問題和解答疑問。",
+  "support.discordJoin": "加入 Discord 伺服器"
 }

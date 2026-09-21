@@ -42,5 +42,10 @@
   "settings.browser": "Böngésző",
   "settings.backgroundLogin": "Háttérbejelentkezés mentése",
   "settings.useExecutable": "Végrehajtható fájl használata",
-  "settings.minimumCoins": "Minimális érmemennyiség"
+  "settings.minimumCoins": "Minimális érmemennyiség",
+  "support.title": "Támogatás és közösség",
+  "support.description": "Kérj segítséget, jelents problémákat, vagy vizsgáld meg a determinisztikus 2.0 műveleteket.",
+  "support.discordTitle": "Csatlakozz a Discordunkhoz",
+  "support.discordBody": "A támogatás legjobb módja, ha csatlakozol Discord-szerverünkhöz. Aktív csapatunk és közösségünk készen áll, hogy segítsen bármilyen problémában vagy kérdésben.",
+  "support.discordJoin": "Csatlakozás a Discord-szerverhez"
 }

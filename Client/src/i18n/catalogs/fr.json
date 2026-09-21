@@ -42,5 +42,10 @@
   "settings.browser": "Navigateur",
   "settings.backgroundLogin": "Enregistrer la connexion en arrière-plan",
   "settings.useExecutable": "Utiliser l’exécutable",
-  "settings.minimumCoins": "Pièces minimum"
+  "settings.minimumCoins": "Pièces minimum",
+  "support.title": "Assistance et communauté",
+  "support.description": "Obtenez de l’aide, signalez des problèmes ou examinez les opérations déterministes 2.0.",
+  "support.discordTitle": "Rejoignez notre Discord",
+  "support.discordBody": "Le meilleur moyen d’obtenir de l’aide est de rejoindre notre serveur Discord. Notre équipe et notre communauté sont actives et prêtes à vous aider en cas de problème ou de question.",
+  "support.discordJoin": "Rejoindre le serveur Discord"
 }

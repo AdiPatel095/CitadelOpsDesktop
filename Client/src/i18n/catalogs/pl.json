@@ -42,5 +42,10 @@
   "settings.browser": "Przeglądarka",
   "settings.backgroundLogin": "Zapisz logowanie w tle",
   "settings.useExecutable": "Użyj pliku wykonywalnego",
-  "settings.minimumCoins": "Minimalna liczba monet"
+  "settings.minimumCoins": "Minimalna liczba monet",
+  "support.title": "Pomoc i społeczność",
+  "support.description": "Uzyskaj pomoc, zgłoś problemy lub sprawdź deterministyczne operacje 2.0.",
+  "support.discordTitle": "Dołącz do naszego Discorda",
+  "support.discordBody": "Najlepszym sposobem uzyskania pomocy jest dołączenie do naszego serwera Discord. Nasz zespół i społeczność są aktywni i gotowi pomóc w razie problemów lub pytań.",
+  "support.discordJoin": "Dołącz do serwera Discord"
 }

@@ -42,5 +42,10 @@
   "settings.browser": "브라우저",
   "settings.backgroundLogin": "백그라운드 로그인 저장",
   "settings.useExecutable": "실행 파일 사용",
-  "settings.minimumCoins": "최소 동전 수"
+  "settings.minimumCoins": "최소 동전 수",
+  "support.title": "지원 및 커뮤니티",
+  "support.description": "도움을 받거나 문제를 신고하고 결정적 2.0 작업을 확인하세요.",
+  "support.discordTitle": "Discord에 참여하세요",
+  "support.discordBody": "지원을 받는 가장 좋은 방법은 Discord 서버에 참여하는 것입니다. 활발한 팀과 커뮤니티가 문제나 질문에 도움을 드릴 준비가 되어 있습니다.",
+  "support.discordJoin": "Discord 서버 참여"
 }

@@ -42,5 +42,10 @@
   "settings.browser": "Tarayıcı",
   "settings.backgroundLogin": "Arka plan girişini kaydet",
   "settings.useExecutable": "Yürütülebilir dosyayı kullan",
-  "settings.minimumCoins": "En az sikke"
+  "settings.minimumCoins": "En az sikke",
+  "support.title": "Destek ve topluluk",
+  "support.description": "Yardım alın, sorun bildirin veya deterministik 2.0 işlemlerini inceleyin.",
+  "support.discordTitle": "Discord topluluğumuza katılın",
+  "support.discordBody": "Destek almanın en iyi yolu Discord sunucumuza katılmaktır. Ekibimiz ve topluluğumuz aktiftir ve her türlü sorun veya sorunuzda yardımcı olmaya hazırdır.",
+  "support.discordJoin": "Discord sunucusuna katıl"
 }

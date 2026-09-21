@@ -42,5 +42,10 @@
   "settings.browser": "Browser",
   "settings.backgroundLogin": "Salva accesso in background",
   "settings.useExecutable": "Usa eseguibile",
-  "settings.minimumCoins": "Monete minime"
+  "settings.minimumCoins": "Monete minime",
+  "support.title": "Assistenza e comunità",
+  "support.description": "Ottieni aiuto, segnala problemi o esamina le operazioni deterministiche 2.0.",
+  "support.discordTitle": "Unisciti al nostro Discord",
+  "support.discordBody": "Il modo migliore per ricevere assistenza è unirti al nostro server Discord. Il nostro team e la comunità sono attivi e pronti ad aiutarti con qualsiasi problema o domanda.",
+  "support.discordJoin": "Unisciti al server Discord"
 }

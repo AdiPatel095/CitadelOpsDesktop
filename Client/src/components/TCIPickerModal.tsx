@@ -1,4 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocale } from '../i18n/LocaleContext';
+import { readViewerLocale } from '../i18n/viewerLocaleStore';
+import { officialCatalogGeneration, subscribeOfficialCatalog } from '../i18n/officialMessages';
+import React, { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { Check, ChevronDown, Clock3, Layers3, Minus, Plus, Sparkles } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { Button, CatalogPickerModal, EmptyState, PillSelector } from './ui';
@@ -73,7 +76,7 @@ let setPickerState: React.Dispatch<
 
 export async function showTCIPicker(options: TCIPickerOptions): Promise<TCIPickerResult> {
   try {
-    await fetchConstructionItemsCatalog();
+    await fetchConstructionItemsCatalog(readViewerLocale());
   } catch {
     // Open the picker with its empty-state guidance when the catalog is unavailable.
   }
@@ -91,6 +94,8 @@ interface TCIPickerModalProps {
 }
 
 export const TCIPickerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const {locale} = useLocale();
+  const generation = useSyncExternalStore(subscribeOfficialCatalog,officialCatalogGeneration,()=>0);
   const [state, setState] = useState<{ isOpen: boolean; options: TCIPickerOptions | null }>({
     isOpen: false,
     options: null,
@@ -106,10 +111,13 @@ export const TCIPickerProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   useEffect(() => {
     if (!state.isOpen || !state.options) return;
-    fetchConstructionItemsCatalog()
-      .then(setCatalog)
-      .catch(() => setCatalog([]));
-  }, [state.isOpen, state.options]);
+    let active = true;
+    setCatalog([]);
+    fetchConstructionItemsCatalog(locale)
+      .then(items=>{if(active)setCatalog(items);})
+      .catch(()=>{if(active)setCatalog([]);});
+    return ()=>{active=false;};
+  }, [state.isOpen, state.options, locale, generation]);
 
   const handleClose = useCallback((result: TCIPickerResult) => {
     setState({ isOpen: false, options: null });
@@ -496,7 +504,7 @@ const TCIBrowserCard: React.FC<TCIBrowserCardProps> = ({ item, isSelected, isAct
           )}
         </div>
         <div className="tci-browser-card-copy">
-          <h3>{item.label}</h3>
+          <h3 lang={item.nameLocale}>{item.label}</h3>
           <p className="tci-browser-effect line-clamp-2">
             {effectLine || 'No effect description available'}
           </p>
@@ -557,7 +565,7 @@ const TCIDetailPanel: React.FC<TCIDetailPanelProps> = ({
         </div>
         <div className="tci-detail-heading">
           <span className="tci-detail-kicker">{item.category || 'Timed construction item'}</span>
-          <h3>{item.label}</h3>
+          <h3 lang={item.nameLocale}>{item.label}</h3>
           <div className="tci-detail-badges">
             <span><Clock3 aria-hidden="true" />{durationRangeLabel(item)}</span>
             <span><Layers3 aria-hidden="true" />{item.groupTiers.length} tiers</span>

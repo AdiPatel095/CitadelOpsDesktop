@@ -42,5 +42,10 @@
   "settings.browser": "Naršyklė",
   "settings.backgroundLogin": "Išsaugoti foninį prisijungimą",
   "settings.useExecutable": "Naudoti vykdomąjį failą",
-  "settings.minimumCoins": "Mažiausias monetų skaičius"
+  "settings.minimumCoins": "Mažiausias monetų skaičius",
+  "support.title": "Pagalba ir bendruomenė",
+  "support.description": "Gaukite pagalbos, praneškite apie problemas arba peržiūrėkite deterministines 2.0 operacijas.",
+  "support.discordTitle": "Prisijunkite prie mūsų Discord",
+  "support.discordBody": "Geriausias būdas gauti pagalbos – prisijungti prie mūsų Discord serverio. Mūsų komanda ir bendruomenė yra aktyvios ir pasirengusios padėti spręsti problemas ar atsakyti į klausimus.",
+  "support.discordJoin": "Prisijungti prie Discord serverio"
 }

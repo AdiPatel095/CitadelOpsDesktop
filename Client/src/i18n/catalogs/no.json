@@ -42,5 +42,10 @@
   "settings.browser": "Nettleser",
   "settings.backgroundLogin": "Lagre bakgrunnsinnlogging",
   "settings.useExecutable": "Bruk kjørbar fil",
-  "settings.minimumCoins": "Minste antall mynter"
+  "settings.minimumCoins": "Minste antall mynter",
+  "support.title": "Hjelp og fellesskap",
+  "support.description": "Få hjelp, rapporter problemer eller undersøk deterministiske 2.0-handlinger.",
+  "support.discordTitle": "Bli med på Discord",
+  "support.discordBody": "Den beste måten å få hjelp på er å bli med på Discord-serveren vår. Teamet og fellesskapet vårt er aktive og klare til å hjelpe med problemer og spørsmål.",
+  "support.discordJoin": "Bli med på Discord-serveren"
 }

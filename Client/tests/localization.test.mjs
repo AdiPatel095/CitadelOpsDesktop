@@ -68,3 +68,16 @@ test('missing official parameters and mixed fallback never claim full translatio
  assert.equal(formatMessage({key:'x',fallback:'The {noun}',gameParams:{noun:{key:'castle',fallback:'Castle'}}},'fr',{},game).resolvedLocale,'mixed');
  assert.equal(formatMessage({key:'x',fallback:'Static source',fallbackText:'Player {x} failed'},'fr',{},game).text,'Player {x} failed');
 });
+
+test('complete legacy fallback bypasses context rather than duplicating it',()=>{
+ const message={key:'done',fallback:'Completed',fallbackText:'Completed action for Player {name}',context:[{key:'action',fallback:'Action for {name}',params:{name:'Player {name}'}}]};
+ assert.equal(modules.formatMessage.formatMessage(message,'en',{}).text,message.fallbackText);
+ assert.equal(modules.formatMessage.formatMessage(message,'fr',{action:'Action pour {name}'}).text,message.fallbackText);
+ assert.equal(modules.formatMessage.formatMessage(message,'fr',{done:'Terminé'}).translated,false);
+});
+
+test('Arabic argument isolation preserves select keys and unchanged mixed-script values',()=>{
+ const params={kind:'player',name:'Player-7 {x}',x:123};
+ const result=modules.formatMessage.formatMessage({key:'a',fallback:'Player {name}',params},'ar',{a:'{kind, select, player {اللاعب {name} عند {x, number}} other {آخر}}'});
+ assert.equal(result.translated,true);assert.ok(result.text.includes('\u2068Player-7 {x}\u2069'));assert.ok(result.text.includes(`\u2068${new Intl.NumberFormat('ar').format(123)}\u2069`));assert.equal(params.name,'Player-7 {x}');assert.equal(params.kind,'player');
+});

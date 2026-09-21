@@ -42,5 +42,10 @@
   "settings.browser": "Browser",
   "settings.backgroundLogin": "Hintergrund-Anmeldung speichern",
   "settings.useExecutable": "Programm verwenden",
-  "settings.minimumCoins": "Mindestmünzen"
+  "settings.minimumCoins": "Mindestmünzen",
+  "support.title": "Hilfe und Community",
+  "support.description": "Erhalte Hilfe, melde Probleme oder prüfe deterministische 2.0-Aktionen.",
+  "support.discordTitle": "Tritt unserem Discord bei",
+  "support.discordBody": "Am besten erhältst du Hilfe auf unserem Discord-Server. Unser Team und unsere aktive Community helfen dir gerne bei Problemen und Fragen.",
+  "support.discordJoin": "Discord-Server beitreten"
 }

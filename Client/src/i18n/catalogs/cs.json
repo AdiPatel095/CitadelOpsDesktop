@@ -42,5 +42,10 @@
   "settings.browser": "Prohlížeč",
   "settings.backgroundLogin": "Uložit přihlášení na pozadí",
   "settings.useExecutable": "Použít spustitelný soubor",
-  "settings.minimumCoins": "Minimum mincí"
+  "settings.minimumCoins": "Minimum mincí",
+  "support.title": "Podpora a komunita",
+  "support.description": "Získejte pomoc, nahlaste problémy nebo prozkoumejte deterministické operace 2.0.",
+  "support.discordTitle": "Připojte se k našemu Discordu",
+  "support.discordBody": "Nejlepší způsob, jak získat podporu, je připojit se k našemu serveru Discord. Náš tým a komunita jsou aktivní a připraveni pomoci s problémy nebo otázkami.",
+  "support.discordJoin": "Připojit se k serveru Discord"
 }

@@ -1,3 +1,5 @@
+import { metadataName, translationValues } from '../i18n/officialMetadata';
+import { loadOfficialMessages, invalidateOfficialMessages } from '../i18n/officialMessages';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useCitadelAPI } from '../api/ApiContext';
 import { useLocale } from '../i18n/LocaleContext';
@@ -7,6 +9,9 @@ import { officialEquipmentEffectScope } from '../equipment/EquipmentEffectApplic
 export interface MetadataItem {
   id: number;
   name: string;
+  nameLocale?: string;
+  localizationKey?: string;
+  translationStatus?: 'official' | 'fallback';
   image?: string;
   level?: number;
   outputAmount?: number;
@@ -69,6 +74,8 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 	const isLoading = unitsLoading || optionalLoading;
 	const localizeOptional = useCallback((keys: string[]) => bestEffortLocalization(keys, locale), [locale]);
 
+  useEffect(() => { invalidateOfficialMessages(); }, [catalogKey]);
+
   useEffect(() => {
     // Do not display labels from a previous viewer locale while the next catalog loads.
     setTroops({}); setTools({}); setBuildings({}); setDecorations({});
@@ -97,7 +104,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 			}
 			let unitTranslations: Record<string, string> = {};
 			try {
-				unitTranslations = await CitadelAPI.localize(localizationKeys(unitsResponse.items), locale);
+				unitTranslations = translationValues(await loadOfficialMessages(localizationKeys(unitsResponse.items), locale));
 			} catch (error) {
 				console.warn('Could not localize official unit metadata; using catalog names', error);
 			}
@@ -110,7 +117,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 				const item: MetadataItem = {
 					...row,
 					id,
-					name: displayName(row, unitTranslations, `Unit ${id}`),
+					...metadataName(row, unitTranslations, `Unit ${id}`),
 					image: `/game-data/${isTool(row) ? 'tools' : 'troops'}/images/${id}.webp`,
 				};
 				if (isTool(row)) nextTools[id] = item;
@@ -172,6 +179,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 					const internalName = decoration ? row.type : row.name;
 					const item: MetadataItem = {
 						...row, id,
+						...metadataName(row, translations, `Building ${id}`, decoration && typeof row.type === 'string' ? [`deco_${row.type}_name`] : []),
 						internalName: typeof internalName === 'string' ? internalName : undefined,
 						name: decoration
 							? decorationDisplayName(row, translations, id)
@@ -357,7 +365,7 @@ function decorationLocalizationKeys(rows: OfficialRecord[]): string[] {
 		if (!isDecoration(row) || typeof row.type !== 'string' || !row.type.trim()) continue;
 		keys.add(`deco_${row.type.trim()}_name`);
 	}
-	return Array.from(keys).slice(0, 5000);
+	return Array.from(keys);
 }
 
 function decorationDisplayName(
@@ -387,13 +395,13 @@ function localizationKeys(rows: OfficialRecord[]): string[] {
       keys.add(value);
     }
   }
-  return Array.from(keys).slice(0, 5000);
+  return Array.from(keys);
 }
 
 async function bestEffortLocalization(keys: string[], locale: string): Promise<Record<string, string>> {
 	if (keys.length === 0) return {};
 	try {
-		return await CitadelAPI.localize(Array.from(new Set(keys)).slice(0, 5000), locale);
+		return translationValues(await loadOfficialMessages(Array.from(new Set(keys)), locale));
 	} catch (error) {
 		console.warn('Could not localize optional official metadata; using catalog names', error);
 		return {};
@@ -425,7 +433,7 @@ function effectLocalizationKeys(effectRows: OfficialRecord[], effectTypeRows: Of
 		keys.add(`${prefix}_active_malus`);
 	}
 	keys.add('effect_category_commonEffectCap');
-	return Array.from(keys).slice(0, 5000);
+	return Array.from(keys);
 }
 
 function currencyLocalizationKeys(rows: OfficialRecord[]): string[] {
@@ -442,16 +450,7 @@ function currencyLocalizationKeys(rows: OfficialRecord[]): string[] {
 }
 
 function displayName(row: OfficialRecord, translations: Record<string, string>, fallback: string): string {
-  if (typeof row._display_name === 'string' && row._display_name.trim() !== '') return row._display_name;
-  for (const value of [row.type, row.name, row.Name, row.JSONKey, row.kingdomName, row.comment2]) {
-    if (typeof value !== 'string' || value.trim() === '') continue;
-    const translated = translations[`kingdomName_${value}`] ?? translations[`${value}_name`] ?? translations[value];
-    if (translated?.trim()) return translated;
-  }
-  for (const value of [row.type, row.name, row.Name, row.kingdomName, row.comment2]) {
-    if (typeof value === 'string' && value.trim()) return value;
-  }
-  return fallback;
+  return metadataName(row,translations,fallback).name;
 }
 
 function positiveID(value: unknown): number {
@@ -475,11 +474,13 @@ function definitionMetadata(
 		if (id < 0 || (!allowZero && id === 0)) continue;
 		const internalName = [row.name, row.Name, row.kingdomName, row.assetName]
 			.find((value): value is string => typeof value === 'string' && value.trim() !== '');
+		const preferredKeys = idField === 'currencyID' ? [row.assetName,row.Name].flatMap(value => typeof value === 'string' ? [`currency_name_${value}`,`currency_name_${lowerFirst(value)}`] : []) : [];
 		const officialCurrencyName = idField === 'currencyID' ? currencyDisplayName(row, translations) : '';
 		result[id] = {
 			...row,
 			id,
 			internalName,
+			...metadataName(row,translations,`${fallbackPrefix} ${id}`,preferredKeys),
 			name: officialCurrencyName || displayName(row, translations, internalName ? splitIdentifier(internalName) : `${fallbackPrefix} ${id}`),
 			image: typeof row.assetName === 'string' && row.assetName.trim()
 				? `/game-data/resources/images/${row.assetName}.webp`
@@ -498,9 +499,7 @@ function currencyDisplayName(row: OfficialRecord, translations: Record<string, s
 			if (translated?.trim()) return translated.trim();
 		}
 	}
-	const fallback = [row.assetName, row.Name]
-		.find((value): value is string => typeof value === 'string' && value.trim() !== '');
-	return fallback ? splitIdentifier(fallback) : '';
+	return '';
 }
 
 function lowerFirst(value: string): string {
@@ -589,6 +588,7 @@ function effectDefinitionMetadata(
 			...row,
 			id,
 			internalName,
+			...metadataName(row,translations,internalName,[`relicequip_effect_description_${internalName}`,`equip_effect_description_${internalName}`,`ci_effect_${internalName}`,`effect_name_${internalName}`]),
 			name: effectTemplate
 				? humanizeEffectTemplate(effectTemplate)
 				: translatedName !== internalName

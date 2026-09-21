@@ -42,5 +42,10 @@
   "settings.browser": "المتصفح",
   "settings.backgroundLogin": "حفظ تسجيل الدخول في الخلفية",
   "settings.useExecutable": "استخدام الملف التنفيذي",
-  "settings.minimumCoins": "الحد الأدنى من العملات"
+  "settings.minimumCoins": "الحد الأدنى من العملات",
+  "support.title": "الدعم والمجتمع",
+  "support.description": "احصل على المساعدة أو أبلغ عن المشكلات أو افحص عمليات 2.0 الحتمية.",
+  "support.discordTitle": "انضم إلى مجتمعنا على Discord",
+  "support.discordBody": "أفضل طريقة للحصول على الدعم هي الانضمام إلى خادم Discord الخاص بنا. فريقنا ومجتمعنا نشطان ومستعدان لمساعدتك في أي مشكلة أو سؤال.",
+  "support.discordJoin": "الانضمام إلى خادم Discord"
 }

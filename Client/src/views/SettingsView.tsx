@@ -1,3 +1,4 @@
+import { useLocalizedErrorState } from '../i18n/useLocalizedErrorState';
 import { useLocale } from '../i18n/LocaleContext';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
@@ -190,9 +191,9 @@ const SettingsView: React.FC = () => {
 	const [attackPriorityDropTargetID, setAttackPriorityDropTargetID] = useState<string | null>(null);
 	const [browserInventory, setBrowserInventory] = useState<BrowserInventory | null>(null);
 	const [browserSelectionPending, setBrowserSelectionPending] = useState(false);
-	const [browserSelectionError, setBrowserSelectionError] = useState('');
+	const [browserSelectionError, setBrowserSelectionError] = useLocalizedErrorState('');
 	const [connectionModePending, setConnectionModePending] = useState(false);
-	const [connectionModeError, setConnectionModeError] = useState('');
+	const [connectionModeError, setConnectionModeError] = useLocalizedErrorState('');
 	const [backgroundLogin, setBackgroundLogin] = useState<BackgroundLoginStatus | null>(null);
 	const [backgroundUsername, setBackgroundUsername] = useState('');
 	const [backgroundPassword, setBackgroundPassword] = useState('');
@@ -209,20 +210,20 @@ const SettingsView: React.FC = () => {
 		return () => { cancelled = true; };
 	}, []);
 	const [backgroundLoginPending, setBackgroundLoginPending] = useState(false);
-	const [backgroundLoginError, setBackgroundLoginError] = useState('');
+	const [backgroundLoginError, setBackgroundLoginError] = useLocalizedErrorState('');
 	const [backgroundLoginMessage, setBackgroundLoginMessage] = useState('');
 	const [customBrowserPath, setCustomBrowserPath] = useState('');
 	const [relogDelayMinutes, setRelogDelayMinutes] = useState('5');
-	const [relogDelayError, setRelogDelayError] = useState('');
-	const [settingsSaveError, setSettingsSaveError] = useState('');
+	const [relogDelayError, setRelogDelayError] = useLocalizedErrorState('');
+	const [settingsSaveError, setSettingsSaveError] = useLocalizedErrorState('');
 	const settingsFileInputRef = useRef<HTMLInputElement>(null);
 	const [settingsTransferPending, setSettingsTransferPending] = useState<'export' | 'import' | null>(null);
-	const [settingsTransferError, setSettingsTransferError] = useState('');
+	const [settingsTransferError, setSettingsTransferError] = useLocalizedErrorState('');
 	const [settingsTransferStatus, setSettingsTransferStatus] = useState('');
 	const [playerHistoryRetention, setPlayerHistoryRetention] = useState<PlayerHistoryRetentionV1 | null>(null);
 	const [playerHistoryRetentionLoading, setPlayerHistoryRetentionLoading] = useState(true);
 	const [playerHistoryRetentionPending, setPlayerHistoryRetentionPending] = useState(false);
-	const [playerHistoryRetentionError, setPlayerHistoryRetentionError] = useState('');
+	const [playerHistoryRetentionError, setPlayerHistoryRetentionError] = useLocalizedErrorState('');
 	const [playerHistoryRetentionStatus, setPlayerHistoryRetentionStatus] = useState('');
 	const [playerHistoryDaysDraft, setPlayerHistoryDaysDraft] = useState('30');
 	const schedulerConfiguration = useMemo(
@@ -289,7 +290,7 @@ const SettingsView: React.FC = () => {
 			})
 			.catch((error) => {
 				if (active) {
-					setPlayerHistoryRetentionError(error instanceof Error ? error.message : 'Could not load My Stats storage options');
+					setPlayerHistoryRetentionError(error instanceof Error ? error : 'Could not load My Stats storage options');
 				}
 			})
 			.finally(() => {
@@ -315,7 +316,7 @@ const SettingsView: React.FC = () => {
 				if (active) setBrowserInventory(inventory);
 			})
 			.catch((error) => {
-				if (active) setBrowserSelectionError(error instanceof Error ? error.message : 'Could not discover browsers');
+				if (active) setBrowserSelectionError(error instanceof Error ? error : 'Could not discover browsers');
 			});
 		return () => {
 			active = false;
@@ -332,7 +333,7 @@ const SettingsView: React.FC = () => {
 			})
 			.catch((error) => {
 				if (active) {
-					setBackgroundLoginError(error instanceof Error ? error.message : 'Could not read the saved background login');
+					setBackgroundLoginError(error instanceof Error ? error : 'Could not read the saved background login');
 				}
 			});
 		return () => {
@@ -405,7 +406,7 @@ const SettingsView: React.FC = () => {
       upgradeEreDelayMs: parseInt(ereDelayMs ?? upgradeEreDelayMs, 10),
       upgradeCoinThreshold: parseFloat(coinThreshold ?? upgradeCoinThreshold),
 		}).catch((error) => {
-			setSettingsSaveError(error instanceof Error ? error.message : 'Could not save settings');
+			setSettingsSaveError(error instanceof Error ? error : 'Could not save settings');
 		});
   };
 
@@ -457,7 +458,7 @@ const SettingsView: React.FC = () => {
 			mode,
 		})
 			.catch((error) => {
-				setConnectionModeError(error instanceof Error ? error.message : 'Could not save the game connection mode');
+				setConnectionModeError(error instanceof Error ? error : 'Could not save the game connection mode');
 			})
 			.finally(() => setConnectionModePending(false));
 	};
@@ -469,7 +470,7 @@ const SettingsView: React.FC = () => {
 		void submitIntent('session.background.prepare')
 			.then(() => submitIntent('session.start'))
 			.catch((error) => {
-				setConnectionModeError(error instanceof Error ? error.message : 'Could not re-enable the saved game login');
+				setConnectionModeError(error instanceof Error ? error : 'Could not re-enable the saved game login');
 			})
 			.finally(() => setConnectionModePending(false));
 	};
@@ -483,7 +484,7 @@ const SettingsView: React.FC = () => {
 				setBrowserInventory(await CitadelAPI.getBrowsers());
 			})
 			.catch((error) => {
-				setBrowserSelectionError(error instanceof Error ? error.message : 'Could not select browser');
+				setBrowserSelectionError(error instanceof Error ? error : 'Could not select browser');
 			})
 			.finally(() => setBrowserSelectionPending(false));
 	};
@@ -513,7 +514,7 @@ const SettingsView: React.FC = () => {
 				setBackgroundLoginMessage('Background login saved. Start Bot can now connect without opening Full application mode.');
 			})
 			.catch((error) => {
-				setBackgroundLoginError(error instanceof Error ? error.message : 'Could not save the background login');
+				setBackgroundLoginError(error instanceof Error ? error : 'Could not save the background login');
 			})
 			.finally(() => setBackgroundLoginPending(false));
 	};
@@ -533,7 +534,7 @@ const SettingsView: React.FC = () => {
 			...reconnectConfiguration,
 			relogDelaySec: minutes * 60,
 		}).catch((error) => {
-			setRelogDelayError(error instanceof Error ? error.message : 'Could not save the relog delay');
+			setRelogDelayError(error instanceof Error ? error : 'Could not save the relog delay');
 		});
 	};
 
@@ -610,7 +611,7 @@ const SettingsView: React.FC = () => {
 				...rankedAttackPriorities(featureIDs),
 			},
 		}).catch((error) => {
-			setSettingsSaveError(error instanceof Error ? error.message : 'Could not save attack priorities');
+			setSettingsSaveError(error instanceof Error ? error : 'Could not save attack priorities');
 		});
 	};
 
@@ -752,7 +753,7 @@ const SettingsView: React.FC = () => {
 			const preferenceCount = Object.keys(bundle.clientPreferences ?? {}).length;
 			setSettingsTransferStatus(`Exported ${sectionCount} settings sections and ${preferenceCount} local preferences.`);
 		} catch (error) {
-			setSettingsTransferError(error instanceof Error ? error.message : 'Could not export settings.');
+			setSettingsTransferError(error instanceof Error ? error : 'Could not export settings.');
 		} finally {
 			setSettingsTransferPending(null);
 		}
@@ -785,7 +786,7 @@ const SettingsView: React.FC = () => {
 			);
 			window.setTimeout(() => window.location.reload(), 800);
 		} catch (error) {
-			setSettingsTransferError(error instanceof Error ? error.message : 'Could not import settings.');
+			setSettingsTransferError(error instanceof Error ? error : 'Could not import settings.');
 			setSettingsTransferPending(null);
 		}
 	};

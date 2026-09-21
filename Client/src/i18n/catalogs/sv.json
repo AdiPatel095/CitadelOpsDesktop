@@ -42,5 +42,10 @@
   "settings.browser": "Webbläsare",
   "settings.backgroundLogin": "Spara bakgrundsinloggning",
   "settings.useExecutable": "Använd körbar fil",
-  "settings.minimumCoins": "Minsta antal mynt"
+  "settings.minimumCoins": "Minsta antal mynt",
+  "support.title": "Hjälp och gemenskap",
+  "support.description": "Få hjälp, rapportera problem eller granska deterministiska 2.0-åtgärder.",
+  "support.discordTitle": "Gå med i vår Discord",
+  "support.discordBody": "Det bästa sättet att få hjälp är att gå med i vår Discord-server. Vårt team och vår gemenskap är aktiva och redo att hjälpa dig med problem och frågor.",
+  "support.discordJoin": "Gå med i Discord-servern"
 }

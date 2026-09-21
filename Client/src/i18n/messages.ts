@@ -2,6 +2,12 @@ import { officialMessageKeys } from './officialKeys';
 import { formatMessage, validateMessageCatalog } from './formatMessage';
 /** Add explicit descriptors here; never translate user names, IDs, or free-form input. */
 export const messages = {
+  "support.title": "Support & Community",
+  "support.description": "Get help, report issues, or inspect deterministic 2.0 operations.",
+  "support.discordTitle": "Join our Discord",
+  "support.discordBody": "The best way to get support is to join our Discord server. Our team and community are active and ready to help you with any issues or questions.",
+  "support.discordJoin": "Join Discord Server",
+
   "settings.system": "System Settings",
   "settings.transfer": "Settings Import & Export",
   "settings.export": "Export settings",

@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/LocaleContext';
 /**
  * @fileoverview Support Page Component
  *
@@ -23,15 +24,16 @@ const DISCORD_LINK = "https://discord.gg/zANyxDqfP3";
  * @returns The support page component
  */
 const SupportPage: React.FC = () => {
+    const { t, messageLocale, direction } = useLocale();
     return (
-        <div className="max-w-4xl mx-auto py-8">
+        <div lang={messageLocale} className="max-w-4xl mx-auto py-8">
             <PageHeader
                 className="mb-8"
-                title="Support & Community"
-                description="Get help, report issues, or inspect deterministic 2.0 operations."
+                title={t('support.title')}
+                description={t('support.description')}
             />
 
-			<IntentConsole />
+			<div lang="en"><IntentConsole /></div>
 
             <div className="mt-8">
                 <Card variant="interactive" className="hover:border-primary/30 transition-all duration-300">
@@ -40,10 +42,9 @@ const SupportPage: React.FC = () => {
                             <Icons.Help className="w-10 h-10 text-[#5865F2]" />
                         </div>
 
-                        <h2 className="text-2xl font-bold text-text-main mb-3">Join our Discord</h2>
+                        <h2 className="text-2xl font-bold text-text-main mb-3">{t('support.discordTitle')}</h2>
                         <p className="text-text-muted max-w-lg mb-8 leading-relaxed">
-                            The best way to get support is to join our Discord server.
-                            Our team and community are active and ready to help you with any issues or questions.
+                            {t('support.discordBody')}
                         </p>
 
                         <a
@@ -52,8 +53,8 @@ const SupportPage: React.FC = () => {
                             rel="noopener noreferrer"
                             className="inline-flex items-center justify-center rounded-global font-semibold transition-all duration-200 active:scale-95 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap px-8 py-3 text-lg gap-3 group bg-[#5865F2] hover:bg-[#4752C4] text-white shadow-lg shadow-[#5865F2]/20"
                         >
-                            <span>Join Discord Server</span>
-                            <Icons.ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                            <span>{t('support.discordJoin')}</span>
+                            <Icons.ArrowRight className={`w-5 h-5 transition-transform ${direction === 'rtl' ? 'rotate-180 group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`} />
                         </a>
                     </CardContent>
                 </Card>

@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useLocale } from '../../i18n/LocaleContext';
+import { officialCatalogGeneration, subscribeOfficialCatalog } from '../../i18n/officialMessages';
+import React, { useState, useEffect, useMemo, useCallback, useRef, useSyncExternalStore } from 'react';
 import { CalendarDays, Hammer, Trash2, Plus, Minus } from 'lucide-react';
 import {
   showTCIPicker,
@@ -54,6 +56,8 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
   const { state, configuration } = useCitadelAPI();
   const castles = castleOptionsFromState(state);
   const [settings, setSettings] = useState<Record<string, AutoTCIItem[]>>({});
+  const {locale} = useLocale();
+  const generation = useSyncExternalStore(subscribeOfficialCatalog,officialCatalogGeneration,()=>0);
   const [catalog, setCatalog] = useState<ConstructionItemCatalogEntry[]>([]);
   const [presetsState, setPresetsState] = useState(() => emptyPresetsFile());
   const [presetDropdownId, setPresetDropdownId] = useState('');
@@ -88,8 +92,11 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
 
   useEffect(() => {
     if (!isOpen) return;
-    fetchConstructionItemsCatalog().then(setCatalog).catch(() => setCatalog([]));
-  }, [isOpen]);
+    let active = true;
+    setCatalog([]);
+    fetchConstructionItemsCatalog(locale).then(items=>{if(active)setCatalog(items);}).catch(()=>{if(active)setCatalog([]);});
+    return ()=>{active=false;};
+  }, [isOpen, locale, generation]);
 
   useEffect(() => {
     if (!isOpen) {

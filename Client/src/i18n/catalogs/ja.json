@@ -42,5 +42,10 @@
   "settings.browser": "ブラウザー",
   "settings.backgroundLogin": "バックグラウンドログインを保存",
   "settings.useExecutable": "実行ファイルを使用",
-  "settings.minimumCoins": "最低コイン数"
+  "settings.minimumCoins": "最低コイン数",
+  "support.title": "サポートとコミュニティ",
+  "support.description": "ヘルプの利用、問題の報告、決定論的な 2.0 操作の確認ができます。",
+  "support.discordTitle": "Discord に参加",
+  "support.discordBody": "サポートを受けるには、Discord サーバーへの参加がおすすめです。活発なチームとコミュニティが、問題の解決や質問への回答をお手伝いします。",
+  "support.discordJoin": "Discord サーバーに参加"
 }

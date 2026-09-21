@@ -1,6 +1,8 @@
+import { invalidateOfficialMessages } from './officialMessages';
+import { loadBackendCatalog } from './backendCatalog';
 import { officialMessageKeys } from './officialKeys';
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { localeStorageKey, normalizeLocale } from './locales';
+import { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { readViewerLocale, setViewerLocale, subscribeViewerLocale } from './viewerLocaleStore';
 import type { Locale } from './locales';
 import { messages } from './messages';
 import { CitadelAPI } from '../api/CitadelClient';
@@ -8,14 +10,11 @@ import { formatMessage } from './formatMessage';
 import type { Catalog, OfficialCatalog } from './formatMessage';
 import { loadMessageCatalog } from './catalogs';
 import type { MessageKey, MessageParameters } from './messages';
-function initialLocale(): Locale {
-  try { return normalizeLocale(localStorage.getItem(localeStorageKey)) ?? 'en'; } catch { return 'en'; }
-}
 const officialKeys: Partial<Record<MessageKey,string>> = officialMessageKeys;
-function createValue(locale: Locale, setLocale: (locale: Locale) => void, catalog: Catalog = {}, game?: OfficialCatalog) {
+function createValue(locale: Locale, setLocale: (locale: Locale) => void, catalog: Catalog = {}, game?: OfficialCatalog, runtimeStatus = 'Disconnected') {
   const message = (key: MessageKey, parameters?: MessageParameters) => formatMessage({key,fallback:messages[key],params:parameters ? {...parameters} : undefined,officialKey:officialKeys[key]},locale,catalog,game);
   return {
-    message,
+    message, catalog, runtimeStatus,
     locale, setLocale, direction: locale === 'ar' ? 'rtl' as const : 'ltr' as const,
     messageLocale: Object.keys(catalog).length ? locale : 'en',
     t: (key: MessageKey, parameters?: MessageParameters) => message(key,parameters).text,
@@ -26,12 +25,15 @@ function createValue(locale: Locale, setLocale: (locale: Locale) => void, catalo
 }
 const LocaleContext = createContext(createValue('en', () => {}));
 export function LocaleProvider({children}: {children: React.ReactNode}) {
-  const [locale,setLocale] = useState<Locale>(initialLocale);
+  const locale = useSyncExternalStore(subscribeViewerLocale,readViewerLocale,()=> 'en' as Locale);
+  const setLocale = setViewerLocale;
+  const [connection,setConnection] = useState('Disconnected');
+  useEffect(() => CitadelAPI.subscribeStatus(status => { invalidateOfficialMessages(); setConnection(status); }),[]);
   const [game,setGame] = useState<{locale: Locale; catalog: OfficialCatalog} | null>(null);
   const [loaded,setLoaded] = useState<{locale: Locale; catalog: Catalog}>({locale:'en',catalog:{}});
   useEffect(() => {
     let active = true;
-    void loadMessageCatalog(locale).then(catalog => { if (active) setLoaded({locale,catalog}); }).catch(() => { if (active) setLoaded({locale,catalog:{}}); });
+    void Promise.all([loadMessageCatalog(locale),loadBackendCatalog(locale)]).then(([custom,backend]) => { if (active) setLoaded({locale,catalog:{...backend,...custom}}); }).catch(() => { if (active) setLoaded({locale,catalog:{}}); });
     return () => { active = false; };
   },[locale]);
   useEffect(() => {
@@ -40,20 +42,14 @@ export function LocaleProvider({children}: {children: React.ReactNode}) {
       if (active) setGame({locale,catalog:{values:result.values,resolvedLocale:result.locale?.resolvedLocale ?? 'en',fallbackKeys:result.locale?.fallbackKeys}});
     }).catch(() => { if (active) setGame(null); });
     return () => { active = false; };
-  },[locale]);
+  },[locale,connection]);
   useEffect(() => {
     // Unconverted page content remains English; converted components mark their own language.
     document.documentElement.lang = 'en';
     document.documentElement.dataset.viewerLocale = locale;
     document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';
-    try { localStorage.setItem(localeStorageKey,locale); } catch { /* Session selection still works without storage. */ }
   },[locale]);
-  useEffect(() => {
-    const sync = (event: StorageEvent) => { if (event.key === localeStorageKey) setLocale(normalizeLocale(event.newValue) ?? 'en'); };
-    window.addEventListener('storage',sync);
-    return () => window.removeEventListener('storage',sync);
-  },[]);
-  const value = useMemo(() => createValue(locale,setLocale,loaded.locale === locale ? loaded.catalog : {},game?.locale === locale ? game.catalog : undefined),[locale,loaded,game]);
+  const value = useMemo(() => createValue(locale,setLocale,loaded.locale === locale ? loaded.catalog : {},game?.locale === locale ? game.catalog : undefined,connection),[locale,loaded,game,connection]);
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 }
 export function useLocale() { return useContext(LocaleContext); }

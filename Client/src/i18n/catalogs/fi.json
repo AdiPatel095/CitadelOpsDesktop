@@ -42,5 +42,10 @@
   "settings.browser": "Selain",
   "settings.backgroundLogin": "Tallenna taustakirjautuminen",
   "settings.useExecutable": "Käytä suoritettavaa tiedostoa",
-  "settings.minimumCoins": "Kolikoiden vähimmäismäärä"
+  "settings.minimumCoins": "Kolikoiden vähimmäismäärä",
+  "support.title": "Tuki ja yhteisö",
+  "support.description": "Hanki apua, ilmoita ongelmista tai tarkastele deterministisiä 2.0-toimintoja.",
+  "support.discordTitle": "Liity Discordiin",
+  "support.discordBody": "Paras tapa saada tukea on liittyä Discord-palvelimellemme. Aktiivinen tiimimme ja yhteisömme auttavat mielellään kaikissa ongelmissa ja kysymyksissä.",
+  "support.discordJoin": "Liity Discord-palvelimelle"
 }
