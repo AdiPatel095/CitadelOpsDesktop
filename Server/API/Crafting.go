@@ -10,6 +10,7 @@ import (
 )
 
 type craftingProjection struct {
+	Locale         *GameData.LocaleResolution           `json:"locale,omitempty"`
 	Recipes        []GameData.CraftingRecipe            `json:"recipes"`
 	Resources      map[string]GameData.CraftingResource `json:"resources"`
 	Nodes          []craftingNode                       `json:"nodes"`
@@ -67,7 +68,18 @@ func (server *Server) handleCraftingProjection(writer http.ResponseWriter, reque
 		writeError(writer, http.StatusServiceUnavailable, "crafting_unavailable", "Official game data is unavailable")
 		return
 	}
-	catalog, err := server.config.GameData.CraftingCatalog()
+	var locale *GameData.LocaleResolution
+	language, _ := server.config.GameData.Language()
+	if request.URL.Query().Has("locale") {
+		var ready bool
+		var resolution GameData.LocaleResolution
+		language, resolution, ready = server.requestLanguage(writer, request)
+		if !ready {
+			return
+		}
+		locale = &resolution
+	}
+	catalog, err := server.config.GameData.CraftingCatalogWithLanguage(language)
 	if err != nil {
 		writeError(writer, http.StatusServiceUnavailable, "crafting_unavailable", err.Error())
 		return
@@ -76,7 +88,7 @@ func (server *Server) handleCraftingProjection(writer http.ResponseWriter, reque
 		applyCraftingIconURLs(&catalog, assets.Icons)
 	}
 	snapshot := server.config.State.ReadOnlyView()
-	projection := craftingProjection{
+	projection := craftingProjection{Locale: locale,
 		Recipes: catalog.Recipes, Resources: catalog.Resources,
 		Nodes: make([]craftingNode, 0, len(snapshot.Castles)),
 	}
