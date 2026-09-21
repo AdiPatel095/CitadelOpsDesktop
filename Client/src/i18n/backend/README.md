@@ -1,7 +1,7 @@
 # Backend message translation source
 
 The portal repository owns these backend-namespaced client catalogs. `en.json`
-is extracted from CitadelOpsBackend PR95 at e8e34993 (282 explicit keys), not an
+is extracted from CitadelOpsBackend PR96 at 609d776f (289 explicit keys), not an
 independently edited translation. The server sends keys, scalar parameters and
 safe context descriptors; each viewer selects a pack locally.
 
@@ -108,3 +108,12 @@ Count labels avoid fixed plural forms, and positive/non-negative remain distinct
 Lithuanian uses informal singular instructions (Įvesk/Patikrink). Official
 Mūšio ataskaita, šnipinėjimo ataskaita and paramos įrankiai guide game terms.
 Variable counts use count/limit phrasing; technical identifiers remain literal.
+
+The finite-label follow-on adds whole-label ICU contexts for wave/flank/slot
+identity, with literal JSON paths as supplemental identifiers. The five official
+flank/unit/tool labels per locale are recorded in ../backend-context-glossary.json
+from v4357. Player/alliance ID errors have separate complete sentences. The old
+generic entity-ID key is removed; no English enum label is interpolated into prose.
+
+Tuple integer validation has distinct item-ID and quantity reason sentences;
+paths supplement their meaning rather than replacing those human labels.
