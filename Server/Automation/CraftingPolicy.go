@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -87,15 +88,15 @@ func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	settings, raw, configured := craftingSettingsFromSnapshot(snapshot)
 	if !configured {
 		return Decision{
-			Status: "waiting", Detail: "No sovereign crafting plan is configured",
+			Status: "waiting", Detail: "No sovereign crafting plan is configured", DetailDescriptor: Localization.New("server.automation.no_sovereign_crafting_plan.67d8d92d", "No sovereign crafting plan is configured", nil),
 			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 300)),
 		}, nil
 	}
 	interval := policyInterval(settings.CheckIntervalSec, 300)
 	if craftingSnapshotStale(settings, snapshot, interval) {
 		return Decision{
-			Status:              "ready",
-			Detail:              "Refresh sovereign crafting queues",
+			Status: "ready",
+			Detail: "Refresh sovereign crafting queues", DetailDescriptor: Localization.New("server.automation.refresh_sovereign_crafting_queues.8e03f534", "Refresh sovereign crafting queues", nil),
 			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 			Request:             &Intent.Request{Name: "crafting.refresh", Arguments: json.RawMessage(`{}`)},
 			ReevaluateOnSuccess: true,
@@ -194,12 +195,14 @@ func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 				followUp = &Intent.Request{Name: "config.update", Arguments: followUpArguments}
 			}
 			detail := fmt.Sprintf("Queue crafting recipe %d at %s", recipeID, castleName(castle))
+			var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.queue_crafting_recipe_p.919826fb", "Queue crafting recipe {p0} at {p1}", Localization.Params{"p0": fmt.Sprintf("%d", recipeID), "p1": fmt.Sprintf("%s", castleName(castle))})
 			metrics := map[string]float64(nil)
 			if selection.Cursor != cursor {
 				detail = fmt.Sprintf(
 					"Queue available crafting recipe %d at %s while earlier cycle recipe %d waits",
 					recipeID, castleName(castle), cycle[cursor],
 				)
+				detailLocalizationMessage = Localization.New("server.automation.queue_available_crafting_recipe.e5c9aece", "Queue available crafting recipe {p0} at {p1} while earlier cycle recipe {p2, number} waits", Localization.Params{"p0": fmt.Sprintf("%d", recipeID), "p1": fmt.Sprintf("%s", castleName(castle)), "p2": cycle[cursor]})
 				metrics = map[string]float64{
 					"waitingRecipeId":  float64(cycle[cursor]),
 					"selectedRecipeId": float64(recipeID),
@@ -210,14 +213,15 @@ func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 					"Queue highest unlocked recipe %d at %s and replace unavailable recipe %d",
 					recipeID, castleName(castle), configuredRecipeID,
 				)
+				detailLocalizationMessage = Localization.New("server.automation.queue_highest_unlocked_recipe.c45e5612", "Queue highest unlocked recipe {p0} at {p1} and replace unavailable recipe {p2}", Localization.Params{"p0": fmt.Sprintf("%d", recipeID), "p1": fmt.Sprintf("%s", castleName(castle)), "p2": fmt.Sprintf("%d", configuredRecipeID)})
 				metrics = map[string]float64{
 					"configuredRecipeId": float64(configuredRecipeID),
 					"resolvedRecipeId":   float64(recipeID),
 				}
 			}
 			return Decision{
-				Status:              "ready",
-				Detail:              detail,
+				Status: "ready",
+				Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage),
 				NextCheckAt:         snapshot.Now.Add(interval),
 				Metrics:             metrics,
 				Request:             &Intent.Request{Name: "crafting.start", Arguments: arguments},
@@ -234,16 +238,21 @@ func (*CraftingPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 		return decision, nil
 	}
 	detail := "No enabled crafting sequence is configured"
+	var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.no_enabled_crafting_sequence.12eb9f69", "No enabled crafting sequence is configured", nil)
 	if plans > 0 && observed == 0 {
 		detail = "Waiting for configured crafting buildings to be observed"
+		detailLocalizationMessage = Localization.New("server.automation.waiting_for_configured_crafting.87c771ec", "Waiting for configured crafting buildings to be observed", nil)
 	} else if plans > 0 && observed == full {
 		detail = "All configured crafting queues are full"
+		detailLocalizationMessage = Localization.New("server.automation.all_configured_crafting_queues.b9be63ac", "All configured crafting queues are full", nil)
 	} else if plans > 0 && waitingForResources > 0 {
 		detail = "Configured crafting recipes are waiting for resources or configured reserves"
+		detailLocalizationMessage = Localization.New("server.automation.configured_crafting_recipes_are.e0dfbe00", "Configured crafting recipes are waiting for resources or configured reserves", nil)
 	} else if plans > 0 {
 		detail = "Configured recipes are not available for the observed crafting queues"
+		detailLocalizationMessage = Localization.New("server.automation.configured_recipes_are_not.21cf3257", "Configured recipes are not available for the observed crafting queues", nil)
 	}
-	return Decision{Status: "idle", Detail: detail, NextCheckAt: snapshot.Now.Add(interval)}, nil
+	return Decision{Status: "idle", Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage), NextCheckAt: snapshot.Now.Add(interval)}, nil
 }
 
 func selectCraftingRecipe(
@@ -420,23 +429,23 @@ func resolveCraftingRecipe(
 func advanceCraftingCursor(raw json.RawMessage, castleKey string, queueKey string, cursor int) (map[string]any, error) {
 	var document map[string]any
 	if err := json.Unmarshal(raw, &document); err != nil {
-		return nil, fmt.Errorf("decode crafting configuration: %w", err)
+		return nil, Localization.WithError(fmt.Errorf("decode crafting configuration: %w", err), Localization.ErrorContext(Localization.New("server.automation.decode_crafting_configuration.610f6a4b", "decode crafting configuration", nil), err))
 	}
 	castles, ok := document["castles"].(map[string]any)
 	if !ok {
-		return nil, fmt.Errorf("crafting configuration has no castles object")
+		return nil, Localization.WithError(fmt.Errorf("crafting configuration has no castles object"), Localization.New("server.automation.crafting_configuration_has_no.80fdd7e3", "crafting configuration has no castles object", nil))
 	}
 	castle, ok := castles[castleKey].(map[string]any)
 	if !ok {
-		return nil, fmt.Errorf("crafting configuration has no castle %s", castleKey)
+		return nil, Localization.WithError(fmt.Errorf("crafting configuration has no castle %s", castleKey), Localization.New("server.automation.crafting_configuration_has_no.41a890a9", "crafting configuration has no castle {p0}", Localization.Params{"p0": fmt.Sprintf("%s", castleKey)}))
 	}
 	buildings, ok := castle["buildings"].(map[string]any)
 	if !ok {
-		return nil, fmt.Errorf("crafting configuration has no buildings for castle %s", castleKey)
+		return nil, Localization.WithError(fmt.Errorf("crafting configuration has no buildings for castle %s", castleKey), Localization.New("server.automation.crafting_configuration_has_no.467bc346", "crafting configuration has no buildings for castle {p0}", Localization.Params{"p0": fmt.Sprintf("%s", castleKey)}))
 	}
 	building, ok := buildings[queueKey].(map[string]any)
 	if !ok {
-		return nil, fmt.Errorf("crafting configuration has no queue %s for castle %s", queueKey, castleKey)
+		return nil, Localization.WithError(fmt.Errorf("crafting configuration has no queue %s for castle %s", queueKey, castleKey), Localization.New("server.automation.crafting_configuration_has_no.f37cea17", "crafting configuration has no queue {p0} for castle {p1}", Localization.Params{"p0": fmt.Sprintf("%s", queueKey), "p1": fmt.Sprintf("%s", castleKey)}))
 	}
 	building["cursor"] = cursor
 	return document, nil
@@ -451,23 +460,23 @@ func replaceCraftingRecipeID(
 ) error {
 	castles, ok := document["castles"].(map[string]any)
 	if !ok {
-		return fmt.Errorf("crafting configuration has no castles object")
+		return Localization.WithError(fmt.Errorf("crafting configuration has no castles object"), Localization.New("server.automation.crafting_configuration_has_no.80fdd7e3", "crafting configuration has no castles object", nil))
 	}
 	castle, ok := castles[castleKey].(map[string]any)
 	if !ok {
-		return fmt.Errorf("crafting configuration has no castle %s", castleKey)
+		return Localization.WithError(fmt.Errorf("crafting configuration has no castle %s", castleKey), Localization.New("server.automation.crafting_configuration_has_no.41a890a9", "crafting configuration has no castle {p0}", Localization.Params{"p0": fmt.Sprintf("%s", castleKey)}))
 	}
 	buildings, ok := castle["buildings"].(map[string]any)
 	if !ok {
-		return fmt.Errorf("crafting configuration has no buildings for castle %s", castleKey)
+		return Localization.WithError(fmt.Errorf("crafting configuration has no buildings for castle %s", castleKey), Localization.New("server.automation.crafting_configuration_has_no.467bc346", "crafting configuration has no buildings for castle {p0}", Localization.Params{"p0": fmt.Sprintf("%s", castleKey)}))
 	}
 	building, ok := buildings[queueKey].(map[string]any)
 	if !ok {
-		return fmt.Errorf("crafting configuration has no queue %s for castle %s", queueKey, castleKey)
+		return Localization.WithError(fmt.Errorf("crafting configuration has no queue %s for castle %s", queueKey, castleKey), Localization.New("server.automation.crafting_configuration_has_no.f37cea17", "crafting configuration has no queue {p0} for castle {p1}", Localization.Params{"p0": fmt.Sprintf("%s", queueKey), "p1": fmt.Sprintf("%s", castleKey)}))
 	}
 	steps, ok := building["steps"].([]any)
 	if !ok {
-		return fmt.Errorf("crafting configuration has no recipe steps for queue %s at castle %s", queueKey, castleKey)
+		return Localization.WithError(fmt.Errorf("crafting configuration has no recipe steps for queue %s at castle %s", queueKey, castleKey), Localization.New("server.automation.crafting_configuration_has_no.7a75ff1d", "crafting configuration has no recipe steps for queue {p0} at castle {p1}", Localization.Params{"p0": fmt.Sprintf("%s", queueKey), "p1": fmt.Sprintf("%s", castleKey)}))
 	}
 	replaced := false
 	for _, rawStep := range steps {
@@ -482,7 +491,7 @@ func replaceCraftingRecipeID(
 		}
 	}
 	if !replaced {
-		return fmt.Errorf("crafting configuration recipe %d was not found for queue %s at castle %s", configuredID, queueKey, castleKey)
+		return Localization.WithError(fmt.Errorf("crafting configuration recipe %d was not found for queue %s at castle %s", configuredID, queueKey, castleKey), Localization.New("server.automation.crafting_configuration_recipe_p.61e2093f", "crafting configuration recipe {p0} was not found for queue {p1} at castle {p2}", Localization.Params{"p0": fmt.Sprintf("%d", configuredID), "p1": fmt.Sprintf("%s", queueKey), "p2": fmt.Sprintf("%s", castleKey)}))
 	}
 	return nil
 }

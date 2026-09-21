@@ -1,6 +1,7 @@
 package App
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -56,7 +57,7 @@ func planNomadRBCTestAttack(
 		return blockedPlan, nil
 	}
 	if current := input.State.NomadCamps.RBCTest; current != nil && current.RunID == request.RunID && current.SafetyError != "" {
-		return Intent.Plan{}, fmt.Errorf("RBC trial %s is blocked: %s", request.RunID, current.SafetyError)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("RBC trial %s is blocked: %s", request.RunID, current.SafetyError), Localization.New("server.app.rbc_trial_p_is.64069c97", "RBC trial {p0} is blocked: {p1}", Localization.Params{"p0": fmt.Sprintf("%s", request.RunID), "p1": fmt.Sprintf("%s", current.SafetyError)}))
 	}
 	resolution, err := resolveCRACommanders(
 		input.State,
@@ -67,11 +68,11 @@ func planNomadRBCTestAttack(
 		return Intent.Plan{}, err
 	}
 	if len(resolution.Selected) != request.ExpectedAttacks {
-		return Intent.Plan{}, fmt.Errorf("RBC trial requires exactly %d available commanders", request.ExpectedAttacks)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("RBC trial requires exactly %d available commanders", request.ExpectedAttacks), Localization.New("server.app.rbc_trial_requires_exactly.a952ac49", "RBC trial requires exactly {p0} available commanders", Localization.Params{"p0": request.ExpectedAttacks}))
 	}
 	request.CommanderIDs = orderNomadChainCommanders(input, source, target, resolution.Selected)
 	if _, err := buildAttackSetupForCommanders(invasionAttackSetup(request.Preset), source, input.GameData, len(request.CommanderIDs)); err != nil {
-		return Intent.Plan{}, fmt.Errorf("validate RBC trial preset inventory: %w", err)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("validate RBC trial preset inventory: %w", err), Localization.ErrorContext(Localization.New("server.app.validate_rbc_trial_preset.5fbd9575", "validate RBC trial preset inventory", nil), err))
 	}
 
 	contextPayload, _ := json.Marshal(struct {
@@ -88,8 +89,8 @@ func planNomadRBCTestAttack(
 	}
 	steps = append(steps, attackCastleContextStep(source))
 	steps = append(steps,
-		Intent.Step{Name: "Initialize or continue opportunistic RBC trial", Action: "nomad.rbc_test.begin", ActionArguments: normalized},
-		Intent.Step{Name: "Verify RBC trial preset inventory", Action: "nomad.rbc_test.inventory.guard", ActionArguments: normalized},
+		Intent.Step{Name: "Initialize or continue opportunistic RBC trial", NameDescriptor: Localization.New("server.app.initialize_or_continue_opportunistic.986b9a01", "Initialize or continue opportunistic RBC trial", nil), Action: "nomad.rbc_test.begin", ActionArguments: normalized},
+		Intent.Step{Name: "Verify RBC trial preset inventory", NameDescriptor: Localization.New("server.app.verify_rbc_trial_preset.306ebd1f", "Verify RBC trial preset inventory", nil), Action: "nomad.rbc_test.inventory.guard", ActionArguments: normalized},
 	)
 	for _, commanderID := range request.CommanderIDs {
 		resolvedArguments, _ := json.Marshal(resolvedNomadRBCTestAttackRequest{
@@ -102,9 +103,9 @@ func planNomadRBCTestAttack(
 		steps = append(steps,
 			deferredCRACommandStep(
 				fmt.Sprintf("Build and launch RBC trial attack with commander %d", commanderID),
-				"nomad.rbc_test.attack.build", resolvedArguments, contextPayload,
+				"nomad.rbc_test.attack.build", resolvedArguments, contextPayload, Localization.New("server.app.build_and_launch_rbc.07bd93d5", "Build and launch RBC trial attack with commander {p0}", Localization.Params{"p0": fmt.Sprintf("%d", commanderID)}),
 			),
-			Intent.Step{Name: "Capture authoritative RBC trial arrival", Action: "nomad.rbc_test.launch.capture", ActionArguments: capture},
+			Intent.Step{Name: "Capture authoritative RBC trial arrival", NameDescriptor: Localization.New("server.app.capture_authoritative_rbc_trial.df6ed899", "Capture authoritative RBC trial arrival", nil), Action: "nomad.rbc_test.launch.capture", ActionArguments: capture},
 		)
 	}
 	castleID := strconv.FormatInt(int64(source.ID), 10)
@@ -118,8 +119,8 @@ func planNomadRBCTestAttack(
 		Admission: &Intent.Admission{
 			Class: Intent.AdmissionAttackLaunch, Module: "autoNomad", Affinity: "castle:" + castleID,
 		},
-		Summary: fmt.Sprintf("Launch a %d-hit Auto Camp trial into RBC %d:%d", len(request.CommanderIDs), target.X, target.Y),
-		Steps:   steps,
+		Summary: fmt.Sprintf("Launch a %d-hit Auto Camp trial into RBC %d:%d", len(request.CommanderIDs), target.X, target.Y), SummaryDescriptor: Localization.New("server.app.launch_a_p_hit.54d5b509", "Launch a {p0}-hit Auto Camp trial into RBC {p1}:{p2}", Localization.Params{"p0": fmt.Sprintf("%d", len(request.CommanderIDs)), "p1": target.X, "p2": target.Y}),
+		Steps: steps,
 	}, nil
 }
 
@@ -138,28 +139,28 @@ func nomadRBCTestAttackContext(
 	request.BatchID = strings.TrimSpace(request.BatchID)
 	if request.RunID == "" || request.BatchID == "" || request.SourceCastleID <= 0 || request.ExpectedAttacks < 1 ||
 		len(request.CommanderIDs) < request.ExpectedAttacks {
-		return nomadRBCTestAttackRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf(
+		return nomadRBCTestAttackRequest{}, State.CastleState{}, State.MapObservation{}, Localization.WithError(fmt.Errorf(
 			"RBC trial requires run and batch ids, a source castle, and at least one commander",
-		)
+		), Localization.New("server.app.rbc_trial_requires_run.fd6f170a", "RBC trial requires run and batch ids, a source castle, and at least one commander", nil))
 	}
 	source, exists := input.State.Castles[request.SourceCastleID]
 	if !exists || source.KingdomID != request.KingdomID {
-		return nomadRBCTestAttackRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("RBC trial source castle is unavailable")
+		return nomadRBCTestAttackRequest{}, State.CastleState{}, State.MapObservation{}, Localization.WithError(fmt.Errorf("RBC trial source castle is unavailable"), Localization.New("server.app.rbc_trial_source_castle.2058891f", "RBC trial source castle is unavailable", nil))
 	}
 	target, exists := input.State.LookupMapObservation(request.KingdomID, fmt.Sprintf("%d:%d", request.TargetX, request.TargetY))
 	if !exists || target.TypeID != kingdomTowerMapTypeID || target.TowerVictoryCount != request.VictoryCount {
-		return nomadRBCTestAttackRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf(
+		return nomadRBCTestAttackRequest{}, State.CastleState{}, State.MapObservation{}, Localization.WithError(fmt.Errorf(
 			"RBC trial target %d:%d changed or is not a kingdom tower", request.TargetX, request.TargetY,
-		)
+		), Localization.New("server.app.rbc_trial_target_p.f59afeb6", "RBC trial target {p0}:{p1} changed or is not a kingdom tower", Localization.Params{"p0": request.TargetX, "p1": request.TargetY}))
 	}
 	key := fmt.Sprintf("%d:%d:%d", target.KingdomID, target.X, target.Y)
 	if cooldown, found := input.State.LookupTowerCooldown(key); found && cooldown.PendingCooldownRefresh {
-		return nomadRBCTestAttackRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf(
+		return nomadRBCTestAttackRequest{}, State.CastleState{}, State.MapObservation{}, Localization.WithError(fmt.Errorf(
 			"RBC trial target %d:%d is awaiting an authoritative cooldown refresh", target.X, target.Y,
-		)
+		), Localization.New("server.app.rbc_trial_target_p.9c979bc6", "RBC trial target {p0}:{p1} is awaiting an authoritative cooldown refresh", Localization.Params{"p0": target.X, "p1": target.Y}))
 	}
 	if appDungeonCooldownRemaining(input.State, target, time.Now().UTC()) > 0 {
-		return nomadRBCTestAttackRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("RBC trial target %d:%d is on cooldown", target.X, target.Y)
+		return nomadRBCTestAttackRequest{}, State.CastleState{}, State.MapObservation{}, Localization.WithError(fmt.Errorf("RBC trial target %d:%d is on cooldown", target.X, target.Y), Localization.New("server.app.rbc_trial_target_p.aa98d97b", "RBC trial target {p0}:{p1} is on cooldown", Localization.Params{"p0": target.X, "p1": target.Y}))
 	}
 	return request, source, target, nil
 }
@@ -233,22 +234,22 @@ func (application *Application) resolveNomadRBCTestAttackStep(
 		},
 	})
 	if err != nil {
-		return Intent.Step{}, fmt.Errorf("resolve RBC trial attack capacity: %w", err)
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("resolve RBC trial attack capacity: %w", err), Localization.ErrorContext(Localization.New("server.app.resolve_rbc_trial_attack.9fcf6f00", "resolve RBC trial attack capacity", nil), err))
 	}
 	setup := invasionAttackSetup(AttackPresets.LimitToCapacity(request.Preset, capacity))
 	built, err := buildAttackSetup(setup, source, input.GameData)
 	if err != nil {
-		return Intent.Step{}, fmt.Errorf("build RBC trial preset %q: %w", request.Preset.Name, err)
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("build RBC trial preset %q: %w", request.Preset.Name, err), Localization.ErrorContext(Localization.New("server.app.build_rbc_trial_preset.d2a79ad2", "build RBC trial preset {p0}", Localization.Params{"p0": fmt.Sprintf("%q", request.Preset.Name)}), err))
 	}
 	attack := invasionAttackBody(source, target, request.CommanderID, built)
 	if err := applyCastleHorseTravelBoost(&attack, input.GameData, source, request.HorseTravelBoostID); err != nil {
-		return Intent.Step{}, fmt.Errorf("resolve RBC trial horse travel boost: %w", err)
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("resolve RBC trial horse travel boost: %w", err), Localization.ErrorContext(Localization.New("server.app.resolve_rbc_trial_horse.2294264c", "resolve RBC trial horse travel boost", nil), err))
 	}
 	body, err := json.Marshal(attack)
 	if err != nil {
-		return Intent.Step{}, fmt.Errorf("build RBC trial CRA payload: %w", err)
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("build RBC trial CRA payload: %w", err), Localization.ErrorContext(Localization.New("server.app.build_rbc_trial_cra.e03f3ecc", "build RBC trial CRA payload", nil), err))
 	}
-	return commandStep(fmt.Sprintf("Attack RBC trial target at %d:%d", target.X, target.Y), "cra", body, "cra"), nil
+	return commandStep(fmt.Sprintf("Attack RBC trial target at %d:%d", target.X, target.Y), "cra", body, "cra", Localization.New("server.app.attack_rbc_trial_target.2d294987", "Attack RBC trial target at {p0}:{p1}", Localization.Params{"p0": target.X, "p1": target.Y})), nil
 }
 
 func (application *Application) beginNomadRBCTest(_ context.Context, arguments json.RawMessage) error {
@@ -278,11 +279,11 @@ func (application *Application) guardNomadRBCTestInventory(_ context.Context, ar
 	state := application.State.ReadOnlyView()
 	source, exists := state.Castles[request.SourceCastleID]
 	if !exists {
-		return fmt.Errorf("RBC trial source castle %d is unavailable", request.SourceCastleID)
+		return Localization.WithError(fmt.Errorf("RBC trial source castle %d is unavailable", request.SourceCastleID), Localization.New("server.app.rbc_trial_source_castle.1b4cac1d", "RBC trial source castle {p0} is unavailable", Localization.Params{"p0": fmt.Sprintf("%d", request.SourceCastleID)}))
 	}
 	gameData, ready := application.GameData.Current()
 	if !ready {
-		return fmt.Errorf("official game data is unavailable")
+		return Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	_, err := buildAttackSetupForCommanders(invasionAttackSetup(request.Preset), source, gameData, request.ExpectedAttacks)
 	return err
@@ -296,7 +297,7 @@ func (application *Application) guardNomadRBCTestAttack(_ context.Context, argum
 	state := application.State.ReadOnlyView()
 	gameData, ready := application.GameData.Current()
 	if !ready {
-		return fmt.Errorf("official game data is unavailable")
+		return Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	_, source, target, err := nomadRBCTestAttackContext(
 		Intent.PlanningContext{State: state, GameData: gameData}, mustMarshalNomadRBCTestAttackRequest(request.nomadRBCTestAttackRequest),
@@ -306,13 +307,13 @@ func (application *Application) guardNomadRBCTestAttack(_ context.Context, argum
 	}
 	commander, exists := state.Commanders[request.CommanderID]
 	if !exists || !commander.Available {
-		return fmt.Errorf("commander %d is no longer available", request.CommanderID)
+		return Localization.WithError(fmt.Errorf("commander %d is no longer available", request.CommanderID), Localization.New("server.app.commander_p_is_no.546e373b", "commander {p0} is no longer available", Localization.Params{"p0": fmt.Sprintf("%d", request.CommanderID)}))
 	}
 	dialog := state.AttackDialog
 	if dialog.SourceCastleID != source.ID || dialog.KingdomID != target.KingdomID ||
 		dialog.Target.TypeID != kingdomTowerMapTypeID || dialog.Target.X != target.X || dialog.Target.Y != target.Y ||
 		dialog.Target.TowerVictoryCount != target.TowerVictoryCount || dialog.Target.TowerCooldownRemaining > 0 {
-		return fmt.Errorf("authoritative ADI row no longer matches ready RBC trial target %d:%d", target.X, target.Y)
+		return Localization.WithError(fmt.Errorf("authoritative ADI row no longer matches ready RBC trial target %d:%d", target.X, target.Y), Localization.New("server.app.authoritative_adi_row_no.b7d1163c", "authoritative ADI row no longer matches ready RBC trial target {p0}:{p1}", Localization.Params{"p0": target.X, "p1": target.Y}))
 	}
 	return nil
 }
@@ -326,7 +327,7 @@ func (application *Application) captureNomadRBCTestLaunch(_ context.Context, arg
 	_, err := application.State.ApplyComponents(State.Components(State.ComponentNomadCamps), func(gameState *State.GameState) ([]string, bool, error) {
 		test := gameState.NomadCamps.RBCTest
 		if test == nil || test.RunID != request.RunID {
-			return nil, false, fmt.Errorf("RBC trial %s is not active", request.RunID)
+			return nil, false, Localization.WithError(fmt.Errorf("RBC trial %s is not active", request.RunID), Localization.New("server.app.rbc_trial_p_is.d1666d45", "RBC trial {p0} is not active", Localization.Params{"p0": fmt.Sprintf("%s", request.RunID)}))
 		}
 		for _, launch := range test.Launches {
 			if launch.BatchID == request.BatchID && launch.CommanderID == request.CommanderID {
@@ -347,7 +348,7 @@ func (application *Application) captureNomadRBCTestLaunch(_ context.Context, arg
 			return true
 		})
 		if !found {
-			return nil, false, fmt.Errorf("CRA response did not return commander %d's RBC trial movement", request.CommanderID)
+			return nil, false, Localization.WithError(fmt.Errorf("CRA response did not return commander %d's RBC trial movement", request.CommanderID), Localization.New("server.app.cra_response_did_not.f465518c", "CRA response did not return commander {p0}'s RBC trial movement", Localization.Params{"p0": fmt.Sprintf("%d", request.CommanderID)}))
 		}
 		launch := State.NomadRBCTestLaunch{
 			BatchID: request.BatchID, CommanderID: request.CommanderID,
@@ -384,7 +385,7 @@ func (application *Application) captureNomadRBCTestLaunch(_ context.Context, arg
 		return err
 	}
 	if safetyError != "" {
-		return fmt.Errorf("unsafe RBC trial arrival order: %s", safetyError)
+		return Localization.WithError(fmt.Errorf("unsafe RBC trial arrival order: %s", safetyError), Localization.New("server.app.unsafe_rbc_trial_arrival.9898ed75", "unsafe RBC trial arrival order: {p0}", Localization.Params{"p0": fmt.Sprintf("%s", safetyError)}))
 	}
 	return nil
 }

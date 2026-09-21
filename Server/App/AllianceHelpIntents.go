@@ -1,6 +1,7 @@
 package App
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -52,7 +53,7 @@ func planAllianceHelpAnswerAll(
 	if len(listIDs) == 0 {
 		if !options.AllowUnobserved || input.State.Session.Generation == 0 ||
 			input.State.AllianceHelpRequests.LastHelpAllGeneration == input.State.Session.Generation {
-			return Intent.Plan{Summary: "Skip alliance help: no alliance member currently needs help"}, nil
+			return Intent.Plan{Summary: "Skip alliance help: no alliance member currently needs help", SummaryDescriptor: Localization.New("server.app.skip_alliance_help_no.eb86e43c", "Skip alliance help: no alliance member currently needs help", nil)}, nil
 		}
 		listIDs = []int64{}
 	}
@@ -64,12 +65,14 @@ func planAllianceHelpAnswerAll(
 	}
 	recordArguments, _ := json.Marshal(request)
 	summary := fmt.Sprintf("Help %d pending alliance request(s)", len(listIDs))
+	var summaryLocalizationMessage *Localization.Message = Localization.New("server.app.help_p_pending_alliance.2dc560fc", "Help {p0} pending alliance request(s)", Localization.Params{"p0": fmt.Sprintf("%d", len(listIDs))})
 	if len(listIDs) == 0 {
 		summary = "Check and help current alliance requests"
+		summaryLocalizationMessage = Localization.New("server.app.check_and_help_current.f4cb37d0", "Check and help current alliance requests", nil)
 	}
 	return Intent.Plan{
 		Claims:  []string{"alliance-help"},
-		Summary: summary,
+		Summary: summary, SummaryDescriptor: Localization.Clone(summaryLocalizationMessage),
 		Steps: []Intent.Step{
 			{
 				Name: "Help alliance members", Resolver: "alliance.help.answer_all.build",
@@ -94,7 +97,7 @@ func resolveAllianceHelpAnswerAllStep(
 		return Intent.Step{}, err
 	}
 	if request.SessionGeneration == 0 || request.SessionGeneration != input.State.Session.Generation {
-		return Intent.Step{}, fmt.Errorf("%w: alliance-help session changed", Intent.ErrPlanStale)
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("%w: alliance-help session changed", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.c4717979", "intent plan became stale before dispatch: alliance-help session changed", nil))
 	}
 	pending := State.PendingOtherAllianceHelpListIDs(input.State)
 	currentObservation := input.State.AllianceHelpRequests.OthersObservedGeneration == input.State.Session.Generation &&
@@ -103,12 +106,12 @@ func resolveAllianceHelpAnswerAllStep(
 		input.State.AllianceHelpRequests.LastHelpAllGeneration != input.State.Session.Generation &&
 		(!currentObservation || len(pending) > 0)
 	if !allianceHelpListsOverlap(request.ListIDs, pending) && !bootstrapAllowed {
-		return Intent.Step{}, fmt.Errorf("%w: the selected alliance-help requests are no longer pending", Intent.ErrPlanStale)
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("%w: the selected alliance-help requests are no longer pending", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.e3b606ea", "intent plan became stale before dispatch: the selected alliance-help requests are no longer pending", nil))
 	}
 	payload, _ := json.Marshal(struct {
 		Limit int `json:"KID"`
 	}{Limit: allianceHelpAllLimit})
-	return commandStep("Help alliance members", "aha", payload, "aha"), nil
+	return commandStep("Help alliance members", "aha", payload, "aha", Localization.New("server.app.help_alliance_members.2b3dae8c", "Help alliance members", nil)), nil
 }
 
 func (application *Application) markAllianceHelpAnswered(_ context.Context, arguments json.RawMessage) error {
@@ -176,43 +179,43 @@ func planAllianceHelpRequest(_ context.Context, input Intent.PlanningContext, ar
 		return Intent.Plan{}, err
 	}
 	if request.ProductionID <= 0 {
-		return Intent.Plan{}, fmt.Errorf("alliance help requires a positive production job id")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("alliance help requires a positive production job id"), Localization.New("server.app.alliance_help_requires_a.eec16f9d", "alliance help requires a positive production job id", nil))
 	}
 	job, eligible := findAllianceHelpJob(input.State, request.ProductionID)
 	if !eligible {
 		if job.CastleID > 0 && !allianceHelpLineSupported(job.LineID) {
-			return Intent.Plan{}, fmt.Errorf("production line %d does not support alliance help requests", job.LineID)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("production line %d does not support alliance help requests", job.LineID), Localization.New("server.app.production_line_p_does.cc1eadf7", "production line {p0} does not support alliance help requests", Localization.Params{"p0": fmt.Sprintf("%d", job.LineID)}))
 		}
 		return Intent.Plan{Summary: fmt.Sprintf(
 			"Skip alliance help: production job %d is no longer eligible", request.ProductionID,
-		)}, nil
+		), SummaryDescriptor: Localization.New("server.app.skip_alliance_help_production.ef4e2b38", "Skip alliance help: production job {p0} is no longer eligible", Localization.Params{"p0": fmt.Sprintf("%d", request.ProductionID)})}, nil
 	}
 	if job.LineID != recruitmentProductionLineID && job.LineID != hospitalProductionLineID {
-		return Intent.Plan{}, fmt.Errorf("production line %d does not support alliance help requests", job.LineID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("production line %d does not support alliance help requests", job.LineID), Localization.New("server.app.production_line_p_does.cc1eadf7", "production line {p0} does not support alliance help requests", Localization.Params{"p0": fmt.Sprintf("%d", job.LineID)}))
 	}
 	if job.LineID == hospitalProductionLineID &&
 		State.OutstandingHospitalAllianceHelpRequests(input.State) >=
 			State.MaximumOutstandingHospitalAllianceHelpRequests {
-		return Intent.Plan{Summary: "Skip alliance help: hospital already has an outstanding request"}, nil
+		return Intent.Plan{Summary: "Skip alliance help: hospital already has an outstanding request", SummaryDescriptor: Localization.New("server.app.skip_alliance_help_hospital.d12487ed", "Skip alliance help: hospital already has an outstanding request", nil)}, nil
 	}
 	castle, exists := input.State.Castles[job.CastleID]
 	if !exists {
-		return Intent.Plan{}, fmt.Errorf("castle %d is not in the current player state", job.CastleID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("castle %d is not in the current player state", job.CastleID), Localization.New("server.app.castle_p_is_not.47524bcb", "castle {p0} is not in the current player state", Localization.Params{"p0": fmt.Sprintf("%d", job.CastleID)}))
 	}
 	if State.CastleFocusKnownUnavailable(input.State, castle) {
-		return Intent.Plan{}, fmt.Errorf(
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf(
 			"%w: castle %d cannot be focused in the current kingdom session", Intent.ErrPlanStale, job.CastleID,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.f50ee7dc", "intent plan became stale before dispatch: castle {p1} cannot be focused in the current kingdom session", Localization.Params{"p1": fmt.Sprintf("%d", job.CastleID)}))
 	}
 	if job.LineID == hospitalProductionLineID && !State.OwnAllianceHelpListCurrent(input.State) {
-		return Intent.Plan{Summary: "Skip alliance help: waiting for the current hospital request list"}, nil
+		return Intent.Plan{Summary: "Skip alliance help: waiting for the current hospital request list", SummaryDescriptor: Localization.New("server.app.skip_alliance_help_waiting.7bd5e4c3", "Skip alliance help: waiting for the current hospital request list", nil)}, nil
 	}
 	if job.LineID == recruitmentProductionLineID &&
 		!recruitmentAllianceHelpQueueCurrent(input.State, castle, time.Now().UTC()) {
-		return Intent.Plan{}, fmt.Errorf(
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf(
 			"%w: recruitment castle %d needs a current production queue",
 			Intent.ErrPlanStale, job.CastleID,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.1c26c16c", "intent plan became stale before dispatch: recruitment castle {p1} needs a current production queue", Localization.Params{"p1": fmt.Sprintf("%d", job.CastleID)}))
 	}
 	recordRequest := allianceHelpRequest{
 		ProductionID: request.ProductionID,
@@ -231,7 +234,7 @@ func planAllianceHelpRequest(_ context.Context, input Intent.PlanningContext, ar
 		claims = append(claims, "production-line:"+strconv.Itoa(job.LineID))
 	}
 	requestStep := Intent.Step{
-		Name: "Request alliance help", Resolver: "alliance.help.build", ResolverArguments: recordArguments,
+		Name: "Request alliance help", NameDescriptor: Localization.New("server.app.request_alliance_help.bb51b355", "Request alliance help", nil), Resolver: "alliance.help.build", ResolverArguments: recordArguments,
 		AwaitOpcodes: []string{"ahh", "ahr"}, TimeoutMillis: 10_000, SuccessCodes: []int{0},
 	}
 	focusStep := castleFocusStep(castle)
@@ -239,15 +242,15 @@ func planAllianceHelpRequest(_ context.Context, input Intent.PlanningContext, ar
 	steps := []Intent.Step{focusStep}
 	if job.LineID == hospitalProductionLineID {
 		steps = append(steps, requestStep, Intent.Step{
-			Name: "Record alliance help request", Action: "alliance.help.mark_requested", ActionArguments: recordArguments,
+			Name: "Record alliance help request", NameDescriptor: Localization.New("server.app.record_alliance_help_request.4797e958", "Record alliance help request", nil), Action: "alliance.help.mark_requested", ActionArguments: recordArguments,
 		})
 	} else {
 		steps = append(steps, requestStep)
 	}
 	return Intent.Plan{
 		Claims:  claims,
-		Summary: "Request alliance help for the active production queue",
-		Steps:   steps,
+		Summary: "Request alliance help for the active production queue", SummaryDescriptor: Localization.New("server.app.request_alliance_help_for.8df98bd1", "Request alliance help for the active production queue", nil),
+		Steps: steps,
 	}, nil
 }
 
@@ -261,45 +264,45 @@ func (application *Application) resolveAllianceHelpRequestStep(
 		return Intent.Step{}, err
 	}
 	if request.ProductionID <= 0 {
-		return Intent.Step{}, fmt.Errorf("alliance help requires a positive production job id")
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("alliance help requires a positive production job id"), Localization.New("server.app.alliance_help_requires_a.eec16f9d", "alliance help requires a positive production job id", nil))
 	}
 	job, eligible := findAllianceHelpJob(input.State, request.ProductionID)
 	if !eligible || job.CastleID != request.CastleID || job.LineID != request.LineID {
-		return Intent.Step{}, fmt.Errorf(
+		return Intent.Step{}, Localization.WithError(fmt.Errorf(
 			"%w: production job %d is no longer eligible for alliance help", Intent.ErrPlanStale, request.ProductionID,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.77e5e464", "intent plan became stale before dispatch: production job {p1} is no longer eligible for alliance help", Localization.Params{"p1": fmt.Sprintf("%d", request.ProductionID)}))
 	}
 	castle, exists := input.State.Castles[job.CastleID]
 	if !exists || State.CastleFocusKnownUnavailable(input.State, castle) {
-		return Intent.Step{}, fmt.Errorf(
+		return Intent.Step{}, Localization.WithError(fmt.Errorf(
 			"%w: castle %d cannot be focused in the current kingdom session", Intent.ErrPlanStale, job.CastleID,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.f50ee7dc", "intent plan became stale before dispatch: castle {p1} cannot be focused in the current kingdom session", Localization.Params{"p1": fmt.Sprintf("%d", job.CastleID)}))
 	}
 	if job.LineID == recruitmentProductionLineID &&
 		!recruitmentAllianceHelpQueueCurrent(input.State, castle, time.Now().UTC()) {
-		return Intent.Step{}, fmt.Errorf(
+		return Intent.Step{}, Localization.WithError(fmt.Errorf(
 			"%w: recruitment castle %d needs a current production queue",
 			Intent.ErrPlanStale, job.CastleID,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.1c26c16c", "intent plan became stale before dispatch: recruitment castle {p1} needs a current production queue", Localization.Params{"p1": fmt.Sprintf("%d", job.CastleID)}))
 	}
 	if job.LineID == recruitmentProductionLineID && !recruitmentAllianceHelpContextCurrent(input, castle) {
-		return Intent.Step{}, fmt.Errorf(
+		return Intent.Step{}, Localization.WithError(fmt.Errorf(
 			"%w: recruitment castle %d is not the current committed castle context",
 			Intent.ErrPlanStale, job.CastleID,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.abdda625", "intent plan became stale before dispatch: recruitment castle {p1} is not the current committed castle context", Localization.Params{"p1": fmt.Sprintf("%d", job.CastleID)}))
 	}
 	if job.LineID == hospitalProductionLineID && !State.OwnAllianceHelpListCurrent(input.State) {
-		return Intent.Step{}, fmt.Errorf(
+		return Intent.Step{}, Localization.WithError(fmt.Errorf(
 			"%w: hospital alliance help needs the current request list", Intent.ErrPlanStale,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.b6ede151", "intent plan became stale before dispatch: hospital alliance help needs the current request list", nil))
 	}
 	if job.LineID == hospitalProductionLineID &&
 		State.OutstandingHospitalAllianceHelpRequests(input.State) >=
 			State.MaximumOutstandingHospitalAllianceHelpRequests {
-		return Intent.Step{}, fmt.Errorf(
+		return Intent.Step{}, Localization.WithError(fmt.Errorf(
 			"%w: hospital alliance help already has an outstanding request",
 			Intent.ErrPlanStale,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.157e8c13", "intent plan became stale before dispatch: hospital alliance help already has an outstanding request", nil))
 	}
 	if job.LineID == recruitmentProductionLineID {
 		return recruitmentAllianceHelpCommand(input, request.CastleID), nil
@@ -308,7 +311,7 @@ func (application *Application) resolveAllianceHelpRequestStep(
 		RequestID int64 `json:"ID"`
 		Type      int   `json:"T"`
 	}{RequestID: request.ProductionID, Type: allianceHelpHospitalType})
-	step := commandStep("Request alliance help", "ahr", payload, "")
+	step := commandStep("Request alliance help", "ahr", payload, "", Localization.New("server.app.request_alliance_help.bb51b355", "Request alliance help", nil))
 	step.AwaitOpcodes = []string{"ahh", "ahr"}
 	step.StaleCodes = []int{175}
 	return step, nil
@@ -326,10 +329,10 @@ func (application *Application) resolveRecruitmentBUPAllianceHelpStep(
 	castle, exists := input.State.Castles[request.CastleID]
 	if !exists || State.CastleFocusKnownUnavailable(input.State, castle) ||
 		!recruitmentAllianceHelpContextCurrent(input, castle) {
-		return Intent.Step{}, fmt.Errorf(
+		return Intent.Step{}, Localization.WithError(fmt.Errorf(
 			"%w: recruitment castle %d is not the current committed castle context",
 			Intent.ErrPlanStale, request.CastleID,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.abdda625", "intent plan became stale before dispatch: recruitment castle {p1} is not the current committed castle context", Localization.Params{"p1": fmt.Sprintf("%d", request.CastleID)}))
 	}
 	// The BUP response itself is the causal evidence for this request. Do not
 	// suppress it with focus-epoch markers or an older alliance-help lifecycle;
@@ -343,7 +346,7 @@ func recruitmentAllianceHelpCommand(input Intent.PlanningContext, castleID State
 		RequestID int64 `json:"ID"`
 		Type      int   `json:"T"`
 	}{RequestID: 0, Type: allianceHelpRecruitmentType})
-	step := commandStep("Request alliance help", "ahr", payload, "")
+	step := commandStep("Request alliance help", "ahr", payload, "", Localization.New("server.app.request_alliance_help.bb51b355", "Request alliance help", nil))
 	step.AwaitOpcodes = []string{"ahh", "ahr"}
 	step.StaleCodes = []int{175}
 	step.ResponseIdentity = Outbound.ResponseIdentity{
@@ -362,25 +365,25 @@ func (application *Application) markRecruitmentBUPAllianceHelpDue(
 		return err
 	}
 	if application == nil || application.State == nil {
-		return fmt.Errorf("production state is unavailable")
+		return Localization.WithError(fmt.Errorf("production state is unavailable"), Localization.New("server.app.production_state_is_unavailable.46c36af4", "production state is unavailable", nil))
 	}
 	view := application.State.PlanningView()
 	castle, exists := view.State.Castles[request.CastleID]
 	input := Intent.PlanningContext{State: view.State, ProtocolContext: view.ProtocolContext}
 	if !exists || !recruitmentAllianceHelpContextCurrent(input, castle) {
-		return fmt.Errorf(
+		return Localization.WithError(fmt.Errorf(
 			"%w: recruitment castle %d focus changed after BUP",
 			Intent.ErrPlanStale, request.CastleID,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.e8f87db0", "intent plan became stale before dispatch: recruitment castle {p1} focus changed after BUP", Localization.Params{"p1": fmt.Sprintf("%d", request.CastleID)}))
 	}
 	protocol := view.ProtocolContext
 	if !application.State.ObserveRecruitmentBUP(
 		request.CastleID, protocol.SessionGeneration, protocol.ConnectionGeneration, protocol.FocusEpoch,
 	) {
-		return fmt.Errorf(
+		return Localization.WithError(fmt.Errorf(
 			"%w: recruitment castle %d focus changed while recording BUP",
 			Intent.ErrPlanStale, request.CastleID,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.11af907a", "intent plan became stale before dispatch: recruitment castle {p1} focus changed while recording BUP", Localization.Params{"p1": fmt.Sprintf("%d", request.CastleID)}))
 	}
 	if request.RequireCovered {
 		protocol = application.State.ProtocolContext()
@@ -388,10 +391,10 @@ func (application *Application) markRecruitmentBUPAllianceHelpDue(
 			protocol.RecruitmentBUPFocusEpoch != protocol.FocusEpoch ||
 			protocol.RecruitmentBUPSerial == 0 ||
 			protocol.RecruitmentAHRCoveredSerial != protocol.RecruitmentBUPSerial {
-			return fmt.Errorf(
+			return Localization.WithError(fmt.Errorf(
 				"%w: recruitment alliance-help coverage expired after BUP at castle %d",
 				Intent.ErrPlanStale, request.CastleID,
-			)
+			), Localization.New("server.app.intent_plan_became_stale.a3b0fe21", "intent plan became stale before dispatch: recruitment alliance-help coverage expired after BUP at castle {p1}", Localization.Params{"p1": fmt.Sprintf("%d", request.CastleID)}))
 		}
 	}
 	return nil
@@ -406,7 +409,7 @@ func (application *Application) markRecruitmentBUPAllianceHelpCovered(
 		return err
 	}
 	if application == nil || application.State == nil {
-		return fmt.Errorf("production state is unavailable")
+		return Localization.WithError(fmt.Errorf("production state is unavailable"), Localization.New("server.app.production_state_is_unavailable.46c36af4", "production state is unavailable", nil))
 	}
 	view := application.State.PlanningView()
 	castle, exists := view.State.Castles[request.CastleID]
@@ -418,10 +421,10 @@ func (application *Application) markRecruitmentBUPAllianceHelpCovered(
 		protocol.RecruitmentBUPFocusEpoch != protocol.FocusEpoch ||
 		protocol.RecruitmentBUPSerial == 0 ||
 		protocol.RecruitmentBUPSerial <= protocol.RecruitmentAHRCoveredSerial {
-		return fmt.Errorf(
+		return Localization.WithError(fmt.Errorf(
 			"%w: recruitment BUP batch at castle %d changed before AHR confirmation",
 			Intent.ErrPlanStale, request.CastleID,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.1eab9dcf", "intent plan became stale before dispatch: recruitment BUP batch at castle {p1} changed before AHR confirmation", Localization.Params{"p1": fmt.Sprintf("%d", request.CastleID)}))
 	}
 	if !application.State.ObserveRecruitmentAHRCovered(
 		request.CastleID,
@@ -430,10 +433,10 @@ func (application *Application) markRecruitmentBUPAllianceHelpCovered(
 		protocol.FocusEpoch,
 		protocol.RecruitmentBUPSerial,
 	) {
-		return fmt.Errorf(
+		return Localization.WithError(fmt.Errorf(
 			"%w: recruitment BUP batch at castle %d changed while confirming AHR",
 			Intent.ErrPlanStale, request.CastleID,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.b56b3b26", "intent plan became stale before dispatch: recruitment BUP batch at castle {p1} changed while confirming AHR", Localization.Params{"p1": fmt.Sprintf("%d", request.CastleID)}))
 	}
 	return nil
 }
@@ -450,7 +453,7 @@ func (application *Application) reconcileStandaloneRecruitmentBUPAllianceHelp(
 		return nil
 	}
 	if application == nil || application.State == nil {
-		return fmt.Errorf("production state is unavailable")
+		return Localization.WithError(fmt.Errorf("production state is unavailable"), Localization.New("server.app.production_state_is_unavailable.46c36af4", "production state is unavailable", nil))
 	}
 	view := application.State.PlanningView()
 	castle, exists := view.State.Castles[request.CastleID]
@@ -464,10 +467,10 @@ func (application *Application) reconcileStandaloneRecruitmentBUPAllianceHelp(
 			protocol.FocusEpoch,
 			time.Now().UTC(),
 		) {
-		return fmt.Errorf(
+		return Localization.WithError(fmt.Errorf(
 			"%w: recruitment alliance-help lifecycle was not committed in castle %d focus",
 			Intent.ErrPlanStale, request.CastleID,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.587b0e08", "intent plan became stale before dispatch: recruitment alliance-help lifecycle was not committed in castle {p1} focus", Localization.Params{"p1": fmt.Sprintf("%d", request.CastleID)}))
 	}
 	return nil
 }
@@ -484,7 +487,7 @@ func (application *Application) prepareStandaloneRecruitmentBUPAllianceHelp(
 		return nil
 	}
 	if application == nil || application.State == nil {
-		return fmt.Errorf("production state is unavailable")
+		return Localization.WithError(fmt.Errorf("production state is unavailable"), Localization.New("server.app.production_state_is_unavailable.46c36af4", "production state is unavailable", nil))
 	}
 	view := application.State.PlanningView()
 	castle, exists := view.State.Castles[request.CastleID]
@@ -497,10 +500,10 @@ func (application *Application) prepareStandaloneRecruitmentBUPAllianceHelp(
 			protocol.ConnectionGeneration,
 			protocol.FocusEpoch,
 		) {
-		return fmt.Errorf(
+		return Localization.WithError(fmt.Errorf(
 			"%w: recruitment AHR could not bind castle %d focus",
 			Intent.ErrPlanStale, request.CastleID,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.1b8a42bc", "intent plan became stale before dispatch: recruitment AHR could not bind castle {p1} focus", Localization.Params{"p1": fmt.Sprintf("%d", request.CastleID)}))
 	}
 	return nil
 }

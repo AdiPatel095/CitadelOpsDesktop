@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -48,7 +49,7 @@ func (*BeriAttackPolicy) WakeSections() []string {
 func (*BeriAttackPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
 	settings := beriSettings{AttackCheckIntervalSec: 30, HorseTravelBoostID: -1}
 	if !decodeSection(snapshot.Configuration, autoBeriWorldSection, &settings) {
-		return beriAttackWaiting(snapshot.Now, "Auto Beri World settings have not been saved", 30), nil
+		return beriAttackWaiting(snapshot.Now, "Auto Beri World settings have not been saved", 30, Localization.New("server.automation.auto_beri_world_settings.a9d19bc3", "Auto Beri World settings have not been saved", nil)), nil
 	}
 	if decision, locked := limitedEventGate(
 		snapshot.State, snapshot.Now, []int64{GameData.BerimondEventID}, "Battle for Berimond",
@@ -60,13 +61,13 @@ func (*BeriAttackPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisio
 		return *decision, nil
 	}
 	if settings.PresetID == "" {
-		return beriAttackWaiting(snapshot.Now, "Choose a Berimond attack preset", settings.AttackCheckIntervalSec), nil
+		return beriAttackWaiting(snapshot.Now, "Choose a Berimond attack preset", settings.AttackCheckIntervalSec, Localization.New("server.automation.choose_a_berimond_attack.dd878d06", "Choose a Berimond attack preset", nil)), nil
 	}
 	if !validHorseTravelBoostID(settings.HorseTravelBoostID) {
-		return beriAttackWaiting(snapshot.Now, "Choose a supported horse travel boost", settings.AttackCheckIntervalSec), nil
+		return beriAttackWaiting(snapshot.Now, "Choose a supported horse travel boost", settings.AttackCheckIntervalSec, Localization.New("server.automation.choose_a_supported_horse.0d7016a8", "Choose a supported horse travel boost", nil)), nil
 	}
 	if snapshot.GameData == nil {
-		return beriAttackWaiting(snapshot.Now, "Official game data is unavailable", settings.AttackCheckIntervalSec), nil
+		return beriAttackWaiting(snapshot.Now, "Official game data is unavailable", settings.AttackCheckIntervalSec, Localization.New("server.automation.official_game_data_is.c5e55e7e", "Official game data is unavailable", nil)), nil
 	}
 	preset, err := beriAttackPreset(snapshot, settings)
 	if err != nil {
@@ -78,13 +79,13 @@ func (*BeriAttackPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisio
 	}
 	commanderIDs, restricted := commanderFeatureCandidates(snapshot.State, snapshot.Configuration, "autoBeriWorld")
 	if restricted && len(commanderIDs) == 0 {
-		return beriAttackWaiting(snapshot.Now, "No commanders are assigned to Auto Beri World", settings.AttackCheckIntervalSec), nil
+		return beriAttackWaiting(snapshot.Now, "No commanders are assigned to Auto Beri World", settings.AttackCheckIntervalSec, Localization.New("server.automation.no_commanders_are_assigned.655a1b0f", "No commanders are assigned to Auto Beri World", nil)), nil
 	}
 
 	unlock, unlockObserved := snapshot.State.KingdomTransport.Unlocks[State.KingdomID(GameData.BerimondKingdomID)]
 	if unlockObserved && !unlock.Unlocked {
 		return Decision{
-			Status: "complete", Detail: "The Battle for Berimond is not currently unlocked",
+			Status: "complete", Detail: "The Battle for Berimond is not currently unlocked", DetailDescriptor: Localization.New("server.automation.the_battle_for_berimond.a9f4b97a", "The Battle for Berimond is not currently unlocked", nil),
 			NextCheckAt: snapshot.Now.Add(interval),
 		}, nil
 	}
@@ -99,20 +100,20 @@ func (*BeriAttackPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisio
 		}
 		if !unlockObserved || !unlock.Unlocked {
 			return Decision{
-				Status: "complete", Detail: "The Battle for Berimond is not currently available",
+				Status: "complete", Detail: "The Battle for Berimond is not currently available", DetailDescriptor: Localization.New("server.automation.the_battle_for_berimond.02a72d4b", "The Battle for Berimond is not currently available", nil),
 				NextCheckAt: snapshot.Now.Add(interval),
 			}, nil
 		}
 		if unlock.Created {
-			return beriAttackWaiting(snapshot.Now, "Waiting for the created Berimond camp to appear", settings.AttackCheckIntervalSec), nil
+			return beriAttackWaiting(snapshot.Now, "Waiting for the created Berimond camp to appear", settings.AttackCheckIntervalSec, Localization.New("server.automation.waiting_for_the_created.8f4c6121", "Waiting for the created Berimond camp to appear", nil)), nil
 		}
 		if !snapshot.State.Beri.CampOpenRequestedAt.IsZero() &&
 			snapshot.Now.Sub(snapshot.State.Beri.CampOpenRequestedAt) < beriCampOpenRetryWindow {
-			return beriAttackWaiting(snapshot.Now, "Waiting for the resource Berimond camp to open", settings.AttackCheckIntervalSec), nil
+			return beriAttackWaiting(snapshot.Now, "Waiting for the resource Berimond camp to open", settings.AttackCheckIntervalSec, Localization.New("server.automation.waiting_for_the_resource.84c45348", "Waiting for the resource Berimond camp to open", nil)), nil
 		}
 		option, found := snapshot.GameData.CheapestNonPremiumBerimondCamp(snapshot.State.Player.Level)
 		if !found {
-			return beriAttackWaiting(snapshot.Now, "No unlocked non-premium Berimond camp is available", settings.AttackCheckIntervalSec), nil
+			return beriAttackWaiting(snapshot.Now, "No unlocked non-premium Berimond camp is available", settings.AttackCheckIntervalSec, Localization.New("server.automation.no_unlocked_non_premium.9a136347", "No unlocked non-premium Berimond camp is available", nil)), nil
 		}
 		return beriAttackIntentDecision(
 			snapshot.Now, interval, fmt.Sprintf("Open non-premium Berimond camp %d", option.ID),
@@ -123,10 +124,12 @@ func (*BeriAttackPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisio
 	commanderID, available := nextAvailableFeatureCommander(snapshot.State, commanderIDs, restricted, snapshot.Now)
 	if !available {
 		detail := "No commander is currently available"
+		var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.no_commander_is_currently.25dd6b1e", "No commander is currently available", nil)
 		if restricted {
 			detail = "No assigned Auto Beri World commander is currently available"
+			detailLocalizationMessage = Localization.New("server.automation.no_assigned_auto_beri.ad18832c", "No assigned Auto Beri World commander is currently available", nil)
 		}
-		return beriAttackWaiting(snapshot.Now, detail, settings.AttackCheckIntervalSec), nil
+		return beriAttackWaiting(snapshot.Now, detail, settings.AttackCheckIntervalSec, Localization.Clone(detailLocalizationMessage)), nil
 	}
 	target, targetFound := beriPendingTarget(snapshot.State, snapshot.Now)
 	if !targetFound {
@@ -159,7 +162,7 @@ func (*BeriAttackPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisio
 			Detail: fmt.Sprintf(
 				"Waiting for Berimond attack inventory: preset needs %d of item %d; camp has %d",
 				required, itemID, availableCount,
-			),
+			), DetailDescriptor: Localization.New("server.automation.waiting_for_berimond_attack.eabf660f", "Waiting for Berimond attack inventory: preset needs {p0} of item {p1}; camp has {p2}", Localization.Params{"p0": required, "p1": fmt.Sprintf("%d", itemID), "p2": availableCount}),
 			NextCheckAt: snapshot.Now.Add(interval),
 		}, nil
 	}
@@ -177,11 +180,11 @@ func (*BeriAttackPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisio
 				Status: "waiting",
 				Detail: fmt.Sprintf(
 					"Waiting for Berimond inventory to reflect %d launched attack(s)", unreflectedLaunches,
-				),
+				), DetailDescriptor: Localization.New("server.automation.waiting_for_berimond_inventory.dedd995e", "Waiting for Berimond inventory to reflect {p0} launched attack(s)", Localization.Params{"p0": unreflectedLaunches}),
 				NextCheckAt: snapshot.Now.Add(beriLaunchRetryInterval),
 			}, nil
 		}
-		return beriAttackWaiting(snapshot.Now, "The selected Berimond preset has no launchable troops", settings.AttackCheckIntervalSec), nil
+		return beriAttackWaiting(snapshot.Now, "The selected Berimond preset has no launchable troops", settings.AttackCheckIntervalSec, Localization.New("server.automation.the_selected_berimond_preset.aa236b8f", "The selected Berimond preset has no launchable troops", nil)), nil
 	}
 	return beriAttackIntentDecision(
 		snapshot.Now, beriLaunchRetryInterval, fmt.Sprintf("Attack Berimond tower at %d:%d", target.X, target.Y),
@@ -242,8 +245,8 @@ func unreflectedBeriTowerLaunches(
 	return count
 }
 
-func beriAttackWaiting(now time.Time, detail string, seconds int) Decision {
-	return Decision{Status: "waiting", Detail: detail, NextCheckAt: now.Add(policyInterval(seconds, 30))}
+func beriAttackWaiting(now time.Time, detail string, seconds int, descriptors ...*Localization.Message) Decision {
+	return Decision{Status: "waiting", Detail: detail, DetailDescriptor: Localization.First(descriptors), NextCheckAt: now.Add(policyInterval(seconds, 30))}
 }
 
 func beriAttackIntentDecision(

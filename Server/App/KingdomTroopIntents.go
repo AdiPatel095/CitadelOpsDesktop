@@ -1,6 +1,7 @@
 package App
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -46,8 +47,8 @@ type kingdomTroopSkipRequest struct {
 
 func planKingdomTroopRefresh(_ context.Context, _ Intent.PlanningContext, _ json.RawMessage) (Intent.Plan, error) {
 	return Intent.Plan{
-		Claims: []string{"troop-transport"}, Summary: "Refresh kingdom troop transports",
-		Steps: []Intent.Step{commandStep("Refresh kingdom troop transports", "kpi", json.RawMessage(`{}`), "kpi")},
+		Claims: []string{"troop-transport"}, Summary: "Refresh kingdom troop transports", SummaryDescriptor: Localization.New("server.app.refresh_kingdom_troop_transports.ab139211", "Refresh kingdom troop transports", nil),
+		Steps: []Intent.Step{commandStep("Refresh kingdom troop transports", "kpi", json.RawMessage(`{}`), "kpi", Localization.New("server.app.refresh_kingdom_troop_transports.ab139211", "Refresh kingdom troop transports", nil))},
 	}, nil
 }
 
@@ -59,13 +60,13 @@ func planKingdomTroopShipment(_ context.Context, input Intent.PlanningContext, a
 	source, sourceExists := input.State.Castles[request.SourceCastleID]
 	target, targetExists := input.State.Castles[request.TargetCastleID]
 	if !sourceExists || source.ID <= 0 {
-		return Intent.Plan{}, fmt.Errorf("source castle %d is not in the current player state", request.SourceCastleID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("source castle %d is not in the current player state", request.SourceCastleID), Localization.New("server.app.source_castle_p_is.fca7f6bd", "source castle {p0} is not in the current player state", Localization.Params{"p0": fmt.Sprintf("%d", request.SourceCastleID)}))
 	}
 	if !targetExists || target.ID <= 0 || target.KingdomID != request.TargetKingdomID {
-		return Intent.Plan{}, fmt.Errorf("target castle %d is not in kingdom %d", request.TargetCastleID, request.TargetKingdomID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("target castle %d is not in kingdom %d", request.TargetCastleID, request.TargetKingdomID), Localization.New("server.app.target_castle_p_is.9e66647b", "target castle {p0} is not in kingdom {p1}", Localization.Params{"p0": fmt.Sprintf("%d", request.TargetCastleID), "p1": fmt.Sprintf("%d", request.TargetKingdomID)}))
 	}
 	if source.ID == target.ID || source.KingdomID == target.KingdomID {
-		return Intent.Plan{}, fmt.Errorf("kingdom troop transfers require castles in different kingdoms")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("kingdom troop transfers require castles in different kingdoms"), Localization.New("server.app.kingdom_troop_transfers_require.fcfd252b", "kingdom troop transfers require castles in different kingdoms", nil))
 	}
 	if err := verifyKingdomTroopExpectedDailyAttackSession(input.State, request.ExpectedDailyAttackSessionStartedAt); err != nil {
 		return Intent.Plan{}, err
@@ -75,17 +76,17 @@ func planKingdomTroopShipment(_ context.Context, input Intent.PlanningContext, a
 	}
 	unlock, observed := input.State.KingdomTransport.Unlocks[target.KingdomID]
 	if input.State.KingdomTransport.ObservedAt.IsZero() || !observed || !unlock.Unlocked {
-		return Intent.Plan{}, fmt.Errorf("kingdom troop transport to %d is not observed as unlocked", target.KingdomID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("kingdom troop transport to %d is not observed as unlocked", target.KingdomID), Localization.New("server.app.kingdom_troop_transport_to.4cc4aa9e", "kingdom troop transport to {p0} is not observed as unlocked", Localization.Params{"p0": fmt.Sprintf("%d", target.KingdomID)}))
 	}
 	if kingdomTroopTransportPending(input.State, target.KingdomID) {
-		return Intent.Plan{}, fmt.Errorf("kingdom %d already has a pending or settling troop transport", target.KingdomID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("kingdom %d already has a pending or settling troop transport", target.KingdomID), Localization.New("server.app.kingdom_p_already_has.d3109204", "kingdom {p0} already has a pending or settling troop transport", Localization.Params{"p0": fmt.Sprintf("%d", target.KingdomID)}))
 	}
 	units, err := normalizeKingdomTroopShipment(input.GameData, source, request.Units)
 	if err != nil {
 		return Intent.Plan{}, err
 	}
 	if request.MaximumTargetTroops < 0 {
-		return Intent.Plan{}, fmt.Errorf("maximumTargetTroops cannot be negative")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("maximumTargetTroops cannot be negative"), Localization.New("server.app.maximumtargettroops_cannot_be_negative.0bf12edd", "maximumTargetTroops cannot be negative", nil))
 	}
 	if request.MaximumTargetTroops > 0 {
 		if err := verifyKingdomTroopTargetCap(
@@ -123,20 +124,20 @@ func planKingdomTroopShipment(_ context.Context, input Intent.PlanningContext, a
 	steps = append(steps,
 		kingdomTransportContextStep(),
 		Intent.RebuildOnResume(Intent.Step{
-			Name: "Verify kingdom troop transport availability", Action: "kingdom.transport.verify_available",
+			Name: "Verify kingdom troop transport availability", NameDescriptor: Localization.New("server.app.verify_kingdom_troop_transport.a230eeb3", "Verify kingdom troop transport availability", nil), Action: "kingdom.transport.verify_available",
 			ActionArguments: guardArguments,
 		}),
 	)
 	if request.MaximumTargetTroops > 0 {
 		steps = append(steps, Intent.Step{
-			Name: "Verify target troop inventory cap", Action: "troops.kingdom.guard_target_cap",
+			Name: "Verify target troop inventory cap", NameDescriptor: Localization.New("server.app.verify_target_troop_inventory.bbbd4ce6", "Verify target troop inventory cap", nil), Action: "troops.kingdom.guard_target_cap",
 			ActionArguments: consumeArguments,
 		})
 	}
-	steps = append(steps, commandStep("Start kingdom troop transfer", "kut", payload, "kut"))
+	steps = append(steps, commandStep("Start kingdom troop transfer", "kut", payload, "kut", Localization.New("server.app.start_kingdom_troop_transfer.9fd0d909", "Start kingdom troop transfer", nil)))
 	if strings.TrimSpace(request.Owner) != "" {
 		if strings.TrimSpace(request.WorkflowID) == "" {
-			return Intent.Plan{}, fmt.Errorf("owned kingdom troop transfer requires workflowId")
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("owned kingdom troop transfer requires workflowId"), Localization.New("server.app.owned_kingdom_troop_transfer.e62d15f9", "owned kingdom troop transfer requires workflowId", nil))
 		}
 		commandIndex := len(steps) - 1
 		steps[commandIndex].PreDispatchAction = "troops.kingdom.workflow.arm"
@@ -149,14 +150,14 @@ func planKingdomTroopShipment(_ context.Context, input Intent.PlanningContext, a
 		steps[commandIndex].DefinitiveResponseFailureArguments = consumeArguments
 		steps[commandIndex].ResponseProjectionFailureIndeterminate = true
 		steps = append(steps, Intent.Step{
-			Name: "Confirm owned kingdom troop transfer", Action: "troops.kingdom.workflow.confirm", ActionArguments: consumeArguments,
+			Name: "Confirm owned kingdom troop transfer", NameDescriptor: Localization.New("server.app.confirm_owned_kingdom_troop.c286a9a3", "Confirm owned kingdom troop transfer", nil), Action: "troops.kingdom.workflow.confirm", ActionArguments: consumeArguments,
 		})
 	}
-	steps = append(steps, Intent.Step{Name: "Consume confirmed donor troops", Action: "troops.kingdom.consume_source", ActionArguments: consumeArguments})
+	steps = append(steps, Intent.Step{Name: "Consume confirmed donor troops", NameDescriptor: Localization.New("server.app.consume_confirmed_donor_troops.ed0c79db", "Consume confirmed donor troops", nil), Action: "troops.kingdom.consume_source", ActionArguments: consumeArguments})
 	return Intent.Plan{
 		Claims:  claims,
-		Summary: fmt.Sprintf("Transfer %s from %s to %s", strings.Join(summaryUnits, ", "), castleLabel(source), castleLabel(target)),
-		Steps:   steps,
+		Summary: fmt.Sprintf("Transfer %s from %s to %s", strings.Join(summaryUnits, ", "), castleLabel(source), castleLabel(target)), SummaryDescriptor: Localization.New("server.app.transfer_p_from_p.5557592b", "Transfer {p0} from {p1} to {p2}", Localization.Params{"p0": fmt.Sprintf("%s", strings.Join(summaryUnits, ", ")), "p1": fmt.Sprintf("%s", castleLabel(source)), "p2": fmt.Sprintf("%s", castleLabel(target))}),
+		Steps: steps,
 	}, nil
 }
 
@@ -170,7 +171,7 @@ func (application *Application) guardKingdomTroopTargetCap(_ context.Context, ar
 	}
 	gameData, ready := application.GameData.Current()
 	if !ready {
-		return fmt.Errorf("official game data is unavailable")
+		return Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	gameState := application.State.ReadOnlyView()
 	if err := verifyKingdomTroopExpectedDailyAttackSession(gameState, request.ExpectedDailyAttackSessionStartedAt); err != nil {
@@ -179,7 +180,7 @@ func (application *Application) guardKingdomTroopTargetCap(_ context.Context, ar
 	source, sourceExists := gameState.Castles[request.SourceCastleID]
 	target, targetExists := gameState.Castles[request.TargetCastleID]
 	if !sourceExists || !targetExists || target.KingdomID != request.TargetKingdomID {
-		return fmt.Errorf("kingdom troop transfer castles changed before dispatch")
+		return Localization.WithError(fmt.Errorf("kingdom troop transfer castles changed before dispatch"), Localization.New("server.app.kingdom_troop_transfer_castles.30324f57", "kingdom troop transfer castles changed before dispatch", nil))
 	}
 	units, err := normalizeKingdomTroopShipment(gameData, source, request.Units)
 	if err != nil {
@@ -195,7 +196,7 @@ func verifyKingdomTroopExpectedDailyAttackSession(gameState State.GameState, exp
 	wanted := expected.UTC()
 	observed := gameState.DailyAttacks.SessionStartedAt.UTC()
 	if wanted.IsZero() || observed.IsZero() || !observed.Equal(wanted) {
-		return fmt.Errorf("%w: the daily attack reset changed after the troop cap was calculated", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: the daily attack reset changed after the troop cap was calculated", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.330befee", "intent plan became stale before dispatch: the daily attack reset changed after the troop cap was calculated", nil))
 	}
 	return nil
 }
@@ -233,7 +234,7 @@ func kingdomTroopTargetInventory(
 	target State.CastleState,
 ) (int64, error) {
 	if gameData == nil {
-		return 0, fmt.Errorf("official game data is unavailable")
+		return 0, Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	catalog, err := gameData.Catalog("units")
 	if err != nil {
@@ -331,11 +332,11 @@ func requireStormTroopSupportMead(gameData *GameData.Store, target State.CastleS
 	}
 	meadID, err := officialResourceIDByJSONKey(gameData, "MEAD")
 	if err != nil {
-		return fmt.Errorf("verify Storm troop support: %w", err)
+		return Localization.WithError(fmt.Errorf("verify Storm troop support: %w", err), Localization.ErrorContext(Localization.New("server.app.verify_storm_troop_support.ebbf0163", "verify Storm troop support", nil), err))
 	}
 	balance, observed := target.Resources[meadID]
 	if !observed || target.FoodStateObservedAt.IsZero() {
-		return fmt.Errorf("Storm Mead balance is not current; refresh Storm before transferring troops")
+		return Localization.WithError(fmt.Errorf("Storm Mead balance is not current; refresh Storm before transferring troops"), Localization.New("server.app.storm_mead_balance_is.2bba2f2d", "Storm Mead balance is not current; refresh Storm before transferring troops", nil))
 	}
 	if balance.Amount < GameData.StormTroopSupportMead {
 		return fmt.Errorf(
@@ -354,7 +355,7 @@ func (application *Application) consumeKingdomTroopSource(_ context.Context, arg
 	amounts := map[State.UnitID]int64{}
 	for _, unit := range request.Units {
 		if unit.UnitID <= 0 || unit.Amount <= 0 {
-			return fmt.Errorf("confirmed kingdom troop transfer has invalid unit data")
+			return Localization.WithError(fmt.Errorf("confirmed kingdom troop transfer has invalid unit data"), Localization.New("server.app.confirmed_kingdom_troop_transfer.f3c2084b", "confirmed kingdom troop transfer has invalid unit data", nil))
 		}
 		amounts[unit.UnitID] += unit.Amount
 	}
@@ -366,16 +367,16 @@ func (application *Application) consumeKingdomTroopSource(_ context.Context, arg
 		}
 		source, found := gameState.MutableCastleParts(request.SourceCastleID, State.CastlePartUnits)
 		if !found {
-			return nil, false, fmt.Errorf("confirmed kingdom troop donor %d is unavailable", request.SourceCastleID)
+			return nil, false, Localization.WithError(fmt.Errorf("confirmed kingdom troop donor %d is unavailable", request.SourceCastleID), Localization.New("server.app.confirmed_kingdom_troop_donor.579cc1a9", "confirmed kingdom troop donor {p0} is unavailable", Localization.Params{"p0": fmt.Sprintf("%d", request.SourceCastleID)}))
 		}
 		authoritativeAfterResponse := workflowExists && workflow.ID == request.WorkflowID && workflow.Owner == request.Owner &&
 			!workflow.TransportObservedAt.IsZero() && source.UnitsObservedAt.After(workflow.TransportObservedAt)
 		for unitID, amount := range amounts {
 			if !authoritativeAfterResponse && source.Units.Stationed[unitID] < amount {
-				return nil, false, fmt.Errorf(
+				return nil, false, Localization.WithError(fmt.Errorf(
 					"confirmed kingdom troop donor %d has only %d of unit %d in state; %d were transferred",
 					source.ID, source.Units.Stationed[unitID], unitID, amount,
-				)
+				), Localization.New("server.app.confirmed_kingdom_troop_donor.a770767e", "confirmed kingdom troop donor {p0} has only {p1} of unit {p2} in state; {p3} were transferred", Localization.Params{"p0": fmt.Sprintf("%d", source.ID), "p1": fmt.Sprintf("%d", source.Units.Stationed[unitID]), "p2": fmt.Sprintf("%d", unitID), "p3": amount}))
 			}
 		}
 		if !authoritativeAfterResponse {
@@ -406,7 +407,7 @@ func (application *Application) armKingdomTroopWorkflow(ctx context.Context, arg
 		return err
 	}
 	if strings.TrimSpace(request.Owner) == "" || strings.TrimSpace(request.WorkflowID) == "" {
-		return fmt.Errorf("owned kingdom troop workflow identity is required")
+		return Localization.WithError(fmt.Errorf("owned kingdom troop workflow identity is required"), Localization.New("server.app.owned_kingdom_troop_workflow.d8dde8a3", "owned kingdom troop workflow identity is required", nil))
 	}
 	now := time.Now().UTC()
 	event, err := application.State.ApplyComponents(State.Components(State.ComponentKingdomTransport), func(gameState *State.GameState) ([]string, bool, error) {
@@ -414,7 +415,7 @@ func (application *Application) armKingdomTroopWorkflow(ctx context.Context, arg
 			if current.ID == request.WorkflowID && current.Owner == request.Owner && current.Status == "armed" {
 				return nil, false, nil
 			}
-			return nil, false, fmt.Errorf("kingdom %d already has an owned troop workflow", request.TargetKingdomID)
+			return nil, false, Localization.WithError(fmt.Errorf("kingdom %d already has an owned troop workflow", request.TargetKingdomID), Localization.New("server.app.kingdom_p_already_has.88f3bbe7", "kingdom {p0} already has an owned troop workflow", Localization.Params{"p0": fmt.Sprintf("%d", request.TargetKingdomID)}))
 		}
 		units := make([]State.KingdomTransportUnit, 0, len(request.Units))
 		for _, unit := range request.Units {
@@ -444,24 +445,24 @@ func (application *Application) guardKingdomTroopWorkflowDispatch(ctx context.Co
 	gameState := application.State.ReadOnlyView()
 	workflow, exists := gameState.KingdomTransport.TroopWorkflows[request.TargetKingdomID]
 	if !exists || workflow.ID != request.WorkflowID || workflow.Owner != request.Owner || workflow.Status != "armed" {
-		return fmt.Errorf("%w: owned kingdom troop workflow changed before dispatch", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: owned kingdom troop workflow changed before dispatch", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.85fe9706", "intent plan became stale before dispatch: owned kingdom troop workflow changed before dispatch", nil))
 	}
 	if workflow.SessionGeneration == 0 || workflow.SessionGeneration != gameState.Session.ConnectionGeneration {
-		return fmt.Errorf("%w: game session changed before kingdom troop dispatch", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: game session changed before kingdom troop dispatch", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.a8237aa4", "intent plan became stale before dispatch: game session changed before kingdom troop dispatch", nil))
 	}
 	if !autoFortressKingdomEnabled(application, request.TargetKingdomID) {
-		return fmt.Errorf("%w: Auto Fortress destination was disabled before dispatch", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: Auto Fortress destination was disabled before dispatch", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.2583476b", "intent plan became stale before dispatch: Auto Fortress destination was disabled before dispatch", nil))
 	}
 	unlock, observed := gameState.KingdomTransport.Unlocks[request.TargetKingdomID]
 	if !observed || !unlock.Unlocked || kingdomTroopTransportPending(gameState, request.TargetKingdomID) {
-		return fmt.Errorf("%w: kingdom troop transport availability changed before dispatch", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: kingdom troop transport availability changed before dispatch", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.f515a900", "intent plan became stale before dispatch: kingdom troop transport availability changed before dispatch", nil))
 	}
 	source, sourceFound := gameState.Castles[request.SourceCastleID]
 	target, targetFound := gameState.Castles[request.TargetCastleID]
 	now := time.Now().UTC()
 	if !sourceFound || !targetFound || target.KingdomID != request.TargetKingdomID || source.UnitsObservedAt.IsZero() ||
 		now.Before(source.UnitsObservedAt) || now.Sub(source.UnitsObservedAt) > 5*time.Minute {
-		return fmt.Errorf("%w: kingdom troop castle inventory changed before dispatch", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: kingdom troop castle inventory changed before dispatch", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.433f0f9e", "intent plan became stale before dispatch: kingdom troop castle inventory changed before dispatch", nil))
 	}
 	if _, err := normalizeKingdomTroopShipment(currentGameData(application), source, request.Units); err != nil {
 		return err
@@ -469,7 +470,7 @@ func (application *Application) guardKingdomTroopWorkflowDispatch(ctx context.Co
 	event, err := application.State.ApplyComponents(State.Components(State.ComponentKingdomTransport), func(current *State.GameState) ([]string, bool, error) {
 		workflow, found := current.KingdomTransport.TroopWorkflows[request.TargetKingdomID]
 		if !found || workflow.ID != request.WorkflowID || workflow.Owner != request.Owner || workflow.Status != "armed" {
-			return nil, false, fmt.Errorf("%w: owned kingdom troop workflow changed before dispatch", Intent.ErrPlanStale)
+			return nil, false, Localization.WithError(fmt.Errorf("%w: owned kingdom troop workflow changed before dispatch", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.85fe9706", "intent plan became stale before dispatch: owned kingdom troop workflow changed before dispatch", nil))
 		}
 		workflow.LaunchedAt = now
 		current.KingdomTransport.TroopWorkflows[request.TargetKingdomID] = workflow
@@ -505,7 +506,7 @@ func (application *Application) confirmKingdomTroopWorkflow(_ context.Context, a
 	view := application.State.ReadOnlyView()
 	workflow, exists := view.KingdomTransport.TroopWorkflows[request.TargetKingdomID]
 	if !exists || workflow.ID != request.WorkflowID || workflow.Owner != request.Owner || workflow.Status != "pending" {
-		return fmt.Errorf("confirmed kingdom troop response did not project the exact owned shipment")
+		return Localization.WithError(fmt.Errorf("confirmed kingdom troop response did not project the exact owned shipment"), Localization.New("server.app.confirmed_kingdom_troop_response.2205d210", "confirmed kingdom troop response did not project the exact owned shipment", nil))
 	}
 	return nil
 }
@@ -557,20 +558,20 @@ func (application *Application) settleKingdomTroopWorkflow(_ context.Context, ar
 	_, err := application.State.ApplyComponents(State.Components(State.ComponentKingdomTransport, State.ComponentCastles), func(gameState *State.GameState) ([]string, bool, error) {
 		workflow, exists := gameState.KingdomTransport.TroopWorkflows[request.TargetKingdomID]
 		if !exists || workflow.Owner != request.Owner || workflow.ID != request.WorkflowID {
-			return nil, false, fmt.Errorf("owned kingdom troop workflow changed before settlement")
+			return nil, false, Localization.WithError(fmt.Errorf("owned kingdom troop workflow changed before settlement"), Localization.New("server.app.owned_kingdom_troop_workflow.9558da46", "owned kingdom troop workflow changed before settlement", nil))
 		}
 		if workflow.Status != "awaiting_destination_refresh" && workflow.Status != "ownership_absent" {
-			return nil, false, fmt.Errorf("owned kingdom troop workflow is not ready to settle")
+			return nil, false, Localization.WithError(fmt.Errorf("owned kingdom troop workflow is not ready to settle"), Localization.New("server.app.owned_kingdom_troop_workflow.eab67af1", "owned kingdom troop workflow is not ready to settle", nil))
 		}
 		if !workflow.SkipRequestedAt.IsZero() {
-			return nil, false, fmt.Errorf("owned kingdom troop workflow still has an unresolved time skip")
+			return nil, false, Localization.WithError(fmt.Errorf("owned kingdom troop workflow still has an unresolved time skip"), Localization.New("server.app.owned_kingdom_troop_workflow.60918ee0", "owned kingdom troop workflow still has an unresolved time skip", nil))
 		}
 		if workflow.SourceReconciledAt.IsZero() && !workflow.SourceDebitedLocally {
-			return nil, false, fmt.Errorf("owned kingdom troop donor inventory is not reconciled")
+			return nil, false, Localization.WithError(fmt.Errorf("owned kingdom troop donor inventory is not reconciled"), Localization.New("server.app.owned_kingdom_troop_donor.006e6878", "owned kingdom troop donor inventory is not reconciled", nil))
 		}
 		target, exists := gameState.Castles[workflow.TargetCastleID]
 		if !exists || target.UnitsObservedAt.IsZero() || !target.UnitsObservedAt.After(workflow.TransportObservedAt) {
-			return nil, false, fmt.Errorf("destination inventory was not refreshed after transport completion")
+			return nil, false, Localization.WithError(fmt.Errorf("destination inventory was not refreshed after transport completion"), Localization.New("server.app.destination_inventory_was_not.2fa31bc5", "destination inventory was not refreshed after transport completion", nil))
 		}
 		delete(gameState.KingdomTransport.TroopWorkflows, request.TargetKingdomID)
 		return []string{"kingdom-transport"}, true, nil
@@ -590,14 +591,14 @@ func (application *Application) reconcileKingdomTroopDonor(_ context.Context, ar
 	_, err := application.State.ApplyComponents(State.Components(State.ComponentKingdomTransport, State.ComponentCastles), func(gameState *State.GameState) ([]string, bool, error) {
 		workflow, exists := gameState.KingdomTransport.TroopWorkflows[request.TargetKingdomID]
 		if !exists || workflow.Owner != request.Owner || workflow.ID != request.WorkflowID {
-			return nil, false, fmt.Errorf("owned kingdom troop workflow changed before donor reconciliation")
+			return nil, false, Localization.WithError(fmt.Errorf("owned kingdom troop workflow changed before donor reconciliation"), Localization.New("server.app.owned_kingdom_troop_workflow.d0bc5526", "owned kingdom troop workflow changed before donor reconciliation", nil))
 		}
 		if workflow.SessionGeneration == 0 || workflow.SessionGeneration != gameState.Session.ConnectionGeneration || workflow.TransportObservedAt.IsZero() {
-			return nil, false, fmt.Errorf("owned kingdom troop workflow lacks current-session transport authority")
+			return nil, false, Localization.WithError(fmt.Errorf("owned kingdom troop workflow lacks current-session transport authority"), Localization.New("server.app.owned_kingdom_troop_workflow.aeb84466", "owned kingdom troop workflow lacks current-session transport authority", nil))
 		}
 		source, exists := gameState.Castles[workflow.SourceCastleID]
 		if !exists || source.UnitsObservedAt.IsZero() || !source.UnitsObservedAt.After(workflow.TransportObservedAt) {
-			return nil, false, fmt.Errorf("donor inventory was not refreshed after the ambiguous troop dispatch")
+			return nil, false, Localization.WithError(fmt.Errorf("donor inventory was not refreshed after the ambiguous troop dispatch"), Localization.New("server.app.donor_inventory_was_not.a9d164a5", "donor inventory was not refreshed after the ambiguous troop dispatch", nil))
 		}
 		workflow.SourceReconciledAt = source.UnitsObservedAt.UTC()
 		gameState.KingdomTransport.TroopWorkflows[request.TargetKingdomID] = workflow
@@ -615,10 +616,10 @@ func (application *Application) armKingdomTroopSkip(ctx context.Context, argumen
 	event, err := application.State.ApplyComponents(State.Components(State.ComponentKingdomTransport), func(gameState *State.GameState) ([]string, bool, error) {
 		current, exists := gameState.KingdomTransport.TroopWorkflows[request.TargetKingdomID]
 		if !exists || current.ID != workflow.ID || current.Owner != workflow.Owner || current.Status != "pending" {
-			return nil, false, fmt.Errorf("%w: owned troop workflow changed before skip", Intent.ErrPlanStale)
+			return nil, false, Localization.WithError(fmt.Errorf("%w: owned troop workflow changed before skip", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.313986c5", "intent plan became stale before dispatch: owned troop workflow changed before skip", nil))
 		}
 		if !current.SkipRequestedAt.IsZero() {
-			return nil, false, fmt.Errorf("owned troop workflow already has an unresolved time skip")
+			return nil, false, Localization.WithError(fmt.Errorf("owned troop workflow already has an unresolved time skip"), Localization.New("server.app.owned_troop_workflow_already.fc5bd559", "owned troop workflow already has an unresolved time skip", nil))
 		}
 		current.SkipCurrencyID = currencyID
 		current.SkipWireKey = strings.ToUpper(strings.TrimSpace(request.TimeSkipID))
@@ -644,7 +645,7 @@ func (application *Application) guardKingdomTroopSkipDispatch(_ context.Context,
 	}
 	if workflow.SkipCurrencyID != currencyID || workflow.SkipWireKey != strings.ToUpper(strings.TrimSpace(request.TimeSkipID)) ||
 		workflow.SkipBalanceBefore != balance || workflow.SkipDurationSec != duration || workflow.SkipRequestedAt.IsZero() {
-		return fmt.Errorf("%w: owned troop time-skip marker changed before dispatch", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: owned troop time-skip marker changed before dispatch", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.aba4236d", "intent plan became stale before dispatch: owned troop time-skip marker changed before dispatch", nil))
 	}
 	return nil
 }
@@ -657,23 +658,23 @@ func (application *Application) validateOwnedKingdomTroopSkip(arguments json.Raw
 	gameState := application.State.ReadOnlyView()
 	workflow, exists := gameState.KingdomTransport.TroopWorkflows[request.TargetKingdomID]
 	if !exists || workflow.ID != request.WorkflowID || workflow.Owner != request.Owner || workflow.Status != "pending" {
-		return request, workflow, 0, 0, 0, 0, fmt.Errorf("%w: owned troop workflow is no longer pending", Intent.ErrPlanStale)
+		return request, workflow, 0, 0, 0, 0, Localization.WithError(fmt.Errorf("%w: owned troop workflow is no longer pending", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.41eb24f6", "intent plan became stale before dispatch: owned troop workflow is no longer pending", nil))
 	}
 	if workflow.SessionGeneration == 0 || workflow.SessionGeneration != gameState.Session.ConnectionGeneration {
-		return request, workflow, 0, 0, 0, 0, fmt.Errorf("%w: owned troop workflow requires current-session reconciliation", Intent.ErrPlanStale)
+		return request, workflow, 0, 0, 0, 0, Localization.WithError(fmt.Errorf("%w: owned troop workflow requires current-session reconciliation", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.a03bea20", "intent plan became stale before dispatch: owned troop workflow requires current-session reconciliation", nil))
 	}
 	useSkips, reserves, enabled := autoFortressSkipSettings(application, request.TargetKingdomID)
 	if !enabled || !useSkips {
-		return request, workflow, 0, 0, 0, 0, fmt.Errorf("%w: Auto Fortress time skips are disabled", Intent.ErrPlanStale)
+		return request, workflow, 0, 0, 0, 0, Localization.WithError(fmt.Errorf("%w: Auto Fortress time skips are disabled", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.483981a9", "intent plan became stale before dispatch: Auto Fortress time skips are disabled", nil))
 	}
 	now := time.Now().UTC()
 	if workflow.TransportObservedAt.IsZero() || now.Before(workflow.TransportObservedAt) ||
 		now.Sub(workflow.TransportObservedAt) > 5*time.Minute {
-		return request, workflow, 0, 0, 0, 0, fmt.Errorf("%w: owned troop transport timer is not current", Intent.ErrPlanStale)
+		return request, workflow, 0, 0, 0, 0, Localization.WithError(fmt.Errorf("%w: owned troop transport timer is not current", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.86c8db4c", "intent plan became stale before dispatch: owned troop transport timer is not current", nil))
 	}
 	remaining, exact := agedOwnedPendingRemaining(gameState, workflow, now)
 	if !exact || remaining <= 0 || request.ExpectedRemaining <= 0 || remaining > request.ExpectedRemaining || request.ExpectedRemaining-remaining > 10 {
-		return request, workflow, 0, 0, 0, 0, fmt.Errorf("%w: owned troop transport timer changed before skip", Intent.ErrPlanStale)
+		return request, workflow, 0, 0, 0, 0, Localization.WithError(fmt.Errorf("%w: owned troop transport timer changed before skip", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.86875178", "intent plan became stale before dispatch: owned troop transport timer changed before skip", nil))
 	}
 	gameData := currentGameData(application)
 	currencyID, err := officialCurrencyID(gameData, request.TimeSkipID)
@@ -682,20 +683,20 @@ func (application *Application) validateOwnedKingdomTroopSkip(arguments json.Raw
 	}
 	duration, err := officialKingdomTroopSkipDuration(gameData, currencyID, request.TimeSkipID)
 	if err != nil || duration != request.ExpectedDurationSec || !kingdomTroopSkipUseful(duration, remaining) {
-		return request, workflow, 0, 0, 0, 0, fmt.Errorf("%w: queued time skip is no longer suitable for the owned transport", Intent.ErrPlanStale)
+		return request, workflow, 0, 0, 0, 0, Localization.WithError(fmt.Errorf("%w: queued time skip is no longer suitable for the owned transport", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.58d0b51e", "intent plan became stale before dispatch: queued time skip is no longer suitable for the owned transport", nil))
 	}
 	balance := gameState.Player.Currencies[currencyID]
 	observation := gameState.Player.CurrencyObservations[currencyID]
 	if observation.ObservedAt.IsZero() || observation.ConnectionGeneration == 0 ||
 		observation.ConnectionGeneration != gameState.Session.ConnectionGeneration || now.Before(observation.ObservedAt) || now.Sub(observation.ObservedAt) > 5*time.Minute {
-		return request, workflow, 0, balance, 0, 0, fmt.Errorf("%w: official time-skip inventory is not current", Intent.ErrPlanStale)
+		return request, workflow, 0, balance, 0, 0, Localization.WithError(fmt.Errorf("%w: official time-skip inventory is not current", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.955212b6", "intent plan became stale before dispatch: official time-skip inventory is not current", nil))
 	}
 	reserve := max(int64(0), reserves[strings.ToUpper(strings.TrimSpace(request.TimeSkipID))])
 	if balance < float64(reserve)+1 {
-		return request, workflow, 0, balance, 0, 0, fmt.Errorf("%w: time-skip reserve is no longer satisfied", Intent.ErrPlanStale)
+		return request, workflow, 0, balance, 0, 0, Localization.WithError(fmt.Errorf("%w: time-skip reserve is no longer satisfied", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.27979763", "intent plan became stale before dispatch: time-skip reserve is no longer satisfied", nil))
 	}
 	if beforeArm && !workflow.SkipRequestedAt.IsZero() {
-		return request, workflow, 0, balance, 0, 0, fmt.Errorf("owned troop workflow already has an unresolved time skip")
+		return request, workflow, 0, balance, 0, 0, Localization.WithError(fmt.Errorf("owned troop workflow already has an unresolved time skip"), Localization.New("server.app.owned_troop_workflow_already.fc5bd559", "owned troop workflow already has an unresolved time skip", nil))
 	}
 	return request, workflow, currencyID, balance, remaining, duration, nil
 }
@@ -711,7 +712,7 @@ func agedOwnedPendingRemaining(gameState State.GameState, workflow State.Kingdom
 
 func officialKingdomTroopSkipDuration(gameData *GameData.Store, currencyID State.CurrencyID, wireKey string) (int64, error) {
 	if gameData == nil {
-		return 0, fmt.Errorf("official game data is unavailable")
+		return 0, Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	options, err := gameData.OfficialTimeSkips()
 	if err != nil {
@@ -723,7 +724,7 @@ func officialKingdomTroopSkipDuration(gameData *GameData.Store, currencyID State
 			return option.Seconds, nil
 		}
 	}
-	return 0, fmt.Errorf("official time skip %s is unavailable", wanted)
+	return 0, Localization.WithError(fmt.Errorf("official time skip %s is unavailable", wanted), Localization.New("server.app.official_time_skip_p.d418b707", "official time skip {p0} is unavailable", Localization.Params{"p0": fmt.Sprintf("%s", wanted)}))
 }
 
 func kingdomTroopSkipUseful(duration int64, remaining int) bool {
@@ -812,10 +813,10 @@ func (application *Application) verifyKingdomTroopSkipTimer(_ context.Context, a
 	_, err := application.State.ApplyComponents(State.Components(State.ComponentKingdomTransport), func(gameState *State.GameState) ([]string, bool, error) {
 		workflow, exists := gameState.KingdomTransport.TroopWorkflows[request.TargetKingdomID]
 		if !exists || workflow.ID != request.WorkflowID || workflow.Owner != request.Owner || workflow.SkipRequestedAt.IsZero() {
-			return nil, false, fmt.Errorf("owned troop time-skip marker is unavailable")
+			return nil, false, Localization.WithError(fmt.Errorf("owned troop time-skip marker is unavailable"), Localization.New("server.app.owned_troop_time_skip.5dfec5a2", "owned troop time-skip marker is unavailable", nil))
 		}
 		if !workflow.TransportObservedAt.After(workflow.SkipRequestedAt) {
-			return nil, false, fmt.Errorf("time-skip response did not project current transport state")
+			return nil, false, Localization.WithError(fmt.Errorf("time-skip response did not project current transport state"), Localization.New("server.app.time_skip_response_did.a1a763e4", "time-skip response did not project current transport state", nil))
 		}
 		remaining, pending := exactOwnedPendingRemaining(*gameState, workflow)
 		elapsed := int(workflow.TransportObservedAt.Sub(workflow.SkipRequestedAt) / time.Second)
@@ -835,7 +836,7 @@ func (application *Application) verifyKingdomTroopSkipTimer(_ context.Context, a
 		return err
 	}
 	if naturalCountdown {
-		return fmt.Errorf("owned transport timer changed only by natural countdown; time-skip progress is unconfirmed")
+		return Localization.WithError(fmt.Errorf("owned transport timer changed only by natural countdown; time-skip progress is unconfirmed"), Localization.New("server.app.owned_transport_timer_changed.71ab80b8", "owned transport timer changed only by natural countdown; time-skip progress is unconfirmed", nil))
 	}
 	return nil
 }
@@ -849,12 +850,12 @@ func (application *Application) verifyKingdomTroopSkipInventory(_ context.Contex
 	workflow, exists := view.KingdomTransport.TroopWorkflows[request.TargetKingdomID]
 	if !exists || workflow.ID != request.WorkflowID || workflow.Owner != request.Owner ||
 		(workflow.Status != "skip_inventory_pending" && workflow.Status != "skip_uncertain") {
-		return fmt.Errorf("owned troop time-skip is not awaiting inventory confirmation")
+		return Localization.WithError(fmt.Errorf("owned troop time-skip is not awaiting inventory confirmation"), Localization.New("server.app.owned_troop_time_skip.297e36ec", "owned troop time-skip is not awaiting inventory confirmation", nil))
 	}
 	observation := view.Player.CurrencyObservations[workflow.SkipCurrencyID]
 	if !observation.ObservedAt.After(workflow.SkipRequestedAt) || observation.ConnectionGeneration == 0 ||
 		observation.ConnectionGeneration != view.Session.ConnectionGeneration {
-		return fmt.Errorf("official time-skip inventory was not refreshed after the spend")
+		return Localization.WithError(fmt.Errorf("official time-skip inventory was not refreshed after the spend"), Localization.New("server.app.official_time_skip_inventory.37fa0053", "official time-skip inventory was not refreshed after the spend", nil))
 	}
 	if view.Player.Currencies[workflow.SkipCurrencyID] > workflow.SkipBalanceBefore-1 {
 		_, markErr := application.State.ApplyComponents(State.Components(State.ComponentKingdomTransport), func(gameState *State.GameState) ([]string, bool, error) {
@@ -870,13 +871,13 @@ func (application *Application) verifyKingdomTroopSkipInventory(_ context.Contex
 		if markErr != nil {
 			return markErr
 		}
-		return fmt.Errorf("transport timer advanced but official inventory did not confirm time-skip consumption")
+		return Localization.WithError(fmt.Errorf("transport timer advanced but official inventory did not confirm time-skip consumption"), Localization.New("server.app.transport_timer_advanced_but.d8de1ace", "transport timer advanced but official inventory did not confirm time-skip consumption", nil))
 	}
 	_, err := application.State.ApplyComponents(State.Components(State.ComponentKingdomTransport, State.ComponentPlayer), func(gameState *State.GameState) ([]string, bool, error) {
 		workflow, exists := gameState.KingdomTransport.TroopWorkflows[request.TargetKingdomID]
 		if !exists || workflow.ID != request.WorkflowID || workflow.Owner != request.Owner ||
 			(workflow.Status != "skip_inventory_pending" && workflow.Status != "skip_uncertain") {
-			return nil, false, fmt.Errorf("owned troop time-skip is not awaiting inventory confirmation")
+			return nil, false, Localization.WithError(fmt.Errorf("owned troop time-skip is not awaiting inventory confirmation"), Localization.New("server.app.owned_troop_time_skip.297e36ec", "owned troop time-skip is not awaiting inventory confirmation", nil))
 		}
 		if _, pending := exactOwnedPendingRemaining(*gameState, workflow); pending {
 			workflow.Status = "pending"
@@ -907,10 +908,10 @@ func normalizeKingdomTroopShipment(
 	requested []kingdomTroopShipmentUnit,
 ) ([]kingdomTroopShipmentUnit, error) {
 	if gameData == nil {
-		return nil, fmt.Errorf("official game data is unavailable")
+		return nil, Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	if len(requested) == 0 || len(requested) > kingdomTroopMaximumStacks {
-		return nil, fmt.Errorf("units must contain between 1 and %d troop stacks", kingdomTroopMaximumStacks)
+		return nil, Localization.WithError(fmt.Errorf("units must contain between 1 and %d troop stacks", kingdomTroopMaximumStacks), Localization.New("server.app.units_must_contain_between.a617e2c8", "units must contain between 1 and {p0} troop stacks", Localization.Params{"p0": kingdomTroopMaximumStacks}))
 	}
 	catalog, err := gameData.Catalog("units")
 	if err != nil {
@@ -919,28 +920,28 @@ func normalizeKingdomTroopShipment(
 	merged := map[State.UnitID]int64{}
 	for _, unit := range requested {
 		if unit.UnitID <= 0 || unit.Amount <= 0 {
-			return nil, fmt.Errorf("every transferred troop requires a positive unitId and amount")
+			return nil, Localization.WithError(fmt.Errorf("every transferred troop requires a positive unitId and amount"), Localization.New("server.app.every_transferred_troop_requires.df1cc2e5", "every transferred troop requires a positive unitId and amount", nil))
 		}
 		raw, found := catalog.Find(strconv.FormatInt(int64(unit.UnitID), 10))
 		if !found {
-			return nil, fmt.Errorf("unit %d is not in the official unit catalog", unit.UnitID)
+			return nil, Localization.WithError(fmt.Errorf("unit %d is not in the official unit catalog", unit.UnitID), Localization.New("server.app.unit_p_is_not.57d42843", "unit {p0} is not in the official unit catalog", Localization.Params{"p0": fmt.Sprintf("%d", unit.UnitID)}))
 		}
 		record, decodeErr := GameData.DecodeRecord(raw)
 		if decodeErr != nil {
 			return nil, decodeErr
 		}
 		if GameData.IsToolRecord(record) {
-			return nil, fmt.Errorf("unit %d is a tool and cannot use kingdom troop transport", unit.UnitID)
+			return nil, Localization.WithError(fmt.Errorf("unit %d is a tool and cannot use kingdom troop transport", unit.UnitID), Localization.New("server.app.unit_p_is_a.0896e640", "unit {p0} is a tool and cannot use kingdom troop transport", Localization.Params{"p0": fmt.Sprintf("%d", unit.UnitID)}))
 		}
 		if merged[unit.UnitID] > int64(^uint64(0)>>1)-unit.Amount {
-			return nil, fmt.Errorf("transfer amount for unit %d is too large", unit.UnitID)
+			return nil, Localization.WithError(fmt.Errorf("transfer amount for unit %d is too large", unit.UnitID), Localization.New("server.app.transfer_amount_for_unit.47e5c79e", "transfer amount for unit {p0} is too large", Localization.Params{"p0": fmt.Sprintf("%d", unit.UnitID)}))
 		}
 		merged[unit.UnitID] += unit.Amount
 	}
 	result := make([]kingdomTroopShipmentUnit, 0, len(merged))
 	for unitID, amount := range merged {
 		if source.Units.Stationed[unitID] < amount {
-			return nil, fmt.Errorf("castle %d has %d stationed unit %d; %d requested", source.ID, source.Units.Stationed[unitID], unitID, amount)
+			return nil, Localization.WithError(fmt.Errorf("castle %d has %d stationed unit %d; %d requested", source.ID, source.Units.Stationed[unitID], unitID, amount), Localization.New("server.app.castle_p_has_p.7adfb050", "castle {p0} has {p1} stationed unit {p2}; {p3} requested", Localization.Params{"p0": fmt.Sprintf("%d", source.ID), "p1": fmt.Sprintf("%d", source.Units.Stationed[unitID]), "p2": fmt.Sprintf("%d", unitID), "p3": amount}))
 		}
 		result = append(result, kingdomTroopShipmentUnit{UnitID: unitID, Amount: amount})
 	}
@@ -961,10 +962,10 @@ func planKingdomTroopSkip(_ context.Context, input Intent.PlanningContext, argum
 	if strings.TrimSpace(request.Owner) != "" {
 		workflow, exists := input.State.KingdomTransport.TroopWorkflows[request.TargetKingdomID]
 		if !exists || workflow.Owner != request.Owner || workflow.ID != request.WorkflowID || workflow.Status != "pending" {
-			return Intent.Plan{}, fmt.Errorf("owned kingdom troop transport is not pending with the expected workflow")
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("owned kingdom troop transport is not pending with the expected workflow"), Localization.New("server.app.owned_kingdom_troop_transport.e8668660", "owned kingdom troop transport is not pending with the expected workflow", nil))
 		}
 		if request.ExpectedRemaining <= 0 {
-			return Intent.Plan{}, fmt.Errorf("owned kingdom troop skip requires expectedRemaining")
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("owned kingdom troop skip requires expectedRemaining"), Localization.New("server.app.owned_kingdom_troop_skip.8aa016d9", "owned kingdom troop skip requires expectedRemaining", nil))
 		}
 		requestArguments, _ := json.Marshal(request)
 		step.PreDispatchAction = "troops.kingdom.skip.arm"
@@ -978,7 +979,7 @@ func planKingdomTroopSkip(_ context.Context, input Intent.PlanningContext, argum
 		step.ResponseProjectionFailureIndeterminate = true
 		_, found := input.State.Castles[workflow.SourceCastleID]
 		if !found {
-			return Intent.Plan{}, fmt.Errorf("owned kingdom troop donor is unavailable")
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("owned kingdom troop donor is unavailable"), Localization.New("server.app.owned_kingdom_troop_donor.42207f8a", "owned kingdom troop donor is unavailable", nil))
 		}
 		steps = []Intent.Step{
 			step,
@@ -992,8 +993,8 @@ func planKingdomTroopSkip(_ context.Context, input Intent.PlanningContext, argum
 			"troop-transport", "kingdom:" + strconv.FormatInt(int64(request.TargetKingdomID), 10),
 			"currency:" + strconv.FormatInt(int64(currencyID), 10),
 		},
-		Summary: fmt.Sprintf("Apply a %s to kingdom %d troop transport", timeSkipLabel, request.TargetKingdomID),
-		Steps:   steps,
+		Summary: fmt.Sprintf("Apply a %s to kingdom %d troop transport", timeSkipLabel, request.TargetKingdomID), SummaryDescriptor: Localization.New("server.app.apply_a_p_to.e2174b30", "Apply a {p0} to kingdom {p1} troop transport", Localization.Params{"p0": fmt.Sprintf("%s", timeSkipLabel), "p1": fmt.Sprintf("%d", request.TargetKingdomID)}),
+		Steps: steps,
 	}, nil
 }
 
@@ -1012,8 +1013,8 @@ func planAccountInventoryRefresh(_ context.Context, _ Intent.PlanningContext, ar
 	}
 	return Intent.Plan{
 		Claims:  []string{"account-resources", "account-currencies"},
-		Summary: "Refresh authoritative account inventory",
-		Steps:   []Intent.Step{accountInventoryRefreshStep("Refresh authoritative account inventory")},
+		Summary: "Refresh authoritative account inventory", SummaryDescriptor: Localization.New("server.app.refresh_authoritative_account_inventory.09e11d47", "Refresh authoritative account inventory", nil),
+		Steps: []Intent.Step{accountInventoryRefreshStep("Refresh authoritative account inventory")},
 	}, nil
 }
 
@@ -1024,7 +1025,7 @@ func kingdomTroopSkipStep(
 ) (Intent.Step, State.CurrencyID, string, error) {
 	request.TimeSkipID = strings.ToUpper(strings.TrimSpace(request.TimeSkipID))
 	if request.TargetKingdomID < 0 || request.TimeSkipID == "" {
-		return Intent.Step{}, 0, "", fmt.Errorf("targetKingdomId and timeSkipId are required")
+		return Intent.Step{}, 0, "", Localization.WithError(fmt.Errorf("targetKingdomId and timeSkipId are required"), Localization.New("server.app.targetkingdomid_and_timeskipid_are.d0c2a0d6", "targetKingdomId and timeSkipId are required", nil))
 	}
 	if requirePending {
 		pending := false
@@ -1035,7 +1036,7 @@ func kingdomTroopSkipStep(
 			}
 		}
 		if !pending {
-			return Intent.Step{}, 0, "", fmt.Errorf("kingdom %d has no pending troop transport", request.TargetKingdomID)
+			return Intent.Step{}, 0, "", Localization.WithError(fmt.Errorf("kingdom %d has no pending troop transport", request.TargetKingdomID), Localization.New("server.app.kingdom_p_has_no.787ee619", "kingdom {p0} has no pending troop transport", Localization.Params{"p0": fmt.Sprintf("%d", request.TargetKingdomID)}))
 		}
 	}
 	currencyID, err := officialCurrencyID(input.GameData, request.TimeSkipID)
@@ -1044,15 +1045,15 @@ func kingdomTroopSkipStep(
 	}
 	timeSkipLabel := officialTimeSkipLabel(input.GameData, int64(currencyID), request.TimeSkipID)
 	if request.MinimumRemaining < 0 {
-		return Intent.Step{}, 0, "", fmt.Errorf("minimumRemaining cannot be negative")
+		return Intent.Step{}, 0, "", Localization.WithError(fmt.Errorf("minimumRemaining cannot be negative"), Localization.New("server.app.minimumremaining_cannot_be_negative.1793e608", "minimumRemaining cannot be negative", nil))
 	}
 	if input.State.Player.Currencies[currencyID]-1 < float64(request.MinimumRemaining) {
-		return Intent.Step{}, 0, "", fmt.Errorf("no %s is available", timeSkipLabel)
+		return Intent.Step{}, 0, "", Localization.WithError(fmt.Errorf("no %s is available", timeSkipLabel), Localization.New("server.app.no_p_is_available.d9c730b3", "no {p0} is available", Localization.Params{"p0": fmt.Sprintf("%s", timeSkipLabel)}))
 	}
 	payload, _ := json.Marshal(map[string]string{
 		"MST": request.TimeSkipID,
 		"KID": strconv.FormatInt(int64(request.TargetKingdomID), 10),
 		"TT":  "1",
 	})
-	return commandStep("Skip kingdom troop transport time", "msk", payload, "msk"), currencyID, timeSkipLabel, nil
+	return commandStep("Skip kingdom troop transport time", "msk", payload, "msk", Localization.New("server.app.skip_kingdom_troop_transport.e84d0a91", "Skip kingdom troop transport time", nil)), currencyID, timeSkipLabel, nil
 }

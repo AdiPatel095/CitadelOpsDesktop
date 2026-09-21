@@ -1,6 +1,7 @@
 package App
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -138,22 +139,22 @@ func (application *Application) executionGate(
 	if application.backgroundOnly {
 		switch strings.TrimSpace(request.Name) {
 		case "config.update":
-			return fmt.Errorf("%w: hosted account settings must be saved through the account control plane", Intent.ErrPlanStale)
+			return Localization.WithError(fmt.Errorf("%w: hosted account settings must be saved through the account control plane", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.69d22c06", "intent plan became stale before dispatch: hosted account settings must be saved through the account control plane", nil))
 		case "session.background.prepare", "session.select_browser":
-			return fmt.Errorf("%w: hosted session setup is managed by the account control plane", Intent.ErrPlanStale)
+			return Localization.WithError(fmt.Errorf("%w: hosted session setup is managed by the account control plane", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.af71fbd3", "intent plan became stale before dispatch: hosted session setup is managed by the account control plane", nil))
 		}
 	}
 	configurationState := application.controlConfigurationState.Load()
 	if plan.Effect != Intent.EffectRead && configurationState == controlConfigurationPending {
-		return fmt.Errorf("%w: account configuration is pending control-plane synchronization", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: account configuration is pending control-plane synchronization", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.6b4aa0fc", "intent plan became stale before dispatch: account configuration is pending control-plane synchronization", nil))
 	}
 	if plan.Effect != Intent.EffectRead && configurationState != controlConfigurationUnmanaged &&
 		planClaimsConfiguration(plan) {
-		return fmt.Errorf("%w: hosted account settings must be saved through the account control plane", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: hosted account settings must be saved through the account control plane", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.69d22c06", "intent plan became stale before dispatch: hosted account settings must be saved through the account control plane", nil))
 	}
 	if plan.Effect != Intent.EffectRead {
 		if err := application.actionPersistenceError(); err != nil {
-			return fmt.Errorf("durable storage is unavailable: %w", err)
+			return Localization.WithError(fmt.Errorf("durable storage is unavailable: %w", err), Localization.ErrorContext(Localization.New("server.app.durable_storage_is_unavailable.05460d88", "durable storage is unavailable", nil), err))
 		}
 	}
 	if err := application.requireAutoBeriGallantryBooster(request, time.Now().UTC()); err != nil {
@@ -207,10 +208,10 @@ func (application *Application) requireAutoKhanRageBooster(plan Intent.Plan, now
 			return nil
 		}
 	}
-	return fmt.Errorf(
+	return Localization.WithError(fmt.Errorf(
 		"%w: Auto Khan requires an active Rage points booster (boi ID %d)",
 		Intent.ErrPlanStale, GameData.KhanRagePointsBoosterID,
-	)
+	), Localization.New("server.app.intent_plan_became_stale.1036cb2c", "intent plan became stale before dispatch: Auto Khan requires an active Rage points booster (boi ID {p1})", Localization.Params{"p1": fmt.Sprintf("%d", GameData.KhanRagePointsBoosterID)}))
 }
 
 func (application *Application) requireAutoBeriGallantryBooster(request Intent.Request, now time.Time) error {
@@ -229,10 +230,10 @@ func (application *Application) requireAutoBeriGallantryBooster(request Intent.R
 			return nil
 		}
 	}
-	return fmt.Errorf(
+	return Localization.WithError(fmt.Errorf(
 		"%w: Auto Beri requires an active Gallantry points booster (boi ID %d)",
 		Intent.ErrPlanStale, GameData.GallantryPointsBoosterID,
-	)
+	), Localization.New("server.app.intent_plan_became_stale.f6d20831", "intent plan became stale before dispatch: Auto Beri requires an active Gallantry points booster (boi ID {p1})", Localization.Params{"p1": fmt.Sprintf("%d", GameData.GallantryPointsBoosterID)}))
 }
 
 func (application *Application) requireAssignedAttackCommanders(plan Intent.Plan) error {
@@ -241,29 +242,29 @@ func (application *Application) requireAssignedAttackCommanders(plan Intent.Plan
 	}
 	moduleID := strings.TrimSpace(plan.Admission.Module)
 	if moduleID == "" {
-		return fmt.Errorf("attack launch does not identify its commander feature")
+		return Localization.WithError(fmt.Errorf("attack launch does not identify its commander feature"), Localization.New("server.app.attack_launch_does_not.19f63c08", "attack launch does not identify its commander feature", nil))
 	}
 	if moduleID == manualAllianceAttackModuleID {
 		return nil
 	}
 	label := application.attackModuleLabel(moduleID)
 	if application.Configuration == nil {
-		return fmt.Errorf("%s commander assignments are unavailable", label)
+		return Localization.WithError(fmt.Errorf("%s commander assignments are unavailable", label), Localization.New("server.app.p_commander_assignments_are.f496c2d2", "{p0} commander assignments are unavailable", Localization.Params{"p0": fmt.Sprintf("%s", label)}))
 	}
 	raw, exists := application.Configuration.Section(commanderFeatureSection)
 	if !exists {
 		return nil
 	}
 	if len(raw) == 0 {
-		return fmt.Errorf("%s commander assignments are invalid", label)
+		return Localization.WithError(fmt.Errorf("%s commander assignments are invalid", label), Localization.New("server.app.p_commander_assignments_are.a31bf38a", "{p0} commander assignments are invalid", Localization.Params{"p0": fmt.Sprintf("%s", label)}))
 	}
 	settings, err := CommanderFeatures.Decode(raw)
 	if err != nil {
-		return fmt.Errorf("%s commander assignments are invalid", label)
+		return Localization.WithError(fmt.Errorf("%s commander assignments are invalid", label), Localization.New("server.app.p_commander_assignments_are.a31bf38a", "{p0} commander assignments are invalid", Localization.Params{"p0": fmt.Sprintf("%s", label)}))
 	}
 	commanders, err := attackPlanCommanderIDs(plan)
 	if err != nil {
-		return fmt.Errorf("validate %s commander assignment: %w", label, err)
+		return Localization.WithError(fmt.Errorf("validate %s commander assignment: %w", label, err), Localization.ErrorContext(Localization.New("server.app.validate_p_commander_assignment.60746bcf", "validate {p0} commander assignment", Localization.Params{"p0": fmt.Sprintf("%s", label)}), err))
 	}
 	gameState := State.NewGameState()
 	if application.State != nil {
@@ -271,10 +272,10 @@ func (application *Application) requireAssignedAttackCommanders(plan Intent.Plan
 	}
 	for _, commanderID := range commanders {
 		if !CommanderFeatures.AssignmentAllows(settings, moduleID, commanderID) {
-			return fmt.Errorf("commander %d is not assigned to %s", commanderID, label)
+			return Localization.WithError(fmt.Errorf("commander %d is not assigned to %s", commanderID, label), Localization.New("server.app.commander_p_is_not.d1534574", "commander {p0} is not assigned to {p1}", Localization.Params{"p0": fmt.Sprintf("%d", commanderID), "p1": fmt.Sprintf("%s", label)}))
 		}
 		if !CommanderFeatures.MeetsFeatureRequirements(gameState, settings, moduleID, commanderID) {
-			return fmt.Errorf("commander %d does not meet the %s equipment requirement", commanderID, label)
+			return Localization.WithError(fmt.Errorf("commander %d does not meet the %s equipment requirement", commanderID, label), Localization.New("server.app.commander_p_does_not.cad9174d", "commander {p0} does not meet the {p1} equipment requirement", Localization.Params{"p0": fmt.Sprintf("%d", commanderID), "p1": fmt.Sprintf("%s", label)}))
 		}
 	}
 	return nil
@@ -302,7 +303,7 @@ func attackPlanCommanderIDs(plan Intent.Plan) ([]State.CommanderID, error) {
 		rawID := strings.TrimSpace(strings.TrimPrefix(claim, "commander:"))
 		wireID, err := strconv.ParseInt(rawID, 10, 64)
 		if err != nil || wireID < 0 {
-			return nil, fmt.Errorf("invalid commander claim %q", claim)
+			return nil, Localization.WithError(fmt.Errorf("invalid commander claim %q", claim), Localization.New("server.app.invalid_commander_claim_p.444dd270", "invalid commander claim {p0}", Localization.Params{"p0": fmt.Sprintf("%q", claim)}))
 		}
 		commanderID := State.CommanderID(wireID)
 		if _, duplicate := seen[commanderID]; duplicate {
@@ -312,7 +313,7 @@ func attackPlanCommanderIDs(plan Intent.Plan) ([]State.CommanderID, error) {
 		commanders = append(commanders, commanderID)
 	}
 	if len(commanders) == 0 {
-		return nil, fmt.Errorf("attack plan does not claim a commander")
+		return nil, Localization.WithError(fmt.Errorf("attack plan does not claim a commander"), Localization.New("server.app.attack_plan_does_not.1331dfcf", "attack plan does not claim a commander", nil))
 	}
 	return commanders, nil
 }

@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"time"
 
@@ -29,9 +30,11 @@ type OperationalCursorUpdate struct {
 }
 
 type Decision struct {
-	Status      string
-	Detail      string
-	NextCheckAt time.Time
+	DetailDescriptor        *Localization.Message `json:"detailDescriptor,omitempty"`
+	FailureDetailDescriptor *Localization.Message `json:"failureDetailDescriptor,omitempty"`
+	Status                  string
+	Detail                  string
+	NextCheckAt             time.Time
 	// EventDriven leaves a passive decision asleep when NextCheckAt is zero.
 	// Only a declared state/configuration/session wake will reevaluate it. This
 	// is used for authoritative blockers whose state cannot change merely

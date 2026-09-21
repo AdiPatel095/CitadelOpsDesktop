@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -39,27 +40,27 @@ func (*AutoStormBuildPolicy) WakeSections() []string {
 func (*AutoStormBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
 	settings := defaultAutoStormSettings()
 	if !decodeSection(snapshot.Configuration, autoStormSection, &settings) {
-		return autoStormBuildWaiting(snapshot.Now, "Auto Storm settings have not been saved", nil), nil
+		return autoStormBuildWaiting(snapshot.Now, "Auto Storm settings have not been saved", nil, Localization.New("server.automation.auto_storm_settings_have.7747d389", "Auto Storm settings have not been saved", nil)), nil
 	}
 	normalizeAutoStormSettings(&settings)
 	if settings.Version != 1 {
-		return autoStormBuildWaiting(snapshot.Now, fmt.Sprintf("Unsupported Auto Storm settings version %d", settings.Version), nil), nil
+		return autoStormBuildWaiting(snapshot.Now, fmt.Sprintf("Unsupported Auto Storm settings version %d", settings.Version), nil, Localization.New("server.automation.unsupported_auto_storm_settings.354f0544", "Unsupported Auto Storm settings version {p0, number}", Localization.Params{"p0": settings.Version})), nil
 	}
 	if snapshot.GameData == nil {
-		return autoStormBuildWaiting(snapshot.Now, "Official game data is unavailable", nil), nil
+		return autoStormBuildWaiting(snapshot.Now, "Official game data is unavailable", nil, Localization.New("server.automation.official_game_data_is.c5e55e7e", "Official game data is unavailable", nil)), nil
 	}
 	if err := autoStormApplyActiveBlueprint(snapshot, &settings); err != nil {
 		return autoStormBuildWaiting(snapshot.Now, err.Error(), nil), nil
 	}
 	if settings.Target == nil && !settings.Harbor.Enabled {
 		return Decision{
-			Status: "complete", Detail: "No Storm castle blueprint or Harbor goal is active",
+			Status: "complete", Detail: "No Storm castle blueprint or Harbor goal is active", DetailDescriptor: Localization.New("server.automation.no_storm_castle_blueprint.b5f70a04", "No Storm castle blueprint or Harbor goal is active", nil),
 			EventDriven: true,
 		}, nil
 	}
 	castle, found := autoStormCastle(snapshot.State, settings.Target)
 	if !found {
-		return autoStormBuildWaiting(snapshot.Now, "No unlocked Storm castle is present", nil), nil
+		return autoStormBuildWaiting(snapshot.Now, "No unlocked Storm castle is present", nil, Localization.New("server.automation.no_unlocked_storm_castle.de248812", "No unlocked Storm castle is present", nil)), nil
 	}
 	metrics := map[string]float64{"castleId": float64(castle.ID)}
 	if decision, actionable := ownedKingdomTransportDecision(
@@ -74,6 +75,7 @@ func (*AutoStormBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Dec
 		return autoStormBuildContinuation(decision), nil
 	}
 	decision, complete, detail, err := evaluateAutoStormBuild(snapshot, settings, castle, metrics)
+	var detailLocalizationMessage *Localization.Message = nil
 	if err != nil {
 		return Decision{}, err
 	}
@@ -86,9 +88,10 @@ func (*AutoStormBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Dec
 	}
 	if detail == "" {
 		detail = "Storm build lane is waiting for its next state change"
+		detailLocalizationMessage = Localization.New("server.automation.storm_build_lane_is.2933ec9b", "Storm build lane is waiting for its next state change", nil)
 	}
 	result := Decision{
-		Status: status, Detail: detail, Metrics: metrics,
+		Status: status, Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage), Metrics: metrics,
 		NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)),
 	}
 	if complete && metrics["stormMissingDecorations"] > 0 {
@@ -171,6 +174,6 @@ func autoStormAllowedTimeSkips(settings autoStormSettings) []string {
 	return []string{"MS1", "MS2", "MS3", "MS4", "MS5", "MS6", "MS7"}
 }
 
-func autoStormBuildWaiting(now time.Time, detail string, metrics map[string]float64) Decision {
-	return Decision{Status: "waiting", Detail: detail, Metrics: metrics, NextCheckAt: now.Add(30 * time.Second)}
+func autoStormBuildWaiting(now time.Time, detail string, metrics map[string]float64, descriptors ...*Localization.Message) Decision {
+	return Decision{Status: "waiting", Detail: detail, DetailDescriptor: Localization.First(descriptors), Metrics: metrics, NextCheckAt: now.Add(30 * time.Second)}
 }

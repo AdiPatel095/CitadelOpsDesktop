@@ -1,6 +1,7 @@
 package API
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,7 +15,7 @@ import (
 
 func (server *Server) handleBuildingPreview(writer http.ResponseWriter, request *http.Request) {
 	if server.config.State == nil {
-		writeError(writer, http.StatusServiceUnavailable, "state_unavailable", "Castle state is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "state_unavailable", "Castle state is unavailable", Localization.New("server.api.castle_state_is_unavailable.8e1c92c4", "Castle state is unavailable", nil))
 		return
 	}
 	gameData, ok := server.currentGameData(writer)
@@ -25,17 +26,17 @@ func (server *Server) handleBuildingPreview(writer http.ResponseWriter, request 
 	decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, 1<<20))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&input); err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid_request", err.Error())
+		writeErrorFromError(writer, http.StatusBadRequest, "invalid_request", err)
 		return
 	}
 	result, err := Buildings.Preview(server.config.State.ReadOnlyView(), gameData, input)
 	if err != nil {
 		var mismatch Buildings.RevisionMismatchError
 		if errors.As(err, &mismatch) {
-			writeError(writer, http.StatusConflict, "state_revision_mismatch", err.Error())
+			writeErrorFromError(writer, http.StatusConflict, "state_revision_mismatch", err)
 			return
 		}
-		writeError(writer, http.StatusUnprocessableEntity, "building_preview_failed", err.Error())
+		writeErrorFromError(writer, http.StatusUnprocessableEntity, "building_preview_failed", err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, result)
@@ -43,7 +44,7 @@ func (server *Server) handleBuildingPreview(writer http.ResponseWriter, request 
 
 func (server *Server) handleExpansionPreview(writer http.ResponseWriter, request *http.Request) {
 	if server.config.State == nil {
-		writeError(writer, http.StatusServiceUnavailable, "state_unavailable", "Castle state is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "state_unavailable", "Castle state is unavailable", Localization.New("server.api.castle_state_is_unavailable.8e1c92c4", "Castle state is unavailable", nil))
 		return
 	}
 	gameData, ok := server.currentGameData(writer)
@@ -54,17 +55,17 @@ func (server *Server) handleExpansionPreview(writer http.ResponseWriter, request
 	decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, 1<<20))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&input); err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid_request", err.Error())
+		writeErrorFromError(writer, http.StatusBadRequest, "invalid_request", err)
 		return
 	}
 	result, err := Buildings.PreviewExpansion(server.config.State.ReadOnlyView(), gameData, input)
 	if err != nil {
 		var mismatch Buildings.RevisionMismatchError
 		if errors.As(err, &mismatch) {
-			writeError(writer, http.StatusConflict, "state_revision_mismatch", err.Error())
+			writeErrorFromError(writer, http.StatusConflict, "state_revision_mismatch", err)
 			return
 		}
-		writeError(writer, http.StatusUnprocessableEntity, "expansion_preview_failed", err.Error())
+		writeErrorFromError(writer, http.StatusUnprocessableEntity, "expansion_preview_failed", err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, result)
@@ -72,7 +73,7 @@ func (server *Server) handleExpansionPreview(writer http.ResponseWriter, request
 
 func (server *Server) handleBuildingTargetDiff(writer http.ResponseWriter, request *http.Request) {
 	if server.config.State == nil {
-		writeError(writer, http.StatusServiceUnavailable, "state_unavailable", "Castle state is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "state_unavailable", "Castle state is unavailable", Localization.New("server.api.castle_state_is_unavailable.8e1c92c4", "Castle state is unavailable", nil))
 		return
 	}
 	gameData, ok := server.currentGameData(writer)
@@ -83,17 +84,17 @@ func (server *Server) handleBuildingTargetDiff(writer http.ResponseWriter, reque
 	decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, 1<<20))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&input); err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid_request", err.Error())
+		writeErrorFromError(writer, http.StatusBadRequest, "invalid_request", err)
 		return
 	}
 	result, err := Buildings.CompileTargetDiff(server.config.State.ReadOnlyView(), gameData, input)
 	if err != nil {
 		var mismatch Buildings.RevisionMismatchError
 		if errors.As(err, &mismatch) {
-			writeError(writer, http.StatusConflict, "state_revision_mismatch", err.Error())
+			writeErrorFromError(writer, http.StatusConflict, "state_revision_mismatch", err)
 			return
 		}
-		writeError(writer, http.StatusUnprocessableEntity, "building_target_diff_failed", err.Error())
+		writeErrorFromError(writer, http.StatusUnprocessableEntity, "building_target_diff_failed", err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, result)
@@ -101,7 +102,7 @@ func (server *Server) handleBuildingTargetDiff(writer http.ResponseWriter, reque
 
 func (server *Server) handleBuildingTargetCapture(writer http.ResponseWriter, request *http.Request) {
 	if server.config.State == nil {
-		writeError(writer, http.StatusServiceUnavailable, "state_unavailable", "Castle state is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "state_unavailable", "Castle state is unavailable", Localization.New("server.api.castle_state_is_unavailable.8e1c92c4", "Castle state is unavailable", nil))
 		return
 	}
 	gameData, ok := server.currentGameData(writer)
@@ -112,17 +113,17 @@ func (server *Server) handleBuildingTargetCapture(writer http.ResponseWriter, re
 	decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, 1<<20))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&input); err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid_request", err.Error())
+		writeErrorFromError(writer, http.StatusBadRequest, "invalid_request", err)
 		return
 	}
 	result, err := Buildings.CaptureTarget(server.config.State.ReadOnlyView(), gameData, input)
 	if err != nil {
 		var mismatch Buildings.RevisionMismatchError
 		if errors.As(err, &mismatch) {
-			writeError(writer, http.StatusConflict, "state_revision_mismatch", err.Error())
+			writeErrorFromError(writer, http.StatusConflict, "state_revision_mismatch", err)
 			return
 		}
-		writeError(writer, http.StatusUnprocessableEntity, "building_target_capture_failed", err.Error())
+		writeErrorFromError(writer, http.StatusUnprocessableEntity, "building_target_capture_failed", err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, result)
@@ -130,7 +131,7 @@ func (server *Server) handleBuildingTargetCapture(writer http.ResponseWriter, re
 
 func (server *Server) handleBuildingBlueprintDiff(writer http.ResponseWriter, request *http.Request) {
 	if server.config.State == nil {
-		writeError(writer, http.StatusServiceUnavailable, "state_unavailable", "Castle state is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "state_unavailable", "Castle state is unavailable", Localization.New("server.api.castle_state_is_unavailable.8e1c92c4", "Castle state is unavailable", nil))
 		return
 	}
 	gameData, ok := server.currentGameData(writer)
@@ -141,17 +142,17 @@ func (server *Server) handleBuildingBlueprintDiff(writer http.ResponseWriter, re
 	decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, 1<<20))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&input); err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid_request", err.Error())
+		writeErrorFromError(writer, http.StatusBadRequest, "invalid_request", err)
 		return
 	}
 	result, err := Buildings.CompileBlueprintDiff(server.config.State.ReadOnlyView(), gameData, input)
 	if err != nil {
 		var mismatch Buildings.RevisionMismatchError
 		if errors.As(err, &mismatch) {
-			writeError(writer, http.StatusConflict, "state_revision_mismatch", err.Error())
+			writeErrorFromError(writer, http.StatusConflict, "state_revision_mismatch", err)
 			return
 		}
-		writeError(writer, http.StatusUnprocessableEntity, "building_blueprint_diff_failed", err.Error())
+		writeErrorFromError(writer, http.StatusUnprocessableEntity, "building_blueprint_diff_failed", err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, result)
@@ -164,12 +165,12 @@ func (server *Server) handleBuildingCatalog(writer http.ResponseWriter, request 
 	}
 	catalog, err := gameData.BuildingCatalog()
 	if err != nil {
-		writeError(writer, http.StatusServiceUnavailable, "building_catalog_unavailable", err.Error())
+		writeErrorFromError(writer, http.StatusServiceUnavailable, "building_catalog_unavailable", err)
 		return
 	}
 	filter, err := parseBuildingCatalogFilter(request)
 	if err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid_request", err.Error())
+		writeErrorFromError(writer, http.StatusBadRequest, "invalid_request", err)
 		return
 	}
 	definitions := catalog.Definitions()
@@ -220,7 +221,7 @@ func parseBuildingCatalogFilter(request *http.Request) (buildingCatalogFilter, e
 			}
 			id, err := strconv.ParseInt(part, 10, 64)
 			if err != nil || id <= 0 {
-				return buildingCatalogFilter{}, fmt.Errorf("invalid building id %q", part)
+				return buildingCatalogFilter{}, Localization.WithError(fmt.Errorf("invalid building id %q", part), Localization.New("server.api.invalid_building_id_p.cff22953", "invalid building id {p0}", Localization.Params{"p0": fmt.Sprintf("%q", part)}))
 			}
 			filter.ids[id] = struct{}{}
 		}
@@ -299,7 +300,7 @@ func optionalBuildingQueryInt(raw string) (*int64, error) {
 	}
 	value, err := strconv.ParseInt(raw, 10, 64)
 	if err != nil {
-		return nil, fmt.Errorf("invalid integer %q", raw)
+		return nil, Localization.WithError(fmt.Errorf("invalid integer %q", raw), Localization.New("server.api.invalid_integer_p.8a237a81", "invalid integer {p0}", Localization.Params{"p0": fmt.Sprintf("%q", raw)}))
 	}
 	return &value, nil
 }
@@ -311,7 +312,7 @@ func nonNegativeBuildingQueryInt(raw string, fallback int) (int, error) {
 	}
 	value, err := strconv.Atoi(raw)
 	if err != nil || value < 0 {
-		return 0, fmt.Errorf("invalid non-negative integer %q", raw)
+		return 0, Localization.WithError(fmt.Errorf("invalid non-negative integer %q", raw), Localization.New("server.api.invalid_non_negative_integer.acc220c5", "invalid non-negative integer {p0}", Localization.Params{"p0": fmt.Sprintf("%q", raw)}))
 	}
 	return value, nil
 }

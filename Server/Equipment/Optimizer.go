@@ -1,6 +1,7 @@
 package Equipment
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -162,10 +163,10 @@ func Optimize(gameState State.GameState, gameData *GameData.Store, request Optim
 	request.LeaderKind = strings.ToLower(strings.TrimSpace(request.LeaderKind))
 	request.CombatMode = strings.ToLower(strings.TrimSpace(request.CombatMode))
 	if request.CombatMode != "pvp" && request.CombatMode != "pve" {
-		return OptimizeResponse{}, fmt.Errorf("combatMode must be pvp or pve")
+		return OptimizeResponse{}, Localization.WithError(fmt.Errorf("combatMode must be pvp or pve"), Localization.New("server.equipment.combatmode_must_be_pvp.4140c885", "combatMode must be pvp or pve", nil))
 	}
 	if request.ResultCount < 0 {
-		return OptimizeResponse{}, fmt.Errorf("resultCount cannot be negative")
+		return OptimizeResponse{}, Localization.WithError(fmt.Errorf("resultCount cannot be negative"), Localization.New("server.equipment.resultcount_cannot_be_negative.95f2697f", "resultCount cannot be negative", nil))
 	}
 	if request.ResultCount == 0 {
 		request.ResultCount = 1
@@ -175,7 +176,7 @@ func Optimize(gameState State.GameState, gameData *GameData.Store, request Optim
 	}
 	for _, areaTypeID := range request.TargetAreaTypeIDs {
 		if areaTypeID <= 0 {
-			return OptimizeResponse{}, fmt.Errorf("targetAreaTypeIds require positive official area type IDs")
+			return OptimizeResponse{}, Localization.WithError(fmt.Errorf("targetAreaTypeIds require positive official area type IDs"), Localization.New("server.equipment.targetareatypeids_require_positive_official.afe30c77", "targetAreaTypeIds require positive official area type IDs", nil))
 		}
 	}
 	currentEquipment, currentGems, err := currentLeaderLoadout(gameState, request.LeaderKind, request.LeaderID)
@@ -199,7 +200,7 @@ func Optimize(gameState State.GameState, gameData *GameData.Store, request Optim
 		candidates := equipmentBySlot[slot]
 		counts.EquipmentBySlot[strconv.Itoa(slot)] = len(candidates)
 		if slot <= 4 && len(candidates) == 0 {
-			return OptimizeResponse{}, fmt.Errorf("no eligible %s equipment exists for slot %d", request.LeaderKind, slot)
+			return OptimizeResponse{}, Localization.WithError(fmt.Errorf("no eligible %s equipment exists for slot %d", request.LeaderKind, slot), Localization.New("server.equipment.no_eligible_p_equipment.4934ad8d", "no eligible {p0} equipment exists for slot {p1}", Localization.Params{"p0": fmt.Sprintf("%s", request.LeaderKind), "p1": slot}))
 		}
 	}
 
@@ -218,7 +219,7 @@ func Optimize(gameState State.GameState, gameData *GameData.Store, request Optim
 		)...)
 	}
 	if len(beam) == 0 {
-		return OptimizeResponse{}, fmt.Errorf("equipment optimizer found no valid loadout")
+		return OptimizeResponse{}, Localization.WithError(fmt.Errorf("equipment optimizer found no valid loadout"), Localization.New("server.equipment.equipment_optimizer_found_no.3f49c64a", "equipment optimizer found no valid loadout", nil))
 	}
 	sort.Slice(beam, func(left, right int) bool { return betterLoadout(beam[left], beam[right]) })
 	alternatives := make([]Loadout, 0, request.ResultCount)
@@ -253,7 +254,7 @@ func Optimize(gameState State.GameState, gameData *GameData.Store, request Optim
 		evaluated = append(evaluated, evaluatedCandidate{loadout: loadout, key: semanticOutcomeKey(loadout.Effects)})
 	}
 	if len(evaluated) == 0 {
-		return OptimizeResponse{}, fmt.Errorf("equipment optimizer found no distinct loadout")
+		return OptimizeResponse{}, Localization.WithError(fmt.Errorf("equipment optimizer found no distinct loadout"), Localization.New("server.equipment.equipment_optimizer_found_no.d5319520", "equipment optimizer found no distinct loadout", nil))
 	}
 	// Collapse exact effective outcomes first. A cheaper trusted quote wins;
 	// equal-cost outcomes retain the optimizer's deterministic assignment order.
@@ -337,7 +338,7 @@ func SnapshotFingerprint(gameState State.GameState, gameData *GameData.Store, ki
 	kind = strings.ToLower(strings.TrimSpace(kind))
 	combatMode = strings.ToLower(strings.TrimSpace(combatMode))
 	if combatMode != "pvp" && combatMode != "pve" {
-		return "", fmt.Errorf("combatMode must be pvp or pve")
+		return "", Localization.WithError(fmt.Errorf("combatMode must be pvp or pve"), Localization.New("server.equipment.combatmode_must_be_pvp.4140c885", "combatMode must be pvp or pve", nil))
 	}
 	equipment, gems, err := currentLeaderLoadout(gameState, kind, leaderID)
 	if err != nil {
@@ -461,23 +462,23 @@ func currentLeaderLoadout(gameState State.GameState, kind string, id int64) (map
 	case "commander":
 		leader, ok := gameState.Commanders[State.CommanderID(id)]
 		if !ok {
-			return nil, nil, fmt.Errorf("commander %d is not in current state", id)
+			return nil, nil, Localization.WithError(fmt.Errorf("commander %d is not in current state", id), Localization.New("server.equipment.commander_p_is_not.7a3d451e", "commander {p0} is not in current state", Localization.Params{"p0": fmt.Sprintf("%d", id)}))
 		}
 		return cloneMap(leader.Equipment), cloneMap(leader.Gems), nil
 	case "castellan":
 		leader, ok := gameState.Castellans[State.CastellanID(id)]
 		if !ok {
-			return nil, nil, fmt.Errorf("castellan %d is not in current state", id)
+			return nil, nil, Localization.WithError(fmt.Errorf("castellan %d is not in current state", id), Localization.New("server.equipment.castellan_p_is_not.cce883a3", "castellan {p0} is not in current state", Localization.Params{"p0": fmt.Sprintf("%d", id)}))
 		}
 		return cloneMap(leader.Equipment), cloneMap(leader.Gems), nil
 	default:
-		return nil, nil, fmt.Errorf("leaderKind must be commander or castellan")
+		return nil, nil, Localization.WithError(fmt.Errorf("leaderKind must be commander or castellan"), Localization.New("server.equipment.leaderkind_must_be_commander.eb1dcd4c", "leaderKind must be commander or castellan", nil))
 	}
 }
 
 func preparePriorities(gameData *GameData.Store, input []Priority) ([]weightedPriority, error) {
 	if len(input) == 0 {
-		return nil, fmt.Errorf("at least one effect priority is required")
+		return nil, Localization.WithError(fmt.Errorf("at least one effect priority is required"), Localization.New("server.equipment.at_least_one_effect.158e0ea8", "at least one effect priority is required", nil))
 	}
 	seen := map[int64]struct{}{}
 	result := make([]weightedPriority, 0, len(input))
@@ -487,14 +488,14 @@ func preparePriorities(gameData *GameData.Store, input []Priority) ([]weightedPr
 	}
 	for _, priority := range input {
 		if priority.EffectID <= 0 || priority.Tier < 1 || priority.Tier > 2 || priority.Position < 0 {
-			return nil, fmt.Errorf("effect priorities require a positive effectId, tier 1 or 2, and non-negative position")
+			return nil, Localization.WithError(fmt.Errorf("effect priorities require a positive effectId, tier 1 or 2, and non-negative position"), Localization.New("server.equipment.effect_priorities_require_a.c4166362", "effect priorities require a positive effectId, tier 1 or 2, and non-negative position", nil))
 		}
 		if _, duplicate := seen[priority.EffectID]; duplicate {
-			return nil, fmt.Errorf("effect %d appears more than once", priority.EffectID)
+			return nil, Localization.WithError(fmt.Errorf("effect %d appears more than once", priority.EffectID), Localization.New("server.equipment.effect_p_appears_more.f46787a0", "effect {p0} appears more than once", Localization.Params{"p0": fmt.Sprintf("%d", priority.EffectID)}))
 		}
 		if effects != nil {
 			if _, found := effects.Find(strconv.FormatInt(priority.EffectID, 10)); !found {
-				return nil, fmt.Errorf("effect %d is not in the official effect catalog", priority.EffectID)
+				return nil, Localization.WithError(fmt.Errorf("effect %d is not in the official effect catalog", priority.EffectID), Localization.New("server.equipment.effect_p_is_not.8474b873", "effect {p0} is not in the official effect catalog", Localization.Params{"p0": fmt.Sprintf("%d", priority.EffectID)}))
 			}
 		}
 		seen[priority.EffectID] = struct{}{}

@@ -1,6 +1,7 @@
 package App
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"fmt"
 
 	"CitadelDesktop/Server/GameData"
@@ -14,7 +15,7 @@ func validateHorseTravelBoostID(value int) error {
 	case 0, -1, 1007, 1008, 1009:
 		return nil
 	default:
-		return fmt.Errorf("horseTravelBoostId must be -1, 1007, 1008, or 1009")
+		return Localization.WithError(fmt.Errorf("horseTravelBoostId must be -1, 1007, 1008, or 1009"), Localization.New("server.app.horsetravelboostid_must_be_or.12adeec0", "horseTravelBoostId must be -1, 1007, 1008, or 1009", nil))
 	}
 }
 
@@ -68,7 +69,7 @@ func applyCastleHorseTravelBoost(
 	value int,
 ) error {
 	if body == nil {
-		return fmt.Errorf("attack body is unavailable")
+		return Localization.WithError(fmt.Errorf("attack body is unavailable"), Localization.New("server.app.attack_body_is_unavailable.3cdf3bc4", "attack body is unavailable", nil))
 	}
 	booster, premiumTravel, err := resolveCastleHorseTravelBoostFields(gameData, castle, value)
 	if err != nil {

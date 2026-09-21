@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -75,17 +76,17 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 	settings.PresetID = strings.TrimSpace(settings.PresetID)
 	settings.FortifyCurrency = strings.ToUpper(strings.TrimSpace(settings.FortifyCurrency))
 	if !configured {
-		return invasionWaiting(snapshot.Now, "Auto Invasion is not configured"), nil
+		return invasionWaiting(snapshot.Now, "Auto Invasion is not configured", Localization.New("server.automation.auto_invasion_is_not.5eb32da0", "Auto Invasion is not configured", nil)), nil
 	}
 	if settings.SourceCastleID <= 0 || settings.PresetID == "" || settings.ScoreTarget <= 0 ||
 		settings.ForeignLordsDifficultyID <= 0 || settings.BloodcrowDifficultyID <= 0 {
-		return invasionWaiting(snapshot.Now, "Choose a source castle, attack preset, both event difficulties, and score target"), nil
+		return invasionWaiting(snapshot.Now, "Choose a source castle, attack preset, both event difficulties, and score target", Localization.New("server.automation.choose_a_source_castle.fe007d8d", "Choose a source castle, attack preset, both event difficulties, and score target", nil)), nil
 	}
 	if !validAutoInvasionFortifyCurrency(settings.FortifyCurrency) {
-		return invasionWaiting(snapshot.Now, "Choose a supported Auto Invasion fortification currency"), nil
+		return invasionWaiting(snapshot.Now, "Choose a supported Auto Invasion fortification currency", Localization.New("server.automation.choose_a_supported_auto.78044c80", "Choose a supported Auto Invasion fortification currency", nil)), nil
 	}
 	if !validHorseTravelBoostID(settings.HorseTravelBoostID) {
-		return invasionWaiting(snapshot.Now, "Choose a supported horse travel boost"), nil
+		return invasionWaiting(snapshot.Now, "Choose a supported horse travel boost", Localization.New("server.automation.choose_a_supported_horse.0d7016a8", "Choose a supported horse travel boost", nil)), nil
 	}
 	if refresh, required := playerProtectionRefreshDecision(snapshot); required {
 		return refresh, nil
@@ -97,7 +98,7 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 	}()
 	if snapshot.State.Player.ProtectionMode.PreparingOrActive(snapshot.Now) {
 		return Decision{
-			Status: "protected", Detail: "Protection Mode is preparing or active; Auto Invasion attacks are paused",
+			Status: "protected", Detail: "Protection Mode is preparing or active; Auto Invasion attacks are paused", DetailDescriptor: Localization.New("server.automation.protection_mode_is_preparing.b5f40423", "Protection Mode is preparing or active; Auto Invasion attacks are paused", nil),
 			NextCheckAt: snapshot.State.Player.ProtectionMode.Until().Add(time.Second),
 		}, nil
 	}
@@ -109,7 +110,7 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 		); locked {
 			return decision, nil
 		}
-		return invasionWaiting(snapshot.Now, "No scalable invasion event is active"), nil
+		return invasionWaiting(snapshot.Now, "No scalable invasion event is active", Localization.New("server.automation.no_scalable_invasion_event.24653418", "No scalable invasion event is active", nil)), nil
 	}
 	targetTypeID, supported := invasionTargetType(score.EventID)
 	if !supported {
@@ -118,14 +119,14 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 		); locked {
 			return decision, nil
 		}
-		return invasionWaiting(snapshot.Now, "Auto Invasion supports Foreign Lords and Bloodcrow"), nil
+		return invasionWaiting(snapshot.Now, "Auto Invasion supports Foreign Lords and Bloodcrow", Localization.New("server.automation.auto_invasion_supports_foreign.3a357c27", "Auto Invasion supports Foreign Lords and Bloodcrow", nil)), nil
 	}
 	source, exists := snapshot.State.Castles[settings.SourceCastleID]
 	if !exists {
-		return invasionWaiting(snapshot.Now, fmt.Sprintf("Source castle %d is unavailable", settings.SourceCastleID)), nil
+		return invasionWaiting(snapshot.Now, fmt.Sprintf("Source castle %d is unavailable", settings.SourceCastleID), Localization.New("server.automation.source_castle_p_is.10eb5b8b", "Source castle {p0} is unavailable", Localization.Params{"p0": fmt.Sprintf("%d", settings.SourceCastleID)})), nil
 	}
 	if source.KingdomID != 0 {
-		return invasionWaiting(snapshot.Now, "Foreign Lords and Bloodcrow attacks require a Great Empire castle"), nil
+		return invasionWaiting(snapshot.Now, "Foreign Lords and Bloodcrow attacks require a Great Empire castle", Localization.New("server.automation.foreign_lords_and_bloodcrow.068958aa", "Foreign Lords and Bloodcrow attacks require a Great Empire castle", nil)), nil
 	}
 	activeTargets := activeInvasionTargets(snapshot.State, targetTypeID, snapshot.Now)
 	activeCount := activeInvasionAttackCount(snapshot.State, source.ID, targetTypeID, snapshot.Now)
@@ -140,44 +141,44 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 		snapshot.State.Invasion.FortifyCurrencies,
 	)
 	if !fortifyCurrencyValid {
-		return invasionWaiting(snapshot.Now, "The selected fortification currency is not valid for the active invasion event"), nil
+		return invasionWaiting(snapshot.Now, "The selected fortification currency is not valid for the active invasion event", Localization.New("server.automation.the_selected_fortification_currency.9a870291", "The selected fortification currency is not valid for the active invasion event", nil)), nil
 	}
 	if fortifyCurrency != "" && fortifyCurrency != "C2" && len(snapshot.State.Invasion.FortifyCurrencies) > 0 &&
 		!snapshot.State.Invasion.SupportsFortifyCurrency(fortifyCurrency) {
 		return invasionWaiting(snapshot.Now, fmt.Sprintf(
 			"The active invasion event does not offer %s for fortification; available currencies: %s",
 			fortifyCurrency, strings.Join(snapshot.State.Invasion.FortifyCurrencies, ", "),
-		)), nil
+		), Localization.New("server.automation.the_active_invasion_event.0ff8bdf7", "The active invasion event does not offer {p0} for fortification; available currencies: {p1}", Localization.Params{"p0": fmt.Sprintf("%s", fortifyCurrency), "p1": fmt.Sprintf("%s", strings.Join(snapshot.State.Invasion.FortifyCurrencies, ", "))})), nil
 	}
 	difficultyID := configuredInvasionDifficulty(settings, score.EventID)
 	if snapshot.GameData == nil {
-		return invasionWaiting(snapshot.Now, "Official event difficulty data is unavailable"), nil
+		return invasionWaiting(snapshot.Now, "Official event difficulty data is unavailable", Localization.New("server.automation.official_event_difficulty_data.3201c06f", "Official event difficulty data is unavailable", nil)), nil
 	}
 	difficulty, valid := snapshot.GameData.ScalableEvent(score.EventID, difficultyID)
 	if !valid {
-		return invasionWaiting(snapshot.Now, fmt.Sprintf("Difficulty %d is not valid for event %d", difficultyID, score.EventID)), nil
+		return invasionWaiting(snapshot.Now, fmt.Sprintf("Difficulty %d is not valid for event %d", difficultyID, score.EventID), Localization.New("server.automation.difficulty_p_is_not.f22bcf4d", "Difficulty {p0} is not valid for event {p1}", Localization.Params{"p0": fmt.Sprintf("%d", difficultyID), "p1": fmt.Sprintf("%d", score.EventID)})), nil
 	}
 	if difficulty.IsLocked && (difficulty.UnlockAchievementID <= 0 || !snapshot.State.Player.Achievements.Completed[difficulty.UnlockAchievementID]) {
-		return invasionWaiting(snapshot.Now, fmt.Sprintf("Difficulty %d is not unlocked by this player's achievements", difficultyID)), nil
+		return invasionWaiting(snapshot.Now, fmt.Sprintf("Difficulty %d is not unlocked by this player's achievements", difficultyID), Localization.New("server.automation.difficulty_p_is_not.5a798be9", "Difficulty {p0} is not unlocked by this player's achievements", Localization.Params{"p0": fmt.Sprintf("%d", difficultyID)})), nil
 	}
 	if score.DifficultyID <= 0 {
 		arguments, _ := json.Marshal(map[string]any{"eventId": score.EventID, "difficultyId": difficultyID})
 		return Decision{
-			Status: "ready", Detail: fmt.Sprintf("Select difficulty %d for the active invasion event", difficultyID),
+			Status: "ready", Detail: fmt.Sprintf("Select difficulty %d for the active invasion event", difficultyID), DetailDescriptor: Localization.New("server.automation.select_difficulty_p_for.0a30c0c6", "Select difficulty {p0} for the active invasion event", Localization.Params{"p0": fmt.Sprintf("%d", difficultyID)}),
 			NextCheckAt: snapshot.Now.Add(2 * time.Second),
 			Request:     &Intent.Request{Name: "invasion.difficulty.select", Arguments: arguments}, ReevaluateOnSuccess: true,
 		}, nil
 	}
 	if score.PlayerScore >= settings.ScoreTarget {
 		return Decision{
-			Status: "complete", Detail: fmt.Sprintf("Score target reached: %d / %d", score.PlayerScore, settings.ScoreTarget),
+			Status: "complete", Detail: fmt.Sprintf("Score target reached: %d / %d", score.PlayerScore, settings.ScoreTarget), DetailDescriptor: Localization.New("server.automation.score_target_reached_p.31fd0a58", "Score target reached: {p0} / {p1}", Localization.Params{"p0": score.PlayerScore, "p1": settings.ScoreTarget}),
 			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)),
 			Metrics:     metrics,
 		}, nil
 	}
 	if remaining := invasionEventRemaining(score, snapshot.Now); remaining >= 0 && remaining <= max(0, settings.MinimumRemainingSec) {
 		return Decision{
-			Status: "idle", Detail: fmt.Sprintf("Event has %d seconds remaining; no new attacks will launch", remaining),
+			Status: "idle", Detail: fmt.Sprintf("Event has %d seconds remaining; no new attacks will launch", remaining), DetailDescriptor: Localization.New("server.automation.event_has_p_seconds.78b2a478", "Event has {p0} seconds remaining; no new attacks will launch", Localization.Params{"p0": remaining}),
 			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)), Metrics: metrics,
 		}, nil
 	}
@@ -187,7 +188,7 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 	}
 	preset, exists := AttackPresets.Find(document, settings.PresetID)
 	if !exists {
-		return invasionWaiting(snapshot.Now, "The selected CitadelOps attack preset no longer exists"), nil
+		return invasionWaiting(snapshot.Now, "The selected CitadelOps attack preset no longer exists", Localization.New("server.automation.the_selected_citadelops_attack.d5cd76cc", "The selected CitadelOps attack preset no longer exists", nil)), nil
 	}
 	if _, blocked := dailyAttackLimitAllowance(
 		snapshot, settings.DailyAttackLimit, policyInterval(settings.CheckIntervalSec, 30), metrics,
@@ -201,18 +202,20 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 	)
 	if commandersRestricted && len(commanderIDs) == 0 {
 		return Decision{
-			Status: "waiting", Detail: "No commanders are assigned to Auto Invasion",
+			Status: "waiting", Detail: "No commanders are assigned to Auto Invasion", DetailDescriptor: Localization.New("server.automation.no_commanders_are_assigned.3e8b0a3b", "No commanders are assigned to Auto Invasion", nil),
 			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)), Metrics: metrics,
 		}, nil
 	}
 	commanderID, commanderAvailable := nextAvailableFeatureCommander(snapshot.State, commanderIDs, commandersRestricted, snapshot.Now)
 	if !commanderAvailable {
 		detail := "No commander is currently available"
+		var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.no_commander_is_currently.25dd6b1e", "No commander is currently available", nil)
 		if commandersRestricted {
 			detail = "No assigned Auto Invasion commander is currently available"
+			detailLocalizationMessage = Localization.New("server.automation.no_assigned_auto_invasion.21562583", "No assigned Auto Invasion commander is currently available", nil)
 		}
 		return Decision{
-			Status: "waiting", Detail: detail,
+			Status: "waiting", Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage),
 			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)), Metrics: metrics,
 		}, nil
 	}
@@ -238,7 +241,7 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 			nextScan = snapshot.Now.Add(2 * time.Second)
 		}
 		return Decision{
-			Status: "idle", Detail: "No eligible invasion castle is available in the latest map scan",
+			Status: "idle", Detail: "No eligible invasion castle is available in the latest map scan", DetailDescriptor: Localization.New("server.automation.no_eligible_invasion_castle.f571e02c", "No eligible invasion castle is available in the latest map scan", nil),
 			NextCheckAt: nextScan, Metrics: metrics,
 		}, nil
 	}
@@ -264,8 +267,8 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 					"bounds": bounds,
 				})
 				return Decision{
-					Status:      "ready",
-					Detail:      fmt.Sprintf("Refresh invasion target %d:%d to confirm attack availability", target.X, target.Y),
+					Status: "ready",
+					Detail: fmt.Sprintf("Refresh invasion target %d:%d to confirm attack availability", target.X, target.Y), DetailDescriptor: Localization.New("server.automation.refresh_invasion_target_p.9c2fb5b0", "Refresh invasion target {p0}:{p1} to confirm attack availability", Localization.Params{"p0": target.X, "p1": target.Y}),
 					NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
 					Request:             &Intent.Request{Name: "invasion.map.scan", Arguments: arguments},
 					ReevaluateOnSuccess: true,
@@ -280,7 +283,7 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 			Detail: fmt.Sprintf(
 				"No attackable invasion castle is available: %d moving, %d reserved, %d settling, %d hidden or protected, %d awaiting confirmation",
 				blocked.busy, blocked.reserved, blocked.settling, blocked.unavailable, blocked.unconfirmed,
-			),
+			), DetailDescriptor: Localization.New("server.automation.no_attackable_invasion_castle.869ecd1c", "No attackable invasion castle is available: {p0} moving, {p1} reserved, {p2} settling, {p3} hidden or protected, {p4} awaiting confirmation", Localization.Params{"p0": blocked.busy, "p1": blocked.reserved, "p2": blocked.settling, "p3": blocked.unavailable, "p4": blocked.unconfirmed}),
 			NextCheckAt: nextCheck, Metrics: metrics,
 		}, nil
 	}
@@ -311,7 +314,7 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 			return decision, nil
 		}
 		return Decision{
-			Status: "waiting", Detail: fmt.Sprintf("Cannot calculate %s inventory requirements: %v", preset.Name, err),
+			Status: "waiting", Detail: fmt.Sprintf("Cannot calculate %s inventory requirements: %v", preset.Name, err), DetailDescriptor: Localization.New("server.automation.cannot_calculate_p_inventory.bb3a1f4b", "Cannot calculate {p0} inventory requirements: {p1}", Localization.Params{"p0": fmt.Sprintf("%s", preset.Name), "p1": fmt.Sprintf("%v", err)}),
 			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)), Metrics: metrics,
 		}, nil
 	} else if found {
@@ -339,7 +342,7 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 	}
 	arguments, _ := json.Marshal(attackArguments)
 	return Decision{
-		Status: "ready", Detail: fmt.Sprintf("Attack invasion castle %d:%d with %s", target.X, target.Y, preset.Name),
+		Status: "ready", Detail: fmt.Sprintf("Attack invasion castle %d:%d with %s", target.X, target.Y, preset.Name), DetailDescriptor: Localization.New("server.automation.attack_invasion_castle_p.277212dd", "Attack invasion castle {p0}:{p1} with {p2}", Localization.Params{"p0": target.X, "p1": target.Y, "p2": fmt.Sprintf("%s", preset.Name)}),
 		NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
 		Request:             &Intent.Request{Name: "invasion.attack", Arguments: arguments},
 		ReevaluateOnSuccess: true, ReevaluateOnStale: true,
@@ -395,8 +398,8 @@ func configuredInvasionDifficulty(settings autoInvasionSettings, eventID int64) 
 	}
 }
 
-func invasionWaiting(now time.Time, detail string) Decision {
-	return Decision{Status: "waiting", Detail: detail, NextCheckAt: now.Add(30 * time.Second)}
+func invasionWaiting(now time.Time, detail string, descriptors ...*Localization.Message) Decision {
+	return Decision{Status: "waiting", Detail: detail, DetailDescriptor: Localization.First(descriptors), NextCheckAt: now.Add(30 * time.Second)}
 }
 
 func invasionTargetType(eventID int64) (int, bool) {
@@ -615,8 +618,8 @@ func invasionReservationReconciliationDecision(snapshot Snapshot, preferred Stat
 		arguments["matchedMovementId"] = movementID
 		encoded, _ := json.Marshal(arguments)
 		return Decision{
-			Status:              "ready",
-			Detail:              fmt.Sprintf("Record confirmed invasion launch at %d:%d", reservation.X, reservation.Y),
+			Status: "ready",
+			Detail: fmt.Sprintf("Record confirmed invasion launch at %d:%d", reservation.X, reservation.Y), DetailDescriptor: Localization.New("server.automation.record_confirmed_invasion_launch.29428d42", "Record confirmed invasion launch at {p0}:{p1}", Localization.Params{"p0": reservation.X, "p1": reservation.Y}),
 			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 			Metrics:             map[string]float64{"unresolvedLaunches": 1, "confirmedLaunches": 1},
 			Request:             &Intent.Request{Name: "invasion.target.reconcile", Arguments: encoded},
@@ -630,7 +633,7 @@ func invasionReservationReconciliationDecision(snapshot Snapshot, preferred Stat
 		return Decision{
 			Status: "ready", Detail: fmt.Sprintf(
 				"Release prior-occurrence invasion reservation at %d:%d", reservation.X, reservation.Y,
-			),
+			), DetailDescriptor: Localization.New("server.automation.release_prior_occurrence_invasion.458dec77", "Release prior-occurrence invasion reservation at {p0}:{p1}", Localization.Params{"p0": reservation.X, "p1": reservation.Y}),
 			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 			Metrics:             map[string]float64{"unresolvedLaunches": 1, "priorOccurrenceReservations": 1},
 			Request:             &Intent.Request{Name: "invasion.target.reconcile", Arguments: encoded},
@@ -658,15 +661,15 @@ func invasionReservationReconciliationDecision(snapshot Snapshot, preferred Stat
 			Status: "waiting", Detail: fmt.Sprintf(
 				"Cannot reconcile unresolved invasion launch at %d:%d without a castle in kingdom %d",
 				reservation.X, reservation.Y, reservation.KingdomID,
-			),
+			), DetailDescriptor: Localization.New("server.automation.cannot_reconcile_unresolved_invasion.5e592b81", "Cannot reconcile unresolved invasion launch at {p0}:{p1} without a castle in kingdom {p2}", Localization.Params{"p0": reservation.X, "p1": reservation.Y, "p2": fmt.Sprintf("%d", reservation.KingdomID)}),
 			NextCheckAt: snapshot.Now.Add(30 * time.Second),
 		}, true
 	}
 	arguments["sourceCastleId"] = source.ID
 	encoded, _ := json.Marshal(arguments)
 	return Decision{
-		Status:              "ready",
-		Detail:              fmt.Sprintf("Reconcile unresolved invasion launch at %d:%d", reservation.X, reservation.Y),
+		Status: "ready",
+		Detail: fmt.Sprintf("Reconcile unresolved invasion launch at %d:%d", reservation.X, reservation.Y), DetailDescriptor: Localization.New("server.automation.reconcile_unresolved_invasion_launch.bad17167", "Reconcile unresolved invasion launch at {p0}:{p1}", Localization.Params{"p0": reservation.X, "p1": reservation.Y}),
 		NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 		Metrics:             map[string]float64{"unresolvedLaunches": 1},
 		Request:             &Intent.Request{Name: "invasion.target.reconcile", Arguments: encoded},

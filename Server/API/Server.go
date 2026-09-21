@@ -1,6 +1,7 @@
 package API
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -189,12 +190,12 @@ func (server *Server) handleGameServers(writer http.ResponseWriter, _ *http.Requ
 func (server *Server) handleBackgroundLoginStatus(writer http.ResponseWriter, _ *http.Request) {
 	writer.Header().Set("Cache-Control", "no-store")
 	if server.config.BackgroundLogin == nil {
-		writeError(writer, http.StatusServiceUnavailable, "background_login_unavailable", "Background login storage is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "background_login_unavailable", "Background login storage is unavailable", Localization.New("server.api.background_login_storage_is.d6340485", "Background login storage is unavailable", nil))
 		return
 	}
 	status, err := server.config.BackgroundLogin.Status()
 	if err != nil {
-		writeError(writer, http.StatusInternalServerError, "background_login_unavailable", err.Error())
+		writeErrorFromError(writer, http.StatusInternalServerError, "background_login_unavailable", err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, status)
@@ -207,36 +208,36 @@ func (server *Server) handleBackgroundLoginConfigure(writer http.ResponseWriter,
 			writer,
 			http.StatusForbidden,
 			"background_login_managed",
-			"Background login is managed by the hosted account control plane",
+			"Background login is managed by the hosted account control plane", Localization.New("server.api.background_login_is_managed.46171e28", "Background login is managed by the hosted account control plane", nil),
 		)
 		return
 	}
 	if !server.originAllowed(request) {
-		writeError(writer, http.StatusForbidden, "origin_not_allowed", "Background login can only be configured from the local CitadelOps application")
+		writeError(writer, http.StatusForbidden, "origin_not_allowed", "Background login can only be configured from the local CitadelOps application", Localization.New("server.api.background_login_can_only.07face08", "Background login can only be configured from the local CitadelOps application", nil))
 		return
 	}
 	if !strings.HasPrefix(strings.ToLower(strings.TrimSpace(request.Header.Get("Content-Type"))), "application/json") {
-		writeError(writer, http.StatusUnsupportedMediaType, "content_type_not_supported", "Background login requires an application/json request")
+		writeError(writer, http.StatusUnsupportedMediaType, "content_type_not_supported", "Background login requires an application/json request", Localization.New("server.api.background_login_requires_an.0f0563fe", "Background login requires an application/json request", nil))
 		return
 	}
 	if server.config.BackgroundLogin == nil {
-		writeError(writer, http.StatusServiceUnavailable, "background_login_unavailable", "Background login storage is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "background_login_unavailable", "Background login storage is unavailable", Localization.New("server.api.background_login_storage_is.d6340485", "Background login storage is unavailable", nil))
 		return
 	}
 	var input Session.BackgroundLoginInput
 	decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, 32<<10))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&input); err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid_request", err.Error())
+		writeErrorFromError(writer, http.StatusBadRequest, "invalid_request", err)
 		return
 	}
 	if err := decoder.Decode(&struct{}{}); err != io.EOF {
-		writeError(writer, http.StatusBadRequest, "invalid_request", "Background login requires exactly one JSON object")
+		writeError(writer, http.StatusBadRequest, "invalid_request", "Background login requires exactly one JSON object", Localization.New("server.api.background_login_requires_exactly.1b4110aa", "Background login requires exactly one JSON object", nil))
 		return
 	}
 	status, err := server.config.BackgroundLogin.Configure(input)
 	if err != nil {
-		writeError(writer, http.StatusUnprocessableEntity, "background_login_invalid", err.Error())
+		writeErrorFromError(writer, http.StatusUnprocessableEntity, "background_login_invalid", err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, status)
@@ -244,7 +245,7 @@ func (server *Server) handleBackgroundLoginConfigure(writer http.ResponseWriter,
 
 func (server *Server) handleConfiguration(writer http.ResponseWriter, _ *http.Request) {
 	if server.config.Configuration == nil {
-		writeError(writer, http.StatusServiceUnavailable, "configuration_unavailable", "Configuration store is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "configuration_unavailable", "Configuration store is unavailable", Localization.New("server.api.configuration_store_is_unavailable.623f75fa", "Configuration store is unavailable", nil))
 		return
 	}
 	writer.Header().Set("Cache-Control", "no-store")
@@ -253,13 +254,13 @@ func (server *Server) handleConfiguration(writer http.ResponseWriter, _ *http.Re
 
 func (server *Server) handleConfigurationSection(writer http.ResponseWriter, request *http.Request) {
 	if server.config.Configuration == nil {
-		writeError(writer, http.StatusServiceUnavailable, "configuration_unavailable", "Configuration store is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "configuration_unavailable", "Configuration store is unavailable", Localization.New("server.api.configuration_store_is_unavailable.623f75fa", "Configuration store is unavailable", nil))
 		return
 	}
 	section := request.PathValue("section")
 	value, ok := server.config.Configuration.Section(section)
 	if !ok {
-		writeError(writer, http.StatusNotFound, "configuration_section_not_found", fmt.Sprintf("Configuration section %q was not found", section))
+		writeError(writer, http.StatusNotFound, "configuration_section_not_found", fmt.Sprintf("Configuration section %q was not found", section), Localization.New("server.api.configuration_section_p_was.0f11f875", "Configuration section {p0} was not found", Localization.Params{"p0": fmt.Sprintf("%q", section)}))
 		return
 	}
 	snapshot := server.config.Configuration.Snapshot()
@@ -323,7 +324,7 @@ func (server *Server) handleHealth(writer http.ResponseWriter, _ *http.Request) 
 
 func (server *Server) handleState(writer http.ResponseWriter, _ *http.Request) {
 	if server.config.State == nil {
-		writeError(writer, http.StatusServiceUnavailable, "state_unavailable", "State store is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "state_unavailable", "State store is unavailable", Localization.New("server.api.state_store_is_unavailable.e4a65fe1", "State store is unavailable", nil))
 		return
 	}
 	writeJSON(writer, http.StatusOK, State.NewClientStateSnapshot(server.config.State.ReadOnlyView()))
@@ -352,13 +353,13 @@ func (server *Server) handleGameDataCollection(writer http.ResponseWriter, reque
 	name := request.PathValue("collection")
 	catalog, err := store.Catalog(name)
 	if err != nil {
-		writeError(writer, http.StatusNotFound, "catalog_not_found", err.Error())
+		writeErrorFromError(writer, http.StatusNotFound, "catalog_not_found", err)
 		return
 	}
 	if id := strings.TrimSpace(request.URL.Query().Get("id")); id != "" {
 		item, found := catalog.Find(id)
 		if !found {
-			writeError(writer, http.StatusNotFound, "item_not_found", fmt.Sprintf("No %s item has id %s", name, id))
+			writeError(writer, http.StatusNotFound, "item_not_found", fmt.Sprintf("No %s item has id %s", name, id), Localization.New("server.api.no_p_item_has.9f0c9501", "No {p0} item has id {p1}", Localization.Params{"p0": fmt.Sprintf("%s", name), "p1": fmt.Sprintf("%s", id)}))
 			return
 		}
 		writeJSON(writer, http.StatusOK, struct {
@@ -378,7 +379,7 @@ func (server *Server) handleGameDataCollection(writer http.ResponseWriter, reque
 
 func (server *Server) handleIntentDefinitions(writer http.ResponseWriter, _ *http.Request) {
 	if server.config.Intents == nil {
-		writeError(writer, http.StatusServiceUnavailable, "intents_unavailable", "Intent engine is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "intents_unavailable", "Intent engine is unavailable", Localization.New("server.api.intent_engine_is_unavailable.1b08a55c", "Intent engine is unavailable", nil))
 		return
 	}
 	writeJSON(writer, http.StatusOK, server.config.Intents.Registry().Definitions())
@@ -386,12 +387,12 @@ func (server *Server) handleIntentDefinitions(writer http.ResponseWriter, _ *htt
 
 func (server *Server) handleLocalization(writer http.ResponseWriter, request *http.Request) {
 	if server.config.GameData == nil {
-		writeError(writer, http.StatusServiceUnavailable, "game_data_unavailable", "Official game data is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "game_data_unavailable", "Official game data is unavailable", Localization.New("server.api.official_game_data_is.c5e55e7e", "Official game data is unavailable", nil))
 		return
 	}
 	language, ready := server.config.GameData.Language()
 	if !ready {
-		writeError(writer, http.StatusServiceUnavailable, "language_unavailable", "Official language data is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "language_unavailable", "Official language data is unavailable", Localization.New("server.api.official_language_data_is.803160d4", "Official language data is unavailable", nil))
 		return
 	}
 	var input struct {
@@ -400,11 +401,11 @@ func (server *Server) handleLocalization(writer http.ResponseWriter, request *ht
 	decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, 1<<20))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&input); err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid_request", err.Error())
+		writeErrorFromError(writer, http.StatusBadRequest, "invalid_request", err)
 		return
 	}
 	if len(input.Keys) > 5000 {
-		writeError(writer, http.StatusRequestEntityTooLarge, "too_many_keys", "At most 5000 language keys may be resolved at once")
+		writeError(writer, http.StatusRequestEntityTooLarge, "too_many_keys", "At most 5000 language keys may be resolved at once", Localization.New("server.api.at_most_language_keys.6651516a", "At most 5000 language keys may be resolved at once", nil))
 		return
 	}
 	writeJSON(writer, http.StatusOK, map[string]any{
@@ -415,14 +416,14 @@ func (server *Server) handleLocalization(writer http.ResponseWriter, request *ht
 
 func (server *Server) handleIntentSubmit(writer http.ResponseWriter, request *http.Request) {
 	if server.config.Intents == nil {
-		writeError(writer, http.StatusServiceUnavailable, "intents_unavailable", "Intent engine is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "intents_unavailable", "Intent engine is unavailable", Localization.New("server.api.intent_engine_is_unavailable.1b08a55c", "Intent engine is unavailable", nil))
 		return
 	}
 	var intentRequest Intent.Request
 	decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, 1<<20))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&intentRequest); err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid_request", err.Error())
+		writeErrorFromError(writer, http.StatusBadRequest, "invalid_request", err)
 		return
 	}
 	intentRequest.Name = request.PathValue("name")
@@ -462,12 +463,12 @@ func waitRequested(request *http.Request) bool {
 
 func (server *Server) handleOperation(writer http.ResponseWriter, request *http.Request) {
 	if server.config.Intents == nil {
-		writeError(writer, http.StatusServiceUnavailable, "intents_unavailable", "Intent engine is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "intents_unavailable", "Intent engine is unavailable", Localization.New("server.api.intent_engine_is_unavailable.1b08a55c", "Intent engine is unavailable", nil))
 		return
 	}
 	receipt, ok := server.config.Intents.Operation(request.PathValue("id"))
 	if !ok {
-		writeError(writer, http.StatusNotFound, "operation_not_found", "Operation was not found")
+		writeError(writer, http.StatusNotFound, "operation_not_found", "Operation was not found", Localization.New("server.api.operation_was_not_found.b8363d5a", "Operation was not found", nil))
 		return
 	}
 	writeJSON(writer, http.StatusOK, receipt)
@@ -475,21 +476,21 @@ func (server *Server) handleOperation(writer http.ResponseWriter, request *http.
 
 func (server *Server) handleOperations(writer http.ResponseWriter, request *http.Request) {
 	if server.config.Intents == nil {
-		writeError(writer, http.StatusServiceUnavailable, "intents_unavailable", "Intent engine is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "intents_unavailable", "Intent engine is unavailable", Localization.New("server.api.intent_engine_is_unavailable.1b08a55c", "Intent engine is unavailable", nil))
 		return
 	}
 	limit := 100
 	if raw := strings.TrimSpace(request.URL.Query().Get("limit")); raw != "" {
 		parsed, err := strconv.Atoi(raw)
 		if err != nil || parsed < 1 || parsed > 1000 {
-			writeError(writer, http.StatusBadRequest, "invalid_limit", "Operation limit must be between 1 and 1000")
+			writeError(writer, http.StatusBadRequest, "invalid_limit", "Operation limit must be between 1 and 1000", Localization.New("server.api.operation_limit_must_be.bb724cb5", "Operation limit must be between 1 and 1000", nil))
 			return
 		}
 		limit = parsed
 	}
 	receipts, err := server.config.Intents.RecentOperations(request.Context(), limit)
 	if err != nil {
-		writeError(writer, http.StatusServiceUnavailable, "operations_unavailable", err.Error())
+		writeErrorFromError(writer, http.StatusServiceUnavailable, "operations_unavailable", err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, receipts)
@@ -497,12 +498,12 @@ func (server *Server) handleOperations(writer http.ResponseWriter, request *http
 
 func (server *Server) handleOperationCancel(writer http.ResponseWriter, request *http.Request) {
 	if server.config.Intents == nil {
-		writeError(writer, http.StatusServiceUnavailable, "intents_unavailable", "Intent engine is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "intents_unavailable", "Intent engine is unavailable", Localization.New("server.api.intent_engine_is_unavailable.1b08a55c", "Intent engine is unavailable", nil))
 		return
 	}
 	id := request.PathValue("id")
 	if !server.config.Intents.Cancel(id) {
-		writeError(writer, http.StatusConflict, "operation_not_running", "Operation is not currently running")
+		writeError(writer, http.StatusConflict, "operation_not_running", "Operation is not currently running", Localization.New("server.api.operation_is_not_currently.e4e0ac62", "Operation is not currently running", nil))
 		return
 	}
 	writeJSON(writer, http.StatusAccepted, map[string]any{"id": id, "cancelled": true})
@@ -618,7 +619,7 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 						return
 					}
 				} else {
-					if err := connection.WriteJSON(errorEnvelope(message.ID, "game_data_unavailable", "Official game data is unavailable")); err != nil {
+					if err := connection.WriteJSON(errorEnvelope(message.ID, "game_data_unavailable", "Official game data is unavailable", Localization.New("server.api.official_game_data_is.c5e55e7e", "Official game data is unavailable", nil))); err != nil {
 						return
 					}
 				}
@@ -628,14 +629,14 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 						return
 					}
 				} else {
-					if err := connection.WriteJSON(errorEnvelope(message.ID, "configuration_unavailable", "Configuration store is unavailable")); err != nil {
+					if err := connection.WriteJSON(errorEnvelope(message.ID, "configuration_unavailable", "Configuration store is unavailable", Localization.New("server.api.configuration_store_is_unavailable.623f75fa", "Configuration store is unavailable", nil))); err != nil {
 						return
 					}
 				}
 			case "intent.submit":
 				var intentRequest Intent.Request
 				if err := json.Unmarshal(message.Payload, &intentRequest); err != nil {
-					if writeErr := connection.WriteJSON(errorEnvelope(message.ID, "invalid_request", err.Error())); writeErr != nil {
+					if writeErr := connection.WriteJSON(errorEnvelopeFromError(message.ID, "invalid_request", err)); writeErr != nil {
 						return
 					}
 					continue
@@ -656,7 +657,7 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 					}
 				}()
 			default:
-				if err := connection.WriteJSON(errorEnvelope(message.ID, "unsupported_message", "Unsupported websocket message type")); err != nil {
+				if err := connection.WriteJSON(errorEnvelope(message.ID, "unsupported_message", "Unsupported websocket message type", Localization.New("server.api.unsupported_websocket_message_type.d8c1ddd3", "Unsupported websocket message type", nil))); err != nil {
 					return
 				}
 			}
@@ -666,12 +667,12 @@ func (server *Server) handleEvents(writer http.ResponseWriter, request *http.Req
 
 func (server *Server) currentGameData(writer http.ResponseWriter) (*GameData.Store, bool) {
 	if server.config.GameData == nil {
-		writeError(writer, http.StatusServiceUnavailable, "game_data_unavailable", "Official game data is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "game_data_unavailable", "Official game data is unavailable", Localization.New("server.api.official_game_data_is.c5e55e7e", "Official game data is unavailable", nil))
 		return nil, false
 	}
 	store, ok := server.config.GameData.Current()
 	if !ok {
-		writeError(writer, http.StatusServiceUnavailable, "game_data_unavailable", "Official game data is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "game_data_unavailable", "Official game data is unavailable", Localization.New("server.api.official_game_data_is.c5e55e7e", "Official game data is unavailable", nil))
 		return nil, false
 	}
 	return store, true
@@ -704,7 +705,7 @@ func readEnvelopes(ctx context.Context, connection *websocket.Conn, output chan<
 			return
 		}
 		if envelope.Version != ContractVersion {
-			reportError(fmt.Errorf("unsupported API contract version %d", envelope.Version))
+			reportError(Localization.WithError(fmt.Errorf("unsupported API contract version %d", envelope.Version), Localization.New("server.api.unsupported_api_contract_version.4fd51ab3", "unsupported API contract version {p0}", Localization.Params{"p0": envelope.Version})))
 			return
 		}
 		select {
@@ -715,13 +716,13 @@ func readEnvelopes(ctx context.Context, connection *websocket.Conn, output chan<
 	}
 }
 
-func errorEnvelope(id string, code string, message string) Envelope {
-	return newEnvelope(id, "error", 0, map[string]string{"code": code, "message": message})
+func errorEnvelope(id string, code string, message string, descriptors ...*Localization.Message) Envelope {
+	return newEnvelope(id, "error", 0, localizedError(code, message, descriptors))
 }
 
-func writeError(writer http.ResponseWriter, status int, code string, message string) {
+func writeError(writer http.ResponseWriter, status int, code string, message string, descriptors ...*Localization.Message) {
 	writeJSON(writer, status, map[string]any{
-		"error": map[string]string{"code": code, "message": message},
+		"error": localizedError(code, message, descriptors),
 	})
 }
 

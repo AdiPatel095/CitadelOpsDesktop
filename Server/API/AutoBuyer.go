@@ -31,7 +31,7 @@ func (server *Server) handleAutoBuyerProjection(writer http.ResponseWriter, _ *h
 	language, _ := server.config.GameData.Language()
 	catalog, err := store.LocalizedAutoBuyerCatalog(language)
 	if err != nil {
-		writeError(writer, http.StatusServiceUnavailable, "auto_buyer_unavailable", err.Error())
+		writeErrorFromError(writer, http.StatusServiceUnavailable, "auto_buyer_unavailable", err)
 		return
 	}
 	projection := autoBuyerProjection{Metadata: store.Metadata(), AutoBuyerCatalog: catalog}

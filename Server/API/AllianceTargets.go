@@ -1,6 +1,7 @@
 package API
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"net/http"
@@ -49,7 +50,7 @@ type allianceTargetAttackPreview struct {
 
 func (server *Server) handleAllianceTargets(writer http.ResponseWriter, request *http.Request) {
 	if server.config.State == nil || server.config.AllianceTargets == nil {
-		writeError(writer, http.StatusServiceUnavailable, "alliance_targets_unavailable", "Alliance target state is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "alliance_targets_unavailable", "Alliance target state is unavailable", Localization.New("server.api.alliance_target_state_is.bbe6e2c6", "Alliance target state is unavailable", nil))
 		return
 	}
 	var gameData *GameData.Store
@@ -75,7 +76,7 @@ func (server *Server) handleAllianceTargets(writer http.ResponseWriter, request 
 		query,
 	)
 	if err != nil {
-		writeError(writer, http.StatusUnprocessableEntity, "alliance_targets_failed", err.Error())
+		writeErrorFromError(writer, http.StatusUnprocessableEntity, "alliance_targets_failed", err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, view)
@@ -83,47 +84,47 @@ func (server *Server) handleAllianceTargets(writer http.ResponseWriter, request 
 
 func (server *Server) handleAllianceTargetAttackPreview(writer http.ResponseWriter, request *http.Request) {
 	if server.config.State == nil || server.config.GameData == nil {
-		writeError(writer, http.StatusServiceUnavailable, "attack_preview_unavailable", "Attack preview state is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "attack_preview_unavailable", "Attack preview state is unavailable", Localization.New("server.api.attack_preview_state_is.34320895", "Attack preview state is unavailable", nil))
 		return
 	}
 	gameData, ready := server.config.GameData.Current()
 	if !ready || gameData == nil {
-		writeError(writer, http.StatusServiceUnavailable, "game_data_unavailable", "Official game data is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "game_data_unavailable", "Official game data is unavailable", Localization.New("server.api.official_game_data_is.c5e55e7e", "Official game data is unavailable", nil))
 		return
 	}
 	var input allianceTargetAttackPreviewRequest
 	decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, 1<<20))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&input); err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid_request", err.Error())
+		writeErrorFromError(writer, http.StatusBadRequest, "invalid_request", err)
 		return
 	}
 	if input.SourceCastleID <= 0 || input.KingdomID != 0 || input.TargetX < 0 || input.TargetY < 0 {
-		writeError(writer, http.StatusBadRequest, "invalid_request", "A Great Empire source and valid target coordinates are required")
+		writeError(writer, http.StatusBadRequest, "invalid_request", "A Great Empire source and valid target coordinates are required", Localization.New("server.api.a_great_empire_source.9c8ad246", "A Great Empire source and valid target coordinates are required", nil))
 		return
 	}
 	if input.TargetTypeID <= 0 || input.TargetLevel <= 0 {
-		writeError(writer, http.StatusBadRequest, "invalid_request", "Target castle type and player level are required")
+		writeError(writer, http.StatusBadRequest, "invalid_request", "Target castle type and player level are required", Localization.New("server.api.target_castle_type_and.5cc2dff3", "Target castle type and player level are required", nil))
 		return
 	}
 	if err := AttackPresets.Validate(input.Preset); err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid_preset", err.Error())
+		writeErrorFromError(writer, http.StatusBadRequest, "invalid_preset", err)
 		return
 	}
 
 	gameState := server.config.State.ReadOnlyView()
 	source, exists := gameState.Castles[input.SourceCastleID]
 	if !exists || source.KingdomID != input.KingdomID {
-		writeError(writer, http.StatusUnprocessableEntity, "source_unavailable", "The selected source is not an owned Great Empire castle")
+		writeError(writer, http.StatusUnprocessableEntity, "source_unavailable", "The selected source is not an owned Great Empire castle", Localization.New("server.api.the_selected_source_is.851ff7c7", "The selected source is not an owned Great Empire castle", nil))
 		return
 	}
 	if source.UnitsObservedAt.IsZero() {
-		writeError(writer, http.StatusUnprocessableEntity, "inventory_unavailable", "The selected castle inventory has not been observed")
+		writeError(writer, http.StatusUnprocessableEntity, "inventory_unavailable", "The selected castle inventory has not been observed", Localization.New("server.api.the_selected_castle_inventory.cfa17b56", "The selected castle inventory has not been observed", nil))
 		return
 	}
 	commanderID, found := firstAvailableCommander(gameState, time.Now().UTC())
 	if !found {
-		writeError(writer, http.StatusUnprocessableEntity, "commander_unavailable", "No commander is currently free")
+		writeError(writer, http.StatusUnprocessableEntity, "commander_unavailable", "No commander is currently free", Localization.New("server.api.no_commander_is_currently.76ae45bb", "No commander is currently free", nil))
 		return
 	}
 	capacity, err := (AttackCapacity.Resolver{}).Resolve(gameState, gameData, AttackCapacity.Request{
@@ -140,13 +141,13 @@ func (server *Server) handleAllianceTargetAttackPreview(writer http.ResponseWrit
 		},
 	})
 	if err != nil {
-		writeError(writer, http.StatusUnprocessableEntity, "attack_capacity_failed", err.Error())
+		writeErrorFromError(writer, http.StatusUnprocessableEntity, "attack_capacity_failed", err)
 		return
 	}
 	limited := AttackPresets.LimitToCapacity(input.Preset, capacity)
 	materialized, familyShortage, familyErr := AttackPresets.CheckInventory(limited, source.Units.Stationed, gameData, 1)
 	if familyErr != nil {
-		writeError(writer, http.StatusUnprocessableEntity, "troop_family_resolution_failed", familyErr.Error())
+		writeErrorFromError(writer, http.StatusUnprocessableEntity, "troop_family_resolution_failed", familyErr)
 		return
 	}
 	requirements, totalTroops, totalTools, formationTroops := allianceTargetRequirements(materialized, source)

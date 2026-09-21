@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -83,10 +84,10 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 		HistoryRefreshSec: autoBuyerDefaultRefreshSec,
 	}
 	if !decodeSection(snapshot.Configuration, autoBuyerSection, &settings) {
-		return autoBuyerWaiting(snapshot.Now, "Auto Buyer settings have not been saved", nil), nil
+		return autoBuyerWaiting(snapshot.Now, "Auto Buyer settings have not been saved", nil, Localization.New("server.automation.auto_buyer_settings_have.dce1a554", "Auto Buyer settings have not been saved", nil)), nil
 	}
 	if settings.Version != 1 {
-		return autoBuyerWaiting(snapshot.Now, fmt.Sprintf("Unsupported Auto Buyer settings version %d", settings.Version), nil), nil
+		return autoBuyerWaiting(snapshot.Now, fmt.Sprintf("Unsupported Auto Buyer settings version %d", settings.Version), nil, Localization.New("server.automation.unsupported_auto_buyer_settings.6688ad11", "Unsupported Auto Buyer settings version {p0, number}", Localization.Params{"p0": settings.Version})), nil
 	}
 	if settings.CheckIntervalSec < autoBuyerDefaultCheckIntervalSec {
 		settings.CheckIntervalSec = autoBuyerDefaultCheckIntervalSec
@@ -96,13 +97,13 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 	}
 	if settings.CheckIntervalSec > 3600 || settings.HistoryRefreshSec > 3600 ||
 		settings.MinimumRubyReserve < 0 {
-		return autoBuyerWaiting(snapshot.Now, "Auto Buyer cadence and ruby reserve settings are invalid", nil), nil
+		return autoBuyerWaiting(snapshot.Now, "Auto Buyer cadence and ruby reserve settings are invalid", nil, Localization.New("server.automation.auto_buyer_cadence_and.2ec179d9", "Auto Buyer cadence and ruby reserve settings are invalid", nil)), nil
 	}
 	if snapshot.GameData == nil {
-		return autoBuyerWaiting(snapshot.Now, "Official game data is unavailable", nil), nil
+		return autoBuyerWaiting(snapshot.Now, "Official game data is unavailable", nil, Localization.New("server.automation.official_game_data_is.c5e55e7e", "Official game data is unavailable", nil)), nil
 	}
 	if _, err := snapshot.GameData.AutoBuyerCatalog(); err != nil {
-		return autoBuyerWaiting(snapshot.Now, "The supported Auto Buyer catalog is unavailable", nil), nil
+		return autoBuyerWaiting(snapshot.Now, "The supported Auto Buyer catalog is unavailable", nil, Localization.New("server.automation.the_supported_auto_buyer.283700d4", "The supported Auto Buyer catalog is unavailable", nil)), nil
 	}
 
 	enabledPackages, enabledSpecialists := 0, 0
@@ -140,7 +141,7 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 			next = earliest
 		}
 		if snapshot.Now.Before(next) {
-			return Decision{Status: "waiting", Detail: "Waiting for the next read-only feast reconciliation check", NextCheckAt: next, Metrics: metrics}, nil
+			return Decision{Status: "waiting", Detail: "Waiting for the next read-only feast reconciliation check", DetailDescriptor: Localization.New("server.automation.waiting_for_the_next.ed8d78fa", "Waiting for the next read-only feast reconciliation check", nil), NextCheckAt: next, Metrics: metrics}, nil
 		}
 		if evidence.ChargedCastleID <= 0 || evidence.AttemptedAt.IsZero() ||
 			evidence.FeastID != snapshot.State.Market.FeastPurchaseExpectedID {
@@ -161,10 +162,11 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 		return decision, nil
 	}
 	if enabledPackages == 0 && enabledSpecialists == 0 && !settings.Feast.Enabled {
-		return autoBuyerIdle(snapshot.Now, settings.CheckIntervalSec, "No Auto Buyer goals are enabled", metrics), nil
+		return autoBuyerIdle(snapshot.Now, settings.CheckIntervalSec, "No Auto Buyer goals are enabled", metrics, Localization.New("server.automation.no_auto_buyer_goals.df8d2f1d", "No Auto Buyer goals are enabled", nil)), nil
 	}
 
 	settings, blockedDetail := isolateAutoBuyerRules(snapshot.GameData, settings, metrics)
+	var blockedDetailLocalizationMessage *Localization.Message = nil
 	invalidDetail := blockedDetail
 	defer func() {
 		if invalidDetail != "" && result.Detail != invalidDetail {
@@ -220,6 +222,7 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 			metrics["feastBlocked"] = 1
 			if blockedDetail == "" {
 				blockedDetail = "Automatic feast source evaluation failed: " + sourceErr.Error()
+				blockedDetailLocalizationMessage = nil
 			}
 		case len(sourceStatus.ContextStaleCandidateIDs) > 0:
 			castleID := sourceStatus.ContextStaleCandidateIDs[0]
@@ -235,7 +238,7 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 				if castle.FoodBalanceObservedAt.After(castle.FoodEconomyObservedAt) {
 					retryAt := castle.FoodBalanceObservedAt.Add(30 * time.Second)
 					if snapshot.Now.Before(retryAt) {
-						return Decision{Status: "waiting", Detail: fmt.Sprintf("Castle %d omitted net food production; waiting before another authoritative refresh", castleID), NextCheckAt: retryAt, Metrics: metrics}, nil
+						return Decision{Status: "waiting", Detail: fmt.Sprintf("Castle %d omitted net food production; waiting before another authoritative refresh", castleID), DetailDescriptor: Localization.New("server.automation.castle_p_omitted_net.2ce5eaf6", "Castle {p0} omitted net food production; waiting before another authoritative refresh", Localization.Params{"p0": fmt.Sprintf("%d", castleID)}), NextCheckAt: retryAt, Metrics: metrics}, nil
 					}
 				}
 			}
@@ -247,11 +250,13 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 			metrics["feastBlocked"] = 1
 			if blockedDetail == "" {
 				blockedDetail = "No owned castle has a usable feast purchase context"
+				blockedDetailLocalizationMessage = Localization.New("server.automation.no_owned_castle_has.422bbb40", "No owned castle has a usable feast purchase context", nil)
 			}
 		case feastSource.Castle.ID <= 0:
 			metrics["feastBlocked"] = 1
 			if blockedDetail == "" {
 				blockedDetail = "No owned castle has fresh positive net food production for automatic feast upkeep"
+				blockedDetailLocalizationMessage = Localization.New("server.automation.no_owned_castle_has.368b7641", "No owned castle has fresh positive net food production for automatic feast upkeep", nil)
 			}
 		default:
 			metrics["feastSourceCastleId"] = float64(feastSource.Castle.ID)
@@ -266,6 +271,7 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 				metrics["feastBlocked"] = 1
 				if blockedDetail == "" {
 					blockedDetail = detail
+					blockedDetailLocalizationMessage = nil
 				}
 			}
 		}
@@ -283,6 +289,7 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 		metrics["specialistBlocked"] = 1
 		if blockedDetail == "" {
 			blockedDetail = detail
+			blockedDetailLocalizationMessage = nil
 		}
 	}
 
@@ -291,6 +298,7 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 		if !sourceFound {
 			if blockedDetail == "" {
 				blockedDetail = "Choose an owned Great Empire main castle for Auto Buyer packages"
+				blockedDetailLocalizationMessage = Localization.New("server.automation.choose_an_owned_great.4a05450f", "Choose an owned Great Empire main castle for Auto Buyer packages", nil)
 			}
 		} else {
 			metrics["sourceCastleId"] = float64(packageSource.ID)
@@ -305,11 +313,12 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 				return *decision, nil
 			} else if detail != "" && blockedDetail == "" {
 				blockedDetail = detail
+				blockedDetailLocalizationMessage = nil
 			}
 		}
 	}
 	if blockedDetail != "" {
-		return autoBuyerWaiting(snapshot.Now, blockedDetail, metrics), nil
+		return autoBuyerWaiting(snapshot.Now, blockedDetail, metrics, Localization.Clone(blockedDetailLocalizationMessage)), nil
 	}
 	if unavailableEventShopGoals > 0 && availablePackageGoals == 0 && enabledSpecialists == 0 && !settings.Feast.Enabled {
 		return Decision{
@@ -317,12 +326,12 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 			Detail: fmt.Sprintf(
 				"Ignoring %d configured event-shop goal(s) while their specific shops are unavailable",
 				unavailableEventShopGoals,
-			),
+			), DetailDescriptor: Localization.New("server.automation.ignoring_p_configured_event.937007bc", "Ignoring {p0} configured event-shop goal(s) while their specific shops are unavailable", Localization.Params{"p0": unavailableEventShopGoals}),
 			NextCheckAt: limitedEventOpeningAfter(snapshot.Now), Metrics: metrics,
 		}, nil
 	}
 
-	return autoBuyerIdle(snapshot.Now, settings.CheckIntervalSec, "All configured purchase floors and reset goals are currently satisfied", metrics), nil
+	return autoBuyerIdle(snapshot.Now, settings.CheckIntervalSec, "All configured purchase floors and reset goals are currently satisfied", metrics, Localization.New("server.automation.all_configured_purchase_floors.569e98ad", "All configured purchase floors and reset goals are currently satisfied", nil)), nil
 }
 
 func autoBuyerSpecialistReconciliationDecision(snapshot Snapshot, metrics map[string]float64) Decision {
@@ -332,7 +341,7 @@ func autoBuyerSpecialistReconciliationDecision(snapshot Snapshot, metrics map[st
 		next = lastRun.Add(autoBuyerFeastPurchasePacing)
 	}
 	if snapshot.Now.Before(next) {
-		return Decision{Status: "waiting", Detail: "Waiting for the next read-only specialist reconciliation check", NextCheckAt: next, Metrics: metrics}
+		return Decision{Status: "waiting", Detail: "Waiting for the next read-only specialist reconciliation check", DetailDescriptor: Localization.New("server.automation.waiting_for_the_next.5d48a9ac", "Waiting for the next read-only specialist reconciliation check", nil), NextCheckAt: next, Metrics: metrics}
 	}
 	decision := autoBuyerRequestDecision(snapshot.Now, metrics, "Recheck unresolved specialist purchase without spending", "autoBuyer.specialist.reconcile", map[string]any{
 		"specialistId": evidence.SpecialistID,
@@ -576,7 +585,7 @@ func evaluateAutoBuyerFeast(
 		nextPurchaseAt := snapshot.State.Market.FeastLastPurchaseAt.Add(autoBuyerFeastPurchasePacing)
 		if snapshot.Now.Before(nextPurchaseAt) {
 			return &Decision{
-				Status: "waiting", Detail: "Waiting briefly before extending the active feast again",
+				Status: "waiting", Detail: "Waiting briefly before extending the active feast again", DetailDescriptor: Localization.New("server.automation.waiting_briefly_before_extending.d7ceee94", "Waiting briefly before extending the active feast again", nil),
 				NextCheckAt: nextPurchaseAt, Metrics: metrics,
 			}, ""
 		}
@@ -829,13 +838,13 @@ func autoBuyerRequestDecision(now time.Time, metrics map[string]float64, detail,
 	}
 }
 
-func autoBuyerWaiting(now time.Time, detail string, metrics map[string]float64) Decision {
-	return Decision{Status: "waiting", Detail: detail, Metrics: metrics, NextCheckAt: now.Add(30 * time.Second)}
+func autoBuyerWaiting(now time.Time, detail string, metrics map[string]float64, descriptors ...*Localization.Message) Decision {
+	return Decision{Status: "waiting", Detail: detail, DetailDescriptor: Localization.First(descriptors), Metrics: metrics, NextCheckAt: now.Add(30 * time.Second)}
 }
 
-func autoBuyerIdle(now time.Time, intervalSec int, detail string, metrics map[string]float64) Decision {
+func autoBuyerIdle(now time.Time, intervalSec int, detail string, metrics map[string]float64, descriptors ...*Localization.Message) Decision {
 	return Decision{
-		Status: "idle", Detail: detail, Metrics: metrics,
+		Status: "idle", Detail: detail, DetailDescriptor: Localization.First(descriptors), Metrics: metrics,
 		NextCheckAt: now.Add(policyInterval(intervalSec, autoBuyerDefaultCheckIntervalSec)),
 	}
 }

@@ -1,6 +1,7 @@
 package State
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"encoding/json"
 	"math"
 	"sort"
@@ -1366,6 +1367,7 @@ const (
 )
 
 type StationingOperation struct {
+	StatusDetailDescriptor *Localization.Message `json:"statusDetailDescriptor,omitempty"`
 	// Runtime castle controls use a separate autoBirdControl record so clearing
 	// cycle tracking cannot accidentally remove a user's pause.
 	Paused          bool       `json:"paused,omitempty"`
@@ -2104,19 +2106,22 @@ type DailyAttackState struct {
 }
 
 type AutomationState struct {
-	SafetyLock         AutomationSafetyLock `json:"safetyLock,omitempty"`
-	ID                 string               `json:"id"`
-	Enabled            bool                 `json:"enabled"`
-	Status             string               `json:"status"`
-	Detail             string               `json:"detail,omitempty"`
-	NextCheckAt        *time.Time           `json:"nextCheckAt,omitempty"`
-	LastRunAt          *time.Time           `json:"lastRunAt,omitempty"`
-	LastOperationID    string               `json:"lastOperationId,omitempty"`
-	LastError          string               `json:"lastError,omitempty"`
-	Metrics            map[string]float64   `json:"metrics,omitempty"`
-	Details            map[string]string    `json:"details,omitempty"`
-	OperationalCursors map[string]int       `json:"operationalCursors,omitempty"`
-	UpdatedAt          time.Time            `json:"updatedAt"`
+	DetailTranslationStatus string                `json:"detailTranslationStatus"`
+	DetailDescriptor        *Localization.Message `json:"detailDescriptor,omitempty"`
+	LastErrorDescriptor     *Localization.Message `json:"lastErrorDescriptor,omitempty"`
+	SafetyLock              AutomationSafetyLock  `json:"safetyLock,omitempty"`
+	ID                      string                `json:"id"`
+	Enabled                 bool                  `json:"enabled"`
+	Status                  string                `json:"status"`
+	Detail                  string                `json:"detail,omitempty"`
+	NextCheckAt             *time.Time            `json:"nextCheckAt,omitempty"`
+	LastRunAt               *time.Time            `json:"lastRunAt,omitempty"`
+	LastOperationID         string                `json:"lastOperationId,omitempty"`
+	LastError               string                `json:"lastError,omitempty"`
+	Metrics                 map[string]float64    `json:"metrics,omitempty"`
+	Details                 map[string]string     `json:"details,omitempty"`
+	OperationalCursors      map[string]int        `json:"operationalCursors,omitempty"`
+	UpdatedAt               time.Time             `json:"updatedAt"`
 }
 
 type GameState struct {

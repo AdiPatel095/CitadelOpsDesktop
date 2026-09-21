@@ -1,6 +1,7 @@
 package App
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"fmt"
 	"regexp"
 	"strings"
@@ -11,9 +12,10 @@ import (
 )
 
 type featureActivity struct {
-	severity string
-	event    string
-	detail   string
+	descriptor *Localization.Message
+	severity   string
+	event      string
+	detail     string
 }
 
 var userFacingActivityIdentifierPatterns = []struct {
@@ -57,7 +59,7 @@ func featureActivities(receipt Intent.Receipt) []featureActivity {
 			severity = "WARN"
 		}
 		return append(activities, featureActivity{
-			severity: severity, event: featureActivityEvent(receipt.Intent), detail: userFacingActivityText(detail),
+			severity: severity, event: featureActivityEvent(receipt.Intent), detail: userFacingActivityText(detail), descriptor: failedActivityDescriptor(receipt),
 		})
 	default:
 		return nil
@@ -174,14 +176,14 @@ func completedFeatureActivities(receipt Intent.Receipt) []featureActivity {
 				}
 				activities = append(activities, featureActivity{
 					severity: "INFO", event: event,
-					detail: userFacingActivityText(fmt.Sprintf("%s (%d of %d)", detail, index+1, len(attackSteps))),
+					detail: userFacingActivityText(fmt.Sprintf("%s (%d of %d)", detail, index+1, len(attackSteps))), descriptor: completedActivityDescriptor(step.NameDescriptor, index+1, len(attackSteps)),
 				})
 			}
 			return activities
 		}
 	}
 	return []featureActivity{{
-		severity: "INFO", event: event, detail: userFacingActivityText(completedActivityDetail(receiptSummary(receipt))),
+		severity: "INFO", event: event, detail: userFacingActivityText(completedActivityDetail(receiptSummary(receipt))), descriptor: completedActivityDescriptor(receipt.Plan.SummaryDescriptor, 1, 1),
 	}}
 }
 
@@ -207,7 +209,7 @@ func completedAttackActivities(receipt Intent.Receipt) []featureActivity {
 			detail = fmt.Sprintf("%s (%d of %d)", detail, ordinal+1, len(launches))
 		}
 		activities = append(activities, featureActivity{
-			severity: "INFO", event: "ATTACK", detail: userFacingActivityText(detail),
+			severity: "INFO", event: "ATTACK", detail: userFacingActivityText(detail), descriptor: completedActivityDescriptor(launch.step.NameDescriptor, ordinal+1, len(launches)),
 		})
 	}
 	return activities
@@ -484,4 +486,24 @@ func userFacingGameName(value string) string {
 		nameRunes[0] = unicode.ToUpper(nameRunes[0])
 	}
 	return string(nameRunes)
+}
+
+func completedActivityDescriptor(action *Localization.Message, ordinal, total int) *Localization.Message {
+	if action == nil {
+		return nil
+	}
+	message := Localization.New("server.activity.completed", "Completed action", nil)
+	if total > 1 {
+		message = Localization.New("server.activity.completed_batch", "Completed action {ordinal} of {total}", Localization.Params{"ordinal": ordinal, "total": total})
+	}
+	message.Context = []*Localization.Message{Localization.Clone(action)}
+	return message
+}
+func failedActivityDescriptor(receipt Intent.Receipt) *Localization.Message {
+	if receipt.Plan == nil || receipt.Plan.SummaryDescriptor == nil || receipt.Failure == nil || receipt.Failure.ExplanationDescriptor == nil {
+		return nil
+	}
+	message := Localization.New("server.activity.failed", "Could not complete action", nil)
+	message.Context = []*Localization.Message{Localization.Clone(receipt.Plan.SummaryDescriptor), Localization.Clone(receipt.Failure.ExplanationDescriptor)}
+	return message
 }

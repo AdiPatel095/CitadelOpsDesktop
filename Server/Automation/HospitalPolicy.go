@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -89,7 +90,7 @@ func (*HospitalPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 					}
 					arguments, _ := json.Marshal(map[string]any{"productionId": productionID})
 					return Decision{
-						Status: "ready", Detail: fmt.Sprintf("Request alliance help for hospital queue at %s", castleName(castle)),
+						Status: "ready", Detail: fmt.Sprintf("Request alliance help for hospital queue at %s", castleName(castle)), DetailDescriptor: Localization.New("server.automation.request_alliance_help_for.629d7046", "Request alliance help for hospital queue at {p0}", Localization.Params{"p0": fmt.Sprintf("%s", castleName(castle))}),
 						NextCheckAt:         snapshot.Now.Add(coordinatorTick),
 						Request:             &Intent.Request{Name: "alliance.help.request", Arguments: arguments},
 						ReevaluateOnSuccess: true,
@@ -117,10 +118,12 @@ func (*HospitalPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 			intentName := "hospital.heal"
 			amount := hospitalStackAmount(snapshot.State, snapshot.GameData)
 			detail := fmt.Sprintf("Heal unit %d at %s", stack.unitID, castleName(castle))
+			var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.heal_unit_p_at.f5708f3d", "Heal unit {p0} at {p1}", Localization.Params{"p0": fmt.Sprintf("%d", stack.unitID), "p1": fmt.Sprintf("%s", castleName(castle))})
 			if known && rubyCost > 0 {
 				intentName = "hospital.discard"
 				amount = stack.amount
 				detail = fmt.Sprintf("Discard ruby-only wounded unit %d at %s", stack.unitID, castleName(castle))
+				detailLocalizationMessage = Localization.New("server.automation.discard_ruby_only_wounded.e23cc815", "Discard ruby-only wounded unit {p0} at {p1}", Localization.Params{"p0": fmt.Sprintf("%d", stack.unitID), "p1": fmt.Sprintf("%s", castleName(castle))})
 			}
 			if amount <= 0 {
 				continue
@@ -132,8 +135,8 @@ func (*HospitalPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 				"castleId": castleID, "unitId": stack.unitID, "amount": amount,
 			})
 			return Decision{
-				Status:              "ready",
-				Detail:              detail,
+				Status: "ready",
+				Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage),
 				NextCheckAt:         snapshot.Now.Add(coordinatorTick),
 				Request:             &Intent.Request{Name: intentName, Arguments: arguments},
 				ReevaluateOnSuccess: true,
@@ -143,20 +146,26 @@ func (*HospitalPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	}
 	status := "idle"
 	detail := "No wounded units need automatic healing"
+	var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.no_wounded_units_need.a9bed334", "No wounded units need automatic healing", nil)
 	if woundedCastles > 0 && observedQueues == 0 {
 		detail = "Waiting for hospital queues to be observed"
+		detailLocalizationMessage = Localization.New("server.automation.waiting_for_hospital_queues.68a3cfa8", "Waiting for hospital queues to be observed", nil)
 	} else if helpListPending {
 		status = "waiting"
 		detail = "Waiting for the current hospital alliance-help request list"
+		detailLocalizationMessage = Localization.New("server.automation.waiting_for_the_current.166fa1a9", "Waiting for the current hospital alliance-help request list", nil)
 	} else if helpCapacityReached {
 		status = "waiting"
 		detail = "Waiting for the outstanding hospital alliance-help request to finish"
+		detailLocalizationMessage = Localization.New("server.automation.waiting_for_the_outstanding.cf7744e8", "Waiting for the outstanding hospital alliance-help request to finish", nil)
 	} else if woundedCastles > 0 {
 		detail = "Hospital queues are full or their capacity is not yet known"
+		detailLocalizationMessage = Localization.New("server.automation.hospital_queues_are_full.69fe66a9", "Hospital queues are full or their capacity is not yet known", nil)
 	} else if focusUnavailable > 0 {
 		detail = "Hospital castles retained from closed kingdoms are not focusable in the current session"
+		detailLocalizationMessage = Localization.New("server.automation.hospital_castles_retained_from.b4724cd9", "Hospital castles retained from closed kingdoms are not focusable in the current session", nil)
 	}
-	return Decision{Status: status, Detail: detail, NextCheckAt: snapshot.Now.Add(interval)}, nil
+	return Decision{Status: status, Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage), NextCheckAt: snapshot.Now.Add(interval)}, nil
 }
 
 func orderedWounded(units map[State.UnitID]int64) []woundedStack {

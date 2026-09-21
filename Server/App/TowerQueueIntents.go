@@ -1,6 +1,7 @@
 package App
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -58,19 +59,19 @@ func planTowerQueueScan(_ context.Context, input Intent.PlanningContext, argumen
 			Y2        int             `json:"AY2"`
 		}{source.KingdomID, window.X1, window.Y1, window.X2, window.Y2})
 		steps = append(steps, commandStep(
-			fmt.Sprintf("Refresh tower map window %d/%d", index+1, len(windows)), "gaa", payload, "gaa",
+			fmt.Sprintf("Refresh tower map window %d/%d", index+1, len(windows)), "gaa", payload, "gaa", Localization.New("server.app.refresh_tower_map_window.0179c8eb", "Refresh tower map window {p0, number}/{p1, number}", Localization.Params{"p0": index + 1, "p1": len(windows)}),
 		))
 	}
 	steps = append(steps, Intent.Step{
-		Name: "Capture fresh tower batch", Action: "tower.queue.capture", ActionArguments: append(json.RawMessage(nil), arguments...),
+		Name: "Capture fresh tower batch", NameDescriptor: Localization.New("server.app.capture_fresh_tower_batch.d99d5357", "Capture fresh tower batch", nil), Action: "tower.queue.capture", ActionArguments: append(json.RawMessage(nil), arguments...),
 	})
 	return Intent.Plan{
 		Claims: []string{
 			"castle-focus", "castle:" + strconv.FormatInt(int64(source.ID), 10),
 			"map:" + strconv.FormatInt(int64(source.KingdomID), 10),
 		},
-		Summary: fmt.Sprintf("Refresh complete tower map around %s", castleLabel(source)),
-		Steps:   steps,
+		Summary: fmt.Sprintf("Refresh complete tower map around %s", castleLabel(source)), SummaryDescriptor: Localization.New("server.app.refresh_complete_tower_map.2dcabea9", "Refresh complete tower map around {p0}", Localization.Params{"p0": fmt.Sprintf("%s", castleLabel(source))}),
+		Steps: steps,
 	}, nil
 }
 
@@ -80,14 +81,14 @@ func planTowerQueueTargetRefresh(_ context.Context, input Intent.PlanningContext
 		return Intent.Plan{}, err
 	}
 	if request.SourceCastleID <= 0 || request.RefreshStartedAt.IsZero() {
-		return Intent.Plan{}, fmt.Errorf("tower queue target refresh requires a source castle and start time")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("tower queue target refresh requires a source castle and start time"), Localization.New("server.app.tower_queue_target_refresh.8bd85cd1", "tower queue target refresh requires a source castle and start time", nil))
 	}
 	source, exists := input.State.Castles[request.SourceCastleID]
 	if !exists {
-		return Intent.Plan{}, fmt.Errorf("tower queue source castle %d is not in the current player state", request.SourceCastleID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("tower queue source castle %d is not in the current player state", request.SourceCastleID), Localization.New("server.app.tower_queue_source_castle.7710151f", "tower queue source castle {p0} is not in the current player state", Localization.Params{"p0": fmt.Sprintf("%d", request.SourceCastleID)}))
 	}
 	if request.KingdomID != source.KingdomID {
-		return Intent.Plan{}, fmt.Errorf("tower queue target must be in source castle kingdom %d", source.KingdomID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("tower queue target must be in source castle kingdom %d", source.KingdomID), Localization.New("server.app.tower_queue_target_must.005c99d3", "tower queue target must be in source castle kingdom {p0}", Localization.Params{"p0": fmt.Sprintf("%d", source.KingdomID)}))
 	}
 	queued := false
 	for _, entry := range input.State.TowerQueue.EntriesByCastle[request.SourceCastleID] {
@@ -97,7 +98,7 @@ func planTowerQueueTargetRefresh(_ context.Context, input Intent.PlanningContext
 		}
 	}
 	if !queued {
-		return Intent.Plan{}, fmt.Errorf("tower target %d:%d is no longer queued", request.TargetX, request.TargetY)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("tower target %d:%d is no longer queued", request.TargetX, request.TargetY), Localization.New("server.app.tower_target_p_p.15137f5e", "tower target {p0}:{p1} is no longer queued", Localization.Params{"p0": request.TargetX, "p1": request.TargetY}))
 	}
 	payload, _ := json.Marshal(struct {
 		KingdomID State.KingdomID `json:"KID"`
@@ -111,9 +112,9 @@ func planTowerQueueTargetRefresh(_ context.Context, input Intent.PlanningContext
 		Claims: []string{
 			"castle-focus", "map:" + strconv.FormatInt(int64(request.KingdomID), 10),
 		},
-		Summary: fmt.Sprintf("Refresh queued tower %d:%d and rotate it if still stale", request.TargetX, request.TargetY),
+		Summary: fmt.Sprintf("Refresh queued tower %d:%d and rotate it if still stale", request.TargetX, request.TargetY), SummaryDescriptor: Localization.New("server.app.refresh_queued_tower_p.fcfff053", "Refresh queued tower {p0}:{p1} and rotate it if still stale", Localization.Params{"p0": request.TargetX, "p1": request.TargetY}),
 		Steps: []Intent.Step{
-			commandStep("Refresh queued tower", "gaa", payload, "gaa"),
+			commandStep("Refresh queued tower", "gaa", payload, "gaa", Localization.New("server.app.refresh_queued_tower.244c96c8", "Refresh queued tower", nil)),
 			{Name: "Rotate unchanged tower behind ready targets", Action: "tower.queue.rotate_stale", ActionArguments: normalizedArguments},
 		},
 	}, nil
@@ -150,14 +151,14 @@ func towerQueueScanContext(input Intent.PlanningContext, arguments json.RawMessa
 		return towerQueueScanRequest{}, State.CastleState{}, err
 	}
 	if request.SourceCastleID <= 0 {
-		return towerQueueScanRequest{}, State.CastleState{}, fmt.Errorf("tower queue source castle is required")
+		return towerQueueScanRequest{}, State.CastleState{}, Localization.WithError(fmt.Errorf("tower queue source castle is required"), Localization.New("server.app.tower_queue_source_castle.6ff7587b", "tower queue source castle is required", nil))
 	}
 	if request.Radius < 1 || request.Radius > 50 {
-		return towerQueueScanRequest{}, State.CastleState{}, fmt.Errorf("tower queue radius must be between 1 and 50")
+		return towerQueueScanRequest{}, State.CastleState{}, Localization.WithError(fmt.Errorf("tower queue radius must be between 1 and 50"), Localization.New("server.app.tower_queue_radius_must.734cc009", "tower queue radius must be between 1 and 50", nil))
 	}
 	source, exists := input.State.Castles[request.SourceCastleID]
 	if !exists {
-		return towerQueueScanRequest{}, State.CastleState{}, fmt.Errorf("tower queue source castle %d is not in the current player state", request.SourceCastleID)
+		return towerQueueScanRequest{}, State.CastleState{}, Localization.WithError(fmt.Errorf("tower queue source castle %d is not in the current player state", request.SourceCastleID), Localization.New("server.app.tower_queue_source_castle.7710151f", "tower queue source castle {p0} is not in the current player state", Localization.Params{"p0": fmt.Sprintf("%d", request.SourceCastleID)}))
 	}
 	return request, source, nil
 }
@@ -170,7 +171,7 @@ func (application *Application) captureTowerQueue(_ context.Context, arguments j
 	_, err = application.State.ApplyComponents(State.Components(State.ComponentTowerQueue), func(gameState *State.GameState) ([]string, bool, error) {
 		source, exists := gameState.Castles[request.SourceCastleID]
 		if !exists || !source.Focused {
-			return nil, false, fmt.Errorf("tower queue source castle %d is no longer focused", request.SourceCastleID)
+			return nil, false, Localization.WithError(fmt.Errorf("tower queue source castle %d is no longer focused", request.SourceCastleID), Localization.New("server.app.tower_queue_source_castle.804d7fc3", "tower queue source castle {p0} is no longer focused", Localization.Params{"p0": fmt.Sprintf("%d", request.SourceCastleID)}))
 		}
 		candidates := make([]State.MapObservation, 0)
 		gameState.RangeMapObservationsByKind(source.KingdomID, State.MapProjectionTower, func(_ string, target State.MapObservation) bool {

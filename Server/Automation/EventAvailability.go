@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"fmt"
 	"time"
 	_ "time/tzdata"
@@ -50,7 +51,7 @@ func limitedEventGate(
 			Detail: fmt.Sprintf(
 				"Waiting for the authoritative %s inventory to settle after the 10:00 Europe/Berlin opening check",
 				label,
-			),
+			), DetailDescriptor: Localization.New("server.automation.waiting_for_the_authoritative.eeb23a21", "Waiting for the authoritative {p0} inventory to settle after the 10:00 Europe/Berlin opening check", Localization.Params{"p0": fmt.Sprintf("%s", label)}),
 			NextCheckAt: graceEndsAt,
 		}, true
 	}
@@ -59,15 +60,17 @@ func limitedEventGate(
 		"%s is not active in the latest confirmed event list; this lane will resume after the event opens or the list updates",
 		label,
 	)
+	var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.p_is_not_active.fe1460d7", "{p0} is not active in the latest confirmed event list; this lane will resume after the event opens or the list updates", Localization.Params{"p0": fmt.Sprintf("%s", label)})
 	if observedAt.Before(opening) {
 		detail = fmt.Sprintf(
 			"No authoritative %s inventory arrived after the latest opening; this lane remains softly locked until an event update",
 			label,
 		)
+		detailLocalizationMessage = Localization.New("server.automation.no_authoritative_p_inventory.13781d1e", "No authoritative {p0} inventory arrived after the latest opening; this lane remains softly locked until an event update", Localization.Params{"p0": fmt.Sprintf("%s", label)})
 	}
 	return Decision{
-		Status:      "soft-locked",
-		Detail:      detail,
+		Status: "soft-locked",
+		Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage),
 		NextCheckAt: limitedEventOpeningAfter(now),
 	}, true
 }

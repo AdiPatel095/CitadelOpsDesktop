@@ -1,6 +1,7 @@
 package State
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"fmt"
 	"reflect"
 	"sort"
@@ -1281,6 +1282,7 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 	if components.Has(ComponentStationing) {
 		clone.Stationing = make(map[string]StationingOperation, len(source.Stationing))
 		for id, operation := range source.Stationing {
+			operation.StatusDetailDescriptor = Localization.Clone(operation.StatusDetailDescriptor)
 			operation.Units = cloneMap(operation.Units)
 			operation.MovementIDs = append([]MovementID(nil), operation.MovementIDs...)
 			operation.PausedUntil = cloneTimePointer(operation.PausedUntil)
@@ -1510,6 +1512,8 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 	if components.Has(ComponentAutomations) {
 		clone.Automations = make(map[string]AutomationState, len(source.Automations))
 		for id, automation := range source.Automations {
+			automation.DetailDescriptor = Localization.Clone(automation.DetailDescriptor)
+			automation.LastErrorDescriptor = Localization.Clone(automation.LastErrorDescriptor)
 			automation.NextCheckAt = cloneTimePointer(automation.NextCheckAt)
 			automation.LastRunAt = cloneTimePointer(automation.LastRunAt)
 			automation.Metrics = cloneMap(automation.Metrics)

@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"fmt"
 	"strings"
 
@@ -39,7 +40,7 @@ func evaluateBeriEventBuild(
 	if layoutStale || queueStale {
 		return autoStormIntentDecision(snapshot.Now, metrics, "Refresh the Berimond castle building state", "building.refresh", map[string]any{
 			"castleId": castle.ID,
-		}), false, "", nil
+		}, Localization.New("server.automation.refresh_the_berimond_castle.d477db72", "Refresh the Berimond castle building state", nil)), false, "", nil
 	}
 	catalog, err := snapshot.GameData.BuildingCatalog()
 	if err != nil {
@@ -48,7 +49,7 @@ func evaluateBeriEventBuild(
 	if giftID, found := autoStormExpansionGift(castle, catalog); found {
 		return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Collect expansion gift %d before reconciling the Berimond layout", giftID), "building.collect_expansion_gift", map[string]any{
 			"castleId": castle.ID, "buildingInstanceId": giftID,
-		}), false, "", nil
+		}, Localization.New("server.automation.collect_expansion_gift_p.28c34463", "Collect expansion gift {p0} before reconciling the Berimond layout", Localization.Params{"p0": fmt.Sprintf("%d", giftID)})), false, "", nil
 	}
 	queueDecision, queueBlocked := autoStormQueueDecision(snapshot, settings, castle, catalog, metrics, profile)
 	if queueDecision != nil {
@@ -132,7 +133,7 @@ func evaluateBeriEventBuild(
 		if autoStormDecorationDefinition(definition) && definition.Storeable != nil && *definition.Storeable {
 			return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Store unmanaged %s before arranging the target layout", definition.DisplayName), "building.store", map[string]any{
 				"castleId": castle.ID, "buildingInstanceId": extra.BuildingInstanceID,
-			}), false, "", nil
+			}, Localization.New("server.automation.store_unmanaged_p_before.64960dea", "Store unmanaged {p0} before arranging the target layout", Localization.Params{"p0": fmt.Sprintf("%s", definition.DisplayName)})), false, "", nil
 		}
 		if !settings.Build.AllowDemolition {
 			return nil, false, fmt.Sprintf("Unmanaged %s must be removed before layout moves; enable demolition to allow this action", definition.DisplayName), nil
@@ -142,7 +143,7 @@ func evaluateBeriEventBuild(
 		}
 		return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Demolish unmanaged %s before arranging the target layout", definition.DisplayName), "building.demolish", map[string]any{
 			"castleId": castle.ID, "buildingInstanceId": extra.BuildingInstanceID,
-		}), false, "", nil
+		}, Localization.New("server.automation.demolish_unmanaged_p_before.47b57709", "Demolish unmanaged {p0} before arranging the target layout", Localization.Params{"p0": fmt.Sprintf("%s", definition.DisplayName)})), false, "", nil
 	}
 
 	metrics["beriBuildPhase"] = beriBuildPhaseMove

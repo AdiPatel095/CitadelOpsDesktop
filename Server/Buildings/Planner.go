@@ -1,6 +1,7 @@
 package Buildings
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"fmt"
 	"math"
 	"sort"
@@ -112,7 +113,7 @@ func Preview(state State.GameState, gameData *GameData.Store, request PreviewReq
 		return PreviewResult{}, RevisionMismatchError{Expected: *request.ExpectedRevision, Actual: state.Revision}
 	}
 	if gameData == nil {
-		return PreviewResult{}, fmt.Errorf("official game data is unavailable")
+		return PreviewResult{}, Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.buildings.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	catalog, err := gameData.BuildingCatalog()
 	if err != nil {
@@ -121,9 +122,9 @@ func Preview(state State.GameState, gameData *GameData.Store, request PreviewReq
 	castleID, castle, found := previewCastle(state, request.CastleID)
 	if !found {
 		if request.CastleID > 0 {
-			return PreviewResult{}, fmt.Errorf("castle %d was not found", request.CastleID)
+			return PreviewResult{}, Localization.WithError(fmt.Errorf("castle %d was not found", request.CastleID), Localization.New("server.buildings.castle_p_was_not.b5cc85b5", "castle {p0} was not found", Localization.Params{"p0": fmt.Sprintf("%d", request.CastleID)}))
 		}
-		return PreviewResult{}, fmt.Errorf("no focused castle is available")
+		return PreviewResult{}, Localization.WithError(fmt.Errorf("no focused castle is available"), Localization.New("server.buildings.no_focused_castle_is.52a6af14", "no focused castle is available", nil))
 	}
 	castle = normalizePreviewLayout(castle, catalog)
 	profile, eventID, objectives, err := resolveProfile(request.Profile, request.EventID, request.Objectives)
@@ -519,9 +520,9 @@ func resolveProfile(raw string, eventID *int64, custom []Objective) (string, *in
 			{Metric: "aquamarineStorage", Weight: .01},
 		}
 	case "custom":
-		return "", nil, nil, fmt.Errorf("custom profile requires at least one objective")
+		return "", nil, nil, Localization.WithError(fmt.Errorf("custom profile requires at least one objective"), Localization.New("server.buildings.custom_profile_requires_at.fa2d083e", "custom profile requires at least one objective", nil))
 	default:
-		return "", nil, nil, fmt.Errorf("unknown building profile %q", raw)
+		return "", nil, nil, Localization.WithError(fmt.Errorf("unknown building profile %q", raw), Localization.New("server.buildings.unknown_building_profile_p.be720ba4", "unknown building profile {p0}", Localization.Params{"p0": fmt.Sprintf("%q", raw)}))
 	}
 	return profile, cloneInt64(eventID), objectives, nil
 }
@@ -531,10 +532,10 @@ func validateObjectives(source []Objective) ([]Objective, error) {
 	for _, objective := range source {
 		objective.Metric = strings.TrimSpace(objective.Metric)
 		if objective.Metric == "" {
-			return nil, fmt.Errorf("building objective metric is required")
+			return nil, Localization.WithError(fmt.Errorf("building objective metric is required"), Localization.New("server.buildings.building_objective_metric_is.53933a29", "building objective metric is required", nil))
 		}
 		if math.IsNaN(objective.Weight) || math.IsInf(objective.Weight, 0) {
-			return nil, fmt.Errorf("building objective %s has an invalid weight", objective.Metric)
+			return nil, Localization.WithError(fmt.Errorf("building objective %s has an invalid weight", objective.Metric), Localization.New("server.buildings.building_objective_p_has.324a4ac3", "building objective {p0} has an invalid weight", Localization.Params{"p0": fmt.Sprintf("%s", objective.Metric)}))
 		}
 		result = append(result, objective)
 	}

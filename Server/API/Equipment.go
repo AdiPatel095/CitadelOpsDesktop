@@ -1,6 +1,7 @@
 package API
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"encoding/json"
 	"net/http"
 
@@ -9,7 +10,7 @@ import (
 
 func (server *Server) handleEquipmentOptimize(writer http.ResponseWriter, request *http.Request) {
 	if server.config.State == nil {
-		writeError(writer, http.StatusServiceUnavailable, "state_unavailable", "Equipment state is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "state_unavailable", "Equipment state is unavailable", Localization.New("server.api.equipment_state_is_unavailable.20345872", "Equipment state is unavailable", nil))
 		return
 	}
 	gameData, ok := server.currentGameData(writer)
@@ -20,12 +21,12 @@ func (server *Server) handleEquipmentOptimize(writer http.ResponseWriter, reques
 	decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, 1<<20))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&input); err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid_request", err.Error())
+		writeErrorFromError(writer, http.StatusBadRequest, "invalid_request", err)
 		return
 	}
 	result, err := Equipment.Optimize(server.config.State.ReadOnlyView(), gameData, input)
 	if err != nil {
-		writeError(writer, http.StatusUnprocessableEntity, "equipment_optimization_failed", err.Error())
+		writeErrorFromError(writer, http.StatusUnprocessableEntity, "equipment_optimization_failed", err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, result)

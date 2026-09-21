@@ -1,6 +1,7 @@
 package App
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"errors"
 	"fmt"
 	"sort"
@@ -13,7 +14,7 @@ import (
 
 const maximumCRACommanderCount = 50
 
-var errCRACommanderUnavailable = errors.New("CRA commander availability changed")
+var errCRACommanderUnavailable = Localization.WithError(errors.New("CRA commander availability changed"), Localization.New("server.app.cra_commander_availability_changed.267a988b", "CRA commander availability changed", nil))
 
 type craCommanderSelectionRequest struct {
 	Candidates []State.CommanderID `json:"candidates,omitempty"`
@@ -49,7 +50,7 @@ func resolveCRACommanders(
 		strategy = strings.ToLower(strings.TrimSpace(selection.Strategy))
 	}
 	if strategy != "first_available" && strategy != "lowest_id" && strategy != "highest_id" {
-		return craCommanderResolution{}, fmt.Errorf("unknown CRA commander selection strategy %q", strategy)
+		return craCommanderResolution{}, Localization.WithError(fmt.Errorf("unknown CRA commander selection strategy %q", strategy), Localization.New("server.app.unknown_cra_commander_selection.81c6ce74", "unknown CRA commander selection strategy {p0}", Localization.Params{"p0": fmt.Sprintf("%q", strategy)}))
 	}
 
 	var requested []State.CommanderID
@@ -68,7 +69,7 @@ func resolveCRACommanders(
 		return craCommanderResolution{}, err
 	}
 	if len(candidates) == 0 {
-		return craCommanderResolution{}, fmt.Errorf("CRA commander selection has no candidates")
+		return craCommanderResolution{}, Localization.WithError(fmt.Errorf("CRA commander selection has no candidates"), Localization.New("server.app.cra_commander_selection_has.0ef36902", "CRA commander selection has no candidates", nil))
 	}
 
 	ordered := append([]State.CommanderID(nil), candidates...)
@@ -84,10 +85,10 @@ func resolveCRACommanders(
 		count = selection.Count
 	}
 	if count <= 0 {
-		return craCommanderResolution{}, fmt.Errorf("CRA commander selection count must be positive")
+		return craCommanderResolution{}, Localization.WithError(fmt.Errorf("CRA commander selection count must be positive"), Localization.New("server.app.cra_commander_selection_count.d9a3cb12", "CRA commander selection count must be positive", nil))
 	}
 	if count > maximumCRACommanderCount {
-		return craCommanderResolution{}, fmt.Errorf("CRA commander selection count may not exceed %d", maximumCRACommanderCount)
+		return craCommanderResolution{}, Localization.WithError(fmt.Errorf("CRA commander selection count may not exceed %d", maximumCRACommanderCount), Localization.New("server.app.cra_commander_selection_count.56cc2b94", "CRA commander selection count may not exceed {p0}", Localization.Params{"p0": maximumCRACommanderCount}))
 	}
 
 	now := time.Now().UTC()
@@ -116,10 +117,10 @@ func resolveCRACommanders(
 		if options.RequireAvailable {
 			availability = " available"
 		}
-		err := fmt.Errorf(
+		err := Localization.WithError(fmt.Errorf(
 			"CRA commander selection requested %d but only %d%s candidate(s) matched",
 			count, len(selected), availability,
-		)
+		), Localization.New("server.app.cra_commander_selection_requested.a38166f6", "CRA commander selection requested {p0} but only {p1}{p2} candidate(s) matched", Localization.Params{"p0": count, "p1": len(selected), "p2": fmt.Sprintf("%s", availability)}))
 		if options.RequireAvailable {
 			return craCommanderResolution{}, fmt.Errorf("%w: %v", errCRACommanderUnavailable, err)
 		}
@@ -139,10 +140,10 @@ func validatedCommanderCandidates(gameState State.GameState, requested []State.C
 	result := make([]State.CommanderID, 0, len(requested))
 	for _, id := range requested {
 		if id < 0 {
-			return nil, fmt.Errorf("CRA commander candidate %d is invalid", id)
+			return nil, Localization.WithError(fmt.Errorf("CRA commander candidate %d is invalid", id), Localization.New("server.app.cra_commander_candidate_p.9d686fbf", "CRA commander candidate {p0} is invalid", Localization.Params{"p0": fmt.Sprintf("%d", id)}))
 		}
 		if _, exists := gameState.Commanders[id]; !exists {
-			return nil, fmt.Errorf("commander %d is not in the current player state", id)
+			return nil, Localization.WithError(fmt.Errorf("commander %d is not in the current player state", id), Localization.New("server.app.commander_p_is_not.62a21327", "commander {p0} is not in the current player state", Localization.Params{"p0": fmt.Sprintf("%d", id)}))
 		}
 		if _, duplicate := seen[id]; duplicate {
 			continue

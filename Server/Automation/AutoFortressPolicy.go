@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -83,7 +84,7 @@ func (*AutoFortressPolicy) WakeSections() []string {
 func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
 	settings := defaultAutoFortressSettings()
 	if !decodeSection(snapshot.Configuration, autoFortressSection, &settings) {
-		return autoFortressWaiting(snapshot, "Auto Fortress settings have not been saved", nil), nil
+		return autoFortressWaiting(snapshot, "Auto Fortress settings have not been saved", nil, Localization.New("server.automation.auto_fortress_settings_have.34b778f4", "Auto Fortress settings have not been saved", nil)), nil
 	}
 	if snapshot.PolicyConfigurationChanged {
 		policy.mu.Lock()
@@ -95,7 +96,7 @@ func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot)
 		return autoFortressWaiting(snapshot, detail, nil), nil
 	}
 	if snapshot.GameData == nil {
-		return autoFortressWaiting(snapshot, "Official game data is unavailable", nil), nil
+		return autoFortressWaiting(snapshot, "Official game data is unavailable", nil, Localization.New("server.automation.official_game_data_is.c5e55e7e", "Official game data is unavailable", nil)), nil
 	}
 	definitions, err := snapshot.GameData.KingdomFortressDefinitions()
 	if err != nil {
@@ -109,7 +110,7 @@ func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot)
 		return autoFortressWaiting(snapshot, err.Error(), nil), nil
 	}
 	if speedContract.RelicMaximumPercent != autoFortressMaximumSpeedPercent {
-		return autoFortressWaiting(snapshot, "Official fortress commander speed contract changed; Auto Fortress is paused", nil), nil
+		return autoFortressWaiting(snapshot, "Official fortress commander speed contract changed; Auto Fortress is paused", nil, Localization.New("server.automation.official_fortress_commander_speed.891da2be", "Official fortress commander speed contract changed; Auto Fortress is paused", nil)), nil
 	}
 	definitionByKingdom := make(map[State.KingdomID]GameData.KingdomFortressDefinition, len(definitions))
 	for _, definition := range definitions {
@@ -128,7 +129,7 @@ func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot)
 		return *decision, nil
 	}
 	if len(sources) == 0 {
-		decision := autoFortressWaiting(snapshot, "Enable at least one available outer-kingdom main castle", metrics)
+		decision := autoFortressWaiting(snapshot, "Enable at least one available outer-kingdom main castle", metrics, Localization.New("server.automation.enable_at_least_one.a8095e21", "Enable at least one available outer-kingdom main castle", nil))
 		decision.Details = details
 		return decision, nil
 	}
@@ -181,14 +182,17 @@ func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot)
 		}
 
 		detail := "No known fortress is currently available"
+		var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.no_known_fortress_is.3b2b0041", "No known fortress is currently available", nil)
 		if !nextCooldown.IsZero() {
 			detail = fmt.Sprintf(
 				"Next known fortress is expected at %s; a targeted cooldown check will run at availability",
 				nextCooldown.UTC().Format("Jan 2 15:04:05 UTC"),
 			)
+			detailLocalizationMessage = nil
 		}
 		if purchaseBlocked != "" {
 			detail += "; supply: " + purchaseBlocked
+			detailLocalizationMessage = nil
 		}
 		next := time.Time{}
 		if !nextCooldown.IsZero() {
@@ -203,7 +207,7 @@ func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot)
 		if next.IsZero() || !next.After(snapshot.Now) {
 			next = snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30))
 		}
-		return Decision{Status: "idle", Detail: detail, NextCheckAt: next, Metrics: metrics, Details: details}, nil
+		return Decision{Status: "idle", Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage), NextCheckAt: next, Metrics: metrics, Details: details}, nil
 	}
 
 	commanderIDs, restricted := commanderFeatureCandidates(snapshot.State, snapshot.Configuration, "autoFortress")
@@ -219,7 +223,7 @@ func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot)
 		}
 	}
 	if !commanderFound {
-		decision := autoFortressWaiting(snapshot, "No available assigned commander has Relic 2.0 equipment and the maxed 100% fortress speed bonus", metrics)
+		decision := autoFortressWaiting(snapshot, "No available assigned commander has Relic 2.0 equipment and the maxed 100% fortress speed bonus", metrics, Localization.New("server.automation.no_available_assigned_commander.973da452", "No available assigned commander has Relic 2.0 equipment and the maxed 100% fortress speed bonus", nil))
 		decision.Details = details
 		return decision, nil
 	}
@@ -239,10 +243,12 @@ func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot)
 	available := max(int64(0), candidate.Source.Units.Stationed[State.UnitID(GameData.DirewolfUnitID)])
 	if available < required {
 		detail := fmt.Sprintf("%s needs %d more arrived Direwolves for one full flank wave", castleName(candidate.Source), required-available)
+		var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.p_needs_p_more.8b5c5bac", "{p0} needs {p1, number} more arrived Direwolves for one full flank wave", Localization.Params{"p0": fmt.Sprintf("%s", castleName(candidate.Source)), "p1": required - available})
 		if purchaseBlocked != "" {
 			detail += "; supply: " + purchaseBlocked
+			detailLocalizationMessage = nil
 		}
-		decision := autoFortressWaiting(snapshot, detail, metrics)
+		decision := autoFortressWaiting(snapshot, detail, metrics, Localization.Clone(detailLocalizationMessage))
 		decision.Details = details
 		return decision, nil
 	}
@@ -258,7 +264,7 @@ func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot)
 		"dailyAttackLimit": settings.DailyAttackLimit, "minimumCommanderSpeedBonus": settings.MinimumCommanderSpeedBonus,
 	})
 	return Decision{
-		Status: "ready", Detail: fmt.Sprintf("Launch fastest Direwolf wave at fortress %d:%d", candidate.Target.X, candidate.Target.Y),
+		Status: "ready", Detail: fmt.Sprintf("Launch fastest Direwolf wave at fortress %d:%d", candidate.Target.X, candidate.Target.Y), DetailDescriptor: Localization.New("server.automation.launch_fastest_direwolf_wave.f080e364", "Launch fastest Direwolf wave at fortress {p0}:{p1}", Localization.Params{"p0": fmt.Sprintf("%d", candidate.Target.X), "p1": fmt.Sprintf("%d", candidate.Target.Y)}),
 		NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics, Details: details,
 		Request: &Intent.Request{Name: "fortress.attack", Arguments: arguments}, ReevaluateOnSuccess: true, ReevaluateOnStale: true,
 	}, nil
@@ -1069,12 +1075,12 @@ func autoFortressRequest(snapshot Snapshot, metrics map[string]float64, detail, 
 	}
 }
 
-func autoFortressWaiting(snapshot Snapshot, detail string, metrics map[string]float64) Decision {
+func autoFortressWaiting(snapshot Snapshot, detail string, metrics map[string]float64, descriptors ...*Localization.Message) Decision {
 	seconds := snapshotFortressCheckInterval(snapshot)
 	if seconds < 1 || seconds > 3600 {
 		seconds = 30
 	}
-	return Decision{Status: "waiting", Detail: detail, NextCheckAt: snapshot.Now.Add(time.Duration(seconds) * time.Second), Metrics: metrics}
+	return Decision{Status: "waiting", Detail: detail, DetailDescriptor: Localization.First(descriptors), NextCheckAt: snapshot.Now.Add(time.Duration(seconds) * time.Second), Metrics: metrics}
 }
 
 func snapshotFortressCheckInterval(snapshot Snapshot) int {
