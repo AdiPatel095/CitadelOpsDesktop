@@ -58,7 +58,26 @@ export function parseMessageDescriptor(value: unknown): LocalizedMessage | undef
             extra.gameParams[name] = { key: parsed.key, fallback: parsed.fallback, ...(parsed.params ? { params: parsed.params } : {}) };
         }
     }
-    return { key: input.key, fallback: input.fallback, ...(input.params !== undefined ? { params } : {}), ...(context ? { context } : {}), ...extra };
+    let listParams:LocalizedMessage['listParams'];
+    if(input.listParams!==undefined){
+        const lists=record(input.listParams);
+        if(input.officialKey!==undefined || !lists || typeof input.fallbackText!=='string' || Object.keys(lists).length<1 || Object.keys(lists).length>4)return undefined;
+        try {if(new TextEncoder().encode(JSON.stringify(lists).replace(/[<>&\u2028\u2029]/g,char=>'\\u'+char.charCodeAt(0).toString(16).padStart(4,'0'))).byteLength>65_536)return undefined;} catch{return undefined;}
+        listParams={};let count=0;
+        for(const [name,items] of Object.entries(lists)){
+            if(['__proto__','prototype','constructor'].includes(name) || Object.hasOwn(params,name) || Object.hasOwn(extra.gameParams??{},name))return undefined;
+            if(!Array.isArray(items) || items.length<1 || items.length>32 || (count+=items.length)>64)return undefined;
+            const leaves=[];
+            for(const item of items){
+                const leaf=record(item);
+                if(!leaf || Object.keys(leaf).some(key=>!['key','fallback','params','fallbackText','officialKey','officialParams','gameParams'].includes(key)))return undefined;
+                const parsed=parseMessageDescriptor(leaf);if(!parsed)return undefined;
+                leaves.push(parsed);
+            }
+            listParams[name]=leaves;
+        }
+    }
+    return { key: input.key, fallback: input.fallback, ...(input.params !== undefined ? { params } : {}), ...(context ? { context } : {}), ...(listParams?{listParams}:{}), ...extra };
 }
 
 export function responseMessageDescriptor(payload: unknown): LocalizedMessage | undefined {

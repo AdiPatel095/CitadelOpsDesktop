@@ -7,7 +7,7 @@ const files = ['locales','formatMessage','gameMessage','officialKeys','sourceMes
 const modules = {};
 for (const file of files) {
  const target = new URL(`../node_modules/.localization-${file}.mjs`,import.meta.url);
- fs.writeFileSync(target,ts.transpileModule(fs.readFileSync(new URL(`../src/i18n/${file}.ts`,import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText);
+ fs.writeFileSync(target,ts.transpileModule(fs.readFileSync(new URL(`../src/i18n/${file}.ts`,import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText.replace("'./messageDescriptor.ts'",JSON.stringify(new URL('../src/i18n/messageDescriptor.ts',import.meta.url).href)));
  modules[file] = await import(pathToFileURL(target.pathname));
  fs.unlinkSync(target);
 }

@@ -6,7 +6,7 @@ import {pathToFileURL} from 'node:url';
 const modules={};
 for(const file of ['config/PatchNotes','i18n/sourceMessages','i18n/formatMessage']) {
  const output=new URL(`../node_modules/.patch-${file.replace('/','-')}.mjs`,import.meta.url);
- fs.writeFileSync(output,ts.transpileModule(fs.readFileSync(new URL(`../src/${file}.ts`,import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText);
+ fs.writeFileSync(output,ts.transpileModule(fs.readFileSync(new URL(`../src/${file}.ts`,import.meta.url),'utf8'),{compilerOptions:{module:ts.ModuleKind.ES2022,target:ts.ScriptTarget.ES2022}}).outputText.replace("'./messageDescriptor.ts'",JSON.stringify(new URL('../src/i18n/messageDescriptor.ts',import.meta.url).href)));
  modules[file]=await import(pathToFileURL(output.pathname));fs.unlinkSync(output);
 }
 test('every release subtitle and note has an exact source-preserving typed catalog assignment',()=>{
