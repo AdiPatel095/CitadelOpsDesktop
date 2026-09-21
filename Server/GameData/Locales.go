@@ -7,8 +7,8 @@ import (
 
 // Official locales verified against the live game bundle and language service
 // version 4357 on 2026-09-20. Lithuanian is served but absent from the alliance
-// language picker. Chinese picker codes currently fail at the service and use
-// the same explicit offline/English fallback as any unavailable dictionary.
+// language picker. The Chinese service codes are case-sensitive and differ
+// from the lowercase alliance picker aliases.
 const LocaleManifestVersion = "4357"
 const LocaleManifestSource = "https://langserv.public.ggs-ep.com/12@4357/en/*"
 
@@ -39,8 +39,8 @@ var officialLocales = []Locale{
 	{"ko", "ko", "한국어", "Korean", "ltr"},
 	{"el", "el", "Ελληνικά", "Greek", "ltr"},
 	{"tr", "tr", "Türkçe", "Turkish", "ltr"},
-	{"zh-CN", "zh_cn", "中文(简体)", "Chinese (Simplified)", "ltr"},
-	{"zh-TW", "zh_tw", "中文(繁體)", "Chinese (Traditional)", "ltr"},
+	{"zh-CN", "zh_CN", "中文(简体)", "Chinese (Simplified)", "ltr"},
+	{"zh-TW", "zh_TW", "中文(繁體)", "Chinese (Traditional)", "ltr"},
 	{"cs", "cs", "Čeština", "Czech", "ltr"},
 	{"ro", "ro", "Română", "Romanian", "ltr"},
 	{"sk", "sk", "Slovenčina", "Slovak", "ltr"},

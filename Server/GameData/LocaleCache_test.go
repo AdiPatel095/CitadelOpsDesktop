@@ -267,3 +267,30 @@ func TestLocaleBlankValuesUseEnglishConsistently(t *testing.T) {
 		t.Fatal(keys)
 	}
 }
+
+func TestChineseServiceCodesAreCaseSensitive(t *testing.T) {
+	manager := localeTestManager(t, func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/metadata":
+			fmt.Fprint(w, `{"@metadata":{"versionNo":"7"}}`)
+		case "/zh_CN/7":
+			fmt.Fprint(w, `{"@metadata":{"versionNo":"7"},"castle":"城堡","equipment":"装备"}`)
+		case "/zh_TW/7":
+			fmt.Fprint(w, `{"@metadata":{"versionNo":"7"},"castle":"城堡","equipment":"裝備"}`)
+		default:
+			http.Error(w, "unsupported case-sensitive service code", 500)
+		}
+	})
+	for _, test := range []struct{ alias, canonical, gameCode, equipment string }{{"zh_cn", "zh-CN", "zh_CN", "装备"}, {"zh_tw", "zh-TW", "zh_TW", "裝備"}} {
+		language, res, err := manager.LanguageFor(context.Background(), test.alias)
+		if err != nil || res.Fallback || res.ResolvedLocale != test.canonical {
+			t.Fatalf("%+v %v", res, err)
+		}
+		if value, _ := language.Text("equipment"); value != test.equipment {
+			t.Fatal(value)
+		}
+		if _, err := os.Stat(filepath.Join(manager.config.CacheDir, "Language-"+test.gameCode+"-v7.json")); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
