@@ -21,6 +21,23 @@ func castleDecisionDescriptor(variant string, castle State.CastleState, values L
 		variant += ".id"
 	}
 	switch variant {
+	case "invasion_refresh.named":
+		return Localization.New("server.automation.castle.invasion_refresh.named", "Refresh invasion targets around {castle}", params)
+	case "invasion_refresh.id":
+		return Localization.New("server.automation.castle.invasion_refresh.id", "Refresh invasion targets around castle {castleID}", params)
+	case "invasion_shortage.named":
+		return Localization.New("server.automation.castle.invasion_shortage.named", "Waiting for attack inventory: {castle} has {available, number} of item {itemID}; {preset} currently requires {required, number}", params)
+	case "invasion_shortage.id":
+		return Localization.New("server.automation.castle.invasion_shortage.id", "Waiting for attack inventory: castle {castleID} has {available, number} of item {itemID}; {preset} currently requires {required, number}", params)
+	case "queued_tower.named":
+		return Localization.New("server.automation.castle.queued_tower.named", "Launch queued tower target {x}:{y} from {castle}", params)
+	case "queued_tower.id":
+		return Localization.New("server.automation.castle.queued_tower.id", "Launch queued tower target {x}:{y} from castle {castleID}", params)
+	case "advisor_tower.named":
+		return Localization.New("server.automation.castle.advisor_tower.named", "Chain {attacks, number} Baron Advisor hits using {skips, number} Time Skips on tower {x}:{y} from {castle}", params)
+	case "advisor_tower.id":
+		return Localization.New("server.automation.castle.advisor_tower.id", "Chain {attacks, number} Baron Advisor hits using {skips, number} Time Skips on tower {x}:{y} from castle {castleID}", params)
+
 	case "bird_refresh_target.named":
 		return Localization.New("server.automation.castle_message.bird_refresh_target.named", "Refresh changed or expired Auto Bird target for {castle}", params)
 	case "bird_refresh_target.id":

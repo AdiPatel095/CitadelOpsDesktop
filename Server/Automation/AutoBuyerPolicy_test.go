@@ -43,6 +43,9 @@ func TestAutoBuyerSpecialistRequiresFourteenDayFloorAndRenewsOneWeekAtATime(t *t
 	if err != nil || decision.Request == nil || decision.Request.Name != "autoBuyer.specialist.purchase" {
 		t.Fatalf("specialist decision = %#v err=%v", decision, err)
 	}
+	if decision.DetailDescriptor == nil || decision.DetailDescriptor.Key != "server.automation.buyer_specialist.renew.0" || decision.DetailDescriptor.Params["days"] != 14 {
+		t.Fatalf("specialist descriptor: %+v", decision.DetailDescriptor)
+	}
 	var request struct {
 		SpecialistID        int   `json:"specialistId"`
 		MinimumDays         int   `json:"minimumDays"`
@@ -143,6 +146,14 @@ func TestAutoBuyerEventPackageWaitsForRouteAndUsesResetCounter(t *testing.T) {
 	})
 	if err != nil || decision.Request == nil || decision.Request.Name != "autoBuyer.package.purchase" {
 		t.Fatalf("active event decision = %#v err=%v", decision, err)
+	}
+	language, langErr := GameData.DecodeLanguage([]byte(`{"currency_name_RiftCoin":"Rift coins"}`), GameData.LanguageMetadata{})
+	if langErr != nil {
+		t.Fatal(langErr)
+	}
+	localized, localizedErr := NewAutoBuyerPolicy().Evaluate(t.Context(), Snapshot{State: gameState, GameData: gameData, Language: language, Now: now, Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{autoBuyerSection: settings}}})
+	if localizedErr != nil || localized.DetailDescriptor == nil || localized.DetailDescriptor.Params["packageID"] != "102" || string(localized.Request.Arguments) != string(decision.Request.Arguments) || localized.Detail != decision.Detail {
+		t.Fatalf("package presentation changed purchase: %+v %v", localized, localizedErr)
 	}
 	gameState.Inventory.ConstructionOffers[102] = 1
 	decision, err = NewAutoBuyerPolicy().Evaluate(t.Context(), Snapshot{

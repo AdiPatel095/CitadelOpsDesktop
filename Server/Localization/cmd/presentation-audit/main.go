@@ -130,7 +130,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fields := map[string][]string{"Intent.Plan": {"Summary"}, "Plan": {"Summary"}, "Decision": {"Detail", "FailureDetail"}, "State.AutomationState": {"Detail", "LastError"}, "FailurePresentation": {"Message", "Explanation", "Recovery"}, "Channel": {"Label", "Description"}, "featureActivity": {"detail"}, "Intent.Step": {"Name"}, "Step": {"Name"}}
+	fields := map[string][]string{"AutoBuyerCapability": {"Reason"}, "GameData.AutoBuyerCapability": {"Reason"}, "Intent.Plan": {"Summary"}, "Plan": {"Summary"}, "Decision": {"Detail", "FailureDetail"}, "State.AutomationState": {"Detail", "LastError"}, "FailurePresentation": {"Message", "Explanation", "Recovery"}, "Channel": {"Label", "Description"}, "featureActivity": {"detail"}, "Intent.Step": {"Name"}, "Step": {"Name"}}
 	entries := []entry{}
 	covered := 0
 	registrySites := 0

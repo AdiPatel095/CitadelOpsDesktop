@@ -227,7 +227,7 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 			"sourceCastleId": source.ID, "radius": fixedInvasionRadius, "scanStartedAt": snapshot.Now,
 		})
 		return Decision{
-			Status: "ready", Detail: fmt.Sprintf("Refresh invasion targets around %s", invasionCastleName(source)),
+			Status: "ready", Detail: fmt.Sprintf("Refresh invasion targets around %s", invasionCastleName(source)), DetailDescriptor: invasionCastleDescriptor("invasion_refresh", source, nil),
 			NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
 			Request: &Intent.Request{Name: "invasion.map.scan", Arguments: arguments}, ReevaluateOnSuccess: true,
 		}, nil
@@ -302,7 +302,7 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 			Detail: fmt.Sprintf(
 				"Refresh invasion targets around %d:%d before attacking (last confirmed %s ago)",
 				target.X, target.Y, snapshot.Now.Sub(target.ObservedAt).Round(time.Second),
-			),
+			), DetailDescriptor: Localization.New("server.automation.invasion_refresh_age", "Refresh invasion targets around {x}:{y} before attacking (last confirmed {seconds, number} seconds ago)", Localization.Params{"x": fmt.Sprint(target.X), "y": fmt.Sprint(target.Y), "seconds": int64(snapshot.Now.Sub(target.ObservedAt).Round(time.Second) / time.Second)}),
 			NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
 			Request: &Intent.Request{Name: "invasion.map.scan", Arguments: arguments}, ReevaluateOnSuccess: true,
 		}, nil
@@ -314,7 +314,7 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 			return decision, nil
 		}
 		return Decision{
-			Status: "waiting", Detail: fmt.Sprintf("Cannot calculate %s inventory requirements: %v", preset.Name, err), DetailDescriptor: Localization.New("server.automation.cannot_calculate_p_inventory.bb3a1f4b", "Cannot calculate {p0} inventory requirements: {p1}", Localization.Params{"p0": fmt.Sprintf("%s", preset.Name), "p1": fmt.Sprintf("%v", err)}),
+			Status: "waiting", Detail: fmt.Sprintf("Cannot calculate %s inventory requirements: %v", preset.Name, err), DetailDescriptor: Localization.Join(Localization.New("server.automation.invasion_inventory_error", "Cannot calculate {preset} inventory requirements", Localization.Params{"preset": preset.Name}), Localization.FromError(err)),
 			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)), Metrics: metrics,
 		}, nil
 	} else if found {
@@ -323,7 +323,7 @@ func (*AutoInvasionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decis
 			Detail: fmt.Sprintf(
 				"Waiting for attack inventory: %s has %d of item %d; %s currently requires %d",
 				invasionCastleName(source), available, itemID, preset.Name, required,
-			),
+			), DetailDescriptor: invasionCastleDescriptor("invasion_shortage", source, Localization.Params{"available": available, "itemID": fmt.Sprint(itemID), "preset": preset.Name, "required": required}),
 			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)), Metrics: metrics,
 		}, nil
 	}
@@ -784,4 +784,9 @@ func invasionCastleName(castle State.CastleState) string {
 		return name
 	}
 	return fmt.Sprintf("castle %d", castle.ID)
+}
+
+func invasionCastleDescriptor(variant string, castle State.CastleState, params Localization.Params) *Localization.Message {
+	castle.Name = strings.TrimSpace(castle.Name)
+	return castleDecisionDescriptor(variant, castle, params)
 }

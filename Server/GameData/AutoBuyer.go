@@ -1,6 +1,7 @@
 package GameData
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"fmt"
 	"sort"
 	"strings"
@@ -41,8 +42,9 @@ type AutoBuyerCatalog struct {
 }
 
 type AutoBuyerCapability struct {
-	Supported bool   `json:"supported"`
-	Reason    string `json:"reason,omitempty"`
+	Supported        bool                  `json:"supported"`
+	Reason           string                `json:"reason,omitempty"`
+	ReasonDescriptor *Localization.Message `json:"reasonDescriptor,omitempty"`
 }
 
 type AutoBuyerShop struct {
@@ -203,7 +205,7 @@ var autoBuyerShopDefinitions = []autoBuyerShopDefinition{
 // AutoBuyerCatalog returns a copy of the capture-backed Auto Buyer projection.
 func (store *Store) AutoBuyerCatalog() (AutoBuyerCatalog, error) {
 	if store == nil {
-		return AutoBuyerCatalog{}, fmt.Errorf("official game data is unavailable")
+		return AutoBuyerCatalog{}, Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.game_data.buyer_unavailable", "Official game data is unavailable", nil))
 	}
 	store.autoBuyerOnce.Do(func() {
 		store.autoBuyerCatalog, store.autoBuyerProducts, store.autoBuyerFeasts, store.autoBuyerErr = store.loadAutoBuyerCatalog()
@@ -233,6 +235,7 @@ func (store *Store) AutoBuyerFeast(feastID int64) (AutoBuyerFeast, bool) {
 		return AutoBuyerFeast{}, false
 	}
 	feast, found := store.autoBuyerFeasts[feastID]
+	feast.AutomaticPurchase = copyAutoBuyerCapability(feast.AutomaticPurchase)
 	return feast, found
 }
 
@@ -263,13 +266,13 @@ func (store *Store) loadAutoBuyerCatalog() (
 		Specialists: autoBuyerSpecialists(),
 		TimedOffers: AutoBuyerCapability{
 			Supported: false,
-			Reason:    "Timed offers require a server-quoted confirmation and are not enabled for unattended purchases yet.",
+			Reason:    "Timed offers require a server-quoted confirmation and are not enabled for unattended purchases yet.", ReasonDescriptor: Localization.New("server.game_data.buyer_capability.timed_offers", "Timed offers require a server-quoted confirmation and are not enabled for unattended purchases yet.", nil),
 		},
 		FeastAutomaticSource: AutoBuyerCapability{
 			Supported: true,
-			Reason:    "Uses the most stored food among owned castles with fresh positive net food production and exposes correlated purchase evidence.",
+			Reason:    "Uses the most stored food among owned castles with fresh positive net food production and exposes correlated purchase evidence.", ReasonDescriptor: Localization.New("server.game_data.buyer_capability.feast_source", "Uses the most stored food among owned castles with fresh positive net food production and exposes correlated purchase evidence.", nil),
 		},
-		SpecialistUpkeep: AutoBuyerCapability{Supported: true, Reason: "Uses current-session authoritative booster and ruby observations with durable no-replay reconciliation."},
+		SpecialistUpkeep: AutoBuyerCapability{Supported: true, Reason: "Uses current-session authoritative booster and ruby observations with durable no-replay reconciliation.", ReasonDescriptor: Localization.New("server.game_data.buyer_capability.specialist_upkeep", "Uses current-session authoritative booster and ruby observations with durable no-replay reconciliation.", nil)},
 	}
 	byPackage := map[string]map[int64]AutoBuyerPackage{}
 	shopIndex := map[string]int{}
@@ -519,8 +522,9 @@ func (store *Store) loadAutoBuyerFeasts(
 		}
 		if price.Premium {
 			feast.AutomaticPurchase = AutoBuyerCapability{
-				Supported: false,
-				Reason:    AutoBuyerRubyFeastUnsupportedReason,
+				Supported:        false,
+				Reason:           AutoBuyerRubyFeastUnsupportedReason,
+				ReasonDescriptor: Localization.New("server.game_data.buyer_capability.ruby_feast", "Automatic ruby feast purchases are unavailable until the game provides a command-local ruby balance confirmation.", nil),
 			}
 		}
 		result = append(result, feast)
@@ -655,5 +659,21 @@ func copyAutoBuyerCatalog(source AutoBuyerCatalog) AutoBuyerCatalog {
 	clone.Packages = append([]AutoBuyerPackage(nil), source.Packages...)
 	clone.Specialists = append([]AutoBuyerSpecialist(nil), source.Specialists...)
 	clone.Feasts = append([]AutoBuyerFeast(nil), source.Feasts...)
+	for index := range clone.Feasts {
+		clone.Feasts[index].AutomaticPurchase = copyAutoBuyerCapability(clone.Feasts[index].AutomaticPurchase)
+	}
+	clone.TimedOffers = copyAutoBuyerCapability(source.TimedOffers)
+	clone.FeastAutomaticSource = copyAutoBuyerCapability(source.FeastAutomaticSource)
+	clone.SpecialistUpkeep = copyAutoBuyerCapability(source.SpecialistUpkeep)
 	return clone
+}
+
+func copyAutoBuyerCapability(source AutoBuyerCapability) AutoBuyerCapability {
+	descriptor := source.ReasonDescriptor
+	if descriptor != nil && descriptor.FallbackText != "" && descriptor.FallbackText != source.Reason {
+		source.ReasonDescriptor = nil
+		return source
+	}
+	source.ReasonDescriptor = Localization.Bind(descriptor, source.Reason)
+	return source
 }

@@ -20,6 +20,8 @@ func examples(){
  _=commandStep("helper missing")
  _=commandStep("helper covered",Localization.New("k","label",nil))
  _=commandStep("decorated covered").WithNameDescriptor(Localization.New("k","label",nil))
+ _=AutoBuyerCapability{Reason:"capability missing"}
+ _=GameData.AutoBuyerCapability{Reason:"capability covered",ReasonDescriptor:Localization.New("c","capability",nil)}
  details["missing"]="map missing"
  details["covered"]="map covered"
  detailDescriptors["covered"]=Localization.New("k","label",nil)
@@ -38,14 +40,14 @@ func examples(){
 	if err := json.Unmarshal(output, &report); err != nil {
 		t.Fatal(err)
 	}
-	if report.DescriptorSites != 5 || len(report.Entries) != 3 {
+	if report.DescriptorSites != 6 || len(report.Entries) != 4 {
 		t.Fatalf("inventory missed boundary: %s", output)
 	}
 	found := map[string]bool{}
 	for _, entry := range report.Entries {
 		found[entry.Expression] = true
 	}
-	if !found[`"elided missing"`] || !found[`"helper missing"`] || !found[`"map missing"`] {
+	if !found[`"elided missing"`] || !found[`"helper missing"`] || !found[`"map missing"`] || !found[`"capability missing"`] {
 		t.Fatalf("wrong unresolved sites: %s", output)
 	}
 }

@@ -82,6 +82,9 @@ func TestAutoTowerPolicyScansStaleCastlesBeforeLaunchingQueue(t *testing.T) {
 	if err != nil || decision.Request == nil || decision.Request.Name != "tower.attack" || decision.FollowUp != nil {
 		t.Fatalf("tower preparation decision: %#v err=%v", decision, err)
 	}
+	if decision.DetailDescriptor == nil || !strings.Contains(decision.DetailDescriptor.Key, "queued_tower") || decision.DetailDescriptor.Params["x"] != "101" {
+		t.Fatalf("tower launch descriptor: %+v", decision.DetailDescriptor)
+	}
 	if !decision.ReevaluateOnStale {
 		t.Fatal("tower attack did not opt into immediate stale re-evaluation")
 	}

@@ -118,6 +118,7 @@ func (*BeriAttackPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisio
 		return beriAttackIntentDecision(
 			snapshot.Now, interval, fmt.Sprintf("Open non-premium Berimond camp %d", option.ID),
 			"beri.camp.open", map[string]any{"campId": option.ID},
+			Localization.New("server.automation.beri_open_camp", "Open non-premium Berimond camp {id}", Localization.Params{"id": fmt.Sprint(option.ID)}),
 		), nil
 	}
 
@@ -193,7 +194,7 @@ func (*BeriAttackPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisio
 			"targetTypeId": target.TypeID, "targetObservedAt": snapshot.State.Beri.TargetObservedAt,
 			"commanderId": commanderID, "preset": preset, "horseTravelBoostId": settings.HorseTravelBoostID,
 			"dailyAttackLimit": settings.DailyAttackLimit,
-		},
+		}, Localization.New("server.automation.beri_attack_target", "Attack Berimond tower at {x}:{y}", Localization.Params{"x": fmt.Sprint(target.X), "y": fmt.Sprint(target.Y)}),
 	), nil
 }
 

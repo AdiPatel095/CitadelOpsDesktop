@@ -165,13 +165,13 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 		return autoBuyerIdle(snapshot.Now, settings.CheckIntervalSec, "No Auto Buyer goals are enabled", metrics, Localization.New("server.automation.no_auto_buyer_goals.df8d2f1d", "No Auto Buyer goals are enabled", nil)), nil
 	}
 
-	settings, blockedDetail := isolateAutoBuyerRules(snapshot.GameData, settings, metrics)
-	var blockedDetailLocalizationMessage *Localization.Message = nil
+	settings, blockedDetail, blockedDetailLocalizationMessage := isolateAutoBuyerRules(snapshot.GameData, settings, metrics)
 	invalidDetail := blockedDetail
+	invalidDescriptor := Localization.Clone(blockedDetailLocalizationMessage)
 	defer func() {
 		if invalidDetail != "" && result.Detail != invalidDetail {
 			result.Detail += "; skipped invalid goal: " + invalidDetail
-			result.DetailDescriptor = nil
+			result.DetailDescriptor = Localization.Bind(Localization.Join(result.DetailDescriptor, Localization.Join(Localization.New("server.automation.buyer_skipped_invalid_goal", "Skipped invalid goal", nil), invalidDescriptor)), result.Detail)
 		}
 	}()
 	enabledSpecialists = 0
@@ -223,13 +223,13 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 			metrics["feastBlocked"] = 1
 			if blockedDetail == "" {
 				blockedDetail = "Automatic feast source evaluation failed: " + sourceErr.Error()
-				blockedDetailLocalizationMessage = nil
+				blockedDetailLocalizationMessage = Localization.Join(Localization.New("server.automation.buyer_feast_source_error", "Automatic feast source evaluation failed", nil), Localization.FromError(sourceErr))
 			}
 		case len(sourceStatus.ContextStaleCandidateIDs) > 0:
 			castleID := sourceStatus.ContextStaleCandidateIDs[0]
 			decision := autoBuyerRequestDecision(snapshot.Now, metrics, fmt.Sprintf("Refresh castle %d economy for automatic feast selection", castleID), "game.focus_castle", map[string]any{
 				"castleId": castleID, "refresh": true,
-			})
+			}, Localization.New("server.automation.buyer_refresh_feast_castle", "Refresh castle {id} economy for automatic feast selection", Localization.Params{"id": fmt.Sprint(castleID)}))
 			decision.ReevaluateOnStale = false
 			decision.NextCheckAt = snapshot.Now.Add(30 * time.Second)
 			return decision, nil
@@ -284,13 +284,13 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 	if specialistContextStale {
 		return autoBuyerRequestDecision(snapshot.Now, metrics, "Refresh specialist timers", "autoBuyer.boosters.refresh", map[string]any{"feastContext": false}, Localization.New("server.automation.refresh_specialist_timers.607cec18", "Refresh specialist timers", nil)), nil
 	}
-	if decision, detail := evaluateAutoBuyerSpecialists(snapshot, settings, metrics); decision != nil {
+	if decision, detail, descriptor := evaluateAutoBuyerSpecialists(snapshot, settings, metrics); decision != nil {
 		return *decision, nil
 	} else if detail != "" {
 		metrics["specialistBlocked"] = 1
 		if blockedDetail == "" {
 			blockedDetail = detail
-			blockedDetailLocalizationMessage = nil
+			blockedDetailLocalizationMessage = Localization.Clone(descriptor)
 		}
 	}
 
@@ -310,11 +310,11 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 					"sourceCastleId": packageSource.ID,
 				}, Localization.New("server.automation.refresh_shop_stock_and.f65001ab", "Refresh shop stock and reset counters", nil)), nil
 			}
-			if decision, detail := evaluateAutoBuyerPackages(snapshot, settings, packageSource, metrics); decision != nil {
+			if decision, detail, descriptor := evaluateAutoBuyerPackages(snapshot, settings, packageSource, metrics); decision != nil {
 				return *decision, nil
 			} else if detail != "" && blockedDetail == "" {
 				blockedDetail = detail
-				blockedDetailLocalizationMessage = nil
+				blockedDetailLocalizationMessage = Localization.Clone(descriptor)
 			}
 		}
 	}
@@ -354,14 +354,16 @@ func autoBuyerSpecialistReconciliationDecision(snapshot Snapshot, metrics map[st
 
 // Disable invalid goals only in this evaluation, never in saved settings.
 // Duplicate identities disable every copy so ordering cannot select a spend.
-func isolateAutoBuyerRules(store *GameData.Store, settings autoBuyerSettings, metrics map[string]float64) (autoBuyerSettings, string) {
+func isolateAutoBuyerRules(store *GameData.Store, settings autoBuyerSettings, metrics map[string]float64) (autoBuyerSettings, string, *Localization.Message) {
 	settings.Packages = append([]autoBuyerPackageRule(nil), settings.Packages...)
 	settings.Specialists = append([]autoBuyerSpecialistRule(nil), settings.Specialists...)
 	first := ""
-	blocked := func(detail string) {
+	var firstDescriptor *Localization.Message
+	blocked := func(detail string, descriptor *Localization.Message) {
 		metrics["invalidGoals"]++
 		if first == "" {
 			first = detail
+			firstDescriptor = Localization.Clone(descriptor)
 		}
 	}
 	packageCounts := map[string]int{}
@@ -374,13 +376,14 @@ func isolateAutoBuyerRules(store *GameData.Store, settings autoBuyerSettings, me
 		if !r.Enabled {
 			continue
 		}
-		detail := validateAutoBuyerRules(store, autoBuyerSettings{Packages: []autoBuyerPackageRule{r}})
+		detail, descriptor := validateAutoBuyerRules(store, autoBuyerSettings{Packages: []autoBuyerPackageRule{r}})
 		if packageCounts[fmt.Sprintf("%s:%d", strings.TrimSpace(r.ShopID), r.PackageID)] > 1 {
 			detail = fmt.Sprintf("Package %d is configured more than once for %s", r.PackageID, r.ShopID)
+			descriptor = Localization.New("server.automation.buyer_package.duplicate", "Package {packageID} is configured more than once for {shop}", Localization.Params{"packageID": fmt.Sprint(r.PackageID), "shop": r.ShopID})
 		}
 		if detail != "" {
 			settings.Packages[i].Enabled = false
-			blocked(detail)
+			blocked(detail, descriptor)
 		}
 	}
 	specialistCounts := map[int]int{}
@@ -393,22 +396,23 @@ func isolateAutoBuyerRules(store *GameData.Store, settings autoBuyerSettings, me
 		if !r.Enabled {
 			continue
 		}
-		detail := validateAutoBuyerRules(store, autoBuyerSettings{Specialists: []autoBuyerSpecialistRule{r}})
+		detail, descriptor := validateAutoBuyerRules(store, autoBuyerSettings{Specialists: []autoBuyerSpecialistRule{r}})
 		if specialistCounts[r.ID] > 1 {
 			detail = fmt.Sprintf("Specialist %d is configured more than once", r.ID)
+			descriptor = Localization.New("server.automation.buyer_specialist.duplicate", "Specialist {id} is configured more than once", Localization.Params{"id": fmt.Sprint(r.ID)})
 		}
 		if detail != "" {
 			settings.Specialists[i].Enabled = false
-			blocked(detail)
+			blocked(detail, descriptor)
 		}
 	}
 	if settings.Feast.Enabled {
-		if detail := validateAutoBuyerRules(store, autoBuyerSettings{Feast: settings.Feast}); detail != "" {
+		if detail, descriptor := validateAutoBuyerRules(store, autoBuyerSettings{Feast: settings.Feast}); detail != "" {
 			settings.Feast.Enabled = false
-			blocked(detail)
+			blocked(detail, descriptor)
 		}
 	}
-	return settings, first
+	return settings, first, firstDescriptor
 }
 
 func autoBuyerAvailablePackageGoals(snapshot Snapshot, settings autoBuyerSettings) (available int, unavailableEventShops int) {
@@ -432,7 +436,7 @@ func autoBuyerAvailablePackageGoals(snapshot Snapshot, settings autoBuyerSetting
 	return available, unavailableEventShops
 }
 
-func validateAutoBuyerRules(store *GameData.Store, settings autoBuyerSettings) string {
+func validateAutoBuyerRules(store *GameData.Store, settings autoBuyerSettings) (string, *Localization.Message) {
 	seenPackages := map[string]struct{}{}
 	for _, rule := range settings.Packages {
 		if !rule.Enabled {
@@ -441,21 +445,21 @@ func validateAutoBuyerRules(store *GameData.Store, settings autoBuyerSettings) s
 		shopID := strings.TrimSpace(rule.ShopID)
 		key := fmt.Sprintf("%s:%d", shopID, rule.PackageID)
 		if _, duplicate := seenPackages[key]; duplicate {
-			return fmt.Sprintf("Package %d is configured more than once for %s", rule.PackageID, shopID)
+			return fmt.Sprintf("Package %d is configured more than once for %s", rule.PackageID, shopID), Localization.New("server.automation.buyer_package.duplicate", "Package {packageID} is configured more than once for {shop}", Localization.Params{"packageID": fmt.Sprint(rule.PackageID), "shop": shopID})
 		}
 		seenPackages[key] = struct{}{}
 		product, found := store.AutoBuyerPackage(shopID, int64(rule.PackageID))
 		if !found {
-			return fmt.Sprintf("Package %d is not in the supported %s Auto Buyer catalog", rule.PackageID, shopID)
+			return fmt.Sprintf("Package %d is not in the supported %s Auto Buyer catalog", rule.PackageID, shopID), Localization.New("server.automation.buyer_package.unsupported", "Package {packageID} is not in the supported {shop} Auto Buyer catalog", Localization.Params{"packageID": fmt.Sprint(rule.PackageID), "shop": shopID})
 		}
 		if rule.TargetPurchasesPerReset <= 0 || rule.TargetPurchasesPerReset > product.Stock {
-			return fmt.Sprintf("%s target must be between 1 and its stock limit %d", product.Name, product.Stock)
+			return fmt.Sprintf("%s target must be between 1 and its stock limit %d", product.Name, product.Stock), buyerPackageRuleDescriptor("target", product, Localization.Params{"stock": product.Stock})
 		}
 		if rule.MinimumBalanceReserve < 0 || rule.MaximumRubySpendPerReset < 0 {
-			return fmt.Sprintf("%s reserve and ruby ceiling cannot be negative", product.Name)
+			return fmt.Sprintf("%s reserve and ruby ceiling cannot be negative", product.Name), buyerPackageRuleDescriptor("reserve", product, nil)
 		}
 		if product.Price.Premium && rule.MaximumRubySpendPerReset < product.Price.Amount {
-			return fmt.Sprintf("%s needs an explicit ruby ceiling of at least %d", product.Name, product.Price.Amount)
+			return fmt.Sprintf("%s needs an explicit ruby ceiling of at least %d", product.Name, product.Price.Amount), buyerPackageRuleDescriptor("ceiling", product, Localization.Params{"cost": product.Price.Amount})
 		}
 	}
 
@@ -465,46 +469,47 @@ func validateAutoBuyerRules(store *GameData.Store, settings autoBuyerSettings) s
 			continue
 		}
 		if _, duplicate := seenSpecialists[rule.ID]; duplicate {
-			return fmt.Sprintf("Specialist %d is configured more than once", rule.ID)
+			return fmt.Sprintf("Specialist %d is configured more than once", rule.ID), Localization.New("server.automation.buyer_specialist.duplicate", "Specialist {id} is configured more than once", Localization.Params{"id": fmt.Sprint(rule.ID)})
 		}
 		seenSpecialists[rule.ID] = struct{}{}
 		specialist, found := GameData.AutoBuyerSpecialistByID(rule.ID)
 		if !found {
-			return fmt.Sprintf("Specialist %d is not supported for automatic renewal", rule.ID)
+			return fmt.Sprintf("Specialist %d is not supported for automatic renewal", rule.ID), Localization.New("server.automation.buyer_specialist.unsupported", "Specialist {id} is not supported for automatic renewal", Localization.Params{"id": fmt.Sprint(rule.ID)})
 		}
 		if rule.MinimumDays < autoBuyerMinimumSpecialistDays || rule.MinimumDays > 365 {
-			return fmt.Sprintf("%s floor must be between %d and 365 days", specialist.Name, autoBuyerMinimumSpecialistDays)
+			return fmt.Sprintf("%s floor must be between %d and 365 days", specialist.Name, autoBuyerMinimumSpecialistDays), buyerSpecialistDescriptor("floor", specialist, Localization.Params{"minimum": autoBuyerMinimumSpecialistDays})
 		}
 		if specialist.ValidatedMaximumRubyCost <= 0 || rule.MaximumRubyCostPerPurchase < specialist.ValidatedMaximumRubyCost {
-			return fmt.Sprintf("%s ruby ceiling must cover its validated maximum cost of %d", specialist.Name, specialist.ValidatedMaximumRubyCost)
+			return fmt.Sprintf("%s ruby ceiling must cover its validated maximum cost of %d", specialist.Name, specialist.ValidatedMaximumRubyCost), buyerSpecialistDescriptor("ceiling", specialist, Localization.Params{"cost": specialist.ValidatedMaximumRubyCost})
 		}
 	}
 
 	if settings.Feast.Enabled {
 		feast, found := store.AutoBuyerFeast(settings.Feast.FeastID)
 		if !found {
-			return fmt.Sprintf("Feast %d is not in the supported official catalog", settings.Feast.FeastID)
+			return fmt.Sprintf("Feast %d is not in the supported official catalog", settings.Feast.FeastID), Localization.New("server.automation.buyer_feast.unsupported", "Feast {id} is not in the supported official catalog", Localization.Params{"id": fmt.Sprint(settings.Feast.FeastID)})
 		}
 		if settings.Feast.MinimumRemainingHours <= 0 || settings.Feast.MinimumRemainingHours > 24*30 ||
 			settings.Feast.MinimumFoodReserve < 0 || settings.Feast.MaximumRubyCostPerPurchase < 0 {
-			return fmt.Sprintf("%s duration, reserve, or ruby ceiling is invalid", feast.Name)
+			return fmt.Sprintf("%s duration, reserve, or ruby ceiling is invalid", feast.Name), buyerFeastRuleDescriptor("invalid", feast, 0)
 		}
 		if !feast.AutomaticPurchase.Supported {
-			return feast.AutomaticPurchase.Reason
+			return feast.AutomaticPurchase.Reason, Localization.Clone(feast.AutomaticPurchase.ReasonDescriptor)
 		}
 		if feast.Price.Premium && (!settings.Feast.AllowRubies || settings.Feast.MaximumRubyCostPerPurchase < feast.Price.Amount) {
-			return fmt.Sprintf("%s needs explicit ruby permission and a ceiling of at least %d", feast.Name, feast.Price.Amount)
+			return fmt.Sprintf("%s needs explicit ruby permission and a ceiling of at least %d", feast.Name, feast.Price.Amount), buyerFeastRuleDescriptor("permission", feast, feast.Price.Amount)
 		}
 	}
-	return ""
+	return "", nil
 }
 
 func evaluateAutoBuyerSpecialists(
 	snapshot Snapshot,
 	settings autoBuyerSettings,
 	metrics map[string]float64,
-) (*Decision, string) {
+) (*Decision, string, *Localization.Message) {
 	firstBlocked := ""
+	var firstDescriptor *Localization.Message
 	for _, rule := range settings.Specialists {
 		if !rule.Enabled {
 			continue
@@ -522,6 +527,7 @@ func evaluateAutoBuyerSpecialists(
 			!autoBuyerObservationFresh(observation.ObservedAt, snapshot.Now, snapshot.State.Session.ChangedAt, autoBuyerRubyFreshness) {
 			if firstBlocked == "" {
 				firstBlocked = fmt.Sprintf("Waiting for a fresh current-session ruby balance before renewing %s", specialist.Name)
+				firstDescriptor = buyerSpecialistDescriptor("balance", specialist, nil)
 			}
 			continue
 		}
@@ -529,6 +535,7 @@ func evaluateAutoBuyerSpecialists(
 		if rubies-settings.MinimumRubyReserve < specialist.ValidatedMaximumRubyCost {
 			if firstBlocked == "" {
 				firstBlocked = fmt.Sprintf("Waiting for %d rubies above reserve to renew %s", specialist.ValidatedMaximumRubyCost, specialist.Name)
+				firstDescriptor = buyerSpecialistDescriptor("cost", specialist, Localization.Params{"cost": specialist.ValidatedMaximumRubyCost})
 			}
 			continue
 		}
@@ -544,10 +551,10 @@ func evaluateAutoBuyerSpecialists(
 		}
 		decision := autoBuyerRequestDecision(snapshot.Now, metrics,
 			fmt.Sprintf("Renew %s by 7 days toward the %d-day floor", specialist.Name, rule.MinimumDays),
-			"autoBuyer.specialist.purchase", arguments)
-		return &decision, ""
+			"autoBuyer.specialist.purchase", arguments, buyerSpecialistDescriptor("renew", specialist, Localization.Params{"days": rule.MinimumDays}))
+		return &decision, "", nil
 	}
-	return nil, firstBlocked
+	return nil, firstBlocked, firstDescriptor
 }
 
 func evaluateAutoBuyerFeast(
@@ -662,8 +669,9 @@ func evaluateAutoBuyerPackages(
 	settings autoBuyerSettings,
 	source State.CastleState,
 	metrics map[string]float64,
-) (*Decision, string) {
+) (*Decision, string, *Localization.Message) {
 	firstBlocked := ""
+	var firstDescriptor *Localization.Message
 	offers, _, _ := snapshot.State.ConstructionOffersFor(source.ID, source.KingdomID)
 	for _, rule := range settings.Packages {
 		if !rule.Enabled {
@@ -673,6 +681,7 @@ func evaluateAutoBuyerPackages(
 		if !autoBuyerLevelEligible(snapshot.State.Player, product.MinLevel, product.MaxLevel, product.MinLegendLevel, product.MaxLegendLevel) {
 			if firstBlocked == "" {
 				firstBlocked = fmt.Sprintf("%s is not available at the current player level", product.Name)
+				firstDescriptor = buyerPackageRuleDescriptor("level", product, nil)
 			}
 			continue
 		}
@@ -680,6 +689,7 @@ func evaluateAutoBuyerPackages(
 		if !active || route.EventID != product.TableID {
 			if firstBlocked == "" {
 				firstBlocked = fmt.Sprintf("%s is not advertised by its current shop", product.Name)
+				firstDescriptor = buyerPackageRuleDescriptor("advertised", product, nil)
 			}
 			continue
 		}
@@ -688,6 +698,7 @@ func evaluateAutoBuyerPackages(
 		); err != nil {
 			if firstBlocked == "" {
 				firstBlocked = fmt.Sprintf("%s is unavailable at %s: %v", product.Name, source.Name, err)
+				firstDescriptor = Localization.Join(buyerPackageRuleDescriptor("destination", product, Localization.Params{"castle": source.Name}), Localization.FromError(err))
 			}
 			continue
 		}
@@ -704,6 +715,7 @@ func evaluateAutoBuyerPackages(
 		if !available {
 			if firstBlocked == "" {
 				firstBlocked = fmt.Sprintf("%s balance is unavailable", product.Price.Name)
+				firstDescriptor = buyerPriceDescriptor(Localization.New("server.automation.buyer_balance_unavailable", "{currency} balance is unavailable", Localization.Params{"currency": product.Price.Name}), snapshot, product.Price)
 			}
 			continue
 		}
@@ -712,6 +724,7 @@ func evaluateAutoBuyerPackages(
 			if !settings.AllowRubyPackages {
 				if firstBlocked == "" {
 					firstBlocked = fmt.Sprintf("Ruby shop purchases are disabled for %s", product.Name)
+					firstDescriptor = buyerPackageRuleDescriptor("disabled", product, nil)
 				}
 				continue
 			}
@@ -721,6 +734,7 @@ func evaluateAutoBuyerPackages(
 			if remainingBudget <= 0 {
 				if firstBlocked == "" {
 					firstBlocked = fmt.Sprintf("%s reached its ruby ceiling for this stock reset", product.Name)
+					firstDescriptor = buyerPackageRuleDescriptor("spent", product, nil)
 				}
 				continue
 			}
@@ -735,6 +749,7 @@ func evaluateAutoBuyerPackages(
 		if amount <= 0 {
 			if firstBlocked == "" {
 				firstBlocked = fmt.Sprintf("Waiting for %d %s above reserve to buy %s", product.Price.Amount, product.Price.Name, product.Name)
+				firstDescriptor = buyerPackagePurchaseDescriptor(snapshot, product, 1, true)
 			}
 			continue
 		}
@@ -750,10 +765,10 @@ func evaluateAutoBuyerPackages(
 		}
 		decision := autoBuyerRequestDecision(snapshot.Now, metrics,
 			fmt.Sprintf("Buy %d x %s for %d %s", amount, product.Name, amount*product.Price.Amount, product.Price.Name),
-			"autoBuyer.package.purchase", arguments)
-		return &decision, ""
+			"autoBuyer.package.purchase", arguments, buyerPackagePurchaseDescriptor(snapshot, product, amount, false))
+		return &decision, "", nil
 	}
-	return nil, firstBlocked
+	return nil, firstBlocked, firstDescriptor
 }
 
 func autoBuyerSourceCastle(gameState State.GameState, configured State.CastleID) (State.CastleState, bool) {

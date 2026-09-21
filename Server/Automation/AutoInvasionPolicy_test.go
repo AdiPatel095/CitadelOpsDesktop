@@ -68,6 +68,9 @@ func TestAutoInvasionPolicyWaitsForEnoughCapacityAdjustedInventory(t *testing.T)
 		t.Fatalf("invasion shortage decision: %#v err=%v", decision, err)
 	}
 
+	if decision.DetailDescriptor == nil || decision.DetailDescriptor.Params["preset"] != "Trial" || decision.DetailDescriptor.Params["itemID"] != "216" {
+		t.Fatalf("inventory descriptor: %+v", decision.DetailDescriptor)
+	}
 	castle := snapshot.State.Castles[1]
 	castle.Units.Stationed[216] = 2_000
 	snapshot.State.Castles[1] = castle
@@ -436,6 +439,9 @@ func TestAutoInvasionRefreshesNeighborhoodBeforePickingStaleTarget(t *testing.T)
 	}
 	if decision.Request == nil || decision.Request.Name != "invasion.map.scan" || !decision.ReevaluateOnSuccess {
 		t.Fatalf("stale candidate must trigger a neighborhood refresh first, got %#v", decision)
+	}
+	if decision.DetailDescriptor == nil || decision.DetailDescriptor.Key != "server.automation.invasion_refresh_age" {
+		t.Fatalf("stale target descriptor: %+v", decision.DetailDescriptor)
 	}
 	var arguments struct {
 		Bounds *State.StormMapBounds `json:"bounds"`

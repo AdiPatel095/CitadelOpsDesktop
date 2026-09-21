@@ -341,6 +341,7 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		return Decision{
 			Status:              "ready",
 			Detail:              autoTowerLaunchDetail(settings, selected, selectedAdvisorAttackCount),
+			DetailDescriptor:    autoTowerLaunchDescriptor(settings, selected, selectedAdvisorAttackCount),
 			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 			Metrics:             metrics,
 			Request:             &Intent.Request{Name: "tower.attack", Arguments: arguments},
@@ -896,4 +897,15 @@ func autoTowerLaunchDetail(settings autoTowerSettings, selected towerQueueCandid
 		"Launch queued tower target %d:%d from %s",
 		selected.Entry.TargetX, selected.Entry.TargetY, castleName(selected.Castle),
 	)
+}
+
+func autoTowerLaunchDescriptor(settings autoTowerSettings, selected towerQueueCandidate, attackCount int) *Localization.Message {
+	params := Localization.Params{"x": fmt.Sprint(selected.Entry.TargetX), "y": fmt.Sprint(selected.Entry.TargetY)}
+	variant := "queued_tower"
+	if settings.UseAdvisor {
+		variant = "advisor_tower"
+		params["attacks"] = attackCount
+		params["skips"] = attackCount - 1
+	}
+	return castleDecisionDescriptor(variant, selected.Castle, params)
 }
