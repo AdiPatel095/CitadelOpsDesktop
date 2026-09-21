@@ -45,7 +45,13 @@ func (engine *Engine) failurePresentation(receipt Receipt, err error) *FailurePr
 	var locked *LaneLockedError
 	if errors.As(err, &locked) {
 		lock := locked.Lock
-		return &FailurePresentation{Kind: FailureUnknown, Message: "Automation lane safety lock", MessageDescriptor: Localization.New("server.intent.automation_lane_safety_lock.56256527", "Automation lane safety lock", nil), Explanation: lock.Detail(), ExplanationDescriptor: lock.DetailDescriptor(), Recovery: "The lane automatically becomes eligible again 30 minutes after this rejection; normal session and feature prerequisites still apply.", RecoveryDescriptor: Localization.New("server.intent.the_lane_automatically_becomes.544b1dee", "The lane automatically becomes eligible again 30 minutes after this rejection; normal session and feature prerequisites still apply.", nil), Severity: FailureSeverityError, Toast: locked.Cause != nil, GameCode: &lock.Code, GameOpcode: lock.Opcode, SafetyLock: &lock}
+		recovery := "The lane automatically becomes eligible again 30 minutes after this rejection; normal session and feature prerequisites still apply."
+		recoveryDescriptor := Localization.New("server.intent.the_lane_automatically_becomes.544b1dee", "The lane automatically becomes eligible again 30 minutes after this rejection; normal session and feature prerequisites still apply.", nil)
+		if lock.ExpiresAt().IsZero() {
+			recovery = "Review this rejection before explicitly clearing the lane lock; normal session and feature prerequisites still apply."
+			recoveryDescriptor = Localization.New("server.intent.safety_lock.review_recovery", "Review this rejection before explicitly clearing the lane lock; normal session and feature prerequisites still apply.", nil)
+		}
+		return &FailurePresentation{Kind: FailureUnknown, Message: "Automation lane safety lock", MessageDescriptor: Localization.New("server.intent.automation_lane_safety_lock.56256527", "Automation lane safety lock", nil), Explanation: lock.Detail(), ExplanationDescriptor: lock.DetailDescriptor(), Recovery: recovery, RecoveryDescriptor: recoveryDescriptor, Severity: FailureSeverityError, Toast: locked.Cause != nil, GameCode: &lock.Code, GameOpcode: lock.Opcode, SafetyLock: &lock}
 	}
 	presentation := &FailurePresentation{
 		Kind:        FailureUnknown,
