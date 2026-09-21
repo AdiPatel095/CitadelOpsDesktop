@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { Check, Heart, List, Flame } from 'lucide-react';
@@ -169,6 +170,7 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
   onFavoriteClick,
   onQuantityChange,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const parentRef = useRef<HTMLDivElement>(null);
   const [columns, setColumns] = useState(8);
   const [gridRowEstimate, setGridRowEstimate] = useState(() => estimateGridMetrics().rowSize);
@@ -236,7 +238,7 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
       <div className="flex-1 overflow-y-auto p-6">
         <EmptyState
           surface="plain"
-          title="No units found"
+          title={localizeStatic("ui.components.troopPickerModal.title.no.units.found.48f2efd9")}
           description={quickAccessTab === 'favorites'
               ? 'Click the heart icon on units to add favorites'
               : quickAccessTab === 'frequent'
@@ -310,7 +312,7 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
                             type="text"
                             value={quantities[unitId] ? quantities[unitId].toLocaleString() : ''}
                             onChange={(e) => onQuantityChange(unitId, e.target.value)}
-                            placeholder="Qty"
+                            placeholder={localizeStatic("ui.components.troopPickerModal.placeholder.qty.a9be9c3e")}
                             className="w-24 h-8 text-center font-mono"
                           />
                         </div>
@@ -387,7 +389,7 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
                               type="text"
                               value={quantities[unitId] ? quantities[unitId].toLocaleString() : ''}
                               onChange={(e) => onQuantityChange(unitId, e.target.value)}
-                              placeholder="Qty"
+                              placeholder={localizeStatic("ui.components.troopPickerModal.placeholder.qty.a9be9c3e")}
                               className="text-center font-mono h-8"
                             />
                           </div>
@@ -410,6 +412,7 @@ const VirtualizedUnitGrid: React.FC<VirtualizedUnitGridProps> = ({
 // ============================================
 
 const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, onClose }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const {
     mode,
     title,
@@ -634,10 +637,10 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
       resultLabel={visibleUnitLabel}
       searchValue={searchQuery}
       onSearchChange={setSearchQuery}
-      searchPlaceholder="Search by name or ID..."
+      searchPlaceholder={localizeStatic("ui.components.troopPickerModal.searchPlaceholder.search.by.name.or.id.1434706f")}
       commandExtras={(
         <PillSelector
-          ariaLabel="Unit collection"
+          ariaLabel={localizeStatic("ui.components.troopPickerModal.ariaLabel.unit.collection.8624da37")}
           value={quickAccessTab}
           onChange={(v) => setQuickAccessTab(v as QuickAccessTab)}
           options={[
@@ -654,7 +657,7 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
           <span className="ui-kicker picker-filter-dock-label"><LocalizedText messageKey="ui.components.troopPickerModal.filters.546ebb8e" /></span>
           <div className="picker-filter-row">
             <PillSelector
-              ariaLabel="Unit type filter"
+              ariaLabel={localizeStatic("ui.components.troopPickerModal.ariaLabel.unit.type.filter.a8d75f93")}
               value={typeFilter}
               onChange={(v) => setTypeFilter(v as TypeFilter)}
               options={[
@@ -665,7 +668,7 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
               size="body"
             />
             <PillSelector
-              ariaLabel="Unit role filter"
+              ariaLabel={localizeStatic("ui.components.troopPickerModal.ariaLabel.unit.role.filter.829629e7")}
               value={roleFilter}
               onChange={(v) => setRoleFilter(v as RoleFilter)}
               options={[
@@ -676,7 +679,7 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
               size="body"
             />
             <PillSelector
-              ariaLabel="Unit food filter"
+              ariaLabel={localizeStatic("ui.components.troopPickerModal.ariaLabel.unit.food.filter.844d3e2a")}
               value={foodFilter}
               onChange={(v) => setFoodFilter(v as FoodFilter)}
               options={[

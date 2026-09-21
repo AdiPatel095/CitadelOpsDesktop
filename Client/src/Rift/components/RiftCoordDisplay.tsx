@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React from 'react';
 import { MapPin, RefreshCw } from 'lucide-react';
@@ -8,6 +9,7 @@ import { useRiftMap } from '../context/RiftMapContext';
 import { formatRiftDelta } from '../types/RiftMapCoords';
 
 const RiftCoordDisplay: React.FC = () => {
+  const { t: localizeStatic } = useStaticLocale();
   const { gameLoggedIn } = useAuth();
   const { castle } = useCastleFocus();
   const { riftMapCoords, refreshRiftMapCoords } = useRiftMap();
@@ -24,7 +26,7 @@ const RiftCoordDisplay: React.FC = () => {
   return (
     <SectionCard
       variant="solid"
-      title="Rift location"
+      title={localizeStatic("ui.rift.components.riftCoordDisplay.title.rift.location.891a4f8c")}
       titleClassName="text-lg text-primary"
       description={(
         <>

@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useEffect, useMemo, useState } from 'react';
 import { Activity, Castle, ShieldCheck, Sparkles, Users } from 'lucide-react';
@@ -55,6 +56,7 @@ interface WorldAllianceDetailViewProps {
 }
 
 const WorldAllianceDetailView = ({ profile, onOpenPlayer }: WorldAllianceDetailViewProps) => {
+  const { t: localizeStatic } = useStaticLocale();
 	const [selectedMetric, setSelectedMetric] = useState('totalMight');
 	const [selectedRange, setSelectedRange] = useState<RangeKey>('24h');
 	const [selectedWindow, setSelectedWindow] = useState<ChartTimeWindow | null>(null);
@@ -105,7 +107,7 @@ const WorldAllianceDetailView = ({ profile, onOpenPlayer }: WorldAllianceDetailV
 	return (
 		<>
 			<PageHeader
-				eyebrow="World Intelligence alliance"
+				eyebrow={localizeStatic("ui.worldIntelligence.components.worldAllianceDetailView.eyebrow.world.intelligence.alliance.54f01fd5")}
 				title={current.name}
 				description={`${formatCount(current.memberCount ?? profile.members.length)} observed members · ${displayWorld(current.worldId)}`}
 				icon={<Users className="h-6 w-6" />}
@@ -131,7 +133,7 @@ const WorldAllianceDetailView = ({ profile, onOpenPlayer }: WorldAllianceDetailV
 							</div>
 						</div>
 						<PillSelector
-							ariaLabel="Public alliance history range"
+							ariaLabel={localizeStatic("ui.worldIntelligence.components.worldAllianceDetailView.ariaLabel.public.alliance.history.range.8a58be9d")}
 							value={selectedRange}
 							onChange={(value) => { setSelectedRange(value as RangeKey); setSelectedWindow(null); }}
 							options={historyRanges.map((range) => ({ value: range.value, label: range.label }))}
@@ -142,7 +144,7 @@ const WorldAllianceDetailView = ({ profile, onOpenPlayer }: WorldAllianceDetailV
 				<CardContent className="liquid-prominent-header-content p-5 sm:p-6">
 					<div className="mb-4">
 						<PillSelector
-							ariaLabel="Public alliance metric"
+							ariaLabel={localizeStatic("ui.worldIntelligence.components.worldAllianceDetailView.ariaLabel.public.alliance.metric.f39a585a")}
 							value={selectedMetric}
 							onChange={(value) => { setSelectedMetric(value); setSelectedWindow(null); }}
 							options={metricDefinitions.map((metric) => ({ value: metric.key, label: metric.shortLabel, icon: <metric.icon className="h-4 w-4" style={{ color: metric.color }} /> }))}
@@ -160,7 +162,7 @@ const WorldAllianceDetailView = ({ profile, onOpenPlayer }: WorldAllianceDetailV
 						range={selectedRange}
 						selectedWindow={selectedWindow}
 						onWindowSelect={setSelectedWindow}
-						emptyMessage="A trend appears after two public alliance observations are available in this range."
+						emptyMessage={localizeStatic("ui.worldIntelligence.components.worldAllianceDetailView.emptyMessage.a.trend.appears.after.two.public.alliance.fdf0ca1b")}
 					/>
 					<div className="mt-3 flex justify-between gap-3 text-xs text-text-muted">
 						<span>{displayedPoints[0] ? formatChartTime(displayedPoints[0].timestampUnix) : 'Waiting for history'}</span>
@@ -172,8 +174,8 @@ const WorldAllianceDetailView = ({ profile, onOpenPlayer }: WorldAllianceDetailV
 
 			<div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
 				{allianceMetrics.map((definition) => <MetricTile key={definition.key} label={definition.label} value={formatNumber(allianceMetricValue(current, definition.key))} tone={definition.tone} size="lg" caption={<MetricDelta current={allianceMetricValue(current, definition.key)} first={history[0] ? allianceMetricValue(history[0], definition.key) : undefined} compact />} />)}
-				<MetricTile label="Public holdings" value={formatCount(profile.holdings.length)} size="lg" />
-				<MetricTile label="Public event scores" value={formatCount(publicMetrics.length)} size="lg" />
+				<MetricTile label={localizeStatic("ui.worldIntelligence.components.worldAllianceDetailView.label.public.holdings.781abd4f")} value={formatCount(profile.holdings.length)} size="lg" />
+				<MetricTile label={localizeStatic("ui.worldIntelligence.components.worldAllianceDetailView.label.public.event.scores.7de12880")} value={formatCount(publicMetrics.length)} size="lg" />
 			</div>
 
 			<Card className="liquid-prominent-header-card">

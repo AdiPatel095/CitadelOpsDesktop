@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -61,6 +62,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
   onClose,
   onOpenFeatureSchedule,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { state, configuration } = useCitadelAPI();
   const [settings, setSettings] = useState<AutoFortressClientStateV1>(defaultAutoFortressClientState);
   const [isSaving, setIsSaving] = useState(false);
@@ -123,9 +125,9 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
       isOpen={isOpen}
       onClose={() => { if (!isSaving) onClose(); }}
       maxWidth="full"
-      title="Auto Fortress"
+      title={localizeStatic("ui.settings.components.autoFortressSettingsModal.title.auto.fortress.8b0edaf5")}
       icon={<Castle className="h-5 w-5" />}
-      description="A speed-first fortress pipeline: discover a ready target, stage Direwolves, verify both cooldowns, and launch one full flank wave with the fastest eligible commander."
+      description={localizeStatic("ui.settings.components.autoFortressSettingsModal.description.a.speed.first.fortress.pipeline.discover.a.20cf0ae7")}
       titleTrailing={(
         <Button
           variant="outline"
@@ -310,7 +312,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
               <div className="text-xs font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.use.time.skips.for.direwolf.transfers.e1a00ae9" /></div>
               <p className="mt-0.5 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.off.by.default.when.enabled.only.confirmed.51b3f8c5" /></p>
             </div>
-            <Switch checked={settings.useTimeSkips} onChange={() => update({ useTimeSkips: !settings.useTimeSkips })} ariaLabel="Use time skips for Direwolf transfers" />
+            <Switch checked={settings.useTimeSkips} onChange={() => update({ useTimeSkips: !settings.useTimeSkips })} ariaLabel={localizeStatic("ui.settings.components.autoFortressSettingsModal.ariaLabel.use.time.skips.for.direwolf.transfers.e1a00ae9")} />
           </div>
         </Card>
 
@@ -333,7 +335,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
             <HorseTravelBoostSelect
               value={settings.horseTravelBoostId}
               onChange={(horseTravelBoostId) => update({ horseTravelBoostId })}
-              description="Courser / fastest tier is the default. Its exact castle-specific HBW definition is resolved again before launch."
+              description={localizeStatic("ui.settings.components.autoFortressSettingsModal.description.courser.fastest.tier.is.the.default.its.fe582b66")}
             />
           </div>
         </Card>

@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useEffect, useMemo, useRef, useState, type DragEvent, type ReactNode } from 'react';
 import {
@@ -86,6 +87,7 @@ export default function EquipmentOptimizer({
 	candidateEffectIDsByMode: Record<EquipmentTargetProfile['combatMode'], number[]>;
 	disabled: boolean;
 }) {
+  const { t: localizeStatic } = useStaticLocale();
 	const { effects, isLoading } = useMetadata();
 	const [targetID, setTargetID] = useState<string | null>(null);
 	const targetProfiles = useMemo(() => equipmentTargetProfiles(effects), [effects]);
@@ -115,7 +117,7 @@ export default function EquipmentOptimizer({
 				title={(
 					<ModalTitle
 						icon={<Target className="h-5 w-5" />}
-						description="Choose the battle family this relic loadout should optimize for."
+						description={localizeStatic("ui.equipment.components.equipmentOptimizer.description.choose.the.battle.family.this.relic.loadout.9185ee43")}
 					>
 						<LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.reconfiguration.target.06c7dc57" /></ModalTitle>
 				)}
@@ -166,6 +168,7 @@ function TargetProfileCard({
 	disabled: boolean;
 	onSelect: () => void;
 }) {
+  const { t: localizeStatic } = useStaticLocale();
 	const { profile, availableGroups } = choice;
 	const tone = profile.combatMode === 'PvP' ? 'primary' : profile.kind === 'event' ? 'warning' : 'success';
 	return (
@@ -196,7 +199,7 @@ function TargetProfileCard({
 					label={profile.kind === 'event' ? 'Target battle stats' : 'Official scope'}
 					value={profile.kind === 'event' ? profile.officialGroupCount.toLocaleString() : 'Broad'}
 				/>
-				<MetricTile size="sm" label="Usable battle stats" value={availableGroups.toLocaleString()} />
+				<MetricTile size="sm" label={localizeStatic("ui.equipment.components.equipmentOptimizer.label.usable.battle.stats.bd169e1e")} value={availableGroups.toLocaleString()} />
 			</div>
 			<div className="mt-4 text-xs font-black uppercase tracking-wide text-primary">
 				{availableGroups > 0 ? `Configure ${profile.label}` : 'No matching effects available'}
@@ -236,6 +239,7 @@ function EquipmentOptimizerEditor({
 	candidateEffectIDs: number[];
 	disabled: boolean;
 }) {
+  const { t: localizeStatic } = useStaticLocale();
 	const { state, catalogs, configuration, submitIntent, optimizeEquipment, updateConfiguration } = useCitadelAPI();
 	const { effects, troops } = useMetadata();
 	const [priorityProfile, setPriorityProfile] = useState<EquipmentPriorityProfile>({ tier1: [], tier2: [] });
@@ -572,7 +576,7 @@ function EquipmentOptimizerEditor({
 					)}
 					<div className="grid gap-3 rounded-global border border-border-base bg-bg-app/45 p-3 sm:grid-cols-[minmax(0,1fr)_auto]">
 						<div className="flex min-w-0 items-start gap-2">
-							<Button size="icon" variant="ghost" onClick={changeTarget} aria-label="Change reconfiguration target" title="Change target">
+							<Button size="icon" variant="ghost" onClick={changeTarget} aria-label={localizeStatic("ui.equipment.components.equipmentOptimizer.aria-label.change.reconfiguration.target.1172fad5")} title={localizeStatic("ui.equipment.components.equipmentOptimizer.title.change.target.36d36e6b")}>
 								<ArrowLeft className="h-4 w-4" />
 							</Button>
 							<div className="min-w-0 flex-1">
@@ -584,7 +588,7 @@ function EquipmentOptimizerEditor({
 							</div>
 						</div>
 						<div className="flex items-center justify-end gap-2 sm:shrink-0">
-							<Button size="icon" variant="ghost" onClick={() => setShowInfo(true)} aria-label="Explain battle stat priority"><Info className="h-4 w-4" /></Button>
+							<Button size="icon" variant="ghost" onClick={() => setShowInfo(true)} aria-label={localizeStatic("ui.equipment.components.equipmentOptimizer.aria-label.explain.battle.stat.priority.20ba9a01")}><Info className="h-4 w-4" /></Button>
 							<Button
 								size="sm"
 								variant="outline"
@@ -598,7 +602,7 @@ function EquipmentOptimizerEditor({
 
 					<div className="grid gap-4 md:grid-cols-2">
 						<PriorityTier
-							title="Max Stat"
+							title={localizeStatic("ui.equipment.components.equipmentOptimizer.title.max.stat.f25df34f")}
 							tier={1}
 							keys={tier1}
 							groupsByKey={groupsByKey}
@@ -617,7 +621,7 @@ function EquipmentOptimizerEditor({
 							onReorder={reorder}
 						/>
 						<PriorityTier
-							title="Have in Random Slots"
+							title={localizeStatic("ui.equipment.components.equipmentOptimizer.title.have.in.random.slots.d286f8b3")}
 							tier={2}
 							keys={tier2}
 							groupsByKey={groupsByKey}
@@ -639,9 +643,9 @@ function EquipmentOptimizerEditor({
 				</div>
 			</Modal>
 
-			<Modal isOpen={showPicker} onClose={() => setShowPicker(false)} title="Add Effective Battle Stat" maxWidth="3xl">
+			<Modal isOpen={showPicker} onClose={() => setShowPicker(false)} title={localizeStatic("ui.equipment.components.equipmentOptimizer.title.add.effective.battle.stat.9bdc52fe")} maxWidth="3xl">
 				<div className="space-y-3">
-					<Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search battle stats" leftIcon={<Search className="h-4 w-4" />} />
+					<Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={localizeStatic("ui.equipment.components.equipmentOptimizer.placeholder.search.battle.stats.6d2a48bf")} leftIcon={<Search className="h-4 w-4" />} />
 					<div className="max-h-[65vh] space-y-4 overflow-y-auto custom-scrollbar">
 						{pickerSections.map((section) => (
 							<section key={`${section.category}:${section.label}`}>
@@ -667,7 +671,7 @@ function EquipmentOptimizerEditor({
 				</div>
 			</Modal>
 
-			<Modal isOpen={showInfo} onClose={() => setShowInfo(false)} title="How Battle Stat Priority Works" maxWidth="2xl">
+			<Modal isOpen={showInfo} onClose={() => setShowInfo(false)} title={localizeStatic("ui.equipment.components.equipmentOptimizer.title.how.battle.stat.priority.works.5c727707")} maxWidth="2xl">
 				<div className="space-y-3 text-sm text-text-muted">
 						<p><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.each.draggable.row.is.the.same.official.8bf29a83" /></p>
 						<p><LocalizedText messageKey="ui.equipment.components.equipmentOptimizer.when.previewing.citadelops.expands.that.group.into.bc9f6b4c" /></p>
@@ -818,6 +822,7 @@ function OptimizerPreview({
 	optimizing: boolean;
 	optimizeError: string | null;
 }) {
+  const { t: localizeStatic } = useStaticLocale();
 	const selected = preview?.alternatives[selectedAlternative] ?? preview?.proposed ?? null;
 	const effectRows = (() => {
 		if (!preview || !selected) return [];
@@ -867,7 +872,7 @@ function OptimizerPreview({
 		<Modal
 			isOpen={preview != null}
 			onClose={onClose}
-			title="Reconfiguration Preview"
+			title={localizeStatic("ui.equipment.components.equipmentOptimizer.title.reconfiguration.preview.36b7dacc")}
 			maxWidth="5xl"
 			footer={(
 				<>

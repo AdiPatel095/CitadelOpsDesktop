@@ -87,3 +87,9 @@ test('authored subset validation does not weaken strict missing-key rejection',(
  assert.deepEqual(modules.formatMessage.validateMessageCatalog({a:'A',b:'B'},{a:'Un'}),['Missing message: b']);
  assert.deepEqual(modules.formatMessage.validateAuthoredMessageSubset({a:'A'},{other:'Other'}),['Unknown message: other']);
 });
+test('source-assigned static messages render verbatim without accidental ICU parameters',()=>{
+ for(const [key,fallback] of Object.entries(modules.sourceMessages.sourceMessages)) {
+  assert.deepEqual(modules.formatMessage.messageArguments(fallback),[],key);
+  assert.equal(modules.formatMessage.formatMessage({key,fallback},'en',{}).text,fallback,key);
+ }
+});

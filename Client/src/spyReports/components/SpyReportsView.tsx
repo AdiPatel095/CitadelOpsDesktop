@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useEffect, useMemo, useState } from 'react';
 import { Binoculars, RefreshCw, Shield, Swords } from 'lucide-react';
@@ -52,6 +53,7 @@ export interface SpyReport {
 type UnitRole = 'attacker' | 'defender' | 'unknown';
 
 const SpyReportsView = () => {
+  const { t: localizeStatic } = useStaticLocale();
   const [reports, setReports] = useState<SpyReport[]>([]);
   const [selected, setSelected] = useState<SpyReport | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,8 +81,8 @@ const SpyReportsView = () => {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Spy Reports"
-        description="Review successful, partial, and failed espionage attempts."
+        title={localizeStatic("ui.spyReports.components.spyReportsView.title.spy.reports.a4541090")}
+        description={localizeStatic("ui.spyReports.components.spyReportsView.description.review.successful.partial.and.failed.espionage.attempts.8d264ff4")}
         icon={<Binoculars className="h-6 w-6" />}
         actions={<Button variant="secondary" onClick={() => void load()} isLoading={loading} leftIcon={<RefreshCw className="h-4 w-4" />}><LocalizedText messageKey="ui.spyReports.components.spyReportsView.refresh.0e916101" /></Button>}
       />
@@ -113,6 +115,7 @@ const SpyReportsView = () => {
 };
 
 export const SpyReportDetail = ({ report, onBack }: { report: SpyReport; onBack: () => void }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { getTroop } = useMetadata();
   const estimates = useMemo(() => estimateRoles(report.setup ?? [], getTroop), [getTroop, report.setup]);
 
@@ -125,7 +128,7 @@ export const SpyReportDetail = ({ report, onBack }: { report: SpyReport; onBack:
             <CardTitle className="mt-1">{report.castle.name || 'Unknown castle'}</CardTitle>
             <p className="mt-1 text-xs font-semibold text-text-muted">{report.target.name || 'Unknown player'} · {report.target.alliance || 'No alliance'} · {coordinateLabel(report.castle)}</p>
           </div>
-          <DetailBackButton label="Back to alliance targets" onClick={onBack} />
+          <DetailBackButton label={localizeStatic("ui.spyReports.components.spyReportsView.label.back.to.alliance.targets.c045f7bc")} onClick={onBack} />
         </CardHeader>
         <CardContent className="liquid-prominent-header-content">
           <TroopCompositionPanel estimates={estimates} />
@@ -166,8 +169,9 @@ const SetupSectionCard = ({ section, getTroop }: { section: SpySection; getTroop
 );
 
 const CastellanPanel = ({ castellan, castle }: { castellan: SpyCastellan; castle: SpyCastle }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const effects = (castellan.calculatedEffects ?? []).slice().sort((left, right) => (left.sortOrder ?? 900) - (right.sortOrder ?? 900));
-  return <Card variant="solid" className="liquid-prominent-header-card xl:sticky xl:top-4"><CardHeader className="liquid-card-header-prominent"><div><CardTitle><LocalizedText messageKey="ui.spyReports.components.spyReportsView.defense.setup.febf972d" /></CardTitle><p className="mt-1 text-xs font-semibold text-text-muted"><LocalizedText messageKey="ui.spyReports.components.spyReportsView.observed.castellan.and.fortification.levels.03a91cfa" /></p></div></CardHeader><CardContent className="liquid-prominent-header-content space-y-4"><div className="grid grid-cols-2 gap-2"><DefenseStat label="Castellan level" value={castellan.level} /><DefenseStat label="General" value={castellan.generalID} /><DefenseStat label="Wall level" value={castle.wallLevel} /><DefenseStat label="Gate level" value={castle.gateLevel} /><DefenseStat label="Moat level" value={castle.moatLevel} /><DefenseStat label="Keep level" value={castle.keepLevel} /></div><div className="space-y-2">{effects.map((effect, index) => <div key={`${effect.label}-${index}`} className="rounded-global border border-border-base bg-bg-app/35 p-3"><div className="flex items-start justify-between gap-3"><span className="text-xs font-semibold text-text-main">{effect.label || effect.name || 'Unknown effect'}</span><span className="shrink-0 text-sm font-bold tabular-nums text-primary">{effect.formattedValue || formatEffectValue(effect.value)}</span></div>{effect.category && <div className="mt-1 text-[10px] uppercase tracking-wide text-text-muted">{effect.category}</div>}</div>)}</div></CardContent></Card>;
+  return <Card variant="solid" className="liquid-prominent-header-card xl:sticky xl:top-4"><CardHeader className="liquid-card-header-prominent"><div><CardTitle><LocalizedText messageKey="ui.spyReports.components.spyReportsView.defense.setup.febf972d" /></CardTitle><p className="mt-1 text-xs font-semibold text-text-muted"><LocalizedText messageKey="ui.spyReports.components.spyReportsView.observed.castellan.and.fortification.levels.03a91cfa" /></p></div></CardHeader><CardContent className="liquid-prominent-header-content space-y-4"><div className="grid grid-cols-2 gap-2"><DefenseStat label={localizeStatic("ui.spyReports.components.spyReportsView.label.castellan.level.21ef0b38")} value={castellan.level} /><DefenseStat label={localizeStatic("ui.spyReports.components.spyReportsView.label.general.c910d474")} value={castellan.generalID} /><DefenseStat label={localizeStatic("ui.spyReports.components.spyReportsView.label.wall.level.f170ea1a")} value={castle.wallLevel} /><DefenseStat label={localizeStatic("ui.spyReports.components.spyReportsView.label.gate.level.78c99a60")} value={castle.gateLevel} /><DefenseStat label={localizeStatic("ui.spyReports.components.spyReportsView.label.moat.level.d7b15add")} value={castle.moatLevel} /><DefenseStat label={localizeStatic("ui.spyReports.components.spyReportsView.label.keep.level.c40f78d0")} value={castle.keepLevel} /></div><div className="space-y-2">{effects.map((effect, index) => <div key={`${effect.label}-${index}`} className="rounded-global border border-border-base bg-bg-app/35 p-3"><div className="flex items-start justify-between gap-3"><span className="text-xs font-semibold text-text-main">{effect.label || effect.name || 'Unknown effect'}</span><span className="shrink-0 text-sm font-bold tabular-nums text-primary">{effect.formattedValue || formatEffectValue(effect.value)}</span></div>{effect.category && <div className="mt-1 text-[10px] uppercase tracking-wide text-text-muted">{effect.category}</div>}</div>)}</div></CardContent></Card>;
 };
 
 const StatusBadge = ({ status }: { status: SpyReport['status'] }) => <Badge variant={status === 'success' ? 'success' : status === 'failed' ? 'danger' : 'warning'}>{status === 'success' ? 'Successful' : status === 'partial' ? 'Partial intel' : 'Failed'}</Badge>;

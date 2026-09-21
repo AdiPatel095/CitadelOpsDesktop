@@ -1,5 +1,11 @@
 /** Verified against official English v4357. Never infer keys from translated text. */
 export const officialMessageKeys = {
+  "ui.battleStats.components.battleStatsView.label.kingdom.f53639f9": "dialog_landmarkList_Kingdom",
+  "ui.battleStats.components.battleStatsView.label.commander.16af7be3": "equipment_itemType_general",
+  "ui.battleStats.components.battleStatsView.label.castellan.b8b6bc93": "equipment_itemType_baron",
+  "ui.components.attackSetupModal.label.tools.ea93d6a2": "tools",
+  "ui.views.attackPresetsView.label.tools.ea93d6a2": "tools",
+  "ui.views.defensePresetsView.label.tools.ea93d6a2": "tools",
   "ui.movement.components.commanderRequirementModal.cancel.19766ed6": "cancel",
   "ui.movement.components.movementView.commander.16af7be3": "equipment_itemType_general",
   "ui.movement.components.movementView.kingdom.f53639f9": "dialog_landmarkList_Kingdom",

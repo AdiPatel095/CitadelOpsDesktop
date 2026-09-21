@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { LocalizedText } from "../i18n/LocalizedText";
 import React from 'react';
 import { Icons } from '../components/Icons';
@@ -80,11 +81,12 @@ function ReleaseCard({ release, isLatest }: { release: PatchNotesRelease; isLate
 }
 
 const PatchNotesView: React.FC = () => {
+  const { t: localizeStatic } = useStaticLocale();
   return (
     <div className="max-w-3xl mx-auto py-6 pb-16">
       <PageHeader
         className="mb-8"
-        title="Patch Notes"
+        title={localizeStatic("ui.views.patchNotesView.title.patch.notes.e851faa6")}
         icon={<Icons.PatchNotes className="h-7 w-7" />}
         description={<>Summaries of recent updates. You’re on version <span className="font-mono text-text-main">v{APP_VERSION_CURRENT}</span>.</>}
       />

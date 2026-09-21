@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import React from 'react';
 import { Crosshair, Shield, Sparkles, Swords } from 'lucide-react';
 import type { EventActivityStateV2, EventCombatTotalsV2, ScalableEventScoreV2 } from '../../api/Contracts';
@@ -30,6 +31,7 @@ const EMPTY_TOTALS: EventCombatTotalsV2 = {
 };
 
 const EventActivityCard: React.FC<EventActivityCardProps> = ({ event }) => {
+  const { t: localizeStatic } = useStaticLocale();
 	const { state } = useCitadelAPI();
 	const activity = event ? state?.eventScores.activityByEvent?.[String(event.eventId)] : undefined;
 	const family = event ? eventFamily(event) : 'other';
@@ -44,17 +46,17 @@ const EventActivityCard: React.FC<EventActivityCardProps> = ({ event }) => {
 	return (
 		<SectionCard
 			variant="solid"
-			title="Automation results"
+			title={localizeStatic("ui.events.components.eventActivityCard.title.automation.results.971632ea")}
 			description={activity?.observedFrom ? `Observed since ${formatDateTime(activity.observedFrom)}` : 'Current event occurrence'}
 			icon={<Sparkles className="h-5 w-5" />}
 			className="feature-event-activity-card"
 		>
 			<div className={`grid grid-cols-2 gap-3 ${showsLoot ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}>
-				<MetricTile label="Attacks made" value={observedActions(outbound)} tone="brand" caption={attackCaption(family)} />
-				<MetricTile label="Victories" value={combined.victories} tone="success" caption={includesDefense ? 'Offense and Khan defense' : 'Confirmed battle reports'} />
-				{showsLoot && <MetricTile label="Loot" value={combined.loot} tone="warning" caption="Resources from confirmed reports" />}
-				<MetricTile label="Troops lost" value={combined.troopLosses} tone={combined.troopLosses > 0 ? 'danger' : 'default'} />
-				<MetricTile label="Tools used" value={combined.toolsUsed} tone="info" />
+				<MetricTile label={localizeStatic("ui.events.components.eventActivityCard.label.attacks.made.200b2f76")} value={observedActions(outbound)} tone="brand" caption={attackCaption(family)} />
+				<MetricTile label={localizeStatic("ui.events.components.eventActivityCard.label.victories.26342b97")} value={combined.victories} tone="success" caption={includesDefense ? 'Offense and Khan defense' : 'Confirmed battle reports'} />
+				{showsLoot && <MetricTile label={localizeStatic("ui.events.components.eventActivityCard.label.loot.839e7c03")} value={combined.loot} tone="warning" caption="Resources from confirmed reports" />}
+				<MetricTile label={localizeStatic("ui.events.components.eventActivityCard.label.troops.lost.8c262aaa")} value={combined.troopLosses} tone={combined.troopLosses > 0 ? 'danger' : 'default'} />
+				<MetricTile label={localizeStatic("ui.events.components.eventActivityCard.label.tools.used.bf92a3b3")} value={combined.toolsUsed} tone="info" />
 			</div>
 
 			<div className="mt-4 grid gap-3 xl:grid-cols-2">
@@ -68,6 +70,7 @@ const EventActivityCard: React.FC<EventActivityCardProps> = ({ event }) => {
 };
 
 function ActivityGroupCard({ group }: { group: ActivityGroup }) {
+  const { t: localizeStatic } = useStaticLocale();
 	const totals = group.totals;
 	return (
 		<div className="rounded-global border border-border-light bg-bg-card/40 p-4">
@@ -82,12 +85,12 @@ function ActivityGroupCard({ group }: { group: ActivityGroup }) {
 			</div>
 			<div className={`mt-4 grid gap-x-3 gap-y-4 ${group.key === 'invasion' ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'}`}>
 				<CompactMetric label={group.firstMetricLabel} value={observedActions(totals)} />
-				<CompactMetric label="Resolved" value={totals.battles} />
-				<CompactMetric label="Victories" value={totals.victories} tone="text-success" />
-				<CompactMetric label="Defeats" value={totals.defeats} tone={totals.defeats > 0 ? 'text-error' : undefined} />
-				<CompactMetric label="Troops lost" value={totals.troopLosses} tone={totals.troopLosses > 0 ? 'text-error' : undefined} />
-				<CompactMetric label="Tools used" value={totals.toolsUsed} />
-				{group.key === 'invasion' && <CompactMetric label="Loot" value={totals.loot} tone="text-warning" />}
+				<CompactMetric label={localizeStatic("ui.events.components.eventActivityCard.label.resolved.5be3c2c8")} value={totals.battles} />
+				<CompactMetric label={localizeStatic("ui.events.components.eventActivityCard.label.victories.26342b97")} value={totals.victories} tone="text-success" />
+				<CompactMetric label={localizeStatic("ui.events.components.eventActivityCard.label.defeats.936cdc19")} value={totals.defeats} tone={totals.defeats > 0 ? 'text-error' : undefined} />
+				<CompactMetric label={localizeStatic("ui.events.components.eventActivityCard.label.troops.lost.8c262aaa")} value={totals.troopLosses} tone={totals.troopLosses > 0 ? 'text-error' : undefined} />
+				<CompactMetric label={localizeStatic("ui.events.components.eventActivityCard.label.tools.used.bf92a3b3")} value={totals.toolsUsed} />
+				{group.key === 'invasion' && <CompactMetric label={localizeStatic("ui.events.components.eventActivityCard.label.loot.839e7c03")} value={totals.loot} tone="text-warning" />}
 			</div>
 		</div>
 	);

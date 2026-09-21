@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { Castle, Clock3, Crosshair, ShieldCheck, ShieldPlus, Swords, Target } from 'lucide-react';
@@ -27,6 +28,7 @@ interface AutoInvasionSettingsModalProps {
 }
 
 export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps> = ({ isOpen, onClose }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { state, configuration, updateConfiguration } = useCitadelAPI();
   const [draft, setDraft] = useState<AutoInvasionClientStateV1>(defaultAutoInvasionClientState);
   const [saving, setSaving] = useState(false);
@@ -105,9 +107,9 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
       isOpen={isOpen}
       onClose={() => { if (!saving) onClose(); }}
       maxWidth="3xl"
-      title="Auto Invasion"
+      title={localizeStatic("ui.settings.components.autoInvasionSettingsModal.title.auto.invasion.d43e5a94")}
       icon={<Crosshair className="h-5 w-5" />}
-      description="Foreign Lords and Bloodcrow attack plan"
+      description={localizeStatic("ui.settings.components.autoInvasionSettingsModal.description.foreign.lords.and.bloodcrow.attack.plan.0ee8d04e")}
       onSave={() => void save()}
       isSaving={saving}
       saveDisabled={!canSave}
@@ -121,7 +123,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
                 value={draft.sourceCastleId > 0 ? String(draft.sourceCastleId) : ''}
                 onChange={(value) => setDraft((current) => ({ ...current, sourceCastleId: Number(value) || 0 }))}
                 options={castles.map((castle) => ({ value: String(castle.id), label: `${castle.name} · ${castle.x}:${castle.y}` }))}
-                placeholder="Choose a Great Empire castle"
+                placeholder={localizeStatic("ui.settings.components.autoInvasionSettingsModal.placeholder.choose.a.great.empire.castle.8a81fec1")}
                 menuGrowToViewport
               />
             </label>
@@ -171,7 +173,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
                 value={foreignLordsSelectionAvailable ? String(draft.foreignLordsDifficultyId) : ''}
                 onChange={(value) => setDraft((current) => ({ ...current, foreignLordsDifficultyId: Number(value) || 0 }))}
                 options={foreignLordsDifficulties}
-                placeholder="Choose unlocked difficulty"
+                placeholder={localizeStatic("ui.settings.components.autoInvasionSettingsModal.placeholder.choose.unlocked.difficulty.a1bf5994")}
                 menuGrowToViewport
               />
             </label>
@@ -184,7 +186,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
                 value={bloodcrowSelectionAvailable ? String(draft.bloodcrowDifficultyId) : ''}
                 onChange={(value) => setDraft((current) => ({ ...current, bloodcrowDifficultyId: Number(value) || 0 }))}
                 options={bloodcrowDifficulties}
-                placeholder="Choose unlocked difficulty"
+                placeholder={localizeStatic("ui.settings.components.autoInvasionSettingsModal.placeholder.choose.unlocked.difficulty.a1bf5994")}
                 menuGrowToViewport
               />
             </label>
@@ -242,7 +244,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
 						...current,
 						fortifyCurrency: checked ? (current.fortifyCurrency || (eventFortifyCurrency ? 'MEDALS' : 'GTO')) : '',
 					}))}
-					ariaLabel="Fortify each Auto Invasion target"
+					ariaLabel={localizeStatic("ui.settings.components.autoInvasionSettingsModal.ariaLabel.fortify.each.auto.invasion.target.f16c4716")}
 				/>
 			</div>
 			{draft.fortifyCurrency !== '' ? (

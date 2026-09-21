@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Check } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -205,6 +206,7 @@ export const ToolPickerProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 };
 
 const ToolPickerModal: React.FC<ToolPickerModalProps> = ({ isOpen, options, onClose }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { tools, isLoading } = useMetadata();
   const { mode, title, preselected = [], allowedToolIds, stockQuantities } = options;
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set(preselected));
@@ -288,7 +290,7 @@ const ToolPickerModal: React.FC<ToolPickerModalProps> = ({ isOpen, options, onCl
       resultLabel={visibleToolLabel}
       searchValue={searchQuery}
       onSearchChange={setSearchQuery}
-      searchPlaceholder="Search by name, type, or ID..."
+      searchPlaceholder={localizeStatic("ui.components.toolPickerModal.searchPlaceholder.search.by.name.type.or.id.e6da0913")}
     >
       {filteredTools.length === 0 ? (
         <div className="flex-1 overflow-y-auto p-6">

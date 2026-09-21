@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useCallback, useEffect, useState } from 'react';
 import { Bot, CalendarDays, Crosshair, FastForward, TicketCheck } from 'lucide-react';
@@ -28,6 +29,7 @@ interface AutoTowerSettingsModalProps {
 }
 
 export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ isOpen, onClose, onOpenFeatureSchedule }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { state, configuration } = useCitadelAPI();
   const castles = castleOptionsFromState(state);
   const [settings, setSettings] = useState<Record<string, AutoTowerCastleSettings>>({});
@@ -112,9 +114,9 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
       isOpen={isOpen}
       onClose={handleClose}
       maxWidth="full"
-      title="Auto Towers"
+      title={localizeStatic("ui.settings.components.autoTowerSettingsModal.title.auto.towers.247e8c64")}
       icon={<Crosshair className="h-5 w-5" />}
-      description="Each scan saves every tower observed in range per castle, including cooldown state. Attacks select the nearest eligible targets independently, so castle focus is only changed when an attack needs it."
+      description={localizeStatic("ui.settings.components.autoTowerSettingsModal.description.each.scan.saves.every.tower.observed.in.00c98e17")}
       titleTrailing={(
             <Button
               variant="outline"
@@ -168,22 +170,22 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
         </div>
         <div className="grid gap-2 lg:grid-cols-2">
           <SettingsToggleRow
-            title="Use Advisor with Time Skips"
-            description="Send a native same-tower Advisor chain. The first hit uses one daily attack; each additional hit consumes one Time Skip covering the three-hour cooldown."
+            title={localizeStatic("ui.settings.components.autoTowerSettingsModal.title.use.advisor.with.time.skips.12bfd1b3")}
+            description={localizeStatic("ui.settings.components.autoTowerSettingsModal.description.send.a.native.same.tower.advisor.chain.9b485b0e")}
             icon={<Bot className="h-4 w-4" />}
             checked={useAdvisor}
             onChange={setUseAdvisor}
-            ariaLabel="Use Robber Baron Advisor mode for Auto Towers"
+            ariaLabel={localizeStatic("ui.settings.components.autoTowerSettingsModal.ariaLabel.use.robber.baron.advisor.mode.for.auto.7147e92c")}
           />
           <SettingsToggleRow
-            title="Auto-activate with token"
-            description="If the Advisor is inactive, consume one dedicated Baron Advisor token. This never buys a token or spends rubies."
+            title={localizeStatic("ui.settings.components.autoTowerSettingsModal.title.auto.activate.with.token.82178176")}
+            description={localizeStatic("ui.settings.components.autoTowerSettingsModal.description.if.the.advisor.is.inactive.consume.one.69e81071")}
             icon={<TicketCheck className="h-4 w-4" />}
             checked={autoActivateAdvisor}
             onChange={setAutoActivateAdvisor}
             disabled={!useAdvisor}
             disabledReason="Enable Advisor mode first."
-            ariaLabel="Auto-activate the Robber Baron Advisor with an available token"
+            ariaLabel={localizeStatic("ui.settings.components.autoTowerSettingsModal.ariaLabel.auto.activate.the.robber.baron.advisor.with.8bebd830")}
           />
         </div>
         <div className="mt-3 rounded-xl border border-border-base bg-bg-card/60 p-3">
@@ -218,7 +220,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
           value={dailyAttackLimit}
           onChange={setDailyAttackLimit}
           serverState={state?.dailyAttacks}
-          description="Stop Auto Towers when the server's account-wide daily attack count reaches this value. Regular attacks and the first hit of every Advisor chain both count; the feature resumes when the server count resets."
+          description={localizeStatic("ui.settings.components.autoTowerSettingsModal.description.stop.auto.towers.when.the.server.s.7d443e02")}
         />
       </div>
 

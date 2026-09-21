@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useEffect, useId, useMemo, useState } from 'react';
 import {
@@ -115,6 +116,7 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
   onClose,
   onSave,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { state } = useCitadelAPI();
   const { troops, tools, unitsLoading: isMetadataLoading, unitsError } = useMetadata();
   const [draft, setDraft] = useState<AttackSetupDraft>(() => normalizeDraft(initialDraft));
@@ -334,7 +336,7 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
             <Switch
               checked={Boolean(draft.useTroopFamilies)}
               onChange={(useTroopFamilies) => setDraft((current) => ({ ...current, useTroopFamilies }))}
-              ariaLabel="Use whole troop families in this attack preset"
+              ariaLabel={localizeStatic("ui.components.attackSetupModal.ariaLabel.use.whole.troop.families.in.this.attack.c1deb650")}
             />
           </section>
         ) : null}
@@ -345,7 +347,7 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
             <Input
               value={draft.name}
               onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
-              placeholder="e.g. RBC — 5 wave ranged"
+              placeholder={localizeStatic("ui.components.attackSetupModal.placeholder.e.g.rbc.5.wave.ranged.9a9be634")}
               maxLength={80}
               className="font-semibold"
             />
@@ -359,7 +361,7 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
                 size="icon"
                 onClick={() => setWaveCount(draft.waves.length - 1)}
                 disabled={draft.waves.length <= 1}
-                title="Remove last wave"
+                title={localizeStatic("ui.components.attackSetupModal.title.remove.last.wave.99e9f782")}
               >
                 <Minus className="h-4 w-4" />
               </Button>
@@ -370,14 +372,14 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
                 value={draft.waves.length}
                 onChange={(event) => setWaveCount(Number(event.target.value))}
                 className="w-16 text-center font-mono font-bold"
-                aria-label="Wave count"
+                aria-label={localizeStatic("ui.components.attackSetupModal.aria-label.wave.count.17eaea44")}
               />
               <Button
                 variant="secondary"
                 size="icon"
                 onClick={() => setWaveCount(draft.waves.length + 1)}
                 disabled={draft.waves.length >= MAX_WAVES}
-                title="Add wave"
+                title={localizeStatic("ui.components.attackSetupModal.title.add.wave.47a3b886")}
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -385,13 +387,13 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
           </div>
 
           <div className="grid grid-cols-3 gap-2">
-            <MetricTile size="sm" className="min-w-[4.75rem]" label="Waves" value={draft.waves.length.toLocaleString()} />
-            <MetricTile size="sm" className="min-w-[4.75rem]" label="Troops" value={totals.troops.toLocaleString()} />
-            <MetricTile size="sm" className="min-w-[4.75rem]" label="Tools" value={totals.tools.toLocaleString()} />
+            <MetricTile size="sm" className="min-w-[4.75rem]" label={localizeStatic("ui.components.attackSetupModal.label.waves.ad5b8321")} value={draft.waves.length.toLocaleString()} />
+            <MetricTile size="sm" className="min-w-[4.75rem]" label={localizeStatic("ui.components.attackSetupModal.label.troops.5d47e163")} value={totals.troops.toLocaleString()} />
+            <MetricTile size="sm" className="min-w-[4.75rem]" label={localizeStatic("ui.components.attackSetupModal.label.tools.ea93d6a2")} value={totals.tools.toLocaleString()} />
           </div>
         </section>
 
-        <section className="flex flex-col gap-4" aria-label="Attack waves">
+        <section className="flex flex-col gap-4" aria-label={localizeStatic("ui.components.attackSetupModal.aria-label.attack.waves.d53463d4")}>
           {draft.waves.map((wave, waveIndex) => (
             <WaveEditorCard
               key={waveIndex}
@@ -602,6 +604,7 @@ const WaveEditorCard: React.FC<WaveEditorCardProps> = ({
   onPickTroop,
   onPickTool,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const waveTotals = summarizeWave(wave);
   const [isOpen, setIsOpen] = useState(true);
   const contentId = useId();
@@ -649,7 +652,7 @@ const WaveEditorCard: React.FC<WaveEditorCardProps> = ({
             className="h-8 w-8 rounded-full !p-0"
             onClick={onDuplicate}
             disabled={waveCount >= MAX_WAVES}
-            title="Duplicate wave"
+            title={localizeStatic("ui.components.attackSetupModal.title.duplicate.wave.2065f71e")}
             aria-label={`Duplicate Wave ${waveIndex + 1}`}
           >
             <Copy className="h-3.5 w-3.5" />
@@ -659,7 +662,7 @@ const WaveEditorCard: React.FC<WaveEditorCardProps> = ({
             size="icon"
             className="h-8 w-8 rounded-full !p-0 hover:!text-error"
             onClick={onClear}
-            title="Clear wave"
+            title={localizeStatic("ui.components.attackSetupModal.title.clear.wave.b1d53a3c")}
             aria-label={`Clear Wave ${waveIndex + 1}`}
           >
             <Eraser className="h-3.5 w-3.5" />
@@ -672,7 +675,7 @@ const WaveEditorCard: React.FC<WaveEditorCardProps> = ({
           <div className="grid gap-1">
             <FormationRow
               kind="tool"
-              label="Tools"
+              label={localizeStatic("ui.components.attackSetupModal.label.tools.ea93d6a2")}
               wave={wave}
               items={toolItems}
               stock={toolStock}
@@ -683,7 +686,7 @@ const WaveEditorCard: React.FC<WaveEditorCardProps> = ({
             />
             <FormationRow
               kind="troop"
-              label="Troops"
+              label={localizeStatic("ui.components.attackSetupModal.label.troops.5d47e163")}
               divided
               wave={wave}
               items={troopItems}
@@ -728,6 +731,7 @@ const CourtyardSupportCard: React.FC<CourtyardSupportCardProps> = ({
   onPickTroop,
   onPickTool,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const kindIsTroop = activeKind === 'troop';
   const slots = kindIsTroop ? support.troops : support.tools;
   const items = kindIsTroop ? troopItems : toolItems;
@@ -756,7 +760,7 @@ const CourtyardSupportCard: React.FC<CourtyardSupportCardProps> = ({
 
         <div className="flex flex-wrap items-center justify-end gap-2">
           <PillSelector
-            ariaLabel="Courtyard support item type"
+            ariaLabel={localizeStatic("ui.components.attackSetupModal.ariaLabel.courtyard.support.item.type.94aaaf91")}
             value={activeKind}
             onChange={(value) => onChangeKind(value as InventoryKind)}
             options={[
@@ -765,13 +769,13 @@ const CourtyardSupportCard: React.FC<CourtyardSupportCardProps> = ({
             ]}
             size="header"
           />
-          <MetricTile size="sm" className="min-w-[4.75rem]" label="Troops" value={troopTotal.toLocaleString()} />
-          <MetricTile size="sm" className="min-w-[4.75rem]" label="Tools" value={toolTotal.toLocaleString()} />
+          <MetricTile size="sm" className="min-w-[4.75rem]" label={localizeStatic("ui.components.attackSetupModal.label.troops.5d47e163")} value={troopTotal.toLocaleString()} />
+          <MetricTile size="sm" className="min-w-[4.75rem]" label={localizeStatic("ui.components.attackSetupModal.label.tools.ea93d6a2")} value={toolTotal.toLocaleString()} />
         </div>
       </CardHeader>
 
       <CardContent className="liquid-prominent-header-content p-3">
-        <section className="overflow-hidden rounded-global border border-border-base bg-bg-app/42" aria-label="Courtyard support formation">
+        <section className="overflow-hidden rounded-global border border-border-base bg-bg-app/42" aria-label={localizeStatic("ui.components.attackSetupModal.aria-label.courtyard.support.formation.4cfd524c")}>
           <div className="overflow-x-auto p-3 custom-scrollbar">
             <div className={`mx-auto flex w-max items-start justify-center gap-2 ${kindIsTroop ? 'min-w-[46rem]' : 'min-w-[18rem]'}`}>
               {slots.map((slot, slotIndex) => (

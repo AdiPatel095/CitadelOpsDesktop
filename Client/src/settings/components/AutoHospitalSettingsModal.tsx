@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useState } from 'react';
 import { CalendarDays, Clock3, Settings } from 'lucide-react';
@@ -33,6 +34,7 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
   onClose,
   onOpenFeatureSchedule,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { configuration } = useCitadelAPI();
   const [settings, setSettings] = useState<AutoHospitalClientSettingsV1>(() => defaultAutoHospitalSettings());
   const featureSchedules = normalizeFeatureSchedules(
@@ -126,9 +128,9 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
       isOpen={isOpen}
       onClose={handleClose}
       maxWidth="4xl"
-      title="Auto Hospital Settings"
+      title={localizeStatic("ui.settings.components.autoHospitalSettingsModal.title.auto.hospital.settings.49c2e75a")}
       icon={<Settings className="h-5 w-5" />}
-      description="Queue scans and calendar windows"
+      description={localizeStatic("ui.settings.components.autoHospitalSettingsModal.description.queue.scans.and.calendar.windows.038e9499")}
       onSave={handleSave}
       isSaving={isSaving}
     >
@@ -140,8 +142,8 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
         )}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(14rem,0.8fr)_minmax(18rem,1.2fr)]">
           <SectionCard
-            title="Queue Check"
-            description="Minutes between hospital scans."
+            title={localizeStatic("ui.settings.components.autoHospitalSettingsModal.title.queue.check.39bf2207")}
+            description={localizeStatic("ui.settings.components.autoHospitalSettingsModal.description.minutes.between.hospital.scans.3dde05fe")}
             icon={<Clock3 className="h-4 w-4" />}
             titleClassName="text-base"
           >
@@ -158,7 +160,7 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
           </SectionCard>
 
           <SectionCard
-            title="Shared Schedule"
+            title={localizeStatic("ui.settings.components.autoHospitalSettingsModal.title.shared.schedule.27b35dc8")}
             description={autoHospitalSchedule ? scheduleSummary(autoHospitalSchedule) : 'Schedule off'}
             icon={<CalendarDays className="h-4 w-4" />}
             titleClassName="text-base"

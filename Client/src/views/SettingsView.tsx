@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { LocalizedText } from "../i18n/LocalizedText";
 import { useLocalizedErrorState } from '../i18n/useLocalizedErrorState';
 import { useLocale } from '../i18n/LocaleContext';
@@ -172,6 +173,7 @@ function isRetentionReduction(
 }
 
 const SettingsView: React.FC = () => {
+  const { t: localizeStatic } = useStaticLocale();
   const { t, locale } = useLocale();
 	const {
 		state,
@@ -797,14 +799,14 @@ const SettingsView: React.FC = () => {
       <PageHeader
         className="mb-6"
         title={t('settings.system')}
-        description="Configure system behaviors, attack scheduling, and portable app preferences."
+        description={localizeStatic("ui.views.settingsView.description.configure.system.behaviors.attack.scheduling.and.portable.1c54a3d3")}
       />
 
       <div className="grid grid-cols-1 gap-6">
 		<SectionCard
 			variant="solid"
 			title={t('settings.transfer')}
-			description="Move your CitadelOps setup between installations with one JSON file."
+			description={localizeStatic("ui.views.settingsView.description.move.your.citadelops.setup.between.installations.with.75d6d027")}
 			icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10"><FileJson className="h-4 w-4 text-violet-400" /></span>}
 			contentClassName="p-6 space-y-5"
 		>
@@ -858,7 +860,7 @@ const SettingsView: React.FC = () => {
 				<SectionCard
 					variant="solid"
 					title={t('settings.history')}
-					description="Choose how often My Stats is recorded, set its day limit, and preview local disk use."
+					description={localizeStatic("ui.views.settingsView.description.choose.how.often.my.stats.is.recorded.bcad35a3")}
 				icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/10"><HardDrive className="h-4 w-4 text-cyan-400" /></span>}
 				actions={playerHistoryRetention == null ? undefined : (
 					<Badge variant={playerHistoryRetention.hosted ? 'warning' : 'secondary'}>
@@ -890,7 +892,7 @@ const SettingsView: React.FC = () => {
 								: 'Storage options unavailable'}
 						icon={<HardDrive className="h-4 w-4" />}
 						disabled={playerHistoryRetentionLoading || playerHistoryRetentionPending || playerHistoryRetentionOptions.length === 0}
-						ariaLabel="My Stats saved history window"
+						ariaLabel={localizeStatic("ui.views.settingsView.ariaLabel.my.stats.saved.history.window.c06cf1f6")}
 					/>
 					{selectedPlayerHistoryRetentionOption?.description && (
 						<p className="mt-2 text-xs leading-relaxed text-text-muted">{selectedPlayerHistoryRetentionOption.description}</p>
@@ -911,7 +913,7 @@ const SettingsView: React.FC = () => {
 								value={playerHistoryDaysDraft}
 								onChange={(event) => setPlayerHistoryDaysDraft(event.target.value)}
 								disabled={playerHistoryRetentionLoading || playerHistoryRetentionPending}
-								aria-label="Custom My Stats retention days"
+								aria-label={localizeStatic("ui.views.settingsView.aria-label.custom.my.stats.retention.days.1baed733")}
 							/>
 							<Button
 								type="button"
@@ -945,7 +947,7 @@ const SettingsView: React.FC = () => {
 								placeholder={playerHistoryRetentionLoading ? 'Loading frequencies…' : 'Recording frequencies unavailable'}
 								icon={<HardDrive className="h-4 w-4" />}
 								disabled={playerHistoryRetentionLoading || playerHistoryRetentionPending || !playerHistoryRetention?.recordingIntervalOptions?.length}
-								ariaLabel="My Stats recording frequency"
+								ariaLabel={localizeStatic("ui.views.settingsView.ariaLabel.my.stats.recording.frequency.80e99156")}
 							/>
 							<p className="mt-2 text-xs leading-relaxed text-text-muted">
 								<LocalizedText messageKey="ui.views.settingsView.snapshots.state.already.available.in.citadelops.it.83098a5f" /></p>
@@ -1005,12 +1007,12 @@ const SettingsView: React.FC = () => {
 				{playerHistoryRetentionStatus && <p role="status" className="text-xs font-medium text-success">{playerHistoryRetentionStatus}</p>}
 			</SectionCard>
 
-		<SectionCard variant="solid" title="Game Connection" icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10"><Icons.Monitor className="h-4 w-4 text-sky-400" /></span>} contentClassName="p-6 space-y-6">
+		<SectionCard variant="solid" title={localizeStatic("ui.views.settingsView.title.game.connection.064c1922")} icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10"><Icons.Monitor className="h-4 w-4 text-sky-400" /></span>} contentClassName="p-6 space-y-6">
 			<div>
 				<h3 className="text-sm font-semibold text-text-main"><LocalizedText messageKey="ui.views.settingsView.how.citadelops.connects.99c1207b" /></h3>
 				<p className="mt-1 max-w-3xl text-xs leading-relaxed text-text-muted">
 					<LocalizedText messageKey="ui.views.settingsView.choose.whether.citadelops.opens.the.complete.game.3f2218c1" /></p>
-				<div role="radiogroup" aria-label="Game connection mode" className="mt-4 grid gap-3 lg:grid-cols-2">
+				<div role="radiogroup" aria-label={localizeStatic("ui.views.settingsView.aria-label.game.connection.mode.ab5b4380")} className="mt-4 grid gap-3 lg:grid-cols-2">
 					<button
 						type="button"
 						role="radio"
@@ -1115,7 +1117,7 @@ const SettingsView: React.FC = () => {
 									autoComplete="username"
 									value={backgroundUsername}
 									onChange={(event) => setBackgroundUsername(event.target.value)}
-									placeholder="Game username"
+									placeholder={localizeStatic("ui.views.settingsView.placeholder.game.username.2867263d")}
 									disabled={backgroundLoginPending}
 								/>
 							</div>
@@ -1130,7 +1132,7 @@ const SettingsView: React.FC = () => {
 									autoComplete="current-password"
 									value={backgroundPassword}
 									onChange={(event) => setBackgroundPassword(event.target.value)}
-									placeholder="Game password"
+									placeholder={localizeStatic("ui.views.settingsView.placeholder.game.password.3ad08cdb")}
 									disabled={backgroundLoginPending}
 								/>
 							</div>
@@ -1219,10 +1221,10 @@ const SettingsView: React.FC = () => {
 							<LocalizedText messageKey="ui.views.settingsView.custom.chromium.executable.45aa9d3d" /></label>
 						<div className="flex flex-col gap-2 sm:flex-row">
 							<Input
-								aria-label="Custom Chromium executable"
+								aria-label={localizeStatic("ui.views.settingsView.aria-label.custom.chromium.executable.45aa9d3d")}
 								value={customBrowserPath}
 								onChange={(event) => setCustomBrowserPath(event.target.value)}
-								placeholder="Absolute path or executable command"
+								placeholder={localizeStatic("ui.views.settingsView.placeholder.absolute.path.or.executable.command.9d0d4eeb")}
 								className="font-mono"
 								disabled={browserSelectionPending}
 							/>
@@ -1265,7 +1267,7 @@ const SettingsView: React.FC = () => {
 				</div>
 		</SectionCard>
 
-        <SectionCard variant="solid" title="Attack Scheduler" icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10"><Icons.Activity className="h-4 w-4 text-indigo-400" /></span>} contentClassName="p-6 space-y-8">
+        <SectionCard variant="solid" title={localizeStatic("ui.views.settingsView.title.attack.scheduler.b3c5e8d8")} icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10"><Icons.Activity className="h-4 w-4 text-indigo-400" /></span>} contentClassName="p-6 space-y-8">
 			{settingsSaveError && <p className="text-xs text-error">{settingsSaveError}</p>}
             <div className="space-y-4">
               <div>
@@ -1320,7 +1322,7 @@ const SettingsView: React.FC = () => {
 						<LocalizedText messageKey="ui.views.settingsView.drag.modules.into.priority.order.highest.first.631d17d1" /></p>
 				</div>
 
-				<div className="space-y-2" role="list" aria-label="Automated attack priority order">
+				<div className="space-y-2" role="list" aria-label={localizeStatic("ui.views.settingsView.aria-label.automated.attack.priority.order.91577830")}>
 					{orderedAttackPriorityFeatures.map((feature, index) => (
 						<div
 							key={feature.id}
@@ -1389,7 +1391,7 @@ const SettingsView: React.FC = () => {
 
         </SectionCard>
 
-        <SectionCard variant="solid" title="Equipment Upgrades" icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10"><Icons.Shield className="h-4 w-4 text-emerald-400" /></span>} contentClassName="p-6 space-y-4">
+        <SectionCard variant="solid" title={localizeStatic("ui.views.settingsView.title.equipment.upgrades.c92efd82")} icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10"><Icons.Shield className="h-4 w-4 text-emerald-400" /></span>} contentClassName="p-6 space-y-4">
             <div>
               <h3 className="text-sm font-semibold text-text-main mb-1"><LocalizedText messageKey="ui.views.settingsView.upgrade.step.delay.8a021bb3" /></h3>
               <p className="text-xs text-text-muted mb-4">

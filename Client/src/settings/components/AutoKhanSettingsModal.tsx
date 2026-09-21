@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -43,6 +44,7 @@ interface AutoKhanSettingsModalProps {
 }
 
 export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ isOpen, onClose }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { state, configuration, updateConfiguration } = useCitadelAPI();
   const [draft, setDraft] = useState<AutoKhanClientStateV1>(defaultAutoKhanClientState);
   const [saving, setSaving] = useState(false);
@@ -122,9 +124,9 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
       isOpen={isOpen}
       onClose={() => { if (!saving) onClose(); }}
       maxWidth="3xl"
-      title="Auto Khan"
+      title={localizeStatic("ui.settings.components.autoKhanSettingsModal.title.auto.khan.24bcea17")}
       icon={<Crosshair className="h-5 w-5" />}
-      description="Chained camp attacks, Khan taunts, and main-castle defense"
+      description={localizeStatic("ui.settings.components.autoKhanSettingsModal.description.chained.camp.attacks.khan.taunts.and.main.339ad3f1")}
       onSave={() => void save()}
       isSaving={saving}
       saveDisabled={!canSave}
@@ -159,7 +161,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
                   value: String(castle.id),
                   label: `${castle.name}${castle.id === mainCastle?.id ? ' · Main' : ' · Outpost'} · ${castle.x}:${castle.y}`,
                 }))}
-                placeholder="Choose a Great Empire castle"
+                placeholder={localizeStatic("ui.settings.components.autoKhanSettingsModal.placeholder.choose.a.great.empire.castle.8a81fec1")}
                 menuGrowToViewport
               />
             </label>
@@ -185,7 +187,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
               <Switch
                 checked={!draft.attackLaunchesEnabled}
                 onChange={(locked) => setDraft((current) => ({ ...current, attackLaunchesEnabled: !locked }))}
-                ariaLabel="Lock automatic Khan attacks"
+                ariaLabel={localizeStatic("ui.settings.components.autoKhanSettingsModal.ariaLabel.lock.automatic.khan.attacks.2b670e17")}
               />
             </div>
 
@@ -197,7 +199,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
               <Switch
                 checked={draft.triggerRage}
                 onChange={(triggerRage) => setDraft((current) => ({ ...current, triggerRage }))}
-                ariaLabel="Trigger Khan retaliation at full rage"
+                ariaLabel={localizeStatic("ui.settings.components.autoKhanSettingsModal.ariaLabel.trigger.khan.retaliation.at.full.rage.a2d62469")}
               />
             </div>
           </div>
@@ -235,7 +237,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
                 <Switch
                   checked={draft.requireActiveRageBooster}
                   onChange={(requireActiveRageBooster) => setDraft((current) => ({ ...current, requireActiveRageBooster }))}
-                  ariaLabel="Require an active Khan Rage points booster"
+                  ariaLabel={localizeStatic("ui.settings.components.autoKhanSettingsModal.ariaLabel.require.an.active.khan.rage.points.booster.2bf5fdd6")}
                 />
               </div>
               <p className="mt-3 rounded-global border border-border-base bg-bg-input/50 p-3 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.this.is.the.timed.rage.points.booster.4049d4e5" /></p>
@@ -277,7 +279,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
                 <Switch
                   checked={draft.replenishDefenseTools}
                   onChange={(replenishDefenseTools) => setDraft((current) => ({ ...current, replenishDefenseTools }))}
-                  ariaLabel="Replenish Auto Khan defense tools"
+                  ariaLabel={localizeStatic("ui.settings.components.autoKhanSettingsModal.ariaLabel.replenish.auto.khan.defense.tools.2db26fd2")}
                 />
               </div>
               {draft.replenishDefenseTools ? (
@@ -343,7 +345,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
             <Switch
               checked={draft.skipCooldowns}
               onChange={(skipCooldowns) => setDraft((current) => ({ ...current, skipCooldowns }))}
-              ariaLabel="Skip every Khan camp cooldown"
+              ariaLabel={localizeStatic("ui.settings.components.autoKhanSettingsModal.ariaLabel.skip.every.khan.camp.cooldown.c1c19442")}
             />
           </div>
           <div className="mt-3 grid gap-3 border-t border-border-base pt-3 sm:grid-cols-4">
@@ -402,7 +404,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
               checked={sourceIsMain && draft.openGateProtection}
               onChange={(openGateProtection) => setDraft((current) => ({ ...current, openGateProtection }))}
               disabled={!sourceIsMain}
-              ariaLabel="Open gates if offensive troops would defend the main castle"
+              ariaLabel={localizeStatic("ui.settings.components.autoKhanSettingsModal.ariaLabel.open.gates.if.offensive.troops.would.defend.14754cac")}
             />
           </div>
           {sourceIsMain && draft.openGateProtection ? (

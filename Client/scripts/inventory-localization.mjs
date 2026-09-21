@@ -19,7 +19,7 @@ function walk(dir) {
           const parent = node.parent;
           let reason = null;
           if (ts.isJsxAttribute(parent) && parent.name.getText(source) === 'messageKey' && ts.isJsxSelfClosingElement(parent.parent?.parent) && parent.parent.parent.tagName.getText(source) === 'LocalizedText') reason = 'explicit typed LocalizedText key; source assignment in static-migrations.json';
-          else if (ts.isCallExpression(parent) && /^(t|message)$/.test(parent.expression.getText(source)) && node === parent.arguments[0]) reason = 'explicit typed localization key reference';
+          else if (ts.isCallExpression(parent) && /^(t|message|localizeStatic)$/.test(parent.expression.getText(source)) && node === parent.arguments[0]) reason = 'explicit typed localization key reference';
           else if (ts.isImportDeclaration(parent) || ts.isExportDeclaration(parent) || ts.isLiteralTypeNode(parent)) reason = 'module path or type-only literal';
           else if (ts.isJsxAttribute(parent) && /^(className|id|key|href|src|type|role|data-|style)/.test(parent.name.getText(source))) reason = 'structural JSX attribute; audit if rendered as content';
           else if (ts.isCallExpression(parent) && /^console\./.test(parent.expression.getText(source))) reason = 'private developer console diagnostic';

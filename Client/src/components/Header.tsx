@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { LocalizedText } from "../i18n/LocalizedText";
 import { useLocale } from '../i18n/LocaleContext';
 import { LanguageSelector } from '../i18n/LanguageSelector';
@@ -53,6 +54,7 @@ const Header: React.FC<HeaderProps> = ({
   onOpenNavigation,
   navigationOpen,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { t, messageLocale, locale } = useLocale();
   const { state, submitIntent } = useCitadelAPI();
   const {
@@ -353,7 +355,7 @@ const Header: React.FC<HeaderProps> = ({
           type="button"
           className="liquid-mobile-nav-trigger"
           onClick={onOpenNavigation}
-          aria-label="Open workspace navigation"
+          aria-label={localizeStatic("ui.components.header.aria-label.open.workspace.navigation.9df22e36")}
           aria-expanded={navigationOpen}
           aria-controls="workspace-navigation"
         >
@@ -365,7 +367,7 @@ const Header: React.FC<HeaderProps> = ({
           <div className="liquid-brand-mark">
             <img
               src={theme === 'light' ? '/logo-light.svg' : '/logo-dark.svg'}
-              alt="Citadel Ops Logo"
+              alt={localizeStatic("ui.components.header.alt.citadel.ops.logo.ab367a3c")}
               className="w-7 h-7 drop-shadow-[0_0_10px_var(--primary-glow)] transition-all duration-300"
             />
           </div>
@@ -388,7 +390,7 @@ const Header: React.FC<HeaderProps> = ({
           <div className="liquid-castle-focus-slot flex min-w-0 items-center gap-2">
             <CastleFocusSwitcher />
           </div>
-          <div className="liquid-status-dock" role="group" aria-label="Daily attacks and automation status">
+          <div className="liquid-status-dock" role="group" aria-label={localizeStatic("ui.components.header.aria-label.daily.attacks.and.automation.status.1f099931")}>
             <DailyAttackTracker />
 
             <div
@@ -434,8 +436,8 @@ const Header: React.FC<HeaderProps> = ({
                   disabled={clearingAutoBirdTracking}
                   onClick={() => void clearAutoBirdTracking()}
                   className="liquid-status-dock-utility text-text-muted hover:text-error"
-                  title="Clear Auto Bird cycle tracking from CitadelOps memory"
-                  aria-label="Clear Auto Bird cycle tracking"
+                  title={localizeStatic("ui.components.header.title.clear.auto.bird.cycle.tracking.from.citadelops.cddc50b5")}
+                  aria-label={localizeStatic("ui.components.header.aria-label.clear.auto.bird.cycle.tracking.4813b36e")}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -444,8 +446,8 @@ const Header: React.FC<HeaderProps> = ({
                   size="icon"
                   onClick={onOpenAutoBirdSettings}
                   className="liquid-status-dock-utility"
-                  title="Auto Bird Settings"
-                  aria-label="Open Auto Bird settings"
+                  title={localizeStatic("ui.components.header.title.auto.bird.settings.158a0a4f")}
+                  aria-label={localizeStatic("ui.components.header.aria-label.open.auto.bird.settings.787f04dc")}
                 >
                   <Settings className="h-4 w-4" />
                 </Button>
@@ -496,8 +498,8 @@ const Header: React.FC<HeaderProps> = ({
                   size="icon"
                   onClick={onOpenAutoStationSettings}
                   className="liquid-status-dock-utility"
-                  title="Auto Station Settings"
-                  aria-label="Open Auto Station settings"
+                  title={localizeStatic("ui.components.header.title.auto.station.settings.eb56c8a6")}
+                  aria-label={localizeStatic("ui.components.header.aria-label.open.auto.station.settings.afad0824")}
                 >
                   <Settings className="h-4 w-4" />
                 </Button>

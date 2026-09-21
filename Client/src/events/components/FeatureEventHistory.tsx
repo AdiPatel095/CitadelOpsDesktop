@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useEffect, useMemo, useState } from 'react';
 import { History } from 'lucide-react';
@@ -55,6 +56,7 @@ export function FeatureEventHistory({ entries, worldId, playerId, now, loading, 
   error: string;
   eventIds?: readonly number[];
 }) {
+  const { t: localizeStatic } = useStaticLocale();
   const [page, setPage] = useState(0);
   const [eventFilter, setEventFilter] = useState('all');
   const finals = useMemo(() => featureEventFinals(entries, worldId, playerId, now)
@@ -71,10 +73,10 @@ export function FeatureEventHistory({ entries, worldId, playerId, now, loading, 
       <div className="flex items-center gap-2 font-bold text-text-main"><History className="h-5 w-5 text-primary" /> Previous event scores</div>
       <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.events.components.featureEventHistory.final.known.account.score.for.each.collected.57490c30" /></p>
     </div>
-    {eventOptions.length > 1 && <div className="mb-4 w-full sm:w-72"><Select ariaLabel="Filter previous scores by event" value={selectedEvent} onChange={(value) => { setEventFilter(value); setPage(0); }} options={[{ value: 'all', label: 'All previous events' }, ...eventOptions]} menuGrowToViewport /></div>}
+    {eventOptions.length > 1 && <div className="mb-4 w-full sm:w-72"><Select ariaLabel={localizeStatic("ui.events.components.featureEventHistory.ariaLabel.filter.previous.scores.by.event.c0cc7d68")} value={selectedEvent} onChange={(value) => { setEventFilter(value); setPage(0); }} options={[{ value: 'all', label: 'All previous events' }, ...eventOptions]} menuGrowToViewport /></div>}
     {error && <p role="status" className="mb-4 text-sm text-warning">{error}</p>}
     {loading ? <p role="status" className="text-sm text-text-muted"><LocalizedText messageKey="ui.events.components.featureEventHistory.loading.previous.scores.9c87ef9b" /></p> : finals.length === 0 ? (
-      <EmptyState size="sm" surface="plain" title="No previous scores recorded" description="Completed events appear here when a known score was collected for this account. Running events and unknown scores are not shown as finals." />
+      <EmptyState size="sm" surface="plain" title={localizeStatic("ui.events.components.featureEventHistory.title.no.previous.scores.recorded.96363ebe")} description={localizeStatic("ui.events.components.featureEventHistory.description.completed.events.appear.here.when.a.known.2ec6ea2e")} />
     ) : <>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">

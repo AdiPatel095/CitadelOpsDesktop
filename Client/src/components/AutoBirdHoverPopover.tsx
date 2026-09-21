@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useCallback, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { RotateCw, Timer } from 'lucide-react';
@@ -59,6 +60,7 @@ const AutoBirdHoverPopover: React.FC<AutoBirdHoverPopoverProps> = ({
 	hint,
 	children,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
  const { submitIntent } = useCitadelAPI();
  const [pending, setPending] = useState<number | null>(null);
  const [error, setError] = useState('');
@@ -145,7 +147,7 @@ const AutoBirdHoverPopover: React.FC<AutoBirdHoverPopoverProps> = ({
 		<div
 			id={tooltipId}
 			role="dialog"
- aria-label="Auto Bird castle controls"
+ aria-label={localizeStatic("ui.components.autoBirdHoverPopover.aria-label.auto.bird.castle.controls.b583d73a")}
  onFocusCapture={clearHideTimer}
  onBlurCapture={scheduleHide}
  onKeyDown={(event) => { if (event.key === 'Escape') { event.stopPropagation(); triggerRef.current?.querySelector('button')?.focus(); setOpen(false); } }}
@@ -192,7 +194,7 @@ const AutoBirdHoverPopover: React.FC<AutoBirdHoverPopoverProps> = ({
  disabled={!canControl || pending !== null}
  aria-pressed={!!paused}
  aria-label={`${cycle.castleName}: ${paused ? 'resume' : 'pause'} Auto Bird`}
- title="Click to pause or resume. Right-click for a timed pause."
+ title={localizeStatic("ui.components.autoBirdHoverPopover.title.click.to.pause.or.resume.right.click.4129d41e")}
  onClick={() => { void controlCastle(cycle.castleId, paused ? 'resume' : 'pause').catch(() => {}); }}
  onContextMenu={(event) => { event.preventDefault(); if (canControl && pending === null) setDurationCastle(cycle); }}
  className="flex min-w-0 flex-1 items-center gap-2.5 text-left disabled:opacity-50 focus-visible:outline focus-visible:outline-primary">

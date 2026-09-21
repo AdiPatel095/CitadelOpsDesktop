@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -33,6 +34,7 @@ import { WorldEventHistory, WorldPlayerEventHistory } from './WorldEventHistory'
 type SelectedEntity = { type: 'player' | 'alliance'; id: number; worldId: string };
 
 const WorldIntelligenceView = () => {
+  const { t: localizeStatic } = useStaticLocale();
 	const { state } = useCitadelAPI();
 	const [status, setStatus] = useState<WorldIntelligenceStatusV1 | null>(null);
 	const worldId = state?.account.worldId || status?.worldId || state?.session.serverUrl || '';
@@ -171,19 +173,19 @@ const WorldIntelligenceView = () => {
 	if (selected) {
 		return (
 			<div className="flex flex-col gap-6 pb-8">
-				<nav aria-label="World Intelligence detail navigation" className="sticky top-3 z-30 self-start">
-					<DetailBackButton label="Back to World Intelligence" onClick={closeProfile} className="shadow-lg backdrop-blur" />
+				<nav aria-label={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.aria-label.world.intelligence.detail.navigation.cc8741b4")} className="sticky top-3 z-30 self-start">
+					<DetailBackButton label={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.label.back.to.world.intelligence.3f33ab67")} onClick={closeProfile} className="shadow-lg backdrop-blur" />
 				</nav>
 				{error && (
 					<div className="flex items-start justify-between gap-3 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm text-error" role="alert">
 						<span>{error}</span>
-						<button type="button" aria-label="Dismiss error" onClick={() => setError('')}><X className="h-4 w-4" /></button>
+						<button type="button" aria-label={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.aria-label.dismiss.error.2db04667")} onClick={() => setError('')}><X className="h-4 w-4" /></button>
 					</div>
 				)}
 				{profileLoading ? (
 					<>
 						<PageHeader
-							eyebrow="World Intelligence dossier"
+							eyebrow={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.eyebrow.world.intelligence.dossier.9fad4808")}
 							title={selected.type === 'player' ? 'Loading player…' : 'Loading alliance…'}
 							description={`Loading public history from ${displayWorld(selected.worldId)}`}
 							icon={selected.type === 'player' ? <UserRound className="h-6 w-6" /> : <Users className="h-6 w-6" />}
@@ -207,12 +209,12 @@ const WorldIntelligenceView = () => {
 				) : (
 					<>
 						<PageHeader
-							eyebrow="World Intelligence dossier"
-							title="Profile unavailable"
+							eyebrow={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.eyebrow.world.intelligence.dossier.9fad4808")}
+							title={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.title.profile.unavailable.158e5a22")}
 							description={`No public profile was returned for ${displayWorld(selected.worldId)}`}
 							icon={selected.type === 'player' ? <UserRound className="h-6 w-6" /> : <Users className="h-6 w-6" />}
 						/>
-						<EmptyState size="lg" title="Profile unavailable" description="No usable public observations were returned for this entity." />
+						<EmptyState size="lg" title={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.title.profile.unavailable.158e5a22")} description={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.description.no.usable.public.observations.were.returned.for.eb4c35e6")} />
 					</>
 				)}
 			</div>
@@ -224,7 +226,7 @@ const WorldIntelligenceView = () => {
 			{error && (
 				<div className="flex items-start justify-between gap-3 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm text-error" role="alert">
 					<span>{error}</span>
-					<button type="button" aria-label="Dismiss error" onClick={() => setError('')}><X className="h-4 w-4" /></button>
+					<button type="button" aria-label={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.aria-label.dismiss.error.2db04667")} onClick={() => setError('')}><X className="h-4 w-4" /></button>
 				</div>
 			)}
 
@@ -251,12 +253,12 @@ const WorldIntelligenceView = () => {
 				<EmptyState
 					size="lg"
 					icon={<CloudOff className="h-7 w-7" />}
-					title="Connect a game world first"
-					description="The active game world is required so players with the same ID on different servers never get mixed."
+					title={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.title.connect.a.game.world.first.4f27f30b")}
+					description={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.description.the.active.game.world.is.required.so.9726b203")}
 				/>
 			) : (
 				<SectionCard
-					title="World rankings"
+					title={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.title.world.rankings.6bfc08e5")}
 					description={`One event-aware player table for ${displayWorld(worldId)} with permanent identity, Might, Honor, and Alliance columns.`}
 					icon={<Database className="h-5 w-5" />}
 				>

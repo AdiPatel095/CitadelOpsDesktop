@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import React from 'react';
 import StaleSessionBanner from '../../components/StaleSessionBanner';
 import { Badge } from '../../components/ui';
@@ -7,12 +8,13 @@ import RiftAttackTemplate from './RiftAttackTemplate';
 import RiftMaidenCommsPanel from './RiftMaidenCommsPanel';
 
 const RiftView: React.FC = () => {
+  const { t: localizeStatic } = useStaticLocale();
   const { castle } = useCastleFocus();
   const { riftMapCoords, riftCRALaunch } = useRiftMap();
   const launchCount = riftCRALaunch?.launches.length ?? 0;
 
   return (
-    <section className="flex flex-col gap-6" aria-label="Rift operations">
+    <section className="flex flex-col gap-6" aria-label={localizeStatic("ui.rift.components.riftView.aria-label.rift.operations.ac78b75f")}>
       <StaleSessionBanner />
 
       <RiftMaidenCommsPanel

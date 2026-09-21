@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { Clock3, Coins, PackageSearch, ShieldCheck, ShoppingCart, Sparkles, Store, Users } from 'lucide-react';
@@ -39,6 +40,7 @@ const ALL_AUTO_BUYER_CURRENCIES = 'all';
 const AUTO_BUYER_PROJECTION_REFRESH_MS = 15_000;
 
 export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ isOpen, onClose }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { state, configuration, updateConfiguration } = useCitadelAPI();
   const { autoBuyerEnabled, setAutomationEnabled } = useAuth();
   const autoBuyerConfiguration = configuration?.sections[AUTO_BUYER_SECTION];
@@ -315,9 +317,9 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
       isOpen={isOpen}
       onClose={() => { if (!saving) onClose(); }}
       maxWidth="6xl"
-      title="Auto Buyer"
+      title={localizeStatic("ui.settings.components.autoBuyerSettingsModal.title.auto.buyer.04362090")}
       icon={<ShoppingCart className="h-5 w-5" />}
-      description="Stock resets, specialist floors, and feast upkeep with hard spending guards"
+      description={localizeStatic("ui.settings.components.autoBuyerSettingsModal.description.stock.resets.specialist.floors.and.feast.upkeep.a1fe045b")}
       onSave={() => void save()}
       isSaving={saving}
       saveDisabled={!configurationValid || Boolean(loadError)}
@@ -338,7 +340,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
               onChange={(enabled) => { void updateMasterSwitch(enabled); }}
               disabled={updatingMasterSwitch}
               size="md"
-              ariaLabel="Run Auto Buyer"
+              ariaLabel={localizeStatic("ui.settings.components.autoBuyerSettingsModal.ariaLabel.run.auto.buyer.d3b546dd")}
             />
           </div>
         </Card>
@@ -359,19 +361,19 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                 value={draft.sourceCastleId > 0 ? String(draft.sourceCastleId) : ''}
                 onChange={(value) => setDraft((current) => ({ ...current, sourceCastleId: Number(value) || 0 }))}
                 options={castles.map((castle) => ({ value: String(castle.id), label: `${castle.name} · ${castle.x}:${castle.y}` }))}
-                placeholder="Choose the main castle"
+                placeholder={localizeStatic("ui.settings.components.autoBuyerSettingsModal.placeholder.choose.the.main.castle.62e2884c")}
                 menuGrowToViewport
               />
             </label>
             <NumberField
-              label="Check every (minutes)"
+              label={localizeStatic("ui.settings.components.autoBuyerSettingsModal.label.check.every.minutes.c9fb0897")}
               value={Math.round(draft.checkIntervalSec / 60)}
               minimum={30}
               maximum={60}
               onChange={(minutes) => setDraft((current) => ({ ...current, checkIntervalSec: minutes * 60 }))}
             />
             <NumberField
-              label="Keep at least rubies"
+              label={localizeStatic("ui.settings.components.autoBuyerSettingsModal.label.keep.at.least.rubies.1abbd768")}
               value={draft.minimumRubyReserve}
               minimum={0}
               onChange={(minimumRubyReserve) => setDraft((current) => ({ ...current, minimumRubyReserve }))}
@@ -385,7 +387,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
             <Switch
               checked={draft.allowRubyPackages}
               onChange={(allowRubyPackages) => setDraft((current) => ({ ...current, allowRubyPackages }))}
-              ariaLabel="Allow ruby-priced shop packages"
+              ariaLabel={localizeStatic("ui.settings.components.autoBuyerSettingsModal.ariaLabel.allow.ruby.priced.shop.packages.5285ebed")}
             />
           </div>
         </Card>
@@ -427,9 +429,9 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                       label: `${shop.name} · ${shop.packageCount} item${shop.packageCount === 1 ? '' : 's'}${selectedCount > 0 ? ` · ${selectedCount} selected` : ''}`,
                     };
                   })}
-                  placeholder="Choose a supported shop"
+                  placeholder={localizeStatic("ui.settings.components.autoBuyerSettingsModal.placeholder.choose.a.supported.shop.1c8c85ac")}
                   icon={<Store className="h-4 w-4" />}
-                  ariaLabel="Auto Buyer shop"
+                  ariaLabel={localizeStatic("ui.settings.components.autoBuyerSettingsModal.ariaLabel.auto.buyer.shop.062cb8c5")}
                   menuGrowToViewport
                 />
               </label>
@@ -448,9 +450,9 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                       label: `${currency.name} · ${currency.count} item${currency.count === 1 ? '' : 's'}`,
                     })),
                   ]}
-                  placeholder="Choose a currency"
+                  placeholder={localizeStatic("ui.settings.components.autoBuyerSettingsModal.placeholder.choose.a.currency.fc3e3a36")}
                   icon={<Coins className="h-4 w-4" />}
-                  ariaLabel="Auto Buyer currency"
+                  ariaLabel={localizeStatic("ui.settings.components.autoBuyerSettingsModal.ariaLabel.auto.buyer.currency.e62c8ed9")}
                   menuGrowToViewport
                 />
               </label>
@@ -498,7 +500,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                           <div className="flex shrink-0 items-end gap-3">
                             <div className="w-44">
                               <NumberField
-                                label="Purchase limit / reset"
+                                label={localizeStatic("ui.settings.components.autoBuyerSettingsModal.label.purchase.limit.reset.1eedeafa")}
                                 value={rule?.targetPurchasesPerReset ?? 1}
                                 minimum={1}
                                 maximum={product.stock}
@@ -527,7 +529,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                             />
                             {product.price.premium ? (
                               <NumberField
-                                label="Max rubies per stock reset"
+                                label={localizeStatic("ui.settings.components.autoBuyerSettingsModal.label.max.rubies.per.stock.reset.7ba34f56")}
                                 value={rule?.maximumRubySpendPerReset ?? product.price.amount}
                                 minimum={product.price.amount}
                                 onChange={(maximumRubySpendPerReset) => updatePackage(product, { maximumRubySpendPerReset })}
@@ -610,7 +612,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
 					{enabled && specialistUpkeepSupported ? (
                       <div className="mt-3 grid gap-3 border-t border-border-base pt-3 md:grid-cols-2">
                         <NumberField
-                          label="Minimum remaining days"
+                          label={localizeStatic("ui.settings.components.autoBuyerSettingsModal.label.minimum.remaining.days.84cd5e8a")}
                           value={rule?.minimumDays ?? AUTO_BUYER_MINIMUM_SPECIALIST_DAYS}
                           minimum={AUTO_BUYER_MINIMUM_SPECIALIST_DAYS}
                           maximum={AUTO_BUYER_MAXIMUM_SPECIALIST_DAYS}
@@ -619,7 +621,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                           onChange={(minimumDays) => updateSpecialist(specialist, { minimumDays })}
                         />
                         <NumberField
-                          label="Max rubies per 7-day renewal"
+                          label={localizeStatic("ui.settings.components.autoBuyerSettingsModal.label.max.rubies.per.7.day.renewal.d22b7a8b")}
                           value={rule?.maximumRubyCostPerPurchase ?? safeMaximum}
                           minimum={0}
                           error={rubyCeilingError}
@@ -654,7 +656,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                     setDraft((current) => ({ ...current, feast: { ...current.feast, enabled } }));
                   }}
                   disabled={!draft.feast.enabled && (!automaticFeastSourceSupported || !selectedFeastSupported) && !preservingEnabledUnsupportedFeast}
-                  ariaLabel="Maintain a feast"
+                  ariaLabel={localizeStatic("ui.settings.components.autoBuyerSettingsModal.ariaLabel.maintain.a.feast.8470a1b8")}
                 />
               </div>
               {draft.feast.enabled || !selectedFeastSupported ? (
@@ -683,7 +685,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                         label: `${feast.name} · +${feast.productionBoostPercent}% · ${formatFeastPrice(feast)}${feast.automaticPurchase?.supported === false ? ' · Automatic purchase unavailable' : ''}`,
                         disabled: feast.automaticPurchase?.supported === false,
                       }))}
-                      placeholder="Choose an official feast"
+                      placeholder={localizeStatic("ui.settings.components.autoBuyerSettingsModal.placeholder.choose.an.official.feast.42a38bc2")}
                       disabled={!automaticFeastSourceSupported}
                       menuGrowToViewport
                     />
@@ -736,11 +738,11 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                         <Switch
                           checked={draft.feast.allowRubies}
                           onChange={(allowRubies) => setDraft((current) => ({ ...current, feast: { ...current.feast, allowRubies } }))}
-                          ariaLabel="Allow ruby feast"
+                          ariaLabel={localizeStatic("ui.settings.components.autoBuyerSettingsModal.ariaLabel.allow.ruby.feast.90aa50c4")}
                         />
                       </div>
                       <NumberField
-                        label="Max rubies per feast purchase"
+                        label={localizeStatic("ui.settings.components.autoBuyerSettingsModal.label.max.rubies.per.feast.purchase.8774b3c7")}
                         value={draft.feast.maximumRubyCostPerPurchase}
                         minimum={selectedFeast.price.amount}
                         onChange={(maximumRubyCostPerPurchase) => setDraft((current) => ({ ...current, feast: { ...current.feast, maximumRubyCostPerPurchase } }))}

@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -84,6 +85,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
   onClose,
   onOpenFeatureSchedule,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { configuration, state, submitIntent } = useCitadelAPI();
   const { currencies } = useMetadata();
   const [settings, setSettings] = useState<AutoSceatResClientSettings>(() => defaultAutoSceatResSettings());
@@ -257,9 +259,9 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
         isOpen={isOpen}
         onClose={handleClose}
         maxWidth="full"
-        title="Auto Sceat Resources"
+        title={localizeStatic("ui.settings.components.autoSceatResSettingsModal.title.auto.sceat.resources.a647166a")}
         icon={<Factory className="h-5 w-5" />}
-        description="Research-aware crafting queues and kingdom-resource logistics"
+        description={localizeStatic("ui.settings.components.autoSceatResSettingsModal.description.research.aware.crafting.queues.and.kingdom.resource.394ed6a5")}
         onSave={handleSave}
         isSaving={isSaving}
       >
@@ -332,7 +334,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                   <div className="text-xs font-black uppercase tracking-wide text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.allowed.transport.skips.73eba8a9" /></div>
                   <ChoiceChipGroup
                     className="mt-2"
-                    ariaLabel="Allowed transport skips"
+                    ariaLabel={localizeStatic("ui.settings.components.autoSceatResSettingsModal.ariaLabel.allowed.transport.skips.73eba8a9")}
                     options={timeSkips.map((skip) => ({ value: skip.id, label: skip.label }))}
                     selected={settings.allowedTimeSkips}
                     disabled={!settings.useKingdomTimeSkips || !settings.autoKingdomTransport}
@@ -484,13 +486,13 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                                       const steps = [...current.steps];
                                       [steps[index - 1], steps[index]] = [steps[index], steps[index - 1]];
                                       return { ...current, steps };
-                                    })} title="Move up"><ArrowUp className="h-3.5 w-3.5" /></Button>
+                                    })} title={localizeStatic("ui.settings.components.autoSceatResSettingsModal.title.move.up.c66feb5e")}><ArrowUp className="h-3.5 w-3.5" /></Button>
                                     <Button variant="ghost" size="icon" disabled={index === plan.steps.length - 1} onClick={() => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => {
                                       const steps = [...current.steps];
                                       [steps[index], steps[index + 1]] = [steps[index + 1], steps[index]];
                                       return { ...current, steps };
-                                    })} title="Move down"><ArrowDown className="h-3.5 w-3.5" /></Button>
-                                    <Button variant="ghost" size="icon" className="text-error" onClick={() => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => ({ ...current, steps: current.steps.filter((_, itemIndex) => itemIndex !== index), cursor: 0 }))} title="Remove"><Trash2 className="h-3.5 w-3.5" /></Button>
+                                    })} title={localizeStatic("ui.settings.components.autoSceatResSettingsModal.title.move.down.40bb50da")}><ArrowDown className="h-3.5 w-3.5" /></Button>
+                                    <Button variant="ghost" size="icon" className="text-error" onClick={() => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => ({ ...current, steps: current.steps.filter((_, itemIndex) => itemIndex !== index), cursor: 0 }))} title={localizeStatic("ui.settings.components.autoSceatResSettingsModal.title.remove.c3812fc4")}><Trash2 className="h-3.5 w-3.5" /></Button>
                                   </div>
                                 </div>
                               );

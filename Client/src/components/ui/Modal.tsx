@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import React, { useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
@@ -29,6 +30,7 @@ export const Modal: React.FC<ModalProps> = ({
   hideCloseButton = false,
   ariaLabel,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const dialogRef = useRef<HTMLDivElement>(null);
   const instanceRef = useRef(Symbol('modal'));
   const onCloseRef = useRef(onClose);
@@ -125,7 +127,7 @@ export const Modal: React.FC<ModalProps> = ({
                 size="icon"
                 onClick={onClose}
                 className="liquid-modal-close"
-                aria-label="Close modal"
+                aria-label={localizeStatic("ui.components.ui.modal.aria-label.close.modal.207bd886")}
               >
                 <X className="h-5 w-5" />
               </Button>

@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useMemo, useState } from 'react';
 import { Castle, Eraser, LockKeyhole, Minus, PackageSearch, Plus, Shield, Sparkles, Waves } from 'lucide-react';
@@ -59,6 +60,7 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
   onClose,
   onSave,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const [draft, setDraft] = useState<DefensePresetDraft>(() => normalizeDefensePresetSlots(initialDraft));
   const [validationError, setValidationError] = useState('');
   const { tools, unitsLoading: isMetadataLoading, unitsError } = useMetadata();
@@ -114,7 +116,7 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
       title={(
         <ModalTitle
           icon={<Shield className="h-5 w-5" />}
-          description="Fixed wall and gate positions match the defense command layout."
+          description={localizeStatic("ui.components.defensePresetEditor.description.fixed.wall.and.gate.positions.match.the.d6b5e13d")}
         >
           {initialDraft.name.trim() ? `Edit ${initialDraft.name}` : 'Create defense preset'}
         </ModalTitle>
@@ -138,7 +140,7 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
             autoFocus
             value={draft.name}
             maxLength={120}
-            placeholder="Full ranged 41 / 18 / 41"
+            placeholder={localizeStatic("ui.components.defensePresetEditor.placeholder.full.ranged.41.18.41.93ec7311")}
             onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
           />
           {draft.sourceCastleId != null ? (
@@ -154,7 +156,7 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
           </div>
         ) : null}
 
-        <section aria-label="Wall formation">
+        <section aria-label={localizeStatic("ui.components.defensePresetEditor.aria-label.wall.formation.d775c51f")}>
           <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
             <div>
               <h3 className="flex items-center gap-2 text-base font-black text-text-main">
@@ -171,8 +173,8 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
           <div className="overflow-x-auto pb-2 custom-scrollbar">
             <div className="grid min-w-[76rem] grid-cols-[minmax(20rem,1fr)_minmax(28rem,1.45fr)_minmax(20rem,1fr)] items-stretch gap-3">
               <DefenseFlankEditorCard
-                label="Left flank"
-                description="Four fixed wall-tool positions."
+                label={localizeStatic("ui.components.defensePresetEditor.label.left.flank.95721338")}
+                description={localizeStatic("ui.components.defensePresetEditor.description.four.fixed.wall.tool.positions.ddb50294")}
                 slotSummary="4 wall"
                 className="min-w-0"
                 section={draft.wall.left}
@@ -183,8 +185,8 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
                 onChange={(section) => updateWall('left', () => section)}
               />
               <DefenseFlankEditorCard
-                label="Front flank"
-                description="Two amber gate-only positions and four blue wall-only positions."
+                label={localizeStatic("ui.components.defensePresetEditor.label.front.flank.62faff4f")}
+                description={localizeStatic("ui.components.defensePresetEditor.description.two.amber.gate.only.positions.and.four.dd2c8f51")}
                 slotSummary="4 wall · 2 gate"
                 className="min-w-0"
                 front
@@ -196,8 +198,8 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
                 onChange={(section) => updateWall('middle', () => section)}
               />
               <DefenseFlankEditorCard
-                label="Right flank"
-                description="Four fixed wall-tool positions."
+                label={localizeStatic("ui.components.defensePresetEditor.label.right.flank.51130f03")}
+                description={localizeStatic("ui.components.defensePresetEditor.description.four.fixed.wall.tool.positions.ddb50294")}
                 slotSummary="4 wall"
                 className="min-w-0"
                 section={draft.wall.right}
@@ -214,7 +216,7 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
             <LocalizedText messageKey="ui.components.defensePresetEditor.the.flank.split.must.total.100.ranged.661c8fad" /></p>
         </section>
 
-        <section aria-label="Moat tools">
+        <section aria-label={localizeStatic("ui.components.defensePresetEditor.aria-label.moat.tools.f461b2a0")}>
           <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
             <div>
               <h3 className="flex items-center gap-2 text-base font-black text-text-main"><Waves className="h-4 w-4 text-info" /> Moat tools</h3>
@@ -233,7 +235,7 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
                   key={key}
                   className="min-w-0"
                   label={label}
-                  description="One fixed moat-tool position."
+                  description={localizeStatic("ui.components.defensePresetEditor.description.one.fixed.moat.tool.position.faabff0d")}
                   slotSummary="1 moat"
                   tone="info"
                   slots={draft.moat[key]}
@@ -251,7 +253,7 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
           </div>
         </section>
 
-        <section aria-label="Courtyard and keep">
+        <section aria-label={localizeStatic("ui.components.defensePresetEditor.aria-label.courtyard.and.keep.e34083fb")}>
           <div className="rounded-global border border-border-base bg-bg-card/45 p-4">
             <label className="flex cursor-pointer items-start gap-3">
               <Switch
@@ -275,7 +277,7 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
                 }))}
                 size="sm"
                 className="mt-0.5 shrink-0"
-                ariaLabel="Include courtyard setup in this defense preset"
+                ariaLabel={localizeStatic("ui.components.defensePresetEditor.ariaLabel.include.courtyard.setup.in.this.defense.preset.f1d428bf")}
               />
               <span>
                 <span className="block text-sm font-black text-text-main"><LocalizedText messageKey="ui.components.defensePresetEditor.include.courtyard.setup.7218ecf4" /></span>
@@ -286,13 +288,13 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
             {draft.keep ? (
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <NumberField
-                  label="Courtyard capacity value"
+                  label={localizeStatic("ui.components.defensePresetEditor.label.courtyard.capacity.value.4b4afb72")}
                   value={draft.keep.mauct}
                   minimum={0}
                   onChange={(value) => setDraft((current) => ({ ...current, keep: { ...current.keep!, mauct: value } }))}
                 />
                 <NumberField
-                  label="Courtyard ranged %"
+                  label={localizeStatic("ui.components.defensePresetEditor.label.courtyard.ranged.defb10fc")}
                   value={100 - draft.keep.unitTypePercent}
                   minimum={0}
                   maximum={100}
@@ -345,7 +347,7 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
             <div className="grid min-w-[54rem] grid-cols-2 items-stretch gap-3">
               <DefenseToolSectionCard
                 className="min-w-0"
-                label="Keep tools"
+                label={localizeStatic("ui.components.defensePresetEditor.label.keep.tools.a7a0edf4")}
                 description={hasEditableCourtyardRows
                   ? 'Normal courtyard tools from official slot type 5.'
                   : preservedCourtyardDescription(preservedKeepToolSlots)}
@@ -365,7 +367,7 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
               />
               <DefenseToolSectionCard
                 className="min-w-0"
-                label="Sceat support tools"
+                label={localizeStatic("ui.components.defensePresetEditor.label.sceat.support.tools.473024a8")}
                 description={hasEditableCourtyardRows
                   ? 'Sceat defense support from official slot type 6.'
                   : preservedCourtyardDescription(preservedKeepToolSlots)}
@@ -541,6 +543,7 @@ const ToolSlotGroup: React.FC<{
   fixedSlotSpecs?: FixedToolSlotSpec[];
   onChange: (slots: DefenseToolSlotV2[]) => void;
 }> = ({ label, slots, allowedToolIDs, stockQuantities, tools, fixedSlotSpecs, onChange }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const renderedSlots = fixedSlotSpecs
     ? fixedSlotSpecs.map((_, index) => slots[index] ?? { definitionId: -1, amount: 0 })
     : slots;
@@ -619,7 +622,7 @@ const ToolSlotGroup: React.FC<{
               <button
                 type="button"
                 className="flex h-9 w-9 items-center justify-center rounded-global border border-border-base bg-bg-card/60 hover:border-primary/40"
-                title="Choose tool"
+                title={localizeStatic("ui.components.defensePresetEditor.title.choose.tool.138d3dd8")}
                 onClick={() => void pickTool(index)}
               >
                 {slot.definitionId > 0 ? <ToolImage toolId={slot.definitionId} size={30} showLevel={false} /> : <PackageSearch className="h-4 w-4 text-text-muted" />}
@@ -632,7 +635,7 @@ const ToolSlotGroup: React.FC<{
                   type="number"
                   className="!px-2 !py-1.5 font-mono"
                   value={slot.definitionId > 0 ? slot.definitionId : ''}
-                  placeholder="Empty"
+                  placeholder={localizeStatic("ui.components.defensePresetEditor.placeholder.empty.c6c094bc")}
                   onChange={(event) => {
                     const definitionId = toInteger(event.target.value, -1);
                     replaceSlot(index, definitionId > 0
@@ -658,7 +661,7 @@ const ToolSlotGroup: React.FC<{
                   type="button"
                   variant="ghost"
                   size="icon"
-                  title="Clear tool"
+                  title={localizeStatic("ui.components.defensePresetEditor.title.clear.tool.38a2dbae")}
                   disabled={slot.definitionId <= 0}
                   onClick={() => replaceSlot(index, { definitionId: -1, amount: 0 })}
                 >
@@ -668,7 +671,7 @@ const ToolSlotGroup: React.FC<{
                   type="button"
                   variant="ghost"
                   size="icon"
-                  title="Remove slot"
+                  title={localizeStatic("ui.components.defensePresetEditor.title.remove.slot.8c09755d")}
                   onClick={() => onChange(slots.filter((_, candidateIndex) => candidateIndex !== index))}
                 >
                   <Minus className="h-3.5 w-3.5" />

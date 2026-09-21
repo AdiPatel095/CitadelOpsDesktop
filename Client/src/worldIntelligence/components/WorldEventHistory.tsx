@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, ArrowUpDown, CalendarDays, ChevronLeft, ChevronRight, History, RefreshCw, Search, Trophy } from 'lucide-react';
@@ -105,6 +106,7 @@ export const WorldEventHistory = ({
 	onOpenPlayer,
 	onOpenAlliance,
 }: WorldEventHistoryProps) => {
+  const { t: localizeStatic } = useStaticLocale();
 	const [runs, setRuns] = useState<WorldIntelligenceEventRunV1[]>([]);
 	const [runBoards, setRunBoards] = useState<Record<string, CachedRunBoards>>({});
 	const [stormPublicBoard, setStormPublicBoard] = useState<EventBoard | null>(null);
@@ -498,7 +500,7 @@ export const WorldEventHistory = ({
 					<div className="flex items-center gap-2 text-base font-bold text-text-main"><Trophy className="h-5 w-5 text-primary" /> Player rankings</div>
 						<p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.name.might.honor.and.alliance.stay.visible.9556c88a" /></p>
 				</div>
-				<Button variant="ghost" size="icon" aria-label="Refresh event history" onClick={() => void refreshBoards()} isLoading={loading}><RefreshCw className="h-4 w-4" /></Button>
+				<Button variant="ghost" size="icon" aria-label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.aria-label.refresh.event.history.6f3331e2")} onClick={() => void refreshBoards()} isLoading={loading}><RefreshCw className="h-4 w-4" /></Button>
 			</div>
 			<div className="mb-4 flex flex-wrap gap-2">
 				<Badge variant="outline">{formatCount(knownRunCount)} collected runs</Badge>
@@ -519,8 +521,8 @@ export const WorldEventHistory = ({
 				<EmptyState
 					size="md"
 					icon={<CalendarDays className="h-6 w-6" />}
-					title="No event runs collected yet"
-					description="The view is ready for backend 1.3.14 event observations and will populate automatically after a collector uploads this world's first run."
+					title={localizeStatic("ui.worldIntelligence.components.worldEventHistory.title.no.event.runs.collected.yet.9b8636ba")}
+					description={localizeStatic("ui.worldIntelligence.components.worldEventHistory.description.the.view.is.ready.for.backend.1.fe44c28a")}
 				/>
 			) : (
 				<>
@@ -537,7 +539,7 @@ export const WorldEventHistory = ({
 									setPage(0);
 								}}
 								options={eventOptions}
-								ariaLabel="Select an event"
+								ariaLabel={localizeStatic("ui.worldIntelligence.components.worldEventHistory.ariaLabel.select.an.event.bc3ec617")}
 								searchable
 								disabled={eventOptions.length <= 1}
 								menuGrowToViewport
@@ -549,7 +551,7 @@ export const WorldEventHistory = ({
 								value={selectedRunKey}
 								onChange={(value) => { setRun(value); setBoard(''); setPage(0); }}
 								options={runOptions}
-								ariaLabel="Select an event session by date range"
+								ariaLabel={localizeStatic("ui.worldIntelligence.components.worldEventHistory.ariaLabel.select.an.event.session.by.date.range.ea9d2609")}
 								menuGrowToViewport
 							/>
 						</div>}
@@ -559,21 +561,21 @@ export const WorldEventHistory = ({
 								value={selectedBoardKey}
 								onChange={(value) => { setBoard(value); setPage(0); }}
 								options={boardOptions}
-								ariaLabel="Select an event leaderboard"
+								ariaLabel={localizeStatic("ui.worldIntelligence.components.worldEventHistory.ariaLabel.select.an.event.leaderboard.7dadfdc0")}
 								menuGrowToViewport
 							/>
 						</div>}
 						{needsLeagueSelector && <div>
 							<div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.level.league.dab1c62c" /></div>
-							<Select value={league} onChange={(value) => { setLeague(value); setPage(0); }} options={leagueOptions} ariaLabel="Filter event scores by level league" searchable menuGrowToViewport />
+							<Select value={league} onChange={(value) => { setLeague(value); setPage(0); }} options={leagueOptions} ariaLabel={localizeStatic("ui.worldIntelligence.components.worldEventHistory.ariaLabel.filter.event.scores.by.level.league.15d67b3a")} searchable menuGrowToViewport />
 						</div>}
 						<div>
 							<div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.player.or.alliance.ff83830f" /></div>
 							<Input
 								value={searchQuery}
 								onChange={(event) => { setSearchQuery(event.target.value); setPage(0); }}
-								placeholder="Search by any part of the name"
-								aria-label="Search players or alliances by name"
+								placeholder={localizeStatic("ui.worldIntelligence.components.worldEventHistory.placeholder.search.by.any.part.of.the.name.832b3d88")}
+								aria-label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.aria-label.search.players.or.alliances.by.name.9097dc95")}
 								leftIcon={<Search className="h-4 w-4" />}
 							/>
 						</div>
@@ -581,17 +583,17 @@ export const WorldEventHistory = ({
 
 					{selectedBoard && (
 						<div className="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-							<MetricTile label="Participants" value={formatCount(selectedBoard.run?.participants ?? selectedBoard.entries.length)} tone="brand" />
-							<MetricTile label="Current score rows" value={formatCount(selectedBoard.entries.length)} tone="info" />
+							<MetricTile label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.label.participants.0e27279b")} value={formatCount(selectedBoard.run?.participants ?? selectedBoard.entries.length)} tone="brand" />
+							<MetricTile label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.label.current.score.rows.1a127530")} value={formatCount(selectedBoard.entries.length)} tone="info" />
 							{originalStormSelected
-								? <MetricTile label="Ranking scope" value="All levels" monospace={false} />
-								: <MetricTile label="Level leagues" value={formatCount(availableLeagueIds.length)} />}
+								? <MetricTile label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.label.ranking.scope.d1f0465f")} value="All levels" monospace={false} />
+								: <MetricTile label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.label.level.leagues.77ca51ba")} value={formatCount(availableLeagueIds.length)} />}
 							{selectedBoard.run ? originalStormSelected ? (
-								<MetricTile label="Last collected" value={formatDateTime(selectedBoard.run.lastObservedAt)} />
+								<MetricTile label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.label.last.collected.df0a6817")} value={formatDateTime(selectedBoard.run.lastObservedAt)} />
 							) : (
 								<MetricTile label={eventRunActive(selectedBoard.run) ? 'Ends' : 'Ended'} value={formatDateTime(selectedBoard.run.eventEndsAt)} tone={eventRunActive(selectedBoard.run) ? 'warning' : 'default'} />
 							) : (
-								<MetricTile label="Updated" value={formatDateTime(latestBoardObservation(selectedBoard.entries))} />
+								<MetricTile label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.label.updated.3a5ecca1")} value={formatDateTime(latestBoardObservation(selectedBoard.entries))} />
 							)}
 						</div>
 					)}
@@ -628,6 +630,7 @@ export const WorldPlayerEventHistory = (props: PlayerEventHistoryProps) => (
 );
 
 const WorldPlayerEventHistoryContent = ({ history, error = '', onOpenAlliance }: PlayerEventHistoryProps) => {
+  const { t: localizeStatic } = useStaticLocale();
 	const [eventKey, setEventKey] = useState(allEvents);
 	const [page, setPage] = useState(0);
 	const [historyNow, setHistoryNow] = useState(() => Date.now());
@@ -669,12 +672,12 @@ const WorldPlayerEventHistoryContent = ({ history, error = '', onOpenAlliance }:
 						<p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.final.known.public.score.from.each.completed.f94de1c4" /></p>
 					</div>
 					<div className="w-full sm:w-72">
-						<Select value={eventKey} onChange={(value) => { setEventKey(value); setPage(0); }} options={eventOptions} ariaLabel="Filter this player's previous event scores" searchable disabled={eventOptions.length <= 1} menuGrowToViewport />
+						<Select value={eventKey} onChange={(value) => { setEventKey(value); setPage(0); }} options={eventOptions} ariaLabel={localizeStatic("ui.worldIntelligence.components.worldEventHistory.ariaLabel.filter.this.player.s.previous.event.scores.d8bad75f")} searchable disabled={eventOptions.length <= 1} menuGrowToViewport />
 					</div>
 				</div>
 				{error && <div className="mb-4 rounded-global border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning" role="status">{error}</div>}
 				{entries.length === 0 ? (
-					<EmptyState size="sm" surface="plain" icon={<Trophy className="h-5 w-5" />} title="No previous scores yet" description="A final known score appears here after a collected event run reaches its recorded end time." />
+					<EmptyState size="sm" surface="plain" icon={<Trophy className="h-5 w-5" />} title={localizeStatic("ui.worldIntelligence.components.worldEventHistory.title.no.previous.scores.yet.10f2b810")} description={localizeStatic("ui.worldIntelligence.components.worldEventHistory.description.a.final.known.score.appears.here.after.949d3a8d")} />
 				) : (
 					<PlayerEventScoreTable entries={visible} page={safePage} pageCount={pageCount} total={entries.length} onPageChange={setPage} onOpenAlliance={onOpenAlliance} />
 				)}
@@ -698,6 +701,7 @@ const EventScoreTable = ({ entries, loading, regularPlayers, eventTitle, searchQ
 	onOpenPlayer: (playerId: number, worldId: string) => void;
 	onOpenAlliance: (allianceId: number, worldId: string) => void;
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
 	if (loading && entries.length === 0) return <div className="flex min-h-72 items-center justify-center text-sm text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.loading.event.leaderboard.3950752a" /></div>;
 	return (
 		<div className={`overflow-hidden rounded-global border border-border-base transition-opacity ${loading ? 'opacity-60' : ''}`} aria-busy={loading}>
@@ -705,13 +709,13 @@ const EventScoreTable = ({ entries, loading, regularPlayers, eventTitle, searchQ
 				<table className="min-w-[68rem] w-full text-sm">
 					<thead className="sticky top-0 z-10 bg-bg-card text-[10px] uppercase tracking-wide text-text-muted">
 						<tr>
-							<SortableEventHeader rowSpan={2} label="Name" column="name" sort={sort} onSort={onSort} className="min-w-56 text-left" />
-							<SortableEventHeader rowSpan={2} label="Might" column="might" sort={sort} onSort={onSort} className="min-w-32 text-right" align="right" />
-							<SortableEventHeader rowSpan={2} label="Honor" column="honor" sort={sort} onSort={onSort} className="min-w-32 text-right" align="right" />
-							<SortableEventHeader rowSpan={2} label="Alliance" column="alliance" sort={sort} onSort={onSort} className="min-w-52 text-left" />
+							<SortableEventHeader rowSpan={2} label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.label.name.dcd1d522")} column="name" sort={sort} onSort={onSort} className="min-w-56 text-left" />
+							<SortableEventHeader rowSpan={2} label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.label.might.f68b032e")} column="might" sort={sort} onSort={onSort} className="min-w-32 text-right" align="right" />
+							<SortableEventHeader rowSpan={2} label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.label.honor.22ea092e")} column="honor" sort={sort} onSort={onSort} className="min-w-32 text-right" align="right" />
+							<SortableEventHeader rowSpan={2} label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.label.alliance.afe3c194")} column="alliance" sort={sort} onSort={onSort} className="min-w-52 text-left" />
 							<th colSpan={2} className="border-l border-border-base px-3 py-2 text-center text-primary">{eventTitle}</th>
 						</tr>
-						<tr className="border-t border-border-base"><SortableEventHeader label="Rank" column="rank" sort={sort} onSort={onSort} className="border-l border-border-base text-right" align="right" /><SortableEventHeader label="Score" column="score" sort={sort} onSort={onSort} className="text-right" align="right" /></tr>
+						<tr className="border-t border-border-base"><SortableEventHeader label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.label.rank.a4130d7d")} column="rank" sort={sort} onSort={onSort} className="border-l border-border-base text-right" align="right" /><SortableEventHeader label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.label.score.38e5a46c")} column="score" sort={sort} onSort={onSort} className="text-right" align="right" /></tr>
 					</thead>
 					<tbody>
 						{entries.length === 0 ? (

@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -324,6 +325,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   onOpenFeatureSchedule,
   onOpenAutomationDuration,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { configuration } = useCitadelAPI();
   const {
     gameLoggedIn,
@@ -932,7 +934,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                   value={autoEquipmentCleanup.intervalMinutes}
                   onChange={(event) => autoEquipmentCleanup.setIntervalMinutes(Number(event.target.value))}
                   className="h-9 px-2 py-1 text-center"
-                  aria-label="Equipment cleanup poll interval in minutes"
+                  aria-label={localizeStatic("ui.views.automationView.aria-label.equipment.cleanup.poll.interval.in.minutes.a1c6845c")}
                 />
               </div>
               <span className="text-xs font-semibold text-text-muted"><LocalizedText messageKey="ui.views.automationView.min.1f6fa6f6" /></span>

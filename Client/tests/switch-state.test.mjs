@@ -1,3 +1,4 @@
+import { sourceMessages } from '../src/i18n/sourceMessages.ts';
 import assert from 'node:assert/strict';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -63,7 +64,7 @@ test('defense courtyard inclusion uses the shared binary switch', async () => {
   assert.match(editor, /<label className="flex cursor-pointer items-start gap-3">[\s\S]*?<Switch/);
   assert.match(editor, /checked=\{draft\.keep != null\}/);
   assert.match(editor, /onChange=\{\(includeCourtyard\) => setDraft/);
-  assert.match(editor, /ariaLabel="Include courtyard setup in this defense preset"/);
+  assert.ok(Object.entries(sourceMessages).some(([key,text]) => text === 'Include courtyard setup in this defense preset' && editor.includes(`ariaLabel={localizeStatic("${key}")}`)));
 });
 
 test('the final palette gives every switch distinct danger and success colors', async () => {

@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Activity, RefreshCw, SlidersHorizontal, Sparkles } from 'lucide-react';
@@ -48,6 +49,7 @@ import {
 } from './EquipmentTypes';
 
 export default function EquipmentView() {
+  const { t: localizeStatic } = useStaticLocale();
 	const { state, configuration, submitIntent } = useCitadelAPI();
 	const { effects, equipments, gems, troops } = useMetadata();
 	const [mode, setMode] = useState<EquipmentMode>('Commander');
@@ -248,7 +250,7 @@ export default function EquipmentView() {
 			<StaleSessionBanner />
 			<Card className="liquid-prominent-header-card equipment-workspace-card h-full min-h-0 flex flex-col">
 				<CardHeader className="liquid-card-header-prominent flex flex-wrap items-center gap-4">
-					<PillSelector ariaLabel="Equipment owner type" value={mode} options={['Commander', 'Castellan']} onChange={(value) => setMode(value as EquipmentMode)} size="header" />
+					<PillSelector ariaLabel={localizeStatic("ui.equipment.components.equipmentView.ariaLabel.equipment.owner.type.8d4616c8")} value={mode} options={['Commander', 'Castellan']} onChange={(value) => setMode(value as EquipmentMode)} size="header" />
 					<div className="equipment-actions ml-auto">
 						<Button size="sm" variant="outline" disabled={controlsDisabled || leaders.length < 2} onClick={() => setShowSwap(true)}><RefreshCw className="mr-1.5 h-4 w-4" />Swap Gear</Button>
 						<Button size="sm" disabled={!state?.session.loggedIn || busy} onClick={() => { setSellType('Gems'); setShowSell(true); }} className="border border-warning/30 bg-warning/10 text-warning hover:border-warning/50 hover:bg-warning/20"><LocalizedText messageKey="ui.equipment.components.equipmentView.sell.gems.8a1147dc" /></Button>
@@ -361,6 +363,7 @@ function EffectiveBattleReport({
 	targetOptions: EquipmentTarget[];
 	onTargetChange: (targetID: string) => void;
 }) {
+  const { t: localizeStatic } = useStaticLocale();
 	return (
 		<section className="flex h-full min-h-0 flex-col">
 			<div className="equipment-report-header">
@@ -383,10 +386,10 @@ function EffectiveBattleReport({
 							searchText: `${option.label} ${option.castleTypeID}`,
 						}))}
 						onChange={onTargetChange}
-						placeholder="Target castle type"
+						placeholder={localizeStatic("ui.equipment.components.equipmentView.placeholder.target.castle.type.d2c19e2e")}
 						searchable
-						searchPlaceholder="Search target castle type"
-						ariaLabel="Battle target"
+						searchPlaceholder={localizeStatic("ui.equipment.components.equipmentView.searchPlaceholder.search.target.castle.type.4db8afb3")}
+						ariaLabel={localizeStatic("ui.equipment.components.equipmentView.ariaLabel.battle.target.4a75ca0e")}
 						className="w-full"
 					/>
 				</div>

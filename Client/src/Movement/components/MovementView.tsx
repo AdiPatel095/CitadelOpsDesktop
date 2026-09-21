@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -150,6 +151,7 @@ function StatusBadge({ status }: { status: CommanderActivity }) {
 }
 
 const MovementView: React.FC = () => {
+  const { t: localizeStatic } = useStaticLocale();
   const { gameLoggedIn } = useAuth();
   const { state, configuration, updateConfiguration } = useCitadelAPI();
   const { movement, refreshMovement } = useMovement();
@@ -279,7 +281,7 @@ const MovementView: React.FC = () => {
       <Card className="liquid-prominent-header-card">
         <CardHeader className="liquid-card-header-prominent flex-wrap gap-3">
           <PillSelector
-            ariaLabel="Commander workspace mode"
+            ariaLabel={localizeStatic("ui.movement.components.movementView.ariaLabel.commander.workspace.mode.d48ff88d")}
             value={mode}
             options={['Functions', 'Live Movements']}
             onChange={(value) => setMode(value as MovementMode)}
@@ -367,7 +369,7 @@ const MovementView: React.FC = () => {
                                     className="rounded-full transition-transform hover:-translate-y-0.5 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:pointer-events-none disabled:opacity-40"
                                     aria-pressed={allAssigned}
                                     aria-label={`${allAssigned ? 'Disable' : 'Enable'} ${feature.label} for all commanders`}
-                                    aria-description="Right-click to configure an equipped bonus-troop requirement."
+                                    aria-description={localizeStatic("ui.movement.components.movementView.aria-description.right.click.to.configure.an.equipped.bonus.845b6341")}
                                     disabled={savingAssignments || commanderIDs.length === 0}
                                     onClick={() => setFeatureForAllCommanders(feature.id, !allAssigned)}
                                     onContextMenu={(event) => {

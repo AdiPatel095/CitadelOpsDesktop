@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -131,6 +132,7 @@ const TIME_SKIP_RESERVES = [
 const LUNA_PACKAGE_ID_SET = new Set(AUTO_STORM_LUNA_PACKAGE_IDS);
 
 export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ isOpen, onClose }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { state, configuration, captureBuildingTarget, updateConfiguration } = useCitadelAPI();
   const { getTool, getTroop } = useMetadata();
   const [draft, setDraft] = useState<AutoStormClientStateV1>(defaultAutoStormClientState);
@@ -542,9 +544,9 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
       isOpen={isOpen}
       onClose={() => { if (!saving && !capturing) onClose(); }}
       maxWidth="full"
-      title="Auto Storm"
+      title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.auto.storm.39d85a5f")}
       icon={<Waves className="h-5 w-5" />}
-      description="Reconcile a captured Storm castle, attack selected forts and resource islands, and spend Aquamarine through guarded goals."
+      description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.reconcile.a.captured.storm.castle.attack.selected.f13374ef")}
       onSave={() => void save()}
       isSaving={saving}
       saveDisabled={!canSave}
@@ -554,8 +556,8 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
         <Card variant="solid" className="p-4">
           <SectionHeading
             icon={Castle}
-            title="Storm castle access"
-            description="Choose the exact official starter castle Auto Storm may open when a new Storm season is locked. Existing and manually opened castles are reconciled without buying again."
+            title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.storm.castle.access.8c4a0314")}
+            description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.choose.the.exact.official.starter.castle.auto.3debe494")}
           />
           <div className="mt-4 flex items-start justify-between gap-4 rounded-global border border-border-base bg-bg-app/30 p-3">
             <div>
@@ -574,7 +576,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                     : current.unlock.prebuiltCastleId,
                 },
               }))}
-              ariaLabel="Automatically open the Storm castle"
+              ariaLabel={localizeStatic("ui.settings.components.autoStormSettingsModal.ariaLabel.automatically.open.the.storm.castle.b46ca0ca")}
             />
           </div>
 
@@ -615,8 +617,8 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
         <Card variant="solid" className="p-4">
           <SectionHeading
             icon={Camera}
-            title="Durable castle blueprints"
-            description="Capture a reusable end state. Each mode is retained separately, preflighted against official data, and activated without changing the other saved modes."
+            title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.durable.castle.blueprints.36e000b1")}
+            description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.capture.a.reusable.end.state.each.mode.e37c0a19")}
           />
           <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_repeat(3,auto)] lg:items-end">
             <label className="block">
@@ -741,36 +743,36 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
           <Card variant="solid" className="p-4">
             <SectionHeading
               icon={Hammer}
-              title="Construction and logistics"
-              description="Gift packets are cleared after expansions. Storage dependencies and upgrade chains are inferred automatically."
+              title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.construction.and.logistics.8e6e0606")}
+              description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.gift.packets.are.cleared.after.expansions.storage.3cefb10e")}
             />
             <div className="mt-4 space-y-3">
               <SettingsToggleRow
                 icon={<Truck className="h-3.5 w-3.5" />}
-                title="Transport missing resources"
-                description="Ship available resources from another owned kingdom castle when Storm cannot afford the next dependency."
+                title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.transport.missing.resources.b76e94ff")}
+                description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.ship.available.resources.from.another.owned.kingdom.cfa81f3c")}
                 checked={draft.build.allowResourceTransport}
                 onChange={(allowResourceTransport) => updateBuild(setDraft, { allowResourceTransport })}
               />
               <SettingsToggleRow
                 icon={<FastForward className="h-3.5 w-3.5" />}
-                title="Use time skips"
-                description="Advance construction, resource transport, or troop transport one skip command at a time, waiting for each confirmed response and preserving the reserves below."
+                title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.use.time.skips.a5caaa59")}
+                description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.advance.construction.resource.transport.or.troop.transport.326defea")}
                 checked={draft.build.allowTimeSkips}
                 onChange={(allowTimeSkips) => updateBuild(setDraft, { allowTimeSkips })}
               />
               <SettingsToggleRow
                 icon={<Sparkles className="h-3.5 w-3.5" />}
-                title="Allow premium costs"
-                description="Permit premium construction paths. Harbor levels 2 and 3 require this permission."
+                title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.allow.premium.costs.fd72d704")}
+                description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.permit.premium.construction.paths.harbor.levels.2.e7439d0f")}
                 checked={draft.build.allowPremium}
                 onChange={(allowPremium) => updateBuild(setDraft, { allowPremium })}
                 tone="warning"
               />
               <SettingsToggleRow
                 icon={<Trash2 className="h-3.5 w-3.5" />}
-                title="Allow demolition"
-                description="Permit exact reconciliation to demolish unmanaged buildings that cannot be stored or moved."
+                title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.allow.demolition.b9a49e66")}
+                description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.permit.exact.reconciliation.to.demolish.unmanaged.buildings.e7ae16af")}
                 checked={draft.build.allowDemolition}
                 onChange={(allowDemolition) => updateBuild(setDraft, { allowDemolition })}
                 warning
@@ -861,7 +863,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                 <Switch
                   checked={draft.harbor.enabled}
                   onChange={(enabled) => setDraft((current) => ({ ...current, harbor: { ...current.harbor, enabled } }))}
-                  ariaLabel="Automate Storm Harbor upgrades"
+                  ariaLabel={localizeStatic("ui.settings.components.autoStormSettingsModal.ariaLabel.automate.storm.harbor.upgrades.9fb63b2d")}
                 />
               </div>
               {draft.harbor.enabled ? (
@@ -885,8 +887,8 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
           <Card variant="solid" className="p-4">
             <SectionHeading
               icon={Swords}
-              title="Forts and resource islands"
-              description="Each target type has its own attack preset. Live attack capacity and troop inventory are validated before launch."
+              title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.forts.and.resource.islands.4ccb548f")}
+              description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.each.target.type.has.its.own.attack.287a841c")}
             />
 
             <div className="mt-4 rounded-global border border-border-base bg-bg-app/30 p-3">
@@ -905,13 +907,13 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                 <Switch
                   checked={draft.forts.enabled}
                   onChange={(enabled) => setDraft((current) => ({ ...current, forts: { ...current.forts, enabled } }))}
-                  ariaLabel="Attack Storm forts"
+                  ariaLabel={localizeStatic("ui.settings.components.autoStormSettingsModal.ariaLabel.attack.storm.forts.d4715eec")}
                 />
               </div>
               {draft.forts.enabled ? (
                 <div className="mt-3 space-y-3 border-t border-border-base pt-3">
                   <ChoiceChipGroup
-                    ariaLabel="Storm fort levels"
+                    ariaLabel={localizeStatic("ui.settings.components.autoStormSettingsModal.ariaLabel.storm.fort.levels.45c2394a")}
                     options={FORT_LEVELS.map((level) => ({ value: level, label: `Level ${level}` }))}
                     selected={draft.forts.levels}
                     onToggle={(level) => setDraft((current) => ({
@@ -940,7 +942,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                     value={draft.forts.presetId}
                     onChange={(presetId) => setDraft((current) => ({ ...current, forts: { ...current.forts, presetId } }))}
                     presets={attackPresets.presets}
-                    placeholder="Fort attack preset"
+                    placeholder={localizeStatic("ui.settings.components.autoStormSettingsModal.placeholder.fort.attack.preset.9a1bfd17")}
                   />
                   {selectedFortPreset ? <PresetSummary preset={selectedFortPreset} /> : null}
                   {draft.forts.levels.length === 0 ? <p className="text-xs text-error"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.select.at.least.one.fort.level.32a7a693" /></p> : null}
@@ -958,7 +960,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               </div>
 
               {activeTargetPriorities.length > 0 ? (
-                <div className="mt-3 space-y-2 border-t border-border-base pt-3" role="list" aria-label="Auto Storm target priority order">
+                <div className="mt-3 space-y-2 border-t border-border-base pt-3" role="list" aria-label={localizeStatic("ui.settings.components.autoStormSettingsModal.aria-label.auto.storm.target.priority.order.de42d734")}>
                   {activeTargetPriorities.map((priority, index) => {
                     const option = TARGET_PRIORITY_OPTIONS[priority];
                     return (
@@ -1043,7 +1045,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                 <Switch
                   checked={draft.islands.enabled}
                   onChange={(enabled) => setDraft((current) => ({ ...current, islands: { ...current.islands, enabled } }))}
-                  ariaLabel="Attack Storm resource islands"
+                  ariaLabel={localizeStatic("ui.settings.components.autoStormSettingsModal.ariaLabel.attack.storm.resource.islands.217a9d89")}
                 />
               </div>
               {draft.islands.enabled ? (
@@ -1051,7 +1053,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                   <div>
                     <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.resources.e89b30aa" /></FieldLabel>
                     <ChoiceChipGroup
-                      ariaLabel="Storm island resources"
+                      ariaLabel={localizeStatic("ui.settings.components.autoStormSettingsModal.ariaLabel.storm.island.resources.cd7f09d0")}
                       options={RESOURCE_OPTIONS}
                       selected={draft.islands.resources}
                       onToggle={(resource) => setDraft((current) => ({
@@ -1063,7 +1065,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                   <div>
                     <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.island.sizes.85f8ba7d" /></FieldLabel>
                     <ChoiceChipGroup
-                      ariaLabel="Storm island sizes"
+                      ariaLabel={localizeStatic("ui.settings.components.autoStormSettingsModal.ariaLabel.storm.island.sizes.aabba11f")}
                       options={SIZE_OPTIONS}
                       selected={draft.islands.sizes}
                       onToggle={(size) => setDraft((current) => ({
@@ -1076,7 +1078,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                     value={draft.islands.presetId}
                     onChange={(presetId) => setDraft((current) => ({ ...current, islands: { ...current.islands, presetId } }))}
                     presets={attackPresets.presets}
-                    placeholder="Island attack preset"
+                    placeholder={localizeStatic("ui.settings.components.autoStormSettingsModal.placeholder.island.attack.preset.1f0006d5")}
                   />
                   {selectedIslandPreset ? <PresetSummary preset={selectedIslandPreset} /> : null}
 
@@ -1123,7 +1125,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                     ...current,
                     troopImport: { ...current.troopImport, enabled },
                   }))}
-                  ariaLabel="Import missing Storm troops"
+                  ariaLabel={localizeStatic("ui.settings.components.autoStormSettingsModal.ariaLabel.import.missing.storm.troops.603c310b")}
                 />
               </div>
               {draft.troopImport.enabled ? (
@@ -1131,7 +1133,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                   <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.donor.castles.efcb2401" /></FieldLabel>
                   {troopDonorCastles.length > 0 ? (
                     <ChoiceChipGroup
-                      ariaLabel="Storm troop donor castles"
+                      ariaLabel={localizeStatic("ui.settings.components.autoStormSettingsModal.ariaLabel.storm.troop.donor.castles.e9f62d7c")}
                       options={troopDonorCastles.map((castle) => ({
                         value: castle.id,
                         label: `${castle.name?.trim() || `Castle ${castle.id}`} · K${castle.kingdomId}`,
@@ -1254,8 +1256,8 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
         <Card variant="solid" className="p-4">
           <SectionHeading
             icon={Package}
-            title="Aquamarine spending"
-            description="Buy prioritized Luna packages while the protected Aquamarine reserve remains intact."
+            title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.aquamarine.spending.9cd6c95d")}
+            description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.buy.prioritized.luna.packages.while.the.protected.babf384f")}
           />
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             <label>
@@ -1280,7 +1282,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               <Input
                 value={lunaSearch}
                 onChange={(event) => setLunaSearch(event.target.value)}
-                placeholder="Reward, category, or package ID"
+                placeholder={localizeStatic("ui.settings.components.autoStormSettingsModal.placeholder.reward.category.or.package.id.86dc65d9")}
                 leftIcon={<Search className="h-4 w-4" />}
               />
               <p className="mt-1 text-[11px] text-text-muted">
@@ -1426,7 +1428,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
         />
 
         <Card variant="solid" className="p-4">
-          <SectionHeading icon={Clock3} title="Cadence" description="Map refreshes are authoritative scans; policy checks react sooner to resource, build, troop, and movement changes." />
+          <SectionHeading icon={Clock3} title={localizeStatic("ui.settings.components.autoStormSettingsModal.title.cadence.316d43c0")} description={localizeStatic("ui.settings.components.autoStormSettingsModal.description.map.refreshes.are.authoritative.scans.policy.checks.ab4ae38c")} />
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <label>
               <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.policy.check.interval.ccd24f98" /></FieldLabel>

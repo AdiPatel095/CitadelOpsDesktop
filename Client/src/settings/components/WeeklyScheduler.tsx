@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CalendarDays, Clock, Plus, Search, Trash2, Wand2 } from 'lucide-react';
@@ -281,6 +282,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
   slotOptionsConfig,
   className = '',
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { getTool, getTroop, troops } = useMetadata();
   const schedule = useMemo(() => normalizeWeeklySchedule(value), [value]);
   const slotOptionsEnabled = !!slotOptionsConfig && !!schedule.slotOptionsEnabled;
@@ -911,7 +913,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
                 size="sm"
                 checked={schedule.enabled}
                 onChange={(enabled) => commitSchedule({ ...schedule, enabled })}
-                ariaLabel="Use weekly schedule"
+                ariaLabel={localizeStatic("ui.settings.components.weeklyScheduler.ariaLabel.use.weekly.schedule.c2262573")}
               />
             </div>
             {slotOptionsConfig && (
@@ -1068,19 +1070,19 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
                     >
                       <button
                         type="button"
-                        aria-label="Copy this slot to previous day"
+                        aria-label={localizeStatic("ui.settings.components.weeklyScheduler.aria-label.copy.this.slot.to.previous.day.55af7ea5")}
                         className="schedule-slot-copy-handle schedule-slot-copy-handle-left"
                         onPointerDown={(event) => beginDrag(event, slot, 'copy-prev-day')}
                       />
                       <button
                         type="button"
-                        aria-label="Copy this slot to next day"
+                        aria-label={localizeStatic("ui.settings.components.weeklyScheduler.aria-label.copy.this.slot.to.next.day.449690bb")}
                         className="schedule-slot-copy-handle schedule-slot-copy-handle-right"
                         onPointerDown={(event) => beginDrag(event, slot, 'copy-next-day')}
                       />
                       <button
                         type="button"
-                        aria-label="Resize start time"
+                        aria-label={localizeStatic("ui.settings.components.weeklyScheduler.aria-label.resize.start.time.9d21e341")}
                         className="schedule-slot-resize-handle schedule-slot-resize-start"
                         onPointerDown={(event) => beginDrag(event, slot, 'resize-start')}
                       />
@@ -1096,7 +1098,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
                       </div>
                       <button
                         type="button"
-                        aria-label="Resize end time"
+                        aria-label={localizeStatic("ui.settings.components.weeklyScheduler.aria-label.resize.end.time.3454bedf")}
                         className="schedule-slot-resize-handle schedule-slot-resize-end"
                         onPointerDown={(event) => beginDrag(event, slot, 'resize-end')}
                       />

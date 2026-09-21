@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { Coins, Trophy } from 'lucide-react';
@@ -29,6 +30,7 @@ const CURRENCY_FALLBACK_NAMES: Record<number, string> = {
 };
 
 const EventScoreCard: React.FC<EventScoreCardProps> = ({ live, event, onOpenRanking, rankingLoading = false }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { state } = useCitadelAPI();
   const { currencies } = useMetadata();
   const [translations, setTranslations] = useState<Record<string, string>>({});
@@ -77,7 +79,7 @@ const EventScoreCard: React.FC<EventScoreCardProps> = ({ live, event, onOpenRank
     <SectionCard
       variant="solid"
       title={eventName}
-      description="Live event score and reward progress"
+      description={localizeStatic("ui.dashboard.components.eventScoreCard.description.live.event.score.and.reward.progress.4a67ced7")}
       titleClassName="truncate text-primary"
       descriptionClassName="font-bold uppercase tracking-wider"
       headerClassName="feature-event-score-header flex-wrap gap-3"
@@ -85,7 +87,7 @@ const EventScoreCard: React.FC<EventScoreCardProps> = ({ live, event, onOpenRank
       actions={(
         <div className="feature-event-score-actions">
           {currencyIDs.length > 0 && (
-            <div className="feature-event-balance-list" aria-label="Event balances">
+            <div className="feature-event-balance-list" aria-label={localizeStatic("ui.dashboard.components.eventScoreCard.aria-label.event.balances.33bb7011")}>
               {currencyIDs.map((currencyID) => {
                 const metadata = currencies[currencyID];
                 const name = metadata?.name ?? CURRENCY_FALLBACK_NAMES[currencyID] ?? `Currency ${currencyID}`;
@@ -118,7 +120,7 @@ const EventScoreCard: React.FC<EventScoreCardProps> = ({ live, event, onOpenRank
                 isLoading={rankingLoading}
                 disabled={!live}
                 onClick={onOpenRanking}
-                title="Open the live GGE Nomad alliance ranking"
+                title={localizeStatic("ui.dashboard.components.eventScoreCard.title.open.the.live.gge.nomad.alliance.ranking.499e9e26")}
               >
                 <LocalizedText messageKey="ui.dashboard.components.eventScoreCard.alliance.ranking.c47701bb" /></Button>
             )}
@@ -137,12 +139,12 @@ const EventScoreCard: React.FC<EventScoreCardProps> = ({ live, event, onOpenRank
         ) : (
           <div className="flex flex-col gap-4">
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-              <MetricTile label="Your score" value={event.playerScore} tone="brand" className="border-border-light bg-bg-card/40 px-4 py-3 [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-xl" />
-              <MetricTile label="Your rank" value={formatRank(event.playerRank)} className="border-border-light bg-bg-card/40 px-4 py-3 [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-xl" />
-              <MetricTile label="Alliance score" value={event.allianceScore} className="border-border-light bg-bg-card/40 px-4 py-3 [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-xl" />
-              <MetricTile label="Alliance rank" value={formatRank(event.allianceRank)} className="border-border-light bg-bg-card/40 px-4 py-3 [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-xl" />
+              <MetricTile label={localizeStatic("ui.dashboard.components.eventScoreCard.label.your.score.5f49fcc8")} value={event.playerScore} tone="brand" className="border-border-light bg-bg-card/40 px-4 py-3 [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-xl" />
+              <MetricTile label={localizeStatic("ui.dashboard.components.eventScoreCard.label.your.rank.dd60f006")} value={formatRank(event.playerRank)} className="border-border-light bg-bg-card/40 px-4 py-3 [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-xl" />
+              <MetricTile label={localizeStatic("ui.dashboard.components.eventScoreCard.label.alliance.score.ce090cd8")} value={event.allianceScore} className="border-border-light bg-bg-card/40 px-4 py-3 [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-xl" />
+              <MetricTile label={localizeStatic("ui.dashboard.components.eventScoreCard.label.alliance.rank.d0816adc")} value={formatRank(event.allianceRank)} className="border-border-light bg-bg-card/40 px-4 py-3 [&_.ui-metric-value]:truncate [&_.ui-metric-value]:text-xl" />
               <MetricTile
-                label="Reward pages"
+                label={localizeStatic("ui.dashboard.components.eventScoreCard.label.reward.pages.54812284")}
                 value={formatRewardPages(event.rewardPagesReached, event.rewardPagesTotal)}
                 tone="success"
                 caption={rewardPagesCaption(event)}

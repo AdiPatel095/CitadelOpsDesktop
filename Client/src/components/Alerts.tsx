@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { useEffect, useRef, useState } from 'react';
 import { Icons } from './Icons';
 import { Notifications, notificationDurationMs, type AppNotification } from './Notifications';
@@ -28,6 +29,7 @@ export const Alerts = () => {
 };
 
 const AlertItem = ({ alert, onDismiss }: { alert: AppNotification; onDismiss: () => void }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const [isExiting, setIsExiting] = useState(false);
   const exitTimer = useRef<number | null>(null);
 
@@ -79,7 +81,7 @@ const AlertItem = ({ alert, onDismiss }: { alert: AppNotification; onDismiss: ()
         type="button"
         onClick={handleDismiss}
         className={`shrink-0 rounded-lg p-1 opacity-70 transition-colors hover:bg-white/10 hover:opacity-100 ${style.text}`}
-        aria-label="Dismiss"
+        aria-label={localizeStatic("ui.components.alerts.aria-label.dismiss.48845bff")}
       >
         <Icons.X className="h-4 w-4" />
       </button>

@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { TimerReset } from 'lucide-react';
@@ -38,6 +39,7 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
   onPauseFor,
   pausedUntil,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { enableAutomationFor, automationTimedUntilByKey } = useAuth();
   const [amount, setAmount] = useState('1');
   const [unit, setUnit] = useState<DurationUnit>('hours');
@@ -129,7 +131,7 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
               value={amount}
               onChange={(event) => setAmount(event.target.value)}
               className="font-mono"
-              aria-label="Automation duration amount"
+              aria-label={localizeStatic("ui.settings.components.automationDurationModal.aria-label.automation.duration.amount.11388035")}
             />
             <Select
               value={unit}
@@ -139,7 +141,7 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
                 { value: 'hours', label: 'Hours' },
                 { value: 'days', label: 'Days' },
               ]}
-              ariaLabel="Automation duration unit"
+              ariaLabel={localizeStatic("ui.settings.components.automationDurationModal.ariaLabel.automation.duration.unit.c82ad9ba")}
             />
           </div>
           {!valid ? <p className="mt-2 text-xs text-error"><LocalizedText messageKey="ui.settings.components.automationDurationModal.choose.a.duration.from.1.minute.through.270a3657" /></p> : null}

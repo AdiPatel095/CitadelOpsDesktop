@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, Filter, Search, Trash2, UsersRound } from 'lucide-react';
@@ -49,6 +50,7 @@ const CommanderRequirementModal: React.FC<CommanderRequirementModalProps> = ({
   onApply,
   onClear,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { state } = useCitadelAPI();
   const { effects, troops } = useMetadata();
   const stats = useMemo(
@@ -148,8 +150,8 @@ const CommanderRequirementModal: React.FC<CommanderRequirementModalProps> = ({
         <Input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search bonus troops, effects, unit IDs, or target areas…"
-          aria-label="Search commander bonus troop stats"
+          placeholder={localizeStatic("ui.movement.components.commanderRequirementModal.placeholder.search.bonus.troops.effects.unit.ids.or.0a660cc1")}
+          aria-label={localizeStatic("ui.movement.components.commanderRequirementModal.aria-label.search.commander.bonus.troop.stats.df5201df")}
           leftIcon={<Search className="h-4 w-4" />}
         />
 
@@ -222,7 +224,7 @@ const CommanderRequirementModal: React.FC<CommanderRequirementModalProps> = ({
               step={1}
               value={minimumValue}
               onChange={(event) => setMinimumValue(event.target.value)}
-              aria-label="Minimum bonus troops"
+              aria-label={localizeStatic("ui.movement.components.commanderRequirementModal.aria-label.minimum.bonus.troops.642d8e1d")}
             />
           </label>
           <label className="flex flex-col gap-1.5">
@@ -233,8 +235,8 @@ const CommanderRequirementModal: React.FC<CommanderRequirementModalProps> = ({
               step={1}
               value={maximumValue}
               onChange={(event) => setMaximumValue(event.target.value)}
-              aria-label="Maximum bonus troops"
-              placeholder="No maximum"
+              aria-label={localizeStatic("ui.movement.components.commanderRequirementModal.aria-label.maximum.bonus.troops.fcde0321")}
+              placeholder={localizeStatic("ui.movement.components.commanderRequirementModal.placeholder.no.maximum.b5cfdf25")}
             />
           </label>
         </div>

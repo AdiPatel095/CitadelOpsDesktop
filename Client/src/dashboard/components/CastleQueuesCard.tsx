@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useMemo } from 'react';
 import { SectionCard } from '../../components/ui';
@@ -41,6 +42,7 @@ function craftingOutputAmount(baseAmount: number | undefined, outputBoostPercent
 }
 
 const CastleQueuesCard: React.FC<CastleQueuesCardProps> = ({ title = 'Queues' }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { castle } = useCastleFocus();
   const { buildings, getCraftingRecipe } = useMetadata();
   const visible = useMemo(
@@ -53,7 +55,7 @@ const CastleQueuesCard: React.FC<CastleQueuesCardProps> = ({ title = 'Queues' })
     <SectionCard
       variant="solid"
       title={title}
-      description="Canonical game queues"
+      description={localizeStatic("ui.dashboard.components.castleQueuesCard.description.canonical.game.queues.e2552ff6")}
       titleClassName="text-primary"
       descriptionClassName="font-bold uppercase tracking-wider"
       className="flex min-h-0 flex-col"

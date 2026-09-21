@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Camera, Castle, Crosshair, FastForward, Hammer, Shield, Swords, Trash2, Users, Zap } from 'lucide-react';
@@ -38,6 +39,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 	onClose,
 	onOpenFeatureSchedule,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
 	const { state, configuration, updateConfiguration, captureBuildingTarget } = useCitadelAPI();
 	const { troops } = useMetadata();
 	const saved = useMemo(
@@ -240,9 +242,9 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 		<SettingsModal
 			isOpen={isOpen}
 			onClose={onClose}
-			title="Auto Beri World"
+			title={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.title.auto.beri.world.a579a63b")}
 			icon={<Swords className="h-5 w-5" />}
-			description="Attack Berimond towers, bring the loot home, and spend only the camp's confirmed resources on the built-in or a captured build target."
+			description={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.description.attack.berimond.towers.bring.the.loot.home.ff1b05e8")}
 			titleTrailing={(
 					<Button
 						variant="outline"
@@ -259,7 +261,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 		>
 			<div className="space-y-5">
 				<SettingsToggleRow
-					title="Only run with a Gallantry booster"
+					title={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.title.only.run.with.a.gallantry.booster.358a7233")}
 					description={(
 						<>
 							Gates transfers, armorer purchases, camp setup, tower attacks, and construction unless boi booster ID 24 is active.
@@ -287,8 +289,8 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 					</div>
 
 					<SettingsToggleRow
-						title="Auto Beri Builder lane"
-						description="Choose whether Auto Beri may build and upgrade the built-in target or an active custom target from returned loot. Turning this lane off does not pause transfers, tools, or attacks."
+						title={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.title.auto.beri.builder.lane.10891189")}
+						description={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.description.choose.whether.auto.beri.may.build.and.eecf5076")}
 						icon={<Hammer className="h-4 w-4" />}
 						checked={settings.build.enabled}
 						onChange={(enabled) => setSettings((current) => ({
@@ -436,8 +438,8 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 
 					<div className="grid gap-3 lg:grid-cols-3">
 						<SettingsToggleRow
-							title="Use construction time skips"
-							description="Advance a confirmed build timer while preserving the selected skip reserves."
+							title={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.title.use.construction.time.skips.c7ae0ffb")}
+							description={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.description.advance.a.confirmed.build.timer.while.preserving.3e2f7894")}
 							icon={<FastForward className="h-4 w-4" />}
 							checked={settings.build.allowTimeSkips}
 							onChange={(allowTimeSkips) => setSettings((current) => ({
@@ -446,8 +448,8 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							}))}
 						/>
 						<SettingsToggleRow
-							title="Allow premium costs"
-							description="Permit built-in or captured target steps that spend premium currency, including eligible Large-tent upgrades."
+							title={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.title.allow.premium.costs.fd72d704")}
+							description={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.description.permit.built.in.or.captured.target.steps.95dd7222")}
 							icon={<Zap className="h-4 w-4" />}
 							checked={settings.build.allowPremium}
 							onChange={(allowPremium) => setSettings((current) => ({
@@ -457,8 +459,8 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							tone="warning"
 						/>
 						<SettingsToggleRow
-							title="Allow demolition"
-							description="Permit exact reconciliation to remove unmanaged buildings when they cannot be moved or stored."
+							title={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.title.allow.demolition.b9a49e66")}
+							description={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.description.permit.exact.reconciliation.to.remove.unmanaged.buildings.93936bb7")}
 							icon={<Trash2 className="h-4 w-4" />}
 							checked={settings.build.allowDemolition}
 							onChange={(allowDemolition) => setSettings((current) => ({
@@ -553,7 +555,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							className="block md:col-span-2"
 							value={settings.horseTravelBoostId}
 							onChange={(horseTravelBoostId) => setSettings((current) => ({ ...current, horseTravelBoostId }))}
-							description="The exact Berimond HBW ID and speed are resolved from the current Faction Stable level. Travel feather remains HBW -1."
+							description={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.description.the.exact.berimond.hbw.id.and.speed.6618c35f")}
 						/>
 					</div>
 					{presetSummary ? (
@@ -602,8 +604,8 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 
 				<div className="space-y-3">
 					<SettingsToggleRow
-						title="Use troop transport time skips"
-						description="Apply the selected skip after a Berimond transfer, one command per confirmed response, until the troops arrive."
+						title={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.title.use.troop.transport.time.skips.54aebc99")}
+						description={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.description.apply.the.selected.skip.after.a.berimond.0e2de10a")}
 						icon={<FastForward className="h-4 w-4" />}
 						checked={settings.useTroopTransportTimeSkips}
 						onChange={(checked) => setSettings((current) => ({ ...current, useTroopTransportTimeSkips: checked }))}
@@ -638,7 +640,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 						min={0}
 						value={settings.beriCastleId || ''}
 						onChange={(event) => updateNumber('beriCastleId', event.target.value)}
-						placeholder="Auto-detect owned kingdom 10 camp"
+						placeholder={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.placeholder.auto.detect.owned.kingdom.10.camp.cabbe880")}
 					/>
 					<p className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.leave.blank.to.use.the.owned.berimond.31b2b0ae" /></p>
 				</div>
@@ -669,7 +671,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 				<div className="space-y-2">
 					<label className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.transfer.troop.2a96547d" /></label>
 					<div className="flex gap-2">
-						<Input readOnly value={settings.transferTroopId || ''} placeholder="Official unit ID" />
+						<Input readOnly value={settings.transferTroopId || ''} placeholder={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.placeholder.official.unit.id.60e3619e")} />
 						<Button variant="outline" leftIcon={<Users className="h-4 w-4" />} onClick={pickTroop}><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.pick.unit.8ff02f40" /></Button>
 					</div>
 					<p className="text-xs text-text-muted">
@@ -682,7 +684,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 						value={effectiveSourceID > 0 ? String(effectiveSourceID) : ''}
 						options={sourceOptions}
 						onChange={(value) => updateNumber('sourceCastleId', value)}
-						placeholder="Main castle"
+						placeholder={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.placeholder.main.castle.0e106dcc")}
 					/>
 				</div>
 

@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Shield, Users } from 'lucide-react';
@@ -36,6 +37,7 @@ interface RiftMaidenCommsPanelProps {
 }
 
 const RiftMaidenCommsPanel: React.FC<RiftMaidenCommsPanelProps> = ({ headerActions }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { state, configuration, connectionStatus, submitIntent, updateConfiguration } = useCitadelAPI();
   const { getTroop } = useMetadata();
   const { gameLoggedIn } = useAuth();
@@ -202,8 +204,8 @@ const RiftMaidenCommsPanel: React.FC<RiftMaidenCommsPanelProps> = ({ headerActio
 	}, [cancelling, maidenRun, submitIntent]);
 
   return (
-    <SectionCard variant="solid" title="Maiden comms wave" titleClassName="text-lg text-primary"
-      description="Starts an exact-count run of dummy 1-wave Rift attacks (11 per flank). Eligible commanders launch in rounds and automatically continue after they return until the requested number is confirmed."
+    <SectionCard variant="solid" title={localizeStatic("ui.rift.components.riftMaidenCommsPanel.title.maiden.comms.wave.b837a58e")} titleClassName="text-lg text-primary"
+      description={localizeStatic("ui.rift.components.riftMaidenCommsPanel.description.starts.an.exact.count.run.of.dummy.b844ea73")}
       descriptionClassName="" headerClassName="flex-wrap gap-3" actions={headerActions}
       contentClassName="flex flex-col gap-4">
         <div className="flex flex-col gap-2 min-w-0">
@@ -296,7 +298,7 @@ const RiftMaidenCommsPanel: React.FC<RiftMaidenCommsPanelProps> = ({ headerActio
 								setProbeGoal(Number.isFinite(value) ? Math.min(9999, Math.max(1, value)) : 1);
 							}}
 							className="w-20 bg-transparent text-right text-sm font-mono text-text-main outline-none disabled:opacity-60"
-							aria-label="Total Rift Maiden probes to launch"
+							aria-label={localizeStatic("ui.rift.components.riftMaidenCommsPanel.aria-label.total.rift.maiden.probes.to.launch.3c331a79")}
 						/>
 					</label>
 
@@ -307,7 +309,7 @@ const RiftMaidenCommsPanel: React.FC<RiftMaidenCommsPanelProps> = ({ headerActio
 							disabled={cancelling}
 							isLoading={cancelling}
 							onClick={handleCancel}
-							title="Stop after already-dispatched probes"
+							title={localizeStatic("ui.rift.components.riftMaidenCommsPanel.title.stop.after.already.dispatched.probes.ba393fe8")}
 						>
 							{cancelling ? 'Cancelling…' : 'Cancel run'}
 						</Button>

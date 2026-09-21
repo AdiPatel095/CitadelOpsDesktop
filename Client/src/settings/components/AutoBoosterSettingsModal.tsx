@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Clock3, Coins, ShieldCheck, Sparkles, Zap } from 'lucide-react';
@@ -37,6 +38,7 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
   onClose,
   onOpenFeatureSchedule,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { state, configuration } = useCitadelAPI();
   const [settings, setSettings] = useState<AutoBoosterClientStateV1>(defaultAutoBoosterClientState);
   const [isSaving, setIsSaving] = useState(false);
@@ -91,9 +93,9 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
       isOpen={isOpen}
       onClose={() => { if (!isSaving) onClose(); }}
       maxWidth="lg"
-      title="Auto Booster"
+      title={localizeStatic("ui.settings.components.autoBoosterSettingsModal.title.auto.booster.e2825136")}
       icon={<Zap className="h-5 w-5" />}
-      description="A standalone daily purchase lane for the premium global fortress-speed boost. It never controls or blocks Auto Fortress."
+      description={localizeStatic("ui.settings.components.autoBoosterSettingsModal.description.a.standalone.daily.purchase.lane.for.the.0a84e4a3")}
       titleTrailing={(
         <Button
           variant="outline"

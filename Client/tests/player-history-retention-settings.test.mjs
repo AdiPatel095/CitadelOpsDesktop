@@ -155,9 +155,9 @@ test('Settings route includes the My Stats storage control and required choices 
 
   assert.match(appSource, /settings:\s*lazy\(\(\) => import\('\.\/views\/SettingsView'\)\)/);
 	assert.match(settingsSource, /title=\{t\('settings.history'\)\}/);
-	assert.match(settingsSource, /ariaLabel="My Stats saved history window"/);
-	assert.match(settingsSource, /ariaLabel="My Stats recording frequency"/);
-	assert.match(settingsSource, /aria-label="Custom My Stats retention days"/);
+	assert.ok(Object.entries(sourceMessages).some(([key, text]) => text === 'My Stats saved history window' && settingsSource.includes(`ariaLabel={localizeStatic("${key}")}`)));
+	assert.ok(Object.entries(sourceMessages).some(([key, text]) => text === 'My Stats recording frequency' && settingsSource.includes(`ariaLabel={localizeStatic("${key}")}`)));
+	assert.ok(Object.entries(sourceMessages).some(([key, text]) => text === 'Custom My Stats retention days' && settingsSource.includes(`aria-label={localizeStatic("${key}")}`)));
 	assert.match(settingsSource, /projectedPlayerHistoryRecordings/);
 	assert.match(settingsSource, /playerHistoryRecordingsPerDay/);
 	assert.ok(Object.entries(sourceMessages).some(([key, text]) => text.includes('does not send additional game scan commands') && settingsSource.includes(`messageKey="${key}"`)), 'Translated settings disclosure remains wired: '+'does not send additional game scan commands');

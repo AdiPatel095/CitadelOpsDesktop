@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { Clock3, Search } from 'lucide-react';
@@ -61,6 +62,7 @@ export const AutoSceatRecipePickerModal: React.FC<AutoSceatRecipePickerModalProp
   onClose,
   onSelect,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const [search, setSearch] = useState('');
 
   useEffect(() => {
@@ -110,7 +112,7 @@ export const AutoSceatRecipePickerModal: React.FC<AutoSceatRecipePickerModalProp
         <Input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search output or type"
+          placeholder={localizeStatic("ui.settings.components.autoSceatRecipePickerModal.placeholder.search.output.or.type.f14eb97f")}
           leftIcon={<Search className="h-4 w-4" />}
         />
 

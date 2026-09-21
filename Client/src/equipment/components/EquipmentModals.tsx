@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowUpCircle, Gem, RefreshCw, Shield, Sparkles, Trash2, TriangleAlert } from 'lucide-react';
@@ -41,6 +42,7 @@ export function EquipmentSellModal({
 	onConfirm: (request: SaleRequest) => void;
 	busy: boolean;
 }) {
+  const { t: localizeStatic } = useStaticLocale();
 	const [relicTab, setRelicTab] = useState<RelicTab>('Non Relic');
 	const [sellLookItems, setSellLookItems] = useState(false);
 	const [sellPost2026, setSellPost2026] = useState(false);
@@ -73,7 +75,7 @@ export function EquipmentSellModal({
 		<Modal
 			isOpen={isOpen}
 			onClose={onClose}
-			title={<PillSelector ariaLabel="Equipment category" value={relicTab} onChange={(value) => setRelicTab(value as RelicTab)} options={['Non Relic', 'Relic 1.0', 'Relic 2.0']} size="header" fullWidth />}
+			title={<PillSelector ariaLabel={localizeStatic("ui.equipment.components.equipmentModals.ariaLabel.equipment.category.d378a1be")} value={relicTab} onChange={(value) => setRelicTab(value as RelicTab)} options={['Non Relic', 'Relic 1.0', 'Relic 2.0']} size="header" fullWidth />}
 			footer={(
 				<>
 					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="ui.equipment.components.equipmentModals.cancel.19766ed6" /></Button>
@@ -103,12 +105,12 @@ export function EquipmentSellModal({
 								<span className="block text-sm font-medium text-text-main"><LocalizedText messageKey="ui.equipment.components.equipmentModals.sell.post.2026.definitions.81a124f5" /></span>
 								<span className="block text-[11px] text-text-muted"><LocalizedText messageKey="ui.equipment.components.equipmentModals.includes.newly.introduced.catalog.ranges.835d450c" /></span>
 							</span>
-							<Switch checked={sellPost2026} onChange={setSellPost2026} ariaLabel="Sell post-2026 definitions" />
+							<Switch checked={sellPost2026} onChange={setSellPost2026} ariaLabel={localizeStatic("ui.equipment.components.equipmentModals.ariaLabel.sell.post.2026.definitions.81a124f5")} />
 						</label>
 						{itemType === 'Equipment' && (
 							<label className="flex cursor-pointer items-center justify-between rounded-global border border-border-base bg-bg-app/50 p-3">
 								<span className="text-sm font-medium text-text-main"><LocalizedText messageKey="ui.equipment.components.equipmentModals.sell.look.items.3837c1a3" /></span>
-								<Switch checked={sellLookItems} onChange={setSellLookItems} ariaLabel="Sell look items" />
+								<Switch checked={sellLookItems} onChange={setSellLookItems} ariaLabel={localizeStatic("ui.equipment.components.equipmentModals.ariaLabel.sell.look.items.3837c1a3")} />
 							</label>
 						)}
 					</div>
@@ -156,6 +158,7 @@ export function EquipmentSwapModal({
 	onConfirm: (otherLeaderID: number) => void;
 	busy: boolean;
 }) {
+  const { t: localizeStatic } = useStaticLocale();
 	const [otherID, setOtherID] = useState<number | null>(null);
 	useEffect(() => {
 		if (isOpen) setOtherID(null);
@@ -165,7 +168,7 @@ export function EquipmentSwapModal({
 		<Modal
 			isOpen={isOpen}
 			onClose={onClose}
-			title="Swap Base Equipment"
+			title={localizeStatic("ui.equipment.components.equipmentModals.title.swap.base.equipment.57096c41")}
 			maxWidth="2xl"
 			footer={(
 				<>
@@ -216,6 +219,7 @@ export function EquipmentEventModal({
 	onConfirm: (event: EquipmentEventKey, tier?: EquipmentEventTier) => void;
 	busy: boolean;
 }) {
+  const { t: localizeStatic } = useStaticLocale();
 	const [selectedEvent, setSelectedEvent] = useState<EquipmentEventKey | null>(null);
 	const [selectedTier, setSelectedTier] = useState<EquipmentEventTier | null>(null);
 	useEffect(() => {
@@ -238,7 +242,7 @@ export function EquipmentEventModal({
 		<Modal
 			isOpen={isOpen}
 			onClose={onClose}
-			title="Equip Event Set"
+			title={localizeStatic("ui.equipment.components.equipmentModals.title.equip.event.set.16c25631")}
 			maxWidth="2xl"
 			footer={(
 				<>

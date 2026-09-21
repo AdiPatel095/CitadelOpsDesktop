@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { LocalizedText } from "../i18n/LocalizedText";
 import { useState } from 'react';
 import type { AutomationStateV2 } from '../api/Contracts';
@@ -13,6 +14,7 @@ export function AutomationSafetyPanel({ states, now }: {
   states: Record<string, AutomationStateV2>;
   now: number;
 }) {
+  const { t: localizeStatic } = useStaticLocale();
   const { submitIntent, refreshState } = useCitadelAPI();
   const [reviews, setReviews] = useState<Record<string, string>>({});
   const [pending, setPending] = useState<string>();
@@ -44,7 +46,7 @@ export function AutomationSafetyPanel({ states, now }: {
   }
 
   return (
-    <section className="rounded-xl border border-amber-500/50 bg-amber-500/5 p-4" aria-label="Automation safety locks">
+    <section className="rounded-xl border border-amber-500/50 bg-amber-500/5 p-4" aria-label={localizeStatic("ui.components.automationSafetyPanel.aria-label.automation.safety.locks.ed105d06")}>
       <h2 className="font-semibold text-text-main"><LocalizedText messageKey="ui.components.automationSafetyPanel.automation.safety.locks.ed105d06" /></h2>
       <p className="mt-1 text-sm text-text-muted"><LocalizedText messageKey="ui.components.automationSafetyPanel.non.whitelisted.game.rejections.pause.only.their.56f5431b" /></p>
       {locked.map(([lane, state]) => {

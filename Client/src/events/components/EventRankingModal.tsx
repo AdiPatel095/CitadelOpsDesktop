@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useMemo } from 'react';
 import { RefreshCw, Trophy } from 'lucide-react';
@@ -25,6 +26,7 @@ const EventRankingModal: React.FC<EventRankingModalProps> = ({
 	onRefresh,
 	onClose,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
 	const entries = useMemo(() => [...(ranking?.entries ?? [])].sort((left, right) => left.rank - right.rank), [ranking?.entries]);
 	const loading = isRefreshing || ranking?.pending === true;
 
@@ -46,14 +48,14 @@ const EventRankingModal: React.FC<EventRankingModalProps> = ({
 		>
 			<div className="flex flex-col gap-4">
 				<div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-					<MetricTile label="Rows returned" value={entries.length} tone="brand" />
-					<MetricTile label="Alliances" value={ranking?.totalAlliances ?? 0} />
-					<MetricTile label="League ID" value={ranking?.leagueId ?? '—'} />
-					<MetricTile label="List type" value={ranking?.listType ?? '—'} />
-					<MetricTile label="First rank" value={formatOptionalNumber(ranking?.firstRank)} />
-					<MetricTile label="Search value" value={ranking?.searchValue || '—'} />
-					<MetricTile label="Global flag" value={ranking?.globalFlag ?? '—'} />
-					<MetricTile label="Refreshed" value={formatObservedAt(ranking?.observedAt)} monospace={false} />
+					<MetricTile label={localizeStatic("ui.events.components.eventRankingModal.label.rows.returned.cd6fbedd")} value={entries.length} tone="brand" />
+					<MetricTile label={localizeStatic("ui.events.components.eventRankingModal.label.alliances.29af085c")} value={ranking?.totalAlliances ?? 0} />
+					<MetricTile label={localizeStatic("ui.events.components.eventRankingModal.label.league.id.b267bb7a")} value={ranking?.leagueId ?? '—'} />
+					<MetricTile label={localizeStatic("ui.events.components.eventRankingModal.label.list.type.2e7efe94")} value={ranking?.listType ?? '—'} />
+					<MetricTile label={localizeStatic("ui.events.components.eventRankingModal.label.first.rank.058a2d7d")} value={formatOptionalNumber(ranking?.firstRank)} />
+					<MetricTile label={localizeStatic("ui.events.components.eventRankingModal.label.search.value.3dfeb184")} value={ranking?.searchValue || '—'} />
+					<MetricTile label={localizeStatic("ui.events.components.eventRankingModal.label.global.flag.d1c1da11")} value={ranking?.globalFlag ?? '—'} />
+					<MetricTile label={localizeStatic("ui.events.components.eventRankingModal.label.refreshed.62b59354")} value={formatObservedAt(ranking?.observedAt)} monospace={false} />
 				</div>
 
 				{error && (

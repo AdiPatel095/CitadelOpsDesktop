@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { Castle, Layers, Play, Save, Sparkles, Trash2 } from 'lucide-react';
@@ -24,6 +25,7 @@ interface DecorationPresetDocument {
 const EMPTY_PRESETS: NamedPreset[] = [];
 
 const DecorationPresetsPanel: React.FC = () => {
+  const { t: localizeStatic } = useStaticLocale();
   const { castle } = useCastleFocus();
   const { configuration, submitIntent, cancelOperation, updateConfiguration } = useCitadelAPI();
   const { decorations } = useMetadata();
@@ -215,7 +217,7 @@ const DecorationPresetsPanel: React.FC = () => {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleSave();
               }}
-              placeholder="Preset name"
+              placeholder={localizeStatic("ui.components.decorationPresetsPanel.placeholder.preset.name.e534a666")}
               className="flex-1"
             />
             <Button

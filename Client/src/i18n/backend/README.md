@@ -38,3 +38,11 @@ battaglia, pt Relatório de combate, nl Gevechtsverslag. These terms apply to ac
 game battle reports, not generic training payloads. Source evidence is the
 versioned official corpus used by the shared game-localization catalog.
 Dutch and Swedish use informal singular address with direct imperatives.
+Danish uses informal direct address. Official v4357 `battlelog` is Kamprapport;
+launch records use “start”, and tombstones use “slettemarkør” (deletion marker).
+Norwegian uses Bokmål with informal direct address; official v4357 `battlelog`
+is Kamprapport. Deletion markers are “slettemarkører”.
+Polish uses direct singular address. Official v4357 `battlelog` is Raport z bitwy.
+Variable maxima use neutral limit phrasing to avoid incorrect noun inflection;
+technical field names, strict positivity, non-negativity and byte limits remain
+unchanged in meaning.

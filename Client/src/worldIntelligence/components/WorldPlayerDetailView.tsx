@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -103,6 +104,7 @@ const historyRanges: Array<{ value: RangeKey; label: string; seconds: number | n
 ];
 
 const WorldPlayerDetailView = ({ profile, onOpenAlliance }: WorldPlayerDetailViewProps) => {
+  const { t: localizeStatic } = useStaticLocale();
 	const [selectedMetric, setSelectedMetric] = useState<PlayerMetricKey>('might');
 	const [selectedRange, setSelectedRange] = useState<RangeKey>('24h');
 	const [selectedWindow, setSelectedWindow] = useState<ChartTimeWindow | null>(null);
@@ -160,7 +162,7 @@ const WorldPlayerDetailView = ({ profile, onOpenAlliance }: WorldPlayerDetailVie
 	return (
 		<>
 			<PageHeader
-				eyebrow="World Intelligence player"
+				eyebrow={localizeStatic("ui.worldIntelligence.components.worldPlayerDetailView.eyebrow.world.intelligence.player.58ee9507")}
 				title={current.name}
 				description={`${progressionLabel(current)} · ${displayWorld(current.worldId)}`}
 				icon={<UserRound className="h-6 w-6" />}
@@ -193,7 +195,7 @@ const WorldPlayerDetailView = ({ profile, onOpenAlliance }: WorldPlayerDetailVie
 							</div>
 						</div>
 						<PillSelector
-							ariaLabel="Public player history range"
+							ariaLabel={localizeStatic("ui.worldIntelligence.components.worldPlayerDetailView.ariaLabel.public.player.history.range.1d68d519")}
 							value={selectedRange}
 							onChange={(value) => setSelectedRange(value as RangeKey)}
 							options={historyRanges.map((range) => ({ value: range.value, label: range.label }))}
@@ -204,7 +206,7 @@ const WorldPlayerDetailView = ({ profile, onOpenAlliance }: WorldPlayerDetailVie
 				<CardContent className="liquid-prominent-header-content p-5 sm:p-6">
 					<div className="mb-4 flex flex-wrap gap-2">
 						<PillSelector
-							ariaLabel="Public player metric"
+							ariaLabel={localizeStatic("ui.worldIntelligence.components.worldPlayerDetailView.ariaLabel.public.player.metric.eec2b7e0")}
 							value={selectedMetric}
 							onChange={(value) => { setSelectedMetric(value as PlayerMetricKey); setSelectedWindow(null); }}
 							options={playerMetrics.map((metric) => ({
@@ -218,11 +220,11 @@ const WorldPlayerDetailView = ({ profile, onOpenAlliance }: WorldPlayerDetailVie
 							<Select
 								value={selectedStormMetric?.key ?? ''}
 								onChange={(value) => { setSelectedMetric(value as PlayerMetricKey); setSelectedWindow(null); }}
-								placeholder="Storm metrics"
-								ariaLabel="More public player metrics"
+								placeholder={localizeStatic("ui.worldIntelligence.components.worldPlayerDetailView.placeholder.storm.metrics.061ae9e4")}
+								ariaLabel={localizeStatic("ui.worldIntelligence.components.worldPlayerDetailView.ariaLabel.more.public.player.metrics.ebfaf212")}
 								className="w-full sm:w-80"
 								searchable
-								searchPlaceholder="Filter Storm metrics"
+								searchPlaceholder={localizeStatic("ui.worldIntelligence.components.worldPlayerDetailView.searchPlaceholder.filter.storm.metrics.6c7ce145")}
 								menuGrowToViewport
 								options={stormMetrics.map((metric) => ({
 									value: metric.key,
@@ -254,7 +256,7 @@ const WorldPlayerDetailView = ({ profile, onOpenAlliance }: WorldPlayerDetailVie
 						range={selectedRange}
 						selectedWindow={selectedWindow}
 						onWindowSelect={setSelectedWindow}
-						emptyMessage="A trend appears after two public observations are available in this range."
+						emptyMessage={localizeStatic("ui.worldIntelligence.components.worldPlayerDetailView.emptyMessage.a.trend.appears.after.two.public.observations.18139be9")}
 					/>
 					<div className="mt-3 flex justify-between gap-3 text-xs text-text-muted">
 						<span>{displayedPoints[0] ? formatChartTime(displayedPoints[0].timestampUnix) : 'Waiting for history'}</span>

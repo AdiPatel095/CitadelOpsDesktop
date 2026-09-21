@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { Pencil, Play, SlidersHorizontal, Trash2, Users } from 'lucide-react';
@@ -133,6 +134,7 @@ function formatCoords(x: number | undefined, y: number | undefined): string {
 }
 
 const RiftAttackTemplate: React.FC = () => {
+  const { t: localizeStatic } = useStaticLocale();
   const { state, configuration, updateConfiguration } = useCitadelAPI();
   const { gameLoggedIn } = useAuth();
   const { castle } = useCastleFocus();
@@ -333,7 +335,7 @@ const RiftAttackTemplate: React.FC = () => {
     <>
       <SectionCard
         variant="solid"
-        title="Captured Rift attacks"
+        title={localizeStatic("ui.rift.components.riftAttackTemplate.title.captured.rift.attacks.8988972c")}
         titleClassName="text-lg text-primary"
         description={(
           <>
@@ -392,7 +394,7 @@ const RiftAttackTemplate: React.FC = () => {
         {launches.length === 0 ? (
           <EmptyState
             size="sm"
-            title="No replay templates have been captured yet."
+            title={localizeStatic("ui.rift.components.riftAttackTemplate.title.no.replay.templates.have.been.captured.yet.2678cbd0")}
             description={gameLoggedIn
                 ? 'Launch one castle attack on the Rift in-game. Citadel Ops will capture its commander, formation, and travel time here for reuse.'
                 : 'Connect to the game and launch one castle attack on the Rift to create your first replay template.'}
@@ -482,7 +484,7 @@ const RiftAttackTemplate: React.FC = () => {
                               onClick={() => startRename(entry)}
                               disabled={activeActionId != null}
                               className="shrink-0 p-1 rounded-md text-text-muted hover:text-primary hover:bg-bg-card-hover disabled:cursor-not-allowed disabled:opacity-40"
-                              title="Rename template"
+                              title={localizeStatic("ui.rift.components.riftAttackTemplate.title.rename.template.91f36a22")}
                               aria-label={`Rename ${label}`}
                             >
                               <Pencil className="w-3.5 h-3.5" />
@@ -492,7 +494,7 @@ const RiftAttackTemplate: React.FC = () => {
                               onClick={() => handleDelete(entry)}
                               disabled={activeActionId != null}
                               className="shrink-0 p-1 rounded-md text-text-muted hover:text-error hover:bg-error/10 disabled:cursor-not-allowed disabled:opacity-40"
-                              title="Delete template"
+                              title={localizeStatic("ui.rift.components.riftAttackTemplate.title.delete.template.da9a9b35")}
                               aria-label={`Delete ${label}`}
                             >
                               <Trash2 className="w-3.5 h-3.5" />

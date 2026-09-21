@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import React, { useCallback, useEffect, useState } from 'react';
 import StaleSessionBanner from '../components/StaleSessionBanner';
 import EventScoreCard from '../dashboard/components/EventScoreCard';
@@ -16,6 +17,7 @@ import AttackEconomyView, {
 type EventsAnalyticsView = 'events' | AttackEconomyFeatureID;
 
 const EventsView: React.FC = () => {
+  const { t: localizeStatic } = useStaticLocale();
   const { gameLoggedIn } = useAuth();
   const { state, submitIntent } = useCitadelAPI();
   const [now, setNow] = useState(() => Date.now());
@@ -83,7 +85,7 @@ const EventsView: React.FC = () => {
   return (
     <div className="flex flex-col gap-6">
       <PillSelector
-        ariaLabel="Feature stats view"
+        ariaLabel={localizeStatic("ui.views.eventsView.ariaLabel.feature.stats.view.aa56511d")}
         value={selectedAnalyticsView}
         onChange={(value) => setAnalyticsView(value as EventsAnalyticsView)}
         options={analyticsOptions}

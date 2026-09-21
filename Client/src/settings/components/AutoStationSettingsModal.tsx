@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useState } from 'react';
 import { Plus, Shield } from 'lucide-react';
@@ -36,6 +37,7 @@ function clampDays(value: number): number {
 }
 
 export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> = ({ isOpen, onClose }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { state: gameState, configuration } = useCitadelAPI();
   const castles = castleOptionsFromState(gameState);
   const [state, setState] = useState<AutoStationClientStateV1>(() => parseAutoStationClientState(null));
@@ -110,9 +112,9 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
       isOpen={isOpen}
       onClose={handleClose}
       maxWidth="full"
-      title="Auto Station Settings"
+      title={localizeStatic("ui.settings.components.autoStationSettingsModal.title.auto.station.settings.eb56c8a6")}
       icon={<Shield className="h-5 w-5" />}
-      description="Choose the exact troops that stay behind to defend. Every other troop currently in the threatened castle is temporarily stationed away."
+      description={localizeStatic("ui.settings.components.autoStationSettingsModal.description.choose.the.exact.troops.that.stay.behind.a5d0c68a")}
       onSave={save}
       saveLabel="Save changes"
       isSaving={isSaving}
@@ -156,12 +158,12 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
               />
             </label>
             <SettingsToggleRow
-              title="Recall when clear"
+              title={localizeStatic("ui.settings.components.autoStationSettingsModal.title.recall.when.clear.553ed7f0")}
               checked={state.recallWhenClear}
               onChange={(checked) => setState((previous) => ({ ...previous, recallWhenClear: checked }))}
             />
             <SettingsToggleRow
-              title="Open Gate Fallback"
+              title={localizeStatic("ui.settings.components.autoStationSettingsModal.title.open.gate.fallback.739eb349")}
               checked={state.openGateFallback}
               onChange={(checked) => setState((previous) => ({ ...previous, openGateFallback: checked }))}
             />
@@ -202,7 +204,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
                         />
                       ))}
                       <AddSlot
-                        label="Edit defense troops"
+                        label={localizeStatic("ui.settings.components.autoStationSettingsModal.label.edit.defense.troops.f3c64913")}
                         layout="icon"
                         onClick={() => selectReserve(castle)}
                         className="h-[76px] w-[76px]"

@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
@@ -82,6 +83,7 @@ const AttackEconomyView = ({
   showFeatureSelector = true,
   embedded = false,
 }: AttackEconomyViewProps) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { resources: resourceMetadata, currencies: currencyMetadata } = useMetadata();
   const [aggregates, setAggregates] = useState<AttackEconomyAggregate[]>([]);
   const [selectedRange, setSelectedRange] = useState<RangeKey>('30d');
@@ -225,7 +227,7 @@ const AttackEconomyView = ({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <PillSelector
-          ariaLabel="Attack economy range"
+          ariaLabel={localizeStatic("ui.attackAnalytics.components.attackEconomyView.ariaLabel.attack.economy.range.83a40ebf")}
           value={selectedRange}
           onChange={(value) => setSelectedRange(value as RangeKey)}
           options={ranges.map((range) => ({ value: range.key, label: range.label }))}
@@ -233,7 +235,7 @@ const AttackEconomyView = ({
         />
         {metricRows.length > 0 && (
           <PillSelector
-            ariaLabel="Reward earned"
+            ariaLabel={localizeStatic("ui.attackAnalytics.components.attackEconomyView.ariaLabel.reward.earned.788ae46b")}
             value={selectedMetricKey}
             onChange={selectMetric}
             options={metricRows.map(([key]) => {
@@ -253,7 +255,7 @@ const AttackEconomyView = ({
 
       {showFeatureSelector && (
         <PillSelector
-          ariaLabel="Attack feature"
+          ariaLabel={localizeStatic("ui.attackAnalytics.components.attackEconomyView.ariaLabel.attack.feature.4c9c1286")}
           value={selectedFeature}
           onChange={(value) => selectFeature(value as AttackEconomyFeatureID)}
           options={attackEconomyFeatureDefinitions.map((feature) => ({

@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import { LocalizedText } from "../i18n/LocalizedText";
 import { useLocale } from '../i18n/LocaleContext';
 import { readViewerLocale } from '../i18n/viewerLocaleStore';
@@ -146,6 +147,7 @@ type TCICatalogFilter = 'all' | 'selected' | 'short' | 'long';
 const SEVEN_DAYS_SECONDS = 7 * 86_400;
 
 const TCIPickerModal: React.FC<TCIPickerModalProps> = ({ isOpen, options, catalog, onClose }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const {
     mode,
     title,
@@ -326,13 +328,13 @@ const TCIPickerModal: React.FC<TCIPickerModalProps> = ({ isOpen, options, catalo
       resultLabel={visibleItemLabel}
       searchValue={searchQuery}
       onSearchChange={setSearchQuery}
-      searchPlaceholder="Search names, effects, durations, or CIDs…"
+      searchPlaceholder={localizeStatic("ui.components.tCIPickerModal.searchPlaceholder.search.names.effects.durations.or.cids.b60e76e6")}
       shellClassName="picker-shell-tci"
       toolbarClassName="tci-browser-toolbar"
       commandRowClassName="tci-browser-command-row"
       commandExtras={(
         <PillSelector
-          ariaLabel="Catalog filters"
+          ariaLabel={localizeStatic("ui.components.tCIPickerModal.ariaLabel.catalog.filters.10d44ee8")}
           value={catalogFilter}
           onChange={(value) => setCatalogFilter(value as TCICatalogFilter)}
           options={[
@@ -478,6 +480,7 @@ interface TCIBrowserCardProps {
 }
 
 const TCIBrowserCard: React.FC<TCIBrowserCardProps> = ({ item, isSelected, isActive, onActivate, onClick }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const effectLine = formatEffectUpgradeLine(item);
   return (
     <button
@@ -499,7 +502,7 @@ const TCIBrowserCard: React.FC<TCIBrowserCardProps> = ({ item, isSelected, isAct
         <div className="tci-browser-card-art">
           <TCIImage src={item.imageUrl} alt={item.buildingName || item.label} size={84} />
           {isSelected && (
-            <span className="tci-browser-selected-mark" aria-label="Selected">
+            <span className="tci-browser-selected-mark" aria-label={localizeStatic("ui.components.tCIPickerModal.aria-label.selected.57fd7a0c")}>
               <Check aria-hidden="true" />
             </span>
           )}
@@ -546,6 +549,7 @@ const TCIDetailPanel: React.FC<TCIDetailPanelProps> = ({
   onFloorStep,
   onCeilingStep,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
   if (!item) {
     return (
       <aside className="tci-detail-panel tci-detail-panel-empty">
@@ -596,7 +600,7 @@ const TCIDetailPanel: React.FC<TCIDetailPanelProps> = ({
           </div>
           <div className="tci-range-editor-controls">
             <TCILevelStepper
-              label="Min"
+              label={localizeStatic("ui.components.tCIPickerModal.label.min.dea79332")}
               value={range.floor}
               decrementDisabled={range.floor <= item.minLevel}
               incrementDisabled={range.floor >= range.ceiling}
@@ -604,7 +608,7 @@ const TCIDetailPanel: React.FC<TCIDetailPanelProps> = ({
               onIncrement={() => onFloorStep(1)}
             />
             <TCILevelStepper
-              label="Max"
+              label={localizeStatic("ui.components.tCIPickerModal.label.max.a1a5936d")}
               value={range.ceiling}
               decrementDisabled={range.ceiling <= range.floor}
               incrementDisabled={range.ceiling >= item.maxLevel}
@@ -640,7 +644,7 @@ const TCIDetailPanel: React.FC<TCIDetailPanelProps> = ({
                   </div>
                   <p>{tier.effects || 'Same visual design; no translated effect line available.'}</p>
                 </div>
-                {included && <Check className="tci-detail-tier-check" aria-label="Included in selected range" />}
+                {included && <Check className="tci-detail-tier-check" aria-label={localizeStatic("ui.components.tCIPickerModal.aria-label.included.in.selected.range.1b6f1688")} />}
               </article>
               {index < item.groupTiers.length - 1 && (
                 <ChevronDown className="tci-detail-chain-arrow" aria-hidden="true" />

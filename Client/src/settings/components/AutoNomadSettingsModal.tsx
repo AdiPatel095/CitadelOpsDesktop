@@ -1,3 +1,4 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { Castle, Clock3, Crosshair, Lock, RotateCcw, ShieldCheck, Swords, Target, TestTube2 } from 'lucide-react';
@@ -27,6 +28,7 @@ interface AutoNomadSettingsModalProps {
 }
 
 export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ isOpen, onClose }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { state, configuration, updateConfiguration } = useCitadelAPI();
   const [draft, setDraft] = useState<AutoNomadClientStateV5>(defaultAutoNomadClientState);
   const [saving, setSaving] = useState(false);
@@ -93,9 +95,9 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
       isOpen={isOpen}
       onClose={() => { if (!saving) onClose(); }}
       maxWidth="3xl"
-      title="Auto Nomad / Samurai"
+      title={localizeStatic("ui.settings.components.autoNomadSettingsModal.title.auto.nomad.samurai.13e95d24")}
       icon={<Crosshair className="h-5 w-5" />}
-      description="Four-camp leveling and locked-target attack chains"
+      description={localizeStatic("ui.settings.components.autoNomadSettingsModal.description.four.camp.leveling.and.locked.target.attack.2e4977f9")}
       onSave={() => void save()}
       isSaving={saving}
       saveDisabled={!canSave}
@@ -109,7 +111,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
                 value={draft.sourceCastleId > 0 ? String(draft.sourceCastleId) : ''}
                 onChange={(value) => setDraft((current) => ({ ...current, sourceCastleId: Number(value) || 0 }))}
                 options={castles.map((castle) => ({ value: String(castle.id), label: `${castle.name} · ${castle.x}:${castle.y}` }))}
-                placeholder="Choose a Great Empire castle"
+                placeholder={localizeStatic("ui.settings.components.autoNomadSettingsModal.placeholder.choose.a.great.empire.castle.8a81fec1")}
                 menuGrowToViewport
               />
             </label>
@@ -188,7 +190,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
                 value={nomadSelectionAvailable ? String(draft.nomadDifficultyId) : ''}
                 onChange={(value) => setDraft((current) => ({ ...current, nomadDifficultyId: Number(value) || 0 }))}
                 options={nomadDifficulties}
-                placeholder="Choose unlocked difficulty"
+                placeholder={localizeStatic("ui.settings.components.autoNomadSettingsModal.placeholder.choose.unlocked.difficulty.a1bf5994")}
                 menuGrowToViewport
               />
             </label>
@@ -201,7 +203,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
                 value={samuraiSelectionAvailable ? String(draft.samuraiDifficultyId) : ''}
                 onChange={(value) => setDraft((current) => ({ ...current, samuraiDifficultyId: Number(value) || 0 }))}
                 options={samuraiDifficulties}
-                placeholder="Choose unlocked difficulty"
+                placeholder={localizeStatic("ui.settings.components.autoNomadSettingsModal.placeholder.choose.unlocked.difficulty.a1bf5994")}
                 menuGrowToViewport
               />
             </label>
@@ -255,7 +257,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
             <Switch
               checked={draft.skipCooldowns}
               onChange={(skipCooldowns) => setDraft((current) => ({ ...current, skipCooldowns }))}
-              ariaLabel="Clear Auto Nomad and Samurai camp cooldowns with time skips"
+              ariaLabel={localizeStatic("ui.settings.components.autoNomadSettingsModal.ariaLabel.clear.auto.nomad.and.samurai.camp.cooldowns.0795c132")}
             />
           </div>
           {draft.skipCooldowns ? (
@@ -304,7 +306,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
                   runId: enabled ? (globalThis.crypto?.randomUUID?.() ?? `rbc-${Date.now()}`) : current.rbcTest.runId,
                 },
               }))}
-              ariaLabel="Run a resource-sized Auto Camp trial against an RBC"
+              ariaLabel={localizeStatic("ui.settings.components.autoNomadSettingsModal.ariaLabel.run.a.resource.sized.auto.camp.trial.07ab088e")}
             />
           </div>
           {draft.rbcTest.enabled ? (
