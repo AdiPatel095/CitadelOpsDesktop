@@ -75,7 +75,30 @@ func bootstrapLocale(request *http.Request) string {
 	if err != nil || len(tags) == 0 {
 		return "en"
 	}
-	_, index, confidence := bootstrapMatcher.Match(tags...)
+	// CLDR also matches related but unsupported languages (for example
+	// Afrikaans to Dutch). Only negotiate explicitly supported base families.
+	filtered := make([]language.Tag, 0, len(tags))
+	for _, tag := range tags {
+		base, certainty := tag.Base()
+		if certainty != language.Exact {
+			continue
+		}
+		code := base.String()
+		if code == "nb" {
+			code = "no"
+		}
+		for _, locale := range bootstrapLocales {
+			supported, _ := language.MustParse(locale.Code).Base()
+			if supported.String() == code {
+				filtered = append(filtered, tag)
+				break
+			}
+		}
+	}
+	if len(filtered) == 0 {
+		return "en"
+	}
+	_, index, confidence := bootstrapMatcher.Match(filtered...)
 	if confidence == language.No {
 		return "en"
 	}

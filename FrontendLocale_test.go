@@ -58,6 +58,12 @@ func TestMissingFrontendNegotiatesRequestLocale(t *testing.T) {
 		{"simplified script", "", "zh-Hans-SG", "zh-CN"},
 		{"Norwegian Bokmal", "", "nb-NO", "no"},
 		{"unsupported", "", "xx", "en"},
+		{"unsupported Belarusian", "", "be", "en"},
+		{"unsupported Afrikaans", "", "af", "en"},
+		{"skip unsupported preference", "", "af,fr;q=0.8", "fr"},
+		{"Macau script", "", "zh-MO", "zh-TW"},
+		{"traditional overrides region", "", "zh-Hant-CN", "zh-TW"},
+		{"simplified overrides region", "", "zh-Hans-TW", "zh-CN"},
 		{"malformed", "", "fr;q=broken", "en"},
 		{"oversized", "", strings.Repeat("fr,", 3000), "en"},
 	}
