@@ -1455,6 +1455,7 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 		}
 		if source.NomadCamps.RBCTest != nil {
 			rbcTest := *source.NomadCamps.RBCTest
+			rbcTest.SafetyErrorDescriptor = Localization.Clone(source.NomadCamps.RBCTest.SafetyErrorDescriptor)
 			rbcTest.Launches = append([]NomadRBCTestLaunch(nil), source.NomadCamps.RBCTest.Launches...)
 			clone.NomadCamps.RBCTest = &rbcTest
 		}
@@ -1468,6 +1469,8 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 		clone.Advisor.Summary.Costs = cloneMap(source.Advisor.Summary.Costs)
 	}
 	if components.Has(ComponentKhan) {
+		clone.Khan.SafetyErrorDescriptor = Localization.Clone(source.Khan.SafetyErrorDescriptor)
+		clone.Khan.Protection.ReasonDescriptor = Localization.Clone(source.Khan.Protection.ReasonDescriptor)
 		clone.Khan.Launches = append([]KhanLaunchState(nil), source.Khan.Launches...)
 		clone.Khan.Taunts = cloneMap(source.Khan.Taunts)
 		clone.Khan.ResolvedTaunts = append([]KhanTauntState(nil), source.Khan.ResolvedTaunts...)

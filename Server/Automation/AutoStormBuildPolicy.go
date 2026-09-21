@@ -50,7 +50,7 @@ func (*AutoStormBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Dec
 		return autoStormBuildWaiting(snapshot.Now, "Official game data is unavailable", nil, Localization.New("server.automation.official_game_data_is.c5e55e7e", "Official game data is unavailable", nil)), nil
 	}
 	if err := autoStormApplyActiveBlueprint(snapshot, &settings); err != nil {
-		return autoStormBuildWaiting(snapshot.Now, err.Error(), nil), nil
+		return autoStormBuildWaiting(snapshot.Now, err.Error(), nil, Localization.FromError(err)), nil
 	}
 	if settings.Target == nil && !settings.Harbor.Enabled {
 		return Decision{

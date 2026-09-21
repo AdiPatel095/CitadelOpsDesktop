@@ -48,7 +48,7 @@ func (*AutoStormShopPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Deci
 		return autoStormWaiting(snapshot.Now, "Official game data is unavailable", Localization.New("server.automation.official_game_data_is.c5e55e7e", "Official game data is unavailable", nil)), nil
 	}
 	if err := autoStormApplyActiveBlueprint(snapshot, &settings); err != nil {
-		return autoStormWaiting(snapshot.Now, err.Error()), nil
+		return autoStormWaiting(snapshot.Now, err.Error(), Localization.FromError(err)), nil
 	}
 	castle, found := autoStormCastle(snapshot.State, settings.Target)
 	if !found {

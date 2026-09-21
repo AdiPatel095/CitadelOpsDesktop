@@ -57,7 +57,7 @@ func planNomadRBCTestAttack(
 		return blockedPlan, nil
 	}
 	if current := input.State.NomadCamps.RBCTest; current != nil && current.RunID == request.RunID && current.SafetyError != "" {
-		return Intent.Plan{}, Localization.WithError(fmt.Errorf("RBC trial %s is blocked: %s", request.RunID, current.SafetyError), Localization.New("server.app.rbc_trial_p_is.64069c97", "RBC trial {p0} is blocked: {p1}", Localization.Params{"p0": fmt.Sprintf("%s", request.RunID), "p1": fmt.Sprintf("%s", current.SafetyError)}))
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("RBC trial %s is blocked: %s", request.RunID, current.SafetyError), Localization.Join(Localization.New("server.app.rbc_trial_blocked", "RBC trial {run} is blocked", Localization.Params{"run": request.RunID}), current.SafetyErrorDescriptor))
 	}
 	resolution, err := resolveCRACommanders(
 		input.State,
@@ -324,6 +324,7 @@ func (application *Application) captureNomadRBCTestLaunch(_ context.Context, arg
 		return err
 	}
 	var safetyError string
+	var safetyDescriptor *Localization.Message
 	_, err := application.State.ApplyComponents(State.Components(State.ComponentNomadCamps), func(gameState *State.GameState) ([]string, bool, error) {
 		test := gameState.NomadCamps.RBCTest
 		if test == nil || test.RunID != request.RunID {
@@ -369,7 +370,9 @@ func (application *Application) captureNomadRBCTestLaunch(_ context.Context, arg
 					launch.CommanderID, launch.ArrivesAt.Format(time.RFC3339Nano),
 					previous.CommanderID, previous.ArrivesAt.Format(time.RFC3339Nano),
 				)
+				safetyDescriptor = Localization.Bind(State.ArrivalOrderDescriptor(launch.CommanderID, launch.ArrivesAt, previous.CommanderID, previous.ArrivesAt), safetyError)
 				test.SafetyError = safetyError
+				test.SafetyErrorDescriptor = Localization.Clone(safetyDescriptor)
 			}
 		}
 		test.Launches = append(test.Launches, launch)
@@ -385,7 +388,7 @@ func (application *Application) captureNomadRBCTestLaunch(_ context.Context, arg
 		return err
 	}
 	if safetyError != "" {
-		return Localization.WithError(fmt.Errorf("unsafe RBC trial arrival order: %s", safetyError), Localization.New("server.app.unsafe_rbc_trial_arrival.9898ed75", "unsafe RBC trial arrival order: {p0}", Localization.Params{"p0": fmt.Sprintf("%s", safetyError)}))
+		return Localization.WithError(fmt.Errorf("unsafe RBC trial arrival order: %s", safetyError), Localization.Join(Localization.New("server.app.arrival_order.rbc_context", "unsafe RBC trial arrival order", nil), safetyDescriptor))
 	}
 	return nil
 }

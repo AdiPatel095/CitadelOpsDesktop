@@ -71,7 +71,7 @@ func (*BeriAttackPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisio
 	}
 	preset, err := beriAttackPreset(snapshot, settings)
 	if err != nil {
-		return beriAttackWaiting(snapshot.Now, err.Error(), settings.AttackCheckIntervalSec), nil
+		return beriAttackWaiting(snapshot.Now, err.Error(), settings.AttackCheckIntervalSec, Localization.FromError(err)), nil
 	}
 	metrics := map[string]float64{}
 	if _, blocked := dailyAttackLimitAllowance(snapshot, settings.DailyAttackLimit, interval, metrics); blocked != nil {
@@ -149,12 +149,12 @@ func (*BeriAttackPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisio
 		},
 	})
 	if err != nil {
-		return beriAttackWaiting(snapshot.Now, "Waiting for a complete Berimond tower target: "+err.Error(), settings.AttackCheckIntervalSec), nil
+		return beriAttackWaiting(snapshot.Now, "Waiting for a complete Berimond tower target: "+err.Error(), settings.AttackCheckIntervalSec, Localization.ErrorContext(Localization.New("server.automation.waiting_for_a_complete.47dce9fb", "Waiting for a complete Berimond tower target", nil), err)), nil
 	}
 	limitedPreset := AttackPresets.LimitToCapacity(preset, baselineCapacity)
 	if itemID, required, availableCount, shortage, err := invasionPresetShortage(limitedPreset, castle, snapshot.GameData); err != nil {
 		return beriAttackWaiting(
-			snapshot.Now, "Cannot resolve Berimond preset troop families: "+err.Error(), settings.AttackCheckIntervalSec,
+			snapshot.Now, "Cannot resolve Berimond preset troop families: "+err.Error(), settings.AttackCheckIntervalSec, Localization.ErrorContext(Localization.New("server.automation.cannot_resolve_berimond_preset.22eb5d2b", "Cannot resolve Berimond preset troop families", nil), err),
 		), nil
 	} else if shortage {
 		return Decision{
@@ -171,7 +171,7 @@ func (*BeriAttackPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisio
 	availableCopies, err := availablePresetCopies(limitedPreset, castle, snapshot.GameData, maximumCopies)
 	if err != nil {
 		return beriAttackWaiting(
-			snapshot.Now, "Cannot resolve Berimond preset troop families: "+err.Error(), settings.AttackCheckIntervalSec,
+			snapshot.Now, "Cannot resolve Berimond preset troop families: "+err.Error(), settings.AttackCheckIntervalSec, Localization.ErrorContext(Localization.New("server.automation.cannot_resolve_berimond_preset.22eb5d2b", "Cannot resolve Berimond preset troop families", nil), err),
 		), nil
 	}
 	if availableCopies <= unreflectedLaunches {

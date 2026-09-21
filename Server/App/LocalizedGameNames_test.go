@@ -90,3 +90,37 @@ func TestConstructionItemMissingKeyUsesExplicitIDTemplate(t *testing.T) {
 		}
 	}
 }
+
+func TestDefenseToolPriceDescriptorRequiresScopedOfficialIdentity(t *testing.T) {
+	store, err := GameData.DecodeStore([]byte(`{"versionInfo":[],"buildings":[],"units":[],"resources":[{"resourceID":1,"name":"currency1","JSONKey":"C1"}],"currencies":[{"currencyID":7,"Name":"Medals"}]}`), GameData.SourceMetadata{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	language, err := GameData.DecodeLanguage([]byte(`{"currency_name_currency1":"Coins","currency_name_Medals":"Medals"}`), GameData.LanguageMetadata{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	input := Intent.PlanningContext{GameData: store, Language: language}
+	for _, tc := range []struct {
+		scope string
+		id    int64
+		key   string
+	}{
+		{GameData.DefenseToolPricePlayerResource, 1, "currency_name_currency1"},
+		{GameData.DefenseToolPriceCastleResource, 1, "currency_name_currency1"},
+		{GameData.DefenseToolPriceCurrency, 7, "currency_name_Medals"},
+		{"unknown", 1, ""}, {GameData.DefenseToolPriceCurrency, 999, ""},
+	} {
+		message := Localization.New("test.price", "Balance: {price}", Localization.Params{"price": "legacy"})
+		result := defenseToolPriceDescriptor(message, input, "price", GameData.DefenseToolShopPackage{PriceScope: tc.scope, PriceID: tc.id, PriceName: "legacy"})
+		if tc.key == "" {
+			if result != nil {
+				t.Fatalf("unknown noun masked: %+v", result)
+			}
+			continue
+		}
+		if result == nil || result.GameParams["price"].Key != tc.key {
+			t.Fatalf("scope %s: %+v", tc.scope, result)
+		}
+	}
+}

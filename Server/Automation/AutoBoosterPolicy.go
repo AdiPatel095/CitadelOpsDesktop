@@ -55,7 +55,7 @@ func (*AutoBoosterPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 	}
 	contract, err := snapshot.GameData.FortressSpeed()
 	if err != nil {
-		return autoBoosterWaiting(snapshot.Now, settings.CheckIntervalSec, err.Error(), nil), nil
+		return autoBoosterWaiting(snapshot.Now, settings.CheckIntervalSec, err.Error(), nil, Localization.FromError(err)), nil
 	}
 	if contract.DailyGlobalEffectID != GameData.FortressDailyGlobalEffectID || contract.DailyBoostPercent <= 0 {
 		return autoBoosterWaiting(snapshot.Now, settings.CheckIntervalSec, "Official fortress-speed global effect changed; Auto Booster is paused", nil, Localization.New("server.automation.official_fortress_speed_global.60d2222b", "Official fortress-speed global effect changed; Auto Booster is paused", nil)), nil

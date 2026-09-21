@@ -463,7 +463,7 @@ func (coordinator *Coordinator) evaluate(
 				if err != nil {
 					current.nextCheck = now.Add(defaultRetry)
 					coordinator.recordDecision(policy.ID(), true, Decision{
-						Status: "blocked", Detail: "Could not rebuild settings-derived work: " + err.Error(),
+						Status: "blocked", Detail: "Could not rebuild settings-derived work: " + err.Error(), DetailDescriptor: Localization.ErrorContext(Localization.New("server.automation.could_not_rebuild_settings.aaa09f6b", "Could not rebuild settings-derived work", nil), err),
 						NextCheckAt: current.nextCheck,
 					})
 					continue
@@ -579,7 +579,7 @@ func (coordinator *Coordinator) evaluate(
 			resetContinuation(current)
 			current.nextCheck = now.Add(defaultRetry)
 			coordinator.recordDecision(policy.ID(), true, Decision{
-				Status: "blocked", Detail: err.Error(), NextCheckAt: current.nextCheck,
+				Status: "blocked", Detail: err.Error(), DetailDescriptor: Localization.FromError(err), NextCheckAt: current.nextCheck,
 			})
 			continue
 		}

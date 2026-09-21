@@ -1796,21 +1796,22 @@ type NomadRBCTestLaunch struct {
 }
 
 type NomadRBCTestState struct {
-	RunID                 string               `json:"runId"`
-	SourceCastleID        CastleID             `json:"sourceCastleId"`
-	KingdomID             KingdomID            `json:"kingdomId"`
-	TargetX               int                  `json:"targetX"`
-	TargetY               int                  `json:"targetY"`
-	ExpectedAttacks       int                  `json:"expectedAttacks"`
-	AttacksLaunched       int                  `json:"attacksLaunched"`
-	VictoriesConfirmed    int                  `json:"victoriesConfirmed"`
-	CooldownsSkipped      int                  `json:"cooldownsSkipped"`
-	Launches              []NomadRBCTestLaunch `json:"launches"`
-	LastReportID          int64                `json:"lastReportId,omitempty"`
-	SafetyError           string               `json:"safetyError,omitempty"`
-	StartedAt             time.Time            `json:"startedAt"`
-	LastChainLaunchedAt   time.Time            `json:"lastChainLaunchedAt,omitempty"`
-	LastCooldownSkippedAt time.Time            `json:"lastCooldownSkippedAt,omitempty"`
+	RunID                 string                `json:"runId"`
+	SourceCastleID        CastleID              `json:"sourceCastleId"`
+	KingdomID             KingdomID             `json:"kingdomId"`
+	TargetX               int                   `json:"targetX"`
+	TargetY               int                   `json:"targetY"`
+	ExpectedAttacks       int                   `json:"expectedAttacks"`
+	AttacksLaunched       int                   `json:"attacksLaunched"`
+	VictoriesConfirmed    int                   `json:"victoriesConfirmed"`
+	CooldownsSkipped      int                   `json:"cooldownsSkipped"`
+	Launches              []NomadRBCTestLaunch  `json:"launches"`
+	LastReportID          int64                 `json:"lastReportId,omitempty"`
+	SafetyError           string                `json:"safetyError,omitempty"`
+	SafetyErrorDescriptor *Localization.Message `json:"safetyErrorDescriptor,omitempty"`
+	StartedAt             time.Time             `json:"startedAt"`
+	LastChainLaunchedAt   time.Time             `json:"lastChainLaunchedAt,omitempty"`
+	LastCooldownSkippedAt time.Time             `json:"lastCooldownSkippedAt,omitempty"`
 }
 
 type NomadCampState struct {
@@ -1885,13 +1886,14 @@ type KhanTauntState struct {
 }
 
 type KhanProtectionState struct {
-	Active                 bool      `json:"active"`
-	CastleID               CastleID  `json:"castleId,omitempty"`
-	OffensiveWallUnits     int64     `json:"offensiveWallUnits,omitempty"`
-	OffensiveUnitThreshold int64     `json:"offensiveUnitThreshold,omitempty"`
-	TriggeredAt            time.Time `json:"triggeredAt,omitempty"`
-	GateOpenUntil          time.Time `json:"gateOpenUntil,omitempty"`
-	Reason                 string    `json:"reason,omitempty"`
+	Active                 bool                  `json:"active"`
+	CastleID               CastleID              `json:"castleId,omitempty"`
+	OffensiveWallUnits     int64                 `json:"offensiveWallUnits,omitempty"`
+	OffensiveUnitThreshold int64                 `json:"offensiveUnitThreshold,omitempty"`
+	TriggeredAt            time.Time             `json:"triggeredAt,omitempty"`
+	GateOpenUntil          time.Time             `json:"gateOpenUntil,omitempty"`
+	Reason                 string                `json:"reason,omitempty"`
+	ReasonDescriptor       *Localization.Message `json:"reasonDescriptor,omitempty"`
 }
 
 type KhanCooldownMSDState struct {
@@ -1949,6 +1951,7 @@ type KhanState struct {
 	LastCooldownSkippedAt         time.Time                         `json:"lastCooldownSkippedAt,omitempty"`
 	LastDefenseToolPurchaseAt     time.Time                         `json:"lastDefenseToolPurchaseAt,omitempty"`
 	SafetyError                   string                            `json:"safetyError,omitempty"`
+	SafetyErrorDescriptor         *Localization.Message             `json:"safetyErrorDescriptor,omitempty"`
 	Protection                    KhanProtectionState               `json:"protection"`
 	CooldownReports               map[int64]KhanCooldownReportState `json:"cooldownReports"`
 	CooldownReportVersion         int                               `json:"cooldownReportVersion"`
