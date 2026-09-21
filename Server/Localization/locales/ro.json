@@ -1,0 +1,15 @@
+{
+  "server.api.event_occurrence_id_is.3c0ae253": "Identificatorul ediției evenimentului este invalid",
+  "server.api.eventkey_is_invalid.5fa0f899": "eventKey este invalid",
+  "server.api.official_game_data_is.c5e55e7e": "Datele oficiale ale jocului nu sunt disponibile",
+  "server.api.official_language_data_is.803160d4": "Datele lingvistice oficiale nu sunt disponibile",
+  "server.api.ranking_metric_type_must.179bda7e": "Tipul indicatorului de clasament trebuie să fie players sau alliances",
+  "server.api.ranking_type_must_be.ae1d21f5": "Tipul clasamentului trebuie să fie players sau alliances",
+  "server.api.streaming_responses_are_unavailable.dbad8099": "Răspunsurile în flux nu sunt disponibile",
+  "server.api.type_must_be_player.6c2ff66b": "Valoarea type trebuie să fie player sau alliance",
+  "server.api.unsupported_locale": "Setare regională neacceptată: {locale}",
+  "server.app.cra_books_payload_must.7aa91e61": "Datele cărților CRA trebuie să fie un tablou gol",
+  "server.app.cra_support_tools_contain.6615c823": "Uneltele de sprijin CRA conțin un identificator de obiect invalid",
+  "server.app.cra_support_troop_count.2d16227f": "Numărul trupelor de sprijin CRA este în afara limitelor acceptate",
+  "server.automation.safety_pause_after_an.67451716": "Pauză de siguranță după eșecul unei acțiuni automatizate"
+}

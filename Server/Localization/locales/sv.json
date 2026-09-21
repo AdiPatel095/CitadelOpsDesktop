@@ -1,0 +1,15 @@
+{
+  "server.api.event_occurrence_id_is.3c0ae253": "ID:t för evenemangstillfället är ogiltigt",
+  "server.api.eventkey_is_invalid.5fa0f899": "eventKey är ogiltigt",
+  "server.api.official_game_data_is.c5e55e7e": "Officiella speldata är inte tillgängliga",
+  "server.api.official_language_data_is.803160d4": "Officiella språkdata är inte tillgängliga",
+  "server.api.ranking_metric_type_must.179bda7e": "Typen av rankningsmått måste vara players eller alliances",
+  "server.api.ranking_type_must_be.ae1d21f5": "Rankningstypen måste vara players eller alliances",
+  "server.api.streaming_responses_are_unavailable.dbad8099": "Strömmande svar är inte tillgängliga",
+  "server.api.type_must_be_player.6c2ff66b": "type måste vara player eller alliance",
+  "server.api.unsupported_locale": "Språkinställningen stöds inte: {locale}",
+  "server.app.cra_books_payload_must.7aa91e61": "CRA-bokdata måste vara en tom array",
+  "server.app.cra_support_tools_contain.6615c823": "CRA-stödverktygen innehåller ett ogiltigt föremåls-ID",
+  "server.app.cra_support_troop_count.2d16227f": "Antalet CRA-stödtrupper ligger utanför de gränser som stöds",
+  "server.automation.safety_pause_after_an.67451716": "Säkerhetspaus efter att en automatiserad åtgärd misslyckades"
+}

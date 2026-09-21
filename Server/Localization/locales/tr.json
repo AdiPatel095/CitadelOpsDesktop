@@ -1,0 +1,15 @@
+{
+  "server.api.event_occurrence_id_is.3c0ae253": "Etkinlik dönemi kimliği geçersiz",
+  "server.api.eventkey_is_invalid.5fa0f899": "eventKey geçersiz",
+  "server.api.official_game_data_is.c5e55e7e": "Resmî oyun verileri kullanılamıyor",
+  "server.api.official_language_data_is.803160d4": "Resmî dil verileri kullanılamıyor",
+  "server.api.ranking_metric_type_must.179bda7e": "Sıralama ölçütü türü players veya alliances olmalıdır",
+  "server.api.ranking_type_must_be.ae1d21f5": "Sıralama türü players veya alliances olmalıdır",
+  "server.api.streaming_responses_are_unavailable.dbad8099": "Akış yanıtları kullanılamıyor",
+  "server.api.type_must_be_player.6c2ff66b": "type değeri player veya alliance olmalıdır",
+  "server.api.unsupported_locale": "Desteklenmeyen yerel ayar: {locale}",
+  "server.app.cra_books_payload_must.7aa91e61": "CRA kitap verileri boş bir dizi olmalıdır",
+  "server.app.cra_support_tools_contain.6615c823": "CRA destek araçları geçersiz bir eşya kimliği içeriyor",
+  "server.app.cra_support_troop_count.2d16227f": "CRA destek birliği sayısı desteklenen sınırların dışında",
+  "server.automation.safety_pause_after_an.67451716": "Otomatik bir işlem başarısız olduktan sonra güvenlik duraklatması"
+}

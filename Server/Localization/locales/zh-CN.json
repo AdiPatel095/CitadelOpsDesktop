@@ -1,0 +1,15 @@
+{
+  "server.api.event_occurrence_id_is.3c0ae253": "活动轮次ID无效",
+  "server.api.eventkey_is_invalid.5fa0f899": "eventKey无效",
+  "server.api.official_game_data_is.c5e55e7e": "官方游戏数据不可用",
+  "server.api.official_language_data_is.803160d4": "官方语言数据不可用",
+  "server.api.ranking_metric_type_must.179bda7e": "排名指标类型必须为players或alliances",
+  "server.api.ranking_type_must_be.ae1d21f5": "排名类型必须为players或alliances",
+  "server.api.streaming_responses_are_unavailable.dbad8099": "流式响应不可用",
+  "server.api.type_must_be_player.6c2ff66b": "type必须为player或alliance",
+  "server.api.unsupported_locale": "不支持的语言区域设置：{locale}",
+  "server.app.cra_books_payload_must.7aa91e61": "CRA书籍数据必须为空数组",
+  "server.app.cra_support_tools_contain.6615c823": "CRA支援工具包含无效的物品ID",
+  "server.app.cra_support_troop_count.2d16227f": "CRA支援兵力数量超出支持范围",
+  "server.automation.safety_pause_after_an.67451716": "自动化操作失败后，已为安全起见暂停"
+}

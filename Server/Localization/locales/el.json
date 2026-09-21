@@ -1,0 +1,15 @@
+{
+  "server.api.event_occurrence_id_is.3c0ae253": "Το αναγνωριστικό εμφάνισης συμβάντος δεν είναι έγκυρο",
+  "server.api.eventkey_is_invalid.5fa0f899": "Το eventKey δεν είναι έγκυρο",
+  "server.api.official_game_data_is.c5e55e7e": "Τα επίσημα δεδομένα του παιχνιδιού δεν είναι διαθέσιμα",
+  "server.api.official_language_data_is.803160d4": "Τα επίσημα γλωσσικά δεδομένα δεν είναι διαθέσιμα",
+  "server.api.ranking_metric_type_must.179bda7e": "Ο τύπος μετρικής κατάταξης πρέπει να είναι players ή alliances",
+  "server.api.ranking_type_must_be.ae1d21f5": "Ο τύπος κατάταξης πρέπει να είναι players ή alliances",
+  "server.api.streaming_responses_are_unavailable.dbad8099": "Οι αποκρίσεις συνεχούς ροής δεν είναι διαθέσιμες",
+  "server.api.type_must_be_player.6c2ff66b": "Η τιμή type πρέπει να είναι player ή alliance",
+  "server.api.unsupported_locale": "Μη υποστηριζόμενη τοπική ρύθμιση: {locale}",
+  "server.app.cra_books_payload_must.7aa91e61": "Τα δεδομένα βιβλίων CRA πρέπει να είναι κενός πίνακας",
+  "server.app.cra_support_tools_contain.6615c823": "Τα εργαλεία υποστήριξης CRA περιέχουν μη έγκυρο αναγνωριστικό αντικειμένου",
+  "server.app.cra_support_troop_count.2d16227f": "Ο αριθμός στρατευμάτων υποστήριξης CRA είναι εκτός των υποστηριζόμενων ορίων",
+  "server.automation.safety_pause_after_an.67451716": "Παύση ασφαλείας μετά από αποτυχία αυτοματοποιημένης ενέργειας"
+}

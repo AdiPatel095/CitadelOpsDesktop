@@ -1,0 +1,15 @@
+{
+  "server.api.event_occurrence_id_is.3c0ae253": "ID výskytu udalosti je neplatné",
+  "server.api.eventkey_is_invalid.5fa0f899": "eventKey je neplatný",
+  "server.api.official_game_data_is.c5e55e7e": "Oficiálne herné údaje nie sú k dispozícii",
+  "server.api.official_language_data_is.803160d4": "Oficiálne jazykové údaje nie sú k dispozícii",
+  "server.api.ranking_metric_type_must.179bda7e": "Typ metriky rebríčka musí byť players alebo alliances",
+  "server.api.ranking_type_must_be.ae1d21f5": "Typ rebríčka musí byť players alebo alliances",
+  "server.api.streaming_responses_are_unavailable.dbad8099": "Streamované odpovede nie sú k dispozícii",
+  "server.api.type_must_be_player.6c2ff66b": "Hodnota type musí byť player alebo alliance",
+  "server.api.unsupported_locale": "Nepodporované miestne nastavenie: {locale}",
+  "server.app.cra_books_payload_must.7aa91e61": "Údaje kníh CRA musia byť prázdne pole",
+  "server.app.cra_support_tools_contain.6615c823": "Podporné nástroje CRA obsahujú neplatné ID predmetu",
+  "server.app.cra_support_troop_count.2d16227f": "Počet podporných jednotiek CRA je mimo podporovaných hraníc",
+  "server.automation.safety_pause_after_an.67451716": "Bezpečnostné pozastavenie po zlyhaní automatizovanej akcie"
+}

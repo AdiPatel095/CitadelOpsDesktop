@@ -1,0 +1,15 @@
+{
+  "server.api.event_occurrence_id_is.3c0ae253": "Hendelsesforekomstens id er ugyldig",
+  "server.api.eventkey_is_invalid.5fa0f899": "eventKey er ugyldig",
+  "server.api.official_game_data_is.c5e55e7e": "De offisielle spilldataene er utilgjengelige",
+  "server.api.official_language_data_is.803160d4": "De offisielle språkdataene er utilgjengelige",
+  "server.api.ranking_metric_type_must.179bda7e": "Typen rangeringsmåling må være players eller alliances",
+  "server.api.ranking_type_must_be.ae1d21f5": "Rangeringstypen må være players eller alliances",
+  "server.api.streaming_responses_are_unavailable.dbad8099": "Strømmede svar er utilgjengelige",
+  "server.api.type_must_be_player.6c2ff66b": "type må være player eller alliance",
+  "server.api.unsupported_locale": "Lokalitetsinnstillingen støttes ikke: {locale}",
+  "server.app.cra_books_payload_must.7aa91e61": "CRA-data for bøker må være en tom tabell",
+  "server.app.cra_support_tools_contain.6615c823": "CRA-støtteverktøy inneholder en ugyldig gjenstands-id",
+  "server.app.cra_support_troop_count.2d16227f": "Antallet CRA-støttetropper er utenfor de støttede grensene",
+  "server.automation.safety_pause_after_an.67451716": "Sikkerhetspause etter en mislykket automatisert handling"
+}

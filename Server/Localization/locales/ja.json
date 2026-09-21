@@ -1,0 +1,15 @@
+{
+  "server.api.event_occurrence_id_is.3c0ae253": "イベント開催回のIDが無効です",
+  "server.api.eventkey_is_invalid.5fa0f899": "eventKeyが無効です",
+  "server.api.official_game_data_is.c5e55e7e": "公式ゲームデータを利用できません",
+  "server.api.official_language_data_is.803160d4": "公式言語データを利用できません",
+  "server.api.ranking_metric_type_must.179bda7e": "ランキング指標の種類はplayersまたはalliancesである必要があります",
+  "server.api.ranking_type_must_be.ae1d21f5": "ランキングの種類はplayersまたはalliancesである必要があります",
+  "server.api.streaming_responses_are_unavailable.dbad8099": "ストリーミング応答を利用できません",
+  "server.api.type_must_be_player.6c2ff66b": "typeはplayerまたはallianceである必要があります",
+  "server.api.unsupported_locale": "未対応のロケールです：{locale}",
+  "server.app.cra_books_payload_must.7aa91e61": "CRAの書物データは空の配列である必要があります",
+  "server.app.cra_support_tools_contain.6615c823": "CRAの支援道具に無効なアイテムIDが含まれています",
+  "server.app.cra_support_troop_count.2d16227f": "CRAの支援兵数が対応範囲外です",
+  "server.automation.safety_pause_after_an.67451716": "自動化操作が失敗したため、安全のために一時停止しています"
+}
