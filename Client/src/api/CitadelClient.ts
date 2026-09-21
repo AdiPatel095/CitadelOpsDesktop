@@ -732,7 +732,7 @@ class CitadelClient {
         message,
         response.status,
         structuredError && typeof structuredError.code === 'string' ? structuredError.code : undefined,
-        responseMessageDescriptor(payload),
+        responseMessageDescriptor(payload) ?? ((structuredError && typeof structuredError.message === 'string') || receiptError ? undefined : {key:'api.httpError',fallback:'CitadelOps API returned HTTP {status}',params:{status:String(response.status)}}),
       );
     }
     return payload as T;

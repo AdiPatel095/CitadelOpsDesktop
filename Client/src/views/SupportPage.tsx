@@ -33,7 +33,7 @@ const SupportPage: React.FC = () => {
                 description={t('support.description')}
             />
 
-			<div lang="en"><IntentConsole /></div>
+			<IntentConsole />
 
             <div className="mt-8">
                 <Card variant="interactive" className="hover:border-primary/30 transition-all duration-300">

@@ -1,6 +1,6 @@
 # Desktop localization coverage ledger
 
-Status: partial foundation, not a translated release. Baseline: e77ed022c2f926ae3509527fdabf54dca9e22586. 49 custom shell/shared-control/settings/support messages plus 4 verified official game-key labels have model-authored translations in all 25 non-English catalogs. Human linguistic review is pending. This small authored set is not full interface coverage. The full visible-text conversion remains open.
+Status: partial foundation, not a translated release. Baseline: e77ed022c2f926ae3509527fdabf54dca9e22586. 69 custom shell/shared-control/settings/support/intent/daily-counter messages plus 4 verified official game-key labels have model-authored translations in all 25 non-English catalogs. Human linguistic review is pending. This small authored set is not full interface coverage. The full visible-text conversion remains open.
 
 ## Source inventory
 

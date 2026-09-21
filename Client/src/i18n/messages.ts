@@ -2,6 +2,28 @@ import { officialMessageKeys } from './officialKeys';
 import { formatMessage, validateMessageCatalog } from './formatMessage';
 /** Add explicit descriptors here; never translate user names, IDs, or free-form input. */
 export const messages = {
+  "dailyAttacks.label": "Daily attacks",
+  "dailyAttacks.observed": "The server’s account-wide normal-attack count is {count, number}. Last observed {observedAt, date, medium} at {observedAt, time, short}. Advisor attacks are exempt.",
+  "dailyAttacks.waiting": "Waiting for the server daily attack counter.",
+  "dailyAttacks.accessible": "Daily attacks: {count, number}",
+  "dailyAttacks.accessibleWaiting": "Daily attacks: waiting for server count",
+
+  'api.httpError': 'CitadelOps API returned HTTP {status}',
+  "intent.title": "Intent Console",
+  "intent.description": "Inspect or submit the same deterministic operations used by the UI and CLI.",
+  "intent.select": "Select an intent",
+  "intent.arguments": "Arguments JSON",
+  "intent.preview": "Preview plan",
+  "intent.submit": "Submit intent",
+  "intent.loadFailed": "Could not load intents.",
+  "intent.jsonObject": "Arguments must be a JSON object.",
+  "intent.jsonInvalid": "Arguments are not valid JSON.",
+  "intent.submitFailed": "Intent submission failed.",
+  "intent.effect.read": "Read",
+  "intent.effect.write": "Write",
+  "intent.effect.launch": "Launch",
+  "intent.effect.external": "External",
+
   "support.title": "Support & Community",
   "support.description": "Get help, report issues, or inspect deterministic 2.0 operations.",
   "support.discordTitle": "Join our Discord",
