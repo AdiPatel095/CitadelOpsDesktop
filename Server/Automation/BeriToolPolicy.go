@@ -104,7 +104,7 @@ func (*BeriToolPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 		if item.MinLevel > snapshot.State.Player.Level {
 			return beriToolWaiting(
 				snapshot.Now,
-				fmt.Sprintf("%s unlocks at level %d", item.Name, item.MinLevel), Localization.New("server.automation.p_unlocks_at_level.3596b4ec", "{p0} unlocks at level {p1, number}", Localization.Params{"p0": fmt.Sprintf("%s", item.Name), "p1": item.MinLevel}),
+				fmt.Sprintf("%s unlocks at level %d", item.Name, item.MinLevel), Localization.New("server.automation.p_unlocks_at_level.3596b4ec", "{p0} unlocks at level {p1, number}", Localization.Params{"p0": fmt.Sprintf("%s", item.Name), "p1": item.MinLevel}).WithGameParam("p0", snapshot.GameData.DefinitionNameKey(snapshot.Language, "units", item.ToolID), item.Name),
 			), nil
 		}
 		deficit := minimum - available
@@ -124,7 +124,7 @@ func (*BeriToolPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 				Detail: fmt.Sprintf(
 					"Waiting for %d coins to buy %d %s; %d coins available",
 					cost, purchases*item.ToolAmount, strings.ToLower(item.Name), coins,
-				), DetailDescriptor: Localization.New("server.automation.waiting_for_p_coins.ba3e6ce9", "Waiting for {p0} coins to buy {p1} {p2}; {p3} coins available", Localization.Params{"p0": cost, "p1": purchases * item.ToolAmount, "p2": fmt.Sprintf("%s", strings.ToLower(item.Name)), "p3": coins}),
+				), DetailDescriptor: Localization.New("server.automation.waiting_for_p_coins.ba3e6ce9", "Waiting for {p0} coins to buy {p1} {p2}; {p3} coins available", Localization.Params{"p0": cost, "p1": purchases * item.ToolAmount, "p2": fmt.Sprintf("%s", strings.ToLower(item.Name)), "p3": coins}).WithGameParam("p2", snapshot.GameData.DefinitionNameKey(snapshot.Language, "units", item.ToolID), strings.ToLower(item.Name)),
 				NextCheckAt: snapshot.Now.Add(beriToolCheckInterval), Metrics: metrics,
 			}, nil
 		}
@@ -137,7 +137,7 @@ func (*BeriToolPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 			Detail: fmt.Sprintf(
 				"Buy a batch of %d %s for %d coins; %d stocked, minimum %d",
 				purchases*item.ToolAmount, strings.ToLower(item.Name), cost, available, minimum,
-			), DetailDescriptor: Localization.New("server.automation.buy_a_batch_of.74d1d3f8", "Buy a batch of {p0} {p1} for {p2} coins; {p3} stocked, minimum {p4}", Localization.Params{"p0": purchases * item.ToolAmount, "p1": fmt.Sprintf("%s", strings.ToLower(item.Name)), "p2": cost, "p3": available, "p4": minimum}),
+			), DetailDescriptor: Localization.New("server.automation.buy_a_batch_of.74d1d3f8", "Buy a batch of {p0} {p1} for {p2} coins; {p3} stocked, minimum {p4}", Localization.Params{"p0": purchases * item.ToolAmount, "p1": fmt.Sprintf("%s", strings.ToLower(item.Name)), "p2": cost, "p3": available, "p4": minimum}).WithGameParam("p1", snapshot.GameData.DefinitionNameKey(snapshot.Language, "units", item.ToolID), strings.ToLower(item.Name)),
 			NextCheckAt: snapshot.Now.Add(beriToolCheckInterval), Metrics: metrics,
 			Request:             &Intent.Request{Name: "beri.tools.purchase", Arguments: arguments},
 			ReevaluateOnSuccess: true, ReevaluateOnStale: true,

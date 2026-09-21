@@ -410,6 +410,12 @@ func (coordinator *Coordinator) evaluate(
 	coordinator.cancelRunsDisallowedByConfiguration(runtime, configuration, now)
 	coordinator.cancelRunsForUnavailableSession(runtime, state)
 	var gameDataStore = coordinator.currentGameData()
+	var language *GameData.LanguageStore
+	if provider, ok := coordinator.gameData.(interface {
+		Language() (*GameData.LanguageStore, bool)
+	}); ok {
+		language, _ = provider.Language()
+	}
 	enabled := enabledFeatures(configuration, now)
 	sessionReady := automationSessionReady(state.Session)
 	for _, policy := range coordinator.policies {
@@ -557,7 +563,7 @@ func (coordinator *Coordinator) evaluate(
 		}
 		current.failureBlockedUntil = time.Time{}
 		snapshot := Snapshot{
-			State: state, Configuration: configuration, GameData: gameDataStore, Telemetry: coordinator.telemetry, Now: now,
+			State: state, Configuration: configuration, GameData: gameDataStore, Language: language, Telemetry: coordinator.telemetry, Now: now,
 			PolicyConfigurationChanged:   previouslyEvaluated && configurationChanged,
 			ConfigurationExternallyOwned: coordinator.externalConfigurationAuthority.Load(),
 		}

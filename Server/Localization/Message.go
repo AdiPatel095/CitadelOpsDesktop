@@ -177,3 +177,17 @@ func First(messages []*Message) *Message {
 	}
 	return Clone(messages[0])
 }
+
+// WithGameParam attaches an official noun identity without mutating the source
+// descriptor. Empty keys retain the original primitive fallback unchanged.
+func (message *Message) WithGameParam(parameter, officialKey, fallback string) *Message {
+	copy := Clone(message)
+	if copy == nil || parameter == "" || officialKey == "" {
+		return copy
+	}
+	if copy.GameParams == nil {
+		copy.GameParams = map[string]GameParam{}
+	}
+	copy.GameParams[parameter] = GameParam{Key: officialKey, Fallback: fallback}
+	return copy
+}

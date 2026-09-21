@@ -46,3 +46,14 @@ func TestDescriptorContextIsBoundedAndCloned(t *testing.T) {
 		t.Fatal("masked missing reason")
 	}
 }
+
+func TestGameNounParamPreservesUserContentAndSource(t *testing.T) {
+	original := New("send", "Send {unit} to {castle}", Params{"unit": "Veteran Crossbowman", "castle": "Castle {admin}"})
+	message := original.WithGameParam("unit", "elitecrossbowman_name", "Veteran Crossbowman")
+	if original.GameParams != nil || message.GameParams["unit"].Key != "elitecrossbowman_name" || message.Params["castle"] != "Castle {admin}" {
+		t.Fatal("noun metadata mutated user content or source")
+	}
+	if _, ok := message.GameParams["castle"]; ok {
+		t.Fatal("user name marked as game text")
+	}
+}

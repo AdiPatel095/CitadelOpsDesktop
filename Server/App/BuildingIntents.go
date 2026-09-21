@@ -347,12 +347,12 @@ func planBuildingPlacement(input Intent.PlanningContext, arguments json.RawMessa
 	name := "Construct building"
 	var nameLocalizationMessage *Localization.Message = Localization.New("server.app.construct_building.f1811844", "Construct building", nil)
 	summary := fmt.Sprintf("Construct %s in %s", definition.DisplayName, castleLabel(castle))
-	var summaryLocalizationMessage *Localization.Message = Localization.New("server.app.construct_p_in_p.817c6301", "Construct {p0} in {p1}", Localization.Params{"p0": fmt.Sprintf("%s", definition.DisplayName), "p1": fmt.Sprintf("%s", castleLabel(castle))})
+	var summaryLocalizationMessage *Localization.Message = Localization.New("server.app.construct_p_in_p.817c6301", "Construct {p0} in {p1}", Localization.Params{"p0": fmt.Sprintf("%s", definition.DisplayName), "p1": fmt.Sprintf("%s", castleLabel(castle))}).WithGameParam("p0", GameData.FirstOfficialNameKey(input.Language, definition.LocalizationKeys...), definition.DisplayName)
 	if kind == buildingMutationPlace {
 		name = "Place stored building"
 		nameLocalizationMessage = Localization.New("server.app.place_stored_building.29ca06c3", "Place stored building", nil)
 		summary = fmt.Sprintf("Place stored %s in %s", definition.DisplayName, castleLabel(castle))
-		summaryLocalizationMessage = Localization.New("server.app.place_stored_p_in.67a6cdc1", "Place stored {p0} in {p1}", Localization.Params{"p0": fmt.Sprintf("%s", definition.DisplayName), "p1": fmt.Sprintf("%s", castleLabel(castle))})
+		summaryLocalizationMessage = Localization.New("server.app.place_stored_p_in.67a6cdc1", "Place stored {p0} in {p1}", Localization.Params{"p0": fmt.Sprintf("%s", definition.DisplayName), "p1": fmt.Sprintf("%s", castleLabel(castle))}).WithGameParam("p0", GameData.FirstOfficialNameKey(input.Language, definition.LocalizationKeys...), definition.DisplayName)
 	}
 	steps := castleContextSteps(input, castle)
 	steps = append(steps, buildingResolverStep(name, "building.placement.build", resolverArguments, "ebu", Localization.Clone(nameLocalizationMessage)))
@@ -474,7 +474,7 @@ func planBuildingUpgrade(_ context.Context, input Intent.PlanningContext, argume
 	steps = append(steps, Intent.Step{Name: "Verify building upgrade", NameDescriptor: Localization.New("server.app.verify_building_upgrade.2ac80367", "Verify building upgrade", nil), Action: "building.verify", ActionArguments: verificationArguments})
 	return Intent.Plan{
 		Claims:  buildingInstanceClaims(castle.ID, request.BuildingInstanceID),
-		Summary: fmt.Sprintf("Upgrade building %d to %s in %s", request.BuildingInstanceID, target.DisplayName, castleLabel(castle)), SummaryDescriptor: Localization.New("server.app.upgrade_building_p_to.1662917f", "Upgrade building {p0} to {p1} in {p2}", Localization.Params{"p0": fmt.Sprintf("%d", request.BuildingInstanceID), "p1": fmt.Sprintf("%s", target.DisplayName), "p2": fmt.Sprintf("%s", castleLabel(castle))}),
+		Summary: fmt.Sprintf("Upgrade building %d to %s in %s", request.BuildingInstanceID, target.DisplayName, castleLabel(castle)), SummaryDescriptor: Localization.New("server.app.upgrade_building_p_to.1662917f", "Upgrade building {p0} to {p1} in {p2}", Localization.Params{"p0": fmt.Sprintf("%d", request.BuildingInstanceID), "p1": fmt.Sprintf("%s", target.DisplayName), "p2": fmt.Sprintf("%s", castleLabel(castle))}).WithGameParam("p1", GameData.FirstOfficialNameKey(input.Language, target.LocalizationKeys...), target.DisplayName),
 		Steps: steps,
 	}, nil
 }
@@ -814,7 +814,7 @@ func validatedBuildingExpansionGift(
 	if !strings.EqualFold(definition.InternalName, "TreasureChest") {
 		return State.CastleState{}, State.Building{}, GameData.BuildingDefinition{}, Localization.WithError(fmt.Errorf(
 			"building %d is %s, not an expansion treasure chest", request.BuildingInstanceID, definition.DisplayName,
-		), Localization.New("server.app.building_p_is_p.446ca746", "building {p0} is {p1}, not an expansion treasure chest", Localization.Params{"p0": fmt.Sprintf("%d", request.BuildingInstanceID), "p1": fmt.Sprintf("%s", definition.DisplayName)}))
+		), Localization.New("server.app.building_p_is_p.446ca746", "building {p0} is {p1}, not an expansion treasure chest", Localization.Params{"p0": fmt.Sprintf("%d", request.BuildingInstanceID), "p1": fmt.Sprintf("%s", definition.DisplayName)}).WithGameParam("p1", GameData.FirstOfficialNameKey(input.Language, definition.LocalizationKeys...), definition.DisplayName))
 	}
 	if requireFresh && (!building.Placed || building.Layer != State.BuildingLayerBD) {
 		return State.CastleState{}, State.Building{}, GameData.BuildingDefinition{}, Localization.WithError(fmt.Errorf(

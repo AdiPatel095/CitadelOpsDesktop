@@ -100,7 +100,7 @@ func planBeriToolPurchase(
 		Summary: fmt.Sprintf(
 			"Buy a batch of %d %s for %d coins toward the Berimond minimum %d",
 			request.Amount*item.ToolAmount, item.Name, request.Amount*item.CoinPrice, request.Minimum,
-		), SummaryDescriptor: Localization.New("server.app.buy_a_batch_of.8ecc9a26", "Buy a batch of {p0} {p1} for {p2} coins toward the Berimond minimum {p3}", Localization.Params{"p0": request.Amount * item.ToolAmount, "p1": fmt.Sprintf("%s", item.Name), "p2": request.Amount * item.CoinPrice, "p3": request.Minimum}),
+		), SummaryDescriptor: gameNameDescriptor(Localization.New("server.app.buy_a_batch_of.8ecc9a26", "Buy a batch of {p0} {p1} for {p2} coins toward the Berimond minimum {p3}", Localization.Params{"p0": request.Amount * item.ToolAmount, "p1": fmt.Sprintf("%s", item.Name), "p2": request.Amount * item.CoinPrice, "p3": request.Minimum}), input, "p1", "units", item.ToolID, item.Name),
 		Steps: steps,
 	}, nil
 }
@@ -138,7 +138,7 @@ func beriToolPurchaseContext(
 	}
 	if item.MinLevel > input.State.Player.Level {
 		return request, castle, item,
-			Localization.WithError(fmt.Errorf("%s requires player level %d", item.Name, item.MinLevel), Localization.New("server.app.p_requires_player_level.a958c0e9", "{p0} requires player level {p1}", Localization.Params{"p0": fmt.Sprintf("%s", item.Name), "p1": item.MinLevel}))
+			Localization.WithError(fmt.Errorf("%s requires player level %d", item.Name, item.MinLevel), gameNameDescriptor(Localization.New("server.app.p_requires_player_level.a958c0e9", "{p0} requires player level {p1}", Localization.Params{"p0": fmt.Sprintf("%s", item.Name), "p1": item.MinLevel}), input, "p0", "units", item.ToolID, item.Name))
 	}
 	available := castle.Units.Stationed[request.ToolID]
 	deficit := request.Minimum - available

@@ -262,7 +262,7 @@ func planMarketResourceShipment(ctx context.Context, input Intent.PlanningContex
 		return Intent.Plan{}, Localization.WithError(fmt.Errorf("resolve market horse travel boost: %w", err), Localization.ErrorContext(Localization.New("server.app.resolve_market_horse_travel.0d4c0b02", "resolve market horse travel boost", nil), err))
 	}
 	if source.Resources[request.ResourceID].Amount < float64(request.Amount) {
-		return Intent.Plan{}, Localization.WithError(fmt.Errorf("source castle %d has insufficient %s", source.ID, resourceName), Localization.New("server.app.source_castle_p_has.09417080", "source castle {p0} has insufficient {p1}", Localization.Params{"p0": fmt.Sprintf("%d", source.ID), "p1": fmt.Sprintf("%s", resourceName)}))
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("source castle %d has insufficient %s", source.ID, resourceName), gameNameDescriptor(Localization.New("server.app.source_castle_p_has.09417080", "source castle {p0} has insufficient {p1}", Localization.Params{"p0": fmt.Sprintf("%d", source.ID), "p1": fmt.Sprintf("%s", resourceName)}), input, "p1", "resources", int64(request.ResourceID), resourceName))
 	}
 	goods := []kingdomResourceShipmentGood{{ResourceID: request.ResourceID, Amount: request.Amount}}
 	if request.EnforceTargetCap {
@@ -309,7 +309,7 @@ func planMarketResourceShipment(ctx context.Context, input Intent.PlanningContex
 			"resource-transport", "castle:" + strconv.FormatInt(int64(source.ID), 10),
 			"castle:" + strconv.FormatInt(int64(target.ID), 10),
 		},
-		Summary: fmt.Sprintf("Ship %d %s from %s to %s", request.Amount, resourceName, castleLabel(source), castleLabel(target)), SummaryDescriptor: Localization.New("server.app.ship_p_p_from.7de39e09", "Ship {p0} {p1} from {p2} to {p3}", Localization.Params{"p0": request.Amount, "p1": fmt.Sprintf("%s", resourceName), "p2": fmt.Sprintf("%s", castleLabel(source)), "p3": fmt.Sprintf("%s", castleLabel(target))}),
+		Summary: fmt.Sprintf("Ship %d %s from %s to %s", request.Amount, resourceName, castleLabel(source), castleLabel(target)), SummaryDescriptor: gameNameDescriptor(Localization.New("server.app.ship_p_p_from.7de39e09", "Ship {p0} {p1} from {p2} to {p3}", Localization.Params{"p0": request.Amount, "p1": fmt.Sprintf("%s", resourceName), "p2": fmt.Sprintf("%s", castleLabel(source)), "p3": fmt.Sprintf("%s", castleLabel(target))}), input, "p1", "resources", int64(request.ResourceID), resourceName),
 		Steps: steps,
 	}, nil
 }
@@ -375,7 +375,7 @@ func planKingdomResourceShipment(ctx context.Context, input Intent.PlanningConte
 		}
 		resourceName := officialResourceDisplayName(input.GameData, good.ResourceID, resourceKey)
 		if source.Resources[good.ResourceID].Amount < float64(good.Amount) {
-			return Intent.Plan{}, Localization.WithError(fmt.Errorf("source castle %d has insufficient %s", source.ID, resourceName), Localization.New("server.app.source_castle_p_has.09417080", "source castle {p0} has insufficient {p1}", Localization.Params{"p0": fmt.Sprintf("%d", source.ID), "p1": fmt.Sprintf("%s", resourceName)}))
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("source castle %d has insufficient %s", source.ID, resourceName), gameNameDescriptor(Localization.New("server.app.source_castle_p_has.09417080", "source castle {p0} has insufficient {p1}", Localization.Params{"p0": fmt.Sprintf("%d", source.ID), "p1": fmt.Sprintf("%s", resourceName)}), input, "p1", "resources", int64(good.ResourceID), resourceName))
 		}
 		wireGoods = append(wireGoods, []any{resourceKey, good.Amount})
 		summaryGoods = append(summaryGoods, fmt.Sprintf("%d %s", good.Amount, resourceName))

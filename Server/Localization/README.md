@@ -47,3 +47,15 @@ custom/durable historical prose, and incomplete source context remain untranslat
 Game-derived nouns still passed as ordinary parameters require further producer
 provenance migration to `gameParams`; this contract alone does not translate them.
 The English catalog and descriptors do not mean non-English packs are complete.
+
+The official noun extension attaches verified keys at building, Berimond tool,
+production/healing unit, resource shipment, and Auto Buyer price/feast producers.
+Keys are selected from official item identities and source-defined candidates;
+rendered English labels are never used as lookup keys. Feast names follow the
+verified official `PremiumFestivalItemVO.nameTextID` expression:
+`"dialog_festival_" + type + "Event"`, including case-sensitive `bigLevel2` types.
+Automation snapshots carry the shared runtime language only to verify those keys;
+viewer preferences never change automation language or dispatch inputs.
+
+Compound custom nouns (overseer variants, bundle labels, level suffixes) still need
+structured custom composition. Missing official keys retain the exact fallback.

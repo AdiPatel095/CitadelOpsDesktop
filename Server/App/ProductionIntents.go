@@ -178,10 +178,10 @@ func planProductionEnqueue(_ context.Context, input Intent.PlanningContext, argu
 		steps = appendRecruitmentBUPAllianceHelpSteps(steps, helpArguments)
 	}
 	summary := fmt.Sprintf("Queue %d %s at %s", request.Amount, definitionLabel, castleLabel(castle))
-	var summaryLocalizationMessage *Localization.Message = Localization.New("server.app.queue_p_p_at.8430a9e8", "Queue {p0, number} {p1} at {p2}", Localization.Params{"p0": request.Amount, "p1": fmt.Sprintf("%s", definitionLabel), "p2": fmt.Sprintf("%s", castleLabel(castle))})
+	var summaryLocalizationMessage *Localization.Message = gameNameDescriptor(Localization.New("server.app.queue_p_p_at.8430a9e8", "Queue {p0, number} {p1} at {p2}", Localization.Params{"p0": request.Amount, "p1": fmt.Sprintf("%s", definitionLabel), "p2": fmt.Sprintf("%s", castleLabel(castle))}), input, "p1", collection, request.DefinitionID, definitionLabel)
 	if stackCount > 1 {
 		summary = fmt.Sprintf("Queue %d stacks of %d %s at %s", stackCount, request.Amount, definitionLabel, castleLabel(castle))
-		summaryLocalizationMessage = Localization.New("server.app.queue_p_stacks_of.3e5fa3c2", "Queue {p0, number} stacks of {p1, number} {p2} at {p3}", Localization.Params{"p0": stackCount, "p1": request.Amount, "p2": fmt.Sprintf("%s", definitionLabel), "p3": fmt.Sprintf("%s", castleLabel(castle))})
+		summaryLocalizationMessage = gameNameDescriptor(Localization.New("server.app.queue_p_stacks_of.3e5fa3c2", "Queue {p0, number} stacks of {p1, number} {p2} at {p3}", Localization.Params{"p0": stackCount, "p1": request.Amount, "p2": fmt.Sprintf("%s", definitionLabel), "p3": fmt.Sprintf("%s", castleLabel(castle))}), input, "p2", collection, request.DefinitionID, definitionLabel)
 	}
 	claims := []string{
 		"castle-focus", "castle:" + strconv.FormatInt(int64(castle.ID), 10),
@@ -427,7 +427,7 @@ func planHospitalOperation(input Intent.PlanningContext, arguments json.RawMessa
 	if !discard {
 		rubyCost, known := officialNumber(input.GameData, "units", int64(request.UnitID), "healingCostC2")
 		if known && rubyCost > 0 {
-			return Intent.Plan{}, Localization.WithError(fmt.Errorf("%s requires rubies to heal; use hospital.discard or heal it manually", unitLabel), Localization.New("server.app.p_requires_rubies_to.a543b4b7", "{p0} requires rubies to heal; use hospital.discard or heal it manually", Localization.Params{"p0": fmt.Sprintf("%s", unitLabel)}))
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("%s requires rubies to heal; use hospital.discard or heal it manually", unitLabel), gameNameDescriptor(Localization.New("server.app.p_requires_rubies_to.a543b4b7", "{p0} requires rubies to heal; use hospital.discard or heal it manually", Localization.Params{"p0": fmt.Sprintf("%s", unitLabel)}), input, "p0", "units", int64(request.UnitID), unitLabel))
 		}
 	}
 	payload, _ := json.Marshal(map[string]any{"U": request.UnitID, "A": request.Amount})
@@ -455,7 +455,7 @@ func planHospitalOperation(input Intent.PlanningContext, arguments json.RawMessa
 		Summary: fmt.Sprintf(
 			"%s: %d %s at %s",
 			label, request.Amount, unitLabel, castleLabel(castle),
-		), SummaryDescriptor: Localization.New("server.app.p_p_p_at.2403c8fc", "{p0}: {p1} {p2} at {p3}", Localization.Params{"p0": fmt.Sprintf("%s", label), "p1": request.Amount, "p2": fmt.Sprintf("%s", unitLabel), "p3": fmt.Sprintf("%s", castleLabel(castle))}),
+		), SummaryDescriptor: gameNameDescriptor(Localization.New("server.app.p_p_p_at.2403c8fc", "{p0}: {p1} {p2} at {p3}", Localization.Params{"p0": fmt.Sprintf("%s", label), "p1": request.Amount, "p2": fmt.Sprintf("%s", unitLabel), "p3": fmt.Sprintf("%s", castleLabel(castle))}), input, "p2", "units", int64(request.UnitID), unitLabel),
 		Steps: steps,
 	}, nil
 }

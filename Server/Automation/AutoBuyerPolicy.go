@@ -641,7 +641,7 @@ func evaluateAutoBuyerFeast(
 	}
 	decision := autoBuyerRequestDecision(snapshot.Now, metrics,
 		fmt.Sprintf("Start or extend %s for %d %s toward the %d-hour floor", feast.Name, effectiveCost, feast.Price.Name, settings.Feast.MinimumRemainingHours),
-		"autoBuyer.feast.purchase", arguments, Localization.New("server.automation.start_or_extend_feast", "Start or extend {feast} for {cost, number} {currency} toward the {hours, number}-hour floor", Localization.Params{"feast": feast.Name, "cost": effectiveCost, "currency": feast.Price.Name, "hours": settings.Feast.MinimumRemainingHours}))
+		"autoBuyer.feast.purchase", arguments, Localization.New("server.automation.start_or_extend_feast", "Start or extend {feast} for {cost, number} {currency} toward the {hours, number}-hour floor", Localization.Params{"feast": feast.Name, "cost": effectiveCost, "currency": feast.Price.Name, "hours": settings.Feast.MinimumRemainingHours}).WithGameParam("currency", snapshot.GameData.DefinitionNameKey(snapshot.Language, "resources", feast.Price.ResourceID), feast.Price.Name).WithGameParam("feast", GameData.FeastNameKey(snapshot.Language, feast), feast.Name))
 	decision.FailureFallback = &Intent.Request{
 		Name: "autoBuyer.feast.reconcile", Arguments: append(json.RawMessage(nil), decision.Request.Arguments...),
 	}

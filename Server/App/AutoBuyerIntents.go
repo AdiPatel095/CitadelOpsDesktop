@@ -257,7 +257,7 @@ func planAutoBuyerPackagePurchase(_ context.Context, input Intent.PlanningContex
 			"shop", "shop:table:" + strconv.FormatInt(product.TableID, 10), "shop:purchase-history", "account-resources",
 			"castle-focus", "castle:" + strconv.FormatInt(int64(source.ID), 10),
 		},
-		Summary: fmt.Sprintf("Buy %d x %s for %d %s", request.Amount, product.Name, request.Amount*product.Price.Amount, product.Price.Name), SummaryDescriptor: Localization.New("server.app.buy_p_x_p.cb2019f5", "Buy {p0} x {p1} for {p2} {p3}", Localization.Params{"p0": request.Amount, "p1": fmt.Sprintf("%s", product.Name), "p2": request.Amount * product.Price.Amount, "p3": fmt.Sprintf("%s", product.Price.Name)}),
+		Summary: fmt.Sprintf("Buy %d x %s for %d %s", request.Amount, product.Name, request.Amount*product.Price.Amount, product.Price.Name), SummaryDescriptor: priceNameDescriptor(Localization.New("server.app.buy_p_x_p.cb2019f5", "Buy {p0} x {p1} for {p2} {p3}", Localization.Params{"p0": request.Amount, "p1": fmt.Sprintf("%s", product.Name), "p2": request.Amount * product.Price.Amount, "p3": fmt.Sprintf("%s", product.Price.Name)}), input, "p3", product.Price),
 		Steps: steps,
 	}, nil
 }
@@ -353,7 +353,7 @@ func planAutoBuyerFeastPurchase(_ context.Context, input Intent.PlanningContext,
 	}
 	balance, available := autoBuyerIntentPriceBalance(input.State, source, feast.Price)
 	if !available {
-		return Intent.Plan{}, Localization.WithError(fmt.Errorf("%s balance is unavailable", feast.Price.Name), Localization.New("server.app.p_balance_is_unavailable.d3e1e9e0", "{p0} balance is unavailable", Localization.Params{"p0": fmt.Sprintf("%s", feast.Price.Name)}))
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("%s balance is unavailable", feast.Price.Name), priceNameDescriptor(Localization.New("server.app.p_balance_is_unavailable.d3e1e9e0", "{p0} balance is unavailable", Localization.Params{"p0": fmt.Sprintf("%s", feast.Price.Name)}), input, "p0", feast.Price))
 	}
 	request.ExpectedBalanceBefore = &balance
 	request.ExpectedEffectiveCost = &effectiveCost
@@ -379,7 +379,7 @@ func planAutoBuyerFeastPurchase(_ context.Context, input Intent.PlanningContext,
 		Claims: []string{
 			"shop", "market:boosters", "castle-focus", "castle-directory", "account-resources", "castle:" + strconv.FormatInt(int64(source.ID), 10),
 		},
-		Summary: fmt.Sprintf("Start or extend %s for %d %s", feast.Name, effectiveCost, feast.Price.Name), SummaryDescriptor: Localization.New("server.app.start_or_extend_p.0a6f2fe2", "Start or extend {p0} for {p1} {p2}", Localization.Params{"p0": fmt.Sprintf("%s", feast.Name), "p1": effectiveCost, "p2": fmt.Sprintf("%s", feast.Price.Name)}),
+		Summary: fmt.Sprintf("Start or extend %s for %d %s", feast.Name, effectiveCost, feast.Price.Name), SummaryDescriptor: priceNameDescriptor(Localization.New("server.app.start_or_extend_p.0a6f2fe2", "Start or extend {p0} for {p1} {p2}", Localization.Params{"p0": fmt.Sprintf("%s", feast.Name), "p1": effectiveCost, "p2": fmt.Sprintf("%s", feast.Price.Name)}).WithGameParam("p0", GameData.FeastNameKey(input.Language, feast), feast.Name), input, "p2", feast.Price),
 		Steps: []Intent.Step{
 			purchase,
 			Intent.RebuildOnResume(boosterRefreshAfter), Intent.RebuildOnResume(castleRefreshAfter),
@@ -534,7 +534,7 @@ func autoBuyerPackagePurchaseContext(
 		}
 		balance, available := autoBuyerIntentPriceBalance(input.State, source, product.Price)
 		if !available {
-			return request, source, product, Localization.WithError(fmt.Errorf("%s balance is unavailable", product.Price.Name), Localization.New("server.app.p_balance_is_unavailable.d3e1e9e0", "{p0} balance is unavailable", Localization.Params{"p0": fmt.Sprintf("%s", product.Price.Name)}))
+			return request, source, product, Localization.WithError(fmt.Errorf("%s balance is unavailable", product.Price.Name), priceNameDescriptor(Localization.New("server.app.p_balance_is_unavailable.d3e1e9e0", "{p0} balance is unavailable", Localization.Params{"p0": fmt.Sprintf("%s", product.Price.Name)}), input, "p0", product.Price))
 		}
 		reserve := request.MinimumBalanceReserve
 		if product.Price.Premium {
@@ -654,7 +654,7 @@ func autoBuyerFeastPurchaseContext(
 		return request, source, feast, Localization.WithError(fmt.Errorf("%w: a previous feast purchase is still awaiting reconciliation", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.dacdd249", "intent plan became stale before dispatch: a previous feast purchase is still awaiting reconciliation", nil))
 	}
 	if !autoBuyerIntentLevelEligible(input.State.Player, feast.MinLevel, feast.MaxLevel, 0, 0) {
-		return request, source, feast, Localization.WithError(fmt.Errorf("%s is not available at the current player level", feast.Name), Localization.New("server.app.p_is_not_available.f71c0398", "{p0} is not available at the current player level", Localization.Params{"p0": fmt.Sprintf("%s", feast.Name)}))
+		return request, source, feast, Localization.WithError(fmt.Errorf("%s is not available at the current player level", feast.Name), Localization.New("server.app.p_is_not_available.f71c0398", "{p0} is not available at the current player level", Localization.Params{"p0": fmt.Sprintf("%s", feast.Name)}).WithGameParam("p0", GameData.FeastNameKey(input.Language, feast), feast.Name))
 	}
 	if !input.State.Market.Feast.FreshAt(now, input.State.Session.ChangedAt, refreshAge) {
 		return request, source, feast, Localization.WithError(fmt.Errorf("%w: feast timer is stale", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.aa15d4ed", "intent plan became stale before dispatch: feast timer is stale", nil))
@@ -685,18 +685,18 @@ func autoBuyerFeastPurchaseContext(
 		return request, source, feast, Localization.WithError(fmt.Errorf("%w: feast %d is already active", Intent.ErrPlanStale, current.ID), Localization.New("server.app.intent_plan_became_stale.3c722c53", "intent plan became stale before dispatch: feast {p1} is already active", Localization.Params{"p1": fmt.Sprintf("%d", current.ID)}))
 	}
 	if autoBuyerIntentRemaining(current.ExpiresAt, now) > int64(request.MinimumRemainingHours)*60*60 {
-		return request, source, feast, Localization.WithError(fmt.Errorf("%w: %s already meets its configured floor", Intent.ErrPlanStale, feast.Name), Localization.New("server.app.intent_plan_became_stale.4e87347b", "intent plan became stale before dispatch: {p1} already meets its configured floor", Localization.Params{"p1": fmt.Sprintf("%s", feast.Name)}))
+		return request, source, feast, Localization.WithError(fmt.Errorf("%w: %s already meets its configured floor", Intent.ErrPlanStale, feast.Name), Localization.New("server.app.intent_plan_became_stale.4e87347b", "intent plan became stale before dispatch: {p1} already meets its configured floor", Localization.Params{"p1": fmt.Sprintf("%s", feast.Name)}).WithGameParam("p1", GameData.FeastNameKey(input.Language, feast), feast.Name))
 	}
 	balance, available := autoBuyerIntentPriceBalance(input.State, source, feast.Price)
 	if !available {
-		return request, source, feast, Localization.WithError(fmt.Errorf("%s balance is unavailable", feast.Price.Name), Localization.New("server.app.p_balance_is_unavailable.d3e1e9e0", "{p0} balance is unavailable", Localization.Params{"p0": fmt.Sprintf("%s", feast.Price.Name)}))
+		return request, source, feast, Localization.WithError(fmt.Errorf("%s balance is unavailable", feast.Price.Name), priceNameDescriptor(Localization.New("server.app.p_balance_is_unavailable.d3e1e9e0", "{p0} balance is unavailable", Localization.Params{"p0": fmt.Sprintf("%s", feast.Price.Name)}), input, "p0", feast.Price))
 	}
 	effectiveCost, costErr := autoBuyerIntentFeastCost(input.State, feast, request.HistoryRefreshSec, now)
 	if costErr != nil {
 		return request, source, feast, costErr
 	}
 	if feast.Price.Premium && request.ExpectedBalanceBefore != nil && balance != *request.ExpectedBalanceBefore {
-		return request, source, feast, Localization.WithError(fmt.Errorf("%w: %s balance changed before feast purchase", Intent.ErrPlanStale, feast.Price.Name), Localization.New("server.app.intent_plan_became_stale.cdd41135", "intent plan became stale before dispatch: {p1} balance changed before feast purchase", Localization.Params{"p1": fmt.Sprintf("%s", feast.Price.Name)}))
+		return request, source, feast, Localization.WithError(fmt.Errorf("%w: %s balance changed before feast purchase", Intent.ErrPlanStale, feast.Price.Name), priceNameDescriptor(Localization.New("server.app.intent_plan_became_stale.cdd41135", "intent plan became stale before dispatch: {p1} balance changed before feast purchase", Localization.Params{"p1": fmt.Sprintf("%s", feast.Price.Name)}), input, "p1", feast.Price))
 	}
 	if request.ExpectedEffectiveCost != nil && effectiveCost != *request.ExpectedEffectiveCost {
 		return request, source, feast, Localization.WithError(fmt.Errorf("%w: effective feast cost changed before purchase", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.7e017469", "intent plan became stale before dispatch: effective feast cost changed before purchase", nil))
@@ -705,11 +705,11 @@ func autoBuyerFeastPurchaseContext(
 	if feast.Price.Premium {
 		reserve = request.MinimumRubyReserve
 		if !request.AllowRubies || request.MaximumRubyCostPerPurchase < effectiveCost {
-			return request, source, feast, Localization.WithError(fmt.Errorf("%s is not permitted within the configured ruby ceiling", feast.Name), Localization.New("server.app.p_is_not_permitted.7694abce", "{p0} is not permitted within the configured ruby ceiling", Localization.Params{"p0": fmt.Sprintf("%s", feast.Name)}))
+			return request, source, feast, Localization.WithError(fmt.Errorf("%s is not permitted within the configured ruby ceiling", feast.Name), Localization.New("server.app.p_is_not_permitted.7694abce", "{p0} is not permitted within the configured ruby ceiling", Localization.Params{"p0": fmt.Sprintf("%s", feast.Name)}).WithGameParam("p0", GameData.FeastNameKey(input.Language, feast), feast.Name))
 		}
 	}
 	if balance-reserve < effectiveCost {
-		return request, source, feast, Localization.WithError(fmt.Errorf("%w: %s requires %d %s above reserve", Intent.ErrPlanStale, feast.Name, effectiveCost, feast.Price.Name), Localization.New("server.app.intent_plan_became_stale.d63d5ab9", "intent plan became stale before dispatch: {p1} requires {p2, number} {p3} above reserve", Localization.Params{"p1": fmt.Sprintf("%s", feast.Name), "p2": effectiveCost, "p3": fmt.Sprintf("%s", feast.Price.Name)}))
+		return request, source, feast, Localization.WithError(fmt.Errorf("%w: %s requires %d %s above reserve", Intent.ErrPlanStale, feast.Name, effectiveCost, feast.Price.Name), priceNameDescriptor(Localization.New("server.app.intent_plan_became_stale.d63d5ab9", "intent plan became stale before dispatch: {p1} requires {p2, number} {p3} above reserve", Localization.Params{"p1": fmt.Sprintf("%s", feast.Name), "p2": effectiveCost, "p3": fmt.Sprintf("%s", feast.Price.Name)}).WithGameParam("p1", GameData.FeastNameKey(input.Language, feast), feast.Name), input, "p3", feast.Price))
 	}
 	return request, source, feast, nil
 }
@@ -776,18 +776,18 @@ func (application *Application) verifyAutoBuyerPackagePurchase(_ context.Context
 	}
 	balance, available := autoBuyerIntentPriceBalance(input.State, source, product.Price)
 	if !available {
-		return Localization.WithError(fmt.Errorf("%s balance is unavailable after package purchase", product.Price.Name), Localization.New("server.app.p_balance_is_unavailable.67b5d066", "{p0} balance is unavailable after package purchase", Localization.Params{"p0": fmt.Sprintf("%s", product.Price.Name)}))
+		return Localization.WithError(fmt.Errorf("%s balance is unavailable after package purchase", product.Price.Name), priceNameDescriptor(Localization.New("server.app.p_balance_is_unavailable.67b5d066", "{p0} balance is unavailable after package purchase", Localization.Params{"p0": fmt.Sprintf("%s", product.Price.Name)}), input, "p0", product.Price))
 	}
 	reserve := request.MinimumBalanceReserve
 	if product.Price.Premium {
 		reserve = max(reserve, request.MinimumRubyReserve)
 	}
 	if balance < reserve {
-		return Localization.WithError(fmt.Errorf("package purchase left %d %s below configured reserve %d", balance, product.Price.Name, reserve), Localization.New("server.app.package_purchase_left_p.db4ef1ca", "package purchase left {p0} {p1} below configured reserve {p2}", Localization.Params{"p0": balance, "p1": fmt.Sprintf("%s", product.Price.Name), "p2": reserve}))
+		return Localization.WithError(fmt.Errorf("package purchase left %d %s below configured reserve %d", balance, product.Price.Name, reserve), priceNameDescriptor(Localization.New("server.app.package_purchase_left_p.db4ef1ca", "package purchase left {p0} {p1} below configured reserve {p2}", Localization.Params{"p0": balance, "p1": fmt.Sprintf("%s", product.Price.Name), "p2": reserve}), input, "p1", product.Price))
 	}
 	maximumCost := request.Amount * product.Price.Amount
 	if request.ExpectedBalanceBefore > balance && request.ExpectedBalanceBefore-balance > maximumCost {
-		return Localization.WithError(fmt.Errorf("package purchase consumed more %s than the official guarded cost", product.Price.Name), Localization.New("server.app.package_purchase_consumed_more.017dfcd8", "package purchase consumed more {p0} than the official guarded cost", Localization.Params{"p0": fmt.Sprintf("%s", product.Price.Name)}))
+		return Localization.WithError(fmt.Errorf("package purchase consumed more %s than the official guarded cost", product.Price.Name), priceNameDescriptor(Localization.New("server.app.package_purchase_consumed_more.017dfcd8", "package purchase consumed more {p0} than the official guarded cost", Localization.Params{"p0": fmt.Sprintf("%s", product.Price.Name)}), input, "p0", product.Price))
 	}
 	return nil
 }
@@ -1422,11 +1422,11 @@ func verifyAutoBuyerFeastPurchaseContext(
 	current := input.State.Market.Feast
 	refreshAge := time.Duration(request.HistoryRefreshSec) * time.Second
 	if !current.FreshAt(now, input.State.Session.ChangedAt, refreshAge) {
-		return Localization.WithError(fmt.Errorf("%s purchase was not confirmed by a current feast snapshot", feast.Name), Localization.New("server.app.p_purchase_was_not.5e1e6c38", "{p0} purchase was not confirmed by a current feast snapshot", Localization.Params{"p0": fmt.Sprintf("%s", feast.Name)}))
+		return Localization.WithError(fmt.Errorf("%s purchase was not confirmed by a current feast snapshot", feast.Name), Localization.New("server.app.p_purchase_was_not.5e1e6c38", "{p0} purchase was not confirmed by a current feast snapshot", Localization.Params{"p0": fmt.Sprintf("%s", feast.Name)}).WithGameParam("p0", GameData.FeastNameKey(input.Language, feast), feast.Name))
 	}
 	if input.State.Market.FeastLastPurchaseAt.Before(request.FeastRefreshAfter) ||
 		!current.ObservedAt.After(input.State.Market.FeastLastPurchaseAt) {
-		return Localization.WithError(fmt.Errorf("%s purchase was not confirmed by a committed direct feast response", feast.Name), Localization.New("server.app.p_purchase_was_not.3a40c6fd", "{p0} purchase was not confirmed by a committed direct feast response", Localization.Params{"p0": fmt.Sprintf("%s", feast.Name)}))
+		return Localization.WithError(fmt.Errorf("%s purchase was not confirmed by a committed direct feast response", feast.Name), Localization.New("server.app.p_purchase_was_not.3a40c6fd", "{p0} purchase was not confirmed by a committed direct feast response", Localization.Params{"p0": fmt.Sprintf("%s", feast.Name)}).WithGameParam("p0", GameData.FeastNameKey(input.Language, feast), feast.Name))
 	}
 	baseline := input.State.Market.FeastLastPurchaseAt
 	expectedExpiry := request.ExpectedExpiresAt
@@ -1437,13 +1437,13 @@ func verifyAutoBuyerFeastPurchaseContext(
 		baseline = expectedExpiry
 	}
 	if current.ID != feast.ID || !State.FeastTimerProgressed(baseline, current.ExpiresAt) {
-		return Localization.WithError(fmt.Errorf("%s purchase was not confirmed by an increased refreshed feast timer", feast.Name), Localization.New("server.app.p_purchase_was_not.5e8c1af2", "{p0} purchase was not confirmed by an increased refreshed feast timer", Localization.Params{"p0": fmt.Sprintf("%s", feast.Name)}))
+		return Localization.WithError(fmt.Errorf("%s purchase was not confirmed by an increased refreshed feast timer", feast.Name), Localization.New("server.app.p_purchase_was_not.5e8c1af2", "{p0} purchase was not confirmed by an increased refreshed feast timer", Localization.Params{"p0": fmt.Sprintf("%s", feast.Name)}).WithGameParam("p0", GameData.FeastNameKey(input.Language, feast), feast.Name))
 	}
 	evidence := input.State.Market.LatestFeastPurchase
 	if evidence.FeastID != request.FeastID || evidence.ChargedCastleID != request.SourceCastleID ||
 		evidence.ChargedKingdomID != request.ExpectedSourceKingdomID || evidence.Outcome != "confirmed" ||
 		!evidence.ActivationConfirmed || evidence.ActivationConfirmedAt.Before(input.State.Market.FeastLastPurchaseAt) {
-		return Localization.WithError(fmt.Errorf("%s purchase is missing correlated charged-source activation evidence", feast.Name), Localization.New("server.app.p_purchase_is_missing.707db9c8", "{p0} purchase is missing correlated charged-source activation evidence", Localization.Params{"p0": fmt.Sprintf("%s", feast.Name)}))
+		return Localization.WithError(fmt.Errorf("%s purchase is missing correlated charged-source activation evidence", feast.Name), Localization.New("server.app.p_purchase_is_missing.707db9c8", "{p0} purchase is missing correlated charged-source activation evidence", Localization.Params{"p0": fmt.Sprintf("%s", feast.Name)}).WithGameParam("p0", GameData.FeastNameKey(input.Language, feast), feast.Name))
 	}
 	source, sourceErr := autoBuyerIntentOwnedFeastCastle(input.State, request.SourceCastleID, request.ExpectedSourceKingdomID)
 	if sourceErr != nil {
@@ -1452,13 +1452,13 @@ func verifyAutoBuyerFeastPurchaseContext(
 	if !feast.Price.Premium &&
 		(source.FoodBalanceObservedAt.Before(input.State.Market.FeastLastPurchaseAt) ||
 			!autoBuyerIntentObservationFresh(source.FoodBalanceObservedAt, now, input.State.Session.ChangedAt, refreshAge)) {
-		return Localization.WithError(fmt.Errorf("%s purchase balance was not confirmed by a post-purchase castle refresh", feast.Name), Localization.New("server.app.p_purchase_balance_was.2fe48b25", "{p0} purchase balance was not confirmed by a post-purchase castle refresh", Localization.Params{"p0": fmt.Sprintf("%s", feast.Name)}))
+		return Localization.WithError(fmt.Errorf("%s purchase balance was not confirmed by a post-purchase castle refresh", feast.Name), Localization.New("server.app.p_purchase_balance_was.2fe48b25", "{p0} purchase balance was not confirmed by a post-purchase castle refresh", Localization.Params{"p0": fmt.Sprintf("%s", feast.Name)}).WithGameParam("p0", GameData.FeastNameKey(input.Language, feast), feast.Name))
 	}
 	balance, available := autoBuyerIntentPriceBalance(input.State, source, feast.Price)
 	if !available {
-		return Localization.WithError(fmt.Errorf("%s balance is unavailable after feast purchase", feast.Price.Name), Localization.New("server.app.p_balance_is_unavailable.972f2782", "{p0} balance is unavailable after feast purchase", Localization.Params{"p0": fmt.Sprintf("%s", feast.Price.Name)}))
+		return Localization.WithError(fmt.Errorf("%s balance is unavailable after feast purchase", feast.Price.Name), priceNameDescriptor(Localization.New("server.app.p_balance_is_unavailable.972f2782", "{p0} balance is unavailable after feast purchase", Localization.Params{"p0": fmt.Sprintf("%s", feast.Price.Name)}), input, "p0", feast.Price))
 	}
-	return verifyAutoBuyerFeastBalance(request, feast, balance)
+	return verifyAutoBuyerFeastBalance(request, feast, balance, input)
 }
 
 func (application *Application) recordAutoBuyerFeastPostPurchase(ctx context.Context, arguments json.RawMessage) error {
@@ -1514,7 +1514,12 @@ func verifyAutoBuyerFeastBalance(
 	request autoBuyerFeastPurchaseRequest,
 	feast GameData.AutoBuyerFeast,
 	balance int64,
+	contexts ...Intent.PlanningContext,
 ) error {
+	var input Intent.PlanningContext
+	if len(contexts) > 0 {
+		input = contexts[0]
+	}
 	if request.ExpectedBalanceBefore == nil || request.ExpectedEffectiveCost == nil {
 		return Localization.WithError(fmt.Errorf("feast verification is missing its guarded balance or cost"), Localization.New("server.app.feast_verification_is_missing.1a6f8f2b", "feast verification is missing its guarded balance or cost", nil))
 	}
@@ -1523,7 +1528,7 @@ func verifyAutoBuyerFeastBalance(
 		// dispatch-time guard against the immediately preceding DCL snapshot;
 		// exact post-purchase debit comparisons would reject valid purchases.
 		if balance < request.MinimumFoodReserve {
-			return Localization.WithError(fmt.Errorf("%s purchase left %s below the configured reserve", feast.Name, feast.Price.Name), Localization.New("server.app.p_purchase_left_p.4c06602e", "{p0} purchase left {p1} below the configured reserve", Localization.Params{"p0": fmt.Sprintf("%s", feast.Name), "p1": fmt.Sprintf("%s", feast.Price.Name)}))
+			return Localization.WithError(fmt.Errorf("%s purchase left %s below the configured reserve", feast.Name, feast.Price.Name), priceNameDescriptor(Localization.New("server.app.p_purchase_left_p.4c06602e", "{p0} purchase left {p1} below the configured reserve", Localization.Params{"p0": fmt.Sprintf("%s", feast.Name), "p1": fmt.Sprintf("%s", feast.Price.Name)}).WithGameParam("p0", GameData.FeastNameKey(input.Language, feast), feast.Name), input, "p1", feast.Price))
 		}
 		return nil
 	}
@@ -1531,19 +1536,19 @@ func verifyAutoBuyerFeastBalance(
 	if feast.Price.Premium {
 		reserve = request.MinimumRubyReserve
 		if !request.AllowRubies || *request.ExpectedEffectiveCost > request.MaximumRubyCostPerPurchase {
-			return Localization.WithError(fmt.Errorf("%s purchase exceeded the configured ruby ceiling", feast.Name), Localization.New("server.app.p_purchase_exceeded_the.8c4b43e4", "{p0} purchase exceeded the configured ruby ceiling", Localization.Params{"p0": fmt.Sprintf("%s", feast.Name)}))
+			return Localization.WithError(fmt.Errorf("%s purchase exceeded the configured ruby ceiling", feast.Name), Localization.New("server.app.p_purchase_exceeded_the.8c4b43e4", "{p0} purchase exceeded the configured ruby ceiling", Localization.Params{"p0": fmt.Sprintf("%s", feast.Name)}).WithGameParam("p0", GameData.FeastNameKey(input.Language, feast), feast.Name))
 		}
 	}
 	if balance < reserve {
-		return Localization.WithError(fmt.Errorf("%s purchase left %s below the configured reserve", feast.Name, feast.Price.Name), Localization.New("server.app.p_purchase_left_p.4c06602e", "{p0} purchase left {p1} below the configured reserve", Localization.Params{"p0": fmt.Sprintf("%s", feast.Name), "p1": fmt.Sprintf("%s", feast.Price.Name)}))
+		return Localization.WithError(fmt.Errorf("%s purchase left %s below the configured reserve", feast.Name, feast.Price.Name), priceNameDescriptor(Localization.New("server.app.p_purchase_left_p.4c06602e", "{p0} purchase left {p1} below the configured reserve", Localization.Params{"p0": fmt.Sprintf("%s", feast.Name), "p1": fmt.Sprintf("%s", feast.Price.Name)}).WithGameParam("p0", GameData.FeastNameKey(input.Language, feast), feast.Name), input, "p1", feast.Price))
 	}
 	if *request.ExpectedBalanceBefore > balance {
 		debited := *request.ExpectedBalanceBefore - balance
 		if feast.Price.Premium && debited > request.MaximumRubyCostPerPurchase {
-			return Localization.WithError(fmt.Errorf("%s purchase exceeded the configured ruby ceiling", feast.Name), Localization.New("server.app.p_purchase_exceeded_the.8c4b43e4", "{p0} purchase exceeded the configured ruby ceiling", Localization.Params{"p0": fmt.Sprintf("%s", feast.Name)}))
+			return Localization.WithError(fmt.Errorf("%s purchase exceeded the configured ruby ceiling", feast.Name), Localization.New("server.app.p_purchase_exceeded_the.8c4b43e4", "{p0} purchase exceeded the configured ruby ceiling", Localization.Params{"p0": fmt.Sprintf("%s", feast.Name)}).WithGameParam("p0", GameData.FeastNameKey(input.Language, feast), feast.Name))
 		}
 		if debited > *request.ExpectedEffectiveCost {
-			return Localization.WithError(fmt.Errorf("%s purchase consumed more %s than the guarded effective cost", feast.Name, feast.Price.Name), Localization.New("server.app.p_purchase_consumed_more.b3a11bcc", "{p0} purchase consumed more {p1} than the guarded effective cost", Localization.Params{"p0": fmt.Sprintf("%s", feast.Name), "p1": fmt.Sprintf("%s", feast.Price.Name)}))
+			return Localization.WithError(fmt.Errorf("%s purchase consumed more %s than the guarded effective cost", feast.Name, feast.Price.Name), priceNameDescriptor(Localization.New("server.app.p_purchase_consumed_more.b3a11bcc", "{p0} purchase consumed more {p1} than the guarded effective cost", Localization.Params{"p0": fmt.Sprintf("%s", feast.Name), "p1": fmt.Sprintf("%s", feast.Price.Name)}).WithGameParam("p0", GameData.FeastNameKey(input.Language, feast), feast.Name), input, "p1", feast.Price))
 		}
 	}
 	return nil

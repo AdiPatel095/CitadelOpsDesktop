@@ -12,6 +12,7 @@ import (
 )
 
 type Snapshot struct {
+	Language                     *GameData.LanguageStore
 	State                        State.GameState
 	Configuration                Configuration.Snapshot
 	GameData                     *GameData.Store
