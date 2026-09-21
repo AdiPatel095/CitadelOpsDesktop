@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/State"
 )
 
@@ -50,5 +51,39 @@ func TestLimitedEventOpeningTracksBerlinDaylightSaving(t *testing.T) {
 	}
 	if got, want := limitedEventOpeningAfter(winter), time.Date(2026, 12, 14, 9, 0, 0, 0, time.UTC); !got.Equal(want) {
 		t.Fatalf("winter opening = %s, want %s", got, want)
+	}
+}
+
+func TestLimitedEventDescriptorUsesWholeIdentityTemplates(t *testing.T) {
+	opening := time.Date(2026, 8, 14, 8, 0, 0, 0, time.UTC)
+	for _, family := range []struct {
+		ids   []int64
+		label string
+	}{
+		{[]int64{nomadEventID, samuraiEventID}, "Nomad or Samurai event"},
+		{[]int64{bloodcrowEventID, foreignLordsEventID}, "Foreign Lords or Bloodcrow event"},
+		{[]int64{autoKhanEventID}, "Nomad Khan event"},
+		{[]int64{GameData.BerimondEventID}, "Battle for Berimond"},
+	} {
+		for _, phase := range []struct{ now, observed time.Time }{
+			{opening.Add(time.Second), opening},
+			{opening.Add(6 * time.Minute), opening},
+			{opening.Add(6 * time.Minute), opening.Add(-time.Hour)},
+		} {
+			state := State.NewGameState()
+			state.EventScores.Inventory.ObservedAt = phase.observed
+			decision, locked := limitedEventGate(state, phase.now, family.ids, family.label)
+			if !locked || decision.DetailDescriptor == nil || decision.DetailDescriptor.Fallback != decision.Detail || len(decision.DetailDescriptor.Params) != 0 {
+				t.Fatalf("lost whole event message: %+v", decision)
+			}
+		}
+	}
+	for _, ids := range [][]int64{nil, {999}, {nomadEventID, samuraiEventID, 999}, {nomadEventID, nomadEventID}} {
+		if limitedEventDescriptor(ids, "inactive") != nil {
+			t.Fatalf("unknown event family inferred: %v", ids)
+		}
+	}
+	if limitedEventDescriptor([]int64{autoKhanEventID}, "unknown") != nil {
+		t.Fatal("unknown phase inferred")
 	}
 }

@@ -130,7 +130,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	if score.DifficultyID <= 0 {
 		arguments, _ := json.Marshal(map[string]any{"eventId": score.EventID, "difficultyId": difficultyID})
 		return Decision{
-			Status: "ready", Detail: fmt.Sprintf("Start %s at difficulty %d", nomadEventName(score.EventID), difficultyID),
+			Status: "ready", Detail: fmt.Sprintf("Start %s at difficulty %d", nomadEventName(score.EventID), difficultyID), DetailDescriptor: nomadEventDescriptor(score.EventID, "nomad_start", Localization.Params{"difficulty": fmt.Sprint(difficultyID)}),
 			NextCheckAt: snapshot.Now.Add(2 * time.Second),
 			Request:     &Intent.Request{Name: "nomad.difficulty.select", Arguments: arguments}, ReevaluateOnSuccess: true,
 		}, nil
@@ -139,7 +139,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		return nomadWaiting(snapshot.Now, fmt.Sprintf(
 			"The active %s run already uses difficulty %d; configured difficulty %d applies to the next run",
 			nomadEventName(score.EventID), score.DifficultyID, difficultyID,
-		)), nil
+		), nomadEventDescriptor(score.EventID, "nomad_difficulty", Localization.Params{"current": fmt.Sprint(score.DifficultyID), "configured": fmt.Sprint(difficultyID)})), nil
 	}
 	if score.PlayerScore >= settings.ScoreTarget {
 		return Decision{
@@ -168,7 +168,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	}
 	preset, exists := AttackPresets.Find(document, configuredNomadPresetID(settings, score.EventID))
 	if !exists {
-		return nomadWaiting(snapshot.Now, fmt.Sprintf("The selected %s attack preset no longer exists", nomadEventName(score.EventID))), nil
+		return nomadWaiting(snapshot.Now, fmt.Sprintf("The selected %s attack preset no longer exists", nomadEventName(score.EventID)), nomadEventDescriptor(score.EventID, "nomad_missing_preset", nil)), nil
 	}
 	progression := snapshot.GameData.EventCampProgression(score.EventID, score.DifficultyID, targetTypeID)
 	if len(progression) == 0 {
@@ -228,7 +228,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 			"sourceCastleId": source.ID, "radius": fixedNomadRadius, "scanStartedAt": snapshot.Now,
 		})
 		return Decision{
-			Status: "ready", Detail: fmt.Sprintf("Discover the four %s camps around %s", nomadEventName(score.EventID), invasionCastleName(source)),
+			Status: "ready", Detail: fmt.Sprintf("Discover the four %s camps around %s", nomadEventName(score.EventID), invasionCastleName(source)), DetailDescriptor: nomadDiscoverDescriptor(score.EventID, source),
 			NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
 			Request: &Intent.Request{Name: "nomad.map.scan", Arguments: arguments}, ReevaluateOnSuccess: true,
 		}, nil
@@ -420,19 +420,19 @@ func nomadSequentialArrivalDecision(
 	if !block.ArrivesAt.IsZero() {
 		metrics["sequentialArrivalAt"] = float64(block.ArrivesAt.Unix())
 	}
-	refreshMovements := func(detail string) (Decision, bool) {
+	refreshMovements := func(detail string, descriptors ...*Localization.Message) (Decision, bool) {
 		return Decision{
-			Status: "ready", Detail: detail,
+			Status: "ready", Detail: detail, DetailDescriptor: Localization.First(descriptors),
 			NextCheckAt: snapshot.Now.Add(State.NomadSequentialArrivalGuardHorizon), Metrics: metrics,
 			Request: &Intent.Request{Name: "game.refresh_movements", Arguments: json.RawMessage(`{}`)}, ReevaluateOnSuccess: true,
 		}, true
 	}
-	refreshTarget := func(detail string) (Decision, bool) {
+	refreshTarget := func(detail string, descriptors ...*Localization.Message) (Decision, bool) {
 		arguments, _ := json.Marshal(map[string]any{
 			"kingdomId": target.KingdomID, "x1": target.X, "y1": target.Y, "x2": target.X, "y2": target.Y,
 		})
 		return Decision{
-			Status: "ready", Detail: detail,
+			Status: "ready", Detail: detail, DetailDescriptor: Localization.First(descriptors),
 			NextCheckAt: snapshot.Now.Add(State.NomadSequentialArrivalGuardHorizon), Metrics: metrics,
 			Request: &Intent.Request{Name: "map.query", Arguments: arguments}, ReevaluateOnSuccess: true,
 		}, true
@@ -441,18 +441,18 @@ func nomadSequentialArrivalDecision(
 	if block.Unknown {
 		movementObservedAt := snapshot.State.MovementSnapshot.ObservedAt
 		if movementObservedAt.IsZero() || !block.LaunchedAt.IsZero() && movementObservedAt.Before(block.LaunchedAt) {
-			return refreshMovements(fmt.Sprintf("Refresh movements before resolving unknown arrival timing at camp %d:%d", target.X, target.Y))
+			return refreshMovements(fmt.Sprintf("Refresh movements before resolving unknown arrival timing at camp %d:%d", target.X, target.Y), Localization.New("server.automation.nomad_arrival.edc03cb7", "Refresh movements before resolving unknown arrival timing at camp {x}:{y}", Localization.Params{"x": target.X, "y": target.Y}))
 		}
 		if block.Live {
 			if snapshot.Now.Sub(movementObservedAt) >= retryInterval {
-				return refreshMovements(fmt.Sprintf("Recheck the unknown-timing movement approaching camp %d:%d", target.X, target.Y))
+				return refreshMovements(fmt.Sprintf("Recheck the unknown-timing movement approaching camp %d:%d", target.X, target.Y), Localization.New("server.automation.nomad_arrival.9ecd80bc", "Recheck the unknown-timing movement approaching camp {x}:{y}", Localization.Params{"x": target.X, "y": target.Y}))
 			}
 			return Decision{
 				Status: "waiting", Detail: fmt.Sprintf("Camp %d:%d has an in-flight attack with unknown arrival timing", target.X, target.Y), DetailDescriptor: Localization.New("server.automation.camp_p_p_has.3246e170", "Camp {p0}:{p1} has an in-flight attack with unknown arrival timing", Localization.Params{"p0": target.X, "p1": target.Y}),
 				NextCheckAt: movementObservedAt.Add(retryInterval), Metrics: metrics,
 			}, true
 		}
-		return refreshTarget(fmt.Sprintf("Confirm camp %d:%d after its unknown-timing movement disappeared", target.X, target.Y))
+		return refreshTarget(fmt.Sprintf("Confirm camp %d:%d after its unknown-timing movement disappeared", target.X, target.Y), Localization.New("server.automation.nomad_arrival.addd8495", "Confirm camp {x}:{y} after its unknown-timing movement disappeared", Localization.Params{"x": target.X, "y": target.Y}))
 	}
 
 	settlementAt := block.ArrivesAt.Add(State.NomadSequentialArrivalGuardHorizon)
@@ -469,11 +469,11 @@ func nomadSequentialArrivalDecision(
 		settlementObservedAt = cooldown.CooldownObservedAt
 	}
 	if settlementObservedAt.Before(settlementAt) {
-		return refreshTarget(fmt.Sprintf("Confirm camp %d:%d after the prior arrival", target.X, target.Y))
+		return refreshTarget(fmt.Sprintf("Confirm camp %d:%d after the prior arrival", target.X, target.Y), Localization.New("server.automation.nomad_arrival.5e4f1edc", "Confirm camp {x}:{y} after the prior arrival", Localization.Params{"x": target.X, "y": target.Y}))
 	}
 	if block.Live && (snapshot.State.MovementSnapshot.ObservedAt.Before(settlementObservedAt) ||
 		snapshot.Now.Sub(snapshot.State.MovementSnapshot.ObservedAt) >= State.NomadSequentialArrivalGuardHorizon) {
-		return refreshMovements(fmt.Sprintf("Confirm the prior movement to camp %d:%d has cleared", target.X, target.Y))
+		return refreshMovements(fmt.Sprintf("Confirm the prior movement to camp %d:%d has cleared", target.X, target.Y), Localization.New("server.automation.nomad_arrival.d0314c3b", "Confirm the prior movement to camp {x}:{y} has cleared", Localization.Params{"x": target.X, "y": target.Y}))
 	}
 	return Decision{
 		Status: "waiting", Detail: fmt.Sprintf("Camp %d:%d is still settling after the prior arrival", target.X, target.Y), DetailDescriptor: Localization.New("server.automation.camp_p_p_is.9eba4a9c", "Camp {p0}:{p1} is still settling after the prior arrival", Localization.Params{"p0": target.X, "p1": target.Y}),

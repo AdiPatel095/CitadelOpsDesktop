@@ -111,7 +111,7 @@ func (*AutoAdvisorPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 	if score.DifficultyID <= 0 {
 		arguments, _ := json.Marshal(map[string]any{"eventId": score.EventID, "difficultyId": difficultyID})
 		return Decision{
-			Status: "ready", Detail: fmt.Sprintf("Start %s at difficulty %d before activating the advisor", nomadEventName(score.EventID), difficultyID),
+			Status: "ready", Detail: fmt.Sprintf("Start %s at difficulty %d before activating the advisor", nomadEventName(score.EventID), difficultyID), DetailDescriptor: nomadEventDescriptor(score.EventID, "advisor_start", Localization.Params{"difficulty": fmt.Sprint(difficultyID)}),
 			NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
 			Request: &Intent.Request{Name: "nomad.difficulty.select", Arguments: arguments}, ReevaluateOnSuccess: true,
 		}, nil
@@ -120,7 +120,7 @@ func (*AutoAdvisorPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 		return autoAdvisorWaiting(snapshot.Now, fmt.Sprintf(
 			"The active %s run uses difficulty %d; configured difficulty %d applies to the next event",
 			nomadEventName(score.EventID), score.DifficultyID, difficultyID,
-		), metrics), nil
+		), metrics, nomadEventDescriptor(score.EventID, "advisor_difficulty", Localization.Params{"current": fmt.Sprint(score.DifficultyID), "configured": fmt.Sprint(difficultyID)})), nil
 	}
 	if !score.AdvisorActive {
 		tokenID := score.AdvisorCurrencyID
@@ -164,7 +164,7 @@ func (*AutoAdvisorPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 	remaining := invasionEventRemaining(score, snapshot.Now)
 	usableSeconds := remaining - settings.MinimumRemainingSec
 	if usableSeconds < State.AdvisorEstimatedCycleSeconds {
-		return autoAdvisorWaiting(snapshot.Now, fmt.Sprintf("Event has only %d usable seconds remaining", max(int64(0), usableSeconds)), metrics), nil
+		return autoAdvisorWaiting(snapshot.Now, fmt.Sprintf("Event has only %d usable seconds remaining", max(int64(0), usableSeconds)), metrics, Localization.New("server.automation.advisor_usable_seconds", "Event has only {seconds, number} usable seconds remaining", Localization.Params{"seconds": max(int64(0), usableSeconds)})), nil
 	}
 	source, exists := snapshot.State.Castles[settings.SourceCastleID]
 	if !exists || source.KingdomID != 0 {
@@ -185,7 +185,7 @@ func (*AutoAdvisorPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 			"sourceCastleId": source.ID, "radius": fixedNomadRadius, "scanStartedAt": snapshot.Now,
 		})
 		return Decision{
-			Status: "ready", Detail: fmt.Sprintf("Discover the four %s camps for Advisor targeting", nomadEventName(score.EventID)),
+			Status: "ready", Detail: fmt.Sprintf("Discover the four %s camps for Advisor targeting", nomadEventName(score.EventID)), DetailDescriptor: nomadEventDescriptor(score.EventID, "advisor_discover", nil),
 			NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
 			Request: &Intent.Request{Name: "nomad.map.scan", Arguments: arguments}, ReevaluateOnSuccess: true,
 		}, nil
@@ -253,7 +253,7 @@ func (*AutoAdvisorPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 		"horseTravelBoostId": settings.HorseTravelBoostID,
 	})
 	return Decision{
-		Status: "ready", Detail: fmt.Sprintf("Launch %d advisor attacks against %s camp %d:%d", attackCount, nomadEventName(score.EventID), target.Observation.X, target.Observation.Y),
+		Status: "ready", Detail: fmt.Sprintf("Launch %d advisor attacks against %s camp %d:%d", attackCount, nomadEventName(score.EventID), target.Observation.X, target.Observation.Y), DetailDescriptor: nomadEventDescriptor(score.EventID, "advisor_launch", Localization.Params{"attacks": attackCount, "x": fmt.Sprint(target.Observation.X), "y": fmt.Sprint(target.Observation.Y)}),
 		NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
 		Request: &Intent.Request{Name: "advisor.run.launch", Arguments: arguments}, ReevaluateOnSuccess: true,
 	}, nil
