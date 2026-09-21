@@ -31,6 +31,17 @@ try {
  assert.match(run({...good,quantity:'Für {name} {count, number} Einheiten behalten'}).stderr,/numeric style changed/);
  assert.match(run(good,p=>p.entries.de.quantity.sourceSha256='stale').stderr,/stale\/missing provenance/);
  assert.match(run({...good,plural:'{count, plural, one {Eine Einheit}'}).stderr,/Error/);
+ english.duplicate=english.quantity;
+ fs.writeFileSync(path.join(temp,'en.json'),JSON.stringify(english));
+ const reused={...good,duplicate:good.quantity};
+ function withReuse(p) {
+  Object.assign(p.entries.de.duplicate,{method:'reviewed-source-key-reuse',translationSourceKey:'quantity',originRevision:'a'.repeat(40),originSourceSha256:sha(english.quantity),originTranslationSha256:sha(good.quantity),semanticReview:'Same fixture meaning and argument contract.'});
+ }
+ assert.equal(run(reused,withReuse).status,0,'reviewed exact source-key reuse should pass');
+ assert.match(run(reused,p=>{withReuse(p);p.entries.de.duplicate.translationSourceKey='plural'}).stderr,/invalid reviewed source-key reuse/);
+ assert.match(run(reused,p=>{withReuse(p);p.entries.de.duplicate.originTranslationSha256='stale'}).stderr,/invalid reviewed source-key reuse/);
+ assert.match(run(reused,p=>{withReuse(p);delete p.entries.de.duplicate.semanticReview}).stderr,/invalid reviewed source-key reuse/);
+ assert.match(run({...reused,duplicate:'{count, number, ::precision-integer} Einheiten für {name}'},withReuse).stderr,/invalid reviewed source-key reuse/);
  const featureKey='server.telemetry.channel.example.label';
  english[featureKey]='Example feature';
  fs.writeFileSync(path.join(temp,'en.json'),JSON.stringify(english));

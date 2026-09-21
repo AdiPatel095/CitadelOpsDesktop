@@ -68,6 +68,15 @@ for (const locale of expectedLocales) {
   if (JSON.stringify(sourceArgs)!==JSON.stringify(translatedArgs)) throw new Error(`${locale}: argument mismatch ${key}`);
   const record=provenance.entries[locale]?.[key];
   if (!record || record.sourceSha256!==hash(english[key]) || record.translationSha256!==hash(text)) throw new Error(`${locale}: stale/missing provenance ${key}`);
+  if (record.method==='reviewed-source-key-reuse') {
+   const origin=record.translationSourceKey;
+   if(typeof origin!=='string' || origin===key || !(origin in english) || !(origin in pack) ||
+      english[origin]!==english[key] || pack[origin]!==text ||
+      record.originSourceSha256!==hash(english[origin]) || record.originTranslationSha256!==hash(pack[origin]) ||
+      !/^[a-f0-9]{40}$/.test(record.originRevision??'') || !record.semanticReview?.trim()) {
+    throw new Error(`${locale}: invalid reviewed source-key reuse ${key}`);
+   }
+  }
   total++;
  }
  for(const [feature,entry] of Object.entries(glossary?.features??{})) {
