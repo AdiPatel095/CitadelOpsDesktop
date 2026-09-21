@@ -9,8 +9,15 @@ export function normalizeLocale(value: unknown): Locale | undefined {
   const tag = value.trim().replaceAll('_', '-').toLowerCase();
   const exact = localeCodes.find(code => code.toLowerCase() === tag);
   if (exact) return exact;
-  if (/^zh-(hant|tw|hk)(-|$)/.test(tag)) return 'zh-TW';
-  if (/^zh(-|$)/.test(tag)) return 'zh-CN';
+  if (/^zh(-|$)/.test(tag)) {
+    try {
+      // CLDR likely subtags preserve explicit scripts and resolve regional defaults.
+      // https://unicode.org/reports/tr35/#Likely_Subtags
+      return new Intl.Locale(tag).maximize().script === 'Hant' ? 'zh-TW' : 'zh-CN';
+    } catch {
+      return undefined;
+    }
+  }
   if (/^(nb|nn)(-|$)/.test(tag)) return 'no';
   return localeCodes.find(code => code === tag.split('-')[0]);
 }

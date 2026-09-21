@@ -14,7 +14,7 @@ for (const file of files) {
 test('normalizes official and regional locales without accepting unsupported languages',()=>{
  const {normalizeLocale,locales}=modules.locales;
  assert.equal(locales.find(item=>item.code==='zh-CN').gameCode,'zh_CN'); assert.equal(locales.find(item=>item.code==='zh-TW').gameCode,'zh_TW');
- assert.equal(locales.length,26); assert.equal(normalizeLocale('zh_tw'),'zh-TW'); assert.equal(normalizeLocale('zh-Hant-HK'),'zh-TW'); assert.equal(normalizeLocale('ar-SA'),'ar'); assert.equal(normalizeLocale('nb-NO'),'no'); assert.equal(normalizeLocale('xx'),undefined);
+ assert.equal(locales.length,26); assert.equal(normalizeLocale('zh_tw'),'zh-TW'); assert.equal(normalizeLocale('zh-Hant-HK'),'zh-TW'); assert.equal(normalizeLocale('zh-MO'),'zh-TW'); assert.equal(normalizeLocale('zh-Hans-MO'),'zh-CN'); assert.equal(normalizeLocale('zh-Hant-CN'),'zh-TW'); assert.equal(normalizeLocale('zh--MO'),undefined); assert.equal(normalizeLocale('ar-SA'),'ar'); assert.equal(normalizeLocale('nb-NO'),'no'); assert.equal(normalizeLocale('xx'),undefined);
 });
 test('ICU plurals, literal HTML, placeholders and untranslated provenance remain distinct',()=>{
  const {formatMessage,validateMessageCatalog}=modules.formatMessage;
