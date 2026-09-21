@@ -221,7 +221,7 @@ func planInvasionTargetReconcile(
 			Claims:  []string{claim},
 			Summary: fmt.Sprintf("Release prior-occurrence invasion reservation at %d:%d", request.TargetX, request.TargetY), SummaryDescriptor: Localization.New("server.app.release_prior_occurrence_invasion.458dec77", "Release prior-occurrence invasion reservation at {p0}:{p1}", Localization.Params{"p0": request.TargetX, "p1": request.TargetY}),
 			Steps: []Intent.Step{{
-				Name: "Release prior-occurrence invasion reservation", Action: "invasion.target.reconcile",
+				Name: "Release prior-occurrence invasion reservation", NameDescriptor: Localization.New("server.app.release_prior_occurrence_invasion.9e959e17", "Release prior-occurrence invasion reservation", nil), Action: "invasion.target.reconcile",
 				ActionArguments: verification,
 			}},
 		}, nil
@@ -236,7 +236,7 @@ func planInvasionTargetReconcile(
 			Claims:  []string{claim},
 			Summary: fmt.Sprintf("Record confirmed invasion launch at %d:%d", request.TargetX, request.TargetY), SummaryDescriptor: Localization.New("server.app.record_confirmed_invasion_launch.29428d42", "Record confirmed invasion launch at {p0}:{p1}", Localization.Params{"p0": request.TargetX, "p1": request.TargetY}),
 			Steps: []Intent.Step{{
-				Name: "Record confirmed invasion target launch", Action: "invasion.target.reconcile",
+				Name: "Record confirmed invasion target launch", NameDescriptor: Localization.New("server.app.record_confirmed_invasion_target.d007b9ac", "Record confirmed invasion target launch", nil), Action: "invasion.target.reconcile",
 				ActionArguments: verification,
 			}},
 		}, nil
@@ -259,7 +259,7 @@ func planInvasionTargetReconcile(
 		steps = append(steps, castleFocusStep(source))
 	}
 	if reservation.CommanderKnown {
-		gam := contextCommandStep("Refresh movements for invasion launch reconciliation", "gam", json.RawMessage(`{}`), "gam")
+		gam := contextCommandStep("Refresh movements for invasion launch reconciliation", "gam", json.RawMessage(`{}`), "gam").WithNameDescriptor(Localization.New("server.app.refresh_movements_for_invasion.e0201713", "Refresh movements for invasion launch reconciliation", nil))
 		gam.ResponseBarrier = Intent.ResponseBarrierCommitted
 		steps = append(steps, gam)
 	} else {
@@ -270,7 +270,7 @@ func planInvasionTargetReconcile(
 			X2        int             `json:"AX2"`
 			Y2        int             `json:"AY2"`
 		}{request.KingdomID, request.TargetX, request.TargetY, request.TargetX, request.TargetY})
-		gaa := contextCommandStep("Refresh invasion target for launch reconciliation", "gaa", gaaPayload, "gaa")
+		gaa := contextCommandStep("Refresh invasion target for launch reconciliation", "gaa", gaaPayload, "gaa").WithNameDescriptor(Localization.New("server.app.refresh_invasion_target_for.c22e10ba", "Refresh invasion target for launch reconciliation", nil))
 		gaa.ResponseBarrier = Intent.ResponseBarrierCommitted
 		steps = append(steps, gaa)
 	}
@@ -430,7 +430,7 @@ func planInvasionAttack(_ context.Context, input Intent.PlanningContext, argumen
 		time.Since(input.State.Player.LegendSkills.ObservedAt) >= 5*time.Minute {
 		steps = append(steps, contextCommandStep(
 			"Refresh Hall of Legends attack limits", "skl", json.RawMessage(`{}`), "skl",
-		))
+		).WithNameDescriptor(Localization.New("server.app.refresh_hall_of_legends.2b74581a", "Refresh Hall of Legends attack limits", nil)))
 	}
 	steps = append(steps, generalSkillsContextSteps(input.State, commanderID, time.Now().UTC())...)
 	steps = append(steps, attackCastleContextStep(source))
@@ -443,7 +443,7 @@ func planInvasionAttack(_ context.Context, input Intent.PlanningContext, argumen
 		X2        int             `json:"AX2"`
 		Y2        int             `json:"AY2"`
 	}{target.KingdomID, target.X, target.Y, target.X, target.Y})
-	refreshStep := contextCommandStep("Refresh selected invasion target", "gaa", refreshPayload, "gaa")
+	refreshStep := contextCommandStep("Refresh selected invasion target", "gaa", refreshPayload, "gaa").WithNameDescriptor(Localization.New("server.app.refresh_selected_invasion_target.86050a94", "Refresh selected invasion target", nil))
 	refreshStep.ResponseBarrier = Intent.ResponseBarrierCommitted
 	verificationArguments, _ := json.Marshal(invasionTargetVerificationRequest{
 		Request:          resolvedInvasionAttackRequest{invasionAttackRequest: request, CommanderID: commanderID},

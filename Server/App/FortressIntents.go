@@ -446,7 +446,7 @@ func planFortressAttack(_ context.Context, input Intent.PlanningContext, argumen
 		"KID": target.KingdomID, "AX1": target.X, "AY1": target.Y,
 		"AX2": target.X, "AY2": target.Y,
 	})
-	targetRefreshStep := contextCommandStep("Verify fortress cooldown immediately before launch", "gaa", targetRefreshPayload, "gaa")
+	targetRefreshStep := contextCommandStep("Verify fortress cooldown immediately before launch", "gaa", targetRefreshPayload, "gaa").WithNameDescriptor(Localization.New("server.app.verify_fortress_cooldown_immediately.9702b64b", "Verify fortress cooldown immediately before launch", nil))
 	targetRefreshStep.ResponseBarrier = Intent.ResponseBarrierCommitted
 	targetRefreshStep.FinalDispatchAction = "fortress.target.verification.arm"
 	targetRefreshStep.FinalDispatchArguments = verificationArguments

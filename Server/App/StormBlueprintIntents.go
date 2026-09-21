@@ -95,7 +95,7 @@ func planStormBlueprintSave(
 			blueprint.Name, blueprint.Target.CastleID, diff.TargetCount, diff.ActionCount,
 		), SummaryDescriptor: Localization.New("server.app.save_and_activate_p.ea88e1ae", "Save and activate {p0} for Storm castle {p1} ({p2} targets, {p3} planned actions)", Localization.Params{"p0": fmt.Sprintf("%s", blueprint.Name), "p1": fmt.Sprintf("%d", blueprint.Target.CastleID), "p2": diff.TargetCount, "p3": diff.ActionCount}),
 		Steps: []Intent.Step{{
-			Name: "Save Storm blueprint", Action: "storm.blueprint.save", ActionArguments: canonical,
+			Name: "Save Storm blueprint", NameDescriptor: Localization.New("server.app.save_storm_blueprint.4393b80d", "Save Storm blueprint", nil), Action: "storm.blueprint.save", ActionArguments: canonical,
 		}},
 	}, nil
 }
@@ -152,7 +152,7 @@ func planStormBlueprintActivate(
 		Claims:  []string{"configuration:" + Buildings.StormBlueprintConfigurationSection},
 		Summary: summary, SummaryDescriptor: Localization.Clone(summaryLocalizationMessage),
 		Steps: []Intent.Step{{
-			Name: "Select Storm blueprint", Action: "storm.blueprint.activate", ActionArguments: canonical,
+			Name: "Select Storm blueprint", NameDescriptor: Localization.New("server.app.select_storm_blueprint.eea7a3ce", "Select Storm blueprint", nil), Action: "storm.blueprint.activate", ActionArguments: canonical,
 		}},
 	}, nil
 }

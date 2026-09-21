@@ -74,11 +74,11 @@ func planDungeonMinuteSkip(
 		), SummaryDescriptor: Localization.New("server.app.apply_a_p_minute.5aa8f1c2", "Apply a {p0}-minute time skip to {p1}-second dungeon cooldown at {p2}:{p3}", Localization.Params{"p0": option.Minutes, "p1": remaining, "p2": request.TargetX, "p3": request.TargetY}),
 		Steps: []Intent.Step{
 			{
-				Name: "Build authoritative dungeon time skip", Resolver: "nomad.cooldown.minute_skip.build",
+				Name: "Build authoritative dungeon time skip", NameDescriptor: Localization.New("server.app.build_authoritative_dungeon_time.a4ee1fe2", "Build authoritative dungeon time skip", nil), Resolver: "nomad.cooldown.minute_skip.build",
 				ResolverArguments: verification, AwaitOpcode: "msd", TimeoutMillis: 10_000, SuccessCodes: []int{0},
 			},
 			timeSkipConsumeStep(input, option.CurrencyID),
-			{Name: "Verify dungeon cooldown advanced", Action: "nomad.cooldown.minute_skip.verify", ActionArguments: verification},
+			{Name: "Verify dungeon cooldown advanced", NameDescriptor: Localization.New("server.app.verify_dungeon_cooldown_advanced.c58fabfe", "Verify dungeon cooldown advanced", nil), Action: "nomad.cooldown.minute_skip.verify", ActionArguments: verification},
 		},
 	}, nil
 }
@@ -377,7 +377,7 @@ func planKhanCooldownReportResolve(
 			len(request.ReportIDs), request.TargetX, request.TargetY,
 		), SummaryDescriptor: Localization.New("server.app.resolve_p_khan_cooldown.22baf706", "Resolve {p0} Khan cooldown report(s) already clear at {p1}:{p2}", Localization.Params{"p0": fmt.Sprintf("%d", len(request.ReportIDs)), "p1": request.TargetX, "p2": request.TargetY}),
 		Steps: []Intent.Step{{
-			Name:   "Resolve Khan cooldown reports without another time skip",
+			Name: "Resolve Khan cooldown reports without another time skip", NameDescriptor: Localization.New("server.app.resolve_khan_cooldown_reports.e77b8328", "Resolve Khan cooldown reports without another time skip", nil),
 			Action: "khan.cooldown.reports.resolve", ActionArguments: arguments,
 		}},
 	}, nil

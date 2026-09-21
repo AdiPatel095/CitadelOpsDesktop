@@ -35,7 +35,7 @@ func TestActiveSafetyLockDiscardsFreshDecisionDescriptors(t *testing.T) {
 	if current.Status != "gated" || current.Detail != lock.Detail() || current.LastError != lock.Detail() {
 		t.Fatalf("lock presentation changed: %#v", current)
 	}
-	if current.DetailDescriptor != nil || current.LastErrorDescriptor != nil || current.DetailTranslationStatus != "untranslated" {
+	if current.DetailDescriptor == nil || current.LastErrorDescriptor == nil || current.DetailDescriptor.Key != "server.state.safety_lock.until" || current.LastErrorDescriptor.Key != "server.state.safety_lock.until" {
 		t.Fatalf("fresh decision concealed lock: %#v", current)
 	}
 	coordinator.updateAutomation("lane", func(next State.AutomationState) State.AutomationState {
@@ -43,7 +43,7 @@ func TestActiveSafetyLockDiscardsFreshDecisionDescriptors(t *testing.T) {
 		next.LastErrorDescriptor = Localization.New("ready", "Ready", nil)
 		return next
 	})
-	if current = store.ReadOnlyView().Automations["lane"]; current.LastErrorDescriptor != nil {
+	if current = store.ReadOnlyView().Automations["lane"]; current.LastErrorDescriptor == nil || current.LastErrorDescriptor.Key != "server.state.safety_lock.until" {
 		t.Fatal("fresh error descriptor concealed lock")
 	}
 }

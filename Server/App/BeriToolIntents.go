@@ -79,13 +79,13 @@ func planBeriToolPurchase(
 	})
 	steps := []Intent.Step{
 		attackCastleContextStep(castle),
-		shopCommandStep("Refresh Berimond armorer", "gbc", historyPayload, 0),
+		shopCommandStep("Refresh Berimond armorer", "gbc", historyPayload, 0).WithNameDescriptor(Localization.New("server.app.refresh_berimond_armorer.4675d28b", "Refresh Berimond armorer", nil)),
 		Intent.RebuildOnResume(Intent.Step{
 			Name: "Recheck Berimond armorer tool purchase", NameDescriptor: Localization.New("server.app.recheck_berimond_armorer_tool.abf3a716", "Recheck Berimond armorer tool purchase", nil), Action: "beri.tools.purchase.guard",
 			ActionArguments: resolvedArguments,
 		}),
 		shopCommandStep("Purchase "+item.Name+" from the Berimond armorer", "sbp", purchasePayload, 0),
-		attackCastleRefreshStep("Refresh Berimond tool inventory after purchase", castle),
+		attackCastleRefreshStep("Refresh Berimond tool inventory after purchase", castle).WithNameDescriptor(Localization.New("server.app.refresh_berimond_tool_inventory.4175233d", "Refresh Berimond tool inventory after purchase", nil)),
 	}
 	steps[3].CoinCost = &Intent.CoinCostRequirement{
 		Amount: request.Amount * item.CoinPrice, Source: "official Berimond armorer package price",

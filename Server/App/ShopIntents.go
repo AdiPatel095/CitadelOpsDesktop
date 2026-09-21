@@ -97,7 +97,7 @@ func planShopPackageHistory(_ context.Context, input Intent.PlanningContext, arg
 	return Intent.Plan{
 		Claims:  []string{"shop", "shop:purchase-history"},
 		Summary: fmt.Sprintf("Load stock-limited package purchase counters for %s", castleLabel(castle)), SummaryDescriptor: Localization.New("server.app.load_stock_limited_package.cfa7b8e7", "Load stock-limited package purchase counters for {p0}", Localization.Params{"p0": fmt.Sprintf("%s", castleLabel(castle))}),
-		Steps: []Intent.Step{shopCommandStep("Load package purchase history", "gbc", payload, 0)},
+		Steps: []Intent.Step{shopCommandStep("Load package purchase history", "gbc", payload, 0).WithNameDescriptor(Localization.New("server.app.load_package_purchase_history.7eb50206", "Load package purchase history", nil))},
 	}, nil
 }
 
@@ -188,7 +188,7 @@ func planShopPackagePurchase(_ context.Context, input Intent.PlanningContext, ar
 	return Intent.Plan{
 		Claims:  []string{"shop", "shop:table:" + strconv.FormatInt(request.TableID, 10), "account-resources"},
 		Summary: fmt.Sprintf("Purchase official package %d from shop table %d", request.ProductID, request.TableID), SummaryDescriptor: Localization.New("server.app.purchase_official_package_p.dfe84fcb", "Purchase official package {p0} from shop table {p1}", Localization.Params{"p0": fmt.Sprintf("%d", request.ProductID), "p1": fmt.Sprintf("%d", request.TableID)}),
-		Steps: []Intent.Step{shopCommandStep("Purchase shop package", "sbp", payload, 0)},
+		Steps: []Intent.Step{shopCommandStep("Purchase shop package", "sbp", payload, 0).WithNameDescriptor(Localization.New("server.app.purchase_shop_package.8e3d9a7b", "Purchase shop package", nil))},
 	}, nil
 }
 
@@ -200,7 +200,7 @@ func planShopMercenaryRefresh(_ context.Context, _ Intent.PlanningContext, argum
 	return Intent.Plan{
 		Claims:  []string{"shop", "shop:mercenary"},
 		Summary: "Load current Mercenary Post offers", SummaryDescriptor: Localization.New("server.app.load_current_mercenary_post.04ae0828", "Load current Mercenary Post offers", nil),
-		Steps: []Intent.Step{shopCommandStep("Load Mercenary Post", "mpe", json.RawMessage(`{"MID":-1}`), 0)},
+		Steps: []Intent.Step{shopCommandStep("Load Mercenary Post", "mpe", json.RawMessage(`{"MID":-1}`), 0).WithNameDescriptor(Localization.New("server.app.load_mercenary_post.a7af229e", "Load Mercenary Post", nil))},
 	}, nil
 }
 
@@ -220,7 +220,7 @@ func planShopMercenaryPurchase(_ context.Context, _ Intent.PlanningContext, argu
 	return Intent.Plan{
 		Claims:  []string{"shop", "shop:mercenary", "account-resources"},
 		Summary: fmt.Sprintf("Purchase Mercenary Post slot %d", request.SlotID), SummaryDescriptor: Localization.New("server.app.purchase_mercenary_post_slot.b370bdd8", "Purchase Mercenary Post slot {p0}", Localization.Params{"p0": fmt.Sprintf("%d", request.SlotID)}),
-		Steps: []Intent.Step{shopCommandStep("Purchase Mercenary Post slot", "mbs", payload, 0)},
+		Steps: []Intent.Step{shopCommandStep("Purchase Mercenary Post slot", "mbs", payload, 0).WithNameDescriptor(Localization.New("server.app.purchase_mercenary_post_slot.aa7c13b5", "Purchase Mercenary Post slot", nil))},
 	}, nil
 }
 
@@ -237,7 +237,7 @@ func planShopOfferPurchase(_ context.Context, _ Intent.PlanningContext, argument
 	return Intent.Plan{
 		Claims:  []string{"shop", "shop:offer", "account-resources"},
 		Summary: fmt.Sprintf("Submit offer %d purchase and capture its confirmation response", request.OfferID), SummaryDescriptor: Localization.New("server.app.submit_offer_p_purchase.fd588542", "Submit offer {p0} purchase and capture its confirmation response", Localization.Params{"p0": fmt.Sprintf("%d", request.OfferID)}),
-		Steps: []Intent.Step{shopCommandStep("Submit offer purchase", "oop", payload, 0, 440)},
+		Steps: []Intent.Step{shopCommandStep("Submit offer purchase", "oop", payload, 0, 440).WithNameDescriptor(Localization.New("server.app.submit_offer_purchase.0f63f5f1", "Submit offer purchase", nil))},
 	}, nil
 }
 
@@ -256,7 +256,7 @@ func planShopOfferConfirm(_ context.Context, _ Intent.PlanningContext, arguments
 	return Intent.Plan{
 		Claims:  []string{"shop", "shop:offer", "account-resources"},
 		Summary: fmt.Sprintf("Confirm offer %d at the server-quoted premium cost %d", request.OfferID, request.ConfirmedPremiumCost), SummaryDescriptor: Localization.New("server.app.confirm_offer_p_at.ddf92cd2", "Confirm offer {p0} at the server-quoted premium cost {p1}", Localization.Params{"p0": fmt.Sprintf("%d", request.OfferID), "p1": request.ConfirmedPremiumCost}),
-		Steps: []Intent.Step{shopCommandStep("Confirm offer purchase", "oop", payload, 0)},
+		Steps: []Intent.Step{shopCommandStep("Confirm offer purchase", "oop", payload, 0).WithNameDescriptor(Localization.New("server.app.confirm_offer_purchase.14e6f0d4", "Confirm offer purchase", nil))},
 	}, nil
 }
 

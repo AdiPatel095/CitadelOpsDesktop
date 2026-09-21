@@ -122,7 +122,7 @@ func planAdvisorAttack(_ context.Context, input Intent.PlanningContext, argument
 	}{source.X, source.Y, target.X, target.Y, target.KingdomID})
 	steps := make([]Intent.Step, 0, 5)
 	if input.State.Player.LegendSkills.ObservedAt.IsZero() || time.Since(input.State.Player.LegendSkills.ObservedAt) >= 5*time.Minute {
-		steps = append(steps, contextCommandStep("Refresh Hall of Legends attack limits", "skl", json.RawMessage(`{}`), "skl"))
+		steps = append(steps, contextCommandStep("Refresh Hall of Legends attack limits", "skl", json.RawMessage(`{}`), "skl").WithNameDescriptor(Localization.New("server.app.refresh_hall_of_legends.2b74581a", "Refresh Hall of Legends attack limits", nil)))
 	}
 	steps = append(steps, generalSkillsContextSteps(input.State, request.CommanderID, time.Now().UTC())...)
 	steps = append(steps, attackCastleContextStep(source))

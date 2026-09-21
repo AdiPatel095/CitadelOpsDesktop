@@ -991,7 +991,7 @@ func (application *Application) registerCoreIntents() error {
 				return Intent.Plan{
 					Claims: []string{"session"}, Summary: fmt.Sprintf("Use %s for game sessions", candidate.Name), SummaryDescriptor: Localization.New("server.app.use_p_for_game.fc0d9888", "Use {p0} for game sessions", Localization.Params{"p0": fmt.Sprintf("%s", candidate.Name)}),
 					Steps: []Intent.Step{{
-						Name: "Select browser", Action: "session.select_browser", ActionArguments: canonical,
+						Name: "Select browser", NameDescriptor: Localization.New("server.app.select_browser.dd56ef5e", "Select browser", nil), Action: "session.select_browser", ActionArguments: canonical,
 					}},
 				}, nil
 			},
@@ -1012,7 +1012,7 @@ func (application *Application) registerCoreIntents() error {
 					Claims:  []string{"configuration:" + update.Section},
 					Summary: fmt.Sprintf("Update %s configuration", update.Section), SummaryDescriptor: Localization.New("server.app.update_p_configuration.94613bbf", "Update {p0} configuration", Localization.Params{"p0": fmt.Sprintf("%s", update.Section)}),
 					Steps: []Intent.Step{{
-						Name: "Save configuration", Action: "config.update", ActionArguments: canonical,
+						Name: "Save configuration", NameDescriptor: Localization.New("server.app.save_configuration.b2b158f2", "Save configuration", nil), Action: "config.update", ActionArguments: canonical,
 					}},
 				}, nil
 			},

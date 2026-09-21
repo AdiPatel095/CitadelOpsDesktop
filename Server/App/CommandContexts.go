@@ -38,7 +38,7 @@ func generalSkillsContextSteps(gameState State.GameState, commanderID State.Comm
 	}
 	return []Intent.Step{contextCommandStep(
 		"Refresh commander general attack limits", "gie", json.RawMessage(`{}`), "gie",
-	)}
+	).WithNameDescriptor(Localization.New("server.app.refresh_commander_general_attack.1ffe2e87", "Refresh commander general attack limits", nil))}
 }
 
 func castleContextSteps(input Intent.PlanningContext, castle State.CastleState) []Intent.Step {
@@ -56,7 +56,7 @@ func castleContextSteps(input Intent.PlanningContext, castle State.CastleState) 
 		input.ProtocolContext.FocusSubcontext == State.FocusSubcontextUnknown {
 		return nil
 	}
-	return []Intent.Step{castleRefreshStep("Re-enter focused castle from map context", castle)}
+	return []Intent.Step{castleRefreshStep("Re-enter focused castle from map context", castle).WithNameDescriptor(Localization.New("server.app.re_enter_focused_castle.312684ff", "Re-enter focused castle from map context", nil))}
 }
 
 func castleFocusStep(castle State.CastleState) Intent.Step {
@@ -65,7 +65,7 @@ func castleFocusStep(castle State.CastleState) Intent.Step {
 		Y         int             `json:"PY"`
 		KingdomID State.KingdomID `json:"KID"`
 	}{castle.X, castle.Y, castle.KingdomID})
-	step := contextCommandStep("Focus castle", "jaa", payload, "jaa")
+	step := contextCommandStep("Focus castle", "jaa", payload, "jaa").WithNameDescriptor(Localization.New("server.app.focus_castle.50e5148a", "Focus castle", nil))
 	step.ResponseBarrier = Intent.ResponseBarrierCommitted
 	return step
 }
@@ -74,7 +74,7 @@ func stationCastleContextStep(castle State.CastleState) Intent.Step {
 	if !castle.Focused {
 		return castleFocusStep(castle)
 	}
-	return castleRefreshStep("Refresh station source castle", castle)
+	return castleRefreshStep("Refresh station source castle", castle).WithNameDescriptor(Localization.New("server.app.refresh_station_source_castle.620aa1ad", "Refresh station source castle", nil))
 }
 
 func castleRefreshStep(name string, castle State.CastleState) Intent.Step {
@@ -93,7 +93,7 @@ func attackCastleContextStep(castle State.CastleState) Intent.Step {
 	if !castle.Focused {
 		return castleFocusStep(castle)
 	}
-	return attackCastleRefreshStep("Refocus attack source castle", castle)
+	return attackCastleRefreshStep("Refocus attack source castle", castle).WithNameDescriptor(Localization.New("server.app.refocus_attack_source_castle.da91500d", "Refocus attack source castle", nil))
 }
 
 func attackCastleRefreshStep(name string, castle State.CastleState) Intent.Step {
@@ -115,7 +115,7 @@ func constructionShopContextSteps(castle State.CastleState) []Intent.Step {
 	}{castle.ID, castle.KingdomID})
 	return []Intent.Step{
 		constructionMenuStep(),
-		contextCommandStep("Refresh construction-item offers", "gbc", payload, "gbc"),
+		contextCommandStep("Refresh construction-item offers", "gbc", payload, "gbc").WithNameDescriptor(Localization.New("server.app.refresh_construction_item_offers.fd46e62d", "Refresh construction-item offers", nil)),
 	}
 }
 
@@ -124,7 +124,7 @@ func constructionShopContextSteps(castle State.CastleState) []Intent.Step {
 // buy slider right before a purchase; the answer is the authoritative
 // fullness oracle for the purchase guard (State.ConstructionItemInventorySpaceLeft).
 func constructionSpaceLeftStep() Intent.Step {
-	return contextCommandStep("Refresh construction-item inventory space", "csp", json.RawMessage(`{}`), "csp")
+	return contextCommandStep("Refresh construction-item inventory space", "csp", json.RawMessage(`{}`), "csp").WithNameDescriptor(Localization.New("server.app.refresh_construction_item_inventory.35c78e7b", "Refresh construction-item inventory space", nil))
 }
 
 func stationRouteContextSteps(source State.CastleState, target State.AllianceHolding) []Intent.Step {
@@ -134,7 +134,7 @@ func stationRouteContextSteps(source State.CastleState, target State.AllianceHol
 		SourceX int `json:"SX"`
 		SourceY int `json:"SY"`
 	}{target.X, target.Y, source.X, source.Y})
-	return []Intent.Step{contextCommandStep("Preview station route", "sdi", payload, "sdi")}
+	return []Intent.Step{contextCommandStep("Preview station route", "sdi", payload, "sdi").WithNameDescriptor(Localization.New("server.app.preview_station_route.321ca54d", "Preview station route", nil))}
 }
 
 // craSetupContextSteps refreshes the same pre-attack state the game uses
@@ -164,9 +164,9 @@ func craSetupContextSteps(craPayload json.RawMessage) ([]Intent.Step, error) {
 	attackDialogPayload, _ := json.Marshal(attackDialog)
 	return []Intent.Step{
 		closeGameUIStep(),
-		contextCommandStep("Refresh world-map context", "gbl", json.RawMessage(`{}`), "gbl"),
-		contextCommandStep("Refresh attack-dialog context", "adi", attackDialogPayload, "adi"),
-		contextCommandStep("Refresh saved attack presets", "gas", json.RawMessage(`{}`), "gas"),
+		contextCommandStep("Refresh world-map context", "gbl", json.RawMessage(`{}`), "gbl").WithNameDescriptor(Localization.New("server.app.refresh_world_map_context.c10486d7", "Refresh world-map context", nil)),
+		contextCommandStep("Refresh attack-dialog context", "adi", attackDialogPayload, "adi").WithNameDescriptor(Localization.New("server.app.refresh_attack_dialog_context.9d287627", "Refresh attack-dialog context", nil)),
+		contextCommandStep("Refresh saved attack presets", "gas", json.RawMessage(`{}`), "gas").WithNameDescriptor(Localization.New("server.app.refresh_saved_attack_presets.e3ddde7b", "Refresh saved attack presets", nil)),
 	}, nil
 }
 
@@ -331,7 +331,7 @@ func (application *Application) resolveCRACommandDependencies(
 	var movementsObservedAfter time.Time
 	if fields.CommanderID != nil {
 		movementsObservedAfter = guardedAt
-		movementStep := contextCommandStep("Refresh commander movements before CRA launch", "gam", json.RawMessage(`{}`), "gam")
+		movementStep := contextCommandStep("Refresh commander movements before CRA launch", "gam", json.RawMessage(`{}`), "gam").WithNameDescriptor(Localization.New("server.app.refresh_commander_movements_before.1d53861a", "Refresh commander movements before CRA launch", nil))
 		movementStep.ResponseBarrier = Intent.ResponseBarrierCommitted
 		setup = append([]Intent.Step{movementStep}, setup...)
 	}
@@ -349,7 +349,7 @@ func (application *Application) resolveCRACommandDependencies(
 		DialogObservedAt: guardedAt, MovementsObservedAfter: movementsObservedAfter,
 	})
 	guards := []Intent.Step{{
-		Name: "Verify authoritative CRA target", Action: "attack.cra.send.guard", ActionArguments: guardArguments,
+		Name: "Verify authoritative CRA target", NameDescriptor: Localization.New("server.app.verify_authoritative_cra_target.551988c7", "Verify authoritative CRA target", nil), Action: "attack.cra.send.guard", ActionArguments: guardArguments,
 	}}
 	if fields.TargetTypeID == State.MapTypeForeignLord || fields.TargetTypeID == State.MapTypeBloodcrow {
 		guards = append(guards, Intent.Step{
@@ -488,9 +488,9 @@ func (application *Application) guardCRASend(_ context.Context, arguments json.R
 }
 
 func equipmentUpgradeContextStep() Intent.Step {
-	return contextCommandStep("Open equipment upgrade menu", "gnr", json.RawMessage(`{}`), "gnr")
+	return contextCommandStep("Open equipment upgrade menu", "gnr", json.RawMessage(`{}`), "gnr").WithNameDescriptor(Localization.New("server.app.open_equipment_upgrade_menu.4289f94b", "Open equipment upgrade menu", nil))
 }
 
 func kingdomTransportContextStep() Intent.Step {
-	return contextCommandStep("Refresh kingdom transports", "kpi", json.RawMessage(`{}`), "kpi")
+	return contextCommandStep("Refresh kingdom transports", "kpi", json.RawMessage(`{}`), "kpi").WithNameDescriptor(Localization.New("server.app.refresh_kingdom_transports.ad5d0438", "Refresh kingdom transports", nil))
 }

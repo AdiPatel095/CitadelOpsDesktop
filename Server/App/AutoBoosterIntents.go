@@ -75,8 +75,8 @@ func planAutoBoosterRefresh(_ context.Context, _ Intent.PlanningContext, argumen
 		return Intent.Plan{}, err
 	}
 	return Intent.Plan{Claims: []string{"shop", "events", "global-effect:2", "account-resources"}, Summary: "Refresh the daily fortress-speed boost account snapshot", SummaryDescriptor: Localization.New("server.app.refresh_the_daily_fortress.6eb6d185", "Refresh the daily fortress-speed boost account snapshot", nil), Steps: []Intent.Step{
-		autoBoosterGBDStep("Refresh daily global-effect account snapshot"),
-		{Name: "Reconcile unresolved boost purchase", Action: "auto_booster.purchase.reconcile"},
+		autoBoosterGBDStep("Refresh daily global-effect account snapshot").WithNameDescriptor(Localization.New("server.app.refresh_daily_global_effect.e3946ea2", "Refresh daily global-effect account snapshot", nil)),
+		{Name: "Reconcile unresolved boost purchase", NameDescriptor: Localization.New("server.app.reconcile_unresolved_boost_purchase.c95add99", "Reconcile unresolved boost purchase", nil), Action: "auto_booster.purchase.reconcile"},
 	}}, nil
 }
 
@@ -87,7 +87,7 @@ func planAutoBoosterPurchase(_ context.Context, input Intent.PlanningContext, ar
 	}
 	resolved, _ := json.Marshal(request)
 	payload, _ := json.Marshal(map[string]any{"GEID": request.GlobalEffectID})
-	purchase := shopCommandStep("Activate daily fortress-speed boost", "agb", payload, 0)
+	purchase := shopCommandStep("Activate daily fortress-speed boost", "agb", payload, 0).WithNameDescriptor(Localization.New("server.app.activate_daily_fortress_speed.46b632ce", "Activate daily fortress-speed boost", nil))
 	purchase.ResponseBarrier = Intent.ResponseBarrierCommitted
 	purchase.CaptureResponse = true
 	purchase.PreDispatchAction, purchase.PreDispatchArguments = "auto_booster.purchase.arm", resolved
@@ -99,9 +99,9 @@ func planAutoBoosterPurchase(_ context.Context, input Intent.PlanningContext, ar
 		Claims:  []string{"shop", "events", "global-effect:" + strconv.FormatInt(request.GlobalEffectID, 10), "account-resources"},
 		Summary: fmt.Sprintf("Activate the daily fortress-speed boost for %d rubies", request.ExpectedRubyCost), SummaryDescriptor: Localization.New("server.app.activate_the_daily_fortress.3bc78a92", "Activate the daily fortress-speed boost for {p0} rubies", Localization.Params{"p0": request.ExpectedRubyCost}),
 		Steps: []Intent.Step{
-			autoBoosterGBDStep("Refresh account snapshot before boost purchase"), purchase,
-			autoBoosterGBDStep("Refresh account snapshot after boost purchase"),
-			{Name: "Reconcile boost purchase evidence", Action: "auto_booster.purchase.reconcile"},
+			autoBoosterGBDStep("Refresh account snapshot before boost purchase").WithNameDescriptor(Localization.New("server.app.refresh_account_snapshot_before.5b9d7d6c", "Refresh account snapshot before boost purchase", nil)), purchase,
+			autoBoosterGBDStep("Refresh account snapshot after boost purchase").WithNameDescriptor(Localization.New("server.app.refresh_account_snapshot_after.32e86947", "Refresh account snapshot after boost purchase", nil)),
+			{Name: "Reconcile boost purchase evidence", NameDescriptor: Localization.New("server.app.reconcile_boost_purchase_evidence.0b3e21a0", "Reconcile boost purchase evidence", nil), Action: "auto_booster.purchase.reconcile"},
 		},
 	}, nil
 }

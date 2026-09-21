@@ -75,12 +75,12 @@ func planAllianceHelpAnswerAll(
 		Summary: summary, SummaryDescriptor: Localization.Clone(summaryLocalizationMessage),
 		Steps: []Intent.Step{
 			{
-				Name: "Help alliance members", Resolver: "alliance.help.answer_all.build",
+				Name: "Help alliance members", NameDescriptor: Localization.New("server.app.help_alliance_members.2b3dae8c", "Help alliance members", nil), Resolver: "alliance.help.answer_all.build",
 				ResolverArguments: recordArguments, AwaitOpcode: "aha", TimeoutMillis: 10_000,
 				SuccessCodes: []int{0},
 			},
 			{
-				Name: "Record answered alliance help", Action: "alliance.help.mark_answered",
+				Name: "Record answered alliance help", NameDescriptor: Localization.New("server.app.record_answered_alliance_help.5c94942b", "Record answered alliance help", nil), Action: "alliance.help.mark_answered",
 				ActionArguments: recordArguments,
 			},
 		},

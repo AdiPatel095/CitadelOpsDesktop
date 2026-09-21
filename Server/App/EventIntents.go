@@ -36,7 +36,7 @@ func planEventRankingRefresh(_ context.Context, input Intent.PlanningContext, ar
 	return Intent.Plan{
 		Claims: []string{"event:" + strconv.FormatInt(request.EventID, 10)}, Summary: fmt.Sprintf("Refresh event %d GGE alliance leaderboard", request.EventID), SummaryDescriptor: Localization.New("server.app.refresh_event_p_gge.4695bf60", "Refresh event {p0} GGE alliance leaderboard", Localization.Params{"p0": fmt.Sprintf("%d", request.EventID)}),
 		Steps: []Intent.Step{
-			{Name: "Clear stale event ranking rows", Action: "event.ranking.begin", ActionArguments: arguments},
+			{Name: "Clear stale event ranking rows", NameDescriptor: Localization.New("server.app.clear_stale_event_ranking.fd7c82ed", "Clear stale event ranking rows", nil), Action: "event.ranking.begin", ActionArguments: arguments},
 			commandStep("Request live GGE event alliance ranking", "hgh", payload, "hgh", Localization.New("server.app.request_live_gge_event.0eb078bf", "Request live GGE event alliance ranking", nil)),
 		},
 	}, nil

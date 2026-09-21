@@ -424,13 +424,13 @@ func planKingdomResourceShipment(ctx context.Context, input Intent.PlanningConte
 	}
 	steps := []Intent.Step{
 		kingdomTransportContextStep(),
-		contextCommandStep("Refresh kingdom resource donor", "grc", resourceRefreshPayload, "grc"),
+		contextCommandStep("Refresh kingdom resource donor", "grc", resourceRefreshPayload, "grc").WithNameDescriptor(Localization.New("server.app.refresh_kingdom_resource_donor.dd4e788a", "Refresh kingdom resource donor", nil)),
 		Intent.RebuildOnResume(Intent.Step{
 			Name: "Verify kingdom resource transport and donor balance", NameDescriptor: Localization.New("server.app.verify_kingdom_resource_transport.83b46fc2", "Verify kingdom resource transport and donor balance", nil), Action: "kingdom.transport.verify_available",
 			ActionArguments: guardArguments,
 		}),
 		commandStep("Start kingdom resource shipment", "kgt", payload, "kgt", Localization.New("server.app.start_kingdom_resource_shipment.13ab9230", "Start kingdom resource shipment", nil)),
-		{Name: "Consume confirmed donor resources", Action: "resources.kingdom.consume_source", ActionArguments: consumeArguments},
+		{Name: "Consume confirmed donor resources", NameDescriptor: Localization.New("server.app.consume_confirmed_donor_resources.d45042df", "Consume confirmed donor resources", nil), Action: "resources.kingdom.consume_source", ActionArguments: consumeArguments},
 	}
 	if strings.TrimSpace(request.TimeSkipID) != "" {
 		skipStep, currencyID, _, skipErr := kingdomResourceSkipStep(input, kingdomResourceSkipRequest{
@@ -461,7 +461,7 @@ func planKingdomResourceShipment(ctx context.Context, input Intent.PlanningConte
 		})
 		steps = append(steps,
 			kingdomTransportContextStep(),
-			contextCommandStep("Refresh skipped kingdom resource destination", "grc", targetRefreshPayload, "grc"),
+			contextCommandStep("Refresh skipped kingdom resource destination", "grc", targetRefreshPayload, "grc").WithNameDescriptor(Localization.New("server.app.refresh_skipped_kingdom_resource.cca0a5d0", "Refresh skipped kingdom resource destination", nil)),
 			Intent.Step{
 				Name: "Complete immediately skipped kingdom resource workflow", NameDescriptor: Localization.New("server.app.complete_immediately_skipped_kingdom.0d48f7e0", "Complete immediately skipped kingdom resource workflow", nil),
 				Action: "resources.kingdom.complete_workflow", ActionArguments: settlementArguments,
@@ -757,8 +757,8 @@ func planKingdomResourceSettlement(_ context.Context, input Intent.PlanningConte
 		},
 		Summary: fmt.Sprintf("Refresh %s after its completed kingdom resource transport", castleLabel(target)), SummaryDescriptor: Localization.New("server.app.refresh_p_after_its.6b9ad103", "Refresh {p0} after its completed kingdom resource transport", Localization.Params{"p0": fmt.Sprintf("%s", castleLabel(target))}),
 		Steps: []Intent.Step{
-			contextCommandStep("Refresh kingdom resource destination", "grc", refreshPayload, "grc"),
-			{Name: "Complete owned kingdom resource workflow", Action: "resources.kingdom.complete_workflow", ActionArguments: arguments},
+			contextCommandStep("Refresh kingdom resource destination", "grc", refreshPayload, "grc").WithNameDescriptor(Localization.New("server.app.refresh_kingdom_resource_destination.2312062d", "Refresh kingdom resource destination", nil)),
+			{Name: "Complete owned kingdom resource workflow", NameDescriptor: Localization.New("server.app.complete_owned_kingdom_resource.284592d4", "Complete owned kingdom resource workflow", nil), Action: "resources.kingdom.complete_workflow", ActionArguments: arguments},
 		},
 	}, nil
 }

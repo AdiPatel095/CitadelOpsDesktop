@@ -354,7 +354,7 @@ func planAllianceTargetAttack(_ context.Context, input Intent.PlanningContext, a
 			time.Since(input.State.Player.LegendSkills.ObservedAt) >= 5*time.Minute) {
 		steps = append(steps, contextCommandStep(
 			"Refresh Hall of Legends attack limits", "skl", json.RawMessage(`{}`), "skl",
-		))
+		).WithNameDescriptor(Localization.New("server.app.refresh_hall_of_legends.2b74581a", "Refresh Hall of Legends attack limits", nil)))
 	}
 	steps = append(steps, generalSkillsContextSteps(input.State, commanderID, time.Now().UTC())...)
 	steps = append(steps, attackCastleContextStep(source))
@@ -638,7 +638,7 @@ func (application *Application) planRiftReplay(_ context.Context, input Intent.P
 		return Intent.Plan{
 			Claims:  []string{"scheduled-operation:rift:" + request.LaunchID},
 			Summary: fmt.Sprintf("Schedule Rift launch %s for %s", request.LaunchID, time.Unix(normalizedArrival, 0).Format(time.RFC3339)), SummaryDescriptor: Localization.New("server.app.schedule_rift_launch_p.3e3e36f7", "Schedule Rift launch {p0} for {p1}", Localization.Params{"p0": fmt.Sprintf("%s", request.LaunchID), "p1": fmt.Sprintf("%s", time.Unix(normalizedArrival, 0).Format(time.RFC3339))}),
-			Steps: []Intent.Step{{Name: "Schedule Rift replay", Action: "operation.schedule", ActionArguments: schedule}},
+			Steps: []Intent.Step{{Name: "Schedule Rift replay", NameDescriptor: Localization.New("server.app.schedule_rift_replay.06415917", "Schedule Rift replay", nil), Action: "operation.schedule", ActionArguments: schedule}},
 		}, nil
 	}
 	if request.HorseTravelBoostID != nil {
@@ -962,8 +962,8 @@ func planRiftTemplateRename(_ context.Context, input Intent.PlanningContext, arg
 	}
 	canonical, _ := json.Marshal(request)
 	return Intent.Plan{
-		Claims: []string{"rift-launch:" + request.LaunchID}, Summary: "Rename Rift launch " + request.LaunchID,
-		Steps: []Intent.Step{{Name: "Rename Rift template", Action: "rift.template.rename", ActionArguments: canonical}},
+		Claims: []string{"rift-launch:" + request.LaunchID}, Summary: "Rename Rift launch " + request.LaunchID, SummaryDescriptor: Localization.New("server.app.rename_rift_launch.summary", "Rename Rift launch {launch}", Localization.Params{"launch": request.LaunchID}),
+		Steps: []Intent.Step{{Name: "Rename Rift template", NameDescriptor: Localization.New("server.app.rename_rift_template.1c813c57", "Rename Rift template", nil), Action: "rift.template.rename", ActionArguments: canonical}},
 	}, nil
 }
 
@@ -982,10 +982,10 @@ func planRiftTemplateDelete(_ context.Context, input Intent.PlanningContext, arg
 	cancel, _ := json.Marshal(map[string]string{"id": "rift:" + request.LaunchID})
 	return Intent.Plan{
 		Claims:  []string{"rift-launch:" + request.LaunchID, "scheduled-operation:rift:" + request.LaunchID},
-		Summary: "Delete Rift launch " + request.LaunchID,
+		Summary: "Delete Rift launch " + request.LaunchID, SummaryDescriptor: Localization.New("server.app.delete_rift_launch.summary", "Delete Rift launch {launch}", Localization.Params{"launch": request.LaunchID}),
 		Steps: []Intent.Step{
-			{Name: "Delete Rift template", Action: "rift.template.delete", ActionArguments: canonical},
-			{Name: "Cancel scheduled replay", Action: "operation.cancel", ActionArguments: cancel},
+			{Name: "Delete Rift template", NameDescriptor: Localization.New("server.app.delete_rift_template.1df7956d", "Delete Rift template", nil), Action: "rift.template.delete", ActionArguments: canonical},
+			{Name: "Cancel scheduled replay", NameDescriptor: Localization.New("server.app.cancel_scheduled_replay.67621819", "Cancel scheduled replay", nil), Action: "operation.cancel", ActionArguments: cancel},
 		},
 	}, nil
 }

@@ -939,7 +939,7 @@ func planCastleFocus(_ context.Context, input Intent.PlanningContext, arguments 
 	}
 	steps := castleContextSteps(input, castle)
 	if request.Refresh && len(steps) == 0 {
-		steps = []Intent.Step{castleRefreshStep("Refresh focused castle", castle)}
+		steps = []Intent.Step{castleRefreshStep("Refresh focused castle", castle).WithNameDescriptor(Localization.New("server.app.refresh_focused_castle.6827e21f", "Refresh focused castle", nil))}
 	}
 	if request.Refresh {
 		for index := range steps {
@@ -983,7 +983,7 @@ func planAllianceInspect(_ context.Context, _ Intent.PlanningContext, arguments 
 		Claims: []string{"alliance-directory"}, Summary: fmt.Sprintf("Inspect alliance %d", request.AllianceID), SummaryDescriptor: Localization.New("server.app.inspect_alliance_p.0b278106", "Inspect alliance {p0}", Localization.Params{"p0": fmt.Sprintf("%d", request.AllianceID)}),
 		Steps: []Intent.Step{
 			commandStep("Inspect alliance", "ain", payload, "ain", Localization.New("server.app.inspect_alliance.d97b1105", "Inspect alliance", nil)),
-			{Name: "Verify inspected alliance", Action: "alliance.verify_inspection", ActionArguments: verification},
+			{Name: "Verify inspected alliance", NameDescriptor: Localization.New("server.app.verify_inspected_alliance.3767a4af", "Verify inspected alliance", nil), Action: "alliance.verify_inspection", ActionArguments: verification},
 		},
 	}, nil
 }

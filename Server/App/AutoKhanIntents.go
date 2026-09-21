@@ -144,7 +144,7 @@ func planKhanTaunt(_ context.Context, input Intent.PlanningContext, arguments js
 		Summary: "Trigger the full-rage Khan retaliation", SummaryDescriptor: Localization.New("server.app.trigger_the_full_rage.3832322d", "Trigger the full-rage Khan retaliation", nil),
 		Steps: []Intent.Step{
 			{
-				Name: "Revalidate and dispatch Khan retaliation", Resolver: "khan.taunt.build",
+				Name: "Revalidate and dispatch Khan retaliation", NameDescriptor: Localization.New("server.app.revalidate_and_dispatch_khan.1719c552", "Revalidate and dispatch Khan retaliation", nil), Resolver: "khan.taunt.build",
 				ResolverArguments: arguments, AwaitOpcode: "gam",
 				TimeoutMillis: khanTauntResponseTimeoutMillis, SuccessCodes: []int{0},
 				ResponseBarrier: Intent.ResponseBarrierCommitted,
@@ -152,7 +152,7 @@ func planKhanTaunt(_ context.Context, input Intent.PlanningContext, arguments js
 					PlayerID: int64(input.State.Player.ID), CastleID: int64(request.MainCastleID),
 				},
 			},
-			{Name: "Record accepted Khan retaliation", Action: "khan.taunt.accepted", ActionArguments: arguments},
+			{Name: "Record accepted Khan retaliation", NameDescriptor: Localization.New("server.app.record_accepted_khan_retaliation.d352f5fa", "Record accepted Khan retaliation", nil), Action: "khan.taunt.accepted", ActionArguments: arguments},
 		},
 	}, nil
 }
@@ -813,7 +813,7 @@ func planKhanDefenseToolReplenish(
 	steps := castleContextSteps(input, main)
 	if item.Stock > 0 {
 		historyPayload, _ := json.Marshal(map[string]any{"CID": main.ID, "KID": main.KingdomID})
-		history := shopCommandStep("Refresh defense-tool package counters", "gbc", historyPayload, 0)
+		history := shopCommandStep("Refresh defense-tool package counters", "gbc", historyPayload, 0).WithNameDescriptor(Localization.New("server.app.refresh_defense_tool_package.07939425", "Refresh defense-tool package counters", nil))
 		history.ResponseBarrier = Intent.ResponseBarrierCommitted
 		steps = append(steps, history)
 	}
@@ -1075,7 +1075,7 @@ func planKhanProtectionClear(_ context.Context, input Intent.PlanningContext, ar
 	}
 	return Intent.Plan{
 		Claims: []string{"khan-protection", "khan-lane"}, Summary: "Clear recovered Auto Khan protection lock", SummaryDescriptor: Localization.New("server.app.clear_recovered_auto_khan.d138c900", "Clear recovered Auto Khan protection lock", nil),
-		Steps: []Intent.Step{{Name: "Verify defense recovery", Action: "khan.protection.clear", ActionArguments: arguments}},
+		Steps: []Intent.Step{{Name: "Verify defense recovery", NameDescriptor: Localization.New("server.app.verify_defense_recovery.60824194", "Verify defense recovery", nil), Action: "khan.protection.clear", ActionArguments: arguments}},
 	}, nil
 }
 

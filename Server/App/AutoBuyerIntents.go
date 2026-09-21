@@ -161,7 +161,7 @@ func planAutoBuyerPackageHistory(_ context.Context, input Intent.PlanningContext
 		return Intent.Plan{}, err
 	}
 	payload, _ := json.Marshal(map[string]any{"CID": source.ID, "KID": source.KingdomID})
-	step := shopCommandStep("Refresh Auto Buyer package counters", "gbc", payload, 0)
+	step := shopCommandStep("Refresh Auto Buyer package counters", "gbc", payload, 0).WithNameDescriptor(Localization.New("server.app.refresh_auto_buyer_package.3d51b3ea", "Refresh Auto Buyer package counters", nil))
 	step.ResponseBarrier = Intent.ResponseBarrierCommitted
 	steps := castleContextSteps(input, source)
 	steps = append(steps, step)
@@ -189,7 +189,7 @@ func planAutoBuyerBoostersRefresh(_ context.Context, _ Intent.PlanningContext, a
 		steps = append(steps, Intent.RebuildOnResume(costReduction), Intent.RebuildOnResume(castleDetails))
 		claims = append(claims, "castle-directory", "account-resources")
 	}
-	boosters := shopCommandStep("Refresh specialist and feast timers", "boi", json.RawMessage(`{}`), 0)
+	boosters := shopCommandStep("Refresh specialist and feast timers", "boi", json.RawMessage(`{}`), 0).WithNameDescriptor(Localization.New("server.app.refresh_specialist_and_feast.71c01280", "Refresh specialist and feast timers", nil))
 	boosters.ResponseBarrier = Intent.ResponseBarrierCommitted
 	steps = append(steps, Intent.RebuildOnResume(boosters))
 	summary := "Refresh Auto Buyer specialist timers"
@@ -214,9 +214,9 @@ func planAutoBuyerPackagePurchase(_ context.Context, input Intent.PlanningContex
 	}
 	resolved, _ := json.Marshal(request)
 	historyPayload, _ := json.Marshal(map[string]any{"CID": source.ID, "KID": source.KingdomID})
-	historyBefore := shopCommandStep("Refresh package counter before purchase", "gbc", historyPayload, 0)
+	historyBefore := shopCommandStep("Refresh package counter before purchase", "gbc", historyPayload, 0).WithNameDescriptor(Localization.New("server.app.refresh_package_counter_before.fa650f31", "Refresh package counter before purchase", nil))
 	historyBefore.ResponseBarrier = Intent.ResponseBarrierCommitted
-	historyAfter := shopCommandStep("Verify package counter after purchase", "gbc", historyPayload, 0)
+	historyAfter := shopCommandStep("Verify package counter after purchase", "gbc", historyPayload, 0).WithNameDescriptor(Localization.New("server.app.verify_package_counter_after.b0540f79", "Verify package counter after purchase", nil))
 	historyAfter.ResponseBarrier = Intent.ResponseBarrierCommitted
 	purchaseCastleID := int64(-1)
 	purchaseKingdomID := State.KingdomID(0)
@@ -270,16 +270,16 @@ func planAutoBuyerSpecialistPurchase(_ context.Context, input Intent.PlanningCon
 	}
 	request.AttemptAfter = now
 	resolved, _ := json.Marshal(request)
-	refreshBefore := shopCommandStep("Refresh specialist timer before renewal", "boi", json.RawMessage(`{}`), 0)
+	refreshBefore := shopCommandStep("Refresh specialist timer before renewal", "boi", json.RawMessage(`{}`), 0).WithNameDescriptor(Localization.New("server.app.refresh_specialist_timer_before.e9512156", "Refresh specialist timer before renewal", nil))
 	refreshBefore.ResponseBarrier = Intent.ResponseBarrierCommitted
-	refreshAfter := shopCommandStep("Refresh specialist timer after renewal", "boi", json.RawMessage(`{}`), 0)
+	refreshAfter := shopCommandStep("Refresh specialist timer after renewal", "boi", json.RawMessage(`{}`), 0).WithNameDescriptor(Localization.New("server.app.refresh_specialist_timer_after.09bc8370", "Refresh specialist timer after renewal", nil))
 	refreshAfter.ResponseBarrier = Intent.ResponseBarrierCommitted
 	return Intent.Plan{
 		Claims:  []string{"shop", "market:boosters", "account-resources", "specialist:" + strconv.Itoa(request.SpecialistID)},
 		Summary: fmt.Sprintf("Renew %s by 7 days within a %d-ruby ceiling", specialist.Name, request.MaximumRubyCostPerPurchase), SummaryDescriptor: specialistNameDescriptor(Localization.New("server.app.renew_p_by_days.310dce39", "Renew {p0} by 7 days within a {p1}-ruby ceiling", Localization.Params{"p0": fmt.Sprintf("%s", specialist.Name), "p1": request.MaximumRubyCostPerPurchase}), specialist),
 		Steps: []Intent.Step{
 			refreshBefore,
-			{Name: "Renew " + specialist.Name, Resolver: "auto_buyer.specialist.purchase.build", ResolverArguments: resolved,
+			{Name: "Renew " + specialist.Name, NameDescriptor: specialistRenewalDescriptor(specialist), Resolver: "auto_buyer.specialist.purchase.build", ResolverArguments: resolved,
 				AwaitOpcode: specialist.Opcode, TimeoutMillis: 10_000, SuccessCodes: []int{0}, CaptureResponse: true,
 				ResponseBarrier: Intent.ResponseBarrierCommitted, ResponseProjectionFailureIndeterminate: true},
 			refreshAfter,
@@ -309,7 +309,7 @@ func resolveAutoBuyerSpecialistPurchaseStep(_ context.Context, input Intent.Plan
 	if specialist.Opcode == "ovs" {
 		payload, _ = json.Marshal(map[string]any{"T": specialist.ResourceType, "PO": -1})
 	}
-	step := shopCommandStep("Renew "+specialist.Name, specialist.Opcode, payload, 0)
+	step := shopCommandStep("Renew "+specialist.Name, specialist.Opcode, payload, 0).WithNameDescriptor(specialistRenewalDescriptor(specialist))
 	step.ResponseBarrier = Intent.ResponseBarrierCommitted
 	step.CaptureResponse = true
 	step.PreDispatchAction = "auto_buyer.specialist.arm"
@@ -331,7 +331,7 @@ func planAutoBuyerSpecialistReconcile(_ context.Context, _ Intent.PlanningContex
 	if err := decodeIntentArguments(arguments, &request); err != nil || request.SpecialistID < 0 {
 		return Intent.Plan{}, Localization.WithError(fmt.Errorf("specialist reconciliation request is invalid"), Localization.New("server.app.specialist_reconciliation_request_is.564c87f8", "specialist reconciliation request is invalid", nil))
 	}
-	refresh := shopCommandStep("Refresh unresolved specialist timer", "boi", json.RawMessage(`{}`), 0)
+	refresh := shopCommandStep("Refresh unresolved specialist timer", "boi", json.RawMessage(`{}`), 0).WithNameDescriptor(Localization.New("server.app.refresh_unresolved_specialist_timer.6c92b5a9", "Refresh unresolved specialist timer", nil))
 	refresh.ResponseBarrier = Intent.ResponseBarrierCommitted
 	return Intent.Plan{Claims: []string{"shop", "market:boosters", "account-resources"}, Summary: "Reconcile unresolved specialist purchase", SummaryDescriptor: Localization.New("server.app.reconcile_unresolved_specialist_purchase.de090c21", "Reconcile unresolved specialist purchase", nil), Steps: []Intent.Step{
 		Intent.RebuildOnResume(refresh), Intent.RebuildOnResume(Intent.Step{Name: "Reconcile specialist purchase", NameDescriptor: Localization.New("server.app.reconcile_specialist_purchase.c84bdf0e", "Reconcile specialist purchase", nil), Action: "auto_buyer.specialist.reconcile", ActionArguments: arguments}),
@@ -363,13 +363,14 @@ func planAutoBuyerFeastPurchase(_ context.Context, input Intent.PlanningContext,
 	routePayload, _ := json.Marshal(autoBuyerFeastRoute{
 		FeastID: feast.ID, CastleID: source.ID, KingdomID: source.KingdomID, Preflight: true,
 	})
-	boosterRefreshAfter := shopCommandStep("Refresh feast timer after purchase", "boi", json.RawMessage(`{}`), 0)
+	boosterRefreshAfter := shopCommandStep("Refresh feast timer after purchase", "boi", json.RawMessage(`{}`), 0).WithNameDescriptor(Localization.New("server.app.refresh_feast_timer_after.a5f4950e", "Refresh feast timer after purchase", nil))
 	boosterRefreshAfter.ResponseBarrier = Intent.ResponseBarrierCommitted
 	castleRefreshAfter := commandStep("Refresh feast castle resources after purchase", "dcl", json.RawMessage(`{"CD":1}`), "dcl", Localization.New("server.app.refresh_feast_castle_resources.c9c34336", "Refresh feast castle resources after purchase", nil))
 	castleRefreshAfter.ResponseBarrier = Intent.ResponseBarrierCommitted
 	purchase := Intent.Step{
-		Name:     "Refresh feast context and start or extend " + feast.Name,
-		Resolver: "auto_buyer.feast.purchase.build", ResolverArguments: resolved,
+		Name:           "Refresh feast context and start or extend " + feast.Name,
+		NameDescriptor: Localization.New("server.app.refresh_feast_context.step", "Refresh feast context and start or extend {feast}", Localization.Params{"feast": feast.Name}).WithGameParam("feast", GameData.FeastNameKey(input.Language, feast), feast.Name),
+		Resolver:       "auto_buyer.feast.purchase.build", ResolverArguments: resolved,
 		AwaitOpcode: "bfs", TimeoutMillis: 10_000, SuccessCodes: []int{0}, CaptureResponse: true,
 		ResponseBarrier:                        Intent.ResponseBarrierCommitted,
 		ResponseProjectionFailureIndeterminate: true,
@@ -396,7 +397,7 @@ func planAutoBuyerFeastReconcile(_ context.Context, _ Intent.PlanningContext, ar
 	if request.FeastID < 0 || request.SourceCastleID <= 0 || request.AttemptAfter.IsZero() {
 		return Intent.Plan{}, Localization.WithError(fmt.Errorf("feast reconciliation boundary is invalid"), Localization.New("server.app.feast_reconciliation_boundary_is.47c9f134", "feast reconciliation boundary is invalid", nil))
 	}
-	boosterRefresh := shopCommandStep("Reconcile feast timer after incomplete purchase", "boi", json.RawMessage(`{}`), 0)
+	boosterRefresh := shopCommandStep("Reconcile feast timer after incomplete purchase", "boi", json.RawMessage(`{}`), 0).WithNameDescriptor(Localization.New("server.app.reconcile_feast_timer_after.3e12607f", "Reconcile feast timer after incomplete purchase", nil))
 	boosterRefresh.ResponseBarrier = Intent.ResponseBarrierCommitted
 	castleRefresh := commandStep("Reconcile feast castle resources after incomplete purchase", "dcl", json.RawMessage(`{"CD":1}`), "dcl", Localization.New("server.app.reconcile_feast_castle_resources.c052e4ee", "Reconcile feast castle resources after incomplete purchase", nil))
 	castleRefresh.ResponseBarrier = Intent.ResponseBarrierCommitted
@@ -437,7 +438,7 @@ func (application *Application) resolveAutoBuyerFeastCommandDependencies(
 	}
 	costReduction := commandStep("Refresh feast cost reduction before purchase", "fce", json.RawMessage(`{}`), "fce", Localization.New("server.app.refresh_feast_cost_reduction.3c7b924b", "Refresh feast cost reduction before purchase", nil))
 	costReduction.ResponseBarrier = Intent.ResponseBarrierCommitted
-	feastTimer := shopCommandStep("Refresh feast timer before purchase", "boi", json.RawMessage(`{}`), 0)
+	feastTimer := shopCommandStep("Refresh feast timer before purchase", "boi", json.RawMessage(`{}`), 0).WithNameDescriptor(Localization.New("server.app.refresh_feast_timer_before.1d6240fd", "Refresh feast timer before purchase", nil))
 	feastTimer.ResponseBarrier = Intent.ResponseBarrierCommitted
 	castleDetails := commandStep("Refresh feast castle resources immediately before purchase", "dcl", json.RawMessage(`{"CD":1}`), "dcl", Localization.New("server.app.refresh_feast_castle_resources.d0a49790", "Refresh feast castle resources immediately before purchase", nil))
 	castleDetails.ResponseBarrier = Intent.ResponseBarrierCommitted
@@ -448,7 +449,7 @@ func (application *Application) resolveAutoBuyerFeastCommandDependencies(
 	}
 	contextSteps := castleContextSteps(input, source)
 	if len(contextSteps) == 0 {
-		contextSteps = []Intent.Step{castleRefreshStep("Refresh automatic feast source economy", source)}
+		contextSteps = []Intent.Step{castleRefreshStep("Refresh automatic feast source economy", source).WithNameDescriptor(Localization.New("server.app.refresh_automatic_feast_source.2906857c", "Refresh automatic feast source economy", nil))}
 	}
 	return Intent.CommandDependencyPlan{
 		Key: key,

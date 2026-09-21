@@ -1,6 +1,7 @@
 package State
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"fmt"
 	"strings"
 	"time"
@@ -61,4 +62,15 @@ func (lock AutomationSafetyLock) Detail() string {
 		return detail + " Paused until " + until.UTC().Format(time.RFC3339) + "."
 	}
 	return detail + " Review this rejection before explicitly clearing the lane lock."
+}
+
+// DetailDescriptor mirrors Detail using a producer-owned template. Protocol
+// identifiers and the UTC deadline remain exact evidence values.
+func (lock AutomationSafetyLock) DetailDescriptor() *Localization.Message {
+	params := Localization.Params{"opcode": strings.ToUpper(lock.Opcode), "code": lock.Code, "operation": lock.OperationID}
+	if until := lock.ExpiresAt(); !until.IsZero() {
+		params["until"] = until.UTC().Format(time.RFC3339)
+		return Localization.Bind(Localization.New("server.state.safety_lock.until", "Safety lock after {opcode} {code} (operation {operation}). Paused until {until}.", params), lock.Detail())
+	}
+	return Localization.Bind(Localization.New("server.state.safety_lock.review", "Safety lock after {opcode} {code} (operation {operation}). Review this rejection before explicitly clearing the lane lock.", params), lock.Detail())
 }

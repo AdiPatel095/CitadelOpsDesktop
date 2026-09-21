@@ -48,7 +48,7 @@ func planAutoBirdCastleControl(_ context.Context, input Intent.PlanningContext, 
 		// the control revision. They must not wait for that cycle's claim.
 		Claims:  []string{fmt.Sprintf("auto-bird-control:%d", request.SourceCastleID)},
 		Summary: fmt.Sprintf("%s Auto Bird for castle %d", request.Action, request.SourceCastleID), SummaryDescriptor: Localization.New("server.app.p_auto_bird_for.3128212d", "{p0} Auto Bird for castle {p1}", Localization.Params{"p0": fmt.Sprintf("%s", request.Action), "p1": fmt.Sprintf("%d", request.SourceCastleID)}),
-		Steps: []Intent.Step{{Name: "Update castle Auto Bird control", Action: "auto_bird.castle.control", ActionArguments: arguments}},
+		Steps: []Intent.Step{{Name: "Update castle Auto Bird control", NameDescriptor: Localization.New("server.app.update_castle_auto_bird.419c9665", "Update castle Auto Bird control", nil), Action: "auto_bird.castle.control", ActionArguments: arguments}},
 	}, nil
 }
 

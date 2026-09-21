@@ -95,7 +95,7 @@ func planBeriBlueprintSave(
 			blueprint.Name, blueprint.Target.CastleID, diff.TargetCount, diff.ActionCount,
 		), SummaryDescriptor: Localization.New("server.app.save_and_activate_p.a0f583c2", "Save and activate {p0} for Berimond camp {p1} ({p2} targets, {p3} planned actions)", Localization.Params{"p0": fmt.Sprintf("%s", blueprint.Name), "p1": fmt.Sprintf("%d", blueprint.Target.CastleID), "p2": diff.TargetCount, "p3": diff.ActionCount}),
 		Steps: []Intent.Step{{
-			Name: "Save Berimond blueprint", Action: "beri.blueprint.save", ActionArguments: canonical,
+			Name: "Save Berimond blueprint", NameDescriptor: Localization.New("server.app.save_berimond_blueprint.30e35467", "Save Berimond blueprint", nil), Action: "beri.blueprint.save", ActionArguments: canonical,
 		}},
 	}, nil
 }
@@ -152,7 +152,7 @@ func planBeriBlueprintActivate(
 		Claims:  []string{"configuration:" + Buildings.BerimondBlueprintConfigurationSection},
 		Summary: summary, SummaryDescriptor: Localization.Clone(summaryLocalizationMessage),
 		Steps: []Intent.Step{{
-			Name: "Select Berimond blueprint", Action: "beri.blueprint.activate", ActionArguments: canonical,
+			Name: "Select Berimond blueprint", NameDescriptor: Localization.New("server.app.select_berimond_blueprint.e4248875", "Select Berimond blueprint", nil), Action: "beri.blueprint.activate", ActionArguments: canonical,
 		}},
 	}, nil
 }

@@ -134,3 +134,28 @@ func specialistNameDescriptor(message *Localization.Message, specialist GameData
 	delete(result.GameParams, parameter)
 	return result
 }
+
+// specialistRenewalDescriptor covers both resolver and final purchase step names.
+func specialistRenewalDescriptor(specialist GameData.AutoBuyerSpecialist) *Localization.Message {
+	switch specialist.ID {
+	case 0:
+		return Localization.New("server.app.specialist_renewal.step.0", "Renew wood overseer", nil)
+	case 1:
+		return Localization.New("server.app.specialist_renewal.step.1", "Renew stone overseer", nil)
+	case 2:
+		return Localization.New("server.app.specialist_renewal.step.2", "Renew food overseer", nil)
+	case 3:
+		return Localization.New("server.app.specialist_renewal.step.3", "Renew honey overseer", nil)
+	case 4:
+		return Localization.New("server.app.specialist_renewal.step.4", "Renew mead overseer", nil)
+	case 5:
+		return Localization.New("server.app.specialist_renewal.step.5", "Renew beef overseer", nil)
+	case 6:
+		return Localization.New("server.app.specialist_renewal.step.6", "Renew marauder", nil)
+	case 8:
+		return Localization.New("server.app.specialist_renewal.step.8", "Renew tax collector", nil)
+	case 10:
+		return Localization.New("server.app.specialist_renewal.step.10", "Renew drill instructor", nil)
+	}
+	return nil
+}

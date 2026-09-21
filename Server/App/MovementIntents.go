@@ -229,7 +229,7 @@ func resolveTroopsStationStep(_ context.Context, input Intent.PlanningContext, a
 	if request.Purpose != "" {
 		after = Intent.Step{Name: "Track accepted support batch", NameDescriptor: Localization.New("server.app.track_accepted_support_batch.167c6a02", "Track accepted support batch", nil), Action: "movement.track_station", ActionArguments: arguments}
 	}
-	return supportDispatchStep("Station troops", source, target, request.DelayHours, amounts, after), nil
+	return supportDispatchStep("Station troops", source, target, request.DelayHours, amounts, after).WithNameDescriptor(Localization.New("server.app.station_troops.2778f606", "Station troops", nil)), nil
 }
 
 func freshAutoBirdStationAmounts(

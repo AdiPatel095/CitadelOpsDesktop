@@ -268,7 +268,7 @@ func planStormCastleUnlock(_ context.Context, input Intent.PlanningContext, argu
 			}),
 			unlockStep,
 			castleListStep,
-			contextCommandStep("Refresh Storm kingdom state", "kpi", json.RawMessage(`{}`), "kpi"),
+			contextCommandStep("Refresh Storm kingdom state", "kpi", json.RawMessage(`{}`), "kpi").WithNameDescriptor(Localization.New("server.app.refresh_storm_kingdom_state.0012e929", "Refresh Storm kingdom state", nil)),
 		},
 	}, nil
 }
@@ -662,7 +662,7 @@ func planStormIslandReturn(_ context.Context, input Intent.PlanningContext, argu
 	}{request.IslandObjectID, castle.X, castle.Y, stationLeaderID, 0, -1, 1, 1, 0, wireUnits})
 	steps := castleContextSteps(input, castle)
 	steps = append(steps,
-		contextCommandStep("Preview island return route", "sdi", route, "sdi"),
+		contextCommandStep("Preview island return route", "sdi", route, "sdi").WithNameDescriptor(Localization.New("server.app.preview_island_return_route.280f06d9", "Preview island return route", nil)),
 		Intent.Step{Name: "Verify report-confirmed island survivors", NameDescriptor: Localization.New("server.app.verify_report_confirmed_island.add352f9", "Verify report-confirmed island survivors", nil), Action: "storm.island.return.guard", ActionArguments: arguments},
 		commandStep("Return surviving island troops to Storm castle", "cds", dispatch, "cds", Localization.New("server.app.return_surviving_island_troops.44a6c20a", "Return surviving island troops to Storm castle", nil)),
 		Intent.Step{Name: "Complete island troop return", NameDescriptor: Localization.New("server.app.complete_island_troop_return.ab63dd3f", "Complete island troop return", nil), Action: "storm.island.return.complete", ActionArguments: arguments},
@@ -692,8 +692,8 @@ func planStormShopPurchase(_ context.Context, input Intent.PlanningContext, argu
 	}{castle.ID, castle.KingdomID})
 	steps := []Intent.Step{
 		castleFocusStep(castle),
-		shopCommandStep("Refresh Luna package purchase counters", "gbc", historyPayload, 0),
-		{Name: "Verify Storm Aquamarine reserve", Action: "storm.shop.guard", ActionArguments: arguments},
+		shopCommandStep("Refresh Luna package purchase counters", "gbc", historyPayload, 0).WithNameDescriptor(Localization.New("server.app.refresh_luna_package_purchase.858325f5", "Refresh Luna package purchase counters", nil)),
+		{Name: "Verify Storm Aquamarine reserve", NameDescriptor: Localization.New("server.app.verify_storm_aquamarine_reserve.aca840c3", "Verify Storm Aquamarine reserve", nil), Action: "storm.shop.guard", ActionArguments: arguments},
 	}
 	purchaseLabels := make([]string, 0, len(purchases))
 	totalCost := int64(0)

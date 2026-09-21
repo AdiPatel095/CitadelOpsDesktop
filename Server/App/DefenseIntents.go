@@ -433,7 +433,7 @@ func defenseContextStep(castle State.CastleState) Intent.Step {
 		CastleID  int64 `json:"AID"`
 		KingdomID int64 `json:"KID"`
 	}{castle.X, castle.Y, int64(castle.ID), -1})
-	return contextCommandStep("Refresh castle defense", "dfc", payload, "dfc")
+	return contextCommandStep("Refresh castle defense", "dfc", payload, "dfc").WithNameDescriptor(Localization.New("server.app.refresh_castle_defense.9e213eef", "Refresh castle defense", nil))
 }
 
 func defenseCastle(input Intent.PlanningContext, castleID State.CastleID) (State.CastleState, error) {

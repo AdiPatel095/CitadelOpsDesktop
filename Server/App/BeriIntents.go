@@ -119,7 +119,7 @@ func planBeriCapacityRefresh(_ context.Context, input Intent.PlanningContext, ar
 		Steps: []Intent.Step{
 			commandStep("Refresh owned-castle troop inventories", "dcl", json.RawMessage(`{"CD":1}`), "dcl", Localization.New("server.app.refresh_owned_castle_troop.fddb7cdb", "Refresh owned-castle troop inventories", nil)),
 			commandStep("Refresh Berimond troop capacity", "fuc", payload, "fuc", Localization.New("server.app.refresh_berimond_troop_capacity.94ebee2a", "Refresh Berimond troop capacity", nil)),
-			{Name: "Verify refreshed Berimond troop capacity", Action: "beri.capacity.verify", ActionArguments: verifyArguments},
+			{Name: "Verify refreshed Berimond troop capacity", NameDescriptor: Localization.New("server.app.verify_refreshed_berimond_troop.4ecdd407", "Verify refreshed Berimond troop capacity", nil), Action: "beri.capacity.verify", ActionArguments: verifyArguments},
 		},
 	}, nil
 }
@@ -412,8 +412,8 @@ func planBeriCampOpen(_ context.Context, input Intent.PlanningContext, arguments
 				ActionArguments: guardArguments,
 			}),
 			commandStep("Open non-premium Berimond camp", "fsc", payload, "fsc", Localization.New("server.app.open_non_premium_berimond.c60d35de", "Open non-premium Berimond camp", nil)),
-			{Name: "Record Berimond camp-open request", Action: "beri.camp.opened", ActionArguments: mark},
-			contextCommandStep("Refresh Berimond kingdom state", "kpi", json.RawMessage(`{}`), "kpi"),
+			{Name: "Record Berimond camp-open request", NameDescriptor: Localization.New("server.app.record_berimond_camp_open.f1f1f963", "Record Berimond camp-open request", nil), Action: "beri.camp.opened", ActionArguments: mark},
+			contextCommandStep("Refresh Berimond kingdom state", "kpi", json.RawMessage(`{}`), "kpi").WithNameDescriptor(Localization.New("server.app.refresh_berimond_kingdom_state.2eeb2ffd", "Refresh Berimond kingdom state", nil)),
 		},
 	}, nil
 }
@@ -500,7 +500,7 @@ func planBeriTargetFind(_ context.Context, input Intent.PlanningContext, argumen
 	steps = append(steps, attackCastleContextStep(source))
 	steps = append(steps,
 		closeGameUIStep(),
-		contextCommandStep("Refresh Berimond world-map context", "gbl", json.RawMessage(`{}`), "gbl"),
+		contextCommandStep("Refresh Berimond world-map context", "gbl", json.RawMessage(`{}`), "gbl").WithNameDescriptor(Localization.New("server.app.refresh_berimond_world_map.6896dc80", "Refresh Berimond world-map context", nil)),
 		beriFindNextTowerStep(),
 		Intent.Step{
 			Name: "Verify selected Berimond tower", NameDescriptor: Localization.New("server.app.verify_selected_berimond_tower.aa5e88f9", "Verify selected Berimond tower", nil), Action: "beri.target.verify",
@@ -521,7 +521,7 @@ func planBeriTargetFind(_ context.Context, input Intent.PlanningContext, argumen
 func beriFindNextTowerStep() Intent.Step {
 	step := contextCommandStep(
 		"Find next available Berimond tower", "fnt", json.RawMessage(`{}`), "fnt",
-	)
+	).WithNameDescriptor(Localization.New("server.app.find_next_available_berimond.09c7c9c7", "Find next available Berimond tower", nil))
 	step.ResponseBarrier = Intent.ResponseBarrierCommitted
 	return step
 }
@@ -588,7 +588,7 @@ func planBeriTowerAttack(_ context.Context, input Intent.PlanningContext, argume
 		time.Since(input.State.Player.LegendSkills.ObservedAt) >= 5*time.Minute {
 		steps = append(steps, contextCommandStep(
 			"Refresh Hall of Legends attack limits", "skl", json.RawMessage(`{}`), "skl",
-		))
+		).WithNameDescriptor(Localization.New("server.app.refresh_hall_of_legends.2b74581a", "Refresh Hall of Legends attack limits", nil)))
 	}
 	steps = append(steps, generalSkillsContextSteps(input.State, request.CommanderID, time.Now().UTC())...)
 	steps = append(steps, attackCastleContextStep(source))
@@ -602,7 +602,7 @@ func planBeriTowerAttack(_ context.Context, input Intent.PlanningContext, argume
 	}{beriKingdomID, target.X, target.Y, target.X, target.Y})
 	targetRefreshStep := contextCommandStep(
 		"Refresh selected Berimond tower", "gaa", targetRefreshPayload, "gaa",
-	)
+	).WithNameDescriptor(Localization.New("server.app.refresh_selected_berimond_tower.a4dafb20", "Refresh selected Berimond tower", nil))
 	targetRefreshStep.ResponseBarrier = Intent.ResponseBarrierCommitted
 	craDependencyPayload, _ := json.Marshal(struct {
 		SourceX     int             `json:"SX"`
@@ -628,7 +628,7 @@ func planBeriTowerAttack(_ context.Context, input Intent.PlanningContext, argume
 			FeatureID: State.AttackFeatureAutoBeriWorld, SourceCastleID: source.ID, CommanderID: request.CommanderID,
 			KingdomID: beriKingdomID, TargetTypeID: target.TypeID, TargetX: target.X, TargetY: target.Y,
 		}),
-		attackCastleRefreshStep("Refresh Berimond source inventory after attack", source),
+		attackCastleRefreshStep("Refresh Berimond source inventory after attack", source).WithNameDescriptor(Localization.New("server.app.refresh_berimond_source_inventory.71930779", "Refresh Berimond source inventory after attack", nil)),
 	)
 	castleID := strconv.FormatInt(int64(source.ID), 10)
 	claims := []string{

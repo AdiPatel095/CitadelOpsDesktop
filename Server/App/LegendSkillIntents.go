@@ -116,7 +116,7 @@ func planLegendSkillPurchase(_ context.Context, input Intent.PlanningContext, ar
 	resolverArguments, _ := json.Marshal(request)
 	steps := make([]Intent.Step, 0, 2)
 	if needsRefresh {
-		steps = append(steps, contextCommandStep("Refresh Hall of Legends", "skl", json.RawMessage(`{}`), "skl"))
+		steps = append(steps, contextCommandStep("Refresh Hall of Legends", "skl", json.RawMessage(`{}`), "skl").WithNameDescriptor(Localization.New("server.app.refresh_hall_of_legends.8b3a8f86", "Refresh Hall of Legends", nil)))
 	}
 	steps = append(steps, Intent.Step{
 		Name: "Purchase Hall of Legends skill", NameDescriptor: Localization.New("server.app.purchase_hall_of_legends.98ed785e", "Purchase Hall of Legends skill", nil), Resolver: "legend.skill.purchase.build", ResolverArguments: resolverArguments,
@@ -202,14 +202,14 @@ func planLegendSkillsReset(_ context.Context, input Intent.PlanningContext, argu
 	}
 	steps := make([]Intent.Step, 0, 3)
 	if needsRefresh {
-		steps = append(steps, contextCommandStep("Refresh Hall of Legends", "skl", json.RawMessage(`{}`), "skl"))
+		steps = append(steps, contextCommandStep("Refresh Hall of Legends", "skl", json.RawMessage(`{}`), "skl").WithNameDescriptor(Localization.New("server.app.refresh_hall_of_legends.8b3a8f86", "Refresh Hall of Legends", nil)))
 	}
 	steps = append(steps,
 		Intent.Step{
 			Name: "Reset Hall of Legends skills", NameDescriptor: Localization.New("server.app.reset_hall_of_legends.f196d739", "Reset Hall of Legends skills", nil), Resolver: "legend.skills.reset.build", ResolverArguments: json.RawMessage(`{}`),
 			AwaitOpcode: "skr", TimeoutMillis: 10_000, SuccessCodes: []int{0},
 		},
-		contextCommandStep("Refresh reset Hall of Legends", "skl", json.RawMessage(`{}`), "skl"),
+		contextCommandStep("Refresh reset Hall of Legends", "skl", json.RawMessage(`{}`), "skl").WithNameDescriptor(Localization.New("server.app.refresh_reset_hall_of.b26b292f", "Refresh reset Hall of Legends", nil)),
 	)
 	return Intent.Plan{
 		Claims:  []string{"hall-of-legends"},

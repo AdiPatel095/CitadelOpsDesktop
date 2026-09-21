@@ -115,7 +115,7 @@ func planTowerQueueTargetRefresh(_ context.Context, input Intent.PlanningContext
 		Summary: fmt.Sprintf("Refresh queued tower %d:%d and rotate it if still stale", request.TargetX, request.TargetY), SummaryDescriptor: Localization.New("server.app.refresh_queued_tower_p.fcfff053", "Refresh queued tower {p0}:{p1} and rotate it if still stale", Localization.Params{"p0": request.TargetX, "p1": request.TargetY}),
 		Steps: []Intent.Step{
 			commandStep("Refresh queued tower", "gaa", payload, "gaa", Localization.New("server.app.refresh_queued_tower.244c96c8", "Refresh queued tower", nil)),
-			{Name: "Rotate unchanged tower behind ready targets", Action: "tower.queue.rotate_stale", ActionArguments: normalizedArguments},
+			{Name: "Rotate unchanged tower behind ready targets", NameDescriptor: Localization.New("server.app.rotate_unchanged_tower_behind.97ec5a96", "Rotate unchanged tower behind ready targets", nil), Action: "tower.queue.rotate_stale", ActionArguments: normalizedArguments},
 		},
 	}, nil
 }

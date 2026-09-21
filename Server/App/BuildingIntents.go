@@ -264,7 +264,7 @@ func resolveBuildingExpansionStep(_ context.Context, input Intent.PlanningContex
 		Direction   int `json:"R"`
 		PaymentType int `json:"CT"`
 	}{request.X, request.Y, request.Direction, paymentType})
-	return buildingMutationStep("Buy castle expansion", "ebe", payload), nil
+	return buildingMutationStep("Buy castle expansion", "ebe", payload).WithNameDescriptor(Localization.New("server.app.buy_castle_expansion.3fb31a21", "Buy castle expansion", nil)), nil
 }
 
 func planBuildingCollectExpansionGift(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
@@ -302,7 +302,7 @@ func resolveBuildingCollectExpansionGiftStep(_ context.Context, input Intent.Pla
 	payload, _ := json.Marshal(struct {
 		BuildingID State.BuildingInstanceID `json:"OID"`
 	}{request.BuildingInstanceID})
-	return buildingMutationStep("Collect expansion gift", "etc", payload), nil
+	return buildingMutationStep("Collect expansion gift", "etc", payload).WithNameDescriptor(Localization.New("server.app.collect_expansion_gift.bbcffec1", "Collect expansion gift", nil)), nil
 }
 
 func planBuildingRefresh(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
@@ -436,7 +436,7 @@ func resolveBuildingMoveStep(_ context.Context, input Intent.PlanningContext, ar
 		Y          int                      `json:"Y"`
 		Rotation   int                      `json:"R"`
 	}{request.BuildingInstanceID, request.X, request.Y, request.Rotation})
-	return buildingMutationStep("Move building", "emo", payload), nil
+	return buildingMutationStep("Move building", "emo", payload).WithNameDescriptor(Localization.New("server.app.move_building.298cf6eb", "Move building", nil)), nil
 }
 
 func planBuildingUpgrade(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
@@ -509,7 +509,7 @@ func resolveBuildingUpgradeStep(_ context.Context, input Intent.PlanningContext,
 		Power      int                      `json:"PWR"`
 		Offer      int                      `json:"PO"`
 	}{request.BuildingInstanceID, power, -1})
-	step := buildingMutationStep("Upgrade building", "eup", payload)
+	step := buildingMutationStep("Upgrade building", "eup", payload).WithNameDescriptor(Localization.New("server.app.upgrade_building.a2bf6f68", "Upgrade building", nil))
 	step.CoinCost, err = buildingCoinCostRequirement(input.GameData, target)
 	if err != nil {
 		return Intent.Step{}, err
@@ -590,7 +590,7 @@ func resolveBuildingFinishFreeStep(_ context.Context, input Intent.PlanningConte
 		BuildingID State.BuildingInstanceID `json:"OID"`
 		FreeSkip   int                      `json:"FS"`
 	}{request.BuildingInstanceID, 1})
-	return buildingMutationStep("Finish building operation for free", "fco", payload), nil
+	return buildingMutationStep("Finish building operation for free", "fco", payload).WithNameDescriptor(Localization.New("server.app.finish_building_operation_for.00d9c467", "Finish building operation for free", nil)), nil
 }
 
 func planBuildingTimeSkip(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
@@ -637,7 +637,7 @@ func resolveBuildingTimeSkipStep(_ context.Context, input Intent.PlanningContext
 		BuildingID State.BuildingInstanceID `json:"OID"`
 		MinuteSkip string                   `json:"MST"`
 	}{request.BuildingInstanceID, option.WireKey})
-	step := buildingMutationStep("Apply building time skip", "msb", payload)
+	step := buildingMutationStep("Apply building time skip", "msb", payload).WithNameDescriptor(Localization.New("server.app.apply_building_time_skip.e23a82b0", "Apply building time skip", nil))
 	step.StaleCodes = []int{147}
 	return step, nil
 }
@@ -677,7 +677,7 @@ func resolveBuildingStoreStep(_ context.Context, input Intent.PlanningContext, a
 	payload, _ := json.Marshal(struct {
 		BuildingID State.BuildingInstanceID `json:"OID"`
 	}{request.BuildingInstanceID})
-	return buildingMutationStep("Store building", "sob", payload), nil
+	return buildingMutationStep("Store building", "sob", payload).WithNameDescriptor(Localization.New("server.app.store_building.e47d9e78", "Store building", nil)), nil
 }
 
 func planBuildingDemolish(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
@@ -716,7 +716,7 @@ func resolveBuildingDemolishStep(_ context.Context, input Intent.PlanningContext
 	payload, _ := json.Marshal(struct {
 		BuildingID State.BuildingInstanceID `json:"OID"`
 	}{request.BuildingInstanceID})
-	step := buildingMutationStep("Demolish building", "edo", payload)
+	step := buildingMutationStep("Demolish building", "edo", payload).WithNameDescriptor(Localization.New("server.app.demolish_building.620f2c52", "Demolish building", nil))
 	step.StaleCodes = []int{147}
 	return step, nil
 }

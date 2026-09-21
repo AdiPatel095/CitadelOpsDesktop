@@ -129,7 +129,7 @@ func planAutoBirdClearTracking(
 		Claims:  []string{autoBirdCycleClaim(0)},
 		Summary: summary, SummaryDescriptor: Localization.Clone(summaryLocalizationMessage),
 		Steps: []Intent.Step{{
-			Name: "Clear persisted Auto Bird cycle tracking", Action: "auto_bird.tracking.clear",
+			Name: "Clear persisted Auto Bird cycle tracking", NameDescriptor: Localization.New("server.app.clear_persisted_auto_bird.3bae2f12", "Clear persisted Auto Bird cycle tracking", nil), Action: "auto_bird.tracking.clear",
 			ActionArguments: json.RawMessage(`{}`),
 		}},
 	}, nil
@@ -197,7 +197,7 @@ func planAutoBirdDiscover(
 		Steps: []Intent.Step{
 			allianceStep,
 			{
-				Name:   "Capture fresh Auto Bird target",
+				Name: "Capture fresh Auto Bird target", NameDescriptor: Localization.New("server.app.capture_fresh_auto_bird.bb79cf47", "Capture fresh Auto Bird target", nil),
 				Action: "auto_bird.target.capture", ActionArguments: actionArguments,
 			},
 		},
@@ -256,7 +256,7 @@ func planAutoBirdPrepare(
 		Steps: []Intent.Step{
 			stationCastleContextStep(source),
 			{
-				Name:   "Capture fresh Auto Bird troop manifest",
+				Name: "Capture fresh Auto Bird troop manifest", NameDescriptor: Localization.New("server.app.capture_fresh_auto_bird.7dbf9f48", "Capture fresh Auto Bird troop manifest", nil),
 				Action: "auto_bird.manifest.capture", ActionArguments: actionArguments,
 			},
 		},
@@ -306,7 +306,7 @@ func planAutoBirdDispatch(
 	// Refresh the source after acquiring castle-focus and retain that claim through
 	// the guard and CDS. A different feature may have changed focus after prepare.
 	steps := []Intent.Step{stationCastleContextStep(source), {
-		Name:   "Verify prepared Auto Bird castle context",
+		Name: "Verify prepared Auto Bird castle context", NameDescriptor: Localization.New("server.app.verify_prepared_auto_bird.d1de00e9", "Verify prepared Auto Bird castle context", nil),
 		Action: "auto_bird.dispatch.guard", ActionArguments: resolverArguments,
 	}}
 	steps = append(steps, stationRouteContextSteps(source, target)...)
@@ -319,7 +319,7 @@ func planAutoBirdDispatch(
 		Name: "Commit successful Auto Bird dispatch", NameDescriptor: Localization.New("server.app.commit_successful_auto_bird.211d25b8", "Commit successful Auto Bird dispatch", nil),
 		Action: "auto_bird.movement.capture", ActionArguments: resolverArguments,
 	})
-	movementStep := contextCommandStep("Refresh launched Auto Bird movement", "gam", json.RawMessage(`{}`), "gam")
+	movementStep := contextCommandStep("Refresh launched Auto Bird movement", "gam", json.RawMessage(`{}`), "gam").WithNameDescriptor(Localization.New("server.app.refresh_launched_auto_bird.58126557", "Refresh launched Auto Bird movement", nil))
 	movementStep.ResponseBarrier = Intent.ResponseBarrierCommitted
 	steps = append(steps, movementStep, Intent.Step{
 		Name: "Reconcile Auto Bird travel and expected return", NameDescriptor: Localization.New("server.app.reconcile_auto_bird_travel.5f3b84c0", "Reconcile Auto Bird travel and expected return", nil),
@@ -354,7 +354,7 @@ func planAutoBirdReconcile(
 		return Intent.Plan{}, Localization.WithError(fmt.Errorf("%w: castle %d has no Auto Bird movement to reconcile", Intent.ErrPlanStale, request.SourceCastleID), Localization.New("server.app.intent_plan_became_stale.e5df75df", "intent plan became stale before dispatch: castle {p1} has no Auto Bird movement to reconcile", Localization.Params{"p1": fmt.Sprintf("%d", request.SourceCastleID)}))
 	}
 	actionArguments, _ := json.Marshal(request)
-	movementStep := contextCommandStep("Refresh Auto Bird movements", "gam", json.RawMessage(`{}`), "gam")
+	movementStep := contextCommandStep("Refresh Auto Bird movements", "gam", json.RawMessage(`{}`), "gam").WithNameDescriptor(Localization.New("server.app.refresh_auto_bird_movements.626f3659", "Refresh Auto Bird movements", nil))
 	movementStep.ResponseBarrier = Intent.ResponseBarrierCommitted
 	return Intent.Plan{
 		Claims: []string{
@@ -366,7 +366,7 @@ func planAutoBirdReconcile(
 		Steps: []Intent.Step{
 			movementStep,
 			{
-				Name:   "Record reconciled Auto Bird travel and expected return",
+				Name: "Record reconciled Auto Bird travel and expected return", NameDescriptor: Localization.New("server.app.record_reconciled_auto_bird.c82aa6f3", "Record reconciled Auto Bird travel and expected return", nil),
 				Action: "auto_bird.movement.capture", ActionArguments: actionArguments,
 			},
 		},
@@ -768,7 +768,7 @@ func (application *Application) resolveAutoBirdDispatchStep(
 		)
 	}
 	step := supportDispatchStep("Dispatch Auto Bird troops", source, target, operation.DelayHours, manifest,
-		Intent.Step{Name: "Track accepted Auto Bird batch", NameDescriptor: Localization.New("server.app.track_accepted_auto_bird.4524d09b", "Track accepted Auto Bird batch", nil), Action: "auto_bird.movement.capture", ActionArguments: arguments})
+		Intent.Step{Name: "Track accepted Auto Bird batch", NameDescriptor: Localization.New("server.app.track_accepted_auto_bird.4524d09b", "Track accepted Auto Bird batch", nil), Action: "auto_bird.movement.capture", ActionArguments: arguments}).WithNameDescriptor(Localization.New("server.app.dispatch_auto_bird_troops.9e71a86c", "Dispatch Auto Bird troops", nil))
 	guard := func(step *Intent.Step) {
 		if step.Opcode != "cds" {
 			return

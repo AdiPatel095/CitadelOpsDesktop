@@ -169,7 +169,7 @@ func planNomadDifficulty(_ context.Context, input Intent.PlanningContext, argume
 		Summary: fmt.Sprintf("Start regular-camp event %d at difficulty %d", request.EventID, request.DifficultyID), SummaryDescriptor: Localization.New("server.app.start_regular_camp_event.2e7b446a", "Start regular-camp event {p0} at difficulty {p1}", Localization.Params{"p0": fmt.Sprintf("%d", request.EventID), "p1": fmt.Sprintf("%d", request.DifficultyID)}),
 		Steps: []Intent.Step{
 			commandStep("Select Nomad/Samurai event difficulty", "sede", payload, "sede", Localization.New("server.app.select_nomad_samurai_event.e4c385ff", "Select Nomad/Samurai event difficulty", nil)),
-			{Name: "Reset the previous regular-camp run", Action: "nomad.run.reset", ActionArguments: arguments},
+			{Name: "Reset the previous regular-camp run", NameDescriptor: Localization.New("server.app.reset_the_previous_regular.da489e83", "Reset the previous regular-camp run", nil), Action: "nomad.run.reset", ActionArguments: arguments},
 		},
 	}, nil
 }
@@ -199,7 +199,7 @@ func planNomadTargetLock(_ context.Context, input Intent.PlanningContext, argume
 	return Intent.Plan{
 		Claims:  []string{nomadTargetClaim(request.nomadTargetRequest)},
 		Summary: fmt.Sprintf("Lock weakest maxed camp at %d:%d", request.TargetX, request.TargetY), SummaryDescriptor: Localization.New("server.app.lock_weakest_maxed_camp.31f97bb8", "Lock weakest maxed camp at {p0}:{p1}", Localization.Params{"p0": request.TargetX, "p1": request.TargetY}),
-		Steps: []Intent.Step{{Name: "Lock regular event camp", Action: "nomad.target.capture", ActionArguments: normalized}},
+		Steps: []Intent.Step{{Name: "Lock regular event camp", NameDescriptor: Localization.New("server.app.lock_regular_event_camp.6a94e7c3", "Lock regular event camp", nil), Action: "nomad.target.capture", ActionArguments: normalized}},
 	}, nil
 }
 
@@ -262,7 +262,7 @@ func planNomadCampAttack(_ context.Context, input Intent.PlanningContext, argume
 	})
 	steps := make([]Intent.Step, 0, len(resolution.Selected)*2+8)
 	if input.State.Player.LegendSkills.ObservedAt.IsZero() || time.Since(input.State.Player.LegendSkills.ObservedAt) >= 5*time.Minute {
-		steps = append(steps, contextCommandStep("Refresh Hall of Legends attack limits", "skl", json.RawMessage(`{}`), "skl"))
+		steps = append(steps, contextCommandStep("Refresh Hall of Legends attack limits", "skl", json.RawMessage(`{}`), "skl").WithNameDescriptor(Localization.New("server.app.refresh_hall_of_legends.2b74581a", "Refresh Hall of Legends attack limits", nil)))
 	}
 	for _, commanderID := range resolution.Selected {
 		steps = append(steps, generalSkillsContextSteps(input.State, commanderID, time.Now().UTC())...)
@@ -399,9 +399,9 @@ func planNomadCooldownSkip(_ context.Context, input Intent.PlanningContext, argu
 		Claims:  []string{nomadTargetClaim(request.nomadTargetRequest), "account-resources"},
 		Summary: fmt.Sprintf("Reset %d-second cooldown on locked camp %d:%d for at most %d rubies", remaining, request.TargetX, request.TargetY, definition.SkipCost), SummaryDescriptor: Localization.New("server.app.reset_p_second_cooldown.8f9ac01b", "Reset {p0}-second cooldown on locked camp {p1}:{p2} for at most {p3} rubies", Localization.Params{"p0": remaining, "p1": request.TargetX, "p2": request.TargetY, "p3": definition.SkipCost}),
 		Steps: []Intent.Step{
-			{Name: "Verify locked camp cooldown and ruby reserve", Action: "nomad.cooldown.guard", ActionArguments: arguments},
+			{Name: "Verify locked camp cooldown and ruby reserve", NameDescriptor: Localization.New("server.app.verify_locked_camp_cooldown.83af720d", "Verify locked camp cooldown and ruby reserve", nil), Action: "nomad.cooldown.guard", ActionArguments: arguments},
 			reset,
-			{Name: "Verify returned zero-cooldown camp row", Action: "nomad.cooldown.verify", ActionArguments: verification},
+			{Name: "Verify returned zero-cooldown camp row", NameDescriptor: Localization.New("server.app.verify_returned_zero_cooldown.e40a740d", "Verify returned zero-cooldown camp row", nil), Action: "nomad.cooldown.verify", ActionArguments: verification},
 		},
 	}, nil
 }

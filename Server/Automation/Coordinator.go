@@ -429,7 +429,7 @@ func (coordinator *Coordinator) evaluate(
 			current.evaluatedSessionKnown = true
 			current.eventOnly = lock.ExpiresAt().IsZero()
 			current.nextCheck = lock.ExpiresAt()
-			coordinator.recordDecision(policy.ID(), policyEnabled(policy, enabled, state), Decision{Status: "gated", Detail: lock.Detail(), NextCheckAt: lock.ExpiresAt()})
+			coordinator.recordDecision(policy.ID(), policyEnabled(policy, enabled, state), Decision{Status: "gated", Detail: lock.Detail(), DetailDescriptor: lock.DetailDescriptor(), NextCheckAt: lock.ExpiresAt()})
 			continue
 		}
 		if !policyEvaluationDue(current, configuration.Revision, sessionReady, state.Session.Generation, now) {
@@ -1308,8 +1308,8 @@ func (coordinator *Coordinator) updateAutomation(id string, update func(State.Au
 		if lock := current.SafetyLock; lock.Active(time.Now().UTC()) {
 			next.Status = "gated"
 			next.Detail = lock.Detail()
-			next.DetailDescriptor = nil
-			next.LastErrorDescriptor = nil
+			next.DetailDescriptor = lock.DetailDescriptor()
+			next.LastErrorDescriptor = lock.DetailDescriptor()
 			next.LastError = next.Detail
 			next.LastOperationID = lock.OperationID
 			next.NextCheckAt = timePointer(lock.ExpiresAt())

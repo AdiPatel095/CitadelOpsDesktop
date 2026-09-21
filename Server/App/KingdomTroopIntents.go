@@ -983,9 +983,9 @@ func planKingdomTroopSkip(_ context.Context, input Intent.PlanningContext, argum
 		}
 		steps = []Intent.Step{
 			step,
-			{Name: "Verify kingdom troop timer advanced", Action: "troops.kingdom.skip.verify_timer", ActionArguments: requestArguments},
-			accountInventoryRefreshStep("Refresh official time-skip inventory"),
-			{Name: "Confirm official time-skip consumption", Action: "troops.kingdom.skip.verify_inventory", ActionArguments: requestArguments},
+			{Name: "Verify kingdom troop timer advanced", NameDescriptor: Localization.New("server.app.verify_kingdom_troop_timer.8f28dec8", "Verify kingdom troop timer advanced", nil), Action: "troops.kingdom.skip.verify_timer", ActionArguments: requestArguments},
+			accountInventoryRefreshStep("Refresh official time-skip inventory").WithNameDescriptor(Localization.New("server.app.refresh_official_time_skip.dbd0cda5", "Refresh official time-skip inventory", nil)),
+			{Name: "Confirm official time-skip consumption", NameDescriptor: Localization.New("server.app.confirm_official_time_skip.e9cf4332", "Confirm official time-skip consumption", nil), Action: "troops.kingdom.skip.verify_inventory", ActionArguments: requestArguments},
 		}
 	}
 	return Intent.Plan{
@@ -1014,7 +1014,7 @@ func planAccountInventoryRefresh(_ context.Context, _ Intent.PlanningContext, ar
 	return Intent.Plan{
 		Claims:  []string{"account-resources", "account-currencies"},
 		Summary: "Refresh authoritative account inventory", SummaryDescriptor: Localization.New("server.app.refresh_authoritative_account_inventory.09e11d47", "Refresh authoritative account inventory", nil),
-		Steps: []Intent.Step{accountInventoryRefreshStep("Refresh authoritative account inventory")},
+		Steps: []Intent.Step{accountInventoryRefreshStep("Refresh authoritative account inventory").WithNameDescriptor(Localization.New("server.app.refresh_authoritative_account_inventory.09e11d47", "Refresh authoritative account inventory", nil))},
 	}, nil
 }
 

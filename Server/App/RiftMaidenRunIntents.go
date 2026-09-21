@@ -107,7 +107,7 @@ func planRiftMaidenRunStart(_ context.Context, input Intent.PlanningContext, arg
 		Claims:  []string{"rift-launch:maiden-wave"},
 		Summary: fmt.Sprintf("Start a %d-probe Rift Maiden run", request.AttackCount), SummaryDescriptor: Localization.New("server.app.start_a_p_probe.4c883f24", "Start a {p0}-probe Rift Maiden run", Localization.Params{"p0": request.AttackCount}),
 		Steps: []Intent.Step{{
-			Name: "Start Rift Maiden probe run", Action: "rift.maiden_run.start", ActionArguments: actionArguments,
+			Name: "Start Rift Maiden probe run", NameDescriptor: Localization.New("server.app.start_rift_maiden_probe.5f796f70", "Start Rift Maiden probe run", nil), Action: "rift.maiden_run.start", ActionArguments: actionArguments,
 		}},
 	}, nil
 }
@@ -133,7 +133,7 @@ func planRiftMaidenRunCancel(_ context.Context, input Intent.PlanningContext, ar
 		Claims:  []string{"rift-launch:maiden-wave"},
 		Summary: fmt.Sprintf("Cancel Rift Maiden run at %d of %d probes", current.AttacksLaunched, current.RequestedAttacks), SummaryDescriptor: Localization.New("server.app.cancel_rift_maiden_run.232a1af5", "Cancel Rift Maiden run at {p0} of {p1} probes", Localization.Params{"p0": current.AttacksLaunched, "p1": current.RequestedAttacks}),
 		Steps: []Intent.Step{{
-			Name: "Cancel Rift Maiden probe run", Action: "rift.maiden_run.cancel", ActionArguments: actionArguments,
+			Name: "Cancel Rift Maiden probe run", NameDescriptor: Localization.New("server.app.cancel_rift_maiden_probe.47d6c6f4", "Cancel Rift Maiden probe run", nil), Action: "rift.maiden_run.cancel", ActionArguments: actionArguments,
 		}},
 	}, nil
 }
