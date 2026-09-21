@@ -1302,6 +1302,8 @@ func (coordinator *Coordinator) updateAutomation(id string, update func(State.Au
 		if lock := current.SafetyLock; lock.Active(time.Now().UTC()) {
 			next.Status = "gated"
 			next.Detail = lock.Detail()
+			next.DetailDescriptor = nil
+			next.LastErrorDescriptor = nil
 			next.LastError = next.Detail
 			next.LastOperationID = lock.OperationID
 			next.NextCheckAt = timePointer(lock.ExpiresAt())

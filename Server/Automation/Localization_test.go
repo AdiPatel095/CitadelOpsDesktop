@@ -3,8 +3,10 @@ package Automation
 import (
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/Localization"
+	"CitadelDesktop/Server/State"
 	"encoding/json"
 	"testing"
+	"time"
 )
 
 func TestPresentationDescriptorsDoNotChangeDecisionFingerprints(t *testing.T) {
@@ -19,5 +21,29 @@ func TestPresentationDescriptorsDoNotChangeDecisionFingerprints(t *testing.T) {
 	after, otherOK := passiveDecisionFingerprint(localized)
 	if !ok || !otherOK || before != after {
 		t.Fatal("presentation changed passive policy scheduling")
+	}
+}
+
+func TestActiveSafetyLockDiscardsFreshDecisionDescriptors(t *testing.T) {
+	initial := coordinatorReadyState()
+	lock := State.AutomationSafetyLock{Lane: "lane", Opcode: "cra", Code: 256, OperationID: "incident", ObservedAt: time.Now().UTC()}
+	initial.Automations["lane"] = State.AutomationState{ID: "lane", SafetyLock: lock}
+	store := State.NewStore(initial)
+	coordinator := NewCoordinator(store, openCoordinatorTestConfiguration(t, "lane"), nil, nil)
+	coordinator.recordDecision("lane", false, Decision{Status: "disabled", Detail: "Disabled", DetailDescriptor: Localization.New("disabled", "Disabled", nil)})
+	current := store.ReadOnlyView().Automations["lane"]
+	if current.Status != "gated" || current.Detail != lock.Detail() || current.LastError != lock.Detail() {
+		t.Fatalf("lock presentation changed: %#v", current)
+	}
+	if current.DetailDescriptor != nil || current.LastErrorDescriptor != nil || current.DetailTranslationStatus != "untranslated" {
+		t.Fatalf("fresh decision concealed lock: %#v", current)
+	}
+	coordinator.updateAutomation("lane", func(next State.AutomationState) State.AutomationState {
+		next.LastError = "Ready"
+		next.LastErrorDescriptor = Localization.New("ready", "Ready", nil)
+		return next
+	})
+	if current = store.ReadOnlyView().Automations["lane"]; current.LastErrorDescriptor != nil {
+		t.Fatal("fresh error descriptor concealed lock")
 	}
 }
