@@ -88,7 +88,6 @@
   "activity.issues": "Upozornenia a chyby · {count, number}",
   "activity.results": "{shown, number} z {total, number}",
   "common.clearSelection": "Zrušiť výber",
-  "common.presetName": "Názov predvoľby",
   "common.savePreset": "Uložiť predvoľbu",
   "common.calendar": "Kalendár",
   "ui.equipment.components.equipmentModals.confirm.sell.827ff403": "Potvrdiť predaj",

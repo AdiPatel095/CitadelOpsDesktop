@@ -10,12 +10,14 @@
     "capital",
     "castle",
     "delete",
+    "dialog_attack_autofill_toolTypes_tt",
     "dialog_battleLog_attacker",
     "dialog_battleLog_defender",
     "dialog_battleLog_loss",
     "dialog_button_saveChanges",
     "dialog_ci_crafting",
     "dialog_defence_leftFlank",
+    "dialog_defence_middleFlank",
     "dialog_defence_rightFlank",
     "dialog_equipment_title",
     "dialog_islandListOverview_title",
@@ -23,6 +25,7 @@
     "dialog_moveOverview_destination",
     "dialog_recuit_generals",
     "dialog_spyLog_result",
+    "dialog_troopPreset_rename_text2",
     "equipment_itemType_baron",
     "equipment_itemType_general",
     "equipment_slotType_armor",
@@ -35,12 +38,17 @@
     "event_title_3",
     "event_title_72",
     "event_title_80",
+    "finalScore",
     "generic_btn_close",
     "generic_btn_reconnect",
     "generic_btn_refresh",
     "generic_btn_search",
+    "generic_date",
     "generic_login_password",
+    "generic_minute_short",
+    "generic_second_short",
     "goods",
+    "honor",
     "laboratory",
     "level",
     "monument",
@@ -55,158 +63,158 @@
     "en": {
       "gameCode": "en",
       "sourceSha256": "f78552848f1d176a232cfa431451da73df7c8811fd63c561815f6276868c3537",
-      "subsetSha256": "e2962bf3887fb3213995583b955976085120111812e5faba7dedde169fc16861",
-      "entries": 47
+      "subsetSha256": "0ab41817feb0b1a87a3a458db4d1937c4f4027ba7bda3ebaf885081d87e05853",
+      "entries": 55
     },
     "de": {
       "gameCode": "de",
       "sourceSha256": "077ea212704f7ee36ea849fb275476f1b528613f0f379783dabea54268648542",
-      "subsetSha256": "f2626eaacaac195c6eb0b6e6c228942d2de46b225d2c19ec2487f0651283bf5c",
-      "entries": 47
+      "subsetSha256": "0a777f029bd31570cc9d66d2b68feb07e7a7e8d5f926543c5f667986a6ab6fec",
+      "entries": 55
     },
     "fr": {
       "gameCode": "fr",
       "sourceSha256": "da1d675e41aaeaedefda6a88c37e1a65d410babb6b3ecd1778acdf1e3fac92cc",
-      "subsetSha256": "20b1813034bd5d3b24b23f94bfbb805d2f673624ece6b994b2b24c412d63fc6e",
-      "entries": 47
+      "subsetSha256": "5a17c95eeedc27b490b0a24ddd494fddbc063ace944aa880b26832b3b410dd5c",
+      "entries": 55
     },
     "pl": {
       "gameCode": "pl",
       "sourceSha256": "fc60cbd76376f6fc4a45818b8825110fd33f867db57ce14ccda4d6079b40003c",
-      "subsetSha256": "3c9b2fc3d46488fab3e8f7d02f57a2a7e72768d509daf18479a6b492c3dc566f",
-      "entries": 47
+      "subsetSha256": "ee79b0d77b33bada8d61ce3771b98fb490fe2aeb12338e690586421c3b7d0bbf",
+      "entries": 55
     },
     "ru": {
       "gameCode": "ru",
       "sourceSha256": "eeeadac22620e624beb093c459d62d776edf8496c1ce2d188b30e8b713098f59",
-      "subsetSha256": "d60fe68365606a511102b27502e71d2ed9eef599402efc0cd1169ad5b5324e04",
-      "entries": 47
+      "subsetSha256": "332d9888cbff134ba74bd5064899f9f9dd1ed9b067131bdfe4545f1129d05f53",
+      "entries": 55
     },
     "it": {
       "gameCode": "it",
       "sourceSha256": "f97e8225424c9afd21ce47b7da84c27bb60a8dca28b9ed39ec5711815daf1a6e",
-      "subsetSha256": "7883a7c5ff65208c80a834eabecce62c9c7f8d8adc67c4565f83328dc3db8375",
-      "entries": 47
+      "subsetSha256": "3fc184ef7c29d13098659c615396661816164a43d73fe60a0f454e1311429864",
+      "entries": 55
     },
     "nl": {
       "gameCode": "nl",
       "sourceSha256": "70d2806c051647ac85e3d64ab8abf1ed9ee44be8e2c5ba9d98c040b51154e008",
-      "subsetSha256": "cf75376c58b7d70fa4537e6c14523e151daee84ed4d1d427eeae86f1b4880724",
-      "entries": 47
+      "subsetSha256": "3310f9c560e59b553f634625a4c4b7d1fa6594ffbe991c8fdc9a24e8bcb853f0",
+      "entries": 55
     },
     "pt": {
       "gameCode": "pt",
       "sourceSha256": "0c5b26875056840cbf1b4941b85479e74e6c14d8ccdfd16cd1b507611bbd0168",
-      "subsetSha256": "aae4b6544ea6d9d9d3bfd8870ab31fb0628f459edfa7bcf863d18e86fb77c6dd",
-      "entries": 47
+      "subsetSha256": "5db9093b49afc78c7473627ae77b7b5ad242986346e6711749706a6e33e5f8a7",
+      "entries": 55
     },
     "es": {
       "gameCode": "es",
       "sourceSha256": "41bdc39371977cd6dad0cdfbe0649ceab70d8e1c22ac2d0982a7da1bd10ec464",
-      "subsetSha256": "2777012bc5a6bec7c513810faa2fe764f5268f448c713ba714335ac4dce35d7b",
-      "entries": 47
+      "subsetSha256": "b0a24202cb9fbf6d43db2f863f15f567daf40102c65bac55ce289a06a2003fa2",
+      "entries": 55
     },
     "ar": {
       "gameCode": "ar",
       "sourceSha256": "0cd57d9b3558f4cb82dc20657f935d7199d3697691dbf010e77325ef38397a15",
-      "subsetSha256": "586b101ddcd356e5af0522fab8c6c7daa29d9a09e8e2cb5e45415469d928ff5e",
-      "entries": 47
+      "subsetSha256": "4c2cf1f6b17df2961e452cd25a89166818fcb29bdd0fbc1c95c25023c1334778",
+      "entries": 55
     },
     "da": {
       "gameCode": "da",
       "sourceSha256": "d5527ee2aeebbc26f739d112938148396b0ba2451fe67c9a267168d3193919a1",
-      "subsetSha256": "a87f69e3dd9af4a0c3746c0af39a5cd45e99e9119a5abbc3422ecb07c99e567e",
-      "entries": 47
+      "subsetSha256": "2fe8306d88993c4c78126dfd56979b3994c30db4c4096b941c92b927fccbb09b",
+      "entries": 55
     },
     "no": {
       "gameCode": "no",
       "sourceSha256": "69b999b246e1cdf0d61c0eac16ab0300e75ef4273d9dfb4584f9606815cc1340",
-      "subsetSha256": "859e9acb8439788abe396baada83b1778b06d14de186b292133d5d980b51b673",
-      "entries": 47
+      "subsetSha256": "ec291effd26af79054b8f0651128331431ee61fb8727f2ffc0e8e4d97da19f1d",
+      "entries": 55
     },
     "fi": {
       "gameCode": "fi",
       "sourceSha256": "3bc95cc785cf478ec663baed17320848d0058c2a49235dfc1954b4d41ad24a9b",
-      "subsetSha256": "341c1a148e9279afae734ac8b3060bb8756bf6be08ef47cd68f157a2ede8ae39",
-      "entries": 47
+      "subsetSha256": "8a608661e61c518ca27ed664d5f788197096b127a1d1a9f527c04727d4700e9d",
+      "entries": 55
     },
     "sv": {
       "gameCode": "sv",
       "sourceSha256": "3e6855861330572c42f3b2c647e908dfd01306c553a24c8ee1d671be44886756",
-      "subsetSha256": "600ddefb554f35ad4b86499f7a895ac7c2de5d9f752cffc8f78bdbf36a87672c",
-      "entries": 47
+      "subsetSha256": "47553fa2c55ebaaacae5b0d0cd6a88fb985b6c62e2c7707dbe3c6da684edaf61",
+      "entries": 55
     },
     "ja": {
       "gameCode": "ja",
       "sourceSha256": "7afd006a39836efc3a6e17f7b3a932a17d5489141b06de81f4a5d7a663c18193",
-      "subsetSha256": "da8baf556a00ce8f2c159cd0ec4a555bb76279f66e144b612dc87defdbf3dd18",
-      "entries": 47
+      "subsetSha256": "67946baa669b1301de00ba32faa57fb359ffd088ff42f5e1b29eb1b976fa4035",
+      "entries": 55
     },
     "ko": {
       "gameCode": "ko",
       "sourceSha256": "8ef639e6ecd0e0b502516487fcacca9ce71300a403da75fd4c58d9fbaffd5b90",
-      "subsetSha256": "f924ee03edb11ff938fe7b4ceb019b79d5545b145b9bd3ec57e1eb0e0462438d",
-      "entries": 47
+      "subsetSha256": "657c521fcfd62f95639772a5a508a1894395b59a311628914cd647841710604c",
+      "entries": 55
     },
     "el": {
       "gameCode": "el",
       "sourceSha256": "8a5ab3d8948fac34ab270e88144ee7902ffd358e6a4b199f7cf81813016cce4b",
-      "subsetSha256": "dd3cd297e184309e779e980d74479d87e17f38dd5e154e541e3886b90b2a4e23",
-      "entries": 47
+      "subsetSha256": "b8e6b054b4f5c51a24ee01cd7178d30c78a2ba7156e129beb828b63e20c967ad",
+      "entries": 55
     },
     "tr": {
       "gameCode": "tr",
       "sourceSha256": "9a0a1b4e6a5f33b64efb9121fc3acd8637d7ac555de7825719451df6928c89a9",
-      "subsetSha256": "a2310f6aab5879e08f7f9fd0b1272877589e40f107397ad5dd4c8a7669faee38",
-      "entries": 47
+      "subsetSha256": "caea50043330d227c2785d6b3456a81ed5cd302bebab4246a9b135bfdc6b87c5",
+      "entries": 55
     },
     "zh-CN": {
       "gameCode": "zh_CN",
       "sourceSha256": "88d3aa470fc8f602b705939d962995cb8126b1e58eb607a3f9acd24ee3300030",
-      "subsetSha256": "38792635cadbe5cea9d7200a76d047415895df16149e5061dc66e827b15e5d31",
-      "entries": 47
+      "subsetSha256": "15b69f0f0eca428f95247081402a069ad3ca9cb42b6c937db46ce9b16ec1b909",
+      "entries": 55
     },
     "zh-TW": {
       "gameCode": "zh_TW",
       "sourceSha256": "86d8a7f1aa7e5619f3dc00bf5a0f47ba5ec8235a3bb2876f247ffbb67f53cf7c",
-      "subsetSha256": "baa245f4e7bf76c4d58ef6b0af6fff18404355459fc47a9db3a2fdfd6b85a1b7",
-      "entries": 47
+      "subsetSha256": "cd23793fad3c72e4812052d0f1753894fc0a29aea5f5de60298d93af2d1abdcc",
+      "entries": 55
     },
     "cs": {
       "gameCode": "cs",
       "sourceSha256": "a887832af7393fb7476a82867c61c0b7f4e8c0e18b1ad1aa8748e067e247104f",
-      "subsetSha256": "f777a41711a1c743d3b0eea85258099ae6d5890babbedc6e35bc67fdc5cec0e8",
-      "entries": 47
+      "subsetSha256": "f441e72c150a5bb7d3aebbf3255694c854bbed402885a83c1ce47680b5e68985",
+      "entries": 55
     },
     "ro": {
       "gameCode": "ro",
       "sourceSha256": "d256ee5dadc5a17b7c08fa6036b3c1be41231e0d580dca133f22de5a038d7313",
-      "subsetSha256": "a0a7cd098c219fccd2325a83a237682c0e04b2a331656d18e2563b637825bd56",
-      "entries": 47
+      "subsetSha256": "59ed4fd6c400fb2e7eebbe6c2e33c980a8fe28e058a0734fac74aa8024f7e548",
+      "entries": 55
     },
     "sk": {
       "gameCode": "sk",
       "sourceSha256": "9c0c52677bc33a542acfe95238e1a6a7f62f9159ea173d159afa562f85b33e11",
-      "subsetSha256": "bf23121265ca5895fa2addb797c395ebd893f1cb3f875eac36c909755261e83f",
-      "entries": 47
+      "subsetSha256": "047219ac63f9421c43a1651717bb45a47f0ba6199ede31bb62f710b366565397",
+      "entries": 55
     },
     "hu": {
       "gameCode": "hu",
       "sourceSha256": "febb892e999a031ab6b77d938313ea9c8bcecc29912119d382c2e88ae3594f94",
-      "subsetSha256": "810da1506bed6263259fb2117d4dd94a3fb604083d3aa965e0c7c79371f03531",
-      "entries": 47
+      "subsetSha256": "765e88470cc6bd53718f80b82933f1c367fa29eb0b0d1af0bbf3d5955072f8cb",
+      "entries": 55
     },
     "bg": {
       "gameCode": "bg",
       "sourceSha256": "0be841ead52fc463754a619a346b80b4f3db425029b1e0c837359e16c28c61e1",
-      "subsetSha256": "ca3ffc9e8b7f93d0a86164f493299bdc8058f51eab6ccde3e9f7c96b535fc94f",
-      "entries": 47
+      "subsetSha256": "8519fc23ca4e02369bfd6c7e89d8d7bf6e994276a738e9405b138644589e7153",
+      "entries": 55
     },
     "lt": {
       "gameCode": "lt",
       "sourceSha256": "0de61af2d3df689e87b32dc363625e34f5685c98b19d2142d9ed071163e5a8ac",
-      "subsetSha256": "2598f2861c133ef66c0573a1133c56c68491be93dc0d0f54c427f947ac89e41f",
-      "entries": 47
+      "subsetSha256": "cd1e948142c01d6a52464a134e5d7188db8b1d45bc3a2997309635d257047436",
+      "entries": 55
     }
   }
 }

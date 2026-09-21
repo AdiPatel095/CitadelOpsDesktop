@@ -88,7 +88,6 @@
   "activity.issues": "Avertismente și erori · {count, number}",
   "activity.results": "{shown, number} din {total, number}",
   "common.clearSelection": "Șterge selecția",
-  "common.presetName": "Numele presetării",
   "common.savePreset": "Salvează presetarea",
   "common.calendar": "Calendar",
   "ui.equipment.components.equipmentModals.confirm.sell.827ff403": "Confirmă vânzarea",

@@ -88,7 +88,6 @@
   "activity.issues": "Ostrzeżenia i błędy · {count, number}",
   "activity.results": "{shown, number} z {total, number}",
   "common.clearSelection": "Wyczyść wybór",
-  "common.presetName": "Nazwa zestawu",
   "common.savePreset": "Zapisz zestaw",
   "common.calendar": "Kalendarz",
   "ui.equipment.components.equipmentModals.confirm.sell.827ff403": "Potwierdź sprzedaż",

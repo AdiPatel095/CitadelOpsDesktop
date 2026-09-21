@@ -88,7 +88,6 @@
   "activity.issues": "Предупреждения и ошибки · {count, number}",
   "activity.results": "{shown, number} из {total, number}",
   "common.clearSelection": "Снять выделение",
-  "common.presetName": "Название шаблона",
   "common.savePreset": "Сохранить шаблон",
   "common.calendar": "Календарь",
   "ui.equipment.components.equipmentModals.confirm.sell.827ff403": "Подтвердить продажу",

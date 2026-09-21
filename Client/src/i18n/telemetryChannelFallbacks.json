@@ -1,0 +1,232 @@
+{
+  "activity": {
+    "description": {
+      "key": "server.telemetry.channel.activity.description",
+      "fallback": "Completed Citadel actions and issues that may need your attention."
+    },
+    "label": {
+      "key": "server.telemetry.channel.activity.label",
+      "fallback": "All Activity"
+    }
+  },
+  "app_send": {
+    "description": {
+      "key": "server.telemetry.channel.app_send.description",
+      "fallback": "Commands sent by Citadel and the matching replies received from the game."
+    },
+    "label": {
+      "key": "server.telemetry.channel.app_send.label",
+      "fallback": "Citadel Commands"
+    }
+  },
+  "autoadvisor": {
+    "description": {
+      "key": "server.telemetry.channel.autoadvisor.description",
+      "fallback": "Launched advisor attacks and other completed advisor actions."
+    },
+    "label": {
+      "key": "server.telemetry.channel.autoadvisor.label",
+      "fallback": "Auto Advisor"
+    }
+  },
+  "autoberiworld": {
+    "description": {
+      "key": "server.telemetry.channel.autoberiworld.description",
+      "fallback": "Completed Berimond troop transfers, tower attacks, and problems requiring attention."
+    },
+    "label": {
+      "key": "server.telemetry.channel.autoberiworld.label",
+      "fallback": "Auto Berimond World"
+    }
+  },
+  "autobird": {
+    "description": {
+      "key": "server.telemetry.channel.autobird.description",
+      "fallback": "Completed Auto Bird troop movements and problems requiring attention."
+    },
+    "label": {
+      "key": "server.telemetry.channel.autobird.label",
+      "fallback": "Auto Bird"
+    }
+  },
+  "autobooster": {
+    "description": {
+      "key": "server.telemetry.channel.autobooster.description",
+      "fallback": "Completed daily fortress-speed booster purchases and problems requiring attention."
+    },
+    "label": {
+      "key": "server.telemetry.channel.autobooster.label",
+      "fallback": "Auto Booster"
+    }
+  },
+  "autobuyer": {
+    "description": {
+      "key": "server.telemetry.channel.autobuyer.description",
+      "fallback": "Completed purchases and purchase problems requiring attention."
+    },
+    "label": {
+      "key": "server.telemetry.channel.autobuyer.label",
+      "fallback": "Auto Buyer"
+    }
+  },
+  "autoequipmentcleanup": {
+    "description": {
+      "key": "server.telemetry.channel.autoequipmentcleanup.description",
+      "fallback": "Completed equipment cleanup actions and problems requiring attention."
+    },
+    "label": {
+      "key": "server.telemetry.channel.autoequipmentcleanup.label",
+      "fallback": "Auto Equipment Cleanup"
+    }
+  },
+  "autofoodbalance": {
+    "description": {
+      "key": "server.telemetry.channel.autofoodbalance.description",
+      "fallback": "Completed food and mead shipments and problems requiring attention."
+    },
+    "label": {
+      "key": "server.telemetry.channel.autofoodbalance.label",
+      "fallback": "Auto Food Balance"
+    }
+  },
+  "autofortress": {
+    "description": {
+      "key": "server.telemetry.channel.autofortress.description",
+      "fallback": "Completed fortress supply, troop transports, attacks, and problems requiring attention."
+    },
+    "label": {
+      "key": "server.telemetry.channel.autofortress.label",
+      "fallback": "Auto Fortress"
+    }
+  },
+  "autohospital": {
+    "description": {
+      "key": "server.telemetry.channel.autohospital.description",
+      "fallback": "Completed hospital actions and problems requiring attention."
+    },
+    "label": {
+      "key": "server.telemetry.channel.autohospital.label",
+      "fallback": "Auto Hospital"
+    }
+  },
+  "autoinvasion": {
+    "description": {
+      "key": "server.telemetry.channel.autoinvasion.description",
+      "fallback": "Launched Foreign Lords and Bloodcrow attacks and problems requiring attention."
+    },
+    "label": {
+      "key": "server.telemetry.channel.autoinvasion.label",
+      "fallback": "Auto Invasion"
+    }
+  },
+  "autokhan": {
+    "description": {
+      "key": "server.telemetry.channel.autokhan.description",
+      "fallback": "Completed Khan attacks, defense, and protection actions."
+    },
+    "label": {
+      "key": "server.telemetry.channel.autokhan.label",
+      "fallback": "Auto Khan"
+    }
+  },
+  "autonomad": {
+    "description": {
+      "key": "server.telemetry.channel.autonomad.description",
+      "fallback": "Launched Nomad and Samurai attacks and other completed event actions."
+    },
+    "label": {
+      "key": "server.telemetry.channel.autonomad.label",
+      "fallback": "Auto Nomad / Samurai"
+    }
+  },
+  "autorecruit": {
+    "description": {
+      "key": "server.telemetry.channel.autorecruit.description",
+      "fallback": "Completed troop queues and problems requiring attention."
+    },
+    "label": {
+      "key": "server.telemetry.channel.autorecruit.label",
+      "fallback": "Auto Recruit"
+    }
+  },
+  "autosceatres": {
+    "description": {
+      "key": "server.telemetry.channel.autosceatres.description",
+      "fallback": "Completed crafting and resource actions and problems requiring attention."
+    },
+    "label": {
+      "key": "server.telemetry.channel.autosceatres.label",
+      "fallback": "Auto Sceat Resources"
+    }
+  },
+  "autostation": {
+    "description": {
+      "key": "server.telemetry.channel.autostation.description",
+      "fallback": "Completed station and recall movements and problems requiring attention."
+    },
+    "label": {
+      "key": "server.telemetry.channel.autostation.label",
+      "fallback": "Auto Station"
+    }
+  },
+  "autostorm": {
+    "description": {
+      "key": "server.telemetry.channel.autostorm.description",
+      "fallback": "Completed Storm attacks, construction, logistics, and shop purchases."
+    },
+    "label": {
+      "key": "server.telemetry.channel.autostorm.label",
+      "fallback": "Auto Storm"
+    }
+  },
+  "autotci": {
+    "description": {
+      "key": "server.telemetry.channel.autotci.description",
+      "fallback": "Completed construction-item equips, upgrades, and purchases and problems requiring attention."
+    },
+    "label": {
+      "key": "server.telemetry.channel.autotci.label",
+      "fallback": "Auto TCI"
+    }
+  },
+  "autotool": {
+    "description": {
+      "key": "server.telemetry.channel.autotool.description",
+      "fallback": "Completed tool queues and problems requiring attention."
+    },
+    "label": {
+      "key": "server.telemetry.channel.autotool.label",
+      "fallback": "Auto Tool"
+    }
+  },
+  "autotowers": {
+    "description": {
+      "key": "server.telemetry.channel.autotowers.description",
+      "fallback": "Launched tower attacks and problems requiring attention."
+    },
+    "label": {
+      "key": "server.telemetry.channel.autotowers.label",
+      "fallback": "Auto Towers"
+    }
+  },
+  "rift": {
+    "description": {
+      "key": "server.telemetry.channel.rift.description",
+      "fallback": "Launched Rift attacks and other completed Rift actions."
+    },
+    "label": {
+      "key": "server.telemetry.channel.rift.label",
+      "fallback": "Rift"
+    }
+  },
+  "websocket_game": {
+    "description": {
+      "key": "server.telemetry.channel.websocket_game.description",
+      "fallback": "Every game WebSocket frame, including actions performed directly in the game."
+    },
+    "label": {
+      "key": "server.telemetry.channel.websocket_game.label",
+      "fallback": "All Game Traffic"
+    }
+  }
+}

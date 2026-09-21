@@ -88,7 +88,6 @@
   "activity.issues": "Uyarılar ve hatalar · {count, number}",
   "activity.results": "{total, number} kayıttan {shown, number}",
   "common.clearSelection": "Seçimi temizle",
-  "common.presetName": "Ön ayar adı",
   "common.savePreset": "Ön ayarı kaydet",
   "common.calendar": "Takvim",
   "ui.equipment.components.equipmentModals.confirm.sell.827ff403": "Satışı onayla",

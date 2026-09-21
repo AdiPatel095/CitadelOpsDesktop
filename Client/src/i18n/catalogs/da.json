@@ -88,7 +88,6 @@
   "activity.issues": "Advarsler og fejl · {count, number}",
   "activity.results": "{shown, number} af {total, number}",
   "common.clearSelection": "Ryd markering",
-  "common.presetName": "Navn på forudindstilling",
   "common.savePreset": "Gem forudindstilling",
   "common.calendar": "Kalender",
   "ui.equipment.components.equipmentModals.confirm.sell.827ff403": "Bekræft salg",

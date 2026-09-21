@@ -1,5 +1,23 @@
 /** Verified against official English v4357. Never infer keys from translated text. */
 export const officialMessageKeys = {
+  "ui.worldIntelligence.components.worldEventHistory.final.score.11c34366": "finalScore",
+  "ui.worldIntelligence.components.worldEventHistory.label.honor.22ea092e": "honor",
+  "ui.views.attackPresetsView.label.tool.types.dd756e8c": "dialog_attack_autofill_toolTypes_tt",
+  "ui.views.defensePresetsView.tool.types.dd756e8c": "dialog_attack_autofill_toolTypes_tt",
+  "ui.views.defensePresetsView.label.front.a6175902": "dialog_defence_middleFlank",
+  "ui.battleStats.components.battleStatsView.label.date.99c40ab4": "generic_date",
+  "common.presetName": "dialog_troopPreset_rename_text2",
+  "ui.settings.components.autoHospitalSettingsModal.min.1f6fa6f6": "generic_minute_short",
+  "ui.settings.components.autoInvasionSettingsModal.min.1f6fa6f6": "generic_minute_short",
+  "ui.settings.components.autoKhanSettingsModal.min.1f6fa6f6": "generic_minute_short",
+  "ui.settings.components.autoNomadSettingsModal.min.1f6fa6f6": "generic_minute_short",
+  "ui.settings.components.autoSceatResSettingsModal.min.1f6fa6f6": "generic_minute_short",
+  "ui.settings.components.autoStormSettingsModal.sec.add93534": "generic_second_short",
+  "ui.settings.components.autoTowerSettingsModal.sec.add93534": "generic_second_short",
+  "ui.settings.components.queueProductionSettingsModal.min.1f6fa6f6": "generic_minute_short",
+  "ui.views.automationView.min.1f6fa6f6": "generic_minute_short",
+  "ui.views.settingsView.min.1f6fa6f6": "generic_minute_short",
+
   "navigation.castle": "castle",
   "navigation.equipment": "dialog_equipment_title",
   "navigation.movement": "dialog_recuit_generals",

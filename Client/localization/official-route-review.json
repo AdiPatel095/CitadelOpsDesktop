@@ -30,7 +30,24 @@
     "ui.components.defensePresetEditor.label.right.flank.51130f03": "dialog_defence_rightFlank",
     "ui.worldIntelligence.components.worldEventHistory.label.rank.a4130d7d": "rank",
     "ui.components.ui.modal.aria-label.close.modal.207bd886": "generic_btn_close",
-    "ui.components.alerts.aria-label.dismiss.48845bff": "generic_btn_close"
+    "ui.components.alerts.aria-label.dismiss.48845bff": "generic_btn_close",
+    "ui.worldIntelligence.components.worldEventHistory.final.score.11c34366": "finalScore",
+    "ui.worldIntelligence.components.worldEventHistory.label.honor.22ea092e": "honor",
+    "ui.views.attackPresetsView.label.tool.types.dd756e8c": "dialog_attack_autofill_toolTypes_tt",
+    "ui.views.defensePresetsView.tool.types.dd756e8c": "dialog_attack_autofill_toolTypes_tt",
+    "ui.views.defensePresetsView.label.front.a6175902": "dialog_defence_middleFlank",
+    "ui.battleStats.components.battleStatsView.label.date.99c40ab4": "generic_date",
+    "common.presetName": "dialog_troopPreset_rename_text2",
+    "ui.settings.components.autoHospitalSettingsModal.min.1f6fa6f6": "generic_minute_short",
+    "ui.settings.components.autoInvasionSettingsModal.min.1f6fa6f6": "generic_minute_short",
+    "ui.settings.components.autoKhanSettingsModal.min.1f6fa6f6": "generic_minute_short",
+    "ui.settings.components.autoNomadSettingsModal.min.1f6fa6f6": "generic_minute_short",
+    "ui.settings.components.autoSceatResSettingsModal.min.1f6fa6f6": "generic_minute_short",
+    "ui.settings.components.autoStormSettingsModal.sec.add93534": "generic_second_short",
+    "ui.settings.components.autoTowerSettingsModal.sec.add93534": "generic_second_short",
+    "ui.settings.components.queueProductionSettingsModal.min.1f6fa6f6": "generic_minute_short",
+    "ui.views.automationView.min.1f6fa6f6": "generic_minute_short",
+    "ui.views.settingsView.min.1f6fa6f6": "generic_minute_short"
   },
   "excludedFalseFriends": [
     "Battle result is not automatically a spy report result",
@@ -38,5 +55,6 @@
     "Travel is not entering another world",
     "General tab is not an alliance rank"
   ],
-  "closeActionScope": "Modal close and notification dismissal both close the current transient UI; official close label supplies accessible action name."
+  "closeActionScope": "Modal close and notification dismissal both close the current transient UI; official close label supplies accessible action name.",
+  "sourceReview": "Adrian source-context review: date timestamp, wall.middle.unitPercent, actual formation tool IDs, preset editor, score/honor fields; min/sec sinks verified duration units. Never infer routes from English equality."
 }

@@ -88,7 +88,6 @@
   "activity.issues": "Avertissements et erreurs · {count, number}",
   "activity.results": "{shown, number} sur {total, number}",
   "common.clearSelection": "Effacer la sélection",
-  "common.presetName": "Nom du préréglage",
   "common.savePreset": "Enregistrer le préréglage",
   "common.calendar": "Calendrier",
   "ui.equipment.components.equipmentModals.confirm.sell.827ff403": "Confirmer la vente",

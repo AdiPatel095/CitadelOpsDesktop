@@ -88,7 +88,6 @@
   "activity.issues": "Предупреждения и грешки · {count, number}",
   "activity.results": "{shown, number} от {total, number}",
   "common.clearSelection": "Изчистване на избора",
-  "common.presetName": "Име на предварителната настройка",
   "common.savePreset": "Запазване на предварителната настройка",
   "common.calendar": "Календар",
   "ui.equipment.components.equipmentModals.confirm.sell.827ff403": "Потвърди продажбата",

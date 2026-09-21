@@ -88,7 +88,6 @@
   "activity.issues": "Advertencias y errores · {count, number}",
   "activity.results": "{shown, number} de {total, number}",
   "common.clearSelection": "Borrar selección",
-  "common.presetName": "Nombre del preajuste",
   "common.savePreset": "Guardar preajuste",
   "common.calendar": "Calendario",
   "ui.equipment.components.equipmentModals.confirm.sell.827ff403": "Confirmar venta",

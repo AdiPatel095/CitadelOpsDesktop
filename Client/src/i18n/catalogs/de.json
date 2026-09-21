@@ -88,7 +88,6 @@
   "activity.issues": "Warnungen und Fehler · {count, number}",
   "activity.results": "{shown, number} von {total, number}",
   "common.clearSelection": "Auswahl aufheben",
-  "common.presetName": "Vorlagenname",
   "common.savePreset": "Vorlage speichern",
   "common.calendar": "Kalender",
   "ui.equipment.components.equipmentModals.confirm.sell.827ff403": "Verkauf bestätigen",

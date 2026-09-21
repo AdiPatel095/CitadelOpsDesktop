@@ -1,8 +1,10 @@
+import {sourceCandidateIdentity,applySourceReviews} from './source-review.mjs';
 import ts from 'typescript';
 import fs from 'node:fs';
 import path from 'node:path';
 const root = new URL('../src/', import.meta.url).pathname;
 const entries = [];
+const identityOccurrences = new Map();
 const exclusions = [];
 const visibleAttributes = /^(title|alt|placeholder|aria-label|aria-description|label|description|message|help|tooltip|emptyText|heading)$/;
 function walk(dir) {
@@ -19,9 +21,9 @@ function walk(dir) {
           const parent = node.parent;
           let reason = null;
           if (ts.isJsxAttribute(parent) && parent.name.getText(source) === 'messageKey' && ts.isJsxSelfClosingElement(parent.parent?.parent) && ['LocalizedText','LocalizedRichText'].includes(parent.parent.parent.tagName.getText(source))) reason = 'explicit typed LocalizedText key; source assignment in static-migrations.json';
-          else if (ts.isCallExpression(parent) && /^(t|message|localizeStatic)$/.test(parent.expression.getText(source)) && node === parent.arguments[0]) reason = 'explicit typed localization key reference';
+          else if (ts.isCallExpression(parent) && /^(t|message|localizeStatic|describeMessage)$/.test(parent.expression.getText(source)) && node === parent.arguments[0]) reason = 'explicit typed localization key reference';
           else if (ts.isImportDeclaration(parent) || ts.isExportDeclaration(parent) || ts.isLiteralTypeNode(parent)) reason = 'module path or type-only literal';
-          else if (ts.isJsxAttribute(parent) && /^(className|id|key|href|src|type|role|data-|style)/.test(parent.name.getText(source))) reason = 'structural JSX attribute; audit if rendered as content';
+          else if (ts.isJsxAttribute(parent) && /^(className|id|key|href|src|type|role|data-[\w-]+|style)$/.test(parent.name.getText(source))) reason = 'structural JSX attribute; audit if rendered as content';
           else if (ts.isCallExpression(parent) && /^console\./.test(parent.expression.getText(source))) reason = 'private developer console diagnostic';
           // Exclude only literals whose syntactic use is a selector or formatting instruction.
           // State values and returned messages remain unresolved because they may reach the UI.
@@ -49,7 +51,15 @@ function walk(dir) {
           if (ts.isPropertyAssignment(parent) && visibleAttributes.test(parent.name.getText(source).replaceAll("'",''))) category = 'display-message-property';
           if (ts.isCallExpression(parent) && /^(Notifications\.|alert$|confirm$|set[A-Za-z]*(Error|Message)$)/.test(parent.expression.getText(source))) category = 'notification-or-error';
           if (reason) { exclusions.push({file:path.relative(root,file),line:source.getLineAndCharacterOfPosition(node.getStart(source)).line+1,reason}); }
-          else entries.push({file:path.relative(root,file),line:source.getLineAndCharacterOfPosition(node.getStart(source)).line+1,kind:ts.SyntaxKind[node.kind],category,text:text.trim(),route:category==='requires-dataflow-review'?'unresolved':'explicit-custom-message-key',classification:'unreviewed'});
+          else {
+            let scope=parent;
+            while(scope && !ts.isFunctionDeclaration(scope) && !ts.isArrowFunction(scope) && !ts.isMethodDeclaration(scope))scope=scope.parent;
+            const scopeName=scope?.name?.getText(source) || (scope && ts.isVariableDeclaration(scope.parent)?scope.parent.name.getText(source):'module');
+            const context=`${scopeName}:${parent.getText(source)}`;
+            const base=sourceCandidateIdentity(path.relative(root,file),ts.SyntaxKind[node.kind],text.trim(),context);
+            const occurrence=identityOccurrences.get(base)??0;identityOccurrences.set(base,occurrence+1);
+            entries.push({id:sourceCandidateIdentity(path.relative(root,file),ts.SyntaxKind[node.kind],text.trim(),context,occurrence),file:path.relative(root,file),line:source.getLineAndCharacterOfPosition(node.getStart(source)).line+1,kind:ts.SyntaxKind[node.kind],category,text:text.trim(),route:category==='requires-dataflow-review'?'unresolved':'explicit-custom-message-key',classification:'unreviewed'});
+          }
         }
       }
       ts.forEachChild(node,visit);
@@ -58,7 +68,12 @@ function walk(dir) {
   }
 }
 walk(root);
+const reviewFile=new URL('../localization/source-reviews.json',import.meta.url);
+const records=fs.existsSync(reviewFile)?JSON.parse(fs.readFileSync(reviewFile,'utf8')):{};
+const reviewed=applySourceReviews(entries,records);
 const categories = Object.fromEntries([...new Set(entries.map(e=>e.category))].map(key=>[key,entries.filter(e=>e.category===key).length]));
-const report={schemaVersion:2,policy:'Conservative source inventory, not semantic coverage certification. Explicit sinks require message key assignment; unresolved candidates require dataflow review. Dynamic API strings need separate descriptor inventory. Technical literals omitted from entries but source references and exclusion reasons retained.',sourceFiles:new Set([...entries,...exclusions].map(e=>e.file)).size,counts:{total:entries.length+exclusions.length,unreviewed:entries.length,excluded:exclusions.length,categories},entries,exclusions};
+const report={schemaVersion:3,reviewErrors:reviewed.errors,policy:'Conservative source inventory, not semantic coverage certification. Explicit sinks require message key assignment; unresolved candidates require dataflow review. Dynamic API strings need separate descriptor inventory. Technical literals omitted from entries but source references and exclusion reasons retained.',sourceFiles:new Set([...entries,...exclusions].map(e=>e.file)).size,counts:{total:entries.length+exclusions.length,unreviewed:reviewed.entries.filter(entry=>entry.classification==='unreviewed').length,reviewed:reviewed.entries.filter(entry=>entry.classification!=='unreviewed').length,excluded:exclusions.length,categories},entries:reviewed.entries,exclusions};
 fs.writeFileSync(new URL('../localization/source-inventory.json',import.meta.url),JSON.stringify(report)+'\n');
 console.log(JSON.stringify({sourceFiles:report.sourceFiles,...report.counts}));
+
+if(reviewed.errors.length){console.error(reviewed.errors.join("\n"));process.exitCode=1;}

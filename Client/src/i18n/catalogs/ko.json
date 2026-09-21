@@ -88,7 +88,6 @@
   "activity.issues": "경고 및 오류 · {count, number}",
   "activity.results": "전체 {total, number}개 중 {shown, number}개",
   "common.clearSelection": "선택 해제",
-  "common.presetName": "프리셋 이름",
   "common.savePreset": "프리셋 저장",
   "common.calendar": "달력",
   "ui.equipment.components.equipmentModals.confirm.sell.827ff403": "판매 확인",

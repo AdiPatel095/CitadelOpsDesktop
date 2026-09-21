@@ -88,7 +88,6 @@
   "activity.issues": "Varoitukset ja virheet · {count, number}",
   "activity.results": "{shown, number} / {total, number}",
   "common.clearSelection": "Tyhjennä valinta",
-  "common.presetName": "Esiasetuksen nimi",
   "common.savePreset": "Tallenna esiasetus",
   "common.calendar": "Kalenteri",
   "ui.equipment.components.equipmentModals.confirm.sell.827ff403": "Vahvista myynti",

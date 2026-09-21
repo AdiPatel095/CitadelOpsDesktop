@@ -1,0 +1,217 @@
+{
+  "c8a0a2441772c39360c2c6203c0e08f98afc904d8d881969959d15d653699024": {
+    "classification": "technical",
+    "reason": "Internal channel/row/filter/reducer/notification identity or search index, not human display prose.",
+    "evidence": "LoggerDock.tsx preferredChannel, logTailReducer, parseLogLine searchText, filter state/options.value, Notifications id/category, or scrollToIndex align; display labels/messages have independent typed sinks."
+  },
+  "e69f8f36b6edb759bb71b3a24199a31f7922e7e7a93deb0c6876f839c5bef884": {
+    "classification": "technical",
+    "reason": "Internal channel/row/filter/reducer/notification identity or search index, not human display prose.",
+    "evidence": "LoggerDock.tsx preferredChannel, logTailReducer, parseLogLine searchText, filter state/options.value, Notifications id/category, or scrollToIndex align; display labels/messages have independent typed sinks."
+  },
+  "cf9c7e40ae522c9ba85d63db173d6c3595b6f371bf617d954821b6f18e46bd62": {
+    "classification": "technical",
+    "reason": "Canonical telemetry severity token used for filtering and CSS tone; displayed severity comes from directionLabel typed messages.",
+    "evidence": "LoggerDock.tsx toneFromToken feeds ParsedLogLine.tone, matchesFilter, and liquid-log-row/badge CSS classes."
+  },
+  "dec1eb411b3e7914636eef6acc88e28e7058fcd1b58cbe3cb3bbecfe3f99d95a": {
+    "classification": "technical",
+    "reason": "Canonical telemetry severity token used for filtering and CSS tone; displayed severity comes from directionLabel typed messages.",
+    "evidence": "LoggerDock.tsx toneFromToken feeds ParsedLogLine.tone, matchesFilter, and liquid-log-row/badge CSS classes."
+  },
+  "b390d7e21fdb944db63ae8c87026794d283a258a700153993ee3f0b921bc5441": {
+    "classification": "technical",
+    "reason": "Canonical telemetry severity token used for filtering and CSS tone; displayed severity comes from directionLabel typed messages.",
+    "evidence": "LoggerDock.tsx toneFromToken feeds ParsedLogLine.tone, matchesFilter, and liquid-log-row/badge CSS classes."
+  },
+  "4ac61bf6961622801e2a30570fd431ced56d64a190ae2a0359dfff970bd71e1e": {
+    "classification": "technical",
+    "reason": "Canonical telemetry severity token used for filtering and CSS tone; displayed severity comes from directionLabel typed messages.",
+    "evidence": "LoggerDock.tsx toneFromToken feeds ParsedLogLine.tone, matchesFilter, and liquid-log-row/badge CSS classes."
+  },
+  "ad030cceb783a55c55b7636afad916ab80b06c57f3aa8d6f9a452b68068213de": {
+    "classification": "technical",
+    "reason": "Canonical telemetry severity token used for filtering and CSS tone; displayed severity comes from directionLabel typed messages.",
+    "evidence": "LoggerDock.tsx toneFromToken feeds ParsedLogLine.tone, matchesFilter, and liquid-log-row/badge CSS classes."
+  },
+  "381f64c82dda1a2131e50ca65c9fa3d6294301d9080fb6173409dfb795aae40d": {
+    "classification": "technical",
+    "reason": "Canonical telemetry severity token used for filtering and CSS tone; displayed severity comes from directionLabel typed messages.",
+    "evidence": "LoggerDock.tsx toneFromToken feeds ParsedLogLine.tone, matchesFilter, and liquid-log-row/badge CSS classes."
+  },
+  "691e2aace07acb5d8f80b16364fb8d4f8179eafd496678d9ea30d3969d54c25e": {
+    "classification": "technical",
+    "reason": "Canonical telemetry severity token used for filtering and CSS tone; displayed severity comes from directionLabel typed messages.",
+    "evidence": "LoggerDock.tsx toneFromToken feeds ParsedLogLine.tone, matchesFilter, and liquid-log-row/badge CSS classes."
+  },
+  "07cfafea7bdfd860356be581bc131e8f3ddaa72de1696abc00f018ceb1f85378": {
+    "classification": "technical",
+    "reason": "Canonical telemetry severity token used for filtering and CSS tone; displayed severity comes from directionLabel typed messages.",
+    "evidence": "LoggerDock.tsx toneFromToken feeds ParsedLogLine.tone, matchesFilter, and liquid-log-row/badge CSS classes."
+  },
+  "7703109a4b778eea88f7f99e4e6d05587d826b8278d653dfe3c0c3d1b745319f": {
+    "classification": "technical",
+    "reason": "Canonical telemetry severity token used for filtering and CSS tone; displayed severity comes from directionLabel typed messages.",
+    "evidence": "LoggerDock.tsx toneFromToken feeds ParsedLogLine.tone, matchesFilter, and liquid-log-row/badge CSS classes."
+  },
+  "1158a6ed499d1d6a21df38cdd359c7e27c45bbae2310d5fcf1c6cecda5f21f00": {
+    "classification": "technical",
+    "reason": "Canonical telemetry severity token used for filtering and CSS tone; displayed severity comes from directionLabel typed messages.",
+    "evidence": "LoggerDock.tsx toneFromToken feeds ParsedLogLine.tone, matchesFilter, and liquid-log-row/badge CSS classes."
+  },
+  "b4e648947b3a66767ee3840f5d404bd14dc450837af18dc20efb3b25ce0d9393": {
+    "classification": "technical",
+    "reason": "Canonical telemetry severity token used for filtering and CSS tone; displayed severity comes from directionLabel typed messages.",
+    "evidence": "LoggerDock.tsx toneFromToken feeds ParsedLogLine.tone, matchesFilter, and liquid-log-row/badge CSS classes."
+  },
+  "5ac59e45d7425a6caef438a8257c046f23e83e4623ffb64865acc668026cf5f4": {
+    "classification": "technical",
+    "reason": "Canonical telemetry severity token used for filtering and CSS tone; displayed severity comes from directionLabel typed messages.",
+    "evidence": "LoggerDock.tsx toneFromToken feeds ParsedLogLine.tone, matchesFilter, and liquid-log-row/badge CSS classes."
+  },
+  "c194d23fe47f913913291cc5ca25c257054f2dd65d18b2a179b0304ad6991403": {
+    "classification": "technical",
+    "reason": "Canonical telemetry severity token used for filtering and CSS tone; displayed severity comes from directionLabel typed messages.",
+    "evidence": "LoggerDock.tsx toneFromToken feeds ParsedLogLine.tone, matchesFilter, and liquid-log-row/badge CSS classes."
+  },
+  "7150e71ce63e933fb8b986e146f7cbad52b231f8c85e354b332152f6d398ba31": {
+    "classification": "technical",
+    "reason": "Canonical telemetry severity token used for filtering and CSS tone; displayed severity comes from directionLabel typed messages.",
+    "evidence": "LoggerDock.tsx toneFromToken feeds ParsedLogLine.tone, matchesFilter, and liquid-log-row/badge CSS classes."
+  },
+  "d16e0647cd5d812012eef3844db6c99c7098632b0f9184596d062a6ad36ef8d4": {
+    "classification": "technical",
+    "reason": "Canonical telemetry severity token used for filtering and CSS tone; displayed severity comes from directionLabel typed messages.",
+    "evidence": "LoggerDock.tsx toneFromToken feeds ParsedLogLine.tone, matchesFilter, and liquid-log-row/badge CSS classes."
+  },
+  "03814472a779611337c3e212f60d536a5d805a933be33743e2e30083cfbaea0f": {
+    "classification": "technical",
+    "reason": "Canonical telemetry severity token used for filtering and CSS tone; displayed severity comes from directionLabel typed messages.",
+    "evidence": "LoggerDock.tsx toneFromToken feeds ParsedLogLine.tone, matchesFilter, and liquid-log-row/badge CSS classes."
+  },
+  "27437c542ed271d827572e4db87200520e11207ad353cbd1946eb1a8068ddca0": {
+    "classification": "technical",
+    "reason": "Canonical telemetry severity token used for filtering and CSS tone; displayed severity comes from directionLabel typed messages.",
+    "evidence": "LoggerDock.tsx toneFromToken feeds ParsedLogLine.tone, matchesFilter, and liquid-log-row/badge CSS classes."
+  },
+  "6cd55c931fb690b874a4d2cbd433285136f2a5541374282a38219ecf110c6c47": {
+    "classification": "technical",
+    "reason": "Canonical telemetry severity token used for filtering and CSS tone; displayed severity comes from directionLabel typed messages.",
+    "evidence": "LoggerDock.tsx toneFromToken feeds ParsedLogLine.tone, matchesFilter, and liquid-log-row/badge CSS classes."
+  },
+  "c8403341af69ca4ac080e644a8e252406dd8f537325f9dd75823df9a4f2c3b55": {
+    "classification": "technical",
+    "reason": "Canonical telemetry severity token used for filtering and CSS tone; displayed severity comes from directionLabel typed messages.",
+    "evidence": "LoggerDock.tsx toneFromToken feeds ParsedLogLine.tone, matchesFilter, and liquid-log-row/badge CSS classes."
+  },
+  "3347a96983379c81cd6703fd3108a05d2361a34b3030a0330a9f22d136a3a45b": {
+    "classification": "technical",
+    "reason": "Canonical telemetry severity token used for filtering and CSS tone; displayed severity comes from directionLabel typed messages.",
+    "evidence": "LoggerDock.tsx toneFromToken feeds ParsedLogLine.tone, matchesFilter, and liquid-log-row/badge CSS classes."
+  },
+  "239fd8b46c1ccff808a21d97a262fd9b0acebad6647000a0cc6b27dfc74789ed": {
+    "classification": "technical",
+    "reason": "Canonical telemetry severity token used for filtering and CSS tone; displayed severity comes from directionLabel typed messages.",
+    "evidence": "LoggerDock.tsx toneFromToken feeds ParsedLogLine.tone, matchesFilter, and liquid-log-row/badge CSS classes."
+  },
+  "1754cfb0219051a803bb792fe5cfc4e60c260306bee79339cd73d207d8ec2d71": {
+    "classification": "technical",
+    "reason": "Clipboard fallback DOM element, positioning instruction, or browser editing command.",
+    "evidence": "LoggerDock.tsx writeClipboardText: createElement, style.position, execCommand; no displayed text."
+  },
+  "de479684244eda273aec42dd5616b368c7470264ecf621a413a8e20a2de9a0b6": {
+    "classification": "technical",
+    "reason": "Clipboard fallback DOM element, positioning instruction, or browser editing command.",
+    "evidence": "LoggerDock.tsx writeClipboardText: createElement, style.position, execCommand; no displayed text."
+  },
+  "cca1d926d920ab3643b1460a54f4ccb89a9b091d8cce815c97c5f3f1289ee579": {
+    "classification": "technical",
+    "reason": "Clipboard fallback DOM element, positioning instruction, or browser editing command.",
+    "evidence": "LoggerDock.tsx writeClipboardText: createElement, style.position, execCommand; no displayed text."
+  },
+  "7066caf3e8fe3aae60ce8499d859e659aa0a6152ebc6d59795e098bcdb60e3ae": {
+    "classification": "technical",
+    "reason": "Internal channel/row/filter/reducer/notification identity or search index, not human display prose.",
+    "evidence": "LoggerDock.tsx preferredChannel, logTailReducer, parseLogLine searchText, filter state/options.value, Notifications id/category, or scrollToIndex align; display labels/messages have independent typed sinks."
+  },
+  "d15e8ca546c3c867201b5ff7c38ce3adbf50b22838302144a2b2df716e0fe99f": {
+    "classification": "technical",
+    "reason": "Internal channel/row/filter/reducer/notification identity or search index, not human display prose.",
+    "evidence": "LoggerDock.tsx preferredChannel, logTailReducer, parseLogLine searchText, filter state/options.value, Notifications id/category, or scrollToIndex align; display labels/messages have independent typed sinks."
+  },
+  "8b6a0f736b526d7f0f3445d7d2b2d5bda7534e1232b5b19699f295e9c0e2a1f3": {
+    "classification": "technical",
+    "reason": "Internal channel/row/filter/reducer/notification identity or search index, not human display prose.",
+    "evidence": "LoggerDock.tsx preferredChannel, logTailReducer, parseLogLine searchText, filter state/options.value, Notifications id/category, or scrollToIndex align; display labels/messages have independent typed sinks."
+  },
+  "c0f1567af356105903eb987dafbb0bd75f830e10228074fbe8068456286bb4fb": {
+    "classification": "technical",
+    "reason": "Internal channel/row/filter/reducer/notification identity or search index, not human display prose.",
+    "evidence": "LoggerDock.tsx preferredChannel, logTailReducer, parseLogLine searchText, filter state/options.value, Notifications id/category, or scrollToIndex align; display labels/messages have independent typed sinks."
+  },
+  "3cdd651f1c84f114adac070440b56fa8e0f3e2a9dab1e47f38804dc81a3b0734": {
+    "classification": "technical",
+    "reason": "Internal channel/row/filter/reducer/notification identity or search index, not human display prose.",
+    "evidence": "LoggerDock.tsx preferredChannel, logTailReducer, parseLogLine searchText, filter state/options.value, Notifications id/category, or scrollToIndex align; display labels/messages have independent typed sinks."
+  },
+  "36431107b01c9aa28bb7e1a3a57e042f2d02fe4071571aceacbc033cd74a46dd": {
+    "classification": "technical",
+    "reason": "Internal channel/row/filter/reducer/notification identity or search index, not human display prose.",
+    "evidence": "LoggerDock.tsx preferredChannel, logTailReducer, parseLogLine searchText, filter state/options.value, Notifications id/category, or scrollToIndex align; display labels/messages have independent typed sinks."
+  },
+  "748ada4d27d874a96285c9f3da02465b002054ee985d5cd9b953227bf686a53a": {
+    "classification": "technical",
+    "reason": "Internal channel/row/filter/reducer/notification identity or search index, not human display prose.",
+    "evidence": "LoggerDock.tsx preferredChannel, logTailReducer, parseLogLine searchText, filter state/options.value, Notifications id/category, or scrollToIndex align; display labels/messages have independent typed sinks."
+  },
+  "875687990b85b7e31f70d5686c62f551a3549d6187fcc34c1c0fec558340849d": {
+    "classification": "technical",
+    "reason": "Internal channel/row/filter/reducer/notification identity or search index, not human display prose.",
+    "evidence": "LoggerDock.tsx preferredChannel, logTailReducer, parseLogLine searchText, filter state/options.value, Notifications id/category, or scrollToIndex align; display labels/messages have independent typed sinks."
+  },
+  "e81a72daa6f1dabf4a9207e259faae55878db94eb10b7b10c15e603fcd55b130": {
+    "classification": "technical",
+    "reason": "Internal channel/row/filter/reducer/notification identity or search index, not human display prose.",
+    "evidence": "LoggerDock.tsx preferredChannel, logTailReducer, parseLogLine searchText, filter state/options.value, Notifications id/category, or scrollToIndex align; display labels/messages have independent typed sinks."
+  },
+  "b9045f4dbaf3dfac94186618ac9c90f26947426fcd612b35e6128fcb988d8394": {
+    "classification": "technical",
+    "reason": "Internal channel/row/filter/reducer/notification identity or search index, not human display prose.",
+    "evidence": "LoggerDock.tsx preferredChannel, logTailReducer, parseLogLine searchText, filter state/options.value, Notifications id/category, or scrollToIndex align; display labels/messages have independent typed sinks."
+  },
+  "4f6245dd342b26c642188f116efcd6eeff549f174a85803c2f1420e7bda34c60": {
+    "classification": "technical",
+    "reason": "Internal channel/row/filter/reducer/notification identity or search index, not human display prose.",
+    "evidence": "LoggerDock.tsx preferredChannel, logTailReducer, parseLogLine searchText, filter state/options.value, Notifications id/category, or scrollToIndex align; display labels/messages have independent typed sinks."
+  },
+  "9e074e5868fa1ec6e32b546e97d87b8997ad42783cc3dccf157469d68e0004d4": {
+    "classification": "technical",
+    "reason": "Internal channel/row/filter/reducer/notification identity or search index, not human display prose.",
+    "evidence": "LoggerDock.tsx preferredChannel, logTailReducer, parseLogLine searchText, filter state/options.value, Notifications id/category, or scrollToIndex align; display labels/messages have independent typed sinks."
+  },
+  "6d2b8ec978b615b05bfcee5d9dbc6bc81e8daa87ec31be9773fca0b900a6b12a": {
+    "classification": "technical",
+    "reason": "Internal channel/row/filter/reducer/notification identity or search index, not human display prose.",
+    "evidence": "LoggerDock.tsx preferredChannel, logTailReducer, parseLogLine searchText, filter state/options.value, Notifications id/category, or scrollToIndex align; display labels/messages have independent typed sinks."
+  },
+  "6c6f4207c7bac0a1554fd93de79a7f7ac1b73f8b1e9e0c9d770305456434653c": {
+    "classification": "technical",
+    "reason": "Internal channel/row/filter/reducer/notification identity or search index, not human display prose.",
+    "evidence": "LoggerDock.tsx preferredChannel, logTailReducer, parseLogLine searchText, filter state/options.value, Notifications id/category, or scrollToIndex align; display labels/messages have independent typed sinks."
+  },
+  "b9dd0ae3f2a96cb0fe59c31c3c6deff26c26a1ac1640fe79c8c6eaee1a81c780": {
+    "classification": "technical",
+    "reason": "Internal channel/row/filter/reducer/notification identity or search index, not human display prose.",
+    "evidence": "LoggerDock.tsx preferredChannel, logTailReducer, parseLogLine searchText, filter state/options.value, Notifications id/category, or scrollToIndex align; display labels/messages have independent typed sinks."
+  },
+  "168748c267243328febf00a117d8cdee1497bce24d8b3501b877ed08f72ed979": {
+    "classification": "technical",
+    "reason": "Internal channel/row/filter/reducer/notification identity or search index, not human display prose.",
+    "evidence": "LoggerDock.tsx preferredChannel, logTailReducer, parseLogLine searchText, filter state/options.value, Notifications id/category, or scrollToIndex align; display labels/messages have independent typed sinks."
+  },
+  "f988a2f7ddefc896db02960bc8fbe0d4d17a18d58f9dea28c050fa72ee40489a": {
+    "classification": "technical",
+    "reason": "Internal channel/row/filter/reducer/notification identity or search index, not human display prose.",
+    "evidence": "LoggerDock.tsx preferredChannel, logTailReducer, parseLogLine searchText, filter state/options.value, Notifications id/category, or scrollToIndex align; display labels/messages have independent typed sinks."
+  }
+}

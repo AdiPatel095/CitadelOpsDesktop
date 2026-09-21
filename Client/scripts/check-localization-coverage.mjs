@@ -45,6 +45,7 @@ for (const family of ['server','backend']) {
   }
 }
 const inventory = JSON.parse(fs.readFileSync(new URL('../localization/source-inventory.json',import.meta.url),'utf8'));
+errors.push(...(inventory.reviewErrors??[]));
 const sourceOpen = inventory.entries.filter(entry=>entry.classification==='unreviewed').length;
 const dynamicGaps = JSON.parse(fs.readFileSync(new URL('../localization/dynamic-gaps.json',import.meta.url),'utf8'));
 console.log(JSON.stringify({typedKeys:Object.keys(messages).length,officialKeys:Object.keys(officialMessageKeys).length,customKeys:Object.keys(custom).length,authoredLocales:localeCodes.length,missingByLocale,externalCoverage,externalMissing,catalogErrorCount:errors.length,catalogErrors:errors.filter(error=>!error.includes('Missing message:')),unreviewedSourceCandidates:sourceOpen,openDynamicSurfaces:dynamicGaps.filter(gap=>gap.status!=='covered').map(gap=>gap.id)},null,2));

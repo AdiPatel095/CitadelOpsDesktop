@@ -88,7 +88,6 @@
   "activity.issues": "Figyelmeztetések és hibák · {count, number}",
   "activity.results": "{shown, number} / {total, number}",
   "common.clearSelection": "Kijelölés törlése",
-  "common.presetName": "Előbeállítás neve",
   "common.savePreset": "Előbeállítás mentése",
   "common.calendar": "Naptár",
   "ui.equipment.components.equipmentModals.confirm.sell.827ff403": "Eladás megerősítése",

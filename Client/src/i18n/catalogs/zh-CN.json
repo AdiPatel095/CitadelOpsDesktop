@@ -88,7 +88,6 @@
   "activity.issues": "警告和错误 · {count, number}",
   "activity.results": "{shown, number} / {total, number}",
   "common.clearSelection": "清除选择",
-  "common.presetName": "预设名称",
   "common.savePreset": "保存预设",
   "common.calendar": "日历",
   "ui.equipment.components.equipmentModals.confirm.sell.827ff403": "确认出售",

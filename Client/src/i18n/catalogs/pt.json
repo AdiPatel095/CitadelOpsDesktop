@@ -88,7 +88,6 @@
   "activity.issues": "Avisos e erros · {count, number}",
   "activity.results": "{shown, number} de {total, number}",
   "common.clearSelection": "Limpar seleção",
-  "common.presetName": "Nome da predefinição",
   "common.savePreset": "Salvar predefinição",
   "common.calendar": "Calendário",
   "ui.equipment.components.equipmentModals.confirm.sell.827ff403": "Confirmar venda",

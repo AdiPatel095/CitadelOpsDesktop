@@ -1,3 +1,7 @@
+import {telemetryChannelDescriptor} from '../i18n/telemetryChannelMessages';
+import {describeMessage} from '../i18n/messages';
+import type {MessageKey} from '../i18n/messages';
+import {assertTelemetryResponse,activityError,ActivityPresentationError} from '../i18n/activityMessages';
 import {messageLanguageAttributes} from '../i18n/messageLanguage';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -39,6 +43,7 @@ type ParsedLogLine = {
   message: string;
   tone: LogTone;
   searchText: string;
+  defaultMessage?: boolean;
 };
 
 const preferredChannel = 'activity';
@@ -85,28 +90,6 @@ const logTailReducer = (state: LogTailState, action: LogTailAction): LogTailStat
   return { entries, nextID };
 };
 
-const fallbackChannelDescriptions: Record<string, string> = {
-  activity: 'Completed Citadel actions and issues that may need your attention.',
-  autobird: 'Completed Auto Bird troop movements and problems requiring attention.',
-  autostation: 'Completed station and recall movements and problems requiring attention.',
-  autorecruit: 'Completed troop queues and problems requiring attention.',
-  autotool: 'Completed tool queues and problems requiring attention.',
-  autosceatres: 'Completed crafting and resource actions and problems requiring attention.',
-  autohospital: 'Completed hospital actions and problems requiring attention.',
-  autotci: 'Completed construction-item equips, upgrades, and purchases and problems requiring attention.',
-  autoberiworld: 'Completed Berimond troop transfers, tower attacks, and problems requiring attention.',
-  autofoodbalance: 'Completed food and mead shipments and problems requiring attention.',
-  autoequipmentcleanup: 'Completed equipment cleanup actions and problems requiring attention.',
-  autotowers: 'Launched tower attacks and problems requiring attention.',
-  autofortress: 'Completed fortress supply, troop transports, attacks, and problems requiring attention.',
-  autoinvasion: 'Launched Foreign Lords and Bloodcrow attacks and problems requiring attention.',
-  autonomad: 'Launched Nomad and Samurai attacks and other completed event actions.',
-  autoadvisor: 'Launched advisor attacks and other completed advisor actions.',
-  autokhan: 'Completed Khan attacks, defense, and protection actions.',
-  autostorm: 'Completed Storm attacks, construction, logistics, and shop purchases.',
-  rift: 'Launched Rift attacks and other completed Rift actions.',
-};
-
 const formatLogTime = (time: string, locale: string) => {
   const [hourText, minute, second] = time.split(':');
   const hour = Number(hourText);
@@ -116,24 +99,24 @@ const formatLogTime = (time: string, locale: string) => {
   return new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: '2-digit', second: '2-digit', timeZone: 'UTC' }).format(new Date(Date.UTC(2000, 0, 1, hour, Number(minute), Number(second))));
 };
 
-const directionLabel = (value: string) => {
+const directionLabel = (value: string, t:(key:MessageKey)=>string) => {
   switch (value.trim().toUpperCase()) {
     case 'SEND':
-      return 'Sent';
+      return t('activity.sent');
     case 'RECV':
-      return 'Received';
+      return t('activity.received');
     case 'MATCH':
-      return 'Reply';
+      return t('activity.reply');
     case 'INFO':
-      return 'Event';
+      return t('activity.event');
     case 'WARN':
     case 'WARNING':
-      return 'Warning';
+      return t('activity.warning');
     case 'ERROR':
-      return 'Error';
+      return t('activity.error');
     case 'DEBUG':
     case 'TRACE':
-      return 'Debug';
+      return t('activity.debug');
     default:
       return value;
   }
@@ -150,10 +133,8 @@ const toneFromToken = (value: string): LogTone => {
   return 'plain';
 };
 
-const activityEventLabel = (value: string) => value
-  .trim()
-  .toLowerCase()
-  .replace(/\b\w/g, (letter) => letter.toUpperCase());
+// Protocol event identities remain verbatim; channel descriptors provide human labels.
+const activityEventLabel = (value: string) => value.trim();
 
 const writeClipboardText = async (value: string) => {
   if (navigator.clipboard?.writeText) {
@@ -174,11 +155,11 @@ const writeClipboardText = async (value: string) => {
   const copied = document.execCommand('copy');
   textarea.remove();
   if (!copied) {
-    throw new Error('Could not copy log data');
+    throw new ActivityPresentationError('activity.copyError');
   }
 };
 
-const parseLogLine = (entry: LogLineEntry, index: number, locale: string): ParsedLogLine => {
+const parseLogLine = (entry: LogLineEntry, index: number, locale: string, t:(key:MessageKey)=>string): ParsedLogLine => {
   const rawLine = entry.raw;
   const raw = rawLine.trimEnd();
   const channelMatch = raw.match(channelLinePattern);
@@ -193,9 +174,10 @@ const parseLogLine = (entry: LogLineEntry, index: number, locale: string): Parse
       raw,
       timestamp: formatLogTime(time, locale),
       direction,
-      primary: directionLabel(direction),
+      primary: directionLabel(direction,t),
       secondary: activityEventLabel(event),
-      message: message.trim() || 'Citadel completed an action.',
+      message: message.trim(),
+      defaultMessage: !message.trim(),
       tone,
       searchText: `${event} ${message}`.toLowerCase(),
     };
@@ -208,7 +190,7 @@ const parseLogLine = (entry: LogLineEntry, index: number, locale: string): Parse
     timestamp: '',
     direction: 'PLAIN',
     primary: '',
-    secondary: 'Activity',
+    secondary: t('activity.label'),
     message: raw,
     tone: 'plain',
     searchText: '',
@@ -232,7 +214,7 @@ export const LoggerDock = React.memo(function LoggerDock() {
   const [channels, setChannels] = useState<ChannelMeta[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [logTail, dispatchLogTail] = useReducer(logTailReducer, { entries: [], nextID: 0 });
-  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<{message:string;messageDescriptor?:LocalizedMessage;detail?:string} | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<LogFilter>('all');
   const [isFollowingLive, setIsFollowingLive] = useState(true);
@@ -251,15 +233,15 @@ export const LoggerDock = React.memo(function LoggerDock() {
     [activeId, channels],
   );
   const currentChannelDescription = currentChannel?.description
-    || (activeId ? fallbackChannelDescriptions[activeId] : '')
-    || 'Live application activity and command history.';
-  const originalLines = useMemo(() => logTail.entries.map((entry,index) => parseLogLine(entry,index,locale)), [logTail.entries,locale]);
-  const messageInputs = useMemo(() => logTail.entries.map((entry,index) => ({ descriptor: entry.messageDescriptor, legacyText: originalLines[index].message })), [logTail.entries,originalLines]);
+    || (activeId ? telemetryChannelDescriptor(activeId,'description')?.fallback : '')
+    || t('activity.defaultDescription');
+  const originalLines = useMemo(() => logTail.entries.map((entry,index) => parseLogLine(entry,index,locale,t)), [logTail.entries,locale,t]);
+  const messageInputs = useMemo(() => logTail.entries.map((entry,index) => ({ descriptor: entry.messageDescriptor ?? (originalLines[index].defaultMessage ? describeMessage('activity.defaultAction') : undefined), legacyText: originalLines[index].message })), [logTail.entries,originalLines]);
   const localizedLines = useLocalizedMessages(messageInputs);
   const parsedLines = useMemo(() => originalLines.map((line,index) => ({ ...line, message: localizedLines[index].text, messageLocale: localizedLines[index].resolvedLocale, translated: localizedLines[index].translated, searchText: `${line.secondary} ${localizedLines[index].text}`.toLocaleLowerCase(locale) })), [originalLines,localizedLines,locale]);
   const channelInputs = useMemo(() => channels.flatMap(channel => [
-    { descriptor: parseMessageDescriptor(channel.labelDescriptor), legacyText: channel.label },
-    { descriptor: parseMessageDescriptor(channel.descriptionDescriptor), legacyText: channel.description || fallbackChannelDescriptions[channel.id] || '' },
+    { descriptor: parseMessageDescriptor(channel.labelDescriptor) ?? telemetryChannelDescriptor(channel.id,'label',channel.label), legacyText: channel.label },
+    { descriptor: parseMessageDescriptor(channel.descriptionDescriptor) ?? telemetryChannelDescriptor(channel.id,'description',channel.description), legacyText: channel.description || telemetryChannelDescriptor(channel.id,'description')?.fallback || '' },
   ]), [channels]);
   const localizedChannels = useLocalizedMessages(channelInputs);
   const channelIndex = channels.findIndex(channel => channel.id === activeId);
@@ -297,10 +279,10 @@ export const LoggerDock = React.memo(function LoggerDock() {
   const filteredLinesRef = useRef(filteredLines);
   const rowVirtualizerRef = useRef(rowVirtualizer);
   const liveStatus = loadError
-    ? 'Updates unavailable'
+    ? t('activity.updatesUnavailable')
     : liveUpdatesPaused
-      ? 'Live updates paused'
-      : `Live · every ${pollIntervalMs / 1000} seconds`;
+      ? t('activity.updatesPaused')
+      : t('activity.liveInterval',{count:pollIntervalMs / 1000});
 
   logEntriesRef.current = logTail.entries;
   isFollowingLiveRef.current = isFollowingLive;
@@ -324,7 +306,7 @@ export const LoggerDock = React.memo(function LoggerDock() {
 
   useEffect(() => {
     if (loadError) {
-      Notifications.error(loadError, 'logger-load');
+      Notifications.publish({id:'logger-load',category:'red',message:loadError.message,messageDescriptor:loadError.messageDescriptor,lines:loadError.detail?[loadError.detail]:undefined});
     }
   }, [loadError]);
 
@@ -334,7 +316,7 @@ export const LoggerDock = React.memo(function LoggerDock() {
     (async () => {
       try {
         const res = await runtimeFetch('/api/v2/telemetry/channels');
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        await assertTelemetryResponse(res);
         const data = (await res.json()) as { channels?: ChannelMeta[] };
         const list = data.channels ?? [];
         if (cancelled) return;
@@ -345,7 +327,7 @@ export const LoggerDock = React.memo(function LoggerDock() {
           return list.find((channel) => channel.id === preferredChannel)?.id ?? list[0]?.id ?? null;
         });
       } catch (error) {
-        if (!cancelled) setLoadError(error instanceof Error ? error.message : 'Failed to load channels');
+        if (!cancelled) setLoadError(activityError(error,'activity.loadChannelsError'));
       }
     })();
     return () => {
@@ -359,7 +341,7 @@ export const LoggerDock = React.memo(function LoggerDock() {
     if (showProgress) setIsRefreshing(true);
     try {
       const res = await runtimeFetch(`/api/v2/telemetry/${encodeURIComponent(activeId)}?limit=${tailLimit}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await assertTelemetryResponse(res);
       const data: unknown = await res.json();
       if (requestID !== fetchSequenceRef.current) return;
       const nextLines = telemetryEntries(data);
@@ -373,7 +355,7 @@ export const LoggerDock = React.memo(function LoggerDock() {
       setLoadError(null);
     } catch (error) {
       if (requestID === fetchSequenceRef.current) {
-        setLoadError(error instanceof Error ? error.message : 'Failed to load log');
+        setLoadError(activityError(error,'activity.loadLogError'));
       }
     } finally {
       if (requestID === fetchSequenceRef.current) setIsRefreshing(false);
@@ -471,7 +453,8 @@ export const LoggerDock = React.memo(function LoggerDock() {
         copyFeedbackTimerRef.current = null;
       }, 1800);
     } catch (error) {
-      Notifications.error(error instanceof Error ? error.message : 'Could not copy log data', 'logger-copy');
+      const failure=activityError(error,'activity.copyError');
+      Notifications.publish({id:'logger-copy',category:'red',message:failure.message,messageDescriptor:failure.messageDescriptor,lines:failure.detail?[failure.detail]:undefined});
     }
   }, []);
 
@@ -507,7 +490,7 @@ export const LoggerDock = React.memo(function LoggerDock() {
                   onClick={() => setOpen(false)}
                   className="liquid-log-close-button"
                   aria-label={t('activity.close')}
-                  title={`${t('activity.close')} (Esc)`}
+                  title={t('activity.closeShortcut',{shortcut:'Esc'})}
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -590,7 +573,7 @@ export const LoggerDock = React.memo(function LoggerDock() {
                   )}
                   disabled={filteredLines.length === 0}
                   aria-label={t('activity.copy')}
-                  title={`Copy ${filteredLines.length.toLocaleString()} visible log lines`}
+                  title={t('activity.copyCount',{count:filteredLines.length})}
                 >
                   {copiedTarget === 'visible-lines' ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
@@ -615,16 +598,16 @@ export const LoggerDock = React.memo(function LoggerDock() {
               ref={logStreamRef}
               className="liquid-log-stream custom-scrollbar"
               role="log"
-              aria-label={currentChannel ? `${currentChannel.label} activity` : 'Log activity'}
+              aria-label={currentChannel ? t('activity.channelActivity',{channel:localizedChannels[channelIndex*2]?.text??currentChannel.label}) : t('activity.logActivity')}
               aria-busy={isRefreshing}
             >
               {filteredLines.length === 0 ? (
                 <span className="liquid-log-empty">
                   {loadError
-                    ? 'Activity is temporarily unavailable. Use Refresh to try again.'
+                    ? t('activity.unavailable')
                     : logTail.entries.length === 0
-                      ? 'No activity yet for this channel.'
-                      : 'No activity matches the current search and filter.'}
+                      ? t('activity.emptyChannel')
+                      : t('activity.emptyFilter')}
                 </span>
               ) : (
                 <div
@@ -652,7 +635,7 @@ export const LoggerDock = React.memo(function LoggerDock() {
                       >
                         <article className={`liquid-log-row liquid-log-row-${line.tone}`}>
                           <div className="liquid-log-row-meta">
-                            <span className="liquid-log-time">{line.timestamp || `#${line.index + 1}`}</span>
+                            <span className="liquid-log-time">{line.timestamp || `#${new Intl.NumberFormat(locale).format(line.index + 1)}`}</span>
                             {line.primary && (
                               <span className={`liquid-log-badge liquid-log-badge-${line.tone}`}>{line.primary}</span>
                             )}

@@ -88,7 +88,6 @@
   "activity.issues": "Προειδοποιήσεις και σφάλματα · {count, number}",
   "activity.results": "{shown, number} από {total, number}",
   "common.clearSelection": "Εκκαθάριση επιλογής",
-  "common.presetName": "Όνομα προρύθμισης",
   "common.savePreset": "Αποθήκευση προρύθμισης",
   "common.calendar": "Ημερολόγιο",
   "ui.equipment.components.equipmentModals.confirm.sell.827ff403": "Επιβεβαίωση πώλησης",
