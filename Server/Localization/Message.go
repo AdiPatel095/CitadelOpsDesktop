@@ -192,3 +192,17 @@ func (message *Message) WithGameParam(parameter, officialKey, fallback string) *
 	copy.GameParams[parameter] = GameParam{Key: officialKey, Fallback: fallback}
 	return copy
 }
+
+// CloneMap isolates additive presentation maps across runtime snapshots.
+func CloneMap(messages map[string]*Message) map[string]*Message {
+	if messages == nil {
+		return nil
+	}
+	result := make(map[string]*Message, len(messages))
+	for key, message := range messages {
+		if message != nil {
+			result[key] = Clone(message)
+		}
+	}
+	return result
+}

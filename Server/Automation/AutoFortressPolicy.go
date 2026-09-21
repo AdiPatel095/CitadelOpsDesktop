@@ -81,7 +81,7 @@ func (*AutoFortressPolicy) WakeSections() []string {
 	return []string{autoFortressSection, commanderFeatureSection}
 }
 
-func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
+func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result Decision, resultErr error) {
 	settings := defaultAutoFortressSettings()
 	if !decodeSection(snapshot.Configuration, autoFortressSection, &settings) {
 		return autoFortressWaiting(snapshot, "Auto Fortress settings have not been saved", nil, Localization.New("server.automation.auto_fortress_settings_have.34b778f4", "Auto Fortress settings have not been saved", nil)), nil
@@ -123,8 +123,14 @@ func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot)
 		"minimumCommanderSpeedBonus": settings.MinimumCommanderSpeedBonus,
 	}
 	details := map[string]string{}
+	detailDescriptors := map[string]*Localization.Message{}
+	defer func() {
+		if result.Details != nil {
+			result.DetailsDescriptors = detailDescriptors
+		}
+	}()
 	main, mainFound := autoBuyerSourceCastle(snapshot.State, 0)
-	if decision := policy.autoFortressSupplyDecision(snapshot, settings, sources, main, mainFound, metrics, details); decision != nil {
+	if decision := policy.autoFortressSupplyDecision(snapshot, settings, sources, main, mainFound, metrics, details, detailDescriptors); decision != nil {
 		decision.Details = details
 		return *decision, nil
 	}
@@ -537,7 +543,9 @@ func (policy *AutoFortressPolicy) autoFortressSupplyDecision(
 	mainFound bool,
 	metrics map[string]float64,
 	details map[string]string,
+	descriptorMaps ...map[string]*Localization.Message,
 ) *Decision {
+	detailDescriptors := detailDescriptorMap(descriptorMaps)
 	configuredKingdoms := make([]int, 0, len(settings.Kingdoms))
 	for key, configured := range settings.Kingdoms {
 		if !configured.Enabled {
@@ -551,6 +559,7 @@ func (policy *AutoFortressPolicy) autoFortressSupplyDecision(
 		metrics[fmt.Sprintf("outstandingDirewolvesKingdom%d", kingdomID)] = 0
 		if _, found := sourceForKingdom(sources, State.KingdomID(kingdomID)); !found {
 			details[fmt.Sprintf("supplyKingdom%d", kingdomID)] = "Main castle is unavailable or the kingdom is not unlocked"
+			detailDescriptors[fmt.Sprintf("supplyKingdom%d", kingdomID)] = Localization.New("server.automation.main_castle_is_unavailable.e1216480", "Main castle is unavailable or the kingdom is not unlocked", nil)
 		}
 	}
 	sort.Ints(configuredKingdoms)
@@ -573,6 +582,7 @@ func (policy *AutoFortressPolicy) autoFortressSupplyDecision(
 		target, found := snapshot.State.Castles[workflow.TargetCastleID]
 		if !found {
 			details[fmt.Sprintf("supplyKingdom%d", kingdomID)] = "Owned Direwolf transfer target is unavailable; reconciliation is paused"
+			detailDescriptors[fmt.Sprintf("supplyKingdom%d", kingdomID)] = Localization.New("server.automation.owned_direwolf_transfer_target.cd1bf957", "Owned Direwolf transfer target is unavailable; reconciliation is paused", nil)
 			if workflow.SourceReconciledAt.IsZero() && !workflow.SourceDebitedLocally && workflow.Status != "armed" && workflow.Status != "ownership_uncertain" && workflow.TransportObservedAt.After(workflow.ArmedAt) && mainFound {
 				if main.UnitsObservedAt.IsZero() || !main.UnitsObservedAt.After(workflow.TransportObservedAt) {
 					decision := autoFortressRequest(snapshot, metrics, "Refresh Direwolf donor after ambiguous dispatch", "game.focus_castle", map[string]any{"castleId": main.ID, "refresh": true}, Localization.New("server.automation.refresh_direwolf_donor_after.62624b9c", "Refresh Direwolf donor after ambiguous dispatch", nil))
@@ -597,13 +607,14 @@ func (policy *AutoFortressPolicy) autoFortressSupplyDecision(
 		metrics[fmt.Sprintf("allocatedDirewolvesKingdom%d", kingdomID)] = float64(stationed + inbound)
 		metrics[fmt.Sprintf("outstandingDirewolvesKingdom%d", kingdomID)] = 0
 		enabled := settings.Kingdoms[strconv.Itoa(int(kingdomID))].Enabled
-		if decision := policy.autoFortressWorkflowDecision(snapshot, settings, main, mainFound, target, workflow, enabled, metrics, details); decision != nil && workflowAction == nil {
+		if decision := policy.autoFortressWorkflowDecision(snapshot, settings, main, mainFound, target, workflow, enabled, metrics, details, detailDescriptors); decision != nil && workflowAction == nil {
 			workflowAction = decision
 		}
 	}
 	if !mainFound {
 		for _, source := range sources {
 			details[fmt.Sprintf("supplyKingdom%d", source.KingdomID)] = "Great Empire main castle is unavailable for Direwolf supply"
+			detailDescriptors[fmt.Sprintf("supplyKingdom%d", source.KingdomID)] = Localization.New("server.automation.great_empire_main_castle.82eee831", "Great Empire main castle is unavailable for Direwolf supply", nil)
 		}
 		return workflowAction
 	}
@@ -625,10 +636,12 @@ func (policy *AutoFortressPolicy) autoFortressSupplyDecision(
 		unlock, observed := snapshot.State.KingdomTransport.Unlocks[source.KingdomID]
 		if !observed || !unlock.Unlocked {
 			details[key] = "Kingdom troop transport is not unlocked"
+			detailDescriptors[key] = Localization.New("server.automation.kingdom_troop_transport_is.f888fc32", "Kingdom troop transport is not unlocked", nil)
 			continue
 		}
 		if source.UnitsObservedAt.IsZero() || snapshot.Now.Sub(source.UnitsObservedAt) > autoFortressUnitFreshness {
 			details[key] = "Destination Direwolf inventory needs a fresh observation"
+			detailDescriptors[key] = Localization.New("server.automation.destination_direwolf_inventory_needs.2ab6a00f", "Destination Direwolf inventory needs a fresh observation", nil)
 			if maintenance == nil && policy.supplyRefreshDue(source.KingdomID, snapshot.Now) {
 				policy.markSupplyRefreshRequested(source.KingdomID, snapshot.Now)
 				decision := autoFortressRequest(snapshot, metrics, "Refresh destination Direwolves at "+castleName(source), "game.focus_castle", map[string]any{"castleId": source.ID, "refresh": true})
@@ -645,6 +658,7 @@ func (policy *AutoFortressPolicy) autoFortressSupplyDecision(
 		metrics[fmt.Sprintf("inboundDirewolvesKingdom%d", source.KingdomID)] = float64(inbound)
 		if _, exists := details[key]; !exists {
 			details[key] = "Direwolf supply is ready"
+			detailDescriptors[key] = Localization.New("server.automation.direwolf_supply_is_ready.cafc9a1f", "Direwolf supply is ready", nil)
 		}
 	}
 
@@ -666,10 +680,12 @@ func (policy *AutoFortressPolicy) autoFortressSupplyDecision(
 		}
 		if destination.pending {
 			details[fmt.Sprintf("supplyKingdom%d", kingdomID)] = "Waiting for the confirmed inbound Direwolves to arrive"
+			detailDescriptors[fmt.Sprintf("supplyKingdom%d", kingdomID)] = Localization.New("server.automation.waiting_for_the_confirmed.dd90e254", "Waiting for the confirmed inbound Direwolves to arrive", nil)
 			continue
 		}
 		if workflow, exists := snapshot.State.KingdomTransport.TroopWorkflows[kingdomID]; exists {
 			details[fmt.Sprintf("supplyKingdom%d", kingdomID)] = "Reconciling the owned Direwolf transfer before another shipment"
+			detailDescriptors[fmt.Sprintf("supplyKingdom%d", kingdomID)] = Localization.New("server.automation.reconciling_the_owned_direwolf.f8feecaa", "Reconciling the owned Direwolf transfer before another shipment", nil)
 			_ = workflow
 			continue
 		}
@@ -681,6 +697,7 @@ func (policy *AutoFortressPolicy) autoFortressSupplyDecision(
 			"units": []map[string]any{{"unitId": GameData.DirewolfUnitID, "amount": amount}},
 		})
 		details[fmt.Sprintf("supplyKingdom%d", kingdomID)] = fmt.Sprintf("Allocating %d Direwolves from the Great Empire", amount)
+		detailDescriptors[fmt.Sprintf("supplyKingdom%d", kingdomID)] = Localization.New("server.automation.allocating_amount_number_direwolves.82b58fd8", "Allocating {amount, number} Direwolves from the Great Empire", Localization.Params{"amount": amount})
 		shipmentAction = &decision
 	}
 	if workflowAction != nil {
@@ -759,10 +776,12 @@ func autoFortressBalanceAllocations(destinations []autoFortressSupplyDestination
 	}
 }
 
-func (policy *AutoFortressPolicy) autoFortressWorkflowDecision(snapshot Snapshot, settings autoFortressSettings, main State.CastleState, mainFound bool, target State.CastleState, workflow State.KingdomTroopTransportWorkflow, enabled bool, metrics map[string]float64, details map[string]string) *Decision {
+func (policy *AutoFortressPolicy) autoFortressWorkflowDecision(snapshot Snapshot, settings autoFortressSettings, main State.CastleState, mainFound bool, target State.CastleState, workflow State.KingdomTroopTransportWorkflow, enabled bool, metrics map[string]float64, details map[string]string, descriptorMaps ...map[string]*Localization.Message) *Decision {
+	detailDescriptors := detailDescriptorMap(descriptorMaps)
 	key := fmt.Sprintf("supplyKingdom%d", target.KingdomID)
 	if workflow.Status == "armed" || workflow.Status == "ownership_uncertain" {
 		details[key] = "Reconciling an uncertain Direwolf shipment before any replay"
+		detailDescriptors[key] = Localization.New("server.automation.reconciling_an_uncertain_direwolf.77eb81f1", "Reconciling an uncertain Direwolf shipment before any replay", nil)
 		if policy.supplyRefreshDue(workflow.KingdomID, snapshot.Now) {
 			policy.markSupplyRefreshRequested(workflow.KingdomID, snapshot.Now)
 			decision := autoFortressRequest(snapshot, metrics, "Refresh uncertain owned Direwolf shipment", "troops.kingdom.refresh", map[string]any{}, Localization.New("server.automation.refresh_uncertain_owned_direwolf.1d0c6481", "Refresh uncertain owned Direwolf shipment", nil))
@@ -773,10 +792,12 @@ func (policy *AutoFortressPolicy) autoFortressWorkflowDecision(snapshot Snapshot
 	if workflow.SourceReconciledAt.IsZero() && !workflow.SourceDebitedLocally {
 		if !mainFound {
 			details[key] = "Owned transfer donor inventory is unresolved; the Great Empire main castle is unavailable"
+			detailDescriptors[key] = Localization.New("server.automation.owned_transfer_donor_inventory.fcf7bdd6", "Owned transfer donor inventory is unresolved; the Great Empire main castle is unavailable", nil)
 			return nil
 		}
 		if workflow.SessionGeneration == 0 || workflow.SessionGeneration != snapshot.State.Session.ConnectionGeneration || workflow.TransportObservedAt.IsZero() {
 			details[key] = "Refreshing current-session transport authority before donor reconciliation"
+			detailDescriptors[key] = Localization.New("server.automation.refreshing_current_session_transport.c18be7a0", "Refreshing current-session transport authority before donor reconciliation", nil)
 			if policy.supplyRefreshDue(workflow.KingdomID, snapshot.Now) {
 				policy.markSupplyRefreshRequested(workflow.KingdomID, snapshot.Now)
 				decision := autoFortressRequest(snapshot, metrics, "Refresh uncertain owned Direwolf shipment", "troops.kingdom.refresh", map[string]any{}, Localization.New("server.automation.refresh_uncertain_owned_direwolf.1d0c6481", "Refresh uncertain owned Direwolf shipment", nil))
@@ -786,10 +807,12 @@ func (policy *AutoFortressPolicy) autoFortressWorkflowDecision(snapshot Snapshot
 		}
 		if main.UnitsObservedAt.IsZero() || !main.UnitsObservedAt.After(workflow.TransportObservedAt) {
 			details[key] = "Refreshing the donor after an ambiguous Direwolf dispatch"
+			detailDescriptors[key] = Localization.New("server.automation.refreshing_the_donor_after.5a3e11cb", "Refreshing the donor after an ambiguous Direwolf dispatch", nil)
 			decision := autoFortressRequest(snapshot, metrics, "Refresh Direwolf donor after ambiguous dispatch", "game.focus_castle", map[string]any{"castleId": main.ID, "refresh": true}, Localization.New("server.automation.refresh_direwolf_donor_after.62624b9c", "Refresh Direwolf donor after ambiguous dispatch", nil))
 			return &decision
 		}
 		details[key] = "Confirming the authoritative donor inventory after shipment"
+		detailDescriptors[key] = Localization.New("server.automation.confirming_the_authoritative_donor.e39f7da3", "Confirming the authoritative donor inventory after shipment", nil)
 		decision := autoFortressRequest(snapshot, metrics, "Reconcile Direwolf donor after ambiguous dispatch", "troops.kingdom.reconcile_donor", map[string]any{
 			"owner": workflow.Owner, "workflowId": workflow.ID, "targetKingdomId": workflow.KingdomID,
 		}, Localization.New("server.automation.reconcile_direwolf_donor_after.3e8f7c6a", "Reconcile Direwolf donor after ambiguous dispatch", nil))
@@ -802,6 +825,7 @@ func (policy *AutoFortressPolicy) autoFortressWorkflowDecision(snapshot Snapshot
 				workflow.Status == "skip_uncertain" && !observation.ObservedAt.After(workflow.SkipInventoryObservedAt)
 			if needsRefresh {
 				details[key] = "Time-skip timer advanced; refreshing official skip inventory before another spend"
+				detailDescriptors[key] = Localization.New("server.automation.time_skip_timer_advanced.adabd66d", "Time-skip timer advanced; refreshing official skip inventory before another spend", nil)
 				if policy.supplyRefreshDue(workflow.KingdomID, snapshot.Now) {
 					policy.markSupplyRefreshRequested(workflow.KingdomID, snapshot.Now)
 					decision := autoFortressRequest(snapshot, metrics, "Refresh official time-skip inventory", "account.inventory.refresh", map[string]any{}, Localization.New("server.automation.refresh_official_time_skip.dbd0cda5", "Refresh official time-skip inventory", nil))
@@ -810,6 +834,7 @@ func (policy *AutoFortressPolicy) autoFortressWorkflowDecision(snapshot Snapshot
 				return nil
 			}
 			details[key] = "Reconciling official time-skip inventory consumption"
+			detailDescriptors[key] = Localization.New("server.automation.reconciling_official_time_skip.56aa4a31", "Reconciling official time-skip inventory consumption", nil)
 			decision := autoFortressRequest(snapshot, metrics, "Reconcile confirmed time-skip inventory", "troops.kingdom.skip.reconcile_inventory", map[string]any{
 				"owner": workflow.Owner, "workflowId": workflow.ID, "targetKingdomId": workflow.KingdomID,
 			}, Localization.New("server.automation.reconcile_confirmed_time_skip.241f2dc6", "Reconcile confirmed time-skip inventory", nil))
@@ -818,6 +843,7 @@ func (policy *AutoFortressPolicy) autoFortressWorkflowDecision(snapshot Snapshot
 		if !workflow.TransportObservedAt.After(workflow.SkipRequestedAt) ||
 			!workflow.SkipTimerObservedAt.IsZero() && !workflow.TransportObservedAt.After(workflow.SkipTimerObservedAt) {
 			details[key] = "Reconciling an uncertain time-skip reply before another spend"
+			detailDescriptors[key] = Localization.New("server.automation.reconciling_an_uncertain_time.9c7b87c7", "Reconciling an uncertain time-skip reply before another spend", nil)
 			if policy.supplyRefreshDue(workflow.KingdomID, snapshot.Now) {
 				policy.markSupplyRefreshRequested(workflow.KingdomID, snapshot.Now)
 				decision := autoFortressRequest(snapshot, metrics, "Refresh owned Direwolf transfer after uncertain skip", "troops.kingdom.refresh", map[string]any{}, Localization.New("server.automation.refresh_owned_direwolf_transfer.9eb2aca1", "Refresh owned Direwolf transfer after uncertain skip", nil))
@@ -826,6 +852,7 @@ func (policy *AutoFortressPolicy) autoFortressWorkflowDecision(snapshot Snapshot
 			return nil
 		}
 		details[key] = "Reconciling the owned transfer timer after a time skip"
+		detailDescriptors[key] = Localization.New("server.automation.reconciling_the_owned_transfer.1d5fe14f", "Reconciling the owned transfer timer after a time skip", nil)
 		decision := autoFortressRequest(snapshot, metrics, "Reconcile owned Direwolf transfer timer", "troops.kingdom.skip.reconcile_timer", map[string]any{
 			"owner": workflow.Owner, "workflowId": workflow.ID, "targetKingdomId": workflow.KingdomID,
 		}, Localization.New("server.automation.reconcile_owned_direwolf_transfer.5a7b3c44", "Reconcile owned Direwolf transfer timer", nil))
@@ -834,10 +861,12 @@ func (policy *AutoFortressPolicy) autoFortressWorkflowDecision(snapshot Snapshot
 	if workflow.Status == "awaiting_destination_refresh" || workflow.Status == "ownership_absent" {
 		if !target.UnitsObservedAt.After(workflow.TransportObservedAt) {
 			details[key] = "Transfer arrived; refreshing destination inventory before reuse"
+			detailDescriptors[key] = Localization.New("server.automation.transfer_arrived_refreshing_destination.ac73401a", "Transfer arrived; refreshing destination inventory before reuse", nil)
 			decision := autoFortressRequest(snapshot, metrics, "Refresh arrived Direwolves at "+castleName(target), "game.focus_castle", map[string]any{"castleId": target.ID, "refresh": true})
 			return &decision
 		}
 		details[key] = "Settling the completed Direwolf transfer"
+		detailDescriptors[key] = Localization.New("server.automation.settling_the_completed_direwolf.98b622a0", "Settling the completed Direwolf transfer", nil)
 		decision := autoFortressRequest(snapshot, metrics, "Settle completed Direwolf transfer to "+castleName(target), "troops.kingdom.settle", map[string]any{
 			"owner": workflow.Owner, "workflowId": workflow.ID, "targetKingdomId": workflow.KingdomID,
 		})
@@ -845,11 +874,14 @@ func (policy *AutoFortressPolicy) autoFortressWorkflowDecision(snapshot Snapshot
 	}
 	if workflow.Status != "pending" {
 		details[key] = "Owned Direwolf shipment requires reconciliation"
+		detailDescriptors[key] = Localization.New("server.automation.owned_direwolf_shipment_requires.2f7767f1", "Owned Direwolf shipment requires reconciliation", nil)
 		return nil
 	}
 	details[key] = "Confirmed Direwolves are inbound"
+	detailDescriptors[key] = Localization.New("server.automation.confirmed_direwolves_are_inbound.deadb392", "Confirmed Direwolves are inbound", nil)
 	if !enabled {
 		details[key] = "Destination is disabled; the confirmed Direwolves will arrive without a new skip or shipment"
+		detailDescriptors[key] = Localization.New("server.automation.destination_is_disabled_the.151d672a", "Destination is disabled; the confirmed Direwolves will arrive without a new skip or shipment", nil)
 		return nil
 	}
 	if !settings.UseTimeSkips {
@@ -858,6 +890,7 @@ func (policy *AutoFortressPolicy) autoFortressWorkflowDecision(snapshot Snapshot
 	if workflow.TransportObservedAt.IsZero() || snapshot.Now.Before(workflow.TransportObservedAt) ||
 		snapshot.Now.Sub(workflow.TransportObservedAt) > autoFortressUnitFreshness {
 		details[key] = "Refreshing the owned Direwolf transfer before considering a time skip"
+		detailDescriptors[key] = Localization.New("server.automation.refreshing_the_owned_direwolf.de3bd653", "Refreshing the owned Direwolf transfer before considering a time skip", nil)
 		decision := autoFortressRequest(snapshot, metrics, "Refresh owned Direwolf transfer before a time skip", "troops.kingdom.refresh", map[string]any{}, Localization.New("server.automation.refresh_owned_direwolf_transfer.e05ddbb2", "Refresh owned Direwolf transfer before a time skip", nil))
 		return &decision
 	}
@@ -869,6 +902,7 @@ func (policy *AutoFortressPolicy) autoFortressWorkflowDecision(snapshot Snapshot
 	if option.WireKey == "" {
 		if autoFortressSkipInventoryNeedsRefresh(snapshot, settings.TimeSkipReserve) {
 			details[key] = "Official time-skip inventory is stale; refreshing before reconsidering a spend"
+			detailDescriptors[key] = Localization.New("server.automation.official_time_skip_inventory.c62574f9", "Official time-skip inventory is stale; refreshing before reconsidering a spend", nil)
 			if policy.supplyRefreshDue(workflow.KingdomID, snapshot.Now) {
 				policy.markSupplyRefreshRequested(workflow.KingdomID, snapshot.Now)
 				decision := autoFortressRequest(snapshot, metrics, "Refresh stale official time-skip inventory", "account.inventory.refresh", map[string]any{}, Localization.New("server.automation.refresh_stale_official_time.7895c01e", "Refresh stale official time-skip inventory", nil))
@@ -877,10 +911,12 @@ func (policy *AutoFortressPolicy) autoFortressWorkflowDecision(snapshot Snapshot
 			return nil
 		}
 		details[key] = "No useful official time skip is available above the configured reserves; waiting naturally"
+		detailDescriptors[key] = Localization.New("server.automation.no_useful_official_time.ae9f9f45", "No useful official time skip is available above the configured reserves; waiting naturally", nil)
 		return nil
 	}
 	reserve := max(int64(0), settings.TimeSkipReserve[option.WireKey])
 	details[key] = fmt.Sprintf("Applying %s with minimal duration waste", option.WireKey)
+	detailDescriptors[key] = Localization.New("server.automation.applying_skip_with_minimal.ccc2f689", "Applying {skip} with minimal duration waste", Localization.Params{"skip": option.WireKey})
 	decision := autoFortressRequest(snapshot, metrics, "Apply "+option.WireKey+" to the owned Direwolf transfer", "troops.kingdom.skip", map[string]any{
 		"targetKingdomId": workflow.KingdomID, "timeSkipId": option.WireKey, "minimumRemaining": reserve,
 		"owner": workflow.Owner, "workflowId": workflow.ID, "expectedRemaining": remaining, "expectedDurationSec": option.Seconds,
@@ -1089,4 +1125,13 @@ func snapshotFortressCheckInterval(snapshot Snapshot) int {
 		return max(1, settings.CheckIntervalSec)
 	}
 	return 30
+}
+
+// Optional maps keep internal test callers compatible while the policy supplies
+// one shared presentation map alongside the raw detail map.
+func detailDescriptorMap(maps []map[string]*Localization.Message) map[string]*Localization.Message {
+	if len(maps) > 0 && maps[0] != nil {
+		return maps[0]
+	}
+	return map[string]*Localization.Message{}
 }

@@ -1518,6 +1518,7 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 			automation.LastRunAt = cloneTimePointer(automation.LastRunAt)
 			automation.Metrics = cloneMap(automation.Metrics)
 			automation.Details = cloneMap(automation.Details)
+			automation.DetailsDescriptors = Localization.CloneMap(automation.DetailsDescriptors)
 			automation.OperationalCursors = cloneMap(automation.OperationalCursors)
 			clone.Automations[id] = automation
 		}
