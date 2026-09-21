@@ -242,5 +242,13 @@
   "battle.allianceAttackRatioHelp": "Défenseurs tués par attaquant perdu lors des attaques contre cette alliance",
   "battle.allianceDefenseRatioHelp": "Attaquants tués par défenseur perdu lors des défenses contre cette alliance",
   "battle.noParsedUnits": "Aucune unité analysée.",
-  "battle.noParsedTools": "Aucun engin analysé."
+  "battle.noParsedTools": "Aucun engin analysé.",
+  "battle.unknownPlayer": "Joueur inconnu",
+  "battle.noAlliance": "Aucune alliance",
+  "battle.unknownCastle": "Château inconnu",
+  "battle.unknownCoordinates": "Coordonnées inconnues",
+  "battle.unknownKingdom": "Royaume inconnu",
+  "battle.kingdomId": "Royaume {id}",
+  "battle.lane": "Secteur {number, number}",
+  "battle.openDetails": "Afficher les détails de {attacker} contre {defender}"
 }

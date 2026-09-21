@@ -242,5 +242,13 @@
   "battle.allianceAttackRatioHelp": "المدافعون المقتولون مقابل كل مهاجم مفقود عند مهاجمة هذا التحالف",
   "battle.allianceDefenseRatioHelp": "المهاجمون المقتولون مقابل كل مدافع مفقود عند الدفاع ضد هذا التحالف",
   "battle.noParsedUnits": "لا توجد وحدات محللة.",
-  "battle.noParsedTools": "لا توجد أدوات محللة."
+  "battle.noParsedTools": "لا توجد أدوات محللة.",
+  "battle.unknownPlayer": "لاعب غير معروف",
+  "battle.noAlliance": "لا يوجد تحالف",
+  "battle.unknownCastle": "قلعة غير معروفة",
+  "battle.unknownCoordinates": "إحداثيات غير معروفة",
+  "battle.unknownKingdom": "مملكة غير معروفة",
+  "battle.kingdomId": "المملكة {id}",
+  "battle.lane": "القطاع {number, number}",
+  "battle.openDetails": "فتح تفاصيل {attacker} ضد {defender}"
 }

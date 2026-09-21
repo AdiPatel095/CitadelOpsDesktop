@@ -56,5 +56,13 @@
   "battle.allianceAttackRatioHelp": "この同盟への攻撃で、失った攻撃者1体あたりに倒した防御者の数",
   "battle.allianceDefenseRatioHelp": "この同盟に対する防御で、失った防御者1体あたりに倒した攻撃者の数",
   "battle.noParsedUnits": "解析されたユニットはありません。",
-  "battle.noParsedTools": "解析された兵器はありません。"
+  "battle.noParsedTools": "解析された兵器はありません。",
+  "battle.unknownPlayer": "不明なプレイヤー",
+  "battle.noAlliance": "同盟なし",
+  "battle.unknownCastle": "不明な城",
+  "battle.unknownCoordinates": "不明な座標",
+  "battle.unknownKingdom": "不明な王国",
+  "battle.kingdomId": "王国 {id}",
+  "battle.lane": "区画 {number, number}",
+  "battle.openDetails": "{attacker} 対 {defender} の詳細を開く"
 }

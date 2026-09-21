@@ -2735,7 +2735,15 @@
       "battle.allianceAttackRatioHelp": "9044d2ee6bf53d723f96727f7f9827fd6ef6b49fa30e42e9cf1e66437ef5b492",
       "battle.allianceDefenseRatioHelp": "fa347d14f526ceec6843a2e3328cbbc6571aac81b8fbb2966150b555f1797fec",
       "battle.noParsedUnits": "48cbeb863a31861e34d7060885ba86371ceda69227cbcac18f5f129689539437",
-      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d"
+      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d",
+      "battle.unknownPlayer": "f5a29b325d43798cb899843eb633fba4b3fea7fb599108c38a4e744b9ea5437a",
+      "battle.noAlliance": "623666daf91ea23cb6e8b32bc93983ec73f4fabf37294a69b5de31387023bac2",
+      "battle.unknownCastle": "5bb09b99f5a66d9fe3594beea5ca0f3ae14a6a6d13081f62ca35fb74d3882cf8",
+      "battle.unknownCoordinates": "f8cffa5234c72dc6df4441f4f23fb323a50d76403acff36af54000d89ea13dd8",
+      "battle.unknownKingdom": "7cdca580b4dda173a1a97b30455deb7f47a5aa649805ce26dccf41834cd3cfe1",
+      "battle.kingdomId": "6a702b2f43954727d75fd586950e663cfcacdb5b09e49fb07bb8da29caca6da4",
+      "battle.lane": "6b8e67f24102a9454badf96183060af1fb2045f0152a348e3bdd29027f5eca47",
+      "battle.openDetails": "a9003e8c5cf1abb157558bd6feecd9b5ed9ec803931a47df3cedc2881bfaa06c"
     }
   },
   "battle.fr.json": {
@@ -2799,7 +2807,15 @@
       "battle.allianceAttackRatioHelp": "9044d2ee6bf53d723f96727f7f9827fd6ef6b49fa30e42e9cf1e66437ef5b492",
       "battle.allianceDefenseRatioHelp": "fa347d14f526ceec6843a2e3328cbbc6571aac81b8fbb2966150b555f1797fec",
       "battle.noParsedUnits": "48cbeb863a31861e34d7060885ba86371ceda69227cbcac18f5f129689539437",
-      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d"
+      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d",
+      "battle.unknownPlayer": "f5a29b325d43798cb899843eb633fba4b3fea7fb599108c38a4e744b9ea5437a",
+      "battle.noAlliance": "623666daf91ea23cb6e8b32bc93983ec73f4fabf37294a69b5de31387023bac2",
+      "battle.unknownCastle": "5bb09b99f5a66d9fe3594beea5ca0f3ae14a6a6d13081f62ca35fb74d3882cf8",
+      "battle.unknownCoordinates": "f8cffa5234c72dc6df4441f4f23fb323a50d76403acff36af54000d89ea13dd8",
+      "battle.unknownKingdom": "7cdca580b4dda173a1a97b30455deb7f47a5aa649805ce26dccf41834cd3cfe1",
+      "battle.kingdomId": "6a702b2f43954727d75fd586950e663cfcacdb5b09e49fb07bb8da29caca6da4",
+      "battle.lane": "6b8e67f24102a9454badf96183060af1fb2045f0152a348e3bdd29027f5eca47",
+      "battle.openDetails": "a9003e8c5cf1abb157558bd6feecd9b5ed9ec803931a47df3cedc2881bfaa06c"
     }
   },
   "battle.es.json": {
@@ -2863,7 +2879,15 @@
       "battle.allianceAttackRatioHelp": "9044d2ee6bf53d723f96727f7f9827fd6ef6b49fa30e42e9cf1e66437ef5b492",
       "battle.allianceDefenseRatioHelp": "fa347d14f526ceec6843a2e3328cbbc6571aac81b8fbb2966150b555f1797fec",
       "battle.noParsedUnits": "48cbeb863a31861e34d7060885ba86371ceda69227cbcac18f5f129689539437",
-      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d"
+      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d",
+      "battle.unknownPlayer": "f5a29b325d43798cb899843eb633fba4b3fea7fb599108c38a4e744b9ea5437a",
+      "battle.noAlliance": "623666daf91ea23cb6e8b32bc93983ec73f4fabf37294a69b5de31387023bac2",
+      "battle.unknownCastle": "5bb09b99f5a66d9fe3594beea5ca0f3ae14a6a6d13081f62ca35fb74d3882cf8",
+      "battle.unknownCoordinates": "f8cffa5234c72dc6df4441f4f23fb323a50d76403acff36af54000d89ea13dd8",
+      "battle.unknownKingdom": "7cdca580b4dda173a1a97b30455deb7f47a5aa649805ce26dccf41834cd3cfe1",
+      "battle.kingdomId": "6a702b2f43954727d75fd586950e663cfcacdb5b09e49fb07bb8da29caca6da4",
+      "battle.lane": "6b8e67f24102a9454badf96183060af1fb2045f0152a348e3bdd29027f5eca47",
+      "battle.openDetails": "a9003e8c5cf1abb157558bd6feecd9b5ed9ec803931a47df3cedc2881bfaa06c"
     }
   },
   "battle.pt.json": {
@@ -2927,7 +2951,15 @@
       "battle.allianceAttackRatioHelp": "9044d2ee6bf53d723f96727f7f9827fd6ef6b49fa30e42e9cf1e66437ef5b492",
       "battle.allianceDefenseRatioHelp": "fa347d14f526ceec6843a2e3328cbbc6571aac81b8fbb2966150b555f1797fec",
       "battle.noParsedUnits": "48cbeb863a31861e34d7060885ba86371ceda69227cbcac18f5f129689539437",
-      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d"
+      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d",
+      "battle.unknownPlayer": "f5a29b325d43798cb899843eb633fba4b3fea7fb599108c38a4e744b9ea5437a",
+      "battle.noAlliance": "623666daf91ea23cb6e8b32bc93983ec73f4fabf37294a69b5de31387023bac2",
+      "battle.unknownCastle": "5bb09b99f5a66d9fe3594beea5ca0f3ae14a6a6d13081f62ca35fb74d3882cf8",
+      "battle.unknownCoordinates": "f8cffa5234c72dc6df4441f4f23fb323a50d76403acff36af54000d89ea13dd8",
+      "battle.unknownKingdom": "7cdca580b4dda173a1a97b30455deb7f47a5aa649805ce26dccf41834cd3cfe1",
+      "battle.kingdomId": "6a702b2f43954727d75fd586950e663cfcacdb5b09e49fb07bb8da29caca6da4",
+      "battle.lane": "6b8e67f24102a9454badf96183060af1fb2045f0152a348e3bdd29027f5eca47",
+      "battle.openDetails": "a9003e8c5cf1abb157558bd6feecd9b5ed9ec803931a47df3cedc2881bfaa06c"
     }
   },
   "battle.it.json": {
@@ -2991,7 +3023,15 @@
       "battle.allianceAttackRatioHelp": "9044d2ee6bf53d723f96727f7f9827fd6ef6b49fa30e42e9cf1e66437ef5b492",
       "battle.allianceDefenseRatioHelp": "fa347d14f526ceec6843a2e3328cbbc6571aac81b8fbb2966150b555f1797fec",
       "battle.noParsedUnits": "48cbeb863a31861e34d7060885ba86371ceda69227cbcac18f5f129689539437",
-      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d"
+      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d",
+      "battle.unknownPlayer": "f5a29b325d43798cb899843eb633fba4b3fea7fb599108c38a4e744b9ea5437a",
+      "battle.noAlliance": "623666daf91ea23cb6e8b32bc93983ec73f4fabf37294a69b5de31387023bac2",
+      "battle.unknownCastle": "5bb09b99f5a66d9fe3594beea5ca0f3ae14a6a6d13081f62ca35fb74d3882cf8",
+      "battle.unknownCoordinates": "f8cffa5234c72dc6df4441f4f23fb323a50d76403acff36af54000d89ea13dd8",
+      "battle.unknownKingdom": "7cdca580b4dda173a1a97b30455deb7f47a5aa649805ce26dccf41834cd3cfe1",
+      "battle.kingdomId": "6a702b2f43954727d75fd586950e663cfcacdb5b09e49fb07bb8da29caca6da4",
+      "battle.lane": "6b8e67f24102a9454badf96183060af1fb2045f0152a348e3bdd29027f5eca47",
+      "battle.openDetails": "a9003e8c5cf1abb157558bd6feecd9b5ed9ec803931a47df3cedc2881bfaa06c"
     }
   },
   "battle.nl.json": {
@@ -3055,7 +3095,15 @@
       "battle.allianceAttackRatioHelp": "9044d2ee6bf53d723f96727f7f9827fd6ef6b49fa30e42e9cf1e66437ef5b492",
       "battle.allianceDefenseRatioHelp": "fa347d14f526ceec6843a2e3328cbbc6571aac81b8fbb2966150b555f1797fec",
       "battle.noParsedUnits": "48cbeb863a31861e34d7060885ba86371ceda69227cbcac18f5f129689539437",
-      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d"
+      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d",
+      "battle.unknownPlayer": "f5a29b325d43798cb899843eb633fba4b3fea7fb599108c38a4e744b9ea5437a",
+      "battle.noAlliance": "623666daf91ea23cb6e8b32bc93983ec73f4fabf37294a69b5de31387023bac2",
+      "battle.unknownCastle": "5bb09b99f5a66d9fe3594beea5ca0f3ae14a6a6d13081f62ca35fb74d3882cf8",
+      "battle.unknownCoordinates": "f8cffa5234c72dc6df4441f4f23fb323a50d76403acff36af54000d89ea13dd8",
+      "battle.unknownKingdom": "7cdca580b4dda173a1a97b30455deb7f47a5aa649805ce26dccf41834cd3cfe1",
+      "battle.kingdomId": "6a702b2f43954727d75fd586950e663cfcacdb5b09e49fb07bb8da29caca6da4",
+      "battle.lane": "6b8e67f24102a9454badf96183060af1fb2045f0152a348e3bdd29027f5eca47",
+      "battle.openDetails": "a9003e8c5cf1abb157558bd6feecd9b5ed9ec803931a47df3cedc2881bfaa06c"
     }
   },
   "battle.sv.json": {
@@ -3119,7 +3167,15 @@
       "battle.allianceAttackRatioHelp": "9044d2ee6bf53d723f96727f7f9827fd6ef6b49fa30e42e9cf1e66437ef5b492",
       "battle.allianceDefenseRatioHelp": "fa347d14f526ceec6843a2e3328cbbc6571aac81b8fbb2966150b555f1797fec",
       "battle.noParsedUnits": "48cbeb863a31861e34d7060885ba86371ceda69227cbcac18f5f129689539437",
-      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d"
+      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d",
+      "battle.unknownPlayer": "f5a29b325d43798cb899843eb633fba4b3fea7fb599108c38a4e744b9ea5437a",
+      "battle.noAlliance": "623666daf91ea23cb6e8b32bc93983ec73f4fabf37294a69b5de31387023bac2",
+      "battle.unknownCastle": "5bb09b99f5a66d9fe3594beea5ca0f3ae14a6a6d13081f62ca35fb74d3882cf8",
+      "battle.unknownCoordinates": "f8cffa5234c72dc6df4441f4f23fb323a50d76403acff36af54000d89ea13dd8",
+      "battle.unknownKingdom": "7cdca580b4dda173a1a97b30455deb7f47a5aa649805ce26dccf41834cd3cfe1",
+      "battle.kingdomId": "6a702b2f43954727d75fd586950e663cfcacdb5b09e49fb07bb8da29caca6da4",
+      "battle.lane": "6b8e67f24102a9454badf96183060af1fb2045f0152a348e3bdd29027f5eca47",
+      "battle.openDetails": "a9003e8c5cf1abb157558bd6feecd9b5ed9ec803931a47df3cedc2881bfaa06c"
     }
   },
   "battle.da.json": {
@@ -3183,7 +3239,15 @@
       "battle.allianceAttackRatioHelp": "9044d2ee6bf53d723f96727f7f9827fd6ef6b49fa30e42e9cf1e66437ef5b492",
       "battle.allianceDefenseRatioHelp": "fa347d14f526ceec6843a2e3328cbbc6571aac81b8fbb2966150b555f1797fec",
       "battle.noParsedUnits": "48cbeb863a31861e34d7060885ba86371ceda69227cbcac18f5f129689539437",
-      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d"
+      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d",
+      "battle.unknownPlayer": "f5a29b325d43798cb899843eb633fba4b3fea7fb599108c38a4e744b9ea5437a",
+      "battle.noAlliance": "623666daf91ea23cb6e8b32bc93983ec73f4fabf37294a69b5de31387023bac2",
+      "battle.unknownCastle": "5bb09b99f5a66d9fe3594beea5ca0f3ae14a6a6d13081f62ca35fb74d3882cf8",
+      "battle.unknownCoordinates": "f8cffa5234c72dc6df4441f4f23fb323a50d76403acff36af54000d89ea13dd8",
+      "battle.unknownKingdom": "7cdca580b4dda173a1a97b30455deb7f47a5aa649805ce26dccf41834cd3cfe1",
+      "battle.kingdomId": "6a702b2f43954727d75fd586950e663cfcacdb5b09e49fb07bb8da29caca6da4",
+      "battle.lane": "6b8e67f24102a9454badf96183060af1fb2045f0152a348e3bdd29027f5eca47",
+      "battle.openDetails": "a9003e8c5cf1abb157558bd6feecd9b5ed9ec803931a47df3cedc2881bfaa06c"
     }
   },
   "battle.no.json": {
@@ -3247,7 +3311,15 @@
       "battle.allianceAttackRatioHelp": "9044d2ee6bf53d723f96727f7f9827fd6ef6b49fa30e42e9cf1e66437ef5b492",
       "battle.allianceDefenseRatioHelp": "fa347d14f526ceec6843a2e3328cbbc6571aac81b8fbb2966150b555f1797fec",
       "battle.noParsedUnits": "48cbeb863a31861e34d7060885ba86371ceda69227cbcac18f5f129689539437",
-      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d"
+      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d",
+      "battle.unknownPlayer": "f5a29b325d43798cb899843eb633fba4b3fea7fb599108c38a4e744b9ea5437a",
+      "battle.noAlliance": "623666daf91ea23cb6e8b32bc93983ec73f4fabf37294a69b5de31387023bac2",
+      "battle.unknownCastle": "5bb09b99f5a66d9fe3594beea5ca0f3ae14a6a6d13081f62ca35fb74d3882cf8",
+      "battle.unknownCoordinates": "f8cffa5234c72dc6df4441f4f23fb323a50d76403acff36af54000d89ea13dd8",
+      "battle.unknownKingdom": "7cdca580b4dda173a1a97b30455deb7f47a5aa649805ce26dccf41834cd3cfe1",
+      "battle.kingdomId": "6a702b2f43954727d75fd586950e663cfcacdb5b09e49fb07bb8da29caca6da4",
+      "battle.lane": "6b8e67f24102a9454badf96183060af1fb2045f0152a348e3bdd29027f5eca47",
+      "battle.openDetails": "a9003e8c5cf1abb157558bd6feecd9b5ed9ec803931a47df3cedc2881bfaa06c"
     }
   },
   "battle.fi.json": {
@@ -3311,7 +3383,15 @@
       "battle.allianceAttackRatioHelp": "9044d2ee6bf53d723f96727f7f9827fd6ef6b49fa30e42e9cf1e66437ef5b492",
       "battle.allianceDefenseRatioHelp": "fa347d14f526ceec6843a2e3328cbbc6571aac81b8fbb2966150b555f1797fec",
       "battle.noParsedUnits": "48cbeb863a31861e34d7060885ba86371ceda69227cbcac18f5f129689539437",
-      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d"
+      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d",
+      "battle.unknownPlayer": "f5a29b325d43798cb899843eb633fba4b3fea7fb599108c38a4e744b9ea5437a",
+      "battle.noAlliance": "623666daf91ea23cb6e8b32bc93983ec73f4fabf37294a69b5de31387023bac2",
+      "battle.unknownCastle": "5bb09b99f5a66d9fe3594beea5ca0f3ae14a6a6d13081f62ca35fb74d3882cf8",
+      "battle.unknownCoordinates": "f8cffa5234c72dc6df4441f4f23fb323a50d76403acff36af54000d89ea13dd8",
+      "battle.unknownKingdom": "7cdca580b4dda173a1a97b30455deb7f47a5aa649805ce26dccf41834cd3cfe1",
+      "battle.kingdomId": "6a702b2f43954727d75fd586950e663cfcacdb5b09e49fb07bb8da29caca6da4",
+      "battle.lane": "6b8e67f24102a9454badf96183060af1fb2045f0152a348e3bdd29027f5eca47",
+      "battle.openDetails": "a9003e8c5cf1abb157558bd6feecd9b5ed9ec803931a47df3cedc2881bfaa06c"
     }
   },
   "battle.zh-CN.json": {
@@ -3375,7 +3455,15 @@
       "battle.allianceAttackRatioHelp": "9044d2ee6bf53d723f96727f7f9827fd6ef6b49fa30e42e9cf1e66437ef5b492",
       "battle.allianceDefenseRatioHelp": "fa347d14f526ceec6843a2e3328cbbc6571aac81b8fbb2966150b555f1797fec",
       "battle.noParsedUnits": "48cbeb863a31861e34d7060885ba86371ceda69227cbcac18f5f129689539437",
-      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d"
+      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d",
+      "battle.unknownPlayer": "f5a29b325d43798cb899843eb633fba4b3fea7fb599108c38a4e744b9ea5437a",
+      "battle.noAlliance": "623666daf91ea23cb6e8b32bc93983ec73f4fabf37294a69b5de31387023bac2",
+      "battle.unknownCastle": "5bb09b99f5a66d9fe3594beea5ca0f3ae14a6a6d13081f62ca35fb74d3882cf8",
+      "battle.unknownCoordinates": "f8cffa5234c72dc6df4441f4f23fb323a50d76403acff36af54000d89ea13dd8",
+      "battle.unknownKingdom": "7cdca580b4dda173a1a97b30455deb7f47a5aa649805ce26dccf41834cd3cfe1",
+      "battle.kingdomId": "6a702b2f43954727d75fd586950e663cfcacdb5b09e49fb07bb8da29caca6da4",
+      "battle.lane": "6b8e67f24102a9454badf96183060af1fb2045f0152a348e3bdd29027f5eca47",
+      "battle.openDetails": "a9003e8c5cf1abb157558bd6feecd9b5ed9ec803931a47df3cedc2881bfaa06c"
     }
   },
   "battle.zh-TW.json": {
@@ -3439,7 +3527,15 @@
       "battle.allianceAttackRatioHelp": "9044d2ee6bf53d723f96727f7f9827fd6ef6b49fa30e42e9cf1e66437ef5b492",
       "battle.allianceDefenseRatioHelp": "fa347d14f526ceec6843a2e3328cbbc6571aac81b8fbb2966150b555f1797fec",
       "battle.noParsedUnits": "48cbeb863a31861e34d7060885ba86371ceda69227cbcac18f5f129689539437",
-      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d"
+      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d",
+      "battle.unknownPlayer": "f5a29b325d43798cb899843eb633fba4b3fea7fb599108c38a4e744b9ea5437a",
+      "battle.noAlliance": "623666daf91ea23cb6e8b32bc93983ec73f4fabf37294a69b5de31387023bac2",
+      "battle.unknownCastle": "5bb09b99f5a66d9fe3594beea5ca0f3ae14a6a6d13081f62ca35fb74d3882cf8",
+      "battle.unknownCoordinates": "f8cffa5234c72dc6df4441f4f23fb323a50d76403acff36af54000d89ea13dd8",
+      "battle.unknownKingdom": "7cdca580b4dda173a1a97b30455deb7f47a5aa649805ce26dccf41834cd3cfe1",
+      "battle.kingdomId": "6a702b2f43954727d75fd586950e663cfcacdb5b09e49fb07bb8da29caca6da4",
+      "battle.lane": "6b8e67f24102a9454badf96183060af1fb2045f0152a348e3bdd29027f5eca47",
+      "battle.openDetails": "a9003e8c5cf1abb157558bd6feecd9b5ed9ec803931a47df3cedc2881bfaa06c"
     }
   },
   "battle.ja.json": {
@@ -3503,7 +3599,15 @@
       "battle.allianceAttackRatioHelp": "9044d2ee6bf53d723f96727f7f9827fd6ef6b49fa30e42e9cf1e66437ef5b492",
       "battle.allianceDefenseRatioHelp": "fa347d14f526ceec6843a2e3328cbbc6571aac81b8fbb2966150b555f1797fec",
       "battle.noParsedUnits": "48cbeb863a31861e34d7060885ba86371ceda69227cbcac18f5f129689539437",
-      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d"
+      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d",
+      "battle.unknownPlayer": "f5a29b325d43798cb899843eb633fba4b3fea7fb599108c38a4e744b9ea5437a",
+      "battle.noAlliance": "623666daf91ea23cb6e8b32bc93983ec73f4fabf37294a69b5de31387023bac2",
+      "battle.unknownCastle": "5bb09b99f5a66d9fe3594beea5ca0f3ae14a6a6d13081f62ca35fb74d3882cf8",
+      "battle.unknownCoordinates": "f8cffa5234c72dc6df4441f4f23fb323a50d76403acff36af54000d89ea13dd8",
+      "battle.unknownKingdom": "7cdca580b4dda173a1a97b30455deb7f47a5aa649805ce26dccf41834cd3cfe1",
+      "battle.kingdomId": "6a702b2f43954727d75fd586950e663cfcacdb5b09e49fb07bb8da29caca6da4",
+      "battle.lane": "6b8e67f24102a9454badf96183060af1fb2045f0152a348e3bdd29027f5eca47",
+      "battle.openDetails": "a9003e8c5cf1abb157558bd6feecd9b5ed9ec803931a47df3cedc2881bfaa06c"
     }
   },
   "battle.ko.json": {
@@ -3567,7 +3671,15 @@
       "battle.allianceAttackRatioHelp": "9044d2ee6bf53d723f96727f7f9827fd6ef6b49fa30e42e9cf1e66437ef5b492",
       "battle.allianceDefenseRatioHelp": "fa347d14f526ceec6843a2e3328cbbc6571aac81b8fbb2966150b555f1797fec",
       "battle.noParsedUnits": "48cbeb863a31861e34d7060885ba86371ceda69227cbcac18f5f129689539437",
-      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d"
+      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d",
+      "battle.unknownPlayer": "f5a29b325d43798cb899843eb633fba4b3fea7fb599108c38a4e744b9ea5437a",
+      "battle.noAlliance": "623666daf91ea23cb6e8b32bc93983ec73f4fabf37294a69b5de31387023bac2",
+      "battle.unknownCastle": "5bb09b99f5a66d9fe3594beea5ca0f3ae14a6a6d13081f62ca35fb74d3882cf8",
+      "battle.unknownCoordinates": "f8cffa5234c72dc6df4441f4f23fb323a50d76403acff36af54000d89ea13dd8",
+      "battle.unknownKingdom": "7cdca580b4dda173a1a97b30455deb7f47a5aa649805ce26dccf41834cd3cfe1",
+      "battle.kingdomId": "6a702b2f43954727d75fd586950e663cfcacdb5b09e49fb07bb8da29caca6da4",
+      "battle.lane": "6b8e67f24102a9454badf96183060af1fb2045f0152a348e3bdd29027f5eca47",
+      "battle.openDetails": "a9003e8c5cf1abb157558bd6feecd9b5ed9ec803931a47df3cedc2881bfaa06c"
     }
   },
   "battle.ru.json": {
@@ -3631,7 +3743,15 @@
       "battle.allianceAttackRatioHelp": "9044d2ee6bf53d723f96727f7f9827fd6ef6b49fa30e42e9cf1e66437ef5b492",
       "battle.allianceDefenseRatioHelp": "fa347d14f526ceec6843a2e3328cbbc6571aac81b8fbb2966150b555f1797fec",
       "battle.noParsedUnits": "48cbeb863a31861e34d7060885ba86371ceda69227cbcac18f5f129689539437",
-      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d"
+      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d",
+      "battle.unknownPlayer": "f5a29b325d43798cb899843eb633fba4b3fea7fb599108c38a4e744b9ea5437a",
+      "battle.noAlliance": "623666daf91ea23cb6e8b32bc93983ec73f4fabf37294a69b5de31387023bac2",
+      "battle.unknownCastle": "5bb09b99f5a66d9fe3594beea5ca0f3ae14a6a6d13081f62ca35fb74d3882cf8",
+      "battle.unknownCoordinates": "f8cffa5234c72dc6df4441f4f23fb323a50d76403acff36af54000d89ea13dd8",
+      "battle.unknownKingdom": "7cdca580b4dda173a1a97b30455deb7f47a5aa649805ce26dccf41834cd3cfe1",
+      "battle.kingdomId": "6a702b2f43954727d75fd586950e663cfcacdb5b09e49fb07bb8da29caca6da4",
+      "battle.lane": "6b8e67f24102a9454badf96183060af1fb2045f0152a348e3bdd29027f5eca47",
+      "battle.openDetails": "a9003e8c5cf1abb157558bd6feecd9b5ed9ec803931a47df3cedc2881bfaa06c"
     }
   },
   "battle.pl.json": {
@@ -3695,7 +3815,15 @@
       "battle.allianceAttackRatioHelp": "9044d2ee6bf53d723f96727f7f9827fd6ef6b49fa30e42e9cf1e66437ef5b492",
       "battle.allianceDefenseRatioHelp": "fa347d14f526ceec6843a2e3328cbbc6571aac81b8fbb2966150b555f1797fec",
       "battle.noParsedUnits": "48cbeb863a31861e34d7060885ba86371ceda69227cbcac18f5f129689539437",
-      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d"
+      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d",
+      "battle.unknownPlayer": "f5a29b325d43798cb899843eb633fba4b3fea7fb599108c38a4e744b9ea5437a",
+      "battle.noAlliance": "623666daf91ea23cb6e8b32bc93983ec73f4fabf37294a69b5de31387023bac2",
+      "battle.unknownCastle": "5bb09b99f5a66d9fe3594beea5ca0f3ae14a6a6d13081f62ca35fb74d3882cf8",
+      "battle.unknownCoordinates": "f8cffa5234c72dc6df4441f4f23fb323a50d76403acff36af54000d89ea13dd8",
+      "battle.unknownKingdom": "7cdca580b4dda173a1a97b30455deb7f47a5aa649805ce26dccf41834cd3cfe1",
+      "battle.kingdomId": "6a702b2f43954727d75fd586950e663cfcacdb5b09e49fb07bb8da29caca6da4",
+      "battle.lane": "6b8e67f24102a9454badf96183060af1fb2045f0152a348e3bdd29027f5eca47",
+      "battle.openDetails": "a9003e8c5cf1abb157558bd6feecd9b5ed9ec803931a47df3cedc2881bfaa06c"
     }
   },
   "battle.tr.json": {
@@ -3759,7 +3887,15 @@
       "battle.allianceAttackRatioHelp": "9044d2ee6bf53d723f96727f7f9827fd6ef6b49fa30e42e9cf1e66437ef5b492",
       "battle.allianceDefenseRatioHelp": "fa347d14f526ceec6843a2e3328cbbc6571aac81b8fbb2966150b555f1797fec",
       "battle.noParsedUnits": "48cbeb863a31861e34d7060885ba86371ceda69227cbcac18f5f129689539437",
-      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d"
+      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d",
+      "battle.unknownPlayer": "f5a29b325d43798cb899843eb633fba4b3fea7fb599108c38a4e744b9ea5437a",
+      "battle.noAlliance": "623666daf91ea23cb6e8b32bc93983ec73f4fabf37294a69b5de31387023bac2",
+      "battle.unknownCastle": "5bb09b99f5a66d9fe3594beea5ca0f3ae14a6a6d13081f62ca35fb74d3882cf8",
+      "battle.unknownCoordinates": "f8cffa5234c72dc6df4441f4f23fb323a50d76403acff36af54000d89ea13dd8",
+      "battle.unknownKingdom": "7cdca580b4dda173a1a97b30455deb7f47a5aa649805ce26dccf41834cd3cfe1",
+      "battle.kingdomId": "6a702b2f43954727d75fd586950e663cfcacdb5b09e49fb07bb8da29caca6da4",
+      "battle.lane": "6b8e67f24102a9454badf96183060af1fb2045f0152a348e3bdd29027f5eca47",
+      "battle.openDetails": "a9003e8c5cf1abb157558bd6feecd9b5ed9ec803931a47df3cedc2881bfaa06c"
     }
   },
   "battle.cs.json": {
@@ -3823,7 +3959,15 @@
       "battle.allianceAttackRatioHelp": "9044d2ee6bf53d723f96727f7f9827fd6ef6b49fa30e42e9cf1e66437ef5b492",
       "battle.allianceDefenseRatioHelp": "fa347d14f526ceec6843a2e3328cbbc6571aac81b8fbb2966150b555f1797fec",
       "battle.noParsedUnits": "48cbeb863a31861e34d7060885ba86371ceda69227cbcac18f5f129689539437",
-      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d"
+      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d",
+      "battle.unknownPlayer": "f5a29b325d43798cb899843eb633fba4b3fea7fb599108c38a4e744b9ea5437a",
+      "battle.noAlliance": "623666daf91ea23cb6e8b32bc93983ec73f4fabf37294a69b5de31387023bac2",
+      "battle.unknownCastle": "5bb09b99f5a66d9fe3594beea5ca0f3ae14a6a6d13081f62ca35fb74d3882cf8",
+      "battle.unknownCoordinates": "f8cffa5234c72dc6df4441f4f23fb323a50d76403acff36af54000d89ea13dd8",
+      "battle.unknownKingdom": "7cdca580b4dda173a1a97b30455deb7f47a5aa649805ce26dccf41834cd3cfe1",
+      "battle.kingdomId": "6a702b2f43954727d75fd586950e663cfcacdb5b09e49fb07bb8da29caca6da4",
+      "battle.lane": "6b8e67f24102a9454badf96183060af1fb2045f0152a348e3bdd29027f5eca47",
+      "battle.openDetails": "a9003e8c5cf1abb157558bd6feecd9b5ed9ec803931a47df3cedc2881bfaa06c"
     }
   },
   "battle.sk.json": {
@@ -3887,7 +4031,15 @@
       "battle.allianceAttackRatioHelp": "9044d2ee6bf53d723f96727f7f9827fd6ef6b49fa30e42e9cf1e66437ef5b492",
       "battle.allianceDefenseRatioHelp": "fa347d14f526ceec6843a2e3328cbbc6571aac81b8fbb2966150b555f1797fec",
       "battle.noParsedUnits": "48cbeb863a31861e34d7060885ba86371ceda69227cbcac18f5f129689539437",
-      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d"
+      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d",
+      "battle.unknownPlayer": "f5a29b325d43798cb899843eb633fba4b3fea7fb599108c38a4e744b9ea5437a",
+      "battle.noAlliance": "623666daf91ea23cb6e8b32bc93983ec73f4fabf37294a69b5de31387023bac2",
+      "battle.unknownCastle": "5bb09b99f5a66d9fe3594beea5ca0f3ae14a6a6d13081f62ca35fb74d3882cf8",
+      "battle.unknownCoordinates": "f8cffa5234c72dc6df4441f4f23fb323a50d76403acff36af54000d89ea13dd8",
+      "battle.unknownKingdom": "7cdca580b4dda173a1a97b30455deb7f47a5aa649805ce26dccf41834cd3cfe1",
+      "battle.kingdomId": "6a702b2f43954727d75fd586950e663cfcacdb5b09e49fb07bb8da29caca6da4",
+      "battle.lane": "6b8e67f24102a9454badf96183060af1fb2045f0152a348e3bdd29027f5eca47",
+      "battle.openDetails": "a9003e8c5cf1abb157558bd6feecd9b5ed9ec803931a47df3cedc2881bfaa06c"
     }
   },
   "battle.hu.json": {
@@ -3951,7 +4103,15 @@
       "battle.allianceAttackRatioHelp": "9044d2ee6bf53d723f96727f7f9827fd6ef6b49fa30e42e9cf1e66437ef5b492",
       "battle.allianceDefenseRatioHelp": "fa347d14f526ceec6843a2e3328cbbc6571aac81b8fbb2966150b555f1797fec",
       "battle.noParsedUnits": "48cbeb863a31861e34d7060885ba86371ceda69227cbcac18f5f129689539437",
-      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d"
+      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d",
+      "battle.unknownPlayer": "f5a29b325d43798cb899843eb633fba4b3fea7fb599108c38a4e744b9ea5437a",
+      "battle.noAlliance": "623666daf91ea23cb6e8b32bc93983ec73f4fabf37294a69b5de31387023bac2",
+      "battle.unknownCastle": "5bb09b99f5a66d9fe3594beea5ca0f3ae14a6a6d13081f62ca35fb74d3882cf8",
+      "battle.unknownCoordinates": "f8cffa5234c72dc6df4441f4f23fb323a50d76403acff36af54000d89ea13dd8",
+      "battle.unknownKingdom": "7cdca580b4dda173a1a97b30455deb7f47a5aa649805ce26dccf41834cd3cfe1",
+      "battle.kingdomId": "6a702b2f43954727d75fd586950e663cfcacdb5b09e49fb07bb8da29caca6da4",
+      "battle.lane": "6b8e67f24102a9454badf96183060af1fb2045f0152a348e3bdd29027f5eca47",
+      "battle.openDetails": "a9003e8c5cf1abb157558bd6feecd9b5ed9ec803931a47df3cedc2881bfaa06c"
     }
   },
   "battle.ro.json": {
@@ -4015,7 +4175,15 @@
       "battle.allianceAttackRatioHelp": "9044d2ee6bf53d723f96727f7f9827fd6ef6b49fa30e42e9cf1e66437ef5b492",
       "battle.allianceDefenseRatioHelp": "fa347d14f526ceec6843a2e3328cbbc6571aac81b8fbb2966150b555f1797fec",
       "battle.noParsedUnits": "48cbeb863a31861e34d7060885ba86371ceda69227cbcac18f5f129689539437",
-      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d"
+      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d",
+      "battle.unknownPlayer": "f5a29b325d43798cb899843eb633fba4b3fea7fb599108c38a4e744b9ea5437a",
+      "battle.noAlliance": "623666daf91ea23cb6e8b32bc93983ec73f4fabf37294a69b5de31387023bac2",
+      "battle.unknownCastle": "5bb09b99f5a66d9fe3594beea5ca0f3ae14a6a6d13081f62ca35fb74d3882cf8",
+      "battle.unknownCoordinates": "f8cffa5234c72dc6df4441f4f23fb323a50d76403acff36af54000d89ea13dd8",
+      "battle.unknownKingdom": "7cdca580b4dda173a1a97b30455deb7f47a5aa649805ce26dccf41834cd3cfe1",
+      "battle.kingdomId": "6a702b2f43954727d75fd586950e663cfcacdb5b09e49fb07bb8da29caca6da4",
+      "battle.lane": "6b8e67f24102a9454badf96183060af1fb2045f0152a348e3bdd29027f5eca47",
+      "battle.openDetails": "a9003e8c5cf1abb157558bd6feecd9b5ed9ec803931a47df3cedc2881bfaa06c"
     }
   },
   "battle.bg.json": {
@@ -4079,7 +4247,15 @@
       "battle.allianceAttackRatioHelp": "9044d2ee6bf53d723f96727f7f9827fd6ef6b49fa30e42e9cf1e66437ef5b492",
       "battle.allianceDefenseRatioHelp": "fa347d14f526ceec6843a2e3328cbbc6571aac81b8fbb2966150b555f1797fec",
       "battle.noParsedUnits": "48cbeb863a31861e34d7060885ba86371ceda69227cbcac18f5f129689539437",
-      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d"
+      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d",
+      "battle.unknownPlayer": "f5a29b325d43798cb899843eb633fba4b3fea7fb599108c38a4e744b9ea5437a",
+      "battle.noAlliance": "623666daf91ea23cb6e8b32bc93983ec73f4fabf37294a69b5de31387023bac2",
+      "battle.unknownCastle": "5bb09b99f5a66d9fe3594beea5ca0f3ae14a6a6d13081f62ca35fb74d3882cf8",
+      "battle.unknownCoordinates": "f8cffa5234c72dc6df4441f4f23fb323a50d76403acff36af54000d89ea13dd8",
+      "battle.unknownKingdom": "7cdca580b4dda173a1a97b30455deb7f47a5aa649805ce26dccf41834cd3cfe1",
+      "battle.kingdomId": "6a702b2f43954727d75fd586950e663cfcacdb5b09e49fb07bb8da29caca6da4",
+      "battle.lane": "6b8e67f24102a9454badf96183060af1fb2045f0152a348e3bdd29027f5eca47",
+      "battle.openDetails": "a9003e8c5cf1abb157558bd6feecd9b5ed9ec803931a47df3cedc2881bfaa06c"
     }
   },
   "battle.lt.json": {
@@ -4143,7 +4319,15 @@
       "battle.allianceAttackRatioHelp": "9044d2ee6bf53d723f96727f7f9827fd6ef6b49fa30e42e9cf1e66437ef5b492",
       "battle.allianceDefenseRatioHelp": "fa347d14f526ceec6843a2e3328cbbc6571aac81b8fbb2966150b555f1797fec",
       "battle.noParsedUnits": "48cbeb863a31861e34d7060885ba86371ceda69227cbcac18f5f129689539437",
-      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d"
+      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d",
+      "battle.unknownPlayer": "f5a29b325d43798cb899843eb633fba4b3fea7fb599108c38a4e744b9ea5437a",
+      "battle.noAlliance": "623666daf91ea23cb6e8b32bc93983ec73f4fabf37294a69b5de31387023bac2",
+      "battle.unknownCastle": "5bb09b99f5a66d9fe3594beea5ca0f3ae14a6a6d13081f62ca35fb74d3882cf8",
+      "battle.unknownCoordinates": "f8cffa5234c72dc6df4441f4f23fb323a50d76403acff36af54000d89ea13dd8",
+      "battle.unknownKingdom": "7cdca580b4dda173a1a97b30455deb7f47a5aa649805ce26dccf41834cd3cfe1",
+      "battle.kingdomId": "6a702b2f43954727d75fd586950e663cfcacdb5b09e49fb07bb8da29caca6da4",
+      "battle.lane": "6b8e67f24102a9454badf96183060af1fb2045f0152a348e3bdd29027f5eca47",
+      "battle.openDetails": "a9003e8c5cf1abb157558bd6feecd9b5ed9ec803931a47df3cedc2881bfaa06c"
     }
   },
   "battle.ar.json": {
@@ -4207,7 +4391,15 @@
       "battle.allianceAttackRatioHelp": "9044d2ee6bf53d723f96727f7f9827fd6ef6b49fa30e42e9cf1e66437ef5b492",
       "battle.allianceDefenseRatioHelp": "fa347d14f526ceec6843a2e3328cbbc6571aac81b8fbb2966150b555f1797fec",
       "battle.noParsedUnits": "48cbeb863a31861e34d7060885ba86371ceda69227cbcac18f5f129689539437",
-      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d"
+      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d",
+      "battle.unknownPlayer": "f5a29b325d43798cb899843eb633fba4b3fea7fb599108c38a4e744b9ea5437a",
+      "battle.noAlliance": "623666daf91ea23cb6e8b32bc93983ec73f4fabf37294a69b5de31387023bac2",
+      "battle.unknownCastle": "5bb09b99f5a66d9fe3594beea5ca0f3ae14a6a6d13081f62ca35fb74d3882cf8",
+      "battle.unknownCoordinates": "f8cffa5234c72dc6df4441f4f23fb323a50d76403acff36af54000d89ea13dd8",
+      "battle.unknownKingdom": "7cdca580b4dda173a1a97b30455deb7f47a5aa649805ce26dccf41834cd3cfe1",
+      "battle.kingdomId": "6a702b2f43954727d75fd586950e663cfcacdb5b09e49fb07bb8da29caca6da4",
+      "battle.lane": "6b8e67f24102a9454badf96183060af1fb2045f0152a348e3bdd29027f5eca47",
+      "battle.openDetails": "a9003e8c5cf1abb157558bd6feecd9b5ed9ec803931a47df3cedc2881bfaa06c"
     }
   },
   "battle.el.json": {
@@ -4271,7 +4463,15 @@
       "battle.allianceAttackRatioHelp": "9044d2ee6bf53d723f96727f7f9827fd6ef6b49fa30e42e9cf1e66437ef5b492",
       "battle.allianceDefenseRatioHelp": "fa347d14f526ceec6843a2e3328cbbc6571aac81b8fbb2966150b555f1797fec",
       "battle.noParsedUnits": "48cbeb863a31861e34d7060885ba86371ceda69227cbcac18f5f129689539437",
-      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d"
+      "battle.noParsedTools": "b0edbe626eab1c9155acfa4be2b5aaf7296584031a77e290af5d4e64fb1bc73d",
+      "battle.unknownPlayer": "f5a29b325d43798cb899843eb633fba4b3fea7fb599108c38a4e744b9ea5437a",
+      "battle.noAlliance": "623666daf91ea23cb6e8b32bc93983ec73f4fabf37294a69b5de31387023bac2",
+      "battle.unknownCastle": "5bb09b99f5a66d9fe3594beea5ca0f3ae14a6a6d13081f62ca35fb74d3882cf8",
+      "battle.unknownCoordinates": "f8cffa5234c72dc6df4441f4f23fb323a50d76403acff36af54000d89ea13dd8",
+      "battle.unknownKingdom": "7cdca580b4dda173a1a97b30455deb7f47a5aa649805ce26dccf41834cd3cfe1",
+      "battle.kingdomId": "6a702b2f43954727d75fd586950e663cfcacdb5b09e49fb07bb8da29caca6da4",
+      "battle.lane": "6b8e67f24102a9454badf96183060af1fb2045f0152a348e3bdd29027f5eca47",
+      "battle.openDetails": "a9003e8c5cf1abb157558bd6feecd9b5ed9ec803931a47df3cedc2881bfaa06c"
     }
   }
 }

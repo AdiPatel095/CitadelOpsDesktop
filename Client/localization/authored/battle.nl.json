@@ -56,5 +56,13 @@
   "battle.allianceAttackRatioHelp": "Gedode verdedigers per verloren aanvaller bij aanvallen op deze alliantie",
   "battle.allianceDefenseRatioHelp": "Gedode aanvallers per verloren verdediger bij verdedigingen tegen deze alliantie",
   "battle.noParsedUnits": "Geen eenheden verwerkt.",
-  "battle.noParsedTools": "Geen tuigen verwerkt."
+  "battle.noParsedTools": "Geen tuigen verwerkt.",
+  "battle.unknownPlayer": "Onbekende speler",
+  "battle.noAlliance": "Geen alliantie",
+  "battle.unknownCastle": "Onbekend kasteel",
+  "battle.unknownCoordinates": "Onbekende coördinaten",
+  "battle.unknownKingdom": "Onbekend koninkrijk",
+  "battle.kingdomId": "Koninkrijk {id}",
+  "battle.lane": "Sectie {number, number}",
+  "battle.openDetails": "Details van {attacker} tegen {defender} openen"
 }

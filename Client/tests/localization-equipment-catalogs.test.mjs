@@ -15,7 +15,7 @@ const read=path=>JSON.parse(fs.readFileSync(new URL(path,import.meta.url)));
 const source=read('../localization/ui.en.json');
 const provenance=read('../localization/module-authorship.json');
 const hash=value=>createHash('sha256').update(value).digest('hex');
-for(const [module,expected] of [['equipment-modals',63],['activity',32],['battle',58]])test(`complete authored ${module} group in all25 catalogs retains source provenance and renders every select branch`,()=>{
+for(const [module,expected] of [['equipment-modals',63],['activity',32],['battle',66]])test(`complete authored ${module} group in all25 catalogs retains source provenance and renders every select branch`,()=>{
  let rendered=0;
  for(const locale of localeCodes.filter(code=>code!=='en')) {
   const filename=`${module}.${locale}.json`;

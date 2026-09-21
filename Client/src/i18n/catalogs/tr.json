@@ -242,5 +242,13 @@
   "battle.allianceAttackRatioHelp": "Bu ittifaka saldırırken kaybedilen her taarruzcu başına öldürülen muhafız sayısı",
   "battle.allianceDefenseRatioHelp": "Bu ittifaka karşı savunurken kaybedilen her muhafız başına öldürülen taarruzcu sayısı",
   "battle.noParsedUnits": "Ayrıştırılmış birim yok.",
-  "battle.noParsedTools": "Ayrıştırılmış alet yok."
+  "battle.noParsedTools": "Ayrıştırılmış alet yok.",
+  "battle.unknownPlayer": "Bilinmeyen oyuncu",
+  "battle.noAlliance": "İttifak yok",
+  "battle.unknownCastle": "Bilinmeyen kale",
+  "battle.unknownCoordinates": "Bilinmeyen koordinatlar",
+  "battle.unknownKingdom": "Bilinmeyen krallık",
+  "battle.kingdomId": "Krallık {id}",
+  "battle.lane": "Bölüm {number, number}",
+  "battle.openDetails": "{attacker} ile {defender} karşılaşmasının ayrıntılarını aç"
 }

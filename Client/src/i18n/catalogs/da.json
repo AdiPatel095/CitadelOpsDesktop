@@ -242,5 +242,13 @@
   "battle.allianceAttackRatioHelp": "Dræbte forsvarere pr. mistet angriber ved angreb på denne alliance",
   "battle.allianceDefenseRatioHelp": "Dræbte angribere pr. mistet forsvarer ved forsvar mod denne alliance",
   "battle.noParsedUnits": "Ingen enheder fortolket.",
-  "battle.noParsedTools": "Ingen redskaber fortolket."
+  "battle.noParsedTools": "Ingen redskaber fortolket.",
+  "battle.unknownPlayer": "Ukendt spiller",
+  "battle.noAlliance": "Ingen alliance",
+  "battle.unknownCastle": "Ukendt borg",
+  "battle.unknownCoordinates": "Ukendte koordinater",
+  "battle.unknownKingdom": "Ukendt kongerige",
+  "battle.kingdomId": "Kongerige {id}",
+  "battle.lane": "Afsnit {number, number}",
+  "battle.openDetails": "Åbn detaljer for {attacker} mod {defender}"
 }

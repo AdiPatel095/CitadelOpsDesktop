@@ -1,5 +1,8 @@
 /** Verified against official English v4357. Never infer keys from translated text. */
 export const officialMessageKeys = {
+  "battle.leftFlank":"dialog_defence_leftFlank",
+  "battle.middleFront":"dialog_defence_middleFlank",
+  "battle.rightFlank":"dialog_defence_rightFlank",
   "activity.rowCrafting": "dialog_ci_crafting",
   "activity.rowDefense": "Defence",
   "ui.worldIntelligence.components.worldEventHistory.final.score.11c34366": "finalScore",

@@ -242,5 +242,13 @@
   "battle.allianceAttackRatioHelp": "Zabití obrancovia na jedného strateného útočníka pri útokoch na túto alianciu",
   "battle.allianceDefenseRatioHelp": "Zabití útočníci na jedného strateného obrancu pri obrane proti tejto aliancii",
   "battle.noParsedUnits": "Žiadne spracované jednotky.",
-  "battle.noParsedTools": "Žiadne spracované nástroje."
+  "battle.noParsedTools": "Žiadne spracované nástroje.",
+  "battle.unknownPlayer": "Neznámy hráč",
+  "battle.noAlliance": "Bez aliancie",
+  "battle.unknownCastle": "Neznámy hrad",
+  "battle.unknownCoordinates": "Neznáme súradnice",
+  "battle.unknownKingdom": "Neznáme kráľovstvo",
+  "battle.kingdomId": "Kráľovstvo {id}",
+  "battle.lane": "Úsek {number, number}",
+  "battle.openDetails": "Otvoriť podrobnosti: {attacker} proti {defender}"
 }

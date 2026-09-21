@@ -242,5 +242,13 @@
   "battle.allianceAttackRatioHelp": "Defensores abatidos por atacante perdido al atacar a esta alianza",
   "battle.allianceDefenseRatioHelp": "Atacantes abatidos por defensor perdido al defenderse de esta alianza",
   "battle.noParsedUnits": "No se han analizado unidades.",
-  "battle.noParsedTools": "No se han analizado herramientas."
+  "battle.noParsedTools": "No se han analizado herramientas.",
+  "battle.unknownPlayer": "Jugador desconocido",
+  "battle.noAlliance": "Sin alianza",
+  "battle.unknownCastle": "Castillo desconocido",
+  "battle.unknownCoordinates": "Coordenadas desconocidas",
+  "battle.unknownKingdom": "Reino desconocido",
+  "battle.kingdomId": "Reino {id}",
+  "battle.lane": "Sector {number, number}",
+  "battle.openDetails": "Ver detalles de {attacker} contra {defender}"
 }

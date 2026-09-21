@@ -242,5 +242,13 @@
   "battle.allianceAttackRatioHelp": "进攻该联盟时，每损失一个进攻者击杀的卫兵数量",
   "battle.allianceDefenseRatioHelp": "抵御该联盟时，每损失一个卫兵击杀的进攻者数量",
   "battle.noParsedUnits": "未解析到单位。",
-  "battle.noParsedTools": "未解析到工具。"
+  "battle.noParsedTools": "未解析到工具。",
+  "battle.unknownPlayer": "未知玩家",
+  "battle.noAlliance": "无联盟",
+  "battle.unknownCastle": "未知城堡",
+  "battle.unknownCoordinates": "未知坐标",
+  "battle.unknownKingdom": "未知王国",
+  "battle.kingdomId": "王国 {id}",
+  "battle.lane": "区域 {number, number}",
+  "battle.openDetails": "查看 {attacker} 对阵 {defender} 的详情"
 }

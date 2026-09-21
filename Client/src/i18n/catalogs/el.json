@@ -242,5 +242,13 @@
   "battle.allianceAttackRatioHelp": "Σκοτωμένοι υπερασπιστές ανά χαμένο επιτιθέμενο στις επιθέσεις κατά αυτής της συμμαχίας",
   "battle.allianceDefenseRatioHelp": "Σκοτωμένοι επιτιθέμενοι ανά χαμένο υπερασπιστή στην άμυνα απέναντι σε αυτή τη συμμαχία",
   "battle.noParsedUnits": "Δεν αναλύθηκαν μονάδες.",
-  "battle.noParsedTools": "Δεν αναλύθηκαν εργαλεία."
+  "battle.noParsedTools": "Δεν αναλύθηκαν εργαλεία.",
+  "battle.unknownPlayer": "Άγνωστος παίκτης",
+  "battle.noAlliance": "Χωρίς συμμαχία",
+  "battle.unknownCastle": "Άγνωστο κάστρο",
+  "battle.unknownCoordinates": "Άγνωστες συντεταγμένες",
+  "battle.unknownKingdom": "Άγνωστο βασίλειο",
+  "battle.kingdomId": "Βασίλειο {id}",
+  "battle.lane": "Τομέας {number, number}",
+  "battle.openDetails": "Άνοιγμα λεπτομερειών για {attacker} εναντίον {defender}"
 }

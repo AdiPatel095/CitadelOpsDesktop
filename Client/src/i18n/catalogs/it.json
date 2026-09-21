@@ -242,5 +242,13 @@
   "battle.allianceAttackRatioHelp": "Difensori uccisi per assalitore perso negli attacchi contro questa alleanza",
   "battle.allianceDefenseRatioHelp": "Assalitori uccisi per difensore perso nelle difese contro questa alleanza",
   "battle.noParsedUnits": "Nessuna unità analizzata.",
-  "battle.noParsedTools": "Nessuno strumento analizzato."
+  "battle.noParsedTools": "Nessuno strumento analizzato.",
+  "battle.unknownPlayer": "Giocatore sconosciuto",
+  "battle.noAlliance": "Nessuna alleanza",
+  "battle.unknownCastle": "Castello sconosciuto",
+  "battle.unknownCoordinates": "Coordinate sconosciute",
+  "battle.unknownKingdom": "Regno sconosciuto",
+  "battle.kingdomId": "Regno {id}",
+  "battle.lane": "Settore {number, number}",
+  "battle.openDetails": "Apri i dettagli di {attacker} contro {defender}"
 }

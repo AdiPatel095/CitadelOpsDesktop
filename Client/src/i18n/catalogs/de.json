@@ -242,5 +242,13 @@
   "battle.allianceAttackRatioHelp": "Getötete Verteidiger pro verlorenem Angreifer bei Angriffen auf diese Allianz",
   "battle.allianceDefenseRatioHelp": "Getötete Angreifer pro verlorenem Verteidiger bei der Verteidigung gegen diese Allianz",
   "battle.noParsedUnits": "Keine Einheiten ausgewertet.",
-  "battle.noParsedTools": "Keine Werkzeuge ausgewertet."
+  "battle.noParsedTools": "Keine Werkzeuge ausgewertet.",
+  "battle.unknownPlayer": "Unbekannter Spieler",
+  "battle.noAlliance": "Keine Allianz",
+  "battle.unknownCastle": "Unbekannte Burg",
+  "battle.unknownCoordinates": "Unbekannte Koordinaten",
+  "battle.unknownKingdom": "Königreich unbekannt",
+  "battle.kingdomId": "Königreich {id}",
+  "battle.lane": "Abschnitt {number, number}",
+  "battle.openDetails": "Details zu {attacker} gegen {defender} öffnen"
 }

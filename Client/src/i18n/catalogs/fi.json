@@ -242,5 +242,13 @@
   "battle.allianceAttackRatioHelp": "Tapetut puolustajat menetettyä hyökkääjää kohden tätä liittoumaa vastaan hyökättäessä",
   "battle.allianceDefenseRatioHelp": "Tapetut hyökkääjät menetettyä puolustajaa kohden tätä liittoumaa vastaan puolustauduttaessa",
   "battle.noParsedUnits": "Ei jäsennettyjä yksiköitä.",
-  "battle.noParsedTools": "Ei jäsennettyjä työkaluja."
+  "battle.noParsedTools": "Ei jäsennettyjä työkaluja.",
+  "battle.unknownPlayer": "Tuntematon pelaaja",
+  "battle.noAlliance": "Ei liittoumaa",
+  "battle.unknownCastle": "Tuntematon linna",
+  "battle.unknownCoordinates": "Tuntemattomat koordinaatit",
+  "battle.unknownKingdom": "Tuntematon valtakunta",
+  "battle.kingdomId": "Valtakunta {id}",
+  "battle.lane": "Osio {number, number}",
+  "battle.openDetails": "Avaa ottelun {attacker} vastaan {defender} tiedot"
 }

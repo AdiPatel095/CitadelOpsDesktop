@@ -1,6 +1,6 @@
 # Battle presentation translations
 
-The 58 `battle.*` entries in each of 25 non-English packs are directly model-authored. Native-speaker review remains pending. This group does not represent complete BattleStats screen coverage; existing source-assigned labels and dynamic data paths remain tracked by the strict inventory.
+The 66 `battle.*` entries in each of 25 non-English packs are directly model-authored. Native-speaker review remains pending. This group does not represent complete BattleStats screen coverage; existing source-assigned labels and dynamic data paths remain tracked by the strict inventory.
 
 Terminology was checked against the official v4357 dictionaries: `battlelog`, `tools`, `dialog_battleLogDetail_courtyard`, `dialog_battleLog_attacker`, `dialog_battleLog_defender`, and `dialog_combatAnimation_wave`. Contextual inflection is retained in whole sentences. In particular, Dutch tools use Tuigen, Swedish courtyard uses Gårdsplan, Italian attacker uses Assalitore, and Japanese waves use 波状攻撃. The support phase means reinforcing troops, not customer support.
 

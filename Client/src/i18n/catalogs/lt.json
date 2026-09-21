@@ -242,5 +242,13 @@
   "battle.allianceAttackRatioHelp": "Nukauti gynėjai vienam prarastam užpuolikui puolant šį aljansą",
   "battle.allianceDefenseRatioHelp": "Nukauti užpuolikai vienam prarastam gynėjui ginantis nuo šio aljanso",
   "battle.noParsedUnits": "Nėra išanalizuotų karių.",
-  "battle.noParsedTools": "Nėra išanalizuotų įrankių."
+  "battle.noParsedTools": "Nėra išanalizuotų įrankių.",
+  "battle.unknownPlayer": "Nežinomas žaidėjas",
+  "battle.noAlliance": "Nėra aljanso",
+  "battle.unknownCastle": "Nežinoma pilis",
+  "battle.unknownCoordinates": "Nežinomos koordinatės",
+  "battle.unknownKingdom": "Nežinoma karalystė",
+  "battle.kingdomId": "Karalystė {id}",
+  "battle.lane": "Ruožas {number, number}",
+  "battle.openDetails": "Atverti {attacker} prieš {defender} informaciją"
 }

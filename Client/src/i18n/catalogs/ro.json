@@ -242,5 +242,13 @@
   "battle.allianceAttackRatioHelp": "Apărători uciși pentru fiecare atacant pierdut la atacarea acestei alianțe",
   "battle.allianceDefenseRatioHelp": "Atacanți uciși pentru fiecare apărător pierdut la apărarea împotriva acestei alianțe",
   "battle.noParsedUnits": "Nicio unitate analizată.",
-  "battle.noParsedTools": "Nicio unealtă analizată."
+  "battle.noParsedTools": "Nicio unealtă analizată.",
+  "battle.unknownPlayer": "Jucător necunoscut",
+  "battle.noAlliance": "Fără alianță",
+  "battle.unknownCastle": "Castel necunoscut",
+  "battle.unknownCoordinates": "Coordonate necunoscute",
+  "battle.unknownKingdom": "Regat necunoscut",
+  "battle.kingdomId": "Regat {id}",
+  "battle.lane": "Sector {number, number}",
+  "battle.openDetails": "Deschide detaliile pentru {attacker} contra {defender}"
 }

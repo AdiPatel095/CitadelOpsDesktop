@@ -242,5 +242,13 @@
   "battle.allianceAttackRatioHelp": "Убити защитници за всеки загубен нападател при атаки срещу този съюз",
   "battle.allianceDefenseRatioHelp": "Убити нападатели за всеки загубен защитник при защита срещу този съюз",
   "battle.noParsedUnits": "Няма анализирани единици.",
-  "battle.noParsedTools": "Няма анализирани инструменти."
+  "battle.noParsedTools": "Няма анализирани инструменти.",
+  "battle.unknownPlayer": "Неизвестен играч",
+  "battle.noAlliance": "Без съюз",
+  "battle.unknownCastle": "Неизвестен замък",
+  "battle.unknownCoordinates": "Неизвестни координати",
+  "battle.unknownKingdom": "Неизвестно кралство",
+  "battle.kingdomId": "Кралство {id}",
+  "battle.lane": "Участък {number, number}",
+  "battle.openDetails": "Отвори подробности за {attacker} срещу {defender}"
 }

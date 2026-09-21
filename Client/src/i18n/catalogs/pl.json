@@ -242,5 +242,13 @@
   "battle.allianceAttackRatioHelp": "Zabici obrońcy na każdego utraconego atakującego podczas ataków na ten sojusz",
   "battle.allianceDefenseRatioHelp": "Zabici atakujący na każdego utraconego obrońcę podczas obrony przed tym sojuszem",
   "battle.noParsedUnits": "Nie przeanalizowano żadnych jednostek.",
-  "battle.noParsedTools": "Nie przeanalizowano żadnych narzędzi."
+  "battle.noParsedTools": "Nie przeanalizowano żadnych narzędzi.",
+  "battle.unknownPlayer": "Nieznany gracz",
+  "battle.noAlliance": "Brak sojuszu",
+  "battle.unknownCastle": "Nieznany zamek",
+  "battle.unknownCoordinates": "Nieznane współrzędne",
+  "battle.unknownKingdom": "Nieznane królestwo",
+  "battle.kingdomId": "Królestwo {id}",
+  "battle.lane": "Odcinek {number, number}",
+  "battle.openDetails": "Otwórz szczegóły starcia {attacker} przeciwko {defender}"
 }

@@ -242,5 +242,13 @@
   "battle.allianceAttackRatioHelp": "Megölt védők száma elvesztett támadónként e szövetség megtámadásakor",
   "battle.allianceDefenseRatioHelp": "Megölt támadók száma elvesztett védőnként az e szövetség elleni védekezéskor",
   "battle.noParsedUnits": "Nincsenek feldolgozott egységek.",
-  "battle.noParsedTools": "Nincsenek feldolgozott eszközök."
+  "battle.noParsedTools": "Nincsenek feldolgozott eszközök.",
+  "battle.unknownPlayer": "Ismeretlen játékos",
+  "battle.noAlliance": "Nincs szövetség",
+  "battle.unknownCastle": "Ismeretlen kastély",
+  "battle.unknownCoordinates": "Ismeretlen koordináták",
+  "battle.unknownKingdom": "Ismeretlen királyság",
+  "battle.kingdomId": "Királyság {id}",
+  "battle.lane": "{number, number}. szakasz",
+  "battle.openDetails": "A {attacker} – {defender} csata részleteinek megnyitása"
 }

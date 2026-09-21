@@ -56,5 +56,13 @@
   "battle.allianceAttackRatioHelp": "Dödade försvarare per förlorad angripare vid anfall mot denna allians",
   "battle.allianceDefenseRatioHelp": "Dödade angripare per förlorad försvarare vid försvar mot denna allians",
   "battle.noParsedUnits": "Inga enheter tolkade.",
-  "battle.noParsedTools": "Inga verktyg tolkade."
+  "battle.noParsedTools": "Inga verktyg tolkade.",
+  "battle.unknownPlayer": "Okänd spelare",
+  "battle.noAlliance": "Ingen allians",
+  "battle.unknownCastle": "Okänt slott",
+  "battle.unknownCoordinates": "Okända koordinater",
+  "battle.unknownKingdom": "Okänt kungarike",
+  "battle.kingdomId": "Kungarike {id}",
+  "battle.lane": "Avsnitt {number, number}",
+  "battle.openDetails": "Öppna detaljer för {attacker} mot {defender}"
 }

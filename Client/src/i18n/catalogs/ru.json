@@ -242,5 +242,13 @@
   "battle.allianceAttackRatioHelp": "Убитые защитники на каждого потерянного нападающего при атаках на этот альянс",
   "battle.allianceDefenseRatioHelp": "Убитые нападающие на каждого потерянного защитника при защите от этого альянса",
   "battle.noParsedUnits": "Нет разобранных данных о воинах.",
-  "battle.noParsedTools": "Нет разобранных данных об орудиях."
+  "battle.noParsedTools": "Нет разобранных данных об орудиях.",
+  "battle.unknownPlayer": "Неизвестный игрок",
+  "battle.noAlliance": "Нет альянса",
+  "battle.unknownCastle": "Неизвестный замок",
+  "battle.unknownCoordinates": "Неизвестные координаты",
+  "battle.unknownKingdom": "Неизвестное королевство",
+  "battle.kingdomId": "Королевство {id}",
+  "battle.lane": "Участок {number, number}",
+  "battle.openDetails": "Открыть подробности: {attacker} против {defender}"
 }
