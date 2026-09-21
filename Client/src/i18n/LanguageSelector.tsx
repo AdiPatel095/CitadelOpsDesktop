@@ -3,7 +3,7 @@ import { CitadelAPI } from '../api/CitadelClient';
 import { useLocale } from './LocaleContext';
 import { locales, normalizeLocale } from './locales';
 export function LanguageSelector() {
-  const {locale,setLocale,t} = useLocale();
+  const {locale,setLocale,t,messageLocale} = useLocale();
   const [available,setAvailable] = useState(locales);
   useEffect(() => {
     let active = true;
@@ -17,8 +17,8 @@ export function LanguageSelector() {
     }).catch(() => { /* Bundled official locale list supports offline selection. */ });
     return () => { active = false; };
   },[]);
-  return <label className="viewer-language" title={t('locale.coverage')}>
-    <span lang="en">{t('locale.select')}</span>
+  return <label lang={messageLocale} className="viewer-language" title={t('locale.coverage')}>
+    <span>{t('locale.select')}</span>
     <select aria-label={t('locale.select')} value={locale} onChange={event => { const next = normalizeLocale(event.target.value); if (next) setLocale(next); }}>
       {available.map(item => <option key={item.code} value={item.code} lang={item.code}>{item.nativeName}</option>)}
     </select>

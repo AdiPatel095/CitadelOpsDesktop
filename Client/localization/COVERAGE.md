@@ -1,6 +1,6 @@
 # Desktop localization coverage ledger
 
-Status: partial foundation, not a translated release. Baseline: e77ed022c2f926ae3509527fdabf54dca9e22586. No custom non-English catalog has been authored. The full visible-text conversion remains open.
+Status: partial foundation, not a translated release. Baseline: e77ed022c2f926ae3509527fdabf54dca9e22586. 31 shell/shared-control messages have model-authored translations in all 25 non-English catalogs. Human linguistic review is pending. This small authored set is not full interface coverage. The full visible-text conversion remains open.
 
 ## Source inventory
 
@@ -10,7 +10,7 @@ Run `node scripts/inventory-localization.mjs` from Client. `source-inventory.jso
 
 | Surface | Source ownership | Required message route | Current gap |
 | --- | --- | --- | --- |
-| Shell/navigation/header/mobile controls | App, Header, Sidebar, ui components | Explicit typed custom keys for JSX, aria and titles | Most literals remain |
+| Shell/navigation/header/mobile controls | App, Header, Sidebar, ui components | Explicit typed custom keys for JSX, aria and titles | Navigation/sidebar/theme converted; header status literals remain |
 | Settings/forms/confirmation/modals | settings/components, SettingsView | Explicit keys; interpolate values once; preserve user input | Labels, validation, help and templates remain |
 | Automation/event views | views, events, attackAnalytics | Custom descriptors; official `localizationKey` first for event names | EventsView currently overrides event IDs with English names |
 | Units/buildings/decorations/equipment/gems/effects/currencies | MetadataContext, equipment components | Official keys via per-request viewer locale; custom generic fallback descriptors | Metadata locale invalidation implemented; display fallback provenance needs consumer presentation |

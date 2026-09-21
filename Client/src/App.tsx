@@ -1,3 +1,4 @@
+import { useLocale } from './i18n/LocaleContext';
 import React, { lazy, Suspense, useEffect, useRef, useState, type ComponentType } from 'react';
 import { Providers } from './Providers';
 import Header from './components/Header';
@@ -97,12 +98,15 @@ const settingsModals: Record<SettingsModalId, React.LazyExoticComponent<Componen
   storm: lazySettingsModal(() => import('./settings/components/AutoStormSettingsModal'), 'AutoStormSettingsModal'),
 };
 
-const WorkspaceFallback = () => (
-  <div className="ui-workspace-loading" role="status">
+const WorkspaceFallback = () => {
+  const { t, messageLocale } = useLocale();
+  return (
+  <div lang={messageLocale} className="ui-workspace-loading" role="status">
     <span className="ui-workspace-loading-mark" aria-hidden="true" />
-    Loading workspace…
+    {t('workspace.loading')}
   </div>
 );
+};
 
 const AppContent: React.FC = () => {
   const [activeView, setActiveView] = useState<ViewId>('castle');

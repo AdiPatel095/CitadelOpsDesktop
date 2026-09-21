@@ -30,3 +30,21 @@ test('official positional placeholders never recursively process inserted values
  assert.equal(modules.gameMessage.formatGameMessage('+{0}% for {1} fields',['{1}',2]),'+{1}% for 2 fields');
  assert.equal(modules.gameMessage.formatGameMessage('<b>{0}</b> {2}', ['Name']),'<b>Name</b> {2}');
 });
+test('all authored shell catalogs have exact keys and valid ICU arguments',()=>{
+ const source = fs.readFileSync(new URL('../src/i18n/messages.ts',import.meta.url),'utf8');
+ const ast=ts.createSourceFile('messages.ts',source,ts.ScriptTarget.Latest,true);
+ let english={};
+ function visit(node) { if(ts.isVariableDeclaration(node)&&node.name.getText(ast)==='messages') { const object=node.initializer.expression; english=Object.fromEntries(object.properties.map(property=>[property.name.text,property.initializer.text])); } ts.forEachChild(node,visit); }
+ visit(ast);
+ for(const locale of modules.locales.localeCodes.filter(code=>code!=='en')) {
+  const catalog=JSON.parse(fs.readFileSync(new URL(`../src/i18n/catalogs/${locale}.json`,import.meta.url),'utf8'));
+  assert.deepEqual(modules.formatMessage.validateMessageCatalog(english,catalog),[],locale);
+ }
+});
+test('official game messages and nested nouns preserve exact user values and fallback coverage',()=>{
+ const {formatMessage}=modules.formatMessage;
+ const game={values:{castle:'Château',move:'Déplacer {0}'},resolvedLocale:'fr'};
+ assert.equal(formatMessage({key:'x',fallback:'Move',officialKey:'move',officialParams:{0:'<User>{1}'}},'fr',{},game).text,'Déplacer <User>{1}');
+ assert.equal(formatMessage({key:'x',fallback:'The {noun}',gameParams:{noun:{key:'castle',fallback:'Castle'}}},'fr',{x:'Le {noun}'},game).text,'Le Château');
+ assert.equal(formatMessage({key:'x',fallback:'The {noun}',gameParams:{noun:{key:'missing',fallback:'Castle'}}},'fr',{x:'Le {noun}'},game).translated,false);
+});

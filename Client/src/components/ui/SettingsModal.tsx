@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/LocaleContext';
 import React, { type ReactNode } from 'react';
 import { Save } from 'lucide-react';
 import { Button } from './Button';
@@ -24,16 +25,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   description,
   titleTrailing,
   onSave,
-  saveLabel = 'Save settings',
+  saveLabel,
   isSaving = false,
   saveDisabled = false,
   cancelDisabled = false,
-  cancelLabel = 'Cancel',
+  cancelLabel,
   footerLeading,
   onClose,
   children,
   ...modalProps
-}) => (
+}) => {
+  const { t, messageLocale } = useLocale();
+  return (
   <Modal
     {...modalProps}
     onClose={onClose}
@@ -41,10 +44,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     footer={(
       <>
         {footerLeading}
-        <Button variant="ghost" onClick={onClose} disabled={cancelDisabled || isSaving} className="px-6">
-          {cancelLabel}
+        <Button lang={messageLocale} variant="ghost" onClick={onClose} disabled={cancelDisabled || isSaving} className="px-6">
+          {cancelLabel ?? t('settings.cancel')}
         </Button>
         <Button
+          lang={messageLocale}
           variant="primary"
           onClick={onSave}
           disabled={saveDisabled}
@@ -52,7 +56,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           className="px-8"
           leftIcon={<Save className="h-4 w-4" />}
         >
-          {saveLabel}
+          {saveLabel ?? t('settings.save')}
         </Button>
       </>
     )}
@@ -60,3 +64,4 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     {children}
   </Modal>
 );
+};

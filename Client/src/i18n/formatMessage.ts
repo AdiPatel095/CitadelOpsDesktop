@@ -1,18 +1,32 @@
 import { IntlMessageFormat } from 'intl-messageformat';
 import { parse, TYPE } from '@formatjs/icu-messageformat-parser';
 import type { MessageFormatElement } from '@formatjs/icu-messageformat-parser';
-export type LocalizedMessage = {key: string; fallback: string; params?: Record<string, string | number | boolean>};
+export type MessageValue = string | number | boolean;
+export type OfficialMessage = {key: string; fallback: string; params?: Record<string, MessageValue>};
+export type LocalizedMessage = {key: string; fallback: string; params?: Record<string, MessageValue>; officialKey?: string; officialParams?: Record<string, MessageValue>; gameParams?: Record<string, OfficialMessage>};
+export type OfficialCatalog = {values: Readonly<Record<string,string>>; resolvedLocale: string; fallbackKeys?: readonly string[]};
+function officialText(template: string, params: Record<string, MessageValue> = {}): string {
+  return template.replace(/\{([A-Za-z0-9_]+)\}/g, (token, key: string) => Object.hasOwn(params,key) ? String(params[key]) : token);
+}
 export type Catalog = Readonly<Record<string,string>>;
 /** Plain text only. React renders the result as text, never HTML. */
-export function formatMessage(message: LocalizedMessage, locale: string, catalog: Catalog): {text: string; translated: boolean; resolvedLocale: string} {
+export function formatMessage(message: LocalizedMessage, locale: string, catalog: Catalog, game?: OfficialCatalog): {text: string; translated: boolean; resolvedLocale: string} {
+  if (message.officialKey && game && Object.hasOwn(game.values,message.officialKey)) {
+    const translated = game.resolvedLocale === locale && !(game.fallbackKeys ?? []).includes(message.officialKey);
+    return {text:officialText(game.values[message.officialKey],message.officialParams),translated,resolvedLocale:translated ? locale : 'en'};
+  }
+  const hasGameFallback = Object.values(message.gameParams ?? {}).some(noun => !game || game.resolvedLocale !== locale || !Object.hasOwn(game.values,noun.key) || (game.fallbackKeys ?? []).includes(noun.key));
+  const gameParams = Object.fromEntries(Object.entries(message.gameParams ?? {}).map(([name,noun]) => [name,
+    officialText(game?.values[noun.key] ?? noun.fallback,noun.params),
+  ]));
   const translated = Object.hasOwn(catalog,message.key) && typeof catalog[message.key] === 'string';
-  const params = Object.fromEntries(Object.entries(message.params ?? {}).map(([key,value]) => [key, typeof value === 'boolean' ? String(value) : value]));
+  const params = Object.fromEntries(Object.entries({...message.params,...gameParams}).map(([key,value]) => [key, typeof value === 'boolean' ? String(value) : value]));
   const render = (template: string, language: string) => {
     const result = new IntlMessageFormat(template,language,undefined,{ignoreTag:true}).format(params);
     return Array.isArray(result) ? result.join('') : String(result);
   };
   if (translated) {
-    try { return {text: render(catalog[message.key],locale),translated:true,resolvedLocale:locale}; }
+    try { return {text: render(catalog[message.key],locale),translated:!hasGameFallback,resolvedLocale:hasGameFallback ? 'mixed' : locale}; }
     catch { /* Invalid translations never break the surrounding user interface. */ }
   }
   try { return {text:render(message.fallback,'en'),translated:false,resolvedLocale:'en'}; }

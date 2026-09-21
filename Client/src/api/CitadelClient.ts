@@ -541,11 +541,13 @@ class CitadelClient {
 	}
 
   async localize(keys: string[], locale?: string): Promise<Record<string, string>> {
-    const response = await this.request<{ values: Record<string, string> }>(`/api/v2/game-data/localize${locale ? `?locale=${encodeURIComponent(locale)}` : ''}`, {
-      method: 'POST',
-      body: JSON.stringify({ keys }),
+    return (await this.localizeCatalog(keys,locale)).values;
+  }
+
+  localizeCatalog(keys: string[], locale?: string): Promise<{values: Record<string,string>; locale?: {requestedLocale: string; resolvedLocale: string; fallback: boolean; fallbackKeys?: string[]}}> {
+    return this.request(`/api/v2/game-data/localize${locale ? `?locale=${encodeURIComponent(locale)}` : ''}`, {
+      method: 'POST', body: JSON.stringify({keys}),
     });
-    return response.values;
   }
 
   getIntentDefinitions(): Promise<IntentDefinition[]> {
