@@ -466,7 +466,6 @@ func discoveredAutoBirdOperation(
 	wait := func(detail string, retryAt time.Time, descriptors ...*Localization.Message) State.StationingOperation {
 		next.Phase = State.StationingPhaseWaiting
 		next.StatusDetail = detail
-		next.StatusDetailDescriptor = Localization.Bind(Localization.First(descriptors), detail)
 		next.StatusDetailDescriptor = nil
 		if len(descriptors) > 0 {
 			next.StatusDetailDescriptor = Localization.Bind(descriptors[0], detail)
@@ -566,7 +565,6 @@ func preparedAutoBirdManifest(
 	wait := func(detail string, retryAt time.Time, descriptors ...*Localization.Message) State.StationingOperation {
 		next.Phase = State.StationingPhaseWaiting
 		next.StatusDetail = detail
-		next.StatusDetailDescriptor = Localization.Bind(Localization.First(descriptors), detail)
 		next.StatusDetailDescriptor = nil
 		if len(descriptors) > 0 {
 			next.StatusDetailDescriptor = Localization.Bind(descriptors[0], detail)
