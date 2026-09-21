@@ -15,7 +15,7 @@ const read=path=>JSON.parse(fs.readFileSync(new URL(path,import.meta.url)));
 const source=read('../localization/ui.en.json');
 const provenance=read('../localization/module-authorship.json');
 const hash=value=>createHash('sha256').update(value).digest('hex');
-for(const [module,expected] of [['equipment-modals',63],['activity',32]])test(`complete ${module} module in all25 catalogs retains source provenance and renders every select branch`,()=>{
+for(const [module,expected] of [['equipment-modals',63],['activity',32],['battle',58]])test(`complete authored ${module} group in all25 catalogs retains source provenance and renders every select branch`,()=>{
  let rendered=0;
  for(const locale of localeCodes.filter(code=>code!=='en')) {
   const filename=`${module}.${locale}.json`;
@@ -30,7 +30,7 @@ for(const [module,expected] of [['equipment-modals',63],['activity',32]])test(`c
    const options={};
    const visit=nodes=>{for(const node of nodes){if(node.type===TYPE.select)options[node.value]=Object.keys(node.options);if(node.type===TYPE.select||node.type===TYPE.plural)Object.values(node.options).forEach(option=>visit(option.value));if(node.type===TYPE.tag)visit(node.children);}};
    visit(parse(source[key]));
-   const defaults={count:2,maximum:5,minimum:1,level:3,id:'00123',name:'Player {0} <b>literal</b>',event:'Event {0}',channel:'Channel {0}',shortcut:'Esc'};
+   const defaults={count:2,maximum:5,minimum:1,level:3,id:'00123',name:'Player {0} <b>literal</b>',event:'Event {0}',channel:'Channel {0}',shortcut:'Esc',amount:1234,changed:12,number:3,visible:2,filtered:4,parsed:5,attacker:'Player {0}',defender:'Other <b>literal</b>'};
    let variants=[{}];
    for(const [argument,values] of Object.entries(options))variants=variants.flatMap(previous=>values.map(value=>({...previous,[argument]:value})));
    for(const variant of variants)for(const count of [0,1,2,5,21,1.5]) {
