@@ -11,7 +11,9 @@
     "preview": "tsc && vite preview"
   },
   "dependencies": {
+    "@formatjs/icu-messageformat-parser": "^3.5.20",
     "@tanstack/react-virtual": "^3.13.23",
+    "intl-messageformat": "^12.1.2",
     "lucide-react": "^0.556.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

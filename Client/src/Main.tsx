@@ -4,6 +4,7 @@ import './index.css'
 import './MaterialExpressive.css'
 import './KingdomPalette.css'
 import App from './App.tsx'
+import { LocaleProvider } from './i18n/LocaleContext'
 
 const preloadRecoveryKey = 'citadelops:preload-recovery-bundle'
 
@@ -22,6 +23,6 @@ window.addEventListener('vite:preloadError', (event) => {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <LocaleProvider><App /></LocaleProvider>
   </StrictMode>,
 )

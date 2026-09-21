@@ -272,16 +272,20 @@ class CitadelClient {
     return this.submitIntent('session.select_browser', { browser }, options);
   }
 
+  getLocales(): Promise<{schemaVersion: number; defaultLocale: string; locales: {code: string; gameCode: string; nativeName: string; name: string; direction: 'ltr' | 'rtl'}[]}> {
+    return this.request('/api/v2/locales');
+  }
+
   getCatalogManifest(): Promise<CatalogManifest> {
     return this.request<CatalogManifest>('/api/v2/game-data');
   }
 
-  getCatalog<T extends Record<string, unknown>>(name: string): Promise<CatalogResponse<T>> {
-    return this.request<CatalogResponse<T>>(`/api/v2/game-data/${encodeURIComponent(name)}`);
+  getCatalog<T extends Record<string, unknown>>(name: string, locale?: string): Promise<CatalogResponse<T>> {
+    return this.request<CatalogResponse<T>>(`/api/v2/game-data/${encodeURIComponent(name)}${locale ? `?locale=${encodeURIComponent(locale)}` : ''}`);
   }
 
-  getProjection<T>(name: string): Promise<T> {
-    return this.request<T>(`/api/v2/projections/${encodeURIComponent(name)}`);
+  getProjection<T>(name: string, locale?: string): Promise<T> {
+    return this.request<T>(`/api/v2/projections/${encodeURIComponent(name)}${locale ? `?locale=${encodeURIComponent(locale)}` : ''}`);
   }
 
 	getAllianceTargets(input: AllianceTargetQueryV2 = {}): Promise<AllianceTargetViewV2> {
@@ -536,8 +540,8 @@ class CitadelClient {
 		});
 	}
 
-  async localize(keys: string[]): Promise<Record<string, string>> {
-    const response = await this.request<{ values: Record<string, string> }>('/api/v2/game-data/localize', {
+  async localize(keys: string[], locale?: string): Promise<Record<string, string>> {
+    const response = await this.request<{ values: Record<string, string> }>(`/api/v2/game-data/localize${locale ? `?locale=${encodeURIComponent(locale)}` : ''}`, {
       method: 'POST',
       body: JSON.stringify({ keys }),
     });

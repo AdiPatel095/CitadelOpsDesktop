@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useCitadelAPI } from '../api/ApiContext';
+import { useLocale } from '../i18n/LocaleContext';
 import { CitadelAPI } from '../api/CitadelClient';
 import { officialEquipmentEffectScope } from '../equipment/EquipmentEffectApplicability';
 
@@ -41,6 +42,7 @@ const MetadataContext = createContext<MetadataContextValue | undefined>(undefine
 
 export function MetadataProvider({ children }: { children: React.ReactNode }) {
 	const { catalogs } = useCitadelAPI();
+	const { locale } = useLocale();
   const [troops, setTroops] = useState<Record<number, MetadataItem>>({});
   const [tools, setTools] = useState<Record<number, MetadataItem>>({});
 	const [buildings, setBuildings] = useState<Record<number, MetadataItem>>({});
@@ -60,10 +62,19 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 	const unitsCatalogKey = useRef('');
 	const optionalCatalogKey = useRef('');
 	const catalogKey = [
+		locale,
 		catalogs?.metadata.digestSha256 ?? '',
 		catalogs?.metadata.languageVersion ?? '',
 	].join(':');
 	const isLoading = unitsLoading || optionalLoading;
+	const localizeOptional = useCallback((keys: string[]) => bestEffortLocalization(keys, locale), [locale]);
+
+  useEffect(() => {
+    // Do not display labels from a previous viewer locale while the next catalog loads.
+    setTroops({}); setTools({}); setBuildings({}); setDecorations({});
+    setResources({}); setCurrencies({}); setEquipments({}); setGems({});
+    setEffects({}); setKingdoms({}); setCraftingRecipes({});
+  }, [locale]);
 
   useEffect(() => {
     let cancelled = false;
@@ -86,7 +97,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 			}
 			let unitTranslations: Record<string, string> = {};
 			try {
-				unitTranslations = await CitadelAPI.localize(localizationKeys(unitsResponse.items));
+				unitTranslations = await CitadelAPI.localize(localizationKeys(unitsResponse.items), locale);
 			} catch (error) {
 				console.warn('Could not localize official unit metadata; using catalog names', error);
 			}
@@ -115,7 +126,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 	      cancelled = true;
 			if (retryTimer != null) clearTimeout(retryTimer);
 	    };
-	  }, [catalogKey, unitsRetryNonce]);
+	  }, [catalogKey, locale, unitsRetryNonce]);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -146,7 +157,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 				gemsResult, effectsResult, effectTypesResult, effectCapsResult, kingdomsResult, craftingResult] = results;
 
 			if (buildingsResult.status === 'fulfilled') {
-				const translations = await bestEffortLocalization([
+				const translations = await localizeOptional([
 					...localizationKeys(buildingsResult.value.items),
 					...decorationLocalizationKeys(buildingsResult.value.items),
 				]);
@@ -174,14 +185,14 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 				setDecorations(nextDecorations);
 			}
 			if (resourcesResult.status === 'fulfilled') {
-				const translations = await bestEffortLocalization(localizationKeys(resourcesResult.value.items));
+				const translations = await localizeOptional(localizationKeys(resourcesResult.value.items));
 				if (cancelled) return;
 				const next = definitionMetadata(resourcesResult.value.items, 'resourceID', translations, 'Resource');
 				for (const resource of Object.values(next)) resource.image = resourceImageURL(resource.internalName) ?? resource.image;
 				setResources(next);
 			}
 			if (currenciesResult.status === 'fulfilled') {
-				const translations = await bestEffortLocalization([
+				const translations = await localizeOptional([
 					...localizationKeys(currenciesResult.value.items),
 					...currencyLocalizationKeys(currenciesResult.value.items),
 				]);
@@ -200,17 +211,17 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 				setCurrencies(next);
 			}
 			if (equipmentsResult.status === 'fulfilled') {
-				const translations = await bestEffortLocalization(localizationKeys(equipmentsResult.value.items));
+				const translations = await localizeOptional(localizationKeys(equipmentsResult.value.items));
 				if (cancelled) return;
 				setEquipments(definitionMetadata(equipmentsResult.value.items, 'equipmentID', translations, 'Equipment'));
 			}
 			if (gemsResult.status === 'fulfilled') {
-				const translations = await bestEffortLocalization(localizationKeys(gemsResult.value.items));
+				const translations = await localizeOptional(localizationKeys(gemsResult.value.items));
 				if (cancelled) return;
 				setGems(definitionMetadata(gemsResult.value.items, 'gemID', translations, 'Gem'));
 			}
 			if (effectsResult.status === 'fulfilled' && effectTypesResult.status === 'fulfilled' && effectCapsResult.status === 'fulfilled') {
-				const translations = await bestEffortLocalization([
+				const translations = await localizeOptional([
 					...localizationKeys([...effectsResult.value.items, ...effectTypesResult.value.items]),
 					...effectLocalizationKeys(effectsResult.value.items, effectTypesResult.value.items),
 				]);
@@ -220,7 +231,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 				));
 			}
 			if (kingdomsResult.status === 'fulfilled') {
-				const translations = await bestEffortLocalization(localizationKeys(kingdomsResult.value.items));
+				const translations = await localizeOptional(localizationKeys(kingdomsResult.value.items));
 				if (cancelled) return;
 				setKingdoms(definitionMetadata(kingdomsResult.value.items, 'kID', translations, 'Kingdom', true));
 			}
@@ -250,7 +261,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 			cancelled = true;
 			if (retryTimer != null) clearTimeout(retryTimer);
 		};
-	}, [catalogKey, optionalRetryNonce]);
+	}, [catalogKey, localizeOptional, optionalRetryNonce]);
 
   const getTroop = useCallback((id: number) => troops[id], [troops]);
   const getTool = useCallback((id: number) => tools[id], [tools]);
@@ -379,10 +390,10 @@ function localizationKeys(rows: OfficialRecord[]): string[] {
   return Array.from(keys).slice(0, 5000);
 }
 
-async function bestEffortLocalization(keys: string[]): Promise<Record<string, string>> {
+async function bestEffortLocalization(keys: string[], locale: string): Promise<Record<string, string>> {
 	if (keys.length === 0) return {};
 	try {
-		return await CitadelAPI.localize(Array.from(new Set(keys)).slice(0, 5000));
+		return await CitadelAPI.localize(Array.from(new Set(keys)).slice(0, 5000), locale);
 	} catch (error) {
 		console.warn('Could not localize optional official metadata; using catalog names', error);
 		return {};
