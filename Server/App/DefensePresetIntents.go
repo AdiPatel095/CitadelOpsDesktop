@@ -139,8 +139,8 @@ func planDefensePresetApply(_ context.Context, input Intent.PlanningContext, arg
 	}
 	return Intent.Plan{
 		Claims:  claims,
-		Summary: "Apply defense preset " + strings.TrimSpace(request.PresetName) + " to " + castleLabel(castle),
-		Steps:   steps,
+		Summary: "Apply defense preset " + strings.TrimSpace(request.PresetName) + " to " + castleLabel(castle), SummaryDescriptor: defenseSummaryDescriptor("preset", castle, strings.TrimSpace(request.PresetName)),
+		Steps: steps,
 	}, nil
 }
 
