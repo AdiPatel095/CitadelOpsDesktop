@@ -171,6 +171,7 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 	defer func() {
 		if invalidDetail != "" && result.Detail != invalidDetail {
 			result.Detail += "; skipped invalid goal: " + invalidDetail
+			result.DetailDescriptor = nil
 		}
 	}()
 	enabledSpecialists = 0
@@ -640,7 +641,7 @@ func evaluateAutoBuyerFeast(
 	}
 	decision := autoBuyerRequestDecision(snapshot.Now, metrics,
 		fmt.Sprintf("Start or extend %s for %d %s toward the %d-hour floor", feast.Name, effectiveCost, feast.Price.Name, settings.Feast.MinimumRemainingHours),
-		"autoBuyer.feast.purchase", arguments)
+		"autoBuyer.feast.purchase", arguments, Localization.New("server.automation.start_or_extend_feast", "Start or extend {feast} for {cost, number} {currency} toward the {hours, number}-hour floor", Localization.Params{"feast": feast.Name, "cost": effectiveCost, "currency": feast.Price.Name, "hours": settings.Feast.MinimumRemainingHours}))
 	decision.FailureFallback = &Intent.Request{
 		Name: "autoBuyer.feast.reconcile", Arguments: append(json.RawMessage(nil), decision.Request.Arguments...),
 	}
@@ -830,10 +831,10 @@ func autoBuyerUnix(value time.Time) int64 {
 	return value.Unix()
 }
 
-func autoBuyerRequestDecision(now time.Time, metrics map[string]float64, detail, name string, arguments any) Decision {
+func autoBuyerRequestDecision(now time.Time, metrics map[string]float64, detail, name string, arguments any, descriptors ...*Localization.Message) Decision {
 	raw, _ := json.Marshal(arguments)
 	return Decision{
-		Status: "ready", Detail: detail, Metrics: metrics, NextCheckAt: now.Add(2 * time.Second),
+		Status: "ready", Detail: detail, DetailDescriptor: Localization.First(descriptors), Metrics: metrics, NextCheckAt: now.Add(2 * time.Second),
 		Request: &Intent.Request{Name: name, Arguments: raw}, ReevaluateOnSuccess: true, ReevaluateOnStale: true,
 	}
 }

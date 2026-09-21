@@ -36,6 +36,12 @@ func TestAutoBuyerFeastIsolatedFromInvalidAndStaleOtherGoals(t *testing.T) {
 			if tc.invalid && (d.Metrics["invalidGoals"] == 0 || !strings.Contains(d.Detail, "skipped invalid goal")) {
 				t.Fatalf("invalid goal hidden: %+v", d)
 			}
+			if tc.invalid && d.DetailDescriptor != nil {
+				t.Fatal("descriptor conceals skipped invalid goal")
+			}
+			if !tc.invalid && d.DetailDescriptor == nil {
+				t.Fatal("valid decision control lacks descriptor")
+			}
 			if string(settings) != before {
 				t.Fatal("saved goals mutated")
 			}
