@@ -86,5 +86,9 @@
   "activity.searchChannel": "Nájsť funkciu alebo kanál",
   "activity.filter": "Filtrovať aktivitu denníka",
   "activity.searchActivity": "Hľadať v denníku",
-  "activity.actionOrIssue": "Akcia alebo problém"
+  "activity.actionOrIssue": "Akcia alebo problém",
+  "activity.all": "Všetka aktivita · {count, number}",
+  "activity.actions": "Dokončené akcie · {count, number}",
+  "activity.issues": "Upozornenia a chyby · {count, number}",
+  "activity.results": "{shown, number} z {total, number}"
 }

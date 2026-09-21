@@ -1,3 +1,4 @@
+import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useCallback, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { RotateCw, Timer } from 'lucide-react';
 import { useCitadelAPI } from '../api/ApiContext';
@@ -162,8 +163,8 @@ const AutoBirdHoverPopover: React.FC<AutoBirdHoverPopoverProps> = ({
 		>
 			<div className="flex shrink-0 items-start justify-between gap-3 border-b border-border-base px-3.5 py-3">
 				<div>
-					<div className="font-bold text-text-main">Auto Bird cycles</div>
-					<div className="mt-0.5 text-[11px] text-text-muted">Every owned castle’s next troop return</div>
+					<div className="font-bold text-text-main"><LocalizedText messageKey="ui.components.autoBirdHoverPopover.auto.bird.cycles.6ee33c86" /></div>
+					<div className="mt-0.5 text-[11px] text-text-muted"><LocalizedText messageKey="ui.components.autoBirdHoverPopover.every.owned.castle.s.next.troop.return.10ce7290" /></div>
 				</div>
 				<span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
 					enabled
@@ -176,7 +177,7 @@ const AutoBirdHoverPopover: React.FC<AutoBirdHoverPopoverProps> = ({
 
 			<div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-2 py-2">
 				{cycles.length === 0 ? (
-					<div className="px-2 py-3 text-text-muted">No castles are available in the current game state.</div>
+					<div className="px-2 py-3 text-text-muted"><LocalizedText messageKey="ui.components.autoBirdHoverPopover.no.castles.are.available.in.the.current.2c572692" /></div>
 				) : (
 					<ul className="m-0 list-none space-y-1 p-0 marker:hidden">
 						{cycles.map((cycle) => {

@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Camera, Castle, Crosshair, FastForward, Hammer, Shield, Swords, Trash2, Users, Zap } from 'lucide-react';
 import type { BuildingBlueprintDiffResponse, BuildingTargetCaptureMode } from '../../api/Contracts';
@@ -250,8 +251,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 						onClick={() => onOpenFeatureSchedule('autoBeriWorld', 'Auto Beri World')}
 						leftIcon={<CalendarDays className="h-4 w-4" />}
 					>
-						Calendar
-					</Button>
+						<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.calendar.d5d0a30b" /></Button>
 			)}
 			maxWidth="4xl"
 			onSave={save}
@@ -283,8 +283,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							<Castle className="h-4 w-4 text-primary" /> Loot-funded camp construction
 						</div>
 						<p className="mt-1 text-xs text-text-muted">
-							Uses the built-in exact camp layout by default, then builds and upgrades only after returned attacks increase the authoritative Berimond wood and stone balances. This lane never transports resources from another kingdom.
-						</p>
+							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.uses.the.built.in.exact.camp.layout.6c194563" /></p>
 					</div>
 
 					<SettingsToggleRow
@@ -303,14 +302,13 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							<div className="min-w-0 flex-1">
 								<div className="flex flex-wrap items-center gap-2">
 									<Badge variant={target ? 'outline' : 'success'}>{target ? 'Built-in available' : 'Active default'}</Badge>
-									<span className="text-sm font-bold text-text-main">Built-in exact camp target</span>
+									<span className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.built.in.exact.camp.target.696aa37c" /></span>
 								</div>
 								<p className="mt-1 text-xs text-text-muted">
-									17 ground tiles, 92 functional buildings, 64 decorations, and 22 fixed targets. All 84 small and large tents plus the Auxiliaries&apos; headquarters resolve to the terminal WoD in current official data.
-								</p>
+									<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.17.ground.tiles.92.functional.buildings.64.9a88ca2d" /></p>
 							</div>
 							<label className="block w-40 shrink-0">
-								<span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-text-muted">Stable target</span>
+								<span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.stable.target.6115bc56" /></span>
 								<Select
 									value={String(settings.build.stableLevel || AUTO_BERI_DEFAULT_STABLE_LEVEL)}
 									onChange={(value) => setSettings((current) => ({
@@ -335,13 +333,12 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							</label>
 						</div>
 						<p className="mt-2 text-[11px] text-text-muted">
-							The Stable level is resolved to its official Berimond WoD when the built-in target is active. An already-higher Stable is retained rather than demolished or downgraded. Maximum Large-tent steps with official premium costs stay gated by “Allow premium costs.” Custom captured targets retain their own Stable definition.
-						</p>
+							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.the.stable.level.is.resolved.to.its.7d6ad5dd" /></p>
 					</div>
 
 					<div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_repeat(3,auto)] lg:items-end">
 						<label className="block">
-							<span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-text-muted">Optional custom camp target</span>
+							<span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.optional.custom.camp.target.08f12769" /></span>
 							<Select
 								value={captureCastle ? String(captureCastle.id) : ''}
 								onChange={(value) => setCaptureCastleId(Number(value) || 0)}
@@ -361,8 +358,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							onClick={() => void captureBlueprint('functional')}
 							leftIcon={<Hammer className="h-4 w-4" />}
 						>
-							Functional
-						</Button>
+							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.functional.b6656595" /></Button>
 						<Button
 							variant="outline"
 							disabled={!captureCastle || capturing != null || blueprintBusy}
@@ -370,8 +366,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							onClick={() => void captureBlueprint('layout')}
 							leftIcon={<Castle className="h-4 w-4" />}
 						>
-							Layout
-						</Button>
+							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.layout.a5119091" /></Button>
 						<Button
 							variant="outline"
 							disabled={!captureCastle || capturing != null || blueprintBusy}
@@ -379,13 +374,12 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							onClick={() => void captureBlueprint('exact')}
 							leftIcon={<Camera className="h-4 w-4" />}
 						>
-							Exact clone
-						</Button>
+							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.exact.clone.0174197d" /></Button>
 					</div>
 
 					{savedBlueprints.length > 0 ? (
 						<div className="flex flex-wrap items-center gap-2">
-							<span className="text-[11px] font-semibold text-text-muted">Saved targets:</span>
+							<span className="text-[11px] font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.saved.targets.1b41cb7c" /></span>
 							{savedBlueprints.map((blueprint) => (
 								<Button
 									key={blueprint.id}
@@ -421,8 +415,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 									onClick={() => void deactivateBlueprint()}
 									leftIcon={<Hammer className="h-3.5 w-3.5" />}
 								>
-									Use built-in default
-								</Button>
+									<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.use.built.in.default.e396d794" /></Button>
 							</div>
 							<div className="mt-3 flex flex-wrap gap-2">
 								<Badge variant="outline">{target.summary.groundCount} ground tiles</Badge>
@@ -438,8 +431,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 						</div>
 					) : (
 						<p className="rounded-xl border border-border-base bg-bg-app/35 px-3 py-2 text-xs text-text-muted">
-							The built-in exact target is active. Capture a custom target only when you want to replace it; combat, transfers, and tool purchases remain independent.
-						</p>
+							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.the.built.in.exact.target.is.active.07b82a6b" /></p>
 					)}
 
 					<div className="grid gap-3 lg:grid-cols-3">
@@ -498,12 +490,12 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 									</label>
 								))}
 							</div>
-							<p className="mt-2 text-[11px] text-text-muted">The builder spends only the amount above these Berimond camp floors.</p>
+							<p className="mt-2 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.the.builder.spends.only.the.amount.above.d96d3273" /></p>
 						</div>
 
 						{settings.build.allowTimeSkips ? (
 							<div>
-								<div className="text-xs font-bold uppercase tracking-wider text-text-muted">Construction skips kept in reserve</div>
+								<div className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.construction.skips.kept.in.reserve.c78ae698" /></div>
 								<div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-7">
 									{AUTO_BERI_TROOP_TRANSPORT_TIME_SKIPS.map((skip) => (
 										<label key={skip.id} className="block">
@@ -521,8 +513,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							</div>
 						) : (
 							<p className="self-center rounded-xl border border-border-base bg-bg-app/35 px-3 py-2 text-xs text-text-muted">
-								Construction time skips are off. Active build timers are allowed to finish normally.
-							</p>
+								<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.construction.time.skips.are.off.active.build.c8682826" /></p>
 						)}
 					</div>
 				</div>
@@ -533,12 +524,11 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							<Crosshair className="h-4 w-4 text-primary" /> Tower attack
 						</div>
 						<p className="mt-1 text-xs text-text-muted">
-							Uses Berimond&apos;s find-next-tower command and the commanders assigned under Movement → Features.
-						</p>
+							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.uses.berimond.s.find.next.tower.command.f09dfe35" /></p>
 					</div>
 					<div className="grid gap-4 md:grid-cols-2">
 						<label className="block">
-							<span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-text-muted">Attack preset</span>
+							<span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.attack.preset.407b93e9" /></span>
 							<Select
 								value={settings.presetId}
 								onChange={(presetId) => setSettings((current) => ({ ...current, presetId }))}
@@ -549,7 +539,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							/>
 						</label>
 						<label className="block">
-							<span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-text-muted">Attack check interval</span>
+							<span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.attack.check.interval.bc3e388d" /></span>
 							<Input
 								type="number"
 								min={30}
@@ -568,7 +558,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 					</div>
 					{presetSummary ? (
 						<div className="flex flex-wrap items-center gap-2 border-t border-border-base pt-3">
-							<span className="mr-1 text-xs text-text-muted">Preset loadout</span>
+							<span className="mr-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.preset.loadout.4c1e2d30" /></span>
 							<Badge variant="outline">{presetSummary.waves} waves</Badge>
 							<Badge variant="outline">{presetSummary.troops.toLocaleString()} troops</Badge>
 							<Badge variant="outline">{presetSummary.tools.toLocaleString()} tools</Badge>
@@ -588,8 +578,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							<Hammer className="h-4 w-4 text-primary" /> Armorer tool minimums
 						</div>
 						<p className="mt-1 text-xs text-text-muted">
-							An independent Auto Beri lane buys the shortage with coins in game-capped batches of up to 1,000. Set a tool to 0 to leave it unmanaged.
-						</p>
+							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.an.independent.auto.beri.lane.buys.the.72da5b70" /></p>
 					</div>
 					<div className="grid gap-4 sm:grid-cols-3">
 						{AUTO_BERI_COIN_ATTACK_TOOLS.map((tool) => (
@@ -608,8 +597,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 						))}
 					</div>
 					<p className="text-xs text-text-muted">
-						Only scaling ladders, battering rams, and mantlets from the coin armorer are eligible.
-					</p>
+						<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.only.scaling.ladders.battering.rams.and.mantlets.72f4a748" /></p>
 				</div>
 
 				<div className="space-y-3">
@@ -622,8 +610,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 					/>
 					<label className="block">
 						<span className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-text-muted">
-							Troop transport skip
-						</span>
+							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.troop.transport.skip.5fc75be9" /></span>
 						<Select
 							value={settings.troopTransportTimeSkipId}
 							onChange={(troopTransportTimeSkipId) => setSettings((current) => parseAutoBeriWorldSettings({
@@ -638,14 +625,14 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 						/>
 					</label>
 					<p className="text-xs text-text-muted">
-						CitadelOps sends the exact <span className="font-mono">fuc</span> capacity with <span className="font-mono">kut</span>.
-						When skipping is enabled, it applies the selected <span className="font-mono">msk</span> immediately, then checks a still-travelling transfer once per minute.
+						CitadelOps sends the exact <span className="font-mono"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.fuc.63ca2042" /></span> capacity with <span className="font-mono"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.kut.341e7a8f" /></span>.
+						When skipping is enabled, it applies the selected <span className="font-mono"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.msk.3521dbfc" /></span> immediately, then checks a still-travelling transfer once per minute.
 						The selection stays saved while skipping is off.
 					</p>
 				</div>
 
 				<div className="space-y-1.5">
-					<label className="text-xs font-bold uppercase tracking-wider text-text-muted">Berimond castle ID</label>
+					<label className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.berimond.castle.id.a5595160" /></label>
 					<Input
 						type="number"
 						min={0}
@@ -653,12 +640,12 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 						onChange={(event) => updateNumber('beriCastleId', event.target.value)}
 						placeholder="Auto-detect owned kingdom 10 camp"
 					/>
-					<p className="text-xs text-text-muted">Leave blank to use the owned Berimond camp automatically.</p>
+					<p className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.leave.blank.to.use.the.owned.berimond.31b2b0ae" /></p>
 				</div>
 
 				<div className="grid gap-4 sm:grid-cols-2">
 					<div className="space-y-1.5">
-						<label className="text-xs font-bold uppercase tracking-wider text-text-muted">Check interval</label>
+						<label className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.check.interval.9a5266be" /></label>
 						<Input
 							type="number"
 							min={5}
@@ -669,7 +656,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 						/>
 					</div>
 					<div className="space-y-1.5">
-						<label className="text-xs font-bold uppercase tracking-wider text-text-muted">Minimum transfer</label>
+						<label className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.minimum.transfer.ef38f61d" /></label>
 						<Input
 							type="number"
 							min={1}
@@ -680,18 +667,17 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 				</div>
 
 				<div className="space-y-2">
-					<label className="text-xs font-bold uppercase tracking-wider text-text-muted">Transfer troop</label>
+					<label className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.transfer.troop.2a96547d" /></label>
 					<div className="flex gap-2">
 						<Input readOnly value={settings.transferTroopId || ''} placeholder="Official unit ID" />
-						<Button variant="outline" leftIcon={<Users className="h-4 w-4" />} onClick={pickTroop}>Pick unit</Button>
+						<Button variant="outline" leftIcon={<Users className="h-4 w-4" />} onClick={pickTroop}><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.pick.unit.8ff02f40" /></Button>
 					</div>
 					<p className="text-xs text-text-muted">
-						Only troops whose official upkeep is Food are eligible. Mead- and Beef-consuming troops are excluded.
-					</p>
+						<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.only.troops.whose.official.upkeep.is.food.29743507" /></p>
 				</div>
 
 				<div className="space-y-1.5">
-					<label className="text-xs font-bold uppercase tracking-wider text-text-muted">Source castle</label>
+					<label className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.source.castle.86d5a48e" /></label>
 					<Select
 						value={effectiveSourceID > 0 ? String(effectiveSourceID) : ''}
 						options={sourceOptions}
@@ -701,7 +687,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 				</div>
 
 				<div className="space-y-1.5">
-					<label className="text-xs font-bold uppercase tracking-wider text-text-muted">kut CID field</label>
+					<label className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.kut.cid.field.580caaae" /></label>
 					<Input
 						type="number"
 						value={settings.wireCastleId}

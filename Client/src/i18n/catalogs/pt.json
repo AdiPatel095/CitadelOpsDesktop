@@ -86,5 +86,9 @@
   "activity.searchChannel": "Procurar uma funcionalidade ou canal",
   "activity.filter": "Filtrar atividade do registo",
   "activity.searchActivity": "Pesquisar no registo",
-  "activity.actionOrIssue": "Ação ou problema"
+  "activity.actionOrIssue": "Ação ou problema",
+  "activity.all": "Toda a atividade · {count, number}",
+  "activity.actions": "Ações concluídas · {count, number}",
+  "activity.issues": "Avisos e erros · {count, number}",
+  "activity.results": "{shown, number} de {total, number}"
 }

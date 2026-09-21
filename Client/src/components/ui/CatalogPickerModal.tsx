@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { type ReactNode } from 'react';
 import { Check, Search } from 'lucide-react';
 import { Badge } from './Badge';
@@ -61,7 +62,7 @@ export const CatalogPickerModal: React.FC<CatalogPickerModalProps> = ({
     )}
     footer={(
       <>
-        <Button variant="ghost" onClick={onClose} className="px-8">Cancel</Button>
+        <Button variant="ghost" onClick={onClose} className="px-8"><LocalizedText messageKey="ui.components.ui.catalogPickerModal.cancel.19766ed6" /></Button>
         <Button
           variant="primary"
           onClick={onConfirm}

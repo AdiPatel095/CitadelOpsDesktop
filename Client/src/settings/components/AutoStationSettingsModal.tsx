@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useState } from 'react';
 import { Plus, Shield } from 'lucide-react';
 import { showTroopPicker, type UnitWithQuantity } from '../../components/TroopPickerModal';
@@ -125,7 +126,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
         <Card variant="solid" className="bg-bg-app p-4">
           <div className="grid gap-4 md:grid-cols-4">
             <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-bold uppercase tracking-wider text-primary">Evacuate at</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-primary"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.evacuate.at.621aebd7" /></span>
               <Input
                 type="number"
                 min={1}
@@ -136,11 +137,11 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
                   leadTimeSec: clampMinutes(Number(event.target.value)) * 60,
                 }))}
                 className="font-mono"
-                rightIcon={<span className="text-xs font-medium uppercase text-text-muted">Minutes left</span>}
+                rightIcon={<span className="text-xs font-medium uppercase text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.minutes.left.4703188b" /></span>}
               />
             </label>
             <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-bold uppercase tracking-wider text-primary">Minimum Bird Days on Target</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-primary"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.minimum.bird.days.on.target.71cbcd1f" /></span>
               <Input
                 type="number"
                 min={0}
@@ -151,7 +152,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
                   minRPTDays: clampDays(Number(event.target.value)),
                 }))}
                 className="font-mono"
-                rightIcon={<span className="text-xs font-medium uppercase text-text-muted">Days</span>}
+                rightIcon={<span className="text-xs font-medium uppercase text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.days.e08c0aa8" /></span>}
               />
             </label>
             <SettingsToggleRow
@@ -166,13 +167,12 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
             />
           </div>
           <p className="mt-4 text-xs leading-relaxed text-text-muted">
-            Station targets are the nearest protected alliance castle in the same kingdom. Sends use a one-hour station timer as a fallback even when recall is enabled. If an attack is already inside the configured window when detected, evacuation starts immediately.
-          </p>
+            <LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.station.targets.are.the.nearest.protected.alliance.b2392f9b" /></p>
         </Card>
 
         <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto pr-1">
           {castles.length === 0 && (
-            <p className="py-8 text-center text-sm text-text-muted">Loading castles…</p>
+            <p className="py-8 text-center text-sm text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.loading.castles.37f1e3a3" /></p>
           )}
           <div className="grid grid-cols-1 gap-4 pb-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {castles.map((castle) => {
@@ -182,14 +182,13 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
                 <Card key={castle.id} variant="solid" className="flex flex-col bg-bg-card-hover/40 p-4 shadow-inner">
                   <div className="mb-3 border-b border-border-base pb-2">
                     <h3 className="text-sm font-bold text-primary">{castle.name || `${castle.type} castle`}</h3>
-                    <p className="mt-1 text-[11px] text-text-muted">These amounts remain in the castle.</p>
+                    <p className="mt-1 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.these.amounts.remain.in.the.castle.e33daec5" /></p>
                   </div>
                   {reserves.length === 0 ? (
                     <div className="flex flex-1 flex-col items-center justify-center gap-3 py-6">
-                      <p className="text-center text-xs font-medium uppercase tracking-wider text-text-muted">No defense reserve</p>
+                      <p className="text-center text-xs font-medium uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.no.defense.reserve.b4ce10ce" /></p>
                       <Button variant="outline" size="sm" onClick={() => selectReserve(castle)} leftIcon={<Plus className="h-4 w-4" />}>
-                        Add troops
-                      </Button>
+                        <LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.add.troops.5264f439" /></Button>
                     </div>
                   ) : (
                     <div className="flex flex-wrap justify-center gap-4">

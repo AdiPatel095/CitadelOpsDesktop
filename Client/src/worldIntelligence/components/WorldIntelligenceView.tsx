@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	CloudOff,
@@ -187,7 +188,7 @@ const WorldIntelligenceView = () => {
 							description={`Loading public history from ${displayWorld(selected.worldId)}`}
 							icon={selected.type === 'player' ? <UserRound className="h-6 w-6" /> : <Users className="h-6 w-6" />}
 						/>
-						<Card><CardContent className="flex min-h-72 items-center justify-center text-sm text-text-muted">Loading public history…</CardContent></Card>
+						<Card><CardContent className="flex min-h-72 items-center justify-center text-sm text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldIntelligenceView.loading.public.history.a3292dbc" /></CardContent></Card>
 					</>
 					) : playerProfile ? (
 						<>
@@ -242,7 +243,7 @@ const WorldIntelligenceView = () => {
 						<Badge variant={freshnessTone(currentCoverage.lastObservedAt)}>Updated {currentCoverage.lastObservedAt ? relativeTime(currentCoverage.lastObservedAt) : 'never'}</Badge>
 					</>
 				) : coverageError ? (
-					<Badge variant="warning" title={coverageError}>Coverage totals unavailable</Badge>
+					<Badge variant="warning" title={coverageError}><LocalizedText messageKey="ui.worldIntelligence.components.worldIntelligenceView.coverage.totals.unavailable.f4675c66" /></Badge>
 				) : null}
 			</div>}
 

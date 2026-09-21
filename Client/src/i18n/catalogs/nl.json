@@ -86,5 +86,9 @@
   "activity.searchChannel": "Functie of kanaal zoeken",
   "activity.filter": "Logactiviteit filteren",
   "activity.searchActivity": "Logactiviteit doorzoeken",
-  "activity.actionOrIssue": "Actie of probleem"
+  "activity.actionOrIssue": "Actie of probleem",
+  "activity.all": "Alle activiteit · {count, number}",
+  "activity.actions": "Voltooide acties · {count, number}",
+  "activity.issues": "Waarschuwingen en fouten · {count, number}",
+  "activity.results": "{shown, number} van {total, number}"
 }

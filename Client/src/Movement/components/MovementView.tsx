@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ArrowUpRight,
@@ -290,11 +291,11 @@ const MovementView: React.FC = () => {
               <span className="ml-2 text-sm font-normal text-text-muted">({rows.length})</span>
             </CardTitle>
             {mode === 'Live Movements' ? <Badge variant={snapshotBadge.variant}>{snapshotBadge.label}</Badge> : null}
-            {assignmentsDirty ? <Badge variant="warning">Unsaved</Badge> : null}
+            {assignmentsDirty ? <Badge variant="warning"><LocalizedText messageKey="ui.movement.components.movementView.unsaved.6250d572" /></Badge> : null}
             {mode === 'Live Movements' && rows.length > 0 ? (
               <span className="text-xs text-text-muted">{availableCount} available</span>
             ) : null}
-            {mode === 'Live Movements' ? <span className="text-xs text-text-muted">Live socket updates</span> : null}
+            {mode === 'Live Movements' ? <span className="text-xs text-text-muted"><LocalizedText messageKey="ui.movement.components.movementView.live.socket.updates.0f117e61" /></span> : null}
           </div>
           {mode === 'Functions' ? (
             <Button
@@ -305,8 +306,7 @@ const MovementView: React.FC = () => {
               onClick={() => void saveCommanderFeatures()}
               leftIcon={<Save className="h-4 w-4" />}
             >
-              Save assignments
-            </Button>
+              <LocalizedText messageKey="ui.movement.components.movementView.save.assignments.79af590f" /></Button>
           ) : null}
           <Button
             variant="secondary"
@@ -324,12 +324,9 @@ const MovementView: React.FC = () => {
           {mode === 'Functions' ? (
             <div className="flex flex-col gap-4">
               <div className="rounded-global border border-border-light bg-bg-card/45 px-4 py-3 shadow-[var(--shadow-raised)]">
-                <p className="text-sm font-semibold text-text-main">Choose the commanders each automation may launch.</p>
+                <p className="text-sm font-semibold text-text-main"><LocalizedText messageKey="ui.movement.components.movementView.choose.the.commanders.each.automation.may.launch.f4da00ff" /></p>
                 <p className="mt-1 text-xs text-text-muted">
-                  Every function defaults to all commanders. Use a function in the table header to toggle it for the full roster, or adjust individual commanders below.
-                  Right-click a header function to require a minimum or maximum equipped bonus-troop stat.
-                  Live availability and feature-specific requirements are still checked before each launch.
-                </p>
+                  <LocalizedText messageKey="ui.movement.components.movementView.every.function.defaults.to.all.commanders.use.31dd9bc0" /></p>
               </div>
               {rows.length === 0 ? (
                 <p className="text-sm text-text-muted">
@@ -342,10 +339,10 @@ const MovementView: React.FC = () => {
                   <table className="min-w-[44rem] w-full text-sm">
                     <thead>
                       <tr className="border-b border-border-light bg-bg-card/65 text-left text-[10px] uppercase tracking-wider text-text-muted">
-                        <th className="w-64 px-4 py-2.5 font-semibold">Commander</th>
+                        <th className="w-64 px-4 py-2.5 font-semibold"><LocalizedText messageKey="ui.movement.components.movementView.commander.16af7be3" /></th>
                         <th className="px-4 py-2.5 font-semibold">
                           <div className="flex flex-col gap-2">
-                            <span>Functions · toggle for all commanders</span>
+                            <span><LocalizedText messageKey="ui.movement.components.movementView.functions.toggle.for.all.commanders.e2e2425b" /></span>
                             <div className="flex flex-wrap gap-1.5 normal-case tracking-normal">
                               {COMMANDER_FEATURES.map((feature) => {
                                 const assignedCount = commanderIDsAssignedToFeature(
@@ -529,13 +526,13 @@ const MovementView: React.FC = () => {
               <table className="min-w-[72rem] w-full table-fixed text-sm">
                 <thead>
                   <tr className="border-b border-border-base bg-bg-card/50 text-left text-[10px] uppercase tracking-wider text-text-muted">
-                    <th className="w-52 px-3 py-2 font-semibold">Commander</th>
-                    <th className="w-32 px-3 py-2 font-semibold">Status</th>
-                    <th className="w-32 px-3 py-2 font-semibold">Kingdom</th>
-                    <th className="w-44 px-3 py-2 font-semibold">Target</th>
-                    <th className="w-56 px-3 py-2 font-semibold">Route</th>
-                    <th className="w-52 px-3 py-2 font-semibold">Timing</th>
-                    <th className="w-40 px-3 py-2 font-semibold">Troops</th>
+                    <th className="w-52 px-3 py-2 font-semibold"><LocalizedText messageKey="ui.movement.components.movementView.commander.16af7be3" /></th>
+                    <th className="w-32 px-3 py-2 font-semibold"><LocalizedText messageKey="ui.movement.components.movementView.status.920e413c" /></th>
+                    <th className="w-32 px-3 py-2 font-semibold"><LocalizedText messageKey="ui.movement.components.movementView.kingdom.f53639f9" /></th>
+                    <th className="w-44 px-3 py-2 font-semibold"><LocalizedText messageKey="ui.movement.components.movementView.target.978354db" /></th>
+                    <th className="w-56 px-3 py-2 font-semibold"><LocalizedText messageKey="ui.movement.components.movementView.route.adc74704" /></th>
+                    <th className="w-52 px-3 py-2 font-semibold"><LocalizedText messageKey="ui.movement.components.movementView.timing.fc4e8425" /></th>
+                    <th className="w-40 px-3 py-2 font-semibold"><LocalizedText messageKey="ui.movement.components.movementView.troops.5d47e163" /></th>
                     <th className="w-24 px-3 py-2 font-semibold">MID</th>
                   </tr>
                 </thead>

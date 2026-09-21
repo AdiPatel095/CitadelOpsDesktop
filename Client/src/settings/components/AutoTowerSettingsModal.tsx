@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useCallback, useEffect, useState } from 'react';
 import { Bot, CalendarDays, Crosshair, FastForward, TicketCheck } from 'lucide-react';
 import UnitImage from '../../components/UnitImage';
@@ -122,8 +123,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
               onClick={() => onOpenFeatureSchedule('autoTowers', 'Auto Towers')}
               leftIcon={<CalendarDays className="h-4 w-4" />}
             >
-              Calendar
-            </Button>
+              <LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.calendar.d5d0a30b" /></Button>
       )}
       onSave={save}
       saveLabel="Save changes"
@@ -136,11 +136,11 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
       )}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-4 rounded-global border border-primary/20 bg-primary/5 p-4">
         <div className="min-w-0">
-          <div className="text-sm font-bold text-text-main">Authoritative map scan</div>
-          <p className="mt-1 text-xs text-text-muted">Fast focus-switch through every enabled castle to rebuild its target list.</p>
+          <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.authoritative.map.scan.dc172025" /></div>
+          <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.fast.focus.switch.through.every.enabled.castle.86ab11a7" /></p>
         </div>
         <label className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-text-muted">Every</span>
+          <span className="text-xs font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.every.9b8617fd" /></span>
           <div className="w-24">
             <Input
               type="number"
@@ -151,7 +151,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
               className="text-center font-mono"
             />
           </div>
-          <span className="text-xs font-semibold text-text-muted">sec</span>
+          <span className="text-xs font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.sec.add93534" /></span>
         </label>
       </div>
 
@@ -161,10 +161,9 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
             <Bot className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="text-sm font-black text-text-main">Robber Baron Advisor</h3>
+            <h3 className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.robber.baron.advisor.04006eb4" /></h3>
             <p className="mt-0.5 text-[11px] leading-relaxed text-text-muted">
-              Advisor mode runs native same-tower chains: hit one uses a daily attack, and every additional hit uses one Time Skip.
-            </p>
+              <LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.advisor.mode.runs.native.same.tower.chains.046a6fbd" /></p>
           </div>
         </div>
         <div className="grid gap-2 lg:grid-cols-2">
@@ -192,10 +191,9 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
             <div className="flex min-w-0 items-start gap-2.5">
               <FastForward className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
               <div>
-                <label htmlFor="auto-tower-daily-time-skips" className="text-xs font-bold text-text-main">Maximum daily Time Skips</label>
+                <label htmlFor="auto-tower-daily-time-skips" className="text-xs font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.maximum.daily.time.skips.a3f214d9" /></label>
                 <p className="mt-0.5 text-[11px] leading-relaxed text-text-muted">
-                  Confirmed Advisor chains count against this cap until the game server&apos;s daily attack counter resets. Set 0 to pause Advisor launches.
-                </p>
+                  <LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.confirmed.advisor.chains.count.against.this.cap.0f5b3790" /></p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -209,7 +207,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
                 onChange={(event) => setMaximumDailyTimeSkips(clampMaximumDailyTimeSkips(event.target.value))}
                 className="w-28 text-center font-mono"
               />
-              <span className="text-[11px] font-semibold text-text-muted">skips</span>
+              <span className="text-[11px] font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.skips.7932e297" /></span>
             </div>
           </div>
         </div>
@@ -254,7 +252,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
 
               <div className="grid gap-3">
                 <label className="flex flex-col gap-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Radius</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.radius.6fe0661c" /></span>
                   <Input
                     type="number"
                     min={1}
@@ -262,14 +260,13 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
                     value={plan.radius}
                     onChange={(event) => updateCastle(castle.id, { radius: clampRadius(event.target.value) })}
                     className="text-center font-mono"
-                    rightIcon={<span className="text-[10px] text-text-muted">tiles</span>}
+                    rightIcon={<span className="text-[10px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.tiles.ad9243fa" /></span>}
                   />
                 </label>
               </div>
 
               <p className="rounded-xl border border-border-base bg-bg-app/50 px-3 py-2.5 text-[11px] text-text-muted">
-                No batch cap: launch every eligible target supported by a currently available selected commander and enough stationed troops. Any return from another attack can wake the next launch immediately.
-              </p>
+                <LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.no.batch.cap.launch.every.eligible.target.373ba7c9" /></p>
 
               <button
                 type="button"
@@ -287,8 +284,8 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
 
               <div className="flex items-center justify-between gap-3 rounded-xl border border-border-base bg-bg-app/50 px-3 py-2.5">
                 <div className="min-w-0">
-                  <div className="text-xs font-bold text-text-main">Maiden-supported only</div>
-                  <p className="mt-0.5 text-[11px] text-text-muted">Only use an available commander with the supported maiden relic.</p>
+                  <div className="text-xs font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.maiden.supported.only.1374eb47" /></div>
+                  <p className="mt-0.5 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoTowerSettingsModal.only.use.an.available.commander.with.the.d7a1c498" /></p>
                 </div>
                 <Switch
                   checked={plan.maidenOnly}

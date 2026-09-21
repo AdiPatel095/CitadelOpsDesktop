@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Castle,
@@ -171,8 +172,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
             </div>
           </div>
           <p className="mt-3 border-t border-border-base pt-3 text-xs text-text-muted">
-            Auto Station has precedence. Any incoming player attack pauses new Khan attacks, cooldown skips, and defense changes while stationing runs. Khan taunts do not count as player attacks.
-          </p>
+            <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.auto.station.has.precedence.any.incoming.player.19ee005a" /></p>
         </Card>
 
         <Card variant="solid" className="p-4">
@@ -180,7 +180,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-sm font-black text-text-main"><LockKeyhole className="h-4 w-4 text-primary" /> Lock automatic Khan attacks</div>
-                <p className="mt-1 text-xs text-text-muted">Stops only Auto Khan&apos;s own attack launches. Map and cooldown maintenance plus the enabled rage and defense lanes continue for a manually driven chain.</p>
+                <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.stops.only.auto.khan.s.own.attack.284cf413" /></p>
               </div>
               <Switch
                 checked={!draft.attackLaunchesEnabled}
@@ -192,7 +192,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
             <div className="flex items-start justify-between gap-4 border-t border-border-base pt-4 md:border-l md:border-t-0 md:pl-4 md:pt-0">
               <div className="min-w-0">
                 <div className="flex items-center gap-2 text-sm font-black text-text-main"><Flame className="h-4 w-4 text-primary" /> Trigger Khan at full rage</div>
-                <p className="mt-1 text-xs text-text-muted">Turn this off to keep attacking and skipping cooldowns without automatically dispatching the Khan retaliation.</p>
+                <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.turn.this.off.to.keep.attacking.and.e1a20f3a" /></p>
               </div>
               <Switch
                 checked={draft.triggerRage}
@@ -207,9 +207,9 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <div className="flex items-center gap-2 text-sm font-black text-text-main"><Flame className="h-4 w-4 text-primary" /> Rage chain limit</div>
-              <p className="mt-1 text-xs text-text-muted">Once this many accepted Khan retaliations are observed in the current event, new camp attacks stop. Full-rage taunts, cooldown handling, and defense recovery continue for the rest of the event.</p>
+              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.once.this.many.accepted.khan.retaliations.are.fa686d33" /></p>
               <label className="mt-3 block max-w-xs">
-                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">Max rage chain · 0 disables limit</span>
+                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.max.rage.chain.0.disables.limit.a652d0a7" /></span>
                 <Input
                   type="text"
                   inputMode="numeric"
@@ -229,7 +229,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 text-sm font-black text-text-main"><Zap className="h-4 w-4 text-primary" /> Require Rage points booster</div>
-                  <p className="mt-1 text-xs text-text-muted">Gate only new automatic camp attacks unless the timed Khan Rage points booster from boi ID 27 is active. Existing taunts, cooldown handling, and defense recovery continue.</p>
+                  <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.gate.only.new.automatic.camp.attacks.unless.2ea26f61" /></p>
                   <p className={`mt-1 text-xs font-bold ${rageBoosterActive ? 'text-success' : 'text-text-muted'}`}>{rageBoosterStatus}</p>
                 </div>
                 <Switch
@@ -238,7 +238,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
                   ariaLabel="Require an active Khan Rage points booster"
                 />
               </div>
-              <p className="mt-3 rounded-global border border-border-base bg-bg-input/50 p-3 text-xs text-text-muted">This is the timed Rage points booster, not a rage-banner attack tool.</p>
+              <p className="mt-3 rounded-global border border-border-base bg-bg-input/50 p-3 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.this.is.the.timed.rage.points.booster.4049d4e5" /></p>
             </div>
           </div>
         </Card>
@@ -247,9 +247,9 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <div className="flex items-center gap-2 text-sm font-black text-text-main"><LockKeyhole className="h-4 w-4 text-primary" /> Nomad points stop</div>
-              <p className="mt-1 text-xs text-text-muted">At the limit, Auto Khan stops launching, recalls its active outgoing attacks, and opens the main-castle gates so later taunts cannot consume the defense preset.</p>
+              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.at.the.limit.auto.khan.stops.launching.8f630fc2" /></p>
               <label className="mt-3 block max-w-xs">
-                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">Stop at Nomad points · 0 disables</span>
+                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.stop.at.nomad.points.0.disables.81362bed" /></span>
                 <Input
                   type="text"
                   inputMode="numeric"
@@ -264,7 +264,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
                 />
               </label>
               {draft.nomadPointThreshold > 0 ? (
-                <p className="mt-2 text-xs text-warning">Reaching this limit uses the game&apos;s current ruby cost for the six-hour open-gate option.</p>
+                <p className="mt-2 text-xs text-warning"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.reaching.this.limit.uses.the.game.s.10d3a9bb" /></p>
               ) : null}
             </div>
 
@@ -272,7 +272,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 text-sm font-black text-text-main"><ShoppingCart className="h-4 w-4 text-primary" /> Replenish defense tools</div>
-                  <p className="mt-1 text-xs text-text-muted">Every 30 seconds, replace preset shortages from currently active coin, Nomad/Khan, event-token, or Aquamarine shop packages.</p>
+                  <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.every.30.seconds.replace.preset.shortages.from.b001d2e4" /></p>
                 </div>
                 <Switch
                   checked={draft.replenishDefenseTools}
@@ -282,8 +282,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
               </div>
               {draft.replenishDefenseTools ? (
                 <div className="mt-3 rounded-global border border-success/30 bg-success/10 p-3 text-xs text-text-main">
-                  Ruby-priced packages are rejected. Auto Khan buys only the exact missing preset tool from a package currently advertised by the server, or the captured Luna table, and only when its non-premium balance can cover the purchase.
-                </div>
+                  <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.ruby.priced.packages.are.rejected.auto.khan.8c84936b" /></div>
               ) : null}
             </div>
           </div>
@@ -332,14 +331,14 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
               onChange={(horseTravelBoostId) => setDraft((current) => ({ ...current, horseTravelBoostId }))}
             />
           </div>
-          <p className="mt-3 border-t border-border-base pt-3 text-xs text-text-muted">The selected defense preset is re-applied to the Great Empire main castle before the attack chain continues.</p>
+          <p className="mt-3 border-t border-border-base pt-3 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.the.selected.defense.preset.is.re.applied.e0cc99f5" /></p>
         </Card>
 
         <Card variant="solid" className="p-4">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-sm font-black text-text-main"><RotateCcw className="h-4 w-4 text-primary" /> Skip every Khan camp cooldown</div>
-              <p className="mt-1 text-xs text-text-muted">Each launched hit reserves enough combined skip time. Every skip command uses one item, then waits for confirmation before applying another.</p>
+              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.each.launched.hit.reserves.enough.combined.skip.10c1e007" /></p>
             </div>
             <Switch
               checked={draft.skipCooldowns}
@@ -379,12 +378,12 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
                   ...current,
                   minimumRemainingSec: clampAutoKhanInteger(event.target.value, 0, 1440, 5) * 60,
                 }))}
-                rightIcon={<span className="text-[10px] text-text-muted">min</span>}
+                rightIcon={<span className="text-[10px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.min.1f6fa6f6" /></span>}
                 className="font-mono"
               />
             </label>
           </div>
-          {!draft.skipCooldowns ? <p className="mt-3 text-xs text-warning">Cooldown skipping is required before these chained attacks can be saved and run.</p> : null}
+          {!draft.skipCooldowns ? <p className="mt-3 text-xs text-warning"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.cooldown.skipping.is.required.before.these.chained.0dfd850e" /></p> : null}
         </Card>
 
         <Card variant="solid" className="p-4">
@@ -409,7 +408,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
           {sourceIsMain && draft.openGateProtection ? (
             <div className="mt-3 border-t border-border-base pt-3">
               <label className="block max-w-xs">
-                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">Offensive wall-unit threshold</span>
+                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.offensive.wall.unit.threshold.c94cc3f9" /></span>
                 <Input
                   type="text"
                   inputMode="numeric"
@@ -424,9 +423,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
                 />
               </label>
               <div className="mt-3 rounded-global border border-warning/30 bg-warning/10 p-3 text-xs text-text-main">
-                At or above this threshold, Auto Khan opens the main castle gates once for six hours and immediately stops attacks, cooldown skips, and new taunts. The feature stays soft-locked without changing your settings; after the gate expires, it refreshes defense and resumes only when the projected offensive wall count is below the threshold.
-                This uses the game&apos;s current ruby cost for the six-hour open-gate option.
-              </div>
+                <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.at.or.above.this.threshold.auto.khan.e1d0e5a1" /></div>
             </div>
           ) : null}
         </Card>

@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import { useEffect, useMemo, useState } from 'react';
 import { History } from 'lucide-react';
 import { CitadelAPI } from '../../api/CitadelClient';
@@ -68,18 +69,18 @@ export function FeatureEventHistory({ entries, worldId, playerId, now, loading, 
   return <Card><CardContent>
     <div className="mb-4">
       <div className="flex items-center gap-2 font-bold text-text-main"><History className="h-5 w-5 text-primary" /> Previous event scores</div>
-      <p className="mt-1 text-xs text-text-muted">Final known account score for each collected, completed event run—not points attributed to an automation. Newest first; dates use this device’s local time.</p>
+      <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.events.components.featureEventHistory.final.known.account.score.for.each.collected.57490c30" /></p>
     </div>
     {eventOptions.length > 1 && <div className="mb-4 w-full sm:w-72"><Select ariaLabel="Filter previous scores by event" value={selectedEvent} onChange={(value) => { setEventFilter(value); setPage(0); }} options={[{ value: 'all', label: 'All previous events' }, ...eventOptions]} menuGrowToViewport /></div>}
     {error && <p role="status" className="mb-4 text-sm text-warning">{error}</p>}
-    {loading ? <p role="status" className="text-sm text-text-muted">Loading previous scores…</p> : finals.length === 0 ? (
+    {loading ? <p role="status" className="text-sm text-text-muted"><LocalizedText messageKey="ui.events.components.featureEventHistory.loading.previous.scores.9c87ef9b" /></p> : finals.length === 0 ? (
       <EmptyState size="sm" surface="plain" title="No previous scores recorded" description="Completed events appear here when a known score was collected for this account. Running events and unknown scores are not shown as finals." />
     ) : <>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead><tr className="border-b border-border-base text-left text-xs text-text-muted">
-            <th scope="col" className="px-3 py-2">Event</th><th scope="col" className="px-3 py-2">Ended</th>
-            <th scope="col" className="px-3 py-2 text-right">Final known score</th><th scope="col" className="px-3 py-2 text-right">Rank</th>
+            <th scope="col" className="px-3 py-2"><LocalizedText messageKey="ui.events.components.featureEventHistory.event.4e1f49a9" /></th><th scope="col" className="px-3 py-2"><LocalizedText messageKey="ui.events.components.featureEventHistory.ended.7cdc804e" /></th>
+            <th scope="col" className="px-3 py-2 text-right"><LocalizedText messageKey="ui.events.components.featureEventHistory.final.known.score.6da338f9" /></th><th scope="col" className="px-3 py-2 text-right"><LocalizedText messageKey="ui.events.components.featureEventHistory.rank.a4130d7d" /></th>
           </tr></thead>
           <tbody>{visible.map((entry) => <tr key={entry.occurrenceId} className="border-b border-border-base/50">
             <td className="px-3 py-3 font-semibold text-text-main">{entry.eventName || entry.eventKey.replaceAll('-', ' ')}</td>
@@ -92,8 +93,8 @@ export function FeatureEventHistory({ entries, worldId, playerId, now, loading, 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-text-muted">
         <span>{filtered.length.toLocaleString()} completed runs · Page {safePage + 1} of {pages}</span>
         <div className="flex gap-2">
-          <Button variant="secondary" size="sm" disabled={safePage === 0} onClick={() => setPage(safePage - 1)}>Previous</Button>
-          <Button variant="secondary" size="sm" disabled={safePage + 1 >= pages} onClick={() => setPage(safePage + 1)}>Next</Button>
+          <Button variant="secondary" size="sm" disabled={safePage === 0} onClick={() => setPage(safePage - 1)}><LocalizedText messageKey="ui.events.components.featureEventHistory.previous.a57b08a4" /></Button>
+          <Button variant="secondary" size="sm" disabled={safePage + 1 >= pages} onClick={() => setPage(safePage + 1)}><LocalizedText messageKey="ui.events.components.featureEventHistory.next.1ff57a29" /></Button>
         </div>
       </div>
     </>}

@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { TimerReset } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -96,14 +97,14 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
       title={<ModalTitle icon={<TimerReset className="h-5 w-5" />}>{onPauseFor ? 'Pause' : 'Run'} {featureLabel} for a duration</ModalTitle>}
       footer={(
         <div className="flex w-full justify-end gap-2">
-          <Button variant="ghost" onClick={onClose} disabled={saving}>Cancel</Button>
+          <Button variant="ghost" onClick={onClose} disabled={saving}><LocalizedText messageKey="ui.settings.components.automationDurationModal.cancel.19766ed6" /></Button>
           <Button onClick={() => void save()} disabled={!valid} isLoading={saving}>{onPauseFor ? 'Pause for this duration' : 'Turn on for this duration'}</Button>
         </div>
       )}
     >
       <div className="flex flex-col gap-4">
         <div className="rounded-global border border-primary/20 bg-primary/5 p-4">
-          <div className="text-sm font-bold text-text-main">Quick durations</div>
+          <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.automationDurationModal.quick.durations.e1a95cd2" /></div>
           <div className="mt-3 grid grid-cols-3 gap-2">
             {durationPresets.map((preset) => (
               <Button
@@ -119,7 +120,7 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
         </div>
 
         <div className="rounded-global border border-border-base bg-bg-card/45 p-4">
-          <div className="text-sm font-bold text-text-main">Custom duration</div>
+          <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.automationDurationModal.custom.duration.37421efc" /></div>
           <div className="mt-3 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
             <Input
               type="number"
@@ -141,7 +142,7 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
               ariaLabel="Automation duration unit"
             />
           </div>
-          {!valid ? <p className="mt-2 text-xs text-error">Choose a duration from 1 minute through 7 days.</p> : null}
+          {!valid ? <p className="mt-2 text-xs text-error"><LocalizedText messageKey="ui.settings.components.automationDurationModal.choose.a.duration.from.1.minute.through.270a3657" /></p> : null}
         </div>
 
         <div className="rounded-global border border-border-base bg-bg-app/40 px-4 py-3 text-xs leading-relaxed text-text-muted">
@@ -151,7 +152,7 @@ export const AutomationDurationModal: React.FC<AutomationDurationModalProps> = (
               <span className="font-semibold text-text-main">{turnsOffAt.toLocaleString()}</span>.
             </p>
           ) : null}
-          <p className="mt-1">Weekly schedules and the global automation lock still apply during this window.</p>
+          <p className="mt-1"><LocalizedText messageKey="ui.settings.components.automationDurationModal.weekly.schedules.and.the.global.automation.lock.a4fd4bf2" /></p>
           {currentUntil ? (
             <p className="mt-2 text-primary">{onPauseFor ? 'Current pause ends' : 'Current timed run ends'} {new Date(currentUntil).toLocaleString()}.</p>
           ) : null}

@@ -14,7 +14,7 @@ function officialParametersComplete(template: string, params: Record<string, Mes
 }
 /** Isolate rendered arguments, never the selector input or stored user values. */
 function isolateArguments(elements: MessageFormatElement[]): MessageFormatElement[] {
-  return elements.flatMap(element=>{
+  return elements.flatMap<MessageFormatElement>(element=>{
     if (element.type === TYPE.select || element.type === TYPE.plural) return [{...element,options:Object.fromEntries(Object.entries(element.options).map(([key,option])=>[key,{...option,value:isolateArguments(option.value)}]))}];
     if (element.type === TYPE.literal || element.type === TYPE.tag) return [element];
     return [{type:TYPE.literal,value:'\u2068'},element,{type:TYPE.literal,value:'\u2069'}];
@@ -85,4 +85,10 @@ export function validateMessageCatalog(source: Catalog, catalog: Catalog): strin
   }
   for (const key of Object.keys(catalog)) if (!Object.hasOwn(source,key)) errors.push(`Unknown message: ${key}`);
   return errors;
+}
+
+/** Validates only authored entries. This is not a completeness check. */
+export function validateAuthoredMessageSubset(source: Catalog, catalog: Catalog): string[] {
+  const authoredSource = Object.fromEntries(Object.entries(source).filter(([key]) => Object.hasOwn(catalog,key)));
+  return validateMessageCatalog(authoredSource,catalog);
 }

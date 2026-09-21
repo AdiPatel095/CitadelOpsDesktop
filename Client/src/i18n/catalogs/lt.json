@@ -86,5 +86,9 @@
   "activity.searchChannel": "Rasti funkciją arba kanalą",
   "activity.filter": "Filtruoti žurnalo veiklą",
   "activity.searchActivity": "Ieškoti žurnalo veikloje",
-  "activity.actionOrIssue": "Veiksmas arba problema"
+  "activity.actionOrIssue": "Veiksmas arba problema",
+  "activity.all": "Visa veikla · {count, number}",
+  "activity.actions": "Užbaigti veiksmai · {count, number}",
+  "activity.issues": "Įspėjimai ir klaidos · {count, number}",
+  "activity.results": "{shown, number} iš {total, number}"
 }

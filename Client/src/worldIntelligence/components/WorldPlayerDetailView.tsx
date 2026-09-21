@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import { useEffect, useMemo, useState } from 'react';
 import {
 	Activity,
@@ -167,12 +168,12 @@ const WorldPlayerDetailView = ({ profile, onOpenAlliance }: WorldPlayerDetailVie
 					<div className="flex flex-wrap justify-end gap-2">
 						{current.allianceId ? (
 							<Button type="button" variant="ghost" size="sm" onClick={() => onOpenAlliance(current.allianceId!)}><Users className="mr-1.5 h-3.5 w-3.5" />{current.allianceName || 'Observed alliance'}</Button>
-						) : <Badge variant="outline">No alliance</Badge>}
+						) : <Badge variant="outline"><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.no.alliance.623666da" /></Badge>}
 						{publicTitle && <Badge variant="primary" className="gap-1.5"><Crown className="h-3.5 w-3.5" />{publicTitle}</Badge>}
 						{current.publicProfile?.achievementPoints != null && <Badge variant="outline">{formatNumber(current.publicProfile.achievementPoints)} achievements</Badge>}
 						{current.publicProfile?.highestGlory != null && <Badge variant="outline">{formatNumber(current.publicProfile.highestGlory)} highest glory</Badge>}
 						{current.publicProfile?.bestRank != null && current.publicProfile.bestRank > 0 && <Badge variant="outline">Best rank #{formatNumber(current.publicProfile.bestRank)}</Badge>}
-						{current.publicProfile?.ruined === true && <Badge variant="warning">Ruined</Badge>}
+						{current.publicProfile?.ruined === true && <Badge variant="warning"><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.ruined.b1f13684" /></Badge>}
 						<Badge variant={freshnessTone(current.observedAt)}>Observed {relativeTime(current.observedAt)}</Badge>
 					</div>
 				)}
@@ -230,7 +231,7 @@ const WorldPlayerDetailView = ({ profile, onOpenAlliance }: WorldPlayerDetailVie
 										<span className="flex min-w-0 items-center gap-2">
 											<PlayerMetricIcon definition={metric} className="h-4 w-4" />
 											<span className="min-w-0 flex-1 truncate">{metric.label}</span>
-											<span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-text-muted">Storm</span>
+											<span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.storm.5870f9bf" /></span>
 										</span>
 									),
 								}))}
@@ -238,11 +239,11 @@ const WorldPlayerDetailView = ({ profile, onOpenAlliance }: WorldPlayerDetailVie
 						)}
 					</div>
 					<div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-text-muted">
-						<span>Hover to inspect a public observation. Drag horizontally to inspect a custom time period.</span>
+						<span><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.hover.to.inspect.a.public.observation.drag.da1f1924" /></span>
 						{selectedWindow && (
 							<div className="flex flex-wrap items-center gap-2">
 								<Badge variant="outline">{formatChartTime(selectedWindow.startUnix)} – {formatChartTime(selectedWindow.endUnix)}</Badge>
-								<Button variant="ghost" size="sm" onClick={() => setSelectedWindow(null)}>Clear selection</Button>
+								<Button variant="ghost" size="sm" onClick={() => setSelectedWindow(null)}><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.clear.selection.cea4d2e0" /></Button>
 							</div>
 						)}
 					</div>
@@ -284,13 +285,13 @@ const WorldPlayerDetailView = ({ profile, onOpenAlliance }: WorldPlayerDetailVie
 				<CardHeader className="liquid-card-header-prominent flex-wrap gap-3">
 					<div>
 						<CardTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" />Public scores & event activity</CardTitle>
-						<p className="mt-1 text-xs text-text-muted">Gallantry, gacha spins, timestamps, and other one-off public values appear here when their event or board is available. Chartable Storm values are available in the graph above.</p>
+						<p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.gallantry.gacha.spins.timestamps.and.other.one.79de0002" /></p>
 					</div>
 					<Badge variant="outline">{publicMetrics.length} observed</Badge>
 				</CardHeader>
 				<CardContent className="liquid-prominent-header-content p-5 sm:p-6">
 					{publicMetrics.length === 0 ? (
-						<p className="text-sm text-text-muted">No additional public event score has been observed for this player yet. Optional boards are discovered independently so an inactive event cannot interrupt the core World Intel scan.</p>
+						<p className="text-sm text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.no.additional.public.event.score.has.been.af69a3f4" /></p>
 					) : (
 						<div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
 							{publicMetrics.map((metric) => (
@@ -315,7 +316,7 @@ const WorldPlayerDetailView = ({ profile, onOpenAlliance }: WorldPlayerDetailVie
 				<CardHeader><CardTitle className="flex items-center gap-2"><History className="h-5 w-5 text-primary" />Identity history</CardTitle></CardHeader>
 				<CardContent className="pt-0">
 					{changes.length === 0 ? (
-						<p className="text-sm text-text-muted">No player name or alliance changes have been observed.</p>
+						<p className="text-sm text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.no.player.name.or.alliance.changes.have.9048b9e4" /></p>
 					) : (
 						<div className="max-h-64 space-y-3 overflow-auto custom-scrollbar">
 							{changes.slice().reverse().map((change, index) => (
@@ -340,10 +341,10 @@ const PlayerMetricIcon = ({ definition, className }: { definition: PlayerMetricD
 
 const MetricDelta = ({ current, first, compact = false }: { current?: number; first?: number; compact?: boolean }) => {
 	if (current == null || first == null || !Number.isFinite(current) || !Number.isFinite(first)) {
-		return <span className="text-xs text-text-muted">No comparison yet</span>;
+		return <span className="text-xs text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.no.comparison.yet.e087ee1e" /></span>;
 	}
 	const delta = current - first;
-	if (delta === 0) return <span className="text-xs text-text-muted">No change</span>;
+	if (delta === 0) return <span className="text-xs text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.no.change.41f9d57c" /></span>;
 	const positive = delta > 0;
 	const percent = first !== 0 ? Math.abs((delta / first) * 100) : null;
 	return (

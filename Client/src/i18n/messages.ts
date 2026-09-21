@@ -1,7 +1,14 @@
+import { sourceMessages } from './sourceMessages';
 import { officialMessageKeys } from './officialKeys';
 import { formatMessage, validateMessageCatalog } from './formatMessage';
 /** Add explicit descriptors here; never translate user names, IDs, or free-form input. */
 export const messages = {
+  ...sourceMessages,
+  "activity.all": "All activity · {count, number}",
+  "activity.actions": "Completed actions · {count, number}",
+  "activity.issues": "Warnings & errors · {count, number}",
+  "activity.results": "{shown, number} of {total, number}",
+
   "activity.title": "Live activity",
   "activity.close": "Close activity",
   "activity.channel": "Channel",

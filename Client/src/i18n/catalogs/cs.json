@@ -86,5 +86,9 @@
   "activity.searchChannel": "Najít funkci nebo kanál",
   "activity.filter": "Filtrovat aktivitu protokolu",
   "activity.searchActivity": "Hledat v protokolu",
-  "activity.actionOrIssue": "Akce nebo problém"
+  "activity.actionOrIssue": "Akce nebo problém",
+  "activity.all": "Veškerá aktivita · {count, number}",
+  "activity.actions": "Dokončené akce · {count, number}",
+  "activity.issues": "Varování a chyby · {count, number}",
+  "activity.results": "{shown, number} z {total, number}"
 }

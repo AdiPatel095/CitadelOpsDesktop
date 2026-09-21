@@ -86,5 +86,9 @@
   "activity.searchChannel": "尋找功能或頻道",
   "activity.filter": "篩選日誌活動",
   "activity.searchActivity": "搜尋日誌活動",
-  "activity.actionOrIssue": "操作或問題"
+  "activity.actionOrIssue": "操作或問題",
+  "activity.all": "全部活動 · {count, number}",
+  "activity.actions": "已完成操作 · {count, number}",
+  "activity.issues": "警告和錯誤 · {count, number}",
+  "activity.results": "{shown, number} / {total, number}"
 }

@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import {
   Activity,
@@ -429,8 +430,7 @@ const PlayerTrackerView = () => {
       {!current ? (
         <Card>
           <CardContent className="flex min-h-56 items-center justify-center p-8 text-center text-text-muted">
-            Connect the game once to begin collecting player analytics.
-          </CardContent>
+            <LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.connect.the.game.once.to.begin.collecting.eae341bc" /></CardContent>
         </Card>
       ) : (
         <>
@@ -510,8 +510,7 @@ const PlayerTrackerView = () => {
                       {formatDate(customWindow.startUnix)} – {formatDate(customWindow.endUnix)}
                     </Badge>
                     <Button variant="ghost" size="sm" onClick={() => setCustomWindow(null)}>
-                      Clear selection
-                    </Button>
+                      <LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.clear.selection.cea4d2e0" /></Button>
                   </div>
                 )}
               </div>
@@ -574,8 +573,8 @@ const PlayerTrackerView = () => {
               <div className="mb-5 rounded-2xl border border-border-base bg-bg-input/45 p-4">
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-text-muted">Chart filters</p>
-                    <p className="mt-1 text-xs text-text-muted">Choose one unit, or combine type, role, and food filters.</p>
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-text-muted"><LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.chart.filters.e485e1ea" /></p>
+                    <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.choose.one.unit.or.combine.type.role.8c33d737" /></p>
                   </div>
                   {troopFiltersActive && (
                     <Button
@@ -588,8 +587,7 @@ const PlayerTrackerView = () => {
                         setSelectedTroopUnitID(null);
                       }}
                     >
-                      Clear filters
-                    </Button>
+                      <LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.clear.filters.7179ea00" /></Button>
                   )}
                 </div>
                 <div className="flex flex-wrap gap-3">
@@ -684,8 +682,7 @@ const PlayerTrackerView = () => {
                       {formatDate(troopWindow.startUnix)} – {formatDate(troopWindow.endUnix)}
                     </Badge>
                     <Button variant="ghost" size="sm" onClick={() => setTroopWindow(null)}>
-                      Clear selection
-                    </Button>
+                      <LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.clear.selection.cea4d2e0" /></Button>
                   </div>
                 )}
               </div>
@@ -720,13 +717,11 @@ const PlayerTrackerView = () => {
               />
               {troopTrendLines.length > 1 && (
                 <p className="mt-3 text-xs text-text-muted">
-                  Six stacked lines: the five highest-count matching units plus Other. The upper boundary equals the filtered total.
-                </p>
+                  <LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.six.stacked.lines.the.five.highest.count.834a1c2b" /></p>
               )}
               {troopFiltersActive && troopChartPoints.length < 2 && (
                 <p className="mt-3 text-xs leading-5 text-text-muted">
-                  Earlier total-only samples cannot be separated by category. New recorded samples will build this filtered trend.
-                </p>
+                  <LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.earlier.total.only.samples.cannot.be.separated.659a6289" /></p>
               )}
               <div className="mt-3 flex justify-between text-xs text-text-muted">
                 <span>{displayedTroopPoints.length > 0 ? formatDate(displayedTroopPoints[0].timestampUnix) : 'Waiting for history'}</span>
@@ -736,8 +731,8 @@ const PlayerTrackerView = () => {
 
               <div className="mt-7 border-t border-border-base pt-6">
                 <div className="mb-4">
-                  <h3 className="text-base font-semibold text-text-main">Combat composition</h3>
-                  <p className="mt-1 text-sm text-text-muted">Current troops grouped by weapon type and battlefield role.</p>
+                  <h3 className="text-base font-semibold text-text-main"><LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.combat.composition.1e8f82ba" /></h3>
+                  <p className="mt-1 text-sm text-text-muted"><LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.current.troops.grouped.by.weapon.type.and.5d9aa861" /></p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   <CombatCompositionCard
@@ -775,8 +770,7 @@ const PlayerTrackerView = () => {
                 </div>
                 {(troopComposition.typeClassified < troopComposition.total || troopComposition.roleClassified < troopComposition.total) && (
                   <p className="mt-3 text-xs text-text-muted">
-                    Composition includes troops recognized by the current game metadata; the total trend still includes every tracked troop.
-                  </p>
+                    <LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.composition.includes.troops.recognized.by.the.current.1a5c8e10" /></p>
                 )}
               </div>
             </CardContent>

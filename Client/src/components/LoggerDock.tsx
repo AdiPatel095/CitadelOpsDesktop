@@ -278,10 +278,10 @@ export const LoggerDock = React.memo(function LoggerDock() {
     [channels,localizedChannels],
   );
   const filterOptions = useMemo(() => [
-    { value: 'all', label: `All activity · ${filterCounts.all.toLocaleString()}` },
-    { value: 'actions', label: `Completed actions · ${filterCounts.actions.toLocaleString()}` },
-    { value: 'issues', label: `Warnings & errors · ${filterCounts.issues.toLocaleString()}` },
-  ], [filterCounts]);
+    { value: 'all', label: t('activity.all', { count: filterCounts.all }) },
+    { value: 'actions', label: t('activity.actions', { count: filterCounts.actions }) },
+    { value: 'issues', label: t('activity.issues', { count: filterCounts.issues }) },
+  ], [filterCounts,t]);
   const rowVirtualizer = useVirtualizer({
     count: filteredLines.length,
     getScrollElement: () => logStreamRef.current,
@@ -492,7 +492,7 @@ export const LoggerDock = React.memo(function LoggerDock() {
                 </span>
                 <span className="min-w-0">
                   <span className="liquid-log-title">{t('activity.title')}</span>
-                  <span lang={localizedChannels[channelIndex * 2 + 1]?.resolvedLocale === 'mixed' ? undefined : localizedChannels[channelIndex * 2 + 1]?.resolvedLocale || 'en'} className="liquid-log-subtitle">{displayedDescription}</span>
+                  <span dir="auto" lang={localizedChannels[channelIndex * 2 + 1]?.resolvedLocale === 'mixed' ? undefined : localizedChannels[channelIndex * 2 + 1]?.resolvedLocale || 'en'} className="liquid-log-subtitle">{displayedDescription}</span>
                 </span>
               </div>
               <div className="liquid-log-header-actions">
@@ -545,7 +545,7 @@ export const LoggerDock = React.memo(function LoggerDock() {
               <div className="liquid-log-control liquid-log-search-control">
                 <span className="liquid-log-control-label">
                   {t('activity.search')}
-                  <span className="liquid-log-result-count">{filteredLines.length.toLocaleString()} of {logTail.entries.length.toLocaleString()}</span>
+                  <span className="liquid-log-result-count">{t('activity.results', { shown: filteredLines.length, total: logTail.entries.length })}</span>
                 </span>
                 <Input
                   type="search"

@@ -86,5 +86,9 @@
   "activity.searchChannel": "Find en funktion eller kanal",
   "activity.filter": "Filtrer logaktivitet",
   "activity.searchActivity": "Søg i logaktivitet",
-  "activity.actionOrIssue": "Handling eller problem"
+  "activity.actionOrIssue": "Handling eller problem",
+  "activity.all": "Al aktivitet · {count, number}",
+  "activity.actions": "Fuldførte handlinger · {count, number}",
+  "activity.issues": "Advarsler og fejl · {count, number}",
+  "activity.results": "{shown, number} af {total, number}"
 }

@@ -86,5 +86,9 @@
   "activity.searchChannel": "البحث عن ميزة أو قناة",
   "activity.filter": "تصفية نشاط السجل",
   "activity.searchActivity": "البحث في نشاط السجل",
-  "activity.actionOrIssue": "إجراء أو مشكلة"
+  "activity.actionOrIssue": "إجراء أو مشكلة",
+  "activity.all": "كل النشاط · {count, number}",
+  "activity.actions": "الإجراءات المكتملة · {count, number}",
+  "activity.issues": "التحذيرات والأخطاء · {count, number}",
+  "activity.results": "{shown, number} من {total, number}"
 }

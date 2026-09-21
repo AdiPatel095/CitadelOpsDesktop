@@ -1,3 +1,4 @@
+import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useMemo, useState } from 'react';
 import { Castle, Eraser, LockKeyhole, Minus, PackageSearch, Plus, Shield, Sparkles, Waves } from 'lucide-react';
 import type { DefenseToolSlotV2, DefenseWallSectionV2 } from '../api/Contracts';
@@ -120,8 +121,8 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
       )}
       footer={
         <>
-          <Button variant="ghost" disabled={saving} onClick={onClose}>Cancel</Button>
-          <Button isLoading={saving} disabled={isMetadataLoading || unitsError != null} onClick={submit}>Save preset</Button>
+          <Button variant="ghost" disabled={saving} onClick={onClose}><LocalizedText messageKey="ui.components.defensePresetEditor.cancel.19766ed6" /></Button>
+          <Button isLoading={saving} disabled={isMetadataLoading || unitsError != null} onClick={submit}><LocalizedText messageKey="ui.components.defensePresetEditor.save.preset.362a1376" /></Button>
         </>
       }
     >
@@ -132,7 +133,7 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
 				</div>
 			) : null}
         <section className="rounded-global border border-border-base bg-bg-card/65 p-3 shadow-[var(--shadow-raised)]">
-          <label className="mb-2 block text-xs font-black uppercase tracking-wider text-text-muted">Preset name</label>
+          <label className="mb-2 block text-xs font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.components.defensePresetEditor.preset.name.e534a666" /></label>
           <Input
             autoFocus
             value={draft.name}
@@ -160,8 +161,7 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
                 <Shield className="h-4 w-4 text-primary" /> Wall formation
               </h3>
               <p className="mt-1 text-xs text-text-muted">
-                Every position is fixed. Select a tool from its card; gate positions accept gate tools only.
-              </p>
+                <LocalizedText messageKey="ui.components.defensePresetEditor.every.position.is.fixed.select.a.tool.b45f9582" /></p>
             </div>
             <Badge variant={wallSplitTotal(draft) === 100 ? 'primary' : 'danger'}>
               Split total {wallSplitTotal(draft)}%
@@ -211,17 +211,16 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
           </div>
 
           <p className="mt-2 text-xs text-text-muted">
-            The flank split must total 100%. Ranged percentage is converted to the game’s melee-percentage wire value.
-          </p>
+            <LocalizedText messageKey="ui.components.defensePresetEditor.the.flank.split.must.total.100.ranged.661c8fad" /></p>
         </section>
 
         <section aria-label="Moat tools">
           <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
             <div>
               <h3 className="flex items-center gap-2 text-base font-black text-text-main"><Waves className="h-4 w-4 text-info" /> Moat tools</h3>
-              <p className="mt-1 text-xs text-text-muted">Each defense section has one fixed moat-tool position.</p>
+              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.components.defensePresetEditor.each.defense.section.has.one.fixed.moat.0f1c3a73" /></p>
             </div>
-            <Badge variant="outline">3 fixed moat slots</Badge>
+            <Badge variant="outline"><LocalizedText messageKey="ui.components.defensePresetEditor.3.fixed.moat.slots.2c862261" /></Badge>
           </div>
           <div className="overflow-x-auto pb-2 custom-scrollbar">
             <div className="grid min-w-[54rem] grid-cols-3 items-stretch gap-3">
@@ -279,10 +278,9 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
                 ariaLabel="Include courtyard setup in this defense preset"
               />
               <span>
-                <span className="block text-sm font-black text-text-main">Include courtyard setup</span>
+                <span className="block text-sm font-black text-text-main"><LocalizedText messageKey="ui.components.defensePresetEditor.include.courtyard.setup.7218ecf4" /></span>
                 <span className="mt-1 block text-xs text-text-muted">
-                  Capacity, ranged allocation, three keep-tool slots, and three Sceat-support slots are part of the preset.
-                </span>
+                  <LocalizedText messageKey="ui.components.defensePresetEditor.capacity.ranged.allocation.three.keep.tool.slots.feaa0287" /></span>
               </span>
             </label>
             {draft.keep ? (
@@ -313,8 +311,7 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
                 <Castle className="h-4 w-4 text-primary" /> Courtyard tools
               </h3>
               <p className="mt-1 text-xs text-text-muted">
-                DFK has three normal keep-tool slots and three Sceat defense-support slots. Each row is validated against its official catalog type.
-              </p>
+                <LocalizedText messageKey="ui.components.defensePresetEditor.dfk.has.three.normal.keep.tool.slots.ea706cd9" /></p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant={hasEditableCourtyardRows ? 'primary' : 'secondary'}>
@@ -340,8 +337,7 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
                     } : current.keep,
                   }))}
                 >
-                  Include courtyard tools
-                </Button>
+                  <LocalizedText messageKey="ui.components.defensePresetEditor.include.courtyard.tools.8ad52231" /></Button>
               ) : null}
             </div>
           </div>
@@ -610,12 +606,11 @@ const ToolSlotGroup: React.FC<{
           leftIcon={<Plus className="h-3.5 w-3.5" />}
           onClick={() => onChange([...slots, { definitionId: -1, amount: 0 }])}
         >
-          Add slot
-        </Button>
+          <LocalizedText messageKey="ui.components.defensePresetEditor.add.slot.21ac8a98" /></Button>
       </div>
       <div className="space-y-2">
         {renderedSlots.length === 0 ? (
-          <div className="rounded-global border border-dashed border-border-base px-3 py-4 text-center text-xs text-text-muted">No slots in this preset.</div>
+          <div className="rounded-global border border-dashed border-border-base px-3 py-4 text-center text-xs text-text-muted"><LocalizedText messageKey="ui.components.defensePresetEditor.no.slots.in.this.preset.6b67dec4" /></div>
         ) : renderedSlots.map((slot, index) => {
           const tool = slot.definitionId > 0 ? tools[slot.definitionId] : undefined;
           const slotSpec = fixedSlotSpecs?.[index];
@@ -647,7 +642,7 @@ const ToolSlotGroup: React.FC<{
                 />
               </div>
               <div>
-                <label className="mb-1 block text-[9px] font-black uppercase tracking-wider text-text-muted">Amount</label>
+                <label className="mb-1 block text-[9px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.components.defensePresetEditor.amount.49e96d7c" /></label>
                 <Input
                   type="number"
                   min={1}
@@ -786,7 +781,7 @@ const FixedDefenseToolSlotCard: React.FC<{
           {locked ? (
             <div className="flex h-[88px] w-[88px] shrink-0 flex-col items-center justify-center gap-2 rounded-global border-2 border-dashed border-border-base bg-bg-input/25 text-text-muted">
               <LockKeyhole className="h-5 w-5" />
-              <span className="text-[9px] font-black uppercase tracking-wide">Preserved</span>
+              <span className="text-[9px] font-black uppercase tracking-wide"><LocalizedText messageKey="ui.components.defensePresetEditor.preserved.9d31b48b" /></span>
             </div>
           ) : (
             <AddSlot

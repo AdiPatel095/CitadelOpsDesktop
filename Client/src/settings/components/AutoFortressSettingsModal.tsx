@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   CalendarDays,
@@ -133,8 +134,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
           onClick={() => onOpenFeatureSchedule('autoFortress', 'Auto Fortress')}
           leftIcon={<CalendarDays className="h-4 w-4" />}
         >
-          Calendar
-        </Button>
+          <LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.calendar.d5d0a30b" /></Button>
       )}
       onSave={save}
       saveLabel="Save fortress plan"
@@ -154,27 +154,26 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
             </div>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-base font-black text-text-main">Direwolf blitz formation</h3>
-                <Badge variant="success">1 full wave</Badge>
-                <Badge variant="secondary">Flanks only</Badge>
+                <h3 className="text-base font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.direwolf.blitz.formation.011583d3" /></h3>
+                <Badge variant="success"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.1.full.wave.ec16c735" /></Badge>
+                <Badge variant="secondary"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.flanks.only.bc229790" /></Badge>
               </div>
               <p className="mt-1 max-w-2xl text-xs leading-relaxed text-text-muted">
-                Unit 277 is filled across both flanks. The runtime chooses only an available Relic 2.0 commander with the full 100% fortress speed bonus, then applies the fastest selected horse tier.
-              </p>
+                <LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.unit.277.is.filled.across.both.flanks.83af8412" /></p>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 text-center sm:grid-cols-3">
             <div className="rounded-xl border border-border-base bg-bg-app/70 px-3 py-2">
               <div className="text-sm font-black text-text-main">24h</div>
-              <div className="text-[10px] uppercase tracking-wide text-text-muted">Global lock</div>
+              <div className="text-[10px] uppercase tracking-wide text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.global.lock.7cfaa3c9" /></div>
             </div>
             <div className="rounded-xl border border-border-base bg-bg-app/70 px-3 py-2">
-              <div className="text-sm font-black text-text-main">5 days</div>
-              <div className="text-[10px] uppercase tracking-wide text-text-muted">Personal lock</div>
+              <div className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.5.days.4343085b" /></div>
+              <div className="text-[10px] uppercase tracking-wide text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.personal.lock.a300b924" /></div>
             </div>
             <div className="col-span-2 rounded-xl border border-border-base bg-bg-app/70 px-3 py-2 sm:col-span-1">
               <div className="text-sm font-black text-text-main">{enabledKingdomCount}/3</div>
-              <div className="text-[10px] uppercase tracking-wide text-text-muted">Kingdoms armed</div>
+              <div className="text-[10px] uppercase tracking-wide text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.kingdoms.armed.98c6dccf" /></div>
             </div>
           </div>
         </div>
@@ -183,8 +182,8 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
       <section className="mb-4">
         <div className="mb-2 flex items-center justify-between gap-3">
           <div>
-            <h3 className="text-sm font-black text-text-main">Kingdom targets</h3>
-            <p className="mt-0.5 text-xs text-text-muted">Each toggle uses that kingdom’s main castle and its private, viewer-specific cooldown rows.</p>
+            <h3 className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.kingdom.targets.3e092efa" /></h3>
+            <p className="mt-0.5 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.each.toggle.uses.that.kingdom.s.main.e96f75b3" /></p>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2 text-[10px] font-black uppercase tracking-wide text-text-muted">
             <span className="flex items-center gap-1.5 rounded-full border border-border-base bg-bg-app/65 px-2.5 py-1.5">
@@ -231,12 +230,12 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
                   <div className="truncate text-xs font-bold text-text-main">{castle?.name ?? 'Main castle not detected'}</div>
                   {castle ? (
                     <div className="mt-2 grid grid-cols-2 gap-1.5 text-[10px]">
-                      <div className="rounded-lg bg-bg-card/70 px-2 py-1"><span className="block text-text-muted">Allocated</span><strong className="text-text-main">{allocated.toLocaleString()}</strong></div>
-                      <div className="rounded-lg bg-bg-card/70 px-2 py-1"><span className="block text-text-muted">Stationed</span><strong className="text-text-main">{stationed.toLocaleString()}</strong></div>
-                      <div className="rounded-lg bg-bg-card/70 px-2 py-1"><span className="block text-text-muted">Inbound</span><strong className="text-text-main">{inbound.toLocaleString()}</strong></div>
-                      <div className="rounded-lg bg-bg-card/70 px-2 py-1"><span className="block text-text-muted">Outstanding</span><strong className="text-text-main">{outstanding.toLocaleString()}</strong></div>
+                      <div className="rounded-lg bg-bg-card/70 px-2 py-1"><span className="block text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.allocated.52d26f44" /></span><strong className="text-text-main">{allocated.toLocaleString()}</strong></div>
+                      <div className="rounded-lg bg-bg-card/70 px-2 py-1"><span className="block text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.stationed.81608ba6" /></span><strong className="text-text-main">{stationed.toLocaleString()}</strong></div>
+                      <div className="rounded-lg bg-bg-card/70 px-2 py-1"><span className="block text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.inbound.d17a5bdd" /></span><strong className="text-text-main">{inbound.toLocaleString()}</strong></div>
+                      <div className="rounded-lg bg-bg-card/70 px-2 py-1"><span className="block text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.outstanding.e681b899" /></span><strong className="text-text-main">{outstanding.toLocaleString()}</strong></div>
                     </div>
-                  ) : <div className="mt-1 text-[11px] text-text-muted">Unlock kingdom first</div>}
+                  ) : <div className="mt-1 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.unlock.kingdom.first.8f49a64e" /></div>}
                   {supplyDetail && <div className="mt-2 text-[10px] font-semibold text-text-muted">{supplyDetail}</div>}
                   {castle && (
                     <div className="mt-2 flex items-center gap-1.5 border-t border-border-base/70 pt-2 text-[10px] font-semibold text-text-muted">
@@ -264,13 +263,13 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
           <div className="flex items-start gap-3">
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><ShoppingBag className="h-5 w-5" /></div>
             <div className="min-w-0 flex-1">
-              <h3 className="text-sm font-black text-text-main">Nomad Direwolf supply</h3>
-              <p className="mt-0.5 text-xs text-text-muted">One exact per-shop-session ceiling, purchased in 100-unit lots from lowest cost to highest.</p>
+              <h3 className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.nomad.direwolf.supply.651320e5" /></h3>
+              <p className="mt-0.5 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.one.exact.per.shop.session.ceiling.purchased.73abffd3" /></p>
             </div>
           </div>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label>
-              <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">Direwolves per session</span>
+              <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.direwolves.per.session.7d1d3918" /></span>
               <Input
                 type="number"
                 min={0}
@@ -279,11 +278,11 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
                 value={settings.direwolfPurchaseLimit}
                 onChange={(event) => update({ direwolfPurchaseLimit: clampDirewolfPurchaseLimit(event.target.value) })}
                 className="font-mono"
-                rightIcon={<span className="text-[10px] text-text-muted">by 100</span>}
+                rightIcon={<span className="text-[10px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.by.100.1c34dfd3" /></span>}
               />
             </label>
             <label>
-              <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">Keep Khan tablets</span>
+              <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.keep.khan.tablets.05e5a18d" /></span>
               <Input
                 type="number"
                 min={0}
@@ -308,8 +307,8 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
           </div>
           <div className="mt-3 flex items-center justify-between gap-4 rounded-xl border border-border-base bg-bg-app/55 px-3 py-3">
             <div>
-              <div className="text-xs font-black text-text-main">Use time skips for Direwolf transfers</div>
-              <p className="mt-0.5 text-[11px] text-text-muted">Off by default. When enabled, only confirmed Auto Fortress shipments can use official inventory above saved reserves.</p>
+              <div className="text-xs font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.use.time.skips.for.direwolf.transfers.e1a00ae9" /></div>
+              <p className="mt-0.5 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.off.by.default.when.enabled.only.confirmed.51b3f8c5" /></p>
             </div>
             <Switch checked={settings.useTimeSkips} onChange={() => update({ useTimeSkips: !settings.useTimeSkips })} ariaLabel="Use time skips for Direwolf transfers" />
           </div>
@@ -320,15 +319,15 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
             <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-amber-500/10 text-amber-500"><Zap className="h-5 w-5" /></div>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-sm font-black text-text-main">March speed</h3>
-                <Badge variant="success">Relic 2.0 required</Badge>
+                <h3 className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.march.speed.b518df50" /></h3>
+                <Badge variant="success"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.relic.2.0.required.8de8ec76" /></Badge>
               </div>
-              <p className="mt-0.5 text-xs text-text-muted">Auto Fortress always selects the full 100% fortress-speed commander bonus and your chosen horse tier.</p>
+              <p className="mt-0.5 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.auto.fortress.always.selects.the.full.100.0058f20b" /></p>
             </div>
           </div>
           <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-[11px] text-text-muted">
             <Zap className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-            <span><strong className="text-text-main">Recommended:</strong> enable the separate Auto Booster feature to buy the 2,500-ruby daily global fortress-speed boost. Auto Fortress does not require, purchase, or spend rubies on that boost.</span>
+            <span><strong className="text-text-main"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.recommended.c2ab5611" /></strong> enable the separate Auto Booster feature to buy the 2,500-ruby daily global fortress-speed boost. Auto Fortress does not require, purchase, or spend rubies on that boost.</span>
           </div>
           <div className="mt-4 rounded-xl border border-border-base bg-bg-app/55 p-3">
             <HorseTravelBoostSelect
@@ -345,7 +344,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
         <div className="flex items-center gap-3 rounded-global border border-border-base bg-bg-card/50 p-4">
           <Gauge className="h-5 w-5 shrink-0 text-primary" />
           <div>
-            <div className="text-xs font-black text-text-main">Full-map cache, exact ready-time checks</div>
+            <div className="text-xs font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.full.map.cache.exact.ready.time.checks.b3e0112d" /></div>
             <p className="mt-0.5 text-[11px] text-text-muted">
               Adaptive sweeps discover every populated map chunk. The account-private timer then schedules a 1×1 refresh at availability and another immediate guard before CRA.
               {nextExpectedReady ? ` Earliest tracked availability: ${nextExpectedReady}.` : ''}

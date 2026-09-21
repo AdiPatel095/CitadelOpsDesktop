@@ -86,5 +86,9 @@
   "activity.searchChannel": "Znajdź funkcję lub kanał",
   "activity.filter": "Filtruj aktywność dziennika",
   "activity.searchActivity": "Przeszukaj dziennik",
-  "activity.actionOrIssue": "Działanie lub problem"
+  "activity.actionOrIssue": "Działanie lub problem",
+  "activity.all": "Cała aktywność · {count, number}",
+  "activity.actions": "Ukończone działania · {count, number}",
+  "activity.issues": "Ostrzeżenia i błędy · {count, number}",
+  "activity.results": "{shown, number} z {total, number}"
 }

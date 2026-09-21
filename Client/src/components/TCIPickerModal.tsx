@@ -1,3 +1,4 @@
+import { LocalizedText } from "../i18n/LocalizedText";
 import { useLocale } from '../i18n/LocaleContext';
 import { readViewerLocale } from '../i18n/viewerLocaleStore';
 import { officialCatalogGeneration, subscribeOfficialCatalog } from '../i18n/officialMessages';
@@ -549,7 +550,7 @@ const TCIDetailPanel: React.FC<TCIDetailPanelProps> = ({
     return (
       <aside className="tci-detail-panel tci-detail-panel-empty">
         <Layers3 aria-hidden="true" />
-        <p>Choose a design to inspect its full upgrade chain.</p>
+        <p><LocalizedText messageKey="ui.components.tCIPickerModal.choose.a.design.to.inspect.its.full.35312c7b" /></p>
       </aside>
     );
   }
@@ -590,7 +591,7 @@ const TCIDetailPanel: React.FC<TCIDetailPanelProps> = ({
       {isSelected && (
         <div className="tci-range-editor">
           <div className="tci-range-editor-heading">
-            <span>Allowed tier range</span>
+            <span><LocalizedText messageKey="ui.components.tCIPickerModal.allowed.tier.range.d6cf09d9" /></span>
             <strong>L{range.floor}–L{range.ceiling}</strong>
           </div>
           <div className="tci-range-editor-controls">
@@ -615,8 +616,8 @@ const TCIDetailPanel: React.FC<TCIDetailPanelProps> = ({
       )}
 
       <div className="tci-detail-chain-heading">
-        <span>Upgrade chain</span>
-        <small>Official CID and active duration by tier</small>
+        <span><LocalizedText messageKey="ui.components.tCIPickerModal.upgrade.chain.2851d12f" /></span>
+        <small><LocalizedText messageKey="ui.components.tCIPickerModal.official.cid.and.active.duration.by.tier.6a071b0a" /></small>
       </div>
       <div className="tci-detail-chain">
         {item.groupTiers.map((tier, index) => {
@@ -634,7 +635,7 @@ const TCIDetailPanel: React.FC<TCIDetailPanelProps> = ({
                 <div className="tci-detail-tier-copy">
                   <div className="tci-detail-tier-meta">
                     <strong><Clock3 aria-hidden="true" />{formatDuration(tier.durationSeconds)}</strong>
-                    {tier.premium && <span>Premium</span>}
+                    {tier.premium && <span><LocalizedText messageKey="ui.components.tCIPickerModal.premium.de88c121" /></span>}
                     {tier.removalCost > 0 && <span>Removal {tier.removalCost.toLocaleString()}</span>}
                   </div>
                   <p>{tier.effects || 'Same visual design; no translated effect line available.'}</p>

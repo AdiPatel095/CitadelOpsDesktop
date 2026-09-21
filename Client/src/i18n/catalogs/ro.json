@@ -86,5 +86,9 @@
   "activity.searchChannel": "Găsește o funcție sau un canal",
   "activity.filter": "Filtrează activitatea jurnalului",
   "activity.searchActivity": "Caută în jurnal",
-  "activity.actionOrIssue": "Acțiune sau problemă"
+  "activity.actionOrIssue": "Acțiune sau problemă",
+  "activity.all": "Toată activitatea · {count, number}",
+  "activity.actions": "Acțiuni finalizate · {count, number}",
+  "activity.issues": "Avertismente și erori · {count, number}",
+  "activity.results": "{shown, number} din {total, number}"
 }

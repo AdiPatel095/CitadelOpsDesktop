@@ -86,5 +86,9 @@
   "activity.searchChannel": "Buscar una función o canal",
   "activity.filter": "Filtrar actividad del registro",
   "activity.searchActivity": "Buscar en el registro",
-  "activity.actionOrIssue": "Acción o problema"
+  "activity.actionOrIssue": "Acción o problema",
+  "activity.all": "Toda la actividad · {count, number}",
+  "activity.actions": "Acciones completadas · {count, number}",
+  "activity.issues": "Advertencias y errores · {count, number}",
+  "activity.results": "{shown, number} de {total, number}"
 }

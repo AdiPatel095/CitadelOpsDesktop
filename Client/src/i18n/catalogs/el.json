@@ -86,5 +86,9 @@
   "activity.searchChannel": "Εύρεση λειτουργίας ή καναλιού",
   "activity.filter": "Φιλτράρισμα δραστηριότητας καταγραφής",
   "activity.searchActivity": "Αναζήτηση στην καταγραφή",
-  "activity.actionOrIssue": "Ενέργεια ή πρόβλημα"
+  "activity.actionOrIssue": "Ενέργεια ή πρόβλημα",
+  "activity.all": "Όλη η δραστηριότητα · {count, number}",
+  "activity.actions": "Ολοκληρωμένες ενέργειες · {count, number}",
+  "activity.issues": "Προειδοποιήσεις και σφάλματα · {count, number}",
+  "activity.results": "{shown, number} από {total, number}"
 }

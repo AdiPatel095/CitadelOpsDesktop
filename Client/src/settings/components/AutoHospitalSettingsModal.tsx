@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useState } from 'react';
 import { CalendarDays, Clock3, Settings } from 'lucide-react';
 import { Badge, Button, Input, SectionCard, SettingsModal } from '../../components/ui';
@@ -87,8 +88,7 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
       <div className="grid gap-2">
         {visibleSlots.length === 0 ? (
           <div className="rounded-global border border-dashed border-border-base bg-bg-card/45 px-4 py-3 text-xs font-semibold text-text-muted">
-            No scheduled windows
-          </div>
+            <LocalizedText messageKey="ui.settings.components.autoHospitalSettingsModal.no.scheduled.windows.8163df4a" /></div>
         ) : (
           visibleSlots.map((slot) => {
             const day = WEEK_DAYS[slot.day]?.short ?? 'Day';
@@ -106,8 +106,7 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
                     {formatMinuteOfDay(slot.startMinute)}-{formatMinuteOfDay(slot.endMinute)}
                   </div>
                   <div className="mt-0.5 text-[11px] font-semibold text-text-muted">
-                    Hospital scan window
-                  </div>
+                    <LocalizedText messageKey="ui.settings.components.autoHospitalSettingsModal.hospital.scan.window.89fff210" /></div>
                 </div>
               </div>
             );
@@ -151,7 +150,7 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
                 value={autoHospitalCheckIntervalSecToMinutes(settings.checkIntervalSec).toLocaleString()}
                 onChange={(e) => updateCheckIntervalMinutes(e.target.value)}
                 className="font-mono text-lg font-black tabular-nums"
-                rightIcon={<span className="text-xs font-bold uppercase text-text-muted">min</span>}
+                rightIcon={<span className="text-xs font-bold uppercase text-text-muted"><LocalizedText messageKey="ui.settings.components.autoHospitalSettingsModal.min.1f6fa6f6" /></span>}
               />
               <p className="mt-2 text-[11px] font-medium text-text-muted">
                 Minimum {MIN_AUTO_HOSPITAL_CHECK_INTERVAL_MIN.toLocaleString()} minute. Default is {DEFAULT_AUTO_HOSPITAL_CHECK_INTERVAL_MIN.toLocaleString()} minutes.
@@ -174,8 +173,7 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
                   onClick={() => onOpenFeatureSchedule('autoHospital', 'Auto Hospital')}
                   leftIcon={<CalendarDays className="h-4 w-4" />}
                 >
-                  Calendar
-                </Button>
+                  <LocalizedText messageKey="ui.settings.components.autoHospitalSettingsModal.calendar.d5d0a30b" /></Button>
               </div>
             )}
           >
@@ -183,8 +181,7 @@ export const AutoHospitalSettingsModal: React.FC<AutoHospitalSettingsModalProps>
                 renderScheduleSlots(autoHospitalSchedule)
               ) : (
                 <div className="rounded-global border border-dashed border-border-base bg-bg-card/45 px-4 py-5 text-sm font-semibold text-text-muted">
-                  Auto Hospital can scan at any time.
-                </div>
+                  <LocalizedText messageKey="ui.settings.components.autoHospitalSettingsModal.auto.hospital.can.scan.at.any.time.c06d2e2d" /></div>
               )}
           </SectionCard>
         </div>

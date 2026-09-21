@@ -86,5 +86,9 @@
   "activity.searchChannel": "Funkció vagy csatorna keresése",
   "activity.filter": "Naplótevékenység szűrése",
   "activity.searchActivity": "Keresés a naplóban",
-  "activity.actionOrIssue": "Művelet vagy probléma"
+  "activity.actionOrIssue": "Művelet vagy probléma",
+  "activity.all": "Összes tevékenység · {count, number}",
+  "activity.actions": "Befejezett műveletek · {count, number}",
+  "activity.issues": "Figyelmeztetések és hibák · {count, number}",
+  "activity.results": "{shown, number} / {total, number}"
 }

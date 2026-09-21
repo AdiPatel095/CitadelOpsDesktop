@@ -86,5 +86,9 @@
   "activity.searchChannel": "Etsi ominaisuus tai kanava",
   "activity.filter": "Suodata lokin toimintaa",
   "activity.searchActivity": "Hae lokin toiminnasta",
-  "activity.actionOrIssue": "Toiminto tai ongelma"
+  "activity.actionOrIssue": "Toiminto tai ongelma",
+  "activity.all": "Kaikki toiminta · {count, number}",
+  "activity.actions": "Valmiit toiminnot · {count, number}",
+  "activity.issues": "Varoitukset ja virheet · {count, number}",
+  "activity.results": "{shown, number} / {total, number}"
 }

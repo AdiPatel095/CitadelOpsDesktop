@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ArrowDown,
@@ -277,7 +278,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
             <CardHeader className="liquid-card-header-prominent">
               <div>
                 <CardTitle className="flex items-center gap-2 text-base"><Truck className="h-4 w-4 text-primary" />Automation & Logistics</CardTitle>
-                <p className="mt-1 text-xs text-text-muted">Schedule queue checks, control resource movement, and protect premium currency spending.</p>
+                <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.schedule.queue.checks.control.resource.movement.and.77b1a0cd" /></p>
               </div>
             </CardHeader>
             <CardContent className="liquid-prominent-header-content grid gap-4 p-5 xl:grid-cols-[1fr_1.2fr_1fr]">
@@ -290,7 +291,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                       min={1}
                       value={Math.max(1, Math.round(settings.checkIntervalSec / 60))}
                       onChange={(event) => setSettings((current) => normalizeAutoSceatResSettings({ ...current, checkIntervalSec: Number(event.target.value) * 60 }))}
-                      rightIcon={<span className="text-[10px] font-black uppercase">min</span>}
+                      rightIcon={<span className="text-[10px] font-black uppercase"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.min.1f6fa6f6" /></span>}
                     />
                   </label>
                   <label className="grid gap-1.5 text-xs font-bold text-text-muted">Minimum shipment
@@ -322,14 +323,13 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                 {renderToggle('Ruby-skip blocked overflow', 'Completes at most one Green main resource craft per cycle when threshold overflow cannot be moved, using the official remaining-time ruby price.', settings.useRubyOverflowSkip, (checked) => setSettings((current) => ({ ...current, useRubyOverflowSkip: checked })), !settings.autoKingdomTransport)}
                 {settings.useRubyOverflowSkip && (
                   <div className="rounded-global border border-warning/30 bg-warning/8 px-3 py-2 text-[10px] font-semibold leading-relaxed text-warning">
-                    Ruby spending is limited to production slots in the Green main castle. Ruby recipes are never selected by this fallback, and the configured ruby reserve is protected.
-                  </div>
+                    <LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.ruby.spending.is.limited.to.production.slots.e2ddc881" /></div>
                 )}
               </div>
 
               <div className="grid content-start gap-3">
                 <div>
-                  <div className="text-xs font-black uppercase tracking-wide text-text-muted">Allowed transport skips</div>
+                  <div className="text-xs font-black uppercase tracking-wide text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.allowed.transport.skips.73eba8a9" /></div>
                   <ChoiceChipGroup
                     className="mt-2"
                     ariaLabel="Allowed transport skips"
@@ -367,8 +367,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                   )}
                 </div>
                 <div className="rounded-global border border-border-base bg-bg-input/35 px-4 py-3 text-[11px] font-medium leading-relaxed text-text-muted">
-                  The smallest selected skip that completes a shipment is preferred. If none completes it, the largest available selected skip is used. Configured inventory reserves are never consumed.
-                </div>
+                  <LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.the.smallest.selected.skip.that.completes.a.e43403b9" /></div>
               </div>
             </CardContent>
           </Card>
@@ -382,7 +381,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                       <CardTitle className="truncate text-base">{node.name}</CardTitle>
                       <p className="mt-1 text-xs font-semibold text-text-muted">{node.role} · Kingdom {node.kingdomID} · {node.buildings.length} crafting building{node.buildings.length === 1 ? '' : 's'}</p>
                     </div>
-                    <Badge variant="success">Crafting</Badge>
+                    <Badge variant="success"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.crafting.000b8216" /></Badge>
                   </CardHeader>
                   <CardContent className="grid gap-4 p-5 xl:grid-cols-2">
                     {node.buildings.map((building) => {
@@ -406,15 +405,15 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                           <div className="mt-4 grid gap-2 rounded-global border border-border-base bg-bg-input/25 p-3 sm:grid-cols-2">
                             <div className="flex items-center justify-between gap-3">
                               <div>
-                                <div className="text-xs font-bold text-text-main">Rent second active</div>
-                                <div className="text-[10px] font-semibold text-text-muted">5m coins / 7 days</div>
+                                <div className="text-xs font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.rent.second.active.deea61a0" /></div>
+                                <div className="text-[10px] font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.5m.coins.7.days.a508e0e6" /></div>
                               </div>
                               <Switch checked={plan.autoRentActiveSlot} onChange={(checked) => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => ({ ...current, autoRentActiveSlot: checked }))} size="sm" ariaLabel={`Rent a second active slot for ${building.name} in ${node.name}`} />
                             </div>
                             <div className="flex items-center justify-between gap-3">
                               <div>
-                                <div className="text-xs font-bold text-text-main">Rent extra queue slots</div>
-                                <div className="text-[10px] font-semibold text-text-muted">0.5m–10m coins / 7 days</div>
+                                <div className="text-xs font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.rent.extra.queue.slots.0e3a3da0" /></div>
+                                <div className="text-[10px] font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.0.5m.10m.coins.7.days.2db82a0e" /></div>
                               </div>
                               <Switch
                                 checked={plan.autoRentQueueSlots > 0}
@@ -428,7 +427,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                             </div>
                             {plan.autoRentQueueSlots > 0 && (
                               <div className="sm:col-span-2">
-                                <div className="mb-1 text-xs font-bold text-text-main">Queue slots to rent</div>
+                                <div className="mb-1 text-xs font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.queue.slots.to.rent.4b5d84c2" /></div>
                                 <Select
                                   value={String(plan.autoRentQueueSlots)}
                                   onChange={(value) => updateBuildingPlan(node.castleID, building.queueTypeID, (current) => ({ ...current, autoRentQueueSlots: Number(value) }))}
@@ -445,10 +444,10 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
 
                           <div className="mt-4 flex items-center justify-between gap-3">
                             <div>
-                              <div className="text-xs font-black uppercase tracking-wide text-text-muted">Repeating recipe cycle</div>
-                              <div className="mt-0.5 text-[10px] font-medium text-text-muted">One item fills every slot; add more to cycle in order.</div>
+                              <div className="text-xs font-black uppercase tracking-wide text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.repeating.recipe.cycle.ca9d6751" /></div>
+                              <div className="mt-0.5 text-[10px] font-medium text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.one.item.fills.every.slot.add.more.9a74f34c" /></div>
                             </div>
-                            <Button variant="outline" size="sm" onClick={() => setPickerTarget({ castleID: node.castleID, building })} leftIcon={<Plus className="h-4 w-4" />}>Recipe</Button>
+                            <Button variant="outline" size="sm" onClick={() => setPickerTarget({ castleID: node.castleID, building })} leftIcon={<Plus className="h-4 w-4" />}><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.recipe.aec69352" /></Button>
                           </div>
 
                           <div className="mt-3 grid gap-2">
@@ -498,8 +497,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                             })}
                             {plan.steps.length === 0 && (
                               <button type="button" onClick={() => setPickerTarget({ castleID: node.castleID, building })} className="rounded-global border border-dashed border-border-base bg-bg-card/35 px-4 py-5 text-center text-xs font-semibold text-text-muted transition hover:border-primary/40 hover:text-primary">
-                                Add the first recipe for this building
-                              </button>
+                                <LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.add.the.first.recipe.for.this.building.9195186d" /></button>
                             )}
                           </div>
                         </div>
@@ -509,7 +507,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
                 </Card>
               ))}
               {craftingNodes.length === 0 && (
-                <Card variant="solid"><CardContent className="p-10 text-center text-sm font-semibold text-text-muted">No crafting buildings are loaded. Connect the game to discover them.</CardContent></Card>
+                <Card variant="solid"><CardContent className="p-10 text-center text-sm font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.no.crafting.buildings.are.loaded.connect.the.d367e3ff" /></CardContent></Card>
               )}
             </div>
 
@@ -517,15 +515,14 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
               <CardHeader>
                 <div>
                   <CardTitle className="flex items-center gap-2 text-base"><Warehouse className="h-4 w-4 text-primary" />Additional Storage Nodes</CardTitle>
-                  <p className="mt-1 text-xs text-text-muted">The four crafting castles are donors and storage too; outposts, capitals, metropolis, and Storm add more buffers.</p>
+                  <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.the.four.crafting.castles.are.donors.and.35534627" /></p>
                 </div>
               </CardHeader>
               <CardContent className="grid gap-3 p-4">
                 {storageNodes.map(renderStorageNode)}
-                {storageNodes.length === 0 && <div className="rounded-global border border-dashed border-border-base px-4 py-6 text-center text-xs font-semibold text-text-muted">No additional storage nodes discovered.</div>}
+                {storageNodes.length === 0 && <div className="rounded-global border border-dashed border-border-base px-4 py-6 text-center text-xs font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.no.additional.storage.nodes.discovered.71f389fd" /></div>}
                 <div className="rounded-global border border-primary/20 bg-primary/[0.04] px-4 py-3 text-[11px] font-medium leading-relaxed text-text-muted">
-                  Logistics capacity is calculated automatically from current game state and owned storage.
-                </div>
+                  <LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.logistics.capacity.is.calculated.automatically.from.current.52f0c37c" /></div>
               </CardContent>
             </Card>
           </div>

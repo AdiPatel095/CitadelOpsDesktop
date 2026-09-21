@@ -3,7 +3,7 @@ import test from 'node:test';
 import fs from 'node:fs';
 import ts from 'typescript';
 import { pathToFileURL } from 'node:url';
-const files = ['locales','formatMessage','gameMessage','officialKeys'];
+const files = ['locales','formatMessage','gameMessage','officialKeys','sourceMessages'];
 const modules = {};
 for (const file of files) {
  const target = new URL(`../node_modules/.localization-${file}.mjs`,import.meta.url);
@@ -31,16 +31,16 @@ test('official positional placeholders never recursively process inserted values
  assert.equal(modules.gameMessage.formatGameMessage('+{0}% for {1} fields',['{1}',2]),'+{1}% for 2 fields');
  assert.equal(modules.gameMessage.formatGameMessage('<b>{0}</b> {2}', ['Name']),'<b>Name</b> {2}');
 });
-test('all authored shell catalogs have exact keys and valid ICU arguments',()=>{
+test('authored locale subsets validate ICU and reject unknown keys; completeness belongs to the strict release gate',()=>{
  const source = fs.readFileSync(new URL('../src/i18n/messages.ts',import.meta.url),'utf8');
  const ast=ts.createSourceFile('messages.ts',source,ts.ScriptTarget.Latest,true);
- let english={};
- function visit(node) { if(ts.isVariableDeclaration(node)&&node.name.getText(ast)==='messages') { const object=node.initializer.expression; english=Object.fromEntries(object.properties.map(property=>[property.name.text,property.initializer.text])); } ts.forEachChild(node,visit); }
+ let english={...modules.sourceMessages.sourceMessages};
+ function visit(node) { if(ts.isVariableDeclaration(node)&&node.name.getText(ast)==='messages') { const object=node.initializer.expression; english={...english,...Object.fromEntries(object.properties.filter(ts.isPropertyAssignment).map(property=>[property.name.text,property.initializer.text]))}; } ts.forEachChild(node,visit); }
  visit(ast);
  for (const key of Object.keys(modules.officialKeys.officialMessageKeys)) delete english[key];
  for(const locale of modules.locales.localeCodes.filter(code=>code!=='en')) {
   const catalog=JSON.parse(fs.readFileSync(new URL(`../src/i18n/catalogs/${locale}.json`,import.meta.url),'utf8'));
-  assert.deepEqual(modules.formatMessage.validateMessageCatalog(english,catalog),[],locale);
+  assert.deepEqual(modules.formatMessage.validateAuthoredMessageSubset(english,catalog),[],locale);
  }
 });
 test('official game messages and nested nouns preserve exact user values and fallback coverage',()=>{
@@ -52,7 +52,7 @@ test('official game messages and nested nouns preserve exact user values and fal
 });
 
 test('navigation game terms use verified semantic official keys',()=>{
- assert.deepEqual(modules.officialKeys.officialMessageKeys,{'navigation.castle':'castle','navigation.equipment':'dialog_equipment_title','navigation.movement':'dialog_recuit_generals','navigation.rift':'event_title_133'});
+ assert.deepEqual(Object.fromEntries(Object.entries(modules.officialKeys.officialMessageKeys).filter(([key])=>key.startsWith('navigation.'))),{'navigation.castle':'castle','navigation.equipment':'dialog_equipment_title','navigation.movement':'dialog_recuit_generals','navigation.rift':'event_title_133'});
 });
 
 test('structured error context preserves scalar identifiers and reports missing context translation',()=>{
@@ -80,4 +80,10 @@ test('Arabic argument isolation preserves select keys and unchanged mixed-script
  const params={kind:'player',name:'Player-7 {x}',x:123};
  const result=modules.formatMessage.formatMessage({key:'a',fallback:'Player {name}',params},'ar',{a:'{kind, select, player {اللاعب {name} عند {x, number}} other {آخر}}'});
  assert.equal(result.translated,true);assert.ok(result.text.includes('\u2068Player-7 {x}\u2069'));assert.ok(result.text.includes(`\u2068${new Intl.NumberFormat('ar').format(123)}\u2069`));assert.equal(params.name,'Player-7 {x}');assert.equal(params.kind,'player');
+});
+
+test('authored subset validation does not weaken strict missing-key rejection',()=>{
+ assert.deepEqual(modules.formatMessage.validateAuthoredMessageSubset({a:'A',b:'B'},{a:'Un'}),[]);
+ assert.deepEqual(modules.formatMessage.validateMessageCatalog({a:'A',b:'B'},{a:'Un'}),['Missing message: b']);
+ assert.deepEqual(modules.formatMessage.validateAuthoredMessageSubset({a:'A'},{other:'Other'}),['Unknown message: other']);
 });

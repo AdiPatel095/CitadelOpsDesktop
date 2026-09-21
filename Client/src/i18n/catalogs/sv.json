@@ -86,5 +86,9 @@
   "activity.searchChannel": "Hitta en funktion eller kanal",
   "activity.filter": "Filtrera loggaktivitet",
   "activity.searchActivity": "Sök i loggaktivitet",
-  "activity.actionOrIssue": "Åtgärd eller problem"
+  "activity.actionOrIssue": "Åtgärd eller problem",
+  "activity.all": "All aktivitet · {count, number}",
+  "activity.actions": "Slutförda åtgärder · {count, number}",
+  "activity.issues": "Varningar och fel · {count, number}",
+  "activity.results": "{shown, number} av {total, number}"
 }

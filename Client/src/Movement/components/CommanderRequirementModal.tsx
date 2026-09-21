@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, Filter, Search, Trash2, UsersRound } from 'lucide-react';
 import UnitImage from '../../components/UnitImage';
@@ -120,18 +121,16 @@ const CommanderRequirementModal: React.FC<CommanderRequirementModalProps> = ({
             onClick={onClear}
             leftIcon={<Trash2 className="h-4 w-4" />}
           >
-            Clear requirement
-          </Button>
+            <LocalizedText messageKey="ui.movement.components.commanderRequirementModal.clear.requirement.b811adea" /></Button>
           <div className="ml-auto flex gap-2">
-            <Button variant="ghost" onClick={onClose}>Cancel</Button>
+            <Button variant="ghost" onClick={onClose}><LocalizedText messageKey="ui.movement.components.commanderRequirementModal.cancel.19766ed6" /></Button>
             <Button
               variant="primary"
               disabled={validationError != null}
               onClick={apply}
               leftIcon={<CheckCircle2 className="h-4 w-4" />}
             >
-              Apply requirement
-            </Button>
+              <LocalizedText messageKey="ui.movement.components.commanderRequirementModal.apply.requirement.33b88b96" /></Button>
           </div>
         </>
       )}
@@ -143,10 +142,7 @@ const CommanderRequirementModal: React.FC<CommanderRequirementModalProps> = ({
             Require an equipped bonus-troop stat
           </div>
           <p className="mt-1 text-xs leading-relaxed text-text-muted">
-            Only commanders whose currently equipped gear meets this limit can launch this function.
-            Stats are discovered from live commander equipment and resolved by official effect and unit IDs.
-            Event-scoped effects remain distinct and show their official target areas.
-          </p>
+            <LocalizedText messageKey="ui.movement.components.commanderRequirementModal.only.commanders.whose.currently.equipped.gear.meets.d44315cf" /></p>
         </div>
 
         <Input
@@ -160,8 +156,7 @@ const CommanderRequirementModal: React.FC<CommanderRequirementModalProps> = ({
         <div className="max-h-80 overflow-y-auto rounded-global border border-border-base bg-bg-app/55 p-2 custom-scrollbar">
           {filteredStats.length === 0 ? (
             <p className="px-3 py-8 text-center text-sm text-text-muted">
-              No matching bonus-troop stats were found on the current commander equipment.
-            </p>
+              <LocalizedText messageKey="ui.movement.components.commanderRequirementModal.no.matching.bonus.troop.stats.were.found.f382bf1c" /></p>
           ) : (
             <div className="grid gap-2 sm:grid-cols-2">
               {filteredStats.map((stat) => {
@@ -220,7 +215,7 @@ const CommanderRequirementModal: React.FC<CommanderRequirementModalProps> = ({
 
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1.5">
-            <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">Minimum bonus troops</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.movement.components.commanderRequirementModal.minimum.bonus.troops.642d8e1d" /></span>
             <Input
               type="number"
               min={0}
@@ -231,7 +226,7 @@ const CommanderRequirementModal: React.FC<CommanderRequirementModalProps> = ({
             />
           </label>
           <label className="flex flex-col gap-1.5">
-            <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">Maximum bonus troops · optional</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.movement.components.commanderRequirementModal.maximum.bonus.troops.optional.e891c2de" /></span>
             <Input
               type="number"
               min={0}

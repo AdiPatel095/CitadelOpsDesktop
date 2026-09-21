@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React from 'react';
 import { MapPin, RefreshCw } from 'lucide-react';
 import { useCastleFocus } from '../../context/CastleFocusContext';
@@ -48,8 +49,7 @@ const RiftCoordDisplay: React.FC = () => {
           title={gameLoggedIn ? 'Refresh Rift coords from game (GAA)' : 'Connect to refresh live map data'}
           leftIcon={<RefreshCw className="w-3.5 h-3.5" />}
         >
-          Refresh
-        </Button>
+          <LocalizedText messageKey="ui.rift.components.riftCoordDisplay.refresh.0e916101" /></Button>
       )}
     >
       {!found || !rift ? (
@@ -65,7 +65,7 @@ const RiftCoordDisplay: React.FC = () => {
                 <MapPin className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-[10px] uppercase tracking-wider text-text-muted font-semibold">Coordinates</p>
+                <p className="text-[10px] uppercase tracking-wider text-text-muted font-semibold"><LocalizedText messageKey="ui.rift.components.riftCoordDisplay.coordinates.117c132e" /></p>
                 <p className="text-2xl font-bold font-mono text-text-main mt-0.5">
                   {rift.x}, {rift.y}
                 </p>
@@ -90,8 +90,7 @@ const RiftCoordDisplay: React.FC = () => {
               </div>
             ) : (
               <p className="text-sm text-text-muted">
-                Focus a castle with map coords to see distance from your castle.
-              </p>
+                <LocalizedText messageKey="ui.rift.components.riftCoordDisplay.focus.a.castle.with.map.coords.to.26a9ff5c" /></p>
             )}
           </div>
         )}

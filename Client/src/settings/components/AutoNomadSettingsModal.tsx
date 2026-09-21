@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { Castle, Clock3, Crosshair, Lock, RotateCcw, ShieldCheck, Swords, Target, TestTube2 } from 'lucide-react';
 import { useCitadelAPI } from '../../api/ApiContext';
@@ -145,7 +146,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
             <div className="mt-3 grid gap-2 border-t border-border-base pt-3 md:grid-cols-2">
               {nomadPresetSummary ? (
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="mr-1 text-xs text-text-muted">Nomad</span>
+                  <span className="mr-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.nomad.b156d00c" /></span>
                   <Badge variant="outline">{nomadPresetSummary.waves} waves</Badge>
                   <Badge variant="outline">{nomadPresetSummary.troops.toLocaleString()} troops</Badge>
                   <Badge variant="outline">{nomadPresetSummary.tools.toLocaleString()} tools</Badge>
@@ -153,7 +154,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
               ) : null}
               {samuraiPresetSummary ? (
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="mr-1 text-xs text-text-muted">Samurai</span>
+                  <span className="mr-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.samurai.031cfd72" /></span>
                   <Badge variant="outline">{samuraiPresetSummary.waves} waves</Badge>
                   <Badge variant="outline">{samuraiPresetSummary.troops.toLocaleString()} troops</Badge>
                   <Badge variant="outline">{samuraiPresetSummary.tools.toLocaleString()} tools</Badge>
@@ -173,7 +174,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
               <div className="flex items-center gap-2 text-sm font-black text-text-main"><ShieldCheck className="h-4 w-4 text-primary" /> Event start difficulty</div>
-              <p className="mt-1 text-xs text-text-muted">The module starts the active event with this difficulty before scanning camps.</p>
+              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.the.module.starts.the.active.event.with.b13c4375" /></p>
             </div>
             <Badge variant="outline">{achievementsObserved ? 'Achievements synced' : 'Syncing achievements'}</Badge>
           </div>
@@ -205,7 +206,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
               />
             </label>
           </div>
-          {difficultyCatalog.loading ? <p className="mt-3 text-xs text-text-muted">Loading official event difficulties…</p> : null}
+          {difficultyCatalog.loading ? <p className="mt-3 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.loading.official.event.difficulties.8ddbd72d" /></p> : null}
           {difficultyCatalog.error ? <p className="mt-3 text-xs text-danger">{difficultyCatalog.error}</p> : null}
         </Card>
 
@@ -230,7 +231,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
             <label className="flex min-w-0 flex-col">
               <span className="mb-1.5 flex min-h-6 items-center justify-between gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted">
                 <span className="flex min-w-0 items-center gap-2"><Clock3 className="h-3.5 w-3.5 shrink-0" /> Stop before event ends</span>
-                <Badge variant="outline" className="shrink-0">30 min recommended</Badge>
+                <Badge variant="outline" className="shrink-0"><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.30.min.recommended.61238251" /></Badge>
               </span>
               <Input
                 type="number"
@@ -238,7 +239,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
                 max={1440}
                 value={Math.round(draft.minimumRemainingSec / 60)}
                 onChange={(event) => setDraft((current) => ({ ...current, minimumRemainingSec: clampAutoNomadInteger(event.target.value, 0, 1440, 30) * 60 }))}
-                rightIcon={<span className="text-[10px] text-text-muted">min</span>}
+                rightIcon={<span className="text-[10px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.min.1f6fa6f6" /></span>}
                 className="font-mono"
               />
             </label>
@@ -249,7 +250,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-sm font-black text-text-main"><RotateCcw className="h-4 w-4 text-primary" /> Clear each landed-hit cooldown</div>
-              <p className="mt-1 text-xs text-text-muted">After every confirmed victory, refresh the target and spend an inventory time skip before the next chained march arrives.</p>
+              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.after.every.confirmed.victory.refresh.the.target.755f02c1" /></p>
             </div>
             <Switch
               checked={draft.skipCooldowns}
@@ -281,7 +282,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
                   </label>
                 ))}
               </div>
-              <p className="mt-3 text-[11px] text-warning">Each server command uses exactly one skip. When no single skip covers the cooldown, smaller available skips are repeated one at a time after each confirmed response.</p>
+              <p className="mt-3 text-[11px] text-warning"><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.each.server.command.uses.exactly.one.skip.ab37a717" /></p>
             </div>
           ) : null}
         </Card>
@@ -290,7 +291,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-sm font-black text-text-main"><TestTube2 className="h-4 w-4 text-primary" /> Temporary RBC end-to-end trial</div>
-              <p className="mt-1 text-xs text-text-muted">Use the Nomad preset against one robber-baron castle, size the chain from live resources, then prove every victory is followed by an immediate time-skip reset.</p>
+              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.use.the.nomad.preset.against.one.robber.89f8e101" /></p>
             </div>
             <Switch
               checked={draft.rbcTest.enabled}
@@ -309,7 +310,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
           {draft.rbcTest.enabled ? (
             <div className="mt-3 grid gap-4 border-t border-border-base pt-3 sm:grid-cols-2">
               <label className="block">
-                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">Target X</span>
+                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.target.x.884ddd14" /></span>
                 <Input
                   type="number"
                   min={0}
@@ -320,7 +321,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">Target Y</span>
+                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.target.y.aae5c7ef" /></span>
                 <Input
                   type="number"
                   min={0}
@@ -330,7 +331,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
                   className="font-mono"
                 />
               </label>
-              <p className="sm:col-span-2 text-[11px] text-warning">The chain uses every currently available selected commander supported by stationed preset copies and uncommitted response-gated RBC cooldown sequences. Any commander or troops returning from any attack can be launched on the next reevaluation without waiting for older chain marches. This mode bypasses event start and four-camp selection only for the explicit run ID created by this switch. Disable it after the trial before enabling the real Nomad/Samurai flow.</p>
+              <p className="sm:col-span-2 text-[11px] text-warning"><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.the.chain.uses.every.currently.available.selected.b2a29d49" /></p>
             </div>
           ) : null}
         </Card>
@@ -338,15 +339,14 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
         <Card variant="solid" className="p-4">
           <div className="flex items-center gap-2 text-sm font-black text-text-main"><Lock className="h-4 w-4 text-primary" /> Fixed four-camp flow</div>
           <div className="mt-3 grid gap-2 sm:grid-cols-3">
-            <div className="rounded-xl border border-border-base bg-bg-app/45 p-3 text-xs text-text-muted"><Badge variant="outline" className="mb-2">1</Badge><div>Advance each of the four nearest regular camps to the terminal victory count defined for the active difficulty.</div></div>
-            <div className="rounded-xl border border-border-base bg-bg-app/45 p-3 text-xs text-text-muted"><Badge variant="outline" className="mb-2">2</Badge><div>Rank maxed camps by defense capacity plus wall, gate, and moat values, then lock the weakest.</div></div>
-            <div className="rounded-xl border border-border-base bg-bg-app/45 p-3 text-xs text-text-muted"><Badge variant="outline" className="mb-2">3</Badge><div>Send the active event’s preset only to the lock, then clear the returned cooldown between every ordered arrival.</div></div>
+            <div className="rounded-xl border border-border-base bg-bg-app/45 p-3 text-xs text-text-muted"><Badge variant="outline" className="mb-2">1</Badge><div><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.advance.each.of.the.four.nearest.regular.45952900" /></div></div>
+            <div className="rounded-xl border border-border-base bg-bg-app/45 p-3 text-xs text-text-muted"><Badge variant="outline" className="mb-2">2</Badge><div><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.rank.maxed.camps.by.defense.capacity.plus.f2d38ec8" /></div></div>
+            <div className="rounded-xl border border-border-base bg-bg-app/45 p-3 text-xs text-text-muted"><Badge variant="outline" className="mb-2">3</Badge><div><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.send.the.active.event.s.preset.only.3ad5b2bc" /></div></div>
           </div>
         </Card>
 
         <p className="rounded-global border border-border-base bg-bg-app/40 px-4 py-3 text-xs text-text-muted">
-          ADI must confirm the same target and zero cooldown before launch. Faster commanders are sent first, and every later CRA is sent immediately after the previous response. Batch size comes from available selected commanders, complete copies of the active event’s preset, and usable cooldown skips. Server-returned arrivals are checked for ordering, then each landed victory is cleared through the target cooldown controller. In-flight attacks can carry the final score beyond the configured threshold.
-        </p>
+          <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.adi.must.confirm.the.same.target.and.1c6467ca" /></p>
       </div>
     </SettingsModal>
   );

@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CalendarDays, Clock, Plus, Search, Trash2, Wand2 } from 'lucide-react';
 import { Badge, Button, Input, Select, SettingsModal, Switch } from '../../components/ui';
@@ -879,24 +880,24 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
             <CalendarDays className="h-4 w-4" />
           </span>
           <div className="schedule-toolbar-title">
-            <span className="schedule-kicker">Schedule Control</span>
+            <span className="schedule-kicker"><LocalizedText messageKey="ui.settings.components.weeklyScheduler.schedule.control.c3dac0da" /></span>
             <div className="schedule-title-row">
-              <h3>Weekly Schedule</h3>
+              <h3><LocalizedText messageKey="ui.settings.components.weeklyScheduler.weekly.schedule.a22f35d1" /></h3>
               <Badge variant={schedule.enabled ? 'success' : 'secondary'}>{scheduleSummary(schedule)}</Badge>
             </div>
           </div>
 
           <div className="schedule-hero-metrics">
             <div className="schedule-hero-metric">
-              <span>Slots</span>
+              <span><LocalizedText messageKey="ui.settings.components.weeklyScheduler.slots.4fd72c06" /></span>
               <strong>{schedule.slots.length}</strong>
             </div>
             <div className="schedule-hero-metric">
-              <span>Days</span>
+              <span><LocalizedText messageKey="ui.settings.components.weeklyScheduler.days.e08c0aa8" /></span>
               <strong>{activeDayCount}/7</strong>
             </div>
             <div className="schedule-hero-metric">
-              <span>Time</span>
+              <span><LocalizedText messageKey="ui.settings.components.weeklyScheduler.time.33b93476" /></span>
               <strong>{formatDuration(weeklyDuration)}</strong>
             </div>
           </div>
@@ -905,7 +906,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
         <div className="schedule-command-bar">
           <div className="schedule-command-toggles">
             <div className="schedule-control-chip">
-              <span>Use Schedule</span>
+              <span><LocalizedText messageKey="ui.settings.components.weeklyScheduler.use.schedule.0a350b34" /></span>
               <Switch
                 size="sm"
                 checked={schedule.enabled}
@@ -928,11 +929,9 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
 
           <div className="schedule-command-actions">
             <Button variant="outline" size="sm" onClick={openAddSlot} leftIcon={<Plus className="h-4 w-4" />}>
-              Add Slot
-            </Button>
+              <LocalizedText messageKey="ui.settings.components.weeklyScheduler.add.slot.05187491" /></Button>
             <Button variant="ghost" size="sm" onClick={setAllWeek} leftIcon={<Wand2 className="h-4 w-4" />}>
-              All Week
-            </Button>
+              <LocalizedText messageKey="ui.settings.components.weeklyScheduler.all.week.3328d635" /></Button>
             <Button
               variant="ghost"
               size="sm"
@@ -940,8 +939,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
               disabled={schedule.slots.length === 0}
               leftIcon={<Trash2 className="h-4 w-4" />}
             >
-              Clear
-            </Button>
+              <LocalizedText messageKey="ui.settings.components.weeklyScheduler.clear.83b12c22" /></Button>
           </div>
         </div>
       </div>
@@ -1121,16 +1119,14 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
         saveLabel="Save Slot"
         footerLeading={editingSlot?.id ? (
           <Button variant="danger" onClick={deleteEditingSlot} leftIcon={<Trash2 className="h-4 w-4" />}>
-            Delete
-          </Button>
+            <LocalizedText messageKey="ui.settings.components.weeklyScheduler.delete.e2d0a549" /></Button>
         ) : undefined}
       >
         {editingSlot && (
           <div className="schedule-slot-form">
             <div className="schedule-field">
               <label>
-                Day
-              </label>
+                <LocalizedText messageKey="ui.settings.components.weeklyScheduler.day.8f2364e1" /></label>
               <Select
                 value={String(editingSlot.day)}
                 options={dayOptions}
@@ -1141,8 +1137,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="schedule-field">
                 <label>
-                  Start Time
-                </label>
+                  <LocalizedText messageKey="ui.settings.components.weeklyScheduler.start.time.271189ae" /></label>
                 <Input
                   value={editingSlot.startTime}
                   onChange={(event) => setEditingSlot({ ...editingSlot, startTime: event.target.value, error: '' })}
@@ -1152,8 +1147,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
               </div>
               <div className="schedule-field">
                 <label>
-                  End Time
-                </label>
+                  <LocalizedText messageKey="ui.settings.components.weeklyScheduler.end.time.48bccddd" /></label>
                 <Input
                   value={editingSlot.endTime}
                   onChange={(event) => setEditingSlot({ ...editingSlot, endTime: event.target.value, error: '' })}
@@ -1217,8 +1211,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
                             onClick={() => selectTroopForSlotOption(field)}
                             leftIcon={<Search className="h-4 w-4" />}
                           >
-                            Choose
-                          </Button>
+                            <LocalizedText messageKey="ui.settings.components.weeklyScheduler.choose.c7f93783" /></Button>
                         </div>
                       ) : field.picker === 'tool' ? (
                         <div className="schedule-troop-picker-row">
@@ -1251,8 +1244,7 @@ export const WeeklyScheduler: React.FC<WeeklySchedulerProps> = ({
                             onClick={() => selectToolForSlotOption(field)}
                             leftIcon={<Search className="h-4 w-4" />}
                           >
-                            Choose
-                          </Button>
+                            <LocalizedText messageKey="ui.settings.components.weeklyScheduler.choose.c7f93783" /></Button>
                         </div>
                       ) : field.choices ? (
                         <Select

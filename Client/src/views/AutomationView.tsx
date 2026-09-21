@@ -1,3 +1,4 @@
+import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Bot,
@@ -822,7 +823,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                 <span className="automation-function-group-rule" aria-hidden="true" />
                 <div className="automation-right-click-banner automation-right-click-inline" role="note">
                   <MousePointerClick aria-hidden="true" />
-                  <span><strong className="text-text-main">Right-click</strong> a toggle for temporary activation</span>
+                  <span><strong className="text-text-main"><LocalizedText messageKey="ui.views.automationView.right.click.58ca4ab7" /></strong> a toggle for temporary activation</span>
                 </div>
               </div>
               <div className="automation-function-grid">
@@ -912,15 +913,15 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
         onClose={() => setIsEquipmentCleanupSettingsOpen(false)}
         maxWidth="md"
         title={
-          <ModalTitle icon={<Trash2 className="h-5 w-5" />}>Auto Equipment Cleanup</ModalTitle>
+          <ModalTitle icon={<Trash2 className="h-5 w-5" />}><LocalizedText messageKey="ui.views.automationView.auto.equipment.cleanup.4116a164" /></ModalTitle>
         }
-        footer={<Button variant="ghost" onClick={() => setIsEquipmentCleanupSettingsOpen(false)}>Close</Button>}
+        footer={<Button variant="ghost" onClick={() => setIsEquipmentCleanupSettingsOpen(false)}><LocalizedText messageKey="ui.views.automationView.close.7d9eb7ac" /></Button>}
       >
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-global border border-primary/20 bg-primary/5 p-4">
             <div className="min-w-0">
-              <div className="text-sm font-bold text-text-main">Poll interval</div>
-              <p className="mt-1 text-xs text-text-muted">Checks equipment storage at this interval while cleanup is allowed to run.</p>
+              <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.views.automationView.poll.interval.47ea8f5d" /></div>
+              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.views.automationView.checks.equipment.storage.at.this.interval.while.1ed68fd4" /></p>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-20">
@@ -934,7 +935,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                   aria-label="Equipment cleanup poll interval in minutes"
                 />
               </div>
-              <span className="text-xs font-semibold text-text-muted">min</span>
+              <span className="text-xs font-semibold text-text-muted"><LocalizedText messageKey="ui.views.automationView.min.1f6fa6f6" /></span>
             </div>
           </div>
 
@@ -949,8 +950,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
           />
 
           <p className="text-xs leading-relaxed text-text-muted">
-            The schedule decides when cleanup may run. The poll interval decides how often it checks while the schedule is active.
-          </p>
+            <LocalizedText messageKey="ui.views.automationView.the.schedule.decides.when.cleanup.may.run.ec3b83b8" /></p>
         </div>
       </Modal>
     </div>

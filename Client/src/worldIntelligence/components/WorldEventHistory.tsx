@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, ArrowUpDown, CalendarDays, ChevronLeft, ChevronRight, History, RefreshCw, Search, Trophy } from 'lucide-react';
 import { CitadelAPI, type WorldIntelligenceSubscriptionStatus } from '../../api/CitadelClient';
@@ -495,7 +496,7 @@ export const WorldEventHistory = ({
 			<div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 				<div>
 					<div className="flex items-center gap-2 text-base font-bold text-text-main"><Trophy className="h-5 w-5 text-primary" /> Player rankings</div>
-						<p className="mt-1 text-xs text-text-muted">Name, Might, Honor, and Alliance stay visible while the selected event adds its Rank and Score columns.</p>
+						<p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.name.might.honor.and.alliance.stay.visible.9556c88a" /></p>
 				</div>
 				<Button variant="ghost" size="icon" aria-label="Refresh event history" onClick={() => void refreshBoards()} isLoading={loading}><RefreshCw className="h-4 w-4" /></Button>
 			</div>
@@ -513,7 +514,7 @@ export const WorldEventHistory = ({
 			{error && <div className="mb-4 rounded-global border border-error/30 bg-error/10 px-4 py-3 text-sm text-error" role="alert">{error}</div>}
 
 			{directoryLoading && eventGroups.length === 0 ? (
-				<div className="flex min-h-72 items-center justify-center text-sm text-text-muted">Loading event history…</div>
+				<div className="flex min-h-72 items-center justify-center text-sm text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.loading.event.history.49c99bd3" /></div>
 			) : eventGroups.length === 0 ? (
 				<EmptyState
 					size="md"
@@ -525,7 +526,7 @@ export const WorldEventHistory = ({
 				<>
 					<div className={`mb-4 grid gap-3 md:grid-cols-2 ${filterGridColumns}`}>
 						<div>
-							<div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-text-muted">Event</div>
+							<div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.event.4e1f49a9" /></div>
 							<Select
 								value={selectedEventKey}
 								onChange={(value) => {
@@ -543,7 +544,7 @@ export const WorldEventHistory = ({
 							/>
 						</div>
 						{needsRunSelector && <div>
-							<div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-text-muted">Event dates</div>
+							<div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.event.dates.9acef6c1" /></div>
 							<Select
 								value={selectedRunKey}
 								onChange={(value) => { setRun(value); setBoard(''); setPage(0); }}
@@ -553,7 +554,7 @@ export const WorldEventHistory = ({
 							/>
 						</div>}
 						{needsBoardSelector && <div>
-							<div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-text-muted">Leaderboard</div>
+							<div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.leaderboard.31b47121" /></div>
 							<Select
 								value={selectedBoardKey}
 								onChange={(value) => { setBoard(value); setPage(0); }}
@@ -563,11 +564,11 @@ export const WorldEventHistory = ({
 							/>
 						</div>}
 						{needsLeagueSelector && <div>
-							<div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-text-muted">Level league</div>
+							<div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.level.league.dab1c62c" /></div>
 							<Select value={league} onChange={(value) => { setLeague(value); setPage(0); }} options={leagueOptions} ariaLabel="Filter event scores by level league" searchable menuGrowToViewport />
 						</div>}
 						<div>
-							<div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-text-muted">Player or alliance</div>
+							<div className="mb-1 text-[10px] font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.player.or.alliance.ff83830f" /></div>
 							<Input
 								value={searchQuery}
 								onChange={(event) => { setSearchQuery(event.target.value); setPage(0); }}
@@ -665,7 +666,7 @@ const WorldPlayerEventHistoryContent = ({ history, error = '', onOpenAlliance }:
 				<div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 					<div>
 						<div className="flex items-center gap-2 font-bold text-text-main"><History className="h-5 w-5 text-primary" /> Previous scores</div>
-						<p className="mt-1 text-xs text-text-muted">Final known public score from each completed event run. End dates and times use this device's local time.</p>
+						<p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.final.known.public.score.from.each.completed.f94de1c4" /></p>
 					</div>
 					<div className="w-full sm:w-72">
 						<Select value={eventKey} onChange={(value) => { setEventKey(value); setPage(0); }} options={eventOptions} ariaLabel="Filter this player's previous event scores" searchable disabled={eventOptions.length <= 1} menuGrowToViewport />
@@ -697,7 +698,7 @@ const EventScoreTable = ({ entries, loading, regularPlayers, eventTitle, searchQ
 	onOpenPlayer: (playerId: number, worldId: string) => void;
 	onOpenAlliance: (allianceId: number, worldId: string) => void;
 }) => {
-	if (loading && entries.length === 0) return <div className="flex min-h-72 items-center justify-center text-sm text-text-muted">Loading event leaderboard…</div>;
+	if (loading && entries.length === 0) return <div className="flex min-h-72 items-center justify-center text-sm text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.loading.event.leaderboard.3950752a" /></div>;
 	return (
 		<div className={`overflow-hidden rounded-global border border-border-base transition-opacity ${loading ? 'opacity-60' : ''}`} aria-busy={loading}>
 			<div className="max-h-[42rem] overflow-auto custom-scrollbar">
@@ -723,7 +724,7 @@ const EventScoreTable = ({ entries, loading, regularPlayers, eventTitle, searchQ
 								<td className="px-3 py-2.5"><button type="button" className="max-w-64 truncate text-left font-bold text-text-main hover:text-primary" onClick={() => onOpenPlayer(entry.playerId, entry.worldId)}>{entry.playerName}</button></td>
 								<RegularMetricValue value={regular?.might} />
 								<RegularMetricValue value={regular?.honor} />
-								<td className="px-3 py-2.5">{allianceId ? <button type="button" className="max-w-56 truncate font-semibold text-text-main hover:text-primary" onClick={() => onOpenAlliance(allianceId, entry.worldId)}>{allianceName || `Alliance ${allianceId}`}</button> : <span className="text-text-muted">No alliance</span>}</td>
+								<td className="px-3 py-2.5">{allianceId ? <button type="button" className="max-w-56 truncate font-semibold text-text-main hover:text-primary" onClick={() => onOpenAlliance(allianceId, entry.worldId)}>{allianceName || `Alliance ${allianceId}`}</button> : <span className="text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.no.alliance.623666da" /></span>}</td>
 								<td className="border-l border-border-base px-3 py-2.5 text-right font-mono font-black text-primary">#{formatCount(entry.rank)}</td>
 								<td className="px-3 py-2.5 text-right"><EventScoreValue entry={entry} /></td>
 							</tr>;
@@ -768,7 +769,7 @@ const PlayerEventScoreTable = ({ entries, page, pageCount, total, onPageChange, 
 		<div className="max-h-[36rem] overflow-auto custom-scrollbar">
 			<table className="min-w-[48rem] w-full text-sm">
 				<thead className="sticky top-0 z-10 bg-bg-card text-[10px] uppercase tracking-wide text-text-muted">
-					<tr><th className="px-3 py-2 text-left">Event run</th><th className="px-3 py-2 text-left">Ended (local)</th><th className="px-3 py-2 text-right">Final score</th><th className="px-3 py-2 text-left">Alliance</th></tr>
+					<tr><th className="px-3 py-2 text-left"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.event.run.f913c08e" /></th><th className="px-3 py-2 text-left"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.ended.local.63df442e" /></th><th className="px-3 py-2 text-right"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.final.score.11c34366" /></th><th className="px-3 py-2 text-left"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.alliance.afe3c194" /></th></tr>
 				</thead>
 				<tbody>
 					{entries.map((entry) => (
@@ -776,7 +777,7 @@ const PlayerEventScoreTable = ({ entries, page, pageCount, total, onPageChange, 
 							<td className="px-3 py-2.5"><div className="font-bold text-text-main">{entry.eventName || humanizeKey(entry.eventKey)}</div><div className="text-[11px] text-text-muted">Run started {formatDate(entry.runStartedOn)}</div></td>
 							<td className="whitespace-nowrap px-3 py-2.5 text-xs font-semibold text-text-main">{formatEventEndLocal(entry.eventEndsAt)}</td>
 							<td className="px-3 py-2.5 text-right"><EventScoreValue entry={entry} /></td>
-							<td className="px-3 py-2.5">{entry.allianceId ? <button type="button" className="max-w-56 truncate font-semibold text-text-main hover:text-primary" onClick={() => onOpenAlliance(entry.allianceId!, entry.worldId)}>{entry.allianceName || `Alliance ${entry.allianceId}`}</button> : <span className="text-text-muted">No alliance</span>}</td>
+							<td className="px-3 py-2.5">{entry.allianceId ? <button type="button" className="max-w-56 truncate font-semibold text-text-main hover:text-primary" onClick={() => onOpenAlliance(entry.allianceId!, entry.worldId)}>{entry.allianceName || `Alliance ${entry.allianceId}`}</button> : <span className="text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.no.alliance.623666da" /></span>}</td>
 						</tr>
 					))}
 				</tbody>
@@ -788,7 +789,7 @@ const PlayerEventScoreTable = ({ entries, page, pageCount, total, onPageChange, 
 
 const EventScoreValue = ({ entry }: { entry: Pick<EventLeaderboardRow, 'score' | 'scoreKnown' | 'scoreUnit'> }) => entry.scoreKnown ? (
 	<div><div className="font-mono font-black text-text-main">{formatCount(entry.score)}</div><div className="text-[10px] uppercase tracking-wide text-text-muted">{entry.scoreUnit || 'points'}</div></div>
-) : <Badge variant="warning">Rank only</Badge>;
+) : <Badge variant="warning"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.rank.only.ed37b9ae" /></Badge>;
 
 const RegularMetricValue = ({ value }: { value?: number }) => (
 	<td className="px-3 py-2.5 text-right font-mono font-semibold text-text-main">

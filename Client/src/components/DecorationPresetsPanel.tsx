@@ -1,3 +1,4 @@
+import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { Castle, Layers, Play, Save, Sparkles, Trash2 } from 'lucide-react';
 import { useCastleFocus } from '../context/CastleFocusContext';
@@ -223,13 +224,11 @@ const DecorationPresetsPanel: React.FC = () => {
               leftIcon={<Save className="h-4 w-4" strokeWidth={2.25} />}
               className="shrink-0 shadow-none hover:shadow-none"
             >
-              Save preset
-            </Button>
+              <LocalizedText messageKey="ui.components.decorationPresetsPanel.save.preset.362a1376" /></Button>
           </div>
           {!canUseCastle && (
             <div className="mt-3 text-xs font-medium text-warning">
-              Castle focus required.
-            </div>
+              <LocalizedText messageKey="ui.components.decorationPresetsPanel.castle.focus.required.32b02b71" /></div>
           )}
         </div>
 
@@ -271,14 +270,12 @@ const DecorationPresetsPanel: React.FC = () => {
                 leftIcon={<Trash2 className="h-3.5 w-3.5" strokeWidth={2.25} />}
                 className="shadow-none hover:shadow-none"
               >
-                Delete
-              </Button>
+                <LocalizedText messageKey="ui.components.decorationPresetsPanel.delete.e2d0a549" /></Button>
             </div>
           </div>
           {canUseCastle && !hasPresets && (
             <div className="mt-3 text-xs font-medium text-text-muted">
-              No saved presets for this castle.
-            </div>
+              <LocalizedText messageKey="ui.components.decorationPresetsPanel.no.saved.presets.for.this.castle.d6a709b5" /></div>
           )}
         </div>
       </div>

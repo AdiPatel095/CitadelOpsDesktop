@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { Clock, Minus, Plus } from 'lucide-react';
 import { Button } from '../../components/ui';
@@ -42,8 +43,7 @@ const RiftArrivalClock: React.FC<RiftArrivalClockProps> = ({ entry, offsetMinute
   if (minUnix == null || arriveAtUnix == null) {
     return (
       <span className="text-xs text-text-muted whitespace-nowrap" title="Complete a successful feather launch to unlock timing">
-        No TT yet
-      </span>
+        <LocalizedText messageKey="ui.rift.components.riftArrivalClock.no.tt.yet.52ed44fe" /></span>
     );
   }
 

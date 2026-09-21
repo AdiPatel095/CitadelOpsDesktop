@@ -86,5 +86,9 @@
   "activity.searchChannel": "Найти функцию или канал",
   "activity.filter": "Фильтровать активность журнала",
   "activity.searchActivity": "Поиск в журнале",
-  "activity.actionOrIssue": "Действие или проблема"
+  "activity.actionOrIssue": "Действие или проблема",
+  "activity.all": "Вся активность · {count, number}",
+  "activity.actions": "Завершённые действия · {count, number}",
+  "activity.issues": "Предупреждения и ошибки · {count, number}",
+  "activity.results": "{shown, number} из {total, number}"
 }

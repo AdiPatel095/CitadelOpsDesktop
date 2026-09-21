@@ -1,3 +1,4 @@
+import { LocalizedText } from "../i18n/LocalizedText";
 import { useState } from 'react';
 import type { AutomationStateV2 } from '../api/Contracts';
 import { useCitadelAPI } from '../api/ApiContext';
@@ -44,8 +45,8 @@ export function AutomationSafetyPanel({ states, now }: {
 
   return (
     <section className="rounded-xl border border-amber-500/50 bg-amber-500/5 p-4" aria-label="Automation safety locks">
-      <h2 className="font-semibold text-text-main">Automation safety locks</h2>
-      <p className="mt-1 text-sm text-text-muted">Non-whitelisted game rejections pause only their originating lane for 30 minutes. Lanes resume normal eligibility checks when the cooldown expires; whitelisted responses never create a lane lock.</p>
+      <h2 className="font-semibold text-text-main"><LocalizedText messageKey="ui.components.automationSafetyPanel.automation.safety.locks.ed105d06" /></h2>
+      <p className="mt-1 text-sm text-text-muted"><LocalizedText messageKey="ui.components.automationSafetyPanel.non.whitelisted.game.rejections.pause.only.their.56f5431b" /></p>
       {locked.map(([lane, state]) => {
         const lock = state.safetyLock!;
         const key = `${lane}:${lock.operationId}`;

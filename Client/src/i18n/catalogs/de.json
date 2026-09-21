@@ -86,5 +86,9 @@
   "activity.searchChannel": "Funktion oder Kanal suchen",
   "activity.filter": "Protokollaktivität filtern",
   "activity.searchActivity": "Protokollaktivität durchsuchen",
-  "activity.actionOrIssue": "Aktion oder Problem"
+  "activity.actionOrIssue": "Aktion oder Problem",
+  "activity.all": "Alle Aktivitäten · {count, number}",
+  "activity.actions": "Abgeschlossene Aktionen · {count, number}",
+  "activity.issues": "Warnungen und Fehler · {count, number}",
+  "activity.results": "{shown, number} von {total, number}"
 }

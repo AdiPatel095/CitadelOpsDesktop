@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { Coins, Trophy } from 'lucide-react';
 import { CitadelAPI } from '../../api/CitadelClient';
@@ -119,8 +120,7 @@ const EventScoreCard: React.FC<EventScoreCardProps> = ({ live, event, onOpenRank
                 onClick={onOpenRanking}
                 title="Open the live GGE Nomad alliance ranking"
               >
-                Alliance ranking
-              </Button>
+                <LocalizedText messageKey="ui.dashboard.components.eventScoreCard.alliance.ranking.c47701bb" /></Button>
             )}
             <span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider ${live ? 'border-success/30 bg-success/10 text-success' : 'border-border-light bg-bg-card/50 text-text-muted'}`}>
               {live ? 'Live' : 'Last known'}
@@ -131,8 +131,8 @@ const EventScoreCard: React.FC<EventScoreCardProps> = ({ live, event, onOpenRank
     >
         {!event ? (
           <div className="rounded-global border border-dashed border-border-light bg-bg-card/35 px-4 py-7 text-center">
-            <p className="text-sm font-medium text-text-main">No supported event is active.</p>
-            <p className="mx-auto mt-2 max-w-xl text-xs text-text-muted">The page will switch automatically when a supported event begins.</p>
+            <p className="text-sm font-medium text-text-main"><LocalizedText messageKey="ui.dashboard.components.eventScoreCard.no.supported.event.is.active.a62481df" /></p>
+            <p className="mx-auto mt-2 max-w-xl text-xs text-text-muted"><LocalizedText messageKey="ui.dashboard.components.eventScoreCard.the.page.will.switch.automatically.when.a.29d21b18" /></p>
           </div>
         ) : (
           <div className="flex flex-col gap-4">

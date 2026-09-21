@@ -1,3 +1,4 @@
+import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useEffect, useId, useMemo, useState } from 'react';
 import {
   ChevronDown,
@@ -267,16 +268,15 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
             </span>
           )}
         >
-          Attack preset
-        </ModalTitle>
+          <LocalizedText messageKey="ui.components.attackSetupModal.attack.preset.407b93e9" /></ModalTitle>
       }
       footer={
         <div className="flex w-full flex-wrap items-center justify-between gap-3">
           <div className="text-xs text-text-muted">
             {unitsError ? (
-              <span className="font-semibold text-error">Troop and tool metadata is unavailable; save will unlock after the automatic retry.</span>
+              <span className="font-semibold text-error"><LocalizedText messageKey="ui.components.attackSetupModal.troop.and.tool.metadata.is.unavailable.save.cea697a4" /></span>
             ) : isMetadataLoading ? (
-              <span className="font-semibold text-text-muted">Loading official troop and tool metadata before save.</span>
+              <span className="font-semibold text-text-muted"><LocalizedText messageKey="ui.components.attackSetupModal.loading.official.troop.and.tool.metadata.before.6bf96435" /></span>
             ) : toolLimitIssues.length > 0 ? (
               <span className="font-semibold text-error">
                 {toolLimitIssues.length} tool section limit{toolLimitIssues.length === 1 ? '' : 's'} must be resolved
@@ -293,7 +293,7 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
             )}
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" onClick={onClose} disabled={isSaving}>Cancel</Button>
+            <Button variant="ghost" onClick={onClose} disabled={isSaving}><LocalizedText messageKey="ui.components.attackSetupModal.cancel.19766ed6" /></Button>
             <Button variant="primary" onClick={handleSave} disabled={!canSave} isLoading={isSaving}>
               {isSaving ? 'Saving preset' : 'Save preset'}
             </Button>
@@ -314,8 +314,7 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
                 {targetType === 'pvp' ? 'PvP tool limits' : 'PvE tool limits'}
               </div>
               <p className="mt-0.5 text-xs text-text-muted">
-                Each wave is checked independently. The server checks the actual target again before CRA is sent.
-              </p>
+                <LocalizedText messageKey="ui.components.attackSetupModal.each.wave.is.checked.independently.the.server.1e4831ee" /></p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline" className="normal-case tracking-normal">Left {toolLimits.L}</Badge>
@@ -328,11 +327,9 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
         {allowTroopFamilyMode ? (
           <section className="flex flex-wrap items-center justify-between gap-4 rounded-global border border-primary/25 bg-primary/8 px-4 py-3">
             <div className="min-w-0 flex-1">
-              <div className="text-sm font-black text-text-main">Use whole troop families</div>
+              <div className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.components.attackSetupModal.use.whole.troop.families.b9bd7e5a" /></div>
               <p className="mt-0.5 text-xs leading-relaxed text-text-muted">
-                Treat each selected troop as a family anchor. At launch, CitadelOps uses the highest owned tier first,
-                keeps partial higher-tier fills, then fills the remaining capacity with lower tiers from the same official family.
-              </p>
+                <LocalizedText messageKey="ui.components.attackSetupModal.treat.each.selected.troop.as.a.family.60aa474a" /></p>
             </div>
             <Switch
               checked={Boolean(draft.useTroopFamilies)}
@@ -344,7 +341,7 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
 
         <section className="grid gap-3 rounded-global border border-border-base bg-bg-card/65 p-3 shadow-[var(--shadow-raised)] lg:grid-cols-[minmax(15rem,1.4fr)_auto_auto] lg:items-end">
           <label className="block min-w-0">
-            <span className="mb-1.5 block text-[11px] font-black uppercase tracking-wider text-text-muted">Preset name</span>
+            <span className="mb-1.5 block text-[11px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.components.attackSetupModal.preset.name.e534a666" /></span>
             <Input
               value={draft.name}
               onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
@@ -355,7 +352,7 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
           </label>
 
           <div>
-            <span className="mb-1.5 block text-[11px] font-black uppercase tracking-wider text-text-muted">Waves</span>
+            <span className="mb-1.5 block text-[11px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.components.attackSetupModal.waves.ad5b8321" /></span>
             <div className="flex items-center gap-2">
               <Button
                 variant="secondary"
@@ -528,7 +525,7 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
               {inventoryPolicy === 'advisory' ? 'Current account inventory is lower than this preset' : 'Preset exceeds available inventory'}
             </div>
             {inventoryPolicy === 'advisory' ? (
-              <p className="mb-2 text-xs font-medium text-text-muted">The preset can still be saved. Live inventory will be validated before an attack launches.</p>
+              <p className="mb-2 text-xs font-medium text-text-muted"><LocalizedText messageKey="ui.components.attackSetupModal.the.preset.can.still.be.saved.live.441f66d8" /></p>
             ) : null}
             <div className="flex flex-wrap gap-2">
               {inventoryIssues.map((issue) => {
@@ -545,10 +542,9 @@ const AttackSetupModal: React.FC<AttackSetupModalProps> = ({
 
         {toolLimitIssues.length > 0 ? (
           <section className="rounded-global border border-error/30 bg-error/8 p-3 text-sm text-error">
-            <div className="mb-2 font-black">Preset exceeds the selected target type’s tool limits</div>
+            <div className="mb-2 font-black"><LocalizedText messageKey="ui.components.attackSetupModal.preset.exceeds.the.selected.target.type.s.0743a51a" /></div>
             <p className="mb-2 text-xs font-medium text-text-muted">
-              Reduce tools in each listed section before saving. Limits apply separately to every wave.
-            </p>
+              <LocalizedText messageKey="ui.components.attackSetupModal.reduce.tools.in.each.listed.section.before.956aaf74" /></p>
             <div className="flex flex-wrap gap-2">
               {toolLimitIssues.slice(0, 12).map((issue) => (
                 <span
@@ -749,8 +745,8 @@ const CourtyardSupportCard: React.FC<CourtyardSupportCardProps> = ({
           </span>
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="m-0 text-base font-black text-text-main">Courtyard support wave</h3>
-              <Badge variant="warning" className="normal-case tracking-normal">Optional</Badge>
+              <h3 className="m-0 text-base font-black text-text-main"><LocalizedText messageKey="ui.components.attackSetupModal.courtyard.support.wave.e3bdc7ec" /></h3>
+              <Badge variant="warning" className="normal-case tracking-normal"><LocalizedText messageKey="ui.components.attackSetupModal.optional.59be7133" /></Badge>
             </div>
             <p className="mt-1 text-xs text-text-muted">
               Add up to {COURTYARD_TROOP_SLOTS} extra troops and {COURTYARD_TOOL_SLOTS} one-use Sceat support tools.
@@ -805,8 +801,7 @@ const CourtyardSupportCard: React.FC<CourtyardSupportCardProps> = ({
         </section>
         {!kindIsTroop && toolItems.length === 0 ? (
           <p className="mt-3 text-xs font-medium text-text-muted">
-            No Sceat attack support tools are available in this inventory.
-          </p>
+            <LocalizedText messageKey="ui.components.attackSetupModal.no.sceat.attack.support.tools.are.available.eae37425" /></p>
         ) : null}
       </CardContent>
     </Card>
@@ -1032,7 +1027,7 @@ const InventorySlotCard: React.FC<InventorySlotCardProps> = ({
           <span className="mt-1.5 flex h-7 items-center text-center text-[10px] font-bold leading-[1.05] text-text-muted">
             Empty {itemKindLabel} slot
           </span>
-          <span className="mt-1 font-mono text-[9px] leading-none text-text-muted">Available</span>
+          <span className="mt-1 font-mono text-[9px] leading-none text-text-muted"><LocalizedText messageKey="ui.components.attackSetupModal.available.e6744473" /></span>
         </>
       )}
     </div>

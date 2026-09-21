@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Anchor,
@@ -558,8 +559,8 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
           />
           <div className="mt-4 flex items-start justify-between gap-4 rounded-global border border-border-base bg-bg-app/30 p-3">
             <div>
-              <div className="text-sm font-bold text-text-main">Automatically open the Storm castle</div>
-              <p className="mt-1 text-xs text-text-muted">Runs only when the game reports Storm locked and no owned Storm castle exists.</p>
+              <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.automatically.open.the.storm.castle.b46ca0ca" /></div>
+              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.runs.only.when.the.game.reports.storm.0fa4cb3f" /></p>
             </div>
             <Switch
               checked={draft.unlock.enabled}
@@ -578,7 +579,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
           </div>
 
           <label className="mt-3 block">
-            <FieldLabel>Castle to open</FieldLabel>
+            <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.castle.to.open.3a550087" /></FieldLabel>
             <Select
               value={draft.unlock.prebuiltCastleId > 0 ? String(draft.unlock.prebuiltCastleId) : ''}
               onChange={(value) => setDraft((current) => ({
@@ -608,7 +609,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             </p>
           ) : null}
           {stormCastleOptionsError ? <p className="mt-2 text-xs text-error">{stormCastleOptionsError}</p> : null}
-          {!unlockValid ? <p className="mt-2 text-xs text-error">Choose a currently available official Storm castle.</p> : null}
+          {!unlockValid ? <p className="mt-2 text-xs text-error"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.choose.a.currently.available.official.storm.castle.25a907f3" /></p> : null}
         </Card>
 
         <Card variant="solid" className="p-4">
@@ -619,7 +620,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
           />
           <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_repeat(3,auto)] lg:items-end">
             <label className="block">
-              <FieldLabel>Storm castle</FieldLabel>
+              <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.storm.castle.2fd1da3a" /></FieldLabel>
               <Select
                 value={stormCastle ? String(stormCastle.id) : ''}
                 onChange={(value) => setCaptureCastleId(Number(value) || 0)}
@@ -639,8 +640,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               onClick={() => void capture('functional')}
               leftIcon={<Hammer className="h-4 w-4" />}
             >
-              Functional
-            </Button>
+              <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.functional.b6656595" /></Button>
             <Button
               variant="outline"
               disabled={!stormCastle || capturing != null}
@@ -648,8 +648,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               onClick={() => void capture('layout')}
               leftIcon={<Castle className="h-4 w-4" />}
             >
-              Layout
-            </Button>
+              <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.layout.a5119091" /></Button>
             <Button
               variant="outline"
               disabled={!stormCastle || capturing != null}
@@ -657,13 +656,12 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               onClick={() => void capture('exact')}
               leftIcon={<Camera className="h-4 w-4" />}
             >
-              Exact clone
-            </Button>
+              <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.exact.clone.0174197d" /></Button>
           </div>
 
           {savedBlueprints.length > 0 ? (
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-semibold text-text-muted">Saved:</span>
+              <span className="text-[11px] font-semibold text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.saved.b6199040" /></span>
               {savedBlueprints.map((blueprint) => (
                 <Button
                   key={blueprint.id}
@@ -696,8 +694,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                   onClick={() => void deactivateBlueprint()}
                   leftIcon={<Trash2 className="h-3.5 w-3.5" />}
                 >
-                  Pause target
-                </Button>
+                  <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.pause.target.ba267ca2" /></Button>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Badge variant="outline">{target.summary.groundCount} ground tiles</Badge>
@@ -713,13 +710,12 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             </div>
           ) : (
             <p className="mt-3 rounded-global border border-border-base bg-bg-app/35 px-3 py-2 text-xs text-text-muted">
-              No castle target is required for combat-only automation. Capturing one enables automated expansions, storage dependencies, logistics, construction, and layout reconciliation.
-            </p>
+              <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.no.castle.target.is.required.for.combat.f9ca213e" /></p>
           )}
 
           {target && target.mode !== 'exact' && target.mode !== 'full' ? (
             <label className="mt-4 block border-t border-border-base pt-4">
-              <FieldLabel icon={Sparkles}>Decoration preset applied after construction</FieldLabel>
+              <FieldLabel icon={Sparkles}><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.decoration.preset.applied.after.construction.3ec5caba" /></FieldLabel>
               <Select
                 value={selectedDecorationValue}
                 onChange={(value) => {
@@ -736,7 +732,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                 searchable
                 menuGrowToViewport
               />
-              <p className="mt-2 text-xs text-text-muted">The preset may come from any castle. Its exact decoration IDs and coordinates are applied only after the building target is complete.</p>
+              <p className="mt-2 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.the.preset.may.come.from.any.castle.42cc0294" /></p>
             </label>
           ) : null}
         </Card>
@@ -782,7 +778,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             </div>
 
             <div className="mt-4 border-t border-border-base pt-4">
-              <FieldLabel>Storm castle spending reserves</FieldLabel>
+              <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.storm.castle.spending.reserves.d7661852" /></FieldLabel>
               <div className="grid grid-cols-3 gap-2">
                 {RESOURCE_RESERVES.map((resource) => (
                   <label key={resource.key} className="block">
@@ -806,7 +802,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
 
             {draft.build.allowResourceTransport ? (
               <div className="mt-4 border-t border-border-base pt-4">
-                <FieldLabel>Protected donor reserves</FieldLabel>
+                <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.protected.donor.reserves.1ab79630" /></FieldLabel>
                 <div className="grid grid-cols-3 gap-2">
                   {RESOURCE_RESERVES.map((resource) => (
                     <label key={resource.key} className="block">
@@ -827,14 +823,13 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                   ))}
                 </div>
                 <p className="mt-2 text-[11px] text-text-muted">
-                  Multi-resource shipments may use every amount above these donor floors, limited only by the Storm castle’s free storage.
-                </p>
+                  <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.multi.resource.shipments.may.use.every.amount.cfd5df72" /></p>
               </div>
             ) : null}
 
             {draft.build.allowTimeSkips ? (
               <div className="mt-4 border-t border-border-base pt-4">
-                <FieldLabel>Time skips kept in reserve</FieldLabel>
+                <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.time.skips.kept.in.reserve.07cf3bca" /></FieldLabel>
                 <div className="grid grid-cols-4 gap-2 sm:grid-cols-7">
                   {TIME_SKIP_RESERVES.map((skip) => (
                     <label key={skip.key} className="block">
@@ -861,7 +856,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2 text-sm font-bold text-text-main"><Anchor className="h-4 w-4 text-primary" /> Upgrade Harbor</div>
-                  <p className="mt-1 text-xs text-text-muted">Override the captured Harbor path and maintain it at a chosen level.</p>
+                  <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.override.the.captured.harbor.path.and.maintain.1d06a158" /></p>
                 </div>
                 <Switch
                   checked={draft.harbor.enabled}
@@ -880,7 +875,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                     options={[1, 2, 3].map((level) => ({ value: String(level), label: `Harbor level ${level}` }))}
                   />
                   {draft.harbor.targetLevel > 1 && !draft.build.allowPremium ? (
-                    <p className="mt-2 text-xs text-warning">Harbor levels 2–3 are premium paths and will wait until premium costs are allowed.</p>
+                    <p className="mt-2 text-xs text-warning"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.harbor.levels.2.3.are.premium.paths.398f3dd1" /></p>
                   ) : null}
                 </div>
               ) : null}
@@ -904,8 +899,8 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             <div className="mt-4 rounded-global border border-border-base bg-bg-app/30 p-3">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <div className="text-sm font-bold text-text-main">Storm forts</div>
-                  <p className="mt-1 text-xs text-text-muted">Attack only the selected official fort levels.</p>
+                  <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.storm.forts.8539a976" /></div>
+                  <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.attack.only.the.selected.official.fort.levels.2e0cd99a" /></p>
                 </div>
                 <Switch
                   checked={draft.forts.enabled}
@@ -925,7 +920,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                     }))}
                   />
                   <label className="block">
-                    <FieldLabel>Minimum attacks remaining</FieldLabel>
+                    <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.minimum.attacks.remaining.64a5bfa6" /></FieldLabel>
                     <Input
                       type="number"
                       min={0}
@@ -939,7 +934,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                       }))}
                       className="font-mono"
                     />
-                    <p className="mt-1 text-[11px] text-text-muted">Only launch against forts with at least this many attacks remaining. Use 0 for no minimum.</p>
+                    <p className="mt-1 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.only.launch.against.forts.with.at.least.43220000" /></p>
                   </label>
                   <PresetSelect
                     value={draft.forts.presetId}
@@ -948,7 +943,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                     placeholder="Fort attack preset"
                   />
                   {selectedFortPreset ? <PresetSummary preset={selectedFortPreset} /> : null}
-                  {draft.forts.levels.length === 0 ? <p className="text-xs text-error">Select at least one fort level.</p> : null}
+                  {draft.forts.levels.length === 0 ? <p className="text-xs text-error"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.select.at.least.one.fort.level.32a7a693" /></p> : null}
                 </div>
               ) : null}
             </div>
@@ -959,8 +954,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                   <Crosshair className="h-4 w-4 text-primary" /> Attack target priority
                 </div>
                 <p className="mt-1 text-xs text-text-muted">
-                  Drag enabled targets into attack order, highest first. Distance only breaks ties between targets in the same row.
-                </p>
+                  <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.drag.enabled.targets.into.attack.order.highest.6f2dfc44" /></p>
               </div>
 
               {activeTargetPriorities.length > 0 ? (
@@ -1036,16 +1030,15 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                 </div>
               ) : (
                 <p className="mt-3 border-t border-border-base pt-3 text-xs text-text-muted">
-                  Enable forts or resource islands and select at least one target to set the attack order.
-                </p>
+                  <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.enable.forts.or.resource.islands.and.select.db2a7a68" /></p>
               )}
             </div>
 
             <div className="mt-3 rounded-global border border-border-base bg-bg-app/30 p-3">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <div className="text-sm font-bold text-text-main">Resource islands</div>
-                  <p className="mt-1 text-xs text-text-muted">Capture matching resources and sizes, then return the report-confirmed surviving attack army to the Storm castle.</p>
+                  <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.resource.islands.761741cc" /></div>
+                  <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.capture.matching.resources.and.sizes.then.return.8af3283c" /></p>
                 </div>
                 <Switch
                   checked={draft.islands.enabled}
@@ -1056,7 +1049,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               {draft.islands.enabled ? (
                 <div className="mt-3 space-y-3 border-t border-border-base pt-3">
                   <div>
-                    <FieldLabel>Resources</FieldLabel>
+                    <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.resources.e89b30aa" /></FieldLabel>
                     <ChoiceChipGroup
                       ariaLabel="Storm island resources"
                       options={RESOURCE_OPTIONS}
@@ -1068,7 +1061,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                     />
                   </div>
                   <div>
-                    <FieldLabel>Island sizes</FieldLabel>
+                    <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.island.sizes.85f8ba7d" /></FieldLabel>
                     <ChoiceChipGroup
                       ariaLabel="Storm island sizes"
                       options={SIZE_OPTIONS}
@@ -1091,11 +1084,10 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <div className="flex items-center gap-2 text-xs font-bold text-text-main"><Shield className="h-3.5 w-3.5 text-primary" /> Island defense units</div>
-                        <p className="mt-1 text-[11px] text-text-muted">Choose dedicated occupation defenders. If empty, one survivor stays only after the successful battle report confirms the island army.</p>
+                        <p className="mt-1 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.choose.dedicated.occupation.defenders.if.empty.one.289de337" /></p>
                       </div>
                       <Button size="sm" variant="outline" onClick={() => void chooseDefenseUnits()} leftIcon={<Shield className="h-3.5 w-3.5" />}>
-                        Choose units
-                      </Button>
+                        <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.choose.units.b979a369" /></Button>
                     </div>
                     {draft.islands.defenseUnits.length > 0 ? (
                       <div className="mt-3 flex flex-wrap gap-2">
@@ -1109,11 +1101,11 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                           </div>
                         ))}
                       </div>
-                    ) : <p className="mt-2 text-[11px] text-text-muted">Automatic minimum occupation: after victory is reported, every surviving attack troop except one returns to the Storm castle.</p>}
+                    ) : <p className="mt-2 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.automatic.minimum.occupation.after.victory.is.reported.4a4d8d99" /></p>}
                   </div>
 
                   {draft.islands.resources.length === 0 || draft.islands.sizes.length === 0 ? (
-                    <p className="text-xs text-error">Select at least one resource and one island size.</p>
+                    <p className="text-xs text-error"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.select.at.least.one.resource.and.one.27bf23fb" /></p>
                   ) : null}
                 </div>
               ) : null}
@@ -1123,7 +1115,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2 text-sm font-bold text-text-main"><Truck className="h-4 w-4 text-primary" /> Import missing troops</div>
-                  <p className="mt-1 text-xs text-text-muted">Import missing attack or configured-defense troops from selected donor castles into the Storm castle before launch. Donors never send directly to an island.</p>
+                  <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.import.missing.attack.or.configured.defense.troops.1f4fca2e" /></p>
                 </div>
                 <Switch
                   checked={draft.troopImport.enabled}
@@ -1136,7 +1128,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               </div>
               {draft.troopImport.enabled ? (
                 <div className="mt-3 border-t border-border-base pt-3">
-                  <FieldLabel>Donor castles</FieldLabel>
+                  <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.donor.castles.efcb2401" /></FieldLabel>
                   {troopDonorCastles.length > 0 ? (
                     <ChoiceChipGroup
                       ariaLabel="Storm troop donor castles"
@@ -1153,10 +1145,10 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                         },
                       }))}
                     />
-                  ) : <p className="text-xs text-text-muted">No non-Storm donor castles are currently observed.</p>}
+                  ) : <p className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.no.non.storm.donor.castles.are.currently.3215ee89" /></p>}
                   <div className="mt-3 grid gap-3 sm:grid-cols-2">
                     <label>
-                      <FieldLabel>Minimum troops kept after launch</FieldLabel>
+                      <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.minimum.troops.kept.after.launch.96092426" /></FieldLabel>
                       <Input
                         type="number"
                         min={0}
@@ -1169,10 +1161,10 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                           },
                         }))}
                       />
-                      <p className="mt-1 text-[11px] text-text-muted">Imports the current preset mix so this many attack troops remain stationed in Storm after the next launch.</p>
+                      <p className="mt-1 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.imports.the.current.preset.mix.so.this.40349458" /></p>
                     </label>
                     <label>
-                      <FieldLabel>Average attacks since reset</FieldLabel>
+                      <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.average.attacks.since.reset.eede0aa7" /></FieldLabel>
                       <Input
                         readOnly
                         value={loadingTroopCapPreview
@@ -1189,7 +1181,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                       </p>
                     </label>
                     <label>
-                      <FieldLabel>Average enabled preset</FieldLabel>
+                      <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.average.enabled.preset.8de09ca3" /></FieldLabel>
                       <Input
                         readOnly
                         value={loadingTroopCapPreview
@@ -1206,7 +1198,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                       </p>
                     </label>
                     <label>
-                      <FieldLabel>Storm committed-troop cap</FieldLabel>
+                      <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.storm.committed.troop.cap.7ca034af" /></FieldLabel>
                       <Input
                         readOnly
                         value={loadingTroopCapPreview
@@ -1234,17 +1226,16 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                     </label>
                   </div>
                   <p className="mt-3 text-[11px] text-text-muted">
-                    The cap is the largest of the 5,000 baseline, confirmed Auto Storm attacks since reset ÷ 24 × average enabled-preset troops, or the amount needed for the largest preset plus your castle reserve. It counts troops stationed in Storm, away on active movements, waiting in transport, and ready to return from islands.
-                  </p>
-                  <p className="mt-2 text-[11px] text-text-muted">Donors are checked in the displayed order, and partial shortages can be filled across several transfers. Time skips use the construction-and-logistics reserve above. Attack tools must already be stationed in Storm.</p>
-                  {!troopImportValid ? <p className="mt-2 text-xs text-error">Select at least one currently observed donor castle.</p> : null}
+                    <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.the.cap.is.the.largest.of.the.4802a71d" /></p>
+                  <p className="mt-2 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.donors.are.checked.in.the.displayed.order.06f5ffd4" /></p>
+                  {!troopImportValid ? <p className="mt-2 text-xs text-error"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.select.at.least.one.currently.observed.donor.8e329343" /></p> : null}
                 </div>
               ) : null}
             </div>
 
             <div className="mt-4 border-t border-border-base pt-4">
               <div>
-                <FieldLabel>Map coverage</FieldLabel>
+                <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.map.coverage.88c46857" /></FieldLabel>
                 <Input readOnly value={stormMapCoverage} />
                 <p className="mt-1 text-[11px] text-text-muted">
                   {stormMapState?.windowCount && stormMapState.lastCompletedAt ? `Last completed ${formatDate(stormMapState.lastCompletedAt)}. ` : ''}
@@ -1268,7 +1259,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
           />
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             <label>
-              <FieldLabel>Keep Aquamarine</FieldLabel>
+              <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.keep.aquamarine.5dd1e957" /></FieldLabel>
               <Input
                 type="number"
                 min={0}
@@ -1285,7 +1276,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
               <p className="mt-1 text-[11px] text-text-muted">Current: {Math.trunc(aquamarineBalance).toLocaleString()}</p>
             </label>
             <label>
-              <FieldLabel>Find a Luna reward</FieldLabel>
+              <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.find.a.luna.reward.45864656" /></FieldLabel>
               <Input
                 value={lunaSearch}
                 onChange={(event) => setLunaSearch(event.target.value)}
@@ -1299,26 +1290,24 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
           </div>
 
           <p className="mt-3 rounded-global border border-warning/20 bg-warning/5 px-3 py-2 text-xs text-text-muted">
-            These 17 rewards were captured from the current Luna storefront; reward amounts, Aquamarine prices, and shop caps come from official game data. Unlimited goals obey the protected reserve and stop at Luna's stock cap when one exists.
-          </p>
+            <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.these.17.rewards.were.captured.from.the.dad7a0a6" /></p>
 
           {loadingPackages ? (
             <div className="mt-3 rounded-global border border-border-base bg-bg-app/30 px-4 py-8 text-center text-sm text-text-muted">
-              Loading Luna's official rewards…
-            </div>
+              <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.loading.luna.s.official.rewards.3e9da22d" /></div>
           ) : lunaPackages.length > 0 ? (
             <div className="mt-3 overflow-hidden rounded-global border border-border-base bg-bg-app/30">
               <div className="max-h-[min(34rem,52dvh)] overflow-auto custom-scrollbar">
                 <table className="w-full min-w-[72rem] table-fixed text-left text-xs">
                   <thead className="sticky top-0 z-10 border-b border-border-base bg-bg-card/95 text-[10px] uppercase tracking-wider text-text-muted">
                     <tr>
-                      <th className="w-[5rem] px-3 py-2.5 text-center font-black">Use</th>
-                      <th className="w-[28%] px-3 py-2.5 font-black">Reward</th>
-                      <th className="w-[9rem] px-3 py-2.5 text-right font-black">Cost</th>
-                      <th className="w-[8rem] px-3 py-2.5 text-center font-black">Purchased / cap</th>
-                      <th className="w-[10rem] px-3 py-2.5 font-black">Target total</th>
-                      <th className="w-[10rem] px-3 py-2.5 font-black">Unlimited</th>
-                      <th className="w-[7rem] px-3 py-2.5 font-black">Priority</th>
+                      <th className="w-[5rem] px-3 py-2.5 text-center font-black"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.use.c36d819e" /></th>
+                      <th className="w-[28%] px-3 py-2.5 font-black"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.reward.55ac8cba" /></th>
+                      <th className="w-[9rem] px-3 py-2.5 text-right font-black"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.cost.204a5eb2" /></th>
+                      <th className="w-[8rem] px-3 py-2.5 text-center font-black"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.purchased.cap.8ad88ee6" /></th>
+                      <th className="w-[10rem] px-3 py-2.5 font-black"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.target.total.414a9b7c" /></th>
+                      <th className="w-[10rem] px-3 py-2.5 font-black"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.unlimited.11dde17d" /></th>
+                      <th className="w-[7rem] px-3 py-2.5 font-black"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.priority.d60dbba0" /></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border-base/70">
@@ -1421,14 +1410,12 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             </div>
           ) : (
             <div className="mt-3 rounded-global border border-error/20 bg-error/5 px-4 py-6 text-center text-sm text-text-muted">
-              No Luna rewards were found in the loaded official package catalog.
-            </div>
+              <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.no.luna.rewards.were.found.in.the.c14fb5ec" /></div>
           )}
-          {!shopValid ? <p className="mt-2 text-xs text-error">Use one unique Luna product per goal and a positive target count for finite goals.</p> : null}
+          {!shopValid ? <p className="mt-2 text-xs text-error"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.use.one.unique.luna.product.per.goal.c8f48292" /></p> : null}
           {draft.aquamarine.purchases.length > 0 ? (
             <p className="mt-1 text-[11px] text-text-muted">
-              Lower priority numbers run first. An uncapped unlimited goal can consume all Aquamarine above the reserve before lower-priority rewards.
-            </p>
+              <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.lower.priority.numbers.run.first.an.uncapped.1a572fa0" /></p>
           ) : null}
         </Card>
 
@@ -1442,7 +1429,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
           <SectionHeading icon={Clock3} title="Cadence" description="Map refreshes are authoritative scans; policy checks react sooner to resource, build, troop, and movement changes." />
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <label>
-              <FieldLabel>Policy check interval</FieldLabel>
+              <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.policy.check.interval.ccd24f98" /></FieldLabel>
               <Input
                 type="number"
                 min={30}
@@ -1452,19 +1439,19 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                   ...current,
                   checkIntervalSec: clampAutoStormInteger(event.target.value, 30, 3600, current.checkIntervalSec),
                 }))}
-                rightIcon={<span className="text-xs text-text-muted">sec</span>}
+                rightIcon={<span className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.sec.add93534" /></span>}
                 className="font-mono"
               />
             </label>
             <label>
-              <FieldLabel>Map refresh interval</FieldLabel>
+              <FieldLabel><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.map.refresh.interval.26a9d474" /></FieldLabel>
               <Input
                 readOnly
                 value={draft.mapRefreshIntervalSec / 3600}
-                rightIcon={<span className="text-xs text-text-muted">hours</span>}
+                rightIcon={<span className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.hours.404314b1" /></span>}
                 className="font-mono"
               />
-              <p className="mt-1 text-[11px] text-text-muted">Failed or interrupted full sweeps are also held to this interval.</p>
+              <p className="mt-1 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.failed.or.interrupted.full.sweeps.are.also.25e99746" /></p>
             </label>
           </div>
         </Card>
@@ -1511,7 +1498,7 @@ function PresetSelect({
 }) {
   return (
     <label className="block">
-      <FieldLabel icon={Crosshair}>Attack preset</FieldLabel>
+      <FieldLabel icon={Crosshair}><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.attack.preset.407b93e9" /></FieldLabel>
       <Select
         value={value}
         onChange={onChange}

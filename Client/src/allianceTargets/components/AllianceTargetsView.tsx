@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
 	AlertTriangle,
@@ -358,8 +359,7 @@ const AllianceTargetsContent = memo(({
               isLoading={loading}
               leftIcon={<RefreshCw className="h-4 w-4" />}
             >
-              Refresh
-            </Button>
+              <LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.refresh.0e916101" /></Button>
           </div>
         )}
         contentClassName="overflow-hidden"
@@ -373,10 +373,10 @@ const AllianceTargetsContent = memo(({
                 <SortableHeader label="Might" column="might" width="w-[8%]" activeColumn={sortKey} direction={sortDirection} onSort={changeSort} align="right" />
                 <SortableHeader label="Status" column="rpt" width="w-[11%]" activeColumn={sortKey} direction={sortDirection} onSort={changeSort} />
                 <SortableHeader label="Target castle" column="target" width="w-[19%]" activeColumn={sortKey} direction={sortDirection} onSort={changeSort} />
-                <th className="w-[14%] px-4 py-3 font-semibold">Spy report</th>
+                <th className="w-[14%] px-4 py-3 font-semibold"><LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.spy.report.7ab63259" /></th>
                 <SortableHeader label="Closest castle" column="closestCastle" width="w-[14%]" activeColumn={sortKey} direction={sortDirection} onSort={changeSort} />
                 <SortableHeader label="Distance" column="distance" width="w-[7%]" activeColumn={sortKey} direction={sortDirection} onSort={changeSort} align="right" />
-                <th className="w-[15%] px-4 py-3 text-right font-semibold">Action</th>
+                <th className="w-[15%] px-4 py-3 text-right font-semibold"><LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.action.64cff131" /></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border-base/60">
@@ -402,7 +402,7 @@ const AllianceTargetsContent = memo(({
         </div>
 
         {!loading && totalTargets === 0 && (
-          <div className="px-5 py-12 text-center text-sm text-text-muted">No castles match the current filters.</div>
+          <div className="px-5 py-12 text-center text-sm text-text-muted"><LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.no.castles.match.the.current.filters.f50796e4" /></div>
         )}
 
         {totalTargets > 0 && (
@@ -461,11 +461,11 @@ const TargetRow = memo(({ target, canSpy, sending, sendingBlocked, loadingIntel,
     <td className="px-4 py-3">
       {target.underBird ? (
         <div className="space-y-1">
-          <Badge variant="warning">Under bird</Badge>
+          <Badge variant="warning"><LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.under.bird.e79c522f" /></Badge>
           <div className="text-xs tabular-nums text-text-muted">{formatDuration(target.rptSeconds)}</div>
         </div>
       ) : (
-        <Badge variant="success">Attackable</Badge>
+        <Badge variant="success"><LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.attackable.89016283" /></Badge>
       )}
     </td>
     <td className="px-4 py-3">
@@ -524,16 +524,14 @@ const TargetRow = memo(({ target, canSpy, sending, sendingBlocked, loadingIntel,
           onClick={() => onSpy(target)}
           leftIcon={<Binoculars className="h-4 w-4" />}
         >
-          Spy
-        </Button>
+          <LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.spy.aa01aabf" /></Button>
         <Button
           size="sm"
           variant="secondary"
 		  onClick={() => onAttack(target)}
 		  leftIcon={<Swords className="h-4 w-4" />}
         >
-		  Attack
-        </Button>
+		  <LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.attack.4cd548f3" /></Button>
       </div>
     </td>
   </tr>
@@ -742,8 +740,7 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 					icon={<Swords className="h-5 w-5" />}
 					description={`${target.name} · ${target.targetCastle.name || target.targetCastle.typeName || 'Player castle'} · ${target.targetCastle.x}:${target.targetCastle.y}`}
 				>
-					Attack alliance target
-				</ModalTitle>
+					<LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.attack.alliance.target.721d1aaf" /></ModalTitle>
 			)}
 			footer={(
 				<div className="flex w-full flex-wrap items-center justify-between gap-3">
@@ -751,7 +748,7 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 						{blockReason || 'CRA-capped formation and live source inventory are ready.'}
 					</p>
 					<div className="flex items-center gap-2">
-						<Button variant="ghost" disabled={launching} onClick={onClose}>Cancel</Button>
+						<Button variant="ghost" disabled={launching} onClick={onClose}><LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.cancel.19766ed6" /></Button>
 						<Button
 							variant="primary"
 							disabled={Boolean(blockReason) || launching}
@@ -759,8 +756,7 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 							onClick={() => void launch()}
 							leftIcon={<Swords className="h-4 w-4" />}
 						>
-							Attack
-						</Button>
+							<LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.attack.4cd548f3" /></Button>
 					</div>
 				</div>
 			)}
@@ -795,7 +791,7 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 
 				<div className="grid gap-4 rounded-global border border-border-base bg-bg-card/45 p-4 md:grid-cols-2">
 					<label className="block min-w-0">
-						<span className="mb-1.5 block text-[11px] font-black uppercase tracking-wider text-text-muted">Source castle</span>
+						<span className="mb-1.5 block text-[11px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.source.castle.86d5a48e" /></span>
 						<Select
 							value={sourceCastleID}
 							options={sourceOptions}
@@ -808,7 +804,7 @@ const AllianceTargetAttackModal = ({ target, onClose }: AllianceTargetAttackModa
 						/>
 					</label>
 					<label className="block min-w-0">
-						<span className="mb-1.5 block text-[11px] font-black uppercase tracking-wider text-text-muted">Attack preset</span>
+						<span className="mb-1.5 block text-[11px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.attack.preset.407b93e9" /></span>
 						<Select
 							value={presetID}
 							options={presetOptions}

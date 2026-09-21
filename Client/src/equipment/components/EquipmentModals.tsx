@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowUpCircle, Gem, RefreshCw, Shield, Sparkles, Trash2, TriangleAlert } from 'lucide-react';
 import { Badge, Button, Input, Modal, PillSelector, Switch } from '../../components/ui';
@@ -75,8 +76,8 @@ export function EquipmentSellModal({
 			title={<PillSelector ariaLabel="Equipment category" value={relicTab} onChange={(value) => setRelicTab(value as RelicTab)} options={['Non Relic', 'Relic 1.0', 'Relic 2.0']} size="header" fullWidth />}
 			footer={(
 				<>
-					<Button variant="ghost" onClick={onClose}>Cancel</Button>
-					<Button variant="danger" onClick={confirm} isLoading={busy}>Confirm Sell</Button>
+					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="ui.equipment.components.equipmentModals.cancel.19766ed6" /></Button>
+					<Button variant="danger" onClick={confirm} isLoading={busy}><LocalizedText messageKey="ui.equipment.components.equipmentModals.confirm.sell.827ff403" /></Button>
 				</>
 			)}
 		>
@@ -92,21 +93,21 @@ export function EquipmentSellModal({
 								? `Sell all Relic 1.0 ${itemType.toLowerCase()}`
 								: `Sell Relic 2.0 ${itemType.toLowerCase()} below ${keepStars} total stars`}
 					</p>
-					<p className="mt-2 text-xs text-error">This game action cannot be reversed.</p>
+					<p className="mt-2 text-xs text-error"><LocalizedText messageKey="ui.equipment.components.equipmentModals.this.game.action.cannot.be.reversed.43e31498" /></p>
 				</div>
 
 				{relicTab === 'Non Relic' && (
 					<div className="space-y-3">
 						<label className="flex cursor-pointer items-center justify-between rounded-global border border-border-base bg-bg-app/50 p-3">
 							<span>
-								<span className="block text-sm font-medium text-text-main">Sell post-2026 definitions</span>
-								<span className="block text-[11px] text-text-muted">Includes newly introduced catalog ranges.</span>
+								<span className="block text-sm font-medium text-text-main"><LocalizedText messageKey="ui.equipment.components.equipmentModals.sell.post.2026.definitions.81a124f5" /></span>
+								<span className="block text-[11px] text-text-muted"><LocalizedText messageKey="ui.equipment.components.equipmentModals.includes.newly.introduced.catalog.ranges.835d450c" /></span>
 							</span>
 							<Switch checked={sellPost2026} onChange={setSellPost2026} ariaLabel="Sell post-2026 definitions" />
 						</label>
 						{itemType === 'Equipment' && (
 							<label className="flex cursor-pointer items-center justify-between rounded-global border border-border-base bg-bg-app/50 p-3">
-								<span className="text-sm font-medium text-text-main">Sell look items</span>
+								<span className="text-sm font-medium text-text-main"><LocalizedText messageKey="ui.equipment.components.equipmentModals.sell.look.items.3837c1a3" /></span>
 								<Switch checked={sellLookItems} onChange={setSellLookItems} ariaLabel="Sell look items" />
 							</label>
 						)}
@@ -116,7 +117,7 @@ export function EquipmentSellModal({
 				{relicTab === 'Relic 2.0' && (
 					<div className="rounded-global border border-border-base bg-bg-app/50 p-4">
 						<div className="mb-3 flex items-center justify-between">
-							<span className="text-sm font-medium text-text-main">Keep total stars and above</span>
+							<span className="text-sm font-medium text-text-main"><LocalizedText messageKey="ui.equipment.components.equipmentModals.keep.total.stars.and.above.21f1668e" /></span>
 							<Badge variant="warning">{keepStars} stars</Badge>
 						</div>
 						<input
@@ -168,8 +169,8 @@ export function EquipmentSwapModal({
 			maxWidth="2xl"
 			footer={(
 				<>
-					<Button variant="ghost" onClick={onClose}>Cancel</Button>
-					<Button disabled={otherID == null} onClick={() => otherID != null && onConfirm(otherID)} isLoading={busy}>Swap Pieces</Button>
+					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="ui.equipment.components.equipmentModals.cancel.19766ed6" /></Button>
+					<Button disabled={otherID == null} onClick={() => otherID != null && onConfirm(otherID)} isLoading={busy}><LocalizedText messageKey="ui.equipment.components.equipmentModals.swap.pieces.86121fb1" /></Button>
 				</>
 			)}
 		>
@@ -241,7 +242,7 @@ export function EquipmentEventModal({
 			maxWidth="2xl"
 			footer={(
 				<>
-					<Button variant="ghost" onClick={onClose}>Cancel</Button>
+					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="ui.equipment.components.equipmentModals.cancel.19766ed6" /></Button>
 					<Button
 						disabled={!canApply}
 						onClick={() => selectedEvent && onConfirm(selectedEvent, selectedTier ?? undefined)}
@@ -261,15 +262,13 @@ export function EquipmentEventModal({
 						Choose the event loadout for <span className="font-semibold text-text-main">{leader?.name}</span>.
 					</p>
 					<p className="mt-1 text-xs text-text-muted">
-						Only storage and pieces already on this commander are eligible. Equipment on other commanders is never moved.
-					</p>
+						<LocalizedText messageKey="ui.equipment.components.equipmentModals.only.storage.and.pieces.already.on.this.9ae35d7d" /></p>
 				</div>
 
 				<div className="flex items-start gap-2 rounded-global border border-warning/30 bg-warning/10 p-3 text-xs text-text-muted">
 					<TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
 					<span>
-						Applying removes all five base equipment slots first. Only matching event pieces are re-equipped, so missing pieces leave their slots empty. The server refuses to clear the commander when no matching equipment is available.
-					</span>
+						<LocalizedText messageKey="ui.equipment.components.equipmentModals.applying.removes.all.five.base.equipment.slots.d95f2a94" /></span>
 				</div>
 
 				<div className="space-y-2">
@@ -289,7 +288,7 @@ export function EquipmentEventModal({
 											<span className="flex flex-wrap items-center gap-2">
 												<span className="text-sm font-semibold text-text-main">{entry.option.label}</span>
 												{hasTierChoice && <Badge variant="secondary">{isSelected && selectedTier ? selectedTier : `${entry.sets.length} tiers`}</Badge>}
-												{displayedSet.complete && <Badge variant="success">Complete</Badge>}
+												{displayedSet.complete && <Badge variant="success"><LocalizedText messageKey="ui.equipment.components.equipmentModals.complete.143b270a" /></Badge>}
 											</span>
 											<span className="mt-1 block text-xs text-text-muted">{entry.option.description}</span>
 											<span className="mt-2 flex flex-wrap gap-2">
@@ -306,8 +305,8 @@ export function EquipmentEventModal({
 								{isSelected && hasTierChoice && (
 									<div className="border-t border-primary/20 px-3 pb-3 pt-2.5">
 										<div className="mb-2 flex items-center justify-between gap-3">
-											<span className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Set tier</span>
-											<span className="text-[11px] text-text-muted">Equip only this tier</span>
+											<span className="text-[11px] font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.equipment.components.equipmentModals.set.tier.9c00987e" /></span>
+											<span className="text-[11px] text-text-muted"><LocalizedText messageKey="ui.equipment.components.equipmentModals.equip.only.this.tier.593e5e5f" /></span>
 										</div>
 										<PillSelector
 											ariaLabel={`${entry.option.label} equipment tier`}
@@ -328,7 +327,7 @@ export function EquipmentEventModal({
 					<p className="text-center text-xs text-warning">No eligible {selectedTier ? `${selectedTier} ` : ''}{selected.option.label} equipment is currently available.</p>
 				)}
 				{leader && !leader.available && (
-					<p className="text-center text-xs text-warning">This commander is busy and cannot be reconfigured.</p>
+					<p className="text-center text-xs text-warning"><LocalizedText messageKey="ui.equipment.components.equipmentModals.this.commander.is.busy.and.cannot.be.41116e12" /></p>
 				)}
 			</div>
 		</Modal>
@@ -370,7 +369,7 @@ export function UnequipModal({
 			title={`Unequip ${kind === 'equipment' ? 'Equipment' : 'Gems'}`}
 			footer={(
 				<>
-					<Button variant="ghost" onClick={onClose}>Cancel</Button>
+					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="ui.equipment.components.equipmentModals.cancel.19766ed6" /></Button>
 					<Button disabled={selected.size === 0} onClick={() => onConfirm(Array.from(selected))} isLoading={busy}>Unequip {selected.size ? `(${selected.size})` : ''}</Button>
 				</>
 			)}
@@ -458,7 +457,7 @@ export function UpgradeModal({
 			title={`Upgrade ${kind === 'equipment' ? 'Equipment' : 'Gem'}`}
 			footer={(
 				<>
-					<Button variant="ghost" onClick={onClose}>Cancel</Button>
+					<Button variant="ghost" onClick={onClose}><LocalizedText messageKey="ui.equipment.components.equipmentModals.cancel.19766ed6" /></Button>
 					<Button
 						disabled={selectedID == null || selectedLevelCap == null || currentLevel >= selectedLevelCap || targetLevel <= currentLevel || targetLevel > selectedLevelCap || coinBlocked}
 						onClick={() => selectedID != null && onConfirm(selectedID, targetLevel)}
@@ -507,7 +506,7 @@ export function UpgradeModal({
 						/>
 					</div>
 				)}
-				{coinBlocked && <p className="text-center text-xs text-warning">The configured coin reserve currently blocks upgrades.</p>}
+				{coinBlocked && <p className="text-center text-xs text-warning"><LocalizedText messageKey="ui.equipment.components.equipmentModals.the.configured.coin.reserve.currently.blocks.upgrades.587e3e2f" /></p>}
 			</div>
 		</Modal>
 	);

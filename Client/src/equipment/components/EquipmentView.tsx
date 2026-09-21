@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Activity, RefreshCw, SlidersHorizontal, Sparkles } from 'lucide-react';
 import { useCitadelAPI } from '../../api/ApiContext';
@@ -250,8 +251,8 @@ export default function EquipmentView() {
 					<PillSelector ariaLabel="Equipment owner type" value={mode} options={['Commander', 'Castellan']} onChange={(value) => setMode(value as EquipmentMode)} size="header" />
 					<div className="equipment-actions ml-auto">
 						<Button size="sm" variant="outline" disabled={controlsDisabled || leaders.length < 2} onClick={() => setShowSwap(true)}><RefreshCw className="mr-1.5 h-4 w-4" />Swap Gear</Button>
-						<Button size="sm" disabled={!state?.session.loggedIn || busy} onClick={() => { setSellType('Gems'); setShowSell(true); }} className="border border-warning/30 bg-warning/10 text-warning hover:border-warning/50 hover:bg-warning/20">Sell Gems</Button>
-						<Button size="sm" disabled={!state?.session.loggedIn || busy} onClick={() => { setSellType('Equipment'); setShowSell(true); }} className="border border-warning/30 bg-warning/10 text-warning hover:border-warning/50 hover:bg-warning/20">Sell Equipment</Button>
+						<Button size="sm" disabled={!state?.session.loggedIn || busy} onClick={() => { setSellType('Gems'); setShowSell(true); }} className="border border-warning/30 bg-warning/10 text-warning hover:border-warning/50 hover:bg-warning/20"><LocalizedText messageKey="ui.equipment.components.equipmentView.sell.gems.8a1147dc" /></Button>
+						<Button size="sm" disabled={!state?.session.loggedIn || busy} onClick={() => { setSellType('Equipment'); setShowSell(true); }} className="border border-warning/30 bg-warning/10 text-warning hover:border-warning/50 hover:bg-warning/20"><LocalizedText messageKey="ui.equipment.components.equipmentView.sell.equipment.aadcdf54" /></Button>
 					</div>
 				</CardHeader>
 
@@ -434,7 +435,7 @@ function EquipmentStatsPane({
 	onReconfigure: () => void;
 	onEventLoadout: () => void;
 }) {
-	if (!leader) return <p className="py-12 text-center text-sm text-text-muted">Select a loadout.</p>;
+	if (!leader) return <p className="py-12 text-center text-sm text-text-muted"><LocalizedText messageKey="ui.equipment.components.equipmentView.select.a.loadout.a4c3f8e7" /></p>;
 	const equipmentCount = rows.filter((row) => row.item).length;
 	const gemCount = rows.filter((row) => row.gem).length;
 	const upgradeableGemCount = rows.filter((row) => (row.gem?.id ?? 0) > 0).length;
@@ -449,14 +450,14 @@ function EquipmentStatsPane({
 						{combatMode ? `${combatMode} Stats` : 'Target Stats'}
 					</Badge>
 					<div className="ml-auto flex flex-wrap justify-end gap-2">
-						<Button size="sm" variant="outline" disabled={disabled || equipmentCount === 0} onClick={() => onUpgrade('equipment')}>Upgrade Equipment</Button>
-						<Button size="sm" disabled={disabled || upgradeableGemCount === 0} onClick={() => onUpgrade('gem')}>Upgrade Gem</Button>
+						<Button size="sm" variant="outline" disabled={disabled || equipmentCount === 0} onClick={() => onUpgrade('equipment')}><LocalizedText messageKey="ui.equipment.components.equipmentView.upgrade.equipment.2cc9e2a4" /></Button>
+						<Button size="sm" disabled={disabled || upgradeableGemCount === 0} onClick={() => onUpgrade('gem')}><LocalizedText messageKey="ui.equipment.components.equipmentView.upgrade.gem.8be1f026" /></Button>
 						{leader.kind === 'commander' && (
-							<Button size="sm" variant="outline" disabled={disabled} onClick={onEventLoadout} leftIcon={<Sparkles className="h-4 w-4" />}>Event Set</Button>
+							<Button size="sm" variant="outline" disabled={disabled} onClick={onEventLoadout} leftIcon={<Sparkles className="h-4 w-4" />}><LocalizedText messageKey="ui.equipment.components.equipmentView.event.set.9308e6ac" /></Button>
 						)}
-						<Button size="sm" disabled={reconfigureDisabled} onClick={onReconfigure} leftIcon={<SlidersHorizontal className="h-4 w-4" />}>Reconfigure</Button>
-						<Button size="sm" variant="outline" disabled={disabled || equipmentCount === 0} onClick={() => onUnequip('equipment')}>Unequip Equipment</Button>
-						<Button size="sm" disabled={disabled || gemCount === 0} onClick={() => onUnequip('gems')}>Unequip Gem</Button>
+						<Button size="sm" disabled={reconfigureDisabled} onClick={onReconfigure} leftIcon={<SlidersHorizontal className="h-4 w-4" />}><LocalizedText messageKey="ui.equipment.components.equipmentView.reconfigure.7458d4f3" /></Button>
+						<Button size="sm" variant="outline" disabled={disabled || equipmentCount === 0} onClick={() => onUnequip('equipment')}><LocalizedText messageKey="ui.equipment.components.equipmentView.unequip.equipment.a2039e49" /></Button>
+						<Button size="sm" disabled={disabled || gemCount === 0} onClick={() => onUnequip('gems')}><LocalizedText messageKey="ui.equipment.components.equipmentView.unequip.gem.d9a5f88e" /></Button>
 					</div>
 				</div>
 			</div>
@@ -476,7 +477,7 @@ function EquipmentStatsPane({
 						</div>
 					</div>
 				))}
-				{effectProfile.sections.length === 0 && <p className="py-8 text-center text-sm text-text-muted">No mapped equipment effects are available for this loadout.</p>}
+				{effectProfile.sections.length === 0 && <p className="py-8 text-center text-sm text-text-muted"><LocalizedText messageKey="ui.equipment.components.equipmentView.no.mapped.equipment.effects.are.available.for.8e82a295" /></p>}
 			</div>
 		</div>
 	);
@@ -494,7 +495,7 @@ function EquipmentEffectGroupRows({ group }: { group: EquipmentEffectGroup }) {
 						<div className="flex flex-wrap items-center gap-2">
 							<span className="text-sm font-medium text-text-muted">{group.label}</span>
 							<Badge variant="outline" className="px-1.5 py-0 text-[9px]">{group.rows.length} effects</Badge>
-							{group.capped && <Badge variant="warning" className="px-1.5 py-0 text-[9px]">Capped</Badge>}
+							{group.capped && <Badge variant="warning" className="px-1.5 py-0 text-[9px]"><LocalizedText messageKey="ui.equipment.components.equipmentView.capped.526b49dc" /></Badge>}
 						</div>
 					</div>
 					<div className="shrink-0 text-right">
@@ -535,7 +536,7 @@ function EquipmentEffectDetailRow({
 					<div className="flex flex-wrap items-center gap-2">
 						<span className="text-sm text-text-muted">{formatEquipmentEffectLabel(effect)}</span>
 						<Badge variant={effectScopeBadge(effect.scope)} className="px-1.5 py-0 text-[9px]">{effect.scope}</Badge>
-						{effect.capped && <Badge variant="warning" className="px-1.5 py-0 text-[9px]">Capped</Badge>}
+						{effect.capped && <Badge variant="warning" className="px-1.5 py-0 text-[9px]"><LocalizedText messageKey="ui.equipment.components.equipmentView.capped.526b49dc" /></Badge>}
 					</div>
 					<div className="mt-1 text-[11px] text-text-muted/80">
 						{effect.sources.join(' · ')}{includeCap && effect.cap ? ` · max ${formatEquipmentEffectValue(effect, effect.cap)}` : ''}

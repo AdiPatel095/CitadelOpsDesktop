@@ -86,5 +86,9 @@
   "activity.searchChannel": "기능 또는 채널 찾기",
   "activity.filter": "로그 활동 필터링",
   "activity.searchActivity": "로그 활동 검색",
-  "activity.actionOrIssue": "작업 또는 문제"
+  "activity.actionOrIssue": "작업 또는 문제",
+  "activity.all": "모든 활동 · {count, number}",
+  "activity.actions": "완료된 작업 · {count, number}",
+  "activity.issues": "경고 및 오류 · {count, number}",
+  "activity.results": "전체 {total, number}개 중 {shown, number}개"
 }

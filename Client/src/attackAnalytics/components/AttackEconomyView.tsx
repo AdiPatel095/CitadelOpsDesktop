@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import {
@@ -209,16 +210,15 @@ const AttackEconomyView = ({
             onClick={() => void loadAggregates()}
             disabled={loading}
           >
-            Refresh
-          </Button>
+            <LocalizedText messageKey="ui.attackAnalytics.components.attackEconomyView.refresh.0e916101" /></Button>
         )}
         meta={(
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="outline">Battle-report verified</Badge>
+            <Badge variant="outline"><LocalizedText messageKey="ui.attackAnalytics.components.attackEconomyView.battle.report.verified.c70ec4cb" /></Badge>
             {(selectedFeature === 'autoTowers' || selectedFeature === 'autoStorm') && (
-              <Badge variant="secondary">Events excluded</Badge>
+              <Badge variant="secondary"><LocalizedText messageKey="ui.attackAnalytics.components.attackEconomyView.events.excluded.ad67c518" /></Badge>
             )}
-            {loadError && <Badge variant="danger">History unavailable</Badge>}
+            {loadError && <Badge variant="danger"><LocalizedText messageKey="ui.attackAnalytics.components.attackEconomyView.history.unavailable.cf319f4d" /></Badge>}
           </div>
         )}
       />}
@@ -284,15 +284,14 @@ const AttackEconomyView = ({
         </CardHeader>
         <CardContent className="p-5 sm:p-6">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-xs text-text-muted">
-            <span>Drag horizontally to inspect a custom time period.</span>
+            <span><LocalizedText messageKey="ui.attackAnalytics.components.attackEconomyView.drag.horizontally.to.inspect.a.custom.time.4a5e7152" /></span>
             {customWindow && (
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant="outline">
                   {formatDate(customWindow.startUnix)} – {formatDate(customWindow.endUnix)}
                 </Badge>
                 <Button variant="ghost" size="sm" onClick={() => setCustomWindow(null)}>
-                  Clear selection
-                </Button>
+                  <LocalizedText messageKey="ui.attackAnalytics.components.attackEconomyView.clear.selection.cea4d2e0" /></Button>
               </div>
             )}
           </div>
@@ -353,7 +352,7 @@ function EmptyAnalyticsState({ compact = false, metricLabel = 'loot' }: { compac
     <div className={`flex flex-col items-center justify-center text-center text-text-muted ${compact ? 'min-h-32 py-4' : 'min-h-40 py-6'}`}>
       <Trophy className="mb-3 h-8 w-8 opacity-50" />
       <div className="text-sm font-semibold text-text-main">No attributed {metricLabel.toLocaleLowerCase()} yet</div>
-      <p className="mt-1 max-w-sm text-xs">New confirmed reports for this automation will begin populating this view.</p>
+      <p className="mt-1 max-w-sm text-xs"><LocalizedText messageKey="ui.attackAnalytics.components.attackEconomyView.new.confirmed.reports.for.this.automation.will.34f774ba" /></p>
     </div>
   );
 }

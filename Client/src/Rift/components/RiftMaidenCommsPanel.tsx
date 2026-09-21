@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Shield, Users } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -228,7 +229,7 @@ const RiftMaidenCommsPanel: React.FC<RiftMaidenCommsPanelProps> = ({ headerActio
               </p>
             </div>
           ) : (
-            <p className="text-xs text-amber-400/90">No main castle troop data yet — connect and wait for castle sync.</p>
+            <p className="text-xs text-amber-400/90"><LocalizedText messageKey="ui.rift.components.riftMaidenCommsPanel.no.main.castle.troop.data.yet.connect.4af49471" /></p>
           )}
           {sendStatus ? (
             <p
@@ -260,8 +261,7 @@ const RiftMaidenCommsPanel: React.FC<RiftMaidenCommsPanelProps> = ({ headerActio
             }
             leftIcon={<Users className="w-3.5 h-3.5" />}
           >
-            Pick unit
-          </Button>
+            <LocalizedText messageKey="ui.rift.components.riftMaidenCommsPanel.pick.unit.8ff02f40" /></Button>
 
           <div
             className={`flex min-w-0 flex-1 items-center gap-2 rounded-lg border px-2.5 py-1.5 md:min-w-[140px] md:flex-none ${
@@ -283,7 +283,7 @@ const RiftMaidenCommsPanel: React.FC<RiftMaidenCommsPanelProps> = ({ headerActio
           </div>
 
 					<label className="flex items-center gap-2 rounded-lg border border-border-base bg-bg-card/50 px-2.5 py-1.5">
-						<span className="text-xs font-semibold text-text-muted">Probe goal</span>
+						<span className="text-xs font-semibold text-text-muted"><LocalizedText messageKey="ui.rift.components.riftMaidenCommsPanel.probe.goal.a822a868" /></span>
 						<input
 							type="number"
 							min={1}

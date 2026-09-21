@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, FastForward, Truck, Wheat } from 'lucide-react';
 import { Button, ChoiceChipGroup, Input, SettingsModal, SettingsToggleRow } from '../../components/ui';
@@ -73,8 +74,7 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
     >
       <div className="space-y-5">
         <p className="text-sm text-text-muted">
-          Before sending resources, CitadelOps refreshes each castle’s food state so troop consumption, brewery inputs, and equipped bonuses are current. It ranks donors by net surplus, requires enough protected storage to fill the destination, then uses market barrows or allowed kingdom transport.
-        </p>
+          <LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.before.sending.resources.citadelops.refreshes.each.castle.1110c8f5" /></p>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <NumberField label="Polling interval" value={settings.checkIntervalSec} min={30} max={3600} suffix="seconds" onChange={(value) => setNumber('checkIntervalSec', value)} />
@@ -85,8 +85,7 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
         </div>
 
         <p className="text-xs text-text-muted">
-          Storm Food and Mead wait until the configured delivery threshold is available after the kingdom-transport toll. The minimum is 10,000.
-        </p>
+          <LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.storm.food.and.mead.wait.until.the.1090dfc3" /></p>
 
         <div className="rounded-global border border-border-base bg-bg-card/40 p-4">
           <HorseTravelBoostSelect
@@ -117,7 +116,7 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
         {settings.useKingdomTimeSkips && settings.autoKingdomTransport && (
           <div className="space-y-3 rounded-global border border-border-base bg-bg-input/35 p-4">
             <div>
-              <div className="text-xs font-bold uppercase tracking-wider text-text-muted">Allowed transport skips</div>
+              <div className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.allowed.transport.skips.73eba8a9" /></div>
               <ChoiceChipGroup
                 className="mt-2"
                 size="sm"
@@ -159,8 +158,7 @@ export const AutoFoodBalanceSettingsModal: React.FC<AutoFoodBalanceSettingsModal
             )}
 
             <p className="text-[11px] leading-relaxed text-text-muted">
-              CitadelOps prefers the smallest selected skip that completes a shipment, then the largest selected partial skip. The amounts above are always kept in reserve.
-            </p>
+              <LocalizedText messageKey="ui.settings.components.autoFoodBalanceSettingsModal.citadelops.prefers.the.smallest.selected.skip.that.a106f6cf" /></p>
           </div>
         )}
 

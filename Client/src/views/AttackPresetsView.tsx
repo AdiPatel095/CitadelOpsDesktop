@@ -1,3 +1,4 @@
+import { LocalizedText } from "../i18n/LocalizedText";
 import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ClipboardCopy,
@@ -264,17 +265,15 @@ const AttackPresetsView: React.FC = () => {
           <Badge variant={document.presets.length > 0 ? 'primary' : 'secondary'}>
             {document.presets.length} preset{document.presets.length === 1 ? '' : 's'}
           </Badge>
-          <Badge variant="outline" className="normal-case tracking-normal">Stored by CitadelOps</Badge>
+          <Badge variant="outline" className="normal-case tracking-normal"><LocalizedText messageKey="ui.views.attackPresetsView.stored.by.citadelops.9f046c26" /></Badge>
           </>
         )}
         actions={(
           <>
             <Button variant="secondary" leftIcon={<ClipboardPaste className="h-4 w-4" />} onClick={openImport}>
-              Import CRA
-            </Button>
+              <LocalizedText messageKey="ui.views.attackPresetsView.import.cra.1371371b" /></Button>
             <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => openPresetCreation()}>
-              New preset
-            </Button>
+              <LocalizedText messageKey="ui.views.attackPresetsView.new.preset.75be83ad" /></Button>
           </>
         )}
         searchValue={query}
@@ -307,8 +306,7 @@ const AttackPresetsView: React.FC = () => {
             : 'Presets are independent from the game’s saved slots and can contain up to 30 complete attack waves.'}
           action={!query.trim() ? (
             <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => openPresetCreation()}>
-              Create preset
-            </Button>
+              <LocalizedText messageKey="ui.views.attackPresetsView.create.preset.6d72507d" /></Button>
           ) : undefined}
         />
       )}
@@ -338,15 +336,12 @@ const AttackPresetsView: React.FC = () => {
             icon={<Swords className="h-5 w-5" />}
             description="This determines the maximum tools allowed in each section of every wave."
           >
-            Choose preset target type
-          </ModalTitle>
+            <LocalizedText messageKey="ui.views.attackPresetsView.choose.preset.target.type.4d782ea3" /></ModalTitle>
         )}
       >
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-text-muted">
-            Select the targets this preset is designed for. CitadelOps will show these limits in the builder
-            and will check the real target again immediately before sending CRA.
-          </p>
+            <LocalizedText messageKey="ui.views.attackPresetsView.select.the.targets.this.preset.is.designed.386a2831" /></p>
           <div className="grid gap-3 md:grid-cols-2">
             <PresetTargetTypeChoice
               type="pve"
@@ -372,9 +367,7 @@ const AttackPresetsView: React.FC = () => {
             />
           </div>
           <div className="rounded-global border border-border-base bg-bg-app/35 px-4 py-3 text-xs leading-relaxed text-text-muted">
-            PvE uses 30 / 40 / 30. Legendary PvP uses 40 / 50 / 40, then the active official
-            Hall flank-tool skill adds up to +10 on the left and right. The real target is checked again before sending.
-          </div>
+            <LocalizedText messageKey="ui.views.attackPresetsView.pve.uses.30.40.30.legendary.pvp.79b5a683" /></div>
         </div>
       </Modal>
 
@@ -387,19 +380,17 @@ const AttackPresetsView: React.FC = () => {
             icon={<ClipboardPaste className="h-5 w-5" />}
             description="Accepts a full %xt% CRA wire command or its JSON payload."
           >
-            Import CRA formation
-          </ModalTitle>
+            <LocalizedText messageKey="ui.views.attackPresetsView.import.cra.formation.aca74fc9" /></ModalTitle>
         )}
         footer={(
           <div className="flex w-full items-center justify-end gap-2">
-            <Button variant="ghost" onClick={() => setImportOpen(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setImportOpen(false)}><LocalizedText messageKey="ui.views.attackPresetsView.cancel.19766ed6" /></Button>
             <Button
               onClick={handleImport}
               disabled={!importValue.trim()}
               leftIcon={<ClipboardPaste className="h-4 w-4" />}
             >
-              Load formation
-            </Button>
+              <LocalizedText messageKey="ui.views.attackPresetsView.load.formation.6d45b3ee" /></Button>
           </div>
         )}
       >
@@ -462,7 +453,7 @@ const PresetCard: React.FC<{
               {preset.targetType === 'pvp' ? 'PvP' : 'PvE'}
             </Badge>
             {preset.useTroopFamilies ? (
-              <Badge variant="primary" className="normal-case tracking-normal">Family fill</Badge>
+              <Badge variant="primary" className="normal-case tracking-normal"><LocalizedText messageKey="ui.views.attackPresetsView.family.fill.30bc122b" /></Badge>
             ) : null}
             <span className="text-xs text-text-muted">
               Tool max · L {toolLimits.L} · C {toolLimits.M} · R {toolLimits.R}
@@ -493,8 +484,7 @@ const PresetCard: React.FC<{
           <FormationPreview label="Tool types" ids={summary.toolTypes} emptyIcon={<Shield className="h-4 w-4" />} render={(id) => <ToolImage toolId={id} size={34} showLevel={false} />} />
         </div>
         <Button variant="secondary" className="w-full" onClick={onEdit} disabled={busy} leftIcon={<Edit3 className="h-4 w-4" />}>
-          Edit formation
-        </Button>
+          <LocalizedText messageKey="ui.views.attackPresetsView.edit.formation.7bc1c041" /></Button>
       </CardContent>
     </Card>
   );

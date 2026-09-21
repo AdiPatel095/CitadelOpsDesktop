@@ -1,3 +1,4 @@
+import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { Check, Heart, List, Flame } from 'lucide-react';
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -650,7 +651,7 @@ const TroopPickerModal: React.FC<TroopPickerModalProps> = ({ isOpen, options, on
       )}
       filterDock={(
         <div className="picker-filter-dock">
-          <span className="ui-kicker picker-filter-dock-label">Filters</span>
+          <span className="ui-kicker picker-filter-dock-label"><LocalizedText messageKey="ui.components.troopPickerModal.filters.546ebb8e" /></span>
           <div className="picker-filter-row">
             <PillSelector
               ariaLabel="Unit type filter"

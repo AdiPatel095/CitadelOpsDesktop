@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useId, useMemo, useState } from 'react';
 import {
   ArrowRight,
@@ -382,8 +383,7 @@ const BattleStatsView: React.FC = () => {
             </FilterField>
 
             <Button variant="outline" className="w-full" onClick={resetFilters}>
-              Reset filters
-            </Button>
+              <LocalizedText messageKey="ui.battleStats.components.battleStatsView.reset.filters.10afa984" /></Button>
 
           </SectionCard>
         </aside>
@@ -421,13 +421,13 @@ const BattleStatsView: React.FC = () => {
             <table className="battle-table w-full text-sm">
               <thead>
                 <tr className="text-left text-xs uppercase tracking-wider text-text-muted border-b border-border-base">
-                    <th className="px-4 py-3 font-semibold">Time</th>
-                    <th className="px-4 py-3 font-semibold">Attacker</th>
-                    <th className="px-4 py-3 font-semibold">Defender</th>
-                    <th className="px-4 py-3 font-semibold">Result</th>
-                    <th className="px-4 py-3 font-semibold">Castle</th>
-                    <th className="px-4 py-3 font-semibold text-right">Attack lost</th>
-                    <th className="px-4 py-3 font-semibold text-right">Def lost</th>
+                    <th className="px-4 py-3 font-semibold"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.time.33b93476" /></th>
+                    <th className="px-4 py-3 font-semibold"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.attacker.2969c659" /></th>
+                    <th className="px-4 py-3 font-semibold"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.defender.157ddc59" /></th>
+                    <th className="px-4 py-3 font-semibold"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.result.6e7d50e8" /></th>
+                    <th className="px-4 py-3 font-semibold"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.castle.419fb3b8" /></th>
+                    <th className="px-4 py-3 font-semibold text-right"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.attack.lost.8832fb51" /></th>
+                    <th className="px-4 py-3 font-semibold text-right"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.def.lost.10bd5680" /></th>
                     <th className="px-3 py-3 font-semibold text-right w-12" aria-label="Open details"></th>
                 </tr>
               </thead>
@@ -483,8 +483,7 @@ const BattleStatsView: React.FC = () => {
             )}
             {filteredReports.length === 0 && (
               <div className="px-5 py-12 text-center text-text-muted">
-                No player battle reports match the current filters.
-              </div>
+                <LocalizedText messageKey="ui.battleStats.components.battleStatsView.no.player.battle.reports.match.the.current.c7977008" /></div>
             )}
       </SectionCard>
     </div>
@@ -543,7 +542,7 @@ const ReportResultBadges: React.FC<{ result: string; size?: 'sm' | 'lg'; classNa
 }) => {
   const parts = splitResultLabel(result);
   if (!parts) {
-    return <Badge variant="secondary">Unknown</Badge>;
+    return <Badge variant="secondary"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.unknown.b764cdc0" /></Badge>;
   }
 
   const roleClass =
@@ -568,7 +567,7 @@ const ResultBadge: React.FC<{ result: string }> = ({ result }) => {
   if (result === 'Attack lost' || result === 'Defense lost') {
     return <Badge variant="danger">{result}</Badge>;
   }
-  return <Badge variant="secondary">Unknown</Badge>;
+  return <Badge variant="secondary"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.unknown.b764cdc0" /></Badge>;
 };
 
 interface PlayerAggregate {
@@ -608,12 +607,12 @@ const PlayerAggregateTable: React.FC<{ rows: PlayerAggregate[] }> = ({ rows }) =
         <table className="battle-aggregate-table w-full text-sm">
           <thead>
             <tr className="text-left text-xs uppercase tracking-wider text-text-muted border-b border-border-base">
-              <th className="px-4 py-3 font-semibold">Player</th>
-              <th className="px-4 py-3 font-semibold text-right">Reports</th>
+              <th className="px-4 py-3 font-semibold"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.player.64aee8c6" /></th>
+              <th className="px-4 py-3 font-semibold text-right"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.reports.dacca3cb" /></th>
               <th className="px-4 py-3 font-semibold text-right">A / D</th>
               <th className="px-4 py-3 font-semibold text-right">W / L</th>
-              <th className="px-4 py-3 font-semibold text-right" title="Defenders killed per attacker lost in attacks by this player">Attack Ratio</th>
-              <th className="px-4 py-3 font-semibold text-right" title="Attackers killed per defender lost in defenses by this player">Defense Ratio</th>
+              <th className="px-4 py-3 font-semibold text-right" title="Defenders killed per attacker lost in attacks by this player"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.attack.ratio.6958245c" /></th>
+              <th className="px-4 py-3 font-semibold text-right" title="Attackers killed per defender lost in defenses by this player"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.defense.ratio.1ffe9f00" /></th>
             </tr>
           </thead>
           <tbody>
@@ -640,7 +639,7 @@ const PlayerAggregateTable: React.FC<{ rows: PlayerAggregate[] }> = ({ rows }) =
             ))}
             {rows.length === 0 && (
               <tr className="h-[3.25rem] border-b border-border-base/70">
-                <td className="px-4 text-center text-text-muted" colSpan={6}>No player aggregate for the current filters.</td>
+                <td className="px-4 text-center text-text-muted" colSpan={6}><LocalizedText messageKey="ui.battleStats.components.battleStatsView.no.player.aggregate.for.the.current.filters.b43972c1" /></td>
               </tr>
             )}
             <AggregateSpacerRows count={AGGREGATE_ROW_LIMIT - Math.min(AGGREGATE_ROW_LIMIT, Math.max(1, rows.length))} columns={6} />
@@ -656,11 +655,11 @@ const AllianceAggregateTable: React.FC<{ rows: AllianceAggregate[] }> = ({ rows 
         <table className="battle-aggregate-table w-full text-sm">
           <thead>
             <tr className="text-left text-xs uppercase tracking-wider text-text-muted border-b border-border-base">
-              <th className="px-4 py-3 font-semibold">Alliance</th>
-              <th className="px-4 py-3 font-semibold text-right">Reports</th>
+              <th className="px-4 py-3 font-semibold"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.alliance.afe3c194" /></th>
+              <th className="px-4 py-3 font-semibold text-right"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.reports.dacca3cb" /></th>
               <th className="px-4 py-3 font-semibold text-right">W / L</th>
-              <th className="px-4 py-3 font-semibold text-right" title="Defenders killed per attacker lost when attacking this alliance">Attack Ratio</th>
-              <th className="px-4 py-3 font-semibold text-right" title="Attackers killed per defender lost when defending against this alliance">Defense Ratio</th>
+              <th className="px-4 py-3 font-semibold text-right" title="Defenders killed per attacker lost when attacking this alliance"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.attack.ratio.6958245c" /></th>
+              <th className="px-4 py-3 font-semibold text-right" title="Attackers killed per defender lost when defending against this alliance"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.defense.ratio.1ffe9f00" /></th>
             </tr>
           </thead>
           <tbody>
@@ -683,7 +682,7 @@ const AllianceAggregateTable: React.FC<{ rows: AllianceAggregate[] }> = ({ rows 
             ))}
             {rows.length === 0 && (
               <tr className="h-[3.25rem] border-b border-border-base/70">
-                <td className="px-4 text-center text-text-muted" colSpan={5}>No alliance aggregate for the current filters.</td>
+                <td className="px-4 text-center text-text-muted" colSpan={5}><LocalizedText messageKey="ui.battleStats.components.battleStatsView.no.alliance.aggregate.for.the.current.filters.95233f6a" /></td>
               </tr>
             )}
             <AggregateSpacerRows count={AGGREGATE_ROW_LIMIT - Math.min(AGGREGATE_ROW_LIMIT, Math.max(1, rows.length))} columns={5} />
@@ -697,7 +696,7 @@ const AggregateSpacerRows: React.FC<{ count: number; columns: number }> = ({ cou
   <>
     {Array.from({ length: count }, (_, index) => (
       <tr key={`aggregate-spacer-${index}`} aria-hidden="true" className="hidden h-[3.25rem] border-b border-border-base/40 2xl:table-row">
-        <td colSpan={columns}>&nbsp;</td>
+        <td colSpan={columns}><LocalizedText messageKey="ui.battleStats.components.battleStatsView..abfbd10d" /></td>
       </tr>
     ))}
   </>
@@ -784,7 +783,7 @@ const BattleDetailsHeader: React.FC<{ report: ParsedReport; outcome: string; onB
             <Swords className="h-6 w-6" />
           </div>
           <div className="min-w-0">
-            <div className="battle-report-eyebrow">Battle report dossier</div>
+            <div className="battle-report-eyebrow"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.battle.report.dossier.33061613" /></div>
             <CardTitle className="battle-report-dossier-title">{battleLocationLabel(report)}</CardTitle>
           </div>
         </div>
@@ -798,7 +797,7 @@ const BattleDetailsHeader: React.FC<{ report: ParsedReport; outcome: string; onB
           <div className="battle-report-seal-ring">
             <Swords className="h-7 w-7" />
           </div>
-          <div className="battle-report-seal-label">Final result</div>
+          <div className="battle-report-seal-label"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.final.result.aead3fa0" /></div>
           <ReportResultBadges result={outcome} size="lg" className="battle-report-result-badges" />
           <div className="battle-report-seal-location">{battleLocationLabel(report)}</div>
         </div>
@@ -1026,8 +1025,7 @@ const EffectComparison: React.FC<{
             <div className="grid grid-cols-[1fr_1.5fr_1fr] divide-x divide-border-base overflow-hidden rounded-global border border-border-base bg-bg-app">
               <EffectComparisonHeader label="Commander" name={commanderName} tone="danger" />
               <div className="flex min-w-0 items-center justify-center bg-bg-surface/45 px-3 py-2 text-center text-[10px] font-bold uppercase tracking-wider text-text-muted">
-                Effect
-              </div>
+                <LocalizedText messageKey="ui.battleStats.components.battleStatsView.effect.2252d5cf" /></div>
               <EffectComparisonHeader label="Castellan" name={castellanName} tone="info" />
             </div>
 
@@ -1055,7 +1053,7 @@ const EffectComparison: React.FC<{
           </div>
         </div>
       ) : (
-        <div className="text-sm text-text-muted py-8 text-center">No parsed leader effects for this report.</div>
+        <div className="text-sm text-text-muted py-8 text-center"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.no.parsed.leader.effects.for.this.report.2ecd0b30" /></div>
       )}
     </CollapsibleDetailCard>
   );
@@ -1288,7 +1286,7 @@ const WaveRow: React.FC<{ wave: BattleWave; index: number }> = ({ wave, index })
         </div>
       )}
       {lanes.length === 0 && (
-        <div className="text-sm text-text-muted">No lane details parsed for this wave.</div>
+        <div className="text-sm text-text-muted"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.no.lane.details.parsed.for.this.wave.892849b6" /></div>
       )}
     </div>
   );

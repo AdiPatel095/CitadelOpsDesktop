@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import { useLocale } from '../../i18n/LocaleContext';
 import { officialCatalogGeneration, subscribeOfficialCatalog } from '../../i18n/officialMessages';
 import React, { useState, useEffect, useMemo, useCallback, useRef, useSyncExternalStore } from 'react';
@@ -379,11 +380,11 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
       isOpen={isOpen}
       onClose={handleClose}
       maxWidth="full"
-      title={<span className="text-amber-500">Auto TCI Settings</span>}
+      title={<span className="text-amber-500"><LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.auto.tci.settings.f9b867dd" /></span>}
       icon={<Hammer className="h-5 w-5 text-amber-500" />}
       description={(
             <>
-              Per castle, pick construction item variants and set a <span className="font-medium text-text-main">level floor and ceiling</span>{' '}
+              Per castle, pick construction item variants and set a <span className="font-medium text-text-main"><LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.level.floor.and.ceiling.484f7a16" /></span>{' '}
               using the level range supplied by the current official construction-item catalog.
             </>
       )}
@@ -395,8 +396,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
               onClick={() => onOpenFeatureSchedule('autoTCI', 'Auto TCI')}
               leftIcon={<CalendarDays className="h-4 w-4" />}
             >
-              Calendar
-            </Button>
+              <LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.calendar.d5d0a30b" /></Button>
       )}
       onSave={handleSave}
       saveLabel="Save changes"
@@ -424,8 +424,8 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
           disabled={isSaving}
           help={(
             <>
-            Choose a preset and click <span className="font-semibold text-text-main">Apply</span> to load it into the grid.{' '}
-            <span className="font-semibold text-text-main">Save changes</span> writes Auto TCI settings and updates the applied preset
+            Choose a preset and click <span className="font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.apply.31e392d1" /></span> to load it into the grid.{' '}
+            <span className="font-semibold text-text-main"><LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.save.changes.dd0ae7a5" /></span> writes Auto TCI settings and updates the applied preset
             (including name). Data is stored next to Auto Bird settings (see AutoTCI.json).
             </>
           )}
@@ -537,11 +537,9 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
                 ) : (
                   <div className="flex min-h-[10rem] flex-col items-center justify-center py-8">
                     <div className="mb-3 text-center text-xs font-bold uppercase tracking-wider text-text-muted/60">
-                      No construction items selected
-                    </div>
+                      <LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.no.construction.items.selected.0fef5a0b" /></div>
                     <Button variant="outline" size="sm" onClick={() => handleAddItem(castleId)} leftIcon={<Plus className="h-4 w-4" />}>
-                      Add construction item
-                    </Button>
+                      <LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.add.construction.item.095fa798" /></Button>
                   </div>
                 )}
               </CardContent>

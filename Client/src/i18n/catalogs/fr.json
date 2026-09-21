@@ -86,5 +86,9 @@
   "activity.searchChannel": "Trouver une fonctionnalité ou un canal",
   "activity.filter": "Filtrer l’activité du journal",
   "activity.searchActivity": "Rechercher dans le journal",
-  "activity.actionOrIssue": "Action ou problème"
+  "activity.actionOrIssue": "Action ou problème",
+  "activity.all": "Toute l’activité · {count, number}",
+  "activity.actions": "Actions terminées · {count, number}",
+  "activity.issues": "Avertissements et erreurs · {count, number}",
+  "activity.results": "{shown, number} sur {total, number}"
 }

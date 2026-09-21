@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Clock3, Coins, ShieldCheck, Sparkles, Zap } from 'lucide-react';
 import { useCitadelAPI } from '../../api/ApiContext';
@@ -101,8 +102,7 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
           onClick={() => onOpenFeatureSchedule('autoBooster', 'Auto Booster')}
           leftIcon={<CalendarDays className="h-4 w-4" />}
         >
-          Calendar
-        </Button>
+          <LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.calendar.d5d0a30b" /></Button>
       )}
       onSave={save}
       saveLabel="Save booster guard"
@@ -122,8 +122,8 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
             </div>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-base font-black text-text-main">Daily fortress-speed boost</h3>
-                <Badge variant="warning">2,500 rubies</Badge>
+                <h3 className="text-base font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.daily.fortress.speed.boost.2fb815fe" /></h3>
+                <Badge variant="warning"><LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.2.500.rubies.966ac160" /></Badge>
                 <Badge variant={statusVariant}>{live.statusLabel}</Badge>
               </div>
               <p className="mt-1 max-w-xl text-xs leading-relaxed text-text-muted">
@@ -154,20 +154,20 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
             </Badge>
           </div>
           <div className="mt-3 grid grid-cols-2 gap-2 text-[11px] md:grid-cols-4">
-            <div className="rounded-xl border border-border-base bg-bg-app/55 px-3 py-2"><span className="block text-text-muted">Event expiry</span><strong className="text-text-main">{formatAutoBoosterRemaining(live.purchase.expiresAt, now)}</strong><span className="mt-0.5 block text-[10px] text-text-muted">{formatReceiptTime(live.purchase.expiresAt)}</span></div>
-            <div className="rounded-xl border border-border-base bg-bg-app/55 px-3 py-2"><span className="block text-text-muted">Quote and reserve</span><strong className="text-text-main">{live.purchaseHasRequest ? `${live.purchase.quotedRubyCost.toLocaleString()} rubies` : 'No purchase quote'}</strong><span className="mt-0.5 block text-[10px] text-text-muted">{live.purchaseHasRequest ? `Keep ${live.purchase.minimumRubyReserve.toLocaleString()}` : 'Reserve not recorded'}</span></div>
-            <div className="rounded-xl border border-border-base bg-bg-app/55 px-3 py-2"><span className="block text-text-muted">Request and result</span><strong className="text-text-main">{live.purchaseHasRequest ? `${live.purchase.requestOpcode.toUpperCase()} · ${live.purchase.resultCode == null ? 'Awaiting result' : `Code ${live.purchase.resultCode}`}` : 'No automated request'}</strong><span className="mt-0.5 block text-[10px] text-text-muted">{live.purchaseHasRequest ? formatAutoBoosterRequestProgress(live.purchase) : 'Activation observed from game state'}</span></div>
-            <div className="rounded-xl border border-border-base bg-bg-app/55 px-3 py-2"><span className="block text-text-muted">Ruby observation</span><strong className="text-text-main">{live.purchaseHasRequest ? formatObservedRubyChange(live.purchase) : 'No purchase balance evidence'}</strong>{live.purchaseHasRequest && <span className="mt-0.5 block text-[10px] text-text-muted">{live.purchase.rubyBefore.toLocaleString()} before{live.purchase.rubyAfterKnown ? ` · ${(live.purchase.rubyAfter ?? 0).toLocaleString()} after` : ''}</span>}<span className="mt-0.5 block text-[10px] font-semibold text-text-main">{live.purchase.debitUnverified ? 'Purchase debit unverified' : 'Purchase debit verified'}</span></div>
+            <div className="rounded-xl border border-border-base bg-bg-app/55 px-3 py-2"><span className="block text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.event.expiry.cfd4614e" /></span><strong className="text-text-main">{formatAutoBoosterRemaining(live.purchase.expiresAt, now)}</strong><span className="mt-0.5 block text-[10px] text-text-muted">{formatReceiptTime(live.purchase.expiresAt)}</span></div>
+            <div className="rounded-xl border border-border-base bg-bg-app/55 px-3 py-2"><span className="block text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.quote.and.reserve.a6203198" /></span><strong className="text-text-main">{live.purchaseHasRequest ? `${live.purchase.quotedRubyCost.toLocaleString()} rubies` : 'No purchase quote'}</strong><span className="mt-0.5 block text-[10px] text-text-muted">{live.purchaseHasRequest ? `Keep ${live.purchase.minimumRubyReserve.toLocaleString()}` : 'Reserve not recorded'}</span></div>
+            <div className="rounded-xl border border-border-base bg-bg-app/55 px-3 py-2"><span className="block text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.request.and.result.2eb7af2b" /></span><strong className="text-text-main">{live.purchaseHasRequest ? `${live.purchase.requestOpcode.toUpperCase()} · ${live.purchase.resultCode == null ? 'Awaiting result' : `Code ${live.purchase.resultCode}`}` : 'No automated request'}</strong><span className="mt-0.5 block text-[10px] text-text-muted">{live.purchaseHasRequest ? formatAutoBoosterRequestProgress(live.purchase) : 'Activation observed from game state'}</span></div>
+            <div className="rounded-xl border border-border-base bg-bg-app/55 px-3 py-2"><span className="block text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.ruby.observation.9c1604b5" /></span><strong className="text-text-main">{live.purchaseHasRequest ? formatObservedRubyChange(live.purchase) : 'No purchase balance evidence'}</strong>{live.purchaseHasRequest && <span className="mt-0.5 block text-[10px] text-text-muted">{live.purchase.rubyBefore.toLocaleString()} before{live.purchase.rubyAfterKnown ? ` · ${(live.purchase.rubyAfter ?? 0).toLocaleString()} after` : ''}</span>}<span className="mt-0.5 block text-[10px] font-semibold text-text-main">{live.purchase.debitUnverified ? 'Purchase debit unverified' : 'Purchase debit verified'}</span></div>
           </div>
           <details className="mt-3 rounded-xl border border-border-base bg-bg-app/40 px-3 py-2 text-[11px] text-text-muted">
-            <summary className="cursor-pointer font-bold text-text-main">Receipt details</summary>
+            <summary className="cursor-pointer font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.receipt.details.02f7cc37" /></summary>
             <dl className="mt-2 grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
-              <div><dt>Request prepared</dt><dd className="font-mono text-text-main">{live.purchaseHasRequest ? formatReceiptTime(live.purchase.requestedAt) : 'Unavailable'}</dd></div>
-              <div><dt>Request dispatched</dt><dd className="font-mono text-text-main">{live.purchaseHasRequest ? formatReceiptTime(live.purchase.dispatchedAt) : 'Unavailable'}</dd></div>
-              <div><dt>Acknowledgement observed</dt><dd className="font-mono text-text-main">{live.purchaseHasRequest ? formatReceiptTime(live.purchase.resultObservedAt) : 'Unavailable'}</dd></div>
-              <div><dt>Activation observed</dt><dd className="font-mono text-text-main">{formatReceiptTime(live.purchase.activationObservedAt)}</dd></div>
-              <div><dt>Quote bonus</dt><dd className="font-mono text-text-main">{live.purchaseHasRequest ? live.purchase.quotedBonusValue.toLocaleString() : 'Unavailable'}</dd></div>
-              <div><dt>Operation</dt><dd className="break-all font-mono text-text-main">{live.purchase.operationId || 'Unavailable'}</dd></div>
+              <div><dt><LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.request.prepared.8e687b36" /></dt><dd className="font-mono text-text-main">{live.purchaseHasRequest ? formatReceiptTime(live.purchase.requestedAt) : 'Unavailable'}</dd></div>
+              <div><dt><LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.request.dispatched.ce6eb892" /></dt><dd className="font-mono text-text-main">{live.purchaseHasRequest ? formatReceiptTime(live.purchase.dispatchedAt) : 'Unavailable'}</dd></div>
+              <div><dt><LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.acknowledgement.observed.469bfdf6" /></dt><dd className="font-mono text-text-main">{live.purchaseHasRequest ? formatReceiptTime(live.purchase.resultObservedAt) : 'Unavailable'}</dd></div>
+              <div><dt><LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.activation.observed.a9cb1031" /></dt><dd className="font-mono text-text-main">{formatReceiptTime(live.purchase.activationObservedAt)}</dd></div>
+              <div><dt><LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.quote.bonus.9d62dae4" /></dt><dd className="font-mono text-text-main">{live.purchaseHasRequest ? live.purchase.quotedBonusValue.toLocaleString() : 'Unavailable'}</dd></div>
+              <div><dt><LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.operation.0f044feb" /></dt><dd className="break-all font-mono text-text-main">{live.purchase.operationId || 'Unavailable'}</dd></div>
             </dl>
           </details>
         </Card>
@@ -180,12 +180,12 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
               <Coins className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-sm font-black text-text-main">Ruby reserve</h3>
-              <p className="mt-0.5 text-xs text-text-muted">The purchase must leave at least this many rubies untouched.</p>
+              <h3 className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.ruby.reserve.bd9dd746" /></h3>
+              <p className="mt-0.5 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.the.purchase.must.leave.at.least.this.a3c95609" /></p>
             </div>
           </div>
           <label className="mt-4 block">
-            <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">Minimum rubies to keep</span>
+            <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.minimum.rubies.to.keep.d6f81306" /></span>
             <Input
               type="number"
               min={0}
@@ -208,8 +208,8 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
               <ShieldCheck className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-sm font-black text-text-main">Dispatch safeguards</h3>
-              <p className="mt-0.5 text-xs text-text-muted">All checks are repeated immediately before premium spend.</p>
+              <h3 className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.dispatch.safeguards.249ed03e" /></h3>
+              <p className="mt-0.5 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.all.checks.are.repeated.immediately.before.premium.2f36dd30" /></p>
             </div>
           </div>
           <div className="mt-4 space-y-2 text-[11px] text-text-muted">
@@ -231,7 +231,7 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
 
       <div className="mt-4 flex items-start gap-3 rounded-global border border-primary/25 bg-primary/5 p-4 text-xs text-text-muted">
         <Zap className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-        <p><strong className="text-text-main">Independent by design.</strong> Auto Booster only buys this one daily global effect. Auto Fortress can run without it, while enabling both is recommended for the fastest fortress marches.</p>
+        <p><strong className="text-text-main"><LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.independent.by.design.c461f898" /></strong> Auto Booster only buys this one daily global effect. Auto Fortress can run without it, while enabling both is recommended for the fastest fortress marches.</p>
       </div>
     </SettingsModal>
   );

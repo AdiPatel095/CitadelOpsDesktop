@@ -86,5 +86,9 @@
   "activity.searchChannel": "Özellik veya kanal bul",
   "activity.filter": "Günlük etkinliğini filtrele",
   "activity.searchActivity": "Günlük etkinliğini ara",
-  "activity.actionOrIssue": "Eylem veya sorun"
+  "activity.actionOrIssue": "Eylem veya sorun",
+  "activity.all": "Tüm etkinlik · {count, number}",
+  "activity.actions": "Tamamlanan eylemler · {count, number}",
+  "activity.issues": "Uyarılar ve hatalar · {count, number}",
+  "activity.results": "{total, number} kayıttan {shown, number}"
 }

@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React from 'react';
 import { Gauge } from 'lucide-react';
 import type { DailyAttackStateV2 } from '../../api/Contracts';
@@ -21,7 +22,7 @@ export const DailyAttackLimitField: React.FC<DailyAttackLimitFieldProps> = ({ va
           </div>
           <p className="mt-1 text-xs text-text-muted">
             {description ?? (
-              <>Stop this automation when the server&apos;s account-wide daily attack count reaches this value. It resumes automatically when the server count resets. Advisor attacks are exempt.</>
+              <><LocalizedText messageKey="ui.settings.components.dailyAttackLimitField.stop.this.automation.when.the.server.s.e625b85e" /></>
             )}
           </p>
           <p className="mt-2 text-[11px] text-text-muted">
@@ -31,7 +32,7 @@ export const DailyAttackLimitField: React.FC<DailyAttackLimitFieldProps> = ({ va
           </p>
         </div>
         <label className="block w-full shrink-0 sm:w-48">
-          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">Attack count · 0 disables</span>
+          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.dailyAttackLimitField.attack.count.0.disables.a9fe9489" /></span>
           <Input
             type="text"
             inputMode="numeric"

@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { type ReactNode } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { Button } from './Button';
@@ -35,10 +36,10 @@ export const NamedPresetControls: React.FC<NamedPresetControlsProps> = ({
   disabled = false,
 }) => (
   <Card variant="solid" className={`shrink-0 border-border-base bg-bg-app p-4 ${className}`}>
-    <div className="mb-3 text-xs font-bold uppercase tracking-wider text-primary">Presets</div>
+    <div className="mb-3 text-xs font-bold uppercase tracking-wider text-primary"><LocalizedText messageKey="ui.components.ui.namedPresetControls.presets.954f93fe" /></div>
     <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end">
       <label className="flex min-w-0 flex-1 flex-col gap-1.5 md:min-w-[220px]">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Preset name</span>
+        <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.components.ui.namedPresetControls.preset.name.e534a666" /></span>
         <Input
           type="text"
           placeholder="Name for new preset or rename on save"
@@ -49,12 +50,12 @@ export const NamedPresetControls: React.FC<NamedPresetControlsProps> = ({
         />
       </label>
       <div className="flex min-w-0 flex-[2] flex-col gap-1.5 md:min-w-[280px]">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted">Load preset</span>
+        <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.components.ui.namedPresetControls.load.preset.f9d863d6" /></span>
         <div className="flex flex-col gap-2 md:flex-row">
           <div className="min-w-0 flex-1">
             <Select value={selectedID} onChange={onSelectedIDChange} options={options} ariaLabel="Load preset" disabled={disabled} />
           </div>
-          <Button variant="outline" onClick={onApply} disabled={disabled} className="w-full shrink-0 bg-bg-card md:w-auto">Apply</Button>
+          <Button variant="outline" onClick={onApply} disabled={disabled} className="w-full shrink-0 bg-bg-card md:w-auto"><LocalizedText messageKey="ui.components.ui.namedPresetControls.apply.31e392d1" /></Button>
         </div>
       </div>
       <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap">
@@ -65,11 +66,9 @@ export const NamedPresetControls: React.FC<NamedPresetControlsProps> = ({
           className="min-w-0 border-info/40 px-2 text-info hover:bg-info/10 md:px-3"
           leftIcon={<Plus className="h-4 w-4" />}
         >
-          Save as new
-        </Button>
+          <LocalizedText messageKey="ui.components.ui.namedPresetControls.save.as.new.84b113d1" /></Button>
         <Button variant="danger" disabled={disabled || !selectedID} onClick={onDelete} className="min-w-0 px-2 md:px-3" leftIcon={<Trash2 className="h-4 w-4" />}>
-          Delete
-        </Button>
+          <LocalizedText messageKey="ui.components.ui.namedPresetControls.delete.e2d0a549" /></Button>
       </div>
     </div>
     {help && <p className="mt-3 text-xs text-text-muted">{help}</p>}

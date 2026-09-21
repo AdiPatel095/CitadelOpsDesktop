@@ -1,3 +1,4 @@
+import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Camera,
@@ -245,7 +246,7 @@ const DefensePresetsView: React.FC = () => {
             <Badge variant={document.presets.length > 0 ? 'primary' : 'secondary'}>
               {document.presets.length} preset{document.presets.length === 1 ? '' : 's'}
             </Badge>
-            <Badge variant="outline" className="normal-case tracking-normal">Stored by CitadelOps</Badge>
+            <Badge variant="outline" className="normal-case tracking-normal"><LocalizedText messageKey="ui.views.defensePresetsView.stored.by.citadelops.9f046c26" /></Badge>
           </>
         )}
         actions={(
@@ -274,7 +275,7 @@ const DefensePresetsView: React.FC = () => {
               aria-label="Refresh defense"
               onClick={() => void handleRefresh()}
             >
-              <span className="hidden 2xl:inline">Refresh defense</span>
+              <span className="hidden 2xl:inline"><LocalizedText messageKey="ui.views.defensePresetsView.refresh.defense.369d88c7" /></span>
             </Button>
             <Button
               variant="secondary"
@@ -284,7 +285,7 @@ const DefensePresetsView: React.FC = () => {
               aria-label="Capture current defense"
               onClick={() => selectedCastle && setEditor({ presetID: null, draft: defensePresetDraftFromCastle(selectedCastle) })}
             >
-              <span className="hidden 2xl:inline">Capture current</span>
+              <span className="hidden 2xl:inline"><LocalizedText messageKey="ui.views.defensePresetsView.capture.current.135de533" /></span>
             </Button>
             <Button
               leftIcon={<Plus className="h-4 w-4" />}
@@ -292,7 +293,7 @@ const DefensePresetsView: React.FC = () => {
               aria-label="New defense preset"
               onClick={() => setEditor({ presetID: null, draft: emptyDefensePresetDraft() })}
             >
-              <span className="hidden 2xl:inline">New preset</span>
+              <span className="hidden 2xl:inline"><LocalizedText messageKey="ui.views.defensePresetsView.new.preset.75be83ad" /></span>
             </Button>
           </>
         )}
@@ -328,8 +329,7 @@ const DefensePresetsView: React.FC = () => {
             : 'Build one manually without live defense state, or refresh a castle and capture its current setup as a starting point.'}
           action={!query.trim() ? (
             <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => setEditor({ presetID: null, draft: emptyDefensePresetDraft() })}>
-              Create preset
-            </Button>
+              <LocalizedText messageKey="ui.views.defensePresetsView.create.preset.6d72507d" /></Button>
           ) : undefined}
         />
       )}
@@ -393,18 +393,18 @@ const PresetCard: React.FC<{
         </div>
         <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
           <div className="rounded-global border border-border-base bg-bg-app/35 p-3">
-            <div className="mb-2 text-[9px] font-black uppercase tracking-wider text-text-muted">Tool types</div>
+            <div className="mb-2 text-[9px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.views.defensePresetsView.tool.types.dd756e8c" /></div>
             <div className="flex min-h-[2.125rem] items-center gap-1.5 overflow-hidden">
               {summary.toolTypes.length > 0 ? summary.toolTypes.slice(0, 8).map((id) => (
                 <ToolImage key={id} toolId={id} size={34} showLevel={false} />
-              )) : <span className="text-xs text-text-muted">No tools assigned</span>}
+              )) : <span className="text-xs text-text-muted"><LocalizedText messageKey="ui.views.defensePresetsView.no.tools.assigned.e628edf3" /></span>}
               {summary.toolTypes.length > 8 ? <Badge variant="secondary">+{summary.toolTypes.length - 8}</Badge> : null}
             </div>
           </div>
           <div className="flex flex-wrap content-start items-start gap-1.5 sm:max-w-48">
-            <Badge variant="outline">Left · 4 wall</Badge>
-            <Badge variant="warning">Front · 4 wall + 2 gate</Badge>
-            <Badge variant="outline">Right · 4 wall</Badge>
+            <Badge variant="outline"><LocalizedText messageKey="ui.views.defensePresetsView.left.4.wall.0b829422" /></Badge>
+            <Badge variant="warning"><LocalizedText messageKey="ui.views.defensePresetsView.front.4.wall.2.gate.f7988e8b" /></Badge>
+            <Badge variant="outline"><LocalizedText messageKey="ui.views.defensePresetsView.right.4.wall.de6cefdf" /></Badge>
             <Badge variant="outline">{summary.moatSlots} moat slots</Badge>
             <Badge variant={preset.keep ? 'primary' : 'secondary'}>
               {summary.courtyardSlots > 0

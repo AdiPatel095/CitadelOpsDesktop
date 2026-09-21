@@ -1,3 +1,4 @@
+import { LocalizedText } from "../i18n/LocalizedText";
 import { useLocale } from '../i18n/LocaleContext';
 import { LanguageSelector } from '../i18n/LanguageSelector';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -370,7 +371,7 @@ const Header: React.FC<HeaderProps> = ({
           </div>
           <div className="liquid-brand-copy">
             <div className="text-lg font-bold leading-tight text-text-main">Citadel Ops</div>
-            <div className="text-[11px] font-medium leading-tight text-text-muted">Command center</div>
+            <div className="text-[11px] font-medium leading-tight text-text-muted"><LocalizedText messageKey="ui.components.header.command.center.2522f9d1" /></div>
           </div>
           <span
             className={`liquid-header-connection ${connectionIconClass} ${connectionPill.pulse ? 'liquid-header-connection-pulse' : ''}`}

@@ -86,5 +86,9 @@
   "activity.searchChannel": "機能またはチャンネルを検索",
   "activity.filter": "ログの活動を絞り込む",
   "activity.searchActivity": "ログの活動を検索",
-  "activity.actionOrIssue": "操作または問題"
+  "activity.actionOrIssue": "操作または問題",
+  "activity.all": "すべての活動 · {count, number}",
+  "activity.actions": "完了した操作 · {count, number}",
+  "activity.issues": "警告とエラー · {count, number}",
+  "activity.results": "{total, number}件中{shown, number}件"
 }

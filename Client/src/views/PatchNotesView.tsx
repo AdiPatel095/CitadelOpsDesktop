@@ -1,3 +1,4 @@
+import { LocalizedText } from "../i18n/LocalizedText";
 import React from 'react';
 import { Icons } from '../components/Icons';
 import { Badge, PageHeader, SectionCard } from '../components/ui';
@@ -34,7 +35,7 @@ function ReleaseCard({ release, isLatest }: { release: PatchNotesRelease; isLate
       title={(
         <>
           <span className="font-mono text-primary">v{release.version}</span>
-          {isLatest && <Badge variant="primary">Current</Badge>}
+          {isLatest && <Badge variant="primary"><LocalizedText messageKey="ui.views.patchNotesView.current.e0d1b682" /></Badge>}
         </>
       )}
       description={release.subtitle}
@@ -95,8 +96,7 @@ const PatchNotesView: React.FC = () => {
       </div>
 
       <p className="mt-10 text-xs text-text-muted text-center">
-        Earlier versions will appear here as they’re released.
-      </p>
+        <LocalizedText messageKey="ui.views.patchNotesView.earlier.versions.will.appear.here.as.they.abab933c" /></p>
     </div>
   );
 };

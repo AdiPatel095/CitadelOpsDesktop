@@ -1,3 +1,4 @@
+import { sourceMessages } from '../src/i18n/sourceMessages.ts';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { after, beforeEach, test } from 'node:test';
@@ -159,7 +160,7 @@ test('Settings route includes the My Stats storage control and required choices 
 	assert.match(settingsSource, /aria-label="Custom My Stats retention days"/);
 	assert.match(settingsSource, /projectedPlayerHistoryRecordings/);
 	assert.match(settingsSource, /playerHistoryRecordingsPerDay/);
-	assert.match(settingsSource, /does not send additional game scan commands/);
+	assert.ok(Object.entries(sourceMessages).some(([key, text]) => text.includes('does not send additional game scan commands') && settingsSource.includes(`messageKey="${key}"`)), 'Translated settings disclosure remains wired: '+'does not send additional game scan commands');
 	assert.match(settingsSource, /estimatedBytesPerRecording/);
 	assert.match(settingsSource, /Local desktop mode applies this policy directly/);
 	assert.match(settingsSource, /Neither dataset is published to the hosted private-metrics backend/);
