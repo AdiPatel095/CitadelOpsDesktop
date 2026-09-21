@@ -497,7 +497,7 @@ func (*AutoStationPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decisi
 		if protectionMode {
 			return protectionModeOpenGateDecision(snapshot, settings, threats, threatCount, earliestImpact, metrics), nil
 		}
-		if decision, refresh := allianceRosterRefreshDecision(snapshot, "Incoming attack detected; refreshing alliance roster before evacuation"); refresh {
+		if decision, refresh := allianceRosterRefreshDecision(snapshot, "Incoming attack detected; refreshing alliance roster before evacuation", Localization.New("server.automation.incoming_attack_detected_refreshing.143eccd4", "Incoming attack detected; refreshing alliance roster before evacuation", nil)); refresh {
 			decision.Status = "threat"
 			decision.Metrics = metrics
 			return decision, nil
@@ -1053,7 +1053,7 @@ func allianceRefreshDecision(snapshot Snapshot, detail string, descriptors ...*L
 	}
 }
 
-func allianceRosterRefreshDecision(snapshot Snapshot, detail string) (Decision, bool) {
+func allianceRosterRefreshDecision(snapshot Snapshot, detail string, descriptors ...*Localization.Message) (Decision, bool) {
 	if snapshot.State.Alliance.ID <= 0 {
 		return Decision{}, false
 	}
@@ -1061,7 +1061,7 @@ func allianceRosterRefreshDecision(snapshot Snapshot, detail string) (Decision, 
 		snapshot.Now.Sub(snapshot.State.Alliance.ObservedAt) < allianceRosterRefreshInterval {
 		return Decision{}, false
 	}
-	return allianceRefreshDecision(snapshot, detail), true
+	return allianceRefreshDecision(snapshot, detail, descriptors...), true
 }
 
 func stationMetrics(threatCount int, earliestImpact time.Time) map[string]float64 {

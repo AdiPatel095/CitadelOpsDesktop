@@ -212,7 +212,7 @@ func (*AutoAdvisorPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 	eventCapacity := min(autoAdvisorMaxAttackCount, int(usableSeconds/State.AdvisorEstimatedCycleSeconds))
 	inventoryCapacity, err := availablePresetCopies(preset, source, snapshot.GameData, autoAdvisorMaxAttackCount)
 	if err != nil {
-		return autoAdvisorWaiting(snapshot.Now, "Cannot resolve attack preset troop families: "+err.Error(), metrics), nil
+		return autoAdvisorWaiting(snapshot.Now, "Cannot resolve attack preset troop families: "+err.Error(), metrics, Localization.ErrorContext(Localization.New("server.automation.cannot_resolve_attack_preset.333c4bed", "Cannot resolve attack preset troop families", nil), err)), nil
 	}
 	coinCapacity := int(math.Floor(max(0, playerResourceAmount(snapshot, "C1")-float64(settings.MinimumCoinReserve)) / float64(settings.CoinCostPerAttack)))
 	rubyCapacity := autoAdvisorMaxAttackCount

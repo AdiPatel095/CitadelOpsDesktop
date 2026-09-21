@@ -310,7 +310,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		}
 		if err := validateAutoNomadToolCompatibility(limitedPreset, snapshot.GameData, score, target); err != nil {
 			return Decision{
-				Status: "gated", Detail: err.Error(),
+				Status: "gated", Detail: err.Error(), DetailDescriptor: Localization.FromError(err),
 				NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)), Metrics: metrics,
 			}, nil
 		}
@@ -396,7 +396,7 @@ func (*AutoNomadPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	}
 	if err := validateAutoNomadToolCompatibility(limitedPreset, snapshot.GameData, score, target); err != nil {
 		return Decision{
-			Status: "gated", Detail: err.Error(),
+			Status: "gated", Detail: err.Error(), DetailDescriptor: Localization.FromError(err),
 			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)), Metrics: metrics,
 		}, nil
 	}
@@ -906,7 +906,7 @@ func nomadPresetWaiting(
 ) Decision {
 	if itemID, required, available, found, err := invasionPresetShortage(preset, source, gameData); err != nil {
 		return Decision{
-			Status: "waiting", Detail: "Cannot resolve preset troop families: " + err.Error(),
+			Status: "waiting", Detail: "Cannot resolve preset troop families: " + err.Error(), DetailDescriptor: Localization.ErrorContext(Localization.New("server.automation.cannot_resolve_preset_troop.42b6f5a4", "Cannot resolve preset troop families", nil), err),
 			NextCheckAt: now.Add(30 * time.Second), Metrics: metrics,
 		}
 	} else if found {
@@ -1023,7 +1023,7 @@ func evaluateAutoNomadRBCTest(snapshot Snapshot, settings autoNomadSettings) (De
 		metrics["cooldownsSkipped"] = float64(test.CooldownsSkipped)
 		if test.SafetyError != "" {
 			return Decision{
-				Status: "blocked", Detail: "RBC trial stopped on unsafe arrival order: " + test.SafetyError,
+				Status: "blocked", Detail: "RBC trial stopped on unsafe arrival order: " + test.SafetyError, DetailDescriptor: Localization.Join(Localization.New("server.automation.rbc_arrival_order.stopped", "RBC trial stopped on unsafe arrival order", nil), test.SafetyErrorDescriptor),
 				NextCheckAt: snapshot.Now.Add(30 * time.Second), Metrics: metrics,
 			}, nil
 		}
@@ -1035,7 +1035,7 @@ func evaluateAutoNomadRBCTest(snapshot Snapshot, settings autoNomadSettings) (De
 	usableSkips := max(0, availableSkips-outstandingCooldownSkips)
 	presetCopies, err := availablePresetCopies(preset, source, snapshot.GameData, len(available))
 	if err != nil {
-		return nomadWaiting(snapshot.Now, "Cannot resolve RBC preset troop families: "+err.Error()), nil
+		return nomadWaiting(snapshot.Now, "Cannot resolve RBC preset troop families: "+err.Error(), Localization.ErrorContext(Localization.New("server.automation.cannot_resolve_rbc_preset.28442d42", "Cannot resolve RBC preset troop families", nil), err)), nil
 	}
 	chainSize := min(len(available), presetCopies)
 	if int64(chainSize) > usableSkips {

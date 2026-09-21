@@ -364,7 +364,7 @@ func khanAttackPresetAvailability(
 ) error {
 	_, shortage, err := AttackPresets.CheckInventory(preset, source.Units.Stationed, gameData, 1)
 	if err != nil {
-		return fmt.Errorf("%w: resolve Khan preset troop families: %v", Intent.ErrPlanStale, err)
+		return Localization.WithError(fmt.Errorf("%w: resolve Khan preset troop families: %v", Intent.ErrPlanStale, err), Localization.Join(Localization.New("server.app.khan_stale_preset_families", "intent plan became stale before dispatch: resolve Khan preset troop families", nil), Localization.FromError(err)))
 	}
 	if shortage != nil {
 		return Localization.WithError(fmt.Errorf(
@@ -524,10 +524,10 @@ func validateKhanLaneGuard(
 		return Localization.WithError(fmt.Errorf("Auto Khan yielded while Auto Station is moving troops"), Localization.New("server.app.auto_khan_yielded_while.824ea287", "Auto Khan yielded while Auto Station is moving troops", nil))
 	}
 	if main.Defense.OpenGateUntil != nil && main.Defense.OpenGateUntil.After(now) {
-		return fmt.Errorf("main castle gates are open until %s", main.Defense.OpenGateUntil.UTC().Format(time.RFC3339))
+		return Localization.WithError(fmt.Errorf("main castle gates are open until %s", main.Defense.OpenGateUntil.UTC().Format(time.RFC3339)), Localization.New("server.app.khan_gates_open_until", "main castle gates are open until {until}", Localization.Params{"until": main.Defense.OpenGateUntil.UTC().Format(time.RFC3339)}))
 	}
 	if gameState.Khan.Protection.Active {
-		return Localization.WithError(fmt.Errorf("Auto Khan protection is locked: %s", gameState.Khan.Protection.Reason), Localization.New("server.app.auto_khan_protection_is.4d183e9d", "Auto Khan protection is locked: {p0}", Localization.Params{"p0": fmt.Sprintf("%s", gameState.Khan.Protection.Reason)}))
+		return Localization.WithError(fmt.Errorf("Auto Khan protection is locked: %s", gameState.Khan.Protection.Reason), Localization.Join(Localization.New("server.app.khan_protection.locked", "Auto Khan protection is locked", nil), gameState.Khan.Protection.ReasonDescriptor))
 	}
 	if request.NomadPointThreshold > 0 {
 		score, _ := gameState.LookupScalableEventScore(khanEventID)
@@ -615,6 +615,7 @@ func (application *Application) captureKhanLaunch(_ context.Context, arguments j
 		return err
 	}
 	var safetyError string
+	var safetyDescriptor *Localization.Message
 	_, err := application.State.ApplyComponents(State.Components(State.ComponentKhan), func(gameState *State.GameState) ([]string, bool, error) {
 		var selected State.MovementState
 		gameState.RangeMovements(func(_ State.MovementID, movement State.MovementState) bool {
@@ -673,6 +674,7 @@ func (application *Application) captureKhanLaunch(_ context.Context, arguments j
 		// policy waits until both arrivals have passed before admitting another
 		// launch; a subsequently ordered launch therefore clears the old marker.
 		gameState.Khan.SafetyError = ""
+		gameState.Khan.SafetyErrorDescriptor = nil
 		if count := len(gameState.Khan.Launches); count > 0 {
 			previous := gameState.Khan.Launches[count-1]
 			if State.KhanLaunchOvertakes(previous.ArrivesAt, launch.ArrivesAt) {
@@ -681,7 +683,9 @@ func (application *Application) captureKhanLaunch(_ context.Context, arguments j
 					launch.CommanderID, launch.ArrivesAt.Format(time.RFC3339Nano),
 					previous.CommanderID, previous.ArrivesAt.Format(time.RFC3339Nano),
 				)
+				safetyDescriptor = Localization.Bind(State.ArrivalOrderDescriptor(launch.CommanderID, launch.ArrivesAt, previous.CommanderID, previous.ArrivesAt), safetyError)
 				gameState.Khan.SafetyError = safetyError
+				gameState.Khan.SafetyErrorDescriptor = Localization.Clone(safetyDescriptor)
 			}
 		}
 		gameState.Khan.Launches = append(gameState.Khan.Launches, launch)
@@ -705,7 +709,7 @@ func (application *Application) captureKhanLaunch(_ context.Context, arguments j
 		return err
 	}
 	if safetyError != "" {
-		return Localization.WithError(fmt.Errorf("unsafe Khan chain arrival order: %s", safetyError), Localization.New("server.app.unsafe_khan_chain_arrival.da72f118", "unsafe Khan chain arrival order: {p0}", Localization.Params{"p0": fmt.Sprintf("%s", safetyError)}))
+		return Localization.WithError(fmt.Errorf("unsafe Khan chain arrival order: %s", safetyError), Localization.Join(Localization.New("server.app.arrival_order.khan_context", "unsafe Khan chain arrival order", nil), safetyDescriptor))
 	}
 	return nil
 }
@@ -835,7 +839,7 @@ func planKhanDefenseToolReplenish(
 		Summary: fmt.Sprintf(
 			"Replenish tool %d with %d package purchase(s) for %d %s",
 			request.ToolID, request.Amount, request.Amount*item.Price, item.PriceName,
-		), SummaryDescriptor: Localization.New("server.app.replenish_tool_p_with.189b3848", "Replenish tool {p0} with {p1} package purchase(s) for {p2} {p3}", Localization.Params{"p0": fmt.Sprintf("%d", request.ToolID), "p1": request.Amount, "p2": request.Amount * item.Price, "p3": fmt.Sprintf("%s", item.PriceName)}),
+		), SummaryDescriptor: defenseToolPriceDescriptor(Localization.New("server.app.replenish_tool_p_with.189b3848", "Replenish tool {p0} with {p1} package purchase(s) for {p2} {p3}", Localization.Params{"p0": fmt.Sprintf("%d", request.ToolID), "p1": request.Amount, "p2": request.Amount * item.Price, "p3": fmt.Sprintf("%s", item.PriceName)}), input, "p3", item),
 		Steps: steps,
 	}, nil
 }
@@ -864,7 +868,7 @@ func khanDefenseToolPurchaseContext(
 	}
 	if next := input.State.Khan.LastDefenseToolPurchaseAt.Add(30 * time.Second); next.After(now) {
 		return request, main, GameData.DefenseToolShopPackage{}, 0, 0,
-			fmt.Errorf("Khan defense tools can next be replenished at %s", next.UTC().Format(time.RFC3339))
+			Localization.WithError(fmt.Errorf("Khan defense tools can next be replenished at %s", next.UTC().Format(time.RFC3339)), Localization.New("server.app.khan_defense_tools_next_replenishment", "Khan defense tools can next be replenished at {until}", Localization.Params{"until": next.UTC().Format(time.RFC3339)}))
 	}
 	item, found := input.GameData.DefenseToolShopPackage(int64(request.PackageID))
 	if !found || item.ToolID != int64(request.ToolID) {
@@ -932,12 +936,12 @@ func khanDefenseToolPurchaseContext(
 	}
 	balance, purchaseCastleID, purchaseKingdomID, available := khanDefenseToolPurchaseBalance(input.State, main, item)
 	if !available {
-		return request, main, item, 0, 0, Localization.WithError(fmt.Errorf("%s balance is unavailable", item.PriceName), Localization.New("server.app.p_balance_is_unavailable.d3e1e9e0", "{p0} balance is unavailable", Localization.Params{"p0": fmt.Sprintf("%s", item.PriceName)}))
+		return request, main, item, 0, 0, Localization.WithError(fmt.Errorf("%s balance is unavailable", item.PriceName), defenseToolPriceDescriptor(Localization.New("server.app.p_balance_is_unavailable.d3e1e9e0", "{p0} balance is unavailable", Localization.Params{"p0": fmt.Sprintf("%s", item.PriceName)}), input, "p0", item))
 	}
 	required := request.Amount * item.Price
 	if balance < required {
 		return request, main, item, 0, 0,
-			Localization.WithError(fmt.Errorf("package %d requires %d %s but only %d is available", request.PackageID, required, item.PriceName, balance), Localization.New("server.app.package_p_requires_p.cb572b3b", "package {p0} requires {p1} {p2} but only {p3} is available", Localization.Params{"p0": fmt.Sprintf("%d", request.PackageID), "p1": required, "p2": fmt.Sprintf("%s", item.PriceName), "p3": balance}))
+			Localization.WithError(fmt.Errorf("package %d requires %d %s but only %d is available", request.PackageID, required, item.PriceName, balance), defenseToolPriceDescriptor(Localization.New("server.app.package_p_requires_p.cb572b3b", "package {p0} requires {p1} {p2} but only {p3} is available", Localization.Params{"p0": fmt.Sprintf("%d", request.PackageID), "p1": required, "p2": fmt.Sprintf("%s", item.PriceName), "p3": balance}), input, "p2", item))
 	}
 	return request, main, item, purchaseCastleID, purchaseKingdomID, nil
 }
@@ -1057,9 +1061,11 @@ func (application *Application) activateKhanProtection(_ context.Context, argume
 		gameState.Khan.Protection = State.KhanProtectionState{
 			Active: true, CastleID: request.CastleID, OffensiveWallUnits: risk.OffensiveUnits,
 			OffensiveUnitThreshold: request.OffensiveUnitThreshold, TriggeredAt: now,
-			GateOpenUntil: castle.Defense.OpenGateUntil.UTC(),
-			Reason:        fmt.Sprintf("Add defense units to continue; %d offensive units reached the %d-unit wall threshold", risk.OffensiveUnits, request.OffensiveUnitThreshold),
+			GateOpenUntil:    castle.Defense.OpenGateUntil.UTC(),
+			Reason:           fmt.Sprintf("Add defense units to continue; %d offensive units reached the %d-unit wall threshold", risk.OffensiveUnits, request.OffensiveUnitThreshold),
+			ReasonDescriptor: Localization.New("server.app.khan_protection.add_defense", "Add defense units to continue; {units, number} offensive units reached the {threshold, number}-unit wall threshold", Localization.Params{"units": risk.OffensiveUnits, "threshold": request.OffensiveUnitThreshold}),
 		}
+		gameState.Khan.Protection.ReasonDescriptor = Localization.Bind(gameState.Khan.Protection.ReasonDescriptor, gameState.Khan.Protection.Reason)
 		return []string{"khan", "defense"}, true, nil
 	})
 	return err

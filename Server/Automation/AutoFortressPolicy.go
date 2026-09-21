@@ -100,14 +100,14 @@ func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot)
 	}
 	definitions, err := snapshot.GameData.KingdomFortressDefinitions()
 	if err != nil {
-		return autoFortressWaiting(snapshot, err.Error(), nil), nil
+		return autoFortressWaiting(snapshot, err.Error(), nil, Localization.FromError(err)), nil
 	}
 	if _, err := snapshot.GameData.FortressDirewolf(); err != nil {
-		return autoFortressWaiting(snapshot, err.Error(), nil), nil
+		return autoFortressWaiting(snapshot, err.Error(), nil, Localization.FromError(err)), nil
 	}
 	speedContract, err := snapshot.GameData.FortressRelicSpeed()
 	if err != nil {
-		return autoFortressWaiting(snapshot, err.Error(), nil), nil
+		return autoFortressWaiting(snapshot, err.Error(), nil, Localization.FromError(err)), nil
 	}
 	if speedContract.RelicMaximumPercent != autoFortressMaximumSpeedPercent {
 		return autoFortressWaiting(snapshot, "Official fortress commander speed contract changed; Auto Fortress is paused", nil, Localization.New("server.automation.official_fortress_commander_speed.891da2be", "Official fortress commander speed contract changed; Auto Fortress is paused", nil)), nil
@@ -240,7 +240,7 @@ func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot)
 			decision.Details = details
 			return decision, nil
 		}
-		decision := autoFortressWaiting(snapshot, "Cannot calculate the one-wave fortress formation: "+err.Error(), metrics)
+		decision := autoFortressWaiting(snapshot, "Cannot calculate the one-wave fortress formation: "+err.Error(), metrics, Localization.ErrorContext(Localization.New("server.automation.cannot_calculate_the_one.d7048c25", "Cannot calculate the one-wave fortress formation", nil), err))
 		decision.Details = details
 		return decision, nil
 	}

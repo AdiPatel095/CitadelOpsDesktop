@@ -245,7 +245,7 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 		snapshot.Configuration.Sections[KhanDomain.DefensePresetsSection], settings.DefensePresetID,
 	)
 	if err != nil {
-		return autoKhanWaiting(snapshot.Now, err.Error(), settings.CheckIntervalSec, nil), nil
+		return autoKhanWaiting(snapshot.Now, err.Error(), settings.CheckIntervalSec, nil, Localization.FromError(err)), nil
 	}
 
 	if _, threatCount, earliestImpact, _ := incomingThreats(snapshot.State, snapshot.Now); threatCount > 0 {
@@ -272,7 +272,7 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 		if protection.GateOpenUntil.After(snapshot.Now) {
 			metrics["gateOpenUntilUnixMs"] = float64(protection.GateOpenUntil.UnixMilli())
 			return Decision{
-				Status: "protected", Detail: protection.Reason,
+				Status: "protected", Detail: protection.Reason, DetailDescriptor: Localization.Clone(protection.ReasonDescriptor),
 				NextCheckAt: minTime(protection.GateOpenUntil.Add(time.Second), snapshot.Now.Add(30*time.Second)), Metrics: metrics,
 			}, nil
 		}
@@ -354,7 +354,7 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 					Status: "replenishing", Detail: fmt.Sprintf(
 						"Defense preset is short %d tool(s); next non-ruby shop check is at %s",
 						missing, nextPurchaseAt.Local().Format("15:04:05"),
-					),
+					), DetailDescriptor: Localization.New("server.automation.khan_tools_next_check", "Defense preset is short {missing, number} tool(s); next non-ruby shop check is at {time}", Localization.Params{"missing": missing, "time": nextPurchaseAt.Local().Format("15:04:05")}),
 					NextCheckAt: nextPurchaseAt, Metrics: metrics,
 				}, nil
 			}
@@ -426,7 +426,7 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 			nextCheckAt := snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, defaultKhanCheckIntervalSec))
 			nextCheckAt = minTime(nextCheckAt, unsafeUntil)
 			return Decision{
-				Status: "blocked", Detail: "Khan chain stopped on unsafe arrival order: " + snapshot.State.Khan.SafetyError,
+				Status: "blocked", Detail: "Khan chain stopped on unsafe arrival order: " + snapshot.State.Khan.SafetyError, DetailDescriptor: Localization.Join(Localization.New("server.automation.khan_arrival_order.stopped", "Khan chain stopped on unsafe arrival order", nil), snapshot.State.Khan.SafetyErrorDescriptor),
 				NextCheckAt: nextCheckAt, Metrics: metrics,
 			}, nil
 		}
@@ -581,10 +581,12 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	}
 	if len(available) == 0 {
 		detail := "No commander is currently available"
+		descriptor := Localization.New("server.automation.no_commander_is_currently.25dd6b1e", "No commander is currently available", nil)
 		if restricted {
 			detail = "No assigned Auto Khan commander is currently available"
+			descriptor = Localization.New("server.automation.no_assigned_auto_khan.dc960cb7", "No assigned Auto Khan commander is currently available", nil)
 		}
-		return autoKhanWaitingUntilTaunt(snapshot, detail, settings.CheckIntervalSec, metrics), nil
+		return autoKhanWaitingUntilTaunt(snapshot, detail, settings.CheckIntervalSec, metrics, descriptor), nil
 	}
 	outstandingSkips := int64(0)
 	if activeRun {
@@ -597,7 +599,7 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	metrics["committedCooldownSkips"] = float64(outstandingSkips)
 	metrics["usableCooldownSkips"] = float64(usableSkips)
 	if usableSkips < 1 {
-		return autoKhanWaitingUntilTaunt(snapshot, "All available Khan cooldown skips are committed to launched hits", settings.CheckIntervalSec, metrics), nil
+		return autoKhanWaitingUntilTaunt(snapshot, "All available Khan cooldown skips are committed to launched hits", settings.CheckIntervalSec, metrics, Localization.New("server.automation.all_available_khan_cooldown.aaa5d815", "All available Khan cooldown skips are committed to launched hits", nil)), nil
 	}
 	metrics["availableCommanders"] = float64(len(available))
 	ordered := autoKhanOrderCommanders(snapshot, source, target, available)
@@ -636,7 +638,7 @@ func (*AutoKhanPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	if err != nil {
 		return autoKhanWaiting(
 			snapshot.Now, "Cannot resolve attack preset troop families: "+err.Error(),
-			settings.CheckIntervalSec, metrics,
+			settings.CheckIntervalSec, metrics, Localization.ErrorContext(Localization.New("server.automation.cannot_resolve_attack_preset.333c4bed", "Cannot resolve attack preset troop families", nil), err),
 		), nil
 	}
 	metrics["presetCopies"] = float64(presetCopies)
@@ -679,7 +681,7 @@ func autoKhanPresetWaiting(
 	metrics["attackLaunchPaused"] = 1
 	if itemID, required, available, found, err := invasionPresetShortage(preset, source, gameData); err != nil {
 		return Decision{
-			Status: "waiting", Detail: "Khan attacks are paused because Citadel could not match the preset troop family: " + err.Error(),
+			Status: "waiting", Detail: "Khan attacks are paused because Citadel could not match the preset troop family: " + err.Error(), DetailDescriptor: Localization.ErrorContext(Localization.New("server.automation.khan_attacks_are_paused.0c075d21", "Khan attacks are paused because Citadel could not match the preset troop family", nil), err),
 			NextCheckAt: now.Add(policyInterval(checkIntervalSec, defaultKhanCheckIntervalSec)), Metrics: metrics,
 		}
 	} else if found {
@@ -939,34 +941,34 @@ func autoKhanAsyncLaneContext(
 		TimeSkipReserve: map[string]int64{}, OffensiveUnitThreshold: 1000,
 		HorseTravelBoostID: -1,
 	}
-	wait := func(detail string, metrics map[string]float64) (autoKhanLaneContext, *Decision, error) {
-		decision := autoKhanWaiting(snapshot.Now, detail, settings.CheckIntervalSec, metrics)
+	wait := func(detail string, metrics map[string]float64, descriptors ...*Localization.Message) (autoKhanLaneContext, *Decision, error) {
+		decision := autoKhanWaiting(snapshot.Now, detail, settings.CheckIntervalSec, metrics, descriptors...)
 		return autoKhanLaneContext{}, &decision, nil
 	}
 	if !decodeSection(snapshot.Configuration, "automation.autoKhan", &settings) {
-		return wait("Auto Khan is not configured", nil)
+		return wait("Auto Khan is not configured", nil, Localization.New("server.automation.khan_lane.5cca0cae", "Auto Khan is not configured", nil))
 	}
 	settings.AttackPresetID = strings.TrimSpace(settings.AttackPresetID)
 	settings.DefensePresetID = strings.TrimSpace(settings.DefensePresetID)
 	if settings.SourceCastleID <= 0 || settings.AttackPresetID == "" || settings.DefensePresetID == "" {
-		return wait("Choose a Great Empire attack castle plus attack and defense presets", nil)
+		return wait("Choose a Great Empire attack castle plus attack and defense presets", nil, Localization.New("server.automation.khan_lane.f337fb00", "Choose a Great Empire attack castle plus attack and defense presets", nil))
 	}
 	if invalidTimeSkipReserve(settings.TimeSkipReserve) {
-		return wait("Khan time-skip reserves cannot be negative", nil)
+		return wait("Khan time-skip reserves cannot be negative", nil, Localization.New("server.automation.khan_lane.cc43ef89", "Khan time-skip reserves cannot be negative", nil))
 	}
 	if settings.OpenGateProtection && settings.OffensiveUnitThreshold <= 0 {
-		return wait("Open-gate protection requires a positive offensive-unit threshold", nil)
+		return wait("Open-gate protection requires a positive offensive-unit threshold", nil, Localization.New("server.automation.khan_lane.aa5690a1", "Open-gate protection requires a positive offensive-unit threshold", nil))
 	}
 	if snapshot.GameData == nil {
-		return wait("Official game data is unavailable", nil)
+		return wait("Official game data is unavailable", nil, Localization.New("server.automation.khan_lane.c5e55e7e", "Official game data is unavailable", nil))
 	}
 	source, found := snapshot.State.Castles[settings.SourceCastleID]
 	if !found || source.KingdomID != 0 {
-		return wait("Auto Khan attack source must be an available Great Empire castle", nil)
+		return wait("Auto Khan attack source must be an available Great Empire castle", nil, Localization.New("server.automation.khan_lane.e1806a89", "Auto Khan attack source must be an available Great Empire castle", nil))
 	}
 	main, found := autoKhanMainCastle(snapshot.State)
 	if !found {
-		return wait("The Great Empire main castle is unavailable", nil)
+		return wait("The Great Empire main castle is unavailable", nil, Localization.New("server.automation.khan_lane.af78541b", "The Great Empire main castle is unavailable", nil))
 	}
 	if settings.OpenGateProtection && source.ID != main.ID {
 		settings.OpenGateProtection = false
@@ -978,13 +980,13 @@ func autoKhanAsyncLaneContext(
 		); locked {
 			return autoKhanLaneContext{}, &decision, nil
 		}
-		return wait("Waiting for the Nomad event and Khan camp", nil)
+		return wait("Waiting for the Nomad event and Khan camp", nil, Localization.New("server.automation.khan_lane.9a6fce53", "Waiting for the Nomad event and Khan camp", nil))
 	}
 	defensePreset, err := KhanDomain.DecodeDefensePreset(
 		snapshot.Configuration.Sections[KhanDomain.DefensePresetsSection], settings.DefensePresetID,
 	)
 	if err != nil {
-		return wait(err.Error(), nil)
+		return wait(err.Error(), nil, Localization.FromError(err))
 	}
 	metrics := autoKhanMetrics(snapshot.State, main)
 	metrics["eventRemainingSec"] = float64(max(int64(0), autoKhanRemaining(score, snapshot.Now)))
@@ -997,7 +999,7 @@ func autoKhanAsyncLaneContext(
 		"nomadPointThreshold":    settings.NomadPointThreshold,
 	}
 	if settings.NomadPointThreshold > 0 && score.PlayerScore >= settings.NomadPointThreshold {
-		return wait("Nomad point threshold reached; the protection lane is stopping Auto Khan", metrics)
+		return wait("Nomad point threshold reached; the protection lane is stopping Auto Khan", metrics, Localization.New("server.automation.khan_lane.b1c35faf", "Nomad point threshold reached; the protection lane is stopping Auto Khan", nil))
 	}
 	if _, threatCount, _, _ := incomingThreats(snapshot.State, snapshot.Now); threatCount > 0 {
 		decision := Decision{
@@ -1014,7 +1016,7 @@ func autoKhanAsyncLaneContext(
 		return autoKhanLaneContext{}, &decision, nil
 	}
 	if snapshot.State.Khan.Protection.Active {
-		return wait("Auto Khan protection is active: "+snapshot.State.Khan.Protection.Reason, metrics)
+		return wait("Auto Khan protection is active: "+snapshot.State.Khan.Protection.Reason, metrics, Localization.Join(Localization.New("server.automation.khan_protection.active", "Auto Khan protection is active", nil), snapshot.State.Khan.Protection.ReasonDescriptor))
 	}
 	if main.Defense.OpenGateUntil != nil && main.Defense.OpenGateUntil.After(snapshot.Now) {
 		decision := Decision{
@@ -1026,7 +1028,7 @@ func autoKhanAsyncLaneContext(
 	if settings.OpenGateProtection {
 		risk, riskErr := KhanDomain.OffensiveWallUnits(main, snapshot.GameData, defensePreset)
 		if riskErr != nil {
-			return wait(riskErr.Error(), metrics)
+			return wait(riskErr.Error(), metrics, Localization.FromError(riskErr))
 		}
 		metrics["offensiveWallUnits"] = float64(risk.OffensiveUnits)
 		metrics["offensiveUnitThreshold"] = float64(settings.OffensiveUnitThreshold)
@@ -1034,7 +1036,7 @@ func autoKhanAsyncLaneContext(
 			return wait(fmt.Sprintf(
 				"Offensive wall units reached %d / %d; waiting for shared gate protection",
 				risk.OffensiveUnits, settings.OffensiveUnitThreshold,
-			), metrics)
+			), metrics, Localization.New("server.automation.khan_lane.waiting_gate_protection", "Offensive wall units reached {units} / {threshold}; waiting for shared gate protection", Localization.Params{"units": risk.OffensiveUnits, "threshold": settings.OffensiveUnitThreshold}))
 		}
 	}
 	return autoKhanLaneContext{
@@ -1501,8 +1503,8 @@ func autoKhanWaiting(now time.Time, detail string, intervalSec int, metrics map[
 	}
 }
 
-func autoKhanWaitingUntilTaunt(snapshot Snapshot, detail string, intervalSec int, metrics map[string]float64) Decision {
-	decision := autoKhanWaiting(snapshot.Now, detail, intervalSec, metrics)
+func autoKhanWaitingUntilTaunt(snapshot Snapshot, detail string, intervalSec int, metrics map[string]float64, descriptors ...*Localization.Message) Decision {
+	decision := autoKhanWaiting(snapshot.Now, detail, intervalSec, metrics, descriptors...)
 	for _, taunt := range snapshot.State.Khan.Taunts {
 		candidate := taunt.ImpactAt.Add(2 * time.Second)
 		if candidate.After(snapshot.Now) && candidate.Before(decision.NextCheckAt) {

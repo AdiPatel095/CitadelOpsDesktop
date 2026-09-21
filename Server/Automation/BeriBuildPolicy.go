@@ -67,7 +67,7 @@ func (*BeriBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	raw := snapshot.Configuration.Sections[Buildings.BerimondBlueprintConfigurationSection]
 	document, err := Buildings.DecodeBerimondBlueprintDocument(raw, snapshot.GameData)
 	if err != nil {
-		return beriBuildWaiting(snapshot.Now, err.Error(), nil), nil
+		return beriBuildWaiting(snapshot.Now, err.Error(), nil, Localization.FromError(err)), nil
 	}
 	blueprint, customTarget := document.Active()
 	var target Buildings.TargetCaptureResult
@@ -97,7 +97,7 @@ func (*BeriBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		}
 		target, err = Buildings.DefaultBerimondTarget(castle.ID, settings.Build.StableLevel, snapshot.GameData)
 		if err != nil {
-			return beriBuildWaiting(snapshot.Now, err.Error(), nil), nil
+			return beriBuildWaiting(snapshot.Now, err.Error(), nil, Localization.FromError(err)), nil
 		}
 	}
 	if unlock, observed := snapshot.State.KingdomTransport.Unlocks[State.KingdomID(GameData.BerimondKingdomID)]; observed &&

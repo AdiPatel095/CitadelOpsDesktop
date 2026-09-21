@@ -65,3 +65,16 @@ func packagePurchaseDescriptor(input Intent.PlanningContext, product GameData.Au
 	}
 	return message
 }
+
+// Defense-tool prices retain source scope/identity; an unknown identity leaves
+// the complete legacy message untranslated instead of hiding an English noun.
+func defenseToolPriceDescriptor(message *Localization.Message, input Intent.PlanningContext, parameter string, item GameData.DefenseToolShopPackage) *Localization.Message {
+	switch item.PriceScope {
+	case GameData.DefenseToolPricePlayerResource, GameData.DefenseToolPriceCastleResource:
+		return gameNameDescriptor(message, input, parameter, "resources", item.PriceID, item.PriceName)
+	case GameData.DefenseToolPriceCurrency:
+		return gameNameDescriptor(message, input, parameter, "currencies", item.PriceID, item.PriceName)
+	default:
+		return nil
+	}
+}
