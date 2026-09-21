@@ -605,6 +605,7 @@
       }
     }
   },
+  "officialSource": "https://langserv.public.ggs-ep.com/12@4357/{gameCode}/*",
   "officialVersion": 4357,
   "schemaVersion": 1,
   "sourceRevision": "0a1e34254806e9e4e9009b727c6c6961c56f42d8",

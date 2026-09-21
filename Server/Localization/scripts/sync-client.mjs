@@ -11,6 +11,7 @@ if (!path.resolve(target).endsWith(path.join('Client','src','i18n','server'))) t
 const report=JSON.parse(execFileSync(process.execPath,[path.join(root,'scripts/validate-locales.mjs'),parserPath],{encoding:'utf8'}));
 fs.mkdirSync(target,{recursive:true});
 const files={'en.json':path.join(root,'en.json')};
+if(fs.existsSync(path.join(root,'feature-names.json'))) files['feature-names.json']=path.join(root,'feature-names.json');
 for(const name of fs.readdirSync(path.join(root,'locales')).filter(name=>name.endsWith('.json')).sort())files[name]=path.join(root,'locales',name);
 const hashes={};
 for(const [name,source] of Object.entries(files)){

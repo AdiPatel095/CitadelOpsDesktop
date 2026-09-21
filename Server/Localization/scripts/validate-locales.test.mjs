@@ -30,5 +30,23 @@ try {
  assert.match(run({...good,quantity:'Für {name} {count, number} Einheiten behalten'}).stderr,/numeric style changed/);
  assert.match(run(good,p=>p.entries.de.quantity.sourceSha256='stale').stderr,/stale\/missing provenance/);
  assert.match(run({...good,plural:'{count, plural, one {Eine Einheit}'}).stderr,/Error/);
+ const featureKey='server.telemetry.channel.example.label';
+ english[featureKey]='Example feature';
+ fs.writeFileSync(path.join(temp,'en.json'),JSON.stringify(english));
+ const featureGlossary={features:{example:{source:english[featureKey],translations:Object.fromEntries(locales.map(locale=>[locale,'Beispielfunktion']))}}};
+ const glossaryBytes=JSON.stringify(featureGlossary);
+ fs.writeFileSync(path.join(temp,'feature-names.json'),glossaryBytes);
+ for(const locale of locales.filter(locale=>locale!=='de')) fs.writeFileSync(path.join(temp,'locales',locale+'.json'),JSON.stringify({[featureKey]:'Beispielfunktion'}));
+ function withGlossary(p){
+  p.featureGlossary={sha256:sha(glossaryBytes)};
+  for(const locale of locales){
+   p.entries[locale]??={};
+   p.entries[locale][featureKey]={sourceSha256:sha(english[featureKey]),translationSha256:sha('Beispielfunktion'),glossaryFeature:'example'};
+  }
+ }
+ const glossaryGood={...good,[featureKey]:'Beispielfunktion'};
+ assert.equal(run(glossaryGood,withGlossary).status,0,'matching glossary labels should pass');
+ assert.match(run({...glossaryGood,[featureKey]:'Different label'},p=>{withGlossary(p);p.entries.de[featureKey].translationSha256=sha('Different label')}).stderr,/feature label drift/);
+ assert.match(run(glossaryGood,p=>{withGlossary(p);p.featureGlossary.sha256='stale'}).stderr,/glossary source hash changed/);
  console.log('Validator rejects missing arguments, lost precision, stale source hashes, and malformed ICU; accepts locale plural grammar.');
 } finally { fs.rmSync(temp,{recursive:true,force:true}); }

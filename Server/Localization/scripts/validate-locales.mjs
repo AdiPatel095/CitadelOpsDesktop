@@ -42,6 +42,11 @@ function numberStyles(nodes, result = new Map()) {
 const sourceAST=Object.fromEntries(Object.entries(english).map(([key,text])=>[key,parse(text)]));
 const {createHash} = await import('node:crypto');
 const hash = value => createHash('sha256').update(value).digest('hex');
+const glossaryPath=path.join(root,'feature-names.json');
+const glossaryBytes=fs.existsSync(glossaryPath)?fs.readFileSync(glossaryPath):null;
+if(provenance.featureGlossary && (!glossaryBytes || provenance.featureGlossary.sha256!==hash(glossaryBytes))) throw new Error('Feature glossary source hash changed');
+const glossary=glossaryBytes?JSON.parse(glossaryBytes):null;
+if(glossary && !provenance.featureGlossary) throw new Error('Feature glossary provenance missing');
 let total = 0;
 const coverage = {};
 for (const locale of expectedLocales) {
@@ -62,6 +67,12 @@ for (const locale of expectedLocales) {
   const record=provenance.entries[locale]?.[key];
   if (!record || record.sourceSha256!==hash(english[key]) || record.translationSha256!==hash(text)) throw new Error(`${locale}: stale/missing provenance ${key}`);
   total++;
+ }
+ for(const [feature,entry] of Object.entries(glossary?.features??{})) {
+  const key=`server.telemetry.channel.${feature}.label`;
+  if(english[key]!==entry.source) throw new Error(`Feature glossary English source changed: ${feature}`);
+  if(typeof entry.translations?.[locale]!=='string' || pack[key]!==entry.translations[locale]) throw new Error(`${locale}: feature label drift ${feature}`);
+  if(provenance.entries[locale]?.[key]?.glossaryFeature!==feature) throw new Error(`${locale}: feature glossary provenance missing ${feature}`);
  }
  for(const key of Object.keys(provenance.entries[locale]??{})) if(!(key in pack)) throw new Error(`${locale}: obsolete provenance ${key}`);
  coverage[locale]={translated:Object.keys(pack).length,source:Object.keys(english).length,missing:Object.keys(english).length-Object.keys(pack).length};
