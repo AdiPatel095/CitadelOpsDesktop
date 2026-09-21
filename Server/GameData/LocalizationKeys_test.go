@@ -37,3 +37,23 @@ func TestFeastNameKeyPreservesOfficialCaseAndType(t *testing.T) {
 		t.Fatal("invented case-insensitive source key")
 	}
 }
+
+func TestDefinitionNameKeyUsesOfficialResourceAliases(t *testing.T) {
+	store, err := DecodeStore([]byte(`{"versionInfo":[],"buildings":[],"units":[],"resources":[{"resourceID":2,"name":"currency2","JSONKey":"C2"},{"resourceID":3,"name":"unresolved","assetName":"woodAsset"}],"currencies":[{"currencyID":8,"Name":"tokens","assetName":"tokenAsset"},{"currencyID":9,"Name":"unresolved","assetName":"specialAsset"}]}`), SourceMetadata{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	language, err := DecodeLanguage([]byte(`{"gold":"Rubies","currency_name_woodAsset":"Wood","currency_name_tokens":"Preferred tokens","tokens_name":"Other tokens","currency_name_specialAsset":"Special tokens"}`), LanguageMetadata{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		collection string
+		id         int64
+		key        string
+	}{{"resources", 2, "gold"}, {"resources", 3, "currency_name_woodAsset"}, {"currencies", 8, "currency_name_tokens"}, {"currencies", 9, "currency_name_specialAsset"}} {
+		if got := store.DefinitionNameKey(language, tc.collection, tc.id); got != tc.key {
+			t.Fatalf("%s/%d: %q, want %q", tc.collection, tc.id, got, tc.key)
+		}
+	}
+}
