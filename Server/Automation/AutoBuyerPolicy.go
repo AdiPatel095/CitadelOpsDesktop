@@ -145,7 +145,7 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 		}
 		if evidence.ChargedCastleID <= 0 || evidence.AttemptedAt.IsZero() ||
 			evidence.FeastID != snapshot.State.Market.FeastPurchaseExpectedID {
-			decision := autoBuyerRequestDecision(snapshot.Now, metrics, "Recheck legacy unresolved feast timer without spending", "autoBuyer.boosters.refresh", map[string]any{"feastContext": false})
+			decision := autoBuyerRequestDecision(snapshot.Now, metrics, "Recheck legacy unresolved feast timer without spending", "autoBuyer.boosters.refresh", map[string]any{"feastContext": false}, Localization.New("server.automation.recheck_legacy_unresolved_feast.e5e0c91b", "Recheck legacy unresolved feast timer without spending", nil))
 			decision.ReevaluateOnSuccess, decision.ReevaluateOnStale = false, false
 			decision.NextCheckAt = snapshot.Now.Add(autoBuyerFeastPurchasePacing)
 			return decision, nil
@@ -156,7 +156,7 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 			"expectedSourceKingdomId": evidence.ChargedKingdomID,
 			"attemptAfter":            evidence.AttemptedAt,
 			"historyRefreshSec":       settings.HistoryRefreshSec,
-		})
+		}, Localization.New("server.automation.recheck_unresolved_feast_purchase.1012cc0b", "Recheck unresolved feast purchase without spending", nil))
 		decision.ReevaluateOnSuccess, decision.ReevaluateOnStale = false, false
 		decision.NextCheckAt = snapshot.Now.Add(autoBuyerFeastPurchasePacing)
 		return decision, nil
@@ -205,7 +205,7 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 	if feastContextStale {
 		decision := autoBuyerRequestDecision(snapshot.Now, metrics, "Refresh specialist and feast context", "autoBuyer.boosters.refresh", map[string]any{
 			"feastContext": settings.Feast.Enabled,
-		})
+		}, Localization.New("server.automation.refresh_specialist_and_feast.847ec05b", "Refresh specialist and feast context", nil))
 		if settings.Feast.Enabled {
 			decision.ReevaluateOnStale = false
 			decision.NextCheckAt = snapshot.Now.Add(30 * time.Second)
@@ -243,7 +243,7 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 					}
 				}
 			}
-			decision := autoBuyerRequestDecision(snapshot.Now, metrics, "Refresh food balances and net production for automatic feast selection", "autoBuyer.boosters.refresh", map[string]any{"feastContext": true})
+			decision := autoBuyerRequestDecision(snapshot.Now, metrics, "Refresh food balances and net production for automatic feast selection", "autoBuyer.boosters.refresh", map[string]any{"feastContext": true}, Localization.New("server.automation.refresh_food_balances_and.46fb2700", "Refresh food balances and net production for automatic feast selection", nil))
 			decision.ReevaluateOnStale = false
 			decision.NextCheckAt = snapshot.Now.Add(30 * time.Second)
 			return decision, nil
@@ -282,7 +282,7 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 	}
 
 	if specialistContextStale {
-		return autoBuyerRequestDecision(snapshot.Now, metrics, "Refresh specialist timers", "autoBuyer.boosters.refresh", map[string]any{"feastContext": false}), nil
+		return autoBuyerRequestDecision(snapshot.Now, metrics, "Refresh specialist timers", "autoBuyer.boosters.refresh", map[string]any{"feastContext": false}, Localization.New("server.automation.refresh_specialist_timers.607cec18", "Refresh specialist timers", nil)), nil
 	}
 	if decision, detail := evaluateAutoBuyerSpecialists(snapshot, settings, metrics); decision != nil {
 		return *decision, nil
@@ -308,7 +308,7 @@ func (*AutoBuyerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 				snapshot.Now.Sub(packageHistoryObservedAt) >= refreshAge {
 				return autoBuyerRequestDecision(snapshot.Now, metrics, "Refresh shop stock and reset counters", "autoBuyer.package.history", map[string]any{
 					"sourceCastleId": packageSource.ID,
-				}), nil
+				}, Localization.New("server.automation.refresh_shop_stock_and.f65001ab", "Refresh shop stock and reset counters", nil)), nil
 			}
 			if decision, detail := evaluateAutoBuyerPackages(snapshot, settings, packageSource, metrics); decision != nil {
 				return *decision, nil
@@ -346,7 +346,7 @@ func autoBuyerSpecialistReconciliationDecision(snapshot Snapshot, metrics map[st
 	}
 	decision := autoBuyerRequestDecision(snapshot.Now, metrics, "Recheck unresolved specialist purchase without spending", "autoBuyer.specialist.reconcile", map[string]any{
 		"specialistId": evidence.SpecialistID,
-	})
+	}, Localization.New("server.automation.recheck_unresolved_specialist_purchase.683f00fd", "Recheck unresolved specialist purchase without spending", nil))
 	decision.ReevaluateOnSuccess, decision.ReevaluateOnStale = false, false
 	decision.NextCheckAt = snapshot.Now.Add(autoBuyerFeastPurchasePacing)
 	return decision

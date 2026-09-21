@@ -40,12 +40,13 @@ type Decision struct {
 	// Only a declared state/configuration/session wake will reevaluate it. This
 	// is used for authoritative blockers whose state cannot change merely
 	// because another polling interval elapsed.
-	EventDriven       bool
-	Metrics           map[string]float64
-	Details           map[string]string
-	Request           *Intent.Request
-	FollowUp          *Intent.Request
-	OperationalCursor *OperationalCursorUpdate
+	EventDriven        bool
+	Metrics            map[string]float64
+	DetailsDescriptors map[string]*Localization.Message
+	Details            map[string]string
+	Request            *Intent.Request
+	FollowUp           *Intent.Request
+	OperationalCursor  *OperationalCursorUpdate
 	// FailureFallback runs only when Request reaches a terminal failed,
 	// partially-succeeded, or indeterminate status. Cancellation never triggers it.
 	FailureFallback *Intent.Request

@@ -623,10 +623,11 @@ func (coordinator *Coordinator) evaluate(
 			current.immediateRuns = 0
 			current.nextCheck = current.submissionBlockedUntil
 			coordinator.recordDecision(policy.ID(), true, Decision{
-				Status:      "waiting",
-				Detail:      "Safety pause after a continuous command chain: " + decision.Detail,
-				NextCheckAt: current.nextCheck,
-				Metrics:     decision.Metrics,
+				Status:           "waiting",
+				Detail:           "Safety pause after a continuous command chain: " + decision.Detail,
+				DetailDescriptor: Localization.Join(Localization.New("server.automation.continuous_chain.safety_pause", "Safety pause after a continuous command chain", nil), decision.DetailDescriptor),
+				NextCheckAt:      current.nextCheck,
+				Metrics:          decision.Metrics,
 			})
 			continue
 		}
@@ -914,6 +915,7 @@ func (coordinator *Coordinator) recordDecision(id string, enabled bool, decision
 		current.NextCheckAt = timePointer(decision.NextCheckAt)
 		current.Metrics = copyMetrics(decision.Metrics)
 		current.Details = copyDetails(decision.Details)
+		current.DetailsDescriptors = Localization.CloneMap(decision.DetailsDescriptors)
 		if current.Status != "blocked" {
 			current.LastError = ""
 		}
@@ -1304,7 +1306,10 @@ func (coordinator *Coordinator) updateAutomation(id string, update func(State.Au
 			gameState.Automations = map[string]State.AutomationState{}
 		}
 		current := gameState.Automations[id]
-		next := update(current)
+		updateInput := current
+		updateInput.Details = copyDetails(current.Details)
+		updateInput.DetailsDescriptors = Localization.CloneMap(current.DetailsDescriptors)
+		next := update(updateInput)
 		if lock := current.SafetyLock; lock.Active(time.Now().UTC()) {
 			next.Status = "gated"
 			next.Detail = lock.Detail()
@@ -1333,6 +1338,25 @@ func (coordinator *Coordinator) updateAutomation(id string, update func(State.Au
 		}
 		next.DetailDescriptor = Localization.Bind(next.DetailDescriptor, next.Detail)
 		next.LastErrorDescriptor = Localization.Bind(next.LastErrorDescriptor, next.LastError)
+		boundDetails := map[string]*Localization.Message{}
+		for key, descriptor := range next.DetailsDescriptors {
+			raw, exists := next.Details[key]
+			if !exists || descriptor == nil {
+				continue
+			}
+			if reflect.DeepEqual(descriptor, current.DetailsDescriptors[key]) && raw != current.Details[key] {
+				continue
+			}
+			if labels.Humanize(raw) != raw {
+				continue
+			}
+			boundDetails[key] = Localization.Bind(descriptor, raw)
+		}
+		if len(boundDetails) == 0 {
+			next.DetailsDescriptors = nil
+		} else {
+			next.DetailsDescriptors = boundDetails
+		}
 		next.DetailTranslationStatus = Localization.Status(next.DetailDescriptor)
 		next.UpdatedAt = current.UpdatedAt
 		if reflect.DeepEqual(current, next) {

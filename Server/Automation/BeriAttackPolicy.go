@@ -95,7 +95,7 @@ func (*BeriAttackPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisio
 			snapshot.Now.Sub(snapshot.State.KingdomTransport.ObservedAt) >= beriKingdomRefreshAge {
 			return beriAttackIntentDecision(
 				snapshot.Now, interval, "Refresh Berimond kingdom availability",
-				"troops.kingdom.refresh", nil,
+				"troops.kingdom.refresh", nil, Localization.New("server.automation.refresh_berimond_kingdom_availability.79a1ed72", "Refresh Berimond kingdom availability", nil),
 			), nil
 		}
 		if !unlockObserved || !unlock.Unlocked {
@@ -135,7 +135,7 @@ func (*BeriAttackPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisio
 	if !targetFound {
 		return beriAttackIntentDecision(
 			snapshot.Now, beriLaunchRetryInterval, "Find the next available Berimond tower",
-			"beri.target.find", map[string]any{"sourceCastleId": castle.ID},
+			"beri.target.find", map[string]any{"sourceCastleId": castle.ID}, Localization.New("server.automation.find_the_next_available.563cbd7b", "Find the next available Berimond tower", nil),
 		), nil
 	}
 	baselineCapacity, err := (AttackCapacity.Resolver{}).ResolveContext(AttackCapacity.Context{
@@ -255,13 +255,14 @@ func beriAttackIntentDecision(
 	detail string,
 	name string,
 	arguments map[string]any,
+	descriptors ...*Localization.Message,
 ) Decision {
 	raw := json.RawMessage(`{}`)
 	if arguments != nil {
 		raw, _ = json.Marshal(arguments)
 	}
 	return Decision{
-		Status: "ready", Detail: detail, NextCheckAt: now.Add(interval),
+		Status: "ready", Detail: detail, DetailDescriptor: Localization.First(descriptors), NextCheckAt: now.Add(interval),
 		Request:             &Intent.Request{Name: name, Arguments: raw},
 		ReevaluateOnSuccess: true, ReevaluateOnStale: true,
 	}

@@ -1259,7 +1259,7 @@ func (engine *Engine) executeStep(ctx context.Context, afterRevision uint64, ste
 		resolvedContext := ctx
 		if dependency := step.CommandDependencies; dependency != nil {
 			dependencyStep := Step{
-				Name: step.Name, Opcode: dependency.Opcode, Payload: dependency.Payload,
+				Name: step.Name, NameDescriptor: Localization.Clone(step.NameDescriptor), Opcode: dependency.Opcode, Payload: dependency.Payload,
 				Command: Protocol.Command{Opcode: dependency.Opcode, Payload: dependency.Payload},
 			}
 			var key string
