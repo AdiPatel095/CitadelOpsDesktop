@@ -1,3 +1,4 @@
+import {createSyntaxExclusionReviewer} from './source-syntax-exclusions.mjs';
 import {patchNoteLiteralText} from '../src/i18n/patchNoteLiteralText.ts';
 import {sourceMessages} from '../src/i18n/sourceMessages.ts';
 import {sourceCandidateIdentity,applySourceReviews} from './source-review.mjs';
@@ -8,6 +9,7 @@ const root = new URL('../src/', import.meta.url).pathname;
 const entries = [];
 const identityOccurrences = new Map();
 const exclusions = [];
+const knownKeys = new Set(Object.keys(JSON.parse(fs.readFileSync(new URL('../localization/ui.en.json',import.meta.url),'utf8'))));
 const visibleAttributes = /^(title|alt|placeholder|aria-label|aria-description|label|description|message|help|tooltip|emptyText|heading)$/;
 function walk(dir) {
   for (const name of fs.readdirSync(dir).sort()) {
@@ -16,12 +18,13 @@ function walk(dir) {
     if (!/\.tsx?$/.test(name)) continue;
     if (path.relative(root,file).startsWith('i18n/')) continue; // Catalog/formatter coverage has its own strict tests, not unmigrated source.
     const source = ts.createSourceFile(file, fs.readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true);
+    const syntaxReason = createSyntaxExclusionReviewer(source,knownKeys);
     function visit(node) {
       if (ts.isJsxText(node) || ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node) || ts.isTemplateExpression(node)) {
         const text = ts.isTemplateExpression(node) ? node.getText(source) : node.text;
         if (text.trim() && /[A-Za-z]/.test(text)) {
           const parent = node.parent;
-          let reason = null;
+          let reason = syntaxReason(node);
           if(path.relative(root,file)==='config/PatchNotes.ts' && ts.isPropertyAssignment(parent) && ts.isStringLiteral(node)) {
             const field=parent.name.getText(source);
             if(['textKey','subtitleKey'].includes(field) && Object.hasOwn(sourceMessages,node.text))reason='explicit typed patch-note catalog key; PatchNotesView renders LocalizedText';

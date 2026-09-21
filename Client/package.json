@@ -9,7 +9,9 @@
     "test": "node --test tests/*.test.mjs",
     "test:world-intel": "node --test tests/storm-ranking.test.mjs",
     "preview": "tsc && vite preview",
-    "check:localization": "node scripts/inventory-localization.mjs && node scripts/check-localization-coverage.mjs"
+    "check:localization": "node scripts/inventory-localization.mjs && node scripts/check-localization-coverage.mjs",
+    "typecheck:app": "tsc -p tsconfig.app.json --noEmit",
+    "typecheck:node": "tsc -p tsconfig.node.json --noEmit"
   },
   "dependencies": {
     "@formatjs/icu-messageformat-parser": "^3.5.20",

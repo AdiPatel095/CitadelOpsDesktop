@@ -1,6 +1,6 @@
 import { equipmentEventOptions } from '../EquipmentEventLoadouts';
-import { describeMessage, interpolate } from '../../i18n/messages';
-import type { LocalizedMessage } from '../../i18n/formatMessage';
+import { describeMessage } from '../../i18n/messages';
+import {formatMessage,type LocalizedMessage} from '../../i18n/formatMessage';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -167,7 +167,7 @@ export default function EquipmentView() {
 		setBusy(true);
 		try {
 			await work();
-			if (success) Notifications.publish({category:'green',message:interpolate(success.fallback,success.params as Record<string,string|number>),messageDescriptor:success});
+			if (success) Notifications.publish({category:'green',message:formatMessage(success,'en',{}).text,messageDescriptor:success});
 			return true;
 		} catch {
 			return false;
@@ -208,7 +208,7 @@ export default function EquipmentView() {
 				event,
 				...(tier ? { tier } : {}),
 			});
-		}, `${tier ? `${tier} ` : ''}${eventLabel} loadout applied`).then((success) => success && setShowEventLoadout(false));
+		}, notification).then((success) => success && setShowEventLoadout(false));
 	};
 
 	const unequip = (slots: number[]) => {
@@ -229,7 +229,7 @@ export default function EquipmentView() {
 					leaderKind: selected.kind, leaderId: selected.id, equipmentId: equipmentID,
 				});
 			}
-		}, `${unequipKind === 'equipment' ? 'Equipment' : 'Gems'} unequipped`).then((success) => success && setUnequipKind(null));
+		}, describeMessage('equipment.notification.unequipped',{kind:unequipKind})).then((success) => success && setUnequipKind(null));
 	};
 
 	const upgrade = (itemID: number, targetLevel: number) => {
@@ -238,7 +238,7 @@ export default function EquipmentView() {
 			itemKind: upgradeKind,
 			itemId: itemID,
 			targetLevel,
-		}), `${upgradeKind === 'equipment' ? 'Equipment' : 'Gem'} upgraded`).then((success) => success && setUpgradeKind(null));
+		}), describeMessage('equipment.notification.upgraded',{kind:upgradeKind})).then((success) => success && setUpgradeKind(null));
 	};
 
 	const scheduler = configuration?.sections.scheduler as Record<string, unknown> | undefined;
