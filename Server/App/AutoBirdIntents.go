@@ -641,11 +641,11 @@ func (application *Application) guardAutoBirdDispatch(
 		if !retryAt.After(now) {
 			retryAt = now.Add(autoBirdFreshStateRetry)
 		}
-		application.deferAutoBirdDispatch(request, "Protection Mode became active before Auto Bird dispatch", retryAt)
+		application.deferAutoBirdDispatch(request, "Protection Mode became active before Auto Bird dispatch", retryAt, Localization.New("server.app.bird_protection_before_dispatch", "Protection Mode became active before Auto Bird dispatch", nil))
 		return Localization.WithError(fmt.Errorf("%w: Protection Mode became active before Auto Bird dispatch", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.d740cbe2", "intent plan became stale before dispatch: Protection Mode became active before Auto Bird dispatch", nil))
 	}
 	if autoBirdPresetWindowExpired(request, now) {
-		application.deferAutoBirdDispatch(request, "The selected Auto Bird preset period ended before dispatch", now.Add(time.Second))
+		application.deferAutoBirdDispatch(request, "The selected Auto Bird preset period ended before dispatch", now.Add(time.Second), Localization.New("server.app.bird_preset_period_ended", "The selected Auto Bird preset period ended before dispatch", nil))
 		return Localization.WithError(fmt.Errorf("%w: the selected Auto Bird preset period ended before dispatch", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.92da81e3", "intent plan became stale before dispatch: the selected Auto Bird preset period ended before dispatch", nil))
 	}
 	contextReady := false
@@ -700,20 +700,20 @@ func (application *Application) resolveAutoBirdDispatchStep(
 	if err := validateAutoBirdControl(input.State, request, now); err != nil {
 		return Intent.Step{}, err
 	}
-	hold := func(detail string, retry time.Duration) (Intent.Step, error) {
-		application.deferAutoBirdDispatch(request, detail, now.Add(retry))
-		return Intent.Step{}, Localization.WithError(fmt.Errorf("%w: %s", Intent.ErrPlanStale, detail), Localization.New("server.app.intent_plan_became_stale.9e9732a4", "intent plan became stale before dispatch: {p1}", Localization.Params{"p1": fmt.Sprintf("%s", detail)}))
+	hold := func(detail string, retry time.Duration, descriptors ...*Localization.Message) (Intent.Step, error) {
+		application.deferAutoBirdDispatch(request, detail, now.Add(retry), descriptors...)
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("%w: %s", Intent.ErrPlanStale, detail), Localization.Join(Localization.New("server.app.bird_dispatch_stale", "intent plan became stale before dispatch", nil), Localization.First(descriptors)))
 	}
 	if input.State.Player.ProtectionMode.PreparingOrActive(now) {
 		retryAt := input.State.Player.ProtectionMode.Until().Add(time.Second)
 		if !retryAt.After(now) {
 			retryAt = now.Add(autoBirdFreshStateRetry)
 		}
-		application.deferAutoBirdDispatch(request, "Protection Mode became active before Auto Bird dispatch", retryAt)
+		application.deferAutoBirdDispatch(request, "Protection Mode became active before Auto Bird dispatch", retryAt, Localization.New("server.app.bird_protection_before_dispatch", "Protection Mode became active before Auto Bird dispatch", nil))
 		return Intent.Step{}, Localization.WithError(fmt.Errorf("%w: Protection Mode became active before Auto Bird dispatch", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.d740cbe2", "intent plan became stale before dispatch: Protection Mode became active before Auto Bird dispatch", nil))
 	}
 	if autoBirdPresetWindowExpired(request, now) {
-		return hold("the selected Auto Bird preset period ended before dispatch", time.Second)
+		return hold("the selected Auto Bird preset period ended before dispatch", time.Second, Localization.New("server.app.bird_preset_period_ended_lower", "the selected Auto Bird preset period ended before dispatch", nil))
 	}
 	operation, exists := input.State.Stationing[request.TrackingID]
 	if !exists || operation.Purpose != "autoBird" ||
@@ -726,14 +726,14 @@ func (application *Application) resolveAutoBirdDispatchStep(
 	if !exists || source.ID <= 0 {
 		return hold(
 			fmt.Sprintf("source castle %d is no longer available", request.SourceCastleID),
-			autoBirdFreshStateRetry,
+			autoBirdFreshStateRetry, Localization.New("server.app.bird_dispatch.source_unavailable", "source castle {castle} is no longer available", Localization.Params{"castle": fmt.Sprint(request.SourceCastleID)}),
 		)
 	}
 	if !source.Focused || operation.UnitsObservedAt.IsZero() ||
 		source.UnitsObservedAt.Before(operation.UnitsObservedAt) {
 		return hold(
 			fmt.Sprintf("castle %d lost its prepared JAA context before Auto Bird dispatch", source.ID),
-			autoBirdFreshStateRetry,
+			autoBirdFreshStateRetry, Localization.New("server.app.bird_dispatch.context_lost", "castle {castle} lost its prepared JAA context before Auto Bird dispatch", Localization.Params{"castle": fmt.Sprint(source.ID)}),
 		)
 	}
 	target, exists := allianceHolding(input.State.Alliance, operation.TargetCastleID)
@@ -741,7 +741,7 @@ func (application *Application) resolveAutoBirdDispatchStep(
 		request.ExpectedTargetCastle != 0 && request.ExpectedTargetCastle != target.CastleID {
 		return hold(
 			fmt.Sprintf("prepared Auto Bird target %d is no longer valid", operation.TargetCastleID),
-			autoBirdFreshStateRetry,
+			autoBirdFreshStateRetry, Localization.New("server.app.bird_dispatch.target_invalid", "prepared Auto Bird target {castle} is no longer valid", Localization.Params{"castle": fmt.Sprint(operation.TargetCastleID)}),
 		)
 	}
 	protectDirewolves := application.autoBirdDirewolvesProtected(input.State, source.ID, now)
@@ -749,13 +749,13 @@ func (application *Application) resolveAutoBirdDispatchStep(
 	if manifestErr != nil {
 		return hold(
 			"could not read eligible troops from the dispatch JAA: "+manifestErr.Error(),
-			autoBirdNoTroopsRetry,
+			autoBirdNoTroopsRetry, Localization.ErrorContext(Localization.New("server.app.bird_dispatch.manifest_error", "could not read eligible troops from the dispatch JAA", nil), manifestErr),
 		)
 	}
 	if len(manifest) == 0 {
 		return hold(
 			fmt.Sprintf("fresh dispatch JAA has no eligible troops at castle %d", source.ID),
-			autoBirdNoTroopsRetry,
+			autoBirdNoTroopsRetry, Localization.New("server.app.bird_dispatch.no_troops", "fresh dispatch JAA has no eligible troops at castle {castle}", Localization.Params{"castle": fmt.Sprint(source.ID)}),
 		)
 	}
 	if request.MinimumSend > 0 && total < request.MinimumSend {
@@ -764,7 +764,7 @@ func (application *Application) resolveAutoBirdDispatchStep(
 				"fresh dispatch JAA has %d eligible troops at castle %d; minimum send is %d",
 				total, source.ID, request.MinimumSend,
 			),
-			autoBirdNoTroopsRetry,
+			autoBirdNoTroopsRetry, Localization.New("server.app.bird_dispatch.minimum_send", "fresh dispatch JAA has {total, number} eligible troops at castle {castle}; minimum send is {minimum, number}", Localization.Params{"total": total, "castle": fmt.Sprint(source.ID), "minimum": request.MinimumSend}),
 		)
 	}
 	step := supportDispatchStep("Dispatch Auto Bird troops", source, target, operation.DelayHours, manifest,
@@ -794,6 +794,7 @@ func (application *Application) deferAutoBirdDispatch(
 	request autoBirdCycleRequest,
 	detail string,
 	retryAt time.Time,
+	descriptors ...*Localization.Message,
 ) {
 	if application == nil || application.State == nil {
 		return
@@ -816,6 +817,7 @@ func (application *Application) deferAutoBirdDispatch(
 		retryAt = retryAt.UTC()
 		next.NextAttemptAt = &retryAt
 		next.StatusDetail = detail
+		next.StatusDetailDescriptor = Localization.Bind(Localization.First(descriptors), detail)
 		next.UpdatedAt = time.Now().UTC()
 		if source, found := gameState.Castles[request.SourceCastleID]; found {
 			next.UnitsObservedAt = source.UnitsObservedAt

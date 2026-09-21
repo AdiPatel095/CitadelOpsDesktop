@@ -7,6 +7,7 @@ import (
 
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
+	"CitadelDesktop/Server/Localization"
 	"CitadelDesktop/Server/State"
 )
 
@@ -470,4 +471,31 @@ func autoBirdIntentTestState(t *testing.T, now time.Time) (State.GameState, *Gam
 		}},
 	}
 	return gameState, gameData
+}
+
+func TestDeferredBirdDispatchBindsOrClearsStatusDescriptor(t *testing.T) {
+	for _, descriptor := range []*Localization.Message{nil, Localization.New("test.bird_hold", "Hold castle {castle}", Localization.Params{"castle": "17"})} {
+		state := State.NewGameState()
+		state.Stationing["bird"] = State.StationingOperation{ID: "bird", Purpose: "autoBird", SourceCastleID: 17, Phase: State.StationingPhaseDispatchReady, StatusDetail: "old", StatusDetailDescriptor: Localization.New("old", "Old reason", nil)}
+		application := &Application{State: State.NewStore(state)}
+		retry := time.Now().UTC().Add(time.Minute)
+		application.deferAutoBirdDispatch(autoBirdCycleRequest{TrackingID: "bird", SourceCastleID: 17}, "Hold castle 17", retry, descriptor)
+		current := application.State.ReadOnlyView().Stationing["bird"]
+		if current.StatusDetail != "Hold castle 17" || current.Phase != State.StationingPhaseWaiting || current.NextAttemptAt == nil || !current.NextAttemptAt.Equal(retry) {
+			t.Fatalf("dispatch hold changed: %+v", current)
+		}
+		if descriptor == nil {
+			if current.StatusDetailDescriptor != nil {
+				t.Fatal("old descriptor survived opaque replacement")
+			}
+			continue
+		}
+		if current.StatusDetailDescriptor == nil || current.StatusDetailDescriptor.FallbackText != current.StatusDetail {
+			t.Fatalf("new descriptor not bound: %+v", current.StatusDetailDescriptor)
+		}
+		descriptor.Params["castle"] = "mutated"
+		if application.State.ReadOnlyView().Stationing["bird"].StatusDetailDescriptor.Params["castle"] != "17" {
+			t.Fatal("caller mutated stored descriptor")
+		}
+	}
 }
