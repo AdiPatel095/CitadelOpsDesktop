@@ -160,7 +160,7 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
           <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
             <div>
               <h3 className="flex items-center gap-2 text-base font-black text-text-main">
-                <Shield className="h-4 w-4 text-primary" /> Wall formation
+                <Shield className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.components.defensePresetEditor.wall.formation.d775c51f" />
               </h3>
               <p className="mt-1 text-xs text-text-muted">
                 <LocalizedText messageKey="ui.components.defensePresetEditor.every.position.is.fixed.select.a.tool.b45f9582" /></p>
@@ -219,7 +219,7 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
         <section aria-label={localizeStatic("ui.components.defensePresetEditor.aria-label.moat.tools.f461b2a0")}>
           <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h3 className="flex items-center gap-2 text-base font-black text-text-main"><Waves className="h-4 w-4 text-info" /> Moat tools</h3>
+              <h3 className="flex items-center gap-2 text-base font-black text-text-main"><Waves className="h-4 w-4 text-info" /> <LocalizedText messageKey="ui.components.defensePresetEditor.moat.tools.f461b2a0" /></h3>
               <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.components.defensePresetEditor.each.defense.section.has.one.fixed.moat.0f1c3a73" /></p>
             </div>
             <Badge variant="outline"><LocalizedText messageKey="ui.components.defensePresetEditor.3.fixed.moat.slots.2c862261" /></Badge>
@@ -310,7 +310,7 @@ const DefensePresetEditor: React.FC<DefensePresetEditorProps> = ({
           <div className="mb-3 mt-4 flex flex-wrap items-end justify-between gap-3">
             <div>
               <h3 className="flex items-center gap-2 text-base font-black text-text-main">
-                <Castle className="h-4 w-4 text-primary" /> Courtyard tools
+                <Castle className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.components.defensePresetEditor.courtyard.tools.ad001739" />
               </h3>
               <p className="mt-1 text-xs text-text-muted">
                 <LocalizedText messageKey="ui.components.defensePresetEditor.dfk.has.three.normal.keep.tool.slots.ea706cd9" /></p>

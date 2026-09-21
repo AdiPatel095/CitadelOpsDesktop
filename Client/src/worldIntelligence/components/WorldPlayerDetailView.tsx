@@ -315,7 +315,7 @@ const WorldPlayerDetailView = ({ profile, onOpenAlliance }: WorldPlayerDetailVie
 			</Card>
 
 			<Card>
-				<CardHeader><CardTitle className="flex items-center gap-2"><History className="h-5 w-5 text-primary" />Identity history</CardTitle></CardHeader>
+				<CardHeader><CardTitle className="flex items-center gap-2"><History className="h-5 w-5 text-primary" /><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.identity.history.8bca6522" /></CardTitle></CardHeader>
 				<CardContent className="pt-0">
 					{changes.length === 0 ? (
 						<p className="text-sm text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldPlayerDetailView.no.player.name.or.alliance.changes.have.9048b9e4" /></p>

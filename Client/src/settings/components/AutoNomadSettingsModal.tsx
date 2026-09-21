@@ -106,7 +106,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
         <Card variant="solid" className="p-4">
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block md:col-span-2">
-              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Castle className="h-3.5 w-3.5" /> Source castle</span>
+              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Castle className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.source.castle.86d5a48e" /></span>
               <Select
                 value={draft.sourceCastleId > 0 ? String(draft.sourceCastleId) : ''}
                 onChange={(value) => setDraft((current) => ({ ...current, sourceCastleId: Number(value) || 0 }))}
@@ -117,7 +117,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
             </label>
 
             <label className="block">
-              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Swords className="h-3.5 w-3.5" /> Nomad attack preset</span>
+              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Swords className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.nomad.attack.preset.88ec98ef" /></span>
               <Select
                 value={draft.nomadPresetId}
                 onChange={(nomadPresetId) => setDraft((current) => ({ ...current, nomadPresetId }))}
@@ -128,7 +128,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
               />
             </label>
             <label className="block">
-              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Swords className="h-3.5 w-3.5" /> Samurai attack preset</span>
+              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Swords className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.samurai.attack.preset.31066b77" /></span>
               <Select
                 value={draft.samuraiPresetId}
                 onChange={(samuraiPresetId) => setDraft((current) => ({ ...current, samuraiPresetId }))}
@@ -175,7 +175,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
         <Card variant="solid" className="p-4">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2 text-sm font-black text-text-main"><ShieldCheck className="h-4 w-4 text-primary" /> Event start difficulty</div>
+              <div className="flex items-center gap-2 text-sm font-black text-text-main"><ShieldCheck className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.event.start.difficulty.d32020cb" /></div>
               <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.the.module.starts.the.active.event.with.b13c4375" /></p>
             </div>
             <Badge variant="outline">{achievementsObserved ? 'Achievements synced' : 'Syncing achievements'}</Badge>
@@ -215,7 +215,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
         <Card variant="solid" className="p-4">
           <div className="grid items-start gap-4 md:grid-cols-2">
             <label className="flex min-w-0 flex-col">
-              <span className="mb-1.5 flex min-h-6 items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Target className="h-3.5 w-3.5" /> Stop at event score</span>
+              <span className="mb-1.5 flex min-h-6 items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Target className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.stop.at.event.score.f1752bfd" /></span>
               <Input
                 type="text"
                 inputMode="numeric"
@@ -232,7 +232,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
             </label>
             <label className="flex min-w-0 flex-col">
               <span className="mb-1.5 flex min-h-6 items-center justify-between gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted">
-                <span className="flex min-w-0 items-center gap-2"><Clock3 className="h-3.5 w-3.5 shrink-0" /> Stop before event ends</span>
+                <span className="flex min-w-0 items-center gap-2"><Clock3 className="h-3.5 w-3.5 shrink-0" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.stop.before.event.ends.96ca2172" /></span>
                 <Badge variant="outline" className="shrink-0"><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.30.min.recommended.61238251" /></Badge>
               </span>
               <Input
@@ -251,7 +251,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
         <Card variant="solid" className="p-4">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <div className="flex items-center gap-2 text-sm font-black text-text-main"><RotateCcw className="h-4 w-4 text-primary" /> Clear each landed-hit cooldown</div>
+              <div className="flex items-center gap-2 text-sm font-black text-text-main"><RotateCcw className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.clear.each.landed.hit.cooldown.e51dba73" /></div>
               <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.after.every.confirmed.victory.refresh.the.target.755f02c1" /></p>
             </div>
             <Switch
@@ -292,7 +292,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
         <Card variant="solid" className="p-4">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <div className="flex items-center gap-2 text-sm font-black text-text-main"><TestTube2 className="h-4 w-4 text-primary" /> Temporary RBC end-to-end trial</div>
+              <div className="flex items-center gap-2 text-sm font-black text-text-main"><TestTube2 className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.temporary.rbc.end.to.end.trial.9da6b870" /></div>
               <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.use.the.nomad.preset.against.one.robber.89f8e101" /></p>
             </div>
             <Switch
@@ -339,7 +339,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
         </Card>
 
         <Card variant="solid" className="p-4">
-          <div className="flex items-center gap-2 text-sm font-black text-text-main"><Lock className="h-4 w-4 text-primary" /> Fixed four-camp flow</div>
+          <div className="flex items-center gap-2 text-sm font-black text-text-main"><Lock className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.fixed.four.camp.flow.380f9acb" /></div>
           <div className="mt-3 grid gap-2 sm:grid-cols-3">
             <div className="rounded-xl border border-border-base bg-bg-app/45 p-3 text-xs text-text-muted"><Badge variant="outline" className="mb-2">1</Badge><div><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.advance.each.of.the.four.nearest.regular.45952900" /></div></div>
             <div className="rounded-xl border border-border-base bg-bg-app/45 p-3 text-xs text-text-muted"><Badge variant="outline" className="mb-2">2</Badge><div><LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.rank.maxed.camps.by.defense.capacity.plus.f2d38ec8" /></div></div>

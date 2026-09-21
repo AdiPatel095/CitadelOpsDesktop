@@ -193,7 +193,7 @@ const WorldAllianceDetailView = ({ profile, onOpenPlayer }: WorldAllianceDetailV
 			</Card>
 
 			<Card>
-				<CardHeader className="flex-wrap gap-3"><CardTitle className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" />Observed roster</CardTitle><Badge variant="outline">{formatCount(profile.members.length)} players</Badge></CardHeader>
+				<CardHeader className="flex-wrap gap-3"><CardTitle className="flex items-center gap-2"><Users className="h-5 w-5 text-primary" /><LocalizedText messageKey="ui.worldIntelligence.components.worldAllianceDetailView.observed.roster.81d02c36" /></CardTitle><Badge variant="outline">{formatCount(profile.members.length)} players</Badge></CardHeader>
 				<CardContent className="pt-0">
 					<div className="max-h-[34rem] overflow-auto rounded-global border border-border-base custom-scrollbar">
 						<table className="w-full min-w-[40rem] text-sm">

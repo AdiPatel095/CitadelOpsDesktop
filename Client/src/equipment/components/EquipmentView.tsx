@@ -258,7 +258,7 @@ export default function EquipmentView() {
 				<CardHeader className="liquid-card-header-prominent flex flex-wrap items-center gap-4">
 					<PillSelector ariaLabel={localizeStatic("ui.equipment.components.equipmentView.ariaLabel.equipment.owner.type.8d4616c8")} value={mode} options={['Commander', 'Castellan']} onChange={(value) => setMode(value as EquipmentMode)} size="header" />
 					<div className="equipment-actions ml-auto">
-						<Button size="sm" variant="outline" disabled={controlsDisabled || leaders.length < 2} onClick={() => setShowSwap(true)}><RefreshCw className="mr-1.5 h-4 w-4" />Swap Gear</Button>
+						<Button size="sm" variant="outline" disabled={controlsDisabled || leaders.length < 2} onClick={() => setShowSwap(true)}><RefreshCw className="mr-1.5 h-4 w-4" /><LocalizedText messageKey="ui.equipment.components.equipmentView.swap.gear.690c2557" /></Button>
 						<Button size="sm" disabled={!state?.session.loggedIn || busy} onClick={() => { setSellType('Gems'); setShowSell(true); }} className="border border-warning/30 bg-warning/10 text-warning hover:border-warning/50 hover:bg-warning/20"><LocalizedText messageKey="ui.equipment.components.equipmentView.sell.gems.8a1147dc" /></Button>
 						<Button size="sm" disabled={!state?.session.loggedIn || busy} onClick={() => { setSellType('Equipment'); setShowSell(true); }} className="border border-warning/30 bg-warning/10 text-warning hover:border-warning/50 hover:bg-warning/20"><LocalizedText messageKey="ui.equipment.components.equipmentView.sell.equipment.aadcdf54" /></Button>
 					</div>
@@ -376,7 +376,7 @@ function EffectiveBattleReport({
 				<div className="min-w-0">
 					<h3 className="flex items-center gap-2 text-base font-semibold text-text-main">
 						<Activity className="h-4 w-4 shrink-0 text-primary" />
-						Effective Battle Report
+						<LocalizedText messageKey="ui.equipment.components.equipmentView.effective.battle.report.6af6f9d6" />
 					</h3>
 					<p className="mt-0.5 truncate text-xs text-text-muted">{leader?.name ?? 'Select a loadout'}</p>
 				</div>

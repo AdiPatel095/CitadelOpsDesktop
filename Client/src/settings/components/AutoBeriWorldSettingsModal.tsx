@@ -283,7 +283,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 				<div className="space-y-4 rounded-xl border border-border-base bg-bg-elevated/40 p-4">
 					<div>
 						<div className="flex items-center gap-2 text-sm font-black text-text-main">
-							<Castle className="h-4 w-4 text-primary" /> Loot-funded camp construction
+							<Castle className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.loot.funded.camp.construction.4371947e" />
 						</div>
 						<p className="mt-1 text-xs text-text-muted">
 							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.uses.the.built.in.exact.camp.layout.6c194563" /></p>
@@ -475,7 +475,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 					<div className="grid gap-4 border-t border-border-base pt-4 lg:grid-cols-2">
 						<div>
 							<div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-text-muted">
-								<Shield className="h-3.5 w-3.5" /> Camp resources kept in reserve
+								<Shield className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.camp.resources.kept.in.reserve.f6713557" />
 							</div>
 							<div className="mt-2 grid grid-cols-2 gap-3">
 								{[
@@ -524,7 +524,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 				<div className="space-y-4 rounded-xl border border-border-base bg-bg-elevated/40 p-4">
 					<div>
 						<div className="flex items-center gap-2 text-sm font-black text-text-main">
-							<Crosshair className="h-4 w-4 text-primary" /> Tower attack
+							<Crosshair className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.tower.attack.62826c7e" />
 						</div>
 						<p className="mt-1 text-xs text-text-muted">
 							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.uses.berimond.s.find.next.tower.command.f09dfe35" /></p>
@@ -578,7 +578,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 				<div className="space-y-4 rounded-xl border border-border-base bg-bg-elevated/40 p-4">
 					<div>
 						<div className="flex items-center gap-2 text-sm font-black text-text-main">
-							<Hammer className="h-4 w-4 text-primary" /> Armorer tool minimums
+							<Hammer className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.armorer.tool.minimums.d4868418" />
 						</div>
 						<p className="mt-1 text-xs text-text-muted">
 							<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.an.independent.auto.beri.lane.buys.the.72da5b70" /></p>

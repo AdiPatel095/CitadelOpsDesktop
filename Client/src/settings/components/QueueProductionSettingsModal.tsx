@@ -542,7 +542,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
           title={addLabel}
         >
           <Plus className="h-5 w-5" />
-          Select
+          <LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.select.2a78025d" />
         </button>
         </div>
         {showsRecruitRotation && (

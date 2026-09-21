@@ -3,7 +3,7 @@ import test from 'node:test';
 import fs from 'node:fs';
 import ts from 'typescript';
 import { pathToFileURL } from 'node:url';
-const files = ['locales','formatMessage','gameMessage','officialKeys','sourceMessages','richMessages'];
+const files = ['locales','formatMessage','gameMessage','officialKeys','sourceMessages','richMessages','patchNoteLiteralText'];
 const modules = {};
 for (const file of files) {
  const target = new URL(`../node_modules/.localization-${file}.mjs`,import.meta.url);
@@ -90,7 +90,7 @@ test('authored subset validation does not weaken strict missing-key rejection',(
 test('source-assigned static messages render verbatim without accidental ICU parameters',()=>{
  for(const [key,fallback] of Object.entries(modules.sourceMessages.sourceMessages)) {
   assert.deepEqual(modules.formatMessage.messageArguments(fallback),[],key);
-  assert.equal(modules.formatMessage.formatMessage({key,fallback},'en',{}).text,fallback,key);
+  assert.equal(modules.formatMessage.formatMessage({key,fallback},'en',{}).text,modules.patchNoteLiteralText.patchNoteLiteralText[key]??fallback,key);
  }
 });
 

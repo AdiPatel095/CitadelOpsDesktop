@@ -225,7 +225,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
           <Card variant="solid" className="p-4">
             <div className="grid gap-4 md:grid-cols-2">
               <label className="block">
-                <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Castle className="h-3.5 w-3.5" /> Source castle</span>
+                <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Castle className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.source.castle.86d5a48e" /></span>
                 <Select
                   value={draft.sourceCastleId > 0 ? String(draft.sourceCastleId) : ''}
                   onChange={(value) => setDraft((current) => ({ ...current, sourceCastleId: Number(value) || 0 }))}
@@ -235,7 +235,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Swords className="h-3.5 w-3.5" /> Advisor attack preset</span>
+                <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Swords className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.advisor.attack.preset.275e72e7" /></span>
                 <Select
                   value={draft.presetId}
                   onChange={(presetId) => setDraft((current) => ({ ...current, presetId }))}
@@ -290,7 +290,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
           </Card>
 
           <Card variant="solid" className="p-4">
-            <div className="mb-3 flex items-center gap-2 text-sm font-black text-text-main"><Clock3 className="h-4 w-4 text-primary" /> Run sizing</div>
+            <div className="mb-3 flex items-center gap-2 text-sm font-black text-text-main"><Clock3 className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.run.sizing.878bd208" /></div>
             <div className="grid gap-4 sm:grid-cols-2">
               <NumberField
                 label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.maximum.attacks.950045b9")}
@@ -313,7 +313,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
           </Card>
 
           <Card variant="solid" className="p-4">
-            <div className="mb-3 flex items-center gap-2 text-sm font-black text-text-main"><Coins className="h-4 w-4 text-primary" /> Resource gates</div>
+            <div className="mb-3 flex items-center gap-2 text-sm font-black text-text-main"><Coins className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.resource.gates.05c86e14" /></div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
               <NumberField label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.all.in.coins.attack.5e43c9f3")} value={draft.coinCostPerAttack} min={1} suffix="coins" onChange={(value) => setInteger('coinCostPerAttack', value, 1, Number.MAX_SAFE_INTEGER, 500)} />
               <NumberField label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.keep.coins.0f999c56")} value={draft.minimumCoinReserve} min={0} suffix="reserve" onChange={(value) => setInteger('minimumCoinReserve', value, 0, Number.MAX_SAFE_INTEGER, 0)} />

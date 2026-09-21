@@ -170,7 +170,7 @@ const DecorationPresetsPanel: React.FC = () => {
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-text-muted">
             <Castle className="h-3.5 w-3.5" strokeWidth={2.25} />
-            Focused castle
+            <LocalizedText messageKey="ui.components.decorationPresetsPanel.focused.castle.808b7d57" />
           </div>
           <div className="mt-1.5 flex min-h-[1.75rem] items-center">
             <CastleFocusHoverPopover
@@ -190,14 +190,14 @@ const DecorationPresetsPanel: React.FC = () => {
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-text-muted">
               <Layers className="h-3.5 w-3.5" strokeWidth={2.25} />
-              Saved
+              <LocalizedText messageKey="ui.components.decorationPresetsPanel.saved.b5c120b3" />
             </div>
             <div className="mt-1.5 truncate text-sm font-semibold text-text-main">{presetCountLabel}</div>
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2 text-[10px] font-bold uppercase text-text-muted">
               <Sparkles className="h-3.5 w-3.5" strokeWidth={2.25} />
-              Selected
+              <LocalizedText messageKey="ui.components.decorationPresetsPanel.selected.57fd7a0c" />
             </div>
             <div className="mt-1.5 truncate text-sm font-semibold text-text-main">{selectedPlacementLabel}</div>
           </div>
@@ -208,7 +208,7 @@ const DecorationPresetsPanel: React.FC = () => {
         <div className="min-w-0">
           <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase text-text-muted">
             <Save className="h-3.5 w-3.5" strokeWidth={2.25} />
-            Capture current layout
+            <LocalizedText messageKey="ui.components.decorationPresetsPanel.capture.current.layout.3c4df644" />
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center 2xl:flex-col 2xl:items-stretch">
             <Input
@@ -237,7 +237,7 @@ const DecorationPresetsPanel: React.FC = () => {
         <div className="min-w-0">
           <div className="mb-2 flex items-center gap-2 text-[10px] font-bold uppercase text-text-muted">
             <Layers className="h-3.5 w-3.5" strokeWidth={2.25} />
-            Saved layout
+            <LocalizedText messageKey="ui.components.decorationPresetsPanel.saved.layout.a9d44916" />
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <Select

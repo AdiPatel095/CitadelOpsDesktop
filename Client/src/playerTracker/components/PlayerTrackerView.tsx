@@ -538,7 +538,7 @@ const PlayerTrackerView = () => {
                 <div>
                   <CardTitle className="flex items-center gap-2 text-lg">
                     <Swords className="h-5 w-5" style={{ color: troopMetricDefinition.color }} />
-                    Troop strength
+                    <LocalizedText messageKey="ui.playerTracker.components.playerTrackerView.troop.strength.1a602396" />
                   </CardTitle>
                   <p className="mt-1 text-xs font-medium text-text-muted">
                     {troopFilterLabel(troopTypeFilter, troopRoleFilter, troopFoodFilter, selectedTroopUnitID, troopMetadata)}

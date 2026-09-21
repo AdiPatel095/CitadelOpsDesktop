@@ -497,7 +497,7 @@ export const WorldEventHistory = ({
 		<div>
 			<div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
 				<div>
-					<div className="flex items-center gap-2 text-base font-bold text-text-main"><Trophy className="h-5 w-5 text-primary" /> Player rankings</div>
+					<div className="flex items-center gap-2 text-base font-bold text-text-main"><Trophy className="h-5 w-5 text-primary" /> <LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.player.rankings.7a29848b" /></div>
 						<p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.name.might.honor.and.alliance.stay.visible.9556c88a" /></p>
 				</div>
 				<Button variant="ghost" size="icon" aria-label={localizeStatic("ui.worldIntelligence.components.worldEventHistory.aria-label.refresh.event.history.6f3331e2")} onClick={() => void refreshBoards()} isLoading={loading}><RefreshCw className="h-4 w-4" /></Button>
@@ -668,7 +668,7 @@ const WorldPlayerEventHistoryContent = ({ history, error = '', onOpenAlliance }:
 			<CardContent>
 				<div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 					<div>
-						<div className="flex items-center gap-2 font-bold text-text-main"><History className="h-5 w-5 text-primary" /> Previous scores</div>
+						<div className="flex items-center gap-2 font-bold text-text-main"><History className="h-5 w-5 text-primary" /> <LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.previous.scores.0b9095fa" /></div>
 						<p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.final.known.public.score.from.each.completed.f94de1c4" /></p>
 					</div>
 					<div className="w-full sm:w-72">
@@ -808,9 +808,9 @@ const TablePager = ({ page, pageCount, total, noun, onPageChange }: { page: numb
 		<div className="flex flex-col gap-2 border-t border-border-base bg-bg-input/25 px-4 py-3 text-xs text-text-muted sm:flex-row sm:items-center sm:justify-between">
 			<span>{formatCount(first)}–{formatCount(last)} of {formatCount(total)} {noun}</span>
 			<div className="flex items-center gap-2">
-				<Button type="button" variant="ghost" size="sm" disabled={page <= 0} onClick={() => onPageChange(page - 1)}><ChevronLeft className="mr-1 h-4 w-4" />Previous</Button>
+				<Button type="button" variant="ghost" size="sm" disabled={page <= 0} onClick={() => onPageChange(page - 1)}><ChevronLeft className="mr-1 h-4 w-4" /><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.previous.a57b08a4" /></Button>
 				<span>Page {page + 1} of {pageCount}</span>
-				<Button type="button" variant="ghost" size="sm" disabled={page + 1 >= pageCount} onClick={() => onPageChange(page + 1)}>Next<ChevronRight className="ml-1 h-4 w-4" /></Button>
+				<Button type="button" variant="ghost" size="sm" disabled={page + 1 >= pageCount} onClick={() => onPageChange(page + 1)}><LocalizedText messageKey="ui.worldIntelligence.components.worldEventHistory.next.1ff57a29" /><ChevronRight className="ml-1 h-4 w-4" /></Button>
 			</div>
 		</div>
 	);

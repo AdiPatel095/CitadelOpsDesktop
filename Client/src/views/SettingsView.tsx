@@ -1029,7 +1029,7 @@ const SettingsView: React.FC = () => {
 									<LocalizedText messageKey="ui.views.settingsView.opens.the.game.tab.so.you.can.2c67b74b" /></span>
 								<span className="mt-3 flex items-start gap-2 rounded-lg border border-warning/20 bg-warning/5 px-3 py-2 text-[11px] leading-relaxed text-warning">
 									<TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-									Uses considerably more processor and memory resources and may make your computer feel slower.
+									<LocalizedText messageKey="ui.views.settingsView.uses.considerably.more.processor.and.memory.resources.fed03b83" />
 								</span>
 							</span>
 						</div>

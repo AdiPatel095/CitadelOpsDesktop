@@ -218,15 +218,15 @@ export const AutoBoosterSettingsModal: React.FC<AutoBoosterSettingsModalProps> =
           <div className="mt-4 space-y-2 text-[11px] text-text-muted">
             <div className="flex items-start gap-2 rounded-xl border border-border-base bg-bg-app/55 px-3 py-2.5">
               <Clock3 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-              The daily effect window and its exact end time must still match.
+              <LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.the.daily.effect.window.and.its.exact.b5390f69" />
             </div>
             <div className="flex items-start gap-2 rounded-xl border border-border-base bg-bg-app/55 px-3 py-2.5">
               <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-secondary" />
-              The server must report effect 2 as not yet boosted in this same window.
+              <LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.the.server.must.report.effect.2.as.d3b588a7" />
             </div>
             <div className="flex items-start gap-2 rounded-xl border border-border-base bg-bg-app/55 px-3 py-2.5">
               <Coins className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
-              The quote must remain exactly 2,500 and the current balance must preserve your reserve.
+              <LocalizedText messageKey="ui.settings.components.autoBoosterSettingsModal.the.quote.must.remain.exactly.2.500.0bac4a18" />
             </div>
           </div>
         </Card>

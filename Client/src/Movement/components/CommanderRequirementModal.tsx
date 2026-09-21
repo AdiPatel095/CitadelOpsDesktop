@@ -141,7 +141,7 @@ const CommanderRequirementModal: React.FC<CommanderRequirementModalProps> = ({
         <div className="rounded-global border border-border-light bg-bg-card/45 px-4 py-3">
           <div className="flex items-center gap-2 text-sm font-semibold text-text-main">
             <Filter className="h-4 w-4 text-primary" />
-            Require an equipped bonus-troop stat
+            <LocalizedText messageKey="ui.movement.components.commanderRequirementModal.require.an.equipped.bonus.troop.stat.5289cf33" />
           </div>
           <p className="mt-1 text-xs leading-relaxed text-text-muted">
             <LocalizedText messageKey="ui.movement.components.commanderRequirementModal.only.commanders.whose.currently.equipped.gear.meets.d44315cf" /></p>

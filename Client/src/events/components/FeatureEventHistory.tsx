@@ -70,7 +70,7 @@ export function FeatureEventHistory({ entries, worldId, playerId, now, loading, 
   const visible = filtered.slice(safePage * pageSize, (safePage + 1) * pageSize);
   return <Card><CardContent>
     <div className="mb-4">
-      <div className="flex items-center gap-2 font-bold text-text-main"><History className="h-5 w-5 text-primary" /> Previous event scores</div>
+      <div className="flex items-center gap-2 font-bold text-text-main"><History className="h-5 w-5 text-primary" /> <LocalizedText messageKey="ui.events.components.featureEventHistory.previous.event.scores.81cc1811" /></div>
       <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.events.components.featureEventHistory.final.known.account.score.for.each.collected.57490c30" /></p>
     </div>
     {eventOptions.length > 1 && <div className="mb-4 w-full sm:w-72"><Select ariaLabel={localizeStatic("ui.events.components.featureEventHistory.ariaLabel.filter.previous.scores.by.event.c0cc7d68")} value={selectedEvent} onChange={(value) => { setEventFilter(value); setPage(0); }} options={[{ value: 'all', label: 'All previous events' }, ...eventOptions]} menuGrowToViewport /></div>}

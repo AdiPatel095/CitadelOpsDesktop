@@ -37,7 +37,7 @@ const UpdateModal = () => {
 					</p>
 					<Card variant="solid" className="mb-8 border-primary/30 p-6 shadow-lg">
 						<div className="flex items-center justify-center gap-3 text-xl font-bold text-primary">
-							<RefreshCw className="h-6 w-6" /> Restart CitadelOps
+							<RefreshCw className="h-6 w-6" /> <LocalizedText messageKey="ui.components.updateModal.restart.citadelops.8b96fc52" />
 						</div>
 						<p className="mt-3 text-sm text-text-muted"><LocalizedText messageKey="ui.components.updateModal.close.this.window.and.reopen.the.application.18c4d2b5" /></p>
 					</Card>

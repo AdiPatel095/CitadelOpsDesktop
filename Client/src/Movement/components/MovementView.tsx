@@ -319,7 +319,7 @@ const MovementView: React.FC = () => {
             title={gameLoggedIn ? 'Refresh commander status' : 'Connect to refresh'}
           >
             <RefreshCw className="mr-1.5 h-4 w-4" />
-            Refresh
+            <LocalizedText messageKey="common.refresh" />
           </Button>
         </CardHeader>
         <CardContent className="liquid-prominent-header-content">
@@ -446,7 +446,7 @@ const MovementView: React.FC = () => {
                                   >
                                     <Badge variant="primary" className="gap-1.5 cursor-pointer normal-case tracking-normal shadow-sm">
                                       <CheckCircle2 className="h-3 w-3" />
-                                      Select all
+                                      <LocalizedText messageKey="ui.movement.components.movementView.select.all.1fc9a387" />
                                     </Badge>
                                   </button>
                                   <button
@@ -458,7 +458,7 @@ const MovementView: React.FC = () => {
                                   >
                                     <Badge variant="danger" className="gap-1.5 cursor-pointer normal-case tracking-normal shadow-sm">
                                       <XCircle className="h-3 w-3" />
-                                      Unselect all
+                                      <LocalizedText messageKey="ui.movement.components.movementView.unselect.all.d60bf0bb" />
                                     </Badge>
                                   </button>
                                 </div>

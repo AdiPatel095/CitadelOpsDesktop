@@ -516,7 +516,7 @@ export const AutoSceatResSettingsModal: React.FC<AutoSceatResSettingsModalProps>
             <Card variant="solid" className="h-fit 2xl:sticky 2xl:top-0">
               <CardHeader>
                 <div>
-                  <CardTitle className="flex items-center gap-2 text-base"><Warehouse className="h-4 w-4 text-primary" />Additional Storage Nodes</CardTitle>
+                  <CardTitle className="flex items-center gap-2 text-base"><Warehouse className="h-4 w-4 text-primary" /><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.additional.storage.nodes.017a7158" /></CardTitle>
                   <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoSceatResSettingsModal.the.four.crafting.castles.are.donors.and.35534627" /></p>
                 </div>
               </CardHeader>

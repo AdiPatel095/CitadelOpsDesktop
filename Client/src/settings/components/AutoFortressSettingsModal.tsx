@@ -194,10 +194,10 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2 text-[10px] font-black uppercase tracking-wide text-text-muted">
             <span className="flex items-center gap-1.5 rounded-full border border-border-base bg-bg-app/65 px-2.5 py-1.5">
-              <Radar className="h-3.5 w-3.5 text-primary" /> Full-map discovery
+              <Radar className="h-3.5 w-3.5 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.full.map.discovery.19d8f15c" />
             </span>
             <span className="flex items-center gap-1.5 rounded-full border border-border-base bg-bg-app/65 px-2.5 py-1.5">
-              <Clock3 className="h-3.5 w-3.5 text-secondary" /> Due-time 1×1 checks
+              <Clock3 className="h-3.5 w-3.5 text-secondary" /> <LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.due.time.1.1.checks.928cc461" />
             </span>
           </div>
         </div>
@@ -310,7 +310,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
           </div>
           <div className="mt-3 flex items-start gap-2 rounded-xl border border-secondary/20 bg-secondary/5 px-3 py-2.5 text-[11px] text-text-muted">
             <Truck className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />
-            Purchases arrive at the Great Empire main castle. The kingdom troop-transfer route distributes all available Direwolves across enabled kingdoms, balancing stationed and confirmed inbound stock.
+            <LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.purchases.arrive.at.the.great.empire.main.e7405a14" />
           </div>
           <div className="mt-3 flex items-center justify-between gap-4 rounded-xl border border-border-base bg-bg-app/55 px-3 py-3">
             <div>

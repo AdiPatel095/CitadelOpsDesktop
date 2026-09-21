@@ -518,7 +518,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
                                 className="flex h-8 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-error/90 hover:bg-error/10"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
-                                Remove
+                                <LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.remove.c3812fc4" />
                               </button>
                             </div>
                           </div>
@@ -531,7 +531,7 @@ export const AutoTCISettingsModal: React.FC<AutoTCISettingsModalProps> = ({ isOp
                       className="mt-4 flex w-full items-center justify-center gap-2 rounded-global border-2 border-dashed border-border-base py-3.5 text-sm font-medium text-text-muted transition-colors hover:border-primary hover:bg-primary/5 hover:text-primary"
                     >
                       <Plus className="h-4 w-4" />
-                      Add construction item
+                      <LocalizedText messageKey="ui.settings.components.autoTCISettingsModal.add.construction.item.095fa798" />
                     </button>
                   </div>
                 ) : (

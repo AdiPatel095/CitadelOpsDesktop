@@ -138,7 +138,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
       <div className="space-y-3">
         {protection?.active ? (
           <div className="rounded-global border border-warning/30 bg-warning/10 p-4">
-            <div className="flex items-center gap-2 text-sm font-black text-warning"><LockKeyhole className="h-4 w-4" /> Auto Khan is safety-locked</div>
+            <div className="flex items-center gap-2 text-sm font-black text-warning"><LockKeyhole className="h-4 w-4" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.auto.khan.is.safety.locked.e454bd5b" /></div>
             <p className="mt-1 text-xs text-text-main" {...messageLanguageAttributes(protectionReason)}>{protectionReason.text}</p>
             <div className="mt-2 flex flex-wrap gap-2">
               <Badge variant="warning">{(protection.offensiveWallUnits ?? 0).toLocaleString()} offensive wall units</Badge>
@@ -150,7 +150,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
         <Card variant="solid" className="p-4">
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block">
-              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Castle className="h-3.5 w-3.5" /> Attack from</span>
+              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Castle className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.attack.from.2ef61f36" /></span>
               <Select
                 value={draft.sourceCastleId > 0 ? String(draft.sourceCastleId) : ''}
                 onChange={(value) => {
@@ -171,7 +171,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
             </label>
 
             <div>
-              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><ShieldCheck className="h-3.5 w-3.5" /> Defend at</span>
+              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><ShieldCheck className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.defend.at.a5f2a10a" /></span>
               <div className="flex min-h-[42px] items-center rounded-global border border-border-base bg-bg-input/70 px-4 text-sm text-text-main">
                 {mainCastle ? `${mainCastle.name?.trim() || `Castle ${mainCastle.id}`} · Main · ${mainCastle.x}:${mainCastle.y}` : 'Great Empire main castle not found'}
               </div>
@@ -185,7 +185,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
           <div className="grid gap-4 md:grid-cols-2">
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
-                <div className="flex items-center gap-2 text-sm font-black text-text-main"><LockKeyhole className="h-4 w-4 text-primary" /> Lock automatic Khan attacks</div>
+                <div className="flex items-center gap-2 text-sm font-black text-text-main"><LockKeyhole className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.lock.automatic.khan.attacks.2b670e17" /></div>
                 <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.stops.only.auto.khan.s.own.attack.284cf413" /></p>
               </div>
               <Switch
@@ -197,7 +197,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
 
             <div className="flex items-start justify-between gap-4 border-t border-border-base pt-4 md:border-l md:border-t-0 md:pl-4 md:pt-0">
               <div className="min-w-0">
-                <div className="flex items-center gap-2 text-sm font-black text-text-main"><Flame className="h-4 w-4 text-primary" /> Trigger Khan at full rage</div>
+                <div className="flex items-center gap-2 text-sm font-black text-text-main"><Flame className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.trigger.khan.at.full.rage.6e8b370e" /></div>
                 <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.turn.this.off.to.keep.attacking.and.e1a20f3a" /></p>
               </div>
               <Switch
@@ -212,7 +212,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
         <Card variant="solid" className="p-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <div className="flex items-center gap-2 text-sm font-black text-text-main"><Flame className="h-4 w-4 text-primary" /> Rage chain limit</div>
+              <div className="flex items-center gap-2 text-sm font-black text-text-main"><Flame className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.rage.chain.limit.907ed6bc" /></div>
               <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.once.this.many.accepted.khan.retaliations.are.fa686d33" /></p>
               <label className="mt-3 block max-w-xs">
                 <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.max.rage.chain.0.disables.limit.a652d0a7" /></span>
@@ -234,7 +234,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
             <div className="border-t border-border-base pt-4 md:border-l md:border-t-0 md:pl-4 md:pt-0">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2 text-sm font-black text-text-main"><Zap className="h-4 w-4 text-primary" /> Require Rage points booster</div>
+                  <div className="flex items-center gap-2 text-sm font-black text-text-main"><Zap className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.require.rage.points.booster.ad17ec97" /></div>
                   <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.gate.only.new.automatic.camp.attacks.unless.2ea26f61" /></p>
                   <p className={`mt-1 text-xs font-bold ${rageBoosterActive ? 'text-success' : 'text-text-muted'}`}>{rageBoosterStatus}</p>
                 </div>
@@ -252,7 +252,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
         <Card variant="solid" className="p-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <div className="flex items-center gap-2 text-sm font-black text-text-main"><LockKeyhole className="h-4 w-4 text-primary" /> Nomad points stop</div>
+              <div className="flex items-center gap-2 text-sm font-black text-text-main"><LockKeyhole className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.nomad.points.stop.727b7bc2" /></div>
               <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.at.the.limit.auto.khan.stops.launching.8f630fc2" /></p>
               <label className="mt-3 block max-w-xs">
                 <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.stop.at.nomad.points.0.disables.81362bed" /></span>
@@ -277,7 +277,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
             <div className="border-t border-border-base pt-4 md:border-l md:border-t-0 md:pl-4 md:pt-0">
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2 text-sm font-black text-text-main"><ShoppingCart className="h-4 w-4 text-primary" /> Replenish defense tools</div>
+                  <div className="flex items-center gap-2 text-sm font-black text-text-main"><ShoppingCart className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.replenish.defense.tools.04cc1c22" /></div>
                   <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.every.30.seconds.replace.preset.shortages.from.b001d2e4" /></p>
                 </div>
                 <Switch
@@ -297,7 +297,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
         <Card variant="solid" className="p-4">
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block">
-              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Swords className="h-3.5 w-3.5" /> Camp attack preset</span>
+              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Swords className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.camp.attack.preset.7f63bfed" /></span>
               <Select
                 value={draft.attackPresetId}
                 onChange={(attackPresetId) => setDraft((current) => ({ ...current, attackPresetId }))}
@@ -315,7 +315,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
             </label>
 
             <label className="block">
-              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><ShieldCheck className="h-3.5 w-3.5" /> Main defense preset</span>
+              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><ShieldCheck className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.main.defense.preset.75e96539" /></span>
               <Select
                 value={draft.defensePresetId}
                 onChange={(defensePresetId) => setDraft((current) => ({ ...current, defensePresetId }))}
@@ -343,7 +343,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
         <Card variant="solid" className="p-4">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <div className="flex items-center gap-2 text-sm font-black text-text-main"><RotateCcw className="h-4 w-4 text-primary" /> Skip every Khan camp cooldown</div>
+              <div className="flex items-center gap-2 text-sm font-black text-text-main"><RotateCcw className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.skip.every.khan.camp.cooldown.c1c19442" /></div>
               <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.each.launched.hit.reserves.enough.combined.skip.10c1e007" /></p>
             </div>
             <Switch
@@ -374,7 +374,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
               </label>
             ))}
             <label className="block">
-              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Clock3 className="h-3.5 w-3.5" /> Stop before event ends</span>
+              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Clock3 className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.stop.before.event.ends.96ca2172" /></span>
               <Input
                 type="number"
                 min={0}
@@ -395,7 +395,7 @@ export const AutoKhanSettingsModal: React.FC<AutoKhanSettingsModalProps> = ({ is
         <Card variant="solid" className="p-4">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-              <div className="flex items-center gap-2 text-sm font-black text-text-main"><ShieldAlert className="h-4 w-4 text-primary" /> Protect offense on the main castle wall</div>
+              <div className="flex items-center gap-2 text-sm font-black text-text-main"><ShieldAlert className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoKhanSettingsModal.protect.offense.on.the.main.castle.wall.e3913e51" /></div>
               <p className="mt-1 text-xs text-text-muted">
                 {sourceIsMain
                   ? 'Use this when the main castle holds both the attacking army and the defense.'

@@ -5,6 +5,14 @@ import { officialMessageKeys, officialMessageNouns } from './officialKeys';
 import { formatMessage, validateMessageCatalog } from './formatMessage';
 /** Add explicit descriptors here; never translate user names, IDs, or free-form input. */
 export const messages = {
+  'patchNotes.kind.added':'Added',
+  'patchNotes.kind.fixed':'Fixed',
+  'patchNotes.kind.security':'Security',
+  'patchNotes.kind.changed':'Changed',
+  'patchNotes.kind.removed':'Removed',
+  'patchNotes.kind.deprecated':'Deprecated',
+  'patchNotes.changes':'{count, plural, one {# change} other {# changes}}',
+
   'activity.rowAction':'Action',
   'activity.rowAllianceHelp':'Alliance help',
   'activity.rowBuilding':'Building',

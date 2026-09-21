@@ -857,7 +857,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             <div className="mt-4 border-t border-border-base pt-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <div className="flex items-center gap-2 text-sm font-bold text-text-main"><Anchor className="h-4 w-4 text-primary" /> Upgrade Harbor</div>
+                  <div className="flex items-center gap-2 text-sm font-bold text-text-main"><Anchor className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.upgrade.harbor.da1bc184" /></div>
                   <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.override.the.captured.harbor.path.and.maintain.1d06a158" /></p>
                 </div>
                 <Switch
@@ -953,7 +953,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             <div className="mt-3 rounded-global border border-border-base bg-bg-app/30 p-3">
               <div>
                 <div className="flex items-center gap-2 text-sm font-bold text-text-main">
-                  <Crosshair className="h-4 w-4 text-primary" /> Attack target priority
+                  <Crosshair className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.attack.target.priority.f25858a6" />
                 </div>
                 <p className="mt-1 text-xs text-text-muted">
                   <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.drag.enabled.targets.into.attack.order.highest.6f2dfc44" /></p>
@@ -1085,7 +1085,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
                   <div className="border-t border-border-base pt-3">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <div className="flex items-center gap-2 text-xs font-bold text-text-main"><Shield className="h-3.5 w-3.5 text-primary" /> Island defense units</div>
+                        <div className="flex items-center gap-2 text-xs font-bold text-text-main"><Shield className="h-3.5 w-3.5 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.island.defense.units.426d8af1" /></div>
                         <p className="mt-1 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.choose.dedicated.occupation.defenders.if.empty.one.289de337" /></p>
                       </div>
                       <Button size="sm" variant="outline" onClick={() => void chooseDefenseUnits()} leftIcon={<Shield className="h-3.5 w-3.5" />}>
@@ -1116,7 +1116,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
             <div className="mt-3 rounded-global border border-border-base bg-bg-app/30 p-3">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <div className="flex items-center gap-2 text-sm font-bold text-text-main"><Truck className="h-4 w-4 text-primary" /> Import missing troops</div>
+                  <div className="flex items-center gap-2 text-sm font-bold text-text-main"><Truck className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.import.missing.troops.8667e705" /></div>
                   <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStormSettingsModal.import.missing.attack.or.configured.defense.troops.1f4fca2e" /></p>
                 </div>
                 <Switch

@@ -574,7 +574,7 @@ const TCIDetailPanel: React.FC<TCIDetailPanelProps> = ({
           <div className="tci-detail-badges">
             <span><Clock3 aria-hidden="true" />{durationRangeLabel(item)}</span>
             <span><Layers3 aria-hidden="true" />{item.groupTiers.length} tiers</span>
-            {item.premium && <span><Sparkles aria-hidden="true" />Premium</span>}
+            {item.premium && <span><Sparkles aria-hidden="true" /><LocalizedText messageKey="ui.components.tCIPickerModal.premium.de88c121" /></span>}
           </div>
         </div>
       </div>

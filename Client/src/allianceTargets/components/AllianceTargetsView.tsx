@@ -507,7 +507,7 @@ const TargetRow = memo(({ target, canSpy, sending, sendingBlocked, loadingIntel,
 	  ) : (
 		<div className="flex items-center gap-1.5 text-xs text-text-muted">
 		  <FileSearch className="h-3.5 w-3.5 opacity-60" />
-		  No report
+		  <LocalizedText messageKey="ui.allianceTargets.components.allianceTargetsView.no.report.3d341ee6" />
 		</div>
 	  )}
 	</td>

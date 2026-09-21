@@ -1,0 +1,555 @@
+[
+  {
+    "file": "Movement/components/CommanderRequirementModal.tsx",
+    "line": 144,
+    "key": "ui.movement.components.commanderRequirementModal.require.an.equipped.bonus.troop.stat.5289cf33",
+    "source": "Require an equipped bonus-troop stat",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "Movement/components/MovementView.tsx",
+    "line": 322,
+    "key": "common.refresh",
+    "source": "Refresh",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "Movement/components/MovementView.tsx",
+    "line": 449,
+    "key": "ui.movement.components.movementView.select.all.1fc9a387",
+    "source": "Select all",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "Movement/components/MovementView.tsx",
+    "line": 461,
+    "key": "ui.movement.components.movementView.unselect.all.d60bf0bb",
+    "source": "Unselect all",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "allianceTargets/components/AllianceTargetsView.tsx",
+    "line": 510,
+    "key": "ui.allianceTargets.components.allianceTargetsView.no.report.3d341ee6",
+    "source": "No report",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "components/DecorationPresetsPanel.tsx",
+    "line": 173,
+    "key": "ui.components.decorationPresetsPanel.focused.castle.808b7d57",
+    "source": "Focused castle",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "components/DecorationPresetsPanel.tsx",
+    "line": 193,
+    "key": "ui.components.decorationPresetsPanel.saved.b5c120b3",
+    "source": "Saved",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "components/DecorationPresetsPanel.tsx",
+    "line": 200,
+    "key": "ui.components.decorationPresetsPanel.selected.57fd7a0c",
+    "source": "Selected",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "components/DecorationPresetsPanel.tsx",
+    "line": 211,
+    "key": "ui.components.decorationPresetsPanel.capture.current.layout.3c4df644",
+    "source": "Capture current layout",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "components/DecorationPresetsPanel.tsx",
+    "line": 240,
+    "key": "ui.components.decorationPresetsPanel.saved.layout.a9d44916",
+    "source": "Saved layout",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "components/DefensePresetEditor.tsx",
+    "line": 163,
+    "key": "ui.components.defensePresetEditor.wall.formation.d775c51f",
+    "source": "Wall formation",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "components/DefensePresetEditor.tsx",
+    "line": 222,
+    "key": "ui.components.defensePresetEditor.moat.tools.f461b2a0",
+    "source": "Moat tools",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "components/DefensePresetEditor.tsx",
+    "line": 313,
+    "key": "ui.components.defensePresetEditor.courtyard.tools.ad001739",
+    "source": "Courtyard tools",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "components/TCIPickerModal.tsx",
+    "line": 577,
+    "key": "ui.components.tCIPickerModal.premium.de88c121",
+    "source": "Premium",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "components/UpdateModal.tsx",
+    "line": 40,
+    "key": "ui.components.updateModal.restart.citadelops.8b96fc52",
+    "source": "Restart CitadelOps",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "equipment/components/EquipmentView.tsx",
+    "line": 261,
+    "key": "ui.equipment.components.equipmentView.swap.gear.690c2557",
+    "source": "Swap Gear",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "equipment/components/EquipmentView.tsx",
+    "line": 379,
+    "key": "ui.equipment.components.equipmentView.effective.battle.report.6af6f9d6",
+    "source": "Effective Battle Report",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "events/components/FeatureEventHistory.tsx",
+    "line": 73,
+    "key": "ui.events.components.featureEventHistory.previous.event.scores.81cc1811",
+    "source": "Previous event scores",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "playerTracker/components/PlayerTrackerView.tsx",
+    "line": 541,
+    "key": "ui.playerTracker.components.playerTrackerView.troop.strength.1a602396",
+    "source": "Troop strength",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoAdvisorSettingsModal.tsx",
+    "line": 228,
+    "key": "ui.settings.components.autoAdvisorSettingsModal.source.castle.86d5a48e",
+    "source": "Source castle",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoAdvisorSettingsModal.tsx",
+    "line": 238,
+    "key": "ui.settings.components.autoAdvisorSettingsModal.advisor.attack.preset.275e72e7",
+    "source": "Advisor attack preset",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoAdvisorSettingsModal.tsx",
+    "line": 293,
+    "key": "ui.settings.components.autoAdvisorSettingsModal.run.sizing.878bd208",
+    "source": "Run sizing",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoAdvisorSettingsModal.tsx",
+    "line": 316,
+    "key": "ui.settings.components.autoAdvisorSettingsModal.resource.gates.05c86e14",
+    "source": "Resource gates",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoBeriWorldSettingsModal.tsx",
+    "line": 286,
+    "key": "ui.settings.components.autoBeriWorldSettingsModal.loot.funded.camp.construction.4371947e",
+    "source": "Loot-funded camp construction",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoBeriWorldSettingsModal.tsx",
+    "line": 478,
+    "key": "ui.settings.components.autoBeriWorldSettingsModal.camp.resources.kept.in.reserve.f6713557",
+    "source": "Camp resources kept in reserve",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoBeriWorldSettingsModal.tsx",
+    "line": 527,
+    "key": "ui.settings.components.autoBeriWorldSettingsModal.tower.attack.62826c7e",
+    "source": "Tower attack",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoBeriWorldSettingsModal.tsx",
+    "line": 581,
+    "key": "ui.settings.components.autoBeriWorldSettingsModal.armorer.tool.minimums.d4868418",
+    "source": "Armorer tool minimums",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoBoosterSettingsModal.tsx",
+    "line": 221,
+    "key": "ui.settings.components.autoBoosterSettingsModal.the.daily.effect.window.and.its.exact.b5390f69",
+    "source": "The daily effect window and its exact end time must still match.",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoBoosterSettingsModal.tsx",
+    "line": 225,
+    "key": "ui.settings.components.autoBoosterSettingsModal.the.server.must.report.effect.2.as.d3b588a7",
+    "source": "The server must report effect 2 as not yet boosted in this same window.",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoBoosterSettingsModal.tsx",
+    "line": 229,
+    "key": "ui.settings.components.autoBoosterSettingsModal.the.quote.must.remain.exactly.2.500.0bac4a18",
+    "source": "The quote must remain exactly 2,500 and the current balance must preserve your reserve.",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoFortressSettingsModal.tsx",
+    "line": 197,
+    "key": "ui.settings.components.autoFortressSettingsModal.full.map.discovery.19d8f15c",
+    "source": "Full-map discovery",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoFortressSettingsModal.tsx",
+    "line": 200,
+    "key": "ui.settings.components.autoFortressSettingsModal.due.time.1.1.checks.928cc461",
+    "source": "Due-time 1×1 checks",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoFortressSettingsModal.tsx",
+    "line": 313,
+    "key": "ui.settings.components.autoFortressSettingsModal.purchases.arrive.at.the.great.empire.main.e7405a14",
+    "source": "Purchases arrive at the Great Empire main castle. The kingdom troop-transfer route distributes all available Direwolves across enabled kingdoms, balancing stationed and confirmed inbound stock.",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoInvasionSettingsModal.tsx",
+    "line": 121,
+    "key": "ui.settings.components.autoInvasionSettingsModal.source.castle.86d5a48e",
+    "source": "Source castle",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoInvasionSettingsModal.tsx",
+    "line": 132,
+    "key": "ui.settings.components.autoInvasionSettingsModal.attack.preset.407b93e9",
+    "source": "Attack preset",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoInvasionSettingsModal.tsx",
+    "line": 161,
+    "key": "ui.settings.components.autoInvasionSettingsModal.event.difficulty.88766fcf",
+    "source": "Event difficulty",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoInvasionSettingsModal.tsx",
+    "line": 202,
+    "key": "ui.settings.components.autoInvasionSettingsModal.stop.at.event.score.f1752bfd",
+    "source": "Stop at event score",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoInvasionSettingsModal.tsx",
+    "line": 219,
+    "key": "ui.settings.components.autoInvasionSettingsModal.stop.before.event.ends.96ca2172",
+    "source": "Stop before event ends",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoInvasionSettingsModal.tsx",
+    "line": 238,
+    "key": "ui.settings.components.autoInvasionSettingsModal.fortify.each.target.418c29a2",
+    "source": "Fortify each target",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoKhanSettingsModal.tsx",
+    "line": 141,
+    "key": "ui.settings.components.autoKhanSettingsModal.auto.khan.is.safety.locked.e454bd5b",
+    "source": "Auto Khan is safety-locked",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoKhanSettingsModal.tsx",
+    "line": 153,
+    "key": "ui.settings.components.autoKhanSettingsModal.attack.from.2ef61f36",
+    "source": "Attack from",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoKhanSettingsModal.tsx",
+    "line": 174,
+    "key": "ui.settings.components.autoKhanSettingsModal.defend.at.a5f2a10a",
+    "source": "Defend at",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoKhanSettingsModal.tsx",
+    "line": 188,
+    "key": "ui.settings.components.autoKhanSettingsModal.lock.automatic.khan.attacks.2b670e17",
+    "source": "Lock automatic Khan attacks",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoKhanSettingsModal.tsx",
+    "line": 200,
+    "key": "ui.settings.components.autoKhanSettingsModal.trigger.khan.at.full.rage.6e8b370e",
+    "source": "Trigger Khan at full rage",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoKhanSettingsModal.tsx",
+    "line": 215,
+    "key": "ui.settings.components.autoKhanSettingsModal.rage.chain.limit.907ed6bc",
+    "source": "Rage chain limit",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoKhanSettingsModal.tsx",
+    "line": 237,
+    "key": "ui.settings.components.autoKhanSettingsModal.require.rage.points.booster.ad17ec97",
+    "source": "Require Rage points booster",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoKhanSettingsModal.tsx",
+    "line": 255,
+    "key": "ui.settings.components.autoKhanSettingsModal.nomad.points.stop.727b7bc2",
+    "source": "Nomad points stop",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoKhanSettingsModal.tsx",
+    "line": 280,
+    "key": "ui.settings.components.autoKhanSettingsModal.replenish.defense.tools.04cc1c22",
+    "source": "Replenish defense tools",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoKhanSettingsModal.tsx",
+    "line": 300,
+    "key": "ui.settings.components.autoKhanSettingsModal.camp.attack.preset.7f63bfed",
+    "source": "Camp attack preset",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoKhanSettingsModal.tsx",
+    "line": 318,
+    "key": "ui.settings.components.autoKhanSettingsModal.main.defense.preset.75e96539",
+    "source": "Main defense preset",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoKhanSettingsModal.tsx",
+    "line": 346,
+    "key": "ui.settings.components.autoKhanSettingsModal.skip.every.khan.camp.cooldown.c1c19442",
+    "source": "Skip every Khan camp cooldown",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoKhanSettingsModal.tsx",
+    "line": 377,
+    "key": "ui.settings.components.autoKhanSettingsModal.stop.before.event.ends.96ca2172",
+    "source": "Stop before event ends",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoKhanSettingsModal.tsx",
+    "line": 398,
+    "key": "ui.settings.components.autoKhanSettingsModal.protect.offense.on.the.main.castle.wall.e3913e51",
+    "source": "Protect offense on the main castle wall",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoNomadSettingsModal.tsx",
+    "line": 109,
+    "key": "ui.settings.components.autoNomadSettingsModal.source.castle.86d5a48e",
+    "source": "Source castle",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoNomadSettingsModal.tsx",
+    "line": 120,
+    "key": "ui.settings.components.autoNomadSettingsModal.nomad.attack.preset.88ec98ef",
+    "source": "Nomad attack preset",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoNomadSettingsModal.tsx",
+    "line": 131,
+    "key": "ui.settings.components.autoNomadSettingsModal.samurai.attack.preset.31066b77",
+    "source": "Samurai attack preset",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoNomadSettingsModal.tsx",
+    "line": 178,
+    "key": "ui.settings.components.autoNomadSettingsModal.event.start.difficulty.d32020cb",
+    "source": "Event start difficulty",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoNomadSettingsModal.tsx",
+    "line": 218,
+    "key": "ui.settings.components.autoNomadSettingsModal.stop.at.event.score.f1752bfd",
+    "source": "Stop at event score",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoNomadSettingsModal.tsx",
+    "line": 235,
+    "key": "ui.settings.components.autoNomadSettingsModal.stop.before.event.ends.96ca2172",
+    "source": "Stop before event ends",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoNomadSettingsModal.tsx",
+    "line": 254,
+    "key": "ui.settings.components.autoNomadSettingsModal.clear.each.landed.hit.cooldown.e51dba73",
+    "source": "Clear each landed-hit cooldown",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoNomadSettingsModal.tsx",
+    "line": 295,
+    "key": "ui.settings.components.autoNomadSettingsModal.temporary.rbc.end.to.end.trial.9da6b870",
+    "source": "Temporary RBC end-to-end trial",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoNomadSettingsModal.tsx",
+    "line": 342,
+    "key": "ui.settings.components.autoNomadSettingsModal.fixed.four.camp.flow.380f9acb",
+    "source": "Fixed four-camp flow",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoSceatResSettingsModal.tsx",
+    "line": 519,
+    "key": "ui.settings.components.autoSceatResSettingsModal.additional.storage.nodes.017a7158",
+    "source": "Additional Storage Nodes",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoStormSettingsModal.tsx",
+    "line": 860,
+    "key": "ui.settings.components.autoStormSettingsModal.upgrade.harbor.da1bc184",
+    "source": "Upgrade Harbor",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoStormSettingsModal.tsx",
+    "line": 956,
+    "key": "ui.settings.components.autoStormSettingsModal.attack.target.priority.f25858a6",
+    "source": "Attack target priority",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoStormSettingsModal.tsx",
+    "line": 1088,
+    "key": "ui.settings.components.autoStormSettingsModal.island.defense.units.426d8af1",
+    "source": "Island defense units",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoStormSettingsModal.tsx",
+    "line": 1119,
+    "key": "ui.settings.components.autoStormSettingsModal.import.missing.troops.8667e705",
+    "source": "Import missing troops",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoTCISettingsModal.tsx",
+    "line": 521,
+    "key": "ui.settings.components.autoTCISettingsModal.remove.c3812fc4",
+    "source": "Remove",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/AutoTCISettingsModal.tsx",
+    "line": 534,
+    "key": "ui.settings.components.autoTCISettingsModal.add.construction.item.095fa798",
+    "source": "Add construction item",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/DailyAttackLimitField.tsx",
+    "line": 21,
+    "key": "ui.settings.components.dailyAttackLimitField.daily.normal.attack.limit.503daf3e",
+    "source": "Daily normal-attack limit",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/HorseTravelBoostSelect.tsx",
+    "line": 27,
+    "key": "ui.settings.components.horseTravelBoostSelect.horse.travel.boost.983830d4",
+    "source": "Horse travel boost",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "settings/components/QueueProductionSettingsModal.tsx",
+    "line": 545,
+    "key": "ui.settings.components.queueProductionSettingsModal.select.2a78025d",
+    "source": "Select",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "views/SettingsView.tsx",
+    "line": 1032,
+    "key": "ui.views.settingsView.uses.considerably.more.processor.and.memory.resources.fed03b83",
+    "source": "Uses considerably more processor and memory resources and may make your computer feel slower.",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "worldIntelligence/components/WorldAllianceDetailView.tsx",
+    "line": 196,
+    "key": "ui.worldIntelligence.components.worldAllianceDetailView.observed.roster.81d02c36",
+    "source": "Observed roster",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "worldIntelligence/components/WorldEventHistory.tsx",
+    "line": 500,
+    "key": "ui.worldIntelligence.components.worldEventHistory.player.rankings.7a29848b",
+    "source": "Player rankings",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "worldIntelligence/components/WorldEventHistory.tsx",
+    "line": 671,
+    "key": "ui.worldIntelligence.components.worldEventHistory.previous.scores.0b9095fa",
+    "source": "Previous scores",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "worldIntelligence/components/WorldEventHistory.tsx",
+    "line": 811,
+    "key": "ui.worldIntelligence.components.worldEventHistory.previous.a57b08a4",
+    "source": "Previous",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "worldIntelligence/components/WorldEventHistory.tsx",
+    "line": 813,
+    "key": "ui.worldIntelligence.components.worldEventHistory.next.1ff57a29",
+    "source": "Next",
+    "kind": "whole-label-with-decorative-icons"
+  },
+  {
+    "file": "worldIntelligence/components/WorldPlayerDetailView.tsx",
+    "line": 318,
+    "key": "ui.worldIntelligence.components.worldPlayerDetailView.identity.history.8bca6522",
+    "source": "Identity history",
+    "kind": "whole-label-with-decorative-icons"
+  }
+]

@@ -1,3 +1,5 @@
+import {patchNoteLiteralText} from '../src/i18n/patchNoteLiteralText.ts';
+import {sourceMessages} from '../src/i18n/sourceMessages.ts';
 import {sourceCandidateIdentity,applySourceReviews} from './source-review.mjs';
 import ts from 'typescript';
 import fs from 'node:fs';
@@ -20,6 +22,15 @@ function walk(dir) {
         if (text.trim() && /[A-Za-z]/.test(text)) {
           const parent = node.parent;
           let reason = null;
+          if(path.relative(root,file)==='config/PatchNotes.ts' && ts.isPropertyAssignment(parent) && ts.isStringLiteral(node)) {
+            const field=parent.name.getText(source);
+            if(['textKey','subtitleKey'].includes(field) && Object.hasOwn(sourceMessages,node.text))reason='explicit typed patch-note catalog key; PatchNotesView renders LocalizedText';
+            if(['text','subtitle'].includes(field) && ts.isObjectLiteralExpression(parent.parent)) {
+              const pair=parent.parent.properties.find(property=>ts.isPropertyAssignment(property)&&property.name.getText(source)===`${field}Key`);
+              if(pair&&ts.isStringLiteral(pair.initializer)&&(patchNoteLiteralText[pair.initializer.text]??sourceMessages[pair.initializer.text])===node.text)reason='canonical English fallback paired with exact typed patch-note key; translated sink is PatchNotesView LocalizedText';
+            }
+          }
+
           if (ts.isJsxAttribute(parent) && parent.name.getText(source) === 'messageKey' && ts.isJsxSelfClosingElement(parent.parent?.parent) && ['LocalizedText','LocalizedRichText'].includes(parent.parent.parent.tagName.getText(source))) reason = 'explicit typed LocalizedText key; source assignment in static-migrations.json';
           else if (ts.isCallExpression(parent) && /^(t|message|localizeStatic|describeMessage)$/.test(parent.expression.getText(source)) && node === parent.arguments[0]) reason = 'explicit typed localization key reference';
           else if (ts.isImportDeclaration(parent) || ts.isExportDeclaration(parent) || ts.isLiteralTypeNode(parent)) reason = 'module path or type-only literal';

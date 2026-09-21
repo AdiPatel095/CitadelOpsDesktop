@@ -118,7 +118,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
         <Card variant="solid" className="p-4">
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block">
-              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Castle className="h-3.5 w-3.5" /> Source castle</span>
+              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Castle className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.source.castle.86d5a48e" /></span>
               <Select
                 value={draft.sourceCastleId > 0 ? String(draft.sourceCastleId) : ''}
                 onChange={(value) => setDraft((current) => ({ ...current, sourceCastleId: Number(value) || 0 }))}
@@ -129,7 +129,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
             </label>
 
             <label className="block">
-              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Swords className="h-3.5 w-3.5" /> Attack preset</span>
+              <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Swords className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.attack.preset.407b93e9" /></span>
               <Select
                 value={draft.presetId}
                 onChange={(presetId) => setDraft((current) => ({ ...current, presetId }))}
@@ -158,7 +158,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
         <Card variant="solid" className="p-4">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div>
-              <div className="flex items-center gap-2 text-sm font-black text-text-main"><ShieldCheck className="h-4 w-4 text-primary" /> Event difficulty</div>
+              <div className="flex items-center gap-2 text-sm font-black text-text-main"><ShieldCheck className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.event.difficulty.88766fcf" /></div>
               <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.only.levels.unlocked.by.this.player.s.15a0e9b5" /></p>
             </div>
             <Badge variant="outline">{achievementsObserved ? 'Achievements synced' : 'Syncing achievements'}</Badge>
@@ -199,7 +199,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
         <Card variant="solid" className="p-4">
           <div className="grid items-start gap-4 md:grid-cols-2">
             <label className="flex min-w-0 flex-col">
-              <span className="mb-1.5 flex min-h-6 items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Target className="h-3.5 w-3.5" /> Stop at event score</span>
+              <span className="mb-1.5 flex min-h-6 items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Target className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.stop.at.event.score.f1752bfd" /></span>
               <Input
                 type="text"
                 inputMode="numeric"
@@ -216,7 +216,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
             </label>
             <label className="flex min-w-0 flex-col">
               <span className="mb-1.5 flex min-h-6 items-center justify-between gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted">
-                <span className="flex min-w-0 items-center gap-2"><Clock3 className="h-3.5 w-3.5 shrink-0" /> Stop before event ends</span>
+                <span className="flex min-w-0 items-center gap-2"><Clock3 className="h-3.5 w-3.5 shrink-0" /> <LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.stop.before.event.ends.96ca2172" /></span>
                 <Badge variant="outline" className="shrink-0"><LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.30.min.recommended.61238251" /></Badge>
               </span>
               <Input
@@ -235,7 +235,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
 		<Card variant="solid" className="p-4">
 			<div className="flex items-start justify-between gap-4">
 				<div className="min-w-0">
-					<div className="flex items-center gap-2 text-sm font-black text-text-main"><ShieldPlus className="h-4 w-4 text-primary" /> Fortify each target</div>
+					<div className="flex items-center gap-2 text-sm font-black text-text-main"><ShieldPlus className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.fortify.each.target.418c29a2" /></div>
 					<p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.optionally.strengthen.the.generated.castle.before.launching.ad463b71" /></p>
 				</div>
 				<Switch
