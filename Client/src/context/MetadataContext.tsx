@@ -1,4 +1,5 @@
-import { canonicalEffectReducer } from '../equipment/CanonicalEffectState';
+import { canonicalEffectCoverage } from '../equipment/CanonicalEffectCoverage';
+import { canonicalEffectReducer, usableCanonicalEffects } from '../equipment/CanonicalEffectState';
 import { equipmentEffectTemplates } from '../equipment/EquipmentEffectLocalization';
 import { metadataName, translationValues } from '../i18n/officialMetadata';
 import { loadOfficialMessages, invalidateOfficialMessages } from '../i18n/officialMessages';
@@ -249,9 +250,13 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 					canonicalFailed = true;
 					dispatchEffects({type:'failed',scope:canonicalCatalogKey});
 				} else {
-					dispatchEffects({type:'resolved',scope:canonicalCatalogKey,values:effectDefinitionMetadata(
+					const canonicalValues=effectDefinitionMetadata(
 						effectsResult.value.items, effectTypesResult.value.items, effectCapsResult.value.items, translations, canonicalTranslations, locale, String(catalogs?.metadata.languageVersion ?? ''),
-					)});
+					);
+					const coverage=canonicalEffectCoverage(effectsResult.value.items,canonicalTranslations,String(catalogs?.metadata.itemVersion ?? ''),String(catalogs?.metadata.languageVersion ?? ''));
+					for(const id of coverage.intentionalAbsences) { canonicalValues[id].canonicalTemplateAbsent=true; canonicalValues[id].canonicalDescriptionStatus='official-template-absent'; }
+					canonicalFailed=!coverage.ready || !usableCanonicalEffects(canonicalValues);
+					dispatchEffects(canonicalFailed ? {type:'failed',scope:canonicalCatalogKey} : {type:'resolved',scope:canonicalCatalogKey,values:canonicalValues});
 				}
 			} else {
 				canonicalFailed = true;

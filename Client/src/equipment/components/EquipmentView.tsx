@@ -54,7 +54,7 @@ export default function EquipmentView() {
 	const { effects, equipments, gems, troops, effectsStatus } = useMetadata();
 	const [mode, setMode] = useState<EquipmentMode>('Commander');
 	const [targetID, setTargetID] = useState('castle-1');
-	const targetOptions = useMemo(() => equipmentTargets(), []);
+	const targetOptions = useMemo(() => equipmentTargets().map(option => ({...option, label: option.labelKey ? localizeStatic(option.labelKey) : option.label, description: option.descriptionKey ? localizeStatic(option.descriptionKey) : option.description})), [localizeStatic]);
 	const target = useMemo(() => targetOptions.find((option) => option.id === targetID) ?? targetOptions[0]!, [targetID, targetOptions]);
 	const targetIndex = useMemo(() => buildOfficialEquipmentTargetIndex(effects), [effects]);
 	const combatMode = useMemo(
@@ -114,16 +114,16 @@ export default function EquipmentView() {
 		if (!state || !selected || selected.kind !== 'commander') return [];
 		return resolveEquipmentEventAvailability(state, selected, equipments, gems);
 	}, [equipments, gems, selected, state]);
-	const rows = useMemo<EquipmentSlotRow[]>(() => equipmentSlots.map(({ slot, label }) => {
+	const rows = useMemo<EquipmentSlotRow[]>(() => equipmentSlots.map(({ slot, labelKey }) => {
 		const equipmentID = selected?.equipment[String(slot)];
 		const gemID = selected?.gems[String(slot)];
 		return {
 			slot,
-			label,
+			label: localizeStatic(labelKey),
 			item: equipmentID != null ? state?.inventory.equipment[String(equipmentID)] : undefined,
 			gem: gemID != null ? state?.inventory.gems[String(gemID)] : undefined,
 		};
-	}), [selected, state?.inventory.equipment, state?.inventory.gems]);
+	}), [selected, state?.inventory.equipment, state?.inventory.gems, localizeStatic]);
 
 	const effectProfile = useMemo(() => buildEquipmentEffectProfile(
 		rows.flatMap((row) => [
@@ -243,12 +243,14 @@ export default function EquipmentView() {
 	const coins = Number(state?.player.resources['1'] ?? 0);
 	const coinBlocked = coinsUnderUpgradeReserve(coins, coinThreshold);
 	const controlsDisabled = !state?.session.loggedIn || busy || selected == null;
+	const hasMissingOfficialDescription = rows.some(row => [...(row.item?.effects ?? []), ...(row.gem?.effects ?? [])].some(effect => effects[effect.definitionId]?.canonicalTemplateAbsent === true));
 	const reconfigureDisabled = busy || selected == null || effectsStatus !== 'ready';
 
 	return (
 		<div className="equipment-view-shell">
 			<StaleSessionBanner />
       {effectsStatus !== 'ready' && <p role="status" className="text-sm text-warning"><LocalizedText messageKey={effectsStatus === 'loading' ? 'equipment.canonicalLoading' : 'equipment.canonicalUnavailable'} /></p>}
+      {hasMissingOfficialDescription && <p role="status" className="text-sm text-text-muted"><LocalizedText messageKey="equipment.missingOfficialDescription" /></p>}
 			<Card className="liquid-prominent-header-card equipment-workspace-card h-full min-h-0 flex flex-col">
 				<CardHeader className="liquid-card-header-prominent flex flex-wrap items-center gap-4">
 					<PillSelector ariaLabel={localizeStatic("ui.equipment.components.equipmentView.ariaLabel.equipment.owner.type.8d4616c8")} value={mode} options={['Commander', 'Castellan']} onChange={(value) => setMode(value as EquipmentMode)} size="header" />

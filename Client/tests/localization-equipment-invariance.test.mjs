@@ -75,3 +75,45 @@ test('missing official effect arguments stay visible rather than silently disapp
  const text=effects.formatEquipmentEffectText(detail,false,'en');
  assert.match(text,/\{1\}/);assert.match(text,/\{2\}/);
 });
+
+test('HTTP-successful empty and partial canonical results cannot replace stable calculation state',async()=>{
+ const {canonicalEffectReducer,usableCanonicalEffects}=await vite.ssrLoadModule('/src/equipment/CanonicalEffectState.ts');
+ const values={101:definition(101,'selected','-{0}%','Mead')};
+ const state={scope:'v4357',status:'ready',values};
+ for(const incomplete of [{},{101:{...values[101],semanticTemplate:''}},{...values,102:{id:102,semanticTemplate:''}}]) {
+  assert.equal(usableCanonicalEffects(incomplete),false);
+  const result=canonicalEffectReducer(state,{type:'resolved',scope:state.scope,values:incomplete});
+  assert.equal(result.status,'unavailable');assert.equal(result.values,values);
+ }
+ assert.equal(usableCanonicalEffects(values),true);
+});
+
+test('canonical coverage accepts audited absences but rejects successful-empty or partial known templates',async()=>{
+ const {canonicalEffectCoverage}=await vite.ssrLoadModule('/src/equipment/CanonicalEffectCoverage.ts');
+ const manifest=JSON.parse(fs.readFileSync(new URL('../src/equipment/canonicalEffectCoverage.v4357.json',import.meta.url),'utf8'));
+ const records=manifest.entries.map(entry=>({effectID:entry.id,name:entry.name}));
+ const canonical=Object.fromEntries(manifest.entries.filter(entry=>entry.key).map(entry=>[entry.key,'canonical template']));
+ const healthy=canonicalEffectCoverage(records,canonical,'786.03','4357');
+ assert.equal(healthy.ready,true);assert.equal(healthy.expectedTemplates,671);assert.equal(healthy.intentionalAbsences.length,159);
+ assert.equal(canonicalEffectCoverage(records,{},'786.03','4357').ready,false);
+ const partial={...canonical};const missingName=manifest.entries.find(entry=>entry.key).name;
+ for(const prefix of ['relicequip_effect_description_','equip_effect_description_','ci_effect_','effect_name_'])delete partial[prefix+missingName];
+ assert.equal(canonicalEffectCoverage(records,partial,'786.03','4357').ready,false);
+ assert.equal(canonicalEffectCoverage(records,canonical,'786.04','4357').ready,true);
+ const absent=manifest.entries.find(entry=>entry.absence==='no-official-template');
+ const changed=records.map(row=>row.effectID===absent.id?{...row,name:'newUnclassifiedIdentity'}:row);
+ assert.equal(canonicalEffectCoverage(changed,canonical,'786.04','4357').ready,false);
+ const newlyResolved={...canonical,[`equip_effect_description_${absent.name}`]:'+{0}% newly published'};
+ assert.equal(canonicalEffectCoverage(records,newlyResolved,'786.04','4357').intentionalAbsences.includes(absent.id),false);
+});
+test('audited skin and enableUnits absences retain canonical raw-value baseline across locales',()=>{
+ for(const name of ['skin','enableUnits']) {
+  const projections=[];
+  for(const locale of ['en','ar','de']) {
+   const metadata={101:{...definition(101,`label-${locale}`,'',name),internalName:name,effectTypeName:name,canonicalTemplateAbsent:true,maxTotalBonus:0}};
+   const profile=effects.buildEquipmentEffectProfile([{label:'slot',effects:[{definitionId:101,values:[7]}]}],metadata,{},1);
+   projections.push(rows(profile).map(({key,value,rawValue,unit,definitionId})=>({key,value,rawValue,unit,definitionId})));
+  }
+  assert.deepEqual(projections[1],projections[0]);assert.deepEqual(projections[2],projections[0]);
+ }
+});

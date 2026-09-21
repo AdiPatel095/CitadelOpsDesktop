@@ -13,5 +13,15 @@ export const officialMessageKeys = {
   "game.resources": "goods",
   "game.level": "level",
   "game.castellan": "equipment_itemType_baron",
-  "game.tools": "tools"
+  "game.tools": "tools",
+  "equipment.slot.armor": "equipment_slotType_armor",
+  "equipment.slot.weapon": "equipment_slotType_weapon",
+  "equipment.slot.helmet": "equipment_slotType_helmet",
+  "equipment.slot.artifact": "equipment_slotType_artifact",
+  "equipment.slot.hero": "equipment_slotType_hero",
+  "equipment.target.4.label": "outpost",
+  "equipment.target.3.label": "capital",
+  "equipment.target.26.label": "monument",
+  "equipment.target.28.label": "laboratory",
+  "equipment.target.43.label": "event_title_133",
 } as const;
