@@ -10101,7 +10101,7 @@
       "server.telemetry.channel.autostation.description": {
         "method": "agent-authored",
         "sourceSha256": "6b4d38ad822ea57026b87ada9efa08141cd9bd38f60365d1bbec54092c0663a4",
-        "translationSha256": "101eee5a634dfbbf177d31dd3b0e9d91f69673e8ff2c9091c06828b6a3309f6c"
+        "translationSha256": "8767726e114bf5799f293f072c17701192cb8e278a7a65fd7b01b1912b0fe2b3"
       },
       "server.telemetry.channel.autostation.label": {
         "glossaryFeature": "autostation",
@@ -14065,7 +14065,7 @@
       "server.telemetry.channel.autostation.description": {
         "method": "agent-authored",
         "sourceSha256": "6b4d38ad822ea57026b87ada9efa08141cd9bd38f60365d1bbec54092c0663a4",
-        "translationSha256": "8da93d9147cab70fcb5b1105d0382241d30b989d57f67d2d826ca9d3a2fea4e4"
+        "translationSha256": "8ae8799921e7fa4f9b80aea6b9c326911cdf9d5560b057a8459248e3b8305c51"
       },
       "server.telemetry.channel.autostation.label": {
         "glossaryFeature": "autostation",

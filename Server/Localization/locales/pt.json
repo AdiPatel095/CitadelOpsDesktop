@@ -133,7 +133,7 @@
   "server.telemetry.channel.autorecruit.label": "Recrutamento automático",
   "server.telemetry.channel.autosceatres.description": "Ações de fabricação e recursos concluídas e problemas que precisam de atenção.",
   "server.telemetry.channel.autosceatres.label": "Recursos de esceta automáticos",
-  "server.telemetry.channel.autostation.description": "Movimentações de estacionamento e retorno de tropas concluídas e problemas que precisam de atenção.",
+  "server.telemetry.channel.autostation.description": "Movimentações de posicionamento e retorno de tropas concluídas e problemas que precisam de atenção.",
   "server.telemetry.channel.autostation.label": "Evacuação automática de tropas",
   "server.telemetry.channel.autostorm.description": "Ataques, construções, operações logísticas e compras na loja das Ilhas da Tempestade concluídos.",
   "server.telemetry.channel.autostorm.label": "Automação das Ilhas da Tempestade",

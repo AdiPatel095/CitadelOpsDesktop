@@ -133,7 +133,7 @@
   "server.telemetry.channel.autorecruit.label": "자동 모집",
   "server.telemetry.channel.autosceatres.description": "완료된 제작 및 자원 작업과 확인이 필요한 문제입니다.",
   "server.telemetry.channel.autosceatres.label": "새트 자원 자동화",
-  "server.telemetry.channel.autostation.description": "완료된 주둔 및 소환 이동과 확인이 필요한 문제입니다.",
+  "server.telemetry.channel.autostation.description": "완료된 주둔 및 병력 후퇴 이동과 확인이 필요한 문제입니다.",
   "server.telemetry.channel.autostation.label": "병력 자동 긴급 대피",
   "server.telemetry.channel.autostorm.description": "완료된 폭풍 제도 공격, 건설, 물류 및 상점 구매입니다.",
   "server.telemetry.channel.autostorm.label": "폭풍 제도 자동화",
