@@ -97,7 +97,7 @@ func planDefenseRefresh(_ context.Context, input Intent.PlanningContext, argumen
 		Name: "Verify defense refresh", NameDescriptor: Localization.New("server.app.verify_defense_refresh.6077463d", "Verify defense refresh", nil), Action: "defense.verify_refresh", ActionArguments: verification,
 	})
 	return Intent.Plan{
-		Claims: defenseClaims(castle.ID), Summary: "Refresh defense setup for " + castleLabel(castle), Steps: steps,
+		Claims: defenseClaims(castle.ID), Summary: "Refresh defense setup for " + castleLabel(castle), SummaryDescriptor: defenseSummaryDescriptor("refresh", castle, ""), Steps: steps,
 	}, nil
 }
 
@@ -138,8 +138,8 @@ func planDefenseOpenGate(_ context.Context, input Intent.PlanningContext, argume
 	id := strconv.FormatInt(int64(castle.ID), 10)
 	return Intent.Plan{
 		Claims:  []string{"castle:" + id, "defense:" + id, "account-resources"},
-		Summary: "Open gates at " + castleLabel(castle),
-		Steps:   []Intent.Step{commandStep("Open castle gates for six hours", "mos", payload, "mos", Localization.New("server.app.open_castle_gates_for.6b2b75cf", "Open castle gates for six hours", nil))},
+		Summary: "Open gates at " + castleLabel(castle), SummaryDescriptor: defenseSummaryDescriptor("gates", castle, ""),
+		Steps: []Intent.Step{commandStep("Open castle gates for six hours", "mos", payload, "mos", Localization.New("server.app.open_castle_gates_for.6b2b75cf", "Open castle gates for six hours", nil))},
 	}, nil
 }
 
@@ -168,7 +168,7 @@ func planDefenseWallUpdate(_ context.Context, input Intent.PlanningContext, argu
 		Name: "Verify defense wall setup", NameDescriptor: Localization.New("server.app.verify_defense_wall_setup.6d508b85", "Verify defense wall setup", nil), Action: "defense.wall.verify", ActionArguments: resolvedArguments,
 	})
 	return Intent.Plan{
-		Claims: defenseClaims(castle.ID), Summary: "Update defense wall setup for " + castleLabel(castle), Steps: steps,
+		Claims: defenseClaims(castle.ID), Summary: "Update defense wall setup for " + castleLabel(castle), SummaryDescriptor: defenseSummaryDescriptor("wall", castle, ""), Steps: steps,
 	}, nil
 }
 
@@ -197,7 +197,7 @@ func planDefenseMoatUpdate(_ context.Context, input Intent.PlanningContext, argu
 		Name: "Verify defense moat setup", NameDescriptor: Localization.New("server.app.verify_defense_moat_setup.9400d0d5", "Verify defense moat setup", nil), Action: "defense.moat.verify", ActionArguments: resolvedArguments,
 	})
 	return Intent.Plan{
-		Claims: defenseClaims(castle.ID), Summary: "Update defense moat setup for " + castleLabel(castle), Steps: steps,
+		Claims: defenseClaims(castle.ID), Summary: "Update defense moat setup for " + castleLabel(castle), SummaryDescriptor: defenseSummaryDescriptor("moat", castle, ""), Steps: steps,
 	}, nil
 }
 
@@ -226,7 +226,7 @@ func planDefenseKeepUpdate(_ context.Context, input Intent.PlanningContext, argu
 		Name: "Verify defense keep setup", NameDescriptor: Localization.New("server.app.verify_defense_keep_setup.178b08dd", "Verify defense keep setup", nil), Action: "defense.keep.verify", ActionArguments: resolvedArguments,
 	})
 	return Intent.Plan{
-		Claims: defenseClaims(castle.ID), Summary: "Update defense keep setup for " + castleLabel(castle), Steps: steps,
+		Claims: defenseClaims(castle.ID), Summary: "Update defense keep setup for " + castleLabel(castle), SummaryDescriptor: defenseSummaryDescriptor("keep", castle, ""), Steps: steps,
 	}, nil
 }
 

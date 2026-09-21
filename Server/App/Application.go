@@ -1114,7 +1114,7 @@ func actionPlanner(action string, claim string, summary string, descriptors ...*
 		return Intent.Plan{
 			Claims: []string{claim}, Summary: summary, SummaryDescriptor: Localization.First(descriptors),
 			Steps: []Intent.Step{{
-				Name: summary, Action: action,
+				Name: summary, NameDescriptor: Localization.First(descriptors), Action: action,
 				ActionArguments: append(json.RawMessage(nil), arguments...),
 			}},
 		}, nil

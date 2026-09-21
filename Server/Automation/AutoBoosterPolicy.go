@@ -72,7 +72,7 @@ func (*AutoBoosterPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 		inventory.GlobalEffectReadGeneration != snapshot.State.Session.ConnectionGeneration ||
 		(!snapshot.State.Session.ChangedAt.IsZero() && inventory.GlobalEffectReadObservedAt.Before(snapshot.State.Session.ChangedAt)) {
 		return autoBoosterRequest(snapshot.Now, settings.CheckIntervalSec, metrics,
-			"Refresh the current daily effect, boost status, and ruby balance", "autoBooster.refresh", map[string]any{}), nil
+			"Refresh the current daily effect, boost status, and ruby balance", "autoBooster.refresh", map[string]any{}, Localization.New("server.automation.refresh_the_current_daily.27f06c1b", "Refresh the current daily effect, boost status, and ruby balance", nil)), nil
 	}
 	if !inventory.GlobalEffectBaselineObservedAt.Equal(inventory.GlobalEffectReadObservedAt) ||
 		inventory.GlobalEffectBaselineGeneration != snapshot.State.Session.ConnectionGeneration {
@@ -194,10 +194,10 @@ func autoBoosterRubyBalance(gameState State.GameState, gameData *GameData.Store)
 	return int64(math.Floor(balance)), found
 }
 
-func autoBoosterRequest(now time.Time, intervalSec int, metrics map[string]float64, detail, name string, arguments any) Decision {
+func autoBoosterRequest(now time.Time, intervalSec int, metrics map[string]float64, detail, name string, arguments any, descriptors ...*Localization.Message) Decision {
 	raw, _ := json.Marshal(arguments)
 	return Decision{
-		Status: "ready", Detail: detail, NextCheckAt: now.Add(time.Duration(intervalSec) * time.Second), Metrics: metrics,
+		Status: "ready", Detail: detail, DetailDescriptor: Localization.First(descriptors), NextCheckAt: now.Add(time.Duration(intervalSec) * time.Second), Metrics: metrics,
 		Request: &Intent.Request{Name: name, Arguments: raw}, ReevaluateOnSuccess: true, ReevaluateOnStale: true,
 	}
 }

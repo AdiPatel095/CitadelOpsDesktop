@@ -70,11 +70,12 @@ func (engine *Engine) failurePresentation(receipt Receipt, err error) *FailurePr
 		presentation.GameOpcode = responseError.Opcode
 		presentation.Knowledge = failureKnowledgeForResponseCode(meaning.Source)
 		presentation.Explanation = responseCodeExplanation(meaning)
-		presentation.ExplanationDescriptor = nil
+		presentation.ExplanationDescriptor = responseCodeExplanationDescriptor(meaning)
 		if meaning.Source == GameData.ResponseCodeOfficial && presentation.Explanation == cleanFailureText(meaning.Message) && !unresolvedGameTextPlaceholder.MatchString(meaning.Message) {
 			presentation.ExplanationDescriptor = Localization.Official("errorCode_"+strconv.Itoa(meaning.Code), meaning.Message)
 		}
 		presentation.Recovery = cleanFailureText(meaning.Recovery)
+		presentation.RecoveryDescriptor = Localization.Clone(meaning.RecoveryDescriptor)
 		if presentation.Recovery == "" && meaning.Source == GameData.ResponseCodeUnknown {
 			presentation.Recovery = fmt.Sprintf(
 				"Refresh the feature once before retrying. If it repeats, include game error %d when reporting it.",
@@ -372,4 +373,15 @@ func commanderAvailabilityDescriptors(lower string) (*Localization.Message, *Loc
 	default:
 		return Localization.New("server.intent.commander_unavailable", "No eligible commander is available right now.", nil), Localization.New("server.intent.wait_for_commander", "Wait for a commander to return; the feature lane will reevaluate automatically.", nil)
 	}
+}
+
+func responseCodeExplanationDescriptor(meaning GameData.ResponseCodeMeaning) *Localization.Message {
+	message := cleanFailureText(meaning.Message)
+	if meaning.Source == GameData.ResponseCodeUnknown || message == "" {
+		return Localization.New("server.intent.game_declined.unknown_explanation", "The game declined this action but does not provide a known explanation.", nil)
+	}
+	if unresolvedGameTextPlaceholder.MatchString(message) {
+		return Localization.New("server.intent.game_declined.incomplete_explanation", "The game declined this action, but its published explanation was incomplete.", nil)
+	}
+	return Localization.Clone(meaning.MessageDescriptor)
 }

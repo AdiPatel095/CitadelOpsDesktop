@@ -471,7 +471,7 @@ func resolveAutoBuyerFeastPurchaseStep(
 	payload, _ := json.Marshal(map[string]any{
 		"T": feast.ID, "CID": source.ID, "KID": source.KingdomID, "PO": -1, "PWR": 0,
 	})
-	step := shopCommandStep("Start or extend "+feast.Name, "bfs", payload, 0)
+	step := shopCommandStep("Start or extend "+feast.Name, "bfs", payload, 0).WithNameDescriptor(Localization.New("server.app.start_or_extend_feast.step", "Start or extend {feast}", Localization.Params{"feast": feast.Name}).WithGameParam("feast", GameData.FeastNameKey(input.Language, feast), feast.Name))
 	step.ResponseBarrier = Intent.ResponseBarrierCommitted
 	step.PreDispatchAction = "auto_buyer.feast.purchase.arm"
 	step.PreDispatchArguments = append(json.RawMessage(nil), arguments...)

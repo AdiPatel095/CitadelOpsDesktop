@@ -57,3 +57,20 @@ func TestGameNounParamPreservesUserContentAndSource(t *testing.T) {
 		t.Fatal("user name marked as game text")
 	}
 }
+
+func TestMissingGameNounIdentityLeavesEntireMessageUntranslated(t *testing.T) {
+	original := New("send", "Send {unit} to {castle}", Params{"unit": "English unit", "castle": "Castle {admin}"})
+	missing := original.WithGameParam("unit", "", "English unit")
+	if missing != nil || Status(missing) != "untranslated" {
+		t.Fatal("missing noun was concealed by a translated outer template")
+	}
+	if Bind(missing, "Send English unit to Castle {admin}") != nil {
+		t.Fatal("legacy binding invented translation provenance")
+	}
+	if missing.WithGameParam("currency", "gold", "Rubies") != nil {
+		t.Fatal("chained noun restored an incomplete descriptor")
+	}
+	if original.Params["castle"] != "Castle {admin}" || original.GameParams != nil {
+		t.Fatal("source or user content changed")
+	}
+}
