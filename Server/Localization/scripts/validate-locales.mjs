@@ -16,6 +16,18 @@ function argumentsOf(nodes, result = new Set()) {
  }
  return [...result].sort();
 }
+function selectBranches(nodes, result = new Map()) {
+ for (const node of nodes) {
+  if (node.type===5) {
+   const branches=result.get(node.value)??new Set();
+   for(const branch of Object.keys(node.options)) branches.add(branch);
+   result.set(node.value,branches);
+  }
+  if (node.options) for(const option of Object.values(node.options)) selectBranches(option.value,result);
+  if (node.children) selectBranches(node.children,result);
+ }
+ return result;
+}
 function numberStyles(nodes, result = new Map()) {
  for (const node of nodes) {
   if (node.type===2 && node.style) {
@@ -40,6 +52,9 @@ for (const locale of expectedLocales) {
   const sourceArgs=argumentsOf(sourceAST[key]);
   const translatedAST=parse(text);
   const translatedArgs=argumentsOf(translatedAST);
+  const sourceSelects=selectBranches(sourceAST[key]);
+  const targetSelects=selectBranches(translatedAST);
+  for(const [name,branches] of sourceSelects) if(JSON.stringify([...branches].sort())!==JSON.stringify([...(targetSelects.get(name)??[])].sort())) throw new Error(`${locale}: select branches changed for ${name} in ${key}`);
   const sourceStyles=numberStyles(sourceAST[key]);
   const targetStyles=numberStyles(translatedAST);
   for(const [name,styles] of sourceStyles) for(const style of styles) if(!targetStyles.get(name)?.has(style)) throw new Error(`${locale}: numeric style changed for ${name} in ${key}`);
