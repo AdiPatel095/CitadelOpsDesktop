@@ -309,7 +309,7 @@ func presentationHelper(s source, fn *ast.FuncType) (helper, bool) {
 			continue
 		}
 		for _, name := range field.Names {
-			if s.text(field.Type) == "string" && (name.Name == "name" || name.Name == "label" || name.Name == "detail") && h.parameter < 0 {
+			if s.text(field.Type) == "string" && (name.Name == "name" || name.Name == "label" || name.Name == "detail" || name.Name == "reason") && h.parameter < 0 {
 				h.parameter = index
 			}
 			index++
