@@ -1058,7 +1058,7 @@ const EffectComparison: React.FC<{
             </div>
 
             {groups.map((group) => (
-              <div key={group.order} className="space-y-2">
+              <div key={group.key} className="space-y-2">
                 <div className="text-[11px] uppercase tracking-wider font-bold text-text-muted">
                   {group.category}
                 </div>
@@ -2447,6 +2447,7 @@ function effectValue(effect: BattleEffect,locale='en'): string {
 }
 
 interface EffectComparisonGroup {
+  key:string;
   category: string;
   order: number;
   rows: EffectComparisonRow[];
@@ -2479,8 +2480,9 @@ function effectComparisonGroups(commanderEffects: BattleEffect[], castellanEffec
   Array.from(buckets.values())
     .sort((a, b) => a.order - b.order || a.key.localeCompare(b.key))
     .forEach((bucket) => {
-      const categoryKey = String(bucket.categoryOrder);
+      const categoryKey = bucket.categoryOrder===99 ? `legacy:${bucket.category}` : String(bucket.categoryOrder);
       const group = groups.get(categoryKey) ?? {
+        key:categoryKey,
         category: bucket.category,
         order: bucket.categoryOrder,
         rows: [],
@@ -2514,7 +2516,7 @@ function addOfficialEffectBucket(
   const category = stringValue(effect.category) || categoryDisplayLabel(categoryID,localize);
   const label = stringValue(effect.officialGroupLabel) || effectLabel(effect,localize('equipment.unknownEffect'));
   const groupKey = stringValue(effect.officialGroupKey) || `official-group-${categoryID}-${groupID}`;
-  const bucketKey = `${categoryID}:${groupKey}`;
+  const bucketKey = categoryID===99 ? JSON.stringify(['legacy',category,groupKey]) : `${categoryID}:${groupKey}`;
   const order = numericValue(effect.sortOrder) ?? categoryID * 100_000 + groupID;
   const bucket = buckets.get(bucketKey) ?? {
     key: bucketKey,

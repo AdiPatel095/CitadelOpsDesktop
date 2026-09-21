@@ -6,7 +6,7 @@ Backend catalogs contain 25 complete 324-key packs. Server catalogs contain 196 
 
 ## Source inventory
 
-The latest inventory has **6,732 unreviewed conservative candidates**, 43 source-bound reviewed records and 10,026 structural exclusions. Candidate count is not a count of visible messages: property selectors, raw identity values and other dataflow candidates still need review. Run `npm run check:localization` from Client to regenerate the inventory and exact coverage counts.
+The latest inventory has **6,734 unreviewed conservative candidates**, 43 source-bound reviewed records and 10,026 structural exclusions. Candidate count is not a count of visible messages: property selectors, raw identity values and other dataflow candidates still need review. Run `npm run check:localization` from Client to regenerate the inventory and exact coverage counts.
 
 Source assignments are retained in `static-migrations.json` (729 standalone sinks), `attribute-migrations.json` (505 static attributes), `icon-label-migrations.json` (79 whole icon-adjacent labels) and `patch-note-migrations.json` (263 release subtitles/items). `common-key-map.json` records reviewed semantic consolidation. Source keys live in `messages.ts`, `sourceMessages.ts` and `richMessages.ts`; `ui.en.json` is generated for tooling.
 
