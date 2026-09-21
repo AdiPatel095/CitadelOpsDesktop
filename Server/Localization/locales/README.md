@@ -28,3 +28,12 @@ and naming-review revision are recorded in provenance. Validation rejects copied
 label drift even when an entry’s own translation hash was updated. Rift labels
 come from official `event_title_133`; other labels are directly authored with
 verified game terminology. Sync also copies the glossary and hashes it.
+
+The channel-description batch completes all 46 telemetry labels/descriptions in
+all 25 locales and incorporates approved source revision e134359 (3,040 source
+messages). Each locale now contains 148 entries; 2,892 source messages remain
+untranslated. Launched attacks remain distinct from completed actions. Run
+`../scripts/channel-stages.test.mjs` for the authorship vocabulary regression
+fixtures and the dispatch-as-completion negative fixture; these supplement,
+rather than replace, semantic review. Final integration must compare the exported
+English catalog hash with the actual integrated Server catalog.

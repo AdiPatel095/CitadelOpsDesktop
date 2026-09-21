@@ -5,7 +5,8 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const parserPath = process.argv[2];
 if (!parserPath) throw new Error('Usage: node validate-locales.mjs /path/to/@formatjs/icu-messageformat-parser/index.js');
 const {parse} = await import(pathToFileURL(path.resolve(parserPath)).href);
-const english = JSON.parse(fs.readFileSync(path.join(root, 'en.json'), 'utf8'));
+const englishBytes=fs.readFileSync(path.join(root, 'en.json'));
+const english = JSON.parse(englishBytes);
 const provenance = JSON.parse(fs.readFileSync(path.join(root, 'locales/provenance.json'), 'utf8'));
 const expectedLocales = ['en','de','fr','pl','ru','it','nl','pt','es','ar','da','no','fi','sv','ja','ko','el','tr','zh-CN','zh-TW','cs','ro','sk','hu','bg','lt'].filter(x=>x!=='en');
 function argumentsOf(nodes, result = new Set()) {
@@ -42,6 +43,7 @@ function numberStyles(nodes, result = new Map()) {
 const sourceAST=Object.fromEntries(Object.entries(english).map(([key,text])=>[key,parse(text)]));
 const {createHash} = await import('node:crypto');
 const hash = value => createHash('sha256').update(value).digest('hex');
+if(provenance.sourceCatalogSha256 && provenance.sourceCatalogSha256!==hash(englishBytes)) throw new Error('Source catalog hash changed');
 const glossaryPath=path.join(root,'feature-names.json');
 const glossaryBytes=fs.existsSync(glossaryPath)?fs.readFileSync(glossaryPath):null;
 if(provenance.featureGlossary && (!glossaryBytes || provenance.featureGlossary.sha256!==hash(glossaryBytes))) throw new Error('Feature glossary source hash changed');

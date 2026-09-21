@@ -25,6 +25,7 @@ try {
  }
  const good={quantity:'Für {name} {count, number, ::precision-integer} Einheiten behalten',plural:'{count, plural, one {Eine Einheit behalten} other {# Einheiten behalten}}',selection:'{mode, select, safe {Behalten} stop {Stoppen} other {Warten}}'};
  assert.equal(run(good).status,0,'locale plural grammar should be accepted');
+ assert.match(run(good,p=>p.sourceCatalogSha256='stale').stderr,/Source catalog hash changed/);
  assert.match(run({...good,selection:'{mode, select, safe {Behalten} other {Warten}}'}).stderr,/select branches changed/);
  assert.match(run({...good,quantity:'Einheiten behalten'}).stderr,/numeric style changed|argument mismatch/);
  assert.match(run({...good,quantity:'Für {name} {count, number} Einheiten behalten'}).stderr,/numeric style changed/);
