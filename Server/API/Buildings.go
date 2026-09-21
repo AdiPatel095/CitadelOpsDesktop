@@ -174,6 +174,19 @@ func (server *Server) handleBuildingCatalog(writer http.ResponseWriter, request 
 		return
 	}
 	definitions := catalog.Definitions()
+	var locale *GameData.LocaleResolution
+	if request.URL.Query().Has("locale") {
+		language, resolution, ready := server.requestLanguage(writer, request)
+		if !ready {
+			return
+		}
+		locale = &resolution
+		for i := range definitions {
+			if name, found := language.Resolve(definitions[i].LocalizationKeys...); found {
+				definitions[i].DisplayName = name
+			}
+		}
+	}
 	filtered := make([]GameData.BuildingDefinition, 0, len(definitions))
 	for _, definition := range definitions {
 		if filter.matches(definition) {
@@ -194,6 +207,7 @@ func (server *Server) handleBuildingCatalog(writer http.ResponseWriter, request 
 		"offset":   filter.offset,
 		"limit":    filter.limit,
 		"items":    filtered[filter.offset:end],
+		"locale":   locale,
 	})
 }
 

@@ -99,6 +99,9 @@ func (server *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/v2/config/import", server.handleConfigurationImport)
 	mux.HandleFunc("GET /api/v2/config/{section}", server.handleConfigurationSection)
 	mux.HandleFunc("PUT /api/v2/config/{section}", server.handleConfigurationUpdate)
+	mux.HandleFunc("GET /api/locales", server.handleLocales)
+	mux.HandleFunc("GET /api/v2/locales", server.handleLocales)
+	mux.HandleFunc("GET /api/v2/game-data/translations", server.handleTranslations)
 	mux.HandleFunc("GET /api/v2/game-data", server.handleGameDataManifest)
 	mux.HandleFunc("GET /api/v2/game-data/currency-icons", server.handleCurrencyIcons)
 	mux.HandleFunc("GET /api/v2/game-data/construction-item-icons", server.handleConstructionItemIcons)
@@ -330,7 +333,7 @@ func (server *Server) handleState(writer http.ResponseWriter, _ *http.Request) {
 	writeJSON(writer, http.StatusOK, State.NewClientStateSnapshot(server.config.State.ReadOnlyView()))
 }
 
-func (server *Server) handleGameDataManifest(writer http.ResponseWriter, _ *http.Request) {
+func (server *Server) handleGameDataManifest(writer http.ResponseWriter, request *http.Request) {
 	store, ok := server.currentGameData(writer)
 	if !ok {
 		return
@@ -339,7 +342,14 @@ func (server *Server) handleGameDataManifest(writer http.ResponseWriter, _ *http
 		"metadata": store.Metadata(),
 		"catalogs": store.Summaries(),
 	}
-	if language, ready := server.config.GameData.Language(); ready {
+	if request.URL.Query().Has("locale") {
+		language, resolution, ok := server.requestLanguage(writer, request)
+		if !ok {
+			return
+		}
+		response["language"] = language.Metadata()
+		response["locale"] = resolution
+	} else if language, ready := server.config.GameData.Language(); ready {
 		response["language"] = language.Metadata()
 	}
 	writeJSON(writer, http.StatusOK, response)
@@ -349,6 +359,14 @@ func (server *Server) handleGameDataCollection(writer http.ResponseWriter, reque
 	store, ok := server.currentGameData(writer)
 	if !ok {
 		return
+	}
+	var locale *GameData.LocaleResolution
+	if request.URL.Query().Has("locale") {
+		_, resolution, ready := server.requestLanguage(writer, request)
+		if !ready {
+			return
+		}
+		locale = &resolution
 	}
 	name := request.PathValue("collection")
 	catalog, err := store.Catalog(name)
@@ -363,18 +381,20 @@ func (server *Server) handleGameDataCollection(writer http.ResponseWriter, reque
 			return
 		}
 		writeJSON(writer, http.StatusOK, struct {
-			Metadata GameData.SourceMetadata `json:"metadata"`
-			Catalog  GameData.CatalogSummary `json:"catalog"`
-			Item     json.RawMessage         `json:"item"`
-		}{store.Metadata(), catalog.Summary(), item})
+			Metadata GameData.SourceMetadata    `json:"metadata"`
+			Catalog  GameData.CatalogSummary    `json:"catalog"`
+			Item     json.RawMessage            `json:"item"`
+			Locale   *GameData.LocaleResolution `json:"locale,omitempty"`
+		}{store.Metadata(), catalog.Summary(), item, locale})
 		return
 	}
 	raw, _ := store.RawCollection(name)
 	writeJSON(writer, http.StatusOK, struct {
-		Metadata GameData.SourceMetadata `json:"metadata"`
-		Catalog  GameData.CatalogSummary `json:"catalog"`
-		Items    json.RawMessage         `json:"items"`
-	}{store.Metadata(), catalog.Summary(), raw})
+		Metadata GameData.SourceMetadata    `json:"metadata"`
+		Catalog  GameData.CatalogSummary    `json:"catalog"`
+		Items    json.RawMessage            `json:"items"`
+		Locale   *GameData.LocaleResolution `json:"locale,omitempty"`
+	}{store.Metadata(), catalog.Summary(), raw, locale})
 }
 
 func (server *Server) handleIntentDefinitions(writer http.ResponseWriter, _ *http.Request) {
@@ -386,13 +406,8 @@ func (server *Server) handleIntentDefinitions(writer http.ResponseWriter, _ *htt
 }
 
 func (server *Server) handleLocalization(writer http.ResponseWriter, request *http.Request) {
-	if server.config.GameData == nil {
-		writeError(writer, http.StatusServiceUnavailable, "game_data_unavailable", "Official game data is unavailable", Localization.New("server.api.official_game_data_is.c5e55e7e", "Official game data is unavailable", nil))
-		return
-	}
-	language, ready := server.config.GameData.Language()
+	language, resolution, ready := server.requestLanguage(writer, request)
 	if !ready {
-		writeError(writer, http.StatusServiceUnavailable, "language_unavailable", "Official language data is unavailable", Localization.New("server.api.official_language_data_is.803160d4", "Official language data is unavailable", nil))
 		return
 	}
 	var input struct {
@@ -408,9 +423,13 @@ func (server *Server) handleLocalization(writer http.ResponseWriter, request *ht
 		writeError(writer, http.StatusRequestEntityTooLarge, "too_many_keys", "At most 5000 language keys may be resolved at once", Localization.New("server.api.at_most_language_keys.6651516a", "At most 5000 language keys may be resolved at once", nil))
 		return
 	}
+	resolution.FallbackKeys = language.FallbackKeysFor(input.Keys)
+	resolution.FallbackKeyCount = len(resolution.FallbackKeys)
 	writeJSON(writer, http.StatusOK, map[string]any{
-		"metadata": language.Metadata(),
-		"values":   language.ResolveMany(input.Keys),
+		"metadata":        language.Metadata(),
+		"values":          language.ResolveMany(input.Keys),
+		"requestedLocale": resolution.RequestedLocale, "resolvedLocale": resolution.ResolvedLocale,
+		"fallback": resolution.Fallback, "locale": resolution,
 	})
 }
 

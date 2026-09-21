@@ -72,6 +72,7 @@
   "server.api.unknown_my_stats_recording.daeaf92b": "Unknown My Stats recording interval",
   "server.api.unknown_my_stats_retention.24bc3955": "Unknown My Stats retention value",
   "server.api.unsupported_api_contract_version.4fd51ab3": "unsupported API contract version {p0}",
+  "server.api.unsupported_locale": "Unsupported locale {locale}",
   "server.api.unsupported_websocket_message_type.d8c1ddd3": "Unsupported websocket message type",
   "server.api.world_intelligence_is_unavailable.8bd6d197": "World Intelligence is unavailable",
   "server.app.activate_auto_khan_soft.5de464cb": "Activate Auto Khan soft lock",

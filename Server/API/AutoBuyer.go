@@ -12,6 +12,7 @@ import (
 type autoBuyerProjection struct {
 	Metadata GameData.SourceMetadata `json:"metadata"`
 	GameData.AutoBuyerCatalog
+	Locale            *GameData.LocaleResolution `json:"locale,omitempty"`
 	SpecialistRuntime autoBuyerSpecialistRuntime `json:"specialistRuntime"`
 }
 
@@ -23,18 +24,28 @@ type autoBuyerSpecialistRuntime struct {
 	RubyCurrentSession   bool       `json:"rubyCurrentSession"`
 }
 
-func (server *Server) handleAutoBuyerProjection(writer http.ResponseWriter, _ *http.Request) {
+func (server *Server) handleAutoBuyerProjection(writer http.ResponseWriter, request *http.Request) {
 	store, ok := server.currentGameData(writer)
 	if !ok {
 		return
 	}
 	language, _ := server.config.GameData.Language()
+	var locale *GameData.LocaleResolution
+	if request.URL.Query().Has("locale") {
+		var ready bool
+		var resolution GameData.LocaleResolution
+		language, resolution, ready = server.requestLanguage(writer, request)
+		if !ready {
+			return
+		}
+		locale = &resolution
+	}
 	catalog, err := store.LocalizedAutoBuyerCatalog(language)
 	if err != nil {
 		writeErrorFromError(writer, http.StatusServiceUnavailable, "auto_buyer_unavailable", err)
 		return
 	}
-	projection := autoBuyerProjection{Metadata: store.Metadata(), AutoBuyerCatalog: catalog}
+	projection := autoBuyerProjection{Metadata: store.Metadata(), AutoBuyerCatalog: catalog, Locale: locale}
 	if server.config.State != nil {
 		state := server.config.State.ReadOnlyView()
 		if !state.Market.BoostersObservedAt.IsZero() {
