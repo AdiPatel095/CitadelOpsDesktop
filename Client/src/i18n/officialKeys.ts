@@ -1,5 +1,7 @@
 /** Verified against official English v4357. Never infer keys from translated text. */
 export const officialMessageKeys = {
+  "activity.rowCrafting": "dialog_ci_crafting",
+  "activity.rowDefense": "Defence",
   "ui.worldIntelligence.components.worldEventHistory.final.score.11c34366": "finalScore",
   "ui.worldIntelligence.components.worldEventHistory.label.honor.22ea092e": "honor",
   "ui.views.attackPresetsView.label.tool.types.dd756e8c": "dialog_attack_autofill_toolTypes_tt",

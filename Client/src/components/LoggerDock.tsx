@@ -1,3 +1,4 @@
+import {activityEventMessageKey} from '../i18n/activityEventMessages';
 import {telemetryChannelDescriptor} from '../i18n/telemetryChannelMessages';
 import {describeMessage} from '../i18n/messages';
 import type {MessageKey} from '../i18n/messages';
@@ -38,6 +39,7 @@ type ParsedLogLine = {
   raw: string;
   timestamp: string;
   direction: string;
+  event: string;
   primary: string;
   secondary: string;
   message: string;
@@ -133,8 +135,8 @@ const toneFromToken = (value: string): LogTone => {
   return 'plain';
 };
 
-// Protocol event identities remain verbatim; channel descriptors provide human labels.
-const activityEventLabel = (value: string) => value.trim();
+// Finite application event labels are translated; unknown protocol identities stay verbatim.
+const activityEventLabel = (value: string,t:(key:MessageKey)=>string) => {const key=activityEventMessageKey(value);return key?t(key):value.trim();};
 
 const writeClipboardText = async (value: string) => {
   if (navigator.clipboard?.writeText) {
@@ -174,8 +176,9 @@ const parseLogLine = (entry: LogLineEntry, index: number, locale: string, t:(key
       raw,
       timestamp: formatLogTime(time, locale),
       direction,
+      event,
       primary: directionLabel(direction,t),
-      secondary: activityEventLabel(event),
+      secondary: activityEventLabel(event,t),
       message: message.trim(),
       defaultMessage: !message.trim(),
       tone,
@@ -189,6 +192,7 @@ const parseLogLine = (entry: LogLineEntry, index: number, locale: string, t:(key
     raw,
     timestamp: '',
     direction: 'PLAIN',
+    event: '',
     primary: '',
     secondary: t('activity.label'),
     message: raw,
@@ -238,7 +242,7 @@ export const LoggerDock = React.memo(function LoggerDock() {
   const originalLines = useMemo(() => logTail.entries.map((entry,index) => parseLogLine(entry,index,locale,t)), [logTail.entries,locale,t]);
   const messageInputs = useMemo(() => logTail.entries.map((entry,index) => ({ descriptor: entry.messageDescriptor ?? (originalLines[index].defaultMessage ? describeMessage('activity.defaultAction') : undefined), legacyText: originalLines[index].message })), [logTail.entries,originalLines]);
   const localizedLines = useLocalizedMessages(messageInputs);
-  const parsedLines = useMemo(() => originalLines.map((line,index) => ({ ...line, message: localizedLines[index].text, messageLocale: localizedLines[index].resolvedLocale, translated: localizedLines[index].translated, searchText: `${line.secondary} ${localizedLines[index].text}`.toLocaleLowerCase(locale) })), [originalLines,localizedLines,locale]);
+  const parsedLines = useMemo(() => originalLines.map((line,index) => ({ ...line, message: localizedLines[index].text, messageLocale: localizedLines[index].resolvedLocale, translated: localizedLines[index].translated, searchText: `${line.searchText} ${line.secondary} ${localizedLines[index].text}`.toLocaleLowerCase(locale) })), [originalLines,localizedLines,locale]);
   const channelInputs = useMemo(() => channels.flatMap(channel => [
     { descriptor: parseMessageDescriptor(channel.labelDescriptor) ?? telemetryChannelDescriptor(channel.id,'label',channel.label), legacyText: channel.label },
     { descriptor: parseMessageDescriptor(channel.descriptionDescriptor) ?? telemetryChannelDescriptor(channel.id,'description',channel.description), legacyText: channel.description || telemetryChannelDescriptor(channel.id,'description')?.fallback || '' },

@@ -15,22 +15,22 @@ const read=path=>JSON.parse(fs.readFileSync(new URL(path,import.meta.url)));
 const source=read('../localization/ui.en.json');
 const provenance=read('../localization/module-authorship.json');
 const hash=value=>createHash('sha256').update(value).digest('hex');
-test('complete equipment module in all25 catalogs retains source provenance and renders every select branch',()=>{
+for(const [module,expected] of [['equipment-modals',63],['activity',32]])test(`complete ${module} module in all25 catalogs retains source provenance and renders every select branch`,()=>{
  let rendered=0;
  for(const locale of localeCodes.filter(code=>code!=='en')) {
-  const filename=`equipment-modals.${locale}.json`;
+  const filename=`${module}.${locale}.json`;
   const authored=read(`../localization/authored/${filename}`);
   const catalog=read(`../src/i18n/catalogs/${locale}.json`);
-  assert.equal(Object.keys(authored).length,63);
+  assert.equal(Object.keys(authored).length,expected);
   for(const [short,value] of Object.entries(authored)) {
-   const key=short.startsWith('equipment.')?short:`ui.equipment.components.equipmentModals.${short}`;
+   const key=Object.hasOwn(source,short)?short:`ui.equipment.components.equipmentModals.${short}`;
    assert.equal(catalog[key],value);
    assert.equal(provenance[filename].sourceHashes[key],hash(source[key]));
    const contract=richMessageContract(source[key]);
    const options={};
    const visit=nodes=>{for(const node of nodes){if(node.type===TYPE.select)options[node.value]=Object.keys(node.options);if(node.type===TYPE.select||node.type===TYPE.plural)Object.values(node.options).forEach(option=>visit(option.value));if(node.type===TYPE.tag)visit(node.children);}};
    visit(parse(source[key]));
-   const defaults={count:2,maximum:5,minimum:1,level:3,id:'00123',name:'Player {0} <b>literal</b>',event:'Event {0}'};
+   const defaults={count:2,maximum:5,minimum:1,level:3,id:'00123',name:'Player {0} <b>literal</b>',event:'Event {0}',channel:'Channel {0}',shortcut:'Esc'};
    let variants=[{}];
    for(const [argument,values] of Object.entries(options))variants=variants.flatMap(previous=>values.map(value=>({...previous,[argument]:value})));
    for(const variant of variants)for(const count of [0,1,2,5,21,1.5]) {
@@ -43,5 +43,5 @@ test('complete equipment module in all25 catalogs retains source provenance and 
    }
   }
  }
- assert.ok(rendered>10000);
+ assert.ok(rendered>=expected*25*6);
 });

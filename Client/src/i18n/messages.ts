@@ -5,6 +5,19 @@ import { officialMessageKeys, officialMessageNouns } from './officialKeys';
 import { formatMessage, validateMessageCatalog } from './formatMessage';
 /** Add explicit descriptors here; never translate user names, IDs, or free-form input. */
 export const messages = {
+  'activity.rowAction':'Action',
+  'activity.rowAllianceHelp':'Alliance help',
+  'activity.rowBuilding':'Building',
+  'activity.rowConstruction':'Construction',
+  'activity.rowCrafting':'Crafting',
+  'activity.rowDefense':'Defense',
+  'activity.rowEspionage':'Espionage',
+  'activity.rowHospital':'Hospital',
+  'activity.rowPurchase':'Purchase',
+  'activity.rowQueue':'Queue',
+  'activity.rowTimeSkip':'Time skip',
+  'activity.rowTransport':'Transport',
+
   'activity.copyCount':'{count, plural, one {Copy # visible log line} other {Copy # visible log lines}}',
   'activity.channelActivity':'{channel} activity',
   'activity.logActivity':'Log activity',

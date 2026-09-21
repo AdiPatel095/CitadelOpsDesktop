@@ -1,5 +1,5 @@
 import {fileURLToPath} from 'node:url';
-import {readExternalCatalogSource} from './external-catalog-source.mjs';
+import {readExternalCatalogSource,assertRuntimeCatalogMatch} from './external-catalog-source.mjs';
 import fs from 'node:fs';
 import { richMessages, richContracts } from '../src/i18n/richMessages.ts';
 import { validateRichMessageCatalog } from '../src/i18n/RichMessage.ts';
@@ -28,6 +28,7 @@ for (const locale of localeCodes.filter(code=>code!=='en')) {
   errors.push(...validateRichMessageCatalog(custom,catalog,Object.fromEntries(Object.entries(richContracts).filter(([key])=>Object.hasOwn(catalog,key)))).map(error=>`${locale}: ${error}`));
   errors.push(...validateMessageCatalog(custom,catalog).map(error=>`${locale}: ${error}`));
 }
+try { assertRuntimeCatalogMatch(fileURLToPath(new URL('../src/i18n/server',import.meta.url)),fileURLToPath(new URL('../../Server/Localization/en.json',import.meta.url))); } catch(error) { errors.push(String(error)); }
 const externalCoverage = {};
 let externalMissing = 0;
 for (const family of ['server','backend']) {

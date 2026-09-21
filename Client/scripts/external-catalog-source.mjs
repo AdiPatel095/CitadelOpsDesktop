@@ -16,3 +16,12 @@ export function readExternalCatalogSource(directory,family) {
  } else throw new Error(`Unknown catalog family: ${family}`);
  return source;
 }
+/** Integration coverage must use the server source included in this checkout. */
+export function assertRuntimeCatalogMatch(clientDirectory,runtimeSourcePath) {
+ if(!fs.existsSync(runtimeSourcePath))throw new Error('server: integrated runtime source catalog is missing');
+ const runtimeBytes=fs.readFileSync(runtimeSourcePath);
+ const runtime=JSON.parse(runtimeBytes);
+ if(!runtime||typeof runtime!=='object'||Array.isArray(runtime)||!Object.keys(runtime).length||Object.values(runtime).some(value=>typeof value!=='string'||!value.trim()))throw new Error('server: integrated runtime source catalog is invalid');
+ const clientPath=path.join(clientDirectory,'en.json');
+ if(!fs.existsSync(clientPath)||hash(fs.readFileSync(clientPath))!==hash(runtimeBytes))throw new Error('server: client catalog does not match integrated runtime source');
+}

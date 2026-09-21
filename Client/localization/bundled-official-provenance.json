@@ -3,6 +3,7 @@
   "version": "4357",
   "purpose": "Explicit reviewed UI routes available before runtime connection",
   "keys": [
+    "Defence",
     "allianceRanking",
     "apply",
     "attack",
@@ -63,158 +64,158 @@
     "en": {
       "gameCode": "en",
       "sourceSha256": "f78552848f1d176a232cfa431451da73df7c8811fd63c561815f6276868c3537",
-      "subsetSha256": "0ab41817feb0b1a87a3a458db4d1937c4f4027ba7bda3ebaf885081d87e05853",
-      "entries": 55
+      "subsetSha256": "52fa4add12363f36d4aaf674019f452c1e3a49e195a89c3b344440f9cf06f95f",
+      "entries": 56
     },
     "de": {
       "gameCode": "de",
       "sourceSha256": "077ea212704f7ee36ea849fb275476f1b528613f0f379783dabea54268648542",
-      "subsetSha256": "0a777f029bd31570cc9d66d2b68feb07e7a7e8d5f926543c5f667986a6ab6fec",
-      "entries": 55
+      "subsetSha256": "25133003ac6134d953a13843ef60b0a15c54b307b3786037b6cef537a060f66c",
+      "entries": 56
     },
     "fr": {
       "gameCode": "fr",
       "sourceSha256": "da1d675e41aaeaedefda6a88c37e1a65d410babb6b3ecd1778acdf1e3fac92cc",
-      "subsetSha256": "5a17c95eeedc27b490b0a24ddd494fddbc063ace944aa880b26832b3b410dd5c",
-      "entries": 55
+      "subsetSha256": "6ab533afdec29af41e2b5aec7a42af2e278ffdbc7d41314178666eacd8f30463",
+      "entries": 56
     },
     "pl": {
       "gameCode": "pl",
       "sourceSha256": "fc60cbd76376f6fc4a45818b8825110fd33f867db57ce14ccda4d6079b40003c",
-      "subsetSha256": "ee79b0d77b33bada8d61ce3771b98fb490fe2aeb12338e690586421c3b7d0bbf",
-      "entries": 55
+      "subsetSha256": "bf7d7bb97b85519d7bb2b2da0a1dda4ad604fe250c9c931a16d12a39414d832e",
+      "entries": 56
     },
     "ru": {
       "gameCode": "ru",
       "sourceSha256": "eeeadac22620e624beb093c459d62d776edf8496c1ce2d188b30e8b713098f59",
-      "subsetSha256": "332d9888cbff134ba74bd5064899f9f9dd1ed9b067131bdfe4545f1129d05f53",
-      "entries": 55
+      "subsetSha256": "38770bd9947d654b8d86915e07ad88c75666e8baca5bc9dd8686a0566847af19",
+      "entries": 56
     },
     "it": {
       "gameCode": "it",
       "sourceSha256": "f97e8225424c9afd21ce47b7da84c27bb60a8dca28b9ed39ec5711815daf1a6e",
-      "subsetSha256": "3fc184ef7c29d13098659c615396661816164a43d73fe60a0f454e1311429864",
-      "entries": 55
+      "subsetSha256": "3fb8079a2c9b80e2dd9eaf0fe52fdd34b481598c9b2f6548fcae4ca8485c09ea",
+      "entries": 56
     },
     "nl": {
       "gameCode": "nl",
       "sourceSha256": "70d2806c051647ac85e3d64ab8abf1ed9ee44be8e2c5ba9d98c040b51154e008",
-      "subsetSha256": "3310f9c560e59b553f634625a4c4b7d1fa6594ffbe991c8fdc9a24e8bcb853f0",
-      "entries": 55
+      "subsetSha256": "c5c9f274f575ed220129a2bd8fcfb711089d9a7d9c0781a8f705f786a0303f51",
+      "entries": 56
     },
     "pt": {
       "gameCode": "pt",
       "sourceSha256": "0c5b26875056840cbf1b4941b85479e74e6c14d8ccdfd16cd1b507611bbd0168",
-      "subsetSha256": "5db9093b49afc78c7473627ae77b7b5ad242986346e6711749706a6e33e5f8a7",
-      "entries": 55
+      "subsetSha256": "2b6ac057688cdea060b53d7bbad2dc9e5ebf746b30864702b84e74939e3cbf35",
+      "entries": 56
     },
     "es": {
       "gameCode": "es",
       "sourceSha256": "41bdc39371977cd6dad0cdfbe0649ceab70d8e1c22ac2d0982a7da1bd10ec464",
-      "subsetSha256": "b0a24202cb9fbf6d43db2f863f15f567daf40102c65bac55ce289a06a2003fa2",
-      "entries": 55
+      "subsetSha256": "a1c6dda92e213d9322d0020a5f6441efa88383c75d6fc1ca457c9066f8e106a4",
+      "entries": 56
     },
     "ar": {
       "gameCode": "ar",
       "sourceSha256": "0cd57d9b3558f4cb82dc20657f935d7199d3697691dbf010e77325ef38397a15",
-      "subsetSha256": "4c2cf1f6b17df2961e452cd25a89166818fcb29bdd0fbc1c95c25023c1334778",
-      "entries": 55
+      "subsetSha256": "a63f28195460d0b821b3b70c442383bb17fe211d5a73165735a22ca8d9cb576a",
+      "entries": 56
     },
     "da": {
       "gameCode": "da",
       "sourceSha256": "d5527ee2aeebbc26f739d112938148396b0ba2451fe67c9a267168d3193919a1",
-      "subsetSha256": "2fe8306d88993c4c78126dfd56979b3994c30db4c4096b941c92b927fccbb09b",
-      "entries": 55
+      "subsetSha256": "ebad950c698da1248b3666d2d60f1069aa72158f7f81f7e698e74bbc67f10a6f",
+      "entries": 56
     },
     "no": {
       "gameCode": "no",
       "sourceSha256": "69b999b246e1cdf0d61c0eac16ab0300e75ef4273d9dfb4584f9606815cc1340",
-      "subsetSha256": "ec291effd26af79054b8f0651128331431ee61fb8727f2ffc0e8e4d97da19f1d",
-      "entries": 55
+      "subsetSha256": "3500f542ed06f8b010a65f6774ae2919d46805979e8f035a16539a414de8f2a5",
+      "entries": 56
     },
     "fi": {
       "gameCode": "fi",
       "sourceSha256": "3bc95cc785cf478ec663baed17320848d0058c2a49235dfc1954b4d41ad24a9b",
-      "subsetSha256": "8a608661e61c518ca27ed664d5f788197096b127a1d1a9f527c04727d4700e9d",
-      "entries": 55
+      "subsetSha256": "7726c5bcc10fd342b4643d28d27b5175967ae3b3789b37c95b034b29720def21",
+      "entries": 56
     },
     "sv": {
       "gameCode": "sv",
       "sourceSha256": "3e6855861330572c42f3b2c647e908dfd01306c553a24c8ee1d671be44886756",
-      "subsetSha256": "47553fa2c55ebaaacae5b0d0cd6a88fb985b6c62e2c7707dbe3c6da684edaf61",
-      "entries": 55
+      "subsetSha256": "bdbe58b00c737ae66fa9d8c2980538ee04341edd67f3a8a5886a2b62ff62c238",
+      "entries": 56
     },
     "ja": {
       "gameCode": "ja",
       "sourceSha256": "7afd006a39836efc3a6e17f7b3a932a17d5489141b06de81f4a5d7a663c18193",
-      "subsetSha256": "67946baa669b1301de00ba32faa57fb359ffd088ff42f5e1b29eb1b976fa4035",
-      "entries": 55
+      "subsetSha256": "c61eaa4503de0b6ca158bce2d2f075a8dfd2df6deaefe62c5b643214419a2015",
+      "entries": 56
     },
     "ko": {
       "gameCode": "ko",
       "sourceSha256": "8ef639e6ecd0e0b502516487fcacca9ce71300a403da75fd4c58d9fbaffd5b90",
-      "subsetSha256": "657c521fcfd62f95639772a5a508a1894395b59a311628914cd647841710604c",
-      "entries": 55
+      "subsetSha256": "d594b41977679bd4bd4ac3a62ee408cd497d1dc4efcadc57f8a067124b4a27e8",
+      "entries": 56
     },
     "el": {
       "gameCode": "el",
       "sourceSha256": "8a5ab3d8948fac34ab270e88144ee7902ffd358e6a4b199f7cf81813016cce4b",
-      "subsetSha256": "b8e6b054b4f5c51a24ee01cd7178d30c78a2ba7156e129beb828b63e20c967ad",
-      "entries": 55
+      "subsetSha256": "6073bd74e1c5ec5ae690f46faca84ab11bc1bd9f17f2d9403fa1c954f21bb186",
+      "entries": 56
     },
     "tr": {
       "gameCode": "tr",
       "sourceSha256": "9a0a1b4e6a5f33b64efb9121fc3acd8637d7ac555de7825719451df6928c89a9",
-      "subsetSha256": "caea50043330d227c2785d6b3456a81ed5cd302bebab4246a9b135bfdc6b87c5",
-      "entries": 55
+      "subsetSha256": "70e9319f12aa94272f80d4d5ba738748907203acd60e801add27cdabc0d08e0f",
+      "entries": 56
     },
     "zh-CN": {
       "gameCode": "zh_CN",
       "sourceSha256": "88d3aa470fc8f602b705939d962995cb8126b1e58eb607a3f9acd24ee3300030",
-      "subsetSha256": "15b69f0f0eca428f95247081402a069ad3ca9cb42b6c937db46ce9b16ec1b909",
-      "entries": 55
+      "subsetSha256": "d2fe0c8d43b843af51bcdf0ddb43cfbea85e69be0dd2fb9f0ecc8d368a6b4c04",
+      "entries": 56
     },
     "zh-TW": {
       "gameCode": "zh_TW",
       "sourceSha256": "86d8a7f1aa7e5619f3dc00bf5a0f47ba5ec8235a3bb2876f247ffbb67f53cf7c",
-      "subsetSha256": "cd23793fad3c72e4812052d0f1753894fc0a29aea5f5de60298d93af2d1abdcc",
-      "entries": 55
+      "subsetSha256": "e5152e83c4732e3c1eea3ec82b92c43c0d59c7163ec5e940cc5f5ca1552289be",
+      "entries": 56
     },
     "cs": {
       "gameCode": "cs",
       "sourceSha256": "a887832af7393fb7476a82867c61c0b7f4e8c0e18b1ad1aa8748e067e247104f",
-      "subsetSha256": "f441e72c150a5bb7d3aebbf3255694c854bbed402885a83c1ce47680b5e68985",
-      "entries": 55
+      "subsetSha256": "ddf42b47263a41aa2c6e872904a6b669fe12fbdbec94b4d774615b768c2db6ed",
+      "entries": 56
     },
     "ro": {
       "gameCode": "ro",
       "sourceSha256": "d256ee5dadc5a17b7c08fa6036b3c1be41231e0d580dca133f22de5a038d7313",
-      "subsetSha256": "59ed4fd6c400fb2e7eebbe6c2e33c980a8fe28e058a0734fac74aa8024f7e548",
-      "entries": 55
+      "subsetSha256": "d996db88fe031f2f74f12deb44d97ae22e707b8a334d380241a51ba4d74e378a",
+      "entries": 56
     },
     "sk": {
       "gameCode": "sk",
       "sourceSha256": "9c0c52677bc33a542acfe95238e1a6a7f62f9159ea173d159afa562f85b33e11",
-      "subsetSha256": "047219ac63f9421c43a1651717bb45a47f0ba6199ede31bb62f710b366565397",
-      "entries": 55
+      "subsetSha256": "7d60751388e395fbfc7d194ce836bbddf395f0a41e2be9925fa5bee4113cf008",
+      "entries": 56
     },
     "hu": {
       "gameCode": "hu",
       "sourceSha256": "febb892e999a031ab6b77d938313ea9c8bcecc29912119d382c2e88ae3594f94",
-      "subsetSha256": "765e88470cc6bd53718f80b82933f1c367fa29eb0b0d1af0bbf3d5955072f8cb",
-      "entries": 55
+      "subsetSha256": "b7f5b083f382ab72648f54939b6a7fecfcfd437e999d339d7d0e219abcff6b5e",
+      "entries": 56
     },
     "bg": {
       "gameCode": "bg",
       "sourceSha256": "0be841ead52fc463754a619a346b80b4f3db425029b1e0c837359e16c28c61e1",
-      "subsetSha256": "8519fc23ca4e02369bfd6c7e89d8d7bf6e994276a738e9405b138644589e7153",
-      "entries": 55
+      "subsetSha256": "49e63f59c10d279d2ba2eb4bfb81dd0d8a17f64b4366c73beae7b75529e6c004",
+      "entries": 56
     },
     "lt": {
       "gameCode": "lt",
       "sourceSha256": "0de61af2d3df689e87b32dc363625e34f5685c98b19d2142d9ed071163e5a8ac",
-      "subsetSha256": "cd1e948142c01d6a52464a134e5d7188db8b1d45bc3a2997309635d257047436",
-      "entries": 55
+      "subsetSha256": "f99271c4fb1e6dc504d64b1b9d5495394cfd9dd092cb556653fb16c038687476",
+      "entries": 56
     }
   }
 }

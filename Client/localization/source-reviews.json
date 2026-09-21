@@ -149,11 +149,6 @@
     "reason": "Internal channel/row/filter/reducer/notification identity or search index, not human display prose.",
     "evidence": "LoggerDock.tsx preferredChannel, logTailReducer, parseLogLine searchText, filter state/options.value, Notifications id/category, or scrollToIndex align; display labels/messages have independent typed sinks."
   },
-  "3cdd651f1c84f114adac070440b56fa8e0f3e2a9dab1e47f38804dc81a3b0734": {
-    "classification": "technical",
-    "reason": "Internal channel/row/filter/reducer/notification identity or search index, not human display prose.",
-    "evidence": "LoggerDock.tsx preferredChannel, logTailReducer, parseLogLine searchText, filter state/options.value, Notifications id/category, or scrollToIndex align; display labels/messages have independent typed sinks."
-  },
   "36431107b01c9aa28bb7e1a3a57e042f2d02fe4071571aceacbc033cd74a46dd": {
     "classification": "technical",
     "reason": "Internal channel/row/filter/reducer/notification identity or search index, not human display prose.",
@@ -213,5 +208,10 @@
     "classification": "technical",
     "reason": "Internal channel/row/filter/reducer/notification identity or search index, not human display prose.",
     "evidence": "LoggerDock.tsx preferredChannel, logTailReducer, parseLogLine searchText, filter state/options.value, Notifications id/category, or scrollToIndex align; display labels/messages have independent typed sinks."
+  },
+  "781e481e5dacd5888de9f38e48efc3667d8ff0a743c02effe6c9dd241240f312": {
+    "classification": "technical",
+    "reason": "Search index includes both original protocol event/message and translated display text; never rendered directly.",
+    "evidence": "LoggerDock parsedLines.searchText is consumed only by filteredLines searchQuery.includes matching."
   }
 }

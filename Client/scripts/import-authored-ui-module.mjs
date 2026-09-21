@@ -6,7 +6,7 @@ if(!file)throw new Error('Pass an explicitly authored module JSON path');
 const source=JSON.parse(fs.readFileSync(new URL('../localization/ui.en.json',import.meta.url),'utf8'));
 const locale=path.basename(file).split('.').at(-2);
 const authored=JSON.parse(fs.readFileSync(file,'utf8'));
-const entries=Object.fromEntries(Object.entries(authored).map(([key,value])=>[key.startsWith('equipment.')?key:`ui.equipment.components.equipmentModals.${key}`,value]));
+const entries=Object.fromEntries(Object.entries(authored).map(([key,value])=>[Object.hasOwn(source,key)?key:`ui.equipment.components.equipmentModals.${key}`,value]));
 for(const [key,value] of Object.entries(entries))if(!Object.hasOwn(source,key)||typeof value!=='string'||!value.trim())throw new Error(`Invalid authored entry ${key}`);
 const target=new URL(`../src/i18n/catalogs/${locale}.json`,import.meta.url);
 const current=JSON.parse(fs.readFileSync(target,'utf8'));

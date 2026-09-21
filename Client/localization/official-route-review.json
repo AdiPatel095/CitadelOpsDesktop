@@ -47,7 +47,9 @@
     "ui.settings.components.autoTowerSettingsModal.sec.add93534": "generic_second_short",
     "ui.settings.components.queueProductionSettingsModal.min.1f6fa6f6": "generic_minute_short",
     "ui.views.automationView.min.1f6fa6f6": "generic_minute_short",
-    "ui.views.settingsView.min.1f6fa6f6": "generic_minute_short"
+    "ui.views.settingsView.min.1f6fa6f6": "generic_minute_short",
+    "activity.rowCrafting": "dialog_ci_crafting",
+    "activity.rowDefense": "Defence"
   },
   "excludedFalseFriends": [
     "Battle result is not automatically a spy report result",
@@ -56,5 +58,6 @@
     "General tab is not an alliance rank"
   ],
   "closeActionScope": "Modal close and notification dismissal both close the current transient UI; official close label supplies accessible action name.",
-  "sourceReview": "Adrian source-context review: date timestamp, wall.middle.unitPercent, actual formation tool IDs, preset editor, score/honor fields; min/sec sinks verified duration units. Never infer routes from English equality."
+  "sourceReview": "Adrian source-context review: date timestamp, wall.middle.unitPercent, actual formation tool IDs, preset editor, score/honor fields; min/sec sinks verified duration units. Never infer routes from English equality.",
+  "activityEventScope": "Finite featureActivityEvents from Server/Telemetry/Store.go: crafting production and defense actions use matching official game concept labels; event protocol tokens stay separate."
 }

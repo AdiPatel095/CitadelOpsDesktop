@@ -37,3 +37,12 @@ test('bundled channel fallbacks match synchronized producer source exactly',()=>
  assert.equal(Object.keys(channels).length,23);
  for(const fields of Object.values(channels))for(const descriptor of Object.values(fields))assert.equal(descriptor.fallback,source[descriptor.key]);
 });
+test('finite application event labels translate while unknown game opcodes remain identities',async()=>{
+ const {activityEventMessageKey}=await vite.ssrLoadModule('/src/i18n/activityEventMessages.ts');
+ const {describeMessage}=await vite.ssrLoadModule('/src/i18n/messages.ts');
+ assert.equal(activityEventMessageKey('gbd'),undefined);
+ assert.equal(activityEventMessageKey('UNKNOWN {0}'),undefined);
+ const key=activityEventMessageKey('PURCHASE');assert.equal(key,'activity.rowPurchase');
+ assert.equal(formatMessage(describeMessage(key),'de',{[key]:'Kauf'}).text,'Kauf');
+ for(const event of ['ACTION','ALLIANCE HELP','ATTACK','BUILDING','CONSTRUCTION','CRAFTING','DEFENSE','EQUIPMENT','ESPIONAGE','EVENT','HOSPITAL','PURCHASE','QUEUE','TIME SKIP','TRANSPORT'])assert.ok(activityEventMessageKey(event),event);
+});
