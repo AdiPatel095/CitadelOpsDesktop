@@ -113,6 +113,8 @@ func planConstructionPurchase(_ context.Context, input Intent.PlanningContext, a
 	steps = append(steps, constructionSpaceLeftStep())
 	steps = append(steps, commandStep("Buy construction item", "sbp", payload, "sbp", Localization.New("server.app.buy_construction_item.ab605286", "Buy construction item", nil)))
 	itemLabel := fmt.Sprintf("construction item %d", constructionItemID)
+	itemName := itemLabel
+	var itemLevel int64
 	if itemCatalog, catalogErr := input.GameData.Catalog("constructionItems"); catalogErr == nil {
 		if itemRaw, found := itemCatalog.Find(strconv.FormatInt(constructionItemID, 10)); found {
 			if item, decodeErr := GameData.DecodeRecord(itemRaw); decodeErr == nil {
@@ -121,7 +123,9 @@ func planConstructionPurchase(_ context.Context, input Intent.PlanningContext, a
 						itemLabel = displayName
 					}
 				}
+				itemName = itemLabel
 				if level, hasLevel := item.Int64("level"); hasLevel && level > 0 {
+					itemLevel = level
 					itemLabel += fmt.Sprintf(" (level %d)", level)
 				}
 			}
@@ -132,7 +136,7 @@ func planConstructionPurchase(_ context.Context, input Intent.PlanningContext, a
 			"castle-focus", "castle:" + strconv.FormatInt(int64(castle.ID), 10),
 			"construction-inventory", "construction-shop", "account-resources",
 		},
-		Summary: fmt.Sprintf("Buy %d x %s from %s", request.Amount, itemLabel, castleLabel(castle)), SummaryDescriptor: Localization.New("server.app.buy_p_x_p.b9b9be09", "Buy {p0} x {p1} from {p2}", Localization.Params{"p0": request.Amount, "p1": fmt.Sprintf("%s", itemLabel), "p2": fmt.Sprintf("%s", castleLabel(castle))}),
+		Summary: fmt.Sprintf("Buy %d x %s from %s", request.Amount, itemLabel, castleLabel(castle)), SummaryDescriptor: constructionPurchaseDescriptor(input, constructionItemID, itemName, itemLevel, request.Amount, castleLabel(castle)),
 		Steps: steps,
 	}, nil
 }

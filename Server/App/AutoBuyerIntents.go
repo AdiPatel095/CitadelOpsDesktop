@@ -257,7 +257,7 @@ func planAutoBuyerPackagePurchase(_ context.Context, input Intent.PlanningContex
 			"shop", "shop:table:" + strconv.FormatInt(product.TableID, 10), "shop:purchase-history", "account-resources",
 			"castle-focus", "castle:" + strconv.FormatInt(int64(source.ID), 10),
 		},
-		Summary: fmt.Sprintf("Buy %d x %s for %d %s", request.Amount, product.Name, request.Amount*product.Price.Amount, product.Price.Name), SummaryDescriptor: priceNameDescriptor(Localization.New("server.app.buy_p_x_p.cb2019f5", "Buy {p0} x {p1} for {p2} {p3}", Localization.Params{"p0": request.Amount, "p1": fmt.Sprintf("%s", product.Name), "p2": request.Amount * product.Price.Amount, "p3": fmt.Sprintf("%s", product.Price.Name)}), input, "p3", product.Price),
+		Summary: fmt.Sprintf("Buy %d x %s for %d %s", request.Amount, product.Name, request.Amount*product.Price.Amount, product.Price.Name), SummaryDescriptor: packagePurchaseDescriptor(input, product, request.Amount),
 		Steps: steps,
 	}, nil
 }
@@ -276,7 +276,7 @@ func planAutoBuyerSpecialistPurchase(_ context.Context, input Intent.PlanningCon
 	refreshAfter.ResponseBarrier = Intent.ResponseBarrierCommitted
 	return Intent.Plan{
 		Claims:  []string{"shop", "market:boosters", "account-resources", "specialist:" + strconv.Itoa(request.SpecialistID)},
-		Summary: fmt.Sprintf("Renew %s by 7 days within a %d-ruby ceiling", specialist.Name, request.MaximumRubyCostPerPurchase), SummaryDescriptor: Localization.New("server.app.renew_p_by_days.310dce39", "Renew {p0} by 7 days within a {p1}-ruby ceiling", Localization.Params{"p0": fmt.Sprintf("%s", specialist.Name), "p1": request.MaximumRubyCostPerPurchase}),
+		Summary: fmt.Sprintf("Renew %s by 7 days within a %d-ruby ceiling", specialist.Name, request.MaximumRubyCostPerPurchase), SummaryDescriptor: specialistNameDescriptor(Localization.New("server.app.renew_p_by_days.310dce39", "Renew {p0} by 7 days within a {p1}-ruby ceiling", Localization.Params{"p0": fmt.Sprintf("%s", specialist.Name), "p1": request.MaximumRubyCostPerPurchase}), specialist),
 		Steps: []Intent.Step{
 			refreshBefore,
 			{Name: "Renew " + specialist.Name, Resolver: "auto_buyer.specialist.purchase.build", ResolverArguments: resolved,
@@ -586,10 +586,10 @@ func autoBuyerSpecialistPurchaseContext(
 	}
 	booster := input.State.Market.Boosters[request.SpecialistID]
 	if !autoBuyerIntentExpiryMatches(booster.ExpiresAt, request.ExpectedExpiresAtUnix) {
-		return request, specialist, Localization.WithError(fmt.Errorf("%w: %s timer changed", Intent.ErrPlanStale, specialist.Name), Localization.New("server.app.intent_plan_became_stale.abd93795", "intent plan became stale before dispatch: {p1} timer changed", Localization.Params{"p1": fmt.Sprintf("%s", specialist.Name)}))
+		return request, specialist, Localization.WithError(fmt.Errorf("%w: %s timer changed", Intent.ErrPlanStale, specialist.Name), specialistNameDescriptor(Localization.New("server.app.intent_plan_became_stale.abd93795", "intent plan became stale before dispatch: {p1} timer changed", Localization.Params{"p1": fmt.Sprintf("%s", specialist.Name)}), specialist))
 	}
 	if booster.Permanent || booster.ExpiresAt.After(now.Add(time.Duration(request.MinimumDays)*24*time.Hour)) {
-		return request, specialist, Localization.WithError(fmt.Errorf("%w: %s already meets its configured floor", Intent.ErrPlanStale, specialist.Name), Localization.New("server.app.intent_plan_became_stale.4e87347b", "intent plan became stale before dispatch: {p1} already meets its configured floor", Localization.Params{"p1": fmt.Sprintf("%s", specialist.Name)}))
+		return request, specialist, Localization.WithError(fmt.Errorf("%w: %s already meets its configured floor", Intent.ErrPlanStale, specialist.Name), specialistNameDescriptor(Localization.New("server.app.intent_plan_became_stale.4e87347b", "intent plan became stale before dispatch: {p1} already meets its configured floor", Localization.Params{"p1": fmt.Sprintf("%s", specialist.Name)}), specialist))
 	}
 	resourceID, found := input.GameData.ResourceIDForJSONKey("C2")
 	observation := input.State.Player.ResourceObservations[State.ResourceID(resourceID)]
@@ -604,7 +604,7 @@ func autoBuyerSpecialistPurchaseContext(
 		return request, specialist, Localization.WithError(fmt.Errorf("%w: ruby balance changed before dispatch", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.7166263b", "intent plan became stale before dispatch: ruby balance changed before dispatch", nil))
 	}
 	if rubies-request.MinimumRubyReserve < specialist.ValidatedMaximumRubyCost {
-		return request, specialist, Localization.WithError(fmt.Errorf("%w: %s requires up to %d rubies above reserve", Intent.ErrPlanStale, specialist.Name, specialist.ValidatedMaximumRubyCost), Localization.New("server.app.intent_plan_became_stale.3e9144d6", "intent plan became stale before dispatch: {p1} requires up to {p2} rubies above reserve", Localization.Params{"p1": fmt.Sprintf("%s", specialist.Name), "p2": fmt.Sprintf("%d", specialist.ValidatedMaximumRubyCost)}))
+		return request, specialist, Localization.WithError(fmt.Errorf("%w: %s requires up to %d rubies above reserve", Intent.ErrPlanStale, specialist.Name, specialist.ValidatedMaximumRubyCost), specialistNameDescriptor(Localization.New("server.app.intent_plan_became_stale.3e9144d6", "intent plan became stale before dispatch: {p1} requires up to {p2} rubies above reserve", Localization.Params{"p1": fmt.Sprintf("%s", specialist.Name), "p2": fmt.Sprintf("%d", specialist.ValidatedMaximumRubyCost)}), specialist))
 	}
 	return request, specialist, nil
 }
@@ -817,7 +817,7 @@ func (application *Application) verifyAutoBuyerSpecialistPurchase(ctx context.Co
 	}
 	evidence := input.State.Market.LatestSpecialistPurchase
 	if input.State.Market.SpecialistPurchasePending || !evidence.ActivationConfirmed || evidence.SpecialistID != request.SpecialistID {
-		return Localization.WithError(fmt.Errorf("%s renewal was not confirmed by the refreshed specialist timer", specialist.Name), Localization.New("server.app.p_renewal_was_not.3e56e590", "{p0} renewal was not confirmed by the refreshed specialist timer", Localization.Params{"p0": fmt.Sprintf("%s", specialist.Name)}))
+		return Localization.WithError(fmt.Errorf("%s renewal was not confirmed by the refreshed specialist timer", specialist.Name), specialistNameDescriptor(Localization.New("server.app.p_renewal_was_not.3e56e590", "{p0} renewal was not confirmed by the refreshed specialist timer", Localization.Params{"p0": fmt.Sprintf("%s", specialist.Name)}), specialist))
 	}
 	return nil
 }
