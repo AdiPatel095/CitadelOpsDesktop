@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/LocaleContext';
 import { LanguageSelector } from '../i18n/LanguageSelector';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Bird, Lock, Menu, Radio, Settings, Shield, Trash2, Unlock } from 'lucide-react';
@@ -51,6 +52,7 @@ const Header: React.FC<HeaderProps> = ({
   onOpenNavigation,
   navigationOpen,
 }) => {
+  const { t, messageLocale, locale } = useLocale();
   const { state, submitIntent } = useCitadelAPI();
   const {
     gameLoggedIn,
@@ -125,7 +127,7 @@ const Header: React.FC<HeaderProps> = ({
 	}, [autoBirdEnabled, autoBirdNextCastleName, autoBirdNextWakeUp, autoBirdStatus, nowTick]);
 
 	const autoBirdInteractionHint = automationTimedUntilByKey.auto_bird
-		? `Timed until ${new Date(automationTimedUntilByKey.auto_bird).toLocaleString()}. Click toggles Auto Bird; right-click changes the duration.`
+		? `Timed until ${new Date(automationTimedUntilByKey.auto_bird).toLocaleString(locale)}. Click toggles Auto Bird; right-click changes the duration.`
 		: gameLoggedIn
 			? 'Click toggles Auto Bird; right-click runs it for a duration.'
 			: 'Showing the last known cycles while disconnected. Right-click runs Auto Bird for a duration.';
@@ -469,7 +471,7 @@ const Header: React.FC<HeaderProps> = ({
                 className="liquid-status-dock-main liquid-status-dock-icon-button liquid-auto-bird-button"
                 aria-label={autoStationPill.text}
                 title={automationTimedUntilByKey.auto_station
-                  ? `Timed until ${new Date(automationTimedUntilByKey.auto_station).toLocaleString()}. Right-click to change the duration.`
+                  ? `Timed until ${new Date(automationTimedUntilByKey.auto_station).toLocaleString(locale)}. Right-click to change the duration.`
                   : `${autoStationDetail || 'Click to turn Auto Station on or off'}. Right-click to run it for a duration.`}
               >
                 <span className="liquid-status-dock-icon liquid-mobile-status-icon" aria-hidden="true">
@@ -518,7 +520,7 @@ const Header: React.FC<HeaderProps> = ({
 				className="uppercase text-[11px]"
 				leftIcon={botLocked ? <Lock className="h-3.5 w-3.5" /> : <Unlock className="h-3.5 w-3.5" />}
 			>
-				<span className="liquid-header-control-label">{botLocked ? 'Unlock Bot' : 'Lock Bot'}</span>
+				<span lang={messageLocale} className="liquid-header-control-label">{botLocked ? t('bot.unlock') : t('bot.lock')}</span>
 			</Button>
           {gameReconnectAvailable && (
             <Button
@@ -533,7 +535,7 @@ const Header: React.FC<HeaderProps> = ({
                   : 'Reconnect to the game now instead of waiting for the retry timer'}
               className="uppercase text-[11px]"
             >
-              <span className="liquid-header-control-label">Reconnect</span>
+              <span lang={messageLocale} className="liquid-header-control-label">{t('bot.reconnect')}</span>
             </Button>
           )}
           {!gameConnectionActive && (
@@ -546,8 +548,8 @@ const Header: React.FC<HeaderProps> = ({
               className="uppercase text-[11px]"
               leftIcon={<div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px] shadow-white/80" />}
             >
-              <span className="liquid-header-control-label">
-                {gameConnectionState === 'starting' ? 'Starting…' : 'Start Bot'}
+              <span lang={messageLocale} className="liquid-header-control-label">
+                {gameConnectionState === 'starting' ? t('bot.starting') : t('bot.start')}
               </span>
             </Button>
           )}

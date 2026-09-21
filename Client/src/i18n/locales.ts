@@ -3,7 +3,7 @@ export const localeCodes = ['en', 'de', 'fr', 'pl', 'ru', 'it', 'nl', 'pt', 'es'
 export type Locale = typeof localeCodes[number];
 export type LocaleDefinition = { code: Locale; gameCode: string; nativeName: string; name: string; direction: 'ltr' | 'rtl' };
 const names = ['English','Deutsch','Français','Polski','Русский','Italiano','Nederlands','Português','Español','العربية','Dansk','Norsk','Suomi','Svenska','日本語','한국어','Ελληνικά','Türkçe','简体中文','繁體中文','Čeština','Română','Slovenčina','Magyar','Български','Lietuvių'];
-export const locales: readonly LocaleDefinition[] = localeCodes.map((code, index) => ({code, gameCode: code.replace('-', '_').toLowerCase(), nativeName: names[index], name: names[index], direction: code === 'ar' ? 'rtl' : 'ltr'}));
+export const locales: readonly LocaleDefinition[] = localeCodes.map((code, index) => ({code, gameCode: code.startsWith('zh-') ? code.replace('-', '_') : code, nativeName: names[index], name: names[index], direction: code === 'ar' ? 'rtl' : 'ltr'}));
 export function normalizeLocale(value: unknown): Locale | undefined {
   if (typeof value !== 'string') return undefined;
   const tag = value.trim().replaceAll('_', '-').toLowerCase();

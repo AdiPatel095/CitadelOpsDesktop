@@ -1,3 +1,4 @@
+import { useLocale } from '../i18n/LocaleContext';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
 	ArrowDown,
@@ -134,11 +135,11 @@ function retentionOptionLabel(
 	return `${option.label} — ${recordings.toLocaleString()} recordings · ~${formatStorageBytes(recordings * bytesPerRecording)}`;
 }
 
-function retentionLabel(value: string): string {
+function retentionLabel(value: string, locale = 'en'): string {
 	if (value === 'none') return 'No history';
 	if (value === 'unlimited') return 'Unlimited';
 	const days = retentionDays(value);
-	return days == null ? value : `${days.toLocaleString()} ${days === 1 ? 'day' : 'days'}`;
+	return days == null ? value : new Intl.NumberFormat(locale, {style:'unit',unit:'day',unitDisplay:'long'}).format(days);
 }
 
 function allowedPlayerHistoryOptions(policy: PlayerHistoryRetentionV1 | null): PlayerHistoryRetentionOptionV1[] {
@@ -169,6 +170,7 @@ function isRetentionReduction(
 }
 
 const SettingsView: React.FC = () => {
+  const { t, locale } = useLocale();
 	const {
 		state,
 		configuration,
@@ -253,7 +255,7 @@ const SettingsView: React.FC = () => {
 	const playerHistoryMaximumLabel = playerHistoryRetention?.options.find(
 		(option) => option.value === playerHistoryRetention.maximum,
 	)?.label ?? (playerHistoryRetention?.maximumDays != null
-		? `${playerHistoryRetention.maximumDays.toLocaleString()} days`
+		? `${playerHistoryRetention.maximumDays.toLocaleString(locale)} days`
 		: playerHistoryRetention?.maximum);
 	const playerHistoryBytesPerRecording = Math.max(
 		1,
@@ -653,10 +655,10 @@ const SettingsView: React.FC = () => {
 		if (!retentionChanged && !intervalChanged) return;
 		if (retentionChanged && playerHistoryRetention?.maximumDays != null && Number.isFinite(nextMagnitude)
 			&& nextMagnitude > playerHistoryRetention.maximumDays * 24) {
-			setPlayerHistoryRetentionError(`Hosted My Stats history is capped at ${playerHistoryRetention.maximumDays.toLocaleString()} days.`);
+			setPlayerHistoryRetentionError(`Hosted My Stats history is capped at ${playerHistoryRetention.maximumDays.toLocaleString(locale)} days.`);
 			return;
 		}
-		const nextLabel = nextOption?.label ?? retentionLabel(nextRetention);
+		const nextLabel = nextOption?.label ?? retentionLabel(nextRetention, locale);
 		const reducing = isRetentionReduction(
 			activePlayerHistoryRetention || playerHistoryRetention?.effective || '',
 			nextRetention,
@@ -732,7 +734,7 @@ const SettingsView: React.FC = () => {
 	const applyPlayerHistoryDays = () => {
 		if (!playerHistoryDaysValid) {
 			setPlayerHistoryRetentionError(playerHistoryRetention?.maximumDays != null
-				? `Enter a whole number from 1 to ${playerHistoryRetention.maximumDays.toLocaleString()} days.`
+				? `Enter a whole number from 1 to ${playerHistoryRetention.maximumDays.toLocaleString(locale)} days.`
 				: 'Enter a positive whole-number day limit.');
 			return;
 		}
@@ -792,14 +794,14 @@ const SettingsView: React.FC = () => {
     <div className="space-y-6 max-w-4xl mx-auto pb-12">
       <PageHeader
         className="mb-6"
-        title="System Settings"
+        title={t('settings.system')}
         description="Configure system behaviors, attack scheduling, and portable app preferences."
       />
 
       <div className="grid grid-cols-1 gap-6">
 		<SectionCard
 			variant="solid"
-			title="Settings Import & Export"
+			title={t('settings.transfer')}
 			description="Move your CitadelOps setup between installations with one JSON file."
 			icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10"><FileJson className="h-4 w-4 text-violet-400" /></span>}
 			contentClassName="p-6 space-y-5"
@@ -819,7 +821,7 @@ const SettingsView: React.FC = () => {
 						disabled={settingsTransferPending != null}
 						onClick={() => void exportSettings()}
 					>
-						Export settings
+						{t('settings.export')}
 					</Button>
 				</div>
 				<div className="rounded-global border border-border-base bg-bg-app/35 p-4">
@@ -843,7 +845,7 @@ const SettingsView: React.FC = () => {
 						disabled={settingsTransferPending != null}
 						onClick={() => settingsFileInputRef.current?.click()}
 					>
-						Import settings
+						{t('settings.import')}
 					</Button>
 				</div>
 			</div>
@@ -857,7 +859,7 @@ const SettingsView: React.FC = () => {
 
 				<SectionCard
 					variant="solid"
-					title="My Stats Storage"
+					title={t('settings.history')}
 					description="Choose how often My Stats is recorded, set its day limit, and preview local disk use."
 				icon={<span className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/10"><HardDrive className="h-4 w-4 text-cyan-400" /></span>}
 				actions={playerHistoryRetention == null ? undefined : (
@@ -887,7 +889,7 @@ const SettingsView: React.FC = () => {
 						placeholder={playerHistoryRetentionLoading
 							? 'Loading storage options…'
 							: activePlayerHistoryRetention
-								? `Custom: ${retentionLabel(activePlayerHistoryRetention)}`
+								? `Custom: ${retentionLabel(activePlayerHistoryRetention, locale)}`
 								: 'Storage options unavailable'}
 						icon={<HardDrive className="h-4 w-4" />}
 						disabled={playerHistoryRetentionLoading || playerHistoryRetentionPending || playerHistoryRetentionOptions.length === 0}
@@ -927,9 +929,9 @@ const SettingsView: React.FC = () => {
 						</div>
 						<p className="mt-2 text-xs leading-relaxed text-text-muted">
 							{playerHistoryDaysValid
-								? `${projectedPlayerHistoryRecordings.toLocaleString()} recordings at the selected cadence · approximately ${formatStorageBytes(projectedPlayerHistoryRecordings * playerHistoryBytesPerRecording)}`
+								? `${projectedPlayerHistoryRecordings.toLocaleString(locale)} recordings at the selected cadence · approximately ${formatStorageBytes(projectedPlayerHistoryRecordings * playerHistoryBytesPerRecording)}`
 								: playerHistoryRetention?.maximumDays != null
-									? `Enter 1–${playerHistoryRetention.maximumDays.toLocaleString()} whole days.`
+									? `Enter 1–${playerHistoryRetention.maximumDays.toLocaleString(locale)} whole days.`
 									: 'Enter a positive whole-number day limit.'}
 							</p>
 						</div>
@@ -942,7 +944,7 @@ const SettingsView: React.FC = () => {
 								value={String(playerHistoryRecordingIntervalSeconds)}
 								options={(playerHistoryRetention?.recordingIntervalOptions ?? []).map((option) => ({
 									value: String(option.seconds),
-									label: `${option.label} — ${option.recordingsPerDay.toLocaleString()}/day · ~${formatStorageBytes(option.recordingsPerDay * playerHistoryBytesPerRecording)}/day`,
+									label: `${option.label} — ${option.recordingsPerDay.toLocaleString(locale)}/day · ~${formatStorageBytes(option.recordingsPerDay * playerHistoryBytesPerRecording)}/day`,
 									searchText: `${option.label} ${option.seconds}`,
 								}))}
 								onChange={selectPlayerHistoryRecordingInterval}
@@ -986,8 +988,8 @@ const SettingsView: React.FC = () => {
 								: activePlayerHistoryRecordings == null
 								? activePlayerHistoryRetention === 'none'
 									? 'History storage is off.'
-									: `Unlimited, growing by up to ${playerHistoryRecordingsPerDay.toLocaleString()} recordings per day · approximately ${formatStorageBytes(playerHistoryRecordingsPerDay * playerHistoryBytesPerRecording)}/day.`
-								: `${activePlayerHistoryRecordings.toLocaleString()} recordings · approximately ${formatStorageBytes(activePlayerHistoryRecordings * playerHistoryBytesPerRecording)}`}
+									: `Unlimited, growing by up to ${playerHistoryRecordingsPerDay.toLocaleString(locale)} recordings per day · approximately ${formatStorageBytes(playerHistoryRecordingsPerDay * playerHistoryBytesPerRecording)}/day.`
+								: `${activePlayerHistoryRecordings.toLocaleString(locale)} recordings · approximately ${formatStorageBytes(activePlayerHistoryRecordings * playerHistoryBytesPerRecording)}`}
 						</p>
 					</div>
 					<div className="rounded-global border border-border-base bg-bg-app/35 p-3">
@@ -1120,7 +1122,7 @@ const SettingsView: React.FC = () => {
 						<div className="mt-4 grid gap-3 lg:grid-cols-3">
 							<div>
 								<label htmlFor="background-login-username" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-text-muted">
-									Username
+									{t('settings.username')}
 								</label>
 								<Input
 									id="background-login-username"
@@ -1134,7 +1136,7 @@ const SettingsView: React.FC = () => {
 							</div>
 							<div>
 								<label htmlFor="background-login-password" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-text-muted">
-									Password
+									{t('settings.password')}
 								</label>
 								<Input
 									id="background-login-password"
@@ -1149,7 +1151,7 @@ const SettingsView: React.FC = () => {
 							</div>
 							<div>
 								<label htmlFor="background-login-server" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-text-muted">
-									Server
+									{t('settings.server')}
 								</label>
 								<Input
 									id="background-login-server"
@@ -1181,7 +1183,7 @@ const SettingsView: React.FC = () => {
 								isLoading={backgroundLoginPending}
 								disabled={backgroundLoginPending || !backgroundUsername.trim() || !backgroundPassword || !backgroundServer.trim()}
 							>
-								Save background login
+								{t('settings.backgroundLogin')}
 							</Button>
 							<p className="text-[11px] leading-relaxed text-text-muted">
 								Saved only in this profile's protected session file and excluded from settings exports and operation receipts.
@@ -1205,7 +1207,7 @@ const SettingsView: React.FC = () => {
 
 				<div className="w-full sm:max-w-[520px]">
 					<label className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
-						Browser
+						{t('settings.browser')}
 					</label>
 						<Select
 							value={selectedBrowserID}
@@ -1250,7 +1252,7 @@ const SettingsView: React.FC = () => {
 								disabled={browserSelectionPending || !customBrowserPath.trim()}
 								className="shrink-0"
 							>
-								Use executable
+								{t('settings.useExecutable')}
 							</Button>
 						</div>
 							<p className="mt-2 text-xs text-text-muted">
@@ -1451,7 +1453,7 @@ const SettingsView: React.FC = () => {
 
             <div className="relative flex-1 w-full sm:max-w-[200px]">
               <label htmlFor="upgrade-coin-reserve" className="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1.5">
-                Minimum Coins
+                {t('settings.minimumCoins')}
               </label>
               <Input
 				id="upgrade-coin-reserve"
@@ -1464,7 +1466,7 @@ const SettingsView: React.FC = () => {
                 className="font-mono"
               />
               <p className="mt-2 text-xs text-text-muted">
-                Reserve: <span className="font-mono font-semibold text-text-main">{parsedCoinThreshold.toLocaleString()}</span> coins
+                Reserve: <span className="font-mono font-semibold text-text-main">{parsedCoinThreshold.toLocaleString(locale)}</span> coins
               </p>
             </div>
         </SectionCard>

@@ -86,7 +86,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 			}
 			let unitsResponse: { items: OfficialRecord[] };
 			try {
-				unitsResponse = await CitadelAPI.getCatalog<OfficialRecord>('units');
+				unitsResponse = await CitadelAPI.getCatalog<OfficialRecord>('units', locale);
 			} catch (error) {
 				if (cancelled) return;
 				console.error('Could not load official unit metadata', error);
@@ -137,17 +137,17 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 				setOptionalLoading(true);
 			}
 			const results = await Promise.allSettled([
-				CitadelAPI.getCatalog<OfficialRecord>('buildings'),
-				CitadelAPI.getCatalog<OfficialRecord>('resources'),
-				CitadelAPI.getCatalog<OfficialRecord>('currencies'),
+				CitadelAPI.getCatalog<OfficialRecord>('buildings', locale),
+				CitadelAPI.getCatalog<OfficialRecord>('resources', locale),
+				CitadelAPI.getCatalog<OfficialRecord>('currencies', locale),
 				loadCurrencyIconRecords(),
-				CitadelAPI.getCatalog<OfficialRecord>('equipments'),
-				CitadelAPI.getCatalog<OfficialRecord>('gems'),
-				CitadelAPI.getCatalog<OfficialRecord>('effects'),
-				CitadelAPI.getCatalog<OfficialRecord>('effecttypes'),
-				CitadelAPI.getCatalog<OfficialRecord>('effectCaps'),
-				CitadelAPI.getCatalog<OfficialRecord>('kingdoms'),
-				CitadelAPI.getProjection<CraftingProjection>('crafting'),
+				CitadelAPI.getCatalog<OfficialRecord>('equipments', locale),
+				CitadelAPI.getCatalog<OfficialRecord>('gems', locale),
+				CitadelAPI.getCatalog<OfficialRecord>('effects', locale),
+				CitadelAPI.getCatalog<OfficialRecord>('effecttypes', locale),
+				CitadelAPI.getCatalog<OfficialRecord>('effectCaps', locale),
+				CitadelAPI.getCatalog<OfficialRecord>('kingdoms', locale),
+				CitadelAPI.getProjection<CraftingProjection>('crafting', locale),
 			] as const);
 			if (cancelled) return;
 			for (const result of results) {
@@ -261,7 +261,7 @@ export function MetadataProvider({ children }: { children: React.ReactNode }) {
 			cancelled = true;
 			if (retryTimer != null) clearTimeout(retryTimer);
 		};
-	}, [catalogKey, localizeOptional, optionalRetryNonce]);
+	}, [catalogKey, locale, localizeOptional, optionalRetryNonce]);
 
   const getTroop = useCallback((id: number) => troops[id], [troops]);
   const getTool = useCallback((id: number) => tools[id], [tools]);

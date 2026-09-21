@@ -3,7 +3,7 @@ import test from 'node:test';
 import fs from 'node:fs';
 import ts from 'typescript';
 import { pathToFileURL } from 'node:url';
-const files = ['locales','formatMessage','gameMessage'];
+const files = ['locales','formatMessage','gameMessage','officialKeys'];
 const modules = {};
 for (const file of files) {
  const target = new URL(`../node_modules/.localization-${file}.mjs`,import.meta.url);
@@ -13,6 +13,7 @@ for (const file of files) {
 }
 test('normalizes official and regional locales without accepting unsupported languages',()=>{
  const {normalizeLocale,locales}=modules.locales;
+ assert.equal(locales.find(item=>item.code==='zh-CN').gameCode,'zh_CN'); assert.equal(locales.find(item=>item.code==='zh-TW').gameCode,'zh_TW');
  assert.equal(locales.length,26); assert.equal(normalizeLocale('zh_tw'),'zh-TW'); assert.equal(normalizeLocale('zh-Hant-HK'),'zh-TW'); assert.equal(normalizeLocale('ar-SA'),'ar'); assert.equal(normalizeLocale('nb-NO'),'no'); assert.equal(normalizeLocale('xx'),undefined);
 });
 test('ICU plurals, literal HTML, placeholders and untranslated provenance remain distinct',()=>{
@@ -36,6 +37,7 @@ test('all authored shell catalogs have exact keys and valid ICU arguments',()=>{
  let english={};
  function visit(node) { if(ts.isVariableDeclaration(node)&&node.name.getText(ast)==='messages') { const object=node.initializer.expression; english=Object.fromEntries(object.properties.map(property=>[property.name.text,property.initializer.text])); } ts.forEachChild(node,visit); }
  visit(ast);
+ for (const key of Object.keys(modules.officialKeys.officialMessageKeys)) delete english[key];
  for(const locale of modules.locales.localeCodes.filter(code=>code!=='en')) {
   const catalog=JSON.parse(fs.readFileSync(new URL(`../src/i18n/catalogs/${locale}.json`,import.meta.url),'utf8'));
   assert.deepEqual(modules.formatMessage.validateMessageCatalog(english,catalog),[],locale);
@@ -47,4 +49,22 @@ test('official game messages and nested nouns preserve exact user values and fal
  assert.equal(formatMessage({key:'x',fallback:'Move',officialKey:'move',officialParams:{0:'<User>{1}'}},'fr',{},game).text,'Déplacer <User>{1}');
  assert.equal(formatMessage({key:'x',fallback:'The {noun}',gameParams:{noun:{key:'castle',fallback:'Castle'}}},'fr',{x:'Le {noun}'},game).text,'Le Château');
  assert.equal(formatMessage({key:'x',fallback:'The {noun}',gameParams:{noun:{key:'missing',fallback:'Castle'}}},'fr',{x:'Le {noun}'},game).translated,false);
+});
+
+test('navigation game terms use verified semantic official keys',()=>{
+ assert.deepEqual(modules.officialKeys.officialMessageKeys,{'navigation.castle':'castle','navigation.equipment':'dialog_equipment_title','navigation.movement':'dialog_recuit_generals','navigation.rift':'event_title_133'});
+});
+
+test('structured error context preserves scalar identifiers and reports missing context translation',()=>{
+ const message={key:'bad',fallback:'Invalid value',context:[{key:'section',fallback:'Section {section}',params:{section:'autoTower'}}]};
+ assert.equal(modules.formatMessage.formatMessage(message,'fr',{bad:'Valeur incorrecte',section:'Section {section}'}).text,'Section autoTower: Valeur incorrecte');
+ assert.equal(modules.formatMessage.formatMessage(message,'fr',{bad:'Valeur incorrecte'}).translated,false);
+});
+
+test('missing official parameters and mixed fallback never claim full translation',()=>{
+ const {formatMessage}=modules.formatMessage;
+ const game={values:{move:'Déplacer {0}',castle:'Château'},resolvedLocale:'fr'};
+ assert.deepEqual(formatMessage({key:'move',fallback:'Could not move',officialKey:'move'},'fr',{},game),{text:'Could not move',translated:false,resolvedLocale:'en'});
+ assert.equal(formatMessage({key:'x',fallback:'The {noun}',gameParams:{noun:{key:'castle',fallback:'Castle'}}},'fr',{},game).resolvedLocale,'mixed');
+ assert.equal(formatMessage({key:'x',fallback:'Static source',fallbackText:'Player {x} failed'},'fr',{},game).text,'Player {x} failed');
 });

@@ -1,6 +1,26 @@
+import { officialMessageKeys } from './officialKeys';
 import { formatMessage, validateMessageCatalog } from './formatMessage';
 /** Add explicit descriptors here; never translate user names, IDs, or free-form input. */
 export const messages = {
+  "settings.system": "System Settings",
+  "settings.transfer": "Settings Import & Export",
+  "settings.export": "Export settings",
+  "settings.import": "Import settings",
+  "settings.history": "My Stats Storage",
+  "settings.username": "Username",
+  "settings.password": "Password",
+  "settings.server": "Server",
+  "settings.browser": "Browser",
+  "settings.backgroundLogin": "Save background login",
+  "settings.useExecutable": "Use executable",
+  "settings.minimumCoins": "Minimum Coins",
+
+  "bot.unlock": "Unlock Bot",
+  "bot.lock": "Lock Bot",
+  "bot.reconnect": "Reconnect",
+  "bot.starting": "Starting\u2026",
+  "bot.start": "Start Bot",
+
   "navigation.castle": "Castle",
   "navigation.automation": "Automation",
   "navigation.events": "Feature Stats",
@@ -12,7 +32,7 @@ export const messages = {
   "navigation.player-tracker": "My Stats",
   "navigation.alliance-targets": "Alliance Targets",
   "navigation.world-intelligence": "World Intel",
-  "navigation.rift": "Rift",
+  "navigation.rift": "Rift Raid",
   "navigation.settings": "Settings",
   "navigation.patch-notes": "Patch Notes",
   "navigation.support": "Support",
@@ -39,7 +59,7 @@ export type MessageParameters = Readonly<Record<string, string | number>>;
 export type MessageDescriptor = { key: MessageKey; parameters?: MessageParameters };
 export type MessageCatalog = Record<MessageKey, string>;
 export function validateCatalog(catalog: Record<string, string>): string[] {
-  return validateMessageCatalog(messages, catalog);
+  return validateMessageCatalog(Object.fromEntries(Object.entries(messages).filter(([key]) => !Object.hasOwn(officialMessageKeys,key))), catalog);
 }
 export function interpolate(template: string, parameters: MessageParameters = {}): string {
   return formatMessage({key: '', fallback: template, params: {...parameters}}, 'en', {}).text;

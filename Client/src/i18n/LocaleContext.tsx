@@ -1,3 +1,4 @@
+import { officialMessageKeys } from './officialKeys';
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { localeStorageKey, normalizeLocale } from './locales';
 import type { Locale } from './locales';
@@ -10,12 +11,14 @@ import type { MessageKey, MessageParameters } from './messages';
 function initialLocale(): Locale {
   try { return normalizeLocale(localStorage.getItem(localeStorageKey)) ?? 'en'; } catch { return 'en'; }
 }
-const officialKeys: Partial<Record<MessageKey,string>> = {'navigation.castle':'castle','navigation.equipment':'dialog_equipment_title','navigation.movement':'dialog_recuit_generals'};
+const officialKeys: Partial<Record<MessageKey,string>> = officialMessageKeys;
 function createValue(locale: Locale, setLocale: (locale: Locale) => void, catalog: Catalog = {}, game?: OfficialCatalog) {
+  const message = (key: MessageKey, parameters?: MessageParameters) => formatMessage({key,fallback:messages[key],params:parameters ? {...parameters} : undefined,officialKey:officialKeys[key]},locale,catalog,game);
   return {
+    message,
     locale, setLocale, direction: locale === 'ar' ? 'rtl' as const : 'ltr' as const,
     messageLocale: Object.keys(catalog).length ? locale : 'en',
-    t: (key: MessageKey, parameters?: MessageParameters) => formatMessage({key,fallback:messages[key],params:parameters ? {...parameters} : undefined,officialKey:officialKeys[key]},locale,catalog,game).text,
+    t: (key: MessageKey, parameters?: MessageParameters) => message(key,parameters).text,
     number: (value: number, options?: Intl.NumberFormatOptions) => new Intl.NumberFormat(locale,options).format(value),
     date: (value: Date | number, options?: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(locale,options).format(value),
     plural: (value: number, options?: Intl.PluralRulesOptions) => new Intl.PluralRules(locale,options).select(value),
@@ -39,7 +42,7 @@ export function LocaleProvider({children}: {children: React.ReactNode}) {
     return () => { active = false; };
   },[locale]);
   useEffect(() => {
-    // Until custom catalogs exist, surrounding interface text remains English.
+    // Unconverted page content remains English; converted components mark their own language.
     document.documentElement.lang = 'en';
     document.documentElement.dataset.viewerLocale = locale;
     document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr';

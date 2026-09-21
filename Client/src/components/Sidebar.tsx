@@ -17,7 +17,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   open,
   onClose,
 }) => {
-  const { t, messageLocale } = useLocale();
+  const { t, message, messageLocale } = useLocale();
   const mainItems = NAVIGATION_ITEMS.filter(item => item.section === 'main');
   const systemItems = NAVIGATION_ITEMS.filter(item => item.section === 'system');
   const systemHasActiveView = systemItems.some(item => item.id === currentView);
@@ -31,6 +31,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     <button
       type="button"
       key={item.id}
+      lang={message(item.labelKey).resolvedLocale}
       className={`liquid-nav-item group ${currentView === item.id ? 'liquid-nav-item-active' : ''}`}
       aria-current={currentView === item.id ? 'page' : undefined}
       onClick={() => openView(item.id)}

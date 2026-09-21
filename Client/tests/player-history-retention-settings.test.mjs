@@ -153,7 +153,7 @@ test('Settings route includes the My Stats storage control and required choices 
 	]);
 
   assert.match(appSource, /settings:\s*lazy\(\(\) => import\('\.\/views\/SettingsView'\)\)/);
-	assert.match(settingsSource, /title="My Stats Storage"/);
+	assert.match(settingsSource, /title=\{t\('settings.history'\)\}/);
 	assert.match(settingsSource, /ariaLabel="My Stats saved history window"/);
 	assert.match(settingsSource, /ariaLabel="My Stats recording frequency"/);
 	assert.match(settingsSource, /aria-label="Custom My Stats retention days"/);

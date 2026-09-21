@@ -1,6 +1,6 @@
 # Desktop localization coverage ledger
 
-Status: partial foundation, not a translated release. Baseline: e77ed022c2f926ae3509527fdabf54dca9e22586. 31 shell/shared-control messages have model-authored translations in all 25 non-English catalogs. Human linguistic review is pending. This small authored set is not full interface coverage. The full visible-text conversion remains open.
+Status: partial foundation, not a translated release. Baseline: e77ed022c2f926ae3509527fdabf54dca9e22586. 44 custom shell/shared-control/settings messages plus 4 verified official game-key labels have model-authored translations in all 25 non-English catalogs. Human linguistic review is pending. This small authored set is not full interface coverage. The full visible-text conversion remains open.
 
 ## Source inventory
 
@@ -25,5 +25,8 @@ Run `node scripts/inventory-localization.mjs` from Client. `source-inventory.jso
 | Protocol IDs, settings keys, operation IDs, diagnostic console | Contracts and technical code | Excluded from translation | Console exclusion applies only to private diagnostics, not displayed LoggerDock content |
 
 ## Completion gate
+
+`npm run check:localization` intentionally fails while source candidates or dynamic surfaces remain open. Build/test success alone is not translation completion. Catalogs are model-authored and need human linguistic review; official translations retain official provenance even when their text equals English.
+
 
 Every visible sink needs a reviewed key or a specific exclusion. Each supported custom catalog must have exactly the English keys and matching recursively parsed ICU argument sets. Official game positional placeholders are separate from ICU. Runtime unknown descriptors, unavailable official keys and retained English history must remain visible as coverage gaps. Check all 26 locales, long text, Arabic direction, locale changes during in-flight fetches, offline fallback, account switching, exports and accessibility. Existing physical left/right CSS and all non-header responsive surfaces still need RTL audit.
