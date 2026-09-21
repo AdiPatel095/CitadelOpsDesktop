@@ -90,5 +90,13 @@
   "activity.all": "Toda la actividad · {count, number}",
   "activity.actions": "Acciones completadas · {count, number}",
   "activity.issues": "Advertencias y errores · {count, number}",
-  "activity.results": "{shown, number} de {total, number}"
+  "activity.results": "{shown, number} de {total, number}",
+  "common.refresh": "Actualizar",
+  "common.clearSelection": "Borrar selección",
+  "common.presetName": "Nombre del preajuste",
+  "common.savePreset": "Guardar preajuste",
+  "common.apply": "Aplicar",
+  "common.close": "Cerrar",
+  "common.calendar": "Calendario",
+  "common.saveChanges": "Guardar cambios"
 }

@@ -1,6 +1,15 @@
 {
+  "server.api.event_occurrence_id_is.3c0ae253": "معرّف دورة الحدث غير صالح",
+  "server.api.eventkey_is_invalid.5fa0f899": "قيمة eventKey غير صالحة",
   "server.api.official_game_data_is.c5e55e7e": "بيانات اللعبة الرسمية غير متاحة",
   "server.api.official_language_data_is.803160d4": "بيانات اللغة الرسمية غير متاحة",
+  "server.api.ranking_metric_type_must.179bda7e": "يجب أن يكون نوع مقياس الترتيب players أو alliances",
+  "server.api.ranking_type_must_be.ae1d21f5": "يجب أن يكون نوع الترتيب players أو alliances",
+  "server.api.streaming_responses_are_unavailable.dbad8099": "الاستجابات المتدفقة غير متاحة",
+  "server.api.type_must_be_player.6c2ff66b": "يجب أن تكون قيمة type هي player أو alliance",
   "server.api.unsupported_locale": "الإعداد المحلي غير مدعوم: {locale}",
+  "server.app.cra_books_payload_must.7aa91e61": "يجب أن تكون بيانات كتب CRA مصفوفة فارغة",
+  "server.app.cra_support_tools_contain.6615c823": "تحتوي أدوات الدعم في CRA على معرّف عنصر غير صالح",
+  "server.app.cra_support_troop_count.2d16227f": "عدد قوات الدعم في CRA خارج الحدود المدعومة",
   "server.automation.safety_pause_after_an.67451716": "توقف احترازي بعد فشل إجراء آلي"
 }

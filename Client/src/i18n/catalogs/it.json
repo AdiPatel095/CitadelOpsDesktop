@@ -90,5 +90,13 @@
   "activity.all": "Tutte le attività · {count, number}",
   "activity.actions": "Azioni completate · {count, number}",
   "activity.issues": "Avvisi ed errori · {count, number}",
-  "activity.results": "{shown, number} di {total, number}"
+  "activity.results": "{shown, number} di {total, number}",
+  "common.refresh": "Aggiorna",
+  "common.clearSelection": "Cancella selezione",
+  "common.presetName": "Nome della preimpostazione",
+  "common.savePreset": "Salva preimpostazione",
+  "common.apply": "Applica",
+  "common.close": "Chiudi",
+  "common.calendar": "Calendario",
+  "common.saveChanges": "Salva modifiche"
 }

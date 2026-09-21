@@ -90,5 +90,13 @@
   "activity.all": "Al aktivitet · {count, number}",
   "activity.actions": "Fuldførte handlinger · {count, number}",
   "activity.issues": "Advarsler og fejl · {count, number}",
-  "activity.results": "{shown, number} af {total, number}"
+  "activity.results": "{shown, number} af {total, number}",
+  "common.refresh": "Opdater",
+  "common.clearSelection": "Ryd markering",
+  "common.presetName": "Navn på forudindstilling",
+  "common.savePreset": "Gem forudindstilling",
+  "common.apply": "Anvend",
+  "common.close": "Luk",
+  "common.calendar": "Kalender",
+  "common.saveChanges": "Gem ændringer"
 }

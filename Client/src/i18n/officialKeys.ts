@@ -24,4 +24,7 @@ export const officialMessageKeys = {
   "equipment.target.26.label": "monument",
   "equipment.target.28.label": "laboratory",
   "equipment.target.43.label": "event_title_133",
+  "equipment.event.nomad.label": "event_title_72",
+  "equipment.event.samurai.label": "event_title_80",
+  "equipment.event.berimond.label": "event_title_3",
 } as const;

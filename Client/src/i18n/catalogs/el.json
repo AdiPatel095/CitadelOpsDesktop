@@ -90,5 +90,13 @@
   "activity.all": "Όλη η δραστηριότητα · {count, number}",
   "activity.actions": "Ολοκληρωμένες ενέργειες · {count, number}",
   "activity.issues": "Προειδοποιήσεις και σφάλματα · {count, number}",
-  "activity.results": "{shown, number} από {total, number}"
+  "activity.results": "{shown, number} από {total, number}",
+  "common.refresh": "Ανανέωση",
+  "common.clearSelection": "Εκκαθάριση επιλογής",
+  "common.presetName": "Όνομα προρύθμισης",
+  "common.savePreset": "Αποθήκευση προρύθμισης",
+  "common.apply": "Εφαρμογή",
+  "common.close": "Κλείσιμο",
+  "common.calendar": "Ημερολόγιο",
+  "common.saveChanges": "Αποθήκευση αλλαγών"
 }

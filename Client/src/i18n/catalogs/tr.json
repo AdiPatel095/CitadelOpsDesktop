@@ -90,5 +90,13 @@
   "activity.all": "Tüm etkinlik · {count, number}",
   "activity.actions": "Tamamlanan eylemler · {count, number}",
   "activity.issues": "Uyarılar ve hatalar · {count, number}",
-  "activity.results": "{total, number} kayıttan {shown, number}"
+  "activity.results": "{total, number} kayıttan {shown, number}",
+  "common.refresh": "Yenile",
+  "common.clearSelection": "Seçimi temizle",
+  "common.presetName": "Ön ayar adı",
+  "common.savePreset": "Ön ayarı kaydet",
+  "common.apply": "Uygula",
+  "common.close": "Kapat",
+  "common.calendar": "Takvim",
+  "common.saveChanges": "Değişiklikleri kaydet"
 }

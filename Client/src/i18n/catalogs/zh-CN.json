@@ -90,5 +90,13 @@
   "activity.all": "全部活动 · {count, number}",
   "activity.actions": "已完成操作 · {count, number}",
   "activity.issues": "警告和错误 · {count, number}",
-  "activity.results": "{shown, number} / {total, number}"
+  "activity.results": "{shown, number} / {total, number}",
+  "common.refresh": "刷新",
+  "common.clearSelection": "清除选择",
+  "common.presetName": "预设名称",
+  "common.savePreset": "保存预设",
+  "common.apply": "应用",
+  "common.close": "关闭",
+  "common.calendar": "日历",
+  "common.saveChanges": "保存更改"
 }

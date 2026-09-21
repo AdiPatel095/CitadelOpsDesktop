@@ -1,6 +1,15 @@
 {
+  "server.api.event_occurrence_id_is.3c0ae253": "Недопустимый идентификатор экземпляра события",
+  "server.api.eventkey_is_invalid.5fa0f899": "Недопустимое значение eventKey",
   "server.api.official_game_data_is.c5e55e7e": "Официальные данные игры недоступны",
   "server.api.official_language_data_is.803160d4": "Официальные языковые данные недоступны",
+  "server.api.ranking_metric_type_must.179bda7e": "Тип метрики рейтинга должен быть players или alliances",
+  "server.api.ranking_type_must_be.ae1d21f5": "Тип рейтинга должен быть players или alliances",
+  "server.api.streaming_responses_are_unavailable.dbad8099": "Потоковые ответы недоступны",
+  "server.api.type_must_be_player.6c2ff66b": "Значение type должно быть player или alliance",
   "server.api.unsupported_locale": "Неподдерживаемая локаль: {locale}",
+  "server.app.cra_books_payload_must.7aa91e61": "Данные книг CRA должны быть пустым массивом",
+  "server.app.cra_support_tools_contain.6615c823": "Инструменты поддержки CRA содержат недопустимый идентификатор предмета",
+  "server.app.cra_support_troop_count.2d16227f": "Количество войск поддержки CRA выходит за допустимые пределы",
   "server.automation.safety_pause_after_an.67451716": "Защитная пауза после сбоя действия автоматизации"
 }

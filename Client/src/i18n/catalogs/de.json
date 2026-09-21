@@ -90,5 +90,13 @@
   "activity.all": "Alle Aktivitäten · {count, number}",
   "activity.actions": "Abgeschlossene Aktionen · {count, number}",
   "activity.issues": "Warnungen und Fehler · {count, number}",
-  "activity.results": "{shown, number} von {total, number}"
+  "activity.results": "{shown, number} von {total, number}",
+  "common.refresh": "Aktualisieren",
+  "common.clearSelection": "Auswahl aufheben",
+  "common.presetName": "Vorlagenname",
+  "common.savePreset": "Vorlage speichern",
+  "common.apply": "Anwenden",
+  "common.close": "Schließen",
+  "common.calendar": "Kalender",
+  "common.saveChanges": "Änderungen speichern"
 }

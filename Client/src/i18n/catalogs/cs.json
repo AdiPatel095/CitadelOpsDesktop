@@ -90,5 +90,13 @@
   "activity.all": "Veškerá aktivita · {count, number}",
   "activity.actions": "Dokončené akce · {count, number}",
   "activity.issues": "Varování a chyby · {count, number}",
-  "activity.results": "{shown, number} z {total, number}"
+  "activity.results": "{shown, number} z {total, number}",
+  "common.refresh": "Obnovit",
+  "common.clearSelection": "Zrušit výběr",
+  "common.presetName": "Název předvolby",
+  "common.savePreset": "Uložit předvolbu",
+  "common.apply": "Použít",
+  "common.close": "Zavřít",
+  "common.calendar": "Kalendář",
+  "common.saveChanges": "Uložit změny"
 }

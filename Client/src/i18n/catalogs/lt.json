@@ -90,5 +90,13 @@
   "activity.all": "Visa veikla · {count, number}",
   "activity.actions": "Užbaigti veiksmai · {count, number}",
   "activity.issues": "Įspėjimai ir klaidos · {count, number}",
-  "activity.results": "{shown, number} iš {total, number}"
+  "activity.results": "{shown, number} iš {total, number}",
+  "common.refresh": "Atnaujinti",
+  "common.clearSelection": "Išvalyti pasirinkimą",
+  "common.presetName": "Išankstinės nuostatos pavadinimas",
+  "common.savePreset": "Išsaugoti išankstinę nuostatą",
+  "common.apply": "Taikyti",
+  "common.close": "Uždaryti",
+  "common.calendar": "Kalendorius",
+  "common.saveChanges": "Išsaugoti pakeitimus"
 }

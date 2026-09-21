@@ -90,5 +90,13 @@
   "activity.all": "すべての活動 · {count, number}",
   "activity.actions": "完了した操作 · {count, number}",
   "activity.issues": "警告とエラー · {count, number}",
-  "activity.results": "{total, number}件中{shown, number}件"
+  "activity.results": "{total, number}件中{shown, number}件",
+  "common.refresh": "更新",
+  "common.clearSelection": "選択を解除",
+  "common.presetName": "プリセット名",
+  "common.savePreset": "プリセットを保存",
+  "common.apply": "適用",
+  "common.close": "閉じる",
+  "common.calendar": "カレンダー",
+  "common.saveChanges": "変更を保存"
 }

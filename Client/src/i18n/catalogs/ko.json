@@ -90,5 +90,13 @@
   "activity.all": "모든 활동 · {count, number}",
   "activity.actions": "완료된 작업 · {count, number}",
   "activity.issues": "경고 및 오류 · {count, number}",
-  "activity.results": "전체 {total, number}개 중 {shown, number}개"
+  "activity.results": "전체 {total, number}개 중 {shown, number}개",
+  "common.refresh": "새로 고침",
+  "common.clearSelection": "선택 해제",
+  "common.presetName": "프리셋 이름",
+  "common.savePreset": "프리셋 저장",
+  "common.apply": "적용",
+  "common.close": "닫기",
+  "common.calendar": "달력",
+  "common.saveChanges": "변경 사항 저장"
 }

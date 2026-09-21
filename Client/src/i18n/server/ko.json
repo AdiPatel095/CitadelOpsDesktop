@@ -1,6 +1,15 @@
 {
+  "server.api.event_occurrence_id_is.3c0ae253": "이벤트 회차 ID가 유효하지 않습니다",
+  "server.api.eventkey_is_invalid.5fa0f899": "eventKey가 유효하지 않습니다",
   "server.api.official_game_data_is.c5e55e7e": "공식 게임 데이터를 사용할 수 없습니다",
   "server.api.official_language_data_is.803160d4": "공식 언어 데이터를 사용할 수 없습니다",
+  "server.api.ranking_metric_type_must.179bda7e": "순위 지표 유형은 players 또는 alliances여야 합니다",
+  "server.api.ranking_type_must_be.ae1d21f5": "순위 유형은 players 또는 alliances여야 합니다",
+  "server.api.streaming_responses_are_unavailable.dbad8099": "스트리밍 응답을 사용할 수 없습니다",
+  "server.api.type_must_be_player.6c2ff66b": "type은 player 또는 alliance여야 합니다",
   "server.api.unsupported_locale": "지원하지 않는 로캘: {locale}",
+  "server.app.cra_books_payload_must.7aa91e61": "CRA 서적 데이터는 빈 배열이어야 합니다",
+  "server.app.cra_support_tools_contain.6615c823": "CRA 지원 도구에 유효하지 않은 아이템 ID가 포함되어 있습니다",
+  "server.app.cra_support_troop_count.2d16227f": "CRA 지원 병력 수가 지원 범위를 벗어났습니다",
   "server.automation.safety_pause_after_an.67451716": "자동화 작업 실패 후 안전을 위해 일시 중지됨"
 }

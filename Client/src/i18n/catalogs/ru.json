@@ -90,5 +90,13 @@
   "activity.all": "Вся активность · {count, number}",
   "activity.actions": "Завершённые действия · {count, number}",
   "activity.issues": "Предупреждения и ошибки · {count, number}",
-  "activity.results": "{shown, number} из {total, number}"
+  "activity.results": "{shown, number} из {total, number}",
+  "common.refresh": "Обновить",
+  "common.clearSelection": "Снять выделение",
+  "common.presetName": "Название шаблона",
+  "common.savePreset": "Сохранить шаблон",
+  "common.apply": "Применить",
+  "common.close": "Закрыть",
+  "common.calendar": "Календарь",
+  "common.saveChanges": "Сохранить изменения"
 }

@@ -1,3 +1,4 @@
+import type { MessageKey } from '../i18n/messages';
 import type { GameStateV2 } from '../api/Contracts';
 import type { MetadataItem } from '../context/MetadataContext';
 import type { EquipmentLeader } from './components/EquipmentTypes';
@@ -16,6 +17,8 @@ export const equipmentEventTierOrder: EquipmentEventTier[] = ['Bronze', 'Silver'
 export interface EquipmentEventOption {
 	value: EquipmentEventKey;
 	label: string;
+	labelKey: MessageKey;
+	descriptionKey: MessageKey;
 	description: string;
 	setIDs: number[];
 }
@@ -37,30 +40,40 @@ export const equipmentEventOptions: EquipmentEventOption[] = [
 	{
 		value: 'nomad',
 		label: 'Nomad Invasion',
+		labelKey: 'equipment.event.nomad.label',
+		descriptionKey: 'equipment.event.nomad.description',
 		description: 'Commander equipment built for Nomad and Khan camps.',
 		setIDs: [1087],
 	},
 	{
 		value: 'samurai',
 		label: 'Samurai Invasion',
+		labelKey: 'equipment.event.samurai.label',
+		descriptionKey: 'equipment.event.samurai.description',
 		description: 'Commander equipment built for Samurai and Daimyo targets.',
 		setIDs: [1088],
 	},
 	{
 		value: 'berimond',
 		label: 'Battle for Berimond',
+		labelKey: 'equipment.event.berimond.label',
+		descriptionKey: 'equipment.event.berimond.description',
 		description: 'Commander equipment built for Berimond camps and towers.',
 		setIDs: [1089],
 	},
 	{
 		value: 'foreign_lords',
 		label: 'Foreign Lords & Bloodcrows',
+		labelKey: 'equipment.event.foreign_lords.label',
+		descriptionKey: 'equipment.event.foreign_lords.description',
 		description: 'The Glory set for Foreign Lord and Bloodcrow castles.',
 		setIDs: [1090],
 	},
 	{
 		value: 'hollow_moon_pvp',
 		label: 'Hollow Moon PvP',
+		labelKey: 'equipment.event.hollow_moon_pvp.label',
+		descriptionKey: 'equipment.event.hollow_moon_pvp.description',
 		description: 'Select one coherent Bronze, Silver, or Gold 2026 PvP set.',
 		setIDs: [1096, 1095, 1094],
 	},

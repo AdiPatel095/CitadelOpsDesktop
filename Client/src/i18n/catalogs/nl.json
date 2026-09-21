@@ -90,5 +90,13 @@
   "activity.all": "Alle activiteit · {count, number}",
   "activity.actions": "Voltooide acties · {count, number}",
   "activity.issues": "Waarschuwingen en fouten · {count, number}",
-  "activity.results": "{shown, number} van {total, number}"
+  "activity.results": "{shown, number} van {total, number}",
+  "common.refresh": "Vernieuwen",
+  "common.clearSelection": "Selectie wissen",
+  "common.presetName": "Naam voorinstelling",
+  "common.savePreset": "Voorinstelling opslaan",
+  "common.apply": "Toepassen",
+  "common.close": "Sluiten",
+  "common.calendar": "Kalender",
+  "common.saveChanges": "Wijzigingen opslaan"
 }

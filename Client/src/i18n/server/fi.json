@@ -1,6 +1,15 @@
 {
+  "server.api.event_occurrence_id_is.3c0ae253": "Tapahtuman esiintymän tunniste on virheellinen",
+  "server.api.eventkey_is_invalid.5fa0f899": "eventKey on virheellinen",
   "server.api.official_game_data_is.c5e55e7e": "Viralliset pelitiedot eivät ole saatavilla",
   "server.api.official_language_data_is.803160d4": "Viralliset kielitiedot eivät ole saatavilla",
+  "server.api.ranking_metric_type_must.179bda7e": "Sijoitusmittarin tyypin on oltava players tai alliances",
+  "server.api.ranking_type_must_be.ae1d21f5": "Sijoituksen tyypin on oltava players tai alliances",
+  "server.api.streaming_responses_are_unavailable.dbad8099": "Suoratoistovastaukset eivät ole saatavilla",
+  "server.api.type_must_be_player.6c2ff66b": "type-arvon on oltava player tai alliance",
   "server.api.unsupported_locale": "Alueasetusta ei tueta: {locale}",
+  "server.app.cra_books_payload_must.7aa91e61": "CRA-kirjatietojen on oltava tyhjä taulukko",
+  "server.app.cra_support_tools_contain.6615c823": "CRA-tukityökalut sisältävät virheellisen esinetunnisteen",
+  "server.app.cra_support_troop_count.2d16227f": "CRA-tukijoukkojen määrä on tuettujen rajojen ulkopuolella",
   "server.automation.safety_pause_after_an.67451716": "Turvatauko automaatiotoiminnon epäonnistumisen jälkeen"
 }

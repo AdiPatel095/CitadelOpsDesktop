@@ -1,6 +1,15 @@
 {
+  "server.api.event_occurrence_id_is.3c0ae253": "活動輪次ID無效",
+  "server.api.eventkey_is_invalid.5fa0f899": "eventKey無效",
   "server.api.official_game_data_is.c5e55e7e": "官方遊戲資料無法使用",
   "server.api.official_language_data_is.803160d4": "官方語言資料無法使用",
+  "server.api.ranking_metric_type_must.179bda7e": "排名指標類型必須為players或alliances",
+  "server.api.ranking_type_must_be.ae1d21f5": "排名類型必須為players或alliances",
+  "server.api.streaming_responses_are_unavailable.dbad8099": "串流回應無法使用",
+  "server.api.type_must_be_player.6c2ff66b": "type必須為player或alliance",
   "server.api.unsupported_locale": "不支援的語言地區設定：{locale}",
+  "server.app.cra_books_payload_must.7aa91e61": "CRA書籍資料必須為空陣列",
+  "server.app.cra_support_tools_contain.6615c823": "CRA支援工具包含無效的物品ID",
+  "server.app.cra_support_troop_count.2d16227f": "CRA支援兵力數量超出支援範圍",
   "server.automation.safety_pause_after_an.67451716": "自動化操作失敗後，已基於安全考量暫停"
 }

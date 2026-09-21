@@ -90,5 +90,13 @@
   "activity.all": "كل النشاط · {count, number}",
   "activity.actions": "الإجراءات المكتملة · {count, number}",
   "activity.issues": "التحذيرات والأخطاء · {count, number}",
-  "activity.results": "{shown, number} من {total, number}"
+  "activity.results": "{shown, number} من {total, number}",
+  "common.refresh": "تحديث",
+  "common.clearSelection": "مسح التحديد",
+  "common.presetName": "اسم الإعداد المسبق",
+  "common.savePreset": "حفظ الإعداد المسبق",
+  "common.apply": "تطبيق",
+  "common.close": "إغلاق",
+  "common.calendar": "التقويم",
+  "common.saveChanges": "حفظ التغييرات"
 }

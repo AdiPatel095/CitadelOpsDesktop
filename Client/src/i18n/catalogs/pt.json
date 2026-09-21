@@ -90,5 +90,13 @@
   "activity.all": "Toda a atividade · {count, number}",
   "activity.actions": "Ações concluídas · {count, number}",
   "activity.issues": "Avisos e erros · {count, number}",
-  "activity.results": "{shown, number} de {total, number}"
+  "activity.results": "{shown, number} de {total, number}",
+  "common.refresh": "Atualizar",
+  "common.clearSelection": "Limpar seleção",
+  "common.presetName": "Nome da predefinição",
+  "common.savePreset": "Salvar predefinição",
+  "common.apply": "Aplicar",
+  "common.close": "Fechar",
+  "common.calendar": "Calendário",
+  "common.saveChanges": "Salvar alterações"
 }

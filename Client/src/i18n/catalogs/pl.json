@@ -90,5 +90,13 @@
   "activity.all": "Cała aktywność · {count, number}",
   "activity.actions": "Ukończone działania · {count, number}",
   "activity.issues": "Ostrzeżenia i błędy · {count, number}",
-  "activity.results": "{shown, number} z {total, number}"
+  "activity.results": "{shown, number} z {total, number}",
+  "common.refresh": "Odśwież",
+  "common.clearSelection": "Wyczyść wybór",
+  "common.presetName": "Nazwa zestawu",
+  "common.savePreset": "Zapisz zestaw",
+  "common.apply": "Zastosuj",
+  "common.close": "Zamknij",
+  "common.calendar": "Kalendarz",
+  "common.saveChanges": "Zapisz zmiany"
 }

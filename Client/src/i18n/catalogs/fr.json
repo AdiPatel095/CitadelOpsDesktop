@@ -90,5 +90,13 @@
   "activity.all": "Toute l’activité · {count, number}",
   "activity.actions": "Actions terminées · {count, number}",
   "activity.issues": "Avertissements et erreurs · {count, number}",
-  "activity.results": "{shown, number} sur {total, number}"
+  "activity.results": "{shown, number} sur {total, number}",
+  "common.refresh": "Actualiser",
+  "common.clearSelection": "Effacer la sélection",
+  "common.presetName": "Nom du préréglage",
+  "common.savePreset": "Enregistrer le préréglage",
+  "common.apply": "Appliquer",
+  "common.close": "Fermer",
+  "common.calendar": "Calendrier",
+  "common.saveChanges": "Enregistrer les modifications"
 }

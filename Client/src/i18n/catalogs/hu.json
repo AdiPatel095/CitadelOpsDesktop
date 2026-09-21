@@ -90,5 +90,13 @@
   "activity.all": "Összes tevékenység · {count, number}",
   "activity.actions": "Befejezett műveletek · {count, number}",
   "activity.issues": "Figyelmeztetések és hibák · {count, number}",
-  "activity.results": "{shown, number} / {total, number}"
+  "activity.results": "{shown, number} / {total, number}",
+  "common.refresh": "Frissítés",
+  "common.clearSelection": "Kijelölés törlése",
+  "common.presetName": "Előbeállítás neve",
+  "common.savePreset": "Előbeállítás mentése",
+  "common.apply": "Alkalmaz",
+  "common.close": "Bezárás",
+  "common.calendar": "Naptár",
+  "common.saveChanges": "Módosítások mentése"
 }

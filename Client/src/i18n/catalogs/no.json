@@ -90,5 +90,13 @@
   "activity.all": "All aktivitet · {count, number}",
   "activity.actions": "Fullførte handlinger · {count, number}",
   "activity.issues": "Advarsler og feil · {count, number}",
-  "activity.results": "{shown, number} av {total, number}"
+  "activity.results": "{shown, number} av {total, number}",
+  "common.refresh": "Oppdater",
+  "common.clearSelection": "Fjern utvalg",
+  "common.presetName": "Navn på forhåndsinnstilling",
+  "common.savePreset": "Lagre forhåndsinnstilling",
+  "common.apply": "Bruk",
+  "common.close": "Lukk",
+  "common.calendar": "Kalender",
+  "common.saveChanges": "Lagre endringer"
 }

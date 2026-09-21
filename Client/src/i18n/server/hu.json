@@ -1,6 +1,15 @@
 {
+  "server.api.event_occurrence_id_is.3c0ae253": "Az esemény előfordulási azonosítója érvénytelen",
+  "server.api.eventkey_is_invalid.5fa0f899": "Az eventKey érvénytelen",
   "server.api.official_game_data_is.c5e55e7e": "A hivatalos játékadatok nem érhetők el",
   "server.api.official_language_data_is.803160d4": "A hivatalos nyelvi adatok nem érhetők el",
+  "server.api.ranking_metric_type_must.179bda7e": "A ranglista mutatójának típusa players vagy alliances kell legyen",
+  "server.api.ranking_type_must_be.ae1d21f5": "A ranglista típusa players vagy alliances kell legyen",
+  "server.api.streaming_responses_are_unavailable.dbad8099": "A folyamatos válaszok nem érhetők el",
+  "server.api.type_must_be_player.6c2ff66b": "A type értéke player vagy alliance kell legyen",
   "server.api.unsupported_locale": "Nem támogatott területi beállítás: {locale}",
+  "server.app.cra_books_payload_must.7aa91e61": "A CRA könyvadatait üres tömbként kell megadni",
+  "server.app.cra_support_tools_contain.6615c823": "A CRA támogató eszközei érvénytelen tárgyazonosítót tartalmaznak",
+  "server.app.cra_support_troop_count.2d16227f": "A CRA támogató csapatainak száma kívül esik a támogatott határokon",
   "server.automation.safety_pause_after_an.67451716": "Biztonsági szünet egy automatizált művelet sikertelensége után"
 }

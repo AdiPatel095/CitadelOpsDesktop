@@ -1,6 +1,15 @@
 {
+  "server.api.event_occurrence_id_is.3c0ae253": "Įvykio pasikartojimo identifikatorius netinkamas",
+  "server.api.eventkey_is_invalid.5fa0f899": "eventKey netinkamas",
   "server.api.official_game_data_is.c5e55e7e": "Oficialūs žaidimo duomenys nepasiekiami",
   "server.api.official_language_data_is.803160d4": "Oficialūs kalbos duomenys nepasiekiami",
+  "server.api.ranking_metric_type_must.179bda7e": "Reitingo rodiklio tipas turi būti players arba alliances",
+  "server.api.ranking_type_must_be.ae1d21f5": "Reitingo tipas turi būti players arba alliances",
+  "server.api.streaming_responses_are_unavailable.dbad8099": "Srautiniai atsakymai nepasiekiami",
+  "server.api.type_must_be_player.6c2ff66b": "type reikšmė turi būti player arba alliance",
   "server.api.unsupported_locale": "Nepalaikoma lokalė: {locale}",
+  "server.app.cra_books_payload_must.7aa91e61": "CRA knygų duomenys turi būti tuščias masyvas",
+  "server.app.cra_support_tools_contain.6615c823": "CRA paramos įrankiuose yra netinkamas daikto identifikatorius",
+  "server.app.cra_support_troop_count.2d16227f": "CRA paramos karių skaičius neatitinka palaikomų ribų",
   "server.automation.safety_pause_after_an.67451716": "Saugos pauzė po nesėkmingo automatizuoto veiksmo"
 }

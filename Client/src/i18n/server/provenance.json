@@ -2,6 +2,16 @@
   "authoring": "Direct agent-authored translations; no native-speaker review claimed. Rejected local MT pilot output is not used.",
   "entries": {
     "ar": {
+      "server.api.event_occurrence_id_is.3c0ae253": {
+        "method": "agent-authored",
+        "sourceSha256": "3c0ae253fa0225afd286348edcde8c7e8c9dac41d833d90741ee71a5e63228c4",
+        "translationSha256": "706ff042f711bd80a7115100f4969e822bb94148045e7350c0e00a2d8ad9a37e"
+      },
+      "server.api.eventkey_is_invalid.5fa0f899": {
+        "method": "agent-authored",
+        "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
+        "translationSha256": "35787e32aa0c96a32b1eaa702548a0c7e0e9993f66b5f141bbe8810bf3cdc2de"
+      },
       "server.api.official_game_data_is.c5e55e7e": {
         "method": "agent-authored",
         "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
@@ -12,10 +22,45 @@
         "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
         "translationSha256": "41b8634aefd5d7488fa2a046fb3fc37d7ce812712093448a9becf2d447f7320a"
       },
+      "server.api.ranking_metric_type_must.179bda7e": {
+        "method": "agent-authored",
+        "sourceSha256": "179bda7e6a486e1d7861b4322965d405fcf25e162cf4604387953019aa63c08c",
+        "translationSha256": "8b2f30533c84350a233fbf69d7749b9f59bba7e6371d5e911683905c75fec0f2"
+      },
+      "server.api.ranking_type_must_be.ae1d21f5": {
+        "method": "agent-authored",
+        "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
+        "translationSha256": "f7def04c02313192d56ca5666080836fe3cba65258fc1f77950ab67774b20420"
+      },
+      "server.api.streaming_responses_are_unavailable.dbad8099": {
+        "method": "agent-authored",
+        "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
+        "translationSha256": "e2297774bed9b9848512d6758847bca1cd83a488f04ea69723c15f981de6e907"
+      },
+      "server.api.type_must_be_player.6c2ff66b": {
+        "method": "agent-authored",
+        "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
+        "translationSha256": "83d7fbb2653a968d275b5a5025016f3489760a341d826e9c4e74511a20666ce6"
+      },
       "server.api.unsupported_locale": {
         "method": "agent-authored",
         "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
         "translationSha256": "5f7516702ca128d170cf3a2e9976d654206037253613eea53cbc764d78f30772"
+      },
+      "server.app.cra_books_payload_must.7aa91e61": {
+        "method": "agent-authored",
+        "sourceSha256": "7aa91e61316a66affa876e779876195cdeb205080aea15d60002a9b973f1a0b5",
+        "translationSha256": "b3e5478884922378f53653fd2df5ad819a9818c170e74297b0abbaed9106f2eb"
+      },
+      "server.app.cra_support_tools_contain.6615c823": {
+        "method": "agent-authored",
+        "sourceSha256": "6615c82355895557519353a8195c08667e84fdf18cbe205f4e066a04b538671f",
+        "translationSha256": "bde5f3d90299d6c3c343089950728e495b11f9f2e24a1d525eb54731fc844f24"
+      },
+      "server.app.cra_support_troop_count.2d16227f": {
+        "method": "agent-authored",
+        "sourceSha256": "2d16227f086d0faa7d43ecec40583517648b37fdd52d3cbafb4d2da72fcb7ef2",
+        "translationSha256": "bb221e49c0f8f3e6f4c5d35d2f8493f8c677c6535f4484ede93caa9f958a1ac7"
       },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
@@ -24,6 +69,16 @@
       }
     },
     "bg": {
+      "server.api.event_occurrence_id_is.3c0ae253": {
+        "method": "agent-authored",
+        "sourceSha256": "3c0ae253fa0225afd286348edcde8c7e8c9dac41d833d90741ee71a5e63228c4",
+        "translationSha256": "db32e415ae0554e18d8d5d9c4c9875e906ad70765c72447006c3b62ce15887c7"
+      },
+      "server.api.eventkey_is_invalid.5fa0f899": {
+        "method": "agent-authored",
+        "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
+        "translationSha256": "bad31e4e0c77af6391969e44a71f3bb74d073cd27e8a977405b1c66c39133839"
+      },
       "server.api.official_game_data_is.c5e55e7e": {
         "method": "agent-authored",
         "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
@@ -34,10 +89,45 @@
         "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
         "translationSha256": "c0b0d918a84f631af7fc53956e5446bb228dd18cbbca277be72a8e123d251f41"
       },
+      "server.api.ranking_metric_type_must.179bda7e": {
+        "method": "agent-authored",
+        "sourceSha256": "179bda7e6a486e1d7861b4322965d405fcf25e162cf4604387953019aa63c08c",
+        "translationSha256": "97f41c23ec3828d5bc83a5fe9142807d60a7100599169e76db20934def2f1110"
+      },
+      "server.api.ranking_type_must_be.ae1d21f5": {
+        "method": "agent-authored",
+        "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
+        "translationSha256": "c77381bd8a3ae0bd700018e72e8a6f1f3e4cf892b685b75f371aed8d6055bd88"
+      },
+      "server.api.streaming_responses_are_unavailable.dbad8099": {
+        "method": "agent-authored",
+        "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
+        "translationSha256": "4b416e5c6ccf1b81f01d62efd0789e2b0951602bda1aecde0fc742962986f834"
+      },
+      "server.api.type_must_be_player.6c2ff66b": {
+        "method": "agent-authored",
+        "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
+        "translationSha256": "e9b22e004312f9883c6d58db30682ac821a5ffa66bf921a3cef2dd32727f4296"
+      },
       "server.api.unsupported_locale": {
         "method": "agent-authored",
         "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
         "translationSha256": "205b620e06078cd3a396d16ffd5550a079b11a21dd6fe508146f4b940d1fd7da"
+      },
+      "server.app.cra_books_payload_must.7aa91e61": {
+        "method": "agent-authored",
+        "sourceSha256": "7aa91e61316a66affa876e779876195cdeb205080aea15d60002a9b973f1a0b5",
+        "translationSha256": "68e9db0b5fc3c7e982772a54aa5876c4851fdee5e68cc1e481befbcc3a087b68"
+      },
+      "server.app.cra_support_tools_contain.6615c823": {
+        "method": "agent-authored",
+        "sourceSha256": "6615c82355895557519353a8195c08667e84fdf18cbe205f4e066a04b538671f",
+        "translationSha256": "c3bf86dc8b80f9a2532b9c6962cf6c7f1e74e3611ce2c376b31bfb7eb69cde66"
+      },
+      "server.app.cra_support_troop_count.2d16227f": {
+        "method": "agent-authored",
+        "sourceSha256": "2d16227f086d0faa7d43ecec40583517648b37fdd52d3cbafb4d2da72fcb7ef2",
+        "translationSha256": "7cdc4c7ab5487ea9e8fd173832f40153a58e51a1bf597eab8bd2cb7004e8abc8"
       },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
@@ -46,6 +136,16 @@
       }
     },
     "cs": {
+      "server.api.event_occurrence_id_is.3c0ae253": {
+        "method": "agent-authored",
+        "sourceSha256": "3c0ae253fa0225afd286348edcde8c7e8c9dac41d833d90741ee71a5e63228c4",
+        "translationSha256": "ee1ad185608d907b25ba70fbb41bc9402bbc546d70127ff31cb35e6026df9b24"
+      },
+      "server.api.eventkey_is_invalid.5fa0f899": {
+        "method": "agent-authored",
+        "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
+        "translationSha256": "269eb7e3596b2f414a5c3de81db830aa945440bf5d50f6eaf0f8308c4dad84e7"
+      },
       "server.api.official_game_data_is.c5e55e7e": {
         "method": "agent-authored",
         "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
@@ -56,10 +156,45 @@
         "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
         "translationSha256": "1f72eddf6e79f8e15e1d4ee0f4b3cc995c3ce28e12a6d453004bcb332dd5c4b5"
       },
+      "server.api.ranking_metric_type_must.179bda7e": {
+        "method": "agent-authored",
+        "sourceSha256": "179bda7e6a486e1d7861b4322965d405fcf25e162cf4604387953019aa63c08c",
+        "translationSha256": "04930a4fef2c90bdf18d674e6b3c6816dde995f38de1966de94f313e85a6e3b0"
+      },
+      "server.api.ranking_type_must_be.ae1d21f5": {
+        "method": "agent-authored",
+        "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
+        "translationSha256": "e9e0539cec5829328e93b7571a45082ed5c481b31e2581da578e39eb66506de3"
+      },
+      "server.api.streaming_responses_are_unavailable.dbad8099": {
+        "method": "agent-authored",
+        "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
+        "translationSha256": "adb91fa5df5163863b6fde86132751dfb0ed550a2a4942003f06958143997297"
+      },
+      "server.api.type_must_be_player.6c2ff66b": {
+        "method": "agent-authored",
+        "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
+        "translationSha256": "3f704dceb44c0eb7206bc8051dcc07dfc0264e60062237de0be6fb2c421852c0"
+      },
       "server.api.unsupported_locale": {
         "method": "agent-authored",
         "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
         "translationSha256": "f6bac8dc1fcdc0be8249a91fe853f8bf2fae0a377cd654535357d2ce2a152292"
+      },
+      "server.app.cra_books_payload_must.7aa91e61": {
+        "method": "agent-authored",
+        "sourceSha256": "7aa91e61316a66affa876e779876195cdeb205080aea15d60002a9b973f1a0b5",
+        "translationSha256": "5fbd7b8e99a255c62160aa6350e198c1681cd524c128082c69e9151d3542182a"
+      },
+      "server.app.cra_support_tools_contain.6615c823": {
+        "method": "agent-authored",
+        "sourceSha256": "6615c82355895557519353a8195c08667e84fdf18cbe205f4e066a04b538671f",
+        "translationSha256": "9c23e66099683915a0811a8e963c969ca862c9b652f0e3aeb0b454baf2a66d78"
+      },
+      "server.app.cra_support_troop_count.2d16227f": {
+        "method": "agent-authored",
+        "sourceSha256": "2d16227f086d0faa7d43ecec40583517648b37fdd52d3cbafb4d2da72fcb7ef2",
+        "translationSha256": "a260f7fe66685f7a0178f106d3dba2e561ceea711bd70f4d2117be0e9cacb10e"
       },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
@@ -171,6 +306,150 @@
       }
     },
     "de": {
+      "server.api.a_great_empire_source.9c8ad246": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "9c8ad246d5de3d9b9cb3b395ebd9fdfac99ac2f68d162ace82aa5ae6f4ff61b0",
+        "translationSha256": "550d5adca9d3a22583a8b077902988d318e319d588825c1c0bfe5e9c535454ae"
+      },
+      "server.api.a_valid_feature_resource.f87fe101": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "f87fe101470d2a11da1d664a8c760bfcea71f75311ad42d81b870465df083b04",
+        "translationSha256": "e6ab1e2900eb466e399e99b792d6be7261ab69cd9b3ce42e1e2d93c897d9a4f5"
+      },
+      "server.api.activity_channel_was_not.ff46c116": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "ff46c11683461492b2a86140f357429d5da921cd56eda320ae22af63292cff7d",
+        "translationSha256": "86dfe3339fe3498bb8b561a298405433930618b3eba70b9342560a2359cf91a8"
+      },
+      "server.api.alliance_id_must_be.de566f1b": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "de566f1bd7d53ab91762707c6fe0c26ea7f18ed9318780b3a746be88212e3b09",
+        "translationSha256": "862dc3cd7446192246e4d82589ea6268b08021e7c2a917236cb6479cb04b435d"
+      },
+      "server.api.alliance_target_state_is.bbe6e2c6": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "bbe6e2c641aa0107233f184e17627783bfabbfbcef7183c56fc4bf360a14a80f",
+        "translationSha256": "974eaa6b5813aa16d4251425aed93d43b990000c90c39bdda459bd05b06a3254"
+      },
+      "server.api.application_update_service_is.e3a45426": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "e3a454266cfcf53602a41ae73249c7da6862edb2d3bf292e289e5a686e8f5c44",
+        "translationSha256": "644acb183f950c37cfd2d6ade3803ff88a286871517c667858fcb3f0cb08f72c"
+      },
+      "server.api.at_most_language_keys.6651516a": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "6651516ad4ac3b3eb8d0568022e0aa5d3547ac9c2bed980dd4df2bf72a19e294",
+        "translationSha256": "38107a9df571924a8f47a5b55f4ca73e875349b2d9ec6352c37303f9296a5755"
+      },
+      "server.api.attack_preview_state_is.34320895": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "343208957e9d6ee1eb47c41475e01957b7bae12be95528477d70621de068945c",
+        "translationSha256": "7b77197a3dbeb3c1c38a8697e4b55f35608478445f44fdddc01797beffd487e1"
+      },
+      "server.api.auto_storm_preview_state.5d110df7": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "5d110df7dbe22caca65c5ef5ed452fc90e0ed927e027654f01e4775f9205ea54",
+        "translationSha256": "be61d2e2eb8145140ec55925fb20620bab3b798e17b77e9b38c2144a9ae434f8"
+      },
+      "server.api.background_login_can_only.07face08": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "07face08ba75f7bb869fa23ab56d01affadd7add37ad3edd3b8a4f1d25dff4da",
+        "translationSha256": "083230d6f686ed50e7df30e9abb1d4eeee87f898b9e6479a582f4787021129a5"
+      },
+      "server.api.background_login_is_managed.46171e28": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "46171e2858563f77316fd1ded24760a9881b9fda1b4b47451abcf77d13d8564b",
+        "translationSha256": "1d1d59bd395cac8cb8842e2c169b88ddea41025373f596508cd8aeac66fedd93"
+      },
+      "server.api.background_login_requires_an.0f0563fe": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "0f0563fe6b5fef5e5300553d1e9e644be5fdbfec11ff231e06e10ea51fcc9783",
+        "translationSha256": "7f0982e582d9af190352a56e704b06bb9225e7085f674b57cc898d55b58b96a0"
+      },
+      "server.api.background_login_requires_exactly.1b4110aa": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "1b4110aae0fe866ec55e6c33593cf30cd2234047ed6eb0054b5ddc210492e729",
+        "translationSha256": "aff1f1aa7df676035076ce2c0b93f5f008a01d6b7fa2bb43773b3f4ff1bb919b"
+      },
+      "server.api.background_login_storage_is.d6340485": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "d6340485a2053de58f3954dafec37b381ed92cd61121713494e2c67f135f8246",
+        "translationSha256": "9296be66a9d68e1a845eb0dc921d2fa9cbffeb4c73e67a3a82ed25fcb8b2e4b4"
+      },
+      "server.api.battle_report_analytics_are.1d336a24": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "1d336a24f3fe9380754a74f1220c28bf364eb02c37ce20d79809ff2ae9292c33",
+        "translationSha256": "10b86f0aad1dafe6e17ad2410f77679608bd0440a96a11ab008b1bd25a333a52"
+      },
+      "server.api.before_must_be_an.26ccb95f": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "26ccb95faa7d8591ad2626fff4ed0f577215f6cc17a4b373e11c90d0ddc83f97",
+        "translationSha256": "bc90ce995bcdf59491038506672f4d7b806ac1becf9bc4eff72416059651b275"
+      },
+      "server.api.castle_state_is_unavailable.8e1c92c4": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "8e1c92c45a9171ef5e2675b3a61b88ffbcf44626de80101e401cc6a76837ca14",
+        "translationSha256": "f3e8d55ba4a95f26fed8853dc0c568115ea6c673a201ff5514f255a54b1500be"
+      },
+      "server.api.catalog_dataset_key_is.4fc934b8": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "4fc934b89435781dd452f10dafd6a32e23639f166d08c1b32dbeb9bb502ebe3b",
+        "translationSha256": "f3e01ea74ddc768a18f0fee666f0a8bf2188af5dd00453047ef9127525d7d4bb"
+      },
+      "server.api.cloud_battle_reports_are.df76c987": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "df76c9875dbd6a392924c0824a4d7db7ff2668386979fe310760e26ce1904e58",
+        "translationSha256": "9955f42178808d5360eded4398d742093e131e1c20bf3c3d39f9fd2bb8588adc"
+      },
+      "server.api.configuration_section_p_was.0f11f875": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "0f11f87569bde36567aca3398a810c7b1705ed811d4a0a8260b8b66059ab3146",
+        "translationSha256": "18f479ef865f90194ff2991b0a525a961d4ef6fc03c5ff195f582219ab765159"
+      },
+      "server.api.configuration_store_is_unavailable.623f75fa": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "623f75fa8f115d2649671db006063ebef30fe595722bdf4604aedf25d2dc31b2",
+        "translationSha256": "ead25d88c383254636a2e811d4116401ad8bf1cd40a85eca1245ed5e495504b5"
+      },
+      "server.api.configuration_update_must_contain.b7eb8212": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "b7eb8212f4be06051c4c9750ee12fe86382a6e6fe4c6be755a1ec2c67b4d5c8a",
+        "translationSha256": "60ce68bf83230fec2e8fce83ea32ffbf94a211fadb393db1836858da6d2611fb"
+      },
+      "server.api.crafting_data_is_unavailable.9c4217a2": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "9c4217a2b87bceca02f5873ca373b4002bf2b43869cf05d729218e3110a522a5",
+        "translationSha256": "d78946afb4be1a6cbc17c005492e8c1b20bb57a11de42aadaa14a47194f312e1"
+      },
+      "server.api.equipment_state_is_unavailable.20345872": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "20345872aa479f808b0433b87efe9f6a3a84491b402ca7cdfc2b2bdf3e243b5e",
+        "translationSha256": "99e0b4ff087d09b7fa02b4e5fb44eaaaac5d4a965427a1894568e5d7a96165cb"
+      },
       "server.api.event_occurrence_id_is.3c0ae253": {
         "method": "authored-translation-memory-reuse",
         "originKey": "backend.worldintel.event_occurrence_id_is_invalid",
@@ -189,6 +468,102 @@
         "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
         "translationSha256": "92ba942319b56c0cf1298182e4a04f5005bea1a8f0eeec447e860e88024d3409"
       },
+      "server.api.expected_p_format_version.c7f24dcd": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "c7f24dcd55d31eb36361f1b19587744780a58965e3fd2c1c1cc201ce1f4ad74d",
+        "translationSha256": "158d8013eabce2909d3e956815a08b3aee4868a44e2fc16b5bb7292fe917ffcb"
+      },
+      "server.api.expected_value_p.bfcae137": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "bfcae137caa806cd388b36673c0da3e9b01e1039d3669717d725d5bc5c2e2a38",
+        "translationSha256": "56a7e6e61ec2d272a8855501ee73effb410c5ce69ab1cf83eba2f1b858fd749b"
+      },
+      "server.api.expectedrevision_is_required.d70fc7d0": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "d70fc7d09a2113129d52b2fe1089306a7def89eaf2345bb9e255f12143965beb",
+        "translationSha256": "225a779990fa1c410fd4f587d0365e8666e281d0131b2d7d5b82e4f5cc6408a6"
+      },
+      "server.api.experimental_battle_research_settings.878d9340": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "878d9340802a9238871ee3c247c4a216193b24034a967d0db28b45d4248c542d",
+        "translationSha256": "a96eee9c4c97a5da5e900edbd6bd8786c6604cad547c62823eb6b833b51d4d93"
+      },
+      "server.api.feature_resource_aggregates_are.1437032e": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "1437032ebb01358cacd331a896358af88b668eb08e9a57ee2d381de59307e2f4",
+        "translationSha256": "7b96d24215e6e491b3d4e1f88d8b4d853c2debcb14593620cc144df0f2188ad8"
+      },
+      "server.api.hosted_account_settings_must.248f745f": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "248f745f12fd61a73b08dd257cd6d9ae277f05b028bb5d0c3bc6e15fb1e3389f",
+        "translationSha256": "01796700a2d976aa77c81c308fae4aa618b34e317bba526029c0ee8cea708d90"
+      },
+      "server.api.hosted_account_settings_must.34f84345": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "34f843457a212bcc22258752fb98409befe8c0ba9f9b7d3fbdc6f10cddb25f9e",
+        "translationSha256": "9ca2148ca3aaf3f50128910d5c189b597da01b15f647ecc4b2a9c1769434ad09"
+      },
+      "server.api.intent_engine_is_unavailable.1b08a55c": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "1b08a55c7d1ff14c5439f08d8daa9dd73577efeeb7b27d852250dc28b855e044",
+        "translationSha256": "01a23f7ea5f538ee89a52c3432caa1a54cf9f05d0e42b54b1428bc38e1c9fdfc"
+      },
+      "server.api.invalid_building_id_p.cff22953": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "cff2295339b23183e9e91eb8214f518fc5956a3dcc3c9e9b994666e3a8dab37f",
+        "translationSha256": "3947ae8b9d8b7a75eab00ba862b4762842f36d4df0a659dca7bad97394e8a18e"
+      },
+      "server.api.invalid_integer_p.8a237a81": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "8a237a81a96b0120a6bed1c6605e939375ad872dfff37b67cb4bad396822a2d0",
+        "translationSha256": "617f57d9f06ad499a16d51a2c31af384b0a892b0464fe619c997a5978a418521"
+      },
+      "server.api.invalid_non_negative_integer.acc220c5": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "acc220c56bbc13b0dbae69507d64b08634b94e5ee6c776f814cd7f925171975c",
+        "translationSha256": "515ff5b41ed0616ebb524372550cdffb9674c1fd01a7ccc4cb0a4aa6bc73d34d"
+      },
+      "server.api.my_stats_retention_did.72cab9de": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "72cab9de00a0db5a7c2f739952f7fafcd6dfacadb1e424e48200a7bbd6e52c64",
+        "translationSha256": "30e4dab3b2122c0dc63aa31244a2eaf8fabfd8614531e75d194b933bced0c138"
+      },
+      "server.api.my_stats_retention_must.d59c4907": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "d59c49072189b48c3caa37b59dd72e37430486a708a5fdcb4871ac7974a5350f",
+        "translationSha256": "38c69d718bde5d2410fbda4348e4d0c62d842527c1833b5b68a6ea84da31c87f"
+      },
+      "server.api.my_stats_storage_policy.f612e323": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "f612e3237ff366209981686d6ef6fc6ae37d106a7a67b6bde640890ae107465c",
+        "translationSha256": "3f7e9847e1e2495668884042f27e836fd60a103874e327394c2b651d3cfa5300"
+      },
+      "server.api.no_commander_is_currently.76ae45bb": {
+        "method": "agent-authored",
+        "semanticReview": "Official v4357 role glossary: Feldherr; preserved absence/availability meaning.",
+        "sourceSha256": "76ae45bb49b1d5087e90c9ddcb25b71dae81fffc2252a349a8aeee53ef62936d",
+        "translationSha256": "bc936dc605d737881bc1c7b749b57ea7e0da1fc8ecfdc32975ea3470b1b9d57a"
+      },
+      "server.api.no_p_item_has.9f0c9501": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "9f0c950171b23992b8c53f067eebb0a09e457e16efd3fb9855f720fe2b47047e",
+        "translationSha256": "5eebee51872ec80babfdae2471a17a5e7921ad6b9b6d296266ca3d2806b56ded"
+      },
       "server.api.official_game_data_is.c5e55e7e": {
         "method": "agent-authored",
         "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
@@ -198,6 +573,36 @@
         "method": "agent-authored",
         "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
         "translationSha256": "888d1247142b1a423492d74ff89c14da1d38ec304d08d54d3a0cf2e756ef0116"
+      },
+      "server.api.operation_is_not_currently.e4e0ac62": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "e4e0ac621279ac3f7b99d6377408265c3ac768e608ef72dbefc275eb4491b0ab",
+        "translationSha256": "f6f5ea994b163c58c6894591d5d2c2b22eedc0aade0fc0034b2b41c6e6e6cb87"
+      },
+      "server.api.operation_limit_must_be.bb724cb5": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "bb724cb58f3606540ba730c018d086eca2a8d603c9a0aa8d9e80e2fb9fe76a18",
+        "translationSha256": "8fca36315f8d8fc6b3395ace0b77231118f52912286d1046d225730bf084c318"
+      },
+      "server.api.operation_was_not_found.b8363d5a": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "b8363d5a08b69b5a9f0ecdfabd870d9d0881d3b3b7fc1157ee22bd9b4441896d",
+        "translationSha256": "73f2f29461d661f4ee11c1ed0298c9362d322314175d27dc8d5b153ed75766e3"
+      },
+      "server.api.player_history_is_unavailable.3ee991d7": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "3ee991d7387d462fc40d0e98c5a82b465cd2b038a70ac69e7e3748d74bf05521",
+        "translationSha256": "244c8b2a2d82e97e400f91e981a05a2be0b0f689f962d2bcc5232341d8006a02"
+      },
+      "server.api.player_id_must_be.1cf49a4b": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "1cf49a4b547e6d1cd2b0355cf91e523e67291bc972432a80e13559ca3d342f2c",
+        "translationSha256": "7359b967f419cf2f515d55dc9620e795be6d561f6f1eba0d8a36cd837b176e5f"
       },
       "server.api.ranking_metric_type_must.179bda7e": {
         "method": "authored-translation-memory-reuse",
@@ -217,6 +622,66 @@
         "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
         "translationSha256": "0fcea529820be7d941ed28cbec3d2767aad84de528774e0b3bed097f57b046ff"
       },
+      "server.api.report_history_is_unavailable.4a955e49": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "4a955e492186f1af8fc9a287e90880eccdd3659e2b1c0b2959629e126ee28885",
+        "translationSha256": "417b74f03890451afc6faa41e9ecca982987d82a7c1b638edb348ce86dc77d4e"
+      },
+      "server.api.retention_or_recordingintervalseconds_is.1929acc3": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "1929acc3a13ab2b6ad2b596ac8f48b10512861c1846300228adb3d12033be56a",
+        "translationSha256": "828b586418732a02ef730a19b023380b4de49b839ec064dabc0d080081e2b0d4"
+      },
+      "server.api.retention_update_must_contain.1f5679c7": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "1f5679c73d7036d47afa9e6e6bd6169a32bee6926e6edc25521e7878ac9086b5",
+        "translationSha256": "61d770030178a78495de1a1a15a612068e7bcd68a87de29bc890d60b0a4d4c72"
+      },
+      "server.api.runtime_diagnostics_are_unavailable.1b27e807": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "1b27e807378afd41c4dec508af5e5ebddeeafb40e85ab472dd59ea0cb4870943",
+        "translationSha256": "7af7692f059f24588324dad6bf461708341f9ed34d8ff1fa8631377475de4916"
+      },
+      "server.api.settings_bundle_contains_no.cb029f76": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "cb029f765624b262f864167d188d1149ba7d479c97cc720516a2c20a87da3969",
+        "translationSha256": "a02c25c4a53d132af6011f346920b90b8888520aa52e03f3922fe1e665c4212a"
+      },
+      "server.api.settings_bundle_may_contain.633b2609": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "633b26091b8bdfb815202708d3d0b32bcad3f4f4f48dd3151fbc2ebd6f430ef4",
+        "translationSha256": "dde2000f3d4a4a76b2d2bd0ccb5c8d00b660855f85607b694f2b7269f708474b"
+      },
+      "server.api.settings_bundle_must_contain.08db41d4": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "08db41d4eeeba49e266075f37b669333cba667181a4f313fa2260d4802ead49b",
+        "translationSha256": "ad4cc09a6bfc3495d7c087533747d9baa6c3d24ce7963c9b92a542766cf55abd"
+      },
+      "server.api.settings_use_configuration_schema.dff2877d": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "dff2877dcb7dec8ba38bba8b558aab930c8792447a966042e039319281e739f4",
+        "translationSha256": "6a38f46f33e49aa7f74952fbac3a45c4ea1d9c52ba3cdd59322a902af36ebaf6"
+      },
+      "server.api.since_must_be_an.0b73d3e3": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "0b73d3e34309cbd1459ee93dea19aeaff9a23bba6624a9e5ba5987140d0c0e20",
+        "translationSha256": "087d447b6817aa3a3ae093888fab50f5db07b2d4adc6de478f23a17e79880c4f"
+      },
+      "server.api.state_store_is_unavailable.e4a65fe1": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "e4a65fe12efe676c70f19a33f93e1f818693fdb3e1a16a139c6f2432f06306d6",
+        "translationSha256": "4c634ac4ce271e28a2d4f227e5b92a48c1da76e4ce4274e95a06950d74c2c164"
+      },
       "server.api.streaming_responses_are_unavailable.dbad8099": {
         "method": "authored-translation-memory-reuse",
         "originKey": "backend.worldintel.streaming_responses_are_unavailable",
@@ -225,6 +690,30 @@
         "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
         "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
         "translationSha256": "bbeb748fd797b10b3bfa6450b5592256d5c104abae80efea69403e31f6258b99"
+      },
+      "server.api.target_castle_type_and.5cc2dff3": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "5cc2dff38046c60798c942a3fd9733678c9bad8ed7fdc06f0690a0d41e1c882e",
+        "translationSha256": "5776d5d93de631c557f075377fb382842073a3267a5c1398190f5cc86ad98a12"
+      },
+      "server.api.telemetry_is_unavailable.3daba4e0": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "3daba4e042684dff0e0bffbbcc8dd2b7a173ef38f8c48c9aa8480b65208401ba",
+        "translationSha256": "56892b71a868cd6e7983062ce40d5d937be311b0e8db12f25f3f9623f81789b1"
+      },
+      "server.api.the_selected_castle_inventory.cfa17b56": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "cfa17b56dd1883d87a4ad0ab13d684eda24f3f1b86e1b90be15985efbf4d0452",
+        "translationSha256": "8b334102f2ff2a6771986ac4a8b7dc4babfea2477a9bf0892425dbd45747259a"
+      },
+      "server.api.the_selected_source_is.851ff7c7": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "851ff7c736e0d33b0d0949393e9cbe6c4356abb471dd9fb85d2b80e78fe2e95b",
+        "translationSha256": "3f8d6932c3e791ac3c5bf67a7467753b4e473714a07a02ede4ede02ad63d66a9"
       },
       "server.api.type_must_be_player.6c2ff66b": {
         "method": "authored-translation-memory-reuse",
@@ -235,10 +724,40 @@
         "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
         "translationSha256": "a43d22d3dcd048b3010c9e769bcf487284d5e9e6c2c6e8b04e767aba46b6afc7"
       },
+      "server.api.unknown_my_stats_recording.daeaf92b": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "daeaf92b9e38af6cf29a8132736bc508c9acc8bd5e08b9c79282047488cc2f35",
+        "translationSha256": "db7b7b7d328c0129bba9665cb359806356027097d52e095f80e622df707f33f5"
+      },
+      "server.api.unknown_my_stats_retention.24bc3955": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "24bc39552e6243db7d357548aa597ecae3bbac6e07d8dc30078746eb9a346f18",
+        "translationSha256": "4be2a6a7cb50587432b6504e6aa8e6e99e7cf3ca736058a90060a82219bdc71c"
+      },
+      "server.api.unsupported_api_contract_version.4fd51ab3": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "4fd51ab3e04798ebd573740a88ee2b903aa58ac05b20e18626ede436a0f3d161",
+        "translationSha256": "fc913bf17f4ed8397660e3a970b3b309816fedbf6b0157b688a5dfbda2851c59"
+      },
       "server.api.unsupported_locale": {
         "method": "agent-authored",
         "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
         "translationSha256": "983068f9616906e9ec2337021de64ba96e3ab41250d440327d098c3ffa03c081"
+      },
+      "server.api.unsupported_websocket_message_type.d8c1ddd3": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "d8c1ddd3c8425af1a8d4823f41ff711cf85d0216680a3ff17db73531d08b800d",
+        "translationSha256": "04f34f604364f5102f4e0fb43319a8af74c42f30e27458475fb1f8b50dee2ec0"
+      },
+      "server.api.world_intelligence_is_unavailable.8bd6d197": {
+        "method": "agent-authored",
+        "semanticReview": "German API module: negations, numeric limits, raw enum/field identifiers, official Great Empire/castle/commander terminology.",
+        "sourceSha256": "8bd6d197eb280445ba03d0ab515e2b314ce1831dc80761eaeede2c5b5357b9a3",
+        "translationSha256": "ad808cd360f9e5f0f0b2487df6dc30a7b8d539f6431bc20663e609d58db39c0e"
       },
       "server.app.cra_books_payload_must.7aa91e61": {
         "method": "authored-translation-memory-reuse",
@@ -274,6 +793,16 @@
       }
     },
     "el": {
+      "server.api.event_occurrence_id_is.3c0ae253": {
+        "method": "agent-authored",
+        "sourceSha256": "3c0ae253fa0225afd286348edcde8c7e8c9dac41d833d90741ee71a5e63228c4",
+        "translationSha256": "5e4237e001b93e0071450a116731edd5123b8af2a2c50e938f1d9c1ee86b2091"
+      },
+      "server.api.eventkey_is_invalid.5fa0f899": {
+        "method": "agent-authored",
+        "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
+        "translationSha256": "485114d4449f21f0de6ea4a40b578c4f48bfff8fd7bc1541fcccaa42d961387a"
+      },
       "server.api.official_game_data_is.c5e55e7e": {
         "method": "agent-authored",
         "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
@@ -284,10 +813,45 @@
         "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
         "translationSha256": "8b55ec5f0c6c039484b98999df3cf6e4c53aedc041d23cd955c306f9dba11576"
       },
+      "server.api.ranking_metric_type_must.179bda7e": {
+        "method": "agent-authored",
+        "sourceSha256": "179bda7e6a486e1d7861b4322965d405fcf25e162cf4604387953019aa63c08c",
+        "translationSha256": "9f17ff3743727a5771f30dc3f0419c10dd516919ae6956acbc7edb6dde39e0d9"
+      },
+      "server.api.ranking_type_must_be.ae1d21f5": {
+        "method": "agent-authored",
+        "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
+        "translationSha256": "bde940638048c67e49d41d023a409459a6d555d02ef2d460a1209925dde903fd"
+      },
+      "server.api.streaming_responses_are_unavailable.dbad8099": {
+        "method": "agent-authored",
+        "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
+        "translationSha256": "27586c987f2582c4c9c3049d202e357ff2fc58f39a840d6ef0ccd368ddc3f997"
+      },
+      "server.api.type_must_be_player.6c2ff66b": {
+        "method": "agent-authored",
+        "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
+        "translationSha256": "fa9dcfeae9c350f3929cdac712e1d8887fc8babe8f9a4ba90da91a02aa1370cd"
+      },
       "server.api.unsupported_locale": {
         "method": "agent-authored",
         "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
         "translationSha256": "6221c12fbb1eee08884767c46d5cb701d0ece94664fba596826a5ab047f90fc8"
+      },
+      "server.app.cra_books_payload_must.7aa91e61": {
+        "method": "agent-authored",
+        "sourceSha256": "7aa91e61316a66affa876e779876195cdeb205080aea15d60002a9b973f1a0b5",
+        "translationSha256": "97ef13db09ab7ba1bac70ef2b84e47e3cdc53892c58f88a360313c98e441b99d"
+      },
+      "server.app.cra_support_tools_contain.6615c823": {
+        "method": "agent-authored",
+        "sourceSha256": "6615c82355895557519353a8195c08667e84fdf18cbe205f4e066a04b538671f",
+        "translationSha256": "3ba6d86ea5c458cccdf6c2fdbae9fda7d1e1155b30070c356c2b9a09b87c5eaa"
+      },
+      "server.app.cra_support_troop_count.2d16227f": {
+        "method": "agent-authored",
+        "sourceSha256": "2d16227f086d0faa7d43ecec40583517648b37fdd52d3cbafb4d2da72fcb7ef2",
+        "translationSha256": "c812ae3aaa15e2d73fcb72316bfb0bdd5e2af494445acdf881c4084051dc4e71"
       },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
@@ -296,6 +860,126 @@
       }
     },
     "es": {
+      "server.api.a_great_empire_source.9c8ad246": {
+        "method": "agent-authored",
+        "sourceSha256": "9c8ad246d5de3d9b9cb3b395ebd9fdfac99ac2f68d162ace82aa5ae6f4ff61b0",
+        "translationSha256": "6f05618565789773b8e43871928a1723593aefc550bf5fc35a02b231c23d3a25"
+      },
+      "server.api.a_valid_feature_resource.f87fe101": {
+        "method": "agent-authored",
+        "sourceSha256": "f87fe101470d2a11da1d664a8c760bfcea71f75311ad42d81b870465df083b04",
+        "translationSha256": "d3e082aca81f2d214cf89d61a09ab782007eac903768cff3d3d71b1bd6eb8429"
+      },
+      "server.api.activity_channel_was_not.ff46c116": {
+        "method": "agent-authored",
+        "sourceSha256": "ff46c11683461492b2a86140f357429d5da921cd56eda320ae22af63292cff7d",
+        "translationSha256": "796c17ed148c2372a419bb3c5d5e4d57e70efc6466b921e59f28162a130bda6f"
+      },
+      "server.api.alliance_id_must_be.de566f1b": {
+        "method": "agent-authored",
+        "sourceSha256": "de566f1bd7d53ab91762707c6fe0c26ea7f18ed9318780b3a746be88212e3b09",
+        "translationSha256": "c928071aa3a572be166b8123cacceb9f7f5862fe042d78f43f8cf2f927ab133c"
+      },
+      "server.api.alliance_target_state_is.bbe6e2c6": {
+        "method": "agent-authored",
+        "sourceSha256": "bbe6e2c641aa0107233f184e17627783bfabbfbcef7183c56fc4bf360a14a80f",
+        "translationSha256": "32bbe25ad4a19a715111c9fb8dcbf1ac3f01f3c14d392ae93224734f48da6439"
+      },
+      "server.api.application_update_service_is.e3a45426": {
+        "method": "agent-authored",
+        "sourceSha256": "e3a454266cfcf53602a41ae73249c7da6862edb2d3bf292e289e5a686e8f5c44",
+        "translationSha256": "5a8de269edd8f4d78c431957a7be76224913b8eb9ae57e285a0ee448cf4395e0"
+      },
+      "server.api.at_most_language_keys.6651516a": {
+        "method": "agent-authored",
+        "sourceSha256": "6651516ad4ac3b3eb8d0568022e0aa5d3547ac9c2bed980dd4df2bf72a19e294",
+        "translationSha256": "c617d29330839fcaac3a1af7a17dedd27d92fa4da7800e657b6863cfdaa4cc52"
+      },
+      "server.api.attack_preview_state_is.34320895": {
+        "method": "agent-authored",
+        "sourceSha256": "343208957e9d6ee1eb47c41475e01957b7bae12be95528477d70621de068945c",
+        "translationSha256": "99797e8567839f12e3b6c8e60b1d9d11fd02d632b0749e9f0443c769f60f28ba"
+      },
+      "server.api.auto_storm_preview_state.5d110df7": {
+        "method": "agent-authored",
+        "sourceSha256": "5d110df7dbe22caca65c5ef5ed452fc90e0ed927e027654f01e4775f9205ea54",
+        "translationSha256": "83cef1ffa0e8fc59db8a6594be38f436a73e53f6d1566c94252af24f163589b7"
+      },
+      "server.api.background_login_can_only.07face08": {
+        "method": "agent-authored",
+        "sourceSha256": "07face08ba75f7bb869fa23ab56d01affadd7add37ad3edd3b8a4f1d25dff4da",
+        "translationSha256": "39084524879d20cdf9de16d1056aad0cafd89c9e62d70b6b7cd28dcc775ce539"
+      },
+      "server.api.background_login_is_managed.46171e28": {
+        "method": "agent-authored",
+        "sourceSha256": "46171e2858563f77316fd1ded24760a9881b9fda1b4b47451abcf77d13d8564b",
+        "translationSha256": "6813d3184170abe6c063ccb5269d366c96346ef1ad3bf5a2182d4f6e7b79c805"
+      },
+      "server.api.background_login_requires_an.0f0563fe": {
+        "method": "agent-authored",
+        "sourceSha256": "0f0563fe6b5fef5e5300553d1e9e644be5fdbfec11ff231e06e10ea51fcc9783",
+        "translationSha256": "5497a8d6d17e5f6b98c06487b7f4e76582caf9fb4763520df09f3f06fec23466"
+      },
+      "server.api.background_login_requires_exactly.1b4110aa": {
+        "method": "agent-authored",
+        "sourceSha256": "1b4110aae0fe866ec55e6c33593cf30cd2234047ed6eb0054b5ddc210492e729",
+        "translationSha256": "cbe7b4a08c8e552eef53f256498a4e6e5ddd6a5583980c2f073157f8d476c211"
+      },
+      "server.api.background_login_storage_is.d6340485": {
+        "method": "agent-authored",
+        "sourceSha256": "d6340485a2053de58f3954dafec37b381ed92cd61121713494e2c67f135f8246",
+        "translationSha256": "ab8bcf2fbce5f5444770f6a882a76e8cc5edfc996cd83fc85b9e97bf83db0dbf"
+      },
+      "server.api.battle_report_analytics_are.1d336a24": {
+        "method": "agent-authored",
+        "sourceSha256": "1d336a24f3fe9380754a74f1220c28bf364eb02c37ce20d79809ff2ae9292c33",
+        "translationSha256": "f0828a5e2662faadf62b0dafc24069f5629c8de567d06e052b6599da257f503c"
+      },
+      "server.api.before_must_be_an.26ccb95f": {
+        "method": "agent-authored",
+        "sourceSha256": "26ccb95faa7d8591ad2626fff4ed0f577215f6cc17a4b373e11c90d0ddc83f97",
+        "translationSha256": "60e0d4395740b200b1f9eefdb72ce34e19c19a6a11609c5087e7caa2491523a6"
+      },
+      "server.api.castle_state_is_unavailable.8e1c92c4": {
+        "method": "agent-authored",
+        "sourceSha256": "8e1c92c45a9171ef5e2675b3a61b88ffbcf44626de80101e401cc6a76837ca14",
+        "translationSha256": "b67cf8f340e0ded6b74a07f0586f4c49575acd159d07bfa97b910e7c99a1846e"
+      },
+      "server.api.catalog_dataset_key_is.4fc934b8": {
+        "method": "agent-authored",
+        "sourceSha256": "4fc934b89435781dd452f10dafd6a32e23639f166d08c1b32dbeb9bb502ebe3b",
+        "translationSha256": "d38b0873cfdbe812ea76b7dfef0e5a7c72f84bc211fed8770a8968d50ceafca8"
+      },
+      "server.api.cloud_battle_reports_are.df76c987": {
+        "method": "agent-authored",
+        "sourceSha256": "df76c9875dbd6a392924c0824a4d7db7ff2668386979fe310760e26ce1904e58",
+        "translationSha256": "d829b7235783dfb26b267cf82249e2c91b76f99f4bda8975362b9ba4d80129e0"
+      },
+      "server.api.configuration_section_p_was.0f11f875": {
+        "method": "agent-authored",
+        "sourceSha256": "0f11f87569bde36567aca3398a810c7b1705ed811d4a0a8260b8b66059ab3146",
+        "translationSha256": "a64c777b4c8738a4bfcb7aaee83314acb062b62b0fc77514464a76d03dd020e6"
+      },
+      "server.api.configuration_store_is_unavailable.623f75fa": {
+        "method": "agent-authored",
+        "sourceSha256": "623f75fa8f115d2649671db006063ebef30fe595722bdf4604aedf25d2dc31b2",
+        "translationSha256": "a6718fbeda13bb1713a326443ce0599d3273f8327bafbd75f313d39805170e3b"
+      },
+      "server.api.configuration_update_must_contain.b7eb8212": {
+        "method": "agent-authored",
+        "sourceSha256": "b7eb8212f4be06051c4c9750ee12fe86382a6e6fe4c6be755a1ec2c67b4d5c8a",
+        "translationSha256": "d057318511411fc48482f25e515a774e6bd64d5329b312fd40294e3d1a9f38aa"
+      },
+      "server.api.crafting_data_is_unavailable.9c4217a2": {
+        "method": "agent-authored",
+        "sourceSha256": "9c4217a2b87bceca02f5873ca373b4002bf2b43869cf05d729218e3110a522a5",
+        "translationSha256": "e0e9ebf4aa77e288056c13b6c530731ba3ca70cc31c7ba43d5d2100595f38b81"
+      },
+      "server.api.equipment_state_is_unavailable.20345872": {
+        "method": "agent-authored",
+        "sourceSha256": "20345872aa479f808b0433b87efe9f6a3a84491b402ca7cdfc2b2bdf3e243b5e",
+        "translationSha256": "1f3d924fd3f4ff6e8bbfa60b6983442359638bb0f609a645bbdf57ca8ece3753"
+      },
       "server.api.event_occurrence_id_is.3c0ae253": {
         "method": "authored-translation-memory-reuse",
         "originKey": "backend.worldintel.event_occurrence_id_is_invalid",
@@ -314,6 +998,86 @@
         "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
         "translationSha256": "1ce2b9a360a6df134330836203aacf7789e80389294364dbaf50b35434388450"
       },
+      "server.api.expected_p_format_version.c7f24dcd": {
+        "method": "agent-authored",
+        "sourceSha256": "c7f24dcd55d31eb36361f1b19587744780a58965e3fd2c1c1cc201ce1f4ad74d",
+        "translationSha256": "32aaab1adf08f137f2a9bc244ef864b42fffab2161427cb4dd11a3d91f44d0e4"
+      },
+      "server.api.expected_value_p.bfcae137": {
+        "method": "agent-authored",
+        "sourceSha256": "bfcae137caa806cd388b36673c0da3e9b01e1039d3669717d725d5bc5c2e2a38",
+        "translationSha256": "dcce0e1fa3d9ed84dfd43c4c65798b6bf5d7d5d5be0923451a5039ca0f46c749"
+      },
+      "server.api.expectedrevision_is_required.d70fc7d0": {
+        "method": "agent-authored",
+        "sourceSha256": "d70fc7d09a2113129d52b2fe1089306a7def89eaf2345bb9e255f12143965beb",
+        "translationSha256": "08a9d61fb190a367d63ea8ba96409d8b46504a3183c5c8d8ac9f39b4b3d7cdc4"
+      },
+      "server.api.experimental_battle_research_settings.878d9340": {
+        "method": "agent-authored",
+        "sourceSha256": "878d9340802a9238871ee3c247c4a216193b24034a967d0db28b45d4248c542d",
+        "translationSha256": "d5bd81f5e9cd855fa3ea9b5e3d921f6d5b75eba23f69ac551d33f59ebf16a572"
+      },
+      "server.api.feature_resource_aggregates_are.1437032e": {
+        "method": "agent-authored",
+        "sourceSha256": "1437032ebb01358cacd331a896358af88b668eb08e9a57ee2d381de59307e2f4",
+        "translationSha256": "a69e8c06e464e9dfdb4b0f5412469c888eee7d4518b08b9c2f8d81bc13563e0a"
+      },
+      "server.api.hosted_account_settings_must.248f745f": {
+        "method": "agent-authored",
+        "sourceSha256": "248f745f12fd61a73b08dd257cd6d9ae277f05b028bb5d0c3bc6e15fb1e3389f",
+        "translationSha256": "1718d68eefa85dd5f48f696af8afd6cc35570d5e05ba996a7b0259c47d6fd3a8"
+      },
+      "server.api.hosted_account_settings_must.34f84345": {
+        "method": "agent-authored",
+        "sourceSha256": "34f843457a212bcc22258752fb98409befe8c0ba9f9b7d3fbdc6f10cddb25f9e",
+        "translationSha256": "d1dde3a579e3a301a579c13425f21f72d2673e92c4fd1f2f9cdd86ee63b7bf62"
+      },
+      "server.api.intent_engine_is_unavailable.1b08a55c": {
+        "method": "agent-authored",
+        "sourceSha256": "1b08a55c7d1ff14c5439f08d8daa9dd73577efeeb7b27d852250dc28b855e044",
+        "translationSha256": "9670f9f133ba07271fbcca77f15dc844b10ea68f975a310dd1173cc04145f836"
+      },
+      "server.api.invalid_building_id_p.cff22953": {
+        "method": "agent-authored",
+        "sourceSha256": "cff2295339b23183e9e91eb8214f518fc5956a3dcc3c9e9b994666e3a8dab37f",
+        "translationSha256": "9d2e8ea6194ecf628733e489b31227bf45cd52887c56c20819a731f729170dc9"
+      },
+      "server.api.invalid_integer_p.8a237a81": {
+        "method": "agent-authored",
+        "sourceSha256": "8a237a81a96b0120a6bed1c6605e939375ad872dfff37b67cb4bad396822a2d0",
+        "translationSha256": "0a51c3aaa0524615eaff19050672448018ec4103a0fd4564c4f646f5cd954e0c"
+      },
+      "server.api.invalid_non_negative_integer.acc220c5": {
+        "method": "agent-authored",
+        "sourceSha256": "acc220c56bbc13b0dbae69507d64b08634b94e5ee6c776f814cd7f925171975c",
+        "translationSha256": "ab0f8367a9cdf14064aef8de9e301609a57bb0a4d1edba1903fcce91b9d6b74a"
+      },
+      "server.api.my_stats_retention_did.72cab9de": {
+        "method": "agent-authored",
+        "sourceSha256": "72cab9de00a0db5a7c2f739952f7fafcd6dfacadb1e424e48200a7bbd6e52c64",
+        "translationSha256": "f3c08526b55172115ef9e81476a4d74e270cc87697982b84fef19611f063a84a"
+      },
+      "server.api.my_stats_retention_must.d59c4907": {
+        "method": "agent-authored",
+        "sourceSha256": "d59c49072189b48c3caa37b59dd72e37430486a708a5fdcb4871ac7974a5350f",
+        "translationSha256": "710982a26b468f78eec6092faef2d9f9827cd26f83a3ce3eedbc476c3a1b9658"
+      },
+      "server.api.my_stats_storage_policy.f612e323": {
+        "method": "agent-authored",
+        "sourceSha256": "f612e3237ff366209981686d6ef6fc6ae37d106a7a67b6bde640890ae107465c",
+        "translationSha256": "4692a1af708dbd474a05c4df3d99419d2a85d086e6540e8da8a0ffff93796b27"
+      },
+      "server.api.no_commander_is_currently.76ae45bb": {
+        "method": "agent-authored",
+        "sourceSha256": "76ae45bb49b1d5087e90c9ddcb25b71dae81fffc2252a349a8aeee53ef62936d",
+        "translationSha256": "da9b64b89e43baa884345310b90a738bc56b4550214f67a3a9fab49c533c2eef"
+      },
+      "server.api.no_p_item_has.9f0c9501": {
+        "method": "agent-authored",
+        "sourceSha256": "9f0c950171b23992b8c53f067eebb0a09e457e16efd3fb9855f720fe2b47047e",
+        "translationSha256": "5c8926f9fc6b4afc2c7086197a3f0a0cfcf4f7cee947be9ffd513c0d1b0c44ae"
+      },
       "server.api.official_game_data_is.c5e55e7e": {
         "method": "agent-authored",
         "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
@@ -323,6 +1087,31 @@
         "method": "agent-authored",
         "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
         "translationSha256": "ddae3e59c6e68efe8ff63bb4c4f4d77572d9c93eba14f6074c4c9787cfaaab2d"
+      },
+      "server.api.operation_is_not_currently.e4e0ac62": {
+        "method": "agent-authored",
+        "sourceSha256": "e4e0ac621279ac3f7b99d6377408265c3ac768e608ef72dbefc275eb4491b0ab",
+        "translationSha256": "eec29d0cc177a50f65a240d1e045dcaae00b521ef3fabb5c38ddc9b9b88985b6"
+      },
+      "server.api.operation_limit_must_be.bb724cb5": {
+        "method": "agent-authored",
+        "sourceSha256": "bb724cb58f3606540ba730c018d086eca2a8d603c9a0aa8d9e80e2fb9fe76a18",
+        "translationSha256": "84c0e2df8464cfd34b95f4681683ab02d18be5aa3b54f4c04ca9db76085784d0"
+      },
+      "server.api.operation_was_not_found.b8363d5a": {
+        "method": "agent-authored",
+        "sourceSha256": "b8363d5a08b69b5a9f0ecdfabd870d9d0881d3b3b7fc1157ee22bd9b4441896d",
+        "translationSha256": "0d0322df9481a90471c30e8f756438525c6cf672d019ad40df01786347b8ce22"
+      },
+      "server.api.player_history_is_unavailable.3ee991d7": {
+        "method": "agent-authored",
+        "sourceSha256": "3ee991d7387d462fc40d0e98c5a82b465cd2b038a70ac69e7e3748d74bf05521",
+        "translationSha256": "dadacf45ddd15a74c87d1fbfbf95a9d7767a2ed2f67a7af8432ca99b2ad363fd"
+      },
+      "server.api.player_id_must_be.1cf49a4b": {
+        "method": "agent-authored",
+        "sourceSha256": "1cf49a4b547e6d1cd2b0355cf91e523e67291bc972432a80e13559ca3d342f2c",
+        "translationSha256": "83d5bca4b6d3f8fe6f35cab9ac37e125c5ac7609fb3bc64712940a94f46d9bb6"
       },
       "server.api.ranking_metric_type_must.179bda7e": {
         "method": "authored-translation-memory-reuse",
@@ -342,6 +1131,56 @@
         "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
         "translationSha256": "b224375968204c952aa3b99549a97c14bf44cb9e56833e026993ae560eb91d1c"
       },
+      "server.api.report_history_is_unavailable.4a955e49": {
+        "method": "agent-authored",
+        "sourceSha256": "4a955e492186f1af8fc9a287e90880eccdd3659e2b1c0b2959629e126ee28885",
+        "translationSha256": "d1fabf52b84dadecde3a5ccc4976bd1c37a773fd34eac3b569345f23a2079ff1"
+      },
+      "server.api.retention_or_recordingintervalseconds_is.1929acc3": {
+        "method": "agent-authored",
+        "sourceSha256": "1929acc3a13ab2b6ad2b596ac8f48b10512861c1846300228adb3d12033be56a",
+        "translationSha256": "9a0b85a995414bcff12d0bccbfbcef94e71a0c0a16392eb143bc68e6b5eed6cf"
+      },
+      "server.api.retention_update_must_contain.1f5679c7": {
+        "method": "agent-authored",
+        "sourceSha256": "1f5679c73d7036d47afa9e6e6bd6169a32bee6926e6edc25521e7878ac9086b5",
+        "translationSha256": "58d9198dd0a29db88ecb73d4dbcf4954f38dc7fbc0628aa7399f4796d5695319"
+      },
+      "server.api.runtime_diagnostics_are_unavailable.1b27e807": {
+        "method": "agent-authored",
+        "sourceSha256": "1b27e807378afd41c4dec508af5e5ebddeeafb40e85ab472dd59ea0cb4870943",
+        "translationSha256": "e2ee5bff5ecc20c87c988b262b1fa281808cb89dc98c1b3878e235d0db761313"
+      },
+      "server.api.settings_bundle_contains_no.cb029f76": {
+        "method": "agent-authored",
+        "sourceSha256": "cb029f765624b262f864167d188d1149ba7d479c97cc720516a2c20a87da3969",
+        "translationSha256": "ac90e99e7fa9e00b6cb2acc4d1b75cafc372a5456aafaff4b12203804a0d9350"
+      },
+      "server.api.settings_bundle_may_contain.633b2609": {
+        "method": "agent-authored",
+        "sourceSha256": "633b26091b8bdfb815202708d3d0b32bcad3f4f4f48dd3151fbc2ebd6f430ef4",
+        "translationSha256": "0111526810af5a010e253ccd76dd9fdf71fe8e5e4f712138002d81dc0d47bcb4"
+      },
+      "server.api.settings_bundle_must_contain.08db41d4": {
+        "method": "agent-authored",
+        "sourceSha256": "08db41d4eeeba49e266075f37b669333cba667181a4f313fa2260d4802ead49b",
+        "translationSha256": "40ea08fe856996d71fe70660539386ce1d7b6ef19e76ecb56c0d50f760ff6f7f"
+      },
+      "server.api.settings_use_configuration_schema.dff2877d": {
+        "method": "agent-authored",
+        "sourceSha256": "dff2877dcb7dec8ba38bba8b558aab930c8792447a966042e039319281e739f4",
+        "translationSha256": "a5afcd6d23dc311bf7517b8db13fe2a2545dc584ac3e3a980e408f0079a2316e"
+      },
+      "server.api.since_must_be_an.0b73d3e3": {
+        "method": "agent-authored",
+        "sourceSha256": "0b73d3e34309cbd1459ee93dea19aeaff9a23bba6624a9e5ba5987140d0c0e20",
+        "translationSha256": "5ac6e215911066b5e1922c0e94895cdd61b3d704833774d1db224e765c0efdd8"
+      },
+      "server.api.state_store_is_unavailable.e4a65fe1": {
+        "method": "agent-authored",
+        "sourceSha256": "e4a65fe12efe676c70f19a33f93e1f818693fdb3e1a16a139c6f2432f06306d6",
+        "translationSha256": "0a52fcf174edf8b49a7755dbd47e0284e284f26ac1da496654e8c23565ec5a02"
+      },
       "server.api.streaming_responses_are_unavailable.dbad8099": {
         "method": "authored-translation-memory-reuse",
         "originKey": "backend.worldintel.streaming_responses_are_unavailable",
@@ -350,6 +1189,26 @@
         "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
         "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
         "translationSha256": "b5282206236e40b4648cde5b91ceb659b4d8856e2d6ab0e700914eb45d2a4318"
+      },
+      "server.api.target_castle_type_and.5cc2dff3": {
+        "method": "agent-authored",
+        "sourceSha256": "5cc2dff38046c60798c942a3fd9733678c9bad8ed7fdc06f0690a0d41e1c882e",
+        "translationSha256": "884c3b30bd76afc04ea2964c165d31b7ab2c32a45e77d940c5c0f47539c0bbac"
+      },
+      "server.api.telemetry_is_unavailable.3daba4e0": {
+        "method": "agent-authored",
+        "sourceSha256": "3daba4e042684dff0e0bffbbcc8dd2b7a173ef38f8c48c9aa8480b65208401ba",
+        "translationSha256": "cfe6cfc2da380d2a5be6d6f527278669b93bb8890f1ff282e2ddc06544784057"
+      },
+      "server.api.the_selected_castle_inventory.cfa17b56": {
+        "method": "agent-authored",
+        "sourceSha256": "cfa17b56dd1883d87a4ad0ab13d684eda24f3f1b86e1b90be15985efbf4d0452",
+        "translationSha256": "ec3450b524fdf871529e4338baa77806b8f18747a5b70539f879b734f7384abf"
+      },
+      "server.api.the_selected_source_is.851ff7c7": {
+        "method": "agent-authored",
+        "sourceSha256": "851ff7c736e0d33b0d0949393e9cbe6c4356abb471dd9fb85d2b80e78fe2e95b",
+        "translationSha256": "b04b66ca2871b46866d4e6ced1e776d4b67ad088453a2990a39a0f3035a078a3"
       },
       "server.api.type_must_be_player.6c2ff66b": {
         "method": "authored-translation-memory-reuse",
@@ -360,10 +1219,35 @@
         "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
         "translationSha256": "ace66e24a35357ed56666d054cb1857b39d5db1e26258194f96eacad185e1505"
       },
+      "server.api.unknown_my_stats_recording.daeaf92b": {
+        "method": "agent-authored",
+        "sourceSha256": "daeaf92b9e38af6cf29a8132736bc508c9acc8bd5e08b9c79282047488cc2f35",
+        "translationSha256": "064ac5581296ef9966f609c618c19967603a2096610cc3ad697856c266157bf0"
+      },
+      "server.api.unknown_my_stats_retention.24bc3955": {
+        "method": "agent-authored",
+        "sourceSha256": "24bc39552e6243db7d357548aa597ecae3bbac6e07d8dc30078746eb9a346f18",
+        "translationSha256": "fd1bcd39aa3b7b46a1557ff8777517b2fe9a6b5f67ea3c06e39217ae47bebb61"
+      },
+      "server.api.unsupported_api_contract_version.4fd51ab3": {
+        "method": "agent-authored",
+        "sourceSha256": "4fd51ab3e04798ebd573740a88ee2b903aa58ac05b20e18626ede436a0f3d161",
+        "translationSha256": "2d67daf83640e6b09f31851a6461d69da0e8a0e3da5464762d1db34a59b89569"
+      },
       "server.api.unsupported_locale": {
         "method": "agent-authored",
         "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
         "translationSha256": "69e78deffef0f1c693775134f4f22cee445aab4eb4ad05ee1e42c340c108faea"
+      },
+      "server.api.unsupported_websocket_message_type.d8c1ddd3": {
+        "method": "agent-authored",
+        "sourceSha256": "d8c1ddd3c8425af1a8d4823f41ff711cf85d0216680a3ff17db73531d08b800d",
+        "translationSha256": "e915e1a92e9b85880b142b01623c9a92ce099e24b8ffc5c2f87a904ee198c6a6"
+      },
+      "server.api.world_intelligence_is_unavailable.8bd6d197": {
+        "method": "agent-authored",
+        "sourceSha256": "8bd6d197eb280445ba03d0ab515e2b314ce1831dc80761eaeede2c5b5357b9a3",
+        "translationSha256": "b0b529c68bea738a34c7ef9e3c292582e9bebb0782b16c4faa377d47e634aa9f"
       },
       "server.app.cra_books_payload_must.7aa91e61": {
         "method": "authored-translation-memory-reuse",
@@ -399,6 +1283,16 @@
       }
     },
     "fi": {
+      "server.api.event_occurrence_id_is.3c0ae253": {
+        "method": "agent-authored",
+        "sourceSha256": "3c0ae253fa0225afd286348edcde8c7e8c9dac41d833d90741ee71a5e63228c4",
+        "translationSha256": "d8d4d3c6d8569f84aa0c1ef992d4a98e3e3b4f30fe447a49cb53510442ec63f1"
+      },
+      "server.api.eventkey_is_invalid.5fa0f899": {
+        "method": "agent-authored",
+        "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
+        "translationSha256": "0e901060de3f3fa475f03888cd4ab7cb7847ca25f34c88f00c80062ca5069b9f"
+      },
       "server.api.official_game_data_is.c5e55e7e": {
         "method": "agent-authored",
         "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
@@ -409,10 +1303,45 @@
         "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
         "translationSha256": "0831c1d12aea1425ffdbb7df0fccf50e1b3135b02792d8a1b5679153433dd8ea"
       },
+      "server.api.ranking_metric_type_must.179bda7e": {
+        "method": "agent-authored",
+        "sourceSha256": "179bda7e6a486e1d7861b4322965d405fcf25e162cf4604387953019aa63c08c",
+        "translationSha256": "94272f77ea0eaee39b4e8cc9ea4497cd8f27a8b33ed5d143e13d35d7933c08ef"
+      },
+      "server.api.ranking_type_must_be.ae1d21f5": {
+        "method": "agent-authored",
+        "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
+        "translationSha256": "d1d52adf2f5e8d1cbd914b339f4cdcb0e3a422a83237d8a6df4745808fdb3e99"
+      },
+      "server.api.streaming_responses_are_unavailable.dbad8099": {
+        "method": "agent-authored",
+        "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
+        "translationSha256": "89d37fb75ca48589c75655eaf7f24817a6c5b808ef91b1dd7c2c109bd3c94f4b"
+      },
+      "server.api.type_must_be_player.6c2ff66b": {
+        "method": "agent-authored",
+        "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
+        "translationSha256": "04bcc5386c062239dab138698fa9e6e64bdb22e49aa9a681158f553112644594"
+      },
       "server.api.unsupported_locale": {
         "method": "agent-authored",
         "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
         "translationSha256": "75f1e537fafe75733c0cdbeb2f700480b560bef73e84fcd5aed84d9a0537b01d"
+      },
+      "server.app.cra_books_payload_must.7aa91e61": {
+        "method": "agent-authored",
+        "sourceSha256": "7aa91e61316a66affa876e779876195cdeb205080aea15d60002a9b973f1a0b5",
+        "translationSha256": "59bb17f90cb01e235222cba8c257c5bb0502f10c2eb2863c6cd38a807c7f3cae"
+      },
+      "server.app.cra_support_tools_contain.6615c823": {
+        "method": "agent-authored",
+        "sourceSha256": "6615c82355895557519353a8195c08667e84fdf18cbe205f4e066a04b538671f",
+        "translationSha256": "64840d3bd4cf35ba414588bf41ce3d6cc9d4f624248611db774e9df5dc25ced7"
+      },
+      "server.app.cra_support_troop_count.2d16227f": {
+        "method": "agent-authored",
+        "sourceSha256": "2d16227f086d0faa7d43ecec40583517648b37fdd52d3cbafb4d2da72fcb7ef2",
+        "translationSha256": "a493c2e94551ccde773b98d5d1e59c0d5486bde9811098a324a4d966ee5c75d0"
       },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
@@ -421,6 +1350,126 @@
       }
     },
     "fr": {
+      "server.api.a_great_empire_source.9c8ad246": {
+        "method": "agent-authored",
+        "sourceSha256": "9c8ad246d5de3d9b9cb3b395ebd9fdfac99ac2f68d162ace82aa5ae6f4ff61b0",
+        "translationSha256": "52a2779a158388c6636ae9f27aa84815f0fc56d301dbd7abc1fe2fa1b8c972ab"
+      },
+      "server.api.a_valid_feature_resource.f87fe101": {
+        "method": "agent-authored",
+        "sourceSha256": "f87fe101470d2a11da1d664a8c760bfcea71f75311ad42d81b870465df083b04",
+        "translationSha256": "68eb452e0e76aa49664b9c64e575f6367e2e1088b0be03acf91b033cbfc04cd2"
+      },
+      "server.api.activity_channel_was_not.ff46c116": {
+        "method": "agent-authored",
+        "sourceSha256": "ff46c11683461492b2a86140f357429d5da921cd56eda320ae22af63292cff7d",
+        "translationSha256": "31c8356a607cc5bf4bd997ceba61b1ffe6b64efddf1794b936b4792e356a16dd"
+      },
+      "server.api.alliance_id_must_be.de566f1b": {
+        "method": "agent-authored",
+        "sourceSha256": "de566f1bd7d53ab91762707c6fe0c26ea7f18ed9318780b3a746be88212e3b09",
+        "translationSha256": "b0c95461c0681e1c2ce6e4dae868db66541c3e48c060643453c347a553b6d58c"
+      },
+      "server.api.alliance_target_state_is.bbe6e2c6": {
+        "method": "agent-authored",
+        "sourceSha256": "bbe6e2c641aa0107233f184e17627783bfabbfbcef7183c56fc4bf360a14a80f",
+        "translationSha256": "54db62852ffacdca52b57b145cd1ba85e3b6fd4f322b7cf54f64944fa399f567"
+      },
+      "server.api.application_update_service_is.e3a45426": {
+        "method": "agent-authored",
+        "sourceSha256": "e3a454266cfcf53602a41ae73249c7da6862edb2d3bf292e289e5a686e8f5c44",
+        "translationSha256": "acb29c6ff058c6854b2079256c8acc7552c69483db6d0983d4a23485e3baa416"
+      },
+      "server.api.at_most_language_keys.6651516a": {
+        "method": "agent-authored",
+        "sourceSha256": "6651516ad4ac3b3eb8d0568022e0aa5d3547ac9c2bed980dd4df2bf72a19e294",
+        "translationSha256": "3d76ad9be3f866bbdd727da77afaaa3ea4eecad14e04165cc0d5917646477b49"
+      },
+      "server.api.attack_preview_state_is.34320895": {
+        "method": "agent-authored",
+        "sourceSha256": "343208957e9d6ee1eb47c41475e01957b7bae12be95528477d70621de068945c",
+        "translationSha256": "9030c1472f7565656b3128efdcf921a8412643bcfae1e2f9e3b5d7005536219a"
+      },
+      "server.api.auto_storm_preview_state.5d110df7": {
+        "method": "agent-authored",
+        "sourceSha256": "5d110df7dbe22caca65c5ef5ed452fc90e0ed927e027654f01e4775f9205ea54",
+        "translationSha256": "42ffc3953ecb69649dc52a4f69adf2c209780eb1560ecaf0e50a733f51a2404f"
+      },
+      "server.api.background_login_can_only.07face08": {
+        "method": "agent-authored",
+        "sourceSha256": "07face08ba75f7bb869fa23ab56d01affadd7add37ad3edd3b8a4f1d25dff4da",
+        "translationSha256": "f3d64a8bb3633efd020a9c26e5f3a92ceafd9e531bf099a555594d21aa9e9aa7"
+      },
+      "server.api.background_login_is_managed.46171e28": {
+        "method": "agent-authored",
+        "sourceSha256": "46171e2858563f77316fd1ded24760a9881b9fda1b4b47451abcf77d13d8564b",
+        "translationSha256": "3625abfed5748b9331f3f8be4c0eebc3afd36578f5032cbbdb7bf22c4b62dd3d"
+      },
+      "server.api.background_login_requires_an.0f0563fe": {
+        "method": "agent-authored",
+        "sourceSha256": "0f0563fe6b5fef5e5300553d1e9e644be5fdbfec11ff231e06e10ea51fcc9783",
+        "translationSha256": "6f39651c2fc507eda55b64509d7477a7365e4dd016b21d70c1fe5d3e1e410e98"
+      },
+      "server.api.background_login_requires_exactly.1b4110aa": {
+        "method": "agent-authored",
+        "sourceSha256": "1b4110aae0fe866ec55e6c33593cf30cd2234047ed6eb0054b5ddc210492e729",
+        "translationSha256": "583b42313e1bb0cbe4cab52d4990dfddc2a6772f958fa9049177d047a1ba16b4"
+      },
+      "server.api.background_login_storage_is.d6340485": {
+        "method": "agent-authored",
+        "sourceSha256": "d6340485a2053de58f3954dafec37b381ed92cd61121713494e2c67f135f8246",
+        "translationSha256": "4143a9a16e93d685b6817a1a3214625664f635a86fda0a9d33d06fc6d5174f7c"
+      },
+      "server.api.battle_report_analytics_are.1d336a24": {
+        "method": "agent-authored",
+        "sourceSha256": "1d336a24f3fe9380754a74f1220c28bf364eb02c37ce20d79809ff2ae9292c33",
+        "translationSha256": "48504b8a6e3a9af0a4ce8aa1a9c5a19fb28b0908920cfddc67c66954c507e14a"
+      },
+      "server.api.before_must_be_an.26ccb95f": {
+        "method": "agent-authored",
+        "sourceSha256": "26ccb95faa7d8591ad2626fff4ed0f577215f6cc17a4b373e11c90d0ddc83f97",
+        "translationSha256": "5188696e0f3cb5aeafab974b136c15c921b93e64e6c1b2c7db9d9f52d6750ac7"
+      },
+      "server.api.castle_state_is_unavailable.8e1c92c4": {
+        "method": "agent-authored",
+        "sourceSha256": "8e1c92c45a9171ef5e2675b3a61b88ffbcf44626de80101e401cc6a76837ca14",
+        "translationSha256": "0eee344328bdf5b294e3b4e91ecbc0255294861a46ad2a903288818a0fff250d"
+      },
+      "server.api.catalog_dataset_key_is.4fc934b8": {
+        "method": "agent-authored",
+        "sourceSha256": "4fc934b89435781dd452f10dafd6a32e23639f166d08c1b32dbeb9bb502ebe3b",
+        "translationSha256": "f906e1ee89edc4856d11ae23e0d270789e27ee1b6a348d82f9533e601108400a"
+      },
+      "server.api.cloud_battle_reports_are.df76c987": {
+        "method": "agent-authored",
+        "sourceSha256": "df76c9875dbd6a392924c0824a4d7db7ff2668386979fe310760e26ce1904e58",
+        "translationSha256": "04630eac1b5f2771007dd6309756c98cca42a3867b901688b8938cba2c81f236"
+      },
+      "server.api.configuration_section_p_was.0f11f875": {
+        "method": "agent-authored",
+        "sourceSha256": "0f11f87569bde36567aca3398a810c7b1705ed811d4a0a8260b8b66059ab3146",
+        "translationSha256": "30a4cfecb70c1711292349cc159da6a3694f619aac64eea64c550863c581c553"
+      },
+      "server.api.configuration_store_is_unavailable.623f75fa": {
+        "method": "agent-authored",
+        "sourceSha256": "623f75fa8f115d2649671db006063ebef30fe595722bdf4604aedf25d2dc31b2",
+        "translationSha256": "08df8d95c60c8af8562845c39eac6c31fad62375e1afe007db44a171d109e803"
+      },
+      "server.api.configuration_update_must_contain.b7eb8212": {
+        "method": "agent-authored",
+        "sourceSha256": "b7eb8212f4be06051c4c9750ee12fe86382a6e6fe4c6be755a1ec2c67b4d5c8a",
+        "translationSha256": "3280b03a59c951fe423ae088b59efba9a1258d8dada4d3696b6188fec0bcb760"
+      },
+      "server.api.crafting_data_is_unavailable.9c4217a2": {
+        "method": "agent-authored",
+        "sourceSha256": "9c4217a2b87bceca02f5873ca373b4002bf2b43869cf05d729218e3110a522a5",
+        "translationSha256": "bca2eb36ff5cb2d0582f308ee4901d87a3a1d5faca780c3db3af9de60feec2e6"
+      },
+      "server.api.equipment_state_is_unavailable.20345872": {
+        "method": "agent-authored",
+        "sourceSha256": "20345872aa479f808b0433b87efe9f6a3a84491b402ca7cdfc2b2bdf3e243b5e",
+        "translationSha256": "d9607dc1eb5fd0b85d4cf69b5107f3162818cc20503f8c88485f682328adc65a"
+      },
       "server.api.event_occurrence_id_is.3c0ae253": {
         "method": "authored-translation-memory-reuse",
         "originKey": "backend.worldintel.event_occurrence_id_is_invalid",
@@ -439,6 +1488,86 @@
         "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
         "translationSha256": "293ebd57477f99edeb77b1c58cfcaef40356adb6d22e69143c2f37bae73aa0b9"
       },
+      "server.api.expected_p_format_version.c7f24dcd": {
+        "method": "agent-authored",
+        "sourceSha256": "c7f24dcd55d31eb36361f1b19587744780a58965e3fd2c1c1cc201ce1f4ad74d",
+        "translationSha256": "d84b617b8bf2f0938f4039d1fe848c7ea333f1e8886ed99fad61577ea96b57f0"
+      },
+      "server.api.expected_value_p.bfcae137": {
+        "method": "agent-authored",
+        "sourceSha256": "bfcae137caa806cd388b36673c0da3e9b01e1039d3669717d725d5bc5c2e2a38",
+        "translationSha256": "149c38549faf438412a1102d2ff753b4678a7f2e8356db70ba9de94ea3ed7275"
+      },
+      "server.api.expectedrevision_is_required.d70fc7d0": {
+        "method": "agent-authored",
+        "sourceSha256": "d70fc7d09a2113129d52b2fe1089306a7def89eaf2345bb9e255f12143965beb",
+        "translationSha256": "6bc8889b8576e2b4fbdd5f013e9b57e99cb209806b6a88cd46e10a348366cfd4"
+      },
+      "server.api.experimental_battle_research_settings.878d9340": {
+        "method": "agent-authored",
+        "sourceSha256": "878d9340802a9238871ee3c247c4a216193b24034a967d0db28b45d4248c542d",
+        "translationSha256": "acde5367e10a9c59ad045fc2fd3c47fb28e076bbf96e4cb3597975e9554e4a5e"
+      },
+      "server.api.feature_resource_aggregates_are.1437032e": {
+        "method": "agent-authored",
+        "sourceSha256": "1437032ebb01358cacd331a896358af88b668eb08e9a57ee2d381de59307e2f4",
+        "translationSha256": "afe233f2a6841cfcacb0454db555dfa44b3086da154b8296017437c65fa3737a"
+      },
+      "server.api.hosted_account_settings_must.248f745f": {
+        "method": "agent-authored",
+        "sourceSha256": "248f745f12fd61a73b08dd257cd6d9ae277f05b028bb5d0c3bc6e15fb1e3389f",
+        "translationSha256": "3f00625121e88356a293934cdf51be100179461a91560d495de6526d8b62fc93"
+      },
+      "server.api.hosted_account_settings_must.34f84345": {
+        "method": "agent-authored",
+        "sourceSha256": "34f843457a212bcc22258752fb98409befe8c0ba9f9b7d3fbdc6f10cddb25f9e",
+        "translationSha256": "970e93a3ff1143329ac6004a0adad0382cb8247e5f85e07633392e7a14e563b5"
+      },
+      "server.api.intent_engine_is_unavailable.1b08a55c": {
+        "method": "agent-authored",
+        "sourceSha256": "1b08a55c7d1ff14c5439f08d8daa9dd73577efeeb7b27d852250dc28b855e044",
+        "translationSha256": "675e43e16d753276657c6edb197010b584b2eef73207afcaa3138af8c10bd958"
+      },
+      "server.api.invalid_building_id_p.cff22953": {
+        "method": "agent-authored",
+        "sourceSha256": "cff2295339b23183e9e91eb8214f518fc5956a3dcc3c9e9b994666e3a8dab37f",
+        "translationSha256": "e4272d9acbdeaee7e3a97a943d52bef4b670544d2964dcaa4d6d13ccc542093d"
+      },
+      "server.api.invalid_integer_p.8a237a81": {
+        "method": "agent-authored",
+        "sourceSha256": "8a237a81a96b0120a6bed1c6605e939375ad872dfff37b67cb4bad396822a2d0",
+        "translationSha256": "04cd66bf64df0329ac64be934c29b75b393e6eafdbc0d5cc2d688b49cd027cd2"
+      },
+      "server.api.invalid_non_negative_integer.acc220c5": {
+        "method": "agent-authored",
+        "sourceSha256": "acc220c56bbc13b0dbae69507d64b08634b94e5ee6c776f814cd7f925171975c",
+        "translationSha256": "f7c8bb4afdcc7e0897b70dfb942ec45e970c307afe4f9b821e35d2d89c3e6432"
+      },
+      "server.api.my_stats_retention_did.72cab9de": {
+        "method": "agent-authored",
+        "sourceSha256": "72cab9de00a0db5a7c2f739952f7fafcd6dfacadb1e424e48200a7bbd6e52c64",
+        "translationSha256": "e383223509cb698f4ed777111da0cd19884dc12aa15cccb8c1b34fcc52d5b1db"
+      },
+      "server.api.my_stats_retention_must.d59c4907": {
+        "method": "agent-authored",
+        "sourceSha256": "d59c49072189b48c3caa37b59dd72e37430486a708a5fdcb4871ac7974a5350f",
+        "translationSha256": "95bfc26a792651b225b123596fb9d7d765513ff195375e59028adf24daf45465"
+      },
+      "server.api.my_stats_storage_policy.f612e323": {
+        "method": "agent-authored",
+        "sourceSha256": "f612e3237ff366209981686d6ef6fc6ae37d106a7a67b6bde640890ae107465c",
+        "translationSha256": "64425483bdff987160877d41aa8bbbe4058ee66e93fe8e24a10d9969a0636050"
+      },
+      "server.api.no_commander_is_currently.76ae45bb": {
+        "method": "agent-authored",
+        "sourceSha256": "76ae45bb49b1d5087e90c9ddcb25b71dae81fffc2252a349a8aeee53ef62936d",
+        "translationSha256": "90a4e45912fdb35ff278782bcdaa6e424ad4c382f5dd7e3fe0fa9674dc701ee6"
+      },
+      "server.api.no_p_item_has.9f0c9501": {
+        "method": "agent-authored",
+        "sourceSha256": "9f0c950171b23992b8c53f067eebb0a09e457e16efd3fb9855f720fe2b47047e",
+        "translationSha256": "0aee8d7ba1b64fab0518a5226b5f9055399f28a4dea1101362f20bfe4cefd260"
+      },
       "server.api.official_game_data_is.c5e55e7e": {
         "method": "agent-authored",
         "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
@@ -448,6 +1577,31 @@
         "method": "agent-authored",
         "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
         "translationSha256": "2226995664b82fcf2ebc47b3d97114d0640b07a0fa23524f7b865ccb87536f84"
+      },
+      "server.api.operation_is_not_currently.e4e0ac62": {
+        "method": "agent-authored",
+        "sourceSha256": "e4e0ac621279ac3f7b99d6377408265c3ac768e608ef72dbefc275eb4491b0ab",
+        "translationSha256": "4bb261ec103850a88c423b4c6dfcc52e4e77e017fcfa288fc67ce92b34ee4eab"
+      },
+      "server.api.operation_limit_must_be.bb724cb5": {
+        "method": "agent-authored",
+        "sourceSha256": "bb724cb58f3606540ba730c018d086eca2a8d603c9a0aa8d9e80e2fb9fe76a18",
+        "translationSha256": "0388f32cdb0522d889efcc32e3105a666d7bc9a6e4e438e3fb4bd52d06cda705"
+      },
+      "server.api.operation_was_not_found.b8363d5a": {
+        "method": "agent-authored",
+        "sourceSha256": "b8363d5a08b69b5a9f0ecdfabd870d9d0881d3b3b7fc1157ee22bd9b4441896d",
+        "translationSha256": "36d1ed2b9b2b5f7f9e47f1aabeb1c1e5023dd0a06d761f6ab6703bd6e36e7fc4"
+      },
+      "server.api.player_history_is_unavailable.3ee991d7": {
+        "method": "agent-authored",
+        "sourceSha256": "3ee991d7387d462fc40d0e98c5a82b465cd2b038a70ac69e7e3748d74bf05521",
+        "translationSha256": "694d7461c2884d35a06aa9d74c6b1b0da5a02631acab9332c30ce0b6a38398ae"
+      },
+      "server.api.player_id_must_be.1cf49a4b": {
+        "method": "agent-authored",
+        "sourceSha256": "1cf49a4b547e6d1cd2b0355cf91e523e67291bc972432a80e13559ca3d342f2c",
+        "translationSha256": "c1426297b8e009c0bfcdf5e9e12928af30c83d8da61b1d9d492681ae4bb7f557"
       },
       "server.api.ranking_metric_type_must.179bda7e": {
         "method": "authored-translation-memory-reuse",
@@ -467,6 +1621,56 @@
         "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
         "translationSha256": "54f324b443b0b6e606ff174faaf722d2614718c6ae9a4beb62216a17754b746e"
       },
+      "server.api.report_history_is_unavailable.4a955e49": {
+        "method": "agent-authored",
+        "sourceSha256": "4a955e492186f1af8fc9a287e90880eccdd3659e2b1c0b2959629e126ee28885",
+        "translationSha256": "0693a97eae466f0e2e274ec18d633f8d4615dcec74931979b8c625b5b6186183"
+      },
+      "server.api.retention_or_recordingintervalseconds_is.1929acc3": {
+        "method": "agent-authored",
+        "sourceSha256": "1929acc3a13ab2b6ad2b596ac8f48b10512861c1846300228adb3d12033be56a",
+        "translationSha256": "92274fea84764017ac2f6eb6d68e4e346da683220526f21991a1d04d003a96e4"
+      },
+      "server.api.retention_update_must_contain.1f5679c7": {
+        "method": "agent-authored",
+        "sourceSha256": "1f5679c73d7036d47afa9e6e6bd6169a32bee6926e6edc25521e7878ac9086b5",
+        "translationSha256": "5cce7892bb6cd431390311d3743b5b6cacb7523842d5140ff9016ca18593e505"
+      },
+      "server.api.runtime_diagnostics_are_unavailable.1b27e807": {
+        "method": "agent-authored",
+        "sourceSha256": "1b27e807378afd41c4dec508af5e5ebddeeafb40e85ab472dd59ea0cb4870943",
+        "translationSha256": "ecca78df66dbe6f1716c8a15ca2df1e44f70230242319f4ae69fa5b64205039a"
+      },
+      "server.api.settings_bundle_contains_no.cb029f76": {
+        "method": "agent-authored",
+        "sourceSha256": "cb029f765624b262f864167d188d1149ba7d479c97cc720516a2c20a87da3969",
+        "translationSha256": "b6fd949c02b79be847bda496ffe77b38da8262221c1330dbdc3fdfbbbe259d8c"
+      },
+      "server.api.settings_bundle_may_contain.633b2609": {
+        "method": "agent-authored",
+        "sourceSha256": "633b26091b8bdfb815202708d3d0b32bcad3f4f4f48dd3151fbc2ebd6f430ef4",
+        "translationSha256": "a1dc8277e52ba9b6a6e814d262d393a2991e8e1f783ccecbdc01f8b607d9ec3b"
+      },
+      "server.api.settings_bundle_must_contain.08db41d4": {
+        "method": "agent-authored",
+        "sourceSha256": "08db41d4eeeba49e266075f37b669333cba667181a4f313fa2260d4802ead49b",
+        "translationSha256": "c62e3fc8e096d5aebf1abf8d681ba2d4b156576f2f384f6a5e34dbe1a67dd284"
+      },
+      "server.api.settings_use_configuration_schema.dff2877d": {
+        "method": "agent-authored",
+        "sourceSha256": "dff2877dcb7dec8ba38bba8b558aab930c8792447a966042e039319281e739f4",
+        "translationSha256": "b87bf2903682e541b2801a44fce26093fd7b69df0f8ae01dac57350b4e9bbaff"
+      },
+      "server.api.since_must_be_an.0b73d3e3": {
+        "method": "agent-authored",
+        "sourceSha256": "0b73d3e34309cbd1459ee93dea19aeaff9a23bba6624a9e5ba5987140d0c0e20",
+        "translationSha256": "8c93ac2d62cf3dae093092630bc3b9c190189100c7afa84ac04d6718b0174e21"
+      },
+      "server.api.state_store_is_unavailable.e4a65fe1": {
+        "method": "agent-authored",
+        "sourceSha256": "e4a65fe12efe676c70f19a33f93e1f818693fdb3e1a16a139c6f2432f06306d6",
+        "translationSha256": "d9ec90b3c9be87e96899c3e992f8c512916b1577900c9420c31d361c0ad99598"
+      },
       "server.api.streaming_responses_are_unavailable.dbad8099": {
         "method": "authored-translation-memory-reuse",
         "originKey": "backend.worldintel.streaming_responses_are_unavailable",
@@ -475,6 +1679,26 @@
         "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
         "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
         "translationSha256": "366b640e121b3f1e8ec3ddc10ac60086a1876287bd21f927ef0b8e70c42556c9"
+      },
+      "server.api.target_castle_type_and.5cc2dff3": {
+        "method": "agent-authored",
+        "sourceSha256": "5cc2dff38046c60798c942a3fd9733678c9bad8ed7fdc06f0690a0d41e1c882e",
+        "translationSha256": "2d0e95110b61a7252e69754f734cd95d30e68d3ad68d6630c8256e8585083d3b"
+      },
+      "server.api.telemetry_is_unavailable.3daba4e0": {
+        "method": "agent-authored",
+        "sourceSha256": "3daba4e042684dff0e0bffbbcc8dd2b7a173ef38f8c48c9aa8480b65208401ba",
+        "translationSha256": "0edaf7aec6c364b27caf0a5dfe7d8e8ac606d69dcb72f97e34ad21f26702d85c"
+      },
+      "server.api.the_selected_castle_inventory.cfa17b56": {
+        "method": "agent-authored",
+        "sourceSha256": "cfa17b56dd1883d87a4ad0ab13d684eda24f3f1b86e1b90be15985efbf4d0452",
+        "translationSha256": "5e966f65c1dcbdca2f2c5deb97d5c0345d2652fa435b1008a801b180e3580657"
+      },
+      "server.api.the_selected_source_is.851ff7c7": {
+        "method": "agent-authored",
+        "sourceSha256": "851ff7c736e0d33b0d0949393e9cbe6c4356abb471dd9fb85d2b80e78fe2e95b",
+        "translationSha256": "cac480025d2f5edf472f95ae89b3eaf6e0df567bcb98a1d07119c6f4a63c0e76"
       },
       "server.api.type_must_be_player.6c2ff66b": {
         "method": "authored-translation-memory-reuse",
@@ -485,10 +1709,35 @@
         "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
         "translationSha256": "42ba58eaba949edf9631266057963d9ec2c763da073543e26860af1aa6246bba"
       },
+      "server.api.unknown_my_stats_recording.daeaf92b": {
+        "method": "agent-authored",
+        "sourceSha256": "daeaf92b9e38af6cf29a8132736bc508c9acc8bd5e08b9c79282047488cc2f35",
+        "translationSha256": "1f6eaf7bd2e97f215c7eb3ca6dc065b1267fc4f32869cad73bc48b4c2d6d8aa5"
+      },
+      "server.api.unknown_my_stats_retention.24bc3955": {
+        "method": "agent-authored",
+        "sourceSha256": "24bc39552e6243db7d357548aa597ecae3bbac6e07d8dc30078746eb9a346f18",
+        "translationSha256": "b7f953da63ae25a2ebc835a74043fb2a85184305a124f5d062f42d989d31eb44"
+      },
+      "server.api.unsupported_api_contract_version.4fd51ab3": {
+        "method": "agent-authored",
+        "sourceSha256": "4fd51ab3e04798ebd573740a88ee2b903aa58ac05b20e18626ede436a0f3d161",
+        "translationSha256": "bfdc9faae1cce24c0a57982ac256e8f261909d00f0930129ce0bef1f1d2dcf75"
+      },
       "server.api.unsupported_locale": {
         "method": "agent-authored",
         "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
         "translationSha256": "9979eaca43504f52ec011727e53ab8bbbde24cd1d98b798ba5afaa6d441eac8f"
+      },
+      "server.api.unsupported_websocket_message_type.d8c1ddd3": {
+        "method": "agent-authored",
+        "sourceSha256": "d8c1ddd3c8425af1a8d4823f41ff711cf85d0216680a3ff17db73531d08b800d",
+        "translationSha256": "06780a8ae0d6f57524095bcf7919b9ebc552c77c39d3ca245779c6d49f2cac10"
+      },
+      "server.api.world_intelligence_is_unavailable.8bd6d197": {
+        "method": "agent-authored",
+        "sourceSha256": "8bd6d197eb280445ba03d0ab515e2b314ce1831dc80761eaeede2c5b5357b9a3",
+        "translationSha256": "45d32fcf0cdcd43b1d7996e6ef4c813ff8b77c97787e627a2fcc5564bee87213"
       },
       "server.app.cra_books_payload_must.7aa91e61": {
         "method": "authored-translation-memory-reuse",
@@ -524,6 +1773,16 @@
       }
     },
     "hu": {
+      "server.api.event_occurrence_id_is.3c0ae253": {
+        "method": "agent-authored",
+        "sourceSha256": "3c0ae253fa0225afd286348edcde8c7e8c9dac41d833d90741ee71a5e63228c4",
+        "translationSha256": "3b484d183ade33fc8a8f40ffa426fecc9d4c0e3c05be1b972b09a56b6a124403"
+      },
+      "server.api.eventkey_is_invalid.5fa0f899": {
+        "method": "agent-authored",
+        "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
+        "translationSha256": "253077e9669d9567358ae41135aa0e5a3fb7301660855bb386a6e264c93ca35f"
+      },
       "server.api.official_game_data_is.c5e55e7e": {
         "method": "agent-authored",
         "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
@@ -534,10 +1793,45 @@
         "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
         "translationSha256": "07943c98314716d437842a33258740acde3b35037f8b66504b01ee9371987ec8"
       },
+      "server.api.ranking_metric_type_must.179bda7e": {
+        "method": "agent-authored",
+        "sourceSha256": "179bda7e6a486e1d7861b4322965d405fcf25e162cf4604387953019aa63c08c",
+        "translationSha256": "469aa8f95725ff0ccebba43e4ca47324a6023c107fe46e3db75ca5c39b8d0387"
+      },
+      "server.api.ranking_type_must_be.ae1d21f5": {
+        "method": "agent-authored",
+        "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
+        "translationSha256": "1604e940a167fb58e90d7d278fd465e8053db510cbbd0e3e0745977520b5196b"
+      },
+      "server.api.streaming_responses_are_unavailable.dbad8099": {
+        "method": "agent-authored",
+        "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
+        "translationSha256": "0b290b62c69f7320cec3daaf6025f7b4e680d1e58ce6b1a5375293d03f2501b4"
+      },
+      "server.api.type_must_be_player.6c2ff66b": {
+        "method": "agent-authored",
+        "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
+        "translationSha256": "ca817da1c29027a6cfb04267de21f7fe1424d90cfe6c1814a313913836fe5a7e"
+      },
       "server.api.unsupported_locale": {
         "method": "agent-authored",
         "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
         "translationSha256": "d40a46d2a3b830ea30062e0da299902621e290cbdef499fa81b210403b9fdd55"
+      },
+      "server.app.cra_books_payload_must.7aa91e61": {
+        "method": "agent-authored",
+        "sourceSha256": "7aa91e61316a66affa876e779876195cdeb205080aea15d60002a9b973f1a0b5",
+        "translationSha256": "8d061f245b2848a2abb259a16d70876311364e6371c8047c4dc56bb7e1079e02"
+      },
+      "server.app.cra_support_tools_contain.6615c823": {
+        "method": "agent-authored",
+        "sourceSha256": "6615c82355895557519353a8195c08667e84fdf18cbe205f4e066a04b538671f",
+        "translationSha256": "a6799948c42df67464ef6cdaf5f05dfbbade5ab60eff65befc8e1615de2a9eb2"
+      },
+      "server.app.cra_support_troop_count.2d16227f": {
+        "method": "agent-authored",
+        "sourceSha256": "2d16227f086d0faa7d43ecec40583517648b37fdd52d3cbafb4d2da72fcb7ef2",
+        "translationSha256": "6d9be4f3f222f6a38f7c133fa56010170189fdff33fc965de014994370636409"
       },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
@@ -546,6 +1840,126 @@
       }
     },
     "it": {
+      "server.api.a_great_empire_source.9c8ad246": {
+        "method": "agent-authored",
+        "sourceSha256": "9c8ad246d5de3d9b9cb3b395ebd9fdfac99ac2f68d162ace82aa5ae6f4ff61b0",
+        "translationSha256": "5de7b4c07b9ce1a095f460fe89ebc5296b27e99da5e8777d5579baa2b216dcf0"
+      },
+      "server.api.a_valid_feature_resource.f87fe101": {
+        "method": "agent-authored",
+        "sourceSha256": "f87fe101470d2a11da1d664a8c760bfcea71f75311ad42d81b870465df083b04",
+        "translationSha256": "f740981e45f64fcde19cec385f3cab99158aa1c993e3517bc1da6ee384b07619"
+      },
+      "server.api.activity_channel_was_not.ff46c116": {
+        "method": "agent-authored",
+        "sourceSha256": "ff46c11683461492b2a86140f357429d5da921cd56eda320ae22af63292cff7d",
+        "translationSha256": "24a5d81264cbf908711ed2435754429cd3f5b83c9060f27de5674431587d5459"
+      },
+      "server.api.alliance_id_must_be.de566f1b": {
+        "method": "agent-authored",
+        "sourceSha256": "de566f1bd7d53ab91762707c6fe0c26ea7f18ed9318780b3a746be88212e3b09",
+        "translationSha256": "1163a54ab5cd3f34432d66588bde77033ee72a2d7f00b94e81bec82cfcf8d6dc"
+      },
+      "server.api.alliance_target_state_is.bbe6e2c6": {
+        "method": "agent-authored",
+        "sourceSha256": "bbe6e2c641aa0107233f184e17627783bfabbfbcef7183c56fc4bf360a14a80f",
+        "translationSha256": "1e151c45c797b7b87832c06aad6afda2211ddf113cd9ac10ecc1d76c4ee4d8c0"
+      },
+      "server.api.application_update_service_is.e3a45426": {
+        "method": "agent-authored",
+        "sourceSha256": "e3a454266cfcf53602a41ae73249c7da6862edb2d3bf292e289e5a686e8f5c44",
+        "translationSha256": "4f3af04a6a9fcabc69e6f711b4fd554f2e53e8f7a83ad0e70654a316956817b9"
+      },
+      "server.api.at_most_language_keys.6651516a": {
+        "method": "agent-authored",
+        "sourceSha256": "6651516ad4ac3b3eb8d0568022e0aa5d3547ac9c2bed980dd4df2bf72a19e294",
+        "translationSha256": "f971cf53b70ffdd16b95d4e641a25e491c099828f7f4b4f8c1a11d6981f498c3"
+      },
+      "server.api.attack_preview_state_is.34320895": {
+        "method": "agent-authored",
+        "sourceSha256": "343208957e9d6ee1eb47c41475e01957b7bae12be95528477d70621de068945c",
+        "translationSha256": "b3f138a1a6e7f2da2784599520e2efd2745d39e3b8fc70478d45d37dc9d4bf0f"
+      },
+      "server.api.auto_storm_preview_state.5d110df7": {
+        "method": "agent-authored",
+        "sourceSha256": "5d110df7dbe22caca65c5ef5ed452fc90e0ed927e027654f01e4775f9205ea54",
+        "translationSha256": "684ba3ed51a018f57161294cbe7d3f50b968f3af5513b537c480c39eb5271022"
+      },
+      "server.api.background_login_can_only.07face08": {
+        "method": "agent-authored",
+        "sourceSha256": "07face08ba75f7bb869fa23ab56d01affadd7add37ad3edd3b8a4f1d25dff4da",
+        "translationSha256": "25a81949592d1dc949982e3772a8e85354df548f1e63b9fff3f4b512bd0ca8a3"
+      },
+      "server.api.background_login_is_managed.46171e28": {
+        "method": "agent-authored",
+        "sourceSha256": "46171e2858563f77316fd1ded24760a9881b9fda1b4b47451abcf77d13d8564b",
+        "translationSha256": "fcda55e611eac9777b690ce5e5f985cf327e3437ad79745095e8486e3743b7ed"
+      },
+      "server.api.background_login_requires_an.0f0563fe": {
+        "method": "agent-authored",
+        "sourceSha256": "0f0563fe6b5fef5e5300553d1e9e644be5fdbfec11ff231e06e10ea51fcc9783",
+        "translationSha256": "20b5687253576bcca2a1bddec383ff0303f62b4878b42dd27534be03e89d2de4"
+      },
+      "server.api.background_login_requires_exactly.1b4110aa": {
+        "method": "agent-authored",
+        "sourceSha256": "1b4110aae0fe866ec55e6c33593cf30cd2234047ed6eb0054b5ddc210492e729",
+        "translationSha256": "47caf9190df653b9f00e734794593bd7b9a3f4c8bf1dda5ab489a8ba825c9801"
+      },
+      "server.api.background_login_storage_is.d6340485": {
+        "method": "agent-authored",
+        "sourceSha256": "d6340485a2053de58f3954dafec37b381ed92cd61121713494e2c67f135f8246",
+        "translationSha256": "54db7f107b4e68185ba55f567f3b8420843cc9b3d3384ec4ad22fce695a46d16"
+      },
+      "server.api.battle_report_analytics_are.1d336a24": {
+        "method": "agent-authored",
+        "sourceSha256": "1d336a24f3fe9380754a74f1220c28bf364eb02c37ce20d79809ff2ae9292c33",
+        "translationSha256": "b851c51179c2087d7ff1331d3c7b8352e571a13d25bb7d3f898695e5f9a50311"
+      },
+      "server.api.before_must_be_an.26ccb95f": {
+        "method": "agent-authored",
+        "sourceSha256": "26ccb95faa7d8591ad2626fff4ed0f577215f6cc17a4b373e11c90d0ddc83f97",
+        "translationSha256": "c59c37fc06451cde1dcd091ec9f88d1fdb9bc2acfa5266bc544bfb3b558daea0"
+      },
+      "server.api.castle_state_is_unavailable.8e1c92c4": {
+        "method": "agent-authored",
+        "sourceSha256": "8e1c92c45a9171ef5e2675b3a61b88ffbcf44626de80101e401cc6a76837ca14",
+        "translationSha256": "27fc011f7b5057374319096068260759bb1f984c0092471c45d89337aa499b7f"
+      },
+      "server.api.catalog_dataset_key_is.4fc934b8": {
+        "method": "agent-authored",
+        "sourceSha256": "4fc934b89435781dd452f10dafd6a32e23639f166d08c1b32dbeb9bb502ebe3b",
+        "translationSha256": "375817224caf44b11fe63cbc72862453ba4ee7560dbab8043200a55188a9cdfb"
+      },
+      "server.api.cloud_battle_reports_are.df76c987": {
+        "method": "agent-authored",
+        "sourceSha256": "df76c9875dbd6a392924c0824a4d7db7ff2668386979fe310760e26ce1904e58",
+        "translationSha256": "28c87be3203b02780aaca7e36d7f8b320cc026ebd67b669c3abc64cd190e62a8"
+      },
+      "server.api.configuration_section_p_was.0f11f875": {
+        "method": "agent-authored",
+        "sourceSha256": "0f11f87569bde36567aca3398a810c7b1705ed811d4a0a8260b8b66059ab3146",
+        "translationSha256": "6e9033fff367b53ab42fb82a2dbd2c8a904814a3886de423595ff7ba087a827c"
+      },
+      "server.api.configuration_store_is_unavailable.623f75fa": {
+        "method": "agent-authored",
+        "sourceSha256": "623f75fa8f115d2649671db006063ebef30fe595722bdf4604aedf25d2dc31b2",
+        "translationSha256": "239a94c39240261b3f348cc72c59d06e7c3b877ed8445a63dcd982eeedcb1f3f"
+      },
+      "server.api.configuration_update_must_contain.b7eb8212": {
+        "method": "agent-authored",
+        "sourceSha256": "b7eb8212f4be06051c4c9750ee12fe86382a6e6fe4c6be755a1ec2c67b4d5c8a",
+        "translationSha256": "d793652b234cc622a4284ac63f5774114c395a6c21f03a4f218973c108053a55"
+      },
+      "server.api.crafting_data_is_unavailable.9c4217a2": {
+        "method": "agent-authored",
+        "sourceSha256": "9c4217a2b87bceca02f5873ca373b4002bf2b43869cf05d729218e3110a522a5",
+        "translationSha256": "a35bfec2b7f9239b05e3d248091928c4a7fb64c9ec329a17c874648462ebe612"
+      },
+      "server.api.equipment_state_is_unavailable.20345872": {
+        "method": "agent-authored",
+        "sourceSha256": "20345872aa479f808b0433b87efe9f6a3a84491b402ca7cdfc2b2bdf3e243b5e",
+        "translationSha256": "4e71d25a223f0b079cc651cd6b9b2bd5c0939a01813ca21af92138217932d8c4"
+      },
       "server.api.event_occurrence_id_is.3c0ae253": {
         "method": "authored-translation-memory-reuse",
         "originKey": "backend.worldintel.event_occurrence_id_is_invalid",
@@ -564,6 +1978,86 @@
         "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
         "translationSha256": "dff0dafe363629be42ba4d2cb6108de36bfe7ed1a7af8188e27ad4a0ba2ae49d"
       },
+      "server.api.expected_p_format_version.c7f24dcd": {
+        "method": "agent-authored",
+        "sourceSha256": "c7f24dcd55d31eb36361f1b19587744780a58965e3fd2c1c1cc201ce1f4ad74d",
+        "translationSha256": "4ebc9f273dc46813d620adc5d16093fb756db9bca5043eace28eea01a7da9261"
+      },
+      "server.api.expected_value_p.bfcae137": {
+        "method": "agent-authored",
+        "sourceSha256": "bfcae137caa806cd388b36673c0da3e9b01e1039d3669717d725d5bc5c2e2a38",
+        "translationSha256": "47c3e1c6b7c0dfc0129b0319327c6447d2a6cac9cf2f3641a6dcd811b1223df3"
+      },
+      "server.api.expectedrevision_is_required.d70fc7d0": {
+        "method": "agent-authored",
+        "sourceSha256": "d70fc7d09a2113129d52b2fe1089306a7def89eaf2345bb9e255f12143965beb",
+        "translationSha256": "22b5e42faf3bc29d95344a6cf714525086f8c4e3d58d926610ea1fb742158cc9"
+      },
+      "server.api.experimental_battle_research_settings.878d9340": {
+        "method": "agent-authored",
+        "sourceSha256": "878d9340802a9238871ee3c247c4a216193b24034a967d0db28b45d4248c542d",
+        "translationSha256": "0a2bd7ff5f30bdafe3d1d17f1ffcb266daefb042508e113bf8dec865924a7d53"
+      },
+      "server.api.feature_resource_aggregates_are.1437032e": {
+        "method": "agent-authored",
+        "sourceSha256": "1437032ebb01358cacd331a896358af88b668eb08e9a57ee2d381de59307e2f4",
+        "translationSha256": "47be48561cd3daa50e8187d40863bf92c5d68ad286f8cdb2be2498377f655289"
+      },
+      "server.api.hosted_account_settings_must.248f745f": {
+        "method": "agent-authored",
+        "sourceSha256": "248f745f12fd61a73b08dd257cd6d9ae277f05b028bb5d0c3bc6e15fb1e3389f",
+        "translationSha256": "0eb40b2ef956002fccfab59bcabf5f93622a4d593f19f73025959f41a724f781"
+      },
+      "server.api.hosted_account_settings_must.34f84345": {
+        "method": "agent-authored",
+        "sourceSha256": "34f843457a212bcc22258752fb98409befe8c0ba9f9b7d3fbdc6f10cddb25f9e",
+        "translationSha256": "4bfef64e0a485b97ae5d5762d0fbd94b6cff817193c107cfc62638338fc8ac1a"
+      },
+      "server.api.intent_engine_is_unavailable.1b08a55c": {
+        "method": "agent-authored",
+        "sourceSha256": "1b08a55c7d1ff14c5439f08d8daa9dd73577efeeb7b27d852250dc28b855e044",
+        "translationSha256": "73484bffd93fad384259c1482c364e5d6592ece9fb435b1e9ad506329f920c3a"
+      },
+      "server.api.invalid_building_id_p.cff22953": {
+        "method": "agent-authored",
+        "sourceSha256": "cff2295339b23183e9e91eb8214f518fc5956a3dcc3c9e9b994666e3a8dab37f",
+        "translationSha256": "82c8abfc9ed7b545c7769db30674d6cc244d352829216fdfad69cb8a14184ced"
+      },
+      "server.api.invalid_integer_p.8a237a81": {
+        "method": "agent-authored",
+        "sourceSha256": "8a237a81a96b0120a6bed1c6605e939375ad872dfff37b67cb4bad396822a2d0",
+        "translationSha256": "962bd67ab64e331acbbf64b4e1174bc28724c409b062341e6213b90d1b6f8396"
+      },
+      "server.api.invalid_non_negative_integer.acc220c5": {
+        "method": "agent-authored",
+        "sourceSha256": "acc220c56bbc13b0dbae69507d64b08634b94e5ee6c776f814cd7f925171975c",
+        "translationSha256": "57b63721892b2d83128887eab625a0e02c4671132df04a72404bcd7c2a2a7a65"
+      },
+      "server.api.my_stats_retention_did.72cab9de": {
+        "method": "agent-authored",
+        "sourceSha256": "72cab9de00a0db5a7c2f739952f7fafcd6dfacadb1e424e48200a7bbd6e52c64",
+        "translationSha256": "82d7611d5965acdfe73e19ab450ce71a359d612820c844f187ac7b9381e1c301"
+      },
+      "server.api.my_stats_retention_must.d59c4907": {
+        "method": "agent-authored",
+        "sourceSha256": "d59c49072189b48c3caa37b59dd72e37430486a708a5fdcb4871ac7974a5350f",
+        "translationSha256": "cbdb9dd51da195a6138e70c46873c529346f40651a76a38627659c9cefa15de2"
+      },
+      "server.api.my_stats_storage_policy.f612e323": {
+        "method": "agent-authored",
+        "sourceSha256": "f612e3237ff366209981686d6ef6fc6ae37d106a7a67b6bde640890ae107465c",
+        "translationSha256": "252765a27378ef9fb32156f60f0fc1bf739f90e94342374f7d75f98c154e4926"
+      },
+      "server.api.no_commander_is_currently.76ae45bb": {
+        "method": "agent-authored",
+        "sourceSha256": "76ae45bb49b1d5087e90c9ddcb25b71dae81fffc2252a349a8aeee53ef62936d",
+        "translationSha256": "2958bce632e32dfbd3d9f6ee41aaf5c9209dd7cc6001df3e352ecc7b2bcb4369"
+      },
+      "server.api.no_p_item_has.9f0c9501": {
+        "method": "agent-authored",
+        "sourceSha256": "9f0c950171b23992b8c53f067eebb0a09e457e16efd3fb9855f720fe2b47047e",
+        "translationSha256": "79705b88eb7ff7a308d0fcc2a21e4942e0ac492d3d0ceacac965264f52224817"
+      },
       "server.api.official_game_data_is.c5e55e7e": {
         "method": "agent-authored",
         "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
@@ -573,6 +2067,31 @@
         "method": "agent-authored",
         "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
         "translationSha256": "9683c4d9ac02ce1ec244b407888ea882509d31d85fa611b70dc24d2d2ef12050"
+      },
+      "server.api.operation_is_not_currently.e4e0ac62": {
+        "method": "agent-authored",
+        "sourceSha256": "e4e0ac621279ac3f7b99d6377408265c3ac768e608ef72dbefc275eb4491b0ab",
+        "translationSha256": "c6cca4f80d380e5d0c9a7add98d2cee1fc9b3ceb5082993cec9bafbd2cee030c"
+      },
+      "server.api.operation_limit_must_be.bb724cb5": {
+        "method": "agent-authored",
+        "sourceSha256": "bb724cb58f3606540ba730c018d086eca2a8d603c9a0aa8d9e80e2fb9fe76a18",
+        "translationSha256": "4556ff2fbe18c78cf284a69a89ee55aad13a18f5f6cab64ce18548ca8dea6597"
+      },
+      "server.api.operation_was_not_found.b8363d5a": {
+        "method": "agent-authored",
+        "sourceSha256": "b8363d5a08b69b5a9f0ecdfabd870d9d0881d3b3b7fc1157ee22bd9b4441896d",
+        "translationSha256": "8c612c75fce8ba7974f685d7847632c5431b8dfcfcea457668400f8cab5605ad"
+      },
+      "server.api.player_history_is_unavailable.3ee991d7": {
+        "method": "agent-authored",
+        "sourceSha256": "3ee991d7387d462fc40d0e98c5a82b465cd2b038a70ac69e7e3748d74bf05521",
+        "translationSha256": "aeee5f2549f764a185983367c46d9213eb249f3a295425fe97f8a98a22da54fd"
+      },
+      "server.api.player_id_must_be.1cf49a4b": {
+        "method": "agent-authored",
+        "sourceSha256": "1cf49a4b547e6d1cd2b0355cf91e523e67291bc972432a80e13559ca3d342f2c",
+        "translationSha256": "6b21a9d5a309f17a6a224028fe697ec08ccc5d7e16b3d03e51a401d0ef640872"
       },
       "server.api.ranking_metric_type_must.179bda7e": {
         "method": "authored-translation-memory-reuse",
@@ -592,6 +2111,56 @@
         "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
         "translationSha256": "79e8ef976defc04e0e77bc2335636ec864a4d402d5dc492cbf35c2979ef06724"
       },
+      "server.api.report_history_is_unavailable.4a955e49": {
+        "method": "agent-authored",
+        "sourceSha256": "4a955e492186f1af8fc9a287e90880eccdd3659e2b1c0b2959629e126ee28885",
+        "translationSha256": "73fc2a977aab26c1eb0f59e7e3cb6a0dc7bee0f8b6c20b902c31eae9bb5bc55a"
+      },
+      "server.api.retention_or_recordingintervalseconds_is.1929acc3": {
+        "method": "agent-authored",
+        "sourceSha256": "1929acc3a13ab2b6ad2b596ac8f48b10512861c1846300228adb3d12033be56a",
+        "translationSha256": "499089c1070469b66dc3cccd86cf217b7684dfa2cc27bc1c9353f1e5afd2a64a"
+      },
+      "server.api.retention_update_must_contain.1f5679c7": {
+        "method": "agent-authored",
+        "sourceSha256": "1f5679c73d7036d47afa9e6e6bd6169a32bee6926e6edc25521e7878ac9086b5",
+        "translationSha256": "adb193f361668693d7761e3a13a3a1623c31efee612b61d4d0ea160b4888d41f"
+      },
+      "server.api.runtime_diagnostics_are_unavailable.1b27e807": {
+        "method": "agent-authored",
+        "sourceSha256": "1b27e807378afd41c4dec508af5e5ebddeeafb40e85ab472dd59ea0cb4870943",
+        "translationSha256": "cd2be629aba0321f2d37851ef56b48416b821eca23a183e856de80eaa4b1e7fa"
+      },
+      "server.api.settings_bundle_contains_no.cb029f76": {
+        "method": "agent-authored",
+        "sourceSha256": "cb029f765624b262f864167d188d1149ba7d479c97cc720516a2c20a87da3969",
+        "translationSha256": "2457af757fb174e8f49705c651009013377112ea63565b089466dee3b54fd5ca"
+      },
+      "server.api.settings_bundle_may_contain.633b2609": {
+        "method": "agent-authored",
+        "sourceSha256": "633b26091b8bdfb815202708d3d0b32bcad3f4f4f48dd3151fbc2ebd6f430ef4",
+        "translationSha256": "b42ba772de37c93d921c54d4278a16f88fe6e0e9c44c0026d4e7e3ca88fe9a56"
+      },
+      "server.api.settings_bundle_must_contain.08db41d4": {
+        "method": "agent-authored",
+        "sourceSha256": "08db41d4eeeba49e266075f37b669333cba667181a4f313fa2260d4802ead49b",
+        "translationSha256": "74fd28b39ad1abeae668cd8fbb8db05588a915ab5ec594f9a42f4bde89f43f92"
+      },
+      "server.api.settings_use_configuration_schema.dff2877d": {
+        "method": "agent-authored",
+        "sourceSha256": "dff2877dcb7dec8ba38bba8b558aab930c8792447a966042e039319281e739f4",
+        "translationSha256": "1d86f8182b0ba9a4bef15eea54009a78739223972eacbc2b5b526002477dfef3"
+      },
+      "server.api.since_must_be_an.0b73d3e3": {
+        "method": "agent-authored",
+        "sourceSha256": "0b73d3e34309cbd1459ee93dea19aeaff9a23bba6624a9e5ba5987140d0c0e20",
+        "translationSha256": "6c3b5b2bcb885b4e5750dd68beb59551fe4d0b13b4859ed7fea46994d800719a"
+      },
+      "server.api.state_store_is_unavailable.e4a65fe1": {
+        "method": "agent-authored",
+        "sourceSha256": "e4a65fe12efe676c70f19a33f93e1f818693fdb3e1a16a139c6f2432f06306d6",
+        "translationSha256": "6b43a06edf7308c5e2e63ad7aeee413ff61c4d2f1f1156cedf3412fb61e38e38"
+      },
       "server.api.streaming_responses_are_unavailable.dbad8099": {
         "method": "authored-translation-memory-reuse",
         "originKey": "backend.worldintel.streaming_responses_are_unavailable",
@@ -600,6 +2169,26 @@
         "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
         "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
         "translationSha256": "3798ce01478091e318cb63eb7f52936a85010f3f267725c34df25e8671dacf93"
+      },
+      "server.api.target_castle_type_and.5cc2dff3": {
+        "method": "agent-authored",
+        "sourceSha256": "5cc2dff38046c60798c942a3fd9733678c9bad8ed7fdc06f0690a0d41e1c882e",
+        "translationSha256": "0bda098bd26c44b3970b008a51b815bac79fd45f8bb6f3798dc3dc1ca89f6781"
+      },
+      "server.api.telemetry_is_unavailable.3daba4e0": {
+        "method": "agent-authored",
+        "sourceSha256": "3daba4e042684dff0e0bffbbcc8dd2b7a173ef38f8c48c9aa8480b65208401ba",
+        "translationSha256": "7eb18ff76fc8c23f797ee0a4414bbba6ca7e17d8dffd1704e12a7a6541d17cb4"
+      },
+      "server.api.the_selected_castle_inventory.cfa17b56": {
+        "method": "agent-authored",
+        "sourceSha256": "cfa17b56dd1883d87a4ad0ab13d684eda24f3f1b86e1b90be15985efbf4d0452",
+        "translationSha256": "033c6ae5db1e6543f096e96e75a8bdff4e0d2772a659572e8043a6965fc27672"
+      },
+      "server.api.the_selected_source_is.851ff7c7": {
+        "method": "agent-authored",
+        "sourceSha256": "851ff7c736e0d33b0d0949393e9cbe6c4356abb471dd9fb85d2b80e78fe2e95b",
+        "translationSha256": "fbd56e36415d5c7ced116560356bca658676fd3aa1c4fe90ee5fab5bf8dd41d9"
       },
       "server.api.type_must_be_player.6c2ff66b": {
         "method": "authored-translation-memory-reuse",
@@ -610,10 +2199,35 @@
         "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
         "translationSha256": "beec796e022e65885a53f3d8bf08a93b8c331b6b8048c441e5a5c03fd1ee60bc"
       },
+      "server.api.unknown_my_stats_recording.daeaf92b": {
+        "method": "agent-authored",
+        "sourceSha256": "daeaf92b9e38af6cf29a8132736bc508c9acc8bd5e08b9c79282047488cc2f35",
+        "translationSha256": "08781d593c5fccedcfb260055849ba2a888bcf7d7b8c23948f17b5003515d96c"
+      },
+      "server.api.unknown_my_stats_retention.24bc3955": {
+        "method": "agent-authored",
+        "sourceSha256": "24bc39552e6243db7d357548aa597ecae3bbac6e07d8dc30078746eb9a346f18",
+        "translationSha256": "f018c983a71c9cf630688c781c7540acfee243d4a6ab7342c3157c3139f4750b"
+      },
+      "server.api.unsupported_api_contract_version.4fd51ab3": {
+        "method": "agent-authored",
+        "sourceSha256": "4fd51ab3e04798ebd573740a88ee2b903aa58ac05b20e18626ede436a0f3d161",
+        "translationSha256": "d64eef6f9f11a76bee02561727de725ebb5bb938aa9541e4710f5d3281973f81"
+      },
       "server.api.unsupported_locale": {
         "method": "agent-authored",
         "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
         "translationSha256": "e80dec67a14e97feaf04efba6352f3724d7925ff52743f0689782206bbcd17ad"
+      },
+      "server.api.unsupported_websocket_message_type.d8c1ddd3": {
+        "method": "agent-authored",
+        "sourceSha256": "d8c1ddd3c8425af1a8d4823f41ff711cf85d0216680a3ff17db73531d08b800d",
+        "translationSha256": "7164829c4dda518f0890b2db059ea1e86c3bdd59ab467a8bf084cf04e650b00c"
+      },
+      "server.api.world_intelligence_is_unavailable.8bd6d197": {
+        "method": "agent-authored",
+        "sourceSha256": "8bd6d197eb280445ba03d0ab515e2b314ce1831dc80761eaeede2c5b5357b9a3",
+        "translationSha256": "c6a52a5318740deb02a9ce6615158a4b9d53ca537a1508bdfb8a606b26621f35"
       },
       "server.app.cra_books_payload_must.7aa91e61": {
         "method": "authored-translation-memory-reuse",
@@ -649,6 +2263,16 @@
       }
     },
     "ja": {
+      "server.api.event_occurrence_id_is.3c0ae253": {
+        "method": "agent-authored",
+        "sourceSha256": "3c0ae253fa0225afd286348edcde8c7e8c9dac41d833d90741ee71a5e63228c4",
+        "translationSha256": "00d355aa58c0539f11bc9d89178f774e2128bddc572ee7fb7f40d334bd8411bb"
+      },
+      "server.api.eventkey_is_invalid.5fa0f899": {
+        "method": "agent-authored",
+        "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
+        "translationSha256": "13d647a3e04ad35cacab316115d4b7cf7ee5114850b58b3c639ec49eb6d948e9"
+      },
       "server.api.official_game_data_is.c5e55e7e": {
         "method": "agent-authored",
         "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
@@ -659,10 +2283,45 @@
         "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
         "translationSha256": "64629b70910edb4f6d297b787530245f02edbb60f7ceffee1bcb5814fa299404"
       },
+      "server.api.ranking_metric_type_must.179bda7e": {
+        "method": "agent-authored",
+        "sourceSha256": "179bda7e6a486e1d7861b4322965d405fcf25e162cf4604387953019aa63c08c",
+        "translationSha256": "cc45e0b922ee67c3b8624cfc0e04eda915a61fea327950288ffa05344cac6332"
+      },
+      "server.api.ranking_type_must_be.ae1d21f5": {
+        "method": "agent-authored",
+        "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
+        "translationSha256": "aefc5bbcb68a693de2e5cb493675ad1805ae5a494b35ecb56c7ba56f51d3752b"
+      },
+      "server.api.streaming_responses_are_unavailable.dbad8099": {
+        "method": "agent-authored",
+        "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
+        "translationSha256": "c740536a163fdbec2345a96dd42346f204eae30c42c09bd8200db77b624bcb4d"
+      },
+      "server.api.type_must_be_player.6c2ff66b": {
+        "method": "agent-authored",
+        "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
+        "translationSha256": "c1ca04a274fd3863d55eb31380e424e7bcfb55b2a7dee2927e5eba4c62a6861f"
+      },
       "server.api.unsupported_locale": {
         "method": "agent-authored",
         "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
         "translationSha256": "2997826966639baf1314416dd56fc6baed245c3bb3bf1256ac0ede7903e9f629"
+      },
+      "server.app.cra_books_payload_must.7aa91e61": {
+        "method": "agent-authored",
+        "sourceSha256": "7aa91e61316a66affa876e779876195cdeb205080aea15d60002a9b973f1a0b5",
+        "translationSha256": "1324fa25c15b3ea0953226522b1e21d1d10c9b8726ea083da087aa73d45bedad"
+      },
+      "server.app.cra_support_tools_contain.6615c823": {
+        "method": "agent-authored",
+        "sourceSha256": "6615c82355895557519353a8195c08667e84fdf18cbe205f4e066a04b538671f",
+        "translationSha256": "e1b30bcb3dee2a3059315cc24771e6e1e7e096ffa639358d9c4caf4b900335ab"
+      },
+      "server.app.cra_support_troop_count.2d16227f": {
+        "method": "agent-authored",
+        "sourceSha256": "2d16227f086d0faa7d43ecec40583517648b37fdd52d3cbafb4d2da72fcb7ef2",
+        "translationSha256": "8dacbd9a4f0206e0c8bf11741c53b162bb25fd5fd672d59a60f1c7ba784cf0e5"
       },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
@@ -671,6 +2330,16 @@
       }
     },
     "ko": {
+      "server.api.event_occurrence_id_is.3c0ae253": {
+        "method": "agent-authored",
+        "sourceSha256": "3c0ae253fa0225afd286348edcde8c7e8c9dac41d833d90741ee71a5e63228c4",
+        "translationSha256": "eb46814ed1481f2dd64c49fae7937d2a04ffc2db0f7120b6b03568ce9edee08a"
+      },
+      "server.api.eventkey_is_invalid.5fa0f899": {
+        "method": "agent-authored",
+        "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
+        "translationSha256": "d7247a203ea0358ba156a16f5581685319fd632f978b9dd61525b050c796c3f8"
+      },
       "server.api.official_game_data_is.c5e55e7e": {
         "method": "agent-authored",
         "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
@@ -681,10 +2350,45 @@
         "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
         "translationSha256": "cdcd0c13370352ae5d990dff64be01265392e61c12586595b31e6cce34a583aa"
       },
+      "server.api.ranking_metric_type_must.179bda7e": {
+        "method": "agent-authored",
+        "sourceSha256": "179bda7e6a486e1d7861b4322965d405fcf25e162cf4604387953019aa63c08c",
+        "translationSha256": "e8d3951a6916c1a80b404d2cdafbca0bad55301a9255f578bee3b845bb9d1db6"
+      },
+      "server.api.ranking_type_must_be.ae1d21f5": {
+        "method": "agent-authored",
+        "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
+        "translationSha256": "0b80c355a88997e45db7f673c264568ce2487a027ccec35fdd4f7120a5459a15"
+      },
+      "server.api.streaming_responses_are_unavailable.dbad8099": {
+        "method": "agent-authored",
+        "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
+        "translationSha256": "a996522e73b7815033a488c3a8a13f6dfc22301129f9aedbeb5f21bc69d51427"
+      },
+      "server.api.type_must_be_player.6c2ff66b": {
+        "method": "agent-authored",
+        "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
+        "translationSha256": "a234cfc1d07acdaded5f652264ab6b86eabaf6ce222401c900bc30ce329983c9"
+      },
       "server.api.unsupported_locale": {
         "method": "agent-authored",
         "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
         "translationSha256": "c9f4543eaee7c39c36c29b907e7bf93b10fc2799647d4821aa30d59643032bfc"
+      },
+      "server.app.cra_books_payload_must.7aa91e61": {
+        "method": "agent-authored",
+        "sourceSha256": "7aa91e61316a66affa876e779876195cdeb205080aea15d60002a9b973f1a0b5",
+        "translationSha256": "fd11c84dd605998232ae3477d9eee5abefd9707fd95e8fd7797051f67cfb387b"
+      },
+      "server.app.cra_support_tools_contain.6615c823": {
+        "method": "agent-authored",
+        "sourceSha256": "6615c82355895557519353a8195c08667e84fdf18cbe205f4e066a04b538671f",
+        "translationSha256": "f0f45ad6ad61d2f2411fc2689e5a37b44588c64cc61eedb826ee999c948d68ad"
+      },
+      "server.app.cra_support_troop_count.2d16227f": {
+        "method": "agent-authored",
+        "sourceSha256": "2d16227f086d0faa7d43ecec40583517648b37fdd52d3cbafb4d2da72fcb7ef2",
+        "translationSha256": "2ef5a2d91a1f2ae96f6d025faf237942bede7e39d2870fb3d544e61b6ab3b312"
       },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
@@ -693,6 +2397,16 @@
       }
     },
     "lt": {
+      "server.api.event_occurrence_id_is.3c0ae253": {
+        "method": "agent-authored",
+        "sourceSha256": "3c0ae253fa0225afd286348edcde8c7e8c9dac41d833d90741ee71a5e63228c4",
+        "translationSha256": "8516cd59f8dc8c96ff8e8ba0650ea03ea3223adbac9fb923e5fa6e11283a976f"
+      },
+      "server.api.eventkey_is_invalid.5fa0f899": {
+        "method": "agent-authored",
+        "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
+        "translationSha256": "c51c47e0aae2223d589bd1f7b9f586c8daf5af692999e5483b15874a3b0b4b83"
+      },
       "server.api.official_game_data_is.c5e55e7e": {
         "method": "agent-authored",
         "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
@@ -703,10 +2417,45 @@
         "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
         "translationSha256": "1d63066158f59039c2fd4f92c32c535f8c1515d54bf8f90f786190ce3a8a350b"
       },
+      "server.api.ranking_metric_type_must.179bda7e": {
+        "method": "agent-authored",
+        "sourceSha256": "179bda7e6a486e1d7861b4322965d405fcf25e162cf4604387953019aa63c08c",
+        "translationSha256": "21094030b025197cb7538839393b8989790c7f3f7719ed69876db6391f20ecbb"
+      },
+      "server.api.ranking_type_must_be.ae1d21f5": {
+        "method": "agent-authored",
+        "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
+        "translationSha256": "30ce4be765c9425a41f560c52a0d45682931323c8b561bf89e684c7b277488e3"
+      },
+      "server.api.streaming_responses_are_unavailable.dbad8099": {
+        "method": "agent-authored",
+        "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
+        "translationSha256": "feebd1e9325f2091af7218b598b042b83d210fc3581ed9d906e133c4211c4195"
+      },
+      "server.api.type_must_be_player.6c2ff66b": {
+        "method": "agent-authored",
+        "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
+        "translationSha256": "3a96763de7bf0539d9bcb926521912cd5c427e3d5e6334e381d92f075eaf8704"
+      },
       "server.api.unsupported_locale": {
         "method": "agent-authored",
         "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
         "translationSha256": "43782893b957cbfa4e88e7d1caf2bf1aab1f4c4f60d58ed86664470f6c56b3e0"
+      },
+      "server.app.cra_books_payload_must.7aa91e61": {
+        "method": "agent-authored",
+        "sourceSha256": "7aa91e61316a66affa876e779876195cdeb205080aea15d60002a9b973f1a0b5",
+        "translationSha256": "5921bda729e245fcba4676a741ee31c1964adcda3f969ab3ee105af291f0331b"
+      },
+      "server.app.cra_support_tools_contain.6615c823": {
+        "method": "agent-authored",
+        "sourceSha256": "6615c82355895557519353a8195c08667e84fdf18cbe205f4e066a04b538671f",
+        "translationSha256": "1e3f8dc20145c6f3d283821205e6d9a1125d495f2a2a0597a1710436c4a213eb"
+      },
+      "server.app.cra_support_troop_count.2d16227f": {
+        "method": "agent-authored",
+        "sourceSha256": "2d16227f086d0faa7d43ecec40583517648b37fdd52d3cbafb4d2da72fcb7ef2",
+        "translationSha256": "2819f957b2937778d7b1f860e56559251d83baca90f16014bb912e4ec3df9011"
       },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
@@ -715,6 +2464,126 @@
       }
     },
     "nl": {
+      "server.api.a_great_empire_source.9c8ad246": {
+        "method": "agent-authored",
+        "sourceSha256": "9c8ad246d5de3d9b9cb3b395ebd9fdfac99ac2f68d162ace82aa5ae6f4ff61b0",
+        "translationSha256": "840348b33bc35085f04f02094f080b7d295c43681112f54e1ddb305cb1c00a92"
+      },
+      "server.api.a_valid_feature_resource.f87fe101": {
+        "method": "agent-authored",
+        "sourceSha256": "f87fe101470d2a11da1d664a8c760bfcea71f75311ad42d81b870465df083b04",
+        "translationSha256": "a73f9e478b864be1542505cc6939f98e2ad959ab84565c9705241ea059e25ef7"
+      },
+      "server.api.activity_channel_was_not.ff46c116": {
+        "method": "agent-authored",
+        "sourceSha256": "ff46c11683461492b2a86140f357429d5da921cd56eda320ae22af63292cff7d",
+        "translationSha256": "c813b442b46334abf4435ae5b121d38cdc9dd09e769639d06c9a58f78918e05e"
+      },
+      "server.api.alliance_id_must_be.de566f1b": {
+        "method": "agent-authored",
+        "sourceSha256": "de566f1bd7d53ab91762707c6fe0c26ea7f18ed9318780b3a746be88212e3b09",
+        "translationSha256": "00d9ba8e3737c24e5374a6364c8bee2eea36862a000e0808c3efbe55a21e00ba"
+      },
+      "server.api.alliance_target_state_is.bbe6e2c6": {
+        "method": "agent-authored",
+        "sourceSha256": "bbe6e2c641aa0107233f184e17627783bfabbfbcef7183c56fc4bf360a14a80f",
+        "translationSha256": "760dea125d78aa37177dd1be8a466e5595784e7d3f9341a2e22c2b3d9b95b7b6"
+      },
+      "server.api.application_update_service_is.e3a45426": {
+        "method": "agent-authored",
+        "sourceSha256": "e3a454266cfcf53602a41ae73249c7da6862edb2d3bf292e289e5a686e8f5c44",
+        "translationSha256": "df75d93f896c1243b87aa5756a8123c49befd5d2cb164f224e13d74ddca93200"
+      },
+      "server.api.at_most_language_keys.6651516a": {
+        "method": "agent-authored",
+        "sourceSha256": "6651516ad4ac3b3eb8d0568022e0aa5d3547ac9c2bed980dd4df2bf72a19e294",
+        "translationSha256": "f46cedd5751303c44fa002bca8d84b7cd0103d76dfa6045b001a9ec0a0f771cf"
+      },
+      "server.api.attack_preview_state_is.34320895": {
+        "method": "agent-authored",
+        "sourceSha256": "343208957e9d6ee1eb47c41475e01957b7bae12be95528477d70621de068945c",
+        "translationSha256": "b31d78ae4faa25ee4789ea39ddb83ba3d07b2289087710c2b55dd70f0e1b9eb7"
+      },
+      "server.api.auto_storm_preview_state.5d110df7": {
+        "method": "agent-authored",
+        "sourceSha256": "5d110df7dbe22caca65c5ef5ed452fc90e0ed927e027654f01e4775f9205ea54",
+        "translationSha256": "a0ebe099b82d2904f7b9c6615518fa2a68d1bfb61e7732e7a50e0ece5bbdf7b0"
+      },
+      "server.api.background_login_can_only.07face08": {
+        "method": "agent-authored",
+        "sourceSha256": "07face08ba75f7bb869fa23ab56d01affadd7add37ad3edd3b8a4f1d25dff4da",
+        "translationSha256": "167684bdeb76e735ba16ee908b8cf234907f5cd6a477fe1a0acfc84a5d1ef5fa"
+      },
+      "server.api.background_login_is_managed.46171e28": {
+        "method": "agent-authored",
+        "sourceSha256": "46171e2858563f77316fd1ded24760a9881b9fda1b4b47451abcf77d13d8564b",
+        "translationSha256": "314c924f9950eac4aa7396df6250a4dbd5feda52d4a36e1e0e617641c5fe3d8d"
+      },
+      "server.api.background_login_requires_an.0f0563fe": {
+        "method": "agent-authored",
+        "sourceSha256": "0f0563fe6b5fef5e5300553d1e9e644be5fdbfec11ff231e06e10ea51fcc9783",
+        "translationSha256": "e23ca1dbaa29ddf5deda2581c2002b39e6fe37e72e18f10573770572480fbc2e"
+      },
+      "server.api.background_login_requires_exactly.1b4110aa": {
+        "method": "agent-authored",
+        "sourceSha256": "1b4110aae0fe866ec55e6c33593cf30cd2234047ed6eb0054b5ddc210492e729",
+        "translationSha256": "7f8e35aa9bedc82bedf5143cd2447d58598ca200127baf992b362b0952961f47"
+      },
+      "server.api.background_login_storage_is.d6340485": {
+        "method": "agent-authored",
+        "sourceSha256": "d6340485a2053de58f3954dafec37b381ed92cd61121713494e2c67f135f8246",
+        "translationSha256": "bb0b02851b18dbe48e5cb3399beb08d60455f15e487ed953af886cd190b95c59"
+      },
+      "server.api.battle_report_analytics_are.1d336a24": {
+        "method": "agent-authored",
+        "sourceSha256": "1d336a24f3fe9380754a74f1220c28bf364eb02c37ce20d79809ff2ae9292c33",
+        "translationSha256": "78f8ae3f12b3642197bdfd86083bb0a603efea56f3bdc9c558396d7811cae855"
+      },
+      "server.api.before_must_be_an.26ccb95f": {
+        "method": "agent-authored",
+        "sourceSha256": "26ccb95faa7d8591ad2626fff4ed0f577215f6cc17a4b373e11c90d0ddc83f97",
+        "translationSha256": "3098d08cb6029c0c84e9694752a677d6ddca2c5d6a297a9f3437e467be7fd69e"
+      },
+      "server.api.castle_state_is_unavailable.8e1c92c4": {
+        "method": "agent-authored",
+        "sourceSha256": "8e1c92c45a9171ef5e2675b3a61b88ffbcf44626de80101e401cc6a76837ca14",
+        "translationSha256": "69f42aa4362cf6f9fb006c52c91e5a06ac4d8bd053ffa9440c2e8336698a49e9"
+      },
+      "server.api.catalog_dataset_key_is.4fc934b8": {
+        "method": "agent-authored",
+        "sourceSha256": "4fc934b89435781dd452f10dafd6a32e23639f166d08c1b32dbeb9bb502ebe3b",
+        "translationSha256": "93a36f7c62e0680fd9afd388243c99f0b59e1d1eb57d920fef8edccb01731348"
+      },
+      "server.api.cloud_battle_reports_are.df76c987": {
+        "method": "agent-authored",
+        "sourceSha256": "df76c9875dbd6a392924c0824a4d7db7ff2668386979fe310760e26ce1904e58",
+        "translationSha256": "7f6b067078eb5f59936613baf8d0a68b43b1635bff44357e35d680a0f822c0f8"
+      },
+      "server.api.configuration_section_p_was.0f11f875": {
+        "method": "agent-authored",
+        "sourceSha256": "0f11f87569bde36567aca3398a810c7b1705ed811d4a0a8260b8b66059ab3146",
+        "translationSha256": "8c33abbf6baa0d4fc64b75799679e512994b167dbb0f51e2cdc84812adfb574f"
+      },
+      "server.api.configuration_store_is_unavailable.623f75fa": {
+        "method": "agent-authored",
+        "sourceSha256": "623f75fa8f115d2649671db006063ebef30fe595722bdf4604aedf25d2dc31b2",
+        "translationSha256": "cd5e7a6256f1802feaaf4fadd0a0a1eea317d90021a9d7431c83e63f8292b209"
+      },
+      "server.api.configuration_update_must_contain.b7eb8212": {
+        "method": "agent-authored",
+        "sourceSha256": "b7eb8212f4be06051c4c9750ee12fe86382a6e6fe4c6be755a1ec2c67b4d5c8a",
+        "translationSha256": "250a2251275b4334c94ef61d5ac89b0e6d59bb9f93b4295fa1d876ae312f4376"
+      },
+      "server.api.crafting_data_is_unavailable.9c4217a2": {
+        "method": "agent-authored",
+        "sourceSha256": "9c4217a2b87bceca02f5873ca373b4002bf2b43869cf05d729218e3110a522a5",
+        "translationSha256": "e5575b4fec668273efc6c82efd9b2482bb02d3b3929878e43af9ad65e6a08956"
+      },
+      "server.api.equipment_state_is_unavailable.20345872": {
+        "method": "agent-authored",
+        "sourceSha256": "20345872aa479f808b0433b87efe9f6a3a84491b402ca7cdfc2b2bdf3e243b5e",
+        "translationSha256": "5394e4cefb125f08d14942b88f8667bb02fb561c7e51cff4fa1a069c973728ba"
+      },
       "server.api.event_occurrence_id_is.3c0ae253": {
         "method": "authored-translation-memory-reuse",
         "originKey": "backend.worldintel.event_occurrence_id_is_invalid",
@@ -733,6 +2602,86 @@
         "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
         "translationSha256": "bc71e8ce53417f411d8916d1544dd89fb91b16d3f30b6230ea3272f5e21ae793"
       },
+      "server.api.expected_p_format_version.c7f24dcd": {
+        "method": "agent-authored",
+        "sourceSha256": "c7f24dcd55d31eb36361f1b19587744780a58965e3fd2c1c1cc201ce1f4ad74d",
+        "translationSha256": "9940a705cdd50a30a5122abecfcdbcd92183304c6d23e41d5e85da64d349ed61"
+      },
+      "server.api.expected_value_p.bfcae137": {
+        "method": "agent-authored",
+        "sourceSha256": "bfcae137caa806cd388b36673c0da3e9b01e1039d3669717d725d5bc5c2e2a38",
+        "translationSha256": "1f721446bb6310fce5a4a9a440fc0bb44a27046d42f6080574f026e928c33930"
+      },
+      "server.api.expectedrevision_is_required.d70fc7d0": {
+        "method": "agent-authored",
+        "sourceSha256": "d70fc7d09a2113129d52b2fe1089306a7def89eaf2345bb9e255f12143965beb",
+        "translationSha256": "f304a838bf8a96696fc6961e80123dfa42c757acb677592d4e56b01755800138"
+      },
+      "server.api.experimental_battle_research_settings.878d9340": {
+        "method": "agent-authored",
+        "sourceSha256": "878d9340802a9238871ee3c247c4a216193b24034a967d0db28b45d4248c542d",
+        "translationSha256": "5b7c4308338fc71d76391e655fc23a5a367a103064fa498ed5274df9eccd56ce"
+      },
+      "server.api.feature_resource_aggregates_are.1437032e": {
+        "method": "agent-authored",
+        "sourceSha256": "1437032ebb01358cacd331a896358af88b668eb08e9a57ee2d381de59307e2f4",
+        "translationSha256": "a56f1bf70c1aa86fcb32872a8f6a555cb2b54d37121876785c6fd25cd3a19fe9"
+      },
+      "server.api.hosted_account_settings_must.248f745f": {
+        "method": "agent-authored",
+        "sourceSha256": "248f745f12fd61a73b08dd257cd6d9ae277f05b028bb5d0c3bc6e15fb1e3389f",
+        "translationSha256": "3e82d6a9c91152552581ee0bfd101c2a36a69ae3c73a9cef38685d77cd8ce810"
+      },
+      "server.api.hosted_account_settings_must.34f84345": {
+        "method": "agent-authored",
+        "sourceSha256": "34f843457a212bcc22258752fb98409befe8c0ba9f9b7d3fbdc6f10cddb25f9e",
+        "translationSha256": "848dda5c8530c56a9813da9cce7c7dc1d556777962ff7263735835e4fb3a96dc"
+      },
+      "server.api.intent_engine_is_unavailable.1b08a55c": {
+        "method": "agent-authored",
+        "sourceSha256": "1b08a55c7d1ff14c5439f08d8daa9dd73577efeeb7b27d852250dc28b855e044",
+        "translationSha256": "1e5342a448c6f170ee62658b8e2fccce2c446a4d0831ed66134003720b239bb5"
+      },
+      "server.api.invalid_building_id_p.cff22953": {
+        "method": "agent-authored",
+        "sourceSha256": "cff2295339b23183e9e91eb8214f518fc5956a3dcc3c9e9b994666e3a8dab37f",
+        "translationSha256": "0e6585b39e275908eab962cc23ae649144c2a1255eb47527c71a4302cd2eb416"
+      },
+      "server.api.invalid_integer_p.8a237a81": {
+        "method": "agent-authored",
+        "sourceSha256": "8a237a81a96b0120a6bed1c6605e939375ad872dfff37b67cb4bad396822a2d0",
+        "translationSha256": "f7aa3b600838367800c903ca18dc8a12e265780e643a44c55dd98069491c4953"
+      },
+      "server.api.invalid_non_negative_integer.acc220c5": {
+        "method": "agent-authored",
+        "sourceSha256": "acc220c56bbc13b0dbae69507d64b08634b94e5ee6c776f814cd7f925171975c",
+        "translationSha256": "0f65835fa964a6ae34039b9db311a20ca900fc3a434dcf083d2fb88834f4bb44"
+      },
+      "server.api.my_stats_retention_did.72cab9de": {
+        "method": "agent-authored",
+        "sourceSha256": "72cab9de00a0db5a7c2f739952f7fafcd6dfacadb1e424e48200a7bbd6e52c64",
+        "translationSha256": "6a6dcaa717d2fa66c68b1a5890b7ad54555993dbfa35040df4cd6d7ba850ff3c"
+      },
+      "server.api.my_stats_retention_must.d59c4907": {
+        "method": "agent-authored",
+        "sourceSha256": "d59c49072189b48c3caa37b59dd72e37430486a708a5fdcb4871ac7974a5350f",
+        "translationSha256": "f82eabf7ce3c78b759cf2b3a85ba9342a79d31c23073c82cb772ea58ee759507"
+      },
+      "server.api.my_stats_storage_policy.f612e323": {
+        "method": "agent-authored",
+        "sourceSha256": "f612e3237ff366209981686d6ef6fc6ae37d106a7a67b6bde640890ae107465c",
+        "translationSha256": "e052270d2ec2fc50490fea668bb05813b46b04cac20501323310e8ece616f88a"
+      },
+      "server.api.no_commander_is_currently.76ae45bb": {
+        "method": "agent-authored",
+        "sourceSha256": "76ae45bb49b1d5087e90c9ddcb25b71dae81fffc2252a349a8aeee53ef62936d",
+        "translationSha256": "dcc2b8c4d8069b7e4fdac70e998113f04469bf11039c156b4e0eb4e6324b35b2"
+      },
+      "server.api.no_p_item_has.9f0c9501": {
+        "method": "agent-authored",
+        "sourceSha256": "9f0c950171b23992b8c53f067eebb0a09e457e16efd3fb9855f720fe2b47047e",
+        "translationSha256": "4280aa3939bf4a68a48e1deb014efd6af3f9c4e33c5b7fa0064cc5e68c550c19"
+      },
       "server.api.official_game_data_is.c5e55e7e": {
         "method": "agent-authored",
         "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
@@ -742,6 +2691,31 @@
         "method": "agent-authored",
         "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
         "translationSha256": "ff4b312f5d9faa8895e644db053db89942161caca3aaa43b95868599f49873b1"
+      },
+      "server.api.operation_is_not_currently.e4e0ac62": {
+        "method": "agent-authored",
+        "sourceSha256": "e4e0ac621279ac3f7b99d6377408265c3ac768e608ef72dbefc275eb4491b0ab",
+        "translationSha256": "b252d4f890cc7a384a65e82b7bd54710fa402e540816ba012d604529219cb42e"
+      },
+      "server.api.operation_limit_must_be.bb724cb5": {
+        "method": "agent-authored",
+        "sourceSha256": "bb724cb58f3606540ba730c018d086eca2a8d603c9a0aa8d9e80e2fb9fe76a18",
+        "translationSha256": "0ab02cef14619503a140e6eee6e8a3cd4bc2bd608c0e987e0d4ff3ecd2f07241"
+      },
+      "server.api.operation_was_not_found.b8363d5a": {
+        "method": "agent-authored",
+        "sourceSha256": "b8363d5a08b69b5a9f0ecdfabd870d9d0881d3b3b7fc1157ee22bd9b4441896d",
+        "translationSha256": "fafb6c9bfe40d6e2b340a668ab90bbd3661131daf189667072fae30674c16f0a"
+      },
+      "server.api.player_history_is_unavailable.3ee991d7": {
+        "method": "agent-authored",
+        "sourceSha256": "3ee991d7387d462fc40d0e98c5a82b465cd2b038a70ac69e7e3748d74bf05521",
+        "translationSha256": "1f1a05fb5c8c6c69d130816d6422ff92ea374a64236221d48131094ba1ebeacc"
+      },
+      "server.api.player_id_must_be.1cf49a4b": {
+        "method": "agent-authored",
+        "sourceSha256": "1cf49a4b547e6d1cd2b0355cf91e523e67291bc972432a80e13559ca3d342f2c",
+        "translationSha256": "1253fe1a80c4eb9fbffbd8c14105764d0d795090aeab93537e05288fc135d70b"
       },
       "server.api.ranking_metric_type_must.179bda7e": {
         "method": "authored-translation-memory-reuse",
@@ -761,6 +2735,56 @@
         "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
         "translationSha256": "92216bbba38ecf669208254dec40f02c93e309f5881fab9234b7de012b5f8929"
       },
+      "server.api.report_history_is_unavailable.4a955e49": {
+        "method": "agent-authored",
+        "sourceSha256": "4a955e492186f1af8fc9a287e90880eccdd3659e2b1c0b2959629e126ee28885",
+        "translationSha256": "d3644d6330906a42e0bac337a8fcad11c12a2d5b45a5be2bfb28e798936542d5"
+      },
+      "server.api.retention_or_recordingintervalseconds_is.1929acc3": {
+        "method": "agent-authored",
+        "sourceSha256": "1929acc3a13ab2b6ad2b596ac8f48b10512861c1846300228adb3d12033be56a",
+        "translationSha256": "217e16f14b29ea2f6b12c3f6abd8619c066bed710699fce790ee1e98693fcc06"
+      },
+      "server.api.retention_update_must_contain.1f5679c7": {
+        "method": "agent-authored",
+        "sourceSha256": "1f5679c73d7036d47afa9e6e6bd6169a32bee6926e6edc25521e7878ac9086b5",
+        "translationSha256": "a5100ecc93c68728e15875696a7f036a22a71b96519475eeaf4ff55b5f13d7c8"
+      },
+      "server.api.runtime_diagnostics_are_unavailable.1b27e807": {
+        "method": "agent-authored",
+        "sourceSha256": "1b27e807378afd41c4dec508af5e5ebddeeafb40e85ab472dd59ea0cb4870943",
+        "translationSha256": "c595dbb246311ed14afdcd7467f3118c1e5e518519061d352ae9e778d8496c67"
+      },
+      "server.api.settings_bundle_contains_no.cb029f76": {
+        "method": "agent-authored",
+        "sourceSha256": "cb029f765624b262f864167d188d1149ba7d479c97cc720516a2c20a87da3969",
+        "translationSha256": "8a5f1c16d2ff19235f0a45abfdac12a02287c6ca01d154b5f85b93be81ae51df"
+      },
+      "server.api.settings_bundle_may_contain.633b2609": {
+        "method": "agent-authored",
+        "sourceSha256": "633b26091b8bdfb815202708d3d0b32bcad3f4f4f48dd3151fbc2ebd6f430ef4",
+        "translationSha256": "93d5fa850b8f5b3464d0e863168a091cee4535da1e57ab72a1c433e3c68b473b"
+      },
+      "server.api.settings_bundle_must_contain.08db41d4": {
+        "method": "agent-authored",
+        "sourceSha256": "08db41d4eeeba49e266075f37b669333cba667181a4f313fa2260d4802ead49b",
+        "translationSha256": "fc8576455b9c9b94e54b527b028e9c533fd90adc6760b8e4ab3620de221d87a0"
+      },
+      "server.api.settings_use_configuration_schema.dff2877d": {
+        "method": "agent-authored",
+        "sourceSha256": "dff2877dcb7dec8ba38bba8b558aab930c8792447a966042e039319281e739f4",
+        "translationSha256": "df1ad0707ec57d9457da937c28290f947d34d2404ecfefabd8f3d01695882dfc"
+      },
+      "server.api.since_must_be_an.0b73d3e3": {
+        "method": "agent-authored",
+        "sourceSha256": "0b73d3e34309cbd1459ee93dea19aeaff9a23bba6624a9e5ba5987140d0c0e20",
+        "translationSha256": "773cd2beceae7f106b93a6ff6a0fee594b485c650ba91d56f682bd7a7596ad99"
+      },
+      "server.api.state_store_is_unavailable.e4a65fe1": {
+        "method": "agent-authored",
+        "sourceSha256": "e4a65fe12efe676c70f19a33f93e1f818693fdb3e1a16a139c6f2432f06306d6",
+        "translationSha256": "922a6b602349ab5ba69e5706c6b576b7885d340f1ca0961bbae58bb82df7ff28"
+      },
       "server.api.streaming_responses_are_unavailable.dbad8099": {
         "method": "authored-translation-memory-reuse",
         "originKey": "backend.worldintel.streaming_responses_are_unavailable",
@@ -769,6 +2793,26 @@
         "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
         "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
         "translationSha256": "f3db50b3b62f075385a8f7fcb36a6736f2806d65ec786263b1d58073b05d471b"
+      },
+      "server.api.target_castle_type_and.5cc2dff3": {
+        "method": "agent-authored",
+        "sourceSha256": "5cc2dff38046c60798c942a3fd9733678c9bad8ed7fdc06f0690a0d41e1c882e",
+        "translationSha256": "37fdee0896bea8d2ed549f0a891ee526f4e9a1cefb499fc42ff44705b2249816"
+      },
+      "server.api.telemetry_is_unavailable.3daba4e0": {
+        "method": "agent-authored",
+        "sourceSha256": "3daba4e042684dff0e0bffbbcc8dd2b7a173ef38f8c48c9aa8480b65208401ba",
+        "translationSha256": "8063307b99b6d7a539d32d1e181e81f49696950e91f56833e4dc3800610ed723"
+      },
+      "server.api.the_selected_castle_inventory.cfa17b56": {
+        "method": "agent-authored",
+        "sourceSha256": "cfa17b56dd1883d87a4ad0ab13d684eda24f3f1b86e1b90be15985efbf4d0452",
+        "translationSha256": "edb7491b2cefd5e8e3a70f834398bb12f947c87f9efcae4ab866bb205286192b"
+      },
+      "server.api.the_selected_source_is.851ff7c7": {
+        "method": "agent-authored",
+        "sourceSha256": "851ff7c736e0d33b0d0949393e9cbe6c4356abb471dd9fb85d2b80e78fe2e95b",
+        "translationSha256": "0a0a144c3e4a66018ddbf23583bb19cff77925bb411b9a815031e73d780dc661"
       },
       "server.api.type_must_be_player.6c2ff66b": {
         "method": "authored-translation-memory-reuse",
@@ -779,10 +2823,35 @@
         "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
         "translationSha256": "bc236adf9169051f92b85545235c3255b1cecab91950aba7e3353c9bb98fbd27"
       },
+      "server.api.unknown_my_stats_recording.daeaf92b": {
+        "method": "agent-authored",
+        "sourceSha256": "daeaf92b9e38af6cf29a8132736bc508c9acc8bd5e08b9c79282047488cc2f35",
+        "translationSha256": "a1c8a35212331243255d5675aebfb0979de99cf72b9f556bcc3a45c9fff10bd7"
+      },
+      "server.api.unknown_my_stats_retention.24bc3955": {
+        "method": "agent-authored",
+        "sourceSha256": "24bc39552e6243db7d357548aa597ecae3bbac6e07d8dc30078746eb9a346f18",
+        "translationSha256": "ddb164f34697a2c393c60f70d4dbfc8dc6772304575cda2230d4d5a593264312"
+      },
+      "server.api.unsupported_api_contract_version.4fd51ab3": {
+        "method": "agent-authored",
+        "sourceSha256": "4fd51ab3e04798ebd573740a88ee2b903aa58ac05b20e18626ede436a0f3d161",
+        "translationSha256": "ef595b941138288c7d587476b6f3dee227029f95339df8e10ad3b91cf9bf830e"
+      },
       "server.api.unsupported_locale": {
         "method": "agent-authored",
         "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
         "translationSha256": "cf13132372b0fddec4aaf82a4e2e28d4348fa92ce71d9107dfc1727db6d19197"
+      },
+      "server.api.unsupported_websocket_message_type.d8c1ddd3": {
+        "method": "agent-authored",
+        "sourceSha256": "d8c1ddd3c8425af1a8d4823f41ff711cf85d0216680a3ff17db73531d08b800d",
+        "translationSha256": "c94c59522cdb6d4701e99378f16c52f7cb46a0741484ee14eebdc411357b7c70"
+      },
+      "server.api.world_intelligence_is_unavailable.8bd6d197": {
+        "method": "agent-authored",
+        "sourceSha256": "8bd6d197eb280445ba03d0ab515e2b314ce1831dc80761eaeede2c5b5357b9a3",
+        "translationSha256": "45d18940333ee337adbbe852bf03e764def367ff36a685f6c45960211c5efb74"
       },
       "server.app.cra_books_payload_must.7aa91e61": {
         "method": "authored-translation-memory-reuse",
@@ -1024,6 +3093,126 @@
       }
     },
     "pt": {
+      "server.api.a_great_empire_source.9c8ad246": {
+        "method": "agent-authored",
+        "sourceSha256": "9c8ad246d5de3d9b9cb3b395ebd9fdfac99ac2f68d162ace82aa5ae6f4ff61b0",
+        "translationSha256": "5da84d8181d5b347a7c2be87de45f530e6d36d7b7f0f2fe4e6d9373dc9f52889"
+      },
+      "server.api.a_valid_feature_resource.f87fe101": {
+        "method": "agent-authored",
+        "sourceSha256": "f87fe101470d2a11da1d664a8c760bfcea71f75311ad42d81b870465df083b04",
+        "translationSha256": "28a04df68ff9e32275cb2987a857901522111ae61b5661d1578354439799971d"
+      },
+      "server.api.activity_channel_was_not.ff46c116": {
+        "method": "agent-authored",
+        "sourceSha256": "ff46c11683461492b2a86140f357429d5da921cd56eda320ae22af63292cff7d",
+        "translationSha256": "18c49fff82a79e1bfafd36826fdf9c8f3ef7347bd56c27cfc40269d49abb39c7"
+      },
+      "server.api.alliance_id_must_be.de566f1b": {
+        "method": "agent-authored",
+        "sourceSha256": "de566f1bd7d53ab91762707c6fe0c26ea7f18ed9318780b3a746be88212e3b09",
+        "translationSha256": "0e6abb75180e1a33ca6c1dd9535181fad424a500db6a576e016fc210d3fe6b4b"
+      },
+      "server.api.alliance_target_state_is.bbe6e2c6": {
+        "method": "agent-authored",
+        "sourceSha256": "bbe6e2c641aa0107233f184e17627783bfabbfbcef7183c56fc4bf360a14a80f",
+        "translationSha256": "f5cfcfb3d4a29bedfe905230bbe825ed3a599434518f253360fbdb163d36c3b0"
+      },
+      "server.api.application_update_service_is.e3a45426": {
+        "method": "agent-authored",
+        "sourceSha256": "e3a454266cfcf53602a41ae73249c7da6862edb2d3bf292e289e5a686e8f5c44",
+        "translationSha256": "e0d12edc9fe0efb57c404b90c63da344465c177652ba55f6ed4136aa910bbf8f"
+      },
+      "server.api.at_most_language_keys.6651516a": {
+        "method": "agent-authored",
+        "sourceSha256": "6651516ad4ac3b3eb8d0568022e0aa5d3547ac9c2bed980dd4df2bf72a19e294",
+        "translationSha256": "3f3427bfeceb2ae2a1e0a67b449e6322e884ffc8e3e501c7ea18e9fca8aef058"
+      },
+      "server.api.attack_preview_state_is.34320895": {
+        "method": "agent-authored",
+        "sourceSha256": "343208957e9d6ee1eb47c41475e01957b7bae12be95528477d70621de068945c",
+        "translationSha256": "4ca5d8fa49c1ed8dae72d316a2d40d1c4daee7e90ec4d8469aec6df23d7b5c9a"
+      },
+      "server.api.auto_storm_preview_state.5d110df7": {
+        "method": "agent-authored",
+        "sourceSha256": "5d110df7dbe22caca65c5ef5ed452fc90e0ed927e027654f01e4775f9205ea54",
+        "translationSha256": "cb8265ebccab7bf484ee834b28c80c5070ba14bc5fe1ca20b083cb3f9bbfd4f8"
+      },
+      "server.api.background_login_can_only.07face08": {
+        "method": "agent-authored",
+        "sourceSha256": "07face08ba75f7bb869fa23ab56d01affadd7add37ad3edd3b8a4f1d25dff4da",
+        "translationSha256": "b2919de21c354a1bc49bbc22f0d28f0f7ba4178357182aa1c17fa0140295fec3"
+      },
+      "server.api.background_login_is_managed.46171e28": {
+        "method": "agent-authored",
+        "sourceSha256": "46171e2858563f77316fd1ded24760a9881b9fda1b4b47451abcf77d13d8564b",
+        "translationSha256": "813f2084552a99bcbfc0d72ff9437cd071bb44b93b2187973d44a6853c742ba0"
+      },
+      "server.api.background_login_requires_an.0f0563fe": {
+        "method": "agent-authored",
+        "sourceSha256": "0f0563fe6b5fef5e5300553d1e9e644be5fdbfec11ff231e06e10ea51fcc9783",
+        "translationSha256": "51576a0eb52c716a2fa76d652ff66906976569c64b414e519513f77746c0d627"
+      },
+      "server.api.background_login_requires_exactly.1b4110aa": {
+        "method": "agent-authored",
+        "sourceSha256": "1b4110aae0fe866ec55e6c33593cf30cd2234047ed6eb0054b5ddc210492e729",
+        "translationSha256": "16a4b98a698060c26ea4707cb077684876257b0d86cb845fc5297ffa004df8ae"
+      },
+      "server.api.background_login_storage_is.d6340485": {
+        "method": "agent-authored",
+        "sourceSha256": "d6340485a2053de58f3954dafec37b381ed92cd61121713494e2c67f135f8246",
+        "translationSha256": "b8a03013591417fa0025fcf496c78f27bef71ce7370847eafea4b7cd2cc4b8cd"
+      },
+      "server.api.battle_report_analytics_are.1d336a24": {
+        "method": "agent-authored",
+        "sourceSha256": "1d336a24f3fe9380754a74f1220c28bf364eb02c37ce20d79809ff2ae9292c33",
+        "translationSha256": "6960f9a1bf913d16d186831c8986142a8fc3e6ede9f6fef52ecf849b3413f2e9"
+      },
+      "server.api.before_must_be_an.26ccb95f": {
+        "method": "agent-authored",
+        "sourceSha256": "26ccb95faa7d8591ad2626fff4ed0f577215f6cc17a4b373e11c90d0ddc83f97",
+        "translationSha256": "d5b9a46a791e0d34caa6df5efe5ae5ef31e601c27e4eb8227cce7662b56a3191"
+      },
+      "server.api.castle_state_is_unavailable.8e1c92c4": {
+        "method": "agent-authored",
+        "sourceSha256": "8e1c92c45a9171ef5e2675b3a61b88ffbcf44626de80101e401cc6a76837ca14",
+        "translationSha256": "62ded75d9b1567799530efa01c0f6b1f6cb13e168d13f36c6ebc6aa08a454a7a"
+      },
+      "server.api.catalog_dataset_key_is.4fc934b8": {
+        "method": "agent-authored",
+        "sourceSha256": "4fc934b89435781dd452f10dafd6a32e23639f166d08c1b32dbeb9bb502ebe3b",
+        "translationSha256": "e924571caa516e3a8e2b1a42f3ab773a444f34e3873009858ca29b0519b6e4bf"
+      },
+      "server.api.cloud_battle_reports_are.df76c987": {
+        "method": "agent-authored",
+        "sourceSha256": "df76c9875dbd6a392924c0824a4d7db7ff2668386979fe310760e26ce1904e58",
+        "translationSha256": "831da8094c61abdd75b4f3195b41ad0c30209ddcc516621c2a3b775951910bd0"
+      },
+      "server.api.configuration_section_p_was.0f11f875": {
+        "method": "agent-authored",
+        "sourceSha256": "0f11f87569bde36567aca3398a810c7b1705ed811d4a0a8260b8b66059ab3146",
+        "translationSha256": "fd1376baa19525218b74f220c4c3fd63fc287861832d7e7e3d239656665781d7"
+      },
+      "server.api.configuration_store_is_unavailable.623f75fa": {
+        "method": "agent-authored",
+        "sourceSha256": "623f75fa8f115d2649671db006063ebef30fe595722bdf4604aedf25d2dc31b2",
+        "translationSha256": "85ae756e4fa611fdc8cc1d27e81a011098218a1e54ebff8f9466789080021031"
+      },
+      "server.api.configuration_update_must_contain.b7eb8212": {
+        "method": "agent-authored",
+        "sourceSha256": "b7eb8212f4be06051c4c9750ee12fe86382a6e6fe4c6be755a1ec2c67b4d5c8a",
+        "translationSha256": "bbcafec1bf848f090999ed4fd43cc640079d63261868e9652b1b84b8b740d480"
+      },
+      "server.api.crafting_data_is_unavailable.9c4217a2": {
+        "method": "agent-authored",
+        "sourceSha256": "9c4217a2b87bceca02f5873ca373b4002bf2b43869cf05d729218e3110a522a5",
+        "translationSha256": "38a6ffb36d86918357219debef29222bbb95eacc7bed79134c2f449207821d51"
+      },
+      "server.api.equipment_state_is_unavailable.20345872": {
+        "method": "agent-authored",
+        "sourceSha256": "20345872aa479f808b0433b87efe9f6a3a84491b402ca7cdfc2b2bdf3e243b5e",
+        "translationSha256": "d19c893d75e4f20bc561d0f1e7e100b85384c629c601cc7f5dd3b902177f2d4b"
+      },
       "server.api.event_occurrence_id_is.3c0ae253": {
         "method": "authored-translation-memory-reuse",
         "originKey": "backend.worldintel.event_occurrence_id_is_invalid",
@@ -1042,6 +3231,86 @@
         "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
         "translationSha256": "8b4c1614443e7e2bcd64a89100507a5f13b09d05f33c7db072a8b56eae149328"
       },
+      "server.api.expected_p_format_version.c7f24dcd": {
+        "method": "agent-authored",
+        "sourceSha256": "c7f24dcd55d31eb36361f1b19587744780a58965e3fd2c1c1cc201ce1f4ad74d",
+        "translationSha256": "0ac806b772995a1d8e9787803058cefe53a12988f8b6f8261901da1f8b84ec06"
+      },
+      "server.api.expected_value_p.bfcae137": {
+        "method": "agent-authored",
+        "sourceSha256": "bfcae137caa806cd388b36673c0da3e9b01e1039d3669717d725d5bc5c2e2a38",
+        "translationSha256": "dcce0e1fa3d9ed84dfd43c4c65798b6bf5d7d5d5be0923451a5039ca0f46c749"
+      },
+      "server.api.expectedrevision_is_required.d70fc7d0": {
+        "method": "agent-authored",
+        "sourceSha256": "d70fc7d09a2113129d52b2fe1089306a7def89eaf2345bb9e255f12143965beb",
+        "translationSha256": "b1e516aa16ee06b1917afcf7116f73c203e15f2e9b5c53b17becd87e0ce93ac8"
+      },
+      "server.api.experimental_battle_research_settings.878d9340": {
+        "method": "agent-authored",
+        "sourceSha256": "878d9340802a9238871ee3c247c4a216193b24034a967d0db28b45d4248c542d",
+        "translationSha256": "3d124b71ea16ee85f385dffb29321a8c91dd9d1485addb2913a3f087f215ed20"
+      },
+      "server.api.feature_resource_aggregates_are.1437032e": {
+        "method": "agent-authored",
+        "sourceSha256": "1437032ebb01358cacd331a896358af88b668eb08e9a57ee2d381de59307e2f4",
+        "translationSha256": "97d0aae0d7efd491d71895aa58ba676ba33b3f32d86f430b0bf0941b62b2dacb"
+      },
+      "server.api.hosted_account_settings_must.248f745f": {
+        "method": "agent-authored",
+        "sourceSha256": "248f745f12fd61a73b08dd257cd6d9ae277f05b028bb5d0c3bc6e15fb1e3389f",
+        "translationSha256": "9c8b249dc7a0a495ea1143154bdd67c890982d1370a8c75783976ea8b034c5dc"
+      },
+      "server.api.hosted_account_settings_must.34f84345": {
+        "method": "agent-authored",
+        "sourceSha256": "34f843457a212bcc22258752fb98409befe8c0ba9f9b7d3fbdc6f10cddb25f9e",
+        "translationSha256": "fc69c9839173ed6bf372ef90c95486ef0e345400438baadcdf230feb8f9c8f3e"
+      },
+      "server.api.intent_engine_is_unavailable.1b08a55c": {
+        "method": "agent-authored",
+        "sourceSha256": "1b08a55c7d1ff14c5439f08d8daa9dd73577efeeb7b27d852250dc28b855e044",
+        "translationSha256": "0ebcf7b11b80a473c1c9fadce9d4f60a9e8a5946fb22cc43fe26037b801d45ec"
+      },
+      "server.api.invalid_building_id_p.cff22953": {
+        "method": "agent-authored",
+        "sourceSha256": "cff2295339b23183e9e91eb8214f518fc5956a3dcc3c9e9b994666e3a8dab37f",
+        "translationSha256": "c124fd1c93202908fd630fe30346ef78c73b003f906a9bb0d3481c00d20c5d0d"
+      },
+      "server.api.invalid_integer_p.8a237a81": {
+        "method": "agent-authored",
+        "sourceSha256": "8a237a81a96b0120a6bed1c6605e939375ad872dfff37b67cb4bad396822a2d0",
+        "translationSha256": "ea78883cd08599e954805d8bc98de5c14c735bf98a7d13fd7902777b5eeac86d"
+      },
+      "server.api.invalid_non_negative_integer.acc220c5": {
+        "method": "agent-authored",
+        "sourceSha256": "acc220c56bbc13b0dbae69507d64b08634b94e5ee6c776f814cd7f925171975c",
+        "translationSha256": "c4c7d98ac25786eaa6a90b0c00e545b611058225a80a13fd413f8e7b41330710"
+      },
+      "server.api.my_stats_retention_did.72cab9de": {
+        "method": "agent-authored",
+        "sourceSha256": "72cab9de00a0db5a7c2f739952f7fafcd6dfacadb1e424e48200a7bbd6e52c64",
+        "translationSha256": "3455f2e56f4d9a3987314136310089e21763827019a7af4b55c938e5d0676dda"
+      },
+      "server.api.my_stats_retention_must.d59c4907": {
+        "method": "agent-authored",
+        "sourceSha256": "d59c49072189b48c3caa37b59dd72e37430486a708a5fdcb4871ac7974a5350f",
+        "translationSha256": "8686f3d9742464730a925befe5c10c3d20540cf9f4bd2254d4382983601429a2"
+      },
+      "server.api.my_stats_storage_policy.f612e323": {
+        "method": "agent-authored",
+        "sourceSha256": "f612e3237ff366209981686d6ef6fc6ae37d106a7a67b6bde640890ae107465c",
+        "translationSha256": "3cc1ac4f30d1d36941c146136f3439ab3b0e8a9787ff367fbe3bb2dddf47162e"
+      },
+      "server.api.no_commander_is_currently.76ae45bb": {
+        "method": "agent-authored",
+        "sourceSha256": "76ae45bb49b1d5087e90c9ddcb25b71dae81fffc2252a349a8aeee53ef62936d",
+        "translationSha256": "df01ccb8295b1e83b1f39b4b0ebbf6c2fadc6c15a67b55dd1a035a6a376d2659"
+      },
+      "server.api.no_p_item_has.9f0c9501": {
+        "method": "agent-authored",
+        "sourceSha256": "9f0c950171b23992b8c53f067eebb0a09e457e16efd3fb9855f720fe2b47047e",
+        "translationSha256": "70a5e46ed6db53b9167fc386a0cce524a7f5dd19046625908abe5f78d44ac632"
+      },
       "server.api.official_game_data_is.c5e55e7e": {
         "method": "agent-authored",
         "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
@@ -1051,6 +3320,31 @@
         "method": "agent-authored",
         "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
         "translationSha256": "0da9fe73145c2c4f51d9df672f8ae650339d78c21e3046731497198f2d17a706"
+      },
+      "server.api.operation_is_not_currently.e4e0ac62": {
+        "method": "agent-authored",
+        "sourceSha256": "e4e0ac621279ac3f7b99d6377408265c3ac768e608ef72dbefc275eb4491b0ab",
+        "translationSha256": "94aed089340711125cee8627d12808f104ae4f8acec24210d75c0e459e927a85"
+      },
+      "server.api.operation_limit_must_be.bb724cb5": {
+        "method": "agent-authored",
+        "sourceSha256": "bb724cb58f3606540ba730c018d086eca2a8d603c9a0aa8d9e80e2fb9fe76a18",
+        "translationSha256": "c5c61f208921cda02c16244e393cc1cbde10af1abb870703fc36c23bd696d307"
+      },
+      "server.api.operation_was_not_found.b8363d5a": {
+        "method": "agent-authored",
+        "sourceSha256": "b8363d5a08b69b5a9f0ecdfabd870d9d0881d3b3b7fc1157ee22bd9b4441896d",
+        "translationSha256": "1ecf82efb5802ca92f91b6000f12422265b992db1dd40a67b2e2cc93be0a7957"
+      },
+      "server.api.player_history_is_unavailable.3ee991d7": {
+        "method": "agent-authored",
+        "sourceSha256": "3ee991d7387d462fc40d0e98c5a82b465cd2b038a70ac69e7e3748d74bf05521",
+        "translationSha256": "bd9fce6d06c6e08ea8fef8d9fc28303523cb8cdf3a468583f2ebb86864787100"
+      },
+      "server.api.player_id_must_be.1cf49a4b": {
+        "method": "agent-authored",
+        "sourceSha256": "1cf49a4b547e6d1cd2b0355cf91e523e67291bc972432a80e13559ca3d342f2c",
+        "translationSha256": "a534deb03010b48a3ef586737cdf45d3e17abd7810a1b21c87f7e9af88060cbc"
       },
       "server.api.ranking_metric_type_must.179bda7e": {
         "method": "authored-translation-memory-reuse",
@@ -1070,6 +3364,56 @@
         "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
         "translationSha256": "b1226bad2e5081475d86ccc5c455cea1f185f107921f141b3b2c6563bca83dd3"
       },
+      "server.api.report_history_is_unavailable.4a955e49": {
+        "method": "agent-authored",
+        "sourceSha256": "4a955e492186f1af8fc9a287e90880eccdd3659e2b1c0b2959629e126ee28885",
+        "translationSha256": "95fdd65c1016cbdbdc5360980f866abca28fae42abc9eecaddd351cbe5733e98"
+      },
+      "server.api.retention_or_recordingintervalseconds_is.1929acc3": {
+        "method": "agent-authored",
+        "sourceSha256": "1929acc3a13ab2b6ad2b596ac8f48b10512861c1846300228adb3d12033be56a",
+        "translationSha256": "48b181e72a301a994d7c8d86c62bb34fec12b8579c91f2cdc2299f1f7bb9e7d0"
+      },
+      "server.api.retention_update_must_contain.1f5679c7": {
+        "method": "agent-authored",
+        "sourceSha256": "1f5679c73d7036d47afa9e6e6bd6169a32bee6926e6edc25521e7878ac9086b5",
+        "translationSha256": "5807266720fa383cc9870f6c297fd30a970c6e5b858e54a056b842f9e0f52635"
+      },
+      "server.api.runtime_diagnostics_are_unavailable.1b27e807": {
+        "method": "agent-authored",
+        "sourceSha256": "1b27e807378afd41c4dec508af5e5ebddeeafb40e85ab472dd59ea0cb4870943",
+        "translationSha256": "6dfd428dd133993f47907bd7bdf153253bf46f037d3aaba305d32bf4e3e080de"
+      },
+      "server.api.settings_bundle_contains_no.cb029f76": {
+        "method": "agent-authored",
+        "sourceSha256": "cb029f765624b262f864167d188d1149ba7d479c97cc720516a2c20a87da3969",
+        "translationSha256": "cf8da7880de875440a441304a281bb84881a4b526c9ec98bc8c4fe11b12cd6a1"
+      },
+      "server.api.settings_bundle_may_contain.633b2609": {
+        "method": "agent-authored",
+        "sourceSha256": "633b26091b8bdfb815202708d3d0b32bcad3f4f4f48dd3151fbc2ebd6f430ef4",
+        "translationSha256": "3fd02aa6643f96e32569c3bf3c6fc2e0340a16da7ce5a21ca4aa2a56230913f0"
+      },
+      "server.api.settings_bundle_must_contain.08db41d4": {
+        "method": "agent-authored",
+        "sourceSha256": "08db41d4eeeba49e266075f37b669333cba667181a4f313fa2260d4802ead49b",
+        "translationSha256": "639b74f1c8474af0fc15b73939494dbb6a0532a3118143593b5c02fa3ab2ffea"
+      },
+      "server.api.settings_use_configuration_schema.dff2877d": {
+        "method": "agent-authored",
+        "sourceSha256": "dff2877dcb7dec8ba38bba8b558aab930c8792447a966042e039319281e739f4",
+        "translationSha256": "ff5f2e0cd24b22786565680c2440b782628a3240fb16815b6af7162f25b2b4b0"
+      },
+      "server.api.since_must_be_an.0b73d3e3": {
+        "method": "agent-authored",
+        "sourceSha256": "0b73d3e34309cbd1459ee93dea19aeaff9a23bba6624a9e5ba5987140d0c0e20",
+        "translationSha256": "d36df0ddc953d8ba16e94be5f74c2277ae9ec6f610bece713f0687ecc43e88ec"
+      },
+      "server.api.state_store_is_unavailable.e4a65fe1": {
+        "method": "agent-authored",
+        "sourceSha256": "e4a65fe12efe676c70f19a33f93e1f818693fdb3e1a16a139c6f2432f06306d6",
+        "translationSha256": "e325fdaa3467b5ea219aa5fdb482a01e7f7403ef7ac4b2cb752862709f114795"
+      },
       "server.api.streaming_responses_are_unavailable.dbad8099": {
         "method": "authored-translation-memory-reuse",
         "originKey": "backend.worldintel.streaming_responses_are_unavailable",
@@ -1078,6 +3422,26 @@
         "semanticReview": "Same protocol/API validation meaning; machine enum values retained.",
         "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
         "translationSha256": "fb3c2ef9ccefd08b16e98610ead69ee0897c259d2cbd3223792296510eb85eec"
+      },
+      "server.api.target_castle_type_and.5cc2dff3": {
+        "method": "agent-authored",
+        "sourceSha256": "5cc2dff38046c60798c942a3fd9733678c9bad8ed7fdc06f0690a0d41e1c882e",
+        "translationSha256": "eb39151dd3a0a4643ee8639aacf4bb00d44ec494324a775fe3f4d7e120281f52"
+      },
+      "server.api.telemetry_is_unavailable.3daba4e0": {
+        "method": "agent-authored",
+        "sourceSha256": "3daba4e042684dff0e0bffbbcc8dd2b7a173ef38f8c48c9aa8480b65208401ba",
+        "translationSha256": "7c3468b8be8c20bd5dca339c844589da6e13a42ca6f515e4d14efbe4c001083d"
+      },
+      "server.api.the_selected_castle_inventory.cfa17b56": {
+        "method": "agent-authored",
+        "sourceSha256": "cfa17b56dd1883d87a4ad0ab13d684eda24f3f1b86e1b90be15985efbf4d0452",
+        "translationSha256": "b369a106ccc244a5ca1e1413479507a656a585f3cb0557ea9830452c0b5fb68a"
+      },
+      "server.api.the_selected_source_is.851ff7c7": {
+        "method": "agent-authored",
+        "sourceSha256": "851ff7c736e0d33b0d0949393e9cbe6c4356abb471dd9fb85d2b80e78fe2e95b",
+        "translationSha256": "01638acdfd3f7939f847b3dfc299653ee0d7a1fd075c8215409e0eca895025e2"
       },
       "server.api.type_must_be_player.6c2ff66b": {
         "method": "authored-translation-memory-reuse",
@@ -1088,10 +3452,35 @@
         "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
         "translationSha256": "223d9c75531e1e1f6819b8bf83e5ec9010b8ddc8ea43b9571ef51190d1d1ffc3"
       },
+      "server.api.unknown_my_stats_recording.daeaf92b": {
+        "method": "agent-authored",
+        "sourceSha256": "daeaf92b9e38af6cf29a8132736bc508c9acc8bd5e08b9c79282047488cc2f35",
+        "translationSha256": "fdd07b442b9c5bef4cfe1234a16324e5eab00c56dba11e4a0aa067dc1f38eb3f"
+      },
+      "server.api.unknown_my_stats_retention.24bc3955": {
+        "method": "agent-authored",
+        "sourceSha256": "24bc39552e6243db7d357548aa597ecae3bbac6e07d8dc30078746eb9a346f18",
+        "translationSha256": "6d8136a7d7a4f49e01a3e9b9a16a9f0b8bd4bfa99b87f859f97fae5bb07ae5c1"
+      },
+      "server.api.unsupported_api_contract_version.4fd51ab3": {
+        "method": "agent-authored",
+        "sourceSha256": "4fd51ab3e04798ebd573740a88ee2b903aa58ac05b20e18626ede436a0f3d161",
+        "translationSha256": "41491a9138622700b043f68898cd80d360d7102134c259051d96e20a00dd2dc4"
+      },
       "server.api.unsupported_locale": {
         "method": "agent-authored",
         "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
         "translationSha256": "3b54fe7d07afe61c456bcd325d423a797c70373dfd7b3a1c70fee88441d05803"
+      },
+      "server.api.unsupported_websocket_message_type.d8c1ddd3": {
+        "method": "agent-authored",
+        "sourceSha256": "d8c1ddd3c8425af1a8d4823f41ff711cf85d0216680a3ff17db73531d08b800d",
+        "translationSha256": "f14a9d5adda7cafab5eaa2709acd90e75ae26e50966ea584730c6092ff7339af"
+      },
+      "server.api.world_intelligence_is_unavailable.8bd6d197": {
+        "method": "agent-authored",
+        "sourceSha256": "8bd6d197eb280445ba03d0ab515e2b314ce1831dc80761eaeede2c5b5357b9a3",
+        "translationSha256": "cdfa38137368390de6f3bec095f78d69a7f047c541ef8e11ff988e089170bc2e"
       },
       "server.app.cra_books_payload_must.7aa91e61": {
         "method": "authored-translation-memory-reuse",
@@ -1127,6 +3516,16 @@
       }
     },
     "ro": {
+      "server.api.event_occurrence_id_is.3c0ae253": {
+        "method": "agent-authored",
+        "sourceSha256": "3c0ae253fa0225afd286348edcde8c7e8c9dac41d833d90741ee71a5e63228c4",
+        "translationSha256": "e50babde5067c0c061f8afc79a9c1196f8df4a0f4ac9478c67e1d218b6d61123"
+      },
+      "server.api.eventkey_is_invalid.5fa0f899": {
+        "method": "agent-authored",
+        "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
+        "translationSha256": "f5c59d47fd7ad97d7082b883ef97b8e5bac4ff102c07be59af73b4933ee65f26"
+      },
       "server.api.official_game_data_is.c5e55e7e": {
         "method": "agent-authored",
         "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
@@ -1137,10 +3536,45 @@
         "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
         "translationSha256": "4db0620310bf029992713de5d70eee628f06d3b561d3a03880829382c757bc98"
       },
+      "server.api.ranking_metric_type_must.179bda7e": {
+        "method": "agent-authored",
+        "sourceSha256": "179bda7e6a486e1d7861b4322965d405fcf25e162cf4604387953019aa63c08c",
+        "translationSha256": "f4c659a2303d7bdea3899f02f328f44f92aa89ca586879fb02dcf4455541328f"
+      },
+      "server.api.ranking_type_must_be.ae1d21f5": {
+        "method": "agent-authored",
+        "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
+        "translationSha256": "c487d4da53973f85bb2ebf6784994789cf058b7c1b93cc205a5fb4b776b12f90"
+      },
+      "server.api.streaming_responses_are_unavailable.dbad8099": {
+        "method": "agent-authored",
+        "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
+        "translationSha256": "8300217f9086c4d5c2480e3492a8d90e30a3455ba4c9a360c7802b8b2d457c61"
+      },
+      "server.api.type_must_be_player.6c2ff66b": {
+        "method": "agent-authored",
+        "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
+        "translationSha256": "e090b8985669f161b6595fa90b5f026f46f635f7caa17f6ad275b8249345f8de"
+      },
       "server.api.unsupported_locale": {
         "method": "agent-authored",
         "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
         "translationSha256": "cacb200ae19c8a22bbfaa538a9630b501a3abf58290e8c0c11a5785fd226939e"
+      },
+      "server.app.cra_books_payload_must.7aa91e61": {
+        "method": "agent-authored",
+        "sourceSha256": "7aa91e61316a66affa876e779876195cdeb205080aea15d60002a9b973f1a0b5",
+        "translationSha256": "2cbd276cb9f602bee339e22cce096cef42e0058c9896c4f9712b5dbc21a52b1c"
+      },
+      "server.app.cra_support_tools_contain.6615c823": {
+        "method": "agent-authored",
+        "sourceSha256": "6615c82355895557519353a8195c08667e84fdf18cbe205f4e066a04b538671f",
+        "translationSha256": "9a9996f91de48997fbe47a68a05c270cb66660157e3c2562bd0d8dac4150fa80"
+      },
+      "server.app.cra_support_troop_count.2d16227f": {
+        "method": "agent-authored",
+        "sourceSha256": "2d16227f086d0faa7d43ecec40583517648b37fdd52d3cbafb4d2da72fcb7ef2",
+        "translationSha256": "7e4d993b3c65994a9330a502ddab090fb5c435e37bccb71165faf05a0a8f0ec2"
       },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
@@ -1149,6 +3583,16 @@
       }
     },
     "ru": {
+      "server.api.event_occurrence_id_is.3c0ae253": {
+        "method": "agent-authored",
+        "sourceSha256": "3c0ae253fa0225afd286348edcde8c7e8c9dac41d833d90741ee71a5e63228c4",
+        "translationSha256": "5bb9a698cceed644960bf5ab4d3ae448c4a0b1b50588f5e7dfaa6e85aa31de00"
+      },
+      "server.api.eventkey_is_invalid.5fa0f899": {
+        "method": "agent-authored",
+        "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
+        "translationSha256": "97ffc23cca6654b442f6c40b3003a343665fa4fa75d5ed876a003b55fcf9d4eb"
+      },
       "server.api.official_game_data_is.c5e55e7e": {
         "method": "agent-authored",
         "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
@@ -1159,10 +3603,45 @@
         "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
         "translationSha256": "9d4ccc71de7a9641d83d3c1b3886fdcd0acf5bceeed04e0f110e4940ecaca443"
       },
+      "server.api.ranking_metric_type_must.179bda7e": {
+        "method": "agent-authored",
+        "sourceSha256": "179bda7e6a486e1d7861b4322965d405fcf25e162cf4604387953019aa63c08c",
+        "translationSha256": "7863317eeb8cadf71c63d59f2d8be5495ea866ac8b3a2be849fb195e1d870838"
+      },
+      "server.api.ranking_type_must_be.ae1d21f5": {
+        "method": "agent-authored",
+        "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
+        "translationSha256": "4754692299c7744668f4faea157fa741acec1f2e1a847c9140ed27cc66cd09da"
+      },
+      "server.api.streaming_responses_are_unavailable.dbad8099": {
+        "method": "agent-authored",
+        "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
+        "translationSha256": "fa4dd843774e8d520de3377dcfa8e9ccdca64ea096110ef057c7bc10b5c00deb"
+      },
+      "server.api.type_must_be_player.6c2ff66b": {
+        "method": "agent-authored",
+        "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
+        "translationSha256": "a20b5ae51cbc3cd2f40e16d745a2ac4537a9f3d137b6eb55199784c159e78b35"
+      },
       "server.api.unsupported_locale": {
         "method": "agent-authored",
         "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
         "translationSha256": "df8cb6396c6b566286c6202922910c99f27e8325522bc08abdd8061919f39636"
+      },
+      "server.app.cra_books_payload_must.7aa91e61": {
+        "method": "agent-authored",
+        "sourceSha256": "7aa91e61316a66affa876e779876195cdeb205080aea15d60002a9b973f1a0b5",
+        "translationSha256": "a1c67dd43054f4165e4b6b1b169ba6dceab716ebbd24d99a8859064c07053e10"
+      },
+      "server.app.cra_support_tools_contain.6615c823": {
+        "method": "agent-authored",
+        "sourceSha256": "6615c82355895557519353a8195c08667e84fdf18cbe205f4e066a04b538671f",
+        "translationSha256": "101d842931239fca26df4b49fadd628ca40821a55f6ae596a805b8a98e026df9"
+      },
+      "server.app.cra_support_troop_count.2d16227f": {
+        "method": "agent-authored",
+        "sourceSha256": "2d16227f086d0faa7d43ecec40583517648b37fdd52d3cbafb4d2da72fcb7ef2",
+        "translationSha256": "8a2e61fde68a7af5a9bc0b831950fa9119c4dd183f0a466b510ae105be1e4268"
       },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
@@ -1171,6 +3650,16 @@
       }
     },
     "sk": {
+      "server.api.event_occurrence_id_is.3c0ae253": {
+        "method": "agent-authored",
+        "sourceSha256": "3c0ae253fa0225afd286348edcde8c7e8c9dac41d833d90741ee71a5e63228c4",
+        "translationSha256": "fe22cd344a4602d500261b01e8d399e3f3460685d87bb6d7938735c4bb9b3145"
+      },
+      "server.api.eventkey_is_invalid.5fa0f899": {
+        "method": "agent-authored",
+        "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
+        "translationSha256": "269eb7e3596b2f414a5c3de81db830aa945440bf5d50f6eaf0f8308c4dad84e7"
+      },
       "server.api.official_game_data_is.c5e55e7e": {
         "method": "agent-authored",
         "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
@@ -1181,10 +3670,45 @@
         "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
         "translationSha256": "2b50649cfdc8736212030199fc6316cb327af23ace21ff656add8896d4518596"
       },
+      "server.api.ranking_metric_type_must.179bda7e": {
+        "method": "agent-authored",
+        "sourceSha256": "179bda7e6a486e1d7861b4322965d405fcf25e162cf4604387953019aa63c08c",
+        "translationSha256": "90ccf0703e1536cb1099426007d89c1f3f0e31eb81f2b6761beaf540b6fdc148"
+      },
+      "server.api.ranking_type_must_be.ae1d21f5": {
+        "method": "agent-authored",
+        "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
+        "translationSha256": "deb7e228b24ba517120cf4dbdfc5e237d6da16e887205bd7e5a9ba3d386e4836"
+      },
+      "server.api.streaming_responses_are_unavailable.dbad8099": {
+        "method": "agent-authored",
+        "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
+        "translationSha256": "f71a2727843fe13b93993b38dc58c110d8cadfdb1a85d44db5ff1f42a968f658"
+      },
+      "server.api.type_must_be_player.6c2ff66b": {
+        "method": "agent-authored",
+        "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
+        "translationSha256": "1bd388f9c9cb97ccea1d7abd11f992f1d1f90b788cf3b7fb1c578c3673921e9a"
+      },
       "server.api.unsupported_locale": {
         "method": "agent-authored",
         "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
         "translationSha256": "36e21de7a713027337bbc67c5aa2e12dee74c376fe37981fd3bf3a465588fccf"
+      },
+      "server.app.cra_books_payload_must.7aa91e61": {
+        "method": "agent-authored",
+        "sourceSha256": "7aa91e61316a66affa876e779876195cdeb205080aea15d60002a9b973f1a0b5",
+        "translationSha256": "05c6b6ddff1ee0abeb41db58193e266372953c3e01e0f8bd012cfb57c5930bec"
+      },
+      "server.app.cra_support_tools_contain.6615c823": {
+        "method": "agent-authored",
+        "sourceSha256": "6615c82355895557519353a8195c08667e84fdf18cbe205f4e066a04b538671f",
+        "translationSha256": "264eee3abbb53eca0099741b5481219d18c90258cb050ccebeb7c9d994b2372b"
+      },
+      "server.app.cra_support_troop_count.2d16227f": {
+        "method": "agent-authored",
+        "sourceSha256": "2d16227f086d0faa7d43ecec40583517648b37fdd52d3cbafb4d2da72fcb7ef2",
+        "translationSha256": "c37e51c3f9d5574d21c04df12abccf5a8f1fa4f1672449c2cfeea53dfd308779"
       },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
@@ -1296,6 +3820,16 @@
       }
     },
     "tr": {
+      "server.api.event_occurrence_id_is.3c0ae253": {
+        "method": "agent-authored",
+        "sourceSha256": "3c0ae253fa0225afd286348edcde8c7e8c9dac41d833d90741ee71a5e63228c4",
+        "translationSha256": "7f94cc9798c83180600a342542dae89039bec584aea179cd5a09818151cd7df8"
+      },
+      "server.api.eventkey_is_invalid.5fa0f899": {
+        "method": "agent-authored",
+        "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
+        "translationSha256": "5d318b27c4229309e960826fbc9d698a08ad8a256a6d8ce13e533c830b4eee30"
+      },
       "server.api.official_game_data_is.c5e55e7e": {
         "method": "agent-authored",
         "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
@@ -1306,10 +3840,45 @@
         "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
         "translationSha256": "daf0a042fdf0f28af50aaba4c9b5002dae11298b3939ac449524d43af3fd97cc"
       },
+      "server.api.ranking_metric_type_must.179bda7e": {
+        "method": "agent-authored",
+        "sourceSha256": "179bda7e6a486e1d7861b4322965d405fcf25e162cf4604387953019aa63c08c",
+        "translationSha256": "7ff0800f7d0abb5856d9e15084b396a12432e2d41dace30dc5464d8bcabe4bd0"
+      },
+      "server.api.ranking_type_must_be.ae1d21f5": {
+        "method": "agent-authored",
+        "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
+        "translationSha256": "2a3c8077017c6a1b25068f56f04b37ff05885af64c27817de289b5e34556ec6a"
+      },
+      "server.api.streaming_responses_are_unavailable.dbad8099": {
+        "method": "agent-authored",
+        "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
+        "translationSha256": "42b6caa65b70de2bde225c16151611b48ee4fea2a85e332a0b6760649db0d751"
+      },
+      "server.api.type_must_be_player.6c2ff66b": {
+        "method": "agent-authored",
+        "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
+        "translationSha256": "4d53b9dc782cfde545b82479b8b56a1a7a6ca02dea47ea5e021750e75baa74fc"
+      },
       "server.api.unsupported_locale": {
         "method": "agent-authored",
         "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
         "translationSha256": "77a291ef485ed5b44590482a3657c83b9f56e5af8cc2b1cba82f1028803710a1"
+      },
+      "server.app.cra_books_payload_must.7aa91e61": {
+        "method": "agent-authored",
+        "sourceSha256": "7aa91e61316a66affa876e779876195cdeb205080aea15d60002a9b973f1a0b5",
+        "translationSha256": "da3f9f6c198b88f7be1309a9498a7fc5887e6cbe364ee2bcce3fc47821fce9d6"
+      },
+      "server.app.cra_support_tools_contain.6615c823": {
+        "method": "agent-authored",
+        "sourceSha256": "6615c82355895557519353a8195c08667e84fdf18cbe205f4e066a04b538671f",
+        "translationSha256": "d73f1d40498dacf4169c36bd34e37613335f786cd7ae68862c9b53bc249a048f"
+      },
+      "server.app.cra_support_troop_count.2d16227f": {
+        "method": "agent-authored",
+        "sourceSha256": "2d16227f086d0faa7d43ecec40583517648b37fdd52d3cbafb4d2da72fcb7ef2",
+        "translationSha256": "fb03113556b070e70519b9315f8796e265d3cdeadc543830879c94f8549907ea"
       },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
@@ -1318,6 +3887,16 @@
       }
     },
     "zh-CN": {
+      "server.api.event_occurrence_id_is.3c0ae253": {
+        "method": "agent-authored",
+        "sourceSha256": "3c0ae253fa0225afd286348edcde8c7e8c9dac41d833d90741ee71a5e63228c4",
+        "translationSha256": "466b172b8da1d452b15df589d8a724665d19641c5f76562ade25a85ae23377d4"
+      },
+      "server.api.eventkey_is_invalid.5fa0f899": {
+        "method": "agent-authored",
+        "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
+        "translationSha256": "dc7fde0157b283b3bfd3e9f2cc2062329c2d0da16b1cddfab279328dd9ee2ede"
+      },
       "server.api.official_game_data_is.c5e55e7e": {
         "method": "agent-authored",
         "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
@@ -1328,10 +3907,45 @@
         "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
         "translationSha256": "9953be3a872563e941b54221d42a60a43816ea16a431217c2ad8265e4f27b523"
       },
+      "server.api.ranking_metric_type_must.179bda7e": {
+        "method": "agent-authored",
+        "sourceSha256": "179bda7e6a486e1d7861b4322965d405fcf25e162cf4604387953019aa63c08c",
+        "translationSha256": "cbf9c445fb410c0e9d477fdb009c2a2095394721c2bc698e01be4bbdcce8d005"
+      },
+      "server.api.ranking_type_must_be.ae1d21f5": {
+        "method": "agent-authored",
+        "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
+        "translationSha256": "8214195d12c9b97bfd350bb991d1547cb51635823e7598a37a45fc9ccfd2e0e2"
+      },
+      "server.api.streaming_responses_are_unavailable.dbad8099": {
+        "method": "agent-authored",
+        "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
+        "translationSha256": "0d21ab4f79a470efa21147b5b0533002996158a631d8f038533328dad7392fed"
+      },
+      "server.api.type_must_be_player.6c2ff66b": {
+        "method": "agent-authored",
+        "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
+        "translationSha256": "9d0ee31b28e2ba81c6513d1a2457470235ae59c43511b60b6d2ee9522fe567ed"
+      },
       "server.api.unsupported_locale": {
         "method": "agent-authored",
         "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
         "translationSha256": "f345bea2fca524a3ba240288176d6422eeebd32f2772e48833f0b51f14fa6d87"
+      },
+      "server.app.cra_books_payload_must.7aa91e61": {
+        "method": "agent-authored",
+        "sourceSha256": "7aa91e61316a66affa876e779876195cdeb205080aea15d60002a9b973f1a0b5",
+        "translationSha256": "b7db58569c22670880431b98612e36e7cd993227e7720f616101f5facfc8417d"
+      },
+      "server.app.cra_support_tools_contain.6615c823": {
+        "method": "agent-authored",
+        "sourceSha256": "6615c82355895557519353a8195c08667e84fdf18cbe205f4e066a04b538671f",
+        "translationSha256": "ba7a46b633be35a0e3eee7a549af913a51b0e00a52eea5f812c11d6ae03e95fc"
+      },
+      "server.app.cra_support_troop_count.2d16227f": {
+        "method": "agent-authored",
+        "sourceSha256": "2d16227f086d0faa7d43ecec40583517648b37fdd52d3cbafb4d2da72fcb7ef2",
+        "translationSha256": "10008d4b08ba3e834a59c612693e9bddcb4041ff087d6058a4f4dfa62112ad1c"
       },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
@@ -1340,6 +3954,16 @@
       }
     },
     "zh-TW": {
+      "server.api.event_occurrence_id_is.3c0ae253": {
+        "method": "agent-authored",
+        "sourceSha256": "3c0ae253fa0225afd286348edcde8c7e8c9dac41d833d90741ee71a5e63228c4",
+        "translationSha256": "a98fcdc0648e266144a6d9a3be12c6dd7812a7a5d1f3b6240e31403bbdccdd66"
+      },
+      "server.api.eventkey_is_invalid.5fa0f899": {
+        "method": "agent-authored",
+        "sourceSha256": "5fa0f89993c9abf2046bc6415e2a32a1c4fa5ba439955e564a279035790fdd53",
+        "translationSha256": "6b331520cc01a2e7c0390e958aa35793240b9cf1825f44b2a83a8d595de3e03d"
+      },
       "server.api.official_game_data_is.c5e55e7e": {
         "method": "agent-authored",
         "sourceSha256": "c5e55e7e36ed1b7bdcd080b8581e74532a1313ac73a02d4241d25afdf96d2e8c",
@@ -1350,10 +3974,45 @@
         "sourceSha256": "803160d4537b1ed9e056b414af1c5607460153f1cd15600460bd16a8c600f93d",
         "translationSha256": "36a40143ff6037599637e6d37342a7f318f7f061667ea0b5fa4b3c29c33b257f"
       },
+      "server.api.ranking_metric_type_must.179bda7e": {
+        "method": "agent-authored",
+        "sourceSha256": "179bda7e6a486e1d7861b4322965d405fcf25e162cf4604387953019aa63c08c",
+        "translationSha256": "0de25aefc8a348cdaeee4a125721127af916acdf5290a08a665363b1667c7c0f"
+      },
+      "server.api.ranking_type_must_be.ae1d21f5": {
+        "method": "agent-authored",
+        "sourceSha256": "ae1d21f5e9a7d745a668a9f453312fba9ea130abd8dd01e898481e095721786d",
+        "translationSha256": "a2ac20ec5d050de2ee2a12810b8a54025d54b35abc2c8ac7cd3f9d7d323ba5ae"
+      },
+      "server.api.streaming_responses_are_unavailable.dbad8099": {
+        "method": "agent-authored",
+        "sourceSha256": "dbad8099322bcde9e31c718f103db5652a176912e39c227227cfb10fa4e97950",
+        "translationSha256": "92189da09cf80d7b1c45b12857f28669af45b039ad087421b39d1f0ef87341a0"
+      },
+      "server.api.type_must_be_player.6c2ff66b": {
+        "method": "agent-authored",
+        "sourceSha256": "6c2ff66bc88562d827ddaf57e4f18c4fdb765e064fc365c07fe7eebc5af5e2a8",
+        "translationSha256": "cf898b7b38148dc850682973f4739f3836ebcbd50705fef74d35ffd7b181f063"
+      },
       "server.api.unsupported_locale": {
         "method": "agent-authored",
         "sourceSha256": "94c1e09f8540ab6375d4441a22ebfd6cf21267609a269426e0c5ec7861679d36",
         "translationSha256": "46e29b7c34e2f1e207cc9d62ee6cdb5d4748668a9eba1170f97a4309fb6dc7a4"
+      },
+      "server.app.cra_books_payload_must.7aa91e61": {
+        "method": "agent-authored",
+        "sourceSha256": "7aa91e61316a66affa876e779876195cdeb205080aea15d60002a9b973f1a0b5",
+        "translationSha256": "0f5566e62476377d5deca471739b3c6e482fe20cad60aa8fced012ad237bf8ed"
+      },
+      "server.app.cra_support_tools_contain.6615c823": {
+        "method": "agent-authored",
+        "sourceSha256": "6615c82355895557519353a8195c08667e84fdf18cbe205f4e066a04b538671f",
+        "translationSha256": "b6ea83f77e1d028ad1ddbe875995b29033e87ed7d78e0526ad3cc697fb81d599"
+      },
+      "server.app.cra_support_troop_count.2d16227f": {
+        "method": "agent-authored",
+        "sourceSha256": "2d16227f086d0faa7d43ecec40583517648b37fdd52d3cbafb4d2da72fcb7ef2",
+        "translationSha256": "00187c1c47386d7da92498ccf312540376027fe5e0b34dea722ba6de8b81ae4c"
       },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",

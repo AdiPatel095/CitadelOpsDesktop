@@ -90,5 +90,13 @@
   "activity.all": "Kaikki toiminta · {count, number}",
   "activity.actions": "Valmiit toiminnot · {count, number}",
   "activity.issues": "Varoitukset ja virheet · {count, number}",
-  "activity.results": "{shown, number} / {total, number}"
+  "activity.results": "{shown, number} / {total, number}",
+  "common.refresh": "Päivitä",
+  "common.clearSelection": "Tyhjennä valinta",
+  "common.presetName": "Esiasetuksen nimi",
+  "common.savePreset": "Tallenna esiasetus",
+  "common.apply": "Käytä",
+  "common.close": "Sulje",
+  "common.calendar": "Kalenteri",
+  "common.saveChanges": "Tallenna muutokset"
 }

@@ -4,6 +4,24 @@ import { officialMessageKeys } from './officialKeys';
 import { formatMessage, validateMessageCatalog } from './formatMessage';
 /** Add explicit descriptors here; never translate user names, IDs, or free-form input. */
 export const messages = {
+  "equipment.event.nomad.label": "Nomad Invasion",
+  "equipment.event.nomad.description": "Commander equipment built for Nomad and Khan camps.",
+  "equipment.event.samurai.label": "Samurai Invasion",
+  "equipment.event.samurai.description": "Commander equipment built for Samurai and Daimyo targets.",
+  "equipment.event.berimond.label": "Battle for Berimond",
+  "equipment.event.berimond.description": "Commander equipment built for Berimond camps and towers.",
+  "equipment.event.foreign_lords.label": "Foreign Lords & Bloodcrows",
+  "equipment.event.foreign_lords.description": "The Glory set for Foreign Lord and Bloodcrow castles.",
+  "equipment.event.hollow_moon_pvp.label": "Hollow Moon PvP",
+  "equipment.event.hollow_moon_pvp.description": "Select one coherent Bronze, Silver, or Gold 2026 PvP set.",
+  "equipment.event.tier": "{tier, select, Bronze {Bronze} Silver {Silver} Gold {Gold} other {Unspecified}}",
+  "equipment.event.apply": "{tier, select, Bronze {Apply Bronze Event Set} Silver {Apply Silver Event Set} Gold {Apply Gold Event Set} other {Apply Event Set}}",
+  "equipment.event.tiers": "{count, plural, one {# tier} other {# tiers}}",
+  "equipment.event.equipmentCount": "{count, number}/{maximum, number} equipment",
+  "equipment.event.gemCount": "{count, number}/{maximum, number} gems",
+  "equipment.event.tierLabel": "{event} equipment tier",
+  "equipment.event.unavailable": "No eligible equipment is currently available for {event}. {tier, select, Bronze {Selected tier: Bronze.} Silver {Selected tier: Silver.} Gold {Selected tier: Gold.} other {}}",
+
   'equipment.missingOfficialDescription': 'Some selected equipment effects have no official description. Their canonical raw values remain unchanged.',
   "equipment.target.1.label": "Main Castle",
   "equipment.target.1.description": "Combines every equipment effect that applies when battling this main castle.",

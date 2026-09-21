@@ -90,5 +90,13 @@
   "activity.all": "Toată activitatea · {count, number}",
   "activity.actions": "Acțiuni finalizate · {count, number}",
   "activity.issues": "Avertismente și erori · {count, number}",
-  "activity.results": "{shown, number} din {total, number}"
+  "activity.results": "{shown, number} din {total, number}",
+  "common.refresh": "Reîmprospătează",
+  "common.clearSelection": "Șterge selecția",
+  "common.presetName": "Numele presetării",
+  "common.savePreset": "Salvează presetarea",
+  "common.apply": "Aplică",
+  "common.close": "Închide",
+  "common.calendar": "Calendar",
+  "common.saveChanges": "Salvează modificările"
 }

@@ -1,3 +1,4 @@
+import { LocalizedRichText } from '../../i18n/LocalizedRichText';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useEffect, useMemo, useState } from 'react';
@@ -252,7 +253,7 @@ export function EquipmentEventModal({
 						onClick={() => selectedEvent && onConfirm(selectedEvent, selectedTier ?? undefined)}
 						isLoading={busy}
 					>
-						Apply{selectedTier ? ` ${selectedTier}` : ''} Event Set
+						{localizeStatic('equipment.event.apply',{tier:selectedTier ?? 'none'})}
 					</Button>
 				</>
 			)}
@@ -263,7 +264,7 @@ export function EquipmentEventModal({
 				</div>
 				<div className="text-center">
 					<p className="text-sm text-text-muted">
-						Choose the event loadout for <span className="font-semibold text-text-main">{leader?.name}</span>.
+						<LocalizedRichText messageKey="equipment.event.chooseForLeader" params={{name:leader?.name ?? ''}} tags={{leader:children=><span className="font-semibold text-text-main">{children}</span>}} />
 					</p>
 					<p className="mt-1 text-xs text-text-muted">
 						<LocalizedText messageKey="ui.equipment.components.equipmentModals.only.storage.and.pieces.already.on.this.9ae35d7d" /></p>
@@ -290,17 +291,17 @@ export function EquipmentEventModal({
 										<span className={`mt-0.5 h-4 w-4 shrink-0 rounded-full border-2 ${isSelected ? 'border-primary bg-primary shadow-[inset_0_0_0_3px_var(--bg-app)]' : 'border-border-base'}`} />
 										<span className="min-w-0 flex-1">
 											<span className="flex flex-wrap items-center gap-2">
-												<span className="text-sm font-semibold text-text-main">{entry.option.label}</span>
-												{hasTierChoice && <Badge variant="secondary">{isSelected && selectedTier ? selectedTier : `${entry.sets.length} tiers`}</Badge>}
+												<span className="text-sm font-semibold text-text-main">{localizeStatic(entry.option.labelKey)}</span>
+												{hasTierChoice && <Badge variant="secondary">{isSelected && selectedTier ? localizeStatic('equipment.event.tier',{tier:selectedTier}) : localizeStatic('equipment.event.tiers',{count:entry.sets.length})}</Badge>}
 												{displayedSet.complete && <Badge variant="success"><LocalizedText messageKey="ui.equipment.components.equipmentModals.complete.143b270a" /></Badge>}
 											</span>
-											<span className="mt-1 block text-xs text-text-muted">{entry.option.description}</span>
+											<span className="mt-1 block text-xs text-text-muted">{localizeStatic(entry.option.descriptionKey)}</span>
 											<span className="mt-2 flex flex-wrap gap-2">
 												<Badge variant={displayedSet.equipmentCount === 5 ? 'success' : displayedSet.equipmentCount > 0 ? 'warning' : 'outline'}>
-													{displayedSet.equipmentCount}/5 equipment
+													{localizeStatic('equipment.event.equipmentCount',{count:displayedSet.equipmentCount,maximum:5})}
 												</Badge>
 												<Badge variant={displayedSet.gemCount === 4 ? 'success' : displayedSet.gemCount > 0 ? 'warning' : 'outline'}>
-													{displayedSet.gemCount}/4 gems
+													{localizeStatic('equipment.event.gemCount',{count:displayedSet.gemCount,maximum:4})}
 												</Badge>
 											</span>
 										</span>
@@ -313,10 +314,10 @@ export function EquipmentEventModal({
 											<span className="text-[11px] text-text-muted"><LocalizedText messageKey="ui.equipment.components.equipmentModals.equip.only.this.tier.593e5e5f" /></span>
 										</div>
 										<PillSelector
-											ariaLabel={`${entry.option.label} equipment tier`}
+											ariaLabel={localizeStatic('equipment.event.tierLabel',{event:localizeStatic(entry.option.labelKey)})}
 											value={selectedTier ?? ''}
 											onChange={(value) => setSelectedTier(value as EquipmentEventTier)}
-											options={equipmentEventTierOrder}
+											options={equipmentEventTierOrder.map(tier=>({value:tier,label:localizeStatic('equipment.event.tier',{tier})}))}
 											size="body"
 											fullWidth
 										/>
@@ -328,7 +329,7 @@ export function EquipmentEventModal({
 				</div>
 
 				{selected && selectedSet && selectedSet.equipmentCount === 0 && (
-					<p className="text-center text-xs text-warning">No eligible {selectedTier ? `${selectedTier} ` : ''}{selected.option.label} equipment is currently available.</p>
+					<p className="text-center text-xs text-warning">{localizeStatic('equipment.event.unavailable',{event:localizeStatic(selected.option.labelKey),tier:selectedTier ?? 'none'})}</p>
 				)}
 				{leader && !leader.available && (
 					<p className="text-center text-xs text-warning"><LocalizedText messageKey="ui.equipment.components.equipmentModals.this.commander.is.busy.and.cannot.be.41116e12" /></p>

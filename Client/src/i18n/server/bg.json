@@ -1,6 +1,15 @@
 {
+  "server.api.event_occurrence_id_is.3c0ae253": "Идентификаторът на изданието на събитието е невалиден",
+  "server.api.eventkey_is_invalid.5fa0f899": "eventKey е невалиден",
   "server.api.official_game_data_is.c5e55e7e": "Официалните данни на играта не са достъпни",
   "server.api.official_language_data_is.803160d4": "Официалните езикови данни не са достъпни",
+  "server.api.ranking_metric_type_must.179bda7e": "Типът на показателя за класиране трябва да е players или alliances",
+  "server.api.ranking_type_must_be.ae1d21f5": "Типът на класирането трябва да е players или alliances",
+  "server.api.streaming_responses_are_unavailable.dbad8099": "Поточните отговори не са достъпни",
+  "server.api.type_must_be_player.6c2ff66b": "Стойността на type трябва да е player или alliance",
   "server.api.unsupported_locale": "Неподдържана локална настройка: {locale}",
+  "server.app.cra_books_payload_must.7aa91e61": "Данните за книгите CRA трябва да са празен масив",
+  "server.app.cra_support_tools_contain.6615c823": "Помощните инструменти CRA съдържат невалиден идентификатор на предмет",
+  "server.app.cra_support_troop_count.2d16227f": "Броят на подкрепящите войски CRA е извън поддържаните граници",
   "server.automation.safety_pause_after_an.67451716": "Предпазна пауза след неуспешно автоматизирано действие"
 }

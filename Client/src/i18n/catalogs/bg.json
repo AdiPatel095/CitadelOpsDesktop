@@ -90,5 +90,13 @@
   "activity.all": "Цялата активност · {count, number}",
   "activity.actions": "Завършени действия · {count, number}",
   "activity.issues": "Предупреждения и грешки · {count, number}",
-  "activity.results": "{shown, number} от {total, number}"
+  "activity.results": "{shown, number} от {total, number}",
+  "common.refresh": "Обновяване",
+  "common.clearSelection": "Изчистване на избора",
+  "common.presetName": "Име на предварителната настройка",
+  "common.savePreset": "Запазване на предварителната настройка",
+  "common.apply": "Прилагане",
+  "common.close": "Затваряне",
+  "common.calendar": "Календар",
+  "common.saveChanges": "Запазване на промените"
 }
