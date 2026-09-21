@@ -153,7 +153,7 @@ func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot)
 		if sourceFound {
 			decision := autoFortressRequest(snapshot, metrics, fmt.Sprintf("Refresh five-day fortress cooldown at %d:%d", cooldown.X, cooldown.Y), "fortress.target.refresh", map[string]any{
 				"sourceCastleId": source.ID, "kingdomId": cooldown.KingdomID, "targetX": cooldown.X, "targetY": cooldown.Y,
-			})
+			}, Localization.New("server.automation.fortress_refresh_cooldown", "Refresh five-day fortress cooldown at {x}:{y}", Localization.Params{"x": fmt.Sprint(cooldown.X), "y": fmt.Sprint(cooldown.Y)}))
 			decision.Details = details
 			return decision, nil
 		}
@@ -181,7 +181,7 @@ func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot)
 				policy.markFullScanRequested(source.KingdomID, snapshot.Now)
 				decision := autoFortressRequest(snapshot, metrics, fmt.Sprintf("Discover every fortress across %s", castleName(source)), "fortress.map.scan", map[string]any{
 					"sourceCastleId": source.ID, "kingdomId": source.KingdomID,
-				})
+				}, castleDecisionDescriptor("fortress_discover", source, nil))
 				decision.Details = details
 				return decision, nil
 			}
@@ -620,7 +620,7 @@ func (policy *AutoFortressPolicy) autoFortressSupplyDecision(
 	}
 	var maintenance *Decision
 	if main.UnitsObservedAt.IsZero() || snapshot.Now.Sub(main.UnitsObservedAt) > autoFortressUnitFreshness {
-		decision := autoFortressRequest(snapshot, metrics, "Refresh purchased Direwolves at "+castleName(main), "game.focus_castle", map[string]any{"castleId": main.ID, "refresh": true})
+		decision := autoFortressRequest(snapshot, metrics, "Refresh purchased Direwolves at "+castleName(main), "game.focus_castle", map[string]any{"castleId": main.ID, "refresh": true}, castleDecisionDescriptor("fortress_refresh_purchased", main, nil))
 		maintenance = &decision
 	}
 	if snapshot.State.KingdomTransport.ObservedAt.IsZero() || snapshot.Now.Sub(snapshot.State.KingdomTransport.ObservedAt) > autoFortressUnitFreshness {
@@ -644,7 +644,7 @@ func (policy *AutoFortressPolicy) autoFortressSupplyDecision(
 			detailDescriptors[key] = Localization.New("server.automation.destination_direwolf_inventory_needs.2ab6a00f", "Destination Direwolf inventory needs a fresh observation", nil)
 			if maintenance == nil && policy.supplyRefreshDue(source.KingdomID, snapshot.Now) {
 				policy.markSupplyRefreshRequested(source.KingdomID, snapshot.Now)
-				decision := autoFortressRequest(snapshot, metrics, "Refresh destination Direwolves at "+castleName(source), "game.focus_castle", map[string]any{"castleId": source.ID, "refresh": true})
+				decision := autoFortressRequest(snapshot, metrics, "Refresh destination Direwolves at "+castleName(source), "game.focus_castle", map[string]any{"castleId": source.ID, "refresh": true}, castleDecisionDescriptor("fortress_refresh_destination", source, nil))
 				maintenance = &decision
 			}
 			continue
@@ -695,7 +695,7 @@ func (policy *AutoFortressPolicy) autoFortressSupplyDecision(
 			"sourceCastleId": main.ID, "targetCastleId": destination.castle.ID, "targetKingdomId": kingdomID,
 			"owner": autoFortressTransportOwner, "workflowId": workflowID,
 			"units": []map[string]any{{"unitId": GameData.DirewolfUnitID, "amount": amount}},
-		})
+		}, castleDecisionDescriptor("fortress_allocate", destination.castle, Localization.Params{"troops": amount}))
 		details[fmt.Sprintf("supplyKingdom%d", kingdomID)] = fmt.Sprintf("Allocating %d Direwolves from the Great Empire", amount)
 		detailDescriptors[fmt.Sprintf("supplyKingdom%d", kingdomID)] = Localization.New("server.automation.allocating_amount_number_direwolves.82b58fd8", "Allocating {amount, number} Direwolves from the Great Empire", Localization.Params{"amount": amount})
 		shipmentAction = &decision
@@ -862,14 +862,14 @@ func (policy *AutoFortressPolicy) autoFortressWorkflowDecision(snapshot Snapshot
 		if !target.UnitsObservedAt.After(workflow.TransportObservedAt) {
 			details[key] = "Transfer arrived; refreshing destination inventory before reuse"
 			detailDescriptors[key] = Localization.New("server.automation.transfer_arrived_refreshing_destination.ac73401a", "Transfer arrived; refreshing destination inventory before reuse", nil)
-			decision := autoFortressRequest(snapshot, metrics, "Refresh arrived Direwolves at "+castleName(target), "game.focus_castle", map[string]any{"castleId": target.ID, "refresh": true})
+			decision := autoFortressRequest(snapshot, metrics, "Refresh arrived Direwolves at "+castleName(target), "game.focus_castle", map[string]any{"castleId": target.ID, "refresh": true}, castleDecisionDescriptor("fortress_refresh_arrived", target, nil))
 			return &decision
 		}
 		details[key] = "Settling the completed Direwolf transfer"
 		detailDescriptors[key] = Localization.New("server.automation.settling_the_completed_direwolf.98b622a0", "Settling the completed Direwolf transfer", nil)
 		decision := autoFortressRequest(snapshot, metrics, "Settle completed Direwolf transfer to "+castleName(target), "troops.kingdom.settle", map[string]any{
 			"owner": workflow.Owner, "workflowId": workflow.ID, "targetKingdomId": workflow.KingdomID,
-		})
+		}, castleDecisionDescriptor("fortress_settle_transfer", target, nil))
 		return &decision
 	}
 	if workflow.Status != "pending" {
@@ -920,7 +920,7 @@ func (policy *AutoFortressPolicy) autoFortressWorkflowDecision(snapshot Snapshot
 	decision := autoFortressRequest(snapshot, metrics, "Apply "+option.WireKey+" to the owned Direwolf transfer", "troops.kingdom.skip", map[string]any{
 		"targetKingdomId": workflow.KingdomID, "timeSkipId": option.WireKey, "minimumRemaining": reserve,
 		"owner": workflow.Owner, "workflowId": workflow.ID, "expectedRemaining": remaining, "expectedDurationSec": option.Seconds,
-	})
+	}, Localization.New("server.automation.fortress_transfer_apply_skip", "Apply {skip} to the owned Direwolf transfer", Localization.Params{"skip": option.WireKey}))
 	return &decision
 }
 
@@ -1096,7 +1096,7 @@ func evaluateAutoFortressPurchase(snapshot Snapshot, settings autoFortressSettin
 			"minimumBalanceReserve": settings.MinimumTabletReserve, "allowRubyPackages": false,
 			"maximumRubySpendPerReset": 0, "minimumRubyReserve": 0,
 			"expectedPurchasedBefore": purchased, "expectedBalanceBefore": balance,
-		})
+		}, Localization.New("server.automation.fortress_buy_direwolves", "Buy {troops, number} Direwolves from the cheapest remaining Nomad tier", Localization.Params{"troops": amount * product.UnitAmount}))
 		return &decision, ""
 	}
 	metrics["direwolvesPurchasedThisSession"] = float64(purchasedUnits)

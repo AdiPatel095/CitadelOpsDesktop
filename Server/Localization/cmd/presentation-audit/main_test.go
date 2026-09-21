@@ -91,7 +91,7 @@ func TestInventoryFindsLexicallyScopedDecisionClosures(t *testing.T) {
 	}
 	fixture := `package fixture
 func first(){
- wait:=func(detail string, metrics map[string]float64, descriptors ...*Localization.Message)(context,*Decision,error){return context{},nil,nil}
+ wait:=func(reason string, metrics map[string]float64, descriptors ...*Localization.Message)(context,*Decision,error){return context{},nil,nil}
  _,_,_=wait("closure missing",nil)
  _,_,_=wait("closure covered",nil,Localization.New("key","closure covered",nil))
 }

@@ -217,13 +217,13 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 			!targetAvailable || target.CastleID != operation.TargetCastleID
 		if targetStale {
 			return withAutoBirdSchedule(snapshot, autoBirdDiscoverDecision(
-				castle, settings, snapshot.Now, "Refresh changed or expired Auto Bird target",
+				castle, settings, snapshot.Now, "Refresh changed or expired Auto Bird target", castleDecisionDescriptor("bird_refresh_target", castle, nil),
 			), time.Time{}), nil
 		}
 		if operation.UnitsObservedAt.IsZero() ||
 			snapshot.Now.Sub(operation.UnitsObservedAt) > 30*time.Second {
 			return withAutoBirdSchedule(snapshot, autoBirdPrepareDecision(
-				castle, settings, snapshot.Now, "Refresh expired Auto Bird troop inventory",
+				castle, settings, snapshot.Now, "Refresh expired Auto Bird troop inventory", castleDecisionDescriptor("bird_refresh_expired", castle, nil),
 			), time.Time{}), nil
 		}
 		arguments := autoBirdCycleArguments(castle.ID, settings)
@@ -232,7 +232,7 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 			Detail: fmt.Sprintf(
 				"Dispatch %d freshly inventoried troops from %s to bird target %d",
 				sumStationOperationUnits(operation.Units), castleName(castle), operation.TargetCastleID,
-			),
+			), DetailDescriptor: castleDecisionDescriptor("bird_dispatch", castle, Localization.Params{"troops": sumStationOperationUnits(operation.Units), "target": fmt.Sprint(operation.TargetCastleID)}),
 			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 			Request:             &Intent.Request{Name: "auto_bird.dispatch", Arguments: arguments},
 			ReevaluateOnSuccess: true,
@@ -260,11 +260,11 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 			snapshot.Now.Sub(operation.AllianceObservedAt) > allianceRosterRefreshInterval ||
 			!targetAvailable || target.CastleID != operation.TargetCastleID {
 			return withAutoBirdSchedule(snapshot, autoBirdDiscoverDecision(
-				castle, settings, snapshot.Now, "Refresh changed or expired Auto Bird target",
+				castle, settings, snapshot.Now, "Refresh changed or expired Auto Bird target", castleDecisionDescriptor("bird_refresh_target", castle, nil),
 			), time.Time{}), nil
 		}
 		return withAutoBirdSchedule(snapshot, autoBirdPrepareDecision(
-			castle, settings, snapshot.Now, "Refresh the latest troop inventory",
+			castle, settings, snapshot.Now, "Refresh the latest troop inventory", castleDecisionDescriptor("bird_refresh_inventory", castle, nil),
 		), time.Time{}), nil
 	}
 
@@ -312,12 +312,12 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 			case State.StationingPhaseWaiting:
 				if snapshot.PolicyConfigurationChanged {
 					return withAutoBirdSchedule(snapshot, autoBirdDiscoverDecision(
-						castle, settings, snapshot.Now, "Restart after relevant automation settings changed",
+						castle, settings, snapshot.Now, "Restart after relevant automation settings changed", castleDecisionDescriptor("bird_restart_settings", castle, nil),
 					), time.Time{}), nil
 				}
 				if operation.PresetID != settings.ResolvedPresetID {
 					return withAutoBirdSchedule(snapshot, autoBirdDiscoverDecision(
-						castle, settings, snapshot.Now, "Restart after the Auto Bird preset changed",
+						castle, settings, snapshot.Now, "Restart after the Auto Bird preset changed", castleDecisionDescriptor("bird_restart_preset", castle, nil),
 					), time.Time{}), nil
 				}
 				// AIN and JAA observations can advance while another castle runs its
@@ -337,7 +337,7 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 			continue
 		}
 		return withAutoBirdSchedule(snapshot, autoBirdDiscoverDecision(
-			castle, settings, snapshot.Now, "Run this castle's independent AIN target discovery",
+			castle, settings, snapshot.Now, "Run this castle's independent AIN target discovery", castleDecisionDescriptor("bird_discover", castle, nil),
 		), time.Time{}), nil
 	}
 	if nextCheck.IsZero() {
@@ -393,10 +393,11 @@ func autoBirdDiscoverDecision(
 	settings autoBirdConfiguration,
 	now time.Time,
 	reason string,
+	descriptors ...*Localization.Message,
 ) Decision {
 	return Decision{
 		Status: "discovering",
-		Detail: fmt.Sprintf("%s for %s", reason, castleName(castle)), DetailDescriptor: Localization.New("server.automation.p_for_p.8660b308", "{p0} for {p1}", Localization.Params{"p0": fmt.Sprintf("%s", reason), "p1": fmt.Sprintf("%s", castleName(castle))}),
+		Detail: fmt.Sprintf("%s for %s", reason, castleName(castle)), DetailDescriptor: Localization.First(descriptors),
 		NextCheckAt:         now.Add(30 * time.Second),
 		Request:             &Intent.Request{Name: "auto_bird.discover", Arguments: autoBirdCycleArguments(castle.ID, settings)},
 		ReevaluateOnSuccess: true,
@@ -409,10 +410,11 @@ func autoBirdPrepareDecision(
 	settings autoBirdConfiguration,
 	now time.Time,
 	reason string,
+	descriptors ...*Localization.Message,
 ) Decision {
 	return Decision{
 		Status: "preparing",
-		Detail: fmt.Sprintf("%s for %s", reason, castleName(castle)), DetailDescriptor: Localization.New("server.automation.p_for_p.8660b308", "{p0} for {p1}", Localization.Params{"p0": fmt.Sprintf("%s", reason), "p1": fmt.Sprintf("%s", castleName(castle))}),
+		Detail: fmt.Sprintf("%s for %s", reason, castleName(castle)), DetailDescriptor: Localization.First(descriptors),
 		NextCheckAt:         now.Add(30 * time.Second),
 		Request:             &Intent.Request{Name: "auto_bird.prepare", Arguments: autoBirdCycleArguments(castle.ID, settings)},
 		ReevaluateOnSuccess: true,
@@ -516,7 +518,7 @@ func (*AutoStationPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decisi
 				next = snapshot.Now.Add(2 * time.Second)
 			}
 			return Decision{
-				Status: "threat", Detail: fmt.Sprintf("%d incoming attack(s); evacuation window opens in %s", threatCount, roundedDuration(remaining-time.Duration(settings.LeadTimeSec)*time.Second)),
+				Status: "threat", Detail: fmt.Sprintf("%d incoming attack(s); evacuation window opens in %s", threatCount, roundedDuration(remaining-time.Duration(settings.LeadTimeSec)*time.Second)), DetailDescriptor: Localization.New("server.automation.station_evacuation_window", "{attacks, number} incoming attack(s); evacuation window opens in {seconds, number} seconds", Localization.Params{"attacks": threatCount, "seconds": int64(roundedDuration(remaining-time.Duration(settings.LeadTimeSec)*time.Second) / time.Second)}),
 				NextCheckAt: next, Metrics: metrics,
 			}, nil
 		}
@@ -541,6 +543,7 @@ func (*AutoStationPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decisi
 			decision := Decision{
 				Status:              "evacuating",
 				Detail:              fmt.Sprintf("Evacuating %d troops from %s", sumStationUnits(units), castleName(castle)),
+				DetailDescriptor:    castleDecisionDescriptor("station_evacuate", castle, Localization.Params{"troops": sumStationUnits(units)}),
 				NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 				Metrics:             metrics,
 				Request:             &Intent.Request{Name: "troops.station", Arguments: arguments},
@@ -634,7 +637,7 @@ func protectionModeOpenGateDecision(
 			next = snapshot.Now.Add(2 * time.Second)
 		}
 		return Decision{
-			Status: "threat", Detail: fmt.Sprintf("%d incoming attack(s); Open Gate safety window opens in %s", threatCount, roundedDuration(remaining-leadTime)),
+			Status: "threat", Detail: fmt.Sprintf("%d incoming attack(s); Open Gate safety window opens in %s", threatCount, roundedDuration(remaining-leadTime)), DetailDescriptor: Localization.New("server.automation.station_gate_window", "{attacks, number} incoming attack(s); Open Gate safety window opens in {seconds, number} seconds", Localization.Params{"attacks": threatCount, "seconds": int64(roundedDuration(remaining-leadTime) / time.Second)}),
 			NextCheckAt: next, Metrics: metrics,
 		}
 	}
