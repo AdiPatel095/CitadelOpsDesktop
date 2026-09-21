@@ -2812,6 +2812,7 @@
   "server.intent.refresh_the_feature_before.e44c9b62": "Refresh the feature before retrying. If it repeats, report the failed action.",
   "server.intent.refresh_the_feature_once.caf697f1": "Refresh the feature once before retrying. If it repeats, include game error {p0} when reporting it.",
   "server.intent.review_the_refreshed_feature.f38e4c30": "Review the refreshed feature status before trying again.",
+  "server.intent.safety_lock.review_recovery": "Review this rejection before explicitly clearing the lane lock; normal session and feature prerequisites still apply.",
   "server.intent.the_action_did_not.1be9cb5f": "The action did not complete.",
   "server.intent.the_app_could_not.079dfaaf": "The app could not save the action state safely.",
   "server.intent.the_feature_lane_will.482d1118": "The feature lane will reevaluate after troop availability changes.",
