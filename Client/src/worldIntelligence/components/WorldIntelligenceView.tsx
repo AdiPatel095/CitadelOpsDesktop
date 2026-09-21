@@ -173,7 +173,7 @@ const WorldIntelligenceView = () => {
 	if (selected) {
 		return (
 			<div className="flex flex-col gap-6 pb-8">
-				<nav aria-label={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.aria-label.world.intelligence.detail.navigation.cc8741b4")} className="sticky top-3 z-30 self-start">
+				<nav aria-label={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.aria-label.world.intelligence.detail.navigation.cc8741b4")} className="world-intelligence-detail-nav sticky top-3 z-30 self-start">
 					<DetailBackButton label={localizeStatic("ui.worldIntelligence.components.worldIntelligenceView.label.back.to.world.intelligence.3f33ab67")} onClick={closeProfile} className="shadow-lg backdrop-blur" />
 				</nav>
 				{error && (

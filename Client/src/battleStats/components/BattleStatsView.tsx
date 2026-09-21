@@ -1,3 +1,4 @@
+import type {MessageKey} from '../../i18n/messages';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useId, useMemo, useState } from 'react';
@@ -61,11 +62,12 @@ interface AllianceMemberOption extends FilterOption {
 type CombatantSide = 'attacker' | 'defender';
 
 const BattleStatsView: React.FC = () => {
-  const { t: localizeStatic } = useStaticLocale();
+  const { t: localizeStatic, number: formatNumber, locale } = useStaticLocale();
   const { state, submitIntent } = useCitadelAPI();
   const [reports, setReports] = useState<ParsedReport[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [sourceLabel, setSourceLabel] = useState<string>('Not loaded');
+  const [sourceKey, setSourceKey] = useState<MessageKey>('battle.sourceNotLoaded');
+  const [sourceError,setSourceError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPlayer, setSelectedPlayer] = useState(allOption);
   const [selectedOpponentPlayer, setSelectedOpponentPlayer] = useState(allOption);
@@ -79,6 +81,7 @@ const BattleStatsView: React.FC = () => {
 
   const loadReports = async () => {
     setIsLoading(true);
+    setSourceError('');
     try {
       let emptySource = '';
       for (const source of dataSources) {
@@ -89,7 +92,7 @@ const BattleStatsView: React.FC = () => {
             continue;
           }
           setReports(loaded.reports);
-          setSourceLabel(loaded.source);
+          setSourceKey(loaded.source === dataSources[0] ? 'battle.sourceCloud' : 'battle.sourceLocal');
           setSelectedReportID((current) =>
             current && loaded.reports.some((report) => reportID(report) === current) ? current : null
           );
@@ -98,11 +101,12 @@ const BattleStatsView: React.FC = () => {
       }
 
       setReports([]);
-      setSourceLabel(emptySource ? `${emptySource} is empty` : 'No local archive found');
+      setSourceKey(emptySource ? (emptySource === dataSources[0] ? 'battle.sourceCloudEmpty' : 'battle.sourceLocalEmpty') : 'battle.sourceMissing');
       setSelectedReportID(null);
     } catch (error) {
       setReports([]);
-      setSourceLabel(error instanceof Error ? `Load failed: ${error.message}` : 'Load failed');
+      setSourceKey('battle.sourceFailed');
+      setSourceError(error instanceof Error ? error.message : '');
       setSelectedReportID(null);
     } finally {
       setIsLoading(false);
@@ -162,8 +166,8 @@ const BattleStatsView: React.FC = () => {
   );
 
   const playerOptions = useMemo(
-    () => buildAlliancePlayerOptions(scopedReports, allianceMembers, visibilityPlayerKeys, homeAllianceKey),
-    [scopedReports, allianceMembers, visibilityPlayerKeys, homeAllianceKey]
+    () => buildAlliancePlayerOptions(scopedReports, allianceMembers, visibilityPlayerKeys, homeAllianceKey).map(option=>option.value === allOption ? {...option,label:localizeStatic('battle.allAlliancePlayers')} : option),
+    [scopedReports, allianceMembers, visibilityPlayerKeys, homeAllianceKey,localizeStatic]
   );
 
   const allianceOptions = useMemo(() => {
@@ -180,14 +184,14 @@ const BattleStatsView: React.FC = () => {
     );
 
     return [
-      { value: allOption, label: 'All opponent alliances' },
+      { value: allOption, label: localizeStatic('battle.allOpponentAlliances') },
       ...rows.map((row) => ({ value: row.key, label: row.name })),
     ];
-  }, [scopedReports, selectedPlayer, selectedOpponentPlayer, visibilityPlayerKeys, homeAllianceKey]);
+  }, [scopedReports, selectedPlayer, selectedOpponentPlayer, visibilityPlayerKeys, homeAllianceKey,localizeStatic]);
 
   const opponentPlayerOptions = useMemo(
-    () => buildOpponentPlayerOptions(scopedReports, selectedPlayer, selectedAlliance, visibilityPlayerKeys, homeAllianceKey),
-    [scopedReports, selectedPlayer, selectedAlliance, visibilityPlayerKeys, homeAllianceKey]
+    () => buildOpponentPlayerOptions(scopedReports, selectedPlayer, selectedAlliance, visibilityPlayerKeys, homeAllianceKey).map(option=>option.value === allOption ? {...option,label:localizeStatic('battle.allOpponentPlayers')} : option),
+    [scopedReports, selectedPlayer, selectedAlliance, visibilityPlayerKeys, homeAllianceKey,localizeStatic]
   );
 
   useEffect(() => {
@@ -314,7 +318,7 @@ const BattleStatsView: React.FC = () => {
           <SectionCard
             className="2xl:h-full 2xl:w-full"
             title={localizeStatic("ui.battleStats.components.battleStatsView.title.battle.stats.5b31568e")}
-            description={sourceLabel}
+            description={<><LocalizedText messageKey={sourceKey}/>{sourceError && <span lang="en" dir="auto" data-translation-status="untranslated">: {sourceError}</span>}</>}
             descriptionClassName="mt-1.5 font-semibold"
             actions={<Button
               variant="ghost"
@@ -363,11 +367,11 @@ const BattleStatsView: React.FC = () => {
                 value={selectedResult}
                 onChange={setSelectedResult}
                 options={[
-                  { value: allOption, label: 'All results' },
-                  { value: 'Attack won', label: 'Attack won' },
-                  { value: 'Attack lost', label: 'Attack lost' },
-                  { value: 'Defense win', label: 'Defense win' },
-                  { value: 'Defense lost', label: 'Defense lost' },
+                  { value: allOption, label: localizeStatic('battle.allResults') },
+                  { value: 'Attack won', label: localizeStatic('battle.attackWon') },
+                  { value: 'Attack lost', label: localizeStatic('battle.attackLost') },
+                  { value: 'Defense win', label: localizeStatic('battle.defenseWon') },
+                  { value: 'Defense lost', label: localizeStatic('battle.defenseLost') },
                 ]}
               />
             </FilterField>
@@ -377,9 +381,9 @@ const BattleStatsView: React.FC = () => {
                 value={selectedRole}
                 onChange={setSelectedRole}
                 options={[
-                  { value: allOption, label: 'All roles' },
-                  { value: 'Attacker', label: 'Attacker' },
-                  { value: 'Defender', label: 'Defender' },
+                  { value: allOption, label: localizeStatic('battle.allRoles') },
+                  { value: 'Attacker', label: localizeStatic('ui.battleStats.components.battleStatsView.attacker.2969c659') },
+                  { value: 'Defender', label: localizeStatic('ui.battleStats.components.battleStatsView.defender.157ddc59') },
                 ]}
               />
             </FilterField>
@@ -411,12 +415,11 @@ const BattleStatsView: React.FC = () => {
         title={localizeStatic("ui.battleStats.components.battleStatsView.title.reports.dacca3cb")}
         description={(
           <>
-            Showing {formatNumber(visibleReports.length)} of {formatNumber(filteredReports.length)} filtered reports
-            <span className="text-text-muted/70"> · {formatNumber(scopedReports.length)} parsed</span>
+            <LocalizedText messageKey="battle.filteredCount" params={{visible:visibleReports.length,filtered:filteredReports.length,parsed:scopedReports.length}}/>
           </>
         )}
         descriptionClassName=""
-        actions={<Badge variant="secondary">{isLoading ? 'Loading' : 'Ready'}</Badge>}
+        actions={<Badge variant="secondary"><LocalizedText messageKey={isLoading ? "battle.loading" : "battle.ready"}/></Badge>}
         contentClassName="overflow-x-auto"
         flush
       >
@@ -439,7 +442,7 @@ const BattleStatsView: React.FC = () => {
                       key={reportID(report)}
                       className="border-b border-border-base/70 hover:bg-bg-card-hover transition-colors"
                     >
-                      <td className="px-4 py-3 text-text-muted whitespace-nowrap">{formatDate(report)}</td>
+                      <td className="px-4 py-3 text-text-muted whitespace-nowrap">{formatDate(report,locale,localizeStatic("ui.battleStats.components.battleStatsView.unknown.b764cdc0"))}</td>
                       <td className="px-4 py-3">
                         <CombatantCell combatant={report.attacker} />
                       </td>
@@ -479,7 +482,7 @@ const BattleStatsView: React.FC = () => {
                   size="sm"
                   onClick={() => setVisibleReportLimit((current) => current + REPORT_ROWS_PAGE_SIZE)}
                 >
-                  Show {formatNumber(Math.min(REPORT_ROWS_PAGE_SIZE, filteredReports.length - visibleReports.length))} more
+                  <LocalizedText messageKey="battle.showMore" params={{count:Math.min(REPORT_ROWS_PAGE_SIZE, filteredReports.length - visibleReports.length)}}/>
                 </Button>
               </div>
             )}
@@ -556,18 +559,18 @@ const ReportResultBadges: React.FC<{ result: string; size?: 'sm' | 'lg'; classNa
 
   return (
     <div className={`flex flex-wrap items-center ${layoutClass} ${className}`}>
-      <Badge variant="outline" className={`${roleClass} ${badgeClass}`}>{parts.role}</Badge>
-      <Badge variant={parts.won ? 'success' : 'danger'} className={badgeClass}>{parts.won ? 'Won' : 'Lost'}</Badge>
+      <Badge variant="outline" className={`${roleClass} ${badgeClass}`}><LocalizedText messageKey={parts.role === 'Attack' ? 'game.attack' : 'activity.rowDefense'}/></Badge>
+      <Badge variant={parts.won ? 'success' : 'danger'} className={badgeClass}><LocalizedText messageKey={parts.won ? 'battle.won' : 'battle.lost'}/></Badge>
     </div>
   );
 };
 
 const ResultBadge: React.FC<{ result: string }> = ({ result }) => {
   if (result === 'Attack won' || result === 'Defense win') {
-    return <Badge variant="success">{result}</Badge>;
+    return <Badge variant="success"><LocalizedText messageKey={result === 'Attack won' ? 'battle.attackWon' : 'battle.defenseWon'}/></Badge>;
   }
   if (result === 'Attack lost' || result === 'Defense lost') {
-    return <Badge variant="danger">{result}</Badge>;
+    return <Badge variant="danger"><LocalizedText messageKey={result === 'Attack lost' ? 'battle.attackLost' : 'battle.defenseLost'}/></Badge>;
   }
   return <Badge variant="secondary"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.unknown.b764cdc0" /></Badge>;
 };
@@ -603,18 +606,22 @@ interface AllianceAggregate {
   defenseAttackersKilled: number;
 }
 
-const PlayerAggregateTable: React.FC<{ rows: PlayerAggregate[] }> = ({ rows }) => (
-  <SectionCard className="flex h-full flex-col" title="Player Aggregate" description="Filtered battle totals by player" descriptionClassName="" actions={<Badge variant="secondary">{rows.length} players</Badge>} contentClassName="flex min-h-0 flex-1 flex-col" flush>
+const PlayerAggregateTable: React.FC<{ rows: PlayerAggregate[] }> = ({ rows }) => {
+  const {t,number} = useStaticLocale();
+  const formatNumber = number;
+  const formatRatio = (numerator:number, denominator:number) => denominator <= 0 ? (numerator > 0 ? '∞' : '--') : number(numerator / denominator,{minimumFractionDigits:2,maximumFractionDigits:2});
+  return (
+  <SectionCard className="flex h-full flex-col" title={t('battle.playerAggregate')} description={t('battle.playerAggregateDescription')} descriptionClassName="" actions={<Badge variant="secondary"><LocalizedText messageKey="battle.playerCount" params={{count:rows.length}}/></Badge>} contentClassName="flex min-h-0 flex-1 flex-col" flush>
     <div className="min-h-0 flex-1 overflow-x-auto">
         <table className="battle-aggregate-table w-full text-sm">
           <thead>
-            <tr className="text-left text-xs uppercase tracking-wider text-text-muted border-b border-border-base">
+            <tr className="text-start text-xs uppercase tracking-wider text-text-muted border-b border-border-base">
               <th className="px-4 py-3 font-semibold"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.player.64aee8c6" /></th>
-              <th className="px-4 py-3 font-semibold text-right"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.reports.dacca3cb" /></th>
-              <th className="px-4 py-3 font-semibold text-right">A / D</th>
-              <th className="px-4 py-3 font-semibold text-right">W / L</th>
-              <th className="px-4 py-3 font-semibold text-right" title="Defenders killed per attacker lost in attacks by this player"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.attack.ratio.6958245c" /></th>
-              <th className="px-4 py-3 font-semibold text-right" title="Attackers killed per defender lost in defenses by this player"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.defense.ratio.1ffe9f00" /></th>
+              <th className="px-4 py-3 font-semibold text-end"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.reports.dacca3cb" /></th>
+              <th className="px-4 py-3 font-semibold text-end"><LocalizedText messageKey="battle.attacksDefenses"/></th>
+              <th className="px-4 py-3 font-semibold text-end"><LocalizedText messageKey="battle.winsLosses"/></th>
+              <th className="px-4 py-3 font-semibold text-end" title={t('battle.playerAttackRatioHelp')}><LocalizedText messageKey="ui.battleStats.components.battleStatsView.attack.ratio.6958245c" /></th>
+              <th className="px-4 py-3 font-semibold text-end" title={t('battle.playerDefenseRatioHelp')}><LocalizedText messageKey="ui.battleStats.components.battleStatsView.defense.ratio.1ffe9f00" /></th>
             </tr>
           </thead>
           <tbody>
@@ -624,17 +631,17 @@ const PlayerAggregateTable: React.FC<{ rows: PlayerAggregate[] }> = ({ rows }) =
                   <div className="font-semibold text-text-main">{row.name}</div>
                   <div className="text-xs text-text-muted">{row.alliance}</div>
                 </td>
-                <td className="px-4 py-2 text-right text-text-main font-semibold">{formatNumber(row.reports)}</td>
-                <td className="px-4 py-2 text-right text-text-muted">{formatNumber(row.attacks)} / {formatNumber(row.defenses)}</td>
-                <td className="px-4 py-2 text-right">
+                <td className="px-4 py-2 text-end text-text-main font-semibold">{formatNumber(row.reports)}</td>
+                <td className="px-4 py-2 text-end text-text-muted">{formatNumber(row.attacks)} / {formatNumber(row.defenses)}</td>
+                <td className="px-4 py-2 text-end">
                   <span className="text-success font-semibold">{formatNumber(row.wins)}</span>
                   <span className="text-text-muted"> / </span>
                   <span className="text-error font-semibold">{formatNumber(row.losses)}</span>
                 </td>
-                <td className="px-4 py-2 text-right text-info font-semibold">
+                <td className="px-4 py-2 text-end text-info font-semibold">
                   {formatRatio(row.attackDefendersKilled, row.attackAttackersLost)}
                 </td>
-                <td className="px-4 py-2 text-right text-error font-semibold">
+                <td className="px-4 py-2 text-end text-error font-semibold">
                   {formatRatio(row.defenseAttackersKilled, row.defenseDefendersLost)}
                 </td>
               </tr>
@@ -650,34 +657,39 @@ const PlayerAggregateTable: React.FC<{ rows: PlayerAggregate[] }> = ({ rows }) =
     </div>
   </SectionCard>
 );
+};
 
-const AllianceAggregateTable: React.FC<{ rows: AllianceAggregate[] }> = ({ rows }) => (
-  <SectionCard className="flex h-full flex-col" title="Alliance Aggregate" description="Filtered battle totals by alliance" descriptionClassName="" actions={<Badge variant="secondary">{rows.length} alliances</Badge>} contentClassName="flex min-h-0 flex-1 flex-col" flush>
+const AllianceAggregateTable: React.FC<{ rows: AllianceAggregate[] }> = ({ rows }) => {
+  const {t,number} = useStaticLocale();
+  const formatNumber = number;
+  const formatRatio = (numerator:number, denominator:number) => denominator <= 0 ? (numerator > 0 ? '∞' : '--') : number(numerator / denominator,{minimumFractionDigits:2,maximumFractionDigits:2});
+  return (
+  <SectionCard className="flex h-full flex-col" title={t('battle.allianceAggregate')} description={t('battle.allianceAggregateDescription')} descriptionClassName="" actions={<Badge variant="secondary"><LocalizedText messageKey="battle.allianceCount" params={{count:rows.length}}/></Badge>} contentClassName="flex min-h-0 flex-1 flex-col" flush>
     <div className="min-h-0 flex-1 overflow-x-auto">
         <table className="battle-aggregate-table w-full text-sm">
           <thead>
-            <tr className="text-left text-xs uppercase tracking-wider text-text-muted border-b border-border-base">
+            <tr className="text-start text-xs uppercase tracking-wider text-text-muted border-b border-border-base">
               <th className="px-4 py-3 font-semibold"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.alliance.afe3c194" /></th>
-              <th className="px-4 py-3 font-semibold text-right"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.reports.dacca3cb" /></th>
-              <th className="px-4 py-3 font-semibold text-right">W / L</th>
-              <th className="px-4 py-3 font-semibold text-right" title="Defenders killed per attacker lost when attacking this alliance"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.attack.ratio.6958245c" /></th>
-              <th className="px-4 py-3 font-semibold text-right" title="Attackers killed per defender lost when defending against this alliance"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.defense.ratio.1ffe9f00" /></th>
+              <th className="px-4 py-3 font-semibold text-end"><LocalizedText messageKey="ui.battleStats.components.battleStatsView.reports.dacca3cb" /></th>
+              <th className="px-4 py-3 font-semibold text-end"><LocalizedText messageKey="battle.winsLosses"/></th>
+              <th className="px-4 py-3 font-semibold text-end" title={t('battle.allianceAttackRatioHelp')}><LocalizedText messageKey="ui.battleStats.components.battleStatsView.attack.ratio.6958245c" /></th>
+              <th className="px-4 py-3 font-semibold text-end" title={t('battle.allianceDefenseRatioHelp')}><LocalizedText messageKey="ui.battleStats.components.battleStatsView.defense.ratio.1ffe9f00" /></th>
             </tr>
           </thead>
           <tbody>
             {rows.slice(0, AGGREGATE_ROW_LIMIT).map((row) => (
               <tr key={row.key} className="h-[3.25rem] border-b border-border-base/70">
                 <td className="px-4 py-2 font-semibold text-text-main">{row.name}</td>
-                <td className="px-4 py-2 text-right text-text-main font-semibold">{formatNumber(row.reports)}</td>
-                <td className="px-4 py-2 text-right">
+                <td className="px-4 py-2 text-end text-text-main font-semibold">{formatNumber(row.reports)}</td>
+                <td className="px-4 py-2 text-end">
                   <span className="text-success font-semibold">{formatNumber(row.wins)}</span>
                   <span className="text-text-muted"> / </span>
                   <span className="text-error font-semibold">{formatNumber(row.losses)}</span>
                 </td>
-                <td className="px-4 py-2 text-right text-info font-semibold">
+                <td className="px-4 py-2 text-end text-info font-semibold">
                   {formatRatio(row.attackDefendersKilled, row.attackAttackersLost)}
                 </td>
-                <td className="px-4 py-2 text-right text-error font-semibold">
+                <td className="px-4 py-2 text-end text-error font-semibold">
                   {formatRatio(row.defenseAttackersKilled, row.defenseDefendersLost)}
                 </td>
               </tr>
@@ -693,6 +705,7 @@ const AllianceAggregateTable: React.FC<{ rows: AllianceAggregate[] }> = ({ rows 
     </div>
   </SectionCard>
 );
+};
 
 const AggregateSpacerRows: React.FC<{ count: number; columns: number }> = ({ count, columns }) => (
   <>
@@ -762,7 +775,7 @@ const ReportDetails: React.FC<{ report: ParsedReport; outcome: string; perspecti
       />
 
       {report.waves && report.waves.length > 0 && (
-        <SectionCard title={localizeStatic("ui.battleStats.components.battleStatsView.title.wall.waves.607728a8")} actions={<Badge variant="secondary">{report.waves.length} waves</Badge>} contentClassName="space-y-3">
+        <SectionCard title={localizeStatic("ui.battleStats.components.battleStatsView.title.wall.waves.607728a8")} actions={<Badge variant="secondary"><LocalizedText messageKey="battle.waves" params={{count:report.waves.length}}/></Badge>} contentClassName="space-y-3">
             {report.waves.map((wave, index) => (
               <WaveRow key={`${wave.wave ?? wave.index ?? index}-${index}`} wave={wave} index={index} />
             ))}
@@ -777,7 +790,7 @@ const BattleDetailsHeader: React.FC<{ report: ParsedReport; outcome: string; onB
   outcome,
   onBack,
 }) => {
-  const { t: localizeStatic } = useStaticLocale();
+  const { t: localizeStatic, locale } = useStaticLocale();
 	const { kingdoms } = useMetadata();
   return (
     <Card variant="solid" className="battle-report-dossier">
@@ -810,7 +823,7 @@ const BattleDetailsHeader: React.FC<{ report: ParsedReport; outcome: string; onB
       </div>
 
       <div className="battle-report-intel-strip">
-        <BannerFact icon={<CalendarDays className="h-4 w-4" />} label={localizeStatic("ui.battleStats.components.battleStatsView.label.date.99c40ab4")} value={formatDate(report)} />
+        <BannerFact icon={<CalendarDays className="h-4 w-4" />} label={localizeStatic("ui.battleStats.components.battleStatsView.label.date.99c40ab4")} value={formatDate(report,locale,localizeStatic("ui.battleStats.components.battleStatsView.unknown.b764cdc0"))} />
         <BannerFact icon={<MapPin className="h-4 w-4" />} label={localizeStatic("ui.battleStats.components.battleStatsView.label.coordinates.117c132e")} value={battleCoordinateLabel(report)} />
 		<BannerFact icon={<Shield className="h-4 w-4" />} label={localizeStatic("game.kingdom")} value={kingdomLabel(report, kingdoms)} />
       </div>
@@ -855,7 +868,7 @@ const UnitStatsPanel: React.FC<{ report: ParsedReport; perspectiveSide: Combatan
   report,
   perspectiveSide,
 }) => {
-  const { t: localizeStatic } = useStaticLocale();
+  const { t: localizeStatic, locale } = useStaticLocale();
 	const { getTroop } = useMetadata();
   const side = perspectiveSide || 'attacker';
   const attackerSent = metricValue(report.metrics, 'attackerSent', 'attackSent');
@@ -869,40 +882,40 @@ const UnitStatsPanel: React.FC<{ report: ParsedReport; perspectiveSide: Combatan
   const opponentForce = isDefenseView ? attackerSent : defenderStationed;
   const opponentLost = isDefenseView ? attackerLost : defenderLost;
   const totalLosses = attackerLost + defenderLost;
-  const tradeRatio = formatTradeRatio(opponentLost, ourLost);
+  const tradeRatio = formatTradeRatio(opponentLost, ourLost,locale);
   const tradeTone = opponentLost > ourLost ? 'success' : opponentLost < ourLost ? 'danger' : 'default';
 
   return (
     <SectionCard
       title={localizeStatic("ui.battleStats.components.battleStatsView.title.all.unit.stats.de5d4283")}
-      description={`${isDefenseView ? 'Defense' : 'Attack'} perspective based on the selected player or alliance.`}
+      description={localizeStatic(isDefenseView ? 'battle.defensePerspective' : 'battle.attackPerspective')}
       descriptionClassName=""
       actions={<div className="flex items-center gap-2">
-        <Badge variant={isDefenseView ? 'primary' : 'danger'}>{isDefenseView ? 'Defender view' : 'Attacker view'}</Badge>
+        <Badge variant={isDefenseView ? 'primary' : 'danger'}>{localizeStatic(isDefenseView ? 'battle.defenderView' : 'battle.attackerView')}</Badge>
         <BarChart3 className="w-5 h-5 text-primary" />
       </div>}
     >
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
           <MetricTile
-            label={isDefenseView ? 'Our stationed' : 'Our sent'}
+            label={localizeStatic(isDefenseView ? 'battle.ourStationed' : 'battle.ourSent')}
             value={ourForce}
             tone={isDefenseView ? 'info' : 'default'}
           />
           {isDefenseView ? (
             <SplitMetricTile
               label={localizeStatic("ui.battleStats.components.battleStatsView.label.our.losses.525db1a0")}
-              leftLabel="Attack units"
+              leftLabel={localizeStatic('battle.attackUnits')}
               leftValue={defenderLossesByRole.attack}
-              rightLabel="Defense units"
+              rightLabel={localizeStatic('battle.defenseUnits')}
               rightValue={defenderLossesByRole.defense}
               tone="danger"
-              caption={defenderLossesByRole.unknown > 0 ? `Unclassified ${formatNumber(defenderLossesByRole.unknown)}` : undefined}
+              caption={defenderLossesByRole.unknown > 0 ? localizeStatic('battle.unclassifiedCount',{count:defenderLossesByRole.unknown}) : undefined}
             />
           ) : (
             <MetricTile label={localizeStatic("ui.battleStats.components.battleStatsView.label.our.losses.525db1a0")} value={ourLost} tone="danger" />
           )}
           <MetricTile
-            label={isDefenseView ? 'Opponent sent' : 'Opponent stationed'}
+            label={localizeStatic(isDefenseView ? 'battle.opponentSent' : 'battle.opponentStationed')}
             value={opponentForce}
             tone={isDefenseView ? 'default' : 'info'}
           />
@@ -911,16 +924,16 @@ const UnitStatsPanel: React.FC<{ report: ParsedReport; perspectiveSide: Combatan
           ) : (
             <SplitMetricTile
               label={localizeStatic("ui.battleStats.components.battleStatsView.label.opponent.losses.4a721262")}
-              leftLabel="Attack units"
+              leftLabel={localizeStatic('battle.attackUnits')}
               leftValue={defenderLossesByRole.attack}
-              rightLabel="Defense units"
+              rightLabel={localizeStatic('battle.defenseUnits')}
               rightValue={defenderLossesByRole.defense}
               tone="success"
-              caption={defenderLossesByRole.unknown > 0 ? `Unclassified ${formatNumber(defenderLossesByRole.unknown)}` : undefined}
+              caption={defenderLossesByRole.unknown > 0 ? localizeStatic('battle.unclassifiedCount',{count:defenderLossesByRole.unknown}) : undefined}
             />
           )}
-          <MetricTile label={localizeStatic("ui.battleStats.components.battleStatsView.label.trade.ratio.fc4c64a4")} value={tradeRatio} tone={tradeTone} caption="Opponent losses per our loss" />
-          <MetricTile label={localizeStatic("ui.battleStats.components.battleStatsView.label.total.losses.134e3b98")} value={totalLosses} tone="danger" caption="Both sides combined" />
+          <MetricTile label={localizeStatic("ui.battleStats.components.battleStatsView.label.trade.ratio.fc4c64a4")} value={tradeRatio} tone={tradeTone} caption={localizeStatic('battle.tradeRatioHelp')} />
+          <MetricTile label={localizeStatic("ui.battleStats.components.battleStatsView.label.total.losses.134e3b98")} value={totalLosses} tone="danger" caption={localizeStatic('battle.totalLossesHelp')} />
       </div>
     </SectionCard>
   );
@@ -943,6 +956,7 @@ const SplitMetricTile: React.FC<{
   tone = 'neutral',
   caption,
 }) => {
+  const {number:formatNumber} = useStaticLocale();
   const toneClass = {
     neutral: 'text-text-main',
     success: 'text-success',
@@ -1130,18 +1144,20 @@ const ForcesAccordion: React.FC<{
   defender,
   defenderUnits,
   defenderTools,
-}) => (
-  <CollapsibleDetailCard title="Forces" subtitle={`${combatantName(attacker)} vs ${combatantName(defender)}`}>
+}) => {
+ const {t} = useStaticLocale();
+ return (
+  <CollapsibleDetailCard title={t('battle.forces')} subtitle={t('battle.matchup',{attacker:combatantName(attacker),defender:combatantName(defender)})}>
     <div className="grid gap-4 xl:grid-cols-2">
       <ForceSidePanel
-        title="Attacker"
+        title={t('ui.battleStats.components.battleStatsView.attacker.2969c659')}
         combatant={attacker}
         units={attackerUnits}
         tools={attackerTools}
         tone="danger"
       />
       <ForceSidePanel
-        title="Defender"
+        title={t('ui.battleStats.components.battleStatsView.defender.157ddc59')}
         combatant={defender}
         units={defenderUnits}
         tools={defenderTools}
@@ -1150,6 +1166,7 @@ const ForcesAccordion: React.FC<{
     </div>
   </CollapsibleDetailCard>
 );
+};
 
 const ForceSidePanel: React.FC<{
   title: string;
@@ -1194,7 +1211,7 @@ const RosterSection: React.FC<{
       </div>
     ) : (
       <div className="border border-border-base rounded-global bg-bg-app px-3 py-4 text-sm text-text-muted text-center">
-        No parsed {kind === 'unit' ? 'units' : 'tools'}.
+        <LocalizedText messageKey={kind === 'unit' ? 'battle.noParsedUnits' : 'battle.noParsedTools'}/>
       </div>
     )}
   </div>
@@ -1206,10 +1223,11 @@ const BattleItemChip: React.FC<{
   valueClass: string;
   compact?: boolean;
 }> = ({ item, kind, valueClass, compact = false }) => {
+  const {number:formatNumber,t} = useStaticLocale();
   const { getTroop, getTool } = useMetadata();
   const id = itemID(item);
   const metadata = kind === 'unit' ? getTroop(id) : getTool(id);
-  const name = metadata?.name ?? `${kind === 'unit' ? 'Unit' : 'Tool'} ${id}`;
+  const name = metadata?.name ?? t(kind === 'unit' ? 'battle.unitId' : 'battle.toolId',{id:String(id)});
   const amount = numericValue(item.amount) ?? 0;
   const delta = kind === 'unit' ? numericValue(item.lost) ?? 0 : numericValue(item.used) ?? 0;
   const changeValue = kind === 'unit' ? delta : delta || amount;
@@ -1223,15 +1241,8 @@ const BattleItemChip: React.FC<{
   const deltaClass = isDangerTone
     ? 'border-error/20 bg-error/10 text-error'
     : 'border-info/20 bg-info/10 text-info';
-  const phase = phaseLabel(item.phase);
-  const title = [
-    name,
-    `x${formatNumber(amount)}`,
-    phase,
-    changeValue > 0 ? `${kind === 'unit' ? 'lost' : 'used'} ${formatNumber(changeValue)}` : '',
-  ]
-    .filter(Boolean)
-    .join(' · ');
+  const phase = stringValue(item.phase).toLowerCase();
+  const title = t('battle.itemTooltip',{name,amount,phase,changed:changeValue,changeKind:changeValue > 0 ? (kind === 'unit' ? 'lost' : 'used') : 'none'});
 
   return (
     <div
@@ -1263,7 +1274,8 @@ const BattleItemChip: React.FC<{
 const WaveRow: React.FC<{ wave: BattleWave; index: number }> = ({ wave, index }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const lanes = wave.lanes ?? [];
-  const waveLabel = `Wave ${wave.wave ?? wave.index ?? index + 1}`;
+  const {t} = useStaticLocale();
+  const waveLabel = t('battle.wave',{number:wave.wave ?? wave.index ?? index + 1});
   const detailsId = `wave-details-${wave.wave ?? wave.index ?? index}-${index}`;
 
   return (
@@ -1309,7 +1321,7 @@ const WaveLaneSummary: React.FC<{ lanes: BattleWaveLane[] }> = ({ lanes }) => (
           <span className="text-[11px] uppercase tracking-wider text-text-muted font-semibold">
             {laneLabel(lane, laneIndex)}
           </span>
-          <Badge variant={result === 'HELD' ? 'success' : 'warning'}>{result}</Badge>
+          <Badge variant={result === 'HELD' ? 'success' : 'warning'}><LocalizedText messageKey={result === 'HELD' ? 'battle.held' : 'battle.breached'}/></Badge>
         </div>
       );
     })}
@@ -1330,7 +1342,7 @@ const LaneDetailCard: React.FC<{ lane: BattleWaveLane; laneIndex: number }> = ({
         <span className="text-xs uppercase tracking-wider text-text-muted font-semibold">
           {laneLabel(lane, laneIndex)}
         </span>
-        <Badge variant={result === 'HELD' ? 'success' : 'warning'}>{result}</Badge>
+        <Badge variant={result === 'HELD' ? 'success' : 'warning'}><LocalizedText messageKey={result === 'HELD' ? 'battle.held' : 'battle.breached'}/></Badge>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-4">
         <LaneSidePanel
@@ -1365,6 +1377,7 @@ const LaneSidePanel: React.FC<{
   toolTitle: string;
   valueClass: string;
 }> = ({ title, lost, units, tools, unitTitle, toolTitle, valueClass }) => {
+  const {number:formatNumber} = useStaticLocale();
   return (
     <div className="min-w-0">
       <div className="flex items-center justify-between gap-2">
@@ -2158,7 +2171,7 @@ function battleCoordinateLabel(report: ParsedReport): string {
     return 'Unknown coordinates';
   }
 
-  return `(${formatNumber(coordinates.x)}, ${formatNumber(coordinates.y)})`;
+  return `(${coordinates.x}, ${coordinates.y})`;
 }
 
 function battleCoordinates(report: ParsedReport): { x: number; y: number } | null {
@@ -2216,13 +2229,13 @@ function reportTimeMs(report: ParsedReport): number | null {
   return null;
 }
 
-function formatDate(report: ParsedReport): string {
+function formatDate(report: ParsedReport, locale:string, unknown:string): string {
   const time = reportTimeMs(report);
   if (time === null) {
-    return 'Unknown';
+    return unknown;
   }
 
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(locale, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -2605,20 +2618,6 @@ function itemKey(item: BattleItemDetail): string {
   return [item.side, item.phase, item.lane, itemID(item), item.amount, item.lost, item.used].filter(Boolean).join(':');
 }
 
-function phaseLabel(value: unknown): string {
-  const phase = stringValue(value).toLowerCase();
-  if (phase === 'wall') {
-    return 'Wall';
-  }
-  if (phase === 'courtyard') {
-    return 'Courtyard';
-  }
-  if (phase === 'support') {
-    return 'Support';
-  }
-  return '';
-}
-
 function laneResult(lane: BattleWaveLane): 'HELD' | 'BREACHED' {
   const defenderStart = lane.defenderStart ?? 0;
   const defenderLost = lane.defenderLost ?? 0;
@@ -2655,24 +2654,13 @@ function laneLabel(lane: BattleWaveLane, index: number): string {
   return ['Left flank', 'Middle front', 'Right flank'][index] ?? `Lane ${index + 1}`;
 }
 
-function formatNumber(value: number): string {
-  return new Intl.NumberFormat().format(value);
-}
-
-function formatRatio(numerator: number, denominator: number): string {
-  if (denominator <= 0) {
-    return numerator > 0 ? '∞' : '--';
-  }
-  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(numerator / denominator);
-}
-
-function formatTradeRatio(opponentLost: number, ourLost: number): string {
+function formatTradeRatio(opponentLost: number, ourLost: number,locale:string): string {
   if (ourLost <= 0) {
-    return opponentLost > 0 ? '∞ : 1' : '--';
+    return opponentLost > 0 ? `∞ : ${new Intl.NumberFormat(locale).format(1)}` : '--';
   }
 
   const value = opponentLost / ourLost;
-  return `${new Intl.NumberFormat(undefined, { maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(value)} : 1`;
+  return `${new Intl.NumberFormat(locale, { maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(value)} : ${new Intl.NumberFormat(locale).format(1)}`;
 }
 
 function numericValue(value: unknown): number | null {
