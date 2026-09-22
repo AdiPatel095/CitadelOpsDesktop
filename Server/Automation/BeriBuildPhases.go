@@ -64,7 +64,8 @@ func evaluateBeriEventBuild(
 	if err != nil {
 		return nil, false, "", err
 	}
-	if !stableDiff.Satisfied {
+	stableRubyBlocked := rubyPolicyOnlyBlocked(stableDiff)
+	if !stableDiff.Satisfied && !stableRubyBlocked {
 		if queueBlocked {
 			return nil, false, "The Berimond construction queue is occupied while the selected Stable level is pending", nil
 		}
@@ -176,6 +177,9 @@ func evaluateBeriEventBuild(
 	metrics["targetBuildingsTotal"] = float64(stableDiff.Summary.TargetCount + decorationDiff.Summary.TargetCount + finalDiff.Summary.TargetCount + fixedDiff.Summary.TargetCount)
 	metrics["targetActionsRemaining"] = float64(finalDiff.Summary.ActionCount + fixedDiff.Summary.ActionCount)
 	if finalDiff.Satisfied && fixedDiff.Satisfied {
+		if stableRubyBlocked {
+			return nil, false, rubyPolicyDetail(stableDiff), nil
+		}
 		return nil, true, "Captured Berimond target state satisfied", nil
 	}
 	if queueBlocked {
@@ -266,7 +270,7 @@ func beriUnsafeTargetDiff(diff Buildings.TargetDiffResult) (string, bool) {
 			continue
 		}
 		switch issue.Code {
-		case "premium_disallowed", "no_space", "kingdom", "area_type", "event_context", "event", "map_context", "map":
+		case "premium_disallowed", "ruby_confirmation_unknown", "ruby_confirmation_required", "no_space", "kingdom", "area_type", "event_context", "event", "map_context", "map":
 			continue
 		default:
 			return issue.Message, true

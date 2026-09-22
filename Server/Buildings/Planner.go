@@ -364,6 +364,11 @@ func finalizeCandidate(
 			break
 		}
 	}
+	if candidate.Kind == ActionUpgrade && constraints.AllowPremium {
+		if blocker := RubyUpgradeBlocker(state, candidate.Costs); blocker != nil {
+			addBlocker(candidate, blocker.Code, blocker.Message)
+		}
+	}
 	if !candidate.Affordable && !constraints.AllowUnaffordable {
 		addBlocker(candidate, "insufficient_resources", "Observed balances do not cover the cost and configured reserves")
 	}

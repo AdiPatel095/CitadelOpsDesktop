@@ -29,14 +29,14 @@ func (*AutoStormBuildPolicy) WakeDomains() []string {
 	// Their wire updates also publish the broad castles/inventory domains and
 	// previously rebuilt the complete target-layout diff many times per second.
 	// Structural build responses still wake this lane immediately.
-	return []string{"buildings", "construction-items", "construction-offers", "kingdom-transport", "storage"}
+	return []string{"ruby-confirmation", "buildings", "construction-items", "construction-offers", "kingdom-transport", "storage"}
 }
 
 func (*AutoStormBuildPolicy) WakeSections() []string {
 	return []string{autoStormSection, Buildings.StormBlueprintConfigurationSection, "decorations.presets"}
 }
 
-func (*AutoStormBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
+func (*AutoStormBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result Decision, resultErr error) {
 	settings := defaultAutoStormSettings()
 	if !decodeSection(snapshot.Configuration, autoStormSection, &settings) {
 		return autoStormBuildWaiting(snapshot.Now, "Auto Storm settings have not been saved", nil), nil
@@ -61,6 +61,11 @@ func (*AutoStormBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Dec
 	if !found {
 		return autoStormBuildWaiting(snapshot.Now, "No unlocked Storm castle is present", nil), nil
 	}
+	defer func() {
+		if resultErr == nil {
+			attachStormRubyUpgradeNotices(&result, snapshot, castle, settings)
+		}
+	}()
 	metrics := map[string]float64{"castleId": float64(castle.ID)}
 	if decision, actionable := ownedKingdomTransportDecision(
 		autoStormTransportOwner,
@@ -87,7 +92,7 @@ func (*AutoStormBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Dec
 	if detail == "" {
 		detail = "Storm build lane is waiting for its next state change"
 	}
-	result := Decision{
+	result = Decision{
 		Status: status, Detail: detail, Metrics: metrics,
 		NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)),
 	}

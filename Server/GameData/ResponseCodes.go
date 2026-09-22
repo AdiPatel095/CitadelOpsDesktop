@@ -68,6 +68,8 @@ var officialClientEnchantResponseCodes = map[int]ResponseCodeMeaning{
 }
 
 var officialClientOpcodeResponseCodes = map[string]map[int]ResponseCodeMeaning{
+	// Official client C2_CONFIRMATION_REQUIRED. Scoped to the verified EUP flow.
+	"eup": {440: {Code: 440, Message: "This ruby purchase requires confirmation in the game.", Source: ResponseCodeOfficialClient}},
 	// Official client enum: NO_MULTIPLE_ALLIANCEHELP = 273.
 	// https://empire-html5.goodgamestudios.com/default/dll/ggs.dll.6644f9217d73e8ce169d.js
 	"ahr": {

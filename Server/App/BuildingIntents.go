@@ -79,14 +79,16 @@ type buildingUpgradeIntentRequest struct {
 	MaximumLevel       int64                    `json:"maximumLevel,omitempty"`
 }
 
+// Legacy premium fields remain decodable so saved confirmation plans can be
+// rejected explicitly; new plans never emit them.
 type buildingUpgradeResolverArguments struct {
 	Request             buildingUpgradeIntentRequest `json:"request"`
 	PremiumMode         string                       `json:"premiumMode,omitempty"`
+	TargetDefinitionID  int64                        `json:"targetDefinitionId,omitempty"`
 	ExpectedPremiumCost int64                        `json:"expectedPremiumCost,omitempty"`
 }
 
 const (
-	buildingPremiumModeQuote   = "quote"
 	buildingPremiumModeConfirm = "confirm"
 )
 
@@ -120,6 +122,9 @@ type buildingVerification struct {
 }
 
 func (application *Application) registerBuildingIntents() error {
+	if err := application.Intents.RegisterAction("building.upgrade.guard", application.guardBuildingUpgrade); err != nil {
+		return err
+	}
 	for name, resolver := range map[string]Intent.StepResolver{
 		"building.expand.build":                 resolveBuildingExpansionStep,
 		"building.collect_expansion_gift.build": resolveBuildingCollectExpansionGiftStep,
@@ -448,23 +453,8 @@ func planBuildingUpgrade(_ context.Context, input Intent.PlanningContext, argume
 		TargetDefinitionID: State.BuildingID(target.ID),
 	})
 	steps := castleContextSteps(input, castle)
-	if premiumCost, premiumOnly := exactBuildingPremiumCost(target); premiumOnly {
-		quoteArguments, _ := json.Marshal(buildingUpgradeResolverArguments{
-			Request: request, PremiumMode: buildingPremiumModeQuote, ExpectedPremiumCost: premiumCost,
-		})
-		quote := buildingResolverStep("Quote premium building upgrade", "building.upgrade.build", quoteArguments, "eup")
-		quote.SuccessCodes = []int{440}
-		quote.ExpectedResponsePayload = expectedBuildingPremiumQuote(request.BuildingInstanceID, premiumCost)
-		steps = append(steps, quote)
-
-		confirmArguments, _ := json.Marshal(buildingUpgradeResolverArguments{
-			Request: request, PremiumMode: buildingPremiumModeConfirm, ExpectedPremiumCost: premiumCost,
-		})
-		steps = append(steps, buildingResolverStep("Confirm premium building upgrade", "building.upgrade.build", confirmArguments, "eup"))
-	} else {
-		resolverArguments, _ := json.Marshal(buildingUpgradeResolverArguments{Request: request})
-		steps = append(steps, buildingResolverStep("Upgrade building", "building.upgrade.build", resolverArguments, "eup"))
-	}
+	resolverArguments, _ := json.Marshal(buildingUpgradeResolverArguments{Request: request, TargetDefinitionID: target.ID})
+	steps = append(steps, buildingResolverStep("Upgrade building", "building.upgrade.build", resolverArguments, "eup"))
 	steps = append(steps, castleFocusStep(castle))
 	steps = append(steps, Intent.Step{Name: "Verify building upgrade", Action: "building.verify", ActionArguments: verificationArguments})
 	return Intent.Plan{
@@ -484,35 +474,27 @@ func resolveBuildingUpgradeStep(_ context.Context, input Intent.PlanningContext,
 	if err != nil {
 		return Intent.Step{}, err
 	}
-	premiumCost, premiumOnly := exactBuildingPremiumCost(target)
+	// Never execute a stored legacy quote/confirmation plan unattended.
 	if resolverArguments.PremiumMode != "" {
-		if !request.AllowPremium {
-			return Intent.Step{}, fmt.Errorf("premium building upgrade requires allowPremium=true")
-		}
-		if !premiumOnly || premiumCost != resolverArguments.ExpectedPremiumCost {
-			return Intent.Step{}, fmt.Errorf("official premium building cost changed before confirmation")
-		}
+		return Intent.Step{}, fmt.Errorf("premium upgrade confirmation requires a new guarded plan")
 	}
-	power := 0
-	if resolverArguments.PremiumMode == buildingPremiumModeConfirm {
-		power = 1
-	} else if resolverArguments.PremiumMode != "" && resolverArguments.PremiumMode != buildingPremiumModeQuote {
-		return Intent.Step{}, fmt.Errorf("unsupported building premium mode %q", resolverArguments.PremiumMode)
-	}
+
 	payload, _ := json.Marshal(struct {
 		BuildingID State.BuildingInstanceID `json:"OID"`
 		Power      int                      `json:"PWR"`
 		Offer      int                      `json:"PO"`
-	}{request.BuildingInstanceID, power, -1})
+	}{request.BuildingInstanceID, 0, -1})
+	if resolverArguments.TargetDefinitionID > 0 && resolverArguments.TargetDefinitionID != target.ID {
+		return Intent.Step{}, fmt.Errorf("%w: upgrade target changed", Intent.ErrPlanStale)
+	}
 	step := buildingMutationStep("Upgrade building", "eup", payload)
+	step.FinalDispatchAction = "building.upgrade.guard"
+	step.FinalDispatchArguments = arguments
 	step.CoinCost, err = buildingCoinCostRequirement(input.GameData, target)
 	if err != nil {
 		return Intent.Step{}, err
 	}
-	if resolverArguments.PremiumMode == buildingPremiumModeQuote {
-		step.SuccessCodes = []int{440}
-		step.ExpectedResponsePayload = expectedBuildingPremiumQuote(request.BuildingInstanceID, premiumCost)
-	}
+
 	return step, nil
 }
 
@@ -525,27 +507,6 @@ func buildingCoinCostRequirement(store *GameData.Store, definition GameData.Buil
 		return nil, nil
 	}
 	return &Intent.CoinCostRequirement{Amount: int64(math.Ceil(cost)), Source: "official building definition cost"}, nil
-}
-
-func exactBuildingPremiumCost(definition GameData.BuildingDefinition) (int64, bool) {
-	if len(definition.Costs) != 1 || !definition.Costs[0].Premium {
-		return 0, false
-	}
-	amount := definition.Costs[0].Amount
-	if amount <= 0 || amount != math.Trunc(amount) || amount > math.MaxInt64 {
-		return 0, false
-	}
-	return int64(amount), true
-}
-
-func expectedBuildingPremiumQuote(buildingID State.BuildingInstanceID, premiumCost int64) json.RawMessage {
-	payload, _ := json.Marshal(struct {
-		BuildingID State.BuildingInstanceID `json:"OID"`
-		Power      int                      `json:"PWR"`
-		Offer      int                      `json:"PO"`
-		Premium    int64                    `json:"CC2T"`
-	}{buildingID, 0, -1, premiumCost})
-	return payload
 }
 
 func planBuildingFinishFree(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
@@ -1541,4 +1502,33 @@ func buildingInstanceClaims(castleID State.CastleID, buildingID State.BuildingIn
 
 func buildingPositionClaim(castleID State.CastleID, x int, y int) string {
 	return fmt.Sprintf("building-position:%d:%d:%d", castleID, x, y)
+}
+
+func (application *Application) guardBuildingUpgrade(_ context.Context, arguments json.RawMessage) error {
+	if application == nil || application.State == nil || application.GameData == nil {
+		return fmt.Errorf("%w: current building upgrade authority is unavailable", Intent.ErrPlanStale)
+	}
+	data, ready := application.GameData.Current()
+	if !ready {
+		return fmt.Errorf("%w: official building data is unavailable", Intent.ErrPlanStale)
+	}
+	return validateFinalBuildingUpgrade(Intent.PlanningContext{State: application.State.ReadOnlyView(), GameData: data}, arguments)
+}
+
+func validateFinalBuildingUpgrade(input Intent.PlanningContext, arguments json.RawMessage) error {
+	var args buildingUpgradeResolverArguments
+	if err := decodeIntentArguments(arguments, &args); err != nil {
+		return err
+	}
+	if args.PremiumMode != "" {
+		return fmt.Errorf("%w: unattended ruby confirmation is not allowed", Intent.ErrPlanStale)
+	}
+	_, _, target, err := validatedBuildingUpgrade(input, args.Request, true)
+	if err != nil {
+		return fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
+	}
+	if args.TargetDefinitionID <= 0 || target.ID != args.TargetDefinitionID {
+		return fmt.Errorf("%w: upgrade target changed", Intent.ErrPlanStale)
+	}
+	return nil
 }

@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"CitadelDesktop/Server/Intent"
+	"CitadelDesktop/Server/State"
+	"CitadelDesktop/Server/Telemetry"
 )
 
 func TestFeatureActivitiesRecordsOneCompletedAction(t *testing.T) {
@@ -248,6 +250,34 @@ func TestUserFacingGameNameHumanizesCatalogIdentifiers(t *testing.T) {
 	for input, expected := range tests {
 		if actual := userFacingGameName(input); actual != expected {
 			t.Errorf("userFacingGameName(%q) = %q, want %q", input, actual, expected)
+		}
+	}
+}
+
+func TestSafetyLockMeaningSurvivesFeatureAndStoredActivity(t *testing.T) {
+	for _, tc := range []struct {
+		opcode  string
+		code    int
+		meaning string
+	}{
+		{"cra", 90, "Please wait 4 sec to attack"}, {"eup", 440, "Spending 3100 rubies is not allowed with Ruby Confirmation Threshold of 2500"},
+	} {
+		lock := State.AutomationSafetyLock{Opcode: tc.opcode, Code: tc.code, OperationID: "op-private", Meaning: tc.meaning}
+		receipt := Intent.Receipt{Intent: "building.upgrade", Status: Intent.StatusFailed, Plan: &Intent.Plan{Effect: Intent.EffectWrite, Summary: "Upgrade Stable", Steps: []Intent.Step{{Opcode: tc.opcode}}}, Failure: &Intent.FailurePresentation{Explanation: lock.Detail()}}
+		activities := featureActivities(receipt)
+		if len(activities) != 1 {
+			t.Fatalf("activities=%#v", activities)
+		}
+		store := Telemetry.NewStore(20)
+		store.RecordFeatureActivity("automation:autoBeriWorld", "building.upgrade", activities[0].severity, activities[0].event, activities[0].detail)
+		lines := strings.Join(store.Tail(Telemetry.ChannelAutoBeriWorld, 20), " ")
+		if !strings.Contains(lines, tc.meaning) || !strings.Contains(lines, "Safety lock after "+strings.ToUpper(tc.opcode)) || strings.Contains(lines, "op-private") {
+			t.Fatalf("visible=%s", lines)
+		}
+		store.RecordFeatureActivity("automation:autoBeriWorld", "building.upgrade", "ERROR", "BUILDING", lock.Detail()+" payload OID=123")
+		lines = strings.Join(store.Tail(Telemetry.ChannelAutoBeriWorld, 1), " ")
+		if strings.Contains(lines, "OID=123") || !strings.Contains(lines, "Could not complete") {
+			t.Fatalf("unsafe=%s", lines)
 		}
 	}
 }

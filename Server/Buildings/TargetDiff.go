@@ -568,6 +568,11 @@ func addTargetActionIssues(
 			break
 		}
 	}
+	if action.Kind == ActionUpgrade && request.Policy.AllowPremium && currentTargetUpgrade(castle, action) {
+		if blocker := RubyUpgradeBlocker(state, action.Costs); blocker != nil {
+			addTargetIssue(result, targetIndex, TargetIssueWaiting, blocker.Code, blocker.Message, nil)
+		}
+	}
 	if (action.Kind == ActionConstruct || action.Kind == ActionUpgrade) && buildingQueueObserved(castle.BuildingQueue) && !buildingQueueAvailable(castle.BuildingQueue) {
 		addTargetIssue(result, targetIndex, TargetIssueWaiting, "construction_queue_full", "the building queue must become available before this path can advance", nil)
 	}
@@ -931,4 +936,15 @@ func minimumCostTargetAssignments(
 		}
 	}
 	return assignments
+}
+
+// Compiled paths include future upgrades. Only the observed building's next
+// upgrade may be gated by today's confirmation setting; earlier affordable
+// upgrades and resource-only construction remain eligible.
+func currentTargetUpgrade(castle State.CastleState, action TargetAction) bool {
+	building, found := castle.Layout.Objects[action.BuildingInstanceID]
+	if !found {
+		building, found = castle.Layout.Fixed[action.BuildingInstanceID]
+	}
+	return found && building.DefinitionID == action.FromDefinitionID
 }

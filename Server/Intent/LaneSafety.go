@@ -9,7 +9,10 @@ import (
 	"sync"
 	"time"
 
+	"CitadelDesktop/Server/Buildings"
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/State"
+	"encoding/json"
 )
 
 // This policy is deliberately independent of error text/ExpectedState. A known
@@ -66,6 +69,10 @@ func (engine *Engine) RefreshAutomationLaneLocks() error {
 					// No trustworthy original time: start one durable bounded timer.
 					lock.ObservedAt = now
 				}
+			}
+			meaning := engine.unsuccessfulResponseCode(lock.Opcode, lock.Code).(*ResponseCodeError).Meaning
+			if meaning.Source != GameData.ResponseCodeUnknown && (lock.Meaning == "" || meaning.Source == GameData.ResponseCodeOfficial) {
+				lock.Meaning, lock.MeaningSource = meaning.Message, string(meaning.Source)
 			}
 			lock.Until = lock.ExpiresAt()
 			if State.AutomationRejectionWhitelisted(lock.Opcode, lock.Code) {
@@ -146,6 +153,10 @@ func (engine *Engine) guardRejection(ctx context.Context, err error) error {
 		return &LaneLockedError{Lock: lock}
 	}
 	lock := State.AutomationSafetyLock{Lane: lane, Opcode: strings.ToLower(strings.TrimSpace(response.Opcode)), Code: response.Meaning.Code, OperationID: request.ID, Intent: request.Name, ObservedAt: time.Now().UTC(), Reason: "unclassified_rejection"}
+	if response.Meaning.Source != GameData.ResponseCodeUnknown {
+		lock.Meaning, lock.MeaningSource = response.Meaning.Message, string(response.Meaning.Source)
+	}
+	lock.Context = engine.rubyRejectionContext(request, lock)
 	lock.Until = lock.ObservedAt.Add(State.AutomationSafetyLockDuration)
 	// Classification is diagnostic; every non-whitelisted rejection has one TTL.
 	if lock.Opcode == "msd" {
@@ -225,4 +236,56 @@ func (engine *Engine) ClearAutomationLaneLock(lane, operationID, review, actor s
 		return err
 	}
 	return nil
+}
+
+// Context comes from the upgrade target and current game setting. EUP.CC2T is
+// a quoted purchase price and must never be treated as the confirmation setting.
+func (engine *Engine) rubyRejectionContext(request Request, lock State.AutomationSafetyLock) string {
+	if lock.Opcode != "eup" || lock.Code != 440 || request.Name != "building.upgrade" || engine.gameData == nil {
+		return ""
+	}
+	var args struct {
+		CastleID   State.CastleID           `json:"castleId"`
+		BuildingID State.BuildingInstanceID `json:"buildingInstanceId"`
+	}
+	if json.Unmarshal(request.Arguments, &args) != nil {
+		return ""
+	}
+	state := engine.state.ReadOnlyView()
+	setting := state.Player.RubyConfirmation
+	if !setting.Current(state.Session) {
+		return ""
+	}
+	data, ok := engine.gameData.Current()
+	if !ok || data == nil {
+		return ""
+	}
+	catalog, err := data.BuildingCatalog()
+	if err != nil {
+		return ""
+	}
+	castle := state.Castles[args.CastleID]
+	building, ok := castle.Layout.Objects[args.BuildingID]
+	if !ok {
+		building, ok = castle.Layout.Fixed[args.BuildingID]
+	}
+	if !ok {
+		return ""
+	}
+	current, ok := catalog.Definition(int64(building.DefinitionID))
+	if !ok {
+		return ""
+	}
+	next, ok := catalog.Definition(current.UpgradeDefinitionID)
+	if !ok {
+		return ""
+	}
+	var costs []Buildings.CostStatus
+	for _, cost := range next.Costs {
+		costs = append(costs, Buildings.CostStatus{Required: cost.Amount, Premium: cost.Premium})
+	}
+	if blocker := Buildings.RubyUpgradeBlocker(state, costs); blocker != nil && blocker.Code == "ruby_confirmation_required" {
+		return blocker.Message
+	}
+	return ""
 }

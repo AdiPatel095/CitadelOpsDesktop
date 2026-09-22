@@ -44,6 +44,7 @@ func RegisterCoreReducers(registry *Registry) error {
 	}{
 		{"gbd", State.AllComponents, reduceInitialState},
 		{"gpi", player, reducePlayerInfo},
+		{"opt", player, reduceRubyConfirmation},
 		{"gcl", castles, reduceCastleList},
 		{"ksc", castles, reduceCastleList},
 		{"gcu", player, reduceGlobalResources},
