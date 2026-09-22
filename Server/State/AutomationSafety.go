@@ -28,17 +28,20 @@ func AutomationRejectionWhitelisted(opcode string, code int) bool {
 // Stored with automations in account snapshots and hosted checkpoints. Value
 // fields keep copy-on-write snapshots isolated without additional cloning.
 type AutomationSafetyLock struct {
-	Lane        string    `json:"lane,omitempty"`
-	Opcode      string    `json:"opcode,omitempty"`
-	Code        int       `json:"code,omitempty"`
-	OperationID string    `json:"operationId,omitempty"`
-	Intent      string    `json:"intent,omitempty"`
-	ObservedAt  time.Time `json:"observedAt,omitempty"`
-	Reason      string    `json:"reason,omitempty"`
-	Until       time.Time `json:"until,omitempty"`
-	ClearedAt   time.Time `json:"clearedAt,omitempty"`
-	Review      string    `json:"review,omitempty"`
-	ReviewedBy  string    `json:"reviewedBy,omitempty"`
+	Meaning       string    `json:"meaning,omitempty"`
+	MeaningSource string    `json:"meaningSource,omitempty"`
+	Context       string    `json:"context,omitempty"`
+	Lane          string    `json:"lane,omitempty"`
+	Opcode        string    `json:"opcode,omitempty"`
+	Code          int       `json:"code,omitempty"`
+	OperationID   string    `json:"operationId,omitempty"`
+	Intent        string    `json:"intent,omitempty"`
+	ObservedAt    time.Time `json:"observedAt,omitempty"`
+	Reason        string    `json:"reason,omitempty"`
+	Until         time.Time `json:"until,omitempty"`
+	ClearedAt     time.Time `json:"clearedAt,omitempty"`
+	Review        string    `json:"review,omitempty"`
+	ReviewedBy    string    `json:"reviewedBy,omitempty"`
 }
 
 func (lock AutomationSafetyLock) Active(now time.Time) bool {
@@ -56,7 +59,13 @@ func (lock AutomationSafetyLock) ExpiresAt() time.Time {
 }
 
 func (lock AutomationSafetyLock) Detail() string {
-	detail := fmt.Sprintf("Safety lock after %s %d (operation %s).", strings.ToUpper(lock.Opcode), lock.Code, lock.OperationID)
+	detail := fmt.Sprintf("Safety lock after %s %d", strings.ToUpper(lock.Opcode), lock.Code)
+	if lock.Context != "" {
+		detail += ": " + lock.Context
+	} else if lock.Meaning != "" {
+		detail += ": " + lock.Meaning
+	}
+	detail = strings.TrimRight(detail, ".") + "."
 	if until := lock.ExpiresAt(); !until.IsZero() {
 		return detail + " Paused until " + until.UTC().Format(time.RFC3339) + "."
 	}

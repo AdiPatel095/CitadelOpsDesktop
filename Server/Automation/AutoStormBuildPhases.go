@@ -71,7 +71,8 @@ func evaluateStrictAutoStormBuild(
 	if err != nil {
 		return nil, false, "", err
 	}
-	if !harborDiff.Satisfied {
+	harborRubyBlocked := rubyPolicyOnlyBlocked(harborDiff)
+	if !harborDiff.Satisfied && !harborRubyBlocked {
 		if queueBlocked {
 			return nil, false, "The Storm construction queue is occupied while the Harbor target is pending", nil
 		}
@@ -110,6 +111,9 @@ func evaluateStrictAutoStormBuild(
 			"Waiting for resources or official prerequisites for Storehouse upgrades through level 7", stormStorehouseDefinitions(catalog))
 	}
 	if settings.Target == nil {
+		if harborRubyBlocked {
+			return nil, false, rubyPolicyDetail(harborDiff), nil
+		}
 		return nil, true, "Configured Storm Harbor and existing Storehouses are satisfied", nil
 	}
 

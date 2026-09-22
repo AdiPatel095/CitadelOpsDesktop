@@ -260,3 +260,15 @@ test('all non-persistent toasts remain for 30 seconds', () => {
   assert.equal(notificationDurationMs('red'), 30_000);
   assert.equal(notificationDurationMs('green'), 30_000);
 });
+
+test('ruby upgrade notices deduplicate polling and report changed or renewed blockers', async () => {
+ const { RubyUpgradeNotificationCoordinator } = await importTypeScript('../src/api/OperationNotifications.ts');
+ const coordinator = new RubyUpgradeNotificationCoordinator();
+ const state = (message) => ({ autoBeriWorldBuild: { details: { 'rubyUpgradeNotice/stable': message } } });
+ assert.equal(coordinator.next(state('Stable: cost 3,100; threshold 1')).length, 1);
+ assert.equal(coordinator.next(state('Stable: cost 3,100; threshold 1')).length, 0);
+ assert.equal(coordinator.next(state('Stable: cost 3,100; threshold 2500')).length, 1);
+ assert.equal(coordinator.next(state('Stable: confirmation unavailable')).length, 1);
+ assert.equal(coordinator.next({}).length, 0);
+ assert.equal(coordinator.next(state('Stable: confirmation unavailable')).length, 1);
+});
