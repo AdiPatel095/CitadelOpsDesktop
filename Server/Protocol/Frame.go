@@ -51,7 +51,7 @@ func Decode(raw string, direction Direction, receivedAt time.Time) (Frame, error
 	if frame.Transport == "" {
 		return Frame{}, fmt.Errorf("xt frame transport is empty")
 	}
-	if strings.HasPrefix(parts[2], "EmpireEx_") {
+	if parts[2] == "EmpireEx" || strings.HasPrefix(parts[2], "EmpireEx_") {
 		frame.Namespace = strings.TrimSpace(parts[2])
 		frame.Opcode = strings.ToLower(strings.TrimSpace(parts[3]))
 	} else {

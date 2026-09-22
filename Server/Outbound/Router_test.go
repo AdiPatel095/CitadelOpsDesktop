@@ -6,6 +6,7 @@ import (
 	"errors"
 	"reflect"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -240,6 +241,19 @@ func TestQueuedCommandOrderingAgesOldWorkToPreventStarvation(t *testing.T) {
 }
 
 func TestRouterKeepsAttackPacingIndependentFromCommandLane(t *testing.T) {
+	for _, namespace := range []string{"EmpireEx", "EmpireEx_21"} {
+		t.Run(namespace, func(t *testing.T) { testRouterNamespacePacing(t, namespace) })
+	}
+}
+
+func testRouterNamespacePacing(t *testing.T, namespace string) {
+	payload := func(opcode, label string) []byte {
+		raw, err := Protocol.Encode(Protocol.Command{Namespace: namespace, Opcode: opcode, Payload: json.RawMessage(`{"label":"` + label + `"}`)})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return raw
+	}
 	root, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	var mu sync.Mutex
@@ -258,16 +272,16 @@ func TestRouterKeepsAttackPacingIndependentFromCommandLane(t *testing.T) {
 		},
 	})
 	defer router.Close()
-	if err := router.Send(context.Background(), outboundTestPayload(t, "cra", "attack-1")); err != nil {
+	if err := router.Send(context.Background(), payload("cra", "attack-1")); err != nil {
 		t.Fatal(err)
 	}
 	results := make(chan error, 2)
 	go func() {
-		results <- router.Send(context.Background(), outboundTestPayload(t, "cra", "attack-2"))
+		results <- router.Send(context.Background(), payload("cra", "attack-2"))
 	}()
 	waitForOutboundQueue(t, router, LaneAttackLaunch, 1)
 	go func() {
-		results <- router.Send(context.Background(), outboundTestPayload(t, "ain", "command"))
+		results <- router.Send(context.Background(), payload("ain", "command"))
 	}()
 	for range 2 {
 		if err := <-results; err != nil {
@@ -279,7 +293,7 @@ func TestRouterKeepsAttackPacingIndependentFromCommandLane(t *testing.T) {
 	if !reflect.DeepEqual(order, []string{"attack-1", "command", "attack-2"}) {
 		t.Fatalf("send order = %#v", order)
 	}
-	if delay := sentAt["attack-2"].Sub(sentAt["attack-1"]); delay < 60*time.Millisecond {
+	if delay := sentAt["attack-2"].Sub(sentAt["attack-1"]); delay < 70*time.Millisecond {
 		t.Fatalf("attack delay = %s", delay)
 	}
 }
@@ -543,4 +557,42 @@ func waitForOutboundQueue(t *testing.T, router *Router, lane Lane, count int) {
 		time.Sleep(time.Millisecond)
 	}
 	t.Fatalf("%s queue did not reach %d", lane, count)
+}
+
+func TestNamespaceAttackPacingPreservesCancellationAndFinalValidation(t *testing.T) {
+	for _, namespace := range []string{"EmpireEx", "EmpireEx_21"} {
+		t.Run(namespace, func(t *testing.T) {
+			var sent atomic.Int32
+			var validations atomic.Int32
+			payload, err := Protocol.Encode(Protocol.Command{Namespace: namespace, Opcode: "cra", Payload: json.RawMessage(`{}`)})
+			if err != nil {
+				t.Fatal(err)
+			}
+			router := NewRouter(t.Context(), Config{Ready: func() bool { return true }, AttackDelay: func() time.Duration { return 80 * time.Millisecond }, Send: func(context.Context, []byte) error { sent.Add(1); return nil }})
+			defer router.Close()
+			if err := router.Send(t.Context(), payload); err != nil {
+				t.Fatal(err)
+			}
+			ctx, cancel := context.WithCancel(t.Context())
+			ctx = WithFinalDispatchValidation(ctx, func(context.Context) error { validations.Add(1); return nil })
+			result := make(chan error, 1)
+			go func() { result <- router.Send(ctx, payload) }()
+			waitForOutboundQueue(t, router, LaneAttackLaunch, 1)
+			cancel()
+			if err := <-result; !errors.Is(err, context.Canceled) {
+				t.Fatalf("cancel=%v", err)
+			}
+			if sent.Load() != 1 || validations.Load() != 0 {
+				t.Fatalf("cancelled command dispatched: sends=%d validations=%d", sent.Load(), validations.Load())
+			}
+			denied := errors.New("authorization changed during pacing")
+			ctx = WithFinalDispatchValidation(t.Context(), func(context.Context) error { validations.Add(1); return denied })
+			if err := router.Send(ctx, payload); !errors.Is(err, denied) {
+				t.Fatalf("validation=%v", err)
+			}
+			if sent.Load() != 1 || validations.Load() != 1 {
+				t.Fatalf("final guard bypassed: sends=%d validations=%d", sent.Load(), validations.Load())
+			}
+		})
+	}
 }

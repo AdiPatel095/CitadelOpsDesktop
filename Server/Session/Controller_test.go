@@ -128,11 +128,17 @@ func TestControllerRejectsGameUICloseWithoutFrontendInteractionTransport(t *test
 }
 
 func TestControllerPacesConsecutiveAttackLaunches(t *testing.T) {
+	for _, namespace := range []string{"EmpireEx", "EmpireEx_21"} {
+		t.Run(namespace, func(t *testing.T) { testControllerNamespacePacing(t, namespace) })
+	}
+}
+
+func testControllerNamespacePacing(t *testing.T, namespace string) {
 	transport := newPacingTransport()
 	controller := NewController(context.Background(), transport, nil, nil)
 	defer controller.outbound.Close()
 	controller.SetAttackDelayProvider(func() time.Duration { return 40 * time.Millisecond })
-	payload, err := Protocol.Encode(Protocol.Command{Namespace: "EmpireEx_21", Opcode: "cra", Payload: []byte(`{}`)})
+	payload, err := Protocol.Encode(Protocol.Command{Namespace: namespace, Opcode: "cra", Payload: []byte(`{}`)})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -145,7 +151,7 @@ func TestControllerPacesConsecutiveAttackLaunches(t *testing.T) {
 	transport.mu.Lock()
 	delay := transport.sends[1].Sub(transport.sends[0])
 	transport.mu.Unlock()
-	if delay < 30*time.Millisecond {
+	if delay < 40*time.Millisecond {
 		t.Fatalf("consecutive attacks were separated by %s", delay)
 	}
 }
