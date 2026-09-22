@@ -17,6 +17,7 @@ func TestRubyUpgradeConfirmationBoundaryAndSessionAuthority(t *testing.T) {
 		generation uint64
 		blocked    bool
 	}{
+		{1_000_000, true, 2, false}, {1_000_001, true, 2, true}, {9223372036854775807, true, 2, true},
 		{-1, true, 2, false}, {3101, true, 2, false}, {3100, true, 2, true}, {1, true, 2, true},
 		{0, true, 2, true}, {-2, true, 2, true}, {-1, false, 2, true}, {-1, true, 1, true},
 	} {

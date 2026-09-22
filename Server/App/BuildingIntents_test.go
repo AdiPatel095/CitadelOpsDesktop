@@ -179,7 +179,7 @@ func TestBuildingUpgradeHonorsGameConfirmationForFixedHarbor(t *testing.T) {
 	if err := validateFinalBuildingUpgrade(input, step.FinalDispatchArguments); err != nil {
 		t.Fatal(err)
 	}
-	for _, amount := range []int64{12300, 1, 0} {
+	for _, amount := range []int64{12300, 1, 0, 1_000_001, 9223372036854775807} {
 		input.State.Player.RubyConfirmation.Amount = amount
 		if err := validateFinalBuildingUpgrade(input, step.FinalDispatchArguments); err == nil {
 			t.Fatal("final dispatch guard allowed changed threshold")

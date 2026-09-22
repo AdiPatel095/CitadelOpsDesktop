@@ -13,7 +13,7 @@ func decodeRubyConfirmation(raw json.RawMessage, generation uint64) State.RubyCo
 	var value struct {
 		Amount *int64 `json:"CC2T"`
 	}
-	if json.Unmarshal(raw, &value) == nil && value.Amount != nil && (*value.Amount == -1 || *value.Amount > 0) {
+	if json.Unmarshal(raw, &value) == nil && value.Amount != nil && State.ValidRubyConfirmationAmount(*value.Amount) {
 		result.Amount, result.Known = *value.Amount, true
 	}
 	return result

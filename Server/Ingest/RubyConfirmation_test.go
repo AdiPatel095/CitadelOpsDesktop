@@ -18,6 +18,7 @@ func TestRubyConfirmationIngestDistinguishesSettingFromQuote(t *testing.T) {
 		known  bool
 		amount int64
 	}{
+		{`{"CC2T":1000000}`, true, 1000000}, {`{"CC2T":1000001}`, false, 0}, {`{"CC2T":9223372036854775807}`, false, 0},
 		{`{"CC2T":1}`, true, 1}, {`{"CC2T":-1}`, true, -1}, {`{}`, false, 0}, {`{"CC2T":null}`, false, 0},
 		{`{"CC2T":0}`, false, 0}, {`{"CC2T":-2}`, false, 0}, {`{"CC2T":1.5}`, false, 0}, {`{"CC2T":"1"}`, false, 0}, {`[]`, false, 0},
 	} {
