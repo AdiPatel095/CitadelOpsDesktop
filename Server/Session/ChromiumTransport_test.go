@@ -104,7 +104,7 @@ func TestLoginCooldownPublishesCountdownDeadlines(t *testing.T) {
 	if status.State != "cooldown" || status.CooldownUntil == nil || status.RetryAt == nil {
 		t.Fatalf("unexpected cooldown status: %+v", status)
 	}
-	if status.CooldownUntil.Before(before.Add(9*time.Second)) || status.RetryAt.Sub(*status.CooldownUntil) != defaultRelogDelay {
+	if status.CooldownUntil.Before(before.Add(9*time.Second)) || status.RetryAt.Sub(*status.CooldownUntil) != loginCooldownSafetyMargin {
 		t.Fatalf("unexpected cooldown deadlines: %+v", status)
 	}
 }
@@ -136,28 +136,30 @@ func TestResyncedEligibleSocketWaitsForFreshLoginFrame(t *testing.T) {
 	}
 }
 
-func TestConfiguredRelogDelayControlsCooldownAndSocketReconnect(t *testing.T) {
+func TestCooldownOverridesRelogDelayButSocketReconnectPreservesIt(t *testing.T) {
 	const configuredDelay = 7 * time.Minute
 	transport := newSocketTestTransport()
 	transport.SetRelogDelayProvider(func() time.Duration { return configuredDelay })
 
-	// A zero server cooldown still exercises the configured relog offset without
-	// launching the delayed reload goroutine that this test does not own.
-	transport.observeLoginFrame(transport.generation, "", `%xt%lli%1%453%{"CD":0}%`, time.Now().UTC())
-	cooldownStatus := transport.Status()
-	if cooldownStatus.CooldownUntil == nil || cooldownStatus.RetryAt == nil ||
-		cooldownStatus.RetryAt.Sub(*cooldownStatus.CooldownUntil) != configuredDelay {
-		t.Fatalf("configured cooldown retry = %+v", cooldownStatus)
-	}
-
-	transport.status.State = "connected"
-	transport.status.LoggedIn = true
-	transport.status.SocketReady = true
 	gameContext, cancel := context.WithCancel(context.Background())
 	cancel()
 	transport.gameContext = gameContext
+
+	// Zero cooldown still retries after the safety margin.
+	transport.observeLoginFrame(transport.generation, "", `%xt%lli%1%453%{"CD":0}%`, time.Now().UTC())
+	cooldownStatus := transport.Status()
+	if cooldownStatus.CooldownUntil == nil || cooldownStatus.RetryAt == nil ||
+		cooldownStatus.RetryAt.Sub(*cooldownStatus.CooldownUntil) != loginCooldownSafetyMargin {
+		t.Fatalf("configured cooldown retry = %+v", cooldownStatus)
+	}
+
+	transport.mu.Lock()
+	transport.status.State = "connected"
+	transport.status.LoggedIn = true
+	transport.status.SocketReady = true
 	requestID := network.RequestID("configured-delay-socket")
 	transport.trackedSockets[requestID] = "wss://example/ep-live"
+	transport.mu.Unlock()
 	before := time.Now().UTC()
 	transport.handleEvent(transport.generation, &network.EventWebSocketClosed{RequestID: requestID})
 	reconnectStatus := transport.Status()
