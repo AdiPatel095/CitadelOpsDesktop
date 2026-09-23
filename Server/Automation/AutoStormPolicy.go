@@ -729,11 +729,11 @@ func autoStormQueueDecision(
 			continue
 		}
 		remaining, known := autoStormBuildingRemaining(castle, building, catalog, snapshot.Now)
-		if (building.ConstructionState == State.BuildingStateDisassembleStopped || building.ConstructionState == State.BuildingStateDisassembleInProgress) && (!known || remaining == 0) {
+		if (known && remaining == 0) || (!known && (building.ConstructionState == State.BuildingStateDisassembleStopped || building.ConstructionState == State.BuildingStateDisassembleInProgress)) {
 			// Completion is delivered by the server's object/queue updates. Do not
 			// mutate a finished process or infer demolition time without its boost.
 			if snapshot.Now.Sub(castle.Layout.ObservedAt) >= 5*time.Second && snapshot.Now.Sub(castle.BuildingQueue.ObservedAt) >= 5*time.Second {
-				return autoStormIntentDecision(snapshot.Now, metrics, "Refresh demolition completion and construction queue", "building.refresh", map[string]any{"castleId": castle.ID}), true
+				return autoStormIntentDecision(snapshot.Now, metrics, "Refresh building completion and construction queue", "building.refresh", map[string]any{"castleId": castle.ID}), true
 			}
 			return nil, true
 		}
@@ -762,38 +762,7 @@ func autoStormBuildingRemaining(
 	catalog *GameData.BuildingCatalog,
 	now time.Time,
 ) (int64, bool) {
-	current, found := catalog.DefinitionView(int64(building.DefinitionID))
-	if !found {
-		return 0, false
-	}
-	target := current
-	inProgress := false
-	switch building.ConstructionState {
-	case State.BuildingStateBuildStopped:
-	case State.BuildingStateBuildInProgress:
-		inProgress = true
-	case State.BuildingStateUpgradeStopped, State.BuildingStateUpgradeInProgress:
-		if current.UpgradeDefinitionID <= 0 {
-			return 0, false
-		}
-		target, found = catalog.DefinitionView(current.UpgradeDefinitionID)
-		if !found {
-			return 0, false
-		}
-		inProgress = building.ConstructionState == State.BuildingStateUpgradeInProgress
-	case State.BuildingStateDisassembleStopped, State.BuildingStateDisassembleInProgress:
-		return Buildings.DemolitionRemaining(castle, building, catalog, now)
-	default:
-		return 0, false
-	}
-	if target.DurationSec <= 0 {
-		return 0, false
-	}
-	progress := max(int64(0), building.ProgressSec)
-	if inProgress && !castle.Layout.ObservedAt.IsZero() && now.After(castle.Layout.ObservedAt) {
-		progress += int64(now.Sub(castle.Layout.ObservedAt) / time.Second)
-	}
-	return max(int64(0), target.DurationSec-progress), true
+	return Buildings.OperationRemaining(castle, building, catalog, now)
 }
 
 func autoStormBuildingTimeSkip(state State.GameState, reserves map[string]int64, remainingSec int64) (int, int64, bool) {

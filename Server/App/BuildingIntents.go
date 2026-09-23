@@ -548,7 +548,7 @@ func resolveBuildingFinishFreeStep(_ context.Context, input Intent.PlanningConte
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Step{}, err
 	}
-	_, building, _, err := validatedBuildingFinishFree(input, request, true)
+	_, _, _, err := validatedBuildingFinishFree(input, request, true)
 	if err != nil {
 		return Intent.Step{}, err
 	}
@@ -557,10 +557,8 @@ func resolveBuildingFinishFreeStep(_ context.Context, input Intent.PlanningConte
 		FreeSkip   int                      `json:"FS"`
 	}{request.BuildingInstanceID, 1})
 	step := buildingMutationStep("Finish building operation for free", "fco", payload)
-	if buildingIsDemolition(building) {
-		step.FinalDispatchAction = "building.finish_free.guard"
-		step.FinalDispatchArguments = arguments
-	}
+	step.FinalDispatchAction = "building.finish_free.guard"
+	step.FinalDispatchArguments = arguments
 	return step, nil
 }
 
@@ -600,7 +598,7 @@ func resolveBuildingTimeSkipStep(_ context.Context, input Intent.PlanningContext
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Step{}, err
 	}
-	_, building, option, _, err := validatedBuildingTimeSkip(input, request, true)
+	_, _, option, _, err := validatedBuildingTimeSkip(input, request, true)
 	if err != nil {
 		return Intent.Step{}, err
 	}
@@ -609,10 +607,8 @@ func resolveBuildingTimeSkipStep(_ context.Context, input Intent.PlanningContext
 		MinuteSkip string                   `json:"MST"`
 	}{request.BuildingInstanceID, option.WireKey})
 	step := buildingMutationStep("Apply building time skip", "msb", payload)
-	if buildingIsDemolition(building) {
-		step.FinalDispatchAction = "building.skip_time.guard"
-		step.FinalDispatchArguments = arguments
-	}
+	step.FinalDispatchAction = "building.skip_time.guard"
+	step.FinalDispatchArguments = arguments
 	step.StaleCodes = []int{147}
 	return step, nil
 }
@@ -967,15 +963,15 @@ func validatedBuildingFinishFree(
 	}
 	if !buildingQueued(castle.BuildingQueue, request.BuildingInstanceID) {
 		return State.CastleState{}, State.Building{}, GameData.BuildingDefinition{}, fmt.Errorf(
-			"building %d is not in the construction queue", request.BuildingInstanceID,
+			"%w: building %d is not in the construction queue", Intent.ErrPlanStale, request.BuildingInstanceID,
 		)
 	}
 	if !buildingOperationInProgress(building.ConstructionState) {
 		return State.CastleState{}, State.Building{}, GameData.BuildingDefinition{}, fmt.Errorf(
-			"building %d is not in a finishable construction state (%d)", request.BuildingInstanceID, building.ConstructionState,
+			"%w: building %d is not in a finishable construction state (%d)", Intent.ErrPlanStale, request.BuildingInstanceID, building.ConstructionState,
 		)
 	}
-	if err := validateDemolitionTiming(input, castle, building, true); err != nil {
+	if err := validateBuildingCompletionTiming(input, castle, building, true); err != nil {
 		return State.CastleState{}, State.Building{}, GameData.BuildingDefinition{}, err
 	}
 	return castle, building, definition, nil
@@ -1021,7 +1017,7 @@ func validatedBuildingTimeSkip(
 		}
 	}
 	if requireFresh {
-		if err := validateDemolitionTiming(input, castle, building, false); err != nil {
+		if err := validateBuildingCompletionTiming(input, castle, building, false); err != nil {
 			return State.CastleState{}, State.Building{}, buildingTimeSkipOption{}, balance, err
 		}
 	}
@@ -1564,22 +1560,23 @@ func buildingIsDemolition(building State.Building) bool {
 	return building.ConstructionState == State.BuildingStateDisassembleStopped || building.ConstructionState == State.BuildingStateDisassembleInProgress
 }
 
-func validateDemolitionTiming(input Intent.PlanningContext, castle State.CastleState, building State.Building, free bool) error {
-	if !buildingIsDemolition(building) {
-		return nil
-	}
+func validateBuildingCompletionTiming(input Intent.PlanningContext, castle State.CastleState, building State.Building, free bool) error {
+	demolition := buildingIsDemolition(building)
 	if input.GameData == nil {
+		if !demolition {
+			return nil
+		}
 		return fmt.Errorf("%w: demolition timing data is unavailable", Intent.ErrPlanStale)
 	}
 	catalog, err := input.GameData.BuildingCatalog()
 	if err != nil {
 		return err
 	}
-	remaining, known := Buildings.DemolitionRemaining(castle, building, catalog, time.Now())
-	if !known || remaining <= 0 {
-		return fmt.Errorf("%w: demolition remaining time is unknown or complete; refresh the building state", Intent.ErrPlanStale)
+	remaining, known := Buildings.OperationRemaining(castle, building, catalog, time.Now())
+	if (known && remaining <= 0) || (!known && demolition) {
+		return fmt.Errorf("%w: building operation is complete or demolition timing is unknown; refresh the building state", Intent.ErrPlanStale)
 	}
-	if free && remaining > 60 {
+	if demolition && free && remaining > 60 {
 		return fmt.Errorf("%w: demolition is not within the free completion window", Intent.ErrPlanStale)
 	}
 	return nil
