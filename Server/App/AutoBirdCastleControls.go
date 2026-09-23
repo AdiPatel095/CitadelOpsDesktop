@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
@@ -105,13 +106,38 @@ func validateAutoBirdControl(state State.GameState, request autoBirdCycleRequest
 }
 
 type autoBirdBatchGuardRequest struct {
-	Cycle   autoBirdCycleRequest `json:"cycle"`
-	Payload json.RawMessage      `json:"payload"`
+	TargetOwner State.PlayerID       `json:"targetOwner"`
+	Cycle       autoBirdCycleRequest `json:"cycle"`
+	Payload     json.RawMessage      `json:"payload"`
 }
 
 func (application *Application) guardAutoBirdBatch(ctx context.Context, arguments json.RawMessage) error {
 	var request autoBirdBatchGuardRequest
 	if err := json.Unmarshal(arguments, &request); err != nil {
+		return err
+	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if application.Configuration == nil || !Automation.AutoBirdDispatchAllowed(application.Configuration.Snapshot(), request.Cycle.PresetID, time.Now()) {
+		return fmt.Errorf("%w: Auto Bird is disabled", Intent.ErrPlanStale)
+	}
+	state := application.State.Snapshot()
+	if err := validateStationSession(state, "autoBird", request.Cycle.ConnectionGeneration, time.Now()); err != nil {
+		return err
+	}
+	op, ok := state.Stationing[request.Cycle.TrackingID]
+	if !ok || op.Purpose != "autoBird" || op.SourceCastleID != request.Cycle.SourceCastleID || op.TargetCastleID != request.Cycle.ExpectedTargetCastle || op.PresetID != request.Cycle.PresetID {
+		return fmt.Errorf("%w: Auto Bird cycle changed before dispatch", Intent.ErrPlanStale)
+	}
+	target, _ := allianceHolding(state.Alliance, request.Cycle.ExpectedTargetCastle)
+	if request.TargetOwner <= 0 || target.PlayerID != request.TargetOwner {
+		return fmt.Errorf("%w: station target owner changed", Intent.ErrPlanStale)
+	}
+	if err := validateStationAuthority(state, request.Cycle.SourceCastleID, request.Cycle.ExpectedTargetCastle, request.Cycle.DispatchStartedAt, request.Cycle.MinimumRPTDays, time.Now()); err != nil {
+		return err
+	}
+	if err := validateStationPayload(state, request.Cycle.ExpectedTargetCastle, request.Payload); err != nil {
 		return err
 	}
 	if err := validateAutoBirdControl(application.State.Snapshot(), request.Cycle, time.Now().UTC()); err != nil {

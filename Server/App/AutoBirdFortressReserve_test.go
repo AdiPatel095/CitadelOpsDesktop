@@ -47,7 +47,7 @@ func TestAutoBirdDirewolfProtectionUsesCurrentFortressControlAndCastleScope(t *t
 		})
 	}
 
-	if _, err := configuration.Update("automation.enabled", json.RawMessage(`{"auto_fortress":false}`)); err != nil {
+	if _, err := configuration.Update("automation.enabled", json.RawMessage(`{"auto_fortress":false,"auto_bird":true}`)); err != nil {
 		t.Fatal(err)
 	}
 	if application.autoBirdDirewolvesProtected(state, 10, now) {
@@ -153,7 +153,7 @@ func TestAutoBirdFinalDispatchRebuildsLateDirewolfBatchAndAllowsOrdinaryBatch(t 
 				SourceCastleID: 10, TargetCastleID: 20, DelayHours: 8,
 				UnitsObservedAt: now, UpdatedAt: now,
 			}
-			configuration := autoBirdFortressConfiguration(t, json.RawMessage(`{"auto_fortress":false}`), 1)
+			configuration := autoBirdFortressConfiguration(t, json.RawMessage(`{"auto_fortress":false,"auto_bird":true}`), 1)
 			state := State.NewStore(gameState)
 			application := &Application{State: state, Configuration: configuration}
 			request, _ := json.Marshal(autoBirdCycleRequest{
@@ -260,7 +260,7 @@ func (sender *autoBirdFinalGuardSender) Send(ctx context.Context, payload []byte
 	}
 	sender.attempts = append(sender.attempts, append(json.RawMessage(nil), command.Payload...))
 	sender.once.Do(func() {
-		_, err = sender.configuration.Update("automation.enabled", json.RawMessage(`{"auto_fortress":true}`))
+		_, err = sender.configuration.Update("automation.enabled", json.RawMessage(`{"auto_fortress":true,"auto_bird":true}`))
 	})
 	if err != nil {
 		return err

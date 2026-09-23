@@ -688,7 +688,7 @@ func applyCastleOwner(raw json.RawMessage, gameState *State.GameState) {
 		LegendLevel int         `json:"LL"`
 		Might       wireFloat64 `json:"MP"`
 		Glory       wireFloat64 `json:"CF"`
-		AllianceID  wireInt64   `json:"AID"`
+		AllianceID  *wireInt64  `json:"AID"`
 		Alliance    string      `json:"AN"`
 	}
 	if len(raw) == 0 || json.Unmarshal(raw, &owner) != nil || State.PlayerID(owner.ID) != gameState.Player.ID {
@@ -699,13 +699,8 @@ func applyCastleOwner(raw json.RawMessage, gameState *State.GameState) {
 	gameState.Player.LegendLevel = owner.LegendLevel
 	gameState.Player.Might = float64(owner.Might)
 	gameState.Player.Glory = float64(owner.Glory)
-	gameState.Player.AllianceID = State.AllianceID(owner.AllianceID)
-	if owner.AllianceID > 0 {
-		gameState.Alliance.ID = State.AllianceID(owner.AllianceID)
-	}
-	if owner.Alliance != "" {
-		gameState.Alliance.Name = owner.Alliance
-	}
+	// Membership is applied by applyOwnAllianceSnapshot with presence and
+	// observation authority after the owning response commits.
 }
 
 func focusedCastle(gameState *State.GameState) (State.CastleID, State.CastleState, bool) {

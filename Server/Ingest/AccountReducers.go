@@ -332,11 +332,16 @@ func reducePlayerProtectionMode(
 	if err := json.Unmarshal(frame.Payload, &root); err != nil {
 		return nil, false, fmt.Errorf("decode player protection mode envelope: %w", err)
 	}
+	membershipChanged := applyOwnAllianceSnapshot(root, frame.ReceivedAt, gameState)
 	changed, lifecycleChanged, err := applyPlayerProtectionSnapshot(root, frame.ReceivedAt, gameState)
+	changed = changed || membershipChanged
 	if err != nil || !changed {
 		return nil, changed, err
 	}
 	domains := []string{"player"}
+	if membershipChanged {
+		domains = append(domains, "alliance")
+	}
 	if lifecycleChanged {
 		domains = append(domains, "player-protection")
 	}
@@ -854,7 +859,7 @@ func reduceAllianceInfo(
 				holdings = append(holdings, holding)
 			}
 		}
-		if State.PlayerID(member.ID) == gameState.Player.ID {
+		if State.PlayerID(member.ID) == gameState.Player.ID && (gameState.Player.AllianceObservedAt.IsZero() || State.AllianceID(payload.Alliance.ID) == gameState.Player.AllianceID) {
 			containsCurrentPlayer = true
 			playerAllianceID := State.AllianceID(member.AllianceID)
 			if playerAllianceID <= 0 {
@@ -1059,19 +1064,16 @@ func applyPlayerCurrencies(raw json.RawMessage, gameState *State.GameState, game
 
 func applyAllianceSummary(raw json.RawMessage, gameState *State.GameState) (bool, error) {
 	var alliance struct {
-		ID   wireInt64 `json:"AID"`
-		Name string    `json:"N"`
+		ID   *wireInt64 `json:"AID"`
+		Name string     `json:"N"`
 	}
 	if err := json.Unmarshal(raw, &alliance); err != nil {
 		return false, fmt.Errorf("decode alliance summary: %w", err)
 	}
 	changed := false
-	if alliance.ID > 0 && gameState.Alliance.ID != State.AllianceID(alliance.ID) {
-		gameState.Alliance.ID = State.AllianceID(alliance.ID)
-		changed = true
-	}
-	if alliance.ID > 0 && gameState.Player.AllianceID != State.AllianceID(alliance.ID) {
-		gameState.Player.AllianceID = State.AllianceID(alliance.ID)
+	if alliance.ID != nil && *alliance.ID >= 0 && (gameState.Alliance.ID != State.AllianceID(*alliance.ID) || gameState.Player.AllianceID != State.AllianceID(*alliance.ID)) {
+		setOwnAlliance(gameState, State.AllianceID(*alliance.ID))
+		gameState.Player.AllianceObservedAt = time.Time{}
 		changed = true
 	}
 	if alliance.Name != "" && gameState.Alliance.Name != alliance.Name {
