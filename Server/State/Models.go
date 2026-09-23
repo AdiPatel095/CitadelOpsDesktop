@@ -443,16 +443,17 @@ type DefenseToolSlot struct {
 }
 
 type Building struct {
-	InstanceID        BuildingInstanceID `json:"instanceId"`
-	DefinitionID      BuildingID         `json:"definitionId"`
-	GridX             int                `json:"gridX,omitempty"`
-	GridY             int                `json:"gridY,omitempty"`
-	Rotation          int                `json:"rotation,omitempty"`
-	ProgressSec       int64              `json:"progressSec,omitempty"`
-	ConstructionState int                `json:"constructionState,omitempty"`
-	Level             int                `json:"level,omitempty"`
-	Layer             BuildingLayer      `json:"layer,omitempty"`
-	Placed            bool               `json:"placed"`
+	InstanceID               BuildingInstanceID `json:"instanceId"`
+	DefinitionID             BuildingID         `json:"definitionId"`
+	GridX                    int                `json:"gridX,omitempty"`
+	GridY                    int                `json:"gridY,omitempty"`
+	Rotation                 int                `json:"rotation,omitempty"`
+	ProgressSec              int64              `json:"progressSec,omitempty"`
+	ConstructionBoostPercent float64            `json:"constructionBoostPercent,omitempty"`
+	ConstructionState        int                `json:"constructionState,omitempty"`
+	Level                    int                `json:"level,omitempty"`
+	Layer                    BuildingLayer      `json:"layer,omitempty"`
+	Placed                   bool               `json:"placed"`
 }
 
 type BuildingProduction struct {

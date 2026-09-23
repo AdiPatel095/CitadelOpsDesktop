@@ -445,7 +445,8 @@ func parseCastleLayoutLayers(
 				InstanceID: State.BuildingInstanceID(instanceID), DefinitionID: State.BuildingID(definitionID),
 				GridX: int(rowInt(row, 2)), GridY: int(rowInt(row, 3)), Rotation: int(rowInt(row, 4)),
 				ProgressSec: rowInt(row, 5), ConstructionState: constructionState, Level: level,
-				Layer: layer.name,
+				ConstructionBoostPercent: buildingConstructionBoost(row),
+				Layer:                    layer.name,
 			}
 			building.Placed = building.GridX >= 0 && building.GridY >= 0
 			if layer.name == State.BuildingLayerBG || layer.name == State.BuildingLayerBD {
