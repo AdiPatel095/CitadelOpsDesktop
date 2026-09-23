@@ -156,3 +156,40 @@ func TestAutoStationPartialTrackedBatchUsesGateWithoutRepeatingCDS(t *testing.T)
 		})
 	}
 }
+
+func TestAutoStationTrackedEmptyInventoryFreshnessBoundary(t *testing.T) {
+	now := time.Now()
+	for _, test := range []struct {
+		name string
+		age  time.Duration
+		want string
+	}{
+		{"inside boundary", 30*time.Second - time.Nanosecond, "protected"},
+		{"at boundary", 30 * time.Second, "protected"},
+		{"outside boundary", 30*time.Second + time.Nanosecond, "castle.focus"},
+		{"old empty AutoBird inventory", 59 * time.Minute, "castle.focus"},
+		{"future inventory", -time.Second, "castle.focus"},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			s := stationThreatFixture(now)
+			s.Player.ProtectionMode.RemainingSec = 600
+			until := now.Add(time.Hour)
+			s.Stationing["autoBird:100"] = State.StationingOperation{ID: "autoBird:100", Purpose: "autoBird", SourceCastleID: 100, UpdatedAt: now.Add(-time.Hour), SuccessCooldownUntil: &until}
+			castle := s.Castles[100]
+			castle.UnitsObservedAt = now.Add(-test.age)
+			castle.Units.Stationed = map[State.UnitID]int64{}
+			s.Castles[100] = castle
+			decision, err := NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{State: s, Now: now})
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := decision.Status
+			if decision.Request != nil {
+				got = decision.Request.Name
+			}
+			if got != test.want {
+				t.Fatalf("want %s, got %+v", test.want, decision)
+			}
+		})
+	}
+}

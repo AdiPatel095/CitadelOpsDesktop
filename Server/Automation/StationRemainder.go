@@ -43,7 +43,7 @@ func trackedStationRemainder(snapshot Snapshot, castle State.CastleState, reserv
 	if !active {
 		return false, false, 0, false
 	}
-	if castle.UnitsObservedAt.IsZero() || castle.UnitsObservedAt.Before(updated) || castle.UnitsObservedAt.After(snapshot.Now) {
+	if castle.UnitsObservedAt.IsZero() || castle.UnitsObservedAt.Before(updated) || castle.UnitsObservedAt.After(snapshot.Now) || snapshot.Now.Sub(castle.UnitsObservedAt) > 30*time.Second {
 		return true, false, 0, false
 	}
 	reserved := map[State.UnitID]int64{}
