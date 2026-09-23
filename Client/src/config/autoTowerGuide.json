@@ -1,11 +1,21 @@
 [
   {
+    "id": "commanders",
+    "title": "Choose your commanders",
+    "items": [
+      {
+        "label": "Commander assignment",
+        "description": "Assign commanders to Auto Towers in Commanders so the task can use them when they are available."
+      }
+    ]
+  },
+  {
     "id": "general",
-    "title": "Scanning and limits",
+    "title": "Set scanning, daily limits and travel",
     "items": [
       {
         "label": "Authoritative map scan · Every",
-        "description": "Refreshes the tower list around each enabled castle every 1,800–3,600 seconds; ready attacks can launch between scans."
+        "description": "Choose how often to refresh each castle’s tower list, from 1,800–3,600 seconds; attacks can launch between scans."
       },
       {
         "label": "Daily normal-attack limit",
@@ -31,11 +41,47 @@
         "label": "Courser / fastest ship tier · rubies",
         "description": "Spends rubies on the faster ruby travel tier when selected."
       }
-    ]
+    ],
+    "image": {
+      "src": "/guide-auto-towers-general.png",
+      "alt": "Auto Towers general settings with fictional Synthetic Castle data",
+      "caption": "Set the scan interval, daily attack limit and travel option; Advisor controls appear when available.",
+      "width": 1406,
+      "height": 966
+    }
+  },
+  {
+    "id": "castle",
+    "title": "Configure each castle",
+    "items": [
+      {
+        "label": "Castle switch",
+        "description": "Turn on each castle you want Auto Towers to scan and attack from."
+      },
+      {
+        "label": "Radius",
+        "description": "Choose how far to search around this castle, from 1–50 tiles."
+      },
+      {
+        "label": "Choose troop",
+        "description": "Choose the stationed troop to fill both attack flanks; attacks wait if there are too few."
+      },
+      {
+        "label": "Maiden-supported only",
+        "description": "Limits this castle to available commanders with the supported maiden relic."
+      }
+    ],
+    "image": {
+      "src": "/guide-auto-towers-castle.png",
+      "alt": "Auto Towers castle settings with fictional Synthetic Castle data",
+      "caption": "Enable a castle and choose its radius, troop and maiden requirement.",
+      "width": 447,
+      "height": 419
+    }
   },
   {
     "id": "advisor",
-    "title": "Robber Baron Advisor · when available",
+    "title": "Use Advisor if wanted · when available",
     "items": [
       {
         "label": "Use Advisor with Time Skips",
@@ -52,42 +98,20 @@
     ]
   },
   {
-    "id": "castle",
-    "title": "For each castle",
-    "items": [
-      {
-        "label": "Castle switch",
-        "description": "Includes this castle in Auto Towers scans and attacks when switched on."
-      },
-      {
-        "label": "Radius",
-        "description": "Limits eligible towers to within 1–50 tiles of this castle."
-      },
-      {
-        "label": "Choose troop",
-        "description": "Selects the stationed troop used to fill both attack flanks, so launches wait when there are too few of that troop."
-      },
-      {
-        "label": "Maiden-supported only",
-        "description": "Limits this castle to available commanders with the supported maiden relic."
-      }
-    ]
-  },
-  {
-    "id": "setup",
-    "title": "Schedule and commanders",
+    "id": "finish",
+    "title": "Set the schedule, save and switch on",
     "items": [
       {
         "label": "Calendar",
-        "description": "Sets the times when Auto Towers is allowed to run, while troop availability and other limits still apply."
-      },
-      {
-        "label": "Commander assignment",
-        "description": "Assign commanders to Auto Towers in Commanders so the task can use them when they are available."
+        "description": "Use Calendar to choose when Auto Towers may run, while troop availability and other limits still apply."
       },
       {
         "label": "Save changes",
-        "description": "Applies your settings; opening or closing this guide does not save or change them."
+        "description": "Select Save changes to apply your settings; reading this guide does not save them."
+      },
+      {
+        "label": "Auto Towers switch",
+        "description": "Turn on Auto Towers on the Automation page after saving your settings to allow the task to run."
       }
     ]
   }
