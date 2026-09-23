@@ -1,0 +1,94 @@
+[
+  {
+    "id": "general",
+    "title": "Scanning and limits",
+    "items": [
+      {
+        "label": "Authoritative map scan · Every",
+        "description": "Refreshes the tower list around each enabled castle every 1,800–3,600 seconds; ready attacks can launch between scans."
+      },
+      {
+        "label": "Daily normal-attack limit",
+        "description": "Pauses at your account-wide daily attack limit until the game resets it; 0 removes the limit."
+      },
+      {
+        "label": "Horse travel boost",
+        "description": "Uses your selected travel option for each attack, including every hit in an Advisor chain, with speed based on the source castle’s travel buildings."
+      },
+      {
+        "label": "Travel feather",
+        "description": "Uses the travel feather option rather than a coin or ruby horse tier."
+      },
+      {
+        "label": "Horse / ship tier · coins",
+        "description": "Spends coins on the coin travel tier."
+      },
+      {
+        "label": "Warhorse / fast ship tier · rubies",
+        "description": "Spends rubies on the first ruby travel tier when selected."
+      },
+      {
+        "label": "Courser / fastest ship tier · rubies",
+        "description": "Spends rubies on the faster ruby travel tier when selected."
+      }
+    ]
+  },
+  {
+    "id": "advisor",
+    "title": "Robber Baron Advisor · when available",
+    "items": [
+      {
+        "label": "Use Advisor with Time Skips",
+        "description": "Repeats hits on one tower, using one daily attack first and one Time Skip of at least three hours per extra hit."
+      },
+      {
+        "label": "Auto-activate with token",
+        "description": "Uses an available Baron Advisor token when the Advisor is inactive, without buying a token or spending rubies."
+      },
+      {
+        "label": "Maximum daily Time Skips",
+        "description": "Caps Time Skips used by confirmed Advisor chains until the game’s daily attack counter resets; 0 pauses Advisor launches."
+      }
+    ]
+  },
+  {
+    "id": "castle",
+    "title": "For each castle",
+    "items": [
+      {
+        "label": "Castle switch",
+        "description": "Includes this castle in Auto Towers scans and attacks when switched on."
+      },
+      {
+        "label": "Radius",
+        "description": "Limits eligible towers to within 1–50 tiles of this castle."
+      },
+      {
+        "label": "Choose troop",
+        "description": "Selects the stationed troop used to fill both attack flanks, so launches wait when there are too few of that troop."
+      },
+      {
+        "label": "Maiden-supported only",
+        "description": "Limits this castle to available commanders with the supported maiden relic."
+      }
+    ]
+  },
+  {
+    "id": "setup",
+    "title": "Schedule and commanders",
+    "items": [
+      {
+        "label": "Calendar",
+        "description": "Sets the times when Auto Towers is allowed to run, while troop availability and other limits still apply."
+      },
+      {
+        "label": "Commander assignment",
+        "description": "Assign commanders to Auto Towers in Commanders so the task can use them when they are available."
+      },
+      {
+        "label": "Save changes",
+        "description": "Applies your settings; opening or closing this guide does not save or change them."
+      }
+    ]
+  }
+]
