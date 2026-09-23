@@ -1,0 +1,114 @@
+[
+  {
+    "definitionId": 200,
+    "gridX": 200,
+    "gridY": 200,
+    "placed": true
+  },
+  {
+    "definitionId": 201,
+    "gridX": 200,
+    "gridY": 220,
+    "rotation": 1,
+    "placed": true
+  },
+  {
+    "definitionId": 201,
+    "gridX": 180,
+    "gridY": 180,
+    "rotation": 2,
+    "placed": true
+  },
+  {
+    "definitionId": 201,
+    "gridX": 190,
+    "gridY": 180,
+    "rotation": 2,
+    "placed": true
+  },
+  {
+    "definitionId": 201,
+    "gridX": 200,
+    "gridY": 180,
+    "placed": true
+  },
+  {
+    "definitionId": 201,
+    "gridX": 210,
+    "gridY": 180,
+    "placed": true
+  },
+  {
+    "definitionId": 201,
+    "gridX": 220,
+    "gridY": 180,
+    "placed": true
+  },
+  {
+    "definitionId": 201,
+    "gridX": 220,
+    "gridY": 200,
+    "placed": true
+  },
+  {
+    "definitionId": 201,
+    "gridX": 230,
+    "gridY": 180,
+    "placed": true
+  },
+  {
+    "definitionId": 201,
+    "gridX": 220,
+    "gridY": 220,
+    "rotation": 1,
+    "placed": true
+  },
+  {
+    "definitionId": 201,
+    "gridX": 220,
+    "gridY": 230,
+    "rotation": 1,
+    "placed": true
+  },
+  {
+    "definitionId": 201,
+    "gridX": 200,
+    "gridY": 230,
+    "rotation": 1,
+    "placed": true
+  },
+  {
+    "definitionId": 201,
+    "gridX": 180,
+    "gridY": 200,
+    "rotation": 1,
+    "placed": true
+  },
+  {
+    "definitionId": 201,
+    "gridX": 180,
+    "gridY": 210,
+    "rotation": 1,
+    "placed": true
+  },
+  {
+    "definitionId": 201,
+    "gridX": 230,
+    "gridY": 200,
+    "placed": true
+  },
+  {
+    "definitionId": 201,
+    "gridX": 180,
+    "gridY": 220,
+    "rotation": 1,
+    "placed": true
+  },
+  {
+    "definitionId": 201,
+    "gridX": 180,
+    "gridY": 230,
+    "rotation": 1,
+    "placed": true
+  }
+]

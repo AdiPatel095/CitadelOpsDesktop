@@ -146,6 +146,42 @@
       }
     },
     {
+      "targetId": "target-storage-extra-1",
+      "definitionId": 246,
+      "placement": {
+        "gridX": 198,
+        "gridY": 185,
+        "rotation": 1
+      }
+    },
+    {
+      "targetId": "target-storage-extra-2",
+      "definitionId": 246,
+      "placement": {
+        "gridX": 204,
+        "gridY": 185,
+        "rotation": 1
+      }
+    },
+    {
+      "targetId": "target-storage-extra-3",
+      "definitionId": 246,
+      "placement": {
+        "gridX": 200,
+        "gridY": 189,
+        "rotation": 0
+      }
+    },
+    {
+      "targetId": "target-storage-extra-4",
+      "definitionId": 246,
+      "placement": {
+        "gridX": 204,
+        "gridY": 189,
+        "rotation": 0
+      }
+    },
+    {
       "targetId": "target-005-627",
       "definitionId": 627,
       "placement": {
@@ -596,33 +632,6 @@
       }
     },
     {
-      "targetId": "target-055-339",
-      "definitionId": 339,
-      "placement": {
-        "gridX": 198,
-        "gridY": 185,
-        "rotation": 0
-      }
-    },
-    {
-      "targetId": "target-056-339",
-      "definitionId": 339,
-      "placement": {
-        "gridX": 202,
-        "gridY": 185,
-        "rotation": 0
-      }
-    },
-    {
-      "targetId": "target-057-339",
-      "definitionId": 339,
-      "placement": {
-        "gridX": 206,
-        "gridY": 185,
-        "rotation": 0
-      }
-    },
-    {
       "targetId": "target-058-339",
       "definitionId": 339,
       "placement": {
@@ -717,24 +726,6 @@
       "definitionId": 339,
       "placement": {
         "gridX": 196,
-        "gridY": 190,
-        "rotation": 0
-      }
-    },
-    {
-      "targetId": "target-069-339",
-      "definitionId": 339,
-      "placement": {
-        "gridX": 200,
-        "gridY": 190,
-        "rotation": 0
-      }
-    },
-    {
-      "targetId": "target-070-339",
-      "definitionId": 339,
-      "placement": {
-        "gridX": 204,
         "gridY": 190,
         "rotation": 0
       }
@@ -1716,8 +1707,8 @@
   ],
   "summary": {
     "groundCount": 17,
-    "buildingCount": 92,
-    "decorationCount": 64,
+    "buildingCount": 96,
+    "decorationCount": 59,
     "fixedCount": 22
   }
 }

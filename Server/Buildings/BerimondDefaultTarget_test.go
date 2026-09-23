@@ -17,9 +17,9 @@ func TestDefaultBerimondTargetUsesReferenceLayoutAndMaximumCampWoDs(t *testing.T
 		target.Mode != TargetCaptureModeExact || !target.Exact {
 		t.Fatalf("unexpected target identity: %#v", target)
 	}
-	if len(target.Ground) != 17 || len(target.Fixed) != 22 || len(target.Buildings) != 156 ||
+	if len(target.Ground) != 17 || len(target.Fixed) != 22 || len(target.Buildings) != 155 ||
 		target.Summary.GroundCount != 17 || target.Summary.FixedCount != 22 ||
-		target.Summary.BuildingCount != 92 || target.Summary.DecorationCount != 64 {
+		target.Summary.BuildingCount != 96 || target.Summary.DecorationCount != 59 {
 		t.Fatalf("unexpected reference target summary: %#v", target.Summary)
 	}
 	counts := targetDefinitionCounts(target.Buildings)

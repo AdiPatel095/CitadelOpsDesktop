@@ -9,6 +9,7 @@ import (
 )
 
 type StorageDependencyRequest struct {
+	EventID                      *int64             `json:"eventId,omitempty"`
 	ExpectedRevision             *uint64            `json:"expectedRevision,omitempty"`
 	CastleID                     State.CastleID     `json:"castleId"`
 	Costs                        []CostStatus       `json:"costs"`
@@ -98,7 +99,7 @@ func PreviewStorageDependency(
 	}
 
 	expansionRequest := ExpansionPreviewRequest{
-		CastleID: castle.ID, Payment: ExpansionPaymentResources,
+		CastleID: castle.ID, EventID: request.EventID, Payment: ExpansionPaymentResources,
 		ResourceReserves: request.ResourceReserves, AllowPremium: request.AllowPremium,
 		AllowTimeSkips: request.AllowTimeSkips,
 	}
