@@ -280,7 +280,7 @@ func CapabilityForDomain(domain string) string {
 		return CapabilityAttacks
 	case "player", "achievements", "legend-skills", "subscriptions":
 		return CapabilityAccountProfile
-	case "currencies":
+	case "currencies", "ruby-confirmation":
 		return CapabilityAccountWallet
 	case "castles":
 		return CapabilityCastleDirectory

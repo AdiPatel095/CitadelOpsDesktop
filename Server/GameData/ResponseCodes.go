@@ -79,6 +79,8 @@ var officialClientEnchantResponseCodes = map[int]ResponseCodeMeaning{
 }
 
 var officialClientOpcodeResponseCodes = map[string]map[int]ResponseCodeMeaning{
+	// Official client C2_CONFIRMATION_REQUIRED. Scoped to the verified EUP flow.
+	"eup": {440: {Code: 440, Message: "This ruby purchase requires confirmation in the game.", MessageDescriptor: Localization.New("server.gamedata.ruby_purchase_confirmation", "This ruby purchase requires confirmation in the game.", nil), Source: ResponseCodeOfficialClient}},
 	// Official client enum: NO_MULTIPLE_ALLIANCEHELP = 273.
 	// https://empire-html5.goodgamestudios.com/default/dll/ggs.dll.6644f9217d73e8ce169d.js
 	"ahr": {
@@ -312,9 +314,8 @@ func ResolveResponseCode(store *LanguageStore, opcode string, code int) Response
 	var meaning ResponseCodeMeaning
 	if message, found := store.ResponseCode(code); found {
 		meaning = ResponseCodeMeaning{
-			Code:    code,
-			Message: message,
-			Source:  ResponseCodeOfficial,
+			Code: code, Message: message, Source: ResponseCodeOfficial,
+			MessageDescriptor: Localization.Official("errorCode_"+strconv.Itoa(code), message),
 		}
 	} else if officialClient, found := officialClientOpcodeResponseCodes[opcode][code]; found {
 		meaning = officialClient

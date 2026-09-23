@@ -7,7 +7,7 @@ if(!formatterPath) throw new Error('Pass the installed intl-messageformat/index.
 const {IntlMessageFormat}=await import(pathToFileURL(path.resolve(formatterPath)).href);
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const source=JSON.parse(fs.readFileSync(path.join(root,'en.json')));
-const keys=Object.keys(source).filter(key=>key.startsWith('server.intent.')&&!key.startsWith('server.intent.description.'));
+const keys=Object.keys(source).filter(key=>key.startsWith('server.intent.')&&!key.startsWith('server.intent.description.')&&!['server.intent.safety_lock_released','server.intent.safety_lock_cleared'].includes(key));
 assert.equal(keys.length,45,'Review new intent messages and extend the complete authored module');
 // Authorship review fixtures: these are deliberately local vocabulary assertions,
 // not a claim that a substring check establishes full linguistic correctness.

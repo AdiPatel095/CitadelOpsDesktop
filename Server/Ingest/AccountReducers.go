@@ -74,6 +74,10 @@ func reduceInitialState(
 			changed = true
 		}
 	}
+	nextConfirmation := decodeRubyConfirmation(root["opt"], gameState.Session.Generation)
+	rubyConfirmationChanged := nextConfirmation != gameState.Player.RubyConfirmation
+	gameState.Player.RubyConfirmation = nextConfirmation
+	changed = changed || rubyConfirmationChanged
 	updated, lifecycleChanged, err := applyPlayerProtectionSnapshot(root, frame.ReceivedAt, gameState)
 	if err != nil {
 		return nil, false, err
@@ -241,6 +245,9 @@ func reduceInitialState(
 			"events", "event-scores", "tower-cooldowns", "tower-queue", "invasion", "storm", "nomad-camps",
 			"khan", "rift", "attacks", "attack-dialog", "achievements", "legend-skills", "command-context",
 		}
+	}
+	if rubyConfirmationChanged {
+		domains = append(domains, "ruby-confirmation")
 	}
 	if protectionLifecycleChanged {
 		domains = append(domains, "player-protection")

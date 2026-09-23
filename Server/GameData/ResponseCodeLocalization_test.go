@@ -30,7 +30,7 @@ func TestResponseCodeProducerDescriptorsFollowOverridesAndStayIsolated(t *testin
 		t.Fatal(err)
 	}
 	meaning := ResolveResponseCode(language, "gui", 53)
-	if meaning.Source != ResponseCodeOfficial || meaning.Message != "Official context explanation." || meaning.MessageDescriptor != nil || meaning.RecoveryDescriptor == nil || meaning.RecoveryDescriptor.Fallback != meaning.Recovery {
+	if meaning.Source != ResponseCodeOfficial || meaning.Message != "Official context explanation." || meaning.MessageDescriptor == nil || meaning.MessageDescriptor.OfficialKey != "errorCode_53" || meaning.RecoveryDescriptor == nil || meaning.RecoveryDescriptor.Fallback != meaning.Recovery {
 		t.Fatalf("official precedence or focused recovery lost: %#v", meaning)
 	}
 }

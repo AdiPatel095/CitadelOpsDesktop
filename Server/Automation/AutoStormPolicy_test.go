@@ -31,7 +31,7 @@ func (counts autoStormTestAttackLaunchCounts) AttackLaunchCountsSince(from time.
 
 func TestAutoStormBuildWakeDomainsIgnoreBalanceOnlyChurn(t *testing.T) {
 	got := NewAutoStormBuildPolicy().WakeDomains()
-	want := []string{"buildings", "construction-items", "construction-offers", "kingdom-transport", "storage"}
+	want := []string{"ruby-confirmation", "buildings", "construction-items", "construction-offers", "kingdom-transport", "storage"}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("wake domains = %v, want %v", got, want)
 	}

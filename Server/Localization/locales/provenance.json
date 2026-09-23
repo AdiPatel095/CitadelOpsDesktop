@@ -418,10 +418,34 @@
         "translationSha256": "acefc6c16c05099c0be7f64079495bba02dee8cac2112ec2fcf22288a8402f02",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.automation.ruby_upgrade_notice": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "cd84d3dfab1c0d9d8c7ea911f317fa976bc77f419edbf92c3b727c65e7e266f9",
+        "translationSha256": "51a109cd4c818b7c28ae6274bd8b8f37fdddac01cb70c05d09977f2682a2a551"
+      },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
         "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
         "translationSha256": "fa16fd651ecb7b7b7018835913b063f3e8d1837a35b53bcc01adb1e6aeab6afd"
+      },
+      "server.buildings.ruby_confirmation_required": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a133c4271963811b745c8d9faa6785749d0cc609e18a8b2222cae039edc5c59f",
+        "translationSha256": "e7b68f754bab86455c7c5f737b645a191dcab400eca56742d56b054ae659d0f1"
+      },
+      "server.buildings.ruby_cost_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "99b1d3f0c5f8f99cd65ac6126915311f5737295f06ea1652c3f4d13c4188a97c",
+        "translationSha256": "34de5763f83e4491e2b8e37f4937cd8e54d7e6320599c1c5fb9bd11ae8ef1193"
+      },
+      "server.buildings.ruby_setting_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a52c035d75df67898fbd34c3cf9ecd4912c96f4dc02b83c03696a83e37bf53c8",
+        "translationSha256": "d5980b723c9a2aac8476a7372783e436e862f276b9cf3322e6ab26050826670c"
       },
       "server.configuration.configuration_data_directory_is.49ba09b5": {
         "method": "agent-authored",
@@ -558,6 +582,12 @@
         "translationSha256": "acefc6c16c05099c0be7f64079495bba02dee8cac2112ec2fcf22288a8402f02",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.gamedata.ruby_purchase_confirmation": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "aac9967e8194f84b4520dc5aa66f3dc3db3fe634fc59ed357aa52dd25662803d",
+        "translationSha256": "1bfc4ef852579d01c69afa63c074feb2e2c7d1ed3d042431943cc08218a6cfd7"
+      },
       "server.intent.action_failed": {
         "method": "agent-authored",
         "sourceSha256": "2c7fbd8658aee258e5a0abb18695f3590a05ee4ffc08c1bdda360958ddc9ffd8",
@@ -693,6 +723,18 @@
         "sourceSha256": "e79b66aa4dd7d5b6999d4e4e0276ec5479c71a57d17a896c99c4f39cd01497b3",
         "translationSha256": "df9e256262fff060faedaf19620d95ea1a065cb702c86c8adb870d83a6ee0192"
       },
+      "server.intent.safety_lock_cleared": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "fcf87ec3251055dd62c62939ecf6c32b1256617e213f2a764f47cbd93df0bfea",
+        "translationSha256": "b127c4e31a75419dd062445564eee27fc0ffe05ee7e955db912cd598647dd6cd"
+      },
+      "server.intent.safety_lock_released": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "257a71c6c34a274e620be055bf6e16be4cf597f53bc23cda3f94f055a4e82e3a",
+        "translationSha256": "80eab5e797fe178c98b5e27505e247b769795703742c1bc03a0c5c212121551a"
+      },
       "server.intent.the_action_did_not.1be9cb5f": {
         "method": "agent-authored",
         "sourceSha256": "1be9cb5f344157145f776c7bf9a6220fe32892db2f71ebdeca3bd2dd80e80546",
@@ -782,6 +824,30 @@
         "method": "agent-authored",
         "sourceSha256": "5e0a4685d2b9ff7c8515c00da23c3d28f2edba14e9ec3a524a0182a82092f9d3",
         "translationSha256": "84bfaa32673fb28b043bafc2cd03abb3ffe8896673a06359beec253c3125f2e4"
+      },
+      "server.state.safety_lock.reason_review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "4a7e0f53d20c7ea5e8d255c527252ba5b427620bbb4e4b9acd2f313eee22cbed",
+        "translationSha256": "f550781351d99e972665fcf5b1fd67651aeb71e40d6e1ffd68faa3bf290e9221"
+      },
+      "server.state.safety_lock.reason_until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "0d15e23c2c7cf98b579926e714d2c9f307baa36af2c115c1d9828c1ee13c2ffe",
+        "translationSha256": "e6510b3e8ad8a3bb545c0e46ac56bf4e835a85e894ce4f614668bc6eb14d85bb"
+      },
+      "server.state.safety_lock.review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "74b2477a645e58bfe3838f3d4fbb84e8c174f3ad326620a6f1a84bed434e6f54",
+        "translationSha256": "f7e6332d85378917b9d2417b8b539d6ff402c6115f0eda0320f096bc6e909c7e"
+      },
+      "server.state.safety_lock.until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "ee98897d8094be43e8205c949c14b1ff6db7a3eaa211a8131d83489d926b892a",
+        "translationSha256": "ece6e5ff6e4c48b5647a351e75e1d2065b1ec5517910ebb0069f72097c0e9408"
       },
       "server.storm.castle_id": {
         "method": "agent-authored",
@@ -1567,10 +1633,34 @@
         "translationSha256": "8d53e3141f6cf88a0ffaf0a74c084e55002e5e72fa8524f3fbf6f072f0c10621",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.automation.ruby_upgrade_notice": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "cd84d3dfab1c0d9d8c7ea911f317fa976bc77f419edbf92c3b727c65e7e266f9",
+        "translationSha256": "3682b9fb36c1314e541d1bdc21cca4b77eef5da8407672e0c18cd5c97bc428a0"
+      },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
         "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
         "translationSha256": "0822220ab533133fc4fa41f25b3abab4a228d247cb34da8f91c65545c506cf28"
+      },
+      "server.buildings.ruby_confirmation_required": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a133c4271963811b745c8d9faa6785749d0cc609e18a8b2222cae039edc5c59f",
+        "translationSha256": "4181dd2f7fc0feac09e08488931b24c9d4c36a9e6aacb29290810d6ef5f64974"
+      },
+      "server.buildings.ruby_cost_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "99b1d3f0c5f8f99cd65ac6126915311f5737295f06ea1652c3f4d13c4188a97c",
+        "translationSha256": "f7bb4943c36877748031be03416a19c8fc5a1f9270c553fa7519ddbd4c4973d1"
+      },
+      "server.buildings.ruby_setting_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a52c035d75df67898fbd34c3cf9ecd4912c96f4dc02b83c03696a83e37bf53c8",
+        "translationSha256": "443e32f4a239ff2b52ab3da38bde690e925caf1dd2ae6b72837fb6cdcffb49db"
       },
       "server.configuration.configuration_data_directory_is.49ba09b5": {
         "method": "agent-authored",
@@ -1707,6 +1797,12 @@
         "translationSha256": "8d53e3141f6cf88a0ffaf0a74c084e55002e5e72fa8524f3fbf6f072f0c10621",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.gamedata.ruby_purchase_confirmation": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "aac9967e8194f84b4520dc5aa66f3dc3db3fe634fc59ed357aa52dd25662803d",
+        "translationSha256": "9bdac4cc7981682bcd565a71b1e7e13b38df6b9256a6e773222ead58de3943f3"
+      },
       "server.intent.action_failed": {
         "method": "agent-authored",
         "sourceSha256": "2c7fbd8658aee258e5a0abb18695f3590a05ee4ffc08c1bdda360958ddc9ffd8",
@@ -1842,6 +1938,18 @@
         "sourceSha256": "e79b66aa4dd7d5b6999d4e4e0276ec5479c71a57d17a896c99c4f39cd01497b3",
         "translationSha256": "06747433c7298a1d319574e7a03e490e5a3a049828419b8c2b98130fb8bd7e6c"
       },
+      "server.intent.safety_lock_cleared": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "fcf87ec3251055dd62c62939ecf6c32b1256617e213f2a764f47cbd93df0bfea",
+        "translationSha256": "f1a5455c7d5e8c387e9f44c9627929e649fe898401d694958f0041f55e0cb7d7"
+      },
+      "server.intent.safety_lock_released": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "257a71c6c34a274e620be055bf6e16be4cf597f53bc23cda3f94f055a4e82e3a",
+        "translationSha256": "11b287d14b43baaa1e94793445cbe3f7af1b9891631a52bf8efdace4c37176e3"
+      },
       "server.intent.the_action_did_not.1be9cb5f": {
         "method": "agent-authored",
         "sourceSha256": "1be9cb5f344157145f776c7bf9a6220fe32892db2f71ebdeca3bd2dd80e80546",
@@ -1931,6 +2039,30 @@
         "method": "agent-authored",
         "sourceSha256": "5e0a4685d2b9ff7c8515c00da23c3d28f2edba14e9ec3a524a0182a82092f9d3",
         "translationSha256": "21f7e6fd345d2463fc279df03b4cfbfa750f264df54aa9d0a0234018e1f95936"
+      },
+      "server.state.safety_lock.reason_review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "4a7e0f53d20c7ea5e8d255c527252ba5b427620bbb4e4b9acd2f313eee22cbed",
+        "translationSha256": "2c728291d752dfe173245be983172d70e7ca0d434d37759bc492f9189f626f0f"
+      },
+      "server.state.safety_lock.reason_until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "0d15e23c2c7cf98b579926e714d2c9f307baa36af2c115c1d9828c1ee13c2ffe",
+        "translationSha256": "4e4b16416f58eb9376209b4226bf9d3abad8cc8f41da67f17528f8c61be66693"
+      },
+      "server.state.safety_lock.review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "74b2477a645e58bfe3838f3d4fbb84e8c174f3ad326620a6f1a84bed434e6f54",
+        "translationSha256": "dea678eadcda3ead7896f75d537703c452877c5a99a1cdc0827a6ffc062e339c"
+      },
+      "server.state.safety_lock.until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "ee98897d8094be43e8205c949c14b1ff6db7a3eaa211a8131d83489d926b892a",
+        "translationSha256": "f6560b18c18c31f0d42255a37e672da300e9692d9445acedabcad986e23660cc"
       },
       "server.storm.castle_id": {
         "method": "agent-authored",
@@ -2716,10 +2848,34 @@
         "translationSha256": "2378a1e67b0e4d72e4dfadfd7df846a0300c1f5210465ded05b4a815067ca270",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.automation.ruby_upgrade_notice": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "cd84d3dfab1c0d9d8c7ea911f317fa976bc77f419edbf92c3b727c65e7e266f9",
+        "translationSha256": "f528b925b535d6bc9ab23a3829121714cd689e7b22efb068ed21cc881ef1e05d"
+      },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
         "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
         "translationSha256": "064f5ae5f829830bb69904e87f96d5786e68963b1d39c7273b56bc9ae5b80f47"
+      },
+      "server.buildings.ruby_confirmation_required": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a133c4271963811b745c8d9faa6785749d0cc609e18a8b2222cae039edc5c59f",
+        "translationSha256": "0735235822eb0b969b22679719de93e72cd5545b82209fffc8d4ea82168409c0"
+      },
+      "server.buildings.ruby_cost_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "99b1d3f0c5f8f99cd65ac6126915311f5737295f06ea1652c3f4d13c4188a97c",
+        "translationSha256": "9dd0560a2289e5498a3b5e42e3ba3a8ffb02793d2d6dd6bdc4d8562e34f3d3f0"
+      },
+      "server.buildings.ruby_setting_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a52c035d75df67898fbd34c3cf9ecd4912c96f4dc02b83c03696a83e37bf53c8",
+        "translationSha256": "8b159d22d02ed20987e0e4191d3e761c382851d4467b5c0cfae28fbf28775f2b"
       },
       "server.configuration.configuration_data_directory_is.49ba09b5": {
         "method": "agent-authored",
@@ -2856,6 +3012,12 @@
         "translationSha256": "2378a1e67b0e4d72e4dfadfd7df846a0300c1f5210465ded05b4a815067ca270",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.gamedata.ruby_purchase_confirmation": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "aac9967e8194f84b4520dc5aa66f3dc3db3fe634fc59ed357aa52dd25662803d",
+        "translationSha256": "513c4e7b91bf4fb0da79a732fa24e39d97923ee2489d768c2f3d2ddc6d239375"
+      },
       "server.intent.action_failed": {
         "method": "agent-authored",
         "sourceSha256": "2c7fbd8658aee258e5a0abb18695f3590a05ee4ffc08c1bdda360958ddc9ffd8",
@@ -2991,6 +3153,18 @@
         "sourceSha256": "e79b66aa4dd7d5b6999d4e4e0276ec5479c71a57d17a896c99c4f39cd01497b3",
         "translationSha256": "9772ed14bfd58e0bc57d0d0e2502a4cdff5f351027c8e3dd64de92b494ec6a3e"
       },
+      "server.intent.safety_lock_cleared": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "fcf87ec3251055dd62c62939ecf6c32b1256617e213f2a764f47cbd93df0bfea",
+        "translationSha256": "06f7740e2c42ef73b3d71ea7f58e8427421db0ad50426590af9a99fdf5811a96"
+      },
+      "server.intent.safety_lock_released": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "257a71c6c34a274e620be055bf6e16be4cf597f53bc23cda3f94f055a4e82e3a",
+        "translationSha256": "1880f1ce2e1d31e113e9022c94043b67b5826fc9d256cd625a5b471e41d5c696"
+      },
       "server.intent.the_action_did_not.1be9cb5f": {
         "method": "agent-authored",
         "sourceSha256": "1be9cb5f344157145f776c7bf9a6220fe32892db2f71ebdeca3bd2dd80e80546",
@@ -3080,6 +3254,30 @@
         "method": "agent-authored",
         "sourceSha256": "5e0a4685d2b9ff7c8515c00da23c3d28f2edba14e9ec3a524a0182a82092f9d3",
         "translationSha256": "88d71c646dbb114d7a2538c37838931c589bff581475b42caf169968044bac31"
+      },
+      "server.state.safety_lock.reason_review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "4a7e0f53d20c7ea5e8d255c527252ba5b427620bbb4e4b9acd2f313eee22cbed",
+        "translationSha256": "96350b436b3540e9d27c0721d1619940bc1014193dbb4bd7a72e5a914cdcf94e"
+      },
+      "server.state.safety_lock.reason_until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "0d15e23c2c7cf98b579926e714d2c9f307baa36af2c115c1d9828c1ee13c2ffe",
+        "translationSha256": "7415bc97296ad16e0b28c51684b2695a66050075f19246672b45f8a685a40a52"
+      },
+      "server.state.safety_lock.review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "74b2477a645e58bfe3838f3d4fbb84e8c174f3ad326620a6f1a84bed434e6f54",
+        "translationSha256": "8fccf5154304ea983be386e3094b9228c01ea9d54c7f2b86bc95ca3eeedc4b1b"
+      },
+      "server.state.safety_lock.until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "ee98897d8094be43e8205c949c14b1ff6db7a3eaa211a8131d83489d926b892a",
+        "translationSha256": "1bd01da8eee441f7b1908805400eabde1e7ec7f895624d56f9ea6343d8b96ce9"
       },
       "server.storm.castle_id": {
         "method": "agent-authored",
@@ -3901,10 +4099,34 @@
         "translationSha256": "51f28e9bf35f9b4de6a18dd1db2ce718589d2956a51f46e8b3479a25fea518f2",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.automation.ruby_upgrade_notice": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "cd84d3dfab1c0d9d8c7ea911f317fa976bc77f419edbf92c3b727c65e7e266f9",
+        "translationSha256": "8b5a416db6bcded1fc0a2a18b249204ddbae29c3aa5705b0adb763ef6b2b0b0e"
+      },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
         "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
         "translationSha256": "fe91a4a945d3ffaa3bb669eb378758af5c52a0e17c6ce3fee78d82a8957534df"
+      },
+      "server.buildings.ruby_confirmation_required": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a133c4271963811b745c8d9faa6785749d0cc609e18a8b2222cae039edc5c59f",
+        "translationSha256": "c77e95cf48044a447061a32febfc962c051ad3d20795bb00c98f5094cd75019f"
+      },
+      "server.buildings.ruby_cost_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "99b1d3f0c5f8f99cd65ac6126915311f5737295f06ea1652c3f4d13c4188a97c",
+        "translationSha256": "29081f417ab4418095a7968e6a18654697ad79ba69a1896efd88ef655846b676"
+      },
+      "server.buildings.ruby_setting_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a52c035d75df67898fbd34c3cf9ecd4912c96f4dc02b83c03696a83e37bf53c8",
+        "translationSha256": "d61a66643e8dfdf1564f864ac25221d03ef6e7f60a40868e0284d7858f9e73f9"
       },
       "server.configuration.configuration_data_directory_is.49ba09b5": {
         "method": "agent-authored",
@@ -4041,6 +4263,12 @@
         "translationSha256": "51f28e9bf35f9b4de6a18dd1db2ce718589d2956a51f46e8b3479a25fea518f2",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.gamedata.ruby_purchase_confirmation": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "aac9967e8194f84b4520dc5aa66f3dc3db3fe634fc59ed357aa52dd25662803d",
+        "translationSha256": "742f7e89af96e989c7038fcf5ff420c8bd3f9990cca4a7c380b6a88bcd0147fa"
+      },
       "server.intent.action_failed": {
         "method": "agent-authored",
         "sourceSha256": "2c7fbd8658aee258e5a0abb18695f3590a05ee4ffc08c1bdda360958ddc9ffd8",
@@ -4176,6 +4404,18 @@
         "sourceSha256": "e79b66aa4dd7d5b6999d4e4e0276ec5479c71a57d17a896c99c4f39cd01497b3",
         "translationSha256": "9280e8eae106ba6666f3738d8ed37ae4e80487edbefa0f14ce892f094812edf0"
       },
+      "server.intent.safety_lock_cleared": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "fcf87ec3251055dd62c62939ecf6c32b1256617e213f2a764f47cbd93df0bfea",
+        "translationSha256": "7a305ba03be6da65c8e475ee0bb3d4be0e13a575aae54e6c8be9f7176e76f150"
+      },
+      "server.intent.safety_lock_released": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "257a71c6c34a274e620be055bf6e16be4cf597f53bc23cda3f94f055a4e82e3a",
+        "translationSha256": "dcca08558f77adc05776abe188840d717a8ab5bae6e6bb8e928bade8a6793841"
+      },
       "server.intent.the_action_did_not.1be9cb5f": {
         "method": "agent-authored",
         "sourceSha256": "1be9cb5f344157145f776c7bf9a6220fe32892db2f71ebdeca3bd2dd80e80546",
@@ -4265,6 +4505,30 @@
         "method": "agent-authored",
         "sourceSha256": "5e0a4685d2b9ff7c8515c00da23c3d28f2edba14e9ec3a524a0182a82092f9d3",
         "translationSha256": "682a55f554b699a8cf96a3f4bbf244a7d5237e80fd5ad8dbffd913ddafa9ec3b"
+      },
+      "server.state.safety_lock.reason_review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "4a7e0f53d20c7ea5e8d255c527252ba5b427620bbb4e4b9acd2f313eee22cbed",
+        "translationSha256": "f1585a18743d213d5f770f09633f3d22d58f327dd08aa49545381323f52ecfdd"
+      },
+      "server.state.safety_lock.reason_until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "0d15e23c2c7cf98b579926e714d2c9f307baa36af2c115c1d9828c1ee13c2ffe",
+        "translationSha256": "46594e504d246360ec5772db58adc697f1666f9285ee6eed04ea16dfd33dfa7b"
+      },
+      "server.state.safety_lock.review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "74b2477a645e58bfe3838f3d4fbb84e8c174f3ad326620a6f1a84bed434e6f54",
+        "translationSha256": "329591aa6d5978b767f029b00e9cbed2de28681b089a192c07d0ccae3fab4ec6"
+      },
+      "server.state.safety_lock.until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "ee98897d8094be43e8205c949c14b1ff6db7a3eaa211a8131d83489d926b892a",
+        "translationSha256": "b642ee1562f42ab120925630c55e6a3962e37df3e3441608afa2e0a0b09435e3"
       },
       "server.storm.castle_id": {
         "method": "agent-authored",
@@ -5150,10 +5414,34 @@
         "translationSha256": "bee7d4b034bb9990903fd786568a20ed85c63c2a8aa52b578eab42a6a3a07b0c",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.automation.ruby_upgrade_notice": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "cd84d3dfab1c0d9d8c7ea911f317fa976bc77f419edbf92c3b727c65e7e266f9",
+        "translationSha256": "ff70ad886d3bde86845910043c7472da4d88771b0dcc00aa12f7058d9b0d9e1a"
+      },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
         "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
         "translationSha256": "8601a1eacb9f0f60736a5d3b8f6935a64c1f90c7c2a0da64a66a01e6d2d7fee2"
+      },
+      "server.buildings.ruby_confirmation_required": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a133c4271963811b745c8d9faa6785749d0cc609e18a8b2222cae039edc5c59f",
+        "translationSha256": "61af751e1d77796136f4598355de4c546497064afc51c13a6e186a5ddf99b033"
+      },
+      "server.buildings.ruby_cost_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "99b1d3f0c5f8f99cd65ac6126915311f5737295f06ea1652c3f4d13c4188a97c",
+        "translationSha256": "26b16d996012c9dda2ff7e989b7dcc96d04266968aa610a8eebc15c0cde1a76b"
+      },
+      "server.buildings.ruby_setting_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a52c035d75df67898fbd34c3cf9ecd4912c96f4dc02b83c03696a83e37bf53c8",
+        "translationSha256": "5840282b77d14a509d4276ffaf1fc7291004d7e5c6fb8ccd34dac3bed1b24f95"
       },
       "server.configuration.configuration_data_directory_is.49ba09b5": {
         "method": "agent-authored",
@@ -5290,6 +5578,12 @@
         "translationSha256": "bee7d4b034bb9990903fd786568a20ed85c63c2a8aa52b578eab42a6a3a07b0c",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.gamedata.ruby_purchase_confirmation": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "aac9967e8194f84b4520dc5aa66f3dc3db3fe634fc59ed357aa52dd25662803d",
+        "translationSha256": "5dc3d38e8e43ef6585df1f765f7a453677a83dd19a4a27d77dee4a2b2df1778b"
+      },
       "server.intent.action_failed": {
         "method": "agent-authored",
         "sourceSha256": "2c7fbd8658aee258e5a0abb18695f3590a05ee4ffc08c1bdda360958ddc9ffd8",
@@ -5425,6 +5719,18 @@
         "sourceSha256": "e79b66aa4dd7d5b6999d4e4e0276ec5479c71a57d17a896c99c4f39cd01497b3",
         "translationSha256": "db6adbfbe2431c2d5656677a589ce7be6d2ad0c5a71dc258a6a47ab7149fa4ea"
       },
+      "server.intent.safety_lock_cleared": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "fcf87ec3251055dd62c62939ecf6c32b1256617e213f2a764f47cbd93df0bfea",
+        "translationSha256": "141783682076f8ea20243e037aec07f441f91a2cb214889276467ee315c39141"
+      },
+      "server.intent.safety_lock_released": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "257a71c6c34a274e620be055bf6e16be4cf597f53bc23cda3f94f055a4e82e3a",
+        "translationSha256": "6503e4d93c7855d259124adb8a33253f7f8ad1f9fa0185ea000b5d7ab1a290fd"
+      },
       "server.intent.the_action_did_not.1be9cb5f": {
         "method": "agent-authored",
         "sourceSha256": "1be9cb5f344157145f776c7bf9a6220fe32892db2f71ebdeca3bd2dd80e80546",
@@ -5514,6 +5820,30 @@
         "method": "agent-authored",
         "sourceSha256": "5e0a4685d2b9ff7c8515c00da23c3d28f2edba14e9ec3a524a0182a82092f9d3",
         "translationSha256": "88378eacf80b739546a4c9c98a1bece1526c2b5894c147a3eb2cb72c746e2ea8"
+      },
+      "server.state.safety_lock.reason_review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "4a7e0f53d20c7ea5e8d255c527252ba5b427620bbb4e4b9acd2f313eee22cbed",
+        "translationSha256": "c0ad232cae4dffbf0805e893e674c09f0702b8efd557a96c054c5926a76ac852"
+      },
+      "server.state.safety_lock.reason_until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "0d15e23c2c7cf98b579926e714d2c9f307baa36af2c115c1d9828c1ee13c2ffe",
+        "translationSha256": "c259094bd0895c25257d8de1c92c9afab1c00d8422b258c49ffd141174623431"
+      },
+      "server.state.safety_lock.review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "74b2477a645e58bfe3838f3d4fbb84e8c174f3ad326620a6f1a84bed434e6f54",
+        "translationSha256": "c902236b815854d652ba11391ba79699cde79f060cafabd45dad80b3ded4fc03"
+      },
+      "server.state.safety_lock.until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "ee98897d8094be43e8205c949c14b1ff6db7a3eaa211a8131d83489d926b892a",
+        "translationSha256": "ce61b53a7b3c4b5220e8615c40bae6ec8db49db12d723f9d7fbb20022e0da2af"
       },
       "server.storm.castle_id": {
         "method": "agent-authored",
@@ -6299,10 +6629,34 @@
         "translationSha256": "959e572f558880c90033c591679eef5c8f2a9fc1a6293c547a2b84cb7255f62c",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.automation.ruby_upgrade_notice": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "cd84d3dfab1c0d9d8c7ea911f317fa976bc77f419edbf92c3b727c65e7e266f9",
+        "translationSha256": "8e7420538cd3ce32adc968e9f289087cb5fcc618cc08f8c8ba7122c4001712b5"
+      },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
         "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
         "translationSha256": "61916b5252d58e995b5bf9d561f279af6a159b8322acd247625fc023175d2185"
+      },
+      "server.buildings.ruby_confirmation_required": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a133c4271963811b745c8d9faa6785749d0cc609e18a8b2222cae039edc5c59f",
+        "translationSha256": "c77a85cbc7e8210c42ebc7d889c2d001402a65ba89eebef8ed1bf426abf2cd49"
+      },
+      "server.buildings.ruby_cost_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "99b1d3f0c5f8f99cd65ac6126915311f5737295f06ea1652c3f4d13c4188a97c",
+        "translationSha256": "80d10cd224b8828c14a8eddc9e23dae3d6c43fd7afb29a8b007c5de1bd732043"
+      },
+      "server.buildings.ruby_setting_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a52c035d75df67898fbd34c3cf9ecd4912c96f4dc02b83c03696a83e37bf53c8",
+        "translationSha256": "89f3b9b5cba4f7f6ddd077a1694a7d822af3976e7e5b626155ff25199e091dc8"
       },
       "server.configuration.configuration_data_directory_is.49ba09b5": {
         "method": "agent-authored",
@@ -6439,6 +6793,12 @@
         "translationSha256": "959e572f558880c90033c591679eef5c8f2a9fc1a6293c547a2b84cb7255f62c",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.gamedata.ruby_purchase_confirmation": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "aac9967e8194f84b4520dc5aa66f3dc3db3fe634fc59ed357aa52dd25662803d",
+        "translationSha256": "55e9ca3b65dbb831ebcbadd472841cdb7c4f37adbbc519c064b02ae41643403e"
+      },
       "server.intent.action_failed": {
         "method": "agent-authored",
         "sourceSha256": "2c7fbd8658aee258e5a0abb18695f3590a05ee4ffc08c1bdda360958ddc9ffd8",
@@ -6574,6 +6934,18 @@
         "sourceSha256": "e79b66aa4dd7d5b6999d4e4e0276ec5479c71a57d17a896c99c4f39cd01497b3",
         "translationSha256": "6cce04100619bf026c12e1de751d6a68709c6dc6a804387225256fefadcdbc9b"
       },
+      "server.intent.safety_lock_cleared": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "fcf87ec3251055dd62c62939ecf6c32b1256617e213f2a764f47cbd93df0bfea",
+        "translationSha256": "053f8c9a06ff39d1a900ae9555a2d52472c654c65a2b84a72d809c24adb95953"
+      },
+      "server.intent.safety_lock_released": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "257a71c6c34a274e620be055bf6e16be4cf597f53bc23cda3f94f055a4e82e3a",
+        "translationSha256": "80f09d24f677ce91bd3091978175a76087e02145d4d37039d1f18c23e3f9e29b"
+      },
       "server.intent.the_action_did_not.1be9cb5f": {
         "method": "agent-authored",
         "sourceSha256": "1be9cb5f344157145f776c7bf9a6220fe32892db2f71ebdeca3bd2dd80e80546",
@@ -6663,6 +7035,30 @@
         "method": "agent-authored",
         "sourceSha256": "5e0a4685d2b9ff7c8515c00da23c3d28f2edba14e9ec3a524a0182a82092f9d3",
         "translationSha256": "2ad12717b4ce840233185b56cd9511e2e4562f81e5219c85ccfa85239d293cb3"
+      },
+      "server.state.safety_lock.reason_review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "4a7e0f53d20c7ea5e8d255c527252ba5b427620bbb4e4b9acd2f313eee22cbed",
+        "translationSha256": "b6905c3f4013b61836006ef743fea64219b51b29c112fcd0b8ab4a7d909aca30"
+      },
+      "server.state.safety_lock.reason_until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "0d15e23c2c7cf98b579926e714d2c9f307baa36af2c115c1d9828c1ee13c2ffe",
+        "translationSha256": "977ff2d4ba5325f4f8f3cd761b219808c41ba7513ea133c96617c358a5215da0"
+      },
+      "server.state.safety_lock.review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "74b2477a645e58bfe3838f3d4fbb84e8c174f3ad326620a6f1a84bed434e6f54",
+        "translationSha256": "1dc6b928188641d7eed46c39869920112890577ad13dfb32115c8c7c27c2baa5"
+      },
+      "server.state.safety_lock.until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "ee98897d8094be43e8205c949c14b1ff6db7a3eaa211a8131d83489d926b892a",
+        "translationSha256": "6b1b8cfeb3727def58801b2364a9342441640ad8db2b3d7744fc9f65dedac25e"
       },
       "server.storm.castle_id": {
         "method": "agent-authored",
@@ -7484,10 +7880,34 @@
         "translationSha256": "55e4dc2858c3eb541a950f535fcb50a662898b2047a2ce5f7a6d0f77e910e9a9",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.automation.ruby_upgrade_notice": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "cd84d3dfab1c0d9d8c7ea911f317fa976bc77f419edbf92c3b727c65e7e266f9",
+        "translationSha256": "731075a13fd325ce8e4f113043210288f7105598add6494c07a98fe3b5870c54"
+      },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
         "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
         "translationSha256": "5deb0d0e3669611a3ec52b422b069fd6d8ace6804a81c57b0999406657162d55"
+      },
+      "server.buildings.ruby_confirmation_required": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a133c4271963811b745c8d9faa6785749d0cc609e18a8b2222cae039edc5c59f",
+        "translationSha256": "da3c3cec6e336f0f215bd037ec4d616a90470421cec672cb739b64e04a782fb0"
+      },
+      "server.buildings.ruby_cost_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "99b1d3f0c5f8f99cd65ac6126915311f5737295f06ea1652c3f4d13c4188a97c",
+        "translationSha256": "add2cd6b4bc516e37f4fe9a9714a7d0cadb78e3dbedde87623450fec33f78ae4"
+      },
+      "server.buildings.ruby_setting_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a52c035d75df67898fbd34c3cf9ecd4912c96f4dc02b83c03696a83e37bf53c8",
+        "translationSha256": "a0f4c50ebfa3a3c4e0b3bea462980bc3cb93b2e2bcf94353e9c36a8f5838999c"
       },
       "server.configuration.configuration_data_directory_is.49ba09b5": {
         "method": "agent-authored",
@@ -7624,6 +8044,12 @@
         "translationSha256": "55e4dc2858c3eb541a950f535fcb50a662898b2047a2ce5f7a6d0f77e910e9a9",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.gamedata.ruby_purchase_confirmation": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "aac9967e8194f84b4520dc5aa66f3dc3db3fe634fc59ed357aa52dd25662803d",
+        "translationSha256": "b8a688ccb54bed1d29718c5280f31de4686cd2d033d9335e3d6ae84330ac0a11"
+      },
       "server.intent.action_failed": {
         "method": "agent-authored",
         "sourceSha256": "2c7fbd8658aee258e5a0abb18695f3590a05ee4ffc08c1bdda360958ddc9ffd8",
@@ -7759,6 +8185,18 @@
         "sourceSha256": "e79b66aa4dd7d5b6999d4e4e0276ec5479c71a57d17a896c99c4f39cd01497b3",
         "translationSha256": "4260b9e92ea45cf38041609c2d8d1c5b8a7126adcd5bb13bd53b1f8455c7d153"
       },
+      "server.intent.safety_lock_cleared": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "fcf87ec3251055dd62c62939ecf6c32b1256617e213f2a764f47cbd93df0bfea",
+        "translationSha256": "339fa9707954da6e1810dea65fb150e5bc99bda003fd68f88309c6c1b58f7bf3"
+      },
+      "server.intent.safety_lock_released": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "257a71c6c34a274e620be055bf6e16be4cf597f53bc23cda3f94f055a4e82e3a",
+        "translationSha256": "0fb87ad84b25fd359452618bb2a6d34940d1b387ce72d1cd715f93b7f9c97b4b"
+      },
       "server.intent.the_action_did_not.1be9cb5f": {
         "method": "agent-authored",
         "sourceSha256": "1be9cb5f344157145f776c7bf9a6220fe32892db2f71ebdeca3bd2dd80e80546",
@@ -7848,6 +8286,30 @@
         "method": "agent-authored",
         "sourceSha256": "5e0a4685d2b9ff7c8515c00da23c3d28f2edba14e9ec3a524a0182a82092f9d3",
         "translationSha256": "773c8f4ca5c4506f13370565c00e922e62cf8f7977e28582f8fcae2b7fd344cb"
+      },
+      "server.state.safety_lock.reason_review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "4a7e0f53d20c7ea5e8d255c527252ba5b427620bbb4e4b9acd2f313eee22cbed",
+        "translationSha256": "06b53346d3b4bd62f23c1fed21d4d5d18d6c1d013dfa4b8f6a29f477a2d9a0e4"
+      },
+      "server.state.safety_lock.reason_until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "0d15e23c2c7cf98b579926e714d2c9f307baa36af2c115c1d9828c1ee13c2ffe",
+        "translationSha256": "ec1524c8c2c15c0ae53c766be6ddcfeb271d1e58a91823e4eaa4737cf7c6215a"
+      },
+      "server.state.safety_lock.review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "74b2477a645e58bfe3838f3d4fbb84e8c174f3ad326620a6f1a84bed434e6f54",
+        "translationSha256": "34f18e01ec90a2f0d7b41143d230c55df0c0015c832b2dbbd277f1c641f7fb21"
+      },
+      "server.state.safety_lock.until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "ee98897d8094be43e8205c949c14b1ff6db7a3eaa211a8131d83489d926b892a",
+        "translationSha256": "829d8da8b84df1de280bb43e3bad54cb42ee40380a532558f1b3eed4a334ad60"
       },
       "server.storm.castle_id": {
         "method": "agent-authored",
@@ -8633,10 +9095,34 @@
         "translationSha256": "33b9e3bccaa2028cca667b29639a71d3fbf645a121c40409ea9d4856d796c647",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.automation.ruby_upgrade_notice": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "cd84d3dfab1c0d9d8c7ea911f317fa976bc77f419edbf92c3b727c65e7e266f9",
+        "translationSha256": "64585cdbf1ac053a2cfc83e2b0e1643485c186cfba79c0fa48c583655273da3b"
+      },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
         "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
         "translationSha256": "d6f1ac9f7917264e243ffa2254aa9926ad4719d95c17d5a9f99bca2cb8d89506"
+      },
+      "server.buildings.ruby_confirmation_required": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a133c4271963811b745c8d9faa6785749d0cc609e18a8b2222cae039edc5c59f",
+        "translationSha256": "8a18b1ecd00889092266c591e8042baa63cef0b71d9631024008f06b7ff480d8"
+      },
+      "server.buildings.ruby_cost_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "99b1d3f0c5f8f99cd65ac6126915311f5737295f06ea1652c3f4d13c4188a97c",
+        "translationSha256": "a82dcc0063983e54df51e1c055bbd6b4c23723bf160f918296301f1c5b273a9e"
+      },
+      "server.buildings.ruby_setting_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a52c035d75df67898fbd34c3cf9ecd4912c96f4dc02b83c03696a83e37bf53c8",
+        "translationSha256": "bbeec8b588a512cb1143ed6c57b84d29eaa22da4bc52c8bf974a7a44eff9b9b6"
       },
       "server.configuration.configuration_data_directory_is.49ba09b5": {
         "method": "agent-authored",
@@ -8773,6 +9259,12 @@
         "translationSha256": "33b9e3bccaa2028cca667b29639a71d3fbf645a121c40409ea9d4856d796c647",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.gamedata.ruby_purchase_confirmation": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "aac9967e8194f84b4520dc5aa66f3dc3db3fe634fc59ed357aa52dd25662803d",
+        "translationSha256": "ee7898f956bf1a0dd4c6955106cffa4840dd1e94d175e4e90af88f0307f76b01"
+      },
       "server.intent.action_failed": {
         "method": "agent-authored",
         "sourceSha256": "2c7fbd8658aee258e5a0abb18695f3590a05ee4ffc08c1bdda360958ddc9ffd8",
@@ -8908,6 +9400,18 @@
         "sourceSha256": "e79b66aa4dd7d5b6999d4e4e0276ec5479c71a57d17a896c99c4f39cd01497b3",
         "translationSha256": "ff2cc2eb6232d67f62f7c442d36c54f5bea7e4c8e3a96f8c2b8dd88b465352f7"
       },
+      "server.intent.safety_lock_cleared": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "fcf87ec3251055dd62c62939ecf6c32b1256617e213f2a764f47cbd93df0bfea",
+        "translationSha256": "e43c5ec09146c4b58156016459a374c3d9e0def63aaa60ba3b2959de84a3d3dd"
+      },
+      "server.intent.safety_lock_released": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "257a71c6c34a274e620be055bf6e16be4cf597f53bc23cda3f94f055a4e82e3a",
+        "translationSha256": "fa96c3e598710b7f73afa47ddf3ad9de880e82cd3fd8dd5abd243ce7bea80487"
+      },
       "server.intent.the_action_did_not.1be9cb5f": {
         "method": "agent-authored",
         "sourceSha256": "1be9cb5f344157145f776c7bf9a6220fe32892db2f71ebdeca3bd2dd80e80546",
@@ -8997,6 +9501,30 @@
         "method": "agent-authored",
         "sourceSha256": "5e0a4685d2b9ff7c8515c00da23c3d28f2edba14e9ec3a524a0182a82092f9d3",
         "translationSha256": "392022066c0e42824afe0e781a0845af3ea52db933158582734c024690c4902a"
+      },
+      "server.state.safety_lock.reason_review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "4a7e0f53d20c7ea5e8d255c527252ba5b427620bbb4e4b9acd2f313eee22cbed",
+        "translationSha256": "0b628ba50bdc12a8338d69c5461d2c5a529c76bb5148f6ee7707af2d5769394c"
+      },
+      "server.state.safety_lock.reason_until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "0d15e23c2c7cf98b579926e714d2c9f307baa36af2c115c1d9828c1ee13c2ffe",
+        "translationSha256": "2759d4a1b2ee053b5e428906e5bc20f1ec2625cac1d29f5805c606389642c133"
+      },
+      "server.state.safety_lock.review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "74b2477a645e58bfe3838f3d4fbb84e8c174f3ad326620a6f1a84bed434e6f54",
+        "translationSha256": "d0baf3891902efa44bc1ca17144445019b8ec8cd1ef1c1fbb60e704225ce8c2b"
+      },
+      "server.state.safety_lock.until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "ee98897d8094be43e8205c949c14b1ff6db7a3eaa211a8131d83489d926b892a",
+        "translationSha256": "e01a14e125ade55376826789f3dc220ebd8b738b2478fe10fded6e0a0ea4a9da"
       },
       "server.storm.castle_id": {
         "method": "agent-authored",
@@ -9818,10 +10346,34 @@
         "translationSha256": "cd5310e28551b719d0522f3273d58fda30a07927645a6bec86a6390c304ca2fa",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.automation.ruby_upgrade_notice": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "cd84d3dfab1c0d9d8c7ea911f317fa976bc77f419edbf92c3b727c65e7e266f9",
+        "translationSha256": "5087679ae1a85eaca6d6ccc7ab0f9c6d9e5870b9ae6c76296f8a214ee3266941"
+      },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
         "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
         "translationSha256": "7eb5fc9e6fc392863e6f92dbb91ed275cd987f0ba1519d56a569552c2cd18984"
+      },
+      "server.buildings.ruby_confirmation_required": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a133c4271963811b745c8d9faa6785749d0cc609e18a8b2222cae039edc5c59f",
+        "translationSha256": "cbc0ce19aac48cc965b5b009b8cf4a3f8bbf60bd52140d071451367e95e1b0d0"
+      },
+      "server.buildings.ruby_cost_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "99b1d3f0c5f8f99cd65ac6126915311f5737295f06ea1652c3f4d13c4188a97c",
+        "translationSha256": "410aa1c955b270825b9e3df0237c9199bb94b792cafabb2c0adf3a64835e3d22"
+      },
+      "server.buildings.ruby_setting_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a52c035d75df67898fbd34c3cf9ecd4912c96f4dc02b83c03696a83e37bf53c8",
+        "translationSha256": "69999dac19065f71cf01262f666cbc1ba86bf203a6e2815874e506d2a94651d2"
       },
       "server.configuration.configuration_data_directory_is.49ba09b5": {
         "method": "agent-authored",
@@ -9958,6 +10510,12 @@
         "translationSha256": "cd5310e28551b719d0522f3273d58fda30a07927645a6bec86a6390c304ca2fa",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.gamedata.ruby_purchase_confirmation": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "aac9967e8194f84b4520dc5aa66f3dc3db3fe634fc59ed357aa52dd25662803d",
+        "translationSha256": "d0e8ed6590075deedfa29d397515bc7438bd7512c024fe4e7865ac438e78c1db"
+      },
       "server.intent.action_failed": {
         "method": "agent-authored",
         "sourceSha256": "2c7fbd8658aee258e5a0abb18695f3590a05ee4ffc08c1bdda360958ddc9ffd8",
@@ -10093,6 +10651,18 @@
         "sourceSha256": "e79b66aa4dd7d5b6999d4e4e0276ec5479c71a57d17a896c99c4f39cd01497b3",
         "translationSha256": "fabd0c8aaba601aecfdf99cea1da4c9ef1d2fd52e99002583d2a0fb1ab0230d5"
       },
+      "server.intent.safety_lock_cleared": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "fcf87ec3251055dd62c62939ecf6c32b1256617e213f2a764f47cbd93df0bfea",
+        "translationSha256": "c4f0525c4460edfbfde4d6b306fa06fd730c603e99230813447cebba285c63d7"
+      },
+      "server.intent.safety_lock_released": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "257a71c6c34a274e620be055bf6e16be4cf597f53bc23cda3f94f055a4e82e3a",
+        "translationSha256": "6b2b0b2fa92aeba728de2e1add1c26f03c73198a3916df7de7187c75a59aad6b"
+      },
       "server.intent.the_action_did_not.1be9cb5f": {
         "method": "agent-authored",
         "sourceSha256": "1be9cb5f344157145f776c7bf9a6220fe32892db2f71ebdeca3bd2dd80e80546",
@@ -10182,6 +10752,30 @@
         "method": "agent-authored",
         "sourceSha256": "5e0a4685d2b9ff7c8515c00da23c3d28f2edba14e9ec3a524a0182a82092f9d3",
         "translationSha256": "71c6507185b3d4ab4307b40cb265f9149842d8fa07b5adfeb2c564eff4699102"
+      },
+      "server.state.safety_lock.reason_review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "4a7e0f53d20c7ea5e8d255c527252ba5b427620bbb4e4b9acd2f313eee22cbed",
+        "translationSha256": "01d071eb8ff0f2435fbaf613504da9cc42ce81fb36f0ceb2f84b8167d9e5b346"
+      },
+      "server.state.safety_lock.reason_until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "0d15e23c2c7cf98b579926e714d2c9f307baa36af2c115c1d9828c1ee13c2ffe",
+        "translationSha256": "a6730457df27ab69b276111d4e4956938cb0223ca947b9d729902254129e85eb"
+      },
+      "server.state.safety_lock.review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "74b2477a645e58bfe3838f3d4fbb84e8c174f3ad326620a6f1a84bed434e6f54",
+        "translationSha256": "a7d0500c8fab969568f17b03fde07130352921229096c0769093d95f79f7f228"
+      },
+      "server.state.safety_lock.until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "ee98897d8094be43e8205c949c14b1ff6db7a3eaa211a8131d83489d926b892a",
+        "translationSha256": "f3ec89c1cccc4088ac26467d809206d1ff3891fb5065a224ca61fd30f0c9c575"
       },
       "server.storm.castle_id": {
         "method": "agent-authored",
@@ -10967,10 +11561,34 @@
         "translationSha256": "53af13ec3445a8769ae5054145210ab33ed69a794c7368b0bcff3d964d6df402",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.automation.ruby_upgrade_notice": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "cd84d3dfab1c0d9d8c7ea911f317fa976bc77f419edbf92c3b727c65e7e266f9",
+        "translationSha256": "b13d2c0e7fd53634641ca17a735506a398d1cabd1373523ccef3266652e81074"
+      },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
         "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
         "translationSha256": "cee72faa1a1174da22b130499bff701599d0205d37b324313654f3d836f9d3f2"
+      },
+      "server.buildings.ruby_confirmation_required": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a133c4271963811b745c8d9faa6785749d0cc609e18a8b2222cae039edc5c59f",
+        "translationSha256": "a19ec0320a873b40078addb09c50a3afd82c897fcb9811d80bcfc73b9a0a908f"
+      },
+      "server.buildings.ruby_cost_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "99b1d3f0c5f8f99cd65ac6126915311f5737295f06ea1652c3f4d13c4188a97c",
+        "translationSha256": "ceca83db5d52738d53f926cc3c0d5a7158ab52c66a3653461020955afef3a384"
+      },
+      "server.buildings.ruby_setting_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a52c035d75df67898fbd34c3cf9ecd4912c96f4dc02b83c03696a83e37bf53c8",
+        "translationSha256": "49d85e839ad6257e86a2a6468c7a1a6e2ae7b6316b7f6f8e6d0641f005c9c99b"
       },
       "server.configuration.configuration_data_directory_is.49ba09b5": {
         "method": "agent-authored",
@@ -11107,6 +11725,12 @@
         "translationSha256": "53af13ec3445a8769ae5054145210ab33ed69a794c7368b0bcff3d964d6df402",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.gamedata.ruby_purchase_confirmation": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "aac9967e8194f84b4520dc5aa66f3dc3db3fe634fc59ed357aa52dd25662803d",
+        "translationSha256": "d951c6004bc7ac8562efe5c28e19da8114c7cd7f3880bcfedfe5f31be634d549"
+      },
       "server.intent.action_failed": {
         "method": "agent-authored",
         "sourceSha256": "2c7fbd8658aee258e5a0abb18695f3590a05ee4ffc08c1bdda360958ddc9ffd8",
@@ -11242,6 +11866,18 @@
         "sourceSha256": "e79b66aa4dd7d5b6999d4e4e0276ec5479c71a57d17a896c99c4f39cd01497b3",
         "translationSha256": "83caf6b99e4ce94407a28cd9573e7680adf62de4b341efdb0186530c003df847"
       },
+      "server.intent.safety_lock_cleared": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "fcf87ec3251055dd62c62939ecf6c32b1256617e213f2a764f47cbd93df0bfea",
+        "translationSha256": "a023fc4a4308675c863a1c0258df31a0de6a2edd7a8ad38fe0fcc6377be649c1"
+      },
+      "server.intent.safety_lock_released": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "257a71c6c34a274e620be055bf6e16be4cf597f53bc23cda3f94f055a4e82e3a",
+        "translationSha256": "d5aaee127adb724727799145645098b88942a52b455a10418d81600c0f5a733a"
+      },
       "server.intent.the_action_did_not.1be9cb5f": {
         "method": "agent-authored",
         "sourceSha256": "1be9cb5f344157145f776c7bf9a6220fe32892db2f71ebdeca3bd2dd80e80546",
@@ -11331,6 +11967,30 @@
         "method": "agent-authored",
         "sourceSha256": "5e0a4685d2b9ff7c8515c00da23c3d28f2edba14e9ec3a524a0182a82092f9d3",
         "translationSha256": "4c8a3864332c53489e05375f909c546f1e2f65991420d70ec5c4fce897ad0bd0"
+      },
+      "server.state.safety_lock.reason_review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "4a7e0f53d20c7ea5e8d255c527252ba5b427620bbb4e4b9acd2f313eee22cbed",
+        "translationSha256": "8818d641d8783b45ba81be5a353d5fbc0d361edc0ac0575e50a5cd81b5e2d686"
+      },
+      "server.state.safety_lock.reason_until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "0d15e23c2c7cf98b579926e714d2c9f307baa36af2c115c1d9828c1ee13c2ffe",
+        "translationSha256": "325a010e95a946a27436f2348dbf796f3635de398e4b4b8f0250eabb85decc72"
+      },
+      "server.state.safety_lock.review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "74b2477a645e58bfe3838f3d4fbb84e8c174f3ad326620a6f1a84bed434e6f54",
+        "translationSha256": "67afe91ab5f310eb92158c692dba61288ca3b2dcd8b8f3be861e09f75a1c938e"
+      },
+      "server.state.safety_lock.until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "ee98897d8094be43e8205c949c14b1ff6db7a3eaa211a8131d83489d926b892a",
+        "translationSha256": "e5ab676d04a1a92caa1458338bb8ea1a6606744391b20f796bbf1f87aca9a4c9"
       },
       "server.storm.castle_id": {
         "method": "agent-authored",
@@ -12152,10 +12812,34 @@
         "translationSha256": "65db6579a74e752683f7d3dd3cd71873c132d7f715db78e9e1f9e7f07fe4c699",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.automation.ruby_upgrade_notice": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "cd84d3dfab1c0d9d8c7ea911f317fa976bc77f419edbf92c3b727c65e7e266f9",
+        "translationSha256": "731075a13fd325ce8e4f113043210288f7105598add6494c07a98fe3b5870c54"
+      },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
         "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
         "translationSha256": "2d1028f13b02fb3b8947aa365afbf6d03f44bb2d28ae8e8ad05091ec1de1e52f"
+      },
+      "server.buildings.ruby_confirmation_required": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a133c4271963811b745c8d9faa6785749d0cc609e18a8b2222cae039edc5c59f",
+        "translationSha256": "a7eb2bc3ba0f67abef08f13ce0cf0f0a8a7c235e060f9e5fad98d704e6ac14c3"
+      },
+      "server.buildings.ruby_cost_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "99b1d3f0c5f8f99cd65ac6126915311f5737295f06ea1652c3f4d13c4188a97c",
+        "translationSha256": "2e2e4f15dcf42c754caf106cf417ee8fb5f16c6da89ec72e6eeeb26f3369be74"
+      },
+      "server.buildings.ruby_setting_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a52c035d75df67898fbd34c3cf9ecd4912c96f4dc02b83c03696a83e37bf53c8",
+        "translationSha256": "ee23e53e40843a22f25b582c26121653fa7d0b7684f99281a7184b8771a5be93"
       },
       "server.configuration.configuration_data_directory_is.49ba09b5": {
         "method": "agent-authored",
@@ -12292,6 +12976,12 @@
         "translationSha256": "65db6579a74e752683f7d3dd3cd71873c132d7f715db78e9e1f9e7f07fe4c699",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.gamedata.ruby_purchase_confirmation": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "aac9967e8194f84b4520dc5aa66f3dc3db3fe634fc59ed357aa52dd25662803d",
+        "translationSha256": "9d760e22c1e6d74478c51f80149deabbfece58adbc9936f5a015a1fc11b7eabf"
+      },
       "server.intent.action_failed": {
         "method": "agent-authored",
         "sourceSha256": "2c7fbd8658aee258e5a0abb18695f3590a05ee4ffc08c1bdda360958ddc9ffd8",
@@ -12427,6 +13117,18 @@
         "sourceSha256": "e79b66aa4dd7d5b6999d4e4e0276ec5479c71a57d17a896c99c4f39cd01497b3",
         "translationSha256": "4d43785c2ca7cb4ff86b597ad07e1c9c91ea245dc3ed82cdf448e40f7e927d68"
       },
+      "server.intent.safety_lock_cleared": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "fcf87ec3251055dd62c62939ecf6c32b1256617e213f2a764f47cbd93df0bfea",
+        "translationSha256": "13a051f866d1850b260f681cfff11e39f801fd337bfb0820586ccd0ba7368a4d"
+      },
+      "server.intent.safety_lock_released": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "257a71c6c34a274e620be055bf6e16be4cf597f53bc23cda3f94f055a4e82e3a",
+        "translationSha256": "8ce6dcbd27ad60b9287bcb90aa95bada8ed48e564a592e3cb90a4b89bd807317"
+      },
       "server.intent.the_action_did_not.1be9cb5f": {
         "method": "agent-authored",
         "sourceSha256": "1be9cb5f344157145f776c7bf9a6220fe32892db2f71ebdeca3bd2dd80e80546",
@@ -12516,6 +13218,30 @@
         "method": "agent-authored",
         "sourceSha256": "5e0a4685d2b9ff7c8515c00da23c3d28f2edba14e9ec3a524a0182a82092f9d3",
         "translationSha256": "500e900025f43d2c6aa7331c8c6cffa3b11c10a04d053c469cf1b8ba084d2a35"
+      },
+      "server.state.safety_lock.reason_review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "4a7e0f53d20c7ea5e8d255c527252ba5b427620bbb4e4b9acd2f313eee22cbed",
+        "translationSha256": "31eb07901509a3ffafcebcd3e7bd4c5f955f6b32918a2d410dc695e380d110ec"
+      },
+      "server.state.safety_lock.reason_until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "0d15e23c2c7cf98b579926e714d2c9f307baa36af2c115c1d9828c1ee13c2ffe",
+        "translationSha256": "07402d633162a5e2f45bb260fbc4f11fd1c0f01c69d207193c070ba58819166d"
+      },
+      "server.state.safety_lock.review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "74b2477a645e58bfe3838f3d4fbb84e8c174f3ad326620a6f1a84bed434e6f54",
+        "translationSha256": "01d3c7701f452b16d1a7bea80ffd12764218d0abb413edf979fb81d72101e6b8"
+      },
+      "server.state.safety_lock.until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "ee98897d8094be43e8205c949c14b1ff6db7a3eaa211a8131d83489d926b892a",
+        "translationSha256": "53a8fa3a753c66512934e7e82550ddbe9c6d24a3126ed34845cafe4f5250d92f"
       },
       "server.storm.castle_id": {
         "method": "agent-authored",
@@ -13301,10 +14027,34 @@
         "translationSha256": "e5ba51854199df78768d46f890233ad28458e89f8cf5fd63e4ae744a75095357",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.automation.ruby_upgrade_notice": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "cd84d3dfab1c0d9d8c7ea911f317fa976bc77f419edbf92c3b727c65e7e266f9",
+        "translationSha256": "2a81a53e8147c38f1849bf247872cc8f4cfdae8fabe14c1e2d6caee469cbc933"
+      },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
         "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
         "translationSha256": "2b8ceaabf7694429cdcb18938cc443180c0d4d4a65df09c410f72357f8bd4b27"
+      },
+      "server.buildings.ruby_confirmation_required": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a133c4271963811b745c8d9faa6785749d0cc609e18a8b2222cae039edc5c59f",
+        "translationSha256": "5dcb8721be8f43be6ff2dcc9e63d2e120ffb0888a1f992b17be00511dae7b607"
+      },
+      "server.buildings.ruby_cost_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "99b1d3f0c5f8f99cd65ac6126915311f5737295f06ea1652c3f4d13c4188a97c",
+        "translationSha256": "27ac7b175750e96f50daa88f1091b0d2a95729d02a7f46007f36d12d34d2acd3"
+      },
+      "server.buildings.ruby_setting_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a52c035d75df67898fbd34c3cf9ecd4912c96f4dc02b83c03696a83e37bf53c8",
+        "translationSha256": "96bef198692eaa1ce759c681d94b30c3d4c4c5e2589653255e7734e495db6436"
       },
       "server.configuration.configuration_data_directory_is.49ba09b5": {
         "method": "agent-authored",
@@ -13441,6 +14191,12 @@
         "translationSha256": "e5ba51854199df78768d46f890233ad28458e89f8cf5fd63e4ae744a75095357",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.gamedata.ruby_purchase_confirmation": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "aac9967e8194f84b4520dc5aa66f3dc3db3fe634fc59ed357aa52dd25662803d",
+        "translationSha256": "e3ba32481df5a36f074f96a5b14299fa922246ea1d3f387c2f13fde91699e825"
+      },
       "server.intent.action_failed": {
         "method": "agent-authored",
         "sourceSha256": "2c7fbd8658aee258e5a0abb18695f3590a05ee4ffc08c1bdda360958ddc9ffd8",
@@ -13576,6 +14332,18 @@
         "sourceSha256": "e79b66aa4dd7d5b6999d4e4e0276ec5479c71a57d17a896c99c4f39cd01497b3",
         "translationSha256": "50028bfb93cd2c473572bcd3df328e0f3bcb679807899432cf318166536c08e0"
       },
+      "server.intent.safety_lock_cleared": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "fcf87ec3251055dd62c62939ecf6c32b1256617e213f2a764f47cbd93df0bfea",
+        "translationSha256": "a318ea82cb174e710d4ec223b734c2f371a6e235fe2c5441b10205bb58fa3953"
+      },
+      "server.intent.safety_lock_released": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "257a71c6c34a274e620be055bf6e16be4cf597f53bc23cda3f94f055a4e82e3a",
+        "translationSha256": "fafd0f1f0d739e4341e55e0ca6afb6598e2e1ec6f67bbe11fe6ab410d1da4cc7"
+      },
       "server.intent.the_action_did_not.1be9cb5f": {
         "method": "agent-authored",
         "sourceSha256": "1be9cb5f344157145f776c7bf9a6220fe32892db2f71ebdeca3bd2dd80e80546",
@@ -13665,6 +14433,30 @@
         "method": "agent-authored",
         "sourceSha256": "5e0a4685d2b9ff7c8515c00da23c3d28f2edba14e9ec3a524a0182a82092f9d3",
         "translationSha256": "213d3526d8450e4ea747fc7709952b5239b847bc5f69cc6eb4f1d8bee13b01a2"
+      },
+      "server.state.safety_lock.reason_review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "4a7e0f53d20c7ea5e8d255c527252ba5b427620bbb4e4b9acd2f313eee22cbed",
+        "translationSha256": "e2dd209952e2e31d34f71c570c155db31150f61d87ac85ca25c2799a5c47cc56"
+      },
+      "server.state.safety_lock.reason_until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "0d15e23c2c7cf98b579926e714d2c9f307baa36af2c115c1d9828c1ee13c2ffe",
+        "translationSha256": "a250f4931318c6ff5f259841a15b6446bb5ea42e261eb6207986756a338330f4"
+      },
+      "server.state.safety_lock.review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "74b2477a645e58bfe3838f3d4fbb84e8c174f3ad326620a6f1a84bed434e6f54",
+        "translationSha256": "203fe0f615eb7f4318ec9e1a647d58fe8b6696c7975d9baac0b052bcf142ad72"
+      },
+      "server.state.safety_lock.until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "ee98897d8094be43e8205c949c14b1ff6db7a3eaa211a8131d83489d926b892a",
+        "translationSha256": "5ddc942c988ce0073e7160db584c719f2ca44e2b542666444cc48ce52ff78b2a"
       },
       "server.storm.castle_id": {
         "method": "agent-authored",
@@ -14450,10 +15242,34 @@
         "translationSha256": "a81691f5e168c3001d9b879665882eb224bded14581abafe7ade885989c71752",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.automation.ruby_upgrade_notice": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "cd84d3dfab1c0d9d8c7ea911f317fa976bc77f419edbf92c3b727c65e7e266f9",
+        "translationSha256": "2c50521970d1c088f77f8cc4d5d1aab3e579b703e9c5d66e01219e2f3ce543a3"
+      },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
         "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
         "translationSha256": "f4e7a1345b64c40a7e68cf9ffc018067c94d4231c4114518dacf977bec17e879"
+      },
+      "server.buildings.ruby_confirmation_required": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a133c4271963811b745c8d9faa6785749d0cc609e18a8b2222cae039edc5c59f",
+        "translationSha256": "5c2bd60c9fd5c6a0e208886397a66d536b89f014efbc241a3531d8a96cb014e9"
+      },
+      "server.buildings.ruby_cost_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "99b1d3f0c5f8f99cd65ac6126915311f5737295f06ea1652c3f4d13c4188a97c",
+        "translationSha256": "be85e4268d843d51cead2dcfea5b4c5d8adf4c8c075e238f051b4eafc28a8ccd"
+      },
+      "server.buildings.ruby_setting_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a52c035d75df67898fbd34c3cf9ecd4912c96f4dc02b83c03696a83e37bf53c8",
+        "translationSha256": "1c88df9586bb301126c3d0178d83bbda31c393822893c48a9f020e93bde085bf"
       },
       "server.configuration.configuration_data_directory_is.49ba09b5": {
         "method": "agent-authored",
@@ -14590,6 +15406,12 @@
         "translationSha256": "a81691f5e168c3001d9b879665882eb224bded14581abafe7ade885989c71752",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.gamedata.ruby_purchase_confirmation": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "aac9967e8194f84b4520dc5aa66f3dc3db3fe634fc59ed357aa52dd25662803d",
+        "translationSha256": "a0a28a808a47c4ebdfba3bec83e37f1a54a04d1f0832015abd23fcb636038158"
+      },
       "server.intent.action_failed": {
         "method": "agent-authored",
         "sourceSha256": "2c7fbd8658aee258e5a0abb18695f3590a05ee4ffc08c1bdda360958ddc9ffd8",
@@ -14725,6 +15547,18 @@
         "sourceSha256": "e79b66aa4dd7d5b6999d4e4e0276ec5479c71a57d17a896c99c4f39cd01497b3",
         "translationSha256": "3a32256418c8aae197b81b34f1046daac5c6ab39b0f7dc5fe7be4775c6e401db"
       },
+      "server.intent.safety_lock_cleared": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "fcf87ec3251055dd62c62939ecf6c32b1256617e213f2a764f47cbd93df0bfea",
+        "translationSha256": "7ede1e64d32dc16c84e18b2ac482f711bf45387c4da69f8218aee04454cbc6dc"
+      },
+      "server.intent.safety_lock_released": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "257a71c6c34a274e620be055bf6e16be4cf597f53bc23cda3f94f055a4e82e3a",
+        "translationSha256": "58bd5e74e03393010305d4db1375588e7799889ecc19a09aad389b4f9a9c8acb"
+      },
       "server.intent.the_action_did_not.1be9cb5f": {
         "method": "agent-authored",
         "sourceSha256": "1be9cb5f344157145f776c7bf9a6220fe32892db2f71ebdeca3bd2dd80e80546",
@@ -14814,6 +15648,30 @@
         "method": "agent-authored",
         "sourceSha256": "5e0a4685d2b9ff7c8515c00da23c3d28f2edba14e9ec3a524a0182a82092f9d3",
         "translationSha256": "f5745669fa9434da77b8e83950ee73e574ce30b36134d57f651d8dd4d12c8310"
+      },
+      "server.state.safety_lock.reason_review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "4a7e0f53d20c7ea5e8d255c527252ba5b427620bbb4e4b9acd2f313eee22cbed",
+        "translationSha256": "1071326f6018791ef0063c603d1e751fb94ac345aa19191394a893ee7a3fcf0a"
+      },
+      "server.state.safety_lock.reason_until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "0d15e23c2c7cf98b579926e714d2c9f307baa36af2c115c1d9828c1ee13c2ffe",
+        "translationSha256": "c1dcfd6a321a0f6a64e03e1160f90ecbbe5b3989ffc73e7773cd4ae095bbb0c1"
+      },
+      "server.state.safety_lock.review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "74b2477a645e58bfe3838f3d4fbb84e8c174f3ad326620a6f1a84bed434e6f54",
+        "translationSha256": "1ec881953a46a6ea420d2089b325c015d6095fb534a60799df4673325cd61162"
+      },
+      "server.state.safety_lock.until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "ee98897d8094be43e8205c949c14b1ff6db7a3eaa211a8131d83489d926b892a",
+        "translationSha256": "6a74427ad460cfe901304e4fe84129221e3561da2c052b05f4db25f078677002"
       },
       "server.storm.castle_id": {
         "method": "agent-authored",
@@ -15599,10 +16457,34 @@
         "translationSha256": "b9906e06f46cbaf51c33ef3bea286311f2123013cd2c259b7a2ffa9321dfb578",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.automation.ruby_upgrade_notice": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "cd84d3dfab1c0d9d8c7ea911f317fa976bc77f419edbf92c3b727c65e7e266f9",
+        "translationSha256": "6bf34ee960265740a11ee775f73f1ce2a803b9356b0dcef90b0521bbba1f034d"
+      },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
         "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
         "translationSha256": "2691db80242ace6fd339bfa3641d9fa7d245dad30bc4b2dd5b9d3f09f0077246"
+      },
+      "server.buildings.ruby_confirmation_required": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a133c4271963811b745c8d9faa6785749d0cc609e18a8b2222cae039edc5c59f",
+        "translationSha256": "40bc38f4f692e9488bd2a334e2a06fa7f57a2d4cab1abda0371936cf33f4b973"
+      },
+      "server.buildings.ruby_cost_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "99b1d3f0c5f8f99cd65ac6126915311f5737295f06ea1652c3f4d13c4188a97c",
+        "translationSha256": "d33aa05ea61627e10f730257ee2ff3401f01f72a902640887d3907c1f0801793"
+      },
+      "server.buildings.ruby_setting_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a52c035d75df67898fbd34c3cf9ecd4912c96f4dc02b83c03696a83e37bf53c8",
+        "translationSha256": "263173906ee375a3bec6ab530305558e8caf250c134245e3b5bb84b8294bdc8c"
       },
       "server.configuration.configuration_data_directory_is.49ba09b5": {
         "method": "agent-authored",
@@ -15739,6 +16621,12 @@
         "translationSha256": "b9906e06f46cbaf51c33ef3bea286311f2123013cd2c259b7a2ffa9321dfb578",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.gamedata.ruby_purchase_confirmation": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "aac9967e8194f84b4520dc5aa66f3dc3db3fe634fc59ed357aa52dd25662803d",
+        "translationSha256": "ca6ff35021e5c434ccf9385d14ddfff05070594b2afff4c32d5d0bb1ec1c18f5"
+      },
       "server.intent.action_failed": {
         "method": "agent-authored",
         "sourceSha256": "2c7fbd8658aee258e5a0abb18695f3590a05ee4ffc08c1bdda360958ddc9ffd8",
@@ -15874,6 +16762,18 @@
         "sourceSha256": "e79b66aa4dd7d5b6999d4e4e0276ec5479c71a57d17a896c99c4f39cd01497b3",
         "translationSha256": "2a34342dfbbbfe1f665ff98516973bd777ccf395de32b4ae0f85304d25de30aa"
       },
+      "server.intent.safety_lock_cleared": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "fcf87ec3251055dd62c62939ecf6c32b1256617e213f2a764f47cbd93df0bfea",
+        "translationSha256": "4061880f943710f96179f2835d804ed2f561b4f2b2876e0583754da02b5cf7fd"
+      },
+      "server.intent.safety_lock_released": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "257a71c6c34a274e620be055bf6e16be4cf597f53bc23cda3f94f055a4e82e3a",
+        "translationSha256": "8091842161e592435b27cf81de6a302d4f20d97e02c99fd0ddc93bb9f67be9cd"
+      },
       "server.intent.the_action_did_not.1be9cb5f": {
         "method": "agent-authored",
         "sourceSha256": "1be9cb5f344157145f776c7bf9a6220fe32892db2f71ebdeca3bd2dd80e80546",
@@ -15963,6 +16863,30 @@
         "method": "agent-authored",
         "sourceSha256": "5e0a4685d2b9ff7c8515c00da23c3d28f2edba14e9ec3a524a0182a82092f9d3",
         "translationSha256": "702e78073711c9d3d28357865d35293f8f4cdb48f385e517f31618246e23a14f"
+      },
+      "server.state.safety_lock.reason_review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "4a7e0f53d20c7ea5e8d255c527252ba5b427620bbb4e4b9acd2f313eee22cbed",
+        "translationSha256": "7f8e7a8a338fdfdcd20c145977c7109534cc65cafccf8ebd70d1e8bc5b1568ed"
+      },
+      "server.state.safety_lock.reason_until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "0d15e23c2c7cf98b579926e714d2c9f307baa36af2c115c1d9828c1ee13c2ffe",
+        "translationSha256": "e9f2fda552006decd42826acf481abac7fb5e0c14beb3607c1739730cad384b3"
+      },
+      "server.state.safety_lock.review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "74b2477a645e58bfe3838f3d4fbb84e8c174f3ad326620a6f1a84bed434e6f54",
+        "translationSha256": "c05b440e4bbddbf8f0c77664f26f9b3534ad6d372e62b4c2f9c470ffdaad08b3"
+      },
+      "server.state.safety_lock.until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "ee98897d8094be43e8205c949c14b1ff6db7a3eaa211a8131d83489d926b892a",
+        "translationSha256": "092183d57a2e99ff5b7818605fbbfaa50d0a93bc56e760faa2cb389de7fe05e9"
       },
       "server.storm.castle_id": {
         "method": "agent-authored",
@@ -16784,10 +17708,34 @@
         "translationSha256": "9009915b16985fb622d101d02dc44cf0814c0007f3f92ce2a2c21009c580f1cf",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.automation.ruby_upgrade_notice": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "cd84d3dfab1c0d9d8c7ea911f317fa976bc77f419edbf92c3b727c65e7e266f9",
+        "translationSha256": "7c8501cfe59cb55ac617025685aa2a28a3dc819ab9bd596e9054886f3e251924"
+      },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
         "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
         "translationSha256": "95cf3fdbc760a2dccd1240df575974fd91e6cbfae6ccc61a848a77eed5ac904c"
+      },
+      "server.buildings.ruby_confirmation_required": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a133c4271963811b745c8d9faa6785749d0cc609e18a8b2222cae039edc5c59f",
+        "translationSha256": "2b017ca1bf6134b079a7cdb037cd8b6a65fd46c0fe55fc84a933698c604e5891"
+      },
+      "server.buildings.ruby_cost_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "99b1d3f0c5f8f99cd65ac6126915311f5737295f06ea1652c3f4d13c4188a97c",
+        "translationSha256": "8131b0a007d546c4d7e287ba36863cc812a88f4786db79a4fab4bf7be8dacd0b"
+      },
+      "server.buildings.ruby_setting_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a52c035d75df67898fbd34c3cf9ecd4912c96f4dc02b83c03696a83e37bf53c8",
+        "translationSha256": "a99bd4390401072ae4bbb12f42b1577c899ddfba47a4bfbafe7747e9f749b746"
       },
       "server.configuration.configuration_data_directory_is.49ba09b5": {
         "method": "agent-authored",
@@ -16924,6 +17872,12 @@
         "translationSha256": "9009915b16985fb622d101d02dc44cf0814c0007f3f92ce2a2c21009c580f1cf",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.gamedata.ruby_purchase_confirmation": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "aac9967e8194f84b4520dc5aa66f3dc3db3fe634fc59ed357aa52dd25662803d",
+        "translationSha256": "b261b551917662f2a19549d4cfa693af437749d46c3bb5f9af981ae6148d0953"
+      },
       "server.intent.action_failed": {
         "method": "agent-authored",
         "sourceSha256": "2c7fbd8658aee258e5a0abb18695f3590a05ee4ffc08c1bdda360958ddc9ffd8",
@@ -17059,6 +18013,18 @@
         "sourceSha256": "e79b66aa4dd7d5b6999d4e4e0276ec5479c71a57d17a896c99c4f39cd01497b3",
         "translationSha256": "06c62dc2925026e3593ae45132da59a1baeb497073b1cafcea9ef75415e93607"
       },
+      "server.intent.safety_lock_cleared": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "fcf87ec3251055dd62c62939ecf6c32b1256617e213f2a764f47cbd93df0bfea",
+        "translationSha256": "de42333b6b8d139511469137ad7b7d071ac3d1c09904e05c7d734ebd9fdeb47f"
+      },
+      "server.intent.safety_lock_released": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "257a71c6c34a274e620be055bf6e16be4cf597f53bc23cda3f94f055a4e82e3a",
+        "translationSha256": "2ef8f20f9b2042f7bc22d9c0260dab119622264493d77d227c41d76cd9e71e7f"
+      },
       "server.intent.the_action_did_not.1be9cb5f": {
         "method": "agent-authored",
         "sourceSha256": "1be9cb5f344157145f776c7bf9a6220fe32892db2f71ebdeca3bd2dd80e80546",
@@ -17148,6 +18114,30 @@
         "method": "agent-authored",
         "sourceSha256": "5e0a4685d2b9ff7c8515c00da23c3d28f2edba14e9ec3a524a0182a82092f9d3",
         "translationSha256": "79cbe246829669f991fb5d25ca5e559d05f52139727c2b4f371780d91ccf4213"
+      },
+      "server.state.safety_lock.reason_review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "4a7e0f53d20c7ea5e8d255c527252ba5b427620bbb4e4b9acd2f313eee22cbed",
+        "translationSha256": "38c541683fa9ad611490e15eac525af72b4019feceea358433dc4dc91d3e7115"
+      },
+      "server.state.safety_lock.reason_until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "0d15e23c2c7cf98b579926e714d2c9f307baa36af2c115c1d9828c1ee13c2ffe",
+        "translationSha256": "bb80baf1d4450f65ea63273612264799ac20ec5825f3f74f4a95c0e5160e5dd4"
+      },
+      "server.state.safety_lock.review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "74b2477a645e58bfe3838f3d4fbb84e8c174f3ad326620a6f1a84bed434e6f54",
+        "translationSha256": "12c68d7706df2812e416370e08fca8b90bfb9ba215e67b1990c17b927407cb53"
+      },
+      "server.state.safety_lock.until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "ee98897d8094be43e8205c949c14b1ff6db7a3eaa211a8131d83489d926b892a",
+        "translationSha256": "fb656c110b8baf7ae16c05f455cb0659d4b8080a72a6ac1d2ae1bc59f2f62ae8"
       },
       "server.storm.castle_id": {
         "method": "agent-authored",
@@ -17969,10 +18959,34 @@
         "translationSha256": "918bcfaccd570a18c1a59b0adf9e0c7a3eb518373ebcf1bd830e45f226c1e6ca",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.automation.ruby_upgrade_notice": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "cd84d3dfab1c0d9d8c7ea911f317fa976bc77f419edbf92c3b727c65e7e266f9",
+        "translationSha256": "8b5a416db6bcded1fc0a2a18b249204ddbae29c3aa5705b0adb763ef6b2b0b0e"
+      },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
         "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
         "translationSha256": "1f4a6b594e6490e38d629ac54da573252ce9f738acf82d8b1916324e54eb121f"
+      },
+      "server.buildings.ruby_confirmation_required": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a133c4271963811b745c8d9faa6785749d0cc609e18a8b2222cae039edc5c59f",
+        "translationSha256": "6dc1f7a88edf877e596255ec1ec0aec06ca7a4ed29469c9064cfca4289016200"
+      },
+      "server.buildings.ruby_cost_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "99b1d3f0c5f8f99cd65ac6126915311f5737295f06ea1652c3f4d13c4188a97c",
+        "translationSha256": "5732fccb194a35aa8c15c06327421d8c0e29c173964120a74cac0da4e0ca4702"
+      },
+      "server.buildings.ruby_setting_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a52c035d75df67898fbd34c3cf9ecd4912c96f4dc02b83c03696a83e37bf53c8",
+        "translationSha256": "bff337ed1af5f9a57119a30f00fcba31b186baf11d54b0219e72fcdcdde03527"
       },
       "server.configuration.configuration_data_directory_is.49ba09b5": {
         "method": "agent-authored",
@@ -18109,6 +19123,12 @@
         "translationSha256": "918bcfaccd570a18c1a59b0adf9e0c7a3eb518373ebcf1bd830e45f226c1e6ca",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.gamedata.ruby_purchase_confirmation": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "aac9967e8194f84b4520dc5aa66f3dc3db3fe634fc59ed357aa52dd25662803d",
+        "translationSha256": "c3b9294b731f975e70b77d813999f484472a6bb53264f8a15f22cde44865f6d0"
+      },
       "server.intent.action_failed": {
         "method": "agent-authored",
         "sourceSha256": "2c7fbd8658aee258e5a0abb18695f3590a05ee4ffc08c1bdda360958ddc9ffd8",
@@ -18244,6 +19264,18 @@
         "sourceSha256": "e79b66aa4dd7d5b6999d4e4e0276ec5479c71a57d17a896c99c4f39cd01497b3",
         "translationSha256": "eed15abe88455d80008b5af66bb2b5cc8cc91f056d5305ac01ecf8ba268704ae"
       },
+      "server.intent.safety_lock_cleared": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "fcf87ec3251055dd62c62939ecf6c32b1256617e213f2a764f47cbd93df0bfea",
+        "translationSha256": "8fce91dfe6ea83e11b2b0175e1d77c391bb47f54568b353257f0f8ff3e4c06ee"
+      },
+      "server.intent.safety_lock_released": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "257a71c6c34a274e620be055bf6e16be4cf597f53bc23cda3f94f055a4e82e3a",
+        "translationSha256": "0fd9b20c42c697e88ac3253274e77da93d9231309862402bfa2f8d22ed2967da"
+      },
       "server.intent.the_action_did_not.1be9cb5f": {
         "method": "agent-authored",
         "sourceSha256": "1be9cb5f344157145f776c7bf9a6220fe32892db2f71ebdeca3bd2dd80e80546",
@@ -18333,6 +19365,30 @@
         "method": "agent-authored",
         "sourceSha256": "5e0a4685d2b9ff7c8515c00da23c3d28f2edba14e9ec3a524a0182a82092f9d3",
         "translationSha256": "b038eae2a7cbdeff1b79d1dc0653f7dcf05bc84ee49d6d5467baad35910c3fb8"
+      },
+      "server.state.safety_lock.reason_review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "4a7e0f53d20c7ea5e8d255c527252ba5b427620bbb4e4b9acd2f313eee22cbed",
+        "translationSha256": "e7ef157df5bc523021288d9a4b77237c40aa63efd3df6f2d7ede072757644a5c"
+      },
+      "server.state.safety_lock.reason_until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "0d15e23c2c7cf98b579926e714d2c9f307baa36af2c115c1d9828c1ee13c2ffe",
+        "translationSha256": "87cb3cfc8bd0237dd71eb04a6ee50fa808e6987434a723531a7c3f50a6f7f948"
+      },
+      "server.state.safety_lock.review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "74b2477a645e58bfe3838f3d4fbb84e8c174f3ad326620a6f1a84bed434e6f54",
+        "translationSha256": "969a32b6d782bd939ad3b13e0d5103931a8b05deb59bdf587c18b27696c2cdfa"
+      },
+      "server.state.safety_lock.until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "ee98897d8094be43e8205c949c14b1ff6db7a3eaa211a8131d83489d926b892a",
+        "translationSha256": "7ef1c04bc97d0848a107cfd36fb9102bead108cde7202be4d3cad3e5b444544d"
       },
       "server.storm.castle_id": {
         "method": "agent-authored",
@@ -19154,10 +20210,34 @@
         "translationSha256": "56321cd560ad5a2dd615ee3a384b40e0f60803e746feca2134b39cc73cabf02d",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.automation.ruby_upgrade_notice": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "cd84d3dfab1c0d9d8c7ea911f317fa976bc77f419edbf92c3b727c65e7e266f9",
+        "translationSha256": "142f1699485855e96e9f655c84c2cd62073c73e7f8e33406f380ca49294e9997"
+      },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
         "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
         "translationSha256": "94d459295301f2247eb7c3eecc0a306c563cb88fbc08b172eb31d902b1dcbeae"
+      },
+      "server.buildings.ruby_confirmation_required": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a133c4271963811b745c8d9faa6785749d0cc609e18a8b2222cae039edc5c59f",
+        "translationSha256": "82af502989431ae618c1f4d0555292621841b684bae900fd2b8e2b85587e48ab"
+      },
+      "server.buildings.ruby_cost_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "99b1d3f0c5f8f99cd65ac6126915311f5737295f06ea1652c3f4d13c4188a97c",
+        "translationSha256": "1d161b76560e8160a13c521d56e0c59f9ec3b293d507e15aa9b34e7c7bbf5565"
+      },
+      "server.buildings.ruby_setting_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a52c035d75df67898fbd34c3cf9ecd4912c96f4dc02b83c03696a83e37bf53c8",
+        "translationSha256": "0ef4668bd1ee541a00aae9378d7f8d2dce3363c1b38434de4fcfd0b309103e84"
       },
       "server.configuration.configuration_data_directory_is.49ba09b5": {
         "method": "agent-authored",
@@ -19294,6 +20374,12 @@
         "translationSha256": "56321cd560ad5a2dd615ee3a384b40e0f60803e746feca2134b39cc73cabf02d",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.gamedata.ruby_purchase_confirmation": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "aac9967e8194f84b4520dc5aa66f3dc3db3fe634fc59ed357aa52dd25662803d",
+        "translationSha256": "39779afeb73f5f6682c10fbcef7979395bbc3163877d20eb1d95f3abb038b6a8"
+      },
       "server.intent.action_failed": {
         "method": "agent-authored",
         "sourceSha256": "2c7fbd8658aee258e5a0abb18695f3590a05ee4ffc08c1bdda360958ddc9ffd8",
@@ -19429,6 +20515,18 @@
         "sourceSha256": "e79b66aa4dd7d5b6999d4e4e0276ec5479c71a57d17a896c99c4f39cd01497b3",
         "translationSha256": "ea7128b88961e748915de4b1ad596a2f94cbf2225626e71a18cfd73a44f5bbbf"
       },
+      "server.intent.safety_lock_cleared": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "fcf87ec3251055dd62c62939ecf6c32b1256617e213f2a764f47cbd93df0bfea",
+        "translationSha256": "a66c761816febed16fd1879d89ab692a9d1aa531905ca3e1e99070224fec79c7"
+      },
+      "server.intent.safety_lock_released": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "257a71c6c34a274e620be055bf6e16be4cf597f53bc23cda3f94f055a4e82e3a",
+        "translationSha256": "10547e9ed651aa936c52878a29a267254869513c1ca675e892c9c261fd0456b1"
+      },
       "server.intent.the_action_did_not.1be9cb5f": {
         "method": "agent-authored",
         "sourceSha256": "1be9cb5f344157145f776c7bf9a6220fe32892db2f71ebdeca3bd2dd80e80546",
@@ -19518,6 +20616,30 @@
         "method": "agent-authored",
         "sourceSha256": "5e0a4685d2b9ff7c8515c00da23c3d28f2edba14e9ec3a524a0182a82092f9d3",
         "translationSha256": "d1dd44f7acf947371504343e6fe813374f8a2c02cd18f1c9535d14fa66313bea"
+      },
+      "server.state.safety_lock.reason_review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "4a7e0f53d20c7ea5e8d255c527252ba5b427620bbb4e4b9acd2f313eee22cbed",
+        "translationSha256": "84eea2c6e81bc8a4b9c8dc5f867580c85b02bc535b3c83585adfc00362604d89"
+      },
+      "server.state.safety_lock.reason_until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "0d15e23c2c7cf98b579926e714d2c9f307baa36af2c115c1d9828c1ee13c2ffe",
+        "translationSha256": "2c0ed45c81ececc1bd7908d72f89b2d89d80a9d6ec1886ccbb18716e9bb0700d"
+      },
+      "server.state.safety_lock.review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "74b2477a645e58bfe3838f3d4fbb84e8c174f3ad326620a6f1a84bed434e6f54",
+        "translationSha256": "ed854103d77075f00866c55e2f276efedfcbc931ed70639c54c36ad86431a207"
+      },
+      "server.state.safety_lock.until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "ee98897d8094be43e8205c949c14b1ff6db7a3eaa211a8131d83489d926b892a",
+        "translationSha256": "2f4aaccc661a5fe3afdb3c79c4edbaebca0dd9aacfb9f8989ed400b3ba95e11f"
       },
       "server.storm.castle_id": {
         "method": "agent-authored",
@@ -20339,10 +21461,34 @@
         "translationSha256": "1a48048b37dd9d5a4b7b0db8e4b0bb62dfc1035c7fa0ed361ae3337bc3ffdd83",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.automation.ruby_upgrade_notice": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "cd84d3dfab1c0d9d8c7ea911f317fa976bc77f419edbf92c3b727c65e7e266f9",
+        "translationSha256": "a4ff8e6c12d3857177b52bf3be73271375fa5bfce0dfbe3b889851088f2a2af2"
+      },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
         "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
         "translationSha256": "166e2700f35ff1d5ae55a30c4acbd0e458ce9a07f18027cc1eb3d0b0f2e6c950"
+      },
+      "server.buildings.ruby_confirmation_required": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a133c4271963811b745c8d9faa6785749d0cc609e18a8b2222cae039edc5c59f",
+        "translationSha256": "e3c904e3c69c038672e62fe6fea144d452329cad177eb32a790084ec20f2d635"
+      },
+      "server.buildings.ruby_cost_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "99b1d3f0c5f8f99cd65ac6126915311f5737295f06ea1652c3f4d13c4188a97c",
+        "translationSha256": "168b2210a54d4eb7dafa2aa7dde2686289080ce45421c2ed78cc6dc411786587"
+      },
+      "server.buildings.ruby_setting_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a52c035d75df67898fbd34c3cf9ecd4912c96f4dc02b83c03696a83e37bf53c8",
+        "translationSha256": "352548a987acbd19dc6793a0028ab5136d4936879b72e2865d60fc44335d47d1"
       },
       "server.configuration.configuration_data_directory_is.49ba09b5": {
         "method": "agent-authored",
@@ -20479,6 +21625,12 @@
         "translationSha256": "1a48048b37dd9d5a4b7b0db8e4b0bb62dfc1035c7fa0ed361ae3337bc3ffdd83",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.gamedata.ruby_purchase_confirmation": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "aac9967e8194f84b4520dc5aa66f3dc3db3fe634fc59ed357aa52dd25662803d",
+        "translationSha256": "95b1d52bcfe1b72baa76398103d4a663b08d60251419feb87fc93a674f0aa73f"
+      },
       "server.intent.action_failed": {
         "method": "agent-authored",
         "sourceSha256": "2c7fbd8658aee258e5a0abb18695f3590a05ee4ffc08c1bdda360958ddc9ffd8",
@@ -20614,6 +21766,18 @@
         "sourceSha256": "e79b66aa4dd7d5b6999d4e4e0276ec5479c71a57d17a896c99c4f39cd01497b3",
         "translationSha256": "2f13754e7aff46cd8cebdd9bb1f60b99a28223b2e68400e13833f0cf1c17fb49"
       },
+      "server.intent.safety_lock_cleared": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "fcf87ec3251055dd62c62939ecf6c32b1256617e213f2a764f47cbd93df0bfea",
+        "translationSha256": "149da184797a06d13be7f9478b02d82b2d7e1ed020412e8638edfc742b235a3d"
+      },
+      "server.intent.safety_lock_released": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "257a71c6c34a274e620be055bf6e16be4cf597f53bc23cda3f94f055a4e82e3a",
+        "translationSha256": "4aeed7294b716eadfff9228303aa978eafc14ddacd7689adbdfbbf709cc4340f"
+      },
       "server.intent.the_action_did_not.1be9cb5f": {
         "method": "agent-authored",
         "sourceSha256": "1be9cb5f344157145f776c7bf9a6220fe32892db2f71ebdeca3bd2dd80e80546",
@@ -20703,6 +21867,30 @@
         "method": "agent-authored",
         "sourceSha256": "5e0a4685d2b9ff7c8515c00da23c3d28f2edba14e9ec3a524a0182a82092f9d3",
         "translationSha256": "ecdf1468e097d04ac6b3878273d14e793710a19ac4892b905c82907b0defdb57"
+      },
+      "server.state.safety_lock.reason_review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "4a7e0f53d20c7ea5e8d255c527252ba5b427620bbb4e4b9acd2f313eee22cbed",
+        "translationSha256": "811efd2cdf55d6de2878ba31d59aa9aa7474f6e319d7ecee45888ffb19241133"
+      },
+      "server.state.safety_lock.reason_until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "0d15e23c2c7cf98b579926e714d2c9f307baa36af2c115c1d9828c1ee13c2ffe",
+        "translationSha256": "76004a28037266a59b99b272cb2bdfc2fef9ec393c4b3c145b80eb155070c46c"
+      },
+      "server.state.safety_lock.review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "74b2477a645e58bfe3838f3d4fbb84e8c174f3ad326620a6f1a84bed434e6f54",
+        "translationSha256": "3c5c1e6594d7c863fec186fff71f5076f514b80332e2a1e652e112598aa19b6a"
+      },
+      "server.state.safety_lock.until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "ee98897d8094be43e8205c949c14b1ff6db7a3eaa211a8131d83489d926b892a",
+        "translationSha256": "deb45d0fa560ac9e0ccdd90fb76775f7e30d8d261652287bff3e17745e718e67"
       },
       "server.storm.castle_id": {
         "method": "agent-authored",
@@ -21488,10 +22676,34 @@
         "translationSha256": "096b67615ca9d127bed65d18e0be86dc5b57664c976e636af72c664ad232a72b",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.automation.ruby_upgrade_notice": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "cd84d3dfab1c0d9d8c7ea911f317fa976bc77f419edbf92c3b727c65e7e266f9",
+        "translationSha256": "f12115a56670427e52c2f5be8a07c87695a65f998b642a3981469de5fcdc7767"
+      },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
         "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
         "translationSha256": "f3b6a5acf7654b07dda843cb35c8b48fd9e6ebc9a93b97e3b6fa44636086b19f"
+      },
+      "server.buildings.ruby_confirmation_required": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a133c4271963811b745c8d9faa6785749d0cc609e18a8b2222cae039edc5c59f",
+        "translationSha256": "5cabc6f792b8b8f40ae494de1c22f9af38f017d0680498a288cb77e89422c0d6"
+      },
+      "server.buildings.ruby_cost_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "99b1d3f0c5f8f99cd65ac6126915311f5737295f06ea1652c3f4d13c4188a97c",
+        "translationSha256": "08ae820f9a804d31e70a6b0a087eff4827c7fbce23727b4ff111e4c5b3b440ee"
+      },
+      "server.buildings.ruby_setting_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a52c035d75df67898fbd34c3cf9ecd4912c96f4dc02b83c03696a83e37bf53c8",
+        "translationSha256": "cf1adf87678b4641695e45ee473cdbc380996acf311164d4effbe3a71aed652e"
       },
       "server.configuration.configuration_data_directory_is.49ba09b5": {
         "method": "agent-authored",
@@ -21628,6 +22840,12 @@
         "translationSha256": "096b67615ca9d127bed65d18e0be86dc5b57664c976e636af72c664ad232a72b",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.gamedata.ruby_purchase_confirmation": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "aac9967e8194f84b4520dc5aa66f3dc3db3fe634fc59ed357aa52dd25662803d",
+        "translationSha256": "987a9622418419db8a0e70c9758a67fa9cfae9d0ded1a0c089b60746d1598c71"
+      },
       "server.intent.action_failed": {
         "method": "agent-authored",
         "sourceSha256": "2c7fbd8658aee258e5a0abb18695f3590a05ee4ffc08c1bdda360958ddc9ffd8",
@@ -21763,6 +22981,18 @@
         "sourceSha256": "e79b66aa4dd7d5b6999d4e4e0276ec5479c71a57d17a896c99c4f39cd01497b3",
         "translationSha256": "09bc8a09cf6837007a68a192c94ff3be4a4371a9313c9e6d97d4bcb21588a054"
       },
+      "server.intent.safety_lock_cleared": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "fcf87ec3251055dd62c62939ecf6c32b1256617e213f2a764f47cbd93df0bfea",
+        "translationSha256": "ae3154dee3ff835d1fd30c94caca67fba14449960a588d707d9fb631a856444b"
+      },
+      "server.intent.safety_lock_released": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "257a71c6c34a274e620be055bf6e16be4cf597f53bc23cda3f94f055a4e82e3a",
+        "translationSha256": "cded2ace755274cd5ba6b003e7e88ab470863a0954134de6461b70adf9f64106"
+      },
       "server.intent.the_action_did_not.1be9cb5f": {
         "method": "agent-authored",
         "sourceSha256": "1be9cb5f344157145f776c7bf9a6220fe32892db2f71ebdeca3bd2dd80e80546",
@@ -21852,6 +23082,30 @@
         "method": "agent-authored",
         "sourceSha256": "5e0a4685d2b9ff7c8515c00da23c3d28f2edba14e9ec3a524a0182a82092f9d3",
         "translationSha256": "2163d9607b2f0115c82fbc3ba5a9cd3edadc47c39454ebdd5a061d60b41f1dbb"
+      },
+      "server.state.safety_lock.reason_review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "4a7e0f53d20c7ea5e8d255c527252ba5b427620bbb4e4b9acd2f313eee22cbed",
+        "translationSha256": "4a9cfe07e05f094affe3d51051c346b1a31ad0ee791d7831119b66c1fae1ba3d"
+      },
+      "server.state.safety_lock.reason_until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "0d15e23c2c7cf98b579926e714d2c9f307baa36af2c115c1d9828c1ee13c2ffe",
+        "translationSha256": "379ad1f861c8b38c3d90eab32ebb6204c550bebe2a46e37cf18364bef65c3276"
+      },
+      "server.state.safety_lock.review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "74b2477a645e58bfe3838f3d4fbb84e8c174f3ad326620a6f1a84bed434e6f54",
+        "translationSha256": "6d9dc6572d0ffe869deced755bde30f85b926e80173ef5e31cfc5ac24dcc90d0"
+      },
+      "server.state.safety_lock.until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "ee98897d8094be43e8205c949c14b1ff6db7a3eaa211a8131d83489d926b892a",
+        "translationSha256": "4bada9cf35f562187b97a2bb20fbf9a0b35f26f297bf6b63f24b4e2f47fbdd73"
       },
       "server.storm.castle_id": {
         "method": "agent-authored",
@@ -22637,10 +23891,34 @@
         "translationSha256": "5a560ca5e8979c50b085417d3a05984192af86b72b649b5b218917635cb23efd",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.automation.ruby_upgrade_notice": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "cd84d3dfab1c0d9d8c7ea911f317fa976bc77f419edbf92c3b727c65e7e266f9",
+        "translationSha256": "e828cabfc8848422d220ab7e36bd1cb5afff32d7d8490151374518239cdd8f94"
+      },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
         "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
         "translationSha256": "8e529872636baa3117a670e74f601a48a4089d75b93632fa105ca1339162ca8a"
+      },
+      "server.buildings.ruby_confirmation_required": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a133c4271963811b745c8d9faa6785749d0cc609e18a8b2222cae039edc5c59f",
+        "translationSha256": "22e23ab9403804afa1f7d7e55591a13f7760a52ddaf9150b9e6038a3f10d3920"
+      },
+      "server.buildings.ruby_cost_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "99b1d3f0c5f8f99cd65ac6126915311f5737295f06ea1652c3f4d13c4188a97c",
+        "translationSha256": "af5d13afa4d53dc3d257655926edc95b7bd95a589293965bf879c542147500e4"
+      },
+      "server.buildings.ruby_setting_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a52c035d75df67898fbd34c3cf9ecd4912c96f4dc02b83c03696a83e37bf53c8",
+        "translationSha256": "133007377d14d554c37e2e8075869e3fcc6b8552d39f55e0473dc389ebac9e17"
       },
       "server.configuration.configuration_data_directory_is.49ba09b5": {
         "method": "agent-authored",
@@ -22777,6 +24055,12 @@
         "translationSha256": "5a560ca5e8979c50b085417d3a05984192af86b72b649b5b218917635cb23efd",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.gamedata.ruby_purchase_confirmation": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "aac9967e8194f84b4520dc5aa66f3dc3db3fe634fc59ed357aa52dd25662803d",
+        "translationSha256": "dd36ac4478aeb99030b7e21ef3307f17fbb0bef09346495d5f6f37a56cae77dd"
+      },
       "server.intent.action_failed": {
         "method": "agent-authored",
         "sourceSha256": "2c7fbd8658aee258e5a0abb18695f3590a05ee4ffc08c1bdda360958ddc9ffd8",
@@ -22912,6 +24196,18 @@
         "sourceSha256": "e79b66aa4dd7d5b6999d4e4e0276ec5479c71a57d17a896c99c4f39cd01497b3",
         "translationSha256": "73e16d6abb87b09a1942df431661e6737d39875bca2f7d4fd8f46626b30aca81"
       },
+      "server.intent.safety_lock_cleared": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "fcf87ec3251055dd62c62939ecf6c32b1256617e213f2a764f47cbd93df0bfea",
+        "translationSha256": "aa33725709740957522c326e6e237106c5aa346548080e62f132e7ee69651647"
+      },
+      "server.intent.safety_lock_released": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "257a71c6c34a274e620be055bf6e16be4cf597f53bc23cda3f94f055a4e82e3a",
+        "translationSha256": "06bbc05d97d4216064676ce458eaf5769499e1c175b2ceffb18c439871d9e644"
+      },
       "server.intent.the_action_did_not.1be9cb5f": {
         "method": "agent-authored",
         "sourceSha256": "1be9cb5f344157145f776c7bf9a6220fe32892db2f71ebdeca3bd2dd80e80546",
@@ -23001,6 +24297,30 @@
         "method": "agent-authored",
         "sourceSha256": "5e0a4685d2b9ff7c8515c00da23c3d28f2edba14e9ec3a524a0182a82092f9d3",
         "translationSha256": "284c08d344c38d6dad91c73c6f5d8d5854d528c5003e0cd87eca08e6ac6099b8"
+      },
+      "server.state.safety_lock.reason_review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "4a7e0f53d20c7ea5e8d255c527252ba5b427620bbb4e4b9acd2f313eee22cbed",
+        "translationSha256": "f6fe4341f5c13f13c35417e277f65d71f8882770b8fa3c7989fd1942a0fedd1a"
+      },
+      "server.state.safety_lock.reason_until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "0d15e23c2c7cf98b579926e714d2c9f307baa36af2c115c1d9828c1ee13c2ffe",
+        "translationSha256": "03fe865f4d52cf04460939cb08aeeecc1599a8b782212e60d5984505dababb13"
+      },
+      "server.state.safety_lock.review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "74b2477a645e58bfe3838f3d4fbb84e8c174f3ad326620a6f1a84bed434e6f54",
+        "translationSha256": "f59d987e7652f442512fe533d9d8ab9025a6f48f452ee2044e78dc4db87d6b60"
+      },
+      "server.state.safety_lock.until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "ee98897d8094be43e8205c949c14b1ff6db7a3eaa211a8131d83489d926b892a",
+        "translationSha256": "107bdae21f444c0ec90a016df5b70a118c7b0ee6e603eb7a749d38bac3f17ae9"
       },
       "server.storm.castle_id": {
         "method": "agent-authored",
@@ -23786,10 +25106,34 @@
         "translationSha256": "8b1d2da63892745c5984edf336b8ea6a5dddb9177a9541787091910ca8ed1637",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.automation.ruby_upgrade_notice": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "cd84d3dfab1c0d9d8c7ea911f317fa976bc77f419edbf92c3b727c65e7e266f9",
+        "translationSha256": "f528b925b535d6bc9ab23a3829121714cd689e7b22efb068ed21cc881ef1e05d"
+      },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
         "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
         "translationSha256": "5762028bda8aa7642d018d67633392000317486a5f9e03e67b2260e4e618af7a"
+      },
+      "server.buildings.ruby_confirmation_required": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a133c4271963811b745c8d9faa6785749d0cc609e18a8b2222cae039edc5c59f",
+        "translationSha256": "7902fa8895d7d7224b9bd361a3c13edc4299af467dd4682c9ed49ef4d385926e"
+      },
+      "server.buildings.ruby_cost_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "99b1d3f0c5f8f99cd65ac6126915311f5737295f06ea1652c3f4d13c4188a97c",
+        "translationSha256": "e18c138faeb253752bfb563b26fb4b2d2266f0bce78907690784e20c994e51c9"
+      },
+      "server.buildings.ruby_setting_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a52c035d75df67898fbd34c3cf9ecd4912c96f4dc02b83c03696a83e37bf53c8",
+        "translationSha256": "0d9e4f4122d3c19a34356b52973fae710fbbe37a8ff2521ebd8759e500656019"
       },
       "server.configuration.configuration_data_directory_is.49ba09b5": {
         "method": "agent-authored",
@@ -23926,6 +25270,12 @@
         "translationSha256": "8b1d2da63892745c5984edf336b8ea6a5dddb9177a9541787091910ca8ed1637",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.gamedata.ruby_purchase_confirmation": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "aac9967e8194f84b4520dc5aa66f3dc3db3fe634fc59ed357aa52dd25662803d",
+        "translationSha256": "098738e467afa9d2859481b0707aa12aa3c86c31fe3e07e25431b8e4ae4bc83b"
+      },
       "server.intent.action_failed": {
         "method": "agent-authored",
         "sourceSha256": "2c7fbd8658aee258e5a0abb18695f3590a05ee4ffc08c1bdda360958ddc9ffd8",
@@ -24061,6 +25411,18 @@
         "sourceSha256": "e79b66aa4dd7d5b6999d4e4e0276ec5479c71a57d17a896c99c4f39cd01497b3",
         "translationSha256": "99ec6e4cf29ab306997741404b468de97b74d521f555f2261c2376ac898f1ad1"
       },
+      "server.intent.safety_lock_cleared": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "fcf87ec3251055dd62c62939ecf6c32b1256617e213f2a764f47cbd93df0bfea",
+        "translationSha256": "b67444792da0f48d39396c086f0f900f5e85182780519f121710b51ced4ed63b"
+      },
+      "server.intent.safety_lock_released": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "257a71c6c34a274e620be055bf6e16be4cf597f53bc23cda3f94f055a4e82e3a",
+        "translationSha256": "51695b5f9163cafabc332329319d92534221a0e5231b5d2bac878e62d18ec904"
+      },
       "server.intent.the_action_did_not.1be9cb5f": {
         "method": "agent-authored",
         "sourceSha256": "1be9cb5f344157145f776c7bf9a6220fe32892db2f71ebdeca3bd2dd80e80546",
@@ -24150,6 +25512,30 @@
         "method": "agent-authored",
         "sourceSha256": "5e0a4685d2b9ff7c8515c00da23c3d28f2edba14e9ec3a524a0182a82092f9d3",
         "translationSha256": "3e9f46de9ee083a31a067a7d48eb39a4b238809b193f5d2a4ef7dfe7a6033aad"
+      },
+      "server.state.safety_lock.reason_review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "4a7e0f53d20c7ea5e8d255c527252ba5b427620bbb4e4b9acd2f313eee22cbed",
+        "translationSha256": "817cde4c0c9b3e73dfdb2b2bfa90ded9435ba25e4f2ba1188f8d2d56a6b34bad"
+      },
+      "server.state.safety_lock.reason_until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "0d15e23c2c7cf98b579926e714d2c9f307baa36af2c115c1d9828c1ee13c2ffe",
+        "translationSha256": "bf932d048d430557a0d02588024f0503b2375e28ea9a272795afc505707a2376"
+      },
+      "server.state.safety_lock.review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "74b2477a645e58bfe3838f3d4fbb84e8c174f3ad326620a6f1a84bed434e6f54",
+        "translationSha256": "990f451b20791a9eac025210e6f31de8daf14f87fba721251e7609218afc3e62"
+      },
+      "server.state.safety_lock.until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "ee98897d8094be43e8205c949c14b1ff6db7a3eaa211a8131d83489d926b892a",
+        "translationSha256": "0649d7404044d07d3c848c3ec65ab58a8c8f1c1ba561f6d791bc204a174eb5b2"
       },
       "server.storm.castle_id": {
         "method": "agent-authored",
@@ -24971,10 +26357,34 @@
         "translationSha256": "6540fdf21221ca6e0bf0e84887a62adc89e143c9a5193ce5ed387681354f0f2c",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.automation.ruby_upgrade_notice": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "cd84d3dfab1c0d9d8c7ea911f317fa976bc77f419edbf92c3b727c65e7e266f9",
+        "translationSha256": "3f3c1e8d6cb2773104eab5cc2f185abac28dc913d02235e8b585b6aba76a1353"
+      },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
         "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
         "translationSha256": "70f0889c9b6683151304c53e6a25b9733e9def5cc3857110efaa8acd6560bfcd"
+      },
+      "server.buildings.ruby_confirmation_required": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a133c4271963811b745c8d9faa6785749d0cc609e18a8b2222cae039edc5c59f",
+        "translationSha256": "ee90a503c6ed424b1fca0468068950eb540acefd9d7d2c1af01ad375c1a7968b"
+      },
+      "server.buildings.ruby_cost_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "99b1d3f0c5f8f99cd65ac6126915311f5737295f06ea1652c3f4d13c4188a97c",
+        "translationSha256": "130521c795f95284620e8d2f47ef81552b5807cda076c2c52b9aee0e5f7cf8b3"
+      },
+      "server.buildings.ruby_setting_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a52c035d75df67898fbd34c3cf9ecd4912c96f4dc02b83c03696a83e37bf53c8",
+        "translationSha256": "3a824ca37e0c82c902e7ec8616f60c0063db0f309b0054e5f98c6cbe32f9418d"
       },
       "server.configuration.configuration_data_directory_is.49ba09b5": {
         "method": "agent-authored",
@@ -25111,6 +26521,12 @@
         "translationSha256": "6540fdf21221ca6e0bf0e84887a62adc89e143c9a5193ce5ed387681354f0f2c",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.gamedata.ruby_purchase_confirmation": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "aac9967e8194f84b4520dc5aa66f3dc3db3fe634fc59ed357aa52dd25662803d",
+        "translationSha256": "e4122572d36231765cc07f707c7a75fd6d0d85ab5af69c62d45bfcca8744c2e5"
+      },
       "server.intent.action_failed": {
         "method": "agent-authored",
         "sourceSha256": "2c7fbd8658aee258e5a0abb18695f3590a05ee4ffc08c1bdda360958ddc9ffd8",
@@ -25246,6 +26662,18 @@
         "sourceSha256": "e79b66aa4dd7d5b6999d4e4e0276ec5479c71a57d17a896c99c4f39cd01497b3",
         "translationSha256": "182334c7411ac56ae96340fb8306d07e419ae91e81a64671fde64ffb718c8f4e"
       },
+      "server.intent.safety_lock_cleared": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "fcf87ec3251055dd62c62939ecf6c32b1256617e213f2a764f47cbd93df0bfea",
+        "translationSha256": "c70327e13ce83d899f9b2e5d1c567de357235870ee55f7d2e6e7259e5f14ba19"
+      },
+      "server.intent.safety_lock_released": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "257a71c6c34a274e620be055bf6e16be4cf597f53bc23cda3f94f055a4e82e3a",
+        "translationSha256": "75be70978f75a92a766aa2ad3fe388001a9fcc67ce959e4fd7566dfe2433fa98"
+      },
       "server.intent.the_action_did_not.1be9cb5f": {
         "method": "agent-authored",
         "sourceSha256": "1be9cb5f344157145f776c7bf9a6220fe32892db2f71ebdeca3bd2dd80e80546",
@@ -25335,6 +26763,30 @@
         "method": "agent-authored",
         "sourceSha256": "5e0a4685d2b9ff7c8515c00da23c3d28f2edba14e9ec3a524a0182a82092f9d3",
         "translationSha256": "caa98707bd4fe04b6f3646e8cbb8b35266b2d4a51adbbbb12fcc54bc5ed5621a"
+      },
+      "server.state.safety_lock.reason_review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "4a7e0f53d20c7ea5e8d255c527252ba5b427620bbb4e4b9acd2f313eee22cbed",
+        "translationSha256": "0ea76fae29d8186bedd5ea3f81f8bdd7329afe980a869a27c5d2747adb7f44f1"
+      },
+      "server.state.safety_lock.reason_until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "0d15e23c2c7cf98b579926e714d2c9f307baa36af2c115c1d9828c1ee13c2ffe",
+        "translationSha256": "2c8b59e5551542c429debd72e2a4be62fa916db2af2014c0f25ad5b0e667794c"
+      },
+      "server.state.safety_lock.review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "74b2477a645e58bfe3838f3d4fbb84e8c174f3ad326620a6f1a84bed434e6f54",
+        "translationSha256": "80720b86cf1c66997d80defaa388d0570156f54f97360e5725b05aa3066b62d4"
+      },
+      "server.state.safety_lock.until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "ee98897d8094be43e8205c949c14b1ff6db7a3eaa211a8131d83489d926b892a",
+        "translationSha256": "0d25174d8ba3aed3895f5c5421e6d5a68eff3a075dbe309720284309dd091d7e"
       },
       "server.storm.castle_id": {
         "method": "agent-authored",
@@ -26120,10 +27572,34 @@
         "translationSha256": "fff0787f2356d9aaa5cf10242b401236c3b38dbf679cf97ea686f5f1554b8e03",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.automation.ruby_upgrade_notice": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "cd84d3dfab1c0d9d8c7ea911f317fa976bc77f419edbf92c3b727c65e7e266f9",
+        "translationSha256": "4d41e088f71c66dfe261065f36efbac99655b4e6832acd87586af2bcd65c6ac2"
+      },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
         "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
         "translationSha256": "5ec14d5b996292ddde099d0a95c0167692d699460edfe0bee80ca2c7aed0a94f"
+      },
+      "server.buildings.ruby_confirmation_required": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a133c4271963811b745c8d9faa6785749d0cc609e18a8b2222cae039edc5c59f",
+        "translationSha256": "97378e52032002910cf56e31c0ebeac4ff6ed71bf3d8bf964f0539ce86631b88"
+      },
+      "server.buildings.ruby_cost_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "99b1d3f0c5f8f99cd65ac6126915311f5737295f06ea1652c3f4d13c4188a97c",
+        "translationSha256": "4f3fde8f7b113e4dd0def611d61c4485dbb7dd1e2d3bf37a0dc72284e82ed279"
+      },
+      "server.buildings.ruby_setting_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a52c035d75df67898fbd34c3cf9ecd4912c96f4dc02b83c03696a83e37bf53c8",
+        "translationSha256": "8502995bb9255ee379de1b44b0fabb2e8efad85795d456adde3f13114639f6c3"
       },
       "server.configuration.configuration_data_directory_is.49ba09b5": {
         "method": "agent-authored",
@@ -26260,6 +27736,12 @@
         "translationSha256": "fff0787f2356d9aaa5cf10242b401236c3b38dbf679cf97ea686f5f1554b8e03",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.gamedata.ruby_purchase_confirmation": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "aac9967e8194f84b4520dc5aa66f3dc3db3fe634fc59ed357aa52dd25662803d",
+        "translationSha256": "490cf9afa8101693fd2424d13ebed171653cb60c65776c4d1307b9f9d821bd88"
+      },
       "server.intent.action_failed": {
         "method": "agent-authored",
         "sourceSha256": "2c7fbd8658aee258e5a0abb18695f3590a05ee4ffc08c1bdda360958ddc9ffd8",
@@ -26395,6 +27877,18 @@
         "sourceSha256": "e79b66aa4dd7d5b6999d4e4e0276ec5479c71a57d17a896c99c4f39cd01497b3",
         "translationSha256": "d6ff6d03d4b533fc4f78895ae1072ddb71691a936dfcd4326398ee50dca37122"
       },
+      "server.intent.safety_lock_cleared": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "fcf87ec3251055dd62c62939ecf6c32b1256617e213f2a764f47cbd93df0bfea",
+        "translationSha256": "1fdd946845eca8fa677e85ca1e27b51b2edca646642bf1a81c4fdea95f98b635"
+      },
+      "server.intent.safety_lock_released": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "257a71c6c34a274e620be055bf6e16be4cf597f53bc23cda3f94f055a4e82e3a",
+        "translationSha256": "9cb493044cde16136c5a862289e925e01ddab0b5a2b028387f2bbfc14eb77129"
+      },
       "server.intent.the_action_did_not.1be9cb5f": {
         "method": "agent-authored",
         "sourceSha256": "1be9cb5f344157145f776c7bf9a6220fe32892db2f71ebdeca3bd2dd80e80546",
@@ -26484,6 +27978,30 @@
         "method": "agent-authored",
         "sourceSha256": "5e0a4685d2b9ff7c8515c00da23c3d28f2edba14e9ec3a524a0182a82092f9d3",
         "translationSha256": "87d401957ec8797f65f758a03de865f34eaac29eac0f52b3db52aa01841eb3f9"
+      },
+      "server.state.safety_lock.reason_review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "4a7e0f53d20c7ea5e8d255c527252ba5b427620bbb4e4b9acd2f313eee22cbed",
+        "translationSha256": "b2943f66751c7b9f6fda69ea1c4cffdd8c4b8c26fb493d3aefa60fce0326f4d5"
+      },
+      "server.state.safety_lock.reason_until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "0d15e23c2c7cf98b579926e714d2c9f307baa36af2c115c1d9828c1ee13c2ffe",
+        "translationSha256": "526e1306c8cf6b643f4efe0bb241b8415cb8e5a07e54268a31c3e2a6c5e4c77a"
+      },
+      "server.state.safety_lock.review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "74b2477a645e58bfe3838f3d4fbb84e8c174f3ad326620a6f1a84bed434e6f54",
+        "translationSha256": "4d756ee2c776876c706dcfac54ecadfc2767321d8da443086eaa2d552be39cf8"
+      },
+      "server.state.safety_lock.until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "ee98897d8094be43e8205c949c14b1ff6db7a3eaa211a8131d83489d926b892a",
+        "translationSha256": "131cbcd52d029ea6e9ea7f950ab67c09e046516f76c52375175c03972cf8a553"
       },
       "server.storm.castle_id": {
         "method": "agent-authored",
@@ -27269,10 +28787,34 @@
         "translationSha256": "d61ae6862296c9f3bfac11edab30a6cfec12c1ff07e7de3657c5450b7fe0a543",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.automation.ruby_upgrade_notice": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "cd84d3dfab1c0d9d8c7ea911f317fa976bc77f419edbf92c3b727c65e7e266f9",
+        "translationSha256": "a112820b3f64aedc6f5cd83a3ff49f55d541fa41031fac30013c701641f3782c"
+      },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
         "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
         "translationSha256": "4564fe0f7355e7708b0a5af8b4928aa0ea085c939ee8b4683b2ecd5c63122224"
+      },
+      "server.buildings.ruby_confirmation_required": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a133c4271963811b745c8d9faa6785749d0cc609e18a8b2222cae039edc5c59f",
+        "translationSha256": "3678b1fc4ad4227b3bb026efb33a26124f0a43d31920823f99af373f722b3aa8"
+      },
+      "server.buildings.ruby_cost_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "99b1d3f0c5f8f99cd65ac6126915311f5737295f06ea1652c3f4d13c4188a97c",
+        "translationSha256": "6fd3a9467bf345e6f821c64178c67467a13b127d7193e132a0c3b718c57f9832"
+      },
+      "server.buildings.ruby_setting_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a52c035d75df67898fbd34c3cf9ecd4912c96f4dc02b83c03696a83e37bf53c8",
+        "translationSha256": "7357fc21b2e2e616f495675db7b6a420e1653053fa6f92e04eca16943d5ef7fe"
       },
       "server.configuration.configuration_data_directory_is.49ba09b5": {
         "method": "agent-authored",
@@ -27409,6 +28951,12 @@
         "translationSha256": "d61ae6862296c9f3bfac11edab30a6cfec12c1ff07e7de3657c5450b7fe0a543",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.gamedata.ruby_purchase_confirmation": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "aac9967e8194f84b4520dc5aa66f3dc3db3fe634fc59ed357aa52dd25662803d",
+        "translationSha256": "9fc892b4454f8a314b54c195ac4d06cf705f39e08f27b125db71c59770863f35"
+      },
       "server.intent.action_failed": {
         "method": "agent-authored",
         "sourceSha256": "2c7fbd8658aee258e5a0abb18695f3590a05ee4ffc08c1bdda360958ddc9ffd8",
@@ -27544,6 +29092,18 @@
         "sourceSha256": "e79b66aa4dd7d5b6999d4e4e0276ec5479c71a57d17a896c99c4f39cd01497b3",
         "translationSha256": "6c6fb8211cff5eb885714808555d4b2a21d0ff632dd1d0fbcf1aceb9c23472b5"
       },
+      "server.intent.safety_lock_cleared": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "fcf87ec3251055dd62c62939ecf6c32b1256617e213f2a764f47cbd93df0bfea",
+        "translationSha256": "2e41264bcf4d23ccda267132f5634f4e44630e04bcca5251da3e490865a4a33c"
+      },
+      "server.intent.safety_lock_released": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "257a71c6c34a274e620be055bf6e16be4cf597f53bc23cda3f94f055a4e82e3a",
+        "translationSha256": "892703b15eee9fa28efa3bd34391d39f54836fda614c7c3a0fca29f9f51738df"
+      },
       "server.intent.the_action_did_not.1be9cb5f": {
         "method": "agent-authored",
         "sourceSha256": "1be9cb5f344157145f776c7bf9a6220fe32892db2f71ebdeca3bd2dd80e80546",
@@ -27633,6 +29193,30 @@
         "method": "agent-authored",
         "sourceSha256": "5e0a4685d2b9ff7c8515c00da23c3d28f2edba14e9ec3a524a0182a82092f9d3",
         "translationSha256": "7f93b16aa5650808c995ed1d3c673b2a2809f2a21ed4cf9d7addef700812b25d"
+      },
+      "server.state.safety_lock.reason_review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "4a7e0f53d20c7ea5e8d255c527252ba5b427620bbb4e4b9acd2f313eee22cbed",
+        "translationSha256": "3956f1009fccc883a2c2920d511aa177b0775e8c2334aa3b0871a12c4ed421f9"
+      },
+      "server.state.safety_lock.reason_until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "0d15e23c2c7cf98b579926e714d2c9f307baa36af2c115c1d9828c1ee13c2ffe",
+        "translationSha256": "76067f668ed09de9b5a2a6c35857319a9cbc082a7dd356d32774bf74f87abe78"
+      },
+      "server.state.safety_lock.review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "74b2477a645e58bfe3838f3d4fbb84e8c174f3ad326620a6f1a84bed434e6f54",
+        "translationSha256": "5a95eb8cbd47bbaaf3455a2edbe9ab63582b28726eca034df2cc71b2afcfda95"
+      },
+      "server.state.safety_lock.until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "ee98897d8094be43e8205c949c14b1ff6db7a3eaa211a8131d83489d926b892a",
+        "translationSha256": "10242fb5291bf058d891bcf1fc66d197242b28586ab7f3d3fff99652f75f4580"
       },
       "server.storm.castle_id": {
         "method": "agent-authored",
@@ -28418,10 +30002,34 @@
         "translationSha256": "f36a9eab799c93bfdf6edc99cd1baacc9d6f8871167b4d7930485ed96290c369",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.automation.ruby_upgrade_notice": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "cd84d3dfab1c0d9d8c7ea911f317fa976bc77f419edbf92c3b727c65e7e266f9",
+        "translationSha256": "34ac9d110afd5b44bff559deac2553f734ec7988584d89ff10193d865716afe9"
+      },
       "server.automation.safety_pause_after_an.67451716": {
         "method": "agent-authored",
         "sourceSha256": "674517164d039f404ed1f90993ebb2eee4e0475f9c51dc1967a026c570ec06b9",
         "translationSha256": "0e30109d536d9fb712ab6266d41480a5369afaa2175c6d9085545bce0b8f4ce3"
+      },
+      "server.buildings.ruby_confirmation_required": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a133c4271963811b745c8d9faa6785749d0cc609e18a8b2222cae039edc5c59f",
+        "translationSha256": "d38b85c5934176267500e8b2cd6847e97e272d1c01f08e28d0759cceda671dfa"
+      },
+      "server.buildings.ruby_cost_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "99b1d3f0c5f8f99cd65ac6126915311f5737295f06ea1652c3f4d13c4188a97c",
+        "translationSha256": "eb1c7ffdd2c303638e5cbc8c4a46941a6e70b3354580d02e99b07dd4edd7ad78"
+      },
+      "server.buildings.ruby_setting_unknown": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "a52c035d75df67898fbd34c3cf9ecd4912c96f4dc02b83c03696a83e37bf53c8",
+        "translationSha256": "c8ca2b39cc81a8bd355bc934d6167ac90fb354e9eb5a821c90e4d2fcd463f846"
       },
       "server.configuration.configuration_data_directory_is.49ba09b5": {
         "method": "agent-authored",
@@ -28558,6 +30166,12 @@
         "translationSha256": "f36a9eab799c93bfdf6edc99cd1baacc9d6f8871167b4d7930485ed96290c369",
         "translationSourceKey": "server.api.official_game_data_is.c5e55e7e"
       },
+      "server.gamedata.ruby_purchase_confirmation": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "aac9967e8194f84b4520dc5aa66f3dc3db3fe634fc59ed357aa52dd25662803d",
+        "translationSha256": "b62fe3ecbc78286883cb86dcc4628026de48f73f6668253e0be41058c635676f"
+      },
       "server.intent.action_failed": {
         "method": "agent-authored",
         "sourceSha256": "2c7fbd8658aee258e5a0abb18695f3590a05ee4ffc08c1bdda360958ddc9ffd8",
@@ -28693,6 +30307,18 @@
         "sourceSha256": "e79b66aa4dd7d5b6999d4e4e0276ec5479c71a57d17a896c99c4f39cd01497b3",
         "translationSha256": "40b81651ae84bea0f3e1467b88d76c246e05c0cdc5bdaa2821f1e87a9635d1d2"
       },
+      "server.intent.safety_lock_cleared": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "fcf87ec3251055dd62c62939ecf6c32b1256617e213f2a764f47cbd93df0bfea",
+        "translationSha256": "6cac9ea999a7b6594dbcb6bb0b8c5253aeeb9bc3728927a3423d1a77447489bd"
+      },
+      "server.intent.safety_lock_released": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "257a71c6c34a274e620be055bf6e16be4cf597f53bc23cda3f94f055a4e82e3a",
+        "translationSha256": "72fef65c526df035a7a938c95074d672b2904b80bf49e74010f3c817f803d876"
+      },
       "server.intent.the_action_did_not.1be9cb5f": {
         "method": "agent-authored",
         "sourceSha256": "1be9cb5f344157145f776c7bf9a6220fe32892db2f71ebdeca3bd2dd80e80546",
@@ -28782,6 +30408,30 @@
         "method": "agent-authored",
         "sourceSha256": "5e0a4685d2b9ff7c8515c00da23c3d28f2edba14e9ec3a524a0182a82092f9d3",
         "translationSha256": "0bdef18f1598bae7f71fbd9a0d2744fa8c44bba83130d1c6bc13f6a1a468637e"
+      },
+      "server.state.safety_lock.reason_review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "4a7e0f53d20c7ea5e8d255c527252ba5b427620bbb4e4b9acd2f313eee22cbed",
+        "translationSha256": "5ece0297294fe6d7803d99116a38e39e2d12169632f7556f3d023b6ba49516a2"
+      },
+      "server.state.safety_lock.reason_until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "0d15e23c2c7cf98b579926e714d2c9f307baa36af2c115c1d9828c1ee13c2ffe",
+        "translationSha256": "a2a256f3747d13481fe62e9cb101dc9ca58daa5d145b71b44c73e49ba53ed84b"
+      },
+      "server.state.safety_lock.review": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "74b2477a645e58bfe3838f3d4fbb84e8c174f3ad326620a6f1a84bed434e6f54",
+        "translationSha256": "7b820b74a62e7cc72c2d401f4c424a57918fb1355b6542ffdf0702842e9b0923"
+      },
+      "server.state.safety_lock.until": {
+        "method": "agent-authored",
+        "semanticReview": "Finite lane lock and ruby guard messages: exact protocol code/deadline, mandatory explicit review, unknown authority blocking and typed cost versus threshold kept distinct. Agent review only.",
+        "sourceSha256": "ee98897d8094be43e8205c949c14b1ff6db7a3eaa211a8131d83489d926b892a",
+        "translationSha256": "f8f7b506c7cbe9ed0e6efb3bd5f0bacae73d0374fa2b29e7fe9912b7b8c718ea"
       },
       "server.storm.castle_id": {
         "method": "agent-authored",
@@ -29157,6 +30807,6 @@
     "sha256": "3e5e8c970e3cfbb704719636d99733d3ef830e036fca4866bcc2bdeb04b003e2"
   },
   "schemaVersion": 1,
-  "sourceCatalogSha256": "b660f5316d61b15e6947481044cee501ad2b0e2d35b7879365e7b7dee021a1fc",
+  "sourceCatalogSha256": "a060931953e8328db6ddc3763c8b744fd7e8564bf515562aace05fbbf5bd275f",
   "sourceRevision": "df5a66733e25a664be7f58de299b56cd1dd813e3"
 }

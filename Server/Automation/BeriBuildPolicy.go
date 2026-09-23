@@ -34,14 +34,14 @@ func (*BeriBuildPolicy) ScheduleKey() string {
 }
 
 func (*BeriBuildPolicy) WakeDomains() []string {
-	return []string{"boosters", "buildings", "castles", "currencies", "events", "event-scores", "movements", "reports", "resources"}
+	return []string{"ruby-confirmation", "boosters", "buildings", "castles", "currencies", "events", "event-scores", "movements", "reports", "resources"}
 }
 
 func (*BeriBuildPolicy) WakeSections() []string {
 	return []string{autoBeriWorldSection, Buildings.BerimondBlueprintConfigurationSection}
 }
 
-func (*BeriBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision, error) {
+func (*BeriBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result Decision, resultErr error) {
 	var settings beriSettings
 	if !decodeSection(snapshot.Configuration, autoBeriWorldSection, &settings) {
 		return beriBuildWaiting(snapshot.Now, "Auto Beri World settings have not been saved", nil, Localization.New("server.automation.auto_beri_world_settings.a9d19bc3", "Auto Beri World settings have not been saved", nil)), nil
@@ -133,6 +133,11 @@ func (*BeriBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		ResourceReserves: settings.Build.ResourceReserves, SourceResourceReserves: map[string]float64{},
 		TimeSkipReserve: settings.Build.TimeSkipReserve,
 	}
+	defer func() {
+		if resultErr == nil {
+			attachRubyUpgradeNotices(&result, snapshot, castle.ID, &target, shared.Build.AllowPremium)
+		}
+	}()
 	decision, complete, detail, err := evaluateBeriEventBuild(
 		snapshot,
 		shared,

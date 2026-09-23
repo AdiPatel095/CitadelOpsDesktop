@@ -72,12 +72,13 @@ type TargetSource struct {
 }
 
 type TargetIssue struct {
-	Severity     string                     `json:"severity"`
-	Code         string                     `json:"code"`
-	Message      string                     `json:"message"`
-	TargetID     string                     `json:"targetId,omitempty"`
-	DefinitionID State.BuildingID           `json:"definitionId,omitempty"`
-	BuildingIDs  []State.BuildingInstanceID `json:"buildingIds,omitempty"`
+	MessageDescriptor *Localization.Message      `json:"messageDescriptor,omitempty"`
+	Severity          string                     `json:"severity"`
+	Code              string                     `json:"code"`
+	Message           string                     `json:"message"`
+	TargetID          string                     `json:"targetId,omitempty"`
+	DefinitionID      State.BuildingID           `json:"definitionId,omitempty"`
+	BuildingIDs       []State.BuildingInstanceID `json:"buildingIds,omitempty"`
 }
 
 type TargetAction struct {
@@ -558,7 +559,7 @@ func addTargetActionIssues(
 		if blocker.Code == "player_level" || blocker.Code == "legend_level" {
 			severity = TargetIssueWaiting
 		}
-		addTargetIssue(result, targetIndex, severity, blocker.Code, blocker.Message, nil)
+		addTargetIssue(result, targetIndex, severity, blocker.Code, blocker.Message, nil, blocker.MessageDescriptor)
 	}
 	if !action.AffordableNow {
 		addTargetIssue(result, targetIndex, TargetIssueWaiting, "resources_pending", "observed balances do not yet cover every compiled action cost and configured reserve", nil)
@@ -567,6 +568,11 @@ func addTargetActionIssues(
 		if cost.Premium && !request.Policy.AllowPremium {
 			addTargetIssue(result, targetIndex, TargetIssueError, "premium_disallowed", "the compiled path includes premium cost while premium spending is disabled", nil)
 			break
+		}
+	}
+	if action.Kind == ActionUpgrade && request.Policy.AllowPremium && currentTargetUpgrade(castle, action) {
+		if blocker := RubyUpgradeBlocker(state, action.Costs); blocker != nil {
+			addTargetIssue(result, targetIndex, TargetIssueWaiting, blocker.Code, blocker.Message, nil, blocker.MessageDescriptor)
 		}
 	}
 	if (action.Kind == ActionConstruct || action.Kind == ActionUpgrade) && buildingQueueObserved(castle.BuildingQueue) && !buildingQueueAvailable(castle.BuildingQueue) {
@@ -772,8 +778,9 @@ func addTargetIssue(
 	code string,
 	message string,
 	buildingIDs []State.BuildingInstanceID,
+	descriptors ...*Localization.Message,
 ) {
-	issue := TargetIssue{Severity: severity, Code: code, Message: message, BuildingIDs: append([]State.BuildingInstanceID(nil), buildingIDs...)}
+	issue := TargetIssue{MessageDescriptor: Localization.First(descriptors), Severity: severity, Code: code, Message: message, BuildingIDs: append([]State.BuildingInstanceID(nil), buildingIDs...)}
 	if targetIndex >= 0 && targetIndex < len(result.Targets) {
 		issue.TargetID = result.Targets[targetIndex].TargetID
 		issue.DefinitionID = result.Targets[targetIndex].Desired.ID
@@ -932,4 +939,15 @@ func minimumCostTargetAssignments(
 		}
 	}
 	return assignments
+}
+
+// Compiled paths include future upgrades. Only the observed building's next
+// upgrade may be gated by today's confirmation setting; earlier affordable
+// upgrades and resource-only construction remain eligible.
+func currentTargetUpgrade(castle State.CastleState, action TargetAction) bool {
+	building, found := castle.Layout.Objects[action.BuildingInstanceID]
+	if !found {
+		building, found = castle.Layout.Fixed[action.BuildingInstanceID]
+	}
+	return found && building.DefinitionID == action.FromDefinitionID
 }

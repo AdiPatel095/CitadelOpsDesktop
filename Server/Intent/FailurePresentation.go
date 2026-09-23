@@ -44,7 +44,7 @@ func (engine *Engine) withFailure(receipt Receipt, err error) Receipt {
 func (engine *Engine) failurePresentation(receipt Receipt, err error) *FailurePresentation {
 	var locked *LaneLockedError
 	if errors.As(err, &locked) {
-		lock := locked.Lock
+		lock := locked.Lock.Clone()
 		recovery := "The lane automatically becomes eligible again 30 minutes after this rejection; normal session and feature prerequisites still apply."
 		recoveryDescriptor := Localization.New("server.intent.the_lane_automatically_becomes.544b1dee", "The lane automatically becomes eligible again 30 minutes after this rejection; normal session and feature prerequisites still apply.", nil)
 		if lock.ExpiresAt().IsZero() {

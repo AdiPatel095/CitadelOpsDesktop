@@ -208,6 +208,8 @@ type AccountBindingState struct {
 }
 
 type PlayerState struct {
+	// Process-local game setting authority; never restored from a saved profile.
+	RubyConfirmation  RubyConfirmationState  `json:"-"`
 	ID                PlayerID               `json:"id"`
 	Name              string                 `json:"name,omitempty"`
 	AllianceID        AllianceID             `json:"allianceId,omitempty"`

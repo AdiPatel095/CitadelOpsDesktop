@@ -141,7 +141,7 @@ func TestPlanBuildingUpgradeTreatsMaximumLevelRaceAsStaleBeforeRefresh(t *testin
 	}
 }
 
-func TestBuildingUpgradeConfirmsExactPremiumQuoteForFixedHarbor(t *testing.T) {
+func TestBuildingUpgradeHonorsGameConfirmationForFixedHarbor(t *testing.T) {
 	gameState := buildingIntentState()
 	castle := gameState.Castles[10]
 	harbor := State.Building{
@@ -159,35 +159,51 @@ func TestBuildingUpgradeConfirmsExactPremiumQuoteForFixedHarbor(t *testing.T) {
 		},
 	}
 
-	plan, err := planBuildingUpgrade(context.Background(), input, json.RawMessage(
-		`{"castleId":10,"buildingInstanceId":32,"allowPremium":true}`,
-	))
+	input.State.Session = State.SessionState{Generation: 1, LoggedIn: true, SocketReady: true}
+	input.State.Player.RubyConfirmation = State.RubyConfirmationState{Amount: 12301, Known: true, Generation: 1}
+	request := json.RawMessage(`{"castleId":10,"buildingInstanceId":32,"allowPremium":true}`)
+	plan, err := planBuildingUpgrade(context.Background(), input, request)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 5 || plan.Steps[0].Opcode != "jca" || plan.Steps[1].Resolver != "building.upgrade.build" ||
-		plan.Steps[2].Resolver != "building.upgrade.build" || plan.Steps[3].Opcode != "jaa" || plan.Steps[4].Action != "building.verify" {
-		t.Fatalf("premium Harbor plan = %#v", plan.Steps)
+	if len(plan.Steps) != 4 {
+		t.Fatalf("plan=%#v", plan.Steps)
 	}
-	if len(plan.Steps[1].SuccessCodes) != 1 || plan.Steps[1].SuccessCodes[0] != 440 ||
-		string(plan.Steps[1].ExpectedResponsePayload) != `{"OID":32,"PWR":0,"PO":-1,"CC2T":12300}` {
-		t.Fatalf("premium quote step = %#v", plan.Steps[1])
+	step, err := resolveBuildingUpgradeStep(context.Background(), input, plan.Steps[1].ResolverArguments)
+	if err != nil || string(step.Command.Payload) != `{"OID":32,"PWR":0,"PO":-1}` || len(step.SuccessCodes) != 1 || step.SuccessCodes[0] != 0 {
+		t.Fatalf("step=%#v err=%v", step, err)
+	}
+	if step.FinalDispatchAction != "building.upgrade.guard" {
+		t.Fatal("missing final guard")
+	}
+	if err := validateFinalBuildingUpgrade(input, step.FinalDispatchArguments); err != nil {
+		t.Fatal(err)
+	}
+	for _, amount := range []int64{12300, 1, 0, 1_000_001, 9223372036854775807} {
+		input.State.Player.RubyConfirmation.Amount = amount
+		if err := validateFinalBuildingUpgrade(input, step.FinalDispatchArguments); err == nil {
+			t.Fatal("final dispatch guard allowed changed threshold")
+		}
+		if _, err := planBuildingUpgrade(context.Background(), input, request); err == nil {
+			t.Fatalf("planned blocked threshold %d", amount)
+		}
+		if step, err := resolveBuildingUpgradeStep(context.Background(), input, plan.Steps[1].ResolverArguments); err == nil || len(step.Command.Payload) != 0 {
+			t.Fatalf("dispatched changed threshold %d: %#v %v", amount, step, err)
+		}
+	}
+	input.State.Player.RubyConfirmation.Amount = -1
+	if _, err := planBuildingUpgrade(context.Background(), input, request); err != nil {
+		t.Fatal(err)
+	}
+	legacy, _ := json.Marshal(buildingUpgradeResolverArguments{Request: buildingUpgradeIntentRequest{CastleID: 10, BuildingInstanceID: 32, AllowPremium: true}, PremiumMode: buildingPremiumModeConfirm, ExpectedPremiumCost: 12300})
+	if _, err := resolveBuildingUpgradeStep(context.Background(), input, legacy); err == nil {
+		t.Fatal("legacy confirmation accepted")
+	}
+	input.State.Session.Generation++
+	if _, err := planBuildingUpgrade(context.Background(), input, request); err == nil {
+		t.Fatal("stale setting accepted")
 	}
 
-	quote, err := resolveBuildingUpgradeStep(context.Background(), input, plan.Steps[1].ResolverArguments)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(quote.Command.Payload) != `{"OID":32,"PWR":0,"PO":-1}` || len(quote.SuccessCodes) != 1 || quote.SuccessCodes[0] != 440 {
-		t.Fatalf("premium quote command = %#v", quote)
-	}
-	confirm, err := resolveBuildingUpgradeStep(context.Background(), input, plan.Steps[2].ResolverArguments)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if string(confirm.Command.Payload) != `{"OID":32,"PWR":1,"PO":-1}` {
-		t.Fatalf("premium confirmation command = %#v", confirm)
-	}
 }
 
 func TestResolveBuildingExpansionUsesCapturedResourceWireShape(t *testing.T) {
