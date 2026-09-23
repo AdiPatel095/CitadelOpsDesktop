@@ -1,6 +1,7 @@
 package App
 
 import (
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/State"
 	"testing"
 	"time"
@@ -54,6 +55,35 @@ func TestAutoStationGateFinalAuthority(t *testing.T) {
 			s.Movements[1] = State.MovementState{ID: 1, TypeID: 0, Direction: 0, OwnerPlayerID: 8, TargetPlayerID: 7, SourceTypeID: 1, SourceCastleID: 20, TargetTypeID: 1, TargetCastleID: 10, ArrivesAt: &arrival}
 			tc.mutate(&s)
 			err := validateAutoStationGate(s, defenseOpenGateRequest{CastleID: 10, AutoStation: true, PlannedAt: planned}, tc.fallback, 60, now)
+			if (err == nil) != tc.allow {
+				t.Fatalf("allow=%v err=%v", tc.allow, err)
+			}
+		})
+	}
+}
+
+func TestPartialTrackedGateRequiresFreshUnsentTroops(t *testing.T) {
+	now := time.Now()
+	data, err := GameData.DecodeStore([]byte(`{"versionInfo":[],"buildings":[],"units":[{"wodID":489},{"wodID":735,"toolCategory":"Premium","slotTypes":"1,2,9"}]}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		name             string
+		amount, reserved int64
+		stale            bool
+		allow            bool
+	}{{"partial", 20, 0, false, true}, {"empty", 0, 0, false, false}, {"reserved", 20, 20, false, false}, {"stale", 20, 0, true, false}} {
+		t.Run(tc.name, func(t *testing.T) {
+			s := State.NewGameState()
+			until := now.Add(time.Hour)
+			s.Stationing["autoStation:10"] = State.StationingOperation{SourceCastleID: 10, UpdatedAt: now.Add(-time.Second), SuccessCooldownUntil: &until}
+			c := State.CastleState{ID: 10, UnitsObservedAt: now, Units: State.CastleUnits{Stationed: map[State.UnitID]int64{489: tc.amount, 735: 20}}}
+			if tc.stale {
+				c.UnitsObservedAt = now.Add(-time.Minute)
+			}
+			s.Castles[10] = c
+			err := validateTrackedGateRemainder(s, defenseOpenGateRequest{CastleID: 10, PlannedAt: now.Add(-time.Second)}, map[State.UnitID]int64{489: tc.reserved}, data, now)
 			if (err == nil) != tc.allow {
 				t.Fatalf("allow=%v err=%v", tc.allow, err)
 			}

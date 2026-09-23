@@ -2,6 +2,7 @@ package Automation
 
 import (
 	"CitadelDesktop/Server/Configuration"
+	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/State"
 	"encoding/json"
 	"testing"
@@ -96,5 +97,62 @@ func TestStationUnknownFutureProtectionMustRefresh(t *testing.T) {
 		if d.Request == nil || d.Request.Name != "map.query" {
 			t.Fatalf("missing refresh: %+v", d)
 		}
+	}
+}
+
+func TestAutoStationPartialTrackedBatchUsesGateWithoutRepeatingCDS(t *testing.T) {
+	now := time.Now()
+	data, err := GameData.DecodeStore([]byte(`{"versionInfo":[],"buildings":[],"units":[{"wodID":489},{"wodID":735,"toolCategory":"Premium","slotTypes":"1,2,9"}]}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		name              string
+		amount, reserve   int64
+		protection, stale bool
+		want              string
+	}{
+		{"partial batch", 20, 0, false, false, "defense.open_gate"},
+		{"fully evacuated", 0, 0, false, false, "protected"},
+		{"reserved only", 20, 20, false, false, "protected"},
+		{"reserved troops under protection", 20, 20, true, false, "defense.open_gate"},
+		{"fully evacuated under protection", 0, 0, true, false, "protected"},
+		{"fully evacuated via AutoBird", 0, 0, true, false, "protected"},
+		{"stale inventory", 20, 0, false, true, "castle.focus"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			s := stationThreatFixture(now)
+			if tc.protection {
+				s.Player.ProtectionMode.RemainingSec = 600
+			}
+			until := now.Add(time.Hour)
+			s.Stationing["autoStation:100"] = State.StationingOperation{ID: "autoStation:100", Purpose: "autoStation", SourceCastleID: 100, UpdatedAt: now.Add(-time.Second), SuccessCooldownUntil: &until, Units: map[State.UnitID]int64{215: 100}}
+			if tc.name == "fully evacuated via AutoBird" {
+				op := s.Stationing["autoStation:100"]
+				delete(s.Stationing, "autoStation:100")
+				op.ID = "autoBird:100"
+				op.Purpose = "autoBird"
+				s.Stationing[op.ID] = op
+			}
+			c := s.Castles[100]
+			c.UnitsObservedAt = now
+			c.Units.Stationed = map[State.UnitID]int64{489: tc.amount, 735: 50}
+			if tc.stale {
+				c.UnitsObservedAt = now.Add(-time.Minute)
+			}
+			s.Castles[100] = c
+			raw, _ := json.Marshal(map[string]any{"openGateFallback": true, "settings": map[string]any{"100": []map[string]any{{"id": 489, "amount": tc.reserve}}}})
+			d, err := NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{State: s, GameData: data, Now: now, Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{"automation.autoStation": raw}}})
+			if err != nil {
+				t.Fatal(err)
+			}
+			got := d.Status
+			if d.Request != nil {
+				got = d.Request.Name
+			}
+			if got != tc.want {
+				t.Fatalf("want %s: %+v", tc.want, d)
+			}
+		})
 	}
 }
