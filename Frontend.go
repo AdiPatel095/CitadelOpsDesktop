@@ -37,12 +37,16 @@ func frontendFileHandler(assets fs.FS) http.Handler {
 }
 
 func missingFrontendHandler() http.Handler {
-	return http.HandlerFunc(func(writer http.ResponseWriter, _ *http.Request) {
+	return http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		locale := bootstrapLocale(request)
+		writer.Header().Set("Content-Language", locale)
+		writer.Header().Add("Vary", "Accept-Language")
+		writer.Header().Set("Cache-Control", "no-store")
 		writer.Header().Set("Content-Type", "application/json; charset=utf-8")
 		writer.Header().Set("X-Content-Type-Options", "nosniff")
 		_ = json.NewEncoder(writer).Encode(map[string]any{
 			"name": "CitadelOps", "version": App.Version,
-			"detail": "Build Client/ or run the Vite development server for the desktop UI.",
+			"detail": bootstrapCatalog.Translations[locale].Text,
 		})
 	})
 }
