@@ -46,6 +46,10 @@ func (state *GameState) prepareAttackPresetMutation(source GameState) {
 
 func (state *GameState) prepareAutomationMutation(source GameState) {
 	state.Automations = cloneMap(source.Automations)
+	for id, automation := range state.Automations {
+		automation.SafetyLock = automation.SafetyLock.Clone()
+		state.Automations[id] = automation
+	}
 }
 
 func (state *GameState) prepareObservationMutation(source GameState) {

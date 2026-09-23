@@ -377,9 +377,11 @@ func (store *Store) RecordFeatureActivityMessage(actor string, intent string, se
 	}
 }
 
+var safetyPairActivity = regexp.MustCompile(`Safety lock after [A-Z][A-Z0-9_]{1,15} [0-9]+`)
+
 func storedFeatureActivityDetail(severity string, event string, detail string) string {
 	detail = strings.Join(strings.Fields(strings.TrimSpace(detail)), " ")
-	if detail != "" && !unsafeFeatureActivityDetail.MatchString(detail) {
+	if detail != "" && !unsafeFeatureActivityDetail.MatchString(safetyPairActivity.ReplaceAllString(detail, "Safety lock after game rejection")) {
 		return detail
 	}
 	if severity == "INFO" {

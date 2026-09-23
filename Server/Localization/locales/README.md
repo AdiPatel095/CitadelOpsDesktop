@@ -1,10 +1,10 @@
 # Authored runtime message packs
 
-These packs are incomplete: every non-English locale contains 217 of 3,177 source
+These packs are incomplete: every non-English locale contains 228 of 3,181 source
 messages. All 73 API messages, 25 configuration messages and 46 telemetry channel
 labels/descriptions are covered, alongside 45 intent failure/recovery messages,
-four explicitly reviewed source-key reuses, 20 Storm/runtime messages, and four earlier runtime messages.
-The remaining 2,960 keys per locale must fall back explicitly to English. Exact
+four explicitly reviewed source-key reuses, 20 Storm/runtime messages, 11 lane lock/ruby guard messages, and four earlier runtime messages.
+The remaining 2,953 keys per locale must fall back explicitly to English. Exact
 coverage is emitted by `../scripts/validate-locales.mjs`.
 
 Every entry records source and translation SHA-256 plus authoring/reuse provenance.

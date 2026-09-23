@@ -7,8 +7,8 @@ not merge, deployment, or live-verification claims.
 
 ## Authored custom packs
 
-All 25 non-English packs contain **217 of 3,177 source keys** (5,425 values).
-Each locale still has **2,960 missing keys**. Missing, stale, or unsupported
+All 25 non-English packs contain **228 of 3,181 source keys** (5,700 values).
+Each locale still has **2,953 missing keys**. Missing, stale, or unsupported
 messages must keep explicit English/raw fallback provenance; they earn no
 translation credit.
 
@@ -19,6 +19,7 @@ translation credit.
 | Telemetry channel labels/descriptions | 46 | official feature glossary, stage fixtures |
 | Intent failure/recovery messages (excluding operation descriptions) | 45 | actual ICU rendering and safety/terminology fixtures |
 | Storm purchases, outcomes, castle identity and guarded actions | 20 | actual ICU/list rendering and source-bound authoring |
+| Lane safety locks, lifecycle and ruby guard messages | 11 | persisted binding, typed numeric guard fixtures and ICU rendering |
 | Reviewed exact source-key reuse | 4 | explicit origin key/revision/hashes and semantic review |
 | Earlier runtime messages | 4 | source/translation hashes and ICU gate |
 
@@ -37,8 +38,8 @@ linguistic correctness.
 
 ## Source producer audit
 
-The source-bound syntax inventory at this baseline records 1,195 descriptor
-sites, 46 explicitly registered telemetry sites, and 33 unclassified sites.
+The source-bound syntax inventory at this baseline records 1,193 descriptor
+sites, 46 explicitly registered telemetry sites, and 34 unclassified sites.
 Some unclassified sites forward descriptors or finite event identifiers; others
 remain source-owned visible prose. These counts are not a complete audit of
 assignments, errors, compound strings, or game-noun parameters.
@@ -63,3 +64,5 @@ intent-safety fixtures, and storm-stages fixtures. The Client owner runs `script
 its owned destination. Compare the exported English catalog hash with the
 actual integrated Server catalog and retain both PR #74 and #75 lineage.
 An older baseline or successful dictionary fetch is not full localization.
+
+Current follow-on integrates PR78 ruby guard lineage without changing whitelist, timing or premium authorization. Updated lock detail omits operation IDs, carries exact protocol code strings, and falls back entirely for unknown or stale context metadata. Source/pack candidate is not deployment evidence.

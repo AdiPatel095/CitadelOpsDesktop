@@ -396,3 +396,26 @@ function uniqueLines(lines: string[]): string[] {
 function cleanText(value: unknown): string {
 	return typeof value === 'string' ? value.trim().replace(/\s+/g, ' ') : '';
 }
+
+// Policy skips do not create failed operations. Route their notices through the
+// same UI publisher, once per lane/target/message change rather than per poll.
+export class RubyUpgradeNotificationCoordinator {
+ private readonly previous = new Map<string, string>();
+ next(automations: Record<string, { details?: Record<string, string> }>): RoutedOperationFailureNotification[] {
+  const notifications: RoutedOperationFailureNotification[] = [];
+  const active = new Set<string>();
+  for (const [lane, state] of Object.entries(automations)) {
+   for (const [key, message] of Object.entries(state.details ?? {})) {
+    if (!key.startsWith('rubyUpgradeNotice/') || !message) continue;
+    const id = `ruby-upgrade-${lane}-${key}`;
+    active.add(id);
+    if (this.previous.get(id) !== message) {
+     this.previous.set(id, message);
+     notifications.push({ id, category: 'yellow', message });
+    }
+   }
+  }
+  for (const id of this.previous.keys()) if (!active.has(id)) this.previous.delete(id);
+  return notifications;
+ }
+}

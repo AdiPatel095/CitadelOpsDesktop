@@ -1515,6 +1515,7 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 	if components.Has(ComponentAutomations) {
 		clone.Automations = make(map[string]AutomationState, len(source.Automations))
 		for id, automation := range source.Automations {
+			automation.SafetyLock = automation.SafetyLock.Clone()
 			automation.DetailDescriptor = Localization.Clone(automation.DetailDescriptor)
 			automation.LastErrorDescriptor = Localization.Clone(automation.LastErrorDescriptor)
 			automation.NextCheckAt = cloneTimePointer(automation.NextCheckAt)

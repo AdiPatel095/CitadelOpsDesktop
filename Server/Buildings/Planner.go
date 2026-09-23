@@ -46,8 +46,9 @@ type PreviewRequest struct {
 }
 
 type Blocker struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
+	MessageDescriptor *Localization.Message `json:"messageDescriptor,omitempty"`
+	Code              string                `json:"code"`
+	Message           string                `json:"message"`
 }
 
 type CostStatus struct {
@@ -363,6 +364,11 @@ func finalizeCandidate(
 		if cost.Premium && !constraints.AllowPremium {
 			addBlocker(candidate, "premium_disallowed", "The action spends premium currency and premium spending is disabled")
 			break
+		}
+	}
+	if candidate.Kind == ActionUpgrade && constraints.AllowPremium {
+		if blocker := RubyUpgradeBlocker(state, candidate.Costs); blocker != nil {
+			addBlocker(candidate, blocker.Code, blocker.Message, blocker.MessageDescriptor)
 		}
 	}
 	if !candidate.Affordable && !constraints.AllowUnaffordable {
@@ -734,13 +740,13 @@ func addMetric(values map[string]float64, metric string, amount float64) {
 	values[metric] += amount
 }
 
-func addBlocker(candidate *Candidate, code, message string) {
+func addBlocker(candidate *Candidate, code, message string, descriptors ...*Localization.Message) {
 	for _, blocker := range candidate.Blockers {
 		if blocker.Code == code {
 			return
 		}
 	}
-	candidate.Blockers = append(candidate.Blockers, Blocker{Code: code, Message: message})
+	candidate.Blockers = append(candidate.Blockers, Blocker{Code: code, Message: message, MessageDescriptor: Localization.First(descriptors)})
 }
 
 func reserveValue(reserves map[string]float64, cost GameData.BuildingCost) float64 {
