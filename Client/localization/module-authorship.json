@@ -6723,5 +6723,755 @@
       "events.points": "c54a061dfcc125cb160421b2680feaf6d65d938d756d887fe4d8d1d046eb626e",
       "events.historyPages": "0fd6fca0824279bb3bfa5e04bac111bf0bbae4ff97774ee20038eb088bb1877f"
     }
+  },
+  "automation-lanes.el.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "translationHashes": {
+      "automation.status": "a3de56c46d19b431b5e2ef91937f7b287517c636d2df5c9a7c9d39d0a7a82c4a",
+      "automation.lane": "8e5a40ff67a315ce9c4f4d2767acae431a95c23fa0587a01ec60d83661675486",
+      "automation.accessibleStatus": "2872b7a56cfed225c719a5d0ab8ac4576972dce0f51620bdce3d6e551dad3600",
+      "automation.waitingLane": "832fedbb342e69787c1f6efc82a7806f68f93f226504ced3fb33c4fa3d6bcd4f",
+      "automation.missingDecorations": "d0301bf38cbdd0962de5f340c5ac69bc6336731341523b42b1e123159cebe132",
+      "automation.nextCheck": "a8dad717592585cd0c6d6a78a8ace06142854f7f6b7f741dff96276f9d926118",
+      "automation.timeLeft": "6fd30c72365315a3a28c259df2eb2fb3680670aa99c8af8f47b24dec1a4c5466",
+      "automation.rate": "5d9d48e5b20775f38fa0abc1d33a2fec58dcbff2c924f3dfb8b37afc55f39e53",
+      "automation.rateTitle": "e4ba4f9794dee17b56975368a13b77287b8cfd0e91710283a39791e1bbd094d0",
+      "automation.daily": "86a686269b17501bed1b02cbe601d8f4814d07649df7f80357007b64c09fd63a",
+      "automation.dailyTitle": "0bd94fe2841631d0103c692197365a1fe70106fcb299f3d3f2a9d1bd1fd09d7e"
+    },
+    "sourceHashes": {
+      "automation.status": "182abe5c3917730ff924e1b364c241f1edd6255f936857e3d860a0b344250af5",
+      "automation.lane": "4ad70d73d5afb9bef2393836a731074f80a1cd602243f3758a1bd7f0c775aff0",
+      "automation.accessibleStatus": "65e6caa7fe754fdb1318ca360a1b463550051ae633d34a5792ac59ebb3979a3b",
+      "automation.waitingLane": "20bc05a9180bdc5a124eeb95efc0dae4e824dc24dc04404a92dfecfdb5c50dfc",
+      "automation.missingDecorations": "93158079a1c772677535449bea409cb7e4d141e37a0e156eb70410fc5c69caab",
+      "automation.nextCheck": "2fc4d01056ac79572ada7aaa1033487f727d18fd7d8f817fb77c9f2d7690a514",
+      "automation.timeLeft": "a6b154c80ca2ca8330352187790c09ed7c8a1258177006ba72f3d5fbbd63d988",
+      "automation.rate": "8fb04571a73f51199a94d4c93647a3064a681af9cc14072046afdff3f5894f64",
+      "automation.rateTitle": "2ae3dccc0250c2bbe5cd77e6dcb352f8e1fd4bfabdfe9405b3160839711634a2",
+      "automation.daily": "716c9e07f73057d6d16a57e477a6f767848c2eaf0259cd1726eb5e27b9853b1b",
+      "automation.dailyTitle": "8ac1f8a7d6c323211484b04181cec2171994c2449eedc9f7906bca5da9eeff39"
+    }
+  },
+  "automation-lanes.ro.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "translationHashes": {
+      "automation.status": "21dda6b7c9eae26e44b45df16e03c1d9e7c47d45261f04eb141adad0009ed1b0",
+      "automation.lane": "76e53ffb63b0fe4369be33999b57b817a271870c509464d2c8118bbd560fd5c7",
+      "automation.accessibleStatus": "de80f52729d146dbe50d8f7c5942d233317a175c9d80151b0f723c66e13b0d82",
+      "automation.waitingLane": "9c27c7ab3ad770abb8ae454f30a1414b491f492eecf1a657779c326c69fad27d",
+      "automation.missingDecorations": "173721645782ef3c14f691b636a100c78b1831be587a997cb1e7a5eb40911105",
+      "automation.nextCheck": "c7a489bef44f7409159d1932d6cac0f85d933082ab6f63ed768bcd4a283e79f5",
+      "automation.timeLeft": "24e6eea6903cf97a443ea3161f801a6a2aad50f11036637a70e8f4c2f5802ce1",
+      "automation.rate": "c693d336cd19583b0409834a3c37a987e1279dad4ae84be0ee1061286d41dd0a",
+      "automation.rateTitle": "77f63ab2dbea90361aa43deebc5ce2630c1aeb72c6e5142cf25543ea0039f865",
+      "automation.daily": "a4fd8e6407f8bbdf214beab4430999a89443040a15d73a4080f6206077b53e38",
+      "automation.dailyTitle": "b2506e7ff6e85f16f78b28bc441c73dd36067e2c6171f54ed31d0f269da3d413"
+    },
+    "sourceHashes": {
+      "automation.status": "182abe5c3917730ff924e1b364c241f1edd6255f936857e3d860a0b344250af5",
+      "automation.lane": "4ad70d73d5afb9bef2393836a731074f80a1cd602243f3758a1bd7f0c775aff0",
+      "automation.accessibleStatus": "65e6caa7fe754fdb1318ca360a1b463550051ae633d34a5792ac59ebb3979a3b",
+      "automation.waitingLane": "20bc05a9180bdc5a124eeb95efc0dae4e824dc24dc04404a92dfecfdb5c50dfc",
+      "automation.missingDecorations": "93158079a1c772677535449bea409cb7e4d141e37a0e156eb70410fc5c69caab",
+      "automation.nextCheck": "2fc4d01056ac79572ada7aaa1033487f727d18fd7d8f817fb77c9f2d7690a514",
+      "automation.timeLeft": "a6b154c80ca2ca8330352187790c09ed7c8a1258177006ba72f3d5fbbd63d988",
+      "automation.rate": "8fb04571a73f51199a94d4c93647a3064a681af9cc14072046afdff3f5894f64",
+      "automation.rateTitle": "2ae3dccc0250c2bbe5cd77e6dcb352f8e1fd4bfabdfe9405b3160839711634a2",
+      "automation.daily": "716c9e07f73057d6d16a57e477a6f767848c2eaf0259cd1726eb5e27b9853b1b",
+      "automation.dailyTitle": "8ac1f8a7d6c323211484b04181cec2171994c2449eedc9f7906bca5da9eeff39"
+    }
+  },
+  "automation-lanes.bg.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "translationHashes": {
+      "automation.status": "1c53c02c41c339a46a0efbae4114a1888e37b6c723664ae074dfaf050b3a7505",
+      "automation.lane": "192ddb9eaee6a61fc804aa8e5459abd1e781c32ff353a57c401a15c5e40c3efb",
+      "automation.accessibleStatus": "7ef95212160c1069352ef2f6e0ab6e664219a20facfde2dfd2b5bd9af941f7b0",
+      "automation.waitingLane": "359f14e3d776578acec0787479a8aa0515ab6f11189bb178e4edff6f84bca10e",
+      "automation.missingDecorations": "e6de0c87a17f2f08bd1ffccc24e33372386d8276a41032bb23aa56aaec47fa69",
+      "automation.nextCheck": "c8e94f34ab640f09f3c5c7ae5f959387ac3e6a97ca4ebcf651f9c1fbbc5e4515",
+      "automation.timeLeft": "362af396656f5a803bab943cc1786a0ab9eff72b1c1fc197bc7c3a674d4d93e1",
+      "automation.rate": "8660f90203c49bbcee969ba15c0067dd1d7d2a3e602558f9ce6a5910ebaa357c",
+      "automation.rateTitle": "e6071f428d4d05e4082a3ae28134e6d61a9227242ad779bc63173cb7ec36eae6",
+      "automation.daily": "be63927895499e726cf7bb92d86e23fbaa11ee3f7a95a5ef0e634882ed118fd1",
+      "automation.dailyTitle": "32248583c5aedf60201df82b9506a34de60cc9116bbb492af9b41f02acc8f196"
+    },
+    "sourceHashes": {
+      "automation.status": "182abe5c3917730ff924e1b364c241f1edd6255f936857e3d860a0b344250af5",
+      "automation.lane": "4ad70d73d5afb9bef2393836a731074f80a1cd602243f3758a1bd7f0c775aff0",
+      "automation.accessibleStatus": "65e6caa7fe754fdb1318ca360a1b463550051ae633d34a5792ac59ebb3979a3b",
+      "automation.waitingLane": "20bc05a9180bdc5a124eeb95efc0dae4e824dc24dc04404a92dfecfdb5c50dfc",
+      "automation.missingDecorations": "93158079a1c772677535449bea409cb7e4d141e37a0e156eb70410fc5c69caab",
+      "automation.nextCheck": "2fc4d01056ac79572ada7aaa1033487f727d18fd7d8f817fb77c9f2d7690a514",
+      "automation.timeLeft": "a6b154c80ca2ca8330352187790c09ed7c8a1258177006ba72f3d5fbbd63d988",
+      "automation.rate": "8fb04571a73f51199a94d4c93647a3064a681af9cc14072046afdff3f5894f64",
+      "automation.rateTitle": "2ae3dccc0250c2bbe5cd77e6dcb352f8e1fd4bfabdfe9405b3160839711634a2",
+      "automation.daily": "716c9e07f73057d6d16a57e477a6f767848c2eaf0259cd1726eb5e27b9853b1b",
+      "automation.dailyTitle": "8ac1f8a7d6c323211484b04181cec2171994c2449eedc9f7906bca5da9eeff39"
+    }
+  },
+  "automation-lanes.ko.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "translationHashes": {
+      "automation.status": "65a34e3053411fa15f78575a44c7024876574756f5a2bbdb8f04d1c84ab4de65",
+      "automation.lane": "dfedc86de9bdd1fd4e06b0bedbe14f4dde89625e326bc4bc8e3c0683d5edfa4d",
+      "automation.accessibleStatus": "a3f0003c0585e49461dc8e0219ab5f6ebb58fe0a3af73ddb03959a9798cd18ae",
+      "automation.waitingLane": "14af174d0dbc231526c8dc040724a9b6f8285bcfc4c91f21bc985c34236ee9b4",
+      "automation.missingDecorations": "83f63aa27e0bf8e720afcffc7fd1e0849e6f54d3b7fb2088432e4206546f4056",
+      "automation.nextCheck": "adcd55c4633ae521ed50532dc7ab65d39fb18949fe5ca8022749cba9a79b886c",
+      "automation.timeLeft": "09eeb7e271898125980158b705af61fcd372f9d21cb8af1eb5bda31b0f9818f0",
+      "automation.rate": "269d0cf46f38d7c8c1dc987b3a059481c5110c48deacd0ac9e6687958c06f5e0",
+      "automation.rateTitle": "95b7718aaf0cba01d3fb4c5fa01cd2a8d85f2894366261dac7513d79544fbbba",
+      "automation.daily": "c109d9ba61a08a674973db261ae1f93b20ed22faf7341fb105e5003ba17b4149",
+      "automation.dailyTitle": "1f103662386db8b7e318c8f4e1fc5c510b8fa2f75dd418d34d4189119592fc75"
+    },
+    "sourceHashes": {
+      "automation.status": "182abe5c3917730ff924e1b364c241f1edd6255f936857e3d860a0b344250af5",
+      "automation.lane": "4ad70d73d5afb9bef2393836a731074f80a1cd602243f3758a1bd7f0c775aff0",
+      "automation.accessibleStatus": "65e6caa7fe754fdb1318ca360a1b463550051ae633d34a5792ac59ebb3979a3b",
+      "automation.waitingLane": "20bc05a9180bdc5a124eeb95efc0dae4e824dc24dc04404a92dfecfdb5c50dfc",
+      "automation.missingDecorations": "93158079a1c772677535449bea409cb7e4d141e37a0e156eb70410fc5c69caab",
+      "automation.nextCheck": "2fc4d01056ac79572ada7aaa1033487f727d18fd7d8f817fb77c9f2d7690a514",
+      "automation.timeLeft": "a6b154c80ca2ca8330352187790c09ed7c8a1258177006ba72f3d5fbbd63d988",
+      "automation.rate": "8fb04571a73f51199a94d4c93647a3064a681af9cc14072046afdff3f5894f64",
+      "automation.rateTitle": "2ae3dccc0250c2bbe5cd77e6dcb352f8e1fd4bfabdfe9405b3160839711634a2",
+      "automation.daily": "716c9e07f73057d6d16a57e477a6f767848c2eaf0259cd1726eb5e27b9853b1b",
+      "automation.dailyTitle": "8ac1f8a7d6c323211484b04181cec2171994c2449eedc9f7906bca5da9eeff39"
+    }
+  },
+  "automation-lanes.fr.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "translationHashes": {
+      "automation.status": "84fd71ebb86e672801eb79f6963cb36c02686489835b8fb7a37a092d03b5b01b",
+      "automation.lane": "84d2ba2e3d5a6af2724dd2b5f0dec8707c985bda0a8a94007c3df9c1ea38aa59",
+      "automation.accessibleStatus": "661cad37e6ae64c4c24fc3cb7f7b0dc75176022b3bc3999774de8468233ed84f",
+      "automation.waitingLane": "31231464fadcf47be8997dc1ab05dc6f6b08ebf36802ae330428e6ef5956bd31",
+      "automation.missingDecorations": "8b272c2d49219b184826d5cd44970087ca32d7bf83f5e30ea4b7e1cf06bdc5f9",
+      "automation.nextCheck": "fcaedc7c06cde7c73afff2c2a0a6355da0fab32ad24495f19559e2284b396ea0",
+      "automation.timeLeft": "ec3f9779a4bf780a8713b2199c9a0e24d574b9d67ce5aeed5707a012e541968c",
+      "automation.rate": "137e87e4de180d71ad2b140c6d2af2fc7d031dd1eaf437cde0bc060c2643dd26",
+      "automation.rateTitle": "536c1cff222b0fd4829bdf606523285e87d04ba55d46814070568f6cf78e28a6",
+      "automation.daily": "7da6c36d9298a3a7b64551690cb5bf9322447929b9bf712701e42dce32f34204",
+      "automation.dailyTitle": "e75d108394610f2a626d5e61681f2a2be63db627eb7b6c5a054206438094a176"
+    },
+    "sourceHashes": {
+      "automation.status": "182abe5c3917730ff924e1b364c241f1edd6255f936857e3d860a0b344250af5",
+      "automation.lane": "4ad70d73d5afb9bef2393836a731074f80a1cd602243f3758a1bd7f0c775aff0",
+      "automation.accessibleStatus": "65e6caa7fe754fdb1318ca360a1b463550051ae633d34a5792ac59ebb3979a3b",
+      "automation.waitingLane": "20bc05a9180bdc5a124eeb95efc0dae4e824dc24dc04404a92dfecfdb5c50dfc",
+      "automation.missingDecorations": "93158079a1c772677535449bea409cb7e4d141e37a0e156eb70410fc5c69caab",
+      "automation.nextCheck": "2fc4d01056ac79572ada7aaa1033487f727d18fd7d8f817fb77c9f2d7690a514",
+      "automation.timeLeft": "a6b154c80ca2ca8330352187790c09ed7c8a1258177006ba72f3d5fbbd63d988",
+      "automation.rate": "8fb04571a73f51199a94d4c93647a3064a681af9cc14072046afdff3f5894f64",
+      "automation.rateTitle": "2ae3dccc0250c2bbe5cd77e6dcb352f8e1fd4bfabdfe9405b3160839711634a2",
+      "automation.daily": "716c9e07f73057d6d16a57e477a6f767848c2eaf0259cd1726eb5e27b9853b1b",
+      "automation.dailyTitle": "8ac1f8a7d6c323211484b04181cec2171994c2449eedc9f7906bca5da9eeff39"
+    }
+  },
+  "automation-lanes.sv.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "translationHashes": {
+      "automation.status": "e9c61f64b579065c53c9a1446881fa504a10d4784b77ec08115b4e9d1d8054ae",
+      "automation.lane": "fcb70af8b671988c4c2c82eb417ff8ca8d949605c606d6c21b15558a4e03219c",
+      "automation.accessibleStatus": "0b38d10186a78053a4312527e11c3a604fa17338d20655ab57ceb1c6189447b2",
+      "automation.waitingLane": "b5d6951f67f0f20d2e3915965864fe402d5428e6f87ece91cf5e5bff93e6c420",
+      "automation.missingDecorations": "d00094e1b6b358a8da4ebe3b6e128df88a9fcfdc6d5f251e710fe12894974882",
+      "automation.nextCheck": "23a94984f96c5ef9f2cf5a9b04c6a8e22543f8cd017071601ff1063aeb629fe7",
+      "automation.timeLeft": "ca0dd953a8573f8d7837a77713375a9d31f365e0b89ed54b1faaeb832844bd23",
+      "automation.rate": "1e8d994c75adbaf3c42c90259b06d91424c0b035916a55f6bd4c9e2fd86aae96",
+      "automation.rateTitle": "9e8319e3ec74c12829d7dc9f5ac41c14d31aa89db7a64df0df8a4ba4bc9f2552",
+      "automation.daily": "d42595b341d711ae34661646b8540c8aa4da7202a22aae13d59c11e4ffd95a67",
+      "automation.dailyTitle": "774dcc46663628e8f286d5f63916febb1627b269b5d63cea2c42cdb9fa0b7085"
+    },
+    "sourceHashes": {
+      "automation.status": "182abe5c3917730ff924e1b364c241f1edd6255f936857e3d860a0b344250af5",
+      "automation.lane": "4ad70d73d5afb9bef2393836a731074f80a1cd602243f3758a1bd7f0c775aff0",
+      "automation.accessibleStatus": "65e6caa7fe754fdb1318ca360a1b463550051ae633d34a5792ac59ebb3979a3b",
+      "automation.waitingLane": "20bc05a9180bdc5a124eeb95efc0dae4e824dc24dc04404a92dfecfdb5c50dfc",
+      "automation.missingDecorations": "93158079a1c772677535449bea409cb7e4d141e37a0e156eb70410fc5c69caab",
+      "automation.nextCheck": "2fc4d01056ac79572ada7aaa1033487f727d18fd7d8f817fb77c9f2d7690a514",
+      "automation.timeLeft": "a6b154c80ca2ca8330352187790c09ed7c8a1258177006ba72f3d5fbbd63d988",
+      "automation.rate": "8fb04571a73f51199a94d4c93647a3064a681af9cc14072046afdff3f5894f64",
+      "automation.rateTitle": "2ae3dccc0250c2bbe5cd77e6dcb352f8e1fd4bfabdfe9405b3160839711634a2",
+      "automation.daily": "716c9e07f73057d6d16a57e477a6f767848c2eaf0259cd1726eb5e27b9853b1b",
+      "automation.dailyTitle": "8ac1f8a7d6c323211484b04181cec2171994c2449eedc9f7906bca5da9eeff39"
+    }
+  },
+  "automation-lanes.ar.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "translationHashes": {
+      "automation.status": "2d6857c3aadb31fa3bfc02fda178421df98d58b76e0320fd5b47a593f823b58f",
+      "automation.lane": "f317115bb53e690392f9b9d3f2b6945c5c54b51a04ca3a818d25d849ff5c75ea",
+      "automation.accessibleStatus": "1e26bea00c89309ddcf63237bff767f96d77953612d3604ae40cc79d7832c5c7",
+      "automation.waitingLane": "b4ddcb4dcc9404bf25d5c3c106f5247922576c804e151f19bb00424837034b59",
+      "automation.missingDecorations": "720198c4d05074a3e363b4a7f6ec0f1096a088345083cc6e0ea39454f61287f5",
+      "automation.nextCheck": "ffbacf614a0b328ff3acbd1addd699c9506bed7722bc81b1e595e3d0defec611",
+      "automation.timeLeft": "90ce770acb564d77d4cd6351aa757f2740b18af63f7be61eb630feba1f7aeb0d",
+      "automation.rate": "cfc9b1a03a0acef776723d9ecc16a873aab6b200fba17081e8dc30109be35313",
+      "automation.rateTitle": "272ca4155478f094d108d6a84496a3239c539b416a320b562db1797dc3488fc8",
+      "automation.daily": "c41e47ad2bb4a49530a0c8257add2c7bb549373a91be34ae69cecbb5826973c6",
+      "automation.dailyTitle": "9bbaac3a8f60766ba901c77056a12cd062cad50114bfbfc49ffa61efad8f4fa7"
+    },
+    "sourceHashes": {
+      "automation.status": "182abe5c3917730ff924e1b364c241f1edd6255f936857e3d860a0b344250af5",
+      "automation.lane": "4ad70d73d5afb9bef2393836a731074f80a1cd602243f3758a1bd7f0c775aff0",
+      "automation.accessibleStatus": "65e6caa7fe754fdb1318ca360a1b463550051ae633d34a5792ac59ebb3979a3b",
+      "automation.waitingLane": "20bc05a9180bdc5a124eeb95efc0dae4e824dc24dc04404a92dfecfdb5c50dfc",
+      "automation.missingDecorations": "93158079a1c772677535449bea409cb7e4d141e37a0e156eb70410fc5c69caab",
+      "automation.nextCheck": "2fc4d01056ac79572ada7aaa1033487f727d18fd7d8f817fb77c9f2d7690a514",
+      "automation.timeLeft": "a6b154c80ca2ca8330352187790c09ed7c8a1258177006ba72f3d5fbbd63d988",
+      "automation.rate": "8fb04571a73f51199a94d4c93647a3064a681af9cc14072046afdff3f5894f64",
+      "automation.rateTitle": "2ae3dccc0250c2bbe5cd77e6dcb352f8e1fd4bfabdfe9405b3160839711634a2",
+      "automation.daily": "716c9e07f73057d6d16a57e477a6f767848c2eaf0259cd1726eb5e27b9853b1b",
+      "automation.dailyTitle": "8ac1f8a7d6c323211484b04181cec2171994c2449eedc9f7906bca5da9eeff39"
+    }
+  },
+  "automation-lanes.es.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "translationHashes": {
+      "automation.status": "c1dfc77433d9cef52c7328056d1c624f303283207adfe4da43333e522bb157e0",
+      "automation.lane": "51de184836269164f688b8ba0a90c6d95eb383b53880867532194c072934e5cb",
+      "automation.accessibleStatus": "238205447f57f7d2eb8651d5d42f2027ad8f46de164a09868393c34dfd7d1eb5",
+      "automation.waitingLane": "dce3b17c6b43e92663aaf1894d33574632a282ca38f8f13e4f96a804043a5da7",
+      "automation.missingDecorations": "2e84e401064d7427a4c32071257371519a24c6c05e8f9df8c64732156fa45d9c",
+      "automation.nextCheck": "020c76fc9f6bfd4d52a6188a1124e516d1db1dcdbd14be1322e7584b5d8fbae5",
+      "automation.timeLeft": "2fba6841c6acc2bea921f1095d3f41c1631f2e1ed6fb917078fcde12af60887d",
+      "automation.rate": "e490dccda3f38f2e493d804fc6baca59150dfd2ba8fa01c4de6c4c7734dac2f2",
+      "automation.rateTitle": "2a806dc713340b9cd86f1d794c14dd69f496ed8da31e5b0673149cc07d3222ab",
+      "automation.daily": "fdeafc75c0767f0a0b36a9b704df011bfb2175eb389947e9cd1f6f6c1f62de2a",
+      "automation.dailyTitle": "ef161fcf83fd2804855ed9841f89f8ea8eaedb788756eeb7a0dfc822f77bab1f"
+    },
+    "sourceHashes": {
+      "automation.status": "182abe5c3917730ff924e1b364c241f1edd6255f936857e3d860a0b344250af5",
+      "automation.lane": "4ad70d73d5afb9bef2393836a731074f80a1cd602243f3758a1bd7f0c775aff0",
+      "automation.accessibleStatus": "65e6caa7fe754fdb1318ca360a1b463550051ae633d34a5792ac59ebb3979a3b",
+      "automation.waitingLane": "20bc05a9180bdc5a124eeb95efc0dae4e824dc24dc04404a92dfecfdb5c50dfc",
+      "automation.missingDecorations": "93158079a1c772677535449bea409cb7e4d141e37a0e156eb70410fc5c69caab",
+      "automation.nextCheck": "2fc4d01056ac79572ada7aaa1033487f727d18fd7d8f817fb77c9f2d7690a514",
+      "automation.timeLeft": "a6b154c80ca2ca8330352187790c09ed7c8a1258177006ba72f3d5fbbd63d988",
+      "automation.rate": "8fb04571a73f51199a94d4c93647a3064a681af9cc14072046afdff3f5894f64",
+      "automation.rateTitle": "2ae3dccc0250c2bbe5cd77e6dcb352f8e1fd4bfabdfe9405b3160839711634a2",
+      "automation.daily": "716c9e07f73057d6d16a57e477a6f767848c2eaf0259cd1726eb5e27b9853b1b",
+      "automation.dailyTitle": "8ac1f8a7d6c323211484b04181cec2171994c2449eedc9f7906bca5da9eeff39"
+    }
+  },
+  "automation-lanes.zh-TW.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "translationHashes": {
+      "automation.status": "9b70f35f424d7583b928b59858b9df60848a3d998341db9e5bbe619deb16088e",
+      "automation.lane": "7138e2ec273629e1d9f14960c1bb5274aba00bc5e9338777b983a48a4d836065",
+      "automation.accessibleStatus": "7fa32855e8eb13a8fdd2f53f492b88107c6c7a6afc4e46221bbda39e852f760a",
+      "automation.waitingLane": "878a8968cf2f9058fed05f544bd2d72379ba87bd682273337bba3740b76f7fd8",
+      "automation.missingDecorations": "3ec73cd4b0394c11640a03672c80e2459537121c0c15376f2a53c0232bc38460",
+      "automation.nextCheck": "b3ea3cb3d6e0230a5836c971c610816fc972c509f0cb246184f8b9c0d8121a0a",
+      "automation.timeLeft": "5e765e18357156b3df09e32ea24f99fada40ccf4464ea86987f216193f1ce7a4",
+      "automation.rate": "eea62a2cdfe394a3190964a81d1ead37df0e314f0e8968440fff51c9bc6afcdc",
+      "automation.rateTitle": "2b14d333d197504f56f9b45bd096b6e4d8c2caeb076c5edfeeffa8f2f8de75f7",
+      "automation.daily": "d9963b4071a748e89e8eb34edd68136f6039e4a92fd11fd95eda93eb26660952",
+      "automation.dailyTitle": "f07b3af86b245bd538a41b2b24e780670f51073f40c8917447973a17be448c53"
+    },
+    "sourceHashes": {
+      "automation.status": "182abe5c3917730ff924e1b364c241f1edd6255f936857e3d860a0b344250af5",
+      "automation.lane": "4ad70d73d5afb9bef2393836a731074f80a1cd602243f3758a1bd7f0c775aff0",
+      "automation.accessibleStatus": "65e6caa7fe754fdb1318ca360a1b463550051ae633d34a5792ac59ebb3979a3b",
+      "automation.waitingLane": "20bc05a9180bdc5a124eeb95efc0dae4e824dc24dc04404a92dfecfdb5c50dfc",
+      "automation.missingDecorations": "93158079a1c772677535449bea409cb7e4d141e37a0e156eb70410fc5c69caab",
+      "automation.nextCheck": "2fc4d01056ac79572ada7aaa1033487f727d18fd7d8f817fb77c9f2d7690a514",
+      "automation.timeLeft": "a6b154c80ca2ca8330352187790c09ed7c8a1258177006ba72f3d5fbbd63d988",
+      "automation.rate": "8fb04571a73f51199a94d4c93647a3064a681af9cc14072046afdff3f5894f64",
+      "automation.rateTitle": "2ae3dccc0250c2bbe5cd77e6dcb352f8e1fd4bfabdfe9405b3160839711634a2",
+      "automation.daily": "716c9e07f73057d6d16a57e477a6f767848c2eaf0259cd1726eb5e27b9853b1b",
+      "automation.dailyTitle": "8ac1f8a7d6c323211484b04181cec2171994c2449eedc9f7906bca5da9eeff39"
+    }
+  },
+  "automation-lanes.cs.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "translationHashes": {
+      "automation.status": "16aa4f6704ce42002ead1c28feb886f0b5cb6a014785229d92eb87974867e1ef",
+      "automation.lane": "bc55c89dbe6664550223f4e3661c2004986854eadd713bb4d1aa9f55071da818",
+      "automation.accessibleStatus": "2c043f4b6d56e6e4b3acf3d2a4aeb0ecc94c9e9e08847d44c4b73679559f0444",
+      "automation.waitingLane": "389bb04cd11c6f4c21e10a589dc7d01f2e4d10037f9d605eec1223b9e6e6dcaf",
+      "automation.missingDecorations": "f234e5e64293009311253e5efa91beeab84bacd95a3f5154a721db6dbbdb6150",
+      "automation.nextCheck": "f735316cdfd9be8315986bef21767af57fd5fbdae730851d2833bf4d591456a7",
+      "automation.timeLeft": "66e536ca90b784846af383b9c783a6e6add8e61b7b386d7c49bb40ebb9c4814b",
+      "automation.rate": "25413e26352db22a391ab476e27f36426001f621ba416176d68832018742c8fc",
+      "automation.rateTitle": "6f4f7b1d54f2a1eb0cdd6f2c624d9072b05c8b9b8710418697bf9747dd9012d3",
+      "automation.daily": "511fc1fc334ec8fc9e4960ca9f60da88bf47191db88a026cbd57bbe5e3e7f968",
+      "automation.dailyTitle": "d8af0362015e63dae2e85d2acc6d7f6bbde434bdf0e87c03799e06f627df11cd"
+    },
+    "sourceHashes": {
+      "automation.status": "182abe5c3917730ff924e1b364c241f1edd6255f936857e3d860a0b344250af5",
+      "automation.lane": "4ad70d73d5afb9bef2393836a731074f80a1cd602243f3758a1bd7f0c775aff0",
+      "automation.accessibleStatus": "65e6caa7fe754fdb1318ca360a1b463550051ae633d34a5792ac59ebb3979a3b",
+      "automation.waitingLane": "20bc05a9180bdc5a124eeb95efc0dae4e824dc24dc04404a92dfecfdb5c50dfc",
+      "automation.missingDecorations": "93158079a1c772677535449bea409cb7e4d141e37a0e156eb70410fc5c69caab",
+      "automation.nextCheck": "2fc4d01056ac79572ada7aaa1033487f727d18fd7d8f817fb77c9f2d7690a514",
+      "automation.timeLeft": "a6b154c80ca2ca8330352187790c09ed7c8a1258177006ba72f3d5fbbd63d988",
+      "automation.rate": "8fb04571a73f51199a94d4c93647a3064a681af9cc14072046afdff3f5894f64",
+      "automation.rateTitle": "2ae3dccc0250c2bbe5cd77e6dcb352f8e1fd4bfabdfe9405b3160839711634a2",
+      "automation.daily": "716c9e07f73057d6d16a57e477a6f767848c2eaf0259cd1726eb5e27b9853b1b",
+      "automation.dailyTitle": "8ac1f8a7d6c323211484b04181cec2171994c2449eedc9f7906bca5da9eeff39"
+    }
+  },
+  "automation-lanes.da.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "translationHashes": {
+      "automation.status": "740e4e16afa9fd71bfcc923b87b2e803ff5f524e0483627df45dfcc0f9a0f02b",
+      "automation.lane": "abb0a5ac37417e7d58512999e5a2eaaff3fbd66e76ef9ee2262f84d47bbec31c",
+      "automation.accessibleStatus": "5b6a69758b3b9872055ce80f8db95ada661ffb043206cd6ce98084ffc4a21e3f",
+      "automation.waitingLane": "0628310d2e7bad0c83b72e0d739c86fb0237ba2c4b34551b1749eea39b524415",
+      "automation.missingDecorations": "f90ebf0a1fc83b72c595af38d028228cf93a8d78959374532787cd75a440a555",
+      "automation.nextCheck": "687a77acd3de3241648fff6fa243d97092c320c2a65512f3121510066db4269e",
+      "automation.timeLeft": "83d42105d9b1044618b04a3a14e29e2b83a67d34d83aa841634838bb97370595",
+      "automation.rate": "b8a2be8c4ce0fd9f764be14ec7651ddb34ce68d90b5eae92c54dc7166a67dce4",
+      "automation.rateTitle": "10a3610475e3fd22e085116ad96bc32793d61bea6a79dbe9ee319b3b4326dec7",
+      "automation.daily": "5afebb7506661efbeb55596a79be344c5bc49a075d7f53f8d31a92826ee45643",
+      "automation.dailyTitle": "188f960e89ff304b8a5ef4084fc0e60569bfd9cd26ca213e543ad6f319134bb2"
+    },
+    "sourceHashes": {
+      "automation.status": "182abe5c3917730ff924e1b364c241f1edd6255f936857e3d860a0b344250af5",
+      "automation.lane": "4ad70d73d5afb9bef2393836a731074f80a1cd602243f3758a1bd7f0c775aff0",
+      "automation.accessibleStatus": "65e6caa7fe754fdb1318ca360a1b463550051ae633d34a5792ac59ebb3979a3b",
+      "automation.waitingLane": "20bc05a9180bdc5a124eeb95efc0dae4e824dc24dc04404a92dfecfdb5c50dfc",
+      "automation.missingDecorations": "93158079a1c772677535449bea409cb7e4d141e37a0e156eb70410fc5c69caab",
+      "automation.nextCheck": "2fc4d01056ac79572ada7aaa1033487f727d18fd7d8f817fb77c9f2d7690a514",
+      "automation.timeLeft": "a6b154c80ca2ca8330352187790c09ed7c8a1258177006ba72f3d5fbbd63d988",
+      "automation.rate": "8fb04571a73f51199a94d4c93647a3064a681af9cc14072046afdff3f5894f64",
+      "automation.rateTitle": "2ae3dccc0250c2bbe5cd77e6dcb352f8e1fd4bfabdfe9405b3160839711634a2",
+      "automation.daily": "716c9e07f73057d6d16a57e477a6f767848c2eaf0259cd1726eb5e27b9853b1b",
+      "automation.dailyTitle": "8ac1f8a7d6c323211484b04181cec2171994c2449eedc9f7906bca5da9eeff39"
+    }
+  },
+  "automation-lanes.no.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "translationHashes": {
+      "automation.status": "094937f4c28a2f7c0720d950ed35fe24e5e0d0fa05cddcce8d78770b8f8f1f9d",
+      "automation.lane": "b3f9b5c57fe4e300fa4f8b5d9f86dbc0783ad121397eaf69fca46ca367216ea6",
+      "automation.accessibleStatus": "5b6a69758b3b9872055ce80f8db95ada661ffb043206cd6ce98084ffc4a21e3f",
+      "automation.waitingLane": "192c6ea69b47fc56d385d9cac204444a65149ff753424cab7f6b96ed4aacbb3c",
+      "automation.missingDecorations": "2a90b2567a1913e9a7ec0c9ada6ad9e518cd39166fe254eb842e05e8411c5a5b",
+      "automation.nextCheck": "e6fecb1d636290f1f3202ed42a4b7fe78d7e20d6d7a8dd951f03cefa83c9b6b5",
+      "automation.timeLeft": "a1a826f8081bfc91930941c78b3a3abf7211d44820c94d824446d0d82d8e7242",
+      "automation.rate": "55943cf96f5748dabfd9a5b3301e362fbb4d4223be37226112e13082837360e7",
+      "automation.rateTitle": "cd8b69f1ffd676b768c255abfc208c85d0f1f4561adf78b7235ad4585746b40c",
+      "automation.daily": "128a4bfae8b88574b1259be4f907c139e472b2639f96dabfbfd148319a701275",
+      "automation.dailyTitle": "8b87e06a57f181fb2436e0525e9038dad4b62082ab4a7c7d406bcdfb069d4883"
+    },
+    "sourceHashes": {
+      "automation.status": "182abe5c3917730ff924e1b364c241f1edd6255f936857e3d860a0b344250af5",
+      "automation.lane": "4ad70d73d5afb9bef2393836a731074f80a1cd602243f3758a1bd7f0c775aff0",
+      "automation.accessibleStatus": "65e6caa7fe754fdb1318ca360a1b463550051ae633d34a5792ac59ebb3979a3b",
+      "automation.waitingLane": "20bc05a9180bdc5a124eeb95efc0dae4e824dc24dc04404a92dfecfdb5c50dfc",
+      "automation.missingDecorations": "93158079a1c772677535449bea409cb7e4d141e37a0e156eb70410fc5c69caab",
+      "automation.nextCheck": "2fc4d01056ac79572ada7aaa1033487f727d18fd7d8f817fb77c9f2d7690a514",
+      "automation.timeLeft": "a6b154c80ca2ca8330352187790c09ed7c8a1258177006ba72f3d5fbbd63d988",
+      "automation.rate": "8fb04571a73f51199a94d4c93647a3064a681af9cc14072046afdff3f5894f64",
+      "automation.rateTitle": "2ae3dccc0250c2bbe5cd77e6dcb352f8e1fd4bfabdfe9405b3160839711634a2",
+      "automation.daily": "716c9e07f73057d6d16a57e477a6f767848c2eaf0259cd1726eb5e27b9853b1b",
+      "automation.dailyTitle": "8ac1f8a7d6c323211484b04181cec2171994c2449eedc9f7906bca5da9eeff39"
+    }
+  },
+  "automation-lanes.zh-CN.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "translationHashes": {
+      "automation.status": "71dde28bf097e6602b72272b2009fde908e7b684c93cdaa0cf8c9018c81d09f7",
+      "automation.lane": "709e4a59b750bf598c090afe4160a90614efd5d8c194d58ae8eed3d6ddecf7d1",
+      "automation.accessibleStatus": "05b1db897400a664b1b8941dbb2c9cd9bf7afb3dc6fe5fc9046e95c88a6d6c08",
+      "automation.waitingLane": "585271200df9393cf8d83b97204a2bdaee83f5bf9e9fad9b10247a4c18aec86d",
+      "automation.missingDecorations": "c37df5988589863cf363ea9c499464e24ac10ea5ad3a12b3dfc6bf772804ff6d",
+      "automation.nextCheck": "293ae94fc2579ad212bc5501d4e2c3446c8b81fa47895869e89add4aa578b806",
+      "automation.timeLeft": "4184f0e98a59add868e56a14722d374ad9908329373b8de770efbd5cf8329d1a",
+      "automation.rate": "f66b54452682a2d4afc2ed00e6654a72d763182b05b91971e355115850e8a748",
+      "automation.rateTitle": "10b70828ec3b68bdf854e75a634093286c83de443391ef6725f728e1a5f3ba77",
+      "automation.daily": "f2d6d6206db019cd02930842ec770b3b54bb4f82173fc8c56273a2a42e87250d",
+      "automation.dailyTitle": "b99d49bcbc1d9e5bf7f6d70364f7463d92039a1823586fe672766e7ed296b1f9"
+    },
+    "sourceHashes": {
+      "automation.status": "182abe5c3917730ff924e1b364c241f1edd6255f936857e3d860a0b344250af5",
+      "automation.lane": "4ad70d73d5afb9bef2393836a731074f80a1cd602243f3758a1bd7f0c775aff0",
+      "automation.accessibleStatus": "65e6caa7fe754fdb1318ca360a1b463550051ae633d34a5792ac59ebb3979a3b",
+      "automation.waitingLane": "20bc05a9180bdc5a124eeb95efc0dae4e824dc24dc04404a92dfecfdb5c50dfc",
+      "automation.missingDecorations": "93158079a1c772677535449bea409cb7e4d141e37a0e156eb70410fc5c69caab",
+      "automation.nextCheck": "2fc4d01056ac79572ada7aaa1033487f727d18fd7d8f817fb77c9f2d7690a514",
+      "automation.timeLeft": "a6b154c80ca2ca8330352187790c09ed7c8a1258177006ba72f3d5fbbd63d988",
+      "automation.rate": "8fb04571a73f51199a94d4c93647a3064a681af9cc14072046afdff3f5894f64",
+      "automation.rateTitle": "2ae3dccc0250c2bbe5cd77e6dcb352f8e1fd4bfabdfe9405b3160839711634a2",
+      "automation.daily": "716c9e07f73057d6d16a57e477a6f767848c2eaf0259cd1726eb5e27b9853b1b",
+      "automation.dailyTitle": "8ac1f8a7d6c323211484b04181cec2171994c2449eedc9f7906bca5da9eeff39"
+    }
+  },
+  "automation-lanes.nl.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "translationHashes": {
+      "automation.status": "8fb087101e9a875b985d1d4c3309dad6fa4819982719ad4fd6749aaf66a23258",
+      "automation.lane": "376405fb5da68866741230f89aacdd61067a377948a48808ec21f2d1d446b5d2",
+      "automation.accessibleStatus": "775330f9ba062ebabfff7c5aebf9790e692ceb0ef06e1cc223393864b30b369f",
+      "automation.waitingLane": "a2bfd02a89e60abf9dbffd23e61428f9a0a9d0711c9a3329148d18bf7a629ba8",
+      "automation.missingDecorations": "a658aa4927466450f8300f2c0bcf916dcb7134e0fdf7df3899d1e1cbffdbe496",
+      "automation.nextCheck": "ab30660f5c3852815dbcca3352303feff95d474765de00e2eb912546cbf4bd49",
+      "automation.timeLeft": "c4d704236d4f4aad23b4b98b0149c6538d7f203249646e1f64f97a34feefeae4",
+      "automation.rate": "62f4c6fb4a7b154196464f14fe93c8d1d99c1bcf0ef5efddf5623095aeb56573",
+      "automation.rateTitle": "d89b8a97f6e5dfd60fe33c3b75b587dffd217cc3f8225e8a1e29a5dc5cec99b9",
+      "automation.daily": "0ac87f1a14a8fbb5d3bfbc8ad47f835509aa87904f95a31d8e44a95606c67d9f",
+      "automation.dailyTitle": "66bd02327f93edf4acda14ba3ec665a36379466f2de3309675d57d4031cb0b69"
+    },
+    "sourceHashes": {
+      "automation.status": "182abe5c3917730ff924e1b364c241f1edd6255f936857e3d860a0b344250af5",
+      "automation.lane": "4ad70d73d5afb9bef2393836a731074f80a1cd602243f3758a1bd7f0c775aff0",
+      "automation.accessibleStatus": "65e6caa7fe754fdb1318ca360a1b463550051ae633d34a5792ac59ebb3979a3b",
+      "automation.waitingLane": "20bc05a9180bdc5a124eeb95efc0dae4e824dc24dc04404a92dfecfdb5c50dfc",
+      "automation.missingDecorations": "93158079a1c772677535449bea409cb7e4d141e37a0e156eb70410fc5c69caab",
+      "automation.nextCheck": "2fc4d01056ac79572ada7aaa1033487f727d18fd7d8f817fb77c9f2d7690a514",
+      "automation.timeLeft": "a6b154c80ca2ca8330352187790c09ed7c8a1258177006ba72f3d5fbbd63d988",
+      "automation.rate": "8fb04571a73f51199a94d4c93647a3064a681af9cc14072046afdff3f5894f64",
+      "automation.rateTitle": "2ae3dccc0250c2bbe5cd77e6dcb352f8e1fd4bfabdfe9405b3160839711634a2",
+      "automation.daily": "716c9e07f73057d6d16a57e477a6f767848c2eaf0259cd1726eb5e27b9853b1b",
+      "automation.dailyTitle": "8ac1f8a7d6c323211484b04181cec2171994c2449eedc9f7906bca5da9eeff39"
+    }
+  },
+  "automation-lanes.ja.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "translationHashes": {
+      "automation.status": "065a3ffc08d7037ebf6ea3ec90e27b5822c4e25ddecaa19296967ad6e99fb24b",
+      "automation.lane": "1802fe5a3634f797777cfd9baf0a8d9184c706cfbf85109f7dfd3e2595f88560",
+      "automation.accessibleStatus": "f9c748497ef1fa35de904e21cce192f7f1a967726d428d84dfc8f5fb8da7aa77",
+      "automation.waitingLane": "6eff00a572e12d6eb0ec40248490f0fb7c04d25fd066c396378913aec6d6f7d9",
+      "automation.missingDecorations": "ae4f3e1d67b3d067c8b0694d9dc02c7b477434224765516a061e54da6e37357d",
+      "automation.nextCheck": "858d6797171c5d6aa45abafa1b1beee1a2facd66888571c1c9f9df4ced13c838",
+      "automation.timeLeft": "0243cc302d63007ab30669ebb964895802d7a52d911d1c76268c92da9d16590a",
+      "automation.rate": "a0363aa12ae897f1be02cfc5e902ccc2e1aa8cf21dcdd3990eb71f0c9938ec77",
+      "automation.rateTitle": "514e224c76a507b5eeed2823e59c9c0b7edd3e22bed9708adb104699859e2cce",
+      "automation.daily": "1aff3279fc645d0d10a4b0aa05ed82a4250c8bd318f678409b7b83e5d6c3ad8d",
+      "automation.dailyTitle": "1bb85b6016a4ccbc5ff2eaa39eafd6847e31e7e04f366fb714cc736382d5b31f"
+    },
+    "sourceHashes": {
+      "automation.status": "182abe5c3917730ff924e1b364c241f1edd6255f936857e3d860a0b344250af5",
+      "automation.lane": "4ad70d73d5afb9bef2393836a731074f80a1cd602243f3758a1bd7f0c775aff0",
+      "automation.accessibleStatus": "65e6caa7fe754fdb1318ca360a1b463550051ae633d34a5792ac59ebb3979a3b",
+      "automation.waitingLane": "20bc05a9180bdc5a124eeb95efc0dae4e824dc24dc04404a92dfecfdb5c50dfc",
+      "automation.missingDecorations": "93158079a1c772677535449bea409cb7e4d141e37a0e156eb70410fc5c69caab",
+      "automation.nextCheck": "2fc4d01056ac79572ada7aaa1033487f727d18fd7d8f817fb77c9f2d7690a514",
+      "automation.timeLeft": "a6b154c80ca2ca8330352187790c09ed7c8a1258177006ba72f3d5fbbd63d988",
+      "automation.rate": "8fb04571a73f51199a94d4c93647a3064a681af9cc14072046afdff3f5894f64",
+      "automation.rateTitle": "2ae3dccc0250c2bbe5cd77e6dcb352f8e1fd4bfabdfe9405b3160839711634a2",
+      "automation.daily": "716c9e07f73057d6d16a57e477a6f767848c2eaf0259cd1726eb5e27b9853b1b",
+      "automation.dailyTitle": "8ac1f8a7d6c323211484b04181cec2171994c2449eedc9f7906bca5da9eeff39"
+    }
+  },
+  "automation-lanes.tr.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "translationHashes": {
+      "automation.status": "82725ca41fc4f42396c4732e0b88890f751148f9eaa3ac118ed545e0982b91b2",
+      "automation.lane": "88cd2c1664fb29beae9db93be00924721155c846fe0f4c79a8bd890935cd5aef",
+      "automation.accessibleStatus": "2a53e0dab331461f8b90f12193f1c1c8b528284d1af1f52a009f79215508b44b",
+      "automation.waitingLane": "808ab518c684eabca0464574152aa2dbf0bf9527cc65dd8ce3730d926fbc9599",
+      "automation.missingDecorations": "a7c98ed30022f1f4fa6d4cfee13372de38b79aff60499abd8223fa5a26a5c2e2",
+      "automation.nextCheck": "028d9786c04a1ce25c372e049e869c018b4f9b3a51de5c170196a3f4ea76da2a",
+      "automation.timeLeft": "abd50a37448726c1d8407bea960ddbb0a8a91f919ffb817546ba7ee8ea1c01a6",
+      "automation.rate": "86931380345d4f945bd1e53bd0c0b55d9d8a99bdc5cee60e0242fe828f370282",
+      "automation.rateTitle": "9c47b0d13ad56700a024d9d0d42cee976cc695897ef66c8a68199adcafe672cc",
+      "automation.daily": "49bcd636060c5c5e2596986c6eb7b769f5b78f952d0618f895606fb9511376ab",
+      "automation.dailyTitle": "ef0113496842aa9c2999479a958e8d51db47e8e54b97d99fa34c456c4bc0c203"
+    },
+    "sourceHashes": {
+      "automation.status": "182abe5c3917730ff924e1b364c241f1edd6255f936857e3d860a0b344250af5",
+      "automation.lane": "4ad70d73d5afb9bef2393836a731074f80a1cd602243f3758a1bd7f0c775aff0",
+      "automation.accessibleStatus": "65e6caa7fe754fdb1318ca360a1b463550051ae633d34a5792ac59ebb3979a3b",
+      "automation.waitingLane": "20bc05a9180bdc5a124eeb95efc0dae4e824dc24dc04404a92dfecfdb5c50dfc",
+      "automation.missingDecorations": "93158079a1c772677535449bea409cb7e4d141e37a0e156eb70410fc5c69caab",
+      "automation.nextCheck": "2fc4d01056ac79572ada7aaa1033487f727d18fd7d8f817fb77c9f2d7690a514",
+      "automation.timeLeft": "a6b154c80ca2ca8330352187790c09ed7c8a1258177006ba72f3d5fbbd63d988",
+      "automation.rate": "8fb04571a73f51199a94d4c93647a3064a681af9cc14072046afdff3f5894f64",
+      "automation.rateTitle": "2ae3dccc0250c2bbe5cd77e6dcb352f8e1fd4bfabdfe9405b3160839711634a2",
+      "automation.daily": "716c9e07f73057d6d16a57e477a6f767848c2eaf0259cd1726eb5e27b9853b1b",
+      "automation.dailyTitle": "8ac1f8a7d6c323211484b04181cec2171994c2449eedc9f7906bca5da9eeff39"
+    }
+  },
+  "automation-lanes.lt.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "translationHashes": {
+      "automation.status": "6abe3c370ee0906626a514083b00790b42eaa55627f0f3d34fd2b49fe2469b46",
+      "automation.lane": "ac24eea5ae90c3239697d70df89bf4415e0eb414b17fa02daf3e34b5b947f187",
+      "automation.accessibleStatus": "5ac3c373c29ab628c45eca10081621edb8b84c921332127458827f3653bb40a2",
+      "automation.waitingLane": "9899b7564f9c9a7d878c8fc5dbabadd1587aa5b2cff6d8ee2cca7f64215c2731",
+      "automation.missingDecorations": "1fd80dfc54f6d6ddb91f024bb8ee1f053b9c7d63003ab916288a4ea1ec3463d4",
+      "automation.nextCheck": "d422adbc08dd4b39a40baf7721279c24a352af5242895c8d2f978f9d05b02e48",
+      "automation.timeLeft": "27d41583d1b3c2c18e4593c66e0e946e37c8922a8d0ddd799ac4940eb22fce71",
+      "automation.rate": "85fa0672f695d58a53a763015d6061356c91f5b587e610ac3aa0cbf294c22703",
+      "automation.rateTitle": "4fb742fef011f3e0746af620c7ae41f15586bcf640d85de4d515cde6d4ec9a6b",
+      "automation.daily": "abaf95ddc87d97eeae0d5e7aa0e6d1f8b35c892ac8d64809e003ea768b23c30d",
+      "automation.dailyTitle": "43a31afaf2f8b625abb033c7f16d4bd99b74e1740c8bf18f649e7b441dc92a48"
+    },
+    "sourceHashes": {
+      "automation.status": "182abe5c3917730ff924e1b364c241f1edd6255f936857e3d860a0b344250af5",
+      "automation.lane": "4ad70d73d5afb9bef2393836a731074f80a1cd602243f3758a1bd7f0c775aff0",
+      "automation.accessibleStatus": "65e6caa7fe754fdb1318ca360a1b463550051ae633d34a5792ac59ebb3979a3b",
+      "automation.waitingLane": "20bc05a9180bdc5a124eeb95efc0dae4e824dc24dc04404a92dfecfdb5c50dfc",
+      "automation.missingDecorations": "93158079a1c772677535449bea409cb7e4d141e37a0e156eb70410fc5c69caab",
+      "automation.nextCheck": "2fc4d01056ac79572ada7aaa1033487f727d18fd7d8f817fb77c9f2d7690a514",
+      "automation.timeLeft": "a6b154c80ca2ca8330352187790c09ed7c8a1258177006ba72f3d5fbbd63d988",
+      "automation.rate": "8fb04571a73f51199a94d4c93647a3064a681af9cc14072046afdff3f5894f64",
+      "automation.rateTitle": "2ae3dccc0250c2bbe5cd77e6dcb352f8e1fd4bfabdfe9405b3160839711634a2",
+      "automation.daily": "716c9e07f73057d6d16a57e477a6f767848c2eaf0259cd1726eb5e27b9853b1b",
+      "automation.dailyTitle": "8ac1f8a7d6c323211484b04181cec2171994c2449eedc9f7906bca5da9eeff39"
+    }
+  },
+  "automation-lanes.hu.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "translationHashes": {
+      "automation.status": "7dbb243fc3eb6c6de9340a54e3902a2ca4bf5e85e8a865ca28566d0ac5938c50",
+      "automation.lane": "fa81deda0281291139bb9099e3162d7d42f63dab5444636f8f5d4be1f199a32b",
+      "automation.accessibleStatus": "0f8f0ceef0bc7fef9f3618109470456258442faa1142e3432997d4d9bc996d74",
+      "automation.waitingLane": "44f73f2522dcadafd2f6e42cfd409d47ceb46c961ea99df0d0795461523540e3",
+      "automation.missingDecorations": "47f7ff7654e1ce93cde988d365a1957e3451fcb1180e27276d3992b61c2c8493",
+      "automation.nextCheck": "f8112d244459597cb427b17057bf1f3572335d462ced271fc06534dead941ec3",
+      "automation.timeLeft": "1bd6f846a7e708c69c7b42ee5a7383f7f7abfedd5e9afd3c1aa184ce7627b88f",
+      "automation.rate": "4cb3c91680eaa47744ac8563476329224cf0b767b9409ca0a63a5e2a6a66d35a",
+      "automation.rateTitle": "da9bbd0bd3cbb21e6eb56eb994689817d2e845f5f846b44daf2502a2b54c044c",
+      "automation.daily": "9a9b34649c1c236710294935d4d56fa4dad70eb1da10ac0264efb13ba626a07e",
+      "automation.dailyTitle": "9858f989805b7a538c93213fb6fd860c092a970a32390cc22495dec13f8dbf82"
+    },
+    "sourceHashes": {
+      "automation.status": "182abe5c3917730ff924e1b364c241f1edd6255f936857e3d860a0b344250af5",
+      "automation.lane": "4ad70d73d5afb9bef2393836a731074f80a1cd602243f3758a1bd7f0c775aff0",
+      "automation.accessibleStatus": "65e6caa7fe754fdb1318ca360a1b463550051ae633d34a5792ac59ebb3979a3b",
+      "automation.waitingLane": "20bc05a9180bdc5a124eeb95efc0dae4e824dc24dc04404a92dfecfdb5c50dfc",
+      "automation.missingDecorations": "93158079a1c772677535449bea409cb7e4d141e37a0e156eb70410fc5c69caab",
+      "automation.nextCheck": "2fc4d01056ac79572ada7aaa1033487f727d18fd7d8f817fb77c9f2d7690a514",
+      "automation.timeLeft": "a6b154c80ca2ca8330352187790c09ed7c8a1258177006ba72f3d5fbbd63d988",
+      "automation.rate": "8fb04571a73f51199a94d4c93647a3064a681af9cc14072046afdff3f5894f64",
+      "automation.rateTitle": "2ae3dccc0250c2bbe5cd77e6dcb352f8e1fd4bfabdfe9405b3160839711634a2",
+      "automation.daily": "716c9e07f73057d6d16a57e477a6f767848c2eaf0259cd1726eb5e27b9853b1b",
+      "automation.dailyTitle": "8ac1f8a7d6c323211484b04181cec2171994c2449eedc9f7906bca5da9eeff39"
+    }
+  },
+  "automation-lanes.pt.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "translationHashes": {
+      "automation.status": "a743fd64b985cce89927324597d184daf1dee9986dc4298fcc3d43f46a4f59da",
+      "automation.lane": "ce2c5858471ba09e65ed2e39707f3d70847bbc8a4523673132248cf932161cc7",
+      "automation.accessibleStatus": "238205447f57f7d2eb8651d5d42f2027ad8f46de164a09868393c34dfd7d1eb5",
+      "automation.waitingLane": "026db2f44abf900f787c5c9c5e0a2f2274ae8b54727a0d00c4efe16faffe727a",
+      "automation.missingDecorations": "d0f6efa6f250770bf39b7aabfc0897964fc6005a58bde6f3ea09e6d1a91f2fea",
+      "automation.nextCheck": "99e83852686b692dabfd36e03793a457c5cfd8891ce5e2cd3bb21cd98a23d006",
+      "automation.timeLeft": "ba05f310b8318525bad12665cce27a1aa1f040e8e4cee02d5d5a25c3c0c18738",
+      "automation.rate": "3bdb5363a8dc92ebc5b501cbedf3a93ae6a1a1a434d3ef7fb85841c58fa7e781",
+      "automation.rateTitle": "cfd150590ad01819fff2f18e46d81a176c4a7aec4b286231db5fcbff7ddd6c55",
+      "automation.daily": "76a7f16e6187839ad8c085a6a44c3498664b3d670ee4d950674664f39065a4b3",
+      "automation.dailyTitle": "bba2a07742137cb8cf8381bd18d16b5ee8db56d8a96e1c78e2b3942892be8371"
+    },
+    "sourceHashes": {
+      "automation.status": "182abe5c3917730ff924e1b364c241f1edd6255f936857e3d860a0b344250af5",
+      "automation.lane": "4ad70d73d5afb9bef2393836a731074f80a1cd602243f3758a1bd7f0c775aff0",
+      "automation.accessibleStatus": "65e6caa7fe754fdb1318ca360a1b463550051ae633d34a5792ac59ebb3979a3b",
+      "automation.waitingLane": "20bc05a9180bdc5a124eeb95efc0dae4e824dc24dc04404a92dfecfdb5c50dfc",
+      "automation.missingDecorations": "93158079a1c772677535449bea409cb7e4d141e37a0e156eb70410fc5c69caab",
+      "automation.nextCheck": "2fc4d01056ac79572ada7aaa1033487f727d18fd7d8f817fb77c9f2d7690a514",
+      "automation.timeLeft": "a6b154c80ca2ca8330352187790c09ed7c8a1258177006ba72f3d5fbbd63d988",
+      "automation.rate": "8fb04571a73f51199a94d4c93647a3064a681af9cc14072046afdff3f5894f64",
+      "automation.rateTitle": "2ae3dccc0250c2bbe5cd77e6dcb352f8e1fd4bfabdfe9405b3160839711634a2",
+      "automation.daily": "716c9e07f73057d6d16a57e477a6f767848c2eaf0259cd1726eb5e27b9853b1b",
+      "automation.dailyTitle": "8ac1f8a7d6c323211484b04181cec2171994c2449eedc9f7906bca5da9eeff39"
+    }
+  },
+  "automation-lanes.sk.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "translationHashes": {
+      "automation.status": "a9e07f8202fcd60ff7d131848133e4873bcde790942fa9b933ccc97a91c845be",
+      "automation.lane": "e98a8f4e66b66f5580dea37d587b5fd56f663a5b0f865b00e435da84ac36e853",
+      "automation.accessibleStatus": "b5d71ce0be57b68aa881d1313c33bb01b2a1012dc08cfe8eda66572b794d1e3c",
+      "automation.waitingLane": "c565e1bbb4594e1b25448a94ba2cdd8a7938f47ccf6f140385d45114438cf0f2",
+      "automation.missingDecorations": "8158e2f43b7885a9f6adb3cb743dc4ead8a8003f5b8ce41c1ff19599dc42ee56",
+      "automation.nextCheck": "bf9fe829f0fcfb9b290b2ea61df09bca91f21dcdb3590def7bffb7b46c685993",
+      "automation.timeLeft": "ba542327e71dfbf749ead01662275ed20a94382a654b30a222d1858bbbdf5b28",
+      "automation.rate": "22172617f219e6048cb2c3bcb7ebbbb5ee479ddf70d465a19998e0af4abc8cb1",
+      "automation.rateTitle": "3d62c299f8601b7bd6afde48fea77cf55009caf7867161744a332503358daecb",
+      "automation.daily": "4f5adaeded303490e08a121a93dd276af13e5a3f2310d3088a9fb7b617c6b7fd",
+      "automation.dailyTitle": "32d0f88e3840b5dfbd89b7a2cf080eebdba80f1d5ce27360b87f25c66b62886e"
+    },
+    "sourceHashes": {
+      "automation.status": "182abe5c3917730ff924e1b364c241f1edd6255f936857e3d860a0b344250af5",
+      "automation.lane": "4ad70d73d5afb9bef2393836a731074f80a1cd602243f3758a1bd7f0c775aff0",
+      "automation.accessibleStatus": "65e6caa7fe754fdb1318ca360a1b463550051ae633d34a5792ac59ebb3979a3b",
+      "automation.waitingLane": "20bc05a9180bdc5a124eeb95efc0dae4e824dc24dc04404a92dfecfdb5c50dfc",
+      "automation.missingDecorations": "93158079a1c772677535449bea409cb7e4d141e37a0e156eb70410fc5c69caab",
+      "automation.nextCheck": "2fc4d01056ac79572ada7aaa1033487f727d18fd7d8f817fb77c9f2d7690a514",
+      "automation.timeLeft": "a6b154c80ca2ca8330352187790c09ed7c8a1258177006ba72f3d5fbbd63d988",
+      "automation.rate": "8fb04571a73f51199a94d4c93647a3064a681af9cc14072046afdff3f5894f64",
+      "automation.rateTitle": "2ae3dccc0250c2bbe5cd77e6dcb352f8e1fd4bfabdfe9405b3160839711634a2",
+      "automation.daily": "716c9e07f73057d6d16a57e477a6f767848c2eaf0259cd1726eb5e27b9853b1b",
+      "automation.dailyTitle": "8ac1f8a7d6c323211484b04181cec2171994c2449eedc9f7906bca5da9eeff39"
+    }
+  },
+  "automation-lanes.it.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "translationHashes": {
+      "automation.status": "28d57f02df0f2b067748454dc7d6021b8c421a9ea1cc843b1e6a19089610043d",
+      "automation.lane": "252c6bcfc3154f5cd08b9dc34983f283873bf26caa39ae93d2b99ff9dd42b29a",
+      "automation.accessibleStatus": "9a6fb3d31f3158cd9f73a60dd3082a930e5d5a8c41bf346282d6edf4e5e3e5f3",
+      "automation.waitingLane": "bcac0c209fc46cc06a6afff89e9467e605923dd953bd56f3b6c37de5e965fef1",
+      "automation.missingDecorations": "4035d128974c4f34b9b9e4642cf21e88a4d50cdde49a1a821331c0ee82df2ccd",
+      "automation.nextCheck": "2feaf67649aa9615de4c59fedb6d80c036914e8fba1fb3b5f184ef11da8e0e2b",
+      "automation.timeLeft": "c13deedcafc2fb12bab6b45ff2e1ea783b938c9e5d764c47dcba12c3f275ffea",
+      "automation.rate": "78b986fa901bd0a26d1ffc630f002d7cf718bef28a9f34cd86c5d07a6b19746f",
+      "automation.rateTitle": "1c1ec2eda5aae9c5ddab28bba8f6a3ee018d04f4000e46fa91c6142755b3d70c",
+      "automation.daily": "b6d41800a6e89bc61bf4bfa6f80fc01a22a2abeb8e07e93e61cc63d5b13e2054",
+      "automation.dailyTitle": "9d0fb3ee2fdcd4be029b193be9a244c1147ced629e8879d1df46ee869682d487"
+    },
+    "sourceHashes": {
+      "automation.status": "182abe5c3917730ff924e1b364c241f1edd6255f936857e3d860a0b344250af5",
+      "automation.lane": "4ad70d73d5afb9bef2393836a731074f80a1cd602243f3758a1bd7f0c775aff0",
+      "automation.accessibleStatus": "65e6caa7fe754fdb1318ca360a1b463550051ae633d34a5792ac59ebb3979a3b",
+      "automation.waitingLane": "20bc05a9180bdc5a124eeb95efc0dae4e824dc24dc04404a92dfecfdb5c50dfc",
+      "automation.missingDecorations": "93158079a1c772677535449bea409cb7e4d141e37a0e156eb70410fc5c69caab",
+      "automation.nextCheck": "2fc4d01056ac79572ada7aaa1033487f727d18fd7d8f817fb77c9f2d7690a514",
+      "automation.timeLeft": "a6b154c80ca2ca8330352187790c09ed7c8a1258177006ba72f3d5fbbd63d988",
+      "automation.rate": "8fb04571a73f51199a94d4c93647a3064a681af9cc14072046afdff3f5894f64",
+      "automation.rateTitle": "2ae3dccc0250c2bbe5cd77e6dcb352f8e1fd4bfabdfe9405b3160839711634a2",
+      "automation.daily": "716c9e07f73057d6d16a57e477a6f767848c2eaf0259cd1726eb5e27b9853b1b",
+      "automation.dailyTitle": "8ac1f8a7d6c323211484b04181cec2171994c2449eedc9f7906bca5da9eeff39"
+    }
+  },
+  "automation-lanes.pl.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "translationHashes": {
+      "automation.status": "8f3a8e19b66b3f814de0777480e7de34d4b6aad2a24f23dcfb986d841f3c02aa",
+      "automation.lane": "6b3a4b34498669725cd962c8d8525a73857e6b34866ce71d500a54e59c7544a8",
+      "automation.accessibleStatus": "8a13d67c27d636ef073ac013f407ccb2bec7b860679846c39c8e040175303ab2",
+      "automation.waitingLane": "0b2cdc459bf04cef85cdc1508c97bbcb7e7e3544994024e6275b86a44012c340",
+      "automation.missingDecorations": "03a8c666fd60cf200dc4aa8d3983fcdeaa414babb96730861764d9cf56d88d42",
+      "automation.nextCheck": "4cde5473f10c5aa90e6e961f49500f1ff43ca98548a946525c6c04f1ca11f751",
+      "automation.timeLeft": "cb520f94ec8c53abf0f3f4849e05b34ee69f973b83da431ef54698dafd325d26",
+      "automation.rate": "9436f529a5989601d0aad83a240e91e3217b6be47a19186fc0258937dd02fec2",
+      "automation.rateTitle": "fd09418ec64c27ed77123b24b732811c5a7ce4ba9d13f8ea9b73b6915437c8d7",
+      "automation.daily": "cbe62d32949e0ab99d600bef2cb0650ca742fdbed95f0c6da09cb62f54d2d367",
+      "automation.dailyTitle": "ba5e722962122c0b7b8525c8b651d3f5f6774a8d9845821f1d974bf1efc63fe9"
+    },
+    "sourceHashes": {
+      "automation.status": "182abe5c3917730ff924e1b364c241f1edd6255f936857e3d860a0b344250af5",
+      "automation.lane": "4ad70d73d5afb9bef2393836a731074f80a1cd602243f3758a1bd7f0c775aff0",
+      "automation.accessibleStatus": "65e6caa7fe754fdb1318ca360a1b463550051ae633d34a5792ac59ebb3979a3b",
+      "automation.waitingLane": "20bc05a9180bdc5a124eeb95efc0dae4e824dc24dc04404a92dfecfdb5c50dfc",
+      "automation.missingDecorations": "93158079a1c772677535449bea409cb7e4d141e37a0e156eb70410fc5c69caab",
+      "automation.nextCheck": "2fc4d01056ac79572ada7aaa1033487f727d18fd7d8f817fb77c9f2d7690a514",
+      "automation.timeLeft": "a6b154c80ca2ca8330352187790c09ed7c8a1258177006ba72f3d5fbbd63d988",
+      "automation.rate": "8fb04571a73f51199a94d4c93647a3064a681af9cc14072046afdff3f5894f64",
+      "automation.rateTitle": "2ae3dccc0250c2bbe5cd77e6dcb352f8e1fd4bfabdfe9405b3160839711634a2",
+      "automation.daily": "716c9e07f73057d6d16a57e477a6f767848c2eaf0259cd1726eb5e27b9853b1b",
+      "automation.dailyTitle": "8ac1f8a7d6c323211484b04181cec2171994c2449eedc9f7906bca5da9eeff39"
+    }
+  },
+  "automation-lanes.ru.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "translationHashes": {
+      "automation.status": "e7bb347f3bf6eaef06af0e2a51091458e47ff6b984884932427352dec8c71047",
+      "automation.lane": "16143aef1bfd2e751881f9ee33f75960a7bbe97db6da53560ff94196fcfb0a9a",
+      "automation.accessibleStatus": "4f501207bce9ab137ad697bfec2631ff9dbe141a4fbcaee4d9c40ea7844fe513",
+      "automation.waitingLane": "2163f3b95f094e7b8b73e0a4e652bf63977fbeca609c253dc569c90f24db17c2",
+      "automation.missingDecorations": "3fa6f0adc5c9f715f058e50abbde109f99487ae269672cbfb64ebe50ea3c6669",
+      "automation.nextCheck": "f701b3d24e9c3ec59f84b98c711c70b0bf98f7628d6a1c30f3c5dcde81b7b64f",
+      "automation.timeLeft": "800d390996e2ba004f669397384709edbd7ee1a494470e1effe3c081bbc99b9f",
+      "automation.rate": "4fbc9b842eb320d9e488e4b493e6163a6395d51e72157abf3af2ba4098556eff",
+      "automation.rateTitle": "0f461562a2b2db76edc95e1025abb6bbd5fdbd773cb798e331e935fc5fdeb4ce",
+      "automation.daily": "9efe947a86d5e9def898a827154bebf47ab766cbac13d0993c3e4caef8b739df",
+      "automation.dailyTitle": "c856454d20d88b46e54291ef738c6ad1005821ec2db63c9c73af73a5bc399c3a"
+    },
+    "sourceHashes": {
+      "automation.status": "182abe5c3917730ff924e1b364c241f1edd6255f936857e3d860a0b344250af5",
+      "automation.lane": "4ad70d73d5afb9bef2393836a731074f80a1cd602243f3758a1bd7f0c775aff0",
+      "automation.accessibleStatus": "65e6caa7fe754fdb1318ca360a1b463550051ae633d34a5792ac59ebb3979a3b",
+      "automation.waitingLane": "20bc05a9180bdc5a124eeb95efc0dae4e824dc24dc04404a92dfecfdb5c50dfc",
+      "automation.missingDecorations": "93158079a1c772677535449bea409cb7e4d141e37a0e156eb70410fc5c69caab",
+      "automation.nextCheck": "2fc4d01056ac79572ada7aaa1033487f727d18fd7d8f817fb77c9f2d7690a514",
+      "automation.timeLeft": "a6b154c80ca2ca8330352187790c09ed7c8a1258177006ba72f3d5fbbd63d988",
+      "automation.rate": "8fb04571a73f51199a94d4c93647a3064a681af9cc14072046afdff3f5894f64",
+      "automation.rateTitle": "2ae3dccc0250c2bbe5cd77e6dcb352f8e1fd4bfabdfe9405b3160839711634a2",
+      "automation.daily": "716c9e07f73057d6d16a57e477a6f767848c2eaf0259cd1726eb5e27b9853b1b",
+      "automation.dailyTitle": "8ac1f8a7d6c323211484b04181cec2171994c2449eedc9f7906bca5da9eeff39"
+    }
+  },
+  "automation-lanes.de.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "translationHashes": {
+      "automation.status": "7249da5b906b09c900f586da56e8a6afa38df852879228771d80040afc4a153e",
+      "automation.lane": "0be63d670d7e170790c9237f6075db86b6d57fa02c745f71b316e9bfde5e377d",
+      "automation.accessibleStatus": "05af4071a089c46d8940c639c6a4c40aa6cacbd202c7403f79f467dfa1d98dd9",
+      "automation.waitingLane": "cc8280489e1a42257d11ebe71c645258f63098b5a2032ecdcd0a08288c5e0718",
+      "automation.missingDecorations": "4442b2666b7193a9224c0cf8120420922b1b09dadedb49f50069750886b5b8e4",
+      "automation.nextCheck": "6f1fa1d1ae3d4a84cb9f07880742e849821218b664965c7087cecd3d205cffb2",
+      "automation.timeLeft": "bb3f47d3dd66164ac8719689a2eab34469170536058a4452a9b7760219b354d2",
+      "automation.rate": "cce041070c1af9ba2db0d07115942a8fcc773349d1b87c6d407111461ee9dac7",
+      "automation.rateTitle": "267286e4c25af04a8b8aacfcd39978032615f1e94ffda5a8629cfc4daec98481",
+      "automation.daily": "a74a3ffbf5603ed909ff0e5822d0808962da42db636d7c0cc99a259c545df96b",
+      "automation.dailyTitle": "9c7bafe23681d495724198363f432247a61baf60f6b793ec7cd21895fe5eab4d"
+    },
+    "sourceHashes": {
+      "automation.status": "182abe5c3917730ff924e1b364c241f1edd6255f936857e3d860a0b344250af5",
+      "automation.lane": "4ad70d73d5afb9bef2393836a731074f80a1cd602243f3758a1bd7f0c775aff0",
+      "automation.accessibleStatus": "65e6caa7fe754fdb1318ca360a1b463550051ae633d34a5792ac59ebb3979a3b",
+      "automation.waitingLane": "20bc05a9180bdc5a124eeb95efc0dae4e824dc24dc04404a92dfecfdb5c50dfc",
+      "automation.missingDecorations": "93158079a1c772677535449bea409cb7e4d141e37a0e156eb70410fc5c69caab",
+      "automation.nextCheck": "2fc4d01056ac79572ada7aaa1033487f727d18fd7d8f817fb77c9f2d7690a514",
+      "automation.timeLeft": "a6b154c80ca2ca8330352187790c09ed7c8a1258177006ba72f3d5fbbd63d988",
+      "automation.rate": "8fb04571a73f51199a94d4c93647a3064a681af9cc14072046afdff3f5894f64",
+      "automation.rateTitle": "2ae3dccc0250c2bbe5cd77e6dcb352f8e1fd4bfabdfe9405b3160839711634a2",
+      "automation.daily": "716c9e07f73057d6d16a57e477a6f767848c2eaf0259cd1726eb5e27b9853b1b",
+      "automation.dailyTitle": "8ac1f8a7d6c323211484b04181cec2171994c2449eedc9f7906bca5da9eeff39"
+    }
+  },
+  "automation-lanes.fi.json": {
+    "method": "direct-model-authored",
+    "linguisticReview": "pending",
+    "translationHashes": {
+      "automation.status": "0d55df36f639ee9529b75a569e2bbf3f0e49adc4104ee1d425de6df99e2c43b8",
+      "automation.lane": "757233eb67d89644ad37a356452adb55ce22a83ddca6db8176d80bf30d165f26",
+      "automation.accessibleStatus": "379ccebcb7c043fa2ec3f0b2e7075958b87db220cdb2c0f95f238ec0f4e995e7",
+      "automation.waitingLane": "493a314fde2095dcb502eb1f858970991f2c7ec15a467dd7bb545f3ba1c26b7b",
+      "automation.missingDecorations": "4b104594a4c4cba56b2eb598a10dc2c7a62830bb45ec3418cce7bc6487d9ae07",
+      "automation.nextCheck": "fa23b457232defffa2e53e461b7cdbcf3ad0b85c6ec1ce45bc139d25b5e5a647",
+      "automation.timeLeft": "fa41fd1a281dd919697c46fe9d0d56f97534f87b6b8a893296b499309a4f50ec",
+      "automation.rate": "a707ea864c7928429290353ea73e39337d9259fc5018feed780b2ceea48b89eb",
+      "automation.rateTitle": "5fa7fd100a065209369d5e343bda672e1ed264dc90265d4f3fad2554da72af92",
+      "automation.daily": "7722256578eb263307be748689509fe9c1a99f74d616757d0cf787142d9e6818",
+      "automation.dailyTitle": "4d298ecb5e30b237eeccacc160520cba042321c024cb4c6ad1e37307913803c9"
+    },
+    "sourceHashes": {
+      "automation.status": "182abe5c3917730ff924e1b364c241f1edd6255f936857e3d860a0b344250af5",
+      "automation.lane": "4ad70d73d5afb9bef2393836a731074f80a1cd602243f3758a1bd7f0c775aff0",
+      "automation.accessibleStatus": "65e6caa7fe754fdb1318ca360a1b463550051ae633d34a5792ac59ebb3979a3b",
+      "automation.waitingLane": "20bc05a9180bdc5a124eeb95efc0dae4e824dc24dc04404a92dfecfdb5c50dfc",
+      "automation.missingDecorations": "93158079a1c772677535449bea409cb7e4d141e37a0e156eb70410fc5c69caab",
+      "automation.nextCheck": "2fc4d01056ac79572ada7aaa1033487f727d18fd7d8f817fb77c9f2d7690a514",
+      "automation.timeLeft": "a6b154c80ca2ca8330352187790c09ed7c8a1258177006ba72f3d5fbbd63d988",
+      "automation.rate": "8fb04571a73f51199a94d4c93647a3064a681af9cc14072046afdff3f5894f64",
+      "automation.rateTitle": "2ae3dccc0250c2bbe5cd77e6dcb352f8e1fd4bfabdfe9405b3160839711634a2",
+      "automation.daily": "716c9e07f73057d6d16a57e477a6f767848c2eaf0259cd1726eb5e27b9853b1b",
+      "automation.dailyTitle": "8ac1f8a7d6c323211484b04181cec2171994c2449eedc9f7906bca5da9eeff39"
+    }
   }
 }

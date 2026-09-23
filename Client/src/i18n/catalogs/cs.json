@@ -291,5 +291,16 @@
   "events.historyUnavailable": "Body z předchozích událostí jsou dočasně nedostupné. Pokus se automaticky zopakuje.",
   "events.allPrevious": "Všechny předchozí události",
   "events.points": "body",
-  "events.historyPages": "Dokončené běhy: {count, number} · Stránka {page, number} z {pages, number}"
+  "events.historyPages": "Dokončené běhy: {count, number} · Stránka {page, number} z {pages, number}",
+  "automation.status": "{status, select, complete {Hotovo} completed {Dokončeno} success {Úspěch} failed {Selhalo} error {Chyba} blocked {Zablokováno} gated {Omezeno} retrying {Další pokus} warning {Varování} running {Běží} enabled {Zapnuto} scheduled {Naplánováno} ready {Připraveno} waiting {Čeká} disabled {Vypnuto} idle {Nečinné} armed {Připravené k akci} cooldown {Doba obnovy} defending {Obrana} discovering {Průzkum} evacuating {Evakuace} preparing {Příprava} protected {Chráněno} protecting {Ochrana} recalling {Odvolávání} reconciling {Sladění} refreshing {Obnovování} replenishing {Doplňování} resolving {Řešení} taunting {Provokování} threat {Hrozba} yielding {Ustupuje přednosti} other {Neznámé}}",
+  "automation.lane": "{lane, select, overall {Celkem} crafting {Výroba} logistics {Logistika} attacks {Útoky} cooldowns {Doby obnovy} rage {Zuřivost} defense {Obrana} transfers {Přesuny} tools {Nástroje} combat {Boj} aquamarine_shop {Akvamarínový obchod} builder {Stavba} builder_missing_decorations {Stavební varování} other {Oblast}}",
+  "automation.accessibleStatus": "Stav funkce {feature}",
+  "automation.waitingLane": "Čekání na stav pravidel: {lane, select, crafting {Výroba} logistics {Logistika} khan_attacks {Chán · Útoky} khan_cooldowns {Chán · Doby obnovy} khan_rage {Chán · Zuřivost} khan_defense {Chán · Obrana} beri_transfers {Berimond · Přesuny} beri_attacks {Berimond · Útoky} beri_tools {Berimond · Nástroje} beri_builder {Berimond · Stavba} storm_combat {Bouřné ostrovy · Boj} storm_shop {Akvamarínový obchod} storm_builder {Bouřné ostrovy · Stavba} other {Oblast}}",
+  "automation.missingDecorations": "Cílové dekorace nedostupné ve skladu: {count, number}. Přeskočí se a zbytek cíle pokračuje.",
+  "automation.nextCheck": "{state, select, waiting {Čekání na další naplánovanou kontrolu} due {Další kontrola má proběhnout nyní} other {Další kontrola za {duration}}}",
+  "automation.timeLeft": "Zbývá {duration}",
+  "automation.rate": "{state, select, loading {Načítání četnosti} unavailable {Četnost nedostupná} other {Útoky / hod.: {count, number}}}",
+  "automation.rateTitle": "{state, select, loading {Načítání aktuální četnosti útoků funkce {feature}.} unavailable {Aktuální četnost útoků funkce {feature} není dostupná.} other {Útoky zahájené funkcí {feature} za posledních 60 minut: {count, number}.}}",
+  "automation.daily": "{state, select, loading {Načítání denního počtu} unavailable {Denní počet nedostupný} other {{count, number} od resetu}}",
+  "automation.dailyTitle": "{state, select, loading {Načítání počtu útoků funkce {feature} v aktuální denní relaci.} unavailable {Denní počet útoků funkce {feature} není dostupný, dokud není zaznamenán reset serveru.} dated {Potvrzené útoky zahájené funkcí {feature} od začátku denní počítací relace serveru v {date}: {count, number}.} other {Potvrzené útoky zahájené funkcí {feature} v aktuální denní počítací relaci serveru: {count, number}.}}"
 }

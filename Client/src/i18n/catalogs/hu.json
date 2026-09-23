@@ -291,5 +291,16 @@
   "events.historyUnavailable": "A korábbi eseménypontszámok átmenetileg nem érhetők el. Automatikus újrapróbálkozás.",
   "events.allPrevious": "Minden korábbi esemény",
   "events.points": "pont",
-  "events.historyPages": "Befejezett fordulók: {count, number} · {page, number}. oldal, összesen {pages, number}"
+  "events.historyPages": "Befejezett fordulók: {count, number} · {page, number}. oldal, összesen {pages, number}",
+  "automation.status": "{status, select, complete {Kész} completed {Befejezve} success {Sikeres} failed {Sikertelen} error {Hiba} blocked {Blokkolva} gated {Korlátozva} retrying {Újrapróbálkozás} warning {Figyelmeztetés} running {Fut} enabled {Engedélyezve} scheduled {Ütemezve} ready {Kész} waiting {Várakozás} disabled {Letiltva} idle {Tétlen} armed {Készenlétben} cooldown {Várakozási idő} defending {Védekezik} discovering {Felderít} evacuating {Kiürít} preparing {Előkészít} protected {Védett} protecting {Védelmet biztosít} recalling {Visszahív} reconciling {Egyeztet} refreshing {Frissít} replenishing {Feltölt} resolving {Felold} taunting {Provokál} threat {Fenyegetés} yielding {Elsőbbséget ad} other {Ismeretlen}}",
+  "automation.lane": "{lane, select, overall {Összesített} crafting {Gyártás} logistics {Logisztika} attacks {Támadások} cooldowns {Várakozási idők} rage {Düh} defense {Védelem} transfers {Áthelyezések} tools {Eszközök} combat {Harc} aquamarine_shop {Akvamarinbolt} builder {Építés} builder_missing_decorations {Építési figyelmeztetés} other {Terület}}",
+  "automation.accessibleStatus": "{feature} állapota",
+  "automation.waitingLane": "Várakozás a szabályzat állapotára: {lane, select, crafting {Gyártás} logistics {Logisztika} khan_attacks {Kán · Támadások} khan_cooldowns {Kán · Várakozási idők} khan_rage {Kán · Düh} khan_defense {Kán · Védelem} beri_transfers {Berimond · Áthelyezések} beri_attacks {Berimond · Támadások} beri_tools {Berimond · Eszközök} beri_builder {Berimond · Építés} storm_combat {Vihar-szigetek · Harc} storm_shop {Akvamarinbolt} storm_builder {Vihar-szigetek · Építés} other {Terület}}",
+  "automation.missingDecorations": "A raktárban nem elérhető céldekorációk: {count, number}. Ezek kimaradnak, a cél többi része folytatódik.",
+  "automation.nextCheck": "{state, select, waiting {Várakozás a következő ütemezett ellenőrzésre} due {A következő ellenőrzés most esedékes} other {Következő ellenőrzés {duration} múlva}}",
+  "automation.timeLeft": "Még {duration}",
+  "automation.rate": "{state, select, loading {Gyakoriság betöltése} unavailable {Gyakoriság nem elérhető} other {Támadások / óra: {count, number}}}",
+  "automation.rateTitle": "{state, select, loading {A(z) {feature} aktuális támadási gyakoriságának betöltése.} unavailable {A(z) {feature} aktuális támadási gyakorisága nem érhető el.} other {A(z) {feature} által az elmúlt 60 percben indított támadások: {count, number}.}}",
+  "automation.daily": "{state, select, loading {Napi szám betöltése} unavailable {Napi szám nem elérhető} other {{count, number} a nullázás óta}}",
+  "automation.dailyTitle": "{state, select, loading {A(z) {feature} aktuális napi munkamenetének támadásszáma betöltődik.} unavailable {A(z) {feature} napi támadásszáma nem érhető el, amíg nem észlelhető szervernullázás.} dated {A(z) {feature} által a szerver napi számlálási munkamenetének {date} kezdetétől indított megerősített támadások: {count, number}.} other {A(z) {feature} által a szerver aktuális napi számlálási munkamenetében indított megerősített támadások: {count, number}.}}"
 }

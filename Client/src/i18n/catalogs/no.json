@@ -291,5 +291,16 @@
   "events.historyUnavailable": "Poeng fra tidligere hendelser er midlertidig utilgjengelige. Prøver automatisk på nytt.",
   "events.allPrevious": "Alle tidligere hendelser",
   "events.points": "poeng",
-  "events.historyPages": "Fullførte runder: {count, number} · Side {page, number} av {pages, number}"
+  "events.historyPages": "Fullførte runder: {count, number} · Side {page, number} av {pages, number}",
+  "automation.status": "{status, select, complete {Ferdig} completed {Fullført} success {Vellykket} failed {Mislykket} error {Feil} blocked {Blokkert} gated {Sperret} retrying {Prøver igjen} warning {Advarsel} running {Kjører} enabled {Aktivert} scheduled {Planlagt} ready {Klar} waiting {Venter} disabled {Deaktivert} idle {Inaktiv} armed {Klargjort} cooldown {Nedkjøling} defending {Forsvarer} discovering {Utforsker} evacuating {Evakuerer} preparing {Forbereder} protected {Beskyttet} protecting {Beskytter} recalling {Tilbakekaller} reconciling {Avstemmer} refreshing {Oppdaterer} replenishing {Etterfyller} resolving {Løser} taunting {Provoserer} threat {Trussel} yielding {Gir forrang} other {Ukjent}}",
+  "automation.lane": "{lane, select, overall {Samlet} crafting {Produksjon} logistics {Logistikk} attacks {Angrep} cooldowns {Nedkjølinger} rage {Raseri} defense {Forsvar} transfers {Overføringer} tools {Verktøy} combat {Kamp} aquamarine_shop {Akvamarinbutikk} builder {Bygging} builder_missing_decorations {Byggeadvarsel} other {Del}}",
+  "automation.accessibleStatus": "Status for {feature}",
+  "automation.waitingLane": "Venter på policystatus: {lane, select, crafting {Produksjon} logistics {Logistikk} khan_attacks {Khan · Angrep} khan_cooldowns {Khan · Nedkjølinger} khan_rage {Khan · Raseri} khan_defense {Khan · Forsvar} beri_transfers {Berimond · Overføringer} beri_attacks {Berimond · Angrep} beri_tools {Berimond · Verktøy} beri_builder {Berimond · Bygging} storm_combat {Stormøyene · Kamp} storm_shop {Akvamarinbutikk} storm_builder {Stormøyene · Bygging} other {Del}}",
+  "automation.missingDecorations": "Måldekorasjoner som ikke finnes på lager: {count, number}. De hoppes over mens resten av målet fortsetter.",
+  "automation.nextCheck": "{state, select, waiting {Venter på neste planlagte sjekk} due {Neste sjekk skal skje nå} other {Neste sjekk om {duration}}}",
+  "automation.timeLeft": "{duration} igjen",
+  "automation.rate": "{state, select, loading {Laster frekvens} unavailable {Frekvens utilgjengelig} other {Angrep / time: {count, number}}}",
+  "automation.rateTitle": "{state, select, loading {Laster gjeldende angrepsfrekvens for {feature}.} unavailable {Gjeldende angrepsfrekvens for {feature} er utilgjengelig.} other {Angrep startet av {feature} de siste 60 minuttene: {count, number}.}}",
+  "automation.daily": "{state, select, loading {Laster daglig antall} unavailable {Daglig antall utilgjengelig} other {{count, number} siden nullstilling}}",
+  "automation.dailyTitle": "{state, select, loading {Laster gjeldende daglige angrepstall for {feature}.} unavailable {Det daglige angrepstallet for {feature} er utilgjengelig til en servernullstilling er observert.} dated {Bekreftede angrep startet av {feature} siden serverens daglige telleøkt startet {date}: {count, number}.} other {Bekreftede angrep startet av {feature} i serverens gjeldende daglige telleøkt: {count, number}.}}"
 }

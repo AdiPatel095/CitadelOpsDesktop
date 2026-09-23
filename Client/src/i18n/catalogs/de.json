@@ -291,5 +291,16 @@
   "events.historyUnavailable": "Bisherige Ereignispunktestände sind vorübergehend nicht verfügbar. Automatischer erneuter Versuch.",
   "events.allPrevious": "Alle bisherigen Ereignisse",
   "events.points": "Punkte",
-  "events.historyPages": "Abgeschlossene Durchläufe: {count, number} · Seite {page, number} von {pages, number}"
+  "events.historyPages": "Abgeschlossene Durchläufe: {count, number} · Seite {page, number} von {pages, number}",
+  "automation.status": "{status, select, complete {Fertig} completed {Abgeschlossen} success {Erfolgreich} failed {Fehlgeschlagen} error {Fehler} blocked {Blockiert} gated {Gesperrt} retrying {Erneuter Versuch} warning {Warnung} running {Läuft} enabled {Aktiviert} scheduled {Geplant} ready {Bereit} waiting {Wartet} disabled {Deaktiviert} idle {Untätig} armed {Bereitgestellt} cooldown {Abklingzeit} defending {Verteidigt} discovering {Erkundet} evacuating {Evakuiert} preparing {Bereitet vor} protected {Geschützt} protecting {Schützt} recalling {Ruft zurück} reconciling {Gleicht ab} refreshing {Aktualisiert} replenishing {Füllt auf} resolving {Klärt} taunting {Provoziert} threat {Bedrohung} yielding {Gibt Vorrang} other {Unbekannt}}",
+  "automation.lane": "{lane, select, overall {Gesamt} crafting {Herstellung} logistics {Logistik} attacks {Angriffe} cooldowns {Abklingzeiten} rage {Wut} defense {Verteidigung} transfers {Transfers} tools {Werkzeuge} combat {Kampf} aquamarine_shop {Aquamarinladen} builder {Bau} builder_missing_decorations {Bauwarnung} other {Bereich}}",
+  "automation.accessibleStatus": "Status von {feature}",
+  "automation.waitingLane": "Warten auf Richtlinienstatus: {lane, select, crafting {Herstellung} logistics {Logistik} khan_attacks {Khan · Angriffe} khan_cooldowns {Khan · Abklingzeiten} khan_rage {Khan · Wut} khan_defense {Khan · Verteidigung} beri_transfers {Berimond · Transfers} beri_attacks {Berimond · Angriffe} beri_tools {Berimond · Werkzeuge} beri_builder {Berimond · Bau} storm_combat {Sturminseln · Kampf} storm_shop {Aquamarinladen} storm_builder {Sturminseln · Bau} other {Bereich}}",
+  "automation.missingDecorations": "Nicht im Lager verfügbare Zieldekorationen: {count, number}. Diese werden übersprungen; der Rest des Ziels wird weiter bearbeitet.",
+  "automation.nextCheck": "{state, select, waiting {Warten auf die nächste geplante Prüfung} due {Die nächste Prüfung ist jetzt fällig} other {Nächste Prüfung in {duration}}}",
+  "automation.timeLeft": "Noch {duration}",
+  "automation.rate": "{state, select, loading {Rate wird geladen} unavailable {Rate nicht verfügbar} other {Angriffe / Std.: {count, number}}}",
+  "automation.rateTitle": "{state, select, loading {Die aktuelle Angriffsrate von {feature} wird geladen.} unavailable {Die aktuelle Angriffsrate von {feature} ist nicht verfügbar.} other {Von {feature} in den letzten 60 Minuten gestartete Angriffe: {count, number}.}}",
+  "automation.daily": "{state, select, loading {Tageswert wird geladen} unavailable {Tageswert nicht verfügbar} other {{count, number} seit Zurücksetzung}}",
+  "automation.dailyTitle": "{state, select, loading {Die aktuelle Tagesangriffszahl von {feature} wird geladen.} unavailable {Die Tagesangriffszahl von {feature} ist erst verfügbar, wenn eine Zurücksetzung des Servers beobachtet wurde.} dated {Bestätigte Angriffe von {feature} seit Beginn der täglichen Server-Zählsitzung am {date}: {count, number}.} other {Bestätigte Angriffe von {feature} in der aktuellen täglichen Server-Zählsitzung: {count, number}.}}"
 }

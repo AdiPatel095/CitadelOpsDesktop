@@ -291,5 +291,16 @@
   "events.historyUnavailable": "Очки предыдущих событий временно недоступны. Повторная попытка будет выполнена автоматически.",
   "events.allPrevious": "Все предыдущие события",
   "events.points": "очки",
-  "events.historyPages": "Завершено сессий: {count, number} · Страница {page, number} из {pages, number}"
+  "events.historyPages": "Завершено сессий: {count, number} · Страница {page, number} из {pages, number}",
+  "automation.status": "{status, select, complete {Готово} completed {Завершено} success {Успех} failed {Сбой} error {Ошибка} blocked {Заблокировано} gated {Ограничено} retrying {Повторная попытка} warning {Предупреждение} running {Выполняется} enabled {Включено} scheduled {Запланировано} ready {Готово} waiting {Ожидание} disabled {Отключено} idle {Бездействие} armed {Готов к действию} cooldown {Перезарядка} defending {Оборона} discovering {Разведка} evacuating {Эвакуация} preparing {Подготовка} protected {Под защитой} protecting {Защита} recalling {Отзыв} reconciling {Согласование} refreshing {Обновление} replenishing {Пополнение} resolving {Разрешение} taunting {Провокация} threat {Угроза} yielding {Уступает приоритет} other {Неизвестно}}",
+  "automation.lane": "{lane, select, overall {Общее} crafting {Изготовление} logistics {Логистика} attacks {Атаки} cooldowns {Перезарядки} rage {Ярость} defense {Защита} transfers {Перемещения} tools {Инструменты} combat {Бой} aquamarine_shop {Магазин аквамарина} builder {Строительство} builder_missing_decorations {Предупреждение о строительстве} other {Направление}}",
+  "automation.accessibleStatus": "Статус {feature}",
+  "automation.waitingLane": "Ожидание состояния правил: {lane, select, crafting {Изготовление} logistics {Логистика} khan_attacks {Хан · Атаки} khan_cooldowns {Хан · Перезарядки} khan_rage {Хан · Ярость} khan_defense {Хан · Защита} beri_transfers {Беримонд · Перемещения} beri_attacks {Беримонд · Атаки} beri_tools {Беримонд · Инструменты} beri_builder {Беримонд · Строительство} storm_combat {Штормовые острова · Бой} storm_shop {Магазин аквамарина} storm_builder {Штормовые острова · Строительство} other {Направление}}",
+  "automation.missingDecorations": "Целевых декораций нет на складе: {count, number}. Они пропускаются, а остальная часть цели продолжается.",
+  "automation.nextCheck": "{state, select, waiting {Ожидание следующей запланированной проверки} due {Следующая проверка должна начаться сейчас} other {Следующая проверка через {duration}}}",
+  "automation.timeLeft": "Осталось {duration}",
+  "automation.rate": "{state, select, loading {Загрузка частоты} unavailable {Частота недоступна} other {Атак / ч: {count, number}}}",
+  "automation.rateTitle": "{state, select, loading {Загрузка текущей частоты атак {feature}.} unavailable {Текущая частота атак {feature} недоступна.} other {Атак, запущенных {feature} за последние 60 минут: {count, number}.}}",
+  "automation.daily": "{state, select, loading {Загрузка суточного счётчика} unavailable {Суточный счётчик недоступен} other {{count, number} после сброса}}",
+  "automation.dailyTitle": "{state, select, loading {Загрузка числа атак {feature} в текущей суточной сессии.} unavailable {Суточное число атак {feature} недоступно до наблюдения сброса сервера.} dated {Подтверждённых атак, запущенных {feature} с начала суточной сессии подсчёта сервера {date}: {count, number}.} other {Подтверждённых атак, запущенных {feature} в текущей суточной сессии подсчёта сервера: {count, number}.}}"
 }

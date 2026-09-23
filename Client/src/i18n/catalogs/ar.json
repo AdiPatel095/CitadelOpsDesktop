@@ -291,5 +291,16 @@
   "events.historyUnavailable": "نقاط الأحداث السابقة غير متاحة مؤقتًا. ستتم إعادة المحاولة تلقائيًا.",
   "events.allPrevious": "جميع الأحداث السابقة",
   "events.points": "نقاط",
-  "events.historyPages": "الجولات المكتملة: {count, number} · الصفحة {page, number} من {pages, number}"
+  "events.historyPages": "الجولات المكتملة: {count, number} · الصفحة {page, number} من {pages, number}",
+  "automation.status": "{status, select, complete {مكتمل} completed {اكتمل} success {نجاح} failed {فشل} error {خطأ} blocked {محظور} gated {مقيّد} retrying {إعادة المحاولة} warning {تحذير} running {قيد التشغيل} enabled {مفعّل} scheduled {مجدول} ready {جاهز} waiting {قيد الانتظار} disabled {معطّل} idle {خامل} armed {جاهز للتنفيذ} cooldown {فترة انتظار} defending {يدافع} discovering {يستكشف} evacuating {يُخلي} preparing {يستعد} protected {محمي} protecting {يحمي} recalling {يستدعي للعودة} reconciling {يوفّق الحالة} refreshing {يحدّث} replenishing {يعيد الإمداد} resolving {يعالج} taunting {يستفز} threat {تهديد} yielding {يفسح الأولوية} other {غير معروف}}",
+  "automation.lane": "{lane, select, overall {الإجمالي} crafting {التصنيع} logistics {الخدمات اللوجستية} attacks {الهجمات} cooldowns {فترات الانتظار} rage {الغضب} defense {الدفاع} transfers {عمليات النقل} tools {الأدوات} combat {القتال} aquamarine_shop {متجر الزبرجد} builder {البناء} builder_missing_decorations {تحذير البناء} other {المسار}}",
+  "automation.accessibleStatus": "حالة {feature}",
+  "automation.waitingLane": "بانتظار حالة السياسة: {lane, select, crafting {التصنيع} logistics {الخدمات اللوجستية} khan_attacks {الخان · الهجمات} khan_cooldowns {الخان · فترات الانتظار} khan_rage {الخان · الغضب} khan_defense {الخان · الدفاع} beri_transfers {بيريموند · عمليات النقل} beri_attacks {بيريموند · الهجمات} beri_tools {بيريموند · الأدوات} beri_builder {بيريموند · البناء} storm_combat {جزر العاصفة · القتال} storm_shop {متجر الزبرجد} storm_builder {جزر العاصفة · البناء} other {المسار}}",
+  "automation.missingDecorations": "زخارف الهدف غير المتاحة في المخزن: {count, number}. يتم تخطيها مع مواصلة بقية الهدف.",
+  "automation.nextCheck": "{state, select, waiting {بانتظار الفحص المجدول التالي} due {حان موعد الفحص التالي الآن} other {الفحص التالي بعد {duration}}}",
+  "automation.timeLeft": "متبقٍ {duration}",
+  "automation.rate": "{state, select, loading {جارٍ تحميل المعدل} unavailable {المعدل غير متاح} other {الهجمات / ساعة: {count, number}}}",
+  "automation.rateTitle": "{state, select, loading {جارٍ تحميل معدل الهجوم الحالي لـ {feature}.} unavailable {معدل الهجوم الحالي لـ {feature} غير متاح.} other {الهجمات التي أطلقها {feature} خلال آخر 60 دقيقة: {count, number}.}}",
+  "automation.daily": "{state, select, loading {جارٍ تحميل العدد اليومي} unavailable {العدد اليومي غير متاح} other {{count, number} منذ إعادة التعيين}}",
+  "automation.dailyTitle": "{state, select, loading {جارٍ تحميل عدد هجمات {feature} في الجلسة اليومية الحالية.} unavailable {عدد هجمات {feature} اليومي غير متاح حتى تتم ملاحظة إعادة تعيين الخادم.} dated {الهجمات المؤكدة التي أطلقها {feature} منذ بدء جلسة العد اليومية للخادم في {date}: {count, number}.} other {الهجمات المؤكدة التي أطلقها {feature} في جلسة العد اليومية الحالية للخادم: {count, number}.}}"
 }

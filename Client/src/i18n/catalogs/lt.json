@@ -291,5 +291,16 @@
   "events.historyUnavailable": "Ankstesnių įvykių taškai laikinai nepasiekiami. Bus automatiškai bandoma dar kartą.",
   "events.allPrevious": "Visi ankstesni įvykiai",
   "events.points": "taškai",
-  "events.historyPages": "Užbaigtos sesijos: {count, number} · Puslapis {page, number} iš {pages, number}"
+  "events.historyPages": "Užbaigtos sesijos: {count, number} · Puslapis {page, number} iš {pages, number}",
+  "automation.status": "{status, select, complete {Baigta} completed {Užbaigta} success {Pavyko} failed {Nepavyko} error {Klaida} blocked {Užblokuota} gated {Apribota} retrying {Bandoma dar kartą} warning {Įspėjimas} running {Vykdoma} enabled {Įjungta} scheduled {Suplanuota} ready {Paruošta} waiting {Laukiama} disabled {Išjungta} idle {Neveikia} armed {Parengta veikti} cooldown {Laukimo laikas} defending {Ginama} discovering {Tyrinėjama} evacuating {Evakuojama} preparing {Ruošiama} protected {Apsaugota} protecting {Saugoma} recalling {Atšaukiama} reconciling {Derinama} refreshing {Atnaujinama} replenishing {Papildoma} resolving {Sprendžiama} taunting {Provokuojama} threat {Grėsmė} yielding {Užleidžiama pirmenybė} other {Nežinoma}}",
+  "automation.lane": "{lane, select, overall {Bendrai} crafting {Gamyba} logistics {Logistika} attacks {Atakos} cooldowns {Laukimo laikai} rage {Įniršis} defense {Gynyba} transfers {Perkėlimai} tools {Įrankiai} combat {Kova} aquamarine_shop {Akvamarino parduotuvė} builder {Statyba} builder_missing_decorations {Statybos įspėjimas} other {Sritis}}",
+  "automation.accessibleStatus": "Funkcijos {feature} būsena",
+  "automation.waitingLane": "Laukiama taisyklių būsenos: {lane, select, crafting {Gamyba} logistics {Logistika} khan_attacks {Chanas · Atakos} khan_cooldowns {Chanas · Laukimo laikai} khan_rage {Chanas · Įniršis} khan_defense {Chanas · Gynyba} beri_transfers {Berimondas · Perkėlimai} beri_attacks {Berimondas · Atakos} beri_tools {Berimondas · Įrankiai} beri_builder {Berimondas · Statyba} storm_combat {Audrų salos · Kova} storm_shop {Akvamarino parduotuvė} storm_builder {Audrų salos · Statyba} other {Sritis}}",
+  "automation.missingDecorations": "Sandėlyje neprieinamos tikslinės dekoracijos: {count, number}. Jos praleidžiamos, o likusi tikslo dalis tęsiama.",
+  "automation.nextCheck": "{state, select, waiting {Laukiama kito suplanuoto patikrinimo} due {Kitas patikrinimas turi vykti dabar} other {Kitas patikrinimas po {duration}}}",
+  "automation.timeLeft": "Liko {duration}",
+  "automation.rate": "{state, select, loading {Įkeliamas dažnis} unavailable {Dažnis neprieinamas} other {Atakos / val.: {count, number}}}",
+  "automation.rateTitle": "{state, select, loading {Įkeliamas dabartinis funkcijos {feature} atakų dažnis.} unavailable {Dabartinis funkcijos {feature} atakų dažnis neprieinamas.} other {Funkcijos {feature} per pastarąsias 60 minučių pradėtos atakos: {count, number}.}}",
+  "automation.daily": "{state, select, loading {Įkeliamas dienos skaičius} unavailable {Dienos skaičius neprieinamas} other {{count, number} nuo nustatymo iš naujo}}",
+  "automation.dailyTitle": "{state, select, loading {Įkeliamas funkcijos {feature} dabartinės dienos sesijos atakų skaičius.} unavailable {Funkcijos {feature} dienos atakų skaičius neprieinamas, kol neužfiksuojamas serverio skaitiklio nustatymas iš naujo.} dated {Funkcijos {feature} patvirtintos atakos nuo serverio dienos skaičiavimo sesijos pradžios {date}: {count, number}.} other {Funkcijos {feature} patvirtintos atakos dabartinėje serverio dienos skaičiavimo sesijoje: {count, number}.}}"
 }

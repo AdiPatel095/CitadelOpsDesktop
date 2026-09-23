@@ -14,3 +14,5 @@ Verified during this checkpoint:
 - Screenshots inspected at1280×720: Arabic sell and swap modals, highlight before/after and fraction before/after. Reproduce with the controls above; no complete responsive or all-route RTL acceptance is claimed.
 
 Official label requests deliberately fail, so official-only buttons retain honest English fallback in this fixture. Full dictionaries, remaining UI text, shared accessibility labels and broad RTL layout migration remain unfinished.
+
+`/lanes.html` uses synthetic CRA90 and EUP440 raw/descriptor pairs generated from the runtime producer. Official `errorCode_90` responses use captured primary v4360 German/Arabic values with source hashes in `lane-official-fixtures.json`. No custom catalog translations are injected: the fixture uses actual application packs. Therefore complete lockout translation requires runtime source/pack integration. Check English → German → Arabic with the switch unchanged, literal unknown status/detail, exact opcode/code/deadline and synthetic player name. The switch updates local fixture state only; the fixture server blocks operational APIs.

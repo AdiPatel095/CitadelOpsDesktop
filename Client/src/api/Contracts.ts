@@ -1630,6 +1630,7 @@ export interface AutomationStateV2 {
 	enabled: boolean;
 	status: string;
 	detail?: string;
+	detailDescriptor?: LocalizedMessage;
 	nextCheckAt?: string;
 	lastRunAt?: string;
 	lastOperationId?: string;

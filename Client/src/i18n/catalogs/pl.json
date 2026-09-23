@@ -291,5 +291,16 @@
   "events.historyUnavailable": "Wyniki poprzednich wydarzeń są tymczasowo niedostępne. Ponowna próba nastąpi automatycznie.",
   "events.allPrevious": "Wszystkie poprzednie wydarzenia",
   "events.points": "punkty",
-  "events.historyPages": "Ukończone rundy: {count, number} · Strona {page, number} z {pages, number}"
+  "events.historyPages": "Ukończone rundy: {count, number} · Strona {page, number} z {pages, number}",
+  "automation.status": "{status, select, complete {Gotowe} completed {Ukończono} success {Sukces} failed {Niepowodzenie} error {Błąd} blocked {Zablokowane} gated {Ograniczone} retrying {Ponawianie} warning {Ostrzeżenie} running {Działa} enabled {Włączone} scheduled {Zaplanowane} ready {Gotowe} waiting {Oczekiwanie} disabled {Wyłączone} idle {Bezczynny} armed {Uzbrojony} cooldown {Czas odnowienia} defending {Obrona} discovering {Rozpoznawanie} evacuating {Ewakuacja} preparing {Przygotowanie} protected {Chroniony} protecting {Ochrona} recalling {Wycofywanie} reconciling {Uzgadnianie} refreshing {Odświeżanie} replenishing {Uzupełnianie} resolving {Rozwiązywanie} taunting {Prowokowanie} threat {Zagrożenie} yielding {Ustępowanie pierwszeństwa} other {Nieznane}}",
+  "automation.lane": "{lane, select, overall {Ogólnie} crafting {Wytwarzanie} logistics {Logistyka} attacks {Ataki} cooldowns {Czasy odnowienia} rage {Szał} defense {Obrona} transfers {Transfery} tools {Narzędzia} combat {Walka} aquamarine_shop {Sklep z akwamarynem} builder {Budowa} builder_missing_decorations {Ostrzeżenie budowy} other {Obszar}}",
+  "automation.accessibleStatus": "Stan funkcji {feature}",
+  "automation.waitingLane": "Oczekiwanie na stan reguł: {lane, select, crafting {Wytwarzanie} logistics {Logistyka} khan_attacks {Chan · Ataki} khan_cooldowns {Chan · Czasy odnowienia} khan_rage {Chan · Szał} khan_defense {Chan · Obrona} beri_transfers {Berimond · Transfery} beri_attacks {Berimond · Ataki} beri_tools {Berimond · Narzędzia} beri_builder {Berimond · Budowa} storm_combat {Wyspy Sztormu · Walka} storm_shop {Sklep z akwamarynem} storm_builder {Wyspy Sztormu · Budowa} other {Obszar}}",
+  "automation.missingDecorations": "Dekoracje docelowe niedostępne w magazynie: {count, number}. Są pomijane, a reszta celu jest kontynuowana.",
+  "automation.nextCheck": "{state, select, waiting {Oczekiwanie na następną zaplanowaną kontrolę} due {Termin następnej kontroli przypada teraz} other {Następna kontrola za {duration}}}",
+  "automation.timeLeft": "Pozostało {duration}",
+  "automation.rate": "{state, select, loading {Ładowanie tempa} unavailable {Tempo niedostępne} other {Ataki / godz.: {count, number}}}",
+  "automation.rateTitle": "{state, select, loading {Ładowanie bieżącego tempa ataków funkcji {feature}.} unavailable {Bieżące tempo ataków funkcji {feature} jest niedostępne.} other {Ataki rozpoczęte przez {feature} w ostatnich 60 minutach: {count, number}.}}",
+  "automation.daily": "{state, select, loading {Ładowanie dziennej liczby} unavailable {Dzienna liczba niedostępna} other {{count, number} od resetu}}",
+  "automation.dailyTitle": "{state, select, loading {Ładowanie liczby ataków funkcji {feature} w bieżącej sesji dziennej.} unavailable {Dzienna liczba ataków funkcji {feature} jest niedostępna do czasu zaobserwowania resetu serwera.} dated {Potwierdzone ataki rozpoczęte przez {feature} od początku dziennej sesji zliczania serwera o {date}: {count, number}.} other {Potwierdzone ataki rozpoczęte przez {feature} w bieżącej dziennej sesji zliczania serwera: {count, number}.}}"
 }

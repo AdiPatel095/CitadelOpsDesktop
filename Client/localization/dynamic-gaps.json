@@ -27,7 +27,7 @@
     "id": "automation-status",
     "source": "context/AuthContext.tsx",
     "status": "uncovered",
-    "reason": "AutoFortress detailsDescriptors entries render reactively with original fallback metadata. Other detail/statusDetail consumers and catalogs remain."
+    "reason": "Lane/overall detail descriptors are exact-bound and reactive; known statuses, lane labels, counts, accessible labels and countdowns have all25 authored packs. Runtime source integration and real-pack browser verification remain pending. Broader automation descriptions, scheduler prose and safety-panel consumers remain open."
   },
   {
     "id": "exported-activity",

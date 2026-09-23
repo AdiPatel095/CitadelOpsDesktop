@@ -1,0 +1,13 @@
+{
+  "automation.status": "{status, select, complete {完了} completed {完了済み} success {成功} failed {失敗} error {エラー} blocked {ブロック中} gated {制限中} retrying {再試行中} warning {警告} running {実行中} enabled {有効} scheduled {予定済み} ready {準備完了} waiting {待機中} disabled {無効} idle {待機} armed {準備済み} cooldown {クールダウン} defending {防衛中} discovering {探索中} evacuating {避難中} preparing {準備中} protected {保護済み} protecting {保護中} recalling {呼び戻し中} reconciling {照合中} refreshing {更新中} replenishing {補充中} resolving {解決中} taunting {挑発中} threat {脅威} yielding {優先権を譲渡中} other {不明}}",
+  "automation.lane": "{lane, select, overall {全体} crafting {製作} logistics {物流} attacks {攻撃} cooldowns {クールダウン} rage {怒り} defense {防御} transfers {移送} tools {道具} combat {戦闘} aquamarine_shop {アクアマリンショップ} builder {建設} builder_missing_decorations {建設警告} other {区分}}",
+  "automation.accessibleStatus": "{feature}の状態",
+  "automation.waitingLane": "ポリシーの状態を待機中：{lane, select, crafting {製作} logistics {物流} khan_attacks {ハーン · 攻撃} khan_cooldowns {ハーン · クールダウン} khan_rage {ハーン · 怒り} khan_defense {ハーン · 防御} beri_transfers {ベリモント · 移送} beri_attacks {ベリモント · 攻撃} beri_tools {ベリモント · 道具} beri_builder {ベリモント · 建設} storm_combat {嵐の島 · 戦闘} storm_shop {アクアマリンショップ} storm_builder {嵐の島 · 建設} other {区分}}",
+  "automation.missingDecorations": "保管庫にない対象装飾品：{count, number}。これらをスキップし、残りの目標の処理を続行します。",
+  "automation.nextCheck": "{state, select, waiting {次の予定された確認を待機中} due {次の確認時刻になりました} other {次の確認まで{duration}}}",
+  "automation.timeLeft": "残り{duration}",
+  "automation.rate": "{state, select, loading {頻度を読み込み中} unavailable {頻度を取得できません} other {攻撃数 / 時間：{count, number}}}",
+  "automation.rateTitle": "{state, select, loading {{feature}の現在の攻撃頻度を読み込み中です。} unavailable {{feature}の現在の攻撃頻度を取得できません。} other {過去60分間に{feature}が開始した攻撃数：{count, number}。}}",
+  "automation.daily": "{state, select, loading {日次件数を読み込み中} unavailable {日次件数を取得できません} other {リセット後{count, number}回}}",
+  "automation.dailyTitle": "{state, select, loading {{feature}の現在の日次セッションの攻撃数を読み込み中です。} unavailable {サーバーのリセットが観測されるまで、{feature}の日次攻撃数は取得できません。} dated {サーバーの日次集計セッションが{date}に開始されてから{feature}が開始した確認済み攻撃数：{count, number}。} other {サーバーの現在の日次集計セッション中に{feature}が開始した確認済み攻撃数：{count, number}。}}"
+}
