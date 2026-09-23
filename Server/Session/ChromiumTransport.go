@@ -1011,25 +1011,13 @@ func (transport *ChromiumTransport) publishLoginFailure(
 	status.SocketReady = false
 	switch *frame.ResponseCode {
 	case 453:
-		var cooldown struct {
-			Seconds int `json:"CD"`
-		}
-		_ = json.Unmarshal(frame.Payload, &cooldown)
-		now := time.Now().UTC()
-		cooldownUntil := now.Add(time.Duration(max(0, cooldown.Seconds)) * time.Second)
-		relogDelay := transport.relogDelay()
-		retryAt := cooldownUntil.Add(relogDelay)
+		cooldownUntil, retryAt := loginCooldownDeadlines(frame.Payload, observedAt, transport.relogDelay())
 		status.State = "cooldown"
-		status.Detail = fmt.Sprintf("Login cooldown: %ds", cooldown.Seconds)
-		status.CooldownUntil = &cooldownUntil
+		status.Detail = "Login cooldown; waiting before retrying"
+		status.CooldownUntil = cooldownUntil
 		status.RetryAt = &retryAt
 		transport.publishStatus(status)
-		if cooldown.Seconds > 0 {
-			go transport.reloadAfter(
-				generation, status.ConnectionGeneration,
-				time.Duration(cooldown.Seconds)*time.Second+relogDelay,
-			)
-		}
+		go transport.reloadAfter(generation, status.ConnectionGeneration, time.Until(retryAt), retryAt)
 	default:
 		status.State = "error"
 		status.CooldownUntil = nil
@@ -1043,6 +1031,7 @@ func (transport *ChromiumTransport) reloadAfter(
 	generation uint64,
 	connectionGeneration uint64,
 	delay time.Duration,
+	expectedRetry ...time.Time,
 ) {
 	timer := time.NewTimer(delay)
 	defer timer.Stop()
@@ -1057,20 +1046,28 @@ func (transport *ChromiumTransport) reloadAfter(
 		return
 	case <-timer.C:
 	}
-	transport.mu.RLock()
-	current := transport.generation == generation && transport.cancel != nil &&
-		transport.status.ConnectionGeneration == connectionGeneration && !transport.restoreSuppressed
-	transport.mu.RUnlock()
-	if !current {
+	if gameContext.Err() != nil {
 		return
 	}
-	status := transport.Status()
+	transport.mu.Lock()
+	current := transport.generation == generation && transport.cancel != nil &&
+		transport.status.ConnectionGeneration == connectionGeneration && !transport.restoreSuppressed
+	if len(expectedRetry) > 0 {
+		current = current && transport.status.RetryAt != nil && transport.status.RetryAt.Equal(expectedRetry[0]) && !transport.status.LoggedIn
+	}
+	if !current {
+		transport.mu.Unlock()
+		return
+	}
+	status := transport.status
 	status.State = "reconnecting"
 	status.LoggedIn = false
 	status.SocketReady = false
 	status.RetryAt = nil
 	status.ChangedAt = time.Now().UTC()
-	transport.publishStatus(status)
+	transport.status = status
+	transport.mu.Unlock()
+	transport.enqueueStatus(status)
 	if err := transport.reloadGame(gameContext); err != nil {
 		transport.publishReloadFailure(status, "Reload game while reconnecting", err)
 		return
@@ -1235,7 +1232,7 @@ func (transport *ChromiumTransport) scheduleSocketReconnect(
 	status.RetryAt = &retryAt
 	status.ChangedAt = time.Now().UTC()
 	transport.publishStatus(status)
-	go transport.reloadAfter(generation, connectionGeneration, delay)
+	go transport.reloadAfter(generation, connectionGeneration, delay, retryAt)
 }
 
 func (transport *ChromiumTransport) SetRelogDelayProvider(provider func() time.Duration) {
