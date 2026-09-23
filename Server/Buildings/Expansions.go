@@ -19,6 +19,7 @@ const (
 )
 
 type ExpansionPreviewRequest struct {
+	EventID                *int64             `json:"eventId,omitempty"`
 	ExpectedRevision       *uint64            `json:"expectedRevision,omitempty"`
 	CastleID               State.CastleID     `json:"castleId"`
 	Payment                string             `json:"payment,omitempty"`
@@ -388,7 +389,7 @@ func expansionStorageBuildingCandidates(
 	}
 	sort.Slice(objectives, func(left, right int) bool { return objectives[left].Metric < objectives[right].Metric })
 	preview, err := Preview(state, gameData, PreviewRequest{
-		CastleID: castle.ID, Profile: "custom", Objectives: objectives,
+		CastleID: castle.ID, Profile: "custom", EventID: request.EventID, Objectives: objectives,
 		Constraints: Constraints{
 			AllowPremium: request.AllowPremium, MinimumValues: minimums,
 			ResourceReserves: cloneFloatMap(request.ResourceReserves),
@@ -659,6 +660,9 @@ func recommendExpansionCapacityAction(
 		}
 		arguments := map[string]any{
 			"castleId": castleID, "resourceReserves": cloneFloatMap(request.ResourceReserves), "allowPremium": request.AllowPremium,
+		}
+		if request.EventID != nil {
+			arguments["eventId"] = *request.EventID
 		}
 		intent := "building.upgrade"
 		kind := "upgrade_storage"

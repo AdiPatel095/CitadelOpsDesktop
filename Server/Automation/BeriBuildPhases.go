@@ -75,10 +75,27 @@ func evaluateBeriEventBuild(
 
 	metrics["beriBuildPhase"] = beriBuildPhaseGround
 	missingGround := autoStormMissingGround(castle, normalized.Ground)
+	if metrics["builtInTarget"] == 1 {
+		missingGround = Buildings.MissingGroundCoverage(castle, normalized.Ground, catalog)
+	}
 	metrics["targetGroundRemaining"] = float64(len(missingGround))
 	if len(missingGround) > 0 {
 		if queueBlocked {
 			return nil, false, "The Berimond construction queue is occupied while target expansions are pending", nil
+		}
+		if metrics["builtInTarget"] == 1 && beriTargetStorageCountReached(castle, normalized, catalog) {
+			preview, previewErr := Buildings.PreviewExpansion(snapshot.State, snapshot.GameData, Buildings.ExpansionPreviewRequest{
+				CastleID: castle.ID, Payment: Buildings.ExpansionPaymentResources,
+				ResourceReserves: settings.Build.ResourceReserves,
+			})
+			if previewErr != nil {
+				return nil, false, "", previewErr
+			}
+			for _, cost := range preview.Costs {
+				if cost.CapacityKnown && !cost.CapacitySufficient {
+					return nil, false, "The built-in Berimond target already has all seven stores; expansion cost plus configured reserves exceeds storage capacity", nil
+				}
+			}
 		}
 		decision, detail, expansionErr := autoStormExpansionDecision(snapshot, settings, castle, missingGround, metrics, profile)
 		if expansionErr != nil {
@@ -349,7 +366,7 @@ func beriPhaseAction(
 			continue
 		}
 		storage, err := Buildings.PreviewStorageDependency(snapshot.State, snapshot.GameData, Buildings.StorageDependencyRequest{
-			CastleID: castle.ID, Costs: action.Costs,
+			CastleID: castle.ID, EventID: optionalAutoEventBuildID(profile.EventID), Costs: action.Costs,
 			ResourceReserves: settings.Build.ResourceReserves,
 			AllowPremium:     settings.Build.AllowPremium, AllowResourceTransport: false,
 			AllowTimeSkips:               settings.Build.AllowTimeSkips,
@@ -404,4 +421,24 @@ func beriPhaseStorageDefinitions(diff Buildings.TargetDiffResult) []State.Buildi
 		}
 	}
 	return result
+}
+
+// The fixed built-in layout must never build an eighth prerequisite store and
+// subsequently classify it as unmanaged. Custom targets keep their own policy.
+func beriTargetStorageCountReached(castle State.CastleState, target Buildings.TargetCaptureResult, catalog *GameData.BuildingCatalog) bool {
+	required := 0
+	for _, building := range target.Buildings {
+		definition, found := catalog.DefinitionView(int64(building.DefinitionID))
+		if found && strings.EqualFold(definition.InternalName, "FactionStorage") {
+			required++
+		}
+	}
+	existing := 0
+	for _, building := range castle.Layout.Objects {
+		definition, found := catalog.DefinitionView(int64(building.DefinitionID))
+		if building.Placed && found && strings.EqualFold(definition.InternalName, "FactionStorage") {
+			existing++
+		}
+	}
+	return required > 0 && existing >= required
 }

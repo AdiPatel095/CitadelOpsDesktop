@@ -850,6 +850,9 @@ func autoStormExpansionDecisionWithStorage(
 		AllowTimeSkips:               settings.Build.AllowTimeSkips,
 		AllowedBuildingDefinitionIDs: allowedStorageDefinitions,
 	}
+	if profile.KingdomID == State.KingdomID(GameData.BerimondKingdomID) {
+		baseRequest.EventID = optionalAutoEventBuildID(profile.EventID)
+	}
 	base, err := Buildings.PreviewExpansion(snapshot.State, snapshot.GameData, baseRequest)
 	if err != nil {
 		return nil, "", err
