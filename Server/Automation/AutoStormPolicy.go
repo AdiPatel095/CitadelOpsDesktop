@@ -729,6 +729,14 @@ func autoStormQueueDecision(
 			continue
 		}
 		remaining, known := autoStormBuildingRemaining(castle, building, catalog, snapshot.Now)
+		if (building.ConstructionState == State.BuildingStateDisassembleStopped || building.ConstructionState == State.BuildingStateDisassembleInProgress) && (!known || remaining == 0) {
+			// Completion is delivered by the server's object/queue updates. Do not
+			// mutate a finished process or infer demolition time without its boost.
+			if snapshot.Now.Sub(castle.Layout.ObservedAt) >= 5*time.Second && snapshot.Now.Sub(castle.BuildingQueue.ObservedAt) >= 5*time.Second {
+				return autoStormIntentDecision(snapshot.Now, metrics, "Refresh demolition completion and construction queue", "building.refresh", map[string]any{"castleId": castle.ID}), true
+			}
+			return nil, true
+		}
 		if !known {
 			continue
 		}
@@ -774,7 +782,7 @@ func autoStormBuildingRemaining(
 		}
 		inProgress = building.ConstructionState == State.BuildingStateUpgradeInProgress
 	case State.BuildingStateDisassembleStopped, State.BuildingStateDisassembleInProgress:
-		inProgress = building.ConstructionState == State.BuildingStateDisassembleInProgress
+		return Buildings.DemolitionRemaining(castle, building, catalog, now)
 	default:
 		return 0, false
 	}
