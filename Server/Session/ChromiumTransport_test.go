@@ -141,6 +141,10 @@ func TestCooldownOverridesRelogDelayButSocketReconnectPreservesIt(t *testing.T) 
 	transport := newSocketTestTransport()
 	transport.SetRelogDelayProvider(func() time.Duration { return configuredDelay })
 
+	gameContext, cancel := context.WithCancel(context.Background())
+	cancel()
+	transport.gameContext = gameContext
+
 	// Zero cooldown still retries after the safety margin.
 	transport.observeLoginFrame(transport.generation, "", `%xt%lli%1%453%{"CD":0}%`, time.Now().UTC())
 	cooldownStatus := transport.Status()
@@ -149,14 +153,13 @@ func TestCooldownOverridesRelogDelayButSocketReconnectPreservesIt(t *testing.T) 
 		t.Fatalf("configured cooldown retry = %+v", cooldownStatus)
 	}
 
+	transport.mu.Lock()
 	transport.status.State = "connected"
 	transport.status.LoggedIn = true
 	transport.status.SocketReady = true
-	gameContext, cancel := context.WithCancel(context.Background())
-	cancel()
-	transport.gameContext = gameContext
 	requestID := network.RequestID("configured-delay-socket")
 	transport.trackedSockets[requestID] = "wss://example/ep-live"
+	transport.mu.Unlock()
 	before := time.Now().UTC()
 	transport.handleEvent(transport.generation, &network.EventWebSocketClosed{RequestID: requestID})
 	reconnectStatus := transport.Status()
