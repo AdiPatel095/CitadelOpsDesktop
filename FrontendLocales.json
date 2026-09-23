@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "key": "bootstrap.missingClient",
+    "text": "Build Client/ or run the Vite development server for the desktop UI.",
+    "sha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b"
+  },
+  "authorship": {
+    "method": "direct-model-authored",
+    "nativeSpeakerReview": false
+  },
+  "translations": {
+    "en": {
+      "text": "Build Client/ or run the Vite development server for the desktop UI.",
+      "sourceSha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b",
+      "sha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b"
+    },
+    "de": {
+      "text": "Erstelle Client/ oder starte den Vite-Entwicklungsserver für die Desktop-Oberfläche.",
+      "sourceSha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b",
+      "sha256": "8abbe4aa499df335ce7aae02931f4f07795be8f46eafef7da018d2c3aca6c49c"
+    },
+    "fr": {
+      "text": "Compilez Client/ ou démarrez le serveur de développement Vite pour l’interface de bureau.",
+      "sourceSha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b",
+      "sha256": "f0795e9d5789e194e96b2a51882de6341d3e82a9a892afb6f57ad48f721fe1aa"
+    },
+    "pl": {
+      "text": "Zbuduj Client/ lub uruchom serwer deweloperski Vite dla interfejsu aplikacji komputerowej.",
+      "sourceSha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b",
+      "sha256": "2ab61c348e04b632b2570d2739f62f8541da3eb903c509b2d30040e2111a6a05"
+    },
+    "ru": {
+      "text": "Соберите Client/ или запустите сервер разработки Vite для интерфейса настольного приложения.",
+      "sourceSha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b",
+      "sha256": "9795fff0c1cb51f43c9e0b5c283a7974d2a4503e702375ddf250133578041dc9"
+    },
+    "it": {
+      "text": "Compila Client/ o avvia il server di sviluppo Vite per l’interfaccia desktop.",
+      "sourceSha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b",
+      "sha256": "c2f856c4fc603e040cbb57d4c50408c784dca6c5e14d6751419392efd1bc18dc"
+    },
+    "nl": {
+      "text": "Bouw Client/ of start de Vite-ontwikkelserver voor de desktopinterface.",
+      "sourceSha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b",
+      "sha256": "7879acf1130cfda588b58944c0e2d6b89e8601e819c3443656078ee2316bf847"
+    },
+    "pt": {
+      "text": "Compile Client/ ou execute o servidor de desenvolvimento Vite para a interface do aplicativo de desktop.",
+      "sourceSha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b",
+      "sha256": "d50ce52505b0c50cf6edf9bfdd2f638d5faab9436cd10cf8930fcd71d9c8d843"
+    },
+    "es": {
+      "text": "Compila Client/ o inicia el servidor de desarrollo de Vite para la interfaz de escritorio.",
+      "sourceSha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b",
+      "sha256": "2e28e47906bbf63df80811fd6a68585033f3c754c9ce5ddcc8b82f5d640a4d4b"
+    },
+    "ar": {
+      "text": "ابنِ Client/ أو شغّل خادم التطوير Vite لواجهة تطبيق سطح المكتب.",
+      "sourceSha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b",
+      "sha256": "4348c3fc88a3e5948c8eb155c9ca5b6653add5df8d0ac0231502888f6dbbf060"
+    },
+    "da": {
+      "text": "Byg Client/, eller start Vite-udviklingsserveren til skrivebordsgrænsefladen.",
+      "sourceSha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b",
+      "sha256": "52e42d9177e23fc507217dfb29a1d69588b54d09da28779eae94202031f71ba7"
+    },
+    "no": {
+      "text": "Bygg Client/, eller start Vite-utviklingsserveren for skrivebordsgrensesnittet.",
+      "sourceSha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b",
+      "sha256": "aff8e06a3ceb014cc23aaba3855a0170b4cd37fcc6351ada93a3d8d6742a8036"
+    },
+    "fi": {
+      "text": "Koosta Client/ tai käynnistä Vite-kehityspalvelin työpöytäsovelluksen käyttöliittymää varten.",
+      "sourceSha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b",
+      "sha256": "7e781281da40c74354e77c6adff9589588ececd8572b11e0145e81d8d8d44389"
+    },
+    "sv": {
+      "text": "Bygg Client/ eller starta Vite-utvecklingsservern för skrivbordsgränssnittet.",
+      "sourceSha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b",
+      "sha256": "8f0354b34497053e9272f602c323f82ea21c0858c6e30810ea5e1984da4af2b3"
+    },
+    "ja": {
+      "text": "デスクトップ UI を表示するには、Client/ をビルドするか、Vite 開発サーバーを起動してください。",
+      "sourceSha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b",
+      "sha256": "3864cddfd9f475c84ba6500023ac2a0bb2b8b2ca9ce3b87527a17feea26f723e"
+    },
+    "ko": {
+      "text": "데스크톱 UI를 사용하려면 Client/를 빌드하거나 Vite 개발 서버를 실행하세요.",
+      "sourceSha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b",
+      "sha256": "2185d1d0430207c029d6e015e2f97104bc3bb466d5155a3692fbd37c2a641af4"
+    },
+    "el": {
+      "text": "Μεταγλωττίστε το Client/ ή εκκινήστε τον διακομιστή ανάπτυξης Vite για τη διεπαφή της εφαρμογής υπολογιστή.",
+      "sourceSha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b",
+      "sha256": "3940691ea441204565d69e0c0e6f81c83f2706686419bc861376af584af8342f"
+    },
+    "tr": {
+      "text": "Masaüstü arayüzü için Client/ derlemesini oluşturun veya Vite geliştirme sunucusunu çalıştırın.",
+      "sourceSha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b",
+      "sha256": "9f1859a5e77a22f51d6e93fd770cf8075eba1ed01c4d39ebcba0c854919f8974"
+    },
+    "zh-CN": {
+      "text": "请构建 Client/ 或运行 Vite 开发服务器，以显示桌面应用界面。",
+      "sourceSha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b",
+      "sha256": "df8fc9527a939e6d235dd40a6a9b69f1a65f6c6794307caf8019a9a2836033e6"
+    },
+    "zh-TW": {
+      "text": "請建置 Client/ 或執行 Vite 開發伺服器，以顯示桌面應用程式介面。",
+      "sourceSha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b",
+      "sha256": "a87e17a3145abe5dd0d7199320bdcd0ca808ce056a17259348a2f98a61ad9cda"
+    },
+    "cs": {
+      "text": "Sestavte Client/ nebo spusťte vývojový server Vite pro rozhraní desktopové aplikace.",
+      "sourceSha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b",
+      "sha256": "f5212015cebe7a0e70d9616141c532faa88fa9de457f4928fffd80780c88ef20"
+    },
+    "ro": {
+      "text": "Compilați Client/ sau porniți serverul de dezvoltare Vite pentru interfața aplicației desktop.",
+      "sourceSha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b",
+      "sha256": "a4267c0c30f6053b53094d490923adf717286eeed236e0cda1a2a084507b2046"
+    },
+    "sk": {
+      "text": "Zostavte Client/ alebo spustite vývojový server Vite pre rozhranie počítačovej aplikácie.",
+      "sourceSha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b",
+      "sha256": "4d05c474767f227a9864cc8510bd3fcd5458acf0d98eb4181603a32d071d7cd5"
+    },
+    "hu": {
+      "text": "Fordítsa le a Client/ könyvtárat, vagy indítsa el a Vite fejlesztői kiszolgálót az asztali felülethez.",
+      "sourceSha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b",
+      "sha256": "e21ddc824faa497a120159a8877703caed1e234894b635562c07b95e43c67053"
+    },
+    "bg": {
+      "text": "Компилирайте Client/ или стартирайте сървъра за разработка Vite за интерфейса на настолното приложение.",
+      "sourceSha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b",
+      "sha256": "852118faedf419113da3e940f57af3704a8253e42542042945a4ac8ab8d6bb48"
+    },
+    "lt": {
+      "text": "Sukurkite Client/ arba paleiskite Vite kūrimo serverį darbalaukio programos sąsajai.",
+      "sourceSha256": "3a3d4644af7b46f71616970922757189b3fd602648238f5215fc7cf73df9283b",
+      "sha256": "d8563106e27b5918ac98596c185b86f481e1ba4f04046d6394521ca797930d48"
+    }
+  }
+}
