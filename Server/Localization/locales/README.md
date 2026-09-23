@@ -1,17 +1,17 @@
 # Authored runtime message packs
 
-These packs are incomplete: every non-English locale contains 196 of 3,072 source
+These packs are incomplete: every non-English locale contains 217 of 3,177 source
 messages. All 73 API messages, 25 configuration messages and 46 telemetry channel
 labels/descriptions are covered, alongside 45 intent failure/recovery messages,
-three explicitly reviewed source-key reuses, and four earlier runtime messages.
-The remaining 2,876 keys per locale must fall back explicitly to English. Exact
+four explicitly reviewed source-key reuses, 20 Storm/runtime messages, and four earlier runtime messages.
+The remaining 2,960 keys per locale must fall back explicitly to English. Exact
 coverage is emitted by `../scripts/validate-locales.mjs`.
 
 Every entry records source and translation SHA-256 plus authoring/reuse provenance.
 Exact reviewed source-key reuse additionally records the origin key, immutable
 revision, both origin hashes, and semantic review; validation rejects drift or
 unmatched templates. It is an authoring aid, never runtime English matching.
-The catalog baseline is approved source revision df5a667. No output from the
+The catalog baseline is approved source revision 97535d9. No output from the
 rejected local MADLAD pilot is included. Agent review is not native-speaker review.
 Protocol fields and enum values remain exact; game terminology follows verified
 v4357 dictionaries. ICU plural categories may vary by locale, while argument
