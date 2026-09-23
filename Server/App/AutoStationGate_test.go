@@ -1,8 +1,11 @@
 package App
 
 import (
+	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/State"
+	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 )
@@ -88,5 +91,49 @@ func TestPartialTrackedGateRequiresFreshUnsentTroops(t *testing.T) {
 				t.Fatalf("allow=%v err=%v", tc.allow, err)
 			}
 		})
+	}
+}
+
+func TestOpenGateCallbackUsesAbsentSettingsDefaults(t *testing.T) {
+	for _, section := range []struct {
+		name, raw string
+		malformed bool
+	}{
+		{"absent", "", false}, {"empty object", "{}", false}, {"null", "null", false},
+		{"explicit opt out", `{"openGateFallback":false}`, false},
+		{"malformed present", `{"leadTimeSec":"bad"}`, true},
+	} {
+		for _, protection := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/protection=%v", section.name, protection), func(t *testing.T) {
+				defaults := map[string]json.RawMessage{"automation.enabled": json.RawMessage(`{"auto_station":true}`)}
+				if section.raw != "" {
+					defaults["automation.autoStation"] = json.RawMessage(section.raw)
+				}
+				configuration, err := Configuration.Open(t.TempDir(), defaults)
+				if err != nil {
+					t.Fatal(err)
+				}
+				now := time.Now()
+				s := State.NewGameState()
+				s.Player.ID = 7
+				s.Player.ProtectionMode.ObservedAt = now
+				if protection {
+					s.Player.ProtectionMode.RemainingSec = 600
+				}
+				s.Session.LoggedIn = true
+				s.Session.SocketReady = true
+				s.Session.ConnectionGeneration = 3
+				s.MovementSnapshot = State.MovementSnapshot{ObservedAt: now, ConnectionGeneration: 3}
+				s.Castles[10] = State.CastleState{ID: 10, SlotType: 1}
+				arrival := now.Add(30 * time.Second)
+				s.Movements[1] = State.MovementState{ID: 1, TypeID: 0, Direction: 0, OwnerPlayerID: 8, TargetPlayerID: 7, SourceTypeID: 1, SourceCastleID: 20, TargetTypeID: 1, TargetCastleID: 10, ArrivesAt: &arrival}
+				application := &Application{Configuration: configuration, State: State.NewStore(s)}
+				args, _ := json.Marshal(defenseOpenGateRequest{CastleID: 10, AutoStation: true, RequireIncomingAttack: true, PlannedAt: now.Add(-time.Second), ConnectionGeneration: 3})
+				err = application.guardOpenGate(t.Context(), args)
+				if want := protection && !section.malformed; (err == nil) != want {
+					t.Fatalf("allow=%v error=%v", want, err)
+				}
+			})
+		}
 	}
 }
