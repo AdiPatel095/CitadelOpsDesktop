@@ -489,6 +489,16 @@ func userFacingGameName(value string) string {
 }
 
 func completedActivityDescriptor(action *Localization.Message, ordinal, total int) *Localization.Message {
+	if action != nil && action.ListParams != nil {
+		status := "completed"
+		raw := completedActivityDetail(action.FallbackText)
+		if total > 1 {
+			status = "completed_batch"
+			raw = fmt.Sprintf("%s (%d of %d)", raw, ordinal, total)
+		}
+		return Intent.StormPlanStatusDescriptor(action, status, raw, nil, ordinal, total)
+	}
+
 	if action == nil {
 		return nil
 	}
@@ -502,6 +512,9 @@ func completedActivityDescriptor(action *Localization.Message, ordinal, total in
 func failedActivityDescriptor(receipt Intent.Receipt) *Localization.Message {
 	if receipt.Plan == nil || receipt.Plan.SummaryDescriptor == nil || receipt.Failure == nil || receipt.Failure.ExplanationDescriptor == nil {
 		return nil
+	}
+	if receipt.Plan.SummaryDescriptor.ListParams != nil {
+		return Intent.StormPlanStatusDescriptor(receipt.Plan.SummaryDescriptor, "failed_activity", userFacingActivityText("Could not "+attemptedActivityDetail(receiptSummary(receipt))+": "+receipt.Failure.Explanation), receipt.Failure.ExplanationDescriptor, 0, 0)
 	}
 	message := Localization.New("server.activity.failed", "Could not complete action", nil)
 	message.Context = []*Localization.Message{Localization.Clone(receipt.Plan.SummaryDescriptor), Localization.Clone(receipt.Failure.ExplanationDescriptor)}

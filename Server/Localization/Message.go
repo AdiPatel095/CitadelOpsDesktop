@@ -18,14 +18,15 @@ type GameParam struct {
 }
 
 type Message struct {
-	FallbackText   string               `json:"fallbackText,omitempty"`
-	Context        []*Message           `json:"context,omitempty"`
-	Key            string               `json:"key"`
-	Fallback       string               `json:"fallback"`
-	Params         Params               `json:"params,omitempty"`
-	OfficialKey    string               `json:"officialKey,omitempty"`
-	OfficialParams Params               `json:"officialParams,omitempty"`
-	GameParams     map[string]GameParam `json:"gameParams,omitempty"`
+	ListParams     map[string][]*Message `json:"listParams,omitempty"`
+	FallbackText   string                `json:"fallbackText,omitempty"`
+	Context        []*Message            `json:"context,omitempty"`
+	Key            string                `json:"key"`
+	Fallback       string                `json:"fallback"`
+	Params         Params                `json:"params,omitempty"`
+	OfficialKey    string                `json:"officialKey,omitempty"`
+	OfficialParams Params                `json:"officialParams,omitempty"`
+	GameParams     map[string]GameParam  `json:"gameParams,omitempty"`
 }
 
 func New(key, fallback string, params Params) *Message {
@@ -42,7 +43,19 @@ func Clone(message *Message) *Message {
 	if message == nil {
 		return nil
 	}
+	if validateLists(message) != nil {
+		return nil
+	}
 	copy := *message
+	copy.ListParams = nil
+	if message.ListParams != nil {
+		copy.ListParams = make(map[string][]*Message, len(message.ListParams))
+		for name, leaves := range message.ListParams {
+			for _, leaf := range leaves {
+				copy.ListParams[name] = append(copy.ListParams[name], Clone(leaf))
+			}
+		}
+	}
 	copy.Context = nil
 	for i, leaf := range message.Context {
 		if i >= 4 {
@@ -109,6 +122,9 @@ func Bind(message *Message, fallback string) *Message {
 		return nil
 	}
 	copy := Clone(message)
+	if copy == nil {
+		return nil
+	}
 	copy.FallbackText = fallback
 	return copy
 }
@@ -130,6 +146,9 @@ func (message Message) MarshalJSON() ([]byte, error) {
 }
 
 func Validate(message *Message) error {
+	if err := validateLists(message); err != nil {
+		return err
+	}
 	if message == nil {
 		return nil
 	}
@@ -150,7 +169,7 @@ func Validate(message *Message) error {
 // Join preserves both independently translatable messages. An unknown child
 // cannot be replaced by a generic translation that would hide its exact reason.
 func Join(first, second *Message) *Message {
-	if first == nil || second == nil {
+	if first == nil || second == nil || first.ListParams != nil || second.ListParams != nil {
 		return nil
 	}
 	// Context is displayed before the main message: explanation, then recovery.
@@ -158,6 +177,9 @@ func Join(first, second *Message) *Message {
 		return nil
 	}
 	combined := Clone(second)
+	if combined == nil || Clone(first) == nil {
+		return nil
+	}
 	prefix := []*Message{}
 	for _, leaf := range first.Context {
 		v := Clone(leaf)

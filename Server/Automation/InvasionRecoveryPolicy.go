@@ -59,7 +59,8 @@ func (*InvasionRecoveryPolicy) Evaluate(_ context.Context, snapshot Snapshot) (D
 			return Decision{
 				Status: "blocked", Detail: "An Auto Invasion launch could not be proven after scoped movement checks; " +
 					"its commander and target remain reserved to prevent a duplicate attack until a new event occurrence is observed",
-				NextCheckAt: nextCheckAt, EventDriven: true,
+				DetailDescriptor: Localization.New("server.automation.invasion_recovery_exhausted", "An Auto Invasion launch could not be proven after scoped movement checks; its commander and target remain reserved to prevent a duplicate attack until a new event occurrence is observed", nil),
+				NextCheckAt:      nextCheckAt, EventDriven: true,
 				Metrics: map[string]float64{"unresolvedLaunches": 1, "recoveryExhausted": 1},
 			}, nil
 		}
