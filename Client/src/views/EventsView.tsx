@@ -1,3 +1,7 @@
+import {LocalizedError} from '../i18n/LocalizedError';
+import {useLocalizedErrorState} from '../i18n/useLocalizedErrorState';
+import {parseMessageDescriptor} from '../i18n/messageDescriptor';
+import {useEventDisplayNames} from '../i18n/useEventDisplayNames';
 import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
 import React, { useCallback, useEffect, useState } from 'react';
 import StaleSessionBanner from '../components/StaleSessionBanner';
@@ -26,7 +30,7 @@ const EventsView: React.FC = () => {
   const history = useFeatureEventHistory(worldId, playerId);
   const [rankingOpen, setRankingOpen] = useState(false);
   const [rankingLoading, setRankingLoading] = useState(false);
-  const [rankingError, setRankingError] = useState('');
+  const [rankingError, setRankingError] = useLocalizedErrorState();
   const [analyticsView, setAnalyticsView] = useState<EventsAnalyticsView>('events');
   const selectedAnalyticsView = analyticsView;
   const selectedEventIds = featureEventIds[selectedAnalyticsView];
@@ -35,6 +39,7 @@ const EventsView: React.FC = () => {
     && (selectedAnalyticsView === 'events' || selectedEventIds?.includes(score.eventId))
   ));
   const event = liveEvents.find((score) => score.eventId === 72) ?? liveEvents[0];
+  const eventNames=useEventDisplayNames([event?.eventId]);
   const ranking = event ? state?.eventScores.rankingByEvent?.[String(event.eventId)] : undefined;
   const analyticsOptions = [
     { value: 'events', label: 'Events' },
@@ -68,10 +73,15 @@ const EventsView: React.FC = () => {
     try {
       const receipt = await submitIntent('event.ranking.refresh', { eventId: event.eventId }, { actor: 'ui:events-ranking' });
       if (receipt.status === 'failed' || receipt.status === 'cancelled' || receipt.status === 'indeterminate') {
-        throw new Error(receipt.error || `Ranking refresh ${receipt.status.replaceAll('_', ' ')}.`);
+        const raw=receipt.error || receipt.failure?.message;
+        if(raw){
+          const descriptor=receipt.failure?.message===raw ? parseMessageDescriptor(receipt.failure.messageDescriptor) : undefined;
+          throw Object.assign(new Error(raw),{messageDescriptor:descriptor});
+        }
+        throw new LocalizedError('events.rankingOutcome',{status:receipt.status});
       }
     } catch (error) {
-      setRankingError(error instanceof Error ? error.message : 'Could not refresh the GGE event ranking.');
+      setRankingError(error instanceof Error ? error : new LocalizedError('events.rankingRefreshFailed'));
     } finally {
       setRankingLoading(false);
     }
@@ -122,7 +132,7 @@ const EventsView: React.FC = () => {
       )}
       <EventRankingModal
         isOpen={rankingOpen && Boolean(event)}
-        eventName={eventDisplayName(event?.eventId, event?.name)}
+        eventName={eventNames(event?.eventId,event?.name).text}
         ranking={ranking}
         allianceId={state?.player.allianceId}
         isRefreshing={rankingLoading}
@@ -133,15 +143,6 @@ const EventsView: React.FC = () => {
     </div>
   );
 };
-
-function eventDisplayName(eventID?: number, name?: string): string {
-  if (eventID === 71) return 'Foreign Lords Invasion';
-  if (eventID === 72) return 'Nomad Invasion';
-  if (eventID === 80) return 'Samurai Invasion';
-  if (eventID === 103) return 'Bloodcrow Invasion';
-  if (name?.trim()) return name.trim();
-  return eventID ? `Event ${eventID}` : 'Event';
-}
 
 function isInvasionEvent(eventID?: number, ...identityParts: Array<string | undefined>): boolean {
   if (eventID === 71 || eventID === 103) return true;

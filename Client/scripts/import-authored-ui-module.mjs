@@ -13,6 +13,6 @@ const current=JSON.parse(fs.readFileSync(target,'utf8'));
 fs.writeFileSync(target,JSON.stringify({...current,...entries},null,2)+'\n');
 const provenancePath=new URL('../localization/module-authorship.json',import.meta.url);
 const provenance=fs.existsSync(provenancePath)?JSON.parse(fs.readFileSync(provenancePath,'utf8')):{};
-provenance[path.basename(file)]={method:'direct-model-authored',linguisticReview:'pending',sourceHashes:Object.fromEntries(Object.keys(entries).map(key=>[key,crypto.createHash('sha256').update(source[key]).digest('hex')]))};
+provenance[path.basename(file)]={method:'direct-model-authored',linguisticReview:'pending',translationHashes:Object.fromEntries(Object.entries(entries).map(([key,value])=>[key,crypto.createHash('sha256').update(value).digest('hex')])),sourceHashes:Object.fromEntries(Object.keys(entries).map(key=>[key,crypto.createHash('sha256').update(source[key]).digest('hex')]))};
 fs.writeFileSync(provenancePath,JSON.stringify(provenance,null,2)+'\n');
 console.log(JSON.stringify({locale,authored:Object.keys(entries).length}));

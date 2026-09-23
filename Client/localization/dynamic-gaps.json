@@ -21,7 +21,7 @@
     "id": "event-history-names",
     "source": "views/EventsView.tsx",
     "status": "uncovered",
-    "reason": "Replace English ID overrides with explicit official localization keys; retained historic text requires provenance."
+    "reason": "Event/history batch replaces EventsView English ID overrides with explicit official event keys, preserves exact historical fallback, and localizes league/date/number/pager presentation. Other event consumers, retained-name provenance in option/title consumers, and older source-assigned labels remain unverified; gap remains open."
   },
   {
     "id": "automation-status",

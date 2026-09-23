@@ -1,3 +1,5 @@
+import {useEventDisplayNames} from '../../i18n/useEventDisplayNames';
+import {messageLanguageAttributes} from '../../i18n/messageLanguage';
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import { useEffect, useMemo, useState } from 'react';
@@ -13,6 +15,7 @@ const pageSize = 10;
 const emptyHistory: WorldIntelligenceEventScoreObservationV1[] = [];
 
 export function useFeatureEventHistory(worldId: string, playerId: number) {
+  const {t}=useStaticLocale();
   worldId = canonicalEventWorldID(worldId);
   const scope = `${worldId}:${playerId}`;
   const [result, setResult] = useState<{
@@ -44,7 +47,7 @@ export function useFeatureEventHistory(worldId: string, playerId: number) {
     return () => { cancelled = true; window.clearInterval(timer); };
   }, [playerId, scope, worldId]);
   // Never show the previous account's rows while the new effect is starting.
-  return result.scope === scope ? result : { entries: emptyHistory, loading: Boolean(worldId && playerId > 0), error: '' };
+  return result.scope === scope ? {...result,error:result.error ? t('events.historyUnavailable') : ''} : { entries: emptyHistory, loading: Boolean(worldId && playerId > 0), error: '' };
 }
 
 export function FeatureEventHistory({ entries, worldId, playerId, now, loading, error, eventIds }: {
@@ -56,13 +59,14 @@ export function FeatureEventHistory({ entries, worldId, playerId, now, loading, 
   error: string;
   eventIds?: readonly number[];
 }) {
-  const { t: localizeStatic } = useStaticLocale();
+  const { t: localizeStatic,locale,number:formatNumber } = useStaticLocale();
   const [page, setPage] = useState(0);
   const [eventFilter, setEventFilter] = useState('all');
   const finals = useMemo(() => featureEventFinals(entries, worldId, playerId, now)
     .filter((entry) => !eventIds || eventIds.includes(entry.eventId)), [entries, eventIds, now, playerId, worldId]);
-  const eventOptions = [...new Map(finals.map((entry) => [String(entry.eventId), entry.eventName || entry.eventKey.replaceAll('-', ' ')])).entries()]
-    .map(([value, label]) => ({ value, label })).sort((left, right) => left.label.localeCompare(right.label));
+  const eventNames=useEventDisplayNames(finals.map(entry=>entry.eventId));
+  const eventOptions = [...new Map(finals.map((entry) => [String(entry.eventId), eventNames(entry.eventId,entry.eventName).text])).entries()]
+    .map(([value, label]) => ({ value, label })).sort((left, right) => left.label.localeCompare(right.label,locale));
   const selectedEvent = eventOptions.some((option) => option.value === eventFilter) ? eventFilter : 'all';
   const filtered = finals.filter((entry) => selectedEvent === 'all' || String(entry.eventId) === selectedEvent);
   const pages = Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -73,7 +77,7 @@ export function FeatureEventHistory({ entries, worldId, playerId, now, loading, 
       <div className="flex items-center gap-2 font-bold text-text-main"><History className="h-5 w-5 text-primary" /> <LocalizedText messageKey="ui.events.components.featureEventHistory.previous.event.scores.81cc1811" /></div>
       <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.events.components.featureEventHistory.final.known.account.score.for.each.collected.57490c30" /></p>
     </div>
-    {eventOptions.length > 1 && <div className="mb-4 w-full sm:w-72"><Select ariaLabel={localizeStatic("ui.events.components.featureEventHistory.ariaLabel.filter.previous.scores.by.event.c0cc7d68")} value={selectedEvent} onChange={(value) => { setEventFilter(value); setPage(0); }} options={[{ value: 'all', label: 'All previous events' }, ...eventOptions]} menuGrowToViewport /></div>}
+    {eventOptions.length > 1 && <div className="mb-4 w-full sm:w-72"><Select ariaLabel={localizeStatic("ui.events.components.featureEventHistory.ariaLabel.filter.previous.scores.by.event.c0cc7d68")} value={selectedEvent} onChange={(value) => { setEventFilter(value); setPage(0); }} options={[{ value: 'all', label: localizeStatic('events.allPrevious') }, ...eventOptions]} menuGrowToViewport /></div>}
     {error && <p role="status" className="mb-4 text-sm text-warning">{error}</p>}
     {loading ? <p role="status" className="text-sm text-text-muted"><LocalizedText messageKey="ui.events.components.featureEventHistory.loading.previous.scores.9c87ef9b" /></p> : finals.length === 0 ? (
       <EmptyState size="sm" surface="plain" title={localizeStatic("ui.events.components.featureEventHistory.title.no.previous.scores.recorded.96363ebe")} description={localizeStatic("ui.events.components.featureEventHistory.description.completed.events.appear.here.when.a.known.2ec6ea2e")} />
@@ -85,15 +89,15 @@ export function FeatureEventHistory({ entries, worldId, playerId, now, loading, 
             <th scope="col" className="px-3 py-2 text-right"><LocalizedText messageKey="ui.events.components.featureEventHistory.final.known.score.6da338f9" /></th><th scope="col" className="px-3 py-2 text-right"><LocalizedText messageKey="ui.events.components.featureEventHistory.rank.a4130d7d" /></th>
           </tr></thead>
           <tbody>{visible.map((entry) => <tr key={entry.occurrenceId} className="border-b border-border-base/50">
-            <td className="px-3 py-3 font-semibold text-text-main">{entry.eventName || entry.eventKey.replaceAll('-', ' ')}</td>
-            <td className="whitespace-nowrap px-3 py-3 text-text-muted">{formatEventEndLocal(entry.eventEndsAt)}</td>
-            <td className="whitespace-nowrap px-3 py-3 text-right tabular-nums text-text-main">{entry.score?.toLocaleString()} <span className="text-xs text-text-muted">{entry.scoreUnit || 'points'}</span></td>
-            <td className="px-3 py-3 text-right tabular-nums text-text-muted">{entry.rank > 0 ? `#${entry.rank.toLocaleString()}` : '—'}</td>
+            <td className="px-3 py-3 font-semibold text-text-main"><span {...messageLanguageAttributes(eventNames(entry.eventId,entry.eventName))}>{eventNames(entry.eventId,entry.eventName).text}</span></td>
+            <td className="whitespace-nowrap px-3 py-3 text-text-muted">{formatEventEndLocal(entry.eventEndsAt,locale,localizeStatic('events.unknown'))}</td>
+            <td className="whitespace-nowrap px-3 py-3 text-right tabular-nums text-text-main">{entry.score==null ? undefined : formatNumber(entry.score)} <span className="text-xs text-text-muted">{!entry.scoreUnit || entry.scoreUnit==='points' ? localizeStatic('events.points') : entry.scoreUnit}</span></td>
+            <td className="px-3 py-3 text-right tabular-nums text-text-muted">{entry.rank > 0 ? `#${formatNumber(entry.rank)}` : '—'}</td>
           </tr>)}</tbody>
         </table>
       </div>
       <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-text-muted">
-        <span>{filtered.length.toLocaleString()} completed runs · Page {safePage + 1} of {pages}</span>
+        <span>{localizeStatic('events.historyPages',{count:filtered.length,page:safePage+1,pages})}</span>
         <div className="flex gap-2">
           <Button variant="secondary" size="sm" disabled={safePage === 0} onClick={() => setPage(safePage - 1)}><LocalizedText messageKey="ui.events.components.featureEventHistory.previous.a57b08a4" /></Button>
           <Button variant="secondary" size="sm" disabled={safePage + 1 >= pages} onClick={() => setPage(safePage + 1)}><LocalizedText messageKey="ui.events.components.featureEventHistory.next.1ff57a29" /></Button>

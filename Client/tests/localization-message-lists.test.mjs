@@ -48,3 +48,18 @@ test('lists cannot be silently omitted or interpreted as ICU typed arguments',()
  }
  assert.equal(parseMessageDescriptor({...descriptor,officialKey:'wood'}),undefined);
 });
+test('aggregate limits accept exact boundaries and reject overflow and collisions',()=>{
+ const bounded={...descriptor,fallback:'{a}{b}{c}{d}',listParams:Object.fromEntries(['a','b','c','d'].map(name=>[name,Array(16).fill(leaf)]))};
+ assert.ok(parseMessageDescriptor(bounded));
+ assert.equal(parseMessageDescriptor({...bounded,listParams:{a:Array(32).fill(leaf),b:Array(32).fill(leaf),c:[leaf]}}),undefined);
+ assert.equal(parseMessageDescriptor({...bounded,listParams:{a:[leaf],b:[leaf],c:[leaf],d:[leaf],e:[leaf]}}),undefined);
+ assert.equal(parseMessageDescriptor({...descriptor,gameParams:{items:{key:'wood',fallback:'Wood'}}}),undefined);
+ assert.equal(parseMessageDescriptor({...descriptor,listParams:JSON.parse('{"__proto__":[{"key":"x","fallback":"x"}]}')}),undefined);
+});
+test('Arabic lists isolate literal Latin names and keep list conjunction locale-aware',()=>{
+ const result=formatMessage({...descriptor,context:undefined},'ar',{purchase:'اشتريت {items}',item:'{name}',unit:'جنود'});
+ assert.equal(result.resolvedLocale,'ar');
+ assert.ok(result.text.includes('Player {0} <b>literal</b>'));
+ assert.ok(result.text.includes('جنود'));
+ assert.ok(result.text.includes('\u2068'));
+});

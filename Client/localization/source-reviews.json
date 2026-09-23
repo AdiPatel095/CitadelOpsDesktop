@@ -213,5 +213,25 @@
     "classification": "technical",
     "reason": "Search index includes both original protocol event/message and translated display text; never rendered directly.",
     "evidence": "LoggerDock parsedLines.searchText is consumed only by filteredLines searchQuery.includes matching."
+  },
+  "50884613fe28f87dfb2d71411ca16dcbe7661a3d164d2a67c2e8d180d3ecae76": {
+    "classification": "technical",
+    "reason": "Account-scope or event-filter identity; display text uses independently localized event names and all-previous label.",
+    "evidence": "FeatureEventHistory.tsx scope guards account history responses; eventFilter/selectedEvent and options.value use all as the canonical filter token. No identity is translated."
+  },
+  "e07a2fb9f40d6b8d73c9f73491782424ef4285614762bb0d5075f3290d2ab07f": {
+    "classification": "technical",
+    "reason": "Account-scope or event-filter identity; display text uses independently localized event names and all-previous label.",
+    "evidence": "FeatureEventHistory.tsx scope guards account history responses; eventFilter/selectedEvent and options.value use all as the canonical filter token. No identity is translated."
+  },
+  "f6af9979ee6702330d5a2d5f1a5d75e7563eb2e9d24e219115c2626d067c8efd": {
+    "classification": "technical",
+    "reason": "Account-scope or event-filter identity; display text uses independently localized event names and all-previous label.",
+    "evidence": "FeatureEventHistory.tsx scope guards account history responses; eventFilter/selectedEvent and options.value use all as the canonical filter token. No identity is translated."
+  },
+  "76f27296813120a7418195fdbae68b1e4097ebc1f37901dba24840f682b0a83b": {
+    "classification": "technical",
+    "reason": "Account-scope or event-filter identity; display text uses independently localized event names and all-previous label.",
+    "evidence": "FeatureEventHistory.tsx scope guards account history responses; eventFilter/selectedEvent and options.value use all as the canonical filter token. No identity is translated."
   }
 }
