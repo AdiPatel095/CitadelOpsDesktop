@@ -1,5 +1,5 @@
 {
-  "recommendationIntro": "These are suggested starting points, not saved defaults; review them before saving.",
+  "recommendationIntro": "These are recommendations for regular use; review them before saving.",
   "steps": [
     {
       "id": "commanders",
@@ -8,7 +8,7 @@
         {
           "label": "Commander assignment",
           "description": "In Commanders, allow Auto Towers for the commanders you want to use and select Save assignments.",
-          "recommendation": "One available commander."
+          "recommendation": "20 commanders assigned to Auto Towers."
         }
       ]
     },
@@ -28,12 +28,12 @@
         {
           "label": "Daily normal-attack limit",
           "description": "Pauses at your account-wide daily attack limit until the game resets it; 0 removes the limit.",
-          "recommendation": "Current server count + 50 for a monitored trial; wait until the count appears."
+          "recommendation": "3,500 account-wide attacks per day."
         },
         {
           "label": "Horse travel boost",
           "description": "Uses your selected travel option for each attack, including every hit in an Advisor chain, with speed based on the source castle’s travel buildings.",
-          "recommendation": "Coin tier if your castle supports it and you have enough coins."
+          "recommendation": "Coin tier where supported, with enough coins."
         },
         {
           "label": "Travel feather",
@@ -67,12 +67,12 @@
         {
           "label": "Castle switch",
           "description": "Turn on each castle you want Auto Towers to scan and attack from.",
-          "recommendation": "One castle on; keep the others off for your first trial."
+          "recommendation": "Enable the castles you want to use regularly."
         },
         {
           "label": "Radius",
           "description": "Choose how far to search around this castle, from 1–50 tiles.",
-          "recommendation": "10 tiles."
+          "recommendation": "35 tiles."
         },
         {
           "label": "Choose troop",
@@ -100,17 +100,17 @@
         {
           "label": "Use Advisor with Time Skips",
           "description": "Repeats hits on one tower, using one daily attack first and one Time Skip of at least three hours per extra hit.",
-          "recommendation": "Off for your first trial."
+          "recommendation": "Off."
         },
         {
           "label": "Auto-activate with token",
           "description": "Uses an available Baron Advisor token when the Advisor is inactive, without buying a token or spending rubies.",
-          "recommendation": "Off; enable only when you intend to use a token."
+          "recommendation": "Off while Advisor is off."
         },
         {
           "label": "Maximum daily Time Skips",
           "description": "Caps Time Skips used by confirmed Advisor chains until the game’s daily attack counter resets; 0 pauses Advisor launches.",
-          "recommendation": "0 with Advisor off; try 5 only when intentionally testing Advisor."
+          "recommendation": "0 while Advisor is off."
         }
       ]
     },
@@ -121,7 +121,7 @@
         {
           "label": "Calendar",
           "description": "Use Calendar to choose when Auto Towers may run, while troop availability and other limits still apply.",
-          "recommendation": "One 30-minute slot while you can monitor it, then Save Schedule."
+          "recommendation": "Your usual running hours."
         },
         {
           "label": "Save changes",
@@ -130,7 +130,7 @@
         {
           "label": "Auto Towers switch",
           "description": "Turn on Auto Towers on the Automation page after saving your settings to allow the task to run.",
-          "recommendation": "Off until setup is saved; switch off after your trial to review results."
+          "recommendation": "On after saving your intended settings."
         }
       ]
     }

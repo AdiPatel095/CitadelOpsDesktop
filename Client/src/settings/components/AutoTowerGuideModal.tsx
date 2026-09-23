@@ -29,7 +29,7 @@ export function AutoTowerGuideModal({ isOpen, onClose, showAdvisor = true }: {
                   <div key={item.label}>
                     <dt className="text-sm font-semibold text-text-main">{item.label}</dt>
                     <dd className="mt-1 text-sm leading-relaxed text-text-muted">{item.description}</dd>
-                    {'recommendation' in item && typeof item.recommendation === 'string' && <dd className="mt-1 text-sm leading-relaxed text-text-main"><strong>Recommended start:</strong> {item.recommendation}</dd>}
+                    {'recommendation' in item && typeof item.recommendation === 'string' && <dd className="mt-1 text-sm leading-relaxed text-text-main"><strong>Recommended:</strong> {item.recommendation}</dd>}
                   </div>
                 ))}
               </dl>
