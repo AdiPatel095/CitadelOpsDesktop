@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"fmt"
 	"strings"
@@ -46,7 +47,7 @@ func (policy *SharedStormScanPolicy) Evaluate(_ context.Context, snapshot Snapsh
 	castle, found := autoStormCastle(snapshot.State, nil)
 	if !found {
 		return Decision{
-			Status: "waiting", Detail: "Shared Storm scanning is waiting for this account to unlock the Storm kingdom",
+			Status: "waiting", Detail: "Shared Storm scanning is waiting for this account to unlock the Storm kingdom", DetailDescriptor: Localization.New("server.automation.shared_storm_scanning_is.62cbc313", "Shared Storm scanning is waiting for this account to unlock the Storm kingdom", nil),
 			NextCheckAt: snapshot.Now.Add(time.Minute),
 		}, nil
 	}
@@ -56,7 +57,7 @@ func (policy *SharedStormScanPolicy) Evaluate(_ context.Context, snapshot Snapsh
 	}
 	if worldID == "" {
 		return Decision{
-			Status: "waiting", Detail: "Shared Storm scanning is waiting for a bound game world",
+			Status: "waiting", Detail: "Shared Storm scanning is waiting for a bound game world", DetailDescriptor: Localization.New("server.automation.shared_storm_scanning_is.f871165f", "Shared Storm scanning is waiting for a bound game world", nil),
 			NextCheckAt: snapshot.Now.Add(time.Minute),
 		}, nil
 	}
@@ -78,10 +79,12 @@ func (policy *SharedStormScanPolicy) Evaluate(_ context.Context, snapshot Snapsh
 			"Shared Storm coverage is current for %d/%d windows across %d capable account(s)",
 			assignment.Coverage.FreshWindowCount, assignment.Coverage.WindowCount, assignment.ParticipantCount,
 		)
+		var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.shared_storm_coverage_is.7d9f6329", "Shared Storm coverage is current for {p0, number}/{p1, number} windows across {p2, number} capable account(s)", Localization.Params{"p0": assignment.Coverage.FreshWindowCount, "p1": assignment.Coverage.WindowCount, "p2": assignment.ParticipantCount})
 		if assignment.Coverage.WindowCount == 0 {
 			detail = "Shared Storm scan participants are settling before work is partitioned"
+			detailLocalizationMessage = Localization.New("server.automation.shared_storm_scan_participants.bde9e3b2", "Shared Storm scan participants are settling before work is partitioned", nil)
 		}
-		return Decision{Status: "waiting", Detail: detail, NextCheckAt: next, Metrics: metrics}, nil
+		return Decision{Status: "waiting", Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage), NextCheckAt: next, Metrics: metrics}, nil
 	}
 	bounds := unionStormBounds(assignment.Windows)
 	request := map[string]any{
@@ -101,7 +104,7 @@ func (policy *SharedStormScanPolicy) Evaluate(_ context.Context, snapshot Snapsh
 			len(assignment.Windows), assignment.Coverage.WindowCount, assignment.Slot+1, assignment.ParticipantCount,
 		),
 		"storm.map.scan",
-		request,
+		request, Localization.New("server.automation.scan_p_p_leased.501c3d7e", "Scan {p0, number}/{p1, number} leased Storm map windows for shared world coverage using participant slot {p2, number}/{p3, number}", Localization.Params{"p0": len(assignment.Windows), "p1": assignment.Coverage.WindowCount, "p2": assignment.Slot + 1, "p3": assignment.ParticipantCount}),
 	)
 	decision.NextCheckAt = assignment.NextCheckAt
 	decision.ReevaluateOnSuccess = true

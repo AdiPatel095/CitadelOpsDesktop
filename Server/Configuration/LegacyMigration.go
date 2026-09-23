@@ -1,6 +1,7 @@
 package Configuration
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -43,15 +44,15 @@ func migrateLegacySections(dataDir string, sections map[string]json.RawMessage) 
 		case errors.Is(err, os.ErrNotExist):
 			continue
 		case err != nil:
-			return false, fmt.Errorf("read legacy configuration %s: %w", migration.fileName, err)
+			return false, Localization.WithError(fmt.Errorf("read legacy configuration %s: %w", migration.fileName, err), Localization.ErrorContext(Localization.New("server.configuration.read_legacy_configuration_p.7c74117b", "read legacy configuration {p0}", Localization.Params{"p0": fmt.Sprintf("%s", migration.fileName)}), err))
 		}
 		value, err := migration.transform(contents)
 		if err != nil {
-			return false, fmt.Errorf("migrate legacy configuration %s: %w", migration.fileName, err)
+			return false, Localization.WithError(fmt.Errorf("migrate legacy configuration %s: %w", migration.fileName, err), Localization.ErrorContext(Localization.New("server.configuration.migrate_legacy_configuration_p.a4a5488d", "migrate legacy configuration {p0}", Localization.Params{"p0": fmt.Sprintf("%s", migration.fileName)}), err))
 		}
 		canonical, err := canonicalSection(migration.section, value)
 		if err != nil {
-			return false, fmt.Errorf("migrate legacy configuration %s: %w", migration.fileName, err)
+			return false, Localization.WithError(fmt.Errorf("migrate legacy configuration %s: %w", migration.fileName, err), Localization.ErrorContext(Localization.New("server.configuration.migrate_legacy_configuration_p.a4a5488d", "migrate legacy configuration {p0}", Localization.Params{"p0": fmt.Sprintf("%s", migration.fileName)}), err))
 		}
 		sections[migration.section] = canonical
 		changed = true
@@ -65,7 +66,7 @@ func migrateLegacyDocument(contents []byte) (json.RawMessage, error) {
 		return nil, err
 	}
 	if document == nil {
-		return nil, fmt.Errorf("expected a JSON object")
+		return nil, Localization.WithError(fmt.Errorf("expected a JSON object"), Localization.New("server.configuration.expected_a_json_object.a07d4035", "expected a JSON object", nil))
 	}
 	return json.Marshal(document)
 }
@@ -76,7 +77,7 @@ func migrateLegacyScheduler(contents []byte) (json.RawMessage, error) {
 		return nil, err
 	}
 	if document == nil {
-		return nil, fmt.Errorf("expected a JSON object")
+		return nil, Localization.WithError(fmt.Errorf("expected a JSON object"), Localization.New("server.configuration.expected_a_json_object.a07d4035", "expected a JSON object", nil))
 	}
 	delete(document, "version")
 	return json.Marshal(document)
@@ -197,12 +198,12 @@ func migrateLegacyConstruction(contents []byte) (json.RawMessage, error) {
 		return nil, err
 	}
 	if document == nil {
-		return nil, fmt.Errorf("expected a JSON object")
+		return nil, Localization.WithError(fmt.Errorf("expected a JSON object"), Localization.New("server.configuration.expected_a_json_object.a07d4035", "expected a JSON object", nil))
 	}
 	var legacyTargets map[string]json.RawMessage
 	if raw := document["targets"]; len(raw) > 0 {
 		if err := json.Unmarshal(raw, &legacyTargets); err != nil {
-			return nil, fmt.Errorf("decode targets: %w", err)
+			return nil, Localization.WithError(fmt.Errorf("decode targets: %w", err), Localization.ErrorContext(Localization.New("server.configuration.decode_targets.d13bcc72", "decode targets", nil), err))
 		}
 	}
 	targets := make(map[string][]constructionMigrationTarget, len(legacyTargets))
@@ -212,7 +213,7 @@ func migrateLegacyConstruction(contents []byte) (json.RawMessage, error) {
 		}
 		items, err := migrateConstructionTargets(raw)
 		if err != nil {
-			return nil, fmt.Errorf("decode targets for castle %s: %w", castleID, err)
+			return nil, Localization.WithError(fmt.Errorf("decode targets for castle %s: %w", castleID, err), Localization.ErrorContext(Localization.New("server.configuration.decode_targets_for_castle.09822267", "decode targets for castle {p0}", Localization.Params{"p0": fmt.Sprintf("%s", castleID)}), err))
 		}
 		targets[castleID] = items
 	}

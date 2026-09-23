@@ -913,6 +913,13 @@ func TestPlanStormShopPurchaseUsesLunaStorefrontWireShape(t *testing.T) {
 	if got := string(batch.Steps[4].Command.Payload); !strings.Contains(got, `"PID":3119`) || !strings.Contains(got, `"AMT":3`) {
 		t.Fatalf("second batched Storm shop payload = %s", got)
 	}
+	if batch.SummaryDescriptor == nil || batch.SummaryDescriptor.FallbackText != batch.Summary {
+		t.Fatal("missing bound purchase descriptor")
+	}
+	leaves := batch.SummaryDescriptor.ListParams["purchases"]
+	if len(leaves) != 2 || leaves[0].Params["packageID"] != "245" || leaves[1].Params["packageID"] != "3119" || leaves[0].Params["amount"] != int64(2) {
+		t.Fatalf("purchase leaf identity/order: %#v", leaves)
+	}
 	if batch.Summary != "Buy 2 x War horn and 3 x Silver Coins from Luna for 35920 Aquamarine at castle 40" {
 		t.Fatalf("batched Storm shop summary = %q", batch.Summary)
 	}
@@ -1050,5 +1057,16 @@ func TestTargetedRefreshBindsUnboundIdentity(t *testing.T) {
 	})
 	if err == nil || !strings.Contains(err.Error(), "identity changed") {
 		t.Fatalf("changed identity accepted: %v", err)
+	}
+}
+
+func TestStormCastleIdentityKeepsNamesLiteral(t *testing.T) {
+	m := stormCastleIdentity(State.CastleState{ID: 12345})
+	if m.Params["id"] != "12345" || m.Key != "server.storm.castle_id" {
+		t.Fatalf("generated castle identity: %#v", m)
+	}
+	m = stormCastleIdentity(State.CastleState{ID: 12345, Name: " <literal>{castle} "})
+	if m.Params["name"] != " <literal>{castle} " {
+		t.Fatal("name bytes changed")
 	}
 }

@@ -260,3 +260,33 @@ test('structured notification descriptors preserve aligned recovery and code whi
  assert.equal(notification.lineDescriptors[2].params.code,'123');
  assert.doesNotThrow(()=>operationFailureNotification({...value,failure:{...value.failure,explanationDescriptor:{key:'bad',fallback:'Bad',context:{length:1}}}}));
 });
+
+test('ruby upgrade notices deduplicate polling and report changed or renewed blockers', async () => {
+ const { RubyUpgradeNotificationCoordinator } = await importTypeScript('../src/api/OperationNotifications.ts');
+ const coordinator = new RubyUpgradeNotificationCoordinator();
+ const state = (message) => ({ autoBeriWorldBuild: { details: { 'rubyUpgradeNotice/stable': message } } });
+ assert.equal(coordinator.next(state('Stable: cost 3,100; threshold 1')).length, 1);
+ assert.equal(coordinator.next(state('Stable: cost 3,100; threshold 1')).length, 0);
+ assert.equal(coordinator.next(state('Stable: cost 3,100; threshold 2500')).length, 1);
+ assert.equal(coordinator.next(state('Stable: confirmation unavailable')).length, 1);
+ assert.equal(coordinator.next({}).length, 0);
+ assert.equal(coordinator.next(state('Stable: confirmation unavailable')).length, 1);
+});
+
+test('ruby notice descriptors retain exact raw binding without changing polling deduplication',async()=>{
+ const {RubyUpgradeNotificationCoordinator}=await importTypeScript('../src/api/OperationNotifications.ts');
+ const coordinator=new RubyUpgradeNotificationCoordinator();
+ const raw='Stable <literal>{0}: cost 3,100; threshold 2,500';
+ const key='rubyUpgradeNotice/stable';
+ const descriptor={key:'fixture.ruby',fallback:'Cost {cost, number}',params:{cost:3100},fallbackText:raw};
+ const state={autoBeriWorldBuild:{details:{[key]:raw},detailsDescriptors:{[key]:descriptor}}};
+ const first=coordinator.next(state)[0];
+ assert.equal(first.message,raw);
+ assert.deepEqual(first.messageDescriptor,descriptor);
+ assert.equal(coordinator.next(state).length,0);
+ coordinator.next({});
+ assert.equal(coordinator.next({...state,autoBeriWorldBuild:{...state.autoBeriWorldBuild,detailsDescriptors:{[key]:{...descriptor,fallbackText:'stale'}}}})[0].messageDescriptor,undefined);
+ coordinator.next({});
+ assert.equal(coordinator.next(state)[0].messageDescriptor.fallbackText,raw);
+ assert.equal(state.autoBeriWorldBuild.details[key],raw);
+});

@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -100,7 +101,7 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 	settings := productionSettings{Mode: "global", CheckIntervalSec: 300, Castles: map[string]productionCastle{}}
 	if !decodeSection(snapshot.Configuration, policy.section, &settings) {
 		return Decision{
-			Status: "waiting", Detail: fmt.Sprintf("No %s production plan is configured", policy.definitionKey),
+			Status: "waiting", Detail: fmt.Sprintf("No %s production plan is configured", policy.definitionKey), DetailDescriptor: Localization.New("server.automation.no_p_production_plan.b349ae92", "No {p0} production plan is configured", Localization.Params{"p0": fmt.Sprintf("%s", policy.definitionKey)}),
 			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 300)),
 		}, nil
 	}
@@ -193,8 +194,8 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 			arguments, _ := json.Marshal(map[string]any{"castleId": castleID, "refresh": true})
 			policy.lastCastleID = castleID
 			return Decision{
-				Status:              "ready",
-				Detail:              fmt.Sprintf("Refresh the %s production queue at %s", policy.definitionKey, castleName(castle)),
+				Status: "ready",
+				Detail: fmt.Sprintf("Refresh the %s production queue at %s", policy.definitionKey, castleName(castle)), DetailDescriptor: Localization.New("server.automation.refresh_the_p_production.26516651", "Refresh the {p0} production queue at {p1}", Localization.Params{"p0": fmt.Sprintf("%s", policy.definitionKey), "p1": fmt.Sprintf("%s", castleName(castle))}),
 				NextCheckAt:         snapshot.Now.Add(coordinatorTick),
 				Request:             &Intent.Request{Name: "game.focus_castle", Arguments: arguments},
 				ScheduleKey:         scheduleKey,
@@ -214,7 +215,7 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 					arguments, _ := json.Marshal(map[string]any{"productionId": productionID})
 					policy.lastCastleID = castleID
 					return Decision{
-						Status: "ready", Detail: fmt.Sprintf("Request alliance help for recruitment queue at %s", castleName(castle)),
+						Status: "ready", Detail: fmt.Sprintf("Request alliance help for recruitment queue at %s", castleName(castle)), DetailDescriptor: Localization.New("server.automation.request_alliance_help_for.c43ffb22", "Request alliance help for recruitment queue at {p0}", Localization.Params{"p0": fmt.Sprintf("%s", castleName(castle))}),
 						NextCheckAt:         snapshot.Now.Add(coordinatorTick),
 						Request:             &Intent.Request{Name: "alliance.help.request", Arguments: arguments},
 						ScheduleKey:         scheduleKey,
@@ -300,11 +301,14 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 		var followUp *Intent.Request
 		var operationalCursorUpdate *OperationalCursorUpdate
 		detail := fmt.Sprintf("Queue the configured %s at %s", policy.definitionKey, castleName(castle))
+		var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.queue_the_configured_p.e34f6e97", "Queue the configured {p0} at {p1}", Localization.Params{"p0": fmt.Sprintf("%s", policy.definitionKey), "p1": fmt.Sprintf("%s", castleName(castle))})
 		if titleGuard != nil && titleGuard.TitleLossFallback {
 			detail = fmt.Sprintf("Queue the level 10 glory-title fallback at %s", castleName(castle))
+			detailLocalizationMessage = Localization.New("server.automation.queue_the_level_glory.3f95ab49", "Queue the level 10 glory-title fallback at {p0}", Localization.Params{"p0": fmt.Sprintf("%s", castleName(castle))})
 		}
 		if scheduled {
 			detail = fmt.Sprintf("Queue scheduled %s %d at %s", policy.definitionKey, target.ID, castleName(castle))
+			detailLocalizationMessage = Localization.New("server.automation.queue_scheduled_p_p.a09fa736", "Queue scheduled {p0} {p1} at {p2}", Localization.Params{"p0": fmt.Sprintf("%s", policy.definitionKey), "p1": fmt.Sprintf("%d", target.ID), "p2": fmt.Sprintf("%s", castleName(castle))})
 		} else if rotating {
 			nextCursor := (cursor + 1) % len(targets)
 			if snapshot.ConfigurationExternallyOwned {
@@ -326,11 +330,12 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 				"Queue Auto Recruit rotation unit %d of %d at %s",
 				cursor+1, len(targets), castleName(castle),
 			)
+			detailLocalizationMessage = Localization.New("server.automation.queue_auto_recruit_rotation.4b91553d", "Queue Auto Recruit rotation unit {p0, number} of {p1, number} at {p2}", Localization.Params{"p0": cursor + 1, "p1": len(targets), "p2": fmt.Sprintf("%s", castleName(castle))})
 		}
 		policy.lastCastleID = castleID
 		return Decision{
-			Status:              "ready",
-			Detail:              detail,
+			Status: "ready",
+			Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage),
 			NextCheckAt:         snapshot.Now.Add(coordinatorTick),
 			Request:             &Intent.Request{Name: "production.enqueue", Arguments: arguments},
 			FollowUp:            followUp,
@@ -342,32 +347,42 @@ func (policy *ProductionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 	}
 	status := "idle"
 	detail := fmt.Sprintf("No enabled castle has a configured %s", policy.definitionKey)
+	var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.no_enabled_castle_has.bd4f1b9a", "No enabled castle has a configured {p0}", Localization.Params{"p0": fmt.Sprintf("%s", policy.definitionKey)})
 	if missingScheduledDefinition > 0 {
 		detail = fmt.Sprintf("The active schedule slot has no valid %s", policy.definitionKey)
+		detailLocalizationMessage = Localization.New("server.automation.the_active_schedule_slot.e018f31e", "The active schedule slot has no valid {p0}", Localization.Params{"p0": fmt.Sprintf("%s", policy.definitionKey)})
 	} else if configured > 0 && observed == 0 {
 		detail = "Waiting for production queues to be observed in the game session"
+		detailLocalizationMessage = Localization.New("server.automation.waiting_for_production_queues.f20c8904", "Waiting for production queues to be observed in the game session", nil)
 	} else if configured > 0 && observed == full {
 		detail = "All observed production queues are full"
+		detailLocalizationMessage = Localization.New("server.automation.all_observed_production_queues.ffa007f7", "All observed production queues are full", nil)
 	} else if focusUnavailable > 0 && configured == 0 {
 		detail = "Configured production castles are not focusable in the current kingdom session"
+		detailLocalizationMessage = Localization.New("server.automation.configured_production_castles_are.45e8f583", "Configured production castles are not focusable in the current kingdom session", nil)
 	} else if gloryTitleUnknown > 0 {
 		detail = "Waiting for the current player glory title before recruiting a title-gated level 11 unit"
+		detailLocalizationMessage = Localization.New("server.automation.waiting_for_the_current.d275792f", "Waiting for the current player glory title before recruiting a title-gated level 11 unit", nil)
 	} else if gloryTitlePaused > 0 {
 		detail = "Glory-title level 11 recruit slots are paused while the required title is lost"
+		detailLocalizationMessage = Localization.New("server.automation.glory_title_level_recruit.0e21563e", "Glory-title level 11 recruit slots are paused while the required title is lost", nil)
 	} else if unavailableDefinition > 0 {
 		if unavailableScheduledDefinition > 0 {
 			detail = fmt.Sprintf("The scheduled %s family is not currently available at any enabled castle", policy.definitionKey)
+			detailLocalizationMessage = Localization.New("server.automation.the_scheduled_p_family.21707dae", "The scheduled {p0} family is not currently available at any enabled castle", Localization.Params{"p0": fmt.Sprintf("%s", policy.definitionKey)})
 		} else {
 			detail = fmt.Sprintf("No enabled castle can currently produce the configured %s family", policy.definitionKey)
+			detailLocalizationMessage = Localization.New("server.automation.no_enabled_castle_can.9ccadd73", "No enabled castle can currently produce the configured {p0} family", Localization.Params{"p0": fmt.Sprintf("%s", policy.definitionKey)})
 		}
 	} else if unknownStackCapacity > 0 {
 		detail = "Waiting for the official building stack capacity"
+		detailLocalizationMessage = Localization.New("server.automation.waiting_for_the_official.e86d33dc", "Waiting for the official building stack capacity", nil)
 	}
 	nextCheck := snapshot.Now.Add(interval)
 	if !nextCastleSchedule.IsZero() && nextCastleSchedule.Before(nextCheck) {
 		nextCheck = nextCastleSchedule
 	}
-	return Decision{Status: status, Detail: detail, NextCheckAt: nextCheck}, nil
+	return Decision{Status: status, Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage), NextCheckAt: nextCheck}, nil
 }
 
 func castleSnapshotCurrent(state State.GameState, castle State.CastleState) bool {
@@ -707,15 +722,15 @@ func productionRotationCursor(cursor int, count int) int {
 func advanceProductionCursor(raw json.RawMessage, castleKey string, cursor int) (map[string]any, error) {
 	var document map[string]any
 	if err := json.Unmarshal(raw, &document); err != nil {
-		return nil, fmt.Errorf("decode production configuration: %w", err)
+		return nil, Localization.WithError(fmt.Errorf("decode production configuration: %w", err), Localization.ErrorContext(Localization.New("server.automation.decode_production_configuration.a2365c11", "decode production configuration", nil), err))
 	}
 	castles, ok := document["castles"].(map[string]any)
 	if !ok {
-		return nil, fmt.Errorf("production configuration has no castles object")
+		return nil, Localization.WithError(fmt.Errorf("production configuration has no castles object"), Localization.New("server.automation.production_configuration_has_no.1324228e", "production configuration has no castles object", nil))
 	}
 	castle, ok := castles[castleKey].(map[string]any)
 	if !ok {
-		return nil, fmt.Errorf("production configuration has no castle %s", castleKey)
+		return nil, Localization.WithError(fmt.Errorf("production configuration has no castle %s", castleKey), Localization.New("server.automation.production_configuration_has_no.db57eec1", "production configuration has no castle {p0}", Localization.Params{"p0": fmt.Sprintf("%s", castleKey)}))
 	}
 	castle["cursor"] = cursor
 	return document, nil

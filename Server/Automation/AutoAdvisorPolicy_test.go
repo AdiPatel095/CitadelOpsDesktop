@@ -19,6 +19,9 @@ func TestAutoAdvisorPolicySizesOneRunToCompletePresetInventory(t *testing.T) {
 	if err != nil || decision.Request == nil || decision.Request.Name != "advisor.run.launch" {
 		t.Fatalf("advisor launch decision: %#v err=%v", decision, err)
 	}
+	if decision.DetailDescriptor == nil || decision.DetailDescriptor.Key != "server.automation.event_message.samurai.advisor_launch" {
+		t.Fatalf("launch descriptor missing: %+v", decision.DetailDescriptor)
+	}
 	var launch struct {
 		AttackCount int               `json:"attackCount"`
 		CommanderID State.CommanderID `json:"commanderId"`

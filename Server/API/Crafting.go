@@ -1,6 +1,7 @@
 package API
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"net/http"
 	"sort"
 	"time"
@@ -10,6 +11,7 @@ import (
 )
 
 type craftingProjection struct {
+	Locale         *GameData.LocaleResolution           `json:"locale,omitempty"`
 	Recipes        []GameData.CraftingRecipe            `json:"recipes"`
 	Resources      map[string]GameData.CraftingResource `json:"resources"`
 	Nodes          []craftingNode                       `json:"nodes"`
@@ -59,24 +61,35 @@ type craftingBuilding struct {
 
 func (server *Server) handleCraftingProjection(writer http.ResponseWriter, request *http.Request) {
 	if server.config.GameData == nil || server.config.State == nil {
-		writeError(writer, http.StatusServiceUnavailable, "crafting_unavailable", "Crafting data is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "crafting_unavailable", "Crafting data is unavailable", Localization.New("server.api.crafting_data_is_unavailable.9c4217a2", "Crafting data is unavailable", nil))
 		return
 	}
 	store, ready := server.config.GameData.Current()
 	if !ready {
-		writeError(writer, http.StatusServiceUnavailable, "crafting_unavailable", "Official game data is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "crafting_unavailable", "Official game data is unavailable", Localization.New("server.api.official_game_data_is.c5e55e7e", "Official game data is unavailable", nil))
 		return
 	}
-	catalog, err := server.config.GameData.CraftingCatalog()
+	var locale *GameData.LocaleResolution
+	language, _ := server.config.GameData.Language()
+	if request.URL.Query().Has("locale") {
+		var ready bool
+		var resolution GameData.LocaleResolution
+		language, resolution, ready = server.requestLanguage(writer, request)
+		if !ready {
+			return
+		}
+		locale = &resolution
+	}
+	catalog, err := server.config.GameData.CraftingCatalogWithLanguage(language)
 	if err != nil {
-		writeError(writer, http.StatusServiceUnavailable, "crafting_unavailable", err.Error())
+		writeErrorFromError(writer, http.StatusServiceUnavailable, "crafting_unavailable", err)
 		return
 	}
 	if assets, assetErr := server.config.GameData.CurrencyAssets(request.Context()); assetErr == nil {
 		applyCraftingIconURLs(&catalog, assets.Icons)
 	}
 	snapshot := server.config.State.ReadOnlyView()
-	projection := craftingProjection{
+	projection := craftingProjection{Locale: locale,
 		Recipes: catalog.Recipes, Resources: catalog.Resources,
 		Nodes: make([]craftingNode, 0, len(snapshot.Castles)),
 	}

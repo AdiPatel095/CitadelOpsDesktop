@@ -1,6 +1,7 @@
 package State
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"fmt"
 	"reflect"
 	"sort"
@@ -1281,6 +1282,7 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 	if components.Has(ComponentStationing) {
 		clone.Stationing = make(map[string]StationingOperation, len(source.Stationing))
 		for id, operation := range source.Stationing {
+			operation.StatusDetailDescriptor = Localization.Clone(operation.StatusDetailDescriptor)
 			operation.Units = cloneMap(operation.Units)
 			operation.MovementIDs = append([]MovementID(nil), operation.MovementIDs...)
 			operation.PausedUntil = cloneTimePointer(operation.PausedUntil)
@@ -1453,6 +1455,7 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 		}
 		if source.NomadCamps.RBCTest != nil {
 			rbcTest := *source.NomadCamps.RBCTest
+			rbcTest.SafetyErrorDescriptor = Localization.Clone(source.NomadCamps.RBCTest.SafetyErrorDescriptor)
 			rbcTest.Launches = append([]NomadRBCTestLaunch(nil), source.NomadCamps.RBCTest.Launches...)
 			clone.NomadCamps.RBCTest = &rbcTest
 		}
@@ -1466,6 +1469,8 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 		clone.Advisor.Summary.Costs = cloneMap(source.Advisor.Summary.Costs)
 	}
 	if components.Has(ComponentKhan) {
+		clone.Khan.SafetyErrorDescriptor = Localization.Clone(source.Khan.SafetyErrorDescriptor)
+		clone.Khan.Protection.ReasonDescriptor = Localization.Clone(source.Khan.Protection.ReasonDescriptor)
 		clone.Khan.Launches = append([]KhanLaunchState(nil), source.Khan.Launches...)
 		clone.Khan.Taunts = cloneMap(source.Khan.Taunts)
 		clone.Khan.ResolvedTaunts = append([]KhanTauntState(nil), source.Khan.ResolvedTaunts...)
@@ -1510,10 +1515,14 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 	if components.Has(ComponentAutomations) {
 		clone.Automations = make(map[string]AutomationState, len(source.Automations))
 		for id, automation := range source.Automations {
+			automation.SafetyLock = automation.SafetyLock.Clone()
+			automation.DetailDescriptor = Localization.Clone(automation.DetailDescriptor)
+			automation.LastErrorDescriptor = Localization.Clone(automation.LastErrorDescriptor)
 			automation.NextCheckAt = cloneTimePointer(automation.NextCheckAt)
 			automation.LastRunAt = cloneTimePointer(automation.LastRunAt)
 			automation.Metrics = cloneMap(automation.Metrics)
 			automation.Details = cloneMap(automation.Details)
+			automation.DetailsDescriptors = Localization.CloneMap(automation.DetailsDescriptors)
 			automation.OperationalCursors = cloneMap(automation.OperationalCursors)
 			clone.Automations[id] = automation
 		}

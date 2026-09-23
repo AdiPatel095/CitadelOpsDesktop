@@ -1,6 +1,7 @@
 package Buildings
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"fmt"
 	"sort"
 	"strings"
@@ -23,7 +24,7 @@ func CompileFixedTargetDiff(
 	request FixedTargetDiffRequest,
 ) (TargetDiffResult, error) {
 	if gameData == nil {
-		return TargetDiffResult{}, fmt.Errorf("official game data is unavailable")
+		return TargetDiffResult{}, Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.buildings.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	catalog, err := gameData.BuildingCatalog()
 	if err != nil {
@@ -32,9 +33,9 @@ func CompileFixedTargetDiff(
 	castleID, castle, found := previewCastle(state, request.CastleID)
 	if !found {
 		if request.CastleID > 0 {
-			return TargetDiffResult{}, fmt.Errorf("castle %d was not found", request.CastleID)
+			return TargetDiffResult{}, Localization.WithError(fmt.Errorf("castle %d was not found", request.CastleID), Localization.New("server.buildings.castle_p_was_not.b5cc85b5", "castle {p0} was not found", Localization.Params{"p0": fmt.Sprintf("%d", request.CastleID)}))
 		}
-		return TargetDiffResult{}, fmt.Errorf("no focused castle is available")
+		return TargetDiffResult{}, Localization.WithError(fmt.Errorf("no focused castle is available"), Localization.New("server.buildings.no_focused_castle_is.52a6af14", "no focused castle is available", nil))
 	}
 	castle = normalizePreviewLayout(castle, catalog)
 	request.Policy.ResourceReserves = cloneFloatMap(request.Policy.ResourceReserves)

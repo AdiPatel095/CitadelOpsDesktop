@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"errors"
@@ -101,19 +102,19 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	settingsConfigured := decodeSection(snapshot.Configuration, "automation.autoTowers", &settings)
 	if !settingsConfigured || len(settings.Castles) == 0 {
 		return Decision{
-			Status: "waiting", Detail: "No tower castles are configured",
+			Status: "waiting", Detail: "No tower castles are configured", DetailDescriptor: Localization.New("server.automation.no_tower_castles_are.bb947c54", "No tower castles are configured", nil),
 			EventDriven: true,
 		}, nil
 	}
 	if !validHorseTravelBoostID(settings.HorseTravelBoostID) {
-		return Decision{Status: "waiting", Detail: "Choose a supported horse travel boost", EventDriven: true}, nil
+		return Decision{Status: "waiting", Detail: "Choose a supported horse travel boost", DetailDescriptor: Localization.New("server.automation.choose_a_supported_horse.0d7016a8", "Choose a supported horse travel boost", nil), EventDriven: true}, nil
 	}
 	if settings.MaximumDailyTimeSkips < 0 {
-		return Decision{Status: "waiting", Detail: "Maximum daily Advisor Time Skips cannot be negative", EventDriven: true}, nil
+		return Decision{Status: "waiting", Detail: "Maximum daily Advisor Time Skips cannot be negative", DetailDescriptor: Localization.New("server.automation.maximum_daily_advisor_time.0db54277", "Maximum daily Advisor Time Skips cannot be negative", nil), EventDriven: true}, nil
 	}
 	if settings.UseAdvisor && settings.MaximumDailyTimeSkips == 0 {
 		return Decision{
-			Status: "waiting", Detail: "Set a positive maximum daily Time Skip limit before using the Baron Advisor",
+			Status: "waiting", Detail: "Set a positive maximum daily Time Skip limit before using the Baron Advisor", DetailDescriptor: Localization.New("server.automation.set_a_positive_maximum.202e2322", "Set a positive maximum daily Time Skip limit before using the Baron Advisor", nil),
 			EventDriven: true,
 		}, nil
 	}
@@ -124,7 +125,7 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	)
 	if commandersRestricted && len(commanderIDs) == 0 {
 		return Decision{
-			Status: "waiting", Detail: "No commanders are assigned to Auto Towers",
+			Status: "waiting", Detail: "No commanders are assigned to Auto Towers", DetailDescriptor: Localization.New("server.automation.no_commanders_are_assigned.e4c6d04f", "No commanders are assigned to Auto Towers", nil),
 			EventDriven: true,
 		}, nil
 	}
@@ -135,8 +136,8 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 			"x2": cooldownTarget.X, "y2": cooldownTarget.Y,
 		})
 		return Decision{
-			Status:              "ready",
-			Detail:              fmt.Sprintf("Refresh cooldown after tower battle at %d:%d", cooldownTarget.X, cooldownTarget.Y),
+			Status: "ready",
+			Detail: fmt.Sprintf("Refresh cooldown after tower battle at %d:%d", cooldownTarget.X, cooldownTarget.Y), DetailDescriptor: Localization.New("server.automation.refresh_cooldown_after_tower.9b84a25a", "Refresh cooldown after tower battle at {p0}:{p1}", Localization.Params{"p0": cooldownTarget.X, "p1": cooldownTarget.Y}),
 			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 			Request:             &Intent.Request{Name: "map.query", Arguments: arguments},
 			ReevaluateOnSuccess: true,
@@ -158,8 +159,8 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 			"scanStartedAt": snapshot.Now,
 		})
 		return Decision{
-			Status:              "ready",
-			Detail:              fmt.Sprintf("Refresh complete tower map around %s", castleName(castle)),
+			Status: "ready",
+			Detail: fmt.Sprintf("Refresh complete tower map around %s", castleName(castle)), DetailDescriptor: Localization.New("server.automation.refresh_complete_tower_map.2dcabea9", "Refresh complete tower map around {p0}", Localization.Params{"p0": fmt.Sprintf("%s", castleName(castle))}),
 			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 			Request:             &Intent.Request{Name: "tower.queue.scan", Arguments: arguments},
 			ScheduleKey:         towerCastleScheduleKey(castle.ID),
@@ -187,7 +188,7 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		metrics["plannedAdvisorTimeSkips"] = float64(plannedTimeSkips)
 		if plannedTimeSkips < 1 {
 			return Decision{
-				Status: "waiting", Detail: "Baron Advisor chaining needs at least one Time Skip that covers the three-hour tower cooldown",
+				Status: "waiting", Detail: "Baron Advisor chaining needs at least one Time Skip that covers the three-hour tower cooldown", DetailDescriptor: Localization.New("server.automation.baron_advisor_chaining_needs.d6347f08", "Baron Advisor chaining needs at least one Time Skip that covers the three-hour tower cooldown", nil),
 				EventDriven: true, Metrics: metrics,
 			}, nil
 		}
@@ -207,17 +208,21 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		)
 		if !commanderAvailable {
 			detail := "No commander is currently available"
+			var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.no_commander_is_currently.25dd6b1e", "No commander is currently available", nil)
 			if commandersRestricted {
 				detail = "No assigned Auto Towers commander is currently available"
+				detailLocalizationMessage = Localization.New("server.automation.no_assigned_auto_towers.35e91608", "No assigned Auto Towers commander is currently available", nil)
 			}
 			if candidate.Plan.MaidenOnly {
 				detail = "No available commander supports the required maiden relic"
+				detailLocalizationMessage = Localization.New("server.automation.no_available_commander_supports.629a4be8", "No available commander supports the required maiden relic", nil)
 				if commandersRestricted {
 					detail = "No available assigned Auto Towers commander supports the required maiden relic"
+					detailLocalizationMessage = Localization.New("server.automation.no_available_assigned_auto.58ec76f5", "No available assigned Auto Towers commander supports the required maiden relic", nil)
 				}
 			}
 			return Decision{
-				Status: "waiting", Detail: detail,
+				Status: "waiting", Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage),
 				EventDriven: true, Metrics: metrics,
 			}, nil
 		}
@@ -275,8 +280,8 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 				"refreshStartedAt": snapshot.Now,
 			})
 			return Decision{
-				Status:              "ready",
-				Detail:              fmt.Sprintf("Refresh queued tower target %d:%d; rotate it back if unchanged", selected.Entry.TargetX, selected.Entry.TargetY),
+				Status: "ready",
+				Detail: fmt.Sprintf("Refresh queued tower target %d:%d; rotate it back if unchanged", selected.Entry.TargetX, selected.Entry.TargetY), DetailDescriptor: Localization.New("server.automation.refresh_queued_tower_target.a45c4ae9", "Refresh queued tower target {p0}:{p1}; rotate it back if unchanged", Localization.Params{"p0": selected.Entry.TargetX, "p1": selected.Entry.TargetY}),
 				NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 				Metrics:             metrics,
 				Request:             &Intent.Request{Name: "tower.queue.target.refresh", Arguments: arguments},
@@ -292,15 +297,15 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		if settings.UseAdvisor && !autoTowerBaronAdvisorActive(snapshot.State) {
 			if snapshot.GameData == nil {
 				return Decision{
-					Status: "waiting", Detail: "Official game data is unavailable; the Baron Advisor token will not be activated yet",
+					Status: "waiting", Detail: "Official game data is unavailable; the Baron Advisor token will not be activated yet", DetailDescriptor: Localization.New("server.automation.official_game_data_is.8eb23e76", "Official game data is unavailable; the Baron Advisor token will not be activated yet", nil),
 					NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)), Metrics: metrics,
 				}, nil
 			}
 			if settings.AutoActivateAdvisor && snapshot.State.Player.Currencies[autoTowerBaronTokenCurrencyID] >= 1 {
 				arguments, _ := json.Marshal(map[string]any{"confirmedTokenSpend": true})
 				return Decision{
-					Status:              "ready",
-					Detail:              fmt.Sprintf("Activate the Baron Advisor for ready tower %d:%d with one available token", selected.Entry.TargetX, selected.Entry.TargetY),
+					Status: "ready",
+					Detail: fmt.Sprintf("Activate the Baron Advisor for ready tower %d:%d with one available token", selected.Entry.TargetX, selected.Entry.TargetY), DetailDescriptor: Localization.New("server.automation.activate_the_baron_advisor.22417a5c", "Activate the Baron Advisor for ready tower {p0}:{p1} with one available token", Localization.Params{"p0": selected.Entry.TargetX, "p1": selected.Entry.TargetY}),
 					NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 					Metrics:             metrics,
 					Request:             &Intent.Request{Name: "tower.advisor.activate", Arguments: arguments},
@@ -310,11 +315,13 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 				}, nil
 			}
 			detail := "Baron Advisor mode is selected, but the Advisor is not active"
+			var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.baron_advisor_mode_is.c255b8a9", "Baron Advisor mode is selected, but the Advisor is not active", nil)
 			if settings.AutoActivateAdvisor {
 				detail += fmt.Sprintf(" and no Baron Advisor token (currency %d) is available", autoTowerBaronTokenCurrencyID)
+				detailLocalizationMessage = nil
 			}
 			return Decision{
-				Status: "waiting", Detail: detail, EventDriven: true, Metrics: metrics,
+				Status: "waiting", Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage), EventDriven: true, Metrics: metrics,
 				ScheduleKey: towerCastleScheduleKey(selected.Castle.ID),
 			}, nil
 		}
@@ -334,6 +341,7 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 		return Decision{
 			Status:              "ready",
 			Detail:              autoTowerLaunchDetail(settings, selected, selectedAdvisorAttackCount),
+			DetailDescriptor:    autoTowerLaunchDescriptor(settings, selected, selectedAdvisorAttackCount),
 			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 			Metrics:             metrics,
 			Request:             &Intent.Request{Name: "tower.attack", Arguments: arguments},
@@ -344,36 +352,43 @@ func (*AutoTowerPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 	}
 	if len(candidates) > 0 {
 		detail := "No queued tower candidate is ready"
+		var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.no_queued_tower_candidate.fb5fec86", "No queued tower candidate is ready", nil)
 		if firstTroopShortage != "" {
 			detail = "Waiting for tower troops: " + firstTroopShortage
+			detailLocalizationMessage = nil
 		} else if firstCapacityError != nil {
 			if decision, refresh := generalSkillsRefreshDecision(firstCapacityError, snapshot.Now, metrics); refresh {
 				return decision, nil
 			}
 			detail = "Cannot calculate tower troop requirements: " + firstCapacityError.Error()
+			detailLocalizationMessage = nil
 		}
 		return Decision{
-			Status: "waiting", Detail: detail,
+			Status: "waiting", Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage),
 			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)),
 			Metrics:     metrics,
 		}, nil
 	}
 
 	detail := "No enabled castle has a queued tower target to launch"
+	var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.no_enabled_castle_has.2a725a0e", "No enabled castle has a queued tower target to launch", nil)
 	if configured == 0 {
 		detail = "No enabled castle has a troop configured"
+		detailLocalizationMessage = Localization.New("server.automation.no_enabled_castle_has.72b05111", "No enabled castle has a troop configured", nil)
 	} else if activeCount > 0 {
 		detail = "No additional tower target is ready; active tower movements continue independently"
+		detailLocalizationMessage = Localization.New("server.automation.no_additional_tower_target.f48b64fe", "No additional tower target is ready; active tower movements continue independently", nil)
 	}
 	if unsupportedHorseCastles > 0 {
 		detail += fmt.Sprintf("; %d configured castle(s) do not support the selected horse travel boost", unsupportedHorseCastles)
+		detailLocalizationMessage = nil
 	}
 	nextCheck := snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30))
 	if !nextCastleSchedule.IsZero() && nextCastleSchedule.Before(nextCheck) {
 		nextCheck = nextCastleSchedule
 	}
 	return Decision{
-		Status: "idle", Detail: detail, NextCheckAt: nextCheck,
+		Status: "idle", Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage), NextCheckAt: nextCheck,
 		Metrics: metrics,
 	}, nil
 }
@@ -392,21 +407,21 @@ func autoTowerAdvisorDailyTimeSkipAllowance(
 	}
 	if maximum <= 0 {
 		return 0, &Decision{
-			Status: "waiting", Detail: "Set a positive maximum daily Time Skip limit before using the Baron Advisor",
+			Status: "waiting", Detail: "Set a positive maximum daily Time Skip limit before using the Baron Advisor", DetailDescriptor: Localization.New("server.automation.set_a_positive_maximum.202e2322", "Set a positive maximum daily Time Skip limit before using the Baron Advisor", nil),
 			EventDriven: true, Metrics: metrics,
 		}
 	}
 	attacks := snapshot.State.DailyAttacks
 	if attacks.ObservedAt.IsZero() || attacks.SessionStartedAt.IsZero() {
 		return 0, &Decision{
-			Status: "waiting", Detail: "Waiting for the authoritative server daily reset before using Advisor Time Skips",
+			Status: "waiting", Detail: "Waiting for the authoritative server daily reset before using Advisor Time Skips", DetailDescriptor: Localization.New("server.automation.waiting_for_the_authoritative.fe492a87", "Waiting for the authoritative server daily reset before using Advisor Time Skips", nil),
 			NextCheckAt: snapshot.Now.Add(interval), Metrics: metrics,
 		}
 	}
 	used, exact := State.TowerAdvisorTimeSkipsUsedSince(snapshot.State, attacks.SessionStartedAt, snapshot.Now)
 	if !exact {
 		return 0, &Decision{
-			Status: "waiting", Detail: "Cannot establish exact Auto Towers Advisor Time Skip usage for the current server day",
+			Status: "waiting", Detail: "Cannot establish exact Auto Towers Advisor Time Skip usage for the current server day", DetailDescriptor: Localization.New("server.automation.cannot_establish_exact_auto.f1bde5b1", "Cannot establish exact Auto Towers Advisor Time Skip usage for the current server day", nil),
 			NextCheckAt: snapshot.Now.Add(interval), Metrics: metrics,
 		}
 	}
@@ -421,7 +436,7 @@ func autoTowerAdvisorDailyTimeSkipAllowance(
 			Detail: fmt.Sprintf(
 				"Daily Auto Towers Advisor Time Skip limit reached: %d / %d; chaining resumes when the server daily attack count resets",
 				used, maximum,
-			),
+			), DetailDescriptor: Localization.New("server.automation.daily_auto_towers_advisor.9d171427", "Daily Auto Towers Advisor Time Skip limit reached: {p0} / {p1}; chaining resumes when the server daily attack count resets", Localization.Params{"p0": used, "p1": maximum}),
 			NextCheckAt: snapshot.Now.Add(interval), Metrics: metrics,
 		}
 	}
@@ -437,7 +452,7 @@ func filterAutoTowerHorseTravelBoostCastles(
 	}
 	if snapshot.GameData == nil {
 		return settings, 0, &Decision{
-			Status: "waiting", Detail: "Waiting for official game data to resolve the selected horse travel boost",
+			Status: "waiting", Detail: "Waiting for official game data to resolve the selected horse travel boost", DetailDescriptor: Localization.New("server.automation.waiting_for_official_game.7059ce31", "Waiting for official game data to resolve the selected horse travel boost", nil),
 			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)),
 		}, nil
 	}
@@ -464,8 +479,8 @@ func filterAutoTowerHorseTravelBoostCastles(
 			}
 			arguments, _ := json.Marshal(map[string]any{"castleId": castle.ID, "refresh": true})
 			return settings, unsupported, &Decision{
-				Status:              "ready",
-				Detail:              fmt.Sprintf("Refresh travel-building state at %s", castleName(castle)),
+				Status: "ready",
+				Detail: fmt.Sprintf("Refresh travel-building state at %s", castleName(castle)), DetailDescriptor: Localization.New("server.automation.refresh_travel_building_state.7d626275", "Refresh travel-building state at {p0}", Localization.Params{"p0": fmt.Sprintf("%s", castleName(castle))}),
 				NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 				Request:             &Intent.Request{Name: "game.focus_castle", Arguments: arguments},
 				ScheduleKey:         towerCastleScheduleKey(castle.ID),
@@ -479,8 +494,8 @@ func filterAutoTowerHorseTravelBoostCastles(
 		case errors.Is(err, GameData.ErrHorseTravelBoostLayoutUnobserved):
 			arguments, _ := json.Marshal(map[string]any{"castleId": castle.ID, "refresh": true})
 			return settings, unsupported, &Decision{
-				Status:              "ready",
-				Detail:              fmt.Sprintf("Refresh travel-building state at %s", castleName(castle)),
+				Status: "ready",
+				Detail: fmt.Sprintf("Refresh travel-building state at %s", castleName(castle)), DetailDescriptor: Localization.New("server.automation.refresh_travel_building_state.7d626275", "Refresh travel-building state at {p0}", Localization.Params{"p0": fmt.Sprintf("%s", castleName(castle))}),
 				NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 				Request:             &Intent.Request{Name: "game.focus_castle", Arguments: arguments},
 				ScheduleKey:         towerCastleScheduleKey(castle.ID),
@@ -501,7 +516,7 @@ func filterAutoTowerHorseTravelBoostCastles(
 			Detail: fmt.Sprintf(
 				"No configured Auto Towers castle supports the selected horse travel boost; %d castle(s) were skipped",
 				unsupported,
-			),
+			), DetailDescriptor: Localization.New("server.automation.no_configured_auto_towers.a3e456bf", "No configured Auto Towers castle supports the selected horse travel boost; {p0} castle(s) were skipped", Localization.Params{"p0": unsupported}),
 			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 30)),
 			Metrics:     map[string]float64{"unsupportedHorseCastles": float64(unsupported)},
 		}, nil
@@ -676,7 +691,7 @@ func autoTowerCapacityRequirement(
 ) (int64, error) {
 	target, exists := snapshot.State.LookupMapObservation(candidate.Entry.KingdomID, fmt.Sprintf("%d:%d", candidate.Entry.TargetX, candidate.Entry.TargetY))
 	if !exists {
-		return 0, fmt.Errorf("tower %d:%d is no longer in map state", candidate.Entry.TargetX, candidate.Entry.TargetY)
+		return 0, Localization.WithError(fmt.Errorf("tower %d:%d is no longer in map state", candidate.Entry.TargetX, candidate.Entry.TargetY), Localization.New("server.automation.tower_p_p_is.a0c98b1c", "tower {p0}:{p1} is no longer in map state", Localization.Params{"p0": fmt.Sprintf("%d", candidate.Entry.TargetX), "p1": fmt.Sprintf("%d", candidate.Entry.TargetY)}))
 	}
 	capacity, err := (AttackCapacity.Resolver{}).Resolve(snapshot.State, snapshot.GameData, AttackCapacity.Request{
 		SourceCastleID: candidate.Castle.ID, CommanderID: commanderID,
@@ -882,4 +897,15 @@ func autoTowerLaunchDetail(settings autoTowerSettings, selected towerQueueCandid
 		"Launch queued tower target %d:%d from %s",
 		selected.Entry.TargetX, selected.Entry.TargetY, castleName(selected.Castle),
 	)
+}
+
+func autoTowerLaunchDescriptor(settings autoTowerSettings, selected towerQueueCandidate, attackCount int) *Localization.Message {
+	params := Localization.Params{"x": fmt.Sprint(selected.Entry.TargetX), "y": fmt.Sprint(selected.Entry.TargetY)}
+	variant := "queued_tower"
+	if settings.UseAdvisor {
+		variant = "advisor_tower"
+		params["attacks"] = attackCount
+		params["skips"] = attackCount - 1
+	}
+	return castleDecisionDescriptor(variant, selected.Castle, params)
 }

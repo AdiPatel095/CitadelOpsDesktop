@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import { APIError, CitadelAPI, OperationError } from './CitadelClient';
-import { OperationFailureNotificationCoordinator } from './OperationNotifications';
+import { OperationFailureNotificationCoordinator, RubyUpgradeNotificationCoordinator } from './OperationNotifications';
 import type {
   APIConnectionStatus,
 	AllianceTargetViewV2,
@@ -103,6 +103,10 @@ export function APIProvider({ children }: { children: ReactNode }) {
 	const configurationReady = useRef(false);
 	const operationsReady = useRef(false);
 	const operationNotificationIDs = useRef(new Map<string, string>());
+	const rubyUpgradeNotifications = useRef(new RubyUpgradeNotificationCoordinator());
+	useEffect(() => {
+		for (const notice of rubyUpgradeNotifications.current.next(state?.automations ?? {})) Notifications.publish(notice);
+	}, [state?.automations]);
 	const operationFailureNotifications = useRef(new OperationFailureNotificationCoordinator());
   const stateRefreshInFlight = useRef<Promise<void> | null>(null);
   const stateRefreshPending = useRef(false);

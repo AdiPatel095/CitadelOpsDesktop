@@ -1,6 +1,7 @@
 package Buildings
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"fmt"
 	"math"
 
@@ -43,11 +44,11 @@ func PreviewStorageDependency(
 		return StorageDependencyResult{}, RevisionMismatchError{Expected: *request.ExpectedRevision, Actual: state.Revision}
 	}
 	if gameData == nil {
-		return StorageDependencyResult{}, fmt.Errorf("official game data is unavailable")
+		return StorageDependencyResult{}, Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.buildings.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	castle, found := state.Castles[request.CastleID]
 	if !found || request.CastleID <= 0 {
-		return StorageDependencyResult{}, fmt.Errorf("castle %d was not found", request.CastleID)
+		return StorageDependencyResult{}, Localization.WithError(fmt.Errorf("castle %d was not found", request.CastleID), Localization.New("server.buildings.castle_p_was_not.b5cc85b5", "castle {p0} was not found", Localization.Params{"p0": fmt.Sprintf("%d", request.CastleID)}))
 	}
 	result := StorageDependencyResult{
 		Revision: state.Revision, CastleID: castle.ID, CapacityNeeds: map[string]float64{},

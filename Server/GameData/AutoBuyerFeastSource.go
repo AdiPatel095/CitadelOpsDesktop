@@ -1,6 +1,7 @@
 package GameData
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"fmt"
 	"math"
 	"sort"
@@ -36,7 +37,7 @@ func (store *Store) SelectAutoBuyerFeastSource(
 ) (AutoBuyerFeastSource, AutoBuyerFeastSourceStatus, error) {
 	status := AutoBuyerFeastSourceStatus{}
 	if store == nil {
-		return AutoBuyerFeastSource{}, status, fmt.Errorf("official game data is unavailable")
+		return AutoBuyerFeastSource{}, status, Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.game_data.buyer_unavailable", "Official game data is unavailable", nil))
 	}
 	resourceIDs, err := store.FoodResourceIDs()
 	if err != nil {

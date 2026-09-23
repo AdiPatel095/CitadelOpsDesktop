@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -56,18 +57,18 @@ func PreviewAutoStormTroopCap(
 	now time.Time,
 ) (AutoStormTroopCapPreview, error) {
 	if gameData == nil {
-		return AutoStormTroopCapPreview{}, fmt.Errorf("official game data is unavailable")
+		return AutoStormTroopCapPreview{}, Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.automation.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	settings := defaultAutoStormSettings()
 	if len(settingsJSON) == 0 {
-		return AutoStormTroopCapPreview{}, fmt.Errorf("Auto Storm settings are required")
+		return AutoStormTroopCapPreview{}, Localization.WithError(fmt.Errorf("Auto Storm settings are required"), Localization.New("server.automation.auto_storm_settings_are.48133d4e", "Auto Storm settings are required", nil))
 	}
 	if err := json.Unmarshal(settingsJSON, &settings); err != nil {
-		return AutoStormTroopCapPreview{}, fmt.Errorf("decode Auto Storm settings: %w", err)
+		return AutoStormTroopCapPreview{}, Localization.WithError(fmt.Errorf("decode Auto Storm settings: %w", err), Localization.ErrorContext(Localization.New("server.automation.decode_auto_storm_settings.cee5c23c", "decode Auto Storm settings", nil), err))
 	}
 	normalizeAutoStormSettings(&settings)
 	if settings.Version != 1 {
-		return AutoStormTroopCapPreview{}, fmt.Errorf("unsupported Auto Storm settings version %d", settings.Version)
+		return AutoStormTroopCapPreview{}, Localization.WithError(fmt.Errorf("unsupported Auto Storm settings version %d", settings.Version), Localization.New("server.automation.unsupported_auto_storm_settings.3136b41a", "unsupported Auto Storm settings version {p0}", Localization.Params{"p0": settings.Version}))
 	}
 	return autoStormTroopCapPreview(Snapshot{
 		State: state, Configuration: configuration, GameData: gameData, Telemetry: telemetry, Now: now,
@@ -251,7 +252,7 @@ func autoStormConfiguredTroops(snapshot Snapshot, settings autoStormSettings) (a
 		result.count++
 		result.maximum = max(result.maximum, total)
 		if result.total > math.MaxInt64-total {
-			return autoStormConfiguredTroopDemand{}, "", fmt.Errorf("enabled Storm preset troop total exceeds the supported range")
+			return autoStormConfiguredTroopDemand{}, "", Localization.WithError(fmt.Errorf("enabled Storm preset troop total exceeds the supported range"), Localization.New("server.automation.enabled_storm_preset_troop.67669c01", "enabled Storm preset troop total exceeds the supported range", nil))
 		}
 		result.total += total
 	}
@@ -263,7 +264,7 @@ func autoStormConfiguredTroops(snapshot Snapshot, settings autoStormSettings) (a
 
 func autoStormCeilTroops(value float64) (int64, error) {
 	if math.IsNaN(value) || math.IsInf(value, 0) || value < 0 || value > float64(math.MaxInt64) {
-		return 0, fmt.Errorf("Auto Storm troop cap exceeds the supported range")
+		return 0, Localization.WithError(fmt.Errorf("Auto Storm troop cap exceeds the supported range"), Localization.New("server.automation.auto_storm_troop_cap.1dfde8e8", "Auto Storm troop cap exceeds the supported range", nil))
 	}
 	return int64(math.Ceil(value)), nil
 }
@@ -273,7 +274,7 @@ func autoStormRequiredTroopTotal(gameData *GameData.Store, required map[State.Un
 	for _, unitID := range sortedAutoStormUnitIDs(required) {
 		isTool, found := autoStormUnitIsTool(gameData, unitID)
 		if !found {
-			return 0, fmt.Errorf("official unit definition %d is unavailable", unitID)
+			return 0, Localization.WithError(fmt.Errorf("official unit definition %d is unavailable", unitID), Localization.New("server.automation.official_unit_definition_p.f7b9e9a6", "official unit definition {p0} is unavailable", Localization.Params{"p0": fmt.Sprintf("%d", unitID)}))
 		}
 		if isTool {
 			continue

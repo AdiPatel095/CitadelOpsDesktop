@@ -1,6 +1,7 @@
 package App
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -81,22 +82,22 @@ func planBeriCapacityRefresh(_ context.Context, input Intent.PlanningContext, ar
 		return Intent.Plan{}, err
 	}
 	if request.BeriCastleID <= 0 {
-		return Intent.Plan{}, fmt.Errorf("beriCastleId must identify the active Berimond castle")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("beriCastleId must identify the active Berimond castle"), Localization.New("server.app.bericastleid_must_identify_the.0ba1c5be", "beriCastleId must identify the active Berimond castle", nil))
 	}
 	castle, exists := input.State.Castles[request.BeriCastleID]
 	if !exists || castle.KingdomID != beriKingdomID {
-		return Intent.Plan{}, fmt.Errorf(
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf(
 			"%w: beriCastleId no longer identifies the active Berimond castle", Intent.ErrPlanStale,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.b176a682", "intent plan became stale before dispatch: beriCastleId no longer identifies the active Berimond castle", nil))
 	}
 	source, exists := input.State.Castles[request.SourceCastleID]
 	if !exists || request.SourceCastleID <= 0 || source.KingdomID != 0 {
-		return Intent.Plan{}, fmt.Errorf(
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf(
 			"%w: sourceCastleId no longer identifies an owned Great Empire donor", Intent.ErrPlanStale,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.43ed39e9", "intent plan became stale before dispatch: sourceCastleId no longer identifies an owned Great Empire donor", nil))
 	}
 	if unlock, observed := input.State.KingdomTransport.Unlocks[beriKingdomID]; observed && !unlock.Unlocked {
-		return Intent.Plan{}, fmt.Errorf("%w: the Battle for Berimond is no longer unlocked", Intent.ErrPlanStale)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("%w: the Battle for Berimond is no longer unlocked", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.c4e00f6a", "intent plan became stale before dispatch: the Battle for Berimond is no longer unlocked", nil))
 	}
 	payload, _ := json.Marshal(struct {
 		CastleID State.CastleID `json:"CID"`
@@ -114,11 +115,11 @@ func planBeriCapacityRefresh(_ context.Context, input Intent.PlanningContext, ar
 		Summary: fmt.Sprintf(
 			"Refresh Berimond troop capacity for castle %d and donor inventory at castle %d",
 			request.BeriCastleID, request.SourceCastleID,
-		),
+		), SummaryDescriptor: Localization.New("server.app.refresh_berimond_troop_capacity.988f413d", "Refresh Berimond troop capacity for castle {p0} and donor inventory at castle {p1}", Localization.Params{"p0": fmt.Sprintf("%d", request.BeriCastleID), "p1": fmt.Sprintf("%d", request.SourceCastleID)}),
 		Steps: []Intent.Step{
-			commandStep("Refresh owned-castle troop inventories", "dcl", json.RawMessage(`{"CD":1}`), "dcl"),
-			commandStep("Refresh Berimond troop capacity", "fuc", payload, "fuc"),
-			{Name: "Verify refreshed Berimond troop capacity", Action: "beri.capacity.verify", ActionArguments: verifyArguments},
+			commandStep("Refresh owned-castle troop inventories", "dcl", json.RawMessage(`{"CD":1}`), "dcl", Localization.New("server.app.refresh_owned_castle_troop.fddb7cdb", "Refresh owned-castle troop inventories", nil)),
+			commandStep("Refresh Berimond troop capacity", "fuc", payload, "fuc", Localization.New("server.app.refresh_berimond_troop_capacity.94ebee2a", "Refresh Berimond troop capacity", nil)),
+			{Name: "Verify refreshed Berimond troop capacity", NameDescriptor: Localization.New("server.app.verify_refreshed_berimond_troop.4ecdd407", "Verify refreshed Berimond troop capacity", nil), Action: "beri.capacity.verify", ActionArguments: verifyArguments},
 		},
 	}, nil
 }
@@ -129,31 +130,31 @@ func (application *Application) verifyBeriCapacity(_ context.Context, arguments 
 		return err
 	}
 	if request.BeriCastleID <= 0 || request.SourceCastleID <= 0 || request.RequestedAt.IsZero() {
-		return fmt.Errorf("Berimond capacity verification requires target and donor castles plus a request time")
+		return Localization.WithError(fmt.Errorf("Berimond capacity verification requires target and donor castles plus a request time"), Localization.New("server.app.berimond_capacity_verification_requires.1e385ff1", "Berimond capacity verification requires target and donor castles plus a request time", nil))
 	}
 	if application == nil || application.State == nil {
-		return fmt.Errorf("Berimond capacity state is unavailable")
+		return Localization.WithError(fmt.Errorf("Berimond capacity state is unavailable"), Localization.New("server.app.berimond_capacity_state_is.af5e2f24", "Berimond capacity state is unavailable", nil))
 	}
 	state := application.State.ReadOnlyView()
 	castle, exists := state.Castles[request.BeriCastleID]
 	if !exists || castle.KingdomID != beriKingdomID {
-		return fmt.Errorf("%w: the Berimond capacity castle is no longer owned", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: the Berimond capacity castle is no longer owned", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.6f8314cf", "intent plan became stale before dispatch: the Berimond capacity castle is no longer owned", nil))
 	}
 	source, exists := state.Castles[request.SourceCastleID]
 	if !exists || source.KingdomID != 0 {
-		return fmt.Errorf("%w: the selected Berimond donor is no longer an owned Great Empire castle", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: the selected Berimond donor is no longer an owned Great Empire castle", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.0ce0562f", "intent plan became stale before dispatch: the selected Berimond donor is no longer an owned Great Empire castle", nil))
 	}
 	if source.UnitsObservedAt.IsZero() || source.UnitsObservedAt.Before(request.RequestedAt) {
-		return fmt.Errorf("%w: the dcl response did not refresh the selected Berimond donor inventory", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: the dcl response did not refresh the selected Berimond donor inventory", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.59b9375e", "intent plan became stale before dispatch: the dcl response did not refresh the selected Berimond donor inventory", nil))
 	}
 	if state.Beri.ObservedAt.IsZero() || state.Beri.ObservedAt.Before(request.RequestedAt) {
-		return fmt.Errorf("%w: the fuc response did not refresh Berimond troop capacity", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: the fuc response did not refresh Berimond troop capacity", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.41e826ea", "intent plan became stale before dispatch: the fuc response did not refresh Berimond troop capacity", nil))
 	}
 	if state.Beri.ParsedSourceID > 0 && state.Beri.ParsedSourceID != request.SourceCastleID {
-		return fmt.Errorf(
+		return Localization.WithError(fmt.Errorf(
 			"%w: Berimond capacity was reported for donor %d instead of selected donor %d",
 			Intent.ErrPlanStale, state.Beri.ParsedSourceID, request.SourceCastleID,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.64ea0821", "intent plan became stale before dispatch: Berimond capacity was reported for donor {p1} instead of selected donor {p2}", Localization.Params{"p1": fmt.Sprintf("%d", state.Beri.ParsedSourceID), "p2": fmt.Sprintf("%d", request.SourceCastleID)}))
 	}
 	return nil
 }
@@ -172,25 +173,25 @@ func planBeriTransfer(_ context.Context, input Intent.PlanningContext, arguments
 		target, exists = ownedCastleInKingdom(input.State, beriKingdomID)
 	}
 	if !exists {
-		return Intent.Plan{}, fmt.Errorf(
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf(
 			"%w: an owned Berimond camp is required before transferring troops", Intent.ErrPlanStale,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.94990f0b", "intent plan became stale before dispatch: an owned Berimond camp is required before transferring troops", nil))
 	}
 	if target.KingdomID != beriKingdomID {
-		return Intent.Plan{}, fmt.Errorf(
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf(
 			"%w: targetCastleId no longer identifies an owned Berimond camp", Intent.ErrPlanStale,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.5a4b2efd", "intent plan became stale before dispatch: targetCastleId no longer identifies an owned Berimond camp", nil))
 	}
 	if request.UnitID <= 0 {
-		return Intent.Plan{}, fmt.Errorf("unitId must identify the official troop transferred to Berimond")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("unitId must identify the official troop transferred to Berimond"), Localization.New("server.app.unitid_must_identify_the.1430a935", "unitId must identify the official troop transferred to Berimond", nil))
 	}
 	if err := validateBeriTransferFoodUnit(input.GameData, request.UnitID); err != nil {
 		return Intent.Plan{}, err
 	}
 	if input.State.Beri.ObservedAt.IsZero() || !input.State.Beri.ConsumedAt.Before(input.State.Beri.ObservedAt) {
-		return Intent.Plan{}, fmt.Errorf(
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf(
 			"%w: Berimond troop capacity has not been refreshed since the last transfer", Intent.ErrPlanStale,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.0cde4339", "intent plan became stale before dispatch: Berimond troop capacity has not been refreshed since the last transfer", nil))
 	}
 	available := input.State.Beri.AvailableTroops
 	if exact, exists := input.State.Beri.TroopsByUnit[request.UnitID]; exists {
@@ -200,9 +201,9 @@ func planBeriTransfer(_ context.Context, input Intent.PlanningContext, arguments
 		request.Amount = available
 	}
 	if request.Amount <= 0 || request.Amount > available {
-		return Intent.Plan{}, fmt.Errorf(
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf(
 			"%w: amount must be between 1 and the refreshed Berimond capacity %d", Intent.ErrPlanStale, available,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.f5fdb055", "intent plan became stale before dispatch: amount must be between 1 and the refreshed Berimond capacity {p1, number}", Localization.Params{"p1": available}))
 	}
 	var skipSteps []Intent.Step
 	var currencyID State.CurrencyID
@@ -248,15 +249,15 @@ func planBeriTransfer(_ context.Context, input Intent.PlanningContext, arguments
 	steps = append(steps,
 		kingdomTransportContextStep(),
 		Intent.RebuildOnResume(Intent.Step{
-			Name: "Verify refreshed Berimond troop transfer", Action: "beri.transfer.verify",
+			Name: "Verify refreshed Berimond troop transfer", NameDescriptor: Localization.New("server.app.verify_refreshed_berimond_troop.8ec71816", "Verify refreshed Berimond troop transfer", nil), Action: "beri.transfer.verify",
 			ActionArguments: guardArguments,
 		}),
-		commandStep("Transfer troops to Berimond", "kut", payload, "kut"),
+		commandStep("Transfer troops to Berimond", "kut", payload, "kut", Localization.New("server.app.transfer_troops_to_berimond.142f0aa5", "Transfer troops to Berimond", nil)),
 		Intent.Step{
-			Name: "Consume confirmed Berimond donor troops", Action: "troops.kingdom.consume_source",
+			Name: "Consume confirmed Berimond donor troops", NameDescriptor: Localization.New("server.app.consume_confirmed_berimond_donor.b4eb94b2", "Consume confirmed Berimond donor troops", nil), Action: "troops.kingdom.consume_source",
 			ActionArguments: sourceConsumeArguments,
 		},
-		Intent.Step{Name: "Consume refreshed Berimond capacity", Action: "beri.consume_capacity", ActionArguments: capacityConsumeArguments},
+		Intent.Step{Name: "Consume refreshed Berimond capacity", NameDescriptor: Localization.New("server.app.consume_refreshed_berimond_capacity.a749c00b", "Consume refreshed Berimond capacity", nil), Action: "beri.consume_capacity", ActionArguments: capacityConsumeArguments},
 	)
 	if len(skipSteps) > 0 {
 		steps = append(steps, skipSteps...)
@@ -274,18 +275,18 @@ func planBeriTransfer(_ context.Context, input Intent.PlanningContext, arguments
 	}
 	return Intent.Plan{
 		Claims:  claims,
-		Summary: fmt.Sprintf("Transfer %d of unit %d from %s to Berimond", request.Amount, request.UnitID, castleLabel(source)),
-		Steps:   steps,
+		Summary: fmt.Sprintf("Transfer %d of unit %d from %s to Berimond", request.Amount, request.UnitID, castleLabel(source)), SummaryDescriptor: Localization.New("server.app.transfer_p_of_unit.6045bb0e", "Transfer {p0} of unit {p1} from {p2} to Berimond", Localization.Params{"p0": request.Amount, "p1": fmt.Sprintf("%d", request.UnitID), "p2": fmt.Sprintf("%s", castleLabel(source))}),
+		Steps: steps,
 	}, nil
 }
 
 func validateBeriTransferFoodUnit(gameData *GameData.Store, unitID State.UnitID) error {
 	usesFood, err := gameData.UnitUsesFoodSupply(unitID)
 	if err != nil {
-		return fmt.Errorf("validate Berimond transfer unit %d: %w", unitID, err)
+		return Localization.WithError(fmt.Errorf("validate Berimond transfer unit %d: %w", unitID, err), Localization.ErrorContext(Localization.New("server.app.validate_berimond_transfer_unit.dfb922e9", "validate Berimond transfer unit {p0}", Localization.Params{"p0": fmt.Sprintf("%d", unitID)}), err))
 	}
 	if !usesFood {
-		return fmt.Errorf("Berimond troop transfers require a Food-consuming unit; unit %d consumes Mead or Beef", unitID)
+		return Localization.WithError(fmt.Errorf("Berimond troop transfers require a Food-consuming unit; unit %d consumes Mead or Beef", unitID), Localization.New("server.app.berimond_troop_transfers_require.54c4d843", "Berimond troop transfers require a Food-consuming unit; unit {p0} consumes Mead or Beef", Localization.Params{"p0": fmt.Sprintf("%d", unitID)}))
 	}
 	return nil
 }
@@ -294,28 +295,28 @@ func validateBeriTransferState(input Intent.PlanningContext, request beriTransfe
 	source, sourceExists := input.State.Castles[request.SourceCastleID]
 	target, targetExists := input.State.Castles[request.TargetCastleID]
 	if !sourceExists || source.ID <= 0 {
-		return fmt.Errorf("Berimond troop donor %d is no longer owned", request.SourceCastleID)
+		return Localization.WithError(fmt.Errorf("Berimond troop donor %d is no longer owned", request.SourceCastleID), Localization.New("server.app.berimond_troop_donor_p.f04d8d02", "Berimond troop donor {p0} is no longer owned", Localization.Params{"p0": fmt.Sprintf("%d", request.SourceCastleID)}))
 	}
 	if source.KingdomID != 0 {
-		return fmt.Errorf("Berimond troop donor %d must be a Great Empire castle", request.SourceCastleID)
+		return Localization.WithError(fmt.Errorf("Berimond troop donor %d must be a Great Empire castle", request.SourceCastleID), Localization.New("server.app.berimond_troop_donor_p.5a0298d4", "Berimond troop donor {p0} must be a Great Empire castle", Localization.Params{"p0": fmt.Sprintf("%d", request.SourceCastleID)}))
 	}
 	if !targetExists || target.ID <= 0 || target.KingdomID != beriKingdomID {
-		return fmt.Errorf("Berimond troop destination %d is no longer owned", request.TargetCastleID)
+		return Localization.WithError(fmt.Errorf("Berimond troop destination %d is no longer owned", request.TargetCastleID), Localization.New("server.app.berimond_troop_destination_p.dd278836", "Berimond troop destination {p0} is no longer owned", Localization.Params{"p0": fmt.Sprintf("%d", request.TargetCastleID)}))
 	}
 	if unlock, observed := input.State.KingdomTransport.Unlocks[beriKingdomID]; observed && !unlock.Unlocked {
-		return fmt.Errorf("the Battle for Berimond is no longer unlocked")
+		return Localization.WithError(fmt.Errorf("the Battle for Berimond is no longer unlocked"), Localization.New("server.app.the_battle_for_berimond.e2100964", "the Battle for Berimond is no longer unlocked", nil))
 	}
 	beri := input.State.Beri
 	if request.CapacityObserved.IsZero() || !beri.ObservedAt.Equal(request.CapacityObserved) ||
 		!beri.ConsumedAt.Before(beri.ObservedAt) {
-		return fmt.Errorf("Berimond troop capacity changed or was already consumed")
+		return Localization.WithError(fmt.Errorf("Berimond troop capacity changed or was already consumed"), Localization.New("server.app.berimond_troop_capacity_changed.1a0ebb95", "Berimond troop capacity changed or was already consumed", nil))
 	}
 	available := beri.AvailableTroops
 	if exact, exists := beri.TroopsByUnit[request.UnitID]; exists {
 		available = exact
 	}
 	if request.UnitID <= 0 || request.Amount <= 0 || request.Amount > available {
-		return fmt.Errorf("Berimond capacity for unit %d is %d; %d requested", request.UnitID, available, request.Amount)
+		return Localization.WithError(fmt.Errorf("Berimond capacity for unit %d is %d; %d requested", request.UnitID, available, request.Amount), Localization.New("server.app.berimond_capacity_for_unit.9b392bfc", "Berimond capacity for unit {p0} is {p1}; {p2} requested", Localization.Params{"p0": fmt.Sprintf("%d", request.UnitID), "p1": available, "p2": request.Amount}))
 	}
 	if err := validateBeriTransferFoodUnit(input.GameData, request.UnitID); err != nil {
 		return err
@@ -326,10 +327,10 @@ func validateBeriTransferState(input Intent.PlanningContext, request beriTransfe
 		return err
 	}
 	if kingdomTroopTransportPending(input.State, beriKingdomID) {
-		return fmt.Errorf("Berimond already has a pending or settling troop transport")
+		return Localization.WithError(fmt.Errorf("Berimond already has a pending or settling troop transport"), Localization.New("server.app.berimond_already_has_a.64936ed3", "Berimond already has a pending or settling troop transport", nil))
 	}
 	if request.TimeSkipCurrency > 0 && input.State.Player.Currencies[request.TimeSkipCurrency] < 1 {
-		return fmt.Errorf("the selected Berimond transfer time skip is no longer available")
+		return Localization.WithError(fmt.Errorf("the selected Berimond transfer time skip is no longer available"), Localization.New("server.app.the_selected_berimond_transfer.4da8ce16", "the selected Berimond transfer time skip is no longer available", nil))
 	}
 	return nil
 }
@@ -340,11 +341,11 @@ func (application *Application) verifyBeriTransfer(_ context.Context, arguments 
 		return err
 	}
 	if application == nil || application.State == nil || application.GameData == nil {
-		return fmt.Errorf("Berimond transfer state is unavailable")
+		return Localization.WithError(fmt.Errorf("Berimond transfer state is unavailable"), Localization.New("server.app.berimond_transfer_state_is.565635c0", "Berimond transfer state is unavailable", nil))
 	}
 	gameData, ready := application.GameData.Current()
 	if !ready {
-		return fmt.Errorf("official game data is unavailable")
+		return Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	if err := validateBeriTransferState(Intent.PlanningContext{
 		State: application.State.ReadOnlyView(), GameData: gameData,
@@ -363,7 +364,7 @@ func (application *Application) consumeBeriCapacity(_ context.Context, arguments
 	}
 	_, err := application.State.ApplyComponents(State.Components(State.ComponentBeri), func(gameState *State.GameState) ([]string, bool, error) {
 		if request.ObservedAt.IsZero() || !gameState.Beri.ObservedAt.Equal(request.ObservedAt) {
-			return nil, false, fmt.Errorf("Berimond capacity changed before it could be consumed")
+			return nil, false, Localization.WithError(fmt.Errorf("Berimond capacity changed before it could be consumed"), Localization.New("server.app.berimond_capacity_changed_before.c9ae8e93", "Berimond capacity changed before it could be consumed", nil))
 		}
 		gameState.Beri.AvailableTroops = 0
 		gameState.Beri.TroopsByUnit = map[State.UnitID]int64{}
@@ -403,16 +404,16 @@ func planBeriCampOpen(_ context.Context, input Intent.PlanningContext, arguments
 		Summary: fmt.Sprintf(
 			"Open non-premium Berimond camp %d for %d wood and %d stone",
 			option.ID, option.CostWood, option.CostStone,
-		),
+		), SummaryDescriptor: Localization.New("server.app.open_non_premium_berimond.e3ffa3e2", "Open non-premium Berimond camp {p0} for {p1} wood and {p2} stone", Localization.Params{"p0": fmt.Sprintf("%d", option.ID), "p1": option.CostWood, "p2": option.CostStone}),
 		Steps: []Intent.Step{
 			kingdomTransportContextStep(),
 			Intent.RebuildOnResume(Intent.Step{
-				Name: "Verify refreshed Berimond camp availability", Action: "beri.camp.open.verify",
+				Name: "Verify refreshed Berimond camp availability", NameDescriptor: Localization.New("server.app.verify_refreshed_berimond_camp.b0ffcf36", "Verify refreshed Berimond camp availability", nil), Action: "beri.camp.open.verify",
 				ActionArguments: guardArguments,
 			}),
-			commandStep("Open non-premium Berimond camp", "fsc", payload, "fsc"),
-			{Name: "Record Berimond camp-open request", Action: "beri.camp.opened", ActionArguments: mark},
-			contextCommandStep("Refresh Berimond kingdom state", "kpi", json.RawMessage(`{}`), "kpi"),
+			commandStep("Open non-premium Berimond camp", "fsc", payload, "fsc", Localization.New("server.app.open_non_premium_berimond.c60d35de", "Open non-premium Berimond camp", nil)),
+			{Name: "Record Berimond camp-open request", NameDescriptor: Localization.New("server.app.record_berimond_camp_open.f1f1f963", "Record Berimond camp-open request", nil), Action: "beri.camp.opened", ActionArguments: mark},
+			contextCommandStep("Refresh Berimond kingdom state", "kpi", json.RawMessage(`{}`), "kpi").WithNameDescriptor(Localization.New("server.app.refresh_berimond_kingdom_state.2eeb2ffd", "Refresh Berimond kingdom state", nil)),
 		},
 	}, nil
 }
@@ -423,30 +424,30 @@ func beriCampOpenOption(
 	refreshedAfter time.Time,
 ) (GameData.BerimondCampOption, error) {
 	if input.GameData == nil {
-		return GameData.BerimondCampOption{}, fmt.Errorf("official game data is unavailable")
+		return GameData.BerimondCampOption{}, Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	option, found := input.GameData.CheapestNonPremiumBerimondCamp(input.State.Player.Level)
 	if !found || campID != option.ID {
 		return GameData.BerimondCampOption{},
-			fmt.Errorf("campId must identify the cheapest unlocked non-premium Berimond camp")
+			Localization.WithError(fmt.Errorf("campId must identify the cheapest unlocked non-premium Berimond camp"), Localization.New("server.app.campid_must_identify_the.5ba00f2f", "campId must identify the cheapest unlocked non-premium Berimond camp", nil))
 	}
 	if _, exists := ownedCastleInKingdom(input.State, beriKingdomID); exists {
 		return GameData.BerimondCampOption{},
-			fmt.Errorf("%w: an owned Berimond camp already exists", Intent.ErrPlanStale)
+			Localization.WithError(fmt.Errorf("%w: an owned Berimond camp already exists", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.85ad226c", "intent plan became stale before dispatch: an owned Berimond camp already exists", nil))
 	}
 	unlock, observed := input.State.KingdomTransport.Unlocks[beriKingdomID]
 	if input.State.KingdomTransport.ObservedAt.IsZero() || !observed || !unlock.Unlocked || unlock.Created {
 		return GameData.BerimondCampOption{},
-			fmt.Errorf("%w: Berimond must be freshly observed as unlocked without an existing camp", Intent.ErrPlanStale)
+			Localization.WithError(fmt.Errorf("%w: Berimond must be freshly observed as unlocked without an existing camp", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.48609051", "intent plan became stale before dispatch: Berimond must be freshly observed as unlocked without an existing camp", nil))
 	}
 	if !refreshedAfter.IsZero() && input.State.KingdomTransport.ObservedAt.Before(refreshedAfter) {
 		return GameData.BerimondCampOption{},
-			fmt.Errorf("the Berimond kingdom list was not refreshed before opening the camp")
+			Localization.WithError(fmt.Errorf("the Berimond kingdom list was not refreshed before opening the camp"), Localization.New("server.app.the_berimond_kingdom_list.9dc2786c", "the Berimond kingdom list was not refreshed before opening the camp", nil))
 	}
 	if !input.State.Beri.CampOpenRequestedAt.IsZero() &&
 		time.Since(input.State.Beri.CampOpenRequestedAt) < 5*time.Minute {
 		return GameData.BerimondCampOption{},
-			fmt.Errorf("%w: a Berimond camp-open request is already settling", Intent.ErrPlanStale)
+			Localization.WithError(fmt.Errorf("%w: a Berimond camp-open request is already settling", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.dfd09007", "intent plan became stale before dispatch: a Berimond camp-open request is already settling", nil))
 	}
 	return option, nil
 }
@@ -457,14 +458,14 @@ func (application *Application) verifyBeriCampOpen(_ context.Context, arguments 
 		return err
 	}
 	if request.CampID <= 0 || request.RefreshStartedAt.IsZero() {
-		return fmt.Errorf("Berimond camp verification requires a camp and refresh time")
+		return Localization.WithError(fmt.Errorf("Berimond camp verification requires a camp and refresh time"), Localization.New("server.app.berimond_camp_verification_requires.2b2745db", "Berimond camp verification requires a camp and refresh time", nil))
 	}
 	if application == nil || application.State == nil || application.GameData == nil {
-		return fmt.Errorf("Berimond camp state is unavailable")
+		return Localization.WithError(fmt.Errorf("Berimond camp state is unavailable"), Localization.New("server.app.berimond_camp_state_is.be86f1e6", "Berimond camp state is unavailable", nil))
 	}
 	gameData, ready := application.GameData.Current()
 	if !ready {
-		return fmt.Errorf("official game data is unavailable")
+		return Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	if _, err := beriCampOpenOption(Intent.PlanningContext{
 		State: application.State.ReadOnlyView(), GameData: gameData,
@@ -481,15 +482,15 @@ func planBeriTargetFind(_ context.Context, input Intent.PlanningContext, argumen
 	}
 	source, exists := input.State.Castles[request.SourceCastleID]
 	if request.SourceCastleID <= 0 {
-		return Intent.Plan{}, fmt.Errorf("sourceCastleId must identify an owned Berimond camp")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("sourceCastleId must identify an owned Berimond camp"), Localization.New("server.app.sourcecastleid_must_identify_an.e7dd16f8", "sourceCastleId must identify an owned Berimond camp", nil))
 	}
 	if !exists || source.KingdomID != beriKingdomID {
-		return Intent.Plan{}, fmt.Errorf(
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf(
 			"%w: sourceCastleId no longer identifies an owned Berimond camp", Intent.ErrPlanStale,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.3a9eaba3", "intent plan became stale before dispatch: sourceCastleId no longer identifies an owned Berimond camp", nil))
 	}
 	if unlock, observed := input.State.KingdomTransport.Unlocks[beriKingdomID]; observed && !unlock.Unlocked {
-		return Intent.Plan{}, fmt.Errorf("%w: the Battle for Berimond is no longer unlocked", Intent.ErrPlanStale)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("%w: the Battle for Berimond is no longer unlocked", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.c4e00f6a", "intent plan became stale before dispatch: the Battle for Berimond is no longer unlocked", nil))
 	}
 	searchStartedAt := time.Now().UTC()
 	guardArguments, _ := json.Marshal(beriTargetFindGuardRequest{
@@ -499,10 +500,10 @@ func planBeriTargetFind(_ context.Context, input Intent.PlanningContext, argumen
 	steps = append(steps, attackCastleContextStep(source))
 	steps = append(steps,
 		closeGameUIStep(),
-		contextCommandStep("Refresh Berimond world-map context", "gbl", json.RawMessage(`{}`), "gbl"),
+		contextCommandStep("Refresh Berimond world-map context", "gbl", json.RawMessage(`{}`), "gbl").WithNameDescriptor(Localization.New("server.app.refresh_berimond_world_map.6896dc80", "Refresh Berimond world-map context", nil)),
 		beriFindNextTowerStep(),
 		Intent.Step{
-			Name: "Verify selected Berimond tower", Action: "beri.target.verify",
+			Name: "Verify selected Berimond tower", NameDescriptor: Localization.New("server.app.verify_selected_berimond_tower.aa5e88f9", "Verify selected Berimond tower", nil), Action: "beri.target.verify",
 			ActionArguments: guardArguments,
 		},
 	)
@@ -512,15 +513,15 @@ func planBeriTargetFind(_ context.Context, input Intent.PlanningContext, argumen
 			"map:" + strconv.FormatInt(int64(beriKingdomID), 10),
 			"beri-target:" + strconv.FormatInt(int64(beriKingdomID), 10),
 		},
-		Summary: "Find the next available Berimond tower",
-		Steps:   steps,
+		Summary: "Find the next available Berimond tower", SummaryDescriptor: Localization.New("server.app.find_the_next_available.563cbd7b", "Find the next available Berimond tower", nil),
+		Steps: steps,
 	}, nil
 }
 
 func beriFindNextTowerStep() Intent.Step {
 	step := contextCommandStep(
 		"Find next available Berimond tower", "fnt", json.RawMessage(`{}`), "fnt",
-	)
+	).WithNameDescriptor(Localization.New("server.app.find_next_available_berimond.09c7c9c7", "Find next available Berimond tower", nil))
 	step.ResponseBarrier = Intent.ResponseBarrierCommitted
 	return step
 }
@@ -528,16 +529,16 @@ func beriFindNextTowerStep() Intent.Step {
 func currentBeriTarget(gameState State.GameState, observedAfter time.Time) (State.MapObservation, error) {
 	beri := gameState.Beri
 	if beri.TargetObservedAt.IsZero() || !beri.TargetInvalidatedAt.Before(beri.TargetObservedAt) {
-		return State.MapObservation{}, fmt.Errorf("Berimond did not select a valid tower")
+		return State.MapObservation{}, Localization.WithError(fmt.Errorf("Berimond did not select a valid tower"), Localization.New("server.app.berimond_did_not_select.a7876f2e", "Berimond did not select a valid tower", nil))
 	}
 	if !observedAfter.IsZero() && beri.TargetObservedAt.Before(observedAfter) {
-		return State.MapObservation{}, fmt.Errorf("Berimond did not return a fresh tower selection")
+		return State.MapObservation{}, Localization.WithError(fmt.Errorf("Berimond did not return a fresh tower selection"), Localization.New("server.app.berimond_did_not_return.30a79f9f", "Berimond did not return a fresh tower selection", nil))
 	}
 	target, exists := gameState.LookupMapObservation(beriKingdomID, fmt.Sprintf("%d:%d", beri.TargetX, beri.TargetY))
 	if !exists || beri.TargetTypeID != AttackCapacity.BerimondTowerMapTypeID ||
 		target.TypeID != AttackCapacity.BerimondTowerMapTypeID || target.Level <= 0 ||
 		target.ObservedAt.Before(beri.TargetObservedAt) {
-		return State.MapObservation{}, fmt.Errorf("the selected Berimond tower is missing from the refreshed map")
+		return State.MapObservation{}, Localization.WithError(fmt.Errorf("the selected Berimond tower is missing from the refreshed map"), Localization.New("server.app.the_selected_berimond_tower.e27ba32f", "the selected Berimond tower is missing from the refreshed map", nil))
 	}
 	return target, nil
 }
@@ -548,21 +549,21 @@ func (application *Application) verifyBeriTargetFound(_ context.Context, argumen
 		return err
 	}
 	if request.SourceCastleID <= 0 || request.SearchStartedAt.IsZero() {
-		return fmt.Errorf("Berimond target verification requires a source castle and search time")
+		return Localization.WithError(fmt.Errorf("Berimond target verification requires a source castle and search time"), Localization.New("server.app.berimond_target_verification_requires.623924f1", "Berimond target verification requires a source castle and search time", nil))
 	}
 	if application == nil || application.State == nil {
-		return fmt.Errorf("Berimond target state is unavailable")
+		return Localization.WithError(fmt.Errorf("Berimond target state is unavailable"), Localization.New("server.app.berimond_target_state_is.2d54a271", "Berimond target state is unavailable", nil))
 	}
 	state := application.State.ReadOnlyView()
 	source, exists := state.Castles[request.SourceCastleID]
 	if !exists || source.KingdomID != beriKingdomID {
-		return fmt.Errorf("%w: the Berimond attack source is no longer owned", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: the Berimond attack source is no longer owned", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.a2e496c7", "intent plan became stale before dispatch: the Berimond attack source is no longer owned", nil))
 	}
 	if !source.Focused {
-		return fmt.Errorf("%w: the Berimond attack source is no longer focused", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: the Berimond attack source is no longer focused", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.5011c69d", "intent plan became stale before dispatch: the Berimond attack source is no longer focused", nil))
 	}
 	if unlock, observed := state.KingdomTransport.Unlocks[beriKingdomID]; observed && !unlock.Unlocked {
-		return fmt.Errorf("%w: the Battle for Berimond is no longer unlocked", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: the Battle for Berimond is no longer unlocked", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.c4e00f6a", "intent plan became stale before dispatch: the Battle for Berimond is no longer unlocked", nil))
 	}
 	if _, err := currentBeriTarget(state, request.SearchStartedAt); err != nil {
 		return fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
@@ -587,7 +588,7 @@ func planBeriTowerAttack(_ context.Context, input Intent.PlanningContext, argume
 		time.Since(input.State.Player.LegendSkills.ObservedAt) >= 5*time.Minute {
 		steps = append(steps, contextCommandStep(
 			"Refresh Hall of Legends attack limits", "skl", json.RawMessage(`{}`), "skl",
-		))
+		).WithNameDescriptor(Localization.New("server.app.refresh_hall_of_legends.2b74581a", "Refresh Hall of Legends attack limits", nil)))
 	}
 	steps = append(steps, generalSkillsContextSteps(input.State, request.CommanderID, time.Now().UTC())...)
 	steps = append(steps, attackCastleContextStep(source))
@@ -601,7 +602,7 @@ func planBeriTowerAttack(_ context.Context, input Intent.PlanningContext, argume
 	}{beriKingdomID, target.X, target.Y, target.X, target.Y})
 	targetRefreshStep := contextCommandStep(
 		"Refresh selected Berimond tower", "gaa", targetRefreshPayload, "gaa",
-	)
+	).WithNameDescriptor(Localization.New("server.app.refresh_selected_berimond_tower.a4dafb20", "Refresh selected Berimond tower", nil))
 	targetRefreshStep.ResponseBarrier = Intent.ResponseBarrierCommitted
 	craDependencyPayload, _ := json.Marshal(struct {
 		SourceX     int             `json:"SX"`
@@ -614,10 +615,10 @@ func planBeriTowerAttack(_ context.Context, input Intent.PlanningContext, argume
 	steps = append(steps,
 		targetRefreshStep,
 		Intent.Step{
-			Name: "Guard Berimond tower attack", Action: "beri.tower.attack.guard", ActionArguments: resolvedArguments,
+			Name: "Guard Berimond tower attack", NameDescriptor: Localization.New("server.app.guard_berimond_tower_attack.02b038be", "Guard Berimond tower attack", nil), Action: "beri.tower.attack.guard", ActionArguments: resolvedArguments,
 		},
 		Intent.Step{
-			Name: "Build and launch Berimond tower attack", Resolver: "beri.tower.attack.build",
+			Name: "Build and launch Berimond tower attack", NameDescriptor: Localization.New("server.app.build_and_launch_berimond.9fc16996", "Build and launch Berimond tower attack", nil), Resolver: "beri.tower.attack.build",
 			ResolverArguments: resolvedArguments, AwaitOpcode: "cra", TimeoutMillis: 10_000, SuccessCodes: []int{0},
 			CommandDependencies: &Intent.CommandDependencyRequest{
 				Opcode: "cra", Payload: craDependencyPayload,
@@ -627,7 +628,7 @@ func planBeriTowerAttack(_ context.Context, input Intent.PlanningContext, argume
 			FeatureID: State.AttackFeatureAutoBeriWorld, SourceCastleID: source.ID, CommanderID: request.CommanderID,
 			KingdomID: beriKingdomID, TargetTypeID: target.TypeID, TargetX: target.X, TargetY: target.Y,
 		}),
-		attackCastleRefreshStep("Refresh Berimond source inventory after attack", source),
+		attackCastleRefreshStep("Refresh Berimond source inventory after attack", source).WithNameDescriptor(Localization.New("server.app.refresh_berimond_source_inventory.71930779", "Refresh Berimond source inventory after attack", nil)),
 	)
 	castleID := strconv.FormatInt(int64(source.ID), 10)
 	claims := []string{
@@ -641,8 +642,8 @@ func planBeriTowerAttack(_ context.Context, input Intent.PlanningContext, argume
 		Admission: &Intent.Admission{
 			Class: Intent.AdmissionAttackLaunch, Module: "autoBeriWorld", Affinity: "castle:" + castleID,
 		},
-		Summary: fmt.Sprintf("Attack Berimond tower at %d:%d with %s", target.X, target.Y, request.Preset.Name),
-		Steps:   steps,
+		Summary: fmt.Sprintf("Attack Berimond tower at %d:%d with %s", target.X, target.Y, request.Preset.Name), SummaryDescriptor: Localization.New("server.app.attack_berimond_tower_at.6496001d", "Attack Berimond tower at {p0}:{p1} with {p2}", Localization.Params{"p0": target.X, "p1": target.Y, "p2": fmt.Sprintf("%s", request.Preset.Name)}),
+		Steps: steps,
 	}, nil
 }
 
@@ -656,7 +657,7 @@ func (application *Application) resolveBeriTowerAttackStep(
 		return Intent.Step{}, err
 	}
 	if !source.Focused {
-		return Intent.Step{}, fmt.Errorf("%w: the Berimond attack source is no longer focused", Intent.ErrPlanStale)
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("%w: the Berimond attack source is no longer focused", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.5011c69d", "intent plan became stale before dispatch: the Berimond attack source is no longer focused", nil))
 	}
 	capacity, err := resolveBeriTowerAttackCapacity(input, request, source, target)
 	if err != nil {
@@ -665,17 +666,17 @@ func (application *Application) resolveBeriTowerAttackStep(
 	limitedPreset := AttackPresets.LimitToCapacity(request.Preset, capacity)
 	built, err := buildAttackSetup(invasionAttackSetup(limitedPreset), source, input.GameData)
 	if err != nil {
-		return Intent.Step{}, fmt.Errorf("build Berimond preset %q: %w", request.Preset.Name, err)
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("build Berimond preset %q: %w", request.Preset.Name, err), Localization.ErrorContext(Localization.New("server.app.build_berimond_preset_p.4e959192", "build Berimond preset {p0}", Localization.Params{"p0": fmt.Sprintf("%q", request.Preset.Name)}), err))
 	}
 	attack := invasionAttackBody(source, target, request.CommanderID, built)
 	if err := applyCastleHorseTravelBoost(&attack, input.GameData, source, request.HorseTravelBoostID); err != nil {
-		return Intent.Step{}, fmt.Errorf("resolve Berimond horse travel boost: %w", err)
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("resolve Berimond horse travel boost: %w", err), Localization.ErrorContext(Localization.New("server.app.resolve_berimond_horse_travel.eb551fba", "resolve Berimond horse travel boost", nil), err))
 	}
 	body, err := json.Marshal(attack)
 	if err != nil {
-		return Intent.Step{}, fmt.Errorf("build Berimond CRA payload: %w", err)
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("build Berimond CRA payload: %w", err), Localization.ErrorContext(Localization.New("server.app.build_berimond_cra_payload.ef750d5a", "build Berimond CRA payload", nil), err))
 	}
-	return commandStep(fmt.Sprintf("Attack Berimond tower at %d:%d", target.X, target.Y), "cra", body, "cra"), nil
+	return commandStep(fmt.Sprintf("Attack Berimond tower at %d:%d", target.X, target.Y), "cra", body, "cra", Localization.New("server.app.attack_berimond_tower_at.a5138f3f", "Attack Berimond tower at {p0}:{p1}", Localization.Params{"p0": target.X, "p1": target.Y})), nil
 }
 
 func resolveBeriTowerAttackCapacity(
@@ -698,7 +699,7 @@ func resolveBeriTowerAttackCapacity(
 		},
 	})
 	if err != nil {
-		return AttackCapacity.Result{}, fmt.Errorf("resolve Berimond tower attack capacity: %w", err)
+		return AttackCapacity.Result{}, Localization.WithError(fmt.Errorf("resolve Berimond tower attack capacity: %w", err), Localization.ErrorContext(Localization.New("server.app.resolve_berimond_tower_attack.f86b2b66", "resolve Berimond tower attack capacity", nil), err))
 	}
 	return capacity, nil
 }
@@ -713,37 +714,37 @@ func beriTowerAttackContext(
 		return request, State.CastleState{}, State.MapObservation{}, err
 	}
 	if input.GameData == nil {
-		return request, State.CastleState{}, State.MapObservation{}, fmt.Errorf("official game data is unavailable")
+		return request, State.CastleState{}, State.MapObservation{}, Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	if err := validateHorseTravelBoostID(request.HorseTravelBoostID); err != nil {
 		return request, State.CastleState{}, State.MapObservation{}, err
 	}
 	if err := AttackPresets.Validate(request.Preset); err != nil {
-		return request, State.CastleState{}, State.MapObservation{}, fmt.Errorf("invalid Berimond attack preset: %w", err)
+		return request, State.CastleState{}, State.MapObservation{}, Localization.WithError(fmt.Errorf("invalid Berimond attack preset: %w", err), Localization.ErrorContext(Localization.New("server.app.invalid_berimond_attack_preset.606a4eb8", "invalid Berimond attack preset", nil), err))
 	}
 	if request.TargetTypeID != AttackCapacity.BerimondTowerMapTypeID {
 		return request, State.CastleState{}, State.MapObservation{},
-			fmt.Errorf("Berimond attacks require tower target type %d", AttackCapacity.BerimondTowerMapTypeID)
+			Localization.WithError(fmt.Errorf("Berimond attacks require tower target type %d", AttackCapacity.BerimondTowerMapTypeID), Localization.New("server.app.berimond_attacks_require_tower.91574b9d", "Berimond attacks require tower target type {p0}", Localization.Params{"p0": fmt.Sprintf("%d", AttackCapacity.BerimondTowerMapTypeID)}))
 	}
 	source, exists := input.State.Castles[request.SourceCastleID]
 	if !exists || source.KingdomID != beriKingdomID {
 		return request, State.CastleState{}, State.MapObservation{},
-			fmt.Errorf("%w: Berimond attack source is unavailable", Intent.ErrPlanStale)
+			Localization.WithError(fmt.Errorf("%w: Berimond attack source is unavailable", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.691521df", "intent plan became stale before dispatch: Berimond attack source is unavailable", nil))
 	}
 	if unlock, observed := input.State.KingdomTransport.Unlocks[beriKingdomID]; observed && !unlock.Unlocked {
-		return request, State.CastleState{}, State.MapObservation{}, fmt.Errorf("%w: the Battle for Berimond is no longer unlocked", Intent.ErrPlanStale)
+		return request, State.CastleState{}, State.MapObservation{}, Localization.WithError(fmt.Errorf("%w: the Battle for Berimond is no longer unlocked", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.c4e00f6a", "intent plan became stale before dispatch: the Battle for Berimond is no longer unlocked", nil))
 	}
 	commander, exists := input.State.Commanders[request.CommanderID]
 	if !exists || !commander.Available || State.CommanderHasActiveMovementAt(input.State, request.CommanderID, now) {
 		return request, State.CastleState{}, State.MapObservation{},
-			fmt.Errorf("%w: Berimond commander %d is no longer available", Intent.ErrPlanStale, request.CommanderID)
+			Localization.WithError(fmt.Errorf("%w: Berimond commander %d is no longer available", Intent.ErrPlanStale, request.CommanderID), Localization.New("server.app.intent_plan_became_stale.726864f6", "intent plan became stale before dispatch: Berimond commander {p1} is no longer available", Localization.Params{"p1": fmt.Sprintf("%d", request.CommanderID)}))
 	}
 	beri := input.State.Beri
 	if request.TargetObservedAt.IsZero() || !beri.TargetObservedAt.Equal(request.TargetObservedAt) ||
 		!beri.TargetInvalidatedAt.Before(beri.TargetObservedAt) ||
 		beri.TargetX != request.TargetX || beri.TargetY != request.TargetY || beri.TargetTypeID != request.TargetTypeID {
 		return request, State.CastleState{}, State.MapObservation{},
-			fmt.Errorf("%w: Berimond tower selection is no longer current", Intent.ErrPlanStale)
+			Localization.WithError(fmt.Errorf("%w: Berimond tower selection is no longer current", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.5cc8691e", "intent plan became stale before dispatch: Berimond tower selection is no longer current", nil))
 	}
 	target, exists := input.State.LookupMapObservation(beriKingdomID, fmt.Sprintf("%d:%d", request.TargetX, request.TargetY))
 	if !exists || target.KingdomID != beriKingdomID || target.X != request.TargetX || target.Y != request.TargetY ||
@@ -752,7 +753,7 @@ func beriTowerAttackContext(
 		target.ObservedAt.Before(request.TargetObservedAt) ||
 		(!request.TargetRefreshAfter.IsZero() && target.ObservedAt.Before(request.TargetRefreshAfter)) {
 		return request, State.CastleState{}, State.MapObservation{},
-			fmt.Errorf("%w: selected Berimond tower is no longer available", Intent.ErrPlanStale)
+			Localization.WithError(fmt.Errorf("%w: selected Berimond tower is no longer available", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.7e3c358c", "intent plan became stale before dispatch: selected Berimond tower is no longer available", nil))
 	}
 	return request, source, target, nil
 }
@@ -763,23 +764,23 @@ func (application *Application) guardBeriTowerAttack(_ context.Context, argument
 		return err
 	}
 	if application == nil || application.State == nil {
-		return fmt.Errorf("Berimond attack state is unavailable")
+		return Localization.WithError(fmt.Errorf("Berimond attack state is unavailable"), Localization.New("server.app.berimond_attack_state_is.5835c6f0", "Berimond attack state is unavailable", nil))
 	}
 	state := application.State.ReadOnlyView()
 	if !beriTargetConfirmedAfterGAA(state, request) {
 		if err := application.invalidateBeriTarget(request); err != nil {
 			return err
 		}
-		return fmt.Errorf(
+		return Localization.WithError(fmt.Errorf(
 			"%w: GAA no longer returned Berimond tower %d:%d", Intent.ErrPlanStale, request.TargetX, request.TargetY,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.ac148c1a", "intent plan became stale before dispatch: GAA no longer returned Berimond tower {p1}:{p2}", Localization.Params{"p1": fmt.Sprintf("%d", request.TargetX), "p2": fmt.Sprintf("%d", request.TargetY)}))
 	}
 	if application.GameData == nil {
-		return fmt.Errorf("official game data is unavailable")
+		return Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	gameData, ready := application.GameData.Current()
 	if !ready {
-		return fmt.Errorf("official game data is unavailable")
+		return Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	resolvedRequest, source, target, err := beriTowerAttackContext(
 		Intent.PlanningContext{State: state, GameData: gameData}, arguments, time.Now().UTC(),
@@ -788,7 +789,7 @@ func (application *Application) guardBeriTowerAttack(_ context.Context, argument
 		return err
 	}
 	if !source.Focused {
-		return fmt.Errorf("%w: the Berimond attack source is no longer focused", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: the Berimond attack source is no longer focused", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.5011c69d", "intent plan became stale before dispatch: the Berimond attack source is no longer focused", nil))
 	}
 	input := Intent.PlanningContext{State: state, GameData: gameData}
 	capacity, err := resolveBeriTowerAttackCapacity(input, resolvedRequest, source, target)
@@ -840,7 +841,7 @@ func (application *Application) markBeriCampOpened(_ context.Context, arguments 
 		return err
 	}
 	if request.RequestedAt.IsZero() {
-		return fmt.Errorf("requestedAt is required")
+		return Localization.WithError(fmt.Errorf("requestedAt is required"), Localization.New("server.app.requestedat_is_required.9f938b4f", "requestedAt is required", nil))
 	}
 	_, err := application.State.ApplyComponents(State.Components(State.ComponentBeri), func(gameState *State.GameState) ([]string, bool, error) {
 		if !gameState.Beri.CampOpenRequestedAt.Before(request.RequestedAt) {

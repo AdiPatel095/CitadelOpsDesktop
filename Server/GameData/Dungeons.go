@@ -5,7 +5,7 @@ import "CitadelDesktop/Server/State"
 // DungeonDefinition is the official robber-baron or kingdom-tower row for a
 // specific kingdom and completed-victory count.
 type DungeonDefinition struct {
-	KingdomID   State.KingdomID
+	KingdomID    State.KingdomID
 	VictoryCount int64
 	LordID       int64
 	SkipCost     int64

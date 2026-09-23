@@ -1,6 +1,7 @@
 package API
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -27,21 +28,21 @@ type configurationUpdateRequest struct {
 // down, reconnecting, or otherwise unavailable.
 func (server *Server) handleConfigurationUpdate(writer http.ResponseWriter, request *http.Request) {
 	if server.config.Configuration == nil {
-		writeError(writer, http.StatusServiceUnavailable, "configuration_unavailable", "Configuration store is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "configuration_unavailable", "Configuration store is unavailable", Localization.New("server.api.configuration_store_is_unavailable.623f75fa", "Configuration store is unavailable", nil))
 		return
 	}
 	var input configurationUpdateRequest
 	decoder := json.NewDecoder(http.MaxBytesReader(writer, request.Body, maximumConfigurationUpdateBytes))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&input); err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid_request", err.Error())
+		writeErrorFromError(writer, http.StatusBadRequest, "invalid_request", err)
 		return
 	}
 	if err := decoder.Decode(&struct{}{}); err != io.EOF {
 		if err == nil {
-			err = fmt.Errorf("configuration update must contain exactly one JSON object")
+			err = Localization.WithError(fmt.Errorf("configuration update must contain exactly one JSON object"), Localization.New("server.api.configuration_update_must_contain.b7eb8212", "configuration update must contain exactly one JSON object", nil))
 		}
-		writeError(writer, http.StatusBadRequest, "invalid_request", err.Error())
+		writeErrorFromError(writer, http.StatusBadRequest, "invalid_request", err)
 		return
 	}
 	section := request.PathValue("section")
@@ -50,7 +51,7 @@ func (server *Server) handleConfigurationUpdate(writer http.ResponseWriter, requ
 			writer,
 			http.StatusGone,
 			"configuration_section_retired",
-			"Experimental Battle Research settings have been removed",
+			"Experimental Battle Research settings have been removed", Localization.New("server.api.experimental_battle_research_settings.878d9340", "Experimental Battle Research settings have been removed", nil),
 		)
 		return
 	}
@@ -59,21 +60,21 @@ func (server *Server) handleConfigurationUpdate(writer http.ResponseWriter, requ
 			writer,
 			http.StatusConflict,
 			"configuration_requires_retention_apply",
-			"My Stats retention must be updated through its durable retention endpoint",
+			"My Stats retention must be updated through its durable retention endpoint", Localization.New("server.api.my_stats_retention_must.d59c4907", "My Stats retention must be updated through its durable retention endpoint", nil),
 		)
 		return
 	}
 	if server.config.BackgroundOnly || server.externalConfigurationAuthority.Load() {
-		writeError(writer, http.StatusConflict, "configuration_control_plane_owned", "Hosted account settings must be saved through the account control plane")
+		writeError(writer, http.StatusConflict, "configuration_control_plane_owned", "Hosted account settings must be saved through the account control plane", Localization.New("server.api.hosted_account_settings_must.248f745f", "Hosted account settings must be saved through the account control plane", nil))
 		return
 	}
 	if err := Configuration.Validate(section, input.Value); err != nil {
-		writeError(writer, http.StatusUnprocessableEntity, "configuration_invalid", err.Error())
+		writeErrorFromError(writer, http.StatusUnprocessableEntity, "configuration_invalid", err)
 		return
 	}
 	if input.ExpectedValue != nil {
 		if err := Configuration.Validate(section, *input.ExpectedValue); err != nil {
-			writeError(writer, http.StatusUnprocessableEntity, "configuration_invalid", fmt.Sprintf("expected value: %v", err))
+			writeError(writer, http.StatusUnprocessableEntity, "configuration_invalid", fmt.Sprintf("expected value: %v", err), Localization.New("server.api.expected_value_p.bfcae137", "expected value: {p0}", Localization.Params{"p0": fmt.Sprintf("%v", err)}))
 			return
 		}
 	}
@@ -85,19 +86,19 @@ func (server *Server) handleConfigurationUpdate(writer http.ResponseWriter, requ
 	)
 	if err != nil {
 		if errors.Is(err, Configuration.ErrInvalidUpdate) {
-			writeError(writer, http.StatusUnprocessableEntity, "configuration_invalid", err.Error())
+			writeErrorFromError(writer, http.StatusUnprocessableEntity, "configuration_invalid", err)
 			return
 		}
 		if errors.Is(err, Configuration.ErrExternalAuthority) {
-			writeError(writer, http.StatusConflict, "configuration_control_plane_owned", "Hosted account settings must be saved through the account control plane")
+			writeError(writer, http.StatusConflict, "configuration_control_plane_owned", "Hosted account settings must be saved through the account control plane", Localization.New("server.api.hosted_account_settings_must.248f745f", "Hosted account settings must be saved through the account control plane", nil))
 			return
 		}
 		if strings.Contains(err.Error(), "configuration revision changed") ||
 			strings.Contains(err.Error(), "configuration section") && strings.HasSuffix(err.Error(), "changed") {
-			writeError(writer, http.StatusConflict, "configuration_conflict", err.Error())
+			writeErrorFromError(writer, http.StatusConflict, "configuration_conflict", err)
 			return
 		}
-		writeError(writer, http.StatusInternalServerError, "configuration_update_failed", err.Error())
+		writeErrorFromError(writer, http.StatusInternalServerError, "configuration_update_failed", err)
 		return
 	}
 	writer.Header().Set("Cache-Control", "no-store")

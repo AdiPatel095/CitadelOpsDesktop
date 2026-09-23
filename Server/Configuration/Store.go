@@ -1,6 +1,7 @@
 package Configuration
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -19,8 +20,8 @@ const (
 	maxSectionBytes = 1 << 20
 )
 
-var ErrExternalAuthority = errors.New("configuration is owned by an external authority")
-var ErrInvalidUpdate = errors.New("configuration update is invalid")
+var ErrExternalAuthority = Localization.WithError(errors.New("configuration is owned by an external authority"), Localization.New("server.configuration.configuration_is_owned_by.368c6b6f", "configuration is owned by an external authority", nil))
+var ErrInvalidUpdate = Localization.WithError(errors.New("configuration update is invalid"), Localization.New("server.configuration.configuration_update_is_invalid.f6edf5c1", "configuration update is invalid", nil))
 
 type Snapshot struct {
 	SchemaVersion int                        `json:"schemaVersion"`
@@ -53,7 +54,7 @@ type Store struct {
 
 func Open(dataDir string, defaults map[string]json.RawMessage) (*Store, error) {
 	if strings.TrimSpace(dataDir) == "" {
-		return nil, fmt.Errorf("configuration data directory is required")
+		return nil, Localization.WithError(fmt.Errorf("configuration data directory is required"), Localization.New("server.configuration.configuration_data_directory_is.49ba09b5", "configuration data directory is required", nil))
 	}
 	path := filepath.Join(dataDir, "Config", "Settings.json")
 	now := time.Now().UTC()
@@ -68,10 +69,10 @@ func Open(dataDir string, defaults map[string]json.RawMessage) (*Store, error) {
 	case err == nil:
 		loaded = true
 		if err := json.Unmarshal(contents, &snapshot); err != nil {
-			return nil, fmt.Errorf("decode configuration: %w", err)
+			return nil, Localization.WithError(fmt.Errorf("decode configuration: %w", err), Localization.ErrorContext(Localization.New("server.configuration.decode_configuration.7759a241", "decode configuration", nil), err))
 		}
 		if snapshot.SchemaVersion != SchemaVersion {
-			return nil, fmt.Errorf("unsupported configuration schema %d", snapshot.SchemaVersion)
+			return nil, Localization.WithError(fmt.Errorf("unsupported configuration schema %d", snapshot.SchemaVersion), Localization.New("server.configuration.unsupported_configuration_schema_p.fbf30d52", "unsupported configuration schema {p0}", Localization.Params{"p0": snapshot.SchemaVersion}))
 		}
 		if snapshot.Sections == nil {
 			snapshot.Sections = map[string]json.RawMessage{}
@@ -81,7 +82,7 @@ func Open(dataDir string, defaults map[string]json.RawMessage) (*Store, error) {
 		}
 	case errors.Is(err, os.ErrNotExist):
 	case err != nil:
-		return nil, fmt.Errorf("read configuration: %w", err)
+		return nil, Localization.WithError(fmt.Errorf("read configuration: %w", err), Localization.ErrorContext(Localization.New("server.configuration.read_configuration.4e4d571b", "read configuration", nil), err))
 	}
 	changed := !loaded
 	migrated, err := migrateLegacySections(dataDir, snapshot.Sections)
@@ -95,7 +96,7 @@ func Open(dataDir string, defaults map[string]json.RawMessage) (*Store, error) {
 		}
 		canonical, err := canonicalSection(section, value)
 		if err != nil {
-			return nil, fmt.Errorf("default configuration %s: %w", section, err)
+			return nil, Localization.WithError(fmt.Errorf("default configuration %s: %w", section, err), Localization.ErrorContext(Localization.New("server.configuration.default_configuration_p.54949bb9", "default configuration {p0}", Localization.Params{"p0": fmt.Sprintf("%s", section)}), err))
 		}
 		snapshot.Sections[section] = canonical
 		changed = true
@@ -103,7 +104,7 @@ func Open(dataDir string, defaults map[string]json.RawMessage) (*Store, error) {
 	for section, value := range snapshot.Sections {
 		canonical, err := canonicalSection(section, value)
 		if err != nil {
-			return nil, fmt.Errorf("configuration %s: %w", section, err)
+			return nil, Localization.WithError(fmt.Errorf("configuration %s: %w", section, err), Localization.ErrorContext(Localization.New("server.configuration.configuration_p.65a7bf22", "configuration {p0}", Localization.Params{"p0": fmt.Sprintf("%s", section)}), err))
 		}
 		if !bytes.Equal(value, canonical) {
 			changed = true
@@ -317,7 +318,7 @@ func (store *Store) UpdateConditional(
 	if expectedValue != nil {
 		expectedCanonical, err = canonicalSection(section, *expectedValue)
 		if err != nil {
-			return Snapshot{}, fmt.Errorf("expected configuration %s: %w", section, err)
+			return Snapshot{}, Localization.WithError(fmt.Errorf("expected configuration %s: %w", section, err), Localization.ErrorContext(Localization.New("server.configuration.expected_configuration_p.2e3d4afd", "expected configuration {p0}", Localization.Params{"p0": fmt.Sprintf("%s", section)}), err))
 		}
 	}
 	store.mu.Lock()
@@ -328,12 +329,12 @@ func (store *Store) UpdateConditional(
 	if expectedRevision != nil && store.snapshot.Revision != *expectedRevision {
 		actual := store.snapshot.Revision
 		store.mu.Unlock()
-		return Snapshot{}, fmt.Errorf("configuration revision changed: expected %d, current %d", *expectedRevision, actual)
+		return Snapshot{}, Localization.WithError(fmt.Errorf("configuration revision changed: expected %d, current %d", *expectedRevision, actual), Localization.New("server.configuration.configuration_revision_changed_expected.60547a34", "configuration revision changed: expected {p0}, current {p1}", Localization.Params{"p0": *expectedRevision, "p1": actual}))
 	}
 	current, exists := store.snapshot.Sections[section]
 	if expectedValue != nil && (!exists || !bytes.Equal(current, expectedCanonical)) {
 		store.mu.Unlock()
-		return Snapshot{}, fmt.Errorf("configuration section %q changed", section)
+		return Snapshot{}, Localization.WithError(fmt.Errorf("configuration section %q changed", section), Localization.New("server.configuration.configuration_section_p_changed.2747f4e3", "configuration section {p0} changed", Localization.Params{"p0": fmt.Sprintf("%q", section)}))
 	}
 	if err := ValidateUpdate(section, canonical, current); err != nil {
 		store.mu.Unlock()
@@ -369,7 +370,7 @@ func (store *Store) requireWritableLocked(sections ...string) error {
 	}
 	for _, section := range sections {
 		if _, allowed := store.locallyWritable[section]; !allowed {
-			return fmt.Errorf("%w: section %q", ErrExternalAuthority, section)
+			return Localization.WithError(fmt.Errorf("%w: section %q", ErrExternalAuthority, section), Localization.New("server.configuration.configuration_is_owned_by.dcd1b417", "configuration is owned by an external authority: section {p1}", Localization.Params{"p1": fmt.Sprintf("%q", section)}))
 		}
 	}
 	return nil
@@ -432,7 +433,7 @@ func ValidateUpdate(section string, proposed, current json.RawMessage) error {
 		jsonValuesEqual(proposedDocument.Feast, currentDocument.Feast) {
 		return nil
 	}
-	return fmt.Errorf("%w: feast minimum remaining hours must be a whole number from 1 to 720", ErrInvalidUpdate)
+	return Localization.WithError(fmt.Errorf("%w: feast minimum remaining hours must be a whole number from 1 to 720", ErrInvalidUpdate), Localization.New("server.configuration.configuration_update_is_invalid.e178c459", "configuration update is invalid: feast minimum remaining hours must be a whole number from 1 to 720", nil))
 }
 
 func jsonValuesEqual(left, right json.RawMessage) bool {
@@ -462,13 +463,13 @@ func (store *Store) Subscribe(buffer int) (<-chan Event, func()) {
 
 func canonicalSection(section string, value json.RawMessage) (json.RawMessage, error) {
 	if !validSectionName(section) {
-		return nil, fmt.Errorf("invalid configuration section %q", section)
+		return nil, Localization.WithError(fmt.Errorf("invalid configuration section %q", section), Localization.New("server.configuration.invalid_configuration_section_p.471cc72a", "invalid configuration section {p0}", Localization.Params{"p0": fmt.Sprintf("%q", section)}))
 	}
 	if len(value) == 0 || len(value) > maxSectionBytes {
-		return nil, fmt.Errorf("configuration section %q must contain 1 to %d bytes", section, maxSectionBytes)
+		return nil, Localization.WithError(fmt.Errorf("configuration section %q must contain 1 to %d bytes", section, maxSectionBytes), Localization.New("server.configuration.configuration_section_p_must.3ae33460", "configuration section {p0} must contain 1 to {p1} bytes", Localization.Params{"p0": fmt.Sprintf("%q", section), "p1": maxSectionBytes}))
 	}
 	if !json.Valid(value) {
-		return nil, fmt.Errorf("configuration section %q is not valid JSON", section)
+		return nil, Localization.WithError(fmt.Errorf("configuration section %q is not valid JSON", section), Localization.New("server.configuration.configuration_section_p_is.f52b7d28", "configuration section {p0} is not valid JSON", Localization.Params{"p0": fmt.Sprintf("%q", section)}))
 	}
 	var compact bytes.Buffer
 	if err := json.Compact(&compact, value); err != nil {
@@ -496,16 +497,16 @@ func validSectionName(value string) bool {
 func writeSnapshot(path string, snapshot Snapshot) error {
 	directory := filepath.Dir(path)
 	if err := os.MkdirAll(directory, 0o700); err != nil {
-		return fmt.Errorf("create configuration directory: %w", err)
+		return Localization.WithError(fmt.Errorf("create configuration directory: %w", err), Localization.ErrorContext(Localization.New("server.configuration.create_configuration_directory.f59ff1c7", "create configuration directory", nil), err))
 	}
 	contents, err := json.MarshalIndent(snapshot, "", "  ")
 	if err != nil {
-		return fmt.Errorf("encode configuration: %w", err)
+		return Localization.WithError(fmt.Errorf("encode configuration: %w", err), Localization.ErrorContext(Localization.New("server.configuration.encode_configuration.79b65cde", "encode configuration", nil), err))
 	}
 	contents = append(contents, '\n')
 	temporary, err := os.CreateTemp(directory, ".Settings-*")
 	if err != nil {
-		return fmt.Errorf("create configuration file: %w", err)
+		return Localization.WithError(fmt.Errorf("create configuration file: %w", err), Localization.ErrorContext(Localization.New("server.configuration.create_configuration_file.c65e583b", "create configuration file", nil), err))
 	}
 	temporaryPath := temporary.Name()
 	defer os.Remove(temporaryPath)
@@ -527,7 +528,7 @@ func writeSnapshot(path string, snapshot Snapshot) error {
 	if err := os.Rename(temporaryPath, path); err != nil {
 		_ = os.Remove(path)
 		if retryErr := os.Rename(temporaryPath, path); retryErr != nil {
-			return fmt.Errorf("save configuration: %w", retryErr)
+			return Localization.WithError(fmt.Errorf("save configuration: %w", retryErr), Localization.ErrorContext(Localization.New("server.configuration.save_configuration.2d5c4c94", "save configuration", nil), retryErr))
 		}
 	}
 	return nil

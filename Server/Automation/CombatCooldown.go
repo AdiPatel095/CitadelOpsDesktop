@@ -10,6 +10,7 @@ package Automation
 // dashboard attacks are never gated at all.
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"fmt"
 	"time"
 )
@@ -41,12 +42,15 @@ func combatCooldownDecision(snapshot Snapshot) (Decision, bool) {
 		return Decision{}, false
 	}
 	detail := fmt.Sprintf("Combat cooldown until %s", cooldown.Until.UTC().Format("15:04:05"))
+	var detailLocalizationMessage *Localization.Message = nil
 	if cooldown.Reason != "" {
 		detail += " — " + cooldown.Reason
+		detailLocalizationMessage = nil
 	}
 	detail += "; attack launches are paused, everything else continues"
+	detailLocalizationMessage = nil
 	return Decision{
-		Status: "waiting", Detail: detail,
+		Status: "waiting", Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage),
 		NextCheckAt: cooldown.Until.Add(time.Second),
 	}, true
 }

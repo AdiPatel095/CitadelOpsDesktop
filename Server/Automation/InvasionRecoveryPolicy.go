@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"sort"
@@ -36,7 +37,7 @@ func (*InvasionRecoveryPolicy) Evaluate(_ context.Context, snapshot Snapshot) (D
 	if probeAt, required := nextInvasionMovementProbe(snapshot); required {
 		if !snapshot.Now.Before(probeAt) {
 			return Decision{
-				Status: "ready", Detail: "Check for an unresolved Auto Invasion launch",
+				Status: "ready", Detail: "Check for an unresolved Auto Invasion launch", DetailDescriptor: Localization.New("server.automation.check_for_an_unresolved.9d18f949", "Check for an unresolved Auto Invasion launch", nil),
 				NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 				Metrics:             map[string]float64{"unresolvedLaunches": 1, "movementProbes": 1},
 				Request:             &Intent.Request{Name: "game.refresh_movements", Arguments: json.RawMessage(`{}`)},
@@ -44,7 +45,7 @@ func (*InvasionRecoveryPolicy) Evaluate(_ context.Context, snapshot Snapshot) (D
 			}, nil
 		}
 		return Decision{
-			Status: "waiting", Detail: "Waiting to check an unresolved Auto Invasion launch",
+			Status: "waiting", Detail: "Waiting to check an unresolved Auto Invasion launch", DetailDescriptor: Localization.New("server.automation.waiting_to_check_an.ff3f91e7", "Waiting to check an unresolved Auto Invasion launch", nil),
 			NextCheckAt: probeAt,
 		}, nil
 	}
@@ -58,19 +59,20 @@ func (*InvasionRecoveryPolicy) Evaluate(_ context.Context, snapshot Snapshot) (D
 			return Decision{
 				Status: "blocked", Detail: "An Auto Invasion launch could not be proven after scoped movement checks; " +
 					"its commander and target remain reserved to prevent a duplicate attack until a new event occurrence is observed",
-				NextCheckAt: nextCheckAt, EventDriven: true,
+				DetailDescriptor: Localization.New("server.automation.invasion_recovery_exhausted", "An Auto Invasion launch could not be proven after scoped movement checks; its commander and target remain reserved to prevent a duplicate attack until a new event occurrence is observed", nil),
+				NextCheckAt:      nextCheckAt, EventDriven: true,
 				Metrics: map[string]float64{"unresolvedLaunches": 1, "recoveryExhausted": 1},
 			}, nil
 		}
 		return Decision{
-			Status: "idle", Detail: "No unresolved Auto Invasion launches", EventDriven: true,
+			Status: "idle", Detail: "No unresolved Auto Invasion launches", DetailDescriptor: Localization.New("server.automation.no_unresolved_auto_invasion.3491bf4c", "No unresolved Auto Invasion launches", nil), EventDriven: true,
 		}, nil
 	}
 	if !next.After(snapshot.Now) {
 		next = snapshot.Now.Add(defaultRetry)
 	}
 	return Decision{
-		Status: "waiting", Detail: "Waiting to verify an unresolved Auto Invasion launch",
+		Status: "waiting", Detail: "Waiting to verify an unresolved Auto Invasion launch", DetailDescriptor: Localization.New("server.automation.waiting_to_verify_an.8b4714c0", "Waiting to verify an unresolved Auto Invasion launch", nil),
 		NextCheckAt: next,
 	}, nil
 }

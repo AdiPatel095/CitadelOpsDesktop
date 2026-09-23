@@ -3,7 +3,9 @@ import {defineConfig} from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import {fileURLToPath} from 'node:url';
-export default defineConfig({root:fileURLToPath(new URL('.',import.meta.url)),plugins:[react(),tailwindcss(),{name:'block-game-api',configureServer(server){server.middlewares.use('/api',(request,response)=>{
+let operationalRequests = 0;
+export default defineConfig({root:fileURLToPath(new URL('.',import.meta.url)),plugins:[react(),tailwindcss(),{name:'block-game-api',configureServer(server){server.middlewares.use('/__fixture-requests',(_request,response)=>{response.setHeader('Content-Type','application/json');response.end(JSON.stringify({operationalRequests}));});server.middlewares.use('/api',(request,response)=>{
+ if(request.method !== 'GET' && !request.url?.startsWith('/v2/game-data/localize')) operationalRequests++;
  response.setHeader('Content-Type','application/json');
  if(request.url?.startsWith('/v2/game-data/localize')) {
   const locale=new URL(request.url,'http://fixture').searchParams.get('locale') ?? 'en';

@@ -1,6 +1,7 @@
 package App
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -388,440 +389,440 @@ func (application *Application) registerGameIntents() error {
 	}
 	definitions := []Intent.Definition{
 		{
-			Name: "account.inventory.refresh", Description: "Refresh authoritative account resource and currency inventory", Effect: Intent.EffectRead,
+			Name: "account.inventory.refresh", Description: "Refresh authoritative account resource and currency inventory", DescriptionDescriptor: Localization.New("server.intent.description.57f0ab05", "Refresh authoritative account resource and currency inventory", nil), Effect: Intent.EffectRead,
 			Planner: planAccountInventoryRefresh,
 		},
 		{
-			Name: "daily_attacks.refresh", Description: "Refresh the authoritative account-wide daily normal-attack count", Effect: Intent.EffectRead,
+			Name: "daily_attacks.refresh", Description: "Refresh the authoritative account-wide daily normal-attack count", DescriptionDescriptor: Localization.New("server.intent.description.e981b588", "Refresh the authoritative account-wide daily normal-attack count", nil), Effect: Intent.EffectRead,
 			Planner: planDailyAttackRefresh,
 		},
 		{
-			Name: "game.refresh_movements", Description: "Request a fresh movement snapshot", Effect: Intent.EffectRead,
+			Name: "game.refresh_movements", Description: "Request a fresh movement snapshot", DescriptionDescriptor: Localization.New("server.intent.description.6d3cd171", "Request a fresh movement snapshot", nil), Effect: Intent.EffectRead,
 			Planner: func(_ context.Context, _ Intent.PlanningContext, _ json.RawMessage) (Intent.Plan, error) {
 				return Intent.Plan{
-					Claims: []string{"game:movements"}, Summary: "Refresh movements",
-					Steps: []Intent.Step{commandStep("Refresh movements", "gam", json.RawMessage(`{}`), "gam")},
+					Claims: []string{"game:movements"}, Summary: "Refresh movements", SummaryDescriptor: Localization.New("server.app.refresh_movements.e31f8395", "Refresh movements", nil),
+					Steps: []Intent.Step{commandStep("Refresh movements", "gam", json.RawMessage(`{}`), "gam", Localization.New("server.app.refresh_movements.e31f8395", "Refresh movements", nil))},
 				}, nil
 			},
 		},
 		{
-			Name: "troops.station", Description: "Station validated troop stacks at a same-kingdom alliance holding", Effect: Intent.EffectLaunch,
+			Name: "troops.station", Description: "Station validated troop stacks at a same-kingdom alliance holding", DescriptionDescriptor: Localization.New("server.intent.description.257afb02", "Station validated troop stacks at a same-kingdom alliance holding", nil), Effect: Intent.EffectLaunch,
 			Planner: planTroopsStation,
 		},
 		{
-			Name: "troops.kingdom.refresh", Description: "Refresh pending kingdom troop transports", Effect: Intent.EffectRead,
+			Name: "troops.kingdom.refresh", Description: "Refresh pending kingdom troop transports", DescriptionDescriptor: Localization.New("server.intent.description.065b257e", "Refresh pending kingdom troop transports", nil), Effect: Intent.EffectRead,
 			Planner: planKingdomTroopRefresh,
 		},
 		{
-			Name: "troops.kingdom.settle", Description: "Settle one completed owned kingdom troop transport after destination refresh", Effect: Intent.EffectWrite,
-			Planner: actionPlanner("troops.kingdom.workflow.settle", "troop-transport", "Settle completed owned kingdom troop transport"),
+			Name: "troops.kingdom.settle", Description: "Settle one completed owned kingdom troop transport after destination refresh", DescriptionDescriptor: Localization.New("server.intent.description.e89baa1c", "Settle one completed owned kingdom troop transport after destination refresh", nil), Effect: Intent.EffectWrite,
+			Planner: actionPlanner("troops.kingdom.workflow.settle", "troop-transport", "Settle completed owned kingdom troop transport", Localization.New("server.app.settle_completed_owned_kingdom.33a4b171", "Settle completed owned kingdom troop transport", nil)),
 		},
 		{
-			Name: "troops.kingdom.reconcile_donor", Description: "Confirm an authoritative donor inventory after an ambiguous kingdom troop dispatch", Effect: Intent.EffectWrite,
-			Planner: actionPlanner("troops.kingdom.workflow.reconcile_donor", "troop-transport", "Reconcile kingdom troop donor inventory"),
+			Name: "troops.kingdom.reconcile_donor", Description: "Confirm an authoritative donor inventory after an ambiguous kingdom troop dispatch", DescriptionDescriptor: Localization.New("server.intent.description.71834e69", "Confirm an authoritative donor inventory after an ambiguous kingdom troop dispatch", nil), Effect: Intent.EffectWrite,
+			Planner: actionPlanner("troops.kingdom.workflow.reconcile_donor", "troop-transport", "Reconcile kingdom troop donor inventory", Localization.New("server.app.reconcile_kingdom_troop_donor.76db0493", "Reconcile kingdom troop donor inventory", nil)),
 		},
 		{
-			Name: "troops.kingdom.skip.reconcile_timer", Description: "Reconcile an owned kingdom troop transfer after an uncertain time-skip reply", Effect: Intent.EffectWrite,
-			Planner: actionPlanner("troops.kingdom.skip.verify_timer", "troop-transport", "Reconcile owned kingdom troop timer"),
+			Name: "troops.kingdom.skip.reconcile_timer", Description: "Reconcile an owned kingdom troop transfer after an uncertain time-skip reply", DescriptionDescriptor: Localization.New("server.intent.description.8db40bba", "Reconcile an owned kingdom troop transfer after an uncertain time-skip reply", nil), Effect: Intent.EffectWrite,
+			Planner: actionPlanner("troops.kingdom.skip.verify_timer", "troop-transport", "Reconcile owned kingdom troop timer", Localization.New("server.app.reconcile_owned_kingdom_troop.c9de7127", "Reconcile owned kingdom troop timer", nil)),
 		},
 		{
-			Name: "troops.kingdom.skip.reconcile_inventory", Description: "Reconcile authoritative time-skip inventory after an owned transfer timer advances", Effect: Intent.EffectWrite,
-			Planner: actionPlanner("troops.kingdom.skip.verify_inventory", "troop-transport", "Reconcile official time-skip inventory"),
+			Name: "troops.kingdom.skip.reconcile_inventory", Description: "Reconcile authoritative time-skip inventory after an owned transfer timer advances", DescriptionDescriptor: Localization.New("server.intent.description.8754b1fd", "Reconcile authoritative time-skip inventory after an owned transfer timer advances", nil), Effect: Intent.EffectWrite,
+			Planner: actionPlanner("troops.kingdom.skip.verify_inventory", "troop-transport", "Reconcile official time-skip inventory", Localization.New("server.app.reconcile_official_time_skip.3db5a68e", "Reconcile official time-skip inventory", nil)),
 		},
 		{
-			Name: "troops.kingdom.ship", Description: "Transfer validated troop stacks from an owned donor castle to another kingdom", Effect: Intent.EffectLaunch,
+			Name: "troops.kingdom.ship", Description: "Transfer validated troop stacks from an owned donor castle to another kingdom", DescriptionDescriptor: Localization.New("server.intent.description.ec3439e7", "Transfer validated troop stacks from an owned donor castle to another kingdom", nil), Effect: Intent.EffectLaunch,
 			Planner: planKingdomTroopShipment,
 		},
 		{
-			Name: "troops.kingdom.skip", Description: "Apply an available official time skip to a pending kingdom troop transport", Effect: Intent.EffectWrite,
+			Name: "troops.kingdom.skip", Description: "Apply an available official time skip to a pending kingdom troop transport", DescriptionDescriptor: Localization.New("server.intent.description.5c477556", "Apply an available official time skip to a pending kingdom troop transport", nil), Effect: Intent.EffectWrite,
 			Planner: planKingdomTroopSkip,
 		},
 		{
-			Name: "movement.recall", Description: "Recall an active player-owned movement", Effect: Intent.EffectLaunch,
+			Name: "movement.recall", Description: "Recall an active player-owned movement", DescriptionDescriptor: Localization.New("server.intent.description.4c5287a2", "Recall an active player-owned movement", nil), Effect: Intent.EffectLaunch,
 			Planner: planMovementRecall,
 		},
 		{
-			Name: "equipment.refresh", Description: "Refresh loadouts, equipment storage, and gem storage", Effect: Intent.EffectRead,
+			Name: "equipment.refresh", Description: "Refresh loadouts, equipment storage, and gem storage", DescriptionDescriptor: Localization.New("server.intent.description.88f2bad8", "Refresh loadouts, equipment storage, and gem storage", nil), Effect: Intent.EffectRead,
 			Planner: planEquipmentRefresh,
 		},
 		{
-			Name: "equipment.equip", Description: "Equip a validated storage item on a commander or castellan", Effect: Intent.EffectWrite,
+			Name: "equipment.equip", Description: "Equip a validated storage item on a commander or castellan", DescriptionDescriptor: Localization.New("server.intent.description.b5c9796a", "Equip a validated storage item on a commander or castellan", nil), Effect: Intent.EffectWrite,
 			Planner: planEquipmentEquip,
 		},
 		{
-			Name: "equipment.unequip", Description: "Unequip one or more validated items from a commander or castellan", Effect: Intent.EffectWrite,
+			Name: "equipment.unequip", Description: "Unequip one or more validated items from a commander or castellan", DescriptionDescriptor: Localization.New("server.intent.description.34abd695", "Unequip one or more validated items from a commander or castellan", nil), Effect: Intent.EffectWrite,
 			Planner: planEquipmentUnequip,
 		},
 		{
-			Name: "equipment.gem.equip", Description: "Socket a validated relic gem into equipped gear", Effect: Intent.EffectWrite,
+			Name: "equipment.gem.equip", Description: "Socket a validated relic gem into equipped gear", DescriptionDescriptor: Localization.New("server.intent.description.014fc0de", "Socket a validated relic gem into equipped gear", nil), Effect: Intent.EffectWrite,
 			Planner: planGemEquip,
 		},
 		{
-			Name: "equipment.gem.unequip", Description: "Remove a socketed gem from equipped gear", Effect: Intent.EffectWrite,
+			Name: "equipment.gem.unequip", Description: "Remove a socketed gem from equipped gear", DescriptionDescriptor: Localization.New("server.intent.description.b23151c2", "Remove a socketed gem from equipped gear", nil), Effect: Intent.EffectWrite,
 			Planner: planGemUnequip,
 		},
 		{
-			Name: "equipment.swap", Description: "Swap base equipment and attached gems between two leaders", Effect: Intent.EffectWrite,
+			Name: "equipment.swap", Description: "Swap base equipment and attached gems between two leaders", DescriptionDescriptor: Localization.New("server.intent.description.0ae873a4", "Swap base equipment and attached gems between two leaders", nil), Effect: Intent.EffectWrite,
 			Planner: planEquipmentSwap,
 		},
 		{
-			Name: "equipment.reconfigure", Description: "Apply a validated optimizer loadout to one commander or castellan", Effect: Intent.EffectWrite,
+			Name: "equipment.reconfigure", Description: "Apply a validated optimizer loadout to one commander or castellan", DescriptionDescriptor: Localization.New("server.intent.description.e084fea2", "Apply a validated optimizer loadout to one commander or castellan", nil), Effect: Intent.EffectWrite,
 			Planner: planEquipmentReconfigure, ReadSet: equipmentReconfigureReadSet,
 		},
 		{
-			Name: "equipment.event.apply", Description: "Replace a commander's base equipment with one coherent owned event set", Effect: Intent.EffectWrite,
+			Name: "equipment.event.apply", Description: "Replace a commander's base equipment with one coherent owned event set", DescriptionDescriptor: Localization.New("server.intent.description.da0ffa04", "Replace a commander's base equipment with one coherent owned event set", nil), Effect: Intent.EffectWrite,
 			Planner: planEquipmentEventApply,
 		},
 		{
-			Name: "equipment.upgrade", Description: "Upgrade equipment or a relic gem to a validated target level", Effect: Intent.EffectWrite,
+			Name: "equipment.upgrade", Description: "Upgrade equipment or a relic gem to a validated target level", DescriptionDescriptor: Localization.New("server.intent.description.e77e1bbd", "Upgrade equipment or a relic gem to a validated target level", nil), Effect: Intent.EffectWrite,
 			Planner: application.planEquipmentUpgrade,
 		},
 		{
-			Name: "equipment.sell", Description: "Sell a deterministic equipment or gem storage selection", Effect: Intent.EffectWrite,
+			Name: "equipment.sell", Description: "Sell a deterministic equipment or gem storage selection", DescriptionDescriptor: Localization.New("server.intent.description.2e099ef3", "Sell a deterministic equipment or gem storage selection", nil), Effect: Intent.EffectWrite,
 			Planner: planEquipmentSell,
 		},
 		{
-			Name: "game.focus_castle", Description: "Focus one of the player's castles when it is not already focused", Effect: Intent.EffectRead,
+			Name: "game.focus_castle", Description: "Focus one of the player's castles when it is not already focused", DescriptionDescriptor: Localization.New("server.intent.description.5f9ca3d8", "Focus one of the player's castles when it is not already focused", nil), Effect: Intent.EffectRead,
 			Planner: planCastleFocus,
 		},
 		{
-			Name: "defense.refresh", Description: "Refresh one castle's defense setup and current troop/tool inventory", Effect: Intent.EffectRead,
+			Name: "defense.refresh", Description: "Refresh one castle's defense setup and current troop/tool inventory", DescriptionDescriptor: Localization.New("server.intent.description.ba7243c7", "Refresh one castle's defense setup and current troop/tool inventory", nil), Effect: Intent.EffectRead,
 			Planner: planDefenseRefresh,
 		},
 		{
-			Name: "defense.open_gate", Description: "Open an owned Great Empire castle's gates for six hours", Effect: Intent.EffectWrite,
+			Name: "defense.open_gate", Description: "Open an owned Great Empire castle's gates for six hours", DescriptionDescriptor: Localization.New("server.intent.description.3ca2d18c", "Open an owned Great Empire castle's gates for six hours", nil), Effect: Intent.EffectWrite,
 			Planner: planDefenseOpenGate,
 		},
 		{
-			Name: "defense.keep.update", Description: "Apply and read back validated DFK allocation, keep-tool, and Sceat-support rows", Effect: Intent.EffectWrite,
+			Name: "defense.keep.update", Description: "Apply and read back validated DFK allocation, keep-tool, and Sceat-support rows", DescriptionDescriptor: Localization.New("server.intent.description.09ca1380", "Apply and read back validated DFK allocation, keep-tool, and Sceat-support rows", nil), Effect: Intent.EffectWrite,
 			Planner: planDefenseKeepUpdate,
 		},
 		{
-			Name: "defense.wall.update", Description: "Apply and read back a validated wall setup using the captured DFW layout", Effect: Intent.EffectWrite,
+			Name: "defense.wall.update", Description: "Apply and read back a validated wall setup using the captured DFW layout", DescriptionDescriptor: Localization.New("server.intent.description.6ac0d8ee", "Apply and read back a validated wall setup using the captured DFW layout", nil), Effect: Intent.EffectWrite,
 			Planner: planDefenseWallUpdate,
 		},
 		{
-			Name: "defense.moat.update", Description: "Apply and read back a validated moat setup using the captured DFM layout", Effect: Intent.EffectWrite,
+			Name: "defense.moat.update", Description: "Apply and read back a validated moat setup using the captured DFM layout", DescriptionDescriptor: Localization.New("server.intent.description.dc839721", "Apply and read back a validated moat setup using the captured DFM layout", nil), Effect: Intent.EffectWrite,
 			Planner: planDefenseMoatUpdate,
 		},
 		{
-			Name: "defense.preset.apply", Description: "Refresh, validate, apply, and read back a complete reusable defense preset", Effect: Intent.EffectWrite,
+			Name: "defense.preset.apply", Description: "Refresh, validate, apply, and read back a complete reusable defense preset", DescriptionDescriptor: Localization.New("server.intent.description.57e3995c", "Refresh, validate, apply, and read back a complete reusable defense preset", nil), Effect: Intent.EffectWrite,
 			Planner: planDefensePresetApply,
 		},
 		{
-			Name: "alliance.refresh", Description: "Refresh the current alliance and member state", Effect: Intent.EffectRead,
+			Name: "alliance.refresh", Description: "Refresh the current alliance and member state", DescriptionDescriptor: Localization.New("server.intent.description.e87b33a9", "Refresh the current alliance and member state", nil), Effect: Intent.EffectRead,
 			Planner: planAllianceRefresh,
 		},
 		{
-			Name: "alliance.inspect", Description: "Fetch a selected alliance into the canonical alliance directory", Effect: Intent.EffectRead,
+			Name: "alliance.inspect", Description: "Fetch a selected alliance into the canonical alliance directory", DescriptionDescriptor: Localization.New("server.intent.description.ffad26b4", "Fetch a selected alliance into the canonical alliance directory", nil), Effect: Intent.EffectRead,
 			Planner: planAllianceInspect,
 		},
 		{
-			Name: "alliance.help.request", Description: "Request alliance help for an eligible production job", Effect: Intent.EffectWrite,
+			Name: "alliance.help.request", Description: "Request alliance help for an eligible production job", DescriptionDescriptor: Localization.New("server.intent.description.54e87528", "Request alliance help for an eligible production job", nil), Effect: Intent.EffectWrite,
 			Planner: planAllianceHelpRequest,
 		},
 		{
-			Name: "alliance.help.answer_all", Description: "Immediately help every actionable request from other alliance members", Effect: Intent.EffectWrite,
+			Name: "alliance.help.answer_all", Description: "Immediately help every actionable request from other alliance members", DescriptionDescriptor: Localization.New("server.intent.description.007194a2", "Immediately help every actionable request from other alliance members", nil), Effect: Intent.EffectWrite,
 			Planner: planAllianceHelpAnswerAll,
 		},
 		{
-			Name: "map.query", Description: "Query an inclusive rectangular world-map viewport", Effect: Intent.EffectRead,
+			Name: "map.query", Description: "Query an inclusive rectangular world-map viewport", DescriptionDescriptor: Localization.New("server.intent.description.a62a221b", "Query an inclusive rectangular world-map viewport", nil), Effect: Intent.EffectRead,
 			Planner: planMapQuery,
 		},
 		{
-			Name: "construction.equip", Description: "Equip an official construction-item definition on a castle building", Effect: Intent.EffectWrite,
+			Name: "construction.equip", Description: "Equip an official construction-item definition on a castle building", DescriptionDescriptor: Localization.New("server.intent.description.7a253066", "Equip an official construction-item definition on a castle building", nil), Effect: Intent.EffectWrite,
 			Planner: planConstructionEquip, ReadSet: constructionReadSet,
 		},
 		{
-			Name: "construction.upgrade", Description: "Upgrade the construction item currently equipped in a building slot", Effect: Intent.EffectWrite,
+			Name: "construction.upgrade", Description: "Upgrade the construction item currently equipped in a building slot", DescriptionDescriptor: Localization.New("server.intent.description.43cb6486", "Upgrade the construction item currently equipped in a building slot", nil), Effect: Intent.EffectWrite,
 			Planner: planConstructionUpgrade, ReadSet: constructionReadSet,
 		},
 		{
-			Name: "construction.shop", Description: "Request the live construction-item offers for a castle", Effect: Intent.EffectRead,
+			Name: "construction.shop", Description: "Request the live construction-item offers for a castle", DescriptionDescriptor: Localization.New("server.intent.description.6c746a66", "Request the live construction-item offers for a castle", nil), Effect: Intent.EffectRead,
 			Planner: planConstructionShop, ReadSet: constructionReadSet,
 		},
 		{
-			Name: "construction.inventory.refresh", Description: "Refresh the account construction-item inventory", Effect: Intent.EffectRead,
+			Name: "construction.inventory.refresh", Description: "Refresh the account construction-item inventory", DescriptionDescriptor: Localization.New("server.intent.description.b1c3e3cd", "Refresh the account construction-item inventory", nil), Effect: Intent.EffectRead,
 			Planner: planConstructionInventoryRefresh, ReadSet: constructionReadSet,
 		},
 		{
-			Name: "construction.purchase", Description: "Buy an official construction-item package from a live shop offer", Effect: Intent.EffectWrite,
+			Name: "construction.purchase", Description: "Buy an official construction-item package from a live shop offer", DescriptionDescriptor: Localization.New("server.intent.description.ed9c3d1e", "Buy an official construction-item package from a live shop offer", nil), Effect: Intent.EffectWrite,
 			Planner: planConstructionPurchase, ReadSet: constructionReadSet,
 		},
 		{
-			Name: "crafting.refresh", Description: "Request all sovereign crafting queues and research entitlements", Effect: Intent.EffectRead,
+			Name: "crafting.refresh", Description: "Request all sovereign crafting queues and research entitlements", DescriptionDescriptor: Localization.New("server.intent.description.2c7fe850", "Request all sovereign crafting queues and research entitlements", nil), Effect: Intent.EffectRead,
 			Planner: func(_ context.Context, _ Intent.PlanningContext, _ json.RawMessage) (Intent.Plan, error) {
 				return Intent.Plan{
-					Claims: []string{"game:crafting"}, Summary: "Refresh crafting queues",
-					Steps: []Intent.Step{commandStep("Refresh crafting queues", "crin", json.RawMessage(`{}`), "crin")},
+					Claims: []string{"game:crafting"}, Summary: "Refresh crafting queues", SummaryDescriptor: Localization.New("server.app.refresh_crafting_queues.14f526c0", "Refresh crafting queues", nil),
+					Steps: []Intent.Step{commandStep("Refresh crafting queues", "crin", json.RawMessage(`{}`), "crin", Localization.New("server.app.refresh_crafting_queues.14f526c0", "Refresh crafting queues", nil))},
 				}, nil
 			},
 		},
 		{
-			Name: "crafting.start", Description: "Start or queue one official crafting recipe", Effect: Intent.EffectWrite,
+			Name: "crafting.start", Description: "Start or queue one official crafting recipe", DescriptionDescriptor: Localization.New("server.intent.description.ab14cd1c", "Start or queue one official crafting recipe", nil), Effect: Intent.EffectWrite,
 			Planner: planCraftingStart,
 		},
 		{
-			Name: "crafting.rent_slot", Description: "Rent the next configured sovereign crafting slot", Effect: Intent.EffectWrite,
+			Name: "crafting.rent_slot", Description: "Rent the next configured sovereign crafting slot", DescriptionDescriptor: Localization.New("server.intent.description.6f56f246", "Rent the next configured sovereign crafting slot", nil), Effect: Intent.EffectWrite,
 			Planner: planCraftingSlotRental,
 		},
 		{
-			Name: "crafting.skip", Description: "Complete one active sovereign craft at its official remaining-time ruby price", Effect: Intent.EffectWrite,
+			Name: "crafting.skip", Description: "Complete one active sovereign craft at its official remaining-time ruby price", DescriptionDescriptor: Localization.New("server.intent.description.e19c57d5", "Complete one active sovereign craft at its official remaining-time ruby price", nil), Effect: Intent.EffectWrite,
 			Planner: planCraftingSkip,
 		},
 		{
-			Name: "resource.logistics.refresh", Description: "Refresh market, caravan, and kingdom-resource transport state", Effect: Intent.EffectRead,
+			Name: "resource.logistics.refresh", Description: "Refresh market, caravan, and kingdom-resource transport state", DescriptionDescriptor: Localization.New("server.intent.description.34635d1c", "Refresh market, caravan, and kingdom-resource transport state", nil), Effect: Intent.EffectRead,
 			Planner: planResourceLogisticsRefresh,
 		},
 		{
-			Name: "resource.ship", Description: "Send resources between owned castles using the transport mode required by their kingdoms", Effect: Intent.EffectLaunch,
+			Name: "resource.ship", Description: "Send resources between owned castles using the transport mode required by their kingdoms", DescriptionDescriptor: Localization.New("server.intent.description.bef9da34", "Send resources between owned castles using the transport mode required by their kingdoms", nil), Effect: Intent.EffectLaunch,
 			Planner: planResourceShipment,
 		},
 		{
-			Name: "resource.market.ship", Description: "Send a validated same-kingdom market shipment between owned castles", Effect: Intent.EffectLaunch,
+			Name: "resource.market.ship", Description: "Send a validated same-kingdom market shipment between owned castles", DescriptionDescriptor: Localization.New("server.intent.description.cd78f1e3", "Send a validated same-kingdom market shipment between owned castles", nil), Effect: Intent.EffectLaunch,
 			Planner: planMarketResourceShipment,
 		},
 		{
-			Name: "resource.kingdom.ship", Description: "Send a validated resource shipment to another owned kingdom", Effect: Intent.EffectLaunch,
+			Name: "resource.kingdom.ship", Description: "Send a validated resource shipment to another owned kingdom", DescriptionDescriptor: Localization.New("server.intent.description.427d347d", "Send a validated resource shipment to another owned kingdom", nil), Effect: Intent.EffectLaunch,
 			Planner: planKingdomResourceShipment,
 		},
 		{
-			Name: "resource.kingdom.skip", Description: "Apply an available official time skip to a pending kingdom-resource shipment", Effect: Intent.EffectWrite,
+			Name: "resource.kingdom.skip", Description: "Apply an available official time skip to a pending kingdom-resource shipment", DescriptionDescriptor: Localization.New("server.intent.description.046625ae", "Apply an available official time skip to a pending kingdom-resource shipment", nil), Effect: Intent.EffectWrite,
 			Planner: planKingdomResourceSkip,
 		},
 		{
-			Name: "resource.kingdom.settle", Description: "Refresh an automation-owned kingdom-resource destination after delivery", Effect: Intent.EffectRead,
+			Name: "resource.kingdom.settle", Description: "Refresh an automation-owned kingdom-resource destination after delivery", DescriptionDescriptor: Localization.New("server.intent.description.2ecc2b70", "Refresh an automation-owned kingdom-resource destination after delivery", nil), Effect: Intent.EffectRead,
 			Planner: planKingdomResourceSettlement,
 		},
 		{
-			Name: "production.enqueue", Description: "Enqueue an official troop or tool definition using observed production context", Effect: Intent.EffectWrite,
+			Name: "production.enqueue", Description: "Enqueue an official troop or tool definition using observed production context", DescriptionDescriptor: Localization.New("server.intent.description.befe6ee2", "Enqueue an official troop or tool definition using observed production context", nil), Effect: Intent.EffectWrite,
 			Planner: planProductionEnqueue,
 		},
 		{
-			Name: "hospital.heal", Description: "Heal a non-premium wounded unit stack at an owned castle", Effect: Intent.EffectWrite,
+			Name: "hospital.heal", Description: "Heal a non-premium wounded unit stack at an owned castle", DescriptionDescriptor: Localization.New("server.intent.description.83aaa29f", "Heal a non-premium wounded unit stack at an owned castle", nil), Effect: Intent.EffectWrite,
 			Planner: planHospitalHeal,
 		},
 		{
-			Name: "hospital.discard", Description: "Discard a wounded unit stack at an owned castle", Effect: Intent.EffectWrite,
+			Name: "hospital.discard", Description: "Discard a wounded unit stack at an owned castle", DescriptionDescriptor: Localization.New("server.intent.description.8b2ce568", "Discard a wounded unit stack at an owned castle", nil), Effect: Intent.EffectWrite,
 			Planner: planHospitalDiscard,
 		},
 		{
-			Name: "spy.launch", Description: "Launch a military espionage mission from an owned castle", Effect: Intent.EffectLaunch,
+			Name: "spy.launch", Description: "Launch a military espionage mission from an owned castle", DescriptionDescriptor: Localization.New("server.intent.description.3e8068ae", "Launch a military espionage mission from an owned castle", nil), Effect: Intent.EffectLaunch,
 			Planner: planSpyLaunch,
 		},
 		{
-			Name: "alliance.target.attack", Description: "Launch a selected CitadelOps preset against an alliance target", Effect: Intent.EffectLaunch,
+			Name: "alliance.target.attack", Description: "Launch a selected CitadelOps preset against an alliance target", DescriptionDescriptor: Localization.New("server.intent.description.94d1b61b", "Launch a selected CitadelOps preset against an alliance target", nil), Effect: Intent.EffectLaunch,
 			Planner: planAllianceTargetAttack,
 		},
 		{
-			Name: "tower.queue.scan", Description: "Focus one configured castle, refresh its tower map, and capture a fresh target batch", Effect: Intent.EffectRead,
+			Name: "tower.queue.scan", Description: "Focus one configured castle, refresh its tower map, and capture a fresh target batch", DescriptionDescriptor: Localization.New("server.intent.description.161657f4", "Focus one configured castle, refresh its tower map, and capture a fresh target batch", nil), Effect: Intent.EffectRead,
 			Planner: planTowerQueueScan,
 		},
 		{
-			Name: "tower.queue.target.refresh", Description: "Refresh one queued tower and rotate it behind other targets when the response remains stale", Effect: Intent.EffectRead,
+			Name: "tower.queue.target.refresh", Description: "Refresh one queued tower and rotate it behind other targets when the response remains stale", DescriptionDescriptor: Localization.New("server.intent.description.0fbd8fcc", "Refresh one queued tower and rotate it behind other targets when the response remains stale", nil), Effect: Intent.EffectRead,
 			Planner: planTowerQueueTargetRefresh,
 		},
 		{
-			Name: "tower.context.refresh", Description: "Refresh selected kingdom-tower attack context and saved formations", Effect: Intent.EffectRead,
+			Name: "tower.context.refresh", Description: "Refresh selected kingdom-tower attack context and saved formations", DescriptionDescriptor: Localization.New("server.intent.description.93ca3bf5", "Refresh selected kingdom-tower attack context and saved formations", nil), Effect: Intent.EffectRead,
 			Planner: planTowerContext,
 		},
 		{
-			Name: "tower.advisor.activate", Description: "Explicitly consume one available Baron Advisor token and refresh its subscription", Effect: Intent.EffectWrite,
+			Name: "tower.advisor.activate", Description: "Explicitly consume one available Baron Advisor token and refresh its subscription", DescriptionDescriptor: Localization.New("server.intent.description.4a92091a", "Explicitly consume one available Baron Advisor token and refresh its subscription", nil), Effect: Intent.EffectWrite,
 			Planner: planTowerAdvisorActivation,
 		},
 		{
-			Name: "tower.attack", Description: "Admit and atomically launch a regular or daily-budgeted Baron Advisor tower chain", Effect: Intent.EffectLaunch,
+			Name: "tower.attack", Description: "Admit and atomically launch a regular or daily-budgeted Baron Advisor tower chain", DescriptionDescriptor: Localization.New("server.intent.description.bf437666", "Admit and atomically launch a regular or daily-budgeted Baron Advisor tower chain", nil), Effect: Intent.EffectLaunch,
 			AttackModule: &Intent.AttackModuleDefinition{ID: "autoTowers", Label: "Auto Towers", Description: "Robber-baron and kingdom tower attacks", DefaultWeight: 50},
 			Planner:      planTowerAttack,
 		},
 		{
-			Name: "tower.launch", Description: "Launch a full-flank configured troop attack against a refreshed kingdom tower", Effect: Intent.EffectLaunch,
+			Name: "tower.launch", Description: "Launch a full-flank configured troop attack against a refreshed kingdom tower", DescriptionDescriptor: Localization.New("server.intent.description.edea0c32", "Launch a full-flank configured troop attack against a refreshed kingdom tower", nil), Effect: Intent.EffectLaunch,
 			AttackModule: &Intent.AttackModuleDefinition{ID: "autoTowers", Label: "Auto Towers", Description: "Robber-baron and kingdom tower attacks", DefaultWeight: 50},
 			Planner:      planTowerLaunch,
 		},
 		{
-			Name: "fortress.map.scan", Description: "Focus an outer-kingdom main castle and discover every kingdom fortress across the populated map", Effect: Intent.EffectRead,
+			Name: "fortress.map.scan", Description: "Focus an outer-kingdom main castle and discover every kingdom fortress across the populated map", DescriptionDescriptor: Localization.New("server.intent.description.42208cae", "Focus an outer-kingdom main castle and discover every kingdom fortress across the populated map", nil), Effect: Intent.EffectRead,
 			Planner: planFortressMapScan,
 		},
 		{
-			Name: "fortress.target.refresh", Description: "Refresh one known kingdom fortress immediately before attack", Effect: Intent.EffectRead,
+			Name: "fortress.target.refresh", Description: "Refresh one known kingdom fortress immediately before attack", DescriptionDescriptor: Localization.New("server.intent.description.47763927", "Refresh one known kingdom fortress immediately before attack", nil), Effect: Intent.EffectRead,
 			Planner: planFortressTargetRefresh,
 		},
 		{
-			Name: "fortress.attack", Description: "Launch the guarded one-wave Direwolf flank formation against a ready kingdom fortress", Effect: Intent.EffectLaunch,
+			Name: "fortress.attack", Description: "Launch the guarded one-wave Direwolf flank formation against a ready kingdom fortress", DescriptionDescriptor: Localization.New("server.intent.description.ebf9e251", "Launch the guarded one-wave Direwolf flank formation against a ready kingdom fortress", nil), Effect: Intent.EffectLaunch,
 			AttackModule: &Intent.AttackModuleDefinition{ID: "autoFortress", Label: "Auto Fortress", Description: "Fast outer-kingdom fortress attacks", DefaultWeight: 60},
 			Planner:      planFortressAttack,
 		},
 		{
-			Name: "invasion.difficulty.select", Description: "Select the configured difficulty for an active Foreign Lords or Bloodcrow event without premium spending", Effect: Intent.EffectWrite,
+			Name: "invasion.difficulty.select", Description: "Select the configured difficulty for an active Foreign Lords or Bloodcrow event without premium spending", DescriptionDescriptor: Localization.New("server.intent.description.4cb20671", "Select the configured difficulty for an active Foreign Lords or Bloodcrow event without premium spending", nil), Effect: Intent.EffectWrite,
 			Planner: planInvasionDifficulty,
 		},
 		{
-			Name: "invasion.map.scan", Description: "Focus the configured castle and refresh nearby invasion-event targets", Effect: Intent.EffectRead,
+			Name: "invasion.map.scan", Description: "Focus the configured castle and refresh nearby invasion-event targets", DescriptionDescriptor: Localization.New("server.intent.description.9ee8b64f", "Focus the configured castle and refresh nearby invasion-event targets", nil), Effect: Intent.EffectRead,
 			Planner: planInvasionMapScan,
 		},
 		{
-			Name: "invasion.target.reconcile", Description: "Reconcile an unresolved invasion launch from fresh target and movement evidence", Effect: Intent.EffectRead,
+			Name: "invasion.target.reconcile", Description: "Reconcile an unresolved invasion launch from fresh target and movement evidence", DescriptionDescriptor: Localization.New("server.intent.description.917669cb", "Reconcile an unresolved invasion launch from fresh target and movement evidence", nil), Effect: Intent.EffectRead,
 			Planner: planInvasionTargetReconcile,
 		},
 		{
-			Name: "invasion.attack", Description: "Launch a CitadelOps attack preset against a Foreign Lords or Bloodcrow castle", Effect: Intent.EffectLaunch,
+			Name: "invasion.attack", Description: "Launch a CitadelOps attack preset against a Foreign Lords or Bloodcrow castle", DescriptionDescriptor: Localization.New("server.intent.description.c86d8b88", "Launch a CitadelOps attack preset against a Foreign Lords or Bloodcrow castle", nil), Effect: Intent.EffectLaunch,
 			AttackModule: &Intent.AttackModuleDefinition{ID: "autoInvasion", Label: "Auto Invasion", Description: "Foreign Lords and Bloodcrow attacks", DefaultWeight: 50},
 			Planner:      planInvasionAttack,
 		},
 		{
-			Name: "nomad.difficulty.select", Description: "Start an active Nomad or Samurai event at the configured unlocked difficulty", Effect: Intent.EffectWrite,
+			Name: "nomad.difficulty.select", Description: "Start an active Nomad or Samurai event at the configured unlocked difficulty", DescriptionDescriptor: Localization.New("server.intent.description.8452e482", "Start an active Nomad or Samurai event at the configured unlocked difficulty", nil), Effect: Intent.EffectWrite,
 			Planner: planNomadDifficulty,
 		},
 		{
-			Name: "nomad.map.scan", Description: "Focus the configured castle and discover its four regular Nomad or Samurai camps", Effect: Intent.EffectRead,
+			Name: "nomad.map.scan", Description: "Focus the configured castle and discover its four regular Nomad or Samurai camps", DescriptionDescriptor: Localization.New("server.intent.description.f34be989", "Focus the configured castle and discover its four regular Nomad or Samurai camps", nil), Effect: Intent.EffectRead,
 			Planner: planNomadMapScan,
 		},
 		{
-			Name: "nomad.target.lock", Description: "Lock the weakest of four maxed regular Nomad or Samurai camps", Effect: Intent.EffectWrite,
+			Name: "nomad.target.lock", Description: "Lock the weakest of four maxed regular Nomad or Samurai camps", DescriptionDescriptor: Localization.New("server.intent.description.be3eb6be", "Lock the weakest of four maxed regular Nomad or Samurai camps", nil), Effect: Intent.EffectWrite,
 			Planner: planNomadTargetLock,
 		},
 		{
-			Name: "nomad.camp.attack", Description: "Level one camp or chain a preset through all available commanders against the locked camp", Effect: Intent.EffectLaunch,
+			Name: "nomad.camp.attack", Description: "Level one camp or chain a preset through all available commanders against the locked camp", DescriptionDescriptor: Localization.New("server.intent.description.4f74a510", "Level one camp or chain a preset through all available commanders against the locked camp", nil), Effect: Intent.EffectLaunch,
 			AttackModule: &Intent.AttackModuleDefinition{ID: "autoNomad", Label: "Auto Nomad/Samurai", Description: "Four-camp leveling and locked-camp attack chains", DefaultWeight: 50},
 			Planner:      planNomadCampAttack,
 		},
 		{
-			Name: "nomad.rbc_test.attack", Description: "Launch an opportunistic Auto Camp chain against one robber-baron castle", Effect: Intent.EffectLaunch,
+			Name: "nomad.rbc_test.attack", Description: "Launch an opportunistic Auto Camp chain against one robber-baron castle", DescriptionDescriptor: Localization.New("server.intent.description.e146f932", "Launch an opportunistic Auto Camp chain against one robber-baron castle", nil), Effect: Intent.EffectLaunch,
 			AttackModule: &Intent.AttackModuleDefinition{ID: "autoNomad", Label: "Auto Nomad/Samurai", Description: "Four-camp leveling and locked-camp attack chains", DefaultWeight: 50},
 			Planner:      planNomadRBCTestAttack,
 		},
 		{
-			Name: "nomad.cooldown.skip", Description: "Reset the locked regular camp cooldown within configured ruby limits", Effect: Intent.EffectWrite,
+			Name: "nomad.cooldown.skip", Description: "Reset the locked regular camp cooldown within configured ruby limits", DescriptionDescriptor: Localization.New("server.intent.description.27da6d4d", "Reset the locked regular camp cooldown within configured ruby limits", nil), Effect: Intent.EffectWrite,
 			Planner: planNomadCooldownSkip,
 		},
 		{
-			Name: "nomad.cooldown.minute_skip", Description: "Apply an inventory time skip to a tower, Nomad, or Samurai cooldown", Effect: Intent.EffectWrite,
+			Name: "nomad.cooldown.minute_skip", Description: "Apply an inventory time skip to a tower, Nomad, or Samurai cooldown", DescriptionDescriptor: Localization.New("server.intent.description.db2722b0", "Apply an inventory time skip to a tower, Nomad, or Samurai cooldown", nil), Effect: Intent.EffectWrite,
 			Planner: planDungeonMinuteSkip,
 		},
 		{
-			Name: "advisor.activate", Description: "Explicitly consume one available event advisor token after confirmation", Effect: Intent.EffectWrite,
+			Name: "advisor.activate", Description: "Explicitly consume one available event advisor token after confirmation", DescriptionDescriptor: Localization.New("server.intent.description.7babb264", "Explicitly consume one available event advisor token after confirmation", nil), Effect: Intent.EffectWrite,
 			Planner: planAdvisorActivation,
 		},
 		{
-			Name: "advisor.overview.refresh", Description: "Refresh cumulative advisor gains, costs, losses, wins, and remaining attacks", Effect: Intent.EffectRead,
+			Name: "advisor.overview.refresh", Description: "Refresh cumulative advisor gains, costs, losses, wins, and remaining attacks", DescriptionDescriptor: Localization.New("server.intent.description.898f2a36", "Refresh cumulative advisor gains, costs, losses, wins, and remaining attacks", nil), Effect: Intent.EffectRead,
 			Planner: planAdvisorOverview,
 		},
 		{
-			Name: "event.ranking.refresh", Description: "Fetch the active Nomad alliance leaderboard from GGE", Effect: Intent.EffectRead,
+			Name: "event.ranking.refresh", Description: "Fetch the active Nomad alliance leaderboard from GGE", DescriptionDescriptor: Localization.New("server.intent.description.69c75509", "Fetch the active Nomad alliance leaderboard from GGE", nil), Effect: Intent.EffectRead,
 			Planner: planEventRankingRefresh,
 		},
 		{
-			Name: "advisor.run.launch", Description: "Launch one guarded server-managed Nomad or Samurai advisor run", Effect: Intent.EffectLaunch,
+			Name: "advisor.run.launch", Description: "Launch one guarded server-managed Nomad or Samurai advisor run", DescriptionDescriptor: Localization.New("server.intent.description.0f15fb12", "Launch one guarded server-managed Nomad or Samurai advisor run", nil), Effect: Intent.EffectLaunch,
 			AttackModule: &Intent.AttackModuleDefinition{ID: "autoAdvisor", Label: "Auto Advisor", Description: "Server-managed Nomad and Samurai advisor attack runs", DefaultWeight: 50},
 			Planner:      planAdvisorAttack,
 		},
 		{
-			Name: "khan.attack", Description: "Launch one guarded attack against the active Nomad Khan camp", Effect: Intent.EffectLaunch,
+			Name: "khan.attack", Description: "Launch one guarded attack against the active Nomad Khan camp", DescriptionDescriptor: Localization.New("server.intent.description.8f31f934", "Launch one guarded attack against the active Nomad Khan camp", nil), Effect: Intent.EffectLaunch,
 			AttackModule: &Intent.AttackModuleDefinition{ID: "autoKhan", Label: "Auto Khan", Description: "Guarded Khan camp attacks and retaliation chains", DefaultWeight: 50},
 			Planner:      planKhanAttack,
 		},
 		{
-			Name: "khan.taunt", Description: "Trigger the Khan retaliation when the player rage bar is full", Effect: Intent.EffectLaunch,
+			Name: "khan.taunt", Description: "Trigger the Khan retaliation when the player rage bar is full", DescriptionDescriptor: Localization.New("server.intent.description.0b25f4b1", "Trigger the Khan retaliation when the player rage bar is full", nil), Effect: Intent.EffectLaunch,
 			Planner: planKhanTaunt,
 		},
 		{
-			Name: "khan.cooldown.reports.resolve", Description: "Resolve report-linked Khan cooldown work after a fresh zero-second target re-ping", Effect: Intent.EffectWrite,
+			Name: "khan.cooldown.reports.resolve", Description: "Resolve report-linked Khan cooldown work after a fresh zero-second target re-ping", DescriptionDescriptor: Localization.New("server.intent.description.c5ef6dd0", "Resolve report-linked Khan cooldown work after a fresh zero-second target re-ping", nil), Effect: Intent.EffectWrite,
 			Planner: planKhanCooldownReportResolve,
 		},
 		{
-			Name: "khan.map.jump", Description: "Locate and jump the world map directly to the active Nomad Khan camp", Effect: Intent.EffectRead,
+			Name: "khan.map.jump", Description: "Locate and jump the world map directly to the active Nomad Khan camp", DescriptionDescriptor: Localization.New("server.intent.description.6486adfe", "Locate and jump the world map directly to the active Nomad Khan camp", nil), Effect: Intent.EffectRead,
 			Planner: planKhanMapJump,
 		},
 		{
-			Name: "khan.open_gate", Description: "Open the main castle gates and activate the six-hour Auto Khan safety lock", Effect: Intent.EffectWrite,
+			Name: "khan.open_gate", Description: "Open the main castle gates and activate the six-hour Auto Khan safety lock", DescriptionDescriptor: Localization.New("server.intent.description.f02eca25", "Open the main castle gates and activate the six-hour Auto Khan safety lock", nil), Effect: Intent.EffectWrite,
 			Planner: planKhanOpenGate,
 		},
 		{
-			Name: "khan.point_limit.protect", Description: "Recall outbound Auto Khan movements and open gates after the Nomad point limit", Effect: Intent.EffectWrite,
+			Name: "khan.point_limit.protect", Description: "Recall outbound Auto Khan movements and open gates after the Nomad point limit", DescriptionDescriptor: Localization.New("server.intent.description.875db6bf", "Recall outbound Auto Khan movements and open gates after the Nomad point limit", nil), Effect: Intent.EffectWrite,
 			Planner: planKhanPointLimitProtection,
 		},
 		{
-			Name: "khan.defense_tools.replenish", Description: "Buy an active non-ruby shop package for a missing Auto Khan defense tool", Effect: Intent.EffectWrite,
+			Name: "khan.defense_tools.replenish", Description: "Buy an active non-ruby shop package for a missing Auto Khan defense tool", DescriptionDescriptor: Localization.New("server.intent.description.37752c28", "Buy an active non-ruby shop package for a missing Auto Khan defense tool", nil), Effect: Intent.EffectWrite,
 			Planner: planKhanDefenseToolReplenish,
 		},
 		{
-			Name: "khan.protection.clear", Description: "Clear an expired Auto Khan safety lock after defense units recover", Effect: Intent.EffectWrite,
+			Name: "khan.protection.clear", Description: "Clear an expired Auto Khan safety lock after defense units recover", DescriptionDescriptor: Localization.New("server.intent.description.e5a552f6", "Clear an expired Auto Khan safety lock after defense units recover", nil), Effect: Intent.EffectWrite,
 			Planner: planKhanProtectionClear,
 		},
 		{
-			Name: "beri.capacity.refresh", Description: "Refresh the active Berimond castle troop-transfer capacity", Effect: Intent.EffectRead,
+			Name: "beri.capacity.refresh", Description: "Refresh the active Berimond castle troop-transfer capacity", DescriptionDescriptor: Localization.New("server.intent.description.b530ca3c", "Refresh the active Berimond castle troop-transfer capacity", nil), Effect: Intent.EffectRead,
 			Planner: planBeriCapacityRefresh,
 		},
 		{
-			Name: "beri.transfer", Description: "Transfer a validated troop batch to Berimond and apply its fixed speed-up", Effect: Intent.EffectLaunch,
+			Name: "beri.transfer", Description: "Transfer a validated troop batch to Berimond and apply its fixed speed-up", DescriptionDescriptor: Localization.New("server.intent.description.47a74578", "Transfer a validated troop batch to Berimond and apply its fixed speed-up", nil), Effect: Intent.EffectLaunch,
 			Planner: planBeriTransfer,
 		},
 		{
-			Name: "beri.tools.refresh", Description: "Refresh the owned Berimond camp tool inventory", Effect: Intent.EffectRead,
+			Name: "beri.tools.refresh", Description: "Refresh the owned Berimond camp tool inventory", DescriptionDescriptor: Localization.New("server.intent.description.68b54eb9", "Refresh the owned Berimond camp tool inventory", nil), Effect: Intent.EffectRead,
 			Planner: planBeriToolInventoryRefresh,
 		},
 		{
-			Name: "beri.tools.purchase", Description: "Buy one game-capped batch of a supported coin attack tool from the Berimond armorer", Effect: Intent.EffectWrite,
+			Name: "beri.tools.purchase", Description: "Buy one game-capped batch of a supported coin attack tool from the Berimond armorer", DescriptionDescriptor: Localization.New("server.intent.description.cc83d169", "Buy one game-capped batch of a supported coin attack tool from the Berimond armorer", nil), Effect: Intent.EffectWrite,
 			Planner: planBeriToolPurchase,
 		},
 		{
-			Name: "beri.camp.open", Description: "Open the cheapest unlocked non-premium Berimond camp", Effect: Intent.EffectWrite,
+			Name: "beri.camp.open", Description: "Open the cheapest unlocked non-premium Berimond camp", DescriptionDescriptor: Localization.New("server.intent.description.c871d1bd", "Open the cheapest unlocked non-premium Berimond camp", nil), Effect: Intent.EffectWrite,
 			Planner: planBeriCampOpen,
 		},
 		{
-			Name: "beri.target.find", Description: "Use Berimond's find-next command to select the next available tower", Effect: Intent.EffectRead,
+			Name: "beri.target.find", Description: "Use Berimond's find-next command to select the next available tower", DescriptionDescriptor: Localization.New("server.intent.description.ef85d9bf", "Use Berimond's find-next command to select the next available tower", nil), Effect: Intent.EffectRead,
 			Planner: planBeriTargetFind,
 		},
 		{
-			Name: "beri.tower.attack", Description: "Launch one guarded CitadelOps preset against the selected Berimond tower", Effect: Intent.EffectLaunch,
+			Name: "beri.tower.attack", Description: "Launch one guarded CitadelOps preset against the selected Berimond tower", DescriptionDescriptor: Localization.New("server.intent.description.0f8afd13", "Launch one guarded CitadelOps preset against the selected Berimond tower", nil), Effect: Intent.EffectLaunch,
 			AttackModule: &Intent.AttackModuleDefinition{ID: "autoBeriWorld", Label: "Auto Beri World", Description: "Berimond troop transfers and guarded tower attacks", DefaultWeight: 50},
 			Planner:      planBeriTowerAttack,
 		},
 		{
-			Name: "rift.maiden_run.start", Description: "Start a durable bounded Rift Maiden probe run", Effect: Intent.EffectWrite,
+			Name: "rift.maiden_run.start", Description: "Start a durable bounded Rift Maiden probe run", DescriptionDescriptor: Localization.New("server.intent.description.fc1b769d", "Start a durable bounded Rift Maiden probe run", nil), Effect: Intent.EffectWrite,
 			Planner: planRiftMaidenRunStart, ReadSet: riftMaidenReadSet,
 		},
 		{
-			Name: "rift.maiden_run.cancel", Description: "Cancel the active Rift Maiden probe run", Effect: Intent.EffectWrite,
+			Name: "rift.maiden_run.cancel", Description: "Cancel the active Rift Maiden probe run", DescriptionDescriptor: Localization.New("server.intent.description.8ea15f33", "Cancel the active Rift Maiden probe run", nil), Effect: Intent.EffectWrite,
 			Planner: planRiftMaidenRunCancel, ReadSet: riftMaidenReadSet,
 		},
 		{
-			Name: "rift.maiden_wave.launch", Description: "Launch deterministic Rift probe waves from an optional eligible commander pool", Effect: Intent.EffectLaunch,
+			Name: "rift.maiden_wave.launch", Description: "Launch deterministic Rift probe waves from an optional eligible commander pool", DescriptionDescriptor: Localization.New("server.intent.description.add19909", "Launch deterministic Rift probe waves from an optional eligible commander pool", nil), Effect: Intent.EffectLaunch,
 			AttackModule: &Intent.AttackModuleDefinition{ID: "riftMaiden", Label: "Rift Maiden Waves", Description: "Shield-maiden probe and wave launches", DefaultWeight: 50},
 			Planner:      planMaidenCommsWave, ReadSet: riftMaidenReadSet,
 		},
 		{
-			Name: "rift.launch.replay", Description: "Replay a captured Rift attack template with one or more selected commanders", Effect: Intent.EffectLaunch,
+			Name: "rift.launch.replay", Description: "Replay a captured Rift attack template with one or more selected commanders", DescriptionDescriptor: Localization.New("server.intent.description.6b97714c", "Replay a captured Rift attack template with one or more selected commanders", nil), Effect: Intent.EffectLaunch,
 			AttackModule: &Intent.AttackModuleDefinition{ID: "riftReplay", Label: "Rift Replays", Description: "Captured Rift attack templates", DefaultWeight: 50},
 			Planner:      application.planRiftReplay, ReadSet: riftReplayReadSet,
 		},
 		{
-			Name: "rift.template.rename", Description: "Rename a captured Rift attack template", Effect: Intent.EffectWrite,
+			Name: "rift.template.rename", Description: "Rename a captured Rift attack template", DescriptionDescriptor: Localization.New("server.intent.description.c1e49424", "Rename a captured Rift attack template", nil), Effect: Intent.EffectWrite,
 			Planner: planRiftTemplateRename, ReadSet: riftTemplateReadSet,
 		},
 		{
-			Name: "rift.template.delete", Description: "Delete a captured Rift attack template and cancel its schedule", Effect: Intent.EffectWrite,
+			Name: "rift.template.delete", Description: "Delete a captured Rift attack template and cancel its schedule", DescriptionDescriptor: Localization.New("server.intent.description.7617564d", "Delete a captured Rift attack template and cancel its schedule", nil), Effect: Intent.EffectWrite,
 			Planner: planRiftTemplateDelete, ReadSet: riftTemplateDeleteReadSet,
 		},
 		{
-			Name: "decoration.apply_preset", Description: "Reconcile one castle's decoration layout with an official-definition preset", Effect: Intent.EffectWrite,
+			Name: "decoration.apply_preset", Description: "Reconcile one castle's decoration layout with an official-definition preset", DescriptionDescriptor: Localization.New("server.intent.description.ad6e3816", "Reconcile one castle's decoration layout with an official-definition preset", nil), Effect: Intent.EffectWrite,
 			Planner: planDecorationPreset,
 		},
 		{
-			Name: "report.spy.fetch", Description: "Fetch one spy report from an observed inbox notice", Effect: Intent.EffectRead,
+			Name: "report.spy.fetch", Description: "Fetch one spy report from an observed inbox notice", DescriptionDescriptor: Localization.New("server.intent.description.56810b8d", "Fetch one spy report from an observed inbox notice", nil), Effect: Intent.EffectRead,
 			Planner: planSpyReportFetch,
 		},
 		{
-			Name: "report.spy.share", Description: "Share one captured player-castle spy report with alliance members", Effect: Intent.EffectWrite,
+			Name: "report.spy.share", Description: "Share one captured player-castle spy report with alliance members", DescriptionDescriptor: Localization.New("server.intent.description.4014151a", "Share one captured player-castle spy report with alliance members", nil), Effect: Intent.EffectWrite,
 			Planner: planSpyReportShare,
 		},
 		{
-			Name: "report.battle.summary", Description: "Fetch one battle report summary from an observed inbox notice", Effect: Intent.EffectRead,
+			Name: "report.battle.summary", Description: "Fetch one battle report summary from an observed inbox notice", DescriptionDescriptor: Localization.New("server.intent.description.13c45c9f", "Fetch one battle report summary from an observed inbox notice", nil), Effect: Intent.EffectRead,
 			Planner: planBattleReportSummary,
 		},
 		{
-			Name: "report.battle.details", Description: "Fetch battle waves, units, and tools using summary-derived report context", Effect: Intent.EffectRead,
+			Name: "report.battle.details", Description: "Fetch battle waves, units, and tools using summary-derived report context", DescriptionDescriptor: Localization.New("server.intent.description.32fc158e", "Fetch battle waves, units, and tools using summary-derived report context", nil), Effect: Intent.EffectRead,
 			Planner: planBattleReportDetails,
 		},
 	}
@@ -846,17 +847,17 @@ func planCraftingStart(_ context.Context, input Intent.PlanningContext, argument
 	}
 	castle, ok := input.State.Castles[request.CastleID]
 	if !ok || request.CastleID <= 0 {
-		return Intent.Plan{}, fmt.Errorf("castle %d is not in the current player state", request.CastleID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("castle %d is not in the current player state", request.CastleID), Localization.New("server.app.castle_p_is_not.47524bcb", "castle {p0} is not in the current player state", Localization.Params{"p0": fmt.Sprintf("%d", request.CastleID)}))
 	}
 	if !castle.SupportsSovereignCrafting() {
-		return Intent.Plan{}, fmt.Errorf("castle %d is a sovereign-resource storage node, not a crafting castle", request.CastleID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("castle %d is a sovereign-resource storage node, not a crafting castle", request.CastleID), Localization.New("server.app.castle_p_is_a.916acd03", "castle {p0} is a sovereign-resource storage node, not a crafting castle", Localization.Params{"p0": fmt.Sprintf("%d", request.CastleID)}))
 	}
 	building, ok := castle.Crafting.Buildings[request.BuildingInstanceID]
 	if !ok || request.BuildingInstanceID <= 0 {
-		return Intent.Plan{}, fmt.Errorf("crafting building %d is not in castle %d", request.BuildingInstanceID, request.CastleID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("crafting building %d is not in castle %d", request.BuildingInstanceID, request.CastleID), Localization.New("server.app.crafting_building_p_is.12059e46", "crafting building {p0} is not in castle {p1}", Localization.Params{"p0": fmt.Sprintf("%d", request.BuildingInstanceID), "p1": fmt.Sprintf("%d", request.CastleID)}))
 	}
 	if request.RecipeID <= 0 || input.GameData == nil {
-		return Intent.Plan{}, fmt.Errorf("recipeId must reference the loaded official catalog")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("recipeId must reference the loaded official catalog"), Localization.New("server.app.recipeid_must_reference_the.65dde533", "recipeId must reference the loaded official catalog", nil))
 	}
 	catalog, err := input.GameData.Catalog("craftingRecipes")
 	if err != nil {
@@ -864,15 +865,15 @@ func planCraftingStart(_ context.Context, input Intent.PlanningContext, argument
 	}
 	rawRecipe, exists := catalog.Find(strconv.FormatInt(request.RecipeID, 10))
 	if !exists {
-		return Intent.Plan{}, fmt.Errorf("crafting recipe %d is not in the current official catalog", request.RecipeID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("crafting recipe %d is not in the current official catalog", request.RecipeID), Localization.New("server.app.crafting_recipe_p_is.c49a5825", "crafting recipe {p0} is not in the current official catalog", Localization.Params{"p0": fmt.Sprintf("%d", request.RecipeID)}))
 	}
 	recipe, err := GameData.DecodeRecord(rawRecipe)
 	if err != nil {
-		return Intent.Plan{}, fmt.Errorf("decode crafting recipe %d: %w", request.RecipeID, err)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("decode crafting recipe %d: %w", request.RecipeID, err), Localization.ErrorContext(Localization.New("server.app.decode_crafting_recipe_p.727dea65", "decode crafting recipe {p0}", Localization.Params{"p0": fmt.Sprintf("%d", request.RecipeID)}), err))
 	}
 	queueTypeID, _ := recipe.Int64("queueTypeId")
 	if int(queueTypeID) != building.QueueTypeID {
-		return Intent.Plan{}, fmt.Errorf("crafting recipe %d belongs to queue %d, not queue %d", request.RecipeID, queueTypeID, building.QueueTypeID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("crafting recipe %d belongs to queue %d, not queue %d", request.RecipeID, queueTypeID, building.QueueTypeID), Localization.New("server.app.crafting_recipe_p_belongs.6573ef55", "crafting recipe {p0} belongs to queue {p1}, not queue {p2}", Localization.Params{"p0": fmt.Sprintf("%d", request.RecipeID), "p1": fmt.Sprintf("%d", queueTypeID), "p2": fmt.Sprintf("%d", building.QueueTypeID)}))
 	}
 	if required, _ := recipe.String("requiredCraftingBuildings"); strings.TrimSpace(required) != "" {
 		allowed := false
@@ -884,11 +885,11 @@ func planCraftingStart(_ context.Context, input Intent.PlanningContext, argument
 			}
 		}
 		if !allowed {
-			return Intent.Plan{}, fmt.Errorf("crafting recipe %d is not valid for building definition %d", request.RecipeID, building.DefinitionID)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("crafting recipe %d is not valid for building definition %d", request.RecipeID, building.DefinitionID), Localization.New("server.app.crafting_recipe_p_is.b3087a49", "crafting recipe {p0} is not valid for building definition {p1}", Localization.Params{"p0": fmt.Sprintf("%d", request.RecipeID), "p1": fmt.Sprintf("%d", building.DefinitionID)}))
 		}
 	}
 	if request.MinimumCoinReserve < 0 {
-		return Intent.Plan{}, fmt.Errorf("minimumCoinReserve must not be negative")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("minimumCoinReserve must not be negative"), Localization.New("server.app.minimumcoinreserve_must_not_be.5e3434b3", "minimumCoinReserve must not be negative", nil))
 	}
 	if err := validateCraftingStartAvailability(input.State, input.GameData, castle, building, request.RecipeID, request.MinimumCoinReserve); err != nil {
 		return Intent.Plan{}, err
@@ -900,7 +901,7 @@ func planCraftingStart(_ context.Context, input Intent.PlanningContext, argument
 		Power      int                      `json:"PWR"`
 		RecipeID   int64                    `json:"CRID"`
 	}{castle.KingdomID, castle.ID, building.InstanceID, request.Power, request.RecipeID})
-	startStep := commandStep("Queue crafting recipe", "crst", payload, "crst")
+	startStep := commandStep("Queue crafting recipe", "crst", payload, "crst", Localization.New("server.app.queue_crafting_recipe.a8548584", "Queue crafting recipe", nil))
 	if costs, costErr := GameData.CraftingRecipeCosts(input.GameData, request.RecipeID); costErr == nil {
 		for _, cost := range costs {
 			if strings.EqualFold(cost.JSONKey, "C1") && cost.Amount > 0 && cost.Amount < math.Exp2(63) {
@@ -914,8 +915,8 @@ func planCraftingStart(_ context.Context, input Intent.PlanningContext, argument
 			"crafting-building:" + strconv.FormatInt(int64(building.InstanceID), 10),
 			"account-resources",
 		},
-		Summary: fmt.Sprintf("Queue crafting recipe %d at %s", request.RecipeID, castleLabel(castle)),
-		Steps:   []Intent.Step{startStep},
+		Summary: fmt.Sprintf("Queue crafting recipe %d at %s", request.RecipeID, castleLabel(castle)), SummaryDescriptor: Localization.New("server.app.queue_crafting_recipe_p.919826fb", "Queue crafting recipe {p0} at {p1}", Localization.Params{"p0": fmt.Sprintf("%d", request.RecipeID), "p1": fmt.Sprintf("%s", castleLabel(castle))}),
+		Steps: []Intent.Step{startStep},
 	}, nil
 }
 
@@ -929,16 +930,16 @@ func planCastleFocus(_ context.Context, input Intent.PlanningContext, arguments 
 	}
 	castle, ok := input.State.Castles[request.CastleID]
 	if !ok || request.CastleID <= 0 {
-		return Intent.Plan{}, fmt.Errorf("castle %d is not in the current player state", request.CastleID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("castle %d is not in the current player state", request.CastleID), Localization.New("server.app.castle_p_is_not.47524bcb", "castle {p0} is not in the current player state", Localization.Params{"p0": fmt.Sprintf("%d", request.CastleID)}))
 	}
 	if State.CastleFocusKnownUnavailable(input.State, castle) {
-		return Intent.Plan{}, fmt.Errorf(
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf(
 			"%w: castle %d cannot be focused in the current kingdom session", Intent.ErrPlanStale, request.CastleID,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.f50ee7dc", "intent plan became stale before dispatch: castle {p1} cannot be focused in the current kingdom session", Localization.Params{"p1": fmt.Sprintf("%d", request.CastleID)}))
 	}
 	steps := castleContextSteps(input, castle)
 	if request.Refresh && len(steps) == 0 {
-		steps = []Intent.Step{castleRefreshStep("Refresh focused castle", castle)}
+		steps = []Intent.Step{castleRefreshStep("Refresh focused castle", castle).WithNameDescriptor(Localization.New("server.app.refresh_focused_castle.6827e21f", "Refresh focused castle", nil))}
 	}
 	if request.Refresh {
 		for index := range steps {
@@ -946,21 +947,21 @@ func planCastleFocus(_ context.Context, input Intent.PlanningContext, arguments 
 		}
 	}
 	return Intent.Plan{
-		Claims: []string{"castle-focus"}, Summary: fmt.Sprintf("Focus %s", castleLabel(castle)),
+		Claims: []string{"castle-focus"}, Summary: fmt.Sprintf("Focus %s", castleLabel(castle)), SummaryDescriptor: Localization.New("server.app.focus_p.b806077f", "Focus {p0}", Localization.Params{"p0": fmt.Sprintf("%s", castleLabel(castle))}),
 		Steps: steps,
 	}, nil
 }
 
 func planAllianceRefresh(_ context.Context, input Intent.PlanningContext, _ json.RawMessage) (Intent.Plan, error) {
 	if input.State.Alliance.ID <= 0 {
-		return Intent.Plan{}, fmt.Errorf("the current player's alliance is not known")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("the current player's alliance is not known"), Localization.New("server.app.the_current_player_s.e618bdb1", "the current player's alliance is not known", nil))
 	}
 	payload, _ := json.Marshal(struct {
 		AllianceID State.AllianceID `json:"AID"`
 	}{AllianceID: input.State.Alliance.ID})
 	return Intent.Plan{
-		Claims: []string{"alliance-directory"}, Summary: "Refresh alliance",
-		Steps: []Intent.Step{commandStep("Refresh alliance", "ain", payload, "ain")},
+		Claims: []string{"alliance-directory"}, Summary: "Refresh alliance", SummaryDescriptor: Localization.New("server.app.refresh_alliance.84aaf5fa", "Refresh alliance", nil),
+		Steps: []Intent.Step{commandStep("Refresh alliance", "ain", payload, "ain", Localization.New("server.app.refresh_alliance.84aaf5fa", "Refresh alliance", nil))},
 	}, nil
 }
 
@@ -972,17 +973,17 @@ func planAllianceInspect(_ context.Context, _ Intent.PlanningContext, arguments 
 		return Intent.Plan{}, err
 	}
 	if request.AllianceID <= 0 {
-		return Intent.Plan{}, fmt.Errorf("allianceId must be positive")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("allianceId must be positive"), Localization.New("server.app.allianceid_must_be_positive.bba64bc4", "allianceId must be positive", nil))
 	}
 	payload, _ := json.Marshal(struct {
 		AllianceID State.AllianceID `json:"AID"`
 	}{AllianceID: request.AllianceID})
 	verification, _ := json.Marshal(request)
 	return Intent.Plan{
-		Claims: []string{"alliance-directory"}, Summary: fmt.Sprintf("Inspect alliance %d", request.AllianceID),
+		Claims: []string{"alliance-directory"}, Summary: fmt.Sprintf("Inspect alliance %d", request.AllianceID), SummaryDescriptor: Localization.New("server.app.inspect_alliance_p.0b278106", "Inspect alliance {p0}", Localization.Params{"p0": fmt.Sprintf("%d", request.AllianceID)}),
 		Steps: []Intent.Step{
-			commandStep("Inspect alliance", "ain", payload, "ain"),
-			{Name: "Verify inspected alliance", Action: "alliance.verify_inspection", ActionArguments: verification},
+			commandStep("Inspect alliance", "ain", payload, "ain", Localization.New("server.app.inspect_alliance.d97b1105", "Inspect alliance", nil)),
+			{Name: "Verify inspected alliance", NameDescriptor: Localization.New("server.app.verify_inspected_alliance.3767a4af", "Verify inspected alliance", nil), Action: "alliance.verify_inspection", ActionArguments: verification},
 		},
 	}, nil
 }
@@ -996,7 +997,7 @@ func (application *Application) verifyAllianceInspection(_ context.Context, argu
 	}
 	alliance, found := application.State.ReadOnlyView().Alliances[request.AllianceID]
 	if !found || alliance.ID != request.AllianceID {
-		return fmt.Errorf("alliance %d did not return a matching live roster", request.AllianceID)
+		return Localization.WithError(fmt.Errorf("alliance %d did not return a matching live roster", request.AllianceID), Localization.New("server.app.alliance_p_did_not.db666f32", "alliance {p0} did not return a matching live roster", Localization.Params{"p0": fmt.Sprintf("%d", request.AllianceID)}))
 	}
 	return nil
 }
@@ -1013,10 +1014,10 @@ func planMapQuery(_ context.Context, _ Intent.PlanningContext, arguments json.Ra
 		return Intent.Plan{}, err
 	}
 	if request.X1 > request.X2 || request.Y1 > request.Y2 {
-		return Intent.Plan{}, fmt.Errorf("map bounds must be ordered from minimum to maximum")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("map bounds must be ordered from minimum to maximum"), Localization.New("server.app.map_bounds_must_be.5796a47f", "map bounds must be ordered from minimum to maximum", nil))
 	}
 	if request.X2-request.X1 > 50 || request.Y2-request.Y1 > 50 {
-		return Intent.Plan{}, fmt.Errorf("map query dimensions may not exceed 51 by 51 tiles")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("map query dimensions may not exceed 51 by 51 tiles"), Localization.New("server.app.map_query_dimensions_may.e0cf4299", "map query dimensions may not exceed 51 by 51 tiles", nil))
 	}
 	payload, _ := json.Marshal(struct {
 		KingdomID State.KingdomID `json:"KID"`
@@ -1027,8 +1028,8 @@ func planMapQuery(_ context.Context, _ Intent.PlanningContext, arguments json.Ra
 	}{request.KingdomID, request.X1, request.Y1, request.X2, request.Y2})
 	return Intent.Plan{
 		Claims:  []string{"castle-focus", "map:" + strconv.FormatInt(int64(request.KingdomID), 10)},
-		Summary: fmt.Sprintf("Query map %d (%d,%d)-(%d,%d)", request.KingdomID, request.X1, request.Y1, request.X2, request.Y2),
-		Steps:   []Intent.Step{commandStep("Query map", "gaa", payload, "gaa")},
+		Summary: fmt.Sprintf("Query map %d (%d,%d)-(%d,%d)", request.KingdomID, request.X1, request.Y1, request.X2, request.Y2), SummaryDescriptor: Localization.New("server.app.query_map_p_p.8db360e5", "Query map {p0} ({p1},{p2})-({p3},{p4})", Localization.Params{"p0": fmt.Sprintf("%d", request.KingdomID), "p1": request.X1, "p2": request.Y1, "p3": request.X2, "p4": request.Y2}),
+		Steps: []Intent.Step{commandStep("Query map", "gaa", payload, "gaa", Localization.New("server.app.query_map.a53a9300", "Query map", nil))},
 	}, nil
 }
 
@@ -1054,13 +1055,13 @@ func planConstructionEquip(_ context.Context, input Intent.PlanningContext, argu
 	resolverArguments, _ := json.Marshal(request)
 	steps := castleContextSteps(input, castle)
 	steps = append(steps, Intent.Step{
-		Name: "Equip construction item", Resolver: "construction.equip.build", ResolverArguments: resolverArguments,
+		Name: "Equip construction item", NameDescriptor: Localization.New("server.app.equip_construction_item.a59b6fb9", "Equip construction item", nil), Resolver: "construction.equip.build", ResolverArguments: resolverArguments,
 		AwaitOpcode: "rpc", TimeoutMillis: 10_000, SuccessCodes: []int{0},
 	})
 	return Intent.Plan{
 		Claims:  constructionClaims(castle.ID, request.BuildingInstanceID),
-		Summary: fmt.Sprintf("Equip construction item %d on building %d", request.DefinitionID, request.BuildingInstanceID),
-		Steps:   steps,
+		Summary: fmt.Sprintf("Equip construction item %d on building %d", request.DefinitionID, request.BuildingInstanceID), SummaryDescriptor: Localization.New("server.app.equip_construction_item_p.843467fa", "Equip construction item {p0} on building {p1}", Localization.Params{"p0": fmt.Sprintf("%d", request.DefinitionID), "p1": fmt.Sprintf("%d", request.BuildingInstanceID)}),
+		Steps: steps,
 	}, nil
 }
 
@@ -1081,7 +1082,7 @@ func resolveConstructionEquipStep(_ context.Context, input Intent.PlanningContex
 		KingdomID  State.KingdomID          `json:"KID"`
 		CastleID   State.CastleID           `json:"AID"`
 	}{request.BuildingInstanceID, request.DefinitionID, request.Slot, request.Mode, castle.KingdomID, castle.ID})
-	return commandStep("Equip construction item", "rpc", payload, "rpc"), nil
+	return commandStep("Equip construction item", "rpc", payload, "rpc", Localization.New("server.app.equip_construction_item.a59b6fb9", "Equip construction item", nil)), nil
 }
 
 func validatedConstructionEquipContext(input Intent.PlanningContext, request constructionEquipRequest, requireFreeSlot bool) (State.CastleState, error) {
@@ -1090,7 +1091,7 @@ func validatedConstructionEquipContext(input Intent.PlanningContext, request con
 		return State.CastleState{}, err
 	}
 	if request.DefinitionID <= 0 || input.GameData == nil {
-		return State.CastleState{}, fmt.Errorf("constructionItemId must reference the loaded official catalog")
+		return State.CastleState{}, Localization.WithError(fmt.Errorf("constructionItemId must reference the loaded official catalog"), Localization.New("server.app.constructionitemid_must_reference_the.d7411b01", "constructionItemId must reference the loaded official catalog", nil))
 	}
 	catalog, err := input.GameData.Catalog("constructionItems")
 	if err != nil {
@@ -1098,18 +1099,18 @@ func validatedConstructionEquipContext(input Intent.PlanningContext, request con
 	}
 	rawItem, exists := catalog.Find(strconv.FormatInt(int64(request.DefinitionID), 10))
 	if !exists {
-		return State.CastleState{}, fmt.Errorf("construction item %d is not in the current official catalog", request.DefinitionID)
+		return State.CastleState{}, Localization.WithError(fmt.Errorf("construction item %d is not in the current official catalog", request.DefinitionID), Localization.New("server.app.construction_item_p_is.5b1d6481", "construction item {p0} is not in the current official catalog", Localization.Params{"p0": fmt.Sprintf("%d", request.DefinitionID)}))
 	}
 	item, err := GameData.DecodeRecord(rawItem)
 	if err != nil {
 		return State.CastleState{}, err
 	}
 	if request.Slot < 0 {
-		return State.CastleState{}, fmt.Errorf("slot cannot be negative")
+		return State.CastleState{}, Localization.WithError(fmt.Errorf("slot cannot be negative"), Localization.New("server.app.slot_cannot_be_negative.f275917c", "slot cannot be negative", nil))
 	}
 	slotType, slotTypeKnown := item.Int64("slotTypeID")
 	if !slotTypeKnown || slotType < 0 {
-		return State.CastleState{}, fmt.Errorf("construction item %d has no valid official slot type", request.DefinitionID)
+		return State.CastleState{}, Localization.WithError(fmt.Errorf("construction item %d has no valid official slot type", request.DefinitionID), Localization.New("server.app.construction_item_p_has.49430d2d", "construction item {p0} has no valid official slot type", Localization.Params{"p0": fmt.Sprintf("%d", request.DefinitionID)}))
 	}
 	groupID, _ := item.Int64("constructionItemGroupID")
 	if groupID > 0 {
@@ -1120,28 +1121,28 @@ func validatedConstructionEquipContext(input Intent.PlanningContext, request con
 		}
 		definition, found := buildingCatalog.Definition(int64(building.DefinitionID))
 		if !found || !int64ListContains(definition.ConstructionItemGroupIDs, groupID) {
-			return State.CastleState{}, fmt.Errorf(
+			return State.CastleState{}, Localization.WithError(fmt.Errorf(
 				"building %d does not accept construction-item group %d", request.BuildingInstanceID, groupID,
-			)
+			), Localization.New("server.app.building_p_does_not.2327c5fb", "building {p0} does not accept construction-item group {p1}", Localization.Params{"p0": fmt.Sprintf("%d", request.BuildingInstanceID), "p1": fmt.Sprintf("%d", groupID)}))
 		}
 	}
 	if requireFreeSlot && !input.State.Inventory.ConstructionItemsObservedAt.IsZero() &&
 		input.State.Inventory.ConstructionItems[request.DefinitionID] <= 0 {
-		return State.CastleState{}, fmt.Errorf("construction item %d is not in observed inventory", request.DefinitionID)
+		return State.CastleState{}, Localization.WithError(fmt.Errorf("construction item %d is not in observed inventory", request.DefinitionID), Localization.New("server.app.construction_item_p_is.e0f10380", "construction item {p0} is not in observed inventory", Localization.Params{"p0": fmt.Sprintf("%d", request.DefinitionID)}))
 	}
 	targetSlot := int(slotType)
 	if requireFreeSlot && (castle.ConstructionSlotsObservedAt.IsZero() ||
 		time.Since(castle.ConstructionSlotsObservedAt) >= constructionSlotSnapshotMaxAge) {
-		return State.CastleState{}, fmt.Errorf(
+		return State.CastleState{}, Localization.WithError(fmt.Errorf(
 			"construction-item slots for castle %d are stale; refresh the castle before equipping", castle.ID,
-		)
+		), Localization.New("server.app.construction_item_slots_for.18ac886e", "construction-item slots for castle {p0} are stale; refresh the castle before equipping", Localization.Params{"p0": fmt.Sprintf("%d", castle.ID)}))
 	}
 	if requireFreeSlot && hasEquippedConstructionItemInSlot(
 		castle.ConstructionSlots[request.BuildingInstanceID], catalog, targetSlot,
 	) {
-		return State.CastleState{}, fmt.Errorf(
+		return State.CastleState{}, Localization.WithError(fmt.Errorf(
 			"building %d already has a construction item equipped in slot %d", request.BuildingInstanceID, targetSlot,
-		)
+		), Localization.New("server.app.building_p_already_has.c721a185", "building {p0} already has a construction item equipped in slot {p1}", Localization.Params{"p0": fmt.Sprintf("%d", request.BuildingInstanceID), "p1": targetSlot}))
 	}
 	return castle, nil
 }
@@ -1175,13 +1176,13 @@ func planConstructionUpgrade(_ context.Context, input Intent.PlanningContext, ar
 	resolverArguments, _ := json.Marshal(request)
 	steps := castleContextSteps(input, castle)
 	steps = append(steps, Intent.Step{
-		Name: "Upgrade construction item", Resolver: "construction.upgrade.build", ResolverArguments: resolverArguments,
+		Name: "Upgrade construction item", NameDescriptor: Localization.New("server.app.upgrade_construction_item.65261640", "Upgrade construction item", nil), Resolver: "construction.upgrade.build", ResolverArguments: resolverArguments,
 		AwaitOpcode: "ubc", TimeoutMillis: 10_000, SuccessCodes: []int{0},
 	})
 	return Intent.Plan{
 		Claims:  constructionClaims(castle.ID, request.BuildingInstanceID),
-		Summary: fmt.Sprintf("Upgrade construction item %d on building %d", request.DefinitionID, request.BuildingInstanceID),
-		Steps:   steps,
+		Summary: fmt.Sprintf("Upgrade construction item %d on building %d", request.DefinitionID, request.BuildingInstanceID), SummaryDescriptor: Localization.New("server.app.upgrade_construction_item_p.3e2ac088", "Upgrade construction item {p0} on building {p1}", Localization.Params{"p0": fmt.Sprintf("%d", request.DefinitionID), "p1": fmt.Sprintf("%d", request.BuildingInstanceID)}),
+		Steps: steps,
 	}, nil
 }
 
@@ -1202,7 +1203,7 @@ func resolveConstructionUpgradeStep(_ context.Context, input Intent.PlanningCont
 		CastleID   State.CastleID           `json:"AID"`
 		ItemID     State.ConstructionItemID `json:"CID"`
 	}{request.BuildingInstanceID, request.OfferCode, request.Slot, castle.KingdomID, castle.ID, equipped})
-	return commandStep("Upgrade construction item", "ubc", payload, "ubc"), nil
+	return commandStep("Upgrade construction item", "ubc", payload, "ubc", Localization.New("server.app.upgrade_construction_item.65261640", "Upgrade construction item", nil)), nil
 }
 
 func validatedConstructionUpgradeContext(
@@ -1215,10 +1216,10 @@ func validatedConstructionUpgradeContext(
 		return State.CastleState{}, 0, err
 	}
 	if request.DefinitionID <= 0 || input.GameData == nil {
-		return State.CastleState{}, 0, fmt.Errorf("constructionItemId must reference the equipped official construction item")
+		return State.CastleState{}, 0, Localization.WithError(fmt.Errorf("constructionItemId must reference the equipped official construction item"), Localization.New("server.app.constructionitemid_must_reference_the.665d0a0d", "constructionItemId must reference the equipped official construction item", nil))
 	}
 	if request.OfferCode <= 0 {
-		return State.CastleState{}, 0, fmt.Errorf("offerCode must identify the official target tier")
+		return State.CastleState{}, 0, Localization.WithError(fmt.Errorf("offerCode must identify the official target tier"), Localization.New("server.app.offercode_must_identify_the.fb888c07", "offerCode must identify the official target tier", nil))
 	}
 	catalog, err := input.GameData.Catalog("constructionItems")
 	if err != nil {
@@ -1226,14 +1227,14 @@ func validatedConstructionUpgradeContext(
 	}
 	rawCurrent, exists := catalog.Find(strconv.FormatInt(int64(request.DefinitionID), 10))
 	if !exists {
-		return State.CastleState{}, 0, fmt.Errorf("construction item %d is not in the current official catalog", request.DefinitionID)
+		return State.CastleState{}, 0, Localization.WithError(fmt.Errorf("construction item %d is not in the current official catalog", request.DefinitionID), Localization.New("server.app.construction_item_p_is.5b1d6481", "construction item {p0} is not in the current official catalog", Localization.Params{"p0": fmt.Sprintf("%d", request.DefinitionID)}))
 	}
 	current, err := GameData.DecodeRecord(rawCurrent)
 	if err != nil {
 		return State.CastleState{}, 0, err
 	}
 	if !GameData.ConstructionItemIsTemporary(current) {
-		return State.CastleState{}, 0, fmt.Errorf("construction item %d is not temporary", request.DefinitionID)
+		return State.CastleState{}, 0, Localization.WithError(fmt.Errorf("construction item %d is not temporary", request.DefinitionID), Localization.New("server.app.construction_item_p_is.75fdf0bf", "construction item {p0} is not temporary", Localization.Params{"p0": fmt.Sprintf("%d", request.DefinitionID)}))
 	}
 	variantKey := GameData.ConstructionItemVariantKey(current)
 	currentLevel, _ := current.Int64("level")
@@ -1250,7 +1251,7 @@ func validatedConstructionUpgradeContext(
 	}
 	expectedCode := map[int64]int{2: 2000, 3: 2001, 4: 2002}[nextLevel]
 	if expectedCode == 0 || request.OfferCode != expectedCode {
-		return State.CastleState{}, 0, fmt.Errorf("offerCode %d does not match official target level %d", request.OfferCode, nextLevel)
+		return State.CastleState{}, 0, Localization.WithError(fmt.Errorf("offerCode %d does not match official target level %d", request.OfferCode, nextLevel), Localization.New("server.app.offercode_p_does_not.4db6511d", "offerCode {p0} does not match official target level {p1}", Localization.Params{"p0": request.OfferCode, "p1": nextLevel}))
 	}
 	if requireEquipped {
 		for _, slot := range castle.ConstructionSlots[request.BuildingInstanceID] {
@@ -1258,10 +1259,10 @@ func validatedConstructionUpgradeContext(
 				return castle, request.DefinitionID, nil
 			}
 		}
-		return State.CastleState{}, 0, fmt.Errorf(
+		return State.CastleState{}, 0, Localization.WithError(fmt.Errorf(
 			"building %d does not have construction item %d in slot %d",
 			request.BuildingInstanceID, request.DefinitionID, request.Slot,
-		)
+		), Localization.New("server.app.building_p_does_not.001f2460", "building {p0} does not have construction item {p1} in slot {p2}", Localization.Params{"p0": fmt.Sprintf("%d", request.BuildingInstanceID), "p1": fmt.Sprintf("%d", request.DefinitionID), "p2": request.Slot}))
 	}
 	return castle, request.DefinitionID, nil
 }
@@ -1275,23 +1276,23 @@ func planConstructionShop(_ context.Context, input Intent.PlanningContext, argum
 	}
 	castle, ok := input.State.Castles[request.CastleID]
 	if !ok || request.CastleID <= 0 {
-		return Intent.Plan{}, fmt.Errorf("castle %d is not in the current player state", request.CastleID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("castle %d is not in the current player state", request.CastleID), Localization.New("server.app.castle_p_is_not.47524bcb", "castle {p0} is not in the current player state", Localization.Params{"p0": fmt.Sprintf("%d", request.CastleID)}))
 	}
 	steps := castleContextSteps(input, castle)
 	steps = append(steps, constructionShopContextSteps(castle)...)
 	return Intent.Plan{
 		Claims:  []string{"castle-focus", "castle:" + strconv.FormatInt(int64(castle.ID), 10), "construction-shop"},
-		Summary: fmt.Sprintf("Load construction-item offers for %s", castleLabel(castle)), Steps: steps,
+		Summary: fmt.Sprintf("Load construction-item offers for %s", castleLabel(castle)), SummaryDescriptor: Localization.New("server.app.load_construction_item_offers.eeb11478", "Load construction-item offers for {p0}", Localization.Params{"p0": fmt.Sprintf("%s", castleLabel(castle))}), Steps: steps,
 	}, nil
 }
 
 func constructionContext(input Intent.PlanningContext, castleID State.CastleID, buildingID State.BuildingInstanceID) (State.CastleState, error) {
 	castle, ok := input.State.Castles[castleID]
 	if !ok || castleID <= 0 {
-		return State.CastleState{}, fmt.Errorf("castle %d is not in the current player state", castleID)
+		return State.CastleState{}, Localization.WithError(fmt.Errorf("castle %d is not in the current player state", castleID), Localization.New("server.app.castle_p_is_not.47524bcb", "castle {p0} is not in the current player state", Localization.Params{"p0": fmt.Sprintf("%d", castleID)}))
 	}
 	if _, ok := castle.Buildings[buildingID]; !ok || buildingID <= 0 {
-		return State.CastleState{}, fmt.Errorf("building instance %d is not in castle %d", buildingID, castleID)
+		return State.CastleState{}, Localization.WithError(fmt.Errorf("building instance %d is not in castle %d", buildingID, castleID), Localization.New("server.app.building_instance_p_is.0ad558d4", "building instance {p0} is not in castle {p1}", Localization.Params{"p0": fmt.Sprintf("%d", buildingID), "p1": fmt.Sprintf("%d", castleID)}))
 	}
 	return castle, nil
 }
@@ -1339,7 +1340,7 @@ func decodeIntentArguments(raw json.RawMessage, destination any) error {
 	decoder := json.NewDecoder(bytes.NewReader(raw))
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(destination); err != nil {
-		return fmt.Errorf("decode intent arguments: %w", err)
+		return Localization.WithError(fmt.Errorf("decode intent arguments: %w", err), Localization.ErrorContext(Localization.New("server.app.decode_intent_arguments.a1c413cf", "decode intent arguments", nil), err))
 	}
 	return nil
 }

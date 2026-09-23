@@ -605,3 +605,116 @@ func TestAutoEventBuildPassesBerimondEventContextThroughUpgradeIntent(t *testing
 		t.Fatalf("Berimond upgrade intent %s (%s) lost event context: %s", decision.Request.Name, decision.Detail, decision.Request.Arguments)
 	}
 }
+
+func TestBeriRubyBlockedStableContinuesEligibleConstruction(t *testing.T) {
+	now := time.Now().UTC()
+	data := beriPhaseTestGameData(t)
+	root := map[string]json.RawMessage{}
+	for _, key := range []string{"versionInfo", "units", "resources", "expansions", "buildings"} {
+		root[key], _ = data.RawCollection(key)
+	}
+	var definitions []map[string]any
+	_ = json.Unmarshal(root["buildings"], &definitions)
+	for _, definition := range definitions {
+		if definition["wodID"] == float64(294) {
+			delete(definition, "costWood")
+			definition["costC2"] = 3100
+		}
+	}
+	root["buildings"], _ = json.Marshal(definitions)
+	raw, _ := json.Marshal(root)
+	data, err := GameData.DecodeStore(raw, GameData.SourceMetadata{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, known := range []bool{true, false} {
+		state, castle := beriPhaseTestState(now, 1, 5000)
+		stable := castle.Layout.Objects[10]
+		stable.DefinitionID = 247
+		castle.Layout.Objects[10], castle.Buildings[10] = stable, stable
+		state.Castles[castle.ID] = castle
+		state.Player.Resources[2] = 5000
+		state.Session = State.SessionState{Generation: 1, LoggedIn: true, SocketReady: true}
+		state.Player.RubyConfirmation = State.RubyConfirmationState{Amount: 2500, Known: known, Generation: 1}
+		target := beriPhaseTarget(castle.ID, nil, []Buildings.TargetBuilding{{TargetID: "stable", DefinitionID: 294}, {TargetID: "tent", DefinitionID: 100}})
+		settings := defaultAutoStormSettings()
+		settings.Target = &target
+		settings.Harbor.Enabled = false
+		settings.Build.AllowPremium = true
+		snapshot := Snapshot{State: state, GameData: data, Now: now}
+		profile := autoEventBuildProfile{KingdomID: castle.KingdomID, FeatureLabel: "Berimond", AttackLootOnly: true, EventID: GameData.BerimondEventID, IgnoreDemolitionCandidate: isBeriStableDefinition}
+		decision, complete, detail, err := evaluateBeriEventBuild(snapshot, settings, castle, map[string]float64{}, profile)
+		if err != nil || complete || decision == nil || decision.Request == nil || decision.Request.Name != "building.construct" {
+			t.Fatalf("known=%t decision=%+v complete=%t detail=%s err=%v", known, decision, complete, detail, err)
+		}
+		attachRubyUpgradeNotices(decision, snapshot, castle.ID, &target, true)
+		notice := decision.Details["rubyUpgradeNotice/stable"]
+		if !strings.Contains(notice, "Stable") || !strings.Contains(notice, "3,100") {
+			t.Fatalf("notice=%s", notice)
+		}
+		settings.Target.Buildings = settings.Target.Buildings[:1]
+		decision, complete, detail, err = evaluateBeriEventBuild(snapshot, settings, castle, map[string]float64{}, profile)
+		if err != nil || complete || decision != nil || detail == "" {
+			t.Fatalf("pending decision=%+v complete=%t detail=%s err=%v", decision, complete, detail, err)
+		}
+	}
+}
+
+func TestBeriConfirmationChecksOnlyCurrentUpgradeInPath(t *testing.T) {
+	now := time.Now().UTC()
+	source := beriPhaseTestGameData(t)
+	root := map[string]json.RawMessage{}
+	for _, key := range []string{"versionInfo", "units", "resources", "expansions", "buildings"} {
+		root[key], _ = source.RawCollection(key)
+	}
+	var definitions []map[string]any
+	_ = json.Unmarshal(root["buildings"], &definitions)
+	for _, d := range definitions {
+		if d["wodID"] == float64(294) {
+			delete(d, "costWood")
+			d["costC2"] = 3100
+			d["upgradeWodID"] = 295
+		}
+	}
+	definitions = append(definitions, map[string]any{"wodID": 295, "name": "FactionStable", "group": "Building", "level": 6, "width": 2, "height": 2, "downgradeWodID": 294, "costC2": 6300, "kIDs": "10", "eventIDs": "3"})
+	root["buildings"], _ = json.Marshal(definitions)
+	raw, _ := json.Marshal(root)
+	data, err := GameData.DecodeStore(raw, GameData.SourceMetadata{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, current := range []int64{0, 247, 294} {
+		state, castle := beriPhaseTestState(now, 1, 5000)
+		stable := castle.Layout.Objects[10]
+		stable.DefinitionID = State.BuildingID(current)
+		castle.Layout.Objects[10], castle.Buildings[10] = stable, stable
+		if current == 0 {
+			delete(castle.Layout.Objects, 10)
+			delete(castle.Buildings, 10)
+		}
+		state.Castles[castle.ID] = castle
+		state.Player.Resources[2] = 50000
+		state.Session = State.SessionState{Generation: 1, LoggedIn: true, SocketReady: true}
+		state.Player.RubyConfirmation = State.RubyConfirmationState{Amount: 5000, Known: true, Generation: 1}
+		target := beriPhaseTarget(castle.ID, nil, []Buildings.TargetBuilding{{TargetID: "stable", DefinitionID: 295}, {TargetID: "tent", DefinitionID: 100}})
+		settings := defaultAutoStormSettings()
+		settings.Target = &target
+		settings.Harbor.Enabled = false
+		settings.Build.AllowPremium = true
+		snapshot := Snapshot{State: state, GameData: data, Now: now}
+		decision, complete, detail, err := evaluateBeriEventBuild(snapshot, settings, castle, map[string]float64{}, autoEventBuildProfile{KingdomID: castle.KingdomID, FeatureLabel: "Berimond", AttackLootOnly: true, EventID: GameData.BerimondEventID, IgnoreDemolitionCandidate: isBeriStableDefinition})
+		if err != nil || complete || decision == nil || decision.Request == nil {
+			t.Fatalf("current=%d decision=%+v detail=%s err=%v", current, decision, detail, err)
+		}
+		attachRubyUpgradeNotices(decision, snapshot, castle.ID, &target, true)
+		if current == 247 && (decision.Request.Name != "building.upgrade" || len(decision.Details) != 0) {
+			t.Fatalf("below-threshold immediate upgrade blocked by future price: %+v", decision)
+		}
+		if current == 0 && (decision.Request.Name != "building.construct" || len(decision.Details) != 0 || !strings.Contains(string(decision.Request.Arguments), `"definitionId":247`)) {
+			t.Fatalf("resource construction blocked: %+v args=%s", decision, decision.Request.Arguments)
+		}
+		if current == 294 && (decision.Request.Name != "building.construct" || !strings.Contains(decision.Details["rubyUpgradeNotice/stable"], "6,300")) {
+			t.Fatalf("next costly upgrade not skipped: %+v", decision)
+		}
+	}
+}

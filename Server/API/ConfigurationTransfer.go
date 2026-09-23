@@ -1,6 +1,7 @@
 package API
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -43,7 +44,7 @@ type settingsImportResult struct {
 
 func (server *Server) handleConfigurationExport(writer http.ResponseWriter, _ *http.Request) {
 	if server.config.Configuration == nil {
-		writeError(writer, http.StatusServiceUnavailable, "configuration_unavailable", "Configuration store is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "configuration_unavailable", "Configuration store is unavailable", Localization.New("server.api.configuration_store_is_unavailable.623f75fa", "Configuration store is unavailable", nil))
 		return
 	}
 	snapshot := server.config.Configuration.Snapshot()
@@ -78,16 +79,16 @@ func (server *Server) handleConfigurationExport(writer http.ResponseWriter, _ *h
 
 func (server *Server) handleConfigurationImport(writer http.ResponseWriter, request *http.Request) {
 	if server.config.BackgroundOnly || server.externalConfigurationAuthority.Load() {
-		writeError(writer, http.StatusConflict, "configuration_control_plane_owned", "Hosted account settings must be imported through the account control plane")
+		writeError(writer, http.StatusConflict, "configuration_control_plane_owned", "Hosted account settings must be imported through the account control plane", Localization.New("server.api.hosted_account_settings_must.34f84345", "Hosted account settings must be imported through the account control plane", nil))
 		return
 	}
 	if server.config.Configuration == nil {
-		writeError(writer, http.StatusServiceUnavailable, "configuration_unavailable", "Configuration store is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "configuration_unavailable", "Configuration store is unavailable", Localization.New("server.api.configuration_store_is_unavailable.623f75fa", "Configuration store is unavailable", nil))
 		return
 	}
 	bundle, err := decodeSettingsBundle(writer, request)
 	if err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid_settings_bundle", err.Error())
+		writeErrorFromError(writer, http.StatusBadRequest, "invalid_settings_bundle", err)
 		return
 	}
 	if bundle.Format != settingsBundleFormat || bundle.FormatVersion != settingsBundleVersion {
@@ -95,7 +96,7 @@ func (server *Server) handleConfigurationImport(writer http.ResponseWriter, requ
 			writer,
 			http.StatusUnprocessableEntity,
 			"unsupported_settings_bundle",
-			fmt.Sprintf("Expected %s format version %d", settingsBundleFormat, settingsBundleVersion),
+			fmt.Sprintf("Expected %s format version %d", settingsBundleFormat, settingsBundleVersion), Localization.New("server.api.expected_p_format_version.c7f24dcd", "Expected {p0} format version {p1}", Localization.Params{"p0": fmt.Sprintf("%s", settingsBundleFormat), "p1": settingsBundleVersion}),
 		)
 		return
 	}
@@ -108,7 +109,7 @@ func (server *Server) handleConfigurationImport(writer http.ResponseWriter, requ
 				"Settings use configuration schema %d; this app supports schema %d",
 				bundle.Configuration.SchemaVersion,
 				Configuration.SchemaVersion,
-			),
+			), Localization.New("server.api.settings_use_configuration_schema.dff2877d", "Settings use configuration schema {p0}; this app supports schema {p1}", Localization.Params{"p0": bundle.Configuration.SchemaVersion, "p1": Configuration.SchemaVersion}),
 		)
 		return
 	}
@@ -120,7 +121,7 @@ func (server *Server) handleConfigurationImport(writer http.ResponseWriter, requ
 	delete(bundle.Configuration.Sections, History.PlayerSamplesConfigurationSection)
 	sectionCount := len(bundle.Configuration.Sections)
 	if sectionCount == 0 {
-		writeError(writer, http.StatusUnprocessableEntity, "empty_settings_bundle", "Settings bundle contains no configuration sections")
+		writeError(writer, http.StatusUnprocessableEntity, "empty_settings_bundle", "Settings bundle contains no configuration sections", Localization.New("server.api.settings_bundle_contains_no.cb029f76", "Settings bundle contains no configuration sections", nil))
 		return
 	}
 	if sectionCount > maxSettingsBundleSections {
@@ -128,13 +129,13 @@ func (server *Server) handleConfigurationImport(writer http.ResponseWriter, requ
 			writer,
 			http.StatusRequestEntityTooLarge,
 			"too_many_settings_sections",
-			fmt.Sprintf("Settings bundle may contain at most %d sections", maxSettingsBundleSections),
+			fmt.Sprintf("Settings bundle may contain at most %d sections", maxSettingsBundleSections), Localization.New("server.api.settings_bundle_may_contain.633b2609", "Settings bundle may contain at most {p0} sections", Localization.Params{"p0": maxSettingsBundleSections}),
 		)
 		return
 	}
 	snapshot, changed, err := server.config.Configuration.UpdateMany(bundle.Configuration.Sections)
 	if err != nil {
-		writeError(writer, http.StatusUnprocessableEntity, "settings_import_failed", err.Error())
+		writeErrorFromError(writer, http.StatusUnprocessableEntity, "settings_import_failed", err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, settingsImportResult{
@@ -155,7 +156,7 @@ func decodeSettingsBundle(writer http.ResponseWriter, request *http.Request) (se
 	}
 	if err := decoder.Decode(&struct{}{}); err != io.EOF {
 		if err == nil {
-			return settingsBundle{}, fmt.Errorf("settings bundle must contain one JSON document")
+			return settingsBundle{}, Localization.WithError(fmt.Errorf("settings bundle must contain one JSON document"), Localization.New("server.api.settings_bundle_must_contain.08db41d4", "settings bundle must contain one JSON document", nil))
 		}
 		return settingsBundle{}, err
 	}
