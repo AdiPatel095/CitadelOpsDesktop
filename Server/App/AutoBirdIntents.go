@@ -27,6 +27,7 @@ const (
 )
 
 type autoBirdCycleRequest struct {
+	ConnectionGeneration uint64               `json:"connectionGeneration"`
 	ControlRevision      time.Time            `json:"controlRevision,omitempty"`
 	SourceCastleID       State.CastleID       `json:"sourceCastleId"`
 	TrackingID           string               `json:"trackingId"`
@@ -297,6 +298,7 @@ func planAutoBirdDispatch(
 		return Intent.Plan{}, fmt.Errorf("%w: castle %d has an incomplete Auto Bird preparation", Intent.ErrPlanStale, source.ID)
 	}
 	request.DispatchStartedAt = now
+	request.ConnectionGeneration = input.State.Session.ConnectionGeneration
 	request.ExpectedTargetCastle = target.CastleID
 	resolverArguments, _ := json.Marshal(request)
 	// Refresh the source after acquiring castle-focus and retain that claim through
@@ -305,6 +307,7 @@ func planAutoBirdDispatch(
 		Name:   "Verify prepared Auto Bird castle context",
 		Action: "auto_bird.dispatch.guard", ActionArguments: resolverArguments,
 	}}
+	steps = append(steps, stationAllianceRefreshStep(now))
 	steps = append(steps, stationRouteContextSteps(source, target)...)
 	steps = append(steps, Intent.Step{
 		Name: "Dispatch freshly resolved Auto Bird troops", Resolver: "auto_bird.dispatch.build",
@@ -759,7 +762,7 @@ func (application *Application) resolveAutoBirdDispatchStep(
 			return
 		}
 		// commandStep stores the wire payload on Command before normalization.
-		guardArguments, _ := json.Marshal(autoBirdBatchGuardRequest{Cycle: request, Payload: step.Command.Payload})
+		guardArguments, _ := json.Marshal(autoBirdBatchGuardRequest{Cycle: request, Payload: step.Command.Payload, TargetOwner: target.PlayerID})
 		step.PreDispatchAction = "auto_bird.batch.guard"
 		step.PreDispatchArguments = guardArguments
 		step.FinalDispatchAction = "auto_bird.batch.guard"

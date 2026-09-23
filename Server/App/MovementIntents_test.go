@@ -114,9 +114,9 @@ func TestPlanTroopsStationRefreshesFocusedSourceAndDefersManifest(t *testing.T) 
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 4 || plan.Steps[0].Opcode != "jca" ||
+	if len(plan.Steps) != 6 || plan.Steps[0].Opcode != "jca" ||
 		plan.Steps[0].ResponseBarrier != Intent.ResponseBarrierCommitted ||
-		plan.Steps[2].Resolver != "troops.station.build" {
+		plan.Steps[4].Resolver != "troops.station.build" {
 		t.Fatalf("station plan steps = %#v", plan.Steps)
 	}
 }
@@ -148,7 +148,7 @@ func TestPlanAutoBirdRequiresManifestObservedAfterItsCastleRefreshStarts(t *test
 		t.Fatal(err)
 	}
 	var resolved stationRequest
-	if err := json.Unmarshal(plan.Steps[2].ResolverArguments, &resolved); err != nil {
+	if err := json.Unmarshal(plan.Steps[3].ResolverArguments, &resolved); err != nil {
 		t.Fatal(err)
 	}
 	if resolved.FreshUnitsObservedAfter.Before(beforePlan) || resolved.FreshUnitsObservedAfter.After(time.Now().UTC()) {
@@ -169,10 +169,11 @@ func TestResolveTroopsStationClampsAutomationToRefreshedUnits(t *testing.T) {
 	gameState.Alliance.Holdings = []State.AllianceHolding{{
 		CastleID: 20, KingdomID: 0, X: 342, Y: 604, SlotType: 1,
 	}}
-	step, err := resolveTroopsStationStep(t.Context(), Intent.PlanningContext{State: gameState}, json.RawMessage(`{
+	seedStationAuthority(&gameState, time.Now())
+	step, err := resolveTroopsStationStep(t.Context(), Intent.PlanningContext{State: gameState}, stationFreshTestArguments(json.RawMessage(`{
 		"sourceCastleId":10,"targetCastleId":20,"delayHours":1,"purpose":"autoStation",
 		"units":[{"unitId":215,"amount":68180},{"unitId":216,"amount":39237},{"unitId":489,"amount":92}]
-	}`))
+	}`)))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -217,9 +218,10 @@ func TestResolveAutoBirdRebuildsManifestFromFreshJAA(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	seedStationAuthority(&gameState, time.Now())
 	step, err := resolveTroopsStationStep(t.Context(), Intent.PlanningContext{
 		State: gameState, GameData: gameData,
-	}, json.RawMessage(`{
+	}, stationFreshTestArguments(json.RawMessage(`{
 		"sourceCastleId":10,"targetCastleId":20,"delayHours":1,
 		"purpose":"autoBird","freshManifest":true,
 		"freshUnitsObservedAfter":"2026-07-29T00:00:00Z","minimumSend":100,
@@ -229,7 +231,7 @@ func TestResolveAutoBirdRebuildsManifestFromFreshJAA(t *testing.T) {
 			{"unitId":489,"amount":20}
 		],
 		"units":[{"unitId":215,"amount":90}]
-	}`))
+	}`)))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -259,12 +261,13 @@ func TestResolveAutoBirdRejectsInventoryNotRefreshedAfterPlan(t *testing.T) {
 	gameState.Alliance.Holdings = []State.AllianceHolding{{
 		CastleID: 20, KingdomID: 0, X: 40, Y: 50, SlotType: 1,
 	}}
-	_, err := resolveTroopsStationStep(t.Context(), Intent.PlanningContext{State: gameState}, json.RawMessage(`{
+	seedStationAuthority(&gameState, time.Now())
+	_, err := resolveTroopsStationStep(t.Context(), Intent.PlanningContext{State: gameState}, stationFreshTestArguments(json.RawMessage(`{
 		"sourceCastleId":10,"targetCastleId":20,"delayHours":1,
 		"purpose":"autoBird","freshManifest":true,
 		"freshUnitsObservedAfter":"2026-07-29T14:00:00Z",
 		"units":[{"unitId":489,"amount":100}]
-	}`))
+	}`)))
 	if err == nil || !strings.Contains(err.Error(), "troop inventory was not refreshed") {
 		t.Fatalf("stale Auto Bird inventory error = %v", err)
 	}

@@ -62,3 +62,12 @@ func capAtPlayerProtectionRefresh(snapshot Snapshot, decision Decision) Decision
 	}
 	return decision
 }
+
+func stationProtectionRefreshDecision(snapshot Snapshot) (Decision, bool) {
+	p := snapshot.State.Player.ProtectionMode.ObservedAt
+	m := snapshot.State.Player.AllianceObservedAt
+	if p.IsZero() || p.After(snapshot.Now) || m.IsZero() || m.After(snapshot.Now) || snapshot.Now.Sub(m) >= playerProtectionRefreshInterval {
+		snapshot.PolicyConfigurationChanged = true
+	}
+	return playerProtectionRefreshDecision(snapshot)
+}

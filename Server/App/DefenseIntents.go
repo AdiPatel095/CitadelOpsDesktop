@@ -27,6 +27,9 @@ type defenseRefreshRequest struct {
 }
 
 type defenseOpenGateRequest struct {
+	ConnectionGeneration  uint64         `json:"connectionGeneration"`
+	AutoStation           bool           `json:"autoStation,omitempty"`
+	PlannedAt             time.Time      `json:"plannedAt,omitempty"`
 	CastleID              State.CastleID `json:"castleId"`
 	RequireIncomingAttack bool           `json:"requireIncomingAttack,omitempty"`
 	RequireProtectionMode bool           `json:"requireProtectionMode,omitempty"`
@@ -134,11 +137,22 @@ func planDefenseOpenGate(_ context.Context, input Intent.PlanningContext, argume
 		KingdomID State.KingdomID `json:"KID"`
 		Cooldown  int             `json:"CD"`
 	}{castle.ID, castle.KingdomID, 0})
+	steps := []Intent.Step{commandStep("Open castle gates for six hours", "mos", payload, "mos")}
+	if request.AutoStation {
+		request.PlannedAt = now
+		request.ConnectionGeneration = input.State.Session.ConnectionGeneration
+		args, _ := json.Marshal(request)
+		steps[0].FinalDispatchAction = "defense.open_gate.guard"
+		steps[0].FinalDispatchArguments = args
+		refresh := contextCommandStep("Refresh incoming attacks before opening gates", "gam", json.RawMessage(`{}`), "gam")
+		refresh.ResponseBarrier = Intent.ResponseBarrierCommitted
+		steps = append([]Intent.Step{stationCastleContextStep(castle), refresh}, steps...)
+	}
 	id := strconv.FormatInt(int64(castle.ID), 10)
 	return Intent.Plan{
-		Claims:  []string{"castle:" + id, "defense:" + id, "account-resources"},
+		Claims:  []string{"castle-focus", "castle:" + id, "defense:" + id, "account-resources"},
 		Summary: "Open gates at " + castleLabel(castle),
-		Steps:   []Intent.Step{commandStep("Open castle gates for six hours", "mos", payload, "mos")},
+		Steps:   steps,
 	}, nil
 }
 

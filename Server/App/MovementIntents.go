@@ -23,6 +23,8 @@ type stationUnitRequest struct {
 }
 
 type stationRequest struct {
+	ConnectionGeneration    uint64               `json:"connectionGeneration"`
+	MinimumRPTDays          int                  `json:"minimumRPTDays"`
 	SourceCastleID          State.CastleID       `json:"sourceCastleId"`
 	TargetCastleID          State.CastleID       `json:"targetCastleId"`
 	DelayHours              int                  `json:"delayHours"`
@@ -126,8 +128,17 @@ func planTroopsStation(_ context.Context, input Intent.PlanningContext, argument
 		request.FreshUnitsObservedAfter = now
 	}
 	request.DispatchStartedAt = now
+	request.ConnectionGeneration = input.State.Session.ConnectionGeneration
 	resolverArguments, _ := json.Marshal(request)
 	steps := []Intent.Step{stationCastleContextStep(source)}
+	if request.Purpose == "autoStation" || request.Purpose == "autoBird" {
+		steps = append(steps, stationAllianceRefreshStep(now))
+	}
+	if request.Purpose == "autoStation" {
+		refresh := contextCommandStep("Refresh incoming attacks before evacuation", "gam", json.RawMessage(`{}`), "gam")
+		refresh.ResponseBarrier = Intent.ResponseBarrierCommitted
+		steps = append(steps, refresh)
+	}
 	steps = append(steps, stationRouteContextSteps(source, target)...)
 	steps = append(steps, Intent.Step{
 		Name: "Station troops", Resolver: "troops.station.build", ResolverArguments: resolverArguments,
@@ -169,6 +180,11 @@ func resolveTroopsStationStep(_ context.Context, input Intent.PlanningContext, a
 	source, exists := input.State.Castles[request.SourceCastleID]
 	if !exists || source.ID <= 0 {
 		return Intent.Step{}, fmt.Errorf("source castle %d is not in the current player state", request.SourceCastleID)
+	}
+	if automation {
+		if err := validateStationAuthority(input.State, request.SourceCastleID, request.TargetCastleID, request.DispatchStartedAt, request.MinimumRPTDays, now); err != nil {
+			return Intent.Step{}, err
+		}
 	}
 	target, exists := allianceHolding(input.State.Alliance, request.TargetCastleID)
 	if !exists || !stationHoldingType(target.SlotType) {
@@ -226,7 +242,25 @@ func resolveTroopsStationStep(_ context.Context, input Intent.PlanningContext, a
 	if request.Purpose != "" {
 		after = Intent.Step{Name: "Track accepted support batch", Action: "movement.track_station", ActionArguments: arguments}
 	}
-	return supportDispatchStep("Station troops", source, target, request.DelayHours, amounts, after), nil
+	step := supportDispatchStep("Station troops", source, target, request.DelayHours, amounts, after)
+	if automation {
+		guard := func(s *Intent.Step) {
+			if s.Opcode != "cds" {
+				return
+			}
+			args, _ := json.Marshal(stationDispatchGuard{Request: request, Payload: s.Command.Payload, TargetOwner: target.PlayerID})
+			s.FinalDispatchAction = "station.dispatch.guard"
+			s.FinalDispatchArguments = args
+		}
+		if len(step.Batch) == 0 {
+			guard(&step)
+		} else {
+			for i := range step.Batch {
+				guard(&step.Batch[i])
+			}
+		}
+	}
+	return step, nil
 }
 
 func freshAutoBirdStationAmounts(

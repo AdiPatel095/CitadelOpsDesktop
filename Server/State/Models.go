@@ -208,23 +208,24 @@ type AccountBindingState struct {
 
 type PlayerState struct {
 	// Process-local game setting authority; never restored from a saved profile.
-	RubyConfirmation  RubyConfirmationState  `json:"-"`
-	ID                PlayerID               `json:"id"`
-	Name              string                 `json:"name,omitempty"`
-	AllianceID        AllianceID             `json:"allianceId,omitempty"`
-	Level             int                    `json:"level,omitempty"`
-	LegendLevel       int                    `json:"legendLevel,omitempty"`
-	Might             float64                `json:"might,omitempty"`
-	Glory             float64                `json:"glory,omitempty"`
-	GloryTitleID      int64                  `json:"gloryTitleId,omitempty"`
-	GloryTitleTopX    int                    `json:"gloryTitleTopX,omitempty"`
-	GloryTitleAt      time.Time              `json:"gloryTitleObservedAt,omitempty"`
-	GloryTitleGen     uint64                 `json:"gloryTitleGeneration,omitempty"`
-	Gallantry         float64                `json:"gallantry,omitempty"`
-	GallantryTitleID  int64                  `json:"gallantryTitleId,omitempty"`
-	GallantryTitleAt  time.Time              `json:"gallantryTitleObservedAt,omitempty"`
-	GallantryTitleGen uint64                 `json:"gallantryTitleGeneration,omitempty"`
-	Resources         map[ResourceID]float64 `json:"resources"`
+	RubyConfirmation   RubyConfirmationState  `json:"-"`
+	ID                 PlayerID               `json:"id"`
+	Name               string                 `json:"name,omitempty"`
+	AllianceID         AllianceID             `json:"allianceId,omitempty"`
+	AllianceObservedAt time.Time              `json:"-"`
+	Level              int                    `json:"level,omitempty"`
+	LegendLevel        int                    `json:"legendLevel,omitempty"`
+	Might              float64                `json:"might,omitempty"`
+	Glory              float64                `json:"glory,omitempty"`
+	GloryTitleID       int64                  `json:"gloryTitleId,omitempty"`
+	GloryTitleTopX     int                    `json:"gloryTitleTopX,omitempty"`
+	GloryTitleAt       time.Time              `json:"gloryTitleObservedAt,omitempty"`
+	GloryTitleGen      uint64                 `json:"gloryTitleGeneration,omitempty"`
+	Gallantry          float64                `json:"gallantry,omitempty"`
+	GallantryTitleID   int64                  `json:"gallantryTitleId,omitempty"`
+	GallantryTitleAt   time.Time              `json:"gallantryTitleObservedAt,omitempty"`
+	GallantryTitleGen  uint64                 `json:"gallantryTitleGeneration,omitempty"`
+	Resources          map[ResourceID]float64 `json:"resources"`
 	// ResourceObservations are live dispatch authority and are intentionally
 	// not persisted. A restart must observe a new current-session GCU snapshot
 	// before unattended premium spending resumes.

@@ -671,7 +671,7 @@ func (coordinator *Coordinator) evaluate(
 			if !receiptLocksLane(receipt) && receipt.Status == Intent.StatusSucceeded && followUp != nil {
 				result := coordinator.intents.Submit(operationContext, *followUp)
 				followUpReceipt = &result
-			} else if !receiptLocksLane(receipt) && failureFallback != nil && shouldRunFailureFallback(receipt.Status, failureFallbackIndeterminateOnly) {
+			} else if operationContext.Err() == nil && !receiptLocksLane(receipt) && failureFallback != nil && shouldRunFailureFallback(receipt.Status, failureFallbackIndeterminateOnly) {
 				result := coordinator.intents.Submit(operationContext, *failureFallback)
 				failureFallbackReceipt = &result
 			}

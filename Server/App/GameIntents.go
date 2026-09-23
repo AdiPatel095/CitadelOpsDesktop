@@ -73,6 +73,15 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterStepResolver("alliance.target.attack.build", application.resolveAllianceTargetAttackStep); err != nil {
 		return err
 	}
+	if err := application.Intents.RegisterStepResolver("station.alliance.refresh", resolveStationAllianceRefresh); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("station.dispatch.guard", application.guardStationDispatch); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("defense.open_gate.guard", application.guardOpenGate); err != nil {
+		return err
+	}
 	if err := application.Intents.RegisterStepResolver("troops.station.build", resolveTroopsStationStep); err != nil {
 		return err
 	}

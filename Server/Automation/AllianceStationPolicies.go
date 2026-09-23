@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"CitadelDesktop/Server/Configuration"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
 )
@@ -93,7 +94,7 @@ func (*AutoBirdPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision 
 			}
 		}
 	}
-	if refresh, required := playerProtectionRefreshDecision(snapshot); required && !releaseWaitingCastle {
+	if refresh, required := stationProtectionRefreshDecision(snapshot); required && !releaseWaitingCastle {
 		return withAutoBirdSchedule(snapshot, refresh, time.Time{}), nil
 	}
 	defer func() {
@@ -476,7 +477,7 @@ func (*AutoStationPolicy) WakeDomains() []string {
 func (*AutoStationPolicy) WakeSections() []string { return []string{"automation.autoStation"} }
 
 func (*AutoStationPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decision Decision, err error) {
-	if refresh, required := playerProtectionRefreshDecision(snapshot); required {
+	if refresh, required := stationProtectionRefreshDecision(snapshot); required {
 		return refresh, nil
 	}
 	defer func() {
@@ -489,25 +490,36 @@ func (*AutoStationPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decisi
 	}
 	decodeSection(snapshot.Configuration, "automation.autoStation", &settings)
 	settings.LeadTimeSec = clampInt(settings.LeadTimeSec, 60, 3600)
-	threats, threatCount, earliestImpact, latestImpact := incomingThreats(snapshot.State, snapshot.Now)
+	threats, threatCount, earliestImpact, _ := incomingThreats(snapshot.State, snapshot.Now)
 	metrics := stationMetrics(threatCount, earliestImpact)
 	protectionMode := snapshot.State.Player.ProtectionMode.PreparingOrActive(snapshot.Now)
 	if threatCount > 0 {
 		if protectionMode {
 			return protectionModeOpenGateDecision(snapshot, settings, threats, threatCount, earliestImpact, metrics), nil
 		}
-		if decision, refresh := allianceRosterRefreshDecision(snapshot, "Incoming attack detected; refreshing alliance roster before evacuation"); refresh {
+		needsRoster := false
+		for id := range threats {
+			active, _, _, _ := trackedStationRemainder(snapshot, snapshot.State.Castles[id], nil)
+			if !active {
+				needsRoster = true
+			}
+		}
+		if decision, refresh := allianceRosterRefreshDecision(snapshot, "Incoming attack detected; refreshing alliance roster before evacuation"); refresh && needsRoster {
 			decision.Status = "threat"
 			decision.Metrics = metrics
+			if decision.Request != nil {
+				for _, id := range sortedThreatCastleIDs(threats) {
+					castle := snapshot.State.Castles[id]
+					if castle.KingdomID == 0 && threats[id].Earliest.Sub(snapshot.Now) <= time.Duration(settings.LeadTimeSec)*time.Second {
+						args, _ := json.Marshal(map[string]any{"castleId": id, "requireIncomingAttack": true, "autoStation": true})
+						decision.FailureFallback = &Intent.Request{Name: "defense.open_gate", Arguments: args}
+						break
+					}
+				}
+			}
 			return decision, nil
 		}
 		protectedTargets := protectedHoldings(snapshot.State.Alliance, settings.MinRPTDays)
-		if len(protectedTargets) == 0 {
-			decision := allianceRefreshDecision(snapshot, "Incoming attack detected; refreshing protected alliance targets")
-			decision.Status = "threat"
-			decision.Metrics = metrics
-			return decision, nil
-		}
 		remaining := earliestImpact.Sub(snapshot.Now)
 		if remaining > time.Duration(settings.LeadTimeSec)*time.Second {
 			next := earliestImpact.Add(-time.Duration(settings.LeadTimeSec) * time.Second)
@@ -519,23 +531,44 @@ func (*AutoStationPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decisi
 				NextCheckAt: next, Metrics: metrics,
 			}, nil
 		}
+		fallbackThreats := map[State.CastleID]threatWindow{}
+		unresolved := false
+		var nextWindow time.Time
 		for _, castleID := range sortedThreatCastleIDs(threats) {
 			castle := snapshot.State.Castles[castleID]
-			if activeTrackedStation(snapshot.State, castle.ID, snapshot.Now) {
+			window := threats[castleID]
+			if window.Earliest.Sub(snapshot.Now) > time.Duration(settings.LeadTimeSec)*time.Second {
+				unresolved = true
+				nextWindow = minTime(nextWindow, window.Earliest.Add(-time.Duration(settings.LeadTimeSec)*time.Second))
+				continue
+			}
+			reserves := settings.Settings[strconv.FormatInt(int64(castle.ID), 10)]
+			if active, fresh, remaining, known := trackedStationRemainder(snapshot, castle, reserves); active {
+				if !fresh {
+					return refreshTrackedStationInventory(snapshot, castle), nil
+				}
+				if known && remaining == 0 {
+					continue
+				}
+				unresolved = true
+				if settings.OpenGateFallback && known {
+					fallbackThreats[castleID] = window
+				}
 				continue
 			}
 			target, found := nearestHolding(protectedTargets, castle)
-			if !found {
-				continue
-			}
 			units := stationableUnits(snapshot, castle, settings.Settings[strconv.FormatInt(int64(castle.ID), 10)])
-			if len(units) == 0 {
+			if !found || len(units) == 0 {
+				unresolved = true
+				if settings.OpenGateFallback {
+					fallbackThreats[castleID] = window
+				}
 				continue
 			}
 			trackingID := "autoStation:" + strconv.FormatInt(int64(castle.ID), 10)
 			arguments, _ := json.Marshal(map[string]any{
 				"sourceCastleId": castle.ID, "targetCastleId": target.CastleID, "delayHours": 1,
-				"purpose": "autoStation", "trackingId": trackingID, "safeAfterUnix": latestImpact.Unix(), "units": units,
+				"purpose": "autoStation", "trackingId": trackingID, "safeAfterUnix": window.Latest.Unix(), "units": units, "minimumRPTDays": settings.MinRPTDays,
 			})
 			decision := Decision{
 				Status:              "evacuating",
@@ -545,9 +578,9 @@ func (*AutoStationPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decisi
 				Request:             &Intent.Request{Name: "troops.station", Arguments: arguments},
 				ReevaluateOnSuccess: true,
 			}
-			if settings.OpenGateFallback && castle.KingdomID == 0 {
+			if castle.KingdomID == 0 {
 				fallbackArguments, _ := json.Marshal(map[string]any{
-					"castleId": castle.ID, "requireIncomingAttack": true,
+					"castleId": castle.ID, "requireIncomingAttack": true, "autoStation": true,
 				})
 				decision.FailureFallback = &Intent.Request{
 					Name: "defense.open_gate", Arguments: fallbackArguments,
@@ -557,6 +590,21 @@ func (*AutoStationPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decisi
 				)
 			}
 			return decision, nil
+		}
+		if len(fallbackThreats) > 0 {
+			gate := protectionModeOpenGateDecision(snapshot, settings, fallbackThreats, threatCount, earliestImpact, metrics)
+			if gate.Request != nil {
+				return gate, nil
+			}
+			if len(fallbackThreats) == len(threats) {
+				return gate, nil
+			}
+		}
+		if unresolved {
+			if nextWindow.IsZero() {
+				nextWindow = snapshot.Now.Add(10 * time.Second)
+			}
+			return Decision{Status: "threat", Detail: "Some threatened castles cannot station troops or are outside their evacuation window", NextCheckAt: nextWindow, Metrics: metrics}, nil
 		}
 		return Decision{
 			Status: "protected", Detail: fmt.Sprintf("%d incoming attack(s); eligible troops are already protected", threatCount),
@@ -601,9 +649,7 @@ func (*AutoStationPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decisi
 	}
 	if protectionMode {
 		detail := "Protection Mode is preparing or active; Auto Station will use Open Gates instead of stationing"
-		if !settings.OpenGateFallback {
-			detail = "Protection Mode is preparing or active; stationing is disabled and Open Gate Fallback is off"
-		}
+
 		return Decision{
 			Status: "protected", Detail: detail,
 			EventDriven: true, Metrics: metrics,
@@ -639,6 +685,21 @@ func protectionModeOpenGateDecision(
 	uncovered := make([]State.CastleID, 0, len(threats))
 	for _, castleID := range sortedThreatCastleIDs(threats) {
 		castle := snapshot.State.Castles[castleID]
+		reserves := settings.Settings[strconv.FormatInt(int64(castle.ID), 10)]
+		if snapshot.State.Player.ProtectionMode.PreparingOrActive(snapshot.Now) {
+			reserves = nil
+		}
+		if active, fresh, remaining, known := trackedStationRemainder(snapshot, castle, reserves); active {
+			if !fresh {
+				return refreshTrackedStationInventory(snapshot, castle)
+			}
+			if known && remaining == 0 {
+				continue
+			}
+			if !known {
+				return Decision{Status: "waiting", Detail: "Waiting for official troop data before checking the evacuation remainder", NextCheckAt: snapshot.Now.Add(10 * time.Second), Metrics: metrics}
+			}
+		}
 		gateUntil := castle.Defense.OpenGateUntil
 		if gateUntil != nil && gateUntil.After(threats[castleID].Latest) {
 			continue
@@ -647,13 +708,7 @@ func protectionModeOpenGateDecision(
 	}
 	if len(uncovered) == 0 {
 		return Decision{
-			Status: "protected", Detail: fmt.Sprintf("%d incoming attack(s); game-reported Open Gate duration covers the final attack", threatCount),
-			NextCheckAt: snapshot.Now.Add(10 * time.Second), Metrics: metrics,
-		}
-	}
-	if !settings.OpenGateFallback {
-		return Decision{
-			Status: "threat", Detail: "Protection Mode suppresses stationing; enable Open Gate Fallback for the threatened castle",
+			Status: "protected", Detail: fmt.Sprintf("%d incoming attack(s); troops are evacuated or game-reported gates cover the final attack", threatCount),
 			NextCheckAt: snapshot.Now.Add(10 * time.Second), Metrics: metrics,
 		}
 	}
@@ -662,6 +717,10 @@ func protectionModeOpenGateDecision(
 	unsupportedCastle := State.CastleID(0)
 	for _, castleID := range uncovered {
 		castle := snapshot.State.Castles[castleID]
+		if window := threats[castleID]; window.Earliest.Sub(snapshot.Now) > leadTime {
+			nextGateExpiry = minTime(nextGateExpiry, window.Earliest.Add(-leadTime))
+			continue
+		}
 		if castle.KingdomID != 0 {
 			if unsupportedCastle == 0 {
 				unsupportedCastle = castleID
@@ -673,11 +732,11 @@ func protectionModeOpenGateDecision(
 			continue
 		}
 		arguments, _ := json.Marshal(map[string]any{
-			"castleId": castle.ID, "requireIncomingAttack": true, "requireProtectionMode": true,
+			"castleId": castle.ID, "requireIncomingAttack": true, "autoStation": true, "requireProtectionMode": snapshot.State.Player.ProtectionMode.PreparingOrActive(snapshot.Now),
 		})
 		return Decision{
 			Status:              "threat",
-			Detail:              fmt.Sprintf("Opening gates at %s; Protection Mode suppresses stationing", castleName(castle)),
+			Detail:              fmt.Sprintf("Opening gates at %s because troops cannot be stationed safely", castleName(castle)),
 			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 			Metrics:             metrics,
 			Request:             &Intent.Request{Name: "defense.open_gate", Arguments: arguments},
@@ -1144,4 +1203,26 @@ func roundedDuration(value time.Duration) time.Duration {
 		return 0
 	}
 	return value.Round(time.Second)
+}
+
+// AutoBirdDispatchAllowed rechecks schedule and selected preset at the wire boundary.
+func AutoBirdDispatchAllowed(configuration Configuration.Snapshot, preset string, now time.Time) bool {
+	if !FeatureEnabledAt(configuration, "auto_bird", now) {
+		return false
+	}
+	schedule := resolveWeeklySchedule(configuration, "autoBird", now)
+	if !schedule.Allowed {
+		return false
+	}
+	settings := defaultAutoBirdConfiguration()
+	decodeSection(configuration, "automation.autoBird", &settings)
+	selected := strings.TrimSpace(settings.ActivePresetID)
+	if schedule.SlotOptionsEnabled {
+		var ok bool
+		selected, ok = autoBirdSchedulePresetID(schedule.Options)
+		if !ok {
+			return false
+		}
+	}
+	return selected == preset
 }
