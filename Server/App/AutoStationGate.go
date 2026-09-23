@@ -33,8 +33,12 @@ func (a *Application) guardOpenGate(ctx context.Context, arguments json.RawMessa
 		} `json:"settings"`
 	}
 	config.LeadTimeSec = 60
-	if err := json.Unmarshal(a.Configuration.Snapshot().Sections["automation.autoStation"], &config); err != nil {
-		return err
+	// Match policy defaults when this optional section has never been saved.
+	// A present malformed value remains a dispatch blocker.
+	if raw := a.Configuration.Snapshot().Sections["automation.autoStation"]; len(raw) > 0 {
+		if err := json.Unmarshal(raw, &config); err != nil {
+			return err
+		}
 	}
 	state := a.State.Snapshot()
 	if err := validateStationSession(state, "autoStation", request.ConnectionGeneration, now); err != nil {
