@@ -5,7 +5,7 @@
     "items": [
       {
         "label": "Commander assignment",
-        "description": "Assign commanders to Auto Towers in Commanders so the task can use them when they are available."
+        "description": "In Commanders, allow Auto Towers for the commanders you want to use and select Save assignments."
       }
     ]
   },
@@ -13,6 +13,10 @@
     "id": "general",
     "title": "Set scanning, daily limits and travel",
     "items": [
+      {
+        "label": "Open settings",
+        "description": "Open Automation, then select the settings button on the Auto Towers card."
+      },
       {
         "label": "Authoritative map scan · Every",
         "description": "Choose how often to refresh each castle’s tower list, from 1,800–3,600 seconds; attacks can launch between scans."
