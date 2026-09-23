@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Button, Modal } from '../../components/ui';
-import guide from '../../config/autoTowerGuide.json';
+import guideData from '../../config/autoTowerGuide.json';
+
+const guide = guideData.steps;
 
 type GuideImage = { src: string; alt: string; caption: string; width: number; height: number };
 
@@ -17,6 +19,7 @@ export function AutoTowerGuideModal({ isOpen, onClose, showAdvisor = true }: {
       <Modal isOpen={isOpen} onClose={closeGuide} title="Auto Towers guide" maxWidth="3xl"
         footer={<Button variant="outline" onClick={closeGuide}>Back to settings</Button>}>
         <p className="mb-4 text-sm text-text-muted">Follow these steps to set up Auto Towers; select a fictional example picture to enlarge it.</p>
+        <p className="mb-4 text-sm text-text-muted">{guideData.recommendationIntro}</p>
         <ol className="space-y-6">
           {guide.filter((step) => showAdvisor || step.id !== 'advisor').map((step, index) => (
             <li key={step.id}>
@@ -26,6 +29,7 @@ export function AutoTowerGuideModal({ isOpen, onClose, showAdvisor = true }: {
                   <div key={item.label}>
                     <dt className="text-sm font-semibold text-text-main">{item.label}</dt>
                     <dd className="mt-1 text-sm leading-relaxed text-text-muted">{item.description}</dd>
+                    {'recommendation' in item && typeof item.recommendation === 'string' && <dd className="mt-1 text-sm leading-relaxed text-text-main"><strong>Recommended start:</strong> {item.recommendation}</dd>}
                   </div>
                 ))}
               </dl>
