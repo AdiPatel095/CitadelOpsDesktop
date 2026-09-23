@@ -696,6 +696,7 @@ func planStormShopPurchase(_ context.Context, input Intent.PlanningContext, argu
 		{Name: "Verify Storm Aquamarine reserve", NameDescriptor: Localization.New("server.app.verify_storm_aquamarine_reserve.aca840c3", "Verify Storm Aquamarine reserve", nil), Action: "storm.shop.guard", ActionArguments: arguments},
 	}
 	purchaseLabels := make([]string, 0, len(purchases))
+	purchaseMessages := make([]*Localization.Message, 0, len(purchases))
 	totalCost := int64(0)
 	for _, purchase := range purchases {
 		payload, _ := json.Marshal(struct {
@@ -718,19 +719,19 @@ func planStormShopPurchase(_ context.Context, input Intent.PlanningContext, argu
 			itemName = fmt.Sprintf("Luna package %d", purchase.request.ProductID)
 		}
 		purchaseLabels = append(purchaseLabels, fmt.Sprintf("%d x %s", purchase.request.Amount, itemName))
+		purchaseMessages = append(purchaseMessages, Localization.New("server.storm.purchase_list_item", "{amount, number} x Luna package {packageID}", Localization.Params{"amount": purchase.request.Amount, "packageID": strconv.FormatInt(int64(purchase.request.ProductID), 10)}))
 		totalCost += purchase.request.Amount * purchase.item.AquamarinePrice
-		steps = append(steps, shopCommandStep("Purchase "+itemName+" from Luna", "sbp", payload, 0))
+		steps = append(steps, shopCommandStep("Purchase "+itemName+" from Luna", "sbp", payload, 0).WithNameDescriptor(Localization.New("server.storm.purchase_step", "Purchase package {packageID} from Luna", Localization.Params{"packageID": strconv.FormatInt(int64(purchase.request.ProductID), 10)})))
 	}
+	summary := fmt.Sprintf("Buy %s from Luna for %d Aquamarine at %s", stormShopFriendlyList(purchaseLabels), totalCost, castleLabel(castle))
 	return Intent.Plan{
 		Claims: []string{
 			"shop", "shop:table:" + strconv.FormatInt(GameData.StormLunaShopTableID, 10), "account-resources", "castle-focus",
 			"castle:" + strconv.FormatInt(int64(request.CastleID), 10),
 		},
-		Summary: fmt.Sprintf(
-			"Buy %s from Luna for %d Aquamarine at %s",
-			stormShopFriendlyList(purchaseLabels), totalCost, castleLabel(castle),
-		),
-		Steps: steps,
+		Summary:           summary,
+		SummaryDescriptor: Localization.WithLists(Localization.New("server.storm.purchase_plan", "Buy {purchases} from Luna for {cost, number} Aquamarine at {castle}", Localization.Params{"cost": totalCost}), summary, map[string][]*Localization.Message{"purchases": purchaseMessages, "castle": {stormCastleIdentity(castle)}}),
+		Steps:             steps,
 	}, nil
 }
 
@@ -1738,4 +1739,11 @@ func stormAttackDialogUnavailable(target State.AttackDialogTarget) bool {
 func mustMarshalStormAttackRequest(request stormAttackRequest) json.RawMessage {
 	payload, _ := json.Marshal(request)
 	return payload
+}
+
+func stormCastleIdentity(castle State.CastleState) *Localization.Message {
+	if castle.Name != "" {
+		return Localization.New("server.storm.castle_name", "{name}", Localization.Params{"name": castle.Name})
+	}
+	return Localization.New("server.storm.castle_id", "castle {id}", Localization.Params{"id": strconv.FormatInt(int64(castle.ID), 10)})
 }

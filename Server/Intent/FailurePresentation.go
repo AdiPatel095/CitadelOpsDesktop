@@ -349,6 +349,17 @@ func cleanFailureText(value string) string {
 }
 
 func failureHeadlineDescriptor(receipt Receipt) *Localization.Message {
+	if receipt.Plan != nil && receipt.Plan.SummaryDescriptor != nil && receipt.Plan.SummaryDescriptor.ListParams != nil {
+		status := "failed"
+		if receipt.Status == StatusPartiallySucceeded {
+			status = "partial"
+		}
+		if receipt.Status == StatusIndeterminate {
+			status = "unconfirmed"
+		}
+		return StormPlanStatusDescriptor(receipt.Plan.SummaryDescriptor, status, failureHeadline(receipt), nil, 0, 0)
+	}
+
 	result := Localization.New("server.intent.action_failed", "This action could not be completed.", nil)
 	switch receipt.Status {
 	case StatusPartiallySucceeded:

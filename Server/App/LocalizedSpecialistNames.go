@@ -129,6 +129,9 @@ func specialistNameDescriptor(message *Localization.Message, specialist GameData
 		return nil
 	}
 	result := Localization.Clone(message)
+	if result == nil {
+		return nil
+	}
 	result.Key, result.Fallback = template.Key, template.Fallback
 	delete(result.Params, parameter)
 	delete(result.GameParams, parameter)

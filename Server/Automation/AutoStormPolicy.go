@@ -466,7 +466,7 @@ func autoStormFullMapScanDecisionWithCoverage(
 			"fullMap":        true,
 			"bounds":         bounds,
 			"scanStartedAt":  snapshot.Now,
-		},
+		}, stormCastleActionDescriptor("map", castle, 0),
 	)
 	decision.NextCheckAt = snapshot.Now.Add(autoStormMapRefreshInterval)
 	return decision
@@ -1242,7 +1242,7 @@ func autoStormTargetTransportDecision(
 		return autoStormIntentDecision(
 			snapshot.Now, metrics,
 			fmt.Sprintf("Transport resources from %s toward the Storm target", autoStormCastleName(source)),
-			"resource.ship", arguments,
+			"resource.ship", arguments, stormCastleActionDescriptor("transport", source, 0),
 		), ""
 	}
 	return nil, "No owned castle can currently supply the missing Storm building resources"
@@ -1435,6 +1435,7 @@ func evaluateAutoStormShop(
 	spendable := aquamarine - settings.Aquamarine.Reserve
 	purchases := make([]autoStormShopPurchaseLine, 0, len(rules))
 	purchaseLabels := make([]string, 0, len(rules))
+	purchaseMessages := make([]*Localization.Message, 0, len(rules))
 	totalCost := int64(0)
 	includesUnlimited := false
 	seenPackages := map[State.PackageID]struct{}{}
@@ -1492,6 +1493,7 @@ func evaluateAutoStormShop(
 		cost := amount * item.AquamarinePrice
 		purchases = append(purchases, autoStormShopPurchaseLine{ProductID: rule.PackageID, Amount: amount})
 		purchaseLabels = append(purchaseLabels, fmt.Sprintf("%d x %s", amount, item.Name))
+		purchaseMessages = append(purchaseMessages, Localization.New("server.storm.purchase_list_item", "{amount, number} x Luna package {packageID}", Localization.Params{"amount": amount, "packageID": strconv.FormatInt(int64(rule.PackageID), 10)}))
 		totalCost += cost
 		spendable -= cost
 		if rule.Unlimited {
@@ -1509,11 +1511,12 @@ func evaluateAutoStormShop(
 	})
 	followUp, _ := json.Marshal(map[string]any{"castleId": castle.ID, "kingdomId": castle.KingdomID})
 	detail := fmt.Sprintf("Buy %s from Luna for %d Aquamarine", autoStormShopFriendlyList(purchaseLabels), totalCost)
-	var detailLocalizationMessage *Localization.Message = nil
+	detailLocalizationMessage := Localization.New("server.storm.purchase_ready", "Buy {purchases} from Luna for {cost, number} Aquamarine", Localization.Params{"cost": totalCost})
 	if includesUnlimited {
 		detail += " (unlimited goal)"
-		detailLocalizationMessage = nil
+		detailLocalizationMessage = Localization.New("server.storm.purchase_ready_unlimited", "Buy {purchases} from Luna for {cost, number} Aquamarine (unlimited goal)", Localization.Params{"cost": totalCost})
 	}
+	detailLocalizationMessage = Localization.WithLists(detailLocalizationMessage, detail, map[string][]*Localization.Message{"purchases": purchaseMessages})
 	return &Decision{
 		Status: "ready", Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage),
 		NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
@@ -2293,7 +2296,7 @@ func autoStormTroopImportDecision(
 		if capPreview.ResetSessionStartedAt != nil {
 			arguments["expectedDailyAttackSessionStartedAt"] = *capPreview.ResetSessionStartedAt
 		}
-		return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Import %d guarded troops from %s", transferTotal, autoStormCastleName(donor)), "troops.kingdom.ship", arguments), ""
+		return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Import %d guarded troops from %s", transferTotal, autoStormCastleName(donor)), "troops.kingdom.ship", arguments, stormCastleActionDescriptor("import", donor, transferTotal)), ""
 	}
 	if missingTools > 0 {
 		return nil, fmt.Sprintf("Selected donor castles cannot supply the missing Storm troops; %d preset tool stack(s) are also missing", missingTools)
@@ -2533,4 +2536,27 @@ func autoStormCastleName(castle State.CastleState) string {
 		return name
 	}
 	return fmt.Sprintf("castle %d", castle.ID)
+}
+
+func stormCastleActionDescriptor(kind string, castle State.CastleState, amount int64) *Localization.Message {
+	named := strings.TrimSpace(castle.Name) != ""
+	params := Localization.Params{"castle": castle.Name, "amount": amount, "id": strconv.FormatInt(int64(castle.ID), 10)}
+	switch kind {
+	case "map":
+		if named {
+			return Localization.New("server.storm.refresh_map", "Refresh the complete Storm map for {castle}", params)
+		}
+		return Localization.New("server.storm.refresh_map_id", "Refresh the complete Storm map for castle {id}", params)
+	case "transport":
+		if named {
+			return Localization.New("server.storm.transport_resources", "Transport resources from {castle} toward the Storm target", params)
+		}
+		return Localization.New("server.storm.transport_resources_id", "Transport resources from castle {id} toward the Storm target", params)
+	case "import":
+		if named {
+			return Localization.New("server.storm.import_troops", "Import {amount, number} guarded troops from {castle}", params)
+		}
+		return Localization.New("server.storm.import_troops_id", "Import {amount, number} guarded troops from castle {id}", params)
+	}
+	return nil
 }
