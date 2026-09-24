@@ -16,13 +16,13 @@ after(async () => {
   await vite.close();
 });
 
-test('Auto Fortress defaults preserve the speed-first attack guards without owning premium spend', () => {
+test('Auto Fortress defaults preserve speed-first selection without owning premium spend', () => {
   const settings = fortressState.defaultAutoFortressClientState();
 
   assert.equal(settings.checkIntervalSec, 5);
   assert.equal('radius' in settings, false);
-  assert.equal(settings.horseTravelBoostId, -1);
-  assert.equal(settings.minimumCommanderSpeedBonus, 100);
+  assert.equal(settings.horseTravelBoostId, 1009);
+  assert.equal('minimumCommanderSpeedBonus' in settings, false);
   assert.equal('dailySpeedBooster' in settings, false);
   assert.equal(settings.useTimeSkips, false);
   assert.deepEqual(settings.timeSkipReserve, {});
@@ -52,7 +52,7 @@ test('Auto Fortress normalization ignores legacy radius and keeps exact 100-unit
 
   assert.equal(settings.checkIntervalSec, 1);
   assert.equal('radius' in settings, false);
-  assert.equal(settings.minimumCommanderSpeedBonus, 100);
+  assert.equal('minimumCommanderSpeedBonus' in settings, false);
   assert.equal(settings.direwolfPurchaseLimit, 5_600);
   assert.equal('dailySpeedBooster' in settings, false);
   assert.equal(settings.useTimeSkips, true);
