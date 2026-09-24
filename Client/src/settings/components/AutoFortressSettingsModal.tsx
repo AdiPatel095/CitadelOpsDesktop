@@ -159,7 +159,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
                 <Badge variant="secondary">Flanks only</Badge>
               </div>
               <p className="mt-1 max-w-2xl text-xs leading-relaxed text-text-muted">
-                Unit 277 is filled across both flanks. The runtime chooses only an available Relic 2.0 commander with the full 100% fortress speed bonus, then applies the fastest selected horse tier.
+                Unit 277 fills both flanks. The runtime chooses the available assigned commander with the fastest parsed travel speed for this fortress, then applies your selected horse tier.
               </p>
             </div>
           </div>
@@ -321,9 +321,9 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="text-sm font-black text-text-main">March speed</h3>
-                <Badge variant="success">Relic 2.0 required</Badge>
+                <Badge variant="success">Fastest available commander</Badge>
               </div>
-              <p className="mt-0.5 text-xs text-text-muted">Auto Fortress always selects the full 100% fortress-speed commander bonus and your chosen horse tier.</p>
+              <p className="mt-0.5 text-xs text-text-muted">Auto Fortress compares applicable equipment, gem, set and general travel-speed effects for each target fortress; no Relic 2.0 or 100% minimum is required.</p>
             </div>
           </div>
           <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-[11px] text-text-muted">

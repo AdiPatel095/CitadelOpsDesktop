@@ -6,12 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"CitadelDesktop/Server/AttackCapacity"
-	EquipmentDomain "CitadelDesktop/Server/Equipment"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/Outbound"
@@ -22,7 +22,6 @@ import (
 const (
 	fortressAttackDialogFreshness = 30 * time.Second
 	fortressPersonalCooldown      = 120 * time.Hour
-	fortressMaximumSpeedPercent   = 100
 	fortressMapChunkSize          = 90
 	fortressMapMaximumChunk       = 20
 	fortressMapBoundaryPadding    = 2
@@ -53,14 +52,15 @@ type fortressFullMapScanResult struct {
 type fortressMapWindowScanner func(context.Context, towerMapWindow) (bool, error)
 
 type fortressAttackRequest struct {
-	SourceCastleID        State.CastleID      `json:"sourceCastleId"`
-	KingdomID             State.KingdomID     `json:"kingdomId"`
-	TargetX               int                 `json:"targetX"`
-	TargetY               int                 `json:"targetY"`
-	CommanderIDs          []State.CommanderID `json:"commanderIds"`
-	HorseTravelBoostID    int                 `json:"horseTravelBoostId"`
-	DailyAttackLimit      int64               `json:"dailyAttackLimit"`
-	MinimumCommanderSpeed float64             `json:"minimumCommanderSpeedBonus"`
+	SourceCastleID     State.CastleID      `json:"sourceCastleId"`
+	KingdomID          State.KingdomID     `json:"kingdomId"`
+	TargetX            int                 `json:"targetX"`
+	TargetY            int                 `json:"targetY"`
+	CommanderIDs       []State.CommanderID `json:"commanderIds"`
+	HorseTravelBoostID int                 `json:"horseTravelBoostId"`
+	DailyAttackLimit   int64               `json:"dailyAttackLimit"`
+	// Deprecated: accept in-flight legacy requests, but never enforce this threshold.
+	MinimumCommanderSpeed float64 `json:"minimumCommanderSpeedBonus,omitempty"`
 }
 
 type fortressResolvedAttackRequest struct {
@@ -480,9 +480,12 @@ func (application *Application) resolveFortressAttackStep(_ context.Context, inp
 
 func buildFortressAttackStep(input Intent.PlanningContext, request fortressResolvedAttackRequest) (Intent.Step, error) {
 	now := time.Now().UTC()
-	_, source, target, _, err := fortressAttackContext(input, mustMarshalFortressAttackRequest(request.fortressAttackRequest), now, true)
+	_, source, target, currentCommander, err := fortressAttackContext(input, mustMarshalFortressAttackRequest(request.fortressAttackRequest), now, true)
 	if err != nil {
 		return Intent.Step{}, err
+	}
+	if currentCommander != request.CommanderID {
+		return Intent.Step{}, fmt.Errorf("%w: fastest available fortress commander changed before launch", Intent.ErrPlanStale)
 	}
 	dialog := input.State.AttackDialog
 	if !fortressAttackDialogFreshForTarget(dialog, source, target, now) {
@@ -618,24 +621,15 @@ func fortressAttackContext(input Intent.PlanningContext, arguments json.RawMessa
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return request, State.CastleState{}, State.MapObservation{}, 0, err
 	}
+	request.MinimumCommanderSpeed = 0 // Legacy field is accepted, then omitted from new steps.
 	if input.GameData == nil {
 		return request, State.CastleState{}, State.MapObservation{}, 0, fmt.Errorf("official game data is unavailable")
 	}
 	if _, err := input.GameData.FortressDirewolf(); err != nil {
 		return request, State.CastleState{}, State.MapObservation{}, 0, err
 	}
-	speedContract, err := input.GameData.FortressRelicSpeed()
-	if err != nil {
-		return request, State.CastleState{}, State.MapObservation{}, 0, err
-	}
-	if speedContract.RelicMaximumPercent != fortressMaximumSpeedPercent {
-		return request, State.CastleState{}, State.MapObservation{}, 0, fmt.Errorf("official fortress commander speed contract changed; refusing to launch")
-	}
 	if err := validateHorseTravelBoostID(request.HorseTravelBoostID); err != nil {
 		return request, State.CastleState{}, State.MapObservation{}, 0, err
-	}
-	if request.MinimumCommanderSpeed != speedContract.RelicMaximumPercent {
-		return request, State.CastleState{}, State.MapObservation{}, 0, fmt.Errorf("fortress commander speed requirement must remain at the 100%% catalog cap")
 	}
 	source, found := input.State.Castles[request.SourceCastleID]
 	if !found || source.KingdomID != request.KingdomID || source.SlotType != 12 {
@@ -654,7 +648,7 @@ func fortressAttackContext(input Intent.PlanningContext, arguments json.RawMessa
 	if State.AttackFeatureTargetPendingAt(input.State, State.AttackFeatureAutoFortress, target.KingdomID, target.TypeID, target.X, target.Y, now) {
 		return request, State.CastleState{}, State.MapObservation{}, 0, fmt.Errorf("%w: fortress at %d:%d already has an unsettled attack", Intent.ErrPlanStale, target.X, target.Y)
 	}
-	commander, err := fortressCommander(input, request.CommanderIDs, source, target, speedContract)
+	commander, err := fortressCommander(input, request.CommanderIDs, source, target)
 	if err != nil {
 		return request, State.CastleState{}, State.MapObservation{}, 0, err
 	}
@@ -666,30 +660,36 @@ func fortressCommander(
 	configured []State.CommanderID,
 	source State.CastleState,
 	target State.MapObservation,
-	speedContract GameData.FortressRelicSpeedContract,
 ) (State.CommanderID, error) {
 	if len(configured) == 0 {
 		return 0, fmt.Errorf("no commander is assigned to Auto Fortress")
 	}
-	resolution, err := resolveCRACommanders(input.State, &craCommanderSelectionRequest{Candidates: configured, Count: 1, Strategy: "lowest_id"}, craCommanderSelectionOptions{
-		Holds: input.CommanderHolds, DefaultCount: 1, RequireAvailable: true,
-	})
-	if err != nil || len(resolution.Selected) == 0 {
-		return 0, fmt.Errorf("%w: no assigned Auto Fortress commander is available", Intent.ErrPlanStale)
-	}
-	commanderID := resolution.Selected[0]
-	relicSpeed, found := EquipmentDomain.CommanderRelic2EffectTotal(input.State, commanderID, speedContract.RelicEffectID)
-	if !found || relicSpeed+0.0001 < speedContract.RelicMaximumPercent {
-		return 0, fmt.Errorf("%w: commander %d has %.0f%% of the required %.0f%% Relic 2.0 fortress speed bonus", Intent.ErrPlanStale, commanderID, relicSpeed, speedContract.RelicMaximumPercent)
-	}
-	speed, err := resolveFortressCommanderSpeed(input.State, input.GameData, source, target, commanderID)
+	candidates, err := validatedCommanderCandidates(input.State, configured)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
 	}
-	if speed+0.0001 < speedContract.RelicMaximumPercent {
-		return 0, fmt.Errorf("%w: commander %d has %.0f%% of the required %.0f%% fortress speed bonus", Intent.ErrPlanStale, commanderID, speed, speedContract.RelicMaximumPercent)
+	sort.Slice(candidates, func(left, right int) bool { return candidates[left] < candidates[right] })
+	now := time.Now().UTC()
+	var selected State.CommanderID
+	best, found := 0.0, false
+	for _, id := range candidates {
+		commander := input.State.Commanders[id]
+		if !commander.Available || State.CommanderHasActiveMovementAt(input.State, id, now) ||
+			State.InvasionCommanderReserved(input.State, id) || input.CommanderHolds != nil && input.CommanderHolds.CommanderHeldAt(id, now) {
+			continue
+		}
+		speed, err := resolveFortressCommanderSpeed(input.State, input.GameData, source, target, id)
+		if err != nil {
+			continue
+		}
+		if !found || speed > best {
+			selected, best, found = id, speed, true
+		}
 	}
-	return commanderID, nil
+	if !found {
+		return 0, fmt.Errorf("%w: no assigned Auto Fortress commander is available with resolvable travel speed", Intent.ErrPlanStale)
+	}
+	return selected, nil
 }
 
 func resolveFortressCommanderSpeed(gameState State.GameState, gameData *GameData.Store, source State.CastleState, target State.MapObservation, commanderID State.CommanderID) (float64, error) {
