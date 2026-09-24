@@ -838,6 +838,22 @@ func autoStormExpansionDecisionWithStorage(
 		return nil, "The captured target requires ground that cannot be expanded further", nil
 	}
 	ground, found := autoStormGroundForExpansion(missing, base.NextExpansion.SpaceIDs)
+	if metrics["builtInTarget"] == 1 && profile.KingdomID == State.KingdomID(GameData.BerimondKingdomID) {
+		catalog, catalogErr := snapshot.GameData.BuildingCatalog()
+		if catalogErr != nil {
+			return nil, "", catalogErr
+		}
+		found = false
+		for _, candidate := range missing {
+			if Buildings.ValidateExpansionFootprint(castle, candidate, catalog) == nil {
+				ground, found = candidate, true
+				break
+			}
+		}
+		if !found {
+			return nil, "Waiting for a fresh Berimond layout with a nonoverlapping official expansion footprint", nil
+		}
+	}
 	if !found {
 		return nil, fmt.Sprintf("Captured ground does not contain the next official expansion level %d", base.NextExpansion.Level), nil
 	}
@@ -856,6 +872,9 @@ func autoStormExpansionDecisionWithStorage(
 	}
 	if preview.RecommendedAction != nil {
 		action := *preview.RecommendedAction
+		if action.Intent == "building.expand" && metrics["builtInTarget"] == 1 && profile.KingdomID == State.KingdomID(GameData.BerimondKingdomID) {
+			action.Arguments["expectedGroundDefinitionId"] = ground.DefinitionID
+		}
 		if !autoEventBuildActionAllowed(action, settings, profile) {
 			if profile.AttackLootOnly && strings.HasPrefix(action.Intent, "resource.") {
 				return nil, profile.expansionResourceWaitDetail(), nil

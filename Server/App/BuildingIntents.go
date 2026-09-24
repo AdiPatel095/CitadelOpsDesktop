@@ -47,13 +47,14 @@ type buildingPlacementResolverArguments struct {
 }
 
 type buildingExpansionIntentRequest struct {
-	CastleID         State.CastleID     `json:"castleId"`
-	X                int                `json:"x"`
-	Y                int                `json:"y"`
-	Direction        int                `json:"direction"`
-	Payment          string             `json:"payment,omitempty"`
-	ResourceReserves map[string]float64 `json:"resourceReserves,omitempty"`
-	AllowPremium     bool               `json:"allowPremium,omitempty"`
+	CastleID                   State.CastleID     `json:"castleId"`
+	ExpectedGroundDefinitionID State.BuildingID   `json:"expectedGroundDefinitionId,omitempty"`
+	X                          int                `json:"x"`
+	Y                          int                `json:"y"`
+	Direction                  int                `json:"direction"`
+	Payment                    string             `json:"payment,omitempty"`
+	ResourceReserves           map[string]float64 `json:"resourceReserves,omitempty"`
+	AllowPremium               bool               `json:"allowPremium,omitempty"`
 }
 
 type buildingInstanceIntentRequest struct {
@@ -123,8 +124,9 @@ type buildingVerification struct {
 
 func (application *Application) registerBuildingIntents() error {
 	for name, action := range map[string]Intent.Action{
-		"building.skip_time.guard":   application.guardBuildingTimeSkip,
-		"building.finish_free.guard": application.guardBuildingFinishFree,
+		"building.skip_time.guard":        application.guardBuildingTimeSkip,
+		"building.finish_free.guard":      application.guardBuildingFinishFree,
+		"building.expand.footprint.guard": application.guardBuildingExpansionFootprint,
 	} {
 		if err := application.Intents.RegisterAction(name, action); err != nil {
 			return err
@@ -277,7 +279,44 @@ func resolveBuildingExpansionStep(_ context.Context, input Intent.PlanningContex
 		Direction   int `json:"R"`
 		PaymentType int `json:"CT"`
 	}{request.X, request.Y, request.Direction, paymentType})
-	return buildingMutationStep("Buy castle expansion", "ebe", payload), nil
+	step := buildingMutationStep("Buy castle expansion", "ebe", payload)
+	if request.ExpectedGroundDefinitionID != 0 {
+		step.FinalDispatchAction = "building.expand.footprint.guard"
+		step.FinalDispatchArguments = append(json.RawMessage(nil), arguments...)
+	}
+	return step, nil
+}
+
+func (application *Application) guardBuildingExpansionFootprint(_ context.Context, arguments json.RawMessage) error {
+	input, err := application.buildingTimingGuardInput()
+	if err != nil {
+		return err
+	}
+	return validateFinalBuildingExpansionFootprint(input, arguments)
+}
+
+func validateFinalBuildingExpansionFootprint(input Intent.PlanningContext, arguments json.RawMessage) error {
+	var request buildingExpansionIntentRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
+	}
+	if request.ExpectedGroundDefinitionID == 0 || input.GameData == nil {
+		return fmt.Errorf("%w: Berimond expansion geometry is unavailable", Intent.ErrPlanStale)
+	}
+	castle, err := buildingCastle(input.State, request.CastleID)
+	if err != nil {
+		return fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
+	}
+	catalog, err := input.GameData.BuildingCatalog()
+	if err != nil {
+		return fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
+	}
+	if err := Buildings.ValidateExpansionFootprint(castle, Buildings.TargetGround{
+		DefinitionID: request.ExpectedGroundDefinitionID, GridX: request.X, GridY: request.Y, Direction: request.Direction,
+	}, catalog); err != nil {
+		return fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
+	}
+	return nil
 }
 
 func planBuildingCollectExpansionGift(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {
@@ -748,6 +787,17 @@ func validatedBuildingExpansion(
 		return State.CastleState{}, GameData.ExpansionDefinition{}, 0, "", fmt.Errorf(
 			"castle %d does not have a fresh focused building layout", castle.ID,
 		)
+	}
+	if request.ExpectedGroundDefinitionID != 0 {
+		buildingCatalog, catalogErr := input.GameData.BuildingCatalog()
+		if catalogErr != nil {
+			return State.CastleState{}, GameData.ExpansionDefinition{}, 0, "", catalogErr
+		}
+		if err := Buildings.ValidateExpansionFootprint(castle, Buildings.TargetGround{
+			DefinitionID: request.ExpectedGroundDefinitionID, GridX: request.X, GridY: request.Y, Direction: request.Direction,
+		}, buildingCatalog); err != nil {
+			return State.CastleState{}, GameData.ExpansionDefinition{}, 0, "", fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
+		}
 	}
 	preview, err := Buildings.PreviewExpansion(input.State, input.GameData, Buildings.ExpansionPreviewRequest{
 		CastleID: castle.ID, Payment: payment, ResourceReserves: request.ResourceReserves, AllowPremium: request.AllowPremium,

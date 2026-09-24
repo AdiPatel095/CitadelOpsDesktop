@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"testing"
+	"time"
 
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/State"
@@ -21,6 +22,65 @@ func storageTargetCatalog(t *testing.T) *GameData.Store {
 		t.Fatal(err)
 	}
 	return data
+}
+
+func TestBerimondExpansionFootprintRejectsPartialAndCompleteOverlap(t *testing.T) {
+	data := storageTargetCatalog(t)
+	catalog, err := data.BuildingCatalog()
+	if err != nil {
+		t.Fatal(err)
+	}
+	raw, err := os.ReadFile("testdata/berimond_equivalent_ground.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var observed []State.Building
+	if err := json.Unmarshal(raw, &observed); err != nil {
+		t.Fatal(err)
+	}
+	candidate := TargetGround{DefinitionID: 201, GridX: 180, GridY: 220, Direction: 1}
+	castle := State.CastleState{Focused: true}
+	castle.Layout.ObservedAt = time.Now().UTC()
+	castle.Layout.Ground = map[State.BuildingInstanceID]State.Building{}
+	for i, building := range observed {
+		building.InstanceID = State.BuildingInstanceID(i + 1)
+		castle.Layout.Ground[building.InstanceID] = building
+	}
+	for id, building := range castle.Layout.Ground {
+		if building.GridX == 180 && building.GridY == 220 && building.Rotation == 1 ||
+			building.GridX == 200 && building.GridY == 220 && building.Rotation == 1 {
+			delete(castle.Layout.Ground, id)
+		}
+	}
+	castle.Layout.Ground[98] = State.Building{InstanceID: 98, DefinitionID: 201, GridX: 180, GridY: 220, Rotation: 2, Placed: true}
+	castle.Layout.Ground[99] = State.Building{InstanceID: 99, DefinitionID: 201, GridX: 190, GridY: 220, Rotation: 2, Placed: true}
+	if len(castle.Layout.Ground) != 17 {
+		t.Fatalf("fixture has %d ground pieces", len(castle.Layout.Ground))
+	}
+	if err := ValidateExpansionFootprint(castle, candidate, catalog); err == nil {
+		t.Fatal("17-piece complete overlap accepted")
+	}
+	delete(castle.Layout.Ground, 99)
+	if len(castle.Layout.Ground) != 16 {
+		t.Fatalf("partial fixture has %d ground pieces", len(castle.Layout.Ground))
+	}
+	if err := ValidateExpansionFootprint(castle, candidate, catalog); err == nil {
+		t.Fatal("16-piece partial overlap accepted")
+	}
+	valid := TargetGround{DefinitionID: 201, GridX: 300, GridY: 300, Direction: 1}
+	castle.Layout.Fixed = map[State.BuildingInstanceID]State.Building{101: {InstanceID: 101, DefinitionID: 235, Placed: true}}
+	if err := ValidateExpansionFootprint(castle, valid, catalog); err != nil {
+		t.Fatalf("nonoverlapping expansion with non-grid fixed slot: %v", err)
+	}
+	castle.Layout.Ground[99] = State.Building{InstanceID: 99, DefinitionID: 201, GridX: 300, GridY: 300, Rotation: 1, Placed: true}
+	if err := ValidateExpansionFootprint(castle, valid, catalog); err == nil {
+		t.Fatal("state change before dispatch accepted")
+	}
+	delete(castle.Layout.Ground, 99)
+	castle.Layout.Objects = map[State.BuildingInstanceID]State.Building{100: {InstanceID: 100, DefinitionID: 242, GridX: 300, GridY: 300, Placed: true}}
+	if err := ValidateExpansionFootprint(castle, valid, catalog); err == nil {
+		t.Fatal("placed building overlap accepted")
+	}
 }
 
 func storageTargetCastle(target TargetCaptureResult, capacity float64, count int) State.CastleState {

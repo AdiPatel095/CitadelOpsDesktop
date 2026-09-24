@@ -228,6 +228,33 @@ func TestResolveBuildingExpansionUsesCapturedResourceWireShape(t *testing.T) {
 	}
 }
 
+func TestBerimondExpansionFinalDispatchRejectsPostResolverOverlap(t *testing.T) {
+	state := buildingIntentState()
+	castle := state.Castles[10]
+	capacity := 100.0
+	castle.Resources = map[State.ResourceID]State.ResourceBalance{
+		3: {Amount: 100, Capacity: &capacity}, 4: {Amount: 100, Capacity: &capacity},
+	}
+	state.Castles[10] = castle
+	input := Intent.PlanningContext{State: state, GameData: buildingIntentGameData(t)}
+	request := json.RawMessage(`{"castleId":10,"x":220,"y":220,"direction":1,"payment":"resources","expectedGroundDefinitionId":200}`)
+	step, err := resolveBuildingExpansionStep(context.Background(), input, request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if step.FinalDispatchAction != "building.expand.footprint.guard" || len(step.FinalDispatchArguments) == 0 {
+		t.Fatalf("EBE lacks final guard: %#v", step)
+	}
+	if err := validateFinalBuildingExpansionFootprint(input, step.FinalDispatchArguments); err != nil {
+		t.Fatal(err)
+	}
+	castle.Layout.Ground[99] = State.Building{InstanceID: 99, DefinitionID: 200, GridX: 220, GridY: 220, Placed: true}
+	input.State.Castles[10] = castle
+	if err := validateFinalBuildingExpansionFootprint(input, step.FinalDispatchArguments); !errors.Is(err, Intent.ErrPlanStale) {
+		t.Fatalf("post-resolver ground overlap accepted: %v", err)
+	}
+}
+
 func TestResolveBuildingCollectExpansionGiftUsesCapturedWireShape(t *testing.T) {
 	gameState := buildingIntentState()
 	chest := State.Building{
