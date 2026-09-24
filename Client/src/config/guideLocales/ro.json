@@ -16,7 +16,10 @@
     "towerGuideIntro": "Urmează acești pași pentru a configura Turnurile automate; selectează o imagine exemplu pentru a o mări.",
     "birdGuideIntro": "Urmează acești pași pentru a configura Adăpostirea automată a trupelor; selectează o imagine exemplu pentru a o mări.",
     "towerPreviewTitle": "Atacuri automate asupra turnurilor · exemplu de configurare",
-    "birdPreviewTitle": "Adăpostirea automată a trupelor · exemplu de configurare"
+    "birdPreviewTitle": "Adăpostirea automată a trupelor · exemplu de configurare",
+    "stationGuideTitle": "Ghid pentru adăpostirea automată a trupelor",
+    "stationGuideIntro": "Urmează acești pași pentru a configura adăpostirea automată a trupelor; selectează imaginea exemplu pentru a o mări.",
+    "stationPreviewTitle": "Exemplu de configurare a adăpostirii automate"
   },
   "autoTower": {
     "recommendationIntro": "Acestea sunt recomandări pentru utilizarea obișnuită; verifică-le înainte de salvare.",
@@ -310,6 +313,106 @@
       "unitOne": "Unitatea fictivă 101 în rezervă: 80",
       "unitTwo": "Unitatea fictivă 102 în rezervă: 40",
       "add": "Adaugă unitate"
+    },
+    "stationGeneral": {
+      "title": "Exemplu de setări ale adăpostirii automate",
+      "evacuate": "Evacuează la: cu 1 minut înainte de impact",
+      "protection": "Protecția destinației: mai mult de 3 zile",
+      "recall": "Retrage când pericolul trece: activat",
+      "gate": "Deschiderea porților ca rezervă: dezactivată",
+      "castle": "Castel fictiv: 80 de trupe defensive rezervate",
+      "save": "Salvează modificările și activează adăpostirea automată"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Recomandările privesc utilizarea obișnuită și nu modifică setările salvate.",
+    "steps": {
+      "open": {
+        "title": "Deschide setările adăpostirii automate",
+        "items": {
+          "open_settings": {
+            "label": "Deschide setările",
+            "description": "În partea de sus a centrului de comandă, selectează butonul de setări de lângă adăpostirea automată a trupelor."
+          }
+        }
+      },
+      "general": {
+        "title": "Configurează răspunsul la atac",
+        "items": {
+          "evacuate_at": {
+            "label": "Evacuează la",
+            "description": "Începe evacuarea cu acest număr de minute înainte de impact sau imediat dacă atacul este detectat în acest interval.",
+            "recommendation": "Cu 1 minut înainte de impact."
+          },
+          "minimum_bird_days": {
+            "label": "Zile minime de protecție la destinație",
+            "description": "Alege un castel aliat cu mai mult decât acest număr de zile de protecție rămase; 0 elimină minimul.",
+            "recommendation": "3 zile, astfel încât destinația să aibă mai mult de 3 zile rămase."
+          },
+          "recall_when_clear": {
+            "label": "Retrage când pericolul trece",
+            "description": "Adu înapoi trupele staționate când ultimul atac detectat a trecut și nu mai există atacuri incoming.",
+            "recommendation": "Activat pentru utilizarea obișnuită."
+          },
+          "open_gate_fallback": {
+            "label": "Deschiderea porților ca rezervă",
+            "description": "Dacă trupele nu pot fi evacuate, această opțiune deschide pentru șase ore porțile castelului propriu atacat, cu excepția Berimondului.",
+            "recommendation": "Dezactivat, dacă nu dorești deschiderea automată a porților când evacuarea eșuează."
+          },
+          "protection_mode": {
+            "label": "Mod de protecție cumpărat",
+            "description": "Când modul de protecție cumpărat se pregătește sau este activ, adăpostirea automată folosește porțile chiar și cu opțiunea de rezervă oprită, cu excepția Berimondului."
+          }
+        },
+        "image": {
+          "alt": "Setări fictive cu timpul evacuării, protecția, retragerea, porțile și rezervele castelului",
+          "caption": "Verifică cele patru controale de răspuns și rezervele defensive ale fiecărui castel înainte de salvare."
+        }
+      },
+      "reserves": {
+        "title": "Alege trupele păstrate în fiecare castel",
+        "items": {
+          "add_troops": {
+            "label": "Adaugă trupe",
+            "description": "Alege tipurile de trupe care rămân în castel; fără rezervă, toate trupele eligibile care nu sunt unelte pot fi evacuate.",
+            "recommendation": "Păstrează garnizoana defensivă obișnuită și lasă surplusul de trupe de atac să plece."
+          },
+          "quantity": {
+            "label": "Cantitate",
+            "description": "Stabilește câte trupe din fiecare tip ales rămân în acest castel; 0 nu rezervă niciuna.",
+            "recommendation": "Folosește numărul necesar pentru apărarea obișnuită a castelului."
+          },
+          "edit_defense_troops": {
+            "label": "Editează trupele defensive",
+            "description": "Deschide din nou selectorul de trupe pentru a modifica tipurile sau cantitățile rezervate castelului."
+          },
+          "remove_defense_troop": {
+            "label": "Elimină o trupă defensivă",
+            "description": "Elimină un bloc de rezervă pentru a nu mai păstra acel tip de trupă în castel."
+          }
+        }
+      },
+      "finish": {
+        "title": "Salvează și activează adăpostirea automată",
+        "items": {
+          "save_changes": {
+            "label": "Salvează modificările",
+            "description": "Salvează timpul, comutatoarele și rezervele fiecărui castel înainte de a ieși din setări."
+          },
+          "auto_station_switch": {
+            "label": "Comutatorul adăpostirii automate",
+            "description": "Activează adăpostirea automată în partea de sus a centrului de comandă după salvare pentru a monitoriza atacurile jucătorilor care se apropie.",
+            "recommendation": "Activat pentru protecție obișnuită după verificarea rezervelor."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Adăpostirea automată a trupelor",
+      "summary": "Mută trupele eligibile înaintea unui atac care se apropie",
+      "description": "Când se apropie un atac al unui jucător, adăpostirea automată mută trupele eligibile la cel mai apropiat castel aliat potrivit din același regat.",
+      "expectation": "Cu retragerea activată, trupele revin după ultimul atac detectat când nu mai există amenințări; altfel, rămân o oră după sosire și apoi se întorc. Lipsa unei destinații sau a trupelor și restricțiile jocului pot împiedica evacuarea.",
+      "helper": "Trupele merg la cel mai apropiat castel aliat eligibil din același regat; dacă evacuarea eșuează, porțile castelului propriu atacat pot proteja în afara Berimondului."
     }
   }
 }

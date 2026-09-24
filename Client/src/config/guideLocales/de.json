@@ -16,7 +16,10 @@
     "towerGuideIntro": "Folge diesen Schritten, um Automatische Turmangriffe einzurichten; wähle ein Beispielbild aus, um es zu vergrößern.",
     "birdGuideIntro": "Folge diesen Schritten, um Automatischen Truppenschutz einzurichten; wähle ein Beispielbild aus, um es zu vergrößern.",
     "towerPreviewTitle": "Beispiel für die Einrichtung von Automatischen Turmangriffen",
-    "birdPreviewTitle": "Beispiel für die Einrichtung von Automatischem Truppenschutz"
+    "birdPreviewTitle": "Beispiel für die Einrichtung von Automatischem Truppenschutz",
+    "stationGuideTitle": "Auto-Station-Anleitung",
+    "stationGuideIntro": "Richten Sie Auto Station mit diesen Schritten ein; wählen Sie das Beispielbild zum Vergrößern aus.",
+    "stationPreviewTitle": "Beispiel zur Auto-Station-Einrichtung"
   },
   "autoTower": {
     "recommendationIntro": "Diese Empfehlungen gelten für den regelmäßigen Betrieb; prüfe sie vor dem Speichern.",
@@ -310,6 +313,106 @@
       "unitOne": "Fiktive Einheit 101 reserviert: 80",
       "unitTwo": "Fiktive Einheit 102 reserviert: 40",
       "add": "Einheit hinzufügen"
+    },
+    "stationGeneral": {
+      "title": "Beispiel für Auto-Station-Einstellungen",
+      "evacuate": "Evakuieren ab: 1 Minute vor Einschlag",
+      "protection": "Zielschutz: mehr als 3 Tage",
+      "recall": "Zurückrufen, wenn sicher: ein",
+      "gate": "Toröffnung als Rückfalloption: aus",
+      "castle": "Fiktive Beispielburg: 80 Verteidigungstruppen reserviert",
+      "save": "Änderungen speichern und Auto Station einschalten"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Die Empfehlungen gelten für die regelmäßige Nutzung von Auto Station und ändern keine gespeicherten Einstellungen.",
+    "steps": {
+      "open": {
+        "title": "Auto-Station-Einstellungen öffnen",
+        "items": {
+          "open_settings": {
+            "label": "Einstellungen öffnen",
+            "description": "Wählen Sie oben in der Kommandozentrale die Einstellungsschaltfläche neben Auto Station."
+          }
+        }
+      },
+      "general": {
+        "title": "Reaktion auf Angriffe festlegen",
+        "items": {
+          "evacuate_at": {
+            "label": "Evakuieren ab",
+            "description": "Beginnen Sie die Evakuierung so viele Minuten vor dem Einschlag oder sofort, wenn ein Angriff erst innerhalb dieses Zeitfensters erkannt wird.",
+            "recommendation": "1 Minute vor dem Einschlag."
+          },
+          "minimum_bird_days": {
+            "label": "Mindestschutzdauer am Ziel",
+            "description": "Wählen Sie eine Allianzburg mit mehr als dieser Anzahl verbleibender Schutztage; 0 hebt die Mindestdauer auf.",
+            "recommendation": "3 Tage, sodass am Ziel mehr als 3 Tage verbleiben müssen."
+          },
+          "recall_when_clear": {
+            "label": "Zurückrufen, wenn sicher",
+            "description": "Holen Sie stationierte Truppen zurück, sobald der letzte erkannte Angriff vorbei ist und kein weiterer Angriff bevorsteht.",
+            "recommendation": "Für den normalen Betrieb eingeschaltet."
+          },
+          "open_gate_fallback": {
+            "label": "Toröffnung als Rückfalloption",
+            "description": "Wenn Truppen nicht evakuiert werden können, öffnet diese optionale Funktion die Tore der angegriffenen eigenen Burg für sechs Stunden, außer in Berimond.",
+            "recommendation": "Aus, sofern Sie bei gescheiterter Evakuierung keine automatische Toröffnung wünschen."
+          },
+          "protection_mode": {
+            "label": "Gekaufter Schutzmodus",
+            "description": "Während ein gekaufter Schutzmodus vorbereitet oder aktiv ist, verwendet Auto Station auch bei ausgeschalteter Rückfalloption Tore, außer in Berimond."
+          }
+        },
+        "image": {
+          "alt": "Fiktive Auto-Station-Einstellungen mit Evakuierungszeit, Schutztagen, Rückruf, Toroption und Burgreserven",
+          "caption": "Prüfen Sie die vier Reaktionsfelder und die Verteidigungsreserven jeder Burg vor dem Speichern."
+        }
+      },
+      "reserves": {
+        "title": "Truppen für jede Burg zurückbehalten",
+        "items": {
+          "add_troops": {
+            "label": "Truppen hinzufügen",
+            "description": "Wählen Sie Truppentypen, die in der Burg bleiben; ohne Reserve können alle geeigneten Truppen außer Werkzeugen evakuiert werden.",
+            "recommendation": "Behalten Sie die übliche Verteidigungsgarnison zu Hause und lassen Sie übrige Angriffstruppen ziehen."
+          },
+          "quantity": {
+            "label": "Anzahl",
+            "description": "Legen Sie fest, wie viele Truppen jedes gewählten Typs in dieser Burg bleiben; 0 behält keine zurück.",
+            "recommendation": "Verwenden Sie die für die normale Verteidigung dieser Burg benötigte Anzahl."
+          },
+          "edit_defense_troops": {
+            "label": "Verteidigungstruppen bearbeiten",
+            "description": "Öffnen Sie die Truppenauswahl erneut, um Typen oder Mengen der Burgreserve zu ändern."
+          },
+          "remove_defense_troop": {
+            "label": "Verteidigungstrupp entfernen",
+            "description": "Entfernen Sie eine Reservekachel, damit dieser Truppentyp nicht mehr in der Burg zurückbleibt."
+          }
+        }
+      },
+      "finish": {
+        "title": "Auto Station speichern und einschalten",
+        "items": {
+          "save_changes": {
+            "label": "Änderungen speichern",
+            "description": "Speichern Sie Zeitfenster, Schalter und Burgreserven, bevor Sie die Einstellungen verlassen."
+          },
+          "auto_station_switch": {
+            "label": "Auto-Station-Schalter",
+            "description": "Schalten Sie Auto Station nach dem Speichern oben in der Kommandozentrale ein, damit eingehende Spielerangriffe erkannt werden.",
+            "recommendation": "Nach Prüfung Ihrer Reserven für den regelmäßigen Schutz einschalten."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatische Truppenstationierung",
+      "summary": "Geeignete Truppen vor einem eingehenden Angriff bewegen",
+      "description": "Bei einem eingehenden Spielerangriff verlegt Auto Station geeignete Truppen zur nächstgelegenen geeigneten Allianzburg im selben Königreich.",
+      "expectation": "Mit aktiviertem Rückruf kehren Truppen nach dem letzten erkannten Angriff zurück, sobald keine Bedrohung mehr besteht; andernfalls bleiben sie nach der Ankunft eine Stunde und kehren dann zurück. Fehlende Ziele, Truppen oder Spielbeschränkungen können die Evakuierung verhindern.",
+      "helper": "Truppen werden bei der nächstgelegenen geeigneten Allianzburg im selben Königreich stationiert; schlägt die Evakuierung fehl, können außerhalb Berimonds die Tore der angegriffenen eigenen Burg schützen."
     }
   }
 }

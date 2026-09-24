@@ -16,7 +16,10 @@
     "towerGuideIntro": "Följ de här stegen för att ställa in Automatiska tornattacker; välj en exempelbild för att förstora den.",
     "birdGuideIntro": "Följ de här stegen för att ställa in Automatiskt skydd av trupper; välj en exempelbild för att förstora den.",
     "towerPreviewTitle": "Exempel på inställningar för Automatiska tornattacker",
-    "birdPreviewTitle": "Exempel på inställningar för Automatiskt skydd av trupper"
+    "birdPreviewTitle": "Exempel på inställningar för Automatiskt skydd av trupper",
+    "stationGuideTitle": "Guide för automatiskt truppskydd",
+    "stationGuideIntro": "Följ dessa steg för att ställa in automatiskt truppskydd; välj exempelbilden för att förstora den.",
+    "stationPreviewTitle": "Exempel på inställning av automatiskt truppskydd"
   },
   "autoTower": {
     "recommendationIntro": "Det här är rekommendationer för regelbunden användning; granska dem innan du sparar.",
@@ -310,6 +313,106 @@
       "unitOne": "Fiktiv enhet 101 reserverad: 80",
       "unitTwo": "Fiktiv enhet 102 reserverad: 40",
       "add": "Lägg till enhet"
+    },
+    "stationGeneral": {
+      "title": "Exempel på inställningar",
+      "evacuate": "Evakuera vid: 1 minut före träff",
+      "protection": "Målskydd: mer än 3 dagar",
+      "recall": "Återkalla när det är säkert: på",
+      "gate": "Öppna portar som reserv: av",
+      "castle": "Fiktivt slott: 80 försvarstrupper reserverade",
+      "save": "Spara ändringar och aktivera automatiskt truppskydd"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Rekommendationerna gäller vanlig användning och ändrar inte sparade inställningar.",
+    "steps": {
+      "open": {
+        "title": "Öppna inställningarna för automatiskt truppskydd",
+        "items": {
+          "open_settings": {
+            "label": "Öppna inställningar",
+            "description": "Välj inställningsknappen bredvid automatiskt truppskydd högst upp i kommandocentralen."
+          }
+        }
+      },
+      "general": {
+        "title": "Ställ in svar på anfall",
+        "items": {
+          "evacuate_at": {
+            "label": "Evakuera vid",
+            "description": "Börja evakuera så här många minuter före träffen, eller direkt om ett anfall först upptäcks inom tidsfönstret.",
+            "recommendation": "1 minut före träffen."
+          },
+          "minimum_bird_days": {
+            "label": "Minsta skyddsdagar på målet",
+            "description": "Välj ett alliansslott med fler än detta antal skyddsdagar kvar; 0 tar bort minimikravet.",
+            "recommendation": "3 dagar, så målet måste ha mer än 3 dagar kvar."
+          },
+          "recall_when_clear": {
+            "label": "Återkalla när det är säkert",
+            "description": "Ta hem stationerade trupper när det sista upptäckta anfallet har passerat och inga fler anfall är på väg.",
+            "recommendation": "På vid normal användning."
+          },
+          "open_gate_fallback": {
+            "label": "Öppna portar som reserv",
+            "description": "Om trupper inte kan evakueras öppnar detta val portarna i det angripna ägda slottet i sex timmar, utom i Berimond.",
+            "recommendation": "Av om du inte vill öppna portar automatiskt när evakuering misslyckas."
+          },
+          "protection_mode": {
+            "label": "Köpt skyddsläge",
+            "description": "När köpt skyddsläge förbereds eller är aktivt använder truppskydd portarna även om reservvalet är av, utom i Berimond."
+          }
+        },
+        "image": {
+          "alt": "Fiktiva inställningar med evakueringstid, skydd, återkallning, portar och slottsreserver",
+          "caption": "Granska de fyra svarsinställningarna och varje slotts försvarsreserver innan du sparar."
+        }
+      },
+      "reserves": {
+        "title": "Välj trupper som stannar i varje slott",
+        "items": {
+          "add_troops": {
+            "label": "Lägg till trupper",
+            "description": "Välj truppslag som stannar i slottet; utan reserv kan alla lämpliga trupper utom verktyg evakueras.",
+            "recommendation": "Behåll den vanliga försvarsgarnisonen hemma och låt överflödiga anfallstrupper flyttas."
+          },
+          "quantity": {
+            "label": "Antal",
+            "description": "Ange hur många trupper av varje valt slag som stannar i detta slott; 0 reserverar inga.",
+            "recommendation": "Använd det antal slottet behöver för sitt vanliga försvar."
+          },
+          "edit_defense_troops": {
+            "label": "Redigera försvarstrupper",
+            "description": "Öppna truppväljaren igen för att ändra slag eller antal i slottets reserv."
+          },
+          "remove_defense_troop": {
+            "label": "Ta bort försvarstrupp",
+            "description": "Ta bort en reservruta för att inte längre hålla kvar det truppslaget i slottet."
+          }
+        }
+      },
+      "finish": {
+        "title": "Spara och aktivera automatiskt truppskydd",
+        "items": {
+          "save_changes": {
+            "label": "Spara ändringar",
+            "description": "Spara tidsfönster, reglage och reserver för varje slott innan du lämnar inställningarna."
+          },
+          "auto_station_switch": {
+            "label": "Reglage för automatiskt truppskydd",
+            "description": "Aktivera automatiskt truppskydd högst upp i kommandocentralen efter att du sparat för att bevaka inkommande spelaranfall.",
+            "recommendation": "På för vanligt skydd efter att du har granskat reserverna."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatiskt truppskydd",
+      "summary": "Flytta lämpliga trupper före ett inkommande anfall",
+      "description": "När ett spelaranfall närmar sig flyttar automatiskt truppskydd lämpliga trupper till närmaste lämpliga alliansslott i samma kungarike.",
+      "expectation": "Med återkallning på kommer trupperna hem efter det sista upptäckta anfallet när inget hot återstår; annars stannar de en timme efter ankomst och återvänder sedan. Avsaknad av mål eller trupper och spelbegränsningar kan hindra evakuering.",
+      "helper": "Trupperna går till närmaste lämpliga alliansslott i samma kungarike; om evakuering misslyckas kan portarna i det angripna ägda slottet skydda utanför Berimond."
     }
   }
 }

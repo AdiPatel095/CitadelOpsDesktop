@@ -16,7 +16,10 @@
     "towerGuideIntro": "Følg disse trinnene for å sette opp Automatiske tårnangrep; velg et eksempelbilde for å forstørre det.",
     "birdGuideIntro": "Følg disse trinnene for å sette opp Automatisk skjerming av tropper; velg et eksempelbilde for å forstørre det.",
     "towerPreviewTitle": "Eksempel på oppsett av Automatiske tårnangrep",
-    "birdPreviewTitle": "Eksempel på oppsett av Automatisk skjerming av tropper"
+    "birdPreviewTitle": "Eksempel på oppsett av Automatisk skjerming av tropper",
+    "stationGuideTitle": "Veiledning for automatisk troppely",
+    "stationGuideIntro": "Følg disse trinnene for å konfigurere automatisk troppely; velg eksempelbildet for å forstørre det.",
+    "stationPreviewTitle": "Eksempel på oppsett av automatisk troppely"
   },
   "autoTower": {
     "recommendationIntro": "Disse anbefalingene gjelder vanlig bruk; gå gjennom dem før du lagrer.",
@@ -310,6 +313,106 @@
       "unitOne": "Oppdiktet enhet 101 reservert: 80",
       "unitTwo": "Oppdiktet enhet 102 reservert: 40",
       "add": "Legg til enhet"
+    },
+    "stationGeneral": {
+      "title": "Eksempel på innstillinger",
+      "evacuate": "Evakuer ved: 1 minutt før treff",
+      "protection": "Målbeskyttelse: mer enn 3 dager",
+      "recall": "Kall tilbake når det er trygt: på",
+      "gate": "Åpne porter som reserve: av",
+      "castle": "Fiktivt slott: 80 forsvarstropper reservert",
+      "save": "Lagre endringer og aktiver automatisk troppely"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Anbefalingene gjelder vanlig bruk og endrer ikke lagrede innstillinger.",
+    "steps": {
+      "open": {
+        "title": "Åpne innstillinger for automatisk troppely",
+        "items": {
+          "open_settings": {
+            "label": "Åpne innstillinger",
+            "description": "Velg innstillingsknappen ved siden av automatisk troppely øverst i kommandosenteret."
+          }
+        }
+      },
+      "general": {
+        "title": "Angi respons på angrep",
+        "items": {
+          "evacuate_at": {
+            "label": "Evakuer ved",
+            "description": "Start evakuering dette antallet minutter før treffet, eller straks hvis et angrep oppdages innenfor tidsvinduet.",
+            "recommendation": "1 minutt før treffet."
+          },
+          "minimum_bird_days": {
+            "label": "Minste beskyttelsesdager på målet",
+            "description": "Velg et allianseslott med mer enn dette antallet beskyttelsesdager igjen; 0 fjerner minstekravet.",
+            "recommendation": "3 dager, slik at målet må ha mer enn 3 dager igjen."
+          },
+          "recall_when_clear": {
+            "label": "Kall tilbake når det er trygt",
+            "description": "Hent hjem stasjonerte tropper når det siste oppdagede angrepet er over og ingen nye angrep er på vei.",
+            "recommendation": "På ved vanlig bruk."
+          },
+          "open_gate_fallback": {
+            "label": "Åpne porter som reserve",
+            "description": "Hvis troppene ikke kan evakueres, åpner dette valget portene i det angrepne eide slottet i seks timer, unntatt i Berimond.",
+            "recommendation": "Av, med mindre du ønsker automatisk portåpning når evakuering mislykkes."
+          },
+          "protection_mode": {
+            "label": "Kjøpt beskyttelsesmodus",
+            "description": "Når kjøpt beskyttelsesmodus klargjøres eller er aktiv, bruker troppely porter selv om reservevalget er av, unntatt i Berimond."
+          }
+        },
+        "image": {
+          "alt": "Fiktive innstillinger med evakueringstid, beskyttelse, hjemkalling, porter og slottsreserver",
+          "caption": "Se over de fire responsvalgene og forsvarsreservene i hvert slott før du lagrer."
+        }
+      },
+      "reserves": {
+        "title": "Velg tropper som skal bli i hvert slott",
+        "items": {
+          "add_troops": {
+            "label": "Legg til tropper",
+            "description": "Velg troppetyper som skal bli i slottet; uten reserver kan alle egnede tropper utenom verktøy evakueres.",
+            "recommendation": "Behold den vanlige forsvarsgarnisonen hjemme og la overskytende angrepstropper dra."
+          },
+          "quantity": {
+            "label": "Antall",
+            "description": "Angi hvor mange tropper av hver valgt type som blir i dette slottet; 0 reserverer ingen.",
+            "recommendation": "Bruk antallet slottet trenger til vanlig forsvar."
+          },
+          "edit_defense_troops": {
+            "label": "Rediger forsvarstropper",
+            "description": "Åpne troppevelgeren igjen for å endre typer eller antall i slottets reserve."
+          },
+          "remove_defense_troop": {
+            "label": "Fjern forsvarstropp",
+            "description": "Fjern en reservebrikke for å slutte å holde denne troppetypen i slottet."
+          }
+        }
+      },
+      "finish": {
+        "title": "Lagre og aktiver automatisk troppely",
+        "items": {
+          "save_changes": {
+            "label": "Lagre endringer",
+            "description": "Lagre tidsvinduet, bryterne og reservene per slott før du forlater innstillingene."
+          },
+          "auto_station_switch": {
+            "label": "Bryter for automatisk troppely",
+            "description": "Slå på automatisk troppely øverst i kommandosenteret etter lagring for å overvåke innkommende spillerangrep.",
+            "recommendation": "På for vanlig beskyttelse etter at du har kontrollert reservene."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatisk troppely",
+      "summary": "Flytt egnede tropper før et innkommende angrep",
+      "description": "Når et spillerangrep nærmer seg, flytter automatisk troppely egnede tropper til det nærmeste egnede allianseslottet i samme kongerike.",
+      "expectation": "Med hjemkalling på kommer troppene tilbake etter det siste oppdagede angrepet når ingen trussel gjenstår; ellers blir de én time etter ankomst og vender så hjem. Manglende mål, tropper eller spillbegrensninger kan hindre evakuering.",
+      "helper": "Troppene går til det nærmeste egnede allianseslottet i samme kongerike; hvis evakuering mislykkes, kan portene i det angrepne eide slottet beskytte utenfor Berimond."
     }
   }
 }

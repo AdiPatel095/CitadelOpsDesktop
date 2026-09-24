@@ -2,25 +2,27 @@ import { useEffect, useState } from 'react';
 import { Button, Modal } from '../../components/ui';
 import towerSource from '../../config/autoTowerGuide.json';
 import birdSource from '../../config/autoBirdGuide.json';
+import stationSource from '../../config/autoStationGuide.json';
 import { useGuideLocale } from '../../config/useGuideLocale';
 import { GuideIllustration, type GuidePanelKind } from '../../config/GuideIllustration';
 
-type Feature = 'autoTower' | 'autoBird';
+type Feature = 'autoTower' | 'autoBird' | 'autoStation';
+type TranslatedGuide = { recommendationIntro: string; steps: Record<string, { title: string; items: Record<string, { label: string; description: string; recommendation?: string }>; image?: { alt: string; caption: string } }> };
 type SourceStep = { id: string; title: string; items: Array<{ id: string; label: string; description: string; recommendation?: string }>; image?: { src: string; alt: string; caption: string; width: number; height: number } };
-const panelKind = (feature: Feature, step: string): GuidePanelKind => feature === 'autoTower' ? (step === 'general' ? 'towerGeneral' : 'towerCastle') : (step === 'general' ? 'birdGeneral' : 'birdCastle');
+const panelKind = (feature: Feature, step: string): GuidePanelKind => feature === 'autoTower' ? (step === 'general' ? 'towerGeneral' : 'towerCastle') : feature === 'autoBird' ? (step === 'general' ? 'birdGeneral' : 'birdCastle') : 'stationGeneral';
 
 export function FeatureGuideModal({ feature, isOpen, onClose, showAdvisor = true }: { feature: Feature; isOpen: boolean; onClose: () => void; showAdvisor?: boolean }) {
   const { locale, pack } = useGuideLocale();
   const [previewStepId, setPreviewStepId] = useState<string | null>(null);
   useEffect(() => { if (!isOpen) setPreviewStepId(null); }, [isOpen]);
-  const source = feature === 'autoTower' ? towerSource : birdSource;
-  const guide = pack[feature];
+  const source = feature === 'autoTower' ? towerSource : feature === 'autoBird' ? birdSource : stationSource;
+  const guide = pack[feature] as unknown as TranslatedGuide;
   const steps = (source.steps as SourceStep[]).filter((step) => showAdvisor || step.id !== 'advisor');
   const previewStep = steps.find((step) => step.id === previewStepId && step.image);
   const closeGuide = () => { setPreviewStepId(null); onClose(); };
-  const title = feature === 'autoTower' ? pack.ui.towerGuideTitle : pack.ui.birdGuideTitle;
-  const intro = feature === 'autoTower' ? pack.ui.towerGuideIntro : pack.ui.birdGuideIntro;
-  const previewTitle = feature === 'autoTower' ? pack.ui.towerPreviewTitle : pack.ui.birdPreviewTitle;
+  const title = feature === 'autoTower' ? pack.ui.towerGuideTitle : feature === 'autoBird' ? pack.ui.birdGuideTitle : pack.ui.stationGuideTitle;
+  const intro = feature === 'autoTower' ? pack.ui.towerGuideIntro : feature === 'autoBird' ? pack.ui.birdGuideIntro : pack.ui.stationGuideIntro;
+  const previewTitle = feature === 'autoTower' ? pack.ui.towerPreviewTitle : feature === 'autoBird' ? pack.ui.birdPreviewTitle : pack.ui.stationPreviewTitle;
   return <>
     <Modal isOpen={isOpen} onClose={closeGuide} title={title} contentLang={locale} contentDir={locale === 'ar' ? 'rtl' : 'ltr'} closeLabel={pack.ui.backToSettings} maxWidth="3xl"
       footer={<Button variant="outline" onClick={closeGuide}>{pack.ui.backToSettings}</Button>}>

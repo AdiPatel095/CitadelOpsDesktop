@@ -16,7 +16,10 @@
     "towerGuideIntro": "Atlikite šiuos veiksmus, kad nustatytumėte automatinius bokštus; pasirinkite pavyzdžio paveikslėlį jam padidinti.",
     "birdGuideIntro": "Atlikite šiuos veiksmus, kad nustatytumėte automatinį karių slėpimą; pasirinkite pavyzdžio paveikslėlį jam padidinti.",
     "towerPreviewTitle": "Automatinės bokštų atakos · nustatymo pavyzdys",
-    "birdPreviewTitle": "Automatinis karių slėpimas · nustatymo pavyzdys"
+    "birdPreviewTitle": "Automatinis karių slėpimas · nustatymo pavyzdys",
+    "stationGuideTitle": "Automatinio karių prieglobsčio vadovas",
+    "stationGuideIntro": "Atlikite šiuos veiksmus automatiniam karių prieglobsčiui nustatyti; pasirinkite pavyzdžio paveikslą, kad jį padidintumėte.",
+    "stationPreviewTitle": "Automatinio karių prieglobsčio nustatymo pavyzdys"
   },
   "autoTower": {
     "recommendationIntro": "Tai rekomendacijos įprastam naudojimui; peržiūrėkite jas prieš išsaugodami.",
@@ -310,6 +313,106 @@
       "unitOne": "Išgalvotas Dalinys 101 rezerve: 80",
       "unitTwo": "Išgalvotas Dalinys 102 rezerve: 40",
       "add": "Pridėti dalinį"
+    },
+    "stationGeneral": {
+      "title": "Prieglobsčio nustatymų pavyzdys",
+      "evacuate": "Evakuoti: likus 1 minutei iki smūgio",
+      "protection": "Taikinio apsauga: daugiau nei 3 dienos",
+      "recall": "Grąžinti pavojui praėjus: įjungta",
+      "gate": "Atsarginis vartų atidarymas: išjungta",
+      "castle": "Išgalvota pilis: rezervuota 80 gynybinių karių",
+      "save": "Išsaugokite pakeitimus ir įjunkite prieglobstį"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Rekomendacijos skirtos įprastam naudojimui ir nekeičia išsaugotų nustatymų.",
+    "steps": {
+      "open": {
+        "title": "Atverkite automatinio karių prieglobsčio nustatymus",
+        "items": {
+          "open_settings": {
+            "label": "Atverti nustatymus",
+            "description": "Komandų centro viršuje pasirinkite nustatymų mygtuką šalia automatinio karių prieglobsčio."
+          }
+        }
+      },
+      "general": {
+        "title": "Nustatykite atsaką į puolimą",
+        "items": {
+          "evacuate_at": {
+            "label": "Evakuoti likus",
+            "description": "Pradėkite evakuaciją tiek minučių prieš smūgį arba iš karto, jei puolimas aptiktas jau per šį laikotarpį.",
+            "recommendation": "Likus 1 minutei iki smūgio."
+          },
+          "minimum_bird_days": {
+            "label": "Mažiausias taikinio apsaugos dienų skaičius",
+            "description": "Pasirinkite sąjungininko pilį, kuriai liko daugiau apsaugos dienų už šią ribą; 0 panaikina minimumą.",
+            "recommendation": "3 dienos, taigi taikiniui turi likti daugiau nei 3 dienos."
+          },
+          "recall_when_clear": {
+            "label": "Grąžinti pavojui praėjus",
+            "description": "Grąžinkite dislokuotus karius, kai baigiasi paskutinis aptiktas puolimas ir nebėra kitų artėjančių puolimų.",
+            "recommendation": "Įjungta įprastam naudojimui."
+          },
+          "open_gate_fallback": {
+            "label": "Atsarginis vartų atidarymas",
+            "description": "Jei karių negalima evakuoti, ši parinktis šešioms valandoms atidaro puolamos nuosavos pilies vartus, išskyrus Berimondą.",
+            "recommendation": "Išjungta, nebent norite automatinio vartų atidarymo nepavykus evakuacijai."
+          },
+          "protection_mode": {
+            "label": "Įsigytas apsaugos režimas",
+            "description": "Kai įsigytas apsaugos režimas ruošiamas arba aktyvus, automatinis prieglobstis naudoja vartus net išjungus atsarginę parinktį, išskyrus Berimondą."
+          }
+        },
+        "image": {
+          "alt": "Išgalvoti nustatymai su evakuacijos laiku, apsauga, grąžinimu, vartais ir pilies rezervais",
+          "caption": "Prieš išsaugodami patikrinkite keturis atsako valdiklius ir kiekvienos pilies gynybinius rezervus."
+        }
+      },
+      "reserves": {
+        "title": "Pasirinkite kiekvienoje pilyje liekančius karius",
+        "items": {
+          "add_troops": {
+            "label": "Pridėti karių",
+            "description": "Pasirinkite pilyje liekančių karių tipus; be rezervo galima evakuoti visus tinkamus karius, išskyrus įrankius.",
+            "recommendation": "Palikite įprastą gynybinę įgulą ir leiskite išvykti pertekliniams puolimo kariams."
+          },
+          "quantity": {
+            "label": "Kiekis",
+            "description": "Nurodykite, kiek kiekvieno pasirinkto tipo karių lieka šioje pilyje; 0 nieko nerezervuoja.",
+            "recommendation": "Naudokite įprastai šios pilies gynybai reikalingą skaičių."
+          },
+          "edit_defense_troops": {
+            "label": "Redaguoti gynybinius karius",
+            "description": "Dar kartą atverkite karių pasirinkimą, kad pakeistumėte pilies rezervo tipus ar kiekius."
+          },
+          "remove_defense_troop": {
+            "label": "Pašalinti gynybinį karį",
+            "description": "Pašalinkite rezervo laukelį, kad šio tipo kariai nebebūtų laikomi pilyje."
+          }
+        }
+      },
+      "finish": {
+        "title": "Išsaugokite ir įjunkite automatinį prieglobstį",
+        "items": {
+          "save_changes": {
+            "label": "Išsaugoti pakeitimus",
+            "description": "Prieš išeidami iš nustatymų išsaugokite laiką, jungiklius ir kiekvienos pilies rezervus."
+          },
+          "auto_station_switch": {
+            "label": "Automatinio prieglobsčio jungiklis",
+            "description": "Išsaugoję įjunkite automatinį prieglobstį komandų centro viršuje, kad būtų stebimi artėjantys žaidėjų puolimai.",
+            "recommendation": "Įjungta įprastai apsaugai patikrinus rezervus."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatinis karių prieglobstis",
+      "summary": "Perkelkite tinkamus karius prieš artėjantį puolimą",
+      "description": "Artėjant žaidėjo puolimui automatinis prieglobstis perkelia tinkamus karius į artimiausią tinkamą sąjungininko pilį toje pačioje karalystėje.",
+      "expectation": "Įjungus grąžinimą kariai sugrįžta po paskutinio aptikto puolimo, kai nebelieka grėsmės; kitu atveju jie lieka valandą po atvykimo ir tada grįžta. Nesant taikinio ar karių ir dėl žaidimo apribojimų evakuacija gali nepavykti.",
+      "helper": "Kariai keliauja į artimiausią tinkamą sąjungininko pilį toje pačioje karalystėje; jei evakuacija nepavyksta, puolamos nuosavos pilies vartai gali apsaugoti ne Berimonde."
     }
   }
 }

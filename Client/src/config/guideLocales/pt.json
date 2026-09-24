@@ -16,7 +16,10 @@
     "towerGuideIntro": "Siga estas etapas para configurar os Ataques automáticos a torres; selecione uma imagem de exemplo para ampliá-la.",
     "birdGuideIntro": "Siga estas etapas para configurar o Abrigo automático de tropas; selecione uma imagem de exemplo para ampliá-la.",
     "towerPreviewTitle": "Exemplo de configuração dos Ataques automáticos a torres",
-    "birdPreviewTitle": "Exemplo de configuração do Abrigo automático de tropas"
+    "birdPreviewTitle": "Exemplo de configuração do Abrigo automático de tropas",
+    "stationGuideTitle": "Guia do abrigo automático de tropas",
+    "stationGuideIntro": "Siga estas etapas para configurar o abrigo automático de tropas; selecione a imagem de exemplo para ampliá-la.",
+    "stationPreviewTitle": "Exemplo de configuração do abrigo automático"
   },
   "autoTower": {
     "recommendationIntro": "Estas recomendações são para o uso regular; revise-as antes de salvar.",
@@ -310,6 +313,106 @@
       "unitOne": "Unidade fictícia 101 reservada: 80",
       "unitTwo": "Unidade fictícia 102 reservada: 40",
       "add": "Adicionar unidade"
+    },
+    "stationGeneral": {
+      "title": "Exemplo de configurações do abrigo automático",
+      "evacuate": "Evacuar em: 1 minuto antes do impacto",
+      "protection": "Proteção do destino: mais de 3 dias",
+      "recall": "Chamar de volta quando seguro: ativado",
+      "gate": "Abertura dos portões como alternativa: desativada",
+      "castle": "Castelo fictício: 80 tropas de defesa reservadas",
+      "save": "Salve as alterações e ative o abrigo automático"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Estas recomendações são para o uso regular do abrigo automático e não alteram as configurações salvas.",
+    "steps": {
+      "open": {
+        "title": "Abra as configurações do abrigo automático",
+        "items": {
+          "open_settings": {
+            "label": "Abrir configurações",
+            "description": "Na parte superior da central de comando, selecione o botão de configurações ao lado do abrigo automático de tropas."
+          }
+        }
+      },
+      "general": {
+        "title": "Defina a resposta aos ataques",
+        "items": {
+          "evacuate_at": {
+            "label": "Evacuar em",
+            "description": "Inicie a evacuação este número de minutos antes do impacto ou imediatamente se um ataque for detectado dentro desse intervalo.",
+            "recommendation": "1 minuto antes do impacto."
+          },
+          "minimum_bird_days": {
+            "label": "Dias mínimos de proteção do destino",
+            "description": "Escolha um castelo aliado com mais do que esta quantidade de dias de proteção restantes; 0 elimina o mínimo.",
+            "recommendation": "3 dias, portanto o destino precisa ter mais de 3 dias restantes."
+          },
+          "recall_when_clear": {
+            "label": "Chamar de volta quando seguro",
+            "description": "Traga as tropas estacionadas de volta depois do último ataque detectado, quando não houver mais ataques chegando.",
+            "recommendation": "Ativado para o uso normal."
+          },
+          "open_gate_fallback": {
+            "label": "Abertura dos portões como alternativa",
+            "description": "Se as tropas não puderem ser evacuadas, esta opção abre por seis horas os portões do castelo próprio atacado, exceto em Berimond.",
+            "recommendation": "Desativado, a menos que você queira abertura automática quando a evacuação falhar."
+          },
+          "protection_mode": {
+            "label": "Modo de Proteção comprado",
+            "description": "Enquanto o Modo de Proteção comprado estiver sendo preparado ou ativo, o abrigo automático usa os portões mesmo com a alternativa desativada, exceto em Berimond."
+          }
+        },
+        "image": {
+          "alt": "Configurações fictícias do abrigo automático com tempo de evacuação, proteção, retorno, portões e reservas do castelo",
+          "caption": "Confira os quatro controles de resposta e as reservas defensivas de cada castelo antes de salvar."
+        }
+      },
+      "reserves": {
+        "title": "Escolha as tropas que ficam em cada castelo",
+        "items": {
+          "add_troops": {
+            "label": "Adicionar tropas",
+            "description": "Escolha os tipos de tropas que permanecem no castelo; sem reservas, todas as tropas elegíveis que não sejam ferramentas podem ser evacuadas.",
+            "recommendation": "Mantenha a guarnição defensiva habitual e permita que tropas de ataque excedentes saiam."
+          },
+          "quantity": {
+            "label": "Quantidade",
+            "description": "Defina quantas tropas de cada tipo escolhido permanecem neste castelo; 0 não reserva nenhuma.",
+            "recommendation": "Use a quantidade necessária à defesa normal deste castelo."
+          },
+          "edit_defense_troops": {
+            "label": "Editar tropas de defesa",
+            "description": "Abra o seletor de tropas novamente para alterar tipos ou quantidades reservadas para este castelo."
+          },
+          "remove_defense_troop": {
+            "label": "Remover tropa de defesa",
+            "description": "Remova um bloco de reserva para deixar de manter esse tipo de tropa no castelo."
+          }
+        }
+      },
+      "finish": {
+        "title": "Salve e ative o abrigo automático",
+        "items": {
+          "save_changes": {
+            "label": "Salvar alterações",
+            "description": "Salve o tempo, os controles e as reservas por castelo antes de sair das configurações."
+          },
+          "auto_station_switch": {
+            "label": "Controle do abrigo automático",
+            "description": "Ative o abrigo automático no topo da central de comando após salvar para observar ataques de jogadores chegando.",
+            "recommendation": "Ativado para proteção regular depois de conferir as reservas."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Abrigo automático de tropas",
+      "summary": "Mova tropas elegíveis antes de um ataque chegando",
+      "description": "Quando um ataque de jogador se aproxima, o abrigo automático move tropas elegíveis para o castelo aliado adequado mais próximo no mesmo reino.",
+      "expectation": "Com o retorno ativado, as tropas voltam após o último ataque detectado quando não restam ameaças; caso contrário, ficam por uma hora após chegar e então voltam. A falta de destino ou tropas e as restrições do jogo podem impedir a evacuação.",
+      "helper": "As tropas vão ao castelo aliado elegível mais próximo no mesmo reino; se a evacuação falhar, os portões do castelo próprio atacado podem protegê-lo fora de Berimond."
     }
   }
 }

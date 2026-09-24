@@ -16,7 +16,10 @@
     "towerGuideIntro": "Sigue estos pasos para configurar los Ataques automáticos a torres; selecciona una imagen de ejemplo para ampliarla.",
     "birdGuideIntro": "Sigue estos pasos para configurar el Resguardo automático de tropas; selecciona una imagen de ejemplo para ampliarla.",
     "towerPreviewTitle": "Ejemplo de configuración de los Ataques automáticos a torres",
-    "birdPreviewTitle": "Ejemplo de configuración del Resguardo automático de tropas"
+    "birdPreviewTitle": "Ejemplo de configuración del Resguardo automático de tropas",
+    "stationGuideTitle": "Guía de refugio automático de tropas",
+    "stationGuideIntro": "Sigue estos pasos para configurar el refugio automático de tropas; selecciona la imagen de ejemplo para ampliarla.",
+    "stationPreviewTitle": "Ejemplo de configuración del refugio automático"
   },
   "autoTower": {
     "recommendationIntro": "Estas recomendaciones son para el uso habitual; revísalas antes de guardar.",
@@ -310,6 +313,106 @@
       "unitOne": "Unidad ficticia 101 reservada: 80",
       "unitTwo": "Unidad ficticia 102 reservada: 40",
       "add": "Añadir unidad"
+    },
+    "stationGeneral": {
+      "title": "Ejemplo de ajustes del refugio automático",
+      "evacuate": "Evacuar a: 1 minuto antes del impacto",
+      "protection": "Protección del destino: más de 3 días",
+      "recall": "Retirar al pasar el peligro: activado",
+      "gate": "Apertura de puertas de respaldo: desactivada",
+      "castle": "Castillo ficticio: 80 tropas defensivas reservadas",
+      "save": "Guardar cambios y activar el refugio automático"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Estas recomendaciones son para el uso habitual del refugio automático de tropas y no cambian los ajustes guardados.",
+    "steps": {
+      "open": {
+        "title": "Abrir los ajustes del refugio automático",
+        "items": {
+          "open_settings": {
+            "label": "Abrir ajustes",
+            "description": "En la parte superior del centro de mando, selecciona el botón de ajustes junto al refugio automático de tropas."
+          }
+        }
+      },
+      "general": {
+        "title": "Configurar la respuesta a ataques",
+        "items": {
+          "evacuate_at": {
+            "label": "Evacuar a",
+            "description": "Inicia la evacuación estos minutos antes del impacto, o de inmediato si el ataque se detecta dentro de ese plazo.",
+            "recommendation": "1 minuto antes del impacto."
+          },
+          "minimum_bird_days": {
+            "label": "Días mínimos de protección del destino",
+            "description": "Elige un castillo aliado con más de estos días de protección restantes; 0 elimina el mínimo.",
+            "recommendation": "3 días, de modo que el destino debe tener más de 3 días restantes."
+          },
+          "recall_when_clear": {
+            "label": "Retirar cuando pase el peligro",
+            "description": "Devuelve las tropas estacionadas cuando termine el último ataque detectado y no quede ningún ataque entrante.",
+            "recommendation": "Activado para el uso normal."
+          },
+          "open_gate_fallback": {
+            "label": "Apertura de puertas de respaldo",
+            "description": "Si no se pueden evacuar las tropas, esta opción abre durante seis horas las puertas del castillo propio atacado, salvo en Berimond.",
+            "recommendation": "Desactivada salvo que quieras abrir puertas automáticamente si falla la evacuación."
+          },
+          "protection_mode": {
+            "label": "Modo de protección comprado",
+            "description": "Cuando el modo de protección comprado se prepara o está activo, el refugio automático usa puertas aunque esta opción esté desactivada, salvo en Berimond."
+          }
+        },
+        "image": {
+          "alt": "Ajustes ficticios del refugio automático con tiempo de evacuación, protección, retirada, puertas y reservas del castillo",
+          "caption": "Revisa los cuatro controles de respuesta y las reservas defensivas de cada castillo antes de guardar."
+        }
+      },
+      "reserves": {
+        "title": "Elegir las tropas que quedan en cada castillo",
+        "items": {
+          "add_troops": {
+            "label": "Añadir tropas",
+            "description": "Elige los tipos de tropas que quedan en el castillo; sin reservas, pueden evacuarse todas las tropas aptas que no sean herramientas.",
+            "recommendation": "Conserva la guarnición defensiva habitual y permite mover las tropas de ataque sobrantes."
+          },
+          "quantity": {
+            "label": "Cantidad",
+            "description": "Indica cuántas tropas de cada tipo elegido permanecen en este castillo; 0 no reserva ninguna.",
+            "recommendation": "Usa la cantidad que este castillo necesita para su defensa habitual."
+          },
+          "edit_defense_troops": {
+            "label": "Editar tropas defensivas",
+            "description": "Abre de nuevo el selector de tropas para cambiar los tipos o cantidades reservados para este castillo."
+          },
+          "remove_defense_troop": {
+            "label": "Quitar tropa defensiva",
+            "description": "Quita una ficha de reserva para dejar de retener ese tipo de tropa en el castillo."
+          }
+        }
+      },
+      "finish": {
+        "title": "Guardar y activar el refugio automático",
+        "items": {
+          "save_changes": {
+            "label": "Guardar cambios",
+            "description": "Guarda el tiempo, los interruptores y las reservas de cada castillo antes de salir de los ajustes."
+          },
+          "auto_station_switch": {
+            "label": "Interruptor del refugio automático",
+            "description": "Activa el refugio automático en la parte superior del centro de mando después de guardar para vigilar los ataques entrantes de jugadores.",
+            "recommendation": "Activado para la protección habitual tras revisar las reservas."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Refugio automático de tropas",
+      "summary": "Mover tropas aptas antes de un ataque entrante",
+      "description": "Cuando se acerca un ataque de jugador, el refugio automático mueve tropas aptas al castillo aliado adecuado más cercano del mismo reino.",
+      "expectation": "Con la retirada activada, las tropas vuelven después del último ataque detectado cuando ya no hay amenazas; de lo contrario, permanecen una hora tras llegar y luego regresan. La falta de destino o tropas y las restricciones del juego pueden impedir la evacuación.",
+      "helper": "Las tropas se estacionan en el castillo aliado apto más cercano del mismo reino; si falla la evacuación, las puertas del castillo propio atacado pueden proteger fuera de Berimond."
     }
   }
 }

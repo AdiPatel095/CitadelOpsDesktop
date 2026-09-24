@@ -16,7 +16,10 @@
     "towerGuideIntro": "Volg deze stappen om Automatische torenaanvallen in te stellen; selecteer een voorbeeldafbeelding om deze te vergroten.",
     "birdGuideIntro": "Volg deze stappen om Automatisch onderbrengen van troepen in te stellen; selecteer een voorbeeldafbeelding om deze te vergroten.",
     "towerPreviewTitle": "Voorbeeld van de instellingen voor Automatische torenaanvallen",
-    "birdPreviewTitle": "Voorbeeld van de instellingen voor Automatisch onderbrengen van troepen"
+    "birdPreviewTitle": "Voorbeeld van de instellingen voor Automatisch onderbrengen van troepen",
+    "stationGuideTitle": "Gids voor automatische troepenopvang",
+    "stationGuideIntro": "Volg deze stappen om automatische troepenopvang in te stellen; selecteer de voorbeeldafbeelding om deze te vergroten.",
+    "stationPreviewTitle": "Voorbeeld van automatische troepenopvang"
   },
   "autoTower": {
     "recommendationIntro": "Dit zijn aanbevelingen voor regelmatig gebruik; controleer ze voordat je opslaat.",
@@ -310,6 +313,106 @@
       "unitOne": "Fictieve eenheid 101 gereserveerd: 80",
       "unitTwo": "Fictieve eenheid 102 gereserveerd: 40",
       "add": "Eenheid toevoegen"
+    },
+    "stationGeneral": {
+      "title": "Voorbeeld van opvanginstellingen",
+      "evacuate": "Evacueren bij: 1 minuut vóór inslag",
+      "protection": "Doelbescherming: meer dan 3 dagen",
+      "recall": "Terugroepen wanneer veilig: aan",
+      "gate": "Poorten openen als uitwijkoptie: uit",
+      "castle": "Fictief voorbeeldkasteel: 80 verdedigingstroepen gereserveerd",
+      "save": "Sla wijzigingen op en schakel automatische opvang in"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Deze aanbevelingen zijn voor regelmatig gebruik en wijzigen geen opgeslagen instellingen.",
+    "steps": {
+      "open": {
+        "title": "Open de instellingen voor automatische troepenopvang",
+        "items": {
+          "open_settings": {
+            "label": "Instellingen openen",
+            "description": "Selecteer bovenaan het commandocentrum de instellingenknop naast automatische troepenopvang."
+          }
+        }
+      },
+      "general": {
+        "title": "Stel de reactie op aanvallen in",
+        "items": {
+          "evacuate_at": {
+            "label": "Evacueren bij",
+            "description": "Begin zoveel minuten vóór de inslag met evacueren, of meteen als een aanval binnen dit tijdvenster wordt ontdekt.",
+            "recommendation": "1 minuut vóór de inslag."
+          },
+          "minimum_bird_days": {
+            "label": "Minimale beschermingsdagen op doel",
+            "description": "Kies een bondgenootschappelijk kasteel met meer dan dit aantal resterende beschermingsdagen; 0 schakelt het minimum uit.",
+            "recommendation": "3 dagen, zodat het doel meer dan 3 dagen over heeft."
+          },
+          "recall_when_clear": {
+            "label": "Terugroepen wanneer veilig",
+            "description": "Haal gestationeerde troepen terug wanneer de laatste ontdekte aanval voorbij is en er geen nieuwe aanval nadert.",
+            "recommendation": "Aan voor normaal gebruik."
+          },
+          "open_gate_fallback": {
+            "label": "Poorten openen als uitwijkoptie",
+            "description": "Als troepen niet kunnen evacueren, opent deze optie zes uur lang de poorten van het aangevallen eigen kasteel, behalve in Berimond.",
+            "recommendation": "Uit, tenzij u automatische poortopening wilt wanneer evacuatie mislukt."
+          },
+          "protection_mode": {
+            "label": "Gekochte beschermingsmodus",
+            "description": "Wanneer een gekochte beschermingsmodus wordt voorbereid of actief is, gebruikt automatische opvang de poorten zelfs als de uitwijkoptie uit staat, behalve in Berimond."
+          }
+        },
+        "image": {
+          "alt": "Fictieve opvanginstellingen met evacuatietijd, bescherming, terugroepactie, poorten en kasteelreserves",
+          "caption": "Controleer de vier reactieopties en de verdedigingsreserves van elk kasteel voordat u opslaat."
+        }
+      },
+      "reserves": {
+        "title": "Kies troepen die in elk kasteel blijven",
+        "items": {
+          "add_troops": {
+            "label": "Troepen toevoegen",
+            "description": "Kies troepensoorten die in het kasteel blijven; zonder reserve kunnen alle geschikte troepen behalve gereedschap evacueren.",
+            "recommendation": "Houd de gebruikelijke verdedigingsbezetting thuis en laat overtollige aanvalstroepen vertrekken."
+          },
+          "quantity": {
+            "label": "Aantal",
+            "description": "Stel in hoeveel troepen van elke gekozen soort in dit kasteel blijven; 0 reserveert er geen.",
+            "recommendation": "Gebruik het aantal dat dit kasteel voor normale verdediging nodig heeft."
+          },
+          "edit_defense_troops": {
+            "label": "Verdedigingstroepen bewerken",
+            "description": "Open de troepenkiezer opnieuw om soorten of aantallen in de kasteelreserve te wijzigen."
+          },
+          "remove_defense_troop": {
+            "label": "Verdedigingstroep verwijderen",
+            "description": "Verwijder een reservetegel om die troepensoort niet langer in het kasteel te houden."
+          }
+        }
+      },
+      "finish": {
+        "title": "Sla op en schakel automatische opvang in",
+        "items": {
+          "save_changes": {
+            "label": "Wijzigingen opslaan",
+            "description": "Sla het tijdvenster, de schakelaars en de reserves per kasteel op voordat u de instellingen verlaat."
+          },
+          "auto_station_switch": {
+            "label": "Schakelaar voor automatische opvang",
+            "description": "Schakel automatische opvang na het opslaan bovenaan het commandocentrum in om inkomende spelersaanvallen te bewaken.",
+            "recommendation": "Aan voor regelmatige bescherming nadat u de reserves hebt gecontroleerd."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatische troepenopvang",
+      "summary": "Verplaats geschikte troepen vóór een inkomende aanval",
+      "description": "Wanneer een spelersaanval nadert, verplaatst automatische troepenopvang geschikte troepen naar het dichtstbijzijnde geschikte bondgenootschappelijke kasteel in hetzelfde koninkrijk.",
+      "expectation": "Met terugroepen ingeschakeld keren troepen na de laatste ontdekte aanval terug zodra er geen dreiging meer is; anders blijven ze na aankomst één uur en keren dan terug. Zonder doel of troepen, of door spelbeperkingen, kan evacuatie mislukken.",
+      "helper": "Troepen gaan naar het dichtstbijzijnde geschikte bondgenootschappelijke kasteel in hetzelfde koninkrijk; bij mislukte evacuatie kunnen de poorten van het aangevallen eigen kasteel buiten Berimond bescherming bieden."
     }
   }
 }

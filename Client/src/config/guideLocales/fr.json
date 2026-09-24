@@ -16,7 +16,10 @@
     "towerGuideIntro": "Suivez ces étapes pour configurer les Attaques automatiques de tours ; sélectionnez une image d’exemple pour l’agrandir.",
     "birdGuideIntro": "Suivez ces étapes pour configurer la Mise à l’abri automatique des troupes ; sélectionnez une image d’exemple pour l’agrandir.",
     "towerPreviewTitle": "Exemple de configuration des Attaques automatiques de tours",
-    "birdPreviewTitle": "Exemple de configuration de la Mise à l’abri automatique des troupes"
+    "birdPreviewTitle": "Exemple de configuration de la Mise à l’abri automatique des troupes",
+    "stationGuideTitle": "Guide de stationnement automatique",
+    "stationGuideIntro": "Suivez ces étapes pour configurer le stationnement automatique ; sélectionnez l’image d’exemple pour l’agrandir.",
+    "stationPreviewTitle": "Exemple de configuration du stationnement automatique"
   },
   "autoTower": {
     "recommendationIntro": "Ces recommandations concernent une utilisation régulière ; vérifiez-les avant d’enregistrer.",
@@ -310,6 +313,106 @@
       "unitOne": "Unité fictive 101 réservée : 80",
       "unitTwo": "Unité fictive 102 réservée : 40",
       "add": "Ajouter une unité"
+    },
+    "stationGeneral": {
+      "title": "Exemple de réglages du stationnement automatique",
+      "evacuate": "Évacuer à : 1 minute avant l’impact",
+      "protection": "Protection de la cible : plus de 3 jours",
+      "recall": "Rappeler quand le danger est passé : activé",
+      "gate": "Ouverture des portes en secours : désactivée",
+      "castle": "Château fictif : 80 troupes défensives réservées",
+      "save": "Enregistrer, puis activer le stationnement automatique"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Ces recommandations concernent l’usage régulier du stationnement automatique et ne modifient aucun réglage enregistré.",
+    "steps": {
+      "open": {
+        "title": "Ouvrir les réglages du stationnement automatique",
+        "items": {
+          "open_settings": {
+            "label": "Ouvrir les réglages",
+            "description": "En haut du centre de commande, sélectionnez le bouton de réglages à côté du stationnement automatique."
+          }
+        }
+      },
+      "general": {
+        "title": "Définir la réaction aux attaques",
+        "items": {
+          "evacuate_at": {
+            "label": "Évacuer à",
+            "description": "Commencez l’évacuation ce nombre de minutes avant l’impact, ou immédiatement si une attaque est détectée dans ce délai.",
+            "recommendation": "1 minute avant l’impact."
+          },
+          "minimum_bird_days": {
+            "label": "Jours de protection minimum de la cible",
+            "description": "Choisissez un château allié ayant plus que ce nombre de jours de protection restants ; 0 supprime ce minimum.",
+            "recommendation": "3 jours, donc la cible doit disposer de plus de 3 jours restants."
+          },
+          "recall_when_clear": {
+            "label": "Rappeler quand le danger est passé",
+            "description": "Rapatriez les troupes stationnées après la dernière attaque détectée lorsqu’aucune autre attaque n’arrive.",
+            "recommendation": "Activé pour l’usage habituel."
+          },
+          "open_gate_fallback": {
+            "label": "Ouverture des portes en secours",
+            "description": "Si les troupes ne peuvent pas être évacuées, cette option ouvre pendant six heures les portes du château possédé attaqué, sauf au Bérimond.",
+            "recommendation": "Désactivé sauf si vous souhaitez ouvrir automatiquement les portes après un échec d’évacuation."
+          },
+          "protection_mode": {
+            "label": "Mode Protection acheté",
+            "description": "Quand le mode Protection acheté se prépare ou est actif, le stationnement automatique utilise les portes même si l’option de secours est désactivée, sauf au Bérimond."
+          }
+        },
+        "image": {
+          "alt": "Réglages fictifs du stationnement automatique avec délai d’évacuation, protection, rappel, portes et réserves du château",
+          "caption": "Vérifiez les quatre commandes de réaction et les réserves défensives de chaque château avant d’enregistrer."
+        }
+      },
+      "reserves": {
+        "title": "Choisir les troupes à garder dans chaque château",
+        "items": {
+          "add_troops": {
+            "label": "Ajouter des troupes",
+            "description": "Choisissez les types de troupes à garder au château ; sans réserve, toutes les troupes admissibles hors outils peuvent être évacuées.",
+            "recommendation": "Gardez la garnison défensive habituelle tout en laissant partir les troupes d’attaque disponibles."
+          },
+          "quantity": {
+            "label": "Quantité",
+            "description": "Indiquez combien de troupes de chaque type choisi restent dans ce château ; 0 n’en garde aucune.",
+            "recommendation": "Utilisez le nombre requis pour la défense habituelle de ce château."
+          },
+          "edit_defense_troops": {
+            "label": "Modifier les troupes défensives",
+            "description": "Rouvrez le sélecteur de troupes pour modifier les types ou les quantités réservés à ce château."
+          },
+          "remove_defense_troop": {
+            "label": "Retirer une troupe défensive",
+            "description": "Retirez une vignette de réserve pour ne plus garder ce type de troupe au château."
+          }
+        }
+      },
+      "finish": {
+        "title": "Enregistrer et activer le stationnement automatique",
+        "items": {
+          "save_changes": {
+            "label": "Enregistrer les modifications",
+            "description": "Enregistrez le délai, les interrupteurs et les réserves de chaque château avant de quitter les réglages."
+          },
+          "auto_station_switch": {
+            "label": "Interrupteur du stationnement automatique",
+            "description": "Activez le stationnement automatique en haut du centre de commande après l’enregistrement pour surveiller les attaques de joueurs entrantes.",
+            "recommendation": "Activé pour une protection régulière après vérification de vos réserves."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Stationnement automatique",
+      "summary": "Déplacer les troupes admissibles avant une attaque entrante",
+      "description": "Lorsqu’une attaque de joueur approche, le stationnement automatique déplace les troupes admissibles vers le château allié adapté le plus proche du même royaume.",
+      "expectation": "Si le rappel est activé, les troupes reviennent après la dernière attaque détectée lorsqu’aucune menace ne subsiste ; sinon, elles restent une heure après leur arrivée avant de revenir. Une cible absente, des troupes indisponibles ou les règles du jeu peuvent empêcher l’évacuation.",
+      "helper": "Les troupes vont au château allié admissible le plus proche du même royaume ; si l’évacuation échoue, les portes du château possédé attaqué peuvent protéger hors du Bérimond."
     }
   }
 }

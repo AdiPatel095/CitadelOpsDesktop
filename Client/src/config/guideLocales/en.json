@@ -16,7 +16,10 @@
     "towerGuideIntro": "Follow these steps to set up Auto Towers; select an example picture to enlarge it.",
     "birdGuideIntro": "Follow these steps to set up Auto Bird; select an example picture to enlarge it.",
     "towerPreviewTitle": "Auto Towers setup example",
-    "birdPreviewTitle": "Auto Bird setup example"
+    "birdPreviewTitle": "Auto Bird setup example",
+    "stationGuideTitle": "Auto Station guide",
+    "stationGuideIntro": "Follow these steps to set up Auto Station; select the example picture to enlarge it.",
+    "stationPreviewTitle": "Auto Station setup example"
   },
   "autoTower": {
     "recommendationIntro": "These are recommendations for regular use; review them before saving.",
@@ -310,6 +313,106 @@
       "unitOne": "Fictional Unit 101 reserved: 80",
       "unitTwo": "Fictional Unit 102 reserved: 40",
       "add": "Add unit"
+    },
+    "stationGeneral": {
+      "title": "Example Auto Station settings",
+      "evacuate": "Evacuate at: 1 minute before impact",
+      "protection": "Target protection: more than 3 days",
+      "recall": "Recall when clear: on",
+      "gate": "Open Gate Fallback: off",
+      "castle": "Fictional Example Castle: 80 defense troops reserved",
+      "save": "Save changes, then enable Auto Station"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Recommended values describe regular Auto Station use; they are guidance and do not change saved settings.",
+    "steps": {
+      "open": {
+        "title": "Open Auto Station settings",
+        "items": {
+          "open_settings": {
+            "label": "Open settings",
+            "description": "At the top of the command center, select the settings button beside Auto Station."
+          }
+        }
+      },
+      "general": {
+        "title": "Set the attack response",
+        "items": {
+          "evacuate_at": {
+            "label": "Evacuate at",
+            "description": "Start evacuation this many minutes before impact, or immediately when an attack is first detected inside that window.",
+            "recommendation": "1 minute before impact."
+          },
+          "minimum_bird_days": {
+            "label": "Minimum Bird Days on Target",
+            "description": "Choose an alliance destination with more than this many days of remaining protection; 0 removes the minimum.",
+            "recommendation": "3 days, so the destination must have more than 3 days remaining."
+          },
+          "recall_when_clear": {
+            "label": "Recall when clear",
+            "description": "Return stationed troops when the last detected attack has passed and no incoming attack remains.",
+            "recommendation": "On for normal operation."
+          },
+          "open_gate_fallback": {
+            "label": "Open Gate Fallback",
+            "description": "When troops cannot evacuate, this opt-in opens six-hour gates at the attacked owned castle in any kingdom except Berimond.",
+            "recommendation": "Off unless you want automatic gate opening when evacuation fails."
+          },
+          "protection_mode": {
+            "label": "Purchased Protection Mode",
+            "description": "When purchased Protection Mode is preparing or active, Auto Station uses gates even with the fallback off, except in Berimond."
+          }
+        },
+        "image": {
+          "alt": "Fictional Auto Station settings with evacuation timing, protection days, recall, gate fallback and castle reserves",
+          "caption": "Review the four response controls and each castle's defense reserves before saving."
+        }
+      },
+      "reserves": {
+        "title": "Choose troops to keep at each castle",
+        "items": {
+          "add_troops": {
+            "label": "Add troops",
+            "description": "Choose troop types to keep at the selected castle; an empty reserve leaves all eligible non-tool troops available to evacuate.",
+            "recommendation": "Keep the usual defensive garrison at home while allowing spare attacking troops to move."
+          },
+          "quantity": {
+            "label": "Quantity",
+            "description": "Set how many of each chosen troop stay at this castle; 0 keeps none of that type.",
+            "recommendation": "Use the number this castle needs for its normal defense."
+          },
+          "edit_defense_troops": {
+            "label": "Edit defense troops",
+            "description": "Open the troop picker again to change the reserve types or quantities for this castle."
+          },
+          "remove_defense_troop": {
+            "label": "Remove defense troop",
+            "description": "Remove a reserve tile to stop keeping that troop type at this castle."
+          }
+        }
+      },
+      "finish": {
+        "title": "Save and enable Auto Station",
+        "items": {
+          "save_changes": {
+            "label": "Save changes",
+            "description": "Save the timing, toggles and per-castle reserves before leaving settings."
+          },
+          "auto_station_switch": {
+            "label": "Auto Station switch",
+            "description": "Turn on Auto Station at the top of the command center after saving to watch for incoming player attacks.",
+            "recommendation": "On for regular protection after reviewing your reserves."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Auto Station",
+      "summary": "Move eligible troops before an incoming attack",
+      "description": "Auto Station moves eligible troops to the nearest suitable alliance castle in the same kingdom when an incoming player attack approaches.",
+      "expectation": "If recall is on, troops return after the last detected attack passes and no threat remains; otherwise they stay for one hour after arrival, then return. A missing target, unavailable troops, or game restrictions can prevent evacuation.",
+      "helper": "Station troops at the nearest eligible alliance castle in the same kingdom; when evacuation fails, Open Gate may protect the attacked owned castle outside Berimond."
     }
   }
 }

@@ -7,6 +7,7 @@ const load = async path => JSON.parse(await readFile(path,'utf8'));
 const source = await load('src/config/guideLocales/en.json');
 const tower = await load('src/config/autoTowerGuide.json');
 const bird = await load('src/config/autoBirdGuide.json');
+const station = await load('src/config/autoStationGuide.json');
 function leaves(candidate, expected, path='') {
   if (typeof expected === 'string') { assert.equal(typeof candidate,'string',path); assert.ok(candidate.trim(),path); return 1; }
   assert.ok(candidate && typeof candidate === 'object' && !Array.isArray(candidate),path);
@@ -16,8 +17,8 @@ function leaves(candidate, expected, path='') {
 test('all 25 non-English guide packs have complete stable-ID content', async () => {
   for (const locale of locales) {
     const pack=await load(`src/config/guideLocales/${locale}.json`);
-    assert.equal(leaves(pack,source,locale),165);
-    for (const [key,guide] of [['autoTower',tower],['autoBird',bird]]) {
+    assert.equal(leaves(pack,source,locale),218);
+    for (const [key,guide] of [['autoTower',tower],['autoBird',bird],['autoStation',station]]) {
       assert.deepEqual(Object.keys(pack[key].steps),guide.steps.map(step=>step.id));
       for (const step of guide.steps) assert.deepEqual(Object.keys(pack[key].steps[step.id].items),step.items.map(item=>item.id));
     }
@@ -38,7 +39,7 @@ test('guide translation provenance pins the exact 26 locale pack bytes', async (
 
 
 test('canonical English guides match the rendered source pack', () => {
-  for (const [key, guide] of [['autoTower', tower], ['autoBird', bird]]) {
+  for (const [key, guide] of [['autoTower', tower], ['autoBird', bird], ['autoStation', station]]) {
     assert.equal(source[key].recommendationIntro, guide.recommendationIntro);
     for (const step of guide.steps) {
       const translated = source[key].steps[step.id];
@@ -49,4 +50,12 @@ test('canonical English guides match the rendered source pack', () => {
       if (step.image) assert.deepEqual(translated.image, { alt:step.image.alt, caption:step.image.caption });
     }
   }
+});
+
+
+test('Station English photo and gate source are present', async () => {
+  const photo = await readFile('public/guide-auto-station-settings.jpg');
+  assert.ok(photo.length > 100_000);
+  assert.equal(station.steps.find(step => step.id === 'general').image.src, '/guide-auto-station-settings.jpg');
+  assert.match(source.autoStation.steps.general.items.open_gate_fallback.description, /any kingdom except Berimond/);
 });

@@ -16,7 +16,10 @@
     "towerGuideIntro": "다음 단계에 따라 자동 탑을 설정하세요. 예시 사진을 선택하면 확대됩니다.",
     "birdGuideIntro": "다음 단계에 따라 자동 병력 대피를 설정하세요. 예시 사진을 선택하면 확대됩니다.",
     "towerPreviewTitle": "탑 자동 공격 설정 예시",
-    "birdPreviewTitle": "병력 자동 대피 보호 설정 예시"
+    "birdPreviewTitle": "병력 자동 대피 보호 설정 예시",
+    "stationGuideTitle": "자동 병력 대피 안내",
+    "stationGuideIntro": "다음 단계에 따라 자동 병력 대피를 설정하세요. 예시 그림을 선택하면 크게 볼 수 있습니다.",
+    "stationPreviewTitle": "자동 병력 대피 설정 예시"
   },
   "autoTower": {
     "recommendationIntro": "일반적인 사용을 위한 권장값입니다. 저장하기 전에 검토하세요.",
@@ -310,6 +313,106 @@
       "unitOne": "가상 유닛 101 예비: 80",
       "unitTwo": "가상 유닛 102 예비: 40",
       "add": "유닛 추가"
+    },
+    "stationGeneral": {
+      "title": "자동 병력 대피 설정 예시",
+      "evacuate": "대피 시작: 공격 도착 1분 전",
+      "protection": "목표 보호: 3일 초과",
+      "recall": "위험이 사라지면 귀환: 켜기",
+      "gate": "예비 성문 개방: 끄기",
+      "castle": "가상 성: 수비 병력 80명 남김",
+      "save": "변경 사항을 저장하고 자동 병력 대피 켜기"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "권장 값은 일상적인 사용을 위한 안내이며 저장된 설정을 변경하지 않습니다.",
+    "steps": {
+      "open": {
+        "title": "자동 병력 대피 설정 열기",
+        "items": {
+          "open_settings": {
+            "label": "설정 열기",
+            "description": "지휘 센터 상단에서 자동 병력 대피 옆의 설정 버튼을 선택하세요."
+          }
+        }
+      },
+      "general": {
+        "title": "공격 대응 설정",
+        "items": {
+          "evacuate_at": {
+            "label": "대피 시작",
+            "description": "공격 도착 전 지정한 분부터 대피를 시작하거나 공격이 그 시간 안에 처음 감지되면 즉시 시작합니다.",
+            "recommendation": "공격 도착 1분 전."
+          },
+          "minimum_bird_days": {
+            "label": "목표의 최소 보호 일수",
+            "description": "남은 보호 기간이 지정 일수보다 긴 동맹 성을 선택하며, 0은 최소 조건을 없앱니다.",
+            "recommendation": "3일로 설정하여 목표에 3일보다 긴 보호 기간이 남도록 합니다."
+          },
+          "recall_when_clear": {
+            "label": "위험이 사라지면 귀환",
+            "description": "마지막으로 감지한 공격이 끝나고 새로운 공격이 없을 때 주둔 병력을 돌려보냅니다.",
+            "recommendation": "일반적인 사용에서는 켜기."
+          },
+          "open_gate_fallback": {
+            "label": "예비 수단으로 성문 개방",
+            "description": "병력을 대피시킬 수 없으면 베리몬드를 제외한 왕국에서 공격받는 소유 성의 성문을 6시간 엽니다.",
+            "recommendation": "대피 실패 시 자동 성문 개방을 원하지 않으면 끄기."
+          },
+          "protection_mode": {
+            "label": "구매한 보호 모드",
+            "description": "구매한 보호 모드가 준비 중이거나 활성 상태이면 예비 수단을 꺼도 베리몬드를 제외하고 성문을 사용합니다."
+          }
+        },
+        "image": {
+          "alt": "대피 시간, 보호 기간, 귀환, 성문, 성 수비 예비 병력을 보여 주는 가상 설정",
+          "caption": "저장하기 전에 네 가지 대응 설정과 각 성의 방어 예비 병력을 확인하세요."
+        }
+      },
+      "reserves": {
+        "title": "각 성에 남길 병력 선택",
+        "items": {
+          "add_troops": {
+            "label": "병력 추가",
+            "description": "성에 남길 병력 종류를 선택하며 예비 병력이 비어 있으면 도구를 제외한 모든 적격 병력을 대피시킬 수 있습니다.",
+            "recommendation": "평소 필요한 수비대를 남기고 여분의 공격 병력이 이동할 수 있게 하세요."
+          },
+          "quantity": {
+            "label": "수량",
+            "description": "선택한 종류별로 이 성에 남길 병력 수를 지정하며, 0은 해당 종류를 남기지 않습니다.",
+            "recommendation": "이 성의 평소 방어에 필요한 수를 사용하세요."
+          },
+          "edit_defense_troops": {
+            "label": "방어 병력 편집",
+            "description": "병력 선택기를 다시 열어 성에 남길 종류나 수량을 변경하세요."
+          },
+          "remove_defense_troop": {
+            "label": "방어 병력 제거",
+            "description": "예비 병력 타일을 제거하면 해당 종류를 성에 더 이상 남기지 않습니다."
+          }
+        }
+      },
+      "finish": {
+        "title": "저장하고 자동 병력 대피 켜기",
+        "items": {
+          "save_changes": {
+            "label": "변경 사항 저장",
+            "description": "설정을 닫기 전에 시간, 스위치, 성별 예비 병력을 저장하세요."
+          },
+          "auto_station_switch": {
+            "label": "자동 병력 대피 스위치",
+            "description": "저장한 뒤 지휘 센터 상단에서 자동 병력 대피를 켜면 들어오는 플레이어 공격을 감시합니다.",
+            "recommendation": "예비 병력을 검토한 후 일상적인 보호용으로 켜기."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "자동 병력 대피",
+      "summary": "다가오는 공격 전에 적격 병력 이동",
+      "description": "플레이어 공격이 다가오면 자동 병력 대피가 적격 병력을 같은 왕국에서 가장 가까운 적합한 동맹 성으로 보냅니다.",
+      "expectation": "귀환을 켜면 마지막으로 감지한 공격이 끝나고 위협이 없을 때 병력이 돌아오며, 끄면 도착 후 한 시간 동안 머물다가 돌아옵니다. 목표나 병력이 없거나 게임 제한이 있으면 대피하지 못할 수 있습니다.",
+      "helper": "병력은 같은 왕국에서 가장 가까운 적격 동맹 성으로 이동하며 대피에 실패하면 베리몬드 밖에서는 공격받는 소유 성의 성문이 보호 수단이 될 수 있습니다."
     }
   }
 }

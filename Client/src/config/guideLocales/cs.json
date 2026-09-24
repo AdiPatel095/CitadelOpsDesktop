@@ -16,7 +16,10 @@
     "towerGuideIntro": "Podle těchto kroků nastavte Automatické útoky na věže; výběrem ukázkového obrázku jej zvětšíte.",
     "birdGuideIntro": "Podle těchto kroků nastavte Automatické ukrývání vojska; výběrem ukázkového obrázku jej zvětšíte.",
     "towerPreviewTitle": "Příklad nastavení Automatických útoků na věže",
-    "birdPreviewTitle": "Příklad nastavení Automatického ukrývání vojska"
+    "birdPreviewTitle": "Příklad nastavení Automatického ukrývání vojska",
+    "stationGuideTitle": "Průvodce automatickou ochranou jednotek",
+    "stationGuideIntro": "Podle těchto kroků nastavte automatickou ochranu jednotek; výběrem ukázkového obrázku jej zvětšíte.",
+    "stationPreviewTitle": "Ukázka nastavení automatické ochrany jednotek"
   },
   "autoTower": {
     "recommendationIntro": "Tato doporučení platí pro pravidelné používání; před uložením je zkontrolujte.",
@@ -310,6 +313,106 @@
       "unitOne": "Fiktivní jednotka 101 rezervována: 80",
       "unitTwo": "Fiktivní jednotka 102 rezervována: 40",
       "add": "Přidat jednotku"
+    },
+    "stationGeneral": {
+      "title": "Ukázka nastavení ochrany jednotek",
+      "evacuate": "Evakuovat: 1 minuta před dopadem",
+      "protection": "Ochrana cíle: více než 3 dny",
+      "recall": "Stáhnout po skončení nebezpečí: zapnuto",
+      "gate": "Záložní otevření bran: vypnuto",
+      "castle": "Smyšlený hrad: 80 obranných jednotek v rezervě",
+      "save": "Uložte změny a zapněte ochranu jednotek"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Doporučení jsou určena pro běžné používání a nemění uložená nastavení.",
+    "steps": {
+      "open": {
+        "title": "Otevřete nastavení automatické ochrany jednotek",
+        "items": {
+          "open_settings": {
+            "label": "Otevřít nastavení",
+            "description": "V horní části velitelského centra vyberte tlačítko nastavení vedle automatické ochrany jednotek."
+          }
+        }
+      },
+      "general": {
+        "title": "Nastavte reakci na útok",
+        "items": {
+          "evacuate_at": {
+            "label": "Evakuovat při",
+            "description": "Spusťte evakuaci tolik minut před dopadem, nebo okamžitě, pokud je útok zjištěn až v tomto časovém okně.",
+            "recommendation": "1 minuta před dopadem."
+          },
+          "minimum_bird_days": {
+            "label": "Minimální dny ochrany cíle",
+            "description": "Vyberte spojenecký hrad s více zbývajícími dny ochrany, než udává tato hodnota; 0 minimum ruší.",
+            "recommendation": "3 dny, takže cíli musí zbývat více než 3 dny."
+          },
+          "recall_when_clear": {
+            "label": "Stáhnout po skončení nebezpečí",
+            "description": "Vraťte umístěné jednotky, když skončí poslední zjištěný útok a žádný další útok nepřichází.",
+            "recommendation": "Zapnuto pro běžné použití."
+          },
+          "open_gate_fallback": {
+            "label": "Záložní otevření bran",
+            "description": "Pokud jednotky nelze evakuovat, tato volba otevře brány napadeného vlastního hradu na šest hodin mimo Berimond.",
+            "recommendation": "Vypnuto, pokud nechcete automaticky otevírat brány při neúspěšné evakuaci."
+          },
+          "protection_mode": {
+            "label": "Zakoupený režim ochrany",
+            "description": "Když se zakoupený režim ochrany připravuje nebo je aktivní, ochrana jednotek používá brány i při vypnuté záložní volbě, kromě Berimondu."
+          }
+        },
+        "image": {
+          "alt": "Smyšlená nastavení s časem evakuace, ochranou, návratem, branami a hradními rezervami",
+          "caption": "Před uložením zkontrolujte čtyři ovládací prvky a obranné rezervy každého hradu."
+        }
+      },
+      "reserves": {
+        "title": "Vyberte jednotky ponechané na každém hradě",
+        "items": {
+          "add_troops": {
+            "label": "Přidat jednotky",
+            "description": "Vyberte druhy jednotek, které zůstanou na hradě; bez rezerv lze evakuovat všechny způsobilé jednotky kromě nástrojů.",
+            "recommendation": "Ponechte obvyklou obrannou posádku doma a přebytečné útočné jednotky nechte odejít."
+          },
+          "quantity": {
+            "label": "Počet",
+            "description": "Určete počet jednotek každého vybraného druhu, které zůstanou na hradě; 0 nic nerezervuje.",
+            "recommendation": "Použijte počet potřebný pro běžnou obranu tohoto hradu."
+          },
+          "edit_defense_troops": {
+            "label": "Upravit obranné jednotky",
+            "description": "Znovu otevřete výběr jednotek a změňte druhy nebo počty v hradní rezervě."
+          },
+          "remove_defense_troop": {
+            "label": "Odebrat obrannou jednotku",
+            "description": "Odeberte dlaždici rezervy, aby se tento druh jednotek už na hradě nezadržoval."
+          }
+        }
+      },
+      "finish": {
+        "title": "Uložte a zapněte ochranu jednotek",
+        "items": {
+          "save_changes": {
+            "label": "Uložit změny",
+            "description": "Před opuštěním nastavení uložte časování, přepínače a rezervy jednotlivých hradů."
+          },
+          "auto_station_switch": {
+            "label": "Přepínač ochrany jednotek",
+            "description": "Po uložení zapněte automatickou ochranu jednotek v horní části velitelského centra a sledujte přicházející útoky hráčů.",
+            "recommendation": "Zapnuto pro běžnou ochranu po kontrole rezerv."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatická ochrana jednotek",
+      "summary": "Přesuňte způsobilé jednotky před přicházejícím útokem",
+      "description": "Při blížícím se útoku hráče přesune automatická ochrana způsobilé jednotky na nejbližší vhodný spojenecký hrad ve stejném království.",
+      "expectation": "Se zapnutým stažením se jednotky vrátí po posledním zjištěném útoku, když už nehrozí nebezpečí; jinak zůstanou hodinu po příjezdu a poté se vrátí. Nedostupný cíl nebo jednotky a omezení hry mohou evakuaci zabránit.",
+      "helper": "Jednotky míří na nejbližší vhodný spojenecký hrad ve stejném království; při selhání evakuace mohou brány napadeného vlastního hradu chránit mimo Berimond."
     }
   }
 }

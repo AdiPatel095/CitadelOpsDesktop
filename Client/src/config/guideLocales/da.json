@@ -16,7 +16,10 @@
     "towerGuideIntro": "Følg disse trin for at indstille Automatiske tårnangreb; vælg et eksempelbillede for at forstørre det.",
     "birdGuideIntro": "Følg disse trin for at indstille Automatisk sikring af tropper i ly; vælg et eksempelbillede for at forstørre det.",
     "towerPreviewTitle": "Eksempel på opsætning af Automatiske tårnangreb",
-    "birdPreviewTitle": "Eksempel på opsætning af Automatisk sikring af tropper i ly"
+    "birdPreviewTitle": "Eksempel på opsætning af Automatisk sikring af tropper i ly",
+    "stationGuideTitle": "Guide til automatisk troppebeskyttelse",
+    "stationGuideIntro": "Følg disse trin for at indstille automatisk troppebeskyttelse; vælg eksempelbilledet for at forstørre det.",
+    "stationPreviewTitle": "Eksempel på indstilling af troppebeskyttelse"
   },
   "autoTower": {
     "recommendationIntro": "Disse anbefalinger gælder almindelig brug; gennemgå dem, før du gemmer.",
@@ -310,6 +313,106 @@
       "unitOne": "Fiktiv enhed 101 reserveret: 80",
       "unitTwo": "Fiktiv enhed 102 reserveret: 40",
       "add": "Tilføj enhed"
+    },
+    "stationGeneral": {
+      "title": "Eksempel på indstillinger",
+      "evacuate": "Evakuér ved: 1 minut før nedslag",
+      "protection": "Målbeskyttelse: mere end 3 dage",
+      "recall": "Kald tilbage, når der er sikkert: til",
+      "gate": "Åbn porte som reserve: fra",
+      "castle": "Fiktivt slot: 80 forsvarstropper reserveret",
+      "save": "Gem ændringer, og aktivér troppebeskyttelse"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Anbefalingerne gælder almindelig brug og ændrer ikke gemte indstillinger.",
+    "steps": {
+      "open": {
+        "title": "Åbn indstillinger for troppebeskyttelse",
+        "items": {
+          "open_settings": {
+            "label": "Åbn indstillinger",
+            "description": "Vælg indstillingsknappen ved siden af automatisk troppebeskyttelse øverst i kommandocentralen."
+          }
+        }
+      },
+      "general": {
+        "title": "Indstil reaktion på angreb",
+        "items": {
+          "evacuate_at": {
+            "label": "Evakuér ved",
+            "description": "Start evakueringen dette antal minutter før nedslaget, eller straks hvis et angreb først opdages inden for tidsvinduet.",
+            "recommendation": "1 minut før nedslaget."
+          },
+          "minimum_bird_days": {
+            "label": "Mindste beskyttelsesdage på målet",
+            "description": "Vælg et alliance-slot med mere end dette antal beskyttelsesdage tilbage; 0 fjerner minimumskravet.",
+            "recommendation": "3 dage, så målet skal have mere end 3 dage tilbage."
+          },
+          "recall_when_clear": {
+            "label": "Kald tilbage, når der er sikkert",
+            "description": "Hent udstationerede tropper hjem, når det sidste registrerede angreb er passeret, og ingen nye angreb nærmer sig.",
+            "recommendation": "Til ved normal brug."
+          },
+          "open_gate_fallback": {
+            "label": "Åbn porte som reserve",
+            "description": "Hvis tropper ikke kan evakueres, åbner dette tilvalg portene i det angrebne ejede slot i seks timer, undtagen i Berimond.",
+            "recommendation": "Fra, medmindre du ønsker automatisk portåbning, når evakuering mislykkes."
+          },
+          "protection_mode": {
+            "label": "Købt beskyttelsestilstand",
+            "description": "Når købt beskyttelsestilstand forberedes eller er aktiv, bruger troppebeskyttelsen porte selv med reservevalget slået fra, undtagen i Berimond."
+          }
+        },
+        "image": {
+          "alt": "Fiktive indstillinger med evakueringstid, beskyttelse, hjemkaldelse, porte og slotsreserver",
+          "caption": "Gennemgå de fire reaktionsindstillinger og hvert slots forsvarsreserver, før du gemmer."
+        }
+      },
+      "reserves": {
+        "title": "Vælg tropper, der skal blive i hvert slot",
+        "items": {
+          "add_troops": {
+            "label": "Tilføj tropper",
+            "description": "Vælg troppetyper, der skal blive i slottet; uden reserve kan alle egnede tropper undtagen værktøjer evakueres.",
+            "recommendation": "Behold den sædvanlige forsvarsgarnison hjemme, og lad overskydende angrebstropper rejse."
+          },
+          "quantity": {
+            "label": "Antal",
+            "description": "Angiv hvor mange tropper af hver valgt type der bliver i slottet; 0 reserverer ingen.",
+            "recommendation": "Brug det antal, slottet behøver til almindeligt forsvar."
+          },
+          "edit_defense_troops": {
+            "label": "Rediger forsvarstropper",
+            "description": "Åbn troppevælgeren igen for at ændre typer eller antal i slottets reserve."
+          },
+          "remove_defense_troop": {
+            "label": "Fjern forsvarstrop",
+            "description": "Fjern en reservebrik for ikke længere at holde den troppetype i slottet."
+          }
+        }
+      },
+      "finish": {
+        "title": "Gem og aktivér troppebeskyttelse",
+        "items": {
+          "save_changes": {
+            "label": "Gem ændringer",
+            "description": "Gem tidsvinduet, kontakterne og reserverne for hvert slot, før du forlader indstillingerne."
+          },
+          "auto_station_switch": {
+            "label": "Kontakt til troppebeskyttelse",
+            "description": "Aktivér troppebeskyttelse øverst i kommandocentralen efter at have gemt for at holde øje med indkommende spillerangreb.",
+            "recommendation": "Til for almindelig beskyttelse, når du har gennemgået reserverne."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatisk troppebeskyttelse",
+      "summary": "Flyt egnede tropper før et indkommende angreb",
+      "description": "Når et spillerangreb nærmer sig, flytter automatisk troppebeskyttelse egnede tropper til det nærmeste egnede allianceslot i samme kongerige.",
+      "expectation": "Med hjemkaldelse slået til vender tropper tilbage efter det sidste registrerede angreb, når ingen trussel er tilbage; ellers bliver de en time efter ankomst og vender så hjem. Manglende mål, tropper eller spilbegrænsninger kan forhindre evakuering.",
+      "helper": "Tropper stationeres i det nærmeste egnede allianceslot i samme kongerige; hvis evakuering mislykkes, kan portene i det angrebne ejede slot beskytte uden for Berimond."
     }
   }
 }

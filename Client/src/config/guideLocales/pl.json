@@ -16,7 +16,10 @@
     "towerGuideIntro": "Wykonaj te kroki, aby skonfigurować Automatyczne ataki na wieże; wybierz obraz przykładowy, aby go powiększyć.",
     "birdGuideIntro": "Wykonaj te kroki, aby skonfigurować Automatyczne ukrywanie wojsk; wybierz obraz przykładowy, aby go powiększyć.",
     "towerPreviewTitle": "Przykład konfiguracji Automatycznych ataków na wieże",
-    "birdPreviewTitle": "Przykład konfiguracji Automatycznego ukrywania wojsk"
+    "birdPreviewTitle": "Przykład konfiguracji Automatycznego ukrywania wojsk",
+    "stationGuideTitle": "Poradnik automatycznej ochrony wojsk",
+    "stationGuideIntro": "Skonfiguruj automatyczną ochronę wojsk według tych kroków; wybierz obraz przykładowy, aby go powiększyć.",
+    "stationPreviewTitle": "Przykład konfiguracji automatycznej ochrony wojsk"
   },
   "autoTower": {
     "recommendationIntro": "Te zalecenia dotyczą regularnego korzystania; sprawdź je przed zapisaniem.",
@@ -310,6 +313,106 @@
       "unitOne": "Fikcyjna jednostka 101 zarezerwowana: 80",
       "unitTwo": "Fikcyjna jednostka 102 zarezerwowana: 40",
       "add": "Dodaj jednostkę"
+    },
+    "stationGeneral": {
+      "title": "Przykładowe ustawienia ochrony wojsk",
+      "evacuate": "Ewakuuj: 1 minuta przed uderzeniem",
+      "protection": "Ochrona celu: ponad 3 dni",
+      "recall": "Przywołaj po ustaniu zagrożenia: włączone",
+      "gate": "Awaryjne otwarcie bram: wyłączone",
+      "castle": "Fikcyjny zamek: 80 wojsk obronnych w rezerwie",
+      "save": "Zapisz zmiany i włącz ochronę wojsk"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Zalecenia dotyczą codziennego korzystania i nie zmieniają zapisanych ustawień.",
+    "steps": {
+      "open": {
+        "title": "Otwórz ustawienia automatycznej ochrony wojsk",
+        "items": {
+          "open_settings": {
+            "label": "Otwórz ustawienia",
+            "description": "W górnej części centrum dowodzenia wybierz przycisk ustawień obok automatycznej ochrony wojsk."
+          }
+        }
+      },
+      "general": {
+        "title": "Ustaw reakcję na atak",
+        "items": {
+          "evacuate_at": {
+            "label": "Ewakuuj przy",
+            "description": "Rozpocznij ewakuację tyle minut przed uderzeniem albo natychmiast, jeśli atak wykryto już w tym przedziale.",
+            "recommendation": "1 minuta przed uderzeniem."
+          },
+          "minimum_bird_days": {
+            "label": "Minimalne dni ochrony celu",
+            "description": "Wybierz zamek sojusznika z większą liczbą dni ochrony niż podany próg; 0 usuwa ten wymóg.",
+            "recommendation": "3 dni, więc cel musi mieć ponad 3 dni ochrony."
+          },
+          "recall_when_clear": {
+            "label": "Przywołaj po ustaniu zagrożenia",
+            "description": "Sprowadź stacjonujące wojska, gdy minie ostatni wykryty atak i nie będzie kolejnego nadchodzącego ataku.",
+            "recommendation": "Włączone przy zwykłym korzystaniu."
+          },
+          "open_gate_fallback": {
+            "label": "Awaryjne otwarcie bram",
+            "description": "Jeśli wojsk nie da się ewakuować, ta opcja otwiera bramy atakowanego własnego zamku na sześć godzin, z wyjątkiem Berimondu.",
+            "recommendation": "Wyłączone, chyba że chcesz automatycznie otwierać bramy po nieudanej ewakuacji."
+          },
+          "protection_mode": {
+            "label": "Zakupiony tryb ochrony",
+            "description": "Gdy zakupiony tryb ochrony jest przygotowywany lub aktywny, ochrona wojsk korzysta z bram nawet przy wyłączonej opcji awaryjnej, z wyjątkiem Berimondu."
+          }
+        },
+        "image": {
+          "alt": "Fikcyjne ustawienia z czasem ewakuacji, ochroną, przywołaniem, bramami i rezerwami zamkowymi",
+          "caption": "Przed zapisem sprawdź cztery ustawienia reakcji i rezerwy obronne każdego zamku."
+        }
+      },
+      "reserves": {
+        "title": "Wybierz wojska pozostające w zamku",
+        "items": {
+          "add_troops": {
+            "label": "Dodaj wojska",
+            "description": "Wybierz rodzaje wojsk pozostające w zamku; bez rezerw można ewakuować wszystkie kwalifikujące się jednostki poza narzędziami.",
+            "recommendation": "Zachowaj zwykły garnizon obronny i pozwól przenieść nadwyżkę wojsk ofensywnych."
+          },
+          "quantity": {
+            "label": "Liczba",
+            "description": "Ustal, ile wojsk każdego wybranego rodzaju pozostaje w zamku; 0 niczego nie rezerwuje.",
+            "recommendation": "Użyj liczby potrzebnej do zwykłej obrony zamku."
+          },
+          "edit_defense_troops": {
+            "label": "Edytuj wojska obronne",
+            "description": "Ponownie otwórz wybór wojsk, aby zmienić rodzaje lub liczby w rezerwie zamku."
+          },
+          "remove_defense_troop": {
+            "label": "Usuń wojsko obronne",
+            "description": "Usuń kafelek rezerwy, aby przestać zatrzymywać ten rodzaj wojska w zamku."
+          }
+        }
+      },
+      "finish": {
+        "title": "Zapisz i włącz ochronę wojsk",
+        "items": {
+          "save_changes": {
+            "label": "Zapisz zmiany",
+            "description": "Zapisz czas, przełączniki i rezerwy każdego zamku przed opuszczeniem ustawień."
+          },
+          "auto_station_switch": {
+            "label": "Przełącznik ochrony wojsk",
+            "description": "Po zapisie włącz automatyczną ochronę wojsk u góry centrum dowodzenia, aby obserwować nadchodzące ataki graczy.",
+            "recommendation": "Włączone dla codziennej ochrony po sprawdzeniu rezerw."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatyczna ochrona wojsk",
+      "summary": "Przenieś kwalifikujące się wojska przed nadchodzącym atakiem",
+      "description": "Gdy nadchodzi atak gracza, automatyczna ochrona przenosi kwalifikujące się wojska do najbliższego odpowiedniego zamku sojusznika w tym samym królestwie.",
+      "expectation": "Przy włączonym przywołaniu wojska wracają po ostatnim wykrytym ataku, gdy nie ma dalszego zagrożenia; w przeciwnym razie pozostają godzinę po przybyciu i wracają. Brak celu lub wojsk oraz ograniczenia gry mogą uniemożliwić ewakuację.",
+      "helper": "Wojska trafiają do najbliższego odpowiedniego zamku sojusznika w tym samym królestwie; jeśli ewakuacja się nie uda, bramy atakowanego własnego zamku mogą chronić poza Berimondem."
     }
   }
 }

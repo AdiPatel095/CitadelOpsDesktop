@@ -16,7 +16,10 @@
     "towerGuideIntro": "依照以下步驟設定自動攻塔；選取範例圖片即可放大。",
     "birdGuideIntro": "依照以下步驟設定自動駐軍避險；選取範例圖片即可放大。",
     "towerPreviewTitle": "自動攻擊高塔設定範例",
-    "birdPreviewTitle": "部隊自動庇護設定範例"
+    "birdPreviewTitle": "部隊自動庇護設定範例",
+    "stationGuideTitle": "自動駐軍避險指南",
+    "stationGuideIntro": "依照下列步驟設定自動駐軍避險；選取範例圖片即可放大檢視。",
+    "stationPreviewTitle": "自動駐軍避險設定範例"
   },
   "autoTower": {
     "recommendationIntro": "以下是日常使用的建議；儲存前請先檢查。",
@@ -310,6 +313,106 @@
       "unitOne": "虛構兵種101保留：80",
       "unitTwo": "虛構兵種102保留：40",
       "add": "新增兵種"
+    },
+    "stationGeneral": {
+      "title": "自動駐軍避險設定範例",
+      "evacuate": "開始撤離：攻擊抵達前1分鐘",
+      "protection": "目標保護期：超過3天",
+      "recall": "危險解除後召回：開啟",
+      "gate": "備用開門：關閉",
+      "castle": "虛構城堡：預留80名防禦部隊",
+      "save": "儲存變更並啟用自動駐軍避險"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "建議值適用於日常使用，僅供參考，不會變更已儲存的設定。",
+    "steps": {
+      "open": {
+        "title": "開啟自動駐軍避險設定",
+        "items": {
+          "open_settings": {
+            "label": "開啟設定",
+            "description": "在指揮中心頂端選取自動駐軍避險旁的設定按鈕。"
+          }
+        }
+      },
+      "general": {
+        "title": "設定攻擊應對方式",
+        "items": {
+          "evacuate_at": {
+            "label": "開始撤離",
+            "description": "在攻擊抵達前指定分鐘數開始撤離；若首次偵測到攻擊時已進入該時間區間，則立即開始。",
+            "recommendation": "攻擊抵達前1分鐘。"
+          },
+          "minimum_bird_days": {
+            "label": "目標最低保護天數",
+            "description": "選擇剩餘保護時間嚴格多於此天數的盟友城堡；設為0則取消最低限制。",
+            "recommendation": "3天，因此目標必須剩餘超過3天的保護時間。"
+          },
+          "recall_when_clear": {
+            "label": "危險解除後召回",
+            "description": "最後一次偵測到的攻擊結束且沒有其他來襲攻擊時，召回駐紮部隊。",
+            "recommendation": "日常使用時開啟。"
+          },
+          "open_gate_fallback": {
+            "label": "開門作為備用方案",
+            "description": "部隊無法撤離時，此選項會在貝里蒙德以外的王國為遭攻擊的己方城堡開門6小時。",
+            "recommendation": "除非希望撤離失敗時自動開門，否則維持關閉。"
+          },
+          "protection_mode": {
+            "label": "已購買的保護模式",
+            "description": "已購買的保護模式正在準備或生效時，即使備用選項關閉，自動駐軍避險仍會在貝里蒙德以外使用城門。"
+          }
+        },
+        "image": {
+          "alt": "展示撤離時間、保護期、召回、城門及城堡預留部隊的虛構設定",
+          "caption": "儲存前檢查四項應對設定與每座城堡的防禦預留部隊。"
+        }
+      },
+      "reserves": {
+        "title": "選擇每座城堡留守的部隊",
+        "items": {
+          "add_troops": {
+            "label": "新增部隊",
+            "description": "選擇留在城堡的部隊類型；預留清單為空時，除了工具以外的所有合格部隊都可撤離。",
+            "recommendation": "保留日常防禦駐軍，讓多餘的攻擊部隊可以移動。"
+          },
+          "quantity": {
+            "label": "數量",
+            "description": "設定每種選定部隊在這座城堡留守的數量；0表示不預留該類型。",
+            "recommendation": "使用這座城堡日常防禦所需的數量。"
+          },
+          "edit_defense_troops": {
+            "label": "編輯防禦部隊",
+            "description": "重新開啟部隊選擇器，修改這座城堡預留部隊的類型或數量。"
+          },
+          "remove_defense_troop": {
+            "label": "移除防禦部隊",
+            "description": "移除預留卡片後，不再將該類型部隊留在城堡。"
+          }
+        }
+      },
+      "finish": {
+        "title": "儲存並啟用自動駐軍避險",
+        "items": {
+          "save_changes": {
+            "label": "儲存變更",
+            "description": "離開設定前儲存時間、開關及每座城堡的預留部隊。"
+          },
+          "auto_station_switch": {
+            "label": "自動駐軍避險開關",
+            "description": "儲存後在指揮中心頂端啟用自動駐軍避險，以監測來襲的玩家攻擊。",
+            "recommendation": "檢查預留部隊後，為日常防護開啟。"
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "自動駐軍避險",
+      "summary": "在來襲攻擊前移動合格部隊",
+      "description": "玩家攻擊臨近時，自動駐軍避險會將合格部隊移動至同一王國中最近的合適盟友城堡。",
+      "expectation": "開啟召回時，部隊會在最後一次偵測到的攻擊結束且沒有剩餘威脅後返回；否則會在抵達後停留一小時再返回。沒有合適目標或部隊，以及遊戲限制，都可能使撤離失敗。",
+      "helper": "部隊前往同一王國中最近的合格盟友城堡；撤離失敗時，貝里蒙德以外遭攻擊的己方城堡可藉由開門獲得保護。"
     }
   }
 }

@@ -16,7 +16,10 @@
     "towerGuideIntro": "Määritä Automaattiset tornihyökkäykset näiden vaiheiden avulla; suurenna esimerkkikuva valitsemalla se.",
     "birdGuideIntro": "Määritä Joukkojen automaattinen suojaan siirtäminen näiden vaiheiden avulla; suurenna esimerkkikuva valitsemalla se.",
     "towerPreviewTitle": "Esimerkki automaattisten tornihyökkäysten asetuksista",
-    "birdPreviewTitle": "Esimerkki joukkojen automaattisen suojaan siirtämisen asetuksista"
+    "birdPreviewTitle": "Esimerkki joukkojen automaattisen suojaan siirtämisen asetuksista",
+    "stationGuideTitle": "Automaattisen joukkojen suojauksen opas",
+    "stationGuideIntro": "Määritä automaattinen joukkojen suojaus näillä ohjeilla; suurenna esimerkkikuva valitsemalla se.",
+    "stationPreviewTitle": "Esimerkki automaattisen joukkojen suojauksen asetuksista"
   },
   "autoTower": {
     "recommendationIntro": "Nämä suositukset koskevat säännöllistä käyttöä; tarkista ne ennen tallentamista.",
@@ -310,6 +313,106 @@
       "unitOne": "Kuvitteellinen yksikkö 101 varattu: 80",
       "unitTwo": "Kuvitteellinen yksikkö 102 varattu: 40",
       "add": "Lisää yksikkö"
+    },
+    "stationGeneral": {
+      "title": "Esimerkki suojauksen asetuksista",
+      "evacuate": "Evakuoi: 1 minuutti ennen osumaa",
+      "protection": "Kohteen suoja: yli 3 päivää",
+      "recall": "Kutsu takaisin vaaran mentyä: päällä",
+      "gate": "Avaa portit varatoimena: pois",
+      "castle": "Kuvitteellinen linna: 80 puolustusjoukkoa varattu",
+      "save": "Tallenna muutokset ja ota suojaus käyttöön"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Suositukset koskevat tavallista käyttöä eivätkä muuta tallennettuja asetuksia.",
+    "steps": {
+      "open": {
+        "title": "Avaa automaattisen joukkojen suojauksen asetukset",
+        "items": {
+          "open_settings": {
+            "label": "Avaa asetukset",
+            "description": "Valitse komentokeskuksen yläosassa automaattisen joukkojen suojauksen vieressä oleva asetusnäppäin."
+          }
+        }
+      },
+      "general": {
+        "title": "Määritä vastaus hyökkäykseen",
+        "items": {
+          "evacuate_at": {
+            "label": "Evakuoi",
+            "description": "Aloita evakuointi näin monta minuuttia ennen osumaa tai heti, jos hyökkäys havaitaan vasta aikarajan sisällä.",
+            "recommendation": "1 minuutti ennen osumaa."
+          },
+          "minimum_bird_days": {
+            "label": "Kohteen suojapäivien vähimmäismäärä",
+            "description": "Valitse liittolaisen linna, jolla on jäljellä enemmän kuin tämä määrä suojapäiviä; 0 poistaa vaatimuksen.",
+            "recommendation": "3 päivää, joten kohteella on oltava yli 3 päivää jäljellä."
+          },
+          "recall_when_clear": {
+            "label": "Kutsu takaisin vaaran mentyä",
+            "description": "Palauta sijoitetut joukot, kun viimeinen havaittu hyökkäys on ohi eikä uusia hyökkäyksiä ole tulossa.",
+            "recommendation": "Päällä tavallisessa käytössä."
+          },
+          "open_gate_fallback": {
+            "label": "Avaa portit varatoimena",
+            "description": "Jos joukkoja ei voida evakuoida, tämä valinta avaa hyökätyn oman linnan portit kuudeksi tunniksi muualla kuin Berimondissa.",
+            "recommendation": "Pois, ellet halua porttien avautuvan automaattisesti evakuoinnin epäonnistuessa."
+          },
+          "protection_mode": {
+            "label": "Ostettu suojaustila",
+            "description": "Kun ostettu suojaustila valmistuu tai on aktiivinen, joukkojen suojaus käyttää portteja varavalinnan ollessa pois päältäkin muualla kuin Berimondissa."
+          }
+        },
+        "image": {
+          "alt": "Kuvitteelliset asetukset evakuointiajalle, suojalle, palautukselle, porteille ja linnan varauksille",
+          "caption": "Tarkista neljä vastausasetusta ja jokaisen linnan puolustusvaraukset ennen tallennusta."
+        }
+      },
+      "reserves": {
+        "title": "Valitse jokaiseen linnaan jäävät joukot",
+        "items": {
+          "add_troops": {
+            "label": "Lisää joukkoja",
+            "description": "Valitse linnaan jätettävät joukkotyypit; ilman varausta kaikki kelvolliset muut kuin työkalujoukot voidaan evakuoida.",
+            "recommendation": "Pidä tavallinen puolustusvaruskunta kotona ja anna ylimääräisten hyökkäysjoukkojen lähteä."
+          },
+          "quantity": {
+            "label": "Määrä",
+            "description": "Määritä, kuinka monta kunkin valitun tyypin joukkoa jää linnaan; 0 ei varaa yhtään.",
+            "recommendation": "Käytä linnan tavalliseen puolustukseen tarvittavaa määrää."
+          },
+          "edit_defense_troops": {
+            "label": "Muokkaa puolustusjoukkoja",
+            "description": "Avaa joukkojen valitsin uudelleen muuttaaksesi linnan varattuja tyyppejä tai määriä."
+          },
+          "remove_defense_troop": {
+            "label": "Poista puolustusjoukko",
+            "description": "Poista varausruutu, jotta kyseistä joukkotyyppiä ei enää pidetä linnassa."
+          }
+        }
+      },
+      "finish": {
+        "title": "Tallenna ja ota suojaus käyttöön",
+        "items": {
+          "save_changes": {
+            "label": "Tallenna muutokset",
+            "description": "Tallenna ajoitus, kytkimet ja linnakohtaiset varaukset ennen asetuksista poistumista."
+          },
+          "auto_station_switch": {
+            "label": "Joukkojen suojauksen kytkin",
+            "description": "Ota automaattinen joukkojen suojaus käyttöön komentokeskuksen yläosassa tallennuksen jälkeen seurataksesi saapuvia pelaajahyökkäyksiä.",
+            "recommendation": "Päällä tavallista suojausta varten varausten tarkistamisen jälkeen."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automaattinen joukkojen suojaus",
+      "summary": "Siirrä kelvolliset joukot ennen saapuvaa hyökkäystä",
+      "description": "Pelaajahyökkäyksen lähestyessä automaattinen suojaus siirtää kelvolliset joukot saman valtakunnan lähimpään sopivaan liittolaislinnaan.",
+      "expectation": "Kun palautus on päällä, joukot palaavat viimeisen havaitun hyökkäyksen jälkeen ilman jäljellä olevaa uhkaa; muuten ne viipyvät tunnin saapumisen jälkeen ja palaavat sitten. Kohteen tai joukkojen puute ja pelin rajoitukset voivat estää evakuoinnin.",
+      "helper": "Joukot siirtyvät saman valtakunnan lähimpään sopivaan liittolaislinnaan; jos evakuointi epäonnistuu, hyökätyn oman linnan portit voivat suojata Berimondin ulkopuolella."
     }
   }
 }

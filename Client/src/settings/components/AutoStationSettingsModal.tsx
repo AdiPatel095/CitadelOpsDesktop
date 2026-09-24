@@ -1,7 +1,9 @@
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useState } from 'react';
-import { Plus, Shield } from 'lucide-react';
+import { BookOpen, Plus, Shield } from 'lucide-react';
+import { useGuideLocale } from '../../config/useGuideLocale';
+import { FeatureGuideModal } from './FeatureGuideModal';
 import { showTroopPicker, type UnitWithQuantity } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
 import {
@@ -37,6 +39,9 @@ function clampDays(value: number): number {
 }
 
 export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> = ({ isOpen, onClose }) => {
+  const { locale: guideLocale, pack: guidePack } = useGuideLocale();
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+  useEffect(() => { if (!isOpen) setIsGuideOpen(false); }, [isOpen]);
   const { t: localizeStatic } = useStaticLocale();
   const { state: gameState, configuration } = useCitadelAPI();
   const castles = castleOptionsFromState(gameState);
@@ -108,6 +113,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
   };
 
   return (
+    <>
     <SettingsModal
       isOpen={isOpen}
       onClose={handleClose}
@@ -115,6 +121,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
       title={localizeStatic("ui.settings.components.autoStationSettingsModal.title.auto.station.settings.eb56c8a6")}
       icon={<Shield className="h-5 w-5" />}
       description={localizeStatic("ui.settings.components.autoStationSettingsModal.description.choose.the.exact.troops.that.stay.behind.a5d0c68a")}
+      titleTrailing={<Button variant="outline" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={guideLocale}>{guidePack.ui.guideButton}</span></Button>}
       onSave={save}
       saveLabel="Save changes"
       isSaving={isSaving}
@@ -169,7 +176,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
             />
           </div>
           <p className="mt-4 text-xs leading-relaxed text-text-muted">
-            <LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.station.targets.are.the.nearest.protected.alliance.b2392f9b" /></p>
+            <span lang={guideLocale} dir={guideLocale === 'ar' ? 'rtl' : 'ltr'}>{guidePack.autoStation.feature.helper}</span></p>
         </Card>
 
         <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto pr-1">
@@ -219,5 +226,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
         </div>
       </div>
     </SettingsModal>
+    <FeatureGuideModal feature="autoStation" isOpen={isOpen && isGuideOpen} onClose={() => setIsGuideOpen(false)} />
+    </>
   );
 };

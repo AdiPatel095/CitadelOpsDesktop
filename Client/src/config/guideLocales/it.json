@@ -16,7 +16,10 @@
     "towerGuideIntro": "Segui questi passaggi per configurare gli Attacchi automatici alle torri; seleziona un’immagine di esempio per ingrandirla.",
     "birdGuideIntro": "Segui questi passaggi per configurare il Riparo automatico delle truppe; seleziona un’immagine di esempio per ingrandirla.",
     "towerPreviewTitle": "Esempio di configurazione degli Attacchi automatici alle torri",
-    "birdPreviewTitle": "Esempio di configurazione del Riparo automatico delle truppe"
+    "birdPreviewTitle": "Esempio di configurazione del Riparo automatico delle truppe",
+    "stationGuideTitle": "Guida al ricovero automatico delle truppe",
+    "stationGuideIntro": "Segui questi passaggi per configurare il ricovero automatico delle truppe; seleziona l'immagine di esempio per ingrandirla.",
+    "stationPreviewTitle": "Esempio di configurazione del ricovero automatico"
   },
   "autoTower": {
     "recommendationIntro": "Questi consigli riguardano l’uso regolare; controllali prima di salvare.",
@@ -310,6 +313,106 @@
       "unitOne": "Unità fittizia 101 riservata: 80",
       "unitTwo": "Unità fittizia 102 riservata: 40",
       "add": "Aggiungi unità"
+    },
+    "stationGeneral": {
+      "title": "Esempio di impostazioni del ricovero automatico",
+      "evacuate": "Evacua a: 1 minuto prima dell'impatto",
+      "protection": "Protezione della destinazione: più di 3 giorni",
+      "recall": "Richiama quando il pericolo è passato: attivo",
+      "gate": "Apertura cancelli di riserva: disattiva",
+      "castle": "Castello fittizio: 80 truppe difensive riservate",
+      "save": "Salva le modifiche e attiva il ricovero automatico"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Questi valori sono consigliati per l'uso regolare del ricovero automatico e non modificano le impostazioni salvate.",
+    "steps": {
+      "open": {
+        "title": "Apri le impostazioni del ricovero automatico",
+        "items": {
+          "open_settings": {
+            "label": "Apri impostazioni",
+            "description": "Nella parte superiore del centro di comando, seleziona il pulsante delle impostazioni accanto al ricovero automatico."
+          }
+        }
+      },
+      "general": {
+        "title": "Imposta la risposta agli attacchi",
+        "items": {
+          "evacuate_at": {
+            "label": "Evacua a",
+            "description": "Avvia l'evacuazione questo numero di minuti prima dell'impatto, oppure subito se l'attacco viene rilevato entro tale intervallo.",
+            "recommendation": "1 minuto prima dell'impatto."
+          },
+          "minimum_bird_days": {
+            "label": "Giorni minimi di protezione della destinazione",
+            "description": "Scegli un castello alleato con più di questo numero di giorni di protezione residui; 0 elimina il minimo.",
+            "recommendation": "3 giorni, quindi la destinazione deve averne più di 3 residui."
+          },
+          "recall_when_clear": {
+            "label": "Richiama quando il pericolo è passato",
+            "description": "Riporta le truppe stanziate quando l'ultimo attacco rilevato è passato e non restano attacchi in arrivo.",
+            "recommendation": "Attivo per l'uso normale."
+          },
+          "open_gate_fallback": {
+            "label": "Apertura cancelli di riserva",
+            "description": "Se le truppe non possono essere evacuate, questa opzione apre per sei ore i cancelli del castello posseduto sotto attacco, tranne a Berimond.",
+            "recommendation": "Disattivo a meno che tu non voglia l'apertura automatica dopo un'evacuazione fallita."
+          },
+          "protection_mode": {
+            "label": "Modalità Protezione acquistata",
+            "description": "Quando la modalità Protezione acquistata è in preparazione o attiva, il ricovero automatico usa i cancelli anche con l'opzione disattivata, tranne a Berimond."
+          }
+        },
+        "image": {
+          "alt": "Impostazioni fittizie del ricovero automatico con tempi di evacuazione, protezione, richiamo, cancelli e riserve",
+          "caption": "Controlla le quattro opzioni di risposta e le riserve difensive di ogni castello prima di salvare."
+        }
+      },
+      "reserves": {
+        "title": "Scegli le truppe da tenere in ogni castello",
+        "items": {
+          "add_troops": {
+            "label": "Aggiungi truppe",
+            "description": "Scegli i tipi di truppe da tenere nel castello; senza riserve, tutte le truppe idonee diverse dagli strumenti possono essere evacuate.",
+            "recommendation": "Tieni la guarnigione difensiva abituale e lascia partire le truppe d'attacco in eccesso."
+          },
+          "quantity": {
+            "label": "Quantità",
+            "description": "Indica quante truppe di ogni tipo scelto restano in questo castello; 0 non ne riserva nessuna.",
+            "recommendation": "Usa il numero necessario alla normale difesa del castello."
+          },
+          "edit_defense_troops": {
+            "label": "Modifica truppe difensive",
+            "description": "Riapri il selettore delle truppe per cambiare tipi o quantità riservati a questo castello."
+          },
+          "remove_defense_troop": {
+            "label": "Rimuovi truppa difensiva",
+            "description": "Rimuovi una tessera di riserva per non trattenere più quel tipo di truppa nel castello."
+          }
+        }
+      },
+      "finish": {
+        "title": "Salva e attiva il ricovero automatico",
+        "items": {
+          "save_changes": {
+            "label": "Salva modifiche",
+            "description": "Salva tempi, interruttori e riserve per castello prima di uscire dalle impostazioni."
+          },
+          "auto_station_switch": {
+            "label": "Interruttore del ricovero automatico",
+            "description": "Attiva il ricovero automatico in cima al centro di comando dopo aver salvato per monitorare gli attacchi dei giocatori in arrivo.",
+            "recommendation": "Attivo per la protezione regolare dopo aver verificato le riserve."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Ricovero automatico delle truppe",
+      "summary": "Sposta le truppe idonee prima di un attacco in arrivo",
+      "description": "Quando si avvicina un attacco di un giocatore, il ricovero automatico sposta le truppe idonee nel castello alleato adatto più vicino dello stesso regno.",
+      "expectation": "Con il richiamo attivo, le truppe tornano dopo l'ultimo attacco rilevato quando non restano minacce; altrimenti rimangono un'ora dopo l'arrivo e poi tornano. La mancanza di una destinazione o di truppe e i limiti del gioco possono impedire l'evacuazione.",
+      "helper": "Le truppe vanno al castello alleato idoneo più vicino dello stesso regno; se l'evacuazione fallisce, i cancelli del castello posseduto sotto attacco possono proteggerlo fuori da Berimond."
     }
   }
 }

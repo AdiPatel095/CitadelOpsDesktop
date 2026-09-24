@@ -16,7 +16,10 @@
     "towerGuideIntro": "Ezekkel a lépésekkel állítsd be az Automatikus tornyokat; nagyításhoz válassz ki egy példaképet.",
     "birdGuideIntro": "Ezekkel a lépésekkel állítsd be az Automatikus csapatmenedéket; nagyításhoz válassz ki egy példaképet.",
     "towerPreviewTitle": "Automatikus toronytámadások · beállítási példa",
-    "birdPreviewTitle": "Csapatok automatikus menedékbe helyezése · beállítási példa"
+    "birdPreviewTitle": "Csapatok automatikus menedékbe helyezése · beállítási példa",
+    "stationGuideTitle": "Az automatikus csapatvédelem útmutatója",
+    "stationGuideIntro": "Az automatikus csapatvédelmet ezekkel a lépésekkel állíthatod be; a példaképre kattintva nagyíthatod fel.",
+    "stationPreviewTitle": "Példa az automatikus csapatvédelem beállítására"
   },
   "autoTower": {
     "recommendationIntro": "Ezek a szokásos használatra vonatkozó ajánlások; mentés előtt nézd át őket.",
@@ -310,6 +313,106 @@
       "unitOne": "Kitalált 101-es egység tartalékban: 80",
       "unitTwo": "Kitalált 102-es egység tartalékban: 40",
       "add": "Egység hozzáadása"
+    },
+    "stationGeneral": {
+      "title": "Példa csapatvédelmi beállításokra",
+      "evacuate": "Kiürítés: 1 perccel az ütközés előtt",
+      "protection": "Cél védelme: több mint 3 nap",
+      "recall": "Visszahívás veszély után: bekapcsolva",
+      "gate": "Kapunyitás tartalékként: kikapcsolva",
+      "castle": "Kitalált vár: 80 védőcsapat tartalékban",
+      "save": "Mentsd a változásokat, majd kapcsold be a csapatvédelmet"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Az ajánlások a rendszeres használatra vonatkoznak, és nem módosítják a mentett beállításokat.",
+    "steps": {
+      "open": {
+        "title": "Nyisd meg az automatikus csapatvédelem beállításait",
+        "items": {
+          "open_settings": {
+            "label": "Beállítások megnyitása",
+            "description": "A parancsnoki központ tetején válaszd az automatikus csapatvédelem melletti beállításgombot."
+          }
+        }
+      },
+      "general": {
+        "title": "Állítsd be a támadásra adott választ",
+        "items": {
+          "evacuate_at": {
+            "label": "Kiürítés ekkor",
+            "description": "Az ütközés előtt ennyi perccel kezdd meg a kiürítést, vagy azonnal, ha a támadást csak az időablakon belül észlelik.",
+            "recommendation": "1 perccel az ütközés előtt."
+          },
+          "minimum_bird_days": {
+            "label": "A cél minimális védelmi napjai",
+            "description": "Olyan szövetséges várat válassz, amelynek ennél több védelmi napja maradt; a 0 megszünteti a minimumot.",
+            "recommendation": "3 nap, tehát a cél védelméből több mint 3 nap maradjon."
+          },
+          "recall_when_clear": {
+            "label": "Visszahívás veszély után",
+            "description": "Hívd haza az állomásozó csapatokat, amikor az utolsó észlelt támadás elmúlt, és nincs további bejövő támadás.",
+            "recommendation": "Bekapcsolva a szokásos használathoz."
+          },
+          "open_gate_fallback": {
+            "label": "Kapunyitás tartalékként",
+            "description": "Ha a csapatok nem evakuálhatók, ez a lehetőség hat órára kinyitja a megtámadott saját vár kapuit, Berimond kivételével.",
+            "recommendation": "Kikapcsolva, hacsak nem szeretnél automatikus kapunyitást a sikertelen kiürítés után."
+          },
+          "protection_mode": {
+            "label": "Vásárolt védelmi mód",
+            "description": "Amikor a vásárolt védelmi mód előkészítés alatt áll vagy aktív, a csapatvédelem kikapcsolt tartalék mellett is kapukat használ, Berimond kivételével."
+          }
+        },
+        "image": {
+          "alt": "Kitalált beállítások kiürítési idővel, védelemmel, visszahívással, kapukkal és várbeli tartalékokkal",
+          "caption": "Mentés előtt ellenőrizd a négy válaszbeállítást és minden vár védelmi tartalékát."
+        }
+      },
+      "reserves": {
+        "title": "Válaszd ki a várban maradó csapatokat",
+        "items": {
+          "add_troops": {
+            "label": "Csapatok hozzáadása",
+            "description": "Válaszd ki a várban maradó csapattípusokat; tartalék nélkül az összes alkalmas, nem eszköz típusú csapat evakuálható.",
+            "recommendation": "Tartsd otthon a szokásos védő helyőrséget, és engedd távozni a felesleges támadó csapatokat."
+          },
+          "quantity": {
+            "label": "Mennyiség",
+            "description": "Add meg, hány csapat marad minden kiválasztott típusból a várban; a 0 egyet sem tartalékol.",
+            "recommendation": "A vár szokásos védelméhez szükséges mennyiséget használd."
+          },
+          "edit_defense_troops": {
+            "label": "Védőcsapatok szerkesztése",
+            "description": "Nyisd meg újra a csapatválasztót a vár tartalék típusainak vagy mennyiségeinek módosításához."
+          },
+          "remove_defense_troop": {
+            "label": "Védőcsapat eltávolítása",
+            "description": "Távolíts el egy tartaléklapkát, hogy az adott csapattípus ne maradjon tovább a várban."
+          }
+        }
+      },
+      "finish": {
+        "title": "Mentsd és kapcsold be a csapatvédelmet",
+        "items": {
+          "save_changes": {
+            "label": "Változtatások mentése",
+            "description": "A beállítások elhagyása előtt mentsd az időzítést, a kapcsolókat és a várankénti tartalékokat."
+          },
+          "auto_station_switch": {
+            "label": "Csapatvédelmi kapcsoló",
+            "description": "Mentés után kapcsold be az automatikus csapatvédelmet a parancsnoki központ tetején a bejövő játékostámadások figyeléséhez.",
+            "recommendation": "Bekapcsolva a rendszeres védelemhez, a tartalékok ellenőrzése után."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatikus csapatvédelem",
+      "summary": "Mozgasd el az alkalmas csapatokat a bejövő támadás előtt",
+      "description": "Közeledő játékostámadáskor az automatikus csapatvédelem az alkalmas csapatokat az azonos királyság legközelebbi megfelelő szövetséges várába küldi.",
+      "expectation": "Bekapcsolt visszahívással a csapatok az utolsó észlelt támadás után térnek vissza, amikor már nincs fenyegetés; különben érkezés után egy órát maradnak, majd hazatérnek. A cél vagy a csapatok hiánya és a játék korlátai megakadályozhatják a kiürítést.",
+      "helper": "A csapatok az azonos királyság legközelebbi megfelelő szövetséges várába mennek; sikertelen kiürítéskor a megtámadott saját vár kapui Berimondon kívül védelmet adhatnak."
     }
   }
 }

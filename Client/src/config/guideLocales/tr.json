@@ -16,7 +16,10 @@
     "towerGuideIntro": "Otomatik Kuleler'i kurmak için bu adımları izleyin; örnek resmi seçerek büyütün.",
     "birdGuideIntro": "Otomatik Asker Koruma'yı kurmak için bu adımları izleyin; örnek resmi seçerek büyütün.",
     "towerPreviewTitle": "Otomatik kule saldırıları · kurulum örneği",
-    "birdPreviewTitle": "Birlikleri otomatik korunaklı alana taşıma · kurulum örneği"
+    "birdPreviewTitle": "Birlikleri otomatik korunaklı alana taşıma · kurulum örneği",
+    "stationGuideTitle": "Otomatik birlik koruma rehberi",
+    "stationGuideIntro": "Otomatik birlik korumasını ayarlamak için bu adımları izleyin; örnek resmi büyütmek için seçin.",
+    "stationPreviewTitle": "Otomatik birlik koruma ayarı örneği"
   },
   "autoTower": {
     "recommendationIntro": "Bunlar düzenli kullanım önerileridir; kaydetmeden önce gözden geçirin.",
@@ -310,6 +313,106 @@
       "unitOne": "Kurgusal Birim 101 yedekte: 80",
       "unitTwo": "Kurgusal Birim 102 yedekte: 40",
       "add": "Birim ekle"
+    },
+    "stationGeneral": {
+      "title": "Otomatik koruma ayarları örneği",
+      "evacuate": "Tahliye: darbeden 1 dakika önce",
+      "protection": "Hedef koruması: 3 günden fazla",
+      "recall": "Tehlike geçince geri çağır: açık",
+      "gate": "Yedek kapı açma: kapalı",
+      "castle": "Kurgusal kale: 80 savunma birliği ayrıldı",
+      "save": "Değişiklikleri kaydedip otomatik korumayı açın"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Öneriler düzenli kullanım içindir ve kayıtlı ayarları değiştirmez.",
+    "steps": {
+      "open": {
+        "title": "Otomatik birlik koruma ayarlarını açın",
+        "items": {
+          "open_settings": {
+            "label": "Ayarları aç",
+            "description": "Komuta merkezinin üst kısmında otomatik birlik korumasının yanındaki ayarlar düğmesini seçin."
+          }
+        }
+      },
+      "general": {
+        "title": "Saldırıya yanıtı ayarlayın",
+        "items": {
+          "evacuate_at": {
+            "label": "Şu sürede tahliye et",
+            "description": "Darbe gelmeden bu kadar dakika önce tahliyeyi başlatın veya saldırı bu aralıkta tespit edilirse hemen başlatın.",
+            "recommendation": "Darbeden 1 dakika önce."
+          },
+          "minimum_bird_days": {
+            "label": "Hedefte en az koruma günü",
+            "description": "Bu değerden daha fazla koruma günü kalan bir ittifak kalesi seçin; 0 alt sınırı kaldırır.",
+            "recommendation": "3 gün; hedefin 3 günden fazla koruması kalmalıdır."
+          },
+          "recall_when_clear": {
+            "label": "Tehlike geçince geri çağır",
+            "description": "Son tespit edilen saldırı geçtikten ve başka gelen saldırı kalmadıktan sonra konuşlanmış birlikleri geri getirin.",
+            "recommendation": "Normal kullanım için açık."
+          },
+          "open_gate_fallback": {
+            "label": "Yedek olarak kapıları aç",
+            "description": "Birlikler tahliye edilemiyorsa bu seçenek Berimond dışında saldırıya uğrayan kendi kalenizin kapılarını altı saat açar.",
+            "recommendation": "Tahliye başarısız olduğunda otomatik kapı açılmasını istemiyorsanız kapalı."
+          },
+          "protection_mode": {
+            "label": "Satın alınan Koruma Modu",
+            "description": "Satın alınan Koruma Modu hazırlanırken veya etkinken otomatik koruma, yedek seçenek kapalı olsa bile Berimond dışında kapıları kullanır."
+          }
+        },
+        "image": {
+          "alt": "Tahliye süresi, koruma, geri çağırma, kapılar ve kale yedeklerini gösteren kurgusal ayarlar",
+          "caption": "Kaydetmeden önce dört yanıt ayarını ve her kalenin savunma yedeğini gözden geçirin."
+        }
+      },
+      "reserves": {
+        "title": "Her kalede kalacak birlikleri seçin",
+        "items": {
+          "add_troops": {
+            "label": "Birlik ekle",
+            "description": "Kalede kalacak birlik türlerini seçin; yedek yoksa araçlar dışındaki tüm uygun birlikler tahliye edilebilir.",
+            "recommendation": "Normal savunma garnizonunu kalede tutun ve fazla saldırı birliklerinin ayrılmasına izin verin."
+          },
+          "quantity": {
+            "label": "Miktar",
+            "description": "Seçilen her türden kaç birliğin bu kalede kalacağını belirleyin; 0 hiç birlik ayırmaz.",
+            "recommendation": "Kalenin normal savunması için gereken sayıyı kullanın."
+          },
+          "edit_defense_troops": {
+            "label": "Savunma birliklerini düzenle",
+            "description": "Kale yedeğinin türlerini veya miktarlarını değiştirmek için birlik seçiciyi yeniden açın."
+          },
+          "remove_defense_troop": {
+            "label": "Savunma birliğini kaldır",
+            "description": "Bu birlik türünü kalede tutmayı bırakmak için yedek kutusunu kaldırın."
+          }
+        }
+      },
+      "finish": {
+        "title": "Otomatik korumayı kaydedin ve açın",
+        "items": {
+          "save_changes": {
+            "label": "Değişiklikleri kaydet",
+            "description": "Ayarlardan ayrılmadan önce süreyi, anahtarları ve kale başına yedekleri kaydedin."
+          },
+          "auto_station_switch": {
+            "label": "Otomatik koruma anahtarı",
+            "description": "Kaydettikten sonra gelen oyuncu saldırılarını izlemek için komuta merkezinin üstündeki otomatik korumayı açın.",
+            "recommendation": "Yedekleri gözden geçirdikten sonra düzenli koruma için açık."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Otomatik birlik koruması",
+      "summary": "Gelen saldırıdan önce uygun birlikleri taşıyın",
+      "description": "Bir oyuncu saldırısı yaklaşırken otomatik birlik koruması uygun birlikleri aynı krallıktaki en yakın uygun ittifak kalesine taşır.",
+      "expectation": "Geri çağırma açıksa birlikler son tespit edilen saldırıdan sonra tehdit kalmadığında döner; değilse varıştan sonra bir saat kalıp döner. Hedef veya birlik bulunmaması ve oyun kısıtlamaları tahliyeyi engelleyebilir.",
+      "helper": "Birlikler aynı krallıktaki en yakın uygun ittifak kalesine gider; tahliye başarısız olursa saldırıya uğrayan kendi kalenizin kapıları Berimond dışında koruma sağlayabilir."
     }
   }
 }
