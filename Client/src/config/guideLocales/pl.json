@@ -28,7 +28,10 @@
     "invasionPreviewTitle": "Przykład konfiguracji automatycznych ataków inwazyjnych",
     "nomadGuideIntro": "Wykonaj te kroki, aby skonfigurować Auto Nomadzi/Samurajowie; wybierz przykładowy panel, aby go powiększyć.",
     "nomadGuideTitle": "Przewodnik Auto Nomadzi/Samurajowie",
-    "nomadPreviewTitle": "Przykład konfiguracji Auto Nomadzi/Samurajowie"
+    "nomadPreviewTitle": "Przykład konfiguracji Auto Nomadzi/Samurajowie",
+    "advisorGuideIntro": "Wykonaj te kroki, aby skonfigurować Automatycznego Doradcę; wybierz przykładowy panel, aby go powiększyć.",
+    "advisorGuideTitle": "Przewodnik Automatycznego Doradcy",
+    "advisorPreviewTitle": "Przykład konfiguracji Automatycznego Doradcy"
   },
   "autoTower": {
     "recommendationIntro": "Te zalecenia dotyczą regularnego korzystania; sprawdź je przed zapisaniem.",
@@ -406,6 +409,43 @@
       "effect": "Włączony test zastępuje wydarzenie prawdziwym atakiem",
       "title": "Przykład sterowania testem",
       "trial": "Tymczasowy test barona rozbójnika: wyłączony"
+    },
+    "advisorDifficulty": {
+      "active": "Aktywne wydarzenie: dopasuj obecną trudność",
+      "nomad": "Nomadzi: odblokowany niezawodny poziom",
+      "samurai": "Samurajowie: odblokowany niezawodny poziom",
+      "title": "Przykład poziomów trudności wydarzenia"
+    },
+    "advisorSetup": {
+      "castle": "Źródło: zwykły zamek wydarzenia w Wielkim Cesarstwie",
+      "travel": "Premia do podróży: Pióro podróżne",
+      "preset": "Schemat: zapisana formacja aktywnego wydarzenia",
+      "title": "Przykładowe ustawienia ataku Doradcy"
+    },
+    "advisorActivation": {
+      "locked": "Jeśli zablokowany: otwórz potwierdzenie aktywacji Doradcy",
+      "paid": "Potwierdź użycie żetonu albo darmową aktywację wskazaną przez grę",
+      "save": "Zapisz ustawienia, a następnie włącz kartę Automatyzacja",
+      "title": "Przykładowy przebieg aktywacji"
+    },
+    "advisorOverview": {
+      "progress": "Bieżące ataki / żądane ataki",
+      "refresh": "Odśwież podgląd, aby odczytać bieżące sumy",
+      "results": "Zwycięstwa, porażki, utraceni żołnierze i narzędzia",
+      "title": "Przykładowy bieżący podgląd"
+    },
+    "advisorResources": {
+      "coins": "Łączny koszt monet na atak: 500 tylko jeśli wystarcza",
+      "feathers": "Zachowaj pióra: 0, chyba że potrzebne gdzie indziej",
+      "rubies": "Rubiny na atak: 0 przy Piórze Podróży",
+      "skips": "Zachowaj 60 min: 0 przedmiotów; rezerwuj 5 godz. i 24 godz. według potrzeb",
+      "title": "Przykładowe budżety zasobów"
+    },
+    "advisorSizing": {
+      "actual": "Rzeczywista seria: ograniczona zasobami i czasem",
+      "maximum": "Maksymalna liczba ataków: 9 999",
+      "time": "Niewykorzystany czas wydarzenia: 30 minut",
+      "title": "Przykładowy rozmiar serii"
     }
   },
   "autoStation": {
@@ -947,5 +987,194 @@
       "summary": "Rozwijaj i atakuj obozy nomadów lub samurajów"
     },
     "recommendationIntro": "Zalecane wartości opisują zwykłe użycie Auto Nomadzi/Samurajowie; są wskazówką i nie zmieniają zapisanych ustawień."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "Włączony po sprawdzeniu i zapisaniu zamierzonych ustawień.",
+            "description": "Po sprawdzeniu ustawień włącz Automatycznego Doradcę na karcie Automatyzacja; już odblokowany Doradca może natychmiast rozpocząć serię.",
+            "label": "Przełącznik Automatycznego Doradcy"
+          },
+          "save_settings": {
+            "label": "Zapisz ustawienia",
+            "description": "Przed zamknięciem okna zapisz zamek źródłowy, schemat, poziomy trudności, rozmiar serii i budżety zasobów."
+          },
+          "activate_advisor": {
+            "description": "Jeśli Doradca jest zablokowany, wybierz Aktywuj Doradcę, aby otworzyć potwierdzenie dla bieżącego wydarzenia.",
+            "label": "Aktywuj Doradcę"
+          },
+          "activate_and_spend": {
+            "description": "Wyślij potwierdzoną aktywację przy użyciu odpowiedniego żetonu wydarzenia lub uniwersalnego żetonu Doradcy; darmowe wydarzenie pokazuje przycisk aktywacji Doradcy.",
+            "label": "Aktywuj i wydaj żeton"
+          },
+          "cancel_activation": {
+            "description": "Zamknij potwierdzenie bez wysyłania aktywacji ani wydawania żetonu.",
+            "label": "Anuluj aktywację"
+          },
+          "confirm_paid_activation": {
+            "description": "Potwierdź, że aktywacja Doradcy może zużyć żeton wydarzenia lub żeton uniwersalny, chyba że gra wskazuje, że to wydarzenie jest darmowe.",
+            "label": "Potwierdź płatną aktywację"
+          }
+        },
+        "image": {
+          "alt": "Ilustracyjny przykład zapisu ustawień Automatycznego Doradcy i aktywacji żetonem",
+          "caption": "Zapisanie lub włączenie nie zużywa żetonu; osobno potwierdzona aktywacja może go zużyć."
+        },
+        "title": "Zapisz, włącz i aktywuj dostęp do Doradcy"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "Trudność nomadów",
+            "recommendation": "Użyj najwyższego odblokowanego poziomu, z którym zwykły skład radzi sobie niezawodnie.",
+            "description": "Wybierz odblokowany poziom trudności Nomadów, który będzie ustawiany przy rozpoczęciu wydarzenia."
+          },
+          "samurai_difficulty": {
+            "label": "Trudność samurajów",
+            "recommendation": "Użyj najwyższego odblokowanego poziomu, z którym zwykły skład radzi sobie niezawodnie.",
+            "description": "Wybierz odblokowany poziom trudności Samurajów, który będzie ustawiany przy rozpoczęciu wydarzenia."
+          },
+          "active_difficulty": {
+            "description": "Dopasuj bieżący poziom trudności aktywnego wydarzenia, inaczej automatyzacja zaczeka zamiast go zmieniać.",
+            "label": "Poziom trudności aktywnego wydarzenia"
+          }
+        },
+        "title": "Wybierz poziomy trudności obu wydarzeń",
+        "image": {
+          "alt": "Ilustracyjne poziomy trudności Doradcy Nomadów i Samurajów",
+          "caption": "Zapisz poziomy trudności obu wydarzeń i dopasuj poziom do już trwającego wydarzenia."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Przyspieszenie podróży konnej",
+            "recommendation": "Pióro podróżne dla szybkiej podróży.",
+            "description": "Wybierz dla serii podróż za pióra, monety lub rubiny."
+          },
+          "open_settings": {
+            "label": "Otwórz ustawienia",
+            "description": "Na stronie Automatyzacja wybierz przycisk ustawień na karcie Automatyczny Doradca."
+          },
+          "source_castle": {
+            "label": "Zamek źródłowy",
+            "recommendation": "Użyj zwykłego zamku wydarzenia z wystarczającą liczbą wojsk i narzędzi.",
+            "description": "Wybierz zamek w Wielkim Cesarstwie, który dostarcza żołnierzy i narzędzia do serii Doradcy."
+          },
+          "attack_preset": {
+            "description": "Wybierz zapisany schemat ataku, którego żołnierze, narzędzia i formacja są kopiowane dla każdego żądanego ataku.",
+            "label": "Schemat ataku Doradcy",
+            "recommendation": "Najpierw utwórz regularny schemat dla aktywnego wydarzenia Nomadów lub Samurajów, a następnie go wybierz."
+          },
+          "complete_copies": {
+            "description": "Dostępne zasoby i pełne kopie schematu mogą zmniejszyć serię poniżej maksymalnej liczby ataków.",
+            "label": "Pełne kopie schematu"
+          }
+        },
+        "image": {
+          "alt": "Ilustracyjny zamek źródłowy, schemat ataku i ustawienia podróży Automatycznego Doradcy",
+          "caption": "Przed ustawieniem podróży wybierz zamek źródłowy w Wielkim Cesarstwie i zapisany schemat wydarzenia."
+        },
+        "title": "Otwórz ustawienia Automatycznego Doradcy"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "Zachowaj tę liczbę 24-godzinnych skoków czasu jako niewykorzystaną rezerwę.",
+            "label": "Zachowaj 24 godz.",
+            "recommendation": "Odłóż zapas potrzebny do budowy lub innych działań."
+          },
+          "keep_5h": {
+            "description": "Zachowaj tę liczbę 5-godzinnych skoków czasu jako niewykorzystaną rezerwę.",
+            "label": "Zachowaj 5 godz.",
+            "recommendation": "Odłóż zapas potrzebny do budowy lub innych działań."
+          },
+          "keep_60m": {
+            "description": "Zachowaj tę liczbę 60-minutowych skoków czasu jako niewykorzystaną rezerwę.",
+            "label": "Zachowaj 60 min",
+            "recommendation": "0 przy regularnych seriach Doradcy."
+          },
+          "coin_cost": {
+            "description": "Oszacuj pełny koszt monet na atak do obliczenia dostępnego budżetu przed rozpoczęciem, bez zmiany cen w grze.",
+            "label": "Łączny koszt monet na atak",
+            "recommendation": "500 tylko jeśli pokrywa rzeczywisty pełny koszt; w przeciwnym razie użyj wyższej zmierzonej sumy."
+          },
+          "keep_coins": {
+            "description": "Wyłącz tyle monet z budżetu serii.",
+            "label": "Zachowaj monety",
+            "recommendation": "Zachowaj zwykły budżet na rekrutację i budowę."
+          },
+          "keep_feathers": {
+            "description": "Wyłącz tyle piór podróży z budżetu serii.",
+            "label": "Zachowaj pióra",
+            "recommendation": "0, chyba że rezerwujesz pióra dla innych funkcji."
+          },
+          "keep_rubies": {
+            "description": "Wyłącz tyle rubinów z budżetu serii.",
+            "label": "Zachowaj rubiny",
+            "recommendation": "Zachowaj saldo potrzebne na inne działania."
+          },
+          "ruby_cost": {
+            "description": "Oszacuj koszt podróży w rubinach na atak; przy wyborze podróży za rubiny wymagana jest wartość dodatnia.",
+            "label": "Rubiny na atak",
+            "recommendation": "0 przy Piórze Podróży; dla podróży za rubiny użyj rzeczywistego dodatniego kosztu."
+          }
+        },
+        "image": {
+          "alt": "Ilustracyjne rezerwy monet, rubinów, piór i przeskoków czasowych Automatycznego Doradcy",
+          "caption": "Pola kosztów są szacunkami planowania; wartości „zachowaj” oznaczają zasoby lub przeskoki czasowe pozostawione bez użycia."
+        },
+        "title": "Ustaw budżety zasobów i rezerwy"
+      },
+      "overview": {
+        "image": {
+          "alt": "Ilustracyjny podgląd postępu i strat Automatycznego Doradcy",
+          "caption": "Podgląd pokazuje postęp serii i straty bez rozpoczynania kolejnej serii."
+        },
+        "items": {
+          "live_progress": {
+            "description": "Odczytaj w podglądzie bieżącą liczbę ataków, żądaną liczbę, zwycięstwa, porażki, utraconych żołnierzy i narzędzia.",
+            "label": "Bieżąca seria Doradcy"
+          },
+          "no_relaunch": {
+            "description": "Zakończona lub anulowana seria tego samego wydarzenia nie rozpoczyna się automatycznie ponownie.",
+            "label": "Zakończona lub anulowana seria"
+          },
+          "refresh_overview": {
+            "description": "Poproś o aktualny postęp serii Doradcy, zwycięstwa, porażki i straty.",
+            "label": "Odśwież podgląd"
+          }
+        },
+        "title": "Sprawdź bieżącą serię Doradcy"
+      },
+      "sizing": {
+        "image": {
+          "alt": "Ilustracyjna liczba ataków Automatycznego Doradcy i ustawienia czasu wydarzenia",
+          "caption": "Żądana liczba ataków jest przed rozpoczęciem ograniczana przez dostępne zasoby i czas wydarzenia."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "Ustaw górny limit ataków w tej jednej serii Doradcy; zasoby i czas pozostały do końca wydarzenia mogą zmniejszyć rzeczywistą liczbę.",
+            "label": "Maksymalna liczba ataków",
+            "recommendation": "9 999, aby dostępne zasoby i czas wydarzenia wyznaczyły rozmiar serii."
+          },
+          "minimum_remaining": {
+            "description": "Pozostaw tyle minut niewykorzystanych w obliczeniu czasu wydarzenia przed rozpoczęciem.",
+            "label": "Zakończ przed końcem wydarzenia",
+            "recommendation": "30 minut; to nie jest ciągły licznik anulujący serię."
+          }
+        },
+        "title": "Ustaw rozmiar serii i czas wydarzenia"
+      }
+    },
+    "feature": {
+      "description": "Auto Doradca rozpoczyna jedną serię ataków Doradcy Nomadów lub Samurajów, której rozmiar zależy od dostępnych zasobów i czasu pozostałego do końca wydarzenia.",
+      "expectation": "Seria czeka na zgodny poziom trudności aktywnego wydarzenia i odblokowany dostęp do Doradcy; zapisanie lub włączenie nie zużywa żetonu, lecz potwierdzona aktywacja może go zużyć.",
+      "name": "Automatyczny Doradca",
+      "summary": "Rozpocznij jedną serię Doradcy Nomadów lub Samurajów dostosowaną do zasobów"
+    },
+    "recommendationIntro": "Zalecane wartości dotyczą regularnego używania Automatycznego Doradcy; są wskazówkami i nie zmieniają zapisanych ustawień."
   }
 }

@@ -28,7 +28,10 @@
     "invasionPreviewTitle": "Automatinių invazijos atakų sąrankos pavyzdys",
     "nomadGuideIntro": "Vadovaukis šiais žingsniais nustatydamas automatinius klajoklius/samurajus; pasirink pavyzdžio skydelį jį padidinti.",
     "nomadGuideTitle": "Automatinių klajoklių/samurajų gidas",
-    "nomadPreviewTitle": "Automatinių klajoklių/samurajų nustatymo pavyzdys"
+    "nomadPreviewTitle": "Automatinių klajoklių/samurajų nustatymo pavyzdys",
+    "advisorGuideIntro": "Atlikite šiuos veiksmus, kad nustatytumėte Automatinį patarėją; pasirinkite pavyzdžio skydelį jį padidinti.",
+    "advisorGuideTitle": "Automatinio patarėjo vadovas",
+    "advisorPreviewTitle": "Automatinio patarėjo nustatymo pavyzdys"
   },
   "autoTower": {
     "recommendationIntro": "Tai rekomendacijos įprastam naudojimui; peržiūrėkite jas prieš išsaugodami.",
@@ -406,6 +409,43 @@
       "effect": "Įjungtas bandymas pakeičia renginį tikru puolimu",
       "title": "Bandymo valdiklių pavyzdys",
       "trial": "Laikinas plėšikų barono bandymas: išjungta"
+    },
+    "advisorDifficulty": {
+      "active": "Aktyvus renginys: atitik dabartinį sudėtingumą",
+      "nomad": "Klajokliai: atrakintas patikimas sudėtingumas",
+      "samurai": "Samurajai: atrakintas patikimas sudėtingumas",
+      "title": "Renginių sunkumų pavyzdys"
+    },
+    "advisorSetup": {
+      "castle": "Pradžia: įprasta renginio pilis Didžiojoje imperijoje",
+      "travel": "Kelionės pagreitis: Kelionės plunksna",
+      "preset": "Šablonas: išsaugota aktyvaus renginio rikiuotė",
+      "title": "Patarėjo atakos nustatymo pavyzdys"
+    },
+    "advisorActivation": {
+      "locked": "Jei užrakinta: atverkite patarėjo aktyvinimo patvirtinimą",
+      "paid": "Patvirtinkite žetono naudojimą arba žaidimo nurodytą nemokamą aktyvinimą",
+      "save": "Išsaugokite nustatymus, tada įjunkite Automatizavimo kortelę",
+      "title": "Aktyvinimo eigos pavyzdys"
+    },
+    "advisorOverview": {
+      "progress": "Dabartinės atakos / prašomos atakos",
+      "refresh": "Atnaujinkite apžvalgą naujausioms sumoms",
+      "results": "Pergalės, pralaimėjimai, prarasti kariai ir įrankiai",
+      "title": "Vykstančios apžvalgos pavyzdys"
+    },
+    "advisorResources": {
+      "coins": "Visos monetos vienai atakai: 500 tik jei pakanka",
+      "feathers": "Palikti plunksnas: 0, jei nereikia kitur",
+      "rubies": "Rubinai vienai atakai: 0 su Kelionės plunksna",
+      "skips": "Palikti 60 min.: 0 daiktų; pagal poreikį saugokite 5 val. ir 24 val.",
+      "title": "Išteklių biudžetų pavyzdys"
+    },
+    "advisorSizing": {
+      "actual": "Tikra serija: riboja ištekliai ir laikas",
+      "maximum": "Didžiausias atakų skaičius: 9 999",
+      "time": "Nepanaudotas renginio laikas: 30 minučių",
+      "title": "Serijos dydžio pavyzdys"
     }
   },
   "autoStation": {
@@ -947,5 +987,194 @@
       "summary": "Tobulink ir pulk klajoklių arba samurajų stovyklas"
     },
     "recommendationIntro": "Rekomenduojamos reikšmės apibūdina įprastą automatinių klajoklių/samurajų naudojimą; jos yra patarimas ir nekeičia išsaugotų nustatymų."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "Įjungta patikrinus ir išsaugojus norimus nustatymus.",
+            "description": "Patikrinę nustatymus įjunkite Automatinį patarėją Automatizavimo kortelėje; jau atrakintas patarėjas gali iškart pradėti seriją.",
+            "label": "Automatinio patarėjo jungiklis"
+          },
+          "save_settings": {
+            "label": "Išsaugoti nustatymus",
+            "description": "Prieš uždarydami langą išsaugokite pradinę pilį, šabloną, sudėtingumus, serijos dydį ir išteklių biudžetus."
+          },
+          "activate_advisor": {
+            "description": "Jei patarėjas užrakintas, pasirinkite Aktyvinti patarėją, kad atvertumėte dabartinio renginio patvirtinimą.",
+            "label": "Aktyvinti patarėją"
+          },
+          "activate_and_spend": {
+            "description": "Pateikite patvirtintą aktyvinimą tinkamu renginio arba universaliu patarėjo žetonu; nemokamas renginys rodo aktyvinimą be žetono.",
+            "label": "Aktyvinti ir panaudoti žetoną"
+          },
+          "cancel_activation": {
+            "description": "Uždarykite patvirtinimą nepateikę aktyvinimo ir nepanaudoję žetono.",
+            "label": "Atšaukti aktyvinimą"
+          },
+          "confirm_paid_activation": {
+            "description": "Patvirtinkite, kad patarėjo aktyvinimas gali sunaudoti renginio arba universalų žetoną, nebent žaidimas nurodo, jog šis renginys nemokamas.",
+            "label": "Patvirtinti mokamą aktyvinimą"
+          }
+        },
+        "image": {
+          "alt": "Iliustraciniai Automatinio patarėjo išsaugojimo ir aktyvinimo žetonu valdikliai",
+          "caption": "Išsaugojimas ar įjungimas žetono nenaudoja; atskirai patvirtintas aktyvinimas gali jį panaudoti."
+        },
+        "title": "Išsaugokite, įjunkite ir aktyvinkite patarėjo prieigą"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "Klajoklių sudėtingumas",
+            "recommendation": "Rinkitės aukščiausią atrakintą sunkumą, kurį įprasta jūsų sudėtis patikimai įveikia.",
+            "description": "Pasirinkite atrakintą klajoklių sudėtingumą, kuris bus nustatytas renginiui prasidėjus."
+          },
+          "samurai_difficulty": {
+            "label": "Samurajų sudėtingumas",
+            "recommendation": "Rinkitės aukščiausią atrakintą sunkumą, kurį įprasta jūsų sudėtis patikimai įveikia.",
+            "description": "Pasirinkite atrakintą samurajų sudėtingumą, kuris bus nustatytas renginiui prasidėjus."
+          },
+          "active_difficulty": {
+            "description": "Pasirinkite jau aktyvaus renginio dabartinį sudėtingumą, kitaip automatizavimas lauks, užuot jį pakeitęs.",
+            "label": "Aktyvaus renginio sudėtingumas"
+          }
+        },
+        "title": "Pasirinkite abiejų renginių sunkumus",
+        "image": {
+          "alt": "Iliustraciniai klajoklių ir samurajų patarėjo sudėtingumo pasirinkimai",
+          "caption": "Išsaugokite abiejų renginių sudėtingumus ir suderinkite jau vykstančio renginio sudėtingumą."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Kelionės žirgu pagreitinimas",
+            "recommendation": "Kelionės plunksna greitai kelionei.",
+            "description": "Serijai pasirinkite kelionę už plunksnas, monetas arba rubinus."
+          },
+          "open_settings": {
+            "label": "Atidarykite nustatymus",
+            "description": "Automatizavimo puslapyje pasirinkite Automatinio patarėjo kortelės nustatymų mygtuką."
+          },
+          "source_castle": {
+            "label": "Pradinė pilis",
+            "recommendation": "Naudokite įprastą renginio pilį su pakankamai karių ir įrankių.",
+            "description": "Pasirinkite Didžiosios imperijos pilį, kuri serijai tiekia karius ir įrankius."
+          },
+          "attack_preset": {
+            "description": "Pasirinkite išsaugotą atakos šabloną, kurio kariai, įrankiai ir rikiuotė kopijuojami kiekvienai prašomai atakai.",
+            "label": "Patarėjo atakos šablonas",
+            "recommendation": "Pirmiausia sukurkite įprastą aktyvaus klajoklių ar samurajų renginio šabloną ir jį pasirinkite."
+          },
+          "complete_copies": {
+            "description": "Turimi ištekliai ir pilnos šablono kopijos gali sumažinti seriją žemiau didžiausio atakų skaičiaus.",
+            "label": "Pilnos šablono kopijos"
+          }
+        },
+        "image": {
+          "alt": "Iliustracinė Automatinio patarėjo pradinė pilis, šablonas ir kelionės nustatymai",
+          "caption": "Prieš nustatydami kelionę pasirinkite pradinę pilį Didžiojoje imperijoje ir išsaugotą renginio šabloną."
+        },
+        "title": "Atverkite Automatinio patarėjo nustatymus"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "Palik šį 24 val. laiko šuolių kiekį nepanaudotą kaip atsargą.",
+            "label": "Palikti 24 val.",
+            "recommendation": "Atidėk statyboms ar kitai veiklai reikalingą kiekį."
+          },
+          "keep_5h": {
+            "description": "Palik šį 5 val. laiko šuolių kiekį nepanaudotą kaip atsargą.",
+            "label": "Palikti 5 val.",
+            "recommendation": "Atidėk statyboms ar kitai veiklai reikalingą kiekį."
+          },
+          "keep_60m": {
+            "description": "Palik šį 60 min. laiko šuolių kiekį nepanaudotą kaip atsargą.",
+            "label": "Palikti 60 min.",
+            "recommendation": "0 įprastoms patarėjo serijoms."
+          },
+          "coin_cost": {
+            "description": "Įvertinkite visą vienos atakos monetų kainą biudžeto skaičiavimui prieš paleidimą, nekeisdami žaidimo kainų.",
+            "label": "Visos monetos vienai atakai",
+            "recommendation": "500 tik jei padengia tikrą visą kainą; kitu atveju naudokite didesnę išmatuotą sumą."
+          },
+          "keep_coins": {
+            "description": "Neįtraukite tokio monetų kiekio į serijos biudžetą.",
+            "label": "Palikti monetas",
+            "recommendation": "Palikite įprastą verbavimo ir statybų biudžetą."
+          },
+          "keep_feathers": {
+            "description": "Neįtraukite tokio kelionės plunksnų kiekio į serijos biudžetą.",
+            "label": "Palikti plunksnas",
+            "recommendation": "0, nebent saugote plunksnas kitoms funkcijoms."
+          },
+          "keep_rubies": {
+            "description": "Neįtraukite tokio rubinų kiekio į serijos biudžetą.",
+            "label": "Palikti rubinus",
+            "recommendation": "Palikite kitoms veikloms reikalingą likutį."
+          },
+          "ruby_cost": {
+            "description": "Įvertinkite rubinų kelionės kainą vienai atakai; pasirinkus kelionę už rubinus būtina teigiama reikšmė.",
+            "label": "Rubinai vienai atakai",
+            "recommendation": "0 su Kelionės plunksna; kelionei už rubinus naudokite tikrą teigiamą kainą."
+          }
+        },
+        "image": {
+          "alt": "Iliustracinės Automatinio patarėjo monetų, rubinų, plunksnų ir laiko praleidimų atsargos",
+          "caption": "Kainos laukai yra planavimo įverčiai; paliekamos reikšmės reiškia nepanaudotus išteklius ar laiko praleidimus."
+        },
+        "title": "Nustatykite išteklių biudžetus ir atsargas"
+      },
+      "overview": {
+        "image": {
+          "alt": "Iliustracinė Automatinio patarėjo eigos ir nuostolių apžvalga",
+          "caption": "Apžvalga rodo serijos eigą ir nuostolius nepradėdama naujos serijos."
+        },
+        "items": {
+          "live_progress": {
+            "description": "Apžvalgoje skaitykite dabartinį ir prašomą atakų skaičių, pergales, pralaimėjimus, prarastus karius ir įrankius.",
+            "label": "Vykstanti patarėjo serija"
+          },
+          "no_relaunch": {
+            "description": "Užbaigta arba atšaukta to paties renginio serija automatiškai neprasideda iš naujo.",
+            "label": "Užbaigta arba atšaukta serija"
+          },
+          "refresh_overview": {
+            "description": "Paprašykite naujausių patarėjo serijos eigos, pergalių, pralaimėjimų ir nuostolių duomenų.",
+            "label": "Atnaujinti apžvalgą"
+          }
+        },
+        "title": "Peržiūrėkite vykstančią patarėjo seriją"
+      },
+      "sizing": {
+        "image": {
+          "alt": "Iliustraciniai Automatinio patarėjo atakų skaičiaus ir renginio laiko nustatymai",
+          "caption": "Prašomą skaičių prieš paleidimą riboja turimi ištekliai ir renginio laikas."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "Nustatykite viršutinę šios vienos patarėjo serijos atakų ribą; ištekliai ir likęs laikas gali sumažinti tikrą skaičių.",
+            "label": "Didžiausias atakų skaičius",
+            "recommendation": "9 999, kad serijos dydį nulemtų turimi ištekliai ir renginio laikas."
+          },
+          "minimum_remaining": {
+            "description": "Palikite tiek minučių nepanaudotų skaičiuojant renginio laiką prieš paleidimą.",
+            "label": "Sustabdyti prieš renginio pabaigą",
+            "recommendation": "30 minučių; tai nėra nuolatinis serijos atšaukimo laikmatis."
+          }
+        },
+        "title": "Nustatykite serijos dydį ir renginio laiką"
+      }
+    },
+    "feature": {
+      "description": "Automatinis patarėjas pradeda vieną klajoklių arba samurajų patarėjo atakų seriją pagal turimus išteklius ir likusį renginio laiką.",
+      "expectation": "Serija laukia tinkamo aktyvaus renginio sudėtingumo ir atrakintos patarėjo prieigos; išsaugojimas ar įjungimas žetono nenaudoja, bet patvirtintas aktyvinimas gali jį panaudoti.",
+      "name": "Automatinis patarėjas",
+      "summary": "Pradėkite vieną pagal išteklius apskaičiuotą klajoklių arba samurajų patarėjo seriją"
+    },
+    "recommendationIntro": "Rekomenduojamos reikšmės skirtos įprastam Automatinio patarėjo naudojimui; jos yra gairės ir nekeičia išsaugotų nustatymų."
   }
 }

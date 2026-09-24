@@ -9,12 +9,14 @@ const translatedSource = { ...english, ui: { ...english.ui }, panels: { ...engli
 delete (translatedSource as Partial<GuidePack>).autoFortress;
 delete (translatedSource as Partial<GuidePack>).autoInvasion;
 delete (translatedSource as Partial<GuidePack>).autoNomad;
+delete (translatedSource as Partial<GuidePack>).autoAdvisor;
 delete (translatedSource.ui as Record<string, string>).fortressGuideTitle;
 delete (translatedSource.ui as Record<string, string>).fortressGuideIntro;
 delete (translatedSource.ui as Record<string, string>).fortressPreviewTitle;
+for (const key of ['advisorGuideTitle', 'advisorGuideIntro', 'advisorPreviewTitle']) delete (translatedSource.ui as Record<string, string>)[key];
 for (const key of ['nomadGuideTitle', 'nomadGuideIntro', 'nomadPreviewTitle']) delete (translatedSource.ui as Record<string, string>)[key];
 for (const key of ['invasionGuideTitle', 'invasionGuideIntro', 'invasionPreviewTitle']) delete (translatedSource.ui as Record<string, string>)[key];
-for (const key of ['fortressKingdoms', 'fortressSupply', 'fortressAttack', 'invasionSetup', 'invasionDifficulty', 'invasionLimits', 'invasionFortify', 'nomadSetup', 'nomadDifficulty', 'nomadLimits', 'nomadCooldowns', 'nomadTrial']) delete (translatedSource.panels as Record<string, unknown>)[key];
+for (const key of ['fortressKingdoms', 'fortressSupply', 'fortressAttack', 'invasionSetup', 'invasionDifficulty', 'invasionLimits', 'invasionFortify', 'nomadSetup', 'nomadDifficulty', 'nomadLimits', 'nomadCooldowns', 'nomadTrial', 'advisorSetup', 'advisorDifficulty', 'advisorSizing', 'advisorResources', 'advisorActivation', 'advisorOverview']) delete (translatedSource.panels as Record<string, unknown>)[key];
 
 function complete(candidate: unknown, source: unknown): boolean {
   if (typeof source === 'string') return typeof candidate === 'string' && candidate.trim().length > 0;

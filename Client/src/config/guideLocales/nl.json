@@ -28,7 +28,10 @@
     "invasionPreviewTitle": "Voorbeeld van het instellen van automatische invasieaanvallen",
     "nomadGuideIntro": "Volg deze stappen om Auto Nomaden/Samoerai in te stellen; selecteer een voorbeeldpaneel om het te vergroten.",
     "nomadGuideTitle": "Gids voor Auto Nomaden/Samoerai",
-    "nomadPreviewTitle": "Instelvoorbeeld voor Auto Nomaden/Samoerai"
+    "nomadPreviewTitle": "Instelvoorbeeld voor Auto Nomaden/Samoerai",
+    "advisorGuideIntro": "Volg deze stappen om Auto Adviseur in te stellen; selecteer een voorbeeldpaneel om het te vergroten.",
+    "advisorGuideTitle": "Gids voor Auto Adviseur",
+    "advisorPreviewTitle": "Instelvoorbeeld voor Auto Adviseur"
   },
   "autoTower": {
     "recommendationIntro": "Dit zijn aanbevelingen voor regelmatig gebruik; controleer ze voordat je opslaat.",
@@ -406,6 +409,43 @@
       "effect": "Test aan vervangt het evenement door een echte aanval",
       "title": "Voorbeeld van testbediening",
       "trial": "Tijdelijke roofriddertest: uit"
+    },
+    "advisorDifficulty": {
+      "active": "Actief evenement: volg de huidige moeilijkheid",
+      "nomad": "Nomaden: vrijgespeelde betrouwbare moeilijkheid",
+      "samurai": "Samoerai: vrijgespeelde betrouwbare moeilijkheid",
+      "title": "Voorbeeld van evenementmoeilijkheden"
+    },
+    "advisorSetup": {
+      "castle": "Vertrek: gebruikelijke evenementburcht in het Grote Rijk",
+      "travel": "Reisversnelling: reisveer",
+      "preset": "Opstelling: opgeslagen formatie voor actief evenement",
+      "title": "Voorbeeld van Adviseur-aanvalsinstellingen"
+    },
+    "advisorActivation": {
+      "locked": "Bij vergrendeling: bevestiging Adviseur activeren openen",
+      "paid": "Betaald tokengebruik of door het spel gemelde gratis activering bevestigen",
+      "save": "Instellingen opslaan en daarna Automatiseringskaart inschakelen",
+      "title": "Voorbeeld van activeringsverloop"
+    },
+    "advisorOverview": {
+      "progress": "Huidige aanval / gevraagde aanvallen",
+      "refresh": "Overzicht vernieuwen voor actuele totalen",
+      "results": "Overwinningen, nederlagen, verloren eenheden en gereedschap",
+      "title": "Voorbeeld van liveoverzicht"
+    },
+    "advisorResources": {
+      "coins": "Totale munten per aanval: 500 alleen als voldoende",
+      "feathers": "Veren bewaren: 0 tenzij elders nodig",
+      "rubies": "Robijnen per aanval: 0 met Reisveer",
+      "skips": "60 min bewaren: 0 voorwerpen; 5 uur en 24 uur zo nodig reserveren",
+      "title": "Voorbeeld van middelenbudgetten"
+    },
+    "advisorSizing": {
+      "actual": "Werkelijke reeks: begrensd door middelen en tijd",
+      "maximum": "Maximumaantal aanvallen: 9.999",
+      "time": "Ongebruikte evenementtijd: 30 minuten",
+      "title": "Voorbeeld van reeksomvang"
     }
   },
   "autoStation": {
@@ -947,5 +987,194 @@
       "summary": "Nomaden- of samoeraikampen verbeteren en aanvallen"
     },
     "recommendationIntro": "Aanbevolen waarden beschrijven normaal gebruik van Auto Nomaden/Samoerai; ze zijn advies en wijzigen opgeslagen instellingen niet."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "Aan nadat je de gewenste instellingen hebt gecontroleerd en opgeslagen.",
+            "description": "Schakel Auto Adviseur na controle in op de Automatiseringskaart; bij een al vrijgespeelde Adviseur kan direct een reeks starten.",
+            "label": "Schakelaar Auto Adviseur"
+          },
+          "save_settings": {
+            "label": "Instellingen opslaan",
+            "description": "Sla bron, opstelling, moeilijkheden, reeksomvang en middelenbudgetten op voordat je dit venster sluit."
+          },
+          "activate_advisor": {
+            "description": "Is de Adviseur vergrendeld, kies Adviseur activeren om de bevestiging voor het huidige evenement te openen.",
+            "label": "Adviseur activeren"
+          },
+          "activate_and_spend": {
+            "description": "Verstuur de bevestigde activering met een geschikt evenementtoken of universeel Adviseurtoken; bij een gratis evenement staat er in plaats daarvan Adviseur activeren.",
+            "label": "Activeren en token besteden"
+          },
+          "cancel_activation": {
+            "description": "Sluit de bevestiging zonder activering te versturen of een token te besteden.",
+            "label": "Activering annuleren"
+          },
+          "confirm_paid_activation": {
+            "description": "Bevestig dat activering van de Adviseur een evenement- of universeel token kan kosten, tenzij het spel dit evenement als gratis meldt.",
+            "label": "Betaalde activering bevestigen"
+          }
+        },
+        "image": {
+          "alt": "Voorbeeld van opslaan en tokenactivering van Auto Adviseur",
+          "caption": "Opslaan of inschakelen kost geen token; de apart bevestigde activering kan er één kosten."
+        },
+        "title": "Toegang tot Adviseur opslaan, inschakelen en activeren"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "Nomadenmoeilijkheid",
+            "recommendation": "Gebruik de hoogste ontgrendelde moeilijkheid die je gebruikelijke opstelling betrouwbaar aankan.",
+            "description": "Kies een vrijgespeelde Nomadenmoeilijkheid voor het begin van dat evenement."
+          },
+          "samurai_difficulty": {
+            "label": "Samoeraimoeilijkheid",
+            "recommendation": "Gebruik de hoogste ontgrendelde moeilijkheid die je gebruikelijke opstelling betrouwbaar aankan.",
+            "description": "Kies een vrijgespeelde Samoeraimoeilijkheid voor het begin van dat evenement."
+          },
+          "active_difficulty": {
+            "description": "Volg de huidige moeilijkheid van een actief evenement, anders wacht de automatisering in plaats van die te veranderen.",
+            "label": "Moeilijkheid van actief evenement"
+          }
+        },
+        "title": "Kies de moeilijkheid voor beide evenementen",
+        "image": {
+          "alt": "Voorbeeld van de moeilijkheden van de Nomaden- en Samoerai-Adviseur",
+          "caption": "Sla beide evenementmoeilijkheden op en volg die van het al lopende evenement."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Reisversnelling met paarden",
+            "recommendation": "Reisveer voor snel reizen.",
+            "description": "Kies de reisoptie met veer, munten of robijnen voor de reeks."
+          },
+          "open_settings": {
+            "label": "Instellingen openen",
+            "description": "Kies op de pagina Automatisering de instellingenknop van de Auto-Adviseurkaart."
+          },
+          "source_castle": {
+            "label": "Vertrekburcht",
+            "recommendation": "Gebruik je gebruikelijke evenementburcht met voldoende troepen en werktuigen.",
+            "description": "Kies de burcht in het Grote Rijk die troepen en gereedschap voor de Adviseurreeks levert."
+          },
+          "attack_preset": {
+            "description": "Kies een opgeslagen aanvalsopstelling waarvan troepen, gereedschap en formatie voor elke gevraagde aanval worden gekopieerd.",
+            "label": "Adviseur-aanvalsopstelling",
+            "recommendation": "Maak eerst een gewone opstelling voor het actieve Nomaden- of Samoerai-evenement en kies die daarna."
+          },
+          "complete_copies": {
+            "description": "Beschikbare middelen en volledige kopieën van de opstelling kunnen de reeks onder het maximumaantal aanvallen brengen.",
+            "label": "Volledige kopieën van de opstelling"
+          }
+        },
+        "image": {
+          "alt": "Voorbeeld van bron, opstelling en reizen van Auto Adviseur",
+          "caption": "Kies een bronburcht in het Grote Rijk en een opgeslagen evenementopstelling voordat je de reisoptie instelt."
+        },
+        "title": "Instellingen van Auto Adviseur openen"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "Bewaar dit aantal tijdsprongen van 24 uur ongebruikt als reserve.",
+            "label": "Bewaar 24 uur",
+            "recommendation": "Reserveer de voorraad die je nodig hebt voor bouwen of andere activiteiten."
+          },
+          "keep_5h": {
+            "description": "Bewaar dit aantal tijdsprongen van 5 uur ongebruikt als reserve.",
+            "label": "Bewaar 5 uur",
+            "recommendation": "Reserveer de voorraad die je nodig hebt voor bouwen of andere activiteiten."
+          },
+          "keep_60m": {
+            "description": "Bewaar dit aantal tijdsprongen van 60 min ongebruikt als reserve.",
+            "label": "Bewaar 60 min",
+            "recommendation": "0 voor gewone Adviseurreeksen."
+          },
+          "coin_cost": {
+            "description": "Schat de totale muntkosten per aanval voor de toets vóór de start, zonder spelprijzen te veranderen.",
+            "label": "Totale munten per aanval",
+            "recommendation": "500 alleen als dit de werkelijke totale kosten dekt; gebruik anders een hoger gemeten totaal."
+          },
+          "keep_coins": {
+            "description": "Sluit dit aantal munten uit van het reeksbudget.",
+            "label": "Munten bewaren",
+            "recommendation": "Bewaar je gewone budget voor werving en bouw."
+          },
+          "keep_feathers": {
+            "description": "Sluit dit aantal reisveren uit van het reeksbudget.",
+            "label": "Veren bewaren",
+            "recommendation": "0 tenzij je veren voor andere functies reserveert."
+          },
+          "keep_rubies": {
+            "description": "Sluit dit aantal robijnen uit van het reeksbudget.",
+            "label": "Robijnen bewaren",
+            "recommendation": "Bewaar het saldo dat je voor andere activiteiten nodig hebt."
+          },
+          "ruby_cost": {
+            "description": "Schat de robijnkosten voor reizen per aanval; bij robijnreizen is een positief getal nodig.",
+            "label": "Robijnen per aanval",
+            "recommendation": "0 met Reisveer; gebruik de werkelijke positieve kosten voor robijnreizen."
+          }
+        },
+        "image": {
+          "alt": "Voorbeeld van munten-, robijnen-, veren- en tijdsprongreserves in Auto Adviseur",
+          "caption": "Kostenvelden zijn planningsschattingen; bewaarwaarden tellen ongebruikte middelen of tijdsprongvoorwerpen."
+        },
+        "title": "Middelenbudgetten en reserves instellen"
+      },
+      "overview": {
+        "image": {
+          "alt": "Voorbeeld van voortgang en verliezen van de Adviseur",
+          "caption": "Het overzicht toont voortgang en verliezen zonder een nieuwe reeks te starten."
+        },
+        "items": {
+          "live_progress": {
+            "description": "Lees in het overzicht huidige en gevraagde aanvallen, overwinningen, nederlagen en verloren eenheden en gereedschap.",
+            "label": "Lopende Adviseurreeks"
+          },
+          "no_relaunch": {
+            "description": "Een voltooide of geannuleerde reeks van hetzelfde evenement start niet vanzelf opnieuw.",
+            "label": "Voltooide of geannuleerde reeks"
+          },
+          "refresh_overview": {
+            "description": "Vraag actuele gegevens over voortgang, overwinningen, nederlagen en verliezen op.",
+            "label": "Overzicht vernieuwen"
+          }
+        },
+        "title": "Lopende Adviseurreeks bekijken"
+      },
+      "sizing": {
+        "image": {
+          "alt": "Voorbeeld van aanvalsaantal en evenementtijd in Auto Adviseur",
+          "caption": "Het gevraagde aantal wordt vóór de start begrensd door middelen en evenementtijd."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "Stel een bovengrens in voor aanvallen van deze ene Adviseurreeks; middelen en resterende tijd kunnen het echte aantal verlagen.",
+            "label": "Maximumaantal aanvallen",
+            "recommendation": "9.999 zodat beschikbare middelen en evenementtijd de reeksomvang bepalen."
+          },
+          "minimum_remaining": {
+            "description": "Laat dit aantal minuten ongebruikt in de berekening van de evenementtijd vóór de start.",
+            "label": "Stop voor einde evenement",
+            "recommendation": "30 minuten; dit is geen doorlopende annuleertimer."
+          }
+        },
+        "title": "Reeksomvang en evenementtijd instellen"
+      }
+    },
+    "feature": {
+      "description": "Auto Adviseur start één reeks Nomaden- of Samoerai-aanvallen van de Adviseur, waarvan de grootte afhangt van beschikbare middelen en resterende evenementtijd.",
+      "expectation": "De reeks wacht op een passende actieve moeilijkheid en vrijgespeelde toegang tot de Adviseur; opslaan of inschakelen kost geen token, maar een bevestigde activering mogelijk wel.",
+      "name": "Auto Adviseur",
+      "summary": "Start één Nomaden- of Samoerai-Adviseurreeks naar beschikbare middelen"
+    },
+    "recommendationIntro": "Aanbevolen waarden beschrijven gewoon gebruik van Auto Adviseur; ze zijn advies en veranderen opgeslagen instellingen niet."
   }
 }

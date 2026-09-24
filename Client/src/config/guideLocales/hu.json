@@ -28,7 +28,10 @@
     "invasionPreviewTitle": "Példa az automatikus inváziós támadás beállítására",
     "nomadGuideIntro": "Kövesd ezeket a lépéseket az Automatikus nomádok/szamurájok beállításához; nagyításhoz válassz egy példapanelt.",
     "nomadGuideTitle": "Útmutató az Automatikus nomádokhoz/szamurájokhoz",
-    "nomadPreviewTitle": "Példa az Automatikus nomádok/szamurájok beállítására"
+    "nomadPreviewTitle": "Példa az Automatikus nomádok/szamurájok beállítására",
+    "advisorGuideIntro": "Az Automatikus tanácsadó beállításához kövesd ezeket a lépéseket; a mintapanelt kiválasztva nagyíthatod ki.",
+    "advisorGuideTitle": "Automatikus tanácsadó útmutató",
+    "advisorPreviewTitle": "Példa az Automatikus tanácsadó beállítására"
   },
   "autoTower": {
     "recommendationIntro": "Ezek a szokásos használatra vonatkozó ajánlások; mentés előtt nézd át őket.",
@@ -406,6 +409,43 @@
       "effect": "Bekapcsolt próba az eseményt valódi támadással váltja fel",
       "title": "Példa a próba vezérlőire",
       "trial": "Ideiglenes rablólovag-próba: ki"
+    },
+    "advisorDifficulty": {
+      "active": "Aktív esemény: jelenlegi nehézség használata",
+      "nomad": "Nomádok: feloldott megbízható nehézség",
+      "samurai": "Szamurájok: feloldott megbízható nehézség",
+      "title": "Példa az események nehézségeire"
+    },
+    "advisorSetup": {
+      "castle": "Kiindulás: szokásos Nagy Birodalom eseményvár",
+      "travel": "Utazási gyorsítás: Utazótoll",
+      "preset": "Beállítás: az aktív esemény mentett alakzata",
+      "title": "Példa a tanácsadói támadás beállítására"
+    },
+    "advisorActivation": {
+      "locked": "Zárolás esetén: nyisd meg a tanácsadó aktiválásának megerősítését",
+      "paid": "Erősítsd meg a zsetonhasználatot vagy a játék által jelzett ingyenes aktiválást",
+      "save": "Mentsd a beállításokat, majd kapcsold be az Automatizálás kártyát",
+      "title": "Példa az aktiválás menetére"
+    },
+    "advisorOverview": {
+      "progress": "Aktuális támadások / kért támadások",
+      "refresh": "Frissítsd az áttekintést az aktuális összesítésekhez",
+      "results": "Győzelmek, vereségek, elveszett egységek és eszközök",
+      "title": "Példa az élő áttekintésre"
+    },
+    "advisorResources": {
+      "coins": "Teljes érmeköltség támadásonként: 500 csak ha elég",
+      "feathers": "Tollak megtartása: 0, ha máshol nincs rájuk szükség",
+      "rubies": "Rubin támadásonként: 0 Utazótollal",
+      "skips": "60 perces időugrás megtartása: 0 darab; 5 és 24 órásból szükség szerint tartalékolj",
+      "title": "Példa erőforrás-keretekre"
+    },
+    "advisorSizing": {
+      "actual": "Tényleges sorozat: erőforrások és idő korlátozzák",
+      "maximum": "Maximális támadások: 9 999",
+      "time": "Fel nem használt eseményidő: 30 perc",
+      "title": "Példa a sorozat méretére"
     }
   },
   "autoStation": {
@@ -947,5 +987,194 @@
       "summary": "Nomád vagy szamuráj táborok fejlesztése és támadása"
     },
     "recommendationIntro": "Az ajánlott értékek az Automatikus nomádok/szamurájok rendszeres használatát írják le; útmutatók, és nem módosítják a mentett beállításokat."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "Bekapcsolva a kívánt beállítások ellenőrzése és mentése után.",
+            "description": "A beállítások ellenőrzése után kapcsold be az Automatikus tanácsadót az Automatizálás kártyán; a már feloldott tanácsadó azonnal indíthat sorozatot.",
+            "label": "Automatikus tanácsadó kapcsoló"
+          },
+          "save_settings": {
+            "label": "Beállítások mentése",
+            "description": "Az ablak bezárása előtt mentsd a forrásvárat, az előre beállított támadást, a nehézségeket, a sorozat méretét és az erőforrás-kereteket."
+          },
+          "activate_advisor": {
+            "description": "Ha a tanácsadó zárolt, válaszd a Tanácsadó aktiválása lehetőséget az aktuális esemény megerősítéséhez.",
+            "label": "Tanácsadó aktiválása"
+          },
+          "activate_and_spend": {
+            "description": "Küldd el a megerősített aktiválást megfelelő eseményzsetonnal vagy általános tanácsadózsetonnal; ingyenes eseménynél a tanácsadó aktiválása jelenik meg.",
+            "label": "Aktiválás és zseton elköltése"
+          },
+          "cancel_activation": {
+            "description": "Zárd be a megerősítést aktiválás és zsetonköltés nélkül.",
+            "label": "Aktiválás megszakítása"
+          },
+          "confirm_paid_activation": {
+            "description": "Erősítsd meg, hogy a tanácsadó aktiválása eseményzsetont vagy általános zsetont használhat el, hacsak a játék nem jelzi ingyenesnek az eseményt.",
+            "label": "Fizetős aktiválás megerősítése"
+          }
+        },
+        "image": {
+          "alt": "Az Automatikus tanácsadó mentésének és zsetonos aktiválásának szemléltető vezérlői",
+          "caption": "A mentés vagy bekapcsolás nem költ zsetont; a külön megerősített aktiválás költhet."
+        },
+        "title": "Mentsd, kapcsold be és aktiváld a tanácsadói hozzáférést"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "Nomád nehézség",
+            "recommendation": "A legmagasabb feloldott nehézséget használd, amelyet a szokásos felállásod megbízhatóan kezel.",
+            "description": "Válassz feloldott nomád nehézséget, amelyet az esemény kezdetén állít be."
+          },
+          "samurai_difficulty": {
+            "label": "Szamuráj nehézség",
+            "recommendation": "A legmagasabb feloldott nehézséget használd, amelyet a szokásos felállásod megbízhatóan kezel.",
+            "description": "Válassz feloldott szamuráj nehézséget, amelyet az esemény kezdetén állít be."
+          },
+          "active_difficulty": {
+            "description": "A már aktív esemény aktuális nehézségét add meg, különben az automatizálás várakozik ahelyett, hogy megváltoztatná.",
+            "label": "Aktív esemény nehézsége"
+          }
+        },
+        "title": "Válaszd ki mindkét esemény nehézségét",
+        "image": {
+          "alt": "Nomád és szamuráj tanácsadói nehézségek szemléltető választása",
+          "caption": "Mentsd mindkét esemény nehézségét, és a már futó esemény nehézségét állítsd be."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Lovas utazás gyorsítása",
+            "recommendation": "Utazótoll a gyors úthoz.",
+            "description": "Válassz tollas, érmés vagy rubinos utazási lehetőséget a sorozathoz."
+          },
+          "open_settings": {
+            "label": "Beállítások megnyitása",
+            "description": "Az Automatizálás oldalon válaszd az Automatikus tanácsadó kártya beállítások gombját."
+          },
+          "source_castle": {
+            "label": "Kiinduló vár",
+            "recommendation": "Használd a szokásos eseményváradat elegendő katonával és eszközzel.",
+            "description": "Válaszd ki a Nagy Birodalomban azt a várat, amely katonákat és eszközöket ad a tanácsadói sorozathoz."
+          },
+          "attack_preset": {
+            "description": "Válassz mentett támadási beállítást, amelynek katonáit, eszközeit és alakzatát minden kért támadáshoz lemásolja.",
+            "label": "Tanácsadói támadási beállítás",
+            "recommendation": "Előbb készíts szokásos beállítást az aktív nomád vagy szamuráj eseményhez, majd válaszd ki."
+          },
+          "complete_copies": {
+            "description": "A rendelkezésre álló erőforrások és a beállítás teljes másolatai a maximális támadásszám alá csökkenthetik a sorozatot.",
+            "label": "Teljes beállításmásolatok"
+          }
+        },
+        "image": {
+          "alt": "Az Automatikus tanácsadó szemléltető forrásvára, támadási beállítása és utazási opciói",
+          "caption": "Az utazás beállítása előtt válassz forrásvárat a Nagy Birodalomban és mentett eseménybeállítást."
+        },
+        "title": "Nyisd meg az Automatikus tanácsadó beállításait"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "Ennyi 24 órás időugrást hagyj érintetlenül tartalékként.",
+            "label": "24 óra megtartása",
+            "recommendation": "Tartsd meg az építéshez vagy más tevékenységhez szükséges készletet."
+          },
+          "keep_5h": {
+            "description": "Ennyi 5 órás időugrást hagyj érintetlenül tartalékként.",
+            "label": "5 óra megtartása",
+            "recommendation": "Tartsd meg az építéshez vagy más tevékenységhez szükséges készletet."
+          },
+          "keep_60m": {
+            "description": "Ennyi 60 perces időugrást hagyj érintetlenül tartalékként.",
+            "label": "60 perc megtartása",
+            "recommendation": "0 a szokásos tanácsadói sorozatokhoz."
+          },
+          "coin_cost": {
+            "description": "Becsüld meg a támadásonkénti teljes érmeköltséget az indítás előtti megfizethetőségi számításhoz a játékárak megváltoztatása nélkül.",
+            "label": "Teljes érmeköltség támadásonként",
+            "recommendation": "500 csak akkor, ha fedezi a tényleges teljes költséget; egyébként használj nagyobb, mért összeget."
+          },
+          "keep_coins": {
+            "description": "Ennyi érmét zárj ki a sorozat keretéből.",
+            "label": "Érmék megtartása",
+            "recommendation": "Tartsd meg a szokásos toborzási és építési keretedet."
+          },
+          "keep_feathers": {
+            "description": "Ennyi utazótollat zárj ki a sorozat keretéből.",
+            "label": "Tollak megtartása",
+            "recommendation": "0, hacsak más funkciókhoz nem tartalékolsz tollakat."
+          },
+          "keep_rubies": {
+            "description": "Ennyi rubint zárj ki a sorozat keretéből.",
+            "label": "Rubinok megtartása",
+            "recommendation": "Tartsd meg a más tevékenységekhez szükséges egyenleget."
+          },
+          "ruby_cost": {
+            "description": "Becsüld meg a támadásonkénti rubinos utazási költséget; rubinos utazásnál pozitív érték szükséges.",
+            "label": "Rubin támadásonként",
+            "recommendation": "0 Utazótoll esetén; rubinos utazáshoz a tényleges pozitív költséget add meg."
+          }
+        },
+        "image": {
+          "alt": "Az Automatikus tanácsadó szemléltető érme-, rubin-, toll- és időugrás-tartalékai",
+          "caption": "A költségmezők tervezési becslések; a megtartási értékek fel nem használt erőforrásokat vagy időugrásokat jelentenek."
+        },
+        "title": "Erőforrás-keretek és tartalékok beállítása"
+      },
+      "overview": {
+        "image": {
+          "alt": "Az Automatikus tanácsadó előrehaladásának és veszteségeinek szemléltető áttekintése",
+          "caption": "Az áttekintés új sorozat indítása nélkül mutatja az előrehaladást és a veszteségeket."
+        },
+        "items": {
+          "live_progress": {
+            "description": "Olvasd le az aktuális és kért támadásszámot, a győzelmeket, vereségeket, elveszett egységeket és eszközöket.",
+            "label": "Futó tanácsadói sorozat"
+          },
+          "no_relaunch": {
+            "description": "Az ugyanazon eseményben befejezett vagy megszakított sorozat nem indul újra automatikusan.",
+            "label": "Befejezett vagy megszakított sorozat"
+          },
+          "refresh_overview": {
+            "description": "Kérd le a tanácsadói sorozat friss előrehaladását, győzelmeit, vereségeit és veszteségeit.",
+            "label": "Áttekintés frissítése"
+          }
+        },
+        "title": "Tekintsd át a futó tanácsadói sorozatot"
+      },
+      "sizing": {
+        "image": {
+          "alt": "Az Automatikus tanácsadó támadásszámának és eseményidejének szemléltető beállításai",
+          "caption": "A kért számot indítás előtt a rendelkezésre álló erőforrások és az esemény ideje korlátozza."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "Állítsd be az egyetlen tanácsadói sorozat támadásainak felső határát; az erőforrások és a hátralévő idő csökkenthetik a tényleges számot.",
+            "label": "Maximális támadások",
+            "recommendation": "9 999, hogy a rendelkezésre álló erőforrások és az esemény ideje határozza meg a sorozat méretét."
+          },
+          "minimum_remaining": {
+            "description": "Ennyi percet hagyj felhasználatlanul az indítás előtti eseményidő-számításban.",
+            "label": "Leállítás az esemény vége előtt",
+            "recommendation": "30 perc; ez nem folyamatos sorozatmegszakító időzítő."
+          }
+        },
+        "title": "Sorozatméret és eseményidő beállítása"
+      }
+    },
+    "feature": {
+      "description": "Az Automatikus tanácsadó egy nomád vagy szamuráj tanácsadói támadássorozatot indít a rendelkezésre álló erőforrások és a hátralévő eseményidő alapján.",
+      "expectation": "A sorozat megvárja az aktív esemény megfelelő nehézségét és a feloldott tanácsadói hozzáférést; a mentés vagy bekapcsolás nem költ zsetont, a megerősített aktiválás viszont költhet.",
+      "name": "Automatikus tanácsadó",
+      "summary": "Indíts egy erőforrásokhoz igazított nomád vagy szamuráj tanácsadói sorozatot"
+    },
+    "recommendationIntro": "Az ajánlott értékek az Automatikus tanácsadó szokásos használatát írják le; útmutatók, és nem módosítják a mentett beállításokat."
   }
 }

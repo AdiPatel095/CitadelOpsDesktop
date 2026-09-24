@@ -28,7 +28,10 @@
     "invasionPreviewTitle": "침공 자동 공격 설정 예시",
     "nomadGuideIntro": "이 단계에 따라 자동 유목민/사무라이를 설정하고 예시 패널을 선택해 확대하세요.",
     "nomadGuideTitle": "자동 유목민/사무라이 안내",
-    "nomadPreviewTitle": "자동 유목민/사무라이 설정 예시"
+    "nomadPreviewTitle": "자동 유목민/사무라이 설정 예시",
+    "advisorGuideIntro": "자동 고문을 설정하려면 다음 단계를 따르고 예시 패널을 선택하면 확대할 수 있습니다.",
+    "advisorGuideTitle": "자동 고문 안내",
+    "advisorPreviewTitle": "자동 고문 설정 예시"
   },
   "autoTower": {
     "recommendationIntro": "일반적인 사용을 위한 권장값입니다. 저장하기 전에 검토하세요.",
@@ -406,6 +409,43 @@
       "effect": "시험 켬: 이벤트 운영을 실제 공격으로 대체",
       "title": "시험 조작 예시",
       "trial": "임시 도적 남작 시험: 끔"
+    },
+    "advisorDifficulty": {
+      "active": "진행 중인 이벤트: 현재 난이도에 맞춤",
+      "nomad": "유목민: 잠금 해제되었고 안정적으로 처리할 난이도",
+      "samurai": "사무라이: 잠금 해제되었고 안정적으로 처리할 난이도",
+      "title": "이벤트 난이도 예시"
+    },
+    "advisorSetup": {
+      "castle": "출발: 대제국의 평소 이벤트 성",
+      "travel": "이동 가속: 여행 깃털",
+      "preset": "프리셋: 현재 이벤트를 위해 저장한 배치",
+      "title": "고문 공격 설정 예시"
+    },
+    "advisorActivation": {
+      "locked": "잠겨 있다면 고문 활성화 확인 열기",
+      "paid": "토큰 사용 또는 게임이 표시한 무료 활성화 확인",
+      "save": "설정을 저장한 다음 자동화 카드 켜기",
+      "title": "활성화 흐름 예시"
+    },
+    "advisorOverview": {
+      "progress": "현재 공격 / 요청한 공격",
+      "refresh": "최신 합계를 보려면 개요 새로고침",
+      "results": "승리, 패배, 잃은 병력과 도구",
+      "title": "진행 개요 예시"
+    },
+    "advisorResources": {
+      "coins": "공격당 전체 동전: 충분할 때만 500",
+      "feathers": "남겨 둘 깃털: 다른 곳에 필요 없으면 0",
+      "rubies": "공격당 루비: 이동 깃털 사용 시 0",
+      "skips": "남겨 둘 60분 단축: 0개; 5시간과 24시간은 필요에 따라 예비",
+      "title": "자원 예산 예시"
+    },
+    "advisorSizing": {
+      "actual": "실제 공격: 자원과 시간으로 제한",
+      "maximum": "최대 공격 수: 9,999",
+      "time": "사용하지 않을 이벤트 시간: 30분",
+      "title": "공격 규모 예시"
     }
   },
   "autoStation": {
@@ -947,5 +987,194 @@
       "summary": "유목민 또는 사무라이 진영 강화 및 공격"
     },
     "recommendationIntro": "권장값은 자동 유목민/사무라이의 평상시 사용을 위한 안내이며 저장된 설정을 변경하지 않습니다."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "원하는 설정을 검토하고 저장한 뒤 켜기.",
+            "description": "설정을 검토한 뒤 자동화 카드에서 자동 고문을 켜며 이미 잠금 해제된 고문은 즉시 공격을 시작할 수 있습니다.",
+            "label": "자동 고문 스위치"
+          },
+          "save_settings": {
+            "label": "설정 저장",
+            "description": "창을 닫기 전에 출발 성, 프리셋, 난이도, 공격 규모와 자원 예산을 저장합니다."
+          },
+          "activate_advisor": {
+            "description": "고문이 잠겨 있다면 고문 활성화를 선택하여 현재 이벤트의 확인 창을 엽니다.",
+            "label": "고문 활성화"
+          },
+          "activate_and_spend": {
+            "description": "사용 가능한 이벤트 토큰 또는 공용 고문 토큰으로 확인된 활성화를 제출하며 무료 이벤트에는 토큰 없는 활성화가 표시됩니다.",
+            "label": "활성화하고 토큰 사용"
+          },
+          "cancel_activation": {
+            "description": "활성화를 제출하거나 토큰을 사용하지 않고 확인 창을 닫습니다.",
+            "label": "활성화 취소"
+          },
+          "confirm_paid_activation": {
+            "description": "게임에서 이 이벤트를 무료로 표시하지 않는 한 고문 활성화에 이벤트 또는 공용 토큰이 소모될 수 있음을 확인합니다.",
+            "label": "유료 활성화 확인"
+          }
+        },
+        "image": {
+          "alt": "자동 고문 저장 및 토큰 활성화 조작 예시",
+          "caption": "저장이나 켜기는 토큰을 쓰지 않으며 별도로 확인한 활성화는 토큰을 쓸 수 있습니다."
+        },
+        "title": "고문 접근을 저장하고 켜서 활성화"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "유목민 난이도",
+            "recommendation": "평소 편성으로 안정적으로 처리할 수 있는 가장 높은 잠금 해제 난이도를 사용합니다.",
+            "description": "이벤트 시작 시 선택할 잠금 해제된 유목민 난이도를 고릅니다."
+          },
+          "samurai_difficulty": {
+            "label": "사무라이 난이도",
+            "recommendation": "평소 편성으로 안정적으로 처리할 수 있는 가장 높은 잠금 해제 난이도를 사용합니다.",
+            "description": "이벤트 시작 시 선택할 잠금 해제된 사무라이 난이도를 고릅니다."
+          },
+          "active_difficulty": {
+            "description": "이미 활성화된 이벤트의 현재 난이도에 맞추지 않으면 자동화가 난이도를 바꾸지 않고 기다립니다.",
+            "label": "활성 이벤트 난이도"
+          }
+        },
+        "title": "두 이벤트의 난이도 선택",
+        "image": {
+          "alt": "유목민과 사무라이 고문 난이도 선택 예시",
+          "caption": "두 이벤트의 난이도를 저장하고 이미 진행 중인 이벤트의 난이도에 맞춥니다."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "말 이동 가속",
+            "recommendation": "빠른 이동에는 여행 깃털.",
+            "description": "공격에 깃털, 동전 또는 루비 이동을 선택합니다."
+          },
+          "open_settings": {
+            "label": "설정 열기",
+            "description": "자동화 페이지의 자동 고문 카드에서 설정 버튼을 선택합니다."
+          },
+          "source_castle": {
+            "label": "출발 성",
+            "recommendation": "병력과 도구가 충분한 평소의 이벤트 성을 사용합니다.",
+            "description": "고문 공격에 병력과 도구를 제공할 대제국의 성을 선택합니다."
+          },
+          "attack_preset": {
+            "description": "요청한 공격마다 병력, 도구와 배치가 복사되는 저장된 공격 프리셋을 선택합니다.",
+            "label": "고문 공격 프리셋",
+            "recommendation": "현재 유목민 또는 사무라이 이벤트에 평소 쓰는 프리셋을 먼저 만든 다음 선택합니다."
+          },
+          "complete_copies": {
+            "description": "사용 가능한 자원과 완전한 프리셋 복사본 수에 따라 공격 규모가 최대 공격 수보다 줄어들 수 있습니다.",
+            "label": "완전한 프리셋 복사본"
+          }
+        },
+        "image": {
+          "alt": "자동 고문의 출발 성, 프리셋과 이동 설정 예시",
+          "caption": "이동을 설정하기 전에 대제국의 출발 성과 저장된 이벤트 프리셋을 선택합니다."
+        },
+        "title": "자동 고문 설정 열기"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "24시간 시간 건너뛰기 아이템을 이 수량만큼 사용하지 않고 남깁니다.",
+            "label": "24시간 보유",
+            "recommendation": "건설이나 다른 활동에 필요한 재고를 남겨 두세요."
+          },
+          "keep_5h": {
+            "description": "5시간 시간 건너뛰기 아이템을 이 수량만큼 사용하지 않고 남깁니다.",
+            "label": "5시간 보유",
+            "recommendation": "건설이나 다른 활동에 필요한 재고를 남겨 두세요."
+          },
+          "keep_60m": {
+            "description": "60분 시간 건너뛰기 아이템을 이 수량만큼 사용하지 않고 남깁니다.",
+            "label": "60분 보유",
+            "recommendation": "일반적인 고문 공격에는 0."
+          },
+          "coin_cost": {
+            "description": "게임 가격을 바꾸지 않고 시작 전 예산 계산에 사용할 공격당 전체 동전 비용을 추정합니다.",
+            "label": "공격당 전체 동전",
+            "recommendation": "실제 전체 비용을 충당할 때만 500을 쓰고 부족하면 측정한 더 높은 합계를 입력합니다."
+          },
+          "keep_coins": {
+            "description": "이 수만큼의 동전을 공격 예산에서 제외합니다.",
+            "label": "남겨 둘 동전",
+            "recommendation": "평소 모집과 건설에 필요한 예산을 남깁니다."
+          },
+          "keep_feathers": {
+            "description": "이 수만큼의 이동 깃털을 공격 예산에서 제외합니다.",
+            "label": "남겨 둘 깃털",
+            "recommendation": "다른 기능에 깃털을 예약하지 않는다면 0."
+          },
+          "keep_rubies": {
+            "description": "이 수만큼의 루비를 공격 예산에서 제외합니다.",
+            "label": "남겨 둘 루비",
+            "recommendation": "다른 활동에 필요한 잔액을 남깁니다."
+          },
+          "ruby_cost": {
+            "description": "공격당 루비 이동 비용을 추정하며 루비 이동을 선택하면 양수 값이 필요합니다.",
+            "label": "공격당 루비",
+            "recommendation": "이동 깃털을 쓰면 0, 루비 이동을 쓰면 실제 양수 비용을 입력합니다."
+          }
+        },
+        "image": {
+          "alt": "자동 고문의 동전, 루비, 깃털과 시간 단축 아이템 예비량 예시",
+          "caption": "비용 항목은 계획용 추정치이며 남겨 둘 값은 사용하지 않을 자원 또는 시간 단축 아이템 수입니다."
+        },
+        "title": "자원 예산과 예비량 설정"
+      },
+      "overview": {
+        "image": {
+          "alt": "자동 고문의 진행과 손실 개요 예시",
+          "caption": "개요는 새 공격을 시작하지 않고 진행과 손실을 보여 줍니다."
+        },
+        "items": {
+          "live_progress": {
+            "description": "개요에서 현재 및 요청한 공격 수, 승리, 패배, 잃은 병력과 도구를 확인합니다.",
+            "label": "진행 중인 고문 공격"
+          },
+          "no_relaunch": {
+            "description": "같은 이벤트에서 완료되거나 취소된 공격은 자동으로 다시 시작되지 않습니다.",
+            "label": "완료 또는 취소된 공격"
+          },
+          "refresh_overview": {
+            "description": "고문 공격의 최신 진행, 승리, 패배와 손실을 요청합니다.",
+            "label": "개요 새로고침"
+          }
+        },
+        "title": "진행 중인 고문 공격 확인"
+      },
+      "sizing": {
+        "image": {
+          "alt": "자동 고문의 공격 수와 이벤트 시간 설정 예시",
+          "caption": "요청한 공격 수는 시작 전에 사용 가능한 자원과 이벤트 시간에 따라 제한됩니다."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "이 한 차례 고문 공격의 상한을 설정하며 자원과 남은 시간에 따라 실제 수가 줄 수 있습니다.",
+            "label": "최대 공격 수",
+            "recommendation": "자원과 이벤트 시간으로 공격 규모를 결정하려면 9,999."
+          },
+          "minimum_remaining": {
+            "description": "시작 전 이벤트 시간 계산에서 이만큼의 분을 사용하지 않고 남깁니다.",
+            "label": "이벤트 종료 전 중단",
+            "recommendation": "30분이며 진행 중인 공격을 계속 감시해 취소하는 타이머는 아닙니다."
+          }
+        },
+        "title": "공격 규모와 이벤트 시간 설정"
+      }
+    },
+    "feature": {
+      "description": "자동 고문은 사용 가능한 자원과 남은 이벤트 시간에 맞춰 유목민 또는 사무라이 고문 공격을 한 차례 시작합니다.",
+      "expectation": "진행은 활성 이벤트의 일치하는 난이도와 고문 잠금 해제를 기다리며, 저장이나 켜기는 토큰을 쓰지 않지만 확인된 활성화는 토큰을 쓸 수 있습니다.",
+      "name": "자동 고문",
+      "summary": "자원에 맞는 유목민 또는 사무라이 고문 공격을 한 차례 시작"
+    },
+    "recommendationIntro": "추천 값은 자동 고문의 일반적인 사용을 위한 안내이며 저장된 설정을 변경하지 않습니다."
   }
 }

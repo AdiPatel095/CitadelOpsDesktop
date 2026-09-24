@@ -28,7 +28,10 @@
     "invasionPreviewTitle": "Exemplu de configurare a atacurilor automate de invazie",
     "nomadGuideIntro": "Urmează acești pași pentru a configura Auto Nomazi/Samurai; selectează un panou de exemplu pentru mărire.",
     "nomadGuideTitle": "Ghid Auto Nomazi/Samurai",
-    "nomadPreviewTitle": "Exemplu de configurare Auto Nomazi/Samurai"
+    "nomadPreviewTitle": "Exemplu de configurare Auto Nomazi/Samurai",
+    "advisorGuideIntro": "Urmează acești pași pentru a configura Consilierul automat; selectează un panou exemplu pentru mărire.",
+    "advisorGuideTitle": "Ghidul Consilierului automat",
+    "advisorPreviewTitle": "Exemplu de configurare a Consilierului automat"
   },
   "autoTower": {
     "recommendationIntro": "Acestea sunt recomandări pentru utilizarea obișnuită; verifică-le înainte de salvare.",
@@ -406,6 +409,43 @@
       "effect": "Testul pornit înlocuiește evenimentul cu un atac real",
       "title": "Exemplu de controale ale testului",
       "trial": "Test temporar contra baronului tâlhar: oprit"
+    },
+    "advisorDifficulty": {
+      "active": "Eveniment activ: potrivește dificultatea curentă",
+      "nomad": "Nomazi: dificultate deblocată și fiabilă",
+      "samurai": "Samurai: dificultate deblocată și fiabilă",
+      "title": "Exemplu de dificultăți ale evenimentelor"
+    },
+    "advisorSetup": {
+      "castle": "Sursă: castelul obișnuit de eveniment din Marele Imperiu",
+      "travel": "Spor de deplasare: Pana de călătorie",
+      "preset": "Presetare: formație salvată pentru evenimentul activ",
+      "title": "Exemplu de configurare a atacului Consilierului"
+    },
+    "advisorActivation": {
+      "locked": "Dacă este blocat: deschide confirmarea activării Consilierului",
+      "paid": "Confirmă folosirea jetonului sau activarea gratuită indicată de joc",
+      "save": "Salvează setările, apoi activează cardul Automatizare",
+      "title": "Exemplu de flux de activare"
+    },
+    "advisorOverview": {
+      "progress": "Atacuri curente / atacuri cerute",
+      "refresh": "Actualizează panoul pentru totalurile curente",
+      "results": "Victorii, înfrângeri, unități și unelte pierdute",
+      "title": "Exemplu de panou activ"
+    },
+    "advisorResources": {
+      "coins": "Cost total în monede pe atac: 500 doar dacă este suficient",
+      "feathers": "Păstrează pene: 0 dacă nu sunt necesare în altă parte",
+      "rubies": "Rubine pe atac: 0 cu Pană de călătorie",
+      "skips": "Păstrează 60 min: 0 obiecte; rezervă 5 h și 24 h după nevoie",
+      "title": "Exemplu de bugete de resurse"
+    },
+    "advisorSizing": {
+      "actual": "Serie reală: limitată de resurse și timp",
+      "maximum": "Atacuri maxime: 9.999",
+      "time": "Timp nefolosit din eveniment: 30 de minute",
+      "title": "Exemplu de dimensiune a seriei"
     }
   },
   "autoStation": {
@@ -947,5 +987,194 @@
       "summary": "Dezvoltă și atacă tabere nomade sau samurai"
     },
     "recommendationIntro": "Valorile recomandate descriu folosirea obișnuită a Auto Nomazi/Samurai; sunt îndrumări și nu schimbă setările salvate."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "Activat după verificarea și salvarea setărilor dorite.",
+            "description": "Activează Consilierul automat pe cardul Automatizare după verificarea setărilor; un Consilier deja deblocat poate porni imediat o serie.",
+            "label": "Comutator Consilier automat"
+          },
+          "save_settings": {
+            "label": "Salvează setările",
+            "description": "Salvează castelul sursă, presetarea, dificultățile, dimensiunea seriei și bugetele înainte să închizi dialogul."
+          },
+          "activate_advisor": {
+            "description": "Dacă Consilierul este blocat, alege Activează Consilierul pentru a deschide confirmarea evenimentului curent.",
+            "label": "Activează Consilierul"
+          },
+          "activate_and_spend": {
+            "description": "Trimite activarea confirmată folosind un jeton eligibil de eveniment sau un jeton universal de Consilier; un eveniment gratuit afișează activarea Consilierului.",
+            "label": "Activează și consumă jetonul"
+          },
+          "cancel_activation": {
+            "description": "Închide confirmarea fără să trimiți activarea sau să consumi un jeton.",
+            "label": "Anulează activarea"
+          },
+          "confirm_paid_activation": {
+            "description": "Confirmă că activarea Consilierului poate consuma un jeton de eveniment sau universal, dacă jocul nu indică faptul că evenimentul este gratuit.",
+            "label": "Confirmă activarea cu plată"
+          }
+        },
+        "image": {
+          "alt": "Comenzi ilustrative pentru salvarea Consilierului automat și activarea cu jeton",
+          "caption": "Salvarea sau activarea comutatorului nu consumă un jeton; activarea confirmată separat îl poate consuma."
+        },
+        "title": "Salvează, activează și deblochează accesul la Consilier"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "Dificultate nomadă",
+            "recommendation": "Folosește cea mai mare dificultate deblocată pe care configurația ta obișnuită o gestionează sigur.",
+            "description": "Alege o dificultate Nomazi deblocată pentru selectare la începutul evenimentului."
+          },
+          "samurai_difficulty": {
+            "label": "Dificultate samurai",
+            "recommendation": "Folosește cea mai mare dificultate deblocată pe care configurația ta obișnuită o gestionează sigur.",
+            "description": "Alege o dificultate Samurai deblocată pentru selectare la începutul evenimentului."
+          },
+          "active_difficulty": {
+            "description": "Potrivește dificultatea curentă a evenimentului deja activ, altfel automatizarea așteaptă în loc să o schimbe.",
+            "label": "Dificultatea evenimentului activ"
+          }
+        },
+        "title": "Alege dificultățile ambelor evenimente",
+        "image": {
+          "alt": "Opțiuni ilustrative de dificultate pentru Consilierul Nomazi și Samurai",
+          "caption": "Salvează dificultățile ambelor evenimente și potrivește-o pe cea a evenimentului deja activ."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Accelerarea deplasării cu cai",
+            "recommendation": "Pana de călătorie pentru deplasare rapidă.",
+            "description": "Alege pentru serie deplasarea cu pene, monede sau rubine."
+          },
+          "open_settings": {
+            "label": "Deschide setările",
+            "description": "Pe pagina Automatizare, selectează butonul de setări al cardului Consilier automat."
+          },
+          "source_castle": {
+            "label": "Castel sursă",
+            "recommendation": "Folosește castelul tău obișnuit pentru eveniment, cu trupe și unelte suficiente.",
+            "description": "Alege castelul din Marele Imperiu care furnizează trupele și uneltele seriei Consilierului."
+          },
+          "attack_preset": {
+            "description": "Alege o presetare de atac salvată ale cărei trupe, unelte și formație sunt copiate pentru fiecare atac cerut.",
+            "label": "Presetare de atac a Consilierului",
+            "recommendation": "Creează mai întâi o presetare obișnuită pentru evenimentul activ Nomazi sau Samurai, apoi selecteaz-o."
+          },
+          "complete_copies": {
+            "description": "Resursele disponibile și copiile complete ale presetării pot reduce seria sub numărul maxim de atacuri.",
+            "label": "Copii complete ale presetării"
+          }
+        },
+        "image": {
+          "alt": "Castel sursă, presetare și setări de deplasare ilustrative ale Consilierului automat",
+          "caption": "Alege un castel sursă din Marele Imperiu și o presetare salvată pentru eveniment înainte de a seta deplasarea."
+        },
+        "title": "Deschide setările Consilierului automat"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "Păstrează nefolosit acest număr de salturi de timp de 24 h ca rezervă.",
+            "label": "Păstrează 24 h",
+            "recommendation": "Rezervă stocul necesar pentru construcții sau alte activități."
+          },
+          "keep_5h": {
+            "description": "Păstrează nefolosit acest număr de salturi de timp de 5 h ca rezervă.",
+            "label": "Păstrează 5 h",
+            "recommendation": "Rezervă stocul necesar pentru construcții sau alte activități."
+          },
+          "keep_60m": {
+            "description": "Păstrează nefolosit acest număr de salturi de timp de 60 min ca rezervă.",
+            "label": "Păstrează 60 min",
+            "recommendation": "0 pentru seriile obișnuite ale Consilierului."
+          },
+          "coin_cost": {
+            "description": "Estimează costul total în monede pentru fiecare atac pentru calculul accesibilității înainte de lansare, fără să schimbi prețurile jocului.",
+            "label": "Cost total în monede pe atac",
+            "recommendation": "500 doar dacă acoperă costul total real; altfel folosește un total măsurat mai mare."
+          },
+          "keep_coins": {
+            "description": "Exclude acest număr de monede din bugetul seriei.",
+            "label": "Păstrează monede",
+            "recommendation": "Păstrează bugetul obișnuit pentru recrutare și construcții."
+          },
+          "keep_feathers": {
+            "description": "Exclude acest număr de pene de deplasare din bugetul seriei.",
+            "label": "Păstrează pene",
+            "recommendation": "0, dacă nu rezervi pene pentru alte funcții."
+          },
+          "keep_rubies": {
+            "description": "Exclude acest număr de rubine din bugetul seriei.",
+            "label": "Păstrează rubine",
+            "recommendation": "Păstrează soldul necesar altor activități."
+          },
+          "ruby_cost": {
+            "description": "Estimează costul de deplasare în rubine pe atac; o valoare pozitivă este necesară dacă alegi deplasarea cu rubine.",
+            "label": "Rubine pe atac",
+            "recommendation": "0 cu Pană de călătorie; folosește costul real pozitiv pentru deplasarea cu rubine."
+          }
+        },
+        "image": {
+          "alt": "Rezerve ilustrative de monede, rubine, pene și salturi de timp ale Consilierului automat",
+          "caption": "Câmpurile de cost sunt estimări pentru planificare; valorile păstrate sunt resurse sau salturi de timp nefolosite."
+        },
+        "title": "Setează bugetele și rezervele de resurse"
+      },
+      "overview": {
+        "image": {
+          "alt": "Panou ilustrativ cu progresul și pierderile Consilierului automat",
+          "caption": "Panoul arată progresul seriei și pierderile fără să pornească o altă serie."
+        },
+        "items": {
+          "live_progress": {
+            "description": "Citește în panou atacurile curente și cerute, victoriile, înfrângerile, unitățile și uneltele pierdute.",
+            "label": "Serie activă a Consilierului"
+          },
+          "no_relaunch": {
+            "description": "O serie încheiată sau anulată pentru același eveniment nu repornește automat.",
+            "label": "Serie încheiată sau anulată"
+          },
+          "refresh_overview": {
+            "description": "Cere date actualizate despre progresul seriei Consilierului, victorii, înfrângeri și pierderi.",
+            "label": "Actualizează panoul"
+          }
+        },
+        "title": "Verifică seria activă a Consilierului"
+      },
+      "sizing": {
+        "image": {
+          "alt": "Număr de atacuri și timp de eveniment ilustrative pentru Consilierul automat",
+          "caption": "Numărul cerut este limitat înainte de lansare de resursele disponibile și timpul evenimentului."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "Setează limita superioară de atacuri pentru această singură serie a Consilierului; resursele și timpul rămas pot reduce numărul real.",
+            "label": "Atacuri maxime",
+            "recommendation": "9.999 pentru ca resursele disponibile și timpul evenimentului să determine dimensiunea seriei."
+          },
+          "minimum_remaining": {
+            "description": "Lasă nefolosite aceste minute în calculul timpului evenimentului înainte de lansare.",
+            "label": "Oprește înainte de sfârșitul evenimentului",
+            "recommendation": "30 de minute; nu este un cronometru continuu care anulează seria."
+          }
+        },
+        "title": "Setează dimensiunea seriei și timpul evenimentului"
+      }
+    },
+    "feature": {
+      "description": "Consilierul automat pornește o singură serie de atacuri Nomazi sau Samurai, dimensionată după resursele disponibile și timpul rămas din eveniment.",
+      "expectation": "Seria așteaptă dificultatea potrivită a evenimentului activ și accesul deblocat la Consilier; salvarea sau activarea comutatorului nu consumă un jeton, dar activarea confirmată poate face asta.",
+      "name": "Consilier automat",
+      "summary": "Pornește o serie Consilier Nomazi sau Samurai dimensionată după resurse"
+    },
+    "recommendationIntro": "Valorile recomandate descriu utilizarea obișnuită a Consilierului automat; sunt îndrumări și nu modifică setările salvate."
   }
 }

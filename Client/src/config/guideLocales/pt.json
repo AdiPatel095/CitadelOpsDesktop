@@ -28,7 +28,10 @@
     "invasionPreviewTitle": "Exemplo de configuração da automação de invasões",
     "nomadGuideIntro": "Siga estas etapas para configurar Auto Nômades/Samurais; selecione um painel de exemplo para ampliá-lo.",
     "nomadGuideTitle": "Guia do Auto Nômades/Samurais",
-    "nomadPreviewTitle": "Exemplo de configuração do Auto Nômades/Samurais"
+    "nomadPreviewTitle": "Exemplo de configuração do Auto Nômades/Samurais",
+    "advisorGuideIntro": "Siga estes passos para configurar Auto Conselheiro; selecione um painel de exemplo para ampliá-lo.",
+    "advisorGuideTitle": "Guia Auto Conselheiro",
+    "advisorPreviewTitle": "Exemplo de configuração do Auto Conselheiro"
   },
   "autoTower": {
     "recommendationIntro": "Estas recomendações são para o uso regular; revise-as antes de salvar.",
@@ -406,6 +409,43 @@
       "effect": "Teste ligado substitui evento por ataque real",
       "title": "Exemplo dos controles do teste",
       "trial": "Teste temporário de barão ladrão: desligado"
+    },
+    "advisorDifficulty": {
+      "active": "Evento ativo: corresponda à dificuldade atual",
+      "nomad": "Nômades: dificuldade desbloqueada e confiável",
+      "samurai": "Samurais: dificuldade desbloqueada e confiável",
+      "title": "Exemplo de dificuldades de evento"
+    },
+    "advisorSetup": {
+      "castle": "Origem: castelo regular de evento no Grande Império",
+      "travel": "Impulso de viagem: Pena de Viagem",
+      "preset": "Formação: disposição salva do evento ativo",
+      "title": "Exemplo de configuração do ataque do Conselheiro"
+    },
+    "advisorActivation": {
+      "locked": "Se bloqueado: abra a confirmação Ativar Conselheiro",
+      "paid": "Confirme o gasto de ficha ou a ativação gratuita informada pelo jogo",
+      "save": "Salve as configurações e depois ligue o cartão Automação",
+      "title": "Exemplo do fluxo de ativação"
+    },
+    "advisorOverview": {
+      "progress": "Ataque atual / ataques solicitados",
+      "refresh": "Atualize a visão geral para consultar totais atuais",
+      "results": "Vitórias, derrotas, unidades e ferramentas perdidas",
+      "title": "Exemplo de visão geral ao vivo"
+    },
+    "advisorResources": {
+      "coins": "Total de moedas por ataque: 500 apenas se suficiente",
+      "feathers": "Manter penas: 0 salvo necessidade em outros recursos",
+      "rubies": "Rubis por ataque: 0 com Pena de Viagem",
+      "skips": "Manter 60 min: 0 itens; reservar 5 h e 24 h conforme necessário",
+      "title": "Exemplo de orçamentos de recursos"
+    },
+    "advisorSizing": {
+      "actual": "Sequência real: limitada por recursos e tempo",
+      "maximum": "Máximo de ataques: 9.999",
+      "time": "Tempo do evento sem uso: 30 minutos",
+      "title": "Exemplo do tamanho da sequência"
     }
   },
   "autoStation": {
@@ -947,5 +987,194 @@
       "summary": "Melhore e ataque acampamentos nômades ou samurais"
     },
     "recommendationIntro": "Os valores recomendados descrevem o uso regular do Auto Nômades/Samurais; servem de orientação e não alteram configurações salvas."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "Ativado após conferir e salvar as configurações desejadas.",
+            "description": "Após conferir as configurações, ligue Auto Conselheiro no cartão Automação; se o Conselheiro já estiver desbloqueado, uma sequência pode começar imediatamente.",
+            "label": "Interruptor do Auto Conselheiro"
+          },
+          "save_settings": {
+            "label": "Salvar configurações",
+            "description": "Salve origem, formação, dificuldades, tamanho da sequência e orçamentos antes de fechar esta janela."
+          },
+          "activate_advisor": {
+            "description": "Se o Conselheiro estiver bloqueado, escolha Ativar Conselheiro para abrir a confirmação do evento atual.",
+            "label": "Ativar Conselheiro"
+          },
+          "activate_and_spend": {
+            "description": "Envie a ativação confirmada com uma ficha elegível do evento ou universal do Conselheiro; um evento gratuito mostra Ativar Conselheiro no lugar.",
+            "label": "Ativar e gastar ficha"
+          },
+          "cancel_activation": {
+            "description": "Feche a confirmação sem enviar a ativação nem gastar ficha.",
+            "label": "Cancelar ativação"
+          },
+          "confirm_paid_activation": {
+            "description": "Reconheça que a ativação do Conselheiro pode consumir ficha do evento ou universal, a menos que o jogo informe que o evento é gratuito.",
+            "label": "Confirmar ativação paga"
+          }
+        },
+        "image": {
+          "alt": "Exemplo de controles de salvar e ativar com ficha do Auto Conselheiro",
+          "caption": "Salvar ou ligar não gasta ficha; a ativação confirmada separadamente pode gastar uma."
+        },
+        "title": "Salve, ligue e ative o acesso ao Conselheiro"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "Dificuldade nômade",
+            "recommendation": "Use a maior dificuldade desbloqueada que sua formação regular consegue enfrentar com segurança.",
+            "description": "Escolha uma dificuldade nômade desbloqueada para selecionar no início do evento."
+          },
+          "samurai_difficulty": {
+            "label": "Dificuldade samurai",
+            "recommendation": "Use a maior dificuldade desbloqueada que sua formação regular consegue enfrentar com segurança.",
+            "description": "Escolha uma dificuldade samurai desbloqueada para selecionar no início do evento."
+          },
+          "active_difficulty": {
+            "description": "Corresponda à dificuldade atual de um evento ativo, ou a automação aguardará em vez de mudá-la.",
+            "label": "Dificuldade do evento ativo"
+          }
+        },
+        "title": "Escolha as dificuldades dos dois eventos",
+        "image": {
+          "alt": "Exemplo de dificuldades do Conselheiro nômade e samurai",
+          "caption": "Salve ambas as dificuldades de evento e corresponda à que já estiver em curso."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Aceleração de viagem a cavalo",
+            "recommendation": "Pena de Viagem para deslocamento rápido.",
+            "description": "Escolha a opção de viagem com pena, moedas ou rubis para a sequência."
+          },
+          "open_settings": {
+            "label": "Abrir configurações",
+            "description": "Na página Automação, escolha o botão de configurações do cartão Auto Conselheiro."
+          },
+          "source_castle": {
+            "label": "Castelo de origem",
+            "recommendation": "Use seu castelo regular de evento com tropas e ferramentas suficientes.",
+            "description": "Escolha o castelo do Grande Império que fornece tropas e ferramentas à sequência do Conselheiro."
+          },
+          "attack_preset": {
+            "description": "Selecione uma formação de ataque salva cujas tropas, ferramentas e disposição são copiadas para cada ataque solicitado.",
+            "label": "Formação de ataque do Conselheiro",
+            "recommendation": "Crie primeiro uma formação regular para o evento nômade ou samurai ativo e depois selecione-a."
+          },
+          "complete_copies": {
+            "description": "Os recursos disponíveis e cópias completas da formação podem reduzir a sequência abaixo do máximo de ataques.",
+            "label": "Cópias completas da formação"
+          }
+        },
+        "image": {
+          "alt": "Exemplo de origem, formação e viagem do Auto Conselheiro",
+          "caption": "Escolha um castelo de origem do Grande Império e uma formação salva para o evento antes da opção de viagem."
+        },
+        "title": "Abra as configurações do Auto Conselheiro"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "Mantenha sem uso esta quantidade de aceleradores de 24 h como reserva.",
+            "label": "Manter 24 h",
+            "recommendation": "Reserve o estoque necessário para construções ou outras atividades."
+          },
+          "keep_5h": {
+            "description": "Mantenha sem uso esta quantidade de aceleradores de 5 h como reserva.",
+            "label": "Manter 5 h",
+            "recommendation": "Reserve o estoque necessário para construções ou outras atividades."
+          },
+          "keep_60m": {
+            "description": "Mantenha sem uso esta quantidade de aceleradores de 60 min como reserva.",
+            "label": "Manter 60 min",
+            "recommendation": "0 para sequências regulares do Conselheiro."
+          },
+          "coin_cost": {
+            "description": "Estime o custo total em moedas por ataque para a verificação antes do início sem alterar preços do jogo.",
+            "label": "Total de moedas por ataque",
+            "recommendation": "500 apenas se cobrir o custo real completo; caso contrário, use um total medido mais alto."
+          },
+          "keep_coins": {
+            "description": "Exclua esta quantidade de moedas do orçamento da sequência.",
+            "label": "Manter moedas",
+            "recommendation": "Mantenha seu orçamento usual de recrutamento e construção."
+          },
+          "keep_feathers": {
+            "description": "Exclua esta quantidade de penas de viagem do orçamento da sequência.",
+            "label": "Manter penas",
+            "recommendation": "0 salvo se você reservar penas para outros recursos."
+          },
+          "keep_rubies": {
+            "description": "Exclua esta quantidade de rubis do orçamento da sequência.",
+            "label": "Manter rubis",
+            "recommendation": "Mantenha o saldo necessário para outras atividades."
+          },
+          "ruby_cost": {
+            "description": "Estime o custo em rubis de viagem por ataque; viagem com rubis exige valor positivo.",
+            "label": "Rubis por ataque",
+            "recommendation": "0 com Pena de Viagem; use o custo positivo real para viajar com rubis."
+          }
+        },
+        "image": {
+          "alt": "Exemplo de reservas de moedas, rubis, penas e saltos de tempo do Auto Conselheiro",
+          "caption": "Os campos de custo são estimativas de planejamento; os valores Manter contam recursos ou saltos de tempo não usados."
+        },
+        "title": "Defina orçamentos e reservas"
+      },
+      "overview": {
+        "image": {
+          "alt": "Exemplo de progresso e perdas do Conselheiro",
+          "caption": "A visão geral mostra progresso e perdas sem iniciar outra sequência."
+        },
+        "items": {
+          "live_progress": {
+            "description": "Leia na visão geral o ataque atual, os solicitados, vitórias, derrotas, unidades e ferramentas perdidas.",
+            "label": "Sequência ativa do Conselheiro"
+          },
+          "no_relaunch": {
+            "description": "Uma sequência concluída ou cancelada no mesmo evento não é iniciada novamente automaticamente.",
+            "label": "Sequência concluída ou cancelada"
+          },
+          "refresh_overview": {
+            "description": "Solicite dados atualizados de progresso, vitórias, derrotas e perdas.",
+            "label": "Atualizar visão geral"
+          }
+        },
+        "title": "Revise a sequência ativa do Conselheiro"
+      },
+      "sizing": {
+        "image": {
+          "alt": "Exemplo de quantidade de ataques e tempo do evento do Auto Conselheiro",
+          "caption": "A quantidade solicitada é limitada antes de começar pelos recursos e pelo tempo do evento."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "Defina um teto de ataques para esta única sequência do Conselheiro; recursos e tempo restante podem reduzir o número real.",
+            "label": "Máximo de ataques",
+            "recommendation": "9.999 para deixar recursos disponíveis e tempo do evento definirem o tamanho da sequência."
+          },
+          "minimum_remaining": {
+            "description": "Deixe esta quantidade de minutos sem uso no cálculo do tempo antes do início.",
+            "label": "Parar antes do fim do evento",
+            "recommendation": "30 minutos; não é um cronômetro de cancelamento contínuo."
+          }
+        },
+        "title": "Defina tamanho da sequência e tempo do evento"
+      }
+    },
+    "feature": {
+      "description": "Auto Conselheiro inicia uma sequência de ataques do Conselheiro nômade ou samurai dimensionada pelos recursos disponíveis e pelo tempo restante do evento.",
+      "expectation": "A sequência aguarda dificuldade ativa correspondente e acesso desbloqueado ao Conselheiro; salvar ou ligar não gasta ficha, mas uma ativação confirmada pode gastar.",
+      "name": "Auto Conselheiro",
+      "summary": "Inicie uma sequência do Conselheiro nômade ou samurai ajustada aos recursos"
+    },
+    "recommendationIntro": "Os valores recomendados descrevem o uso regular do Auto Conselheiro; são orientações e não alteram configurações salvas."
   }
 }

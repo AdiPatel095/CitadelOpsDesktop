@@ -28,7 +28,10 @@
     "invasionPreviewTitle": "Exemple de configuration de l'automatisation des invasions",
     "nomadGuideIntro": "Suivez ces étapes pour configurer Auto Nomades/Samouraïs ; sélectionnez un panneau d'exemple pour l'agrandir.",
     "nomadGuideTitle": "Guide Auto Nomades/Samouraïs",
-    "nomadPreviewTitle": "Exemple de configuration d'Auto Nomades/Samouraïs"
+    "nomadPreviewTitle": "Exemple de configuration d'Auto Nomades/Samouraïs",
+    "advisorGuideIntro": "Suivez ces étapes pour configurer Auto Conseiller ; sélectionnez un panneau d'exemple pour l'agrandir.",
+    "advisorGuideTitle": "Guide Auto Conseiller",
+    "advisorPreviewTitle": "Exemple de configuration d'Auto Conseiller"
   },
   "autoTower": {
     "recommendationIntro": "Ces recommandations concernent une utilisation régulière ; vérifiez-les avant d’enregistrer.",
@@ -406,6 +409,43 @@
       "effect": "Test activé : remplace l'événement par une véritable attaque",
       "title": "Exemple des commandes du test",
       "trial": "Test temporaire sur château de fieffé coquin : désactivé"
+    },
+    "advisorDifficulty": {
+      "active": "Événement actif : reprendre sa difficulté actuelle",
+      "nomad": "Nomades : difficulté débloquée et fiable",
+      "samurai": "Samouraïs : difficulté débloquée et fiable",
+      "title": "Exemple de difficultés d'événement"
+    },
+    "advisorSetup": {
+      "castle": "Source : château d'événement habituel du Grand Empire",
+      "travel": "Accélération du déplacement : plume de voyage",
+      "preset": "Préréglage : formation enregistrée pour l'événement actif",
+      "title": "Exemple des réglages d'attaque du Conseiller"
+    },
+    "advisorActivation": {
+      "locked": "Si verrouillé : ouvrir la confirmation Activer le Conseiller",
+      "paid": "Confirmer l'utilisation payante d'un jeton ou l'activation gratuite signalée par le jeu",
+      "save": "Enregistrer les réglages puis activer la carte Automatisation",
+      "title": "Exemple du parcours d'activation"
+    },
+    "advisorOverview": {
+      "progress": "Attaque actuelle / attaques demandées",
+      "refresh": "Actualiser l'aperçu pour lire les totaux actuels",
+      "results": "Victoires, défaites, unités et outils perdus",
+      "title": "Exemple de l'aperçu en direct"
+    },
+    "advisorResources": {
+      "coins": "Coût total en pièces par attaque : 500 seulement si suffisant",
+      "feathers": "Garder des plumes : 0 sauf besoin ailleurs",
+      "rubies": "Rubis par attaque : 0 avec la Plume de voyage",
+      "skips": "Garder 60 min : 0 objet ; réserver 5 h et 24 h selon les besoins",
+      "title": "Exemple des budgets de ressources"
+    },
+    "advisorSizing": {
+      "actual": "Série réelle : limitée par les ressources et le temps",
+      "maximum": "Nombre maximal d'attaques : 9 999",
+      "time": "Temps d'événement inutilisé : 30 minutes",
+      "title": "Exemple de taille de série"
     }
   },
   "autoStation": {
@@ -947,5 +987,194 @@
       "summary": "Améliorer et attaquer les camps nomades ou samouraïs"
     },
     "recommendationIntro": "Les valeurs recommandées décrivent l'usage régulier d'Auto Nomades/Samouraïs ; elles servent de conseil et ne modifient pas les paramètres enregistrés."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "Activé après avoir vérifié et enregistré les réglages voulus.",
+            "description": "Après vérification des réglages, activez Auto Conseiller sur sa carte Automatisation ; si le Conseiller est déjà débloqué, une série peut démarrer immédiatement.",
+            "label": "Interrupteur Auto Conseiller"
+          },
+          "save_settings": {
+            "label": "Enregistrer les paramètres",
+            "description": "Enregistrez le château source, le préréglage, les difficultés, la taille de série et les budgets avant de fermer cette fenêtre."
+          },
+          "activate_advisor": {
+            "description": "Si le Conseiller est verrouillé, choisissez Activer le Conseiller pour ouvrir la confirmation de l'événement actuel.",
+            "label": "Activer le Conseiller"
+          },
+          "activate_and_spend": {
+            "description": "Envoyez l'activation confirmée avec un jeton d'événement ou de Conseiller universel admissible ; si l'événement est gratuit, le bouton indique plutôt Activer le Conseiller.",
+            "label": "Activer et dépenser un jeton"
+          },
+          "cancel_activation": {
+            "description": "Fermez la confirmation sans soumettre d'activation ni dépenser de jeton.",
+            "label": "Annuler l'activation"
+          },
+          "confirm_paid_activation": {
+            "description": "Reconnaissez que l'activation du Conseiller peut consommer un jeton d'événement ou universel, sauf si le jeu indique que cet événement est gratuit.",
+            "label": "Confirmer l'activation payante"
+          }
+        },
+        "image": {
+          "alt": "Exemple des commandes d'enregistrement et d'activation par jeton d'Auto Conseiller",
+          "caption": "Enregistrer ou activer l'automatisation ne dépense aucun jeton ; l'activation confirmée séparément peut en dépenser un."
+        },
+        "title": "Enregistrer, activer et débloquer l'accès au Conseiller"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "Difficulté nomade",
+            "recommendation": "Utilisez la difficulté débloquée la plus élevée que votre composition habituelle maîtrise de façon fiable.",
+            "description": "Choisissez une difficulté nomade débloquée à sélectionner au début de cet événement."
+          },
+          "samurai_difficulty": {
+            "label": "Difficulté samouraï",
+            "recommendation": "Utilisez la difficulté débloquée la plus élevée que votre composition habituelle maîtrise de façon fiable.",
+            "description": "Choisissez une difficulté samouraï débloquée à sélectionner au début de cet événement."
+          },
+          "active_difficulty": {
+            "description": "Utilisez la difficulté actuelle d'un événement déjà actif, sinon l'automatisation attend au lieu de la changer.",
+            "label": "Difficulté de l'événement actif"
+          }
+        },
+        "title": "Choisissez les deux difficultés d'événement",
+        "image": {
+          "alt": "Exemple des difficultés du Conseiller nomade et samouraï",
+          "caption": "Enregistrez les deux difficultés d'événement et reprenez celle de l'événement déjà en cours."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Accélération du déplacement à cheval",
+            "recommendation": "Plume de voyage pour un déplacement rapide.",
+            "description": "Choisissez l'option de voyage par plume, pièces ou rubis pour la série."
+          },
+          "open_settings": {
+            "label": "Ouvrir les paramètres",
+            "description": "Sur la page Automatisation, choisissez le bouton des paramètres de la carte Auto Conseiller."
+          },
+          "source_castle": {
+            "label": "Château source",
+            "recommendation": "Utilisez votre château d'événement habituel avec suffisamment de troupes et d'outils.",
+            "description": "Choisissez le château du Grand Empire qui fournit troupes et outils pour la série du Conseiller."
+          },
+          "attack_preset": {
+            "description": "Sélectionnez un préréglage d'attaque enregistré dont les troupes, outils et formations sont copiés pour chaque attaque demandée.",
+            "label": "Préréglage d'attaque du Conseiller",
+            "recommendation": "Créez d'abord un préréglage régulier pour l'événement nomade ou samouraï actif, puis sélectionnez-le."
+          },
+          "complete_copies": {
+            "description": "Les ressources disponibles et les copies complètes du préréglage peuvent réduire la série sous le nombre maximal d'attaques.",
+            "label": "Copies complètes du préréglage"
+          }
+        },
+        "image": {
+          "alt": "Exemple du château source, du préréglage et du voyage d'Auto Conseiller",
+          "caption": "Choisissez un château source du Grand Empire et un préréglage d'événement enregistré avant l'option de voyage."
+        },
+        "title": "Ouvrir les paramètres d'Auto Conseiller"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "Conserver ce nombre d'accélérations de 24 h en réserve sans les utiliser.",
+            "label": "Conserver 24 h",
+            "recommendation": "Réserver le stock nécessaire aux constructions ou à d'autres activités."
+          },
+          "keep_5h": {
+            "description": "Conserver ce nombre d'accélérations de 5 h en réserve sans les utiliser.",
+            "label": "Conserver 5 h",
+            "recommendation": "Réserver le stock nécessaire aux constructions ou à d'autres activités."
+          },
+          "keep_60m": {
+            "description": "Conserver ce nombre d'accélérations de 60 min en réserve sans les utiliser.",
+            "label": "Conserver 60 min",
+            "recommendation": "0 pour les séries régulières du Conseiller."
+          },
+          "coin_cost": {
+            "description": "Estimez le coût total en pièces par attaque pour le calcul de capacité avant lancement sans changer les prix du jeu.",
+            "label": "Coût total en pièces par attaque",
+            "recommendation": "500 seulement si cela couvre votre coût réel complet ; sinon utilisez un total mesuré plus élevé."
+          },
+          "keep_coins": {
+            "description": "Excluez ce nombre de pièces du budget de la série.",
+            "label": "Garder des pièces",
+            "recommendation": "Gardez votre budget habituel pour le recrutement et la construction."
+          },
+          "keep_feathers": {
+            "description": "Excluez ce nombre de plumes de voyage du budget de la série.",
+            "label": "Garder des plumes",
+            "recommendation": "0 sauf si vous réservez des plumes pour d'autres fonctions."
+          },
+          "keep_rubies": {
+            "description": "Excluez ce nombre de rubis du budget de la série.",
+            "label": "Garder des rubis",
+            "recommendation": "Gardez le solde nécessaire aux autres activités."
+          },
+          "ruby_cost": {
+            "description": "Estimez le coût en rubis du voyage par attaque ; une valeur positive est obligatoire avec le voyage en rubis.",
+            "label": "Rubis par attaque",
+            "recommendation": "0 avec la Plume de voyage ; indiquez le coût positif réel avec le voyage en rubis."
+          }
+        },
+        "image": {
+          "alt": "Exemple des réserves de pièces, rubis, plumes et accélérations d'Auto Conseiller",
+          "caption": "Les champs de coût sont des estimations de planification ; les valeurs « garder » comptent les ressources ou objets d'accélération non utilisés."
+        },
+        "title": "Fixer les budgets et les réserves"
+      },
+      "overview": {
+        "image": {
+          "alt": "Exemple de la progression et des pertes du Conseiller",
+          "caption": "L'aperçu affiche la progression et les pertes sans lancer une autre série."
+        },
+        "items": {
+          "live_progress": {
+            "description": "Lisez dans l'aperçu l'attaque actuelle, le nombre demandé, les victoires, défaites, unités et outils perdus.",
+            "label": "Série du Conseiller en cours"
+          },
+          "no_relaunch": {
+            "description": "Une série terminée ou annulée pour le même événement n'est pas relancée automatiquement.",
+            "label": "Série terminée ou annulée"
+          },
+          "refresh_overview": {
+            "description": "Demandez les données actualisées sur la progression, les victoires, les défaites et les pertes.",
+            "label": "Actualiser l'aperçu"
+          }
+        },
+        "title": "Examiner la série du Conseiller en cours"
+      },
+      "sizing": {
+        "image": {
+          "alt": "Exemple du nombre d'attaques et du temps d'événement d'Auto Conseiller",
+          "caption": "Le nombre demandé est limité avant le lancement par les ressources et le temps d'événement."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "Fixez une limite supérieure d'attaques pour cette seule série du Conseiller ; les ressources et le temps restant peuvent réduire le nombre réel.",
+            "label": "Nombre maximal d'attaques",
+            "recommendation": "9 999 pour laisser les ressources disponibles et le temps d'événement déterminer la taille de la série."
+          },
+          "minimum_remaining": {
+            "description": "Laissez ce nombre de minutes inutilisées dans le calcul du temps d'événement avant lancement.",
+            "label": "Arrêter avant la fin de l'événement",
+            "recommendation": "30 minutes ; ce n'est pas un minuteur d'annulation permanent."
+          }
+        },
+        "title": "Fixer la taille de la série et le temps d'événement"
+      }
+    },
+    "feature": {
+      "description": "Auto Conseiller lance une série d'attaques nomades ou samouraïs dont le nombre dépend des ressources disponibles et du temps restant dans l'événement.",
+      "expectation": "La série attend une difficulté active correspondante et l'accès débloqué au Conseiller ; enregistrer ou activer l'automatisation ne dépense pas de jeton, mais une activation confirmée peut le faire.",
+      "name": "Auto Conseiller",
+      "summary": "Lancer une série de Conseiller nomade ou samouraï adaptée aux ressources"
+    },
+    "recommendationIntro": "Les valeurs recommandées décrivent l'usage régulier d'Auto Conseiller ; elles servent de conseil et ne changent pas les paramètres enregistrés."
   }
 }

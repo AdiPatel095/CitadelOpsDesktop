@@ -28,7 +28,10 @@
     "invasionPreviewTitle": "Ejemplo de configuración de automatización de invasiones",
     "nomadGuideIntro": "Sigue estos pasos para configurar Auto Nómadas/Samuráis; selecciona un panel de ejemplo para ampliarlo.",
     "nomadGuideTitle": "Guía de Auto Nómadas/Samuráis",
-    "nomadPreviewTitle": "Ejemplo de configuración de Auto Nómadas/Samuráis"
+    "nomadPreviewTitle": "Ejemplo de configuración de Auto Nómadas/Samuráis",
+    "advisorGuideIntro": "Sigue estos pasos para configurar Auto Asesor; selecciona un panel de ejemplo para ampliarlo.",
+    "advisorGuideTitle": "Guía de Auto Asesor",
+    "advisorPreviewTitle": "Ejemplo de configuración de Auto Asesor"
   },
   "autoTower": {
     "recommendationIntro": "Estas recomendaciones son para el uso habitual; revísalas antes de guardar.",
@@ -406,6 +409,43 @@
       "effect": "Prueba activada: sustituye el evento por un ataque real",
       "title": "Ejemplo de controles de la prueba",
       "trial": "Prueba temporal contra un castillo de barón ladrón: desactivada"
+    },
+    "advisorDifficulty": {
+      "active": "Evento activo: coincide con su dificultad actual",
+      "nomad": "Nómadas: dificultad desbloqueada y fiable",
+      "samurai": "Samuráis: dificultad desbloqueada y fiable",
+      "title": "Ejemplo de dificultades de evento"
+    },
+    "advisorSetup": {
+      "castle": "Origen: castillo habitual de evento del Gran Imperio",
+      "travel": "Impulso de viaje: pluma de viaje",
+      "preset": "Plantilla: formación guardada del evento activo",
+      "title": "Ejemplo de configuración de ataque del Asesor"
+    },
+    "advisorActivation": {
+      "locked": "Si está bloqueado: abrir confirmación de Activar Asesor",
+      "paid": "Confirmar el gasto de ficha o la activación gratuita indicada por el juego",
+      "save": "Guardar ajustes y luego activar la tarjeta de Automatización",
+      "title": "Ejemplo de pasos de activación"
+    },
+    "advisorOverview": {
+      "progress": "Ataque actual / ataques solicitados",
+      "refresh": "Actualizar resumen para ver los totales actuales",
+      "results": "Victorias, derrotas, unidades y herramientas perdidas",
+      "title": "Ejemplo de resumen en directo"
+    },
+    "advisorResources": {
+      "coins": "Monedas totales por ataque: 500 solo si basta",
+      "feathers": "Conservar plumas: 0 salvo necesidad en otra función",
+      "rubies": "Rubíes por ataque: 0 con Pluma de viaje",
+      "skips": "Conservar 60 min: 0 objetos; reservar 5 h y 24 h según necesidad",
+      "title": "Ejemplo de presupuestos de recursos"
+    },
+    "advisorSizing": {
+      "actual": "Serie real: limitada por recursos y tiempo",
+      "maximum": "Máximo de ataques: 9.999",
+      "time": "Tiempo del evento sin usar: 30 minutos",
+      "title": "Ejemplo de tamaño de serie"
     }
   },
   "autoStation": {
@@ -947,5 +987,194 @@
       "summary": "Mejora y ataca campamentos nómadas o samuráis"
     },
     "recommendationIntro": "Los valores recomendados describen el uso habitual de Auto Nómadas/Samuráis; solo orientan y no modifican la configuración guardada."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "Activado después de revisar y guardar los ajustes deseados.",
+            "description": "Tras revisar los ajustes, activa Auto Asesor en su tarjeta de Automatización; si el Asesor ya está desbloqueado, puede comenzar una serie de inmediato.",
+            "label": "Interruptor de Auto Asesor"
+          },
+          "save_settings": {
+            "label": "Guardar ajustes",
+            "description": "Guarda origen, plantilla, dificultades, tamaño de serie y presupuestos de recursos antes de cerrar este cuadro."
+          },
+          "activate_advisor": {
+            "description": "Si el Asesor está bloqueado, elige Activar Asesor para abrir la confirmación del evento actual.",
+            "label": "Activar Asesor"
+          },
+          "activate_and_spend": {
+            "description": "Envía la activación confirmada con una ficha válida del evento o una ficha universal del Asesor; un evento gratuito muestra Activar Asesor en su lugar.",
+            "label": "Activar y gastar ficha"
+          },
+          "cancel_activation": {
+            "description": "Cierra la confirmación sin enviar la activación ni gastar una ficha.",
+            "label": "Cancelar activación"
+          },
+          "confirm_paid_activation": {
+            "description": "Reconoce que activar el Asesor puede consumir una ficha del evento o universal, salvo que el juego indique que este evento es gratuito.",
+            "label": "Confirmar activación de pago"
+          }
+        },
+        "image": {
+          "alt": "Ejemplo de controles de guardado y activación con fichas de Auto Asesor",
+          "caption": "Guardar o activar la automatización no gasta fichas; la activación confirmada por separado puede gastarlas."
+        },
+        "title": "Guardar, activar y desbloquear acceso al Asesor"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "Dificultad nómada",
+            "recommendation": "Usa la mayor dificultad desbloqueada que tu configuración habitual pueda superar con fiabilidad.",
+            "description": "Elige una dificultad nómada desbloqueada para seleccionar cuando comience ese evento."
+          },
+          "samurai_difficulty": {
+            "label": "Dificultad samurái",
+            "recommendation": "Usa la mayor dificultad desbloqueada que tu configuración habitual pueda superar con fiabilidad.",
+            "description": "Elige una dificultad samurái desbloqueada para seleccionar cuando comience ese evento."
+          },
+          "active_difficulty": {
+            "description": "Usa la dificultad actual de un evento activo; si no coincide, la automatización espera en vez de cambiarla.",
+            "label": "Dificultad del evento activo"
+          }
+        },
+        "title": "Elige las dificultades de ambos eventos",
+        "image": {
+          "alt": "Ejemplo de dificultades del Asesor nómada y samurái",
+          "caption": "Guarda las dificultades de ambos eventos y usa la del que ya esté en marcha."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Impulso de viaje a caballo",
+            "recommendation": "Pluma de viaje para viajar rápido.",
+            "description": "Elige la opción de viaje con pluma, monedas o rubíes para la serie."
+          },
+          "open_settings": {
+            "label": "Abrir ajustes",
+            "description": "En la página Automatización, elige el botón de ajustes de la tarjeta Auto Asesor."
+          },
+          "source_castle": {
+            "label": "Castillo de origen",
+            "recommendation": "Usa tu castillo de evento habitual con suficientes tropas y herramientas.",
+            "description": "Elige el castillo del Gran Imperio que proporciona tropas y herramientas para la serie del Asesor."
+          },
+          "attack_preset": {
+            "description": "Selecciona una plantilla de ataque guardada cuyas tropas, herramientas y formación se copien en cada ataque solicitado.",
+            "label": "Plantilla de ataque del Asesor",
+            "recommendation": "Primero crea una plantilla habitual para el evento nómada o samurái activo y después selecciónala."
+          },
+          "complete_copies": {
+            "description": "Los recursos disponibles y las copias completas de la plantilla pueden reducir la serie por debajo del máximo de ataques.",
+            "label": "Copias completas de la plantilla"
+          }
+        },
+        "image": {
+          "alt": "Ejemplo de origen, plantilla y viaje de Auto Asesor",
+          "caption": "Elige un castillo de origen del Gran Imperio y una plantilla de evento guardada antes de configurar el viaje."
+        },
+        "title": "Abrir ajustes de Auto Asesor"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "Conserva esta cantidad de saltos de tiempo de 24 h sin usarlos como reserva.",
+            "label": "Conservar 24 h",
+            "recommendation": "Reserva las existencias que necesites para construcciones u otras actividades."
+          },
+          "keep_5h": {
+            "description": "Conserva esta cantidad de saltos de tiempo de 5 h sin usarlos como reserva.",
+            "label": "Conservar 5 h",
+            "recommendation": "Reserva las existencias que necesites para construcciones u otras actividades."
+          },
+          "keep_60m": {
+            "description": "Conserva esta cantidad de saltos de tiempo de 60 min sin usarlos como reserva.",
+            "label": "Conservar 60 min",
+            "recommendation": "0 para series habituales del Asesor."
+          },
+          "coin_cost": {
+            "description": "Estima el coste total en monedas por ataque para calcular la capacidad antes del lanzamiento sin cambiar los precios del juego.",
+            "label": "Monedas totales por ataque",
+            "recommendation": "500 solo si cubre el coste real completo; si no, usa un total medido mayor."
+          },
+          "keep_coins": {
+            "description": "Excluye esta cantidad de monedas del presupuesto de la serie.",
+            "label": "Conservar monedas",
+            "recommendation": "Conserva tu presupuesto habitual de reclutamiento y construcción."
+          },
+          "keep_feathers": {
+            "description": "Excluye esta cantidad de plumas de viaje del presupuesto de la serie.",
+            "label": "Conservar plumas",
+            "recommendation": "0 salvo que reserves plumas para otras funciones."
+          },
+          "keep_rubies": {
+            "description": "Excluye esta cantidad de rubíes del presupuesto de la serie.",
+            "label": "Conservar rubíes",
+            "recommendation": "Conserva el saldo necesario para otras actividades."
+          },
+          "ruby_cost": {
+            "description": "Estima el coste de viaje en rubíes por ataque; si eliges viaje con rubíes, el valor debe ser positivo.",
+            "label": "Rubíes por ataque",
+            "recommendation": "0 con Pluma de viaje; usa el coste positivo real para viajar con rubíes."
+          }
+        },
+        "image": {
+          "alt": "Ejemplo de reservas de monedas, rubíes, plumas y saltos de tiempo de Auto Asesor",
+          "caption": "Los campos de coste son estimaciones de planificación; los valores «conservar» cuentan recursos o saltos de tiempo sin usar."
+        },
+        "title": "Configurar presupuestos y reservas"
+      },
+      "overview": {
+        "image": {
+          "alt": "Ejemplo de progreso y pérdidas del Asesor",
+          "caption": "El resumen muestra progreso y pérdidas sin iniciar otra serie."
+        },
+        "items": {
+          "live_progress": {
+            "description": "Consulta en el resumen el ataque actual, los solicitados, victorias, derrotas, unidades perdidas y herramientas perdidas.",
+            "label": "Serie del Asesor en curso"
+          },
+          "no_relaunch": {
+            "description": "Una serie terminada o cancelada para el mismo evento no se inicia de nuevo automáticamente.",
+            "label": "Serie terminada o cancelada"
+          },
+          "refresh_overview": {
+            "description": "Solicita datos actualizados de progreso, victorias, derrotas y pérdidas de la serie.",
+            "label": "Actualizar resumen"
+          }
+        },
+        "title": "Revisar la serie actual del Asesor"
+      },
+      "sizing": {
+        "image": {
+          "alt": "Ejemplo de cantidad de ataques y tiempo del evento en Auto Asesor",
+          "caption": "El número solicitado se limita antes de comenzar según los recursos y el tiempo del evento."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "Fija el máximo de ataques de esta única serie del Asesor; los recursos y el tiempo restante pueden reducir la cantidad real.",
+            "label": "Máximo de ataques",
+            "recommendation": "9.999 para que los recursos y el tiempo del evento determinen el tamaño de la serie."
+          },
+          "minimum_remaining": {
+            "description": "Deja este número de minutos sin usar al calcular el tiempo del evento antes del lanzamiento.",
+            "label": "Parar antes del fin del evento",
+            "recommendation": "30 minutos; no es un temporizador de cancelación durante la serie."
+          }
+        },
+        "title": "Configurar tamaño de serie y tiempo del evento"
+      }
+    },
+    "feature": {
+      "description": "Auto Asesor inicia una serie de ataques del Asesor nómada o samurái cuyo tamaño depende de los recursos disponibles y del tiempo restante del evento.",
+      "expectation": "La serie espera una dificultad activa coincidente y el acceso al Asesor desbloqueado; guardar o activar la automatización no gasta fichas, pero una activación confirmada puede hacerlo.",
+      "name": "Auto Asesor",
+      "summary": "Inicia una serie del Asesor nómada o samurái ajustada a los recursos"
+    },
+    "recommendationIntro": "Los valores recomendados describen el uso habitual de Auto Asesor; son orientativos y no cambian los ajustes guardados."
   }
 }

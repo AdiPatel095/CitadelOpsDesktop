@@ -1,7 +1,7 @@
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, Bot, Castle, Clock3, Coins, RefreshCw, ShieldCheck, Swords } from 'lucide-react';
+import { AlertTriangle, BookOpen, Bot, Castle, Clock3, Coins, RefreshCw, ShieldCheck, Swords } from 'lucide-react';
 import { useCitadelAPI } from '../../api/ApiContext';
 import type { GameStateV2, ScalableEventScoreV2 } from '../../api/Contracts';
 import { castleOptionsFromState } from '../../api/Selectors';
@@ -22,6 +22,8 @@ import {
 } from '../AutoAdvisorClientState';
 import { eventDifficultyName, useEventDifficultyOptions } from '../EventDifficultyOptions';
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
+import { FeatureGuideModal } from './FeatureGuideModal';
+import { englishGuidePack, useGuideLocale } from '../../config/useGuideLocale';
 
 interface AutoAdvisorSettingsModalProps {
   isOpen: boolean;
@@ -37,6 +39,11 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
   const [activating, setActivating] = useState(false);
   const [activationOpen, setActivationOpen] = useState(false);
   const [activationAcknowledged, setActivationAcknowledged] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const { locale: guideLocale, pack: guidePack } = useGuideLocale();
+  const advisorGuidePack = guidePack.autoAdvisor ? guidePack : englishGuidePack;
+  const advisorGuideLocale = advisorGuidePack === englishGuidePack ? 'en' : guideLocale;
+  useEffect(() => { if (!isOpen) setIsGuideOpen(false); }, [isOpen]);
 
   const castles = useMemo(() => castleOptionsFromState(state).filter((castle) => castle.kingdomId === 0), [state]);
   const presetDocument = useMemo(
@@ -155,6 +162,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
         isOpen={isOpen}
         onClose={() => { if (!saving && !activating) onClose(); }}
         maxWidth="3xl"
+        titleTrailing={<Button variant="outline" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={advisorGuideLocale}>{advisorGuidePack.ui.guideButton}</span></Button>}
         title={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.title.auto.advisor.3c6f5be4")}
         icon={<Bot className="h-5 w-5" />}
         description={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.description.one.guarded.nomad.or.samurai.advisor.run.350d2486")}
@@ -387,6 +395,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
           </div>
         </div>
       </Modal>
+      <FeatureGuideModal feature="autoAdvisor" isOpen={isOpen && isGuideOpen} onClose={() => setIsGuideOpen(false)} />
     </>
   );
 };

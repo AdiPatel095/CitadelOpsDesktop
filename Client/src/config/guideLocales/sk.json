@@ -28,7 +28,10 @@
     "invasionPreviewTitle": "Príklad nastavenia automatických inváznych útokov",
     "nomadGuideIntro": "Podľa týchto krokov nastavte Automatických Nomádov/Samurajov; výberom zväčšíte ukážkový panel.",
     "nomadGuideTitle": "Sprievodca Automatickými Nomádmi/Samurajmi",
-    "nomadPreviewTitle": "Ukážka nastavenia Automatických Nomádov/Samurajov"
+    "nomadPreviewTitle": "Ukážka nastavenia Automatických Nomádov/Samurajov",
+    "advisorGuideIntro": "Pomocou týchto krokov nastavte Automatického poradcu; výberom ukážkového panelu ho zväčšíte.",
+    "advisorGuideTitle": "Sprievodca Automatickým poradcom",
+    "advisorPreviewTitle": "Príklad nastavenia Automatického poradcu"
   },
   "autoTower": {
     "recommendationIntro": "Toto sú odporúčania na bežné používanie; pred uložením ich skontrolujte.",
@@ -406,6 +409,43 @@
       "effect": "Zapnutý test nahradí udalosť skutočným útokom",
       "title": "Príklad ovládania testu",
       "trial": "Dočasný test lúpežného baróna: vypnutý"
+    },
+    "advisorDifficulty": {
+      "active": "Aktívna udalosť: zvoliť aktuálnu obtiažnosť",
+      "nomad": "Nomádi: odomknutá spoľahlivá obtiažnosť",
+      "samurai": "Samuraji: odomknutá spoľahlivá obtiažnosť",
+      "title": "Príklad obtiažností udalostí"
+    },
+    "advisorSetup": {
+      "castle": "Východiskový: bežný hrad udalosti vo Veľkej ríši",
+      "travel": "Posilnenie presunu: Cestovné pierko",
+      "preset": "Predvoľba: uložená formácia aktívnej udalosti",
+      "title": "Príklad nastavenia útoku poradcu"
+    },
+    "advisorActivation": {
+      "locked": "Ak je zamknutý: otvorte potvrdenie aktivácie poradcu",
+      "paid": "Potvrďte použitie žetónu alebo bezplatnú aktiváciu oznámenú hrou",
+      "save": "Uložte nastavenia a zapnite kartu Automatizácia",
+      "title": "Príklad priebehu aktivácie"
+    },
+    "advisorOverview": {
+      "progress": "Aktuálne útoky / požadované útoky",
+      "refresh": "Obnovte prehľad pre aktuálne súčty",
+      "results": "Víťazstvá, porážky, stratené jednotky a nástroje",
+      "title": "Príklad aktuálneho prehľadu"
+    },
+    "advisorResources": {
+      "coins": "Celkové mince za útok: 500 len ak stačia",
+      "feathers": "Ponechať pierka: 0, ak nie sú potrebné inde",
+      "rubies": "Rubíny za útok: 0 s cestovným pierkom",
+      "skips": "Ponechať 60 min: 0 predmetov; podľa potreby rezervujte 5 h a 24 h",
+      "title": "Príklad rozpočtu zdrojov"
+    },
+    "advisorSizing": {
+      "actual": "Skutočná séria: obmedzená zdrojmi a časom",
+      "maximum": "Maximum útokov: 9 999",
+      "time": "Nevyužitý čas udalosti: 30 minút",
+      "title": "Príklad veľkosti série"
     }
   },
   "autoStation": {
@@ -947,5 +987,194 @@
       "summary": "Vylepšovať a napádať nomádske či samurajské tábory"
     },
     "recommendationIntro": "Odporúčané hodnoty opisujú bežné používanie Automatických Nomádov/Samurajov; sú radou a nemenia uložené nastavenia."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "Zapnuté po kontrole a uložení zamýšľaných nastavení.",
+            "description": "Po kontrole nastavení zapnite Automatického poradcu na karte Automatizácia; už odomknutý poradca môže sériu spustiť ihneď.",
+            "label": "Prepínač Automatického poradcu"
+          },
+          "save_settings": {
+            "label": "Uložiť nastavenia",
+            "description": "Pred zatvorením okna uložte zdrojový hrad, predvoľbu, náročnosti, veľkosť série a rozpočty zdrojov."
+          },
+          "activate_advisor": {
+            "description": "Ak je poradca zamknutý, vyberte Aktivovať poradcu a otvorte potvrdenie pre aktuálnu udalosť.",
+            "label": "Aktivovať poradcu"
+          },
+          "activate_and_spend": {
+            "description": "Odošlite potvrdenú aktiváciu vhodným žetónom udalosti alebo univerzálnym žetónom poradcu; bezplatná udalosť ukáže aktiváciu poradcu.",
+            "label": "Aktivovať a minúť žetón"
+          },
+          "cancel_activation": {
+            "description": "Zatvorte potvrdenie bez odoslania aktivácie alebo minutia žetónu.",
+            "label": "Zrušiť aktiváciu"
+          },
+          "confirm_paid_activation": {
+            "description": "Potvrďte, že aktivácia poradcu môže spotrebovať žetón udalosti alebo univerzálny žetón, ak hra túto udalosť neoznačuje za bezplatnú.",
+            "label": "Potvrdiť platenú aktiváciu"
+          }
+        },
+        "image": {
+          "alt": "Ilustračné ovládacie prvky uloženia a aktivácie Automatického poradcu žetónom",
+          "caption": "Uloženie ani zapnutie žetón neminie; samostatne potvrdená aktivácia ho môže minúť."
+        },
+        "title": "Uložte, zapnite a aktivujte prístup k poradcovi"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "Nomádska obtiažnosť",
+            "recommendation": "Použite najvyššiu odomknutú obtiažnosť, ktorú vaša bežná zostava spoľahlivo zvládne.",
+            "description": "Vyberte odomknutú náročnosť Nomádov, ktorá sa nastaví pri začiatku udalosti."
+          },
+          "samurai_difficulty": {
+            "label": "Samurajská obtiažnosť",
+            "recommendation": "Použite najvyššiu odomknutú obtiažnosť, ktorú vaša bežná zostava spoľahlivo zvládne.",
+            "description": "Vyberte odomknutú náročnosť Samurajov, ktorá sa nastaví pri začiatku udalosti."
+          },
+          "active_difficulty": {
+            "description": "Zvoľte aktuálnu náročnosť už aktívnej udalosti, inak automatizácia počká namiesto jej zmeny.",
+            "label": "Náročnosť aktívnej udalosti"
+          }
+        },
+        "title": "Vyberte obtiažnosti oboch udalostí",
+        "image": {
+          "alt": "Ilustračné voľby náročnosti poradcu Nomádov a Samurajov",
+          "caption": "Uložte náročnosti oboch udalostí a zvoľte náročnosť zodpovedajúcu už prebiehajúcej udalosti."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Zrýchlenie cesty koňom",
+            "recommendation": "Cestovné pierko na rýchly presun.",
+            "description": "Pre sériu vyberte cestu za pierka, mince alebo rubíny."
+          },
+          "open_settings": {
+            "label": "Otvorte nastavenia",
+            "description": "Na stránke Automatizácia vyberte tlačidlo nastavení na karte Automatický poradca."
+          },
+          "source_castle": {
+            "label": "Východiskový hrad",
+            "recommendation": "Použite svoj bežný hrad pre udalosti s dosť vojakmi a nástrojmi.",
+            "description": "Vyberte hrad vo Veľkej ríši, ktorý dodá vojakov a nástroje pre sériu poradcu."
+          },
+          "attack_preset": {
+            "description": "Vyberte uloženú predvoľbu útoku, ktorej vojaci, nástroje a formácia sa skopírujú pre každý požadovaný útok.",
+            "label": "Útočná predvoľba poradcu",
+            "recommendation": "Najprv vytvorte bežnú predvoľbu pre aktívnu udalosť Nomádov alebo Samurajov a potom ju vyberte."
+          },
+          "complete_copies": {
+            "description": "Dostupné zdroje a úplné kópie predvoľby môžu znížiť sériu pod maximálny počet útokov.",
+            "label": "Úplné kópie predvoľby"
+          }
+        },
+        "image": {
+          "alt": "Ilustračný zdrojový hrad, predvoľba a cestovné nastavenia Automatického poradcu",
+          "caption": "Pred nastavením cesty vyberte zdrojový hrad vo Veľkej ríši a uloženú predvoľbu udalosti."
+        },
+        "title": "Otvorte nastavenia Automatického poradcu"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "Ponechajte tento počet 24-hodinových časových skokov nedotknutý ako rezervu.",
+            "label": "Ponechať 24 h",
+            "recommendation": "Odložte zásobu potrebnú na stavby alebo iné činnosti."
+          },
+          "keep_5h": {
+            "description": "Ponechajte tento počet 5-hodinových časových skokov nedotknutý ako rezervu.",
+            "label": "Ponechať 5 h",
+            "recommendation": "Odložte zásobu potrebnú na stavby alebo iné činnosti."
+          },
+          "keep_60m": {
+            "description": "Ponechajte tento počet 60-minútových časových skokov nedotknutý ako rezervu.",
+            "label": "Ponechať 60 min",
+            "recommendation": "0 pre bežné série poradcu."
+          },
+          "coin_cost": {
+            "description": "Odhadnite úplnú cenu v minciach za útok pre výpočet dostupnosti pred spustením bez zmeny cien v hre.",
+            "label": "Celkové mince za útok",
+            "recommendation": "500 len ak pokryjú skutočné úplné náklady; inak použite vyššiu zistenú sumu."
+          },
+          "keep_coins": {
+            "description": "Vyraďte tento počet mincí z rozpočtu série.",
+            "label": "Ponechať mince",
+            "recommendation": "Ponechajte si bežný rozpočet na nábor a stavby."
+          },
+          "keep_feathers": {
+            "description": "Vyraďte tento počet cestovných pierok z rozpočtu série.",
+            "label": "Ponechať pierka",
+            "recommendation": "0, ak si pierka nerezervujete pre iné funkcie."
+          },
+          "keep_rubies": {
+            "description": "Vyraďte tento počet rubínov z rozpočtu série.",
+            "label": "Ponechať rubíny",
+            "recommendation": "Ponechajte si zostatok potrebný na iné činnosti."
+          },
+          "ruby_cost": {
+            "description": "Odhadnite cenu rubínovej cesty za útok; pri voľbe cesty za rubíny je potrebná kladná hodnota.",
+            "label": "Rubíny za útok",
+            "recommendation": "0 s cestovným pierkom; pre rubínovú cestu použite skutočnú kladnú cenu."
+          }
+        },
+        "image": {
+          "alt": "Ilustračné rezervy mincí, rubínov, pierok a časových preskočení Automatického poradcu",
+          "caption": "Údaje o cene sú odhadmi pre plánovanie; hodnoty ponechania označujú zdroje alebo časové preskočenia, ktoré sa nevyužijú."
+        },
+        "title": "Nastavte rozpočty zdrojov a rezervy"
+      },
+      "overview": {
+        "image": {
+          "alt": "Ilustračný prehľad postupu a strát Automatického poradcu",
+          "caption": "Prehľad ukazuje postup série a straty bez začatia ďalšej série."
+        },
+        "items": {
+          "live_progress": {
+            "description": "V prehľade sledujte aktuálny a požadovaný počet útokov, víťazstvá, porážky, stratené jednotky a nástroje.",
+            "label": "Prebiehajúca séria poradcu"
+          },
+          "no_relaunch": {
+            "description": "Dokončená alebo zrušená séria tej istej udalosti sa automaticky znova nespustí.",
+            "label": "Dokončená alebo zrušená séria"
+          },
+          "refresh_overview": {
+            "description": "Vyžiadajte si aktuálny postup série poradcu, víťazstvá, porážky a straty.",
+            "label": "Obnoviť prehľad"
+          }
+        },
+        "title": "Skontrolujte prebiehajúcu sériu poradcu"
+      },
+      "sizing": {
+        "image": {
+          "alt": "Ilustračné nastavenia počtu útokov a času udalosti Automatického poradcu",
+          "caption": "Požadovaný počet je pred spustením obmedzený dostupnými zdrojmi a časom udalosti."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "Nastavte hornú hranicu útokov tejto jedinej série poradcu; zdroje a zostávajúci čas udalosti môžu skutočný počet znížiť.",
+            "label": "Maximum útokov",
+            "recommendation": "9 999, aby veľkosť série určili dostupné zdroje a čas udalosti."
+          },
+          "minimum_remaining": {
+            "description": "Tento počet minút ponechajte nevyužitý pri výpočte času udalosti pred spustením.",
+            "label": "Zastaviť pred koncom udalosti",
+            "recommendation": "30 minút; nejde o priebežný časovač rušenia série."
+          }
+        },
+        "title": "Nastavte veľkosť série a čas udalosti"
+      }
+    },
+    "feature": {
+      "description": "Automatický poradca spustí jednu sériu útokov poradcu Nomádov alebo Samurajov podľa dostupných zdrojov a zostávajúceho času udalosti.",
+      "expectation": "Séria čaká na zodpovedajúcu náročnosť aktívnej udalosti a odomknutého poradcu; uloženie ani zapnutie žetón neminie, potvrdená aktivácia ho však môže minúť.",
+      "name": "Automatický poradca",
+      "summary": "Spustite jednu sériu poradcu Nomádov alebo Samurajov podľa dostupných zdrojov"
+    },
+    "recommendationIntro": "Odporúčané hodnoty opisujú bežné používanie Automatického poradcu; sú len usmernením a nemenia uložené nastavenia."
   }
 }

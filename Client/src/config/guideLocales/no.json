@@ -28,7 +28,10 @@
     "invasionPreviewTitle": "Eksempel på oppsett av automatiske invasjonsangrep",
     "nomadGuideIntro": "Følg disse trinnene for å sette opp Auto Nomader/Samuraier; velg et eksempelpanel for å forstørre det.",
     "nomadGuideTitle": "Veiledning for Auto Nomader/Samuraier",
-    "nomadPreviewTitle": "Oppsetteksempel for Auto Nomader/Samuraier"
+    "nomadPreviewTitle": "Oppsetteksempel for Auto Nomader/Samuraier",
+    "advisorGuideIntro": "Følg disse trinnene for å sette opp Auto Rådgiver; velg et eksempelpanel for å forstørre det.",
+    "advisorGuideTitle": "Veiledning for Auto Rådgiver",
+    "advisorPreviewTitle": "Oppsetteksempel for Auto Rådgiver"
   },
   "autoTower": {
     "recommendationIntro": "Disse anbefalingene gjelder vanlig bruk; gå gjennom dem før du lagrer.",
@@ -406,6 +409,43 @@
       "effect": "Prøve på erstatter hendelsesdrift med ekte angrep",
       "title": "Eksempel på prøveinnstillinger",
       "trial": "Midlertidig røverbaronprøve: av"
+    },
+    "advisorDifficulty": {
+      "active": "Aktiv hendelse: match gjeldende vanskelighet",
+      "nomad": "Nomader: opplåst pålitelig vanskelighet",
+      "samurai": "Samuraier: opplåst pålitelig vanskelighet",
+      "title": "Eksempel på hendelsesvanskeligheter"
+    },
+    "advisorSetup": {
+      "castle": "Kilde: vanlig hendelsesborg i Det Store Imperiet",
+      "travel": "Reisepåslag: Reisefjær",
+      "preset": "Oppsett: lagret formasjon for aktiv hendelse",
+      "title": "Eksempel på Rådgiver-angrepsinnstillinger"
+    },
+    "advisorActivation": {
+      "locked": "Hvis låst: åpne bekreftelsen Aktiver Rådgiver",
+      "paid": "Bekreft betalt brikkebruk eller gratis aktivering oppgitt av spillet",
+      "save": "Lagre innstillinger, og slå deretter på Automatisering-kortet",
+      "title": "Eksempel på aktiveringsflyt"
+    },
+    "advisorOverview": {
+      "progress": "Gjeldende angrep / ønskede angrep",
+      "refresh": "Oppdater oversikten for å lese dagens tall",
+      "results": "Seire, nederlag, tapte enheter og verktøy",
+      "title": "Eksempel på liveoversikt"
+    },
+    "advisorResources": {
+      "coins": "Totale mynter per angrep: 500 bare hvis nok",
+      "feathers": "Behold fjær: 0 med mindre de trengs annet sted",
+      "rubies": "Rubiner per angrep: 0 med Reisefjær",
+      "skips": "Behold 60 min: 0 gjenstander; reserver 5 timer og 24 timer ved behov",
+      "title": "Eksempel på ressursbudsjetter"
+    },
+    "advisorSizing": {
+      "actual": "Faktisk sekvens: begrenset av ressurser og tid",
+      "maximum": "Maksimale angrep: 9 999",
+      "time": "Ubrukt hendelsestid: 30 minutter",
+      "title": "Eksempel på sekvensstørrelse"
     }
   },
   "autoStation": {
@@ -947,5 +987,194 @@
       "summary": "Oppgrader og angrip nomade- eller samuraileirer"
     },
     "recommendationIntro": "Anbefalte verdier beskriver vanlig bruk av Auto Nomader/Samuraier; de er veiledning og endrer ikke lagrede innstillinger."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "På etter at du har kontrollert og lagret de ønskede innstillingene.",
+            "description": "Slå på Auto Rådgiver på Automatisering-kortet etter å ha sett over innstillingene; en allerede opplåst Rådgiver kan starte en sekvens med en gang.",
+            "label": "Bryter for Auto Rådgiver"
+          },
+          "save_settings": {
+            "label": "Lagre innstillinger",
+            "description": "Lagre kilde, oppsett, vanskelighetsgrader, sekvensstørrelse og ressursbudsjetter før du lukker dialogen."
+          },
+          "activate_advisor": {
+            "description": "Hvis Rådgiveren er låst, velg Aktiver Rådgiver for å åpne bekreftelsen for gjeldende hendelse.",
+            "label": "Aktiver Rådgiver"
+          },
+          "activate_and_spend": {
+            "description": "Send bekreftet aktivering med en gyldig hendelsesbrikke eller universell Rådgiver-brikke; en gratis hendelse viser Aktiver Rådgiver i stedet.",
+            "label": "Aktiver og bruk brikke"
+          },
+          "cancel_activation": {
+            "description": "Lukk bekreftelsen uten å sende aktivering eller bruke en brikke.",
+            "label": "Avbryt aktivering"
+          },
+          "confirm_paid_activation": {
+            "description": "Bekreft at aktivering av Rådgiveren kan bruke en hendelses- eller universell brikke, med mindre spillet oppgir at hendelsen er gratis.",
+            "label": "Bekreft betalt aktivering"
+          }
+        },
+        "image": {
+          "alt": "Eksempel på lagring og brikkeaktivering i Auto Rådgiver",
+          "caption": "Lagring eller innkobling bruker ingen brikke; separat bekreftet aktivering kan bruke én."
+        },
+        "title": "Lagre, slå på og aktiver Rådgiver-tilgang"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "Nomadevanskelighet",
+            "recommendation": "Bruk den høyeste opplåste vanskelighetsgraden som ditt vanlige oppsett klarer pålitelig.",
+            "description": "Velg en opplåst nomadevanskelighet for start av hendelsen."
+          },
+          "samurai_difficulty": {
+            "label": "Samuraivanskelighet",
+            "recommendation": "Bruk den høyeste opplåste vanskelighetsgraden som ditt vanlige oppsett klarer pålitelig.",
+            "description": "Velg en opplåst samuraivanskelighet for start av hendelsen."
+          },
+          "active_difficulty": {
+            "description": "Følg vanskeligheten i den aktive hendelsen, ellers venter automatiseringen i stedet for å endre den.",
+            "label": "Aktiv hendelsesvanskelighet"
+          }
+        },
+        "title": "Velg vanskelighetsgrad for begge hendelser",
+        "image": {
+          "alt": "Eksempel på nomade- og samurairådgiverens vanskelighetsgrader",
+          "caption": "Lagre begge hendelsesvanskelighetene og følg den som allerede kjører."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Reisefart med hest",
+            "recommendation": "Reisefjær for rask reise.",
+            "description": "Velg reise med fjær, mynter eller rubiner for sekvensen."
+          },
+          "open_settings": {
+            "label": "Åpne innstillinger",
+            "description": "Velg innstillingsknappen på Auto Rådgiver-kortet på Automatisering-siden."
+          },
+          "source_castle": {
+            "label": "Kildeborg",
+            "recommendation": "Bruk din vanlige hendelsesborg med nok tropper og verktøy.",
+            "description": "Velg borgen i Det store riket som leverer tropper og verktøy til Rådgiver-sekvensen."
+          },
+          "attack_preset": {
+            "description": "Velg et lagret angrepsoppsett der tropper, verktøy og formasjon kopieres til hvert angrep du ber om.",
+            "label": "Rådgiverens angrepsoppsett",
+            "recommendation": "Lag først et vanlig oppsett for den aktive nomade- eller samuraihendelsen, og velg det deretter."
+          },
+          "complete_copies": {
+            "description": "Tilgjengelige ressurser og hele kopier av oppsettet kan begrense sekvensen til færre enn maksimalt antall angrep.",
+            "label": "Hele kopier av oppsettet"
+          }
+        },
+        "image": {
+          "alt": "Eksempel på kilde, oppsett og reise i Auto Rådgiver",
+          "caption": "Velg en kildeborg i Det store riket og et lagret hendelsesoppsett før reisen stilles inn."
+        },
+        "title": "Åpne innstillinger for Auto Rådgiver"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "Behold dette antallet tidshopp på 24 timer ubrukt som reserve.",
+            "label": "Behold 24 timer",
+            "recommendation": "Reserver beholdningen du trenger til bygging eller andre aktiviteter."
+          },
+          "keep_5h": {
+            "description": "Behold dette antallet tidshopp på 5 timer ubrukt som reserve.",
+            "label": "Behold 5 timer",
+            "recommendation": "Reserver beholdningen du trenger til bygging eller andre aktiviteter."
+          },
+          "keep_60m": {
+            "description": "Behold dette antallet tidshopp på 60 min ubrukt som reserve.",
+            "label": "Behold 60 min",
+            "recommendation": "0 for vanlige Rådgiver-sekvenser."
+          },
+          "coin_cost": {
+            "description": "Anslå den fulle myntkostnaden per angrep for kontrollen før start uten å endre spillprisene.",
+            "label": "Totale mynter per angrep",
+            "recommendation": "500 bare hvis det dekker den faktiske fulle kostnaden; ellers bruk et høyere målt beløp."
+          },
+          "keep_coins": {
+            "description": "Hold dette antallet mynter utenfor sekvensbudsjettet.",
+            "label": "Behold mynter",
+            "recommendation": "Behold ditt vanlige budsjett for rekruttering og bygging."
+          },
+          "keep_feathers": {
+            "description": "Hold dette antallet reisefjær utenfor sekvensbudsjettet.",
+            "label": "Behold fjær",
+            "recommendation": "0 med mindre du reserverer fjær til andre funksjoner."
+          },
+          "keep_rubies": {
+            "description": "Hold dette antallet rubiner utenfor sekvensbudsjettet.",
+            "label": "Behold rubiner",
+            "recommendation": "Behold saldoen som trengs til andre aktiviteter."
+          },
+          "ruby_cost": {
+            "description": "Anslå rubinkostnaden for reise per angrep; et positivt tall kreves ved rubinreise.",
+            "label": "Rubiner per angrep",
+            "recommendation": "0 med Reisefjær; bruk den faktiske positive kostnaden ved rubinreise."
+          }
+        },
+        "image": {
+          "alt": "Eksempel på mynt-, rubin-, fjær- og tidshoppreserver i Auto Rådgiver",
+          "caption": "Kostnadsfeltene er planleggingsanslag; behold-verdier teller ubrukte ressurser eller tidshoppgjenstander."
+        },
+        "title": "Sett ressursbudsjetter og reserver"
+      },
+      "overview": {
+        "image": {
+          "alt": "Eksempel på Rådgiver-fremdrift og tap",
+          "caption": "Oversikten viser fremdrift og tap uten å starte en ny sekvens."
+        },
+        "items": {
+          "live_progress": {
+            "description": "Les gjeldende og ønsket angrep, seire, nederlag samt tapte enheter og verktøy i oversikten.",
+            "label": "Pågående Rådgiver-sekvens"
+          },
+          "no_relaunch": {
+            "description": "En fullført eller avbrutt sekvens for samme hendelse startes ikke automatisk på nytt.",
+            "label": "Fullført eller avbrutt sekvens"
+          },
+          "refresh_overview": {
+            "description": "Be om oppdaterte data om fremdrift, seire, nederlag og tap.",
+            "label": "Oppdater oversikt"
+          }
+        },
+        "title": "Se på den pågående Rådgiver-sekvensen"
+      },
+      "sizing": {
+        "image": {
+          "alt": "Eksempel på angrepsantall og hendelsestid i Auto Rådgiver",
+          "caption": "Ønsket antall begrenses før start av ressurser og hendelsestid."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "Sett en øvre grense for angrep i denne ene Rådgiver-sekvensen; ressurser og gjenværende tid kan redusere det faktiske antallet.",
+            "label": "Maksimale angrep",
+            "recommendation": "9 999, slik at ressurser og hendelsestid bestemmer sekvensens størrelse."
+          },
+          "minimum_remaining": {
+            "description": "La dette antallet minutter stå ubrukt i beregningen av hendelsestid før start.",
+            "label": "Stopp før hendelsen slutter",
+            "recommendation": "30 minutter; dette er ikke en løpende avbrytelsestimer."
+          }
+        },
+        "title": "Sett sekvensstørrelse og hendelsestid"
+      }
+    },
+    "feature": {
+      "description": "Auto Rådgiver starter én nomade- eller samurairådgiversekvens, der antallet angrep bestemmes av tilgjengelige ressurser og gjenværende hendelsestid.",
+      "expectation": "Sekvensen venter på samsvarende aktiv vanskelighet og opplåst Rådgiver-tilgang; lagring eller innkobling bruker ingen brikke, men bekreftet aktivering kan gjøre det.",
+      "name": "Auto Rådgiver",
+      "summary": "Start én ressursberegnet nomade- eller samurairådgiversekvens"
+    },
+    "recommendationIntro": "Anbefalte verdier beskriver vanlig bruk av Auto Rådgiver; de er veiledning og endrer ikke lagrede innstillinger."
   }
 }

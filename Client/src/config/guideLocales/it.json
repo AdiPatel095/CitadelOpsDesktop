@@ -28,7 +28,10 @@
     "invasionPreviewTitle": "Esempio di configurazione dell'automazione delle invasioni",
     "nomadGuideIntro": "Segui questi passaggi per configurare Auto Nomadi/Samurai; seleziona un pannello di esempio per ingrandirlo.",
     "nomadGuideTitle": "Guida di Auto Nomadi/Samurai",
-    "nomadPreviewTitle": "Esempio di configurazione di Auto Nomadi/Samurai"
+    "nomadPreviewTitle": "Esempio di configurazione di Auto Nomadi/Samurai",
+    "advisorGuideIntro": "Segui questi passaggi per configurare Auto Consigliere; seleziona un pannello di esempio per ingrandirlo.",
+    "advisorGuideTitle": "Guida Auto Consigliere",
+    "advisorPreviewTitle": "Esempio di configurazione di Auto Consigliere"
   },
   "autoTower": {
     "recommendationIntro": "Questi consigli riguardano l’uso regolare; controllali prima di salvare.",
@@ -406,6 +409,43 @@
       "effect": "Prova attiva: sostituisce l'evento con un vero attacco",
       "title": "Esempio dei controlli della prova",
       "trial": "Prova temporanea contro masnadieri: disattivata"
+    },
+    "advisorDifficulty": {
+      "active": "Evento attivo: usa la difficoltà attuale",
+      "nomad": "Nomadi: difficoltà sbloccata e affidabile",
+      "samurai": "Samurai: difficoltà sbloccata e affidabile",
+      "title": "Esempio di difficoltà dell'evento"
+    },
+    "advisorSetup": {
+      "castle": "Partenza: castello abituale per l'evento nel Grande Impero",
+      "travel": "Potenziamento di viaggio: piuma da viaggio",
+      "preset": "Preset: formazione salvata dell'evento attivo",
+      "title": "Esempio di configurazione dell'attacco del Consigliere"
+    },
+    "advisorActivation": {
+      "locked": "Se bloccato: apri la conferma Attiva Consigliere",
+      "paid": "Conferma uso del gettone a pagamento o attivazione gratuita segnalata dal gioco",
+      "save": "Salva impostazioni, poi abilita la scheda Automazione",
+      "title": "Esempio del flusso di attivazione"
+    },
+    "advisorOverview": {
+      "progress": "Attacco corrente / attacchi richiesti",
+      "refresh": "Aggiorna riepilogo per leggere i totali attuali",
+      "results": "Vittorie, sconfitte, unità e strumenti perduti",
+      "title": "Esempio di riepilogo in tempo reale"
+    },
+    "advisorResources": {
+      "coins": "Monete totali per attacco: 500 solo se sufficienti",
+      "feathers": "Conserva piume: 0 salvo necessità altrove",
+      "rubies": "Rubini per attacco: 0 con Piuma di viaggio",
+      "skips": "Conserva 60 min: 0 oggetti; riserva 5 h e 24 h secondo necessità",
+      "title": "Esempio di budget delle risorse"
+    },
+    "advisorSizing": {
+      "actual": "Serie effettiva: limitata da risorse e tempo",
+      "maximum": "Attacchi massimi: 9.999",
+      "time": "Tempo dell'evento non usato: 30 minuti",
+      "title": "Esempio di dimensione della serie"
     }
   },
   "autoStation": {
@@ -947,5 +987,194 @@
       "summary": "Potenzia e attacca gli accampamenti nomadi o samurai"
     },
     "recommendationIntro": "I valori consigliati descrivono l'uso regolare di Auto Nomadi/Samurai; sono indicazioni e non cambiano le impostazioni salvate."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "Attivo dopo aver controllato e salvato le impostazioni desiderate.",
+            "description": "Dopo aver controllato le impostazioni, abilita Auto Consigliere nella scheda Automazione; se il Consigliere è già sbloccato, una serie può partire subito.",
+            "label": "Interruttore Auto Consigliere"
+          },
+          "save_settings": {
+            "label": "Salva impostazioni",
+            "description": "Salva castello di partenza, preset, difficoltà, dimensione della serie e budget prima di chiudere questa finestra."
+          },
+          "activate_advisor": {
+            "description": "Se il Consigliere è bloccato, scegli Attiva Consigliere per aprire la conferma dell'evento corrente.",
+            "label": "Attiva Consigliere"
+          },
+          "activate_and_spend": {
+            "description": "Invia l'attivazione confermata con un gettone valido dell'evento o universale del Consigliere; se l'evento è gratuito, compare invece Attiva Consigliere.",
+            "label": "Attiva e spendi gettone"
+          },
+          "cancel_activation": {
+            "description": "Chiudi la conferma senza inviare l'attivazione o spendere un gettone.",
+            "label": "Annulla attivazione"
+          },
+          "confirm_paid_activation": {
+            "description": "Riconosci che attivare il Consigliere può consumare un gettone dell'evento o universale, salvo che il gioco segnali l'evento come gratuito.",
+            "label": "Conferma attivazione a pagamento"
+          }
+        },
+        "image": {
+          "alt": "Esempio dei controlli di salvataggio e attivazione con gettoni di Auto Consigliere",
+          "caption": "Salvare o abilitare non spende gettoni; l'attivazione confermata separatamente può consumarne uno."
+        },
+        "title": "Salva, abilita e attiva l'accesso al Consigliere"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "Difficoltà nomade",
+            "recommendation": "Usa la difficoltà sbloccata più alta che la tua formazione abituale affronta in modo affidabile.",
+            "description": "Scegli una difficoltà nomade sbloccata da selezionare all'avvio dell'evento."
+          },
+          "samurai_difficulty": {
+            "label": "Difficoltà samurai",
+            "recommendation": "Usa la difficoltà sbloccata più alta che la tua formazione abituale affronta in modo affidabile.",
+            "description": "Scegli una difficoltà samurai sbloccata da selezionare all'avvio dell'evento."
+          },
+          "active_difficulty": {
+            "description": "Usa la difficoltà attuale di un evento attivo, altrimenti l'automazione attende invece di modificarla.",
+            "label": "Difficoltà dell'evento attivo"
+          }
+        },
+        "title": "Scegli le difficoltà di entrambi gli eventi",
+        "image": {
+          "alt": "Esempio delle difficoltà del Consigliere nomade e samurai",
+          "caption": "Salva entrambe le difficoltà e usa quella dell'evento già in corso."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Potenziamento del viaggio a cavallo",
+            "recommendation": "Piuma da viaggio per spostamenti rapidi.",
+            "description": "Scegli l'opzione di viaggio con piuma, monete o rubini per la serie."
+          },
+          "open_settings": {
+            "label": "Apri le impostazioni",
+            "description": "Nella pagina Automazione, scegli il pulsante delle impostazioni nella scheda Auto Consigliere."
+          },
+          "source_castle": {
+            "label": "Castello di partenza",
+            "recommendation": "Usa il tuo castello abituale per l'evento con abbastanza truppe e strumenti.",
+            "description": "Scegli il castello del Grande Impero che fornisce truppe e strumenti alla serie del Consigliere."
+          },
+          "attack_preset": {
+            "description": "Seleziona un preset d'attacco salvato, le cui truppe, strumenti e formazione sono copiati per ogni attacco richiesto.",
+            "label": "Preset d'attacco del Consigliere",
+            "recommendation": "Prima crea un preset regolare per l'evento nomade o samurai attivo, poi selezionalo."
+          },
+          "complete_copies": {
+            "description": "Le risorse disponibili e le copie complete del preset possono ridurre la serie sotto il numero massimo di attacchi.",
+            "label": "Copie complete del preset"
+          }
+        },
+        "image": {
+          "alt": "Esempio di partenza, preset e viaggio di Auto Consigliere",
+          "caption": "Scegli un castello di partenza nel Grande Impero e un preset d'evento salvato prima dell'opzione di viaggio."
+        },
+        "title": "Apri le impostazioni di Auto Consigliere"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "Conserva senza usarli questo numero di salti temporali da 24 h.",
+            "label": "Conserva 24 h",
+            "recommendation": "Tieni da parte la scorta necessaria per costruzioni o altre attività."
+          },
+          "keep_5h": {
+            "description": "Conserva senza usarli questo numero di salti temporali da 5 h.",
+            "label": "Conserva 5 h",
+            "recommendation": "Tieni da parte la scorta necessaria per costruzioni o altre attività."
+          },
+          "keep_60m": {
+            "description": "Conserva senza usarli questo numero di salti temporali da 60 min.",
+            "label": "Conserva 60 min",
+            "recommendation": "0 per le normali serie del Consigliere."
+          },
+          "coin_cost": {
+            "description": "Stima il costo totale in monete per attacco per la verifica prima dell'avvio, senza cambiare i prezzi del gioco.",
+            "label": "Monete totali per attacco",
+            "recommendation": "500 solo se copre il costo effettivo completo; altrimenti usa un totale misurato più alto."
+          },
+          "keep_coins": {
+            "description": "Escludi questo numero di monete dal budget della serie.",
+            "label": "Conserva monete",
+            "recommendation": "Conserva il budget abituale per reclutamento e costruzione."
+          },
+          "keep_feathers": {
+            "description": "Escludi questo numero di piume di viaggio dal budget della serie.",
+            "label": "Conserva piume",
+            "recommendation": "0 salvo che tu riservi piume ad altre funzioni."
+          },
+          "keep_rubies": {
+            "description": "Escludi questo numero di rubini dal budget della serie.",
+            "label": "Conserva rubini",
+            "recommendation": "Conserva il saldo necessario ad altre attività."
+          },
+          "ruby_cost": {
+            "description": "Stima il costo in rubini per attacco del viaggio; con il viaggio in rubini serve un valore positivo.",
+            "label": "Rubini per attacco",
+            "recommendation": "0 con Piuma di viaggio; usa il costo effettivo positivo per il viaggio in rubini."
+          }
+        },
+        "image": {
+          "alt": "Esempio delle riserve di monete, rubini, piume e salti temporali di Auto Consigliere",
+          "caption": "I campi dei costi sono stime di pianificazione; i valori Conserva contano risorse o salti temporali non usati."
+        },
+        "title": "Imposta budget e riserve"
+      },
+      "overview": {
+        "image": {
+          "alt": "Esempio di progressi e perdite del Consigliere",
+          "caption": "Il riepilogo mostra progressi e perdite senza avviare un'altra serie."
+        },
+        "items": {
+          "live_progress": {
+            "description": "Leggi nel riepilogo attacco corrente, attacchi richiesti, vittorie, sconfitte, unità e strumenti perduti.",
+            "label": "Serie del Consigliere in corso"
+          },
+          "no_relaunch": {
+            "description": "Una serie completata o annullata nello stesso evento non si riavvia automaticamente.",
+            "label": "Serie completata o annullata"
+          },
+          "refresh_overview": {
+            "description": "Richiedi dati aggiornati su progressi, vittorie, sconfitte e perdite.",
+            "label": "Aggiorna riepilogo"
+          }
+        },
+        "title": "Controlla la serie del Consigliere in corso"
+      },
+      "sizing": {
+        "image": {
+          "alt": "Esempio del numero di attacchi e del tempo dell'evento di Auto Consigliere",
+          "caption": "Il numero richiesto è limitato prima dell'avvio da risorse e tempo dell'evento."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "Imposta un limite superiore agli attacchi di questa singola serie del Consigliere; risorse e tempo rimanente possono ridurre il numero reale.",
+            "label": "Attacchi massimi",
+            "recommendation": "9.999 per lasciare che risorse disponibili e tempo dell'evento determinino la serie."
+          },
+          "minimum_remaining": {
+            "description": "Lascia inutilizzati questi minuti nel calcolo del tempo prima dell'avvio.",
+            "label": "Fermati prima della fine dell'evento",
+            "recommendation": "30 minuti; non è un timer di annullamento durante la serie."
+          }
+        },
+        "title": "Imposta dimensione della serie e tempo dell'evento"
+      }
+    },
+    "feature": {
+      "description": "Auto Consigliere avvia una serie di attacchi del Consigliere nomade o samurai dimensionata dalle risorse disponibili e dal tempo rimanente dell'evento.",
+      "expectation": "La serie attende una difficoltà attiva corrispondente e l'accesso sbloccato al Consigliere; salvare o abilitare non spende gettoni, mentre l'attivazione confermata potrebbe farlo.",
+      "name": "Auto Consigliere",
+      "summary": "Avvia una serie del Consigliere nomade o samurai commisurata alle risorse"
+    },
+    "recommendationIntro": "I valori consigliati descrivono l'uso regolare di Auto Consigliere; sono indicazioni e non modificano le impostazioni salvate."
   }
 }

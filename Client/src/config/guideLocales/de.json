@@ -28,7 +28,10 @@
     "invasionPreviewTitle": "Beispiel für die Einrichtung automatischer Invasionsangriffe",
     "nomadGuideIntro": "Folge diesen Schritten, um Auto Nomaden/Samurai einzurichten; wähle ein Beispielbild zum Vergrößern.",
     "nomadGuideTitle": "Anleitung für Auto Nomaden/Samurai",
-    "nomadPreviewTitle": "Einrichtungsbeispiel für Auto Nomaden/Samurai"
+    "nomadPreviewTitle": "Einrichtungsbeispiel für Auto Nomaden/Samurai",
+    "advisorGuideIntro": "Folge diesen Schritten, um Auto Berater einzurichten; wähle ein Beispielbild zum Vergrößern.",
+    "advisorGuideTitle": "Anleitung für Auto Berater",
+    "advisorPreviewTitle": "Einrichtungsbeispiel für Auto Berater"
   },
   "autoTower": {
     "recommendationIntro": "Diese Empfehlungen gelten für den regelmäßigen Betrieb; prüfe sie vor dem Speichern.",
@@ -406,6 +409,43 @@
       "effect": "Test Ein ersetzt den Eventbetrieb durch einen echten Angriff",
       "title": "Beispiel für Teststeuerung",
       "trial": "Vorübergehender Raubritterburgtest: Aus"
+    },
+    "advisorDifficulty": {
+      "active": "Aktives Event: aktuellen Schwierigkeitsgrad übernehmen",
+      "nomad": "Nomaden: freigeschalteter verlässlicher Schwierigkeitsgrad",
+      "samurai": "Samurai: freigeschalteter verlässlicher Schwierigkeitsgrad",
+      "title": "Beispiel für Event-Schwierigkeitsgrade"
+    },
+    "advisorSetup": {
+      "castle": "Ausgang: übliche Eventburg im Großen Imperium",
+      "travel": "Reisebonus: Reisefeder",
+      "preset": "Vorlage: gespeicherte Aufstellung für das aktive Event",
+      "title": "Beispiel für Berater-Angriffseinstellungen"
+    },
+    "advisorActivation": {
+      "locked": "Bei Sperre: Bestätigung über Berater aktivieren öffnen",
+      "paid": "Kostenpflichtige Tokenverwendung oder vom Spiel gemeldete kostenlose Aktivierung bestätigen",
+      "save": "Einstellungen speichern, dann Automatisierungskarte einschalten",
+      "title": "Beispiel für den Aktivierungsablauf"
+    },
+    "advisorOverview": {
+      "progress": "Aktueller Angriff / angeforderte Angriffe",
+      "refresh": "Übersicht für aktuelle Summen aktualisieren",
+      "results": "Siege, Niederlagen, verlorene Einheiten und Werkzeuge",
+      "title": "Beispiel für die Live-Übersicht"
+    },
+    "advisorResources": {
+      "coins": "Gesamte Münzen je Angriff: 500 nur bei ausreichender Deckung",
+      "feathers": "Federn behalten: 0, sofern anderswo nicht benötigt",
+      "rubies": "Rubine je Angriff: 0 mit Reisefeder",
+      "skips": "60 Min. behalten: 0 Gegenstände; 5 Std. und 24 Std. nach Bedarf reservieren",
+      "title": "Beispiel für Ressourcenbudgets"
+    },
+    "advisorSizing": {
+      "actual": "Tatsächlicher Lauf: durch Ressourcen und Zeit begrenzt",
+      "maximum": "Maximale Angriffe: 9.999",
+      "time": "Ungenutzte Eventzeit: 30 Minuten",
+      "title": "Beispiel für die Laufgröße"
     }
   },
   "autoStation": {
@@ -947,5 +987,194 @@
       "summary": "Nomaden- oder Samurai-Eventlager entwickeln und angreifen"
     },
     "recommendationIntro": "Empfohlene Werte beschreiben den regulären Einsatz von Auto Nomaden/Samurai; sie dienen nur als Orientierung und ändern keine gespeicherten Einstellungen."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "Ein, nachdem du deine gewünschten Einstellungen geprüft und gespeichert hast.",
+            "description": "Aktiviere Auto Berater nach Prüfung der Einstellungen auf der Automatisierungskarte; bei bereits freigeschaltetem Berater kann sofort ein Lauf starten.",
+            "label": "Schalter für Auto Berater"
+          },
+          "save_settings": {
+            "label": "Einstellungen speichern",
+            "description": "Speichere Quellburg, Vorlage, Schwierigkeitsgrade, Laufgröße und Ressourcenbudgets vor dem Schließen dieses Dialogs."
+          },
+          "activate_advisor": {
+            "description": "Ist der Berater gesperrt, öffne mit Berater aktivieren die Bestätigung für das aktuelle Event.",
+            "label": "Berater aktivieren"
+          },
+          "activate_and_spend": {
+            "description": "Sende die bestätigte Aktivierung mit einem zulässigen Event- oder Universal-Berater-Token ab; bei kostenlosem Event steht stattdessen Berater aktivieren.",
+            "label": "Aktivieren und Token ausgeben"
+          },
+          "cancel_activation": {
+            "description": "Schließe die Bestätigung, ohne eine Aktivierung abzusenden oder einen Token auszugeben.",
+            "label": "Aktivierung abbrechen"
+          },
+          "confirm_paid_activation": {
+            "description": "Bestätige, dass die Berateraktivierung einen Event- oder Universal-Token verbrauchen kann, sofern das Spiel das Event nicht als kostenlos meldet.",
+            "label": "Kostenpflichtige Aktivierung bestätigen"
+          }
+        },
+        "image": {
+          "alt": "Beispiel für Speichern und Tokenaktivierung bei Auto Berater",
+          "caption": "Speichern oder Einschalten verbraucht keinen Token; die gesondert bestätigte Aktivierung kann einen verbrauchen."
+        },
+        "title": "Beraterzugang speichern, einschalten und aktivieren"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "Nomaden-Schwierigkeitsgrad",
+            "recommendation": "Nutze den höchsten freigeschalteten Schwierigkeitsgrad, den deine übliche Aufstellung zuverlässig bewältigt.",
+            "description": "Wähle einen freigeschalteten Nomaden-Schwierigkeitsgrad für den Eventstart."
+          },
+          "samurai_difficulty": {
+            "label": "Samurai-Schwierigkeitsgrad",
+            "recommendation": "Nutze den höchsten freigeschalteten Schwierigkeitsgrad, den deine übliche Aufstellung zuverlässig bewältigt.",
+            "description": "Wähle einen freigeschalteten Samurai-Schwierigkeitsgrad für den Eventstart."
+          },
+          "active_difficulty": {
+            "description": "Übernimm den aktuellen Schwierigkeitsgrad eines aktiven Events; andernfalls wartet die Automatisierung, statt ihn zu ändern.",
+            "label": "Schwierigkeitsgrad des aktiven Events"
+          }
+        },
+        "title": "Wähle beide Event-Schwierigkeitsgrade",
+        "image": {
+          "alt": "Beispiel für die Berater-Schwierigkeitsgrade von Nomaden und Samurai",
+          "caption": "Speichere beide Event-Schwierigkeitsgrade und übernimm den bereits laufenden."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Reisebeschleunigung mit Pferden",
+            "recommendation": "Reisefeder für schnelles Reisen.",
+            "description": "Wähle Feder-, Münz- oder Rubinreiseoption für den Lauf."
+          },
+          "open_settings": {
+            "label": "Einstellungen öffnen",
+            "description": "Wähle auf der Automatisierungsseite die Einstellungsschaltfläche der Auto-Berater-Karte."
+          },
+          "source_castle": {
+            "label": "Ausgangsburg",
+            "recommendation": "Nutze deine übliche Eventburg mit genügend Truppen und Werkzeugen.",
+            "description": "Wähle die Burg im Großen Imperium, die Truppen und Werkzeuge für den Beraterlauf bereitstellt."
+          },
+          "attack_preset": {
+            "description": "Wähle eine gespeicherte Angriffsvorlage, deren Truppen, Werkzeuge und Aufstellung für jeden angeforderten Angriff kopiert werden.",
+            "label": "Berater-Angriffsvorlage",
+            "recommendation": "Erstelle zunächst eine reguläre Vorlage für das aktive Nomaden- oder Samurai-Event und wähle sie dann aus."
+          },
+          "complete_copies": {
+            "description": "Verfügbare Ressourcen und vollständige Vorlagenkopien können den Lauf unter die maximale Angriffszahl begrenzen.",
+            "label": "Vollständige Vorlagenkopien"
+          }
+        },
+        "image": {
+          "alt": "Beispiel für Auto-Berater-Quelle, Vorlage und Reiseoption",
+          "caption": "Wähle eine Quellburg im Großen Imperium und eine gespeicherte Eventvorlage, bevor du die Reiseoption festlegst."
+        },
+        "title": "Auto-Berater-Einstellungen öffnen"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "So viele 24-Stunden-Zeitsprünge als Reserve unangetastet lassen.",
+            "label": "24 Std. behalten",
+            "recommendation": "Den Vorrat reservieren, den du für Bauten oder andere Aufgaben brauchst."
+          },
+          "keep_5h": {
+            "description": "So viele 5-Stunden-Zeitsprünge als Reserve unangetastet lassen.",
+            "label": "5 Std. behalten",
+            "recommendation": "Den Vorrat reservieren, den du für Bauten oder andere Aufgaben brauchst."
+          },
+          "keep_60m": {
+            "description": "So viele 60-Minuten-Zeitsprünge als Reserve unangetastet lassen.",
+            "label": "60 Min. behalten",
+            "recommendation": "0 für reguläre Beraterläufe."
+          },
+          "coin_cost": {
+            "description": "Schätze die gesamten Münzkosten je Angriff für die Prüfung vor dem Start, ohne Spielpreise zu ändern.",
+            "label": "Gesamte Münzen je Angriff",
+            "recommendation": "500 nur, wenn es die tatsächlichen Gesamtkosten deckt; sonst einen höheren gemessenen Betrag verwenden."
+          },
+          "keep_coins": {
+            "description": "Schließe diese Zahl Münzen vom Laufbudget aus.",
+            "label": "Münzen behalten",
+            "recommendation": "Behalte dein übliches Budget für Rekrutierung und Bauten."
+          },
+          "keep_feathers": {
+            "description": "Schließe diese Zahl Reisefedern vom Laufbudget aus.",
+            "label": "Federn behalten",
+            "recommendation": "0, sofern du Federn nicht für andere Funktionen reservierst."
+          },
+          "keep_rubies": {
+            "description": "Schließe diese Zahl Rubine vom Laufbudget aus.",
+            "label": "Rubine behalten",
+            "recommendation": "Behalte das für andere Aktivitäten benötigte Guthaben."
+          },
+          "ruby_cost": {
+            "description": "Schätze die Rubinkosten der Reise pro Angriff; bei Rubinreise ist ein positiver Wert erforderlich.",
+            "label": "Rubine je Angriff",
+            "recommendation": "0 mit Reisefeder; bei Rubinreise die tatsächlichen positiven Kosten verwenden."
+          }
+        },
+        "image": {
+          "alt": "Beispiel für Münz-, Rubin-, Feder- und Zeitsprungreserven bei Auto Berater",
+          "caption": "Kostenfelder sind Planungsschätzungen; Behalten-Werte zählen ungenutzte Ressourcen oder Zeitsprunggegenstände."
+        },
+        "title": "Ressourcenbudgets und Reserven festlegen"
+      },
+      "overview": {
+        "image": {
+          "alt": "Beispiel für Beraterfortschritt und Verluste",
+          "caption": "Die Übersicht zeigt Laufstand und Verluste, ohne einen weiteren Lauf zu starten."
+        },
+        "items": {
+          "live_progress": {
+            "description": "Lies in der Übersicht aktuellen und angeforderten Angriff, Siege, Niederlagen sowie verlorene Einheiten und Werkzeuge ab.",
+            "label": "Laufender Beraterlauf"
+          },
+          "no_relaunch": {
+            "description": "Ein abgeschlossener oder abgebrochener Lauf desselben Events wird nicht automatisch erneut gestartet.",
+            "label": "Abgeschlossener oder abgebrochener Lauf"
+          },
+          "refresh_overview": {
+            "description": "Fordere aktuelle Angaben zu Laufstand, Siegen, Niederlagen und Verlusten an.",
+            "label": "Übersicht aktualisieren"
+          }
+        },
+        "title": "Laufenden Beraterlauf prüfen"
+      },
+      "sizing": {
+        "image": {
+          "alt": "Beispiel für Angriffszahl und Eventzeit bei Auto Berater",
+          "caption": "Die angeforderte Zahl wird vor dem Start durch Ressourcen und Eventzeit begrenzt."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "Setze eine Obergrenze für Angriffe dieses einen Beraterlaufs; Ressourcen und Restzeit können die tatsächliche Zahl verringern.",
+            "label": "Maximale Angriffe",
+            "recommendation": "9.999, damit verfügbare Ressourcen und Eventzeit die Laufgröße bestimmen."
+          },
+          "minimum_remaining": {
+            "description": "Lass diese Anzahl Minuten bei der Berechnung der Eventzeit vor dem Start ungenutzt.",
+            "label": "Vor Eventende stoppen",
+            "recommendation": "30 Minuten; dies ist kein laufender Abbruch-Timer."
+          }
+        },
+        "title": "Laufgröße und Eventzeit festlegen"
+      }
+    },
+    "feature": {
+      "description": "Auto Berater startet einen Nomaden- oder Samurai-Beraterlauf, dessen Angriffszahl sich nach verfügbaren Ressourcen und verbleibender Eventzeit richtet.",
+      "expectation": "Der Lauf wartet auf eine passende aktive Schwierigkeit und freigeschalteten Beraterzugang; Speichern oder Einschalten verbraucht keinen Token, eine bestätigte Aktivierung möglicherweise schon.",
+      "name": "Auto Berater",
+      "summary": "Einen ressourcengerechten Nomaden- oder Samurai-Beraterlauf starten"
+    },
+    "recommendationIntro": "Empfohlene Werte beschreiben die reguläre Nutzung von Auto Berater; sie dienen nur als Orientierung und ändern keine gespeicherten Einstellungen."
   }
 }

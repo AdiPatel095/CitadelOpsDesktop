@@ -28,7 +28,10 @@
     "invasionPreviewTitle": "入侵自动攻击设置示例",
     "nomadGuideIntro": "按照这些步骤设置自动游牧武士；选择示例面板即可放大。",
     "nomadGuideTitle": "自动游牧武士指南",
-    "nomadPreviewTitle": "自动游牧武士设置示例"
+    "nomadPreviewTitle": "自动游牧武士设置示例",
+    "advisorGuideIntro": "按照以下步骤设置自动顾问；选择示例面板可将其放大。",
+    "advisorGuideTitle": "自动顾问指南",
+    "advisorPreviewTitle": "自动顾问设置示例"
   },
   "autoTower": {
     "recommendationIntro": "以下是日常使用的建议；保存前请检查。",
@@ -406,6 +409,43 @@
       "effect": "开启试验会以真实攻击取代活动运行",
       "title": "试验控件示例",
       "trial": "临时强盗男爵试验：关"
+    },
+    "advisorDifficulty": {
+      "active": "活动进行中：匹配当前难度",
+      "nomad": "游牧：已解锁且能稳定完成的难度",
+      "samurai": "武士：已解锁且能稳定完成的难度",
+      "title": "活动难度示例"
+    },
+    "advisorSetup": {
+      "castle": "出发地：大帝国常用活动城堡",
+      "travel": "行军加速：旅行羽毛",
+      "preset": "预设：为当前活动保存的阵型",
+      "title": "顾问攻击设置示例"
+    },
+    "advisorActivation": {
+      "locked": "如果尚未解锁：打开顾问激活确认窗口",
+      "paid": "确认使用代币或游戏显示的免费激活",
+      "save": "保存设置，然后开启自动化卡片",
+      "title": "激活流程示例"
+    },
+    "advisorOverview": {
+      "progress": "当前攻击数 / 请求的攻击数",
+      "refresh": "刷新概览以查看当前总数",
+      "results": "胜场、败场、损失的单位和工具",
+      "title": "实时概览示例"
+    },
+    "advisorResources": {
+      "coins": "每次攻击的全部金币：仅在足够时使用500",
+      "feathers": "保留羽毛：其他地方不需要时设为0",
+      "rubies": "每次攻击的红宝石：使用行军羽毛时设为0",
+      "skips": "保留60分钟道具：0件；按需保留5小时和24小时道具",
+      "title": "资源预算示例"
+    },
+    "advisorSizing": {
+      "actual": "实际批次：受资源和时间限制",
+      "maximum": "最大攻击数：9,999",
+      "time": "未使用的活动时间：30分钟",
+      "title": "批次规模示例"
     }
   },
   "autoStation": {
@@ -947,5 +987,194 @@
       "summary": "升级并攻击游牧或武士活动营地"
     },
     "recommendationIntro": "推荐值适用于自动游牧武士的日常使用，仅供参考，不会更改已保存的设置。"
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "检查并保存预期设置后开启。",
+            "description": "检查设置后在自动化卡片上开启自动顾问；已解锁的顾问可能立即开始批次。",
+            "label": "自动顾问开关"
+          },
+          "save_settings": {
+            "label": "保存设置",
+            "description": "关闭对话框之前，保存出发城堡、预设、难度、批次规模和资源预算。"
+          },
+          "activate_advisor": {
+            "description": "如果顾问尚未解锁，请选择激活顾问，打开当前活动的确认窗口。",
+            "label": "激活顾问"
+          },
+          "activate_and_spend": {
+            "description": "使用符合条件的活动代币或通用顾问代币提交已确认的激活；免费活动会显示无需代币的激活。",
+            "label": "激活并消耗代币"
+          },
+          "cancel_activation": {
+            "description": "关闭确认窗口，不提交激活或消耗代币。",
+            "label": "取消激活"
+          },
+          "confirm_paid_activation": {
+            "description": "确认激活顾问可能消耗活动代币或通用代币，除非游戏显示本次活动免费。",
+            "label": "确认付费激活"
+          }
+        },
+        "image": {
+          "alt": "自动顾问保存和代币激活控件的示意图",
+          "caption": "保存或开启不会消耗代币；单独确认的激活可能消耗代币。"
+        },
+        "title": "保存、开启并激活顾问权限"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "游牧难度",
+            "recommendation": "使用平时的配置能够稳定应对的最高已解锁难度。",
+            "description": "选择活动开始时要设置的已解锁游牧难度。"
+          },
+          "samurai_difficulty": {
+            "label": "武士难度",
+            "recommendation": "使用平时的配置能够稳定应对的最高已解锁难度。",
+            "description": "选择活动开始时要设置的已解锁武士难度。"
+          },
+          "active_difficulty": {
+            "description": "匹配已经进行中的活动当前难度，否则自动化会等待而不会修改难度。",
+            "label": "进行中活动的难度"
+          }
+        },
+        "title": "选择两种活动的难度",
+        "image": {
+          "alt": "游牧和武士顾问难度选择示意图",
+          "caption": "保存两种活动的难度，并与已经进行中的活动难度保持一致。"
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "骑乘行军加速",
+            "recommendation": "快速行军推荐旅行羽毛。",
+            "description": "为批次选择羽毛、金币或红宝石行军方式。"
+          },
+          "open_settings": {
+            "label": "打开设置",
+            "description": "在自动化页面选择自动顾问卡片上的设置按钮。"
+          },
+          "source_castle": {
+            "label": "出发城堡",
+            "recommendation": "使用士兵和工具充足的常用活动城堡。",
+            "description": "选择为顾问批次提供士兵和工具的大帝国城堡。"
+          },
+          "attack_preset": {
+            "description": "选择已保存的攻击预设，系统会为每次请求的攻击复制其士兵、工具和阵型。",
+            "label": "顾问攻击预设",
+            "recommendation": "先为当前游牧或武士活动创建日常使用的预设，再选择它。"
+          },
+          "complete_copies": {
+            "description": "可用资源和完整预设副本数可能使批次数量低于最大攻击数。",
+            "label": "完整预设副本"
+          }
+        },
+        "image": {
+          "alt": "自动顾问出发城堡、预设和行军设置示意图",
+          "caption": "设置行军前，选择大帝国的出发城堡和已保存的活动预设。"
+        },
+        "title": "打开自动顾问设置"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "将这么多24小时时间跳跃道具保留不用。",
+            "label": "保留24小时",
+            "recommendation": "保留建造或其他活动需要的库存。"
+          },
+          "keep_5h": {
+            "description": "将这么多5小时时间跳跃道具保留不用。",
+            "label": "保留5小时",
+            "recommendation": "保留建造或其他活动需要的库存。"
+          },
+          "keep_60m": {
+            "description": "将这么多60分钟时间跳跃道具保留不用。",
+            "label": "保留60分钟",
+            "recommendation": "日常顾问批次设为0。"
+          },
+          "coin_cost": {
+            "description": "估算每次攻击的全部金币费用，用于启动前的负担能力计算，而不会更改游戏价格。",
+            "label": "每次攻击的全部金币",
+            "recommendation": "只有500足以支付实际全部费用时才使用；否则输入测得的更高总额。"
+          },
+          "keep_coins": {
+            "description": "从批次预算中排除相应数量的金币。",
+            "label": "保留金币",
+            "recommendation": "保留日常招募和建造所需的预算。"
+          },
+          "keep_feathers": {
+            "description": "从批次预算中排除相应数量的行军羽毛。",
+            "label": "保留羽毛",
+            "recommendation": "除非需要为其他功能预留羽毛，否则设为0。"
+          },
+          "keep_rubies": {
+            "description": "从批次预算中排除相应数量的红宝石。",
+            "label": "保留红宝石",
+            "recommendation": "保留其他活动所需的余额。"
+          },
+          "ruby_cost": {
+            "description": "估算每次攻击的红宝石行军费用；选择红宝石行军时必须填写正数。",
+            "label": "每次攻击的红宝石",
+            "recommendation": "使用行军羽毛时设为0；红宝石行军时填写实际的正数费用。"
+          }
+        },
+        "image": {
+          "alt": "自动顾问金币、红宝石、羽毛和时间跳跃道具保留量示意图",
+          "caption": "费用字段是规划估算值；保留数值表示不会使用的资源或时间跳跃道具。"
+        },
+        "title": "设置资源预算和保留量"
+      },
+      "overview": {
+        "image": {
+          "alt": "自动顾问进度和损失概览示意图",
+          "caption": "概览显示批次进度和损失，不会开始另一个批次。"
+        },
+        "items": {
+          "live_progress": {
+            "description": "在概览中查看当前和请求的攻击数、胜场、败场、损失的单位和工具。",
+            "label": "正在进行的顾问批次"
+          },
+          "no_relaunch": {
+            "description": "同一活动中完成或取消的批次不会自动重新开始。",
+            "label": "完成或取消的批次"
+          },
+          "refresh_overview": {
+            "description": "请求更新顾问批次进度、胜场、败场和损失。",
+            "label": "刷新概览"
+          }
+        },
+        "title": "查看正在进行的顾问批次"
+      },
+      "sizing": {
+        "image": {
+          "alt": "自动顾问攻击数和活动时间设置示意图",
+          "caption": "请求的攻击数会在启动前受到可用资源和活动时间限制。"
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "设置此次顾问批次的攻击数上限；资源和剩余活动时间可能进一步降低实际攻击数。",
+            "label": "最大攻击数",
+            "recommendation": "设为9,999，让可用资源和活动时间决定批次规模。"
+          },
+          "minimum_remaining": {
+            "description": "在启动前的活动时间计算中，预留相应分钟数不使用。",
+            "label": "活动结束前停止",
+            "recommendation": "30分钟；这不是运行期间持续取消批次的计时器。"
+          }
+        },
+        "title": "设置批次规模和活动时间"
+      }
+    },
+    "feature": {
+      "description": "自动顾问根据可用资源和活动剩余时间，发起一次游牧或武士顾问攻击批次。",
+      "expectation": "批次会等待当前活动难度匹配且顾问已解锁；保存或开启不会消耗代币，但确认激活可能消耗代币。",
+      "name": "自动顾问",
+      "summary": "按资源规模发起一次游牧或武士顾问攻击批次"
+    },
+    "recommendationIntro": "推荐数值适用于自动顾问的日常使用，仅供参考，不会更改已保存的设置。"
   }
 }

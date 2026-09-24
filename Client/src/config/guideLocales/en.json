@@ -28,7 +28,10 @@
     "invasionPreviewTitle": "Auto Invasion setup example",
     "nomadGuideTitle": "Auto Nomad/Samurai guide",
     "nomadGuideIntro": "Follow these steps to set up Auto Nomad/Samurai; select an example panel to enlarge it.",
-    "nomadPreviewTitle": "Auto Nomad/Samurai setup example"
+    "nomadPreviewTitle": "Auto Nomad/Samurai setup example",
+    "advisorGuideTitle": "Auto Advisor guide",
+    "advisorGuideIntro": "Follow these steps to set up Auto Advisor; select an example panel to enlarge it.",
+    "advisorPreviewTitle": "Auto Advisor setup example"
   },
   "autoTower": {
     "recommendationIntro": "These are recommendations for regular use; review them before saving.",
@@ -406,6 +409,43 @@
       "trial": "Temporary RBC trial: Off",
       "coordinates": "Target X / Y: unused during routine operation",
       "effect": "Trial On replaces event operation with a real attack"
+    },
+    "advisorSetup": {
+      "title": "Example Advisor attack setup",
+      "castle": "Source: usual Great Empire event castle",
+      "preset": "Preset: saved active-event formation",
+      "travel": "Travel boost: Travel Feather"
+    },
+    "advisorDifficulty": {
+      "title": "Example event difficulties",
+      "nomad": "Nomad: unlocked reliable difficulty",
+      "samurai": "Samurai: unlocked reliable difficulty",
+      "active": "Active event: match its current difficulty"
+    },
+    "advisorSizing": {
+      "title": "Example run size",
+      "maximum": "Maximum attacks: 9,999",
+      "time": "Unused event time: 30 minutes",
+      "actual": "Actual run: limited by resources and time"
+    },
+    "advisorResources": {
+      "title": "Example resource budgets",
+      "coins": "All-in coins per attack: 500 only if sufficient",
+      "rubies": "Rubies per attack: 0 with Travel Feather",
+      "feathers": "Keep feathers: 0 unless needed elsewhere",
+      "skips": "Keep 60m: 0 items; reserve 5h and 24h as needed"
+    },
+    "advisorActivation": {
+      "title": "Example activation flow",
+      "save": "Save settings, then enable the Automation card",
+      "locked": "If locked: open Activate Advisor confirmation",
+      "paid": "Confirm paid token use or the game-reported free activation"
+    },
+    "advisorOverview": {
+      "title": "Example live overview",
+      "progress": "Current attack / requested attacks",
+      "results": "Wins, defeats, units lost and tools lost",
+      "refresh": "Refresh overview to read current totals"
     }
   },
   "autoStation": {
@@ -946,6 +986,195 @@
       "summary": "Level and attack Nomad or Samurai event camps",
       "description": "Auto Nomad/Samurai levels eligible event camps, selects the weakest fully levelled camp and repeatedly attacks it with the event-specific saved preset until a stopping limit is reached.",
       "expectation": "It waits for an active event, eligible commanders, troops, tools and usable time skips when cooldown clearing is enabled; travelling attacks may finish after new launches stop."
+    }
+  },
+  "autoAdvisor": {
+    "recommendationIntro": "Recommended values describe regular Auto Advisor use; they are guidance and do not change saved settings.",
+    "steps": {
+      "open": {
+        "title": "Open Auto Advisor settings",
+        "items": {
+          "open_settings": {
+            "label": "Open settings",
+            "description": "On the Automation page, select the settings button on the Auto Advisor card."
+          },
+          "source_castle": {
+            "label": "Source castle",
+            "description": "Choose the Great Empire castle that supplies troops and tools for the Advisor run.",
+            "recommendation": "Use your usual event castle with enough troops and tools."
+          },
+          "attack_preset": {
+            "label": "Advisor attack preset",
+            "description": "Select a saved Attack Preset whose troops, tools and formation are copied for every requested attack.",
+            "recommendation": "Create a regular preset for the active Nomad or Samurai event first, then select it."
+          },
+          "horse_travel_boost": {
+            "label": "Horse travel boost",
+            "description": "Choose the feather, coin or ruby travel option for the run.",
+            "recommendation": "Travel Feather for fast travel."
+          },
+          "complete_copies": {
+            "label": "Complete preset copies",
+            "description": "Available resources and complete preset copies can reduce the run below the maximum attack count."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Advisor source, preset and travel settings",
+          "caption": "Choose a Great Empire source castle and a saved event preset before setting travel."
+        }
+      },
+      "difficulty": {
+        "title": "Choose both event difficulties",
+        "items": {
+          "nomad_difficulty": {
+            "label": "Nomad difficulty",
+            "description": "Choose an unlocked Nomad difficulty to select when that event starts.",
+            "recommendation": "Use the highest unlocked difficulty your usual setup handles reliably."
+          },
+          "samurai_difficulty": {
+            "label": "Samurai difficulty",
+            "description": "Choose an unlocked Samurai difficulty to select when that event starts.",
+            "recommendation": "Use the highest unlocked difficulty your usual setup handles reliably."
+          },
+          "active_difficulty": {
+            "label": "Active event difficulty",
+            "description": "Match the current difficulty of an already active event or this automation waits rather than changing it."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Nomad and Samurai Advisor difficulty choices",
+          "caption": "Save both event difficulties and match the one already running."
+        }
+      },
+      "sizing": {
+        "title": "Set the run size and event time",
+        "items": {
+          "maximum_attacks": {
+            "label": "Maximum attacks",
+            "description": "Set an upper bound on attacks in this single Advisor run; resources and remaining event time may lower the actual count.",
+            "recommendation": "9,999 to let available resources and event time determine the run size."
+          },
+          "minimum_remaining": {
+            "label": "Stop before event end",
+            "description": "Leave this many minutes unused in the pre-launch event-time calculation.",
+            "recommendation": "30 minutes; this is not an ongoing cancellation timer."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Advisor attack-count and event-time settings",
+          "caption": "The requested count is limited before launch by available resources and event time."
+        }
+      },
+      "resources": {
+        "title": "Set resource budgets and reserves",
+        "items": {
+          "coin_cost": {
+            "label": "All-in coins per attack",
+            "description": "Estimate the full coin cost per attack for the pre-launch affordability calculation without changing game prices.",
+            "recommendation": "500 only if it covers your actual full cost; otherwise use a higher measured total."
+          },
+          "keep_coins": {
+            "label": "Keep coins",
+            "description": "Exclude this many coins from the run budget.",
+            "recommendation": "Keep your usual recruitment and building budget."
+          },
+          "ruby_cost": {
+            "label": "Rubies per attack",
+            "description": "Estimate ruby travel cost per attack, with a positive value required when ruby travel is selected.",
+            "recommendation": "0 with Travel Feather; use the actual positive cost for ruby travel."
+          },
+          "keep_rubies": {
+            "label": "Keep rubies",
+            "description": "Exclude this many rubies from the run budget.",
+            "recommendation": "Keep the balance needed for other activities."
+          },
+          "keep_feathers": {
+            "label": "Keep feathers",
+            "description": "Exclude this many travel feathers from the run budget.",
+            "recommendation": "0 unless you reserve feathers for other features."
+          },
+          "keep_60m": {
+            "label": "Keep 60m",
+            "description": "Keep this many 60m time-skip items untouched as a reserve.",
+            "recommendation": "0 for regular Advisor runs."
+          },
+          "keep_5h": {
+            "label": "Keep 5h",
+            "description": "Keep this many 5h time-skip items untouched as a reserve.",
+            "recommendation": "Reserve the stock you need for building or other activities."
+          },
+          "keep_24h": {
+            "label": "Keep 24h",
+            "description": "Keep this many 24h time-skip items untouched as a reserve.",
+            "recommendation": "Reserve the stock you need for building or other activities."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Advisor coin, ruby, feather and time-skip reserves",
+          "caption": "Cost fields are planning estimates; keep values count resources or time-skip items left unused."
+        }
+      },
+      "activation": {
+        "title": "Save, enable and activate Advisor access",
+        "items": {
+          "save_settings": {
+            "label": "Save settings",
+            "description": "Save the source, preset, difficulties, run size and resource budgets before closing this dialog."
+          },
+          "auto_advisor_switch": {
+            "label": "Auto Advisor switch",
+            "description": "Enable Auto Advisor on its Automation card after reviewing the settings; an already unlocked Advisor may launch a run immediately.",
+            "recommendation": "On after reviewing and saving your intended settings."
+          },
+          "activate_advisor": {
+            "label": "Activate Advisor",
+            "description": "If Advisor is locked, choose Activate Advisor to open confirmation for the current event."
+          },
+          "confirm_paid_activation": {
+            "label": "Confirm paid activation",
+            "description": "Acknowledge that activating Advisor may consume an event or universal token unless the game reports this event as free."
+          },
+          "activate_and_spend": {
+            "label": "Activate and spend token",
+            "description": "Submit the confirmed activation using an eligible event token or universal Advisor token; a free event shows Activate advisor instead."
+          },
+          "cancel_activation": {
+            "label": "Cancel activation",
+            "description": "Close the confirmation without submitting an activation or spending a token."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Advisor save and token activation controls",
+          "caption": "Saving or enabling does not spend a token; the separate confirmed activation may do so."
+        }
+      },
+      "overview": {
+        "title": "Review the live Advisor run",
+        "items": {
+          "refresh_overview": {
+            "label": "Refresh overview",
+            "description": "Request updated Advisor run progress, wins, defeats and losses."
+          },
+          "live_progress": {
+            "label": "Live Advisor run",
+            "description": "Read the current attack count, requested count, wins, defeats, lost units and lost tools in the overview."
+          },
+          "no_relaunch": {
+            "label": "Completed or cancelled run",
+            "description": "A completed or cancelled run for the same event is not automatically started again."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Advisor progress and loss overview",
+          "caption": "The overview shows run progress and losses without starting another run."
+        }
+      }
+    },
+    "feature": {
+      "name": "Auto Advisor",
+      "summary": "Start one resource-sized Nomad or Samurai Advisor run",
+      "description": "Auto Advisor starts one Nomad or Samurai Advisor attack run sized by available resources and remaining event time.",
+      "expectation": "The run waits for active matching difficulty and unlocked Advisor access; saving or enabling does not spend a token, while a confirmed activation may do so."
     }
   }
 }

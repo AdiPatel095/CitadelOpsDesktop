@@ -28,7 +28,10 @@
     "invasionPreviewTitle": "Otomatik istila saldırıları kurulum örneği",
     "nomadGuideIntro": "Otomatik Göçebeler/Samuraylar kurmak için bu adımları izle; büyütmek için örnek paneli seç.",
     "nomadGuideTitle": "Otomatik Göçebeler/Samuraylar rehberi",
-    "nomadPreviewTitle": "Otomatik Göçebeler/Samuraylar kurulum örneği"
+    "nomadPreviewTitle": "Otomatik Göçebeler/Samuraylar kurulum örneği",
+    "advisorGuideIntro": "Otomatik Danışman'ı ayarlamak için bu adımları izleyin; büyütmek için örnek paneli seçin.",
+    "advisorGuideTitle": "Otomatik Danışman kılavuzu",
+    "advisorPreviewTitle": "Otomatik Danışman ayarları örneği"
   },
   "autoTower": {
     "recommendationIntro": "Bunlar düzenli kullanım önerileridir; kaydetmeden önce gözden geçirin.",
@@ -406,6 +409,43 @@
       "effect": "Deneme açıkken etkinliğin yerini gerçek saldırı alır",
       "title": "Deneme denetimleri örneği",
       "trial": "Geçici Haydut Baron denemesi: kapalı"
+    },
+    "advisorDifficulty": {
+      "active": "Etkin olay: mevcut zorlukla eşleştir",
+      "nomad": "Göçebeler: açık ve güvenilir zorluk",
+      "samurai": "Samuraylar: açık ve güvenilir zorluk",
+      "title": "Örnek etkinlik zorlukları"
+    },
+    "advisorSetup": {
+      "castle": "Kaynak: Büyük İmparatorluk'taki olağan etkinlik kalesi",
+      "travel": "Yolculuk hızlandırması: Yolculuk Tüyü",
+      "preset": "Şablon: etkin etkinliğin kayıtlı düzeni",
+      "title": "Danışman saldırı ayarları örneği"
+    },
+    "advisorActivation": {
+      "locked": "Kilitliyse: Danışman etkinleştirme onayını açın",
+      "paid": "Jeton kullanımını veya oyunun bildirdiği ücretsiz etkinleştirmeyi onaylayın",
+      "save": "Ayarları kaydedin, sonra Otomasyon kartını açın",
+      "title": "Etkinleştirme akışı örneği"
+    },
+    "advisorOverview": {
+      "progress": "Mevcut saldırılar / istenen saldırılar",
+      "refresh": "Güncel toplamları görmek için görünümü yenileyin",
+      "results": "Galibiyetler, yenilgiler, kayıp birlikler ve araçlar",
+      "title": "Canlı görünüm örneği"
+    },
+    "advisorResources": {
+      "coins": "Saldırı başına toplam sikke: 500 yalnızca yeterliyse",
+      "feathers": "Tüy sakla: başka yerde gerekmiyorsa 0",
+      "rubies": "Saldırı başına yakut: Yolculuk Tüyü ile 0",
+      "skips": "60 dk sakla: 0 öğe; gerektiği kadar 5 sa ve 24 sa saklayın",
+      "title": "Kaynak bütçesi örneği"
+    },
+    "advisorSizing": {
+      "actual": "Gerçek dizi: kaynaklar ve süreyle sınırlı",
+      "maximum": "Azami saldırı: 9.999",
+      "time": "Kullanılmayan etkinlik süresi: 30 dakika",
+      "title": "Dizi boyutu örneği"
     }
   },
   "autoStation": {
@@ -947,5 +987,194 @@
       "summary": "Göçebe veya samuray kamplarını geliştir ve saldır"
     },
     "recommendationIntro": "Önerilen değerler Otomatik Göçebeler/Samuraylar için düzenli kullanımı açıklar; yol gösterir ve kayıtlı ayarları değiştirmez."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "İstediğiniz ayarları inceleyip kaydettikten sonra açık.",
+            "description": "Ayarları gözden geçirdikten sonra Otomasyon kartından Otomatik Danışman'ı açın; zaten açılmış Danışman hemen dizi başlatabilir.",
+            "label": "Otomatik Danışman anahtarı"
+          },
+          "save_settings": {
+            "label": "Ayarları kaydet",
+            "description": "Pencereyi kapatmadan önce kaynak kaleyi, şablonu, zorlukları, dizi boyutunu ve kaynak bütçelerini kaydedin."
+          },
+          "activate_advisor": {
+            "description": "Danışman kilitliyse mevcut etkinlik için onay penceresini açmak üzere Danışmanı Etkinleştir'i seçin.",
+            "label": "Danışmanı Etkinleştir"
+          },
+          "activate_and_spend": {
+            "description": "Onaylanan etkinleştirmeyi uygun etkinlik jetonu veya evrensel Danışman jetonuyla gönderin; ücretsiz etkinlik jetonsuz etkinleştirme gösterir.",
+            "label": "Etkinleştir ve jeton harca"
+          },
+          "cancel_activation": {
+            "description": "Etkinleştirme göndermeden veya jeton harcamadan onay penceresini kapatın.",
+            "label": "Etkinleştirmeyi iptal et"
+          },
+          "confirm_paid_activation": {
+            "description": "Oyun bu etkinliği ücretsiz göstermiyorsa Danışman etkinleştirmesinin etkinlik veya evrensel jeton tüketebileceğini kabul edin.",
+            "label": "Ücretli etkinleştirmeyi onayla"
+          }
+        },
+        "image": {
+          "alt": "Otomatik Danışman kaydetme ve jetonla etkinleştirme denetimlerinin örneği",
+          "caption": "Kaydetmek veya açmak jeton harcamaz; ayrı olarak onaylanan etkinleştirme harcayabilir."
+        },
+        "title": "Danışman erişimini kaydedin, açın ve etkinleştirin"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "Göçebe zorluğu",
+            "recommendation": "Olağan düzeninizin güvenilir biçimde üstesinden geldiği en yüksek açık zorluğu kullanın.",
+            "description": "Etkinlik başladığında seçilecek açılmış bir Göçebe zorluğu seçin."
+          },
+          "samurai_difficulty": {
+            "label": "Samuray zorluğu",
+            "recommendation": "Olağan düzeninizin güvenilir biçimde üstesinden geldiği en yüksek açık zorluğu kullanın.",
+            "description": "Etkinlik başladığında seçilecek açılmış bir Samuray zorluğu seçin."
+          },
+          "active_difficulty": {
+            "description": "Zaten etkin olan etkinliğin mevcut zorluğunu eşleştirin, aksi halde otomasyon onu değiştirmek yerine bekler.",
+            "label": "Etkin etkinlik zorluğu"
+          }
+        },
+        "title": "İki etkinliğin zorluğunu seçin",
+        "image": {
+          "alt": "Göçebe ve Samuray Danışmanı zorluk seçimlerinin örneği",
+          "caption": "İki etkinliğin zorluğunu kaydedin ve zaten süren etkinliğin zorluğuyla eşleştirin."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Atla yolculuk hızlandırması",
+            "recommendation": "Hızlı yolculuk için Yolculuk Tüyü.",
+            "description": "Dizi için tüy, sikke veya yakutla yolculuk seçin."
+          },
+          "open_settings": {
+            "label": "Ayarları açın",
+            "description": "Otomasyon sayfasında Otomatik Danışman kartındaki ayarlar düğmesini seçin."
+          },
+          "source_castle": {
+            "label": "Kaynak kale",
+            "recommendation": "Yeterli asker ve aracı olan olağan etkinlik kalenizi kullanın.",
+            "description": "Danışman dizisine asker ve araç sağlayacak Büyük İmparatorluk kalesini seçin."
+          },
+          "attack_preset": {
+            "description": "Askerleri, araçları ve düzeni istenen her saldırıya kopyalanan kayıtlı bir saldırı şablonu seçin.",
+            "label": "Danışman saldırı şablonu",
+            "recommendation": "Önce etkin Göçebe veya Samuray etkinliği için olağan şablon oluşturup ardından seçin."
+          },
+          "complete_copies": {
+            "description": "Mevcut kaynaklar ve eksiksiz şablon kopyaları diziyi azami saldırı sayısının altına indirebilir.",
+            "label": "Eksiksiz şablon kopyaları"
+          }
+        },
+        "image": {
+          "alt": "Otomatik Danışman kaynak kalesi, şablonu ve yolculuk ayarlarının örneği",
+          "caption": "Yolculuğu ayarlamadan önce Büyük İmparatorluk'ta kaynak kale ve kayıtlı etkinlik şablonu seçin."
+        },
+        "title": "Otomatik Danışman ayarlarını açın"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "Bu sayıdaki 24 saatlik zaman atlamasını rezerv olarak kullanmadan sakla.",
+            "label": "24 sa sakla",
+            "recommendation": "İnşaat veya başka işler için gerekli stoğu ayır."
+          },
+          "keep_5h": {
+            "description": "Bu sayıdaki 5 saatlik zaman atlamasını rezerv olarak kullanmadan sakla.",
+            "label": "5 sa sakla",
+            "recommendation": "İnşaat veya başka işler için gerekli stoğu ayır."
+          },
+          "keep_60m": {
+            "description": "Bu sayıdaki 60 dakikalık zaman atlamasını rezerv olarak kullanmadan sakla.",
+            "label": "60 dk sakla",
+            "recommendation": "Olağan Danışman dizileri için 0."
+          },
+          "coin_cost": {
+            "description": "Oyun fiyatlarını değiştirmeden başlatma öncesi bütçe hesabı için saldırı başına tam sikke maliyetini tahmin edin.",
+            "label": "Saldırı başına toplam sikke",
+            "recommendation": "500 yalnızca gerçek tam maliyeti karşılıyorsa; değilse ölçtüğünüz daha yüksek toplamı kullanın."
+          },
+          "keep_coins": {
+            "description": "Bu kadar sikkeyi dizinin bütçesinden çıkarın.",
+            "label": "Sikke sakla",
+            "recommendation": "Olağan asker toplama ve inşaat bütçenizi koruyun."
+          },
+          "keep_feathers": {
+            "description": "Bu kadar yolculuk tüyünü dizinin bütçesinden çıkarın.",
+            "label": "Tüy sakla",
+            "recommendation": "Başka özelliklere tüy ayırmıyorsanız 0."
+          },
+          "keep_rubies": {
+            "description": "Bu kadar yakutu dizinin bütçesinden çıkarın.",
+            "label": "Yakut sakla",
+            "recommendation": "Diğer etkinlikler için gereken bakiyeyi koruyun."
+          },
+          "ruby_cost": {
+            "description": "Saldırı başına yakutlu yolculuk maliyetini tahmin edin; yakutlu yolculuk seçilirse pozitif değer gerekir.",
+            "label": "Saldırı başına yakut",
+            "recommendation": "Yolculuk Tüyü ile 0; yakutlu yolculukta gerçek pozitif maliyeti kullanın."
+          }
+        },
+        "image": {
+          "alt": "Otomatik Danışman sikke, yakut, tüy ve zaman atlama rezervlerinin örneği",
+          "caption": "Maliyet alanları planlama tahminidir; saklama değerleri kullanılmayan kaynak veya zaman atlama öğelerini gösterir."
+        },
+        "title": "Kaynak bütçelerini ve rezervleri ayarlayın"
+      },
+      "overview": {
+        "image": {
+          "alt": "Otomatik Danışman ilerleme ve kayıp görünümünün örneği",
+          "caption": "Görünüm, yeni dizi başlatmadan ilerlemeyi ve kayıpları gösterir."
+        },
+        "items": {
+          "live_progress": {
+            "description": "Görünümde mevcut ve istenen saldırı sayısını, galibiyetleri, yenilgileri, kayıp birlikleri ve araçları okuyun.",
+            "label": "Canlı Danışman dizisi"
+          },
+          "no_relaunch": {
+            "description": "Aynı etkinlikte tamamlanmış veya iptal edilmiş bir dizi otomatik olarak yeniden başlamaz.",
+            "label": "Tamamlanan veya iptal edilen dizi"
+          },
+          "refresh_overview": {
+            "description": "Danışman dizisinin güncel ilerleme, galibiyet, yenilgi ve kayıplarını isteyin.",
+            "label": "Görünümü yenile"
+          }
+        },
+        "title": "Canlı Danışman dizisini inceleyin"
+      },
+      "sizing": {
+        "image": {
+          "alt": "Otomatik Danışman saldırı sayısı ve etkinlik süresi ayarlarının örneği",
+          "caption": "İstenen sayı başlatılmadan önce mevcut kaynaklar ve etkinlik süresiyle sınırlandırılır."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "Bu tek Danışman dizisindeki saldırıların üst sınırını ayarlayın; kaynaklar ve kalan süre gerçek sayıyı azaltabilir.",
+            "label": "Azami saldırı",
+            "recommendation": "Kaynaklar ve etkinlik süresi dizi boyutunu belirlesin diye 9.999."
+          },
+          "minimum_remaining": {
+            "description": "Başlatma öncesi etkinlik süresi hesabında bu kadar dakikayı kullanılmadan bırakın.",
+            "label": "Etkinlik bitmeden dur",
+            "recommendation": "30 dakika; bu, devam eden bir dizi iptal zamanlayıcısı değildir."
+          }
+        },
+        "title": "Dizi boyutunu ve etkinlik süresini ayarlayın"
+      }
+    },
+    "feature": {
+      "description": "Otomatik Danışman, mevcut kaynaklara ve etkinlikte kalan süreye göre boyutlandırılmış tek bir Göçebe veya Samuray Danışmanı saldırı dizisi başlatır.",
+      "expectation": "Dizi, etkinliğin uygun zorluğunu ve açılmış Danışman erişimini bekler; kaydetmek veya açmak jeton harcamaz, ancak onaylanan etkinleştirme harcayabilir.",
+      "name": "Otomatik Danışman",
+      "summary": "Kaynaklara göre boyutlandırılmış tek bir Göçebe veya Samuray Danışmanı dizisi başlatın"
+    },
+    "recommendationIntro": "Önerilen değerler Otomatik Danışman'ın olağan kullanımını açıklar; bunlar yol gösterir ve kayıtlı ayarları değiştirmez."
   }
 }

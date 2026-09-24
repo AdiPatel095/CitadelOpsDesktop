@@ -28,7 +28,10 @@
     "invasionPreviewTitle": "入侵自動攻擊設定範例",
     "nomadGuideIntro": "按照這些步驟設定自動遊牧武士；選擇範例面板即可放大。",
     "nomadGuideTitle": "自動遊牧武士指南",
-    "nomadPreviewTitle": "自動遊牧武士設定範例"
+    "nomadPreviewTitle": "自動遊牧武士設定範例",
+    "advisorGuideIntro": "依照以下步驟設定自動顧問；選擇範例面板即可放大。",
+    "advisorGuideTitle": "自動顧問指南",
+    "advisorPreviewTitle": "自動顧問設定範例"
   },
   "autoTower": {
     "recommendationIntro": "以下是日常使用的建議；儲存前請先檢查。",
@@ -406,6 +409,43 @@
       "effect": "開啟試驗會以真實攻擊取代活動運作",
       "title": "試驗控制項範例",
       "trial": "臨時強盜男爵試驗：關"
+    },
+    "advisorDifficulty": {
+      "active": "活動進行中：符合目前難度",
+      "nomad": "遊牧：已解鎖且能穩定完成的難度",
+      "samurai": "武士：已解鎖且能穩定完成的難度",
+      "title": "活動難度範例"
+    },
+    "advisorSetup": {
+      "castle": "出發地：大帝國常用活動城堡",
+      "travel": "行軍加速：旅行羽毛",
+      "preset": "預設：為目前活動儲存的陣型",
+      "title": "顧問攻擊設定範例"
+    },
+    "advisorActivation": {
+      "locked": "若尚未解鎖：開啟顧問啟用確認視窗",
+      "paid": "確認使用代幣或遊戲顯示的免費啟用",
+      "save": "儲存設定，然後開啟自動化卡片",
+      "title": "啟用流程範例"
+    },
+    "advisorOverview": {
+      "progress": "目前攻擊數 / 要求的攻擊數",
+      "refresh": "重新整理總覽以查看目前總數",
+      "results": "勝場、敗場、損失的單位與工具",
+      "title": "即時總覽範例"
+    },
+    "advisorResources": {
+      "coins": "每次攻擊的全部金幣：僅在足夠時使用500",
+      "feathers": "保留羽毛：其他地方不需要時設為0",
+      "rubies": "每次攻擊的紅寶石：使用行軍羽毛時設為0",
+      "skips": "保留60分鐘道具：0件；依需要保留5小時與24小時道具",
+      "title": "資源預算範例"
+    },
+    "advisorSizing": {
+      "actual": "實際攻擊：受資源與時間限制",
+      "maximum": "最大攻擊數：9,999",
+      "time": "未使用的活動時間：30分鐘",
+      "title": "攻擊規模範例"
     }
   },
   "autoStation": {
@@ -947,5 +987,194 @@
       "summary": "升級並攻擊遊牧或武士活動營地"
     },
     "recommendationIntro": "建議值適用於自動遊牧武士的日常使用，僅供參考，不會更改已儲存的設定。"
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "檢查並儲存預期設定後開啟。",
+            "description": "檢查設定後，在自動化卡片開啟自動顧問；已解鎖的顧問可能立即開始一輪攻擊。",
+            "label": "自動顧問開關"
+          },
+          "save_settings": {
+            "label": "儲存設定",
+            "description": "關閉對話框之前，儲存出發城堡、預設、難度、攻擊輪次規模和資源預算。"
+          },
+          "activate_advisor": {
+            "description": "若顧問尚未解鎖，請選擇啟用顧問，開啟目前活動的確認視窗。",
+            "label": "啟用顧問"
+          },
+          "activate_and_spend": {
+            "description": "使用符合資格的活動代幣或通用顧問代幣提交已確認的啟用；免費活動會顯示無需代幣的啟用。",
+            "label": "啟用並消耗代幣"
+          },
+          "cancel_activation": {
+            "description": "關閉確認視窗，不提交啟用或消耗代幣。",
+            "label": "取消啟用"
+          },
+          "confirm_paid_activation": {
+            "description": "確認啟用顧問可能消耗活動代幣或通用代幣，除非遊戲顯示這次活動免費。",
+            "label": "確認付費啟用"
+          }
+        },
+        "image": {
+          "alt": "自動顧問儲存與代幣啟用控制項的示意圖",
+          "caption": "儲存或開啟不會消耗代幣；另外確認的啟用可能消耗代幣。"
+        },
+        "title": "儲存、開啟並啟用顧問權限"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "遊牧難度",
+            "recommendation": "使用平常的配置能夠穩定應付的最高已解鎖難度。",
+            "description": "選擇活動開始時要設定的已解鎖遊牧難度。"
+          },
+          "samurai_difficulty": {
+            "label": "武士難度",
+            "recommendation": "使用平常的配置能夠穩定應付的最高已解鎖難度。",
+            "description": "選擇活動開始時要設定的已解鎖武士難度。"
+          },
+          "active_difficulty": {
+            "description": "配合已經進行中的活動目前難度，否則自動化會等待而不會修改難度。",
+            "label": "進行中活動的難度"
+          }
+        },
+        "title": "選擇兩種活動的難度",
+        "image": {
+          "alt": "遊牧與武士顧問難度選擇示意圖",
+          "caption": "儲存兩種活動的難度，並與已經進行中的活動難度保持一致。"
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "騎乘行軍加速",
+            "recommendation": "快速行軍建議旅行羽毛。",
+            "description": "為這輪攻擊選擇羽毛、金幣或紅寶石行軍方式。"
+          },
+          "open_settings": {
+            "label": "開啟設定",
+            "description": "在自動化頁面選擇自動顧問卡片上的設定按鈕。"
+          },
+          "source_castle": {
+            "label": "出發城堡",
+            "recommendation": "使用士兵和工具充足的常用活動城堡。",
+            "description": "選擇為顧問攻擊提供士兵與工具的大帝國城堡。"
+          },
+          "attack_preset": {
+            "description": "選擇已儲存的攻擊預設，系統會為每次要求的攻擊複製其士兵、工具與陣型。",
+            "label": "顧問攻擊預設",
+            "recommendation": "先為目前遊牧或武士活動建立日常使用的預設，再選擇它。"
+          },
+          "complete_copies": {
+            "description": "可用資源與完整預設副本數可能讓實際輪次低於最大攻擊數。",
+            "label": "完整預設副本"
+          }
+        },
+        "image": {
+          "alt": "自動顧問出發城堡、預設與行軍設定示意圖",
+          "caption": "設定行軍前，選擇大帝國的出發城堡與已儲存的活動預設。"
+        },
+        "title": "開啟自動顧問設定"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "將這麼多24小時時間跳躍道具保留不用。",
+            "label": "保留24小時",
+            "recommendation": "保留建造或其他活動需要的庫存。"
+          },
+          "keep_5h": {
+            "description": "將這麼多5小時時間跳躍道具保留不用。",
+            "label": "保留5小時",
+            "recommendation": "保留建造或其他活動需要的庫存。"
+          },
+          "keep_60m": {
+            "description": "將這麼多60分鐘時間跳躍道具保留不用。",
+            "label": "保留60分鐘",
+            "recommendation": "日常顧問攻擊設為0。"
+          },
+          "coin_cost": {
+            "description": "估算每次攻擊的全部金幣費用，用於啟動前的負擔能力計算，不會變更遊戲價格。",
+            "label": "每次攻擊的全部金幣",
+            "recommendation": "只有500足以支付實際全部費用時才使用；否則輸入測得的較高總額。"
+          },
+          "keep_coins": {
+            "description": "從攻擊預算中排除指定數量的金幣。",
+            "label": "保留金幣",
+            "recommendation": "保留日常徵兵與建造所需的預算。"
+          },
+          "keep_feathers": {
+            "description": "從攻擊預算中排除指定數量的行軍羽毛。",
+            "label": "保留羽毛",
+            "recommendation": "除非要為其他功能預留羽毛，否則設為0。"
+          },
+          "keep_rubies": {
+            "description": "從攻擊預算中排除指定數量的紅寶石。",
+            "label": "保留紅寶石",
+            "recommendation": "保留其他活動所需的餘額。"
+          },
+          "ruby_cost": {
+            "description": "估算每次攻擊的紅寶石行軍費用；選擇紅寶石行軍時必須填入正數。",
+            "label": "每次攻擊的紅寶石",
+            "recommendation": "使用行軍羽毛時設為0；紅寶石行軍時填入實際正數費用。"
+          }
+        },
+        "image": {
+          "alt": "自動顧問金幣、紅寶石、羽毛與時間跳躍道具保留量示意圖",
+          "caption": "費用欄位是規劃估算值；保留數值代表不會使用的資源或時間跳躍道具。"
+        },
+        "title": "設定資源預算與保留量"
+      },
+      "overview": {
+        "image": {
+          "alt": "自動顧問進度與損失總覽示意圖",
+          "caption": "總覽顯示這輪攻擊的進度與損失，不會開始另一輪。"
+        },
+        "items": {
+          "live_progress": {
+            "description": "在總覽查看目前與要求的攻擊數、勝場、敗場、損失的單位與工具。",
+            "label": "正在進行的顧問攻擊"
+          },
+          "no_relaunch": {
+            "description": "同一活動中完成或取消的一輪攻擊不會自動重新開始。",
+            "label": "完成或取消的攻擊"
+          },
+          "refresh_overview": {
+            "description": "要求更新顧問攻擊進度、勝場、敗場與損失。",
+            "label": "重新整理總覽"
+          }
+        },
+        "title": "查看正在進行的顧問攻擊"
+      },
+      "sizing": {
+        "image": {
+          "alt": "自動顧問攻擊數與活動時間設定示意圖",
+          "caption": "要求的攻擊數在啟動前會受到可用資源與活動時間限制。"
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "設定這輪顧問攻擊的攻擊數上限；資源與剩餘活動時間可能進一步減少實際攻擊數。",
+            "label": "最大攻擊數",
+            "recommendation": "設為9,999，讓可用資源與活動時間決定攻擊規模。"
+          },
+          "minimum_remaining": {
+            "description": "在啟動前的活動時間計算中，預留指定分鐘數不使用。",
+            "label": "活動結束前停止",
+            "recommendation": "30分鐘；這不是執行期間持續取消攻擊的計時器。"
+          }
+        },
+        "title": "設定攻擊規模與活動時間"
+      }
+    },
+    "feature": {
+      "description": "自動顧問依照可用資源與活動剩餘時間，啟動一輪遊牧或武士顧問攻擊。",
+      "expectation": "這輪攻擊會等待目前活動難度相符且顧問已解鎖；儲存或開啟不會消耗代幣，但確認啟用可能消耗代幣。",
+      "name": "自動顧問",
+      "summary": "依資源規模啟動一輪遊牧或武士顧問攻擊"
+    },
+    "recommendationIntro": "建議數值適用於自動顧問的日常使用，僅供參考，不會變更已儲存的設定。"
   }
 }

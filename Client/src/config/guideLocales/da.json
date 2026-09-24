@@ -28,7 +28,10 @@
     "invasionPreviewTitle": "Eksempel på opsætning af automatiske invasionsangreb",
     "nomadGuideIntro": "Følg disse trin for at opsætte Auto Nomader/Samuraier; vælg et eksempelpanel for at forstørre det.",
     "nomadGuideTitle": "Guide til Auto Nomader/Samuraier",
-    "nomadPreviewTitle": "Opsætningseksempel til Auto Nomader/Samuraier"
+    "nomadPreviewTitle": "Opsætningseksempel til Auto Nomader/Samuraier",
+    "advisorGuideIntro": "Følg disse trin for at indstille Auto Rådgiver; vælg et eksempelpanel for at forstørre det.",
+    "advisorGuideTitle": "Guide til Auto Rådgiver",
+    "advisorPreviewTitle": "Opsætningseksempel til Auto Rådgiver"
   },
   "autoTower": {
     "recommendationIntro": "Disse anbefalinger gælder almindelig brug; gennemgå dem, før du gemmer.",
@@ -406,6 +409,43 @@
       "effect": "Prøve til erstatter eventdrift med ægte angreb",
       "title": "Eksempel på prøveindstillinger",
       "trial": "Midlertidig røverbaronprøve: fra"
+    },
+    "advisorDifficulty": {
+      "active": "Aktivt event: match nuværende sværhedsgrad",
+      "nomad": "Nomader: oplåst pålidelig sværhedsgrad",
+      "samurai": "Samuraier: oplåst pålidelig sværhedsgrad",
+      "title": "Eksempel på begivenheders sværhedsgrad"
+    },
+    "advisorSetup": {
+      "castle": "Udgang: normal begivenhedsborg i Det Store Imperium",
+      "travel": "Rejseforstærkning: Rejsefjer",
+      "preset": "Opsætning: gemt formation til aktivt event",
+      "title": "Eksempel på Rådgiverens angrebsindstillinger"
+    },
+    "advisorActivation": {
+      "locked": "Hvis låst: åbn bekræftelsen Aktivér Rådgiver",
+      "paid": "Bekræft betalt tokenbrug eller gratis aktivering meldt af spillet",
+      "save": "Gem indstillinger, og slå derefter automatiseringskortet til",
+      "title": "Eksempel på aktiveringsforløb"
+    },
+    "advisorOverview": {
+      "progress": "Aktuelt angreb / ønskede angreb",
+      "refresh": "Opdatér oversigten for aktuelle totaler",
+      "results": "Sejre, nederlag, tabte enheder og redskaber",
+      "title": "Eksempel på liveoversigt"
+    },
+    "advisorResources": {
+      "coins": "Samlede mønter pr. angreb: 500 kun hvis tilstrækkeligt",
+      "feathers": "Behold fjer: 0, medmindre de behøves andetsteds",
+      "rubies": "Rubiner pr. angreb: 0 med Rejsefjer",
+      "skips": "Behold 60 min: 0 genstande; reserver 5 timer og 24 timer efter behov",
+      "title": "Eksempel på ressourcebudgetter"
+    },
+    "advisorSizing": {
+      "actual": "Faktisk række: begrænset af ressourcer og tid",
+      "maximum": "Maksimale angreb: 9.999",
+      "time": "Ubrugt eventtid: 30 minutter",
+      "title": "Eksempel på rækkestørrelse"
     }
   },
   "autoStation": {
@@ -947,5 +987,194 @@
       "summary": "Opgrader og angrib nomade- eller samurailejre"
     },
     "recommendationIntro": "Anbefalede værdier beskriver almindelig brug af Auto Nomader/Samuraier; de er vejledning og ændrer ikke gemte indstillinger."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "Til efter gennemgang og lagring af de ønskede indstillinger.",
+            "description": "Slå Auto Rådgiver til på automatiseringskortet efter gennemgang af indstillingerne; en allerede oplåst Rådgiver kan starte en række straks.",
+            "label": "Kontakt til Auto Rådgiver"
+          },
+          "save_settings": {
+            "label": "Gem indstillinger",
+            "description": "Gem kilde, opsætning, sværhedsgrader, rækkestørrelse og ressourcebudgetter, før du lukker dialogen."
+          },
+          "activate_advisor": {
+            "description": "Hvis Rådgiveren er låst, skal du vælge Aktivér Rådgiver for at åbne bekræftelsen for det aktuelle event.",
+            "label": "Aktivér Rådgiver"
+          },
+          "activate_and_spend": {
+            "description": "Send bekræftet aktivering med en gyldig eventtoken eller universel Rådgivertoken; et gratis event viser i stedet Aktivér Rådgiver.",
+            "label": "Aktivér og brug token"
+          },
+          "cancel_activation": {
+            "description": "Luk bekræftelsen uden at sende aktivering eller bruge en token.",
+            "label": "Annullér aktivering"
+          },
+          "confirm_paid_activation": {
+            "description": "Bekræft, at aktivering af Rådgiveren kan bruge en event- eller universel token, medmindre spillet melder dette event gratis.",
+            "label": "Bekræft betalt aktivering"
+          }
+        },
+        "image": {
+          "alt": "Eksempel på lagring og tokenaktivering i Auto Rådgiver",
+          "caption": "Lagring eller aktivering bruger ingen token; særskilt bekræftet oplåsning kan bruge en."
+        },
+        "title": "Gem, slå til og aktivér adgang til Rådgiveren"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "Nomadesværhedsgrad",
+            "recommendation": "Brug den højeste oplåste sværhedsgrad, som din normale opsætning klarer pålideligt.",
+            "description": "Vælg en oplåst nomadesværhedsgrad til starten af dette event."
+          },
+          "samurai_difficulty": {
+            "label": "Samuraisværhedsgrad",
+            "recommendation": "Brug den højeste oplåste sværhedsgrad, som din normale opsætning klarer pålideligt.",
+            "description": "Vælg en oplåst samuraisværhedsgrad til starten af dette event."
+          },
+          "active_difficulty": {
+            "description": "Match det aktive events nuværende sværhedsgrad, ellers venter automatiseringen frem for at ændre den.",
+            "label": "Aktivt events sværhedsgrad"
+          }
+        },
+        "title": "Vælg begge begivenheders sværhedsgrad",
+        "image": {
+          "alt": "Eksempel på nomade- og samurairådgiverens sværhedsgrader",
+          "caption": "Gem begge eventsværhedsgrader, og match den, der allerede er aktiv."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Rejseboost med hest",
+            "recommendation": "Rejsefjer til hurtig rejse.",
+            "description": "Vælg fjer-, mønt- eller rubinrejse til rækken."
+          },
+          "open_settings": {
+            "label": "Åbn indstillinger",
+            "description": "Vælg indstillingsknappen på Auto Rådgiver-kortet på siden Automatisering."
+          },
+          "source_castle": {
+            "label": "Udgangsborg",
+            "recommendation": "Brug din normale begivenhedsborg med nok tropper og værktøjer.",
+            "description": "Vælg borgen i Det Store Rige, der leverer tropper og redskaber til Rådgiverrækken."
+          },
+          "attack_preset": {
+            "description": "Vælg en gemt angrebsopsætning, hvis tropper, redskaber og formation kopieres til hvert ønsket angreb.",
+            "label": "Rådgiverens angrebsopsætning",
+            "recommendation": "Opret først en almindelig opsætning til det aktive nomade- eller samuraievent, og vælg den derefter."
+          },
+          "complete_copies": {
+            "description": "Tilgængelige ressourcer og fulde kopier af opsætningen kan begrænse rækken til færre end det maksimale antal angreb.",
+            "label": "Fulde kopier af opsætningen"
+          }
+        },
+        "image": {
+          "alt": "Eksempel på kilde, opsætning og rejse i Auto Rådgiver",
+          "caption": "Vælg en kildeborg i Det Store Rige og en gemt eventopsætning, før du indstiller rejsen."
+        },
+        "title": "Åbn indstillinger for Auto Rådgiver"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "Behold dette antal tidsspring på 24 timer ubrugt som reserve.",
+            "label": "Behold 24 timer",
+            "recommendation": "Reserver den beholdning, du skal bruge til byggeri eller andre aktiviteter."
+          },
+          "keep_5h": {
+            "description": "Behold dette antal tidsspring på 5 timer ubrugt som reserve.",
+            "label": "Behold 5 timer",
+            "recommendation": "Reserver den beholdning, du skal bruge til byggeri eller andre aktiviteter."
+          },
+          "keep_60m": {
+            "description": "Behold dette antal tidsspring på 60 min ubrugt som reserve.",
+            "label": "Behold 60 min",
+            "recommendation": "0 til almindelige Rådgiverrækker."
+          },
+          "coin_cost": {
+            "description": "Skøn de samlede møntomkostninger pr. angreb til kontrollen før start uden at ændre spillets priser.",
+            "label": "Samlede mønter pr. angreb",
+            "recommendation": "500 kun hvis det dækker den faktiske fulde pris; brug ellers et højere målt beløb."
+          },
+          "keep_coins": {
+            "description": "Undtag dette antal mønter fra rækkens budget.",
+            "label": "Behold mønter",
+            "recommendation": "Behold dit almindelige budget til rekruttering og byggeri."
+          },
+          "keep_feathers": {
+            "description": "Undtag dette antal rejsefjer fra rækkens budget.",
+            "label": "Behold fjer",
+            "recommendation": "0, medmindre du reserverer fjer til andre funktioner."
+          },
+          "keep_rubies": {
+            "description": "Undtag dette antal rubiner fra rækkens budget.",
+            "label": "Behold rubiner",
+            "recommendation": "Behold den saldo, du har brug for til andre aktiviteter."
+          },
+          "ruby_cost": {
+            "description": "Skøn rubinomkostningen pr. angreb for rejse; et positivt tal kræves ved rubinrejse.",
+            "label": "Rubiner pr. angreb",
+            "recommendation": "0 med Rejsefjer; brug den faktiske positive pris ved rubinrejse."
+          }
+        },
+        "image": {
+          "alt": "Eksempel på mønt-, rubin-, fjer- og tidsspringsreserver i Auto Rådgiver",
+          "caption": "Omkostningsfelter er planlægningsskøn; behold-værdier tæller ubrugte ressourcer eller tidsspringsgenstande."
+        },
+        "title": "Indstil ressourcebudgetter og reserver"
+      },
+      "overview": {
+        "image": {
+          "alt": "Eksempel på Rådgiverens fremdrift og tab",
+          "caption": "Oversigten viser fremdrift og tab uden at starte en ny række."
+        },
+        "items": {
+          "live_progress": {
+            "description": "Læs aktuelt og ønsket angreb, sejre, nederlag samt tabte enheder og redskaber i oversigten.",
+            "label": "Løbende Rådgiverrække"
+          },
+          "no_relaunch": {
+            "description": "En afsluttet eller annulleret række for samme event startes ikke automatisk igen.",
+            "label": "Afsluttet eller annulleret række"
+          },
+          "refresh_overview": {
+            "description": "Bed om opdaterede oplysninger om rækkens fremdrift, sejre, nederlag og tab.",
+            "label": "Opdatér oversigt"
+          }
+        },
+        "title": "Gennemgå den løbende Rådgiverrække"
+      },
+      "sizing": {
+        "image": {
+          "alt": "Eksempel på angrebsantal og eventtid i Auto Rådgiver",
+          "caption": "Det ønskede antal begrænses før start af ressourcer og eventtid."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "Sæt en øvre grænse for angreb i denne ene Rådgiverrække; ressourcer og resterende tid kan mindske det faktiske antal.",
+            "label": "Maksimale angreb",
+            "recommendation": "9.999, så ressourcer og eventtid bestemmer rækkens størrelse."
+          },
+          "minimum_remaining": {
+            "description": "Lad dette antal minutter være ubrugt i beregningen af eventtid før start.",
+            "label": "Stop før eventets slutning",
+            "recommendation": "30 minutter; det er ikke en løbende annulleringstimer."
+          }
+        },
+        "title": "Indstil rækkestørrelse og eventtid"
+      }
+    },
+    "feature": {
+      "description": "Auto Rådgiver starter én nomade- eller samurairådgiverangrebsrække, hvis størrelse bestemmes af tilgængelige ressourcer og resterende eventtid.",
+      "expectation": "Rækken venter på matchende aktiv sværhedsgrad og oplåst adgang til Rådgiveren; lagring eller aktivering bruger ingen token, men bekræftet oplåsning kan gøre det.",
+      "name": "Auto Rådgiver",
+      "summary": "Start én ressourcetilpasset nomade- eller samurairådgiverrække"
+    },
+    "recommendationIntro": "Anbefalede værdier beskriver almindelig brug af Auto Rådgiver; de er vejledning og ændrer ikke gemte indstillinger."
   }
 }

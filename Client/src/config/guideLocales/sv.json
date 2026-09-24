@@ -28,7 +28,10 @@
     "invasionPreviewTitle": "Exempel på inställning av automatiska invasionsanfall",
     "nomadGuideIntro": "Följ dessa steg för att ställa in Auto Nomader/Samurajer; välj en exempelpanel för att förstora den.",
     "nomadGuideTitle": "Guide för Auto Nomader/Samurajer",
-    "nomadPreviewTitle": "Inställningsexempel för Auto Nomader/Samurajer"
+    "nomadPreviewTitle": "Inställningsexempel för Auto Nomader/Samurajer",
+    "advisorGuideIntro": "Följ dessa steg för att ställa in Auto Rådgivare; välj en exempelpanel för att förstora den.",
+    "advisorGuideTitle": "Guide för Auto Rådgivare",
+    "advisorPreviewTitle": "Inställningsexempel för Auto Rådgivare"
   },
   "autoTower": {
     "recommendationIntro": "Det här är rekommendationer för regelbunden användning; granska dem innan du sparar.",
@@ -406,6 +409,43 @@
       "effect": "Prov på ersätter evenemanget med ett riktigt anfall",
       "title": "Exempel på provinställningar",
       "trial": "Tillfälligt rövarbaronsprov: av"
+    },
+    "advisorDifficulty": {
+      "active": "Aktivt evenemang: matcha aktuell svårighet",
+      "nomad": "Nomader: upplåst pålitlig svårighet",
+      "samurai": "Samurajer: upplåst pålitlig svårighet",
+      "title": "Exempel på evenemangssvårigheter"
+    },
+    "advisorSetup": {
+      "castle": "Ursprung: vanlig evenemangsborg i Det stora imperiet",
+      "travel": "Reseförstärkning: Resefjäder",
+      "preset": "Uppställning: sparad formation för aktivt evenemang",
+      "title": "Exempel på Rådgivarens anfallsinställningar"
+    },
+    "advisorActivation": {
+      "locked": "Om låst: öppna bekräftelsen Aktivera Rådgivare",
+      "paid": "Bekräfta betald pollettanvändning eller gratis aktivering enligt spelet",
+      "save": "Spara inställningar och slå sedan på Automatisering-kortet",
+      "title": "Exempel på aktiveringsflöde"
+    },
+    "advisorOverview": {
+      "progress": "Nuvarande anfall / begärda anfall",
+      "refresh": "Uppdatera översikten för aktuella summor",
+      "results": "Segrar, förluster, förlorade enheter och verktyg",
+      "title": "Exempel på liveöversikt"
+    },
+    "advisorResources": {
+      "coins": "Totala mynt per anfall: 500 endast om tillräckligt",
+      "feathers": "Behåll fjädrar: 0 om de inte behövs annars",
+      "rubies": "Rubiner per anfall: 0 med Resefjäder",
+      "skips": "Behåll 60 min: 0 föremål; reservera 5 timmar och 24 timmar vid behov",
+      "title": "Exempel på resursbudgetar"
+    },
+    "advisorSizing": {
+      "actual": "Faktisk serie: begränsad av resurser och tid",
+      "maximum": "Maximala anfall: 9 999",
+      "time": "Oanvänd evenemangstid: 30 minuter",
+      "title": "Exempel på seriestorlek"
     }
   },
   "autoStation": {
@@ -947,5 +987,194 @@
       "summary": "Uppgradera och anfall nomad- eller samurajläger"
     },
     "recommendationIntro": "Rekommenderade värden beskriver vanlig användning av Auto Nomader/Samurajer; de är råd och ändrar inte sparade inställningar."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "På efter att du granskat och sparat önskade inställningar.",
+            "description": "Slå på Auto Rådgivare på Automatisering-kortet efter att du granskat inställningarna; en redan upplåst Rådgivare kan starta serien direkt.",
+            "label": "Reglage för Auto Rådgivare"
+          },
+          "save_settings": {
+            "label": "Spara inställningar",
+            "description": "Spara källa, uppställning, svårigheter, seriestorlek och resursbudgetar innan du stänger dialogen."
+          },
+          "activate_advisor": {
+            "description": "Om Rådgivaren är låst väljer du Aktivera Rådgivare för att öppna bekräftelsen för aktuellt evenemang.",
+            "label": "Aktivera Rådgivare"
+          },
+          "activate_and_spend": {
+            "description": "Skicka bekräftad aktivering med en giltig evenemangs- eller universell Rådgivarpolett; ett gratis evenemang visar i stället Aktivera Rådgivare.",
+            "label": "Aktivera och använd pollett"
+          },
+          "cancel_activation": {
+            "description": "Stäng bekräftelsen utan att skicka aktivering eller använda en pollett.",
+            "label": "Avbryt aktivering"
+          },
+          "confirm_paid_activation": {
+            "description": "Bekräfta att aktivering av Rådgivaren kan förbruka en evenemangs- eller universell pollett om spelet inte anger att evenemanget är gratis.",
+            "label": "Bekräfta betald aktivering"
+          }
+        },
+        "image": {
+          "alt": "Exempel på sparande och pollettaktivering i Auto Rådgivare",
+          "caption": "Sparande eller påslagning kostar ingen pollett; separat bekräftad aktivering kan förbruka en."
+        },
+        "title": "Spara, slå på och aktivera Rådgivaren"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "Nomadsvårighet",
+            "recommendation": "Använd den högsta upplåsta svårighetsgrad som din vanliga uppställning klarar pålitligt.",
+            "description": "Välj en upplåst nomadsvårighet för start av evenemanget."
+          },
+          "samurai_difficulty": {
+            "label": "Samurajsvårighet",
+            "recommendation": "Använd den högsta upplåsta svårighetsgrad som din vanliga uppställning klarar pålitligt.",
+            "description": "Välj en upplåst samurajsvårighet för start av evenemanget."
+          },
+          "active_difficulty": {
+            "description": "Matcha den aktuella svårigheten för ett aktivt evenemang, annars väntar automatiseringen i stället för att ändra den.",
+            "label": "Aktivt evenemangs svårighet"
+          }
+        },
+        "title": "Välj svårighetsgrad för båda evenemangen",
+        "image": {
+          "alt": "Exempel på nomad- och samurajrådgivarens svårigheter",
+          "caption": "Spara båda evenemangens svårigheter och matcha den som redan pågår."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Reseökning med häst",
+            "recommendation": "Resefjäder för snabb resa.",
+            "description": "Välj resa med fjäder, mynt eller rubiner för serien."
+          },
+          "open_settings": {
+            "label": "Öppna inställningar",
+            "description": "På sidan Automatisering väljer du inställningsknappen på Auto Rådgivare-kortet."
+          },
+          "source_castle": {
+            "label": "Ursprungsborg",
+            "recommendation": "Använd din vanliga evenemangsborg med tillräckligt med trupper och verktyg.",
+            "description": "Välj borgen i Det stora riket som ger trupper och verktyg till Rådgivarserien."
+          },
+          "attack_preset": {
+            "description": "Välj en sparad anfallsuppställning vars trupper, verktyg och formation kopieras till varje begärt anfall.",
+            "label": "Rådgivarens anfallsuppställning",
+            "recommendation": "Skapa först en vanlig uppställning för det aktiva nomad- eller samurajevenemanget och välj sedan den."
+          },
+          "complete_copies": {
+            "description": "Tillgängliga resurser och hela kopior av uppställningen kan minska serien under högsta antalet anfall.",
+            "label": "Hela kopior av uppställningen"
+          }
+        },
+        "image": {
+          "alt": "Exempel på källa, uppställning och resa i Auto Rådgivare",
+          "caption": "Välj en källborg i Det stora riket och en sparad evenemangsuppställning innan resan ställs in."
+        },
+        "title": "Öppna inställningar för Auto Rådgivare"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "Behåll detta antal tidshopp på 24 timmar oanvända som reserv.",
+            "label": "Behåll 24 timmar",
+            "recommendation": "Reservera det lager du behöver för byggande eller andra aktiviteter."
+          },
+          "keep_5h": {
+            "description": "Behåll detta antal tidshopp på 5 timmar oanvända som reserv.",
+            "label": "Behåll 5 timmar",
+            "recommendation": "Reservera det lager du behöver för byggande eller andra aktiviteter."
+          },
+          "keep_60m": {
+            "description": "Behåll detta antal tidshopp på 60 min oanvända som reserv.",
+            "label": "Behåll 60 min",
+            "recommendation": "0 för vanliga Rådgivarserier."
+          },
+          "coin_cost": {
+            "description": "Uppskatta den totala myntkostnaden per anfall för kontrollen före start utan att ändra spelpriser.",
+            "label": "Totala mynt per anfall",
+            "recommendation": "500 bara om det täcker hela den faktiska kostnaden; använd annars ett högre uppmätt belopp."
+          },
+          "keep_coins": {
+            "description": "Håll detta antal mynt utanför seriens budget.",
+            "label": "Behåll mynt",
+            "recommendation": "Behåll din vanliga budget för rekrytering och byggande."
+          },
+          "keep_feathers": {
+            "description": "Håll detta antal resefjädrar utanför seriens budget.",
+            "label": "Behåll fjädrar",
+            "recommendation": "0 om du inte reserverar fjädrar för andra funktioner."
+          },
+          "keep_rubies": {
+            "description": "Håll detta antal rubiner utanför seriens budget.",
+            "label": "Behåll rubiner",
+            "recommendation": "Behåll saldot du behöver för andra aktiviteter."
+          },
+          "ruby_cost": {
+            "description": "Uppskatta rubinkostnaden för resa per anfall; ett positivt tal krävs vid rubinresa.",
+            "label": "Rubiner per anfall",
+            "recommendation": "0 med Resefjäder; använd den faktiska positiva kostnaden vid rubinresa."
+          }
+        },
+        "image": {
+          "alt": "Exempel på mynt-, rubin-, fjäder- och tidshoppsreserver i Auto Rådgivare",
+          "caption": "Kostnadsfält är planeringsuppskattningar; behållvärden räknar oanvända resurser eller tidshoppsföremål."
+        },
+        "title": "Ange resursbudgetar och reserver"
+      },
+      "overview": {
+        "image": {
+          "alt": "Exempel på Rådgivarens framsteg och förluster",
+          "caption": "Översikten visar framsteg och förluster utan att starta en ny serie."
+        },
+        "items": {
+          "live_progress": {
+            "description": "Läs nuvarande och begärda anfall, segrar, förluster samt förlorade enheter och verktyg i översikten.",
+            "label": "Pågående Rådgivarserie"
+          },
+          "no_relaunch": {
+            "description": "En avslutad eller avbruten serie för samma evenemang startas inte om automatiskt.",
+            "label": "Avslutad eller avbruten serie"
+          },
+          "refresh_overview": {
+            "description": "Begär uppdaterad information om framsteg, segrar, förluster och bortfall.",
+            "label": "Uppdatera översikt"
+          }
+        },
+        "title": "Granska pågående Rådgivarserie"
+      },
+      "sizing": {
+        "image": {
+          "alt": "Exempel på antal anfall och evenemangstid i Auto Rådgivare",
+          "caption": "Begärt antal begränsas före start av resurser och evenemangstid."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "Sätt en övre gräns för anfall i denna enda Rådgivarserie; resurser och återstående tid kan minska det faktiska antalet.",
+            "label": "Maximala anfall",
+            "recommendation": "9 999 så att resurser och evenemangstid bestämmer seriens storlek."
+          },
+          "minimum_remaining": {
+            "description": "Låt detta antal minuter vara oanvänt i beräkningen av evenemangstid före start.",
+            "label": "Stoppa före evenemangets slut",
+            "recommendation": "30 minuter; detta är ingen löpande avbrytartimer."
+          }
+        },
+        "title": "Ange seriestorlek och evenemangstid"
+      }
+    },
+    "feature": {
+      "description": "Auto Rådgivare startar en nomad- eller samurajrådgivarserie där antalet anfall beror på tillgängliga resurser och återstående evenemangstid.",
+      "expectation": "Serien väntar på matchande aktiv svårighet och upplåst Rådgivare; sparande eller påslagning förbrukar ingen pollett, men bekräftad aktivering kan göra det.",
+      "name": "Auto Rådgivare",
+      "summary": "Starta en resursanpassad nomad- eller samurajrådgivarserie"
+    },
+    "recommendationIntro": "Rekommenderade värden beskriver vanlig användning av Auto Rådgivare; de är råd och ändrar inte sparade inställningar."
   }
 }

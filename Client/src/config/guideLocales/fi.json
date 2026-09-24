@@ -28,7 +28,10 @@
     "invasionPreviewTitle": "Esimerkki automaattisten maahantunkeutumishyökkäysten asetuksista",
     "nomadGuideIntro": "Määritä automaattiset nomadit/samurait näiden vaiheiden avulla; suurenna esimerkkipaneeli valitsemalla se.",
     "nomadGuideTitle": "Automaattisten nomadien/samuraiden opas",
-    "nomadPreviewTitle": "Esimerkki automaattisten nomadien/samuraiden asetuksista"
+    "nomadPreviewTitle": "Esimerkki automaattisten nomadien/samuraiden asetuksista",
+    "advisorGuideIntro": "Määritä Automaattinen Neuvonantaja näiden vaiheiden avulla; suurenna esimerkkipaneeli valitsemalla se.",
+    "advisorGuideTitle": "Automaattisen Neuvonantajan opas",
+    "advisorPreviewTitle": "Automaattisen Neuvonantajan asennusesimerkki"
   },
   "autoTower": {
     "recommendationIntro": "Nämä suositukset koskevat säännöllistä käyttöä; tarkista ne ennen tallentamista.",
@@ -406,6 +409,43 @@
       "effect": "Koe päällä korvaa tapahtuman oikealla hyökkäyksellä",
       "title": "Esimerkki kokeen hallinnasta",
       "trial": "Väliaikainen ryöstöparonikoe: pois"
+    },
+    "advisorDifficulty": {
+      "active": "Aktiivinen tapahtuma: vastaa nykyistä vaikeustasoa",
+      "nomad": "Nomadit: avattu ja luotettava vaikeustaso",
+      "samurai": "Samurait: avattu ja luotettava vaikeustaso",
+      "title": "Esimerkki tapahtumien vaikeusasteista"
+    },
+    "advisorSetup": {
+      "castle": "Lähtö: tavallinen Suuren valtakunnan tapahtumalinna",
+      "travel": "Matkustusnopeutus: Matkahöyhen",
+      "preset": "Kokoonpano: aktiivisen tapahtuman tallennettu muodostelma",
+      "title": "Esimerkki Neuvonantajan hyökkäysasetuksista"
+    },
+    "advisorActivation": {
+      "locked": "Jos lukittu: avaa Aktivoi Neuvonantaja -vahvistus",
+      "paid": "Vahvista maksullisen merkin käyttö tai pelin ilmoittama maksuton aktivointi",
+      "save": "Tallenna asetukset ja kytke sitten Automaatio-kortti päälle",
+      "title": "Esimerkki aktivoinnin vaiheista"
+    },
+    "advisorOverview": {
+      "progress": "Nykyinen hyökkäys / pyydetyt hyökkäykset",
+      "refresh": "Päivitä yhteenveto nähdäksesi nykyiset kokonaismäärät",
+      "results": "Voitot, tappiot, menetetyt yksiköt ja työkalut",
+      "title": "Esimerkki reaaliaikaisesta yhteenvedosta"
+    },
+    "advisorResources": {
+      "coins": "Kolikot yhteensä hyökkäystä kohti: 500 vain, jos riittää",
+      "feathers": "Säilytä höyheniä: 0, ellei niitä tarvita muualla",
+      "rubies": "Rubiinit hyökkäystä kohti: 0 Matkustushöyhenellä",
+      "skips": "Säilytä 60 min: 0 esinettä; varaa 5 h ja 24 h tarpeen mukaan",
+      "title": "Esimerkki resurssibudjeteista"
+    },
+    "advisorSizing": {
+      "actual": "Todellinen sarja: rajattu resursseilla ja ajalla",
+      "maximum": "Enimmäishyökkäykset: 9 999",
+      "time": "Käyttämätön tapahtuma-aika: 30 minuuttia",
+      "title": "Esimerkki sarjan koosta"
     }
   },
   "autoStation": {
@@ -947,5 +987,194 @@
       "summary": "Kehitä ja hyökkää nomadi- tai samuraileireihin"
     },
     "recommendationIntro": "Suositellut arvot kuvaavat automaattisten nomadien/samuraiden tavallista käyttöä; ne ovat ohjeita eivätkä muuta tallennettuja asetuksia."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "Päällä, kun olet tarkistanut ja tallentanut haluamasi asetukset.",
+            "description": "Ota Automaattinen Neuvonantaja käyttöön Automaatio-kortissa asetusten tarkistuksen jälkeen; jos Neuvonantaja on jo avattu, sarja voi alkaa heti.",
+            "label": "Automaattisen Neuvonantajan kytkin"
+          },
+          "save_settings": {
+            "label": "Tallenna asetukset",
+            "description": "Tallenna lähdelinna, kokoonpano, vaikeustasot, sarjan koko ja resurssibudjetit ennen tämän ikkunan sulkemista."
+          },
+          "activate_advisor": {
+            "description": "Jos Neuvonantaja on lukittu, avaa nykyisen tapahtuman vahvistus valitsemalla Aktivoi Neuvonantaja.",
+            "label": "Aktivoi Neuvonantaja"
+          },
+          "activate_and_spend": {
+            "description": "Lähetä vahvistettu aktivointi kelvollisella tapahtumamerkillä tai yleisellä Neuvonantajamerkillä; maksuttomassa tapahtumassa painike on Aktivoi Neuvonantaja.",
+            "label": "Aktivoi ja käytä merkki"
+          },
+          "cancel_activation": {
+            "description": "Sulje vahvistus lähettämättä aktivointia tai käyttämättä merkkiä.",
+            "label": "Peru aktivointi"
+          },
+          "confirm_paid_activation": {
+            "description": "Hyväksy, että Neuvonantajan aktivointi voi kuluttaa tapahtuma- tai yleismerkin, ellei peli ilmoita tapahtumaa maksuttomaksi.",
+            "label": "Vahvista maksullinen aktivointi"
+          }
+        },
+        "image": {
+          "alt": "Esimerkki Automaattisen Neuvonantajan tallennuksesta ja merkkien aktivoinnista",
+          "caption": "Tallennus tai käyttöönotto ei kuluta merkkiä; erikseen vahvistettu aktivointi voi kuluttaa yhden."
+        },
+        "title": "Tallenna, ota käyttöön ja aktivoi Neuvonantajan käyttöoikeus"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "Nomadivaikeustaso",
+            "recommendation": "Käytä korkeinta avattua vaikeusastetta, josta tavallinen kokoonpanosi selviää luotettavasti.",
+            "description": "Valitse avattu nomadivaikeustaso tapahtuman alkuun."
+          },
+          "samurai_difficulty": {
+            "label": "Samuraivaikeustaso",
+            "recommendation": "Käytä korkeinta avattua vaikeusastetta, josta tavallinen kokoonpanosi selviää luotettavasti.",
+            "description": "Valitse avattu samuraivaikeustaso tapahtuman alkuun."
+          },
+          "active_difficulty": {
+            "description": "Käytä aktiivisen tapahtuman nykyistä vaikeustasoa, tai automaatio odottaa sen muuttamisen sijaan.",
+            "label": "Aktiivisen tapahtuman vaikeustaso"
+          }
+        },
+        "title": "Valitse molempien tapahtumien vaikeusasteet",
+        "image": {
+          "alt": "Esimerkki nomadi- ja samurainneuvonantajan vaikeustasoista",
+          "caption": "Tallenna molempien tapahtumien vaikeustasot ja käytä jo käynnissä olevan tapahtuman tasoa."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Hevosmatkan nopeutus",
+            "recommendation": "Matkahöyhen nopeaan matkustukseen.",
+            "description": "Valitse sarjan matkustusvaihtoehto höyhenillä, kolikoilla tai rubiineilla."
+          },
+          "open_settings": {
+            "label": "Avaa asetukset",
+            "description": "Valitse Automaatio-sivulla Automaattisen Neuvonantajan kortin asetuspainike."
+          },
+          "source_castle": {
+            "label": "Lähtölinna",
+            "recommendation": "Käytä tavallista tapahtumalinnaasi, jossa on tarpeeksi joukkoja ja työkaluja.",
+            "description": "Valitse Suuren valtakunnan linna, joka antaa joukot ja työkalut Neuvonantajan sarjaan."
+          },
+          "attack_preset": {
+            "description": "Valitse tallennettu hyökkäyskokoonpano, jonka joukot, työkalut ja muodostelma kopioidaan jokaiseen pyydettyyn hyökkäykseen.",
+            "label": "Neuvonantajan hyökkäyskokoonpano",
+            "recommendation": "Luo ensin tavallinen kokoonpano aktiiviseen nomadi- tai samuraitapahtumaan ja valitse se."
+          },
+          "complete_copies": {
+            "description": "Käytettävissä olevat resurssit ja täydet kokoonpanokopiot voivat pienentää sarjaa enimmäishyökkäysmäärän alle.",
+            "label": "Täydet kokoonpanokopiot"
+          }
+        },
+        "image": {
+          "alt": "Esimerkki Automaattisen Neuvonantajan lähteestä, kokoonpanosta ja matkasta",
+          "caption": "Valitse Suuren valtakunnan lähdelinna ja tallennettu tapahtumakokoonpano ennen matkustusasetusta."
+        },
+        "title": "Avaa Automaattisen Neuvonantajan asetukset"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "Säilytä näin monta 24 tunnin aikahyppyä käyttämättömänä varalla.",
+            "label": "Säilytä 24 h",
+            "recommendation": "Varaa rakentamiseen tai muihin toimintoihin tarvitsemasi määrä."
+          },
+          "keep_5h": {
+            "description": "Säilytä näin monta 5 tunnin aikahyppyä käyttämättömänä varalla.",
+            "label": "Säilytä 5 h",
+            "recommendation": "Varaa rakentamiseen tai muihin toimintoihin tarvitsemasi määrä."
+          },
+          "keep_60m": {
+            "description": "Säilytä näin monta 60 minuutin aikahyppyä käyttämättömänä varalla.",
+            "label": "Säilytä 60 min",
+            "recommendation": "0 tavallisiin Neuvonantajan sarjoihin."
+          },
+          "coin_cost": {
+            "description": "Arvioi koko kolikkokustannus hyökkäystä kohti ennen aloitusta tehtävää varallisuustarkistusta varten muuttamatta pelin hintoja.",
+            "label": "Kolikot yhteensä hyökkäystä kohti",
+            "recommendation": "500 vain, jos se kattaa todelliset kokonaiskulut; muuten käytä suurempaa mitattua summaa."
+          },
+          "keep_coins": {
+            "description": "Jätä tämä määrä kolikoita sarjan budjetin ulkopuolelle.",
+            "label": "Säilytä kolikoita",
+            "recommendation": "Säilytä tavallinen rekrytointi- ja rakennusbudjettisi."
+          },
+          "keep_feathers": {
+            "description": "Jätä tämä määrä matkustushöyheniä sarjan budjetin ulkopuolelle.",
+            "label": "Säilytä höyheniä",
+            "recommendation": "0, ellet varaa höyheniä muihin toimintoihin."
+          },
+          "keep_rubies": {
+            "description": "Jätä tämä määrä rubiineja sarjan budjetin ulkopuolelle.",
+            "label": "Säilytä rubiineja",
+            "recommendation": "Säilytä muihin toimintoihin tarvittava saldo."
+          },
+          "ruby_cost": {
+            "description": "Arvioi matkustuksen rubiinikustannus hyökkäystä kohti; rubiinimatkalle vaaditaan positiivinen arvo.",
+            "label": "Rubiinit hyökkäystä kohti",
+            "recommendation": "0 Matkustushöyhenellä; rubiinimatkalle todellinen positiivinen hinta."
+          }
+        },
+        "image": {
+          "alt": "Esimerkki Automaattisen Neuvonantajan kolikko-, rubiini-, höyhen- ja aikahyppyvaroista",
+          "caption": "Kustannuskentät ovat suunnitteluarvioita; säilytettävät arvot laskevat käyttämättömiä resursseja tai aikahyppyesineitä."
+        },
+        "title": "Aseta resurssibudjetit ja varaukset"
+      },
+      "overview": {
+        "image": {
+          "alt": "Esimerkki Neuvonantajan edistymisestä ja tappioista",
+          "caption": "Yhteenveto näyttää edistymisen ja tappiot aloittamatta uutta sarjaa."
+        },
+        "items": {
+          "live_progress": {
+            "description": "Katso yhteenvedosta nykyinen ja pyydetty hyökkäysmäärä, voitot, tappiot sekä menetetyt yksiköt ja työkalut.",
+            "label": "Käynnissä oleva Neuvonantajan sarja"
+          },
+          "no_relaunch": {
+            "description": "Valmistunutta tai peruttua saman tapahtuman sarjaa ei käynnistetä automaattisesti uudelleen.",
+            "label": "Valmistunut tai peruttu sarja"
+          },
+          "refresh_overview": {
+            "description": "Pyydä päivitetyt tiedot sarjan edistymisestä, voitoista, tappioista ja menetyksistä.",
+            "label": "Päivitä yhteenveto"
+          }
+        },
+        "title": "Tarkastele käynnissä olevaa Neuvonantajan sarjaa"
+      },
+      "sizing": {
+        "image": {
+          "alt": "Esimerkki Automaattisen Neuvonantajan hyökkäysmäärästä ja tapahtuma-ajasta",
+          "caption": "Pyydetty määrä rajataan ennen aloitusta resurssien ja tapahtuma-ajan mukaan."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "Aseta tämän yhden Neuvonantajan sarjan hyökkäysten yläraja; resurssit ja jäljellä oleva aika voivat pienentää todellista määrää.",
+            "label": "Enimmäishyökkäykset",
+            "recommendation": "9 999, jotta resurssit ja tapahtuma-aika määräävät sarjan koon."
+          },
+          "minimum_remaining": {
+            "description": "Jätä tämä määrä minuutteja käyttämättä tapahtuma-ajan laskelmassa ennen aloitusta.",
+            "label": "Lopeta ennen tapahtuman päättymistä",
+            "recommendation": "30 minuuttia; tämä ei ole sarjan aikainen peruutusajastin."
+          }
+        },
+        "title": "Aseta sarjan koko ja tapahtuma-aika"
+      }
+    },
+    "feature": {
+      "description": "Automaattinen Neuvonantaja käynnistää yhden nomadi- tai samurainneuvonantajan hyökkäyssarjan, jonka koko määräytyy käytettävissä olevien resurssien ja jäljellä olevan tapahtuma-ajan mukaan.",
+      "expectation": "Sarja odottaa vastaavaa aktiivista vaikeustasoa ja avattua Neuvonantajaa; tallennus tai käyttöönotto ei kuluta merkkiä, mutta vahvistettu aktivointi voi kuluttaa.",
+      "name": "Automaattinen Neuvonantaja",
+      "summary": "Aloita yksi resurssien mukainen nomadi- tai samurainneuvonantajan sarja"
+    },
+    "recommendationIntro": "Suositellut arvot kuvaavat Automaattisen Neuvonantajan tavallista käyttöä; ne ovat ohjeita eivätkä muuta tallennettuja asetuksia."
   }
 }
