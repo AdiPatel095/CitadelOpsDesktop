@@ -84,7 +84,13 @@ func TestAutoStationRosterRefreshFailureHasGuardedGateFallback(t *testing.T) {
 	s := stationThreatFixture(now)
 	s.Alliance.ID = 9
 	d, err := NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{State: s, Now: now})
-	if err != nil || d.Request == nil || d.Request.Name != "alliance.refresh" || d.FailureFallback == nil {
+	if err != nil || d.Request == nil || d.Request.Name != "alliance.refresh" || d.FailureFallback != nil {
+		t.Fatalf("refresh without opt-in: %+v %v", d, err)
+	}
+	d, err = NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{State: s, Now: now, Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{
+		"automation.autoStation": json.RawMessage(`{"openGateFallback":true}`),
+	}}})
+	if err != nil || d.Request == nil || d.Request.Name != "alliance.refresh" || d.FailureFallback == nil || d.FailureFallback.Name != "defense.open_gate" {
 		t.Fatalf("%+v %v", d, err)
 	}
 }
