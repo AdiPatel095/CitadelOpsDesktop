@@ -837,3 +837,15 @@ func TestFortressCommanderHoldsAndFinalFastestRecheck(t *testing.T) {
 		t.Fatalf("changed fastest commander did not stale prior launch: %v", err)
 	}
 }
+
+func TestAutoFortressInitialConfigurationUsesTravelFeather(t *testing.T) {
+	var settings struct {
+		HorseTravelBoostID int `json:"horseTravelBoostId"`
+	}
+	if err := json.Unmarshal(defaultConfiguration()["automation.autoFortress"], &settings); err != nil {
+		t.Fatal(err)
+	}
+	if settings.HorseTravelBoostID != -1 {
+		t.Fatalf("initial Auto Fortress travel boost = %d, want feather -1", settings.HorseTravelBoostID)
+	}
+}

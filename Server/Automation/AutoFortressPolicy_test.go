@@ -61,6 +61,33 @@ func TestAutoFortressPurchaseUsesCheapestDirewolfTierBeforeNextTier(t *testing.T
 	}
 }
 
+func TestAutoFortressTravelBoostDefaultsToFeatherAndPreservesSavedTier(t *testing.T) {
+	if got := defaultAutoFortressSettings().HorseTravelBoostID; got != -1 {
+		t.Fatalf("new Auto Fortress travel boost = %d, want feather -1", got)
+	}
+	for _, tc := range []struct {
+		name string
+		raw  json.RawMessage
+		want int
+	}{
+		{name: "missing", raw: json.RawMessage(`{"version":1}`), want: -1},
+		{name: "feather", raw: json.RawMessage(`{"horseTravelBoostId":-1}`), want: -1},
+		{name: "coins", raw: json.RawMessage(`{"horseTravelBoostId":1007}`), want: 1007},
+		{name: "rubies", raw: json.RawMessage(`{"horseTravelBoostId":1008}`), want: 1008},
+		{name: "courser", raw: json.RawMessage(`{"horseTravelBoostId":1009}`), want: 1009},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			settings := defaultAutoFortressSettings()
+			if err := json.Unmarshal(tc.raw, &settings); err != nil {
+				t.Fatal(err)
+			}
+			if settings.HorseTravelBoostID != tc.want || !validHorseTravelBoostID(settings.HorseTravelBoostID) {
+				t.Fatalf("decoded travel boost = %d, want %d", settings.HorseTravelBoostID, tc.want)
+			}
+		})
+	}
+}
+
 func TestAutoFortressPolicyLaunchesWithOrdinaryCommanderAndLegacyMinimum(t *testing.T) {
 	gameData := autoFortressTestGameData(t)
 	now := time.Now().UTC()

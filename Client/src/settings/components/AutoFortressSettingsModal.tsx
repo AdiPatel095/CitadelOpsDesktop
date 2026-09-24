@@ -334,7 +334,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
             <HorseTravelBoostSelect
               value={settings.horseTravelBoostId}
               onChange={(horseTravelBoostId) => update({ horseTravelBoostId })}
-              description="Courser / fastest tier is the default. Its exact castle-specific HBW definition is resolved again before launch."
+              description="Travel feather is the default. Your saved horse tier stays selected when changed; its castle-specific HBW definition is resolved again before launch."
             />
           </div>
         </Card>

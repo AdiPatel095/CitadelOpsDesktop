@@ -262,7 +262,7 @@ func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot)
 func defaultAutoFortressSettings() autoFortressSettings {
 	return autoFortressSettings{
 		Version: 1, CheckIntervalSec: autoFortressDefaultCheckIntervalSec, MapRefreshIntervalSec: autoFortressDefaultMapRefreshSec,
-		HorseTravelBoostID: 1009,
+		HorseTravelBoostID: -1,
 		TimeSkipReserve:    map[string]int64{}, Kingdoms: map[string]autoFortressKingdom{},
 	}
 }

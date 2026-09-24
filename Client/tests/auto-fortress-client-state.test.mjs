@@ -21,7 +21,7 @@ test('Auto Fortress defaults preserve speed-first selection without owning premi
 
   assert.equal(settings.checkIntervalSec, 5);
   assert.equal('radius' in settings, false);
-  assert.equal(settings.horseTravelBoostId, 1009);
+  assert.equal(settings.horseTravelBoostId, -1);
   assert.equal('minimumCommanderSpeedBonus' in settings, false);
   assert.equal('dailySpeedBooster' in settings, false);
   assert.equal(settings.useTimeSkips, false);
@@ -31,6 +31,13 @@ test('Auto Fortress defaults preserve speed-first selection without owning premi
     2: { enabled: false },
     3: { enabled: false },
   });
+});
+
+test('Auto Fortress uses feather for missing travel selection and preserves saved tiers', () => {
+  assert.equal(fortressState.parseAutoFortressClientState({}).horseTravelBoostId, -1);
+  for (const tier of [-1, 1007, 1008, 1009]) {
+    assert.equal(fortressState.parseAutoFortressClientState({ horseTravelBoostId: tier }).horseTravelBoostId, tier);
+  }
 });
 
 test('Auto Fortress normalization ignores legacy radius and keeps exact 100-unit limits', () => {
