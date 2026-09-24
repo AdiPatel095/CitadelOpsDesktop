@@ -31,7 +31,10 @@
     "nomadPreviewTitle": "Ejemplo de configuración de Auto Nómadas/Samuráis",
     "advisorGuideIntro": "Sigue estos pasos para configurar Auto Asesor; selecciona un panel de ejemplo para ampliarlo.",
     "advisorGuideTitle": "Guía de Auto Asesor",
-    "advisorPreviewTitle": "Ejemplo de configuración de Auto Asesor"
+    "advisorPreviewTitle": "Ejemplo de configuración de Auto Asesor",
+    "khanGuideIntro": "Sigue estos pasos para configurar Kan automático; selecciona un panel de ejemplo para ampliarlo.",
+    "khanGuideTitle": "Guía de Kan automático",
+    "khanPreviewTitle": "Ejemplo de configuración de Kan automático"
   },
   "autoTower": {
     "recommendationIntro": "Estas recomendaciones son para el uso habitual; revísalas antes de guardar.",
@@ -446,6 +449,48 @@
       "maximum": "Máximo de ataques: 9.999",
       "time": "Tiempo del evento sin usar: 30 minutos",
       "title": "Ejemplo de tamaño de serie"
+    },
+    "khanCooldowns": {
+      "long": "Reserva aceleradores de 5 h y 24 h para otras tareas",
+      "pause": "Los nuevos ataques se pausan si faltan aceleradores utilizables",
+      "short": "Conservar 1 min / 5 min / 10 min / 30 min / 1 h: 0 objetos cada uno",
+      "skip": "Saltar cada espera del campamento: activado",
+      "title": "Ejemplo de reservas de aceleradores"
+    },
+    "khanLimits": {
+      "daily": "Ataques normales diarios: 0, sin límite adicional",
+      "end": "Detener nuevos ataques 5 minutos antes del final",
+      "points": "Detener al alcanzar puntos nómadas: 0, desactivado",
+      "title": "Ejemplo de límites de parada",
+      "tools": "Reposición de herramientas de defensa: activada si se desea"
+    },
+    "khanProtection": {
+      "gate": "Abrir puertas principales y pausar Kan al llegar al umbral",
+      "outpost": "Fortín como origen: protección desactivada",
+      "source": "Se aplica al atacar desde el castillo principal",
+      "threshold": "Unidades ofensivas en la muralla: 1.000",
+      "title": "Ejemplo de protección de la muralla principal"
+    },
+    "khanRage": {
+      "attacks": "Ataques automáticos al campamento: desbloqueados",
+      "booster": "Potenciador temporal de puntos de furia exigido: desactivado",
+      "chain": "Máxima cadena de furia: 0, sin límite adicional",
+      "title": "Ejemplo de controles de furia",
+      "trigger": "Represalia con furia completa: activada"
+    },
+    "khanSave": {
+      "defense": "Comprobar la defensa principal antes de las represalias",
+      "enable": "Activar Kan automático en la tarjeta Automatización",
+      "priority": "Estación automática atiende los ataques de jugadores por separado",
+      "save": "Guardar ajustes tras preparar ambos modelos",
+      "title": "Ejemplo de guardar y activar"
+    },
+    "khanSetup": {
+      "defense": "Defender en: castillo principal del Gran Imperio",
+      "presets": "Modelos guardados de ataque al Kan y defensa principal",
+      "source": "Atacar desde: fortín del Gran Imperio",
+      "title": "Ejemplo de configuración del Kan",
+      "travel": "Pluma de viaje para viajar rápido"
     }
   },
   "autoStation": {
@@ -1176,5 +1221,213 @@
       "summary": "Inicia una serie del Asesor nómada o samurái ajustada a los recursos"
     },
     "recommendationIntro": "Los valores recomendados describen el uso habitual de Auto Asesor; son orientativos y no cambian los ajustes guardados."
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "Conservar 10 min",
+            "description": "Conserva esta cantidad de aceleradores de 10 min sin usar.",
+            "recommendation": "0 para cadenas habituales del Kan."
+          },
+          "keep_1m": {
+            "label": "Conservar 1 min",
+            "description": "Conserva esta cantidad de aceleradores de 1 min sin usar.",
+            "recommendation": "0 para cadenas habituales del Kan."
+          },
+          "keep_24h": {
+            "label": "Conservar 24 h",
+            "recommendation": "Reserva las existencias que necesites para construcciones u otras actividades.",
+            "description": "Conserva esta cantidad de aceleradores de 24 h sin usar."
+          },
+          "keep_30m": {
+            "label": "Conservar 30 min",
+            "description": "Conserva esta cantidad de aceleradores de 30 min sin usar.",
+            "recommendation": "0 para cadenas habituales del Kan."
+          },
+          "keep_5h": {
+            "label": "Conservar 5 h",
+            "recommendation": "Reserva las existencias que necesites para construcciones u otras actividades.",
+            "description": "Conserva esta cantidad de aceleradores de 5 h sin usar."
+          },
+          "keep_5m": {
+            "label": "Conservar 5 min",
+            "description": "Conserva esta cantidad de aceleradores de 5 min sin usar.",
+            "recommendation": "0 para cadenas habituales del Kan."
+          },
+          "keep_1h": {
+            "description": "Conserva esta cantidad de aceleradores de 1 h sin usar.",
+            "label": "Conservar 1 h",
+            "recommendation": "0 para cadenas habituales del Kan."
+          },
+          "skip_cooldowns": {
+            "description": "Reserva y usa suficientes aceleradores para eliminar las esperas del campamento tras los ataques.",
+            "label": "Saltar cada espera del campamento del Kan",
+            "recommendation": "Activado; el cuadro de ajustes actual lo exige para guardar."
+          },
+          "skip_shortage": {
+            "description": "Los nuevos ataques al campamento se pausan si los aceleradores utilizables no cubren la espera requerida.",
+            "label": "Aceleradores utilizables insuficientes"
+          }
+        },
+        "image": {
+          "alt": "Ejemplo de eliminación de esperas y reservas de aceleradores de Kan automático",
+          "caption": "Las reservas cuentan objetos, no minutos."
+        },
+        "title": "Configurar saltos de espera y reservas"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "Límite diario de ataques normales",
+            "description": "Detén los nuevos ataques al campamento de esta automatización al alcanzar el contador diario de ataques normales de la cuenta; 0 desactiva el límite.",
+            "recommendation": "0 salvo que necesites un límite para toda la cuenta."
+          },
+          "event_end": {
+            "label": "Parar antes del fin del evento",
+            "description": "Detén nuevos ataques al campamento esta cantidad de minutos antes de terminar el evento.",
+            "recommendation": "5 minutos."
+          },
+          "nomad_points": {
+            "description": "Con esta puntuación informada, detén nuevos ataques del Kan, retira los que viajan y abre las puertas principales; 0 desactiva esta parada.",
+            "label": "Detener al alcanzar puntos nómadas",
+            "recommendation": "0 salvo que quieras detenerte y protegerte en una puntuación elegida."
+          },
+          "replenish_tools": {
+            "description": "Repón herramientas faltantes del modelo de defensa con ofertas válidas y rechaza lotes con precio en rubíes.",
+            "label": "Reponer herramientas de defensa",
+            "recommendation": "Activado si deseas compras automáticas válidas."
+          }
+        },
+        "image": {
+          "alt": "Ejemplo de puntos, herramientas y límite diario de Kan automático",
+          "caption": "Un límite positivo de puntos nómadas también retira los ataques del Kan en curso y abre las puertas principales."
+        },
+        "title": "Configurar puntos, suministros y límites diarios"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "Guardar ajustes",
+            "description": "Guarda castillos, modelos, controles de furia, límites, reservas de aceleradores y protección seleccionados."
+          },
+          "enable_switch": {
+            "description": "Activa Kan automático en su tarjeta de Automatización tras comprobar la defensa principal.",
+            "label": "Interruptor de Kan automático",
+            "recommendation": "Activado tras guardar y preparar la defensa."
+          },
+          "station_priority": {
+            "description": "Estación automática atiende ataques entrantes de jugadores por separado de las represalias del Kan.",
+            "label": "Prioridad de Estación automática"
+          }
+        },
+        "image": {
+          "alt": "Ejemplo de guardar y activar Kan automático",
+          "caption": "Comprueba la defensa del castillo principal antes de activar represalias del Kan."
+        },
+        "title": "Guardar y activar Kan automático"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Impulso de viaje a caballo",
+            "recommendation": "Pluma de viaje para viajar rápido.",
+            "description": "Elige viaje con plumas, monedas o rubíes para atacar campamentos."
+          },
+          "open_settings": {
+            "label": "Abrir ajustes",
+            "description": "En la página Automatización, elige el botón de ajustes en la tarjeta Kan automático."
+          },
+          "attack_from": {
+            "description": "Elige un castillo principal o fortín del Gran Imperio que suministre los ataques al campamento del Kan.",
+            "label": "Atacar desde",
+            "recommendation": "Usa un fortín con tu ejército ofensivo cuando esté disponible."
+          },
+          "camp_attack_preset": {
+            "description": "Elige un modelo de ataque guardado para ataques habituales al campamento del Kan.",
+            "label": "Modelo de ataque al campamento",
+            "recommendation": "Crea primero tu modelo habitual de ataque al Kan."
+          },
+          "defend_at": {
+            "description": "Las represalias del Kan se defienden en el castillo principal del Gran Imperio mostrado aquí, que es de solo lectura.",
+            "label": "Defender en"
+          },
+          "main_defense_preset": {
+            "description": "Elige un modelo de defensa guardado que se reaplica en el castillo principal antes de las represalias.",
+            "label": "Modelo de defensa principal",
+            "recommendation": "Crea tu modelo habitual de defensa contra el Kan y prepara sus tropas y herramientas."
+          }
+        },
+        "image": {
+          "alt": "Ejemplo de castillo, modelos y viaje de Kan automático",
+          "caption": "Prepara ambos modelos y la defensa principal antes de activar la cadena de ataques."
+        },
+        "title": "Elegir castillos, modelos y viaje"
+      },
+      "protection": {
+        "image": {
+          "alt": "Ejemplo de protección de la muralla del castillo principal para Kan automático",
+          "caption": "La protección de la muralla solo se aplica al atacar desde el castillo principal."
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "Activa la protección principal cuando las unidades ofensivas de la muralla lleguen a esta cantidad.",
+            "label": "Umbral de unidades ofensivas en la muralla",
+            "recommendation": "1.000 unidades ofensivas en la muralla."
+          },
+          "outpost_source": {
+            "description": "Esta protección se desactiva cuando un fortín proporciona los ataques y el castillo principal se defiende aparte.",
+            "label": "Fortín como origen"
+          },
+          "protect_offense": {
+            "description": "Al atacar desde el castillo principal, abre sus puertas y pausa Kan si demasiadas tropas ofensivas defenderían la muralla.",
+            "label": "Proteger ofensiva en la muralla principal",
+            "recommendation": "Activado si el castillo principal proporciona los ataques."
+          }
+        },
+        "title": "Proteger la muralla del castillo principal"
+      },
+      "rage": {
+        "image": {
+          "alt": "Ejemplo de furia y permisos de ataque de Kan automático",
+          "caption": "El potenciador temporal de puntos de furia no es lo mismo que los estandartes de furia."
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "Detén nuevos ataques al campamento mientras continúan la gestión de furia, las esperas y la defensa.",
+            "label": "Bloquear ataques automáticos del Kan",
+            "recommendation": "Desactivado para los ataques habituales al campamento."
+          },
+          "max_rage_chain": {
+            "description": "Limita las represalias aceptadas en el evento actual antes de detener nuevos ataques al campamento; 0 elimina el límite.",
+            "label": "Máxima cadena de furia",
+            "recommendation": "0 salvo que necesites limitar las represalias."
+          },
+          "rage_booster": {
+            "description": "Permite nuevos ataques automáticos al campamento solo mientras esté activo el potenciador temporal de puntos de furia.",
+            "label": "Exigir potenciador de puntos de furia",
+            "recommendation": "Desactivado salvo que quieras atacar solo con potenciador."
+          },
+          "rage_continues": {
+            "description": "El límite de cadena de furia no detiene las provocaciones con furia completa, las esperas ni la recuperación de la defensa.",
+            "label": "La gestión de furia continúa"
+          },
+          "trigger_full_rage": {
+            "description": "Provoca una represalia del Kan al llenarse la furia.",
+            "label": "Provocar al Kan con furia completa",
+            "recommendation": "Activado cuando el castillo principal esté preparado para defenderse."
+          }
+        },
+        "title": "Configurar furia y permisos de ataque"
+      }
+    },
+    "feature": {
+      "description": "Khan automático ataca el campamento del Kan, elimina las esperas, provoca represalias con la furia al máximo y mantiene la defensa del castillo principal.",
+      "expectation": "Pausa los nuevos ataques al alcanzar límites o faltar recursos mientras protege el castillo principal; los ataques de otros jugadores corresponden a Estación automática.",
+      "name": "Kan automático",
+      "summary": "Encadena ataques al campamento del Kan y defiende las represalias en tu castillo principal"
+    },
+    "recommendationIntro": "Los valores recomendados describen el uso habitual de Kan automático; son orientativos y no cambian ajustes guardados."
   }
 }

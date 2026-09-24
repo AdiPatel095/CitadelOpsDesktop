@@ -12,6 +12,7 @@ export const registry = {
   autoInvasion: { source: 'autoInvasionGuide.json', ui: 'invasion', panels: 'invasion' },
   autoNomad: { source: 'autoNomadGuide.json', ui: 'nomad', panels: 'nomad' },
   autoAdvisor: { source: 'autoAdvisorGuide.json', ui: 'advisor', panels: 'advisor' },
+  autoKhan: { source: 'autoKhanGuide.json', ui: 'khan', panels: 'khan' },
 };
 const defaultRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const hash = value => createHash('sha256').update(value).digest('hex');
@@ -148,8 +149,8 @@ export async function recordEnglish(root, feature, mirror) {
   for (const target of targets) {
     if ((await sourceContract(target, feature)).sourceSha256 !== source.sourceSha256) throw Error('Mirror English guide source differs');
     const provenance = await loadProvenance(target), progress = await loadProgress(target);
-    provenance.source = 'autoTowerGuide.json, autoBirdGuide.json, autoStationGuide.json, autoFortressGuide.json and autoInvasionGuide.json, plus autoNomadGuide.json and autoAdvisorGuide.json; en.json fixes the semantic key contract.';
-    provenance.scope = 'Auto Towers, Auto Bird, Auto Station, Auto Fortress, Auto Invasion, Auto Nomad/Samurai and Auto Advisor guide, feature-card and illustrative panel strings only; not whole-application localization.';
+    provenance.source = 'autoTowerGuide.json, autoBirdGuide.json, autoStationGuide.json, autoFortressGuide.json and autoInvasionGuide.json, plus autoNomadGuide.json, autoAdvisorGuide.json and autoKhanGuide.json; en.json fixes the semantic key contract.';
+    provenance.scope = 'Auto Towers, Auto Bird, Auto Station, Auto Fortress, Auto Invasion, Auto Nomad/Samurai Auto Advisor and Auto Khan guide, feature-card and illustrative panel strings only; not whole-application localization.';
     provenance.englishSourceSha256 = provenance.locales.en = hash(await readFile(packPath(target, 'en')));
     progress.features ??= {};
     progress.features[feature] ??= { locales: {} };
@@ -163,7 +164,7 @@ async function main() {
   const [command, feature, ...options] = process.argv.slice(2);
   const flag = name => { const index = options.indexOf(name); return index < 0 ? undefined : options[index + 1]; };
   const root = resolve(flag('--root') ?? defaultRoot), mirror = flag('--mirror') ? resolve(flag('--mirror')) : undefined;
-  if (!registry[feature]) throw Error(`Usage: guide-packs.mjs export|status|import|check|provenance autoTower|autoBird|autoStation|autoFortress|autoInvasion|autoNomad|autoAdvisor [locale file] [--root client] [--mirror client]`);
+  if (!registry[feature]) throw Error(`Usage: guide-packs.mjs export|status|import|check|provenance autoTower|autoBird|autoStation|autoFortress|autoInvasion|autoNomad|autoAdvisor|autoKhan [locale file] [--root client] [--mirror client]`);
   if (command === 'export') { console.log(json(await exportGuide(root, feature)).trimEnd()); return; }
   if (command === 'status' || command === 'check') {
     const report = await statusGuide(root, feature, mirror);

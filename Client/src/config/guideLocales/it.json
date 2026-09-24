@@ -31,7 +31,10 @@
     "nomadPreviewTitle": "Esempio di configurazione di Auto Nomadi/Samurai",
     "advisorGuideIntro": "Segui questi passaggi per configurare Auto Consigliere; seleziona un pannello di esempio per ingrandirlo.",
     "advisorGuideTitle": "Guida Auto Consigliere",
-    "advisorPreviewTitle": "Esempio di configurazione di Auto Consigliere"
+    "advisorPreviewTitle": "Esempio di configurazione di Auto Consigliere",
+    "khanGuideIntro": "Segui questi passaggi per configurare Khan automatico; seleziona un pannello di esempio per ingrandirlo.",
+    "khanGuideTitle": "Guida di Khan automatico",
+    "khanPreviewTitle": "Esempio di configurazione di Khan automatico"
   },
   "autoTower": {
     "recommendationIntro": "Questi consigli riguardano l’uso regolare; controllali prima di salvare.",
@@ -446,6 +449,48 @@
       "maximum": "Attacchi massimi: 9.999",
       "time": "Tempo dell'evento non usato: 30 minuti",
       "title": "Esempio di dimensione della serie"
+    },
+    "khanCooldowns": {
+      "long": "Conserva gli acceleratori da 5 e 24 ore per altri impieghi",
+      "pause": "I nuovi attacchi si fermano se mancano acceleratori utilizzabili",
+      "short": "Conserva 1 min / 5 min / 10 min / 30 min / 1 ora: 0 oggetti ciascuno",
+      "skip": "Salta ogni attesa del campo: attivo",
+      "title": "Esempio di riserve di acceleratori"
+    },
+    "khanLimits": {
+      "daily": "Attacchi normali giornalieri: 0, nessun limite aggiunto",
+      "end": "Ferma i nuovi attacchi 5 minuti prima della fine",
+      "points": "Fermati ai punti nomadi: 0, disattivo",
+      "title": "Esempio di limiti di arresto",
+      "tools": "Rifornimento strumenti difensivi: attivo se desiderato"
+    },
+    "khanProtection": {
+      "gate": "Apri le porte principali e metti Khan in pausa alla soglia",
+      "outpost": "Fonte avamposto: protezione disattivata",
+      "source": "Vale quando gli attacchi partono dal castello principale",
+      "threshold": "Unità offensive sulle mura: 1.000",
+      "title": "Esempio di protezione delle mura principali"
+    },
+    "khanRage": {
+      "attacks": "Attacchi automatici al campo: sbloccati",
+      "booster": "Potenziamento temporaneo dei punti furia richiesto: no",
+      "chain": "Catena massima di furia: 0, nessun limite aggiunto",
+      "title": "Esempio di controlli della furia",
+      "trigger": "Rappresaglia a furia piena: attiva"
+    },
+    "khanSave": {
+      "defense": "Controlla la difesa principale prima delle rappresaglie",
+      "enable": "Attiva Khan automatico sulla scheda Automazione",
+      "priority": "Stazione automatica gestisce gli attacchi dei giocatori a parte",
+      "save": "Salva dopo aver preparato entrambi i modelli",
+      "title": "Esempio di salvataggio e attivazione"
+    },
+    "khanSetup": {
+      "defense": "Difendi a: castello principale del Grande Impero",
+      "presets": "Modelli salvati di attacco al Khan e difesa principale",
+      "source": "Attacca da: avamposto del Grande Impero",
+      "title": "Esempio di configurazione del Khan",
+      "travel": "Piuma di viaggio per muoversi rapidamente"
     }
   },
   "autoStation": {
@@ -1176,5 +1221,213 @@
       "summary": "Avvia una serie del Consigliere nomade o samurai commisurata alle risorse"
     },
     "recommendationIntro": "I valori consigliati descrivono l'uso regolare di Auto Consigliere; sono indicazioni e non modificano le impostazioni salvate."
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "Conserva 10 min",
+            "description": "Conserva inutilizzato questo numero di acceleratori da 10 min.",
+            "recommendation": "0 per le normali catene del Khan."
+          },
+          "keep_1m": {
+            "label": "Conserva 1 min",
+            "description": "Conserva inutilizzato questo numero di acceleratori da 1 min.",
+            "recommendation": "0 per le normali catene del Khan."
+          },
+          "keep_24h": {
+            "label": "Conserva 24 h",
+            "recommendation": "Tieni da parte la scorta necessaria per costruzioni o altre attività.",
+            "description": "Conserva inutilizzato questo numero di acceleratori da 24 ore."
+          },
+          "keep_30m": {
+            "label": "Conserva 30 min",
+            "description": "Conserva inutilizzato questo numero di acceleratori da 30 min.",
+            "recommendation": "0 per le normali catene del Khan."
+          },
+          "keep_5h": {
+            "label": "Conserva 5 h",
+            "recommendation": "Tieni da parte la scorta necessaria per costruzioni o altre attività.",
+            "description": "Conserva inutilizzato questo numero di acceleratori da 5 ore."
+          },
+          "keep_5m": {
+            "label": "Conserva 5 min",
+            "description": "Conserva inutilizzato questo numero di acceleratori da 5 min.",
+            "recommendation": "0 per le normali catene del Khan."
+          },
+          "keep_1h": {
+            "description": "Conserva inutilizzato questo numero di acceleratori da 1 ora.",
+            "label": "Conserva 1 ora",
+            "recommendation": "0 per le normali catene del Khan."
+          },
+          "skip_cooldowns": {
+            "description": "Prenota e usa abbastanza acceleratori per eliminare le attese dell'accampamento dopo gli attacchi.",
+            "label": "Salta ogni attesa del campo del Khan",
+            "recommendation": "Attivo; l'attuale finestra delle impostazioni lo richiede per salvare."
+          },
+          "skip_shortage": {
+            "description": "I nuovi attacchi al campo si fermano se gli acceleratori utilizzabili non coprono l'attesa richiesta.",
+            "label": "Acceleratori utilizzabili insufficienti"
+          }
+        },
+        "image": {
+          "alt": "Esempio illustrativo dei salti di attesa e delle riserve di acceleratori di Khan automatico",
+          "caption": "Le riserve contano gli oggetti, non i minuti."
+        },
+        "title": "Imposta i salti delle attese e le riserve"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "Limite giornaliero degli attacchi normali",
+            "description": "Ferma i nuovi attacchi al campo di questa automazione al contatore giornaliero degli attacchi normali dell'account; 0 disattiva il limite.",
+            "recommendation": "0 se non ti serve un limite per tutto l'account."
+          },
+          "event_end": {
+            "label": "Fermati prima della fine dell'evento",
+            "description": "Ferma i nuovi attacchi al campo questi minuti prima della fine dell'evento.",
+            "recommendation": "5 minuti."
+          },
+          "nomad_points": {
+            "description": "A questo punteggio registrato, ferma i nuovi attacchi del Khan, richiama quelli in viaggio e apri le porte principali; 0 disattiva l'arresto.",
+            "label": "Fermati ai punti nomadi",
+            "recommendation": "0, a meno che tu non voglia fermarti e proteggerti a un punteggio scelto."
+          },
+          "replenish_tools": {
+            "description": "Rifornisci gli strumenti mancanti dal modello di difesa con offerte idonee, rifiutando i pacchetti in rubini.",
+            "label": "Rifornisci gli strumenti di difesa",
+            "recommendation": "Attivo se vuoi acquisti automatici idonei."
+          }
+        },
+        "image": {
+          "alt": "Esempio di punti, strumenti e limite giornaliero di Khan automatico",
+          "caption": "Una soglia positiva di punti nomadi richiama anche gli attacchi del Khan in viaggio e apre le porte principali."
+        },
+        "title": "Imposta limiti di punti, rifornimenti e attacchi giornalieri"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "Salva impostazioni",
+            "description": "Salva castelli, modelli, controlli della furia, limiti, riserve di acceleratori e protezioni selezionati."
+          },
+          "enable_switch": {
+            "description": "Attiva Khan automatico dalla scheda Automazione dopo aver controllato la difesa principale.",
+            "label": "Interruttore di Khan automatico",
+            "recommendation": "Attivo dopo aver salvato le impostazioni e preparato la difesa."
+          },
+          "station_priority": {
+            "description": "Stazione automatica gestisce gli attacchi dei giocatori in arrivo separatamente dalle rappresaglie del Khan.",
+            "label": "Priorità di Stazione automatica"
+          }
+        },
+        "image": {
+          "alt": "Esempio di salvataggio e attivazione di Khan automatico",
+          "caption": "Controlla la difesa del castello principale prima di attivare le rappresaglie del Khan."
+        },
+        "title": "Salva e attiva Khan automatico"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Potenziamento del viaggio a cavallo",
+            "recommendation": "Piuma da viaggio per spostamenti rapidi.",
+            "description": "Scegli viaggio con piume, monete o rubini per attaccare i campi."
+          },
+          "open_settings": {
+            "label": "Apri le impostazioni",
+            "description": "Nella pagina Automazione, scegli il pulsante impostazioni della scheda Khan automatico."
+          },
+          "attack_from": {
+            "description": "Scegli un castello principale o un avamposto del Grande Impero che fornisca gli attacchi al campo del Khan.",
+            "label": "Attacca da",
+            "recommendation": "Usa un avamposto con il tuo esercito offensivo quando disponibile."
+          },
+          "camp_attack_preset": {
+            "description": "Scegli un modello d'attacco salvato per i normali attacchi al campo del Khan.",
+            "label": "Modello d'attacco al campo",
+            "recommendation": "Crea prima il tuo normale modello d'attacco contro il Khan."
+          },
+          "defend_at": {
+            "description": "Le rappresaglie del Khan colpiscono il castello principale del Grande Impero mostrato qui, in sola lettura.",
+            "label": "Difendi a"
+          },
+          "main_defense_preset": {
+            "description": "Scegli un modello di difesa salvato, riapplicato al castello principale prima delle rappresaglie.",
+            "label": "Modello di difesa principale",
+            "recommendation": "Crea il tuo normale modello di difesa contro il Khan e prepara truppe e strumenti."
+          }
+        },
+        "image": {
+          "alt": "Esempio illustrativo di castello, modelli e viaggio di Khan automatico",
+          "caption": "Prepara entrambi i modelli e la difesa principale prima di attivare la catena d'attacco."
+        },
+        "title": "Scegli castelli, modelli e viaggio"
+      },
+      "protection": {
+        "image": {
+          "alt": "Esempio di protezione delle mura del castello principale per Khan automatico",
+          "caption": "Questa protezione delle mura si applica solo quando il castello principale è la fonte degli attacchi."
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "Attiva la protezione del castello principale quando le unità offensive sulle mura raggiungono questo numero.",
+            "label": "Soglia di unità offensive sulle mura",
+            "recommendation": "1.000 unità offensive sulle mura."
+          },
+          "outpost_source": {
+            "description": "La protezione è disattivata quando un avamposto fornisce gli attacchi e il castello principale si difende separatamente.",
+            "label": "Avamposto come fonte"
+          },
+          "protect_offense": {
+            "description": "Se attacchi dal castello principale, apri le porte e metti in pausa Khan quando troppe truppe offensive difenderebbero le mura.",
+            "label": "Proteggi le truppe offensive sulle mura principali",
+            "recommendation": "Attivo se gli attacchi partono dal castello principale."
+          }
+        },
+        "title": "Proteggi le mura del castello principale"
+      },
+      "rage": {
+        "image": {
+          "alt": "Esempio di furia e permessi d'attacco di Khan automatico",
+          "caption": "Il potenziamento temporaneo dei punti furia è distinto dagli stendardi furia."
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "Ferma i nuovi attacchi al campo mentre furia, attese e difesa continuano.",
+            "label": "Blocca gli attacchi automatici del Khan",
+            "recommendation": "Disattivo per i normali attacchi al campo."
+          },
+          "max_rage_chain": {
+            "description": "Limita le rappresaglie accettate nell'evento corrente prima che si fermino i nuovi attacchi al campo; 0 elimina il limite.",
+            "label": "Catena massima di furia",
+            "recommendation": "0 se non ti serve limitare le rappresaglie."
+          },
+          "rage_booster": {
+            "description": "Consenti nuovi attacchi automatici al campo solo mentre è attivo il potenziamento temporaneo dei punti furia.",
+            "label": "Richiedi il potenziamento dei punti furia",
+            "recommendation": "Disattivo salvo che tu voglia attaccare solo con il potenziamento."
+          },
+          "rage_continues": {
+            "description": "Il limite della catena furia non ferma provocazioni a furia piena, attese o recupero della difesa.",
+            "label": "La gestione della furia continua"
+          },
+          "trigger_full_rage": {
+            "description": "Provoca una rappresaglia del Khan quando la furia è piena.",
+            "label": "Provoca il Khan a furia piena",
+            "recommendation": "Attivo quando il castello principale è pronto a difendersi."
+          }
+        },
+        "title": "Imposta la furia e i permessi d'attacco"
+      }
+    },
+    "feature": {
+      "description": "Khan automatico attacca l'accampamento del Khan, elimina le attese, provoca rappresaglie a furia piena e mantiene la difesa del castello principale.",
+      "expectation": "Mette in pausa i nuovi attacchi all'accampamento ai limiti configurati o se mancano risorse, proteggendo il castello principale; gli attacchi dei giocatori restano compito di Stazione automatica.",
+      "name": "Khan automatico",
+      "summary": "Concatena attacchi al campo del Khan e difendi le rappresaglie nel castello principale"
+    },
+    "recommendationIntro": "I valori consigliati descrivono l'uso abituale di Khan automatico; sono indicazioni e non cambiano le impostazioni salvate."
   }
 }

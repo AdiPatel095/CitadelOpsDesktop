@@ -31,7 +31,10 @@
     "nomadPreviewTitle": "Exemplu de configurare Auto Nomazi/Samurai",
     "advisorGuideIntro": "Urmează acești pași pentru a configura Consilierul automat; selectează un panou exemplu pentru mărire.",
     "advisorGuideTitle": "Ghidul Consilierului automat",
-    "advisorPreviewTitle": "Exemplu de configurare a Consilierului automat"
+    "advisorPreviewTitle": "Exemplu de configurare a Consilierului automat",
+    "khanGuideIntro": "Urmează acești pași pentru configurarea Khanului automat; selectează un panou exemplu pentru mărire.",
+    "khanGuideTitle": "Ghidul Khanului automat",
+    "khanPreviewTitle": "Exemplu de configurare a Khanului automat"
   },
   "autoTower": {
     "recommendationIntro": "Acestea sunt recomandări pentru utilizarea obișnuită; verifică-le înainte de salvare.",
@@ -446,6 +449,48 @@
       "maximum": "Atacuri maxime: 9.999",
       "time": "Timp nefolosit din eveniment: 30 de minute",
       "title": "Exemplu de dimensiune a seriei"
+    },
+    "khanCooldowns": {
+      "long": "Rezervă acceleratoare de 5 h și 24 h pentru alte activități",
+      "pause": "Atacurile noi se întrerup când lipsesc acceleratoare utilizabile",
+      "short": "Păstrează 1 min / 5 min / 10 min / 30 min / 1 h: 0 obiecte din fiecare",
+      "skip": "Elimină fiecare așteptare a taberei: pornit",
+      "title": "Exemplu de rezerve de acceleratoare"
+    },
+    "khanLimits": {
+      "daily": "Atacuri normale zilnice: 0, fără limită suplimentară",
+      "end": "Oprește atacurile noi cu 5 minute înainte de final",
+      "points": "Oprește la puncte nomade: 0, dezactivat",
+      "title": "Exemplu de limite de oprire",
+      "tools": "Reaprovizionare unelte de apărare: pornită dacă dorești"
+    },
+    "khanProtection": {
+      "gate": "Deschide porțile principale și întrerupe Khan la prag",
+      "outpost": "Avanpost ca sursă: protecție dezactivată",
+      "source": "Se aplică atacurilor din castelul principal",
+      "threshold": "Unități ofensive pe zid: 1.000",
+      "title": "Exemplu de protecție a zidului principal"
+    },
+    "khanRage": {
+      "attacks": "Atacuri automate asupra taberei: deblocate",
+      "booster": "Amplificator temporar de puncte de furie necesar: oprit",
+      "chain": "Lanț maxim de furie: 0, fără limită suplimentară",
+      "title": "Exemplu de controale de furie",
+      "trigger": "Represalii la furie maximă: pornite"
+    },
+    "khanSave": {
+      "defense": "Verifică apărarea principală înainte de represalii",
+      "enable": "Activează Khan automat pe cardul Automatizare",
+      "priority": "Staționarea automată gestionează atacurile jucătorilor separat",
+      "save": "Salvează setările după pregătirea ambelor presetări",
+      "title": "Exemplu de salvare și activare"
+    },
+    "khanSetup": {
+      "defense": "Apără la: castelul principal din Marele Imperiu",
+      "presets": "Presetări salvate de atac asupra Khanului și apărare principală",
+      "source": "Atacă din: avanpost din Marele Imperiu",
+      "title": "Exemplu de configurare a Khanului",
+      "travel": "Pană de călătorie pentru deplasare rapidă"
     }
   },
   "autoStation": {
@@ -1176,5 +1221,213 @@
       "summary": "Pornește o serie Consilier Nomazi sau Samurai dimensionată după resurse"
     },
     "recommendationIntro": "Valorile recomandate descriu utilizarea obișnuită a Consilierului automat; sunt îndrumări și nu modifică setările salvate."
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "Păstrează 10 min",
+            "description": "Păstrează nefolosite atâtea acceleratoare de 10 min.",
+            "recommendation": "0 pentru lanțurile obișnuite ale Khanului."
+          },
+          "keep_1m": {
+            "label": "Păstrează 1 min",
+            "description": "Păstrează nefolosite atâtea acceleratoare de 1 min.",
+            "recommendation": "0 pentru lanțurile obișnuite ale Khanului."
+          },
+          "keep_24h": {
+            "label": "Păstrează 24 h",
+            "recommendation": "Rezervă stocul necesar pentru construcții sau alte activități.",
+            "description": "Păstrează nefolosite atâtea acceleratoare de 24 h."
+          },
+          "keep_30m": {
+            "label": "Păstrează 30 min",
+            "description": "Păstrează nefolosite atâtea acceleratoare de 30 min.",
+            "recommendation": "0 pentru lanțurile obișnuite ale Khanului."
+          },
+          "keep_5h": {
+            "label": "Păstrează 5 h",
+            "recommendation": "Rezervă stocul necesar pentru construcții sau alte activități.",
+            "description": "Păstrează nefolosite atâtea acceleratoare de 5 h."
+          },
+          "keep_5m": {
+            "label": "Păstrează 5 min",
+            "description": "Păstrează nefolosite atâtea acceleratoare de 5 min.",
+            "recommendation": "0 pentru lanțurile obișnuite ale Khanului."
+          },
+          "keep_1h": {
+            "description": "Păstrează nefolosite atâtea acceleratoare de 1 h.",
+            "label": "Păstrează 1 h",
+            "recommendation": "0 pentru lanțurile obișnuite ale Khanului."
+          },
+          "skip_cooldowns": {
+            "description": "Rezervă și folosește suficiente acceleratoare pentru a elimina așteptările taberei după atacuri.",
+            "label": "Elimină fiecare așteptare a taberei Khanului",
+            "recommendation": "Pornit; fereastra actuală de setări cere acest lucru pentru salvare."
+          },
+          "skip_shortage": {
+            "description": "Atacurile noi asupra taberei se întrerup dacă acceleratoarele utilizabile nu acoperă așteptarea necesară.",
+            "label": "Acceleratoare utilizabile insuficiente"
+          }
+        },
+        "image": {
+          "alt": "Exemplu de eliminare a așteptărilor și rezerve de acceleratoare ale Khanului automat",
+          "caption": "Rezervele numără obiecte, nu minute."
+        },
+        "title": "Setează eliminarea așteptărilor și rezervele"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "Limita zilnică a atacurilor obișnuite",
+            "description": "Oprește atacurile noi ale acestei automatizări la contorul zilnic de atacuri normale al întregului cont; 0 dezactivează limita.",
+            "recommendation": "0 dacă nu ai nevoie de o limită pentru întregul cont."
+          },
+          "event_end": {
+            "label": "Oprește înainte de sfârșitul evenimentului",
+            "description": "Oprește atacurile noi asupra taberei cu atâtea minute înainte de sfârșitul evenimentului.",
+            "recommendation": "5 minute."
+          },
+          "nomad_points": {
+            "description": "La acest scor raportat, oprește atacuri noi ale Khanului, recheamă atacurile în drum și deschide porțile principale; 0 dezactivează oprirea.",
+            "label": "Oprește la puncte nomade",
+            "recommendation": "0 dacă nu dorești oprire și protecție la un scor ales."
+          },
+          "replenish_tools": {
+            "description": "Înlocuiește uneltele lipsă din presetarea de apărare prin oferte eligibile și respinge pachetele cu preț în rubine.",
+            "label": "Reaprovizionează uneltele de apărare",
+            "recommendation": "Pornit dacă dorești achiziții automate eligibile."
+          }
+        },
+        "image": {
+          "alt": "Exemplu de puncte, unelte și limită zilnică pentru Khan automat",
+          "caption": "O oprire la puncte nomade mai mare decât zero recheamă și atacurile Khanului în drum și deschide porțile principale."
+        },
+        "title": "Setează limitele de puncte, provizii și atacuri zilnice"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "Salvează setările",
+            "description": "Salvează castelele, presetările, controalele de furie, limitele, rezervele de acceleratoare și protecțiile alese."
+          },
+          "enable_switch": {
+            "description": "Activează Khan automat din cardul Automatizare după verificarea apărării principale.",
+            "label": "Comutator Khan automat",
+            "recommendation": "Pornit după salvarea setărilor și pregătirea apărării."
+          },
+          "station_priority": {
+            "description": "Staționarea automată gestionează atacurile primite de la jucători separat de represaliile Khanului.",
+            "label": "Prioritatea Staționării automate"
+          }
+        },
+        "image": {
+          "alt": "Exemplu de salvare și activare a Khanului automat",
+          "caption": "Verifică apărarea castelului principal înainte să activezi represaliile Khanului."
+        },
+        "title": "Salvează și activează Khan automat"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Accelerarea deplasării cu cai",
+            "recommendation": "Pana de călătorie pentru deplasare rapidă.",
+            "description": "Alege deplasarea cu pene, monede sau rubine pentru atacuri asupra taberei."
+          },
+          "open_settings": {
+            "label": "Deschide setările",
+            "description": "Pe pagina Automatizare alege butonul de setări al cardului Khan automat."
+          },
+          "attack_from": {
+            "description": "Alege castelul principal sau un avanpost din Marele Imperiu care furnizează atacurile asupra taberei Khanului.",
+            "label": "Atacă din",
+            "recommendation": "Folosește un avanpost cu armata ta ofensivă dacă există."
+          },
+          "camp_attack_preset": {
+            "description": "Alege o presetare de atac salvată pentru atacurile obișnuite asupra taberei Khanului.",
+            "label": "Presetare de atac asupra taberei",
+            "recommendation": "Creează mai întâi presetarea ta obișnuită de atac asupra Khanului."
+          },
+          "defend_at": {
+            "description": "Represaliile Khanului se apără la castelul principal din Marele Imperiu afișat aici; câmpul nu poate fi editat.",
+            "label": "Apără la"
+          },
+          "main_defense_preset": {
+            "description": "Alege o presetare de apărare salvată, reaplicată la castelul principal înainte de represalii.",
+            "label": "Presetare de apărare principală",
+            "recommendation": "Creează presetarea ta obișnuită de apărare împotriva Khanului și pregătește trupe și unelte."
+          }
+        },
+        "image": {
+          "alt": "Exemplu de castel, presetări și deplasare pentru Khan automat",
+          "caption": "Pregătește ambele presetări și apărarea principală înainte de activarea lanțului de atacuri."
+        },
+        "title": "Alege castele, presetări și deplasare"
+      },
+      "protection": {
+        "image": {
+          "alt": "Exemplu de protecție a zidului castelului principal pentru Khan automat",
+          "caption": "Protecția zidului se aplică numai când atacurile pleacă din castelul principal."
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "Declanșează protecția când unitățile ofensive de pe zid ating acest număr.",
+            "label": "Prag de unități ofensive pe zid",
+            "recommendation": "1.000 de unități ofensive pe zid."
+          },
+          "outpost_source": {
+            "description": "Protecția este dezactivată dacă un avanpost furnizează atacurile și castelul principal apără separat.",
+            "label": "Avanpost ca sursă"
+          },
+          "protect_offense": {
+            "description": "Când ataci din castelul principal, deschide porțile și întrerupe Khan dacă prea multe trupe ofensive ar apăra zidul.",
+            "label": "Protejează trupele ofensive pe zidul principal",
+            "recommendation": "Pornit când castelul principal furnizează atacurile."
+          }
+        },
+        "title": "Protejează zidul castelului principal"
+      },
+      "rage": {
+        "image": {
+          "alt": "Exemplu de furie și permisiuni de atac pentru Khan automat",
+          "caption": "Amplificatorul temporar de puncte de furie este diferit de steagurile de furie."
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "Oprește atacurile noi asupra taberei în timp ce gestionarea furiei, așteptările și apărarea continuă.",
+            "label": "Blochează atacurile automate ale Khanului",
+            "recommendation": "Oprit pentru atacuri obișnuite asupra taberei."
+          },
+          "max_rage_chain": {
+            "description": "Limitează represaliile acceptate în evenimentul curent înainte de oprirea atacurilor noi asupra taberei; 0 elimină limita.",
+            "label": "Lanț maxim de furie",
+            "recommendation": "0 dacă nu ai nevoie de o limită de represalii."
+          },
+          "rage_booster": {
+            "description": "Permite atacurile automate noi asupra taberei numai când amplificatorul temporar de puncte de furie este activ.",
+            "label": "Cere amplificatorul de puncte de furie",
+            "recommendation": "Oprit dacă nu dorești atacuri numai cu amplificator."
+          },
+          "rage_continues": {
+            "description": "Limita lanțului de furie nu oprește declanșarea la furie maximă, așteptările sau refacerea apărării.",
+            "label": "Gestionarea furiei continuă"
+          },
+          "trigger_full_rage": {
+            "description": "Provoacă represalii ale Khanului când furia este maximă.",
+            "label": "Provoacă Khanul la furie maximă",
+            "recommendation": "Pornit când castelul principal este pregătit să apere."
+          }
+        },
+        "title": "Setează furia și permisiunile de atac"
+      }
+    },
+    "feature": {
+      "description": "Khan automat atacă tabăra Khanului, elimină timpii de așteptare, declanșează represalii la furie maximă și menține apărarea castelului principal.",
+      "expectation": "Atacurile noi asupra taberei se opresc la limitele alese sau când lipsesc resurse, protejând castelul principal; atacurile jucătorilor sunt gestionate de Staționarea automată.",
+      "name": "Khan automat",
+      "summary": "Leagă atacurile asupra taberei Khanului și apără represaliile la castelul principal"
+    },
+    "recommendationIntro": "Valorile recomandate descriu folosirea obișnuită a Khanului automat; sunt îndrumări și nu modifică setările salvate."
   }
 }

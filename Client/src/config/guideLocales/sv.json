@@ -31,7 +31,10 @@
     "nomadPreviewTitle": "Inställningsexempel för Auto Nomader/Samurajer",
     "advisorGuideIntro": "Följ dessa steg för att ställa in Auto Rådgivare; välj en exempelpanel för att förstora den.",
     "advisorGuideTitle": "Guide för Auto Rådgivare",
-    "advisorPreviewTitle": "Inställningsexempel för Auto Rådgivare"
+    "advisorPreviewTitle": "Inställningsexempel för Auto Rådgivare",
+    "khanGuideIntro": "Följ dessa steg för att ställa in Automatiska Khan; välj en exempelpanel för att förstora den.",
+    "khanGuideTitle": "Guide till Automatiska Khan",
+    "khanPreviewTitle": "Exempel på inställningar för Automatiska Khan"
   },
   "autoTower": {
     "recommendationIntro": "Det här är rekommendationer för regelbunden användning; granska dem innan du sparar.",
@@ -446,6 +449,48 @@
       "maximum": "Maximala anfall: 9 999",
       "time": "Oanvänd evenemangstid: 30 minuter",
       "title": "Exempel på seriestorlek"
+    },
+    "khanCooldowns": {
+      "long": "Reservera tidsförkortare på 5 och 24 timmar för andra uppgifter",
+      "pause": "Nya anfall pausas om användbara förkortare saknas",
+      "short": "Behåll 1 min / 5 min / 10 min / 30 min / 1 timme: 0 föremål av varje",
+      "skip": "Hoppa över varje väntetid i lägret: på",
+      "title": "Exempel på tidsförkortarreserver"
+    },
+    "khanLimits": {
+      "daily": "Vanliga anfall per dag: 0, ingen extra gräns",
+      "end": "Stoppa nya anfall 5 minuter före slutet",
+      "points": "Stoppa vid nomadpoäng: 0, avstängt",
+      "title": "Exempel på stoppgränser",
+      "tools": "Fyll på försvarsverktyg: på om du vill"
+    },
+    "khanProtection": {
+      "gate": "Öppna huvudportarna och pausa Khan vid gränsen",
+      "outpost": "Utpost som källa: skydd avstängt",
+      "source": "Gäller anfall från huvudslottet",
+      "threshold": "Offensiva murenheter: 1 000",
+      "title": "Exempel på skydd av huvudmuren"
+    },
+    "khanRage": {
+      "attacks": "Automatiska lägeranfall: upplåsta",
+      "booster": "Tidsbegränsad raseripoängförstärkning krävs: av",
+      "chain": "Maximal raserikedja: 0, ingen extra gräns",
+      "title": "Exempel på raserikontroller",
+      "trigger": "Motanfall vid fullt raseri: på"
+    },
+    "khanSave": {
+      "defense": "Kontrollera huvudförsvaret före motanfall",
+      "enable": "Aktivera Automatiska Khan på kortet Automatisering",
+      "priority": "Automatisk stationering hanterar spelarattacker separat",
+      "save": "Spara inställningar när båda mallarna är klara",
+      "title": "Exempel på att spara och aktivera"
+    },
+    "khanSetup": {
+      "defense": "Försvara vid: huvudslott i Stora riket",
+      "presets": "Sparade Khan-anfalls- och huvudförsvarsmallar",
+      "source": "Anfall från: utpost i Stora riket",
+      "title": "Exempel på Khan-inställningar",
+      "travel": "Resefjäder för snabba resor"
     }
   },
   "autoStation": {
@@ -1176,5 +1221,213 @@
       "summary": "Starta en resursanpassad nomad- eller samurajrådgivarserie"
     },
     "recommendationIntro": "Rekommenderade värden beskriver vanlig användning av Auto Rådgivare; de är råd och ändrar inte sparade inställningar."
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "Behåll 10 min",
+            "description": "Lämna så många tidsförkortare på 10 min oanvända.",
+            "recommendation": "0 för vanliga Khan-kedjor."
+          },
+          "keep_1m": {
+            "label": "Behåll 1 min",
+            "description": "Lämna så många tidsförkortare på 1 min oanvända.",
+            "recommendation": "0 för vanliga Khan-kedjor."
+          },
+          "keep_24h": {
+            "label": "Behåll 24 timmar",
+            "recommendation": "Reservera det lager du behöver för byggande eller andra aktiviteter.",
+            "description": "Lämna så många tidsförkortare på 24 timmar oanvända."
+          },
+          "keep_30m": {
+            "label": "Behåll 30 min",
+            "description": "Lämna så många tidsförkortare på 30 min oanvända.",
+            "recommendation": "0 för vanliga Khan-kedjor."
+          },
+          "keep_5h": {
+            "label": "Behåll 5 timmar",
+            "recommendation": "Reservera det lager du behöver för byggande eller andra aktiviteter.",
+            "description": "Lämna så många tidsförkortare på 5 timmar oanvända."
+          },
+          "keep_5m": {
+            "label": "Behåll 5 min",
+            "description": "Lämna så många tidsförkortare på 5 min oanvända.",
+            "recommendation": "0 för vanliga Khan-kedjor."
+          },
+          "keep_1h": {
+            "description": "Lämna så många tidsförkortare på 1 timme oanvända.",
+            "label": "Behåll 1 timme",
+            "recommendation": "0 för vanliga Khan-kedjor."
+          },
+          "skip_cooldowns": {
+            "description": "Reservera och använd tillräckligt med tidsförkortare för att rensa lägrets väntetider efter anfall.",
+            "label": "Hoppa över varje väntetid i Khanlägret",
+            "recommendation": "På; den nuvarande inställningsrutan kräver detta för att spara."
+          },
+          "skip_shortage": {
+            "description": "Nya lägeranfall pausas om användbara tidsförkortare inte täcker väntetiden som krävs.",
+            "label": "För få användbara tidsförkortare"
+          }
+        },
+        "image": {
+          "alt": "Illustration av att hoppa över väntetider och reserver av tidsförkortare i Automatiska Khan",
+          "caption": "Reservvärden räknar föremål, inte minuter."
+        },
+        "title": "Ställ in väntetider och reserver"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "Daglig gräns för vanliga attacker",
+            "description": "Stoppa nya lägeranfall från denna automatisering vid kontots dagliga räknare för vanliga anfall; 0 stänger av gränsen.",
+            "recommendation": "0 om du inte behöver en gräns för hela kontot."
+          },
+          "event_end": {
+            "label": "Stoppa före evenemangets slut",
+            "description": "Stoppa nya lägeranfall så här många minuter innan evenemanget slutar.",
+            "recommendation": "5 minuter."
+          },
+          "nomad_points": {
+            "description": "Vid denna rapporterade poäng stoppas nya Khananfall, utgående anfall återkallas och huvudportarna öppnas; 0 stänger av stoppet.",
+            "label": "Stoppa vid nomadpoäng",
+            "recommendation": "0 om du inte vill stoppa och skydda vid en vald poäng."
+          },
+          "replenish_tools": {
+            "description": "Ersätt saknade verktyg i försvarsmallen från godkända erbjudanden och avvisa paket som kostar rubiner.",
+            "label": "Fyll på försvarsverktyg",
+            "recommendation": "På om du vill ha godkända automatiska köp."
+          }
+        },
+        "image": {
+          "alt": "Illustration av poäng, verktyg och dagsgräns för Automatiska Khan",
+          "caption": "Ett positivt stopp vid nomadpoäng återkallar även utgående Khananfall och öppnar huvudslottets portar."
+        },
+        "title": "Ställ in poäng-, förråds- och dagsgränser"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "Spara inställningar",
+            "description": "Spara valda slott, mallar, raserikontroller, gränser, tidsförkortarreserver och skydd."
+          },
+          "enable_switch": {
+            "description": "Aktivera Automatiska Khan på kortet Automatisering efter att ha kontrollerat huvudförsvaret.",
+            "label": "Brytare för Automatiska Khan",
+            "recommendation": "På efter att inställningarna sparats och försvaret förberetts."
+          },
+          "station_priority": {
+            "description": "Automatisk stationering hanterar inkommande spelarattacker separat från Khan-motanfall.",
+            "label": "Prioritet för Automatisk stationering"
+          }
+        },
+        "image": {
+          "alt": "Illustration av att spara och aktivera Automatiska Khan",
+          "caption": "Kontrollera huvudslottets försvar innan du aktiverar Khan-motanfall."
+        },
+        "title": "Spara och aktivera Automatiska Khan"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Reseökning med häst",
+            "recommendation": "Resefjäder för snabb resa.",
+            "description": "Välj resa med fjädrar, mynt eller rubiner för lägeranfall."
+          },
+          "open_settings": {
+            "label": "Öppna inställningar",
+            "description": "Välj inställningsknappen på kortet Automatiska Khan på sidan Automatisering."
+          },
+          "attack_from": {
+            "description": "Välj ett huvudslott eller en utpost i Stora riket som tillhandahåller Khanlägeranfallen.",
+            "label": "Anfall från",
+            "recommendation": "Använd en utpost med din anfallsarmé när det är möjligt."
+          },
+          "camp_attack_preset": {
+            "description": "Välj en sparad anfallsmall för vanliga Khanlägeranfall.",
+            "label": "Mall för lägeranfall",
+            "recommendation": "Skapa först din vanliga Khan-anfallsmall."
+          },
+          "defend_at": {
+            "description": "Khan-motanfall försvaras vid huvudslottet i Stora riket som visas här; fältet är skrivskyddat.",
+            "label": "Försvara vid"
+          },
+          "main_defense_preset": {
+            "description": "Välj en sparad försvarsmall som används igen vid huvudslottet före motanfall.",
+            "label": "Mall för huvudförsvar",
+            "recommendation": "Skapa din vanliga Khan-försvarsmall och förbered trupper och verktyg."
+          }
+        },
+        "image": {
+          "alt": "Illustration av slott, mallar och resa i Automatiska Khan",
+          "caption": "Förbered båda mallarna och huvudslottets försvar innan du aktiverar anfallskedjan."
+        },
+        "title": "Välj slott, mallar och resa"
+      },
+      "protection": {
+        "image": {
+          "alt": "Illustration av skydd för huvudslottets mur i Automatiska Khan",
+          "caption": "Murskyddet gäller bara när anfallen utgår från huvudslottet."
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "Utlös skyddet när offensiva enheter på muren når detta antal.",
+            "label": "Gräns för offensiva murenheter",
+            "recommendation": "1 000 offensiva murenheter."
+          },
+          "outpost_source": {
+            "description": "Murskyddet stängs av om en utpost skickar anfallen och huvudslottet försvarar sig separat.",
+            "label": "Utpost som källa"
+          },
+          "protect_offense": {
+            "description": "När du anfaller från huvudslottet öppnas portarna och Khan pausas om för många offensiva trupper skulle försvara muren.",
+            "label": "Skydda offensiva trupper på huvudmuren",
+            "recommendation": "På när huvudslottet skickar anfallen."
+          }
+        },
+        "title": "Skydda huvudslottets mur"
+      },
+      "rage": {
+        "image": {
+          "alt": "Illustration av raseri och anfalletillstånd i Automatiska Khan",
+          "caption": "Den tidsbegränsade förstärkningen för raseripoäng är skild från raserifanor."
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "Stoppa nya lägeranfall medan raseri, väntetider och försvar fortsätter.",
+            "label": "Lås automatiska Khananfall",
+            "recommendation": "Av för vanliga lägeranfall."
+          },
+          "max_rage_chain": {
+            "description": "Begränsa accepterade motanfall under det aktuella evenemanget innan nya lägeranfall stoppas; 0 tar bort gränsen.",
+            "label": "Maximal raserikedja",
+            "recommendation": "0 om du inte behöver en gräns för motanfall."
+          },
+          "rage_booster": {
+            "description": "Tillåt nya automatiska lägeranfall endast när den tidsbegränsade raseripoängförstärkningen är aktiv.",
+            "label": "Kräv raseripoängförstärkning",
+            "recommendation": "Av om du inte vill anfalla endast med förstärkning."
+          },
+          "rage_continues": {
+            "description": "En gräns för raserikedjan stoppar varken utlösning vid fullt raseri, väntetider eller återhämtning av försvaret.",
+            "label": "Raserihantering fortsätter"
+          },
+          "trigger_full_rage": {
+            "description": "Utlös ett Khan-motanfall när raseriet är fullt.",
+            "label": "Utlös Khan vid fullt raseri",
+            "recommendation": "På när huvudslottet är redo att försvara sig."
+          }
+        },
+        "title": "Ställ in raseri och anfalletillstånd"
+      }
+    },
+    "feature": {
+      "description": "Automatiska Khan anfaller Khanlägret, rensar väntetider, utlöser motanfall vid fullt raseri och upprätthåller huvudslottets försvar.",
+      "expectation": "Nya lägeranfall pausas vid valda gränser eller resursbrist samtidigt som huvudslottet skyddas; inkommande spelarattacker hanteras av Automatisk stationering.",
+      "name": "Automatiska Khan",
+      "summary": "Kedja Khanlägeranfall och försvara motanfallen vid huvudslottet"
+    },
+    "recommendationIntro": "Rekommenderade värden beskriver vanlig användning av Automatiska Khan; de är vägledning och ändrar inte sparade inställningar."
   }
 }

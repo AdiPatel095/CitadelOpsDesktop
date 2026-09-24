@@ -31,7 +31,10 @@
     "nomadPreviewTitle": "Auto Nomad/Samurai setup example",
     "advisorGuideTitle": "Auto Advisor guide",
     "advisorGuideIntro": "Follow these steps to set up Auto Advisor; select an example panel to enlarge it.",
-    "advisorPreviewTitle": "Auto Advisor setup example"
+    "advisorPreviewTitle": "Auto Advisor setup example",
+    "khanGuideTitle": "Auto Khan guide",
+    "khanGuideIntro": "Follow these steps to set up Auto Khan; select an example panel to enlarge it.",
+    "khanPreviewTitle": "Auto Khan setup example"
   },
   "autoTower": {
     "recommendationIntro": "These are recommendations for regular use; review them before saving.",
@@ -446,6 +449,48 @@
       "progress": "Current attack / requested attacks",
       "results": "Wins, defeats, units lost and tools lost",
       "refresh": "Refresh overview to read current totals"
+    },
+    "khanSetup": {
+      "title": "Example Khan setup",
+      "source": "Attack from: Great Empire outpost",
+      "defense": "Defend at: Great Empire main castle",
+      "presets": "Saved Khan attack and main-defense presets",
+      "travel": "Travel Feather for fast travel"
+    },
+    "khanRage": {
+      "title": "Example rage controls",
+      "attacks": "Automatic camp attacks: unlocked",
+      "trigger": "Full-rage retaliation: on",
+      "chain": "Max rage chain: 0, no added cap",
+      "booster": "Timed Rage points booster required: off"
+    },
+    "khanLimits": {
+      "title": "Example stopping limits",
+      "points": "Stop at Nomad points: 0, disabled",
+      "tools": "Defense-tool replenishment: on if desired",
+      "daily": "Daily normal attacks: 0, no added limit",
+      "end": "Stop new attacks 5 minutes before event end"
+    },
+    "khanCooldowns": {
+      "title": "Example cooldown reserves",
+      "skip": "Skip every camp cooldown: on",
+      "short": "Keep 1m / 5m / 10m / 30m / 1h: 0 items each",
+      "long": "Reserve 5h / 24h for other jobs",
+      "pause": "Insufficient usable skips pause new attacks"
+    },
+    "khanProtection": {
+      "title": "Example main-wall safeguard",
+      "source": "Applies when attacking from main castle",
+      "gate": "Open main gates and pause Khan at threshold",
+      "threshold": "Offensive wall units: 1,000",
+      "outpost": "Outpost source: safeguard disabled"
+    },
+    "khanSave": {
+      "title": "Example save and enable flow",
+      "save": "Save settings after preparing both presets",
+      "enable": "Enable Auto Khan on Automation card",
+      "defense": "Check main-castle defense before retaliation",
+      "priority": "Auto Station handles player attacks separately"
     }
   },
   "autoStation": {
@@ -1175,6 +1220,214 @@
       "summary": "Start one resource-sized Nomad or Samurai Advisor run",
       "description": "Auto Advisor starts one Nomad or Samurai Advisor attack run sized by available resources and remaining event time.",
       "expectation": "The run waits for active matching difficulty and unlocked Advisor access; saving or enabling does not spend a token, while a confirmed activation may do so."
+    }
+  },
+  "autoKhan": {
+    "feature": {
+      "name": "Auto Khan",
+      "summary": "Chain Khan camp attacks and defend retaliation at your main castle",
+      "description": "Auto Khan attacks the Khan camp, clears cooldowns, triggers full-rage retaliations and maintains the main-castle defense.",
+      "expectation": "It pauses new camp attacks at configured limits or resource shortages while protecting the main castle; incoming player attacks remain Auto Station’s concern."
+    },
+    "recommendationIntro": "Recommended values describe regular Auto Khan use; they are guidance and do not change saved settings.",
+    "steps": {
+      "setup": {
+        "title": "Choose castles, presets and travel",
+        "items": {
+          "open_settings": {
+            "label": "Open settings",
+            "description": "On the Automation page, select the settings button on the Auto Khan card."
+          },
+          "attack_from": {
+            "label": "Attack from",
+            "description": "Choose a Great Empire main castle or outpost that supplies the Khan camp attacks.",
+            "recommendation": "Use an outpost with your attacking army when available."
+          },
+          "defend_at": {
+            "label": "Defend at",
+            "description": "Khan retaliations defend at the Great Empire main castle shown here, which is read-only."
+          },
+          "camp_attack_preset": {
+            "label": "Camp attack preset",
+            "description": "Choose a saved Attack Preset for regular Khan camp attacks.",
+            "recommendation": "Create your regular Khan attack preset first."
+          },
+          "main_defense_preset": {
+            "label": "Main defense preset",
+            "description": "Choose a saved Defense Preset reapplied at the main castle before retaliations.",
+            "recommendation": "Create your regular Khan defense preset and prepare its troops and tools."
+          },
+          "horse_travel_boost": {
+            "label": "Horse travel boost",
+            "description": "Choose feather, coin or ruby travel for camp attacks.",
+            "recommendation": "Travel Feather for fast travel."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Khan castle, preset and travel settings",
+          "caption": "Prepare both presets and main-castle defense before enabling the attack chain."
+        }
+      },
+      "rage": {
+        "title": "Set rage and attack permissions",
+        "items": {
+          "lock_automatic_attacks": {
+            "label": "Lock automatic Khan attacks",
+            "description": "Stop new camp attacks while rage handling, cooldown work and defense continue.",
+            "recommendation": "Off for regular camp attacks."
+          },
+          "trigger_full_rage": {
+            "label": "Trigger Khan at full rage",
+            "description": "Provoke a Khan retaliation when rage is full.",
+            "recommendation": "On when the main castle is ready to defend."
+          },
+          "max_rage_chain": {
+            "label": "Max rage chain",
+            "description": "Limit accepted retaliations in the current event before new camp attacks stop; 0 removes this limit.",
+            "recommendation": "0 unless you need a retaliation cap."
+          },
+          "rage_booster": {
+            "label": "Require Rage points booster",
+            "description": "Allow new automatic camp attacks only while the timed Rage points booster is active.",
+            "recommendation": "Off unless you want booster-only attacks."
+          },
+          "rage_continues": {
+            "label": "Rage work continues",
+            "description": "A rage-chain cap does not stop full-rage triggering, cooldown work or defense recovery."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Khan rage and attack-permission settings",
+          "caption": "The timed Rage points booster is separate from rage banners."
+        }
+      },
+      "limits": {
+        "title": "Set score, supply and daily limits",
+        "items": {
+          "nomad_points": {
+            "label": "Stop at Nomad points",
+            "description": "At this reported score, stop new Khan attacks, recall outgoing Khan attacks and open the main gates; 0 disables this stop.",
+            "recommendation": "0 unless you want to stop and protect at a chosen score."
+          },
+          "replenish_tools": {
+            "label": "Replenish defense tools",
+            "description": "Replace Defense Preset shortages from eligible offers while rejecting ruby-priced packages.",
+            "recommendation": "On if you want eligible automatic purchases."
+          },
+          "daily_limit": {
+            "label": "Daily normal-attack limit",
+            "description": "Stop this automation’s new camp attacks at the account-wide daily normal-attack count; 0 disables this limit.",
+            "recommendation": "0 unless you need an account-wide limit."
+          },
+          "event_end": {
+            "label": "Stop before event end",
+            "description": "Stop new camp attacks this many minutes before the event ends.",
+            "recommendation": "5 minutes."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Khan score, tool and daily-limit settings",
+          "caption": "A positive Nomad-point stop also recalls outgoing Khan attacks and opens main gates."
+        }
+      },
+      "cooldowns": {
+        "title": "Set cooldown skipping and reserves",
+        "items": {
+          "skip_cooldowns": {
+            "label": "Skip every Khan camp cooldown",
+            "description": "Reserve and use enough time-skip items to clear camp cooldowns after attacks.",
+            "recommendation": "On; the current settings dialog requires this to save."
+          },
+          "keep_1m": {
+            "label": "Keep 1m",
+            "description": "Keep this many 1m time-skip items untouched.",
+            "recommendation": "0 for regular Khan chains."
+          },
+          "keep_5m": {
+            "label": "Keep 5m",
+            "description": "Keep this many 5m time-skip items untouched.",
+            "recommendation": "0 for regular Khan chains."
+          },
+          "keep_10m": {
+            "label": "Keep 10m",
+            "description": "Keep this many 10m time-skip items untouched.",
+            "recommendation": "0 for regular Khan chains."
+          },
+          "keep_30m": {
+            "label": "Keep 30m",
+            "description": "Keep this many 30m time-skip items untouched.",
+            "recommendation": "0 for regular Khan chains."
+          },
+          "keep_1h": {
+            "label": "Keep 1h",
+            "description": "Keep this many 1h time-skip items untouched.",
+            "recommendation": "0 for regular Khan chains."
+          },
+          "keep_5h": {
+            "label": "Keep 5h",
+            "description": "Keep this many 5h time-skip items untouched.",
+            "recommendation": "Reserve the stock you need for building or other activities."
+          },
+          "keep_24h": {
+            "label": "Keep 24h",
+            "description": "Keep this many 24h time-skip items untouched.",
+            "recommendation": "Reserve the stock you need for building or other activities."
+          },
+          "skip_shortage": {
+            "label": "Insufficient usable skips",
+            "description": "New camp attacks pause when available time-skip items cannot clear the required cooldown."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Khan cooldown skipping and time-skip reserves",
+          "caption": "Reserve counts are numbers of items, not minutes of time."
+        }
+      },
+      "protection": {
+        "title": "Protect the main-castle wall",
+        "items": {
+          "protect_offense": {
+            "label": "Protect offense on the main-castle wall",
+            "description": "When attacking from the main castle, open its gates and pause Khan if too many offensive troops would defend the wall.",
+            "recommendation": "On when the main castle supplies attacks."
+          },
+          "offensive_threshold": {
+            "label": "Offensive wall-unit threshold",
+            "description": "Trigger that main-castle protection when offensive wall units reach this count.",
+            "recommendation": "1,000 offensive wall units."
+          },
+          "outpost_source": {
+            "label": "Outpost source",
+            "description": "This wall safeguard is disabled when an outpost supplies attacks and the main castle defends separately."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Khan main-castle wall protection",
+          "caption": "The wall safeguard applies only when the main castle is the attack source."
+        }
+      },
+      "save": {
+        "title": "Save and enable Auto Khan",
+        "items": {
+          "save_settings": {
+            "label": "Save settings",
+            "description": "Save the selected castles, presets, rage controls, limits, cooldown reserves and protection settings."
+          },
+          "enable_switch": {
+            "label": "Auto Khan switch",
+            "description": "Enable Auto Khan from its Automation card after checking the main-castle defense.",
+            "recommendation": "On after saving and preparing the defense."
+          },
+          "station_priority": {
+            "label": "Auto Station priority",
+            "description": "Auto Station handles incoming player attacks separately from Khan retaliations."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Khan save and enable flow",
+          "caption": "Check the main-castle defense before enabling Khan retaliations."
+        }
+      }
     }
   }
 }

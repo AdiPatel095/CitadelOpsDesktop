@@ -31,7 +31,10 @@
     "nomadPreviewTitle": "자동 유목민/사무라이 설정 예시",
     "advisorGuideIntro": "자동 고문을 설정하려면 다음 단계를 따르고 예시 패널을 선택하면 확대할 수 있습니다.",
     "advisorGuideTitle": "자동 고문 안내",
-    "advisorPreviewTitle": "자동 고문 설정 예시"
+    "advisorPreviewTitle": "자동 고문 설정 예시",
+    "khanGuideIntro": "이 단계에 따라 자동 칸을 설정하세요. 예시 패널을 선택하면 확대할 수 있습니다.",
+    "khanGuideTitle": "자동 칸 가이드",
+    "khanPreviewTitle": "자동 칸 설정 예시"
   },
   "autoTower": {
     "recommendationIntro": "일반적인 사용을 위한 권장값입니다. 저장하기 전에 검토하세요.",
@@ -446,6 +449,48 @@
       "maximum": "최대 공격 수: 9,999",
       "time": "사용하지 않을 이벤트 시간: 30분",
       "title": "공격 규모 예시"
+    },
+    "khanCooldowns": {
+      "long": "5시간 및 24시간 단축은 다른 작업을 위해 남겨 두기",
+      "pause": "사용 가능한 단축 아이템이 부족하면 새 공격 일시 중지",
+      "short": "1분/5분/10분/30분/1시간 보유: 각각 0개",
+      "skip": "야영지 대기 시간을 매번 건너뛰기: 켜기",
+      "title": "시간 단축 보유량 예시"
+    },
+    "khanLimits": {
+      "daily": "일일 일반 공격: 0, 추가 한도 없음",
+      "end": "이벤트 종료 5분 전 새 공격 중단",
+      "points": "유목민 점수에서 중단: 0, 비활성화",
+      "title": "중지 한도 예시",
+      "tools": "방어 도구 보충: 필요하면 켜기"
+    },
+    "khanProtection": {
+      "gate": "기준에 도달하면 본성 성문을 열고 칸 일시 중지",
+      "outpost": "출발지 전초기지: 보호 비활성화",
+      "source": "본성에서 공격할 때 적용",
+      "threshold": "성벽 공격 병력: 1,000명",
+      "title": "본성 성벽 보호 예시"
+    },
+    "khanRage": {
+      "attacks": "자동 야영지 공격: 잠금 해제",
+      "booster": "시간제 분노 점수 강화 효과 필수: 끄기",
+      "chain": "최대 분노 연쇄: 0, 추가 한도 없음",
+      "title": "분노 제어 예시",
+      "trigger": "분노가 가득 찼을 때 보복: 켜기"
+    },
+    "khanSave": {
+      "defense": "보복 전에 본성 방어 확인",
+      "enable": "자동화 카드에서 자동 칸 활성화",
+      "priority": "자동 대피는 플레이어 공격을 별도로 처리",
+      "save": "두 프리셋을 준비한 뒤 설정 저장",
+      "title": "저장 및 활성화 예시"
+    },
+    "khanSetup": {
+      "defense": "방어 위치: 대제국 본성",
+      "presets": "저장된 칸 공격과 본성 방어 프리셋",
+      "source": "공격 출발지: 대제국 전초기지",
+      "title": "칸 설정 예시",
+      "travel": "빠른 이동을 위한 이동 깃털"
     }
   },
   "autoStation": {
@@ -1176,5 +1221,213 @@
       "summary": "자원에 맞는 유목민 또는 사무라이 고문 공격을 한 차례 시작"
     },
     "recommendationIntro": "추천 값은 자동 고문의 일반적인 사용을 위한 안내이며 저장된 설정을 변경하지 않습니다."
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "10분 보유",
+            "description": "10분 시간 단축 아이템을 이 개수만큼 사용하지 않고 남겨 둡니다.",
+            "recommendation": "일반적인 칸 연속 공격에는 0개."
+          },
+          "keep_1m": {
+            "label": "1분 보유",
+            "description": "1분 시간 단축 아이템을 이 개수만큼 사용하지 않고 남겨 둡니다.",
+            "recommendation": "일반적인 칸 연속 공격에는 0개."
+          },
+          "keep_24h": {
+            "label": "24시간 보유",
+            "recommendation": "건설이나 다른 활동에 필요한 재고를 남겨 두세요.",
+            "description": "24시간 시간 단축 아이템을 이 개수만큼 사용하지 않고 남겨 둡니다."
+          },
+          "keep_30m": {
+            "label": "30분 보유",
+            "description": "30분 시간 단축 아이템을 이 개수만큼 사용하지 않고 남겨 둡니다.",
+            "recommendation": "일반적인 칸 연속 공격에는 0개."
+          },
+          "keep_5h": {
+            "label": "5시간 보유",
+            "recommendation": "건설이나 다른 활동에 필요한 재고를 남겨 두세요.",
+            "description": "5시간 시간 단축 아이템을 이 개수만큼 사용하지 않고 남겨 둡니다."
+          },
+          "keep_5m": {
+            "label": "5분 보유",
+            "description": "5분 시간 단축 아이템을 이 개수만큼 사용하지 않고 남겨 둡니다.",
+            "recommendation": "일반적인 칸 연속 공격에는 0개."
+          },
+          "keep_1h": {
+            "description": "1시간 시간 단축 아이템을 이 개수만큼 사용하지 않고 남겨 둡니다.",
+            "label": "1시간 보유",
+            "recommendation": "일반적인 칸 연속 공격에는 0개."
+          },
+          "skip_cooldowns": {
+            "description": "공격 후 야영지 대기 시간을 해제할 만큼의 시간 단축 아이템을 확보하고 사용합니다.",
+            "label": "칸 야영지의 대기 시간을 매번 건너뛰기",
+            "recommendation": "켜기. 현재 설정 대화상자는 저장할 때 이 옵션을 요구합니다."
+          },
+          "skip_shortage": {
+            "description": "사용 가능한 시간 단축 아이템으로 필요한 대기 시간을 해제할 수 없으면 새로운 야영지 공격을 일시 중지합니다.",
+            "label": "사용 가능한 단축 아이템 부족"
+          }
+        },
+        "image": {
+          "alt": "자동 칸의 대기 시간 건너뛰기와 시간 단축 아이템 보유량을 보여 주는 예시",
+          "caption": "보유량은 시간이 아니라 아이템 개수입니다."
+        },
+        "title": "대기 시간 건너뛰기와 보유량 설정"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "일반 공격 일일 한도",
+            "description": "계정 전체의 일일 일반 공격 횟수에 도달하면 이 자동화의 새로운 야영지 공격을 중단합니다. 0은 이 한도를 해제합니다.",
+            "recommendation": "계정 전체 한도가 필요하지 않으면 0."
+          },
+          "event_end": {
+            "label": "이벤트 종료 전 중단",
+            "description": "이벤트 종료 전 지정한 분 수만큼 일찍 새로운 야영지 공격을 중단합니다.",
+            "recommendation": "5분."
+          },
+          "nomad_points": {
+            "description": "보고된 점수가 이 값에 도달하면 새로운 칸 공격을 중단하고 출발한 공격을 회수하며 본성 성문을 엽니다. 0은 이 중지를 해제합니다.",
+            "label": "유목민 점수에서 중단",
+            "recommendation": "선택한 점수에서 멈춰 보호할 필요가 없으면 0."
+          },
+          "replenish_tools": {
+            "description": "루비 가격의 묶음을 제외하고 적합한 제안에서 방어 프리셋에 부족한 도구를 보충합니다.",
+            "label": "방어 도구 보충",
+            "recommendation": "적합한 자동 구매를 원하면 켜기."
+          }
+        },
+        "image": {
+          "alt": "자동 칸 점수, 도구, 일일 한도의 예시 화면",
+          "caption": "유목민 점수 중지 값이 양수이면 출발한 칸 공격도 회수하고 본성 성문을 엽니다."
+        },
+        "title": "점수, 보급, 일일 한도 설정"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "설정 저장",
+            "description": "선택한 성, 프리셋, 분노 제어, 한도, 시간 단축 보유량, 보호 설정을 저장합니다."
+          },
+          "enable_switch": {
+            "description": "본성 방어를 확인한 뒤 자동화 카드에서 자동 칸을 활성화합니다.",
+            "label": "자동 칸 스위치",
+            "recommendation": "저장하고 방어를 준비한 뒤 켜기."
+          },
+          "station_priority": {
+            "description": "자동 대피는 플레이어의 공격을 칸의 보복과 별도로 처리합니다.",
+            "label": "자동 대피 우선순위"
+          }
+        },
+        "image": {
+          "alt": "자동 칸 저장과 활성화의 예시 화면",
+          "caption": "칸의 보복을 활성화하기 전에 본성의 방어를 확인합니다."
+        },
+        "title": "자동 칸 저장 및 활성화"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "말 이동 가속",
+            "recommendation": "빠른 이동에는 여행 깃털.",
+            "description": "야영지 공격의 이동 수단으로 깃털, 동전 또는 루비를 선택합니다."
+          },
+          "open_settings": {
+            "label": "설정 열기",
+            "description": "자동화 페이지에서 자동 칸 카드의 설정 버튼을 선택합니다."
+          },
+          "attack_from": {
+            "description": "칸 야영지 공격에 병력을 보낼 대제국 본성 또는 전초기지를 선택합니다.",
+            "label": "공격 출발지",
+            "recommendation": "가능하다면 공격 병력이 있는 전초기지를 사용합니다."
+          },
+          "camp_attack_preset": {
+            "description": "일반적인 칸 야영지 공격에 사용할 저장된 공격 프리셋을 선택합니다.",
+            "label": "야영지 공격 프리셋",
+            "recommendation": "먼저 일반적인 칸 공격 프리셋을 만듭니다."
+          },
+          "defend_at": {
+            "description": "칸의 보복은 여기 표시된 대제국 본성에서 방어합니다. 이 필드는 읽기 전용입니다.",
+            "label": "방어 위치"
+          },
+          "main_defense_preset": {
+            "description": "보복 전에 본성에 다시 적용할 저장된 방어 프리셋을 선택합니다.",
+            "label": "본성 방어 프리셋",
+            "recommendation": "일반적인 칸 방어 프리셋을 만들고 병력과 도구를 준비합니다."
+          }
+        },
+        "image": {
+          "alt": "자동 칸 성, 프리셋, 이동 설정의 예시 화면",
+          "caption": "연속 공격을 활성화하기 전에 두 프리셋과 본성 방어를 준비합니다."
+        },
+        "title": "성, 프리셋, 이동 방법 선택"
+      },
+      "protection": {
+        "image": {
+          "alt": "자동 칸 본성 성벽 보호의 예시 화면",
+          "caption": "성벽 보호는 공격 출발지가 본성일 때만 적용됩니다."
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "성벽의 공격 병력이 이 수에 도달하면 본성 보호를 작동합니다.",
+            "label": "성벽 공격 병력 기준",
+            "recommendation": "성벽의 공격 병력 1,000명."
+          },
+          "outpost_source": {
+            "description": "전초기지에서 공격하고 본성에서 별도로 방어하면 이 성벽 보호는 비활성화됩니다.",
+            "label": "출발지 전초기지"
+          },
+          "protect_offense": {
+            "description": "본성에서 공격할 때 공격 병력이 너무 많이 성벽에서 방어하게 되면 성문을 열고 칸을 일시 중지합니다.",
+            "label": "본성 성벽의 공격 병력 보호",
+            "recommendation": "본성에서 공격한다면 켜기."
+          }
+        },
+        "title": "본성 성벽 보호"
+      },
+      "rage": {
+        "image": {
+          "alt": "자동 칸 분노와 공격 허가의 예시 화면",
+          "caption": "시간제 분노 점수 강화 효과와 분노 깃발은 서로 다릅니다."
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "분노 처리, 대기 시간 해제, 방어를 계속하면서 새로운 야영지 공격을 중단합니다.",
+            "label": "자동 칸 공격 잠그기",
+            "recommendation": "일반적인 야영지 공격에는 끄기."
+          },
+          "max_rage_chain": {
+            "description": "현재 이벤트에서 수락할 보복 횟수를 제한하며, 한도에 도달하면 새로운 야영지 공격이 멈춥니다. 0은 한도를 없앱니다.",
+            "label": "최대 분노 연쇄",
+            "recommendation": "보복 한도가 필요하지 않으면 0."
+          },
+          "rage_booster": {
+            "description": "시간제 분노 점수 강화 효과가 활성화된 동안에만 새로운 자동 야영지 공격을 허용합니다.",
+            "label": "분노 점수 강화 효과 필수",
+            "recommendation": "강화 효과 중에만 공격할 필요가 없다면 끄기."
+          },
+          "rage_continues": {
+            "description": "분노 연쇄 한도는 분노가 가득 찼을 때의 보복 유도, 대기 시간 처리, 방어 복구를 중단하지 않습니다.",
+            "label": "분노 처리 계속"
+          },
+          "trigger_full_rage": {
+            "description": "분노가 가득 차면 칸의 보복을 유도합니다.",
+            "label": "분노가 가득 찰 때 칸 유도",
+            "recommendation": "본성의 방어 준비가 끝났다면 켜기."
+          }
+        },
+        "title": "분노와 공격 허가 설정"
+      }
+    },
+    "feature": {
+      "description": "자동 칸은 칸 야영지를 공격하고 대기 시간을 해제하며 분노가 가득 차면 보복을 유도하고 본성 방어를 유지합니다.",
+      "expectation": "설정된 한도에 도달하거나 자원이 부족하면 새로운 야영지 공격을 중단하고 본성을 보호합니다. 들어오는 플레이어 공격은 자동 대피가 처리합니다.",
+      "name": "자동 칸",
+      "summary": "칸 야영지를 연속 공격하고 본성에서 보복을 방어"
+    },
+    "recommendationIntro": "권장 값은 자동 칸의 일반적인 사용을 위한 안내이며 저장된 설정을 바꾸지 않습니다."
   }
 }

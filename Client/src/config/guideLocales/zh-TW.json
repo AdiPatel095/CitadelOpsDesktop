@@ -31,7 +31,10 @@
     "nomadPreviewTitle": "自動遊牧武士設定範例",
     "advisorGuideIntro": "依照以下步驟設定自動顧問；選擇範例面板即可放大。",
     "advisorGuideTitle": "自動顧問指南",
-    "advisorPreviewTitle": "自動顧問設定範例"
+    "advisorPreviewTitle": "自動顧問設定範例",
+    "khanGuideIntro": "依照以下步驟設定自動可汗；選擇範例面板可放大檢視。",
+    "khanGuideTitle": "自動可汗指南",
+    "khanPreviewTitle": "自動可汗設定範例"
   },
   "autoTower": {
     "recommendationIntro": "以下是日常使用的建議；儲存前請先檢查。",
@@ -446,6 +449,48 @@
       "maximum": "最大攻擊數：9,999",
       "time": "未使用的活動時間：30分鐘",
       "title": "攻擊規模範例"
+    },
+    "khanCooldowns": {
+      "long": "為其他任務保留5小時／24小時加速道具",
+      "pause": "可用加速道具不足會暫停新攻擊",
+      "short": "保留1分／5分／10分／30分／1小時：每種0件",
+      "skip": "略過每次營地冷卻：開啟",
+      "title": "加速道具保留量範例"
+    },
+    "khanLimits": {
+      "daily": "每日普通攻擊：0，無額外限制",
+      "end": "活動結束前5分鐘停止新攻擊",
+      "points": "達到遊牧者積分時停止：0，關閉",
+      "title": "停止限制範例",
+      "tools": "防禦工具補充：視需要開啟"
+    },
+    "khanProtection": {
+      "gate": "達到門檻時開啟主城城門並暫停可汗",
+      "outpost": "出兵點為前哨站：保護停用",
+      "source": "從主城出兵時適用",
+      "threshold": "城牆進攻兵力：1,000",
+      "title": "主城城牆保護範例"
+    },
+    "khanRage": {
+      "attacks": "自動營地攻擊：未鎖定",
+      "booster": "要求限時怒氣積分增益：關閉",
+      "chain": "最大怒氣連擊數：0，無額外上限",
+      "title": "怒氣控制範例",
+      "trigger": "滿怒反擊：開啟"
+    },
+    "khanSave": {
+      "defense": "反擊前檢查主城防禦",
+      "enable": "在自動化卡片上啟用自動可汗",
+      "priority": "自動避兵另外處理玩家攻擊",
+      "save": "準備好兩套預設後儲存設定",
+      "title": "儲存與啟用流程範例"
+    },
+    "khanSetup": {
+      "defense": "防守地點：大帝國主城",
+      "presets": "已儲存的可汗攻擊與主城防禦預設",
+      "source": "出兵點：大帝國前哨站",
+      "title": "可汗設定範例",
+      "travel": "使用行軍羽毛加快行軍"
     }
   },
   "autoStation": {
@@ -1176,5 +1221,213 @@
       "summary": "依資源規模啟動一輪遊牧或武士顧問攻擊"
     },
     "recommendationIntro": "建議數值適用於自動顧問的日常使用，僅供參考，不會變更已儲存的設定。"
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "保留10分鐘",
+            "description": "保留這麼多件10分鐘加速道具不使用。",
+            "recommendation": "日常可汗連擊建議設為0。"
+          },
+          "keep_1m": {
+            "label": "保留1分鐘",
+            "description": "保留這麼多件1分鐘加速道具不使用。",
+            "recommendation": "日常可汗連擊建議設為0。"
+          },
+          "keep_24h": {
+            "label": "保留24小時",
+            "recommendation": "保留建造或其他活動需要的庫存。",
+            "description": "保留這麼多件24小時加速道具不使用。"
+          },
+          "keep_30m": {
+            "label": "保留30分鐘",
+            "description": "保留這麼多件30分鐘加速道具不使用。",
+            "recommendation": "日常可汗連擊建議設為0。"
+          },
+          "keep_5h": {
+            "label": "保留5小時",
+            "recommendation": "保留建造或其他活動需要的庫存。",
+            "description": "保留這麼多件5小時加速道具不使用。"
+          },
+          "keep_5m": {
+            "label": "保留5分鐘",
+            "description": "保留這麼多件5分鐘加速道具不使用。",
+            "recommendation": "日常可汗連擊建議設為0。"
+          },
+          "keep_1h": {
+            "description": "保留這麼多件1小時加速道具不使用。",
+            "label": "保留1小時道具",
+            "recommendation": "日常可汗連擊建議設為0。"
+          },
+          "skip_cooldowns": {
+            "description": "保留並使用足夠的加速道具，在攻擊後清除營地冷卻。",
+            "label": "略過每次可汗營地冷卻",
+            "recommendation": "開啟；目前的設定視窗要求啟用此項才能儲存。"
+          },
+          "skip_shortage": {
+            "description": "可用加速道具不足以清除所需冷卻時，會暫停新的營地攻擊。",
+            "label": "可用加速道具不足"
+          }
+        },
+        "image": {
+          "alt": "自動可汗冷卻略過與加速道具保留量示意",
+          "caption": "保留量是道具件數，不是時間分鐘數。"
+        },
+        "title": "設定冷卻略過與保留量"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "每日一般攻擊上限",
+            "description": "帳號範圍內的每日普通攻擊次數達到此值時，停止本自動化發動新的營地攻擊；0代表停用此上限。",
+            "recommendation": "不需要帳號範圍上限時設為0。"
+          },
+          "event_end": {
+            "label": "活動結束前停止",
+            "description": "在活動結束前這麼多分鐘停止新的營地攻擊。",
+            "recommendation": "5分鐘。"
+          },
+          "nomad_points": {
+            "description": "當已回報積分達到此值時，停止新的可汗攻擊、召回出發中的攻擊並開啟主城城門；0代表停用此停止條件。",
+            "label": "達到遊牧者積分時停止",
+            "recommendation": "除非想在指定積分停止並啟動保護，否則設為0。"
+          },
+          "replenish_tools": {
+            "description": "從符合條件的商品補充防禦預設短缺的工具，同時排除紅寶石定價的套組。",
+            "label": "補充防禦工具",
+            "recommendation": "希望進行符合條件的自動購買時開啟。"
+          }
+        },
+        "image": {
+          "alt": "自動可汗積分、工具與每日上限示意",
+          "caption": "遊牧者積分停止值大於0時，也會召回出發中的可汗攻擊並開啟主城城門。"
+        },
+        "title": "設定積分、補給和每日限制"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "儲存設定",
+            "description": "儲存所選城堡、預設、怒氣控制、限制、加速道具保留量和保護設定。"
+          },
+          "enable_switch": {
+            "description": "檢查主城防禦後，在自動化卡片上啟用自動可汗。",
+            "label": "自動可汗開關",
+            "recommendation": "儲存並準備好防禦後開啟。"
+          },
+          "station_priority": {
+            "description": "自動避兵獨立處理來襲的玩家攻擊，不與可汗反擊混用。",
+            "label": "自動避兵優先處理"
+          }
+        },
+        "image": {
+          "alt": "自動可汗儲存與啟用流程示意",
+          "caption": "啟用可汗反擊前，先檢查主城防禦。"
+        },
+        "title": "儲存並啟用自動可汗"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "騎乘行軍加速",
+            "recommendation": "快速行軍建議旅行羽毛。",
+            "description": "為營地攻擊選擇羽毛、金幣或紅寶石行軍加速。"
+          },
+          "open_settings": {
+            "label": "開啟設定",
+            "description": "在自動化頁面，選擇自動可汗卡片上的設定按鈕。"
+          },
+          "attack_from": {
+            "description": "選擇大帝國的主城或前哨站，作為可汗營地攻擊的出兵點。",
+            "label": "從何處出兵",
+            "recommendation": "有進攻軍隊時，優先使用所在前哨站。"
+          },
+          "camp_attack_preset": {
+            "description": "選擇已儲存的攻擊預設，用於日常可汗營地攻擊。",
+            "label": "營地攻擊預設",
+            "recommendation": "先建立日常可汗攻擊預設。"
+          },
+          "defend_at": {
+            "description": "可汗反擊在此處顯示的大帝國主城防禦；此欄位為唯讀。",
+            "label": "防守地點"
+          },
+          "main_defense_preset": {
+            "description": "選擇已儲存的防禦預設，在反擊前重新套用到主城。",
+            "label": "主城防禦預設",
+            "recommendation": "建立日常可汗防禦預設，並準備相應兵力與工具。"
+          }
+        },
+        "image": {
+          "alt": "自動可汗城堡、預設和行軍設定示意",
+          "caption": "啟用連續攻擊前，準備好兩套預設與主城防禦。"
+        },
+        "title": "選擇城堡、預設和行軍方式"
+      },
+      "protection": {
+        "image": {
+          "alt": "自動可汗主城城牆保護示意",
+          "caption": "僅從主城出兵攻擊時，城牆保護才適用。"
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "城牆上的進攻兵種達到此數量時，觸發主城保護。",
+            "label": "城牆進攻兵力門檻",
+            "recommendation": "城牆上的進攻兵力1,000。"
+          },
+          "outpost_source": {
+            "description": "從前哨站出兵且主城另外防禦時，此城牆保護會停用。",
+            "label": "出兵點為前哨站"
+          },
+          "protect_offense": {
+            "description": "從主城出兵時，如果過多進攻兵力將被用於守牆，就開啟城門並暫停可汗。",
+            "label": "保護主城城牆上的進攻兵力",
+            "recommendation": "從主城出兵時開啟。"
+          }
+        },
+        "title": "保護主城城牆"
+      },
+      "rage": {
+        "image": {
+          "alt": "自動可汗怒氣與攻擊許可示意",
+          "caption": "限時怒氣積分增益與怒氣旗幟是不同效果。"
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "停止新的營地攻擊，同時繼續處理怒氣、冷卻與防禦。",
+            "label": "鎖定自動可汗攻擊",
+            "recommendation": "日常營地攻擊建議關閉。"
+          },
+          "max_rage_chain": {
+            "description": "限制目前活動可接受的反擊次數，達到上限後停止新的營地攻擊；0代表取消上限。",
+            "label": "最大怒氣連擊數",
+            "recommendation": "不需要反擊次數上限時設為0。"
+          },
+          "rage_booster": {
+            "description": "只有限時怒氣積分增益生效時，才允許新的自動營地攻擊。",
+            "label": "要求怒氣積分增益",
+            "recommendation": "除非只想在增益期間攻擊，否則關閉。"
+          },
+          "rage_continues": {
+            "description": "怒氣連擊上限不會停止滿怒反擊觸發、冷卻處理或防禦恢復。",
+            "label": "怒氣處理繼續"
+          },
+          "trigger_full_rage": {
+            "description": "怒氣全滿時觸發可汗反擊。",
+            "label": "滿怒時觸發可汗",
+            "recommendation": "主城已準備好防禦時開啟。"
+          }
+        },
+        "title": "設定怒氣和攻擊許可"
+      }
+    },
+    "feature": {
+      "description": "自動可汗會攻擊可汗營地、清除冷卻、在怒氣全滿時觸發反擊，並維持主城防禦。",
+      "expectation": "達到設定限制或資源不足時會暫停新的營地攻擊並保護主城；來襲的玩家攻擊由自動避兵處理。",
+      "name": "自動可汗",
+      "summary": "連續攻擊可汗營地，並在主城抵禦反擊"
+    },
+    "recommendationIntro": "建議值適用於自動可汗的日常使用，僅供參考，不會變更已儲存的設定。"
   }
 }

@@ -31,7 +31,10 @@
     "nomadPreviewTitle": "Ukážka nastavenia Automatických Nomádov/Samurajov",
     "advisorGuideIntro": "Pomocou týchto krokov nastavte Automatického poradcu; výberom ukážkového panelu ho zväčšíte.",
     "advisorGuideTitle": "Sprievodca Automatickým poradcom",
-    "advisorPreviewTitle": "Príklad nastavenia Automatického poradcu"
+    "advisorPreviewTitle": "Príklad nastavenia Automatického poradcu",
+    "khanGuideIntro": "Podľa týchto krokov nastavte Automatického chána; výberom ukážkového panelu ho zväčšíte.",
+    "khanGuideTitle": "Sprievodca Automatickým chánom",
+    "khanPreviewTitle": "Príklad nastavenia Automatického chána"
   },
   "autoTower": {
     "recommendationIntro": "Toto sú odporúčania na bežné používanie; pred uložením ich skontrolujte.",
@@ -446,6 +449,48 @@
       "maximum": "Maximum útokov: 9 999",
       "time": "Nevyužitý čas udalosti: 30 minút",
       "title": "Príklad veľkosti série"
+    },
+    "khanCooldowns": {
+      "long": "Ponechajte 5-hodinové a 24-hodinové preskočenia na iné úlohy",
+      "pause": "Nové útoky sa pozastavia pri nedostatku použiteľných preskočení",
+      "short": "Ponechať 1 min / 5 min / 10 min / 30 min / 1 h: z každého 0 kusov",
+      "skip": "Preskočiť každé čakanie tábora: zapnuté",
+      "title": "Príklad rezerv časových preskočení"
+    },
+    "khanLimits": {
+      "daily": "Bežné útoky za deň: 0, bez dodatočnej hranice",
+      "end": "Zastaviť nové útoky 5 minút pred koncom",
+      "points": "Zastaviť pri nomádskych bodoch: 0, vypnuté",
+      "title": "Príklad hraníc zastavenia",
+      "tools": "Dopĺňať obranné nástroje: zapnuté podľa priania"
+    },
+    "khanProtection": {
+      "gate": "Otvoriť hlavné brány a pozastaviť chána pri dosiahnutí hranice",
+      "outpost": "Základňa ako zdroj: ochrana vypnutá",
+      "source": "Platí pre útoky z hlavného hradu",
+      "threshold": "Útočné jednotky na múre: 1 000",
+      "title": "Príklad ochrany hlavného múru"
+    },
+    "khanRage": {
+      "attacks": "Automatické útoky na tábor: odomknuté",
+      "booster": "Požadované časové posilnenie bodov hnevu: vypnuté",
+      "chain": "Maximálny reťazec hnevu: 0, bez dodatočnej hranice",
+      "title": "Príklad ovládania hnevu",
+      "trigger": "Odveta pri plnom hneve: zapnutá"
+    },
+    "khanSave": {
+      "defense": "Pred odvetou skontrolovať hlavnú obranu",
+      "enable": "Zapnúť Automatického chána na karte Automatizácia",
+      "priority": "Automatické stacionovanie rieši hráčske útoky zvlášť",
+      "save": "Po príprave oboch predvolieb uložiť nastavenia",
+      "title": "Príklad uloženia a zapnutia"
+    },
+    "khanSetup": {
+      "defense": "Obrana v: hlavný hrad vo Veľkej ríši",
+      "presets": "Uložené predvoľby chánskeho útoku a hlavnej obrany",
+      "source": "Útok z: základňa vo Veľkej ríši",
+      "title": "Príklad nastavenia chána",
+      "travel": "Cestovné pierko na rýchlu cestu"
     }
   },
   "autoStation": {
@@ -1176,5 +1221,213 @@
       "summary": "Spustite jednu sériu poradcu Nomádov alebo Samurajov podľa dostupných zdrojov"
     },
     "recommendationIntro": "Odporúčané hodnoty opisujú bežné používanie Automatického poradcu; sú len usmernením a nemenia uložené nastavenia."
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "Ponechať 10 min",
+            "description": "Nechajte toľko 10-minútových preskočení nepoužitých.",
+            "recommendation": "0 pre bežné chánske reťazce."
+          },
+          "keep_1m": {
+            "label": "Ponechať 1 min",
+            "description": "Nechajte toľko 1-minútových preskočení nepoužitých.",
+            "recommendation": "0 pre bežné chánske reťazce."
+          },
+          "keep_24h": {
+            "label": "Ponechať 24 h",
+            "recommendation": "Odložte zásobu potrebnú na stavby alebo iné činnosti.",
+            "description": "Nechajte toľko 24-hodinových preskočení nepoužitých."
+          },
+          "keep_30m": {
+            "label": "Ponechať 30 min",
+            "description": "Nechajte toľko 30-minútových preskočení nepoužitých.",
+            "recommendation": "0 pre bežné chánske reťazce."
+          },
+          "keep_5h": {
+            "label": "Ponechať 5 h",
+            "recommendation": "Odložte zásobu potrebnú na stavby alebo iné činnosti.",
+            "description": "Nechajte toľko 5-hodinových preskočení nepoužitých."
+          },
+          "keep_5m": {
+            "label": "Ponechať 5 min",
+            "description": "Nechajte toľko 5-minútových preskočení nepoužitých.",
+            "recommendation": "0 pre bežné chánske reťazce."
+          },
+          "keep_1h": {
+            "description": "Nechajte toľko 1-hodinových preskočení nepoužitých.",
+            "label": "Ponechať 1 h",
+            "recommendation": "0 pre bežné chánske reťazce."
+          },
+          "skip_cooldowns": {
+            "description": "Rezervujte a použite dosť preskočení na odstránenie čakania tábora po útokoch.",
+            "label": "Preskočiť každé čakanie chánskeho tábora",
+            "recommendation": "Zapnuté; aktuálne okno nastavení to vyžaduje na uloženie."
+          },
+          "skip_shortage": {
+            "description": "Nové útoky na tábor sa pozastavia, ak použiteľné preskočenia nepokryjú potrebné čakanie.",
+            "label": "Nedostatok použiteľných preskočení"
+          }
+        },
+        "image": {
+          "alt": "Ilustračné preskakovanie čakania a rezervy časových preskočení Automatického chána",
+          "caption": "Rezervy počítajú predmety, nie minúty."
+        },
+        "title": "Nastavte preskakovanie a rezervy"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "Denný limit bežných útokov",
+            "description": "Zastavte nové útoky na tábor tejto automatizácie pri dennom počítadle bežných útokov účtu; 0 limit vypne.",
+            "recommendation": "0, ak nepotrebujete limit pre celý účet."
+          },
+          "event_end": {
+            "label": "Zastaviť pred koncom udalosti",
+            "description": "Zastavte nové útoky na tábor toľko minút pred koncom udalosti.",
+            "recommendation": "5 minút."
+          },
+          "nomad_points": {
+            "description": "Pri tomto oznámenom skóre zastavte nové chánske útoky, stiahnite tie na ceste a otvorte hlavné brány; 0 zastavenie vypne.",
+            "label": "Zastaviť pri nomádskych bodoch",
+            "recommendation": "0, ak nechcete zastaviť a chrániť pri zvolenom skóre."
+          },
+          "replenish_tools": {
+            "description": "Doplňte chýbajúce nástroje z obrannej predvoľby vhodnými ponukami a odmietnite balíčky za rubíny.",
+            "label": "Dopĺňať obranné nástroje",
+            "recommendation": "Zapnuté, ak chcete vhodné automatické nákupy."
+          }
+        },
+        "image": {
+          "alt": "Ilustračné body, nástroje a denný limit Automatického chána",
+          "caption": "Kladná hranica nomádskych bodov tiež stiahne odchádzajúce chánske útoky a otvorí brány hlavného hradu."
+        },
+        "title": "Nastavte body, zásoby a denné limity"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "Uložiť nastavenia",
+            "description": "Uložte vybrané hrady, predvoľby, ovládanie hnevu, limity, rezervy preskočení a ochranu."
+          },
+          "enable_switch": {
+            "description": "Po kontrole hlavnej obrany zapnite Automatického chána na karte Automatizácia.",
+            "label": "Prepínač Automatického chána",
+            "recommendation": "Zapnuté po uložení nastavení a príprave obrany."
+          },
+          "station_priority": {
+            "description": "Automatické stacionovanie rieši prichádzajúce útoky hráčov oddelene od chánskych odviet.",
+            "label": "Prednosť Automatického stacionovania"
+          }
+        },
+        "image": {
+          "alt": "Ilustračné uloženie a zapnutie Automatického chána",
+          "caption": "Pred zapnutím chánskych odviet skontrolujte obranu hlavného hradu."
+        },
+        "title": "Uložte a zapnite Automatického chána"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Zrýchlenie cesty koňom",
+            "recommendation": "Cestovné pierko na rýchly presun.",
+            "description": "Pre útoky na tábor vyberte cestu za pierka, mince alebo rubíny."
+          },
+          "open_settings": {
+            "label": "Otvorte nastavenia",
+            "description": "Na stránke Automatizácia vyberte tlačidlo nastavení karty Automatický chán."
+          },
+          "attack_from": {
+            "description": "Vyberte hlavný hrad alebo základňu vo Veľkej ríši ako zdroj útokov na chánsky tábor.",
+            "label": "Útok z",
+            "recommendation": "Ak môžete, použite základňu so svojou útočnou armádou."
+          },
+          "camp_attack_preset": {
+            "description": "Vyberte uloženú útočnú predvoľbu pre bežné útoky na chánsky tábor.",
+            "label": "Predvoľba útoku na tábor",
+            "recommendation": "Najprv vytvorte bežnú predvoľbu útoku na chána."
+          },
+          "defend_at": {
+            "description": "Chánske odvety mieria na tu zobrazený hlavný hrad vo Veľkej ríši; pole je len na čítanie.",
+            "label": "Obrana v"
+          },
+          "main_defense_preset": {
+            "description": "Vyberte uloženú obrannú predvoľbu znovu použitú v hlavnom hrade pred odvetou.",
+            "label": "Predvoľba hlavnej obrany",
+            "recommendation": "Vytvorte bežnú obrannú predvoľbu proti chánovi a pripravte vojakov a nástroje."
+          }
+        },
+        "image": {
+          "alt": "Ilustračný hrad, predvoľby a cesta Automatického chána",
+          "caption": "Pred zapnutím útočného reťazca pripravte obe predvoľby a obranu hlavného hradu."
+        },
+        "title": "Zvoľte hrady, predvoľby a cestu"
+      },
+      "protection": {
+        "image": {
+          "alt": "Ilustračná ochrana múru hlavného hradu pre Automatického chána",
+          "caption": "Ochrana múru platí len pri útokoch z hlavného hradu."
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "Spustite ochranu, keď počet útočných jednotiek na múre dosiahne túto hodnotu.",
+            "label": "Hranica útočných jednotiek na múre",
+            "recommendation": "1 000 útočných jednotiek na múre."
+          },
+          "outpost_source": {
+            "description": "Ochrana je vypnutá, ak útočí základňa a hlavný hrad sa bráni oddelene.",
+            "label": "Základňa ako zdroj"
+          },
+          "protect_offense": {
+            "description": "Pri útokoch z hlavného hradu otvorte jeho brány a pozastavte chána, ak by múr bránilo priveľa útočných vojakov.",
+            "label": "Chrániť útočných vojakov na múre hlavného hradu",
+            "recommendation": "Zapnuté, keď útoky pochádzajú z hlavného hradu."
+          }
+        },
+        "title": "Chráňte múr hlavného hradu"
+      },
+      "rage": {
+        "image": {
+          "alt": "Ilustračný hnev a povolenia útokov Automatického chána",
+          "caption": "Časovo obmedzené posilnenie bodov hnevu je iné než zástavy hnevu."
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "Zastavte nové útoky na tábor, zatiaľ čo hnev, čakania a obrana pokračujú.",
+            "label": "Uzamknúť automatické chánske útoky",
+            "recommendation": "Vypnuté pre bežné útoky na tábor."
+          },
+          "max_rage_chain": {
+            "description": "Obmedzte prijaté odvety v aktuálnej udalosti pred zastavením nových útokov na tábor; 0 hranicu odstráni.",
+            "label": "Maximálny reťazec hnevu",
+            "recommendation": "0, ak nepotrebujete hranicu odviet."
+          },
+          "rage_booster": {
+            "description": "Povoľte nové automatické útoky na tábor len počas aktívneho časového posilnenia bodov hnevu.",
+            "label": "Vyžadovať posilnenie bodov hnevu",
+            "recommendation": "Vypnuté, ak nechcete útočiť len s posilnením."
+          },
+          "rage_continues": {
+            "description": "Hranica reťazca hnevu nezastaví spúšťanie pri plnom hneve, čakania ani obnovenie obrany.",
+            "label": "Spracovanie hnevu pokračuje"
+          },
+          "trigger_full_rage": {
+            "description": "Vyvolajte chánsku odvetu pri plnom hneve.",
+            "label": "Vyvolať chána pri plnom hneve",
+            "recommendation": "Zapnuté, keď je hlavný hrad pripravený brániť sa."
+          }
+        },
+        "title": "Nastavte hnev a povolenia útokov"
+      }
+    },
+    "feature": {
+      "description": "Automatický chán útočí na chánsky tábor, ruší čakania, vyvoláva odvetu pri plnom hneve a udržiava obranu hlavného hradu.",
+      "expectation": "Nové útoky na tábor sa pozastavia pri nastavených medziach alebo nedostatku zdrojov, zatiaľ čo hlavný hrad ostáva chránený; prichádzajúce útoky hráčov rieši Automatické stacionovanie.",
+      "name": "Automatický chán",
+      "summary": "Reťazte útoky na chánsky tábor a bráňte odvetu pri hlavnom hrade"
+    },
+    "recommendationIntro": "Odporúčané hodnoty opisujú bežné používanie Automatického chána; sú usmernením a nemenia uložené nastavenia."
   }
 }

@@ -31,7 +31,10 @@
     "nomadPreviewTitle": "Esimerkki automaattisten nomadien/samuraiden asetuksista",
     "advisorGuideIntro": "Määritä Automaattinen Neuvonantaja näiden vaiheiden avulla; suurenna esimerkkipaneeli valitsemalla se.",
     "advisorGuideTitle": "Automaattisen Neuvonantajan opas",
-    "advisorPreviewTitle": "Automaattisen Neuvonantajan asennusesimerkki"
+    "advisorPreviewTitle": "Automaattisen Neuvonantajan asennusesimerkki",
+    "khanGuideIntro": "Määritä Automaattinen Khan näiden vaiheiden avulla; suurenna esimerkkipaneeli valitsemalla se.",
+    "khanGuideTitle": "Automaattisen Khanin opas",
+    "khanPreviewTitle": "Esimerkki Automaattisen Khanin määrityksestä"
   },
   "autoTower": {
     "recommendationIntro": "Nämä suositukset koskevat säännöllistä käyttöä; tarkista ne ennen tallentamista.",
@@ -446,6 +449,48 @@
       "maximum": "Enimmäishyökkäykset: 9 999",
       "time": "Käyttämätön tapahtuma-aika: 30 minuuttia",
       "title": "Esimerkki sarjan koosta"
+    },
+    "khanCooldowns": {
+      "long": "Varaa 5 ja 24 tunnin aikahyppäykset muihin tehtäviin",
+      "pause": "Uudet hyökkäykset keskeytyvät, jos käytettäviä aikahyppäyksiä ei ole tarpeeksi",
+      "short": "Säilytä 1 min / 5 min / 10 min / 30 min / 1 h: jokaista 0 esinettä",
+      "skip": "Ohita jokainen leirin odotusaika: päällä",
+      "title": "Esimerkki aikahyppäysvarannoista"
+    },
+    "khanLimits": {
+      "daily": "Tavalliset hyökkäykset päivässä: 0, ei lisärajaa",
+      "end": "Pysäytä uudet hyökkäykset 5 minuuttia ennen loppua",
+      "points": "Pysäytä nomadipisteisiin: 0, pois",
+      "title": "Esimerkki pysäytysrajoista",
+      "tools": "Puolustustyökalujen täydennys: päällä haluttaessa"
+    },
+    "khanProtection": {
+      "gate": "Avaa pääportit ja keskeytä Khan rajalla",
+      "outpost": "Etuvartio lähteenä: suojaus pois",
+      "source": "Koskee päälinnasta lähteviä hyökkäyksiä",
+      "threshold": "Hyökkäysyksiköitä muurilla: 1 000",
+      "title": "Esimerkki päälinnan muurin suojauksesta"
+    },
+    "khanRage": {
+      "attacks": "Automaattiset leirihyökkäykset: lukitsematta",
+      "booster": "Ajastettu raivopistetehostin vaaditaan: pois",
+      "chain": "Raivoketjun enimmäismäärä: 0, ei lisärajaa",
+      "title": "Esimerkki raivoasetuksista",
+      "trigger": "Vastaisku täydellä raivolla: päällä"
+    },
+    "khanSave": {
+      "defense": "Tarkista päälinnan puolustus ennen vastaiskua",
+      "enable": "Ota Automaattinen Khan käyttöön Automaatio-kortissa",
+      "priority": "Automaattinen asemointi käsittelee pelaajien hyökkäykset erikseen",
+      "save": "Tallenna asetukset, kun molemmat mallit on valmisteltu",
+      "title": "Esimerkki tallentamisesta ja käyttöönotosta"
+    },
+    "khanSetup": {
+      "defense": "Puolusta kohteessa: Suuren valtakunnan päälinna",
+      "presets": "Tallennetut Khan-hyökkäys- ja pääpuolustusmallit",
+      "source": "Hyökkää kohteesta: Suuren valtakunnan etuvartio",
+      "title": "Esimerkki Khanin asetuksista",
+      "travel": "Matkahöyhen nopeaan matkustukseen"
     }
   },
   "autoStation": {
@@ -1176,5 +1221,213 @@
       "summary": "Aloita yksi resurssien mukainen nomadi- tai samurainneuvonantajan sarja"
     },
     "recommendationIntro": "Suositellut arvot kuvaavat Automaattisen Neuvonantajan tavallista käyttöä; ne ovat ohjeita eivätkä muuta tallennettuja asetuksia."
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "Säilytä 10 min",
+            "description": "Jätä näin monta 10 minuutin aikahyppäysesinettä käyttämättä.",
+            "recommendation": "0 tavallisiin Khan-ketjuihin."
+          },
+          "keep_1m": {
+            "label": "Säilytä 1 min",
+            "description": "Jätä näin monta 1 minuutin aikahyppäysesinettä käyttämättä.",
+            "recommendation": "0 tavallisiin Khan-ketjuihin."
+          },
+          "keep_24h": {
+            "label": "Säilytä 24 h",
+            "recommendation": "Varaa rakentamiseen tai muihin toimintoihin tarvitsemasi määrä.",
+            "description": "Jätä näin monta 24 tunnin aikahyppäysesinettä käyttämättä."
+          },
+          "keep_30m": {
+            "label": "Säilytä 30 min",
+            "description": "Jätä näin monta 30 minuutin aikahyppäysesinettä käyttämättä.",
+            "recommendation": "0 tavallisiin Khan-ketjuihin."
+          },
+          "keep_5h": {
+            "label": "Säilytä 5 h",
+            "recommendation": "Varaa rakentamiseen tai muihin toimintoihin tarvitsemasi määrä.",
+            "description": "Jätä näin monta 5 tunnin aikahyppäysesinettä käyttämättä."
+          },
+          "keep_5m": {
+            "label": "Säilytä 5 min",
+            "description": "Jätä näin monta 5 minuutin aikahyppäysesinettä käyttämättä.",
+            "recommendation": "0 tavallisiin Khan-ketjuihin."
+          },
+          "keep_1h": {
+            "description": "Jätä näin monta 1 tunnin aikahyppäysesinettä käyttämättä.",
+            "label": "Säilytä 1 h",
+            "recommendation": "0 tavallisiin Khan-ketjuihin."
+          },
+          "skip_cooldowns": {
+            "description": "Varaa ja käytä riittävästi aikahyppäysesineitä leirin odotusaikojen poistamiseen hyökkäysten jälkeen.",
+            "label": "Ohita jokainen Khanin leirin odotusaika",
+            "recommendation": "Päällä; nykyinen asetusikkuna edellyttää tätä tallentamiseen."
+          },
+          "skip_shortage": {
+            "description": "Uudet leirihyökkäykset keskeytyvät, jos käytettävät aikahyppäysesineet eivät riitä vaadittuun odotusaikaan.",
+            "label": "Liian vähän käytettäviä aikahyppäyksiä"
+          }
+        },
+        "image": {
+          "alt": "Havainnekuva Automaattisen Khanin odotusaikojen ohituksesta ja aikahyppäysvarannoista",
+          "caption": "Varannot ovat esinemääriä, eivät minuutteja."
+        },
+        "title": "Aseta odotusajat ja varannot"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "Tavallisten hyökkäysten päiväraja",
+            "description": "Pysäytä tämän automaation uudet leirihyökkäykset tilin yhteisellä päivittäisellä tavallisten hyökkäysten laskurilla; 0 poistaa rajan.",
+            "recommendation": "0, ellei tarvitse koko tilin rajaa."
+          },
+          "event_end": {
+            "label": "Lopeta ennen tapahtuman päättymistä",
+            "description": "Pysäytä uudet leirihyökkäykset näin monta minuuttia ennen tapahtuman loppua.",
+            "recommendation": "5 minuuttia."
+          },
+          "nomad_points": {
+            "description": "Pysäytä ilmoitetulla pistemäärällä uudet Khan-hyökkäykset, palauta matkalla olevat hyökkäykset ja avaa pääportit; 0 poistaa pysäytyksen.",
+            "label": "Pysäytä nomadipisteisiin",
+            "recommendation": "0, ellet halua pysäyttää ja suojata valitulla pistemäärällä."
+          },
+          "replenish_tools": {
+            "description": "Korvaa puolustusmallista puuttuvat työkalut kelvollisista tarjouksista ja hylkää rubiineilla hinnoitellut paketit.",
+            "label": "Täydennä puolustustyökaluja",
+            "recommendation": "Päällä, jos haluat kelvollisia automaattiostoja."
+          }
+        },
+        "image": {
+          "alt": "Havainnekuva Automaattisen Khanin pisteistä, työkaluista ja päivärajasta",
+          "caption": "Positiivinen nomadipisteiden pysäytys myös palauttaa matkalla olevat Khan-hyökkäykset ja avaa päälinnan portit."
+        },
+        "title": "Aseta piste-, tarvike- ja päivärajat"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "Tallenna asetukset",
+            "description": "Tallenna valitut linnat, mallit, raivoasetukset, rajat, aikahyppäysvarannot ja suojaukset."
+          },
+          "enable_switch": {
+            "description": "Ota Automaattinen Khan käyttöön Automaatio-kortissa päälinnan puolustuksen tarkistamisen jälkeen.",
+            "label": "Automaattisen Khanin kytkin",
+            "recommendation": "Päällä tallennuksen ja puolustuksen valmistelun jälkeen."
+          },
+          "station_priority": {
+            "description": "Automaattinen asemointi käsittelee pelaajien saapuvat hyökkäykset erillään Khanin vastaiskuista.",
+            "label": "Automaattisen asemoinnin etusija"
+          }
+        },
+        "image": {
+          "alt": "Havainnekuva Automaattisen Khanin tallentamisesta ja käyttöönotosta",
+          "caption": "Tarkista päälinnan puolustus ennen Khanin vastaiskujen käynnistämistä."
+        },
+        "title": "Tallenna ja käynnistä Automaattinen Khan"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Hevosmatkan nopeutus",
+            "recommendation": "Matkahöyhen nopeaan matkustukseen.",
+            "description": "Valitse leirihyökkäyksiin matkustus höyhenillä, kolikoilla tai rubiineilla."
+          },
+          "open_settings": {
+            "label": "Avaa asetukset",
+            "description": "Valitse Automaatio-sivun Automaattinen Khan -kortin asetuspainike."
+          },
+          "attack_from": {
+            "description": "Valitse Suuren valtakunnan päälinna tai etuvartio Khanin leirihyökkäysten lähteeksi.",
+            "label": "Hyökkää kohteesta",
+            "recommendation": "Käytä etuvartiota, jossa hyökkäysarmeijasi on, jos mahdollista."
+          },
+          "camp_attack_preset": {
+            "description": "Valitse tallennettu hyökkäysmalli tavallisiin Khanin leirihyökkäyksiin.",
+            "label": "Leirin hyökkäysmalli",
+            "recommendation": "Luo ensin tavallinen Khan-hyökkäysmallisi."
+          },
+          "defend_at": {
+            "description": "Khanin vastaiskut puolustetaan tässä näkyvässä Suuren valtakunnan päälinnassa; kenttää ei voi muokata.",
+            "label": "Puolusta kohteessa"
+          },
+          "main_defense_preset": {
+            "description": "Valitse tallennettu puolustusmalli, joka otetaan uudelleen käyttöön päälinnassa ennen vastaiskuja.",
+            "label": "Päälinnan puolustusmalli",
+            "recommendation": "Luo tavallinen Khan-puolustusmallisi ja valmistele joukot ja työkalut."
+          }
+        },
+        "image": {
+          "alt": "Havainnekuva Automaattisen Khanin linnasta, malleista ja matkasta",
+          "caption": "Valmistele molemmat mallit ja päälinnan puolustus ennen hyökkäysketjun käynnistämistä."
+        },
+        "title": "Valitse linnat, mallit ja matka"
+      },
+      "protection": {
+        "image": {
+          "alt": "Havainnekuva Automaattisen Khanin päälinnan muurin suojauksesta",
+          "caption": "Muurisuojaus toimii vain, kun hyökkäykset lähtevät päälinnasta."
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "Käynnistä päälinnan suojaus, kun hyökkäysyksiköitä muurilla on näin monta.",
+            "label": "Muurin hyökkäysyksiköiden raja",
+            "recommendation": "1 000 hyökkäysyksikköä muurilla."
+          },
+          "outpost_source": {
+            "description": "Suojaus on pois käytöstä, kun etuvartio lähettää hyökkäykset ja päälinna puolustaa erikseen.",
+            "label": "Etuvartio lähteenä"
+          },
+          "protect_offense": {
+            "description": "Kun hyökkäät päälinnasta, avaa portit ja keskeytä Khan, jos liian moni hyökkäysjoukko puolustaisi muuria.",
+            "label": "Suojaa hyökkäysjoukot päälinnan muurilla",
+            "recommendation": "Päällä, kun hyökkäykset lähtevät päälinnasta."
+          }
+        },
+        "title": "Suojaa päälinnan muuri"
+      },
+      "rage": {
+        "image": {
+          "alt": "Havainnekuva Automaattisen Khanin raivosta ja hyökkäysluvista",
+          "caption": "Ajastettu raivopisteiden tehostin on eri asia kuin raivoliput."
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "Pysäytä uudet leirihyökkäykset, mutta jatka raivon käsittelyä, odotusaikoja ja puolustusta.",
+            "label": "Lukitse automaattiset Khan-hyökkäykset",
+            "recommendation": "Pois tavallisia leirihyökkäyksiä varten."
+          },
+          "max_rage_chain": {
+            "description": "Rajoita nykyisen tapahtuman hyväksyttyjä vastaiskuja ennen uusien leirihyökkäysten pysähtymistä; 0 poistaa rajan.",
+            "label": "Raivoketjun enimmäismäärä",
+            "recommendation": "0, ellet tarvitse rajaa vastaiskuille."
+          },
+          "rage_booster": {
+            "description": "Salli uudet automaattiset leirihyökkäykset vain ajastetun raivopistetehostimen ollessa aktiivinen.",
+            "label": "Vaadi raivopistetehostin",
+            "recommendation": "Pois, ellet halua hyökätä vain tehostimen kanssa."
+          },
+          "rage_continues": {
+            "description": "Raivoketjun raja ei pysäytä täyden raivon laukaisua, odotusaikoja eikä puolustuksen palautumista.",
+            "label": "Raivon käsittely jatkuu"
+          },
+          "trigger_full_rage": {
+            "description": "Provosoituu Khanin vastaisku, kun raivo on täysi.",
+            "label": "Laukaise Khan täydellä raivolla",
+            "recommendation": "Päällä, kun päälinna on valmis puolustamaan."
+          }
+        },
+        "title": "Aseta raivo ja hyökkäysluvat"
+      }
+    },
+    "feature": {
+      "description": "Automaattinen Khan hyökkää Khanin leiriin, poistaa odotusajat, käynnistää vastaiskut täydellä raivolla ja ylläpitää päälinnan puolustusta.",
+      "expectation": "Uudet leirihyökkäykset keskeytyvät asetetuilla rajoilla tai resurssipulassa samalla kun päälinnaa suojataan; pelaajien saapuvat hyökkäykset kuuluvat Automaattiselle asemoinnille.",
+      "name": "Automaattinen Khan",
+      "summary": "Ketjuta Khanin leirihyökkäyksiä ja puolusta vastaiskut päälinnassa"
+    },
+    "recommendationIntro": "Suositellut arvot kuvaavat Automaattisen Khanin tavallista käyttöä; ne ovat ohjeita eivätkä muuta tallennettuja asetuksia."
   }
 }

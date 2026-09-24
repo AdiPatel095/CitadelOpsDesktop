@@ -31,7 +31,10 @@
     "nomadPreviewTitle": "自动游牧武士设置示例",
     "advisorGuideIntro": "按照以下步骤设置自动顾问；选择示例面板可将其放大。",
     "advisorGuideTitle": "自动顾问指南",
-    "advisorPreviewTitle": "自动顾问设置示例"
+    "advisorPreviewTitle": "自动顾问设置示例",
+    "khanGuideIntro": "按照以下步骤设置自动可汗；选择示例面板可放大查看。",
+    "khanGuideTitle": "自动可汗指南",
+    "khanPreviewTitle": "自动可汗设置示例"
   },
   "autoTower": {
     "recommendationIntro": "以下是日常使用的建议；保存前请检查。",
@@ -446,6 +449,48 @@
       "maximum": "最大攻击数：9,999",
       "time": "未使用的活动时间：30分钟",
       "title": "批次规模示例"
+    },
+    "khanCooldowns": {
+      "long": "为其他任务保留5小时／24小时加速道具",
+      "pause": "可用加速道具不足会暂停新攻击",
+      "short": "保留1分／5分／10分／30分／1小时：每种0件",
+      "skip": "跳过每次营地冷却：开启",
+      "title": "加速道具保留量示例"
+    },
+    "khanLimits": {
+      "daily": "每日普通攻击：0，无额外限制",
+      "end": "活动结束前5分钟停止新攻击",
+      "points": "达到游牧者积分时停止：0，关闭",
+      "title": "停止限制示例",
+      "tools": "防御工具补充：按需开启"
+    },
+    "khanProtection": {
+      "gate": "达到阈值时打开主城城门并暂停可汗",
+      "outpost": "出兵点为前哨站：保护停用",
+      "source": "从主城出兵时适用",
+      "threshold": "城墙进攻兵力：1,000",
+      "title": "主城城墙保护示例"
+    },
+    "khanRage": {
+      "attacks": "自动营地攻击：未锁定",
+      "booster": "要求限时怒气积分增益：关闭",
+      "chain": "最大怒气连击数：0，无额外上限",
+      "title": "怒气控制示例",
+      "trigger": "满怒反击：开启"
+    },
+    "khanSave": {
+      "defense": "反击前检查主城防御",
+      "enable": "在自动化卡片上启用自动可汗",
+      "priority": "自动避兵单独处理玩家攻击",
+      "save": "准备好两套预设后保存设置",
+      "title": "保存与启用流程示例"
+    },
+    "khanSetup": {
+      "defense": "防守地点：大帝国主城",
+      "presets": "已保存的可汗攻击和主城防御预设",
+      "source": "出兵点：大帝国前哨站",
+      "title": "可汗设置示例",
+      "travel": "使用行军羽毛加快行军"
     }
   },
   "autoStation": {
@@ -1176,5 +1221,213 @@
       "summary": "按资源规模发起一次游牧或武士顾问攻击批次"
     },
     "recommendationIntro": "推荐数值适用于自动顾问的日常使用，仅供参考，不会更改已保存的设置。"
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "保留10分钟",
+            "description": "保留这么多件10分钟加速道具不用。",
+            "recommendation": "日常可汗连击建议设为0。"
+          },
+          "keep_1m": {
+            "label": "保留1分钟",
+            "description": "保留这么多件1分钟加速道具不用。",
+            "recommendation": "日常可汗连击建议设为0。"
+          },
+          "keep_24h": {
+            "label": "保留24小时",
+            "recommendation": "保留建造或其他活动需要的库存。",
+            "description": "保留这么多件24小时加速道具不用。"
+          },
+          "keep_30m": {
+            "label": "保留30分钟",
+            "description": "保留这么多件30分钟加速道具不用。",
+            "recommendation": "日常可汗连击建议设为0。"
+          },
+          "keep_5h": {
+            "label": "保留5小时",
+            "recommendation": "保留建造或其他活动需要的库存。",
+            "description": "保留这么多件5小时加速道具不用。"
+          },
+          "keep_5m": {
+            "label": "保留5分钟",
+            "description": "保留这么多件5分钟加速道具不用。",
+            "recommendation": "日常可汗连击建议设为0。"
+          },
+          "keep_1h": {
+            "description": "保留这么多件1小时加速道具不用。",
+            "label": "保留1小时道具",
+            "recommendation": "日常可汗连击建议设为0。"
+          },
+          "skip_cooldowns": {
+            "description": "保留并使用足够的加速道具，在攻击后清除营地冷却。",
+            "label": "跳过每次可汗营地冷却",
+            "recommendation": "开启；当前设置窗口要求启用此项才能保存。"
+          },
+          "skip_shortage": {
+            "description": "可用加速道具不足以清除所需冷却时，会暂停新的营地攻击。",
+            "label": "可用加速道具不足"
+          }
+        },
+        "image": {
+          "alt": "自动可汗冷却跳过和加速道具保留量示意",
+          "caption": "保留量是道具件数，不是时间分钟数。"
+        },
+        "title": "设置冷却跳过和保留量"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "每日普通攻击上限",
+            "description": "账号范围内的每日普通攻击次数达到此值时，停止本自动化发起新的营地攻击；0表示禁用此上限。",
+            "recommendation": "不需要账号范围上限时设为0。"
+          },
+          "event_end": {
+            "label": "活动结束前停止",
+            "description": "在活动结束前这么多分钟停止新的营地攻击。",
+            "recommendation": "5分钟。"
+          },
+          "nomad_points": {
+            "description": "当已报告积分达到此值时，停止新的可汗攻击、召回在途攻击并打开主城城门；0表示禁用此停止条件。",
+            "label": "达到游牧者积分时停止",
+            "recommendation": "除非希望在指定积分停止并开启保护，否则设为0。"
+          },
+          "replenish_tools": {
+            "description": "从符合条件的商品补充防御预设短缺的工具，同时排除红宝石定价的礼包。",
+            "label": "补充防御工具",
+            "recommendation": "希望进行符合条件的自动购买时开启。"
+          }
+        },
+        "image": {
+          "alt": "自动可汗积分、工具及每日上限示意",
+          "caption": "游牧者积分停止值大于0时，还会召回在途可汗攻击并打开主城城门。"
+        },
+        "title": "设置积分、补给和每日限制"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "保存设置",
+            "description": "保存所选城堡、预设、怒气控制、限制、加速道具保留量和保护设置。"
+          },
+          "enable_switch": {
+            "description": "检查主城防御后，在自动化卡片上启用自动可汗。",
+            "label": "自动可汗开关",
+            "recommendation": "保存并准备好防御后开启。"
+          },
+          "station_priority": {
+            "description": "自动避兵独立处理来袭的玩家攻击，不与可汗反击混用。",
+            "label": "自动避兵优先处理"
+          }
+        },
+        "image": {
+          "alt": "自动可汗保存与启用流程示意",
+          "caption": "启用可汗反击前，先检查主城防御。"
+        },
+        "title": "保存并启用自动可汗"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "骑乘行军加速",
+            "recommendation": "快速行军推荐旅行羽毛。",
+            "description": "为营地攻击选择羽毛、金币或红宝石行军加速。"
+          },
+          "open_settings": {
+            "label": "打开设置",
+            "description": "在自动化页面，选择自动可汗卡片上的设置按钮。"
+          },
+          "attack_from": {
+            "description": "选择大帝国的主城或前哨站，作为可汗营地攻击的出兵点。",
+            "label": "从何处出兵",
+            "recommendation": "有进攻军队时，优先使用所在前哨站。"
+          },
+          "camp_attack_preset": {
+            "description": "选择已保存的攻击预设，用于日常可汗营地攻击。",
+            "label": "营地攻击预设",
+            "recommendation": "先创建日常可汗攻击预设。"
+          },
+          "defend_at": {
+            "description": "可汗反击在此处显示的大帝国主城防御；此字段为只读。",
+            "label": "防守地点"
+          },
+          "main_defense_preset": {
+            "description": "选择已保存的防御预设，在反击前重新应用到主城。",
+            "label": "主城防御预设",
+            "recommendation": "创建日常可汗防御预设，并准备相应兵力和工具。"
+          }
+        },
+        "image": {
+          "alt": "自动可汗城堡、预设和行军设置示意",
+          "caption": "启用连续攻击前，准备好两套预设和主城防御。"
+        },
+        "title": "选择城堡、预设和行军方式"
+      },
+      "protection": {
+        "image": {
+          "alt": "自动可汗主城城墙保护示意",
+          "caption": "仅当从主城出兵攻击时，城墙保护才适用。"
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "城墙上的进攻兵种达到此数量时，触发主城保护。",
+            "label": "城墙进攻兵力阈值",
+            "recommendation": "城墙上的进攻兵力1,000。"
+          },
+          "outpost_source": {
+            "description": "从前哨站出兵且主城单独防御时，此城墙保护会停用。",
+            "label": "出兵点为前哨站"
+          },
+          "protect_offense": {
+            "description": "从主城出兵时，如果过多进攻兵力将被用于守墙，就打开城门并暂停可汗。",
+            "label": "保护主城城墙上的进攻兵力",
+            "recommendation": "从主城出兵时开启。"
+          }
+        },
+        "title": "保护主城城墙"
+      },
+      "rage": {
+        "image": {
+          "alt": "自动可汗怒气和攻击许可示意",
+          "caption": "限时怒气积分增益与怒气旗帜是不同效果。"
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "停止新的营地攻击，同时继续处理怒气、冷却和防御。",
+            "label": "锁定自动可汗攻击",
+            "recommendation": "日常营地攻击建议关闭。"
+          },
+          "max_rage_chain": {
+            "description": "限制当前活动可接受的反击次数，达到上限后停止新的营地攻击；0表示取消上限。",
+            "label": "最大怒气连击数",
+            "recommendation": "不需要反击次数上限时设为0。"
+          },
+          "rage_booster": {
+            "description": "只有限时怒气积分增益生效时，才允许新的自动营地攻击。",
+            "label": "要求怒气积分增益",
+            "recommendation": "除非只想在增益期间攻击，否则关闭。"
+          },
+          "rage_continues": {
+            "description": "怒气连击上限不会停止满怒反击触发、冷却处理或防御恢复。",
+            "label": "怒气处理继续"
+          },
+          "trigger_full_rage": {
+            "description": "怒气满时触发可汗反击。",
+            "label": "满怒时触发可汗",
+            "recommendation": "主城已准备好防御时开启。"
+          }
+        },
+        "title": "设置怒气和攻击许可"
+      }
+    },
+    "feature": {
+      "description": "自动可汗会攻击可汗营地、清除冷却、在怒气满时触发反击，并维持主城防御。",
+      "expectation": "达到设定限制或资源不足时会暂停新的营地攻击并保护主城；来袭的玩家攻击由自动避兵处理。",
+      "name": "自动可汗",
+      "summary": "连续攻击可汗营地，并在主城抵御反击"
+    },
+    "recommendationIntro": "推荐值适用于自动可汗的日常使用，仅供参考，不会更改已保存的设置。"
   }
 }

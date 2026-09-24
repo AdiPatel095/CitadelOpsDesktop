@@ -31,7 +31,10 @@
     "nomadPreviewTitle": "Przykład konfiguracji Auto Nomadzi/Samurajowie",
     "advisorGuideIntro": "Wykonaj te kroki, aby skonfigurować Automatycznego Doradcę; wybierz przykładowy panel, aby go powiększyć.",
     "advisorGuideTitle": "Przewodnik Automatycznego Doradcy",
-    "advisorPreviewTitle": "Przykład konfiguracji Automatycznego Doradcy"
+    "advisorPreviewTitle": "Przykład konfiguracji Automatycznego Doradcy",
+    "khanGuideIntro": "Wykonaj te kroki, aby ustawić Automatycznego Chana; wybierz przykładowy panel, aby go powiększyć.",
+    "khanGuideTitle": "Przewodnik Automatycznego Chana",
+    "khanPreviewTitle": "Przykład ustawień Automatycznego Chana"
   },
   "autoTower": {
     "recommendationIntro": "Te zalecenia dotyczą regularnego korzystania; sprawdź je przed zapisaniem.",
@@ -446,6 +449,48 @@
       "maximum": "Maksymalna liczba ataków: 9 999",
       "time": "Niewykorzystany czas wydarzenia: 30 minut",
       "title": "Przykładowy rozmiar serii"
+    },
+    "khanCooldowns": {
+      "long": "Zarezerwuj przyspieszenia 5- i 24-godzinne do innych zadań",
+      "pause": "Nowe ataki wstrzymują się przy braku dostępnych przyspieszeń",
+      "short": "Zachowaj 1 min / 5 min / 10 min / 30 min / 1 godz.: po 0 przedmiotów",
+      "skip": "Pomiń każde odnowienie obozu: włączone",
+      "title": "Przykład rezerw przyspieszeń"
+    },
+    "khanLimits": {
+      "daily": "Zwykłe ataki dziennie: 0, bez dodatkowego limitu",
+      "end": "Zatrzymaj nowe ataki 5 minut przed końcem",
+      "points": "Zatrzymaj przy punktach Nomadów: 0, wyłączone",
+      "title": "Przykład limitów zatrzymania",
+      "tools": "Uzupełnianie narzędzi obronnych: włączone, jeśli chcesz"
+    },
+    "khanProtection": {
+      "gate": "Otwórz główne bramy i wstrzymaj Chana przy progu",
+      "outpost": "Posterunek jako źródło: ochrona wyłączona",
+      "source": "Dotyczy ataków z głównego zamku",
+      "threshold": "Jednostki ofensywne na murze: 1 000",
+      "title": "Przykład ochrony głównego muru"
+    },
+    "khanRage": {
+      "attacks": "Automatyczne ataki na obóz: odblokowane",
+      "booster": "Wymagany czasowy wzmacniacz gniewu: nie",
+      "chain": "Maksymalna seria gniewu: 0, bez dodatkowego limitu",
+      "title": "Przykład sterowania gniewem",
+      "trigger": "Kontratak przy pełnym gniewie: włączony"
+    },
+    "khanSave": {
+      "defense": "Sprawdź obronę główną przed kontratakiem",
+      "enable": "Włącz Automatycznego Chana na karcie Automatyzacja",
+      "priority": "Automatyczne Stacjonowanie obsługuje ataki graczy osobno",
+      "save": "Zapisz ustawienia po przygotowaniu obu szablonów",
+      "title": "Przykład zapisu i włączenia"
+    },
+    "khanSetup": {
+      "defense": "Broń w: główny zamek Wielkiego Cesarstwa",
+      "presets": "Zapisane szablony ataku Chana i obrony głównej",
+      "source": "Atakuj z: posterunek w Wielkim Cesarstwie",
+      "title": "Przykład ustawień Chana",
+      "travel": "Pióro Podróży do szybkiej podróży"
     }
   },
   "autoStation": {
@@ -1176,5 +1221,213 @@
       "summary": "Rozpocznij jedną serię Doradcy Nomadów lub Samurajów dostosowaną do zasobów"
     },
     "recommendationIntro": "Zalecane wartości dotyczą regularnego używania Automatycznego Doradcy; są wskazówkami i nie zmieniają zapisanych ustawień."
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "Zachowaj 10 min",
+            "description": "Zachowaj bez użycia tyle przyspieszeń 10-minutowych.",
+            "recommendation": "0 przy zwykłych seriach Chana."
+          },
+          "keep_1m": {
+            "label": "Zachowaj 1 min",
+            "description": "Zachowaj bez użycia tyle przyspieszeń 1-minutowych.",
+            "recommendation": "0 przy zwykłych seriach Chana."
+          },
+          "keep_24h": {
+            "label": "Zachowaj 24 godz.",
+            "recommendation": "Odłóż zapas potrzebny do budowy lub innych działań.",
+            "description": "Zachowaj bez użycia tyle przyspieszeń 24-godzinnych."
+          },
+          "keep_30m": {
+            "label": "Zachowaj 30 min",
+            "description": "Zachowaj bez użycia tyle przyspieszeń 30-minutowych.",
+            "recommendation": "0 przy zwykłych seriach Chana."
+          },
+          "keep_5h": {
+            "label": "Zachowaj 5 godz.",
+            "recommendation": "Odłóż zapas potrzebny do budowy lub innych działań.",
+            "description": "Zachowaj bez użycia tyle przyspieszeń 5-godzinnych."
+          },
+          "keep_5m": {
+            "label": "Zachowaj 5 min",
+            "description": "Zachowaj bez użycia tyle przyspieszeń 5-minutowych.",
+            "recommendation": "0 przy zwykłych seriach Chana."
+          },
+          "keep_1h": {
+            "description": "Zachowaj bez użycia tyle przyspieszeń 1-godzinnych.",
+            "label": "Zachowaj 1 godz.",
+            "recommendation": "0 przy zwykłych seriach Chana."
+          },
+          "skip_cooldowns": {
+            "description": "Rezerwuj i używaj dość przyspieszeń, aby usuwać odnowienia obozu po atakach.",
+            "label": "Pomiń każde odnowienie obozu Chana",
+            "recommendation": "Włączone; obecne okno ustawień wymaga tego do zapisania."
+          },
+          "skip_shortage": {
+            "description": "Nowe ataki na obóz są wstrzymane, gdy dostępne przyspieszenia nie wystarczają na wymagane odnowienie.",
+            "label": "Za mało dostępnych przyspieszeń"
+          }
+        },
+        "image": {
+          "alt": "Ilustracja pomijania odnowień i rezerw przyspieszeń Automatycznego Chana",
+          "caption": "Rezerwy liczą przedmioty, a nie minuty."
+        },
+        "title": "Ustaw pomijanie odnowień i rezerwy"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "Dzienny limit zwykłych ataków",
+            "description": "Zatrzymaj nowe ataki tej automatyzacji po osiągnięciu wspólnego dla konta dziennego licznika zwykłych ataków; 0 wyłącza limit.",
+            "recommendation": "0, jeśli nie potrzebujesz limitu dla całego konta."
+          },
+          "event_end": {
+            "label": "Zakończ przed końcem wydarzenia",
+            "description": "Zatrzymaj nowe ataki na obóz tyle minut przed końcem wydarzenia.",
+            "recommendation": "5 minut."
+          },
+          "nomad_points": {
+            "description": "Przy tej zgłoszonej punktacji zatrzymaj nowe ataki Chana, odwołaj ataki w drodze i otwórz główne bramy; 0 wyłącza zatrzymanie.",
+            "label": "Zatrzymaj przy punktach Nomadów",
+            "recommendation": "0, chyba że chcesz zatrzymać się i chronić przy wybranej punktacji."
+          },
+          "replenish_tools": {
+            "description": "Uzupełnij brakujące narzędzia z szablonu obrony z dostępnych ofert, odrzucając pakiety za rubiny.",
+            "label": "Uzupełniaj narzędzia obronne",
+            "recommendation": "Włączone, jeśli chcesz odpowiednich automatycznych zakupów."
+          }
+        },
+        "image": {
+          "alt": "Ilustracja punktów, narzędzi i limitu dziennego Automatycznego Chana",
+          "caption": "Dodatni próg punktów Nomadów odwołuje także wysłane ataki Chana i otwiera bramy głównego zamku."
+        },
+        "title": "Ustaw limity punktów, zapasów i dziennych ataków"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "Zapisz ustawienia",
+            "description": "Zapisz wybrane zamki, szablony, sterowanie gniewem, limity, rezerwy przyspieszeń i ochronę."
+          },
+          "enable_switch": {
+            "description": "Włącz Automatycznego Chana na karcie Automatyzacja po sprawdzeniu obrony głównej.",
+            "label": "Przełącznik Automatycznego Chana",
+            "recommendation": "Włączone po zapisaniu ustawień i przygotowaniu obrony."
+          },
+          "station_priority": {
+            "description": "Automatyczne Stacjonowanie obsługuje nadchodzące ataki graczy osobno od kontrataków Chana.",
+            "label": "Priorytet Automatycznego Stacjonowania"
+          }
+        },
+        "image": {
+          "alt": "Ilustracja zapisu i włączenia Automatycznego Chana",
+          "caption": "Sprawdź obronę głównego zamku przed uruchomieniem kontrataków Chana."
+        },
+        "title": "Zapisz i włącz Automatycznego Chana"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Przyspieszenie podróży konnej",
+            "recommendation": "Pióro podróżne dla szybkiej podróży.",
+            "description": "Wybierz podróż za pióra, monety lub rubiny dla ataków na obóz."
+          },
+          "open_settings": {
+            "label": "Otwórz ustawienia",
+            "description": "Na stronie Automatyzacja wybierz przycisk ustawień na karcie Automatyczny Chan."
+          },
+          "attack_from": {
+            "description": "Wybierz główny zamek lub posterunek w Wielkim Cesarstwie jako źródło ataków na obóz Chana.",
+            "label": "Atakuj z",
+            "recommendation": "Użyj posterunku ze swoją armią ofensywną, gdy jest dostępny."
+          },
+          "camp_attack_preset": {
+            "description": "Wybierz zapisany szablon ataku do zwykłych ataków na obóz Chana.",
+            "label": "Szablon ataku na obóz",
+            "recommendation": "Najpierw utwórz zwykły szablon ataku na Chana."
+          },
+          "defend_at": {
+            "description": "Kontrataki Chana bronią się w pokazanym tu głównym zamku Wielkiego Cesarstwa; tego pola nie można edytować.",
+            "label": "Broń w"
+          },
+          "main_defense_preset": {
+            "description": "Wybierz zapisany szablon obrony ponownie stosowany w głównym zamku przed kontratakami.",
+            "label": "Szablon obrony głównej",
+            "recommendation": "Utwórz zwykły szablon obrony przed Chanem oraz przygotuj jego wojska i narzędzia."
+          }
+        },
+        "image": {
+          "alt": "Ilustracja zamku, szablonów i podróży Automatycznego Chana",
+          "caption": "Przygotuj oba szablony i obronę głównego zamku przed włączeniem serii ataków."
+        },
+        "title": "Wybierz zamki, szablony i podróż"
+      },
+      "protection": {
+        "image": {
+          "alt": "Ilustracja ochrony muru głównego zamku w Automatycznym Chanie",
+          "caption": "Ochrona muru działa tylko przy atakowaniu z głównego zamku."
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "Uruchom ochronę, gdy liczba jednostek ofensywnych na murze osiągnie tę wartość.",
+            "label": "Próg jednostek ofensywnych na murze",
+            "recommendation": "1 000 jednostek ofensywnych na murze."
+          },
+          "outpost_source": {
+            "description": "Ochrona jest wyłączona, gdy ataki wychodzą z posterunku, a główny zamek broni się osobno.",
+            "label": "Posterunek jako źródło"
+          },
+          "protect_offense": {
+            "description": "Przy atakach z głównego zamku otwórz jego bramy i wstrzymaj Chana, jeśli zbyt wiele jednostek ofensywnych broniłoby muru.",
+            "label": "Chroń wojska ofensywne na murze głównym",
+            "recommendation": "Włączone, gdy ataki wychodzą z głównego zamku."
+          }
+        },
+        "title": "Chroń mur głównego zamku"
+      },
+      "rage": {
+        "image": {
+          "alt": "Ilustracja gniewu i zezwoleń na ataki Automatycznego Chana",
+          "caption": "Czasowy wzmacniacz punktów gniewu różni się od chorągwi gniewu."
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "Zatrzymaj nowe ataki na obóz, zachowując obsługę gniewu, odnowień i obrony.",
+            "label": "Zablokuj automatyczne ataki Chana",
+            "recommendation": "Wyłączone przy zwykłych atakach na obóz."
+          },
+          "max_rage_chain": {
+            "description": "Ogranicz przyjęte kontrataki w bieżącym wydarzeniu, po czym zatrzymaj nowe ataki na obóz; 0 usuwa limit.",
+            "label": "Maksymalna seria gniewu",
+            "recommendation": "0, jeśli nie potrzebujesz limitu kontrataków."
+          },
+          "rage_booster": {
+            "description": "Zezwalaj na nowe automatyczne ataki na obóz tylko przy aktywnym czasowym wzmacniaczu punktów gniewu.",
+            "label": "Wymagaj wzmacniacza punktów gniewu",
+            "recommendation": "Wyłączone, chyba że chcesz atakować tylko ze wzmacniaczem."
+          },
+          "rage_continues": {
+            "description": "Limit serii gniewu nie zatrzymuje wywołania przy pełnym gniewie, odnowień ani przywracania obrony.",
+            "label": "Obsługa gniewu trwa dalej"
+          },
+          "trigger_full_rage": {
+            "description": "Wywołaj kontratak Chana, gdy gniew jest pełny.",
+            "label": "Wywołaj Chana przy pełnym gniewie",
+            "recommendation": "Włączone, gdy główny zamek jest gotowy do obrony."
+          }
+        },
+        "title": "Ustaw gniew i zezwolenia na ataki"
+      }
+    },
+    "feature": {
+      "description": "Automatyczny Chan atakuje obóz Chana, usuwa odnowienia, wywołuje kontrataki przy pełnym gniewie i utrzymuje obronę głównego zamku.",
+      "expectation": "Nowe ataki na obóz wstrzymują się po osiągnięciu ustawionych limitów lub przy braku zasobów, a główny zamek jest chroniony; nadchodzące ataki graczy obsługuje Automatyczne Stacjonowanie.",
+      "name": "Automatyczny Chan",
+      "summary": "Łącz ataki na obóz Chana i broń głównego zamku przed kontratakami"
+    },
+    "recommendationIntro": "Zalecane wartości opisują zwykłe używanie Automatycznego Chana; są wskazówkami i nie zmieniają zapisanych ustawień."
   }
 }

@@ -12,6 +12,7 @@ const fortress = await load('src/config/autoFortressGuide.json');
 const invasion = await load('src/config/autoInvasionGuide.json');
 const nomad = await load('src/config/autoNomadGuide.json');
 const advisor = await load('src/config/autoAdvisorGuide.json');
+const khan = await load('src/config/autoKhanGuide.json');
 const countLeaves = value => typeof value === 'string' ? 1 : Object.values(value).reduce((sum, child) => sum + countLeaves(child), 0);
 function leaves(candidate, expected, path='') {
   if (typeof expected === 'string') { assert.equal(typeof candidate,'string',path); assert.ok(candidate.trim(),path); return 1; }
@@ -24,7 +25,7 @@ test('all 25 non-English guide packs have complete stable-ID content', async () 
     const pack=await load(`src/config/guideLocales/${locale}.json`);
     const expected = source;
     assert.equal(leaves(pack,expected,locale),countLeaves(expected));
-    for (const [key,guide] of [['autoTower',tower],['autoBird',bird],['autoStation',station],['autoFortress',fortress],['autoInvasion',invasion],['autoNomad',nomad],['autoAdvisor',advisor]].filter(([key]) => pack[key])) {
+    for (const [key,guide] of [['autoTower',tower],['autoBird',bird],['autoStation',station],['autoFortress',fortress],['autoInvasion',invasion],['autoNomad',nomad],['autoAdvisor',advisor],['autoKhan',khan]].filter(([key]) => pack[key])) {
       assert.deepEqual(Object.keys(pack[key].steps).sort(),guide.steps.map(step=>step.id).sort());
       for (const step of guide.steps) assert.deepEqual(Object.keys(pack[key].steps[step.id].items).sort(),step.items.map(item=>item.id).sort());
     }
@@ -45,7 +46,7 @@ test('guide translation provenance pins the exact 26 locale pack bytes', async (
 
 
 test('canonical English guides match the rendered source pack', () => {
-  for (const [key, guide] of [['autoTower', tower], ['autoBird', bird], ['autoStation', station], ['autoFortress', fortress], ['autoInvasion', invasion], ['autoNomad', nomad], ['autoAdvisor', advisor]]) {
+  for (const [key, guide] of [['autoTower', tower], ['autoBird', bird], ['autoStation', station], ['autoFortress', fortress], ['autoInvasion', invasion], ['autoNomad', nomad], ['autoAdvisor', advisor], ['autoKhan', khan]]) {
     assert.equal(source[key].recommendationIntro, guide.recommendationIntro);
     for (const step of guide.steps) {
       const translated = source[key].steps[step.id];
@@ -71,4 +72,12 @@ test('Advisor guidance separates save, activation, and pre-launch limits', () =>
   assert.match(source.autoAdvisor.steps.activation.items.confirm_paid_activation.description, /token/);
   assert.match(source.autoAdvisor.steps.sizing.items.minimum_remaining.recommendation, /not an ongoing cancellation timer/);
   assert.match(source.autoAdvisor.steps.resources.items.coin_cost.recommendation, /only if it covers/);
+});
+
+
+test('Khan English guide distinguishes score stop, rage cap, and main-wall protection', () => {
+  assert.match(source.autoKhan.steps.limits.items.nomad_points.description, /recall outgoing Khan attacks and open the main gates/);
+  assert.match(source.autoKhan.steps.rage.items.max_rage_chain.description, /before new camp attacks stop/);
+  assert.match(source.autoKhan.steps.protection.items.protect_offense.description, /When attacking from the main castle/);
+  assert.equal(source.autoKhan.steps.limits.items.event_end.recommendation, '5 minutes.');
 });

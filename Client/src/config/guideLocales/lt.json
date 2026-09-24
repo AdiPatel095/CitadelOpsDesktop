@@ -31,7 +31,10 @@
     "nomadPreviewTitle": "Automatinių klajoklių/samurajų nustatymo pavyzdys",
     "advisorGuideIntro": "Atlikite šiuos veiksmus, kad nustatytumėte Automatinį patarėją; pasirinkite pavyzdžio skydelį jį padidinti.",
     "advisorGuideTitle": "Automatinio patarėjo vadovas",
-    "advisorPreviewTitle": "Automatinio patarėjo nustatymo pavyzdys"
+    "advisorPreviewTitle": "Automatinio patarėjo nustatymo pavyzdys",
+    "khanGuideIntro": "Atlikite šiuos veiksmus, kad nustatytumėte Auto Chaną; pasirinkite pavyzdžio skydelį, kad jį padidintumėte.",
+    "khanGuideTitle": "Auto Chano vadovas",
+    "khanPreviewTitle": "Auto Chano nustatymo pavyzdys"
   },
   "autoTower": {
     "recommendationIntro": "Tai rekomendacijos įprastam naudojimui; peržiūrėkite jas prieš išsaugodami.",
@@ -446,6 +449,48 @@
       "maximum": "Didžiausias atakų skaičius: 9 999",
       "time": "Nepanaudotas renginio laikas: 30 minučių",
       "title": "Serijos dydžio pavyzdys"
+    },
+    "khanCooldowns": {
+      "long": "Rezervuokite 5 val. / 24 val. spartinimus kitoms užduotims",
+      "pause": "Nepakankami tinkami spartinimai pristabdo naujus puolimus",
+      "short": "Palikti 1 min. / 5 min. / 10 min. / 30 min. / 1 val.: po 0 daiktų",
+      "skip": "Praleisti kiekvieną stovyklos atvėsimą: įjungta",
+      "title": "Atvėsimo rezervų pavyzdys"
+    },
+    "khanLimits": {
+      "daily": "Įprasti dienos puolimai: 0, be papildomos ribos",
+      "end": "Stabdyti naujus puolimus likus 5 minutėms iki renginio pabaigos",
+      "points": "Stabdyti ties klajoklių taškais: 0, išjungta",
+      "title": "Sustabdymo ribų pavyzdys",
+      "tools": "Gynybos įrankių papildymas: įjungti pagal poreikį"
+    },
+    "khanProtection": {
+      "gate": "Atidaryti pagrindinius vartus ir pristabdyti Chaną ties riba",
+      "outpost": "Šaltinis – forpostas: apsauga išjungta",
+      "source": "Taikoma puolant iš pagrindinės pilies",
+      "threshold": "Puolantys daliniai ant sienos: 1 000",
+      "title": "Pagrindinės sienos apsaugos pavyzdys"
+    },
+    "khanRage": {
+      "attacks": "Automatiniai stovyklos puolimai: atrakinti",
+      "booster": "Laikinas įniršio taškų stiprintuvas privalomas: ne",
+      "chain": "Didžiausia įniršio grandinė: 0, be papildomos ribos",
+      "title": "Įniršio nustatymų pavyzdys",
+      "trigger": "Atsakomasis puolimas esant pilnam įniršiui: įjungta"
+    },
+    "khanSave": {
+      "defense": "Prieš atsakomąjį puolimą patikrinkite pagrindinės pilies gynybą",
+      "enable": "Įjunkite Auto Chaną automatikos kortelėje",
+      "priority": "Automatinis prieglobstis atskirai tvarko žaidėjų puolimus",
+      "save": "Paruošę abu šablonus išsaugokite nustatymus",
+      "title": "Išsaugojimo ir įjungimo pavyzdys"
+    },
+    "khanSetup": {
+      "defense": "Gintis ties: Didžiosios imperijos pagrindine pilimi",
+      "presets": "Išsaugoti Chano puolimo ir pagrindinės gynybos šablonai",
+      "source": "Pulti iš: Didžiosios imperijos forposto",
+      "title": "Chano nustatymo pavyzdys",
+      "travel": "Kelionės plunksna greitai kelionei"
     }
   },
   "autoStation": {
@@ -1176,5 +1221,213 @@
       "summary": "Pradėkite vieną pagal išteklius apskaičiuotą klajoklių arba samurajų patarėjo seriją"
     },
     "recommendationIntro": "Rekomenduojamos reikšmės skirtos įprastam Automatinio patarėjo naudojimui; jos yra gairės ir nekeičia išsaugotų nustatymų."
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "Palikti 10 min.",
+            "description": "Palikite nepanaudotą tiek 10 min. laiko spartinimo daiktų.",
+            "recommendation": "0 įprastoms Chano puolimų grandinėms."
+          },
+          "keep_1m": {
+            "label": "Palikti 1 min.",
+            "description": "Palikite nepanaudotą tiek 1 min. laiko spartinimo daiktų.",
+            "recommendation": "0 įprastoms Chano puolimų grandinėms."
+          },
+          "keep_24h": {
+            "label": "Palikti 24 val.",
+            "recommendation": "Atidėk statyboms ar kitai veiklai reikalingą kiekį.",
+            "description": "Palikite nepanaudotą tiek 24 val. laiko spartinimo daiktų."
+          },
+          "keep_30m": {
+            "label": "Palikti 30 min.",
+            "description": "Palikite nepanaudotą tiek 30 min. laiko spartinimo daiktų.",
+            "recommendation": "0 įprastoms Chano puolimų grandinėms."
+          },
+          "keep_5h": {
+            "label": "Palikti 5 val.",
+            "recommendation": "Atidėk statyboms ar kitai veiklai reikalingą kiekį.",
+            "description": "Palikite nepanaudotą tiek 5 val. laiko spartinimo daiktų."
+          },
+          "keep_5m": {
+            "label": "Palikti 5 min.",
+            "description": "Palikite nepanaudotą tiek 5 min. laiko spartinimo daiktų.",
+            "recommendation": "0 įprastoms Chano puolimų grandinėms."
+          },
+          "keep_1h": {
+            "description": "Palikite nepanaudotą tiek 1 val. laiko spartinimo daiktų.",
+            "label": "Palikti 1 val.",
+            "recommendation": "0 įprastoms Chano puolimų grandinėms."
+          },
+          "skip_cooldowns": {
+            "description": "Rezervuokite ir naudokite pakankamai laiko spartinimo daiktų, kad po puolimų panaikintumėte stovyklos atvėsimą.",
+            "label": "Praleisti kiekvieną Chano stovyklos atvėsimą",
+            "recommendation": "Įjungta; dabartinis nustatymų langas reikalauja šios parinkties norint išsaugoti."
+          },
+          "skip_shortage": {
+            "description": "Nauji stovyklos puolimai pristabdomi, kai turimų laiko spartinimo daiktų nepakanka privalomam atvėsimui panaikinti.",
+            "label": "Nepakanka tinkamų spartinimų"
+          }
+        },
+        "image": {
+          "alt": "Iliustraciniai Auto Chano atvėsimo praleidimo ir laiko spartinimų rezervų nustatymai",
+          "caption": "Rezervai nurodo daiktų, o ne laiko minučių skaičių."
+        },
+        "title": "Nustatykite atvėsimo praleidimą ir rezervus"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "Įprastų atakų dienos riba",
+            "description": "Sustabdykite šios automatikos naujus stovyklos puolimus pasiekus visos paskyros įprastų dienos puolimų skaičių; 0 išjungia šią ribą.",
+            "recommendation": "0, jei visos paskyros riba nereikalinga."
+          },
+          "event_end": {
+            "label": "Sustabdyti prieš renginio pabaigą",
+            "description": "Sustabdykite naujus stovyklos puolimus tiek minučių prieš renginio pabaigą.",
+            "recommendation": "5 minutės."
+          },
+          "nomad_points": {
+            "description": "Pasiekus šį praneštą taškų skaičių, sustabdykite naujus Chano puolimus, atšaukite išsiųstus puolimus ir atidarykite pagrindinius vartus; 0 išjungia sustabdymą.",
+            "label": "Sustabdyti ties klajoklių taškais",
+            "recommendation": "0, nebent norite sustoti ir apsisaugoti ties pasirinktu taškų skaičiumi."
+          },
+          "replenish_tools": {
+            "description": "Papildykite gynybos šablono trūkstamus įrankius iš tinkamų pasiūlymų, atmesdami už rubinus siūlomus rinkinius.",
+            "label": "Papildyti gynybos įrankius",
+            "recommendation": "Įjungta, jei norite tinkamų automatinių pirkimų."
+          }
+        },
+        "image": {
+          "alt": "Iliustraciniai Auto Chano taškų, įrankių ir dienos ribos nustatymai",
+          "caption": "Teigiama klajoklių taškų sustabdymo riba taip pat atšaukia išsiųstus Chano puolimus ir atidaro pagrindinius vartus."
+        },
+        "title": "Nustatykite taškų, atsargų ir dienos ribas"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "Išsaugoti nustatymus",
+            "description": "Išsaugokite pasirinktus pilių, šablonų, įniršio, ribų, atvėsimo rezervų ir apsaugos nustatymus."
+          },
+          "enable_switch": {
+            "description": "Patikrinę pagrindinės pilies gynybą, įjunkite Auto Chaną jo automatikos kortelėje.",
+            "label": "Auto Chano jungiklis",
+            "recommendation": "Įjungta išsaugojus ir paruošus gynybą."
+          },
+          "station_priority": {
+            "description": "Automatinis prieglobstis atskirai tvarko įeinančius žaidėjų puolimus ir Chano atsakomuosius puolimus.",
+            "label": "Automatinio prieglobsčio pirmenybė"
+          }
+        },
+        "image": {
+          "alt": "Iliustracinė Auto Chano išsaugojimo ir įjungimo eiga",
+          "caption": "Prieš įjungdami Chano atsakomuosius puolimus patikrinkite pagrindinės pilies gynybą."
+        },
+        "title": "Išsaugokite ir įjunkite Auto Chaną"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Kelionės žirgu pagreitinimas",
+            "recommendation": "Kelionės plunksna greitai kelionei.",
+            "description": "Stovyklos puolimams pasirinkite kelionę su plunksnomis, monetomis arba rubinais."
+          },
+          "open_settings": {
+            "label": "Atidarykite nustatymus",
+            "description": "Automatikos puslapyje pasirinkite Auto Chano kortelės nustatymų mygtuką."
+          },
+          "attack_from": {
+            "description": "Pasirinkite Didžiosios imperijos pagrindinę pilį arba forpostą, iš kurio bus siunčiami Chano stovyklos puolimai.",
+            "label": "Pulti iš",
+            "recommendation": "Jei įmanoma, naudokite forpostą su savo puolančiąja kariuomene."
+          },
+          "camp_attack_preset": {
+            "description": "Pasirinkite išsaugotą puolimo šabloną įprastiems Chano stovyklos puolimams.",
+            "label": "Stovyklos puolimo šablonas",
+            "recommendation": "Pirmiausia sukurkite savo įprastą Chano puolimo šabloną."
+          },
+          "defend_at": {
+            "description": "Chano atsakomieji puolimai ginami čia rodomoje Didžiosios imperijos pagrindinėje pilyje; šis laukas yra tik skaitymui.",
+            "label": "Gintis ties"
+          },
+          "main_defense_preset": {
+            "description": "Pasirinkite išsaugotą gynybos šabloną, kuris prieš atsakomuosius puolimus vėl pritaikomas pagrindinėje pilyje.",
+            "label": "Pagrindinės gynybos šablonas",
+            "recommendation": "Sukurkite įprastą Chano gynybos šabloną ir paruoškite jo dalinius bei įrankius."
+          }
+        },
+        "image": {
+          "alt": "Iliustraciniai Auto Chano pilies, šablonų ir kelionės nustatymai",
+          "caption": "Prieš įjungdami puolimų grandinę, paruoškite abu šablonus ir pagrindinės pilies gynybą."
+        },
+        "title": "Pasirinkite pilis, šablonus ir kelionę"
+      },
+      "protection": {
+        "image": {
+          "alt": "Iliustracinė Auto Chano pagrindinės pilies sienos apsauga",
+          "caption": "Sienos apsauga taikoma tik tada, kai puolimai siunčiami iš pagrindinės pilies."
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "Įjunkite pagrindinės pilies apsaugą, kai puolančių dalinių ant sienos skaičius pasiekia šią ribą.",
+            "label": "Puolančių sienos dalinių riba",
+            "recommendation": "1 000 puolančių dalinių ant sienos."
+          },
+          "outpost_source": {
+            "description": "Ši sienos apsauga išjungta, kai puolimai siunčiami iš forposto, o pagrindinė pilis ginasi atskirai.",
+            "label": "Šaltinis – forpostas"
+          },
+          "protect_offense": {
+            "description": "Puolant iš pagrindinės pilies, atidarykite jos vartus ir pristabdykite Chaną, jei ant sienos gintųsi per daug puolančių dalinių.",
+            "label": "Apsaugoti puolančius dalinius ant pagrindinės pilies sienos",
+            "recommendation": "Įjungta, kai puolimai siunčiami iš pagrindinės pilies."
+          }
+        },
+        "title": "Apsaugokite pagrindinės pilies sieną"
+      },
+      "rage": {
+        "image": {
+          "alt": "Iliustraciniai Auto Chano įniršio ir puolimų leidimo nustatymai",
+          "caption": "Laikinas įniršio taškų stiprintuvas skiriasi nuo įniršio vėliavų."
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "Sustabdykite naujus stovyklos puolimus, kol toliau tvarkomas įniršis, atvėsimas ir gynyba.",
+            "label": "Užrakinti automatinius Chano puolimus",
+            "recommendation": "Išjungta įprastiems stovyklos puolimams."
+          },
+          "max_rage_chain": {
+            "description": "Apribokite priimtų atsakomųjų puolimų skaičių dabartiniame renginyje, po kurio nauji stovyklos puolimai sustoja; 0 pašalina ribą.",
+            "label": "Didžiausia įniršio grandinė",
+            "recommendation": "0, jei atsakomųjų puolimų riba nereikalinga."
+          },
+          "rage_booster": {
+            "description": "Leiskite naujus automatinius stovyklos puolimus tik kol aktyvus laikinas įniršio taškų stiprintuvas.",
+            "label": "Reikalauti įniršio taškų stiprintuvo",
+            "recommendation": "Išjungta, jei nenorite puolimų tik su stiprintuvu."
+          },
+          "rage_continues": {
+            "description": "Įniršio grandinės riba nesustabdo atsakomojo puolimo iššaukimo esant pilnam įniršiui, atvėsimo tvarkymo ar gynybos atkūrimo.",
+            "label": "Įniršio veiksmai tęsiami"
+          },
+          "trigger_full_rage": {
+            "description": "Iššaukite Chano atsakomąjį puolimą, kai įniršis pilnas.",
+            "label": "Iššaukti Chaną esant pilnam įniršiui",
+            "recommendation": "Įjungta, kai pagrindinė pilis pasirengusi gintis."
+          }
+        },
+        "title": "Nustatykite įniršį ir puolimų leidimus"
+      }
+    },
+    "feature": {
+      "description": "Auto Chanas puola Chano stovyklą, panaikina atvėsimo laikotarpius, iššaukia atsakomuosius puolimus esant pilnam įniršiui ir palaiko pagrindinės pilies gynybą.",
+      "expectation": "Nauji stovyklos puolimai sustabdomi pasiekus nustatytas ribas arba pritrūkus išteklių, o pagrindinė pilis saugoma; įeinančiais žaidėjų puolimais rūpinasi Automatinis prieglobstis.",
+      "name": "Auto Chanas",
+      "summary": "Grandine pulkite Chano stovyklą ir ginkite pagrindinę pilį nuo atsakomųjų puolimų"
+    },
+    "recommendationIntro": "Rekomenduojamos reikšmės skirtos įprastam Auto Chano naudojimui; jos nekeičia išsaugotų nustatymų."
   }
 }

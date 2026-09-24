@@ -31,7 +31,10 @@
     "nomadPreviewTitle": "Otomatik Göçebeler/Samuraylar kurulum örneği",
     "advisorGuideIntro": "Otomatik Danışman'ı ayarlamak için bu adımları izleyin; büyütmek için örnek paneli seçin.",
     "advisorGuideTitle": "Otomatik Danışman kılavuzu",
-    "advisorPreviewTitle": "Otomatik Danışman ayarları örneği"
+    "advisorPreviewTitle": "Otomatik Danışman ayarları örneği",
+    "khanGuideIntro": "Otomatik Han'ı kurmak için bu adımları izleyin; büyütmek için bir örnek panel seçin.",
+    "khanGuideTitle": "Otomatik Han rehberi",
+    "khanPreviewTitle": "Otomatik Han kurulum örneği"
   },
   "autoTower": {
     "recommendationIntro": "Bunlar düzenli kullanım önerileridir; kaydetmeden önce gözden geçirin.",
@@ -446,6 +449,48 @@
       "maximum": "Azami saldırı: 9.999",
       "time": "Kullanılmayan etkinlik süresi: 30 dakika",
       "title": "Dizi boyutu örneği"
+    },
+    "khanCooldowns": {
+      "long": "5 saatlik / 24 saatlik hızlandırmaları başka işler için ayırın",
+      "pause": "Kullanılabilir hızlandırma yetersizse yeni saldırılar duraklar",
+      "short": "1 dk / 5 dk / 10 dk / 30 dk / 1 sa sakla: her biri 0 eşya",
+      "skip": "Her kamp beklemesini atla: açık",
+      "title": "Örnek hızlandırma rezervleri"
+    },
+    "khanLimits": {
+      "daily": "Günlük normal saldırılar: 0, ek sınır yok",
+      "end": "Etkinlik bitmeden 5 dakika önce yeni saldırıları durdur",
+      "points": "Göçebe puanında durdur: 0, kapalı",
+      "title": "Örnek durdurma sınırları",
+      "tools": "Savunma aracı tamamlama: istenirse açık"
+    },
+    "khanProtection": {
+      "gate": "Eşikte ana kapıları aç ve Han'ı duraklat",
+      "outpost": "Kaynak ileri karakol: koruma kapalı",
+      "source": "Ana kaleden saldırırken uygulanır",
+      "threshold": "Duvar hücum birlikleri: 1.000",
+      "title": "Örnek ana duvar koruması"
+    },
+    "khanRage": {
+      "attacks": "Otomatik kamp saldırıları: kilitli değil",
+      "booster": "Süreli Öfke puanı güçlendiricisi zorunlu: kapalı",
+      "chain": "Azami öfke zinciri: 0, ek sınır yok",
+      "title": "Örnek öfke denetimleri",
+      "trigger": "Tam öfkede misilleme: açık"
+    },
+    "khanSave": {
+      "defense": "Misillemeden önce ana kale savunmasını kontrol et",
+      "enable": "Otomasyon kartında Otomatik Han'ı etkinleştir",
+      "priority": "Otomatik Sığınma oyuncu saldırılarını ayrı yönetir",
+      "save": "İki düzeni hazırladıktan sonra ayarları kaydet",
+      "title": "Örnek kaydetme ve etkinleştirme akışı"
+    },
+    "khanSetup": {
+      "defense": "Savunma konumu: Büyük İmparatorluk ana kalesi",
+      "presets": "Kayıtlı Han saldırısı ve ana savunma düzenleri",
+      "source": "Saldırı kaynağı: Büyük İmparatorluk ileri karakolu",
+      "title": "Örnek Han kurulumu",
+      "travel": "Hızlı yolculuk için Yolculuk Tüyü"
     }
   },
   "autoStation": {
@@ -1176,5 +1221,213 @@
       "summary": "Kaynaklara göre boyutlandırılmış tek bir Göçebe veya Samuray Danışmanı dizisi başlatın"
     },
     "recommendationIntro": "Önerilen değerler Otomatik Danışman'ın olağan kullanımını açıklar; bunlar yol gösterir ve kayıtlı ayarları değiştirmez."
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "10 dk sakla",
+            "description": "Bu kadar 10 dakikalık hızlandırma eşyasını kullanmadan saklayın.",
+            "recommendation": "Normal Han saldırı zincirleri için 0."
+          },
+          "keep_1m": {
+            "label": "1 dk sakla",
+            "description": "Bu kadar 1 dakikalık hızlandırma eşyasını kullanmadan saklayın.",
+            "recommendation": "Normal Han saldırı zincirleri için 0."
+          },
+          "keep_24h": {
+            "label": "24 sa sakla",
+            "recommendation": "İnşaat veya başka işler için gerekli stoğu ayır.",
+            "description": "Bu kadar 24 saatlik hızlandırma eşyasını kullanmadan saklayın."
+          },
+          "keep_30m": {
+            "label": "30 dk sakla",
+            "description": "Bu kadar 30 dakikalık hızlandırma eşyasını kullanmadan saklayın.",
+            "recommendation": "Normal Han saldırı zincirleri için 0."
+          },
+          "keep_5h": {
+            "label": "5 sa sakla",
+            "recommendation": "İnşaat veya başka işler için gerekli stoğu ayır.",
+            "description": "Bu kadar 5 saatlik hızlandırma eşyasını kullanmadan saklayın."
+          },
+          "keep_5m": {
+            "label": "5 dk sakla",
+            "description": "Bu kadar 5 dakikalık hızlandırma eşyasını kullanmadan saklayın.",
+            "recommendation": "Normal Han saldırı zincirleri için 0."
+          },
+          "keep_1h": {
+            "description": "Bu kadar 1 saatlik hızlandırma eşyasını kullanmadan saklayın.",
+            "label": "1 saat sakla",
+            "recommendation": "Normal Han saldırı zincirleri için 0."
+          },
+          "skip_cooldowns": {
+            "description": "Saldırılardan sonra kampın bekleme süresini kaldırmak için yeterli hızlandırma eşyası ayırıp kullanın.",
+            "label": "Her Han kampı beklemesini atla",
+            "recommendation": "Açık; mevcut ayarlar penceresi kaydetmek için bunu gerektirir."
+          },
+          "skip_shortage": {
+            "description": "Kullanılabilir hızlandırmalar gereken bekleme süresini kaldıramadığında yeni kamp saldırıları duraklar.",
+            "label": "Yeterli kullanılabilir hızlandırma yok"
+          }
+        },
+        "image": {
+          "alt": "Otomatik Han bekleme atlama ve hızlandırma rezervlerinin temsili görünümü",
+          "caption": "Rezervler dakika değil, eşya sayısıdır."
+        },
+        "title": "Bekleme atlamayı ve rezervleri ayarlayın"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "Günlük normal saldırı sınırı",
+            "description": "Hesap genelindeki günlük normal saldırı sayısına ulaşıldığında bu otomasyonun yeni kamp saldırılarını durdurun; 0 bu sınırı kapatır.",
+            "recommendation": "Hesap genelinde sınır gerekmiyorsa 0."
+          },
+          "event_end": {
+            "label": "Etkinlik bitmeden dur",
+            "description": "Etkinlik bitmeden bu kadar dakika önce yeni kamp saldırılarını durdurun.",
+            "recommendation": "5 dakika."
+          },
+          "nomad_points": {
+            "description": "Bildirilen bu puana ulaşıldığında yeni Han saldırılarını durdurun, yoldaki saldırıları geri çağırın ve ana kapıları açın; 0 bu durdurmayı kapatır.",
+            "label": "Göçebe puanında durdur",
+            "recommendation": "Seçilen puanda durup korunmak istemiyorsanız 0."
+          },
+          "replenish_tools": {
+            "description": "Yakutla fiyatlandırılan paketleri reddederek Savunma Düzeni eksiklerini uygun tekliflerden tamamlayın.",
+            "label": "Savunma araçlarını tamamla",
+            "recommendation": "Uygun otomatik satın almaları istiyorsanız açık."
+          }
+        },
+        "image": {
+          "alt": "Otomatik Han puan, araç ve günlük sınır ayarlarının temsili görünümü",
+          "caption": "Pozitif Göçebe puanı sınırı, yoldaki Han saldırılarını geri çağırır ve ana kapıları açar."
+        },
+        "title": "Puan, tedarik ve günlük sınırları ayarlayın"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "Ayarları kaydet",
+            "description": "Seçilen kaleleri, düzenleri, öfke denetimlerini, sınırları, hızlandırma rezervlerini ve koruma ayarlarını kaydedin."
+          },
+          "enable_switch": {
+            "description": "Ana kale savunmasını kontrol ettikten sonra Otomatik Han'ı Otomasyon kartından etkinleştirin.",
+            "label": "Otomatik Han anahtarı",
+            "recommendation": "Kaydettikten ve savunmayı hazırladıktan sonra açık."
+          },
+          "station_priority": {
+            "description": "Otomatik Sığınma, gelen oyuncu saldırılarını Han misillemelerinden ayrı yönetir.",
+            "label": "Otomatik Sığınma önceliği"
+          }
+        },
+        "image": {
+          "alt": "Otomatik Han kaydetme ve etkinleştirme akışının temsili görünümü",
+          "caption": "Han misillemelerini açmadan önce ana kalenin savunmasını kontrol edin."
+        },
+        "title": "Otomatik Han'ı kaydedip etkinleştirin"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Atla yolculuk hızlandırması",
+            "recommendation": "Hızlı yolculuk için Yolculuk Tüyü.",
+            "description": "Kamp saldırıları için tüy, sikke veya yakut yolculuğunu seçin."
+          },
+          "open_settings": {
+            "label": "Ayarları açın",
+            "description": "Otomasyon sayfasında Otomatik Han kartının ayarlar düğmesini seçin."
+          },
+          "attack_from": {
+            "description": "Han kampı saldırılarını sağlayacak Büyük İmparatorluk ana kalesini veya ileri karakolunu seçin.",
+            "label": "Saldırı kaynağı",
+            "recommendation": "Varsa hücum ordunuzun bulunduğu ileri karakolu kullanın."
+          },
+          "camp_attack_preset": {
+            "description": "Normal Han kampı saldırıları için kayıtlı bir Saldırı Düzeni seçin.",
+            "label": "Kamp saldırısı düzeni",
+            "recommendation": "Önce normal Han saldırı düzeninizi oluşturun."
+          },
+          "defend_at": {
+            "description": "Han misillemeleri burada gösterilen Büyük İmparatorluk ana kalesinde savunulur; bu alan salt okunurdur.",
+            "label": "Savunma konumu"
+          },
+          "main_defense_preset": {
+            "description": "Misillemelerden önce ana kaleye yeniden uygulanan kayıtlı bir Savunma Düzeni seçin.",
+            "label": "Ana savunma düzeni",
+            "recommendation": "Normal Han savunma düzeninizi oluşturup birliklerini ve araçlarını hazırlayın."
+          }
+        },
+        "image": {
+          "alt": "Otomatik Han kale, düzen ve yolculuk ayarlarının temsili görünümü",
+          "caption": "Saldırı zincirini açmadan önce iki düzeni de ve ana kale savunmasını hazırlayın."
+        },
+        "title": "Kaleleri, düzenleri ve yolculuğu seçin"
+      },
+      "protection": {
+        "image": {
+          "alt": "Otomatik Han ana kale duvarı korumasının temsili görünümü",
+          "caption": "Duvar koruması yalnızca saldırı kaynağı ana kaleyse uygulanır."
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "Duvar üzerindeki hücum birlikleri bu sayıya ulaştığında ana kale korumasını başlatın.",
+            "label": "Hücum duvar birliği eşiği",
+            "recommendation": "1.000 hücum duvar birliği."
+          },
+          "outpost_source": {
+            "description": "Saldırılar ileri karakoldan gönderildiğinde ve ana kale ayrı savunulduğunda bu duvar koruması devre dışıdır.",
+            "label": "Kaynak ileri karakol"
+          },
+          "protect_offense": {
+            "description": "Ana kaleden saldırırken, duvarda çok fazla hücum birliği savunacaksa kapıları açın ve Han'ı duraklatın.",
+            "label": "Ana kale duvarındaki hücum birliklerini koru",
+            "recommendation": "Ana kale saldırı kaynağıysa açık."
+          }
+        },
+        "title": "Ana kale duvarını koruyun"
+      },
+      "rage": {
+        "image": {
+          "alt": "Otomatik Han öfke ve saldırı izni ayarlarının temsili görünümü",
+          "caption": "Süreli Öfke puanı güçlendiricisi, öfke sancaklarından ayrıdır."
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "Öfke işlemleri, bekleme ve savunma sürerken yeni kamp saldırılarını durdurun.",
+            "label": "Otomatik Han saldırılarını kilitle",
+            "recommendation": "Normal kamp saldırıları için kapalı."
+          },
+          "max_rage_chain": {
+            "description": "Bu etkinlikte kabul edilen misillemeleri sınırlayın; sınıra ulaşınca yeni kamp saldırıları durur ve 0 sınırı kaldırır.",
+            "label": "Azami öfke zinciri",
+            "recommendation": "Misilleme sınırı gerekmiyorsa 0."
+          },
+          "rage_booster": {
+            "description": "Yeni otomatik kamp saldırılarına yalnızca süreli Öfke puanı güçlendiricisi etkinken izin verin.",
+            "label": "Öfke puanı güçlendiricisi gerektir",
+            "recommendation": "Yalnızca güçlendiricili saldırılar istemiyorsanız kapalı."
+          },
+          "rage_continues": {
+            "description": "Öfke zinciri sınırı, tam öfkede misilleme başlatmayı, bekleme işlemlerini veya savunmanın yenilenmesini durdurmaz.",
+            "label": "Öfke işlemleri sürer"
+          },
+          "trigger_full_rage": {
+            "description": "Öfke dolduğunda Han misillemesini başlatın.",
+            "label": "Tam öfkede Han'ı tetikle",
+            "recommendation": "Ana kale savunmaya hazırsa açık."
+          }
+        },
+        "title": "Öfke ve saldırı izinlerini ayarlayın"
+      }
+    },
+    "feature": {
+      "description": "Otomatik Han, Han kampına saldırır, bekleme sürelerini kaldırır, tam öfkede misilleme başlatır ve ana kalenin savunmasını sürdürür.",
+      "expectation": "Belirlenen sınırlara ulaşıldığında veya kaynaklar azaldığında yeni kamp saldırıları duraklar ve ana kale korunur; gelen oyuncu saldırılarını Otomatik Sığınma yönetir.",
+      "name": "Otomatik Han",
+      "summary": "Han kampına art arda saldırın ve ana kalenizi misillemelere karşı savunun"
+    },
+    "recommendationIntro": "Önerilen değerler Otomatik Han'ın normal kullanımına yöneliktir; kaydedilmiş ayarları değiştirmez."
   }
 }

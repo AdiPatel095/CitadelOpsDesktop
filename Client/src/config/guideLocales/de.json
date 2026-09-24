@@ -31,7 +31,10 @@
     "nomadPreviewTitle": "Einrichtungsbeispiel für Auto Nomaden/Samurai",
     "advisorGuideIntro": "Folge diesen Schritten, um Auto Berater einzurichten; wähle ein Beispielbild zum Vergrößern.",
     "advisorGuideTitle": "Anleitung für Auto Berater",
-    "advisorPreviewTitle": "Einrichtungsbeispiel für Auto Berater"
+    "advisorPreviewTitle": "Einrichtungsbeispiel für Auto Berater",
+    "khanGuideIntro": "Folge diesen Schritten zum Einrichten von Auto Khan; wähle ein Beispielbild zum Vergrößern.",
+    "khanGuideTitle": "Auto-Khan-Anleitung",
+    "khanPreviewTitle": "Beispiel für Auto-Khan-Einstellungen"
   },
   "autoTower": {
     "recommendationIntro": "Diese Empfehlungen gelten für den regelmäßigen Betrieb; prüfe sie vor dem Speichern.",
@@ -446,6 +449,48 @@
       "maximum": "Maximale Angriffe: 9.999",
       "time": "Ungenutzte Eventzeit: 30 Minuten",
       "title": "Beispiel für die Laufgröße"
+    },
+    "khanCooldowns": {
+      "long": "5-Stunden- und 24-Stunden-Vorrat für andere Aufgaben reservieren",
+      "pause": "Bei zu wenigen nutzbaren Zeitverkürzern pausieren neue Angriffe",
+      "short": "1 Min. / 5 Min. / 10 Min. / 30 Min. / 1 Std. behalten: jeweils 0 Gegenstände",
+      "skip": "Jede Lagerabklingzeit überspringen: ein",
+      "title": "Beispiel für Zeitverkürzerreserven"
+    },
+    "khanLimits": {
+      "daily": "Normale Angriffe pro Tag: 0, keine zusätzliche Grenze",
+      "end": "Neue Angriffe 5 Minuten vor Ereignisende stoppen",
+      "points": "Bei Nomadenpunkten stoppen: 0, deaktiviert",
+      "title": "Beispiel für Stoppgrenzen",
+      "tools": "Verteidigungswerkzeuge auffüllen: ein, wenn gewünscht"
+    },
+    "khanProtection": {
+      "gate": "Haupttore öffnen und Khan an der Grenze pausieren",
+      "outpost": "Außenposten als Quelle: Schutz deaktiviert",
+      "source": "Gilt bei Angriffen aus der Hauptburg",
+      "threshold": "Offensive Mauereinheiten: 1.000",
+      "title": "Beispiel für Hauptburg-Mauerschutz"
+    },
+    "khanRage": {
+      "attacks": "Automatische Lagerangriffe: entsperrt",
+      "booster": "Zeitlich begrenzter Wutpunkte-Booster erforderlich: aus",
+      "chain": "Maximale Wutserie: 0, keine zusätzliche Grenze",
+      "title": "Beispiel für Wutsteuerung",
+      "trigger": "Vergeltung bei voller Wut: ein"
+    },
+    "khanSave": {
+      "defense": "Hauptburgverteidigung vor der Vergeltung prüfen",
+      "enable": "Auto Khan auf der Automatisierungskarte aktivieren",
+      "priority": "Auto Station behandelt Spielerangriffe getrennt",
+      "save": "Einstellungen nach Vorbereitung beider Vorlagen speichern",
+      "title": "Beispiel für Speichern und Aktivieren"
+    },
+    "khanSetup": {
+      "defense": "Verteidigung in: Hauptburg des Großen Imperiums",
+      "presets": "Gespeicherte Khan-Angriffs- und Hauptburg-Verteidigungsvorlagen",
+      "source": "Angriff von: Außenposten im Großen Imperium",
+      "title": "Beispiel für Khan-Einstellungen",
+      "travel": "Reisefeder für schnelle Reisen"
     }
   },
   "autoStation": {
@@ -1176,5 +1221,213 @@
       "summary": "Einen ressourcengerechten Nomaden- oder Samurai-Beraterlauf starten"
     },
     "recommendationIntro": "Empfohlene Werte beschreiben die reguläre Nutzung von Auto Berater; sie dienen nur als Orientierung und ändern keine gespeicherten Einstellungen."
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "10 Min. behalten",
+            "description": "Lasse so viele 10-Minuten-Zeitverkürzer unangetastet.",
+            "recommendation": "0 für regelmäßige Khan-Angriffsfolgen."
+          },
+          "keep_1m": {
+            "label": "1 Min. behalten",
+            "description": "Lasse so viele 1-Minuten-Zeitverkürzer unangetastet.",
+            "recommendation": "0 für regelmäßige Khan-Angriffsfolgen."
+          },
+          "keep_24h": {
+            "label": "24 Std. behalten",
+            "recommendation": "Den Vorrat reservieren, den du für Bauten oder andere Aufgaben brauchst.",
+            "description": "Lasse so viele 24-Stunden-Zeitverkürzer unangetastet."
+          },
+          "keep_30m": {
+            "label": "30 Min. behalten",
+            "description": "Lasse so viele 30-Minuten-Zeitverkürzer unangetastet.",
+            "recommendation": "0 für regelmäßige Khan-Angriffsfolgen."
+          },
+          "keep_5h": {
+            "label": "5 Std. behalten",
+            "recommendation": "Den Vorrat reservieren, den du für Bauten oder andere Aufgaben brauchst.",
+            "description": "Lasse so viele 5-Stunden-Zeitverkürzer unangetastet."
+          },
+          "keep_5m": {
+            "label": "5 Min. behalten",
+            "description": "Lasse so viele 5-Minuten-Zeitverkürzer unangetastet.",
+            "recommendation": "0 für regelmäßige Khan-Angriffsfolgen."
+          },
+          "keep_1h": {
+            "description": "Lasse so viele 1-Stunden-Zeitverkürzer unangetastet.",
+            "label": "1 Stunde behalten",
+            "recommendation": "0 für regelmäßige Khan-Angriffsfolgen."
+          },
+          "skip_cooldowns": {
+            "description": "Reserviere und verwende genügend Zeitverkürzer, um Lagerabklingzeiten nach Angriffen zu beenden.",
+            "label": "Jede Khanlager-Abklingzeit überspringen",
+            "recommendation": "Ein; der aktuelle Einstellungsdialog verlangt dies zum Speichern."
+          },
+          "skip_shortage": {
+            "description": "Neue Lagerangriffe pausieren, wenn die nutzbaren Zeitverkürzer die nötige Abklingzeit nicht abdecken.",
+            "label": "Nicht genug nutzbare Zeitverkürzer"
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto-Khan-Einstellungen für Abklingzeiten und Zeitverkürzerreserven",
+          "caption": "Reservewerte zählen Gegenstände, nicht Minuten."
+        },
+        "title": "Abklingzeiten und Reserven einstellen"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "Tageslimit für normale Angriffe",
+            "description": "Stoppe neue Lagerangriffe dieser Automatisierung beim kontoweiten Tageszähler für normale Angriffe; 0 deaktiviert diese Grenze.",
+            "recommendation": "0, wenn du keine kontoweite Grenze brauchst."
+          },
+          "event_end": {
+            "label": "Vor Eventende stoppen",
+            "description": "Stoppe neue Lagerangriffe so viele Minuten vor dem Ende des Ereignisses.",
+            "recommendation": "5 Minuten."
+          },
+          "nomad_points": {
+            "description": "Stoppe bei dieser gemeldeten Punktzahl neue Khanangriffe, rufe ausgehende Khanangriffe zurück und öffne die Haupttore; 0 deaktiviert den Stopp.",
+            "label": "Bei Nomadenpunkten stoppen",
+            "recommendation": "0, außer du willst bei einer gewählten Punktzahl stoppen und schützen."
+          },
+          "replenish_tools": {
+            "description": "Ersetze fehlende Verteidigungswerkzeuge der Vorlage aus geeigneten Angeboten und lehne Rubinkäufe ab.",
+            "label": "Verteidigungswerkzeuge auffüllen",
+            "recommendation": "Ein, wenn du geeignete automatische Käufe möchtest."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto-Khan-Einstellungen für Punkte, Werkzeuge und Tagesgrenze",
+          "caption": "Ein positiver Nomadenpunkte-Stopp ruft auch ausgehende Khanangriffe zurück und öffnet die Tore der Hauptburg."
+        },
+        "title": "Punkte-, Vorrats- und Tagesgrenzen festlegen"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "Einstellungen speichern",
+            "description": "Speichere Burgen, Vorlagen, Wutsteuerung, Grenzen, Zeitverkürzerreserven und Schutzeinstellungen."
+          },
+          "enable_switch": {
+            "description": "Aktiviere Auto Khan auf der Automatisierungskarte, nachdem du die Hauptburgverteidigung geprüft hast.",
+            "label": "Auto-Khan-Schalter",
+            "recommendation": "Ein, nachdem Einstellungen gespeichert und die Verteidigung vorbereitet wurden."
+          },
+          "station_priority": {
+            "description": "Auto Station behandelt eingehende Spielerangriffe getrennt von Khanvergeltungen.",
+            "label": "Vorrang von Auto Station"
+          }
+        },
+        "image": {
+          "alt": "Illustrativer Ablauf zum Speichern und Aktivieren von Auto Khan",
+          "caption": "Prüfe die Hauptburgverteidigung, bevor du Khanvergeltungen aktivierst."
+        },
+        "title": "Auto Khan speichern und aktivieren"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Reisebeschleunigung mit Pferden",
+            "recommendation": "Reisefeder für schnelles Reisen.",
+            "description": "Wähle Feder-, Münz- oder Rubinreise für Lagerangriffe."
+          },
+          "open_settings": {
+            "label": "Einstellungen öffnen",
+            "description": "Wähle auf der Automatisierungsseite die Einstellungen der Auto-Khan-Karte."
+          },
+          "attack_from": {
+            "description": "Wähle eine Hauptburg oder einen Außenposten im Großen Imperium als Quelle der Khanlager-Angriffe.",
+            "label": "Angriff von",
+            "recommendation": "Nutze nach Möglichkeit einen Außenposten mit deiner Angriffsarmee."
+          },
+          "camp_attack_preset": {
+            "description": "Wähle eine gespeicherte Angriffsvorlage für regelmäßige Khanlager-Angriffe.",
+            "label": "Lager-Angriffsvorlage",
+            "recommendation": "Erstelle zuerst deine regelmäßige Khan-Angriffsvorlage."
+          },
+          "defend_at": {
+            "description": "Khanvergeltungen treffen die hier angezeigte Hauptburg des Großen Imperiums; dieses Feld ist schreibgeschützt.",
+            "label": "Verteidigung in"
+          },
+          "main_defense_preset": {
+            "description": "Wähle eine gespeicherte Verteidigungsvorlage, die vor Vergeltungen in der Hauptburg erneut angewendet wird.",
+            "label": "Hauptburg-Verteidigungsvorlage",
+            "recommendation": "Erstelle deine regelmäßige Khan-Verteidigungsvorlage und bereite Truppen und Werkzeuge vor."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto-Khan-Einstellungen für Burg, Vorlagen und Reise",
+          "caption": "Bereite beide Vorlagen und die Hauptburgverteidigung vor, bevor du die Angriffskette aktivierst."
+        },
+        "title": "Burgen, Vorlagen und Reise auswählen"
+      },
+      "protection": {
+        "image": {
+          "alt": "Illustrativer Schutz der Hauptburgmauer für Auto Khan",
+          "caption": "Der Mauerschutz gilt nur, wenn die Hauptburg als Angriffsquelle dient."
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "Löse den Schutz der Hauptburg aus, sobald so viele Offensivtruppen an der Mauer stehen würden.",
+            "label": "Grenze für offensive Mauereinheiten",
+            "recommendation": "1.000 offensive Mauereinheiten."
+          },
+          "outpost_source": {
+            "description": "Dieser Mauerschutz ist deaktiviert, wenn ein Außenposten angreift und die Hauptburg getrennt verteidigt.",
+            "label": "Außenposten als Quelle"
+          },
+          "protect_offense": {
+            "description": "Bei Angriffen aus der Hauptburg öffne ihre Tore und pausiere Khan, wenn zu viele Offensivtruppen die Mauer verteidigen würden.",
+            "label": "Offensive Truppen an der Hauptburgmauer schützen",
+            "recommendation": "Ein, wenn die Hauptburg Angriffe liefert."
+          }
+        },
+        "title": "Hauptburgmauer schützen"
+      },
+      "rage": {
+        "image": {
+          "alt": "Illustrative Auto-Khan-Einstellungen für Wut und Angriffsberechtigung",
+          "caption": "Der zeitlich begrenzte Wutpunkte-Booster ist etwas anderes als Wutbanner."
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "Stoppe neue Lagerangriffe, während Wutverarbeitung, Abklingzeiten und Verteidigung weiterlaufen.",
+            "label": "Automatische Khanangriffe sperren",
+            "recommendation": "Aus für regelmäßige Lagerangriffe."
+          },
+          "max_rage_chain": {
+            "description": "Begrenze die akzeptierten Vergeltungen im aktuellen Ereignis, bevor neue Lagerangriffe stoppen; 0 entfernt die Grenze.",
+            "label": "Maximale Wutserie",
+            "recommendation": "0, wenn du keine Vergeltungsgrenze brauchst."
+          },
+          "rage_booster": {
+            "description": "Erlaube neue automatische Lagerangriffe nur, solange der zeitlich begrenzte Wutpunkte-Booster aktiv ist.",
+            "label": "Wutpunkte-Booster erforderlich",
+            "recommendation": "Aus, außer du willst nur mit Booster angreifen."
+          },
+          "rage_continues": {
+            "description": "Eine Wutseriengrenze stoppt weder Auslösungen bei voller Wut noch Abklingzeiten oder die Wiederherstellung der Verteidigung.",
+            "label": "Wutverarbeitung läuft weiter"
+          },
+          "trigger_full_rage": {
+            "description": "Provoziere eine Khanvergeltung, wenn die Wut voll ist.",
+            "label": "Khan bei voller Wut auslösen",
+            "recommendation": "Ein, wenn die Hauptburg zur Verteidigung bereit ist."
+          }
+        },
+        "title": "Wut und Angriffsberechtigung festlegen"
+      }
+    },
+    "feature": {
+      "description": "Auto Khan greift das Khanlager an, überspringt Abklingzeiten, löst Vergeltungen bei voller Wut aus und hält die Verteidigung der Hauptburg bereit.",
+      "expectation": "Bei festgelegten Grenzen oder Ressourcenmangel pausieren neue Lagerangriffe, während die Hauptburg geschützt wird; eingehende Spielerangriffe bleiben Aufgabe von Auto Station.",
+      "name": "Automatischer Khan",
+      "summary": "Verkette Khanlager-Angriffe und verteidige Vergeltungen in deiner Hauptburg"
+    },
+    "recommendationIntro": "Empfohlene Werte beschreiben die regelmäßige Nutzung von Auto Khan; sie sind Hinweise und ändern gespeicherte Einstellungen nicht."
   }
 }

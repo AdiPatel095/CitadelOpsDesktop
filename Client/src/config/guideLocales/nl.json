@@ -31,7 +31,10 @@
     "nomadPreviewTitle": "Instelvoorbeeld voor Auto Nomaden/Samoerai",
     "advisorGuideIntro": "Volg deze stappen om Auto Adviseur in te stellen; selecteer een voorbeeldpaneel om het te vergroten.",
     "advisorGuideTitle": "Gids voor Auto Adviseur",
-    "advisorPreviewTitle": "Instelvoorbeeld voor Auto Adviseur"
+    "advisorPreviewTitle": "Instelvoorbeeld voor Auto Adviseur",
+    "khanGuideIntro": "Volg deze stappen om Automatische Khan in te stellen; kies een voorbeeldpaneel om het te vergroten.",
+    "khanGuideTitle": "Handleiding voor Automatische Khan",
+    "khanPreviewTitle": "Voorbeeld van Automatische Khan-instelling"
   },
   "autoTower": {
     "recommendationIntro": "Dit zijn aanbevelingen voor regelmatig gebruik; controleer ze voordat je opslaat.",
@@ -446,6 +449,48 @@
       "maximum": "Maximumaantal aanvallen: 9.999",
       "time": "Ongebruikte evenementtijd: 30 minuten",
       "title": "Voorbeeld van reeksomvang"
+    },
+    "khanCooldowns": {
+      "long": "Reserveer 5-uurs- en 24-uursversnellers voor andere taken",
+      "pause": "Nieuwe aanvallen pauzeren bij te weinig bruikbare versnellers",
+      "short": "Bewaar 1 min / 5 min / 10 min / 30 min / 1 uur: elk 0 voorwerpen",
+      "skip": "Elke kampwachttijd overslaan: aan",
+      "title": "Voorbeeld van tijdversnellerreserves"
+    },
+    "khanLimits": {
+      "daily": "Normale aanvallen per dag: 0, geen extra limiet",
+      "end": "Stop nieuwe aanvallen 5 minuten voor het einde",
+      "points": "Stop bij Nomadenpunten: 0, uitgeschakeld",
+      "title": "Voorbeeld van stoplimieten",
+      "tools": "Verdedigingsgereedschap aanvullen: aan indien gewenst"
+    },
+    "khanProtection": {
+      "gate": "Open hoofdpoorten en pauzeer Khan bij de drempel",
+      "outpost": "Buitenpost als bron: bescherming uit",
+      "source": "Geldt bij aanvallen uit het hoofdkasteel",
+      "threshold": "Offensieve muureenheden: 1.000",
+      "title": "Voorbeeld van hoofdmuurbescherming"
+    },
+    "khanRage": {
+      "attacks": "Automatische kampaanvallen: niet vergrendeld",
+      "booster": "Tijdelijke Woedepuntenboost vereist: uit",
+      "chain": "Maximale woedeketen: 0, geen extra limiet",
+      "title": "Voorbeeld van woedebediening",
+      "trigger": "Vergelding bij volle woede: aan"
+    },
+    "khanSave": {
+      "defense": "Controleer de hoofdverdediging voor vergelding",
+      "enable": "Schakel Automatische Khan in op de Automatisering-kaart",
+      "priority": "Automatisch Stationeren behandelt spelersaanvallen apart",
+      "save": "Sla instellingen op na voorbereiding van beide sjablonen",
+      "title": "Voorbeeld van opslaan en inschakelen"
+    },
+    "khanSetup": {
+      "defense": "Verdedigen bij: hoofdkasteel in het Grote Rijk",
+      "presets": "Opgeslagen Khan-aanvals- en hoofdverdedigingssjablonen",
+      "source": "Aanvallen vanuit: buitenpost in het Grote Rijk",
+      "title": "Voorbeeld van Khan-instelling",
+      "travel": "Reisveer voor snel reizen"
     }
   },
   "autoStation": {
@@ -1176,5 +1221,213 @@
       "summary": "Start één Nomaden- of Samoerai-Adviseurreeks naar beschikbare middelen"
     },
     "recommendationIntro": "Aanbevolen waarden beschrijven gewoon gebruik van Auto Adviseur; ze zijn advies en veranderen opgeslagen instellingen niet."
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "Bewaar 10 min",
+            "description": "Houd zoveel tijdversnellers van 10 min ongebruikt.",
+            "recommendation": "0 voor normale Khan-reeksen."
+          },
+          "keep_1m": {
+            "label": "Bewaar 1 min",
+            "description": "Houd zoveel tijdversnellers van 1 min ongebruikt.",
+            "recommendation": "0 voor normale Khan-reeksen."
+          },
+          "keep_24h": {
+            "label": "Bewaar 24 uur",
+            "recommendation": "Reserveer de voorraad die je nodig hebt voor bouwen of andere activiteiten.",
+            "description": "Houd zoveel tijdversnellers van 24 uur ongebruikt."
+          },
+          "keep_30m": {
+            "label": "Bewaar 30 min",
+            "description": "Houd zoveel tijdversnellers van 30 min ongebruikt.",
+            "recommendation": "0 voor normale Khan-reeksen."
+          },
+          "keep_5h": {
+            "label": "Bewaar 5 uur",
+            "recommendation": "Reserveer de voorraad die je nodig hebt voor bouwen of andere activiteiten.",
+            "description": "Houd zoveel tijdversnellers van 5 uur ongebruikt."
+          },
+          "keep_5m": {
+            "label": "Bewaar 5 min",
+            "description": "Houd zoveel tijdversnellers van 5 min ongebruikt.",
+            "recommendation": "0 voor normale Khan-reeksen."
+          },
+          "keep_1h": {
+            "description": "Houd zoveel tijdversnellers van 1 uur ongebruikt.",
+            "label": "Bewaar 1 uur",
+            "recommendation": "0 voor normale Khan-reeksen."
+          },
+          "skip_cooldowns": {
+            "description": "Reserveer en gebruik genoeg tijdversnellers om kampwachttijden na aanvallen te wissen.",
+            "label": "Elke Khan-kampwachttijd overslaan",
+            "recommendation": "Aan; het huidige instellingenvenster vereist dit om op te slaan."
+          },
+          "skip_shortage": {
+            "description": "Nieuwe kampaanvallen pauzeren als bruikbare tijdversnellers de benodigde wachttijd niet kunnen dekken.",
+            "label": "Onvoldoende bruikbare tijdversnellers"
+          }
+        },
+        "image": {
+          "alt": "Illustratieve instellingen voor het overslaan van wachttijden en tijdversnellerreserves van Automatische Khan",
+          "caption": "Reservewaarden tellen voorwerpen, geen minuten."
+        },
+        "title": "Wachttijden en reserves instellen"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "Daglimiet voor normale aanvallen",
+            "description": "Stop nieuwe kampaanvallen van deze automatisering bij het accountbrede dagtotaal van normale aanvallen; 0 schakelt deze limiet uit.",
+            "recommendation": "0 tenzij je een accountbrede limiet nodig hebt."
+          },
+          "event_end": {
+            "label": "Stop voor einde evenement",
+            "description": "Stop nieuwe kampaanvallen dit aantal minuten voor het einde van het evenement.",
+            "recommendation": "5 minuten."
+          },
+          "nomad_points": {
+            "description": "Stop bij deze gemelde score nieuwe Khan-aanvallen, roep vertrokken Khan-aanvallen terug en open de hoofdpoorten; 0 schakelt deze stop uit.",
+            "label": "Stop bij Nomadenpunten",
+            "recommendation": "0 tenzij je bij een gekozen score wilt stoppen en beschermen."
+          },
+          "replenish_tools": {
+            "description": "Vervang ontbrekend gereedschap uit het verdedigingssjabloon via geschikte aanbiedingen en wijs pakketten met robijnprijzen af.",
+            "label": "Verdedigingsgereedschap aanvullen",
+            "recommendation": "Aan als je geschikte automatische aankopen wilt."
+          }
+        },
+        "image": {
+          "alt": "Illustratieve instellingen voor punten, gereedschap en daglimiet van Automatische Khan",
+          "caption": "Een positieve stop bij Nomadenpunten haalt ook uitgaande Khan-aanvallen terug en opent de poorten van het hoofdkasteel."
+        },
+        "title": "Punten-, voorraad- en daglimieten instellen"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "Instellingen opslaan",
+            "description": "Sla gekozen kastelen, sjablonen, woedebediening, limieten, tijdversnellerreserves en bescherming op."
+          },
+          "enable_switch": {
+            "description": "Activeer Automatische Khan op de Automatisering-kaart nadat je de hoofdverdediging hebt gecontroleerd.",
+            "label": "Schakelaar voor Automatische Khan",
+            "recommendation": "Aan nadat de instellingen zijn opgeslagen en de verdediging is voorbereid."
+          },
+          "station_priority": {
+            "description": "Automatisch Stationeren behandelt inkomende spelersaanvallen los van Khan-vergeldingen.",
+            "label": "Prioriteit van Automatisch Stationeren"
+          }
+        },
+        "image": {
+          "alt": "Illustratief verloop van opslaan en activeren van Automatische Khan",
+          "caption": "Controleer de verdediging van het hoofdkasteel voordat je Khan-vergeldingen activeert."
+        },
+        "title": "Automatische Khan opslaan en inschakelen"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Reisversnelling met paarden",
+            "recommendation": "Reisveer voor snel reizen.",
+            "description": "Kies reizen met veren, munten of robijnen voor kampaanvallen."
+          },
+          "open_settings": {
+            "label": "Instellingen openen",
+            "description": "Kies op de pagina Automatisering de instellingenknop op de kaart Automatische Khan."
+          },
+          "attack_from": {
+            "description": "Kies een hoofdkasteel of buitenpost in het Grote Rijk die de Khan-kampaanvallen levert.",
+            "label": "Aanvallen vanuit",
+            "recommendation": "Gebruik zo mogelijk een buitenpost met je aanvalsleger."
+          },
+          "camp_attack_preset": {
+            "description": "Kies een opgeslagen aanvalssjabloon voor normale Khan-kampaanvallen.",
+            "label": "Sjabloon voor kampaanval",
+            "recommendation": "Maak eerst je gewone Khan-aanvalssjabloon."
+          },
+          "defend_at": {
+            "description": "Khan-vergeldingen worden verdedigd bij het hier getoonde hoofdkasteel in het Grote Rijk; dit veld is alleen-lezen.",
+            "label": "Verdedigen bij"
+          },
+          "main_defense_preset": {
+            "description": "Kies een opgeslagen verdedigingssjabloon dat voor vergeldingen opnieuw op het hoofdkasteel wordt toegepast.",
+            "label": "Sjabloon voor hoofdverdediging",
+            "recommendation": "Maak je gewone Khan-verdedigingssjabloon en bereid troepen en gereedschap voor."
+          }
+        },
+        "image": {
+          "alt": "Illustratieve kasteel-, sjabloon- en reisinstellingen van Automatische Khan",
+          "caption": "Bereid beide sjablonen en de hoofdverdediging voor voordat je de aanvalsketen activeert."
+        },
+        "title": "Kastelen, sjablonen en reizen kiezen"
+      },
+      "protection": {
+        "image": {
+          "alt": "Illustratieve bescherming van de muur van het hoofdkasteel voor Automatische Khan",
+          "caption": "Deze muurbescherming geldt alleen als het hoofdkasteel aanvallen verzendt."
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "Activeer die bescherming wanneer dit aantal offensieve eenheden op de muur wordt bereikt.",
+            "label": "Drempel voor offensieve muureenheden",
+            "recommendation": "1.000 offensieve muureenheden."
+          },
+          "outpost_source": {
+            "description": "Deze bescherming is uitgeschakeld als een buitenpost aanvallen verzendt en het hoofdkasteel apart verdedigt.",
+            "label": "Buitenpost als bron"
+          },
+          "protect_offense": {
+            "description": "Open bij aanvallen uit het hoofdkasteel de poorten en pauzeer Khan als te veel offensieve troepen de muur zouden verdedigen.",
+            "label": "Offensieve troepen op de hoofdmuur beschermen",
+            "recommendation": "Aan als het hoofdkasteel de aanvallen levert."
+          }
+        },
+        "title": "De muur van het hoofdkasteel beschermen"
+      },
+      "rage": {
+        "image": {
+          "alt": "Illustratieve woede- en aanvalsinstellingen van Automatische Khan",
+          "caption": "De tijdelijke Woedepuntenboost is iets anders dan woedevlaggen."
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "Stop nieuwe kampaanvallen terwijl woedeverwerking, wachttijden en verdediging doorgaan.",
+            "label": "Automatische Khan-aanvallen vergrendelen",
+            "recommendation": "Uit voor normale kampaanvallen."
+          },
+          "max_rage_chain": {
+            "description": "Beperk het aantal aanvaarde vergeldingen in het huidige evenement voordat nieuwe kampaanvallen stoppen; 0 heft deze limiet op.",
+            "label": "Maximale woedeketen",
+            "recommendation": "0 tenzij je vergeldingen wilt begrenzen."
+          },
+          "rage_booster": {
+            "description": "Sta nieuwe automatische kampaanvallen alleen toe terwijl de tijdelijke Woedepuntenboost actief is.",
+            "label": "Woedepuntenboost vereisen",
+            "recommendation": "Uit tenzij je alleen met boost wilt aanvallen."
+          },
+          "rage_continues": {
+            "description": "Een woedeketenlimiet stopt noch het uitlokken bij volle woede, noch de wachttijden of het herstel van de verdediging.",
+            "label": "Woedeverwerking gaat door"
+          },
+          "trigger_full_rage": {
+            "description": "Lok een Khan-vergelding uit wanneer de woede vol is.",
+            "label": "Khan uitlokken bij volle woede",
+            "recommendation": "Aan wanneer het hoofdkasteel klaar is om te verdedigen."
+          }
+        },
+        "title": "Woede en aanvalsrechten instellen"
+      }
+    },
+    "feature": {
+      "description": "Automatische Khan valt het Khan-kamp aan, wist wachttijden, lokt vergelding uit bij volle woede en onderhoudt de verdediging van het hoofdkasteel.",
+      "expectation": "Nieuwe kampaanvallen pauzeren bij ingestelde limieten of tekort aan middelen terwijl het hoofdkasteel beschermd wordt; inkomende spelersaanvallen blijven de taak van Automatisch Stationeren.",
+      "name": "Automatische Khan",
+      "summary": "Schakel Khan-kampaanvallen aaneen en verdedig vergelding bij je hoofdkasteel"
+    },
+    "recommendationIntro": "Aanbevolen waarden beschrijven normaal gebruik van Automatische Khan; ze zijn richtlijnen en wijzigen opgeslagen instellingen niet."
   }
 }

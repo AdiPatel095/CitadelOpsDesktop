@@ -31,7 +31,10 @@
     "nomadPreviewTitle": "Példa az Automatikus nomádok/szamurájok beállítására",
     "advisorGuideIntro": "Az Automatikus tanácsadó beállításához kövesd ezeket a lépéseket; a mintapanelt kiválasztva nagyíthatod ki.",
     "advisorGuideTitle": "Automatikus tanácsadó útmutató",
-    "advisorPreviewTitle": "Példa az Automatikus tanácsadó beállítására"
+    "advisorPreviewTitle": "Példa az Automatikus tanácsadó beállítására",
+    "khanGuideIntro": "Kövesd ezeket a lépéseket az Automatikus kán beállításához; válassz példapanelt a nagyításhoz.",
+    "khanGuideTitle": "Automatikus kán útmutató",
+    "khanPreviewTitle": "Automatikus kán beállításának példája"
   },
   "autoTower": {
     "recommendationIntro": "Ezek a szokásos használatra vonatkozó ajánlások; mentés előtt nézd át őket.",
@@ -446,6 +449,48 @@
       "maximum": "Maximális támadások: 9 999",
       "time": "Fel nem használt eseményidő: 30 perc",
       "title": "Példa a sorozat méretére"
+    },
+    "khanCooldowns": {
+      "long": "Foglalj le 5 és 24 órás időugrásokat más feladatokra",
+      "pause": "Az új támadások szünetelnek, ha nincs elég használható időugrás",
+      "short": "1 perc / 5 perc / 10 perc / 30 perc / 1 óra megtartása: mindegyikből 0 tárgy",
+      "skip": "Minden tábori várakozás átugrása: be",
+      "title": "Időugrás-tartalékok példája"
+    },
+    "khanLimits": {
+      "daily": "Napi normál támadások: 0, nincs további korlát",
+      "end": "Új támadások leállítása 5 perccel a vég előtt",
+      "points": "Leállítás nomádpontnál: 0, kikapcsolva",
+      "title": "Megállítási korlátok példája",
+      "tools": "Védelmi eszközök pótlása: be, ha szeretnéd"
+    },
+    "khanProtection": {
+      "gate": "Nyisd ki a főkapukat és szüneteltesd a kánt a küszöbnél",
+      "outpost": "Előőrs mint forrás: védelem kikapcsolva",
+      "source": "Fővárból induló támadásokra érvényes",
+      "threshold": "Támadó falegységek: 1 000",
+      "title": "Fővárfal-védelem példája"
+    },
+    "khanRage": {
+      "attacks": "Automatikus tábori támadások: nincs zárolás",
+      "booster": "Időzített dühpont-erősítő szükséges: ki",
+      "chain": "Maximális düh-lánc: 0, nincs további korlát",
+      "title": "Dühvezérlés példája",
+      "trigger": "Megtorlás teljes dühnél: be"
+    },
+    "khanSave": {
+      "defense": "Ellenőrizd a fővédelmet a megtorlás előtt",
+      "enable": "Kapcsold be az Automatikus kánt az Automatizálás kártyán",
+      "priority": "Az Automatikus állomásoztatás külön kezeli a játékostámadásokat",
+      "save": "Mentsd a beállításokat a két beállítás előkészítése után",
+      "title": "Mentési és bekapcsolási folyamat példája"
+    },
+    "khanSetup": {
+      "defense": "Védelem itt: a Nagy Birodalom fővára",
+      "presets": "Mentett kántámadási és fővédelmi beállítások",
+      "source": "Támadás innen: nagy birodalmi előőrs",
+      "title": "Kánbeállítások példája",
+      "travel": "Utazótoll gyors utazáshoz"
     }
   },
   "autoStation": {
@@ -1176,5 +1221,213 @@
       "summary": "Indíts egy erőforrásokhoz igazított nomád vagy szamuráj tanácsadói sorozatot"
     },
     "recommendationIntro": "Az ajánlott értékek az Automatikus tanácsadó szokásos használatát írják le; útmutatók, és nem módosítják a mentett beállításokat."
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "10 perc megtartása",
+            "description": "Ennyi 10 perces időugrás-tárgyat hagyj felhasználatlanul.",
+            "recommendation": "0 a szokásos kánláncokhoz."
+          },
+          "keep_1m": {
+            "label": "1 perc megtartása",
+            "description": "Ennyi 1 perces időugrás-tárgyat hagyj felhasználatlanul.",
+            "recommendation": "0 a szokásos kánláncokhoz."
+          },
+          "keep_24h": {
+            "label": "24 óra megtartása",
+            "recommendation": "Tartsd meg az építéshez vagy más tevékenységhez szükséges készletet.",
+            "description": "Ennyi 24 órás időugrás-tárgyat hagyj felhasználatlanul."
+          },
+          "keep_30m": {
+            "label": "30 perc megtartása",
+            "description": "Ennyi 30 perces időugrás-tárgyat hagyj felhasználatlanul.",
+            "recommendation": "0 a szokásos kánláncokhoz."
+          },
+          "keep_5h": {
+            "label": "5 óra megtartása",
+            "recommendation": "Tartsd meg az építéshez vagy más tevékenységhez szükséges készletet.",
+            "description": "Ennyi 5 órás időugrás-tárgyat hagyj felhasználatlanul."
+          },
+          "keep_5m": {
+            "label": "5 perc megtartása",
+            "description": "Ennyi 5 perces időugrás-tárgyat hagyj felhasználatlanul.",
+            "recommendation": "0 a szokásos kánláncokhoz."
+          },
+          "keep_1h": {
+            "description": "Ennyi 1 órás időugrás-tárgyat hagyj felhasználatlanul.",
+            "label": "1 óra megtartása",
+            "recommendation": "0 a szokásos kánláncokhoz."
+          },
+          "skip_cooldowns": {
+            "description": "Foglalj le és használj elég időugrás-tárgyat a tábori várakozások törléséhez a támadások után.",
+            "label": "Minden kántábori várakozás átugrása",
+            "recommendation": "Be; a jelenlegi beállítási ablak ezt megköveteli a mentéshez."
+          },
+          "skip_shortage": {
+            "description": "Az új tábori támadások szünetelnek, ha a felhasználható időugrások nem fedezik a szükséges várakozást.",
+            "label": "Nincs elég használható időugrás"
+          }
+        },
+        "image": {
+          "alt": "Az Automatikus kán várakozási időinek és időugrás-tartalékainak szemléltetése",
+          "caption": "A tartalékok tárgyakat számolnak, nem perceket."
+        },
+        "title": "Várakozás és tartalékok beállítása"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "Normál támadások napi korlátja",
+            "description": "Állítsd le az automatizálás új tábori támadásait a fiók napi normál támadási számlálójánál; a 0 kikapcsolja a korlátot.",
+            "recommendation": "0, ha nincs szükséged a teljes fiókra vonatkozó korlátra."
+          },
+          "event_end": {
+            "label": "Leállítás az esemény vége előtt",
+            "description": "Az esemény vége előtt ennyi perccel állítsd le az új tábori támadásokat.",
+            "recommendation": "5 perc."
+          },
+          "nomad_points": {
+            "description": "A jelzett pontszámnál állítsd le az új kántámadásokat, hívd vissza az úton lévőket, és nyisd ki a főkapukat; a 0 kikapcsolja ezt.",
+            "label": "Leállítás nomádpontnál",
+            "recommendation": "0, hacsak nem szeretnél megállni és védekezni egy kiválasztott pontszámnál."
+          },
+          "replenish_tools": {
+            "description": "Pótold a védelmi beállítás hiányzó eszközeit megfelelő ajánlatokból, a rubinos csomagokat elutasítva.",
+            "label": "Védelmi eszközök pótlása",
+            "recommendation": "Be, ha megfelelő automatikus vásárlást szeretnél."
+          }
+        },
+        "image": {
+          "alt": "Az Automatikus kán pont-, eszköz- és napi korlátainak szemléltetése",
+          "caption": "A pozitív nomádpont-megállítás visszahívja az úton lévő kántámadásokat és kinyitja a fővár kapuit is."
+        },
+        "title": "Pont-, készlet- és napi korlátok beállítása"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "Beállítások mentése",
+            "description": "Mentsd a kiválasztott várakat, beállításokat, dühvezérlést, korlátokat, időugrás-tartalékokat és védelmet."
+          },
+          "enable_switch": {
+            "description": "Kapcsold be az Automatikus kánt az Automatizálás kártyán a fővédelem ellenőrzése után.",
+            "label": "Automatikus kán kapcsoló",
+            "recommendation": "Be a beállítások mentése és a védelem előkészítése után."
+          },
+          "station_priority": {
+            "description": "Az Automatikus állomásoztatás a bejövő játékostámadásokat a kánmegtorlásoktól külön kezeli.",
+            "label": "Az Automatikus állomásoztatás elsőbbsége"
+          }
+        },
+        "image": {
+          "alt": "Az Automatikus kán mentésének és bekapcsolásának szemléltetése",
+          "caption": "Ellenőrizd a fővár védelmét a kánmegtorlások aktiválása előtt."
+        },
+        "title": "Automatikus kán mentése és bekapcsolása"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Lovas utazás gyorsítása",
+            "recommendation": "Utazótoll a gyors úthoz.",
+            "description": "Válassz tollas, érmés vagy rubinos utazást a tábori támadásokhoz."
+          },
+          "open_settings": {
+            "label": "Beállítások megnyitása",
+            "description": "Az Automatizálás oldalon válaszd az Automatikus kán kártya beállításgombját."
+          },
+          "attack_from": {
+            "description": "Válassz fővárat vagy előőrsöt a Nagy Birodalomban a kántábori támadásokhoz.",
+            "label": "Támadás innen",
+            "recommendation": "Ha van rá lehetőség, használd az előőrsöt a támadó seregeddel."
+          },
+          "camp_attack_preset": {
+            "description": "Válassz mentett támadási beállítást a szokásos kántábori támadásokhoz.",
+            "label": "Tábori támadás beállítása",
+            "recommendation": "Előbb hozd létre a szokásos kántámadási beállításodat."
+          },
+          "defend_at": {
+            "description": "A kánmegtorlásokat az itt látható nagy birodalmi fővárban véded; a mező csak olvasható.",
+            "label": "Védelem itt"
+          },
+          "main_defense_preset": {
+            "description": "Válassz mentett védelmi beállítást, amelyet a megtorlások előtt újra alkalmaz a fővárban.",
+            "label": "Fővári védelmi beállítás",
+            "recommendation": "Hozd létre a szokásos kánvédelmi beállításodat, és készítsd elő a katonákat és eszközöket."
+          }
+        },
+        "image": {
+          "alt": "Az Automatikus kán várának, beállításainak és utazásának szemléltetése",
+          "caption": "Készítsd elő mindkét beállítást és a fővár védelmét a támadási lánc bekapcsolása előtt."
+        },
+        "title": "Várak, beállítások és utazás kiválasztása"
+      },
+      "protection": {
+        "image": {
+          "alt": "Az Automatikus kán fővárfal-védelmének szemléltetése",
+          "caption": "A fal védelme csak akkor érvényes, ha a fővárból indulnak a támadások."
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "Indítsd el a fővár védelmét, ha ennyi támadó egység kerülne a falra.",
+            "label": "Támadó falegységek küszöbe",
+            "recommendation": "1 000 támadó falegység."
+          },
+          "outpost_source": {
+            "description": "A védelem kikapcsol, ha az előőrs indít támadásokat, és a fővár külön védekezik.",
+            "label": "Előőrs mint forrás"
+          },
+          "protect_offense": {
+            "description": "Ha a fővárból támadsz, nyisd ki a kapuit és szüneteltesd a kánt, ha túl sok támadó katona védené a falat.",
+            "label": "Támadó katonák védelme a fővár falán",
+            "recommendation": "Be, ha a fővár indítja a támadásokat."
+          }
+        },
+        "title": "A fővár falának védelme"
+      },
+      "rage": {
+        "image": {
+          "alt": "Az Automatikus kán dühének és támadási engedélyeinek szemléltetése",
+          "caption": "Az időzített dühpont-erősítő különbözik a dühzászlóktól."
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "Állítsd le az új tábori támadásokat, miközben a dühkezelés, várakozások és védelem folytatódnak.",
+            "label": "Automatikus kántámadások zárolása",
+            "recommendation": "Ki a szokásos tábori támadásokhoz."
+          },
+          "max_rage_chain": {
+            "description": "Korlátozd az aktuális eseményben elfogadott megtorlásokat, mielőtt az új tábori támadások leállnak; a 0 eltávolítja a korlátot.",
+            "label": "Maximális düh-lánc",
+            "recommendation": "0, ha nincs szükséged megtorlási korlátra."
+          },
+          "rage_booster": {
+            "description": "Csak aktív időzített dühpont-erősítővel engedélyezd az új automatikus tábori támadásokat.",
+            "label": "Dühpont-erősítő megkövetelése",
+            "recommendation": "Ki, hacsak nem akarsz csak erősítővel támadni."
+          },
+          "rage_continues": {
+            "description": "A düh-lánc korlátja nem állítja le a teljes dühnél történő kiváltást, várakozásokat vagy a védelem helyreállítását.",
+            "label": "A dühkezelés folytatódik"
+          },
+          "trigger_full_rage": {
+            "description": "Válts ki kánmegtorlást teljes düh esetén.",
+            "label": "Kán kiváltása teljes dühnél",
+            "recommendation": "Be, amikor a fővár készen áll a védelemre."
+          }
+        },
+        "title": "Düh és támadási engedélyek beállítása"
+      }
+    },
+    "feature": {
+      "description": "Az Automatikus kán megtámadja a kán táborát, feloldja a várakozási időket, teljes düh esetén megtorlást vált ki, és fenntartja a fővár védelmét.",
+      "expectation": "Az új tábori támadások megállnak a beállított korlátoknál vagy erőforráshiányban, miközben a fővár védelem alatt marad; a bejövő játékostámadásokat az Automatikus állomásoztatás kezeli.",
+      "name": "Automatikus kán",
+      "summary": "Láncold össze a kántábor támadásait, és védd meg a fővárat a megtorlástól"
+    },
+    "recommendationIntro": "Az ajánlott értékek az Automatikus kán szokásos használatát írják le; útmutatók, és nem módosítják a mentett beállításokat."
   }
 }

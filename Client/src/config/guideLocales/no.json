@@ -31,7 +31,10 @@
     "nomadPreviewTitle": "Oppsetteksempel for Auto Nomader/Samuraier",
     "advisorGuideIntro": "Følg disse trinnene for å sette opp Auto Rådgiver; velg et eksempelpanel for å forstørre det.",
     "advisorGuideTitle": "Veiledning for Auto Rådgiver",
-    "advisorPreviewTitle": "Oppsetteksempel for Auto Rådgiver"
+    "advisorPreviewTitle": "Oppsetteksempel for Auto Rådgiver",
+    "khanGuideIntro": "Følg disse trinnene for å sette opp Automatisk Khan; velg et eksempelpanel for å forstørre det.",
+    "khanGuideTitle": "Veiledning for Automatisk Khan",
+    "khanPreviewTitle": "Eksempel på oppsett av Automatisk Khan"
   },
   "autoTower": {
     "recommendationIntro": "Disse anbefalingene gjelder vanlig bruk; gå gjennom dem før du lagrer.",
@@ -446,6 +449,48 @@
       "maximum": "Maksimale angrep: 9 999",
       "time": "Ubrukt hendelsestid: 30 minutter",
       "title": "Eksempel på sekvensstørrelse"
+    },
+    "khanCooldowns": {
+      "long": "Reserver tidsforkortere på 5 og 24 timer til andre oppgaver",
+      "pause": "Nye angrep pauses hvis brukbare tidsforkortere mangler",
+      "short": "Behold 1 min / 5 min / 10 min / 30 min / 1 time: 0 gjenstander av hver",
+      "skip": "Hopp over hver leirventetid: på",
+      "title": "Eksempel på tidsforkorterreserver"
+    },
+    "khanLimits": {
+      "daily": "Normale angrep per dag: 0, ingen ekstra grense",
+      "end": "Stopp nye angrep 5 minutter før hendelsen slutter",
+      "points": "Stopp ved nomadepoeng: 0, avslått",
+      "title": "Eksempel på stoppgrenser",
+      "tools": "Fyll på forsvarsverktøy: på hvis ønskelig"
+    },
+    "khanProtection": {
+      "gate": "Åpne hovedportene og pause Khan ved grensen",
+      "outpost": "Utpost som kilde: vern avslått",
+      "source": "Gjelder angrep fra hovedborgen",
+      "threshold": "Offensive murenheter: 1 000",
+      "title": "Eksempel på vern av hovedmuren"
+    },
+    "khanRage": {
+      "attacks": "Automatiske leirangrep: ulåst",
+      "booster": "Tidsbegrenset raseripoeng-booster kreves: av",
+      "chain": "Maksimal raserikjede: 0, ingen ekstra grense",
+      "title": "Eksempel på raserikontroller",
+      "trigger": "Gjengjeldelse ved fullt raseri: på"
+    },
+    "khanSave": {
+      "defense": "Kontroller hovedforsvaret før gjengjeldelse",
+      "enable": "Aktiver Automatisk Khan på Automatisering-kortet",
+      "priority": "Automatisk stasjonering håndterer spillerangrep separat",
+      "save": "Lagre innstillinger etter at begge malene er klare",
+      "title": "Eksempel på lagring og aktivering"
+    },
+    "khanSetup": {
+      "defense": "Forsvar ved: hovedborg i Det store riket",
+      "presets": "Lagrede Khan-angreps- og hovedforsvarsmaler",
+      "source": "Angrip fra: utpost i Det store riket",
+      "title": "Eksempel på Khan-oppsett",
+      "travel": "Reisefjær for rask reise"
     }
   },
   "autoStation": {
@@ -1176,5 +1221,213 @@
       "summary": "Start én ressursberegnet nomade- eller samurairådgiversekvens"
     },
     "recommendationIntro": "Anbefalte verdier beskriver vanlig bruk av Auto Rådgiver; de er veiledning og endrer ikke lagrede innstillinger."
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "Behold 10 min",
+            "description": "La så mange tidsforkortere på 10 min være ubrukt.",
+            "recommendation": "0 for vanlige Khan-kjeder."
+          },
+          "keep_1m": {
+            "label": "Behold 1 min",
+            "description": "La så mange tidsforkortere på 1 min være ubrukt.",
+            "recommendation": "0 for vanlige Khan-kjeder."
+          },
+          "keep_24h": {
+            "label": "Behold 24 timer",
+            "recommendation": "Reserver beholdningen du trenger til bygging eller andre aktiviteter.",
+            "description": "La så mange tidsforkortere på 24 timer være ubrukt."
+          },
+          "keep_30m": {
+            "label": "Behold 30 min",
+            "description": "La så mange tidsforkortere på 30 min være ubrukt.",
+            "recommendation": "0 for vanlige Khan-kjeder."
+          },
+          "keep_5h": {
+            "label": "Behold 5 timer",
+            "recommendation": "Reserver beholdningen du trenger til bygging eller andre aktiviteter.",
+            "description": "La så mange tidsforkortere på 5 timer være ubrukt."
+          },
+          "keep_5m": {
+            "label": "Behold 5 min",
+            "description": "La så mange tidsforkortere på 5 min være ubrukt.",
+            "recommendation": "0 for vanlige Khan-kjeder."
+          },
+          "keep_1h": {
+            "description": "La så mange tidsforkortere på 1 time være ubrukt.",
+            "label": "Behold 1 time",
+            "recommendation": "0 for vanlige Khan-kjeder."
+          },
+          "skip_cooldowns": {
+            "description": "Reserver og bruk nok tidsforkortere til å rydde leirens ventetider etter angrep.",
+            "label": "Hopp over hver Khan-leirventetid",
+            "recommendation": "På; den gjeldende innstillingsdialogen krever dette for lagring."
+          },
+          "skip_shortage": {
+            "description": "Nye leirangrep pauses hvis brukbare tidsforkortere ikke dekker nødvendig ventetid.",
+            "label": "For få brukbare tidsforkortere"
+          }
+        },
+        "image": {
+          "alt": "Illustrasjon av ventetidshopp og tidsforkorterreserver for Automatisk Khan",
+          "caption": "Reserveverdier teller gjenstander, ikke minutter."
+        },
+        "title": "Still inn ventetidshopp og reserver"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "Daglig grense for normale angrep",
+            "description": "Stopp nye leirangrep fra denne automasjonen ved kontoens daglige teller for normale angrep; 0 slår av grensen.",
+            "recommendation": "0 med mindre du trenger en grense for hele kontoen."
+          },
+          "event_end": {
+            "label": "Stopp før hendelsen slutter",
+            "description": "Stopp nye leirangrep så mange minutter før hendelsen slutter.",
+            "recommendation": "5 minutter."
+          },
+          "nomad_points": {
+            "description": "Ved denne registrerte poengsummen stoppes nye Khan-angrep, angrep på vei kalles tilbake og hovedportene åpnes; 0 slår av stoppet.",
+            "label": "Stopp ved nomadepoeng",
+            "recommendation": "0 med mindre du vil stoppe og beskytte ved en valgt poengsum."
+          },
+          "replenish_tools": {
+            "description": "Erstatt manglende verktøy i forsvarsmalen fra kvalifiserte tilbud, og avvis pakker som koster rubiner.",
+            "label": "Fyll på forsvarsverktøy",
+            "recommendation": "På hvis du ønsker kvalifiserte automatiske kjøp."
+          }
+        },
+        "image": {
+          "alt": "Illustrasjon av poeng, verktøy og dagsgrense for Automatisk Khan",
+          "caption": "En positiv grense for nomadepoeng kaller også tilbake Khan-angrep på vei og åpner hovedborgens porter."
+        },
+        "title": "Still inn poeng-, forsynings- og dagsgrenser"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "Lagre innstillinger",
+            "description": "Lagre valgte borger, maler, raserikontroller, grenser, tidsforkorterreserver og beskyttelse."
+          },
+          "enable_switch": {
+            "description": "Aktiver Automatisk Khan på Automatisering-kortet etter at du har kontrollert hovedforsvaret.",
+            "label": "Bryter for Automatisk Khan",
+            "recommendation": "På etter at innstillingene er lagret og forsvaret er forberedt."
+          },
+          "station_priority": {
+            "description": "Automatisk stasjonering håndterer innkommende spillerangrep separat fra Khan-gjengjeldelser.",
+            "label": "Prioritet for Automatisk stasjonering"
+          }
+        },
+        "image": {
+          "alt": "Illustrasjon av lagring og aktivering av Automatisk Khan",
+          "caption": "Kontroller hovedborgens forsvar før du aktiverer Khan-gjengjeldelser."
+        },
+        "title": "Lagre og aktiver Automatisk Khan"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Reisefart med hest",
+            "recommendation": "Reisefjær for rask reise.",
+            "description": "Velg reise med fjær, mynter eller rubiner for leirangrep."
+          },
+          "open_settings": {
+            "label": "Åpne innstillinger",
+            "description": "Velg innstillingsknappen på Automatisk Khan-kortet på Automatisering-siden."
+          },
+          "attack_from": {
+            "description": "Velg en hovedborg eller utpost i Det store riket som sender Khan-leirangrepene.",
+            "label": "Angrip fra",
+            "recommendation": "Bruk en utpost med angrepshæren din når det er mulig."
+          },
+          "camp_attack_preset": {
+            "description": "Velg en lagret angrepsmal for vanlige Khan-leirangrep.",
+            "label": "Mal for leirangrep",
+            "recommendation": "Lag først din vanlige Khan-angrepsmal."
+          },
+          "defend_at": {
+            "description": "Khan-gjengjeldelser forsvares ved hovedborgen i Det store riket som vises her; feltet er skrivebeskyttet.",
+            "label": "Forsvar ved"
+          },
+          "main_defense_preset": {
+            "description": "Velg en lagret forsvarsmal som brukes på nytt i hovedborgen før gjengjeldelser.",
+            "label": "Mal for hovedforsvar",
+            "recommendation": "Lag din vanlige Khan-forsvarsmal og forbered tropper og verktøy."
+          }
+        },
+        "image": {
+          "alt": "Illustrasjon av borg, maler og reise for Automatisk Khan",
+          "caption": "Forbered begge malene og hovedborgens forsvar før du aktiverer angrepskjeden."
+        },
+        "title": "Velg borger, maler og reise"
+      },
+      "protection": {
+        "image": {
+          "alt": "Illustrasjon av beskyttelse av hovedborgens mur for Automatisk Khan",
+          "caption": "Murvernet gjelder bare når hovedborgen sender angrepene."
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "Utløs hovedborgvernet når offensive enheter på muren når dette antallet.",
+            "label": "Grense for offensive murenheter",
+            "recommendation": "1 000 offensive murenheter."
+          },
+          "outpost_source": {
+            "description": "Murvernet er avslått når en utpost sender angrepene og hovedborgen forsvarer seg separat.",
+            "label": "Utpost som kilde"
+          },
+          "protect_offense": {
+            "description": "Når du angriper fra hovedborgen, åpnes portene og Khan pauses hvis for mange offensive tropper ville forsvart muren.",
+            "label": "Beskytt offensive tropper på hovedborgmuren",
+            "recommendation": "På når hovedborgen sender angrepene."
+          }
+        },
+        "title": "Beskytt hovedborgens mur"
+      },
+      "rage": {
+        "image": {
+          "alt": "Illustrasjon av raseri og angrepstillatelser for Automatisk Khan",
+          "caption": "Den tidsbegrensede boosteren for raseripoeng er forskjellig fra raseribannere."
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "Stopp nye leirangrep mens raseri, ventetider og forsvar fortsetter.",
+            "label": "Lås automatiske Khan-angrep",
+            "recommendation": "Av for vanlige leirangrep."
+          },
+          "max_rage_chain": {
+            "description": "Begrens aksepterte gjengjeldelser i gjeldende hendelse før nye leirangrep stopper; 0 fjerner grensen.",
+            "label": "Maksimal raserikjede",
+            "recommendation": "0 med mindre du trenger en grense for gjengjeldelser."
+          },
+          "rage_booster": {
+            "description": "Tillat nye automatiske leirangrep bare mens den tidsbegrensede raseripoeng-boosteren er aktiv.",
+            "label": "Krev raseripoeng-booster",
+            "recommendation": "Av med mindre du bare vil angripe med booster."
+          },
+          "rage_continues": {
+            "description": "En grense for raserikjeden stopper ikke utløsning ved fullt raseri, ventetider eller gjenoppretting av forsvar.",
+            "label": "Raseriarbeidet fortsetter"
+          },
+          "trigger_full_rage": {
+            "description": "Utløs en Khan-gjengjeldelse når raseriet er fullt.",
+            "label": "Utløs Khan ved fullt raseri",
+            "recommendation": "På når hovedborgen er klar til å forsvare seg."
+          }
+        },
+        "title": "Still inn raseri og angrepstillatelser"
+      }
+    },
+    "feature": {
+      "description": "Automatisk Khan angriper Khan-leiren, rydder ventetider, utløser gjengjeldelse ved fullt raseri og holder forsvaret i hovedborgen klart.",
+      "expectation": "Nye leirangrep pauses ved valgte grenser eller ressursmangel mens hovedborgen beskyttes; innkommende spillerangrep håndteres av Automatisk stasjonering.",
+      "name": "Automatisk Khan",
+      "summary": "Kjed Khan-leirangrep sammen og forsvar gjengjeldelse i hovedborgen"
+    },
+    "recommendationIntro": "Anbefalte verdier beskriver vanlig bruk av Automatisk Khan; de er veiledning og endrer ikke lagrede innstillinger."
   }
 }

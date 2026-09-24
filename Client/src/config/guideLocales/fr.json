@@ -31,7 +31,10 @@
     "nomadPreviewTitle": "Exemple de configuration d'Auto Nomades/Samouraïs",
     "advisorGuideIntro": "Suivez ces étapes pour configurer Auto Conseiller ; sélectionnez un panneau d'exemple pour l'agrandir.",
     "advisorGuideTitle": "Guide Auto Conseiller",
-    "advisorPreviewTitle": "Exemple de configuration d'Auto Conseiller"
+    "advisorPreviewTitle": "Exemple de configuration d'Auto Conseiller",
+    "khanGuideIntro": "Suivez ces étapes pour configurer Khan automatique ; sélectionnez un panneau d'exemple pour l'agrandir.",
+    "khanGuideTitle": "Guide de Khan automatique",
+    "khanPreviewTitle": "Exemple de configuration de Khan automatique"
   },
   "autoTower": {
     "recommendationIntro": "Ces recommandations concernent une utilisation régulière ; vérifiez-les avant d’enregistrer.",
@@ -446,6 +449,48 @@
       "maximum": "Nombre maximal d'attaques : 9 999",
       "time": "Temps d'événement inutilisé : 30 minutes",
       "title": "Exemple de taille de série"
+    },
+    "khanCooldowns": {
+      "long": "Réserver des accélérateurs de 5 h et 24 h pour d'autres tâches",
+      "pause": "Les attaques s'arrêtent si les accélérateurs utilisables manquent",
+      "short": "Conserver 1 min / 5 min / 10 min / 30 min / 1 h : 0 objet chacun",
+      "skip": "Passer chaque délai du camp : activé",
+      "title": "Exemple de réserves d'accélérateurs"
+    },
+    "khanLimits": {
+      "daily": "Attaques normales quotidiennes : 0, aucune limite ajoutée",
+      "end": "Arrêter les nouvelles attaques 5 min avant la fin",
+      "points": "Arrêt aux points nomades : 0, désactivé",
+      "title": "Exemple de limites d'arrêt",
+      "tools": "Réapprovisionnement des outils : activé si souhaité"
+    },
+    "khanProtection": {
+      "gate": "Ouvrir les portes principales et suspendre Khan au seuil",
+      "outpost": "Avant-poste comme source : protection désactivée",
+      "source": "S'applique aux attaques lancées du château principal",
+      "threshold": "Unités offensives sur le mur : 1 000",
+      "title": "Exemple de protection du mur principal"
+    },
+    "khanRage": {
+      "attacks": "Attaques automatiques de camp : déverrouillées",
+      "booster": "Bonus temporaire de points de rage requis : désactivé",
+      "chain": "Limite de chaîne de rage : 0, aucune limite ajoutée",
+      "title": "Exemple de contrôles de rage",
+      "trigger": "Représailles à rage maximale : activées"
+    },
+    "khanSave": {
+      "defense": "Vérifier la défense du château principal avant les représailles",
+      "enable": "Activer Khan automatique sur la carte Automatisation",
+      "priority": "Station automatique gère séparément les attaques de joueurs",
+      "save": "Enregistrer après préparation des deux modèles",
+      "title": "Exemple de parcours d'enregistrement et d'activation"
+    },
+    "khanSetup": {
+      "defense": "Défendre à : château principal du Grand Empire",
+      "presets": "Modèles enregistrés d'attaque du Khan et de défense principale",
+      "source": "Attaquer depuis : avant-poste du Grand Empire",
+      "title": "Exemple de configuration du Khan",
+      "travel": "Plume de voyage pour aller vite"
     }
   },
   "autoStation": {
@@ -1176,5 +1221,213 @@
       "summary": "Lancer une série de Conseiller nomade ou samouraï adaptée aux ressources"
     },
     "recommendationIntro": "Les valeurs recommandées décrivent l'usage régulier d'Auto Conseiller ; elles servent de conseil et ne changent pas les paramètres enregistrés."
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "Conserver 10 min",
+            "description": "Conservez ce nombre d'accélérateurs de 10 min sans les utiliser.",
+            "recommendation": "0 pour les enchaînements habituels du Khan."
+          },
+          "keep_1m": {
+            "label": "Conserver 1 min",
+            "description": "Conservez ce nombre d'accélérateurs de 1 min sans les utiliser.",
+            "recommendation": "0 pour les enchaînements habituels du Khan."
+          },
+          "keep_24h": {
+            "label": "Conserver 24 h",
+            "recommendation": "Réserver le stock nécessaire aux constructions ou à d'autres activités.",
+            "description": "Conservez ce nombre d'accélérateurs de 24 h sans les utiliser."
+          },
+          "keep_30m": {
+            "label": "Conserver 30 min",
+            "description": "Conservez ce nombre d'accélérateurs de 30 min sans les utiliser.",
+            "recommendation": "0 pour les enchaînements habituels du Khan."
+          },
+          "keep_5h": {
+            "label": "Conserver 5 h",
+            "recommendation": "Réserver le stock nécessaire aux constructions ou à d'autres activités.",
+            "description": "Conservez ce nombre d'accélérateurs de 5 h sans les utiliser."
+          },
+          "keep_5m": {
+            "label": "Conserver 5 min",
+            "description": "Conservez ce nombre d'accélérateurs de 5 min sans les utiliser.",
+            "recommendation": "0 pour les enchaînements habituels du Khan."
+          },
+          "keep_1h": {
+            "description": "Conservez ce nombre d'accélérateurs de 1 h sans les utiliser.",
+            "label": "Conserver 1 h",
+            "recommendation": "0 pour les enchaînements habituels du Khan."
+          },
+          "skip_cooldowns": {
+            "description": "Réservez et utilisez assez d'accélérateurs pour effacer les délais du camp après les attaques.",
+            "label": "Passer chaque délai du camp du Khan",
+            "recommendation": "Activé ; la fenêtre de réglages actuelle l'exige pour enregistrer."
+          },
+          "skip_shortage": {
+            "description": "Les nouvelles attaques de camp s'arrêtent si les accélérateurs utilisables ne couvrent pas le délai requis.",
+            "label": "Accélérateurs utilisables insuffisants"
+          }
+        },
+        "image": {
+          "alt": "Illustration des délais et réserves d'accélérateurs de Khan automatique",
+          "caption": "Les réserves comptent des objets, et non des minutes."
+        },
+        "title": "Régler les délais et les réserves"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "Limite quotidienne des attaques normales",
+            "description": "Arrêtez les nouvelles attaques de camp de cette automatisation au compteur quotidien de combats normaux du compte ; 0 désactive cette limite.",
+            "recommendation": "0 sauf si vous avez besoin d'une limite pour tout le compte."
+          },
+          "event_end": {
+            "label": "Arrêter avant la fin de l'événement",
+            "description": "Arrêtez les nouvelles attaques de camp autant de minutes avant la fin de l'événement.",
+            "recommendation": "5 minutes."
+          },
+          "nomad_points": {
+            "description": "À ce score annoncé, arrêtez les nouvelles attaques du Khan, rappelez celles en route et ouvrez les portes principales ; 0 désactive cet arrêt.",
+            "label": "Arrêter aux points nomades",
+            "recommendation": "0 sauf si vous voulez arrêter et protéger à un score choisi."
+          },
+          "replenish_tools": {
+            "description": "Remplacez les outils manquants du modèle de défense par des offres admissibles en refusant les lots payés en rubis.",
+            "label": "Réapprovisionner les outils de défense",
+            "recommendation": "Activé si vous souhaitez des achats automatiques admissibles."
+          }
+        },
+        "image": {
+          "alt": "Illustration des points, outils et limites quotidiennes de Khan automatique",
+          "caption": "Un seuil positif de points nomades rappelle aussi les attaques du Khan en route et ouvre les portes du château principal."
+        },
+        "title": "Définir les limites de points, de stock et quotidiennes"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "Enregistrer les paramètres",
+            "description": "Enregistrez les châteaux, modèles, contrôles de rage, limites, réserves d'accélérateurs et protections sélectionnés."
+          },
+          "enable_switch": {
+            "description": "Activez Khan automatique depuis sa carte d'automatisation après avoir vérifié la défense du château principal.",
+            "label": "Interrupteur Khan automatique",
+            "recommendation": "Activé après avoir enregistré les réglages et préparé la défense."
+          },
+          "station_priority": {
+            "description": "Station automatique gère les attaques de joueurs entrantes séparément des représailles du Khan.",
+            "label": "Priorité de Station automatique"
+          }
+        },
+        "image": {
+          "alt": "Illustration de l'enregistrement et de l'activation de Khan automatique",
+          "caption": "Vérifiez la défense du château principal avant d'activer les représailles du Khan."
+        },
+        "title": "Enregistrer et activer Khan automatique"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Accélération du déplacement à cheval",
+            "recommendation": "Plume de voyage pour un déplacement rapide.",
+            "description": "Choisissez le trajet par plume, pièces ou rubis pour les attaques de camp."
+          },
+          "open_settings": {
+            "label": "Ouvrir les paramètres",
+            "description": "Sur la page Automatisation, choisissez le bouton de réglages de la carte Khan automatique."
+          },
+          "attack_from": {
+            "description": "Choisissez un château principal ou un avant-poste du Grand Empire qui fournit les attaques du camp du Khan.",
+            "label": "Attaquer depuis",
+            "recommendation": "Utilisez un avant-poste avec votre armée offensive quand c'est possible."
+          },
+          "camp_attack_preset": {
+            "description": "Choisissez un modèle d'attaque enregistré pour les attaques habituelles du camp du Khan.",
+            "label": "Modèle d'attaque du camp",
+            "recommendation": "Créez d'abord votre modèle d'attaque habituel contre le Khan."
+          },
+          "defend_at": {
+            "description": "Les représailles du Khan visent le château principal du Grand Empire affiché ici, en lecture seule.",
+            "label": "Défendre à"
+          },
+          "main_defense_preset": {
+            "description": "Choisissez un modèle de défense enregistré, réappliqué au château principal avant les représailles.",
+            "label": "Modèle de défense principal",
+            "recommendation": "Créez votre modèle de défense habituel contre le Khan et préparez troupes et outils."
+          }
+        },
+        "image": {
+          "alt": "Illustration du château, des modèles et du trajet de Khan automatique",
+          "caption": "Préparez les deux modèles et la défense principale avant d'activer l'enchaînement d'attaques."
+        },
+        "title": "Choisir les châteaux, modèles et trajets"
+      },
+      "protection": {
+        "image": {
+          "alt": "Illustration de la protection du mur du château principal pour Khan automatique",
+          "caption": "Cette protection du mur ne s'applique que lorsque le château principal lance les attaques."
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "Déclenchez cette protection lorsque les unités offensives sur le mur atteignent ce nombre.",
+            "label": "Seuil d'unités offensives sur le mur",
+            "recommendation": "1 000 unités offensives sur le mur."
+          },
+          "outpost_source": {
+            "description": "Cette protection est désactivée lorsqu'un avant-poste lance les attaques et que le château principal défend séparément.",
+            "label": "Avant-poste comme source"
+          },
+          "protect_offense": {
+            "description": "Lorsque vous attaquez depuis le château principal, ouvrez ses portes et suspendez Khan si trop de troupes offensives défendraient le mur.",
+            "label": "Protéger les troupes offensives sur le mur principal",
+            "recommendation": "Activé si le château principal lance les attaques."
+          }
+        },
+        "title": "Protéger le mur du château principal"
+      },
+      "rage": {
+        "image": {
+          "alt": "Illustration de la rage et des autorisations d'attaque de Khan automatique",
+          "caption": "Le bonus de points de rage temporaire est distinct des bannières de rage."
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "Arrêtez les nouvelles attaques de camp pendant que la rage, les délais et la défense continuent.",
+            "label": "Verrouiller les attaques automatiques du Khan",
+            "recommendation": "Désactivé pour les attaques de camp habituelles."
+          },
+          "max_rage_chain": {
+            "description": "Limitez les représailles acceptées durant l'événement avant l'arrêt des nouvelles attaques de camp ; 0 supprime cette limite.",
+            "label": "Limite de chaîne de rage",
+            "recommendation": "0 sauf si vous avez besoin d'une limite de représailles."
+          },
+          "rage_booster": {
+            "description": "Autorisez les nouvelles attaques automatiques de camp uniquement pendant que le bonus de points de rage temporaire est actif.",
+            "label": "Exiger le bonus de points de rage",
+            "recommendation": "Désactivé sauf si vous voulez attaquer uniquement avec le bonus."
+          },
+          "rage_continues": {
+            "description": "La limite de chaîne de rage n'arrête ni le déclenchement à rage maximale, ni les délais, ni la récupération de la défense.",
+            "label": "La gestion de la rage continue"
+          },
+          "trigger_full_rage": {
+            "description": "Provoquez des représailles du Khan lorsque la rage est maximale.",
+            "label": "Déclencher le Khan à rage maximale",
+            "recommendation": "Activé lorsque le château principal est prêt à défendre."
+          }
+        },
+        "title": "Régler la rage et les autorisations d'attaque"
+      }
+    },
+    "feature": {
+      "description": "Khan automatique attaque le camp du Khan, efface les délais, déclenche les représailles à rage maximale et maintient la défense du château principal.",
+      "expectation": "Il suspend les nouvelles attaques de camp aux limites définies ou en cas de ressources insuffisantes tout en protégeant le château principal ; les attaques de joueurs restent du ressort de Station automatique.",
+      "name": "Khan automatique",
+      "summary": "Enchaînez les attaques du camp du Khan et défendez les représailles au château principal"
+    },
+    "recommendationIntro": "Les valeurs recommandées décrivent l'utilisation habituelle de Khan automatique ; elles servent de guide et ne modifient pas les réglages enregistrés."
   }
 }
