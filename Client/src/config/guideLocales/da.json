@@ -25,7 +25,10 @@
     "fortressPreviewTitle": "Eksempel på opsætning af automatisk fæstningsangreb",
     "invasionGuideIntro": "Følg disse trin for at indstille automatiske invasionsangreb; vælg et eksempelpanel for at forstørre det.",
     "invasionGuideTitle": "Guide til automatiske invasionsangreb",
-    "invasionPreviewTitle": "Eksempel på opsætning af automatiske invasionsangreb"
+    "invasionPreviewTitle": "Eksempel på opsætning af automatiske invasionsangreb",
+    "nomadGuideIntro": "Følg disse trin for at opsætte Auto Nomader/Samuraier; vælg et eksempelpanel for at forstørre det.",
+    "nomadGuideTitle": "Guide til Auto Nomader/Samuraier",
+    "nomadPreviewTitle": "Opsætningseksempel til Auto Nomader/Samuraier"
   },
   "autoTower": {
     "recommendationIntro": "Disse anbefalinger gælder almindelig brug; gennemgå dem, før du gemmer.",
@@ -372,6 +375,37 @@
       "preset": "Angrebsopsætning: gemt begivenhedsformation",
       "title": "Eksempel på opsætning af begivenhedsangreb",
       "travel": "Rejseforstærkning: Rejsefjer"
+    },
+    "nomadDifficulty": {
+      "title": "Eksempel på begivenheders sværhedsgrad",
+      "active": "Aktivt event: match nuværende sværhedsgrad",
+      "nomad": "Nomader: oplåst pålidelig sværhedsgrad",
+      "samurai": "Samuraier: oplåst pålidelig sværhedsgrad"
+    },
+    "nomadSetup": {
+      "castle": "Udgang: normal begivenhedsborg i Det Store Imperium",
+      "travel": "Rejseforstærkning: Rejsefjer",
+      "nomadPreset": "Nomadeopsætning: gemt lejrformation",
+      "samuraiPreset": "Samuraiopsætning: gemt lejrformation",
+      "title": "Eksempel på eventlejrindstillinger"
+    },
+    "nomadCooldowns": {
+      "clear": "Fjern ventetid efter bekræftet sejr: til",
+      "long": "Behold 5 timer / 24 timer: beholdning til andre aktiviteter",
+      "short": "Behold 1 / 5 / 10 / 30 / 60 min: 0 genstande af hver",
+      "title": "Eksempel på ventetidsvalg"
+    },
+    "nomadLimits": {
+      "daily": "Ekstra daglig grænse: 0",
+      "score": "Pointmål: sidste personlige belønningsmilepæl",
+      "time": "Stop før slut: 30 minutter",
+      "title": "Eksempel på stopregler"
+    },
+    "nomadTrial": {
+      "coordinates": "Mål X / Y: ubrugt i almindelig drift",
+      "effect": "Prøve til erstatter eventdrift med ægte angreb",
+      "title": "Eksempel på prøveindstillinger",
+      "trial": "Midlertidig røverbaronprøve: fra"
     }
   },
   "autoStation": {
@@ -723,5 +757,195 @@
         "title": "Åbn indstillinger for automatiske invasionsangreb"
       }
     }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "Brug den højeste oplåste sværhedsgrad, som din normale opsætning klarer pålideligt.",
+            "description": "Vælg en oplåst nomadesværhedsgrad ved eventstart.",
+            "label": "Nomadesværhedsgrad"
+          },
+          "samurai_difficulty": {
+            "recommendation": "Brug den højeste oplåste sværhedsgrad, som din normale opsætning klarer pålideligt.",
+            "description": "Vælg en oplåst samuraisværhedsgrad ved eventstart.",
+            "label": "Samuraisværhedsgrad"
+          },
+          "active_difficulty": {
+            "description": "Ved et aktivt event skal du matche den nuværende sværhedsgrad, da et andet gemt valg får automatiseringen til at vente frem for at ændre den.",
+            "label": "Allerede aktivt event"
+          }
+        },
+        "title": "Vælg begge begivenheders sværhedsgrad",
+        "image": {
+          "alt": "Eksempel på nomade- og samuraisværhedsgrader",
+          "caption": "Vælg en særskilt oplåst sværhedsgrad for hvert event og match det aktive events grad."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "Til efter gennemgang og lagring af de ønskede indstillinger.",
+            "description": "Slå Auto Nomader/Samuraier til på automatiseringskortet efter lagring, så det kører, når event og egnede ressourcer er til rådighed.",
+            "label": "Kontakt til Auto Nomader/Samuraier"
+          },
+          "save_settings": {
+            "label": "Gem indstillinger",
+            "description": "Gem kilde, opsætninger, sværhedsgrader, stopgrænser, tidsspringsvalg og teststatus, før du lukker denne dialog."
+          },
+          "readiness": {
+            "description": "Automatiseringen opgraderer eventlejre og venter på egnede kommandører, tropper, redskaber og brugbare tidsspring, når de er slået til.",
+            "label": "Klar til lejrangreb"
+          }
+        },
+        "title": "Gem og slå Auto Nomader/Samuraier til"
+      },
+      "limits": {
+        "image": {
+          "caption": "Pointmålet stopper nye starter, men angreb, der allerede rejser, kan stadig afsluttes.",
+          "alt": "Eksempel på point- og stopgrænser for Auto Nomader/Samuraier"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Stop denne automatisering ved kontoens daglige antal normale angreb, indtil spillet nulstiller det; 0 tilføjer ingen grænse.",
+            "label": "Daglig grænse for normale angreb",
+            "recommendation": "0, så begivenhedens pointmål styrer forløbet."
+          },
+          "minimum_remaining": {
+            "description": "Start ikke flere nye angreb dette antal minutter før begivenheden slutter.",
+            "label": "Stop før begivenheden slutter",
+            "recommendation": "30 minutter."
+          },
+          "score_target": {
+            "description": "Start ikke nye angreb, når de rapporterede begivenhedspoint når eller overstiger målet.",
+            "label": "Stop ved begivenhedspoint",
+            "recommendation": "Brug din normale sidste milepæl for personlig belønning over 0."
+          },
+          "travelling_attacks": {
+            "description": "Angreb, der allerede rejser, kan afsluttes efter en stopbetingelse og løfte slutpointene over målet.",
+            "label": "Angreb undervejs"
+          }
+        },
+        "title": "Indstil point- og stopgrænser"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Rejseboost med hest",
+            "recommendation": "Rejsefjer til hurtig rejse.",
+            "description": "Vælg rejsemulighed med fjer, mønter eller rubiner til lejrangreb."
+          },
+          "open_settings": {
+            "label": "Åbn indstillinger",
+            "description": "På siden Automatisering vælges indstillingsknappen på kortet Auto Nomader/Samuraier."
+          },
+          "source_castle": {
+            "label": "Udgangsborg",
+            "recommendation": "Brug din normale begivenhedsborg med nok tropper og værktøjer.",
+            "description": "Vælg borgen i Det Store Rige, der leverer tropper og redskaber til lejrangreb."
+          },
+          "nomad_preset": {
+            "description": "Vælg en gemt angrebsopsætning med tropper, redskaber og formation til nomadelejre.",
+            "label": "Nomadeangrebsopsætning",
+            "recommendation": "Opret og vælg din almindelige nomadeopsætning."
+          },
+          "samurai_preset": {
+            "description": "Vælg en gemt angrebsopsætning med tropper, redskaber og formation til samurailejre.",
+            "label": "Samuraiangrebsopsætning",
+            "recommendation": "Opret og vælg din almindelige samuraiopsætning."
+          }
+        },
+        "image": {
+          "alt": "Eksempel på kilde, opsætninger og rejse for Auto Nomader/Samuraier",
+          "caption": "Opret begge eventopsætninger, før du vælger kildeborg og rejsemulighed."
+        },
+        "title": "Åbn indstillinger for Auto Nomader/Samuraier"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "Eksempel på lejrventetider og reserver af tidsspring",
+          "caption": "Hver behold-værdi tæller tidsspringsgenstande, ikke minutters ventetid."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "Behold dette antal tidsspring på 10 min ubrugt som reserve.",
+            "label": "Behold 10 min",
+            "recommendation": "0 til almindelige lejrrunder."
+          },
+          "keep_1m": {
+            "description": "Behold dette antal tidsspring på 1 min ubrugt som reserve.",
+            "label": "Behold 1 min",
+            "recommendation": "0 til almindelige lejrrunder."
+          },
+          "keep_24h": {
+            "description": "Behold dette antal tidsspring på 24 timer ubrugt som reserve.",
+            "label": "Behold 24 timer",
+            "recommendation": "Reserver den beholdning, du skal bruge til byggeri eller andre aktiviteter."
+          },
+          "keep_30m": {
+            "description": "Behold dette antal tidsspring på 30 min ubrugt som reserve.",
+            "label": "Behold 30 min",
+            "recommendation": "0 til almindelige lejrrunder."
+          },
+          "keep_5h": {
+            "description": "Behold dette antal tidsspring på 5 timer ubrugt som reserve.",
+            "label": "Behold 5 timer",
+            "recommendation": "Reserver den beholdning, du skal bruge til byggeri eller andre aktiviteter."
+          },
+          "keep_5m": {
+            "description": "Behold dette antal tidsspring på 5 min ubrugt som reserve.",
+            "label": "Behold 5 min",
+            "recommendation": "0 til almindelige lejrrunder."
+          },
+          "keep_60m": {
+            "description": "Behold dette antal tidsspring på 60 min ubrugt som reserve.",
+            "label": "Behold 60 min",
+            "recommendation": "0 til almindelige lejrrunder."
+          },
+          "skip_cooldowns": {
+            "description": "Efter en bekræftet sejr over en lejr bruges et tilgængeligt tidsspring til at fjerne målets ventetid.",
+            "label": "Fjern ventetid efter hvert vellykket angreb",
+            "recommendation": "Slå til ved almindelige gentagne lejrangreb; slå fra for at vente på naturlige ventetider."
+          }
+        },
+        "title": "Vælg tidsspring og reserver"
+      },
+      "trial": {
+        "image": {
+          "alt": "Eksempel på midlertidig prøve mod røverbaronborg",
+          "caption": "Prøven starter et ægte angreb og erstatter normal eventdrift, mens den er slået til."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "Erstat normal eventdrift med et ægte angrebsforsøg mod én røverbaronborg ved hjælp af nomadeopsætningen og tidsspring.",
+            "label": "Midlertidig fuld prøve mod røverbaronborg",
+            "recommendation": "Slået fra ved almindelige nomade- eller samuraikørsler."
+          },
+          "target_x": {
+            "description": "Angiv kun røverbaronborgens vandrette koordinat til den midlertidige prøve.",
+            "label": "Mål X",
+            "recommendation": "Lad stå ubrugt, når prøven er slået fra."
+          },
+          "target_y": {
+            "description": "Angiv kun røverbaronborgens lodrette koordinat til den midlertidige prøve.",
+            "label": "Mål Y",
+            "recommendation": "Lad stå ubrugt, når prøven er slået fra."
+          },
+          "trial_skips": {
+            "description": "Når prøven slås til, aktiveres tidsspring også for prøven.",
+            "label": "Tidsspring til prøven"
+          }
+        },
+        "title": "Lad den midlertidige prøve være slået fra ved almindelige kørsler"
+      }
+    },
+    "feature": {
+      "description": "Auto Nomader/Samuraier opgraderer egnede eventlejre, vælger den svageste fuldt opgraderede lejr og angriber den gentagne gange med eventets gemte angrebsopsætning, indtil en stopgrænse nås.",
+      "expectation": "Den venter på et aktivt event, egnede kommandører, tropper, redskaber og brugbare tidsspring, når ventetider ryddes; angreb undervejs kan afsluttes efter stop for nye angreb.",
+      "name": "Auto Nomader/Samuraier",
+      "summary": "Opgrader og angrib nomade- eller samurailejre"
+    },
+    "recommendationIntro": "Anbefalede værdier beskriver almindelig brug af Auto Nomader/Samuraier; de er vejledning og ændrer ikke gemte indstillinger."
   }
 }

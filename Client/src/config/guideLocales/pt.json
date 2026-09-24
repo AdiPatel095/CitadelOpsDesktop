@@ -25,7 +25,10 @@
     "fortressPreviewTitle": "Exemplo de configuração da automação de fortalezas",
     "invasionGuideIntro": "Siga estas etapas para configurar a automação de invasões; selecione um painel de exemplo para ampliá-lo.",
     "invasionGuideTitle": "Guia da automação de invasões",
-    "invasionPreviewTitle": "Exemplo de configuração da automação de invasões"
+    "invasionPreviewTitle": "Exemplo de configuração da automação de invasões",
+    "nomadGuideIntro": "Siga estas etapas para configurar Auto Nômades/Samurais; selecione um painel de exemplo para ampliá-lo.",
+    "nomadGuideTitle": "Guia do Auto Nômades/Samurais",
+    "nomadPreviewTitle": "Exemplo de configuração do Auto Nômades/Samurais"
   },
   "autoTower": {
     "recommendationIntro": "Estas recomendações são para o uso regular; revise-as antes de salvar.",
@@ -372,6 +375,37 @@
       "preset": "Formação de ataque: disposição de evento salva",
       "title": "Exemplo de preparação de ataque de evento",
       "travel": "Impulso de viagem: Pena de Viagem"
+    },
+    "nomadDifficulty": {
+      "title": "Exemplo de dificuldades de evento",
+      "active": "Evento ativo: corresponda à dificuldade atual",
+      "nomad": "Nômades: dificuldade desbloqueada e confiável",
+      "samurai": "Samurais: dificuldade desbloqueada e confiável"
+    },
+    "nomadSetup": {
+      "castle": "Origem: castelo regular de evento no Grande Império",
+      "travel": "Impulso de viagem: Pena de Viagem",
+      "nomadPreset": "Formação nômade: disposição salva para acampamentos",
+      "samuraiPreset": "Formação samurai: disposição salva para acampamentos",
+      "title": "Exemplo de configuração de acampamentos do evento"
+    },
+    "nomadCooldowns": {
+      "clear": "Eliminar espera após vitória confirmada: ligado",
+      "long": "Manter 5 h / 24 h: estoque reservado para outras atividades",
+      "short": "Manter 1 / 5 / 10 / 30 / 60 min: 0 itens cada",
+      "title": "Exemplo de opções de espera"
+    },
+    "nomadLimits": {
+      "daily": "Limite diário adicional: 0",
+      "score": "Meta de pontos: marco final de recompensa pessoal",
+      "time": "Parar antes do fim: 30 minutos",
+      "title": "Exemplo de regras de parada"
+    },
+    "nomadTrial": {
+      "coordinates": "Alvo X / Y: sem uso durante operação regular",
+      "effect": "Teste ligado substitui evento por ataque real",
+      "title": "Exemplo dos controles do teste",
+      "trial": "Teste temporário de barão ladrão: desligado"
     }
   },
   "autoStation": {
@@ -723,5 +757,195 @@
         "title": "Abra as configurações da automação de invasões"
       }
     }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "Use a maior dificuldade desbloqueada que sua formação regular consegue enfrentar com segurança.",
+            "description": "Escolha uma dificuldade nômade desbloqueada para o início do evento.",
+            "label": "Dificuldade nômade"
+          },
+          "samurai_difficulty": {
+            "recommendation": "Use a maior dificuldade desbloqueada que sua formação regular consegue enfrentar com segurança.",
+            "description": "Escolha uma dificuldade samurai desbloqueada para o início do evento.",
+            "label": "Dificuldade samurai"
+          },
+          "active_difficulty": {
+            "description": "Em evento ativo, corresponda à dificuldade atual, pois outra escolha salva faz a automação esperar em vez de mudá-la.",
+            "label": "Evento já ativo"
+          }
+        },
+        "title": "Escolha as dificuldades dos dois eventos",
+        "image": {
+          "alt": "Exemplo de dificuldades nômades e samurais",
+          "caption": "Escolha uma dificuldade desbloqueada para cada evento e corresponda à dificuldade do evento ativo."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "Ativado após conferir e salvar as configurações desejadas.",
+            "description": "Depois de salvar, ligue Auto Nômades/Samurais no cartão Automação para executar quando houver evento e recursos elegíveis.",
+            "label": "Interruptor do Auto Nômades/Samurais"
+          },
+          "save_settings": {
+            "label": "Salvar configurações",
+            "description": "Salve origem, formações, dificuldades, limites de parada, opções de aceleração e estado do teste antes de fechar esta janela."
+          },
+          "readiness": {
+            "description": "A automação melhora acampamentos do evento e aguarda comandantes, tropas, ferramentas e, se ativados, aceleradores utilizáveis.",
+            "label": "Prontidão dos acampamentos"
+          }
+        },
+        "title": "Salve e ative Auto Nômades/Samurais"
+      },
+      "limits": {
+        "image": {
+          "caption": "A meta de pontos interrompe novos envios, mas ataques já em deslocamento podem terminar.",
+          "alt": "Exemplo de pontos e limites de parada do Auto Nômades/Samurais"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Pare esta automação ao atingir a contagem diária de ataques normais de toda a conta até o jogo redefini-la; 0 não adiciona limite.",
+            "label": "Limite diário de ataques normais",
+            "recommendation": "0 para deixar a meta de pontos do evento controlar a sequência."
+          },
+          "minimum_remaining": {
+            "description": "Pare de iniciar novos ataques este número de minutos antes do fim do evento.",
+            "label": "Parar antes do fim do evento",
+            "recommendation": "30 minutos."
+          },
+          "score_target": {
+            "description": "Pare de iniciar novos ataques quando os pontos do evento informados alcançarem ou ultrapassarem esta meta.",
+            "label": "Parar nos pontos do evento",
+            "recommendation": "Use seu último marco regular de recompensa pessoal, acima de 0."
+          },
+          "travelling_attacks": {
+            "description": "Ataques já em deslocamento podem terminar após uma condição de parada e elevar os pontos finais acima da meta.",
+            "label": "Ataques em deslocamento"
+          }
+        },
+        "title": "Defina os pontos e limites de parada"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Aceleração de viagem a cavalo",
+            "recommendation": "Pena de Viagem para deslocamento rápido.",
+            "description": "Escolha pena, moedas ou rubis como opção de viagem para ataques aos acampamentos."
+          },
+          "open_settings": {
+            "label": "Abrir configurações",
+            "description": "Na página Automação, selecione o botão de configurações do cartão Auto Nômades/Samurais."
+          },
+          "source_castle": {
+            "label": "Castelo de origem",
+            "recommendation": "Use seu castelo regular de evento com tropas e ferramentas suficientes.",
+            "description": "Escolha o castelo no Grande Império que fornece tropas e ferramentas para atacar acampamentos."
+          },
+          "nomad_preset": {
+            "description": "Selecione uma formação de ataque salva com tropas, ferramentas e disposição para acampamentos nômades.",
+            "label": "Formação de ataque nômade",
+            "recommendation": "Crie e selecione sua formação nômade habitual."
+          },
+          "samurai_preset": {
+            "description": "Selecione uma formação de ataque salva com tropas, ferramentas e disposição para acampamentos samurais.",
+            "label": "Formação de ataque samurai",
+            "recommendation": "Crie e selecione sua formação samurai habitual."
+          }
+        },
+        "image": {
+          "alt": "Exemplo de origem, formações e viagem do Auto Nômades/Samurais",
+          "caption": "Crie as duas formações de evento antes de escolher o castelo de origem e a opção de viagem."
+        },
+        "title": "Abra as configurações do Auto Nômades/Samurais"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "Exemplo de espera dos acampamentos e reserva de aceleradores",
+          "caption": "Cada valor de manter conta itens de aceleração, não minutos de espera."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "Mantenha sem uso esta quantidade de aceleradores de 10 min como reserva.",
+            "label": "Manter 10 min",
+            "recommendation": "0 para séries regulares de acampamentos."
+          },
+          "keep_1m": {
+            "description": "Mantenha sem uso esta quantidade de aceleradores de 1 min como reserva.",
+            "label": "Manter 1 min",
+            "recommendation": "0 para séries regulares de acampamentos."
+          },
+          "keep_24h": {
+            "description": "Mantenha sem uso esta quantidade de aceleradores de 24 h como reserva.",
+            "label": "Manter 24 h",
+            "recommendation": "Reserve o estoque necessário para construções ou outras atividades."
+          },
+          "keep_30m": {
+            "description": "Mantenha sem uso esta quantidade de aceleradores de 30 min como reserva.",
+            "label": "Manter 30 min",
+            "recommendation": "0 para séries regulares de acampamentos."
+          },
+          "keep_5h": {
+            "description": "Mantenha sem uso esta quantidade de aceleradores de 5 h como reserva.",
+            "label": "Manter 5 h",
+            "recommendation": "Reserve o estoque necessário para construções ou outras atividades."
+          },
+          "keep_5m": {
+            "description": "Mantenha sem uso esta quantidade de aceleradores de 5 min como reserva.",
+            "label": "Manter 5 min",
+            "recommendation": "0 para séries regulares de acampamentos."
+          },
+          "keep_60m": {
+            "description": "Mantenha sem uso esta quantidade de aceleradores de 60 min como reserva.",
+            "label": "Manter 60 min",
+            "recommendation": "0 para séries regulares de acampamentos."
+          },
+          "skip_cooldowns": {
+            "description": "Após vitória confirmada contra um acampamento, use um acelerador disponível para eliminar a espera desse alvo.",
+            "label": "Eliminar espera após cada ataque bem-sucedido",
+            "recommendation": "Ative para ataques regulares repetidos a acampamentos; desative para esperar naturalmente."
+          }
+        },
+        "title": "Escolha aceleradores e reservas"
+      },
+      "trial": {
+        "image": {
+          "alt": "Exemplo dos controles do teste temporário contra castelo de barão ladrão",
+          "caption": "O teste lança um ataque real e substitui a operação normal do evento enquanto ativado."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "Substitua a operação normal do evento por um teste de ataque real a um castelo de barão ladrão usando a formação nômade e aceleradores.",
+            "label": "Teste temporário completo contra castelo de barão ladrão",
+            "recommendation": "Desligado para séries regulares de nômades ou samurais."
+          },
+          "target_x": {
+            "description": "Informe a coordenada horizontal do castelo de barão ladrão apenas para o teste temporário.",
+            "label": "Alvo X",
+            "recommendation": "Deixe sem uso enquanto o teste estiver desligado."
+          },
+          "target_y": {
+            "description": "Informe a coordenada vertical do castelo de barão ladrão apenas para o teste temporário.",
+            "label": "Alvo Y",
+            "recommendation": "Deixe sem uso enquanto o teste estiver desligado."
+          },
+          "trial_skips": {
+            "description": "Ativar o teste também ativa aceleradores para eliminar a espera do teste.",
+            "label": "Aceleradores do teste"
+          }
+        },
+        "title": "Deixe o teste temporário desligado para séries regulares"
+      }
+    },
+    "feature": {
+      "description": "Auto Nômades/Samurais melhora os acampamentos elegíveis do evento, escolhe o mais fraco entre os totalmente melhorados e o ataca repetidamente com a formação salva para o evento até atingir um limite de parada.",
+      "expectation": "Aguarda evento ativo, comandantes, tropas, ferramentas e aceleradores utilizáveis quando a limpeza de espera está ligada; ataques em viagem podem terminar após cessarem os novos lançamentos.",
+      "name": "Auto Nômades/Samurais",
+      "summary": "Melhore e ataque acampamentos nômades ou samurais"
+    },
+    "recommendationIntro": "Os valores recomendados descrevem o uso regular do Auto Nômades/Samurais; servem de orientação e não alteram configurações salvas."
   }
 }

@@ -25,7 +25,10 @@
     "fortressPreviewTitle": "Exemple de configuration de l’Automatisation des forteresses",
     "invasionGuideIntro": "Suivez ces étapes pour configurer l'automatisation des invasions; sélectionnez un panneau d'exemple pour l'agrandir.",
     "invasionGuideTitle": "Guide de l'automatisation des invasions",
-    "invasionPreviewTitle": "Exemple de configuration de l'automatisation des invasions"
+    "invasionPreviewTitle": "Exemple de configuration de l'automatisation des invasions",
+    "nomadGuideIntro": "Suivez ces étapes pour configurer Auto Nomades/Samouraïs ; sélectionnez un panneau d'exemple pour l'agrandir.",
+    "nomadGuideTitle": "Guide Auto Nomades/Samouraïs",
+    "nomadPreviewTitle": "Exemple de configuration d'Auto Nomades/Samouraïs"
   },
   "autoTower": {
     "recommendationIntro": "Ces recommandations concernent une utilisation régulière ; vérifiez-les avant d’enregistrer.",
@@ -372,6 +375,37 @@
       "preset": "Préréglage d'attaque : formation d'événement enregistrée",
       "title": "Exemple de préparation d'attaque d'événement",
       "travel": "Bonus de voyage : Plume de voyage"
+    },
+    "nomadDifficulty": {
+      "title": "Exemple de difficultés d'événement",
+      "active": "Événement actif : reprendre sa difficulté actuelle",
+      "nomad": "Nomades : difficulté débloquée et fiable",
+      "samurai": "Samouraïs : difficulté débloquée et fiable"
+    },
+    "nomadSetup": {
+      "castle": "Source : château d'événement habituel du Grand Empire",
+      "travel": "Accélération du déplacement : plume de voyage",
+      "nomadPreset": "Préréglage nomade : formation de camp enregistrée",
+      "samuraiPreset": "Préréglage samouraï : formation de camp enregistrée",
+      "title": "Exemple de configuration des camps d'événement"
+    },
+    "nomadCooldowns": {
+      "clear": "Supprimer le délai après une victoire confirmée : activé",
+      "long": "Conserver 5 h / 24 h : stock réservé à d'autres activités",
+      "short": "Conserver 1 / 5 / 10 / 30 / 60 min : 0 objet chacun",
+      "title": "Exemple de choix des délais"
+    },
+    "nomadLimits": {
+      "daily": "Limite quotidienne ajoutée : 0",
+      "score": "Objectif de score : dernier palier de récompense personnelle",
+      "time": "Arrêter avant la fin : 30 minutes",
+      "title": "Exemple des règles d'arrêt"
+    },
+    "nomadTrial": {
+      "coordinates": "Cible X / Y : inutilisée en fonctionnement normal",
+      "effect": "Test activé : remplace l'événement par une véritable attaque",
+      "title": "Exemple des commandes du test",
+      "trial": "Test temporaire sur château de fieffé coquin : désactivé"
     }
   },
   "autoStation": {
@@ -723,5 +757,195 @@
         "title": "Ouvrez les paramètres de l'automatisation des invasions"
       }
     }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "Utilisez la difficulté débloquée la plus élevée que votre composition habituelle maîtrise de façon fiable.",
+            "description": "Choisir une difficulté nomade débloquée pour le début de l'événement.",
+            "label": "Difficulté nomade"
+          },
+          "samurai_difficulty": {
+            "recommendation": "Utilisez la difficulté débloquée la plus élevée que votre composition habituelle maîtrise de façon fiable.",
+            "description": "Choisir une difficulté samouraï débloquée pour le début de l'événement.",
+            "label": "Difficulté samouraï"
+          },
+          "active_difficulty": {
+            "description": "Pour un événement déjà actif, reprendre sa difficulté actuelle, car un autre choix enregistré met l'automatisation en attente au lieu de la modifier.",
+            "label": "Événement déjà actif"
+          }
+        },
+        "title": "Choisissez les deux difficultés d'événement",
+        "image": {
+          "alt": "Exemple des difficultés nomades et samouraïs",
+          "caption": "Choisir une difficulté débloquée distincte pour chaque événement et reprendre celle de l'événement actif."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "Activé après avoir vérifié et enregistré les réglages voulus.",
+            "description": "Après l'enregistrement, activer Auto Nomades/Samouraïs sur sa carte Automatisation pour fonctionner lorsqu'un événement et les ressources nécessaires sont disponibles.",
+            "label": "Interrupteur Auto Nomades/Samouraïs"
+          },
+          "save_settings": {
+            "label": "Enregistrer les paramètres",
+            "description": "Enregistrer la source, les préréglages, les difficultés, les limites d'arrêt, le choix d'accélérations et l'état du test avant de fermer cette fenêtre."
+          },
+          "readiness": {
+            "description": "L'automatisation améliore les camps d'événement et attend des commandants, troupes, outils et, si les accélérations sont activées, des accélérations utilisables.",
+            "label": "Préparation des attaques de camp"
+          }
+        },
+        "title": "Enregistrer et activer Auto Nomades/Samouraïs"
+      },
+      "limits": {
+        "image": {
+          "caption": "Le score cible arrête les nouveaux départs, mais les attaques déjà en route peuvent se terminer.",
+          "alt": "Exemple des limites de score et d'arrêt d'Auto Nomades/Samouraïs"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Arrêtez cette automatisation au nombre quotidien d'attaques normales du compte jusqu'à la remise à zéro par le jeu; 0 n'ajoute aucune limite.",
+            "label": "Limite quotidienne des attaques normales",
+            "recommendation": "0 pour que le score cible de l'événement pilote la série."
+          },
+          "minimum_remaining": {
+            "description": "Arrêtez de lancer de nouvelles attaques ce nombre de minutes avant la fin de l'événement.",
+            "label": "Arrêter avant la fin de l'événement",
+            "recommendation": "30 minutes."
+          },
+          "score_target": {
+            "description": "Arrêtez de lancer de nouvelles attaques lorsque le score d'événement indiqué atteint ou dépasse cette cible.",
+            "label": "Arrêter au score d'événement",
+            "recommendation": "Utilisez votre dernier palier habituel de récompense personnelle, supérieur à 0."
+          },
+          "travelling_attacks": {
+            "description": "Les attaques déjà en route peuvent se terminer après une condition d'arrêt et faire dépasser la cible au score final.",
+            "label": "Attaques en route"
+          }
+        },
+        "title": "Fixez le score et les limites d'arrêt"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Accélération du déplacement à cheval",
+            "recommendation": "Plume de voyage pour un déplacement rapide.",
+            "description": "Choisir l'option de voyage par plume, pièces ou rubis pour les attaques de camp."
+          },
+          "open_settings": {
+            "label": "Ouvrir les paramètres",
+            "description": "Sur la page Automatisation, choisir le bouton des paramètres de la carte Auto Nomades/Samouraïs."
+          },
+          "source_castle": {
+            "label": "Château source",
+            "recommendation": "Utilisez votre château d'événement habituel avec suffisamment de troupes et d'outils.",
+            "description": "Choisir le château du Grand Empire qui fournit les troupes et outils pour les attaques de camp."
+          },
+          "nomad_preset": {
+            "description": "Choisir un préréglage d'attaque enregistré avec troupes, outils et formation pour les camps nomades.",
+            "label": "Préréglage d'attaque nomade",
+            "recommendation": "Créer et choisir votre préréglage nomade habituel."
+          },
+          "samurai_preset": {
+            "description": "Choisir un préréglage d'attaque enregistré avec troupes, outils et formation pour les camps samouraïs.",
+            "label": "Préréglage d'attaque samouraï",
+            "recommendation": "Créer et choisir votre préréglage samouraï habituel."
+          }
+        },
+        "image": {
+          "alt": "Exemple de la source, des préréglages et du voyage d'Auto Nomades/Samouraïs",
+          "caption": "Créer les deux préréglages d'événement avant de choisir le château source et l'option de voyage."
+        },
+        "title": "Ouvrir les paramètres d'Auto Nomades/Samouraïs"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "Exemple des délais des camps et des réserves d'accélérations",
+          "caption": "Chaque valeur à conserver compte des objets d'accélération et non des minutes de délai."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "Conserver ce nombre d'accélérations de 10 min en réserve sans les utiliser.",
+            "label": "Conserver 10 min",
+            "recommendation": "0 pour les attaques de camp régulières."
+          },
+          "keep_1m": {
+            "description": "Conserver ce nombre d'accélérations de 1 min en réserve sans les utiliser.",
+            "label": "Conserver 1 min",
+            "recommendation": "0 pour les attaques de camp régulières."
+          },
+          "keep_24h": {
+            "description": "Conserver ce nombre d'accélérations de 24 h en réserve sans les utiliser.",
+            "label": "Conserver 24 h",
+            "recommendation": "Réserver le stock nécessaire aux constructions ou à d'autres activités."
+          },
+          "keep_30m": {
+            "description": "Conserver ce nombre d'accélérations de 30 min en réserve sans les utiliser.",
+            "label": "Conserver 30 min",
+            "recommendation": "0 pour les attaques de camp régulières."
+          },
+          "keep_5h": {
+            "description": "Conserver ce nombre d'accélérations de 5 h en réserve sans les utiliser.",
+            "label": "Conserver 5 h",
+            "recommendation": "Réserver le stock nécessaire aux constructions ou à d'autres activités."
+          },
+          "keep_5m": {
+            "description": "Conserver ce nombre d'accélérations de 5 min en réserve sans les utiliser.",
+            "label": "Conserver 5 min",
+            "recommendation": "0 pour les attaques de camp régulières."
+          },
+          "keep_60m": {
+            "description": "Conserver ce nombre d'accélérations de 60 min en réserve sans les utiliser.",
+            "label": "Conserver 60 min",
+            "recommendation": "0 pour les attaques de camp régulières."
+          },
+          "skip_cooldowns": {
+            "description": "Après une victoire confirmée contre un camp, utiliser une accélération disponible pour supprimer le délai de cette cible.",
+            "label": "Supprimer le délai après chaque attaque réussie",
+            "recommendation": "Activer pour les attaques répétées régulières contre les camps ; désactiver pour attendre la fin naturelle des délais."
+          }
+        },
+        "title": "Choisir les accélérations et les réserves"
+      },
+      "trial": {
+        "image": {
+          "alt": "Exemple des commandes du test temporaire sur château de fieffé coquin",
+          "caption": "Le test lance une véritable attaque et remplace le fonctionnement normal de l'événement tant qu'il est actif."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "Remplacer le fonctionnement normal de l'événement par un véritable test d'attaque contre un château de fieffé coquin avec le préréglage nomade et des accélérations.",
+            "label": "Test temporaire complet sur château de fieffé coquin",
+            "recommendation": "Désactivé pour les attaques nomades ou samouraïs régulières."
+          },
+          "target_x": {
+            "description": "Saisir la coordonnée horizontale du château de fieffé coquin uniquement pour le test temporaire.",
+            "label": "Cible X",
+            "recommendation": "Laisser inutilisé tant que le test est désactivé."
+          },
+          "target_y": {
+            "description": "Saisir la coordonnée verticale du château de fieffé coquin uniquement pour le test temporaire.",
+            "label": "Cible Y",
+            "recommendation": "Laisser inutilisé tant que le test est désactivé."
+          },
+          "trial_skips": {
+            "description": "L'activation du test active aussi les accélérations de délai pour ce test.",
+            "label": "Accélérations du test"
+          }
+        },
+        "title": "Laisser le test temporaire désactivé pour les attaques régulières"
+      }
+    },
+    "feature": {
+      "description": "Auto Nomades/Samouraïs améliore les camps admissibles, choisit le camp entièrement amélioré le plus faible et l'attaque à répétition avec le préréglage enregistré propre à l'événement jusqu'à une limite d'arrêt.",
+      "expectation": "L'automatisation attend un événement actif, des commandants, troupes, outils et accélérations utilisables si la suppression des délais est activée ; les attaques en route peuvent se terminer après l'arrêt des nouveaux départs.",
+      "name": "Auto Nomades/Samouraïs",
+      "summary": "Améliorer et attaquer les camps nomades ou samouraïs"
+    },
+    "recommendationIntro": "Les valeurs recommandées décrivent l'usage régulier d'Auto Nomades/Samouraïs ; elles servent de conseil et ne modifient pas les paramètres enregistrés."
   }
 }

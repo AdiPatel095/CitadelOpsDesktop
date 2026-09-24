@@ -25,7 +25,10 @@
     "fortressPreviewTitle": "Voorbeeld van fortautomatisering instellen",
     "invasionGuideIntro": "Volg deze stappen om automatische invasieaanvallen in te stellen; selecteer een voorbeeldpaneel om het te vergroten.",
     "invasionGuideTitle": "Gids voor automatische invasieaanvallen",
-    "invasionPreviewTitle": "Voorbeeld van het instellen van automatische invasieaanvallen"
+    "invasionPreviewTitle": "Voorbeeld van het instellen van automatische invasieaanvallen",
+    "nomadGuideIntro": "Volg deze stappen om Auto Nomaden/Samoerai in te stellen; selecteer een voorbeeldpaneel om het te vergroten.",
+    "nomadGuideTitle": "Gids voor Auto Nomaden/Samoerai",
+    "nomadPreviewTitle": "Instelvoorbeeld voor Auto Nomaden/Samoerai"
   },
   "autoTower": {
     "recommendationIntro": "Dit zijn aanbevelingen voor regelmatig gebruik; controleer ze voordat je opslaat.",
@@ -372,6 +375,37 @@
       "preset": "Aanvalsvoorinstelling: opgeslagen evenementopstelling",
       "title": "Voorbeeld van evenementaanval",
       "travel": "Reisversnelling: Reisveer"
+    },
+    "nomadDifficulty": {
+      "title": "Voorbeeld van evenementmoeilijkheden",
+      "active": "Actief evenement: volg de huidige moeilijkheid",
+      "nomad": "Nomaden: vrijgespeelde betrouwbare moeilijkheid",
+      "samurai": "Samoerai: vrijgespeelde betrouwbare moeilijkheid"
+    },
+    "nomadSetup": {
+      "castle": "Vertrek: gebruikelijke evenementburcht in het Grote Rijk",
+      "travel": "Reisversnelling: reisveer",
+      "nomadPreset": "Nomadenopstelling: opgeslagen kampformatie",
+      "samuraiPreset": "Samoeraiopstelling: opgeslagen kampformatie",
+      "title": "Voorbeeld van evenementkampinstellingen"
+    },
+    "nomadCooldowns": {
+      "clear": "Wachttijd na bevestigde overwinning opheffen: aan",
+      "long": "Bewaar 5 uur / 24 uur: voorraad voor andere activiteiten",
+      "short": "Bewaar 1 / 5 / 10 / 30 / 60 min: telkens 0 voorwerpen",
+      "title": "Voorbeeld van wachttijdkeuzes"
+    },
+    "nomadLimits": {
+      "daily": "Extra daglimiet: 0",
+      "score": "Scoredoel: laatste persoonlijke beloningsmijlpaal",
+      "time": "Stop voor einde: 30 minuten",
+      "title": "Voorbeeld van stopregels"
+    },
+    "nomadTrial": {
+      "coordinates": "Doel X / Y: ongebruikt bij gewone werking",
+      "effect": "Test aan vervangt het evenement door een echte aanval",
+      "title": "Voorbeeld van testbediening",
+      "trial": "Tijdelijke roofriddertest: uit"
     }
   },
   "autoStation": {
@@ -723,5 +757,195 @@
         "title": "Open de instellingen voor automatische invasieaanvallen"
       }
     }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "Gebruik de hoogste ontgrendelde moeilijkheid die je gebruikelijke opstelling betrouwbaar aankan.",
+            "description": "Kies een vrijgespeelde nomadenmoeilijkheid voor de start van het evenement.",
+            "label": "Nomadenmoeilijkheid"
+          },
+          "samurai_difficulty": {
+            "recommendation": "Gebruik de hoogste ontgrendelde moeilijkheid die je gebruikelijke opstelling betrouwbaar aankan.",
+            "description": "Kies een vrijgespeelde samoeraimoeilijkheid voor de start van het evenement.",
+            "label": "Samoeraimoeilijkheid"
+          },
+          "active_difficulty": {
+            "description": "Volg bij een actief evenement de huidige moeilijkheid, want met een andere opgeslagen keuze wacht de automatisering in plaats van die te wijzigen.",
+            "label": "Al actief evenement"
+          }
+        },
+        "title": "Kies de moeilijkheid voor beide evenementen",
+        "image": {
+          "alt": "Voorbeeld van nomaden- en samoeraimoeilijkheden",
+          "caption": "Kies voor elk evenement een afzonderlijk vrijgespeeld moeilijkheidsniveau en volg dat van het actieve evenement."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "Aan nadat je de gewenste instellingen hebt gecontroleerd en opgeslagen.",
+            "description": "Zet Auto Nomaden/Samoerai na het opslaan aan op de Automatiseringskaart om te draaien wanneer er een evenement en geschikte middelen zijn.",
+            "label": "Schakelaar Auto Nomaden/Samoerai"
+          },
+          "save_settings": {
+            "label": "Instellingen opslaan",
+            "description": "Sla bron, aanvalsopstellingen, moeilijkheden, stopgrenzen, tijdsprongen en teststatus op voordat je dit venster sluit."
+          },
+          "readiness": {
+            "description": "De automatisering verbetert evenementenkampen en wacht op geschikte commandanten, troepen, gereedschap en bruikbare tijdsprongen als die zijn ingeschakeld.",
+            "label": "Gereedheid voor kampaanvallen"
+          }
+        },
+        "title": "Auto Nomaden/Samoerai opslaan en inschakelen"
+      },
+      "limits": {
+        "image": {
+          "caption": "Het puntendoel stopt nieuwe vertrekken, maar al reizende aanvallen kunnen nog eindigen.",
+          "alt": "Voorbeeld van score- en stopgrenzen van Auto Nomaden/Samoerai"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Stop deze automatisering bij het accountbrede dagelijkse aantal normale aanvallen tot het spel het terugzet; 0 voegt geen grens toe.",
+            "label": "Daglimiet voor normale aanvallen",
+            "recommendation": "0 zodat het puntendoel van het evenement de reeks bepaalt."
+          },
+          "minimum_remaining": {
+            "description": "Begin zo veel minuten vóór het evenement eindigt geen nieuwe aanvallen meer.",
+            "label": "Stop vóór het evenement eindigt",
+            "recommendation": "30 minuten."
+          },
+          "score_target": {
+            "description": "Begin geen nieuwe aanvallen zodra de gemelde evenementpunten dit doel bereiken of overschrijden.",
+            "label": "Stop bij evenementpunten",
+            "recommendation": "Gebruik je gebruikelijke laatste persoonlijke beloningsmijlpaal boven 0."
+          },
+          "travelling_attacks": {
+            "description": "Al reizende aanvallen kunnen na een stopvoorwaarde eindigen en het eindtotaal boven het doel brengen.",
+            "label": "Reizende aanvallen"
+          }
+        },
+        "title": "Stel punten- en stopgrenzen in"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Reisversnelling met paarden",
+            "recommendation": "Reisveer voor snel reizen.",
+            "description": "Kies voor kampaanvallen de reisoptie met veer, munten of robijnen."
+          },
+          "open_settings": {
+            "label": "Instellingen openen",
+            "description": "Kies op de pagina Automatisering de instellingenknop op de kaart Auto Nomaden/Samoerai."
+          },
+          "source_castle": {
+            "label": "Vertrekburcht",
+            "recommendation": "Gebruik je gebruikelijke evenementburcht met voldoende troepen en werktuigen.",
+            "description": "Kies de burcht in het Grote Rijk die troepen en gereedschap levert voor kampaanvallen."
+          },
+          "nomad_preset": {
+            "description": "Kies een opgeslagen aanvalsopstelling met troepen, gereedschap en formatie voor nomadenkampen.",
+            "label": "Nomadenaanvalsopstelling",
+            "recommendation": "Maak en kies je gebruikelijke nomadenopstelling."
+          },
+          "samurai_preset": {
+            "description": "Kies een opgeslagen aanvalsopstelling met troepen, gereedschap en formatie voor samoeraikampen.",
+            "label": "Samoeraiaanvalsopstelling",
+            "recommendation": "Maak en kies je gebruikelijke samoeraiopstelling."
+          }
+        },
+        "image": {
+          "alt": "Voorbeeld van bron, aanvalsopstellingen en reizen van Auto Nomaden/Samoerai",
+          "caption": "Maak beide evenementaanvalsopstellingen voordat je de bronburcht en reisoptie kiest."
+        },
+        "title": "Open de instellingen voor Auto Nomaden/Samoerai"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "Voorbeeld van kampwachttijden en tijdsprongreserves",
+          "caption": "Elke bewaargewaarde telt tijdsprongvoorwerpen, geen minuten wachttijd."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "Bewaar dit aantal tijdsprongen van 10 min ongebruikt als reserve.",
+            "label": "Bewaar 10 min",
+            "recommendation": "0 voor gewone kamprondes."
+          },
+          "keep_1m": {
+            "description": "Bewaar dit aantal tijdsprongen van 1 min ongebruikt als reserve.",
+            "label": "Bewaar 1 min",
+            "recommendation": "0 voor gewone kamprondes."
+          },
+          "keep_24h": {
+            "description": "Bewaar dit aantal tijdsprongen van 24 uur ongebruikt als reserve.",
+            "label": "Bewaar 24 uur",
+            "recommendation": "Reserveer de voorraad die je nodig hebt voor bouwen of andere activiteiten."
+          },
+          "keep_30m": {
+            "description": "Bewaar dit aantal tijdsprongen van 30 min ongebruikt als reserve.",
+            "label": "Bewaar 30 min",
+            "recommendation": "0 voor gewone kamprondes."
+          },
+          "keep_5h": {
+            "description": "Bewaar dit aantal tijdsprongen van 5 uur ongebruikt als reserve.",
+            "label": "Bewaar 5 uur",
+            "recommendation": "Reserveer de voorraad die je nodig hebt voor bouwen of andere activiteiten."
+          },
+          "keep_5m": {
+            "description": "Bewaar dit aantal tijdsprongen van 5 min ongebruikt als reserve.",
+            "label": "Bewaar 5 min",
+            "recommendation": "0 voor gewone kamprondes."
+          },
+          "keep_60m": {
+            "description": "Bewaar dit aantal tijdsprongen van 60 min ongebruikt als reserve.",
+            "label": "Bewaar 60 min",
+            "recommendation": "0 voor gewone kamprondes."
+          },
+          "skip_cooldowns": {
+            "description": "Gebruik na een bevestigde overwinning op een kamp een beschikbare tijdsprong om de wachttijd van dat doel op te heffen.",
+            "label": "Hef wachttijd na elke geslaagde aanval op",
+            "recommendation": "Aan voor gewone herhaalde kampaanvallen; uit om de natuurlijke wachttijd af te wachten."
+          }
+        },
+        "title": "Kies tijdsprongen en reserves"
+      },
+      "trial": {
+        "image": {
+          "alt": "Voorbeeld van de tijdelijke test tegen een roofridderburcht",
+          "caption": "De test start een echte aanval en vervangt de normale evenementwerking zolang hij aanstaat."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "Vervang de normale evenementwerking door een echte aanvalstest op één roofridderburcht met de nomadenopstelling en tijdsprongen.",
+            "label": "Tijdelijke volledige test tegen een roofridderburcht",
+            "recommendation": "Uit voor gewone nomaden- of samoeraiacties."
+          },
+          "target_x": {
+            "description": "Voer de horizontale coördinaat van de roofridderburcht alleen voor de tijdelijke test in.",
+            "label": "Doel X",
+            "recommendation": "Laat ongebruikt zolang de test uitstaat."
+          },
+          "target_y": {
+            "description": "Voer de verticale coördinaat van de roofridderburcht alleen voor de tijdelijke test in.",
+            "label": "Doel Y",
+            "recommendation": "Laat ongebruikt zolang de test uitstaat."
+          },
+          "trial_skips": {
+            "description": "Als je de test inschakelt, worden ook de tijdsprongen voor de test ingeschakeld.",
+            "label": "Tijdsprongen voor de test"
+          }
+        },
+        "title": "Laat de tijdelijke test uit voor gewone acties"
+      }
+    },
+    "feature": {
+      "description": "Auto Nomaden/Samoerai verbetert geschikte evenementenkampen, kiest het zwakste volledig verbeterde kamp en valt dit met de opgeslagen evenementaanvalsopstelling herhaaldelijk aan totdat een stopgrens is bereikt.",
+      "expectation": "Het wacht op een actief evenement, geschikte commandanten, troepen, gereedschap en bruikbare tijdsprongen als het opheffen van wachttijden aanstaat; aanvallen onderweg kunnen na het stoppen van nieuwe aanvallen nog afronden.",
+      "name": "Auto Nomaden/Samoerai",
+      "summary": "Nomaden- of samoeraikampen verbeteren en aanvallen"
+    },
+    "recommendationIntro": "Aanbevolen waarden beschrijven normaal gebruik van Auto Nomaden/Samoerai; ze zijn advies en wijzigen opgeslagen instellingen niet."
   }
 }

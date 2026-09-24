@@ -25,7 +25,10 @@
     "fortressPreviewTitle": "Esempio di configurazione dell'automazione delle fortezze",
     "invasionGuideIntro": "Segui questi passaggi per configurare l'automazione delle invasioni; seleziona un pannello di esempio per ingrandirlo.",
     "invasionGuideTitle": "Guida all'automazione delle invasioni",
-    "invasionPreviewTitle": "Esempio di configurazione dell'automazione delle invasioni"
+    "invasionPreviewTitle": "Esempio di configurazione dell'automazione delle invasioni",
+    "nomadGuideIntro": "Segui questi passaggi per configurare Auto Nomadi/Samurai; seleziona un pannello di esempio per ingrandirlo.",
+    "nomadGuideTitle": "Guida di Auto Nomadi/Samurai",
+    "nomadPreviewTitle": "Esempio di configurazione di Auto Nomadi/Samurai"
   },
   "autoTower": {
     "recommendationIntro": "Questi consigli riguardano l’uso regolare; controllali prima di salvare.",
@@ -372,6 +375,37 @@
       "preset": "Formazione d'attacco: schieramento d'evento salvato",
       "title": "Esempio di preparazione dell'attacco dell'evento",
       "travel": "Potenziamento del viaggio: Piuma da viaggio"
+    },
+    "nomadDifficulty": {
+      "title": "Esempio di difficoltà dell'evento",
+      "active": "Evento attivo: usa la difficoltà attuale",
+      "nomad": "Nomadi: difficoltà sbloccata e affidabile",
+      "samurai": "Samurai: difficoltà sbloccata e affidabile"
+    },
+    "nomadSetup": {
+      "castle": "Partenza: castello abituale per l'evento nel Grande Impero",
+      "travel": "Potenziamento di viaggio: piuma da viaggio",
+      "nomadPreset": "Preset nomade: formazione salvata per accampamenti",
+      "samuraiPreset": "Preset samurai: formazione salvata per accampamenti",
+      "title": "Esempio di configurazione degli accampamenti dell'evento"
+    },
+    "nomadCooldowns": {
+      "clear": "Azzera attesa dopo una vittoria confermata: attivo",
+      "long": "Conserva 5 h / 24 h: scorta riservata ad altre attività",
+      "short": "Conserva 1 / 5 / 10 / 30 / 60 min: 0 oggetti ciascuno",
+      "title": "Esempio di scelte per le attese"
+    },
+    "nomadLimits": {
+      "daily": "Limite giornaliero aggiuntivo: 0",
+      "score": "Obiettivo di punteggio: ultimo traguardo premio personale",
+      "time": "Ferma prima della fine: 30 minuti",
+      "title": "Esempio di regole di arresto"
+    },
+    "nomadTrial": {
+      "coordinates": "Bersaglio X / Y: inutilizzato nelle attività normali",
+      "effect": "Prova attiva: sostituisce l'evento con un vero attacco",
+      "title": "Esempio dei controlli della prova",
+      "trial": "Prova temporanea contro masnadieri: disattivata"
     }
   },
   "autoStation": {
@@ -723,5 +757,195 @@
         "title": "Apri le impostazioni dell'automazione delle invasioni"
       }
     }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "Usa la difficoltà sbloccata più alta che la tua formazione abituale affronta in modo affidabile.",
+            "description": "Scegli una difficoltà nomade sbloccata per l'avvio dell'evento.",
+            "label": "Difficoltà nomade"
+          },
+          "samurai_difficulty": {
+            "recommendation": "Usa la difficoltà sbloccata più alta che la tua formazione abituale affronta in modo affidabile.",
+            "description": "Scegli una difficoltà samurai sbloccata per l'avvio dell'evento.",
+            "label": "Difficoltà samurai"
+          },
+          "active_difficulty": {
+            "description": "Se un evento è già attivo, usa la sua difficoltà attuale: con una scelta salvata diversa l'automazione attende invece di cambiarla.",
+            "label": "Evento già attivo"
+          }
+        },
+        "title": "Scegli le difficoltà di entrambi gli eventi",
+        "image": {
+          "alt": "Esempio delle difficoltà nomadi e samurai",
+          "caption": "Scegli una difficoltà sbloccata separata per ciascun evento e usa quella attuale se l'evento è già attivo."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "Attivo dopo aver controllato e salvato le impostazioni desiderate.",
+            "description": "Dopo aver salvato, attiva Auto Nomadi/Samurai nella scheda Automazione per eseguirlo quando sono disponibili un evento e le risorse necessarie.",
+            "label": "Interruttore Auto Nomadi/Samurai"
+          },
+          "save_settings": {
+            "label": "Salva impostazioni",
+            "description": "Salva castello di partenza, preset, difficoltà, limiti di arresto, scelta dei salti e stato della prova prima di chiudere questa finestra."
+          },
+          "readiness": {
+            "description": "L'automazione potenzia gli accampamenti dell'evento e attende comandanti, truppe, strumenti e, se abilitati, salti temporali utilizzabili.",
+            "label": "Prontezza degli accampamenti"
+          }
+        },
+        "title": "Salva e attiva Auto Nomadi/Samurai"
+      },
+      "limits": {
+        "image": {
+          "caption": "Il punteggio obiettivo ferma i nuovi invii, ma gli attacchi già in viaggio possono terminare.",
+          "alt": "Esempio dei limiti di punteggio e arresto di Auto Nomadi/Samurai"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Ferma questa automazione al conteggio giornaliero degli attacchi normali dell'intero account finché il gioco non lo azzera; 0 non aggiunge limiti.",
+            "label": "Limite giornaliero degli attacchi normali",
+            "recommendation": "0, così il punteggio obiettivo dell'evento controlla la serie."
+          },
+          "minimum_remaining": {
+            "description": "Smetti di iniziare nuovi attacchi questo numero di minuti prima della fine dell'evento.",
+            "label": "Fermati prima della fine dell'evento",
+            "recommendation": "30 minuti."
+          },
+          "score_target": {
+            "description": "Smetti di iniziare nuovi attacchi quando il punteggio dell'evento indicato raggiunge o supera questo obiettivo.",
+            "label": "Fermati al punteggio dell'evento",
+            "recommendation": "Usa l'ultimo traguardo abituale di ricompensa personale, superiore a 0."
+          },
+          "travelling_attacks": {
+            "description": "Gli attacchi già in viaggio possono terminare dopo una condizione d'arresto e portare il punteggio finale oltre l'obiettivo.",
+            "label": "Attacchi in viaggio"
+          }
+        },
+        "title": "Imposta punteggio e limiti d'arresto"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Potenziamento del viaggio a cavallo",
+            "recommendation": "Piuma da viaggio per spostamenti rapidi.",
+            "description": "Scegli l'opzione di viaggio con piuma, monete o rubini per gli attacchi agli accampamenti."
+          },
+          "open_settings": {
+            "label": "Apri le impostazioni",
+            "description": "Nella pagina Automazione, seleziona il pulsante delle impostazioni nella scheda Auto Nomadi/Samurai."
+          },
+          "source_castle": {
+            "label": "Castello di partenza",
+            "recommendation": "Usa il tuo castello abituale per l'evento con abbastanza truppe e strumenti.",
+            "description": "Scegli il castello nel Grande Impero che fornisce truppe e strumenti per gli attacchi agli accampamenti."
+          },
+          "nomad_preset": {
+            "description": "Seleziona un preset d'attacco salvato con truppe, strumenti e formazione per gli accampamenti nomadi.",
+            "label": "Preset d'attacco nomade",
+            "recommendation": "Crea e seleziona il tuo normale preset nomade."
+          },
+          "samurai_preset": {
+            "description": "Seleziona un preset d'attacco salvato con truppe, strumenti e formazione per gli accampamenti samurai.",
+            "label": "Preset d'attacco samurai",
+            "recommendation": "Crea e seleziona il tuo normale preset samurai."
+          }
+        },
+        "image": {
+          "alt": "Esempio di partenza, preset e viaggio di Auto Nomadi/Samurai",
+          "caption": "Crea entrambi i preset dell'evento prima di scegliere il castello di partenza e l'opzione di viaggio."
+        },
+        "title": "Apri le impostazioni di Auto Nomadi/Samurai"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "Esempio di attese degli accampamenti e riserve di salti temporali",
+          "caption": "Ogni valore da conservare conta oggetti di salto temporale, non minuti di attesa."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "Conserva senza usarli questo numero di salti temporali da 10 min.",
+            "label": "Conserva 10 min",
+            "recommendation": "0 per le normali serie di accampamenti."
+          },
+          "keep_1m": {
+            "description": "Conserva senza usarli questo numero di salti temporali da 1 min.",
+            "label": "Conserva 1 min",
+            "recommendation": "0 per le normali serie di accampamenti."
+          },
+          "keep_24h": {
+            "description": "Conserva senza usarli questo numero di salti temporali da 24 h.",
+            "label": "Conserva 24 h",
+            "recommendation": "Tieni da parte la scorta necessaria per costruzioni o altre attività."
+          },
+          "keep_30m": {
+            "description": "Conserva senza usarli questo numero di salti temporali da 30 min.",
+            "label": "Conserva 30 min",
+            "recommendation": "0 per le normali serie di accampamenti."
+          },
+          "keep_5h": {
+            "description": "Conserva senza usarli questo numero di salti temporali da 5 h.",
+            "label": "Conserva 5 h",
+            "recommendation": "Tieni da parte la scorta necessaria per costruzioni o altre attività."
+          },
+          "keep_5m": {
+            "description": "Conserva senza usarli questo numero di salti temporali da 5 min.",
+            "label": "Conserva 5 min",
+            "recommendation": "0 per le normali serie di accampamenti."
+          },
+          "keep_60m": {
+            "description": "Conserva senza usarli questo numero di salti temporali da 60 min.",
+            "label": "Conserva 60 min",
+            "recommendation": "0 per le normali serie di accampamenti."
+          },
+          "skip_cooldowns": {
+            "description": "Dopo una vittoria confermata contro un accampamento, usa un salto temporale disponibile per azzerare l'attesa di quel bersaglio.",
+            "label": "Azzera l'attesa dopo ogni attacco riuscito",
+            "recommendation": "Attiva per i normali attacchi ripetuti agli accampamenti; disattiva per attendere il tempo naturale."
+          }
+        },
+        "title": "Scegli salti temporali e riserve"
+      },
+      "trial": {
+        "image": {
+          "alt": "Esempio dei controlli per la prova temporanea contro un castello dei masnadieri",
+          "caption": "La prova lancia un vero attacco e sostituisce l'attività normale dell'evento mentre è attiva."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "Sostituisci l'attività normale dell'evento con una prova di attacco reale contro un castello dei masnadieri usando il preset nomade e i salti temporali.",
+            "label": "Prova temporanea completa contro un castello dei masnadieri",
+            "recommendation": "Disattivata per le normali serie nomadi o samurai."
+          },
+          "target_x": {
+            "description": "Inserisci la coordinata orizzontale del castello dei masnadieri solo per la prova temporanea.",
+            "label": "Bersaglio X",
+            "recommendation": "Lascia inutilizzato quando la prova è disattivata."
+          },
+          "target_y": {
+            "description": "Inserisci la coordinata verticale del castello dei masnadieri solo per la prova temporanea.",
+            "label": "Bersaglio Y",
+            "recommendation": "Lascia inutilizzato quando la prova è disattivata."
+          },
+          "trial_skips": {
+            "description": "L'attivazione della prova abilita anche i salti per le attese di quella prova.",
+            "label": "Salti temporali della prova"
+          }
+        },
+        "title": "Lascia disattivata la prova temporanea per le serie normali"
+      }
+    },
+    "feature": {
+      "description": "Auto Nomadi/Samurai potenzia gli accampamenti idonei dell'evento, sceglie il più debole tra quelli completamente potenziati e lo attacca ripetutamente con il preset salvato per l'evento finché non raggiunge un limite di arresto.",
+      "expectation": "Attende un evento attivo, comandanti, truppe, strumenti e salti temporali utilizzabili se la rimozione dei tempi d'attesa è attiva; gli attacchi in viaggio possono terminare dopo lo stop ai nuovi invii.",
+      "name": "Auto Nomadi/Samurai",
+      "summary": "Potenzia e attacca gli accampamenti nomadi o samurai"
+    },
+    "recommendationIntro": "I valori consigliati descrivono l'uso regolare di Auto Nomadi/Samurai; sono indicazioni e non cambiano le impostazioni salvate."
   }
 }

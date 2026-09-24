@@ -25,7 +25,10 @@
     "fortressPreviewTitle": "Einrichtungsbeispiel für die Festungsautomatisierung",
     "invasionGuideIntro": "Folge diesen Schritten, um automatische Invasionsangriffe einzurichten; wähle ein Beispielbild zur Vergrößerung.",
     "invasionGuideTitle": "Anleitung für automatische Invasionsangriffe",
-    "invasionPreviewTitle": "Beispiel für die Einrichtung automatischer Invasionsangriffe"
+    "invasionPreviewTitle": "Beispiel für die Einrichtung automatischer Invasionsangriffe",
+    "nomadGuideIntro": "Folge diesen Schritten, um Auto Nomaden/Samurai einzurichten; wähle ein Beispielbild zum Vergrößern.",
+    "nomadGuideTitle": "Anleitung für Auto Nomaden/Samurai",
+    "nomadPreviewTitle": "Einrichtungsbeispiel für Auto Nomaden/Samurai"
   },
   "autoTower": {
     "recommendationIntro": "Diese Empfehlungen gelten für den regelmäßigen Betrieb; prüfe sie vor dem Speichern.",
@@ -372,6 +375,37 @@
       "preset": "Angriffsvorlage: gespeicherte Eventaufstellung",
       "title": "Beispiel für Eventangriffe",
       "travel": "Reiseverstärkung: Reisefeder"
+    },
+    "nomadDifficulty": {
+      "title": "Beispiel für Event-Schwierigkeitsgrade",
+      "active": "Aktives Event: aktuellen Schwierigkeitsgrad übernehmen",
+      "nomad": "Nomaden: freigeschalteter verlässlicher Schwierigkeitsgrad",
+      "samurai": "Samurai: freigeschalteter verlässlicher Schwierigkeitsgrad"
+    },
+    "nomadSetup": {
+      "castle": "Ausgang: übliche Eventburg im Großen Imperium",
+      "travel": "Reisebonus: Reisefeder",
+      "nomadPreset": "Nomaden-Vorlage: gespeicherte Lageraufstellung",
+      "samuraiPreset": "Samurai-Vorlage: gespeicherte Lageraufstellung",
+      "title": "Beispiel für Eventlager-Einstellungen"
+    },
+    "nomadCooldowns": {
+      "clear": "Abklingzeit nach bestätigtem Sieg beenden: Ein",
+      "long": "5 Std. / 24 Std. behalten: Vorrat für andere Aufgaben reserviert",
+      "short": "1 / 5 / 10 / 30 / 60 Min. behalten: jeweils 0 Gegenstände",
+      "title": "Beispiel für Abklingzeiteinstellungen"
+    },
+    "nomadLimits": {
+      "daily": "Zusätzliche Tagesgrenze: 0",
+      "score": "Punkteziel: letzte persönliche Belohnungsstufe",
+      "time": "Vor Eventende stoppen: 30 Minuten",
+      "title": "Beispiel für Stoppregeln"
+    },
+    "nomadTrial": {
+      "coordinates": "Ziel X / Y: im regulären Betrieb ungenutzt",
+      "effect": "Test Ein ersetzt den Eventbetrieb durch einen echten Angriff",
+      "title": "Beispiel für Teststeuerung",
+      "trial": "Vorübergehender Raubritterburgtest: Aus"
     }
   },
   "autoStation": {
@@ -723,5 +757,195 @@
         "title": "Einstellungen für automatische Invasionsangriffe öffnen"
       }
     }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "Nutze den höchsten freigeschalteten Schwierigkeitsgrad, den deine übliche Aufstellung zuverlässig bewältigt.",
+            "description": "Für den Eventstart einen freigeschalteten Nomaden-Schwierigkeitsgrad wählen.",
+            "label": "Nomaden-Schwierigkeitsgrad"
+          },
+          "samurai_difficulty": {
+            "recommendation": "Nutze den höchsten freigeschalteten Schwierigkeitsgrad, den deine übliche Aufstellung zuverlässig bewältigt.",
+            "description": "Für den Eventstart einen freigeschalteten Samurai-Schwierigkeitsgrad wählen.",
+            "label": "Samurai-Schwierigkeitsgrad"
+          },
+          "active_difficulty": {
+            "description": "Bei einem aktiven Event dessen aktuellen Schwierigkeitsgrad übernehmen, da die Automatisierung bei einer abweichenden gespeicherten Wahl wartet, statt ihn zu ändern.",
+            "label": "Bereits aktives Event"
+          }
+        },
+        "title": "Wähle beide Event-Schwierigkeitsgrade",
+        "image": {
+          "alt": "Beispiel für die Schwierigkeitswahl bei Nomaden und Samurai",
+          "caption": "Für jedes Event einen eigenen freigeschalteten Schwierigkeitsgrad wählen und beim aktiven Event dessen aktuellen Grad übernehmen."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "Ein, nachdem du deine gewünschten Einstellungen geprüft und gespeichert hast.",
+            "description": "Auto Nomaden/Samurai nach dem Speichern auf der Automatisierungskarte einschalten, damit es bei verfügbarem Event und geeigneten Ressourcen läuft.",
+            "label": "Schalter für Auto Nomaden/Samurai"
+          },
+          "save_settings": {
+            "label": "Einstellungen speichern",
+            "description": "Quelle, Vorlagen, Schwierigkeitsgrade, Stoppgrenzen, Zeitsprungwahl und Teststatus vor dem Schließen dieses Dialogs speichern."
+          },
+          "readiness": {
+            "description": "Die Automatisierung entwickelt Eventlager und wartet auf geeignete Feldherren, Truppen, Werkzeuge und bei aktivierten Zeitsprüngen auf nutzbare Zeitsprünge.",
+            "label": "Bereitschaft für Lagerangriffe"
+          }
+        },
+        "title": "Auto Nomaden/Samurai speichern und einschalten"
+      },
+      "limits": {
+        "image": {
+          "caption": "Das Punkteziel stoppt neue Starts, während bereits reisende Angriffe noch enden können.",
+          "alt": "Beispiel für Punkte- und Stoppgrenzen von Auto Nomaden/Samurai"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Stoppe diese Automatisierung bei der kontoweiten täglichen Zahl normaler Angriffe, bis das Spiel sie zurücksetzt; 0 fügt keine Grenze hinzu.",
+            "label": "Tageslimit für normale Angriffe",
+            "recommendation": "0, damit das Event-Punkteziel den Lauf steuert."
+          },
+          "minimum_remaining": {
+            "description": "Starte so viele Minuten vor Eventende keine neuen Angriffe mehr.",
+            "label": "Vor Eventende stoppen",
+            "recommendation": "30 Minuten."
+          },
+          "score_target": {
+            "description": "Starte keine neuen Angriffe mehr, sobald die gemeldete Event-Punktzahl dieses Ziel erreicht oder überschreitet.",
+            "label": "Bei Event-Punktzahl stoppen",
+            "recommendation": "Nutze deine übliche letzte persönliche Belohnungsstufe oberhalb von 0."
+          },
+          "travelling_attacks": {
+            "description": "Bereits reisende Angriffe können nach einer Stoppbedingung enden und die endgültige Punktzahl über das Ziel erhöhen.",
+            "label": "Reisende Angriffe"
+          }
+        },
+        "title": "Punkte- und Stoppgrenzen festlegen"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Reisebeschleunigung mit Pferden",
+            "recommendation": "Reisefeder für schnelles Reisen.",
+            "description": "Für Lagerangriffe die Reiseoption mit Feder, Münzen oder Rubinen wählen."
+          },
+          "open_settings": {
+            "label": "Einstellungen öffnen",
+            "description": "Auf der Automatisierungsseite die Einstellungsschaltfläche der Auto-Nomaden/Samurai-Karte wählen."
+          },
+          "source_castle": {
+            "label": "Ausgangsburg",
+            "recommendation": "Nutze deine übliche Eventburg mit genügend Truppen und Werkzeugen.",
+            "description": "Die Burg im Großen Imperium wählen, die Truppen und Werkzeuge für Lagerangriffe bereitstellt."
+          },
+          "nomad_preset": {
+            "description": "Eine gespeicherte Angriffsvorlage mit Truppen, Werkzeugen und Aufstellung für Nomadenlager wählen.",
+            "label": "Nomaden-Angriffsvorlage",
+            "recommendation": "Deine reguläre Nomaden-Vorlage erstellen und auswählen."
+          },
+          "samurai_preset": {
+            "description": "Eine gespeicherte Angriffsvorlage mit Truppen, Werkzeugen und Aufstellung für Samurailager wählen.",
+            "label": "Samurai-Angriffsvorlage",
+            "recommendation": "Deine reguläre Samurai-Vorlage erstellen und auswählen."
+          }
+        },
+        "image": {
+          "alt": "Beispiel für Quelle, Vorlagen und Reiseoptionen von Auto Nomaden/Samurai",
+          "caption": "Beide Eventvorlagen erstellen, bevor du die Quellburg und Reiseoption auswählst."
+        },
+        "title": "Einstellungen für Auto Nomaden/Samurai öffnen"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "Beispiel für Lagerabklingzeiten und Zeitsprungreserven",
+          "caption": "Jeder Behalten-Wert zählt Zeitsprunggegenstände, nicht Minuten Abklingzeit."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "So viele 10-Minuten-Zeitsprünge als Reserve unangetastet lassen.",
+            "label": "10 Min. behalten",
+            "recommendation": "0 für reguläre Lagerläufe."
+          },
+          "keep_1m": {
+            "description": "So viele 1-Minuten-Zeitsprünge als Reserve unangetastet lassen.",
+            "label": "1 Min. behalten",
+            "recommendation": "0 für reguläre Lagerläufe."
+          },
+          "keep_24h": {
+            "description": "So viele 24-Stunden-Zeitsprünge als Reserve unangetastet lassen.",
+            "label": "24 Std. behalten",
+            "recommendation": "Den Vorrat reservieren, den du für Bauten oder andere Aufgaben brauchst."
+          },
+          "keep_30m": {
+            "description": "So viele 30-Minuten-Zeitsprünge als Reserve unangetastet lassen.",
+            "label": "30 Min. behalten",
+            "recommendation": "0 für reguläre Lagerläufe."
+          },
+          "keep_5h": {
+            "description": "So viele 5-Stunden-Zeitsprünge als Reserve unangetastet lassen.",
+            "label": "5 Std. behalten",
+            "recommendation": "Den Vorrat reservieren, den du für Bauten oder andere Aufgaben brauchst."
+          },
+          "keep_5m": {
+            "description": "So viele 5-Minuten-Zeitsprünge als Reserve unangetastet lassen.",
+            "label": "5 Min. behalten",
+            "recommendation": "0 für reguläre Lagerläufe."
+          },
+          "keep_60m": {
+            "description": "So viele 60-Minuten-Zeitsprünge als Reserve unangetastet lassen.",
+            "label": "60 Min. behalten",
+            "recommendation": "0 für reguläre Lagerläufe."
+          },
+          "skip_cooldowns": {
+            "description": "Nach einem bestätigten Lagersieg einen verfügbaren Zeitsprung nutzen, um die Abklingzeit dieses Ziels zu beenden.",
+            "label": "Abklingzeit nach jedem erfolgreichen Angriff beenden",
+            "recommendation": "Für reguläre wiederholte Lagerangriffe einschalten; ausgeschaltet die natürliche Abklingzeit abwarten."
+          }
+        },
+        "title": "Zeitsprünge und Reserven wählen"
+      },
+      "trial": {
+        "image": {
+          "alt": "Beispiel für die Steuerung des vorübergehenden Raubritterburgtests",
+          "caption": "Der Test startet einen echten Angriff und ersetzt bei Aktivierung den normalen Eventbetrieb."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "Den normalen Eventbetrieb durch einen echten Angriffstest auf eine Raubritterburg mit Nomaden-Vorlage und Zeitsprüngen ersetzen.",
+            "label": "Vorübergehender End-to-End-Test auf Raubritterburg",
+            "recommendation": "Für reguläre Nomaden- oder Samurai-Läufe ausschalten."
+          },
+          "target_x": {
+            "description": "Die horizontale Koordinate der Raubritterburg nur für den vorübergehenden Test eingeben.",
+            "label": "Ziel X",
+            "recommendation": "Bei ausgeschaltetem Test ungenutzt lassen."
+          },
+          "target_y": {
+            "description": "Die vertikale Koordinate der Raubritterburg nur für den vorübergehenden Test eingeben.",
+            "label": "Ziel Y",
+            "recommendation": "Bei ausgeschaltetem Test ungenutzt lassen."
+          },
+          "trial_skips": {
+            "description": "Beim Einschalten des Tests werden auch Zeitsprünge für den Test aktiviert.",
+            "label": "Zeitsprünge im Test"
+          }
+        },
+        "title": "Den vorübergehenden Test für reguläre Läufe ausgeschaltet lassen"
+      }
+    },
+    "feature": {
+      "description": "Auto Nomaden/Samurai entwickelt geeignete Eventlager, wählt das schwächste vollständig entwickelte Lager und greift es mit der für das Event gespeicherten Vorlage wiederholt an, bis eine Stoppgrenze erreicht ist.",
+      "expectation": "Es wartet auf ein aktives Event, geeignete Feldherren, Truppen, Werkzeuge und bei aktivierter Abkürzung nutzbare Zeitsprünge; laufende Angriffe können nach dem Stopp neuer Starts noch enden.",
+      "name": "Auto Nomaden/Samurai",
+      "summary": "Nomaden- oder Samurai-Eventlager entwickeln und angreifen"
+    },
+    "recommendationIntro": "Empfohlene Werte beschreiben den regulären Einsatz von Auto Nomaden/Samurai; sie dienen nur als Orientierung und ändern keine gespeicherten Einstellungen."
   }
 }

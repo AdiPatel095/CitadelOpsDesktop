@@ -10,6 +10,7 @@ const bird = await load('src/config/autoBirdGuide.json');
 const station = await load('src/config/autoStationGuide.json');
 const fortress = await load('src/config/autoFortressGuide.json');
 const invasion = await load('src/config/autoInvasionGuide.json');
+const nomad = await load('src/config/autoNomadGuide.json');
 const countLeaves = value => typeof value === 'string' ? 1 : Object.values(value).reduce((sum, child) => sum + countLeaves(child), 0);
 function leaves(candidate, expected, path='') {
   if (typeof expected === 'string') { assert.equal(typeof candidate,'string',path); assert.ok(candidate.trim(),path); return 1; }
@@ -22,7 +23,7 @@ test('all 25 non-English guide packs have complete stable-ID content', async () 
     const pack=await load(`src/config/guideLocales/${locale}.json`);
     const expected = source;
     assert.equal(leaves(pack,expected,locale),countLeaves(expected));
-    for (const [key,guide] of [['autoTower',tower],['autoBird',bird],['autoStation',station],['autoFortress',fortress],['autoInvasion',invasion]].filter(([key]) => pack[key])) {
+    for (const [key,guide] of [['autoTower',tower],['autoBird',bird],['autoStation',station],['autoFortress',fortress],['autoInvasion',invasion],['autoNomad',nomad]].filter(([key]) => pack[key])) {
       assert.deepEqual(Object.keys(pack[key].steps).sort(),guide.steps.map(step=>step.id).sort());
       for (const step of guide.steps) assert.deepEqual(Object.keys(pack[key].steps[step.id].items).sort(),step.items.map(item=>item.id).sort());
     }
@@ -43,7 +44,7 @@ test('guide translation provenance pins the exact 26 locale pack bytes', async (
 
 
 test('canonical English guides match the rendered source pack', () => {
-  for (const [key, guide] of [['autoTower', tower], ['autoBird', bird], ['autoStation', station], ['autoFortress', fortress], ['autoInvasion', invasion]]) {
+  for (const [key, guide] of [['autoTower', tower], ['autoBird', bird], ['autoStation', station], ['autoFortress', fortress], ['autoInvasion', invasion], ['autoNomad', nomad]]) {
     assert.equal(source[key].recommendationIntro, guide.recommendationIntro);
     for (const step of guide.steps) {
       const translated = source[key].steps[step.id];

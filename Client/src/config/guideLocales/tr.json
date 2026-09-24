@@ -25,7 +25,10 @@
     "fortressPreviewTitle": "Otomatik kale saldırıları kurulum örneği",
     "invasionGuideIntro": "Otomatik istila saldırılarını ayarlamak için bu adımları izleyin; büyütmek için örnek panel seçin.",
     "invasionGuideTitle": "Otomatik istila saldırıları rehberi",
-    "invasionPreviewTitle": "Otomatik istila saldırıları kurulum örneği"
+    "invasionPreviewTitle": "Otomatik istila saldırıları kurulum örneği",
+    "nomadGuideIntro": "Otomatik Göçebeler/Samuraylar kurmak için bu adımları izle; büyütmek için örnek paneli seç.",
+    "nomadGuideTitle": "Otomatik Göçebeler/Samuraylar rehberi",
+    "nomadPreviewTitle": "Otomatik Göçebeler/Samuraylar kurulum örneği"
   },
   "autoTower": {
     "recommendationIntro": "Bunlar düzenli kullanım önerileridir; kaydetmeden önce gözden geçirin.",
@@ -372,6 +375,37 @@
       "preset": "Saldırı düzeni: kaydedilmiş etkinlik dizilimi",
       "title": "Örnek etkinlik saldırısı hazırlığı",
       "travel": "Yolculuk hızlandırması: Yolculuk Tüyü"
+    },
+    "nomadDifficulty": {
+      "title": "Örnek etkinlik zorlukları",
+      "active": "Etkin olay: mevcut zorlukla eşleştir",
+      "nomad": "Göçebeler: açık ve güvenilir zorluk",
+      "samurai": "Samuraylar: açık ve güvenilir zorluk"
+    },
+    "nomadSetup": {
+      "castle": "Kaynak: Büyük İmparatorluk'taki olağan etkinlik kalesi",
+      "travel": "Yolculuk hızlandırması: Yolculuk Tüyü",
+      "nomadPreset": "Göçebe düzeni: kayıtlı kamp dizilişi",
+      "samuraiPreset": "Samuray düzeni: kayıtlı kamp dizilişi",
+      "title": "Etkinlik kampı ayarları örneği"
+    },
+    "nomadCooldowns": {
+      "clear": "Onaylanmış zaferden sonra beklemeyi kaldır: açık",
+      "long": "5 sa / 24 sa sakla: diğer işler için stok",
+      "short": "1 / 5 / 10 / 30 / 60 dk sakla: her birinden 0 öğe",
+      "title": "Bekleme seçenekleri örneği"
+    },
+    "nomadLimits": {
+      "daily": "Ek günlük sınır: 0",
+      "score": "Puan hedefi: son kişisel ödül eşiği",
+      "time": "Bitişten önce dur: 30 dakika",
+      "title": "Durma kuralları örneği"
+    },
+    "nomadTrial": {
+      "coordinates": "Hedef X / Y: normal çalışmada kullanılmaz",
+      "effect": "Deneme açıkken etkinliğin yerini gerçek saldırı alır",
+      "title": "Deneme denetimleri örneği",
+      "trial": "Geçici Haydut Baron denemesi: kapalı"
     }
   },
   "autoStation": {
@@ -723,5 +757,195 @@
         "title": "Otomatik istila saldırıları ayarlarını açın"
       }
     }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "Olağan düzeninizin güvenilir biçimde üstesinden geldiği en yüksek açık zorluğu kullanın.",
+            "description": "Etkinlik başlangıcı için açık bir Göçebe zorluğu seç.",
+            "label": "Göçebe zorluğu"
+          },
+          "samurai_difficulty": {
+            "recommendation": "Olağan düzeninizin güvenilir biçimde üstesinden geldiği en yüksek açık zorluğu kullanın.",
+            "description": "Etkinlik başlangıcı için açık bir Samuray zorluğu seç.",
+            "label": "Samuray zorluğu"
+          },
+          "active_difficulty": {
+            "description": "Etkin bir etkinlikte mevcut zorluğuyla eşleştir; farklı kayıtlı seçim zorluğu değiştirmek yerine otomasyonu bekletir.",
+            "label": "Zaten etkin olan etkinlik"
+          }
+        },
+        "title": "İki etkinliğin zorluğunu seçin",
+        "image": {
+          "alt": "Göçebe ve samuray zorlukları örneği",
+          "caption": "Her etkinlik için ayrı bir açık zorluk seç ve etkin olanın mevcut zorluğuyla eşleştir."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "İstediğiniz ayarları inceleyip kaydettikten sonra açık.",
+            "description": "Kaydettikten sonra etkinlik ve uygun kaynaklar olduğunda çalışması için Otomatik Göçebeler/Samuraylar seçeneğini Otomasyon kartından aç.",
+            "label": "Otomatik Göçebeler/Samuraylar anahtarı"
+          },
+          "save_settings": {
+            "label": "Ayarları kaydet",
+            "description": "Bu pencereyi kapatmadan önce kaynak kaleyi, düzenleri, zorlukları, durma sınırlarını, zaman atlama tercihlerini ve deneme durumunu kaydet."
+          },
+          "readiness": {
+            "description": "Otomasyon etkinlik kamplarını geliştirir ve uygun komutanları, askerleri, araçları ve açıksa kullanılabilir zaman atlamalarını bekler.",
+            "label": "Kamp saldırısı hazırlığı"
+          }
+        },
+        "title": "Otomatik Göçebeler/Samuraylar seçeneğini kaydet ve aç"
+      },
+      "limits": {
+        "image": {
+          "caption": "Puan hedefi yeni çıkışları durdurur ancak yoldaki saldırılar bitebilir.",
+          "alt": "Otomatik Göçebeler/Samuraylar puan ve durma sınırları örneği"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Oyun sıfırlayana kadar hesap genelindeki günlük normal saldırı sayısında bu otomasyonu durdurun; 0 sınır eklemez.",
+            "label": "Günlük normal saldırı sınırı",
+            "recommendation": "Etkinlik puan hedefinin seriyi yönetmesi için 0."
+          },
+          "minimum_remaining": {
+            "description": "Etkinlik bitmeden bu kadar dakika önce yeni saldırı başlatmayı bırakın.",
+            "label": "Etkinlik bitmeden durdur",
+            "recommendation": "30 dakika."
+          },
+          "score_target": {
+            "description": "Bildirilen etkinlik puanı bu hedefe ulaştığında veya onu geçtiğinde yeni saldırı başlatmayı bırakın.",
+            "label": "Etkinlik puanında durdur",
+            "recommendation": "0'ın üzerindeki olağan son kişisel ödül aşamanızı kullanın."
+          },
+          "travelling_attacks": {
+            "description": "Yoldaki saldırılar durma koşulundan sonra bitebilir ve son puanı hedefin üzerine çıkarabilir.",
+            "label": "Yoldaki saldırılar"
+          }
+        },
+        "title": "Puanı ve durma sınırlarını ayarlayın"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Atla yolculuk hızlandırması",
+            "recommendation": "Hızlı yolculuk için Yolculuk Tüyü.",
+            "description": "Kamp saldırıları için tüy, altın veya yakutla yolculuk seçeneğini seç."
+          },
+          "open_settings": {
+            "label": "Ayarları açın",
+            "description": "Otomasyon sayfasında Otomatik Göçebeler/Samuraylar kartının ayarlar düğmesini seç."
+          },
+          "source_castle": {
+            "label": "Kaynak kale",
+            "recommendation": "Yeterli asker ve aracı olan olağan etkinlik kalenizi kullanın.",
+            "description": "Kamp saldırılarına asker ve araç sağlayan Büyük İmparatorluk kalesini seç."
+          },
+          "nomad_preset": {
+            "description": "Göçebe kampları için askerleri, araçları ve dizilişi olan kayıtlı saldırı düzenini seç.",
+            "label": "Göçebe saldırı düzeni",
+            "recommendation": "Düzenli Göçebe düzenini oluştur ve seç."
+          },
+          "samurai_preset": {
+            "description": "Samuray kampları için askerleri, araçları ve dizilişi olan kayıtlı saldırı düzenini seç.",
+            "label": "Samuray saldırı düzeni",
+            "recommendation": "Düzenli Samuray düzenini oluştur ve seç."
+          }
+        },
+        "image": {
+          "alt": "Otomatik Göçebeler/Samuraylar kaynak, düzen ve yolculuk örneği",
+          "caption": "Kaynak kaleyi ve yolculuk seçeneğini belirlemeden önce iki etkinlik düzenini de oluştur."
+        },
+        "title": "Otomatik Göçebeler/Samuraylar ayarlarını aç"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "Kamp beklemeleri ve zaman atlama rezervleri örneği",
+          "caption": "Her saklama değeri bekleme dakikalarını değil, zaman atlama öğelerini sayar."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "Bu sayıdaki 10 dakikalık zaman atlamasını rezerv olarak kullanmadan sakla.",
+            "label": "10 dk sakla",
+            "recommendation": "Düzenli kamp turları için 0."
+          },
+          "keep_1m": {
+            "description": "Bu sayıdaki 1 dakikalık zaman atlamasını rezerv olarak kullanmadan sakla.",
+            "label": "1 dk sakla",
+            "recommendation": "Düzenli kamp turları için 0."
+          },
+          "keep_24h": {
+            "description": "Bu sayıdaki 24 saatlik zaman atlamasını rezerv olarak kullanmadan sakla.",
+            "label": "24 sa sakla",
+            "recommendation": "İnşaat veya başka işler için gerekli stoğu ayır."
+          },
+          "keep_30m": {
+            "description": "Bu sayıdaki 30 dakikalık zaman atlamasını rezerv olarak kullanmadan sakla.",
+            "label": "30 dk sakla",
+            "recommendation": "Düzenli kamp turları için 0."
+          },
+          "keep_5h": {
+            "description": "Bu sayıdaki 5 saatlik zaman atlamasını rezerv olarak kullanmadan sakla.",
+            "label": "5 sa sakla",
+            "recommendation": "İnşaat veya başka işler için gerekli stoğu ayır."
+          },
+          "keep_5m": {
+            "description": "Bu sayıdaki 5 dakikalık zaman atlamasını rezerv olarak kullanmadan sakla.",
+            "label": "5 dk sakla",
+            "recommendation": "Düzenli kamp turları için 0."
+          },
+          "keep_60m": {
+            "description": "Bu sayıdaki 60 dakikalık zaman atlamasını rezerv olarak kullanmadan sakla.",
+            "label": "60 dk sakla",
+            "recommendation": "Düzenli kamp turları için 0."
+          },
+          "skip_cooldowns": {
+            "description": "Onaylanmış bir kamp zaferinden sonra hedefin beklemesini kaldırmak için mevcut bir zaman atlaması kullan.",
+            "label": "Her başarılı saldırıdan sonra beklemeyi kaldır",
+            "recommendation": "Düzenli tekrarlanan kamp saldırıları için açık; doğal bekleme için kapalı."
+          }
+        },
+        "title": "Zaman atlamalarını ve rezervleri seç"
+      },
+      "trial": {
+        "image": {
+          "alt": "Geçici Haydut Baron kalesi deneme denetimleri örneği",
+          "caption": "Deneme gerçek bir saldırı başlatır ve açıkken normal etkinlik çalışmasının yerini alır."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "Normal etkinlik çalışmasını Göçebe düzeni ve zaman atlamalarıyla bir Haydut Baron kalesine yapılan gerçek deneme saldırısıyla değiştir.",
+            "label": "Haydut Baron kalesine geçici uçtan uca deneme",
+            "recommendation": "Düzenli Göçebe veya Samuray turlarında kapalı."
+          },
+          "target_x": {
+            "description": "Haydut Baron kalesinin yatay koordinatını yalnızca geçici deneme için gir.",
+            "label": "Hedef X",
+            "recommendation": "Deneme kapalıyken kullanma."
+          },
+          "target_y": {
+            "description": "Haydut Baron kalesinin dikey koordinatını yalnızca geçici deneme için gir.",
+            "label": "Hedef Y",
+            "recommendation": "Deneme kapalıyken kullanma."
+          },
+          "trial_skips": {
+            "description": "Denemeyi açmak onun için zaman atlamalarını da açar.",
+            "label": "Deneme zaman atlamaları"
+          }
+        },
+        "title": "Düzenli turlar için geçici denemeyi kapalı tut"
+      }
+    },
+    "feature": {
+      "description": "Otomatik Göçebeler/Samuraylar uygun etkinlik kamplarını geliştirir, tamamen geliştirilmiş en zayıf kampı seçer ve bir durma sınırına ulaşana kadar etkinliğe özgü kayıtlı düzenle tekrar tekrar saldırır.",
+      "expectation": "Etkin bir etkinliği, uygun komutanları, askerleri, araçları ve bekleme süresi temizleme açıksa kullanılabilir zaman atlamalarını bekler; yoldaki saldırılar yeni çıkışlar durduktan sonra tamamlanabilir.",
+      "name": "Otomatik Göçebeler/Samuraylar",
+      "summary": "Göçebe veya samuray kamplarını geliştir ve saldır"
+    },
+    "recommendationIntro": "Önerilen değerler Otomatik Göçebeler/Samuraylar için düzenli kullanımı açıklar; yol gösterir ve kayıtlı ayarları değiştirmez."
   }
 }

@@ -1,7 +1,7 @@
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
-import { Castle, Clock3, Crosshair, Lock, RotateCcw, ShieldCheck, Swords, Target, TestTube2 } from 'lucide-react';
+import { BookOpen, Castle, Clock3, Crosshair, Lock, RotateCcw, ShieldCheck, Swords, Target, TestTube2 } from 'lucide-react';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { castleOptionsFromState } from '../../api/Selectors';
 import {
@@ -21,6 +21,8 @@ import {
 import { eventDifficultyName, useEventDifficultyOptions } from '../EventDifficultyOptions';
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
 import { DailyAttackLimitField } from './DailyAttackLimitField';
+import { FeatureGuideModal } from './FeatureGuideModal';
+import { englishGuidePack, useGuideLocale } from '../../config/useGuideLocale';
 
 interface AutoNomadSettingsModalProps {
   isOpen: boolean;
@@ -32,6 +34,11 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
   const { state, configuration, updateConfiguration } = useCitadelAPI();
   const [draft, setDraft] = useState<AutoNomadClientStateV5>(defaultAutoNomadClientState);
   const [saving, setSaving] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const { locale: guideLocale, pack: guidePack } = useGuideLocale();
+  const nomadGuidePack = guidePack.autoNomad ? guidePack : englishGuidePack;
+  const nomadGuideLocale = nomadGuidePack === englishGuidePack ? 'en' : guideLocale;
+  useEffect(() => { if (!isOpen) setIsGuideOpen(false); }, [isOpen]);
   const castles = useMemo(() => castleOptionsFromState(state).filter((castle) => castle.kingdomId === 0), [state]);
   const presetDocument = useMemo(
     () => parseAttackPresetDocument(configuration?.sections[ATTACK_PRESETS_SECTION]),
@@ -90,11 +97,11 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
     }
   };
 
-  return (
-    <SettingsModal
+  return (<><SettingsModal
       isOpen={isOpen}
       onClose={() => { if (!saving) onClose(); }}
       maxWidth="3xl"
+      titleTrailing={<Button variant="outline" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={nomadGuideLocale}>{nomadGuidePack.ui.guideButton}</span></Button>}
       title={localizeStatic("ui.settings.components.autoNomadSettingsModal.title.auto.nomad.samurai.13e95d24")}
       icon={<Crosshair className="h-5 w-5" />}
       description={localizeStatic("ui.settings.components.autoNomadSettingsModal.description.four.camp.leveling.and.locked.target.attack.2e4977f9")}
@@ -351,5 +358,7 @@ export const AutoNomadSettingsModal: React.FC<AutoNomadSettingsModalProps> = ({ 
           <LocalizedText messageKey="ui.settings.components.autoNomadSettingsModal.adi.must.confirm.the.same.target.and.1c6467ca" /></p>
       </div>
     </SettingsModal>
+    <FeatureGuideModal feature="autoNomad" isOpen={isOpen && isGuideOpen} onClose={() => setIsGuideOpen(false)} />
+    </>
   );
 };

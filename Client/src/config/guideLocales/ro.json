@@ -25,7 +25,10 @@
     "fortressPreviewTitle": "Exemplu de configurare a atacurilor automate asupra fortărețelor",
     "invasionGuideIntro": "Urmează acești pași pentru a seta atacurile automate de invazie; selectează un panou exemplu pentru a-l mări.",
     "invasionGuideTitle": "Ghid pentru atacurile automate de invazie",
-    "invasionPreviewTitle": "Exemplu de configurare a atacurilor automate de invazie"
+    "invasionPreviewTitle": "Exemplu de configurare a atacurilor automate de invazie",
+    "nomadGuideIntro": "Urmează acești pași pentru a configura Auto Nomazi/Samurai; selectează un panou de exemplu pentru mărire.",
+    "nomadGuideTitle": "Ghid Auto Nomazi/Samurai",
+    "nomadPreviewTitle": "Exemplu de configurare Auto Nomazi/Samurai"
   },
   "autoTower": {
     "recommendationIntro": "Acestea sunt recomandări pentru utilizarea obișnuită; verifică-le înainte de salvare.",
@@ -372,6 +375,37 @@
       "preset": "Preset de atac: formație de eveniment salvată",
       "title": "Exemplu de pregătire a atacului de eveniment",
       "travel": "Spor de deplasare: Pana de călătorie"
+    },
+    "nomadDifficulty": {
+      "title": "Exemplu de dificultăți ale evenimentelor",
+      "active": "Eveniment activ: potrivește dificultatea curentă",
+      "nomad": "Nomazi: dificultate deblocată și fiabilă",
+      "samurai": "Samurai: dificultate deblocată și fiabilă"
+    },
+    "nomadSetup": {
+      "castle": "Sursă: castelul obișnuit de eveniment din Marele Imperiu",
+      "travel": "Spor de deplasare: Pana de călătorie",
+      "nomadPreset": "Configurație nomadă: formație de tabără salvată",
+      "samuraiPreset": "Configurație samurai: formație de tabără salvată",
+      "title": "Exemplu de setări pentru taberele evenimentului"
+    },
+    "nomadCooldowns": {
+      "clear": "Elimină pauza după victorie confirmată: pornit",
+      "long": "Păstrează 5 h / 24 h: stoc rezervat altor activități",
+      "short": "Păstrează 1 / 5 / 10 / 30 / 60 min: câte 0 obiecte",
+      "title": "Exemplu de opțiuni pentru pauze"
+    },
+    "nomadLimits": {
+      "daily": "Limită zilnică suplimentară: 0",
+      "score": "Obiectiv de puncte: ultimul prag de recompensă personală",
+      "time": "Oprește înainte de sfârșit: 30 de minute",
+      "title": "Exemplu de reguli de oprire"
+    },
+    "nomadTrial": {
+      "coordinates": "Ținta X / Y: nefolosită în funcționarea obișnuită",
+      "effect": "Testul pornit înlocuiește evenimentul cu un atac real",
+      "title": "Exemplu de controale ale testului",
+      "trial": "Test temporar contra baronului tâlhar: oprit"
     }
   },
   "autoStation": {
@@ -723,5 +757,195 @@
         "title": "Deschide setările atacurilor automate de invazie"
       }
     }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "Folosește cea mai mare dificultate deblocată pe care configurația ta obișnuită o gestionează sigur.",
+            "description": "Alege o dificultate nomadă deblocată pentru începutul evenimentului.",
+            "label": "Dificultate nomadă"
+          },
+          "samurai_difficulty": {
+            "recommendation": "Folosește cea mai mare dificultate deblocată pe care configurația ta obișnuită o gestionează sigur.",
+            "description": "Alege o dificultate samurai deblocată pentru începutul evenimentului.",
+            "label": "Dificultate samurai"
+          },
+          "active_difficulty": {
+            "description": "Pentru un eveniment activ, potrivește dificultatea curentă, deoarece o alegere salvată diferită face automatizarea să aștepte în loc să o schimbe.",
+            "label": "Eveniment deja activ"
+          }
+        },
+        "title": "Alege dificultățile ambelor evenimente",
+        "image": {
+          "alt": "Exemplu de dificultăți nomade și samurai",
+          "caption": "Alege o dificultate deblocată separată pentru fiecare eveniment și potrivește dificultatea celui activ."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "Activat după verificarea și salvarea setărilor dorite.",
+            "description": "După salvare, pornește Auto Nomazi/Samurai pe cardul Automatizare pentru a rula când există un eveniment și resurse eligibile.",
+            "label": "Comutator Auto Nomazi/Samurai"
+          },
+          "save_settings": {
+            "label": "Salvează setările",
+            "description": "Salvează sursa, configurațiile, dificultățile, limitele de oprire, alegerile de salturi și starea testului înainte de a închide dialogul."
+          },
+          "readiness": {
+            "description": "Automatizarea dezvoltă taberele evenimentului și așteaptă comandanți, trupe, unelte și salturi de timp utilizabile când acestea sunt activate.",
+            "label": "Pregătirea pentru atacurile asupra taberelor"
+          }
+        },
+        "title": "Salvează și pornește Auto Nomazi/Samurai"
+      },
+      "limits": {
+        "image": {
+          "caption": "Scorul țintă oprește noile lansări, însă atacurile deja în deplasare se pot încheia.",
+          "alt": "Exemplu de limite de puncte și oprire pentru Auto Nomazi/Samurai"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Oprește această automatizare la numărul zilnic de atacuri normale al întregului cont până la resetarea lui de către joc; 0 nu adaugă o limită.",
+            "label": "Limita zilnică a atacurilor obișnuite",
+            "recommendation": "0 pentru ca scorul țintă al evenimentului să controleze seria."
+          },
+          "minimum_remaining": {
+            "description": "Nu mai lansa atacuri noi cu acest număr de minute înainte de sfârșitul evenimentului.",
+            "label": "Oprește înainte de sfârșitul evenimentului",
+            "recommendation": "30 de minute."
+          },
+          "score_target": {
+            "description": "Nu mai lansa atacuri noi când scorul evenimentului raportat atinge sau depășește această țintă.",
+            "label": "Oprește la scorul evenimentului",
+            "recommendation": "Folosește ultimul tău prag obișnuit de recompensă personală, peste 0."
+          },
+          "travelling_attacks": {
+            "description": "Atacurile deja în deplasare se pot încheia după îndeplinirea unei condiții de oprire și pot ridica scorul final peste țintă.",
+            "label": "Atacuri în deplasare"
+          }
+        },
+        "title": "Setează scorul și limitele de oprire"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Accelerarea deplasării cu cai",
+            "recommendation": "Pana de călătorie pentru deplasare rapidă.",
+            "description": "Alege opțiunea de călătorie cu pană, monede sau rubine pentru atacurile asupra taberelor."
+          },
+          "open_settings": {
+            "label": "Deschide setările",
+            "description": "Pe pagina Automatizare, selectează butonul de setări al cardului Auto Nomazi/Samurai."
+          },
+          "source_castle": {
+            "label": "Castel sursă",
+            "recommendation": "Folosește castelul tău obișnuit pentru eveniment, cu trupe și unelte suficiente.",
+            "description": "Alege castelul din Marele Imperiu care furnizează trupe și unelte pentru atacurile asupra taberelor."
+          },
+          "nomad_preset": {
+            "description": "Selectează o configurație de atac salvată cu trupe, unelte și formație pentru taberele nomade.",
+            "label": "Configurație de atac nomadă",
+            "recommendation": "Creează și selectează configurația ta nomadă obișnuită."
+          },
+          "samurai_preset": {
+            "description": "Selectează o configurație de atac salvată cu trupe, unelte și formație pentru taberele samurai.",
+            "label": "Configurație de atac samurai",
+            "recommendation": "Creează și selectează configurația ta samurai obișnuită."
+          }
+        },
+        "image": {
+          "alt": "Exemplu de sursă, configurații și călătorie pentru Auto Nomazi/Samurai",
+          "caption": "Creează ambele configurații de eveniment înainte să alegi castelul sursă și opțiunea de călătorie."
+        },
+        "title": "Deschide setările Auto Nomazi/Samurai"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "Exemplu de pauze ale taberelor și rezerve de salturi de timp",
+          "caption": "Fiecare valoare Păstrează numără obiecte de salt de timp, nu minute de pauză."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "Păstrează nefolosit acest număr de salturi de timp de 10 min ca rezervă.",
+            "label": "Păstrează 10 min",
+            "recommendation": "0 pentru seriile obișnuite de tabere."
+          },
+          "keep_1m": {
+            "description": "Păstrează nefolosit acest număr de salturi de timp de 1 min ca rezervă.",
+            "label": "Păstrează 1 min",
+            "recommendation": "0 pentru seriile obișnuite de tabere."
+          },
+          "keep_24h": {
+            "description": "Păstrează nefolosit acest număr de salturi de timp de 24 h ca rezervă.",
+            "label": "Păstrează 24 h",
+            "recommendation": "Rezervă stocul necesar pentru construcții sau alte activități."
+          },
+          "keep_30m": {
+            "description": "Păstrează nefolosit acest număr de salturi de timp de 30 min ca rezervă.",
+            "label": "Păstrează 30 min",
+            "recommendation": "0 pentru seriile obișnuite de tabere."
+          },
+          "keep_5h": {
+            "description": "Păstrează nefolosit acest număr de salturi de timp de 5 h ca rezervă.",
+            "label": "Păstrează 5 h",
+            "recommendation": "Rezervă stocul necesar pentru construcții sau alte activități."
+          },
+          "keep_5m": {
+            "description": "Păstrează nefolosit acest număr de salturi de timp de 5 min ca rezervă.",
+            "label": "Păstrează 5 min",
+            "recommendation": "0 pentru seriile obișnuite de tabere."
+          },
+          "keep_60m": {
+            "description": "Păstrează nefolosit acest număr de salturi de timp de 60 min ca rezervă.",
+            "label": "Păstrează 60 min",
+            "recommendation": "0 pentru seriile obișnuite de tabere."
+          },
+          "skip_cooldowns": {
+            "description": "După o victorie confirmată împotriva taberei, folosește un salt de timp disponibil pentru a elimina pauza acelei ținte.",
+            "label": "Elimină pauza după fiecare atac reușit",
+            "recommendation": "Pornit pentru atacurile repetate obișnuite asupra taberelor; oprit pentru a aștepta pauzele naturale."
+          }
+        },
+        "title": "Alege salturi de timp și rezerve"
+      },
+      "trial": {
+        "image": {
+          "alt": "Exemplu de controale pentru testul temporar contra castelului baronului tâlhar",
+          "caption": "Testul lansează un atac real și înlocuiește funcționarea normală a evenimentului cât timp este pornit."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "Înlocuiește funcționarea normală a evenimentului cu un test de atac real asupra unui castel de baron tâlhar folosind configurația nomadă și salturi de timp.",
+            "label": "Test temporar complet contra castelului baronului tâlhar",
+            "recommendation": "Oprit pentru seriile obișnuite de nomazi sau samurai."
+          },
+          "target_x": {
+            "description": "Introdu coordonata orizontală a castelului baronului tâlhar numai pentru testul temporar.",
+            "label": "Ținta X",
+            "recommendation": "Lasă nefolosit cât timp testul este oprit."
+          },
+          "target_y": {
+            "description": "Introdu coordonata verticală a castelului baronului tâlhar numai pentru testul temporar.",
+            "label": "Ținta Y",
+            "recommendation": "Lasă nefolosit cât timp testul este oprit."
+          },
+          "trial_skips": {
+            "description": "Pornirea testului activează și salturile de timp pentru acest test.",
+            "label": "Salturi de timp pentru test"
+          }
+        },
+        "title": "Lasă testul temporar oprit pentru seriile obișnuite"
+      }
+    },
+    "feature": {
+      "description": "Auto Nomazi/Samurai dezvoltă taberele eligibile ale evenimentului, alege cea mai slabă tabără dezvoltată complet și o atacă repetat cu configurația salvată pentru eveniment până când atinge o limită de oprire.",
+      "expectation": "Așteaptă un eveniment activ, comandanți, trupe, unelte și salturi de timp utilizabile când eliminarea pauzei este activă; atacurile aflate în drum se pot încheia după oprirea lansărilor noi.",
+      "name": "Auto Nomazi/Samurai",
+      "summary": "Dezvoltă și atacă tabere nomade sau samurai"
+    },
+    "recommendationIntro": "Valorile recomandate descriu folosirea obișnuită a Auto Nomazi/Samurai; sunt îndrumări și nu schimbă setările salvate."
   }
 }

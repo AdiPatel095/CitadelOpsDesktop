@@ -25,7 +25,10 @@
     "fortressPreviewTitle": "Példa az automatikus erődtámadás beállítására",
     "invasionGuideIntro": "Kövesd ezeket a lépéseket az automatikus inváziós támadás beállításához; nagyításhoz válassz példapanelt.",
     "invasionGuideTitle": "Útmutató az automatikus inváziós támadáshoz",
-    "invasionPreviewTitle": "Példa az automatikus inváziós támadás beállítására"
+    "invasionPreviewTitle": "Példa az automatikus inváziós támadás beállítására",
+    "nomadGuideIntro": "Kövesd ezeket a lépéseket az Automatikus nomádok/szamurájok beállításához; nagyításhoz válassz egy példapanelt.",
+    "nomadGuideTitle": "Útmutató az Automatikus nomádokhoz/szamurájokhoz",
+    "nomadPreviewTitle": "Példa az Automatikus nomádok/szamurájok beállítására"
   },
   "autoTower": {
     "recommendationIntro": "Ezek a szokásos használatra vonatkozó ajánlások; mentés előtt nézd át őket.",
@@ -372,6 +375,37 @@
       "preset": "Támadási sablon: mentett eseményalakzat",
       "title": "Példa az eseménytámadás beállítására",
       "travel": "Utazási gyorsítás: Utazótoll"
+    },
+    "nomadDifficulty": {
+      "title": "Példa az események nehézségeire",
+      "active": "Aktív esemény: jelenlegi nehézség használata",
+      "nomad": "Nomádok: feloldott megbízható nehézség",
+      "samurai": "Szamurájok: feloldott megbízható nehézség"
+    },
+    "nomadSetup": {
+      "castle": "Kiindulás: szokásos Nagy Birodalom eseményvár",
+      "travel": "Utazási gyorsítás: Utazótoll",
+      "nomadPreset": "Nomád beállítás: mentett tábori felállás",
+      "samuraiPreset": "Szamuráj beállítás: mentett tábori felállás",
+      "title": "Példa az eseménytáborok beállításaira"
+    },
+    "nomadCooldowns": {
+      "clear": "Várakozás törlése megerősített győzelem után: be",
+      "long": "5 óra / 24 óra megtartása: készlet más tevékenységekhez",
+      "short": "1 / 5 / 10 / 30 / 60 perc megtartása: mindegyikből 0 tárgy",
+      "title": "Példa a várakozási idő beállításaira"
+    },
+    "nomadLimits": {
+      "daily": "További napi korlát: 0",
+      "score": "Pontcél: utolsó személyes jutalomhatár",
+      "time": "Leállás vége előtt: 30 perc",
+      "title": "Példa a leállítási szabályokra"
+    },
+    "nomadTrial": {
+      "coordinates": "Cél X / Y: normál működésben nem használatos",
+      "effect": "Bekapcsolt próba az eseményt valódi támadással váltja fel",
+      "title": "Példa a próba vezérlőire",
+      "trial": "Ideiglenes rablólovag-próba: ki"
     }
   },
   "autoStation": {
@@ -723,5 +757,195 @@
         "title": "Nyisd meg az automatikus inváziós támadás beállításait"
       }
     }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "A legmagasabb feloldott nehézséget használd, amelyet a szokásos felállásod megbízhatóan kezel.",
+            "description": "Válassz feloldott nomád nehézséget az esemény kezdetéhez.",
+            "label": "Nomád nehézség"
+          },
+          "samurai_difficulty": {
+            "recommendation": "A legmagasabb feloldott nehézséget használd, amelyet a szokásos felállásod megbízhatóan kezel.",
+            "description": "Válassz feloldott szamuráj nehézséget az esemény kezdetéhez.",
+            "label": "Szamuráj nehézség"
+          },
+          "active_difficulty": {
+            "description": "Aktív eseménynél egyezzen a jelenlegi nehézség, mert eltérő mentett választás esetén az automatizálás vár, nem változtatja meg.",
+            "label": "Már aktív esemény"
+          }
+        },
+        "title": "Válaszd ki mindkét esemény nehézségét",
+        "image": {
+          "alt": "Példa a nomád és szamuráj nehézségi fokokra",
+          "caption": "Minden eseményhez külön feloldott nehézséget válassz, aktív eseménynél pedig annak jelenlegi nehézségét használd."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "Bekapcsolva a kívánt beállítások ellenőrzése és mentése után.",
+            "description": "Mentés után kapcsold be az Automatikus nomádok/szamurájok funkciót az Automatizálás kártyán, hogy esemény és megfelelő erőforrások esetén fusson.",
+            "label": "Automatikus nomádok/szamurájok kapcsoló"
+          },
+          "save_settings": {
+            "label": "Beállítások mentése",
+            "description": "Az ablak bezárása előtt mentsd a forrást, támadási beállításokat, nehézségeket, leállítási határokat, időugrás-választást és próbaállapotot."
+          },
+          "readiness": {
+            "description": "Az automatizálás fejleszti az eseménytáborokat, és alkalmas parancsnokokra, katonákra, eszközökre, valamint bekapcsolás esetén használható időugrásokra vár.",
+            "label": "Tábori támadások készenléte"
+          }
+        },
+        "title": "Automatikus nomádok/szamurájok mentése és bekapcsolása"
+      },
+      "limits": {
+        "image": {
+          "caption": "A pontcél leállítja az új indításokat, de a már úton lévő támadások befejeződhetnek.",
+          "alt": "Példa az Automatikus nomádok/szamurájok pont- és leállítási határaira"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Állítsd le ezt az automatizálást a fiók napi normál támadásszámánál, amíg a játék vissza nem állítja; a 0 nem ad hozzá korlátot.",
+            "label": "Normál támadások napi korlátja",
+            "recommendation": "0, hogy az esemény pontcélja irányítsa a futást."
+          },
+          "minimum_remaining": {
+            "description": "Az esemény vége előtt ennyi perccel ne indíts több új támadást.",
+            "label": "Leállítás az esemény vége előtt",
+            "recommendation": "30 perc."
+          },
+          "score_target": {
+            "description": "Ne indíts új támadást, amikor a jelentett eseménypontszám eléri vagy meghaladja ezt a célt.",
+            "label": "Leállítás eseménypontszámnál",
+            "recommendation": "A szokásos utolsó személyes jutalmi mérföldkövedet használd, amely nagyobb 0-nál."
+          },
+          "travelling_attacks": {
+            "description": "A már úton lévő támadások a leállítási feltétel után befejeződhetnek, és a végső pontszámot a cél fölé emelhetik.",
+            "label": "Úton lévő támadások"
+          }
+        },
+        "title": "Állítsd be a pont- és leállítási korlátokat"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Lovas utazás gyorsítása",
+            "recommendation": "Utazótoll a gyors úthoz.",
+            "description": "A tábori támadásokhoz válaszd a tollas, érmés vagy rubinos utazási opciót."
+          },
+          "open_settings": {
+            "label": "Beállítások megnyitása",
+            "description": "Az Automatizálás oldalon válaszd az Automatikus nomádok/szamurájok kártya beállításgombját."
+          },
+          "source_castle": {
+            "label": "Kiinduló vár",
+            "recommendation": "Használd a szokásos eseményváradat elegendő katonával és eszközzel.",
+            "description": "Válaszd a Nagy Birodalom várát, amely katonákat és eszközöket biztosít a tábori támadásokhoz."
+          },
+          "nomad_preset": {
+            "description": "Válassz mentett támadási beállítást katonákkal, eszközökkel és felállással a nomád táborokhoz.",
+            "label": "Nomád támadási beállítás",
+            "recommendation": "Hozd létre és válaszd ki a szokásos nomád beállításodat."
+          },
+          "samurai_preset": {
+            "description": "Válassz mentett támadási beállítást katonákkal, eszközökkel és felállással a szamuráj táborokhoz.",
+            "label": "Szamuráj támadási beállítás",
+            "recommendation": "Hozd létre és válaszd ki a szokásos szamuráj beállításodat."
+          }
+        },
+        "image": {
+          "alt": "Példa az Automatikus nomádok/szamurájok forrására, beállításaira és útjára",
+          "caption": "Hozd létre mindkét esemény támadási beállítását a forrásvár és az utazási opció kiválasztása előtt."
+        },
+        "title": "Automatikus nomádok/szamurájok beállításainak megnyitása"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "Példa a táborok várakozási idejére és az időugrás-tartalékokra",
+          "caption": "Minden megtartandó érték időugrás-tárgyakat számol, nem várakozási perceket."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "Ennyi 10 perces időugrást hagyj érintetlenül tartalékként.",
+            "label": "10 perc megtartása",
+            "recommendation": "0 a szokásos tábori körökhöz."
+          },
+          "keep_1m": {
+            "description": "Ennyi 1 perces időugrást hagyj érintetlenül tartalékként.",
+            "label": "1 perc megtartása",
+            "recommendation": "0 a szokásos tábori körökhöz."
+          },
+          "keep_24h": {
+            "description": "Ennyi 24 órás időugrást hagyj érintetlenül tartalékként.",
+            "label": "24 óra megtartása",
+            "recommendation": "Tartsd meg az építéshez vagy más tevékenységhez szükséges készletet."
+          },
+          "keep_30m": {
+            "description": "Ennyi 30 perces időugrást hagyj érintetlenül tartalékként.",
+            "label": "30 perc megtartása",
+            "recommendation": "0 a szokásos tábori körökhöz."
+          },
+          "keep_5h": {
+            "description": "Ennyi 5 órás időugrást hagyj érintetlenül tartalékként.",
+            "label": "5 óra megtartása",
+            "recommendation": "Tartsd meg az építéshez vagy más tevékenységhez szükséges készletet."
+          },
+          "keep_5m": {
+            "description": "Ennyi 5 perces időugrást hagyj érintetlenül tartalékként.",
+            "label": "5 perc megtartása",
+            "recommendation": "0 a szokásos tábori körökhöz."
+          },
+          "keep_60m": {
+            "description": "Ennyi 60 perces időugrást hagyj érintetlenül tartalékként.",
+            "label": "60 perc megtartása",
+            "recommendation": "0 a szokásos tábori körökhöz."
+          },
+          "skip_cooldowns": {
+            "description": "Egy tábor elleni megerősített győzelem után használj elérhető időugrást a célpont várakozási idejének törlésére.",
+            "label": "Várakozás törlése minden sikeres támadás után",
+            "recommendation": "Bekapcsolva a szokásos ismételt tábori támadásokhoz; kikapcsolva a természetes várakozáshoz."
+          }
+        },
+        "title": "Időugrások és tartalékok kiválasztása"
+      },
+      "trial": {
+        "image": {
+          "alt": "Példa az ideiglenes rablólovag-vár próba vezérlőire",
+          "caption": "A próba valódi támadást indít, és bekapcsolva felváltja a normál eseményműködést."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "Váltsd fel a normál eseményműködést egy rablólovag vára elleni valódi próbatámadással, nomád beállítással és időugrásokkal.",
+            "label": "Ideiglenes teljes próba rablólovag vára ellen",
+            "recommendation": "Kikapcsolva a szokásos nomád vagy szamuráj körökhöz."
+          },
+          "target_x": {
+            "description": "A rablólovag-vár vízszintes koordinátáját csak az ideiglenes próbához add meg.",
+            "label": "Cél X",
+            "recommendation": "Hagyd használaton kívül, amíg a próba ki van kapcsolva."
+          },
+          "target_y": {
+            "description": "A rablólovag-vár függőleges koordinátáját csak az ideiglenes próbához add meg.",
+            "label": "Cél Y",
+            "recommendation": "Hagyd használaton kívül, amíg a próba ki van kapcsolva."
+          },
+          "trial_skips": {
+            "description": "A próba bekapcsolása a próba időugrásait is bekapcsolja.",
+            "label": "Próba időugrásai"
+          }
+        },
+        "title": "Az ideiglenes próbát hagyd kikapcsolva a szokásos körökhöz"
+      }
+    },
+    "feature": {
+      "description": "Az Automatikus nomádok/szamurájok fejleszti a megfelelő eseménytáborokat, kiválasztja a leggyengébb teljesen fejlesztett tábort, és az eseményhez mentett támadási beállítással ismételten támadja, amíg el nem ér egy leállítási határt.",
+      "expectation": "Aktív eseményre, alkalmas parancsnokokra, katonákra, eszközökre és használható időugrásokra vár, ha a várakozás törlése be van kapcsolva; az úton lévő támadások az új indítások leállítása után is befejeződhetnek.",
+      "name": "Automatikus nomádok/szamurájok",
+      "summary": "Nomád vagy szamuráj táborok fejlesztése és támadása"
+    },
+    "recommendationIntro": "Az ajánlott értékek az Automatikus nomádok/szamurájok rendszeres használatát írják le; útmutatók, és nem módosítják a mentett beállításokat."
   }
 }

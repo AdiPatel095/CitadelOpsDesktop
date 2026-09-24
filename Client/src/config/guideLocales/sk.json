@@ -25,7 +25,10 @@
     "fortressPreviewTitle": "Príklad nastavenia automatických útokov na pevnosti",
     "invasionGuideIntro": "Postupujte podľa krokov na nastavenie automatických inváznych útokov; výberom ukážkového panelu ho zväčšíte.",
     "invasionGuideTitle": "Sprievodca automatickými inváznymi útokmi",
-    "invasionPreviewTitle": "Príklad nastavenia automatických inváznych útokov"
+    "invasionPreviewTitle": "Príklad nastavenia automatických inváznych útokov",
+    "nomadGuideIntro": "Podľa týchto krokov nastavte Automatických Nomádov/Samurajov; výberom zväčšíte ukážkový panel.",
+    "nomadGuideTitle": "Sprievodca Automatickými Nomádmi/Samurajmi",
+    "nomadPreviewTitle": "Ukážka nastavenia Automatických Nomádov/Samurajov"
   },
   "autoTower": {
     "recommendationIntro": "Toto sú odporúčania na bežné používanie; pred uložením ich skontrolujte.",
@@ -372,6 +375,37 @@
       "preset": "Útočná predvoľba: uložená formácia udalosti",
       "title": "Príklad nastavenia útoku udalosti",
       "travel": "Posilnenie presunu: Cestovné pierko"
+    },
+    "nomadDifficulty": {
+      "title": "Príklad obtiažností udalostí",
+      "active": "Aktívna udalosť: zvoliť aktuálnu obtiažnosť",
+      "nomad": "Nomádi: odomknutá spoľahlivá obtiažnosť",
+      "samurai": "Samuraji: odomknutá spoľahlivá obtiažnosť"
+    },
+    "nomadSetup": {
+      "castle": "Východiskový: bežný hrad udalosti vo Veľkej ríši",
+      "travel": "Posilnenie presunu: Cestovné pierko",
+      "nomadPreset": "Nomádska zostava: uložené rozmiestnenie na tábory",
+      "samuraiPreset": "Samurajská zostava: uložené rozmiestnenie na tábory",
+      "title": "Príklad nastavení táborov udalosti"
+    },
+    "nomadCooldowns": {
+      "clear": "Odstrániť čakanie po potvrdenom víťazstve: zapnuté",
+      "long": "Ponechať 5 h / 24 h: zásoba na iné činnosti",
+      "short": "Ponechať 1 / 5 / 10 / 30 / 60 min: po 0 predmetov",
+      "title": "Príklad nastavenia čakania"
+    },
+    "nomadLimits": {
+      "daily": "Dodatočný denný limit: 0",
+      "score": "Bodový cieľ: posledný míľnik osobnej odmeny",
+      "time": "Zastaviť pred koncom: 30 minút",
+      "title": "Príklad pravidiel zastavenia"
+    },
+    "nomadTrial": {
+      "coordinates": "Cieľ X / Y: pri bežnej prevádzke sa nepoužíva",
+      "effect": "Zapnutý test nahradí udalosť skutočným útokom",
+      "title": "Príklad ovládania testu",
+      "trial": "Dočasný test lúpežného baróna: vypnutý"
     }
   },
   "autoStation": {
@@ -723,5 +757,195 @@
         "title": "Otvorte nastavenia automatických inváznych útokov"
       }
     }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "Použite najvyššiu odomknutú obtiažnosť, ktorú vaša bežná zostava spoľahlivo zvládne.",
+            "description": "Vyberte odomknutú nomádsku obtiažnosť na začiatok udalosti.",
+            "label": "Nomádska obtiažnosť"
+          },
+          "samurai_difficulty": {
+            "recommendation": "Použite najvyššiu odomknutú obtiažnosť, ktorú vaša bežná zostava spoľahlivo zvládne.",
+            "description": "Vyberte odomknutú samurajskú obtiažnosť na začiatok udalosti.",
+            "label": "Samurajská obtiažnosť"
+          },
+          "active_difficulty": {
+            "description": "Pri aktívnej udalosti zvoľte jej aktuálnu obtiažnosť, pretože iná uložená voľba nechá automatizáciu čakať namiesto zmeny úrovne.",
+            "label": "Už aktívna udalosť"
+          }
+        },
+        "title": "Vyberte obtiažnosti oboch udalostí",
+        "image": {
+          "alt": "Príklad nomádskej a samurajskej obtiažnosti",
+          "caption": "Pre každú udalosť vyberte samostatnú odomknutú obtiažnosť a pri aktívnej udalosti zvoľte jej aktuálnu úroveň."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "Zapnuté po kontrole a uložení zamýšľaných nastavení.",
+            "description": "Po uložení zapnite Automatických Nomádov/Samurajov na karte Automatizácia, aby bežali pri dostupnej udalosti a vhodných zdrojoch.",
+            "label": "Prepínač Automatickí Nomádi/Samuraji"
+          },
+          "save_settings": {
+            "label": "Uložiť nastavenia",
+            "description": "Pred zatvorením okna uložte zdroj, zostavy, obtiažnosti, hranice zastavenia, voľby časových skokov a stav testu."
+          },
+          "readiness": {
+            "description": "Automatizácia vylepšuje tábory udalosti a čaká na vhodných veliteľov, vojakov, nástroje a pri zapnutí aj použiteľné časové skoky.",
+            "label": "Pripravenosť na útoky na tábory"
+          }
+        },
+        "title": "Uložiť a zapnúť Automatických Nomádov/Samurajov"
+      },
+      "limits": {
+        "image": {
+          "caption": "Bodový cieľ zastaví nové vyslania, ale útoky už na ceste môžu dobehnúť.",
+          "alt": "Príklad bodových a zastavovacích hraníc Automatických Nomádov/Samurajov"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Zastavte automatizáciu pri dennom počte bežných útokov celého účtu až do obnovenia hrou; 0 nepridáva obmedzenie.",
+            "label": "Denný limit bežných útokov",
+            "recommendation": "0, aby beh riadil bodový cieľ udalosti."
+          },
+          "minimum_remaining": {
+            "description": "Prestaňte začínať nové útoky tento počet minút pred koncom udalosti.",
+            "label": "Zastaviť pred koncom udalosti",
+            "recommendation": "30 minút."
+          },
+          "score_target": {
+            "description": "Prestaňte začínať nové útoky, keď hlásené body udalosti dosiahnu alebo prekročia cieľ.",
+            "label": "Zastaviť pri bodoch udalosti",
+            "recommendation": "Použite svoju bežnú poslednú hranicu osobnej odmeny vyššiu ako 0."
+          },
+          "travelling_attacks": {
+            "description": "Útoky už na ceste môžu dobehnúť po splnení podmienky zastavenia a zvýšiť konečné body nad cieľ.",
+            "label": "Útoky na ceste"
+          }
+        },
+        "title": "Nastavte body a hranice zastavenia"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Zrýchlenie cesty koňom",
+            "recommendation": "Cestovné pierko na rýchly presun.",
+            "description": "Pre útoky na tábory zvoľte cestu s pierkom, mincami alebo rubínmi."
+          },
+          "open_settings": {
+            "label": "Otvorte nastavenia",
+            "description": "Na stránke Automatizácia vyberte tlačidlo nastavení na karte Automatickí Nomádi/Samuraji."
+          },
+          "source_castle": {
+            "label": "Východiskový hrad",
+            "recommendation": "Použite svoj bežný hrad pre udalosti s dosť vojakmi a nástrojmi.",
+            "description": "Vyberte hrad vo Veľkej ríši, ktorý dodá vojakov a nástroje na útoky na tábory."
+          },
+          "nomad_preset": {
+            "description": "Vyberte uloženú útočnú zostavu s vojakmi, nástrojmi a rozmiestnením pre nomádske tábory.",
+            "label": "Nomádska útočná zostava",
+            "recommendation": "Vytvorte a vyberte svoju bežnú nomádsku zostavu."
+          },
+          "samurai_preset": {
+            "description": "Vyberte uloženú útočnú zostavu s vojakmi, nástrojmi a rozmiestnením pre samurajské tábory.",
+            "label": "Samurajská útočná zostava",
+            "recommendation": "Vytvorte a vyberte svoju bežnú samurajskú zostavu."
+          }
+        },
+        "image": {
+          "alt": "Príklad zdroja, zostáv a cesty Automatických Nomádov/Samurajov",
+          "caption": "Pred výberom zdrojového hradu a cesty vytvorte obe zostavy udalosti."
+        },
+        "title": "Otvoriť nastavenia Automatických Nomádov/Samurajov"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "Príklad čakania táborov a rezerv časových skokov",
+          "caption": "Každá hodnota Ponechať počíta predmety časových skokov, nie minúty čakania."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "Ponechajte tento počet 10-minútových časových skokov nedotknutý ako rezervu.",
+            "label": "Ponechať 10 min",
+            "recommendation": "0 pre bežné série útokov na tábory."
+          },
+          "keep_1m": {
+            "description": "Ponechajte tento počet 1-minútových časových skokov nedotknutý ako rezervu.",
+            "label": "Ponechať 1 min",
+            "recommendation": "0 pre bežné série útokov na tábory."
+          },
+          "keep_24h": {
+            "description": "Ponechajte tento počet 24-hodinových časových skokov nedotknutý ako rezervu.",
+            "label": "Ponechať 24 h",
+            "recommendation": "Odložte zásobu potrebnú na stavby alebo iné činnosti."
+          },
+          "keep_30m": {
+            "description": "Ponechajte tento počet 30-minútových časových skokov nedotknutý ako rezervu.",
+            "label": "Ponechať 30 min",
+            "recommendation": "0 pre bežné série útokov na tábory."
+          },
+          "keep_5h": {
+            "description": "Ponechajte tento počet 5-hodinových časových skokov nedotknutý ako rezervu.",
+            "label": "Ponechať 5 h",
+            "recommendation": "Odložte zásobu potrebnú na stavby alebo iné činnosti."
+          },
+          "keep_5m": {
+            "description": "Ponechajte tento počet 5-minútových časových skokov nedotknutý ako rezervu.",
+            "label": "Ponechať 5 min",
+            "recommendation": "0 pre bežné série útokov na tábory."
+          },
+          "keep_60m": {
+            "description": "Ponechajte tento počet 60-minútových časových skokov nedotknutý ako rezervu.",
+            "label": "Ponechať 60 min",
+            "recommendation": "0 pre bežné série útokov na tábory."
+          },
+          "skip_cooldowns": {
+            "description": "Po potvrdenom víťazstve nad táborom použite dostupný časový skok na odstránenie čakania tohto cieľa.",
+            "label": "Odstrániť čakanie po každom úspešnom útoku",
+            "recommendation": "Zapnúť pre bežné opakované útoky na tábory; vypnúť pre prirodzené čakanie."
+          }
+        },
+        "title": "Vybrať časové skoky a rezervy"
+      },
+      "trial": {
+        "image": {
+          "alt": "Príklad dočasného testu proti hradu lúpežného baróna",
+          "caption": "Test spustí skutočný útok a po zapnutí nahradí bežnú prevádzku udalosti."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "Nahraďte bežnú prevádzku udalosti skutočným skúšobným útokom na jeden hrad lúpežného baróna s nomádskou zostavou a časovými skokmi.",
+            "label": "Dočasný úplný test proti hradu lúpežného baróna",
+            "recommendation": "Vypnúť pre bežné nomádske či samurajské série."
+          },
+          "target_x": {
+            "description": "Vodorovnú súradnicu hradu lúpežného baróna zadajte iba pre dočasný test.",
+            "label": "Cieľ X",
+            "recommendation": "Pri vypnutom teste nepoužívať."
+          },
+          "target_y": {
+            "description": "Zvislú súradnicu hradu lúpežného baróna zadajte iba pre dočasný test.",
+            "label": "Cieľ Y",
+            "recommendation": "Pri vypnutom teste nepoužívať."
+          },
+          "trial_skips": {
+            "description": "Zapnutie testu zapne aj časové skoky pre tento test.",
+            "label": "Časové skoky pri teste"
+          }
+        },
+        "title": "Pri bežných sériách nechať dočasný test vypnutý"
+      }
+    },
+    "feature": {
+      "description": "Automatickí Nomádi/Samuraji vylepšujú vhodné tábory udalosti, vyberú najslabší plne vylepšený tábor a opakovane naň útočia uloženou zostavou danej udalosti, kým sa nedosiahne hranica zastavenia.",
+      "expectation": "Čakajú na aktívnu udalosť, vhodných veliteľov, vojakov, nástroje a použiteľné časové skoky pri zapnutom rušení čakania; útoky na ceste sa môžu dokončiť po zastavení nových výprav.",
+      "name": "Automatickí Nomádi/Samuraji",
+      "summary": "Vylepšovať a napádať nomádske či samurajské tábory"
+    },
+    "recommendationIntro": "Odporúčané hodnoty opisujú bežné používanie Automatických Nomádov/Samurajov; sú radou a nemenia uložené nastavenia."
   }
 }

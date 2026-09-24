@@ -25,7 +25,10 @@
     "fortressPreviewTitle": "Automatinių tvirtovių atakų sąrankos pavyzdys",
     "invasionGuideIntro": "Atlikite šiuos veiksmus automatinėms invazijos atakoms nustatyti; pasirinkite pavyzdinį skydelį, kad jį padidintumėte.",
     "invasionGuideTitle": "Automatinių invazijos atakų gidas",
-    "invasionPreviewTitle": "Automatinių invazijos atakų sąrankos pavyzdys"
+    "invasionPreviewTitle": "Automatinių invazijos atakų sąrankos pavyzdys",
+    "nomadGuideIntro": "Vadovaukis šiais žingsniais nustatydamas automatinius klajoklius/samurajus; pasirink pavyzdžio skydelį jį padidinti.",
+    "nomadGuideTitle": "Automatinių klajoklių/samurajų gidas",
+    "nomadPreviewTitle": "Automatinių klajoklių/samurajų nustatymo pavyzdys"
   },
   "autoTower": {
     "recommendationIntro": "Tai rekomendacijos įprastam naudojimui; peržiūrėkite jas prieš išsaugodami.",
@@ -372,6 +375,37 @@
       "preset": "Atakos šablonas: išsaugota renginio rikiuotė",
       "title": "Renginio atakos sąrankos pavyzdys",
       "travel": "Kelionės pagreitis: Kelionės plunksna"
+    },
+    "nomadDifficulty": {
+      "title": "Renginių sunkumų pavyzdys",
+      "active": "Aktyvus renginys: atitik dabartinį sudėtingumą",
+      "nomad": "Klajokliai: atrakintas patikimas sudėtingumas",
+      "samurai": "Samurajai: atrakintas patikimas sudėtingumas"
+    },
+    "nomadSetup": {
+      "castle": "Pradžia: įprasta renginio pilis Didžiojoje imperijoje",
+      "travel": "Kelionės pagreitis: Kelionės plunksna",
+      "nomadPreset": "Klajoklių schema: išsaugota stovyklos rikiuotė",
+      "samuraiPreset": "Samurajų schema: išsaugota stovyklos rikiuotė",
+      "title": "Renginio stovyklų nustatymų pavyzdys"
+    },
+    "nomadCooldowns": {
+      "clear": "Pašalinti laukimą po patvirtintos pergalės: įjungta",
+      "long": "Palikti 5 val. / 24 val.: atsarga kitai veiklai",
+      "short": "Palikti 1 / 5 / 10 / 30 / 60 min.: po 0 daiktų",
+      "title": "Laukimo pasirinkimų pavyzdys"
+    },
+    "nomadLimits": {
+      "daily": "Papildoma dienos riba: 0",
+      "score": "Taškų tikslas: paskutinis asmeninio atlygio etapas",
+      "time": "Sustabdyti prieš pabaigą: 30 minučių",
+      "title": "Sustabdymo taisyklių pavyzdys"
+    },
+    "nomadTrial": {
+      "coordinates": "Taikinys X / Y: nenaudojama įprastai",
+      "effect": "Įjungtas bandymas pakeičia renginį tikru puolimu",
+      "title": "Bandymo valdiklių pavyzdys",
+      "trial": "Laikinas plėšikų barono bandymas: išjungta"
     }
   },
   "autoStation": {
@@ -723,5 +757,195 @@
         "title": "Atverkite automatinių invazijos atakų nustatymus"
       }
     }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "Rinkitės aukščiausią atrakintą sunkumą, kurį įprasta jūsų sudėtis patikimai įveikia.",
+            "description": "Renginio pradžiai pasirink atrakintą klajoklių sudėtingumą.",
+            "label": "Klajoklių sudėtingumas"
+          },
+          "samurai_difficulty": {
+            "recommendation": "Rinkitės aukščiausią atrakintą sunkumą, kurį įprasta jūsų sudėtis patikimai įveikia.",
+            "description": "Renginio pradžiai pasirink atrakintą samurajų sudėtingumą.",
+            "label": "Samurajų sudėtingumas"
+          },
+          "active_difficulty": {
+            "description": "Aktyviam renginiui parink dabartinį sudėtingumą, nes kitoks išsaugotas pasirinkimas verčia automatizavimą laukti, o ne keičia lygį.",
+            "label": "Jau aktyvus renginys"
+          }
+        },
+        "title": "Pasirinkite abiejų renginių sunkumus",
+        "image": {
+          "alt": "Klajoklių ir samurajų sudėtingumo pavyzdys",
+          "caption": "Kiekvienam renginiui pasirink atskirą atrakintą sudėtingumą ir atitik aktyvaus renginio lygį."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "Įjungta patikrinus ir išsaugojus norimus nustatymus.",
+            "description": "Išsaugojęs įjunk automatinius klajoklius/samurajus Automatizavimo kortelėje, kad funkcija veiktų esant renginiui ir tinkamiems ištekliams.",
+            "label": "Automatinių klajoklių/samurajų jungiklis"
+          },
+          "save_settings": {
+            "label": "Išsaugoti nustatymus",
+            "description": "Prieš uždarydamas langą išsaugok šaltinį, schemas, sudėtingumus, sustabdymo ribas, laiko šuolių pasirinkimą ir bandymo būseną."
+          },
+          "readiness": {
+            "description": "Automatizavimas tobulina renginio stovyklas ir laukia tinkamų vadų, karių, įrankių bei, jei įjungti, naudojamų laiko šuolių.",
+            "label": "Pasirengimas stovyklų puolimui"
+          }
+        },
+        "title": "Išsaugoti ir įjungti automatinius klajoklius/samurajus"
+      },
+      "limits": {
+        "image": {
+          "caption": "Taškų tikslas sustabdo naujus išsiuntimus, bet jau keliaujančios atakos gali baigtis.",
+          "alt": "Automatinių klajoklių/samurajų taškų ir sustabdymo ribų pavyzdys"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Sustabdykite automatizavimą pasiekus visos paskyros dienos įprastų atakų skaičių, kol žaidimas jį atnaujins; 0 neprideda ribos.",
+            "label": "Įprastų atakų dienos riba",
+            "recommendation": "0, kad renginio taškų tikslas valdytų eigą."
+          },
+          "minimum_remaining": {
+            "description": "Nebesiųskite naujų atakų likus tiek minučių iki renginio pabaigos.",
+            "label": "Stabdyti prieš renginio pabaigą",
+            "recommendation": "30 minučių."
+          },
+          "score_target": {
+            "description": "Nebesiųskite naujų atakų, kai pranešti renginio taškai pasiekia arba viršija šį tikslą.",
+            "label": "Stabdyti ties renginio taškais",
+            "recommendation": "Naudokite įprastą paskutinį asmeninio atlygio etapą virš 0."
+          },
+          "travelling_attacks": {
+            "description": "Jau keliaujančios atakos gali baigtis po stabdymo sąlygos ir pakelti galutinius taškus virš tikslo.",
+            "label": "Keliaujančios atakos"
+          }
+        },
+        "title": "Nustatykite taškų ir stabdymo ribas"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Kelionės žirgu pagreitinimas",
+            "recommendation": "Kelionės plunksna greitai kelionei.",
+            "description": "Stovyklų puolimui pasirink kelionę su plunksna, monetomis arba rubinais."
+          },
+          "open_settings": {
+            "label": "Atidarykite nustatymus",
+            "description": "Automatizavimo puslapyje pasirink automatinių klajoklių/samurajų kortelės nustatymų mygtuką."
+          },
+          "source_castle": {
+            "label": "Pradinė pilis",
+            "recommendation": "Naudokite įprastą renginio pilį su pakankamai karių ir įrankių.",
+            "description": "Pasirink Didžiosios imperijos pilį, kuri tiekia karius ir įrankius stovyklų puolimui."
+          },
+          "nomad_preset": {
+            "description": "Pasirink išsaugotą puolimo schemą su kariais, įrankiais ir rikiuote klajoklių stovykloms.",
+            "label": "Klajoklių puolimo schema",
+            "recommendation": "Sukurk ir pasirink įprastą klajoklių schemą."
+          },
+          "samurai_preset": {
+            "description": "Pasirink išsaugotą puolimo schemą su kariais, įrankiais ir rikiuote samurajų stovykloms.",
+            "label": "Samurajų puolimo schema",
+            "recommendation": "Sukurk ir pasirink įprastą samurajų schemą."
+          }
+        },
+        "image": {
+          "alt": "Automatinių klajoklių/samurajų šaltinio, schemų ir kelionės pavyzdys",
+          "caption": "Sukurk abi renginių schemas prieš pasirinkdamas šaltinio pilį ir kelionės variantą."
+        },
+        "title": "Atidaryti automatinių klajoklių/samurajų nustatymus"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "Stovyklų laukimo ir laiko šuolių atsargų pavyzdys",
+          "caption": "Kiekviena paliekama reikšmė skaičiuoja laiko šuolių daiktus, o ne laukimo minutes."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "Palik šį 10 min. laiko šuolių kiekį nepanaudotą kaip atsargą.",
+            "label": "Palikti 10 min.",
+            "recommendation": "0 įprastiems stovyklų puolimams."
+          },
+          "keep_1m": {
+            "description": "Palik šį 1 min. laiko šuolių kiekį nepanaudotą kaip atsargą.",
+            "label": "Palikti 1 min.",
+            "recommendation": "0 įprastiems stovyklų puolimams."
+          },
+          "keep_24h": {
+            "description": "Palik šį 24 val. laiko šuolių kiekį nepanaudotą kaip atsargą.",
+            "label": "Palikti 24 val.",
+            "recommendation": "Atidėk statyboms ar kitai veiklai reikalingą kiekį."
+          },
+          "keep_30m": {
+            "description": "Palik šį 30 min. laiko šuolių kiekį nepanaudotą kaip atsargą.",
+            "label": "Palikti 30 min.",
+            "recommendation": "0 įprastiems stovyklų puolimams."
+          },
+          "keep_5h": {
+            "description": "Palik šį 5 val. laiko šuolių kiekį nepanaudotą kaip atsargą.",
+            "label": "Palikti 5 val.",
+            "recommendation": "Atidėk statyboms ar kitai veiklai reikalingą kiekį."
+          },
+          "keep_5m": {
+            "description": "Palik šį 5 min. laiko šuolių kiekį nepanaudotą kaip atsargą.",
+            "label": "Palikti 5 min.",
+            "recommendation": "0 įprastiems stovyklų puolimams."
+          },
+          "keep_60m": {
+            "description": "Palik šį 60 min. laiko šuolių kiekį nepanaudotą kaip atsargą.",
+            "label": "Palikti 60 min.",
+            "recommendation": "0 įprastiems stovyklų puolimams."
+          },
+          "skip_cooldowns": {
+            "description": "Po patvirtintos pergalės prieš stovyklą naudok turimą laiko šuolį šio taikinio laukimui pašalinti.",
+            "label": "Pašalinti laukimą po kiekvieno sėkmingo puolimo",
+            "recommendation": "Įjungta įprastiems pasikartojantiems stovyklų puolimams; išjungta natūraliam laukimui."
+          }
+        },
+        "title": "Pasirink laiko šuolius ir atsargas"
+      },
+      "trial": {
+        "image": {
+          "alt": "Laikino bandymo prieš plėšikų barono pilį valdiklių pavyzdys",
+          "caption": "Bandymas pradeda tikrą puolimą ir, kol įjungtas, pakeičia įprastą renginio veikimą."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "Pakeisk įprastą renginio veikimą tikru bandomuoju puolimu prieš vieną plėšikų barono pilį, naudodamas klajoklių schemą ir laiko šuolius.",
+            "label": "Laikinas visas bandymas prieš plėšikų barono pilį",
+            "recommendation": "Išjungta įprastiems klajoklių ar samurajų puolimams."
+          },
+          "target_x": {
+            "description": "Plėšikų barono pilies horizontalią koordinatę įvesk tik laikinam bandymui.",
+            "label": "Taikinys X",
+            "recommendation": "Palik nenaudojamą, kol bandymas išjungtas."
+          },
+          "target_y": {
+            "description": "Plėšikų barono pilies vertikalią koordinatę įvesk tik laikinam bandymui.",
+            "label": "Taikinys Y",
+            "recommendation": "Palik nenaudojamą, kol bandymas išjungtas."
+          },
+          "trial_skips": {
+            "description": "Įjungus bandymą jam įjungiami ir laiko šuoliai.",
+            "label": "Bandymo laiko šuoliai"
+          }
+        },
+        "title": "Įprastiems puolimams laikiną bandymą palik išjungtą"
+      }
+    },
+    "feature": {
+      "description": "Automatiniai klajokliai/samurajai tobulina tinkamas renginio stovyklas, pasirenka silpniausią visiškai patobulintą stovyklą ir pakartotinai ją puola išsaugota renginiui skirta puolimo schema, kol pasiekiama sustabdymo riba.",
+      "expectation": "Sistema laukia aktyvaus renginio, tinkamų vadų, karių, įrankių ir naudojamų laiko šuolių, jei įjungtas laukimo šalinimas; keliaujantys puolimai gali baigtis po naujų išsiuntimų sustabdymo.",
+      "name": "Automatiniai klajokliai/samurajai",
+      "summary": "Tobulink ir pulk klajoklių arba samurajų stovyklas"
+    },
+    "recommendationIntro": "Rekomenduojamos reikšmės apibūdina įprastą automatinių klajoklių/samurajų naudojimą; jos yra patarimas ir nekeičia išsaugotų nustatymų."
   }
 }

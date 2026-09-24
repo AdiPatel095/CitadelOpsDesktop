@@ -25,7 +25,10 @@
     "fortressPreviewTitle": "Ejemplo de configuración de la automatización de fortalezas",
     "invasionGuideIntro": "Sigue estos pasos para configurar la automatización de invasiones; selecciona un panel de ejemplo para ampliarlo.",
     "invasionGuideTitle": "Guía de automatización de invasiones",
-    "invasionPreviewTitle": "Ejemplo de configuración de automatización de invasiones"
+    "invasionPreviewTitle": "Ejemplo de configuración de automatización de invasiones",
+    "nomadGuideIntro": "Sigue estos pasos para configurar Auto Nómadas/Samuráis; selecciona un panel de ejemplo para ampliarlo.",
+    "nomadGuideTitle": "Guía de Auto Nómadas/Samuráis",
+    "nomadPreviewTitle": "Ejemplo de configuración de Auto Nómadas/Samuráis"
   },
   "autoTower": {
     "recommendationIntro": "Estas recomendaciones son para el uso habitual; revísalas antes de guardar.",
@@ -372,6 +375,37 @@
       "preset": "Preajuste de ataque: formación de evento guardada",
       "title": "Ejemplo de configuración de ataque de evento",
       "travel": "Impulso de viaje: Pluma de viaje"
+    },
+    "nomadDifficulty": {
+      "title": "Ejemplo de dificultades de evento",
+      "active": "Evento activo: coincide con su dificultad actual",
+      "nomad": "Nómadas: dificultad desbloqueada y fiable",
+      "samurai": "Samuráis: dificultad desbloqueada y fiable"
+    },
+    "nomadSetup": {
+      "castle": "Origen: castillo habitual de evento del Gran Imperio",
+      "travel": "Impulso de viaje: pluma de viaje",
+      "nomadPreset": "Plantilla nómada: formación de campamento guardada",
+      "samuraiPreset": "Plantilla samurái: formación de campamento guardada",
+      "title": "Ejemplo de configuración de campamentos de evento"
+    },
+    "nomadCooldowns": {
+      "clear": "Eliminar espera tras una victoria confirmada: activado",
+      "long": "Conservar 5 h / 24 h: existencias reservadas para otras actividades",
+      "short": "Conservar 1 / 5 / 10 / 30 / 60 min: 0 objetos de cada uno",
+      "title": "Ejemplo de opciones de espera"
+    },
+    "nomadLimits": {
+      "daily": "Límite diario adicional: 0",
+      "score": "Objetivo de puntos: última recompensa personal",
+      "time": "Parar antes del final: 30 minutos",
+      "title": "Ejemplo de reglas de parada"
+    },
+    "nomadTrial": {
+      "coordinates": "Objetivo X / Y: sin usar durante la actividad habitual",
+      "effect": "Prueba activada: sustituye el evento por un ataque real",
+      "title": "Ejemplo de controles de la prueba",
+      "trial": "Prueba temporal contra un castillo de barón ladrón: desactivada"
     }
   },
   "autoStation": {
@@ -723,5 +757,195 @@
         "title": "Abre los ajustes de la automatización de invasiones"
       }
     }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "Usa la mayor dificultad desbloqueada que tu configuración habitual pueda superar con fiabilidad.",
+            "description": "Elige una dificultad nómada desbloqueada para iniciar el evento.",
+            "label": "Dificultad nómada"
+          },
+          "samurai_difficulty": {
+            "recommendation": "Usa la mayor dificultad desbloqueada que tu configuración habitual pueda superar con fiabilidad.",
+            "description": "Elige una dificultad samurái desbloqueada para iniciar el evento.",
+            "label": "Dificultad samurái"
+          },
+          "active_difficulty": {
+            "description": "Si el evento ya está activo, coincide con su dificultad actual, pues una selección guardada distinta deja la automatización en espera en vez de cambiarla.",
+            "label": "Evento ya activo"
+          }
+        },
+        "title": "Elige las dificultades de ambos eventos",
+        "image": {
+          "alt": "Ejemplo de dificultades nómadas y samuráis",
+          "caption": "Elige una dificultad desbloqueada distinta para cada evento y coincide con la del evento activo."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "Activado después de revisar y guardar los ajustes deseados.",
+            "description": "Después de guardar, activa Auto Nómadas/Samuráis en su tarjeta de Automatización para ejecutarlo cuando haya un evento y recursos aptos.",
+            "label": "Interruptor de Auto Nómadas/Samuráis"
+          },
+          "save_settings": {
+            "label": "Guardar ajustes",
+            "description": "Guarda el origen, las plantillas, las dificultades, los límites de parada, los saltos y el estado de la prueba antes de cerrar este cuadro."
+          },
+          "readiness": {
+            "description": "La automatización mejora los campamentos del evento y espera comandantes, tropas, herramientas y, si los saltos están activados, saltos utilizables.",
+            "label": "Preparación de los campamentos"
+          }
+        },
+        "title": "Guarda y activa Auto Nómadas/Samuráis"
+      },
+      "limits": {
+        "image": {
+          "caption": "El objetivo de puntos detiene nuevos envíos, pero los ataques que ya viajan pueden terminar.",
+          "alt": "Ejemplo de límites de puntos y parada de Auto Nómadas/Samuráis"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Detén esta automatización al alcanzar el número diario de ataques normales de toda la cuenta hasta que el juego lo reinicie; 0 no añade límite.",
+            "label": "Límite diario de ataques normales",
+            "recommendation": "0 para que el objetivo de puntos del evento controle la serie."
+          },
+          "minimum_remaining": {
+            "description": "Deja de iniciar nuevos ataques este número de minutos antes de que termine el evento.",
+            "label": "Detener antes del final del evento",
+            "recommendation": "30 minutos."
+          },
+          "score_target": {
+            "description": "Deja de iniciar nuevos ataques cuando los puntos del evento indicados alcancen o superen este objetivo.",
+            "label": "Detener en puntos del evento",
+            "recommendation": "Usa tu último hito habitual de recompensa personal, superior a 0."
+          },
+          "travelling_attacks": {
+            "description": "Los ataques que ya viajan pueden terminar después de cumplirse una condición de parada y elevar los puntos finales por encima del objetivo.",
+            "label": "Ataques en camino"
+          }
+        },
+        "title": "Define los puntos y límites de parada"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Impulso de viaje a caballo",
+            "recommendation": "Pluma de viaje para viajar rápido.",
+            "description": "Elige la opción de viaje con pluma, monedas o rubíes para los ataques a campamentos."
+          },
+          "open_settings": {
+            "label": "Abrir ajustes",
+            "description": "En la página Automatización, selecciona el botón de ajustes de la tarjeta Auto Nómadas/Samuráis."
+          },
+          "source_castle": {
+            "label": "Castillo de origen",
+            "recommendation": "Usa tu castillo de evento habitual con suficientes tropas y herramientas.",
+            "description": "Elige el castillo del Gran Imperio que aporta tropas y herramientas para atacar los campamentos."
+          },
+          "nomad_preset": {
+            "description": "Selecciona una plantilla de ataque guardada con tropas, herramientas y formación para los campamentos nómadas.",
+            "label": "Plantilla de ataque nómada",
+            "recommendation": "Crea y selecciona tu plantilla nómada habitual."
+          },
+          "samurai_preset": {
+            "description": "Selecciona una plantilla de ataque guardada con tropas, herramientas y formación para los campamentos samuráis.",
+            "label": "Plantilla de ataque samurái",
+            "recommendation": "Crea y selecciona tu plantilla samurái habitual."
+          }
+        },
+        "image": {
+          "alt": "Ejemplo de origen, plantillas y viaje de Auto Nómadas/Samuráis",
+          "caption": "Crea ambas plantillas de evento antes de elegir el castillo de origen y la opción de viaje."
+        },
+        "title": "Abre los ajustes de Auto Nómadas/Samuráis"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "Ejemplo de esperas de campamento y reservas de saltos de tiempo",
+          "caption": "Cada valor de conservación cuenta objetos de salto de tiempo, no minutos de espera."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "Conserva esta cantidad de saltos de tiempo de 10 min sin usarlos como reserva.",
+            "label": "Conservar 10 min",
+            "recommendation": "0 para las series habituales de campamentos."
+          },
+          "keep_1m": {
+            "description": "Conserva esta cantidad de saltos de tiempo de 1 min sin usarlos como reserva.",
+            "label": "Conservar 1 min",
+            "recommendation": "0 para las series habituales de campamentos."
+          },
+          "keep_24h": {
+            "description": "Conserva esta cantidad de saltos de tiempo de 24 h sin usarlos como reserva.",
+            "label": "Conservar 24 h",
+            "recommendation": "Reserva las existencias que necesites para construcciones u otras actividades."
+          },
+          "keep_30m": {
+            "description": "Conserva esta cantidad de saltos de tiempo de 30 min sin usarlos como reserva.",
+            "label": "Conservar 30 min",
+            "recommendation": "0 para las series habituales de campamentos."
+          },
+          "keep_5h": {
+            "description": "Conserva esta cantidad de saltos de tiempo de 5 h sin usarlos como reserva.",
+            "label": "Conservar 5 h",
+            "recommendation": "Reserva las existencias que necesites para construcciones u otras actividades."
+          },
+          "keep_5m": {
+            "description": "Conserva esta cantidad de saltos de tiempo de 5 min sin usarlos como reserva.",
+            "label": "Conservar 5 min",
+            "recommendation": "0 para las series habituales de campamentos."
+          },
+          "keep_60m": {
+            "description": "Conserva esta cantidad de saltos de tiempo de 60 min sin usarlos como reserva.",
+            "label": "Conservar 60 min",
+            "recommendation": "0 para las series habituales de campamentos."
+          },
+          "skip_cooldowns": {
+            "description": "Tras una victoria confirmada contra un campamento, usa un salto de tiempo disponible para eliminar la espera de ese objetivo.",
+            "label": "Eliminar la espera tras cada ataque acertado",
+            "recommendation": "Actívalo para ataques repetidos habituales a campamentos; desactívalo para esperar las pausas naturales."
+          }
+        },
+        "title": "Elige saltos de tiempo y reservas"
+      },
+      "trial": {
+        "image": {
+          "alt": "Ejemplo de controles de la prueba temporal contra un castillo de barón ladrón",
+          "caption": "La prueba inicia un ataque real y sustituye la actividad normal del evento mientras está activada."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "Sustituye la actividad normal del evento por una prueba de ataque real a un castillo de barón ladrón con la plantilla nómada y saltos de tiempo.",
+            "label": "Prueba temporal completa contra un castillo de barón ladrón",
+            "recommendation": "Desactivada para las series habituales de nómadas o samuráis."
+          },
+          "target_x": {
+            "description": "Introduce la coordenada horizontal del castillo de barón ladrón solo para la prueba temporal.",
+            "label": "Objetivo X",
+            "recommendation": "Déjalo sin usar mientras la prueba esté desactivada."
+          },
+          "target_y": {
+            "description": "Introduce la coordenada vertical del castillo de barón ladrón solo para la prueba temporal.",
+            "label": "Objetivo Y",
+            "recommendation": "Déjalo sin usar mientras la prueba esté desactivada."
+          },
+          "trial_skips": {
+            "description": "Activar la prueba también activa los saltos para eliminar las esperas de esa prueba.",
+            "label": "Saltos de tiempo de la prueba"
+          }
+        },
+        "title": "Deja desactivada la prueba temporal para las series habituales"
+      }
+    },
+    "feature": {
+      "description": "Auto Nómadas/Samuráis mejora los campamentos de evento aptos, elige el más débil entre los completamente mejorados y lo ataca repetidamente con la plantilla guardada del evento hasta alcanzar un límite de parada.",
+      "expectation": "Espera un evento activo, comandantes, tropas, herramientas y saltos de tiempo disponibles si se activó la eliminación de esperas; los ataques en camino pueden terminar después de detener los nuevos lanzamientos.",
+      "name": "Auto Nómadas/Samuráis",
+      "summary": "Mejora y ataca campamentos nómadas o samuráis"
+    },
+    "recommendationIntro": "Los valores recomendados describen el uso habitual de Auto Nómadas/Samuráis; solo orientan y no modifican la configuración guardada."
   }
 }

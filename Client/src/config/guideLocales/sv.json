@@ -25,7 +25,10 @@
     "fortressPreviewTitle": "Exempel på inställning av automatiska fästningsanfall",
     "invasionGuideIntro": "Följ dessa steg för att ställa in automatiska invasionsanfall; välj en exempelpanel för att förstora den.",
     "invasionGuideTitle": "Guide till automatiska invasionsanfall",
-    "invasionPreviewTitle": "Exempel på inställning av automatiska invasionsanfall"
+    "invasionPreviewTitle": "Exempel på inställning av automatiska invasionsanfall",
+    "nomadGuideIntro": "Följ dessa steg för att ställa in Auto Nomader/Samurajer; välj en exempelpanel för att förstora den.",
+    "nomadGuideTitle": "Guide för Auto Nomader/Samurajer",
+    "nomadPreviewTitle": "Inställningsexempel för Auto Nomader/Samurajer"
   },
   "autoTower": {
     "recommendationIntro": "Det här är rekommendationer för regelbunden användning; granska dem innan du sparar.",
@@ -372,6 +375,37 @@
       "preset": "Anfallsupplägg: sparad evenemangsformation",
       "title": "Exempel på evenemangsanfall",
       "travel": "Reseförstärkning: Resefjäder"
+    },
+    "nomadDifficulty": {
+      "title": "Exempel på evenemangssvårigheter",
+      "active": "Aktivt evenemang: matcha aktuell svårighet",
+      "nomad": "Nomader: upplåst pålitlig svårighet",
+      "samurai": "Samurajer: upplåst pålitlig svårighet"
+    },
+    "nomadSetup": {
+      "castle": "Ursprung: vanlig evenemangsborg i Det stora imperiet",
+      "travel": "Reseförstärkning: Resefjäder",
+      "nomadPreset": "Nomadupplägg: sparad lägerformation",
+      "samuraiPreset": "Samurajupplägg: sparad lägerformation",
+      "title": "Exempel på inställningar för evenemangsläger"
+    },
+    "nomadCooldowns": {
+      "clear": "Ta bort väntetid efter bekräftad seger: på",
+      "long": "Behåll 5 timmar / 24 timmar: lager för andra aktiviteter",
+      "short": "Behåll 1 / 5 / 10 / 30 / 60 min: 0 föremål av varje",
+      "title": "Exempel på väntetidsval"
+    },
+    "nomadLimits": {
+      "daily": "Extra dagsgräns: 0",
+      "score": "Poängmål: sista personliga belöningsnivån",
+      "time": "Stoppa före slutet: 30 minuter",
+      "title": "Exempel på stoppregler"
+    },
+    "nomadTrial": {
+      "coordinates": "Mål X / Y: oanvända i vanlig drift",
+      "effect": "Prov på ersätter evenemanget med ett riktigt anfall",
+      "title": "Exempel på provinställningar",
+      "trial": "Tillfälligt rövarbaronsprov: av"
     }
   },
   "autoStation": {
@@ -723,5 +757,195 @@
         "title": "Öppna inställningarna för automatiska invasionsanfall"
       }
     }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "Använd den högsta upplåsta svårighetsgrad som din vanliga uppställning klarar pålitligt.",
+            "description": "Välj en upplåst nomadsvårighetsgrad vid evenemangsstart.",
+            "label": "Nomadsvårighet"
+          },
+          "samurai_difficulty": {
+            "recommendation": "Använd den högsta upplåsta svårighetsgrad som din vanliga uppställning klarar pålitligt.",
+            "description": "Välj en upplåst samurajsvårighetsgrad vid evenemangsstart.",
+            "label": "Samurajsvårighet"
+          },
+          "active_difficulty": {
+            "description": "För ett aktivt evenemang måste aktuell svårighetsgrad matchas, eftersom ett annat sparat val får automatiseringen att vänta i stället för att ändra den.",
+            "label": "Redan aktivt evenemang"
+          }
+        },
+        "title": "Välj svårighetsgrad för båda evenemangen",
+        "image": {
+          "alt": "Exempel på nomad- och samurajsvårighetsgrader",
+          "caption": "Välj en separat upplåst svårighetsgrad för varje evenemang och matcha det aktiva evenemangets grad."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "På efter att du granskat och sparat önskade inställningar.",
+            "description": "Slå på Auto Nomader/Samurajer på Automatisering-kortet efter sparandet så att det körs när evenemang och lämpliga resurser finns.",
+            "label": "Reglage för Auto Nomader/Samurajer"
+          },
+          "save_settings": {
+            "label": "Spara inställningar",
+            "description": "Spara källa, upplägg, svårighetsgrader, stoppgränser, tidshoppsval och teststatus innan dialogen stängs."
+          },
+          "readiness": {
+            "description": "Automatiseringen uppgraderar evenemangsläger och väntar på lämpliga befälhavare, trupper, verktyg och användbara tidshopp när dessa är aktiverade.",
+            "label": "Redo för lägeranfall"
+          }
+        },
+        "title": "Spara och aktivera Auto Nomader/Samurajer"
+      },
+      "limits": {
+        "image": {
+          "caption": "Poängmålet stoppar nya starter, men anfall som redan är på väg kan avslutas.",
+          "alt": "Exempel på poäng- och stoppgränser för Auto Nomader/Samurajer"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Stoppa denna automatisering vid kontots dagliga antal normala anfall tills spelet återställer det; 0 lägger inte till någon gräns.",
+            "label": "Daglig gräns för vanliga attacker",
+            "recommendation": "0 så att evenemangets poängmål styr serien."
+          },
+          "minimum_remaining": {
+            "description": "Starta inga nya anfall så här många minuter innan evenemanget slutar.",
+            "label": "Stoppa innan evenemanget slutar",
+            "recommendation": "30 minuter."
+          },
+          "score_target": {
+            "description": "Starta inga nya anfall när den rapporterade evenemangspoängen når eller överskrider målet.",
+            "label": "Stoppa vid evenemangspoäng",
+            "recommendation": "Använd din vanliga sista personliga belöningsnivå över 0."
+          },
+          "travelling_attacks": {
+            "description": "Anfall som redan är på väg kan avslutas efter ett stoppvillkor och höja slutpoängen över målet.",
+            "label": "Anfall på väg"
+          }
+        },
+        "title": "Ställ in poäng- och stoppgränser"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Reseökning med häst",
+            "recommendation": "Resefjäder för snabb resa.",
+            "description": "Välj resealternativ med fjäder, mynt eller rubiner för lägeranfall."
+          },
+          "open_settings": {
+            "label": "Öppna inställningar",
+            "description": "Välj inställningsknappen på Auto Nomader/Samurajer-kortet på Automatisering-sidan."
+          },
+          "source_castle": {
+            "label": "Ursprungsborg",
+            "recommendation": "Använd din vanliga evenemangsborg med tillräckligt med trupper och verktyg.",
+            "description": "Välj borgen i Det stora riket som ger trupper och verktyg till lägeranfallen."
+          },
+          "nomad_preset": {
+            "description": "Välj ett sparat anfallsupplägg med trupper, verktyg och formation för nomadläger.",
+            "label": "Nomadiskt anfallsupplägg",
+            "recommendation": "Skapa och välj ditt vanliga nomadupplägg."
+          },
+          "samurai_preset": {
+            "description": "Välj ett sparat anfallsupplägg med trupper, verktyg och formation för samurajläger.",
+            "label": "Samurajiskt anfallsupplägg",
+            "recommendation": "Skapa och välj ditt vanliga samurajupplägg."
+          }
+        },
+        "image": {
+          "alt": "Exempel på källa, upplägg och resa för Auto Nomader/Samurajer",
+          "caption": "Skapa båda evenemangsuppsättningarna innan du väljer källborg och resealternativ."
+        },
+        "title": "Öppna inställningar för Auto Nomader/Samurajer"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "Exempel på lägerväntetider och reserver av tidshopp",
+          "caption": "Varje behåll-värde räknar tidshoppsföremål, inte minuter väntetid."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "Behåll detta antal tidshopp på 10 min oanvända som reserv.",
+            "label": "Behåll 10 min",
+            "recommendation": "0 för vanliga lägerrundor."
+          },
+          "keep_1m": {
+            "description": "Behåll detta antal tidshopp på 1 min oanvända som reserv.",
+            "label": "Behåll 1 min",
+            "recommendation": "0 för vanliga lägerrundor."
+          },
+          "keep_24h": {
+            "description": "Behåll detta antal tidshopp på 24 timmar oanvända som reserv.",
+            "label": "Behåll 24 timmar",
+            "recommendation": "Reservera det lager du behöver för byggande eller andra aktiviteter."
+          },
+          "keep_30m": {
+            "description": "Behåll detta antal tidshopp på 30 min oanvända som reserv.",
+            "label": "Behåll 30 min",
+            "recommendation": "0 för vanliga lägerrundor."
+          },
+          "keep_5h": {
+            "description": "Behåll detta antal tidshopp på 5 timmar oanvända som reserv.",
+            "label": "Behåll 5 timmar",
+            "recommendation": "Reservera det lager du behöver för byggande eller andra aktiviteter."
+          },
+          "keep_5m": {
+            "description": "Behåll detta antal tidshopp på 5 min oanvända som reserv.",
+            "label": "Behåll 5 min",
+            "recommendation": "0 för vanliga lägerrundor."
+          },
+          "keep_60m": {
+            "description": "Behåll detta antal tidshopp på 60 min oanvända som reserv.",
+            "label": "Behåll 60 min",
+            "recommendation": "0 för vanliga lägerrundor."
+          },
+          "skip_cooldowns": {
+            "description": "Efter en bekräftad seger över ett läger används ett tillgängligt tidshopp för att ta bort målets väntetid.",
+            "label": "Ta bort väntetid efter varje lyckat anfall",
+            "recommendation": "På för vanliga upprepade lägeranfall; av för att vänta på naturliga väntetider."
+          }
+        },
+        "title": "Välj tidshopp och reserver"
+      },
+      "trial": {
+        "image": {
+          "alt": "Exempel på tillfälligt prov mot rövarbaronsborg",
+          "caption": "Provet startar ett riktigt anfall och ersätter vanlig evenemangsdrift medan det är på."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "Ersätt vanlig evenemangsdrift med ett riktigt anfallsprov mot en rövarbaronsborg med nomadupplägg och tidshopp.",
+            "label": "Tillfälligt fullständigt prov mot rövarbaronsborg",
+            "recommendation": "Av vid vanliga nomad- eller samurajrundor."
+          },
+          "target_x": {
+            "description": "Ange rövarbaronsborgens vågräta koordinat endast för det tillfälliga provet.",
+            "label": "Mål X",
+            "recommendation": "Lämna oanvänt när provet är av."
+          },
+          "target_y": {
+            "description": "Ange rövarbaronsborgens lodräta koordinat endast för det tillfälliga provet.",
+            "label": "Mål Y",
+            "recommendation": "Lämna oanvänt när provet är av."
+          },
+          "trial_skips": {
+            "description": "När provet slås på aktiveras också tidshopp för provet.",
+            "label": "Tidshopp för provet"
+          }
+        },
+        "title": "Låt det tillfälliga provet vara av vid vanliga rundor"
+      }
+    },
+    "feature": {
+      "description": "Auto Nomader/Samurajer uppgraderar lämpliga evenemangsläger, väljer det svagaste fullt uppgraderade lägret och anfaller det upprepade gånger med evenemangets sparade anfallsupplägg tills en stoppgräns nås.",
+      "expectation": "Den väntar på ett aktivt evenemang, lämpliga befälhavare, trupper, verktyg och användbara tidshopp när väntetider rensas; anfall på väg kan avslutas efter att nya anfall stoppats.",
+      "name": "Auto Nomader/Samurajer",
+      "summary": "Uppgradera och anfall nomad- eller samurajläger"
+    },
+    "recommendationIntro": "Rekommenderade värden beskriver vanlig användning av Auto Nomader/Samurajer; de är råd och ändrar inte sparade inställningar."
   }
 }

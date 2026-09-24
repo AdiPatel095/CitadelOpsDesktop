@@ -25,7 +25,10 @@
     "fortressPreviewTitle": "Esimerkki automaattisten linnakehyökkäysten määrittämisestä",
     "invasionGuideIntro": "Noudata näitä vaiheita automaattisten maahantunkeutumishyökkäysten määrittämiseksi; suurenna esimerkkipaneeli valitsemalla se.",
     "invasionGuideTitle": "Automaattisten maahantunkeutumishyökkäysten opas",
-    "invasionPreviewTitle": "Esimerkki automaattisten maahantunkeutumishyökkäysten asetuksista"
+    "invasionPreviewTitle": "Esimerkki automaattisten maahantunkeutumishyökkäysten asetuksista",
+    "nomadGuideIntro": "Määritä automaattiset nomadit/samurait näiden vaiheiden avulla; suurenna esimerkkipaneeli valitsemalla se.",
+    "nomadGuideTitle": "Automaattisten nomadien/samuraiden opas",
+    "nomadPreviewTitle": "Esimerkki automaattisten nomadien/samuraiden asetuksista"
   },
   "autoTower": {
     "recommendationIntro": "Nämä suositukset koskevat säännöllistä käyttöä; tarkista ne ennen tallentamista.",
@@ -372,6 +375,37 @@
       "preset": "Hyökkäysmalli: tallennettu tapahtumamuodostelma",
       "title": "Esimerkki tapahtumahyökkäyksen asetuksista",
       "travel": "Matkustusnopeutus: Matkahöyhen"
+    },
+    "nomadDifficulty": {
+      "title": "Esimerkki tapahtumien vaikeusasteista",
+      "active": "Aktiivinen tapahtuma: vastaa nykyistä vaikeustasoa",
+      "nomad": "Nomadit: avattu ja luotettava vaikeustaso",
+      "samurai": "Samurait: avattu ja luotettava vaikeustaso"
+    },
+    "nomadSetup": {
+      "castle": "Lähtö: tavallinen Suuren valtakunnan tapahtumalinna",
+      "travel": "Matkustusnopeutus: Matkahöyhen",
+      "nomadPreset": "Nomadikokoonpano: tallennettu leirimuodostelma",
+      "samuraiPreset": "Samuraikokoonpano: tallennettu leirimuodostelma",
+      "title": "Esimerkki tapahtumaleirien asetuksista"
+    },
+    "nomadCooldowns": {
+      "clear": "Poista odotusaika vahvistetun voiton jälkeen: päällä",
+      "long": "Säilytä 5 h / 24 h: varasto muuhun toimintaan",
+      "short": "Säilytä 1 / 5 / 10 / 30 / 60 min: 0 esinettä kutakin",
+      "title": "Esimerkki odotusaikavalinnoista"
+    },
+    "nomadLimits": {
+      "daily": "Päivittäinen lisäraja: 0",
+      "score": "Pistetavoite: viimeinen henkilökohtainen palkintoraja",
+      "time": "Lopeta ennen päättymistä: 30 minuuttia",
+      "title": "Esimerkki pysäytyssäännöistä"
+    },
+    "nomadTrial": {
+      "coordinates": "Kohde X / Y: ei käytössä tavallisessa toiminnassa",
+      "effect": "Koe päällä korvaa tapahtuman oikealla hyökkäyksellä",
+      "title": "Esimerkki kokeen hallinnasta",
+      "trial": "Väliaikainen ryöstöparonikoe: pois"
     }
   },
   "autoStation": {
@@ -723,5 +757,195 @@
         "title": "Avaa automaattisten maahantunkeutumishyökkäysten asetukset"
       }
     }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "Käytä korkeinta avattua vaikeusastetta, josta tavallinen kokoonpanosi selviää luotettavasti.",
+            "description": "Valitse avattu nomadivaikeustaso tapahtuman alkuun.",
+            "label": "Nomadivaikeustaso"
+          },
+          "samurai_difficulty": {
+            "recommendation": "Käytä korkeinta avattua vaikeusastetta, josta tavallinen kokoonpanosi selviää luotettavasti.",
+            "description": "Valitse avattu samuraivaikeustaso tapahtuman alkuun.",
+            "label": "Samuraivaikeustaso"
+          },
+          "active_difficulty": {
+            "description": "Aktiivisessa tapahtumassa käytä sen nykyistä vaikeustasoa, sillä poikkeava tallennettu valinta saa automaation odottamaan eikä muuta tasoa.",
+            "label": "Jo aktiivinen tapahtuma"
+          }
+        },
+        "title": "Valitse molempien tapahtumien vaikeusasteet",
+        "image": {
+          "alt": "Esimerkki nomadi- ja samuraivaikeustasoista",
+          "caption": "Valitse kummallekin tapahtumalle erillinen avattu vaikeustaso ja vastaa aktiivisen tapahtuman tasoa."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "Päällä, kun olet tarkistanut ja tallentanut haluamasi asetukset.",
+            "description": "Kytke automaattiset nomadit/samurait päälle Automaatio-kortista tallennuksen jälkeen, jotta toiminto käynnistyy tapahtuman ja kelvollisten resurssien ollessa käytettävissä.",
+            "label": "Automaattisten nomadien/samuraiden kytkin"
+          },
+          "save_settings": {
+            "label": "Tallenna asetukset",
+            "description": "Tallenna lähtölinna, kokoonpanot, vaikeustasot, pysäytysrajat, aikahyppyvalinnat ja kokeen tila ennen ikkunan sulkemista."
+          },
+          "readiness": {
+            "description": "Automaatio kehittää tapahtumaleirejä ja odottaa kelvollisia komentajia, joukkoja, työkaluja ja käytettäviä aikahyppyjä, jos ne ovat käytössä.",
+            "label": "Valmius leirihyökkäykseen"
+          }
+        },
+        "title": "Tallenna ja käynnistä automaattiset nomadit/samurait"
+      },
+      "limits": {
+        "image": {
+          "caption": "Pistetavoite pysäyttää uudet lähdöt, mutta jo matkalla olevat hyökkäykset voivat päättyä.",
+          "alt": "Esimerkki automaattisten nomadien/samuraiden piste- ja pysäytysrajoista"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Pysäytä tämä automaatio tilin päivittäisen tavallisten hyökkäysten määrän täyttyessä, kunnes peli nollaa sen; 0 ei lisää rajaa.",
+            "label": "Tavallisten hyökkäysten päiväraja",
+            "recommendation": "0, jotta tapahtuman pistetavoite ohjaa sarjaa."
+          },
+          "minimum_remaining": {
+            "description": "Lopeta uusien hyökkäysten aloittaminen näin monta minuuttia ennen tapahtuman loppua.",
+            "label": "Pysäytä ennen tapahtuman loppua",
+            "recommendation": "30 minuuttia."
+          },
+          "score_target": {
+            "description": "Lopeta uusien hyökkäysten aloittaminen, kun ilmoitettu tapahtumapistemäärä saavuttaa tai ylittää tämän tavoitteen.",
+            "label": "Pysäytä tapahtumapistemäärässä",
+            "recommendation": "Käytä tavanomaista viimeistä henkilökohtaisen palkinnon rajapyykkiäsi, joka ylittää 0."
+          },
+          "travelling_attacks": {
+            "description": "Jo matkalla olevat hyökkäykset voivat päättyä pysäytysehdon jälkeen ja nostaa lopulliset pisteet tavoitteen yli.",
+            "label": "Matkalla olevat hyökkäykset"
+          }
+        },
+        "title": "Määritä piste- ja pysäytysrajat"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Hevosmatkan nopeutus",
+            "recommendation": "Matkahöyhen nopeaan matkustukseen.",
+            "description": "Valitse leirihyökkäyksiin sulalla, kolikoilla tai rubiineilla maksettava matkustusvaihtoehto."
+          },
+          "open_settings": {
+            "label": "Avaa asetukset",
+            "description": "Valitse Automaatio-sivulla automaattisten nomadien/samuraiden kortin asetuspainike."
+          },
+          "source_castle": {
+            "label": "Lähtölinna",
+            "recommendation": "Käytä tavallista tapahtumalinnaasi, jossa on tarpeeksi joukkoja ja työkaluja.",
+            "description": "Valitse Suuren valtakunnan linna, joka tarjoaa joukot ja työkalut leirihyökkäyksiin."
+          },
+          "nomad_preset": {
+            "description": "Valitse tallennettu hyökkäyskokoonpano nomadileirien joukoille, työkaluille ja muodostelmalle.",
+            "label": "Nomadihyökkäyksen kokoonpano",
+            "recommendation": "Luo ja valitse tavallinen nomadikokoonpanosi."
+          },
+          "samurai_preset": {
+            "description": "Valitse tallennettu hyökkäyskokoonpano samuraileirien joukoille, työkaluille ja muodostelmalle.",
+            "label": "Samuraihyökkäyksen kokoonpano",
+            "recommendation": "Luo ja valitse tavallinen samuraikokoonpanosi."
+          }
+        },
+        "image": {
+          "alt": "Esimerkki automaattisten nomadien/samuraiden lähteestä, kokoonpanoista ja matkasta",
+          "caption": "Luo molemmat tapahtumakokoonpanot ennen lähtölinnan ja matkustusvaihtoehdon valintaa."
+        },
+        "title": "Avaa automaattisten nomadien/samuraiden asetukset"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "Esimerkki leirien odotusajoista ja aikahyppyvarastoista",
+          "caption": "Jokainen säilytettävä määrä laskee aikahyppyesineitä, ei odotusajan minuutteja."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "Säilytä näin monta 10 minuutin aikahyppyä käyttämättömänä varalla.",
+            "label": "Säilytä 10 min",
+            "recommendation": "0 tavallisiin leirikierroksiin."
+          },
+          "keep_1m": {
+            "description": "Säilytä näin monta 1 minuutin aikahyppyä käyttämättömänä varalla.",
+            "label": "Säilytä 1 min",
+            "recommendation": "0 tavallisiin leirikierroksiin."
+          },
+          "keep_24h": {
+            "description": "Säilytä näin monta 24 tunnin aikahyppyä käyttämättömänä varalla.",
+            "label": "Säilytä 24 h",
+            "recommendation": "Varaa rakentamiseen tai muihin toimintoihin tarvitsemasi määrä."
+          },
+          "keep_30m": {
+            "description": "Säilytä näin monta 30 minuutin aikahyppyä käyttämättömänä varalla.",
+            "label": "Säilytä 30 min",
+            "recommendation": "0 tavallisiin leirikierroksiin."
+          },
+          "keep_5h": {
+            "description": "Säilytä näin monta 5 tunnin aikahyppyä käyttämättömänä varalla.",
+            "label": "Säilytä 5 h",
+            "recommendation": "Varaa rakentamiseen tai muihin toimintoihin tarvitsemasi määrä."
+          },
+          "keep_5m": {
+            "description": "Säilytä näin monta 5 minuutin aikahyppyä käyttämättömänä varalla.",
+            "label": "Säilytä 5 min",
+            "recommendation": "0 tavallisiin leirikierroksiin."
+          },
+          "keep_60m": {
+            "description": "Säilytä näin monta 60 minuutin aikahyppyä käyttämättömänä varalla.",
+            "label": "Säilytä 60 min",
+            "recommendation": "0 tavallisiin leirikierroksiin."
+          },
+          "skip_cooldowns": {
+            "description": "Käytä vahvistetun leirivoiton jälkeen saatavilla olevaa aikahyppyä kohteen odotusajan poistamiseen.",
+            "label": "Poista odotusaika jokaisen onnistuneen hyökkäyksen jälkeen",
+            "recommendation": "Päällä tavallisissa toistuvissa leirihyökkäyksissä; pois, kun haluat odottaa luonnollista odotusaikaa."
+          }
+        },
+        "title": "Valitse aikahypyt ja varastot"
+      },
+      "trial": {
+        "image": {
+          "alt": "Esimerkki väliaikaisesta ryöstöparonin linnan kokeesta",
+          "caption": "Koe käynnistää oikean hyökkäyksen ja korvaa tavallisen tapahtumatoiminnan ollessaan päällä."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "Korvaa tavallinen tapahtumatoiminta oikealla hyökkäyskokeella yhtä ryöstöparonin linnaa vastaan käyttäen nomadikokoonpanoa ja aikahyppyjä.",
+            "label": "Väliaikainen kattava ryöstöparonin linnan koe",
+            "recommendation": "Pois tavallisilta nomadi- tai samuraikierroksilta."
+          },
+          "target_x": {
+            "description": "Anna ryöstöparonin linnan vaakakoordinaatti vain väliaikaista koetta varten.",
+            "label": "Kohde X",
+            "recommendation": "Jätä käyttämättä, kun koe on pois päältä."
+          },
+          "target_y": {
+            "description": "Anna ryöstöparonin linnan pystykoordinaatti vain väliaikaista koetta varten.",
+            "label": "Kohde Y",
+            "recommendation": "Jätä käyttämättä, kun koe on pois päältä."
+          },
+          "trial_skips": {
+            "description": "Kokeen kytkeminen päälle ottaa myös aikahypyt käyttöön kokeessa.",
+            "label": "Kokeen aikahypyt"
+          }
+        },
+        "title": "Pidä väliaikainen koe pois päältä tavallisissa kierroksissa"
+      }
+    },
+    "feature": {
+      "description": "Automaattiset nomadit/samurait kehittää kelvollisia tapahtumaleirejä, valitsee heikoimman täysin kehitetyn leirin ja hyökkää siihen toistuvasti tapahtumalle tallennetulla hyökkäyskokoonpanolla, kunnes pysäytysraja täyttyy.",
+      "expectation": "Se odottaa aktiivista tapahtumaa, kelvollisia komentajia, joukkoja, työkaluja ja käytettäviä aikahyppyjä, jos odotusajan poisto on käytössä; matkalla olevat hyökkäykset voivat päättyä uusien lähtöjen pysähdyttyä.",
+      "name": "Automaattiset nomadit/samurait",
+      "summary": "Kehitä ja hyökkää nomadi- tai samuraileireihin"
+    },
+    "recommendationIntro": "Suositellut arvot kuvaavat automaattisten nomadien/samuraiden tavallista käyttöä; ne ovat ohjeita eivätkä muuta tallennettuja asetuksia."
   }
 }

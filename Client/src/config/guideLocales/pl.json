@@ -25,7 +25,10 @@
     "fortressPreviewTitle": "Przykład konfiguracji automatycznych ataków na fortece",
     "invasionGuideIntro": "Wykonaj te kroki, aby ustawić automatyczne ataki inwazyjne; wybierz panel przykładu, aby go powiększyć.",
     "invasionGuideTitle": "Przewodnik po automatycznych atakach inwazyjnych",
-    "invasionPreviewTitle": "Przykład konfiguracji automatycznych ataków inwazyjnych"
+    "invasionPreviewTitle": "Przykład konfiguracji automatycznych ataków inwazyjnych",
+    "nomadGuideIntro": "Wykonaj te kroki, aby skonfigurować Auto Nomadzi/Samurajowie; wybierz przykładowy panel, aby go powiększyć.",
+    "nomadGuideTitle": "Przewodnik Auto Nomadzi/Samurajowie",
+    "nomadPreviewTitle": "Przykład konfiguracji Auto Nomadzi/Samurajowie"
   },
   "autoTower": {
     "recommendationIntro": "Te zalecenia dotyczą regularnego korzystania; sprawdź je przed zapisaniem.",
@@ -372,6 +375,37 @@
       "preset": "Schemat ataku: zapisana formacja wydarzenia",
       "title": "Przykład ustawienia ataku wydarzenia",
       "travel": "Premia do podróży: Pióro podróżne"
+    },
+    "nomadDifficulty": {
+      "title": "Przykład poziomów trudności wydarzenia",
+      "active": "Aktywne wydarzenie: dopasuj obecną trudność",
+      "nomad": "Nomadzi: odblokowany niezawodny poziom",
+      "samurai": "Samurajowie: odblokowany niezawodny poziom"
+    },
+    "nomadSetup": {
+      "castle": "Źródło: zwykły zamek wydarzenia w Wielkim Cesarstwie",
+      "travel": "Premia do podróży: Pióro podróżne",
+      "nomadPreset": "Schemat nomadów: zapisany układ na obozy",
+      "samuraiPreset": "Schemat samurajów: zapisany układ na obozy",
+      "title": "Przykład ustawień obozów wydarzenia"
+    },
+    "nomadCooldowns": {
+      "clear": "Usuń przerwę po potwierdzonym zwycięstwie: włączone",
+      "long": "Zachowaj 5 godz. / 24 godz.: zapas na inne działania",
+      "short": "Zachowaj 1 / 5 / 10 / 30 / 60 min: po 0 przedmiotów",
+      "title": "Przykład wyboru przerw"
+    },
+    "nomadLimits": {
+      "daily": "Dodatkowy limit dzienny: 0",
+      "score": "Cel punktowy: ostatni próg nagrody osobistej",
+      "time": "Zatrzymaj przed końcem: 30 minut",
+      "title": "Przykład zasad zatrzymania"
+    },
+    "nomadTrial": {
+      "coordinates": "Cel X / Y: nieużywany w zwykłym działaniu",
+      "effect": "Włączony test zastępuje wydarzenie prawdziwym atakiem",
+      "title": "Przykład sterowania testem",
+      "trial": "Tymczasowy test barona rozbójnika: wyłączony"
     }
   },
   "autoStation": {
@@ -723,5 +757,195 @@
         "title": "Otwórz ustawienia automatycznych ataków inwazyjnych"
       }
     }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "Użyj najwyższego odblokowanego poziomu, z którym zwykły skład radzi sobie niezawodnie.",
+            "description": "Wybierz odblokowany poziom trudności nomadów na start wydarzenia.",
+            "label": "Trudność nomadów"
+          },
+          "samurai_difficulty": {
+            "recommendation": "Użyj najwyższego odblokowanego poziomu, z którym zwykły skład radzi sobie niezawodnie.",
+            "description": "Wybierz odblokowany poziom trudności samurajów na start wydarzenia.",
+            "label": "Trudność samurajów"
+          },
+          "active_difficulty": {
+            "description": "Przy aktywnym wydarzeniu dopasuj jego obecny poziom, ponieważ inny zapisany wybór wstrzymuje automat zamiast zmieniać trudność.",
+            "label": "Już aktywne wydarzenie"
+          }
+        },
+        "title": "Wybierz poziomy trudności obu wydarzeń",
+        "image": {
+          "alt": "Przykład poziomów trudności nomadów i samurajów",
+          "caption": "Wybierz osobny odblokowany poziom trudności dla każdego wydarzenia i dopasuj poziom aktywnego wydarzenia."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "Włączony po sprawdzeniu i zapisaniu zamierzonych ustawień.",
+            "description": "Po zapisaniu włącz Auto Nomadzi/Samurajowie na karcie Automatyzacja, aby działało przy dostępnym wydarzeniu i odpowiednich zasobach.",
+            "label": "Przełącznik Auto Nomadzi/Samurajowie"
+          },
+          "save_settings": {
+            "label": "Zapisz ustawienia",
+            "description": "Przed zamknięciem okna zapisz źródło, schematy, trudności, limity zatrzymania, wybór skoków czasu i stan testu."
+          },
+          "readiness": {
+            "description": "Automatyzacja rozwija obozy wydarzenia i czeka na dostępnych dowódców, wojsko, narzędzia i użyteczne skoki czasu, gdy są włączone.",
+            "label": "Gotowość do ataków na obozy"
+          }
+        },
+        "title": "Zapisz i włącz Auto Nomadzi/Samurajowie"
+      },
+      "limits": {
+        "image": {
+          "caption": "Cel punktowy zatrzymuje nowe wysłania, ale ataki już w drodze mogą się zakończyć.",
+          "alt": "Przykład limitów punktowych i zatrzymania Auto Nomadzi/Samurajowie"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Zatrzymaj tę automatyzację przy dziennej liczbie zwykłych ataków na całym koncie do wyzerowania jej przez grę; 0 nie dodaje limitu.",
+            "label": "Dzienny limit zwykłych ataków",
+            "recommendation": "0, aby cel punktowy wydarzenia sterował serią."
+          },
+          "minimum_remaining": {
+            "description": "Przestań rozpoczynać nowe ataki tyle minut przed końcem wydarzenia.",
+            "label": "Zatrzymaj przed końcem wydarzenia",
+            "recommendation": "30 minut."
+          },
+          "score_target": {
+            "description": "Przestań rozpoczynać nowe ataki, gdy zgłoszone punkty wydarzenia osiągną lub przekroczą ten cel.",
+            "label": "Zatrzymaj przy punktach wydarzenia",
+            "recommendation": "Użyj swojego zwykłego ostatniego progu nagrody osobistej powyżej 0."
+          },
+          "travelling_attacks": {
+            "description": "Ataki już w drodze mogą zakończyć się po spełnieniu warunku zatrzymania i podnieść wynik końcowy ponad cel.",
+            "label": "Ataki w drodze"
+          }
+        },
+        "title": "Ustaw punkty i limity zatrzymania"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Przyspieszenie podróży konnej",
+            "recommendation": "Pióro podróżne dla szybkiej podróży.",
+            "description": "Wybierz opcję podróży z piórem, monetami lub rubinami dla ataków na obozy."
+          },
+          "open_settings": {
+            "label": "Otwórz ustawienia",
+            "description": "Na stronie Automatyzacja wybierz przycisk ustawień na karcie Auto Nomadzi/Samurajowie."
+          },
+          "source_castle": {
+            "label": "Zamek źródłowy",
+            "recommendation": "Użyj zwykłego zamku wydarzenia z wystarczającą liczbą wojsk i narzędzi.",
+            "description": "Wybierz zamek w Wielkim Cesarstwie dostarczający wojsko i narzędzia do ataków na obozy."
+          },
+          "nomad_preset": {
+            "description": "Wybierz zapisany schemat ataku z wojskiem, narzędziami i ustawieniem dla obozów nomadów.",
+            "label": "Schemat ataku na nomadów",
+            "recommendation": "Utwórz i wybierz swój zwykły schemat nomadów."
+          },
+          "samurai_preset": {
+            "description": "Wybierz zapisany schemat ataku z wojskiem, narzędziami i ustawieniem dla obozów samurajów.",
+            "label": "Schemat ataku na samurajów",
+            "recommendation": "Utwórz i wybierz swój zwykły schemat samurajów."
+          }
+        },
+        "image": {
+          "alt": "Przykład źródła, schematów i podróży Auto Nomadzi/Samurajowie",
+          "caption": "Utwórz oba schematy wydarzenia przed wybraniem zamku źródłowego i opcji podróży."
+        },
+        "title": "Otwórz ustawienia Auto Nomadzi/Samurajowie"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "Przykład przerw obozowych i zapasów skoków czasu",
+          "caption": "Każda wartość zachowania oznacza liczbę przedmiotów skoku czasu, a nie minuty przerwy."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "Zachowaj tę liczbę 10-minutowych skoków czasu jako niewykorzystaną rezerwę.",
+            "label": "Zachowaj 10 min",
+            "recommendation": "0 dla zwykłych serii ataków na obozy."
+          },
+          "keep_1m": {
+            "description": "Zachowaj tę liczbę 1-minutowych skoków czasu jako niewykorzystaną rezerwę.",
+            "label": "Zachowaj 1 min",
+            "recommendation": "0 dla zwykłych serii ataków na obozy."
+          },
+          "keep_24h": {
+            "description": "Zachowaj tę liczbę 24-godzinnych skoków czasu jako niewykorzystaną rezerwę.",
+            "label": "Zachowaj 24 godz.",
+            "recommendation": "Odłóż zapas potrzebny do budowy lub innych działań."
+          },
+          "keep_30m": {
+            "description": "Zachowaj tę liczbę 30-minutowych skoków czasu jako niewykorzystaną rezerwę.",
+            "label": "Zachowaj 30 min",
+            "recommendation": "0 dla zwykłych serii ataków na obozy."
+          },
+          "keep_5h": {
+            "description": "Zachowaj tę liczbę 5-godzinnych skoków czasu jako niewykorzystaną rezerwę.",
+            "label": "Zachowaj 5 godz.",
+            "recommendation": "Odłóż zapas potrzebny do budowy lub innych działań."
+          },
+          "keep_5m": {
+            "description": "Zachowaj tę liczbę 5-minutowych skoków czasu jako niewykorzystaną rezerwę.",
+            "label": "Zachowaj 5 min",
+            "recommendation": "0 dla zwykłych serii ataków na obozy."
+          },
+          "keep_60m": {
+            "description": "Zachowaj tę liczbę 60-minutowych skoków czasu jako niewykorzystaną rezerwę.",
+            "label": "Zachowaj 60 min",
+            "recommendation": "0 dla zwykłych serii ataków na obozy."
+          },
+          "skip_cooldowns": {
+            "description": "Po potwierdzonym zwycięstwie nad obozem użyj dostępnego skoku czasu, aby usunąć przerwę dla tego celu.",
+            "label": "Usuń przerwę po każdym udanym ataku",
+            "recommendation": "Włącz dla zwykłych powtarzanych ataków na obozy; wyłącz, aby czekać na naturalne przerwy."
+          }
+        },
+        "title": "Wybierz skoki czasu i rezerwy"
+      },
+      "trial": {
+        "image": {
+          "alt": "Przykład sterowania tymczasowym testem przeciw zamkowi barona rozbójnika",
+          "caption": "Test uruchamia prawdziwy atak i zastępuje zwykłe działanie wydarzenia, gdy jest włączony."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "Zastąp zwykłe działanie wydarzenia rzeczywistym testowym atakiem na jeden zamek barona rozbójnika z użyciem schematu nomadów i skoków czasu.",
+            "label": "Tymczasowy pełny test przeciw zamkowi barona rozbójnika",
+            "recommendation": "Wyłączony przy zwykłych seriach nomadów lub samurajów."
+          },
+          "target_x": {
+            "description": "Wpisz poziomą współrzędną zamku barona rozbójnika tylko na potrzeby tymczasowego testu.",
+            "label": "Cel X",
+            "recommendation": "Pozostaw nieużywane, gdy test jest wyłączony."
+          },
+          "target_y": {
+            "description": "Wpisz pionową współrzędną zamku barona rozbójnika tylko na potrzeby tymczasowego testu.",
+            "label": "Cel Y",
+            "recommendation": "Pozostaw nieużywane, gdy test jest wyłączony."
+          },
+          "trial_skips": {
+            "description": "Włączenie testu włącza także skoki czasu dla tego testu.",
+            "label": "Skoki czasu w teście"
+          }
+        },
+        "title": "Pozostaw tymczasowy test wyłączony podczas zwykłych serii"
+      }
+    },
+    "feature": {
+      "description": "Auto Nomadzi/Samurajowie rozwija kwalifikujące się obozy wydarzenia, wybiera najsłabszy w pełni rozwinięty obóz i wielokrotnie go atakuje zapisanym schematem właściwym dla wydarzenia aż do osiągnięcia limitu zatrzymania.",
+      "expectation": "Czeka na aktywne wydarzenie, dostępnych dowódców, wojsko, narzędzia i skoki czasu, gdy włączono usuwanie przerw; ataki w drodze mogą zakończyć się po wstrzymaniu nowych wypraw.",
+      "name": "Auto Nomadzi/Samurajowie",
+      "summary": "Rozwijaj i atakuj obozy nomadów lub samurajów"
+    },
+    "recommendationIntro": "Zalecane wartości opisują zwykłe użycie Auto Nomadzi/Samurajowie; są wskazówką i nie zmieniają zapisanych ustawień."
   }
 }

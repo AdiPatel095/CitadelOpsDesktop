@@ -1,6 +1,6 @@
 # Guide locale workflow
 
-Run these commands from `Client/`; the web client has the same `npm run guide:locales` command from its root. The script reads the configured locale list and derives stable leaf paths from the English guide source and `guideLocales/en.json` for Auto Towers, Auto Bird, Auto Station, Auto Fortress, or Auto Invasion. It never calls a translation service.
+Run these commands from `Client/`; the web client has the same `npm run guide:locales` command from its root. The script reads the configured locale list and derives stable leaf paths from the English guide source and `guideLocales/en.json` for Auto Towers, Auto Bird, Auto Station, Auto Fortress, Auto Invasion, or Auto Nomad/Samurai. It never calls a translation service.
 
 1. `npm run --silent guide:locales -- export autoFortress > fortress-en.json` writes the current flat English template with a source hash. Author one locale by replacing every value in `entries` with a reviewed translation; keep keys, feature and hash unchanged.
 2. `npm run --silent guide:locales -- import autoFortress fr fortress-fr.json --mirror /absolute/path/to/CitadelOpsFrontend` validates the whole feature before writing both clients. It rejects missing, extra, blank and unchanged-English packs, stale source hashes, or unrelated mirror differences. Repeat the same import safely after interruption; it preserves other guide content.

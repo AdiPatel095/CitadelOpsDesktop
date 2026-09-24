@@ -25,7 +25,10 @@
     "fortressPreviewTitle": "Eksempel på oppsett av automatiske festningsangrep",
     "invasionGuideIntro": "Følg disse trinnene for å stille inn automatiske invasjonsangrep; velg et eksempelpanel for å forstørre det.",
     "invasionGuideTitle": "Veiledning for automatiske invasjonsangrep",
-    "invasionPreviewTitle": "Eksempel på oppsett av automatiske invasjonsangrep"
+    "invasionPreviewTitle": "Eksempel på oppsett av automatiske invasjonsangrep",
+    "nomadGuideIntro": "Følg disse trinnene for å sette opp Auto Nomader/Samuraier; velg et eksempelpanel for å forstørre det.",
+    "nomadGuideTitle": "Veiledning for Auto Nomader/Samuraier",
+    "nomadPreviewTitle": "Oppsetteksempel for Auto Nomader/Samuraier"
   },
   "autoTower": {
     "recommendationIntro": "Disse anbefalingene gjelder vanlig bruk; gå gjennom dem før du lagrer.",
@@ -372,6 +375,37 @@
       "preset": "Angrepsoppsett: lagret hendelsesformasjon",
       "title": "Eksempel på hendelsesangrepsoppsett",
       "travel": "Reisepåslag: Reisefjær"
+    },
+    "nomadDifficulty": {
+      "title": "Eksempel på hendelsesvanskeligheter",
+      "active": "Aktiv hendelse: match gjeldende vanskelighet",
+      "nomad": "Nomader: opplåst pålitelig vanskelighet",
+      "samurai": "Samuraier: opplåst pålitelig vanskelighet"
+    },
+    "nomadSetup": {
+      "castle": "Kilde: vanlig hendelsesborg i Det Store Imperiet",
+      "travel": "Reisepåslag: Reisefjær",
+      "nomadPreset": "Nomadeoppsett: lagret leirformasjon",
+      "samuraiPreset": "Samuraioppsett: lagret leirformasjon",
+      "title": "Eksempel på innstillinger for hendelsesleirer"
+    },
+    "nomadCooldowns": {
+      "clear": "Fjern ventetid etter bekreftet seier: på",
+      "long": "Behold 5 timer / 24 timer: beholdning til andre aktiviteter",
+      "short": "Behold 1 / 5 / 10 / 30 / 60 min: 0 gjenstander hver",
+      "title": "Eksempel på ventetidsvalg"
+    },
+    "nomadLimits": {
+      "daily": "Ekstra daglig grense: 0",
+      "score": "Poengmål: siste personlige belønningsmilepæl",
+      "time": "Stopp før slutt: 30 minutter",
+      "title": "Eksempel på stoppregler"
+    },
+    "nomadTrial": {
+      "coordinates": "Mål X / Y: ubrukt ved vanlig drift",
+      "effect": "Prøve på erstatter hendelsesdrift med ekte angrep",
+      "title": "Eksempel på prøveinnstillinger",
+      "trial": "Midlertidig røverbaronprøve: av"
     }
   },
   "autoStation": {
@@ -723,5 +757,195 @@
         "title": "Åpne innstillinger for automatiske invasjonsangrep"
       }
     }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "Bruk den høyeste opplåste vanskelighetsgraden som ditt vanlige oppsett klarer pålitelig.",
+            "description": "Velg en opplåst nomadevanskelighetsgrad ved hendelsesstart.",
+            "label": "Nomadevanskelighet"
+          },
+          "samurai_difficulty": {
+            "recommendation": "Bruk den høyeste opplåste vanskelighetsgraden som ditt vanlige oppsett klarer pålitelig.",
+            "description": "Velg en opplåst samuraivanskelighetsgrad ved hendelsesstart.",
+            "label": "Samuraivanskelighet"
+          },
+          "active_difficulty": {
+            "description": "For en aktiv hendelse må du matche gjeldende vanskelighetsgrad, fordi et annet lagret valg får automatiseringen til å vente i stedet for å endre den.",
+            "label": "Allerede aktiv hendelse"
+          }
+        },
+        "title": "Velg vanskelighetsgrad for begge hendelser",
+        "image": {
+          "alt": "Eksempel på nomade- og samuraivanskelighetsgrader",
+          "caption": "Velg en egen opplåst vanskelighetsgrad for hver hendelse, og match graden i den aktive hendelsen."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "På etter at du har kontrollert og lagret de ønskede innstillingene.",
+            "description": "Slå på Auto Nomader/Samuraier på Automatisering-kortet etter lagring for å kjøre når hendelsen og egnede ressurser er tilgjengelige.",
+            "label": "Bryter for Auto Nomader/Samuraier"
+          },
+          "save_settings": {
+            "label": "Lagre innstillinger",
+            "description": "Lagre kilde, oppsett, vanskelighetsgrader, stoppgrenser, tidshoppvalg og teststatus før du lukker denne dialogen."
+          },
+          "readiness": {
+            "description": "Automatiseringen oppgraderer hendelsesleirer og venter på egnede kommandører, tropper, verktøy og brukbare tidshopp når de er aktivert.",
+            "label": "Klar for leirangrep"
+          }
+        },
+        "title": "Lagre og slå på Auto Nomader/Samuraier"
+      },
+      "limits": {
+        "image": {
+          "caption": "Poengmålet stopper nye starter, men angrep som allerede er underveis kan fullføres.",
+          "alt": "Eksempel på poeng- og stoppgrenser for Auto Nomader/Samuraier"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Stopp denne automatikken ved kontoens daglige antall normale angrep til spillet nullstiller det; 0 legger ikke til en grense.",
+            "label": "Daglig grense for normale angrep",
+            "recommendation": "0, så hendelsens poengmål styrer serien."
+          },
+          "minimum_remaining": {
+            "description": "Start ikke nye angrep dette antallet minutter før hendelsen slutter.",
+            "label": "Stopp før hendelsen slutter",
+            "recommendation": "30 minutter."
+          },
+          "score_target": {
+            "description": "Start ikke nye angrep når rapportert hendelsesscore når eller overstiger dette målet.",
+            "label": "Stopp ved hendelsesscore",
+            "recommendation": "Bruk ditt vanlige siste nivå for personlig belønning over 0."
+          },
+          "travelling_attacks": {
+            "description": "Angrep som allerede er underveis kan fullføres etter en stoppbetingelse og løfte sluttscoren over målet.",
+            "label": "Angrep underveis"
+          }
+        },
+        "title": "Still inn poeng- og stoppgrenser"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Reisefart med hest",
+            "recommendation": "Reisefjær for rask reise.",
+            "description": "Velg reisealternativ med fjær, mynter eller rubiner for leirangrep."
+          },
+          "open_settings": {
+            "label": "Åpne innstillinger",
+            "description": "Velg innstillingsknappen på Auto Nomader/Samuraier-kortet på Automatisering-siden."
+          },
+          "source_castle": {
+            "label": "Kildeborg",
+            "recommendation": "Bruk din vanlige hendelsesborg med nok tropper og verktøy.",
+            "description": "Velg borgen i Det store riket som leverer tropper og verktøy til leirangrep."
+          },
+          "nomad_preset": {
+            "description": "Velg et lagret angrepsoppsett med tropper, verktøy og formasjon for nomadeleirer.",
+            "label": "Nomadeangrepsoppsett",
+            "recommendation": "Opprett og velg ditt vanlige nomadeoppsett."
+          },
+          "samurai_preset": {
+            "description": "Velg et lagret angrepsoppsett med tropper, verktøy og formasjon for samuraileirer.",
+            "label": "Samuraiangrepsoppsett",
+            "recommendation": "Opprett og velg ditt vanlige samuraioppsett."
+          }
+        },
+        "image": {
+          "alt": "Eksempel på kilde, oppsett og reise for Auto Nomader/Samuraier",
+          "caption": "Opprett begge hendelsesoppsettene før du velger kildeborg og reisevalg."
+        },
+        "title": "Åpne innstillinger for Auto Nomader/Samuraier"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "Eksempel på leirventetider og tidshoppreserver",
+          "caption": "Hver behold-verdi teller tidshoppgjenstander, ikke minutter med ventetid."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "Behold dette antallet tidshopp på 10 min ubrukt som reserve.",
+            "label": "Behold 10 min",
+            "recommendation": "0 for vanlige leirrunder."
+          },
+          "keep_1m": {
+            "description": "Behold dette antallet tidshopp på 1 min ubrukt som reserve.",
+            "label": "Behold 1 min",
+            "recommendation": "0 for vanlige leirrunder."
+          },
+          "keep_24h": {
+            "description": "Behold dette antallet tidshopp på 24 timer ubrukt som reserve.",
+            "label": "Behold 24 timer",
+            "recommendation": "Reserver beholdningen du trenger til bygging eller andre aktiviteter."
+          },
+          "keep_30m": {
+            "description": "Behold dette antallet tidshopp på 30 min ubrukt som reserve.",
+            "label": "Behold 30 min",
+            "recommendation": "0 for vanlige leirrunder."
+          },
+          "keep_5h": {
+            "description": "Behold dette antallet tidshopp på 5 timer ubrukt som reserve.",
+            "label": "Behold 5 timer",
+            "recommendation": "Reserver beholdningen du trenger til bygging eller andre aktiviteter."
+          },
+          "keep_5m": {
+            "description": "Behold dette antallet tidshopp på 5 min ubrukt som reserve.",
+            "label": "Behold 5 min",
+            "recommendation": "0 for vanlige leirrunder."
+          },
+          "keep_60m": {
+            "description": "Behold dette antallet tidshopp på 60 min ubrukt som reserve.",
+            "label": "Behold 60 min",
+            "recommendation": "0 for vanlige leirrunder."
+          },
+          "skip_cooldowns": {
+            "description": "Etter en bekreftet leirseier brukes et tilgjengelig tidshopp til å fjerne ventetiden for det målet.",
+            "label": "Fjern ventetid etter hvert vellykket angrep",
+            "recommendation": "På for vanlige gjentatte leirangrep; av for å vente på naturlige ventetider."
+          }
+        },
+        "title": "Velg tidshopp og reserver"
+      },
+      "trial": {
+        "image": {
+          "alt": "Eksempel på midlertidig prøve mot røverbaronborg",
+          "caption": "Prøven starter et ekte angrep og erstatter vanlig hendelsesdrift mens den er på."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "Erstatt vanlig hendelsesdrift med en ekte angrepsprøve mot én røverbaronborg med nomadeoppsettet og tidshopp.",
+            "label": "Midlertidig fullstendig prøve mot røverbaronborg",
+            "recommendation": "Av for vanlige nomade- eller samurairunder."
+          },
+          "target_x": {
+            "description": "Skriv bare inn røverbaronborgens vannrette koordinat for den midlertidige prøven.",
+            "label": "Mål X",
+            "recommendation": "La stå ubrukt når prøven er av."
+          },
+          "target_y": {
+            "description": "Skriv bare inn røverbaronborgens loddrette koordinat for den midlertidige prøven.",
+            "label": "Mål Y",
+            "recommendation": "La stå ubrukt når prøven er av."
+          },
+          "trial_skips": {
+            "description": "Når prøven slås på, slås tidshopp også på for prøven.",
+            "label": "Tidshopp for prøven"
+          }
+        },
+        "title": "La den midlertidige prøven være av ved vanlige runder"
+      }
+    },
+    "feature": {
+      "description": "Auto Nomader/Samuraier oppgraderer kvalifiserte eventleirer, velger den svakeste fullt oppgraderte leiren og angriper den gjentatte ganger med det lagrede eventoppsettet til en stoppgrense nås.",
+      "expectation": "Den venter på en aktiv hendelse, egnede kommandører, tropper, verktøy og brukbare tidshopp når ventetider fjernes; angrep underveis kan fullføres etter at nye angrep stopper.",
+      "name": "Auto Nomader/Samuraier",
+      "summary": "Oppgrader og angrip nomade- eller samuraileirer"
+    },
+    "recommendationIntro": "Anbefalte verdier beskriver vanlig bruk av Auto Nomader/Samuraier; de er veiledning og endrer ikke lagrede innstillinger."
   }
 }

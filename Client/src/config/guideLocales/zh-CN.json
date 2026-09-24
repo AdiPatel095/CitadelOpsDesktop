@@ -25,7 +25,10 @@
     "fortressPreviewTitle": "要塞自动攻击设置示例",
     "invasionGuideIntro": "按照这些步骤设置入侵自动攻击；选择示例面板可放大查看。",
     "invasionGuideTitle": "入侵自动攻击指南",
-    "invasionPreviewTitle": "入侵自动攻击设置示例"
+    "invasionPreviewTitle": "入侵自动攻击设置示例",
+    "nomadGuideIntro": "按照这些步骤设置自动游牧武士；选择示例面板即可放大。",
+    "nomadGuideTitle": "自动游牧武士指南",
+    "nomadPreviewTitle": "自动游牧武士设置示例"
   },
   "autoTower": {
     "recommendationIntro": "以下是日常使用的建议；保存前请检查。",
@@ -372,6 +375,37 @@
       "preset": "攻击预设：已保存的活动阵型",
       "title": "活动攻击设置示例",
       "travel": "行军加速：旅行羽毛"
+    },
+    "nomadDifficulty": {
+      "title": "活动难度示例",
+      "active": "活动进行中：匹配当前难度",
+      "nomad": "游牧：已解锁且能稳定完成的难度",
+      "samurai": "武士：已解锁且能稳定完成的难度"
+    },
+    "nomadSetup": {
+      "castle": "出发地：大帝国常用活动城堡",
+      "travel": "行军加速：旅行羽毛",
+      "nomadPreset": "游牧预设：已保存的营地阵型",
+      "samuraiPreset": "武士预设：已保存的营地阵型",
+      "title": "活动营地设置示例"
+    },
+    "nomadCooldowns": {
+      "clear": "确认获胜后清除冷却：开",
+      "long": "保留5小时/24小时：用于其他活动的库存",
+      "short": "保留1/5/10/30/60分钟：每种0个",
+      "title": "冷却选项示例"
+    },
+    "nomadLimits": {
+      "daily": "额外每日限制：0",
+      "score": "积分目标：最后一个个人奖励里程碑",
+      "time": "结束前停止：30分钟",
+      "title": "停止规则示例"
+    },
+    "nomadTrial": {
+      "coordinates": "目标X/Y：日常运行不使用",
+      "effect": "开启试验会以真实攻击取代活动运行",
+      "title": "试验控件示例",
+      "trial": "临时强盗男爵试验：关"
     }
   },
   "autoStation": {
@@ -723,5 +757,195 @@
         "title": "打开入侵自动攻击设置"
       }
     }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "使用平时的配置能够稳定应对的最高已解锁难度。",
+            "description": "选择活动开始时使用的已解锁游牧难度。",
+            "label": "游牧难度"
+          },
+          "samurai_difficulty": {
+            "recommendation": "使用平时的配置能够稳定应对的最高已解锁难度。",
+            "description": "选择活动开始时使用的已解锁武士难度。",
+            "label": "武士难度"
+          },
+          "active_difficulty": {
+            "description": "如果活动已经开始，请与当前难度一致；不同的已保存选择会让自动化等待，而不会更改活动难度。",
+            "label": "活动已开始"
+          }
+        },
+        "title": "选择两种活动的难度",
+        "image": {
+          "alt": "游牧与武士难度选择示例",
+          "caption": "为两个活动分别选择已解锁难度，并与当前活动的难度保持一致。"
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "检查并保存预期设置后开启。",
+            "description": "保存后，在自动化卡片上开启自动游牧武士，以便在活动和合格资源可用时运行。",
+            "label": "自动游牧武士开关"
+          },
+          "save_settings": {
+            "label": "保存设置",
+            "description": "关闭对话框前，保存来源、预设、难度、停止限制、时间跳跃选择和试验状态。"
+          },
+          "readiness": {
+            "description": "自动化会升级活动营地，并等待合格的指挥官、士兵、工具，以及开启时间跳跃时可用的道具。",
+            "label": "营地攻击准备情况"
+          }
+        },
+        "title": "保存并开启自动游牧武士"
+      },
+      "limits": {
+        "image": {
+          "caption": "分数目标会停止新的出击，但已经在行军的攻击可能结束。",
+          "alt": "自动游牧武士积分及停止限制示例"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "当整个账号达到每日普通攻击次数时停止此自动化，直到游戏重置次数；0表示不增加限制。",
+            "label": "每日普通攻击上限",
+            "recommendation": "设为0，让活动分数目标控制进程。"
+          },
+          "minimum_remaining": {
+            "description": "在活动结束前指定的分钟数停止发起新攻击。",
+            "label": "在活动结束前停止",
+            "recommendation": "30分钟。"
+          },
+          "score_target": {
+            "description": "当报告的活动分数达到或超过此目标时停止发起新攻击。",
+            "label": "达到活动分数后停止",
+            "recommendation": "使用你平时最后一个高于0的个人奖励阶段。"
+          },
+          "travelling_attacks": {
+            "description": "已在行军的攻击可能在满足停止条件后结束，使最终分数超过目标。",
+            "label": "行军中的攻击"
+          }
+        },
+        "title": "设置分数和停止限制"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "骑乘行军加速",
+            "recommendation": "快速行军推荐旅行羽毛。",
+            "description": "为营地攻击选择羽毛、金币或红宝石行程选项。"
+          },
+          "open_settings": {
+            "label": "打开设置",
+            "description": "在自动化页面选择自动游牧武士卡片上的设置按钮。"
+          },
+          "source_castle": {
+            "label": "出发城堡",
+            "recommendation": "使用士兵和工具充足的常用活动城堡。",
+            "description": "选择在大帝国中为营地攻击提供士兵和工具的城堡。"
+          },
+          "nomad_preset": {
+            "description": "为游牧营地选择已保存的攻击预设，其中包含士兵、工具和阵型。",
+            "label": "游牧攻击预设",
+            "recommendation": "创建并选择日常使用的游牧预设。"
+          },
+          "samurai_preset": {
+            "description": "为武士营地选择已保存的攻击预设，其中包含士兵、工具和阵型。",
+            "label": "武士攻击预设",
+            "recommendation": "创建并选择日常使用的武士预设。"
+          }
+        },
+        "image": {
+          "alt": "自动游牧武士来源、预设及行程示例",
+          "caption": "选择来源城堡和行程选项前，先创建两个活动的攻击预设。"
+        },
+        "title": "打开自动游牧武士设置"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "营地冷却和时间跳跃保留量示例",
+          "caption": "每个“保留”数值表示时间跳跃道具的数量，不是冷却分钟数。"
+        },
+        "items": {
+          "keep_10m": {
+            "description": "将这么多10分钟时间跳跃道具保留不用。",
+            "label": "保留10分钟",
+            "recommendation": "日常营地轮刷设为0。"
+          },
+          "keep_1m": {
+            "description": "将这么多1分钟时间跳跃道具保留不用。",
+            "label": "保留1分钟",
+            "recommendation": "日常营地轮刷设为0。"
+          },
+          "keep_24h": {
+            "description": "将这么多24小时时间跳跃道具保留不用。",
+            "label": "保留24小时",
+            "recommendation": "保留建造或其他活动需要的库存。"
+          },
+          "keep_30m": {
+            "description": "将这么多30分钟时间跳跃道具保留不用。",
+            "label": "保留30分钟",
+            "recommendation": "日常营地轮刷设为0。"
+          },
+          "keep_5h": {
+            "description": "将这么多5小时时间跳跃道具保留不用。",
+            "label": "保留5小时",
+            "recommendation": "保留建造或其他活动需要的库存。"
+          },
+          "keep_5m": {
+            "description": "将这么多5分钟时间跳跃道具保留不用。",
+            "label": "保留5分钟",
+            "recommendation": "日常营地轮刷设为0。"
+          },
+          "keep_60m": {
+            "description": "将这么多60分钟时间跳跃道具保留不用。",
+            "label": "保留60分钟",
+            "recommendation": "日常营地轮刷设为0。"
+          },
+          "skip_cooldowns": {
+            "description": "确认战胜营地后，使用可用的时间跳跃消除该目标的冷却。",
+            "label": "每次成功攻击后清除冷却",
+            "recommendation": "日常重复攻击营地时开启；关闭则等待自然冷却。"
+          }
+        },
+        "title": "选择时间跳跃及保留量"
+      },
+      "trial": {
+        "image": {
+          "alt": "针对强盗男爵城堡的临时试验控件示例",
+          "caption": "试验会发起真实攻击，开启期间会取代正常的活动运行。"
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "使用游牧预设和时间跳跃，向一座强盗男爵城堡发起真实试验攻击，以取代正常活动运行。",
+            "label": "针对强盗男爵城堡的临时端到端试验",
+            "recommendation": "日常游牧或武士轮刷时关闭。"
+          },
+          "target_x": {
+            "description": "仅在临时试验中输入强盗男爵城堡的横坐标。",
+            "label": "目标X",
+            "recommendation": "试验关闭时保持不用。"
+          },
+          "target_y": {
+            "description": "仅在临时试验中输入强盗男爵城堡的纵坐标。",
+            "label": "目标Y",
+            "recommendation": "试验关闭时保持不用。"
+          },
+          "trial_skips": {
+            "description": "开启试验时也会为试验开启时间跳跃。",
+            "label": "试验时间跳跃"
+          }
+        },
+        "title": "日常轮刷时关闭临时试验"
+      }
+    },
+    "feature": {
+      "description": "自动游牧武士会升级符合条件的活动营地，选择已完全升级的最弱营地，并用该活动保存的攻击预设反复攻击，直到达到停止限制。",
+      "expectation": "它会等待进行中的活动、合格的指挥官、士兵、工具，以及启用清除冷却时可用的时间跳跃；停止发起新攻击后，行进中的攻击仍可能完成。",
+      "name": "自动游牧武士",
+      "summary": "升级并攻击游牧或武士活动营地"
+    },
+    "recommendationIntro": "推荐值适用于自动游牧武士的日常使用，仅供参考，不会更改已保存的设置。"
   }
 }
