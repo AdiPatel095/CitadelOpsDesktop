@@ -85,6 +85,7 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"kgt", components(State.ComponentKingdomTransport), reduceKingdomTransport},
 		{"kut", components(State.ComponentKingdomTransport), reduceKingdomTransport},
 		{"msk", components(State.ComponentKingdomTransport), reduceKingdomTransport},
+		{"rei", components(State.ComponentResearch), reduceResearch},
 		{"sie", components(State.ComponentSubscriptions), reduceSubscriptions},
 		{"upc", components(State.ComponentSubscriptions), reduceSubscriptions},
 		{"fuc", components(State.ComponentBeri), reduceBeriCapacity},

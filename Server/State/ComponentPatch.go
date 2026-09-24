@@ -134,51 +134,54 @@ type ComponentPatch struct {
 	Revision      uint64    `json:"revision"`
 	UpdatedAt     time.Time `json:"updatedAt"`
 
-	CatalogVersion       *string                         `json:"catalogVersion,omitempty"`
-	LanguageVersion      *string                         `json:"languageVersion,omitempty"`
-	Session              *SessionState                   `json:"session,omitempty"`
-	Account              *AccountBindingState            `json:"account,omitempty"`
-	Player               *PlayerState                    `json:"player,omitempty"`
-	Castles              *map[CastleID]CastleState       `json:"castles,omitempty"`
-	CastleChanges        *[]CastleChange                 `json:"castleChanges,omitempty"`
-	Commanders           *map[CommanderID]CommanderState `json:"commanders,omitempty"`
-	Generals             *map[int64]GeneralState         `json:"generals,omitempty"`
-	Castellans           *map[CastellanID]CastellanState `json:"castellans,omitempty"`
-	Movements            *map[MovementID]MovementState   `json:"movements,omitempty"`
-	MovementChanges      *[]MovementChange               `json:"movementChanges,omitempty"`
-	MovementSnapshot     *MovementSnapshot               `json:"movementSnapshot,omitempty"`
-	Stationing           *map[string]StationingOperation `json:"stationing,omitempty"`
-	Scheduled            *map[string]ScheduledOperation  `json:"scheduled,omitempty"`
-	Rift                 *RiftState                      `json:"rift,omitempty"`
-	Inventory            *InventoryState                 `json:"inventory,omitempty"`
-	InventoryChanges     *InventoryPatch                 `json:"inventoryChanges,omitempty"`
-	Subscriptions        *map[int]SubscriptionState      `json:"subscriptions,omitempty"`
-	Market               *MarketState                    `json:"market,omitempty"`
-	KingdomTransport     *KingdomTransportState          `json:"kingdomTransport,omitempty"`
-	Beri                 *BeriState                      `json:"beri,omitempty"`
-	Alliance             *AllianceState                  `json:"alliance,omitempty"`
-	Alliances            *map[AllianceID]AllianceState   `json:"alliances,omitempty"`
-	AllianceHelpRequests *AllianceHelpRequestState       `json:"allianceHelpRequests,omitempty"`
-	Map                  *WorldMap                       `json:"map,omitempty"`
-	MapChanges           *[]MapChange                    `json:"mapChanges,omitempty"`
-	TowerCooldowns       *map[string]TowerCooldownState  `json:"towerCooldowns,omitempty"`
-	TowerQueue           *TowerQueueState                `json:"towerQueue,omitempty"`
-	Invasion             *InvasionState                  `json:"invasion,omitempty"`
-	Storm                *StormState                     `json:"storm,omitempty"`
-	NomadCamps           *NomadCampState                 `json:"nomadCamps,omitempty"`
-	Advisor              *AdvisorState                   `json:"advisor,omitempty"`
-	Khan                 *KhanState                      `json:"khan,omitempty"`
-	DailyAttacks         *DailyAttackState               `json:"dailyAttacks,omitempty"`
-	AttackDialog         *AttackDialogState              `json:"attackDialog,omitempty"`
-	CombatCooldown       *CombatCooldownState            `json:"combatCooldown,omitempty"`
-	AttackPresets        *[]AttackPreset                 `json:"attackPresets,omitempty"`
-	AttackAnalytics      *AttackAnalyticsState           `json:"attackAnalytics,omitempty"`
-	EventScores          *EventScoreState                `json:"eventScores,omitempty"`
-	EventScoreChanges    *EventScorePatch                `json:"eventScoreChanges,omitempty"`
-	CommandContext       *CommandContextState            `json:"commandContext,omitempty"`
-	Automations          *map[string]AutomationState     `json:"automations,omitempty"`
-	Reports              *ReportState                    `json:"reports,omitempty"`
-	Observations         *map[string]ProtocolObservation `json:"observations,omitempty"`
+	CatalogVersion          *string                         `json:"catalogVersion,omitempty"`
+	LanguageVersion         *string                         `json:"languageVersion,omitempty"`
+	Session                 *SessionState                   `json:"session,omitempty"`
+	Account                 *AccountBindingState            `json:"account,omitempty"`
+	Player                  *PlayerState                    `json:"player,omitempty"`
+	Castles                 *map[CastleID]CastleState       `json:"castles,omitempty"`
+	CastleChanges           *[]CastleChange                 `json:"castleChanges,omitempty"`
+	Commanders              *map[CommanderID]CommanderState `json:"commanders,omitempty"`
+	Generals                *map[int64]GeneralState         `json:"generals,omitempty"`
+	Castellans              *map[CastellanID]CastellanState `json:"castellans,omitempty"`
+	Movements               *map[MovementID]MovementState   `json:"movements,omitempty"`
+	MovementChanges         *[]MovementChange               `json:"movementChanges,omitempty"`
+	MovementSnapshot        *MovementSnapshot               `json:"movementSnapshot,omitempty"`
+	Stationing              *map[string]StationingOperation `json:"stationing,omitempty"`
+	Scheduled               *map[string]ScheduledOperation  `json:"scheduled,omitempty"`
+	Rift                    *RiftState                      `json:"rift,omitempty"`
+	Inventory               *InventoryState                 `json:"inventory,omitempty"`
+	InventoryChanges        *InventoryPatch                 `json:"inventoryChanges,omitempty"`
+	Subscriptions           *map[int]SubscriptionState      `json:"subscriptions,omitempty"`
+	SubscriptionsObservedAt *time.Time                      `json:"subscriptionsObservedAt,omitempty"`
+	SubscriptionsGeneration *uint64                         `json:"subscriptionsGeneration,omitempty"`
+	Research                *ResearchState                  `json:"research,omitempty"`
+	Market                  *MarketState                    `json:"market,omitempty"`
+	KingdomTransport        *KingdomTransportState          `json:"kingdomTransport,omitempty"`
+	Beri                    *BeriState                      `json:"beri,omitempty"`
+	Alliance                *AllianceState                  `json:"alliance,omitempty"`
+	Alliances               *map[AllianceID]AllianceState   `json:"alliances,omitempty"`
+	AllianceHelpRequests    *AllianceHelpRequestState       `json:"allianceHelpRequests,omitempty"`
+	Map                     *WorldMap                       `json:"map,omitempty"`
+	MapChanges              *[]MapChange                    `json:"mapChanges,omitempty"`
+	TowerCooldowns          *map[string]TowerCooldownState  `json:"towerCooldowns,omitempty"`
+	TowerQueue              *TowerQueueState                `json:"towerQueue,omitempty"`
+	Invasion                *InvasionState                  `json:"invasion,omitempty"`
+	Storm                   *StormState                     `json:"storm,omitempty"`
+	NomadCamps              *NomadCampState                 `json:"nomadCamps,omitempty"`
+	Advisor                 *AdvisorState                   `json:"advisor,omitempty"`
+	Khan                    *KhanState                      `json:"khan,omitempty"`
+	DailyAttacks            *DailyAttackState               `json:"dailyAttacks,omitempty"`
+	AttackDialog            *AttackDialogState              `json:"attackDialog,omitempty"`
+	CombatCooldown          *CombatCooldownState            `json:"combatCooldown,omitempty"`
+	AttackPresets           *[]AttackPreset                 `json:"attackPresets,omitempty"`
+	AttackAnalytics         *AttackAnalyticsState           `json:"attackAnalytics,omitempty"`
+	EventScores             *EventScoreState                `json:"eventScores,omitempty"`
+	EventScoreChanges       *EventScorePatch                `json:"eventScoreChanges,omitempty"`
+	CommandContext          *CommandContextState            `json:"commandContext,omitempty"`
+	Automations             *map[string]AutomationState     `json:"automations,omitempty"`
+	Reports                 *ReportState                    `json:"reports,omitempty"`
+	Observations            *map[string]ProtocolObservation `json:"observations,omitempty"`
 }
 
 func componentPatch(
@@ -279,6 +282,11 @@ func componentPatch(
 	}
 	if components.Has(ComponentSubscriptions) {
 		patch.Subscriptions = &state.Subscriptions
+		patch.SubscriptionsObservedAt = &state.SubscriptionsObservedAt
+		patch.SubscriptionsGeneration = &state.SubscriptionsGeneration
+	}
+	if components.Has(ComponentResearch) {
+		patch.Research = &state.Research
 	}
 	if components.Has(ComponentMarket) {
 		patch.Market = &state.Market

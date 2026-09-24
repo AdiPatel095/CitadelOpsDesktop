@@ -665,8 +665,11 @@ func (store *Store) applyScoped(writes ComponentSet, mutation ScopedMutation) (E
 		if effectiveWrites.Has(ComponentRift) && reflect.DeepEqual(candidate.Rift, current.state.Rift) {
 			effectiveWrites &^= Components(ComponentRift)
 		}
-		if effectiveWrites.Has(ComponentSubscriptions) && reflect.DeepEqual(candidate.Subscriptions, current.state.Subscriptions) {
+		if effectiveWrites.Has(ComponentSubscriptions) && reflect.DeepEqual(candidate.Subscriptions, current.state.Subscriptions) && candidate.SubscriptionsObservedAt.Equal(current.state.SubscriptionsObservedAt) && candidate.SubscriptionsGeneration == current.state.SubscriptionsGeneration {
 			effectiveWrites &^= Components(ComponentSubscriptions)
+		}
+		if effectiveWrites.Has(ComponentResearch) && reflect.DeepEqual(candidate.Research, current.state.Research) {
+			effectiveWrites &^= Components(ComponentResearch)
 		}
 		if effectiveWrites.Has(ComponentMarket) && reflect.DeepEqual(candidate.Market, current.state.Market) {
 			effectiveWrites &^= Components(ComponentMarket)
@@ -1340,6 +1343,9 @@ func cloneGameStateComponents(source GameState, components ComponentSet) GameSta
 	}
 	if components.Has(ComponentSubscriptions) {
 		clone.Subscriptions = cloneMap(source.Subscriptions)
+	}
+	if components.Has(ComponentResearch) {
+		clone.Research.CompletedIDs = cloneMap(source.Research.CompletedIDs)
 	}
 	if components.Has(ComponentMarket) {
 		clone.Market.Castles = make(map[CastleID]MarketCastleState, len(source.Market.Castles))

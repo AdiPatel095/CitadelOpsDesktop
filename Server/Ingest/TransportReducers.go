@@ -847,7 +847,7 @@ func reduceSubscriptions(
 		return nil, false, fmt.Errorf("decode subscriptions: %w", err)
 	}
 	rawSubscriptions, exists := payload["SP"]
-	if !exists {
+	if !exists || string(rawSubscriptions) == "null" {
 		return nil, false, nil
 	}
 	var subscriptions []struct {
@@ -868,10 +868,12 @@ func reduceSubscriptions(
 			GracePeriodSec: subscription.GracePeriodSec,
 		}
 	}
-	if reflect.DeepEqual(gameState.Subscriptions, next) {
+	if reflect.DeepEqual(gameState.Subscriptions, next) && gameState.SubscriptionsObservedAt.Equal(frame.ReceivedAt) && gameState.SubscriptionsGeneration == gameState.Session.Generation {
 		return nil, false, nil
 	}
 	gameState.Subscriptions = next
+	gameState.SubscriptionsObservedAt = frame.ReceivedAt.UTC()
+	gameState.SubscriptionsGeneration = gameState.Session.Generation
 	return []string{"subscriptions"}, true, nil
 }
 
@@ -880,4 +882,37 @@ func rawAt(row []json.RawMessage, index int) json.RawMessage {
 		return nil
 	}
 	return row[index]
+}
+
+// reduceResearch records the complete bought-research set from a successful
+// REI response. Missing or malformed BR never certifies a bonus.
+func reduceResearch(_ context.Context, frame Protocol.Frame, gameState *State.GameState, _ *GameData.Store) ([]string, bool, error) {
+	if !frameSucceeded(frame) || len(frame.Payload) == 0 {
+		return nil, false, nil
+	}
+	var payload map[string]json.RawMessage
+	if err := json.Unmarshal(frame.Payload, &payload); err != nil {
+		return nil, false, fmt.Errorf("decode research: %w", err)
+	}
+	raw, ok := payload["BR"]
+	if !ok || string(raw) == "null" {
+		return nil, false, nil
+	}
+	var ids []int64
+	if err := json.Unmarshal(raw, &ids); err != nil {
+		return nil, false, fmt.Errorf("decode bought research: %w", err)
+	}
+	completed := make(map[int64]bool, len(ids))
+	for _, id := range ids {
+		if id <= 0 {
+			return nil, false, fmt.Errorf("invalid bought research id %d", id)
+		}
+		completed[id] = true
+	}
+	next := State.ResearchState{CompletedIDs: completed, ObservedAt: frame.ReceivedAt.UTC(), Generation: gameState.Session.Generation}
+	if reflect.DeepEqual(gameState.Research, next) {
+		return nil, false, nil
+	}
+	gameState.Research = next
+	return []string{"research"}, true, nil
 }

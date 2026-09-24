@@ -1047,6 +1047,12 @@ type InventoryState struct {
 	ItemsObservedAt                 map[string]time.Time                      `json:"itemsObservedAt,omitempty"`
 }
 
+type ResearchState struct {
+	CompletedIDs map[int64]bool `json:"completedIds"`
+	ObservedAt   time.Time      `json:"observedAt,omitempty"`
+	Generation   uint64         `json:"generation,omitempty"`
+}
+
 type SubscriptionState struct {
 	TypeID         int `json:"typeId"`
 	RemainingSec   int `json:"remainingSec,omitempty"`
@@ -2124,49 +2130,52 @@ type AutomationState struct {
 }
 
 type GameState struct {
-	SchemaVersion        int                                     `json:"schemaVersion"`
-	Revision             uint64                                  `json:"revision"`
-	UpdatedAt            time.Time                               `json:"updatedAt"`
-	CatalogVersion       string                                  `json:"catalogVersion,omitempty"`
-	LanguageVersion      string                                  `json:"languageVersion,omitempty"`
-	Session              SessionState                            `json:"session"`
-	Account              AccountBindingState                     `json:"account"`
-	Player               PlayerState                             `json:"player"`
-	Castles              map[CastleID]CastleState                `json:"castles"`
-	Commanders           map[CommanderID]CommanderState          `json:"commanders"`
-	Generals             map[int64]GeneralState                  `json:"generals"`
-	Castellans           map[CastellanID]CastellanState          `json:"castellans"`
-	Movements            map[MovementID]MovementState            `json:"movements"`
-	MovementSnapshot     MovementSnapshot                        `json:"movementSnapshot"`
-	Stationing           map[string]StationingOperation          `json:"stationing"`
-	Scheduled            map[string]ScheduledOperation           `json:"scheduled"`
-	Rift                 RiftState                               `json:"rift"`
-	Inventory            InventoryState                          `json:"inventory"`
-	Subscriptions        map[int]SubscriptionState               `json:"subscriptions"`
-	Market               MarketState                             `json:"market"`
-	KingdomTransport     KingdomTransportState                   `json:"kingdomTransport"`
-	Beri                 BeriState                               `json:"beri"`
-	Alliance             AllianceState                           `json:"alliance"`
-	Alliances            map[AllianceID]AllianceState            `json:"alliances"`
-	AllianceHelpRequests AllianceHelpRequestState                `json:"allianceHelpRequests"`
-	Map                  map[KingdomID]map[string]MapObservation `json:"-"`
-	TowerCooldowns       map[string]TowerCooldownState           `json:"towerCooldowns"`
-	TowerQueue           TowerQueueState                         `json:"towerQueue"`
-	Invasion             InvasionState                           `json:"invasion"`
-	Storm                StormState                              `json:"storm"`
-	NomadCamps           NomadCampState                          `json:"nomadCamps"`
-	Advisor              AdvisorState                            `json:"advisor"`
-	Khan                 KhanState                               `json:"khan"`
-	DailyAttacks         DailyAttackState                        `json:"dailyAttacks"`
-	AttackDialog         AttackDialogState                       `json:"attackDialog"`
-	CombatCooldown       CombatCooldownState                     `json:"combatCooldown"`
-	AttackPresets        []AttackPreset                          `json:"attackPresets"`
-	AttackAnalytics      AttackAnalyticsState                    `json:"attackAnalytics"`
-	EventScores          EventScoreState                         `json:"eventScores"`
-	CommandContext       CommandContextState                     `json:"commandContext"`
-	Automations          map[string]AutomationState              `json:"automations"`
-	Reports              ReportState                             `json:"reports"`
-	Observations         map[string]ProtocolObservation          `json:"observations"`
+	SchemaVersion           int                                     `json:"schemaVersion"`
+	Revision                uint64                                  `json:"revision"`
+	UpdatedAt               time.Time                               `json:"updatedAt"`
+	CatalogVersion          string                                  `json:"catalogVersion,omitempty"`
+	LanguageVersion         string                                  `json:"languageVersion,omitempty"`
+	Session                 SessionState                            `json:"session"`
+	Account                 AccountBindingState                     `json:"account"`
+	Player                  PlayerState                             `json:"player"`
+	Castles                 map[CastleID]CastleState                `json:"castles"`
+	Commanders              map[CommanderID]CommanderState          `json:"commanders"`
+	Generals                map[int64]GeneralState                  `json:"generals"`
+	Castellans              map[CastellanID]CastellanState          `json:"castellans"`
+	Movements               map[MovementID]MovementState            `json:"movements"`
+	MovementSnapshot        MovementSnapshot                        `json:"movementSnapshot"`
+	Stationing              map[string]StationingOperation          `json:"stationing"`
+	Scheduled               map[string]ScheduledOperation           `json:"scheduled"`
+	Rift                    RiftState                               `json:"rift"`
+	Inventory               InventoryState                          `json:"inventory"`
+	Subscriptions           map[int]SubscriptionState               `json:"subscriptions"`
+	SubscriptionsObservedAt time.Time                               `json:"subscriptionsObservedAt,omitempty"`
+	SubscriptionsGeneration uint64                                  `json:"subscriptionsGeneration,omitempty"`
+	Research                ResearchState                           `json:"research"`
+	Market                  MarketState                             `json:"market"`
+	KingdomTransport        KingdomTransportState                   `json:"kingdomTransport"`
+	Beri                    BeriState                               `json:"beri"`
+	Alliance                AllianceState                           `json:"alliance"`
+	Alliances               map[AllianceID]AllianceState            `json:"alliances"`
+	AllianceHelpRequests    AllianceHelpRequestState                `json:"allianceHelpRequests"`
+	Map                     map[KingdomID]map[string]MapObservation `json:"-"`
+	TowerCooldowns          map[string]TowerCooldownState           `json:"towerCooldowns"`
+	TowerQueue              TowerQueueState                         `json:"towerQueue"`
+	Invasion                InvasionState                           `json:"invasion"`
+	Storm                   StormState                              `json:"storm"`
+	NomadCamps              NomadCampState                          `json:"nomadCamps"`
+	Advisor                 AdvisorState                            `json:"advisor"`
+	Khan                    KhanState                               `json:"khan"`
+	DailyAttacks            DailyAttackState                        `json:"dailyAttacks"`
+	AttackDialog            AttackDialogState                       `json:"attackDialog"`
+	CombatCooldown          CombatCooldownState                     `json:"combatCooldown"`
+	AttackPresets           []AttackPreset                          `json:"attackPresets"`
+	AttackAnalytics         AttackAnalyticsState                    `json:"attackAnalytics"`
+	EventScores             EventScoreState                         `json:"eventScores"`
+	CommandContext          CommandContextState                     `json:"commandContext"`
+	Automations             map[string]AutomationState              `json:"automations"`
+	Reports                 ReportState                             `json:"reports"`
+	Observations            map[string]ProtocolObservation          `json:"observations"`
 
 	sharedMap                   *worldMapGeneration
 	mapOverlay                  *accountMapGeneration
@@ -2255,6 +2264,7 @@ func NewGameState() GameState {
 			ItemsObservedAt:            map[string]time.Time{},
 		},
 		Subscriptions: map[int]SubscriptionState{},
+		Research:      ResearchState{CompletedIDs: map[int64]bool{}},
 		Market: MarketState{
 			Castles: map[CastleID]MarketCastleState{}, Boosters: map[int]MarketBoosterState{},
 		},

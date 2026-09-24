@@ -14,11 +14,9 @@ import (
 type HospitalPolicy struct{}
 
 const (
-	hospitalLineID                       = 2
-	hospitalBaseStackAmount        int64 = 10
-	hospitalSubscriptionStackBonus int64 = 5
-	hospitalMaximumStackAmount     int64 = 15
-	hospitalSubscriptionEffectID         = 189
+	hospitalLineID = 2
+	// The intent resolves the exact fresh entitlement before dispatch.
+	hospitalMaximumStackAmount int64 = 15
 )
 
 type hospitalSettings struct {
@@ -115,7 +113,7 @@ func (*HospitalPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 		for _, stack := range wounded {
 			rubyCost, known := recordNumber(snapshot.GameData, "units", int64(stack.unitID), "healingCostC2")
 			intentName := "hospital.heal"
-			amount := hospitalStackAmount(snapshot.State, snapshot.GameData)
+			amount := hospitalMaximumStackAmount
 			detail := fmt.Sprintf("Heal unit %d at %s", stack.unitID, castleName(castle))
 			if known && rubyCost > 0 {
 				intentName = "hospital.discard"
@@ -173,43 +171,6 @@ func orderedWounded(units map[State.UnitID]int64) []woundedStack {
 		return result[left].unitID < result[right].unitID
 	})
 	return result
-}
-
-func hospitalStackAmount(state State.GameState, gameData *GameData.Store) int64 {
-	amount := hospitalBaseStackAmount
-	if hasHospitalSubscriptionStackBonus(state, gameData) {
-		amount += hospitalSubscriptionStackBonus
-	}
-	if amount > hospitalMaximumStackAmount {
-		return hospitalMaximumStackAmount
-	}
-	return amount
-}
-
-func hasHospitalSubscriptionStackBonus(state State.GameState, gameData *GameData.Store) bool {
-	if gameData == nil || len(state.Subscriptions) == 0 {
-		return false
-	}
-	activeTypeIDs := map[int]struct{}{}
-	for typeID, subscription := range state.Subscriptions {
-		if subscription.TypeID > 0 {
-			typeID = subscription.TypeID
-		}
-		if typeID > 0 && subscription.RemainingSec > 0 {
-			activeTypeIDs[typeID] = struct{}{}
-		}
-	}
-	if len(activeTypeIDs) == 0 {
-		return false
-	}
-	for typeID := range activeTypeIDs {
-		for _, effect := range gameData.SubscriptionEffectsView(typeID) {
-			if effect.ID == hospitalSubscriptionEffectID && effect.Value > 0 {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 func hospitalQueueCapacity(castle State.CastleState, gameData *GameData.Store) int {

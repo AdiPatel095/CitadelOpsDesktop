@@ -20,13 +20,19 @@ Source: `Server/Automation/HospitalPolicy.go`,
 `hospitalSettings` has a single field, `checkIntervalSec`. Everything else is
 derived from observed game state — which units are wounded, what the hospital
 queue capacity is, and how many alliance-help requests are outstanding.
+The policy requests at most 15 wounded units. Before sending a heal, the intent
+refreshes the focused castle, completed research, and subscriptions. It caps
+the actual request by the wounded count and the client's five-unit base
+per-slot limit plus verified research and subscription bonuses (at most 15).
+Unverified bonus evidence contributes zero.
 
 ## Wake triggers
 
 Domains: `production`, `subscriptions`, `units`. Section:
 `automation.autoHospital`.
 
-`subscriptions` matters because a premium subscription changes queue capacity.
+`subscriptions` remains a wake trigger. The heal intent checks its current
+effect and expiry before sending.
 
 ## Decision ladder
 
@@ -45,6 +51,11 @@ Domains: `production`, `subscriptions`, `units`. Section:
 - **Capacity must be known.** The feature distinguishes "queue is full" from
   "capacity not yet observed" and refuses to queue against an unknown capacity
   rather than guessing.
+- **Per-slot amount.** Heal requests use the five-unit base plus verified
+  research and subscription bonuses, independently of available queue slots.
+  A final dispatch check blocks a queued heal if its entitlement or fresh
+  wounded/queue state changes. Ruby-only wounded units are discarded using
+  their full wounded count.
 - **Outstanding help cap.** It will not pile up alliance-help requests; when the
   outstanding count reaches the cap it waits for one to complete. Alliance help
   is a social resource and spamming it is costly to the player.
