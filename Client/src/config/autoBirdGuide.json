@@ -1,0 +1,136 @@
+{
+  "recommendationIntro": "Recommended values describe regular Auto Bird use; they are guidance and do not change saved settings.",
+  "steps": [
+    {
+      "id": "open",
+      "title": "Open Auto Bird settings",
+      "items": [
+        {
+          "label": "Open settings",
+          "description": "At the top of the command center, select the settings button beside Auto Bird."
+        }
+      ]
+    },
+    {
+      "id": "general",
+      "title": "Set stationing time and sending rules",
+      "items": [
+        {
+          "label": "Random delay range · Min",
+          "description": "Set the shortest number of hours troops will stay at the alliance destination after travel completes.",
+          "recommendation": "6 hours stationed at the alliance target after arrival."
+        },
+        {
+          "label": "Random delay range · Max",
+          "description": "Set the longest stay at the destination; Auto Bird chooses a random duration between Min and Max.",
+          "recommendation": "12 hours stationed at the alliance target after arrival."
+        },
+        {
+          "label": "Minimum to send",
+          "description": "Set the minimum total number of eligible troops needed after castle reserves are kept; this is a threshold, not the exact number sent.",
+          "recommendation": "1,000 eligible troops in total after castle reserves are kept; this is a threshold, not an exact send size."
+        },
+        {
+          "label": "Minimum RPT (remaining protection time)",
+          "description": "Use targets with more than this many days of protection remaining; 0 removes the check.",
+          "recommendation": "3 days; a target must have more than 3 days of remaining protection time."
+        }
+      ],
+      "image": {
+        "src": "/guide-auto-bird-general.png",
+        "alt": "Auto Bird stationing delay, minimum send, minimum RPT, and preset controls",
+        "caption": "Set stationing time and eligibility, then review the Everyday reserve preset before saving.",
+        "width": 1405,
+        "height": 475
+      }
+    },
+    {
+      "id": "reserves",
+      "title": "Choose troops to keep in each castle",
+      "items": [
+        {
+          "label": "Add unit",
+          "description": "For each castle, choose troop types to keep at home instead of sending; an empty reserve leaves all eligible troops available after automatic reserves.",
+          "recommendation": "Choose the troop types each castle needs for defense or other regular jobs."
+        },
+        {
+          "label": "Quantity",
+          "description": "Set a positive quantity of each chosen troop to keep in that castle; 0 does not reserve the whole type.",
+          "recommendation": "Keep the number of each troop type this castle needs at home for defense or other jobs; review actual troop counts."
+        },
+        {
+          "label": "Remove unit",
+          "description": "Remove a unit tile to stop reserving that type in the selected castle."
+        },
+        {
+          "label": "Auto Fortress reserve",
+          "description": "When Auto Fortress locks all Direwolves here, this automatic reserve is not saved in Auto Bird presets and any earlier manual Direwolf amount returns when the lock ends."
+        }
+      ],
+      "image": {
+        "src": "/guide-auto-bird-castle.png",
+        "alt": "Auto Bird castle reserve tiles for fictional Example Castle",
+        "caption": "Reserve only the units needed at this castle; Unit 101 and Unit 102 are fictional troop placeholders.",
+        "width": 275,
+        "height": 244
+      }
+    },
+    {
+      "id": "presets",
+      "title": "Save and select a preset",
+      "items": [
+        {
+          "label": "Preset name",
+          "description": "Enter a name for a new preset or edit the applied preset’s name before saving changes.",
+          "recommendation": "Use a recognizable name such as Everyday."
+        },
+        {
+          "label": "Load preset",
+          "description": "Choose a saved preset in the list, or choose Saved configuration to use the stored settings without a named preset.",
+          "recommendation": "Use the intended everyday preset as the runtime default: select it, Apply, then Save changes."
+        },
+        {
+          "label": "Apply",
+          "description": "Load the selected preset into this settings draft; select Save changes to commit it as the runtime default."
+        },
+        {
+          "label": "Save as new",
+          "description": "Immediately save the current settings as a new named preset and select it as the runtime default."
+        },
+        {
+          "label": "Delete",
+          "description": "After confirmation, immediately delete the selected preset and clear the runtime default if it was selected."
+        },
+        {
+          "label": "Runtime default",
+          "description": "The runtime default is the saved active preset, or the saved configuration when no preset is active."
+        }
+      ]
+    },
+    {
+      "id": "finish",
+      "title": "Set the schedule, save and enable",
+      "items": [
+        {
+          "label": "Calendar",
+          "description": "Choose when Auto Bird may run and select Save Schedule for your changes.",
+          "recommendation": "Leave the schedule off for ongoing operation, or set usual weekly hours and Save Schedule."
+        },
+        {
+          "label": "Specify Preset Per Period",
+          "description": "Choose a saved preset for a calendar period when that period should override the runtime default.",
+          "recommendation": "Off unless different periods need different reserves."
+        },
+        {
+          "label": "Save changes",
+          "description": "Save the settings draft and any applied preset changes; reading this guide does not save them."
+        },
+        {
+          "label": "Auto Bird switch",
+          "description": "Turn on Auto Bird at the top of the command center after saving to allow its normal castle cycles.",
+          "recommendation": "Turn Auto Bird on after saving; the header status shows each castle’s cycle."
+        }
+      ]
+    }
+  ]
+}
