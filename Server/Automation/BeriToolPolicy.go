@@ -59,7 +59,7 @@ func (*BeriToolPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	if snapshot.GameData == nil {
 		return beriToolWaiting(snapshot.Now, "Official game data is unavailable", Localization.New("server.automation.official_game_data_is.c5e55e7e", "Official game data is unavailable", nil)), nil
 	}
-	castle, found := beriToolCastle(snapshot.State, settings.BeriCastleID)
+	castle, found := beriCastle(snapshot.State)
 	if !found {
 		return beriToolWaiting(snapshot.Now, "Waiting for an owned Berimond camp", Localization.New("server.automation.waiting_for_an_owned.deab064e", "Waiting for an owned Berimond camp", nil)), nil
 	}

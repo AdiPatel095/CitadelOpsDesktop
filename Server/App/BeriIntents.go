@@ -29,20 +29,27 @@ type beriCapacityRefreshRequest struct {
 type beriTransferRequest struct {
 	SourceCastleID State.CastleID `json:"sourceCastleId,omitempty"`
 	TargetCastleID State.CastleID `json:"targetCastleId,omitempty"`
-	WireCastleID   int64          `json:"wireCastleId,omitempty"`
-	UnitID         State.UnitID   `json:"unitId"`
-	Amount         int64          `json:"amount,omitempty"`
-	UseTimeSkip    bool           `json:"useTimeSkip,omitempty"`
-	TimeSkipID     string         `json:"timeSkipId,omitempty"`
+	// Accepted for queued legacy requests; KUT always uses CID -1.
+	LegacyWireCastleID    int64        `json:"wireCastleId,omitempty"`
+	ConfigurationRevision uint64       `json:"configurationRevision,omitempty"`
+	DonorUnitsObserved    time.Time    `json:"donorUnitsObservedAt,omitempty"`
+	CampUnitsObserved     time.Time    `json:"campUnitsObservedAt,omitempty"`
+	UnitID                State.UnitID `json:"unitId"`
+	Amount                int64        `json:"amount,omitempty"`
+	UseTimeSkip           bool         `json:"useTimeSkip,omitempty"`
+	TimeSkipID            string       `json:"timeSkipId,omitempty"`
 }
 
 type beriTransferGuardRequest struct {
-	SourceCastleID   State.CastleID   `json:"sourceCastleId"`
-	TargetCastleID   State.CastleID   `json:"targetCastleId"`
-	UnitID           State.UnitID     `json:"unitId"`
-	Amount           int64            `json:"amount"`
-	CapacityObserved time.Time        `json:"capacityObservedAt"`
-	TimeSkipCurrency State.CurrencyID `json:"timeSkipCurrencyId"`
+	SourceCastleID        State.CastleID   `json:"sourceCastleId"`
+	TargetCastleID        State.CastleID   `json:"targetCastleId"`
+	UnitID                State.UnitID     `json:"unitId"`
+	Amount                int64            `json:"amount"`
+	CapacityObserved      time.Time        `json:"capacityObservedAt"`
+	TimeSkipCurrency      State.CurrencyID `json:"timeSkipCurrencyId"`
+	ConfigurationRevision uint64           `json:"configurationRevision,omitempty"`
+	DonorUnitsObserved    time.Time        `json:"donorUnitsObservedAt,omitempty"`
+	CampUnitsObserved     time.Time        `json:"campUnitsObservedAt,omitempty"`
 }
 
 type beriCampOpenRequest struct {
@@ -221,6 +228,8 @@ func planBeriTransfer(_ context.Context, input Intent.PlanningContext, arguments
 	guard := beriTransferGuardRequest{
 		SourceCastleID: source.ID, TargetCastleID: target.ID, UnitID: request.UnitID, Amount: request.Amount,
 		CapacityObserved: input.State.Beri.ObservedAt, TimeSkipCurrency: currencyID,
+		ConfigurationRevision: request.ConfigurationRevision,
+		DonorUnitsObserved:    request.DonorUnitsObserved, CampUnitsObserved: request.CampUnitsObserved,
 	}
 	if err := validateBeriTransferState(input, guard); err != nil {
 		return Intent.Plan{}, err
@@ -229,17 +238,13 @@ func planBeriTransfer(_ context.Context, input Intent.PlanningContext, arguments
 		SourceCastleID: source.ID, TargetCastleID: target.ID, TargetKingdomID: beriKingdomID,
 		Units: []kingdomTroopShipmentUnit{{UnitID: request.UnitID, Amount: request.Amount}},
 	}
-	wireCastleID := request.WireCastleID
-	if wireCastleID == 0 {
-		wireCastleID = -1
-	}
 	payload, _ := json.Marshal(struct {
 		SourceCastleID State.CastleID  `json:"SCID"`
 		SourceKingdom  State.KingdomID `json:"SKID"`
 		TargetKingdom  State.KingdomID `json:"TKID"`
 		WireCastleID   int64           `json:"CID"`
 		Troops         [][]int64       `json:"A"`
-	}{source.ID, source.KingdomID, beriKingdomID, wireCastleID, [][]int64{{int64(request.UnitID), request.Amount}}})
+	}{source.ID, source.KingdomID, beriKingdomID, -1, [][]int64{{int64(request.UnitID), request.Amount}}})
 	guardArguments, _ := json.Marshal(guard)
 	sourceConsumeArguments, _ := json.Marshal(shipment)
 	capacityConsumeArguments, _ := json.Marshal(struct {
@@ -303,6 +308,10 @@ func validateBeriTransferState(input Intent.PlanningContext, request beriTransfe
 	if !targetExists || target.ID <= 0 || target.KingdomID != beriKingdomID {
 		return Localization.WithError(fmt.Errorf("Berimond troop destination %d is no longer owned", request.TargetCastleID), Localization.New("server.app.berimond_troop_destination_p.dd278836", "Berimond troop destination {p0} is no longer owned", Localization.Params{"p0": fmt.Sprintf("%d", request.TargetCastleID)}))
 	}
+	if (!request.DonorUnitsObserved.IsZero() && !source.UnitsObservedAt.Equal(request.DonorUnitsObserved)) ||
+		(!request.CampUnitsObserved.IsZero() && !target.UnitsObservedAt.Equal(request.CampUnitsObserved)) {
+		return fmt.Errorf("Berimond donor or camp inventory changed before transfer")
+	}
 	if unlock, observed := input.State.KingdomTransport.Unlocks[beriKingdomID]; observed && !unlock.Unlocked {
 		return Localization.WithError(fmt.Errorf("the Battle for Berimond is no longer unlocked"), Localization.New("server.app.the_battle_for_berimond.e2100964", "the Battle for Berimond is no longer unlocked", nil))
 	}
@@ -342,6 +351,10 @@ func (application *Application) verifyBeriTransfer(_ context.Context, arguments 
 	}
 	if application == nil || application.State == nil || application.GameData == nil {
 		return Localization.WithError(fmt.Errorf("Berimond transfer state is unavailable"), Localization.New("server.app.berimond_transfer_state_is.565635c0", "Berimond transfer state is unavailable", nil))
+	}
+	if request.ConfigurationRevision > 0 && (application.Configuration == nil ||
+		application.Configuration.Revision() != request.ConfigurationRevision) {
+		return fmt.Errorf("%w: Berimond settings or attack preset changed before transfer", Intent.ErrPlanStale)
 	}
 	gameData, ready := application.GameData.Current()
 	if !ready {

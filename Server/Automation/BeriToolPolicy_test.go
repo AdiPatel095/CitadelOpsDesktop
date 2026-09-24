@@ -24,7 +24,7 @@ func TestBeriToolPolicyUsesIndependentSharedFeatureControls(t *testing.T) {
 
 func TestBeriToolPolicyRefreshesThenBuysExactScalingLadderShortage(t *testing.T) {
 	now := time.Date(2026, 7, 29, 23, 30, 0, 0, time.UTC)
-	snapshot := beriToolTestSnapshot(t, now, `{"toolMinimums":{"614":10,"611":5,"620":5}}`)
+	snapshot := beriToolTestSnapshot(t, now, `{"beriCastleId":100,"toolMinimums":{"614":10,"611":5,"620":5}}`)
 	policy := NewBeriToolPolicy()
 
 	decision, err := policy.Evaluate(t.Context(), snapshot)

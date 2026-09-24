@@ -310,14 +310,8 @@ func clampLevel(level int) int {
 
 type legacyBeriDocument struct {
 	MinTroopsToTransfer        int64  `json:"minTroopsToTransfer"`
-	BeriCastleID               *int64 `json:"beriCastleId"`
-	BeriCastleCID              *int64 `json:"beriCastleCID"`
-	TransferTroopID            *int64 `json:"transferTroopId"`
-	TransferTroopWID           *int64 `json:"transferTroopWID"`
 	SourceCastleID             *int64 `json:"sourceCastleId"`
 	KutSourceCastleSCID        *int64 `json:"kutSourceCastleSCID"`
-	WireCastleID               *int64 `json:"wireCastleId"`
-	KutCastleCID               *int64 `json:"kutCastleCID"`
 	TroopSpaceCheckIntervalSec int    `json:"troopSpaceCheckIntervalSec"`
 }
 
@@ -328,10 +322,7 @@ func migrateLegacyBeri(contents []byte) (json.RawMessage, error) {
 	}
 	return json.Marshal(map[string]any{
 		"minTroopsToTransfer":        legacy.MinTroopsToTransfer,
-		"beriCastleId":               firstInt64(legacy.BeriCastleID, legacy.BeriCastleCID, 0),
-		"transferTroopId":            firstInt64(legacy.TransferTroopID, legacy.TransferTroopWID, 0),
 		"sourceCastleId":             firstInt64(legacy.SourceCastleID, legacy.KutSourceCastleSCID, 0),
-		"wireCastleId":               firstInt64(legacy.WireCastleID, legacy.KutCastleCID, -1),
 		"troopSpaceCheckIntervalSec": legacy.TroopSpaceCheckIntervalSec,
 	})
 }
