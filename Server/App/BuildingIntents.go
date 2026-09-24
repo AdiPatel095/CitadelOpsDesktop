@@ -47,13 +47,14 @@ type buildingPlacementResolverArguments struct {
 }
 
 type buildingExpansionIntentRequest struct {
-	CastleID         State.CastleID     `json:"castleId"`
-	X                int                `json:"x"`
-	Y                int                `json:"y"`
-	Direction        int                `json:"direction"`
-	Payment          string             `json:"payment,omitempty"`
-	ResourceReserves map[string]float64 `json:"resourceReserves,omitempty"`
-	AllowPremium     bool               `json:"allowPremium,omitempty"`
+	CastleID                   State.CastleID     `json:"castleId"`
+	ExpectedGroundDefinitionID State.BuildingID   `json:"expectedGroundDefinitionId,omitempty"`
+	X                          int                `json:"x"`
+	Y                          int                `json:"y"`
+	Direction                  int                `json:"direction"`
+	Payment                    string             `json:"payment,omitempty"`
+	ResourceReserves           map[string]float64 `json:"resourceReserves,omitempty"`
+	AllowPremium               bool               `json:"allowPremium,omitempty"`
 }
 
 type buildingInstanceIntentRequest struct {
@@ -748,6 +749,17 @@ func validatedBuildingExpansion(
 		return State.CastleState{}, GameData.ExpansionDefinition{}, 0, "", fmt.Errorf(
 			"castle %d does not have a fresh focused building layout", castle.ID,
 		)
+	}
+	if request.ExpectedGroundDefinitionID != 0 {
+		buildingCatalog, catalogErr := input.GameData.BuildingCatalog()
+		if catalogErr != nil {
+			return State.CastleState{}, GameData.ExpansionDefinition{}, 0, "", catalogErr
+		}
+		if err := Buildings.ValidateExpansionFootprint(castle, Buildings.TargetGround{
+			DefinitionID: request.ExpectedGroundDefinitionID, GridX: request.X, GridY: request.Y, Direction: request.Direction,
+		}, buildingCatalog); err != nil {
+			return State.CastleState{}, GameData.ExpansionDefinition{}, 0, "", fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
+		}
 	}
 	preview, err := Buildings.PreviewExpansion(input.State, input.GameData, Buildings.ExpansionPreviewRequest{
 		CastleID: castle.ID, Payment: payment, ResourceReserves: request.ResourceReserves, AllowPremium: request.AllowPremium,
