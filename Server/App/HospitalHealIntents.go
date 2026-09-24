@@ -25,17 +25,26 @@ const (
 // requested amount is an upper bound, including for manually submitted intents.
 func resolveHospitalHealStep(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Step, error) {
 	var request struct {
-		CastleID State.CastleID `json:"castleId"`
-		UnitID   State.UnitID   `json:"unitId"`
-		Amount   int64          `json:"amount"`
+		CastleID             State.CastleID `json:"castleId"`
+		UnitID               State.UnitID   `json:"unitId"`
+		Amount               int64          `json:"amount"`
+		FocusEpoch           uint64         `json:"focusEpoch,omitempty"`
+		SessionGeneration    uint64         `json:"sessionGeneration,omitempty"`
+		ConnectionGeneration uint64         `json:"connectionGeneration,omitempty"`
 	}
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return Intent.Step{}, err
 	}
 	state := input.State
 	castle, ok := state.Castles[request.CastleID]
+	protocol := input.ProtocolContext
 	if !ok || !castle.Focused || State.CastleFocusKnownUnavailable(state, castle) ||
-		(input.ProtocolContext.FocusedCastleID > 0 && input.ProtocolContext.FocusedCastleID != request.CastleID) {
+		protocol.FocusedCastleID != request.CastleID || protocol.FocusSubcontext != State.FocusSubcontextCastle ||
+		protocol.FocusEpoch == 0 || protocol.SessionGeneration != state.Session.Generation ||
+		protocol.ConnectionGeneration != state.Session.ConnectionGeneration ||
+		(request.FocusEpoch != 0 && (request.FocusEpoch != protocol.FocusEpoch ||
+			request.SessionGeneration != protocol.SessionGeneration ||
+			request.ConnectionGeneration != protocol.ConnectionGeneration)) {
 		return Intent.Step{}, fmt.Errorf("%w: hospital castle focus changed", Intent.ErrPlanStale)
 	}
 	now := time.Now().UTC()
@@ -69,6 +78,8 @@ func resolveHospitalHealStep(_ context.Context, input Intent.PlanningContext, ar
 	step.StaleCodes = []int{175}
 	guardArguments, _ := json.Marshal(map[string]any{
 		"castleId": request.CastleID, "unitId": request.UnitID, "amount": amount,
+		"focusEpoch": protocol.FocusEpoch, "sessionGeneration": protocol.SessionGeneration,
+		"connectionGeneration": protocol.ConnectionGeneration,
 	})
 	step.FinalDispatchAction = "hospital.heal.guard"
 	step.FinalDispatchArguments = guardArguments
@@ -83,8 +94,10 @@ func (application *Application) guardHospitalHealDispatch(ctx context.Context, a
 	if !ready || store == nil {
 		return fmt.Errorf("official hospital catalog is unavailable")
 	}
-	state := application.State.ReadOnlyView()
-	step, err := resolveHospitalHealStep(ctx, Intent.PlanningContext{State: state, GameData: store}, arguments)
+	view := application.State.PlanningView()
+	step, err := resolveHospitalHealStep(ctx, Intent.PlanningContext{
+		State: view.State, GameData: store, ProtocolContext: view.ProtocolContext,
+	}, arguments)
 	if err != nil {
 		return err
 	}
@@ -193,7 +206,7 @@ func hospitalSubscriptionBonus(state State.GameState, store *GameData.Store, aft
 	var bonus int64
 	for typeID, subscription := range state.Subscriptions {
 		if typeID <= 0 || subscription.TypeID != typeID || subscription.RemainingSec <= 0 ||
-			observedAt.Add(time.Duration(subscription.RemainingSec)*time.Second).Before(now) {
+			!observedAt.Add(time.Duration(subscription.RemainingSec)*time.Second).After(now) {
 			continue
 		}
 		for _, effect := range store.SubscriptionEffectsView(typeID) {
