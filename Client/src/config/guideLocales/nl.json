@@ -34,7 +34,10 @@
     "advisorPreviewTitle": "Instelvoorbeeld voor Auto Adviseur",
     "khanGuideIntro": "Volg deze stappen om Automatische Khan in te stellen; kies een voorbeeldpaneel om het te vergroten.",
     "khanGuideTitle": "Handleiding voor Automatische Khan",
-    "khanPreviewTitle": "Voorbeeld van Automatische Khan-instelling"
+    "khanPreviewTitle": "Voorbeeld van Automatische Khan-instelling",
+    "beriGuideIntro": "Volg deze stappen om Auto Beri in te stellen; selecteer een voorbeeldpaneel om het te vergroten.",
+    "beriGuideTitle": "Handleiding Auto Beri",
+    "beriPreviewTitle": "Voorbeeldinstellingen Auto Beri"
   },
   "autoTower": {
     "recommendationIntro": "Dit zijn aanbevelingen voor regelmatig gebruik; controleer ze voordat je opslaat.",
@@ -491,6 +494,45 @@
       "source": "Aanvallen vanuit: buitenpost in het Grote Rijk",
       "title": "Voorbeeld van Khan-instelling",
       "travel": "Reisveer voor snel reizen"
+    },
+    "beriBuilder": {
+      "permissions": "Premium en sloop: uit tenzij gecontroleerd",
+      "reserves": "Reserveer Berimond-grondstoffen en tijdoverslagen",
+      "stable": "Factiestal: gekozen niveau 1–5",
+      "target": "Ingebouwd exact doel of gecontroleerde eigen indeling",
+      "title": "Voorbeeld van optionele kampbouw"
+    },
+    "beriReadiness": {
+      "booster": "Dapperheidsbooster als voorwaarde: optioneel",
+      "food": "Transport vereist voorinstellingstroepen met Voedsel",
+      "preset": "Controleer opgeslagen troepen- en gereedschapsplaatsen",
+      "title": "Voorbeeld van torengereedheid"
+    },
+    "beriSave": {
+      "calendar": "Kalender uit voor doorlopend gebruik",
+      "enable": "Schakel Auto Beri in op de Automatisering-kaart",
+      "save": "Sla op na controle van de troepenverhouding",
+      "title": "Voorbeeld van opslaan en inschakelen"
+    },
+    "beriSetup": {
+      "donor": "Donor in het Grote Rijk met benodigde troepen",
+      "limit": "Dagelijkse normale aanvallen: 0 extra limiet",
+      "preset": "Opgeslagen Berimond-aanvalsvoorinstelling",
+      "title": "Voorbeeld van aanval en bevoorrading",
+      "travel": "Reisveer voor torenaanvallen"
+    },
+    "beriTools": {
+      "ladders": "Ladders: afgestemd op gewone aanvallen",
+      "mantlets": "Schilden: afgestemd op gewone aanvallen",
+      "rams": "Stormrammen: afgestemd op gewone aanvallen",
+      "title": "Voorbeeld van minimale gereedschapsvoorraad"
+    },
+    "beriTransfers": {
+      "capacity": "Vrije capaciteit: 3; drempel: 3",
+      "mix": "Voorinstellingsverhouding: 2 eenheden A per 1 eenheid B",
+      "next": "Volgende zending: maximaal 1 B uit donorvoorraad",
+      "stock": "Kampvoorraad: 2 A en 0 B",
+      "title": "Voorbeeld van evenredig transport"
     }
   },
   "autoStation": {
@@ -1429,5 +1471,218 @@
       "summary": "Schakel Khan-kampaanvallen aaneen en verdedig vergelding bij je hoofdkasteel"
     },
     "recommendationIntro": "Aanbevolen waarden beschrijven normaal gebruik van Automatische Khan; ze zijn richtlijnen en wijzigen opgeslagen instellingen niet."
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "Auto Beri versterkt je eigen Berimond-kamp volgens de troepenverhouding van de gekozen aanvalsvoorinstelling en kan daarna torens aanvallen, gereedschap aanvullen en bouwen met bevestigde buit.",
+      "expectation": "Transporten wachten op actuele voorraden in kamp en donorkasteel, gemelde capaciteit en afhandeling van de vorige zending; een gedeeltelijke donorvoorraad kan een kleinere zending opleveren, terwijl een ontbrekend benodigd type de aanvulling pauzeert.",
+      "name": "Automatisch Berimond-beheer",
+      "summary": "Bevoorraad en beheer je Berimond-kamp"
+    },
+    "recommendationIntro": "De aanbevelingen beschrijven normaal gebruik van Auto Beri en veranderen geen opgeslagen instellingen.",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "Illustratieve instellingen voor optionele kampbouw in Auto Beri",
+          "caption": "Ingebouwd doel, stalniveau, bouwrechten en reserves."
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "Sta het verwijderen toe van onbeheerde gebouwen die voor het exacte doel niet verplaatst of opgeslagen kunnen worden.",
+            "label": "Sloop toestaan",
+            "recommendation": "Uit, tenzij je de beoogde verwijderingen hebt nagekeken."
+          },
+          "allow_premium_costs": {
+            "description": "Sta geschikte bouwstappen toe die premiumvaluta uitgeven.",
+            "label": "Premiumkosten toestaan",
+            "recommendation": "Uit, tenzij je uitdrukkelijk premiumbouw wilt."
+          },
+          "auto_beri_builder_lane": {
+            "description": "Bouw of verbeter een exact kampdoel met bevestigde teruggekeerde buit, zonder grondstoffen uit een ander koninkrijk te vervoeren.",
+            "label": "Auto-Beri-bouwbeheer",
+            "recommendation": "Uit totdat je doel en uitgavenrechten hebt nagekeken."
+          },
+          "camp_resource_reserves": {
+            "description": "Houd de gekozen hoeveelheden Berimond-hout en -steen buiten bereik van de bouwer.",
+            "label": "Kampgrondstoffen reserveren",
+            "recommendation": "Reserveer wat je voor ander kampwerk nodig hebt."
+          },
+          "construction_time_skip_reserves": {
+            "description": "Houd het gekozen aantal van elk tijdoverslagitem buiten bereik van de bouwer.",
+            "label": "Bouwtijdoverslagen reserveren",
+            "recommendation": "Reserveer wat je voor andere activiteiten nodig hebt."
+          },
+          "optional_custom_camp_target": {
+            "description": "Leg een indeling vast, bekijk die, sla die op en activeer die alleen als ze het ingebouwde doel moet vervangen.",
+            "label": "Optioneel eigen kampdoel",
+            "recommendation": "Behoud het ingebouwde doel tenzij je een eigen indeling hebt gecontroleerd."
+          },
+          "stable_target": {
+            "description": "Kies voor het ingebouwde doel het gewenste niveau van de factiestal van 1 tot 5.",
+            "label": "Doelniveau stal",
+            "recommendation": "Kies een niveau dat je huidige evenementmiddelen aankunnen."
+          },
+          "use_construction_time_skips": {
+            "description": "Versnel een bevestigde bouwtimer met behoud van de gekozen tijdoverslagreserves.",
+            "label": "Bouwtijdoverslagen gebruiken",
+            "recommendation": "Uit, tenzij sneller bouwen die items waard is."
+          }
+        },
+        "title": "Kies optionele kampbouw"
+      },
+      "readiness": {
+        "image": {
+          "alt": "Illustratieve instellingen voor gereedheid voor Auto-Beri-torenaanvallen",
+          "caption": "Status van de boostervoorwaarde en voorinstellingsopstelling, zonder echte booster of klantgegevens."
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "Controleer de golven, troepen en gereedschappen van de gekozen voorinstelling voordat je aanvallen inschakelt.",
+            "label": "Opstelling aanvalsvoorinstelling",
+            "recommendation": "Houd voor je gebruikelijke aanvalstempo voldoende gekozen troepen en gereedschappen bij donor en kamp."
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "Vereis een actieve Dapperheidsbooster voordat transport, gereedschapaankopen, kampvoorbereiding, torenaanvallen of bouw doorgaan.",
+            "label": "Alleen met Dapperheidsbooster uitvoeren",
+            "recommendation": "Aan als alle Auto-Beri-onderdelen van de booster moeten afhangen."
+          }
+        },
+        "title": "Bereid torenaanvallen voor"
+      },
+      "save": {
+        "image": {
+          "alt": "Illustratieve instellingen voor Auto Beri opslaan en inschakelen",
+          "caption": "Voorbereidingslijst, schakelaar en optioneel rooster zonder echte accountgegevens."
+        },
+        "items": {
+          "automation_switch": {
+            "description": "Schakel Auto Beri in op de Automatisering-kaart nadat je kamp, donortroepen, voorinstelling en optionele uitgaven hebt gecontroleerd.",
+            "label": "Automatiseringsschakelaar",
+            "recommendation": "Aan na het instellen."
+          },
+          "calendar": {
+            "description": "Laat het rooster uit voor doorlopend gebruik of stel zo nodig je gebruikelijke uren in en sla het op.",
+            "label": "Kalender",
+            "recommendation": "Uit voor doorlopend evenementgebruik."
+          },
+          "save_settings": {
+            "description": "Sla voorinstelling, donor, transportsnelheid, aanvalslimieten, gereedschap en optionele bouwkeuzes op voordat je de automatisering inschakelt.",
+            "label": "Instellingen opslaan"
+          }
+        },
+        "title": "Opslaan en inschakelen"
+      },
+      "setup": {
+        "image": {
+          "alt": "Illustratieve Auto-Beri-instellingen voor aanval en bevoorrading",
+          "caption": "Opgeslagen aanvalsvoorinstelling, donorkasteel in het Grote Rijk, Reisveer, aanvalscontrole en daglimiet."
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "Stel in hoe vaak Auto Beri naar een volgende torenaanval zoekt.",
+            "label": "Controle-interval aanvallen",
+            "recommendation": "Houd het gebruikelijke interval van 30 seconden aan tenzij je minder controles wilt."
+          },
+          "attack_preset": {
+            "description": "Kies een opgeslagen Berimond-aanvalsformatie; Auto Beri gebruikt de troepenverhouding voor transport en torenaanvallen.",
+            "label": "Aanvalsvoorinstelling",
+            "recommendation": "Maak en kies eerst je gebruikelijke Berimond-voorinstelling."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Stop nieuwe Auto-Beri-torenaanvallen zodra de accountbrede dagelijkse teller voor normale aanvallen deze limiet bereikt; 0 verwijdert deze extra limiet.",
+            "label": "Daglimiet normale aanvallen",
+            "recommendation": "0, tenzij je een accountbrede limiet gebruikt."
+          },
+          "horse_travel_boost": {
+            "description": "Kies voor torenaanvallen reizen met veer, munten of robijnen.",
+            "label": "Reisversnelling",
+            "recommendation": "Reisveer voor snel reizen zonder robijnreis te kiezen."
+          },
+          "open_settings": {
+            "description": "Open op de pagina Automatisering de instellingen van de Auto-Beri-kaart.",
+            "label": "Instellingen openen"
+          },
+          "source_castle": {
+            "description": "Kies het kasteel of de buitenpost in het Grote Rijk die deze troepen levert.",
+            "label": "Donorkasteel",
+            "recommendation": "Kies het kasteel met je aanvalsleger."
+          }
+        },
+        "title": "Kies aanval en bevoorradingsbron"
+      },
+      "tools": {
+        "image": {
+          "alt": "Illustratieve instellingen voor Auto-Beri-kampgereedschap",
+          "caption": "De drie minimale gereedschapsvoorraden en een duidelijk fictieve kampinventaris."
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "Vul zoveel gestationeerde stormrammen aan volgens dezelfde regel.",
+            "label": "Minimum stormrammen",
+            "recommendation": "Stem af op je gebruikelijke voorinstelling."
+          },
+          "mantlets_minimum": {
+            "description": "Vul zoveel gestationeerde schilden aan volgens dezelfde regel.",
+            "label": "Minimum schilden",
+            "recommendation": "Stem af op je gebruikelijke voorinstelling."
+          },
+          "scaling_ladders_minimum": {
+            "description": "Vul zoveel gestationeerde ladders in het kamp aan via geschikte muntaanbiedingen; 0 laat ze onbeheerd.",
+            "label": "Minimum ladders",
+            "recommendation": "Stem af op je gebruikelijke voorinstelling en aanvalstempo."
+          }
+        },
+        "title": "Onderhoud kampgereedschap"
+      },
+      "transfers": {
+        "image": {
+          "alt": "Illustratieve instellingen voor evenredig Auto-Beri-troepentransport",
+          "caption": "Fictieve verhouding 2:1, kampvoorraad, vrije capaciteit en een gedeeltelijke zending van één type; de waarden zijn voorbeelden, geen opgeslagen standaarden."
+        },
+        "items": {
+          "check_interval": {
+            "description": "Stel in hoe vaak Auto Beri de vrije transportcapaciteit en beide kasteelvoorraden vernieuwt.",
+            "label": "Controle-interval",
+            "recommendation": "Houd het gebruikelijke interval van 30 seconden aan."
+          },
+          "food_only": {
+            "description": "Alleen voorinstellingstroepen die Voedsel gebruiken kunnen worden vervoerd; niet-ondersteunde eenheden of onopgeloste troepenfamilies pauzeren met een reden.",
+            "label": "Alleen troepen met Voedsel vervoeren"
+          },
+          "minimum_free_capacity": {
+            "description": "Begin transport pas wanneer de gemelde vrije capaciteit deze drempel bereikt; een enkele evenredige zending mag kleiner zijn.",
+            "label": "Minimale vrije capaciteit",
+            "recommendation": "Kies de laagste vrije drempel die bij je gewone transportschema past."
+          },
+          "owned_berimond_camp": {
+            "description": "Auto Beri vindt je eigen Berimond-kamp automatisch, dus je hoeft geen kamp-ID in te voeren.",
+            "label": "Eigen Berimond-kamp"
+          },
+          "partial_donor": {
+            "description": "Heeft de donor een deel van het benodigde troepentype, dan stuurt Auto Beri die kleinere hoeveelheid; zonder dat type wacht het in plaats van een ander type te sturen.",
+            "label": "Gedeeltelijke donorvoorraad"
+          },
+          "pending_transfer": {
+            "description": "Auto Beri wacht tot elke zending aankomt en vernieuwt de kampvoorraad voordat het de voorinstellingsverhouding opnieuw berekent.",
+            "label": "Lopend transport"
+          },
+          "preset_troop_mix": {
+            "description": "Auto Beri telt herhaalde troepenplaatsen uit de golven en binnenplaats van de gekozen voorinstelling op en vult telkens één ondervertegenwoordigd type aan.",
+            "label": "Troepenverhouding van voorinstelling"
+          },
+          "troop_transport_skip": {
+            "description": "Kies de duur van het item dat wordt gebruikt wanneer transportversnelling aanstaat.",
+            "label": "Transporttijdoverslag",
+            "recommendation": "Bewaar langere overslagen voor andere taken als je ze nodig hebt."
+          },
+          "use_troop_transport_time_skips": {
+            "description": "Pas de gekozen tijdoverslag toe op een bevestigd transport terwijl het onderweg is.",
+            "label": "Transporttijdoverslagen gebruiken",
+            "recommendation": "Uit, tenzij snellere kampbevoorrading die bewaarde items waard is."
+          }
+        },
+        "title": "Stel evenredig troepentransport in"
+      }
+    }
   }
 }

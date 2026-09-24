@@ -34,7 +34,10 @@
     "advisorPreviewTitle": "Exemplu de configurare a Consilierului automat",
     "khanGuideIntro": "Urmează acești pași pentru configurarea Khanului automat; selectează un panou exemplu pentru mărire.",
     "khanGuideTitle": "Ghidul Khanului automat",
-    "khanPreviewTitle": "Exemplu de configurare a Khanului automat"
+    "khanPreviewTitle": "Exemplu de configurare a Khanului automat",
+    "beriGuideIntro": "Urmează acești pași pentru a configura Berimond automat; selectează un panou de exemplu ca să îl mărești.",
+    "beriGuideTitle": "Ghidul Berimond automat",
+    "beriPreviewTitle": "Exemplu de configurare a Berimondului automat"
   },
   "autoTower": {
     "recommendationIntro": "Acestea sunt recomandări pentru utilizarea obișnuită; verifică-le înainte de salvare.",
@@ -491,6 +494,45 @@
       "source": "Atacă din: avanpost din Marele Imperiu",
       "title": "Exemplu de configurare a Khanului",
       "travel": "Pană de călătorie pentru deplasare rapidă"
+    },
+    "beriBuilder": {
+      "permissions": "Premium și demolare: dezactivate până la verificare",
+      "reserves": "Păstrează rezerve de resurse Berimond și accelerări",
+      "stable": "Grajdul facțiunii: nivel ales între 1 și 5",
+      "target": "Țintă exactă încorporată sau plan propriu verificat",
+      "title": "Exemplu de construcție opțională a taberei"
+    },
+    "beriReadiness": {
+      "booster": "Amplificator de Vitejie necesar: opțional",
+      "food": "Transferurile necesită trupe din șablon care consumă Hrană",
+      "preset": "Verifică pozițiile de trupe și unelte salvate",
+      "title": "Exemplu de pregătire a turnurilor"
+    },
+    "beriSave": {
+      "calendar": "Calendar dezactivat pentru funcționare continuă",
+      "enable": "Activează Berimond automat pe cardul Automatizare",
+      "save": "Salvează setările după verificarea proporției trupelor",
+      "title": "Exemplu de salvare și activare"
+    },
+    "beriSetup": {
+      "donor": "Donator în Marele Imperiu cu trupele necesare",
+      "limit": "Atacuri normale zilnice: 0 limită suplimentară",
+      "preset": "Șablon de atac Berimond salvat",
+      "title": "Exemplu de atac și aprovizionare",
+      "travel": "Pană de călătorie pentru atacurile asupra turnurilor"
+    },
+    "beriTools": {
+      "ladders": "Scări: potrivite atacurilor obișnuite",
+      "mantlets": "Scuturi: potrivite atacurilor obișnuite",
+      "rams": "Berbeci: potriviți atacurilor obișnuite",
+      "title": "Exemplu de stocuri minime de unelte"
+    },
+    "beriTransfers": {
+      "capacity": "Capacitate liberă: 3; prag: 3",
+      "mix": "Raportul șablonului: 2 unități A la 1 unitate B",
+      "next": "Următorul transport: până la 1 B din stocul donatorului",
+      "stock": "Stocul taberei: 2 A și 0 B",
+      "title": "Exemplu de transferuri proporționale"
     }
   },
   "autoStation": {
@@ -1429,5 +1471,218 @@
       "summary": "Leagă atacurile asupra taberei Khanului și apără represaliile la castelul principal"
     },
     "recommendationIntro": "Valorile recomandate descriu folosirea obișnuită a Khanului automat; sunt îndrumări și nu modifică setările salvate."
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "Berimond automat întărește tabăra deținută în proporția trupelor din șablonul de atac ales și apoi poate ataca turnuri, reaproviziona unelte și construi din pradă confirmată.",
+      "expectation": "Transferurile așteaptă stocuri recente în tabără și la castelul donator, capacitatea raportată și încheierea transportului precedent; un stoc parțial permite un transport mai mic, iar lipsa tipului necesar oprește reaprovizionarea.",
+      "name": "Berimond automat",
+      "summary": "Aprovizionează și administrează tabăra din Berimond"
+    },
+    "recommendationIntro": "Recomandările descriu utilizarea obișnuită a Berimondului automat și nu modifică setările salvate.",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "Setări ilustrative pentru construcția opțională a taberei",
+          "caption": "Țintă încorporată, nivelul grajdului, permisiuni de construcție și rezerve."
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "Permite eliminarea clădirilor negestionate care nu pot fi mutate ori depozitate pentru atingerea exactă a țintei.",
+            "label": "Permite demolarea",
+            "recommendation": "Dezactivat dacă nu ai verificat eliminările planificate."
+          },
+          "allow_premium_costs": {
+            "description": "Permite etape eligibile de construcție care consumă monedă premium.",
+            "label": "Permite costuri premium",
+            "recommendation": "Dezactivat dacă nu dorești explicit construcții premium."
+          },
+          "auto_beri_builder_lane": {
+            "description": "Construiește sau îmbunătățește ținta exactă a taberei cu pradă întoarsă și confirmată, fără transport de resurse din alt regat.",
+            "label": "Constructorul Berimond automat",
+            "recommendation": "Dezactivat până verifici ținta și permisiunile de cheltuire."
+          },
+          "camp_resource_reserves": {
+            "description": "Păstrează cantitățile alese de lemn și piatră din Berimond în afara resurselor disponibile constructorului.",
+            "label": "Rezerve de resurse ale taberei",
+            "recommendation": "Rezervă ce îți trebuie pentru alte lucrări în tabără."
+          },
+          "construction_time_skip_reserves": {
+            "description": "Păstrează numărul ales din fiecare obiect de reducere a timpului în afara resurselor constructorului.",
+            "label": "Rezerve de accelerări pentru construcție",
+            "recommendation": "Rezervă ce îți trebuie pentru alte activități."
+          },
+          "optional_custom_camp_target": {
+            "description": "Capturează, previzualizează, salvează și activează un plan doar dacă trebuie să înlocuiască ținta încorporată.",
+            "label": "Țintă personalizată opțională",
+            "recommendation": "Păstrează ținta încorporată până verifici un plan personalizat."
+          },
+          "stable_target": {
+            "description": "Alege pentru ținta încorporată nivelul dorit al grajdului facțiunii, între 1 și 5.",
+            "label": "Nivelul țintă al grajdului",
+            "recommendation": "Alege un nivel pe care îl susțin resursele evenimentului curent."
+          },
+          "use_construction_time_skips": {
+            "description": "Accelerează un cronometru de construcție confirmat, păstrând rezervele alese de accelerări.",
+            "label": "Folosește accelerări pentru construcție",
+            "recommendation": "Dezactivat dacă grăbirea construcției nu merită acele obiecte."
+          }
+        },
+        "title": "Alege construcția opțională a taberei"
+      },
+      "readiness": {
+        "image": {
+          "alt": "Setări ilustrative pentru pregătirea atacurilor asupra turnurilor",
+          "caption": "Starea condiției de amplificator și alcătuirea șablonului, fără amplificator activ sau date reale ale clienților."
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "Verifică valurile, trupele și uneltele șablonului ales înainte de activarea atacurilor.",
+            "label": "Alcătuirea șablonului de atac",
+            "recommendation": "Păstrează suficiente trupe și unelte din fiecare tip ales la donator și în tabără pentru ritmul obișnuit al atacurilor."
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "Solicită un amplificator de Vitejie activ înainte de continuarea transferurilor, cumpărării de unelte, pregătirii taberei, atacurilor asupra turnurilor sau construcției.",
+            "label": "Rulează doar cu amplificator de Vitejie",
+            "recommendation": "Activat dacă toate funcțiile Berimond automat trebuie să depindă de amplificator."
+          }
+        },
+        "title": "Pregătește atacurile asupra turnurilor"
+      },
+      "save": {
+        "image": {
+          "alt": "Setări ilustrative pentru salvarea și activarea Berimondului automat",
+          "caption": "Listă de pregătire, comutator și calendar opțional fără a arăta un cont real."
+        },
+        "items": {
+          "automation_switch": {
+            "description": "Activează Berimond automat din cardul Automatizare după verificarea taberei, trupelor donatorului, șablonului și cheltuielilor opționale.",
+            "label": "Comutator de automatizare",
+            "recommendation": "Activat după configurare."
+          },
+          "calendar": {
+            "description": "Lasă calendarul dezactivat pentru funcționare continuă sau setează orele obișnuite și salvează programul dacă ai nevoie de un interval.",
+            "label": "Calendar",
+            "recommendation": "Dezactivat pentru funcționarea continuă a evenimentului."
+          },
+          "save_settings": {
+            "description": "Salvează șablonul, donatorul, ritmul transferurilor, limitele de atac, uneltele și opțiunile de construcție înainte de activarea automatizării.",
+            "label": "Salvează setările"
+          }
+        },
+        "title": "Salvează și activează"
+      },
+      "setup": {
+        "image": {
+          "alt": "Setări ilustrative pentru atac și aprovizionare",
+          "caption": "Șablon de atac salvat, castel donator în Marele Imperiu, Pană de călătorie, verificarea atacurilor și limită zilnică."
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "Stabilește cât de des caută automatizarea următorul atac asupra unui turn.",
+            "label": "Interval de verificare a atacurilor",
+            "recommendation": "Păstrează intervalul obișnuit de 30 de secunde dacă nu dorești verificări mai rare."
+          },
+          "attack_preset": {
+            "description": "Alege o formație de atac din Berimond salvată; automatizarea folosește proporția trupelor ei pentru transferuri și atacuri asupra turnurilor.",
+            "label": "Șablon de atac",
+            "recommendation": "Creează și alege mai întâi șablonul obișnuit pentru Berimond."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Oprește atacurile noi asupra turnurilor când numărul zilnic de atacuri normale al întregului cont atinge limita; 0 elimină această limită suplimentară.",
+            "label": "Limită zilnică de atacuri normale",
+            "recommendation": "0 dacă nu folosești o limită pentru întregul cont."
+          },
+          "horse_travel_boost": {
+            "description": "Alege călătorie cu pană, monede sau rubine pentru atacurile asupra turnurilor.",
+            "label": "Accelerarea călătoriei",
+            "recommendation": "Pană de călătorie pentru viteză fără a alege călătoria cu rubine."
+          },
+          "open_settings": {
+            "description": "Pe pagina Automatizare, deschide setările cardului Auto Beri World.",
+            "label": "Deschide setările"
+          },
+          "source_castle": {
+            "description": "Alege castelul sau avanpostul din Marele Imperiu care furnizează trupele.",
+            "label": "Castel donator",
+            "recommendation": "Alege castelul unde se află armata ta de atac."
+          }
+        },
+        "title": "Alege atacul și sursa de aprovizionare"
+      },
+      "tools": {
+        "image": {
+          "alt": "Setări ilustrative pentru uneltele taberei",
+          "caption": "Cele trei stocuri minime de unelte și un inventar de tabără evident fictiv."
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "Completează acest număr de berbeci staționați după aceeași regulă.",
+            "label": "Minim de berbeci",
+            "recommendation": "Adaptează la consumul șablonului tău obișnuit."
+          },
+          "mantlets_minimum": {
+            "description": "Completează acest număr de scuturi staționate după aceeași regulă.",
+            "label": "Minim de scuturi",
+            "recommendation": "Adaptează la consumul șablonului tău obișnuit."
+          },
+          "scaling_ladders_minimum": {
+            "description": "Completează acest număr de scări staționate în tabără prin oferte eligibile în monede; 0 le lasă negestionate.",
+            "label": "Minim de scări",
+            "recommendation": "Adaptează la șablonul și ritmul tău obișnuit de atac."
+          }
+        },
+        "title": "Întreține uneltele taberei"
+      },
+      "transfers": {
+        "image": {
+          "alt": "Setări ilustrative pentru transferuri proporționale de trupe",
+          "caption": "Raport fictiv 2:1, stocul taberei, capacitate liberă și un transport parțial al unui singur tip; valorile sunt exemple, nu setări implicite salvate."
+        },
+        "items": {
+          "check_interval": {
+            "description": "Stabilește cât de des actualizează automatizarea capacitatea liberă de transfer și stocurile ambelor castele.",
+            "label": "Interval de verificare",
+            "recommendation": "Păstrează intervalul obișnuit de 30 de secunde."
+          },
+          "food_only": {
+            "description": "Se pot transfera doar trupele șablonului care consumă Hrană; unitățile incompatibile sau familiile nerezolvate suspendă operația cu o explicație.",
+            "label": "Doar trupe care consumă Hrană"
+          },
+          "minimum_free_capacity": {
+            "description": "Începe transferurile numai când capacitatea liberă raportată atinge pragul; un transport proporțional individual poate fi mai mic.",
+            "label": "Capacitate liberă minimă",
+            "recommendation": "Alege cel mai mic prag potrivit ritmului tău obișnuit de transfer."
+          },
+          "owned_berimond_camp": {
+            "description": "Automatizarea găsește singură tabăra deținută în Berimond, deci nu trebuie introdus niciun ID de tabără.",
+            "label": "Tabără deținută în Berimond"
+          },
+          "partial_donor": {
+            "description": "Dacă donatorul are o parte din tipul necesar, automatizarea trimite cantitatea mai mică; dacă nu are deloc, așteaptă în loc să trimită alt tip.",
+            "label": "Stoc parțial la donator"
+          },
+          "pending_transfer": {
+            "description": "Automatizarea așteaptă sosirea fiecărui transport și actualizează stocul taberei înainte de recalcularea raportului.",
+            "label": "Transfer în curs"
+          },
+          "preset_troop_mix": {
+            "description": "Automatizarea adună pozițiile repetate de trupe din valurile și curtea șablonului ales și completează câte un tip subreprezentat.",
+            "label": "Proporția trupelor din șablon"
+          },
+          "troop_transport_skip": {
+            "description": "Alege durata obiectului folosit când accelerarea transportului este activă.",
+            "label": "Accelerarea transportului",
+            "recommendation": "Păstrează accelerările mai lungi pentru alte activități, dacă ai nevoie de ele."
+          },
+          "use_troop_transport_time_skips": {
+            "description": "Aplică accelerarea aleasă unui transfer confirmat cât timp este pe drum.",
+            "label": "Folosește accelerări de transport",
+            "recommendation": "Dezactivat dacă aprovizionarea mai rapidă nu merită obiectele economisite."
+          }
+        },
+        "title": "Configurează transferurile proporționale"
+      }
+    }
   }
 }

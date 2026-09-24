@@ -34,7 +34,10 @@
     "advisorPreviewTitle": "Esempio di configurazione di Auto Consigliere",
     "khanGuideIntro": "Segui questi passaggi per configurare Khan automatico; seleziona un pannello di esempio per ingrandirlo.",
     "khanGuideTitle": "Guida di Khan automatico",
-    "khanPreviewTitle": "Esempio di configurazione di Khan automatico"
+    "khanPreviewTitle": "Esempio di configurazione di Khan automatico",
+    "beriGuideIntro": "Segui questi passaggi per impostare Auto Beri World; seleziona un pannello d’esempio per ingrandirlo.",
+    "beriGuideTitle": "Guida Auto Beri World",
+    "beriPreviewTitle": "Esempio di configurazione Auto Beri World"
   },
   "autoTower": {
     "recommendationIntro": "Questi consigli riguardano l’uso regolare; controllali prima di salvare.",
@@ -491,6 +494,45 @@
       "source": "Attacca da: avamposto del Grande Impero",
       "title": "Esempio di configurazione del Khan",
       "travel": "Piuma di viaggio per muoversi rapidamente"
+    },
+    "beriBuilder": {
+      "permissions": "Premium e demolizione: disattivati se non verificati",
+      "reserves": "Conserva risorse di Berimond e acceleratori",
+      "stable": "Scuderie di fazione: livello scelto da 1 a 5",
+      "target": "Obiettivo preciso integrato o disposizione personalizzata verificata",
+      "title": "Esempio di costruzione facoltativa dell’accampamento"
+    },
+    "beriReadiness": {
+      "booster": "Requisito di potenziamento di galanteria: facoltativo",
+      "food": "I trasferimenti richiedono truppe del modello alimentate con Cibo",
+      "preset": "Controlla gli spazi truppe e strumenti del modello salvato",
+      "title": "Esempio di preparazione delle torri"
+    },
+    "beriSave": {
+      "calendar": "Calendario disattivato per il funzionamento continuo",
+      "enable": "Attiva Auto Beri dalla scheda Automazione",
+      "save": "Salva le impostazioni dopo aver controllato le proporzioni",
+      "title": "Esempio di salvataggio e attivazione"
+    },
+    "beriSetup": {
+      "donor": "Donatore del Grande Impero con le truppe necessarie",
+      "limit": "Attacchi normali giornalieri: 0 limite aggiuntivo",
+      "preset": "Modello d’attacco di Berimond salvato",
+      "title": "Esempio di attacco e rifornimento",
+      "travel": "Piuma da viaggio per gli attacchi alle torri"
+    },
+    "beriTools": {
+      "ladders": "Scale: secondo gli attacchi abituali",
+      "mantlets": "Mantelletti: secondo gli attacchi abituali",
+      "rams": "Arieti: secondo gli attacchi abituali",
+      "title": "Esempio di minimi degli strumenti"
+    },
+    "beriTransfers": {
+      "capacity": "Capacità libera: 3; soglia: 3",
+      "mix": "Proporzione del modello: 2 unità A per 1 unità B",
+      "next": "Prossima spedizione: fino a 1 B dalle scorte del donatore",
+      "stock": "Scorte dell’accampamento: 2 A e 0 B",
+      "title": "Esempio di trasferimenti proporzionali"
     }
   },
   "autoStation": {
@@ -1429,5 +1471,218 @@
       "summary": "Concatena attacchi al campo del Khan e difendi le rappresaglie nel castello principale"
     },
     "recommendationIntro": "I valori consigliati descrivono l'uso abituale di Khan automatico; sono indicazioni e non cambiano le impostazioni salvate."
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "Auto Beri rinforza il tuo accampamento di Berimond secondo le proporzioni delle truppe del modello d’attacco scelto e può attaccare torri, rifornire strumenti e costruire con bottino confermato.",
+      "expectation": "I trasferimenti attendono scorte aggiornate nell’accampamento e nel castello donatore, capacità segnalata e conclusione della spedizione precedente; scorte parziali permettono un invio ridotto, mentre l’assenza del tipo necessario sospende il rifornimento.",
+      "name": "Auto Beri World",
+      "summary": "Rifornisci e gestisci il tuo accampamento di Berimond"
+    },
+    "recommendationIntro": "I suggerimenti riguardano l’uso normale di Auto Beri e non cambiano le impostazioni salvate.",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "Impostazioni illustrative per la costruzione facoltativa dell’accampamento Auto Beri",
+          "caption": "Obiettivo integrato, livello delle scuderie, permessi di costruzione e riserve."
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "Consenti la rimozione di edifici non gestiti che non possono essere spostati o immagazzinati per raggiungere esattamente l’obiettivo.",
+            "label": "Consenti demolizioni",
+            "recommendation": "Disattivato se non hai esaminato le rimozioni previste."
+          },
+          "allow_premium_costs": {
+            "description": "Consenti passaggi di costruzione idonei che spendono valuta premium.",
+            "label": "Consenti costi premium",
+            "recommendation": "Disattivato se non desideri esplicitamente costruzioni premium."
+          },
+          "auto_beri_builder_lane": {
+            "description": "Costruisci o migliora un obiettivo preciso dell’accampamento usando il bottino rientrato e confermato, senza trasferire risorse da un altro regno.",
+            "label": "Costruzione Auto Beri",
+            "recommendation": "Disattivata finché non hai esaminato l’obiettivo e i permessi di spesa."
+          },
+          "camp_resource_reserves": {
+            "description": "Tieni le quantità scelte di legno e pietra di Berimond fuori dalla disponibilità del costruttore.",
+            "label": "Riserve di risorse dell’accampamento",
+            "recommendation": "Conserva quanto serve per gli altri lavori dell’accampamento."
+          },
+          "construction_time_skip_reserves": {
+            "description": "Tieni il numero scelto di ogni acceleratore fuori dalla disponibilità del costruttore.",
+            "label": "Riserve di acceleratori di costruzione",
+            "recommendation": "Conserva quanto serve per le altre attività."
+          },
+          "optional_custom_camp_target": {
+            "description": "Acquisisci, visualizza in anteprima, salva e attiva una disposizione solo se deve sostituire l’obiettivo integrato.",
+            "label": "Obiettivo personalizzato facoltativo",
+            "recommendation": "Mantieni l’obiettivo integrato finché non hai esaminato una disposizione personalizzata."
+          },
+          "stable_target": {
+            "description": "Scegli per l’obiettivo integrato il livello desiderato delle scuderie di fazione da 1 a 5.",
+            "label": "Livello obiettivo delle scuderie",
+            "recommendation": "Scegli un livello sostenibile con le risorse dell’evento corrente."
+          },
+          "use_construction_time_skips": {
+            "description": "Accelera un timer di costruzione confermato rispettando le riserve di acceleratori scelte.",
+            "label": "Usa acceleratori di costruzione",
+            "recommendation": "Disattivato se la costruzione più rapida non giustifica quegli oggetti."
+          }
+        },
+        "title": "Scegli la costruzione facoltativa dell’accampamento"
+      },
+      "readiness": {
+        "image": {
+          "alt": "Impostazioni illustrative per preparare gli attacchi alle torri Auto Beri",
+          "caption": "Stato del requisito del potenziamento e formazione del modello, senza dati reali di potenziamenti o clienti."
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "Controlla ondate, truppe e strumenti del modello scelto prima di attivare gli attacchi.",
+            "label": "Formazione del modello d’attacco",
+            "recommendation": "Tieni abbastanza truppe e strumenti scelti presso il donatore e nell’accampamento per il ritmo d’attacco abituale."
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "Richiedi un potenziamento di galanteria attivo prima di trasferimenti, acquisti di strumenti, preparazione dell’accampamento, attacchi alle torri o costruzioni.",
+            "label": "Esegui solo con potenziamento di galanteria",
+            "recommendation": "Attivo se vuoi subordinare tutti i compiti Auto Beri al potenziamento."
+          }
+        },
+        "title": "Prepara gli attacchi alle torri"
+      },
+      "save": {
+        "image": {
+          "alt": "Impostazioni illustrative per salvare e attivare Auto Beri",
+          "caption": "Lista di preparazione, interruttore e calendario facoltativo senza mostrare un account reale."
+        },
+        "items": {
+          "automation_switch": {
+            "description": "Attiva Auto Beri dalla sua scheda Automazione dopo aver controllato accampamento, truppe del donatore, modello e spese facoltative.",
+            "label": "Interruttore dell’automazione",
+            "recommendation": "Attivo dopo la preparazione."
+          },
+          "calendar": {
+            "description": "Lascia disattivato il calendario per il funzionamento continuo oppure imposta e salva gli orari abituali quando serve una fascia.",
+            "label": "Calendario",
+            "recommendation": "Disattivato per il funzionamento continuo dell’evento."
+          },
+          "save_settings": {
+            "description": "Salva modello, donatore, frequenza dei trasferimenti, limiti d’attacco, strumenti e scelte di costruzione prima di attivare l’automazione.",
+            "label": "Salva impostazioni"
+          }
+        },
+        "title": "Salva e attiva"
+      },
+      "setup": {
+        "image": {
+          "alt": "Impostazioni illustrative per attacco e rifornimento Auto Beri",
+          "caption": "Modello d’attacco salvato, castello donatore del Grande Impero, Piuma da viaggio, controllo degli attacchi e limite giornaliero."
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "Imposta quanto spesso Auto Beri cerca un altro attacco a una torre.",
+            "label": "Intervallo di controllo degli attacchi",
+            "recommendation": "Mantieni il solito intervallo di 30 secondi se non desideri meno controlli."
+          },
+          "attack_preset": {
+            "description": "Scegli una formazione d’attacco di Berimond salvata; Auto Beri usa le sue proporzioni di truppe per trasferimenti e attacchi alle torri.",
+            "label": "Modello d’attacco",
+            "recommendation": "Crea e seleziona prima il tuo solito modello di Berimond."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Ferma i nuovi attacchi Auto Beri alle torri quando il contatore giornaliero degli attacchi normali dell’account raggiunge questo limite; 0 elimina il limite aggiuntivo.",
+            "label": "Limite giornaliero degli attacchi normali",
+            "recommendation": "0 se non usi un limite per l’intero account."
+          },
+          "horse_travel_boost": {
+            "description": "Scegli per gli attacchi alle torri il viaggio con piuma, monete o rubini.",
+            "label": "Potenziamento di viaggio",
+            "recommendation": "Piuma da viaggio per muoversi rapidamente senza scegliere rubini."
+          },
+          "open_settings": {
+            "description": "Nella pagina Automazione, apri le impostazioni della scheda Auto Beri World.",
+            "label": "Apri impostazioni"
+          },
+          "source_castle": {
+            "description": "Scegli il castello o avamposto del Grande Impero che fornisce queste truppe.",
+            "label": "Castello donatore",
+            "recommendation": "Scegli il castello con il tuo esercito d’attacco."
+          }
+        },
+        "title": "Scegli attacco e fonte di rifornimento"
+      },
+      "tools": {
+        "image": {
+          "alt": "Impostazioni illustrative per gli strumenti dell’accampamento Auto Beri",
+          "caption": "I tre minimi degli strumenti e scorte dell’accampamento chiaramente fittizie."
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "Rifornisci questo numero di arieti stazionati secondo la stessa regola.",
+            "label": "Minimo di arieti",
+            "recommendation": "Adegua al consumo del tuo modello abituale."
+          },
+          "mantlets_minimum": {
+            "description": "Rifornisci questo numero di mantelletti stazionati secondo la stessa regola.",
+            "label": "Minimo di mantelletti",
+            "recommendation": "Adegua al consumo del tuo modello abituale."
+          },
+          "scaling_ladders_minimum": {
+            "description": "Rifornisci questo numero di scale stazionate nell’accampamento tramite offerte idonee in monete; 0 le lascia senza gestione.",
+            "label": "Minimo di scale",
+            "recommendation": "Adegua al modello e al ritmo d’attacco abituali."
+          }
+        },
+        "title": "Mantieni gli strumenti dell’accampamento"
+      },
+      "transfers": {
+        "image": {
+          "alt": "Impostazioni illustrative dei trasferimenti proporzionali di truppe Auto Beri",
+          "caption": "Proporzione fittizia 2:1, scorte dell’accampamento, capacità libera e un invio parziale di un solo tipo; sono esempi, non impostazioni salvate."
+        },
+        "items": {
+          "check_interval": {
+            "description": "Imposta quanto spesso Auto Beri aggiorna la capacità libera di trasferimento e le scorte di entrambi i castelli.",
+            "label": "Intervallo di controllo",
+            "recommendation": "Mantieni il solito intervallo di 30 secondi."
+          },
+          "food_only": {
+            "description": "Si possono trasferire solo le truppe del modello che consumano Cibo; unità non supportate o famiglie irrisolte sospendono l’operazione con una motivazione.",
+            "label": "Solo trasferimenti di truppe alimentate con Cibo"
+          },
+          "minimum_free_capacity": {
+            "description": "Avvia i trasferimenti solo quando la capacità libera segnalata raggiunge questa soglia; un singolo invio proporzionale può essere più piccolo.",
+            "label": "Capacità libera minima",
+            "recommendation": "Scegli la soglia libera più bassa adatta al normale ritmo di trasferimento."
+          },
+          "owned_berimond_camp": {
+            "description": "Auto Beri trova automaticamente il tuo accampamento di Berimond, quindi non serve inserire un ID.",
+            "label": "Accampamento di Berimond posseduto"
+          },
+          "partial_donor": {
+            "description": "Se il donatore possiede alcune truppe del tipo necessario, Auto Beri invia quella quantità minore; se non ne possiede, attende invece di inviare un altro tipo.",
+            "label": "Scorte parziali del donatore"
+          },
+          "pending_transfer": {
+            "description": "Auto Beri attende l’arrivo di ogni spedizione e aggiorna le scorte dell’accampamento prima di ricalcolare le proporzioni del modello.",
+            "label": "Trasferimento in corso"
+          },
+          "preset_troop_mix": {
+            "description": "Auto Beri somma gli spazi truppe ripetuti nelle ondate e nel cortile del modello scelto, poi rifornisce un tipo sottorappresentato alla volta.",
+            "label": "Proporzioni delle truppe del modello"
+          },
+          "troop_transport_skip": {
+            "description": "Scegli la durata dell’oggetto usato quando l’accelerazione del trasporto è attiva.",
+            "label": "Acceleratore del trasporto",
+            "recommendation": "Conserva gli acceleratori più lunghi per altre attività quando servono."
+          },
+          "use_troop_transport_time_skips": {
+            "description": "Applica l’acceleratore scelto a un trasferimento confermato ancora in viaggio.",
+            "label": "Usa acceleratori di trasporto",
+            "recommendation": "Disattivato se il rifornimento più veloce non giustifica quegli oggetti conservati."
+          }
+        },
+        "title": "Imposta trasferimenti proporzionali di truppe"
+      }
+    }
   }
 }

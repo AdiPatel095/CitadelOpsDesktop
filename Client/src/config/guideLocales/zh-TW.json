@@ -34,7 +34,10 @@
     "advisorPreviewTitle": "自動顧問設定範例",
     "khanGuideIntro": "依照以下步驟設定自動可汗；選擇範例面板可放大檢視。",
     "khanGuideTitle": "自動可汗指南",
-    "khanPreviewTitle": "自動可汗設定範例"
+    "khanPreviewTitle": "自動可汗設定範例",
+    "beriGuideIntro": "依照這些步驟設定自動貝里蒙德世界；選取範例面板即可放大。",
+    "beriGuideTitle": "自動貝里蒙德世界指南",
+    "beriPreviewTitle": "自動貝里蒙德世界設定範例"
   },
   "autoTower": {
     "recommendationIntro": "以下是日常使用的建議；儲存前請先檢查。",
@@ -491,6 +494,45 @@
       "source": "出兵點：大帝國前哨站",
       "title": "可汗設定範例",
       "travel": "使用行軍羽毛加快行軍"
+    },
+    "beriBuilder": {
+      "permissions": "高級貨幣與拆除：檢查前關閉",
+      "reserves": "預留貝里蒙德資源與跳過道具",
+      "stable": "派系馬廄：所選等級1至5",
+      "target": "內建指定目標或已檢查的自訂布局",
+      "title": "可選營地建造範例"
+    },
+    "beriReadiness": {
+      "booster": "勇氣增益條件：可選",
+      "food": "運輸需要消耗食物的預設部隊",
+      "preset": "檢查已儲存的部隊與工具欄位",
+      "title": "高塔攻擊準備範例"
+    },
+    "beriSave": {
+      "calendar": "持續運作時關閉行事曆",
+      "enable": "從自動化卡片開啟自動貝里蒙德世界",
+      "save": "檢查兵種比例後儲存設定",
+      "title": "儲存與啟用流程範例"
+    },
+    "beriSetup": {
+      "donor": "有足夠所需部隊的大帝國供應城堡",
+      "limit": "每日一般攻擊：額外上限0",
+      "preset": "已儲存的貝里蒙德攻擊預設",
+      "title": "攻擊與補給設定範例",
+      "travel": "高塔攻擊使用旅行羽毛"
+    },
+    "beriTools": {
+      "ladders": "攀牆梯：依一般攻擊配置",
+      "mantlets": "擋板：依一般攻擊配置",
+      "rams": "攻城槌：依一般攻擊配置",
+      "title": "營地工具最低數量範例"
+    },
+    "beriTransfers": {
+      "capacity": "剩餘容量：3；門檻：3",
+      "mix": "預設比例：2個A單位對1個B單位",
+      "next": "下一批：從供應庫存最多運送1個B",
+      "stock": "營地庫存：2個A、0個B",
+      "title": "按比例運輸範例"
     }
   },
   "autoStation": {
@@ -1429,5 +1471,218 @@
       "summary": "連續攻擊可汗營地，並在主城抵禦反擊"
     },
     "recommendationIntro": "建議值適用於自動可汗的日常使用，僅供參考，不會變更已儲存的設定。"
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "自動貝里蒙德依所選攻擊預設的兵種比例，為你擁有的貝里蒙德營地補充部隊，之後可攻擊高塔、補足工具，並以已確認的戰利品建造。",
+      "expectation": "運輸會等待營地與供應城堡的最新庫存、已回報的容量，以及前一批運兵完成；若供應庫存不足，可送出較少部隊，而缺少必要兵種時則暫停補充。",
+      "name": "自動貝里蒙德世界",
+      "summary": "補給並管理你的貝里蒙德營地"
+    },
+    "recommendationIntro": "建議選項描述自動貝里蒙德的一般使用方式，僅供參考，不會變更已儲存的設定。",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "可選營地建造設定示意圖",
+          "caption": "內建目標、馬廄目標、建造權限與預留項目。"
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "允許清除位於指定目標、無法搬移或存放的非管理建築。",
+            "label": "允許拆除",
+            "recommendation": "檢查目標中將清除的項目以前，建議保持關閉。"
+          },
+          "allow_premium_costs": {
+            "description": "允許符合條件且需花費高級貨幣的建造步驟。",
+            "label": "允許高級貨幣費用",
+            "recommendation": "除非你有意以高級貨幣建造，否則建議關閉。"
+          },
+          "auto_beri_builder_lane": {
+            "description": "以已確認的戰利品建造或升級營地的指定目標，不從其他王國運送資源。",
+            "label": "自動貝里蒙德建造流程",
+            "recommendation": "檢查目標和花費權限以前，建議關閉。"
+          },
+          "camp_resource_reserves": {
+            "description": "保留指定數量的貝里蒙德木材和石材，不讓建造流程使用。",
+            "label": "營地資源預留量",
+            "recommendation": "保留其他營地工作需要的數量。"
+          },
+          "construction_time_skip_reserves": {
+            "description": "保留指定數量的各種時間跳過道具，不讓建造流程使用。",
+            "label": "建造時間跳過道具預留量",
+            "recommendation": "保留其他活動需要的道具。"
+          },
+          "optional_custom_camp_target": {
+            "description": "只有想取代內建目標時，才擷取、預覽、儲存並啟用自訂布局。",
+            "label": "可選的自訂營地目標",
+            "recommendation": "檢查自訂布局以前，建議沿用內建目標。"
+          },
+          "stable_target": {
+            "description": "為內建目標選擇1至5級的派系馬廄目標等級。",
+            "label": "馬廄目標",
+            "recommendation": "選擇目前活動資源能支持的等級。"
+          },
+          "use_construction_time_skips": {
+            "description": "在保留所選跳過道具預留量的情況下推進已確認的建造計時器。",
+            "label": "使用建造時間跳過道具",
+            "recommendation": "除非加快建造值得消耗這些道具，否則建議關閉。"
+          }
+        },
+        "title": "選擇可選的營地建造設定"
+      },
+      "readiness": {
+        "image": {
+          "alt": "高塔攻擊準備設定示意圖",
+          "caption": "不表示真實增益或客戶資料的增益條件與預設編隊。"
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "啟用攻擊之前，檢查所選預設的波次、部隊和工具。",
+            "label": "攻擊預設編隊",
+            "recommendation": "在供應城堡與營地保留足夠的所選部隊及工具，以維持平常的攻擊節奏。"
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "在運輸、購買工具、準備營地、攻擊高塔或建造以前，要求勇氣增益處於生效狀態。",
+            "label": "僅在勇氣增益生效時執行",
+            "recommendation": "如果希望所有自動貝里蒙德流程都受增益條件限制，建議開啟。"
+          }
+        },
+        "title": "設定高塔攻擊準備條件"
+      },
+      "save": {
+        "image": {
+          "alt": "儲存與啟用設定示意圖",
+          "caption": "不顯示真實帳號的設定確認清單、開關和可選行事曆。"
+        },
+        "items": {
+          "automation_switch": {
+            "description": "確認營地、供應部隊、預設與可選花費設定後，從自動化卡片開啟自動貝里蒙德世界。",
+            "label": "自動化開關",
+            "recommendation": "完成設定後開啟。"
+          },
+          "calendar": {
+            "description": "持續運作時讓行事曆保持關閉；若需要時段限制，請設定平常時段並儲存排程。",
+            "label": "行事曆",
+            "recommendation": "活動期間持續運作時，建議關閉。"
+          },
+          "save_settings": {
+            "description": "啟用自動化以前，儲存預設、供應城堡、運輸頻率、攻擊限制、工具及可選建造設定。",
+            "label": "儲存設定"
+          }
+        },
+        "title": "儲存並啟用"
+      },
+      "setup": {
+        "image": {
+          "alt": "攻擊與補給來源設定示意圖",
+          "caption": "已儲存的攻擊預設、大帝國供應城堡、旅行羽毛、攻擊檢查及每日限制。"
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "設定自動貝里蒙德檢查能否再次攻擊高塔的頻率。",
+            "label": "攻擊檢查間隔",
+            "recommendation": "除非需要減少檢查次數，否則保留一般的30秒間隔。"
+          },
+          "attack_preset": {
+            "description": "選擇已儲存的貝里蒙德攻擊編隊；自動貝里蒙德會將其兵種比例用於運輸與高塔攻擊。",
+            "label": "攻擊預設",
+            "recommendation": "先建立並選擇你平常使用的貝里蒙德預設。"
+          },
+          "daily_normal_attack_limit": {
+            "description": "帳號範圍的每日一般攻擊次數達到上限時，停止新的自動貝里蒙德高塔攻擊；0代表取消這項額外限制。",
+            "label": "每日一般攻擊上限",
+            "recommendation": "除非使用帳號範圍的上限，否則建議設為0。"
+          },
+          "horse_travel_boost": {
+            "description": "為高塔攻擊選擇羽毛、金幣或紅寶石旅行方式。",
+            "label": "馬匹旅行加速",
+            "recommendation": "選用旅行羽毛，可快速移動而不必選擇紅寶石旅行。"
+          },
+          "open_settings": {
+            "description": "在自動化頁面開啟自動貝里蒙德世界卡片的設定。",
+            "label": "開啟設定"
+          },
+          "source_castle": {
+            "description": "選擇供應這些部隊的大帝國城堡或前哨站。",
+            "label": "供應城堡",
+            "recommendation": "選擇駐有你攻擊部隊的城堡。"
+          }
+        },
+        "title": "選擇攻擊與補給來源"
+      },
+      "tools": {
+        "image": {
+          "alt": "營地工具設定示意圖",
+          "caption": "三種工具的最低數量，以及明確為虛構的營地庫存。"
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "依相同規則將駐營攻城槌補充至此數量。",
+            "label": "攻城槌最低數量",
+            "recommendation": "依照平常預設的消耗量設定。"
+          },
+          "mantlets_minimum": {
+            "description": "依相同規則將駐營擋板補充至此數量。",
+            "label": "擋板最低數量",
+            "recommendation": "依照平常預設的消耗量設定。"
+          },
+          "scaling_ladders_minimum": {
+            "description": "使用符合條件的金幣報價，將營地梯子補充至此數量；0代表不管理。",
+            "label": "攀牆梯最低數量",
+            "recommendation": "依照平常預設和攻擊頻率所需數量設定。"
+          }
+        },
+        "title": "維持營地工具"
+      },
+      "transfers": {
+        "image": {
+          "alt": "按比例運輸部隊設定示意圖",
+          "caption": "虛構的2比1預設比例、營地庫存、剩餘容量及單一兵種的部分運送；數值只是範例，並非已儲存的預設值。"
+        },
+        "items": {
+          "check_interval": {
+            "description": "設定自動貝里蒙德重新取得運輸剩餘容量與兩座城堡庫存的頻率。",
+            "label": "檢查間隔",
+            "recommendation": "保留一般的30秒間隔。"
+          },
+          "food_only": {
+            "description": "只能運送消耗食物的預設部隊；不支援的單位或無法判定的兵種家族會顯示原因並暫停。",
+            "label": "僅運送消耗食物的部隊"
+          },
+          "minimum_free_capacity": {
+            "description": "只有已回報的剩餘容量達到此門檻時才開始運輸；單次按比例計算的運量可以更少。",
+            "label": "最低剩餘容量",
+            "recommendation": "使用符合你一般運輸頻率的最小剩餘容量門檻。"
+          },
+          "owned_berimond_camp": {
+            "description": "自動貝里蒙德會自動找到你擁有的貝里蒙德營地，因此無須輸入營地ID。",
+            "label": "擁有的貝里蒙德營地"
+          },
+          "partial_donor": {
+            "description": "如果供應城堡有部分所需兵種，自動貝里蒙德會少量運送；如果完全沒有，則等待而不改送其他兵種。",
+            "label": "部分供應庫存"
+          },
+          "pending_transfer": {
+            "description": "自動貝里蒙德會等每批運兵抵達並更新營地庫存後，才重新計算預設比例。",
+            "label": "待完成的運輸"
+          },
+          "preset_troop_mix": {
+            "description": "自動貝里蒙德會加總所選預設各波次與庭院中重複的部隊欄位，然後每次補充一種不足的兵種。",
+            "label": "預設兵種比例"
+          },
+          "troop_transport_skip": {
+            "description": "啟用運輸時間跳過時，選擇使用道具的時長。",
+            "label": "部隊運輸跳過道具",
+            "recommendation": "如有需要，將較長的跳過道具留給其他工作。"
+          },
+          "use_troop_transport_time_skips": {
+            "description": "將所選跳過道具套用到仍在途中的已確認運輸。",
+            "label": "使用部隊運輸時間跳過道具",
+            "recommendation": "除非加快營地補給值得消耗已存的跳過道具，否則建議關閉。"
+          }
+        },
+        "title": "設定按比例運輸部隊"
+      }
+    }
   }
 }

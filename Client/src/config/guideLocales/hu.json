@@ -34,7 +34,10 @@
     "advisorPreviewTitle": "Példa az Automatikus tanácsadó beállítására",
     "khanGuideIntro": "Kövesd ezeket a lépéseket az Automatikus kán beállításához; válassz példapanelt a nagyításhoz.",
     "khanGuideTitle": "Automatikus kán útmutató",
-    "khanPreviewTitle": "Automatikus kán beállításának példája"
+    "khanPreviewTitle": "Automatikus kán beállításának példája",
+    "beriGuideIntro": "Kövesd ezeket a lépéseket az Automatikus Berimond beállításához; válassz ki egy példapanelt a nagyításhoz.",
+    "beriGuideTitle": "Az Automatikus Berimond útmutatója",
+    "beriPreviewTitle": "Példa az Automatikus Berimond beállítására"
   },
   "autoTower": {
     "recommendationIntro": "Ezek a szokásos használatra vonatkozó ajánlások; mentés előtt nézd át őket.",
@@ -491,6 +494,45 @@
       "source": "Támadás innen: nagy birodalmi előőrs",
       "title": "Kánbeállítások példája",
       "travel": "Utazótoll gyors utazáshoz"
+    },
+    "beriBuilder": {
+      "permissions": "Prémium és bontás: kikapcsolva ellenőrzésig",
+      "reserves": "Tartalékold a berimondi erőforrásokat és időugrásokat",
+      "stable": "Frakcióistálló: választott szint 1–5",
+      "target": "Beépített pontos cél vagy ellenőrzött egyéni terv",
+      "title": "Példa opcionális táborépítésre"
+    },
+    "beriReadiness": {
+      "booster": "Vitézségi erősítő követelménye: opcionális",
+      "food": "A szállításhoz a sablon Élelmet fogyasztó csapatai kellenek",
+      "preset": "Ellenőrizd a mentett csapat- és eszközhelyeket",
+      "title": "Példa a toronytámadási készenlétre"
+    },
+    "beriSave": {
+      "calendar": "Naptár kikapcsolva a folyamatos működéshez",
+      "enable": "Kapcsold be az Automatikus Berimondot az Automatizálás kártyán",
+      "save": "A csapatarány ellenőrzése után mentsd a beállításokat",
+      "title": "Példa mentésre és bekapcsolásra"
+    },
+    "beriSetup": {
+      "donor": "Küldő a Nagy Birodalomban a szükséges csapatokkal",
+      "limit": "Napi normál támadások: 0 további korlát",
+      "preset": "Mentett berimondi támadási sablon",
+      "title": "Példa támadásra és ellátásra",
+      "travel": "Utazótoll a toronytámadásokhoz"
+    },
+    "beriTools": {
+      "ladders": "Létrák: a szokásos támadásokhoz igazítva",
+      "mantlets": "Pajzsok: a szokásos támadásokhoz igazítva",
+      "rams": "Faltörő kosok: a szokásos támadásokhoz igazítva",
+      "title": "Példa minimális eszközkészletre"
+    },
+    "beriTransfers": {
+      "capacity": "Szabad kapacitás: 3; küszöb: 3",
+      "mix": "Sablonarány: 2 A egység 1 B egységhez",
+      "next": "Következő szállítmány: legfeljebb 1 B a küldő készletéből",
+      "stock": "Tábori készlet: 2 A és 0 B",
+      "title": "Példa arányos szállításra"
     }
   },
   "autoStation": {
@@ -1429,5 +1471,218 @@
       "summary": "Láncold össze a kántábor támadásait, és védd meg a fővárat a megtorlástól"
     },
     "recommendationIntro": "Az ajánlott értékek az Automatikus kán szokásos használatát írják le; útmutatók, és nem módosítják a mentett beállításokat."
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "Az Automatikus Berimond a választott támadási sablon csapatarányai szerint erősíti a saját berimondi táborodat, majd tornyokat támadhat, eszközöket pótolhat és igazolt zsákmányból építkezhet.",
+      "expectation": "Az átszállítás friss tábori és küldővári készletre, jelentett kapacitásra és az előző szállítmány lezárására vár; a részleges készlet kisebb szállítmányt tesz lehetővé, a szükséges típus hiánya pedig szünetelteti a pótlást.",
+      "name": "Automatikus Berimond",
+      "summary": "Lásd el és működtesd berimondi táborodat"
+    },
+    "recommendationIntro": "Az ajánlások az Automatikus Berimond szokásos használatára vonatkoznak, és nem módosítják a mentett beállításokat.",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "Szemléltető beállítások az opcionális táborépítéshez",
+          "caption": "Beépített cél, istállószint, építési engedélyek és tartalékok."
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "Engedélyezd azoknak a nem kezelt épületeknek az eltávolítását, amelyek a pontos cél érdekében nem mozgathatók vagy tárolhatók.",
+            "label": "Bontás engedélyezése",
+            "recommendation": "Kikapcsolva, amíg át nem nézted a tervezett eltávolításokat."
+          },
+          "allow_premium_costs": {
+            "description": "Engedélyezd a megfelelő, prémium pénznemet felhasználó építési lépéseket.",
+            "label": "Prémium költségek engedélyezése",
+            "recommendation": "Kikapcsolva, hacsak nem akarsz kifejezetten prémium építkezést."
+          },
+          "auto_beri_builder_lane": {
+            "description": "Építs vagy fejlessz pontos tábori célt igazoltan visszaérkezett zsákmányból anélkül, hogy másik királyságból erőforrást szállítanál.",
+            "label": "Automatikus Berimond-építő",
+            "recommendation": "Kikapcsolva, amíg át nem nézted a célt és a költési engedélyeket."
+          },
+          "camp_resource_reserves": {
+            "description": "Tartsd távol az építőtől a berimondi fa és kő kiválasztott mennyiségét.",
+            "label": "Tábori erőforrás-tartalékok",
+            "recommendation": "Tartalékold, amire a tábor más feladataihoz szükséged van."
+          },
+          "construction_time_skip_reserves": {
+            "description": "Tartsd távol az építőtől minden időugró tárgy kiválasztott darabszámát.",
+            "label": "Építési időugrások tartaléka",
+            "recommendation": "Tartalékold, amire más tevékenységekhez szükséged van."
+          },
+          "optional_custom_camp_target": {
+            "description": "Csak akkor rögzíts, tekints meg, ments és aktiválj elrendezést, ha az a beépített célt helyettesíti.",
+            "label": "Opcionális egyéni táborcél",
+            "recommendation": "Tartsd meg a beépített célt, amíg nem vizsgáltál meg egyéni elrendezést."
+          },
+          "stable_target": {
+            "description": "Válaszd ki a beépített cél frakcióistállójának kívánt szintjét 1 és 5 között.",
+            "label": "Istálló célszintje",
+            "recommendation": "Olyan szintet válassz, amelyet az aktuális esemény erőforrásai fedeznek."
+          },
+          "use_construction_time_skips": {
+            "description": "Gyorsíts meg egy igazolt építési időzítőt a kijelölt időugrás-tartalékok megtartásával.",
+            "label": "Építési időugrások használata",
+            "recommendation": "Kikapcsolva, hacsak a gyorsabb építés meg nem éri ezeket a tárgyakat."
+          }
+        },
+        "title": "Válaszd ki az opcionális táborépítést"
+      },
+      "readiness": {
+        "image": {
+          "alt": "Szemléltető beállítások a toronytámadások előkészítéséhez",
+          "caption": "Az erősítő feltétel állapota és a sablon összeállítása valódi erősítő vagy ügyféladat nélkül."
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "A támadások bekapcsolása előtt ellenőrizd a kiválasztott sablon hullámait, csapatait és eszközeit.",
+            "label": "Támadási sablon összeállítása",
+            "recommendation": "Tarts elegendő kiválasztott csapatot és eszközt a küldő várban és a táborban a szokásos támadási ütemedhez."
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "Követelj meg aktív vitézségi erősítőt a szállítások, eszközvásárlások, tábori előkészületek, toronytámadások vagy építkezés folytatásához.",
+            "label": "Csak vitézségi erősítővel fusson",
+            "recommendation": "Bekapcsolva, ha minden Automatikus Berimond-feladatot az erősítőtől akarsz függővé tenni."
+          }
+        },
+        "title": "Készítsd elő a toronytámadásokat"
+      },
+      "save": {
+        "image": {
+          "alt": "Szemléltető beállítások a mentéshez és bekapcsoláshoz",
+          "caption": "Előkészítési lista, kapcsoló és opcionális naptár valódi fiók nélkül."
+        },
+        "items": {
+          "automation_switch": {
+            "description": "Kapcsold be az Automatikus Berimondot az Automatizálás kártyán, miután ellenőrizted a tábort, a küldő csapatait, a sablont és az opcionális költést.",
+            "label": "Automatizálási kapcsoló",
+            "recommendation": "Be a beállítás után."
+          },
+          "calendar": {
+            "description": "Folyamatos működéshez hagyd kikapcsolva a naptárt, vagy szükség esetén állítsd be és mentsd a szokásos órákat.",
+            "label": "Naptár",
+            "recommendation": "Kikapcsolva az esemény folyamatos futtatásához."
+          },
+          "save_settings": {
+            "description": "Az automatizálás bekapcsolása előtt mentsd a sablont, a küldőt, a szállítási ütemet, a támadási korlátokat, az eszközöket és az opcionális építési döntéseket.",
+            "label": "Beállítások mentése"
+          }
+        },
+        "title": "Mentés és bekapcsolás"
+      },
+      "setup": {
+        "image": {
+          "alt": "Szemléltető támadási és ellátási beállítások",
+          "caption": "Mentett támadási sablon, küldő vár a Nagy Birodalomban, Utazótoll, támadásellenőrzés és napi korlát."
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "Állítsd be, milyen gyakran keres újabb toronytámadást az automatizálás.",
+            "label": "Támadásellenőrzési időköz",
+            "recommendation": "Tartsd meg a szokásos 30 másodperces időközt, hacsak nem akarsz ritkább ellenőrzést."
+          },
+          "attack_preset": {
+            "description": "Válassz mentett berimondi támadási alakzatot; az automatizálás a csapatarányait használja szállításhoz és toronytámadáshoz.",
+            "label": "Támadási sablon",
+            "recommendation": "Előbb készítsd el és válaszd ki a szokásos berimondi sablonodat."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Állítsd le az új toronytámadásokat, ha a fiók normál támadásainak napi száma eléri ezt a korlátot; a 0 megszünteti a további korlátot.",
+            "label": "Normál támadások napi korlátja",
+            "recommendation": "0, hacsak nem használsz fiókszintű korlátot."
+          },
+          "horse_travel_boost": {
+            "description": "A toronytámadáshoz válassz tollas, érmés vagy rubinos utazást.",
+            "label": "Utazási gyorsítás",
+            "recommendation": "Utazótoll a gyors haladáshoz rubinos út választása nélkül."
+          },
+          "open_settings": {
+            "description": "Az Automatizálás oldalon nyisd meg az Auto Beri World kártya beállításait.",
+            "label": "Beállítások megnyitása"
+          },
+          "source_castle": {
+            "description": "Válaszd ki a Nagy Birodalom várát vagy előőrsét, amely a csapatokat adja.",
+            "label": "Küldő vár",
+            "recommendation": "Azt a várat válaszd, ahol a támadó sereged áll."
+          }
+        },
+        "title": "Válaszd ki a támadást és az ellátási forrást"
+      },
+      "tools": {
+        "image": {
+          "alt": "Szemléltető tábori eszközbeállítások",
+          "caption": "Három eszközminimum és egy egyértelműen kitalált tábori készlet."
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "Ugyanezzel a szabállyal pótold ennyi állomásozó faltörő kost.",
+            "label": "Faltörő kosok minimuma",
+            "recommendation": "Igazítsd a szokásos sablonod felhasználásához."
+          },
+          "mantlets_minimum": {
+            "description": "Ugyanezzel a szabállyal pótold ennyi állomásozó pajzsot.",
+            "label": "Pajzsok minimuma",
+            "recommendation": "Igazítsd a szokásos sablonod felhasználásához."
+          },
+          "scaling_ladders_minimum": {
+            "description": "Megfelelő érmés ajánlatokból pótold ennyi állomásozó létrát a táborban; a 0 nem kezeli őket.",
+            "label": "Létrák minimuma",
+            "recommendation": "Igazítsd a szokásos sablonodhoz és támadási ütemedhez."
+          }
+        },
+        "title": "Tartsd fenn a tábori eszközöket"
+      },
+      "transfers": {
+        "image": {
+          "alt": "Szemléltető beállítások az arányos csapatszállításhoz",
+          "caption": "Kitalált 2:1 arány, tábori készlet, szabad kapacitás és egyetlen típus részleges szállítmánya; az értékek példák, nem mentett alapértékek."
+        },
+        "items": {
+          "check_interval": {
+            "description": "Állítsd be, milyen gyakran frissíti az automatizálás a szabad szállítási kapacitást és mindkét vár készletét.",
+            "label": "Ellenőrzési időköz",
+            "recommendation": "Tartsd meg a szokásos 30 másodperces időközt."
+          },
+          "food_only": {
+            "description": "Csak az Élelmet fogyasztó sabloncsapatok szállíthatók; a nem támogatott egységek vagy fel nem oldott csapatcsaládok indoklással megállítják a műveletet.",
+            "label": "Csak Élelmet fogyasztó csapatok"
+          },
+          "minimum_free_capacity": {
+            "description": "Csak akkor kezdj szállítást, ha a jelentett szabad kapacitás eléri ezt a küszöböt; egyetlen arányos szállítmány kisebb is lehet.",
+            "label": "Minimális szabad kapacitás",
+            "recommendation": "A szokásos szállítási ütemedhez illő legkisebb szabad küszöböt válaszd."
+          },
+          "owned_berimond_camp": {
+            "description": "Az automatizálás magától megtalálja a saját berimondi táborodat, ezért nem kell táborazonosítót beírnod.",
+            "label": "Saját berimondi tábor"
+          },
+          "partial_donor": {
+            "description": "Ha a küldőnél van valamennyi a szükséges csapattípusból, az automatizálás ezt a kisebb mennyiséget küldi; ha nincs, más típus küldése helyett vár.",
+            "label": "Részleges készlet a küldőnél"
+          },
+          "pending_transfer": {
+            "description": "Az automatizálás megvárja minden szállítmány érkezését, és frissíti a tábor készletét, mielőtt újraszámolná a sablon arányát.",
+            "label": "Folyamatban lévő szállítás"
+          },
+          "preset_troop_mix": {
+            "description": "Az automatizálás összeadja a kiválasztott sablon hullámainak és udvarának ismétlődő csapathelyeit, majd egyszerre egy alulreprezentált típust pótol.",
+            "label": "A sablon csapataránya"
+          },
+          "troop_transport_skip": {
+            "description": "Válaszd ki a bekapcsolt szállításgyorsításkor használt tárgy időtartamát.",
+            "label": "Szállítási időugrás",
+            "recommendation": "Szükség esetén tartalékold a hosszabb időugrásokat más feladatokra."
+          },
+          "use_troop_transport_time_skips": {
+            "description": "Használd a kiválasztott időugrást egy igazolt szállításon, amíg az úton van.",
+            "label": "Szállítási időugrások használata",
+            "recommendation": "Kikapcsolva, hacsak a gyorsabb tábori ellátás meg nem éri az eltett tárgyakat."
+          }
+        },
+        "title": "Állítsd be az arányos csapatszállítást"
+      }
+    }
   }
 }

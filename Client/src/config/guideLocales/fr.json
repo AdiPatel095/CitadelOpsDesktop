@@ -34,7 +34,10 @@
     "advisorPreviewTitle": "Exemple de configuration d'Auto Conseiller",
     "khanGuideIntro": "Suivez ces étapes pour configurer Khan automatique ; sélectionnez un panneau d'exemple pour l'agrandir.",
     "khanGuideTitle": "Guide de Khan automatique",
-    "khanPreviewTitle": "Exemple de configuration de Khan automatique"
+    "khanPreviewTitle": "Exemple de configuration de Khan automatique",
+    "beriGuideIntro": "Suivez ces étapes pour configurer Auto Beri World ; agrandissez un panneau d’exemple au besoin.",
+    "beriGuideTitle": "Guide Auto Beri World",
+    "beriPreviewTitle": "Exemple de configuration Auto Beri World"
   },
   "autoTower": {
     "recommendationIntro": "Ces recommandations concernent une utilisation régulière ; vérifiez-les avant d’enregistrer.",
@@ -491,6 +494,45 @@
       "source": "Attaquer depuis : avant-poste du Grand Empire",
       "title": "Exemple de configuration du Khan",
       "travel": "Plume de voyage pour aller vite"
+    },
+    "beriBuilder": {
+      "permissions": "Coûts premium et démolition : désactivés sauf vérification",
+      "reserves": "Réserver les ressources de Bérimond et les accélérateurs",
+      "stable": "Écurie de faction : niveau choisi de 1 à 5",
+      "target": "Objectif intégré exact ou disposition personnalisée vérifiée",
+      "title": "Exemple de construction facultative du camp"
+    },
+    "beriReadiness": {
+      "booster": "Condition de booster de bravoure : facultative",
+      "food": "Les transferts exigent des troupes du modèle nourries",
+      "preset": "Vérifier les troupes et outils du modèle enregistré",
+      "title": "Exemple de préparation des tours"
+    },
+    "beriSave": {
+      "calendar": "Calendrier désactivé pour un fonctionnement continu",
+      "enable": "Activer Auto Beri sur la carte Automatisation",
+      "save": "Enregistrer après vérification des proportions de troupes",
+      "title": "Exemple d’enregistrement et d’activation"
+    },
+    "beriSetup": {
+      "donor": "Château donneur du Grand Empire avec les troupes nécessaires",
+      "limit": "Attaques normales quotidiennes : 0 limite ajoutée",
+      "preset": "Modèle d’attaque de Bérimond enregistré",
+      "title": "Exemple d’attaque et d’approvisionnement",
+      "travel": "Plume de voyage pour les attaques de tours"
+    },
+    "beriTools": {
+      "ladders": "Échelles : adaptées aux attaques habituelles",
+      "mantlets": "Mantelets : adaptés aux attaques habituelles",
+      "rams": "Béliers : adaptés aux attaques habituelles",
+      "title": "Exemple de stocks minimaux d’outils"
+    },
+    "beriTransfers": {
+      "capacity": "Capacité libre : 3 ; seuil : 3",
+      "mix": "Proportions du modèle : 2 unités A pour 1 unité B",
+      "next": "Prochain envoi : jusqu’à 1 B du stock donneur",
+      "stock": "Stock du camp : 2 A et 0 B",
+      "title": "Exemple de transferts proportionnels"
     }
   },
   "autoStation": {
@@ -1429,5 +1471,218 @@
       "summary": "Enchaînez les attaques du camp du Khan et défendez les représailles au château principal"
     },
     "recommendationIntro": "Les valeurs recommandées décrivent l'utilisation habituelle de Khan automatique ; elles servent de guide et ne modifient pas les réglages enregistrés."
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "Auto Beri renforce votre camp de Bérimond selon les proportions de troupes du modèle d’attaque choisi, puis peut attaquer les tours, réapprovisionner les outils et construire grâce au butin confirmé.",
+      "expectation": "Les transferts attendent des inventaires récents au camp et au château donneur, la capacité déclarée et la fin de tout envoi précédent ; un stock partiel permet un envoi réduit, tandis que l’absence du type requis suspend le réapprovisionnement.",
+      "name": "Auto Beri World",
+      "summary": "Approvisionnez et gérez votre camp de Bérimond"
+    },
+    "recommendationIntro": "Les choix recommandés concernent l’usage régulier d’Auto Beri ; ils ne modifient aucun réglage enregistré.",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "Réglages illustratifs de construction facultative du camp Auto Beri",
+          "caption": "Objectif intégré, niveau d’écurie, autorisations de construction et réserves."
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "Autorisez la suppression des bâtiments non gérés qui ne peuvent être déplacés ni stockés pour atteindre exactement l’objectif.",
+            "label": "Autoriser la démolition",
+            "recommendation": "Désactivé, sauf après vérification des suppressions prévues."
+          },
+          "allow_premium_costs": {
+            "description": "Autorisez les étapes de construction admissibles qui dépensent une monnaie premium.",
+            "label": "Autoriser les coûts premium",
+            "recommendation": "Désactivé, sauf si vous souhaitez explicitement des constructions premium."
+          },
+          "auto_beri_builder_lane": {
+            "description": "Construisez ou améliorez l’objectif exact du camp avec le butin revenu et confirmé, sans transporter de ressources d’un autre royaume.",
+            "label": "Construction Auto Beri",
+            "recommendation": "Désactivée jusqu’à la vérification de l’objectif et des autorisations de dépense."
+          },
+          "camp_resource_reserves": {
+            "description": "Réservez les quantités choisies de bois et de pierre de Bérimond hors de la construction automatique.",
+            "label": "Réserves de ressources du camp",
+            "recommendation": "Réservez ce qu’exigent les autres travaux du camp."
+          },
+          "construction_time_skip_reserves": {
+            "description": "Réservez le nombre choisi de chaque accélérateur hors de la construction automatique.",
+            "label": "Réserves d’accélérateurs de construction",
+            "recommendation": "Réservez ce qu’exigent vos autres activités."
+          },
+          "optional_custom_camp_target": {
+            "description": "Capturez, prévisualisez, enregistrez et activez une disposition seulement si elle doit remplacer l’objectif intégré.",
+            "label": "Objectif personnalisé facultatif",
+            "recommendation": "Conservez l’objectif intégré tant que vous n’avez pas examiné une disposition personnalisée."
+          },
+          "stable_target": {
+            "description": "Choisissez pour l’objectif intégré le niveau souhaité de l’écurie de faction, de 1 à 5.",
+            "label": "Niveau cible de l’écurie",
+            "recommendation": "Choisissez un niveau adapté aux ressources de votre événement actuel."
+          },
+          "use_construction_time_skips": {
+            "description": "Accélérez un chantier confirmé tout en conservant les accélérateurs réservés.",
+            "label": "Utiliser des accélérateurs de construction",
+            "recommendation": "Désactivé, sauf si une construction plus rapide justifie ces objets."
+          }
+        },
+        "title": "Choisir la construction facultative du camp"
+      },
+      "readiness": {
+        "image": {
+          "alt": "Réglages illustratifs de préparation des attaques de tours Auto Beri",
+          "caption": "État de la condition de booster et composition du modèle, sans booster actif ni données client réelles."
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "Vérifiez les vagues, les troupes et les outils du modèle choisi avant d’activer les attaques.",
+            "label": "Composition du modèle d’attaque",
+            "recommendation": "Gardez assez de chaque troupe et outil choisis au château donneur et au camp pour votre rythme habituel."
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "Exigez un booster de bravoure actif avant les transferts, achats d’outils, préparatifs du camp, attaques de tours et constructions.",
+            "label": "Exécuter seulement avec un booster de bravoure",
+            "recommendation": "Activé si tous les volets d’Auto Beri doivent dépendre du booster."
+          }
+        },
+        "title": "Préparer les attaques de tours"
+      },
+      "save": {
+        "image": {
+          "alt": "Réglages illustratifs d’enregistrement et d’activation d’Auto Beri",
+          "caption": "Liste de préparation, interrupteur et calendrier facultatif, sans compte réel."
+        },
+        "items": {
+          "automation_switch": {
+            "description": "Activez Auto Beri depuis sa carte Automatisation après avoir vérifié le camp, les troupes du donneur, le modèle et les dépenses facultatives.",
+            "label": "Interrupteur d’automatisation",
+            "recommendation": "Activé après la préparation."
+          },
+          "calendar": {
+            "description": "Laissez le calendrier désactivé pour un fonctionnement continu, ou définissez vos heures habituelles puis enregistrez-le si nécessaire.",
+            "label": "Calendrier",
+            "recommendation": "Désactivé pour un événement suivi en continu."
+          },
+          "save_settings": {
+            "description": "Enregistrez le modèle, le donneur, le rythme des transferts, les limites d’attaque, les outils et les choix de construction avant d’activer l’automatisation.",
+            "label": "Enregistrer les réglages"
+          }
+        },
+        "title": "Enregistrer et activer"
+      },
+      "setup": {
+        "image": {
+          "alt": "Réglages illustratifs d’attaque et d’approvisionnement Auto Beri",
+          "caption": "Modèle d’attaque enregistré, château donneur du Grand Empire, Plume de voyage, contrôle des attaques et limite quotidienne."
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "Définissez la fréquence à laquelle Auto Beri cherche une autre attaque de tour.",
+            "label": "Intervalle de contrôle des attaques",
+            "recommendation": "Gardez l’intervalle habituel de 30 secondes, sauf si vous souhaitez moins de contrôles."
+          },
+          "attack_preset": {
+            "description": "Choisissez une formation d’attaque de Bérimond enregistrée ; Auto Beri utilise ses proportions de troupes pour les transferts et les attaques de tours.",
+            "label": "Modèle d’attaque",
+            "recommendation": "Créez et choisissez d’abord votre modèle habituel de Bérimond."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Arrêtez les nouvelles attaques de tours Auto Beri quand le compteur quotidien de toutes les attaques normales du compte atteint cette limite ; 0 supprime cette limite ajoutée.",
+            "label": "Limite quotidienne d’attaques normales",
+            "recommendation": "0, sauf si vous utilisez une limite pour tout le compte."
+          },
+          "horse_travel_boost": {
+            "description": "Choisissez pour les attaques de tours un déplacement par plume, pièces ou rubis.",
+            "label": "Accélération du voyage",
+            "recommendation": "Plume de voyage pour aller vite sans choisir un trajet en rubis."
+          },
+          "open_settings": {
+            "description": "Sur la page Automatisation, ouvrez les réglages de la carte Auto Beri World.",
+            "label": "Ouvrir les réglages"
+          },
+          "source_castle": {
+            "description": "Choisissez le château ou l’avant-poste du Grand Empire qui fournit ces troupes.",
+            "label": "Château donneur",
+            "recommendation": "Choisissez le château où se trouve votre armée d’attaque."
+          }
+        },
+        "title": "Choisir l’attaque et la source d’approvisionnement"
+      },
+      "tools": {
+        "image": {
+          "alt": "Réglages illustratifs des outils du camp Auto Beri",
+          "caption": "Les trois stocks minimaux d’outils et un inventaire de camp clairement fictif."
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "Réapprovisionnez ce nombre de béliers stationnés selon la même règle.",
+            "label": "Stock minimal de béliers",
+            "recommendation": "Adaptez-le à l’usage de votre modèle habituel."
+          },
+          "mantlets_minimum": {
+            "description": "Réapprovisionnez ce nombre de mantelets stationnés selon la même règle.",
+            "label": "Stock minimal de mantelets",
+            "recommendation": "Adaptez-le à l’usage de votre modèle habituel."
+          },
+          "scaling_ladders_minimum": {
+            "description": "Réapprovisionnez ce nombre d’échelles stationnées au camp avec des offres admissibles en pièces ; 0 les laisse sans gestion.",
+            "label": "Stock minimal d’échelles",
+            "recommendation": "Adaptez-le au modèle et au rythme d’attaque habituels."
+          }
+        },
+        "title": "Entretenir les outils du camp"
+      },
+      "transfers": {
+        "image": {
+          "alt": "Réglages illustratifs des transferts proportionnels de troupes Auto Beri",
+          "caption": "Proportions fictives 2:1, stock du camp, capacité libre et envoi partiel d’un seul type ; ces valeurs sont des exemples, pas des défauts enregistrés."
+        },
+        "items": {
+          "check_interval": {
+            "description": "Définissez la fréquence d’actualisation de la capacité libre et des inventaires des deux châteaux.",
+            "label": "Intervalle de contrôle",
+            "recommendation": "Gardez l’intervalle habituel de 30 secondes."
+          },
+          "food_only": {
+            "description": "Seules les troupes du modèle consommant de la nourriture sont transférables ; les unités non prises en charge ou les familles non résolues suspendent l’opération avec une raison.",
+            "label": "Transferts réservés aux troupes nourries"
+          },
+          "minimum_free_capacity": {
+            "description": "Commencez les transferts seulement lorsque la capacité libre déclarée atteint ce seuil ; un envoi proportionnel individuel peut être plus petit.",
+            "label": "Capacité libre minimale",
+            "recommendation": "Choisissez le plus petit seuil libre adapté à votre rythme de transfert habituel."
+          },
+          "owned_berimond_camp": {
+            "description": "Auto Beri trouve automatiquement votre propre camp de Bérimond ; aucun identifiant de camp n’est à saisir.",
+            "label": "Camp de Bérimond possédé"
+          },
+          "partial_donor": {
+            "description": "Si le donneur possède une partie du type nécessaire, Auto Beri envoie cette quantité réduite ; s’il n’en possède aucune, il attend plutôt que d’envoyer un autre type.",
+            "label": "Stock partiel du donneur"
+          },
+          "pending_transfer": {
+            "description": "Auto Beri attend l’arrivée de chaque envoi et actualise le stock du camp avant de recalculer les proportions du modèle.",
+            "label": "Transfert en cours"
+          },
+          "preset_troop_mix": {
+            "description": "Auto Beri additionne les emplacements de troupes répétés des vagues et de la cour du modèle choisi, puis réapprovisionne un type sous-représenté à la fois.",
+            "label": "Proportions des troupes du modèle"
+          },
+          "troop_transport_skip": {
+            "description": "Choisissez la durée de l’objet utilisé quand l’accélération du transport est active.",
+            "label": "Accélérateur de transport",
+            "recommendation": "Réservez les accélérateurs longs pour d’autres tâches si nécessaire."
+          },
+          "use_troop_transport_time_skips": {
+            "description": "Appliquez l’accélérateur choisi à un transfert confirmé pendant son trajet.",
+            "label": "Utiliser des accélérateurs de transport",
+            "recommendation": "Désactivé, sauf si un approvisionnement plus rapide justifie les objets économisés."
+          }
+        },
+        "title": "Régler les transferts proportionnels de troupes"
+      }
+    }
   }
 }

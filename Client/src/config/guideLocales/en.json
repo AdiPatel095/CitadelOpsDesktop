@@ -34,7 +34,10 @@
     "advisorPreviewTitle": "Auto Advisor setup example",
     "khanGuideTitle": "Auto Khan guide",
     "khanGuideIntro": "Follow these steps to set up Auto Khan; select an example panel to enlarge it.",
-    "khanPreviewTitle": "Auto Khan setup example"
+    "khanPreviewTitle": "Auto Khan setup example",
+    "beriGuideTitle": "Auto Beri World guide",
+    "beriGuideIntro": "Follow these steps to set up Auto Beri World; select an example panel to enlarge it.",
+    "beriPreviewTitle": "Auto Beri World setup example"
   },
   "autoTower": {
     "recommendationIntro": "These are recommendations for regular use; review them before saving.",
@@ -491,6 +494,45 @@
       "enable": "Enable Auto Khan on Automation card",
       "defense": "Check main-castle defense before retaliation",
       "priority": "Auto Station handles player attacks separately"
+    },
+    "beriSetup": {
+      "title": "Example attack and supply setup",
+      "preset": "Saved Berimond attack preset",
+      "donor": "Great Empire donor with needed troops",
+      "travel": "Travel Feather for tower attacks",
+      "limit": "Daily normal attacks: 0 added cap"
+    },
+    "beriTransfers": {
+      "title": "Example proportional transfers",
+      "mix": "Preset mix: 2 units A to 1 unit B",
+      "stock": "Camp stock: 2 A and 0 B",
+      "capacity": "Free capacity: 3; threshold: 3",
+      "next": "Next shipment: up to 1 B from donor stock"
+    },
+    "beriReadiness": {
+      "title": "Example tower readiness",
+      "booster": "Gallantry booster gate: optional",
+      "preset": "Review saved troop and tool slots",
+      "food": "Transfers require Food-fed preset troops"
+    },
+    "beriTools": {
+      "title": "Example camp tool minimums",
+      "ladders": "Scaling ladders: match usual attacks",
+      "rams": "Battering rams: match usual attacks",
+      "mantlets": "Mantlets: match usual attacks"
+    },
+    "beriBuilder": {
+      "title": "Example optional camp builder",
+      "target": "Built-in exact target or reviewed custom layout",
+      "stable": "Faction Stable: selected level 1–5",
+      "permissions": "Premium and demolition: off unless reviewed",
+      "reserves": "Reserve Berimond resources and skips"
+    },
+    "beriSave": {
+      "title": "Example save and enable flow",
+      "save": "Save settings after reviewing troop mix",
+      "enable": "Enable Auto Beri World on Automation card",
+      "calendar": "Calendar off for continuous operation"
     }
   },
   "autoStation": {
@@ -1428,6 +1470,219 @@
           "caption": "Check the main-castle defense before enabling Khan retaliations."
         }
       }
+    }
+  },
+  "autoBeri": {
+    "recommendationIntro": "Recommended choices describe regular Auto Beri use; they are guidance and do not change saved settings.",
+    "steps": {
+      "setup": {
+        "title": "Choose your attack and supply source",
+        "items": {
+          "open_settings": {
+            "label": "Open settings",
+            "description": "On the Automation page, open the Auto Beri World card settings."
+          },
+          "attack_preset": {
+            "label": "Attack preset",
+            "description": "Choose a saved Berimond attack formation; Auto Beri uses its troop mix for transfers as well as tower attacks.",
+            "recommendation": "Create and select your usual Berimond preset first."
+          },
+          "source_castle": {
+            "label": "Source castle",
+            "description": "Choose the Great Empire castle or outpost supplying those troops.",
+            "recommendation": "Select the castle that holds your attack army."
+          },
+          "horse_travel_boost": {
+            "label": "Horse travel boost",
+            "description": "Choose feather, coin, or ruby travel for tower attacks.",
+            "recommendation": "Travel Feather for fast travel without selecting ruby travel."
+          },
+          "attack_check_interval": {
+            "label": "Attack check interval",
+            "description": "Set how often Auto Beri checks for another tower attack.",
+            "recommendation": "Keep the usual 30-second interval unless you need fewer checks."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Daily normal attack limit",
+            "description": "Stop new Auto Beri tower attacks at the account-wide daily normal-attack count; 0 removes this added limit.",
+            "recommendation": "0 unless you use an account-wide cap."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Beri choose your attack and supply source settings",
+          "caption": "Saved attack preset, Great Empire donor castle, Travel Feather, attack check, and daily limit."
+        }
+      },
+      "transfers": {
+        "title": "Set proportional troop transfers",
+        "items": {
+          "owned_berimond_camp": {
+            "label": "Owned Berimond camp",
+            "description": "Auto Beri finds your owned Berimond camp automatically, so there is no camp ID to enter."
+          },
+          "preset_troop_mix": {
+            "label": "Preset troop mix",
+            "description": "Auto Beri totals repeated troop slots across the selected preset’s waves and courtyard, then replenishes one underrepresented type at a time."
+          },
+          "food_only": {
+            "label": "Food-only transfers",
+            "description": "Only Food-fed preset troops can transfer; unsupported units or unresolved troop families pause with a reason."
+          },
+          "partial_donor": {
+            "label": "Partial donor stock",
+            "description": "When the donor has some of the needed troop type, Auto Beri sends that smaller amount; with none, it waits instead of sending another type."
+          },
+          "pending_transfer": {
+            "label": "Pending transfer",
+            "description": "Auto Beri waits for each shipment to arrive and refreshes camp stock before recalculating the preset mix."
+          },
+          "check_interval": {
+            "label": "Check interval",
+            "description": "Set how often Auto Beri refreshes free transfer capacity and both castle inventories.",
+            "recommendation": "Keep the usual 30-second interval."
+          },
+          "minimum_free_capacity": {
+            "label": "Minimum free capacity",
+            "description": "Begin transfers only when reported free capacity reaches this threshold; an individual proportional shipment can be smaller.",
+            "recommendation": "Use the smallest free-capacity threshold that suits your usual transfer pace."
+          },
+          "use_troop_transport_time_skips": {
+            "label": "Use troop transport time skips",
+            "description": "Apply the selected skip to a confirmed transfer while it is still travelling.",
+            "recommendation": "Off unless faster camp resupply is worth the saved skip items."
+          },
+          "troop_transport_skip": {
+            "label": "Troop transport skip",
+            "description": "Choose the duration of the item used when transport skipping is on.",
+            "recommendation": "Reserve longer skips for other tasks if you need them."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Beri set proportional troop transfers settings",
+          "caption": "A fictional 2:1 preset mix, camp stock, free capacity, and one partial single-type shipment; values are examples, not saved defaults."
+        }
+      },
+      "readiness": {
+        "title": "Set tower attack readiness",
+        "items": {
+          "only_run_with_a_gallantry_booster": {
+            "label": "Only run with a Gallantry booster",
+            "description": "Require an active Gallantry booster before transfers, tool purchases, camp setup, tower attacks, or construction proceed.",
+            "recommendation": "On if you want every Auto Beri lane gated by the booster."
+          },
+          "attack_preset_loadout": {
+            "label": "Attack preset loadout",
+            "description": "Review the selected preset's waves, troops, and tools before enabling attacks.",
+            "recommendation": "Keep enough of each selected troop and tool at the donor and camp for your normal attack pace."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Beri set tower attack readiness settings",
+          "caption": "Booster gate status and preset loadout, with no implied live booster or customer data."
+        }
+      },
+      "tools": {
+        "title": "Maintain camp tools",
+        "items": {
+          "scaling_ladders_minimum": {
+            "label": "Scaling ladders minimum",
+            "description": "Replenish this many stationed ladders at the camp using eligible coin offers; 0 leaves them unmanaged.",
+            "recommendation": "Match the number your usual preset and attack pace need."
+          },
+          "battering_rams_minimum": {
+            "label": "Battering rams minimum",
+            "description": "Replenish this many stationed rams under the same rule.",
+            "recommendation": "Match your usual preset's use."
+          },
+          "mantlets_minimum": {
+            "label": "Mantlets minimum",
+            "description": "Replenish this many stationed mantlets under the same rule.",
+            "recommendation": "Match your usual preset's use."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Beri maintain camp tools settings",
+          "caption": "The three tool minimums and a clearly fictional camp inventory."
+        }
+      },
+      "builder": {
+        "title": "Choose optional camp construction",
+        "items": {
+          "auto_beri_builder_lane": {
+            "label": "Auto Beri Builder lane",
+            "description": "Build or upgrade an exact camp target using confirmed returned loot, without transporting resources from another kingdom.",
+            "recommendation": "Off until you have reviewed the target and spending permissions."
+          },
+          "stable_target": {
+            "label": "Stable target",
+            "description": "Choose the desired Faction Stable level from 1 through 5 for the built-in target.",
+            "recommendation": "Choose the level your current event resources can support."
+          },
+          "optional_custom_camp_target": {
+            "label": "Optional custom camp target",
+            "description": "Capture, preview, save, and activate a layout only if you want it to replace the built-in target.",
+            "recommendation": "Keep the built-in target unless you have inspected a custom layout."
+          },
+          "use_construction_time_skips": {
+            "label": "Use construction time skips",
+            "description": "Advance a confirmed build timer while keeping the selected skip reserves.",
+            "recommendation": "Off unless faster construction is worth those items."
+          },
+          "allow_premium_costs": {
+            "label": "Allow premium costs",
+            "description": "Permit eligible construction steps that spend premium currency.",
+            "recommendation": "Off unless you intentionally want premium construction."
+          },
+          "allow_demolition": {
+            "label": "Allow demolition",
+            "description": "Permit exact-target cleanup of unmanaged buildings that cannot be moved or stored.",
+            "recommendation": "Off unless you have reviewed the target's removals."
+          },
+          "camp_resource_reserves": {
+            "label": "Camp resource reserves",
+            "description": "Keep the chosen amounts of Berimond wood and stone unavailable to the builder.",
+            "recommendation": "Reserve what you need for other camp work."
+          },
+          "construction_time_skip_reserves": {
+            "label": "Construction time-skip reserves",
+            "description": "Keep the chosen number of each skip item unavailable to the builder.",
+            "recommendation": "Reserve what you need for other activities."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Beri choose optional camp construction settings",
+          "caption": "Built-in target, stable target, construction permissions, and reserve groups."
+        }
+      },
+      "save": {
+        "title": "Save and enable",
+        "items": {
+          "save_settings": {
+            "label": "Save settings",
+            "description": "Save the preset, donor, transfer pacing, attack limits, tools, and optional build choices before enabling the automation."
+          },
+          "automation_switch": {
+            "label": "Automation switch",
+            "description": "Turn on Auto Beri World from its Automation card after confirming your camp, donor troops, preset, and optional spending settings.",
+            "recommendation": "On after setup."
+          },
+          "calendar": {
+            "label": "Calendar",
+            "description": "Leave the schedule off for continuous operation, or set your usual hours and save the schedule if you need a time window.",
+            "recommendation": "Off for ongoing event operation."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Beri save and enable settings",
+          "caption": "Saved setup checklist, switch, and optional schedule, without showing a live account."
+        }
+      }
+    },
+    "feature": {
+      "name": "Auto Beri World",
+      "summary": "Supply and run your Berimond camp",
+      "description": "Auto Beri uses your selected attack preset to reinforce an owned Berimond camp in proportion, then can attack towers, replenish tools and build from confirmed loot.",
+      "expectation": "Transfers wait for a fresh camp and donor inventory, reported capacity and any prior shipment to settle; partial donor stock can send a smaller shipment, while a missing needed type pauses replenishment."
     }
   }
 }

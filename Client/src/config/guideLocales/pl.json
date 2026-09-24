@@ -34,7 +34,10 @@
     "advisorPreviewTitle": "Przykład konfiguracji Automatycznego Doradcy",
     "khanGuideIntro": "Wykonaj te kroki, aby ustawić Automatycznego Chana; wybierz przykładowy panel, aby go powiększyć.",
     "khanGuideTitle": "Przewodnik Automatycznego Chana",
-    "khanPreviewTitle": "Przykład ustawień Automatycznego Chana"
+    "khanPreviewTitle": "Przykład ustawień Automatycznego Chana",
+    "beriGuideIntro": "Wykonaj te kroki, aby ustawić Automatyczny Berimond; wybierz przykładowy panel, by go powiększyć.",
+    "beriGuideTitle": "Poradnik Automatycznego Berimondu",
+    "beriPreviewTitle": "Przykładowa konfiguracja Automatycznego Berimondu"
   },
   "autoTower": {
     "recommendationIntro": "Te zalecenia dotyczą regularnego korzystania; sprawdź je przed zapisaniem.",
@@ -491,6 +494,45 @@
       "source": "Atakuj z: posterunek w Wielkim Cesarstwie",
       "title": "Przykład ustawień Chana",
       "travel": "Pióro Podróży do szybkiej podróży"
+    },
+    "beriBuilder": {
+      "permissions": "Premium i wyburzanie: wyłączone do przeglądu",
+      "reserves": "Rezerwuj zasoby Berimondu i przyspieszenia",
+      "stable": "Stajnia frakcji: wybrany poziom 1–5",
+      "target": "Wbudowany dokładny cel lub sprawdzony własny układ",
+      "title": "Przykład opcjonalnej rozbudowy obozu"
+    },
+    "beriReadiness": {
+      "booster": "Wymagane wzmocnienie waleczności: opcjonalne",
+      "food": "Transport wymaga wojsk schematu zużywających Żywność",
+      "preset": "Sprawdź zapisane miejsca na wojska i narzędzia",
+      "title": "Przykład gotowości do ataków na wieże"
+    },
+    "beriSave": {
+      "calendar": "Kalendarz wyłączony do ciągłej pracy",
+      "enable": "Włącz Automatyczny Berimond na karcie Automatyzacja",
+      "save": "Zapisz ustawienia po sprawdzeniu proporcji wojsk",
+      "title": "Przykład zapisu i włączenia"
+    },
+    "beriSetup": {
+      "donor": "Źródło w Wielkim Cesarstwie z wymaganymi wojskami",
+      "limit": "Dziennie zwykłe ataki: 0 dodatkowego limitu",
+      "preset": "Zapisany schemat ataku na Berimond",
+      "title": "Przykład ataku i zaopatrzenia",
+      "travel": "Pióro podróżne dla ataków na wieże"
+    },
+    "beriTools": {
+      "ladders": "Drabiny: według zwykłych ataków",
+      "mantlets": "Osłony: według zwykłych ataków",
+      "rams": "Tarany: według zwykłych ataków",
+      "title": "Przykład minimalnych zapasów narzędzi"
+    },
+    "beriTransfers": {
+      "capacity": "Wolna pojemność: 3; próg: 3",
+      "mix": "Proporcje schematu: 2 jednostki A na 1 jednostkę B",
+      "next": "Następna wysyłka: do 1 B ze źródła",
+      "stock": "Stan obozu: 2 A i 0 B",
+      "title": "Przykład proporcjonalnych transportów"
     }
   },
   "autoStation": {
@@ -1429,5 +1471,218 @@
       "summary": "Łącz ataki na obóz Chana i broń głównego zamku przed kontratakami"
     },
     "recommendationIntro": "Zalecane wartości opisują zwykłe używanie Automatycznego Chana; są wskazówkami i nie zmieniają zapisanych ustawień."
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "Automatyczny Berimond wzmacnia posiadany obóz według proporcji wojsk z wybranego schematu ataku, a następnie może atakować wieże, uzupełniać narzędzia i budować z potwierdzonego łupu.",
+      "expectation": "Transporty czekają na aktualny stan obozu i zamku źródłowego, zgłoszoną pojemność oraz zakończenie poprzedniej wysyłki; częściowy zapas pozwala wysłać mniej wojsk, a brak wymaganego typu wstrzymuje uzupełnianie.",
+      "name": "Automatyczny Berimond",
+      "summary": "Zaopatruj i prowadź obóz w Berimondzie"
+    },
+    "recommendationIntro": "Zalecenia dotyczą zwykłego korzystania z Automatycznego Berimondu i nie zmieniają zapisanych ustawień.",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "Przykładowe ustawienia opcjonalnej rozbudowy obozu w Automatycznym Berimondzie",
+          "caption": "Wbudowany cel, poziom stajni, zgody na budowę i rezerwy."
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "Zezwól na usunięcie niezarządzanych budynków, których nie można przenieść ani schować, aby osiągnąć dokładny cel.",
+            "label": "Zezwól na wyburzanie",
+            "recommendation": "Wyłączone, chyba że sprawdzisz planowane usunięcia."
+          },
+          "allow_premium_costs": {
+            "description": "Zezwól na kwalifikujące się etapy budowy wymagające waluty premium.",
+            "label": "Zezwól na koszty premium",
+            "recommendation": "Wyłączone, chyba że świadomie chcesz budowy za walutę premium."
+          },
+          "auto_beri_builder_lane": {
+            "description": "Buduj lub ulepszaj dokładny cel obozu za potwierdzony łup po powrocie ataku, bez transportu surowców z innego królestwa.",
+            "label": "Budowniczy Automatycznego Berimondu",
+            "recommendation": "Wyłączony do sprawdzenia celu i zezwoleń na wydatki."
+          },
+          "camp_resource_reserves": {
+            "description": "Zachowaj wybrane ilości drewna i kamienia Berimondu poza zasięgiem budowniczego.",
+            "label": "Rezerwy surowców obozu",
+            "recommendation": "Zarezerwuj to, czego potrzebujesz do innych prac w obozie."
+          },
+          "construction_time_skip_reserves": {
+            "description": "Zachowaj wybraną liczbę każdego przedmiotu skracającego czas poza zasięgiem budowniczego.",
+            "label": "Rezerwy przyspieszeń budowy",
+            "recommendation": "Zarezerwuj to, czego potrzebujesz do innych działań."
+          },
+          "optional_custom_camp_target": {
+            "description": "Przechwyć, obejrzyj, zapisz i aktywuj układ tylko wtedy, gdy ma zastąpić wbudowany cel.",
+            "label": "Opcjonalny własny cel obozu",
+            "recommendation": "Pozostaw wbudowany cel, dopóki nie sprawdzisz własnego układu."
+          },
+          "stable_target": {
+            "description": "Wybierz dla wbudowanego celu poziom stajni frakcji od 1 do 5.",
+            "label": "Docelowy poziom stajni",
+            "recommendation": "Wybierz poziom, na który wystarczą zasoby bieżącego wydarzenia."
+          },
+          "use_construction_time_skips": {
+            "description": "Przyspiesz potwierdzony licznik budowy, zachowując wybrane rezerwy przyspieszeń.",
+            "label": "Używaj przyspieszeń budowy",
+            "recommendation": "Wyłączone, chyba że szybsza budowa jest warta tych przedmiotów."
+          }
+        },
+        "title": "Wybierz opcjonalną rozbudowę obozu"
+      },
+      "readiness": {
+        "image": {
+          "alt": "Przykładowe ustawienia gotowości do ataków na wieże",
+          "caption": "Stan warunku wzmocnienia i układ schematu bez aktywnego wzmocnienia ani prawdziwych danych klienta."
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "Sprawdź fale, wojska i narzędzia wybranego schematu przed włączeniem ataków.",
+            "label": "Obsada schematu ataku",
+            "recommendation": "Zachowaj dość każdego wybranego rodzaju wojsk i narzędzi w zamku źródłowym oraz obozie na zwykłe tempo ataków."
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "Wymagaj aktywnego wzmocnienia waleczności, zanim ruszą transporty, zakupy narzędzi, przygotowania obozu, ataki na wieże lub budowa.",
+            "label": "Działaj tylko ze wzmocnieniem waleczności",
+            "recommendation": "Włączone, jeśli każda część automatyzacji ma wymagać wzmocnienia."
+          }
+        },
+        "title": "Przygotuj ataki na wieże"
+      },
+      "save": {
+        "image": {
+          "alt": "Przykładowe ustawienia zapisywania i włączania Automatycznego Berimondu",
+          "caption": "Lista przygotowań, przełącznik i opcjonalny harmonogram bez prawdziwego konta."
+        },
+        "items": {
+          "automation_switch": {
+            "description": "Włącz Automatyczny Berimond na karcie Automatyzacja po sprawdzeniu obozu, wojsk źródłowych, schematu i opcjonalnych wydatków.",
+            "label": "Przełącznik automatyzacji",
+            "recommendation": "Włączony po konfiguracji."
+          },
+          "calendar": {
+            "description": "Pozostaw harmonogram wyłączony do pracy ciągłej albo ustaw zwykłe godziny i zapisz go, gdy potrzebujesz okna czasowego.",
+            "label": "Kalendarz",
+            "recommendation": "Wyłączony podczas ciągłego prowadzenia wydarzenia."
+          },
+          "save_settings": {
+            "description": "Zapisz schemat, źródło, tempo transportów, limity ataków, narzędzia i opcje budowy przed włączeniem automatyzacji.",
+            "label": "Zapisz ustawienia"
+          }
+        },
+        "title": "Zapisz i włącz"
+      },
+      "setup": {
+        "image": {
+          "alt": "Przykładowe ustawienia ataku i zaopatrzenia Automatycznego Berimondu",
+          "caption": "Zapisany schemat ataku, zamek źródłowy w Wielkim Cesarstwie, Pióro podróżne, sprawdzanie ataków i limit dzienny."
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "Ustaw, jak często automatyzacja szuka następnego ataku na wieżę.",
+            "label": "Odstęp między sprawdzaniem ataków",
+            "recommendation": "Zachowaj zwykłe 30 sekund, chyba że chcesz rzadszego sprawdzania."
+          },
+          "attack_preset": {
+            "description": "Wybierz zapisany schemat ataku na Berimond; automatyzacja wykorzysta jego proporcje wojsk do transportów i ataków na wieże.",
+            "label": "Schemat ataku",
+            "recommendation": "Najpierw utwórz i wybierz swój zwykły schemat na Berimond."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Zatrzymaj nowe ataki na wieże, gdy ogólny licznik dziennych zwykłych ataków konta osiągnie ten limit; 0 usuwa dodatkowe ograniczenie.",
+            "label": "Dzienny limit zwykłych ataków",
+            "recommendation": "0, chyba że używasz limitu dla całego konta."
+          },
+          "horse_travel_boost": {
+            "description": "Wybierz podróż z piórem, monetami lub rubinami dla ataków na wieże.",
+            "label": "Przyspieszenie podróży",
+            "recommendation": "Pióro podróżne dla szybkiej podróży bez wyboru rubinów."
+          },
+          "open_settings": {
+            "description": "Na stronie Automatyzacja otwórz ustawienia karty Auto Beri World.",
+            "label": "Otwórz ustawienia"
+          },
+          "source_castle": {
+            "description": "Wybierz zamek lub posterunek w Wielkim Cesarstwie dostarczający te wojska.",
+            "label": "Zamek źródłowy",
+            "recommendation": "Wybierz zamek, w którym stoi twoja armia atakująca."
+          }
+        },
+        "title": "Wybierz atak i źródło zaopatrzenia"
+      },
+      "tools": {
+        "image": {
+          "alt": "Przykładowe ustawienia narzędzi w obozie Automatycznego Berimondu",
+          "caption": "Trzy minima narzędzi i wyraźnie fikcyjny stan obozu."
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "Uzupełniaj tę liczbę stacjonujących taranów według tej samej zasady.",
+            "label": "Minimum taranów",
+            "recommendation": "Dostosuj do zużycia w zwykłym schemacie."
+          },
+          "mantlets_minimum": {
+            "description": "Uzupełniaj tę liczbę stacjonujących osłon według tej samej zasady.",
+            "label": "Minimum osłon",
+            "recommendation": "Dostosuj do zużycia w zwykłym schemacie."
+          },
+          "scaling_ladders_minimum": {
+            "description": "Uzupełniaj tę liczbę stacjonujących drabin w obozie z odpowiednich ofert za monety; 0 pozostawia je bez zarządzania.",
+            "label": "Minimum drabin",
+            "recommendation": "Dostosuj do zwykłego schematu i tempa ataków."
+          }
+        },
+        "title": "Utrzymuj narzędzia obozu"
+      },
+      "transfers": {
+        "image": {
+          "alt": "Przykładowe ustawienia proporcjonalnego transportu wojsk",
+          "caption": "Fikcyjne proporcje 2:1, stan obozu, wolna pojemność i częściowa wysyłka jednego typu; wartości są przykładami, a nie zapisanymi domyślnymi ustawieniami."
+        },
+        "items": {
+          "check_interval": {
+            "description": "Ustaw, jak często automatyzacja odświeża wolną pojemność i stan obu zamków.",
+            "label": "Odstęp między sprawdzeniami",
+            "recommendation": "Zachowaj zwykłe 30 sekund."
+          },
+          "food_only": {
+            "description": "Można wysłać tylko wojska schematu zużywające Żywność; nieobsługiwane jednostki lub nierozpoznane rodziny wojsk wstrzymują działanie z wyjaśnieniem.",
+            "label": "Tylko wojska zużywające Żywność"
+          },
+          "minimum_free_capacity": {
+            "description": "Rozpoczynaj transport dopiero po osiągnięciu podanego progu wolnej pojemności; pojedyncza proporcjonalna wysyłka może być mniejsza.",
+            "label": "Minimalna wolna pojemność",
+            "recommendation": "Wybierz najniższy próg pasujący do zwykłego tempa transportów."
+          },
+          "owned_berimond_camp": {
+            "description": "Automatyzacja sama znajduje twój obóz w Berimondzie, więc nie wpisujesz identyfikatora obozu.",
+            "label": "Własny obóz w Berimondzie"
+          },
+          "partial_donor": {
+            "description": "Jeśli źródło ma część wymaganego typu wojsk, automatyzacja wysyła tę mniejszą liczbę; bez tego typu czeka zamiast wysyłać inny.",
+            "label": "Częściowy zapas źródła"
+          },
+          "pending_transfer": {
+            "description": "Automatyzacja czeka na dotarcie każdej wysyłki i odświeża stan obozu przed ponownym obliczeniem proporcji.",
+            "label": "Transport w toku"
+          },
+          "preset_troop_mix": {
+            "description": "Automatyzacja sumuje powtarzające się miejsca na wojska w falach i na dziedzińcu wybranego schematu, po czym uzupełnia po jednym niedoreprezentowanym typie.",
+            "label": "Proporcje wojsk schematu"
+          },
+          "troop_transport_skip": {
+            "description": "Wybierz czas trwania przedmiotu używanego przy włączonym przyspieszeniu transportu.",
+            "label": "Przyspieszenie transportu",
+            "recommendation": "Rezerwuj dłuższe przyspieszenia do innych zadań, jeśli ich potrzebujesz."
+          },
+          "use_troop_transport_time_skips": {
+            "description": "Zastosuj wybrane przyspieszenie do potwierdzonego transportu, gdy ten wciąż podróżuje.",
+            "label": "Używaj przyspieszeń transportu",
+            "recommendation": "Wyłączone, chyba że szybsze zaopatrzenie obozu jest warte zużycia tych przedmiotów."
+          }
+        },
+        "title": "Ustaw proporcjonalny transport wojsk"
+      }
+    }
   }
 }

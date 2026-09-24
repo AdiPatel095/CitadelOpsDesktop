@@ -34,7 +34,10 @@
     "advisorPreviewTitle": "Automatinio patarėjo nustatymo pavyzdys",
     "khanGuideIntro": "Atlikite šiuos veiksmus, kad nustatytumėte Auto Chaną; pasirinkite pavyzdžio skydelį, kad jį padidintumėte.",
     "khanGuideTitle": "Auto Chano vadovas",
-    "khanPreviewTitle": "Auto Chano nustatymo pavyzdys"
+    "khanPreviewTitle": "Auto Chano nustatymo pavyzdys",
+    "beriGuideIntro": "Norėdami nustatyti Automatinį Berimondą, atlikite šiuos veiksmus; pasirinkite pavyzdinį skydelį jam padidinti.",
+    "beriGuideTitle": "Automatinio Berimondo vadovas",
+    "beriPreviewTitle": "Automatinio Berimondo nustatymo pavyzdys"
   },
   "autoTower": {
     "recommendationIntro": "Tai rekomendacijos įprastam naudojimui; peržiūrėkite jas prieš išsaugodami.",
@@ -491,6 +494,45 @@
       "source": "Pulti iš: Didžiosios imperijos forposto",
       "title": "Chano nustatymo pavyzdys",
       "travel": "Kelionės plunksna greitai kelionei"
+    },
+    "beriBuilder": {
+      "permissions": "Premium ir griovimas: išjungta iki patikrinimo",
+      "reserves": "Rezervuokite Berimondo išteklius ir pagreitinimus",
+      "stable": "Frakcijos arklidė: pasirinktas lygis 1–5",
+      "target": "Integruotas tikslus tikslas arba patikrintas nuosavas planas",
+      "title": "Neprivalomos stovyklos statybos pavyzdys"
+    },
+    "beriReadiness": {
+      "booster": "Narsos stiprintuvo reikalavimas: neprivalomas",
+      "food": "Perkėlimams reikia Maistą naudojančių šablono karių",
+      "preset": "Patikrinkite išsaugotas karių ir įrankių vietas",
+      "title": "Pasirengimo bokštams pavyzdys"
+    },
+    "beriSave": {
+      "calendar": "Kalendorius išjungtas nuolatiniam veikimui",
+      "enable": "Įjunkite Automatinį Berimondą Automatikos kortelėje",
+      "save": "Išsaugokite nustatymus patikrinę karių proporcijas",
+      "title": "Išsaugojimo ir įjungimo pavyzdys"
+    },
+    "beriSetup": {
+      "donor": "Tiekėjas Didžiojoje imperijoje su reikalingais kariais",
+      "limit": "Įprasti puolimai per dieną: 0 papildomų ribų",
+      "preset": "Išsaugotas Berimondo puolimo šablonas",
+      "title": "Puolimo ir aprūpinimo pavyzdys",
+      "travel": "Kelionės plunksna bokštų puolimams"
+    },
+    "beriTools": {
+      "ladders": "Kopėčios: pagal įprastus puolimus",
+      "mantlets": "Skydai: pagal įprastus puolimus",
+      "rams": "Taranai: pagal įprastus puolimus",
+      "title": "Minimalių įrankių atsargų pavyzdys"
+    },
+    "beriTransfers": {
+      "capacity": "Laisva talpa: 3; slenkstis: 3",
+      "mix": "Šablono santykis: 2 A vienetai vienam B vienetui",
+      "next": "Kita siunta: iki 1 B iš tiekėjo atsargų",
+      "stock": "Stovyklos atsargos: 2 A ir 0 B",
+      "title": "Proporcingų perkėlimų pavyzdys"
     }
   },
   "autoStation": {
@@ -1429,5 +1471,218 @@
       "summary": "Grandine pulkite Chano stovyklą ir ginkite pagrindinę pilį nuo atsakomųjų puolimų"
     },
     "recommendationIntro": "Rekomenduojamos reikšmės skirtos įprastam Auto Chano naudojimui; jos nekeičia išsaugotų nustatymų."
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "Automatinis Berimondas sustiprina jums priklausančią stovyklą pagal pasirinkto puolimo šablono karių proporcijas, o tada gali pulti bokštus, papildyti įrankius ir statyti iš patvirtinto grobio.",
+      "expectation": "Perkėlimai laukia naujų stovyklos ir tiekėjo pilies atsargų, nurodytos talpos ir ankstesnės siuntos užbaigimo; dalinės atsargos leidžia mažesnę siuntą, o trūkstamas būtinas tipas sustabdo papildymą.",
+      "name": "Automatinis Berimondas",
+      "summary": "Aprūpinkite ir valdykite savo Berimondo stovyklą"
+    },
+    "recommendationIntro": "Rekomendacijos skirtos įprastam Automatinio Berimondo naudojimui ir nekeičia išsaugotų nustatymų.",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "Pavyzdiniai neprivalomos stovyklos statybos nustatymai",
+          "caption": "Integruotas tikslas, arklidės lygis, statybos leidimai ir atsargos."
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "Leiskite pašalinti nevaldomus pastatus, kurių negalima perkelti ar sandėliuoti, kad būtų tiksliai pasiektas tikslas.",
+            "label": "Leisti griovimą",
+            "recommendation": "Išjungta, kol neperžiūrėjote numatytų pašalinimų."
+          },
+          "allow_premium_costs": {
+            "description": "Leiskite tinkamus statybos veiksmus, kurie išleidžia aukščiausios klasės valiutą.",
+            "label": "Leisti aukščiausios klasės išlaidas",
+            "recommendation": "Išjungta, nebent aiškiai norite mokamos statybos."
+          },
+          "auto_beri_builder_lane": {
+            "description": "Statykite arba gerinkite tikslų stovyklos tikslą iš patvirtinto grįžusio grobio, neperveždami išteklių iš kitos karalystės.",
+            "label": "Automatinio Berimondo statytojas",
+            "recommendation": "Išjungta, kol peržiūrėsite tikslą ir leidimus išlaidoms."
+          },
+          "camp_resource_reserves": {
+            "description": "Laikykite pasirinktus Berimondo medienos ir akmens kiekius neprieinamus statytojui.",
+            "label": "Stovyklos išteklių atsargos",
+            "recommendation": "Rezervuokite tai, ko reikia kitoms stovyklos užduotims."
+          },
+          "construction_time_skip_reserves": {
+            "description": "Laikykite pasirinktą kiekvieno laiko praleidimo daikto kiekį neprieinamą statytojui.",
+            "label": "Statybos laiko praleidimo atsargos",
+            "recommendation": "Rezervuokite tai, ko reikia kitai veiklai."
+          },
+          "optional_custom_camp_target": {
+            "description": "Užfiksuokite, peržiūrėkite, išsaugokite ir įjunkite planą tik jei jis turi pakeisti integruotą tikslą.",
+            "label": "Neprivalomas nuosavas stovyklos tikslas",
+            "recommendation": "Palikite integruotą tikslą, kol neperžiūrėjote nuosavo plano."
+          },
+          "stable_target": {
+            "description": "Integruotam tikslui pasirinkite norimą frakcijos arklidės lygį nuo 1 iki 5.",
+            "label": "Arklidės tikslinis lygis",
+            "recommendation": "Pasirinkite lygį, kurį leidžia dabartinio renginio ištekliai."
+          },
+          "use_construction_time_skips": {
+            "description": "Pagreitinkite patvirtintą statybos laikmatį išsaugodami pasirinktas laiko praleidimo atsargas.",
+            "label": "Naudoti statybos pagreitinimus",
+            "recommendation": "Išjungta, nebent greitesnė statyba verta šių daiktų."
+          }
+        },
+        "title": "Pasirinkite neprivalomą stovyklos statybą"
+      },
+      "readiness": {
+        "image": {
+          "alt": "Pavyzdiniai pasirengimo bokštų puolimui nustatymai",
+          "caption": "Stiprintuvo sąlyga ir šablono sudėtis be tikro aktyvaus stiprintuvo ar klientų duomenų."
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "Prieš įjungdami puolimus patikrinkite pasirinkto šablono bangas, karius ir įrankius.",
+            "label": "Puolimo šablono sudėtis",
+            "recommendation": "Laikykite pakankamai kiekvienos pasirinktos karių ir įrankių rūšies tiekėjo pilyje ir stovykloje įprastam puolimo tempui."
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "Reikalaukite aktyvaus narsos stiprintuvo, kad tęstųsi perkėlimai, įrankių pirkimai, stovyklos rengimas, bokštų puolimas ar statyba.",
+            "label": "Vykdyti tik su narsos stiprintuvu",
+            "recommendation": "Įjungta, jei visos Automatinio Berimondo dalys turi priklausyti nuo stiprintuvo."
+          }
+        },
+        "title": "Paruoškite bokštų puolimus"
+      },
+      "save": {
+        "image": {
+          "alt": "Pavyzdiniai išsaugojimo ir įjungimo nustatymai",
+          "caption": "Pasirengimo sąrašas, jungiklis ir neprivalomas kalendorius be tikros paskyros."
+        },
+        "items": {
+          "automation_switch": {
+            "description": "Įjunkite Automatinį Berimondą Automatikos kortelėje, patikrinę stovyklą, tiekėjo karius, šabloną ir neprivalomas išlaidas.",
+            "label": "Automatikos jungiklis",
+            "recommendation": "Įjungta po paruošimo."
+          },
+          "calendar": {
+            "description": "Palikite kalendorių išjungtą nuolatiniam veikimui arba nustatykite įprastas valandas ir išsaugokite tvarkaraštį, jei reikia laiko lango.",
+            "label": "Kalendorius",
+            "recommendation": "Išjungta nuolatiniam renginio veikimui."
+          },
+          "save_settings": {
+            "description": "Prieš įjungdami automatiką išsaugokite šabloną, tiekėją, perkėlimų ritmą, puolimų ribas, įrankius ir neprivalomus statybos sprendimus.",
+            "label": "Išsaugoti nustatymus"
+          }
+        },
+        "title": "Išsaugoti ir įjungti"
+      },
+      "setup": {
+        "image": {
+          "alt": "Pavyzdiniai puolimo ir aprūpinimo nustatymai",
+          "caption": "Išsaugotas puolimo šablonas, tiekėjo pilis Didžiojoje imperijoje, Kelionės plunksna, puolimų tikrinimas ir dienos riba."
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "Nustatykite, kaip dažnai automatika ieško kito bokšto puolimo.",
+            "label": "Puolimų tikrinimo intervalas",
+            "recommendation": "Palikite įprastą 30 sekundžių intervalą, nebent norite tikrinti rečiau."
+          },
+          "attack_preset": {
+            "description": "Pasirinkite išsaugotą Berimondo puolimo sudėtį; automatika jos karių proporcijas naudoja perkėlimams ir bokštų puolimams.",
+            "label": "Puolimo šablonas",
+            "recommendation": "Pirmiausia sukurkite ir pasirinkite įprastą Berimondo šabloną."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Sustabdykite naujus bokštų puolimus, kai visos paskyros įprastų puolimų dienos skaičius pasiekia šią ribą; 0 ją panaikina.",
+            "label": "Dienos įprastų puolimų riba",
+            "recommendation": "0, nebent naudojate visos paskyros ribą."
+          },
+          "horse_travel_boost": {
+            "description": "Bokštų puolimams pasirinkite kelionę su plunksna, monetomis ar rubinais.",
+            "label": "Kelionės pagreitinimas",
+            "recommendation": "Kelionės plunksna greitai kelionei be rubinų pasirinkimo."
+          },
+          "open_settings": {
+            "description": "Automatikos puslapyje atidarykite Auto Beri World kortelės nustatymus.",
+            "label": "Atidaryti nustatymus"
+          },
+          "source_castle": {
+            "description": "Pasirinkite pilį arba forpostą Didžiojoje imperijoje, kuri tiekia šiuos karius.",
+            "label": "Tiekėjo pilis",
+            "recommendation": "Pasirinkite pilį, kurioje yra jūsų puolanti armija."
+          }
+        },
+        "title": "Pasirinkite puolimą ir tiekimo šaltinį"
+      },
+      "tools": {
+        "image": {
+          "alt": "Pavyzdiniai stovyklos įrankių nustatymai",
+          "caption": "Trys minimalios įrankių atsargos ir aiškiai išgalvotas stovyklos inventorius."
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "Papildykite šį dislokuotų taranų skaičių pagal tą pačią taisyklę.",
+            "label": "Minimalus taranų kiekis",
+            "recommendation": "Derinkite prie įprasto šablono naudojimo."
+          },
+          "mantlets_minimum": {
+            "description": "Papildykite šį dislokuotų skydų skaičių pagal tą pačią taisyklę.",
+            "label": "Minimalus skydų kiekis",
+            "recommendation": "Derinkite prie įprasto šablono naudojimo."
+          },
+          "scaling_ladders_minimum": {
+            "description": "Papildykite šį dislokuotų kopėčių skaičių stovykloje iš tinkamų pasiūlymų už monetas; 0 palieka jas nevaldomas.",
+            "label": "Minimalus kopėčių kiekis",
+            "recommendation": "Derinkite prie įprasto šablono ir puolimų tempo."
+          }
+        },
+        "title": "Prižiūrėkite stovyklos įrankius"
+      },
+      "transfers": {
+        "image": {
+          "alt": "Pavyzdiniai proporcingų karių perkėlimų nustatymai",
+          "caption": "Išgalvotas santykis 2:1, stovyklos atsargos, laisva talpa ir dalinė vieno tipo siunta; skaičiai yra pavyzdžiai, ne išsaugoti numatytieji nustatymai."
+        },
+        "items": {
+          "check_interval": {
+            "description": "Nustatykite, kaip dažnai automatika atnaujina laisvą perkėlimo talpą ir abiejų pilių atsargas.",
+            "label": "Tikrinimo intervalas",
+            "recommendation": "Palikite įprastą 30 sekundžių intervalą."
+          },
+          "food_only": {
+            "description": "Perkelti galima tik Maistą naudojančius šablono karius; nepalaikomi vienetai ar neišspręstos karių šeimos sustabdo veiksmą su paaiškinimu.",
+            "label": "Tik Maistą naudojantys kariai"
+          },
+          "minimum_free_capacity": {
+            "description": "Pradėkite perkėlimus tik kai nurodyta laisva talpa pasiekia šį slenkstį; pavienė proporcinga siunta gali būti mažesnė.",
+            "label": "Minimali laisva talpa",
+            "recommendation": "Pasirinkite mažiausią laisvos talpos slenkstį, tinkantį įprastam perkėlimų tempui."
+          },
+          "owned_berimond_camp": {
+            "description": "Automatika pati randa jums priklausančią Berimondo stovyklą, todėl stovyklos ID įvesti nereikia.",
+            "label": "Jums priklausanti Berimondo stovykla"
+          },
+          "partial_donor": {
+            "description": "Jei tiekėjas turi dalį reikiamos karių rūšies, automatika išsiunčia mažesnį kiekį; jei visai neturi, laukia, o ne siunčia kitą rūšį.",
+            "label": "Dalinės tiekėjo atsargos"
+          },
+          "pending_transfer": {
+            "description": "Automatika laukia kiekvienos siuntos atvykimo ir atnaujina stovyklos atsargas prieš iš naujo skaičiuodama santykį.",
+            "label": "Laukiamas perkėlimas"
+          },
+          "preset_troop_mix": {
+            "description": "Automatika susumuoja pasirinkto šablono bangose ir kieme pasikartojančias karių vietas, tada po vieną papildo nepakankamai atstovaujamą rūšį.",
+            "label": "Šablono karių proporcijos"
+          },
+          "troop_transport_skip": {
+            "description": "Pasirinkite daikto trukmę, naudojamą įjungus transporto pagreitinimą.",
+            "label": "Transporto pagreitinimas",
+            "recommendation": "Ilgesnius pagreitinimus pasilikite kitoms užduotims, jei jų reikia."
+          },
+          "use_troop_transport_time_skips": {
+            "description": "Pritaikykite pasirinktą pagreitinimą patvirtintam perkėlimui, kol jis dar kelyje.",
+            "label": "Naudoti transporto pagreitinimus",
+            "recommendation": "Išjungta, nebent greitesnis stovyklos aprūpinimas vertas išsaugotų daiktų."
+          }
+        },
+        "title": "Nustatykite proporcingus karių perkėlimus"
+      }
+    }
   }
 }

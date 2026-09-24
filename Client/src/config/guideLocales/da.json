@@ -34,7 +34,10 @@
     "advisorPreviewTitle": "Opsætningseksempel til Auto Rådgiver",
     "khanGuideIntro": "Følg disse trin for at indstille Automatisk Khan; vælg et eksempelpanel for at forstørre det.",
     "khanGuideTitle": "Vejledning til Automatisk Khan",
-    "khanPreviewTitle": "Eksempel på Automatisk Khan-opsætning"
+    "khanPreviewTitle": "Eksempel på Automatisk Khan-opsætning",
+    "beriGuideIntro": "Følg disse trin for at indstille Auto Beri; vælg et eksempelpanel for at forstørre det.",
+    "beriGuideTitle": "Vejledning til Auto Beri",
+    "beriPreviewTitle": "Eksempel på Auto-Beri-opsætning"
   },
   "autoTower": {
     "recommendationIntro": "Disse anbefalinger gælder almindelig brug; gennemgå dem, før du gemmer.",
@@ -491,6 +494,45 @@
       "source": "Angrib fra: forpost i Det Store Rige",
       "title": "Eksempel på Khan-opsætning",
       "travel": "Rejsefjer for hurtig rejse"
+    },
+    "beriBuilder": {
+      "permissions": "Premium og nedrivning: fra, medmindre gennemgået",
+      "reserves": "Reserver Berimond-ressourcer og tidskip",
+      "stable": "Fraktionsstald: valgt niveau 1–5",
+      "target": "Indbygget præcist mål eller gennemgået eget layout",
+      "title": "Eksempel på valgfrit lejrbyggeri"
+    },
+    "beriReadiness": {
+      "booster": "Tapperhedsboosterkrav: valgfrit",
+      "food": "Overførsler kræver forudindstillingstropper, der bruger Mad",
+      "preset": "Gennemgå gemte pladser til tropper og værktøjer",
+      "title": "Eksempel på tårnberedskab"
+    },
+    "beriSave": {
+      "calendar": "Kalender fra ved løbende drift",
+      "enable": "Slå Auto Beri til på Automatiseringskortet",
+      "save": "Gem indstillinger efter kontrol af troppeforhold",
+      "title": "Eksempel på at gemme og aktivere"
+    },
+    "beriSetup": {
+      "donor": "Donor i Det Store Imperium med nødvendige tropper",
+      "limit": "Daglige normale angreb: 0 ekstra grænse",
+      "preset": "Gemt Berimond-angrebsforudindstilling",
+      "title": "Eksempel på angreb og forsyning",
+      "travel": "Rejsefjer til tårnangreb"
+    },
+    "beriTools": {
+      "ladders": "Stiger: tilpas til normale angreb",
+      "mantlets": "Skjolde: tilpas til normale angreb",
+      "rams": "Stormbukke: tilpas til normale angreb",
+      "title": "Eksempel på mindstelager for værktøjer"
+    },
+    "beriTransfers": {
+      "capacity": "Fri kapacitet: 3; grænse: 3",
+      "mix": "Forudindstillingsforhold: 2 enheder A til 1 enhed B",
+      "next": "Næste forsendelse: op til 1 B fra donorlagret",
+      "stock": "Lejrlager: 2 A og 0 B",
+      "title": "Eksempel på forholdsmæssige overførsler"
     }
   },
   "autoStation": {
@@ -1429,5 +1471,218 @@
       "summary": "Kæd Khan-lejrangreb sammen, og forsvar gengældelsen ved din hovedborg"
     },
     "recommendationIntro": "Anbefalede værdier beskriver almindelig brug af Automatisk Khan; de er vejledning og ændrer ikke gemte indstillinger."
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "Auto Beri forstærker din ejede Berimond-lejr efter troppeforholdet i den valgte angrebsforudindstilling og kan derefter angribe tårne, fylde værktøjer op og bygge med bekræftet bytte.",
+      "expectation": "Overførsler venter på friske lagre i lejr og donerborg, oplyst kapacitet og afslutning af tidligere forsendelser; delvist donorlager kan give en mindre forsendelse, mens en manglende nødvendig type sætter opfyldning på pause.",
+      "name": "Automatisk Berimond",
+      "summary": "Forsyn og driv din Berimond-lejr"
+    },
+    "recommendationIntro": "Anbefalingerne beskriver normal brug af Auto Beri og ændrer ikke gemte indstillinger.",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "Illustrative indstillinger for valgfrit lejrbyggeri i Auto Beri",
+          "caption": "Indbygget mål, staldniveau, byggetilladelser og reserver."
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "Tillad at fjerne ikke-styrede bygninger, som ikke kan flyttes eller opbevares, for at nå det præcise mål.",
+            "label": "Tillad nedrivning",
+            "recommendation": "Fra, medmindre du har gennemgået de planlagte fjernelser."
+          },
+          "allow_premium_costs": {
+            "description": "Tillad egnede byggetrin, der bruger premiumvaluta.",
+            "label": "Tillad premiumomkostninger",
+            "recommendation": "Fra, medmindre du bevidst ønsker premiumbyggeri."
+          },
+          "auto_beri_builder_lane": {
+            "description": "Byg eller opgrader et præcist lejrmål med bekræftet hjemvendt bytte uden at flytte ressourcer fra et andet rige.",
+            "label": "Auto-Beri-byggeri",
+            "recommendation": "Fra, indtil du har gennemgået målet og tilladelserne til forbrug."
+          },
+          "camp_resource_reserves": {
+            "description": "Hold de valgte mængder Berimond-træ og -sten uden for byggerens rådighed.",
+            "label": "Ressourcereserver i lejren",
+            "recommendation": "Reserver det, du behøver til andet arbejde i lejren."
+          },
+          "construction_time_skip_reserves": {
+            "description": "Hold det valgte antal af hvert tidskip uden for byggerens rådighed.",
+            "label": "Reserver til byggetidskip",
+            "recommendation": "Reserver det, du behøver til andre aktiviteter."
+          },
+          "optional_custom_camp_target": {
+            "description": "Indfang, forhåndsvis, gem og aktivér kun et layout, hvis det skal erstatte det indbyggede mål.",
+            "label": "Valgfrit tilpasset lejrmål",
+            "recommendation": "Behold det indbyggede mål, medmindre du har gennemgået et tilpasset layout."
+          },
+          "stable_target": {
+            "description": "Vælg det ønskede niveau for fraktionsstalden fra 1 til 5 i det indbyggede mål.",
+            "label": "Staldmål",
+            "recommendation": "Vælg et niveau, som dine aktuelle begivenhedsressourcer kan understøtte."
+          },
+          "use_construction_time_skips": {
+            "description": "Fremskynd en bekræftet byggetimer og bevar de valgte tidskipreserver.",
+            "label": "Brug byggetidskip",
+            "recommendation": "Fra, medmindre hurtigere byggeri er disse genstande værd."
+          }
+        },
+        "title": "Vælg valgfrit lejrbyggeri"
+      },
+      "readiness": {
+        "image": {
+          "alt": "Illustrative indstillinger for klargøring til Auto-Beri-tårnangreb",
+          "caption": "Boosterkrav og forudindstillingens opstilling uden aktive boostere eller rigtige kundedata."
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "Gennemgå den valgte forudindstillings bølger, tropper og værktøjer, før angreb aktiveres.",
+            "label": "Angrebsforudindstillingens opstilling",
+            "recommendation": "Hold nok af hver valgt troppe og hvert værktøj hos donor og i lejren til dit normale angrebstempo."
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "Kræv en aktiv Tapperhedsbooster, før overførsler, værktøjskøb, lejrforberedelse, tårnangreb eller byggeri fortsætter.",
+            "label": "Kør kun med Tapperhedsbooster",
+            "recommendation": "Til, hvis alle Auto-Beri-dele skal kræve boosteren."
+          }
+        },
+        "title": "Klargør tårnangreb"
+      },
+      "save": {
+        "image": {
+          "alt": "Illustrative indstillinger for at gemme og aktivere Auto Beri",
+          "caption": "Tjekliste, kontakt og valgfri kalender uden en rigtig konto."
+        },
+        "items": {
+          "automation_switch": {
+            "description": "Slå Auto Beri til på Automatiseringskortet efter at have gennemgået lejr, donortropper, forudindstilling og valgfrie udgifter.",
+            "label": "Automatiseringskontakt",
+            "recommendation": "Til efter opsætning."
+          },
+          "calendar": {
+            "description": "Lad kalenderen være fra ved løbende drift, eller indstil og gem dine sædvanlige timer, hvis du behøver et tidsvindue.",
+            "label": "Kalender",
+            "recommendation": "Fra ved løbende begivenhedsdrift."
+          },
+          "save_settings": {
+            "description": "Gem forudindstilling, donor, overførselstempo, angrebsgrænser, værktøjer og valgfrit byggeri, før automatiseringen aktiveres.",
+            "label": "Gem indstillinger"
+          }
+        },
+        "title": "Gem og aktivér"
+      },
+      "setup": {
+        "image": {
+          "alt": "Illustrative Auto-Beri-indstillinger for angreb og forsyning",
+          "caption": "Gemt angrebsforudindstilling, donorborg i Det Store Imperium, Rejsefjer, angrebskontrol og dagsgrænse."
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "Angiv, hvor ofte Auto Beri leder efter et nyt tårnangreb.",
+            "label": "Interval for angrebskontrol",
+            "recommendation": "Behold det sædvanlige interval på 30 sekunder, medmindre du ønsker færre kontroller."
+          },
+          "attack_preset": {
+            "description": "Vælg en gemt Berimond-angrebsformation; Auto Beri bruger dens troppeforhold til overførsler og tårnangreb.",
+            "label": "Angrebsforudindstilling",
+            "recommendation": "Opret og vælg først din sædvanlige Berimond-forudindstilling."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Stop nye Auto-Beri-tårnangreb, når kontoens daglige antal normale angreb når denne grænse; 0 fjerner den ekstra grænse.",
+            "label": "Daglig grænse for normale angreb",
+            "recommendation": "0, medmindre du bruger en grænse for hele kontoen."
+          },
+          "horse_travel_boost": {
+            "description": "Vælg rejse med fjer, mønter eller rubiner til tårnangreb.",
+            "label": "Rejseboost",
+            "recommendation": "Rejsefjer for hurtig rejse uden at vælge rubiner."
+          },
+          "open_settings": {
+            "description": "Åbn indstillingerne på Auto-Beri-kortet på siden Automatisering.",
+            "label": "Åbn indstillinger"
+          },
+          "source_castle": {
+            "description": "Vælg borgen eller forposten i Det Store Imperium, som leverer tropperne.",
+            "label": "Donorborg",
+            "recommendation": "Vælg borgen med din angrebshær."
+          }
+        },
+        "title": "Vælg angreb og forsyningskilde"
+      },
+      "tools": {
+        "image": {
+          "alt": "Illustrative indstillinger for lejrens Auto-Beri-værktøjer",
+          "caption": "De tre mindstelagre af værktøjer og et tydeligt opdigtet lejrlager."
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "Fyld dette antal stationerede stormbukke op efter samme regel.",
+            "label": "Mindste antal stormbukke",
+            "recommendation": "Tilpas til dit sædvanlige forbrug i forudindstillingen."
+          },
+          "mantlets_minimum": {
+            "description": "Fyld dette antal stationerede skjolde op efter samme regel.",
+            "label": "Mindste antal skjolde",
+            "recommendation": "Tilpas til dit sædvanlige forbrug i forudindstillingen."
+          },
+          "scaling_ladders_minimum": {
+            "description": "Fyld dette antal stationerede stiger i lejren op via egnede mønttilbud; 0 lader dem være ustyrede.",
+            "label": "Mindste antal stiger",
+            "recommendation": "Tilpas til din sædvanlige forudindstilling og angrebstempo."
+          }
+        },
+        "title": "Vedligehold lejrens værktøjer"
+      },
+      "transfers": {
+        "image": {
+          "alt": "Illustrative indstillinger for forholdsmæssige Auto-Beri-troppeoverførsler",
+          "caption": "Opdigtet forhold 2:1, lejrlager, fri kapacitet og én delvis forsendelse af én type; værdierne er eksempler og ikke gemte standarder."
+        },
+        "items": {
+          "check_interval": {
+            "description": "Angiv, hvor ofte Auto Beri opdaterer fri overførselskapacitet og begge borglagre.",
+            "label": "Kontrolinterval",
+            "recommendation": "Behold det sædvanlige interval på 30 sekunder."
+          },
+          "food_only": {
+            "description": "Kun forudindstillingens tropper, som bruger Mad, kan overføres; ikke-understøttede enheder eller uafklarede troppefamilier sættes på pause med en begrundelse.",
+            "label": "Kun overførsel af tropper, der bruger Mad"
+          },
+          "minimum_free_capacity": {
+            "description": "Start først overførsler, når den oplyste frie kapacitet når denne grænse; en enkelt forholdsmæssig forsendelse kan være mindre.",
+            "label": "Mindste frie kapacitet",
+            "recommendation": "Vælg den laveste frie grænse, der passer til dit normale overførselstempo."
+          },
+          "owned_berimond_camp": {
+            "description": "Auto Beri finder automatisk din ejede Berimond-lejr, så du skal ikke indtaste et lejr-id.",
+            "label": "Ejet Berimond-lejr"
+          },
+          "partial_donor": {
+            "description": "Hvis donor har nogle af den nødvendige troppetype, sender Auto Beri den mindre mængde; hvis donor ingen har, venter den frem for at sende en anden type.",
+            "label": "Delvist donorlager"
+          },
+          "pending_transfer": {
+            "description": "Auto Beri venter på hver forsendelses ankomst og opdaterer lejrlageret, før forudindstillingens forhold beregnes igen.",
+            "label": "Afventende overførsel"
+          },
+          "preset_troop_mix": {
+            "description": "Auto Beri lægger gentagne troppepladser fra den valgte forudindstillings bølger og gård sammen og fylder én underrepræsenteret type op ad gangen.",
+            "label": "Forudindstillingens troppeforhold"
+          },
+          "troop_transport_skip": {
+            "description": "Vælg varigheden af genstanden, der bruges, når transportskip er slået til.",
+            "label": "Transporttidskip",
+            "recommendation": "Reserver længere skip til andre opgaver, hvis du behøver dem."
+          },
+          "use_troop_transport_time_skips": {
+            "description": "Brug det valgte skip på en bekræftet overførsel, mens den stadig er undervejs.",
+            "label": "Brug transporttidskip",
+            "recommendation": "Fra, medmindre hurtigere lejrforsyning er de sparede genstande værd."
+          }
+        },
+        "title": "Indstil forholdsmæssige troppeoverførsler"
+      }
+    }
   }
 }

@@ -34,7 +34,10 @@
     "advisorPreviewTitle": "Automaattisen Neuvonantajan asennusesimerkki",
     "khanGuideIntro": "Määritä Automaattinen Khan näiden vaiheiden avulla; suurenna esimerkkipaneeli valitsemalla se.",
     "khanGuideTitle": "Automaattisen Khanin opas",
-    "khanPreviewTitle": "Esimerkki Automaattisen Khanin määrityksestä"
+    "khanPreviewTitle": "Esimerkki Automaattisen Khanin määrityksestä",
+    "beriGuideIntro": "Määritä Auto Beri seuraamalla näitä vaiheita; suurenna esimerkkipaneeli valitsemalla se.",
+    "beriGuideTitle": "Auto Berin opas",
+    "beriPreviewTitle": "Esimerkki Auto Berin asetuksista"
   },
   "autoTower": {
     "recommendationIntro": "Nämä suositukset koskevat säännöllistä käyttöä; tarkista ne ennen tallentamista.",
@@ -491,6 +494,45 @@
       "source": "Hyökkää kohteesta: Suuren valtakunnan etuvartio",
       "title": "Esimerkki Khanin asetuksista",
       "travel": "Matkahöyhen nopeaan matkustukseen"
+    },
+    "beriBuilder": {
+      "permissions": "Premium ja purku: pois, ellei tarkistettu",
+      "reserves": "Varaa Berimondin resurssit ja ajansäästöt",
+      "stable": "Ryhmätalli: valittu taso 1–5",
+      "target": "Sisäinen tarkka tavoite tai tarkistettu oma pohja",
+      "title": "Esimerkki valinnaisesta leirirakentamisesta"
+    },
+    "beriReadiness": {
+      "booster": "Urhoollisuustehostin vaatimuksena: valinnainen",
+      "food": "Siirrot vaativat mallin Ruokaa käyttäviä joukkoja",
+      "preset": "Tarkista tallennetut joukko- ja työkalupaikat",
+      "title": "Esimerkki tornihyökkäysvalmiudesta"
+    },
+    "beriSave": {
+      "calendar": "Kalenteri pois jatkuvaa toimintaa varten",
+      "enable": "Käynnistä Auto Beri Automaatio-kortista",
+      "save": "Tallenna asetukset joukko-osuuksien tarkistuksen jälkeen",
+      "title": "Esimerkki tallennuksesta ja käyttöönotosta"
+    },
+    "beriSetup": {
+      "donor": "Luovuttaja Suuressa valtakunnassa tarvittavien joukkojen kanssa",
+      "limit": "Normaaleja hyökkäyksiä päivässä: 0 lisärajaa",
+      "preset": "Tallennettu Berimond-hyökkäysmalli",
+      "title": "Esimerkki hyökkäyksestä ja huollosta",
+      "travel": "Matkahöyhen tornihyökkäyksiin"
+    },
+    "beriTools": {
+      "ladders": "Tikkaat: sovita tavallisiin hyökkäyksiin",
+      "mantlets": "Suojakilvet: sovita tavallisiin hyökkäyksiin",
+      "rams": "Muurinmurtajat: sovita tavallisiin hyökkäyksiin",
+      "title": "Esimerkki työkalujen vähimmäisvarastosta"
+    },
+    "beriTransfers": {
+      "capacity": "Vapaa kapasiteetti: 3; raja: 3",
+      "mix": "Mallin suhde: 2 yksikköä A yhtä B-yksikköä kohti",
+      "next": "Seuraava lähetys: enintään 1 B luovuttajan varastosta",
+      "stock": "Leirivarasto: 2 A ja 0 B",
+      "title": "Esimerkki suhteellisista siirroista"
     }
   },
   "autoStation": {
@@ -1429,5 +1471,218 @@
       "summary": "Ketjuta Khanin leirihyökkäyksiä ja puolusta vastaiskut päälinnassa"
     },
     "recommendationIntro": "Suositellut arvot kuvaavat Automaattisen Khanin tavallista käyttöä; ne ovat ohjeita eivätkä muuta tallennettuja asetuksia."
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "Automaattinen Berimond vahvistaa omistamaasi Berimond-leiriä valitun hyökkäysmallin joukko-osuuksien mukaan ja voi sen jälkeen hyökätä torneihin, täydentää työkaluja ja rakentaa vahvistetulla saaliilla.",
+      "expectation": "Siirrot odottavat tuoreita leirin ja luovuttajalinnan joukkomääriä, ilmoitettua kapasiteettia ja edellisen lähetyksen päättymistä; osittainen luovuttajavarasto voi tuottaa pienemmän lähetyksen, mutta tarvittavan lajin puute keskeyttää täydennyksen.",
+      "name": "Automaattinen Berimond",
+      "summary": "Huolla ja käytä Berimond-leiriäsi"
+    },
+    "recommendationIntro": "Suositukset koskevat Auto Berin tavanomaista käyttöä eivätkä muuta tallennettuja asetuksia.",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "Havainnolliset Auto Berin valinnaisen leirirakentamisen asetukset",
+          "caption": "Sisäinen tavoite, tallin taso, rakentamisluvat ja varaukset."
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "Salli sellaisten hallitsemattomien rakennusten poistaminen, joita ei voi siirtää tai varastoida tarkan tavoitteen saavuttamiseksi.",
+            "label": "Salli purkaminen",
+            "recommendation": "Pois, ellet ole tarkistanut suunniteltuja poistoja."
+          },
+          "allow_premium_costs": {
+            "description": "Salli kelvolliset rakentamisvaiheet, jotka kuluttavat premium-valuuttaa.",
+            "label": "Salli premium-kustannukset",
+            "recommendation": "Pois, ellet nimenomaisesti halua premium-rakentamista."
+          },
+          "auto_beri_builder_lane": {
+            "description": "Rakenna tai paranna tarkkaa leiritavoitetta vahvistetulla palanneella saaliilla siirtämättä resursseja toisesta valtakunnasta.",
+            "label": "Auto Berin rakentaja",
+            "recommendation": "Pois, kunnes olet tarkistanut tavoitteen ja kulutusluvat."
+          },
+          "camp_resource_reserves": {
+            "description": "Pidä valitut Berimondin puu- ja kivimäärät rakentajan käytön ulkopuolella.",
+            "label": "Leirin resurssivaraukset",
+            "recommendation": "Varaa muihin leiritöihin tarvitsemasi määrä."
+          },
+          "construction_time_skip_reserves": {
+            "description": "Pidä valittu määrä kutakin ajansäästöesinettä rakentajan käytön ulkopuolella.",
+            "label": "Rakentamisen ajansäästövaraukset",
+            "recommendation": "Varaa muihin toimintoihin tarvitsemasi määrä."
+          },
+          "optional_custom_camp_target": {
+            "description": "Tallenna, esikatsele ja aktivoi pohja vain, jos sen on tarkoitus korvata sisäinen tavoite.",
+            "label": "Valinnainen oma leiritavoite",
+            "recommendation": "Pidä sisäinen tavoite, ellet ole tarkistanut omaa pohjaa."
+          },
+          "stable_target": {
+            "description": "Valitse sisäisen tavoitteen ryhmätallille haluttu taso väliltä 1–5.",
+            "label": "Tallin tavoitetaso",
+            "recommendation": "Valitse taso, jonka nykyisen tapahtuman resurssit riittävät kattamaan."
+          },
+          "use_construction_time_skips": {
+            "description": "Nopeuta vahvistettua rakennusajastinta säilyttäen valitut ajansäästövaraukset.",
+            "label": "Käytä rakentamisen ajansäästöjä",
+            "recommendation": "Pois, ellei nopeampi rakentaminen ole näiden esineiden arvoista."
+          }
+        },
+        "title": "Valitse valinnainen leirirakentaminen"
+      },
+      "readiness": {
+        "image": {
+          "alt": "Havainnolliset Auto Berin tornihyökkäysvalmiuden asetukset",
+          "caption": "Tehostinvaatimuksen tila ja mallin kokoonpano ilman todellista tehostinta tai asiakastietoja."
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "Tarkista valitun mallin aallot, joukot ja työkalut ennen hyökkäysten käynnistämistä.",
+            "label": "Hyökkäysmallin kokoonpano",
+            "recommendation": "Pidä jokaista valittua joukkotyyppiä ja työkalua riittävästi luovuttajalla ja leirissä tavanomaista hyökkäystahtiasi varten."
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "Vaadi aktiivinen urhoollisuustehostin ennen siirtojen, työkaluostojen, leirin valmistelun, tornihyökkäysten tai rakentamisen jatkamista.",
+            "label": "Suorita vain urhoollisuustehostimella",
+            "recommendation": "Päällä, jos kaikkien Auto Berin osien tulee riippua tehostimesta."
+          }
+        },
+        "title": "Valmistele tornihyökkäykset"
+      },
+      "save": {
+        "image": {
+          "alt": "Havainnolliset Auto Berin tallennus- ja käyttöönottoasetukset",
+          "caption": "Valmistelulista, kytkin ja valinnainen kalenteri ilman oikeaa tiliä."
+        },
+        "items": {
+          "automation_switch": {
+            "description": "Käynnistä Auto Beri Automaatio-kortista tarkistettuasi leirin, luovuttajan joukot, mallin ja valinnaiset kulut.",
+            "label": "Automaation kytkin",
+            "recommendation": "Päällä asetusten jälkeen."
+          },
+          "calendar": {
+            "description": "Jätä kalenteri pois jatkuvaa toimintaa varten tai määritä tavalliset tuntisi ja tallenna aikataulu, jos tarvitset aikaikkunan.",
+            "label": "Kalenteri",
+            "recommendation": "Pois jatkuvassa tapahtumakäytössä."
+          },
+          "save_settings": {
+            "description": "Tallenna malli, luovuttaja, siirtotahti, hyökkäysrajat, työkalut ja valinnaiset rakennusvalinnat ennen automaation käynnistämistä.",
+            "label": "Tallenna asetukset"
+          }
+        },
+        "title": "Tallenna ja käynnistä"
+      },
+      "setup": {
+        "image": {
+          "alt": "Havainnolliset Auto Berin hyökkäys- ja huoltoasetukset",
+          "caption": "Tallennettu hyökkäysmalli, Suuren valtakunnan luovuttajalinna, Matkahöyhen, hyökkäystarkistus ja päiväkohtainen raja."
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "Määritä, kuinka usein Auto Beri etsii seuraavaa tornihyökkäystä.",
+            "label": "Hyökkäysten tarkistusväli",
+            "recommendation": "Pidä tavallinen 30 sekunnin väli, ellet halua harvempia tarkistuksia."
+          },
+          "attack_preset": {
+            "description": "Valitse tallennettu Berimond-hyökkäyskokoonpano; Auto Beri käyttää sen joukko-osuuksia siirtoihin ja tornihyökkäyksiin.",
+            "label": "Hyökkäysmalli",
+            "recommendation": "Luo ja valitse ensin tavallinen Berimond-mallisi."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Lopeta uudet Auto Berin tornihyökkäykset, kun koko tilin normaalien hyökkäysten päivittäinen määrä saavuttaa tämän rajan; 0 poistaa lisärajan.",
+            "label": "Normaalien hyökkäysten päiväraja",
+            "recommendation": "0, ellet käytä koko tilin rajaa."
+          },
+          "horse_travel_boost": {
+            "description": "Valitse tornihyökkäyksiin höyhen-, kolikko- tai rubiinimatka.",
+            "label": "Matkanopeutus",
+            "recommendation": "Matkahöyhen nopeaan matkaan ilman rubiinimatkaa."
+          },
+          "open_settings": {
+            "description": "Avaa Auto Beri -kortin asetukset Automaatio-sivulla.",
+            "label": "Avaa asetukset"
+          },
+          "source_castle": {
+            "description": "Valitse nämä joukot lähettävä Suuren valtakunnan linna tai etuvartio.",
+            "label": "Luovuttajalinna",
+            "recommendation": "Valitse linna, jossa hyökkäysarmeijasi on."
+          }
+        },
+        "title": "Valitse hyökkäys ja huoltolähde"
+      },
+      "tools": {
+        "image": {
+          "alt": "Havainnolliset Auto Berin leirityökalujen asetukset",
+          "caption": "Kolme työkalujen vähimmäisvarastoa ja selvästi kuvitteellinen leirivarasto."
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "Täydennä näin monta leiriin sijoitettua muurinmurtajaa samalla säännöllä.",
+            "label": "Muurinmurtajien vähimmäismäärä",
+            "recommendation": "Sovita määrä tavallisen mallisi käyttöön."
+          },
+          "mantlets_minimum": {
+            "description": "Täydennä näin monta leiriin sijoitettua suojakilpeä samalla säännöllä.",
+            "label": "Suojakilpien vähimmäismäärä",
+            "recommendation": "Sovita määrä tavallisen mallisi käyttöön."
+          },
+          "scaling_ladders_minimum": {
+            "description": "Täydennä näin monta leiriin sijoitettua tikasta kelvollisilla kolikkotarjouksilla; 0 jättää ne hallitsematta.",
+            "label": "Tikkaiden vähimmäismäärä",
+            "recommendation": "Sovita määrä tavalliseen malliisi ja hyökkäystahtiisi."
+          }
+        },
+        "title": "Ylläpidä leirin työkaluja"
+      },
+      "transfers": {
+        "image": {
+          "alt": "Havainnolliset Auto Berin suhteellisten joukkojen siirtoasetukset",
+          "caption": "Kuvitteellinen suhde 2:1, leirivarasto, vapaa kapasiteetti ja yhden tyypin osittainen lähetys; luvut ovat esimerkkejä eivätkä tallennettuja oletuksia."
+        },
+        "items": {
+          "check_interval": {
+            "description": "Määritä, kuinka usein Auto Beri päivittää vapaan siirtokapasiteetin ja molempien linnojen joukkomäärät.",
+            "label": "Tarkistusväli",
+            "recommendation": "Pidä tavallinen 30 sekunnin väli."
+          },
+          "food_only": {
+            "description": "Vain mallin Ruokaa kuluttavia joukkoja voidaan siirtää; tukemattomat yksiköt tai ratkaisemattomat joukkoperheet keskeyttävät toiminnan perustelun kanssa.",
+            "label": "Vain Ruokaa käyttävät joukot"
+          },
+          "minimum_free_capacity": {
+            "description": "Aloita siirrot vasta, kun ilmoitettu vapaa kapasiteetti saavuttaa tämän rajan; yksittäinen suhteellinen lähetys voi olla pienempi.",
+            "label": "Vapaan kapasiteetin vähimmäismäärä",
+            "recommendation": "Valitse pienin vapaa raja, joka sopii tavalliseen siirtotahtiisi."
+          },
+          "owned_berimond_camp": {
+            "description": "Auto Beri löytää omistamasi Berimond-leirin automaattisesti, joten leirin tunnusta ei tarvitse syöttää.",
+            "label": "Oma Berimond-leiri"
+          },
+          "partial_donor": {
+            "description": "Jos luovuttajalla on osa tarvittavasta joukkotyypistä, Auto Beri lähettää pienemmän määrän; jos tyyppiä ei ole lainkaan, se odottaa toisen tyypin lähettämisen sijaan.",
+            "label": "Luovuttajan osittainen varasto"
+          },
+          "pending_transfer": {
+            "description": "Auto Beri odottaa jokaisen lähetyksen saapumista ja päivittää leirivaraston ennen mallin suhteen laskemista uudelleen.",
+            "label": "Odottava siirto"
+          },
+          "preset_troop_mix": {
+            "description": "Auto Beri laskee yhteen valitun mallin aaltojen ja sisäpihan toistuvat joukkopaikat ja täydentää yhtä aliedustettua tyyppiä kerrallaan.",
+            "label": "Mallin joukko-osuudet"
+          },
+          "troop_transport_skip": {
+            "description": "Valitse käytettävän esineen kesto, kun kuljetuksen ajansäästö on käytössä.",
+            "label": "Kuljetuksen ajansäästö",
+            "recommendation": "Varaa pidemmät säästöt muihin tehtäviin tarpeen mukaan."
+          },
+          "use_troop_transport_time_skips": {
+            "description": "Käytä valittua ajansäästöä vahvistettuun siirtoon sen ollessa matkalla.",
+            "label": "Käytä kuljetuksen ajansäästöjä",
+            "recommendation": "Pois, ellei nopeampi leirihuolto ole säästettyjen esineiden arvoista."
+          }
+        },
+        "title": "Määritä suhteelliset joukkojen siirrot"
+      }
+    }
   }
 }

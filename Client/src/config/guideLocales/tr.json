@@ -34,7 +34,10 @@
     "advisorPreviewTitle": "Otomatik Danışman ayarları örneği",
     "khanGuideIntro": "Otomatik Han'ı kurmak için bu adımları izleyin; büyütmek için bir örnek panel seçin.",
     "khanGuideTitle": "Otomatik Han rehberi",
-    "khanPreviewTitle": "Otomatik Han kurulum örneği"
+    "khanPreviewTitle": "Otomatik Han kurulum örneği",
+    "beriGuideIntro": "Auto Beri Dünyası'nı kurmak için bu adımları izleyin; büyütmek istediğiniz örnek panoyu seçin.",
+    "beriGuideTitle": "Auto Beri Dünyası rehberi",
+    "beriPreviewTitle": "Auto Beri Dünyası kurulum örneği"
   },
   "autoTower": {
     "recommendationIntro": "Bunlar düzenli kullanım önerileridir; kaydetmeden önce gözden geçirin.",
@@ -491,6 +494,45 @@
       "source": "Saldırı kaynağı: Büyük İmparatorluk ileri karakolu",
       "title": "Örnek Han kurulumu",
       "travel": "Hızlı yolculuk için Yolculuk Tüyü"
+    },
+    "beriBuilder": {
+      "permissions": "Premium ve yıkım: incelemeden kapalı",
+      "reserves": "Berimond kaynaklarını ve hızlandırmaları ayırın",
+      "stable": "Grup Ahırı: seçilen seviye 1–5",
+      "target": "Yerleşik kesin hedef veya incelenmiş özel yerleşim",
+      "title": "Örnek isteğe bağlı kamp inşaatçısı"
+    },
+    "beriReadiness": {
+      "booster": "Cesaret güçlendiricisi koşulu: isteğe bağlı",
+      "food": "Transferler yiyecekle beslenen şablon askerlerini gerektirir",
+      "preset": "Kayıtlı asker ve araç yuvalarını inceleyin",
+      "title": "Örnek kule hazırlığı"
+    },
+    "beriSave": {
+      "calendar": "Sürekli çalışma için takvim kapalı",
+      "enable": "Otomasyon kartında Auto Beri Dünyası'nı açın",
+      "save": "Asker karışımını inceleyip ayarları kaydedin",
+      "title": "Örnek kaydetme ve etkinleştirme akışı"
+    },
+    "beriSetup": {
+      "donor": "Gereken askerlere sahip Büyük İmparatorluk kaynak kalesi",
+      "limit": "Günlük normal saldırılar: 0 ek sınır",
+      "preset": "Kayıtlı Berimond saldırı şablonu",
+      "title": "Örnek saldırı ve kaynak kurulumu",
+      "travel": "Kule saldırıları için Seyahat Tüyü"
+    },
+    "beriTools": {
+      "ladders": "Tırmanma merdivenleri: olağan saldırılara göre",
+      "mantlets": "Siperler: olağan saldırılara göre",
+      "rams": "Koçbaşları: olağan saldırılara göre",
+      "title": "Örnek kamp araçları alt sınırları"
+    },
+    "beriTransfers": {
+      "capacity": "Boş kapasite: 3; eşik: 3",
+      "mix": "Şablon karışımı: 2 A birimi ve 1 B birimi",
+      "next": "Sonraki sevkiyat: kaynak stokundan en çok 1 B",
+      "stock": "Kamp stoku: 2 A ve 0 B",
+      "title": "Örnek oranlı transferler"
     }
   },
   "autoStation": {
@@ -1429,5 +1471,218 @@
       "summary": "Han kampına art arda saldırın ve ana kalenizi misillemelere karşı savunun"
     },
     "recommendationIntro": "Önerilen değerler Otomatik Han'ın normal kullanımına yöneliktir; kaydedilmiş ayarları değiştirmez."
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "Auto Beri, seçtiğiniz saldırı şablonunu kullanarak size ait Berimond kampına askerleri oranlı biçimde takviye eder; ardından kulelere saldırabilir, araçları yenileyebilir ve doğrulanmış ganimetle inşa yapabilir.",
+      "expectation": "Transferler, kamp ve kaynak kalenin güncel envanterini, bildirilen kapasiteyi ve önceki sevkiyatın tamamlanmasını bekler; kısmi stok daha küçük sevkiyata izin verirken gerekli bir türün yokluğu takviyeyi durdurur.",
+      "name": "Auto Beri Dünyası",
+      "summary": "Berimond kampınızı besleyin ve yönetin"
+    },
+    "recommendationIntro": "Önerilen seçimler Auto Beri'nin olağan kullanımı içindir; yalnızca yol gösterir ve kayıtlı ayarları değiştirmez.",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "Auto Beri isteğe bağlı kamp inşaatı ayarlarının temsili görünümü",
+          "caption": "Yerleşik hedef, ahır hedefi, inşaat izinleri ve rezerv grupları."
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "Taşınamayan veya depolanamayan yönetilmeyen yapıların tam hedefte kaldırılmasına izin verin.",
+            "label": "Yıkıma izin ver",
+            "recommendation": "Hedefte nelerin kaldırılacağını incelemediyseniz kapalı tutun."
+          },
+          "allow_premium_costs": {
+            "description": "Premium para harcayan uygun inşaat adımlarına izin verin.",
+            "label": "Premium harcamalara izin ver",
+            "recommendation": "Premium inşaatı bilerek istiyorsanız açın; aksi halde kapalı tutun."
+          },
+          "auto_beri_builder_lane": {
+            "description": "Başka bir krallıktan kaynak taşımadan, doğrulanmış ganimetle kamptaki kesin hedefi inşa edin veya yükseltin.",
+            "label": "Auto Beri inşa hattı",
+            "recommendation": "Hedefi ve harcama izinlerini inceleyene kadar kapalı tutun."
+          },
+          "camp_resource_reserves": {
+            "description": "Seçilen Berimond odunu ve taşını inşaatçı için kullanılamaz tutun.",
+            "label": "Kamp kaynak rezervleri",
+            "recommendation": "Diğer kamp işleri için gereken miktarı ayırın."
+          },
+          "construction_time_skip_reserves": {
+            "description": "Seçilen sayıda hızlandırma öğesini inşaatçı için kullanılamaz tutun.",
+            "label": "İnşaat hızlandırma rezervleri",
+            "recommendation": "Diğer işler için gerekenleri ayırın."
+          },
+          "optional_custom_camp_target": {
+            "description": "Yalnızca yerleşik hedefin yerine geçmesini istiyorsanız bir yerleşimi yakalayın, önizleyin, kaydedin ve etkinleştirin.",
+            "label": "İsteğe bağlı özel kamp hedefi",
+            "recommendation": "Özel yerleşimi incelemediyseniz yerleşik hedefi kullanın."
+          },
+          "stable_target": {
+            "description": "Yerleşik hedef için istediğiniz Grup Ahırı seviyesini 1 ile 5 arasında seçin.",
+            "label": "Ahır hedefi",
+            "recommendation": "Mevcut etkinlik kaynaklarınızın karşılayabildiği seviyeyi seçin."
+          },
+          "use_construction_time_skips": {
+            "description": "Seçilen hızlandırma rezervlerini koruyarak doğrulanmış inşaat süresini ilerletin.",
+            "label": "İnşaat hızlandırmalarını kullan",
+            "recommendation": "Öğeleri harcamaya değecek kadar hızlı inşaat istemiyorsanız kapalı tutun."
+          }
+        },
+        "title": "İsteğe bağlı kamp inşaatını seçin"
+      },
+      "readiness": {
+        "image": {
+          "alt": "Auto Beri kule saldırısı hazırlık ayarlarının temsili görünümü",
+          "caption": "Canlı güçlendirici veya müşteri verisi izlenimi vermeyen güçlendirici durumu ve şablon donanımı."
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "Saldırıları açmadan önce seçilen şablonun dalgalarını, askerlerini ve araçlarını inceleyin.",
+            "label": "Saldırı şablonu donanımı",
+            "recommendation": "Normal saldırı hızınız için kaynak kalede ve kampta yeterli sayıda seçili asker ve araç bulundurun."
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "Transferler, araç alımları, kamp kurulumu, kule saldırıları veya inşaat için etkin Cesaret güçlendiricisi zorunlu olsun.",
+            "label": "Yalnızca Cesaret güçlendiricisiyle çalıştır",
+            "recommendation": "Tüm Auto Beri hatlarını güçlendiriciye bağlamak istiyorsanız açın."
+          }
+        },
+        "title": "Kule saldırısı hazırlığını ayarlayın"
+      },
+      "save": {
+        "image": {
+          "alt": "Auto Beri kaydetme ve etkinleştirme ayarlarının temsili görünümü",
+          "caption": "Canlı hesap göstermeyen kayıtlı kurulum listesi, anahtar ve isteğe bağlı takvim."
+        },
+        "items": {
+          "automation_switch": {
+            "description": "Kampı, kaynak askerlerini, şablonu ve isteğe bağlı harcama ayarlarını doğruladıktan sonra Otomasyon kartından Auto Beri Dünyası'nı açın.",
+            "label": "Otomasyon anahtarı",
+            "recommendation": "Kurulumdan sonra açın."
+          },
+          "calendar": {
+            "description": "Sürekli çalışma için takvimi kapalı bırakın veya zaman aralığı gerekiyorsa olağan saatlerinizi ayarlayıp takvimi kaydedin.",
+            "label": "Takvim",
+            "recommendation": "Sürekli etkinlik çalışması için kapalı tutun."
+          },
+          "save_settings": {
+            "description": "Otomasyonu açmadan önce şablonu, kaynak kaleyi, transfer sıklığını, saldırı sınırlarını, araçları ve isteğe bağlı inşaat seçimlerini kaydedin.",
+            "label": "Ayarları kaydet"
+          }
+        },
+        "title": "Kaydedin ve etkinleştirin"
+      },
+      "setup": {
+        "image": {
+          "alt": "Auto Beri saldırı ve kaynak ayarlarının temsili görünümü",
+          "caption": "Kayıtlı saldırı şablonu, Büyük İmparatorluk kaynak kalesi, Seyahat Tüyü, saldırı denetimi ve günlük sınır."
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "Auto Beri'nin yeni bir kule saldırısı için ne sıklıkla denetim yapacağını ayarlayın.",
+            "label": "Saldırı denetim aralığı",
+            "recommendation": "Daha az denetim istemiyorsanız olağan 30 saniyelik aralığı koruyun."
+          },
+          "attack_preset": {
+            "description": "Kayıtlı bir Berimond saldırı dizilişi seçin; Auto Beri bunun asker karışımını hem transferlerde hem de kule saldırılarında kullanır.",
+            "label": "Saldırı şablonu",
+            "recommendation": "Önce olağan Berimond şablonunuzu oluşturup seçin."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Hesap genelindeki günlük normal saldırı sayısına ulaşıldığında yeni Auto Beri kule saldırılarını durdurun; 0 bu ek sınırı kaldırır.",
+            "label": "Günlük normal saldırı sınırı",
+            "recommendation": "Hesap genelinde sınır kullanmıyorsanız 0."
+          },
+          "horse_travel_boost": {
+            "description": "Kule saldırılarında tüy, sikke veya yakut seyahatini seçin.",
+            "label": "At seyahat güçlendirmesi",
+            "recommendation": "Yakutlu seyahati seçmeden hızlı yolculuk için Seyahat Tüyü."
+          },
+          "open_settings": {
+            "description": "Otomasyon sayfasında Auto Beri Dünyası kartının ayarlarını açın.",
+            "label": "Ayarları aç"
+          },
+          "source_castle": {
+            "description": "Bu askerleri sağlayan Büyük İmparatorluk kalesini veya ileri karakolunu seçin.",
+            "label": "Kaynak kale",
+            "recommendation": "Saldırı ordunuzun bulunduğu kaleyi seçin."
+          }
+        },
+        "title": "Saldırı ve kaynak seçiminizi yapın"
+      },
+      "tools": {
+        "image": {
+          "alt": "Auto Beri kamp araçları ayarlarının temsili görünümü",
+          "caption": "Üç araç alt sınırı ve açıkça kurgusal bir kamp envanteri."
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "Aynı kurala göre kampta bu sayıda koçbaşı bulundurun.",
+            "label": "Koçbaşı alt sınırı",
+            "recommendation": "Olağan şablonunuzun kullanımına göre ayarlayın."
+          },
+          "mantlets_minimum": {
+            "description": "Aynı kurala göre kampta bu sayıda siper bulundurun.",
+            "label": "Siper alt sınırı",
+            "recommendation": "Olağan şablonunuzun kullanımına göre ayarlayın."
+          },
+          "scaling_ladders_minimum": {
+            "description": "Uygun sikke teklifleriyle kampta bu sayıda merdiven bulundurun; 0 bunları yönetmez.",
+            "label": "Tırmanma merdiveni alt sınırı",
+            "recommendation": "Olağan şablonunuzun ve saldırı hızınızın gerektirdiği sayıyı seçin."
+          }
+        },
+        "title": "Kamp araçlarını koruyun"
+      },
+      "transfers": {
+        "image": {
+          "alt": "Auto Beri oranlı asker transferi ayarlarının temsili görünümü",
+          "caption": "Kurgusal 2:1 şablon karışımı, kamp stoku, boş kapasite ve tek türden kısmi sevkiyat; değerler örnektir, kayıtlı varsayılanlar değildir."
+        },
+        "items": {
+          "check_interval": {
+            "description": "Auto Beri'nin boş transfer kapasitesini ve iki kalenin envanterini ne sıklıkla yenileyeceğini ayarlayın.",
+            "label": "Denetim aralığı",
+            "recommendation": "Olağan 30 saniyelik aralığı koruyun."
+          },
+          "food_only": {
+            "description": "Yalnızca yiyecekle beslenen şablon askerleri transfer edilebilir; desteklenmeyen birimler veya çözümlenemeyen asker aileleri açıklamayla beklemeye alınır.",
+            "label": "Yalnızca yiyecekli transferler"
+          },
+          "minimum_free_capacity": {
+            "description": "Transferleri yalnızca bildirilen boş kapasite bu eşiğe ulaştığında başlatın; tek bir oranlı sevkiyat daha küçük olabilir.",
+            "label": "Asgari boş kapasite",
+            "recommendation": "Olağan transfer hızınıza uygun en küçük boş kapasite eşiğini kullanın."
+          },
+          "owned_berimond_camp": {
+            "description": "Auto Beri size ait Berimond kampını otomatik bulur, bu yüzden kamp kimliği girilmez.",
+            "label": "Size ait Berimond kampı"
+          },
+          "partial_donor": {
+            "description": "Kaynak kalede gereken asker türünden bir miktar varsa Auto Beri daha azını gönderir; hiç yoksa başka tür göndermek yerine bekler.",
+            "label": "Kısmi kaynak stoku"
+          },
+          "pending_transfer": {
+            "description": "Auto Beri şablon karışımını yeniden hesaplamadan önce her sevkiyatın varmasını ve kamp stokunun yenilenmesini bekler.",
+            "label": "Bekleyen transfer"
+          },
+          "preset_troop_mix": {
+            "description": "Auto Beri, seçili şablonun dalgaları ve avlusundaki tekrarlanan asker yuvalarını toplar, sonra en eksik türü sırayla takviye eder.",
+            "label": "Şablon asker karışımı"
+          },
+          "troop_transport_skip": {
+            "description": "Transfer hızlandırması açıkken kullanılacak öğenin süresini seçin.",
+            "label": "Asker transferi hızlandırması",
+            "recommendation": "Gerekiyorsa daha uzun hızlandırmaları diğer işler için ayırın."
+          },
+          "use_troop_transport_time_skips": {
+            "description": "Seçilen hızlandırmayı hâlâ yolda olan doğrulanmış transfere uygulayın.",
+            "label": "Asker transferinde hızlandırma kullan",
+            "recommendation": "Kamptaki askerleri daha hızlı yenilemek biriktirilmiş hızlandırmalara değmiyorsa kapalı tutun."
+          }
+        },
+        "title": "Oranlı asker transferlerini ayarlayın"
+      }
+    }
   }
 }

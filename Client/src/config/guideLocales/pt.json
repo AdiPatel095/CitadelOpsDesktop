@@ -34,7 +34,10 @@
     "advisorPreviewTitle": "Exemplo de configuração do Auto Conselheiro",
     "khanGuideIntro": "Siga estas etapas para configurar Khan Automático; selecione um painel de exemplo para ampliar.",
     "khanGuideTitle": "Guia do Khan Automático",
-    "khanPreviewTitle": "Exemplo de configuração do Khan Automático"
+    "khanPreviewTitle": "Exemplo de configuração do Khan Automático",
+    "beriGuideIntro": "Siga estas etapas para configurar o Auto Beri World; selecione um painel de exemplo para ampliar.",
+    "beriGuideTitle": "Guia do Auto Beri World",
+    "beriPreviewTitle": "Exemplo de configuração do Auto Beri World"
   },
   "autoTower": {
     "recommendationIntro": "Estas recomendações são para o uso regular; revise-as antes de salvar.",
@@ -491,6 +494,45 @@
       "source": "Atacar de: posto avançado do Grande Império",
       "title": "Exemplo de configuração do Khan",
       "travel": "Pena de Viagem para ir mais rápido"
+    },
+    "beriBuilder": {
+      "permissions": "Premium e demolição: desligados até revisão",
+      "reserves": "Reserve recursos de Berimond e aceleradores",
+      "stable": "Estábulo de facção: nível escolhido de 1 a 5",
+      "target": "Objetivo exato integrado ou layout personalizado revisado",
+      "title": "Exemplo de construção opcional do acampamento"
+    },
+    "beriReadiness": {
+      "booster": "Exigência de reforço de galhardia: opcional",
+      "food": "Transferências exigem tropas da predefinição alimentadas com Comida",
+      "preset": "Confira tropas e ferramentas da predefinição salva",
+      "title": "Exemplo de preparo das torres"
+    },
+    "beriSave": {
+      "calendar": "Calendário desligado para operação contínua",
+      "enable": "Ligue o Auto Beri no cartão Automação",
+      "save": "Salve as configurações após conferir a proporção de tropas",
+      "title": "Exemplo de salvar e ligar"
+    },
+    "beriSetup": {
+      "donor": "Fornecedor no Grande Império com as tropas necessárias",
+      "limit": "Ataques normais diários: 0 limite adicional",
+      "preset": "Predefinição de ataque de Berimond salva",
+      "title": "Exemplo de ataque e abastecimento",
+      "travel": "Pena de viagem para ataques a torres"
+    },
+    "beriTools": {
+      "ladders": "Escadas: conforme os ataques habituais",
+      "mantlets": "Manteletes: conforme os ataques habituais",
+      "rams": "Aríetes: conforme os ataques habituais",
+      "title": "Exemplo de mínimos de ferramentas"
+    },
+    "beriTransfers": {
+      "capacity": "Capacidade livre: 3; limiar: 3",
+      "mix": "Proporção da predefinição: 2 unidades A para 1 unidade B",
+      "next": "Próximo envio: até 1 B do estoque fornecedor",
+      "stock": "Estoque do acampamento: 2 A e 0 B",
+      "title": "Exemplo de transferências proporcionais"
     }
   },
   "autoStation": {
@@ -1429,5 +1471,218 @@
       "summary": "Encadeie ataques ao acampamento do Khan e defenda retaliações no castelo principal"
     },
     "recommendationIntro": "Os valores recomendados descrevem o uso habitual do Khan Automático; são orientações e não alteram configurações salvas."
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "Auto Beri reforça seu acampamento em Berimond na proporção de tropas da predefinição de ataque escolhida e pode atacar torres, repor ferramentas e construir com saque confirmado.",
+      "expectation": "As transferências aguardam inventários atualizados no acampamento e no castelo fornecedor, capacidade informada e a conclusão do envio anterior; estoque parcial permite um envio menor, enquanto a ausência do tipo necessário pausa a reposição.",
+      "name": "Auto Beri World",
+      "summary": "Abasteça e administre seu acampamento em Berimond"
+    },
+    "recommendationIntro": "As recomendações descrevem o uso regular do Auto Beri; elas não alteram configurações salvas.",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "Configurações ilustrativas da construção opcional do acampamento no Auto Beri",
+          "caption": "Objetivo integrado, nível do estábulo, permissões de construção e reservas."
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "Permita remover construções não gerenciadas que não podem ser movidas nem guardadas para cumprir exatamente o objetivo.",
+            "label": "Permitir demolição",
+            "recommendation": "Desligado, a menos que você tenha revisado as remoções previstas."
+          },
+          "allow_premium_costs": {
+            "description": "Permita etapas de construção elegíveis que gastam moeda premium.",
+            "label": "Permitir custos premium",
+            "recommendation": "Desligado, a menos que você queira explicitamente construções premium."
+          },
+          "auto_beri_builder_lane": {
+            "description": "Construa ou melhore um objetivo exato no acampamento com saque retornado e confirmado, sem transportar recursos de outro reino.",
+            "label": "Construtor do Auto Beri",
+            "recommendation": "Desligado até revisar o objetivo e as permissões de gasto."
+          },
+          "camp_resource_reserves": {
+            "description": "Reserve as quantidades escolhidas de madeira e pedra de Berimond fora do alcance do construtor.",
+            "label": "Reservas de recursos do acampamento",
+            "recommendation": "Reserve o necessário para outras tarefas do acampamento."
+          },
+          "construction_time_skip_reserves": {
+            "description": "Reserve a quantidade escolhida de cada acelerador fora do alcance do construtor.",
+            "label": "Reservas de aceleradores de construção",
+            "recommendation": "Reserve o necessário para outras atividades."
+          },
+          "optional_custom_camp_target": {
+            "description": "Capture, visualize, salve e ative um layout apenas se ele for substituir o objetivo integrado.",
+            "label": "Objetivo personalizado opcional",
+            "recommendation": "Mantenha o objetivo integrado até revisar um layout personalizado."
+          },
+          "stable_target": {
+            "description": "Escolha para o objetivo integrado o nível desejado do estábulo de facção, de 1 a 5.",
+            "label": "Nível desejado do estábulo",
+            "recommendation": "Escolha um nível compatível com os recursos do evento atual."
+          },
+          "use_construction_time_skips": {
+            "description": "Acelere um cronômetro de construção confirmado respeitando as reservas escolhidas de aceleradores.",
+            "label": "Usar aceleradores de construção",
+            "recommendation": "Desligado, a menos que construir mais rápido compense esses itens."
+          }
+        },
+        "title": "Escolha a construção opcional do acampamento"
+      },
+      "readiness": {
+        "image": {
+          "alt": "Configurações ilustrativas de preparo dos ataques a torres no Auto Beri",
+          "caption": "Estado da exigência de reforço e formação da predefinição, sem reforço ativo nem dados reais de clientes."
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "Confira as ondas, tropas e ferramentas da predefinição escolhida antes de ativar os ataques.",
+            "label": "Formação da predefinição de ataque",
+            "recommendation": "Mantenha tropas e ferramentas escolhidas suficientes no castelo fornecedor e no acampamento para seu ritmo habitual."
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "Exija um reforço de galhardia ativo antes de transferências, compras de ferramentas, preparo do acampamento, ataques a torres ou construções.",
+            "label": "Executar somente com reforço de galhardia",
+            "recommendation": "Ligado se você quiser condicionar todas as tarefas do Auto Beri ao reforço."
+          }
+        },
+        "title": "Prepare os ataques a torres"
+      },
+      "save": {
+        "image": {
+          "alt": "Configurações ilustrativas de salvar e ativar o Auto Beri",
+          "caption": "Lista de preparo, chave e calendário opcional sem mostrar uma conta real."
+        },
+        "items": {
+          "automation_switch": {
+            "description": "Ligue o Auto Beri no cartão de Automação depois de conferir o acampamento, as tropas fornecedoras, a predefinição e os gastos opcionais.",
+            "label": "Chave de automação",
+            "recommendation": "Ligado após a configuração."
+          },
+          "calendar": {
+            "description": "Deixe a agenda desligada para operação contínua ou defina seus horários habituais e salve se precisar de uma janela.",
+            "label": "Calendário",
+            "recommendation": "Desligado para operação contínua do evento."
+          },
+          "save_settings": {
+            "description": "Salve a predefinição, o fornecedor, o ritmo das transferências, limites de ataque, ferramentas e escolhas opcionais de construção antes de ligar a automação.",
+            "label": "Salvar configurações"
+          }
+        },
+        "title": "Salve e ative"
+      },
+      "setup": {
+        "image": {
+          "alt": "Configurações ilustrativas de ataque e abastecimento no Auto Beri",
+          "caption": "Predefinição de ataque salva, castelo fornecedor do Grande Império, Pena de viagem, verificação de ataques e limite diário."
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "Defina com que frequência o Auto Beri procura outro ataque a torre.",
+            "label": "Intervalo de verificação de ataques",
+            "recommendation": "Mantenha o intervalo habitual de 30 segundos, a menos que queira menos verificações."
+          },
+          "attack_preset": {
+            "description": "Escolha uma formação de ataque de Berimond salva; o Auto Beri usa a proporção de tropas dela para transferências e ataques a torres.",
+            "label": "Predefinição de ataque",
+            "recommendation": "Crie e selecione primeiro sua predefinição habitual de Berimond."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Pare novos ataques do Auto Beri a torres quando o contador diário de ataques normais da conta atingir este limite; 0 remove o limite adicional.",
+            "label": "Limite diário de ataques normais",
+            "recommendation": "0, a menos que use um limite para toda a conta."
+          },
+          "horse_travel_boost": {
+            "description": "Escolha viagem com pena, moedas ou rubis para ataques a torres.",
+            "label": "Aceleração de viagem",
+            "recommendation": "Pena de viagem para rapidez sem selecionar viagem com rubis."
+          },
+          "open_settings": {
+            "description": "Na página Automação, abra as configurações do cartão Auto Beri World.",
+            "label": "Abrir configurações"
+          },
+          "source_castle": {
+            "description": "Escolha o castelo ou posto avançado no Grande Império que fornece essas tropas.",
+            "label": "Castelo fornecedor",
+            "recommendation": "Escolha o castelo onde fica seu exército de ataque."
+          }
+        },
+        "title": "Escolha ataque e origem do abastecimento"
+      },
+      "tools": {
+        "image": {
+          "alt": "Configurações ilustrativas das ferramentas do acampamento no Auto Beri",
+          "caption": "Os três mínimos de ferramentas e um inventário de acampamento claramente fictício."
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "Reponha esta quantidade de aríetes estacionados seguindo a mesma regra.",
+            "label": "Mínimo de aríetes",
+            "recommendation": "Ajuste ao uso de sua predefinição habitual."
+          },
+          "mantlets_minimum": {
+            "description": "Reponha esta quantidade de manteletes estacionados seguindo a mesma regra.",
+            "label": "Mínimo de manteletes",
+            "recommendation": "Ajuste ao uso de sua predefinição habitual."
+          },
+          "scaling_ladders_minimum": {
+            "description": "Reponha esta quantidade de escadas estacionadas no acampamento com ofertas elegíveis em moedas; 0 deixa de gerenciá-las.",
+            "label": "Mínimo de escadas",
+            "recommendation": "Ajuste à predefinição e ao ritmo de ataque habituais."
+          }
+        },
+        "title": "Mantenha as ferramentas do acampamento"
+      },
+      "transfers": {
+        "image": {
+          "alt": "Configurações ilustrativas de transferências proporcionais de tropas no Auto Beri",
+          "caption": "Proporção fictícia 2:1, estoque do acampamento, capacidade livre e um envio parcial de um único tipo; os valores são exemplos, não padrões salvos."
+        },
+        "items": {
+          "check_interval": {
+            "description": "Defina com que frequência o Auto Beri atualiza a capacidade livre e os inventários de ambos os castelos.",
+            "label": "Intervalo de verificação",
+            "recommendation": "Mantenha o intervalo habitual de 30 segundos."
+          },
+          "food_only": {
+            "description": "Somente tropas da predefinição que consomem Comida podem ser transferidas; unidades incompatíveis ou famílias não resolvidas pausam com uma explicação.",
+            "label": "Somente transferências de tropas alimentadas com Comida"
+          },
+          "minimum_free_capacity": {
+            "description": "Inicie transferências apenas quando a capacidade livre informada atingir este limiar; um envio proporcional individual pode ser menor.",
+            "label": "Capacidade livre mínima",
+            "recommendation": "Escolha o menor limiar livre adequado ao seu ritmo habitual de transferências."
+          },
+          "owned_berimond_camp": {
+            "description": "O Auto Beri encontra automaticamente seu acampamento em Berimond, sem precisar informar um ID.",
+            "label": "Acampamento próprio em Berimond"
+          },
+          "partial_donor": {
+            "description": "Se o fornecedor tiver parte do tipo de tropa necessário, o Auto Beri envia essa quantidade menor; se não tiver nenhuma, aguarda em vez de enviar outro tipo.",
+            "label": "Estoque parcial do fornecedor"
+          },
+          "pending_transfer": {
+            "description": "O Auto Beri espera cada envio chegar e atualiza o estoque do acampamento antes de recalcular a proporção da predefinição.",
+            "label": "Transferência pendente"
+          },
+          "preset_troop_mix": {
+            "description": "O Auto Beri soma posições repetidas de tropas nas ondas e no pátio da predefinição escolhida e repõe um tipo sub-representado por vez.",
+            "label": "Proporção de tropas da predefinição"
+          },
+          "troop_transport_skip": {
+            "description": "Escolha a duração do item usado quando a aceleração de transporte estiver ligada.",
+            "label": "Acelerador de transporte",
+            "recommendation": "Reserve aceleradores mais longos para outras tarefas, se necessário."
+          },
+          "use_troop_transport_time_skips": {
+            "description": "Aplique o acelerador escolhido a uma transferência confirmada enquanto ela ainda estiver em trânsito.",
+            "label": "Usar aceleradores de transporte",
+            "recommendation": "Desligado, a menos que abastecer mais rápido compense gastar esses itens guardados."
+          }
+        },
+        "title": "Configure transferências proporcionais de tropas"
+      }
+    }
   }
 }

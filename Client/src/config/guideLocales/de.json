@@ -34,7 +34,10 @@
     "advisorPreviewTitle": "Einrichtungsbeispiel für Auto Berater",
     "khanGuideIntro": "Folge diesen Schritten zum Einrichten von Auto Khan; wähle ein Beispielbild zum Vergrößern.",
     "khanGuideTitle": "Auto-Khan-Anleitung",
-    "khanPreviewTitle": "Beispiel für Auto-Khan-Einstellungen"
+    "khanPreviewTitle": "Beispiel für Auto-Khan-Einstellungen",
+    "beriGuideIntro": "Befolge diese Schritte für Auto Beri World; wähle ein Beispielpanel zum Vergrößern.",
+    "beriGuideTitle": "Anleitung für Auto Beri World",
+    "beriPreviewTitle": "Beispiel für die Einrichtung von Auto Beri World"
   },
   "autoTower": {
     "recommendationIntro": "Diese Empfehlungen gelten für den regelmäßigen Betrieb; prüfe sie vor dem Speichern.",
@@ -491,6 +494,45 @@
       "source": "Angriff von: Außenposten im Großen Imperium",
       "title": "Beispiel für Khan-Einstellungen",
       "travel": "Reisefeder für schnelle Reisen"
+    },
+    "beriBuilder": {
+      "permissions": "Premium und Abriss: aus, sofern nicht geprüft",
+      "reserves": "Berimond-Ressourcen und Zeitverkürzer reservieren",
+      "stable": "Fraktionsstall: gewählte Stufe 1–5",
+      "target": "Eingebautes exaktes Ziel oder geprüftes eigenes Layout",
+      "title": "Beispiel für optionalen Lagerausbau"
+    },
+    "beriReadiness": {
+      "booster": "Tapferkeitsbooster als Bedingung: optional",
+      "food": "Transfers benötigen Vorlagentruppen mit Nahrungsverbrauch",
+      "preset": "Gespeicherte Truppen- und Werkzeugplätze prüfen",
+      "title": "Beispiel für Turmbereitschaft"
+    },
+    "beriSave": {
+      "calendar": "Kalender für Dauerbetrieb aus",
+      "enable": "Auto Beri über die Automatisierungskarte einschalten",
+      "save": "Einstellungen nach Prüfung des Truppenverhältnisses speichern",
+      "title": "Beispiel für Speichern und Einschalten"
+    },
+    "beriSetup": {
+      "donor": "Spender im Großen Imperium mit benötigten Truppen",
+      "limit": "Tageslimit normale Angriffe: 0 Zusatzlimit",
+      "preset": "Gespeicherte Berimond-Angriffsvorlage",
+      "title": "Beispiel für Angriff und Versorgung",
+      "travel": "Reisefeder für Turmangriffe"
+    },
+    "beriTools": {
+      "ladders": "Sturmleitern: an übliche Angriffe anpassen",
+      "mantlets": "Schutzschilde: an übliche Angriffe anpassen",
+      "rams": "Rammböcke: an übliche Angriffe anpassen",
+      "title": "Beispiel für Werkzeugmindestbestände"
+    },
+    "beriTransfers": {
+      "capacity": "Freie Kapazität: 3; Schwelle: 3",
+      "mix": "Vorlagenverhältnis: 2 Einheiten A zu 1 Einheit B",
+      "next": "Nächste Sendung: bis zu 1 B aus dem Spenderbestand",
+      "stock": "Lagerbestand: 2 A und 0 B",
+      "title": "Beispiel für verhältnismäßige Transfers"
     }
   },
   "autoStation": {
@@ -1429,5 +1471,218 @@
       "summary": "Verkette Khanlager-Angriffe und verteidige Vergeltungen in deiner Hauptburg"
     },
     "recommendationIntro": "Empfohlene Werte beschreiben die regelmäßige Nutzung von Auto Khan; sie sind Hinweise und ändern gespeicherte Einstellungen nicht."
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "Auto Beri verstärkt dein eigenes Berimond-Lager im Verhältnis der Truppen aus der gewählten Angriffsvorlage und kann danach Türme angreifen, Werkzeuge auffüllen und mit bestätigter Beute bauen.",
+      "expectation": "Transfers warten auf aktuelle Bestände im Lager und beim Spender, gemeldete Kapazität und den Abschluss der vorherigen Sendung; ein kleinerer Spenderbestand kann teilweise gesendet werden, während ein fehlender benötigter Typ die Auffüllung pausiert.",
+      "name": "Automatisierte Berimond-Welt",
+      "summary": "Versorge und betreibe dein Berimond-Lager"
+    },
+    "recommendationIntro": "Die Empfehlungen beschreiben die regelmäßige Nutzung von Auto Beri; sie ändern keine gespeicherten Einstellungen.",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "Illustrative Einstellungen für den optionalen Lagerausbau in Auto Beri",
+          "caption": "Eingebautes Ziel, Stallziel, Bauberechtigungen und Reserven."
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "Erlaube, nicht verwaltete Gebäude für das exakte Ziel zu entfernen, wenn sie weder verschoben noch eingelagert werden können.",
+            "label": "Abriss erlauben",
+            "recommendation": "Aus, sofern du die für das Ziel nötigen Entfernungen nicht geprüft hast."
+          },
+          "allow_premium_costs": {
+            "description": "Erlaube geeignete Bauschritte mit Premiumwährung.",
+            "label": "Premiumkosten erlauben",
+            "recommendation": "Aus, sofern du Premiumbau nicht ausdrücklich möchtest."
+          },
+          "auto_beri_builder_lane": {
+            "description": "Baue oder verbessere ein exaktes Lagerziel mit bestätigter zurückgekehrter Beute, ohne Ressourcen aus einem anderen Königreich zu transportieren.",
+            "label": "Auto-Beri-Bauverwaltung",
+            "recommendation": "Aus, bis du Ziel und Ausgabeberechtigungen geprüft hast."
+          },
+          "camp_resource_reserves": {
+            "description": "Halte die gewählten Mengen Berimond-Holz und -Stein für die Bauverwaltung zurück.",
+            "label": "Ressourcenreserven im Lager",
+            "recommendation": "Reserviere, was du für andere Arbeiten im Lager brauchst."
+          },
+          "construction_time_skip_reserves": {
+            "description": "Halte die gewählte Anzahl jedes Zeitverkürzers für die Bauverwaltung zurück.",
+            "label": "Reserven für Bauzeitverkürzer",
+            "recommendation": "Reserviere, was du für andere Aktivitäten brauchst."
+          },
+          "optional_custom_camp_target": {
+            "description": "Erfasse, prüfe, speichere und aktiviere ein Layout nur dann, wenn es das eingebaute Ziel ersetzen soll.",
+            "label": "Optionales eigenes Lagerziel",
+            "recommendation": "Behalte das eingebaute Ziel, sofern du kein eigenes Layout geprüft hast."
+          },
+          "stable_target": {
+            "description": "Wähle für das eingebaute Ziel die gewünschte Stufe des Fraktionsstalls von 1 bis 5.",
+            "label": "Stallziel",
+            "recommendation": "Wähle eine Stufe, die deine aktuellen Eventressourcen tragen können."
+          },
+          "use_construction_time_skips": {
+            "description": "Beschleunige einen bestätigten Bautimer unter Einhaltung der gewählten Zeitverkürzerreserven.",
+            "label": "Bauzeitverkürzer verwenden",
+            "recommendation": "Aus, sofern dir schnelleres Bauen diese Gegenstände wert ist."
+          }
+        },
+        "title": "Optionalen Lagerausbau wählen"
+      },
+      "readiness": {
+        "image": {
+          "alt": "Illustrative Einstellungen für die Bereitschaft zu Turmangriffen in Auto Beri",
+          "caption": "Status der Booster-Bedingung und Vorlagenaufstellung ohne echte Booster- oder Kundendaten."
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "Prüfe Wellen, Truppen und Werkzeuge der gewählten Vorlage, bevor du Angriffe einschaltest.",
+            "label": "Aufstellung der Angriffsvorlage",
+            "recommendation": "Halte für dein übliches Angriffstempo genügend ausgewählte Truppen und Werkzeuge beim Spender und im Lager bereit."
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "Verlange einen aktiven Tapferkeitsbooster, bevor Transfers, Werkzeugkäufe, Lageraufbau, Turmangriffe oder Bauarbeiten weiterlaufen.",
+            "label": "Nur mit Tapferkeitsbooster ausführen",
+            "recommendation": "Ein, wenn alle Auto-Beri-Bereiche vom Booster abhängen sollen."
+          }
+        },
+        "title": "Bereitschaft für Turmangriffe einstellen"
+      },
+      "save": {
+        "image": {
+          "alt": "Illustrative Einstellungen zum Speichern und Einschalten von Auto Beri",
+          "caption": "Prüfliste für gespeicherte Einrichtung, Schalter und optionalen Zeitplan ohne echtes Konto."
+        },
+        "items": {
+          "automation_switch": {
+            "description": "Schalte Auto Beri über die Automatisierungskarte ein, nachdem du Lager, Spendertruppen, Vorlage und optionale Ausgaben geprüft hast.",
+            "label": "Automatisierungsschalter",
+            "recommendation": "Nach der Einrichtung ein."
+          },
+          "calendar": {
+            "description": "Lass den Zeitplan für Dauerbetrieb aus oder lege bei Bedarf übliche Stunden fest und speichere ihn.",
+            "label": "Kalender",
+            "recommendation": "Für laufenden Eventbetrieb aus."
+          },
+          "save_settings": {
+            "description": "Speichere Vorlage, Spender, Transfertakt, Angriffslimits, Werkzeuge und optionale Bauentscheidungen, bevor du die Automatisierung einschaltest.",
+            "label": "Einstellungen speichern"
+          }
+        },
+        "title": "Speichern und einschalten"
+      },
+      "setup": {
+        "image": {
+          "alt": "Illustrative Einstellungen für Angriffe und Versorgung in Auto Beri",
+          "caption": "Gespeicherte Angriffsvorlage, Spenderburg im Großen Imperium, Reisefeder, Angriffsprüfung und Tageslimit."
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "Lege fest, wie oft Auto Beri nach einem weiteren Turmangriff sucht.",
+            "label": "Prüfintervall für Angriffe",
+            "recommendation": "Behalte das übliche Intervall von 30 Sekunden, sofern du nicht seltener prüfen möchtest."
+          },
+          "attack_preset": {
+            "description": "Wähle eine gespeicherte Berimond-Angriffsformation; Auto Beri nutzt deren Truppenverhältnis für Transfers und Turmangriffe.",
+            "label": "Angriffsvorlage",
+            "recommendation": "Erstelle und wähle zuerst deine übliche Berimond-Vorlage."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Stoppe neue Auto-Beri-Turmangriffe beim kontoweiten Tageszähler für normale Angriffe; 0 entfernt dieses Zusatzlimit.",
+            "label": "Tageslimit für normale Angriffe",
+            "recommendation": "0, sofern du kein kontoweites Limit brauchst."
+          },
+          "horse_travel_boost": {
+            "description": "Wähle für Turmangriffe eine Reise mit Feder, Münzen oder Rubinen.",
+            "label": "Reisebeschleunigung",
+            "recommendation": "Reisefeder für schnelles Reisen ohne Rubinreise."
+          },
+          "open_settings": {
+            "description": "Öffne auf der Automatisierungsseite die Einstellungen der Auto-Beri-Karte.",
+            "label": "Einstellungen öffnen"
+          },
+          "source_castle": {
+            "description": "Wähle die Burg oder den Außenposten im Großen Imperium, von dem die Truppen kommen.",
+            "label": "Spenderburg",
+            "recommendation": "Wähle die Burg mit deiner Angriffsarmee."
+          }
+        },
+        "title": "Angriff und Versorgungsquelle wählen"
+      },
+      "tools": {
+        "image": {
+          "alt": "Illustrative Einstellungen für Lagerwerkzeuge in Auto Beri",
+          "caption": "Die drei Werkzeugmindestbestände und ein eindeutig fiktiver Lagerbestand."
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "Fülle so viele stationierte Rammböcke nach derselben Regel auf.",
+            "label": "Mindestbestand Rammböcke",
+            "recommendation": "Richte dich nach dem Verbrauch deiner üblichen Vorlage."
+          },
+          "mantlets_minimum": {
+            "description": "Fülle so viele stationierte Schutzschilde nach derselben Regel auf.",
+            "label": "Mindestbestand Schutzschilde",
+            "recommendation": "Richte dich nach dem Verbrauch deiner üblichen Vorlage."
+          },
+          "scaling_ladders_minimum": {
+            "description": "Fülle so viele stationierte Sturmleitern im Lager mit geeigneten Münzangeboten auf; 0 lässt sie unverwaltet.",
+            "label": "Mindestbestand Sturmleitern",
+            "recommendation": "Richte dich nach deiner üblichen Vorlage und deinem Angriffstempo."
+          }
+        },
+        "title": "Lagerwerkzeuge erhalten"
+      },
+      "transfers": {
+        "image": {
+          "alt": "Illustrative Einstellungen für verhältnismäßige Truppentransfers in Auto Beri",
+          "caption": "Ein fiktives Vorlagenverhältnis von 2:1, Lagerbestand, freie Kapazität und eine teilweise Sendung eines Truppentyps; die Werte sind Beispiele, keine gespeicherten Vorgaben."
+        },
+        "items": {
+          "check_interval": {
+            "description": "Lege fest, wie oft Auto Beri freie Transferkapazität und beide Burgbestände aktualisiert.",
+            "label": "Prüfintervall",
+            "recommendation": "Behalte das übliche Intervall von 30 Sekunden."
+          },
+          "food_only": {
+            "description": "Nur Vorlagentruppen mit Nahrungsverbrauch können transferiert werden; nicht unterstützte Einheiten oder nicht auflösbare Truppenfamilien pausieren mit Begründung.",
+            "label": "Nur Truppen mit Nahrungsverbrauch"
+          },
+          "minimum_free_capacity": {
+            "description": "Beginne Transfers erst ab diesem gemeldeten freien Platz; eine einzelne anteilige Sendung darf kleiner sein.",
+            "label": "Mindestkapazität frei",
+            "recommendation": "Wähle die kleinste freie Kapazität, die zu deinem üblichen Transfertakt passt."
+          },
+          "owned_berimond_camp": {
+            "description": "Auto Beri erkennt dein eigenes Berimond-Lager automatisch; du musst keine Lager-ID eingeben.",
+            "label": "Eigenes Berimond-Lager"
+          },
+          "partial_donor": {
+            "description": "Wenn beim Spender einige Truppen des benötigten Typs vorhanden sind, sendet Auto Beri diese kleinere Menge; ohne diesen Typ wartet es statt einen anderen zu senden.",
+            "label": "Teilbestand beim Spender"
+          },
+          "pending_transfer": {
+            "description": "Auto Beri wartet auf die Ankunft jeder Sendung und aktualisiert den Lagerbestand, bevor es das Vorlagenverhältnis neu berechnet.",
+            "label": "Ausstehender Transfer"
+          },
+          "preset_troop_mix": {
+            "description": "Auto Beri summiert wiederholte Truppenplätze aus den Wellen und dem Hof der gewählten Vorlage und füllt jeweils einen unterrepräsentierten Typ nach.",
+            "label": "Truppenverhältnis der Vorlage"
+          },
+          "troop_transport_skip": {
+            "description": "Wähle die Dauer des Gegenstands, der bei eingeschalteter Transportbeschleunigung verwendet wird.",
+            "label": "Transportzeitverkürzer",
+            "recommendation": "Reserviere längere Verkürzer für andere Aufgaben, wenn du sie brauchst."
+          },
+          "use_troop_transport_time_skips": {
+            "description": "Wende den gewählten Zeitverkürzer auf einen bestätigten Transfer an, solange er unterwegs ist.",
+            "label": "Transportzeitverkürzer verwenden",
+            "recommendation": "Aus, sofern dir schnellere Lagerversorgung die gespeicherten Zeitverkürzer wert ist."
+          }
+        },
+        "title": "Verhältnismäßige Truppentransfers einstellen"
+      }
+    }
   }
 }

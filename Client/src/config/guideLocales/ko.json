@@ -34,7 +34,10 @@
     "advisorPreviewTitle": "자동 고문 설정 예시",
     "khanGuideIntro": "이 단계에 따라 자동 칸을 설정하세요. 예시 패널을 선택하면 확대할 수 있습니다.",
     "khanGuideTitle": "자동 칸 가이드",
-    "khanPreviewTitle": "자동 칸 설정 예시"
+    "khanPreviewTitle": "자동 칸 설정 예시",
+    "beriGuideIntro": "다음 단계에 따라 자동 베리몬드 월드를 설정하고 예시 패널을 선택해 확대하세요.",
+    "beriGuideTitle": "자동 베리몬드 월드 안내서",
+    "beriPreviewTitle": "자동 베리몬드 월드 설정 예시"
   },
   "autoTower": {
     "recommendationIntro": "일반적인 사용을 위한 권장값입니다. 저장하기 전에 검토하세요.",
@@ -491,6 +494,45 @@
       "source": "공격 출발지: 대제국 전초기지",
       "title": "칸 설정 예시",
       "travel": "빠른 이동을 위한 이동 깃털"
+    },
+    "beriBuilder": {
+      "permissions": "프리미엄과 철거: 검토 전에는 끔",
+      "reserves": "베리몬드 자원과 시간 단축 비축",
+      "stable": "파벌 마구간: 선택한 레벨 1~5",
+      "target": "기본 지정 목표 또는 검토한 사용자 지정 배치",
+      "title": "선택적 진영 건설 예시"
+    },
+    "beriReadiness": {
+      "booster": "용맹 부스터 조건: 선택 사항",
+      "food": "수송에는 식량 소비 프리셋 병력이 필요",
+      "preset": "저장된 병력과 도구 칸 확인",
+      "title": "탑 공격 준비 예시"
+    },
+    "beriSave": {
+      "calendar": "계속 실행하려면 일정 끔",
+      "enable": "자동화 카드에서 자동 베리몬드 월드 켜기",
+      "save": "병력 비율 검토 후 설정 저장",
+      "title": "저장 및 활성화 흐름 예시"
+    },
+    "beriSetup": {
+      "donor": "필요한 병력이 있는 그레이트 엠파이어 공급 성",
+      "limit": "일일 일반 공격: 추가 제한 0",
+      "preset": "저장된 베리몬드 공격 프리셋",
+      "title": "공격과 공급원 설정 예시",
+      "travel": "탑 공격에 여행 깃털"
+    },
+    "beriTools": {
+      "ladders": "공성 사다리: 평소 공격에 맞춤",
+      "mantlets": "방패막: 평소 공격에 맞춤",
+      "rams": "공성 망치: 평소 공격에 맞춤",
+      "title": "진영 도구 최소 수량 예시"
+    },
+    "beriTransfers": {
+      "capacity": "여유 용량: 3; 기준: 3",
+      "mix": "프리셋 비율: A 2유닛 대 B 1유닛",
+      "next": "다음 수송: 공급 재고에서 B 최대 1유닛",
+      "stock": "진영 재고: A 2, B 0",
+      "title": "병력 비례 수송 예시"
     }
   },
   "autoStation": {
@@ -1429,5 +1471,218 @@
       "summary": "칸 야영지를 연속 공격하고 본성에서 보복을 방어"
     },
     "recommendationIntro": "권장 값은 자동 칸의 일반적인 사용을 위한 안내이며 저장된 설정을 바꾸지 않습니다."
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "자동 베리몬드는 선택한 공격 프리셋의 병력 비율에 따라 소유한 베리몬드 진영에 병력을 보충하고, 탑을 공격하거나 도구를 채우고 확인된 전리품으로 건설할 수 있습니다.",
+      "expectation": "수송은 진영과 공급 성의 최신 재고, 보고된 여유 용량, 이전 수송의 완료를 기다리며, 공급 병력이 일부 있으면 더 적게 보내고 필요한 종류가 없으면 보충을 멈춥니다.",
+      "name": "자동 베리몬드 월드",
+      "summary": "베리몬드 진영 보급 및 운영"
+    },
+    "recommendationIntro": "권장 선택은 자동 베리몬드의 일반적인 사용을 위한 안내이며 저장된 설정을 바꾸지 않습니다.",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "선택적 진영 건설 설정의 예시 화면",
+          "caption": "기본 목표, 마구간 목표, 건설 허가, 비축 항목."
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "옮기거나 보관할 수 없는 관리 외 건물이 지정 목표에 있으면 철거하도록 허용합니다.",
+            "label": "철거 허용",
+            "recommendation": "제거 대상을 검토하기 전에는 끄는 것이 좋습니다."
+          },
+          "allow_premium_costs": {
+            "description": "프리미엄 화폐를 쓰는 대상 건설 단계를 허용합니다.",
+            "label": "프리미엄 비용 허용",
+            "recommendation": "프리미엄 건설을 의도한 경우가 아니면 끄는 것이 좋습니다."
+          },
+          "auto_beri_builder_lane": {
+            "description": "다른 왕국에서 자원을 운반하지 않고 확인된 전리품으로 진영의 지정 목표를 건설하거나 업그레이드합니다.",
+            "label": "자동 베리몬드 건설 작업",
+            "recommendation": "목표와 지출 허가를 검토하기 전에는 끄는 것이 좋습니다."
+          },
+          "camp_resource_reserves": {
+            "description": "선택한 베리몬드 목재와 석재 수량을 건설에 사용하지 않고 남겨 둡니다.",
+            "label": "진영 자원 비축량",
+            "recommendation": "다른 진영 작업에 필요한 양을 남겨 두세요."
+          },
+          "construction_time_skip_reserves": {
+            "description": "선택한 각 시간 단축 아이템 수량을 건설에 사용하지 않고 남겨 둡니다.",
+            "label": "건설 시간 단축 비축량",
+            "recommendation": "다른 활동에 필요한 수량을 남겨 두세요."
+          },
+          "optional_custom_camp_target": {
+            "description": "기본 목표를 대체하려는 경우에만 배치를 캡처하고 미리 보고 저장한 다음 활성화합니다.",
+            "label": "선택적 사용자 지정 진영 목표",
+            "recommendation": "사용자 지정 배치를 검토하지 않았다면 기본 목표를 사용하세요."
+          },
+          "stable_target": {
+            "description": "기본 목표의 파벌 마구간 희망 레벨을 1부터 5까지 선택합니다.",
+            "label": "마구간 목표",
+            "recommendation": "현재 이벤트 자원으로 가능한 레벨을 선택하세요."
+          },
+          "use_construction_time_skips": {
+            "description": "선택한 비축량을 유지하면서 확인된 건설 타이머를 진행합니다.",
+            "label": "건설 시간 단축 사용",
+            "recommendation": "아이템을 써서 건설을 앞당길 가치가 없다면 끄는 것이 좋습니다."
+          }
+        },
+        "title": "선택적 진영 건설 선택"
+      },
+      "readiness": {
+        "image": {
+          "alt": "탑 공격 준비 설정의 예시 화면",
+          "caption": "실제 부스터나 고객 데이터를 암시하지 않는 부스터 조건과 프리셋 편성."
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "공격을 켜기 전에 선택한 프리셋의 공격 파동, 병력, 도구를 확인합니다.",
+            "label": "공격 프리셋 편성",
+            "recommendation": "일반적인 공격 속도에 필요한 각 병력과 도구를 공급 성과 진영에 충분히 두세요."
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "수송, 도구 구매, 진영 준비, 탑 공격, 건설 전에 활성 용맹 부스터를 요구합니다.",
+            "label": "용맹 부스터가 있을 때만 실행",
+            "recommendation": "모든 자동 베리몬드 작업을 부스터로 제한하려면 켜는 것이 좋습니다."
+          }
+        },
+        "title": "탑 공격 준비 설정"
+      },
+      "save": {
+        "image": {
+          "alt": "저장 및 활성화 설정의 예시 화면",
+          "caption": "실제 계정이 아닌 저장 설정 확인 목록, 스위치, 선택적 일정."
+        },
+        "items": {
+          "automation_switch": {
+            "description": "진영과 공급 병력, 프리셋, 선택적 지출 설정을 확인한 뒤 자동화 카드에서 자동 베리몬드 월드를 켭니다.",
+            "label": "자동화 스위치",
+            "recommendation": "설정을 마친 뒤 켜세요."
+          },
+          "calendar": {
+            "description": "계속 실행하려면 일정을 끄고, 시간대가 필요하면 평소 시간을 정해 일정을 저장합니다.",
+            "label": "일정",
+            "recommendation": "이벤트를 계속 운영하려면 끄는 것이 좋습니다."
+          },
+          "save_settings": {
+            "description": "자동화를 켜기 전에 프리셋, 공급 성, 수송 간격, 공격 제한, 도구, 선택적 건설 설정을 저장합니다.",
+            "label": "설정 저장"
+          }
+        },
+        "title": "저장하고 켜기"
+      },
+      "setup": {
+        "image": {
+          "alt": "공격과 공급원 설정의 예시 화면",
+          "caption": "저장된 공격 프리셋, 그레이트 엠파이어 공급 성, 여행 깃털, 공격 확인, 일일 제한."
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "자동 베리몬드가 다음 탑 공격을 확인하는 간격을 정합니다.",
+            "label": "공격 확인 간격",
+            "recommendation": "확인을 줄일 필요가 없다면 일반적인 30초 간격을 유지하세요."
+          },
+          "attack_preset": {
+            "description": "저장된 베리몬드 공격 편성을 선택하면 자동 베리몬드가 해당 병력 비율을 수송과 탑 공격에 모두 사용합니다.",
+            "label": "공격 프리셋",
+            "recommendation": "평소 사용할 베리몬드 프리셋을 먼저 만들고 선택하세요."
+          },
+          "daily_normal_attack_limit": {
+            "description": "계정 전체의 일일 일반 공격 횟수에 도달하면 새 자동 베리몬드 탑 공격을 멈추며, 0이면 이 추가 제한이 없어집니다.",
+            "label": "일일 일반 공격 제한",
+            "recommendation": "계정 전체 제한을 쓰지 않는다면 0을 권장합니다."
+          },
+          "horse_travel_boost": {
+            "description": "탑 공격에 깃털, 동전, 루비 이동을 선택합니다.",
+            "label": "말 이동 강화",
+            "recommendation": "루비 이동을 선택하지 않고 빠르게 이동하려면 여행 깃털을 권장합니다."
+          },
+          "open_settings": {
+            "description": "자동화 페이지에서 자동 베리몬드 월드 카드의 설정을 엽니다.",
+            "label": "설정 열기"
+          },
+          "source_castle": {
+            "description": "병력을 공급할 그레이트 엠파이어 성이나 전초기지를 선택합니다.",
+            "label": "공급 성",
+            "recommendation": "공격 병력이 있는 성을 선택하세요."
+          }
+        },
+        "title": "공격과 공급원 선택"
+      },
+      "tools": {
+        "image": {
+          "alt": "진영 도구 설정의 예시 화면",
+          "caption": "세 종류 도구의 최소 수량과 명확히 가상의 진영 재고."
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "같은 규칙으로 주둔 중인 공성 망치를 이 수량까지 보충합니다.",
+            "label": "공성 망치 최소 수량",
+            "recommendation": "평소 프리셋의 사용량에 맞추세요."
+          },
+          "mantlets_minimum": {
+            "description": "같은 규칙으로 주둔 중인 방패막을 이 수량까지 보충합니다.",
+            "label": "방패막 최소 수량",
+            "recommendation": "평소 프리셋의 사용량에 맞추세요."
+          },
+          "scaling_ladders_minimum": {
+            "description": "해당 동전 판매 품목을 이용해 진영의 사다리를 이 수량까지 보충하며, 0이면 관리하지 않습니다.",
+            "label": "공성 사다리 최소 수량",
+            "recommendation": "평소 프리셋과 공격 속도에 필요한 수량에 맞추세요."
+          }
+        },
+        "title": "진영 도구 유지"
+      },
+      "transfers": {
+        "image": {
+          "alt": "병력 비례 수송 설정의 예시 화면",
+          "caption": "가상의 2:1 프리셋 비율, 진영 재고, 여유 용량, 한 병종의 부분 수송을 보여 주며 수치는 저장된 기본값이 아닌 예시입니다."
+        },
+        "items": {
+          "check_interval": {
+            "description": "자동 베리몬드가 수송 여유 용량과 양쪽 성의 재고를 새로 확인하는 간격을 정합니다.",
+            "label": "확인 간격",
+            "recommendation": "일반적인 30초 간격을 유지하세요."
+          },
+          "food_only": {
+            "description": "식량을 소비하는 프리셋 병력만 수송할 수 있으며 지원하지 않는 유닛이나 병종 계열을 판별할 수 없으면 이유를 알려 주고 기다립니다.",
+            "label": "식량 소비 병력만 수송"
+          },
+          "minimum_free_capacity": {
+            "description": "보고된 여유 용량이 이 기준에 도달할 때만 수송을 시작하며 개별 비례 수송량은 더 적을 수 있습니다.",
+            "label": "최소 여유 용량",
+            "recommendation": "평소 수송 속도에 맞는 가장 작은 여유 용량 기준을 사용하세요."
+          },
+          "owned_berimond_camp": {
+            "description": "자동 베리몬드가 소유한 베리몬드 진영을 자동으로 찾으므로 진영 ID를 입력할 필요가 없습니다.",
+            "label": "소유한 베리몬드 진영"
+          },
+          "partial_donor": {
+            "description": "공급 성에 필요한 병종이 일부 있으면 더 적게 보내고 전혀 없으면 다른 병종을 대신 보내지 않고 기다립니다.",
+            "label": "부분 공급 재고"
+          },
+          "pending_transfer": {
+            "description": "자동 베리몬드는 각 수송이 도착하고 진영 재고가 갱신될 때까지 기다린 뒤 프리셋 비율을 다시 계산합니다.",
+            "label": "대기 중인 수송"
+          },
+          "preset_troop_mix": {
+            "description": "자동 베리몬드는 선택한 프리셋의 공격 파동과 안뜰에 반복된 병력 칸을 합산한 다음 부족한 병종 하나씩 보충합니다.",
+            "label": "프리셋 병력 비율"
+          },
+          "troop_transport_skip": {
+            "description": "수송 단축을 켰을 때 사용할 아이템의 시간을 선택합니다.",
+            "label": "병력 수송 단축",
+            "recommendation": "필요하다면 긴 시간 단축 아이템을 다른 작업에 남겨 두세요."
+          },
+          "use_troop_transport_time_skips": {
+            "description": "아직 이동 중인 확인된 수송에 선택한 단축 아이템을 적용합니다.",
+            "label": "병력 수송 시간 단축 사용",
+            "recommendation": "진영 보급을 빨리하는 데 저장한 단축 아이템을 쓸 가치가 없다면 끄는 것이 좋습니다."
+          }
+        },
+        "title": "병력 비례 수송 설정"
+      }
+    }
   }
 }

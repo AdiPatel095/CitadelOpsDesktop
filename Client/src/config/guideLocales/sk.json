@@ -34,7 +34,10 @@
     "advisorPreviewTitle": "Príklad nastavenia Automatického poradcu",
     "khanGuideIntro": "Podľa týchto krokov nastavte Automatického chána; výberom ukážkového panelu ho zväčšíte.",
     "khanGuideTitle": "Sprievodca Automatickým chánom",
-    "khanPreviewTitle": "Príklad nastavenia Automatického chána"
+    "khanPreviewTitle": "Príklad nastavenia Automatického chána",
+    "beriGuideIntro": "Podľa týchto krokov nastavte Automatický Berimond; výberom príkladového panela ho zväčšíte.",
+    "beriGuideTitle": "Sprievodca Automatickým Berimondom",
+    "beriPreviewTitle": "Príklad nastavenia Automatického Berimondu"
   },
   "autoTower": {
     "recommendationIntro": "Toto sú odporúčania na bežné používanie; pred uložením ich skontrolujte.",
@@ -491,6 +494,45 @@
       "source": "Útok z: základňa vo Veľkej ríši",
       "title": "Príklad nastavenia chána",
       "travel": "Cestovné pierko na rýchlu cestu"
+    },
+    "beriBuilder": {
+      "permissions": "Premium a búranie: vypnuté do kontroly",
+      "reserves": "Vyhraďte berimondské suroviny a urýchlenia",
+      "stable": "Frakčná stajňa: zvolená úroveň 1–5",
+      "target": "Vstavaný presný cieľ alebo preverené vlastné rozloženie",
+      "title": "Príklad voliteľnej výstavby tábora"
+    },
+    "beriReadiness": {
+      "booster": "Posilnenie statočnosti ako podmienka: voliteľné",
+      "food": "Presuny vyžadujú jednotky predlohy spotrebúvajúce Jedlo",
+      "preset": "Skontrolujte uložené miesta jednotiek a nástrojov",
+      "title": "Príklad pripravenosti na veže"
+    },
+    "beriSave": {
+      "calendar": "Kalendár vypnutý pre nepretržitú prevádzku",
+      "enable": "Zapnite Automatický Berimond na karte Automatizácia",
+      "save": "Po kontrole pomeru jednotiek uložte nastavenia",
+      "title": "Príklad uloženia a zapnutia"
+    },
+    "beriSetup": {
+      "donor": "Darca vo Veľkej ríši s potrebnými jednotkami",
+      "limit": "Denné bežné útoky: 0 dodatočných limitov",
+      "preset": "Uložená berimondská útočná predloha",
+      "title": "Príklad útoku a zásobovania",
+      "travel": "Cestovné pierko na útoky na veže"
+    },
+    "beriTools": {
+      "ladders": "Rebríky: podľa obvyklých útokov",
+      "mantlets": "Štíty: podľa obvyklých útokov",
+      "rams": "Baranidlá: podľa obvyklých útokov",
+      "title": "Príklad minimálnych zásob nástrojov"
+    },
+    "beriTransfers": {
+      "capacity": "Voľná kapacita: 3; prah: 3",
+      "mix": "Pomer predlohy: 2 jednotky A na 1 jednotku B",
+      "next": "Ďalšia zásielka: až 1 B zo zásob darcu",
+      "stock": "Stav tábora: 2 A a 0 B",
+      "title": "Príklad pomerných presunov"
     }
   },
   "autoStation": {
@@ -1429,5 +1471,218 @@
       "summary": "Reťazte útoky na chánsky tábor a bráňte odvetu pri hlavnom hrade"
     },
     "recommendationIntro": "Odporúčané hodnoty opisujú bežné používanie Automatického chána; sú usmernením a nemenia uložené nastavenia."
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "Automatický Berimond posilňuje vlastnený tábor podľa pomeru jednotiek vo vybranej útočnej predlohe a potom môže útočiť na veže, dopĺňať nástroje a stavať z potvrdenej koristi.",
+      "expectation": "Presuny čakajú na aktuálne stavy tábora a darcovského hradu, hlásenú kapacitu a dokončenie predošlej zásielky; čiastočné zásoby umožňujú menšiu zásielku, kým chýbajúci potrebný typ dopĺňanie pozastaví.",
+      "name": "Automatický Berimond",
+      "summary": "Zásobujte a spravujte svoj tábor v Berimonde"
+    },
+    "recommendationIntro": "Odporúčania opisujú bežné používanie Automatického Berimondu a nemenia uložené nastavenia.",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "Ilustračné nastavenia voliteľnej výstavby tábora v Automatickom Berimonde",
+          "caption": "Vstavaný cieľ, úroveň stajne, stavebné oprávnenia a rezervy."
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "Povoľte odstránenie nespravovaných budov, ktoré nemožno presunúť ani uložiť, aby sa dosiahol presný cieľ.",
+            "label": "Povoliť búranie",
+            "recommendation": "Vypnuté, kým nepreveríte plánované odstránenia."
+          },
+          "allow_premium_costs": {
+            "description": "Povoľte vhodné stavebné kroky, ktoré míňajú prémiovú menu.",
+            "label": "Povoliť prémiové náklady",
+            "recommendation": "Vypnuté, ak prémiovú výstavbu vyslovene nechcete."
+          },
+          "auto_beri_builder_lane": {
+            "description": "Stavajte alebo vylepšujte presný cieľ tábora z potvrdenej vrátenej koristi bez prepravy surovín z iného kráľovstva.",
+            "label": "Staviteľ Automatického Berimondu",
+            "recommendation": "Vypnutý do preverenia cieľa a oprávnení na výdavky."
+          },
+          "camp_resource_reserves": {
+            "description": "Vyhraďte zvolené množstvá berimondského dreva a kameňa mimo dosahu staviteľa.",
+            "label": "Rezervy surovín tábora",
+            "recommendation": "Vyhraďte to, čo potrebujete na inú prácu v tábore."
+          },
+          "construction_time_skip_reserves": {
+            "description": "Vyhraďte zvolený počet každého predmetu na skrátenie času mimo dosahu staviteľa.",
+            "label": "Rezervy skrátenia času stavby",
+            "recommendation": "Vyhraďte to, čo potrebujete na ďalšie činnosti."
+          },
+          "optional_custom_camp_target": {
+            "description": "Zachyťte, prezrite, uložte a aktivujte rozloženie iba vtedy, ak má nahradiť vstavaný cieľ.",
+            "label": "Voliteľný vlastný cieľ tábora",
+            "recommendation": "Ponechajte vstavaný cieľ, kým nepreveríte vlastné rozloženie."
+          },
+          "stable_target": {
+            "description": "Pre vstavaný cieľ zvoľte požadovanú úroveň frakčnej stajne od 1 do 5.",
+            "label": "Cieľová úroveň stajne",
+            "recommendation": "Zvoľte úroveň, ktorú umožňujú zdroje aktuálnej udalosti."
+          },
+          "use_construction_time_skips": {
+            "description": "Urýchlite potvrdený stavebný časovač a zachovajte pritom zvolené rezervy urýchlenia.",
+            "label": "Používať urýchlenia stavby",
+            "recommendation": "Vypnuté, ak rýchlejšia stavba nestojí za tieto predmety."
+          }
+        },
+        "title": "Vyberte voliteľnú výstavbu tábora"
+      },
+      "readiness": {
+        "image": {
+          "alt": "Ilustračné nastavenia pripravenosti na útoky na veže",
+          "caption": "Stav podmienky posilnenia a zostava predlohy bez skutočne aktívneho posilnenia či údajov zákazníka."
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "Pred zapnutím útokov skontrolujte vlny, jednotky a nástroje vybranej predlohy.",
+            "label": "Zostava útočnej predlohy",
+            "recommendation": "Udržujte u darcu aj v tábore dosť všetkých vybraných jednotiek a nástrojov pre bežné tempo útokov."
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "Vyžadujte aktívne posilnenie statočnosti pred pokračovaním presunov, nákupov nástrojov, prípravy tábora, útokov na veže alebo stavby.",
+            "label": "Spúšťať iba s posilnením statočnosti",
+            "recommendation": "Zapnuté, ak má každá časť automatizácie vyžadovať posilnenie."
+          }
+        },
+        "title": "Pripravte útoky na veže"
+      },
+      "save": {
+        "image": {
+          "alt": "Ilustračné nastavenia uloženia a zapnutia Automatického Berimondu",
+          "caption": "Kontrolný zoznam, prepínač a voliteľný kalendár bez skutočného účtu."
+        },
+        "items": {
+          "automation_switch": {
+            "description": "Zapnite Automatický Berimond na karte Automatizácia po kontrole tábora, darcových jednotiek, predlohy a voliteľných výdavkov.",
+            "label": "Prepínač automatizácie",
+            "recommendation": "Zapnuté po nastavení."
+          },
+          "calendar": {
+            "description": "Pre nepretržitú prevádzku nechajte kalendár vypnutý alebo nastavte obvyklé hodiny a uložte rozvrh, ak potrebujete časové okno.",
+            "label": "Kalendár",
+            "recommendation": "Vypnuté pre priebežnú prevádzku udalosti."
+          },
+          "save_settings": {
+            "description": "Pred zapnutím automatizácie uložte predlohu, darcu, tempo presunov, limity útokov, nástroje a voľby výstavby.",
+            "label": "Uložiť nastavenia"
+          }
+        },
+        "title": "Uložiť a zapnúť"
+      },
+      "setup": {
+        "image": {
+          "alt": "Ilustračné nastavenia útokov a zásobovania Automatického Berimondu",
+          "caption": "Uložená útočná predloha, darcovský hrad vo Veľkej ríši, Cestovné pierko, kontrola útokov a denný limit."
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "Nastavte, ako často automatizácia hľadá ďalší útok na vežu.",
+            "label": "Interval kontroly útokov",
+            "recommendation": "Ponechajte obvyklý interval 30 sekúnd, ak nechcete menej kontrol."
+          },
+          "attack_preset": {
+            "description": "Vyberte uloženú berimondskú útočnú zostavu; automatizácia použije jej pomer jednotiek pri presunoch aj útokoch na veže.",
+            "label": "Útočná predloha",
+            "recommendation": "Najskôr vytvorte a vyberte svoju obvyklú berimondskú predlohu."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Zastavte nové útoky na veže, keď celkový denný počet bežných útokov účtu dosiahne tento limit; 0 odstraňuje dodatočné obmedzenie.",
+            "label": "Denný limit bežných útokov",
+            "recommendation": "0, ak nepoužívate limit pre celý účet."
+          },
+          "horse_travel_boost": {
+            "description": "Pre útoky na veže zvoľte cestu za pierko, mince alebo rubíny.",
+            "label": "Zrýchlenie cesty",
+            "recommendation": "Cestovné pierko na rýchly presun bez voľby rubínovej cesty."
+          },
+          "open_settings": {
+            "description": "Na stránke Automatizácia otvorte nastavenia karty Auto Beri World.",
+            "label": "Otvoriť nastavenia"
+          },
+          "source_castle": {
+            "description": "Vyberte hrad alebo základňu vo Veľkej ríši, odkiaľ pochádzajú jednotky.",
+            "label": "Darcovský hrad",
+            "recommendation": "Vyberte hrad so svojou útočnou armádou."
+          }
+        },
+        "title": "Zvoľte útok a zdroj zásobovania"
+      },
+      "tools": {
+        "image": {
+          "alt": "Ilustračné nastavenia táborových nástrojov Automatického Berimondu",
+          "caption": "Tri minimálne zásoby nástrojov a zjavne vymyslený inventár tábora."
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "Dopĺňajte tento počet umiestnených baranidiel podľa rovnakého pravidla.",
+            "label": "Minimum baranidiel",
+            "recommendation": "Prispôsobte spotrebe vo svojej obvyklej predlohe."
+          },
+          "mantlets_minimum": {
+            "description": "Dopĺňajte tento počet umiestnených štítov podľa rovnakého pravidla.",
+            "label": "Minimum štítov",
+            "recommendation": "Prispôsobte spotrebe vo svojej obvyklej predlohe."
+          },
+          "scaling_ladders_minimum": {
+            "description": "Dopĺňajte tento počet umiestnených rebríkov v tábore z vhodných ponúk za mince; 0 ich ponechá bez správy.",
+            "label": "Minimum rebríkov",
+            "recommendation": "Prispôsobte svojej obvyklej predlohe a tempu útokov."
+          }
+        },
+        "title": "Udržujte nástroje tábora"
+      },
+      "transfers": {
+        "image": {
+          "alt": "Ilustračné nastavenia pomerných presunov jednotiek",
+          "caption": "Vymyslený pomer 2:1, stav tábora, voľná kapacita a čiastočná zásielka jediného typu; hodnoty sú príklady, nie uložené predvolené nastavenia."
+        },
+        "items": {
+          "check_interval": {
+            "description": "Nastavte, ako často automatizácia obnovuje voľnú prepravnú kapacitu a zásoby v oboch hradoch.",
+            "label": "Interval kontroly",
+            "recommendation": "Ponechajte obvyklý interval 30 sekúnd."
+          },
+          "food_only": {
+            "description": "Presúvať možno iba jednotky predlohy spotrebúvajúce Jedlo; nepodporované jednotky alebo nevyriešené rodiny sa pozastavia s vysvetlením.",
+            "label": "Iba presuny jednotiek spotrebúvajúcich Jedlo"
+          },
+          "minimum_free_capacity": {
+            "description": "Začnite presuny až po dosiahnutí tohto prahu hlásenej voľnej kapacity; jednotlivá pomerná zásielka môže byť menšia.",
+            "label": "Minimálna voľná kapacita",
+            "recommendation": "Vyberte najnižší voľný prah zodpovedajúci bežnému tempu presunov."
+          },
+          "owned_berimond_camp": {
+            "description": "Automatizácia sama nájde váš vlastnený berimondský tábor, preto netreba zadávať ID tábora.",
+            "label": "Vlastnený tábor v Berimonde"
+          },
+          "partial_donor": {
+            "description": "Ak má darca časť potrebného typu jednotiek, automatizácia odošle menšie množstvo; ak nemá žiadne, čaká namiesto odoslania iného typu.",
+            "label": "Čiastočné zásoby u darcu"
+          },
+          "pending_transfer": {
+            "description": "Automatizácia čaká na príchod každej zásielky a pred novým výpočtom pomeru aktualizuje stav tábora.",
+            "label": "Prebiehajúci presun"
+          },
+          "preset_troop_mix": {
+            "description": "Automatizácia spočíta opakované miesta jednotiek vo vlnách a na nádvorí vybranej predlohy a dopĺňa vždy jeden nedostatočne zastúpený typ.",
+            "label": "Pomer jednotiek predlohy"
+          },
+          "troop_transport_skip": {
+            "description": "Vyberte trvanie predmetu použitého pri zapnutom urýchlení prepravy.",
+            "label": "Urýchlenie prepravy",
+            "recommendation": "Dlhšie urýchlenia si podľa potreby vyhraďte na iné úlohy."
+          },
+          "use_troop_transport_time_skips": {
+            "description": "Použite zvolené urýchlenie na potvrdený presun, kým je na ceste.",
+            "label": "Používať urýchlenie prepravy",
+            "recommendation": "Vypnuté, ak rýchlejšie zásobovanie tábora nestojí za uložené predmety."
+          }
+        },
+        "title": "Nastavte pomerné presuny jednotiek"
+      }
+    }
   }
 }
