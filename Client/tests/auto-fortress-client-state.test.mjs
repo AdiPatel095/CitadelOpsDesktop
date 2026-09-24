@@ -21,7 +21,7 @@ test('Auto Fortress defaults preserve the speed-first attack guards without owni
 
   assert.equal(settings.checkIntervalSec, 5);
   assert.equal('radius' in settings, false);
-  assert.equal(settings.horseTravelBoostId, 1009);
+  assert.equal(settings.horseTravelBoostId, -1);
   assert.equal(settings.minimumCommanderSpeedBonus, 100);
   assert.equal('dailySpeedBooster' in settings, false);
   assert.equal(settings.useTimeSkips, false);

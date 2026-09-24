@@ -19,7 +19,10 @@
     "birdPreviewTitle": "Eksempel på oppsett av Automatisk skjerming av tropper",
     "stationGuideTitle": "Veiledning for automatisk troppely",
     "stationGuideIntro": "Følg disse trinnene for å konfigurere automatisk troppely; velg eksempelbildet for å forstørre det.",
-    "stationPreviewTitle": "Eksempel på oppsett av automatisk troppely"
+    "stationPreviewTitle": "Eksempel på oppsett av automatisk troppely",
+    "fortressGuideIntro": "Følg disse trinnene for å stille inn automatiske festningsangrep; velg et eksempelpanel for å forstørre det.",
+    "fortressGuideTitle": "Veiledning for automatiske festningsangrep",
+    "fortressPreviewTitle": "Eksempel på oppsett av automatiske festningsangrep"
   },
   "autoTower": {
     "recommendationIntro": "Disse anbefalingene gjelder vanlig bruk; gå gjennom dem før du lagrer.",
@@ -322,6 +325,26 @@
       "gate": "Åpne porter som reserve: av",
       "castle": "Fiktivt slott: 80 forsvarstropper reservert",
       "save": "Lagre endringer og aktiver automatisk troppely"
+    },
+    "fortressAttack": {
+      "commander": "Kommandant: raskeste kvalifiserte tildelte",
+      "daily": "Daglig grense for normale angrep: 0",
+      "title": "Eksempel på angrepsinnstillinger",
+      "travel": "Reisepåslag: Reisefjær",
+      "wave": "Én full bølge med skrekkulver på begge flanker"
+    },
+    "fortressKingdoms": {
+      "everwinter": "Evigvinterbreen: på når låst opp",
+      "peaks": "Ildtoppene: på når låst opp",
+      "sands": "Den Brennende Sanden: på når låst opp",
+      "title": "Eksempel på kongerikeinnstillinger"
+    },
+    "fortressSupply": {
+      "purchase": "Skrekkulver per økt: 5 000",
+      "reserve": "Behold Khan-tavler: 25 000",
+      "route": "Forsyning: hovedborgen i Det Store Imperiet til aktiverte kongeriker",
+      "skips": "Tidsbesparelser for bekreftede overføringer: på",
+      "title": "Eksempel på forsyning av skrekkulver"
     }
   },
   "autoStation": {
@@ -413,6 +436,134 @@
       "description": "Når et spillerangrep nærmer seg, flytter automatisk troppely egnede tropper til det nærmeste egnede allianseslottet i samme kongerike.",
       "expectation": "Med hjemkalling på kommer troppene tilbake etter det siste oppdagede angrepet når ingen trussel gjenstår; ellers blir de én time etter ankomst og vender så hjem. Manglende mål, tropper eller spillbegrensninger kan hindre evakuering.",
       "helper": "Troppene går til det nærmeste egnede allianseslottet i samme kongerike; hvis evakuering mislykkes, kan portene i det angrepne eide slottet beskytte utenfor Berimond."
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "Raskeste tilgjengelige kommandant",
+      "commanderHelp": "Automatiske festningsangrep sammenligner relevante reisehastighetseffekter fra utstyr, edelstener, sett og generaler for hver målfestning; Relikvie 2.0 eller minst 100 % er ikke påkrevd.",
+      "description": "Automatiske festningsangrep kjøper skrekkulver innenfor lagrede grenser, forsyner aktiverte ytre kongeriker og angriper festninger som er klare, fra hovedborgene deres.",
+      "expectation": "Hvert angrep trenger en festning som er klar, nok skrekkulver til begge flanker og en kvalifisert tildelt kommandant; nedkjøling eller forsinket forsyning kan sette det på pause.",
+      "name": "Automatiske festningsangrep",
+      "settingsSummary": "Automatiske festningsangrep klargjør skrekkulver og velger den raskeste kvalifiserte tildelte kommandanten for hver målfestning.",
+      "summary": "Forsyn skrekkulver og angrip festninger som er klare",
+      "travelHelp": "Reisefjæren er standard; det lagrede reisevalget ditt beholdes. Det borgspesifikke reisepåslaget beregnes på nytt før angrepet sendes."
+    },
+    "recommendationIntro": "De anbefalte verdiene beskriver vanlig bruk av automatiske festningsangrep; de er veiledning og endrer ikke lagrede innstillinger.",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "Illustrerende eksempel på angreps- og reiseinnstillinger for automatiske festningsangrep",
+          "caption": "Automatiske festningsangrep rangerer kvalifiserte tildelte kommandanter for hvert mål og bruker det lagrede reisevalget."
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "Under Kommandanter tildeler du kommandantene automatiske festningsangrep kan bruke, og lagrer tildelingene.",
+            "label": "Tildeling av kommandanter",
+            "recommendation": "Tildel kommandantene du vanligvis vil ha tilgjengelige for festningsangrep."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Stopp automatiske festningsangrep ved kontoens daglige antall normale angrep til spillet nullstiller det; 0 legger ikke til noen grense.",
+            "label": "Daglig grense for normale angrep",
+            "recommendation": "0, med mindre du ønsker en ekstra dagsgrense."
+          },
+          "fastest_commander": {
+            "description": "For hver festning velger automatikken den raskeste tildelte kommandanten som er tilgjengelig nå, ut fra relevante effekter fra utstyr, edelstener, sett og generaler etter begrensninger.",
+            "label": "Raskeste kvalifiserte kommandant",
+            "recommendation": "En Relikvie 2.0-gjenstand eller 100 % hastighetsbonus er ikke nødvendig."
+          },
+          "full_flank_wave": {
+            "description": "Hvert angrep venter på nok skrekkulver til å fylle begge flanker med én full bølge.",
+            "label": "Skrekkulvbølge på begge flanker"
+          },
+          "horse_travel_boost": {
+            "description": "Velg reisealternativ for festningsangrep; et uttrykkelig lagret mynt- eller rubinnivå forblir valgt.",
+            "label": "Reisepåslag for hest",
+            "recommendation": "Reisefjær for raskest reise."
+          }
+        },
+        "title": "Still inn angrep og reise"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "Slå på automatiske festningsangrep på Automatisering-kortet etter lagring for å starte de vanlige syklusene.",
+            "label": "Bryter for automatiske festningsangrep",
+            "recommendation": "På etter at du har kontrollert og lagret de ønskede innstillingene."
+          },
+          "calendar": {
+            "description": "Bruk Kalender for å begrense når automatiske festningsangrep kan kjøre, og velg Lagre tidsplan ved endringer.",
+            "label": "Kalender",
+            "recommendation": "Av for kontinuerlig vanlig drift."
+          },
+          "save_fortress_plan": {
+            "description": "Lagre innstillingene for kongeriker, forsyning og angrep før du lukker dialogen.",
+            "label": "Lagre festningsplan"
+          }
+        },
+        "title": "Still inn tidsplanen, lagre og slå på"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "Illustrerende eksempel på kontrollene for de tre ytre kongerikene i automatiske festningsangrep",
+          "caption": "Aktiver hvert opplåst kongerike hvis hovedborg skal motta skrekkulver og angripe festninger."
+        },
+        "items": {
+          "burning_sands": {
+            "description": "Aktiver angrep og forsyning av skrekkulver fra hovedborgen din i Den Brennende Sanden når kongeriket er låst opp.",
+            "label": "Den Brennende Sanden",
+            "recommendation": "På når låst opp og klart til bruk."
+          },
+          "everwinter_glacier": {
+            "description": "Aktiver angrep og forsyning av skrekkulver fra hovedborgen din i Evigvinterbreen når kongeriket er låst opp.",
+            "label": "Evigvinterbreen",
+            "recommendation": "På når låst opp og klart til bruk."
+          },
+          "fire_peaks": {
+            "description": "Aktiver angrep og forsyning av skrekkulver fra hovedborgen din i Ildtoppene når kongeriket er låst opp.",
+            "label": "Ildtoppene",
+            "recommendation": "På når låst opp og klart til bruk."
+          }
+        },
+        "title": "Velg festningskongeriker"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "På Automatisering-siden velger du innstillingsknappen på kortet for automatiske festningsangrep.",
+            "label": "Åpne innstillinger"
+          }
+        },
+        "title": "Åpne innstillingene for automatiske festningsangrep"
+      },
+      "supply": {
+        "image": {
+          "alt": "Illustrerende eksempel på kjøps- og overføringsinnstillinger for skrekkulver",
+          "caption": "Kontroller kjøpstaket per økt, reserven av Khan-tavler og valget av tidsbesparelser for bekreftede overføringer."
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "Begrens kjøp av skrekkulver i nomadebutikken til partier på 100 per butikkøkt; 0 slår av kjøp.",
+            "label": "Skrekkulver per økt",
+            "recommendation": "5 000 skrekkulver per økt til den billigste prisen."
+          },
+          "keep_khan_tablets": {
+            "description": "Stopp kjøp av skrekkulver før beholdningen av Khan-tavler faller under denne reserven.",
+            "label": "Behold Khan-tavler",
+            "recommendation": "Behold 25 000 Khan-tavler."
+          },
+          "supply_route": {
+            "description": "Kjøpte skrekkulver ankommer hovedborgen i Det Store Imperiet og fordeles til aktiverte kongeriker.",
+            "label": "Forsyningsrute for skrekkulver"
+          },
+          "use_time_skips": {
+            "description": "Bruk bare egnede tidsbesparelser for bekreftede forsendelser fra automatiske festningsangrep, og overhold lagrede lagerreserver.",
+            "label": "Bruk tidsbesparelser til overføring av skrekkulver",
+            "recommendation": "På for raskere forsyning når de lagrede reservene av tidsbesparelser tillater det."
+          }
+        },
+        "title": "Still inn forsyning av skrekkulver"
+      }
     }
   }
 }

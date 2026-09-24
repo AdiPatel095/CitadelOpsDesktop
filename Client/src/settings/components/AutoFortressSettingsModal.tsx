@@ -7,6 +7,7 @@ import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   CalendarDays,
+  BookOpen,
   Castle,
   Clock3,
   Flame,
@@ -23,6 +24,8 @@ import { Badge, Button, Card, Input, SettingsModal, Switch } from '../../compone
 import { useCitadelAPI } from '../../api/ApiContext';
 import { DailyAttackLimitField } from './DailyAttackLimitField';
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
+import { FeatureGuideModal } from './FeatureGuideModal';
+import { englishGuidePack, useGuideLocale } from '../../config/useGuideLocale';
 import {
   AUTO_FORTRESS_DIREWOLF_ID,
   AUTO_FORTRESS_SECTION,
@@ -71,6 +74,11 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
   const [settings, setSettings] = useState<AutoFortressClientStateV1>(defaultAutoFortressClientState);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const { locale: guideLocale, pack: guidePack } = useGuideLocale();
+  const fortressGuidePack = guidePack.autoFortress ? guidePack : englishGuidePack;
+  const fortressGuideLocale = fortressGuidePack === englishGuidePack ? 'en' : guideLocale;
+  useEffect(() => { if (!isOpen) setIsGuideOpen(false); }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -125,7 +133,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
     }
   };
 
-  return (
+  return (<>
     <SettingsModal
       isOpen={isOpen}
       onClose={() => { if (!isSaving) onClose(); }}
@@ -133,7 +141,10 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
       title={localizeStatic("ui.settings.components.autoFortressSettingsModal.title.auto.fortress.8b0edaf5")}
       icon={<Castle className="h-5 w-5" />}
       description={localizeStatic("ui.settings.components.autoFortressSettingsModal.description.a.speed.first.fortress.pipeline.discover.a.20cf0ae7")}
-      titleTrailing={(
+      titleTrailing={<div className="flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}>
+          <span lang={fortressGuideLocale}>{fortressGuidePack.ui.guideButton}</span>
+        </Button>
         <Button
           variant="outline"
           size="sm"
@@ -142,7 +153,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
           leftIcon={<CalendarDays className="h-4 w-4" />}
         >
           <LocalizedText messageKey="common.calendar" /></Button>
-      )}
+      </div>}
       onSave={save}
       saveLabel="Save fortress plan"
       isSaving={isSaving}
@@ -166,7 +177,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
                 <Badge variant="secondary"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.flanks.only.bc229790" /></Badge>
               </div>
               <p className="mt-1 max-w-2xl text-xs leading-relaxed text-text-muted">
-                <LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.unit.277.is.filled.across.both.flanks.83af8412" /></p>
+                <span lang={fortressGuideLocale} dir={fortressGuideLocale === 'ar' ? 'rtl' : 'ltr'}>{fortressGuidePack.autoFortress.feature.settingsSummary}</span></p>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 text-center sm:grid-cols-3">
@@ -327,9 +338,9 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.march.speed.b518df50" /></h3>
-                <Badge variant="success"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.relic.2.0.required.8de8ec76" /></Badge>
+                <Badge variant="success"><span lang={fortressGuideLocale}>{fortressGuidePack.autoFortress.feature.commanderBadge}</span></Badge>
               </div>
-              <p className="mt-0.5 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoFortressSettingsModal.auto.fortress.always.selects.the.full.100.0058f20b" /></p>
+              <p className="mt-0.5 text-xs text-text-muted" lang={fortressGuideLocale} dir={fortressGuideLocale === 'ar' ? 'rtl' : 'ltr'}>{fortressGuidePack.autoFortress.feature.commanderHelp}</p>
             </div>
           </div>
           <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-[11px] text-text-muted">
@@ -340,7 +351,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
             <HorseTravelBoostSelect
               value={settings.horseTravelBoostId}
               onChange={(horseTravelBoostId) => update({ horseTravelBoostId })}
-              description={localizeStatic("ui.settings.components.autoFortressSettingsModal.description.courser.fastest.tier.is.the.default.its.fe582b66")}
+              description={<span lang={fortressGuideLocale} dir={fortressGuideLocale === 'ar' ? 'rtl' : 'ltr'}>{fortressGuidePack.autoFortress.feature.travelHelp}</span>}
             />
           </div>
         </Card>
@@ -360,5 +371,7 @@ export const AutoFortressSettingsModal: React.FC<AutoFortressSettingsModalProps>
         </div>
       </div>
     </SettingsModal>
+    <FeatureGuideModal feature="autoFortress" isOpen={isOpen && isGuideOpen} onClose={() => setIsGuideOpen(false)} />
+    </>
   );
 };

@@ -19,7 +19,10 @@
     "birdPreviewTitle": "Adăpostirea automată a trupelor · exemplu de configurare",
     "stationGuideTitle": "Ghid pentru adăpostirea automată a trupelor",
     "stationGuideIntro": "Urmează acești pași pentru a configura adăpostirea automată a trupelor; selectează imaginea exemplu pentru a o mări.",
-    "stationPreviewTitle": "Exemplu de configurare a adăpostirii automate"
+    "stationPreviewTitle": "Exemplu de configurare a adăpostirii automate",
+    "fortressGuideIntro": "Urmează acești pași pentru a configura atacurile automate asupra fortărețelor; selectează un panou exemplu pentru a-l mări.",
+    "fortressGuideTitle": "Ghid pentru atacurile automate asupra fortărețelor",
+    "fortressPreviewTitle": "Exemplu de configurare a atacurilor automate asupra fortărețelor"
   },
   "autoTower": {
     "recommendationIntro": "Acestea sunt recomandări pentru utilizarea obișnuită; verifică-le înainte de salvare.",
@@ -322,6 +325,26 @@
       "gate": "Deschiderea porților ca rezervă: dezactivată",
       "castle": "Castel fictiv: 80 de trupe defensive rezervate",
       "save": "Salvează modificările și activează adăpostirea automată"
+    },
+    "fortressAttack": {
+      "commander": "Comandant: cel mai rapid eligibil atribuit",
+      "daily": "Limita zilnică de atacuri normale: 0",
+      "title": "Exemplu de setări de atac",
+      "travel": "Spor de deplasare: Pana de călătorie",
+      "wave": "Un val complet de lupi înfricoșători pe ambele flancuri"
+    },
+    "fortressKingdoms": {
+      "everwinter": "Ghețarul Iernii Veșnice: activat când este deblocat",
+      "peaks": "Vârfurile de Foc: activat când este deblocat",
+      "sands": "Nisipurile Arzătoare: activat când este deblocat",
+      "title": "Exemplu de setări de regat"
+    },
+    "fortressSupply": {
+      "purchase": "Lupi înfricoșători pe sesiune: 5.000",
+      "reserve": "Păstrează tăblițele Hanului: 25.000",
+      "route": "Aprovizionare: din castelul principal al Marelui Imperiu către regatele activate",
+      "skips": "Acceleratoare pentru transferurile confirmate: activate",
+      "title": "Exemplu de aprovizionare cu lupi înfricoșători"
     }
   },
   "autoStation": {
@@ -413,6 +436,134 @@
       "description": "Când se apropie un atac al unui jucător, adăpostirea automată mută trupele eligibile la cel mai apropiat castel aliat potrivit din același regat.",
       "expectation": "Cu retragerea activată, trupele revin după ultimul atac detectat când nu mai există amenințări; altfel, rămân o oră după sosire și apoi se întorc. Lipsa unei destinații sau a trupelor și restricțiile jocului pot împiedica evacuarea.",
       "helper": "Trupele merg la cel mai apropiat castel aliat eligibil din același regat; dacă evacuarea eșuează, porțile castelului propriu atacat pot proteja în afara Berimondului."
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "Cel mai rapid comandant disponibil",
+      "commanderHelp": "Atacurile automate asupra fortărețelor compară efectele aplicabile asupra vitezei de deplasare din echipamente, pietre prețioase, seturi și generali pentru fiecare fortăreață vizată; nu este necesară o Relicvă 2.0 sau un minim de 100%.",
+      "description": "Atacurile automate asupra fortărețelor cumpără lupi înfricoșători în limitele salvate, aprovizionează regatele exterioare activate și atacă fortărețele pregătite din castelele lor principale.",
+      "expectation": "Fiecare atac necesită o fortăreață pregătită, destui lupi înfricoșători pentru ambele flancuri și un comandant atribuit eligibil; perioadele de așteptare sau întârzierile de aprovizionare îl pot suspenda.",
+      "name": "Atacuri automate asupra fortărețelor",
+      "settingsSummary": "Atacurile automate asupra fortărețelor pregătesc lupi înfricoșători și aleg cel mai rapid comandant atribuit eligibil pentru fiecare fortăreață vizată.",
+      "summary": "Aprovizionează lupii înfricoșători și atacă fortărețele pregătite",
+      "travelHelp": "Pana de călătorie este opțiunea implicită; alegerea de deplasare salvată este păstrată. Sporul specific castelului este calculat din nou înainte de plecare."
+    },
+    "recommendationIntro": "Valorile recomandate descriu utilizarea obișnuită a atacurilor automate asupra fortărețelor; sunt orientative și nu schimbă setările salvate.",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "Exemplu ilustrativ al setărilor de atac și deplasare pentru atacurile automate asupra fortărețelor",
+          "caption": "Atacurile automate asupra fortărețelor clasifică comandanții atribuiți eligibili pentru fiecare țintă și folosesc opțiunea de deplasare salvată."
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "În Comandanți, atribuie comandanții pe care îi pot folosi atacurile automate asupra fortărețelor, apoi salvează atribuirile.",
+            "label": "Atribuirea comandanților",
+            "recommendation": "Atribuie comandanții pe care vrei de obicei să îi ai disponibili pentru atacurile asupra fortărețelor."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Oprește atacurile automate asupra fortărețelor la numărul zilnic de atacuri normale al contului până când jocul îl resetează; 0 nu adaugă o limită.",
+            "label": "Limita zilnică de atacuri normale",
+            "recommendation": "0, dacă nu dorești o limită zilnică suplimentară."
+          },
+          "fastest_commander": {
+            "description": "Pentru fiecare fortăreață, automatizarea alege cel mai rapid comandant atribuit disponibil în prezent după efectele aplicabile ale echipamentelor, pietrelor prețioase, seturilor și generalilor, cu limitele aplicate.",
+            "label": "Cel mai rapid comandant eligibil",
+            "recommendation": "Nu este necesar un obiect Relicvă 2.0 sau un bonus de viteză de 100%."
+          },
+          "full_flank_wave": {
+            "description": "Fiecare atac așteaptă suficienți lupi înfricoșători pentru a umple ambele flancuri într-un singur val complet.",
+            "label": "Val de lupi înfricoșători pe ambele flancuri"
+          },
+          "horse_travel_boost": {
+            "description": "Alege opțiunea de deplasare pentru atacurile asupra fortărețelor; o opțiune cu monede sau rubine salvată explicit rămâne selectată.",
+            "label": "Spor de deplasare pentru cal",
+            "recommendation": "Pana de călătorie pentru deplasarea cea mai rapidă."
+          }
+        },
+        "title": "Setează atacurile și deplasarea"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "Activează atacurile automate asupra fortărețelor pe cardul Automatizare după salvare pentru a porni ciclurile obișnuite.",
+            "label": "Comutatorul atacurilor automate asupra fortărețelor",
+            "recommendation": "Activat după verificarea și salvarea setărilor dorite."
+          },
+          "calendar": {
+            "description": "Folosește Calendarul pentru a limita perioadele de funcționare ale atacurilor automate asupra fortărețelor și selectează Salvează programul după modificări.",
+            "label": "Calendar",
+            "recommendation": "Dezactivat pentru funcționare obișnuită continuă."
+          },
+          "save_fortress_plan": {
+            "description": "Salvează setările de regat, aprovizionare și atac înainte de a închide această fereastră.",
+            "label": "Salvează planul fortărețelor"
+          }
+        },
+        "title": "Setează programul, salvează și activează"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "Exemplu ilustrativ al comenzilor pentru cele trei regate exterioare ale atacurilor automate asupra fortărețelor",
+          "caption": "Activează fiecare regat deblocat al cărui castel principal trebuie să primească lupi înfricoșători și să atace fortărețe."
+        },
+        "items": {
+          "burning_sands": {
+            "description": "Activează atacurile și aprovizionarea cu lupi înfricoșători din castelul tău principal din Nisipurile Arzătoare când acel regat este deblocat.",
+            "label": "Nisipurile Arzătoare",
+            "recommendation": "Activat când este deblocat și pregătit pentru utilizare."
+          },
+          "everwinter_glacier": {
+            "description": "Activează atacurile și aprovizionarea cu lupi înfricoșători din castelul tău principal din Ghețarul Iernii Veșnice când acel regat este deblocat.",
+            "label": "Ghețarul Iernii Veșnice",
+            "recommendation": "Activat când este deblocat și pregătit pentru utilizare."
+          },
+          "fire_peaks": {
+            "description": "Activează atacurile și aprovizionarea cu lupi înfricoșători din castelul tău principal din Vârfurile de Foc când acel regat este deblocat.",
+            "label": "Vârfurile de Foc",
+            "recommendation": "Activat când este deblocat și pregătit pentru utilizare."
+          }
+        },
+        "title": "Alege regatele pentru fortărețe"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "Pe pagina Automatizare, selectează butonul de setări de pe cardul atacurilor automate asupra fortărețelor.",
+            "label": "Deschide setările"
+          }
+        },
+        "title": "Deschide setările atacurilor automate asupra fortărețelor"
+      },
+      "supply": {
+        "image": {
+          "alt": "Exemplu ilustrativ al setărilor de cumpărare și transfer ale lupilor înfricoșători",
+          "caption": "Verifică plafonul de cumpărare pe sesiune, rezerva de tăblițe ale Hanului și folosirea acceleratoarelor pentru transferurile confirmate."
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "Limitează cumpărarea de lupi înfricoșători din magazinul nomad la loturi de câte 100 pe sesiune; 0 dezactivează cumpărarea.",
+            "label": "Lupi înfricoșători pe sesiune",
+            "recommendation": "5.000 de lupi înfricoșători pe sesiune la cel mai mic preț."
+          },
+          "keep_khan_tablets": {
+            "description": "Oprește cumpărarea lupilor înfricoșători înainte ca numărul tăblițelor Hanului să scadă sub această rezervă.",
+            "label": "Păstrează tăblițele Hanului",
+            "recommendation": "Păstrează 25.000 de tăblițe ale Hanului."
+          },
+          "supply_route": {
+            "description": "Lupii înfricoșători cumpărați sosesc la castelul principal din Marele Imperiu și sunt distribuiți regatelor activate.",
+            "label": "Ruta de aprovizionare cu lupi înfricoșători"
+          },
+          "use_time_skips": {
+            "description": "Folosește acceleratoare eligibile numai pentru transporturile confirmate ale atacurilor automate asupra fortărețelor, respectând rezervele de inventar salvate.",
+            "label": "Folosește acceleratoare pentru transferurile lupilor înfricoșători",
+            "recommendation": "Activat pentru aprovizionare mai rapidă dacă rezervele salvate de acceleratoare permit acest lucru."
+          }
+        },
+        "title": "Setează aprovizionarea cu lupi înfricoșători"
+      }
     }
   }
 }

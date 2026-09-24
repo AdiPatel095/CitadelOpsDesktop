@@ -19,7 +19,10 @@
     "birdPreviewTitle": "Příklad nastavení Automatického ukrývání vojska",
     "stationGuideTitle": "Průvodce automatickou ochranou jednotek",
     "stationGuideIntro": "Podle těchto kroků nastavte automatickou ochranu jednotek; výběrem ukázkového obrázku jej zvětšíte.",
-    "stationPreviewTitle": "Ukázka nastavení automatické ochrany jednotek"
+    "stationPreviewTitle": "Ukázka nastavení automatické ochrany jednotek",
+    "fortressGuideIntro": "Postupujte podle kroků k nastavení automatických útoků na pevnosti; výběrem ukázkového panelu jej zvětšíte.",
+    "fortressGuideTitle": "Průvodce automatickými útoky na pevnosti",
+    "fortressPreviewTitle": "Příklad nastavení automatických útoků na pevnosti"
   },
   "autoTower": {
     "recommendationIntro": "Tato doporučení platí pro pravidelné používání; před uložením je zkontrolujte.",
@@ -322,6 +325,26 @@
       "gate": "Záložní otevření bran: vypnuto",
       "castle": "Smyšlený hrad: 80 obranných jednotek v rezervě",
       "save": "Uložte změny a zapněte ochranu jednotek"
+    },
+    "fortressAttack": {
+      "commander": "Velitel: nejrychlejší způsobilý přidělený",
+      "daily": "Denní limit běžných útoků: 0",
+      "title": "Příklad nastavení útoku",
+      "travel": "Posílení přesunu: Cestovní pírko",
+      "wave": "Jedna plná vlna hrůzných vlků na obou křídlech"
+    },
+    "fortressKingdoms": {
+      "everwinter": "Ledovec věčné zimy: zapnuto po odemčení",
+      "peaks": "Ohnivé vrcholy: zapnuto po odemčení",
+      "sands": "Hořící písky: zapnuto po odemčení",
+      "title": "Příklad nastavení království"
+    },
+    "fortressSupply": {
+      "purchase": "Hrůzní vlci za relaci: 5 000",
+      "reserve": "Ponechat chánovy tabulky: 25 000",
+      "route": "Zásobování: z hlavního hradu Velké říše do povolených království",
+      "skips": "Zkrácení času pro potvrzené přesuny: zapnuto",
+      "title": "Příklad zásobování hrůznými vlky"
     }
   },
   "autoStation": {
@@ -413,6 +436,134 @@
       "description": "Při blížícím se útoku hráče přesune automatická ochrana způsobilé jednotky na nejbližší vhodný spojenecký hrad ve stejném království.",
       "expectation": "Se zapnutým stažením se jednotky vrátí po posledním zjištěném útoku, když už nehrozí nebezpečí; jinak zůstanou hodinu po příjezdu a poté se vrátí. Nedostupný cíl nebo jednotky a omezení hry mohou evakuaci zabránit.",
       "helper": "Jednotky míří na nejbližší vhodný spojenecký hrad ve stejném království; při selhání evakuace mohou brány napadeného vlastního hradu chránit mimo Berimond."
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "Nejrychlejší dostupný velitel",
+      "commanderHelp": "Automatické útoky na pevnosti porovnávají použitelné účinky vybavení, drahokamů, sad a generálů na rychlost přesunu pro každou cílovou pevnost; Relikvie 2.0 ani minimum 100 % nejsou potřeba.",
+      "description": "Automatické útoky na pevnosti nakupují hrůzné vlky v uložených mezích, zásobují povolená vnější království a útočí na připravené pevnosti z jejich hlavních hradů.",
+      "expectation": "Každý útok vyžaduje připravenou pevnost, dostatek hrůzných vlků na obě křídla a způsobilého přiděleného velitele; čekací doby či zpoždění zásobování jej mohou pozastavit.",
+      "name": "Automatické útoky na pevnosti",
+      "settingsSummary": "Automatické útoky na pevnosti připravují hrůzné vlky a pro každou cílovou pevnost vybírají nejrychlejšího způsobilého přiděleného velitele.",
+      "summary": "Zásobujte hrůzné vlky a útočte na připravené pevnosti",
+      "travelHelp": "Cestovní pírko je výchozí volbou; vaše uložená volba přesunu zůstává zachována. Posílení pro konkrétní hrad se před vysláním znovu vypočítá."
+    },
+    "recommendationIntro": "Doporučené hodnoty popisují běžné používání automatických útoků na pevnosti; jsou vodítkem a nemění uložená nastavení.",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "Ilustrační příklad nastavení útoku a přesunu pro automatické útoky na pevnosti",
+          "caption": "Automatické útoky na pevnosti řadí způsobilé přidělené velitele pro každý cíl a používají uloženou volbu přesunu."
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "V části Velitelé přidělte velitele, které mohou automatické útoky na pevnosti využívat, a přidělení uložte.",
+            "label": "Přidělení velitelů",
+            "recommendation": "Přidělte velitele, které obvykle chcete mít dostupné pro útoky na pevnosti."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Zastavte automatické útoky na pevnosti při celodenním počtu běžných útoků účtu až do jeho obnovení hrou; 0 nepřidává omezení.",
+            "label": "Denní limit běžných útoků",
+            "recommendation": "0, pokud nechcete další denní omezení."
+          },
+          "fastest_commander": {
+            "description": "Pro každou pevnost automatika vybírá nejrychlejšího aktuálně dostupného přiděleného velitele podle použitelných účinků vybavení, drahokamů, sad a generálů po uplatnění stropů.",
+            "label": "Nejrychlejší způsobilý velitel",
+            "recommendation": "Předmět Relikvie 2.0 ani 100% bonus rychlosti nejsou vyžadovány."
+          },
+          "full_flank_wave": {
+            "description": "Každý útok čeká na dostatek hrůzných vlků k zaplnění obou křídel jedinou plnou vlnou.",
+            "label": "Vlna hrůzných vlků na obou křídlech"
+          },
+          "horse_travel_boost": {
+            "description": "Zvolte možnost přesunu pro útoky na pevnosti; výslovně uložená volba za mince nebo rubíny zůstane vybraná.",
+            "label": "Posílení přesunu koně",
+            "recommendation": "Cestovní pírko pro nejrychlejší přesun."
+          }
+        },
+        "title": "Nastavte útoky a přesun"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "Po uložení zapněte automatické útoky na pevnosti na kartě Automatizace a spusťte běžné cykly.",
+            "label": "Přepínač automatických útoků na pevnosti",
+            "recommendation": "Zapnuto po kontrole a uložení zamýšlených nastavení."
+          },
+          "calendar": {
+            "description": "Pomocí Kalendáře omezte dobu běhu automatických útoků na pevnosti a po změnách zvolte Uložit rozvrh.",
+            "label": "Kalendář",
+            "recommendation": "Vypnuto pro nepřetržitý běžný provoz."
+          },
+          "save_fortress_plan": {
+            "description": "Před zavřením tohoto okna uložte nastavení království, zásobování a útoků.",
+            "label": "Uložit plán pevností"
+          }
+        },
+        "title": "Nastavte rozvrh, uložte a zapněte"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "Ilustrační příklad ovládání tří vnějších království pro automatické útoky na pevnosti",
+          "caption": "Zapněte každé odemčené království, jehož hlavní hrad má přijímat hrůzné vlky a útočit na pevnosti."
+        },
+        "items": {
+          "burning_sands": {
+            "description": "Po odemčení Hořících písků zapněte útoky a zásobování hrůznými vlky z vašeho tamního hlavního hradu.",
+            "label": "Hořící písky",
+            "recommendation": "Zapnuto po odemčení a připravenosti k použití."
+          },
+          "everwinter_glacier": {
+            "description": "Po odemčení Ledovce věčné zimy zapněte útoky a zásobování hrůznými vlky z vašeho tamního hlavního hradu.",
+            "label": "Ledovec věčné zimy",
+            "recommendation": "Zapnuto po odemčení a připravenosti k použití."
+          },
+          "fire_peaks": {
+            "description": "Po odemčení Ohnivých vrcholů zapněte útoky a zásobování hrůznými vlky z vašeho tamního hlavního hradu.",
+            "label": "Ohnivé vrcholy",
+            "recommendation": "Zapnuto po odemčení a připravenosti k použití."
+          }
+        },
+        "title": "Zvolte království pro pevnosti"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "Na stránce Automatizace zvolte tlačítko nastavení na kartě automatických útoků na pevnosti.",
+            "label": "Otevřít nastavení"
+          }
+        },
+        "title": "Otevřete nastavení automatických útoků na pevnosti"
+      },
+      "supply": {
+        "image": {
+          "alt": "Ilustrační příklad nastavení nákupů a přesunů hrůzných vlků",
+          "caption": "Zkontrolujte strop nákupů za relaci, rezervu chánových tabulek a volbu zkrácení času pro potvrzené přesuny."
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "Omezte nákupy hrůzných vlků v obchodě nomádů na dávky po 100 za každou relaci; 0 nákupy vypíná.",
+            "label": "Hrůzní vlci za relaci",
+            "recommendation": "5 000 hrůzných vlků za relaci za nejnižší cenu."
+          },
+          "keep_khan_tablets": {
+            "description": "Zastavte nákupy hrůzných vlků dříve, než počet chánových tabulek klesne pod tuto rezervu.",
+            "label": "Ponechat chánovy tabulky",
+            "recommendation": "Ponechte 25 000 chánových tabulek."
+          },
+          "supply_route": {
+            "description": "Nakoupení hrůzní vlci dorazí do hlavního hradu Velké říše a poté se rozdělí do povolených království.",
+            "label": "Trasa zásobování hrůznými vlky"
+          },
+          "use_time_skips": {
+            "description": "Používejte vhodná zkrácení času pouze pro potvrzené zásilky automatických útoků na pevnosti a dodržujte uložené rezervy zásob.",
+            "label": "Použít zkrácení času na přesuny hrůzných vlků",
+            "recommendation": "Zapnuto pro rychlejší doplnění, pokud to umožňují uložené rezervy zkrácení času."
+          }
+        },
+        "title": "Nastavte zásobování hrůznými vlky"
+      }
     }
   }
 }

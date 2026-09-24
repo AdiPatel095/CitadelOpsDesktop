@@ -19,7 +19,10 @@
     "birdPreviewTitle": "Eksempel på opsætning af Automatisk sikring af tropper i ly",
     "stationGuideTitle": "Guide til automatisk troppebeskyttelse",
     "stationGuideIntro": "Følg disse trin for at indstille automatisk troppebeskyttelse; vælg eksempelbilledet for at forstørre det.",
-    "stationPreviewTitle": "Eksempel på indstilling af troppebeskyttelse"
+    "stationPreviewTitle": "Eksempel på indstilling af troppebeskyttelse",
+    "fortressGuideIntro": "Følg trinene for at indstille automatisk fæstningsangreb; vælg et eksempelpanel for at forstørre det.",
+    "fortressGuideTitle": "Guide til automatisk fæstningsangreb",
+    "fortressPreviewTitle": "Eksempel på opsætning af automatisk fæstningsangreb"
   },
   "autoTower": {
     "recommendationIntro": "Disse anbefalinger gælder almindelig brug; gennemgå dem, før du gemmer.",
@@ -322,6 +325,26 @@
       "gate": "Åbn porte som reserve: fra",
       "castle": "Fiktivt slot: 80 forsvarstropper reserveret",
       "save": "Gem ændringer, og aktivér troppebeskyttelse"
+    },
+    "fortressAttack": {
+      "commander": "Kommandør: hurtigste kvalificerede tildelte",
+      "daily": "Daglig grænse for normale angreb: 0",
+      "title": "Eksempel på angrebsindstillinger",
+      "travel": "Rejseforstærkning: Rejsefjer",
+      "wave": "Én fuld bølge af skrækwulve på begge flanker"
+    },
+    "fortressKingdoms": {
+      "everwinter": "Evigvinterens Gletsjer: til, når låst op",
+      "peaks": "Ildtoppene: til, når låst op",
+      "sands": "Det Brændende Sand: til, når låst op",
+      "title": "Eksempel på kongerigeindstillinger"
+    },
+    "fortressSupply": {
+      "purchase": "Skrækwulve pr. session: 5.000",
+      "reserve": "Behold Khan-tavler: 25.000",
+      "route": "Forsyning: hovedborgen i Det Store Imperium til aktiverede kongeriger",
+      "skips": "Tidsbesparelser til bekræftede overførsler: til",
+      "title": "Eksempel på forsyning af skrækwulve"
     }
   },
   "autoStation": {
@@ -413,6 +436,134 @@
       "description": "Når et spillerangreb nærmer sig, flytter automatisk troppebeskyttelse egnede tropper til det nærmeste egnede allianceslot i samme kongerige.",
       "expectation": "Med hjemkaldelse slået til vender tropper tilbage efter det sidste registrerede angreb, når ingen trussel er tilbage; ellers bliver de en time efter ankomst og vender så hjem. Manglende mål, tropper eller spilbegrænsninger kan forhindre evakuering.",
       "helper": "Tropper stationeres i det nærmeste egnede allianceslot i samme kongerige; hvis evakuering mislykkes, kan portene i det angrebne ejede slot beskytte uden for Berimond."
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "Hurtigste tilgængelige kommandør",
+      "commanderHelp": "Automatisk fæstningsangreb sammenligner relevante rejsehastighedseffekter fra udstyr, ædelsten, sæt og generaler for hver målfæstning; Relikvie 2.0 og mindst 100 % kræves ikke.",
+      "description": "Automatisk fæstningsangreb køber skrækwulve inden for gemte grænser, forsyner aktiverede ydre kongeriger og angriber fæstninger, der er klar, fra deres hovedborge.",
+      "expectation": "Hvert angreb kræver en fæstning, der er klar, nok skrækwulve til begge flanker og en kvalificeret tildelt kommandør; nedkøling eller forsinket forsyning kan sætte det på pause.",
+      "name": "Automatisk fæstningsangreb",
+      "settingsSummary": "Automatisk fæstningsangreb forbereder skrækwulve og vælger den hurtigste kvalificerede tildelte kommandør for hver målfæstning.",
+      "summary": "Forsyn skrækwulve, og angrib fæstninger, der er klar",
+      "travelHelp": "Rejsefjeren er standard; dit gemte rejsevalg bevares. Den borgspecifikke rejseforstærkning beregnes igen før afsendelse."
+    },
+    "recommendationIntro": "De anbefalede værdier beskriver almindelig brug af automatisk fæstningsangreb; de er vejledning og ændrer ikke gemte indstillinger.",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "Illustrativt eksempel på angrebs- og rejseindstillinger for automatisk fæstningsangreb",
+          "caption": "Automatisk fæstningsangreb rangerer kvalificerede tildelte kommandører for hvert mål og bruger det gemte rejsevalg."
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "Tildel under Kommandører de kommandører, som automatisk fæstningsangreb må bruge, og gem tildelingerne.",
+            "label": "Tildeling af kommandører",
+            "recommendation": "Tildel de kommandører, som du normalt vil have til rådighed til fæstningsangreb."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Stop automatisk fæstningsangreb ved kontoens daglige antal normale angreb, indtil spillet nulstiller det; 0 tilføjer ingen grænse.",
+            "label": "Daglig grænse for normale angreb",
+            "recommendation": "0, medmindre du ønsker en ekstra daglig grænse."
+          },
+          "fastest_commander": {
+            "description": "For hver fæstning vælger automatiseringen den hurtigste aktuelt tilgængelige tildelte kommandør ud fra relevante effekter fra udstyr, ædelsten, sæt og generaler efter begrænsninger.",
+            "label": "Hurtigste kvalificerede kommandør",
+            "recommendation": "En Relikvie 2.0-genstand eller 100 % hastighedsbonus er ikke påkrævet."
+          },
+          "full_flank_wave": {
+            "description": "Hvert angreb venter på nok skrækwulve til at fylde begge flanker i én fuld bølge.",
+            "label": "Skrækwulvebølge på begge flanker"
+          },
+          "horse_travel_boost": {
+            "description": "Vælg rejsemuligheden for fæstningsangreb; et udtrykkeligt gemt mønt- eller rubinniveau forbliver valgt.",
+            "label": "Hestens rejseforstærkning",
+            "recommendation": "Rejsefjer giver den hurtigste rejse."
+          }
+        },
+        "title": "Indstil angreb og rejse"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "Slå automatisk fæstningsangreb til på Automatisering-kortet efter at have gemt for at starte de normale cyklusser.",
+            "label": "Kontakt til automatisk fæstningsangreb",
+            "recommendation": "Til efter gennemgang og lagring af de ønskede indstillinger."
+          },
+          "calendar": {
+            "description": "Brug Kalender til at begrænse, hvornår automatisk fæstningsangreb kan køre, og vælg Gem tidsplan ved ændringer.",
+            "label": "Kalender",
+            "recommendation": "Fra ved uafbrudt almindelig drift."
+          },
+          "save_fortress_plan": {
+            "description": "Gem indstillingerne for kongeriger, forsyning og angreb, før du lukker dialogen.",
+            "label": "Gem fæstningsplan"
+          }
+        },
+        "title": "Indstil tidsplanen, gem, og slå til"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "Illustrativt eksempel på automatisk fæstningsangrebs kontroller for de tre ydre kongeriger",
+          "caption": "Aktivér hvert oplåst kongerige, hvis hovedborg skal modtage skrækwulve og angribe fæstninger."
+        },
+        "items": {
+          "burning_sands": {
+            "description": "Aktivér angreb og forsyning af skrækwulve fra din hovedborg i Det Brændende Sand, når kongeriget er låst op.",
+            "label": "Det Brændende Sand",
+            "recommendation": "Til, når det er låst op og klar til brug."
+          },
+          "everwinter_glacier": {
+            "description": "Aktivér angreb og forsyning af skrækwulve fra din hovedborg i Evigvinterens Gletsjer, når kongeriget er låst op.",
+            "label": "Evigvinterens Gletsjer",
+            "recommendation": "Til, når det er låst op og klar til brug."
+          },
+          "fire_peaks": {
+            "description": "Aktivér angreb og forsyning af skrækwulve fra din hovedborg i Ildtoppene, når kongeriget er låst op.",
+            "label": "Ildtoppene",
+            "recommendation": "Til, når det er låst op og klar til brug."
+          }
+        },
+        "title": "Vælg fæstningskongeriger"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "På siden Automatisering skal du vælge indstillingsknappen på kortet for automatisk fæstningsangreb.",
+            "label": "Åbn indstillinger"
+          }
+        },
+        "title": "Åbn indstillinger for automatisk fæstningsangreb"
+      },
+      "supply": {
+        "image": {
+          "alt": "Illustrativt eksempel på køb og overførsel af skrækwulve i automatisk fæstningsangreb",
+          "caption": "Gennemgå købsloftet pr. session, reserven af Khan-tavler og tidsbesparelser til bekræftede overførsler."
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "Begræns køb af skrækwulve i nomadebutikken til partier på 100 pr. butikssession; 0 slår køb fra.",
+            "label": "Skrækwulve pr. session",
+            "recommendation": "5.000 skrækwulve pr. session til den billigste pris."
+          },
+          "keep_khan_tablets": {
+            "description": "Stop med at købe skrækwulve, før beholdningen af Khan-tavler falder under denne reserve.",
+            "label": "Behold Khan-tavler",
+            "recommendation": "Behold 25.000 Khan-tavler."
+          },
+          "supply_route": {
+            "description": "Købte skrækwulve ankommer til hovedborgen i Det Store Imperium og fordeles til aktiverede kongeriger.",
+            "label": "Forsyningsrute for skrækwulve"
+          },
+          "use_time_skips": {
+            "description": "Brug kun egnede tidsbesparelser til bekræftede forsendelser fra automatisk fæstningsangreb, og overhold gemte lagerreserver.",
+            "label": "Brug tidsbesparelser til overførsel af skrækwulve",
+            "recommendation": "Til for hurtigere forsyning, når dine gemte reserver af tidsbesparelser tillader det."
+          }
+        },
+        "title": "Indstil forsyning af skrækwulve"
+      }
     }
   }
 }

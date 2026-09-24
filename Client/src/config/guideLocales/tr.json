@@ -19,7 +19,10 @@
     "birdPreviewTitle": "Birlikleri otomatik korunaklı alana taşıma · kurulum örneği",
     "stationGuideTitle": "Otomatik birlik koruma rehberi",
     "stationGuideIntro": "Otomatik birlik korumasını ayarlamak için bu adımları izleyin; örnek resmi büyütmek için seçin.",
-    "stationPreviewTitle": "Otomatik birlik koruma ayarı örneği"
+    "stationPreviewTitle": "Otomatik birlik koruma ayarı örneği",
+    "fortressGuideIntro": "Otomatik kale saldırılarını ayarlamak için bu adımları izleyin; büyütmek için bir örnek panel seçin.",
+    "fortressGuideTitle": "Otomatik kale saldırıları rehberi",
+    "fortressPreviewTitle": "Otomatik kale saldırıları kurulum örneği"
   },
   "autoTower": {
     "recommendationIntro": "Bunlar düzenli kullanım önerileridir; kaydetmeden önce gözden geçirin.",
@@ -322,6 +325,26 @@
       "gate": "Yedek kapı açma: kapalı",
       "castle": "Kurgusal kale: 80 savunma birliği ayrıldı",
       "save": "Değişiklikleri kaydedip otomatik korumayı açın"
+    },
+    "fortressAttack": {
+      "commander": "Komutan: en hızlı uygun atanmış",
+      "daily": "Günlük normal saldırı sınırı: 0",
+      "title": "Örnek saldırı ayarları",
+      "travel": "Yolculuk hızlandırması: Yolculuk Tüyü",
+      "wave": "İki kanatta tek tam korkunç kurt dalgası"
+    },
+    "fortressKingdoms": {
+      "everwinter": "Sonsuz Kış Buzulu: açıldığında açık",
+      "peaks": "Ateş Zirveleri: açıldığında açık",
+      "sands": "Yanan Kumlar: açıldığında açık",
+      "title": "Örnek krallık ayarları"
+    },
+    "fortressSupply": {
+      "purchase": "Oturum başına korkunç kurt: 5.000",
+      "reserve": "Han tabletlerini sakla: 25.000",
+      "route": "İkmal: Büyük İmparatorluk ana kalesinden etkin krallıklara",
+      "skips": "Onaylı aktarımlar için zaman atlamaları: açık",
+      "title": "Örnek korkunç kurt ikmali"
     }
   },
   "autoStation": {
@@ -413,6 +436,134 @@
       "description": "Bir oyuncu saldırısı yaklaşırken otomatik birlik koruması uygun birlikleri aynı krallıktaki en yakın uygun ittifak kalesine taşır.",
       "expectation": "Geri çağırma açıksa birlikler son tespit edilen saldırıdan sonra tehdit kalmadığında döner; değilse varıştan sonra bir saat kalıp döner. Hedef veya birlik bulunmaması ve oyun kısıtlamaları tahliyeyi engelleyebilir.",
       "helper": "Birlikler aynı krallıktaki en yakın uygun ittifak kalesine gider; tahliye başarısız olursa saldırıya uğrayan kendi kalenizin kapıları Berimond dışında koruma sağlayabilir."
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "En hızlı uygun komutan",
+      "commanderHelp": "Otomatik kale saldırıları, her hedef kale için ekipman, mücevher, set ve generallerin geçerli yolculuk hızı etkilerini karşılaştırır; Relik 2.0 veya en az %100 şartı yoktur.",
+      "description": "Otomatik kale saldırıları kayıtlı sınırlar içinde korkunç kurt satın alır, etkin dış krallıkları besler ve ana kalelerinden hazır kalelere saldırır.",
+      "expectation": "Her saldırı için hazır bir hedef kale, iki kanada yetecek korkunç kurt ve uygun atanmış komutan gerekir; bekleme süreleri veya ikmal gecikmeleri saldırıyı duraklatabilir.",
+      "name": "Otomatik kale saldırıları",
+      "settingsSummary": "Otomatik kale saldırıları korkunç kurtları hazırlar ve her hedef kale için en hızlı uygun atanmış komutanı seçer.",
+      "summary": "Korkunç kurtları ikmal edin ve hazır kalelere saldırın",
+      "travelHelp": "Yolculuk Tüyü varsayılandır; kayıtlı yolculuk seçiminiz korunur. Kaleye özgü hızlandırma, gönderimden önce yeniden hesaplanır."
+    },
+    "recommendationIntro": "Önerilen değerler otomatik kale saldırılarının düzenli kullanımını anlatır; yol göstericidir ve kayıtlı ayarları değiştirmez.",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "Otomatik kale saldırıları için örnek saldırı ve yolculuk ayarları",
+          "caption": "Otomatik kale saldırıları her hedef için uygun atanmış komutanları sıralar ve kayıtlı yolculuk seçimini kullanır."
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "Komutanlar bölümünde otomatik kale saldırılarının kullanabileceği komutanları atayın ve bu atamaları kaydedin.",
+            "label": "Komutan ataması",
+            "recommendation": "Kale saldırıları için genellikle uygun olmasını istediğiniz komutanları atayın."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Oyun sıfırlayana kadar hesap genelindeki günlük normal saldırı sayısında otomatik kale saldırılarını durdurun; 0 ek sınır koymaz.",
+            "label": "Günlük normal saldırı sınırı",
+            "recommendation": "Ek bir günlük sınır istemiyorsanız 0."
+          },
+          "fastest_commander": {
+            "description": "Otomasyon, her kale için sınırlar uygulandıktan sonra geçerli ekipman, mücevher, set ve general etkilerine göre o anda uygun olan en hızlı atanmış komutanı seçer.",
+            "label": "En hızlı uygun komutan",
+            "recommendation": "Relik 2.0 eşyası veya %100 hız bonusu gerekmez."
+          },
+          "full_flank_wave": {
+            "description": "Her saldırı, iki kanadı tek bir tam dalgayla doldurmaya yetecek korkunç kurt bekler.",
+            "label": "İki kanatta korkunç kurt dalgası"
+          },
+          "horse_travel_boost": {
+            "description": "Kale saldırıları için yolculuk seçeneğini belirleyin; açıkça kaydedilmiş para veya yakut kademesi seçili kalır.",
+            "label": "At yolculuğu hızlandırması",
+            "recommendation": "En hızlı yolculuk için Yolculuk Tüyü."
+          }
+        },
+        "title": "Saldırıları ve yolculuğu ayarlayın"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "Kaydettikten sonra normal döngüleri başlatmak için Otomasyon kartındaki otomatik kale saldırılarını açın.",
+            "label": "Otomatik kale saldırıları anahtarı",
+            "recommendation": "İstediğiniz ayarları inceleyip kaydettikten sonra açık."
+          },
+          "calendar": {
+            "description": "Otomatik kale saldırılarının çalışacağı zamanları Takvim ile sınırlayın ve değişikliklerden sonra Programı Kaydet'i seçin.",
+            "label": "Takvim",
+            "recommendation": "Kesintisiz düzenli kullanım için kapalı."
+          },
+          "save_fortress_plan": {
+            "description": "Bu pencereden çıkmadan önce krallık, ikmal ve saldırı ayarlarını kaydedin.",
+            "label": "Kale planını kaydet"
+          }
+        },
+        "title": "Programı ayarlayın, kaydedin ve açın"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "Otomatik kale saldırılarının üç dış krallık kontrolünü gösteren örnek",
+          "caption": "Ana kalesinin korkunç kurt alıp kalelere saldırmasını istediğiniz her açık krallığı etkinleştirin."
+        },
+        "items": {
+          "burning_sands": {
+            "description": "Krallık açıldığında Yanan Kumlar'daki ana kalenizden saldırıları ve korkunç kurt ikmalini etkinleştirin.",
+            "label": "Yanan Kumlar",
+            "recommendation": "Açılıp kullanıma hazır olduğunda açık."
+          },
+          "everwinter_glacier": {
+            "description": "Krallık açıldığında Sonsuz Kış Buzulu'ndaki ana kalenizden saldırıları ve korkunç kurt ikmalini etkinleştirin.",
+            "label": "Sonsuz Kış Buzulu",
+            "recommendation": "Açılıp kullanıma hazır olduğunda açık."
+          },
+          "fire_peaks": {
+            "description": "Krallık açıldığında Ateş Zirveleri'ndeki ana kalenizden saldırıları ve korkunç kurt ikmalini etkinleştirin.",
+            "label": "Ateş Zirveleri",
+            "recommendation": "Açılıp kullanıma hazır olduğunda açık."
+          }
+        },
+        "title": "Kale krallıklarını seçin"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "Otomasyon sayfasında otomatik kale saldırıları kartındaki ayarlar düğmesini seçin.",
+            "label": "Ayarları aç"
+          }
+        },
+        "title": "Otomatik kale saldırıları ayarlarını açın"
+      },
+      "supply": {
+        "image": {
+          "alt": "Otomatik kale saldırılarının korkunç kurt satın alma ve aktarım ayarlarını gösteren örnek",
+          "caption": "Oturum başına satın alma sınırını, Han tabletleri rezervini ve onaylı aktarımlar için zaman atlama seçimini inceleyin."
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "Göçebe mağazasında korkunç kurt alımını her mağaza oturumunda 100'lük gruplarla sınırlandırın; 0 alımı kapatır.",
+            "label": "Oturum başına korkunç kurt",
+            "recommendation": "En ucuz kademeden oturum başına 5.000 korkunç kurt."
+          },
+          "keep_khan_tablets": {
+            "description": "Han tabletleri bakiyeniz bu rezervin altına düşmeden korkunç kurt alımını durdurun.",
+            "label": "Han tabletlerini sakla",
+            "recommendation": "25.000 Han tableti saklayın."
+          },
+          "supply_route": {
+            "description": "Satın alınan korkunç kurtlar Büyük İmparatorluk ana kalesine ulaşır ve etkin krallıklara dağıtılır.",
+            "label": "Korkunç kurt ikmal yolu"
+          },
+          "use_time_skips": {
+            "description": "Uygun zaman atlamalarını yalnızca onaylı otomatik kale saldırısı sevkiyatlarında kullanın ve kayıtlı envanter rezervlerine uyun.",
+            "label": "Korkunç kurt aktarımlarında zaman atlaması kullan",
+            "recommendation": "Kayıtlı zaman atlama rezervleriniz izin verdiğinde daha hızlı ikmal için açık."
+          }
+        },
+        "title": "Korkunç kurt ikmalini ayarlayın"
+      }
     }
   }
 }

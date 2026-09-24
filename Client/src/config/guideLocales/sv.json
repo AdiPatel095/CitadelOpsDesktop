@@ -19,7 +19,10 @@
     "birdPreviewTitle": "Exempel på inställningar för Automatiskt skydd av trupper",
     "stationGuideTitle": "Guide för automatiskt truppskydd",
     "stationGuideIntro": "Följ dessa steg för att ställa in automatiskt truppskydd; välj exempelbilden för att förstora den.",
-    "stationPreviewTitle": "Exempel på inställning av automatiskt truppskydd"
+    "stationPreviewTitle": "Exempel på inställning av automatiskt truppskydd",
+    "fortressGuideIntro": "Följ stegen för att ställa in automatiska fästningsanfall; välj en exempelpanel för att förstora den.",
+    "fortressGuideTitle": "Guide till automatiska fästningsanfall",
+    "fortressPreviewTitle": "Exempel på inställning av automatiska fästningsanfall"
   },
   "autoTower": {
     "recommendationIntro": "Det här är rekommendationer för regelbunden användning; granska dem innan du sparar.",
@@ -322,6 +325,26 @@
       "gate": "Öppna portar som reserv: av",
       "castle": "Fiktivt slott: 80 försvarstrupper reserverade",
       "save": "Spara ändringar och aktivera automatiskt truppskydd"
+    },
+    "fortressAttack": {
+      "commander": "Befälhavare: snabbaste kvalificerade tilldelade",
+      "daily": "Daglig gräns för normala anfall: 0",
+      "title": "Exempel på anfallsinställningar",
+      "travel": "Reseförstärkning: Resefjäder",
+      "wave": "En full skräckvargvåg över båda flankerna"
+    },
+    "fortressKingdoms": {
+      "everwinter": "Evigvinterglaciären: på när upplåst",
+      "peaks": "Eldtopparna: på när upplåst",
+      "sands": "De brinnande sandarna: på när upplåst",
+      "title": "Exempel på kungarikesinställningar"
+    },
+    "fortressSupply": {
+      "purchase": "Skräckvargar per session: 5 000",
+      "reserve": "Behåll Khan-tavlor: 25 000",
+      "route": "Försörjning: huvudborgen i Det stora imperiet till aktiverade kungariken",
+      "skips": "Tidsförkortningar för bekräftade överföringar: på",
+      "title": "Exempel på skräckvargförsörjning"
     }
   },
   "autoStation": {
@@ -413,6 +436,134 @@
       "description": "När ett spelaranfall närmar sig flyttar automatiskt truppskydd lämpliga trupper till närmaste lämpliga alliansslott i samma kungarike.",
       "expectation": "Med återkallning på kommer trupperna hem efter det sista upptäckta anfallet när inget hot återstår; annars stannar de en timme efter ankomst och återvänder sedan. Avsaknad av mål eller trupper och spelbegränsningar kan hindra evakuering.",
       "helper": "Trupperna går till närmaste lämpliga alliansslott i samma kungarike; om evakuering misslyckas kan portarna i det angripna ägda slottet skydda utanför Berimond."
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "Snabbaste tillgängliga befälhavare",
+      "commanderHelp": "Automatiska fästningsanfall jämför tillämpliga effekter på restid från utrustning, ädelstenar, set och generaler för varje målfästning; Relik 2.0 eller minst 100 % krävs inte.",
+      "description": "Automatiska fästningsanfall köper skräckvargar inom sparade gränser, förser aktiverade yttre kungariken och angriper redo fästningar från deras huvudborgar.",
+      "expectation": "Varje anfall kräver en redo fästning, tillräckligt med skräckvargar för båda flankerna och en kvalificerad tilldelad befälhavare; väntetider eller försenade leveranser kan pausa det.",
+      "name": "Automatiska fästningsanfall",
+      "settingsSummary": "Automatiska fästningsanfall förbereder skräckvargar och väljer den snabbaste kvalificerade tilldelade befälhavaren för varje målfästning.",
+      "summary": "Förse med skräckvargar och angrip redo fästningar",
+      "travelHelp": "Resefjädern är standard; ditt sparade reseval behålls. Den borgspecifika hastighetsökningen beräknas på nytt före avfärd."
+    },
+    "recommendationIntro": "De rekommenderade värdena beskriver vanlig användning av automatiska fästningsanfall; de är vägledning och ändrar inte sparade inställningar.",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "Illustrativt exempel på anfalls- och reseinställningar för automatiska fästningsanfall",
+          "caption": "Automatiska fästningsanfall rangordnar kvalificerade tilldelade befälhavare för varje mål och använder det sparade resevalet."
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "Tilldela de befälhavare som automatiska fästningsanfall får använda under Befälhavare och spara tilldelningarna.",
+            "label": "Tilldelning av befälhavare",
+            "recommendation": "Tilldela befälhavarna som du vanligtvis vill ha tillgängliga för fästningsanfall."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Stoppa automatiska fästningsanfall vid kontots dagliga antal normala anfall tills spelet återställer det; 0 lägger inte till någon gräns.",
+            "label": "Daglig gräns för normala anfall",
+            "recommendation": "0 om du inte vill ha en extra daglig gräns."
+          },
+          "fastest_commander": {
+            "description": "För varje fästning väljer automatiken den snabbaste för tillfället tillgängliga tilldelade befälhavaren utifrån tillämpliga effekter från utrustning, ädelstenar, set och generaler efter begränsningar.",
+            "label": "Snabbaste kvalificerade befälhavare",
+            "recommendation": "Ett Relik 2.0-föremål eller 100 % hastighetsbonus krävs inte."
+          },
+          "full_flank_wave": {
+            "description": "Varje anfall väntar på tillräckligt med skräckvargar för att fylla båda flankerna i en enda full våg.",
+            "label": "Skräckvargvåg på båda flankerna"
+          },
+          "horse_travel_boost": {
+            "description": "Välj resealternativ för fästningsanfall; en uttryckligen sparad mynt- eller rubinnivå förblir vald.",
+            "label": "Reseförstärkning för häst",
+            "recommendation": "Resefjäder för snabbast resa."
+          }
+        },
+        "title": "Ställ in anfall och resor"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "Slå på automatiska fästningsanfall på Automatisering-kortet efter att du sparat för att starta vanliga cykler.",
+            "label": "Reglage för automatiska fästningsanfall",
+            "recommendation": "På efter att du granskat och sparat önskade inställningar."
+          },
+          "calendar": {
+            "description": "Använd Kalender för att begränsa när automatiska fästningsanfall får köras och välj Spara schema efter ändringar.",
+            "label": "Kalender",
+            "recommendation": "Av för kontinuerlig vanlig drift."
+          },
+          "save_fortress_plan": {
+            "description": "Spara inställningarna för kungariken, försörjning och anfall innan du lämnar den här dialogrutan.",
+            "label": "Spara fästningsplan"
+          }
+        },
+        "title": "Ställ in schemat, spara och slå på"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "Illustrativt exempel på reglagen för de tre yttre kungarikena i automatiska fästningsanfall",
+          "caption": "Aktivera varje upplåst kungarike vars huvudborg ska ta emot skräckvargar och angripa fästningar."
+        },
+        "items": {
+          "burning_sands": {
+            "description": "Aktivera anfall och skräckvargförsörjning från din huvudborg i De brinnande sandarna när kungariket är upplåst.",
+            "label": "De brinnande sandarna",
+            "recommendation": "På när upplåst och redo att användas."
+          },
+          "everwinter_glacier": {
+            "description": "Aktivera anfall och skräckvargförsörjning från din huvudborg i Evigvinterglaciären när kungariket är upplåst.",
+            "label": "Evigvinterglaciären",
+            "recommendation": "På när upplåst och redo att användas."
+          },
+          "fire_peaks": {
+            "description": "Aktivera anfall och skräckvargförsörjning från din huvudborg i Eldtopparna när kungariket är upplåst.",
+            "label": "Eldtopparna",
+            "recommendation": "På när upplåst och redo att användas."
+          }
+        },
+        "title": "Välj fästningskungariken"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "Välj inställningsknappen på kortet för automatiska fästningsanfall på sidan Automatisering.",
+            "label": "Öppna inställningar"
+          }
+        },
+        "title": "Öppna inställningar för automatiska fästningsanfall"
+      },
+      "supply": {
+        "image": {
+          "alt": "Illustrativt exempel på köp och överföring av skräckvargar för automatiska fästningsanfall",
+          "caption": "Granska köptaket per session, reserven av Khan-tavlor och tidsförkortningar för bekräftade överföringar."
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "Begränsa köp av skräckvargar i nomadbutiken till omgångar om 100 per butikssession; 0 stänger av köp.",
+            "label": "Skräckvargar per session",
+            "recommendation": "5 000 skräckvargar per session till den billigaste prisnivån."
+          },
+          "keep_khan_tablets": {
+            "description": "Stoppa köpen av skräckvargar innan ditt saldo av Khan-tavlor sjunker under denna reserv.",
+            "label": "Behåll Khan-tavlor",
+            "recommendation": "Behåll 25 000 Khan-tavlor."
+          },
+          "supply_route": {
+            "description": "Köpta skräckvargar anländer till huvudborgen i Det stora imperiet och fördelas till aktiverade kungariken.",
+            "label": "Försörjningsväg för skräckvargar"
+          },
+          "use_time_skips": {
+            "description": "Använd bara lämpliga tidsförkortningar för bekräftade försändelser från automatiska fästningsanfall och respektera sparade lagerreserver.",
+            "label": "Använd tidsförkortningar för skräckvargöverföringar",
+            "recommendation": "På för snabbare försörjning när dina sparade reserver av tidsförkortningar tillåter det."
+          }
+        },
+        "title": "Ställ in skräckvargförsörjning"
+      }
     }
   }
 }

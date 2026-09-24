@@ -19,7 +19,10 @@
     "birdPreviewTitle": "Automatinis karių slėpimas · nustatymo pavyzdys",
     "stationGuideTitle": "Automatinio karių prieglobsčio vadovas",
     "stationGuideIntro": "Atlikite šiuos veiksmus automatiniam karių prieglobsčiui nustatyti; pasirinkite pavyzdžio paveikslą, kad jį padidintumėte.",
-    "stationPreviewTitle": "Automatinio karių prieglobsčio nustatymo pavyzdys"
+    "stationPreviewTitle": "Automatinio karių prieglobsčio nustatymo pavyzdys",
+    "fortressGuideIntro": "Atlikite šiuos veiksmus automatinėms tvirtovių atakoms nustatyti; pasirinkite pavyzdinį skydelį, kad jį padidintumėte.",
+    "fortressGuideTitle": "Automatinių tvirtovių atakų gidas",
+    "fortressPreviewTitle": "Automatinių tvirtovių atakų sąrankos pavyzdys"
   },
   "autoTower": {
     "recommendationIntro": "Tai rekomendacijos įprastam naudojimui; peržiūrėkite jas prieš išsaugodami.",
@@ -322,6 +325,26 @@
       "gate": "Atsarginis vartų atidarymas: išjungta",
       "castle": "Išgalvota pilis: rezervuota 80 gynybinių karių",
       "save": "Išsaugokite pakeitimus ir įjunkite prieglobstį"
+    },
+    "fortressAttack": {
+      "commander": "Vadas: greičiausias tinkamas priskirtas",
+      "daily": "Įprastų atakų paros riba: 0",
+      "title": "Atakų nustatymų pavyzdys",
+      "travel": "Kelionės pagreitis: Kelionės plunksna",
+      "wave": "Viena pilna siaubo vilkų banga abiejuose sparnuose"
+    },
+    "fortressKingdoms": {
+      "everwinter": "Amžinosios žiemos ledynas: įjungta atrakinus",
+      "peaks": "Ugnies viršūnės: įjungta atrakinus",
+      "sands": "Degantys smėlynai: įjungta atrakinus",
+      "title": "Karalysčių nustatymų pavyzdys"
+    },
+    "fortressSupply": {
+      "purchase": "Siaubo vilkų per sesiją: 5 000",
+      "reserve": "Palikti chano lentelių: 25 000",
+      "route": "Tiekimas: iš Didžiosios imperijos pagrindinės pilies į įjungtas karalystes",
+      "skips": "Laiko trumpinimai patvirtintiems perkėlimams: įjungta",
+      "title": "Siaubo vilkų tiekimo pavyzdys"
     }
   },
   "autoStation": {
@@ -413,6 +436,134 @@
       "description": "Artėjant žaidėjo puolimui automatinis prieglobstis perkelia tinkamus karius į artimiausią tinkamą sąjungininko pilį toje pačioje karalystėje.",
       "expectation": "Įjungus grąžinimą kariai sugrįžta po paskutinio aptikto puolimo, kai nebelieka grėsmės; kitu atveju jie lieka valandą po atvykimo ir tada grįžta. Nesant taikinio ar karių ir dėl žaidimo apribojimų evakuacija gali nepavykti.",
       "helper": "Kariai keliauja į artimiausią tinkamą sąjungininko pilį toje pačioje karalystėje; jei evakuacija nepavyksta, puolamos nuosavos pilies vartai gali apsaugoti ne Berimonde."
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "Greičiausias prieinamas vadas",
+      "commanderHelp": "Automatinės tvirtovių atakos kiekvienai tikslinei tvirtovei lygina pritaikomus įrangos, brangakmenių, rinkinių ir generolų kelionės greičio efektus; Relikvija 2.0 ar 100 % minimumas nereikalingi.",
+      "description": "Automatinės tvirtovių atakos perka siaubo vilkus pagal išsaugotas ribas, aprūpina įjungtas išorines karalystes ir puola paruoštas tvirtoves iš jų pagrindinių pilių.",
+      "expectation": "Kiekvienai atakai reikia paruoštos tvirtovės, pakankamai siaubo vilkų abiem sparnams ir tinkamo priskirto vado; laukimo laikotarpiai ar tiekimo vėlavimai gali ją pristabdyti.",
+      "name": "Automatinės tvirtovių atakos",
+      "settingsSummary": "Automatinės tvirtovių atakos paruošia siaubo vilkus ir kiekvienai tikslinei tvirtovei parenka greičiausią tinkamą priskirtą vadą.",
+      "summary": "Tiekite siaubo vilkus ir pulkite paruoštas tvirtoves",
+      "travelHelp": "Kelionės plunksna yra numatytoji; jūsų išsaugotas kelionės pasirinkimas išlieka. Konkrečios pilies pagreitis prieš išsiuntimą apskaičiuojamas dar kartą."
+    },
+    "recommendationIntro": "Rekomenduojamos vertės apibūdina įprastą automatinių tvirtovių atakų naudojimą; jos yra patarimai ir nekeičia išsaugotų nustatymų.",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "Iliustracinis automatinių tvirtovių atakų ir kelionės nustatymų pavyzdys",
+          "caption": "Automatinės tvirtovių atakos rikiuoja tinkamus priskirtus vadus kiekvienam taikiniui ir naudoja išsaugotą kelionės pasirinkimą."
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "Vadų skiltyje priskirkite vadus, kuriuos gali naudoti automatinės tvirtovių atakos, ir išsaugokite priskyrimus.",
+            "label": "Vadų priskyrimas",
+            "recommendation": "Priskirkite vadus, kuriuos paprastai norite turėti tvirtovių atakoms."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Sustabdykite automatines tvirtovių atakas pasiekus paskyros paros įprastų atakų skaičių, kol žaidimas jį atnaujins; 0 neprideda ribos.",
+            "label": "Įprastų atakų paros riba",
+            "recommendation": "0, nebent norite papildomos paros ribos."
+          },
+          "fastest_commander": {
+            "description": "Kiekvienai tvirtovei automatika parenka greičiausią dabar prieinamą priskirtą vadą pagal pritaikomus įrangos, brangakmenių, rinkinių ir generolų efektus, pritaikius ribas.",
+            "label": "Greičiausias tinkamas vadas",
+            "recommendation": "Relikvijos 2.0 daiktas ar 100 % greičio premija nereikalingi."
+          },
+          "full_flank_wave": {
+            "description": "Kiekviena ataka laukia pakankamai siaubo vilkų, kad vienoje pilnoje bangoje užpildytų abu sparnus.",
+            "label": "Siaubo vilkų banga abiejuose sparnuose"
+          },
+          "horse_travel_boost": {
+            "description": "Pasirinkite kelionės parinktį tvirtovių atakoms; aiškiai išsaugotas monetų ar rubinų lygis lieka pasirinktas.",
+            "label": "Žirgo kelionės pagreitis",
+            "recommendation": "Kelionės plunksna greičiausiai kelionei."
+          }
+        },
+        "title": "Nustatykite atakas ir kelionę"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "Išsaugoję įjunkite automatines tvirtovių atakas Automatizavimo kortelėje, kad prasidėtų įprasti ciklai.",
+            "label": "Automatinių tvirtovių atakų jungiklis",
+            "recommendation": "Įjungta patikrinus ir išsaugojus norimus nustatymus."
+          },
+          "calendar": {
+            "description": "Naudokite Kalendorių automatinių tvirtovių atakų laikui apriboti ir pakeitę pasirinkite Išsaugoti tvarkaraštį.",
+            "label": "Kalendorius",
+            "recommendation": "Išjungta nuolatiniam įprastam veikimui."
+          },
+          "save_fortress_plan": {
+            "description": "Prieš uždarydami šį langą išsaugokite karalysčių, tiekimo ir atakų nustatymus.",
+            "label": "Išsaugoti tvirtovių planą"
+          }
+        },
+        "title": "Nustatykite tvarkaraštį, išsaugokite ir įjunkite"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "Iliustracinis trijų išorinių karalysčių automatinių tvirtovių atakų valdiklių pavyzdys",
+          "caption": "Įjunkite kiekvieną atrakintą karalystę, kurios pagrindinė pilis turi gauti siaubo vilkų ir pulti tvirtoves."
+        },
+        "items": {
+          "burning_sands": {
+            "description": "Įjunkite atakas ir siaubo vilkų tiekimą iš savo pagrindinės pilies Degančiuose smėlynuose, kai karalystė atrakinta.",
+            "label": "Degantys smėlynai",
+            "recommendation": "Įjungta, kai atrakinta ir paruošta naudoti."
+          },
+          "everwinter_glacier": {
+            "description": "Įjunkite atakas ir siaubo vilkų tiekimą iš savo pagrindinės pilies Amžinosios žiemos ledyne, kai karalystė atrakinta.",
+            "label": "Amžinosios žiemos ledynas",
+            "recommendation": "Įjungta, kai atrakinta ir paruošta naudoti."
+          },
+          "fire_peaks": {
+            "description": "Įjunkite atakas ir siaubo vilkų tiekimą iš savo pagrindinės pilies Ugnies viršūnėse, kai karalystė atrakinta.",
+            "label": "Ugnies viršūnės",
+            "recommendation": "Įjungta, kai atrakinta ir paruošta naudoti."
+          }
+        },
+        "title": "Pasirinkite tvirtovių karalystes"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "Automatizavimo puslapyje pasirinkite nustatymų mygtuką automatinių tvirtovių atakų kortelėje.",
+            "label": "Atverti nustatymus"
+          }
+        },
+        "title": "Atverkite automatinių tvirtovių atakų nustatymus"
+      },
+      "supply": {
+        "image": {
+          "alt": "Iliustracinis siaubo vilkų pirkimo ir perkėlimo nustatymų pavyzdys",
+          "caption": "Peržiūrėkite pirkimo ribą per sesiją, chano lentelių rezervą ir laiko trumpinimo pasirinkimą patvirtintiems perkėlimams."
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "Ribokite siaubo vilkų pirkimus klajoklių parduotuvėje po 100 vienetų per sesiją; 0 išjungia pirkimą.",
+            "label": "Siaubo vilkų per sesiją",
+            "recommendation": "5 000 siaubo vilkų per sesiją pigiausioje kainų pakopoje."
+          },
+          "keep_khan_tablets": {
+            "description": "Nutraukite siaubo vilkų pirkimą, kol chano lentelių kiekis nenukrito žemiau šio rezervo.",
+            "label": "Palikti chano lentelių",
+            "recommendation": "Palikite 25 000 chano lentelių."
+          },
+          "supply_route": {
+            "description": "Nupirkti siaubo vilkai atvyksta į Didžiosios imperijos pagrindinę pilį ir paskirstomi įjungtoms karalystėms.",
+            "label": "Siaubo vilkų tiekimo kelias"
+          },
+          "use_time_skips": {
+            "description": "Naudokite tinkamus laiko trumpinimus tik patvirtintoms automatinių tvirtovių atakų siuntoms ir laikykitės išsaugotų atsargų rezervų.",
+            "label": "Naudoti laiko trumpinimus siaubo vilkų perkėlimams",
+            "recommendation": "Įjungta greitesniam tiekimui, jei tai leidžia išsaugoti laiko trumpinimų rezervai."
+          }
+        },
+        "title": "Nustatykite siaubo vilkų tiekimą"
+      }
     }
   }
 }

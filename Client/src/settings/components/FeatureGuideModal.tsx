@@ -3,26 +3,29 @@ import { Button, Modal } from '../../components/ui';
 import towerSource from '../../config/autoTowerGuide.json';
 import birdSource from '../../config/autoBirdGuide.json';
 import stationSource from '../../config/autoStationGuide.json';
-import { useGuideLocale } from '../../config/useGuideLocale';
+import fortressSource from '../../config/autoFortressGuide.json';
+import { englishGuidePack, useGuideLocale } from '../../config/useGuideLocale';
 import { GuideIllustration, type GuidePanelKind } from '../../config/GuideIllustration';
 
-type Feature = 'autoTower' | 'autoBird' | 'autoStation';
+type Feature = 'autoTower' | 'autoBird' | 'autoStation' | 'autoFortress';
 type TranslatedGuide = { recommendationIntro: string; steps: Record<string, { title: string; items: Record<string, { label: string; description: string; recommendation?: string }>; image?: { alt: string; caption: string } }> };
 type SourceStep = { id: string; title: string; items: Array<{ id: string; label: string; description: string; recommendation?: string }>; image?: { src: string; alt: string; caption: string; width: number; height: number } };
-const panelKind = (feature: Feature, step: string): GuidePanelKind => feature === 'autoTower' ? (step === 'general' ? 'towerGeneral' : 'towerCastle') : feature === 'autoBird' ? (step === 'general' ? 'birdGeneral' : 'birdCastle') : 'stationGeneral';
+const panelKind = (feature: Feature, step: string): GuidePanelKind => feature === 'autoTower' ? (step === 'general' ? 'towerGeneral' : 'towerCastle') : feature === 'autoBird' ? (step === 'general' ? 'birdGeneral' : 'birdCastle') : feature === 'autoStation' ? 'stationGeneral' : step === 'kingdoms' ? 'fortressKingdoms' : step === 'supply' ? 'fortressSupply' : 'fortressAttack';
 
 export function FeatureGuideModal({ feature, isOpen, onClose, showAdvisor = true }: { feature: Feature; isOpen: boolean; onClose: () => void; showAdvisor?: boolean }) {
-  const { locale, pack } = useGuideLocale();
+  const { locale: selectedLocale, pack: selectedPack } = useGuideLocale();
+  const pack = feature === 'autoFortress' && !('autoFortress' in selectedPack) ? englishGuidePack : selectedPack;
+  const locale = pack === englishGuidePack ? 'en' : selectedLocale;
   const [previewStepId, setPreviewStepId] = useState<string | null>(null);
   useEffect(() => { if (!isOpen) setPreviewStepId(null); }, [isOpen]);
-  const source = feature === 'autoTower' ? towerSource : feature === 'autoBird' ? birdSource : stationSource;
+  const source = feature === 'autoTower' ? towerSource : feature === 'autoBird' ? birdSource : feature === 'autoStation' ? stationSource : fortressSource;
   const guide = pack[feature] as unknown as TranslatedGuide;
   const steps = (source.steps as SourceStep[]).filter((step) => showAdvisor || step.id !== 'advisor');
   const previewStep = steps.find((step) => step.id === previewStepId && step.image);
   const closeGuide = () => { setPreviewStepId(null); onClose(); };
-  const title = feature === 'autoTower' ? pack.ui.towerGuideTitle : feature === 'autoBird' ? pack.ui.birdGuideTitle : pack.ui.stationGuideTitle;
-  const intro = feature === 'autoTower' ? pack.ui.towerGuideIntro : feature === 'autoBird' ? pack.ui.birdGuideIntro : pack.ui.stationGuideIntro;
-  const previewTitle = feature === 'autoTower' ? pack.ui.towerPreviewTitle : feature === 'autoBird' ? pack.ui.birdPreviewTitle : pack.ui.stationPreviewTitle;
+  const title = feature === 'autoTower' ? pack.ui.towerGuideTitle : feature === 'autoBird' ? pack.ui.birdGuideTitle : feature === 'autoStation' ? pack.ui.stationGuideTitle : pack.ui.fortressGuideTitle;
+  const intro = feature === 'autoTower' ? pack.ui.towerGuideIntro : feature === 'autoBird' ? pack.ui.birdGuideIntro : feature === 'autoStation' ? pack.ui.stationGuideIntro : pack.ui.fortressGuideIntro;
+  const previewTitle = feature === 'autoTower' ? pack.ui.towerPreviewTitle : feature === 'autoBird' ? pack.ui.birdPreviewTitle : feature === 'autoStation' ? pack.ui.stationPreviewTitle : pack.ui.fortressPreviewTitle;
   return <>
     <Modal isOpen={isOpen} onClose={closeGuide} title={title} contentLang={locale} contentDir={locale === 'ar' ? 'rtl' : 'ltr'} closeLabel={pack.ui.backToSettings} maxWidth="3xl"
       footer={<Button variant="outline" onClick={closeGuide}>{pack.ui.backToSettings}</Button>}>
@@ -44,13 +47,13 @@ export function FeatureGuideModal({ feature, isOpen, onClose, showAdvisor = true
                   </div>;
                 })}
               </dl>
-              {step.image && 'image' in content && content.image && <figure className="mt-3" style={{ maxWidth: locale === 'en' ? step.image.width : 680 }}>
+              {step.image && 'image' in content && content.image && <figure className="mt-3" style={{ maxWidth: locale === 'en' && feature !== 'autoFortress' ? step.image.width : 680 }}>
                 <button type="button" onClick={() => setPreviewStepId(step.id)} aria-label={pack.ui.enlargePicture}
                   className="block w-full overflow-hidden rounded-xl border border-border-base hover:border-primary focus-visible:outline-2 focus-visible:outline-primary">
-                  {locale === 'en' ? <img src={step.image.src} alt={content.image.alt} width={step.image.width} height={step.image.height} loading="lazy" className="h-auto w-full" /> :
+                  {locale === 'en' && feature !== 'autoFortress' ? <img src={step.image.src} alt={content.image.alt} width={step.image.width} height={step.image.height} loading="lazy" className="h-auto w-full" /> :
                     <GuideIllustration pack={pack} kind={panelKind(feature, step.id)} locale={locale} alt={[pack.ui.illustrativeExample, content.title, pack.panels[panelKind(feature, step.id)].title].join(' — ')} showAdvisor={showAdvisor} />}
                 </button>
-                <figcaption className="mt-2 text-xs leading-relaxed text-text-muted">{locale !== 'en' && <strong>{pack.ui.illustrativeExample}. </strong>}{content.image.caption}</figcaption>
+                <figcaption className="mt-2 text-xs leading-relaxed text-text-muted">{(locale !== 'en' || feature === 'autoFortress') && <strong>{pack.ui.illustrativeExample}. </strong>}{content.image.caption}</figcaption>
               </figure>}
             </li>;
           })}
@@ -63,7 +66,7 @@ export function FeatureGuideModal({ feature, isOpen, onClose, showAdvisor = true
         const content = guide.steps[previewStep.id as keyof typeof guide.steps];
         if (!previewStep.image || !('image' in content) || !content.image) return null;
         return <div lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'} className="overflow-auto" tabIndex={0} role="region" aria-label={pack.ui.fullSizePicture}>
-          {locale === 'en' ? <img src={previewStep.image.src} alt={content.image.alt} width={previewStep.image.width} height={previewStep.image.height} className="h-auto max-w-none" style={{ width: previewStep.image.width }} /> :
+          {locale === 'en' && feature !== 'autoFortress' ? <img src={previewStep.image.src} alt={content.image.alt} width={previewStep.image.width} height={previewStep.image.height} className="h-auto max-w-none" style={{ width: previewStep.image.width }} /> :
             <GuideIllustration pack={pack} kind={panelKind(feature, previewStep.id)} locale={locale} large alt={[pack.ui.illustrativeExample, content.title, pack.panels[panelKind(feature, previewStep.id)].title].join(' — ')} showAdvisor={showAdvisor} />}
         </div>;
       })()}

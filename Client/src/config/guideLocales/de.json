@@ -19,7 +19,10 @@
     "birdPreviewTitle": "Beispiel für die Einrichtung von Automatischem Truppenschutz",
     "stationGuideTitle": "Auto-Station-Anleitung",
     "stationGuideIntro": "Richten Sie Auto Station mit diesen Schritten ein; wählen Sie das Beispielbild zum Vergrößern aus.",
-    "stationPreviewTitle": "Beispiel zur Auto-Station-Einrichtung"
+    "stationPreviewTitle": "Beispiel zur Auto-Station-Einrichtung",
+    "fortressGuideIntro": "Befolge diese Schritte zur Einrichtung der Festungsautomatisierung; wähle eine Beispieltafel aus, um sie zu vergrößern.",
+    "fortressGuideTitle": "Anleitung zur Festungsautomatisierung",
+    "fortressPreviewTitle": "Einrichtungsbeispiel für die Festungsautomatisierung"
   },
   "autoTower": {
     "recommendationIntro": "Diese Empfehlungen gelten für den regelmäßigen Betrieb; prüfe sie vor dem Speichern.",
@@ -322,6 +325,26 @@
       "gate": "Toröffnung als Rückfalloption: aus",
       "castle": "Fiktive Beispielburg: 80 Verteidigungstruppen reserviert",
       "save": "Änderungen speichern und Auto Station einschalten"
+    },
+    "fortressAttack": {
+      "commander": "Feldherr: schnellster geeigneter zugewiesener",
+      "daily": "Tageslimit für normale Angriffe: 0",
+      "title": "Beispiel für Angriffseinstellungen",
+      "travel": "Reisebonus: Reisefeder",
+      "wave": "Eine vollständige Sturmwolf-Welle auf beiden Flanken"
+    },
+    "fortressKingdoms": {
+      "everwinter": "Eisiger Gletscher: ein nach Freischaltung",
+      "peaks": "Feuergipfel: ein nach Freischaltung",
+      "sands": "Brennende Sande: ein nach Freischaltung",
+      "title": "Beispiel für Königreichseinstellungen"
+    },
+    "fortressSupply": {
+      "purchase": "Sturmwölfe pro Sitzung: 5.000",
+      "reserve": "Khan-Tafeln behalten: 25.000",
+      "route": "Versorgung: vom Großen Imperium in aktivierte Königreiche",
+      "skips": "Zeitverkürzer für bestätigte Transfers: ein",
+      "title": "Beispiel für Sturmwolf-Versorgung"
     }
   },
   "autoStation": {
@@ -413,6 +436,134 @@
       "description": "Bei einem eingehenden Spielerangriff verlegt Auto Station geeignete Truppen zur nächstgelegenen geeigneten Allianzburg im selben Königreich.",
       "expectation": "Mit aktiviertem Rückruf kehren Truppen nach dem letzten erkannten Angriff zurück, sobald keine Bedrohung mehr besteht; andernfalls bleiben sie nach der Ankunft eine Stunde und kehren dann zurück. Fehlende Ziele, Truppen oder Spielbeschränkungen können die Evakuierung verhindern.",
       "helper": "Truppen werden bei der nächstgelegenen geeigneten Allianzburg im selben Königreich stationiert; schlägt die Evakuierung fehl, können außerhalb Berimonds die Tore der angegriffenen eigenen Burg schützen."
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "Schnellster verfügbarer Feldherr",
+      "commanderHelp": "Die Automatisierung von Festungen vergleicht passende Reisegeschwindigkeitseffekte aus Ausrüstung, Edelsteinen, Sets und Generälen für jede Zielfestung; weder Relikt 2.0 noch ein Bonus von 100 % sind erforderlich.",
+      "description": "Die Automatisierung von Festungen kauft Sturmwölfe innerhalb der gespeicherten Grenzen, versorgt aktivierte äußere Königreiche und greift bereite Festungen von deren Hauptburgen aus an.",
+      "expectation": "Jeder Angriff benötigt eine bereite Festung, genug Sturmwölfe für beide Flanken und einen geeigneten zugewiesenen Feldherrn; Abklingzeiten oder Lieferverzögerungen können ihn aufhalten.",
+      "name": "Automatisierung von Festungen",
+      "settingsSummary": "Die Automatisierung von Festungen bereitet Sturmwölfe vor und wählt für jede Zielfestung den schnellsten geeigneten zugewiesenen Feldherrn.",
+      "summary": "Sturmwölfe liefern und bereite Festungen angreifen",
+      "travelHelp": "Die Reisefeder ist voreingestellt; deine gespeicherte Reiseoption bleibt erhalten. Der burgspezifische Bonus wird vor dem Angriff erneut ermittelt."
+    },
+    "recommendationIntro": "Die empfohlenen Werte beschreiben die regelmäßige Nutzung der Automatisierung von Festungen; sie dienen nur als Orientierung und ändern keine gespeicherten Einstellungen.",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "Anschauliches Beispiel für Angriffs- und Reiseeinstellungen der Festungsautomatisierung",
+          "caption": "Die Automatisierung von Festungen ordnet geeignete zugewiesene Feldherren für jedes Ziel nach Geschwindigkeit und nutzt die gespeicherte Reiseoption."
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "Weise unter Feldherren die Feldherren zu, die die Automatisierung von Festungen verwenden darf, und speichere die Zuweisungen.",
+            "label": "Feldherrenzuweisung",
+            "recommendation": "Weise die Feldherren zu, die du normalerweise für Festungsangriffe verfügbar halten möchtest."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Stoppe die Automatisierung von Festungen beim kontoweiten Tageszähler für normale Angriffe bis zum Zurücksetzen durch das Spiel; 0 setzt keine zusätzliche Grenze.",
+            "label": "Tageslimit für normale Angriffe",
+            "recommendation": "0, sofern du keine zusätzliche Tagesgrenze möchtest."
+          },
+          "fastest_commander": {
+            "description": "Für jede Festung wählt die Automatisierung von Festungen den schnellsten momentan verfügbaren zugewiesenen Feldherrn anhand passender Ausrüstungs-, Edelstein-, Set- und Generalseffekte nach Anwendung der Obergrenzen.",
+            "label": "Schnellster geeigneter Feldherr",
+            "recommendation": "Weder ein Relikt-2.0-Gegenstand noch ein Geschwindigkeitsbonus von 100 % ist erforderlich."
+          },
+          "full_flank_wave": {
+            "description": "Jeder Angriff wartet auf genügend Sturmwölfe, um beide Flanken in einer vollständigen Welle zu füllen.",
+            "label": "Sturmwolf-Flankenwelle"
+          },
+          "horse_travel_boost": {
+            "description": "Wähle die Reiseoption für Festungsangriffe; eine ausdrücklich gespeicherte Münz- oder Rubin-Stufe bleibt ausgewählt.",
+            "label": "Pferde-Reisebonus",
+            "recommendation": "Reisefeder für die schnellste Reise."
+          }
+        },
+        "title": "Angriffe und Reise einstellen"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "Aktiviere die Automatisierung von Festungen nach dem Speichern auf der Automatisierungskarte, um ihre normalen Abläufe zu starten.",
+            "label": "Schalter für die Festungsautomatisierung",
+            "recommendation": "Ein, nachdem du deine gewünschten Einstellungen geprüft und gespeichert hast."
+          },
+          "calendar": {
+            "description": "Nutze den Kalender, um die Laufzeiten der Automatisierung von Festungen einzugrenzen, und wähle für Änderungen „Zeitplan speichern“.",
+            "label": "Kalender",
+            "recommendation": "Aus für einen durchgehenden regelmäßigen Betrieb."
+          },
+          "save_fortress_plan": {
+            "description": "Speichere die Einstellungen für Königreiche, Versorgung und Angriffe, bevor du dieses Fenster verlässt.",
+            "label": "Festungsplan speichern"
+          }
+        },
+        "title": "Zeitplan festlegen, speichern und aktivieren"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "Anschauliches Beispiel für die Königreichsschalter der Festungsautomatisierung",
+          "caption": "Aktiviere jedes freigeschaltete Königreich, dessen Hauptburg Sturmwölfe erhalten und Festungen angreifen soll."
+        },
+        "items": {
+          "burning_sands": {
+            "description": "Aktiviere Angriffe und Sturmwolf-Lieferungen von deiner eigenen Hauptburg in den Brennenden Sanden, wenn das Königreich freigeschaltet ist.",
+            "label": "Brennende Sande",
+            "recommendation": "Ein, wenn freigeschaltet und einsatzbereit."
+          },
+          "everwinter_glacier": {
+            "description": "Aktiviere Angriffe und Sturmwolf-Lieferungen von deiner eigenen Hauptburg im Eisigen Gletscher, wenn das Königreich freigeschaltet ist.",
+            "label": "Eisiger Gletscher",
+            "recommendation": "Ein, wenn freigeschaltet und einsatzbereit."
+          },
+          "fire_peaks": {
+            "description": "Aktiviere Angriffe und Sturmwolf-Lieferungen von deiner eigenen Hauptburg in den Feuergipfeln, wenn das Königreich freigeschaltet ist.",
+            "label": "Feuergipfel",
+            "recommendation": "Ein, wenn freigeschaltet und einsatzbereit."
+          }
+        },
+        "title": "Festungs-Königreiche auswählen"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "Wähle auf der Automatisierungsseite die Schaltfläche „Einstellungen“ auf der Karte der Festungsautomatisierung.",
+            "label": "Einstellungen öffnen"
+          }
+        },
+        "title": "Einstellungen der Festungsautomatisierung öffnen"
+      },
+      "supply": {
+        "image": {
+          "alt": "Anschauliches Beispiel für Sturmwolf-Käufe und Transfers der Festungsautomatisierung",
+          "caption": "Prüfe das Kauflimit pro Sitzung, die Khan-Tafel-Reserve und die Option für Zeitverkürzer bei bestätigten Transfers."
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "Begrenze Sturmwolf-Käufe im Nomadenladen pro Ladensitzung auf Hunderterpakete; 0 deaktiviert Käufe.",
+            "label": "Sturmwölfe pro Sitzung",
+            "recommendation": "5.000 Sturmwölfe pro Sitzung zur günstigsten Preisstufe."
+          },
+          "keep_khan_tablets": {
+            "description": "Beende Sturmwolf-Käufe, bevor dein Bestand an Khan-Tafeln unter diese Reserve fällt.",
+            "label": "Khan-Tafeln behalten",
+            "recommendation": "25.000 Khan-Tafeln behalten."
+          },
+          "supply_route": {
+            "description": "Gekaufte Sturmwölfe treffen in der Hauptburg des Großen Imperiums ein und werden auf aktivierte Königreiche verteilt.",
+            "label": "Sturmwolf-Versorgungsweg"
+          },
+          "use_time_skips": {
+            "description": "Nutze geeignete Zeitverkürzer nur für bestätigte Lieferungen der Festungsautomatisierung und beachte gespeicherte Bestandsreserven.",
+            "label": "Zeitverkürzer für Sturmwolf-Transfers nutzen",
+            "recommendation": "Ein für schnellere Versorgung, wenn deine gespeicherten Zeitverkürzer-Reserven dies erlauben."
+          }
+        },
+        "title": "Sturmwolf-Versorgung einstellen"
+      }
     }
   }
 }

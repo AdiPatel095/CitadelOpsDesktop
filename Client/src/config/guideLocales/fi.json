@@ -19,7 +19,10 @@
     "birdPreviewTitle": "Esimerkki joukkojen automaattisen suojaan siirtämisen asetuksista",
     "stationGuideTitle": "Automaattisen joukkojen suojauksen opas",
     "stationGuideIntro": "Määritä automaattinen joukkojen suojaus näillä ohjeilla; suurenna esimerkkikuva valitsemalla se.",
-    "stationPreviewTitle": "Esimerkki automaattisen joukkojen suojauksen asetuksista"
+    "stationPreviewTitle": "Esimerkki automaattisen joukkojen suojauksen asetuksista",
+    "fortressGuideIntro": "Määritä automaattiset linnakehyökkäykset näiden vaiheiden avulla; suurenna esimerkkipaneeli valitsemalla se.",
+    "fortressGuideTitle": "Automaattisten linnakehyökkäysten opas",
+    "fortressPreviewTitle": "Esimerkki automaattisten linnakehyökkäysten määrittämisestä"
   },
   "autoTower": {
     "recommendationIntro": "Nämä suositukset koskevat säännöllistä käyttöä; tarkista ne ennen tallentamista.",
@@ -322,6 +325,26 @@
       "gate": "Avaa portit varatoimena: pois",
       "castle": "Kuvitteellinen linna: 80 puolustusjoukkoa varattu",
       "save": "Tallenna muutokset ja ota suojaus käyttöön"
+    },
+    "fortressAttack": {
+      "commander": "Komentaja: nopein kelvollinen nimetty",
+      "daily": "Tavallisten hyökkäysten päiväraja: 0",
+      "title": "Esimerkki hyökkäysasetuksista",
+      "travel": "Matkustusnopeutus: Matkahöyhen",
+      "wave": "Yksi täysi hirviösusiaalto molemmilla sivustoilla"
+    },
+    "fortressKingdoms": {
+      "everwinter": "Ikuisen talven jäätikkö: päällä avattuna",
+      "peaks": "Tulihuiput: päällä avattuna",
+      "sands": "Palavat hiekat: päällä avattuna",
+      "title": "Esimerkki valtakunta-asetuksista"
+    },
+    "fortressSupply": {
+      "purchase": "Hirviösusia istuntoa kohti: 5 000",
+      "reserve": "Säästä Khan-tauluja: 25 000",
+      "route": "Toimitus: Suuren valtakunnan päälinnasta käyttöön otettuihin valtakuntiin",
+      "skips": "Aikahypyt vahvistettuihin siirtoihin: päällä",
+      "title": "Esimerkki hirviösusien toimituksesta"
     }
   },
   "autoStation": {
@@ -413,6 +436,134 @@
       "description": "Pelaajahyökkäyksen lähestyessä automaattinen suojaus siirtää kelvolliset joukot saman valtakunnan lähimpään sopivaan liittolaislinnaan.",
       "expectation": "Kun palautus on päällä, joukot palaavat viimeisen havaitun hyökkäyksen jälkeen ilman jäljellä olevaa uhkaa; muuten ne viipyvät tunnin saapumisen jälkeen ja palaavat sitten. Kohteen tai joukkojen puute ja pelin rajoitukset voivat estää evakuoinnin.",
       "helper": "Joukot siirtyvät saman valtakunnan lähimpään sopivaan liittolaislinnaan; jos evakuointi epäonnistuu, hyökätyn oman linnan portit voivat suojata Berimondin ulkopuolella."
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "Nopein käytettävissä oleva komentaja",
+      "commanderHelp": "Automaattiset linnakehyökkäykset vertaavat kuhunkin kohdelinnakkeeseen soveltuvia varusteiden, jalokivien, settien ja kenraalien matkanopeusvaikutuksia; Relic 2.0 -esinettä tai 100 prosentin vähimmäistasoa ei vaadita.",
+      "description": "Automaattiset linnakehyökkäykset ostavat hirviösusia tallennetuissa rajoissa, toimittavat niitä käyttöön otettuihin ulompiin valtakuntiin ja hyökkäävät valmiisiin linnakkeisiin niiden päälinnoista.",
+      "expectation": "Jokainen hyökkäys vaatii valmiin linnakkeen, riittävästi hirviösusia molemmille sivustoille ja kelvollisen tehtävään nimetyn komentajan; odotusajat tai toimitusviiveet voivat keskeyttää sen.",
+      "name": "Automaattiset linnakehyökkäykset",
+      "settingsSummary": "Automaattiset linnakehyökkäykset valmistavat hirviösusia ja valitsevat nopeimman kelvollisen tehtävään nimetyn komentajan jokaiseen kohdelinnakkeeseen.",
+      "summary": "Toimita hirviösusia ja hyökkää valmiisiin linnakkeisiin",
+      "travelHelp": "Matkahöyhen on oletusvalinta; tallennettu matkustusvalintasi säilyy. Linnakohtainen nopeutus lasketaan uudelleen ennen lähtöä."
+    },
+    "recommendationIntro": "Suositusarvot kuvaavat automaattisten linnakehyökkäysten tavanomaista käyttöä; ne ovat ohjeita eivätkä muuta tallennettuja asetuksia.",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "Havainnollistava esimerkki automaattisten linnakehyökkäysten hyökkäys- ja matkustusasetuksista",
+          "caption": "Automaattiset linnakehyökkäykset asettavat kelvolliset tehtävään nimetyt komentajat paremmuusjärjestykseen kullekin kohteelle ja käyttävät tallennettua matkustusvalintaa."
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "Nimeä Komentajat-kohdassa automaattisten linnakehyökkäysten käytettävissä olevat komentajat ja tallenna valinnat.",
+            "label": "Komentajien nimeäminen",
+            "recommendation": "Nimeä komentajat, joita tavallisesti haluat käyttää linnakehyökkäyksiin."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Pysäytä automaattiset linnakehyökkäykset tilin päivittäisen tavallisten hyökkäysten määrän täyttyessä, kunnes peli nollaa määrän; 0 ei lisää rajaa.",
+            "label": "Tavallisten hyökkäysten päiväraja",
+            "recommendation": "0, ellet halua lisätä päivittäistä rajaa."
+          },
+          "fastest_commander": {
+            "description": "Jokaiseen linnakkeeseen valitaan nopein tällä hetkellä käytettävissä oleva nimetty komentaja soveltuvien varuste-, jalokivi-, setti- ja kenraalivaikutusten perusteella rajojen jälkeen.",
+            "label": "Nopein kelvollinen komentaja",
+            "recommendation": "Relic 2.0 -esinettä tai 100 prosentin nopeusbonusta ei vaadita."
+          },
+          "full_flank_wave": {
+            "description": "Jokainen hyökkäys odottaa, kunnes hirviösusia riittää täyttämään molemmat sivustat yhdellä täydellä aallolla.",
+            "label": "Hirviösusiaalto molemmilla sivustoilla"
+          },
+          "horse_travel_boost": {
+            "description": "Valitse linnakehyökkäysten matkustusvaihtoehto; erikseen tallennettu kolikko- tai rubiinitaso säilyy valittuna.",
+            "label": "Hevosen matkustusnopeutus",
+            "recommendation": "Matkahöyhen nopeimpaan matkustukseen."
+          }
+        },
+        "title": "Määritä hyökkäykset ja matkustus"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "Käynnistä tavalliset syklit ottamalla automaattiset linnakehyökkäykset käyttöön Automaatio-kortissa tallentamisen jälkeen.",
+            "label": "Automaattisten linnakehyökkäysten kytkin",
+            "recommendation": "Päällä, kun olet tarkistanut ja tallentanut haluamasi asetukset."
+          },
+          "calendar": {
+            "description": "Rajoita automaattisten linnakehyökkäysten käyttöaikaa Kalenterissa ja valitse Tallenna aikataulu muutosten jälkeen.",
+            "label": "Kalenteri",
+            "recommendation": "Pois päältä jatkuvaa tavanomaista käyttöä varten."
+          },
+          "save_fortress_plan": {
+            "description": "Tallenna valtakunta-, toimitus- ja hyökkäysasetukset ennen tämän ikkunan sulkemista.",
+            "label": "Tallenna linnakesuunnitelma"
+          }
+        },
+        "title": "Määritä aikataulu, tallenna ja ota käyttöön"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "Havainnollistava esimerkki automaattisten linnakehyökkäysten kolmen ulomman valtakunnan valinnoista",
+          "caption": "Ota käyttöön jokainen avattu valtakunta, jonka päälinnaan toimitetaan hirviösusia ja josta hyökätään linnakkeisiin."
+        },
+        "items": {
+          "burning_sands": {
+            "description": "Ota hyökkäykset ja hirviösusien toimitus käyttöön Palavien hiekkojen päälinnaasi, kun valtakunta on avattu.",
+            "label": "Palavat hiekat",
+            "recommendation": "Päällä, kun valtakunta on avattu ja käyttövalmis."
+          },
+          "everwinter_glacier": {
+            "description": "Ota hyökkäykset ja hirviösusien toimitus käyttöön Ikuisen talven jäätikön päälinnaasi, kun valtakunta on avattu.",
+            "label": "Ikuisen talven jäätikkö",
+            "recommendation": "Päällä, kun valtakunta on avattu ja käyttövalmis."
+          },
+          "fire_peaks": {
+            "description": "Ota hyökkäykset ja hirviösusien toimitus käyttöön Tulihuippujen päälinnaasi, kun valtakunta on avattu.",
+            "label": "Tulihuiput",
+            "recommendation": "Päällä, kun valtakunta on avattu ja käyttövalmis."
+          }
+        },
+        "title": "Valitse linnakevaltakunnat"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "Valitse Automaatio-sivulla automaattisten linnakehyökkäysten kortin asetuspainike.",
+            "label": "Avaa asetukset"
+          }
+        },
+        "title": "Avaa automaattisten linnakehyökkäysten asetukset"
+      },
+      "supply": {
+        "image": {
+          "alt": "Havainnollistava esimerkki hirviösusien osto- ja siirtoasetuksista",
+          "caption": "Tarkista oston yläraja istuntoa kohti, Khan-taulujen varanto ja aikahyppyjen käyttö vahvistettuihin siirtoihin."
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "Rajoita hirviösusien ostot nomadikaupasta 100 yksikön eriin kauppaistuntoa kohti; 0 poistaa ostot käytöstä.",
+            "label": "Hirviösusia istuntoa kohti",
+            "recommendation": "5 000 hirviösutta istuntoa kohti halvimmalla hintatasolla."
+          },
+          "keep_khan_tablets": {
+            "description": "Lopeta hirviösusien ostot ennen kuin Khan-taulujen määrä alittaa tämän varannon.",
+            "label": "Säästä Khan-tauluja",
+            "recommendation": "Säästä 25 000 Khan-taulua."
+          },
+          "supply_route": {
+            "description": "Ostetut hirviösudet saapuvat Suuren valtakunnan päälinnaan, josta ne jaetaan käyttöön otettuihin valtakuntiin.",
+            "label": "Hirviösusien toimitusreitti"
+          },
+          "use_time_skips": {
+            "description": "Käytä soveltuvia aikahyppyjä vain automaattisten linnakehyökkäysten vahvistettuihin lähetyksiin tallennettuja varantoja noudattaen.",
+            "label": "Käytä aikahyppyjä hirviösusien siirtoon",
+            "recommendation": "Päällä nopeampaa täydennystä varten, jos tallennetut aikahyppyvarannot sallivat sen."
+          }
+        },
+        "title": "Määritä hirviösusien toimitus"
+      }
     }
   }
 }

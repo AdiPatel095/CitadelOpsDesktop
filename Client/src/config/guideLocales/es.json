@@ -19,7 +19,10 @@
     "birdPreviewTitle": "Ejemplo de configuración del Resguardo automático de tropas",
     "stationGuideTitle": "Guía de refugio automático de tropas",
     "stationGuideIntro": "Sigue estos pasos para configurar el refugio automático de tropas; selecciona la imagen de ejemplo para ampliarla.",
-    "stationPreviewTitle": "Ejemplo de configuración del refugio automático"
+    "stationPreviewTitle": "Ejemplo de configuración del refugio automático",
+    "fortressGuideIntro": "Sigue estos pasos para configurar la automatización de fortalezas; selecciona un panel de ejemplo para ampliarlo.",
+    "fortressGuideTitle": "Guía de automatización de fortalezas",
+    "fortressPreviewTitle": "Ejemplo de configuración de la automatización de fortalezas"
   },
   "autoTower": {
     "recommendationIntro": "Estas recomendaciones son para el uso habitual; revísalas antes de guardar.",
@@ -322,6 +325,26 @@
       "gate": "Apertura de puertas de respaldo: desactivada",
       "castle": "Castillo ficticio: 80 tropas defensivas reservadas",
       "save": "Guardar cambios y activar el refugio automático"
+    },
+    "fortressAttack": {
+      "commander": "Comandante: el asignado elegible más rápido",
+      "daily": "Límite diario de ataques normales: 0",
+      "title": "Ejemplo de ajustes de ataque",
+      "travel": "Impulso de viaje: pluma de viaje",
+      "wave": "Una oleada completa de lobos feroces en ambos flancos"
+    },
+    "fortressKingdoms": {
+      "everwinter": "Glaciar Inviernoeterno: activado si está desbloqueado",
+      "peaks": "Cumbres de Fuego: activado si está desbloqueado",
+      "sands": "Arenas Ardientes: activado si está desbloqueado",
+      "title": "Ejemplo de ajustes de reinos"
+    },
+    "fortressSupply": {
+      "purchase": "Lobos feroces por sesión: 5.000",
+      "reserve": "Reservar tablillas del Kan: 25.000",
+      "route": "Suministro: del castillo principal del Gran Imperio a los reinos habilitados",
+      "skips": "Aceleradores para traslados confirmados: activados",
+      "title": "Ejemplo de suministro de lobos feroces"
     }
   },
   "autoStation": {
@@ -413,6 +436,134 @@
       "description": "Cuando se acerca un ataque de jugador, el refugio automático mueve tropas aptas al castillo aliado adecuado más cercano del mismo reino.",
       "expectation": "Con la retirada activada, las tropas vuelven después del último ataque detectado cuando ya no hay amenazas; de lo contrario, permanecen una hora tras llegar y luego regresan. La falta de destino o tropas y las restricciones del juego pueden impedir la evacuación.",
       "helper": "Las tropas se estacionan en el castillo aliado apto más cercano del mismo reino; si falla la evacuación, las puertas del castillo propio atacado pueden proteger fuera de Berimond."
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "Comandante disponible más rápido",
+      "commanderHelp": "La automatización de fortalezas compara los efectos de velocidad de viaje aplicables del equipo, las gemas, los conjuntos y los generales para cada fortaleza objetivo; no se exige una reliquia 2.0 ni un mínimo del 100 %.",
+      "description": "La automatización de fortalezas compra lobos feroces dentro de los límites guardados, abastece a los reinos exteriores habilitados y ataca las fortalezas disponibles desde sus castillos principales.",
+      "expectation": "Cada ataque necesita una fortaleza disponible, suficientes lobos feroces para ambos flancos y un comandante asignado elegible; los tiempos de espera o los retrasos del suministro pueden pausarlo.",
+      "name": "Automatización de fortalezas",
+      "settingsSummary": "La automatización de fortalezas prepara lobos feroces y elige al comandante asignado elegible más rápido para cada fortaleza objetivo.",
+      "summary": "Abastece de lobos feroces y ataca fortalezas disponibles",
+      "travelHelp": "La pluma de viaje es la opción predeterminada; se conserva la opción de viaje que hayas guardado. El impulso correspondiente al castillo se vuelve a determinar antes del ataque."
+    },
+    "recommendationIntro": "Los valores recomendados describen el uso habitual de la automatización de fortalezas; son orientativos y no modifican los ajustes guardados.",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "Ejemplo ilustrativo de los ajustes de ataque y viaje de la automatización de fortalezas",
+          "caption": "La automatización de fortalezas ordena los comandantes asignados elegibles para cada objetivo y usa la opción de viaje guardada."
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "En Comandantes, asigna los comandantes que puede usar la automatización de fortalezas y guarda esas asignaciones.",
+            "label": "Asignación de comandantes",
+            "recommendation": "Asigna los comandantes que normalmente quieras tener disponibles para atacar fortalezas."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Detén la automatización de fortalezas al alcanzar el número diario de ataques normales de la cuenta hasta que el juego lo restablezca; 0 no añade ningún límite.",
+            "label": "Límite diario de ataques normales",
+            "recommendation": "0, salvo que quieras añadir un límite diario."
+          },
+          "fastest_commander": {
+            "description": "Para cada fortaleza, la automatización elige al comandante asignado disponible más rápido según los efectos aplicables de equipo, gemas, conjuntos y generales tras aplicar los límites.",
+            "label": "Comandante elegible más rápido",
+            "recommendation": "No se exige una reliquia 2.0 ni una bonificación de velocidad del 100 %."
+          },
+          "full_flank_wave": {
+            "description": "Cada ataque espera a tener suficientes lobos feroces para llenar ambos flancos en una sola oleada completa.",
+            "label": "Oleada de lobos feroces en ambos flancos"
+          },
+          "horse_travel_boost": {
+            "description": "Elige la opción de viaje para los ataques a fortalezas; se conserva cualquier nivel de monedas o rubíes que hayas guardado expresamente.",
+            "label": "Impulso de viaje del caballo",
+            "recommendation": "Pluma de viaje para viajar lo más rápido posible."
+          }
+        },
+        "title": "Configura los ataques y el viaje"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "Activa la automatización de fortalezas desde la tarjeta de Automatización después de guardar para iniciar sus ciclos habituales.",
+            "label": "Interruptor de la automatización de fortalezas",
+            "recommendation": "Activado después de revisar y guardar los ajustes deseados."
+          },
+          "calendar": {
+            "description": "Usa el Calendario para limitar cuándo puede funcionar la automatización de fortalezas y selecciona Guardar calendario si cambias el horario.",
+            "label": "Calendario",
+            "recommendation": "Desactivado para un funcionamiento habitual continuo."
+          },
+          "save_fortress_plan": {
+            "description": "Guarda los ajustes de reinos, suministro y ataques antes de salir de este cuadro.",
+            "label": "Guardar plan de fortalezas"
+          }
+        },
+        "title": "Configura el horario, guarda y activa"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "Ejemplo ilustrativo de los controles de los tres reinos exteriores de la automatización de fortalezas",
+          "caption": "Activa cada reino desbloqueado cuyo castillo principal deba recibir lobos feroces y atacar fortalezas."
+        },
+        "items": {
+          "burning_sands": {
+            "description": "Activa los ataques y el suministro de lobos feroces desde tu castillo principal de Arenas Ardientes cuando hayas desbloqueado ese reino.",
+            "label": "Arenas Ardientes",
+            "recommendation": "Activado cuando esté desbloqueado y listo para usar."
+          },
+          "everwinter_glacier": {
+            "description": "Activa los ataques y el suministro de lobos feroces desde tu castillo principal de Glaciar Inviernoeterno cuando hayas desbloqueado ese reino.",
+            "label": "Glaciar Inviernoeterno",
+            "recommendation": "Activado cuando esté desbloqueado y listo para usar."
+          },
+          "fire_peaks": {
+            "description": "Activa los ataques y el suministro de lobos feroces desde tu castillo principal de Cumbres de Fuego cuando hayas desbloqueado ese reino.",
+            "label": "Cumbres de Fuego",
+            "recommendation": "Activado cuando esté desbloqueado y listo para usar."
+          }
+        },
+        "title": "Elige los reinos para las fortalezas"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "En la página Automatización, selecciona el botón de ajustes de la tarjeta de automatización de fortalezas.",
+            "label": "Abrir ajustes"
+          }
+        },
+        "title": "Abre los ajustes de la automatización de fortalezas"
+      },
+      "supply": {
+        "image": {
+          "alt": "Ejemplo ilustrativo de los ajustes de compra y traslado de lobos feroces de la automatización de fortalezas",
+          "caption": "Revisa el límite de compras por sesión, la reserva de tablillas del Kan y la opción de aceleradores para traslados confirmados."
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "Limita las compras de lobos feroces en la tienda nómada a lotes de 100 por sesión; 0 desactiva las compras.",
+            "label": "Lobos feroces por sesión",
+            "recommendation": "5.000 lobos feroces por sesión al precio más bajo."
+          },
+          "keep_khan_tablets": {
+            "description": "Detén las compras de lobos feroces antes de que tus tablillas del Kan bajen de esta reserva.",
+            "label": "Reservar tablillas del Kan",
+            "recommendation": "Reserva 25.000 tablillas del Kan."
+          },
+          "supply_route": {
+            "description": "Los lobos feroces comprados llegan al castillo principal del Gran Imperio y se distribuyen a los reinos habilitados.",
+            "label": "Ruta de suministro de lobos feroces"
+          },
+          "use_time_skips": {
+            "description": "Usa aceleradores elegibles solo para los envíos confirmados de la automatización de fortalezas y respeta las reservas de inventario guardadas.",
+            "label": "Usar aceleradores para trasladar lobos feroces",
+            "recommendation": "Activado para acelerar el suministro cuando lo permitan tus reservas de aceleradores guardadas."
+          }
+        },
+        "title": "Configura el suministro de lobos feroces"
+      }
     }
   }
 }

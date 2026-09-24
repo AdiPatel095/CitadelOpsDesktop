@@ -19,7 +19,10 @@
     "birdPreviewTitle": "Przykład konfiguracji Automatycznego ukrywania wojsk",
     "stationGuideTitle": "Poradnik automatycznej ochrony wojsk",
     "stationGuideIntro": "Skonfiguruj automatyczną ochronę wojsk według tych kroków; wybierz obraz przykładowy, aby go powiększyć.",
-    "stationPreviewTitle": "Przykład konfiguracji automatycznej ochrony wojsk"
+    "stationPreviewTitle": "Przykład konfiguracji automatycznej ochrony wojsk",
+    "fortressGuideIntro": "Wykonaj te kroki, aby skonfigurować automatyczne ataki na fortece; wybierz przykładowy panel, aby go powiększyć.",
+    "fortressGuideTitle": "Przewodnik po automatycznych atakach na fortece",
+    "fortressPreviewTitle": "Przykład konfiguracji automatycznych ataków na fortece"
   },
   "autoTower": {
     "recommendationIntro": "Te zalecenia dotyczą regularnego korzystania; sprawdź je przed zapisaniem.",
@@ -322,6 +325,26 @@
       "gate": "Awaryjne otwarcie bram: wyłączone",
       "castle": "Fikcyjny zamek: 80 wojsk obronnych w rezerwie",
       "save": "Zapisz zmiany i włącz ochronę wojsk"
+    },
+    "fortressAttack": {
+      "commander": "Dowódca: najszybszy kwalifikujący się przydzielony",
+      "daily": "Dzienny limit zwykłych ataków: 0",
+      "title": "Przykładowe ustawienia ataków",
+      "travel": "Premia do podróży: Pióro podróżne",
+      "wave": "Jedna pełna fala wilków grozy na obu skrzydłach"
+    },
+    "fortressKingdoms": {
+      "everwinter": "Lodowiec Wiecznej Zimy: włączony po odblokowaniu",
+      "peaks": "Ogniste Szczyty: włączone po odblokowaniu",
+      "sands": "Płonące Piaski: włączone po odblokowaniu",
+      "title": "Przykładowe ustawienia królestw"
+    },
+    "fortressSupply": {
+      "purchase": "Wilki grozy na sesję: 5 000",
+      "reserve": "Zachowaj tabliczki chana: 25 000",
+      "route": "Zaopatrzenie: z zamku głównego w Wielkim Cesarstwie do włączonych królestw",
+      "skips": "Przyspieszenia dla potwierdzonych transferów: włączone",
+      "title": "Przykład zaopatrzenia w wilki grozy"
     }
   },
   "autoStation": {
@@ -413,6 +436,134 @@
       "description": "Gdy nadchodzi atak gracza, automatyczna ochrona przenosi kwalifikujące się wojska do najbliższego odpowiedniego zamku sojusznika w tym samym królestwie.",
       "expectation": "Przy włączonym przywołaniu wojska wracają po ostatnim wykrytym ataku, gdy nie ma dalszego zagrożenia; w przeciwnym razie pozostają godzinę po przybyciu i wracają. Brak celu lub wojsk oraz ograniczenia gry mogą uniemożliwić ewakuację.",
       "helper": "Wojska trafiają do najbliższego odpowiedniego zamku sojusznika w tym samym królestwie; jeśli ewakuacja się nie uda, bramy atakowanego własnego zamku mogą chronić poza Berimondem."
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "Najszybszy dostępny dowódca",
+      "commanderHelp": "Automatyczne ataki na fortece porównują właściwe dla każdej fortecy docelowej efekty prędkości podróży z wyposażenia, klejnotów, zestawów i generałów; Relikt 2.0 ani minimum 100% nie są wymagane.",
+      "description": "Automatyczne ataki na fortece kupują wilki grozy w zapisanych limitach, zaopatrują włączone zewnętrzne królestwa i atakują gotowe fortece z ich zamków głównych.",
+      "expectation": "Każdy atak wymaga gotowej fortecy, dostatecznej liczby wilków grozy na oba skrzydła i kwalifikującego się przydzielonego dowódcy; czas odnowienia lub opóźnienia zaopatrzenia mogą go wstrzymać.",
+      "name": "Automatyczne ataki na fortece",
+      "settingsSummary": "Automatyczne ataki na fortece przygotowują wilki grozy i wybierają najszybszego kwalifikującego się przydzielonego dowódcę dla każdej fortecy docelowej.",
+      "summary": "Zaopatruj w wilki grozy i atakuj gotowe fortece",
+      "travelHelp": "Pióro podróżne jest opcją domyślną; zapisany wybór podróży pozostaje bez zmian. Premia właściwa dla zamku jest obliczana ponownie przed wysłaniem ataku."
+    },
+    "recommendationIntro": "Zalecane wartości opisują zwykłe korzystanie z automatycznych ataków na fortece; są wskazówkami i nie zmieniają zapisanych ustawień.",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "Przykładowe ustawienia ataku i podróży dla automatycznych ataków na fortece",
+          "caption": "Automatyczne ataki na fortece szeregują kwalifikujących się przydzielonych dowódców dla każdego celu i korzystają z zapisanego wyboru podróży."
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "W sekcji Dowódcy przydziel dowódców dostępnych dla automatycznych ataków na fortece i zapisz przydziały.",
+            "label": "Przydział dowódców",
+            "recommendation": "Przydziel dowódców, których zwykle chcesz mieć dostępnych do ataków na fortece."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Zatrzymaj automatyczne ataki na fortece po osiągnięciu dziennej liczby zwykłych ataków na całym koncie do czasu jej wyzerowania przez grę; 0 nie dodaje limitu.",
+            "label": "Dzienny limit zwykłych ataków",
+            "recommendation": "0, chyba że chcesz dodać dzienny limit."
+          },
+          "fastest_commander": {
+            "description": "Dla każdej fortecy automatyzacja wybiera najszybszego aktualnie dostępnego przydzielonego dowódcę według właściwych efektów wyposażenia, klejnotów, zestawów i generałów po uwzględnieniu limitów.",
+            "label": "Najszybszy kwalifikujący się dowódca",
+            "recommendation": "Przedmiot Relikt 2.0 ani premia prędkości 100% nie są wymagane."
+          },
+          "full_flank_wave": {
+            "description": "Każdy atak czeka na dostateczną liczbę wilków grozy, by wypełnić oba skrzydła jedną pełną falą.",
+            "label": "Fala wilków grozy na obu skrzydłach"
+          },
+          "horse_travel_boost": {
+            "description": "Wybierz opcję podróży dla ataków na fortece; wyraźnie zapisana opcja za monety lub rubiny pozostanie wybrana.",
+            "label": "Premia do podróży konnej",
+            "recommendation": "Pióro podróżne zapewniające najszybszą podróż."
+          }
+        },
+        "title": "Ustaw ataki i podróż"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "Po zapisaniu włącz automatyczne ataki na fortece na karcie Automatyzacja, aby rozpocząć zwykłe cykle.",
+            "label": "Przełącznik automatycznych ataków na fortece",
+            "recommendation": "Włączony po sprawdzeniu i zapisaniu zamierzonych ustawień."
+          },
+          "calendar": {
+            "description": "Użyj Kalendarza, aby ograniczyć godziny działania automatycznych ataków na fortece, i wybierz Zapisz harmonogram po zmianach.",
+            "label": "Kalendarz",
+            "recommendation": "Wyłączony dla nieprzerwanego zwykłego działania."
+          },
+          "save_fortress_plan": {
+            "description": "Przed zamknięciem tego okna zapisz ustawienia królestw, zaopatrzenia i ataków.",
+            "label": "Zapisz plan fortec"
+          }
+        },
+        "title": "Ustaw harmonogram, zapisz i włącz"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "Przykładowe ustawienia trzech zewnętrznych królestw dla automatycznych ataków na fortece",
+          "caption": "Włącz każde odblokowane królestwo, którego zamek główny ma otrzymywać wilki grozy i atakować fortece."
+        },
+        "items": {
+          "burning_sands": {
+            "description": "Włącz ataki i dostawy wilków grozy z zamku głównego na Płonących Piaskach, gdy to królestwo zostanie odblokowane.",
+            "label": "Płonące Piaski",
+            "recommendation": "Włączone po odblokowaniu i przygotowaniu do użycia."
+          },
+          "everwinter_glacier": {
+            "description": "Włącz ataki i dostawy wilków grozy z zamku głównego na Lodowcu Wiecznej Zimy, gdy to królestwo zostanie odblokowane.",
+            "label": "Lodowiec Wiecznej Zimy",
+            "recommendation": "Włączone po odblokowaniu i przygotowaniu do użycia."
+          },
+          "fire_peaks": {
+            "description": "Włącz ataki i dostawy wilków grozy z zamku głównego na Ognistych Szczytach, gdy to królestwo zostanie odblokowane.",
+            "label": "Ogniste Szczyty",
+            "recommendation": "Włączone po odblokowaniu i przygotowaniu do użycia."
+          }
+        },
+        "title": "Wybierz królestwa fortec"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "Na stronie Automatyzacja wybierz przycisk ustawień na karcie automatycznych ataków na fortece.",
+            "label": "Otwórz ustawienia"
+          }
+        },
+        "title": "Otwórz ustawienia automatycznych ataków na fortece"
+      },
+      "supply": {
+        "image": {
+          "alt": "Przykładowe ustawienia zakupu i transferu wilków grozy dla automatycznych ataków na fortece",
+          "caption": "Sprawdź limit zakupów na sesję, rezerwę tabliczek chana i użycie przyspieszeń dla potwierdzonych transferów."
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "Ogranicz zakupy wilków grozy w sklepie nomadów do partii po 100 w każdej sesji sklepu; 0 wyłącza kupowanie.",
+            "label": "Wilki grozy na sesję",
+            "recommendation": "5 000 wilków grozy na sesję w najtańszej kategorii cenowej."
+          },
+          "keep_khan_tablets": {
+            "description": "Zatrzymaj zakupy wilków grozy, zanim liczba tabliczek chana spadnie poniżej tej rezerwy.",
+            "label": "Zachowaj tabliczki chana",
+            "recommendation": "Zachowaj 25 000 tabliczek chana."
+          },
+          "supply_route": {
+            "description": "Kupione wilki grozy trafiają do zamku głównego w Wielkim Cesarstwie i są rozdzielane między włączone królestwa.",
+            "label": "Trasa zaopatrzenia wilków grozy"
+          },
+          "use_time_skips": {
+            "description": "Używaj odpowiednich przyspieszeń tylko dla potwierdzonych transportów automatycznych ataków na fortece, zachowując zapisane rezerwy zasobów.",
+            "label": "Użyj przyspieszeń do transferu wilków grozy",
+            "recommendation": "Włączone dla szybszych dostaw, jeśli pozwalają na to zapisane rezerwy przyspieszeń."
+          }
+        },
+        "title": "Ustaw zaopatrzenie w wilki grozy"
+      }
     }
   }
 }

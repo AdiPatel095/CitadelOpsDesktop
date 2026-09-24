@@ -19,7 +19,10 @@
     "birdPreviewTitle": "Esempio di configurazione del Riparo automatico delle truppe",
     "stationGuideTitle": "Guida al ricovero automatico delle truppe",
     "stationGuideIntro": "Segui questi passaggi per configurare il ricovero automatico delle truppe; seleziona l'immagine di esempio per ingrandirla.",
-    "stationPreviewTitle": "Esempio di configurazione del ricovero automatico"
+    "stationPreviewTitle": "Esempio di configurazione del ricovero automatico",
+    "fortressGuideIntro": "Segui questi passaggi per impostare l'automazione delle fortezze; seleziona un pannello di esempio per ingrandirlo.",
+    "fortressGuideTitle": "Guida all'automazione delle fortezze",
+    "fortressPreviewTitle": "Esempio di configurazione dell'automazione delle fortezze"
   },
   "autoTower": {
     "recommendationIntro": "Questi consigli riguardano l’uso regolare; controllali prima di salvare.",
@@ -322,6 +325,26 @@
       "gate": "Apertura cancelli di riserva: disattiva",
       "castle": "Castello fittizio: 80 truppe difensive riservate",
       "save": "Salva le modifiche e attiva il ricovero automatico"
+    },
+    "fortressAttack": {
+      "commander": "Comandante: il più veloce tra quelli assegnati e idonei",
+      "daily": "Limite giornaliero degli attacchi normali: 0",
+      "title": "Esempio di impostazioni di attacco",
+      "travel": "Potenziamento di viaggio: piuma da viaggio",
+      "wave": "Un'ondata completa di lupi feroci su entrambi i fianchi"
+    },
+    "fortressKingdoms": {
+      "everwinter": "Ghiacciaio Semprinverno: attivo quando sbloccato",
+      "peaks": "Vette di Fuoco: attivo quando sbloccato",
+      "sands": "Sabbie Ardenti: attivo quando sbloccato",
+      "title": "Esempio di impostazioni dei regni"
+    },
+    "fortressSupply": {
+      "purchase": "Lupi feroci per sessione: 5.000",
+      "reserve": "Conserva tavolette del Khan: 25.000",
+      "route": "Rifornimento: dal castello principale del Grande Impero ai regni abilitati",
+      "skips": "Acceleratori per trasferimenti confermati: attivi",
+      "title": "Esempio di rifornimento dei lupi feroci"
     }
   },
   "autoStation": {
@@ -413,6 +436,134 @@
       "description": "Quando si avvicina un attacco di un giocatore, il ricovero automatico sposta le truppe idonee nel castello alleato adatto più vicino dello stesso regno.",
       "expectation": "Con il richiamo attivo, le truppe tornano dopo l'ultimo attacco rilevato quando non restano minacce; altrimenti rimangono un'ora dopo l'arrivo e poi tornano. La mancanza di una destinazione o di truppe e i limiti del gioco possono impedire l'evacuazione.",
       "helper": "Le truppe vanno al castello alleato idoneo più vicino dello stesso regno; se l'evacuazione fallisce, i cancelli del castello posseduto sotto attacco possono proteggerlo fuori da Berimond."
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "Comandante disponibile più veloce",
+      "commanderHelp": "L'automazione delle fortezze confronta gli effetti applicabili sulla velocità di viaggio di equipaggiamento, gemme, set e generali per ogni fortezza bersaglio; non sono richiesti una reliquia 2.0 o un minimo del 100%.",
+      "description": "L'automazione delle fortezze acquista lupi feroci entro i limiti salvati, rifornisce i regni esterni abilitati e attacca le fortezze pronte dai rispettivi castelli principali.",
+      "expectation": "Ogni attacco richiede una fortezza pronta, abbastanza lupi feroci per entrambi i fianchi e un comandante assegnato idoneo; tempi di attesa o ritardi dei rifornimenti possono sospenderlo.",
+      "name": "Automazione delle fortezze",
+      "settingsSummary": "L'automazione delle fortezze prepara lupi feroci e sceglie il comandante assegnato idoneo più veloce per ogni fortezza bersaglio.",
+      "summary": "Rifornisci i lupi feroci e attacca le fortezze pronte",
+      "travelHelp": "La piuma da viaggio è l'opzione predefinita; la scelta di viaggio salvata viene mantenuta. Il potenziamento specifico del castello viene ricalcolato prima dell'attacco."
+    },
+    "recommendationIntro": "I valori consigliati descrivono l'uso abituale dell'automazione delle fortezze; sono indicazioni e non modificano le impostazioni salvate.",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "Esempio illustrativo delle impostazioni di attacco e viaggio dell'automazione delle fortezze",
+          "caption": "L'automazione delle fortezze classifica i comandanti assegnati idonei per ogni bersaglio e usa la scelta di viaggio salvata."
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "In Comandanti, assegna i comandanti che l'automazione delle fortezze può usare e salva le assegnazioni.",
+            "label": "Assegnazione dei comandanti",
+            "recommendation": "Assegna i comandanti che normalmente vuoi rendere disponibili per gli attacchi alle fortezze."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Ferma l'automazione delle fortezze al conteggio giornaliero degli attacchi normali dell'account fino al ripristino del gioco; 0 non aggiunge alcun limite.",
+            "label": "Limite giornaliero degli attacchi normali",
+            "recommendation": "0, a meno che tu non voglia un ulteriore limite giornaliero."
+          },
+          "fastest_commander": {
+            "description": "Per ogni fortezza, l'automazione sceglie il comandante assegnato attualmente disponibile più veloce in base agli effetti applicabili di equipaggiamento, gemme, set e generali dopo i limiti.",
+            "label": "Comandante idoneo più veloce",
+            "recommendation": "Non sono richiesti una reliquia 2.0 o un bonus velocità del 100%."
+          },
+          "full_flank_wave": {
+            "description": "Ogni attacco attende abbastanza lupi feroci per riempire entrambi i fianchi con una sola ondata completa.",
+            "label": "Ondata di lupi feroci sui due fianchi"
+          },
+          "horse_travel_boost": {
+            "description": "Scegli l'opzione di viaggio per gli attacchi alle fortezze; un livello a monete o rubini salvato esplicitamente resta selezionato.",
+            "label": "Potenziamento del viaggio a cavallo",
+            "recommendation": "Piuma da viaggio per il viaggio più veloce."
+          }
+        },
+        "title": "Imposta attacchi e viaggio"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "Attiva l'automazione delle fortezze nella scheda Automazione dopo il salvataggio per avviare i cicli normali.",
+            "label": "Interruttore dell'automazione delle fortezze",
+            "recommendation": "Attivo dopo aver controllato e salvato le impostazioni desiderate."
+          },
+          "calendar": {
+            "description": "Usa il Calendario per limitare gli orari dell'automazione delle fortezze, poi seleziona Salva programma per ogni modifica.",
+            "label": "Calendario",
+            "recommendation": "Disattivato per un funzionamento abituale continuo."
+          },
+          "save_fortress_plan": {
+            "description": "Salva le impostazioni di regni, rifornimenti e attacchi prima di chiudere questa finestra.",
+            "label": "Salva il piano delle fortezze"
+          }
+        },
+        "title": "Imposta il programma, salva e attiva"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "Esempio illustrativo dei controlli dei tre regni esterni dell'automazione delle fortezze",
+          "caption": "Attiva ogni regno sbloccato il cui castello principale deve ricevere lupi feroci e attaccare fortezze."
+        },
+        "items": {
+          "burning_sands": {
+            "description": "Attiva attacchi e rifornimento di lupi feroci dal tuo castello principale nelle Sabbie Ardenti quando il regno è sbloccato.",
+            "label": "Sabbie Ardenti",
+            "recommendation": "Attivo quando sbloccato e pronto all'uso."
+          },
+          "everwinter_glacier": {
+            "description": "Attiva attacchi e rifornimento di lupi feroci dal tuo castello principale nel Ghiacciaio Semprinverno quando il regno è sbloccato.",
+            "label": "Ghiacciaio Semprinverno",
+            "recommendation": "Attivo quando sbloccato e pronto all'uso."
+          },
+          "fire_peaks": {
+            "description": "Attiva attacchi e rifornimento di lupi feroci dal tuo castello principale nelle Vette di Fuoco quando il regno è sbloccato.",
+            "label": "Vette di Fuoco",
+            "recommendation": "Attivo quando sbloccato e pronto all'uso."
+          }
+        },
+        "title": "Scegli i regni delle fortezze"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "Nella pagina Automazione, seleziona il pulsante delle impostazioni nella scheda dell'automazione delle fortezze.",
+            "label": "Apri impostazioni"
+          }
+        },
+        "title": "Apri le impostazioni dell'automazione delle fortezze"
+      },
+      "supply": {
+        "image": {
+          "alt": "Esempio illustrativo delle impostazioni di acquisto e trasferimento dei lupi feroci dell'automazione delle fortezze",
+          "caption": "Controlla il tetto di acquisto per sessione, la riserva di tavolette del Khan e l'uso degli acceleratori per i trasferimenti confermati."
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "Limita gli acquisti di lupi feroci nel negozio dei Nomadi a lotti da 100 per ogni sessione; 0 disattiva gli acquisti.",
+            "label": "Lupi feroci per sessione",
+            "recommendation": "5.000 lupi feroci per sessione al prezzo più basso."
+          },
+          "keep_khan_tablets": {
+            "description": "Interrompi gli acquisti di lupi feroci prima che le tavolette del Khan scendano sotto questa riserva.",
+            "label": "Conserva tavolette del Khan",
+            "recommendation": "Conserva 25.000 tavolette del Khan."
+          },
+          "supply_route": {
+            "description": "I lupi feroci acquistati arrivano al castello principale del Grande Impero e vengono distribuiti ai regni abilitati.",
+            "label": "Percorso di rifornimento dei lupi feroci"
+          },
+          "use_time_skips": {
+            "description": "Usa gli acceleratori idonei solo per le spedizioni confermate dell'automazione delle fortezze rispettando le riserve salvate nell'inventario.",
+            "label": "Usa acceleratori per trasferire lupi feroci",
+            "recommendation": "Attivo per rifornimenti più rapidi quando le riserve di acceleratori salvate lo consentono."
+          }
+        },
+        "title": "Imposta il rifornimento di lupi feroci"
+      }
     }
   }
 }

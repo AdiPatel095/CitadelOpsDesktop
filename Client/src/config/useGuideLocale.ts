@@ -3,7 +3,14 @@ import { useLocale } from '../i18n/LocaleContext';
 import english from './guideLocales/en.json';
 
 export type GuidePack = typeof english;
+export const englishGuidePack: GuidePack = english;
 const loaders = import.meta.glob<{ default: GuidePack }>('./guideLocales/*.json');
+const translatedSource = { ...english, ui: { ...english.ui }, panels: { ...english.panels } };
+delete (translatedSource as Partial<GuidePack>).autoFortress;
+delete (translatedSource.ui as Record<string, string>).fortressGuideTitle;
+delete (translatedSource.ui as Record<string, string>).fortressGuideIntro;
+delete (translatedSource.ui as Record<string, string>).fortressPreviewTitle;
+for (const key of ['fortressKingdoms', 'fortressSupply', 'fortressAttack']) delete (translatedSource.panels as Record<string, unknown>)[key];
 
 function complete(candidate: unknown, source: unknown): boolean {
   if (typeof source === 'string') return typeof candidate === 'string' && candidate.trim().length > 0;
@@ -20,7 +27,7 @@ export function useGuideLocale() {
     if (locale === 'en') return;
     let active = true;
     const loader = loaders[`./guideLocales/${locale}.json`];
-    if (loader) void loader().then((module) => { if (active && complete(module.default, english)) setLoaded({ locale, pack: module.default }); }).catch(() => { /* Source-language fallback remains explicit. */ });
+    if (loader) void loader().then((module) => { if (active && complete(module.default, translatedSource)) setLoaded({ locale, pack: module.default }); }).catch(() => { /* Source-language fallback remains explicit. */ });
     return () => { active = false; };
   }, [locale]);
   return locale === 'en' ? { locale: 'en', pack: english } : loaded.locale === locale ? loaded : { locale: 'en', pack: english };

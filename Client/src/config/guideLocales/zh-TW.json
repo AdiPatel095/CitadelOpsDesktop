@@ -19,7 +19,10 @@
     "birdPreviewTitle": "部隊自動庇護設定範例",
     "stationGuideTitle": "自動駐軍避險指南",
     "stationGuideIntro": "依照下列步驟設定自動駐軍避險；選取範例圖片即可放大檢視。",
-    "stationPreviewTitle": "自動駐軍避險設定範例"
+    "stationPreviewTitle": "自動駐軍避險設定範例",
+    "fortressGuideIntro": "依照以下步驟設定要塞自動攻擊；選擇範例面板即可放大檢視。",
+    "fortressGuideTitle": "要塞自動攻擊指南",
+    "fortressPreviewTitle": "要塞自動攻擊設定範例"
   },
   "autoTower": {
     "recommendationIntro": "以下是日常使用的建議；儲存前請先檢查。",
@@ -322,6 +325,26 @@
       "gate": "備用開門：關閉",
       "castle": "虛構城堡：預留80名防禦部隊",
       "save": "儲存變更並啟用自動駐軍避險"
+    },
+    "fortressAttack": {
+      "commander": "指揮官：最快的合格已指派指揮官",
+      "daily": "每日一般攻擊上限：0",
+      "title": "攻擊設定範例",
+      "travel": "行軍加速：旅行羽毛",
+      "wave": "一個完整波次的恐狼填滿兩翼"
+    },
+    "fortressKingdoms": {
+      "everwinter": "永冬冰川：解鎖後開啟",
+      "peaks": "火焰山峰：解鎖後開啟",
+      "sands": "烈焰沙漠：解鎖後開啟",
+      "title": "王國設定範例"
+    },
+    "fortressSupply": {
+      "purchase": "每次工作階段的恐狼數量：5,000",
+      "reserve": "保留可汗石板：25,000",
+      "route": "補給：從大帝國主城堡至已啟用王國",
+      "skips": "確認轉移使用時間加速：開啟",
+      "title": "恐狼補給範例"
     }
   },
   "autoStation": {
@@ -413,6 +436,134 @@
       "description": "玩家攻擊臨近時，自動駐軍避險會將合格部隊移動至同一王國中最近的合適盟友城堡。",
       "expectation": "開啟召回時，部隊會在最後一次偵測到的攻擊結束且沒有剩餘威脅後返回；否則會在抵達後停留一小時再返回。沒有合適目標或部隊，以及遊戲限制，都可能使撤離失敗。",
       "helper": "部隊前往同一王國中最近的合格盟友城堡；撤離失敗時，貝里蒙德以外遭攻擊的己方城堡可藉由開門獲得保護。"
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "目前可用的最快指揮官",
+      "commanderHelp": "要塞自動攻擊會針對每座目標要塞比較裝備、寶石、套裝與將軍適用的行軍速度效果；不需要遺物2.0，也沒有100%的最低要求。",
+      "description": "要塞自動攻擊會依已儲存的限制購買恐狼、補給已啟用的外圍王國，並從各王國的主城堡攻擊準備就緒的要塞。",
+      "expectation": "每次攻擊都需要準備就緒的要塞、足以填滿兩翼的恐狼及符合資格的已指派指揮官；冷卻時間或補給延誤可能讓攻擊暫停。",
+      "name": "要塞自動攻擊",
+      "settingsSummary": "要塞自動攻擊會準備恐狼，並為每座目標要塞選擇目前可用且符合資格的最快已指派指揮官。",
+      "summary": "補給恐狼並攻擊準備就緒的要塞",
+      "travelHelp": "旅行羽毛是預設選項；你儲存的行軍選項會保留。出發前會重新計算特定城堡的加速效果。"
+    },
+    "recommendationIntro": "建議值說明要塞自動攻擊的日常用法；僅供參考，不會變更已儲存的設定。",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "要塞自動攻擊與行軍設定的示意圖",
+          "caption": "要塞自動攻擊會依目標對符合資格的已指派指揮官排序，並使用已儲存的行軍選項。"
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "在「指揮官」中指派要塞自動攻擊可使用的指揮官，然後儲存指派。",
+            "label": "指揮官指派",
+            "recommendation": "指派你平常希望用於要塞攻擊的指揮官。"
+          },
+          "daily_normal_attack_limit": {
+            "description": "當整個帳號達到每日一般攻擊次數時暫停要塞自動攻擊，直到遊戲重設次數；0表示不增加限制。",
+            "label": "每日一般攻擊上限",
+            "recommendation": "除非需要額外的每日上限，否則設為0。"
+          },
+          "fastest_commander": {
+            "description": "針對每座要塞，系統會在套用上限後，依裝備、寶石、套裝及將軍的適用效果，選擇目前可用的最快已指派指揮官。",
+            "label": "最快的合格指揮官",
+            "recommendation": "不需要遺物2.0物品或100%速度加成。"
+          },
+          "full_flank_wave": {
+            "description": "每次攻擊都會等待恐狼數量足以用一個完整波次填滿兩翼。",
+            "label": "兩翼恐狼波次"
+          },
+          "horse_travel_boost": {
+            "description": "選擇要塞攻擊的行軍選項；明確儲存的金幣或紅寶石等級會維持選取。",
+            "label": "戰馬行軍加速",
+            "recommendation": "選擇旅行羽毛以獲得最快行軍速度。"
+          }
+        },
+        "title": "設定攻擊與行軍"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "儲存後在「自動化」卡片開啟要塞自動攻擊，以啟動正常循環。",
+            "label": "要塞自動攻擊開關",
+            "recommendation": "檢查並儲存預期設定後開啟。"
+          },
+          "calendar": {
+            "description": "使用「行事曆」限制要塞自動攻擊的執行時間，修改後選擇「儲存排程」。",
+            "label": "行事曆",
+            "recommendation": "持續正常運作時關閉。"
+          },
+          "save_fortress_plan": {
+            "description": "離開此視窗前儲存王國、補給及攻擊設定。",
+            "label": "儲存要塞計畫"
+          }
+        },
+        "title": "設定排程、儲存並開啟"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "要塞自動攻擊三個外圍王國控制項的示意圖",
+          "caption": "啟用每個已解鎖且需要從其主城堡接收恐狼並攻擊要塞的王國。"
+        },
+        "items": {
+          "burning_sands": {
+            "description": "解鎖烈焰沙漠後，從你在該王國的主城堡啟用攻擊及恐狼補給。",
+            "label": "烈焰沙漠",
+            "recommendation": "解鎖並準備好使用時開啟。"
+          },
+          "everwinter_glacier": {
+            "description": "解鎖永冬冰川後，從你在該王國的主城堡啟用攻擊及恐狼補給。",
+            "label": "永冬冰川",
+            "recommendation": "解鎖並準備好使用時開啟。"
+          },
+          "fire_peaks": {
+            "description": "解鎖火焰山峰後，從你在該王國的主城堡啟用攻擊及恐狼補給。",
+            "label": "火焰山峰",
+            "recommendation": "解鎖並準備好使用時開啟。"
+          }
+        },
+        "title": "選擇要塞王國"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "在「自動化」頁面選擇要塞自動攻擊卡片上的設定按鈕。",
+            "label": "開啟設定"
+          }
+        },
+        "title": "開啟要塞自動攻擊設定"
+      },
+      "supply": {
+        "image": {
+          "alt": "要塞自動攻擊恐狼購買及轉移設定的示意圖",
+          "caption": "查看每次工作階段的購買上限、可汗石板保留量，以及確認轉移使用的時間加速選項。"
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "將遊牧商店每次工作階段購買的恐狼限制為每批100隻；0表示關閉購買。",
+            "label": "每次工作階段的恐狼數量",
+            "recommendation": "以最低價格等級每次工作階段購買5,000隻恐狼。"
+          },
+          "keep_khan_tablets": {
+            "description": "在可汗石板餘額低於此保留量前停止購買恐狼。",
+            "label": "保留可汗石板",
+            "recommendation": "保留25,000塊可汗石板。"
+          },
+          "supply_route": {
+            "description": "購買的恐狼先抵達大帝國主城堡，再分配至已啟用的王國。",
+            "label": "恐狼補給路線"
+          },
+          "use_time_skips": {
+            "description": "僅對已確認的要塞自動攻擊運輸使用符合資格的時間加速道具，並遵守已儲存的庫存保留量。",
+            "label": "恐狼轉移使用時間加速",
+            "recommendation": "若已儲存的時間加速道具保留量允許，則開啟以加快補給。"
+          }
+        },
+        "title": "設定恐狼補給"
+      }
     }
   }
 }

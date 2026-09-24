@@ -19,7 +19,10 @@
     "birdPreviewTitle": "Automatické ukrývanie vojska · príklad nastavenia",
     "stationGuideTitle": "Sprievodca automatickou ochranou jednotiek",
     "stationGuideIntro": "Nastavte automatickú ochranu jednotiek podľa týchto krokov; výberom ukážkového obrázka ho zväčšíte.",
-    "stationPreviewTitle": "Ukážka nastavenia automatickej ochrany jednotiek"
+    "stationPreviewTitle": "Ukážka nastavenia automatickej ochrany jednotiek",
+    "fortressGuideIntro": "Postupujte podľa krokov na nastavenie automatických útokov na pevnosti; výberom ukážkového panelu ho zväčšíte.",
+    "fortressGuideTitle": "Sprievodca automatickými útokmi na pevnosti",
+    "fortressPreviewTitle": "Príklad nastavenia automatických útokov na pevnosti"
   },
   "autoTower": {
     "recommendationIntro": "Toto sú odporúčania na bežné používanie; pred uložením ich skontrolujte.",
@@ -322,6 +325,26 @@
       "gate": "Záložné otvorenie brán: vypnuté",
       "castle": "Vymyslený hrad: 80 obranných jednotiek v rezerve",
       "save": "Uložte zmeny a zapnite ochranu jednotiek"
+    },
+    "fortressAttack": {
+      "commander": "Veliteľ: najrýchlejší spôsobilý pridelený",
+      "daily": "Denný limit bežných útokov: 0",
+      "title": "Príklad nastavení útoku",
+      "travel": "Posilnenie presunu: Cestovné pierko",
+      "wave": "Jedna plná vlna hrozivých vlkov na oboch krídlach"
+    },
+    "fortressKingdoms": {
+      "everwinter": "Ľadovec večnej zimy: zapnuté po odomknutí",
+      "peaks": "Ohnivé vrcholy: zapnuté po odomknutí",
+      "sands": "Horiace piesky: zapnuté po odomknutí",
+      "title": "Príklad nastavení kráľovstiev"
+    },
+    "fortressSupply": {
+      "purchase": "Hroziví vlci za reláciu: 5 000",
+      "reserve": "Ponechať chánove tabuľky: 25 000",
+      "route": "Zásobovanie: z hlavného hradu Veľkej ríše do povolených kráľovstiev",
+      "skips": "Skrátenia času na potvrdené presuny: zapnuté",
+      "title": "Príklad zásobovania hrozivými vlkmi"
     }
   },
   "autoStation": {
@@ -413,6 +436,134 @@
       "description": "Keď sa blíži útok hráča, automatická ochrana presúva spôsobilé jednotky na najbližší vhodný spojenecký hrad v tom istom kráľovstve.",
       "expectation": "Pri zapnutom stiahnutí sa jednotky vrátia po poslednom zistenom útoku, keď už nehrozí nebezpečenstvo; inak zostanú hodinu po príchode a potom sa vrátia. Chýbajúci cieľ alebo jednotky a obmedzenia hry môžu evakuácii zabrániť.",
       "helper": "Jednotky idú na najbližší vhodný spojenecký hrad v tom istom kráľovstve; ak evakuácia zlyhá, brány napadnutého vlastného hradu môžu chrániť mimo Berimondu."
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "Najrýchlejší dostupný veliteľ",
+      "commanderHelp": "Automatické útoky na pevnosti porovnávajú použiteľné účinky výstroja, drahokamov, súprav a generálov na rýchlosť presunu pre každú cieľovú pevnosť; Relikvia 2.0 ani minimum 100 % nie sú potrebné.",
+      "description": "Automatické útoky na pevnosti nakupujú hrozivé vlky v uložených medziach, zásobujú povolené vonkajšie kráľovstvá a útočia na pripravené pevnosti z ich hlavných hradov.",
+      "expectation": "Každý útok vyžaduje pripravenú pevnosť, dosť hrozivých vlkov na obe krídla a spôsobilého prideleného veliteľa; čakacie doby či zdržanie zásobovania ho môžu pozastaviť.",
+      "name": "Automatické útoky na pevnosti",
+      "settingsSummary": "Automatické útoky na pevnosti pripravujú hrozivých vlkov a pre každú cieľovú pevnosť vyberajú najrýchlejšieho spôsobilého prideleného veliteľa.",
+      "summary": "Zásobujte hrozivých vlkov a útočte na pripravené pevnosti",
+      "travelHelp": "Cestovné pierko je predvolená voľba; vaša uložená voľba presunu zostáva zachovaná. Posilnenie pre konkrétny hrad sa pred vyslaním znovu vypočíta."
+    },
+    "recommendationIntro": "Odporúčané hodnoty opisujú bežné používanie automatických útokov na pevnosti; sú návodom a nemenia uložené nastavenia.",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "Ilustračný príklad nastavení útoku a presunu pre automatické útoky na pevnosti",
+          "caption": "Automatické útoky na pevnosti zoraďujú spôsobilých pridelených veliteľov pre každý cieľ a používajú uloženú voľbu presunu."
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "V časti Velitelia prideľte veliteľov, ktorých môžu automatické útoky na pevnosti použiť, a pridelenia uložte.",
+            "label": "Pridelenie veliteľov",
+            "recommendation": "Prideľte veliteľov, ktorých zvyčajne chcete mať dostupných na útoky na pevnosti."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Zastavte automatické útoky na pevnosti pri dennom počte bežných útokov celého účtu až do jeho obnovenia hrou; 0 nepridáva hranicu.",
+            "label": "Denný limit bežných útokov",
+            "recommendation": "0, ak nechcete ďalší denný limit."
+          },
+          "fastest_commander": {
+            "description": "Pre každú pevnosť automatika vyberá najrýchlejšieho momentálne dostupného prideleného veliteľa podľa použiteľných účinkov výstroja, drahokamov, súprav a generálov po uplatnení stropov.",
+            "label": "Najrýchlejší spôsobilý veliteľ",
+            "recommendation": "Predmet Relikvia 2.0 ani 100 % bonus rýchlosti sa nevyžadujú."
+          },
+          "full_flank_wave": {
+            "description": "Každý útok čaká na dosť hrozivých vlkov na zaplnenie oboch krídel jedinou plnou vlnou.",
+            "label": "Vlna hrozivých vlkov na oboch krídlach"
+          },
+          "horse_travel_boost": {
+            "description": "Vyberte možnosť presunu pre útoky na pevnosti; výslovne uložená voľba za mince alebo rubíny zostane zvolená.",
+            "label": "Posilnenie presunu koňa",
+            "recommendation": "Cestovné pierko pre najrýchlejší presun."
+          }
+        },
+        "title": "Nastavte útoky a presun"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "Po uložení zapnite automatické útoky na pevnosti na karte Automatizácia a spustite bežné cykly.",
+            "label": "Prepínač automatických útokov na pevnosti",
+            "recommendation": "Zapnuté po kontrole a uložení zamýšľaných nastavení."
+          },
+          "calendar": {
+            "description": "Pomocou Kalendára obmedzte čas chodu automatických útokov na pevnosti a po zmenách vyberte Uložiť rozvrh.",
+            "label": "Kalendár",
+            "recommendation": "Vypnuté pre nepretržitú bežnú prevádzku."
+          },
+          "save_fortress_plan": {
+            "description": "Pred zatvorením tohto okna uložte nastavenia kráľovstiev, zásobovania a útokov.",
+            "label": "Uložiť plán pevností"
+          }
+        },
+        "title": "Nastavte rozvrh, uložte a zapnite"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "Ilustračný príklad ovládania troch vonkajších kráľovstiev pre automatické útoky na pevnosti",
+          "caption": "Zapnite každé odomknuté kráľovstvo, ktorého hlavný hrad má prijímať hrozivých vlkov a útočiť na pevnosti."
+        },
+        "items": {
+          "burning_sands": {
+            "description": "Po odomknutí Horiacich pieskov zapnite útoky a zásobovanie hrozivými vlkmi z vášho tamojšieho hlavného hradu.",
+            "label": "Horiace piesky",
+            "recommendation": "Zapnuté po odomknutí a pripravenosti na použitie."
+          },
+          "everwinter_glacier": {
+            "description": "Po odomknutí Ľadovca večnej zimy zapnite útoky a zásobovanie hrozivými vlkmi z vášho tamojšieho hlavného hradu.",
+            "label": "Ľadovec večnej zimy",
+            "recommendation": "Zapnuté po odomknutí a pripravenosti na použitie."
+          },
+          "fire_peaks": {
+            "description": "Po odomknutí Ohnivých vrcholov zapnite útoky a zásobovanie hrozivými vlkmi z vášho tamojšieho hlavného hradu.",
+            "label": "Ohnivé vrcholy",
+            "recommendation": "Zapnuté po odomknutí a pripravenosti na použitie."
+          }
+        },
+        "title": "Vyberte kráľovstvá pre pevnosti"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "Na stránke Automatizácia vyberte tlačidlo nastavení na karte automatických útokov na pevnosti.",
+            "label": "Otvoriť nastavenia"
+          }
+        },
+        "title": "Otvorte nastavenia automatických útokov na pevnosti"
+      },
+      "supply": {
+        "image": {
+          "alt": "Ilustračný príklad nastavení nákupu a presunu hrozivých vlkov",
+          "caption": "Skontrolujte strop nákupov za reláciu, rezervu chánových tabuliek a voľbu skrátenia času pri potvrdených presunoch."
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "Obmedzte nákupy hrozivých vlkov v obchode nomádov na dávky po 100 za každú reláciu; 0 nákupy vypína.",
+            "label": "Hroziví vlci za reláciu",
+            "recommendation": "5 000 hrozivých vlkov za reláciu za najnižšiu cenu."
+          },
+          "keep_khan_tablets": {
+            "description": "Zastavte nákupy hrozivých vlkov skôr, než počet chánových tabuliek klesne pod túto rezervu.",
+            "label": "Ponechať chánove tabuľky",
+            "recommendation": "Ponechajte 25 000 chánových tabuliek."
+          },
+          "supply_route": {
+            "description": "Kúpení hroziví vlci prídu do hlavného hradu Veľkej ríše a potom sa rozdelia do povolených kráľovstiev.",
+            "label": "Trasa zásobovania hrozivými vlkmi"
+          },
+          "use_time_skips": {
+            "description": "Používajte vhodné skrátenia času iba na potvrdené zásielky automatických útokov na pevnosti a dodržujte uložené rezervy zásob.",
+            "label": "Použiť skrátenia času na presun hrozivých vlkov",
+            "recommendation": "Zapnuté na rýchlejšie doplnenie, ak to umožňujú uložené rezervy skrátenia času."
+          }
+        },
+        "title": "Nastavte zásobovanie hrozivými vlkmi"
+      }
     }
   }
 }

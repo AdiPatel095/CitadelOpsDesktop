@@ -19,7 +19,10 @@
     "birdPreviewTitle": "Csapatok automatikus menedékbe helyezése · beállítási példa",
     "stationGuideTitle": "Az automatikus csapatvédelem útmutatója",
     "stationGuideIntro": "Az automatikus csapatvédelmet ezekkel a lépésekkel állíthatod be; a példaképre kattintva nagyíthatod fel.",
-    "stationPreviewTitle": "Példa az automatikus csapatvédelem beállítására"
+    "stationPreviewTitle": "Példa az automatikus csapatvédelem beállítására",
+    "fortressGuideIntro": "Kövesd a lépéseket az automatikus erődtámadás beállításához; nagyításhoz válassz egy példapanelt.",
+    "fortressGuideTitle": "Útmutató az automatikus erődtámadáshoz",
+    "fortressPreviewTitle": "Példa az automatikus erődtámadás beállítására"
   },
   "autoTower": {
     "recommendationIntro": "Ezek a szokásos használatra vonatkozó ajánlások; mentés előtt nézd át őket.",
@@ -322,6 +325,26 @@
       "gate": "Kapunyitás tartalékként: kikapcsolva",
       "castle": "Kitalált vár: 80 védőcsapat tartalékban",
       "save": "Mentsd a változásokat, majd kapcsold be a csapatvédelmet"
+    },
+    "fortressAttack": {
+      "commander": "Parancsnok: leggyorsabb alkalmas kijelölt",
+      "daily": "Normál támadások napi korlátja: 0",
+      "title": "Példa a támadási beállításokra",
+      "travel": "Utazási gyorsítás: Utazótoll",
+      "wave": "Egy teljes rémfarkashullám mindkét szárnyon"
+    },
+    "fortressKingdoms": {
+      "everwinter": "Örök tél gleccsere: bekapcsolva feloldás után",
+      "peaks": "Tűzcsúcsok: bekapcsolva feloldás után",
+      "sands": "Égő homok: bekapcsolva feloldás után",
+      "title": "Példa a királysági beállításokra"
+    },
+    "fortressSupply": {
+      "purchase": "Rémfarkasok munkamenetenként: 5 000",
+      "reserve": "Kán tábláinak megtartása: 25 000",
+      "route": "Ellátás: a Nagy Birodalom fővárából az engedélyezett királyságokba",
+      "skips": "Időgyorsítás megerősített szállításokhoz: bekapcsolva",
+      "title": "Példa a rémfarkas-ellátásra"
     }
   },
   "autoStation": {
@@ -413,6 +436,134 @@
       "description": "Közeledő játékostámadáskor az automatikus csapatvédelem az alkalmas csapatokat az azonos királyság legközelebbi megfelelő szövetséges várába küldi.",
       "expectation": "Bekapcsolt visszahívással a csapatok az utolsó észlelt támadás után térnek vissza, amikor már nincs fenyegetés; különben érkezés után egy órát maradnak, majd hazatérnek. A cél vagy a csapatok hiánya és a játék korlátai megakadályozhatják a kiürítést.",
       "helper": "A csapatok az azonos királyság legközelebbi megfelelő szövetséges várába mennek; sikertelen kiürítéskor a megtámadott saját vár kapui Berimondon kívül védelmet adhatnak."
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "Leggyorsabb elérhető parancsnok",
+      "commanderHelp": "Az automatikus erődtámadás minden célzott erődnél összeveti a felszerelés, drágakövek, készletek és tábornokok alkalmazható utazási sebességhatásait; Relikvia 2.0 vagy legalább 100% nem szükséges.",
+      "description": "Az automatikus erődtámadás a mentett korlátokon belül rémfarkasokat vásárol, ellátja az engedélyezett külső királyságokat, és azok főváraiból támadja a kész erődöket.",
+      "expectation": "Minden támadáshoz kész erőd, mindkét szárnyra elegendő rémfarkas és alkalmas kijelölt parancsnok szükséges; a várakozási idők vagy ellátási késések szüneteltethetik.",
+      "name": "Automatikus erődtámadás",
+      "settingsSummary": "Az automatikus erődtámadás előkészíti a rémfarkasokat, és minden célzott erődhöz a leggyorsabb alkalmas kijelölt parancsnokot választja.",
+      "summary": "Lásd el rémfarkasokkal és támadd a kész erődöket",
+      "travelHelp": "Az Utazótoll az alapértelmezett; a mentett utazási választás megmarad. A várhoz tartozó gyorsítás indulás előtt újra kiszámításra kerül."
+    },
+    "recommendationIntro": "Az ajánlott értékek az automatikus erődtámadás szokásos használatát írják le; útmutatók, és nem módosítják a mentett beállításokat.",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "Szemléltető példa az automatikus erődtámadás támadási és utazási beállításaira",
+          "caption": "Az automatikus erődtámadás célonként rangsorolja az alkalmas kijelölt parancsnokokat, és a mentett utazási választást használja."
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "A Parancsnokok résznél jelöld ki az automatikus erődtámadás számára használható parancsnokokat, majd mentsd a kijelöléseket.",
+            "label": "Parancsnokok kijelölése",
+            "recommendation": "Azokat a parancsnokokat jelöld ki, akiket rendszerint erődtámadáshoz elérhetővé szeretnél tenni."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Állítsd le az automatikus erődtámadást a fiók napi normál támadásszámánál, amíg a játék vissza nem állítja azt; a 0 nem ad hozzá korlátot.",
+            "label": "Normál támadások napi korlátja",
+            "recommendation": "0, hacsak nem szeretnél további napi korlátot."
+          },
+          "fastest_commander": {
+            "description": "Minden erődhöz a jelenleg elérhető leggyorsabb kijelölt parancsnokot választja az alkalmazható felszerelés-, drágakő-, készlet- és tábornoki hatások alapján, a felső korlátok után.",
+            "label": "Leggyorsabb alkalmas parancsnok",
+            "recommendation": "Relikvia 2.0 tárgy vagy 100%-os sebességbónusz nem szükséges."
+          },
+          "full_flank_wave": {
+            "description": "Minden támadás megvárja, hogy egy teljes hullámhoz mindkét szárnyon elegendő rémfarkas legyen.",
+            "label": "Rémfarkashullám mindkét szárnyon"
+          },
+          "horse_travel_boost": {
+            "description": "Válaszd ki az erődtámadások utazási módját; a kifejezetten mentett érmés vagy rubinos fokozat kiválasztva marad.",
+            "label": "Lovas utazási gyorsítás",
+            "recommendation": "Utazótoll a leggyorsabb úthoz."
+          }
+        },
+        "title": "Állítsd be a támadásokat és az utazást"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "Mentés után kapcsold be az automatikus erődtámadást az Automatizálás kártyán a normál ciklusok indításához.",
+            "label": "Automatikus erődtámadás kapcsolója",
+            "recommendation": "Bekapcsolva a kívánt beállítások ellenőrzése és mentése után."
+          },
+          "calendar": {
+            "description": "A Naptárral korlátozd az automatikus erődtámadás működési idejét, majd változtatás esetén válaszd a Menetrend mentése lehetőséget.",
+            "label": "Naptár",
+            "recommendation": "Kikapcsolva a folyamatos szokásos működéshez."
+          },
+          "save_fortress_plan": {
+            "description": "A párbeszédablak elhagyása előtt mentsd a királyság-, ellátási és támadási beállításokat.",
+            "label": "Erődterv mentése"
+          }
+        },
+        "title": "Állítsd be az ütemezést, mentsd, és kapcsold be"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "Szemléltető példa az automatikus erődtámadás három külső királysági vezérlőjére",
+          "caption": "Engedélyezd azokat a feloldott királyságokat, amelyek fővárába rémfarkasokat szeretnél küldeni és amelyekből erődöket támadnál."
+        },
+        "items": {
+          "burning_sands": {
+            "description": "Engedélyezd a támadásokat és a rémfarkas-ellátást az Égő homok fővárából, ha ezt a királyságot feloldottad.",
+            "label": "Égő homok",
+            "recommendation": "Bekapcsolva, ha feloldottad és használatra kész."
+          },
+          "everwinter_glacier": {
+            "description": "Engedélyezd a támadásokat és a rémfarkas-ellátást az Örök tél gleccsere fővárából, ha ezt a királyságot feloldottad.",
+            "label": "Örök tél gleccsere",
+            "recommendation": "Bekapcsolva, ha feloldottad és használatra kész."
+          },
+          "fire_peaks": {
+            "description": "Engedélyezd a támadásokat és a rémfarkas-ellátást a Tűzcsúcsok fővárából, ha ezt a királyságot feloldottad.",
+            "label": "Tűzcsúcsok",
+            "recommendation": "Bekapcsolva, ha feloldottad és használatra kész."
+          }
+        },
+        "title": "Válaszd ki az erődkirályságokat"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "Az Automatizálás oldalon válaszd az automatikus erődtámadás kártyáján a beállítások gombot.",
+            "label": "Beállítások megnyitása"
+          }
+        },
+        "title": "Nyisd meg az automatikus erődtámadás beállításait"
+      },
+      "supply": {
+        "image": {
+          "alt": "Szemléltető példa az automatikus erődtámadás rémfarkas-vásárlási és -szállítási beállításaira",
+          "caption": "Tekintsd át a munkamenetenkénti vásárlási plafont, a kán tábláinak tartalékát és a megerősített szállítások időgyorsítását."
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "A nomád boltban munkamenetenként 100-as csomagokra korlátozd a rémfarkas-vásárlást; a 0 kikapcsolja a vásárlást.",
+            "label": "Rémfarkasok munkamenetenként",
+            "recommendation": "5 000 rémfarkas munkamenetenként a legolcsóbb áron."
+          },
+          "keep_khan_tablets": {
+            "description": "Állítsd le a rémfarkas-vásárlást, mielőtt a kán tábláinak száma e tartalék alá esne.",
+            "label": "Kán tábláinak megtartása",
+            "recommendation": "Tarts meg 25 000 kántáblát."
+          },
+          "supply_route": {
+            "description": "A vásárolt rémfarkasok a Nagy Birodalom fővárába érkeznek, majd az engedélyezett királyságokba kerülnek.",
+            "label": "Rémfarkas-ellátási útvonal"
+          },
+          "use_time_skips": {
+            "description": "Csak megerősített automatikus erődtámadási szállításokhoz használj alkalmas időgyorsításokat, és tartsd be a mentett készlettartalékokat.",
+            "label": "Időgyorsítás használata rémfarkas-szállításhoz",
+            "recommendation": "Bekapcsolva a gyorsabb ellátáshoz, ha a mentett időgyorsítási tartalékok engedik."
+          }
+        },
+        "title": "Állítsd be a rémfarkas-ellátást"
+      }
     }
   }
 }

@@ -27,7 +27,7 @@ export const defaultAutoFortressClientState = (): AutoFortressClientStateV1 => (
   checkIntervalSec: 5,
   mapRefreshIntervalSec: 1800,
   dailyAttackLimit: 0,
-  horseTravelBoostId: 1009,
+  horseTravelBoostId: -1,
   minimumCommanderSpeedBonus: 100,
   direwolfPurchaseLimit: 0,
   minimumTabletReserve: 0,

@@ -19,7 +19,10 @@
     "birdPreviewTitle": "Auto Bird setup example",
     "stationGuideTitle": "Auto Station guide",
     "stationGuideIntro": "Follow these steps to set up Auto Station; select the example picture to enlarge it.",
-    "stationPreviewTitle": "Auto Station setup example"
+    "stationPreviewTitle": "Auto Station setup example",
+    "fortressGuideTitle": "Auto Fortress guide",
+    "fortressGuideIntro": "Follow these steps to set up Auto Fortress; select an example panel to enlarge it.",
+    "fortressPreviewTitle": "Auto Fortress setup example"
   },
   "autoTower": {
     "recommendationIntro": "These are recommendations for regular use; review them before saving.",
@@ -322,6 +325,26 @@
       "gate": "Open Gate Fallback: off",
       "castle": "Fictional Example Castle: 80 defense troops reserved",
       "save": "Save changes, then enable Auto Station"
+    },
+    "fortressKingdoms": {
+      "title": "Example kingdom settings",
+      "everwinter": "Everwinter Glacier: on when unlocked",
+      "sands": "Burning Sands: on when unlocked",
+      "peaks": "Fire Peaks: on when unlocked"
+    },
+    "fortressSupply": {
+      "title": "Example Direwolf supply",
+      "purchase": "Direwolves per session: 5,000",
+      "reserve": "Keep Khan tablets: 25,000",
+      "skips": "Time Skips for confirmed transfers: on",
+      "route": "Supply: Great Empire main to enabled kingdoms"
+    },
+    "fortressAttack": {
+      "title": "Example attack settings",
+      "commander": "Commander: fastest eligible assigned",
+      "travel": "Travel boost: Travel Feather",
+      "daily": "Daily normal-attack limit: 0",
+      "wave": "One full Direwolf wave across both flanks"
     }
   },
   "autoStation": {
@@ -413,6 +436,134 @@
       "description": "Auto Station moves eligible troops to the nearest suitable alliance castle in the same kingdom when an incoming player attack approaches.",
       "expectation": "If recall is on, troops return after the last detected attack passes and no threat remains; otherwise they stay for one hour after arrival, then return. A missing target, unavailable troops, or game restrictions can prevent evacuation.",
       "helper": "Station troops at the nearest eligible alliance castle in the same kingdom; when evacuation fails, Open Gate may protect the attacked owned castle outside Berimond."
+    }
+  },
+  "autoFortress": {
+    "recommendationIntro": "Recommended values describe regular Auto Fortress use; they are guidance and do not change saved settings.",
+    "steps": {
+      "open": {
+        "title": "Open Auto Fortress settings",
+        "items": {
+          "open_settings": {
+            "label": "Open settings",
+            "description": "On the Automation page, select the settings button on the Auto Fortress card."
+          }
+        }
+      },
+      "kingdoms": {
+        "title": "Choose fortress kingdoms",
+        "items": {
+          "everwinter_glacier": {
+            "label": "Everwinter Glacier",
+            "description": "Enable attacks and Direwolf supply from your owned Everwinter Glacier main castle when that kingdom is unlocked.",
+            "recommendation": "On when unlocked and ready to use."
+          },
+          "burning_sands": {
+            "label": "Burning Sands",
+            "description": "Enable attacks and Direwolf supply from your owned Burning Sands main castle when that kingdom is unlocked.",
+            "recommendation": "On when unlocked and ready to use."
+          },
+          "fire_peaks": {
+            "label": "Fire Peaks",
+            "description": "Enable attacks and Direwolf supply from your owned Fire Peaks main castle when that kingdom is unlocked.",
+            "recommendation": "On when unlocked and ready to use."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Fortress kingdom controls for the three outer kingdoms",
+          "caption": "Enable each unlocked kingdom whose main castle should receive Direwolves and attack fortresses."
+        }
+      },
+      "supply": {
+        "title": "Set Direwolf supply",
+        "items": {
+          "direwolves_per_session": {
+            "label": "Direwolves per session",
+            "description": "Limit Nomad-shop Direwolf purchases in batches of 100 for each shop session; 0 disables buying.",
+            "recommendation": "5,000 Direwolves per session at the cheapest tier."
+          },
+          "keep_khan_tablets": {
+            "label": "Keep Khan tablets",
+            "description": "Stop Direwolf purchases before your Khan-tablet balance falls below this reserve.",
+            "recommendation": "Keep 25,000 Khan tablets."
+          },
+          "use_time_skips": {
+            "label": "Use time skips for Direwolf transfers",
+            "description": "Use eligible Time Skips only for confirmed Auto Fortress shipments while respecting saved inventory reserves.",
+            "recommendation": "On for faster resupply when your saved Time Skip reserves allow it."
+          },
+          "supply_route": {
+            "label": "Direwolf supply route",
+            "description": "Purchased Direwolves arrive at the Great Empire main castle and are distributed to enabled kingdoms."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Fortress Direwolf purchase and transfer settings",
+          "caption": "Review the per-session purchase ceiling, Khan-tablet reserve and confirmed-transfer Time Skip choice."
+        }
+      },
+      "attack": {
+        "title": "Set attacks and travel",
+        "items": {
+          "commander_assignment": {
+            "label": "Commander assignment",
+            "description": "In Commanders, assign the commanders Auto Fortress may use, then save those assignments.",
+            "recommendation": "Assign the commanders you normally want available for fortress attacks."
+          },
+          "fastest_commander": {
+            "label": "Fastest eligible commander",
+            "description": "For each fortress, Auto Fortress chooses the fastest currently available assigned commander using applicable equipment, gem, set and general speed effects after caps.",
+            "recommendation": "No Relic 2.0 item or 100% speed bonus is required."
+          },
+          "horse_travel_boost": {
+            "label": "Horse travel boost",
+            "description": "Choose the travel option for fortress attacks; an explicitly saved coin or ruby tier stays selected.",
+            "recommendation": "Travel Feather for the fastest travel."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Daily normal-attack limit",
+            "description": "Stop Auto Fortress at your account-wide daily normal-attack count until the game resets it; 0 adds no limit.",
+            "recommendation": "0 unless you want an additional daily cap."
+          },
+          "full_flank_wave": {
+            "label": "Direwolf flank wave",
+            "description": "Each attack waits for enough Direwolves to fill both flanks in one full wave."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Fortress attack and travel settings",
+          "caption": "Auto Fortress ranks eligible assigned commanders for each target and uses the saved travel choice."
+        }
+      },
+      "finish": {
+        "title": "Set the schedule, save and enable",
+        "items": {
+          "calendar": {
+            "label": "Calendar",
+            "description": "Use Calendar to restrict when Auto Fortress may run, then select Save Schedule for any schedule changes.",
+            "recommendation": "Off for continuous regular operation."
+          },
+          "save_fortress_plan": {
+            "label": "Save fortress plan",
+            "description": "Save the kingdom, supply and attack settings before leaving this dialog."
+          },
+          "auto_fortress_switch": {
+            "label": "Auto Fortress switch",
+            "description": "Turn on Auto Fortress on the Automation card after saving to start its normal cycles.",
+            "recommendation": "On after reviewing and saving your intended settings."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Auto Fortress",
+      "summary": "Supply Direwolves and attack ready fortresses",
+      "description": "Auto Fortress buys Direwolves within saved limits, supplies enabled outer kingdoms and attacks ready fortresses from their main castles.",
+      "expectation": "Each attack needs a ready fortress, enough Direwolves for both flanks and an eligible assigned commander; cooldowns or supply delays can pause it.",
+      "settingsSummary": "Auto Fortress prepares Direwolves and chooses the fastest eligible assigned commander for each target fortress.",
+      "commanderBadge": "Fastest available commander",
+      "commanderHelp": "Auto Fortress compares applicable equipment, gem, set and general travel-speed effects for each target fortress; no Relic 2.0 or 100% minimum is required.",
+      "travelHelp": "Travel Feather is the default; your saved travel choice is preserved. The castle-specific boost is resolved again before launch."
     }
   }
 }

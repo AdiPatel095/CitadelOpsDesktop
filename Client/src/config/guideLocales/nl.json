@@ -19,7 +19,10 @@
     "birdPreviewTitle": "Voorbeeld van de instellingen voor Automatisch onderbrengen van troepen",
     "stationGuideTitle": "Gids voor automatische troepenopvang",
     "stationGuideIntro": "Volg deze stappen om automatische troepenopvang in te stellen; selecteer de voorbeeldafbeelding om deze te vergroten.",
-    "stationPreviewTitle": "Voorbeeld van automatische troepenopvang"
+    "stationPreviewTitle": "Voorbeeld van automatische troepenopvang",
+    "fortressGuideIntro": "Volg deze stappen om de fortautomatisering in te stellen; selecteer een voorbeeldpaneel om het te vergroten.",
+    "fortressGuideTitle": "Gids voor fortautomatisering",
+    "fortressPreviewTitle": "Voorbeeld van fortautomatisering instellen"
   },
   "autoTower": {
     "recommendationIntro": "Dit zijn aanbevelingen voor regelmatig gebruik; controleer ze voordat je opslaat.",
@@ -322,6 +325,26 @@
       "gate": "Poorten openen als uitwijkoptie: uit",
       "castle": "Fictief voorbeeldkasteel: 80 verdedigingstroepen gereserveerd",
       "save": "Sla wijzigingen op en schakel automatische opvang in"
+    },
+    "fortressAttack": {
+      "commander": "Bevelhebber: snelste geschikte toegewezen bevelhebber",
+      "daily": "Dagelijkse limiet voor normale aanvallen: 0",
+      "title": "Voorbeeld van aanvalsinstellingen",
+      "travel": "Reisversnelling: reisveer",
+      "wave": "Eén volledige schrikwolvengolf over beide flanken"
+    },
+    "fortressKingdoms": {
+      "everwinter": "Eeuwige IJsgletsjer: aan wanneer ontgrendeld",
+      "peaks": "Vuurpieken: aan wanneer ontgrendeld",
+      "sands": "Brandende Woestijn: aan wanneer ontgrendeld",
+      "title": "Voorbeeld van rijksinstellingen"
+    },
+    "fortressSupply": {
+      "purchase": "Schrikwolven per sessie: 5.000",
+      "reserve": "Khan-tabletten bewaren: 25.000",
+      "route": "Bevoorrading: hoofdkasteel van het Grote Rijk naar ingeschakelde rijken",
+      "skips": "Tijdversnellers voor bevestigde transfers: aan",
+      "title": "Voorbeeld van schrikwolvenbevoorrading"
     }
   },
   "autoStation": {
@@ -413,6 +436,134 @@
       "description": "Wanneer een spelersaanval nadert, verplaatst automatische troepenopvang geschikte troepen naar het dichtstbijzijnde geschikte bondgenootschappelijke kasteel in hetzelfde koninkrijk.",
       "expectation": "Met terugroepen ingeschakeld keren troepen na de laatste ontdekte aanval terug zodra er geen dreiging meer is; anders blijven ze na aankomst één uur en keren dan terug. Zonder doel of troepen, of door spelbeperkingen, kan evacuatie mislukken.",
       "helper": "Troepen gaan naar het dichtstbijzijnde geschikte bondgenootschappelijke kasteel in hetzelfde koninkrijk; bij mislukte evacuatie kunnen de poorten van het aangevallen eigen kasteel buiten Berimond bescherming bieden."
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "Snelste beschikbare bevelhebber",
+      "commanderHelp": "De fortautomatisering vergelijkt voor elk doelfort de toepasselijke reissnelheidseffecten van uitrusting, edelstenen, sets en generaals; een Relikwie 2.0 of minimum van 100% is niet vereist.",
+      "description": "De fortautomatisering koopt schrikwolven binnen de opgeslagen grenzen, bevoorraadt ingeschakelde buitenrijken en valt gereedstaande forten aan vanuit hun hoofdkastelen.",
+      "expectation": "Elke aanval vereist een gereedstaand fort, genoeg schrikwolven voor beide flanken en een geschikte toegewezen bevelhebber; wachttijden of vertragingen in de bevoorrading kunnen de aanval onderbreken.",
+      "name": "Fortautomatisering",
+      "settingsSummary": "De fortautomatisering bereidt schrikwolven voor en kiest voor elk doelfort de snelste geschikte toegewezen bevelhebber.",
+      "summary": "Bevoorraad schrikwolven en val gereedstaande forten aan",
+      "travelHelp": "De reisveer is standaard; je opgeslagen reiskeuze blijft behouden. De kasteelspecifieke versnelling wordt vóór vertrek opnieuw bepaald."
+    },
+    "recommendationIntro": "De aanbevolen waarden beschrijven normaal gebruik van de fortautomatisering; ze zijn richtlijnen en veranderen opgeslagen instellingen niet.",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "Illustratief voorbeeld van aanvals- en reisinstellingen voor fortautomatisering",
+          "caption": "De fortautomatisering rangschikt geschikte toegewezen bevelhebbers per doelwit en gebruikt de opgeslagen reiskeuze."
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "Wijs onder Bevelhebbers de bevelhebbers toe die de fortautomatisering mag gebruiken en sla de toewijzingen op.",
+            "label": "Bevelhebbers toewijzen",
+            "recommendation": "Wijs de bevelhebbers toe die je gewoonlijk voor fortaanvallen beschikbaar wilt houden."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Stop de fortautomatisering bij dit accountbrede dagelijkse aantal normale aanvallen totdat het spel de teller terugzet; 0 voegt geen limiet toe.",
+            "label": "Dagelijkse limiet voor normale aanvallen",
+            "recommendation": "0, tenzij je een extra dagelijkse limiet wilt."
+          },
+          "fastest_commander": {
+            "description": "Voor elk fort kiest de fortautomatisering de snelste momenteel beschikbare toegewezen bevelhebber op basis van toepasselijke effecten van uitrusting, edelstenen, sets en generaals na plafonds.",
+            "label": "Snelste geschikte bevelhebber",
+            "recommendation": "Een Relikwie 2.0 of snelheidsbonus van 100% is niet vereist."
+          },
+          "full_flank_wave": {
+            "description": "Elke aanval wacht op genoeg schrikwolven om beide flanken met één volledige golf te vullen.",
+            "label": "Schrikwolvengolf op beide flanken"
+          },
+          "horse_travel_boost": {
+            "description": "Kies de reisoptie voor fortaanvallen; een uitdrukkelijk opgeslagen munt- of robijnniveau blijft geselecteerd.",
+            "label": "Reisversnelling voor paarden",
+            "recommendation": "Reisveer voor de snelste reis."
+          }
+        },
+        "title": "Stel aanvallen en reizen in"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "Schakel de fortautomatisering na het opslaan in op de Automatisering-kaart om de normale cycli te starten.",
+            "label": "Schakelaar voor fortautomatisering",
+            "recommendation": "Aan nadat je de gewenste instellingen hebt gecontroleerd en opgeslagen."
+          },
+          "calendar": {
+            "description": "Gebruik Kalender om de tijden voor fortautomatisering te beperken en kies Schema opslaan na wijzigingen.",
+            "label": "Kalender",
+            "recommendation": "Uit voor doorlopend normaal gebruik."
+          },
+          "save_fortress_plan": {
+            "description": "Sla de instellingen voor rijken, bevoorrading en aanvallen op voordat je dit venster sluit.",
+            "label": "Fortplan opslaan"
+          }
+        },
+        "title": "Stel het schema in, sla op en schakel in"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "Illustratief voorbeeld van de bediening voor de drie buitenrijken van fortautomatisering",
+          "caption": "Schakel elk ontgrendeld rijk in waarvan het hoofdkasteel schrikwolven moet ontvangen en forten moet aanvallen."
+        },
+        "items": {
+          "burning_sands": {
+            "description": "Schakel aanvallen en schrikwolvenbevoorrading vanuit je hoofdkasteel in de Brandende Woestijn in wanneer dit rijk is ontgrendeld.",
+            "label": "Brandende Woestijn",
+            "recommendation": "Aan wanneer ontgrendeld en klaar voor gebruik."
+          },
+          "everwinter_glacier": {
+            "description": "Schakel aanvallen en schrikwolvenbevoorrading vanuit je hoofdkasteel in de Eeuwige IJsgletsjer in wanneer dit rijk is ontgrendeld.",
+            "label": "Eeuwige IJsgletsjer",
+            "recommendation": "Aan wanneer ontgrendeld en klaar voor gebruik."
+          },
+          "fire_peaks": {
+            "description": "Schakel aanvallen en schrikwolvenbevoorrading vanuit je hoofdkasteel in de Vuurpieken in wanneer dit rijk is ontgrendeld.",
+            "label": "Vuurpieken",
+            "recommendation": "Aan wanneer ontgrendeld en klaar voor gebruik."
+          }
+        },
+        "title": "Kies fort-rijken"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "Selecteer op de pagina Automatisering de instellingenknop op de kaart Fortautomatisering.",
+            "label": "Instellingen openen"
+          }
+        },
+        "title": "Open de instellingen voor fortautomatisering"
+      },
+      "supply": {
+        "image": {
+          "alt": "Illustratief voorbeeld van de aankoop- en transferinstellingen voor schrikwolven",
+          "caption": "Controleer het aankoopp plafond per sessie, de reserve van Khan-tabletten en de keuze voor tijdversnellers bij bevestigde transfers."
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "Beperk aankopen van schrikwolven in de Nomadenwinkel tot partijen van 100 per winkelsessie; 0 schakelt aankopen uit.",
+            "label": "Schrikwolven per sessie",
+            "recommendation": "5.000 schrikwolven per sessie in de goedkoopste prijsklasse."
+          },
+          "keep_khan_tablets": {
+            "description": "Stop aankopen van schrikwolven voordat je saldo Khan-tabletten onder deze reserve daalt.",
+            "label": "Khan-tabletten bewaren",
+            "recommendation": "Bewaar 25.000 Khan-tabletten."
+          },
+          "supply_route": {
+            "description": "Gekochte schrikwolven komen aan in het hoofdkasteel van het Grote Rijk en worden over de ingeschakelde rijken verdeeld.",
+            "label": "Bevoorradingsroute voor schrikwolven"
+          },
+          "use_time_skips": {
+            "description": "Gebruik geschikte tijdversnellers alleen voor bevestigde transporten van fortautomatisering en respecteer de opgeslagen voorraadreserves.",
+            "label": "Tijdversnellers gebruiken voor schrikwolventransfers",
+            "recommendation": "Aan voor snellere bevoorrading als je opgeslagen reserves voor tijdversnellers dit toelaten."
+          }
+        },
+        "title": "Stel schrikwolvenbevoorrading in"
+      }
     }
   }
 }
