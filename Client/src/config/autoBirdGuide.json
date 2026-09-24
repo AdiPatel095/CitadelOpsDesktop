@@ -28,7 +28,7 @@
         {
           "label": "Minimum to send",
           "description": "Set the minimum total number of eligible troops needed after castle reserves are kept; this is a threshold, not the exact number sent.",
-          "recommendation": "0 troops, so any nonempty eligible group can go after castle reserves are kept."
+          "recommendation": "1,000 eligible troops in total after castle reserves are kept; this is a threshold, not an exact send size."
         },
         {
           "label": "Minimum RPT (remaining protection time)",
