@@ -538,11 +538,13 @@ func (coordinator *Coordinator) evaluate(
 			current.nextCheck = time.Time{}
 			current.eventOnly = true
 			coordinator.recordTroopAvailabilityGate(policy.ID(), *current.troopAvailabilityGate)
+			coordinator.traceAutoStationDecision(policy.ID(), true, Decision{Status: "gated"}, "troop_gate")
 			continue
 		}
 		if current.coinAvailabilityGate != nil {
 			if coinAvailabilityGateWaiting(current, now) {
 				coordinator.recordCoinAvailabilityGate(policy.ID(), *current.coinAvailabilityGate)
+				coordinator.traceAutoStationDecision(policy.ID(), true, Decision{Status: "gated"}, "coin_gate")
 				continue
 			}
 		}
@@ -550,7 +552,7 @@ func (coordinator *Coordinator) evaluate(
 			current.nextCheck = current.failureBlockedUntil
 			coordinator.recordDecision(policy.ID(), true, Decision{
 				Status: "waiting", Detail: "Safety pause after an automation action failed", NextCheckAt: current.nextCheck,
-			})
+			}, "failure_pause")
 			continue
 		}
 		current.failureBlockedUntil = time.Time{}
@@ -986,7 +988,7 @@ func (coordinator *Coordinator) traceAutoStationDecision(id string, enabled bool
 	reason := "policy"
 	if len(traceReason) > 0 {
 		switch traceReason[0] {
-		case "safety_lock", "session", "schedule":
+		case "safety_lock", "session", "schedule", "troop_gate", "coin_gate", "failure_pause":
 			reason = traceReason[0]
 		}
 	}
