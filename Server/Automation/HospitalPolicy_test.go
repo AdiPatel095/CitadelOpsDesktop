@@ -29,12 +29,12 @@ func TestHospitalPolicyQueuesBaseStackWhenHospitalIsEmpty(t *testing.T) {
 	if decision.Request == nil || decision.Request.Name != "hospital.heal" {
 		t.Fatalf("unexpected decision: %#v", decision)
 	}
-	if amount := hospitalIntentAmount(t, decision); amount != hospitalBaseStackAmount {
-		t.Fatalf("heal amount = %d, want %d", amount, hospitalBaseStackAmount)
+	if amount := hospitalIntentAmount(t, decision); amount != 5 {
+		t.Fatalf("heal amount = %d, want 5", amount)
 	}
 }
 
-func TestHospitalPolicyUsesSubscriptionStackBonus(t *testing.T) {
+func TestHospitalPolicyKeepsBaseStackWithSubscription(t *testing.T) {
 	now := time.Date(2026, 7, 12, 17, 0, 0, 0, time.UTC)
 	snapshot := hospitalPolicySnapshot(t, now)
 	snapshot.State.Subscriptions[1] = State.SubscriptionState{TypeID: 1, RemainingSec: 60}
@@ -45,8 +45,23 @@ func TestHospitalPolicyUsesSubscriptionStackBonus(t *testing.T) {
 	if decision.Request == nil || decision.Request.Name != "hospital.heal" {
 		t.Fatalf("unexpected decision: %#v", decision)
 	}
-	if amount := hospitalIntentAmount(t, decision); amount != hospitalMaximumStackAmount {
-		t.Fatalf("heal amount = %d, want %d", amount, hospitalMaximumStackAmount)
+	if amount := hospitalIntentAmount(t, decision); amount != 5 {
+		t.Fatalf("heal amount = %d, want 5", amount)
+	}
+}
+
+func TestHospitalPolicyLimitsHealToWoundedCount(t *testing.T) {
+	now := time.Date(2026, 7, 12, 17, 0, 0, 0, time.UTC)
+	snapshot := hospitalPolicySnapshot(t, now)
+	castle := snapshot.State.Castles[77]
+	castle.Units.Hospital[215] = 3
+	snapshot.State.Castles[77] = castle
+	decision, err := NewHospitalPolicy().Evaluate(context.Background(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "hospital.heal" {
+		t.Fatalf("unexpected decision=%#v err=%v", decision, err)
+	}
+	if amount := hospitalIntentAmount(t, decision); amount != 3 {
+		t.Fatalf("heal amount = %d, want 3 wounded units", amount)
 	}
 }
 
