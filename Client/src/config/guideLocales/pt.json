@@ -22,7 +22,10 @@
     "stationPreviewTitle": "Exemplo de configuração do abrigo automático",
     "fortressGuideIntro": "Siga estas etapas para configurar a automação de fortalezas; selecione um painel de exemplo para ampliá-lo.",
     "fortressGuideTitle": "Guia da automação de fortalezas",
-    "fortressPreviewTitle": "Exemplo de configuração da automação de fortalezas"
+    "fortressPreviewTitle": "Exemplo de configuração da automação de fortalezas",
+    "invasionGuideIntro": "Siga estas etapas para configurar a automação de invasões; selecione um painel de exemplo para ampliá-lo.",
+    "invasionGuideTitle": "Guia da automação de invasões",
+    "invasionPreviewTitle": "Exemplo de configuração da automação de invasões"
   },
   "autoTower": {
     "recommendationIntro": "Estas recomendações são para o uso regular; revise-as antes de salvar.",
@@ -345,6 +348,30 @@
       "route": "Abastecimento: castelo principal do Grande Império para reinos ativados",
       "skips": "Aceleradores para transferências confirmadas: ativados",
       "title": "Exemplo de abastecimento de lobos ferozes"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Corvos Sangrentos: dificuldade desbloqueada adequada",
+      "current": "A dificuldade do evento ativo permanece",
+      "foreign": "Lordes Estrangeiros: dificuldade desbloqueada adequada",
+      "title": "Exemplo de dificuldades de evento"
+    },
+    "invasionFortify": {
+      "currency": "Se ativado: moeda do evento quando oferecida",
+      "enabled": "Fortificar cada alvo: desativado",
+      "rubies": "Rubis somente se selecionados expressamente",
+      "title": "Exemplo de fortificação dos alvos"
+    },
+    "invasionLimits": {
+      "before": "Parar 30 minutos antes do fim do evento",
+      "daily": "Limite diário de ataques normais: 0",
+      "score": "Pontos: último marco regular de recompensa pessoal acima de 0",
+      "title": "Exemplo de pontos e limites de parada"
+    },
+    "invasionSetup": {
+      "castle": "Origem: castelo regular de evento no Grande Império",
+      "preset": "Formação de ataque: disposição de evento salva",
+      "title": "Exemplo de preparação de ataque de evento",
+      "travel": "Impulso de viagem: Pena de Viagem"
     }
   },
   "autoStation": {
@@ -563,6 +590,137 @@
           }
         },
         "title": "Configure o abastecimento de lobos ferozes"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "A automação de invasões ataca Lordes Estrangeiros ou Corvos Sangrentos com uma formação de ataque salva até atingir a meta de pontos ou outro limite de parada.",
+      "expectation": "Ela aguarda um evento ativo, comandantes elegíveis e tropas e ferramentas suficientes; ataques já em deslocamento podem terminar após a interrupção de novos ataques.",
+      "name": "Automação de invasões",
+      "summary": "Ataque Lordes Estrangeiros e Corvos Sangrentos até sua meta de pontos"
+    },
+    "recommendationIntro": "Os valores recomendados descrevem o uso regular da automação de invasões; são orientações e não alteram as configurações salvas.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Exemplo ilustrativo das dificuldades de Lordes Estrangeiros e Corvos Sangrentos",
+          "caption": "Escolha uma dificuldade alternativa desbloqueada diferente para cada evento."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Escolha uma dificuldade desbloqueada de Corvos Sangrentos para selecionar quando o evento atual não tiver uma escolhida.",
+            "label": "Dificuldade de Corvos Sangrentos",
+            "recommendation": "Use a maior dificuldade desbloqueada que sua formação regular consegue enfrentar com segurança."
+          },
+          "difficulty_note": {
+            "description": "Salve as duas escolhas de evento; alterar um valor salvo não substitui a dificuldade do evento ativo.",
+            "label": "Dificuldade atual"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Escolha uma dificuldade desbloqueada de Lordes Estrangeiros para selecionar quando o evento atual não tiver uma escolhida.",
+            "label": "Dificuldade de Lordes Estrangeiros",
+            "recommendation": "Use a maior dificuldade desbloqueada que sua formação regular consegue enfrentar com segurança."
+          }
+        },
+        "title": "Escolha as dificuldades dos dois eventos"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "Ative a automação de invasões no cartão Automação após salvar para funcionar quando houver evento e recursos elegíveis.",
+            "label": "Interruptor da automação de invasões",
+            "recommendation": "Ativado após conferir e salvar as configurações desejadas."
+          },
+          "readiness": {
+            "description": "A automação de invasões aguarda um evento ativo, comandantes elegíveis e tropas e ferramentas suficientes.",
+            "label": "Preparação do ataque"
+          },
+          "save_settings": {
+            "description": "Salve o castelo de origem, a formação, as dificuldades, os limites de parada e a escolha de fortificação antes de fechar esta janela.",
+            "label": "Salvar configurações"
+          }
+        },
+        "title": "Salve e ative a automação de invasões"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Exemplo ilustrativo das configurações de fortificação da automação de invasões",
+          "caption": "Deixe a fortificação desligada, a menos que pretenda gastar uma moeda de evento disponível ou rubis selecionados expressamente."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Escolha uma opção disponível no evento ativo; o jogo define cada preço e selecionar rubis expressamente permite esse gasto.",
+            "label": "Moeda de fortificação",
+            "recommendation": "Moeda do evento quando oferecida e com a fortificação ativada."
+          },
+          "fortify_each_target": {
+            "description": "Se ativada, fortaleça cada castelo inimigo gerado antes de atacá-lo usando a moeda selecionada.",
+            "label": "Fortificar cada alvo",
+            "recommendation": "Desativado, a menos que a fortificação faça parte de sua estratégia regular de evento."
+          }
+        },
+        "title": "Escolha a fortificação opcional dos alvos"
+      },
+      "limits": {
+        "image": {
+          "alt": "Exemplo ilustrativo dos pontos e limites de parada da automação de invasões",
+          "caption": "A meta de pontos interrompe novos envios, mas ataques já em deslocamento podem terminar."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Pare esta automação ao atingir a contagem diária de ataques normais de toda a conta até o jogo redefini-la; 0 não adiciona limite.",
+            "label": "Limite diário de ataques normais",
+            "recommendation": "0 para deixar a meta de pontos do evento controlar a sequência."
+          },
+          "minimum_remaining": {
+            "description": "Pare de iniciar novos ataques este número de minutos antes do fim do evento.",
+            "label": "Parar antes do fim do evento",
+            "recommendation": "30 minutos."
+          },
+          "score_target": {
+            "description": "Pare de iniciar novos ataques quando os pontos do evento informados alcançarem ou ultrapassarem esta meta.",
+            "label": "Parar nos pontos do evento",
+            "recommendation": "Use seu último marco regular de recompensa pessoal, acima de 0."
+          },
+          "travelling_attacks": {
+            "description": "Ataques já em deslocamento podem terminar após uma condição de parada e elevar os pontos finais acima da meta.",
+            "label": "Ataques em deslocamento"
+          }
+        },
+        "title": "Defina os pontos e limites de parada"
+      },
+      "open": {
+        "image": {
+          "alt": "Exemplo ilustrativo das configurações de castelo de origem, formação e viagem da automação de invasões",
+          "caption": "Escolha um castelo de origem no Grande Império e uma formação de evento salva antes de definir a viagem."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Selecione uma formação de ataque salva com tropas, ferramentas e disposição para Lordes Estrangeiros ou Corvos Sangrentos.",
+            "label": "Formação de ataque",
+            "recommendation": "Crie primeiro uma formação regular para Lordes Estrangeiros ou Corvos Sangrentos e selecione-a aqui."
+          },
+          "capacity_note": {
+            "description": "As quantidades de tropas e ferramentas da formação se ajustam à capacidade do comandante e alvo selecionados.",
+            "label": "Capacidade de ataque"
+          },
+          "horse_travel_boost": {
+            "description": "Escolha a opção de viagem com pena, moedas ou rubis para esses ataques.",
+            "label": "Impulso de viagem do cavalo",
+            "recommendation": "Pena de Viagem para deslocamento rápido."
+          },
+          "open_settings": {
+            "description": "Na página Automação, selecione o botão de configurações no cartão da automação de invasões.",
+            "label": "Abrir configurações"
+          },
+          "source_castle": {
+            "description": "Escolha o castelo do Grande Império que fornece tropas e ferramentas para os ataques de evento.",
+            "label": "Castelo de origem",
+            "recommendation": "Use seu castelo regular de evento com tropas e ferramentas suficientes."
+          }
+        },
+        "title": "Abra as configurações da automação de invasões"
       }
     }
   }

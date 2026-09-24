@@ -7,10 +7,12 @@ export const englishGuidePack: GuidePack = english;
 const loaders = import.meta.glob<{ default: GuidePack }>('./guideLocales/*.json');
 const translatedSource = { ...english, ui: { ...english.ui }, panels: { ...english.panels } };
 delete (translatedSource as Partial<GuidePack>).autoFortress;
+delete (translatedSource as Partial<GuidePack>).autoInvasion;
 delete (translatedSource.ui as Record<string, string>).fortressGuideTitle;
 delete (translatedSource.ui as Record<string, string>).fortressGuideIntro;
 delete (translatedSource.ui as Record<string, string>).fortressPreviewTitle;
-for (const key of ['fortressKingdoms', 'fortressSupply', 'fortressAttack']) delete (translatedSource.panels as Record<string, unknown>)[key];
+for (const key of ['invasionGuideTitle', 'invasionGuideIntro', 'invasionPreviewTitle']) delete (translatedSource.ui as Record<string, string>)[key];
+for (const key of ['fortressKingdoms', 'fortressSupply', 'fortressAttack', 'invasionSetup', 'invasionDifficulty', 'invasionLimits', 'invasionFortify']) delete (translatedSource.panels as Record<string, unknown>)[key];
 
 function complete(candidate: unknown, source: unknown): boolean {
   if (typeof source === 'string') return typeof candidate === 'string' && candidate.trim().length > 0;

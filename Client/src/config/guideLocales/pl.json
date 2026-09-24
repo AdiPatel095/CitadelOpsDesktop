@@ -22,7 +22,10 @@
     "stationPreviewTitle": "Przykład konfiguracji automatycznej ochrony wojsk",
     "fortressGuideIntro": "Wykonaj te kroki, aby skonfigurować automatyczne ataki na fortece; wybierz przykładowy panel, aby go powiększyć.",
     "fortressGuideTitle": "Przewodnik po automatycznych atakach na fortece",
-    "fortressPreviewTitle": "Przykład konfiguracji automatycznych ataków na fortece"
+    "fortressPreviewTitle": "Przykład konfiguracji automatycznych ataków na fortece",
+    "invasionGuideIntro": "Wykonaj te kroki, aby ustawić automatyczne ataki inwazyjne; wybierz panel przykładu, aby go powiększyć.",
+    "invasionGuideTitle": "Przewodnik po automatycznych atakach inwazyjnych",
+    "invasionPreviewTitle": "Przykład konfiguracji automatycznych ataków inwazyjnych"
   },
   "autoTower": {
     "recommendationIntro": "Te zalecenia dotyczą regularnego korzystania; sprawdź je przed zapisaniem.",
@@ -345,6 +348,30 @@
       "route": "Zaopatrzenie: z zamku głównego w Wielkim Cesarstwie do włączonych królestw",
       "skips": "Przyspieszenia dla potwierdzonych transferów: włączone",
       "title": "Przykład zaopatrzenia w wilki grozy"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Krwawe Kruki: odpowiedni odblokowany poziom",
+      "current": "Trudność aktywnego wydarzenia pozostaje bez zmian",
+      "foreign": "Obcy Władcy: odpowiedni odblokowany poziom",
+      "title": "Przykład poziomów trudności wydarzenia"
+    },
+    "invasionFortify": {
+      "currency": "Jeśli włączone: waluta wydarzenia, gdy dostępna",
+      "enabled": "Umocnij każdy cel: wyłączone",
+      "rubies": "Rubiny tylko po wyraźnym wyborze",
+      "title": "Przykład umocnienia celów"
+    },
+    "invasionLimits": {
+      "before": "Zatrzymaj 30 minut przed końcem wydarzenia",
+      "daily": "Dzienny limit zwykłych ataków: 0",
+      "score": "Punkty: zwykły ostatni próg nagrody osobistej powyżej 0",
+      "title": "Przykład punktów i limitów zatrzymania"
+    },
+    "invasionSetup": {
+      "castle": "Źródło: zwykły zamek wydarzenia w Wielkim Cesarstwie",
+      "preset": "Schemat ataku: zapisana formacja wydarzenia",
+      "title": "Przykład ustawienia ataku wydarzenia",
+      "travel": "Premia do podróży: Pióro podróżne"
     }
   },
   "autoStation": {
@@ -563,6 +590,137 @@
           }
         },
         "title": "Ustaw zaopatrzenie w wilki grozy"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "Automatyczne ataki inwazyjne atakują Obcych Władców lub Krwawe Kruki przy użyciu zapisanego schematu ataku do osiągnięcia celu punktowego lub innego limitu zatrzymania.",
+      "expectation": "Czekają na aktywne wydarzenie, odpowiednich dowódców i wystarczającą liczbę wojsk i narzędzi; ataki już w drodze mogą zakończyć się po zatrzymaniu nowych ataków.",
+      "name": "Automatyczne ataki inwazyjne",
+      "summary": "Atakuj Obcych Władców i Krwawe Kruki do swojego celu punktowego"
+    },
+    "recommendationIntro": "Zalecane wartości opisują zwykłe korzystanie z automatycznych ataków inwazyjnych; są wskazówkami i nie zmieniają zapisanych ustawień.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Przykładowe wybory trudności Obcych Władców i Krwawych Kruków",
+          "caption": "Wybierz osobny odblokowany zapasowy poziom trudności dla każdego wydarzenia."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Wybierz odblokowany poziom trudności Krwawych Kruków do użycia, gdy w bieżącym wydarzeniu nie wybrano poziomu.",
+            "label": "Poziom trudności Krwawych Kruków",
+            "recommendation": "Użyj najwyższego odblokowanego poziomu, z którym zwykły skład radzi sobie niezawodnie."
+          },
+          "difficulty_note": {
+            "description": "Zapisz oba wybory wydarzeń; zmiana zapisanej wartości nie zastępuje trudności aktywnego wydarzenia.",
+            "label": "Bieżący poziom trudności"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Wybierz odblokowany poziom trudności Obcych Władców do użycia, gdy w bieżącym wydarzeniu nie wybrano poziomu.",
+            "label": "Poziom trudności Obcych Władców",
+            "recommendation": "Użyj najwyższego odblokowanego poziomu, z którym zwykły skład radzi sobie niezawodnie."
+          }
+        },
+        "title": "Wybierz poziomy trudności obu wydarzeń"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "Po zapisaniu włącz automatyczne ataki inwazyjne na karcie Automatyzacja, aby działały przy aktywnym wydarzeniu i odpowiednich zasobach.",
+            "label": "Przełącznik automatycznych ataków inwazyjnych",
+            "recommendation": "Włączony po sprawdzeniu i zapisaniu zamierzonych ustawień."
+          },
+          "readiness": {
+            "description": "Automatyczne ataki inwazyjne czekają na aktywne wydarzenie, odpowiednich dowódców oraz wystarczającą liczbę wojsk i narzędzi.",
+            "label": "Gotowość do ataku"
+          },
+          "save_settings": {
+            "description": "Przed zamknięciem okna zapisz zamek źródłowy, schemat, trudności, limity zatrzymania i wybór umocnień.",
+            "label": "Zapisz ustawienia"
+          }
+        },
+        "title": "Zapisz i włącz automatyczne ataki inwazyjne"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Przykładowe ustawienia umocnień automatycznych ataków inwazyjnych",
+          "caption": "Pozostaw umocnienia wyłączone, chyba że zamierzasz wydawać dostępną walutę wydarzenia lub wyraźnie wybrane rubiny."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Wybierz opcję obsługiwaną przez aktywne wydarzenie; gra ustala każdą cenę, a wyraźny wybór rubinów pozwala je wydawać.",
+            "label": "Waluta umocnień",
+            "recommendation": "Waluta wydarzenia, jeśli jest dostępna i umocnienia są włączone."
+          },
+          "fortify_each_target": {
+            "description": "Jeśli funkcja jest włączona, wzmocnij każdy wygenerowany zamek wroga przed atakiem wybraną walutą.",
+            "label": "Umocnij każdy cel",
+            "recommendation": "Wyłączone, chyba że umocnienia należą do twojej zwykłej strategii wydarzenia."
+          }
+        },
+        "title": "Wybierz opcjonalne umocnienia celów"
+      },
+      "limits": {
+        "image": {
+          "alt": "Przykładowe punkty i limity zatrzymania automatycznych ataków inwazyjnych",
+          "caption": "Cel punktowy zatrzymuje nowe wysłania, ale ataki już w drodze mogą się zakończyć."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Zatrzymaj tę automatyzację przy dziennej liczbie zwykłych ataków na całym koncie do wyzerowania jej przez grę; 0 nie dodaje limitu.",
+            "label": "Dzienny limit zwykłych ataków",
+            "recommendation": "0, aby cel punktowy wydarzenia sterował serią."
+          },
+          "minimum_remaining": {
+            "description": "Przestań rozpoczynać nowe ataki tyle minut przed końcem wydarzenia.",
+            "label": "Zatrzymaj przed końcem wydarzenia",
+            "recommendation": "30 minut."
+          },
+          "score_target": {
+            "description": "Przestań rozpoczynać nowe ataki, gdy zgłoszone punkty wydarzenia osiągną lub przekroczą ten cel.",
+            "label": "Zatrzymaj przy punktach wydarzenia",
+            "recommendation": "Użyj swojego zwykłego ostatniego progu nagrody osobistej powyżej 0."
+          },
+          "travelling_attacks": {
+            "description": "Ataki już w drodze mogą zakończyć się po spełnieniu warunku zatrzymania i podnieść wynik końcowy ponad cel.",
+            "label": "Ataki w drodze"
+          }
+        },
+        "title": "Ustaw punkty i limity zatrzymania"
+      },
+      "open": {
+        "image": {
+          "alt": "Przykładowe ustawienia zamku źródłowego, schematu i podróży dla automatycznych ataków inwazyjnych",
+          "caption": "Wybierz zamek źródłowy w Wielkim Cesarstwie i zapisany schemat wydarzenia przed ustawieniem podróży."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Wybierz zapisany schemat ataku z wojskami, narzędziami i formacją dla Obcych Władców lub Krwawych Kruków.",
+            "label": "Schemat ataku",
+            "recommendation": "Najpierw utwórz zwykły schemat dla Obcych Władców lub Krwawych Kruków, a potem wybierz go tutaj."
+          },
+          "capacity_note": {
+            "description": "Liczby wojsk i narzędzi ze schematu dostosowują się do pojemności wybranego dowódcy i celu.",
+            "label": "Pojemność ataku"
+          },
+          "horse_travel_boost": {
+            "description": "Wybierz dla tych ataków opcję podróży za pióro, monety lub rubiny.",
+            "label": "Premia do podróży konnej",
+            "recommendation": "Pióro podróżne dla szybkiej podróży."
+          },
+          "open_settings": {
+            "description": "Na stronie Automatyzacja wybierz przycisk ustawień na karcie automatycznych ataków inwazyjnych.",
+            "label": "Otwórz ustawienia"
+          },
+          "source_castle": {
+            "description": "Wybierz zamek w Wielkim Cesarstwie, który dostarcza wojska i narzędzia do ataków wydarzenia.",
+            "label": "Zamek źródłowy",
+            "recommendation": "Użyj zwykłego zamku wydarzenia z wystarczającą liczbą wojsk i narzędzi."
+          }
+        },
+        "title": "Otwórz ustawienia automatycznych ataków inwazyjnych"
       }
     }
   }

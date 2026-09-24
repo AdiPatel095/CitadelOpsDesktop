@@ -22,7 +22,10 @@
     "stationPreviewTitle": "Voorbeeld van automatische troepenopvang",
     "fortressGuideIntro": "Volg deze stappen om de fortautomatisering in te stellen; selecteer een voorbeeldpaneel om het te vergroten.",
     "fortressGuideTitle": "Gids voor fortautomatisering",
-    "fortressPreviewTitle": "Voorbeeld van fortautomatisering instellen"
+    "fortressPreviewTitle": "Voorbeeld van fortautomatisering instellen",
+    "invasionGuideIntro": "Volg deze stappen om automatische invasieaanvallen in te stellen; selecteer een voorbeeldpaneel om het te vergroten.",
+    "invasionGuideTitle": "Gids voor automatische invasieaanvallen",
+    "invasionPreviewTitle": "Voorbeeld van het instellen van automatische invasieaanvallen"
   },
   "autoTower": {
     "recommendationIntro": "Dit zijn aanbevelingen voor regelmatig gebruik; controleer ze voordat je opslaat.",
@@ -345,6 +348,30 @@
       "route": "Bevoorrading: hoofdkasteel van het Grote Rijk naar ingeschakelde rijken",
       "skips": "Tijdversnellers voor bevestigde transfers: aan",
       "title": "Voorbeeld van schrikwolvenbevoorrading"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Bloedkraaien: geschikte ontgrendelde moeilijkheid",
+      "current": "De moeilijkheid van het actieve evenement blijft bestaan",
+      "foreign": "Buitenlandse Heren: geschikte ontgrendelde moeilijkheid",
+      "title": "Voorbeeld van evenementmoeilijkheden"
+    },
+    "invasionFortify": {
+      "currency": "Indien ingeschakeld: evenementvaluta wanneer beschikbaar",
+      "enabled": "Elk doel versterken: uit",
+      "rubies": "Robijnen alleen wanneer uitdrukkelijk gekozen",
+      "title": "Voorbeeld van doelversterking"
+    },
+    "invasionLimits": {
+      "before": "Stop 30 minuten vóór het evenement eindigt",
+      "daily": "Dagelijkse limiet voor normale aanvallen: 0",
+      "score": "Punten: gebruikelijke laatste persoonlijke beloning boven 0",
+      "title": "Voorbeeld van punten- en stopgrenzen"
+    },
+    "invasionSetup": {
+      "castle": "Vertrek: gebruikelijke evenementburcht in het Grote Rijk",
+      "preset": "Aanvalsvoorinstelling: opgeslagen evenementopstelling",
+      "title": "Voorbeeld van evenementaanval",
+      "travel": "Reisversnelling: Reisveer"
     }
   },
   "autoStation": {
@@ -563,6 +590,137 @@
           }
         },
         "title": "Stel schrikwolvenbevoorrading in"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "Automatische invasieaanvallen vallen Buitenlandse Heren of Bloedkraaien aan met een opgeslagen aanvalsvoorinstelling totdat het puntendoel of een andere stopgrens is bereikt.",
+      "expectation": "Ze wachten op een actief evenement, geschikte bevelhebbers en voldoende troepen en werktuigen; al reizende aanvallen kunnen eindigen nadat nieuwe aanvallen zijn gestopt.",
+      "name": "Automatische invasieaanvallen",
+      "summary": "Val Buitenlandse Heren en Bloedkraaien aan tot je puntendoel"
+    },
+    "recommendationIntro": "De aanbevolen waarden beschrijven normaal gebruik van automatische invasieaanvallen; ze zijn richtlijnen en veranderen opgeslagen instellingen niet.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Illustratieve moeilijkheidskeuzes voor Buitenlandse Heren en Bloedkraaien",
+          "caption": "Kies voor elk evenement een aparte ontgrendelde moeilijkheid als reserve."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Kies een ontgrendelde moeilijkheid voor Bloedkraaien als voor het huidige evenement nog geen moeilijkheid is gekozen.",
+            "label": "Moeilijkheid Bloedkraaien",
+            "recommendation": "Gebruik de hoogste ontgrendelde moeilijkheid die je gebruikelijke opstelling betrouwbaar aankan."
+          },
+          "difficulty_note": {
+            "description": "Sla beide evenementkeuzes op; een gewijzigde opgeslagen waarde vervangt de actieve moeilijkheid niet.",
+            "label": "Huidige moeilijkheid"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Kies een ontgrendelde moeilijkheid voor Buitenlandse Heren als voor het huidige evenement nog geen moeilijkheid is gekozen.",
+            "label": "Moeilijkheid Buitenlandse Heren",
+            "recommendation": "Gebruik de hoogste ontgrendelde moeilijkheid die je gebruikelijke opstelling betrouwbaar aankan."
+          }
+        },
+        "title": "Kies de moeilijkheid voor beide evenementen"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "Schakel automatische invasieaanvallen na het opslaan in op de Automatisering-kaart om ze te laten lopen wanneer een evenement en geschikte middelen beschikbaar zijn.",
+            "label": "Schakelaar voor automatische invasieaanvallen",
+            "recommendation": "Aan na controle en opslag van je gewenste instellingen."
+          },
+          "readiness": {
+            "description": "Automatische invasieaanvallen wachten op een actief evenement, geschikte bevelhebbers en voldoende troepen en werktuigen.",
+            "label": "Gereedheid voor aanvallen"
+          },
+          "save_settings": {
+            "description": "Sla de vertrekburcht, voorinstelling, moeilijkheden, stopgrenzen en versterkingskeuze op voordat je dit venster sluit.",
+            "label": "Instellingen opslaan"
+          }
+        },
+        "title": "Sla op en schakel automatische invasieaanvallen in"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Illustratieve versterkingsinstellingen voor automatische invasieaanvallen",
+          "caption": "Laat versterken uit tenzij je een beschikbare evenementvaluta of uitdrukkelijk gekozen robijnen wilt uitgeven."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Kies een optie die het actieve evenement ondersteunt; het spel bepaalt elke prijs en een uitdrukkelijke keuze voor robijnen staat robijnuitgaven toe.",
+            "label": "Valuta voor versterking",
+            "recommendation": "Evenementvaluta wanneer beschikbaar en versterken ingeschakeld is."
+          },
+          "fortify_each_target": {
+            "description": "Versterk, indien ingeschakeld, elk gegenereerd vijandelijk kasteel vóór de aanval met de gekozen valuta.",
+            "label": "Elk doel versterken",
+            "recommendation": "Uit tenzij versterken deel is van je gebruikelijke evenementstrategie."
+          }
+        },
+        "title": "Kies optionele versterking van doelen"
+      },
+      "limits": {
+        "image": {
+          "alt": "Illustratief voorbeeld van punten- en stopgrenzen voor automatische invasieaanvallen",
+          "caption": "Het puntendoel stopt nieuwe vertrekken, maar al reizende aanvallen kunnen nog eindigen."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Stop deze automatisering bij het accountbrede dagelijkse aantal normale aanvallen tot het spel het terugzet; 0 voegt geen grens toe.",
+            "label": "Dagelijkse limiet voor normale aanvallen",
+            "recommendation": "0 zodat het puntendoel van het evenement de reeks bepaalt."
+          },
+          "minimum_remaining": {
+            "description": "Begin zo veel minuten vóór het evenement eindigt geen nieuwe aanvallen meer.",
+            "label": "Stop vóór het evenement eindigt",
+            "recommendation": "30 minuten."
+          },
+          "score_target": {
+            "description": "Begin geen nieuwe aanvallen zodra de gemelde evenementpunten dit doel bereiken of overschrijden.",
+            "label": "Stop bij evenementpunten",
+            "recommendation": "Gebruik je gebruikelijke laatste persoonlijke beloningsmijlpaal boven 0."
+          },
+          "travelling_attacks": {
+            "description": "Al reizende aanvallen kunnen na een stopvoorwaarde eindigen en het eindtotaal boven het doel brengen.",
+            "label": "Reizende aanvallen"
+          }
+        },
+        "title": "Stel punten- en stopgrenzen in"
+      },
+      "open": {
+        "image": {
+          "alt": "Illustratieve instellingen voor vertrekburcht, voorinstelling en reis van automatische invasieaanvallen",
+          "caption": "Kies een vertrekburcht in het Grote Rijk en een opgeslagen evenementvoorinstelling voordat je de reisoptie kiest."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Selecteer een opgeslagen aanvalsvoorinstelling met troepen, werktuigen en opstelling voor Buitenlandse Heren of Bloedkraaien.",
+            "label": "Aanvalsvoorinstelling",
+            "recommendation": "Maak eerst een gebruikelijke voorinstelling voor Buitenlandse Heren of Bloedkraaien en selecteer die hier."
+          },
+          "capacity_note": {
+            "description": "De aantallen troepen en werktuigen uit de voorinstelling passen zich aan de capaciteit van de gekozen bevelhebber en het doel aan.",
+            "label": "Aanvalscapaciteit"
+          },
+          "horse_travel_boost": {
+            "description": "Kies voor deze aanvallen een reisoptie met veer, munten of robijnen.",
+            "label": "Reisversnelling voor paarden",
+            "recommendation": "Reisveer voor snel reizen."
+          },
+          "open_settings": {
+            "description": "Selecteer op de pagina Automatisering de instellingenknop op de kaart voor automatische invasieaanvallen.",
+            "label": "Instellingen openen"
+          },
+          "source_castle": {
+            "description": "Kies het kasteel in het Grote Rijk dat troepen en werktuigen voor evenementaanvallen levert.",
+            "label": "Vertrekburcht",
+            "recommendation": "Gebruik je gebruikelijke evenementburcht met voldoende troepen en werktuigen."
+          }
+        },
+        "title": "Open de instellingen voor automatische invasieaanvallen"
       }
     }
   }

@@ -22,7 +22,10 @@
     "stationPreviewTitle": "Ejemplo de configuración del refugio automático",
     "fortressGuideIntro": "Sigue estos pasos para configurar la automatización de fortalezas; selecciona un panel de ejemplo para ampliarlo.",
     "fortressGuideTitle": "Guía de automatización de fortalezas",
-    "fortressPreviewTitle": "Ejemplo de configuración de la automatización de fortalezas"
+    "fortressPreviewTitle": "Ejemplo de configuración de la automatización de fortalezas",
+    "invasionGuideIntro": "Sigue estos pasos para configurar la automatización de invasiones; selecciona un panel de ejemplo para ampliarlo.",
+    "invasionGuideTitle": "Guía de automatización de invasiones",
+    "invasionPreviewTitle": "Ejemplo de configuración de automatización de invasiones"
   },
   "autoTower": {
     "recommendationIntro": "Estas recomendaciones son para el uso habitual; revísalas antes de guardar.",
@@ -345,6 +348,30 @@
       "route": "Suministro: del castillo principal del Gran Imperio a los reinos habilitados",
       "skips": "Aceleradores para traslados confirmados: activados",
       "title": "Ejemplo de suministro de lobos feroces"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Cuervos Sangrientos: dificultad desbloqueada adecuada",
+      "current": "La dificultad del evento activo permanece",
+      "foreign": "Señores Extranjeros: dificultad desbloqueada adecuada",
+      "title": "Ejemplo de dificultades de evento"
+    },
+    "invasionFortify": {
+      "currency": "Si se activa: moneda de evento cuando esté disponible",
+      "enabled": "Fortificar cada objetivo: desactivado",
+      "rubies": "Rubíes solo si se seleccionan expresamente",
+      "title": "Ejemplo de fortificación de objetivos"
+    },
+    "invasionLimits": {
+      "before": "Detener 30 minutos antes del final del evento",
+      "daily": "Límite diario de ataques normales: 0",
+      "score": "Puntos: último hito habitual de recompensa personal por encima de 0",
+      "title": "Ejemplo de puntos y límites de parada"
+    },
+    "invasionSetup": {
+      "castle": "Origen: castillo habitual de evento del Gran Imperio",
+      "preset": "Preajuste de ataque: formación de evento guardada",
+      "title": "Ejemplo de configuración de ataque de evento",
+      "travel": "Impulso de viaje: Pluma de viaje"
     }
   },
   "autoStation": {
@@ -563,6 +590,137 @@
           }
         },
         "title": "Configura el suministro de lobos feroces"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "La automatización de invasiones ataca a los Señores Extranjeros o Cuervos Sangrientos con un preajuste de ataque guardado hasta alcanzar el objetivo de puntos u otro límite de parada.",
+      "expectation": "Espera a que haya un evento activo, comandantes aptos y suficientes tropas y herramientas; los ataques que ya viajan pueden terminar después de detener nuevos ataques.",
+      "name": "Automatización de invasiones",
+      "summary": "Ataca a Señores Extranjeros y Cuervos Sangrientos hasta tu objetivo de puntos"
+    },
+    "recommendationIntro": "Los valores recomendados describen el uso habitual de la automatización de invasiones; son orientativos y no cambian los ajustes guardados.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Ejemplo ilustrativo de las dificultades de Señores Extranjeros y Cuervos Sangrientos",
+          "caption": "Elige una dificultad de respaldo desbloqueada distinta para cada evento."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Elige una dificultad desbloqueada de Cuervos Sangrientos para seleccionarla cuando el evento actual no tenga ninguna elegida.",
+            "label": "Dificultad de Cuervos Sangrientos",
+            "recommendation": "Usa la mayor dificultad desbloqueada que tu configuración habitual pueda superar con fiabilidad."
+          },
+          "difficulty_note": {
+            "description": "Guarda ambas elecciones de evento; cambiar un valor guardado no sustituye la dificultad del evento activo.",
+            "label": "Dificultad actual"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Elige una dificultad desbloqueada de Señores Extranjeros para seleccionarla cuando el evento actual no tenga ninguna elegida.",
+            "label": "Dificultad de Señores Extranjeros",
+            "recommendation": "Usa la mayor dificultad desbloqueada que tu configuración habitual pueda superar con fiabilidad."
+          }
+        },
+        "title": "Elige las dificultades de ambos eventos"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "Activa la automatización de invasiones en la tarjeta Automatización después de guardar para que funcione cuando haya un evento y recursos aptos.",
+            "label": "Interruptor de automatización de invasiones",
+            "recommendation": "Activado tras revisar y guardar los ajustes deseados."
+          },
+          "readiness": {
+            "description": "La automatización de invasiones espera a un evento activo, comandantes aptos y suficientes tropas y herramientas.",
+            "label": "Preparación de ataques"
+          },
+          "save_settings": {
+            "description": "Guarda el castillo de origen, preajuste, dificultades, límites de parada y opción de fortificación antes de cerrar este cuadro.",
+            "label": "Guardar ajustes"
+          }
+        },
+        "title": "Guarda y activa la automatización de invasiones"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Ejemplo ilustrativo de los ajustes de fortificación de la automatización de invasiones",
+          "caption": "Deja la fortificación desactivada salvo que quieras gastar una moneda de evento disponible o rubíes elegidos expresamente."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Elige una opción admitida por el evento activo; el juego fija cada precio y seleccionar expresamente rubíes permite gastarlos.",
+            "label": "Moneda de fortificación",
+            "recommendation": "Moneda de evento cuando esté disponible y la fortificación esté activada."
+          },
+          "fortify_each_target": {
+            "description": "Si está activado, refuerza cada castillo enemigo generado antes de atacarlo con la moneda elegida.",
+            "label": "Fortificar cada objetivo",
+            "recommendation": "Desactivado salvo que la fortificación forme parte de tu estrategia habitual de evento."
+          }
+        },
+        "title": "Elige la fortificación opcional de objetivos"
+      },
+      "limits": {
+        "image": {
+          "alt": "Ejemplo ilustrativo de los puntos y límites de parada de la automatización de invasiones",
+          "caption": "El objetivo de puntos detiene nuevos envíos, pero los ataques que ya viajan pueden terminar."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Detén esta automatización al alcanzar el número diario de ataques normales de toda la cuenta hasta que el juego lo reinicie; 0 no añade límite.",
+            "label": "Límite diario de ataques normales",
+            "recommendation": "0 para que el objetivo de puntos del evento controle la serie."
+          },
+          "minimum_remaining": {
+            "description": "Deja de iniciar nuevos ataques este número de minutos antes de que termine el evento.",
+            "label": "Detener antes del final del evento",
+            "recommendation": "30 minutos."
+          },
+          "score_target": {
+            "description": "Deja de iniciar nuevos ataques cuando los puntos del evento indicados alcancen o superen este objetivo.",
+            "label": "Detener en puntos del evento",
+            "recommendation": "Usa tu último hito habitual de recompensa personal, superior a 0."
+          },
+          "travelling_attacks": {
+            "description": "Los ataques que ya viajan pueden terminar después de cumplirse una condición de parada y elevar los puntos finales por encima del objetivo.",
+            "label": "Ataques en camino"
+          }
+        },
+        "title": "Define los puntos y límites de parada"
+      },
+      "open": {
+        "image": {
+          "alt": "Ejemplo ilustrativo del castillo de origen, preajuste y viaje de la automatización de invasiones",
+          "caption": "Elige un castillo de origen del Gran Imperio y un preajuste de evento guardado antes de ajustar el viaje."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Selecciona un preajuste de ataque guardado con tropas, herramientas y formación para Señores Extranjeros o Cuervos Sangrientos.",
+            "label": "Preajuste de ataque",
+            "recommendation": "Crea primero un preajuste habitual de Señores Extranjeros o Cuervos Sangrientos y selecciónalo aquí."
+          },
+          "capacity_note": {
+            "description": "Las cantidades de tropas y herramientas del preajuste se adaptan a la capacidad del comandante y objetivo seleccionados.",
+            "label": "Capacidad de ataque"
+          },
+          "horse_travel_boost": {
+            "description": "Elige la opción de viaje con pluma, monedas o rubíes para estos ataques.",
+            "label": "Impulso de viaje del caballo",
+            "recommendation": "Pluma de viaje para viajar rápido."
+          },
+          "open_settings": {
+            "description": "En la página Automatización, selecciona el botón de ajustes de la tarjeta de automatización de invasiones.",
+            "label": "Abrir ajustes"
+          },
+          "source_castle": {
+            "description": "Elige el castillo del Gran Imperio que aporta tropas y herramientas para los ataques de evento.",
+            "label": "Castillo de origen",
+            "recommendation": "Usa tu castillo de evento habitual con suficientes tropas y herramientas."
+          }
+        },
+        "title": "Abre los ajustes de la automatización de invasiones"
       }
     }
   }

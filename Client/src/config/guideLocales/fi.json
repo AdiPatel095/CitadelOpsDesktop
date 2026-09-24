@@ -22,7 +22,10 @@
     "stationPreviewTitle": "Esimerkki automaattisen joukkojen suojauksen asetuksista",
     "fortressGuideIntro": "Määritä automaattiset linnakehyökkäykset näiden vaiheiden avulla; suurenna esimerkkipaneeli valitsemalla se.",
     "fortressGuideTitle": "Automaattisten linnakehyökkäysten opas",
-    "fortressPreviewTitle": "Esimerkki automaattisten linnakehyökkäysten määrittämisestä"
+    "fortressPreviewTitle": "Esimerkki automaattisten linnakehyökkäysten määrittämisestä",
+    "invasionGuideIntro": "Noudata näitä vaiheita automaattisten maahantunkeutumishyökkäysten määrittämiseksi; suurenna esimerkkipaneeli valitsemalla se.",
+    "invasionGuideTitle": "Automaattisten maahantunkeutumishyökkäysten opas",
+    "invasionPreviewTitle": "Esimerkki automaattisten maahantunkeutumishyökkäysten asetuksista"
   },
   "autoTower": {
     "recommendationIntro": "Nämä suositukset koskevat säännöllistä käyttöä; tarkista ne ennen tallentamista.",
@@ -345,6 +348,30 @@
       "route": "Toimitus: Suuren valtakunnan päälinnasta käyttöön otettuihin valtakuntiin",
       "skips": "Aikahypyt vahvistettuihin siirtoihin: päällä",
       "title": "Esimerkki hirviösusien toimituksesta"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Verivarikset: sopiva avattu vaikeusaste",
+      "current": "Aktiivisen tapahtuman vaikeusaste pysyy voimassa",
+      "foreign": "Ulkomaalaiset lordit: sopiva avattu vaikeusaste",
+      "title": "Esimerkki tapahtumien vaikeusasteista"
+    },
+    "invasionFortify": {
+      "currency": "Jos käytössä: tapahtumavaluutta, kun tarjolla",
+      "enabled": "Linnoita jokainen kohde: pois",
+      "rubies": "Rubiinit vain nimenomaisella valinnalla",
+      "title": "Esimerkki kohteen linnoituksesta"
+    },
+    "invasionLimits": {
+      "before": "Pysäytä 30 minuuttia ennen tapahtuman loppua",
+      "daily": "Tavallisten hyökkäysten päiväraja: 0",
+      "score": "Pisteet: tavallinen viimeinen henkilökohtainen palkinto yli 0",
+      "title": "Esimerkki piste- ja pysäytysrajoista"
+    },
+    "invasionSetup": {
+      "castle": "Lähtö: tavallinen Suuren valtakunnan tapahtumalinna",
+      "preset": "Hyökkäysmalli: tallennettu tapahtumamuodostelma",
+      "title": "Esimerkki tapahtumahyökkäyksen asetuksista",
+      "travel": "Matkustusnopeutus: Matkahöyhen"
     }
   },
   "autoStation": {
@@ -563,6 +590,137 @@
           }
         },
         "title": "Määritä hirviösusien toimitus"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "Automaattiset maahantunkeutumishyökkäykset hyökkäävät ulkomaalaisia lordeja tai verivariksia vastaan tallennetulla hyökkäysmallilla, kunnes pistetavoite tai muu pysäytysraja saavutetaan.",
+      "expectation": "Ne odottavat aktiivista tapahtumaa, kelvollisia komentajia sekä riittävästi joukkoja ja työkaluja; jo matkalla olevat hyökkäykset voivat päättyä uusien hyökkäysten loputtua.",
+      "name": "Automaattiset maahantunkeutumishyökkäykset",
+      "summary": "Hyökkää ulkomaalaisia lordeja ja verivariksia vastaan pistetavoitteeseen asti"
+    },
+    "recommendationIntro": "Suositusarvot kuvaavat automaattisten maahantunkeutumishyökkäysten tavanomaista käyttöä; ne ovat ohjeita eivätkä muuta tallennettuja asetuksia.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Havainnollistavat vaikeusastevalinnat ulkomaalaisille lordeille ja verivariksille",
+          "caption": "Valitse kullekin tapahtumalle oma avattu varavaikeusaste."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Valitse avattu verivaristen vaikeusaste käytettäväksi, jos nykyisessä tapahtumassa ei ole vielä valittua vaikeusastetta.",
+            "label": "Verivaristen vaikeusaste",
+            "recommendation": "Käytä korkeinta avattua vaikeusastetta, josta tavallinen kokoonpanosi selviää luotettavasti."
+          },
+          "difficulty_note": {
+            "description": "Tallenna molemmat tapahtumavalinnat; tallennetun arvon muuttaminen ei korvaa aktiivisen tapahtuman vaikeusastetta.",
+            "label": "Nykyinen vaikeusaste"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Valitse avattu ulkomaalaisten lordien vaikeusaste käytettäväksi, jos nykyisessä tapahtumassa ei ole vielä valittua vaikeusastetta.",
+            "label": "Ulkomaalaisten lordien vaikeusaste",
+            "recommendation": "Käytä korkeinta avattua vaikeusastetta, josta tavallinen kokoonpanosi selviää luotettavasti."
+          }
+        },
+        "title": "Valitse molempien tapahtumien vaikeusasteet"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "Ota automaattiset maahantunkeutumishyökkäykset käyttöön Automaatio-kortissa tallentamisen jälkeen, jotta ne toimivat tapahtuman ja kelvollisten resurssien ollessa saatavilla.",
+            "label": "Automaattisten maahantunkeutumishyökkäysten kytkin",
+            "recommendation": "Päällä, kun olet tarkistanut ja tallentanut haluamasi asetukset."
+          },
+          "readiness": {
+            "description": "Automaattiset maahantunkeutumishyökkäykset odottavat aktiivista tapahtumaa, kelvollisia komentajia ja riittävästi joukkoja sekä työkaluja.",
+            "label": "Hyökkäysvalmius"
+          },
+          "save_settings": {
+            "description": "Tallenna lähtölinna, malli, vaikeusasteet, pysäytysrajat ja linnoitusvalinta ennen tämän ikkunan sulkemista.",
+            "label": "Tallenna asetukset"
+          }
+        },
+        "title": "Tallenna ja ota automaattiset maahantunkeutumishyökkäykset käyttöön"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Havainnollistavat linnoitusasetukset automaattisille maahantunkeutumishyökkäyksille",
+          "caption": "Pidä linnoitus pois päältä, ellet aio käyttää saatavilla olevaa tapahtumavaluuttaa tai nimenomaisesti valittuja rubiineja."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Valitse aktiivisen tapahtuman tukema vaihtoehto; peli määrittää hinnat, ja rubiinien nimenomainen valinta sallii niiden käytön.",
+            "label": "Linnoituksen valuutta",
+            "recommendation": "Tapahtumavaluutta, kun sitä on tarjolla ja linnoitus on käytössä."
+          },
+          "fortify_each_target": {
+            "description": "Jos toiminto on käytössä, vahvista jokainen luotu vihollislinna valitulla valuutalla ennen hyökkäystä.",
+            "label": "Linnoita jokainen kohde",
+            "recommendation": "Pois, ellei linnoitus kuulu tavalliseen tapahtumastrategiaasi."
+          }
+        },
+        "title": "Valitse valinnainen kohteiden linnoitus"
+      },
+      "limits": {
+        "image": {
+          "alt": "Havainnollistavat piste- ja pysäytysrajat automaattisille maahantunkeutumishyökkäyksille",
+          "caption": "Pistetavoite pysäyttää uudet lähdöt, mutta jo matkalla olevat hyökkäykset voivat päättyä."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Pysäytä tämä automaatio tilin päivittäisen tavallisten hyökkäysten määrän täyttyessä, kunnes peli nollaa sen; 0 ei lisää rajaa.",
+            "label": "Tavallisten hyökkäysten päiväraja",
+            "recommendation": "0, jotta tapahtuman pistetavoite ohjaa sarjaa."
+          },
+          "minimum_remaining": {
+            "description": "Lopeta uusien hyökkäysten aloittaminen näin monta minuuttia ennen tapahtuman loppua.",
+            "label": "Pysäytä ennen tapahtuman loppua",
+            "recommendation": "30 minuuttia."
+          },
+          "score_target": {
+            "description": "Lopeta uusien hyökkäysten aloittaminen, kun ilmoitettu tapahtumapistemäärä saavuttaa tai ylittää tämän tavoitteen.",
+            "label": "Pysäytä tapahtumapistemäärässä",
+            "recommendation": "Käytä tavanomaista viimeistä henkilökohtaisen palkinnon rajapyykkiäsi, joka ylittää 0."
+          },
+          "travelling_attacks": {
+            "description": "Jo matkalla olevat hyökkäykset voivat päättyä pysäytysehdon jälkeen ja nostaa lopulliset pisteet tavoitteen yli.",
+            "label": "Matkalla olevat hyökkäykset"
+          }
+        },
+        "title": "Määritä piste- ja pysäytysrajat"
+      },
+      "open": {
+        "image": {
+          "alt": "Havainnollistavat lähtölinnan, mallin ja matkan asetukset automaattisille maahantunkeutumishyökkäyksille",
+          "caption": "Valitse lähtölinna Suuresta valtakunnasta ja tallennettu tapahtumamalli ennen matkustusvaihtoehtoa."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Valitse tallennettu hyökkäysmalli, jossa on joukot, työkalut ja muodostelma ulkomaalaisia lordeja tai verivariksia vastaan.",
+            "label": "Hyökkäysmalli",
+            "recommendation": "Luo ensin tavallinen malli ulkomaalaisia lordeja tai verivariksia vastaan ja valitse se tässä."
+          },
+          "capacity_note": {
+            "description": "Mallin joukko- ja työkalumäärät mukautuvat valitun komentajan ja kohteen kapasiteettiin.",
+            "label": "Hyökkäyskapasiteetti"
+          },
+          "horse_travel_boost": {
+            "description": "Valitse näille hyökkäyksille höyhen-, kolikko- tai rubiinimatkustusvaihtoehto.",
+            "label": "Hevosen matkustusnopeutus",
+            "recommendation": "Matkahöyhen nopeaan matkustukseen."
+          },
+          "open_settings": {
+            "description": "Valitse Automaatio-sivulla automaattisten maahantunkeutumishyökkäysten kortin asetuspainike.",
+            "label": "Avaa asetukset"
+          },
+          "source_castle": {
+            "description": "Valitse Suuren valtakunnan linna, joka antaa joukot ja työkalut tapahtumahyökkäyksiin.",
+            "label": "Lähtölinna",
+            "recommendation": "Käytä tavallista tapahtumalinnaasi, jossa on tarpeeksi joukkoja ja työkaluja."
+          }
+        },
+        "title": "Avaa automaattisten maahantunkeutumishyökkäysten asetukset"
       }
     }
   }

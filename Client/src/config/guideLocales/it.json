@@ -22,7 +22,10 @@
     "stationPreviewTitle": "Esempio di configurazione del ricovero automatico",
     "fortressGuideIntro": "Segui questi passaggi per impostare l'automazione delle fortezze; seleziona un pannello di esempio per ingrandirlo.",
     "fortressGuideTitle": "Guida all'automazione delle fortezze",
-    "fortressPreviewTitle": "Esempio di configurazione dell'automazione delle fortezze"
+    "fortressPreviewTitle": "Esempio di configurazione dell'automazione delle fortezze",
+    "invasionGuideIntro": "Segui questi passaggi per configurare l'automazione delle invasioni; seleziona un pannello di esempio per ingrandirlo.",
+    "invasionGuideTitle": "Guida all'automazione delle invasioni",
+    "invasionPreviewTitle": "Esempio di configurazione dell'automazione delle invasioni"
   },
   "autoTower": {
     "recommendationIntro": "Questi consigli riguardano l’uso regolare; controllali prima di salvare.",
@@ -345,6 +348,30 @@
       "route": "Rifornimento: dal castello principale del Grande Impero ai regni abilitati",
       "skips": "Acceleratori per trasferimenti confermati: attivi",
       "title": "Esempio di rifornimento dei lupi feroci"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Corvi sanguinari: difficoltà sbloccata adatta",
+      "current": "La difficoltà dell'evento attivo resta invariata",
+      "foreign": "Signori stranieri: difficoltà sbloccata adatta",
+      "title": "Esempio di difficoltà dell'evento"
+    },
+    "invasionFortify": {
+      "currency": "Se attiva: valuta dell'evento quando disponibile",
+      "enabled": "Fortifica ogni bersaglio: disattivato",
+      "rubies": "Rubini solo se scelti espressamente",
+      "title": "Esempio di fortificazione dei bersagli"
+    },
+    "invasionLimits": {
+      "before": "Arresto 30 minuti prima della fine dell'evento",
+      "daily": "Limite giornaliero degli attacchi normali: 0",
+      "score": "Punteggio: ultimo traguardo abituale di ricompensa personale sopra 0",
+      "title": "Esempio di punteggio e limiti d'arresto"
+    },
+    "invasionSetup": {
+      "castle": "Partenza: castello abituale per l'evento nel Grande Impero",
+      "preset": "Formazione d'attacco: schieramento d'evento salvato",
+      "title": "Esempio di preparazione dell'attacco dell'evento",
+      "travel": "Potenziamento del viaggio: Piuma da viaggio"
     }
   },
   "autoStation": {
@@ -563,6 +590,137 @@
           }
         },
         "title": "Imposta il rifornimento di lupi feroci"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "L'automazione delle invasioni attacca Signori stranieri o Corvi sanguinari con una formazione d'attacco salvata finché raggiunge il punteggio obiettivo o un altro limite d'arresto.",
+      "expectation": "Attende un evento attivo, comandanti idonei e abbastanza truppe e strumenti; gli attacchi già in viaggio possono terminare dopo l'arresto dei nuovi attacchi.",
+      "name": "Automazione delle invasioni",
+      "summary": "Attacca Signori stranieri e Corvi sanguinari fino al punteggio obiettivo"
+    },
+    "recommendationIntro": "I valori consigliati descrivono l'uso abituale dell'automazione delle invasioni; sono indicazioni e non modificano le impostazioni salvate.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Esempio illustrativo delle difficoltà di Signori stranieri e Corvi sanguinari",
+          "caption": "Scegli per ogni evento una diversa difficoltà di riserva sbloccata."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Scegli una difficoltà sbloccata dei Corvi sanguinari da selezionare quando l'evento corrente non ne ha una scelta.",
+            "label": "Difficoltà dei Corvi sanguinari",
+            "recommendation": "Usa la difficoltà sbloccata più alta che la tua formazione abituale affronta in modo affidabile."
+          },
+          "difficulty_note": {
+            "description": "Salva entrambe le scelte dell'evento; cambiare un valore salvato non sostituisce la difficoltà dell'evento attivo.",
+            "label": "Difficoltà attuale"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Scegli una difficoltà sbloccata dei Signori stranieri da selezionare quando l'evento corrente non ne ha una scelta.",
+            "label": "Difficoltà dei Signori stranieri",
+            "recommendation": "Usa la difficoltà sbloccata più alta che la tua formazione abituale affronta in modo affidabile."
+          }
+        },
+        "title": "Scegli le difficoltà di entrambi gli eventi"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "Dopo il salvataggio, attiva l'automazione delle invasioni sulla scheda Automazione per farla funzionare quando sono disponibili un evento e risorse idonee.",
+            "label": "Interruttore dell'automazione delle invasioni",
+            "recommendation": "Attivo dopo aver controllato e salvato le impostazioni desiderate."
+          },
+          "readiness": {
+            "description": "L'automazione delle invasioni attende un evento attivo, comandanti idonei e truppe e strumenti sufficienti.",
+            "label": "Preparazione dell'attacco"
+          },
+          "save_settings": {
+            "description": "Salva castello di partenza, formazione, difficoltà, limiti d'arresto e scelta della fortificazione prima di chiudere questa finestra.",
+            "label": "Salva impostazioni"
+          }
+        },
+        "title": "Salva e attiva l'automazione delle invasioni"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Esempio illustrativo delle impostazioni di fortificazione dell'automazione delle invasioni",
+          "caption": "Lascia la fortificazione disattivata a meno che tu non intenda spendere valuta dell'evento disponibile o rubini scelti espressamente."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Scegli un'opzione supportata dall'evento attivo; il gioco stabilisce ogni prezzo e la scelta esplicita dei rubini ne autorizza la spesa.",
+            "label": "Valuta per la fortificazione",
+            "recommendation": "Valuta dell'evento, se disponibile e con la fortificazione attiva."
+          },
+          "fortify_each_target": {
+            "description": "Se attivata, rinforza ogni castello nemico generato prima dell'attacco con la valuta selezionata.",
+            "label": "Fortifica ogni bersaglio",
+            "recommendation": "Disattivato a meno che la fortificazione non faccia parte della tua strategia abituale per l'evento."
+          }
+        },
+        "title": "Scegli la fortificazione facoltativa dei bersagli"
+      },
+      "limits": {
+        "image": {
+          "alt": "Esempio illustrativo di punteggio e limiti d'arresto dell'automazione delle invasioni",
+          "caption": "Il punteggio obiettivo ferma i nuovi invii, ma gli attacchi già in viaggio possono terminare."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Ferma questa automazione al conteggio giornaliero degli attacchi normali dell'intero account finché il gioco non lo azzera; 0 non aggiunge limiti.",
+            "label": "Limite giornaliero degli attacchi normali",
+            "recommendation": "0, così il punteggio obiettivo dell'evento controlla la serie."
+          },
+          "minimum_remaining": {
+            "description": "Smetti di iniziare nuovi attacchi questo numero di minuti prima della fine dell'evento.",
+            "label": "Fermati prima della fine dell'evento",
+            "recommendation": "30 minuti."
+          },
+          "score_target": {
+            "description": "Smetti di iniziare nuovi attacchi quando il punteggio dell'evento indicato raggiunge o supera questo obiettivo.",
+            "label": "Fermati al punteggio dell'evento",
+            "recommendation": "Usa l'ultimo traguardo abituale di ricompensa personale, superiore a 0."
+          },
+          "travelling_attacks": {
+            "description": "Gli attacchi già in viaggio possono terminare dopo una condizione d'arresto e portare il punteggio finale oltre l'obiettivo.",
+            "label": "Attacchi in viaggio"
+          }
+        },
+        "title": "Imposta punteggio e limiti d'arresto"
+      },
+      "open": {
+        "image": {
+          "alt": "Esempio illustrativo delle impostazioni di castello di partenza, formazione e viaggio dell'automazione delle invasioni",
+          "caption": "Scegli un castello di partenza nel Grande Impero e una formazione d'evento salvata prima di impostare il viaggio."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Seleziona una formazione d'attacco salvata con truppe, strumenti e schieramento per Signori stranieri o Corvi sanguinari.",
+            "label": "Formazione d'attacco",
+            "recommendation": "Crea prima una formazione abituale per Signori stranieri o Corvi sanguinari, poi selezionala qui."
+          },
+          "capacity_note": {
+            "description": "Le quantità di truppe e strumenti della formazione si adattano alla capacità del comandante e del bersaglio selezionati.",
+            "label": "Capacità d'attacco"
+          },
+          "horse_travel_boost": {
+            "description": "Scegli l'opzione di viaggio con piuma, monete o rubini per questi attacchi.",
+            "label": "Potenziamento del viaggio a cavallo",
+            "recommendation": "Piuma da viaggio per spostamenti rapidi."
+          },
+          "open_settings": {
+            "description": "Nella pagina Automazione, seleziona il pulsante delle impostazioni sulla scheda dell'automazione delle invasioni.",
+            "label": "Apri impostazioni"
+          },
+          "source_castle": {
+            "description": "Scegli il castello nel Grande Impero che fornisce truppe e strumenti per gli attacchi dell'evento.",
+            "label": "Castello di partenza",
+            "recommendation": "Usa il tuo castello abituale per l'evento con abbastanza truppe e strumenti."
+          }
+        },
+        "title": "Apri le impostazioni dell'automazione delle invasioni"
       }
     }
   }

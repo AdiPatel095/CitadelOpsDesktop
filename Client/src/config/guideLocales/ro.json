@@ -22,7 +22,10 @@
     "stationPreviewTitle": "Exemplu de configurare a adăpostirii automate",
     "fortressGuideIntro": "Urmează acești pași pentru a configura atacurile automate asupra fortărețelor; selectează un panou exemplu pentru a-l mări.",
     "fortressGuideTitle": "Ghid pentru atacurile automate asupra fortărețelor",
-    "fortressPreviewTitle": "Exemplu de configurare a atacurilor automate asupra fortărețelor"
+    "fortressPreviewTitle": "Exemplu de configurare a atacurilor automate asupra fortărețelor",
+    "invasionGuideIntro": "Urmează acești pași pentru a seta atacurile automate de invazie; selectează un panou exemplu pentru a-l mări.",
+    "invasionGuideTitle": "Ghid pentru atacurile automate de invazie",
+    "invasionPreviewTitle": "Exemplu de configurare a atacurilor automate de invazie"
   },
   "autoTower": {
     "recommendationIntro": "Acestea sunt recomandări pentru utilizarea obișnuită; verifică-le înainte de salvare.",
@@ -345,6 +348,30 @@
       "route": "Aprovizionare: din castelul principal al Marelui Imperiu către regatele activate",
       "skips": "Acceleratoare pentru transferurile confirmate: activate",
       "title": "Exemplu de aprovizionare cu lupi înfricoșători"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Corbi Sângeroși: dificultate deblocată potrivită",
+      "current": "Dificultatea evenimentului activ rămâne neschimbată",
+      "foreign": "Lorzi Străini: dificultate deblocată potrivită",
+      "title": "Exemplu de dificultăți ale evenimentelor"
+    },
+    "invasionFortify": {
+      "currency": "Dacă este activat: monedă de eveniment când este disponibilă",
+      "enabled": "Fortifică fiecare țintă: dezactivat",
+      "rubies": "Rubine numai după alegerea explicită",
+      "title": "Exemplu de fortificare a țintelor"
+    },
+    "invasionLimits": {
+      "before": "Oprire cu 30 de minute înainte de finalul evenimentului",
+      "daily": "Limita zilnică de atacuri normale: 0",
+      "score": "Scor: ultimul prag obișnuit de recompensă personală peste 0",
+      "title": "Exemplu de scor și limite de oprire"
+    },
+    "invasionSetup": {
+      "castle": "Sursă: castelul obișnuit de eveniment din Marele Imperiu",
+      "preset": "Preset de atac: formație de eveniment salvată",
+      "title": "Exemplu de pregătire a atacului de eveniment",
+      "travel": "Spor de deplasare: Pana de călătorie"
     }
   },
   "autoStation": {
@@ -563,6 +590,137 @@
           }
         },
         "title": "Setează aprovizionarea cu lupi înfricoșători"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "Atacurile automate de invazie atacă Lorzi Străini sau Corbi Sângeroși cu un preset de atac salvat până la atingerea scorului țintă sau a altei limite de oprire.",
+      "expectation": "Așteaptă un eveniment activ, comandanți eligibili și suficiente trupe și unelte; atacurile deja în deplasare se pot încheia după oprirea noilor atacuri.",
+      "name": "Atacuri automate de invazie",
+      "summary": "Atacă Lorzi Străini și Corbi Sângeroși până la scorul țintă"
+    },
+    "recommendationIntro": "Valorile recomandate descriu utilizarea obișnuită a atacurilor automate de invazie; sunt orientative și nu schimbă setările salvate.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Exemplu ilustrativ de dificultăți pentru Lorzi Străini și Corbi Sângeroși",
+          "caption": "Alege o dificultate de rezervă deblocată distinctă pentru fiecare eveniment."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Alege o dificultate deblocată pentru Corbi Sângeroși care va fi selectată dacă evenimentul actual nu are niciuna aleasă.",
+            "label": "Dificultatea pentru Corbi Sângeroși",
+            "recommendation": "Folosește cea mai mare dificultate deblocată pe care configurația ta obișnuită o gestionează sigur."
+          },
+          "difficulty_note": {
+            "description": "Salvează ambele alegeri de eveniment; schimbarea unei valori salvate nu înlocuiește dificultatea unui eveniment activ.",
+            "label": "Dificultatea actuală"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Alege o dificultate deblocată pentru Lorzi Străini care va fi selectată dacă evenimentul actual nu are niciuna aleasă.",
+            "label": "Dificultatea pentru Lorzi Străini",
+            "recommendation": "Folosește cea mai mare dificultate deblocată pe care configurația ta obișnuită o gestionează sigur."
+          }
+        },
+        "title": "Alege dificultățile ambelor evenimente"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "După salvare, activează atacurile automate de invazie pe cardul Automatizare pentru a funcționa când există un eveniment și resurse eligibile.",
+            "label": "Comutatorul atacurilor automate de invazie",
+            "recommendation": "Activat după verificarea și salvarea setărilor dorite."
+          },
+          "readiness": {
+            "description": "Atacurile automate de invazie așteaptă un eveniment activ, comandanți eligibili și suficiente trupe și unelte.",
+            "label": "Pregătirea atacului"
+          },
+          "save_settings": {
+            "description": "Salvează castelul sursă, presetul, dificultățile, limitele de oprire și alegerea de fortificare înainte de închiderea ferestrei.",
+            "label": "Salvează setările"
+          }
+        },
+        "title": "Salvează și activează atacurile automate de invazie"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Exemplu ilustrativ al setărilor de fortificare pentru atacurile automate de invazie",
+          "caption": "Lasă fortificarea oprită, dacă nu dorești să cheltuiești monedă disponibilă a evenimentului sau rubine alese explicit."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Alege o opțiune acceptată de evenimentul activ; jocul stabilește fiecare preț, iar alegerea explicită a rubinelor permite cheltuirea lor.",
+            "label": "Moneda pentru fortificare",
+            "recommendation": "Moneda evenimentului când este disponibilă și fortificarea este activată."
+          },
+          "fortify_each_target": {
+            "description": "Dacă este activată, întărește fiecare castel inamic generat înainte de atac cu moneda selectată.",
+            "label": "Fortifică fiecare țintă",
+            "recommendation": "Dezactivat, dacă fortificarea nu face parte din strategia ta obișnuită de eveniment."
+          }
+        },
+        "title": "Alege fortificarea opțională a țintelor"
+      },
+      "limits": {
+        "image": {
+          "alt": "Exemplu ilustrativ de scor și limite de oprire pentru atacurile automate de invazie",
+          "caption": "Scorul țintă oprește noile lansări, însă atacurile deja în deplasare se pot încheia."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Oprește această automatizare la numărul zilnic de atacuri normale al întregului cont până la resetarea lui de către joc; 0 nu adaugă o limită.",
+            "label": "Limita zilnică de atacuri normale",
+            "recommendation": "0 pentru ca scorul țintă al evenimentului să controleze seria."
+          },
+          "minimum_remaining": {
+            "description": "Nu mai lansa atacuri noi cu acest număr de minute înainte de sfârșitul evenimentului.",
+            "label": "Oprește înainte de sfârșitul evenimentului",
+            "recommendation": "30 de minute."
+          },
+          "score_target": {
+            "description": "Nu mai lansa atacuri noi când scorul evenimentului raportat atinge sau depășește această țintă.",
+            "label": "Oprește la scorul evenimentului",
+            "recommendation": "Folosește ultimul tău prag obișnuit de recompensă personală, peste 0."
+          },
+          "travelling_attacks": {
+            "description": "Atacurile deja în deplasare se pot încheia după îndeplinirea unei condiții de oprire și pot ridica scorul final peste țintă.",
+            "label": "Atacuri în deplasare"
+          }
+        },
+        "title": "Setează scorul și limitele de oprire"
+      },
+      "open": {
+        "image": {
+          "alt": "Exemplu ilustrativ pentru castelul sursă, preset și deplasare la atacurile automate de invazie",
+          "caption": "Alege un castel sursă din Marele Imperiu și un preset de eveniment salvat înainte de a seta deplasarea."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Selectează un preset de atac salvat cu trupe, unelte și formație pentru Lorzi Străini sau Corbi Sângeroși.",
+            "label": "Preset de atac",
+            "recommendation": "Creează mai întâi un preset obișnuit pentru Lorzi Străini sau Corbi Sângeroși, apoi selectează-l aici."
+          },
+          "capacity_note": {
+            "description": "Cantitățile de trupe și unelte din preset se adaptează la capacitatea comandantului și a țintei selectate.",
+            "label": "Capacitatea de atac"
+          },
+          "horse_travel_boost": {
+            "description": "Alege opțiunea de deplasare cu pană, monede sau rubine pentru aceste atacuri.",
+            "label": "Spor de deplasare pentru cal",
+            "recommendation": "Pana de călătorie pentru deplasare rapidă."
+          },
+          "open_settings": {
+            "description": "Pe pagina Automatizare, selectează butonul de setări de pe cardul atacurilor automate de invazie.",
+            "label": "Deschide setările"
+          },
+          "source_castle": {
+            "description": "Alege castelul din Marele Imperiu care oferă trupe și unelte pentru atacurile evenimentului.",
+            "label": "Castel sursă",
+            "recommendation": "Folosește castelul tău obișnuit pentru eveniment, cu trupe și unelte suficiente."
+          }
+        },
+        "title": "Deschide setările atacurilor automate de invazie"
       }
     }
   }

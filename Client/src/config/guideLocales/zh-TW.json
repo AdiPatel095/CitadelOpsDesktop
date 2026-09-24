@@ -22,7 +22,10 @@
     "stationPreviewTitle": "自動駐軍避險設定範例",
     "fortressGuideIntro": "依照以下步驟設定要塞自動攻擊；選擇範例面板即可放大檢視。",
     "fortressGuideTitle": "要塞自動攻擊指南",
-    "fortressPreviewTitle": "要塞自動攻擊設定範例"
+    "fortressPreviewTitle": "要塞自動攻擊設定範例",
+    "invasionGuideIntro": "依照這些步驟設定入侵自動攻擊；選擇範例面板即可放大檢視。",
+    "invasionGuideTitle": "入侵自動攻擊指南",
+    "invasionPreviewTitle": "入侵自動攻擊設定範例"
   },
   "autoTower": {
     "recommendationIntro": "以下是日常使用的建議；儲存前請先檢查。",
@@ -345,6 +348,30 @@
       "route": "補給：從大帝國主城堡至已啟用王國",
       "skips": "確認轉移使用時間加速：開啟",
       "title": "恐狼補給範例"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "血鴉：適合的已解鎖難度",
+      "current": "目前活動難度保持不變",
+      "foreign": "異國領主：適合的已解鎖難度",
+      "title": "活動難度範例"
+    },
+    "invasionFortify": {
+      "currency": "開啟時：活動提供的活動貨幣",
+      "enabled": "強化每個目標：關閉",
+      "rubies": "僅在明確選擇時使用紅寶石",
+      "title": "目標強化範例"
+    },
+    "invasionLimits": {
+      "before": "活動結束前30分鐘停止",
+      "daily": "每日一般攻擊上限：0",
+      "score": "分數：平常高於0的最後個人獎勵",
+      "title": "分數和停止限制範例"
+    },
+    "invasionSetup": {
+      "castle": "出發地：大帝國常用活動城堡",
+      "preset": "攻擊預設：已儲存的活動陣型",
+      "title": "活動攻擊設定範例",
+      "travel": "行軍加速：旅行羽毛"
     }
   },
   "autoStation": {
@@ -563,6 +590,137 @@
           }
         },
         "title": "設定恐狼補給"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "入侵自動攻擊會使用已儲存的攻擊預設攻打異國領主或血鴉，直到達到分數目標或其他停止限制。",
+      "expectation": "它會等待進行中的活動、符合資格的指揮官以及足夠的士兵和工具；已在行軍的攻擊可能在停止發起新攻擊後才結束。",
+      "name": "入侵自動攻擊",
+      "summary": "攻打異國領主和血鴉，直到達到你的分數目標"
+    },
+    "recommendationIntro": "建議值說明入侵自動攻擊的日常用法；僅供參考，不會變更已儲存的設定。",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "異國領主和血鴉難度選擇的示意圖",
+          "caption": "為每種活動分別選擇一個已解鎖的備用難度。"
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "選擇一個已解鎖的血鴉難度，以便在目前活動未選擇難度時使用。",
+            "label": "血鴉難度",
+            "recommendation": "使用平常的配置能夠穩定應付的最高已解鎖難度。"
+          },
+          "difficulty_note": {
+            "description": "儲存兩種活動的選擇；修改儲存值不會取代進行中活動的難度。",
+            "label": "目前難度"
+          },
+          "foreign_lords_difficulty": {
+            "description": "選擇一個已解鎖的異國領主難度，以便在目前活動未選擇難度時使用。",
+            "label": "異國領主難度",
+            "recommendation": "使用平常的配置能夠穩定應付的最高已解鎖難度。"
+          }
+        },
+        "title": "選擇兩種活動的難度"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "儲存後在自動化卡片開啟入侵自動攻擊，以便在活動和合格資源可用時運作。",
+            "label": "入侵自動攻擊開關",
+            "recommendation": "檢查並儲存預期設定後開啟。"
+          },
+          "readiness": {
+            "description": "入侵自動攻擊會等待進行中的活動、合格的指揮官以及足夠的士兵和工具。",
+            "label": "攻擊準備狀態"
+          },
+          "save_settings": {
+            "description": "關閉此視窗前儲存出發城堡、預設、難度、停止限制和強化選項。",
+            "label": "儲存設定"
+          }
+        },
+        "title": "儲存並開啟入侵自動攻擊"
+      },
+      "fortify": {
+        "image": {
+          "alt": "入侵自動攻擊強化設定的示意圖",
+          "caption": "除非打算使用可用的活動貨幣或明確選擇的紅寶石，否則保持強化關閉。"
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "選擇目前活動支援的選項；每項價格由遊戲設定，明確選擇紅寶石即允許消耗紅寶石。",
+            "label": "強化貨幣",
+            "recommendation": "強化已開啟且活動提供時使用活動貨幣。"
+          },
+          "fortify_each_target": {
+            "description": "開啟後，在攻擊前使用所選貨幣強化每座生成的敵方城堡。",
+            "label": "強化每個目標",
+            "recommendation": "除非強化屬於你平常的活動策略，否則關閉。"
+          }
+        },
+        "title": "選擇可選的目標強化"
+      },
+      "limits": {
+        "image": {
+          "alt": "入侵自動攻擊分數和停止限制的示意圖",
+          "caption": "分數目標會停止新的出擊，但已經在行軍的攻擊可能結束。"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "當整個帳號達到每日一般攻擊次數時停止此自動化，直到遊戲重設次數；0表示不增加限制。",
+            "label": "每日一般攻擊上限",
+            "recommendation": "設為0，讓活動分數目標控制進程。"
+          },
+          "minimum_remaining": {
+            "description": "在活動結束前指定的分鐘數停止發起新攻擊。",
+            "label": "在活動結束前停止",
+            "recommendation": "30分鐘。"
+          },
+          "score_target": {
+            "description": "當回報的活動分數達到或超過此目標時停止發起新攻擊。",
+            "label": "達到活動分數後停止",
+            "recommendation": "使用你平常最後一個高於0的個人獎勵階段。"
+          },
+          "travelling_attacks": {
+            "description": "已在行軍的攻擊可能在符合停止條件後結束，使最終分數超過目標。",
+            "label": "行軍中的攻擊"
+          }
+        },
+        "title": "設定分數和停止限制"
+      },
+      "open": {
+        "image": {
+          "alt": "入侵自動攻擊的出發城堡、預設和行軍設定示意圖",
+          "caption": "設定行軍選項前，選擇大帝國的出發城堡和已儲存的活動預設。"
+        },
+        "items": {
+          "attack_preset": {
+            "description": "選擇包含攻打異國領主或血鴉的士兵、工具和陣型的已儲存攻擊預設。",
+            "label": "攻擊預設",
+            "recommendation": "先建立平常使用的異國領主或血鴉預設，然後在此選擇。"
+          },
+          "capacity_note": {
+            "description": "預設中的士兵和工具數量會依所選指揮官和目標的容量調整。",
+            "label": "攻擊容量"
+          },
+          "horse_travel_boost": {
+            "description": "為這些攻擊選擇羽毛、金幣或紅寶石行軍選項。",
+            "label": "戰馬行軍加速",
+            "recommendation": "快速行軍建議旅行羽毛。"
+          },
+          "open_settings": {
+            "description": "在自動化頁面選擇入侵自動攻擊卡片上的設定按鈕。",
+            "label": "開啟設定"
+          },
+          "source_castle": {
+            "description": "選擇為活動攻擊提供士兵和工具的大帝國城堡。",
+            "label": "出發城堡",
+            "recommendation": "使用士兵和工具充足的常用活動城堡。"
+          }
+        },
+        "title": "開啟入侵自動攻擊設定"
       }
     }
   }

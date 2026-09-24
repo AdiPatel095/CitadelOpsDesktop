@@ -22,7 +22,10 @@
     "stationPreviewTitle": "자동 병력 대피 설정 예시",
     "fortressGuideIntro": "이 단계에 따라 요새 자동 공격을 설정하고 예시 패널을 선택해 확대하세요.",
     "fortressGuideTitle": "요새 자동 공격 가이드",
-    "fortressPreviewTitle": "요새 자동 공격 설정 예시"
+    "fortressPreviewTitle": "요새 자동 공격 설정 예시",
+    "invasionGuideIntro": "이 단계에 따라 침공 자동 공격을 설정하고 예시 패널을 선택해 확대하세요.",
+    "invasionGuideTitle": "침공 자동 공격 가이드",
+    "invasionPreviewTitle": "침공 자동 공격 설정 예시"
   },
   "autoTower": {
     "recommendationIntro": "일반적인 사용을 위한 권장값입니다. 저장하기 전에 검토하세요.",
@@ -345,6 +348,30 @@
       "route": "보급: 대제국 본성에서 활성화된 왕국으로",
       "skips": "확인된 이동의 시간 단축: 켜기",
       "title": "공포의 늑대 보급 예시"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "피의 까마귀: 적절한 잠금 해제 난이도",
+      "current": "진행 중인 이벤트 난이도 유지",
+      "foreign": "외국 영주: 적절한 잠금 해제 난이도",
+      "title": "이벤트 난이도 예시"
+    },
+    "invasionFortify": {
+      "currency": "켜면: 제공될 때 이벤트 화폐",
+      "enabled": "각 대상 강화: 끄기",
+      "rubies": "루비는 명시적으로 선택한 경우에만",
+      "title": "대상 강화 예시"
+    },
+    "invasionLimits": {
+      "before": "이벤트 종료 30분 전에 중지",
+      "daily": "일일 일반 공격 한도: 0",
+      "score": "점수: 0보다 높은 평소 마지막 개인 보상",
+      "title": "점수 및 중지 한도 예시"
+    },
+    "invasionSetup": {
+      "castle": "출발: 대제국의 평소 이벤트 성",
+      "preset": "공격 프리셋: 저장된 이벤트 편성",
+      "title": "이벤트 공격 설정 예시",
+      "travel": "이동 가속: 여행 깃털"
     }
   },
   "autoStation": {
@@ -563,6 +590,137 @@
           }
         },
         "title": "공포의 늑대 보급 설정"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "침공 자동 공격은 저장된 공격 프리셋으로 외국 영주 또는 피의 까마귀를 공격하며 점수 목표나 다른 중지 한도에 도달하면 멈춥니다.",
+      "expectation": "진행 중인 이벤트, 적격 지휘관, 충분한 병력과 도구를 기다리며 이미 이동 중인 공격은 새 공격이 멈춘 후에도 완료될 수 있습니다.",
+      "name": "침공 자동 공격",
+      "summary": "외국 영주와 피의 까마귀를 점수 목표까지 공격"
+    },
+    "recommendationIntro": "추천 값은 침공 자동 공격의 일반적인 사용법을 설명하는 안내이며 저장된 설정을 변경하지 않습니다.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "외국 영주와 피의 까마귀 난이도 선택의 예시 그림",
+          "caption": "각 이벤트에 대해 별도로 잠금 해제된 예비 난이도를 선택합니다."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "현재 이벤트에 선택된 난이도가 없을 때 사용할 잠금 해제된 피의 까마귀 난이도를 선택합니다.",
+            "label": "피의 까마귀 난이도",
+            "recommendation": "평소 편성으로 안정적으로 처리할 수 있는 가장 높은 잠금 해제 난이도를 사용합니다."
+          },
+          "difficulty_note": {
+            "description": "두 이벤트 선택을 모두 저장하며 저장한 값을 바꿔도 진행 중인 이벤트의 난이도는 교체되지 않습니다.",
+            "label": "현재 난이도"
+          },
+          "foreign_lords_difficulty": {
+            "description": "현재 이벤트에 선택된 난이도가 없을 때 사용할 잠금 해제된 외국 영주 난이도를 선택합니다.",
+            "label": "외국 영주 난이도",
+            "recommendation": "평소 편성으로 안정적으로 처리할 수 있는 가장 높은 잠금 해제 난이도를 사용합니다."
+          }
+        },
+        "title": "두 이벤트의 난이도 선택"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "저장 후 자동화 카드에서 침공 자동 공격을 켜면 이벤트와 적격 자원이 있을 때 작동합니다.",
+            "label": "침공 자동 공격 스위치",
+            "recommendation": "원하는 설정을 검토하고 저장한 뒤 켜기."
+          },
+          "readiness": {
+            "description": "침공 자동 공격은 진행 중인 이벤트, 적격 지휘관, 충분한 병력과 도구를 기다립니다.",
+            "label": "공격 준비 상태"
+          },
+          "save_settings": {
+            "description": "이 창을 닫기 전에 출발 성, 프리셋, 난이도, 중지 한도, 강화 선택을 저장합니다.",
+            "label": "설정 저장"
+          }
+        },
+        "title": "침공 자동 공격 저장 및 활성화"
+      },
+      "fortify": {
+        "image": {
+          "alt": "침공 자동 공격 강화 설정의 예시 그림",
+          "caption": "사용 가능한 이벤트 화폐나 명시적으로 선택한 루비를 쓰려는 경우가 아니면 강화를 끕니다."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "진행 중인 이벤트가 지원하는 옵션을 선택하며 각 가격은 게임이 정하고 루비를 명시적으로 선택하면 지출이 허용됩니다.",
+            "label": "강화 화폐",
+            "recommendation": "강화를 켰고 제공된다면 이벤트 화폐."
+          },
+          "fortify_each_target": {
+            "description": "켜면 생성된 적의 성을 공격하기 전에 선택한 화폐로 매번 강화합니다.",
+            "label": "각 대상 강화",
+            "recommendation": "강화가 평소 이벤트 전략에 포함되지 않으면 끄기."
+          }
+        },
+        "title": "선택적 대상 강화 선택"
+      },
+      "limits": {
+        "image": {
+          "alt": "침공 자동 공격 점수 및 중지 한도의 예시 그림",
+          "caption": "점수 목표는 새 출정을 중단하지만 이미 이동 중인 공격은 완료될 수 있습니다."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "계정 전체의 일일 일반 공격 횟수에 도달하면 게임에서 초기화할 때까지 자동화를 중단하며 0은 추가 한도를 두지 않습니다.",
+            "label": "일일 일반 공격 한도",
+            "recommendation": "이벤트 점수 목표로 진행을 제어하려면 0."
+          },
+          "minimum_remaining": {
+            "description": "이벤트 종료 전 지정한 분 수만큼 남았을 때부터 새 공격을 시작하지 않습니다.",
+            "label": "이벤트 종료 전에 중지",
+            "recommendation": "30분."
+          },
+          "score_target": {
+            "description": "보고된 이벤트 점수가 이 목표에 도달하거나 초과하면 새 공격을 시작하지 않습니다.",
+            "label": "이벤트 점수에서 중지",
+            "recommendation": "0보다 높은 평소의 마지막 개인 보상 단계를 사용합니다."
+          },
+          "travelling_attacks": {
+            "description": "이미 이동 중인 공격은 중지 조건 이후에 완료되어 최종 점수가 목표를 넘을 수 있습니다.",
+            "label": "이동 중인 공격"
+          }
+        },
+        "title": "점수 및 중지 한도 설정"
+      },
+      "open": {
+        "image": {
+          "alt": "침공 자동 공격 출발 성, 프리셋, 이동 설정의 예시 그림",
+          "caption": "이동 옵션을 설정하기 전에 대제국의 출발 성과 저장된 이벤트 프리셋을 선택합니다."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "외국 영주 또는 피의 까마귀용 병력, 도구, 편성을 포함한 저장된 공격 프리셋을 선택합니다.",
+            "label": "공격 프리셋",
+            "recommendation": "먼저 평소 사용할 외국 영주 또는 피의 까마귀 프리셋을 만들고 여기에서 선택합니다."
+          },
+          "capacity_note": {
+            "description": "프리셋의 병력과 도구 수는 선택한 지휘관과 대상의 수용량에 맞게 조정됩니다.",
+            "label": "공격 수용량"
+          },
+          "horse_travel_boost": {
+            "description": "이 공격에 깃털, 동전 또는 루비 이동 옵션을 선택합니다.",
+            "label": "말 이동 가속",
+            "recommendation": "빠른 이동에는 여행 깃털."
+          },
+          "open_settings": {
+            "description": "자동화 페이지에서 침공 자동 공격 카드의 설정 버튼을 선택합니다.",
+            "label": "설정 열기"
+          },
+          "source_castle": {
+            "description": "이벤트 공격에 병력과 도구를 공급할 대제국의 성을 선택합니다.",
+            "label": "출발 성",
+            "recommendation": "병력과 도구가 충분한 평소의 이벤트 성을 사용합니다."
+          }
+        },
+        "title": "침공 자동 공격 설정 열기"
       }
     }
   }

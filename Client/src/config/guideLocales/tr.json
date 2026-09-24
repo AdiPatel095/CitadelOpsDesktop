@@ -22,7 +22,10 @@
     "stationPreviewTitle": "Otomatik birlik koruma ayarı örneği",
     "fortressGuideIntro": "Otomatik kale saldırılarını ayarlamak için bu adımları izleyin; büyütmek için bir örnek panel seçin.",
     "fortressGuideTitle": "Otomatik kale saldırıları rehberi",
-    "fortressPreviewTitle": "Otomatik kale saldırıları kurulum örneği"
+    "fortressPreviewTitle": "Otomatik kale saldırıları kurulum örneği",
+    "invasionGuideIntro": "Otomatik istila saldırılarını ayarlamak için bu adımları izleyin; büyütmek için örnek panel seçin.",
+    "invasionGuideTitle": "Otomatik istila saldırıları rehberi",
+    "invasionPreviewTitle": "Otomatik istila saldırıları kurulum örneği"
   },
   "autoTower": {
     "recommendationIntro": "Bunlar düzenli kullanım önerileridir; kaydetmeden önce gözden geçirin.",
@@ -345,6 +348,30 @@
       "route": "İkmal: Büyük İmparatorluk ana kalesinden etkin krallıklara",
       "skips": "Onaylı aktarımlar için zaman atlamaları: açık",
       "title": "Örnek korkunç kurt ikmali"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Kan Kargaları: uygun açık zorluk",
+      "current": "Etkin etkinliğin zorluğu aynı kalır",
+      "foreign": "Yabancı Lordlar: uygun açık zorluk",
+      "title": "Örnek etkinlik zorlukları"
+    },
+    "invasionFortify": {
+      "currency": "Açıksa: sunulduğunda etkinlik parası",
+      "enabled": "Her hedefi güçlendir: kapalı",
+      "rubies": "Yakutlar yalnızca açıkça seçilirse",
+      "title": "Örnek hedef güçlendirme"
+    },
+    "invasionLimits": {
+      "before": "Etkinlik bitmeden 30 dakika önce durdur",
+      "daily": "Günlük normal saldırı sınırı: 0",
+      "score": "Puan: 0'ın üzerindeki olağan son kişisel ödül",
+      "title": "Örnek puan ve durma sınırları"
+    },
+    "invasionSetup": {
+      "castle": "Kaynak: Büyük İmparatorluk'taki olağan etkinlik kalesi",
+      "preset": "Saldırı düzeni: kaydedilmiş etkinlik dizilimi",
+      "title": "Örnek etkinlik saldırısı hazırlığı",
+      "travel": "Yolculuk hızlandırması: Yolculuk Tüyü"
     }
   },
   "autoStation": {
@@ -563,6 +590,137 @@
           }
         },
         "title": "Korkunç kurt ikmalini ayarlayın"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "Otomatik istila saldırıları, kaydedilmiş bir saldırı düzeniyle Yabancı Lordlara veya Kan Kargalarına puan hedefine ya da başka bir durma sınırına ulaşana kadar saldırır.",
+      "expectation": "Etkin bir etkinlik, uygun komutanlar ve yeterli asker ile araç bekler; yoldaki saldırılar yeni saldırılar durduktan sonra bitebilir.",
+      "name": "Otomatik istila saldırıları",
+      "summary": "Yabancı Lordlara ve Kan Kargalarına puan hedefine kadar saldır"
+    },
+    "recommendationIntro": "Önerilen değerler otomatik istila saldırılarının düzenli kullanımını anlatır; yol göstericidir ve kayıtlı ayarları değiştirmez.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Yabancı Lordlar ve Kan Kargaları için örnek zorluk seçimleri",
+          "caption": "Her etkinlik için ayrı bir açık yedek zorluk seçin."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Güncel etkinlikte seçili zorluk yoksa kullanılacak açık Kan Kargaları zorluğunu seçin.",
+            "label": "Kan Kargaları zorluğu",
+            "recommendation": "Olağan düzeninizin güvenilir biçimde üstesinden geldiği en yüksek açık zorluğu kullanın."
+          },
+          "difficulty_note": {
+            "description": "İki etkinlik seçimini de kaydedin; kayıtlı değeri değiştirmek etkin bir etkinliğin zorluğunu değiştirmez.",
+            "label": "Güncel zorluk"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Güncel etkinlikte seçili zorluk yoksa kullanılacak açık Yabancı Lordlar zorluğunu seçin.",
+            "label": "Yabancı Lordlar zorluğu",
+            "recommendation": "Olağan düzeninizin güvenilir biçimde üstesinden geldiği en yüksek açık zorluğu kullanın."
+          }
+        },
+        "title": "İki etkinliğin zorluğunu seçin"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "Kaydettikten sonra etkinlik ve uygun kaynaklar varken çalışması için Otomasyon kartından otomatik istila saldırılarını açın.",
+            "label": "Otomatik istila saldırıları anahtarı",
+            "recommendation": "İstediğiniz ayarları gözden geçirip kaydettikten sonra açık."
+          },
+          "readiness": {
+            "description": "Otomatik istila saldırıları etkin bir etkinlik, uygun komutanlar ve yeterli asker ile araç bekler.",
+            "label": "Saldırı hazırlığı"
+          },
+          "save_settings": {
+            "description": "Bu pencereyi kapatmadan önce kaynak kaleyi, düzeni, zorlukları, durma sınırlarını ve güçlendirme seçimini kaydedin.",
+            "label": "Ayarları kaydet"
+          }
+        },
+        "title": "Otomatik istila saldırılarını kaydedip açın"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Otomatik istila saldırıları için örnek güçlendirme ayarları",
+          "caption": "Kullanılabilir etkinlik parasını veya açıkça seçtiğiniz yakutları harcamak istemiyorsanız güçlendirmeyi kapalı tutun."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Etkin etkinliğin desteklediği bir seçenek seçin; her fiyatı oyun belirler ve yakutları açıkça seçmek harcanmalarına izin verir.",
+            "label": "Güçlendirme parası",
+            "recommendation": "Sunuluyorsa ve güçlendirme açıksa etkinlik parası."
+          },
+          "fortify_each_target": {
+            "description": "Açıksa oluşturulan her düşman kalesini saldırıdan önce seçilen parayla güçlendirin.",
+            "label": "Her hedefi güçlendir",
+            "recommendation": "Güçlendirme olağan etkinlik stratejinizin bir parçası değilse kapalı."
+          }
+        },
+        "title": "İsteğe bağlı hedef güçlendirmeyi seçin"
+      },
+      "limits": {
+        "image": {
+          "alt": "Otomatik istila saldırıları için örnek puan ve durma sınırları",
+          "caption": "Puan hedefi yeni çıkışları durdurur ancak yoldaki saldırılar bitebilir."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Oyun sıfırlayana kadar hesap genelindeki günlük normal saldırı sayısında bu otomasyonu durdurun; 0 sınır eklemez.",
+            "label": "Günlük normal saldırı sınırı",
+            "recommendation": "Etkinlik puan hedefinin seriyi yönetmesi için 0."
+          },
+          "minimum_remaining": {
+            "description": "Etkinlik bitmeden bu kadar dakika önce yeni saldırı başlatmayı bırakın.",
+            "label": "Etkinlik bitmeden durdur",
+            "recommendation": "30 dakika."
+          },
+          "score_target": {
+            "description": "Bildirilen etkinlik puanı bu hedefe ulaştığında veya onu geçtiğinde yeni saldırı başlatmayı bırakın.",
+            "label": "Etkinlik puanında durdur",
+            "recommendation": "0'ın üzerindeki olağan son kişisel ödül aşamanızı kullanın."
+          },
+          "travelling_attacks": {
+            "description": "Yoldaki saldırılar durma koşulundan sonra bitebilir ve son puanı hedefin üzerine çıkarabilir.",
+            "label": "Yoldaki saldırılar"
+          }
+        },
+        "title": "Puanı ve durma sınırlarını ayarlayın"
+      },
+      "open": {
+        "image": {
+          "alt": "Otomatik istila saldırıları için örnek kaynak kale, düzen ve yolculuk ayarları",
+          "caption": "Yolculuğu ayarlamadan önce Büyük İmparatorluk'ta bir kaynak kale ve kaydedilmiş etkinlik düzeni seçin."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Yabancı Lordlar veya Kan Kargaları için asker, araç ve dizilim içeren kayıtlı saldırı düzeni seçin.",
+            "label": "Saldırı düzeni",
+            "recommendation": "Önce olağan bir Yabancı Lordlar veya Kan Kargaları düzeni oluşturup sonra burada seçin."
+          },
+          "capacity_note": {
+            "description": "Düzendeki asker ve araç sayıları seçilen komutanın ve hedefin kapasitesine uyarlanır.",
+            "label": "Saldırı kapasitesi"
+          },
+          "horse_travel_boost": {
+            "description": "Bu saldırılar için tüy, para veya yakut yolculuk seçeneğini belirleyin.",
+            "label": "At yolculuğu hızlandırması",
+            "recommendation": "Hızlı yolculuk için Yolculuk Tüyü."
+          },
+          "open_settings": {
+            "description": "Otomasyon sayfasında otomatik istila saldırıları kartının ayarlar düğmesini seçin.",
+            "label": "Ayarları aç"
+          },
+          "source_castle": {
+            "description": "Etkinlik saldırılarına asker ve araç sağlayan Büyük İmparatorluk kalesini seçin.",
+            "label": "Kaynak kale",
+            "recommendation": "Yeterli asker ve aracı olan olağan etkinlik kalenizi kullanın."
+          }
+        },
+        "title": "Otomatik istila saldırıları ayarlarını açın"
       }
     }
   }

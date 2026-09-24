@@ -22,7 +22,10 @@
     "stationPreviewTitle": "Exempel på inställning av automatiskt truppskydd",
     "fortressGuideIntro": "Följ stegen för att ställa in automatiska fästningsanfall; välj en exempelpanel för att förstora den.",
     "fortressGuideTitle": "Guide till automatiska fästningsanfall",
-    "fortressPreviewTitle": "Exempel på inställning av automatiska fästningsanfall"
+    "fortressPreviewTitle": "Exempel på inställning av automatiska fästningsanfall",
+    "invasionGuideIntro": "Följ dessa steg för att ställa in automatiska invasionsanfall; välj en exempelpanel för att förstora den.",
+    "invasionGuideTitle": "Guide till automatiska invasionsanfall",
+    "invasionPreviewTitle": "Exempel på inställning av automatiska invasionsanfall"
   },
   "autoTower": {
     "recommendationIntro": "Det här är rekommendationer för regelbunden användning; granska dem innan du sparar.",
@@ -345,6 +348,30 @@
       "route": "Försörjning: huvudborgen i Det stora imperiet till aktiverade kungariken",
       "skips": "Tidsförkortningar för bekräftade överföringar: på",
       "title": "Exempel på skräckvargförsörjning"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Blodkråkor: lämplig upplåst svårighet",
+      "current": "Den aktiva evenemangssvårigheten behålls",
+      "foreign": "Främmande herrar: lämplig upplåst svårighet",
+      "title": "Exempel på evenemangssvårigheter"
+    },
+    "invasionFortify": {
+      "currency": "Om på: evenemangsvaluta när den erbjuds",
+      "enabled": "Befäst varje mål: av",
+      "rubies": "Rubiner bara vid uttryckligt val",
+      "title": "Exempel på målbefästning"
+    },
+    "invasionLimits": {
+      "before": "Stoppa 30 minuter före evenemangets slut",
+      "daily": "Daglig gräns för normala anfall: 0",
+      "score": "Poäng: vanliga sista personliga belöning över 0",
+      "title": "Exempel på poäng- och stoppgränser"
+    },
+    "invasionSetup": {
+      "castle": "Ursprung: vanlig evenemangsborg i Det stora imperiet",
+      "preset": "Anfallsupplägg: sparad evenemangsformation",
+      "title": "Exempel på evenemangsanfall",
+      "travel": "Reseförstärkning: Resefjäder"
     }
   },
   "autoStation": {
@@ -563,6 +590,137 @@
           }
         },
         "title": "Ställ in skräckvargförsörjning"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "Automatiska invasionsanfall angriper främmande herrar eller blodkråkor med en sparad anfallsinställning tills poängmålet eller en annan stoppgräns nås.",
+      "expectation": "De väntar på ett aktivt evenemang, kvalificerade befälhavare och tillräckligt med trupper och verktyg; anfall som redan är på väg kan avslutas efter stoppet för nya anfall.",
+      "name": "Automatiska invasionsanfall",
+      "summary": "Anfall främmande herrar och blodkråkor mot ditt poängmål"
+    },
+    "recommendationIntro": "De rekommenderade värdena beskriver normal användning av automatiska invasionsanfall; de är vägledning och ändrar inte sparade inställningar.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Illustrativa svårighetsval för främmande herrar och blodkråkor",
+          "caption": "Välj en separat upplåst reservsvårighet för varje evenemang."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Välj en upplåst svårighetsgrad för blodkråkor som används om det aktuella evenemanget saknar ett valt alternativ.",
+            "label": "Svårighetsgrad för blodkråkor",
+            "recommendation": "Använd den högsta upplåsta svårighetsgrad som din vanliga uppställning klarar pålitligt."
+          },
+          "difficulty_note": {
+            "description": "Spara båda evenemangsvalen; att ändra ett sparat värde ersätter inte svårighetsgraden i ett aktivt evenemang.",
+            "label": "Nuvarande svårighetsgrad"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Välj en upplåst svårighetsgrad för främmande herrar som används om det aktuella evenemanget saknar ett valt alternativ.",
+            "label": "Svårighetsgrad för främmande herrar",
+            "recommendation": "Använd den högsta upplåsta svårighetsgrad som din vanliga uppställning klarar pålitligt."
+          }
+        },
+        "title": "Välj svårighetsgrad för båda evenemangen"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "Slå på automatiska invasionsanfall på Automatisering-kortet efter att du sparat för att köra när ett evenemang och lämpliga resurser finns.",
+            "label": "Reglage för automatiska invasionsanfall",
+            "recommendation": "På efter att du granskat och sparat önskade inställningar."
+          },
+          "readiness": {
+            "description": "Automatiska invasionsanfall väntar på ett aktivt evenemang, kvalificerade befälhavare och tillräckligt med trupper och verktyg.",
+            "label": "Redo för anfall"
+          },
+          "save_settings": {
+            "description": "Spara ursprungsborg, inställning, svårigheter, stoppgränser och befästningsval innan du stänger dialogrutan.",
+            "label": "Spara inställningar"
+          }
+        },
+        "title": "Spara och slå på automatiska invasionsanfall"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Illustrativa befästningsinställningar för automatiska invasionsanfall",
+          "caption": "Låt befästning vara av om du inte tänker spendera tillgänglig evenemangsvaluta eller uttryckligen valda rubiner."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Välj ett alternativ som det aktiva evenemanget stöder; spelet bestämmer varje pris och uttryckligt val av rubiner tillåter rubinförbrukning.",
+            "label": "Valuta för befästning",
+            "recommendation": "Evenemangsvaluta när den erbjuds och befästning är aktiverad."
+          },
+          "fortify_each_target": {
+            "description": "Om funktionen är aktiverad stärks varje skapat fiendeslott före anfall med vald valuta.",
+            "label": "Befäst varje mål",
+            "recommendation": "Av om befästning inte ingår i din vanliga evenemangsstrategi."
+          }
+        },
+        "title": "Välj valfri befästning av mål"
+      },
+      "limits": {
+        "image": {
+          "alt": "Illustrativa poäng- och stoppgränser för automatiska invasionsanfall",
+          "caption": "Poängmålet stoppar nya starter, men anfall som redan är på väg kan avslutas."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Stoppa denna automatisering vid kontots dagliga antal normala anfall tills spelet återställer det; 0 lägger inte till någon gräns.",
+            "label": "Daglig gräns för normala anfall",
+            "recommendation": "0 så att evenemangets poängmål styr serien."
+          },
+          "minimum_remaining": {
+            "description": "Starta inga nya anfall så här många minuter innan evenemanget slutar.",
+            "label": "Stoppa innan evenemanget slutar",
+            "recommendation": "30 minuter."
+          },
+          "score_target": {
+            "description": "Starta inga nya anfall när den rapporterade evenemangspoängen når eller överskrider målet.",
+            "label": "Stoppa vid evenemangspoäng",
+            "recommendation": "Använd din vanliga sista personliga belöningsnivå över 0."
+          },
+          "travelling_attacks": {
+            "description": "Anfall som redan är på väg kan avslutas efter ett stoppvillkor och höja slutpoängen över målet.",
+            "label": "Anfall på väg"
+          }
+        },
+        "title": "Ställ in poäng- och stoppgränser"
+      },
+      "open": {
+        "image": {
+          "alt": "Illustrativa inställningar för ursprungsborg, anfallsupplägg och resa vid automatiska invasionsanfall",
+          "caption": "Välj en ursprungsborg i Det stora imperiet och ett sparat evenemangsupplägg innan du ställer in resan."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Välj ett sparat anfallsupplägg med trupper, verktyg och formation för främmande herrar eller blodkråkor.",
+            "label": "Anfallsupplägg",
+            "recommendation": "Skapa först ett vanligt upplägg för främmande herrar eller blodkråkor och välj det här."
+          },
+          "capacity_note": {
+            "description": "Antalet trupper och verktyg i upplägget anpassas till den valda befälhavarens och målets kapacitet.",
+            "label": "Anfallskapacitet"
+          },
+          "horse_travel_boost": {
+            "description": "Välj resealternativ med fjäder, mynt eller rubiner för dessa anfall.",
+            "label": "Reseförstärkning för häst",
+            "recommendation": "Resefjäder för snabb resa."
+          },
+          "open_settings": {
+            "description": "Välj inställningsknappen på kortet för automatiska invasionsanfall på sidan Automatisering.",
+            "label": "Öppna inställningar"
+          },
+          "source_castle": {
+            "description": "Välj borgen i Det stora imperiet som förser evenemangsanfallet med trupper och verktyg.",
+            "label": "Ursprungsborg",
+            "recommendation": "Använd din vanliga evenemangsborg med tillräckligt med trupper och verktyg."
+          }
+        },
+        "title": "Öppna inställningarna för automatiska invasionsanfall"
       }
     }
   }

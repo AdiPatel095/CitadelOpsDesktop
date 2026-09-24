@@ -22,7 +22,10 @@
     "stationPreviewTitle": "Példa az automatikus csapatvédelem beállítására",
     "fortressGuideIntro": "Kövesd a lépéseket az automatikus erődtámadás beállításához; nagyításhoz válassz egy példapanelt.",
     "fortressGuideTitle": "Útmutató az automatikus erődtámadáshoz",
-    "fortressPreviewTitle": "Példa az automatikus erődtámadás beállítására"
+    "fortressPreviewTitle": "Példa az automatikus erődtámadás beállítására",
+    "invasionGuideIntro": "Kövesd ezeket a lépéseket az automatikus inváziós támadás beállításához; nagyításhoz válassz példapanelt.",
+    "invasionGuideTitle": "Útmutató az automatikus inváziós támadáshoz",
+    "invasionPreviewTitle": "Példa az automatikus inváziós támadás beállítására"
   },
   "autoTower": {
     "recommendationIntro": "Ezek a szokásos használatra vonatkozó ajánlások; mentés előtt nézd át őket.",
@@ -345,6 +348,30 @@
       "route": "Ellátás: a Nagy Birodalom fővárából az engedélyezett királyságokba",
       "skips": "Időgyorsítás megerősített szállításokhoz: bekapcsolva",
       "title": "Példa a rémfarkas-ellátásra"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Vérvarjak: megfelelő feloldott nehézség",
+      "current": "Az aktív esemény nehézsége változatlan marad",
+      "foreign": "Idegen urak: megfelelő feloldott nehézség",
+      "title": "Példa az események nehézségeire"
+    },
+    "invasionFortify": {
+      "currency": "Ha bekapcsolva: eseménypénz, amikor elérhető",
+      "enabled": "Minden cél erősítése: kikapcsolva",
+      "rubies": "Rubin csak kifejezett választással",
+      "title": "Példa a célerősítésre"
+    },
+    "invasionLimits": {
+      "before": "Leállítás 30 perccel az esemény vége előtt",
+      "daily": "Normál támadások napi korlátja: 0",
+      "score": "Pont: szokásos utolsó személyes jutalom 0 felett",
+      "title": "Példa pont- és leállítási korlátokra"
+    },
+    "invasionSetup": {
+      "castle": "Kiindulás: szokásos Nagy Birodalom eseményvár",
+      "preset": "Támadási sablon: mentett eseményalakzat",
+      "title": "Példa az eseménytámadás beállítására",
+      "travel": "Utazási gyorsítás: Utazótoll"
     }
   },
   "autoStation": {
@@ -563,6 +590,137 @@
           }
         },
         "title": "Állítsd be a rémfarkas-ellátást"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "Az automatikus inváziós támadás az Idegen urakat vagy Vérvarjakat támadja mentett támadási sablonnal, amíg el nem éri a pontcélt vagy más leállítási korlátot.",
+      "expectation": "Aktív eseményre, alkalmas parancsnokokra, valamint elegendő katonára és eszközre vár; a már úton lévő támadások az új támadások leállítása után is befejeződhetnek.",
+      "name": "Automatikus inváziós támadás",
+      "summary": "Támadd az Idegen urakat és Vérvarjakat a pontcélodig"
+    },
+    "recommendationIntro": "Az ajánlott értékek az automatikus inváziós támadás szokásos használatát írják le; útmutatók, és nem módosítják a mentett beállításokat.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Szemléltető nehézségi választások az Idegen urakhoz és Vérvarjakhoz",
+          "caption": "Minden eseményhez külön feloldott tartalék nehézséget válassz."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Válassz feloldott Vérvarjak nehézséget arra az esetre, ha a jelenlegi eseményben még nincs kiválasztva nehézség.",
+            "label": "Vérvarjak nehézsége",
+            "recommendation": "A legmagasabb feloldott nehézséget használd, amelyet a szokásos felállásod megbízhatóan kezel."
+          },
+          "difficulty_note": {
+            "description": "Mentsd mindkét esemény választását; a mentett érték módosítása nem cseréli le az aktív esemény nehézségét.",
+            "label": "Jelenlegi nehézség"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Válassz feloldott Idegen urak nehézséget arra az esetre, ha a jelenlegi eseményben még nincs kiválasztva nehézség.",
+            "label": "Idegen urak nehézsége",
+            "recommendation": "A legmagasabb feloldott nehézséget használd, amelyet a szokásos felállásod megbízhatóan kezel."
+          }
+        },
+        "title": "Válaszd ki mindkét esemény nehézségét"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "Mentés után kapcsold be az automatikus inváziós támadást az Automatizálás kártyán, hogy esemény és alkalmas erőforrások esetén működjön.",
+            "label": "Automatikus inváziós támadás kapcsolója",
+            "recommendation": "Bekapcsolva a kívánt beállítások ellenőrzése és mentése után."
+          },
+          "readiness": {
+            "description": "Az automatikus inváziós támadás aktív eseményre, alkalmas parancsnokokra és elegendő katonára és eszközre vár.",
+            "label": "Támadási készenlét"
+          },
+          "save_settings": {
+            "description": "A párbeszédablak bezárása előtt mentsd a kiinduló várat, sablont, nehézségeket, leállítási korlátokat és erősítési választást.",
+            "label": "Beállítások mentése"
+          }
+        },
+        "title": "Mentsd és kapcsold be az automatikus inváziós támadást"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Szemléltető erősítési beállítások az automatikus inváziós támadáshoz",
+          "caption": "Hagyd kikapcsolva az erősítést, hacsak nem akarsz elérhető eseménypénzt vagy kifejezetten kiválasztott rubint költeni."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Válassz az aktív esemény által támogatott lehetőséget; minden árat a játék szab meg, és a rubin kifejezett választása engedélyezi a rubinköltést.",
+            "label": "Erősítés pénzneme",
+            "recommendation": "Eseménypénz, ha rendelkezésre áll és az erősítés be van kapcsolva."
+          },
+          "fortify_each_target": {
+            "description": "Ha bekapcsolod, a kiválasztott pénznemmel erősíts meg minden létrehozott ellenséges várat a támadás előtt.",
+            "label": "Minden cél erősítése",
+            "recommendation": "Kikapcsolva, kivéve ha az erősítés a szokásos eseménystratégiád része."
+          }
+        },
+        "title": "Válaszd az opcionális célerősítést"
+      },
+      "limits": {
+        "image": {
+          "alt": "Szemléltető pont- és leállítási korlátok az automatikus inváziós támadáshoz",
+          "caption": "A pontcél leállítja az új indításokat, de a már úton lévő támadások befejeződhetnek."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Állítsd le ezt az automatizálást a fiók napi normál támadásszámánál, amíg a játék vissza nem állítja; a 0 nem ad hozzá korlátot.",
+            "label": "Normál támadások napi korlátja",
+            "recommendation": "0, hogy az esemény pontcélja irányítsa a futást."
+          },
+          "minimum_remaining": {
+            "description": "Az esemény vége előtt ennyi perccel ne indíts több új támadást.",
+            "label": "Leállítás az esemény vége előtt",
+            "recommendation": "30 perc."
+          },
+          "score_target": {
+            "description": "Ne indíts új támadást, amikor a jelentett eseménypontszám eléri vagy meghaladja ezt a célt.",
+            "label": "Leállítás eseménypontszámnál",
+            "recommendation": "A szokásos utolsó személyes jutalmi mérföldkövedet használd, amely nagyobb 0-nál."
+          },
+          "travelling_attacks": {
+            "description": "A már úton lévő támadások a leállítási feltétel után befejeződhetnek, és a végső pontszámot a cél fölé emelhetik.",
+            "label": "Úton lévő támadások"
+          }
+        },
+        "title": "Állítsd be a pont- és leállítási korlátokat"
+      },
+      "open": {
+        "image": {
+          "alt": "Szemléltető kiinduló vár-, sablon- és utazási beállítások az automatikus inváziós támadáshoz",
+          "caption": "Válassz kiinduló várat a Nagy Birodalomban és mentett eseménysablont az utazási lehetőség beállítása előtt."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Válassz mentett támadási sablont katonákkal, eszközökkel és alakzattal az Idegen urak vagy Vérvarjak ellen.",
+            "label": "Támadási sablon",
+            "recommendation": "Előbb hozz létre szokásos Idegen urak vagy Vérvarjak sablont, majd válaszd ki itt."
+          },
+          "capacity_note": {
+            "description": "A sablon katona- és eszközmennyisége a kiválasztott parancsnok és cél kapacitásához igazodik.",
+            "label": "Támadási kapacitás"
+          },
+          "horse_travel_boost": {
+            "description": "Válassz tollas, érmés vagy rubinos utazási lehetőséget ezekhez a támadásokhoz.",
+            "label": "Lovas utazási gyorsítás",
+            "recommendation": "Utazótoll a gyors úthoz."
+          },
+          "open_settings": {
+            "description": "Az Automatizálás oldalon válaszd az automatikus inváziós támadás kártyájának beállításgombját.",
+            "label": "Beállítások megnyitása"
+          },
+          "source_castle": {
+            "description": "Válaszd ki a Nagy Birodalom várát, amely katonákat és eszközöket ad az eseménytámadásokhoz.",
+            "label": "Kiinduló vár",
+            "recommendation": "Használd a szokásos eseményváradat elegendő katonával és eszközzel."
+          }
+        },
+        "title": "Nyisd meg az automatikus inváziós támadás beállításait"
       }
     }
   }

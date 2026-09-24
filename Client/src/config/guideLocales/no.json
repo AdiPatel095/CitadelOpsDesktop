@@ -22,7 +22,10 @@
     "stationPreviewTitle": "Eksempel på oppsett av automatisk troppely",
     "fortressGuideIntro": "Følg disse trinnene for å stille inn automatiske festningsangrep; velg et eksempelpanel for å forstørre det.",
     "fortressGuideTitle": "Veiledning for automatiske festningsangrep",
-    "fortressPreviewTitle": "Eksempel på oppsett av automatiske festningsangrep"
+    "fortressPreviewTitle": "Eksempel på oppsett av automatiske festningsangrep",
+    "invasionGuideIntro": "Følg disse trinnene for å stille inn automatiske invasjonsangrep; velg et eksempelpanel for å forstørre det.",
+    "invasionGuideTitle": "Veiledning for automatiske invasjonsangrep",
+    "invasionPreviewTitle": "Eksempel på oppsett av automatiske invasjonsangrep"
   },
   "autoTower": {
     "recommendationIntro": "Disse anbefalingene gjelder vanlig bruk; gå gjennom dem før du lagrer.",
@@ -345,6 +348,30 @@
       "route": "Forsyning: hovedborgen i Det Store Imperiet til aktiverte kongeriker",
       "skips": "Tidsbesparelser for bekreftede overføringer: på",
       "title": "Eksempel på forsyning av skrekkulver"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Blodkråker: passende opplåst vanskelighetsgrad",
+      "current": "Den aktive hendelsens vanskelighetsgrad beholdes",
+      "foreign": "Fremmede herrer: passende opplåst vanskelighetsgrad",
+      "title": "Eksempel på hendelsesvanskeligheter"
+    },
+    "invasionFortify": {
+      "currency": "Hvis på: hendelsesvaluta når tilgjengelig",
+      "enabled": "Befest hvert mål: av",
+      "rubies": "Rubiner bare ved uttrykkelig valg",
+      "title": "Eksempel på befestning av mål"
+    },
+    "invasionLimits": {
+      "before": "Stopp 30 minutter før hendelsen slutter",
+      "daily": "Daglig grense for normale angrep: 0",
+      "score": "Poeng: vanlig siste personlig belønning over 0",
+      "title": "Eksempel på poeng- og stoppgrenser"
+    },
+    "invasionSetup": {
+      "castle": "Kilde: vanlig hendelsesborg i Det Store Imperiet",
+      "preset": "Angrepsoppsett: lagret hendelsesformasjon",
+      "title": "Eksempel på hendelsesangrepsoppsett",
+      "travel": "Reisepåslag: Reisefjær"
     }
   },
   "autoStation": {
@@ -563,6 +590,137 @@
           }
         },
         "title": "Still inn forsyning av skrekkulver"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "Automatiske invasjonsangrep angriper fremmede herrer eller blodkråker med et lagret angrepsoppsett til poengmålet eller en annen stoppgrense er nådd.",
+      "expectation": "De venter på en aktiv hendelse, kvalifiserte kommandanter og nok tropper og verktøy; angrep som allerede er underveis kan fullføres etter at nye angrep stopper.",
+      "name": "Automatiske invasjonsangrep",
+      "summary": "Angrip fremmede herrer og blodkråker mot poengmålet ditt"
+    },
+    "recommendationIntro": "De anbefalte verdiene beskriver vanlig bruk av automatiske invasjonsangrep; de er veiledning og endrer ikke lagrede innstillinger.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Illustrerende valg av vanskelighetsgrad for fremmede herrer og blodkråker",
+          "caption": "Velg en egen opplåst reservevanskelighet for hver hendelse."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Velg en opplåst vanskelighetsgrad for blodkråker som brukes når ingen er valgt i den aktuelle hendelsen.",
+            "label": "Vanskelighetsgrad for blodkråker",
+            "recommendation": "Bruk den høyeste opplåste vanskelighetsgraden som ditt vanlige oppsett klarer pålitelig."
+          },
+          "difficulty_note": {
+            "description": "Lagre begge hendelsesvalgene; endring av en lagret verdi erstatter ikke vanskelighetsgraden i en aktiv hendelse.",
+            "label": "Gjeldende vanskelighetsgrad"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Velg en opplåst vanskelighetsgrad for fremmede herrer som brukes når ingen er valgt i den aktuelle hendelsen.",
+            "label": "Vanskelighetsgrad for fremmede herrer",
+            "recommendation": "Bruk den høyeste opplåste vanskelighetsgraden som ditt vanlige oppsett klarer pålitelig."
+          }
+        },
+        "title": "Velg vanskelighetsgrad for begge hendelser"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "Slå på automatiske invasjonsangrep på Automatisering-kortet etter lagring for å kjøre når en hendelse og kvalifiserte ressurser er tilgjengelige.",
+            "label": "Bryter for automatiske invasjonsangrep",
+            "recommendation": "På etter at du har kontrollert og lagret ønskede innstillinger."
+          },
+          "readiness": {
+            "description": "Automatiske invasjonsangrep venter på en aktiv hendelse, kvalifiserte kommandanter og nok tropper og verktøy.",
+            "label": "Klar til angrep"
+          },
+          "save_settings": {
+            "description": "Lagre kildeborg, oppsett, vanskelighetsgrader, stoppgrenser og valg av befestning før du lukker dialogen.",
+            "label": "Lagre innstillinger"
+          }
+        },
+        "title": "Lagre og slå på automatiske invasjonsangrep"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Illustrerende befestningsinnstillinger for automatiske invasjonsangrep",
+          "caption": "La befestning være av med mindre du vil bruke tilgjengelig hendelsesvaluta eller rubiner du uttrykkelig velger."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Velg et alternativ som den aktive hendelsen støtter; spillet setter hver pris, og et uttrykkelig valg av rubiner tillater rubinbruk.",
+            "label": "Valuta for befestning",
+            "recommendation": "Hendelsesvaluta når den tilbys og befestning er på."
+          },
+          "fortify_each_target": {
+            "description": "Hvis på, styrk hver genererte fiendeborg før du angriper den med valgt valuta.",
+            "label": "Befest hvert mål",
+            "recommendation": "Av med mindre befestning er del av din vanlige hendelsesstrategi."
+          }
+        },
+        "title": "Velg valgfri befestning av mål"
+      },
+      "limits": {
+        "image": {
+          "alt": "Illustrerende eksempel på poeng- og stoppgrenser for automatiske invasjonsangrep",
+          "caption": "Poengmålet stopper nye starter, men angrep som allerede er underveis kan fullføres."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Stopp denne automatikken ved kontoens daglige antall normale angrep til spillet nullstiller det; 0 legger ikke til en grense.",
+            "label": "Daglig grense for normale angrep",
+            "recommendation": "0, så hendelsens poengmål styrer serien."
+          },
+          "minimum_remaining": {
+            "description": "Start ikke nye angrep dette antallet minutter før hendelsen slutter.",
+            "label": "Stopp før hendelsen slutter",
+            "recommendation": "30 minutter."
+          },
+          "score_target": {
+            "description": "Start ikke nye angrep når rapportert hendelsesscore når eller overstiger dette målet.",
+            "label": "Stopp ved hendelsesscore",
+            "recommendation": "Bruk ditt vanlige siste nivå for personlig belønning over 0."
+          },
+          "travelling_attacks": {
+            "description": "Angrep som allerede er underveis kan fullføres etter en stoppbetingelse og løfte sluttscoren over målet.",
+            "label": "Angrep underveis"
+          }
+        },
+        "title": "Still inn poeng- og stoppgrenser"
+      },
+      "open": {
+        "image": {
+          "alt": "Illustrerende innstillinger for kildeborg, oppsett og reise ved automatiske invasjonsangrep",
+          "caption": "Velg en kildeborg i Det Store Imperiet og et lagret hendelsesoppsett før du velger reisealternativ."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Velg et lagret angrepsoppsett med tropper, verktøy og formasjon mot fremmede herrer eller blodkråker.",
+            "label": "Angrepsoppsett",
+            "recommendation": "Lag først et vanlig oppsett mot fremmede herrer eller blodkråker, og velg det her."
+          },
+          "capacity_note": {
+            "description": "Antallet tropper og verktøy i oppsettet tilpasses kapasiteten til valgt kommandant og mål.",
+            "label": "Angrepskapasitet"
+          },
+          "horse_travel_boost": {
+            "description": "Velg reisealternativ med fjær, mynter eller rubiner for disse angrepene.",
+            "label": "Reisepåslag for hest",
+            "recommendation": "Reisefjær for rask reise."
+          },
+          "open_settings": {
+            "description": "På Automatisering-siden velger du innstillingsknappen på kortet for automatiske invasjonsangrep.",
+            "label": "Åpne innstillinger"
+          },
+          "source_castle": {
+            "description": "Velg borgen i Det Store Imperiet som leverer tropper og verktøy til hendelsesangrep.",
+            "label": "Kildeborg",
+            "recommendation": "Bruk din vanlige hendelsesborg med nok tropper og verktøy."
+          }
+        },
+        "title": "Åpne innstillinger for automatiske invasjonsangrep"
       }
     }
   }

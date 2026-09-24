@@ -22,7 +22,10 @@
     "stationPreviewTitle": "Ukázka nastavení automatické ochrany jednotek",
     "fortressGuideIntro": "Postupujte podle kroků k nastavení automatických útoků na pevnosti; výběrem ukázkového panelu jej zvětšíte.",
     "fortressGuideTitle": "Průvodce automatickými útoky na pevnosti",
-    "fortressPreviewTitle": "Příklad nastavení automatických útoků na pevnosti"
+    "fortressPreviewTitle": "Příklad nastavení automatických útoků na pevnosti",
+    "invasionGuideIntro": "Postupujte podle kroků k nastavení automatických invazních útoků; výběrem ukázkového panelu jej zvětšíte.",
+    "invasionGuideTitle": "Průvodce automatickými invazními útoky",
+    "invasionPreviewTitle": "Příklad nastavení automatických invazních útoků"
   },
   "autoTower": {
     "recommendationIntro": "Tato doporučení platí pro pravidelné používání; před uložením je zkontrolujte.",
@@ -345,6 +348,30 @@
       "route": "Zásobování: z hlavního hradu Velké říše do povolených království",
       "skips": "Zkrácení času pro potvrzené přesuny: zapnuto",
       "title": "Příklad zásobování hrůznými vlky"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Krvavé vrány: vhodná odemčená obtížnost",
+      "current": "Obtížnost aktivní události zůstává",
+      "foreign": "Cizí páni: vhodná odemčená obtížnost",
+      "title": "Příklad obtížností událostí"
+    },
+    "invasionFortify": {
+      "currency": "Při zapnutí: měna události, pokud je dostupná",
+      "enabled": "Opevnit každý cíl: vypnuto",
+      "rubies": "Rubíny jen při výslovném výběru",
+      "title": "Příklad opevnění cílů"
+    },
+    "invasionLimits": {
+      "before": "Zastavit 30 minut před koncem události",
+      "daily": "Denní limit běžných útoků: 0",
+      "score": "Body: běžná poslední osobní odměna nad 0",
+      "title": "Příklad bodů a hranic zastavení"
+    },
+    "invasionSetup": {
+      "castle": "Výchozí: běžný hrad události ve Velké říši",
+      "preset": "Útočná předvolba: uložená formace události",
+      "title": "Příklad nastavení útoku události",
+      "travel": "Posílení přesunu: Cestovní pírko"
     }
   },
   "autoStation": {
@@ -563,6 +590,137 @@
           }
         },
         "title": "Nastavte zásobování hrůznými vlky"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "Automatické invazní útoky útočí na Cizí pány nebo Krvavé vrány s uloženou útočnou předvolbou, dokud nedosáhnou bodového cíle nebo jiné hranice zastavení.",
+      "expectation": "Čekají na aktivní událost, vhodné velitele a dostatek vojáků a nástrojů; útoky na cestě mohou skončit i po zastavení nových útoků.",
+      "name": "Automatické invazní útoky",
+      "summary": "Útočte na Cizí pány a Krvavé vrány až k bodovému cíli"
+    },
+    "recommendationIntro": "Doporučené hodnoty popisují běžné používání automatických invazních útoků; jsou vodítkem a nemění uložená nastavení.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Ilustrační výběr obtížnosti Cizích pánů a Krvavých vran",
+          "caption": "Pro každou událost zvolte samostatnou odemčenou záložní obtížnost."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Zvolte odemčenou obtížnost Krvavých vran pro případ, že v aktuální události není žádná vybrána.",
+            "label": "Obtížnost Krvavých vran",
+            "recommendation": "Použijte nejvyšší odemčenou obtížnost, kterou vaše běžná sestava spolehlivě zvládne."
+          },
+          "difficulty_note": {
+            "description": "Uložte obě volby událostí; změna uložené hodnoty nenahradí obtížnost aktivní události.",
+            "label": "Aktuální obtížnost"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Zvolte odemčenou obtížnost Cizích pánů pro případ, že v aktuální události není žádná vybrána.",
+            "label": "Obtížnost Cizích pánů",
+            "recommendation": "Použijte nejvyšší odemčenou obtížnost, kterou vaše běžná sestava spolehlivě zvládne."
+          }
+        },
+        "title": "Zvolte obtížnosti obou událostí"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "Po uložení zapněte automatické invazní útoky na kartě Automatizace, aby fungovaly při dostupné události a vhodných zdrojích.",
+            "label": "Přepínač automatických invazních útoků",
+            "recommendation": "Zapnuto po kontrole a uložení zamýšlených nastavení."
+          },
+          "readiness": {
+            "description": "Automatické invazní útoky čekají na aktivní událost, vhodné velitele a dostatek vojáků a nástrojů.",
+            "label": "Připravenost k útoku"
+          },
+          "save_settings": {
+            "description": "Před zavřením okna uložte výchozí hrad, předvolbu, obtížnosti, hranice zastavení a volbu opevnění.",
+            "label": "Uložit nastavení"
+          }
+        },
+        "title": "Uložte a zapněte automatické invazní útoky"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Ilustrační nastavení opevnění automatických invazních útoků",
+          "caption": "Nechte opevnění vypnuté, pokud nechcete utrácet dostupnou měnu události nebo výslovně zvolené rubíny."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Vyberte možnost podporovanou aktivní událostí; hra určuje každou cenu a výslovná volba rubínů povoluje jejich útratu.",
+            "label": "Měna na opevnění",
+            "recommendation": "Měna události, pokud je dostupná a opevnění je zapnuto."
+          },
+          "fortify_each_target": {
+            "description": "Pokud je zapnuto, posilte každý vytvořený nepřátelský hrad před útokem zvolenou měnou.",
+            "label": "Opevnit každý cíl",
+            "recommendation": "Vypnuto, pokud opevnění nepatří do vaší běžné strategie událostí."
+          }
+        },
+        "title": "Zvolte volitelné opevnění cílů"
+      },
+      "limits": {
+        "image": {
+          "alt": "Ilustrační bodové a časové hranice automatických invazních útoků",
+          "caption": "Bodový cíl zastaví nová vyslání, ale útoky již na cestě mohou doběhnout."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Zastavte automatizaci při denním počtu běžných útoků celého účtu až do obnovení hrou; 0 nepřidává omezení.",
+            "label": "Denní limit běžných útoků",
+            "recommendation": "0, aby běh řídil bodový cíl události."
+          },
+          "minimum_remaining": {
+            "description": "Přestaňte zahajovat nové útoky tento počet minut před koncem události.",
+            "label": "Zastavit před koncem události",
+            "recommendation": "30 minut."
+          },
+          "score_target": {
+            "description": "Přestaňte zahajovat nové útoky, jakmile hlášené body události dosáhnou nebo překročí cíl.",
+            "label": "Zastavit při bodech události",
+            "recommendation": "Použijte svou běžnou poslední hranici osobní odměny vyšší než 0."
+          },
+          "travelling_attacks": {
+            "description": "Útoky již na cestě mohou doběhnout po splnění podmínky zastavení a zvýšit konečné body nad cíl.",
+            "label": "Útoky na cestě"
+          }
+        },
+        "title": "Nastavte body a hranice zastavení"
+      },
+      "open": {
+        "image": {
+          "alt": "Ilustrační nastavení výchozího hradu, předvolby a přesunu automatických invazních útoků",
+          "caption": "Vyberte výchozí hrad ve Velké říši a uloženou předvolbu události před nastavením přesunu."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Vyberte uloženou útočnou předvolbu s vojáky, nástroji a formací proti Cizím pánům nebo Krvavým vránám.",
+            "label": "Útočná předvolba",
+            "recommendation": "Nejprve vytvořte běžnou předvolbu proti Cizím pánům nebo Krvavým vránám a pak ji zde zvolte."
+          },
+          "capacity_note": {
+            "description": "Počty vojáků a nástrojů z předvolby se přizpůsobí kapacitě zvoleného velitele a cíle.",
+            "label": "Kapacita útoku"
+          },
+          "horse_travel_boost": {
+            "description": "Pro tyto útoky zvolte přesun s pírkem, mincemi nebo rubíny.",
+            "label": "Posílení přesunu koně",
+            "recommendation": "Cestovní pírko pro rychlý přesun."
+          },
+          "open_settings": {
+            "description": "Na stránce Automatizace vyberte tlačítko nastavení na kartě automatických invazních útoků.",
+            "label": "Otevřít nastavení"
+          },
+          "source_castle": {
+            "description": "Vyberte hrad ve Velké říši, který dodává vojáky a nástroje pro útoky události.",
+            "label": "Výchozí hrad",
+            "recommendation": "Použijte svůj běžný hrad pro události s dostatkem vojáků a nástrojů."
+          }
+        },
+        "title": "Otevřete nastavení automatických invazních útoků"
       }
     }
   }

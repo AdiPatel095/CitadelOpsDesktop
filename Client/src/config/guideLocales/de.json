@@ -22,7 +22,10 @@
     "stationPreviewTitle": "Beispiel zur Auto-Station-Einrichtung",
     "fortressGuideIntro": "Befolge diese Schritte zur Einrichtung der Festungsautomatisierung; wähle eine Beispieltafel aus, um sie zu vergrößern.",
     "fortressGuideTitle": "Anleitung zur Festungsautomatisierung",
-    "fortressPreviewTitle": "Einrichtungsbeispiel für die Festungsautomatisierung"
+    "fortressPreviewTitle": "Einrichtungsbeispiel für die Festungsautomatisierung",
+    "invasionGuideIntro": "Folge diesen Schritten, um automatische Invasionsangriffe einzurichten; wähle ein Beispielbild zur Vergrößerung.",
+    "invasionGuideTitle": "Anleitung für automatische Invasionsangriffe",
+    "invasionPreviewTitle": "Beispiel für die Einrichtung automatischer Invasionsangriffe"
   },
   "autoTower": {
     "recommendationIntro": "Diese Empfehlungen gelten für den regelmäßigen Betrieb; prüfe sie vor dem Speichern.",
@@ -345,6 +348,30 @@
       "route": "Versorgung: vom Großen Imperium in aktivierte Königreiche",
       "skips": "Zeitverkürzer für bestätigte Transfers: ein",
       "title": "Beispiel für Sturmwolf-Versorgung"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Blutkrähen: freigeschalteter geeigneter Schwierigkeitsgrad",
+      "current": "Der aktive Event-Schwierigkeitsgrad bleibt bestehen",
+      "foreign": "Fremde Fürsten: freigeschalteter geeigneter Schwierigkeitsgrad",
+      "title": "Beispiel für Event-Schwierigkeitsgrade"
+    },
+    "invasionFortify": {
+      "currency": "Falls aktiviert: Eventwährung, wenn verfügbar",
+      "enabled": "Jedes Ziel befestigen: aus",
+      "rubies": "Rubine nur bei ausdrücklicher Auswahl",
+      "title": "Beispiel für Zielbefestigung"
+    },
+    "invasionLimits": {
+      "before": "30 Minuten vor Eventende stoppen",
+      "daily": "Tagesgrenze für normale Angriffe: 0",
+      "score": "Punkte: übliche letzte persönliche Belohnung oberhalb von 0",
+      "title": "Beispiel für Punkte- und Stoppgrenzen"
+    },
+    "invasionSetup": {
+      "castle": "Ausgang: übliche Eventburg im Großen Imperium",
+      "preset": "Angriffsvorlage: gespeicherte Eventaufstellung",
+      "title": "Beispiel für Eventangriffe",
+      "travel": "Reiseverstärkung: Reisefeder"
     }
   },
   "autoStation": {
@@ -563,6 +590,137 @@
           }
         },
         "title": "Sturmwolf-Versorgung einstellen"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "Auto Invasion greift Fremde Fürsten oder Blutkrähen mit einer gespeicherten Angriffsvorlage an, bis das Punkteziel oder eine andere Stoppgrenze erreicht ist.",
+      "expectation": "Es wartet auf ein aktives Event, geeignete Feldherren und ausreichend Truppen und Werkzeuge; bereits reisende Angriffe können nach dem Stopp neuer Angriffe enden.",
+      "name": "Automatische Invasionsangriffe",
+      "summary": "Greife Fremde Fürsten und Blutkrähen bis zu deinem Punkteziel an"
+    },
+    "recommendationIntro": "Die empfohlenen Werte beschreiben die regelmäßige Nutzung der automatischen Invasionsangriffe; sie dienen als Orientierung und ändern keine gespeicherten Einstellungen.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Illustrative Schwierigkeitsauswahl für Fremde Fürsten und Blutkrähen",
+          "caption": "Wähle für jedes Event einen eigenen freigeschalteten Schwierigkeitsgrad als Rückfalloption."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Wähle einen freigeschalteten Schwierigkeitsgrad für Blutkrähen, falls im aktuellen Event noch keiner gewählt wurde.",
+            "label": "Schwierigkeitsgrad Blutkrähen",
+            "recommendation": "Nutze den höchsten freigeschalteten Schwierigkeitsgrad, den deine übliche Aufstellung zuverlässig bewältigt."
+          },
+          "difficulty_note": {
+            "description": "Speichere beide Event-Auswahlen; eine Änderung des gespeicherten Werts ersetzt nicht den aktiven Schwierigkeitsgrad.",
+            "label": "Aktueller Schwierigkeitsgrad"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Wähle einen freigeschalteten Schwierigkeitsgrad für Fremde Fürsten, falls im aktuellen Event noch keiner gewählt wurde.",
+            "label": "Schwierigkeitsgrad Fremde Fürsten",
+            "recommendation": "Nutze den höchsten freigeschalteten Schwierigkeitsgrad, den deine übliche Aufstellung zuverlässig bewältigt."
+          }
+        },
+        "title": "Wähle beide Event-Schwierigkeitsgrade"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "Schalte die automatischen Invasionsangriffe nach dem Speichern auf der Automatisierungskarte ein, damit sie bei aktivem Event und verfügbaren Ressourcen laufen.",
+            "label": "Schalter für automatische Invasionsangriffe",
+            "recommendation": "Ein, nachdem du deine gewünschten Einstellungen geprüft und gespeichert hast."
+          },
+          "readiness": {
+            "description": "Die automatischen Invasionsangriffe warten auf ein aktives Event, geeignete Feldherren und genügend Truppen und Werkzeuge.",
+            "label": "Bereitschaft zum Angriff"
+          },
+          "save_settings": {
+            "description": "Speichere Ausgangsburg, Vorlage, Schwierigkeitsgrade, Stoppgrenzen und Befestigungswahl, bevor du diesen Dialog schließt.",
+            "label": "Einstellungen speichern"
+          }
+        },
+        "title": "Speichern und automatische Invasionsangriffe aktivieren"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Illustrative Befestigungseinstellungen für automatische Invasionsangriffe",
+          "caption": "Lass die Befestigung aus, sofern du nicht bewusst verfügbare Eventwährung oder ausdrücklich gewählte Rubine ausgeben willst."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Wähle eine vom aktiven Event unterstützte Option; das Spiel bestimmt jeden Preis, und die ausdrückliche Wahl von Rubinen erlaubt Rubinausgaben.",
+            "label": "Währung für Befestigung",
+            "recommendation": "Eventwährung, wenn sie verfügbar und die Befestigung aktiviert ist."
+          },
+          "fortify_each_target": {
+            "description": "Wenn aktiviert, verstärke jede erzeugte gegnerische Burg vor dem Angriff mit der gewählten Währung.",
+            "label": "Jedes Ziel befestigen",
+            "recommendation": "Aus, sofern Befestigung nicht Teil deiner üblichen Eventstrategie ist."
+          }
+        },
+        "title": "Optionale Befestigung der Ziele wählen"
+      },
+      "limits": {
+        "image": {
+          "alt": "Illustrative Punkte- und Stoppgrenzen für automatische Invasionsangriffe",
+          "caption": "Das Punkteziel stoppt neue Starts, während bereits reisende Angriffe noch enden können."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Stoppe diese Automatisierung bei der kontoweiten täglichen Zahl normaler Angriffe, bis das Spiel sie zurücksetzt; 0 fügt keine Grenze hinzu.",
+            "label": "Tagesgrenze für normale Angriffe",
+            "recommendation": "0, damit das Event-Punkteziel den Lauf steuert."
+          },
+          "minimum_remaining": {
+            "description": "Starte so viele Minuten vor Eventende keine neuen Angriffe mehr.",
+            "label": "Vor Eventende stoppen",
+            "recommendation": "30 Minuten."
+          },
+          "score_target": {
+            "description": "Starte keine neuen Angriffe mehr, sobald die gemeldete Event-Punktzahl dieses Ziel erreicht oder überschreitet.",
+            "label": "Bei Event-Punktzahl stoppen",
+            "recommendation": "Nutze deine übliche letzte persönliche Belohnungsstufe oberhalb von 0."
+          },
+          "travelling_attacks": {
+            "description": "Bereits reisende Angriffe können nach einer Stoppbedingung enden und die endgültige Punktzahl über das Ziel erhöhen.",
+            "label": "Reisende Angriffe"
+          }
+        },
+        "title": "Punkte- und Stoppgrenzen festlegen"
+      },
+      "open": {
+        "image": {
+          "alt": "Illustrative Einstellungen für Ausgangsburg, Vorlage und Reise bei automatischen Invasionsangriffen",
+          "caption": "Wähle eine Ausgangsburg im Großen Imperium und eine gespeicherte Eventvorlage, bevor du die Reiseoption einstellst."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Wähle eine gespeicherte Angriffsvorlage mit Truppen, Werkzeugen und Aufstellung für Fremde Fürsten oder Blutkrähen.",
+            "label": "Angriffsvorlage",
+            "recommendation": "Erstelle zuerst eine Vorlage für regelmäßige Fremde-Fürsten- oder Blutkrähenangriffe und wähle sie hier aus."
+          },
+          "capacity_note": {
+            "description": "Die Truppen- und Werkzeugzahlen der Vorlage passen sich der Kapazität des gewählten Feldherrn und Ziels an.",
+            "label": "Angriffskapazität"
+          },
+          "horse_travel_boost": {
+            "description": "Wähle für diese Angriffe die Reiseoption mit Feder, Münzen oder Rubinen.",
+            "label": "Reiseverstärkung des Pferds",
+            "recommendation": "Reisefeder für schnelles Reisen."
+          },
+          "open_settings": {
+            "description": "Wähle auf der Automatisierungsseite die Einstellungsschaltfläche der Karte für automatische Invasionsangriffe.",
+            "label": "Einstellungen öffnen"
+          },
+          "source_castle": {
+            "description": "Wähle die Burg im Großen Imperium, die Truppen und Werkzeuge für Eventangriffe stellt.",
+            "label": "Ausgangsburg",
+            "recommendation": "Nutze deine übliche Eventburg mit genügend Truppen und Werkzeugen."
+          }
+        },
+        "title": "Einstellungen für automatische Invasionsangriffe öffnen"
       }
     }
   }

@@ -22,7 +22,10 @@
     "stationPreviewTitle": "Exemple de configuration du stationnement automatique",
     "fortressGuideIntro": "Suivez ces étapes pour régler l’Automatisation des forteresses ; sélectionnez un panneau d’exemple pour l’agrandir.",
     "fortressGuideTitle": "Guide de l’Automatisation des forteresses",
-    "fortressPreviewTitle": "Exemple de configuration de l’Automatisation des forteresses"
+    "fortressPreviewTitle": "Exemple de configuration de l’Automatisation des forteresses",
+    "invasionGuideIntro": "Suivez ces étapes pour configurer l'automatisation des invasions; sélectionnez un panneau d'exemple pour l'agrandir.",
+    "invasionGuideTitle": "Guide de l'automatisation des invasions",
+    "invasionPreviewTitle": "Exemple de configuration de l'automatisation des invasions"
   },
   "autoTower": {
     "recommendationIntro": "Ces recommandations concernent une utilisation régulière ; vérifiez-les avant d’enregistrer.",
@@ -345,6 +348,30 @@
       "route": "Approvisionnement : du Grand Empire vers les royaumes activés",
       "skips": "Accélérateurs pour les transferts confirmés : activés",
       "title": "Exemple d’approvisionnement en loups féroces"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Corbeaux de sang : difficulté débloquée adaptée",
+      "current": "La difficulté de l'événement actif reste en place",
+      "foreign": "Seigneurs étrangers : difficulté débloquée adaptée",
+      "title": "Exemple de difficultés d'événement"
+    },
+    "invasionFortify": {
+      "currency": "Si activé : monnaie d'événement lorsqu'elle est proposée",
+      "enabled": "Fortifier chaque cible : désactivé",
+      "rubies": "Rubis uniquement après sélection explicite",
+      "title": "Exemple de fortification des cibles"
+    },
+    "invasionLimits": {
+      "before": "Arrêt 30 minutes avant la fin de l'événement",
+      "daily": "Limite quotidienne d'attaques normales : 0",
+      "score": "Score : dernier palier habituel de récompense personnelle au-dessus de 0",
+      "title": "Exemple de score et de limites d'arrêt"
+    },
+    "invasionSetup": {
+      "castle": "Source : château d'événement habituel du Grand Empire",
+      "preset": "Préréglage d'attaque : formation d'événement enregistrée",
+      "title": "Exemple de préparation d'attaque d'événement",
+      "travel": "Bonus de voyage : Plume de voyage"
     }
   },
   "autoStation": {
@@ -563,6 +590,137 @@
           }
         },
         "title": "Régler l’approvisionnement en loups féroces"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "L'automatisation des invasions attaque les Seigneurs étrangers ou les Corbeaux de sang avec un préréglage d'attaque enregistré jusqu'à atteindre le score cible ou une autre limite d'arrêt.",
+      "expectation": "Elle attend un événement actif, des commandants admissibles et assez de troupes et d'outils; les attaques déjà en route peuvent se terminer après l'arrêt des nouveaux départs.",
+      "name": "Automatisation des invasions",
+      "summary": "Attaquez les Seigneurs étrangers et les Corbeaux de sang jusqu'à votre score cible"
+    },
+    "recommendationIntro": "Les valeurs recommandées décrivent l'usage habituel de l'automatisation des invasions; elles servent de conseils et ne modifient pas les paramètres enregistrés.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Exemple illustratif des difficultés des Seigneurs étrangers et des Corbeaux de sang",
+          "caption": "Choisissez une difficulté de secours débloquée distincte pour chaque événement."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Choisissez une difficulté des Corbeaux de sang débloquée si aucune difficulté n'est sélectionnée pour l'événement en cours.",
+            "label": "Difficulté des Corbeaux de sang",
+            "recommendation": "Utilisez la difficulté débloquée la plus élevée que votre composition habituelle maîtrise de façon fiable."
+          },
+          "difficulty_note": {
+            "description": "Enregistrez les deux choix d'événement; changer une valeur enregistrée ne remplace pas la difficulté de l'événement actif.",
+            "label": "Difficulté actuelle"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Choisissez une difficulté des Seigneurs étrangers débloquée si aucune difficulté n'est sélectionnée pour l'événement en cours.",
+            "label": "Difficulté des Seigneurs étrangers",
+            "recommendation": "Utilisez la difficulté débloquée la plus élevée que votre composition habituelle maîtrise de façon fiable."
+          }
+        },
+        "title": "Choisissez les deux difficultés d'événement"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "Après l'enregistrement, activez l'automatisation des invasions sur la carte Automatisation pour fonctionner lorsqu'un événement et des ressources admissibles sont disponibles.",
+            "label": "Interrupteur de l'automatisation des invasions",
+            "recommendation": "Activé après avoir vérifié et enregistré les paramètres souhaités."
+          },
+          "readiness": {
+            "description": "L'automatisation des invasions attend un événement actif, des commandants admissibles et assez de troupes et d'outils.",
+            "label": "Préparation de l'attaque"
+          },
+          "save_settings": {
+            "description": "Enregistrez le château source, le préréglage, les difficultés, les limites d'arrêt et le choix de fortification avant de fermer cette fenêtre.",
+            "label": "Enregistrer les paramètres"
+          }
+        },
+        "title": "Enregistrez et activez l'automatisation des invasions"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Exemple illustratif des paramètres de fortification de l'automatisation des invasions",
+          "caption": "Laissez la fortification désactivée sauf si vous voulez dépenser une monnaie d'événement disponible ou des rubis choisis explicitement."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Choisissez une option prise en charge par l'événement actif; le jeu fixe chaque prix et la sélection explicite des rubis autorise leur dépense.",
+            "label": "Monnaie de fortification",
+            "recommendation": "La monnaie d'événement lorsqu'elle est proposée et que la fortification est activée."
+          },
+          "fortify_each_target": {
+            "description": "Si cette option est activée, renforcez chaque château ennemi généré avant de l'attaquer avec la monnaie sélectionnée.",
+            "label": "Fortifier chaque cible",
+            "recommendation": "Désactivé sauf si la fortification fait partie de votre stratégie habituelle pour cet événement."
+          }
+        },
+        "title": "Choisissez la fortification facultative des cibles"
+      },
+      "limits": {
+        "image": {
+          "alt": "Exemple illustratif du score et des limites d'arrêt de l'automatisation des invasions",
+          "caption": "Le score cible arrête les nouveaux départs, mais les attaques déjà en route peuvent se terminer."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Arrêtez cette automatisation au nombre quotidien d'attaques normales du compte jusqu'à la remise à zéro par le jeu; 0 n'ajoute aucune limite.",
+            "label": "Limite quotidienne d'attaques normales",
+            "recommendation": "0 pour que le score cible de l'événement pilote la série."
+          },
+          "minimum_remaining": {
+            "description": "Arrêtez de lancer de nouvelles attaques ce nombre de minutes avant la fin de l'événement.",
+            "label": "Arrêter avant la fin de l'événement",
+            "recommendation": "30 minutes."
+          },
+          "score_target": {
+            "description": "Arrêtez de lancer de nouvelles attaques lorsque le score d'événement indiqué atteint ou dépasse cette cible.",
+            "label": "Arrêter au score d'événement",
+            "recommendation": "Utilisez votre dernier palier habituel de récompense personnelle, supérieur à 0."
+          },
+          "travelling_attacks": {
+            "description": "Les attaques déjà en route peuvent se terminer après une condition d'arrêt et faire dépasser la cible au score final.",
+            "label": "Attaques en route"
+          }
+        },
+        "title": "Fixez le score et les limites d'arrêt"
+      },
+      "open": {
+        "image": {
+          "alt": "Exemple illustratif des paramètres de château source, de préréglage et de voyage pour l'automatisation des invasions",
+          "caption": "Choisissez un château source dans le Grand Empire et un préréglage d'événement enregistré avant de régler le voyage."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Sélectionnez un préréglage d'attaque enregistré contenant les troupes, les outils et la formation pour les Seigneurs étrangers ou les Corbeaux de sang.",
+            "label": "Préréglage d'attaque",
+            "recommendation": "Créez d'abord un préréglage habituel pour les Seigneurs étrangers ou les Corbeaux de sang, puis sélectionnez-le ici."
+          },
+          "capacity_note": {
+            "description": "Les quantités de troupes et d'outils du préréglage s'adaptent à la capacité du commandant et de la cible sélectionnés.",
+            "label": "Capacité d'attaque"
+          },
+          "horse_travel_boost": {
+            "description": "Choisissez une option de voyage à plume, pièces ou rubis pour ces attaques.",
+            "label": "Bonus de voyage du cheval",
+            "recommendation": "Plume de voyage pour un déplacement rapide."
+          },
+          "open_settings": {
+            "description": "Sur la page Automatisation, sélectionnez le bouton des paramètres de la carte de l'automatisation des invasions.",
+            "label": "Ouvrir les paramètres"
+          },
+          "source_castle": {
+            "description": "Choisissez le château du Grand Empire qui fournit les troupes et les outils pour les attaques d'événement.",
+            "label": "Château source",
+            "recommendation": "Utilisez votre château d'événement habituel avec suffisamment de troupes et d'outils."
+          }
+        },
+        "title": "Ouvrez les paramètres de l'automatisation des invasions"
       }
     }
   }

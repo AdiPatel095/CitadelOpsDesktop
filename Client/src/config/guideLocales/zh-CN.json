@@ -22,7 +22,10 @@
     "stationPreviewTitle": "自动驻军避险设置示例",
     "fortressGuideIntro": "按照这些步骤设置要塞自动攻击；选择示例面板可放大查看。",
     "fortressGuideTitle": "要塞自动攻击指南",
-    "fortressPreviewTitle": "要塞自动攻击设置示例"
+    "fortressPreviewTitle": "要塞自动攻击设置示例",
+    "invasionGuideIntro": "按照这些步骤设置入侵自动攻击；选择示例面板可放大查看。",
+    "invasionGuideTitle": "入侵自动攻击指南",
+    "invasionPreviewTitle": "入侵自动攻击设置示例"
   },
   "autoTower": {
     "recommendationIntro": "以下是日常使用的建议；保存前请检查。",
@@ -345,6 +348,30 @@
       "route": "补给：从大帝国主城堡到已启用王国",
       "skips": "确认转移使用时间加速：开启",
       "title": "恐狼补给示例"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "血鸦：适合的已解锁难度",
+      "current": "当前活动难度保持不变",
+      "foreign": "异国领主：适合的已解锁难度",
+      "title": "活动难度示例"
+    },
+    "invasionFortify": {
+      "currency": "开启时：活动提供的活动货币",
+      "enabled": "强化每个目标：关闭",
+      "rubies": "仅在明确选择时使用红宝石",
+      "title": "目标强化示例"
+    },
+    "invasionLimits": {
+      "before": "活动结束前30分钟停止",
+      "daily": "每日普通攻击上限：0",
+      "score": "分数：平时高于0的最后个人奖励",
+      "title": "分数和停止限制示例"
+    },
+    "invasionSetup": {
+      "castle": "出发地：大帝国常用活动城堡",
+      "preset": "攻击预设：已保存的活动阵型",
+      "title": "活动攻击设置示例",
+      "travel": "行军加速：旅行羽毛"
     }
   },
   "autoStation": {
@@ -563,6 +590,137 @@
           }
         },
         "title": "设置恐狼补给"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "入侵自动攻击会使用已保存的攻击预设攻打异国领主或血鸦，直到达到分数目标或其他停止限制。",
+      "expectation": "它会等待进行中的活动、符合条件的指挥官以及足够的士兵和工具；已在行军的攻击可能在停止发起新攻击后才结束。",
+      "name": "入侵自动攻击",
+      "summary": "攻打异国领主和血鸦，直到达到你的分数目标"
+    },
+    "recommendationIntro": "推荐值说明入侵自动攻击的日常用法；仅供参考，不会更改已保存的设置。",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "异国领主和血鸦难度选择的示意图",
+          "caption": "为每种活动分别选择一个已解锁的备用难度。"
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "选择一个已解锁的血鸦难度，以便在当前活动未选择难度时使用。",
+            "label": "血鸦难度",
+            "recommendation": "使用平时的配置能够稳定应对的最高已解锁难度。"
+          },
+          "difficulty_note": {
+            "description": "保存两种活动的选择；修改保存值不会替换进行中活动的难度。",
+            "label": "当前难度"
+          },
+          "foreign_lords_difficulty": {
+            "description": "选择一个已解锁的异国领主难度，以便在当前活动未选择难度时使用。",
+            "label": "异国领主难度",
+            "recommendation": "使用平时的配置能够稳定应对的最高已解锁难度。"
+          }
+        },
+        "title": "选择两种活动的难度"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "保存后在自动化卡片上开启入侵自动攻击，以便在活动和合格资源可用时运行。",
+            "label": "入侵自动攻击开关",
+            "recommendation": "检查并保存预期设置后开启。"
+          },
+          "readiness": {
+            "description": "入侵自动攻击会等待进行中的活动、合格的指挥官以及足够的士兵和工具。",
+            "label": "攻击准备状态"
+          },
+          "save_settings": {
+            "description": "关闭此窗口前保存出发城堡、预设、难度、停止限制和强化选项。",
+            "label": "保存设置"
+          }
+        },
+        "title": "保存并开启入侵自动攻击"
+      },
+      "fortify": {
+        "image": {
+          "alt": "入侵自动攻击强化设置的示意图",
+          "caption": "除非打算使用可用的活动货币或明确选择的红宝石，否则保持强化关闭。"
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "选择当前活动支持的选项；每项价格由游戏设定，明确选择红宝石即允许消耗红宝石。",
+            "label": "强化货币",
+            "recommendation": "强化已开启且活动提供时使用活动货币。"
+          },
+          "fortify_each_target": {
+            "description": "开启后，在攻击前使用所选货币强化每座生成的敌方城堡。",
+            "label": "强化每个目标",
+            "recommendation": "除非强化属于你平时的活动策略，否则关闭。"
+          }
+        },
+        "title": "选择可选的目标强化"
+      },
+      "limits": {
+        "image": {
+          "alt": "入侵自动攻击分数和停止限制的示意图",
+          "caption": "分数目标会停止新的出击，但已经在行军的攻击可能结束。"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "当整个账号达到每日普通攻击次数时停止此自动化，直到游戏重置次数；0表示不增加限制。",
+            "label": "每日普通攻击上限",
+            "recommendation": "设为0，让活动分数目标控制进程。"
+          },
+          "minimum_remaining": {
+            "description": "在活动结束前指定的分钟数停止发起新攻击。",
+            "label": "在活动结束前停止",
+            "recommendation": "30分钟。"
+          },
+          "score_target": {
+            "description": "当报告的活动分数达到或超过此目标时停止发起新攻击。",
+            "label": "达到活动分数后停止",
+            "recommendation": "使用你平时最后一个高于0的个人奖励阶段。"
+          },
+          "travelling_attacks": {
+            "description": "已在行军的攻击可能在满足停止条件后结束，使最终分数超过目标。",
+            "label": "行军中的攻击"
+          }
+        },
+        "title": "设置分数和停止限制"
+      },
+      "open": {
+        "image": {
+          "alt": "入侵自动攻击的出发城堡、预设和行军设置示意图",
+          "caption": "设置行军选项前，选择大帝国的出发城堡和已保存的活动预设。"
+        },
+        "items": {
+          "attack_preset": {
+            "description": "选择包含攻打异国领主或血鸦的士兵、工具和阵型的已保存攻击预设。",
+            "label": "攻击预设",
+            "recommendation": "先创建平时使用的异国领主或血鸦预设，然后在此处选择。"
+          },
+          "capacity_note": {
+            "description": "预设中的士兵和工具数量会根据所选指挥官和目标的容量调整。",
+            "label": "攻击容量"
+          },
+          "horse_travel_boost": {
+            "description": "为这些攻击选择羽毛、金币或红宝石行军选项。",
+            "label": "战马行军加速",
+            "recommendation": "快速行军推荐旅行羽毛。"
+          },
+          "open_settings": {
+            "description": "在自动化页面选择入侵自动攻击卡片上的设置按钮。",
+            "label": "打开设置"
+          },
+          "source_castle": {
+            "description": "选择为活动攻击提供士兵和工具的大帝国城堡。",
+            "label": "出发城堡",
+            "recommendation": "使用士兵和工具充足的常用活动城堡。"
+          }
+        },
+        "title": "打开入侵自动攻击设置"
       }
     }
   }

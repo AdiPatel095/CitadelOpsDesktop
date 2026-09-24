@@ -1,7 +1,7 @@
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
-import { Castle, Clock3, Crosshair, ShieldCheck, ShieldPlus, Swords, Target } from 'lucide-react';
+import { BookOpen, Castle, Clock3, Crosshair, ShieldCheck, ShieldPlus, Swords, Target } from 'lucide-react';
 import { useCitadelAPI } from '../../api/ApiContext';
 import { castleOptionsFromState } from '../../api/Selectors';
 import {
@@ -20,6 +20,8 @@ import {
 } from '../AutoInvasionClientState';
 import { eventDifficultyName, useEventDifficultyOptions } from '../EventDifficultyOptions';
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
+import { FeatureGuideModal } from './FeatureGuideModal';
+import { englishGuidePack, useGuideLocale } from '../../config/useGuideLocale';
 import { DailyAttackLimitField } from './DailyAttackLimitField';
 
 interface AutoInvasionSettingsModalProps {
@@ -32,6 +34,11 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
   const { state, configuration, updateConfiguration } = useCitadelAPI();
   const [draft, setDraft] = useState<AutoInvasionClientStateV1>(defaultAutoInvasionClientState);
   const [saving, setSaving] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const { locale: guideLocale, pack: guidePack } = useGuideLocale();
+  const invasionGuidePack = guidePack.autoInvasion ? guidePack : englishGuidePack;
+  const invasionGuideLocale = invasionGuidePack === englishGuidePack ? 'en' : guideLocale;
+  useEffect(() => { if (!isOpen) setIsGuideOpen(false); }, [isOpen]);
   const castles = useMemo(() => castleOptionsFromState(state).filter((castle) => castle.kingdomId === 0), [state]);
   const presetDocument = useMemo(
     () => parseAttackPresetDocument(configuration?.sections[ATTACK_PRESETS_SECTION]),
@@ -102,7 +109,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
     }
   };
 
-  return (
+  return (<>
     <SettingsModal
       isOpen={isOpen}
       onClose={() => { if (!saving) onClose(); }}
@@ -110,6 +117,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
       title={localizeStatic("ui.settings.components.autoInvasionSettingsModal.title.auto.invasion.d43e5a94")}
       icon={<Crosshair className="h-5 w-5" />}
       description={localizeStatic("ui.settings.components.autoInvasionSettingsModal.description.foreign.lords.and.bloodcrow.attack.plan.0ee8d04e")}
+      titleTrailing={<Button variant="outline" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={invasionGuideLocale}>{invasionGuidePack.ui.guideButton}</span></Button>}
       onSave={() => void save()}
       isSaving={saving}
       saveDisabled={!canSave}
@@ -271,5 +279,7 @@ export const AutoInvasionSettingsModal: React.FC<AutoInvasionSettingsModalProps>
 			<LocalizedText messageKey="ui.settings.components.autoInvasionSettingsModal.troop.quantities.adapt.to.the.freshly.resolved.67bcfcf5" /></p>
       </div>
     </SettingsModal>
+    <FeatureGuideModal feature="autoInvasion" isOpen={isOpen && isGuideOpen} onClose={() => setIsGuideOpen(false)} />
+    </>
   );
 };

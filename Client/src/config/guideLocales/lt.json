@@ -22,7 +22,10 @@
     "stationPreviewTitle": "Automatinio karių prieglobsčio nustatymo pavyzdys",
     "fortressGuideIntro": "Atlikite šiuos veiksmus automatinėms tvirtovių atakoms nustatyti; pasirinkite pavyzdinį skydelį, kad jį padidintumėte.",
     "fortressGuideTitle": "Automatinių tvirtovių atakų gidas",
-    "fortressPreviewTitle": "Automatinių tvirtovių atakų sąrankos pavyzdys"
+    "fortressPreviewTitle": "Automatinių tvirtovių atakų sąrankos pavyzdys",
+    "invasionGuideIntro": "Atlikite šiuos veiksmus automatinėms invazijos atakoms nustatyti; pasirinkite pavyzdinį skydelį, kad jį padidintumėte.",
+    "invasionGuideTitle": "Automatinių invazijos atakų gidas",
+    "invasionPreviewTitle": "Automatinių invazijos atakų sąrankos pavyzdys"
   },
   "autoTower": {
     "recommendationIntro": "Tai rekomendacijos įprastam naudojimui; peržiūrėkite jas prieš išsaugodami.",
@@ -345,6 +348,30 @@
       "route": "Tiekimas: iš Didžiosios imperijos pagrindinės pilies į įjungtas karalystes",
       "skips": "Laiko trumpinimai patvirtintiems perkėlimams: įjungta",
       "title": "Siaubo vilkų tiekimo pavyzdys"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Kraujo varnai: tinkamas atrakintas sunkumas",
+      "current": "Aktyvaus renginio sunkumas lieka nepakeistas",
+      "foreign": "Svetimi valdovai: tinkamas atrakintas sunkumas",
+      "title": "Renginių sunkumų pavyzdys"
+    },
+    "invasionFortify": {
+      "currency": "Jei įjungta: renginio valiuta, kai siūloma",
+      "enabled": "Stiprinti kiekvieną taikinį: išjungta",
+      "rubies": "Rubinai tik aiškiai pasirinkus",
+      "title": "Taikinių stiprinimo pavyzdys"
+    },
+    "invasionLimits": {
+      "before": "Stabdyti likus 30 minučių iki renginio pabaigos",
+      "daily": "Įprastų atakų dienos riba: 0",
+      "score": "Taškai: įprastas paskutinis asmeninis atlygis virš 0",
+      "title": "Taškų ir stabdymo ribų pavyzdys"
+    },
+    "invasionSetup": {
+      "castle": "Pradžia: įprasta renginio pilis Didžiojoje imperijoje",
+      "preset": "Atakos šablonas: išsaugota renginio rikiuotė",
+      "title": "Renginio atakos sąrankos pavyzdys",
+      "travel": "Kelionės pagreitis: Kelionės plunksna"
     }
   },
   "autoStation": {
@@ -563,6 +590,137 @@
           }
         },
         "title": "Nustatykite siaubo vilkų tiekimą"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "Automatinės invazijos atakos puola Svetimus valdovus arba Kraujo varnus pagal išsaugotą atakos šabloną, kol pasiekiamas taškų tikslas ar kita stabdymo riba.",
+      "expectation": "Jos laukia aktyvaus renginio, tinkamų vadų ir pakankamai karių bei įrankių; jau keliaujančios atakos gali pasibaigti sustabdžius naujas.",
+      "name": "Automatinės invazijos atakos",
+      "summary": "Pulkite Svetimus valdovus ir Kraujo varnus iki taškų tikslo"
+    },
+    "recommendationIntro": "Rekomenduojamos vertės apibūdina įprastą automatinių invazijos atakų naudojimą; jos yra patarimai ir nekeičia išsaugotų nustatymų.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Iliustraciniai Svetimų valdovų ir Kraujo varnų sunkumo pasirinkimai",
+          "caption": "Kiekvienam renginiui pasirinkite atskirą atrakintą atsarginį sunkumą."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Pasirinkite atrakintą Kraujo varnų sunkumą, naudojamą, kai dabartiniam renginiui joks sunkumas nepasirinktas.",
+            "label": "Kraujo varnų sunkumas",
+            "recommendation": "Rinkitės aukščiausią atrakintą sunkumą, kurį įprasta jūsų sudėtis patikimai įveikia."
+          },
+          "difficulty_note": {
+            "description": "Išsaugokite abu renginių pasirinkimus; išsaugotos vertės pakeitimas nepakeičia aktyvaus renginio sunkumo.",
+            "label": "Dabartinis sunkumas"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Pasirinkite atrakintą Svetimų valdovų sunkumą, naudojamą, kai dabartiniam renginiui joks sunkumas nepasirinktas.",
+            "label": "Svetimų valdovų sunkumas",
+            "recommendation": "Rinkitės aukščiausią atrakintą sunkumą, kurį įprasta jūsų sudėtis patikimai įveikia."
+          }
+        },
+        "title": "Pasirinkite abiejų renginių sunkumus"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "Išsaugoję įjunkite automatines invazijos atakas Automatizavimo kortelėje, kad jos veiktų esant renginiui ir tinkamiems ištekliams.",
+            "label": "Automatinių invazijos atakų jungiklis",
+            "recommendation": "Įjungta patikrinus ir išsaugojus norimus nustatymus."
+          },
+          "readiness": {
+            "description": "Automatinės invazijos atakos laukia aktyvaus renginio, tinkamų vadų ir pakankamai karių bei įrankių.",
+            "label": "Pasirengimas atakai"
+          },
+          "save_settings": {
+            "description": "Prieš uždarydami langą išsaugokite pradinę pilį, šabloną, sunkumus, stabdymo ribas ir stiprinimo pasirinkimą.",
+            "label": "Išsaugoti nustatymus"
+          }
+        },
+        "title": "Išsaugokite ir įjunkite automatines invazijos atakas"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Iliustraciniai automatinių invazijos atakų stiprinimo nustatymai",
+          "caption": "Palikite stiprinimą išjungtą, nebent ketinate leisti turimą renginio valiutą arba aiškiai pasirinktus rubinus."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Pasirinkite aktyvaus renginio palaikomą parinktį; žaidimas nustato kiekvieną kainą, o aiškus rubinų pasirinkimas leidžia juos išleisti.",
+            "label": "Stiprinimo valiuta",
+            "recommendation": "Renginio valiuta, kai ji siūloma ir stiprinimas įjungtas."
+          },
+          "fortify_each_target": {
+            "description": "Jei įjungta, prieš ataką sustiprinkite kiekvieną sugeneruotą priešo pilį pasirinkta valiuta.",
+            "label": "Stiprinti kiekvieną taikinį",
+            "recommendation": "Išjungta, nebent stiprinimas yra įprastos jūsų renginio strategijos dalis."
+          }
+        },
+        "title": "Pasirinkite neprivalomą taikinių stiprinimą"
+      },
+      "limits": {
+        "image": {
+          "alt": "Iliustracinės automatinių invazijos atakų taškų ir stabdymo ribos",
+          "caption": "Taškų tikslas sustabdo naujus išsiuntimus, bet jau keliaujančios atakos gali baigtis."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Sustabdykite automatizavimą pasiekus visos paskyros dienos įprastų atakų skaičių, kol žaidimas jį atnaujins; 0 neprideda ribos.",
+            "label": "Įprastų atakų dienos riba",
+            "recommendation": "0, kad renginio taškų tikslas valdytų eigą."
+          },
+          "minimum_remaining": {
+            "description": "Nebesiųskite naujų atakų likus tiek minučių iki renginio pabaigos.",
+            "label": "Stabdyti prieš renginio pabaigą",
+            "recommendation": "30 minučių."
+          },
+          "score_target": {
+            "description": "Nebesiųskite naujų atakų, kai pranešti renginio taškai pasiekia arba viršija šį tikslą.",
+            "label": "Stabdyti ties renginio taškais",
+            "recommendation": "Naudokite įprastą paskutinį asmeninio atlygio etapą virš 0."
+          },
+          "travelling_attacks": {
+            "description": "Jau keliaujančios atakos gali baigtis po stabdymo sąlygos ir pakelti galutinius taškus virš tikslo.",
+            "label": "Keliaujančios atakos"
+          }
+        },
+        "title": "Nustatykite taškų ir stabdymo ribas"
+      },
+      "open": {
+        "image": {
+          "alt": "Iliustraciniai pradinės pilies, šablono ir kelionės nustatymai automatinėms invazijos atakoms",
+          "caption": "Pasirinkite pradinę pilį Didžiojoje imperijoje ir išsaugotą renginio šabloną prieš nustatydami kelionę."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Pasirinkite išsaugotą atakos šabloną su kariais, įrankiais ir rikiuote prieš Svetimus valdovus arba Kraujo varnus.",
+            "label": "Atakos šablonas",
+            "recommendation": "Pirma sukurkite įprastą šabloną Svetimiems valdovams arba Kraujo varnams, tada pasirinkite jį čia."
+          },
+          "capacity_note": {
+            "description": "Šablono karių ir įrankių kiekiai prisitaiko prie pasirinkto vado ir taikinio talpos.",
+            "label": "Atakos talpa"
+          },
+          "horse_travel_boost": {
+            "description": "Šioms atakoms pasirinkite plunksnos, monetų arba rubinų kelionės variantą.",
+            "label": "Žirgo kelionės pagreitis",
+            "recommendation": "Kelionės plunksna greitai kelionei."
+          },
+          "open_settings": {
+            "description": "Automatizavimo puslapyje pasirinkite automatinių invazijos atakų kortelės nustatymų mygtuką.",
+            "label": "Atverti nustatymus"
+          },
+          "source_castle": {
+            "description": "Pasirinkite Didžiosios imperijos pilį, tiekiančią karius ir įrankius renginio atakoms.",
+            "label": "Pradinė pilis",
+            "recommendation": "Naudokite įprastą renginio pilį su pakankamai karių ir įrankių."
+          }
+        },
+        "title": "Atverkite automatinių invazijos atakų nustatymus"
       }
     }
   }

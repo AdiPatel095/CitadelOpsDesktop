@@ -22,7 +22,10 @@
     "stationPreviewTitle": "Eksempel på indstilling af troppebeskyttelse",
     "fortressGuideIntro": "Følg trinene for at indstille automatisk fæstningsangreb; vælg et eksempelpanel for at forstørre det.",
     "fortressGuideTitle": "Guide til automatisk fæstningsangreb",
-    "fortressPreviewTitle": "Eksempel på opsætning af automatisk fæstningsangreb"
+    "fortressPreviewTitle": "Eksempel på opsætning af automatisk fæstningsangreb",
+    "invasionGuideIntro": "Følg disse trin for at indstille automatiske invasionsangreb; vælg et eksempelpanel for at forstørre det.",
+    "invasionGuideTitle": "Guide til automatiske invasionsangreb",
+    "invasionPreviewTitle": "Eksempel på opsætning af automatiske invasionsangreb"
   },
   "autoTower": {
     "recommendationIntro": "Disse anbefalinger gælder almindelig brug; gennemgå dem, før du gemmer.",
@@ -345,6 +348,30 @@
       "route": "Forsyning: hovedborgen i Det Store Imperium til aktiverede kongeriger",
       "skips": "Tidsbesparelser til bekræftede overførsler: til",
       "title": "Eksempel på forsyning af skrækwulve"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Blodkrager: passende oplåst sværhedsgrad",
+      "current": "Den aktive begivenheds sværhedsgrad bevares",
+      "foreign": "Fremmede herrer: passende oplåst sværhedsgrad",
+      "title": "Eksempel på begivenheders sværhedsgrad"
+    },
+    "invasionFortify": {
+      "currency": "Hvis aktiveret: begivenhedsvaluta, når den tilbydes",
+      "enabled": "Forstærk hvert mål: fra",
+      "rubies": "Rubiner kun efter udtrykkeligt valg",
+      "title": "Eksempel på forstærkning af mål"
+    },
+    "invasionLimits": {
+      "before": "Stop 30 minutter før begivenheden slutter",
+      "daily": "Daglig grænse for normale angreb: 0",
+      "score": "Point: normal sidste personlig belønning over 0",
+      "title": "Eksempel på point- og stopgrænser"
+    },
+    "invasionSetup": {
+      "castle": "Udgang: normal begivenhedsborg i Det Store Imperium",
+      "preset": "Angrebsopsætning: gemt begivenhedsformation",
+      "title": "Eksempel på opsætning af begivenhedsangreb",
+      "travel": "Rejseforstærkning: Rejsefjer"
     }
   },
   "autoStation": {
@@ -563,6 +590,137 @@
           }
         },
         "title": "Indstil forsyning af skrækwulve"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "Automatiske invasionsangreb angriber fremmede herrer eller blodkrager med en gemt angrebsopsætning, indtil pointmålet eller en anden stopgrænse nås.",
+      "expectation": "De venter på en aktiv begivenhed, egnede kommandører og nok tropper og værktøjer; angreb, der allerede er undervejs, kan afsluttes efter stop for nye angreb.",
+      "name": "Automatiske invasionsangreb",
+      "summary": "Angrib fremmede herrer og blodkrager frem mod dit pointmål"
+    },
+    "recommendationIntro": "De anbefalede værdier beskriver almindelig brug af automatiske invasionsangreb; de er vejledning og ændrer ikke gemte indstillinger.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Illustrative sværhedsvalg for fremmede herrer og blodkrager",
+          "caption": "Vælg en særskilt oplåst reserve-sværhedsgrad for hver begivenhed."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Vælg en oplåst sværhedsgrad for blodkrager, som bruges, når den aktuelle begivenhed ikke har nogen valgt.",
+            "label": "Sværhedsgrad for blodkrager",
+            "recommendation": "Brug den højeste oplåste sværhedsgrad, som din normale opsætning klarer pålideligt."
+          },
+          "difficulty_note": {
+            "description": "Gem begge begivenhedsvalg; ændring af en gemt værdi erstatter ikke den aktive begivenheds sværhedsgrad.",
+            "label": "Aktuel sværhedsgrad"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Vælg en oplåst sværhedsgrad for fremmede herrer, som bruges, når den aktuelle begivenhed ikke har nogen valgt.",
+            "label": "Sværhedsgrad for fremmede herrer",
+            "recommendation": "Brug den højeste oplåste sværhedsgrad, som din normale opsætning klarer pålideligt."
+          }
+        },
+        "title": "Vælg begge begivenheders sværhedsgrad"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "Slå automatiske invasionsangreb til på Automatisering-kortet efter lagring, så de kører, når en begivenhed og egnede ressourcer er tilgængelige.",
+            "label": "Kontakt til automatiske invasionsangreb",
+            "recommendation": "Til efter kontrol og lagring af de ønskede indstillinger."
+          },
+          "readiness": {
+            "description": "Automatiske invasionsangreb venter på en aktiv begivenhed, egnede kommandører og tilstrækkeligt med tropper og værktøjer.",
+            "label": "Klar til angreb"
+          },
+          "save_settings": {
+            "description": "Gem udgangsborg, opsætning, sværhedsgrader, stopgrænser og forstærkningsvalg, før du lukker dialogen.",
+            "label": "Gem indstillinger"
+          }
+        },
+        "title": "Gem og aktivér automatiske invasionsangreb"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Illustrative forstærkningsindstillinger for automatiske invasionsangreb",
+          "caption": "Lad forstærkning være slået fra, medmindre du vil bruge tilgængelig begivenhedsvaluta eller udtrykkeligt valgte rubiner."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Vælg en mulighed, som den aktive begivenhed understøtter; spillet bestemmer hver pris, og et udtrykkeligt valg af rubiner tillader rubinforbrug.",
+            "label": "Valuta til forstærkning",
+            "recommendation": "Begivenhedsvaluta, når den tilbydes og forstærkning er slået til."
+          },
+          "fortify_each_target": {
+            "description": "Hvis det er aktiveret, forstærkes hvert genereret fjendtligt slot før angrebet med den valgte valuta.",
+            "label": "Forstærk hvert mål",
+            "recommendation": "Fra, medmindre forstærkning er del af din normale begivenhedsstrategi."
+          }
+        },
+        "title": "Vælg valgfri forstærkning af mål"
+      },
+      "limits": {
+        "image": {
+          "alt": "Illustrativt eksempel på point- og stopgrænser for automatiske invasionsangreb",
+          "caption": "Pointmålet stopper nye starter, men angreb, der allerede rejser, kan stadig afsluttes."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Stop denne automatisering ved kontoens daglige antal normale angreb, indtil spillet nulstiller det; 0 tilføjer ingen grænse.",
+            "label": "Daglig grænse for normale angreb",
+            "recommendation": "0, så begivenhedens pointmål styrer forløbet."
+          },
+          "minimum_remaining": {
+            "description": "Start ikke flere nye angreb dette antal minutter før begivenheden slutter.",
+            "label": "Stop før begivenheden slutter",
+            "recommendation": "30 minutter."
+          },
+          "score_target": {
+            "description": "Start ikke nye angreb, når de rapporterede begivenhedspoint når eller overstiger målet.",
+            "label": "Stop ved begivenhedspoint",
+            "recommendation": "Brug din normale sidste milepæl for personlig belønning over 0."
+          },
+          "travelling_attacks": {
+            "description": "Angreb, der allerede rejser, kan afsluttes efter en stopbetingelse og løfte slutpointene over målet.",
+            "label": "Angreb undervejs"
+          }
+        },
+        "title": "Indstil point- og stopgrænser"
+      },
+      "open": {
+        "image": {
+          "alt": "Illustrative indstillinger for udgangsborg, opsætning og rejse ved automatiske invasionsangreb",
+          "caption": "Vælg en udgangsborg i Det Store Imperium og en gemt begivenhedsopsætning, før du vælger rejsemulighed."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Vælg en gemt angrebsopsætning med tropper, værktøjer og formation mod fremmede herrer eller blodkrager.",
+            "label": "Angrebsopsætning",
+            "recommendation": "Opret først en normal opsætning mod fremmede herrer eller blodkrager, og vælg den her."
+          },
+          "capacity_note": {
+            "description": "Opsætningens antal tropper og værktøjer tilpasses den valgte kommandørs og målets kapacitet.",
+            "label": "Angrebskapacitet"
+          },
+          "horse_travel_boost": {
+            "description": "Vælg rejsemuligheden med fjer, mønter eller rubiner til disse angreb.",
+            "label": "Hestens rejseforstærkning",
+            "recommendation": "Rejsefjer til hurtig rejse."
+          },
+          "open_settings": {
+            "description": "På siden Automatisering vælger du indstillingsknappen på kortet for automatiske invasionsangreb.",
+            "label": "Åbn indstillinger"
+          },
+          "source_castle": {
+            "description": "Vælg borgen i Det Store Imperium, som leverer tropper og værktøjer til begivenhedsangreb.",
+            "label": "Udgangsborg",
+            "recommendation": "Brug din normale begivenhedsborg med nok tropper og værktøjer."
+          }
+        },
+        "title": "Åbn indstillinger for automatiske invasionsangreb"
       }
     }
   }

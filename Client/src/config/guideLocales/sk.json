@@ -22,7 +22,10 @@
     "stationPreviewTitle": "Ukážka nastavenia automatickej ochrany jednotiek",
     "fortressGuideIntro": "Postupujte podľa krokov na nastavenie automatických útokov na pevnosti; výberom ukážkového panelu ho zväčšíte.",
     "fortressGuideTitle": "Sprievodca automatickými útokmi na pevnosti",
-    "fortressPreviewTitle": "Príklad nastavenia automatických útokov na pevnosti"
+    "fortressPreviewTitle": "Príklad nastavenia automatických útokov na pevnosti",
+    "invasionGuideIntro": "Postupujte podľa krokov na nastavenie automatických inváznych útokov; výberom ukážkového panelu ho zväčšíte.",
+    "invasionGuideTitle": "Sprievodca automatickými inváznymi útokmi",
+    "invasionPreviewTitle": "Príklad nastavenia automatických inváznych útokov"
   },
   "autoTower": {
     "recommendationIntro": "Toto sú odporúčania na bežné používanie; pred uložením ich skontrolujte.",
@@ -345,6 +348,30 @@
       "route": "Zásobovanie: z hlavného hradu Veľkej ríše do povolených kráľovstiev",
       "skips": "Skrátenia času na potvrdené presuny: zapnuté",
       "title": "Príklad zásobovania hrozivými vlkmi"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Krvavé vrany: vhodná odomknutá obtiažnosť",
+      "current": "Obtiažnosť aktívnej udalosti zostáva",
+      "foreign": "Cudzí páni: vhodná odomknutá obtiažnosť",
+      "title": "Príklad obtiažností udalostí"
+    },
+    "invasionFortify": {
+      "currency": "Pri zapnutí: mena udalosti, ak je dostupná",
+      "enabled": "Opevniť každý cieľ: vypnuté",
+      "rubies": "Rubíny iba pri výslovnom výbere",
+      "title": "Príklad opevnenia cieľov"
+    },
+    "invasionLimits": {
+      "before": "Zastaviť 30 minút pred koncom udalosti",
+      "daily": "Denný limit bežných útokov: 0",
+      "score": "Body: bežná posledná osobná odmena nad 0",
+      "title": "Príklad bodov a hraníc zastavenia"
+    },
+    "invasionSetup": {
+      "castle": "Východiskový: bežný hrad udalosti vo Veľkej ríši",
+      "preset": "Útočná predvoľba: uložená formácia udalosti",
+      "title": "Príklad nastavenia útoku udalosti",
+      "travel": "Posilnenie presunu: Cestovné pierko"
     }
   },
   "autoStation": {
@@ -563,6 +590,137 @@
           }
         },
         "title": "Nastavte zásobovanie hrozivými vlkmi"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "Automatické invázne útoky útočia na Cudzích pánov alebo Krvavé vrany s uloženou útočnou predvoľbou, kým nedosiahnu bodový cieľ alebo inú hranicu zastavenia.",
+      "expectation": "Čakajú na aktívnu udalosť, vhodných veliteľov a dosť vojakov a nástrojov; útoky na ceste sa môžu skončiť aj po zastavení nových útokov.",
+      "name": "Automatické invázne útoky",
+      "summary": "Útočte na Cudzích pánov a Krvavé vrany až k bodovému cieľu"
+    },
+    "recommendationIntro": "Odporúčané hodnoty opisujú bežné používanie automatických inváznych útokov; sú návodom a nemenia uložené nastavenia.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Ilustračný výber obtiažnosti Cudzích pánov a Krvavých vrán",
+          "caption": "Pre každú udalosť vyberte samostatnú odomknutú záložnú obtiažnosť."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Vyberte odomknutú obtiažnosť Krvavých vrán pre prípad, že v aktuálnej udalosti nie je žiadna zvolená.",
+            "label": "Obtiažnosť Krvavých vrán",
+            "recommendation": "Použite najvyššiu odomknutú obtiažnosť, ktorú vaša bežná zostava spoľahlivo zvládne."
+          },
+          "difficulty_note": {
+            "description": "Uložte obe voľby udalostí; zmena uloženej hodnoty nenahradí obtiažnosť aktívnej udalosti.",
+            "label": "Aktuálna obtiažnosť"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Vyberte odomknutú obtiažnosť Cudzích pánov pre prípad, že v aktuálnej udalosti nie je žiadna zvolená.",
+            "label": "Obtiažnosť Cudzích pánov",
+            "recommendation": "Použite najvyššiu odomknutú obtiažnosť, ktorú vaša bežná zostava spoľahlivo zvládne."
+          }
+        },
+        "title": "Vyberte obtiažnosti oboch udalostí"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "Po uložení zapnite automatické invázne útoky na karte Automatizácia, aby fungovali pri dostupnej udalosti a vhodných zdrojoch.",
+            "label": "Prepínač automatických inváznych útokov",
+            "recommendation": "Zapnuté po kontrole a uložení zamýšľaných nastavení."
+          },
+          "readiness": {
+            "description": "Automatické invázne útoky čakajú na aktívnu udalosť, vhodných veliteľov a dosť vojakov a nástrojov.",
+            "label": "Pripravenosť na útok"
+          },
+          "save_settings": {
+            "description": "Pred zatvorením okna uložte východiskový hrad, predvoľbu, obtiažnosti, hranice zastavenia a voľbu opevnenia.",
+            "label": "Uložiť nastavenia"
+          }
+        },
+        "title": "Uložte a zapnite automatické invázne útoky"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Ilustračné nastavenia opevnenia automatických inváznych útokov",
+          "caption": "Nechajte opevnenie vypnuté, ak nechcete míňať dostupnú menu udalosti alebo výslovne zvolené rubíny."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Vyberte možnosť podporovanú aktívnou udalosťou; hra určuje každú cenu a výslovná voľba rubínov povoľuje ich míňanie.",
+            "label": "Mena na opevnenie",
+            "recommendation": "Mena udalosti, ak je dostupná a opevnenie je zapnuté."
+          },
+          "fortify_each_target": {
+            "description": "Ak je zapnuté, posilnite každý vytvorený nepriateľský hrad pred útokom zvolenou menou.",
+            "label": "Opevniť každý cieľ",
+            "recommendation": "Vypnuté, ak opevnenie nepatrí do vašej bežnej stratégie udalostí."
+          }
+        },
+        "title": "Vyberte voliteľné opevnenie cieľov"
+      },
+      "limits": {
+        "image": {
+          "alt": "Ilustračné bodové a časové hranice automatických inváznych útokov",
+          "caption": "Bodový cieľ zastaví nové vyslania, ale útoky už na ceste môžu dobehnúť."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Zastavte automatizáciu pri dennom počte bežných útokov celého účtu až do obnovenia hrou; 0 nepridáva obmedzenie.",
+            "label": "Denný limit bežných útokov",
+            "recommendation": "0, aby beh riadil bodový cieľ udalosti."
+          },
+          "minimum_remaining": {
+            "description": "Prestaňte začínať nové útoky tento počet minút pred koncom udalosti.",
+            "label": "Zastaviť pred koncom udalosti",
+            "recommendation": "30 minút."
+          },
+          "score_target": {
+            "description": "Prestaňte začínať nové útoky, keď hlásené body udalosti dosiahnu alebo prekročia cieľ.",
+            "label": "Zastaviť pri bodoch udalosti",
+            "recommendation": "Použite svoju bežnú poslednú hranicu osobnej odmeny vyššiu ako 0."
+          },
+          "travelling_attacks": {
+            "description": "Útoky už na ceste môžu dobehnúť po splnení podmienky zastavenia a zvýšiť konečné body nad cieľ.",
+            "label": "Útoky na ceste"
+          }
+        },
+        "title": "Nastavte body a hranice zastavenia"
+      },
+      "open": {
+        "image": {
+          "alt": "Ilustračné nastavenia východiskového hradu, predvoľby a presunu automatických inváznych útokov",
+          "caption": "Vyberte východiskový hrad vo Veľkej ríši a uloženú predvoľbu udalosti pred nastavením presunu."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Vyberte uloženú útočnú predvoľbu s vojakmi, nástrojmi a formáciou proti Cudzím pánom alebo Krvavým vranám.",
+            "label": "Útočná predvoľba",
+            "recommendation": "Najprv vytvorte bežnú predvoľbu proti Cudzím pánom alebo Krvavým vranám a potom ju tu vyberte."
+          },
+          "capacity_note": {
+            "description": "Počty vojakov a nástrojov z predvoľby sa prispôsobia kapacite zvoleného veliteľa a cieľa.",
+            "label": "Kapacita útoku"
+          },
+          "horse_travel_boost": {
+            "description": "Pre tieto útoky vyberte presun s pierkom, mincami alebo rubínmi.",
+            "label": "Posilnenie presunu koňa",
+            "recommendation": "Cestovné pierko na rýchly presun."
+          },
+          "open_settings": {
+            "description": "Na stránke Automatizácia vyberte tlačidlo nastavení na karte automatických inváznych útokov.",
+            "label": "Otvoriť nastavenia"
+          },
+          "source_castle": {
+            "description": "Vyberte hrad vo Veľkej ríši, ktorý dodáva vojakov a nástroje pre útoky udalosti.",
+            "label": "Východiskový hrad",
+            "recommendation": "Použite svoj bežný hrad pre udalosti s dosť vojakmi a nástrojmi."
+          }
+        },
+        "title": "Otvorte nastavenia automatických inváznych útokov"
       }
     }
   }
