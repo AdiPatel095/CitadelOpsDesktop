@@ -46,9 +46,9 @@ export function FeatureGuideModal({ feature, isOpen, onClose, showAdvisor = true
                 <button type="button" onClick={() => setPreviewStepId(step.id)} aria-label={pack.ui.enlargePicture}
                   className="block w-full overflow-hidden rounded-xl border border-border-base hover:border-primary focus-visible:outline-2 focus-visible:outline-primary">
                   {locale === 'en' ? <img src={step.image.src} alt={content.image.alt} width={step.image.width} height={step.image.height} loading="lazy" className="h-auto w-full" /> :
-                    <GuideIllustration pack={pack} kind={panelKind(feature, step.id)} locale={locale} alt={content.image.alt} showAdvisor={showAdvisor} />}
+                    <GuideIllustration pack={pack} kind={panelKind(feature, step.id)} locale={locale} alt={[pack.ui.illustrativeExample, content.title, pack.panels[panelKind(feature, step.id)].title].join(' — ')} showAdvisor={showAdvisor} />}
                 </button>
-                <figcaption className="mt-2 text-xs leading-relaxed text-text-muted">{content.image.caption}</figcaption>
+                <figcaption className="mt-2 text-xs leading-relaxed text-text-muted">{locale !== 'en' && <strong>{pack.ui.illustrativeExample}. </strong>}{content.image.caption}</figcaption>
               </figure>}
             </li>;
           })}
@@ -62,7 +62,7 @@ export function FeatureGuideModal({ feature, isOpen, onClose, showAdvisor = true
         if (!previewStep.image || !('image' in content) || !content.image) return null;
         return <div lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'} className="overflow-auto" tabIndex={0} role="region" aria-label={pack.ui.fullSizePicture}>
           {locale === 'en' ? <img src={previewStep.image.src} alt={content.image.alt} width={previewStep.image.width} height={previewStep.image.height} className="h-auto max-w-none" style={{ width: previewStep.image.width }} /> :
-            <GuideIllustration pack={pack} kind={panelKind(feature, previewStep.id)} locale={locale} large alt={content.image.alt} showAdvisor={showAdvisor} />}
+            <GuideIllustration pack={pack} kind={panelKind(feature, previewStep.id)} locale={locale} large alt={[pack.ui.illustrativeExample, content.title, pack.panels[panelKind(feature, previewStep.id)].title].join(' — ')} showAdvisor={showAdvisor} />}
         </div>;
       })()}
     </Modal>
