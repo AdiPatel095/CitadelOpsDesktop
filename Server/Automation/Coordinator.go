@@ -11,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -35,6 +36,8 @@ type Coordinator struct {
 	configuration                  *Configuration.Store
 	gameData                       GameDataProvider
 	telemetry                      AttackLaunchCountsProvider
+	traceMu                        sync.Mutex
+	lastAutoStationTrace           string
 	intents                        IntentSubmitter
 	policies                       []Policy
 	stateWakeByDomain              map[string][]string
@@ -429,7 +432,7 @@ func (coordinator *Coordinator) evaluate(
 			current.evaluatedSessionKnown = true
 			current.eventOnly = lock.ExpiresAt().IsZero()
 			current.nextCheck = lock.ExpiresAt()
-			coordinator.recordDecision(policy.ID(), policyEnabled(policy, enabled, state), Decision{Status: "gated", Detail: lock.Detail(), DetailDescriptor: lock.DetailDescriptor(), NextCheckAt: lock.ExpiresAt()})
+			coordinator.recordDecision(policy.ID(), policyEnabled(policy, enabled, state), Decision{Status: "gated", Detail: lock.Detail(), DetailDescriptor: lock.DetailDescriptor(), NextCheckAt: lock.ExpiresAt()}, "safety_lock")
 			continue
 		}
 		if !policyEvaluationDue(current, configuration.Revision, sessionReady, state.Session.Generation, now) {
@@ -528,7 +531,7 @@ func (coordinator *Coordinator) evaluate(
 			}
 			coordinator.recordDecision(policy.ID(), true, Decision{
 				Status: "waiting", Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage), NextCheckAt: current.nextCheck,
-			})
+			}, "session")
 			continue
 		}
 		if allowed, next := scheduleAllows(configuration, policyScheduleKey(policy), now); !allowed {
@@ -539,7 +542,7 @@ func (coordinator *Coordinator) evaluate(
 			current.nextCheck = next
 			coordinator.recordDecision(policy.ID(), true, Decision{
 				Status: "scheduled", Detail: "Outside the configured weekly schedule", DetailDescriptor: Localization.New("server.automation.outside_the_configured_weekly.e8fa033d", "Outside the configured weekly schedule", nil), NextCheckAt: next,
-			})
+			}, "schedule")
 			continue
 		}
 		if current.troopAvailabilityGate != nil {
@@ -659,7 +662,7 @@ func (coordinator *Coordinator) evaluate(
 		operationContext, cancelOperation := policyOperationContext(ctx, policy.ID())
 		current.cancelRun = cancelOperation
 		coordinator.recordDecision(policy.ID(), true, Decision{
-			Status: "running", Detail: decision.Detail, DetailDescriptor: Localization.Clone(decision.DetailDescriptor), NextCheckAt: decision.NextCheckAt, Metrics: decision.Metrics,
+			Status: "running", Detail: decision.Detail, DetailDescriptor: Localization.Clone(decision.DetailDescriptor), NextCheckAt: decision.NextCheckAt, Metrics: decision.Metrics, Request: &request,
 		})
 		go func(
 			policyID string,
@@ -902,7 +905,7 @@ func (coordinator *Coordinator) cancelRunsForUnavailableSession(
 	}
 }
 
-func (coordinator *Coordinator) recordDecision(id string, enabled bool, decision Decision) {
+func (coordinator *Coordinator) recordDecision(id string, enabled bool, decision Decision, traceReason ...string) {
 	coordinator.updateAutomation(id, func(current State.AutomationState) State.AutomationState {
 		current.ID = id
 		current.Enabled = enabled
@@ -921,6 +924,7 @@ func (coordinator *Coordinator) recordDecision(id string, enabled bool, decision
 		}
 		return current
 	})
+	coordinator.traceAutoStationDecision(id, enabled, decision, traceReason...)
 }
 
 func (coordinator *Coordinator) recordReceipt(result operationResult) {
@@ -985,6 +989,98 @@ func (coordinator *Coordinator) recordReceipt(result operationResult) {
 		}
 		return current
 	})
+	coordinator.traceAutoStationReceipt(result)
+}
+
+// Auto Station diagnostics use fixed fields only. Decision detail, request
+// arguments, operation identifiers and receipt errors can contain game data.
+func (coordinator *Coordinator) traceAutoStationDecision(id string, enabled bool, decision Decision, traceReason ...string) {
+	if id != "autoStation" {
+		return
+	}
+	logger, ok := coordinator.telemetry.(interface{ RecordFeature(string, string, string) })
+	if !ok {
+		return
+	}
+	status := safeAutoStationStatus(decision.Status)
+	reason := "policy"
+	if len(traceReason) > 0 {
+		switch traceReason[0] {
+		case "safety_lock", "session", "schedule":
+			reason = traceReason[0]
+		}
+	}
+	intent := "none"
+	if decision.Request != nil {
+		intent = safeAutoStationIntent(decision.Request.Name)
+	}
+	threats := int(decision.Metrics["threatCount"])
+	if threats < 0 || threats > 10000 {
+		threats = 0
+	}
+	impact := int64(decision.Metrics["nextImpactUnixMs"])
+	if impact < 0 || impact > 100000000000000 {
+		impact = 0
+	}
+	// The impact belongs in the signature; rolling retry timestamps do not.
+	key := fmt.Sprintf("enabled=%t status=%s reason=%s threats=%d intent=%s impactUnixMs=%d", enabled, status, reason, threats, intent, impact)
+	coordinator.traceMu.Lock()
+	if key == coordinator.lastAutoStationTrace {
+		coordinator.traceMu.Unlock()
+		return
+	}
+	coordinator.lastAutoStationTrace = key
+	coordinator.traceMu.Unlock()
+	nextCheck := "none"
+	if !decision.NextCheckAt.IsZero() {
+		nextCheck = decision.NextCheckAt.UTC().Format(time.RFC3339)
+	}
+	logger.RecordFeature("autostation", "DECISION", key+" nextCheckAt="+nextCheck)
+}
+
+func (coordinator *Coordinator) traceAutoStationReceipt(result operationResult) {
+	if result.policyID != "autoStation" {
+		return
+	}
+	logger, ok := coordinator.telemetry.(interface{ RecordFeature(string, string, string) })
+	if !ok {
+		return
+	}
+	detail := fmt.Sprintf("intent=%s status=%s", safeAutoStationIntent(result.receipt.Intent), safeAutoStationReceiptStatus(result.receipt.Status))
+	if result.followUp != nil {
+		detail += fmt.Sprintf(" followUp=%s status=%s", safeAutoStationIntent(result.followUp.Intent), safeAutoStationReceiptStatus(result.followUp.Status))
+	}
+	if result.failureFallback != nil {
+		detail += fmt.Sprintf(" fallback=%s status=%s", safeAutoStationIntent(result.failureFallback.Intent), safeAutoStationReceiptStatus(result.failureFallback.Status))
+	}
+	logger.RecordFeature("autostation", "RECEIPT", detail)
+}
+
+func safeAutoStationStatus(status string) string {
+	switch status {
+	case "armed", "blocked", "disabled", "error", "evacuating", "gated", "idle", "protected", "recalling", "refreshing", "running", "scheduled", "threat", "waiting":
+		return status
+	default:
+		return "other"
+	}
+}
+
+func safeAutoStationIntent(name string) string {
+	switch name {
+	case "alliance.refresh", "castle.focus", "defense.open_gate", "game.refresh_movements", "map.query", "movement.recall", "troops.station":
+		return name
+	default:
+		return "other"
+	}
+}
+
+func safeAutoStationReceiptStatus(status Intent.Status) string {
+	switch status {
+	case Intent.StatusSucceeded, Intent.StatusFailed, Intent.StatusPartiallySucceeded, Intent.StatusIndeterminate, Intent.StatusCancelled:
+		return string(status)
+	default:
+		return "other"
+	}
 }
 
 func (coordinator *Coordinator) recordTroopAvailabilityGate(id string, gate troopAvailabilityGate) {
