@@ -23,7 +23,12 @@ func applyOwnAllianceSnapshot(root map[string]json.RawMessage, observed time.Tim
 	visit = func(owner map[string]json.RawMessage) bool {
 		id, own := rawInt64(owner["OID"])
 		aid, present := rawInt64(owner["AID"])
-		if own && State.PlayerID(id) == state.Player.ID && id > 0 && present && aid >= 0 {
+		if own && State.PlayerID(id) == state.Player.ID && id > 0 && present && aid >= -1 {
+			// The game's explicit -1 means this player has no alliance.
+			// Other negative values and omitted AID are not membership evidence.
+			if aid == -1 {
+				aid = 0
+			}
 			setOwnAlliance(state, State.AllianceID(aid))
 			state.Player.AllianceObservedAt = observed
 			return true
