@@ -1,7 +1,7 @@
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Bird, CalendarDays, LockKeyhole, Plus } from 'lucide-react';
+import { Bird, BookOpen, CalendarDays, LockKeyhole, Plus } from 'lucide-react';
 import { showTroopPicker } from '../../components/TroopPickerModal';
 import type { UnitWithQuantity } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
@@ -31,6 +31,7 @@ import { useCitadelAPI } from '../../api/ApiContext';
 import { castleOptionsFromState } from '../../api/Selectors';
 import { useAuth } from '../../context/AuthContext';
 import { AUTO_FORTRESS_DIREWOLF_ID } from '../AutoFortressClientState';
+import { AutoBirdGuideModal } from './AutoBirdGuideModal';
 import {
   autoFortressReservesDirewolves,
   mergeAutoBirdPickerItems,
@@ -71,6 +72,8 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
   const [presetError, setPresetError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+  useEffect(() => { if (!isOpen) setIsGuideOpen(false); }, [isOpen]);
   const loadedConfigurationSignature = useRef<string | null>(null);
 
   const currentIgnoreSettings = useCallback((): AutoBirdStoredSettings => {
@@ -308,6 +311,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
     !presetsState.presets.some((preset) => preset.id === activePresetId);
 
   return (
+    <>
     <SettingsModal
       isOpen={isOpen}
       onClose={handleClose}
@@ -321,6 +325,8 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
             </>
       )}
       titleTrailing={(
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}>Guide</Button>
             <Button
               variant="outline"
               size="sm"
@@ -328,7 +334,9 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
               onClick={() => onOpenFeatureSchedule('autoBird', 'Auto Bird')}
               leftIcon={<CalendarDays className="h-4 w-4" />}
             >
-              <LocalizedText messageKey="common.calendar" /></Button>
+              <LocalizedText messageKey="common.calendar" />
+            </Button>
+        </div>
       )}
       onSave={handleSave}
       saveLabel="Save changes"
@@ -422,7 +430,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
           disabled={isSaving}
           help={(
             <>
-            Choose a preset and click <span className="font-semibold text-text-main"><LocalizedText messageKey="common.apply" /></span> to make it the runtime default and load it into the grid.{' '}
+            Choose a preset and click <span className="font-semibold text-text-main"><LocalizedText messageKey="common.apply" /></span> to load it into this draft.{' '}
             <span className="font-semibold text-text-main"><LocalizedText messageKey="common.saveChanges" /></span> persists that selection and updates the applied preset
             (including its name). Another feature can switch the runtime default by preset ID, while Calendar periods can override it.
             </>
@@ -502,5 +510,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
         </div>
       </div>
     </SettingsModal>
+    <AutoBirdGuideModal isOpen={isOpen && isGuideOpen} onClose={() => setIsGuideOpen(false)} />
+    </>
   );
 };
