@@ -3,6 +3,7 @@ package App
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -52,6 +53,48 @@ func TestPlanDefenseOpenGateUsesCapturedMOSShapeWithAutomationGuards(t *testing.
 	}
 	if got := string(plan.Steps[0].Command.Payload); got != `{"CID":10,"KID":0,"CD":0}` {
 		t.Fatalf("MOS payload = %s", got)
+	}
+}
+
+func TestPlanDefenseOpenGateTargetsAttackedCastleAcrossKingdoms(t *testing.T) {
+	for _, tc := range []struct {
+		kingdom State.KingdomID
+		allowed bool
+	}{{0, true}, {2, true}, {10, false}} {
+		t.Run(fmt.Sprintf("kingdom-%d", tc.kingdom), func(t *testing.T) {
+			state := defenseIntentState()
+			state.Player.ID = 7
+			main := state.Castles[10]
+			main.KingdomID = 0
+			state.Castles[10] = main
+			attacked := main
+			attacked.ID = 42
+			attacked.KingdomID = tc.kingdom
+			attacked.SlotType = 4
+			state.Castles[42] = attacked
+			arrives := time.Now().Add(time.Minute)
+			state.Movements[1] = State.MovementState{ID: 1, TypeID: 0, Direction: 0, OwnerPlayerID: 8, TargetPlayerID: 7, SourceTypeID: 1, SourceCastleID: 20, TargetTypeID: 4, TargetCastleID: 42, ArrivesAt: &arrives}
+			plan, err := planDefenseOpenGate(context.Background(), Intent.PlanningContext{State: state}, json.RawMessage(`{"castleId":42,"requireIncomingAttack":true,"autoStation":true}`))
+			if (err == nil) != tc.allowed {
+				t.Fatalf("allowed=%v err=%v", tc.allowed, err)
+			}
+			if !tc.allowed {
+				return
+			}
+			if tc.kingdom == 2 {
+				if _, err := planDefenseOpenGate(context.Background(), Intent.PlanningContext{State: state}, json.RawMessage(`{"castleId":42,"requireIncomingAttack":true}`)); err == nil {
+					t.Fatal("manual defense gate unexpectedly widened to another kingdom")
+				}
+			}
+			step := plan.Steps[len(plan.Steps)-1]
+			var payload struct {
+				CID State.CastleID  `json:"CID"`
+				KID State.KingdomID `json:"KID"`
+			}
+			if err := json.Unmarshal(step.Command.Payload, &payload); err != nil || payload.CID != 42 || payload.KID != tc.kingdom || step.FinalDispatchAction != "defense.open_gate.guard" {
+				t.Fatalf("target payload=%s guard=%q err=%v", step.Command.Payload, step.FinalDispatchAction, err)
+			}
+		})
 	}
 }
 

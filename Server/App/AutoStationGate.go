@@ -78,8 +78,8 @@ func validateAutoStationGate(s State.GameState, r defenseOpenGateRequest, fallba
 		return stale("incoming attacks were not refreshed for this session")
 	}
 	castle, ok := s.Castles[r.CastleID]
-	if !ok || castle.KingdomID != 0 {
-		return stale("gate protocol is confirmed only for owned primary-kingdom castles")
+	if !ok || castle.KingdomID == 10 {
+		return stale("gate protocol is unavailable for Berimond or a castle outside the current player state")
 	}
 	if castle.Defense.OpenGateUntil != nil && castle.Defense.OpenGateUntil.After(now) {
 		return stale("gates are already open")
