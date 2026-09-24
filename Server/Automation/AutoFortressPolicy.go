@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"CitadelDesktop/Server/AttackCapacity"
-	EquipmentDomain "CitadelDesktop/Server/Equipment"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
@@ -24,7 +23,6 @@ const (
 	autoFortressAttackDialogFreshness   = 30 * time.Second
 	autoFortressUnitFreshness           = 5 * time.Minute
 	autoFortressPurchaseHistoryAge      = 5 * time.Minute
-	autoFortressMaximumSpeedPercent     = 100
 )
 
 type AutoFortressPolicy struct {
@@ -34,17 +32,16 @@ type AutoFortressPolicy struct {
 }
 
 type autoFortressSettings struct {
-	Version                    int                            `json:"version"`
-	CheckIntervalSec           int                            `json:"checkIntervalSec"`
-	MapRefreshIntervalSec      int                            `json:"mapRefreshIntervalSec"`
-	DailyAttackLimit           int64                          `json:"dailyAttackLimit"`
-	HorseTravelBoostID         int                            `json:"horseTravelBoostId"`
-	MinimumCommanderSpeedBonus float64                        `json:"minimumCommanderSpeedBonus"`
-	DirewolfPurchaseLimit      int64                          `json:"direwolfPurchaseLimit"`
-	MinimumTabletReserve       int64                          `json:"minimumTabletReserve"`
-	UseTimeSkips               bool                           `json:"useTimeSkips"`
-	TimeSkipReserve            map[string]int64               `json:"timeSkipReserve"`
-	Kingdoms                   map[string]autoFortressKingdom `json:"kingdoms"`
+	Version               int                            `json:"version"`
+	CheckIntervalSec      int                            `json:"checkIntervalSec"`
+	MapRefreshIntervalSec int                            `json:"mapRefreshIntervalSec"`
+	DailyAttackLimit      int64                          `json:"dailyAttackLimit"`
+	HorseTravelBoostID    int                            `json:"horseTravelBoostId"`
+	DirewolfPurchaseLimit int64                          `json:"direwolfPurchaseLimit"`
+	MinimumTabletReserve  int64                          `json:"minimumTabletReserve"`
+	UseTimeSkips          bool                           `json:"useTimeSkips"`
+	TimeSkipReserve       map[string]int64               `json:"timeSkipReserve"`
+	Kingdoms              map[string]autoFortressKingdom `json:"kingdoms"`
 }
 
 type autoFortressKingdom struct {
@@ -104,13 +101,6 @@ func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot)
 	if _, err := snapshot.GameData.FortressDirewolf(); err != nil {
 		return autoFortressWaiting(snapshot, err.Error(), nil), nil
 	}
-	speedContract, err := snapshot.GameData.FortressRelicSpeed()
-	if err != nil {
-		return autoFortressWaiting(snapshot, err.Error(), nil), nil
-	}
-	if speedContract.RelicMaximumPercent != autoFortressMaximumSpeedPercent {
-		return autoFortressWaiting(snapshot, "Official fortress commander speed contract changed; Auto Fortress is paused", nil), nil
-	}
 	definitionByKingdom := make(map[State.KingdomID]GameData.KingdomFortressDefinition, len(definitions))
 	for _, definition := range definitions {
 		definitionByKingdom[State.KingdomID(definition.KingdomID)] = definition
@@ -119,7 +109,6 @@ func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot)
 	sources := autoFortressSources(snapshot.State, settings, definitionByKingdom)
 	metrics := map[string]float64{
 		"enabledKingdoms": float64(len(sources)), "direwolfPurchaseLimit": float64(settings.DirewolfPurchaseLimit),
-		"minimumCommanderSpeedBonus": settings.MinimumCommanderSpeedBonus,
 	}
 	details := map[string]string{}
 	main, mainFound := autoBuyerSourceCastle(snapshot.State, 0)
@@ -207,19 +196,25 @@ func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot)
 	}
 
 	commanderIDs, restricted := commanderFeatureCandidates(snapshot.State, snapshot.Configuration, "autoFortress")
+	if !restricted {
+		commanderIDs = make([]State.CommanderID, 0, len(snapshot.State.Commanders))
+		for id := range snapshot.State.Commanders {
+			commanderIDs = append(commanderIDs, id)
+		}
+	}
 	var candidate autoFortressTarget
 	var commanderID State.CommanderID
 	var speed float64
 	commanderFound := false
 	for _, nextCandidate := range candidates {
-		commanderID, speed, commanderFound = fastestFortressCommander(snapshot, nextCandidate, commanderIDs, restricted, speedContract)
+		commanderID, speed, commanderFound = fastestFortressCommander(snapshot, nextCandidate, commanderIDs)
 		if commanderFound {
 			candidate = nextCandidate
 			break
 		}
 	}
 	if !commanderFound {
-		decision := autoFortressWaiting(snapshot, "No available assigned commander has Relic 2.0 equipment and the maxed 100% fortress speed bonus", metrics)
+		decision := autoFortressWaiting(snapshot, "No available assigned commander has a resolvable travel speed for this fortress", metrics)
 		decision.Details = details
 		return decision, nil
 	}
@@ -254,8 +249,8 @@ func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot)
 	arguments, _ := json.Marshal(map[string]any{
 		"sourceCastleId": candidate.Source.ID, "kingdomId": candidate.Target.KingdomID,
 		"targetX": candidate.Target.X, "targetY": candidate.Target.Y,
-		"commanderIds": []State.CommanderID{commanderID}, "horseTravelBoostId": settings.HorseTravelBoostID,
-		"dailyAttackLimit": settings.DailyAttackLimit, "minimumCommanderSpeedBonus": settings.MinimumCommanderSpeedBonus,
+		"commanderIds": commanderIDs, "horseTravelBoostId": settings.HorseTravelBoostID,
+		"dailyAttackLimit": settings.DailyAttackLimit,
 	})
 	return Decision{
 		Status: "ready", Detail: fmt.Sprintf("Launch fastest Direwolf wave at fortress %d:%d", candidate.Target.X, candidate.Target.Y),
@@ -267,8 +262,8 @@ func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot)
 func defaultAutoFortressSettings() autoFortressSettings {
 	return autoFortressSettings{
 		Version: 1, CheckIntervalSec: autoFortressDefaultCheckIntervalSec, MapRefreshIntervalSec: autoFortressDefaultMapRefreshSec,
-		HorseTravelBoostID: 1009, MinimumCommanderSpeedBonus: autoFortressMaximumSpeedPercent,
-		TimeSkipReserve: map[string]int64{}, Kingdoms: map[string]autoFortressKingdom{},
+		HorseTravelBoostID: -1,
+		TimeSkipReserve:    map[string]int64{}, Kingdoms: map[string]autoFortressKingdom{},
 	}
 }
 
@@ -287,8 +282,8 @@ func validateAutoFortressSettings(settings autoFortressSettings) string {
 	if invalidTimeSkipReserve(settings.TimeSkipReserve) {
 		return "Auto Fortress time-skip reserves must be non-negative whole numbers"
 	}
-	if !validHorseTravelBoostID(settings.HorseTravelBoostID) || settings.MinimumCommanderSpeedBonus != autoFortressMaximumSpeedPercent {
-		return "Auto Fortress requires the maxed 100% fortress commander speed bonus and a supported travel boost"
+	if !validHorseTravelBoostID(settings.HorseTravelBoostID) {
+		return "Auto Fortress requires a supported travel boost"
 	}
 	return ""
 }
@@ -452,23 +447,14 @@ func fastestFortressCommander(
 	snapshot Snapshot,
 	candidate autoFortressTarget,
 	configured []State.CommanderID,
-	restricted bool,
-	speedContract GameData.FortressRelicSpeedContract,
 ) (State.CommanderID, float64, bool) {
-	if !restricted {
-		configured = make([]State.CommanderID, 0, len(snapshot.State.Commanders))
-		for commanderID := range snapshot.State.Commanders {
-			configured = append(configured, commanderID)
-		}
-	}
 	sort.Slice(configured, func(left, right int) bool { return configured[left] < configured[right] })
 	selected, best := State.CommanderID(0), -1.0
 	found := false
 	for _, commanderID := range configured {
 		commander, exists := snapshot.State.Commanders[commanderID]
-		relicSpeed, hasRelicSpeed := EquipmentDomain.CommanderRelic2EffectTotal(snapshot.State, commanderID, speedContract.RelicEffectID)
 		if !exists || !commander.Available || State.CommanderHasActiveMovementAt(snapshot.State, commanderID, snapshot.Now) ||
-			!hasRelicSpeed || relicSpeed+0.0001 < speedContract.RelicMaximumPercent {
+			State.InvasionCommanderReserved(snapshot.State, commanderID) {
 			continue
 		}
 		result, err := (AttackCapacity.Resolver{}).ResolveTravelSpeed(snapshot.State, snapshot.GameData, AttackCapacity.Request{
@@ -478,7 +464,7 @@ func fastestFortressCommander(
 				Level: candidate.Target.Level, CastleTypeID: candidate.Target.TypeID, PvP: false,
 			},
 		})
-		if err != nil || result.AppliedPercent+0.0001 < speedContract.RelicMaximumPercent {
+		if err != nil {
 			continue
 		}
 		if !found || result.AppliedPercent > best || result.AppliedPercent == best && commanderID < selected {

@@ -61,7 +61,34 @@ func TestAutoFortressPurchaseUsesCheapestDirewolfTierBeforeNextTier(t *testing.T
 	}
 }
 
-func TestAutoFortressPolicyLaunchesOnlyWithMaxedRelicTwoCommander(t *testing.T) {
+func TestAutoFortressTravelBoostDefaultsToFeatherAndPreservesSavedTier(t *testing.T) {
+	if got := defaultAutoFortressSettings().HorseTravelBoostID; got != -1 {
+		t.Fatalf("new Auto Fortress travel boost = %d, want feather -1", got)
+	}
+	for _, tc := range []struct {
+		name string
+		raw  json.RawMessage
+		want int
+	}{
+		{name: "missing", raw: json.RawMessage(`{"version":1}`), want: -1},
+		{name: "feather", raw: json.RawMessage(`{"horseTravelBoostId":-1}`), want: -1},
+		{name: "coins", raw: json.RawMessage(`{"horseTravelBoostId":1007}`), want: 1007},
+		{name: "rubies", raw: json.RawMessage(`{"horseTravelBoostId":1008}`), want: 1008},
+		{name: "courser", raw: json.RawMessage(`{"horseTravelBoostId":1009}`), want: 1009},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			settings := defaultAutoFortressSettings()
+			if err := json.Unmarshal(tc.raw, &settings); err != nil {
+				t.Fatal(err)
+			}
+			if settings.HorseTravelBoostID != tc.want || !validHorseTravelBoostID(settings.HorseTravelBoostID) {
+				t.Fatalf("decoded travel boost = %d, want %d", settings.HorseTravelBoostID, tc.want)
+			}
+		})
+	}
+}
+
+func TestAutoFortressPolicyLaunchesWithOrdinaryCommanderAndLegacyMinimum(t *testing.T) {
 	gameData := autoFortressTestGameData(t)
 	now := time.Now().UTC()
 	gameState := State.NewGameState()
@@ -97,8 +124,69 @@ func TestAutoFortressPolicyLaunchesOnlyWithMaxedRelicTwoCommander(t *testing.T) 
 	item.RarityID = 4
 	gameState.Inventory.Equipment[5001] = item
 	decision, err = NewAutoFortressPolicy().Evaluate(t.Context(), Snapshot{State: gameState, Configuration: configuration, GameData: gameData, Now: now})
-	if err != nil || decision.Request != nil || decision.Status != "waiting" {
-		t.Fatalf("non-Relic-2.0 commander was accepted: %#v err=%v", decision, err)
+	if err != nil || decision.Request == nil || decision.Request.Name != "fortress.attack" {
+		t.Fatalf("ordinary commander with legacy minimum was rejected: %#v err=%v", decision, err)
+	}
+	for _, id := range []State.CommanderID{6, 8} {
+		gameState.Commanders[id] = State.CommanderState{ID: id, Available: true, Equipment: map[string]State.EquipmentInstanceID{"1": State.EquipmentInstanceID(id)}}
+		gameState.Inventory.Equipment[State.EquipmentInstanceID(id)] = State.EquipmentInstance{ID: State.EquipmentInstanceID(id), Effects: State.EquipmentEffects{{DefinitionID: 426, Values: []float64{float64(id * 20)}}}}
+	}
+	configuration.Sections[commanderFeatureSection] = json.RawMessage(`{"version":1,"assignments":{"autoFortress":[5,6]}}`)
+	decision, err = NewAutoFortressPolicy().Evaluate(t.Context(), Snapshot{State: gameState, Configuration: configuration, GameData: gameData, Now: now})
+	if err != nil || decision.Request == nil || decision.Request.Name != "fortress.attack" {
+		t.Fatalf("assigned commander launch = %#v err=%v", decision, err)
+	}
+	var request struct {
+		CommanderIDs []State.CommanderID `json:"commanderIds"`
+	}
+	if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil {
+		t.Fatal(err)
+	}
+	if len(request.CommanderIDs) != 2 || request.CommanderIDs[0] != 5 || request.CommanderIDs[1] != 6 || decision.Metrics["commanderSpeedBonus"] != 120 {
+		t.Fatalf("policy did not pass eligible assignment pool for planner re-rank: ids=%v speed=%.0f", request.CommanderIDs, decision.Metrics["commanderSpeedBonus"])
+	}
+}
+
+func TestAutoFortressFastestCommanderUsesAppliedSpeedAndEligibility(t *testing.T) {
+	now := time.Now().UTC()
+	state := State.NewGameState()
+	source := State.CastleState{ID: 10, KingdomID: 1, SlotType: 12}
+	state.Castles[source.ID] = source
+	for id, effect := range map[State.CommanderID]struct {
+		effect int64
+		amount float64
+	}{
+		5: {2106, 150}, // raw 150, capped at 100
+		6: {426, 110},  // raw 110, applied 110
+		7: {426, 200},  // faster, but unavailable
+		8: {426, 300},  // faster, but not assigned
+		9: {426, 110},  // tie with 6; lower ID wins
+	} {
+		state.Commanders[id] = State.CommanderState{ID: id, Available: id != 7, Equipment: map[string]State.EquipmentInstanceID{"1": State.EquipmentInstanceID(id)}}
+		state.Inventory.Equipment[State.EquipmentInstanceID(id)] = State.EquipmentInstance{ID: State.EquipmentInstanceID(id), Effects: State.EquipmentEffects{{DefinitionID: effect.effect, Values: []float64{effect.amount}}}}
+	}
+	target := State.MapObservation{KingdomID: 1, X: 101, Y: 100, TypeID: State.MapTypeKingdomFortress, Level: 45}
+	snapshot := Snapshot{State: state, GameData: autoFortressTestGameData(t), Now: now}
+	candidate := autoFortressTarget{Source: source, Target: target}
+	assigned := []State.CommanderID{9, 7, 6, 5}
+	selected, speed, found := fastestFortressCommander(snapshot, candidate, assigned)
+	if !found || selected != 6 || speed != 110 {
+		t.Fatalf("fastest assigned parsed speed = %d %.0f %v", selected, speed, found)
+	}
+	state.Commanders[6] = State.CommanderState{ID: 6, Available: false}
+	snapshot.State = state
+	selected, speed, found = fastestFortressCommander(snapshot, candidate, assigned)
+	if !found || selected != 9 || speed != 110 {
+		t.Fatalf("unavailable fastest was selected: %d %.0f %v", selected, speed, found)
+	}
+	selected, speed, found = fastestFortressCommander(Snapshot{State: state, Now: now}, candidate, assigned)
+	if found {
+		t.Fatalf("missing official effect metadata selected commander %d at %.0f", selected, speed)
+	}
+	state.Commanders[10] = State.CommanderState{ID: 10, Available: true}
+	selected, speed, found = fastestFortressCommander(Snapshot{State: state, GameData: autoFortressTestGameData(t), Now: now}, candidate, []State.CommanderID{10})
+	if !found || selected != 10 || speed != 0 {
+		t.Fatalf("zero-speed ordinary commander was rejected: %d %.0f %v", selected, speed, found)
 	}
 }
 

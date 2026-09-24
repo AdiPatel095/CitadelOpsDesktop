@@ -108,9 +108,8 @@ func (store *Store) FortressDirewolf() (FortressUnitDefinition, error) {
 	return FortressUnitDefinition{UnitID: DirewolfUnitID, Type: unitType, Name: name}, nil
 }
 
-// FortressRelicSpeed validates only the Relic 2.0 commander speed contract.
-// Auto Fortress intentionally depends on this contract but not on the
-// separately controlled premium global-effect booster.
+// FortressRelicSpeed validates the Relic 2.0 commander speed contract used by
+// Auto Booster; Auto Fortress ranks all eligible commanders independently.
 func (store *Store) FortressRelicSpeed() (FortressRelicSpeedContract, error) {
 	if store == nil {
 		return FortressRelicSpeedContract{}, fmt.Errorf("official game data is unavailable")
