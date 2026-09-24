@@ -55,9 +55,17 @@ func TestAutoStationDecisionTraceIsBoundedAndPrivate(t *testing.T) {
 	coordinator.traceAutoStationDecision("autoStation", true, decision)
 	coordinator.traceAutoStationDecision("other", true, decision)
 	coordinator.traceAutoStationDecision("autoStation", false, Decision{Status: "gated", Detail: "private lock"}, "safety_lock")
-	if len(recorder.entries) != 6 || !strings.Contains(recorder.entries[4], "intent=defense.open_gate") ||
+	for _, reason := range []string{"troop_gate", "coin_gate", "failure_pause"} {
+		coordinator.traceAutoStationDecision("autoStation", true, Decision{Status: "gated", Detail: "private blocker"}, reason)
+	}
+	if len(recorder.entries) != 9 || !strings.Contains(recorder.entries[4], "intent=defense.open_gate") ||
 		!strings.Contains(recorder.entries[5], "reason=safety_lock") {
 		t.Fatalf("trace transitions = %v", recorder.entries)
+	}
+	for index, reason := range []string{"troop_gate", "coin_gate", "failure_pause"} {
+		if !strings.Contains(recorder.entries[6+index], "reason="+reason) {
+			t.Fatalf("missing %s trace: %v", reason, recorder.entries)
+		}
 	}
 	for _, entry := range recorder.entries {
 		if strings.Contains(entry, "SecretName") || strings.Contains(entry, "private") || strings.Contains(entry, "1,2") {
