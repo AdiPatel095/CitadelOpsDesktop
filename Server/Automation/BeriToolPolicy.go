@@ -58,7 +58,7 @@ func (*BeriToolPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	if snapshot.GameData == nil {
 		return beriToolWaiting(snapshot.Now, "Official game data is unavailable"), nil
 	}
-	castle, found := beriToolCastle(snapshot.State, settings.BeriCastleID)
+	castle, found := beriCastle(snapshot.State)
 	if !found {
 		return beriToolWaiting(snapshot.Now, "Waiting for an owned Berimond camp"), nil
 	}
@@ -157,17 +157,6 @@ func beriConfiguredToolMinimums(configured map[State.UnitID]int64) map[State.Uni
 		}
 	}
 	return result
-}
-
-func beriToolCastle(gameState State.GameState, requested State.CastleID) (State.CastleState, bool) {
-	if requested > 0 {
-		castle, found := gameState.Castles[requested]
-		if !found || castle.KingdomID != State.KingdomID(GameData.BerimondKingdomID) {
-			return State.CastleState{}, false
-		}
-		return castle, true
-	}
-	return beriCastle(gameState)
 }
 
 func beriToolWaiting(now time.Time, detail string) Decision {

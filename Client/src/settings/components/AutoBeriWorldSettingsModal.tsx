@@ -1,13 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, Camera, Castle, Crosshair, FastForward, Hammer, Shield, Swords, Trash2, Users, Zap } from 'lucide-react';
+import { CalendarDays, Camera, Castle, Crosshair, FastForward, Hammer, Shield, Swords, Trash2, Zap } from 'lucide-react';
 import type { BuildingBlueprintDiffResponse, BuildingTargetCaptureMode } from '../../api/Contracts';
 import { CitadelAPI } from '../../api/CitadelClient';
-import { showTroopPicker } from '../../components/TroopPickerModal';
 import { ATTACK_PRESETS_SECTION, parseAttackPresetDocument, summarizeAttackPreset } from '../../attackPresets/AttackPresetTypes';
 import { Notifications } from '../../components/Notifications';
 import { Badge, Button, Input, Select, SettingsModal, SettingsToggleRow } from '../../components/ui';
 import { useCitadelAPI } from '../../api/ApiContext';
-import { useMetadata } from '../../context/MetadataContext';
 import { configurationSection } from '../Configuration';
 import {
 	AUTO_BERI_COIN_ATTACK_TOOLS,
@@ -38,7 +36,6 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 	onOpenFeatureSchedule,
 }) => {
 	const { state, configuration, updateConfiguration, captureBuildingTarget } = useCitadelAPI();
-	const { troops } = useMetadata();
 	const saved = useMemo(
 		() => parseAutoBeriWorldSettings(configurationSection(configuration, 'automation.autoBeriWorld')),
 		[configuration?.sections['automation.autoBeriWorld']],
@@ -66,15 +63,6 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 		: state?.market?.boostersObservedAt
 			? 'No active boi ID 24 booster detected'
 			: 'Waiting for the first authoritative boi booster snapshot';
-	const foodTroopIDs = useMemo(() => Object.entries(troops).flatMap(([rawID, unit]) => {
-		const unitID = Number(rawID);
-		const foodSupply = metadataNumber(unit.foodSupply);
-		const meadSupply = metadataNumber(unit.meadSupply);
-		const beefSupply = metadataNumber(unit.beefSupply);
-		return Number.isInteger(unitID) && unitID > 0 && foodSupply > 0 && meadSupply <= 0 && beefSupply <= 0
-			? [unitID]
-			: [];
-	}), [troops]);
 	const beriCastles = useMemo(() => Object.values(state?.castles ?? {})
 		.filter((castle) => castle.kingdomId === 10)
 		.sort((left, right) => left.id - right.id), [state?.castles]);
@@ -113,8 +101,8 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 	const effectiveSourceID = settings.sourceCastleId || castles.find((castle) => castle.slotType === 1)?.id || 0;
 
 	const updateNumber = (
-		field: 'minTroopsToTransfer' | 'beriCastleId' | 'transferTroopId' | 'sourceCastleId' |
-			'wireCastleId' | 'troopSpaceCheckIntervalSec' | 'attackCheckIntervalSec',
+		field: 'minTroopsToTransfer' | 'sourceCastleId' |
+			'troopSpaceCheckIntervalSec' | 'attackCheckIntervalSec',
 		value: string,
 	) => {
 		setSettings((current) => ({ ...current, [field]: Number.parseInt(value, 10) || 0 }));
@@ -215,17 +203,6 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 		}
 	};
 
-	const pickTroop = async () => {
-		const result = await showTroopPicker({
-			mode: 'single',
-			title: 'Troop type to transfer to Berimond',
-			preselected: foodTroopIDs.includes(settings.transferTroopId) ? [settings.transferTroopId] : [],
-			allowedUnitIds: foodTroopIDs,
-		});
-		if (typeof result === 'number' && result > 0) {
-			setSettings((current) => ({ ...current, transferTroopId: result }));
-		}
-	};
 
 	const save = () => {
 		const normalized = parseAutoBeriWorldSettings({ ...settings, sourceCastleId: effectiveSourceID });
@@ -566,6 +543,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							description="The exact Berimond HBW ID and speed are resolved from the current Faction Stable level. Travel feather remains HBW -1."
 						/>
 					</div>
+					<p className="text-xs text-text-muted">Transfer troop proportions come from this preset; only Food-fed troops are eligible, and donor shortages pause transfers.</p>
 					{presetSummary ? (
 						<div className="flex flex-wrap items-center gap-2 border-t border-border-base pt-3">
 							<span className="mr-1 text-xs text-text-muted">Preset loadout</span>
@@ -644,17 +622,6 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 					</p>
 				</div>
 
-				<div className="space-y-1.5">
-					<label className="text-xs font-bold uppercase tracking-wider text-text-muted">Berimond castle ID</label>
-					<Input
-						type="number"
-						min={0}
-						value={settings.beriCastleId || ''}
-						onChange={(event) => updateNumber('beriCastleId', event.target.value)}
-						placeholder="Auto-detect owned kingdom 10 camp"
-					/>
-					<p className="text-xs text-text-muted">Leave blank to use the owned Berimond camp automatically.</p>
-				</div>
 
 				<div className="grid gap-4 sm:grid-cols-2">
 					<div className="space-y-1.5">
@@ -669,7 +636,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 						/>
 					</div>
 					<div className="space-y-1.5">
-						<label className="text-xs font-bold uppercase tracking-wider text-text-muted">Minimum transfer</label>
+						<label className="text-xs font-bold uppercase tracking-wider text-text-muted">Minimum free capacity</label>
 						<Input
 							type="number"
 							min={1}
@@ -679,16 +646,6 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 					</div>
 				</div>
 
-				<div className="space-y-2">
-					<label className="text-xs font-bold uppercase tracking-wider text-text-muted">Transfer troop</label>
-					<div className="flex gap-2">
-						<Input readOnly value={settings.transferTroopId || ''} placeholder="Official unit ID" />
-						<Button variant="outline" leftIcon={<Users className="h-4 w-4" />} onClick={pickTroop}>Pick unit</Button>
-					</div>
-					<p className="text-xs text-text-muted">
-						Only troops whose official upkeep is Food are eligible. Mead- and Beef-consuming troops are excluded.
-					</p>
-				</div>
 
 				<div className="space-y-1.5">
 					<label className="text-xs font-bold uppercase tracking-wider text-text-muted">Source castle</label>
@@ -700,29 +657,12 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 					/>
 				</div>
 
-				<div className="space-y-1.5">
-					<label className="text-xs font-bold uppercase tracking-wider text-text-muted">kut CID field</label>
-					<Input
-						type="number"
-						value={settings.wireCastleId}
-						onChange={(event) => setSettings((current) => ({
-							...current,
-							wireCastleId: Number.isFinite(Number(event.target.value)) ? Math.trunc(Number(event.target.value)) : -1,
-						}))}
-					/>
-					<p className="text-xs text-text-muted">The game normally expects <span className="font-mono">-1</span>.</p>
-				</div>
 
 				{saveError && <p className="text-xs text-error">{saveError}</p>}
 			</div>
 		</SettingsModal>
 	);
 };
-
-function metadataNumber(value: unknown): number {
-	const parsed = Number(value);
-	return Number.isFinite(parsed) ? parsed : 0;
-}
 
 function formatBoosterRemaining(milliseconds: number): string {
 	const totalMinutes = Math.max(1, Math.ceil(milliseconds / 60_000));
