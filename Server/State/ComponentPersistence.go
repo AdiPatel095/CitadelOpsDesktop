@@ -2013,6 +2013,17 @@ func applyComponentPatch(state *GameState, component Component, patch *Component
 			return err
 		}
 		state.Subscriptions = *patch.Subscriptions
+		if patch.SubscriptionsObservedAt != nil {
+			state.SubscriptionsObservedAt = *patch.SubscriptionsObservedAt
+		}
+		if patch.SubscriptionsGeneration != nil {
+			state.SubscriptionsGeneration = *patch.SubscriptionsGeneration
+		}
+	case ComponentResearch:
+		if err := require(patch.Research); err != nil {
+			return err
+		}
+		state.Research = *patch.Research
 	case ComponentMarket:
 		if err := require(patch.Market); err != nil {
 			return err

@@ -15,9 +15,8 @@ type HospitalPolicy struct{}
 
 const (
 	hospitalLineID = 2
-	// The client allows at least five units per healing slot. Research and
-	// subscription effects can raise that limit, but we do not model them yet.
-	hospitalBaseStackAmount int64 = 5
+	// The intent resolves the exact fresh entitlement before dispatch.
+	hospitalMaximumStackAmount int64 = 15
 )
 
 type hospitalSettings struct {
@@ -114,7 +113,7 @@ func (*HospitalPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 		for _, stack := range wounded {
 			rubyCost, known := recordNumber(snapshot.GameData, "units", int64(stack.unitID), "healingCostC2")
 			intentName := "hospital.heal"
-			amount := hospitalBaseStackAmount
+			amount := hospitalMaximumStackAmount
 			detail := fmt.Sprintf("Heal unit %d at %s", stack.unitID, castleName(castle))
 			if known && rubyCost > 0 {
 				intentName = "hospital.discard"

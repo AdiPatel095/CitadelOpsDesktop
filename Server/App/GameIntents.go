@@ -158,6 +158,12 @@ func (application *Application) registerGameIntents() error {
 	if err := application.Intents.RegisterStepResolver("production.enqueue.alliance_help.build", application.resolveRecruitmentBUPAllianceHelpStep); err != nil {
 		return err
 	}
+	if err := application.Intents.RegisterStepResolver("hospital.heal.build", resolveHospitalHealStep); err != nil {
+		return err
+	}
+	if err := application.Intents.RegisterAction("hospital.heal.guard", application.guardHospitalHealDispatch); err != nil {
+		return err
+	}
 	if err := application.Intents.RegisterAction("production.enqueue.mark_help_covered", application.markRecruitmentBUPAllianceHelpCovered); err != nil {
 		return err
 	}

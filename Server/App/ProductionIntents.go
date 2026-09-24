@@ -441,7 +441,19 @@ func planHospitalOperation(input Intent.PlanningContext, arguments json.RawMessa
 	focusStep.StaleCodes = []int{175}
 	operationStep := commandStep(label, opcode, payload, opcode)
 	operationStep.StaleCodes = []int{175}
-	steps := []Intent.Step{focusStep, operationStep}
+	steps := []Intent.Step{focusStep}
+	if !discard {
+		refreshResearch := commandStep("Refresh completed hospital research", "rei", json.RawMessage(`{}`), "rei")
+		refreshResearch.ResponseBarrier = Intent.ResponseBarrierCommitted
+		refreshSubscriptions := commandStep("Refresh hospital subscription", "sie", json.RawMessage(`{}`), "sie")
+		refreshSubscriptions.ResponseBarrier = Intent.ResponseBarrierCommitted
+		steps = append(steps, refreshResearch, refreshSubscriptions)
+		operationStep = Intent.Step{
+			Name: label, Resolver: "hospital.heal.build", ResolverArguments: arguments,
+			AwaitOpcode: "hru", TimeoutMillis: 10_000, SuccessCodes: []int{0}, StaleCodes: []int{175},
+		}
+	}
+	steps = append(steps, operationStep)
 	return Intent.Plan{
 		Claims: []string{
 			"castle-focus", "castle:" + strconv.FormatInt(int64(castle.ID), 10),
