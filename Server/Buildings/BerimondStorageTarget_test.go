@@ -68,8 +68,9 @@ func TestBerimondExpansionFootprintRejectsPartialAndCompleteOverlap(t *testing.T
 		t.Fatal("16-piece partial overlap accepted")
 	}
 	valid := TargetGround{DefinitionID: 201, GridX: 300, GridY: 300, Direction: 1}
+	castle.Layout.Fixed = map[State.BuildingInstanceID]State.Building{101: {InstanceID: 101, DefinitionID: 235, Placed: true}}
 	if err := ValidateExpansionFootprint(castle, valid, catalog); err != nil {
-		t.Fatalf("nonoverlapping expansion: %v", err)
+		t.Fatalf("nonoverlapping expansion with non-grid fixed slot: %v", err)
 	}
 	castle.Layout.Ground[99] = State.Building{InstanceID: 99, DefinitionID: 201, GridX: 300, GridY: 300, Rotation: 1, Placed: true}
 	if err := ValidateExpansionFootprint(castle, valid, catalog); err == nil {

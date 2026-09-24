@@ -124,8 +124,9 @@ type buildingVerification struct {
 
 func (application *Application) registerBuildingIntents() error {
 	for name, action := range map[string]Intent.Action{
-		"building.skip_time.guard":   application.guardBuildingTimeSkip,
-		"building.finish_free.guard": application.guardBuildingFinishFree,
+		"building.skip_time.guard":        application.guardBuildingTimeSkip,
+		"building.finish_free.guard":      application.guardBuildingFinishFree,
+		"building.expand.footprint.guard": application.guardBuildingExpansionFootprint,
 	} {
 		if err := application.Intents.RegisterAction(name, action); err != nil {
 			return err
@@ -278,7 +279,44 @@ func resolveBuildingExpansionStep(_ context.Context, input Intent.PlanningContex
 		Direction   int `json:"R"`
 		PaymentType int `json:"CT"`
 	}{request.X, request.Y, request.Direction, paymentType})
-	return buildingMutationStep("Buy castle expansion", "ebe", payload), nil
+	step := buildingMutationStep("Buy castle expansion", "ebe", payload)
+	if request.ExpectedGroundDefinitionID != 0 {
+		step.FinalDispatchAction = "building.expand.footprint.guard"
+		step.FinalDispatchArguments = append(json.RawMessage(nil), arguments...)
+	}
+	return step, nil
+}
+
+func (application *Application) guardBuildingExpansionFootprint(_ context.Context, arguments json.RawMessage) error {
+	input, err := application.buildingTimingGuardInput()
+	if err != nil {
+		return err
+	}
+	return validateFinalBuildingExpansionFootprint(input, arguments)
+}
+
+func validateFinalBuildingExpansionFootprint(input Intent.PlanningContext, arguments json.RawMessage) error {
+	var request buildingExpansionIntentRequest
+	if err := decodeIntentArguments(arguments, &request); err != nil {
+		return fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
+	}
+	if request.ExpectedGroundDefinitionID == 0 || input.GameData == nil {
+		return fmt.Errorf("%w: Berimond expansion geometry is unavailable", Intent.ErrPlanStale)
+	}
+	castle, err := buildingCastle(input.State, request.CastleID)
+	if err != nil {
+		return fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
+	}
+	catalog, err := input.GameData.BuildingCatalog()
+	if err != nil {
+		return fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
+	}
+	if err := Buildings.ValidateExpansionFootprint(castle, Buildings.TargetGround{
+		DefinitionID: request.ExpectedGroundDefinitionID, GridX: request.X, GridY: request.Y, Direction: request.Direction,
+	}, catalog); err != nil {
+		return fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
+	}
+	return nil
 }
 
 func planBuildingCollectExpansionGift(_ context.Context, input Intent.PlanningContext, arguments json.RawMessage) (Intent.Plan, error) {

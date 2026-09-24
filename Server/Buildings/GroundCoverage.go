@@ -25,7 +25,7 @@ func ValidateExpansionFootprint(castle State.CastleState, candidate TargetGround
 	for _, cell := range footprintCells(Placement{GridX: candidate.GridX, GridY: candidate.GridY, Width: w, Height: h}) {
 		cells[cell] = true
 	}
-	for _, layer := range []map[State.BuildingInstanceID]State.Building{castle.Layout.Ground, castle.Layout.Objects, castle.Layout.Fixed} {
+	for _, layer := range []map[State.BuildingInstanceID]State.Building{castle.Layout.Ground, castle.Layout.Objects} {
 		for _, building := range layer {
 			if !building.Placed {
 				continue
