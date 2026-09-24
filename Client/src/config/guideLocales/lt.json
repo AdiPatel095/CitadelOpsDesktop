@@ -1,0 +1,315 @@
+{
+  "ui": {
+    "guideButton": "Vadovas",
+    "calendarButton": "Kalendorius",
+    "recommendedLabel": "Rekomenduojama",
+    "backToSettings": "Grįžti į nustatymus",
+    "backToGuide": "Grįžti į vadovą",
+    "howToSetUp": "Kaip nustatyti",
+    "whatToExpect": "Ko tikėtis",
+    "openFullSizePicture": "Atidaryti viso dydžio paveikslėlį",
+    "illustrativeExample": "Iliustracinis pavyzdys",
+    "enlargePicture": "Padidinti pavyzdžio paveikslėlį",
+    "fullSizePicture": "Viso dydžio pavyzdžio paveikslėlis; slinkite, kad matytumėte visus nustatymus",
+    "towerGuideTitle": "Automatinės bokštų atakos · vadovas",
+    "birdGuideTitle": "Automatinis karių slėpimas · vadovas",
+    "towerGuideIntro": "Atlikite šiuos veiksmus, kad nustatytumėte automatinius bokštus; pasirinkite pavyzdžio paveikslėlį jam padidinti.",
+    "birdGuideIntro": "Atlikite šiuos veiksmus, kad nustatytumėte automatinį karių slėpimą; pasirinkite pavyzdžio paveikslėlį jam padidinti.",
+    "towerPreviewTitle": "Automatinės bokštų atakos · nustatymo pavyzdys",
+    "birdPreviewTitle": "Automatinis karių slėpimas · nustatymo pavyzdys"
+  },
+  "autoTower": {
+    "recommendationIntro": "Tai rekomendacijos įprastam naudojimui; peržiūrėkite jas prieš išsaugodami.",
+    "steps": {
+      "commanders": {
+        "title": "Pasirinkite vadus",
+        "items": {
+          "commander_assignment": {
+            "label": "Vadų priskyrimas",
+            "description": "Vadų skiltyje leiskite automatinius bokštus norimiems vadams ir pasirinkite Išsaugoti priskyrimus.",
+            "recommendation": "Automatiniams bokštams priskirkite 20 vadų."
+          }
+        }
+      },
+      "general": {
+        "title": "Nustatykite skenavimą, dienos ribas ir kelionę",
+        "items": {
+          "open_settings": {
+            "label": "Atidarykite nustatymus",
+            "description": "Atidarykite Automatizavimą, tada pasirinkite nustatymų mygtuką automatinių bokštų kortelėje."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Patikimo žemėlapio skenavimas · Kas",
+            "description": "Pasirinkite, kaip dažnai atnaujinti kiekvienos pilies bokštų sąrašą, nuo 1800 iki 3600 sekundžių; atakos gali prasidėti tarp skenavimų.",
+            "recommendation": "1800 sekundžių (30 minučių)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Įprastų atakų dienos riba",
+            "description": "Pasiekus visos paskyros dienos atakų ribą, sustabdoma, kol žaidimas ją atstato; 0 ribą panaikina.",
+            "recommendation": "3500 atakų per dieną visoje paskyroje."
+          },
+          "horse_travel_boost": {
+            "label": "Kelionės žirgu pagreitinimas",
+            "description": "Kiekvienai atakai, įskaitant kiekvieną Patarėjo grandinės smūgį, naudoja pasirinktą kelionės būdą; greitis priklauso nuo išvykimo pilies kelionės pastatų.",
+            "recommendation": "Monetų lygis, kur jis palaikomas, turint pakankamai monetų."
+          },
+          "travel_feather": {
+            "label": "Kelionės plunksna",
+            "description": "Naudoja kelionės plunksną, o ne žirgo lygį už monetas ar rubinus."
+          },
+          "horse_ship_tier_coins": {
+            "label": "Žirgo / laivo lygis · monetos",
+            "description": "Monetų kelionės lygiui išleidžia monetas."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Karo žirgo / greito laivo lygis · rubinai",
+            "description": "Pasirinkus išleidžia rubinus pirmajam kelionės už rubinus lygiui."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Greituolio / greičiausio laivo lygis · rubinai",
+            "description": "Pasirinkus išleidžia rubinus greitesniam kelionės už rubinus lygiui."
+          }
+        },
+        "image": {
+          "alt": "Bendrieji automatinių bokštų nustatymai su išgalvotais Sintetinės pilies duomenimis",
+          "caption": "Nustatykite skenavimo intervalą, dienos atakų ribą ir kelionės būdą; Patarėjo valdikliai rodomi, kai pasiekiami."
+        }
+      },
+      "castle": {
+        "title": "Nustatykite kiekvieną pilį",
+        "items": {
+          "castle_switch": {
+            "label": "Pilies jungiklis",
+            "description": "Įjunkite kiekvieną pilį, iš kurios automatiniai bokštai turi skenuoti ir pulti.",
+            "recommendation": "Įjunkite pilis, kurias norite naudoti reguliariai."
+          },
+          "radius": {
+            "label": "Spindulys",
+            "description": "Pasirinkite paieškos atstumą aplink pilį nuo 1 iki 50 langelių.",
+            "recommendation": "35 langeliai."
+          },
+          "choose_troop": {
+            "label": "Pasirinkite karius",
+            "description": "Pasirinkite pilyje esančių karių rūšį abiem atakos sparnams užpildyti; jei karių per mažai, atakos laukia.",
+            "recommendation": "Pilyje esantys puolimo kariai, kurių pakanka abiem sparnams."
+          },
+          "maiden_supported_only": {
+            "label": "Tik su Mergelės parama",
+            "description": "Apriboja šią pilį iki pasiekiamų vadų su palaikoma Mergelės relikvija.",
+            "recommendation": "Išjungta, nebent pasirinktas vadas turi palaikomą Mergelės relikviją."
+          }
+        },
+        "image": {
+          "alt": "Automatinių bokštų pilies nustatymai su išgalvotais Sintetinės pilies duomenimis",
+          "caption": "Įjunkite pilį ir pasirinkite jos spindulį, karius bei Mergelės sąlygą."
+        }
+      },
+      "advisor": {
+        "title": "Jei norite, naudokite Patarėją · kai pasiekiamas",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Naudoti Patarėją su laiko praleidimais",
+            "description": "Kartoja smūgius vienam bokštui: pirmiausia sunaudoja vieną dienos ataką, o kiekvienam papildomam smūgiui – vieną bent trijų valandų laiko praleidimą.",
+            "recommendation": "Išjungta."
+          },
+          "auto_activate_with_token": {
+            "label": "Automatiškai aktyvinti žetonu",
+            "description": "Kai Patarėjas neaktyvus, naudoja turimą Barono Patarėjo žetoną, nepirkdamas žetono ir neleisdamas rubinų.",
+            "recommendation": "Išjungta, kol Patarėjas išjungtas."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Didžiausias dienos laiko praleidimų skaičius",
+            "description": "Riboja patvirtintų Patarėjo grandinių naudojamus laiko praleidimus, kol žaidimas atstato dienos atakų skaitiklį; 0 sustabdo Patarėjo atakų paleidimą.",
+            "recommendation": "0, kol Patarėjas išjungtas."
+          }
+        }
+      },
+      "finish": {
+        "title": "Nustatykite tvarkaraštį, išsaugokite ir įjunkite",
+        "items": {
+          "calendar": {
+            "label": "Kalendorius",
+            "description": "Kalendoriuje pasirinkite, kada automatiniai bokštai gali veikti; karių prieinamumas ir kiti apribojimai tebegalioja.",
+            "recommendation": "Jūsų įprastos veikimo valandos."
+          },
+          "save_changes": {
+            "label": "Išsaugoti pakeitimus",
+            "description": "Pasirinkite Išsaugoti pakeitimus, kad pritaikytumėte nustatymus; šio vadovo skaitymas jų neišsaugo."
+          },
+          "auto_towers_switch": {
+            "label": "Automatinės bokštų atakos · jungiklis",
+            "description": "Išsaugoję nustatymus Automatizavimo puslapyje įjunkite automatinius bokštus, kad užduotis galėtų veikti.",
+            "recommendation": "Įjungta po norimų nustatymų išsaugojimo."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatinės bokštų atakos",
+      "summary": "Kartotinės atakos prieš netoliese esančius bokštus",
+      "description": "Siunčia atakas prieš plėšikų baronų ir karalysčių bokštus iš pasirinktų pilių.",
+      "expectation": "Reikia pakankamai karių, laisvo vado ir atakai parengto bokšto. Gali tekti laukti karių sugrįžimo arba bokšto laikmačio pabaigos."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "Rekomenduojamos vertės apibūdina įprastą automatinio karių slėpimo naudojimą; tai patarimai, nekeičiantys išsaugotų nustatymų.",
+    "steps": {
+      "open": {
+        "title": "Atidarykite automatinio karių slėpimo nustatymus",
+        "items": {
+          "open_settings": {
+            "label": "Atidarykite nustatymus",
+            "description": "Komandų centro viršuje pasirinkite nustatymų mygtuką šalia automatinio karių slėpimo."
+          }
+        }
+      },
+      "general": {
+        "title": "Nustatykite įgulos laiką ir siuntimo taisykles",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Atsitiktinės delsos intervalas · Minimumas",
+            "description": "Nustatykite trumpiausią valandų skaičių, kurį kariai liks sąjungos vietoje pasibaigus kelionei.",
+            "recommendation": "6 valandos sąjungos tiksle po atvykimo."
+          },
+          "random_delay_range_max": {
+            "label": "Atsitiktinės delsos intervalas · Maksimumas",
+            "description": "Nustatykite ilgiausią buvimo vietoje trukmę; automatinis karių slėpimas atsitiktinai parenka laiką tarp minimumo ir maksimumo.",
+            "recommendation": "12 valandų sąjungos tiksle po atvykimo."
+          },
+          "minimum_to_send": {
+            "label": "Mažiausias siunčiamas kiekis",
+            "description": "Nustatykite mažiausią tinkamų karių bendrą skaičių, kuris turi likti atskaičius pilies rezervus; tai slenkstis, o ne tikslus siunčiamų karių skaičius.",
+            "recommendation": "Iš viso 1000 tinkamų karių po pilies rezervų atidėjimo; tai slenkstis, ne tikslus siuntos dydis."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "Mažiausias RPT (likęs apsaugos laikas)",
+            "description": "Naudokite taikinius, kuriems liko daugiau apsaugos dienų nei ši vertė; 0 patikrą pašalina.",
+            "recommendation": "3 dienos; taikiniui turi likti daugiau kaip 3 apsaugos dienos."
+          }
+        },
+        "image": {
+          "alt": "Automatinio karių slėpimo įgulos delsa, mažiausias siunčiamas kiekis, mažiausias RPT ir išankstinių rinkinių valdikliai",
+          "caption": "Nustatykite buvimo laiką ir tinkamumo sąlygas, tada prieš išsaugodami peržiūrėkite Kasdienio rezervo rinkinį."
+        }
+      },
+      "reserves": {
+        "title": "Pasirinkite kiekvienoje pilyje paliekamus karius",
+        "items": {
+          "add_unit": {
+            "label": "Pridėti dalinį",
+            "description": "Kiekvienai piliai pasirinkite karių rūšis, kurias laikysite namuose, o ne siųsite; tuščias rezervas palieka visus tinkamus karius po automatinių rezervų.",
+            "recommendation": "Pasirinkite karių rūšis, kurių kiekvienai piliai reikia gynybai ar kitoms įprastoms užduotims."
+          },
+          "quantity": {
+            "label": "Kiekis",
+            "description": "Nurodykite teigiamą kiekvienos pasirinktos karių rūšies skaičių, kuris liks pilyje; 0 nerezervuoja visos rūšies.",
+            "recommendation": "Palikite pilyje tiek kiekvienos rūšies karių, kiek reikia gynybai ar kitoms užduotims; patikrinkite tikrąjį karių skaičių."
+          },
+          "remove_unit": {
+            "label": "Pašalinti dalinį",
+            "description": "Pašalinkite dalinio plytelę, kad pasirinktoje pilyje ši rūšis nebebūtų rezervuojama."
+          },
+          "auto_fortress_reserve": {
+            "label": "Tvirtovių automatizavimas · rezervas",
+            "description": "Kai automatinė tvirtovė čia užrakina visus baisiuosius vilkus, šis automatinis rezervas neišsaugomas automatinio karių slėpimo rinkiniuose; pasibaigus užraktui, grįžta anksčiau rankiniu būdu nustatytas baisiųjų vilkų kiekis."
+          }
+        },
+        "image": {
+          "alt": "Automatinio karių slėpimo rezervo plytelės išgalvotai Pavyzdinei piliai",
+          "caption": "Rezervuokite tik šiai piliai reikalingus dalinius; Dalinys 101 ir Dalinys 102 yra išgalvoti karių pavadinimai."
+        }
+      },
+      "presets": {
+        "title": "Išsaugokite ir pasirinkite rinkinį",
+        "items": {
+          "preset_name": {
+            "label": "Rinkinio pavadinimas",
+            "description": "Įveskite naujo rinkinio pavadinimą arba prieš išsaugodami pakeitimus redaguokite pritaikyto rinkinio pavadinimą.",
+            "recommendation": "Naudokite atpažįstamą pavadinimą, pvz., Kasdienis."
+          },
+          "load_preset": {
+            "label": "Įkelti rinkinį",
+            "description": "Pasirinkite išsaugotą rinkinį iš sąrašo arba Išsaugotą konfigūraciją, jei norite naudoti nustatymus be pavadinto rinkinio.",
+            "recommendation": "Numatytajam veikimui naudokite norimą kasdienį rinkinį: pasirinkite jį, spauskite Pritaikyti, tada Išsaugoti pakeitimus."
+          },
+          "apply": {
+            "label": "Pritaikyti",
+            "description": "Įkelkite pasirinktą rinkinį į šį nustatymų juodraštį; pasirinkite Išsaugoti pakeitimus, kad jis taptų numatytuoju veikimo rinkiniu."
+          },
+          "save_as_new": {
+            "label": "Išsaugoti kaip naują",
+            "description": "Iškart išsaugo dabartinius nustatymus kaip naują pavadintą rinkinį ir parenka jį numatytuoju veikimui."
+          },
+          "delete": {
+            "label": "Ištrinti",
+            "description": "Patvirtinus iškart ištrina pasirinktą rinkinį ir panaikina numatytąjį veikimo rinkinį, jei jis buvo pasirinktas."
+          },
+          "runtime_default": {
+            "label": "Numatytasis veikimo rinkinys",
+            "description": "Numatytasis veikimo rinkinys yra išsaugotas aktyvus rinkinys arba išsaugota konfigūracija, jei nėra aktyvaus rinkinio."
+          }
+        }
+      },
+      "finish": {
+        "title": "Nustatykite tvarkaraštį, išsaugokite ir aktyvinkite",
+        "items": {
+          "calendar": {
+            "label": "Kalendorius",
+            "description": "Pasirinkite, kada gali veikti automatinis karių slėpimas, ir pasirinkite Išsaugoti tvarkaraštį pakeitimams išsaugoti.",
+            "recommendation": "Nuolatiniam veikimui palikite tvarkaraštį išjungtą arba nustatykite įprastas savaitės valandas ir išsaugokite tvarkaraštį."
+          },
+          "specify_preset_per_period": {
+            "label": "Nurodyti rinkinį kiekvienam laikotarpiui",
+            "description": "Pasirinkite išsaugotą rinkinį kalendoriaus laikotarpiui, jei tuo metu jis turi pakeisti numatytąjį veikimo rinkinį.",
+            "recommendation": "Išjungta, nebent skirtingiems laikotarpiams reikia skirtingų rezervų."
+          },
+          "save_changes": {
+            "label": "Išsaugoti pakeitimus",
+            "description": "Išsaugokite nustatymų juodraštį ir visus pritaikyto rinkinio pakeitimus; šio vadovo skaitymas jų neišsaugo."
+          },
+          "auto_bird_switch": {
+            "label": "Automatinis karių slėpimas · jungiklis",
+            "description": "Išsaugoję komandų centro viršuje įjunkite automatinį karių slėpimą, kad vyktų įprasti pilių ciklai.",
+            "recommendation": "Išsaugoję įjunkite automatinį karių slėpimą; antraštės būsena rodo kiekvienos pilies ciklą."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatinis karių slėpimas",
+      "summary": "Laikykite pasirinktus karius svetur pagal tvarkaraštį",
+      "description": "Reguliariai dislokuoja perteklinius karius tinkamose sąjungos pilyse ir jiems sugrįžus kartoja ciklą.",
+      "expectation": "Laukia, jei nėra tinkamos vietos ar laisvų karių siuntimui. Karių išsiuntimas nepadaro pilies nepažeidžiamos."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "Bendrieji nustatymai",
+      "scan": "Skenavimo intervalas: 1800 sekundžių",
+      "daily": "Dienos atakų riba: 3500",
+      "travel": "Kelionės pagreitinimas: monetų lygis",
+      "advisor": "Patarėjas: išjungtas"
+    },
+    "towerCastle": {
+      "title": "Pavyzdinė pilis",
+      "enabled": "Automatinės bokštų atakos · įjungti",
+      "radius": "Spindulys: 35 langeliai",
+      "troop": "Pasirinkti kariai: išgalvotas puolimo dalinys",
+      "maiden": "Tik su Mergelės parama: išjungta"
+    },
+    "birdGeneral": {
+      "title": "Bendrieji nustatymai",
+      "min": "Trumpiausias buvimas: 6 valandos",
+      "max": "Ilgiausias buvimas: 12 valandų",
+      "send": "Mažiausias tinkamų karių skaičius po rezervų: 1000 karių",
+      "rpt": "Mažiausia likusi apsauga: daugiau kaip 3 dienos",
+      "preset": "Rinkinys: Kasdienis rezervas"
+    },
+    "birdCastle": {
+      "title": "Pavyzdinė pilis",
+      "unitOne": "Išgalvotas Dalinys 101 rezerve: 80",
+      "unitTwo": "Išgalvotas Dalinys 102 rezerve: 40",
+      "add": "Pridėti dalinį"
+    }
+  }
+}

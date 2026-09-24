@@ -1,0 +1,315 @@
+{
+  "ui": {
+    "guideButton": "Przewodnik",
+    "calendarButton": "Kalendarz",
+    "recommendedLabel": "Zalecane",
+    "backToSettings": "Wróć do ustawień",
+    "backToGuide": "Wróć do przewodnika",
+    "howToSetUp": "Jak to skonfigurować",
+    "whatToExpect": "Czego się spodziewać",
+    "openFullSizePicture": "Otwórz obraz w pełnym rozmiarze",
+    "illustrativeExample": "Przykład poglądowy",
+    "enlargePicture": "Powiększ obraz przykładowy",
+    "fullSizePicture": "Obraz przykładowy w pełnym rozmiarze; przewiń, aby zobaczyć wszystkie ustawienia",
+    "towerGuideTitle": "Przewodnik po Automatycznych atakach na wieże",
+    "birdGuideTitle": "Przewodnik po Automatycznym ukrywaniu wojsk",
+    "towerGuideIntro": "Wykonaj te kroki, aby skonfigurować Automatyczne ataki na wieże; wybierz obraz przykładowy, aby go powiększyć.",
+    "birdGuideIntro": "Wykonaj te kroki, aby skonfigurować Automatyczne ukrywanie wojsk; wybierz obraz przykładowy, aby go powiększyć.",
+    "towerPreviewTitle": "Przykład konfiguracji Automatycznych ataków na wieże",
+    "birdPreviewTitle": "Przykład konfiguracji Automatycznego ukrywania wojsk"
+  },
+  "autoTower": {
+    "recommendationIntro": "Te zalecenia dotyczą regularnego korzystania; sprawdź je przed zapisaniem.",
+    "steps": {
+      "commanders": {
+        "title": "Wybierz dowódców",
+        "items": {
+          "commander_assignment": {
+            "label": "Przypisanie dowódców",
+            "description": "W sekcji Dowódcy zezwól na Automatyczne ataki na wieże wybranym dowódcom, a następnie wybierz Zapisz przypisania.",
+            "recommendation": "20 dowódców przypisanych do Automatycznych ataków na wieże."
+          }
+        }
+      },
+      "general": {
+        "title": "Ustaw skanowanie, dzienne limity i podróż",
+        "items": {
+          "open_settings": {
+            "label": "Otwórz ustawienia",
+            "description": "Otwórz Automatyzację, a następnie wybierz przycisk ustawień na karcie Automatyczne ataki na wieże."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Skanowanie wiarygodnej mapy · Co ile",
+            "description": "Wybierz częstotliwość odświeżania listy wież każdego zamku, od 1800 do 3600 sekund; ataki mogą wyruszać między skanami.",
+            "recommendation": "1800 sekund (30 minut)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Dzienny limit zwykłych ataków",
+            "description": "Wstrzymuje działanie po osiągnięciu dziennego limitu ataków dla całego konta, aż gra go zresetuje; 0 usuwa limit.",
+            "recommendation": "3500 ataków dziennie dla całego konta."
+          },
+          "horse_travel_boost": {
+            "label": "Przyspieszenie podróży konnej",
+            "description": "Używa wybranej opcji podróży dla każdego ataku, także każdego uderzenia w serii doradcy; prędkość zależy od budynków podróżnych zamku początkowego.",
+            "recommendation": "Poziom za monety, jeśli dostępny i masz dość monet."
+          },
+          "travel_feather": {
+            "label": "Pióro podróżne",
+            "description": "Używa pióra podróżnego zamiast poziomu konia za monety lub rubiny."
+          },
+          "horse_ship_tier_coins": {
+            "label": "Koń / statek · monety",
+            "description": "Wydaje monety na poziom podróży za monety."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Koń bojowy / szybki statek · rubiny",
+            "description": "Po wybraniu wydaje rubiny na pierwszy poziom podróży za rubiny."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Rumak / najszybszy statek · rubiny",
+            "description": "Po wybraniu wydaje rubiny na szybszy poziom podróży za rubiny."
+          }
+        },
+        "image": {
+          "alt": "Ogólne ustawienia Automatycznych ataków na wieże z fikcyjnymi danymi zamku Synthetic Castle",
+          "caption": "Ustaw odstęp skanowania, dzienny limit ataków i opcję podróży; elementy doradcy pojawią się, jeśli są dostępne."
+        }
+      },
+      "castle": {
+        "title": "Skonfiguruj każdy zamek",
+        "items": {
+          "castle_switch": {
+            "label": "Przełącznik zamku",
+            "description": "Włącz każdy zamek, z którego Automatyczne ataki na wieże mają skanować i atakować.",
+            "recommendation": "Włącz zamki, których chcesz regularnie używać."
+          },
+          "radius": {
+            "label": "Promień",
+            "description": "Wybierz zasięg poszukiwania wokół zamku, od 1 do 50 pól.",
+            "recommendation": "35 pól."
+          },
+          "choose_troop": {
+            "label": "Wybierz wojsko",
+            "description": "Wybierz stacjonujące wojsko, które wypełni oba skrzydła ataku; ataki czekają, jeśli jednostek jest za mało.",
+            "recommendation": "Stacjonujące wojsko ofensywne z wystarczającą liczbą jednostek na oba skrzydła."
+          },
+          "maiden_supported_only": {
+            "label": "Tylko z relikwią dziewicy",
+            "description": "Ogranicza ten zamek do dostępnych dowódców z obsługiwaną relikwią dziewicy.",
+            "recommendation": "Wyłączone, chyba że wybrany dowódca ma obsługiwaną relikwię dziewicy."
+          }
+        },
+        "image": {
+          "alt": "Ustawienia zamku Automatycznych ataków na wieże z fikcyjnymi danymi Synthetic Castle",
+          "caption": "Włącz zamek i wybierz jego promień, wojsko oraz wymaganie relikwii dziewicy."
+        }
+      },
+      "advisor": {
+        "title": "Użyj doradcy, jeśli chcesz · gdy dostępny",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Użyj doradcy ze skrótami czasu",
+            "description": "Powtarza uderzenia w jedną wieżę: najpierw używa jednego dziennego ataku, a potem jednego skrótu czasu o co najmniej trzy godziny na każde dodatkowe uderzenie.",
+            "recommendation": "Wyłączone."
+          },
+          "auto_activate_with_token": {
+            "label": "Aktywuj automatycznie żetonem",
+            "description": "Używa dostępnego żetonu doradcy baronów, gdy doradca jest nieaktywny, bez kupowania żetonu ani wydawania rubinów.",
+            "recommendation": "Wyłączone, gdy doradca jest wyłączony."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Maksymalna dzienna liczba skrótów czasu",
+            "description": "Ogranicza skróty czasu używane przez potwierdzone serie doradcy do zresetowania dziennego licznika ataków gry; 0 wstrzymuje ataki doradcy.",
+            "recommendation": "0, gdy doradca jest wyłączony."
+          }
+        }
+      },
+      "finish": {
+        "title": "Ustaw harmonogram, zapisz i włącz",
+        "items": {
+          "calendar": {
+            "label": "Kalendarz",
+            "description": "Użyj kalendarza, aby wybrać, kiedy Automatyczne ataki na wieże mogą działać; dostępność wojsk i inne limity nadal obowiązują.",
+            "recommendation": "Twoje zwykłe godziny działania."
+          },
+          "save_changes": {
+            "label": "Zapisz zmiany",
+            "description": "Wybierz Zapisz zmiany, aby zastosować ustawienia; samo czytanie tego przewodnika ich nie zapisuje."
+          },
+          "auto_towers_switch": {
+            "label": "Przełącznik Automatycznych ataków na wieże",
+            "description": "Włącz Automatyczne ataki na wieże na stronie Automatyzacja po zapisaniu ustawień, aby zadanie mogło działać.",
+            "recommendation": "Włączone po zapisaniu wybranych ustawień."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatyczne ataki na wieże",
+      "summary": "Powtarzaj ataki na pobliskie wieże",
+      "description": "Wysyła ataki na wieże baronów rozbójników i królestw z wybranych zamków.",
+      "expectation": "Potrzebuje wystarczającej liczby wojsk, dostępnego dowódcy i wieży gotowej do ataku. Może czekać na powrót wojsk lub upływ czasu na wieży."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "Zalecane wartości opisują regularne używanie Automatycznego ukrywania wojsk; są wskazówką i nie zmieniają zapisanych ustawień.",
+    "steps": {
+      "open": {
+        "title": "Otwórz ustawienia Automatycznego ukrywania wojsk",
+        "items": {
+          "open_settings": {
+            "label": "Otwórz ustawienia",
+            "description": "U góry centrum dowodzenia wybierz przycisk ustawień obok Automatycznego ukrywania wojsk."
+          }
+        }
+      },
+      "general": {
+        "title": "Ustaw czas stacjonowania i zasady wysyłania",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Losowy zakres czasu · Min",
+            "description": "Ustaw minimalną liczbę godzin, przez które wojska zostaną u celu sojuszu po zakończeniu podróży.",
+            "recommendation": "6 godzin stacjonowania u celu sojuszu po przybyciu."
+          },
+          "random_delay_range_max": {
+            "label": "Losowy zakres czasu · Maks",
+            "description": "Ustaw najdłuższy pobyt u celu; Automatyczne ukrywanie wojsk losuje czas między Min i Maks.",
+            "recommendation": "12 godzin stacjonowania u celu sojuszu po przybyciu."
+          },
+          "minimum_to_send": {
+            "label": "Minimalna liczba do wysłania",
+            "description": "Ustaw minimalną łączną liczbę kwalifikujących się wojsk po pozostawieniu rezerw w zamku; to próg, a nie dokładna liczba wysyłanych wojsk.",
+            "recommendation": "Łącznie 1000 kwalifikujących się wojsk po pozostawieniu rezerw w zamku; to próg, a nie dokładna wielkość wysyłki."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "Minimalny RPT (pozostały czas ochrony)",
+            "description": "Używaj celów z ochroną dłuższą niż podana liczba dni; 0 wyłącza sprawdzanie.",
+            "recommendation": "3 dni; cel musi mieć ściśle więcej niż 3 dni pozostałej ochrony."
+          }
+        },
+        "image": {
+          "alt": "Ustawienia czasu stacjonowania, minimum wysyłki, minimalnego RPT i zestawów Automatycznego ukrywania wojsk",
+          "caption": "Ustaw czas stacjonowania i kwalifikację, a przed zapisaniem sprawdź zestaw rezerw Codzienny."
+        }
+      },
+      "reserves": {
+        "title": "Wybierz wojska pozostające w każdym zamku",
+        "items": {
+          "add_unit": {
+            "label": "Dodaj jednostkę",
+            "description": "Dla każdego zamku wybierz typy wojsk, które mają zostać na miejscu zamiast być wysłane; pusta rezerwa ręczna pozostawia wszystkie kwalifikujące się wojska dostępne po rezerwach automatycznych.",
+            "recommendation": "Wybierz typy wojsk potrzebne zamkowi do obrony lub innych regularnych zadań."
+          },
+          "quantity": {
+            "label": "Liczba",
+            "description": "Ustaw dodatnią liczbę każdego wybranego typu wojsk, które mają pozostać w zamku; 0 nie rezerwuje całego typu.",
+            "recommendation": "Pozostaw w zamku liczbę wojsk każdego typu potrzebną do obrony lub innych zadań; sprawdź rzeczywiste stany."
+          },
+          "remove_unit": {
+            "label": "Usuń jednostkę",
+            "description": "Usuń kafelek jednostki, aby przestać rezerwować ten typ w wybranym zamku."
+          },
+          "auto_fortress_reserve": {
+            "label": "Rezerwa Automatyzacji fortec",
+            "description": "Gdy Automatyzacja fortec blokuje tutaj wszystkie straszliwe wilki, ta automatyczna rezerwa nie zapisuje się w zestawach Automatycznego ukrywania wojsk, a wcześniejsza ręczna liczba straszliwych wilków wraca po zakończeniu blokady."
+          }
+        },
+        "image": {
+          "alt": "Kafelki rezerw Automatycznego ukrywania wojsk dla fikcyjnego zamku Example Castle",
+          "caption": "Rezerwuj tylko jednostki potrzebne w tym zamku; Jednostka 101 i Jednostka 102 są fikcyjnymi przykładami wojsk."
+        }
+      },
+      "presets": {
+        "title": "Zapisz i wybierz zestaw",
+        "items": {
+          "preset_name": {
+            "label": "Nazwa zestawu",
+            "description": "Wpisz nazwę nowego zestawu lub zmień nazwę zastosowanego zestawu przed zapisaniem zmian.",
+            "recommendation": "Użyj łatwej do rozpoznania nazwy, takiej jak Codzienny."
+          },
+          "load_preset": {
+            "label": "Wczytaj zestaw",
+            "description": "Wybierz zapisany zestaw z listy lub Zapisana konfiguracja, aby użyć zapisanych ustawień bez nazwanego zestawu.",
+            "recommendation": "Użyj wybranego codziennego zestawu jako domyślnego podczas działania: wybierz go, kliknij Zastosuj, a następnie Zapisz zmiany."
+          },
+          "apply": {
+            "label": "Zastosuj",
+            "description": "Wczytuje wybrany zestaw do tej wersji roboczej ustawień; wybierz Zapisz zmiany, aby zatwierdzić go jako domyślny podczas działania."
+          },
+          "save_as_new": {
+            "label": "Zapisz jako nowy",
+            "description": "Natychmiast zapisuje bieżące ustawienia jako nowy nazwany zestaw i wybiera go jako domyślny podczas działania."
+          },
+          "delete": {
+            "label": "Usuń",
+            "description": "Po potwierdzeniu natychmiast usuwa wybrany zestaw i czyści ustawienie domyślne podczas działania, jeśli był wybrany."
+          },
+          "runtime_default": {
+            "label": "Domyślny podczas działania",
+            "description": "Domyślny podczas działania jest zapisany aktywny zestaw albo zapisana konfiguracja, gdy żaden zestaw nie jest aktywny."
+          }
+        }
+      },
+      "finish": {
+        "title": "Ustaw harmonogram, zapisz i włącz",
+        "items": {
+          "calendar": {
+            "label": "Kalendarz",
+            "description": "Wybierz, kiedy Automatyczne ukrywanie wojsk może działać, i wybierz Zapisz harmonogram, aby zachować zmiany.",
+            "recommendation": "Pozostaw harmonogram wyłączony dla ciągłej pracy albo ustaw zwykłe godziny tygodniowe i zapisz harmonogram."
+          },
+          "specify_preset_per_period": {
+            "label": "Określ zestaw dla okresu",
+            "description": "Wybierz zapisany zestaw dla okresu kalendarza, jeśli ma on zastąpić domyślny zestaw podczas działania.",
+            "recommendation": "Wyłączone, chyba że różne okresy wymagają różnych rezerw."
+          },
+          "save_changes": {
+            "label": "Zapisz zmiany",
+            "description": "Zapisz wersję roboczą ustawień i zastosowane zmiany zestawów; samo czytanie tego przewodnika ich nie zapisuje."
+          },
+          "auto_bird_switch": {
+            "label": "Przełącznik Automatycznego ukrywania wojsk",
+            "description": "Po zapisaniu włącz Automatyczne ukrywanie wojsk u góry centrum dowodzenia, aby umożliwić normalne cykle zamków.",
+            "recommendation": "Po zapisaniu włącz Automatyczne ukrywanie wojsk; stan w nagłówku pokazuje cykl każdego zamku."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatyczne ukrywanie wojsk",
+      "summary": "Stacjonuje wybrane wojska poza zamkiem zgodnie z harmonogramem",
+      "description": "Regularnie stacjonuje wolne wojska w kwalifikujących się zamkach sojuszu i powtarza cykl po ich powrocie.",
+      "expectation": "Czeka, jeśli nie ma odpowiedniego celu lub wolnych wojsk do wysłania. Przeniesienie wojsk nie czyni zamku niezniszczalnym."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "Ustawienia ogólne",
+      "scan": "Odstęp skanowania: 1800 sekund",
+      "daily": "Dzienny limit ataków: 3500",
+      "travel": "Przyspieszenie podróży: poziom za monety",
+      "advisor": "Doradca: wyłączony"
+    },
+    "towerCastle": {
+      "title": "Przykładowy zamek",
+      "enabled": "Automatyczne ataki na wieże: włączone",
+      "radius": "Promień: 35 pól",
+      "troop": "Wybrane wojsko: fikcyjna jednostka ofensywna",
+      "maiden": "Tylko z relikwią dziewicy: wyłączone"
+    },
+    "birdGeneral": {
+      "title": "Ustawienia ogólne",
+      "min": "Minimalny pobyt: 6 godzin",
+      "max": "Maksymalny pobyt: 12 godzin",
+      "send": "Minimalna liczba kwalifikujących się wojsk po rezerwach: 1000",
+      "rpt": "Minimalna pozostała ochrona: ponad 3 dni",
+      "preset": "Zestaw: rezerwa Codzienny"
+    },
+    "birdCastle": {
+      "title": "Przykładowy zamek",
+      "unitOne": "Fikcyjna jednostka 101 zarezerwowana: 80",
+      "unitTwo": "Fikcyjna jednostka 102 zarezerwowana: 40",
+      "add": "Dodaj jednostkę"
+    }
+  }
+}

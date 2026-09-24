@@ -1,0 +1,315 @@
+{
+  "ui": {
+    "guideButton": "Kılavuz",
+    "calendarButton": "Takvim",
+    "recommendedLabel": "Önerilen",
+    "backToSettings": "Ayarlara dön",
+    "backToGuide": "Kılavuza dön",
+    "howToSetUp": "Nasıl kurulur",
+    "whatToExpect": "Neler beklenir",
+    "openFullSizePicture": "Resmi tam boyutta aç",
+    "illustrativeExample": "Açıklayıcı örnek",
+    "enlargePicture": "Örnek resmi büyüt",
+    "fullSizePicture": "Tam boyutlu örnek resim; tüm ayarları görmek için kaydırın",
+    "towerGuideTitle": "Otomatik kule saldırıları · kılavuz",
+    "birdGuideTitle": "Birlikleri otomatik korunaklı alana taşıma · kılavuz",
+    "towerGuideIntro": "Otomatik Kuleler'i kurmak için bu adımları izleyin; örnek resmi seçerek büyütün.",
+    "birdGuideIntro": "Otomatik Asker Koruma'yı kurmak için bu adımları izleyin; örnek resmi seçerek büyütün.",
+    "towerPreviewTitle": "Otomatik kule saldırıları · kurulum örneği",
+    "birdPreviewTitle": "Birlikleri otomatik korunaklı alana taşıma · kurulum örneği"
+  },
+  "autoTower": {
+    "recommendationIntro": "Bunlar düzenli kullanım önerileridir; kaydetmeden önce gözden geçirin.",
+    "steps": {
+      "commanders": {
+        "title": "Komutanlarınızı seçin",
+        "items": {
+          "commander_assignment": {
+            "label": "Komutan ataması",
+            "description": "Komutanlar bölümünde kullanmak istediğiniz komutanlar için Otomatik Kuleler'e izin verin ve Atamaları kaydet'i seçin.",
+            "recommendation": "Otomatik Kuleler'e 20 komutan atayın."
+          }
+        }
+      },
+      "general": {
+        "title": "Tarama, günlük sınırlar ve yolculuğu ayarlayın",
+        "items": {
+          "open_settings": {
+            "label": "Ayarları açın",
+            "description": "Otomasyon'u açın, ardından Otomatik Kuleler kartındaki ayarlar düğmesini seçin."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Yetkili harita taraması · Her",
+            "description": "Her kalenin kule listesinin yenilenme sıklığını 1.800–3.600 saniye arasında seçin; taramalar arasında saldırılar başlatılabilir.",
+            "recommendation": "1.800 saniye (30 dakika)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Günlük normal saldırı sınırı",
+            "description": "Hesap genelindeki günlük saldırı sınırına ulaşılınca oyun sınırı sıfırlayana kadar duraklar; 0 sınırı kaldırır.",
+            "recommendation": "Hesap genelinde günde 3.500 saldırı."
+          },
+          "horse_travel_boost": {
+            "label": "Atla yolculuk hızlandırması",
+            "description": "Danışman zincirindeki her vuruş dahil her saldırıda seçtiğiniz yolculuk seçeneğini kullanır; hız, çıkış kalesinin yolculuk binalarına bağlıdır.",
+            "recommendation": "Desteklenen yerlerde, yeterli sikke varsa sikke kademesi."
+          },
+          "travel_feather": {
+            "label": "Yolculuk tüyü",
+            "description": "Sikke veya yakut kullanılan at kademesi yerine yolculuk tüyünü kullanır."
+          },
+          "horse_ship_tier_coins": {
+            "label": "At / gemi kademesi · sikke",
+            "description": "Sikke yolculuk kademesinde sikke harcar."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Savaş atı / hızlı gemi kademesi · yakut",
+            "description": "Seçildiğinde ilk yakut yolculuk kademesinde yakut harcar."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Koşucu at / en hızlı gemi kademesi · yakut",
+            "description": "Seçildiğinde daha hızlı yakut yolculuk kademesinde yakut harcar."
+          }
+        },
+        "image": {
+          "alt": "Kurgusal Sentetik Kale verileriyle Otomatik Kuleler genel ayarları",
+          "caption": "Tarama aralığını, günlük saldırı sınırını ve yolculuk seçeneğini ayarlayın; Danışman kontrolleri kullanılabildiğinde görünür."
+        }
+      },
+      "castle": {
+        "title": "Her kaleyi yapılandırın",
+        "items": {
+          "castle_switch": {
+            "label": "Kale anahtarı",
+            "description": "Otomatik Kuleler'in tarama ve saldırı yapmasını istediğiniz her kaleyi açın.",
+            "recommendation": "Düzenli kullanmak istediğiniz kaleleri etkinleştirin."
+          },
+          "radius": {
+            "label": "Yarıçap",
+            "description": "Bu kalenin çevresinde aranacak mesafeyi 1–50 kare arasında seçin.",
+            "recommendation": "35 kare."
+          },
+          "choose_troop": {
+            "label": "Asker seçin",
+            "description": "Saldırının iki kanadını dolduracak konuşlu asker türünü seçin; sayı yetersizse saldırılar bekler.",
+            "recommendation": "İki kanada yetecek sayıda konuşlu saldırı askeri."
+          },
+          "maiden_supported_only": {
+            "label": "Yalnızca Bakire destekli",
+            "description": "Bu kaleyi, desteklenen Bakire yadigârına sahip uygun komutanlarla sınırlar.",
+            "recommendation": "Seçtiğiniz komutanda desteklenen Bakire yadigârı yoksa kapalı."
+          }
+        },
+        "image": {
+          "alt": "Kurgusal Sentetik Kale verileriyle Otomatik Kuleler kale ayarları",
+          "caption": "Kaleyi etkinleştirip yarıçapını, askerini ve Bakire koşulunu seçin."
+        }
+      },
+      "advisor": {
+        "title": "İsterseniz Danışman'ı kullanın · mevcut olduğunda",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Danışman'ı Zaman Atlamaları ile kullan",
+            "description": "Bir kuleye saldırıları tekrarlar; önce bir günlük saldırı, her ek vuruş için de en az üç saatlik bir Zaman Atlaması kullanır.",
+            "recommendation": "Kapalı."
+          },
+          "auto_activate_with_token": {
+            "label": "Jetonla otomatik etkinleştir",
+            "description": "Danışman devre dışıyken mevcut bir Baron Danışman jetonunu kullanır; jeton satın almaz veya yakut harcamaz.",
+            "recommendation": "Danışman kapalıyken kapalı."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Günlük en fazla Zaman Atlaması",
+            "description": "Onaylanmış Danışman zincirlerinin kullandığı Zaman Atlamalarını, oyunun günlük saldırı sayacı sıfırlanana kadar sınırlar; 0 Danışman saldırılarının başlatılmasını duraklatır.",
+            "recommendation": "Danışman kapalıyken 0."
+          }
+        }
+      },
+      "finish": {
+        "title": "Takvimi ayarlayın, kaydedin ve açın",
+        "items": {
+          "calendar": {
+            "label": "Takvim",
+            "description": "Asker uygunluğu ve diğer sınırlar geçerli olmaya devam ederken, Otomatik Kuleler'in ne zaman çalışabileceğini Takvim'den seçin.",
+            "recommendation": "Her zamanki çalışma saatleriniz."
+          },
+          "save_changes": {
+            "label": "Değişiklikleri kaydet",
+            "description": "Ayarlarınızı uygulamak için Değişiklikleri kaydet'i seçin; bu kılavuzu okumak onları kaydetmez."
+          },
+          "auto_towers_switch": {
+            "label": "Otomatik kule saldırıları · anahtar",
+            "description": "Görevin çalışabilmesi için ayarlarınızı kaydettikten sonra Otomasyon sayfasında Otomatik Kuleler'i açın.",
+            "recommendation": "İstediğiniz ayarları kaydettikten sonra açık."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Otomatik kule saldırıları",
+      "summary": "Yakındaki kulelere saldırıları tekrarla",
+      "description": "Seçtiğiniz kalelerden haydut baron ve krallık kulelerine saldırılar gönderir.",
+      "expectation": "Yeterli asker, uygun bir komutan ve saldırıya hazır bir kule gerekir. Askerler dönene veya kulenin sayacı dolana kadar bekleyebilir."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "Önerilen değerler Otomatik Asker Koruma'nın düzenli kullanımını anlatır; bunlar yol gösterir ve kayıtlı ayarları değiştirmez.",
+    "steps": {
+      "open": {
+        "title": "Otomatik Asker Koruma ayarlarını açın",
+        "items": {
+          "open_settings": {
+            "label": "Ayarları açın",
+            "description": "Komuta merkezinin üstünde Otomatik Asker Koruma'nın yanındaki ayarlar düğmesini seçin."
+          }
+        }
+      },
+      "general": {
+        "title": "Konuşlanma süresini ve gönderim kurallarını ayarlayın",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Rastgele gecikme aralığı · En az",
+            "description": "Yolculuk bittikten sonra askerlerin ittifak hedefinde kalacağı en kısa süreyi saat olarak belirleyin.",
+            "recommendation": "Varıştan sonra ittifak hedefinde 6 saat konuşlanma."
+          },
+          "random_delay_range_max": {
+            "label": "Rastgele gecikme aralığı · En çok",
+            "description": "Hedefteki en uzun kalış süresini belirleyin; Otomatik Asker Koruma en az ve en çok değerleri arasında rastgele bir süre seçer.",
+            "recommendation": "Varıştan sonra ittifak hedefinde 12 saat konuşlanma."
+          },
+          "minimum_to_send": {
+            "label": "Gönderim için en az",
+            "description": "Kale yedekleri tutulduktan sonra gerekli toplam uygun asker sayısının alt sınırını belirleyin; bu, gönderilecek kesin sayı değil, bir eşiktir.",
+            "recommendation": "Kale yedekleri tutulduktan sonra toplam 1.000 uygun asker; bu, kesin gönderim miktarı değil, bir eşiktir."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "Asgari RPT (kalan koruma süresi)",
+            "description": "Kalan koruması bu gün sayısından fazla olan hedefleri kullanın; 0 denetimi kaldırır.",
+            "recommendation": "3 gün; hedefin kalan koruma süresi 3 günden fazla olmalıdır."
+          }
+        },
+        "image": {
+          "alt": "Otomatik Asker Koruma konuşlanma gecikmesi, asgari gönderim, asgari RPT ve ön ayar kontrolleri",
+          "caption": "Konuşlanma süresini ve uygunluğu ayarlayın, ardından kaydetmeden önce Günlük yedek ön ayarını gözden geçirin."
+        }
+      },
+      "reserves": {
+        "title": "Her kalede tutulacak askerleri seçin",
+        "items": {
+          "add_unit": {
+            "label": "Birim ekle",
+            "description": "Her kale için gönderilmeyip evde tutulacak asker türlerini seçin; boş yedek listesi, otomatik yedekler ayrıldıktan sonra tüm uygun askerleri kullanılabilir bırakır.",
+            "recommendation": "Her kalenin savunma veya diğer düzenli işler için ihtiyaç duyduğu asker türlerini seçin."
+          },
+          "quantity": {
+            "label": "Miktar",
+            "description": "Seçilen her asker türünden kalede tutulacak pozitif bir sayı belirleyin; 0 bütün türü yedekte tutmaz.",
+            "recommendation": "Savunma veya diğer işler için bu kalede gereken her asker türünün sayısını tutun; gerçek asker sayılarını kontrol edin."
+          },
+          "remove_unit": {
+            "label": "Birim kaldır",
+            "description": "Seçilen kalede bu türü yedekte tutmayı bırakmak için birim kutucuğunu kaldırın."
+          },
+          "auto_fortress_reserve": {
+            "label": "Hisar otomasyonu · yedek",
+            "description": "Otomatik Kale buradaki tüm Korkunç Kurtları kilitlediğinde, bu otomatik yedek Otomatik Asker Koruma ön ayarlarına kaydedilmez; kilit bitince önceki manuel Korkunç Kurt miktarı geri gelir."
+          }
+        },
+        "image": {
+          "alt": "Kurgusal Örnek Kale için Otomatik Asker Koruma yedek kutucukları",
+          "caption": "Bu kalede yalnızca gerekli birimleri yedekte tutun; Birim 101 ve Birim 102 kurgusal asker yer tutucularıdır."
+        }
+      },
+      "presets": {
+        "title": "Ön ayarı kaydedin ve seçin",
+        "items": {
+          "preset_name": {
+            "label": "Ön ayar adı",
+            "description": "Yeni bir ön ayar için ad girin veya değişiklikleri kaydetmeden önce uygulanmış ön ayarın adını düzenleyin.",
+            "recommendation": "Günlük gibi kolay tanınan bir ad kullanın."
+          },
+          "load_preset": {
+            "label": "Ön ayarı yükle",
+            "description": "Listeden kayıtlı bir ön ayar seçin veya adlı bir ön ayar olmadan saklanan ayarları kullanmak için Kayıtlı yapılandırma'yı seçin.",
+            "recommendation": "Amaçlanan günlük ön ayarı çalışma varsayılanı yapın: onu seçin, Uygula'ya, ardından Değişiklikleri kaydet'e basın."
+          },
+          "apply": {
+            "label": "Uygula",
+            "description": "Seçilen ön ayarı bu ayar taslağına yükleyin; çalışma varsayılanı olarak kesinleştirmek için Değişiklikleri kaydet'i seçin."
+          },
+          "save_as_new": {
+            "label": "Yeni olarak kaydet",
+            "description": "Geçerli ayarları hemen yeni adlı bir ön ayar olarak kaydeder ve çalışma varsayılanı olarak seçer."
+          },
+          "delete": {
+            "label": "Sil",
+            "description": "Onaydan sonra seçilen ön ayarı hemen siler ve seçiliyse çalışma varsayılanını temizler."
+          },
+          "runtime_default": {
+            "label": "Çalışma varsayılanı",
+            "description": "Çalışma varsayılanı kaydedilmiş etkin ön ayardır; etkin ön ayar yoksa kayıtlı yapılandırmadır."
+          }
+        }
+      },
+      "finish": {
+        "title": "Takvimi ayarlayın, kaydedin ve etkinleştirin",
+        "items": {
+          "calendar": {
+            "label": "Takvim",
+            "description": "Otomatik Asker Koruma'nın ne zaman çalışabileceğini seçin ve değişiklikleriniz için Takvimi kaydet'i seçin.",
+            "recommendation": "Sürekli çalışma için takvimi kapalı bırakın veya olağan haftalık saatleri ayarlayıp Takvimi kaydet'i seçin."
+          },
+          "specify_preset_per_period": {
+            "label": "Dönem başına ön ayar belirt",
+            "description": "Bir takvim dönemi çalışma varsayılanını geçersiz kılacaksa o dönem için kayıtlı bir ön ayar seçin.",
+            "recommendation": "Farklı dönemlerde farklı yedekler gerekmiyorsa kapalı."
+          },
+          "save_changes": {
+            "label": "Değişiklikleri kaydet",
+            "description": "Ayar taslağını ve uygulanmış ön ayar değişikliklerini kaydedin; bu kılavuzu okumak onları kaydetmez."
+          },
+          "auto_bird_switch": {
+            "label": "Birlikleri otomatik korunaklı alana taşıma · anahtar",
+            "description": "Normal kale döngülerinin çalışması için kaydettikten sonra komuta merkezinin üstünde Otomatik Asker Koruma'yı açın.",
+            "recommendation": "Kaydettikten sonra Otomatik Asker Koruma'yı açın; üstteki durum her kalenin döngüsünü gösterir."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Birlikleri otomatik korunaklı alana taşıma",
+      "summary": "Seçilen askerleri programa göre uzakta tutun",
+      "description": "Fazla askerleri uygun ittifak kalelerinde düzenli olarak konuşlandırır ve geri döndüklerinde döngüyü tekrarlar.",
+      "expectation": "Uygun hedef veya gönderilecek fazla asker yoksa bekler. Askerleri taşımak kalenizi yenilmez yapmaz."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "Genel ayarlar",
+      "scan": "Tarama aralığı: 1.800 saniye",
+      "daily": "Günlük saldırı sınırı: 3.500",
+      "travel": "Yolculuk hızlandırması: sikke kademesi",
+      "advisor": "Danışman: kapalı"
+    },
+    "towerCastle": {
+      "title": "Örnek Kale",
+      "enabled": "Otomatik kule saldırıları: açık",
+      "radius": "Yarıçap: 35 kare",
+      "troop": "Seçilen asker: kurgusal saldırı birimi",
+      "maiden": "Yalnızca Bakire destekli: kapalı"
+    },
+    "birdGeneral": {
+      "title": "Genel ayarlar",
+      "min": "En kısa kalış: 6 saat",
+      "max": "En uzun kalış: 12 saat",
+      "send": "Yedeklerden sonra en az uygun toplam: 1.000 asker",
+      "rpt": "Asgari kalan koruma: 3 günden fazla",
+      "preset": "Ön ayar: Günlük yedek"
+    },
+    "birdCastle": {
+      "title": "Örnek Kale",
+      "unitOne": "Kurgusal Birim 101 yedekte: 80",
+      "unitTwo": "Kurgusal Birim 102 yedekte: 40",
+      "add": "Birim ekle"
+    }
+  }
+}

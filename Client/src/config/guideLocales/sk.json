@@ -1,0 +1,315 @@
+{
+  "ui": {
+    "guideButton": "Sprievodca",
+    "calendarButton": "Kalendár",
+    "recommendedLabel": "Odporúčané",
+    "backToSettings": "Späť na nastavenia",
+    "backToGuide": "Späť na sprievodcu",
+    "howToSetUp": "Ako to nastaviť",
+    "whatToExpect": "Čo očakávať",
+    "openFullSizePicture": "Otvoriť obrázok v plnej veľkosti",
+    "illustrativeExample": "Ilustračný príklad",
+    "enlargePicture": "Zväčšiť obrázok príkladu",
+    "fullSizePicture": "Obrázok príkladu v plnej veľkosti; posúvaním zobrazíte všetky nastavenia",
+    "towerGuideTitle": "Automatické útoky na veže · sprievodca",
+    "birdGuideTitle": "Automatické ukrývanie vojska · sprievodca",
+    "towerGuideIntro": "Podľa týchto krokov nastavte automatické veže; výberom obrázka príkladu ho zväčšíte.",
+    "birdGuideIntro": "Podľa týchto krokov nastavte automatické ukrytie vojska; výberom obrázka príkladu ho zväčšíte.",
+    "towerPreviewTitle": "Automatické útoky na veže · príklad nastavenia",
+    "birdPreviewTitle": "Automatické ukrývanie vojska · príklad nastavenia"
+  },
+  "autoTower": {
+    "recommendationIntro": "Toto sú odporúčania na bežné používanie; pred uložením ich skontrolujte.",
+    "steps": {
+      "commanders": {
+        "title": "Vyberte veliteľov",
+        "items": {
+          "commander_assignment": {
+            "label": "Priradenie veliteľov",
+            "description": "V časti Velitelia povoľte automatické veže pre veliteľov, ktorých chcete používať, a vyberte Uložiť priradenia.",
+            "recommendation": "Priraďte automatickým vežiam 20 veliteľov."
+          }
+        }
+      },
+      "general": {
+        "title": "Nastavte skenovanie, denné limity a cestovanie",
+        "items": {
+          "open_settings": {
+            "label": "Otvorte nastavenia",
+            "description": "Otvorte Automatizáciu a potom vyberte tlačidlo nastavení na karte automatických veží."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Skenovanie autoritatívnej mapy · Každých",
+            "description": "Vyberte, ako často sa obnoví zoznam veží každého hradu, od 1 800 do 3 600 sekúnd; útoky sa môžu začať medzi skenovaniami.",
+            "recommendation": "1 800 sekúnd (30 minút)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Denný limit bežných útokov",
+            "description": "Pozastaví sa pri dennom limite útokov celého účtu, kým ho hra nevynuluje; 0 limit odstráni.",
+            "recommendation": "3 500 útokov denne pre celý účet."
+          },
+          "horse_travel_boost": {
+            "label": "Zrýchlenie cesty koňom",
+            "description": "Pri každom útoku vrátane každého zásahu v sérii Poradcu použije zvolený spôsob cestovania; rýchlosť závisí od cestovných budov v zdrojovom hrade.",
+            "recommendation": "Úroveň za mince tam, kde je podporovaná, s dostatkom mincí."
+          },
+          "travel_feather": {
+            "label": "Cestovné pierko",
+            "description": "Použije cestovné pierko namiesto úrovne koňa za mince alebo rubíny."
+          },
+          "horse_ship_tier_coins": {
+            "label": "Úroveň kôň / loď · mince",
+            "description": "Na cestovanie na úrovni za mince míňa mince."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Úroveň bojový kôň / rýchla loď · rubíny",
+            "description": "Pri výbere míňa rubíny na prvú úroveň cestovania za rubíny."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Úroveň rýchly kôň / najrýchlejšia loď · rubíny",
+            "description": "Pri výbere míňa rubíny na rýchlejšiu úroveň cestovania za rubíny."
+          }
+        },
+        "image": {
+          "alt": "Všeobecné nastavenia automatických veží s fiktívnymi údajmi Syntetického hradu",
+          "caption": "Nastavte interval skenovania, denný limit útokov a spôsob cestovania; ovládanie Poradcu sa zobrazí, keď je dostupné."
+        }
+      },
+      "castle": {
+        "title": "Nastavte každý hrad",
+        "items": {
+          "castle_switch": {
+            "label": "Prepínač hradu",
+            "description": "Zapnite každý hrad, z ktorého majú automatické veže skenovať a útočiť.",
+            "recommendation": "Aktivujte hrady, ktoré chcete pravidelne používať."
+          },
+          "radius": {
+            "label": "Polomer",
+            "description": "Vyberte vzdialenosť vyhľadávania okolo hradu od 1 do 50 políčok.",
+            "recommendation": "35 políčok."
+          },
+          "choose_troop": {
+            "label": "Vyberte vojsko",
+            "description": "Vyberte umiestnený druh vojska na obsadenie oboch krídel útoku; pri nedostatku vojska útoky čakajú.",
+            "recommendation": "Umiestnené útočné vojsko v počte dostatočnom na obe krídla."
+          },
+          "maiden_supported_only": {
+            "label": "Len s podporou Panny",
+            "description": "Obmedzí hrad na dostupných veliteľov s podporovanou relikviou Panny.",
+            "recommendation": "Vypnuté, ak zvolený veliteľ nemá podporovanú relikviu Panny."
+          }
+        },
+        "image": {
+          "alt": "Nastavenia hradu automatických veží s fiktívnymi údajmi Syntetického hradu",
+          "caption": "Aktivujte hrad a vyberte jeho polomer, vojsko a požiadavku na Pannu."
+        }
+      },
+      "advisor": {
+        "title": "Použite Poradcu podľa potreby · ak je dostupný",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Použiť Poradcu s preskočením času",
+            "description": "Opakuje zásahy do jednej veže; najprv použije jeden denný útok a na každý ďalší zásah jedno preskočenie času v dĺžke aspoň troch hodín.",
+            "recommendation": "Vypnuté."
+          },
+          "auto_activate_with_token": {
+            "label": "Automaticky aktivovať žetónom",
+            "description": "Keď je Poradca neaktívny, použije dostupný žetón Barónovho poradcu bez kúpy žetónu či míňania rubínov.",
+            "recommendation": "Vypnuté, kým je Poradca vypnutý."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Maximálny denný počet preskočení času",
+            "description": "Obmedzuje preskočenia času použité potvrdenými sériami Poradcu až do vynulovania denného počítadla útokov v hre; 0 pozastaví spúšťanie útokov Poradcu.",
+            "recommendation": "0, kým je Poradca vypnutý."
+          }
+        }
+      },
+      "finish": {
+        "title": "Nastavte plán, uložte a zapnite",
+        "items": {
+          "calendar": {
+            "label": "Kalendár",
+            "description": "V Kalendári vyberte, kedy môžu automatické veže bežať; dostupnosť vojska a ostatné limity naďalej platia.",
+            "recommendation": "Vaše obvyklé hodiny prevádzky."
+          },
+          "save_changes": {
+            "label": "Uložiť zmeny",
+            "description": "Výberom Uložiť zmeny použijete nastavenia; čítanie tohto sprievodcu ich neuloží."
+          },
+          "auto_towers_switch": {
+            "label": "Automatické útoky na veže · prepínač",
+            "description": "Po uložení nastavení zapnite automatické veže na stránke Automatizácia, aby sa úloha mohla spustiť.",
+            "recommendation": "Zapnuté po uložení zamýšľaných nastavení."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatické útoky na veže",
+      "summary": "Opakované útoky na blízke veže",
+      "description": "Posiela útoky na veže lúpežných barónov a kráľovstiev z vybraných hradov.",
+      "expectation": "Potrebuje dostatok vojska, dostupného veliteľa a vežu pripravenú na útok. Môže čakať na návrat vojska alebo uplynutie časovača veže."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "Odporúčané hodnoty opisujú bežné používanie automatického ukrytia vojska; sú to rady a nemenia uložené nastavenia.",
+    "steps": {
+      "open": {
+        "title": "Otvorte nastavenia automatického ukrytia vojska",
+        "items": {
+          "open_settings": {
+            "label": "Otvorte nastavenia",
+            "description": "V hornej časti veliteľského centra vyberte tlačidlo nastavení vedľa automatického ukrytia vojska."
+          }
+        }
+      },
+      "general": {
+        "title": "Nastavte čas umiestnenia a pravidlá odosielania",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Rozsah náhodného zdržania · Minimum",
+            "description": "Nastavte najkratší počet hodín, počas ktorých vojsko zostane v cieli aliancie po dokončení cesty.",
+            "recommendation": "6 hodín umiestnenia v cieli aliancie po príchode."
+          },
+          "random_delay_range_max": {
+            "label": "Rozsah náhodného zdržania · Maximum",
+            "description": "Nastavte najdlhší pobyt v cieli; automatické ukrytie vojska náhodne vyberie trvanie medzi minimom a maximom.",
+            "recommendation": "12 hodín umiestnenia v cieli aliancie po príchode."
+          },
+          "minimum_to_send": {
+            "label": "Minimum na odoslanie",
+            "description": "Nastavte minimálny celkový počet vhodného vojska po ponechaní hradných rezerv; ide o prah, nie presný počet odoslaných vojakov.",
+            "recommendation": "Spolu 1 000 vhodných vojakov po ponechaní hradných rezerv; ide o prah, nie presný počet odoslaných."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "Minimálne RPT (zostávajúci čas ochrany)",
+            "description": "Používajte ciele, ktorým zostáva viac dní ochrany, než je táto hodnota; 0 kontrolu zruší.",
+            "recommendation": "3 dni; cieľu musí zostávať viac ako 3 dni ochrany."
+          }
+        },
+        "image": {
+          "alt": "Čas umiestnenia, minimum na odoslanie, minimálne RPT a ovládanie predvolieb automatického ukrytia vojska",
+          "caption": "Nastavte čas umiestnenia a podmienky, potom pred uložením skontrolujte predvoľbu Každodennej rezervy."
+        }
+      },
+      "reserves": {
+        "title": "Vyberte vojsko, ktoré zostane v každom hrade",
+        "items": {
+          "add_unit": {
+            "label": "Pridať jednotku",
+            "description": "Pre každý hrad vyberte druhy vojska, ktoré zostanú doma namiesto odoslania; prázdna rezerva nechá po automatických rezervách dostupné všetko vhodné vojsko.",
+            "recommendation": "Vyberte druhy vojska potrebné pre obranu alebo iné bežné úlohy každého hradu."
+          },
+          "quantity": {
+            "label": "Množstvo",
+            "description": "Zadajte kladný počet každého vybraného druhu vojska, ktorý má zostať v hrade; 0 nerezervuje celý druh.",
+            "recommendation": "Ponechajte doma počet každého druhu potrebný na obranu alebo iné úlohy; skontrolujte skutočné počty vojakov."
+          },
+          "remove_unit": {
+            "label": "Odstrániť jednotku",
+            "description": "Odstráňte dlaždicu jednotky, aby sa tento druh vo vybranom hrade prestal rezervovať."
+          },
+          "auto_fortress_reserve": {
+            "label": "Automatizácia pevností · rezerva",
+            "description": "Keď automatická pevnosť zablokuje všetkých tunajších hrozných vlkov, táto automatická rezerva sa neuloží do predvolieb automatického ukrytia vojska a po skončení blokovania sa obnoví predchádzajúci ručne zadaný počet hrozných vlkov."
+          }
+        },
+        "image": {
+          "alt": "Dlaždice rezerv automatického ukrytia vojska pre fiktívny Vzorový hrad",
+          "caption": "Rezervujte iba jednotky potrebné v tomto hrade; Jednotka 101 a Jednotka 102 sú fiktívne označenia vojska."
+        }
+      },
+      "presets": {
+        "title": "Uložte a vyberte predvoľbu",
+        "items": {
+          "preset_name": {
+            "label": "Názov predvoľby",
+            "description": "Zadajte názov novej predvoľby alebo pred uložením zmien upravte názov použitej predvoľby.",
+            "recommendation": "Použite rozpoznateľný názov, napríklad Každodenná."
+          },
+          "load_preset": {
+            "label": "Načítať predvoľbu",
+            "description": "Vyberte uloženú predvoľbu zo zoznamu alebo Uloženú konfiguráciu, ak chcete použiť uložené nastavenia bez pomenovanej predvoľby.",
+            "recommendation": "Použite zamýšľanú každodennú predvoľbu ako predvolenú pri behu: vyberte ju, kliknite na Použiť a potom na Uložiť zmeny."
+          },
+          "apply": {
+            "label": "Použiť",
+            "description": "Načítajte vybranú predvoľbu do tohto konceptu nastavení; výberom Uložiť zmeny ju potvrdíte ako predvolenú pri behu."
+          },
+          "save_as_new": {
+            "label": "Uložiť ako novú",
+            "description": "Okamžite uloží aktuálne nastavenia ako novú pomenovanú predvoľbu a vyberie ju ako predvolenú pri behu."
+          },
+          "delete": {
+            "label": "Odstrániť",
+            "description": "Po potvrdení okamžite odstráni vybranú predvoľbu a vymaže predvolenú pri behu, ak bola vybraná."
+          },
+          "runtime_default": {
+            "label": "Predvolená pri behu",
+            "description": "Predvolená pri behu je uložená aktívna predvoľba alebo uložená konfigurácia, ak nie je aktívna žiadna predvoľba."
+          }
+        }
+      },
+      "finish": {
+        "title": "Nastavte plán, uložte a aktivujte",
+        "items": {
+          "calendar": {
+            "label": "Kalendár",
+            "description": "Vyberte, kedy môže automatické ukrytie vojska bežať, a zmeny uložte výberom Uložiť plán.",
+            "recommendation": "Pri nepretržitej prevádzke nechajte plán vypnutý alebo nastavte obvyklé týždenné hodiny a uložte plán."
+          },
+          "specify_preset_per_period": {
+            "label": "Určiť predvoľbu pre každé obdobie",
+            "description": "Vyberte uloženú predvoľbu pre obdobie v kalendári, ak má toto obdobie nahradiť predvolenú pri behu.",
+            "recommendation": "Vypnuté, ak rôzne obdobia nepotrebujú rôzne rezervy."
+          },
+          "save_changes": {
+            "label": "Uložiť zmeny",
+            "description": "Uložte koncept nastavení aj zmeny použitej predvoľby; čítanie tohto sprievodcu ich neuloží."
+          },
+          "auto_bird_switch": {
+            "label": "Automatické ukrývanie vojska · prepínač",
+            "description": "Po uložení zapnite automatické ukrytie vojska v hornej časti veliteľského centra, aby prebiehali bežné cykly hradov.",
+            "recommendation": "Po uložení zapnite automatické ukrytie vojska; stav v záhlaví ukazuje cyklus každého hradu."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatické ukrývanie vojska",
+      "summary": "Udržiavajte vybrané vojsko mimo hradu podľa plánu",
+      "description": "Pravidelne umiestňuje nadbytočné vojsko do vhodných aliančných hradov a po návrate opakuje cyklus.",
+      "expectation": "Čaká, ak niet vhodného cieľa alebo nadbytočného vojska. Presun vojska nerobí hrad nezraniteľným."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "Všeobecné nastavenia",
+      "scan": "Interval skenovania: 1 800 sekúnd",
+      "daily": "Denný limit útokov: 3 500",
+      "travel": "Zrýchlenie cesty: úroveň za mince",
+      "advisor": "Poradca: vypnutý"
+    },
+    "towerCastle": {
+      "title": "Vzorový hrad",
+      "enabled": "Automatické útoky na veže · zapnuté",
+      "radius": "Polomer: 35 políčok",
+      "troop": "Vybrané vojsko: fiktívna útočná jednotka",
+      "maiden": "Len s podporou Panny: vypnuté"
+    },
+    "birdGeneral": {
+      "title": "Všeobecné nastavenia",
+      "min": "Najkratší pobyt: 6 hodín",
+      "max": "Najdlhší pobyt: 12 hodín",
+      "send": "Minimálny vhodný súčet po rezervách: 1 000 vojakov",
+      "rpt": "Minimálna zostávajúca ochrana: viac ako 3 dni",
+      "preset": "Predvoľba: Každodenná rezerva"
+    },
+    "birdCastle": {
+      "title": "Vzorový hrad",
+      "unitOne": "Fiktívna jednotka 101 v rezerve: 80",
+      "unitTwo": "Fiktívna jednotka 102 v rezerve: 40",
+      "add": "Pridať jednotku"
+    }
+  }
+}

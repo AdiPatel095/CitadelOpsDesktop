@@ -1,0 +1,315 @@
+{
+  "ui": {
+    "guideButton": "Guía",
+    "calendarButton": "Calendario",
+    "recommendedLabel": "Recomendado",
+    "backToSettings": "Volver a los ajustes",
+    "backToGuide": "Volver a la guía",
+    "howToSetUp": "Cómo configurarlo",
+    "whatToExpect": "Qué puedes esperar",
+    "openFullSizePicture": "Abrir imagen a tamaño completo",
+    "illustrativeExample": "Ejemplo ilustrativo",
+    "enlargePicture": "Ampliar imagen de ejemplo",
+    "fullSizePicture": "Imagen de ejemplo a tamaño completo; desplázate para ver todos los ajustes",
+    "towerGuideTitle": "Guía de Ataques automáticos a torres",
+    "birdGuideTitle": "Guía de Resguardo automático de tropas",
+    "towerGuideIntro": "Sigue estos pasos para configurar los Ataques automáticos a torres; selecciona una imagen de ejemplo para ampliarla.",
+    "birdGuideIntro": "Sigue estos pasos para configurar el Resguardo automático de tropas; selecciona una imagen de ejemplo para ampliarla.",
+    "towerPreviewTitle": "Ejemplo de configuración de los Ataques automáticos a torres",
+    "birdPreviewTitle": "Ejemplo de configuración del Resguardo automático de tropas"
+  },
+  "autoTower": {
+    "recommendationIntro": "Estas recomendaciones son para el uso habitual; revísalas antes de guardar.",
+    "steps": {
+      "commanders": {
+        "title": "Elige tus comandantes",
+        "items": {
+          "commander_assignment": {
+            "label": "Asignación de comandantes",
+            "description": "En Comandantes, permite los Ataques automáticos a torres para los comandantes que quieras usar y selecciona Guardar asignaciones.",
+            "recommendation": "20 comandantes asignados a los Ataques automáticos a torres."
+          }
+        }
+      },
+      "general": {
+        "title": "Configura el escaneo, los límites diarios y el viaje",
+        "items": {
+          "open_settings": {
+            "label": "Abrir ajustes",
+            "description": "Abre Automatización y selecciona el botón de ajustes de la tarjeta Ataques automáticos a torres."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Escaneo del mapa autorizado · Frecuencia",
+            "description": "Elige cada cuánto se actualiza la lista de torres de cada castillo, entre 1800 y 3600 segundos; los ataques pueden iniciarse entre escaneos.",
+            "recommendation": "1800 segundos (30 minutos)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Límite diario de ataques normales",
+            "description": "Se pausa al alcanzar el límite diario de ataques de toda la cuenta hasta que el juego lo restablezca; 0 elimina el límite.",
+            "recommendation": "3500 ataques diarios en toda la cuenta."
+          },
+          "horse_travel_boost": {
+            "label": "Impulso de viaje a caballo",
+            "description": "Usa la opción de viaje elegida para cada ataque, incluidos todos los golpes de una cadena del consejero; la velocidad depende de los edificios de viaje del castillo de origen.",
+            "recommendation": "Nivel con monedas cuando esté disponible, con monedas suficientes."
+          },
+          "travel_feather": {
+            "label": "Pluma de viaje",
+            "description": "Usa la opción de pluma de viaje en lugar de un nivel de caballo con monedas o rubíes."
+          },
+          "horse_ship_tier_coins": {
+            "label": "Nivel de caballo / barco · monedas",
+            "description": "Gasta monedas en el nivel de viaje con monedas."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Nivel de caballo de guerra / barco rápido · rubíes",
+            "description": "Gasta rubíes en el primer nivel de viaje con rubíes cuando se selecciona."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Nivel de corcel / barco más rápido · rubíes",
+            "description": "Gasta rubíes en el nivel de viaje con rubíes más rápido cuando se selecciona."
+          }
+        },
+        "image": {
+          "alt": "Ajustes generales de los Ataques automáticos a torres con datos ficticios del castillo Synthetic Castle",
+          "caption": "Configura el intervalo de escaneo, el límite diario de ataques y la opción de viaje; los controles del consejero aparecen cuando están disponibles."
+        }
+      },
+      "castle": {
+        "title": "Configura cada castillo",
+        "items": {
+          "castle_switch": {
+            "label": "Interruptor del castillo",
+            "description": "Activa cada castillo desde el que quieras que los Ataques automáticos a torres escaneen y ataquen.",
+            "recommendation": "Activa los castillos que quieras utilizar habitualmente."
+          },
+          "radius": {
+            "label": "Radio",
+            "description": "Elige hasta dónde buscar alrededor de este castillo, entre 1 y 50 casillas.",
+            "recommendation": "35 casillas."
+          },
+          "choose_troop": {
+            "label": "Elegir tropa",
+            "description": "Elige la tropa estacionada que llenará ambos flancos de ataque; los ataques esperan si no hay suficientes unidades.",
+            "recommendation": "Una tropa de ataque estacionada con suficientes unidades para ambos flancos."
+          },
+          "maiden_supported_only": {
+            "label": "Solo con reliquia de doncella",
+            "description": "Limita este castillo a comandantes disponibles que tengan la reliquia de doncella compatible.",
+            "recommendation": "Desactivado, salvo que el comandante elegido tenga la reliquia de doncella compatible."
+          }
+        },
+        "image": {
+          "alt": "Ajustes de castillo de los Ataques automáticos a torres con datos ficticios de Synthetic Castle",
+          "caption": "Activa un castillo y elige su radio, tropa y requisito de reliquia de doncella."
+        }
+      },
+      "advisor": {
+        "title": "Usa el consejero si lo deseas · cuando esté disponible",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Usar consejero con saltos de tiempo",
+            "description": "Repite los golpes contra una torre: primero usa un ataque diario y después un salto de tiempo de al menos tres horas por cada golpe adicional.",
+            "recommendation": "Desactivado."
+          },
+          "auto_activate_with_token": {
+            "label": "Activar automáticamente con ficha",
+            "description": "Usa una ficha disponible del consejero de barones cuando el consejero está inactivo, sin comprar una ficha ni gastar rubíes.",
+            "recommendation": "Desactivado mientras el consejero esté desactivado."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Máximo diario de saltos de tiempo",
+            "description": "Limita los saltos de tiempo usados por cadenas confirmadas del consejero hasta que se restablezca el contador diario de ataques del juego; 0 pausa los lanzamientos del consejero.",
+            "recommendation": "0 mientras el consejero esté desactivado."
+          }
+        }
+      },
+      "finish": {
+        "title": "Configura el horario, guarda y activa",
+        "items": {
+          "calendar": {
+            "label": "Calendario",
+            "description": "Usa el calendario para elegir cuándo pueden funcionar los Ataques automáticos a torres; siguen aplicándose la disponibilidad de tropas y los demás límites.",
+            "recommendation": "Tus horas habituales de funcionamiento."
+          },
+          "save_changes": {
+            "label": "Guardar cambios",
+            "description": "Selecciona Guardar cambios para aplicar los ajustes; leer esta guía no los guarda."
+          },
+          "auto_towers_switch": {
+            "label": "Interruptor de Ataques automáticos a torres",
+            "description": "Activa los Ataques automáticos a torres en la página Automatización después de guardar los ajustes para permitir que se ejecuten.",
+            "recommendation": "Activado después de guardar los ajustes deseados."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Ataques automáticos a torres",
+      "summary": "Repite ataques a torres cercanas",
+      "description": "Envía ataques contra torres de barones ladrones y de los reinos desde los castillos que elijas.",
+      "expectation": "Necesita suficientes tropas, un comandante disponible y una torre lista para atacar. Puede esperar mientras vuelven las tropas o termina el temporizador de una torre."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "Los valores recomendados describen el uso habitual del Resguardo automático de tropas; son orientativos y no cambian los ajustes guardados.",
+    "steps": {
+      "open": {
+        "title": "Abre los ajustes del Resguardo automático de tropas",
+        "items": {
+          "open_settings": {
+            "label": "Abrir ajustes",
+            "description": "En la parte superior del centro de mando, selecciona el botón de ajustes junto al Resguardo automático de tropas."
+          }
+        }
+      },
+      "general": {
+        "title": "Configura la duración del estacionamiento y las reglas de envío",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Intervalo de duración aleatoria · Mín.",
+            "description": "Configura el mínimo de horas que las tropas permanecerán en el destino de la alianza después de completar el viaje.",
+            "recommendation": "6 horas estacionadas en el objetivo de la alianza tras llegar."
+          },
+          "random_delay_range_max": {
+            "label": "Intervalo de duración aleatoria · Máx.",
+            "description": "Configura la estancia máxima en el destino; el Resguardo automático de tropas elige una duración aleatoria entre Mín. y Máx.",
+            "recommendation": "12 horas estacionadas en el objetivo de la alianza tras llegar."
+          },
+          "minimum_to_send": {
+            "label": "Mínimo para enviar",
+            "description": "Configura el total mínimo de tropas aptas necesario después de conservar las reservas del castillo; es un umbral, no la cantidad exacta que se envía.",
+            "recommendation": "1000 tropas aptas en total después de conservar las reservas del castillo; es un umbral, no una cantidad exacta de envío."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "RPT mínimo (tiempo de protección restante)",
+            "description": "Usa objetivos con más de esta cantidad de días de protección restantes; 0 elimina la comprobación.",
+            "recommendation": "3 días; un objetivo debe tener estrictamente más de 3 días de protección restantes."
+          }
+        },
+        "image": {
+          "alt": "Controles de duración del estacionamiento, envío mínimo, RPT mínimo y preajustes del Resguardo automático de tropas",
+          "caption": "Configura la duración del estacionamiento y los requisitos, y revisa el preajuste de reserva Cotidiano antes de guardar."
+        }
+      },
+      "reserves": {
+        "title": "Elige las tropas que conservarás en cada castillo",
+        "items": {
+          "add_unit": {
+            "label": "Añadir unidad",
+            "description": "Para cada castillo, elige los tipos de tropas que permanecerán en casa en lugar de enviarse; una reserva manual vacía deja disponibles todas las tropas aptas después de las reservas automáticas.",
+            "recommendation": "Elige los tipos de tropas que necesita cada castillo para defenderse o realizar otras tareas habituales."
+          },
+          "quantity": {
+            "label": "Cantidad",
+            "description": "Configura una cantidad positiva de cada tropa elegida que se quedará en ese castillo; 0 no reserva todo el tipo.",
+            "recommendation": "Conserva en el castillo la cantidad de cada tipo de tropa necesaria para la defensa u otras tareas; revisa las cantidades reales."
+          },
+          "remove_unit": {
+            "label": "Quitar unidad",
+            "description": "Quita una ficha de unidad para dejar de reservar ese tipo en el castillo seleccionado."
+          },
+          "auto_fortress_reserve": {
+            "label": "Reserva de la Automatización de fortalezas",
+            "description": "Cuando la Automatización de fortalezas bloquea aquí todos los lobos terribles, esta reserva automática no se guarda en los preajustes del Resguardo automático de tropas y vuelve la cantidad manual anterior de lobos terribles cuando termina el bloqueo."
+          }
+        },
+        "image": {
+          "alt": "Fichas de reserva del Resguardo automático de tropas para el castillo ficticio Example Castle",
+          "caption": "Reserva solo las unidades necesarias en este castillo; Unidad 101 y Unidad 102 son ejemplos ficticios de tropas."
+        }
+      },
+      "presets": {
+        "title": "Guarda y selecciona un preajuste",
+        "items": {
+          "preset_name": {
+            "label": "Nombre del preajuste",
+            "description": "Introduce un nombre para un preajuste nuevo o cambia el nombre del preajuste aplicado antes de guardar los cambios.",
+            "recommendation": "Usa un nombre fácil de reconocer, como Cotidiano."
+          },
+          "load_preset": {
+            "label": "Cargar preajuste",
+            "description": "Elige un preajuste guardado de la lista o Configuración guardada para usar los ajustes almacenados sin un preajuste con nombre.",
+            "recommendation": "Usa el preajuste cotidiano deseado como valor predeterminado de ejecución: selecciónalo, pulsa Aplicar y luego Guardar cambios."
+          },
+          "apply": {
+            "label": "Aplicar",
+            "description": "Carga el preajuste seleccionado en este borrador de ajustes; selecciona Guardar cambios para confirmarlo como valor predeterminado de ejecución."
+          },
+          "save_as_new": {
+            "label": "Guardar como nuevo",
+            "description": "Guarda inmediatamente los ajustes actuales como un preajuste nuevo con nombre y lo selecciona como valor predeterminado de ejecución."
+          },
+          "delete": {
+            "label": "Eliminar",
+            "description": "Tras la confirmación, elimina de inmediato el preajuste seleccionado y borra el valor predeterminado de ejecución si era el seleccionado."
+          },
+          "runtime_default": {
+            "label": "Valor predeterminado de ejecución",
+            "description": "El valor predeterminado de ejecución es el preajuste activo guardado o, si no hay uno activo, la configuración guardada."
+          }
+        }
+      },
+      "finish": {
+        "title": "Configura el horario, guarda y activa",
+        "items": {
+          "calendar": {
+            "label": "Calendario",
+            "description": "Elige cuándo puede funcionar el Resguardo automático de tropas y selecciona Guardar horario para conservar los cambios.",
+            "recommendation": "Deja el horario desactivado para un funcionamiento continuo o define las horas semanales habituales y guarda el horario."
+          },
+          "specify_preset_per_period": {
+            "label": "Especificar preajuste por período",
+            "description": "Elige un preajuste guardado para un período del calendario cuando deba sustituir el valor predeterminado de ejecución.",
+            "recommendation": "Desactivado salvo que los diferentes períodos necesiten reservas distintas."
+          },
+          "save_changes": {
+            "label": "Guardar cambios",
+            "description": "Guarda el borrador de ajustes y los cambios de los preajustes aplicados; leer esta guía no los guarda."
+          },
+          "auto_bird_switch": {
+            "label": "Interruptor de Resguardo automático de tropas",
+            "description": "Activa el Resguardo automático de tropas en la parte superior del centro de mando después de guardar para permitir sus ciclos normales de castillo.",
+            "recommendation": "Activa el Resguardo automático de tropas después de guardar; el estado del encabezado muestra el ciclo de cada castillo."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Resguardo automático de tropas",
+      "summary": "Estaciona las tropas seleccionadas fuera del castillo según un horario",
+      "description": "Estaciona habitualmente las tropas disponibles en castillos de alianza aptos y repite el ciclo cuando regresan.",
+      "expectation": "Espera si no hay un destino adecuado o tropas disponibles para enviar. Mover las tropas no vuelve invulnerable tu castillo."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "Ajustes generales",
+      "scan": "Intervalo de escaneo: 1800 segundos",
+      "daily": "Límite diario de ataques: 3500",
+      "travel": "Impulso de viaje: nivel con monedas",
+      "advisor": "Consejero: desactivado"
+    },
+    "towerCastle": {
+      "title": "Castillo de ejemplo",
+      "enabled": "Ataques automáticos a torres: activados",
+      "radius": "Radio: 35 casillas",
+      "troop": "Tropa elegida: unidad de ataque ficticia",
+      "maiden": "Solo con reliquia de doncella: desactivado"
+    },
+    "birdGeneral": {
+      "title": "Ajustes generales",
+      "min": "Estancia mínima: 6 horas",
+      "max": "Estancia máxima: 12 horas",
+      "send": "Total mínimo apto después de reservas: 1000 tropas",
+      "rpt": "Protección restante mínima: más de 3 días",
+      "preset": "Preajuste: reserva Cotidiano"
+    },
+    "birdCastle": {
+      "title": "Castillo de ejemplo",
+      "unitOne": "Unidad ficticia 101 reservada: 80",
+      "unitTwo": "Unidad ficticia 102 reservada: 40",
+      "add": "Añadir unidad"
+    }
+  }
+}

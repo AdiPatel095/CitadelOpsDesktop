@@ -1,0 +1,315 @@
+{
+  "ui": {
+    "guideButton": "Guida",
+    "calendarButton": "Calendario",
+    "recommendedLabel": "Consigliato",
+    "backToSettings": "Torna alle impostazioni",
+    "backToGuide": "Torna alla guida",
+    "howToSetUp": "Come configurarlo",
+    "whatToExpect": "Cosa aspettarsi",
+    "openFullSizePicture": "Apri l’immagine a dimensione intera",
+    "illustrativeExample": "Esempio illustrativo",
+    "enlargePicture": "Ingrandisci l’immagine di esempio",
+    "fullSizePicture": "Immagine di esempio a dimensione intera; scorri per vedere tutte le impostazioni",
+    "towerGuideTitle": "Guida agli Attacchi automatici alle torri",
+    "birdGuideTitle": "Guida al Riparo automatico delle truppe",
+    "towerGuideIntro": "Segui questi passaggi per configurare gli Attacchi automatici alle torri; seleziona un’immagine di esempio per ingrandirla.",
+    "birdGuideIntro": "Segui questi passaggi per configurare il Riparo automatico delle truppe; seleziona un’immagine di esempio per ingrandirla.",
+    "towerPreviewTitle": "Esempio di configurazione degli Attacchi automatici alle torri",
+    "birdPreviewTitle": "Esempio di configurazione del Riparo automatico delle truppe"
+  },
+  "autoTower": {
+    "recommendationIntro": "Questi consigli riguardano l’uso regolare; controllali prima di salvare.",
+    "steps": {
+      "commanders": {
+        "title": "Scegli i comandanti",
+        "items": {
+          "commander_assignment": {
+            "label": "Assegnazione dei comandanti",
+            "description": "In Comandanti, abilita gli Attacchi automatici alle torri per i comandanti che vuoi usare e seleziona Salva assegnazioni.",
+            "recommendation": "20 comandanti assegnati agli Attacchi automatici alle torri."
+          }
+        }
+      },
+      "general": {
+        "title": "Imposta scansione, limiti giornalieri e viaggio",
+        "items": {
+          "open_settings": {
+            "label": "Apri le impostazioni",
+            "description": "Apri Automazione, poi seleziona il pulsante delle impostazioni nella scheda Attacchi automatici alle torri."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Scansione della mappa autorevole · Frequenza",
+            "description": "Scegli ogni quanto aggiornare l’elenco delle torri di ogni castello, da 1.800 a 3.600 secondi; gli attacchi possono partire tra una scansione e l’altra.",
+            "recommendation": "1.800 secondi (30 minuti)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Limite giornaliero degli attacchi normali",
+            "description": "L’esecuzione si interrompe al limite giornaliero di attacchi dell’intero account finché il gioco non lo azzera; 0 elimina il limite.",
+            "recommendation": "3.500 attacchi al giorno per l’intero account."
+          },
+          "horse_travel_boost": {
+            "label": "Potenziamento del viaggio a cavallo",
+            "description": "Usa l’opzione di viaggio scelta per ogni attacco, compresi tutti i colpi di una sequenza del consigliere; la velocità dipende dagli edifici di viaggio del castello di partenza.",
+            "recommendation": "Fascia a monete dove disponibile, con monete sufficienti."
+          },
+          "travel_feather": {
+            "label": "Piuma da viaggio",
+            "description": "Usa la piuma da viaggio invece di una fascia del cavallo a monete o rubini."
+          },
+          "horse_ship_tier_coins": {
+            "label": "Fascia cavallo / nave · monete",
+            "description": "Spende monete per la fascia di viaggio a monete."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Fascia cavallo da guerra / nave veloce · rubini",
+            "description": "Spende rubini per la prima fascia di viaggio a rubini quando viene scelta."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Fascia corsiero / nave più veloce · rubini",
+            "description": "Spende rubini per la fascia di viaggio a rubini più rapida quando viene scelta."
+          }
+        },
+        "image": {
+          "alt": "Impostazioni generali degli Attacchi automatici alle torri con dati fittizi del castello Synthetic Castle",
+          "caption": "Imposta l’intervallo di scansione, il limite giornaliero degli attacchi e l’opzione di viaggio; i controlli del consigliere compaiono quando disponibili."
+        }
+      },
+      "castle": {
+        "title": "Configura ogni castello",
+        "items": {
+          "castle_switch": {
+            "label": "Interruttore del castello",
+            "description": "Attiva ogni castello da cui vuoi che gli Attacchi automatici alle torri eseguano scansioni e attacchi.",
+            "recommendation": "Attiva i castelli che vuoi usare regolarmente."
+          },
+          "radius": {
+            "label": "Raggio",
+            "description": "Scegli quanto lontano cercare attorno a questo castello, da 1 a 50 caselle.",
+            "recommendation": "35 caselle."
+          },
+          "choose_troop": {
+            "label": "Scegli una truppa",
+            "description": "Scegli la truppa di stanza che riempirà entrambi i fianchi d’attacco; gli attacchi attendono se le unità non bastano.",
+            "recommendation": "Una truppa d’attacco di stanza con unità sufficienti per entrambi i fianchi."
+          },
+          "maiden_supported_only": {
+            "label": "Solo con reliquia della fanciulla",
+            "description": "Limita questo castello ai comandanti disponibili con la reliquia della fanciulla supportata.",
+            "recommendation": "Disattivato, a meno che il comandante scelto non abbia la reliquia della fanciulla supportata."
+          }
+        },
+        "image": {
+          "alt": "Impostazioni del castello degli Attacchi automatici alle torri con dati fittizi del castello Synthetic Castle",
+          "caption": "Attiva un castello e scegli raggio, truppa e requisito della reliquia della fanciulla."
+        }
+      },
+      "advisor": {
+        "title": "Usa il consigliere se vuoi · quando disponibile",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Usa il consigliere con i salti temporali",
+            "description": "Ripete i colpi su una torre usando prima un attacco giornaliero, poi un salto temporale di almeno tre ore per ogni colpo aggiuntivo.",
+            "recommendation": "Disattivato."
+          },
+          "auto_activate_with_token": {
+            "label": "Attiva automaticamente con un gettone",
+            "description": "Usa un gettone disponibile del consigliere dei baroni quando il consigliere è inattivo, senza acquistare gettoni né spendere rubini.",
+            "recommendation": "Disattivato mentre il consigliere è disattivato."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Numero massimo giornaliero di salti temporali",
+            "description": "Limita i salti temporali usati dalle sequenze confermate del consigliere finché il contatore giornaliero degli attacchi del gioco non si azzera; 0 sospende le partenze del consigliere.",
+            "recommendation": "0 mentre il consigliere è disattivato."
+          }
+        }
+      },
+      "finish": {
+        "title": "Imposta il calendario, salva e attiva",
+        "items": {
+          "calendar": {
+            "label": "Calendario",
+            "description": "Usa il calendario per scegliere quando gli Attacchi automatici alle torri possono funzionare; restano validi la disponibilità delle truppe e gli altri limiti.",
+            "recommendation": "Le tue consuete ore di funzionamento."
+          },
+          "save_changes": {
+            "label": "Salva modifiche",
+            "description": "Seleziona Salva modifiche per applicare le impostazioni; leggere questa guida non le salva."
+          },
+          "auto_towers_switch": {
+            "label": "Interruttore degli Attacchi automatici alle torri",
+            "description": "Dopo aver salvato le impostazioni, attiva gli Attacchi automatici alle torri nella pagina Automazione per consentirne l’esecuzione.",
+            "recommendation": "Attivato dopo aver salvato le impostazioni desiderate."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Attacchi automatici alle torri",
+      "summary": "Ripeti gli attacchi alle torri vicine",
+      "description": "Invia attacchi contro le torri dei masnadieri e dei regni dai castelli scelti.",
+      "expectation": "Servono truppe sufficienti, un comandante disponibile e una torre pronta per l’attacco. Può attendere il ritorno delle truppe o la fine del timer di una torre."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "I valori consigliati descrivono l’uso regolare del Riparo automatico delle truppe; sono indicativi e non modificano le impostazioni salvate.",
+    "steps": {
+      "open": {
+        "title": "Apri le impostazioni del Riparo automatico delle truppe",
+        "items": {
+          "open_settings": {
+            "label": "Apri le impostazioni",
+            "description": "Nella parte superiore del centro di comando, seleziona il pulsante delle impostazioni accanto al Riparo automatico delle truppe."
+          }
+        }
+      },
+      "general": {
+        "title": "Imposta la durata dello stazionamento e le regole di invio",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Intervallo casuale della durata · Min",
+            "description": "Imposta il numero minimo di ore in cui le truppe resteranno alla destinazione dell’alleanza dopo la fine del viaggio.",
+            "recommendation": "6 ore di stazionamento all’obiettivo dell’alleanza dopo l’arrivo."
+          },
+          "random_delay_range_max": {
+            "label": "Intervallo casuale della durata · Max",
+            "description": "Imposta la permanenza massima alla destinazione; il Riparo automatico delle truppe sceglie una durata casuale tra Min e Max.",
+            "recommendation": "12 ore di stazionamento all’obiettivo dell’alleanza dopo l’arrivo."
+          },
+          "minimum_to_send": {
+            "label": "Minimo da inviare",
+            "description": "Imposta il numero totale minimo di truppe idonee necessario dopo aver conservato le riserve del castello; è una soglia, non il numero esatto inviato.",
+            "recommendation": "1.000 truppe idonee in totale dopo aver conservato le riserve del castello; è una soglia, non la quantità esatta da inviare."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "RPT minimo (tempo di protezione residuo)",
+            "description": "Usa obiettivi con più di questo numero di giorni di protezione residui; 0 disattiva il controllo.",
+            "recommendation": "3 giorni; un obiettivo deve avere più di 3 giorni di protezione residui."
+          }
+        },
+        "image": {
+          "alt": "Controlli del Riparo automatico delle truppe per durata dello stazionamento, invio minimo, RPT minimo e preset",
+          "caption": "Imposta la durata dello stazionamento e i requisiti, poi controlla il preset di riserva Quotidiano prima di salvare."
+        }
+      },
+      "reserves": {
+        "title": "Scegli le truppe da tenere in ogni castello",
+        "items": {
+          "add_unit": {
+            "label": "Aggiungi unità",
+            "description": "Per ogni castello, scegli i tipi di truppe da tenere a casa invece di inviarli; una riserva manuale vuota lascia disponibili tutte le truppe idonee dopo le riserve automatiche.",
+            "recommendation": "Scegli i tipi di truppe necessari a ogni castello per la difesa o per altri compiti regolari."
+          },
+          "quantity": {
+            "label": "Quantità",
+            "description": "Imposta una quantità positiva di ogni truppa scelta da tenere in quel castello; 0 non riserva l’intero tipo.",
+            "recommendation": "Tieni nel castello il numero di truppe di ogni tipo necessario per la difesa o altri compiti; controlla gli effettivi reali."
+          },
+          "remove_unit": {
+            "label": "Rimuovi unità",
+            "description": "Rimuovi una tessera unità per smettere di riservare quel tipo nel castello selezionato."
+          },
+          "auto_fortress_reserve": {
+            "label": "Riserva dell’Automazione delle fortezze",
+            "description": "Quando l’Automazione delle fortezze blocca qui tutti i Canis dirus, questa riserva automatica non viene salvata nei preset del Riparo automatico delle truppe e la precedente quantità manuale di Canis dirus torna al termine del blocco."
+          }
+        },
+        "image": {
+          "alt": "Tessere di riserva del Riparo automatico delle truppe del castello fittizio Example Castle",
+          "caption": "Riserva solo le unità necessarie in questo castello; Unità 101 e Unità 102 sono segnaposto fittizi di truppe."
+        }
+      },
+      "presets": {
+        "title": "Salva e seleziona un preset",
+        "items": {
+          "preset_name": {
+            "label": "Nome del preset",
+            "description": "Inserisci un nome per un nuovo preset oppure modifica quello del preset applicato prima di salvare le modifiche.",
+            "recommendation": "Usa un nome riconoscibile come Quotidiano."
+          },
+          "load_preset": {
+            "label": "Carica preset",
+            "description": "Scegli un preset salvato dall’elenco oppure Configurazione salvata per usare le impostazioni memorizzate senza un preset con nome.",
+            "recommendation": "Usa il preset quotidiano desiderato come impostazione predefinita in esecuzione: selezionalo, premi Applica, poi Salva modifiche."
+          },
+          "apply": {
+            "label": "Applica",
+            "description": "Carica il preset selezionato in questa bozza di impostazioni; seleziona Salva modifiche per confermarlo come impostazione predefinita in esecuzione."
+          },
+          "save_as_new": {
+            "label": "Salva come nuovo",
+            "description": "Salva subito le impostazioni attuali come nuovo preset con nome e lo seleziona come impostazione predefinita in esecuzione."
+          },
+          "delete": {
+            "label": "Elimina",
+            "description": "Dopo la conferma, elimina subito il preset selezionato e cancella l’impostazione predefinita in esecuzione se era selezionato."
+          },
+          "runtime_default": {
+            "label": "Impostazione predefinita in esecuzione",
+            "description": "L’impostazione predefinita in esecuzione è il preset attivo salvato oppure, se non ce n’è uno attivo, la configurazione salvata."
+          }
+        }
+      },
+      "finish": {
+        "title": "Imposta il calendario, salva e attiva",
+        "items": {
+          "calendar": {
+            "label": "Calendario",
+            "description": "Scegli quando il Riparo automatico delle truppe può funzionare e seleziona Salva calendario per conservare le modifiche.",
+            "recommendation": "Lascia il calendario disattivato per il funzionamento continuo oppure imposta le solite ore settimanali e salvalo."
+          },
+          "specify_preset_per_period": {
+            "label": "Specifica un preset per periodo",
+            "description": "Scegli un preset salvato per un periodo del calendario se deve sostituire l’impostazione predefinita in esecuzione.",
+            "recommendation": "Disattivato, a meno che periodi diversi richiedano riserve diverse."
+          },
+          "save_changes": {
+            "label": "Salva modifiche",
+            "description": "Salva la bozza delle impostazioni e le modifiche ai preset applicati; leggere questa guida non le salva."
+          },
+          "auto_bird_switch": {
+            "label": "Interruttore del Riparo automatico delle truppe",
+            "description": "Dopo aver salvato, attiva il Riparo automatico delle truppe nella parte superiore del centro di comando per consentire i normali cicli dei castelli.",
+            "recommendation": "Attiva il Riparo automatico delle truppe dopo aver salvato; lo stato nell’intestazione mostra il ciclo di ogni castello."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Riparo automatico delle truppe",
+      "summary": "Staziona altrove le truppe scelte secondo un calendario",
+      "description": "Staziona regolarmente le truppe disponibili nei castelli dell’alleanza idonei e ripete il ciclo al loro ritorno.",
+      "expectation": "Attende se non c’è una destinazione adatta o non ci sono truppe disponibili da inviare. Spostare le truppe non rende invulnerabile il castello."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "Impostazioni generali",
+      "scan": "Intervallo di scansione: 1.800 secondi",
+      "daily": "Limite giornaliero di attacchi: 3.500",
+      "travel": "Potenziamento del viaggio: fascia a monete",
+      "advisor": "Consigliere: disattivato"
+    },
+    "towerCastle": {
+      "title": "Castello di esempio",
+      "enabled": "Attacchi automatici alle torri: attivati",
+      "radius": "Raggio: 35 caselle",
+      "troop": "Truppa scelta: unità d’attacco fittizia",
+      "maiden": "Solo con reliquia della fanciulla: disattivato"
+    },
+    "birdGeneral": {
+      "title": "Impostazioni generali",
+      "min": "Permanenza minima: 6 ore",
+      "max": "Permanenza massima: 12 ore",
+      "send": "Totale minimo idoneo dopo le riserve: 1.000 truppe",
+      "rpt": "Protezione residua minima: più di 3 giorni",
+      "preset": "Preset: riserva Quotidiano"
+    },
+    "birdCastle": {
+      "title": "Castello di esempio",
+      "unitOne": "Unità fittizia 101 riservata: 80",
+      "unitTwo": "Unità fittizia 102 riservata: 40",
+      "add": "Aggiungi unità"
+    }
+  }
+}

@@ -1,0 +1,315 @@
+{
+  "ui": {
+    "guideButton": "Vejledning",
+    "calendarButton": "Kalender",
+    "recommendedLabel": "Anbefalet",
+    "backToSettings": "Tilbage til indstillinger",
+    "backToGuide": "Tilbage til vejledning",
+    "howToSetUp": "Sådan indstiller du det",
+    "whatToExpect": "Hvad du kan forvente",
+    "openFullSizePicture": "Åbn billede i fuld størrelse",
+    "illustrativeExample": "Illustrativt eksempel",
+    "enlargePicture": "Forstør eksempelbilledet",
+    "fullSizePicture": "Eksempelbillede i fuld størrelse; rul for at se alle indstillinger",
+    "towerGuideTitle": "Vejledning til Automatiske tårnangreb",
+    "birdGuideTitle": "Vejledning til Automatisk sikring af tropper i ly",
+    "towerGuideIntro": "Følg disse trin for at indstille Automatiske tårnangreb; vælg et eksempelbillede for at forstørre det.",
+    "birdGuideIntro": "Følg disse trin for at indstille Automatisk sikring af tropper i ly; vælg et eksempelbillede for at forstørre det.",
+    "towerPreviewTitle": "Eksempel på opsætning af Automatiske tårnangreb",
+    "birdPreviewTitle": "Eksempel på opsætning af Automatisk sikring af tropper i ly"
+  },
+  "autoTower": {
+    "recommendationIntro": "Disse anbefalinger gælder almindelig brug; gennemgå dem, før du gemmer.",
+    "steps": {
+      "commanders": {
+        "title": "Vælg dine kommandører",
+        "items": {
+          "commander_assignment": {
+            "label": "Tildeling af kommandører",
+            "description": "Tillad Automatiske tårnangreb under Kommandører for de kommandører, du vil bruge, og vælg Gem tildelinger.",
+            "recommendation": "20 kommandører tildelt Automatiske tårnangreb."
+          }
+        }
+      },
+      "general": {
+        "title": "Indstil scanning, dagsgrænser og rejse",
+        "items": {
+          "open_settings": {
+            "label": "Åbn indstillinger",
+            "description": "Åbn Automatisering, og vælg indstillingsknappen på kortet Automatiske tårnangreb."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Autoritativ kortscanning · Interval",
+            "description": "Vælg, hvor ofte hvert slots tårnliste opdateres, fra 1.800 til 3.600 sekunder; angreb kan starte mellem scanninger.",
+            "recommendation": "1.800 sekunder (30 minutter)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Daglig grænse for normale angreb",
+            "description": "Sætter på pause ved den daglige angrebsgrænse for hele kontoen, indtil spillet nulstiller den; 0 fjerner grænsen.",
+            "recommendation": "3.500 angreb om dagen for hele kontoen."
+          },
+          "horse_travel_boost": {
+            "label": "Rejseboost med hest",
+            "description": "Bruger den valgte rejsemulighed til hvert angreb, også hvert slag i en rådgiversekvens; hastigheden afhænger af rejsebygningerne på afgangsslottet.",
+            "recommendation": "Møntniveau, hvor det understøttes, med nok mønter."
+          },
+          "travel_feather": {
+            "label": "Rejsefjer",
+            "description": "Bruger rejsefjeren i stedet for et hesteniveau med mønter eller rubiner."
+          },
+          "horse_ship_tier_coins": {
+            "label": "Hest / skib · mønter",
+            "description": "Bruger mønter på rejseniveauet med mønter."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Krigshest / hurtigt skib · rubiner",
+            "description": "Bruger rubiner på det første rubinniveau for rejse, når det vælges."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Væddeløbshest / hurtigste skib · rubiner",
+            "description": "Bruger rubiner på det hurtigere rubinniveau for rejse, når det vælges."
+          }
+        },
+        "image": {
+          "alt": "Generelle indstillinger for Automatiske tårnangreb med fiktive data fra Synthetic Castle",
+          "caption": "Indstil scanningsinterval, daglig angrebsgrænse og rejsemulighed; rådgiverindstillinger vises, når de er tilgængelige."
+        }
+      },
+      "castle": {
+        "title": "Indstil hvert slot",
+        "items": {
+          "castle_switch": {
+            "label": "Slotskontakt",
+            "description": "Aktivér hvert slot, som Automatiske tårnangreb skal scanne og angribe fra.",
+            "recommendation": "Aktivér de slotte, du vil bruge regelmæssigt."
+          },
+          "radius": {
+            "label": "Radius",
+            "description": "Vælg, hvor langt der søges omkring dette slot, fra 1 til 50 felter.",
+            "recommendation": "35 felter."
+          },
+          "choose_troop": {
+            "label": "Vælg trop",
+            "description": "Vælg den stationerede trop, som skal fylde begge angrebsflanker; angreb venter, hvis der er for få enheder.",
+            "recommendation": "En stationeret angrebstrop med nok enheder til begge flanker."
+          },
+          "maiden_supported_only": {
+            "label": "Kun med jomfrurelikvie",
+            "description": "Begrænser dette slot til tilgængelige kommandører med det understøttede jomfrurelikvie.",
+            "recommendation": "Fra, medmindre din valgte kommandør har det understøttede jomfrurelikvie."
+          }
+        },
+        "image": {
+          "alt": "Slotsindstillinger for Automatiske tårnangreb med fiktive data fra Synthetic Castle",
+          "caption": "Aktivér et slot, og vælg radius, trop og krav om jomfrurelikvie."
+        }
+      },
+      "advisor": {
+        "title": "Brug rådgiveren efter behov · når tilgængelig",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Brug rådgiver med tidsforkortere",
+            "description": "Gentager slag mod ét tårn med først ét dagligt angreb og derefter én tidsforkorter på mindst tre timer pr. ekstra slag.",
+            "recommendation": "Fra."
+          },
+          "auto_activate_with_token": {
+            "label": "Aktivér automatisk med token",
+            "description": "Bruger en tilgængelig baronrådgiver-token, når rådgiveren er inaktiv, uden at købe en token eller bruge rubiner.",
+            "recommendation": "Fra, mens rådgiveren er slået fra."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Maksimalt antal daglige tidsforkortere",
+            "description": "Begrænser tidsforkortere brugt af bekræftede rådgiversekvenser, indtil spillets daglige angrebstæller nulstilles; 0 sætter rådgiverangreb på pause.",
+            "recommendation": "0, mens rådgiveren er slået fra."
+          }
+        }
+      },
+      "finish": {
+        "title": "Indstil kalenderen, gem og slå til",
+        "items": {
+          "calendar": {
+            "label": "Kalender",
+            "description": "Brug kalenderen til at vælge, hvornår Automatiske tårnangreb må køre; tilgængelige tropper og andre grænser gælder stadig.",
+            "recommendation": "Dine sædvanlige aktive timer."
+          },
+          "save_changes": {
+            "label": "Gem ændringer",
+            "description": "Vælg Gem ændringer for at anvende dine indstillinger; denne vejledning gemmer dem ikke."
+          },
+          "auto_towers_switch": {
+            "label": "Kontakt til Automatiske tårnangreb",
+            "description": "Slå Automatiske tårnangreb til på siden Automatisering, efter du har gemt indstillingerne, så opgaven kan køre.",
+            "recommendation": "Til efter at have gemt de ønskede indstillinger."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatiske tårnangreb",
+      "summary": "Gentag angreb på nærliggende tårne",
+      "description": "Sender angreb mod røverbaron- og kongerigetårne fra de slotte, du vælger.",
+      "expectation": "Det kræver nok tropper, en tilgængelig kommandør og et tårn, der kan angribes. Opgaven kan vente på hjemvendende tropper eller et tårns nedtælling."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "De anbefalede værdier beskriver almindelig brug af Automatisk sikring af tropper i ly; de er vejledende og ændrer ikke gemte indstillinger.",
+    "steps": {
+      "open": {
+        "title": "Åbn indstillinger for Automatisk sikring af tropper i ly",
+        "items": {
+          "open_settings": {
+            "label": "Åbn indstillinger",
+            "description": "Vælg indstillingsknappen ved siden af Automatisk sikring af tropper i ly øverst i kommandocentret."
+          }
+        }
+      },
+      "general": {
+        "title": "Indstil stationeringstid og regler for udsendelse",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Tilfældig varighed · Min",
+            "description": "Indstil det mindste antal timer, tropperne bliver ved alliancemålet, efter rejsen er afsluttet.",
+            "recommendation": "6 timers stationering ved alliancemålet efter ankomst."
+          },
+          "random_delay_range_max": {
+            "label": "Tilfældig varighed · Maks",
+            "description": "Indstil det længste ophold ved målet; Automatisk sikring af tropper i ly vælger en tilfældig varighed mellem Min og Maks.",
+            "recommendation": "12 timers stationering ved alliancemålet efter ankomst."
+          },
+          "minimum_to_send": {
+            "label": "Minimum for udsendelse",
+            "description": "Indstil det mindste samlede antal egnede tropper, der kræves, efter slotsreserverne bliver hjemme; det er en tærskel, ikke det præcise antal, der sendes.",
+            "recommendation": "1.000 egnede tropper i alt, efter slotsreserverne bliver hjemme; det er en tærskel, ikke en præcis udsendelsesmængde."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "Minimum RPT (resterende beskyttelsestid)",
+            "description": "Brug mål med mere end dette antal dages beskyttelse tilbage; 0 fjerner kontrollen.",
+            "recommendation": "3 dage; et mål skal have strengt mere end 3 dages beskyttelse tilbage."
+          }
+        },
+        "image": {
+          "alt": "Indstillinger for Automatisk sikring af tropper i ly: stationeringstid, minimumsudsendelse, minimum RPT og forudindstillinger",
+          "caption": "Indstil stationeringstid og egnethed, og gennemgå reserveforudindstillingen Hverdag, før du gemmer."
+        }
+      },
+      "reserves": {
+        "title": "Vælg tropper, der skal blive på hvert slot",
+        "items": {
+          "add_unit": {
+            "label": "Tilføj enhed",
+            "description": "Vælg på hvert slot de troppetyper, der skal blive hjemme i stedet for at blive sendt; en tom manuel reserve efterlader alle egnede tropper tilgængelige efter automatiske reserver.",
+            "recommendation": "Vælg de troppetyper, hvert slot behøver til forsvar eller andre faste opgaver."
+          },
+          "quantity": {
+            "label": "Antal",
+            "description": "Indstil et positivt antal af hver valgt trop, der skal blive på slottet; 0 reserverer ikke hele typen.",
+            "recommendation": "Behold det antal af hver troppetype, som slottet behøver til forsvar eller andre opgaver; kontrollér de faktiske troppeantal."
+          },
+          "remove_unit": {
+            "label": "Fjern enhed",
+            "description": "Fjern en enhedsflise for at stoppe reservation af den type på det valgte slot."
+          },
+          "auto_fortress_reserve": {
+            "label": "Reserve til Automatisering af fæstninger",
+            "description": "Når Automatisering af fæstninger låser alle skrækulve her, gemmes denne automatiske reserve ikke i forudindstillinger for Automatisk sikring af tropper i ly, og det tidligere manuelle antal skrækulve vender tilbage, når låsen ophører."
+          }
+        },
+        "image": {
+          "alt": "Reservefliser til Automatisk sikring af tropper i ly for det fiktive slot Example Castle",
+          "caption": "Reservér kun de enheder, slottet behøver; Enhed 101 og Enhed 102 er fiktive troppeeksempler."
+        }
+      },
+      "presets": {
+        "title": "Gem og vælg en forudindstilling",
+        "items": {
+          "preset_name": {
+            "label": "Navn på forudindstilling",
+            "description": "Indtast et navn til en ny forudindstilling, eller redigér navnet på den anvendte forudindstilling, før du gemmer ændringer.",
+            "recommendation": "Brug et genkendeligt navn som Hverdag."
+          },
+          "load_preset": {
+            "label": "Indlæs forudindstilling",
+            "description": "Vælg en gemt forudindstilling på listen, eller vælg Gemt konfiguration for at bruge de gemte indstillinger uden en navngivet forudindstilling.",
+            "recommendation": "Brug den ønskede hverdagsforudindstilling som standard under kørsel: vælg den, tryk Anvend, og vælg derefter Gem ændringer."
+          },
+          "apply": {
+            "label": "Anvend",
+            "description": "Indlæser den valgte forudindstilling i dette indstillingsudkast; vælg Gem ændringer for at gøre den til standard under kørsel."
+          },
+          "save_as_new": {
+            "label": "Gem som ny",
+            "description": "Gemmer straks de aktuelle indstillinger som en ny navngivet forudindstilling og vælger den som standard under kørsel."
+          },
+          "delete": {
+            "label": "Slet",
+            "description": "Sletter efter bekræftelse straks den valgte forudindstilling og rydder standarden under kørsel, hvis den var valgt."
+          },
+          "runtime_default": {
+            "label": "Standard under kørsel",
+            "description": "Standarden under kørsel er den gemte aktive forudindstilling eller den gemte konfiguration, når ingen forudindstilling er aktiv."
+          }
+        }
+      },
+      "finish": {
+        "title": "Indstil kalenderen, gem og aktivér",
+        "items": {
+          "calendar": {
+            "label": "Kalender",
+            "description": "Vælg, hvornår Automatisk sikring af tropper i ly må køre, og vælg Gem kalender for at gemme ændringerne.",
+            "recommendation": "Lad kalenderen være slået fra ved løbende drift, eller indstil dine sædvanlige ugentlige timer, og gem kalenderen."
+          },
+          "specify_preset_per_period": {
+            "label": "Angiv forudindstilling pr. periode",
+            "description": "Vælg en gemt forudindstilling for en kalenderperiode, hvis perioden skal tilsidesætte standarden under kørsel.",
+            "recommendation": "Fra, medmindre forskellige perioder kræver forskellige reserver."
+          },
+          "save_changes": {
+            "label": "Gem ændringer",
+            "description": "Gem indstillingsudkastet og anvendte ændringer i forudindstillinger; læsning af denne vejledning gemmer dem ikke."
+          },
+          "auto_bird_switch": {
+            "label": "Kontakt til Automatisk sikring af tropper i ly",
+            "description": "Slå Automatisk sikring af tropper i ly til øverst i kommandocentret efter lagring for at tillade de normale slotscyklusser.",
+            "recommendation": "Slå Automatisk sikring af tropper i ly til efter lagring; status i sidehovedet viser hvert slots cyklus."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatisk sikring af tropper i ly",
+      "summary": "Stationér udvalgte tropper andre steder efter en kalender",
+      "description": "Stationerer jævnligt disponible tropper på egnede allianceslotte og gentager cyklussen, når de vender tilbage.",
+      "expectation": "Venter, hvis der ikke er noget egnet mål eller disponible tropper. Flytning af tropper gør ikke dit slot usårligt."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "Generelle indstillinger",
+      "scan": "Scanningsinterval: 1.800 sekunder",
+      "daily": "Daglig angrebsgrænse: 3.500",
+      "travel": "Rejseboost: møntniveau",
+      "advisor": "Rådgiver: fra"
+    },
+    "towerCastle": {
+      "title": "Eksempelslot",
+      "enabled": "Automatiske tårnangreb: til",
+      "radius": "Radius: 35 felter",
+      "troop": "Valgt trop: fiktiv angrebsenhed",
+      "maiden": "Kun med jomfrurelikvie: fra"
+    },
+    "birdGeneral": {
+      "title": "Generelle indstillinger",
+      "min": "Mindste ophold: 6 timer",
+      "max": "Længste ophold: 12 timer",
+      "send": "Mindste egnede total efter reserver: 1.000 tropper",
+      "rpt": "Mindste resterende beskyttelse: mere end 3 dage",
+      "preset": "Forudindstilling: hverdagsreserve"
+    },
+    "birdCastle": {
+      "title": "Eksempelslot",
+      "unitOne": "Fiktiv enhed 101 reserveret: 80",
+      "unitTwo": "Fiktiv enhed 102 reserveret: 40",
+      "add": "Tilføj enhed"
+    }
+  }
+}

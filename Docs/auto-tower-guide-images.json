@@ -1,7 +1,7 @@
 {
   "sourceRevision": "66ddff3094baaffefa8137f2462aa44e6da01c66",
   "captured": "2026-09-23",
-  "provenance": "Sophie synthetic Vite harness using actual Desktop settings components and CSS; handwritten Synthetic Castle (id 1, kingdom 0, x 1, y 1, empty units), default config, no recordings or non-local network; configuration writes throw. Modal crop for general; castle card crop for castle.",
+  "provenance": "Sophie synthetic Vite harness using actual Desktop settings components and CSS; handwritten Synthetic Castle (id 1, kingdom 0, x 1, y 1, empty units), default config, no recordings or non-local network; configuration writes throw. Modal crop for general; castle card crop for castle. Recaptured from the same localhost-only synthetic harness with displayed daily limit 3,500 and castle radius 35, without changing application defaults.",
   "images": [
     {
       "src": "/guide-auto-towers-general.png",
@@ -9,7 +9,7 @@
       "caption": "Set the scan interval, daily attack limit and travel option; Advisor controls appear when available.",
       "width": 1406,
       "height": 966,
-      "sha256": "b102a47863598201b22d01e4e6eac0437c3e4e9da300da4b883fc019c0cdc99d"
+      "sha256": "9e0a338730dbe0e09d1045109cdb40a00b80bcbaab59678cfbdabfb67bba39a2"
     },
     {
       "src": "/guide-auto-towers-castle.png",
@@ -17,7 +17,8 @@
       "caption": "Enable a castle and choose its radius, troop and maiden requirement.",
       "width": 447,
       "height": 419,
-      "sha256": "6a484f215c5f8d6a5f26ffd0905304f9853871454768542b3841d4294e7981a4"
+      "sha256": "a9427a46436556c3a13134928742078e58c0a26fbb5468e8c4ade33fc0896a20"
     }
-  ]
+  ],
+  "recaptured": "2026-09-24"
 }

@@ -1,0 +1,315 @@
+{
+  "ui": {
+    "guideButton": "指南",
+    "calendarButton": "行事曆",
+    "recommendedLabel": "建議",
+    "backToSettings": "返回設定",
+    "backToGuide": "返回指南",
+    "howToSetUp": "設定方式",
+    "whatToExpect": "預期結果",
+    "openFullSizePicture": "開啟原尺寸圖片",
+    "illustrativeExample": "示意範例",
+    "enlargePicture": "放大範例圖片",
+    "fullSizePicture": "原尺寸範例圖片；捲動以查看所有設定",
+    "towerGuideTitle": "自動攻擊高塔指南",
+    "birdGuideTitle": "部隊自動庇護指南",
+    "towerGuideIntro": "依照以下步驟設定自動攻塔；選取範例圖片即可放大。",
+    "birdGuideIntro": "依照以下步驟設定自動駐軍避險；選取範例圖片即可放大。",
+    "towerPreviewTitle": "自動攻擊高塔設定範例",
+    "birdPreviewTitle": "部隊自動庇護設定範例"
+  },
+  "autoTower": {
+    "recommendationIntro": "以下是日常使用的建議；儲存前請先檢查。",
+    "steps": {
+      "commanders": {
+        "title": "選擇指揮官",
+        "items": {
+          "commander_assignment": {
+            "label": "指揮官指派",
+            "description": "在「指揮官」中，允許想使用的指揮官參與自動攻塔，然後選取「儲存指派」。",
+            "recommendation": "為自動攻塔指派20名指揮官。"
+          }
+        }
+      },
+      "general": {
+        "title": "設定掃描、每日上限與行軍",
+        "items": {
+          "open_settings": {
+            "label": "開啟設定",
+            "description": "開啟「自動化」，然後選取自動攻塔卡片上的設定按鈕。"
+          },
+          "authoritative_map_scan_every": {
+            "label": "權威地圖掃描 · 每隔",
+            "description": "選擇各城堡的塔樓清單更新頻率，範圍為1,800至3,600秒；掃描之間仍可發動攻擊。",
+            "recommendation": "1,800秒（30分鐘）。"
+          },
+          "daily_normal_attack_limit": {
+            "label": "每日一般攻擊上限",
+            "description": "達到整個帳號的每日攻擊上限後暫停，直到遊戲重設計數；設為0則取消上限。",
+            "recommendation": "整個帳號每天3,500次攻擊。"
+          },
+          "horse_travel_boost": {
+            "label": "騎乘行軍加速",
+            "description": "每次攻擊都使用所選的行軍方式，包括顧問連續攻擊中的每次攻擊；速度取決於出發城堡的行軍建築。",
+            "recommendation": "支援時選擇金幣級別，並確保金幣充足。"
+          },
+          "travel_feather": {
+            "label": "行軍羽毛",
+            "description": "使用行軍羽毛，而非消耗金幣或紅寶石的坐騎級別。"
+          },
+          "horse_ship_tier_coins": {
+            "label": "坐騎／船隻級別 · 金幣",
+            "description": "使用金幣行軍級別時消耗金幣。"
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "戰馬／快船級別 · 紅寶石",
+            "description": "選用第一個紅寶石行軍級別時消耗紅寶石。"
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "駿馬／最快船級別 · 紅寶石",
+            "description": "選用更快的紅寶石行軍級別時消耗紅寶石。"
+          }
+        },
+        "image": {
+          "alt": "使用虛構「合成城堡」資料的自動攻塔一般設定",
+          "caption": "設定掃描間隔、每日攻擊上限及行軍方式；顧問控制項會在可用時顯示。"
+        }
+      },
+      "castle": {
+        "title": "逐座設定城堡",
+        "items": {
+          "castle_switch": {
+            "label": "城堡開關",
+            "description": "啟用要由自動攻塔掃描並發動攻擊的每座城堡。",
+            "recommendation": "啟用平常要使用的城堡。"
+          },
+          "radius": {
+            "label": "半徑",
+            "description": "選擇這座城堡周圍的搜尋範圍，1至50格。",
+            "recommendation": "35格。"
+          },
+          "choose_troop": {
+            "label": "選擇兵種",
+            "description": "選擇駐紮兵種填滿攻擊兩翼；數量不足時攻擊會等待。",
+            "recommendation": "數量足以填滿兩翼的駐紮攻擊兵種。"
+          },
+          "maiden_supported_only": {
+            "label": "僅限受少女聖物支援",
+            "description": "將這座城堡限制為使用擁有受支援少女聖物的可用指揮官。",
+            "recommendation": "除非所選指揮官擁有受支援的少女聖物，否則關閉。"
+          }
+        },
+        "image": {
+          "alt": "使用虛構「合成城堡」資料的自動攻塔城堡設定",
+          "caption": "啟用城堡，並選擇半徑、兵種及少女聖物條件。"
+        }
+      },
+      "advisor": {
+        "title": "視需要使用顧問 · 可用時",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "搭配時間跳躍使用顧問",
+            "description": "反覆攻擊同一座塔：先消耗一次每日攻擊，之後每次額外攻擊消耗一個至少三小時的時間跳躍。",
+            "recommendation": "關閉。"
+          },
+          "auto_activate_with_token": {
+            "label": "使用代幣自動啟用",
+            "description": "顧問未啟用時使用現有的男爵顧問代幣；不會購買代幣或消耗紅寶石。",
+            "recommendation": "顧問關閉時保持關閉。"
+          },
+          "maximum_daily_time_skips": {
+            "label": "每日時間跳躍上限",
+            "description": "限制已確認的顧問連續攻擊所使用的時間跳躍數量，直到遊戲重設每日攻擊計數；設為0會暫停顧問發動攻擊。",
+            "recommendation": "顧問關閉時設為0。"
+          }
+        }
+      },
+      "finish": {
+        "title": "設定時程、儲存並開啟",
+        "items": {
+          "calendar": {
+            "label": "行事曆",
+            "description": "使用行事曆選擇自動攻塔的執行時間；兵力是否可用及其他限制仍然適用。",
+            "recommendation": "平常的執行時間。"
+          },
+          "save_changes": {
+            "label": "儲存變更",
+            "description": "選取「儲存變更」以套用設定；閱讀本指南不會儲存設定。"
+          },
+          "auto_towers_switch": {
+            "label": "自動攻擊高塔開關",
+            "description": "儲存設定後，在「自動化」頁面開啟自動攻塔，任務才能執行。",
+            "recommendation": "儲存所需設定後開啟。"
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "自動攻擊高塔",
+      "summary": "反覆攻擊附近塔樓",
+      "description": "從所選城堡向強盜男爵塔及王國塔發動攻擊。",
+      "expectation": "需要足夠兵力、可用的指揮官及可攻擊的塔樓。兵力尚未返回或塔樓計時尚未結束時可能需要等待。"
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "建議值說明自動駐軍避險的日常用法；這些指引不會變更已儲存的設定。",
+    "steps": {
+      "open": {
+        "title": "開啟自動駐軍避險設定",
+        "items": {
+          "open_settings": {
+            "label": "開啟設定",
+            "description": "在指揮中心頂端，選取自動駐軍避險旁的設定按鈕。"
+          }
+        }
+      },
+      "general": {
+        "title": "設定駐紮時間與派遣規則",
+        "items": {
+          "random_delay_range_min": {
+            "label": "隨機延遲範圍 · 最小值",
+            "description": "設定行軍完成後，部隊在聯盟目的地駐紮的最短時數。",
+            "recommendation": "抵達後在聯盟目標駐紮6小時。"
+          },
+          "random_delay_range_max": {
+            "label": "隨機延遲範圍 · 最大值",
+            "description": "設定在目的地駐紮的最長時間；自動駐軍避險會在最小值和最大值之間隨機選擇時長。",
+            "recommendation": "抵達後在聯盟目標駐紮12小時。"
+          },
+          "minimum_to_send": {
+            "label": "最低派遣門檻",
+            "description": "設定城堡保留預備兵後，符合條件的兵力總數必須達到的最低值；這是門檻，並非實際派遣人數。",
+            "recommendation": "城堡保留預備兵後，符合條件的兵力共1,000人；這是門檻，並非確切派遣人數。"
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "最低剩餘保護時間（RPT）",
+            "description": "僅使用剩餘保護天數超過此值的目標；設為0則取消檢查。",
+            "recommendation": "3天；目標的剩餘保護時間必須超過3天。"
+          }
+        },
+        "image": {
+          "alt": "自動駐軍避險的駐紮延遲、最低派遣人數、最低RPT及預設控制項",
+          "caption": "設定駐紮時間與使用條件，儲存前檢查「日常預備兵」預設。"
+        }
+      },
+      "reserves": {
+        "title": "選擇各城堡留守的部隊",
+        "items": {
+          "add_unit": {
+            "label": "新增兵種",
+            "description": "為每座城堡選擇留守而不派遣的兵種；預備兵清單為空時，扣除自動保留兵力後，所有符合條件的部隊均可派遣。",
+            "recommendation": "選擇各城堡用於防禦或其他日常任務的兵種。"
+          },
+          "quantity": {
+            "label": "數量",
+            "description": "為所選的各兵種設定要留守的正數數量；設為0不會保留該兵種的全部部隊。",
+            "recommendation": "按防禦或其他任務需求，留守各兵種所需數量；請核對實際兵力。"
+          },
+          "remove_unit": {
+            "label": "移除兵種",
+            "description": "移除兵種方塊，即停止在所選城堡保留該兵種。"
+          },
+          "auto_fortress_reserve": {
+            "label": "要塞自動化預備兵",
+            "description": "自動要塞鎖定這裡的全部恐狼時，這部分自動保留兵力不會儲存到自動駐軍避險預設中；鎖定結束後，先前手動設定的恐狼數量會恢復。"
+          }
+        },
+        "image": {
+          "alt": "虛構「範例城堡」的自動駐軍避險預備兵方塊",
+          "caption": "只保留這座城堡需要的部隊；兵種101和兵種102是虛構的佔位名稱。"
+        }
+      },
+      "presets": {
+        "title": "儲存並選擇預設",
+        "items": {
+          "preset_name": {
+            "label": "預設名稱",
+            "description": "輸入新預設的名稱，或在儲存變更前編輯已套用預設的名稱。",
+            "recommendation": "使用「日常」等容易辨識的名稱。"
+          },
+          "load_preset": {
+            "label": "載入預設",
+            "description": "從清單中選擇已儲存的預設，或選擇「已儲存設定」，以使用沒有名稱的已儲存設定。",
+            "recommendation": "要將日常預設設為執行預設值：選取該預設，按「套用」，再按「儲存變更」。"
+          },
+          "apply": {
+            "label": "套用",
+            "description": "將所選預設載入目前的設定草稿；選取「儲存變更」才會將其設為執行預設值。"
+          },
+          "save_as_new": {
+            "label": "另存為新預設",
+            "description": "立即將目前設定儲存為新的命名預設，並選為執行預設值。"
+          },
+          "delete": {
+            "label": "刪除",
+            "description": "確認後立即刪除所選預設；若它是執行預設值，也會清除該選擇。"
+          },
+          "runtime_default": {
+            "label": "執行預設值",
+            "description": "執行預設值是已儲存的啟用預設；沒有啟用預設時，則是已儲存設定。"
+          }
+        }
+      },
+      "finish": {
+        "title": "設定時程、儲存並啟用",
+        "items": {
+          "calendar": {
+            "label": "行事曆",
+            "description": "選擇自動駐軍避險的執行時間，然後按「儲存時程」儲存變更。",
+            "recommendation": "持續執行時可關閉時程；也可設定平常的每週時段並儲存時程。"
+          },
+          "specify_preset_per_period": {
+            "label": "按時段指定預設",
+            "description": "若某個行事曆時段需要覆蓋執行預設值，請為該時段選擇已儲存的預設。",
+            "recommendation": "除非不同時段需要不同預備兵，否則關閉。"
+          },
+          "save_changes": {
+            "label": "儲存變更",
+            "description": "儲存設定草稿及已套用預設的變更；閱讀本指南不會儲存這些變更。"
+          },
+          "auto_bird_switch": {
+            "label": "部隊自動庇護開關",
+            "description": "儲存後，在指揮中心頂端開啟自動駐軍避險，以執行各城堡的正常循環。",
+            "recommendation": "儲存後開啟自動駐軍避險；頂端狀態會顯示各城堡的循環。"
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "部隊自動庇護",
+      "summary": "依時程將選定部隊駐紮在外",
+      "description": "定期將多餘部隊駐紮到符合條件的聯盟城堡，待部隊返回後重複循環。",
+      "expectation": "沒有合適目的地或可派遣的多餘部隊時會等待。調走部隊不會讓城堡無敵。"
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "一般設定",
+      "scan": "掃描間隔：1,800秒",
+      "daily": "每日攻擊上限：3,500",
+      "travel": "行軍加速：金幣級別",
+      "advisor": "顧問：關閉"
+    },
+    "towerCastle": {
+      "title": "範例城堡",
+      "enabled": "自動攻擊高塔：開啟",
+      "radius": "半徑：35格",
+      "troop": "所選兵種：虛構的攻擊部隊",
+      "maiden": "僅限受少女聖物支援：關閉"
+    },
+    "birdGeneral": {
+      "title": "一般設定",
+      "min": "最短駐紮：6小時",
+      "max": "最長駐紮：12小時",
+      "send": "保留預備兵後符合條件的最低人數：1,000人",
+      "rpt": "最低剩餘保護時間：超過3天",
+      "preset": "預設：日常預備兵"
+    },
+    "birdCastle": {
+      "title": "範例城堡",
+      "unitOne": "虛構兵種101保留：80",
+      "unitTwo": "虛構兵種102保留：40",
+      "add": "新增兵種"
+    }
+  }
+}

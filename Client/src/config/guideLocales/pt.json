@@ -1,0 +1,315 @@
+{
+  "ui": {
+    "guideButton": "Guia",
+    "calendarButton": "Calendário",
+    "recommendedLabel": "Recomendado",
+    "backToSettings": "Voltar às configurações",
+    "backToGuide": "Voltar ao guia",
+    "howToSetUp": "Como configurar",
+    "whatToExpect": "O que esperar",
+    "openFullSizePicture": "Abrir imagem em tamanho real",
+    "illustrativeExample": "Exemplo ilustrativo",
+    "enlargePicture": "Ampliar imagem de exemplo",
+    "fullSizePicture": "Imagem de exemplo em tamanho real; role para ver todas as configurações",
+    "towerGuideTitle": "Guia dos Ataques automáticos a torres",
+    "birdGuideTitle": "Guia do Abrigo automático de tropas",
+    "towerGuideIntro": "Siga estas etapas para configurar os Ataques automáticos a torres; selecione uma imagem de exemplo para ampliá-la.",
+    "birdGuideIntro": "Siga estas etapas para configurar o Abrigo automático de tropas; selecione uma imagem de exemplo para ampliá-la.",
+    "towerPreviewTitle": "Exemplo de configuração dos Ataques automáticos a torres",
+    "birdPreviewTitle": "Exemplo de configuração do Abrigo automático de tropas"
+  },
+  "autoTower": {
+    "recommendationIntro": "Estas recomendações são para o uso regular; revise-as antes de salvar.",
+    "steps": {
+      "commanders": {
+        "title": "Escolha seus comandantes",
+        "items": {
+          "commander_assignment": {
+            "label": "Atribuição de comandantes",
+            "description": "Em Comandantes, permita os Ataques automáticos a torres para os comandantes que deseja usar e selecione Salvar atribuições.",
+            "recommendation": "20 comandantes atribuídos aos Ataques automáticos a torres."
+          }
+        }
+      },
+      "general": {
+        "title": "Configure a varredura, os limites diários e a viagem",
+        "items": {
+          "open_settings": {
+            "label": "Abrir configurações",
+            "description": "Abra Automação e selecione o botão de configurações no cartão dos Ataques automáticos a torres."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Varredura do mapa oficial · Frequência",
+            "description": "Escolha a frequência de atualização da lista de torres de cada castelo, entre 1.800 e 3.600 segundos; ataques podem começar entre as varreduras.",
+            "recommendation": "1.800 segundos (30 minutos)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Limite diário de ataques normais",
+            "description": "Pausa ao atingir o limite diário de ataques da conta inteira até que o jogo o redefina; 0 remove o limite.",
+            "recommendation": "3.500 ataques por dia na conta inteira."
+          },
+          "horse_travel_boost": {
+            "label": "Aceleração de viagem a cavalo",
+            "description": "Usa a opção de viagem selecionada em cada ataque, inclusive em cada golpe de uma sequência do conselheiro; a velocidade depende dos edifícios de viagem do castelo de origem.",
+            "recommendation": "Categoria com moedas, quando disponível, com moedas suficientes."
+          },
+          "travel_feather": {
+            "label": "Pena de viagem",
+            "description": "Usa a opção de pena de viagem em vez de uma categoria de cavalo com moedas ou rubis."
+          },
+          "horse_ship_tier_coins": {
+            "label": "Categoria cavalo / navio · moedas",
+            "description": "Gasta moedas na categoria de viagem com moedas."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Categoria cavalo de guerra / navio rápido · rubis",
+            "description": "Gasta rubis na primeira categoria de viagem com rubis quando selecionada."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Categoria corcel / navio mais rápido · rubis",
+            "description": "Gasta rubis na categoria de viagem com rubis mais rápida quando selecionada."
+          }
+        },
+        "image": {
+          "alt": "Configurações gerais dos Ataques automáticos a torres com dados fictícios do castelo Synthetic Castle",
+          "caption": "Configure o intervalo de varredura, o limite diário de ataques e a opção de viagem; os controles do conselheiro aparecem quando disponíveis."
+        }
+      },
+      "castle": {
+        "title": "Configure cada castelo",
+        "items": {
+          "castle_switch": {
+            "label": "Controle do castelo",
+            "description": "Ative cada castelo a partir do qual deseja que os Ataques automáticos a torres façam varreduras e ataques.",
+            "recommendation": "Ative os castelos que deseja usar regularmente."
+          },
+          "radius": {
+            "label": "Raio",
+            "description": "Escolha a distância de busca ao redor deste castelo, de 1 a 50 espaços.",
+            "recommendation": "35 espaços."
+          },
+          "choose_troop": {
+            "label": "Escolher tropa",
+            "description": "Escolha a tropa estacionada para preencher os dois flancos de ataque; os ataques aguardam se não houver unidades suficientes.",
+            "recommendation": "Uma tropa de ataque estacionada com unidades suficientes para os dois flancos."
+          },
+          "maiden_supported_only": {
+            "label": "Somente com relíquia da donzela",
+            "description": "Limita este castelo aos comandantes disponíveis com a relíquia da donzela compatível.",
+            "recommendation": "Desativado, a menos que o comandante escolhido tenha a relíquia da donzela compatível."
+          }
+        },
+        "image": {
+          "alt": "Configurações de castelo dos Ataques automáticos a torres com dados fictícios do castelo Synthetic Castle",
+          "caption": "Ative um castelo e escolha o raio, a tropa e o requisito da relíquia da donzela."
+        }
+      },
+      "advisor": {
+        "title": "Use o conselheiro se desejar · quando disponível",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Usar conselheiro com aceleradores de tempo",
+            "description": "Repete golpes em uma torre, usando primeiro um ataque diário e depois um acelerador de tempo de pelo menos três horas por golpe adicional.",
+            "recommendation": "Desativado."
+          },
+          "auto_activate_with_token": {
+            "label": "Ativar automaticamente com ficha",
+            "description": "Usa uma ficha disponível do conselheiro dos barões quando ele está inativo, sem comprar fichas nem gastar rubis.",
+            "recommendation": "Desativado enquanto o conselheiro estiver desativado."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Máximo diário de aceleradores de tempo",
+            "description": "Limita os aceleradores de tempo usados por sequências confirmadas do conselheiro até o contador diário de ataques do jogo ser redefinido; 0 pausa os lançamentos do conselheiro.",
+            "recommendation": "0 enquanto o conselheiro estiver desativado."
+          }
+        }
+      },
+      "finish": {
+        "title": "Defina o calendário, salve e ative",
+        "items": {
+          "calendar": {
+            "label": "Calendário",
+            "description": "Use o calendário para escolher quando os Ataques automáticos a torres podem funcionar; a disponibilidade de tropas e os outros limites ainda se aplicam.",
+            "recommendation": "Seus horários habituais de funcionamento."
+          },
+          "save_changes": {
+            "label": "Salvar alterações",
+            "description": "Selecione Salvar alterações para aplicar suas configurações; ler este guia não as salva."
+          },
+          "auto_towers_switch": {
+            "label": "Controle dos Ataques automáticos a torres",
+            "description": "Ative os Ataques automáticos a torres na página Automação depois de salvar as configurações para permitir a execução.",
+            "recommendation": "Ativado após salvar as configurações desejadas."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Ataques automáticos a torres",
+      "summary": "Repita ataques a torres próximas",
+      "description": "Envia ataques contra torres de barões ladrões e dos reinos a partir dos castelos escolhidos.",
+      "expectation": "Precisa de tropas suficientes, um comandante disponível e uma torre pronta para ser atacada. Pode aguardar o retorno das tropas ou o fim da contagem de uma torre."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "Os valores recomendados descrevem o uso regular do Abrigo automático de tropas; servem como orientação e não alteram as configurações salvas.",
+    "steps": {
+      "open": {
+        "title": "Abra as configurações do Abrigo automático de tropas",
+        "items": {
+          "open_settings": {
+            "label": "Abrir configurações",
+            "description": "No alto da central de comando, selecione o botão de configurações ao lado do Abrigo automático de tropas."
+          }
+        }
+      },
+      "general": {
+        "title": "Configure o tempo de permanência e as regras de envio",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Intervalo aleatório de permanência · Mín.",
+            "description": "Defina o número mínimo de horas que as tropas permanecerão no destino da aliança depois que a viagem terminar.",
+            "recommendation": "6 horas estacionadas no alvo da aliança após a chegada."
+          },
+          "random_delay_range_max": {
+            "label": "Intervalo aleatório de permanência · Máx.",
+            "description": "Defina a permanência máxima no destino; o Abrigo automático de tropas escolhe uma duração aleatória entre Mín. e Máx.",
+            "recommendation": "12 horas estacionadas no alvo da aliança após a chegada."
+          },
+          "minimum_to_send": {
+            "label": "Mínimo para enviar",
+            "description": "Defina o total mínimo de tropas elegíveis necessário após manter as reservas do castelo; isto é um limite de elegibilidade, não o número exato enviado.",
+            "recommendation": "1.000 tropas elegíveis no total após manter as reservas do castelo; isto é um limite de elegibilidade, não uma quantidade exata de envio."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "RPT mínimo (tempo de proteção restante)",
+            "description": "Use alvos com mais do que este número de dias de proteção restantes; 0 desativa a verificação.",
+            "recommendation": "3 dias; o alvo precisa ter estritamente mais de 3 dias de proteção restantes."
+          }
+        },
+        "image": {
+          "alt": "Controles do Abrigo automático de tropas para permanência, envio mínimo, RPT mínimo e predefinições",
+          "caption": "Configure o tempo de permanência e a elegibilidade, depois revise a predefinição de reserva Cotidiana antes de salvar."
+        }
+      },
+      "reserves": {
+        "title": "Escolha as tropas a manter em cada castelo",
+        "items": {
+          "add_unit": {
+            "label": "Adicionar unidade",
+            "description": "Em cada castelo, escolha os tipos de tropa que ficarão em casa em vez de serem enviados; uma reserva manual vazia deixa todas as tropas elegíveis disponíveis após as reservas automáticas.",
+            "recommendation": "Escolha os tipos de tropa de que cada castelo precisa para defesa ou outras tarefas regulares."
+          },
+          "quantity": {
+            "label": "Quantidade",
+            "description": "Defina uma quantidade positiva de cada tropa escolhida para manter no castelo; 0 não reserva o tipo inteiro.",
+            "recommendation": "Mantenha no castelo a quantidade de cada tipo de tropa necessária para defesa ou outras tarefas; confira as contagens reais."
+          },
+          "remove_unit": {
+            "label": "Remover unidade",
+            "description": "Remova um bloco de unidade para deixar de reservar esse tipo no castelo selecionado."
+          },
+          "auto_fortress_reserve": {
+            "label": "Reserva da Automação de fortalezas",
+            "description": "Quando a Automação de fortalezas bloqueia todos os lobos ferozes aqui, essa reserva automática não é salva nas predefinições do Abrigo automático de tropas, e a quantidade manual anterior de lobos ferozes volta quando o bloqueio termina."
+          }
+        },
+        "image": {
+          "alt": "Blocos de reserva do Abrigo automático de tropas no castelo fictício Example Castle",
+          "caption": "Reserve apenas as unidades necessárias neste castelo; Unidade 101 e Unidade 102 são exemplos fictícios de tropas."
+        }
+      },
+      "presets": {
+        "title": "Salve e selecione uma predefinição",
+        "items": {
+          "preset_name": {
+            "label": "Nome da predefinição",
+            "description": "Digite um nome para uma nova predefinição ou edite o nome da predefinição aplicada antes de salvar as alterações.",
+            "recommendation": "Use um nome fácil de reconhecer, como Cotidiana."
+          },
+          "load_preset": {
+            "label": "Carregar predefinição",
+            "description": "Escolha uma predefinição salva na lista ou Configuração salva para usar os ajustes armazenados sem uma predefinição nomeada.",
+            "recommendation": "Use a predefinição cotidiana desejada como padrão de execução: selecione-a, clique em Aplicar e depois em Salvar alterações."
+          },
+          "apply": {
+            "label": "Aplicar",
+            "description": "Carrega a predefinição selecionada neste rascunho de configurações; selecione Salvar alterações para confirmá-la como padrão de execução."
+          },
+          "save_as_new": {
+            "label": "Salvar como nova",
+            "description": "Salva imediatamente as configurações atuais como uma nova predefinição nomeada e a seleciona como padrão de execução."
+          },
+          "delete": {
+            "label": "Excluir",
+            "description": "Após a confirmação, exclui imediatamente a predefinição selecionada e limpa o padrão de execução se ela estava selecionada."
+          },
+          "runtime_default": {
+            "label": "Padrão de execução",
+            "description": "O padrão de execução é a predefinição ativa salva ou, se nenhuma estiver ativa, a configuração salva."
+          }
+        }
+      },
+      "finish": {
+        "title": "Defina o calendário, salve e ative",
+        "items": {
+          "calendar": {
+            "label": "Calendário",
+            "description": "Escolha quando o Abrigo automático de tropas pode funcionar e selecione Salvar calendário para guardar suas alterações.",
+            "recommendation": "Deixe o calendário desativado para funcionamento contínuo ou defina os horários semanais habituais e salve o calendário."
+          },
+          "specify_preset_per_period": {
+            "label": "Especificar predefinição por período",
+            "description": "Escolha uma predefinição salva para um período do calendário quando esse período tiver de substituir o padrão de execução.",
+            "recommendation": "Desativado, a menos que períodos diferentes precisem de reservas diferentes."
+          },
+          "save_changes": {
+            "label": "Salvar alterações",
+            "description": "Salve o rascunho das configurações e as alterações da predefinição aplicada; ler este guia não as salva."
+          },
+          "auto_bird_switch": {
+            "label": "Controle do Abrigo automático de tropas",
+            "description": "Ative o Abrigo automático de tropas no alto da central de comando depois de salvar para permitir os ciclos normais dos castelos.",
+            "recommendation": "Ative o Abrigo automático de tropas depois de salvar; o status do cabeçalho mostra o ciclo de cada castelo."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Abrigo automático de tropas",
+      "summary": "Mantenha as tropas selecionadas estacionadas fora do castelo conforme o calendário",
+      "description": "Estaciona regularmente tropas disponíveis em castelos elegíveis da aliança e repete o ciclo quando elas retornam.",
+      "expectation": "Aguarda se não houver destino adequado ou tropas disponíveis para enviar. Mover tropas não torna seu castelo invulnerável."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "Configurações gerais",
+      "scan": "Intervalo de varredura: 1.800 segundos",
+      "daily": "Limite diário de ataques: 3.500",
+      "travel": "Aceleração de viagem: categoria com moedas",
+      "advisor": "Conselheiro: desativado"
+    },
+    "towerCastle": {
+      "title": "Castelo de exemplo",
+      "enabled": "Ataques automáticos a torres: ativados",
+      "radius": "Raio: 35 espaços",
+      "troop": "Tropa escolhida: unidade de ataque fictícia",
+      "maiden": "Somente com relíquia da donzela: desativado"
+    },
+    "birdGeneral": {
+      "title": "Configurações gerais",
+      "min": "Permanência mínima: 6 horas",
+      "max": "Permanência máxima: 12 horas",
+      "send": "Total mínimo elegível após reservas: 1.000 tropas",
+      "rpt": "Proteção restante mínima: mais de 3 dias",
+      "preset": "Predefinição: reserva Cotidiana"
+    },
+    "birdCastle": {
+      "title": "Castelo de exemplo",
+      "unitOne": "Unidade fictícia 101 reservada: 80",
+      "unitTwo": "Unidade fictícia 102 reservada: 40",
+      "add": "Adicionar unidade"
+    }
+  }
+}

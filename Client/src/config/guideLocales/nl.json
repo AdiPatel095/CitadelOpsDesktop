@@ -1,0 +1,315 @@
+{
+  "ui": {
+    "guideButton": "Handleiding",
+    "calendarButton": "Kalender",
+    "recommendedLabel": "Aanbevolen",
+    "backToSettings": "Terug naar instellingen",
+    "backToGuide": "Terug naar handleiding",
+    "howToSetUp": "Zo stel je het in",
+    "whatToExpect": "Wat je kunt verwachten",
+    "openFullSizePicture": "Afbeelding op volledig formaat openen",
+    "illustrativeExample": "Illustratief voorbeeld",
+    "enlargePicture": "Voorbeeldafbeelding vergroten",
+    "fullSizePicture": "Voorbeeldafbeelding op volledig formaat; scrol om alle instellingen te bekijken",
+    "towerGuideTitle": "Handleiding voor Automatische torenaanvallen",
+    "birdGuideTitle": "Handleiding voor Automatisch onderbrengen van troepen",
+    "towerGuideIntro": "Volg deze stappen om Automatische torenaanvallen in te stellen; selecteer een voorbeeldafbeelding om deze te vergroten.",
+    "birdGuideIntro": "Volg deze stappen om Automatisch onderbrengen van troepen in te stellen; selecteer een voorbeeldafbeelding om deze te vergroten.",
+    "towerPreviewTitle": "Voorbeeld van de instellingen voor Automatische torenaanvallen",
+    "birdPreviewTitle": "Voorbeeld van de instellingen voor Automatisch onderbrengen van troepen"
+  },
+  "autoTower": {
+    "recommendationIntro": "Dit zijn aanbevelingen voor regelmatig gebruik; controleer ze voordat je opslaat.",
+    "steps": {
+      "commanders": {
+        "title": "Kies je commandanten",
+        "items": {
+          "commander_assignment": {
+            "label": "Commandanten toewijzen",
+            "description": "Sta Automatische torenaanvallen bij Commandanten toe voor de commandanten die je wilt gebruiken en selecteer Toewijzingen opslaan.",
+            "recommendation": "20 commandanten toegewezen aan Automatische torenaanvallen."
+          }
+        }
+      },
+      "general": {
+        "title": "Stel scans, daglimieten en reizen in",
+        "items": {
+          "open_settings": {
+            "label": "Instellingen openen",
+            "description": "Open Automatisering en selecteer de instellingenknop op de kaart Automatische torenaanvallen."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Scan van de gezaghebbende kaart · Interval",
+            "description": "Kies hoe vaak de torenlijst van elk kasteel wordt vernieuwd, tussen 1.800 en 3.600 seconden; aanvallen kunnen tussen scans vertrekken.",
+            "recommendation": "1.800 seconden (30 minuten)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Daglimiet voor normale aanvallen",
+            "description": "Pauzeert bij de dagelijkse aanvalslimiet voor je hele account totdat het spel deze reset; 0 heft de limiet op.",
+            "recommendation": "3.500 aanvallen per dag voor het hele account."
+          },
+          "horse_travel_boost": {
+            "label": "Reisversnelling met paarden",
+            "description": "Gebruikt je gekozen reisoptie voor elke aanval, inclusief elke treffer in een adviseursreeks; de snelheid hangt af van de reisgebouwen van het vertrekkasteel.",
+            "recommendation": "Muntniveau waar beschikbaar, met voldoende munten."
+          },
+          "travel_feather": {
+            "label": "Reisveer",
+            "description": "Gebruikt de reisveer in plaats van een paardenniveau met munten of robijnen."
+          },
+          "horse_ship_tier_coins": {
+            "label": "Paard / schip · munten",
+            "description": "Besteedt munten aan het reisniveau met munten."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Oorlogspaard / snel schip · robijnen",
+            "description": "Besteedt robijnen aan het eerste reisniveau met robijnen wanneer dit is gekozen."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Renpaard / snelste schip · robijnen",
+            "description": "Besteedt robijnen aan het snellere reisniveau met robijnen wanneer dit is gekozen."
+          }
+        },
+        "image": {
+          "alt": "Algemene instellingen voor Automatische torenaanvallen met fictieve gegevens van Synthetic Castle",
+          "caption": "Stel het scaninterval, de dagelijkse aanvalslimiet en de reisoptie in; adviseursopties verschijnen wanneer beschikbaar."
+        }
+      },
+      "castle": {
+        "title": "Stel elk kasteel in",
+        "items": {
+          "castle_switch": {
+            "label": "Kasteelschakelaar",
+            "description": "Schakel elk kasteel in van waaruit Automatische torenaanvallen moeten scannen en aanvallen.",
+            "recommendation": "Schakel de kastelen in die je regelmatig wilt gebruiken."
+          },
+          "radius": {
+            "label": "Straal",
+            "description": "Kies hoe ver rond dit kasteel wordt gezocht, van 1 tot 50 velden.",
+            "recommendation": "35 velden."
+          },
+          "choose_troop": {
+            "label": "Kies troep",
+            "description": "Kies de gestationeerde troep waarmee beide aanvalsflanken worden gevuld; aanvallen wachten als er te weinig eenheden zijn.",
+            "recommendation": "Een gestationeerde aanvalstroep met genoeg eenheden voor beide flanken."
+          },
+          "maiden_supported_only": {
+            "label": "Alleen met jonkvrouwenrelikwie",
+            "description": "Beperkt dit kasteel tot beschikbare commandanten met het ondersteunde jonkvrouwenrelikwie.",
+            "recommendation": "Uit, tenzij je gekozen commandant het ondersteunde jonkvrouwenrelikwie heeft."
+          }
+        },
+        "image": {
+          "alt": "Kasteelinstellingen voor Automatische torenaanvallen met fictieve gegevens van Synthetic Castle",
+          "caption": "Schakel een kasteel in en kies de straal, troep en vereiste voor het jonkvrouwenrelikwie."
+        }
+      },
+      "advisor": {
+        "title": "Gebruik de adviseur indien gewenst · indien beschikbaar",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Adviseur gebruiken met tijdversnellers",
+            "description": "Herhaalt treffers op één toren: eerst met één dagelijkse aanval en daarna met één tijdversneller van minstens drie uur per extra treffer.",
+            "recommendation": "Uit."
+          },
+          "auto_activate_with_token": {
+            "label": "Automatisch activeren met fiche",
+            "description": "Gebruikt een beschikbaar baronnenadviseursfiche als de adviseur inactief is, zonder een fiche te kopen of robijnen uit te geven.",
+            "recommendation": "Uit zolang de adviseur uit staat."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Maximaal aantal tijdversnellers per dag",
+            "description": "Beperkt de tijdversnellers die bevestigde adviseursreeksen gebruiken totdat de dagelijkse aanvalsteller van het spel wordt gereset; 0 pauzeert aanvallen van de adviseur.",
+            "recommendation": "0 zolang de adviseur uit staat."
+          }
+        }
+      },
+      "finish": {
+        "title": "Stel het schema in, sla op en schakel in",
+        "items": {
+          "calendar": {
+            "label": "Kalender",
+            "description": "Gebruik de kalender om te kiezen wanneer Automatische torenaanvallen mogen draaien; de beschikbaarheid van troepen en andere limieten blijven gelden.",
+            "recommendation": "Je gebruikelijke actieve uren."
+          },
+          "save_changes": {
+            "label": "Wijzigingen opslaan",
+            "description": "Selecteer Wijzigingen opslaan om je instellingen toe te passen; deze handleiding lezen slaat ze niet op."
+          },
+          "auto_towers_switch": {
+            "label": "Schakelaar voor Automatische torenaanvallen",
+            "description": "Schakel Automatische torenaanvallen op de pagina Automatisering in nadat je de instellingen hebt opgeslagen, zodat de taak kan draaien.",
+            "recommendation": "Aan na het opslaan van de gewenste instellingen."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatische torenaanvallen",
+      "summary": "Herhaal aanvallen op nabije torens",
+      "description": "Verstuurt aanvallen naar roofbaronnen- en koninkrijkstorens vanuit de kastelen die je kiest.",
+      "expectation": "Er zijn genoeg troepen, een beschikbare commandant en een aanvalsgerede toren nodig. De taak kan wachten tot troepen terugkeren of de timer van een toren afloopt."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "De aanbevolen waarden beschrijven regelmatig gebruik van Automatisch onderbrengen van troepen; ze zijn richtlijnen en wijzigen opgeslagen instellingen niet.",
+    "steps": {
+      "open": {
+        "title": "Open de instellingen voor Automatisch onderbrengen van troepen",
+        "items": {
+          "open_settings": {
+            "label": "Instellingen openen",
+            "description": "Selecteer bovenaan het commandocentrum de instellingenknop naast Automatisch onderbrengen van troepen."
+          }
+        }
+      },
+      "general": {
+        "title": "Stel stationeringstijd en verzendregels in",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Willekeurige duur · Minimum",
+            "description": "Stel het kleinste aantal uren in dat troepen op de bondgenootschapsbestemming blijven nadat de reis is voltooid.",
+            "recommendation": "6 uur gestationeerd bij het bondgenootschapsdoel na aankomst."
+          },
+          "random_delay_range_max": {
+            "label": "Willekeurige duur · Maximum",
+            "description": "Stel de langste verblijfsduur op de bestemming in; Automatisch onderbrengen van troepen kiest willekeurig een duur tussen Minimum en Maximum.",
+            "recommendation": "12 uur gestationeerd bij het bondgenootschapsdoel na aankomst."
+          },
+          "minimum_to_send": {
+            "label": "Minimum om te verzenden",
+            "description": "Stel het minimale totaal aan geschikte troepen in dat nodig is nadat de kasteelreserves thuis zijn gehouden; dit is een drempel, niet het exacte aantal dat wordt verzonden.",
+            "recommendation": "In totaal 1.000 geschikte troepen na het thuis houden van kasteelreserves; dit is een drempel, geen exact verzendaantal."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "Minimale RPT (resterende beschermingstijd)",
+            "description": "Gebruik doelen met meer dan dit aantal resterende beschermingsdagen; 0 schakelt de controle uit.",
+            "recommendation": "3 dagen; een doel moet strikt meer dan 3 dagen beschermingstijd over hebben."
+          }
+        },
+        "image": {
+          "alt": "Instellingen voor Automatisch onderbrengen van troepen: stationeringsduur, verzendminimum, minimale RPT en voorinstellingen",
+          "caption": "Stel stationeringsduur en geschiktheid in en controleer de reserveringsvoorinstelling Dagelijks voordat je opslaat."
+        }
+      },
+      "reserves": {
+        "title": "Kies welke troepen in elk kasteel blijven",
+        "items": {
+          "add_unit": {
+            "label": "Eenheid toevoegen",
+            "description": "Kies per kasteel welke troepensoorten thuisblijven in plaats van te worden verzonden; met een lege handmatige reserve blijven alle geschikte troepen na automatische reserves beschikbaar.",
+            "recommendation": "Kies de troepensoorten die elk kasteel nodig heeft voor verdediging of andere vaste taken."
+          },
+          "quantity": {
+            "label": "Aantal",
+            "description": "Stel een positief aantal van elke gekozen troep in dat in dit kasteel blijft; 0 reserveert niet de hele soort.",
+            "recommendation": "Houd van elke troepensoort het aantal thuis dat dit kasteel nodig heeft voor verdediging of andere taken; controleer de werkelijke aantallen."
+          },
+          "remove_unit": {
+            "label": "Eenheid verwijderen",
+            "description": "Verwijder een eenheidstegel om die soort niet langer in het geselecteerde kasteel te reserveren."
+          },
+          "auto_fortress_reserve": {
+            "label": "Reserve van Automatisering van vestingen",
+            "description": "Wanneer Automatisering van vestingen hier alle woeste wolven vastzet, wordt deze automatische reserve niet opgeslagen in voorinstellingen voor Automatisch onderbrengen van troepen; het eerdere handmatige aantal woeste wolven keert terug zodra de blokkering eindigt."
+          }
+        },
+        "image": {
+          "alt": "Reservetegels voor Automatisch onderbrengen van troepen in het fictieve kasteel Example Castle",
+          "caption": "Reserveer alleen de eenheden die dit kasteel nodig heeft; Eenheid 101 en Eenheid 102 zijn fictieve troepvoorbeelden."
+        }
+      },
+      "presets": {
+        "title": "Sla een voorinstelling op en selecteer deze",
+        "items": {
+          "preset_name": {
+            "label": "Naam van voorinstelling",
+            "description": "Voer een naam in voor een nieuwe voorinstelling of wijzig de naam van de toegepaste voorinstelling voordat je wijzigingen opslaat.",
+            "recommendation": "Gebruik een herkenbare naam zoals Dagelijks."
+          },
+          "load_preset": {
+            "label": "Voorinstelling laden",
+            "description": "Kies een opgeslagen voorinstelling in de lijst of kies Opgeslagen configuratie om de opgeslagen instellingen zonder benoemde voorinstelling te gebruiken.",
+            "recommendation": "Gebruik de gewenste dagelijkse voorinstelling als standaard tijdens uitvoering: selecteer deze, kies Toepassen en daarna Wijzigingen opslaan."
+          },
+          "apply": {
+            "label": "Toepassen",
+            "description": "Laadt de gekozen voorinstelling in deze conceptinstellingen; selecteer Wijzigingen opslaan om deze als standaard tijdens uitvoering vast te leggen."
+          },
+          "save_as_new": {
+            "label": "Opslaan als nieuw",
+            "description": "Slaat de huidige instellingen onmiddellijk op als een nieuwe benoemde voorinstelling en selecteert deze als standaard tijdens uitvoering."
+          },
+          "delete": {
+            "label": "Verwijderen",
+            "description": "Verwijdert na bevestiging onmiddellijk de geselecteerde voorinstelling en wist de standaard tijdens uitvoering als die geselecteerd was."
+          },
+          "runtime_default": {
+            "label": "Standaard tijdens uitvoering",
+            "description": "De standaard tijdens uitvoering is de opgeslagen actieve voorinstelling, of de opgeslagen configuratie wanneer geen voorinstelling actief is."
+          }
+        }
+      },
+      "finish": {
+        "title": "Stel het schema in, sla op en schakel in",
+        "items": {
+          "calendar": {
+            "label": "Kalender",
+            "description": "Kies wanneer Automatisch onderbrengen van troepen mag draaien en selecteer Schema opslaan om je wijzigingen te bewaren.",
+            "recommendation": "Laat het schema uit voor doorlopend gebruik of stel je gebruikelijke wekelijkse uren in en sla het schema op."
+          },
+          "specify_preset_per_period": {
+            "label": "Voorinstelling per periode opgeven",
+            "description": "Kies een opgeslagen voorinstelling voor een kalenderperiode wanneer die de standaard tijdens uitvoering moet vervangen.",
+            "recommendation": "Uit, tenzij verschillende perioden verschillende reserves nodig hebben."
+          },
+          "save_changes": {
+            "label": "Wijzigingen opslaan",
+            "description": "Sla de conceptinstellingen en toegepaste wijzigingen aan voorinstellingen op; deze handleiding lezen slaat ze niet op."
+          },
+          "auto_bird_switch": {
+            "label": "Schakelaar voor Automatisch onderbrengen van troepen",
+            "description": "Schakel Automatisch onderbrengen van troepen bovenaan het commandocentrum in na het opslaan om de normale kasteelcycli toe te staan.",
+            "recommendation": "Schakel Automatisch onderbrengen van troepen in na het opslaan; de status in de kop toont de cyclus van elk kasteel."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatisch onderbrengen van troepen",
+      "summary": "Stationeer geselecteerde troepen volgens een schema buiten het kasteel",
+      "description": "Stationeert regelmatig beschikbare troepen in geschikte bondgenootschapskastelen en herhaalt de cyclus wanneer ze terugkeren.",
+      "expectation": "Wacht als er geen geschikt doel of geen beschikbare troepen zijn. Troepen verplaatsen maakt je kasteel niet onkwetsbaar."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "Algemene instellingen",
+      "scan": "Scaninterval: 1.800 seconden",
+      "daily": "Dagelijkse aanvalslimiet: 3.500",
+      "travel": "Reisversnelling: muntniveau",
+      "advisor": "Adviseur: uit"
+    },
+    "towerCastle": {
+      "title": "Voorbeeldkasteel",
+      "enabled": "Automatische torenaanvallen: aan",
+      "radius": "Straal: 35 velden",
+      "troop": "Gekozen troep: fictieve aanvalseenheid",
+      "maiden": "Alleen met jonkvrouwenrelikwie: uit"
+    },
+    "birdGeneral": {
+      "title": "Algemene instellingen",
+      "min": "Minimaal verblijf: 6 uur",
+      "max": "Maximaal verblijf: 12 uur",
+      "send": "Minimaal geschikt totaal na reserves: 1.000 troepen",
+      "rpt": "Minimale resterende bescherming: meer dan 3 dagen",
+      "preset": "Voorinstelling: dagelijkse reserve"
+    },
+    "birdCastle": {
+      "title": "Voorbeeldkasteel",
+      "unitOne": "Fictieve eenheid 101 gereserveerd: 80",
+      "unitTwo": "Fictieve eenheid 102 gereserveerd: 40",
+      "add": "Eenheid toevoegen"
+    }
+  }
+}

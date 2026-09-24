@@ -1,0 +1,315 @@
+{
+  "ui": {
+    "guideButton": "가이드",
+    "calendarButton": "달력",
+    "recommendedLabel": "권장",
+    "backToSettings": "설정으로 돌아가기",
+    "backToGuide": "가이드로 돌아가기",
+    "howToSetUp": "설정 방법",
+    "whatToExpect": "예상 동작",
+    "openFullSizePicture": "전체 크기 사진 열기",
+    "illustrativeExample": "설명용 예시",
+    "enlargePicture": "예시 사진 확대",
+    "fullSizePicture": "전체 크기 예시 사진입니다. 스크롤하여 모든 설정을 확인하세요",
+    "towerGuideTitle": "탑 자동 공격 가이드",
+    "birdGuideTitle": "병력 자동 대피 보호 가이드",
+    "towerGuideIntro": "다음 단계에 따라 자동 탑을 설정하세요. 예시 사진을 선택하면 확대됩니다.",
+    "birdGuideIntro": "다음 단계에 따라 자동 병력 대피를 설정하세요. 예시 사진을 선택하면 확대됩니다.",
+    "towerPreviewTitle": "탑 자동 공격 설정 예시",
+    "birdPreviewTitle": "병력 자동 대피 보호 설정 예시"
+  },
+  "autoTower": {
+    "recommendationIntro": "일반적인 사용을 위한 권장값입니다. 저장하기 전에 검토하세요.",
+    "steps": {
+      "commanders": {
+        "title": "지휘관 선택",
+        "items": {
+          "commander_assignment": {
+            "label": "지휘관 배정",
+            "description": "지휘관 메뉴에서 사용할 지휘관에게 자동 탑을 허용하고 배정 저장을 선택하세요.",
+            "recommendation": "자동 탑에 지휘관 20명을 배정하세요."
+          }
+        }
+      },
+      "general": {
+        "title": "스캔, 일일 한도 및 이동 설정",
+        "items": {
+          "open_settings": {
+            "label": "설정 열기",
+            "description": "자동화 메뉴를 연 다음 자동 탑 카드의 설정 버튼을 선택하세요."
+          },
+          "authoritative_map_scan_every": {
+            "label": "기준 지도 스캔 · 간격",
+            "description": "각 성의 탑 목록을 1,800~3,600초마다 새로 고치도록 정하며, 스캔 사이에도 공격이 시작될 수 있습니다.",
+            "recommendation": "1,800초(30분)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "일반 공격 일일 한도",
+            "description": "계정 전체의 일일 공격 한도에 도달하면 게임에서 초기화할 때까지 중지하며, 0은 한도를 없앱니다.",
+            "recommendation": "계정 전체에서 하루 3,500회 공격."
+          },
+          "horse_travel_boost": {
+            "label": "말 이동 가속",
+            "description": "조언자의 연속 공격에 포함된 각 공격에도 선택한 이동 수단을 사용하며, 속도는 출발 성의 이동 건물에 따라 달라집니다.",
+            "recommendation": "지원되는 곳에서는 코인 단계를 사용하고 코인을 충분히 확보하세요."
+          },
+          "travel_feather": {
+            "label": "이동 깃털",
+            "description": "코인 또는 루비를 쓰는 말 단계 대신 이동 깃털을 사용합니다."
+          },
+          "horse_ship_tier_coins": {
+            "label": "말 / 배 단계 · 코인",
+            "description": "코인 이동 단계에 코인을 사용합니다."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "군마 / 빠른 배 단계 · 루비",
+            "description": "선택하면 첫 번째 루비 이동 단계에 루비를 사용합니다."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "준마 / 가장 빠른 배 단계 · 루비",
+            "description": "선택하면 더 빠른 루비 이동 단계에 루비를 사용합니다."
+          }
+        },
+        "image": {
+          "alt": "가상의 합성 성 데이터를 사용한 자동 탑 일반 설정",
+          "caption": "스캔 간격, 일일 공격 한도 및 이동 수단을 설정하세요. 조언자 설정은 사용 가능한 경우 표시됩니다."
+        }
+      },
+      "castle": {
+        "title": "각 성 설정",
+        "items": {
+          "castle_switch": {
+            "label": "성 스위치",
+            "description": "자동 탑이 스캔하고 공격할 각 성을 켜세요.",
+            "recommendation": "평소 사용할 성을 활성화하세요."
+          },
+          "radius": {
+            "label": "반경",
+            "description": "이 성 주변의 탐색 거리를 1~50칸에서 선택하세요.",
+            "recommendation": "35칸."
+          },
+          "choose_troop": {
+            "label": "병력 선택",
+            "description": "공격의 양쪽 측면을 채울 주둔 병력을 선택하며, 병력이 부족하면 공격이 대기합니다.",
+            "recommendation": "양쪽 측면에 충분한 수의 주둔 공격 병력."
+          },
+          "maiden_supported_only": {
+            "label": "지원되는 처녀 유물만",
+            "description": "이 성에서 사용할 지휘관을 지원되는 처녀 유물을 가진 지휘관으로 제한합니다.",
+            "recommendation": "선택한 지휘관에게 지원되는 처녀 유물이 없다면 끄세요."
+          }
+        },
+        "image": {
+          "alt": "가상의 합성 성 데이터를 사용한 자동 탑 성 설정",
+          "caption": "성을 켜고 반경, 병력 및 처녀 유물 조건을 선택하세요."
+        }
+      },
+      "advisor": {
+        "title": "원하면 조언자 사용 · 사용 가능한 경우",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "시간 건너뛰기와 조언자 사용",
+            "description": "한 탑을 반복 공격할 때 먼저 일일 공격 1회를 사용하고 추가 공격마다 최소 3시간짜리 시간 건너뛰기 1개를 사용합니다.",
+            "recommendation": "꺼짐."
+          },
+          "auto_activate_with_token": {
+            "label": "토큰으로 자동 활성화",
+            "description": "조언자가 비활성일 때 사용 가능한 남작 조언자 토큰을 사용하며, 토큰을 구매하거나 루비를 소비하지 않습니다.",
+            "recommendation": "조언자를 끄는 동안 꺼짐."
+          },
+          "maximum_daily_time_skips": {
+            "label": "하루 최대 시간 건너뛰기",
+            "description": "게임의 일일 공격 횟수가 초기화될 때까지 확인된 조언자 연속 공격에 사용되는 시간 건너뛰기를 제한하며, 0은 조언자의 공격 시작을 중지합니다.",
+            "recommendation": "조언자를 끄는 동안 0."
+          }
+        }
+      },
+      "finish": {
+        "title": "일정을 설정하고 저장한 뒤 켜기",
+        "items": {
+          "calendar": {
+            "label": "달력",
+            "description": "달력에서 탑 자동 공격의 실행 시간을 선택하되, 병력 가용성과 다른 제한도 계속 적용됩니다.",
+            "recommendation": "평소 실행 시간."
+          },
+          "save_changes": {
+            "label": "변경 사항 저장",
+            "description": "변경 사항 저장을 선택하면 설정이 적용되지만, 이 가이드를 읽는 것만으로는 저장되지 않습니다."
+          },
+          "auto_towers_switch": {
+            "label": "탑 자동 공격 스위치",
+            "description": "설정을 저장한 다음 자동화 페이지에서 자동 탑을 켜야 작업을 실행할 수 있습니다.",
+            "recommendation": "원하는 설정을 저장한 후 켜세요."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "탑 자동 공격",
+      "summary": "주변 탑 반복 공격",
+      "description": "선택한 성에서 도적 남작과 왕국의 탑을 공격합니다.",
+      "expectation": "충분한 병력, 사용 가능한 지휘관, 공격 준비가 된 탑이 필요합니다. 병력이 돌아오거나 탑의 타이머가 끝날 때까지 기다릴 수 있습니다."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "권장값은 자동 병력 대피의 일반적인 사용을 설명하는 지침이며 저장된 설정을 변경하지 않습니다.",
+    "steps": {
+      "open": {
+        "title": "자동 병력 대피 설정 열기",
+        "items": {
+          "open_settings": {
+            "label": "설정 열기",
+            "description": "지휘 센터 상단에서 자동 병력 대피 옆의 설정 버튼을 선택하세요."
+          }
+        }
+      },
+      "general": {
+        "title": "주둔 시간과 파견 규칙 설정",
+        "items": {
+          "random_delay_range_min": {
+            "label": "무작위 지연 범위 · 최소",
+            "description": "이동이 완료된 후 병력이 동맹 목적지에 머무를 최소 시간을 지정하세요.",
+            "recommendation": "도착 후 동맹 대상지에 6시간 주둔."
+          },
+          "random_delay_range_max": {
+            "label": "무작위 지연 범위 · 최대",
+            "description": "목적지에서의 최대 체류 시간을 정하면 병력 자동 대피 보호가 최소값과 최대값 사이에서 무작위로 시간을 선택합니다.",
+            "recommendation": "도착 후 동맹 대상지에 12시간 주둔."
+          },
+          "minimum_to_send": {
+            "label": "파견 최소 병력",
+            "description": "성에 남길 예비 병력을 확보한 뒤 파견 가능한 병력의 최소 총수를 정하며, 이는 실제 파견 수가 아닌 자격 기준입니다.",
+            "recommendation": "성의 예비 병력을 남긴 후 파견 가능한 병력 총 1,000명. 실제 파견 인원이 아닌 기준값입니다."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "최소 잔여 보호 시간(RPT)",
+            "description": "보호 기간이 이 일수보다 더 많이 남은 대상지를 사용하며, 0은 검사를 해제합니다.",
+            "recommendation": "3일. 대상지의 잔여 보호 시간이 3일을 초과해야 합니다."
+          }
+        },
+        "image": {
+          "alt": "자동 병력 대피의 주둔 지연, 최소 파견 병력, 최소 RPT 및 사전 설정 관리",
+          "caption": "주둔 시간과 자격 조건을 설정하고 저장하기 전에 평상시 예비 병력 사전 설정을 검토하세요."
+        }
+      },
+      "reserves": {
+        "title": "각 성에 남길 병력 선택",
+        "items": {
+          "add_unit": {
+            "label": "유닛 추가",
+            "description": "각 성에서 보내지 않고 남길 병력 유형을 선택하며, 예비 병력 설정을 비워 두면 자동 예비 병력을 제외한 모든 적격 병력을 사용할 수 있습니다.",
+            "recommendation": "방어 또는 평소 다른 임무에 각 성이 필요한 병력 유형을 선택하세요."
+          },
+          "quantity": {
+            "label": "수량",
+            "description": "선택한 병력 유형마다 성에 남길 수량을 양수로 지정하며, 0으로 설정해도 해당 유형 전체가 예비로 남지는 않습니다.",
+            "recommendation": "방어나 다른 임무에 필요한 각 병력 유형의 수량을 성에 남기고 실제 병력 수를 확인하세요."
+          },
+          "remove_unit": {
+            "label": "유닛 제거",
+            "description": "유닛 타일을 제거하면 선택한 성에서 해당 유형을 더는 예비로 남기지 않습니다."
+          },
+          "auto_fortress_reserve": {
+            "label": "요새 자동화 예비 병력",
+            "description": "요새 자동화가 여기의 모든 다이어울프를 고정하면 이 자동 예비 병력은 병력 자동 대피 보호 사전 설정에 저장되지 않고, 고정이 끝나면 이전에 수동으로 지정한 수량이 돌아옵니다."
+          }
+        },
+        "image": {
+          "alt": "가상의 예시 성에 대한 자동 병력 대피 예비 병력 타일",
+          "caption": "이 성에 필요한 유닛만 남기세요. 유닛 101과 유닛 102는 가상의 병력 표시입니다."
+        }
+      },
+      "presets": {
+        "title": "사전 설정 저장 및 선택",
+        "items": {
+          "preset_name": {
+            "label": "사전 설정 이름",
+            "description": "새 사전 설정의 이름을 입력하거나 변경 사항을 저장하기 전에 적용된 사전 설정의 이름을 수정하세요.",
+            "recommendation": "평상시처럼 알아보기 쉬운 이름을 사용하세요."
+          },
+          "load_preset": {
+            "label": "사전 설정 불러오기",
+            "description": "목록에서 저장된 사전 설정을 선택하거나 저장된 구성을 선택해 이름 있는 사전 설정 없이 저장된 설정을 사용하세요.",
+            "recommendation": "원하는 평상시 사전 설정을 실행 기본값으로 사용하려면 선택하고 적용을 누른 다음 변경 사항을 저장하세요."
+          },
+          "apply": {
+            "label": "적용",
+            "description": "선택한 사전 설정을 설정 초안에 불러오고 변경 사항 저장을 선택해 실행 기본값으로 확정하세요."
+          },
+          "save_as_new": {
+            "label": "새로 저장",
+            "description": "현재 설정을 새 이름의 사전 설정으로 즉시 저장하고 실행 기본값으로 선택합니다."
+          },
+          "delete": {
+            "label": "삭제",
+            "description": "확인 후 선택한 사전 설정을 즉시 삭제하며, 그것이 선택된 기본값이었다면 실행 기본값도 지웁니다."
+          },
+          "runtime_default": {
+            "label": "실행 기본값",
+            "description": "실행 기본값은 저장된 활성 사전 설정이며, 활성 사전 설정이 없으면 저장된 구성입니다."
+          }
+        }
+      },
+      "finish": {
+        "title": "일정을 설정하고 저장한 뒤 활성화",
+        "items": {
+          "calendar": {
+            "label": "달력",
+            "description": "자동 병력 대피가 실행될 시간을 선택하고 일정 저장을 눌러 변경 사항을 저장하세요.",
+            "recommendation": "계속 실행하려면 일정을 꺼 두거나 평소의 주간 시간을 정하고 일정을 저장하세요."
+          },
+          "specify_preset_per_period": {
+            "label": "기간별 사전 설정 지정",
+            "description": "달력의 특정 기간에 실행 기본값을 덮어써야 한다면 그 기간에 저장된 사전 설정을 선택하세요.",
+            "recommendation": "기간마다 서로 다른 예비 병력이 필요하지 않다면 끄세요."
+          },
+          "save_changes": {
+            "label": "변경 사항 저장",
+            "description": "설정 초안과 적용된 사전 설정의 변경 사항을 저장하지만, 이 가이드를 읽는 것만으로는 저장되지 않습니다."
+          },
+          "auto_bird_switch": {
+            "label": "병력 자동 대피 보호 스위치",
+            "description": "저장한 후 지휘 센터 상단에서 자동 병력 대피를 켜면 정상적인 성별 주기가 실행됩니다.",
+            "recommendation": "저장한 뒤 자동 병력 대피를 켜세요. 헤더 상태에 각 성의 주기가 표시됩니다."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "병력 자동 대피 보호",
+      "summary": "선택한 병력을 일정에 따라 밖에 두기",
+      "description": "남는 병력을 적격한 동맹 성에 정기적으로 주둔시키고 돌아오면 주기를 반복합니다.",
+      "expectation": "적절한 목적지나 보낼 수 있는 남는 병력이 없으면 기다립니다. 병력을 옮겨도 성이 무적이 되지는 않습니다."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "일반 설정",
+      "scan": "스캔 간격: 1,800초",
+      "daily": "일일 공격 한도: 3,500",
+      "travel": "이동 가속: 코인 단계",
+      "advisor": "조언자: 꺼짐"
+    },
+    "towerCastle": {
+      "title": "예시 성",
+      "enabled": "탑 자동 공격: 켜짐",
+      "radius": "반경: 35칸",
+      "troop": "선택한 병력: 가상의 공격 유닛",
+      "maiden": "지원되는 처녀 유물만: 꺼짐"
+    },
+    "birdGeneral": {
+      "title": "일반 설정",
+      "min": "최소 체류: 6시간",
+      "max": "최대 체류: 12시간",
+      "send": "예비 병력을 제외한 적격 병력 최소 합계: 1,000명",
+      "rpt": "최소 잔여 보호 시간: 3일 초과",
+      "preset": "사전 설정: 평상시 예비 병력"
+    },
+    "birdCastle": {
+      "title": "예시 성",
+      "unitOne": "가상 유닛 101 예비: 80",
+      "unitTwo": "가상 유닛 102 예비: 40",
+      "add": "유닛 추가"
+    }
+  }
+}

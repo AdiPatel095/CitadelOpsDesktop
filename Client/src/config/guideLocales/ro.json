@@ -1,0 +1,315 @@
+{
+  "ui": {
+    "guideButton": "Ghid",
+    "calendarButton": "Calendar",
+    "recommendedLabel": "Recomandat",
+    "backToSettings": "Înapoi la setări",
+    "backToGuide": "Înapoi la ghid",
+    "howToSetUp": "Cum se configurează",
+    "whatToExpect": "La ce să te aștepți",
+    "openFullSizePicture": "Deschide imaginea la dimensiune maximă",
+    "illustrativeExample": "Exemplu ilustrativ",
+    "enlargePicture": "Mărește imaginea exemplului",
+    "fullSizePicture": "Imaginea exemplului la dimensiune maximă; derulează pentru toate setările",
+    "towerGuideTitle": "Atacuri automate asupra turnurilor · ghid",
+    "birdGuideTitle": "Adăpostirea automată a trupelor · ghid",
+    "towerGuideIntro": "Urmează acești pași pentru a configura Turnurile automate; selectează o imagine exemplu pentru a o mări.",
+    "birdGuideIntro": "Urmează acești pași pentru a configura Adăpostirea automată a trupelor; selectează o imagine exemplu pentru a o mări.",
+    "towerPreviewTitle": "Atacuri automate asupra turnurilor · exemplu de configurare",
+    "birdPreviewTitle": "Adăpostirea automată a trupelor · exemplu de configurare"
+  },
+  "autoTower": {
+    "recommendationIntro": "Acestea sunt recomandări pentru utilizarea obișnuită; verifică-le înainte de salvare.",
+    "steps": {
+      "commanders": {
+        "title": "Alege comandanții",
+        "items": {
+          "commander_assignment": {
+            "label": "Atribuirea comandanților",
+            "description": "În Comandanți, permite Turnurile automate pentru comandanții doriți și selectează Salvează atribuirile.",
+            "recommendation": "Atribuie 20 de comandanți Turnurilor automate."
+          }
+        }
+      },
+      "general": {
+        "title": "Configurează scanarea, limitele zilnice și deplasarea",
+        "items": {
+          "open_settings": {
+            "label": "Deschide setările",
+            "description": "Deschide Automatizare, apoi selectează butonul de setări de pe cardul Turnuri automate."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Scanarea hărții autorizate · La fiecare",
+            "description": "Alege cât de des se actualizează lista turnurilor fiecărui castel, între 1.800 și 3.600 de secunde; atacurile pot porni între scanări.",
+            "recommendation": "1.800 de secunde (30 de minute)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Limita zilnică a atacurilor obișnuite",
+            "description": "Se oprește la limita zilnică de atacuri a întregului cont până când jocul o resetează; 0 elimină limita.",
+            "recommendation": "3.500 de atacuri pe zi pentru întregul cont."
+          },
+          "horse_travel_boost": {
+            "label": "Accelerarea deplasării cu cai",
+            "description": "Folosește opțiunea de deplasare selectată pentru fiecare atac, inclusiv fiecare lovitură dintr-un lanț al Consilierului; viteza depinde de clădirile de deplasare ale castelului de plecare.",
+            "recommendation": "Nivelul cu monede, unde este disponibil, cu suficiente monede."
+          },
+          "travel_feather": {
+            "label": "Pană de călătorie",
+            "description": "Folosește pana de călătorie în locul unui nivel de cai cu monede sau rubine."
+          },
+          "horse_ship_tier_coins": {
+            "label": "Nivel cal / navă · monede",
+            "description": "Cheltuiește monede pentru nivelul de deplasare cu monede."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Nivel cal de război / navă rapidă · rubine",
+            "description": "Cheltuiește rubine pentru primul nivel de deplasare cu rubine, când este selectat."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Nivel cal iute / cea mai rapidă navă · rubine",
+            "description": "Cheltuiește rubine pentru nivelul mai rapid de deplasare cu rubine, când este selectat."
+          }
+        },
+        "image": {
+          "alt": "Setările generale ale Turnurilor automate cu date fictive ale Castelului Sintetic",
+          "caption": "Configurează intervalul de scanare, limita zilnică de atacuri și deplasarea; comenzile Consilierului apar când sunt disponibile."
+        }
+      },
+      "castle": {
+        "title": "Configurează fiecare castel",
+        "items": {
+          "castle_switch": {
+            "label": "Comutatorul castelului",
+            "description": "Activează fiecare castel din care Turnurile automate trebuie să scaneze și să atace.",
+            "recommendation": "Activează castelele pe care vrei să le folosești regulat."
+          },
+          "radius": {
+            "label": "Rază",
+            "description": "Alege distanța de căutare în jurul acestui castel, între 1 și 50 de căsuțe.",
+            "recommendation": "35 de căsuțe."
+          },
+          "choose_troop": {
+            "label": "Alege trupele",
+            "description": "Alege tipul de trupe staționate care să umple ambele flancuri ale atacului; atacurile așteaptă dacă nu sunt suficiente.",
+            "recommendation": "Trupe de atac staționate suficiente pentru ambele flancuri."
+          },
+          "maiden_supported_only": {
+            "label": "Numai cu sprijinul Fecioarei",
+            "description": "Limitează castelul la comandanții disponibili cu relicva Fecioarei acceptată.",
+            "recommendation": "Dezactivat, dacă acel comandant ales nu are relicva Fecioarei acceptată."
+          }
+        },
+        "image": {
+          "alt": "Setările castelului pentru Turnuri automate cu date fictive ale Castelului Sintetic",
+          "caption": "Activează castelul și alege raza, trupele și condiția pentru Fecioară."
+        }
+      },
+      "advisor": {
+        "title": "Folosește Consilierul dacă dorești · când este disponibil",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Folosește Consilierul cu Salturi în timp",
+            "description": "Repetă loviturile asupra unui turn, folosind mai întâi un atac zilnic și apoi câte un Salt în timp de cel puțin trei ore pentru fiecare lovitură suplimentară.",
+            "recommendation": "Dezactivat."
+          },
+          "auto_activate_with_token": {
+            "label": "Activare automată cu jeton",
+            "description": "Folosește un jeton disponibil al Consilierului baronului când Consilierul este inactiv, fără să cumpere un jeton sau să cheltuiască rubine.",
+            "recommendation": "Dezactivat cât timp Consilierul este oprit."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Numărul maxim zilnic de Salturi în timp",
+            "description": "Limitează Salturile în timp folosite de lanțurile confirmate ale Consilierului până la resetarea contorului zilnic de atacuri din joc; 0 oprește lansările Consilierului.",
+            "recommendation": "0 cât timp Consilierul este oprit."
+          }
+        }
+      },
+      "finish": {
+        "title": "Configurează programul, salvează și pornește",
+        "items": {
+          "calendar": {
+            "label": "Calendar",
+            "description": "Folosește Calendarul pentru a alege când pot rula Turnurile automate; disponibilitatea trupelor și celelalte limite se aplică în continuare.",
+            "recommendation": "Orele tale obișnuite de funcționare."
+          },
+          "save_changes": {
+            "label": "Salvează modificările",
+            "description": "Selectează Salvează modificările pentru a aplica setările; citirea acestui ghid nu le salvează."
+          },
+          "auto_towers_switch": {
+            "label": "Atacuri automate asupra turnurilor · comutator",
+            "description": "După salvarea setărilor, pornește Turnurile automate din pagina Automatizare pentru a permite rularea activității.",
+            "recommendation": "Pornit după salvarea setărilor dorite."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Atacuri automate asupra turnurilor",
+      "summary": "Repetă atacurile asupra turnurilor din apropiere",
+      "description": "Trimite atacuri asupra turnurilor baronilor tâlhari și ale regatelor din castelele alese.",
+      "expectation": "Are nevoie de suficiente trupe, un comandant disponibil și un turn pregătit pentru atac. Poate aștepta întoarcerea trupelor sau expirarea cronometrului turnului."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "Valorile recomandate descriu utilizarea obișnuită a Adăpostirii automate a trupelor; sunt orientative și nu modifică setările salvate.",
+    "steps": {
+      "open": {
+        "title": "Deschide setările Adăpostirii automate a trupelor",
+        "items": {
+          "open_settings": {
+            "label": "Deschide setările",
+            "description": "În partea de sus a centrului de comandă, selectează butonul de setări de lângă Adăpostirea automată a trupelor."
+          }
+        }
+      },
+      "general": {
+        "title": "Configurează durata staționării și regulile de trimitere",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Interval de întârziere aleatorie · Minim",
+            "description": "Stabilește numărul minim de ore în care trupele rămân la destinația alianței după încheierea deplasării.",
+            "recommendation": "6 ore de staționare la ținta alianței după sosire."
+          },
+          "random_delay_range_max": {
+            "label": "Interval de întârziere aleatorie · Maxim",
+            "description": "Stabilește șederea maximă la destinație; Adăpostirea automată a trupelor alege o durată aleatorie între minim și maxim.",
+            "recommendation": "12 ore de staționare la ținta alianței după sosire."
+          },
+          "minimum_to_send": {
+            "label": "Minim pentru trimitere",
+            "description": "Stabilește numărul total minim de trupe eligibile necesare după păstrarea rezervelor castelului; acesta este un prag, nu numărul exact trimis.",
+            "recommendation": "1.000 de trupe eligibile în total după păstrarea rezervelor castelului; acesta este un prag, nu dimensiunea exactă a trimiterii."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "RPT minim (timp de protecție rămas)",
+            "description": "Folosește ținte cu mai multe zile de protecție rămase decât această valoare; 0 elimină verificarea.",
+            "recommendation": "3 zile; ținta trebuie să aibă mai mult de 3 zile de protecție rămase."
+          }
+        },
+        "image": {
+          "alt": "Durata de staționare, minimul de trimis, RPT minim și comenzile presetărilor pentru Adăpostirea automată a trupelor",
+          "caption": "Configurează durata staționării și eligibilitatea, apoi verifică presetarea rezervelor Zilnice înainte de salvare."
+        }
+      },
+      "reserves": {
+        "title": "Alege trupele de păstrat în fiecare castel",
+        "items": {
+          "add_unit": {
+            "label": "Adaugă unitate",
+            "description": "Pentru fiecare castel, alege tipurile de trupe care rămân acasă în loc să fie trimise; o rezervă goală lasă disponibile toate trupele eligibile după rezervele automate.",
+            "recommendation": "Alege tipurile de trupe necesare fiecărui castel pentru apărare sau alte activități obișnuite."
+          },
+          "quantity": {
+            "label": "Cantitate",
+            "description": "Stabilește o cantitate pozitivă din fiecare tip de trupă ales care să rămână în castel; 0 nu rezervă întregul tip.",
+            "recommendation": "Păstrează acasă numărul necesar din fiecare tip de trupă pentru apărare sau alte activități; verifică efectivele reale."
+          },
+          "remove_unit": {
+            "label": "Elimină unitatea",
+            "description": "Elimină cardul unității pentru a nu mai rezerva acel tip în castelul selectat."
+          },
+          "auto_fortress_reserve": {
+            "label": "Automatizarea fortărețelor · rezervă",
+            "description": "Când Fortăreața automată blochează aici toți Lupii cumpliți, această rezervă automată nu este salvată în presetările Adăpostirii automate a trupelor; cantitatea manuală anterioară revine după încetarea blocării."
+          }
+        },
+        "image": {
+          "alt": "Carduri de rezervă ale Adăpostirii automate a trupelor pentru Castelul Exemplu fictiv",
+          "caption": "Păstrează doar unitățile necesare în acest castel; Unitatea 101 și Unitatea 102 sunt nume fictive de trupe."
+        }
+      },
+      "presets": {
+        "title": "Salvează și selectează o presetare",
+        "items": {
+          "preset_name": {
+            "label": "Numele presetării",
+            "description": "Introdu un nume pentru o presetare nouă sau editează numele presetării aplicate înainte de a salva modificările.",
+            "recommendation": "Folosește un nume ușor de recunoscut, precum Zilnic."
+          },
+          "load_preset": {
+            "label": "Încarcă presetarea",
+            "description": "Alege o presetare salvată din listă sau Configurație salvată pentru a folosi setările stocate fără o presetare numită.",
+            "recommendation": "Folosește presetarea zilnică dorită ca implicită la rulare: selecteaz-o, apasă Aplică, apoi Salvează modificările."
+          },
+          "apply": {
+            "label": "Aplică",
+            "description": "Încarcă presetarea selectată în această ciornă de setări; selectează Salvează modificările pentru a o confirma ca implicită la rulare."
+          },
+          "save_as_new": {
+            "label": "Salvează ca nouă",
+            "description": "Salvează imediat setările curente ca presetare nouă cu nume și o selectează ca implicită la rulare."
+          },
+          "delete": {
+            "label": "Șterge",
+            "description": "După confirmare, șterge imediat presetarea selectată și elimină valoarea implicită la rulare dacă aceasta era selectată."
+          },
+          "runtime_default": {
+            "label": "Implicit la rulare",
+            "description": "Valoarea implicită la rulare este presetarea activă salvată sau configurația salvată când nu este activă nicio presetare."
+          }
+        }
+      },
+      "finish": {
+        "title": "Configurează programul, salvează și activează",
+        "items": {
+          "calendar": {
+            "label": "Calendar",
+            "description": "Alege când poate rula Adăpostirea automată a trupelor și selectează Salvează programul pentru modificările tale.",
+            "recommendation": "Lasă programul dezactivat pentru funcționare continuă sau stabilește ore săptămânale obișnuite și salvează programul."
+          },
+          "specify_preset_per_period": {
+            "label": "Specifică o presetare pentru fiecare interval",
+            "description": "Alege o presetare salvată pentru un interval din calendar dacă acel interval trebuie să înlocuiască valoarea implicită la rulare.",
+            "recommendation": "Dezactivat dacă intervalele diferite nu au nevoie de rezerve diferite."
+          },
+          "save_changes": {
+            "label": "Salvează modificările",
+            "description": "Salvează ciorna de setări și modificările presetării aplicate; citirea acestui ghid nu le salvează."
+          },
+          "auto_bird_switch": {
+            "label": "Adăpostirea automată a trupelor · comutator",
+            "description": "După salvare, pornește Adăpostirea automată a trupelor în partea de sus a centrului de comandă pentru a permite ciclurile normale ale castelelor.",
+            "recommendation": "Pornește Adăpostirea automată a trupelor după salvare; starea din antet arată ciclul fiecărui castel."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Adăpostirea automată a trupelor",
+      "summary": "Ține trupele selectate plecate conform programului",
+      "description": "Staționează regulat trupele disponibile la castelele eligibile ale alianței și repetă ciclul când acestea se întorc.",
+      "expectation": "Așteaptă dacă nu există o destinație potrivită sau trupe libere de trimis. Mutarea trupelor nu face castelul invulnerabil."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "Setări generale",
+      "scan": "Interval de scanare: 1.800 de secunde",
+      "daily": "Limită zilnică de atacuri: 3.500",
+      "travel": "Accelerarea deplasării: nivelul cu monede",
+      "advisor": "Consilier: dezactivat"
+    },
+    "towerCastle": {
+      "title": "Castelul Exemplu",
+      "enabled": "Atacuri automate asupra turnurilor · pornite",
+      "radius": "Rază: 35 de căsuțe",
+      "troop": "Trupă aleasă: unitate de atac fictivă",
+      "maiden": "Numai cu sprijinul Fecioarei: dezactivat"
+    },
+    "birdGeneral": {
+      "title": "Setări generale",
+      "min": "Ședere minimă: 6 ore",
+      "max": "Ședere maximă: 12 ore",
+      "send": "Total minim eligibil după rezerve: 1.000 de trupe",
+      "rpt": "Protecție rămasă minimă: mai mult de 3 zile",
+      "preset": "Presetare: rezervă Zilnică"
+    },
+    "birdCastle": {
+      "title": "Castelul Exemplu",
+      "unitOne": "Unitatea fictivă 101 în rezervă: 80",
+      "unitTwo": "Unitatea fictivă 102 în rezervă: 40",
+      "add": "Adaugă unitate"
+    }
+  }
+}

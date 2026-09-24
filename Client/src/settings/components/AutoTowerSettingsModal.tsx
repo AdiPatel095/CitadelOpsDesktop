@@ -19,6 +19,7 @@ import {
   type AutoTowerCastleSettings,
 } from '../AutoTowerClientState';
 import { AutoTowerGuideModal } from './AutoTowerGuideModal';
+import { useGuideLocale } from '../../config/useGuideLocale';
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
 import { DailyAttackLimitField } from './DailyAttackLimitField';
 import type { HorseTravelBoostID } from '../HorseTravelBoost';
@@ -30,6 +31,7 @@ interface AutoTowerSettingsModalProps {
 }
 
 export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ isOpen, onClose, onOpenFeatureSchedule }) => {
+  const { locale: guideLocale, pack: guidePack } = useGuideLocale();
   const { t: localizeStatic } = useStaticLocale();
   const { state, configuration } = useCitadelAPI();
   const castles = castleOptionsFromState(state);
@@ -123,7 +125,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
       description={localizeStatic("ui.settings.components.autoTowerSettingsModal.description.each.scan.saves.every.tower.observed.in.00c98e17")}
       titleTrailing={(
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}>Guide</Button>
+          <Button variant="outline" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={guideLocale}>{guidePack.ui.guideButton}</span></Button>
             <Button
               variant="outline"
               size="sm"

@@ -1,0 +1,315 @@
+{
+  "ui": {
+    "guideButton": "Anleitung",
+    "calendarButton": "Kalender",
+    "recommendedLabel": "Empfohlen",
+    "backToSettings": "Zurück zu den Einstellungen",
+    "backToGuide": "Zurück zur Anleitung",
+    "howToSetUp": "So richtest du es ein",
+    "whatToExpect": "Was dich erwartet",
+    "openFullSizePicture": "Bild in voller Größe öffnen",
+    "illustrativeExample": "Veranschaulichendes Beispiel",
+    "enlargePicture": "Beispielbild vergrößern",
+    "fullSizePicture": "Beispielbild in voller Größe; scrolle, um alle Einstellungen zu sehen",
+    "towerGuideTitle": "Anleitung für Automatische Turmangriffe",
+    "birdGuideTitle": "Anleitung für Automatischen Truppenschutz",
+    "towerGuideIntro": "Folge diesen Schritten, um Automatische Turmangriffe einzurichten; wähle ein Beispielbild aus, um es zu vergrößern.",
+    "birdGuideIntro": "Folge diesen Schritten, um Automatischen Truppenschutz einzurichten; wähle ein Beispielbild aus, um es zu vergrößern.",
+    "towerPreviewTitle": "Beispiel für die Einrichtung von Automatischen Turmangriffen",
+    "birdPreviewTitle": "Beispiel für die Einrichtung von Automatischem Truppenschutz"
+  },
+  "autoTower": {
+    "recommendationIntro": "Diese Empfehlungen gelten für den regelmäßigen Betrieb; prüfe sie vor dem Speichern.",
+    "steps": {
+      "commanders": {
+        "title": "Wähle deine Feldherren",
+        "items": {
+          "commander_assignment": {
+            "label": "Feldherren zuweisen",
+            "description": "Erlaube Automatische Turmangriffe unter „Feldherren“ für die Feldherren, die du verwenden möchtest, und wähle „Zuweisungen speichern“.",
+            "recommendation": "20 Feldherren sind Automatischen Turmangriffen zugewiesen."
+          }
+        }
+      },
+      "general": {
+        "title": "Scans, Tageslimits und Reiseoption festlegen",
+        "items": {
+          "open_settings": {
+            "label": "Einstellungen öffnen",
+            "description": "Öffne „Automatisierung“ und wähle die Einstellungsschaltfläche auf der Karte „Automatische Turmangriffe“."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Verbindlicher Kartenscan · Intervall",
+            "description": "Lege fest, wie oft die Turmliste jeder Burg aktualisiert wird, nämlich alle 1.800 bis 3.600 Sekunden; Angriffe können zwischen den Scans starten.",
+            "recommendation": "1.800 Sekunden (30 Minuten)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Tageslimit für normale Angriffe",
+            "description": "Bei Erreichen des täglichen Angriffslimits für das gesamte Konto pausiert die Funktion, bis das Spiel es zurücksetzt; 0 hebt das Limit auf.",
+            "recommendation": "3.500 Angriffe pro Tag für das gesamte Konto."
+          },
+          "horse_travel_boost": {
+            "label": "Reisebeschleunigung mit Pferden",
+            "description": "Verwendet die gewählte Reiseoption für jeden Angriff, auch für jeden Treffer einer Beraterfolge, wobei die Geschwindigkeit von den Reisegebäuden der Ausgangsburg abhängt.",
+            "recommendation": "Münzstufe, wo verfügbar, mit ausreichend Münzen."
+          },
+          "travel_feather": {
+            "label": "Reisefeder",
+            "description": "Verwendet die Reisefeder statt einer Pferdestufe für Münzen oder Rubine."
+          },
+          "horse_ship_tier_coins": {
+            "label": "Pferd / Schiff · Münzen",
+            "description": "Gibt Münzen für die Münzreisestufe aus."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Streitross / schnelles Schiff · Rubine",
+            "description": "Gibt bei Auswahl Rubine für die erste Rubinreisestufe aus."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Rennpferd / schnellstes Schiff · Rubine",
+            "description": "Gibt bei Auswahl Rubine für die schnellere Rubinreisestufe aus."
+          }
+        },
+        "image": {
+          "alt": "Allgemeine Einstellungen für Automatische Turmangriffe mit fiktiven Daten der Burg „Synthetic Castle“",
+          "caption": "Lege Scanintervall, tägliches Angriffslimit und Reiseoption fest; Berateroptionen erscheinen, wenn sie verfügbar sind."
+        }
+      },
+      "castle": {
+        "title": "Jede Burg einrichten",
+        "items": {
+          "castle_switch": {
+            "label": "Burgschalter",
+            "description": "Aktiviere jede Burg, von der aus Automatische Turmangriffe scannen und angreifen sollen.",
+            "recommendation": "Aktiviere die Burgen, die du regelmäßig verwenden möchtest."
+          },
+          "radius": {
+            "label": "Radius",
+            "description": "Lege fest, wie weit um diese Burg gesucht wird: 1 bis 50 Felder.",
+            "recommendation": "35 Felder."
+          },
+          "choose_troop": {
+            "label": "Truppentyp wählen",
+            "description": "Wähle den stationierten Truppentyp, der beide Angriffsflanken füllen soll; bei zu wenigen Einheiten warten Angriffe.",
+            "recommendation": "Ein stationierter Angriffstruppentyp mit genügend Einheiten für beide Flanken."
+          },
+          "maiden_supported_only": {
+            "label": "Nur mit Jungfrauen-Relikt",
+            "description": "Beschränkt diese Burg auf verfügbare Feldherren mit dem unterstützten Jungfrauen-Relikt.",
+            "recommendation": "Aus, sofern dein gewählter Feldherr nicht über das unterstützte Jungfrauen-Relikt verfügt."
+          }
+        },
+        "image": {
+          "alt": "Burgeinstellungen für Automatische Turmangriffe mit fiktiven Daten der Burg „Synthetic Castle“",
+          "caption": "Aktiviere eine Burg und wähle Radius, Truppentyp und Anforderung an das Jungfrauen-Relikt."
+        }
+      },
+      "advisor": {
+        "title": "Berater bei Bedarf nutzen · falls verfügbar",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Berater mit Zeitverkürzern verwenden",
+            "description": "Wiederholt Treffer auf einen Turm: zuerst mit einem täglichen Angriff und für jeden weiteren Treffer mit einem Zeitverkürzer von mindestens drei Stunden.",
+            "recommendation": "Aus."
+          },
+          "auto_activate_with_token": {
+            "label": "Automatisch mit Token aktivieren",
+            "description": "Verwendet einen vorhandenen Raubritter-Berater-Token, wenn der Berater inaktiv ist, ohne einen Token zu kaufen oder Rubine auszugeben.",
+            "recommendation": "Aus, solange der Berater ausgeschaltet ist."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Maximale tägliche Zeitverkürzer",
+            "description": "Begrenzt die Zeitverkürzer bestätigter Beraterfolgen, bis der tägliche Angriffszähler des Spiels zurückgesetzt wird; 0 pausiert Beraterangriffe.",
+            "recommendation": "0, solange der Berater ausgeschaltet ist."
+          }
+        }
+      },
+      "finish": {
+        "title": "Zeitplan festlegen, speichern und einschalten",
+        "items": {
+          "calendar": {
+            "label": "Kalender",
+            "description": "Wähle im Kalender, wann Automatische Turmangriffe laufen dürfen; verfügbare Truppen und andere Grenzen gelten weiterhin.",
+            "recommendation": "Deine üblichen Betriebszeiten."
+          },
+          "save_changes": {
+            "label": "Änderungen speichern",
+            "description": "Wähle „Änderungen speichern“, um deine Einstellungen zu übernehmen; das Lesen dieser Anleitung speichert sie nicht."
+          },
+          "auto_towers_switch": {
+            "label": "Schalter für Automatische Turmangriffe",
+            "description": "Aktiviere Automatische Turmangriffe auf der Seite „Automatisierung“, nachdem du deine Einstellungen gespeichert hast, damit die Aufgabe laufen kann.",
+            "recommendation": "Ein, nachdem du deine gewünschten Einstellungen gespeichert hast."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatische Turmangriffe",
+      "summary": "Wiederholte Angriffe auf nahe Türme",
+      "description": "Sendet von den gewählten Burgen aus Angriffe auf Raubrittertürme und Türme der Königreiche.",
+      "expectation": "Benötigt genügend Truppen, einen verfügbaren Feldherrn und einen angreifbaren Turm. Die Funktion kann warten, während Truppen zurückkehren oder ein Turmtimer abläuft."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "Die empfohlenen Werte gelten für den regelmäßigen Einsatz von Automatischem Truppenschutz; sie dienen als Orientierung und ändern keine gespeicherten Einstellungen.",
+    "steps": {
+      "open": {
+        "title": "Einstellungen für Automatischen Truppenschutz öffnen",
+        "items": {
+          "open_settings": {
+            "label": "Einstellungen öffnen",
+            "description": "Wähle oben in der Kommandozentrale die Einstellungsschaltfläche neben „Automatischer Truppenschutz“."
+          }
+        }
+      },
+      "general": {
+        "title": "Stationierungsdauer und Senderegeln festlegen",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Zufällige Dauer · Minimum",
+            "description": "Lege fest, wie viele Stunden die Truppen mindestens am Bündnisziel bleiben, nachdem die Reise abgeschlossen ist.",
+            "recommendation": "6 Stunden Stationierung am Bündnisziel nach der Ankunft."
+          },
+          "random_delay_range_max": {
+            "label": "Zufällige Dauer · Maximum",
+            "description": "Lege die längste Aufenthaltsdauer am Ziel fest; Automatischer Truppenschutz wählt zufällig eine Dauer zwischen Minimum und Maximum.",
+            "recommendation": "12 Stunden Stationierung am Bündnisziel nach der Ankunft."
+          },
+          "minimum_to_send": {
+            "label": "Mindestmenge zum Senden",
+            "description": "Lege die Mindestgesamtzahl geeigneter Truppen fest, die nach dem Zurückbehalten der Burgreserven verfügbar sein muss; dies ist ein Schwellenwert, nicht die genaue Sendezahl.",
+            "recommendation": "Insgesamt 1.000 geeignete Truppen nach Abzug der Burgreserven; dies ist ein Schwellenwert, keine genaue Sendezahl."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "Mindest-RPT (verbleibende Schutzzeit)",
+            "description": "Verwende nur Ziele mit mehr als dieser Anzahl verbleibender Schutztage; 0 deaktiviert die Prüfung.",
+            "recommendation": "3 Tage; ein Ziel muss noch mehr als 3 Tage Schutzzeit haben."
+          }
+        },
+        "image": {
+          "alt": "Einstellungen für Automatischen Truppenschutz: Stationierungsdauer, Mindestmenge, Mindest-RPT und Vorlagen",
+          "caption": "Lege Stationierungsdauer und Eignung fest und prüfe vor dem Speichern die Reservevorlage „Alltag“."
+        }
+      },
+      "reserves": {
+        "title": "Truppen auswählen, die in jeder Burg bleiben",
+        "items": {
+          "add_unit": {
+            "label": "Einheit hinzufügen",
+            "description": "Wähle für jede Burg Truppentypen aus, die zu Hause bleiben statt entsendet zu werden; bei einer leeren manuellen Reserve sind nach automatischen Reserven alle geeigneten Truppen verfügbar.",
+            "recommendation": "Wähle die Truppentypen aus, die jede Burg für Verteidigung oder andere regelmäßige Aufgaben benötigt."
+          },
+          "quantity": {
+            "label": "Anzahl",
+            "description": "Lege eine positive Anzahl jedes gewählten Truppentyps fest, die in dieser Burg bleiben soll; 0 reserviert nicht den gesamten Typ.",
+            "recommendation": "Behalte von jedem Truppentyp die Anzahl in der Burg, die für Verteidigung oder andere Aufgaben benötigt wird; prüfe die tatsächlichen Truppenbestände."
+          },
+          "remove_unit": {
+            "label": "Einheit entfernen",
+            "description": "Entferne eine Einheitenkachel, damit dieser Typ in der gewählten Burg nicht länger manuell reserviert wird."
+          },
+          "auto_fortress_reserve": {
+            "label": "Reserve der Festungsautomatisierung",
+            "description": "Wenn die Automatisierung von Festungen hier alle Sturmwölfe sperrt, wird diese automatische Reserve nicht in Vorlagen für Automatischen Truppenschutz gespeichert; nach Ende der Sperre gilt wieder die frühere manuelle Sturmwolf-Anzahl."
+          }
+        },
+        "image": {
+          "alt": "Reservekacheln für Automatischen Truppenschutz einer Burg mit fiktiven Daten der Burg „Example Castle“",
+          "caption": "Reserviere nur die in dieser Burg benötigten Einheiten; Einheit 101 und Einheit 102 sind fiktive Truppenplatzhalter."
+        }
+      },
+      "presets": {
+        "title": "Vorlage speichern und auswählen",
+        "items": {
+          "preset_name": {
+            "label": "Vorlagenname",
+            "description": "Gib einen Namen für eine neue Vorlage ein oder bearbeite den Namen der angewendeten Vorlage, bevor du Änderungen speicherst.",
+            "recommendation": "Verwende einen gut erkennbaren Namen wie „Alltag“."
+          },
+          "load_preset": {
+            "label": "Vorlage laden",
+            "description": "Wähle eine gespeicherte Vorlage aus der Liste oder „Gespeicherte Konfiguration“, um die gespeicherten Einstellungen ohne benannte Vorlage zu nutzen.",
+            "recommendation": "Verwende die gewünschte Alltagsvorlage als Laufzeitstandard: auswählen, „Anwenden“ und dann „Änderungen speichern“."
+          },
+          "apply": {
+            "label": "Anwenden",
+            "description": "Lädt die gewählte Vorlage in diesen Einstellungsentwurf; wähle „Änderungen speichern“, um sie als Laufzeitstandard zu übernehmen."
+          },
+          "save_as_new": {
+            "label": "Als neu speichern",
+            "description": "Speichert die aktuellen Einstellungen sofort als neue benannte Vorlage und wählt sie als Laufzeitstandard aus."
+          },
+          "delete": {
+            "label": "Löschen",
+            "description": "Löscht die gewählte Vorlage nach Bestätigung sofort und entfernt den Laufzeitstandard, falls diese Vorlage ausgewählt war."
+          },
+          "runtime_default": {
+            "label": "Laufzeitstandard",
+            "description": "Der Laufzeitstandard ist die gespeicherte aktive Vorlage oder, wenn keine Vorlage aktiv ist, die gespeicherte Konfiguration."
+          }
+        }
+      },
+      "finish": {
+        "title": "Zeitplan festlegen, speichern und aktivieren",
+        "items": {
+          "calendar": {
+            "label": "Kalender",
+            "description": "Wähle, wann Automatischer Truppenschutz laufen darf, und speichere die Änderungen mit „Zeitplan speichern“.",
+            "recommendation": "Lass den Zeitplan für den laufenden Betrieb ausgeschaltet oder lege übliche Wochenzeiten fest und speichere den Zeitplan."
+          },
+          "specify_preset_per_period": {
+            "label": "Vorlage pro Zeitraum festlegen",
+            "description": "Wähle für einen Kalenderzeitraum eine gespeicherte Vorlage, wenn sie den Laufzeitstandard für diesen Zeitraum ersetzen soll.",
+            "recommendation": "Aus, sofern verschiedene Zeiträume keine unterschiedlichen Reserven benötigen."
+          },
+          "save_changes": {
+            "label": "Änderungen speichern",
+            "description": "Speichere den Einstellungsentwurf und alle angewendeten Vorlagenänderungen; das Lesen dieser Anleitung speichert sie nicht."
+          },
+          "auto_bird_switch": {
+            "label": "Schalter für Automatischen Truppenschutz",
+            "description": "Aktiviere Automatischen Truppenschutz nach dem Speichern oben in der Kommandozentrale, damit die normalen Burgzyklen laufen können.",
+            "recommendation": "Aktiviere Automatischen Truppenschutz nach dem Speichern; der Status in der Kopfzeile zeigt den Zyklus jeder Burg."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatischer Truppenschutz",
+      "summary": "Ausgewählte Truppen nach Zeitplan außerhalb der Burg stationieren",
+      "description": "Stationiert regelmäßig entbehrliche Truppen in geeigneten Bündnisburgen und wiederholt den Zyklus nach ihrer Rückkehr.",
+      "expectation": "Wartet, wenn kein geeignetes Ziel oder keine entbehrlichen Truppen verfügbar sind. Das Verlegen von Truppen macht deine Burg nicht unangreifbar."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "Allgemeine Einstellungen",
+      "scan": "Scanintervall: 1.800 Sekunden",
+      "daily": "Tägliches Angriffslimit: 3.500",
+      "travel": "Reisebeschleunigung: Münzstufe",
+      "advisor": "Berater: aus"
+    },
+    "towerCastle": {
+      "title": "Beispielburg",
+      "enabled": "Automatische Turmangriffe: ein",
+      "radius": "Radius: 35 Felder",
+      "troop": "Gewählter Truppentyp: fiktive Angriffseinheit",
+      "maiden": "Nur mit Jungfrauen-Relikt: aus"
+    },
+    "birdGeneral": {
+      "title": "Allgemeine Einstellungen",
+      "min": "Mindestaufenthalt: 6 Stunden",
+      "max": "Höchstaufenthalt: 12 Stunden",
+      "send": "Mindestgesamtzahl geeigneter Truppen nach Reserven: 1.000",
+      "rpt": "Verbleibender Mindestschutz: mehr als 3 Tage",
+      "preset": "Vorlage: Alltagsreserve"
+    },
+    "birdCastle": {
+      "title": "Beispielburg",
+      "unitOne": "Fiktive Einheit 101 reserviert: 80",
+      "unitTwo": "Fiktive Einheit 102 reserviert: 40",
+      "add": "Einheit hinzufügen"
+    }
+  }
+}

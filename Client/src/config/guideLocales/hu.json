@@ -1,0 +1,315 @@
+{
+  "ui": {
+    "guideButton": "Útmutató",
+    "calendarButton": "Naptár",
+    "recommendedLabel": "Ajánlott",
+    "backToSettings": "Vissza a beállításokhoz",
+    "backToGuide": "Vissza az útmutatóhoz",
+    "howToSetUp": "A beállítás menete",
+    "whatToExpect": "Mire számíthatsz",
+    "openFullSizePicture": "Kép megnyitása teljes méretben",
+    "illustrativeExample": "Szemléltető példa",
+    "enlargePicture": "Példakép nagyítása",
+    "fullSizePicture": "Teljes méretű példakép; görgess az összes beállítás megtekintéséhez",
+    "towerGuideTitle": "Automatikus toronytámadások · útmutató",
+    "birdGuideTitle": "Csapatok automatikus menedékbe helyezése · útmutató",
+    "towerGuideIntro": "Ezekkel a lépésekkel állítsd be az Automatikus tornyokat; nagyításhoz válassz ki egy példaképet.",
+    "birdGuideIntro": "Ezekkel a lépésekkel állítsd be az Automatikus csapatmenedéket; nagyításhoz válassz ki egy példaképet.",
+    "towerPreviewTitle": "Automatikus toronytámadások · beállítási példa",
+    "birdPreviewTitle": "Csapatok automatikus menedékbe helyezése · beállítási példa"
+  },
+  "autoTower": {
+    "recommendationIntro": "Ezek a szokásos használatra vonatkozó ajánlások; mentés előtt nézd át őket.",
+    "steps": {
+      "commanders": {
+        "title": "Válaszd ki a parancsnokaidat",
+        "items": {
+          "commander_assignment": {
+            "label": "Parancsnokok hozzárendelése",
+            "description": "A Parancsnokok résznél engedélyezd az Automatikus tornyokat a kívánt parancsnokoknak, majd válaszd a Hozzárendelések mentése lehetőséget.",
+            "recommendation": "Rendelj 20 parancsnokot az Automatikus tornyokhoz."
+          }
+        }
+      },
+      "general": {
+        "title": "Állítsd be a felderítést, a napi korlátokat és az utazást",
+        "items": {
+          "open_settings": {
+            "label": "Beállítások megnyitása",
+            "description": "Nyisd meg az Automatizálást, majd válaszd az Automatikus tornyok kártyájának beállítások gombját."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Hiteles térkép felderítése · Ennyi időnként",
+            "description": "Válaszd ki, milyen gyakran frissüljön az egyes várak toronylistája, 1800 és 3600 másodperc között; a felderítések között is indulhatnak támadások.",
+            "recommendation": "1800 másodperc (30 perc)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Normál támadások napi korlátja",
+            "description": "A teljes fiókra vonatkozó napi támadási korlátnál szünetel, amíg a játék vissza nem állítja azt; a 0 megszünteti a korlátot.",
+            "recommendation": "Napi 3500 támadás a teljes fiókban."
+          },
+          "horse_travel_boost": {
+            "label": "Lovas utazás gyorsítása",
+            "description": "A kiválasztott utazási módot használja minden támadáshoz, a Tanácsadó láncának minden ütéséhez is; a sebesség a kiinduló vár utazási épületeitől függ.",
+            "recommendation": "Érmés fokozat, ahol elérhető, elegendő érmével."
+          },
+          "travel_feather": {
+            "label": "Utazótoll",
+            "description": "Az utazótollat használja az érmés vagy rubinos lófokozat helyett."
+          },
+          "horse_ship_tier_coins": {
+            "label": "Ló / hajó fokozat · érmék",
+            "description": "Érmét költ az érmés utazási fokozatra."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Harci ló / gyors hajó fokozat · rubinok",
+            "description": "Kiválasztásakor rubint költ az első rubinos utazási fokozatra."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Gyors ló / leggyorsabb hajó fokozat · rubinok",
+            "description": "Kiválasztásakor rubint költ a gyorsabb rubinos utazási fokozatra."
+          }
+        },
+        "image": {
+          "alt": "Az Automatikus tornyok általános beállításai a kitalált Szintetikus vár adataival",
+          "caption": "Állítsd be a felderítési időközt, a napi támadási korlátot és az utazási módot; a Tanácsadó vezérlői akkor jelennek meg, ha elérhetők."
+        }
+      },
+      "castle": {
+        "title": "Állítsd be az egyes várakat",
+        "items": {
+          "castle_switch": {
+            "label": "Várkapcsoló",
+            "description": "Kapcsold be azokat a várakat, amelyekből az Automatikus tornyok felderítsen és támadjon.",
+            "recommendation": "Engedélyezd a rendszeresen használni kívánt várakat."
+          },
+          "radius": {
+            "label": "Sugár",
+            "description": "Válaszd ki a vár körüli keresés távolságát 1 és 50 mező között.",
+            "recommendation": "35 mező."
+          },
+          "choose_troop": {
+            "label": "Csapat kiválasztása",
+            "description": "Válaszd ki a két támadó szárny feltöltésére szolgáló állomásozó csapatot; ha kevés van belőle, a támadások várnak.",
+            "recommendation": "Mindkét szárnyra elegendő állomásozó támadó csapat."
+          },
+          "maiden_supported_only": {
+            "label": "Csak a Leány ereklyéjével támogatott",
+            "description": "A várat azokra az elérhető parancsnokokra korlátozza, akik rendelkeznek a támogatott Leány-ereklyével.",
+            "recommendation": "Kikapcsolva, hacsak a választott parancsnok nem rendelkezik a támogatott Leány-ereklyével."
+          }
+        },
+        "image": {
+          "alt": "Az Automatikus tornyok várbeállításai a kitalált Szintetikus vár adataival",
+          "caption": "Engedélyezd a várat, és válaszd ki a sugarát, a csapatát és a Leány-ereklyére vonatkozó feltételt."
+        }
+      },
+      "advisor": {
+        "title": "Használd a Tanácsadót, ha szeretnéd · amikor elérhető",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Tanácsadó használata Időugrásokkal",
+            "description": "Egy tornyot többször támad: először egy napi támadást, majd minden további ütéshez egy legalább háromórás Időugrást használ.",
+            "recommendation": "Kikapcsolva."
+          },
+          "auto_activate_with_token": {
+            "label": "Automatikus aktiválás tokennel",
+            "description": "Ha a Tanácsadó nem aktív, felhasznál egy rendelkezésre álló Bárói Tanácsadó tokent, anélkül hogy tokent vásárolna vagy rubint költene.",
+            "recommendation": "Kikapcsolva, amíg a Tanácsadó ki van kapcsolva."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Napi Időugrások legnagyobb száma",
+            "description": "Korlátozza a megerősített Tanácsadó-láncok Időugrásait, amíg a játék napi támadásszámlálója vissza nem áll; a 0 szünetelteti a Tanácsadó támadásainak indítását.",
+            "recommendation": "0, amíg a Tanácsadó ki van kapcsolva."
+          }
+        }
+      },
+      "finish": {
+        "title": "Állítsd be az ütemezést, ments és kapcsold be",
+        "items": {
+          "calendar": {
+            "label": "Naptár",
+            "description": "A Naptárban válaszd ki, mikor működhetnek az Automatikus tornyok; a csapatok elérhetősége és a többi korlát továbbra is érvényes.",
+            "recommendation": "A szokásos működési óráid."
+          },
+          "save_changes": {
+            "label": "Változások mentése",
+            "description": "A beállítások alkalmazásához válaszd a Változások mentése lehetőséget; az útmutató olvasása nem menti el őket."
+          },
+          "auto_towers_switch": {
+            "label": "Automatikus toronytámadások · kapcsoló",
+            "description": "A beállítások mentése után az Automatizálás oldalon kapcsold be az Automatikus tornyokat, hogy a feladat futhasson.",
+            "recommendation": "A kívánt beállítások mentése után bekapcsolva."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatikus toronytámadások",
+      "summary": "Közeli tornyok ismételt támadása",
+      "description": "A kiválasztott várakból támadásokat indít rablóbárók és királyságok tornyai ellen.",
+      "expectation": "Elegendő csapat, szabad parancsnok és támadható torony kell hozzá. Várhat a csapatok visszaérkezésére vagy a torony időzítőjének lejártára."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "Az ajánlott értékek az Automatikus csapatmenedék szokásos használatát írják le; útmutatásul szolgálnak, és nem módosítják a mentett beállításokat.",
+    "steps": {
+      "open": {
+        "title": "Nyisd meg az Automatikus csapatmenedék beállításait",
+        "items": {
+          "open_settings": {
+            "label": "Beállítások megnyitása",
+            "description": "A parancsnoki központ tetején válaszd az Automatikus csapatmenedék melletti beállítások gombot."
+          }
+        }
+      },
+      "general": {
+        "title": "Állítsd be az állomásozási időt és a küldési szabályokat",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Véletlen késleltetés tartománya · Minimum",
+            "description": "Add meg, hány órát töltsenek legalább a csapatok a szövetségi célpontnál az utazás befejezése után.",
+            "recommendation": "Érkezés után 6 óra állomásozás a szövetségi célpontnál."
+          },
+          "random_delay_range_max": {
+            "label": "Véletlen késleltetés tartománya · Maximum",
+            "description": "Add meg a leghosszabb ott-tartózkodást; az Automatikus csapatmenedék véletlenszerű időt választ a minimum és maximum között.",
+            "recommendation": "Érkezés után 12 óra állomásozás a szövetségi célpontnál."
+          },
+          "minimum_to_send": {
+            "label": "Küldési minimum",
+            "description": "Add meg a várban tartandó tartalék levonása után szükséges, küldhető csapatok minimális összlétszámát; ez küszöb, nem a pontosan elküldött létszám.",
+            "recommendation": "A vár tartalékainak megtartása után összesen 1000 küldhető katona; ez küszöb, nem a pontosan elküldött létszám."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "Minimális RPT (hátralévő védelmi idő)",
+            "description": "Olyan célpontokat használj, amelyek védelméből ennél több nap van hátra; a 0 kikapcsolja az ellenőrzést.",
+            "recommendation": "3 nap; a célpont védelméből több mint 3 napnak kell hátralennie."
+          }
+        },
+        "image": {
+          "alt": "Az Automatikus csapatmenedék állomásozási késleltetése, küldési minimuma, minimális RPT-je és sablonvezérlői",
+          "caption": "Állítsd be az állomásozási időt és a jogosultságot, majd mentés előtt nézd át a Mindennapi tartalék sablont."
+        }
+      },
+      "reserves": {
+        "title": "Válaszd ki az egyes várakban tartandó csapatokat",
+        "items": {
+          "add_unit": {
+            "label": "Egység hozzáadása",
+            "description": "Váranként válaszd ki az otthon tartandó csapattípusokat; üres tartalék esetén az automatikus tartalékok levonása után minden küldhető csapat rendelkezésre áll.",
+            "recommendation": "Válaszd ki az egyes várak védelméhez vagy más szokásos feladataihoz szükséges csapattípusokat."
+          },
+          "quantity": {
+            "label": "Mennyiség",
+            "description": "Adj meg pozitív mennyiséget minden kiválasztott csapattípusból, amely a várban marad; a 0 nem tartalékolja a teljes típust.",
+            "recommendation": "Tarts otthon minden csapattípusból annyit, amennyi a védelemhez vagy más feladatokhoz kell; ellenőrizd a tényleges létszámot."
+          },
+          "remove_unit": {
+            "label": "Egység eltávolítása",
+            "description": "Távolítsd el az egység csempéjét, hogy a kiválasztott várban többé ne tartalékold ezt a típust."
+          },
+          "auto_fortress_reserve": {
+            "label": "Erődök automatizálása · tartalék",
+            "description": "Amikor az Automatikus erőd itt az összes rémfarkast leköti, ez az automatikus tartalék nem kerül az Automatikus csapatmenedék sablonjaiba; a lekötés végén visszaáll a korábban kézzel megadott rémfarkas-mennyiség."
+          }
+        },
+        "image": {
+          "alt": "Az Automatikus csapatmenedék tartalékcsempéi a kitalált Példavárban",
+          "caption": "Csak az itt szükséges egységeket tartalékold; a 101-es és 102-es egység kitalált csapatjelölés."
+        }
+      },
+      "presets": {
+        "title": "Sablon mentése és kiválasztása",
+        "items": {
+          "preset_name": {
+            "label": "Sablon neve",
+            "description": "Adj nevet egy új sablonnak, vagy a módosítások mentése előtt szerkeszd az alkalmazott sablon nevét.",
+            "recommendation": "Használj felismerhető nevet, például Mindennapi."
+          },
+          "load_preset": {
+            "label": "Sablon betöltése",
+            "description": "Válassz mentett sablont a listából, vagy a Mentett konfigurációt, ha névvel ellátott sablon nélkül szeretnéd használni a mentett beállításokat.",
+            "recommendation": "A kívánt mindennapi sablont állítsd be futásidejű alapértelmezésként: válaszd ki, kattints az Alkalmazásra, majd a Változások mentésére."
+          },
+          "apply": {
+            "label": "Alkalmazás",
+            "description": "Töltsd be a kiválasztott sablont ebbe a beállítási piszkozatba; a Változások mentésével véglegesítheted futásidejű alapértelmezésként."
+          },
+          "save_as_new": {
+            "label": "Mentés újként",
+            "description": "Az aktuális beállításokat azonnal új, névvel ellátott sablonként menti, és futásidejű alapértelmezésként választja ki."
+          },
+          "delete": {
+            "label": "Törlés",
+            "description": "Megerősítés után azonnal törli a kiválasztott sablont, és ha az volt kiválasztva, törli a futásidejű alapértelmezést is."
+          },
+          "runtime_default": {
+            "label": "Futásidejű alapértelmezés",
+            "description": "A futásidejű alapértelmezés az aktív mentett sablon, vagy ha nincs aktív sablon, a mentett konfiguráció."
+          }
+        }
+      },
+      "finish": {
+        "title": "Állítsd be az ütemezést, ments és engedélyezd",
+        "items": {
+          "calendar": {
+            "label": "Naptár",
+            "description": "Válaszd ki, mikor működhet az Automatikus csapatmenedék, majd a változásokhoz válaszd az Ütemezés mentése lehetőséget.",
+            "recommendation": "Folyamatos működéshez hagyd kikapcsolva az ütemezést, vagy add meg a szokásos heti órákat, és mentsd az ütemezést."
+          },
+          "specify_preset_per_period": {
+            "label": "Sablon megadása időszakonként",
+            "description": "Egy naptári időszakhoz válassz mentett sablont, ha annak felül kell írnia a futásidejű alapértelmezést.",
+            "recommendation": "Kikapcsolva, hacsak a különböző időszakokhoz nem kellenek eltérő tartalékok."
+          },
+          "save_changes": {
+            "label": "Változások mentése",
+            "description": "Mentsd a beállítási piszkozatot és az alkalmazott sablon módosításait; az útmutató olvasása nem menti el őket."
+          },
+          "auto_bird_switch": {
+            "label": "Csapatok automatikus menedékbe helyezése · kapcsoló",
+            "description": "Mentés után a parancsnoki központ tetején kapcsold be az Automatikus csapatmenedéket a várak szokásos ciklusaihoz.",
+            "recommendation": "Mentés után kapcsold be az Automatikus csapatmenedéket; a fejléc állapota mutatja az egyes várak ciklusát."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Csapatok automatikus menedékbe helyezése",
+      "summary": "A kiválasztott csapatok távol tartása ütemezés szerint",
+      "description": "A fölösleges csapatokat rendszeresen megfelelő szövetségi várakba állomásoztatja, és visszatérésük után megismétli a ciklust.",
+      "expectation": "Megfelelő célpont vagy küldhető fölösleges csapat nélkül vár. A csapatok mozgatása nem teszi sebezhetetlenné a várat."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "Általános beállítások",
+      "scan": "Felderítési időköz: 1800 másodperc",
+      "daily": "Napi támadási korlát: 3500",
+      "travel": "Utazási gyorsítás: érmés fokozat",
+      "advisor": "Tanácsadó: kikapcsolva"
+    },
+    "towerCastle": {
+      "title": "Példavár",
+      "enabled": "Automatikus toronytámadások · bekapcsolva",
+      "radius": "Sugár: 35 mező",
+      "troop": "Választott csapat: kitalált támadó egység",
+      "maiden": "Csak a Leány ereklyéjével támogatott: kikapcsolva"
+    },
+    "birdGeneral": {
+      "title": "Általános beállítások",
+      "min": "Legrövidebb tartózkodás: 6 óra",
+      "max": "Leghosszabb tartózkodás: 12 óra",
+      "send": "Tartalékok után a küldhetők minimális összlétszáma: 1000 katona",
+      "rpt": "Minimális hátralévő védelem: több mint 3 nap",
+      "preset": "Sablon: Mindennapi tartalék"
+    },
+    "birdCastle": {
+      "title": "Példavár",
+      "unitOne": "Kitalált 101-es egység tartalékban: 80",
+      "unitTwo": "Kitalált 102-es egység tartalékban: 40",
+      "add": "Egység hozzáadása"
+    }
+  }
+}

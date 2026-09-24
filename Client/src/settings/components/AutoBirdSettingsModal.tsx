@@ -32,6 +32,7 @@ import { castleOptionsFromState } from '../../api/Selectors';
 import { useAuth } from '../../context/AuthContext';
 import { AUTO_FORTRESS_DIREWOLF_ID } from '../AutoFortressClientState';
 import { AutoBirdGuideModal } from './AutoBirdGuideModal';
+import { useGuideLocale } from '../../config/useGuideLocale';
 import {
   autoFortressReservesDirewolves,
   mergeAutoBirdPickerItems,
@@ -55,6 +56,7 @@ function clampMinRPTDays(value: number): number {
 }
 
 export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ isOpen, onClose, onOpenFeatureSchedule }) => {
+  const { locale: guideLocale, pack: guidePack } = useGuideLocale();
   const { t: localizeStatic } = useStaticLocale();
   const { state, configuration } = useCitadelAPI();
   const { autoFortressEnabled } = useAuth();
@@ -326,7 +328,7 @@ export const AutoBirdSettingsModal: React.FC<AutoBirdSettingsModalProps> = ({ is
       )}
       titleTrailing={(
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}>Guide</Button>
+          <Button variant="outline" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={guideLocale}>{guidePack.ui.guideButton}</span></Button>
             <Button
               variant="outline"
               size="sm"

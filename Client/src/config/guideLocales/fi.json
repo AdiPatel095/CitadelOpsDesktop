@@ -1,0 +1,315 @@
+{
+  "ui": {
+    "guideButton": "Opas",
+    "calendarButton": "Kalenteri",
+    "recommendedLabel": "Suositus",
+    "backToSettings": "Takaisin asetuksiin",
+    "backToGuide": "Takaisin oppaaseen",
+    "howToSetUp": "Näin teet asetukset",
+    "whatToExpect": "Mitä on odotettavissa",
+    "openFullSizePicture": "Avaa kuva täysikokoisena",
+    "illustrativeExample": "Havainnollinen esimerkki",
+    "enlargePicture": "Suurenna esimerkkikuva",
+    "fullSizePicture": "Täysikokoinen esimerkkikuva; vieritä nähdäksesi kaikki asetukset",
+    "towerGuideTitle": "Automaattiset tornihyökkäykset -opas",
+    "birdGuideTitle": "Joukkojen automaattinen suojaan siirtäminen -opas",
+    "towerGuideIntro": "Määritä Automaattiset tornihyökkäykset näiden vaiheiden avulla; suurenna esimerkkikuva valitsemalla se.",
+    "birdGuideIntro": "Määritä Joukkojen automaattinen suojaan siirtäminen näiden vaiheiden avulla; suurenna esimerkkikuva valitsemalla se.",
+    "towerPreviewTitle": "Esimerkki automaattisten tornihyökkäysten asetuksista",
+    "birdPreviewTitle": "Esimerkki joukkojen automaattisen suojaan siirtämisen asetuksista"
+  },
+  "autoTower": {
+    "recommendationIntro": "Nämä suositukset koskevat säännöllistä käyttöä; tarkista ne ennen tallentamista.",
+    "steps": {
+      "commanders": {
+        "title": "Valitse komentajasi",
+        "items": {
+          "commander_assignment": {
+            "label": "Komentajien määritys",
+            "description": "Salli automaattiset tornihyökkäykset haluamillesi komentajille Komentajat-osiossa ja valitse Tallenna määritykset.",
+            "recommendation": "20 komentajaa määritetty automaattisiin tornihyökkäyksiin."
+          }
+        }
+      },
+      "general": {
+        "title": "Määritä skannaus, päivärajat ja matkustus",
+        "items": {
+          "open_settings": {
+            "label": "Avaa asetukset",
+            "description": "Avaa Automaatio ja valitse Automaattiset tornihyökkäykset -kortin asetuspainike."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Virallisen kartan skannaus · Väli",
+            "description": "Valitse, kuinka usein kunkin linnan torniluettelo päivitetään, 1 800–3 600 sekunnin välein; hyökkäykset voivat alkaa skannausten välillä.",
+            "recommendation": "1 800 sekuntia (30 minuuttia)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Tavallisten hyökkäysten päiväraja",
+            "description": "Toiminta keskeytyy koko tilin päivittäisen hyökkäysrajan täytyttyä, kunnes peli nollaa sen; 0 poistaa rajan.",
+            "recommendation": "3 500 hyökkäystä päivässä koko tilillä."
+          },
+          "horse_travel_boost": {
+            "label": "Hevosmatkan nopeutus",
+            "description": "Käyttää valittua matkustusvaihtoehtoa jokaisessa hyökkäyksessä, myös jokaisessa neuvonantajan ketjun osumassa; nopeus riippuu lähtölinnan matkustusrakennuksista.",
+            "recommendation": "Kolikoilla maksettava taso, jos tuettu ja kolikoita on riittävästi."
+          },
+          "travel_feather": {
+            "label": "Matkahöyhen",
+            "description": "Käyttää matkahöyhentä kolikoilla tai rubiineilla maksettavan hevostason sijaan."
+          },
+          "horse_ship_tier_coins": {
+            "label": "Hevonen / laiva · kolikot",
+            "description": "Kuluttaa kolikoita kolikoilla maksettavaan matkustustasoon."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Sotaratsu / nopea laiva · rubiinit",
+            "description": "Kuluttaa valittaessa rubiineja ensimmäiseen rubiineilla maksettavaan matkustustasoon."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Juoksuratsu / nopein laiva · rubiinit",
+            "description": "Kuluttaa valittaessa rubiineja nopeampaan rubiineilla maksettavaan matkustustasoon."
+          }
+        },
+        "image": {
+          "alt": "Automaattisten tornihyökkäysten yleisasetukset kuvitteellisilla Synthetic Castle -linnan tiedoilla",
+          "caption": "Määritä skannausväli, päivittäinen hyökkäysraja ja matkustusvaihtoehto; neuvonantajan asetukset näkyvät, kun ne ovat käytettävissä."
+        }
+      },
+      "castle": {
+        "title": "Määritä jokainen linna",
+        "items": {
+          "castle_switch": {
+            "label": "Linnan kytkin",
+            "description": "Ota käyttöön jokainen linna, josta automaattisten tornihyökkäysten halutaan skannaavan ja hyökkäävän.",
+            "recommendation": "Ota käyttöön linnat, joita haluat käyttää säännöllisesti."
+          },
+          "radius": {
+            "label": "Säde",
+            "description": "Valitse haun etäisyys tästä linnasta, 1–50 ruutua.",
+            "recommendation": "35 ruutua."
+          },
+          "choose_troop": {
+            "label": "Valitse joukko",
+            "description": "Valitse paikalla oleva joukko täyttämään hyökkäyksen molemmat sivustat; hyökkäykset odottavat, jos yksiköitä on liian vähän.",
+            "recommendation": "Paikalla oleva hyökkäysjoukko, jossa on riittävästi yksiköitä molemmille sivustoille."
+          },
+          "maiden_supported_only": {
+            "label": "Vain neitoreliikin kanssa",
+            "description": "Rajaa tämän linnan käytettävissä oleviin komentajiin, joilla on tuettu neitoreliikki.",
+            "recommendation": "Pois käytöstä, ellei valitulla komentajalla ole tuettua neitoreliikkiä."
+          }
+        },
+        "image": {
+          "alt": "Automaattisten tornihyökkäysten linna-asetukset kuvitteellisilla Synthetic Castle -linnan tiedoilla",
+          "caption": "Ota linna käyttöön ja valitse sen säde, joukko ja neitoreliikin vaatimus."
+        }
+      },
+      "advisor": {
+        "title": "Käytä neuvonantajaa halutessasi · jos saatavilla",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Käytä neuvonantajaa aikahyppyjen kanssa",
+            "description": "Toistaa osumia samaan torniin: ensin yksi päivittäinen hyökkäys ja sitten vähintään kolmen tunnin aikahyppy jokaista lisäosumaa varten.",
+            "recommendation": "Pois käytöstä."
+          },
+          "auto_activate_with_token": {
+            "label": "Aktivoi automaattisesti poletilla",
+            "description": "Käyttää saatavilla olevan paronineuvonantajan poletin, kun neuvonantaja ei ole aktiivinen, ostamatta polettia tai kuluttamatta rubiineja.",
+            "recommendation": "Pois käytöstä, kun neuvonantaja on pois käytöstä."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Aikahyppyjen päivittäinen enimmäismäärä",
+            "description": "Rajoittaa vahvistettujen neuvonantajaketjujen käyttämiä aikahyppyjä, kunnes pelin päivittäinen hyökkäyslaskuri nollautuu; 0 keskeyttää neuvonantajan hyökkäykset.",
+            "recommendation": "0, kun neuvonantaja on pois käytöstä."
+          }
+        }
+      },
+      "finish": {
+        "title": "Määritä aikataulu, tallenna ja ota käyttöön",
+        "items": {
+          "calendar": {
+            "label": "Kalenteri",
+            "description": "Valitse kalenterista, milloin automaattiset tornihyökkäykset saavat toimia; joukkojen saatavuus ja muut rajat ovat silti voimassa.",
+            "recommendation": "Tavalliset toiminta-aikasi."
+          },
+          "save_changes": {
+            "label": "Tallenna muutokset",
+            "description": "Ota asetukset käyttöön valitsemalla Tallenna muutokset; tämän oppaan lukeminen ei tallenna niitä."
+          },
+          "auto_towers_switch": {
+            "label": "Automaattisten tornihyökkäysten kytkin",
+            "description": "Ota automaattiset tornihyökkäykset käyttöön Automaatio-sivulla asetusten tallentamisen jälkeen, jotta tehtävä voi toimia.",
+            "recommendation": "Käytössä, kun halutut asetukset on tallennettu."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automaattiset tornihyökkäykset",
+      "summary": "Toista hyökkäyksiä lähellä oleviin torneihin",
+      "description": "Lähettää hyökkäyksiä ryöstöparonien ja kuningaskuntien torneihin valitsemistasi linnoista.",
+      "expectation": "Tarvitaan riittävästi joukkoja, käytettävissä oleva komentaja ja hyökkäysvalmis torni. Toiminto voi odottaa joukkojen paluuta tai tornin ajastimen päättymistä."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "Suositellut arvot kuvaavat joukkojen automaattisen suojaan siirtämisen säännöllistä käyttöä; ne ovat ohjeita eivätkä muuta tallennettuja asetuksia.",
+    "steps": {
+      "open": {
+        "title": "Avaa joukkojen automaattisen suojaan siirtämisen asetukset",
+        "items": {
+          "open_settings": {
+            "label": "Avaa asetukset",
+            "description": "Valitse komentokeskuksen yläosassa joukkojen automaattisen suojaan siirtämisen vieressä oleva asetuspainike."
+          }
+        }
+      },
+      "general": {
+        "title": "Määritä sijoitusaika ja lähetyssäännöt",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Satunnainen kesto · Min",
+            "description": "Määritä lyhin tuntimäärä, jonka joukot pysyvät liittouman kohteessa matkan päättymisen jälkeen.",
+            "recommendation": "6 tuntia sijoitettuna liittouman kohteeseen saapumisen jälkeen."
+          },
+          "random_delay_range_max": {
+            "label": "Satunnainen kesto · Maks",
+            "description": "Määritä pisin viipymä kohteessa; joukkojen automaattinen suojaan siirtäminen valitsee satunnaisen keston Min- ja Maks-arvojen väliltä.",
+            "recommendation": "12 tuntia sijoitettuna liittouman kohteeseen saapumisen jälkeen."
+          },
+          "minimum_to_send": {
+            "label": "Lähetyksen vähimmäismäärä",
+            "description": "Määritä kelvollisten joukkojen vähimmäiskokonaismäärä sen jälkeen, kun linnan reservit on jätetty kotiin; tämä on kynnysarvo, ei tarkka lähetettävä määrä.",
+            "recommendation": "Yhteensä 1 000 kelvollista joukkoa linnan reservien kotiin jättämisen jälkeen; tämä on kynnysarvo, ei tarkka lähetettävä määrä."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "RPT:n vähimmäisarvo (jäljellä oleva suoja-aika)",
+            "description": "Käytä kohteita, joiden suojaa on jäljellä enemmän kuin tämä määrä päiviä; 0 poistaa tarkistuksen.",
+            "recommendation": "3 päivää; kohteella on oltava suojaa jäljellä ehdottomasti yli 3 päivää."
+          }
+        },
+        "image": {
+          "alt": "Joukkojen automaattisen suojaan siirtämisen sijoitusajan, lähetyksen vähimmäismäärän, RPT:n vähimmäisarvon ja esiasetusten säätimet",
+          "caption": "Määritä sijoitusaika ja kelpoisuus, ja tarkista Arki-reserviesiasetus ennen tallentamista."
+        }
+      },
+      "reserves": {
+        "title": "Valitse jokaiseen linnaan jätettävät joukot",
+        "items": {
+          "add_unit": {
+            "label": "Lisää yksikkö",
+            "description": "Valitse kullekin linnalle kotiin jätettävät joukkotyypit lähettämisen sijaan; tyhjä manuaalinen reservi jättää kaikki kelvolliset joukot käytettäviksi automaattisten reservien jälkeen.",
+            "recommendation": "Valitse joukkotyypit, joita kukin linna tarvitsee puolustukseen tai muihin säännöllisiin tehtäviin."
+          },
+          "quantity": {
+            "label": "Määrä",
+            "description": "Määritä kustakin valitusta joukosta positiivinen määrä, joka jää linnaan; 0 ei varaa koko tyyppiä.",
+            "recommendation": "Jätä linnaan kutakin joukkotyyppiä puolustukseen tai muihin tehtäviin tarvittava määrä; tarkista todelliset joukkomäärät."
+          },
+          "remove_unit": {
+            "label": "Poista yksikkö",
+            "description": "Poista yksikön ruutu, jotta kyseistä tyyppiä ei enää varata valittuun linnaan."
+          },
+          "auto_fortress_reserve": {
+            "label": "Linnoitusten automatisoinnin reservi",
+            "description": "Kun linnoitusten automatisointi lukitsee täällä kaikki suursudet, tätä automaattista reserviä ei tallenneta joukkojen automaattisen suojaan siirtämisen esiasetuksiin, ja aiempi käsin asetettu suursuden määrä palautuu lukituksen päätyttyä."
+          }
+        },
+        "image": {
+          "alt": "Joukkojen automaattisen suojaan siirtämisen reserviruudut kuvitteellisessa Example Castle -linnassa",
+          "caption": "Varaa vain tässä linnassa tarvittavat yksiköt; Yksikkö 101 ja Yksikkö 102 ovat kuvitteellisia joukkoesimerkkejä."
+        }
+      },
+      "presets": {
+        "title": "Tallenna ja valitse esiasetus",
+        "items": {
+          "preset_name": {
+            "label": "Esiasetuksen nimi",
+            "description": "Kirjoita uudelle esiasetukselle nimi tai muokkaa käytössä olevan esiasetuksen nimeä ennen muutosten tallentamista.",
+            "recommendation": "Käytä helposti tunnistettavaa nimeä, kuten Arki."
+          },
+          "load_preset": {
+            "label": "Lataa esiasetus",
+            "description": "Valitse luettelosta tallennettu esiasetus tai valitse Tallennettu kokoonpano, jos haluat käyttää tallennettuja asetuksia ilman nimettyä esiasetusta.",
+            "recommendation": "Käytä haluamaasi arkiesiasetusta ajonaikaisena oletuksena: valitse se, paina Käytä ja sitten Tallenna muutokset."
+          },
+          "apply": {
+            "label": "Käytä",
+            "description": "Lataa valitun esiasetuksen tähän asetusluonnokseen; valitse Tallenna muutokset vahvistaaksesi sen ajonaikaiseksi oletukseksi."
+          },
+          "save_as_new": {
+            "label": "Tallenna uutena",
+            "description": "Tallentaa nykyiset asetukset heti uutena nimettynä esiasetuksena ja valitsee sen ajonaikaiseksi oletukseksi."
+          },
+          "delete": {
+            "label": "Poista",
+            "description": "Poistaa vahvistuksen jälkeen valitun esiasetuksen heti ja tyhjentää ajonaikaisen oletuksen, jos se oli valittuna."
+          },
+          "runtime_default": {
+            "label": "Ajonaikainen oletus",
+            "description": "Ajonaikainen oletus on tallennettu aktiivinen esiasetus tai tallennettu kokoonpano, kun esiasetusta ei ole aktiivisena."
+          }
+        }
+      },
+      "finish": {
+        "title": "Määritä aikataulu, tallenna ja ota käyttöön",
+        "items": {
+          "calendar": {
+            "label": "Kalenteri",
+            "description": "Valitse, milloin joukkojen automaattinen suojaan siirtäminen saa toimia, ja tallenna muutokset valitsemalla Tallenna aikataulu.",
+            "recommendation": "Jätä aikataulu pois käytöstä jatkuvaa toimintaa varten tai määritä tavalliset viikkotunnit ja tallenna aikataulu."
+          },
+          "specify_preset_per_period": {
+            "label": "Määritä esiasetus jaksolle",
+            "description": "Valitse tallennettu esiasetus kalenterijaksolle, jos sen tulee ohittaa ajonaikainen oletus kyseisenä aikana.",
+            "recommendation": "Pois käytöstä, elleivät eri jaksot tarvitse erilaisia reservejä."
+          },
+          "save_changes": {
+            "label": "Tallenna muutokset",
+            "description": "Tallenna asetusluonnos ja käytössä olevien esiasetusten muutokset; tämän oppaan lukeminen ei tallenna niitä."
+          },
+          "auto_bird_switch": {
+            "label": "Joukkojen automaattisen suojaan siirtämisen kytkin",
+            "description": "Ota joukkojen automaattinen suojaan siirtäminen käyttöön komentokeskuksen yläosassa tallentamisen jälkeen, jotta linnojen tavalliset kierrot voivat toimia.",
+            "recommendation": "Ota joukkojen automaattinen suojaan siirtäminen käyttöön tallentamisen jälkeen; otsakkeen tila näyttää kunkin linnan kierron."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Joukkojen automaattinen suojaan siirtäminen",
+      "summary": "Sijoittaa valitut joukot muualle aikataulun mukaan",
+      "description": "Sijoittaa säännöllisesti vapaita joukkoja kelvollisiin liittouman linnoihin ja toistaa kierron niiden palattua.",
+      "expectation": "Odottaa, jos sopivaa kohdetta tai lähetettäviä vapaita joukkoja ei ole. Joukkojen siirtäminen ei tee linnastasi haavoittumatonta."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "Yleisasetukset",
+      "scan": "Skannausväli: 1 800 sekuntia",
+      "daily": "Päivittäinen hyökkäysraja: 3 500",
+      "travel": "Matkanopeutus: kolikkotaso",
+      "advisor": "Neuvonantaja: pois"
+    },
+    "towerCastle": {
+      "title": "Esimerkkilinna",
+      "enabled": "Automaattiset tornihyökkäykset: päällä",
+      "radius": "Säde: 35 ruutua",
+      "troop": "Valittu joukko: kuvitteellinen hyökkäysyksikkö",
+      "maiden": "Vain neitoreliikin kanssa: pois"
+    },
+    "birdGeneral": {
+      "title": "Yleisasetukset",
+      "min": "Lyhin viipymä: 6 tuntia",
+      "max": "Pisin viipymä: 12 tuntia",
+      "send": "Kelvollisten joukkojen vähimmäismäärä reservien jälkeen: 1 000",
+      "rpt": "Jäljellä oleva vähimmäissuoja: yli 3 päivää",
+      "preset": "Esiasetus: Arki-reservi"
+    },
+    "birdCastle": {
+      "title": "Esimerkkilinna",
+      "unitOne": "Kuvitteellinen yksikkö 101 varattu: 80",
+      "unitTwo": "Kuvitteellinen yksikkö 102 varattu: 40",
+      "add": "Lisää yksikkö"
+    }
+  }
+}

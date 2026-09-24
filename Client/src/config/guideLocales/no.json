@@ -1,0 +1,315 @@
+{
+  "ui": {
+    "guideButton": "Veiledning",
+    "calendarButton": "Kalender",
+    "recommendedLabel": "Anbefalt",
+    "backToSettings": "Tilbake til innstillinger",
+    "backToGuide": "Tilbake til veiledningen",
+    "howToSetUp": "Slik setter du det opp",
+    "whatToExpect": "Hva du kan forvente",
+    "openFullSizePicture": "Åpne bilde i full størrelse",
+    "illustrativeExample": "Illustrerende eksempel",
+    "enlargePicture": "Forstørr eksempelbildet",
+    "fullSizePicture": "Eksempelbilde i full størrelse; rull for å se alle innstillinger",
+    "towerGuideTitle": "Veiledning for Automatiske tårnangrep",
+    "birdGuideTitle": "Veiledning for Automatisk skjerming av tropper",
+    "towerGuideIntro": "Følg disse trinnene for å sette opp Automatiske tårnangrep; velg et eksempelbilde for å forstørre det.",
+    "birdGuideIntro": "Følg disse trinnene for å sette opp Automatisk skjerming av tropper; velg et eksempelbilde for å forstørre det.",
+    "towerPreviewTitle": "Eksempel på oppsett av Automatiske tårnangrep",
+    "birdPreviewTitle": "Eksempel på oppsett av Automatisk skjerming av tropper"
+  },
+  "autoTower": {
+    "recommendationIntro": "Disse anbefalingene gjelder vanlig bruk; gå gjennom dem før du lagrer.",
+    "steps": {
+      "commanders": {
+        "title": "Velg kommandørene dine",
+        "items": {
+          "commander_assignment": {
+            "label": "Tildeling av kommandører",
+            "description": "Tillat Automatiske tårnangrep under Kommandører for kommandørene du vil bruke, og velg Lagre tildelinger.",
+            "recommendation": "20 kommandører tildelt Automatiske tårnangrep."
+          }
+        }
+      },
+      "general": {
+        "title": "Still inn skanning, dagsgrenser og reise",
+        "items": {
+          "open_settings": {
+            "label": "Åpne innstillinger",
+            "description": "Åpne Automatisering og velg innstillingsknappen på kortet Automatiske tårnangrep."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Autoritativ kartskanning · Intervall",
+            "description": "Velg hvor ofte tårnlisten for hvert slott skal oppdateres, fra 1 800 til 3 600 sekunder; angrep kan starte mellom skanningene.",
+            "recommendation": "1 800 sekunder (30 minutter)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Daglig grense for normale angrep",
+            "description": "Setter på pause ved den daglige angrepsgrensen for hele kontoen til spillet tilbakestiller den; 0 fjerner grensen.",
+            "recommendation": "3 500 angrep per dag for hele kontoen."
+          },
+          "horse_travel_boost": {
+            "label": "Reisefart med hest",
+            "description": "Bruker det valgte reisealternativet for hvert angrep, også hvert treff i en rådgiversekvens; farten avhenger av reisebygningene på startslottet.",
+            "recommendation": "Myntnivå der det støttes, med nok mynter."
+          },
+          "travel_feather": {
+            "label": "Reisefjær",
+            "description": "Bruker reisefjæren i stedet for et hestenivå med mynter eller rubiner."
+          },
+          "horse_ship_tier_coins": {
+            "label": "Hest / skip · mynter",
+            "description": "Bruker mynter på reisenivået med mynter."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Krigshest / raskt skip · rubiner",
+            "description": "Bruker rubiner på det første reisenivået med rubiner når det velges."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Løpshest / raskeste skip · rubiner",
+            "description": "Bruker rubiner på det raskere reisenivået med rubiner når det velges."
+          }
+        },
+        "image": {
+          "alt": "Generelle innstillinger for Automatiske tårnangrep med oppdiktede data fra Synthetic Castle",
+          "caption": "Still inn skanneintervallet, den daglige angrepsgrensen og reisealternativet; rådgiverkontroller vises når de er tilgjengelige."
+        }
+      },
+      "castle": {
+        "title": "Sett opp hvert slott",
+        "items": {
+          "castle_switch": {
+            "label": "Slottsbryter",
+            "description": "Slå på hvert slott du vil at Automatiske tårnangrep skal skanne og angripe fra.",
+            "recommendation": "Slå på slottene du vil bruke regelmessig."
+          },
+          "radius": {
+            "label": "Radius",
+            "description": "Velg hvor langt det skal søkes rundt dette slottet, fra 1 til 50 felt.",
+            "recommendation": "35 felt."
+          },
+          "choose_troop": {
+            "label": "Velg tropp",
+            "description": "Velg den stasjonerte troppen som skal fylle begge angrepsflankene; angrep venter hvis det er for få enheter.",
+            "recommendation": "En stasjonert angrepstropp med nok enheter til begge flankene."
+          },
+          "maiden_supported_only": {
+            "label": "Bare med jomfrurelikvie",
+            "description": "Begrenser dette slottet til tilgjengelige kommandører med det støttede jomfrurelikviet.",
+            "recommendation": "Av, med mindre den valgte kommandøren har det støttede jomfrurelikviet."
+          }
+        },
+        "image": {
+          "alt": "Slottsinnstillinger for Automatiske tårnangrep med oppdiktede data fra Synthetic Castle",
+          "caption": "Slå på et slott og velg radius, tropp og krav om jomfrurelikvie."
+        }
+      },
+      "advisor": {
+        "title": "Bruk rådgiveren om ønskelig · når tilgjengelig",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Bruk rådgiver med tidshopp",
+            "description": "Gjentar treff på ett tårn med først ett daglig angrep og deretter ett tidshopp på minst tre timer per ekstra treff.",
+            "recommendation": "Av."
+          },
+          "auto_activate_with_token": {
+            "label": "Aktiver automatisk med pollett",
+            "description": "Bruker en tilgjengelig baronrådgiverpollett når rådgiveren er inaktiv, uten å kjøpe en pollett eller bruke rubiner.",
+            "recommendation": "Av mens rådgiveren er slått av."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Maksimalt antall tidshopp per dag",
+            "description": "Begrenser tidshopp brukt av bekreftede rådgiversekvenser til spillets daglige angrepsteller tilbakestilles; 0 setter rådgiverangrep på pause.",
+            "recommendation": "0 mens rådgiveren er slått av."
+          }
+        }
+      },
+      "finish": {
+        "title": "Still inn kalenderen, lagre og slå på",
+        "items": {
+          "calendar": {
+            "label": "Kalender",
+            "description": "Bruk kalenderen til å velge når Automatiske tårnangrep kan kjøre; tilgjengelige tropper og andre grenser gjelder fortsatt.",
+            "recommendation": "De vanlige driftstidene dine."
+          },
+          "save_changes": {
+            "label": "Lagre endringer",
+            "description": "Velg Lagre endringer for å ta i bruk innstillingene; å lese denne veiledningen lagrer dem ikke."
+          },
+          "auto_towers_switch": {
+            "label": "Bryter for Automatiske tårnangrep",
+            "description": "Slå på Automatiske tårnangrep på Automatisering-siden etter at du har lagret innstillingene, slik at oppgaven kan kjøre.",
+            "recommendation": "På etter at du har lagret de ønskede innstillingene."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatiske tårnangrep",
+      "summary": "Gjenta angrep på tårn i nærheten",
+      "description": "Sender angrep mot røverbaron- og kongeriketårn fra slottene du velger.",
+      "expectation": "Krever nok tropper, en tilgjengelig kommandør og et tårn som er klart for angrep. Oppgaven kan vente på tropper som kommer tilbake eller på at en tårntimer går ut."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "De anbefalte verdiene beskriver vanlig bruk av Automatisk skjerming av tropper; de er veiledende og endrer ikke lagrede innstillinger.",
+    "steps": {
+      "open": {
+        "title": "Åpne innstillinger for Automatisk skjerming av tropper",
+        "items": {
+          "open_settings": {
+            "label": "Åpne innstillinger",
+            "description": "Velg innstillingsknappen ved siden av Automatisk skjerming av tropper øverst i kommandosenteret."
+          }
+        }
+      },
+      "general": {
+        "title": "Still inn stasjoneringstid og senderegler",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Tilfeldig varighet · Min",
+            "description": "Angi det korteste antallet timer troppene blir ved alliansens mål etter at reisen er fullført.",
+            "recommendation": "6 timer stasjonert ved alliansens mål etter ankomst."
+          },
+          "random_delay_range_max": {
+            "label": "Tilfeldig varighet · Maks",
+            "description": "Angi det lengste oppholdet ved målet; Automatisk skjerming av tropper velger en tilfeldig varighet mellom Min og Maks.",
+            "recommendation": "12 timer stasjonert ved alliansens mål etter ankomst."
+          },
+          "minimum_to_send": {
+            "label": "Minimum for sending",
+            "description": "Angi det minste totale antallet kvalifiserte tropper som trengs etter at slottsreservene er holdt hjemme; dette er en terskel, ikke det eksakte antallet som sendes.",
+            "recommendation": "Totalt 1 000 kvalifiserte tropper etter at slottsreservene er holdt hjemme; dette er en terskel, ikke en eksakt sendemengde."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "Minimum RPT (gjenværende beskyttelsestid)",
+            "description": "Bruk mål med mer enn dette antallet dager beskyttelse igjen; 0 fjerner kontrollen.",
+            "recommendation": "3 dager; et mål må ha strengt mer enn 3 dager beskyttelse igjen."
+          }
+        },
+        "image": {
+          "alt": "Kontroller for Automatisk skjerming av tropper: stasjoneringstid, sendeminimum, minimum RPT og forhåndsinnstillinger",
+          "caption": "Still inn stasjoneringstid og kvalifikasjonskrav, og gjennomgå reserveforhåndsinnstillingen Hverdag før du lagrer."
+        }
+      },
+      "reserves": {
+        "title": "Velg tropper som skal bli i hvert slott",
+        "items": {
+          "add_unit": {
+            "label": "Legg til enhet",
+            "description": "Velg for hvert slott hvilke troppetyper som skal bli hjemme i stedet for å sendes; en tom manuell reserve lar alle kvalifiserte tropper være tilgjengelige etter automatiske reserver.",
+            "recommendation": "Velg troppetyper som hvert slott trenger til forsvar eller andre faste oppgaver."
+          },
+          "quantity": {
+            "label": "Antall",
+            "description": "Angi et positivt antall av hver valgt tropp som skal bli i slottet; 0 reserverer ikke hele typen.",
+            "recommendation": "Behold antallet av hver troppetype som slottet trenger til forsvar eller andre oppgaver; kontroller de faktiske troppetallene."
+          },
+          "remove_unit": {
+            "label": "Fjern enhet",
+            "description": "Fjern en enhetsrute for å slutte å reservere den typen i det valgte slottet."
+          },
+          "auto_fortress_reserve": {
+            "label": "Reserve for Automatisering av festninger",
+            "description": "Når Automatisering av festninger låser alle skrekkulver her, lagres ikke denne automatiske reserven i forhåndsinnstillinger for Automatisk skjerming av tropper, og det tidligere manuelle antallet skrekkulver kommer tilbake når låsen opphører."
+          }
+        },
+        "image": {
+          "alt": "Reserveruter for Automatisk skjerming av tropper i det oppdiktede slottet Example Castle",
+          "caption": "Reserver bare enhetene som trengs på dette slottet; Enhet 101 og Enhet 102 er oppdiktede troppeeksempler."
+        }
+      },
+      "presets": {
+        "title": "Lagre og velg en forhåndsinnstilling",
+        "items": {
+          "preset_name": {
+            "label": "Navn på forhåndsinnstilling",
+            "description": "Skriv inn et navn på en ny forhåndsinnstilling, eller rediger navnet på den anvendte forhåndsinnstillingen før du lagrer endringer.",
+            "recommendation": "Bruk et gjenkjennelig navn som Hverdag."
+          },
+          "load_preset": {
+            "label": "Last inn forhåndsinnstilling",
+            "description": "Velg en lagret forhåndsinnstilling fra listen, eller velg Lagret konfigurasjon for å bruke lagrede innstillinger uten en navngitt forhåndsinnstilling.",
+            "recommendation": "Bruk ønsket hverdagsinnstilling som standard under kjøring: velg den, trykk Bruk, og velg deretter Lagre endringer."
+          },
+          "apply": {
+            "label": "Bruk",
+            "description": "Laster den valgte forhåndsinnstillingen inn i dette innstillingsutkastet; velg Lagre endringer for å gjøre den til standard under kjøring."
+          },
+          "save_as_new": {
+            "label": "Lagre som ny",
+            "description": "Lagrer gjeldende innstillinger umiddelbart som en ny navngitt forhåndsinnstilling og velger den som standard under kjøring."
+          },
+          "delete": {
+            "label": "Slett",
+            "description": "Sletter etter bekreftelse den valgte forhåndsinnstillingen umiddelbart og fjerner standarden under kjøring hvis den var valgt."
+          },
+          "runtime_default": {
+            "label": "Standard under kjøring",
+            "description": "Standarden under kjøring er den lagrede aktive forhåndsinnstillingen, eller den lagrede konfigurasjonen når ingen forhåndsinnstilling er aktiv."
+          }
+        }
+      },
+      "finish": {
+        "title": "Still inn kalenderen, lagre og aktiver",
+        "items": {
+          "calendar": {
+            "label": "Kalender",
+            "description": "Velg når Automatisk skjerming av tropper kan kjøre, og velg Lagre kalender for å lagre endringene.",
+            "recommendation": "La kalenderen være av for løpende drift, eller still inn de vanlige uketidene og lagre kalenderen."
+          },
+          "specify_preset_per_period": {
+            "label": "Angi forhåndsinnstilling per periode",
+            "description": "Velg en lagret forhåndsinnstilling for en kalenderperiode hvis perioden skal overstyre standarden under kjøring.",
+            "recommendation": "Av, med mindre forskjellige perioder trenger forskjellige reserver."
+          },
+          "save_changes": {
+            "label": "Lagre endringer",
+            "description": "Lagre innstillingsutkastet og anvendte endringer i forhåndsinnstillinger; å lese denne veiledningen lagrer dem ikke."
+          },
+          "auto_bird_switch": {
+            "label": "Bryter for Automatisk skjerming av tropper",
+            "description": "Slå på Automatisk skjerming av tropper øverst i kommandosenteret etter lagring for å tillate normale slottssykluser.",
+            "recommendation": "Slå på Automatisk skjerming av tropper etter lagring; statusen i overskriften viser syklusen til hvert slott."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatisk skjerming av tropper",
+      "summary": "Stasjonerer utvalgte tropper andre steder etter en kalender",
+      "description": "Stasjonerer regelmessig tilgjengelige tropper ved kvalifiserte allianseslott og gjentar syklusen når de kommer tilbake.",
+      "expectation": "Venter hvis det ikke finnes et passende mål eller tilgjengelige tropper. Flytting av tropper gjør ikke slottet ditt usårbart."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "Generelle innstillinger",
+      "scan": "Skanneintervall: 1 800 sekunder",
+      "daily": "Daglig angrepsgrense: 3 500",
+      "travel": "Reisefart: myntnivå",
+      "advisor": "Rådgiver: av"
+    },
+    "towerCastle": {
+      "title": "Eksempelslott",
+      "enabled": "Automatiske tårnangrep: på",
+      "radius": "Radius: 35 felt",
+      "troop": "Valgt tropp: oppdiktet angrepsenhet",
+      "maiden": "Bare med jomfrurelikvie: av"
+    },
+    "birdGeneral": {
+      "title": "Generelle innstillinger",
+      "min": "Korteste opphold: 6 timer",
+      "max": "Lengste opphold: 12 timer",
+      "send": "Minste kvalifiserte total etter reserver: 1 000 tropper",
+      "rpt": "Minste gjenværende beskyttelse: mer enn 3 dager",
+      "preset": "Forhåndsinnstilling: hverdagsreserve"
+    },
+    "birdCastle": {
+      "title": "Eksempelslott",
+      "unitOne": "Oppdiktet enhet 101 reservert: 80",
+      "unitTwo": "Oppdiktet enhet 102 reservert: 40",
+      "add": "Legg til enhet"
+    }
+  }
+}

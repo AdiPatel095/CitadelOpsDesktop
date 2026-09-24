@@ -1,0 +1,315 @@
+{
+  "ui": {
+    "guideButton": "Guide",
+    "calendarButton": "Calendar",
+    "recommendedLabel": "Recommended",
+    "backToSettings": "Back to settings",
+    "backToGuide": "Back to guide",
+    "howToSetUp": "How to set it up",
+    "whatToExpect": "What to expect",
+    "openFullSizePicture": "Open full-size picture",
+    "illustrativeExample": "Illustrative example",
+    "enlargePicture": "Enlarge example picture",
+    "fullSizePicture": "Full-size example picture; scroll to view all settings",
+    "towerGuideTitle": "Auto Towers guide",
+    "birdGuideTitle": "Auto Bird guide",
+    "towerGuideIntro": "Follow these steps to set up Auto Towers; select an example picture to enlarge it.",
+    "birdGuideIntro": "Follow these steps to set up Auto Bird; select an example picture to enlarge it.",
+    "towerPreviewTitle": "Auto Towers setup example",
+    "birdPreviewTitle": "Auto Bird setup example"
+  },
+  "autoTower": {
+    "recommendationIntro": "These are recommendations for regular use; review them before saving.",
+    "steps": {
+      "commanders": {
+        "title": "Choose your commanders",
+        "items": {
+          "commander_assignment": {
+            "label": "Commander assignment",
+            "description": "In Commanders, allow Auto Towers for the commanders you want to use and select Save assignments.",
+            "recommendation": "20 commanders assigned to Auto Towers."
+          }
+        }
+      },
+      "general": {
+        "title": "Set scanning, daily limits and travel",
+        "items": {
+          "open_settings": {
+            "label": "Open settings",
+            "description": "Open Automation, then select the settings button on the Auto Towers card."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Authoritative map scan · Every",
+            "description": "Choose how often to refresh each castle’s tower list, from 1,800–3,600 seconds; attacks can launch between scans.",
+            "recommendation": "1,800 seconds (30 minutes)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Daily normal-attack limit",
+            "description": "Pauses at your account-wide daily attack limit until the game resets it; 0 removes the limit.",
+            "recommendation": "3,500 account-wide attacks per day."
+          },
+          "horse_travel_boost": {
+            "label": "Horse travel boost",
+            "description": "Uses your selected travel option for each attack, including every hit in an Advisor chain, with speed based on the source castle’s travel buildings.",
+            "recommendation": "Coin tier where supported, with enough coins."
+          },
+          "travel_feather": {
+            "label": "Travel feather",
+            "description": "Uses the travel feather option rather than a coin or ruby horse tier."
+          },
+          "horse_ship_tier_coins": {
+            "label": "Horse / ship tier · coins",
+            "description": "Spends coins on the coin travel tier."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Warhorse / fast ship tier · rubies",
+            "description": "Spends rubies on the first ruby travel tier when selected."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Courser / fastest ship tier · rubies",
+            "description": "Spends rubies on the faster ruby travel tier when selected."
+          }
+        },
+        "image": {
+          "alt": "Auto Towers general settings with fictional Synthetic Castle data",
+          "caption": "Set the scan interval, daily attack limit and travel option; Advisor controls appear when available."
+        }
+      },
+      "castle": {
+        "title": "Configure each castle",
+        "items": {
+          "castle_switch": {
+            "label": "Castle switch",
+            "description": "Turn on each castle you want Auto Towers to scan and attack from.",
+            "recommendation": "Enable the castles you want to use regularly."
+          },
+          "radius": {
+            "label": "Radius",
+            "description": "Choose how far to search around this castle, from 1–50 tiles.",
+            "recommendation": "35 tiles."
+          },
+          "choose_troop": {
+            "label": "Choose troop",
+            "description": "Choose the stationed troop to fill both attack flanks; attacks wait if there are too few.",
+            "recommendation": "A stationed attack troop with enough units for both flanks."
+          },
+          "maiden_supported_only": {
+            "label": "Maiden-supported only",
+            "description": "Limits this castle to available commanders with the supported maiden relic.",
+            "recommendation": "Off unless your chosen commander has the supported maiden relic."
+          }
+        },
+        "image": {
+          "alt": "Auto Towers castle settings with fictional Synthetic Castle data",
+          "caption": "Enable a castle and choose its radius, troop and maiden requirement."
+        }
+      },
+      "advisor": {
+        "title": "Use Advisor if wanted · when available",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Use Advisor with Time Skips",
+            "description": "Repeats hits on one tower, using one daily attack first and one Time Skip of at least three hours per extra hit.",
+            "recommendation": "Off."
+          },
+          "auto_activate_with_token": {
+            "label": "Auto-activate with token",
+            "description": "Uses an available Baron Advisor token when the Advisor is inactive, without buying a token or spending rubies.",
+            "recommendation": "Off while Advisor is off."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Maximum daily Time Skips",
+            "description": "Caps Time Skips used by confirmed Advisor chains until the game’s daily attack counter resets; 0 pauses Advisor launches.",
+            "recommendation": "0 while Advisor is off."
+          }
+        }
+      },
+      "finish": {
+        "title": "Set the schedule, save and switch on",
+        "items": {
+          "calendar": {
+            "label": "Calendar",
+            "description": "Use Calendar to choose when Auto Towers may run, while troop availability and other limits still apply.",
+            "recommendation": "Your usual running hours."
+          },
+          "save_changes": {
+            "label": "Save changes",
+            "description": "Select Save changes to apply your settings; reading this guide does not save them."
+          },
+          "auto_towers_switch": {
+            "label": "Auto Towers switch",
+            "description": "Turn on Auto Towers on the Automation page after saving your settings to allow the task to run.",
+            "recommendation": "On after saving your intended settings."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Auto Towers",
+      "summary": "Repeat nearby tower attacks",
+      "description": "Sends attacks against robber-baron and kingdom towers from the castles you choose.",
+      "expectation": "It needs enough troops, an available commander and a tower that is ready to attack. It may wait while troops return or a tower's timer runs down."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "Recommended values describe regular Auto Bird use; they are guidance and do not change saved settings.",
+    "steps": {
+      "open": {
+        "title": "Open Auto Bird settings",
+        "items": {
+          "open_settings": {
+            "label": "Open settings",
+            "description": "At the top of the command center, select the settings button beside Auto Bird."
+          }
+        }
+      },
+      "general": {
+        "title": "Set stationing time and sending rules",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Random delay range · Min",
+            "description": "Set the shortest number of hours troops will stay at the alliance destination after travel completes.",
+            "recommendation": "6 hours stationed at the alliance target after arrival."
+          },
+          "random_delay_range_max": {
+            "label": "Random delay range · Max",
+            "description": "Set the longest stay at the destination; Auto Bird chooses a random duration between Min and Max.",
+            "recommendation": "12 hours stationed at the alliance target after arrival."
+          },
+          "minimum_to_send": {
+            "label": "Minimum to send",
+            "description": "Set the minimum total number of eligible troops needed after castle reserves are kept; this is a threshold, not the exact number sent.",
+            "recommendation": "1,000 eligible troops in total after castle reserves are kept; this is a threshold, not an exact send size."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "Minimum RPT (remaining protection time)",
+            "description": "Use targets with more than this many days of protection remaining; 0 removes the check.",
+            "recommendation": "3 days; a target must have more than 3 days of remaining protection time."
+          }
+        },
+        "image": {
+          "alt": "Auto Bird stationing delay, minimum send, minimum RPT, and preset controls",
+          "caption": "Set stationing time and eligibility, then review the Everyday reserve preset before saving."
+        }
+      },
+      "reserves": {
+        "title": "Choose troops to keep in each castle",
+        "items": {
+          "add_unit": {
+            "label": "Add unit",
+            "description": "For each castle, choose troop types to keep at home instead of sending; an empty reserve leaves all eligible troops available after automatic reserves.",
+            "recommendation": "Choose the troop types each castle needs for defense or other regular jobs."
+          },
+          "quantity": {
+            "label": "Quantity",
+            "description": "Set a positive quantity of each chosen troop to keep in that castle; 0 does not reserve the whole type.",
+            "recommendation": "Keep the number of each troop type this castle needs at home for defense or other jobs; review actual troop counts."
+          },
+          "remove_unit": {
+            "label": "Remove unit",
+            "description": "Remove a unit tile to stop reserving that type in the selected castle."
+          },
+          "auto_fortress_reserve": {
+            "label": "Auto Fortress reserve",
+            "description": "When Auto Fortress locks all Direwolves here, this automatic reserve is not saved in Auto Bird presets and any earlier manual Direwolf amount returns when the lock ends."
+          }
+        },
+        "image": {
+          "alt": "Auto Bird castle reserve tiles for fictional Example Castle",
+          "caption": "Reserve only the units needed at this castle; Unit 101 and Unit 102 are fictional troop placeholders."
+        }
+      },
+      "presets": {
+        "title": "Save and select a preset",
+        "items": {
+          "preset_name": {
+            "label": "Preset name",
+            "description": "Enter a name for a new preset or edit the applied preset’s name before saving changes.",
+            "recommendation": "Use a recognizable name such as Everyday."
+          },
+          "load_preset": {
+            "label": "Load preset",
+            "description": "Choose a saved preset in the list, or choose Saved configuration to use the stored settings without a named preset.",
+            "recommendation": "Use the intended everyday preset as the runtime default: select it, Apply, then Save changes."
+          },
+          "apply": {
+            "label": "Apply",
+            "description": "Load the selected preset into this settings draft; select Save changes to commit it as the runtime default."
+          },
+          "save_as_new": {
+            "label": "Save as new",
+            "description": "Immediately save the current settings as a new named preset and select it as the runtime default."
+          },
+          "delete": {
+            "label": "Delete",
+            "description": "After confirmation, immediately delete the selected preset and clear the runtime default if it was selected."
+          },
+          "runtime_default": {
+            "label": "Runtime default",
+            "description": "The runtime default is the saved active preset, or the saved configuration when no preset is active."
+          }
+        }
+      },
+      "finish": {
+        "title": "Set the schedule, save and enable",
+        "items": {
+          "calendar": {
+            "label": "Calendar",
+            "description": "Choose when Auto Bird may run and select Save Schedule for your changes.",
+            "recommendation": "Leave the schedule off for ongoing operation, or set usual weekly hours and Save Schedule."
+          },
+          "specify_preset_per_period": {
+            "label": "Specify Preset Per Period",
+            "description": "Choose a saved preset for a calendar period when that period should override the runtime default.",
+            "recommendation": "Off unless different periods need different reserves."
+          },
+          "save_changes": {
+            "label": "Save changes",
+            "description": "Save the settings draft and any applied preset changes; reading this guide does not save them."
+          },
+          "auto_bird_switch": {
+            "label": "Auto Bird switch",
+            "description": "Turn on Auto Bird at the top of the command center after saving to allow its normal castle cycles.",
+            "recommendation": "Turn Auto Bird on after saving; the header status shows each castle’s cycle."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Auto Bird",
+      "summary": "Keep selected troops away on a schedule",
+      "description": "Routinely stations spare troops at eligible alliance castles and repeats the cycle when they return.",
+      "expectation": "It waits if there is no suitable destination or no spare troops to send. Moving troops does not make your castle invulnerable."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "General settings",
+      "scan": "Scan interval: 1,800 seconds",
+      "daily": "Daily attack limit: 3,500",
+      "travel": "Travel boost: coin tier",
+      "advisor": "Advisor: off"
+    },
+    "towerCastle": {
+      "title": "Example Castle",
+      "enabled": "Auto Towers: on",
+      "radius": "Radius: 35 tiles",
+      "troop": "Chosen troop: fictional attack unit",
+      "maiden": "Maiden-supported only: off"
+    },
+    "birdGeneral": {
+      "title": "General settings",
+      "min": "Minimum stay: 6 hours",
+      "max": "Maximum stay: 12 hours",
+      "send": "Minimum eligible total after reserves: 1,000 troops",
+      "rpt": "Minimum protection remaining: more than 3 days",
+      "preset": "Preset: Everyday reserve"
+    },
+    "birdCastle": {
+      "title": "Example Castle",
+      "unitOne": "Fictional Unit 101 reserved: 80",
+      "unitTwo": "Fictional Unit 102 reserved: 40",
+      "add": "Add unit"
+    }
+  }
+}

@@ -1,0 +1,70 @@
+import { useEffect, useState } from 'react';
+import { Button, Modal } from '../../components/ui';
+import towerSource from '../../config/autoTowerGuide.json';
+import birdSource from '../../config/autoBirdGuide.json';
+import { useGuideLocale } from '../../config/useGuideLocale';
+import { GuideIllustration, type GuidePanelKind } from '../../config/GuideIllustration';
+
+type Feature = 'autoTower' | 'autoBird';
+type SourceStep = { id: string; title: string; items: Array<{ id: string; label: string; description: string; recommendation?: string }>; image?: { src: string; alt: string; caption: string; width: number; height: number } };
+const panelKind = (feature: Feature, step: string): GuidePanelKind => feature === 'autoTower' ? (step === 'general' ? 'towerGeneral' : 'towerCastle') : (step === 'general' ? 'birdGeneral' : 'birdCastle');
+
+export function FeatureGuideModal({ feature, isOpen, onClose, showAdvisor = true }: { feature: Feature; isOpen: boolean; onClose: () => void; showAdvisor?: boolean }) {
+  const { locale, pack } = useGuideLocale();
+  const [previewStepId, setPreviewStepId] = useState<string | null>(null);
+  useEffect(() => { if (!isOpen) setPreviewStepId(null); }, [isOpen]);
+  const source = feature === 'autoTower' ? towerSource : birdSource;
+  const guide = pack[feature];
+  const steps = (source.steps as SourceStep[]).filter((step) => showAdvisor || step.id !== 'advisor');
+  const previewStep = steps.find((step) => step.id === previewStepId && step.image);
+  const closeGuide = () => { setPreviewStepId(null); onClose(); };
+  const title = feature === 'autoTower' ? pack.ui.towerGuideTitle : pack.ui.birdGuideTitle;
+  const intro = feature === 'autoTower' ? pack.ui.towerGuideIntro : pack.ui.birdGuideIntro;
+  const previewTitle = feature === 'autoTower' ? pack.ui.towerPreviewTitle : pack.ui.birdPreviewTitle;
+  return <>
+    <Modal isOpen={isOpen} onClose={closeGuide} title={title} contentLang={locale} contentDir={locale === 'ar' ? 'rtl' : 'ltr'} closeLabel={pack.ui.backToSettings} maxWidth="3xl"
+      footer={<Button variant="outline" onClick={closeGuide}>{pack.ui.backToSettings}</Button>}>
+      <div lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
+        <p className="mb-4 text-sm text-text-muted">{intro}</p>
+        <p className="mb-4 text-sm text-text-muted">{guide.recommendationIntro}</p>
+        <ol className="space-y-6">
+          {steps.map((step, index) => {
+            const content = guide.steps[step.id as keyof typeof guide.steps];
+            return <li key={step.id}>
+              <h3 className="mb-2 text-sm font-bold text-primary">{index + 1}. {content.title}</h3>
+              <dl className="space-y-3">
+                {step.items.map((item) => {
+                  const translated = (content.items as Record<string, { label: string; description: string; recommendation?: string }>)[item.id];
+                  return <div key={item.id}>
+                    <dt className="text-sm font-semibold text-text-main">{translated.label}</dt>
+                    <dd className="mt-1 text-sm leading-relaxed text-text-muted">{translated.description}</dd>
+                    {'recommendation' in translated && typeof translated.recommendation === 'string' && <dd className="mt-1 text-sm leading-relaxed text-text-main"><strong>{pack.ui.recommendedLabel}:</strong> {translated.recommendation}</dd>}
+                  </div>;
+                })}
+              </dl>
+              {step.image && 'image' in content && content.image && <figure className="mt-3" style={{ maxWidth: locale === 'en' ? step.image.width : 680 }}>
+                <button type="button" onClick={() => setPreviewStepId(step.id)} aria-label={pack.ui.enlargePicture}
+                  className="block w-full overflow-hidden rounded-xl border border-border-base hover:border-primary focus-visible:outline-2 focus-visible:outline-primary">
+                  {locale === 'en' ? <img src={step.image.src} alt={content.image.alt} width={step.image.width} height={step.image.height} loading="lazy" className="h-auto w-full" /> :
+                    <GuideIllustration pack={pack} kind={panelKind(feature, step.id)} locale={locale} alt={content.image.alt} showAdvisor={showAdvisor} />}
+                </button>
+                <figcaption className="mt-2 text-xs leading-relaxed text-text-muted">{content.image.caption}</figcaption>
+              </figure>}
+            </li>;
+          })}
+        </ol>
+      </div>
+    </Modal>
+    <Modal isOpen={isOpen && !!previewStep} onClose={() => setPreviewStepId(null)} title={previewTitle} contentLang={locale} contentDir={locale === 'ar' ? 'rtl' : 'ltr'} closeLabel={pack.ui.backToGuide} maxWidth="full"
+      footer={<Button variant="outline" onClick={() => setPreviewStepId(null)}>{pack.ui.backToGuide}</Button>}>
+      {previewStep && (() => {
+        const content = guide.steps[previewStep.id as keyof typeof guide.steps];
+        if (!previewStep.image || !('image' in content) || !content.image) return null;
+        return <div lang={locale} dir={locale === 'ar' ? 'rtl' : 'ltr'} className="overflow-auto" tabIndex={0} role="region" aria-label={pack.ui.fullSizePicture}>
+          {locale === 'en' ? <img src={previewStep.image.src} alt={content.image.alt} width={previewStep.image.width} height={previewStep.image.height} className="h-auto max-w-none" style={{ width: previewStep.image.width }} /> :
+            <GuideIllustration pack={pack} kind={panelKind(feature, previewStep.id)} locale={locale} large alt={content.image.alt} showAdvisor={showAdvisor} />}
+        </div>;
+      })()}
+    </Modal>
+  </>;
+}

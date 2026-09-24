@@ -1,0 +1,315 @@
+{
+  "ui": {
+    "guideButton": "Guide",
+    "calendarButton": "Kalender",
+    "recommendedLabel": "Rekommenderat",
+    "backToSettings": "Tillbaka till inställningar",
+    "backToGuide": "Tillbaka till guiden",
+    "howToSetUp": "Så ställer du in det",
+    "whatToExpect": "Vad du kan förvänta dig",
+    "openFullSizePicture": "Öppna bilden i full storlek",
+    "illustrativeExample": "Illustrativt exempel",
+    "enlargePicture": "Förstora exempelbilden",
+    "fullSizePicture": "Exempelbild i full storlek; rulla för att se alla inställningar",
+    "towerGuideTitle": "Guide för Automatiska tornattacker",
+    "birdGuideTitle": "Guide för Automatiskt skydd av trupper",
+    "towerGuideIntro": "Följ de här stegen för att ställa in Automatiska tornattacker; välj en exempelbild för att förstora den.",
+    "birdGuideIntro": "Följ de här stegen för att ställa in Automatiskt skydd av trupper; välj en exempelbild för att förstora den.",
+    "towerPreviewTitle": "Exempel på inställningar för Automatiska tornattacker",
+    "birdPreviewTitle": "Exempel på inställningar för Automatiskt skydd av trupper"
+  },
+  "autoTower": {
+    "recommendationIntro": "Det här är rekommendationer för regelbunden användning; granska dem innan du sparar.",
+    "steps": {
+      "commanders": {
+        "title": "Välj dina anförare",
+        "items": {
+          "commander_assignment": {
+            "label": "Tilldela anförare",
+            "description": "Tillåt Automatiska tornattacker under Anförare för de anförare du vill använda och välj Spara tilldelningar.",
+            "recommendation": "20 anförare tilldelade Automatiska tornattacker."
+          }
+        }
+      },
+      "general": {
+        "title": "Ställ in skanning, dagsgränser och resa",
+        "items": {
+          "open_settings": {
+            "label": "Öppna inställningar",
+            "description": "Öppna Automatisering och välj inställningsknappen på kortet Automatiska tornattacker."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Skanning av den auktoritativa kartan · Intervall",
+            "description": "Välj hur ofta tornlistan för varje slott ska uppdateras, från 1 800 till 3 600 sekunder; attacker kan starta mellan skanningarna.",
+            "recommendation": "1 800 sekunder (30 minuter)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Daglig gräns för vanliga attacker",
+            "description": "Pausar vid den dagliga attackgränsen för hela kontot tills spelet återställer den; 0 tar bort gränsen.",
+            "recommendation": "3 500 attacker per dag för hela kontot."
+          },
+          "horse_travel_boost": {
+            "label": "Reseökning med häst",
+            "description": "Använder ditt valda resealternativ för varje attack, även varje träff i en rådgivarkedja; hastigheten beror på resebyggnaderna i startslottet.",
+            "recommendation": "Myntnivå där det stöds, med tillräckligt många mynt."
+          },
+          "travel_feather": {
+            "label": "Resefjäder",
+            "description": "Använder resefjädern i stället för en hästnivå med mynt eller rubiner."
+          },
+          "horse_ship_tier_coins": {
+            "label": "Häst / skepp · mynt",
+            "description": "Förbrukar mynt för resenivån med mynt."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Stridshäst / snabbt skepp · rubiner",
+            "description": "Förbrukar rubiner för den första resenivån med rubiner när den väljs."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Kapplöpningshäst / snabbaste skepp · rubiner",
+            "description": "Förbrukar rubiner för den snabbare resenivån med rubiner när den väljs."
+          }
+        },
+        "image": {
+          "alt": "Allmänna inställningar för Automatiska tornattacker med fiktiva uppgifter för Synthetic Castle",
+          "caption": "Ställ in skanningsintervall, daglig attackgräns och resealternativ; rådgivarkontroller visas när de är tillgängliga."
+        }
+      },
+      "castle": {
+        "title": "Ställ in varje slott",
+        "items": {
+          "castle_switch": {
+            "label": "Slottsreglage",
+            "description": "Aktivera varje slott som Automatiska tornattacker ska skanna och attackera från.",
+            "recommendation": "Aktivera de slott du vill använda regelbundet."
+          },
+          "radius": {
+            "label": "Radie",
+            "description": "Välj hur långt sökningen ska nå runt slottet, från 1 till 50 rutor.",
+            "recommendation": "35 rutor."
+          },
+          "choose_troop": {
+            "label": "Välj trupp",
+            "description": "Välj den stationerade trupp som ska fylla båda attackflankerna; attacker väntar om det finns för få enheter.",
+            "recommendation": "En stationerad attacktrupp med tillräckligt många enheter för båda flankerna."
+          },
+          "maiden_supported_only": {
+            "label": "Endast med jungfrurelik",
+            "description": "Begränsar slottet till tillgängliga anförare med den jungfrurelik som stöds.",
+            "recommendation": "Av, om inte din valda anförare har den jungfrurelik som stöds."
+          }
+        },
+        "image": {
+          "alt": "Slottsinställningar för Automatiska tornattacker med fiktiva uppgifter för Synthetic Castle",
+          "caption": "Aktivera ett slott och välj radie, trupp och krav på jungfrurelik."
+        }
+      },
+      "advisor": {
+        "title": "Använd rådgivaren vid behov · när tillgänglig",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Använd rådgivare med tidsförkortningar",
+            "description": "Upprepar träffar mot ett torn med först en daglig attack och sedan en tidsförkortning på minst tre timmar per extra träff.",
+            "recommendation": "Av."
+          },
+          "auto_activate_with_token": {
+            "label": "Aktivera automatiskt med pollett",
+            "description": "Använder en tillgänglig baronrådgivarpolett när rådgivaren är inaktiv, utan att köpa en pollett eller förbruka rubiner.",
+            "recommendation": "Av medan rådgivaren är avstängd."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Högsta antal tidsförkortningar per dag",
+            "description": "Begränsar tidsförkortningar som används av bekräftade rådgivarkedjor tills spelets dagliga attackräknare återställs; 0 pausar rådgivarattacker.",
+            "recommendation": "0 medan rådgivaren är avstängd."
+          }
+        }
+      },
+      "finish": {
+        "title": "Ställ in schemat, spara och aktivera",
+        "items": {
+          "calendar": {
+            "label": "Kalender",
+            "description": "Använd kalendern för att välja när Automatiska tornattacker får köras; tillgång på trupper och andra gränser gäller fortfarande.",
+            "recommendation": "Dina vanliga aktiva timmar."
+          },
+          "save_changes": {
+            "label": "Spara ändringar",
+            "description": "Välj Spara ändringar för att tillämpa inställningarna; att läsa den här guiden sparar dem inte."
+          },
+          "auto_towers_switch": {
+            "label": "Reglage för Automatiska tornattacker",
+            "description": "Aktivera Automatiska tornattacker på sidan Automatisering efter att du har sparat inställningarna så att uppgiften kan köras.",
+            "recommendation": "På efter att du har sparat de inställningar du vill använda."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatiska tornattacker",
+      "summary": "Upprepa attacker mot närliggande torn",
+      "description": "Skickar attacker mot rövarbaronernas torn och kungarikestorn från de slott du väljer.",
+      "expectation": "Det krävs tillräckligt med trupper, en tillgänglig anförare och ett torn som går att attackera. Uppgiften kan vänta medan trupper återvänder eller en torntimer räknar ned."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "De rekommenderade värdena beskriver regelbunden användning av Automatiskt skydd av trupper; de är vägledning och ändrar inte sparade inställningar.",
+    "steps": {
+      "open": {
+        "title": "Öppna inställningar för Automatiskt skydd av trupper",
+        "items": {
+          "open_settings": {
+            "label": "Öppna inställningar",
+            "description": "Välj inställningsknappen bredvid Automatiskt skydd av trupper högst upp i kommandocentralen."
+          }
+        }
+      },
+      "general": {
+        "title": "Ställ in stationeringstid och regler för utsändning",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Slumpmässig varaktighet · Min",
+            "description": "Ange det minsta antalet timmar som trupperna ska stanna vid alliansens mål efter att resan är klar.",
+            "recommendation": "6 timmars stationering vid alliansens mål efter ankomst."
+          },
+          "random_delay_range_max": {
+            "label": "Slumpmässig varaktighet · Max",
+            "description": "Ange den längsta vistelsen vid målet; Automatiskt skydd av trupper väljer en slumpmässig varaktighet mellan Min och Max.",
+            "recommendation": "12 timmars stationering vid alliansens mål efter ankomst."
+          },
+          "minimum_to_send": {
+            "label": "Minsta antal att skicka",
+            "description": "Ange det minsta totala antalet lämpliga trupper som krävs efter att slottsreserverna hållits hemma; det är en tröskel, inte exakt antal som skickas.",
+            "recommendation": "Totalt 1 000 lämpliga trupper efter att slottsreserverna hållits hemma; det är en tröskel, inte en exakt utsändningsmängd."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "Minsta RPT (återstående skyddstid)",
+            "description": "Använd mål med mer än detta antal skyddsdagar kvar; 0 tar bort kontrollen.",
+            "recommendation": "3 dagar; målet måste ha strikt mer än 3 dagars skyddstid kvar."
+          }
+        },
+        "image": {
+          "alt": "Inställningar för Automatiskt skydd av trupper: stationeringstid, minsta utsändning, minsta RPT och förinställningar",
+          "caption": "Ställ in stationeringstid och lämplighet och granska reservförinställningen Vardag innan du sparar."
+        }
+      },
+      "reserves": {
+        "title": "Välj trupper som ska stanna i varje slott",
+        "items": {
+          "add_unit": {
+            "label": "Lägg till enhet",
+            "description": "Välj för varje slott vilka truppslag som ska stanna hemma i stället för att skickas; en tom manuell reserv lämnar alla lämpliga trupper tillgängliga efter automatiska reserver.",
+            "recommendation": "Välj de truppslag varje slott behöver för försvar eller andra återkommande uppgifter."
+          },
+          "quantity": {
+            "label": "Antal",
+            "description": "Ange ett positivt antal av varje valt truppslag som ska stanna i slottet; 0 reserverar inte hela truppslaget.",
+            "recommendation": "Behåll det antal av varje truppslag som slottet behöver för försvar eller andra uppgifter; kontrollera de faktiska truppantalen."
+          },
+          "remove_unit": {
+            "label": "Ta bort enhet",
+            "description": "Ta bort en enhetsruta för att sluta reservera truppslaget i det valda slottet."
+          },
+          "auto_fortress_reserve": {
+            "label": "Reserv för Automatisering av fästningar",
+            "description": "När Automatisering av fästningar låser alla jättevargar här sparas denna automatiska reserv inte i förinställningar för Automatiskt skydd av trupper, och det tidigare manuella antalet jättevargar återkommer när låset upphör."
+          }
+        },
+        "image": {
+          "alt": "Reservrutor för Automatiskt skydd av trupper i det fiktiva slottet Example Castle",
+          "caption": "Reservera bara de enheter som behövs i slottet; Enhet 101 och Enhet 102 är fiktiva exempel på trupper."
+        }
+      },
+      "presets": {
+        "title": "Spara och välj en förinställning",
+        "items": {
+          "preset_name": {
+            "label": "Namn på förinställning",
+            "description": "Ange ett namn för en ny förinställning eller ändra namnet på den tillämpade förinställningen innan du sparar ändringar.",
+            "recommendation": "Använd ett namn som är lätt att känna igen, till exempel Vardag."
+          },
+          "load_preset": {
+            "label": "Läs in förinställning",
+            "description": "Välj en sparad förinställning i listan eller välj Sparad konfiguration för att använda lagrade inställningar utan en namngiven förinställning.",
+            "recommendation": "Använd den önskade vardagsförinställningen som standard vid körning: välj den, tryck på Tillämpa och sedan på Spara ändringar."
+          },
+          "apply": {
+            "label": "Tillämpa",
+            "description": "Läser in den valda förinställningen i detta inställningsutkast; välj Spara ändringar för att göra den till standard vid körning."
+          },
+          "save_as_new": {
+            "label": "Spara som ny",
+            "description": "Sparar genast de aktuella inställningarna som en ny namngiven förinställning och väljer den som standard vid körning."
+          },
+          "delete": {
+            "label": "Ta bort",
+            "description": "Tar efter bekräftelse genast bort den valda förinställningen och rensar standarden vid körning om den var vald."
+          },
+          "runtime_default": {
+            "label": "Standard vid körning",
+            "description": "Standarden vid körning är den sparade aktiva förinställningen eller den sparade konfigurationen när ingen förinställning är aktiv."
+          }
+        }
+      },
+      "finish": {
+        "title": "Ställ in schemat, spara och aktivera",
+        "items": {
+          "calendar": {
+            "label": "Kalender",
+            "description": "Välj när Automatiskt skydd av trupper får köras och välj Spara schema för att spara ändringarna.",
+            "recommendation": "Låt schemat vara av för löpande drift eller ställ in dina vanliga veckotider och spara schemat."
+          },
+          "specify_preset_per_period": {
+            "label": "Ange förinställning per period",
+            "description": "Välj en sparad förinställning för en kalenderperiod om den ska ersätta standarden vid körning.",
+            "recommendation": "Av om inte olika perioder behöver olika reserver."
+          },
+          "save_changes": {
+            "label": "Spara ändringar",
+            "description": "Spara inställningsutkastet och tillämpade ändringar i förinställningar; att läsa den här guiden sparar dem inte."
+          },
+          "auto_bird_switch": {
+            "label": "Reglage för Automatiskt skydd av trupper",
+            "description": "Aktivera Automatiskt skydd av trupper högst upp i kommandocentralen efter att du sparat för att tillåta normala slottscykler.",
+            "recommendation": "Aktivera Automatiskt skydd av trupper efter att du sparat; statusen i sidhuvudet visar varje slotts cykel."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatiskt skydd av trupper",
+      "summary": "Stationerar valda trupper på annan plats enligt ett schema",
+      "description": "Stationerar regelbundet lediga trupper i lämpliga alliansslott och upprepar cykeln när de återvänder.",
+      "expectation": "Väntar om det saknas ett lämpligt mål eller lediga trupper. Att flytta trupper gör inte slottet osårbart."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "Allmänna inställningar",
+      "scan": "Skanningsintervall: 1 800 sekunder",
+      "daily": "Daglig attackgräns: 3 500",
+      "travel": "Reseökning: myntnivå",
+      "advisor": "Rådgivare: av"
+    },
+    "towerCastle": {
+      "title": "Exempelslott",
+      "enabled": "Automatiska tornattacker: på",
+      "radius": "Radie: 35 rutor",
+      "troop": "Vald trupp: fiktiv attackenhet",
+      "maiden": "Endast med jungfrurelik: av"
+    },
+    "birdGeneral": {
+      "title": "Allmänna inställningar",
+      "min": "Kortaste vistelse: 6 timmar",
+      "max": "Längsta vistelse: 12 timmar",
+      "send": "Minsta lämpliga total efter reserver: 1 000 trupper",
+      "rpt": "Minsta återstående skydd: mer än 3 dagar",
+      "preset": "Förinställning: vardagsreserv"
+    },
+    "birdCastle": {
+      "title": "Exempelslott",
+      "unitOne": "Fiktiv enhet 101 reserverad: 80",
+      "unitTwo": "Fiktiv enhet 102 reserverad: 40",
+      "add": "Lägg till enhet"
+    }
+  }
+}

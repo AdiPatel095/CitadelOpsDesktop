@@ -1,0 +1,315 @@
+{
+  "ui": {
+    "guideButton": "Guide",
+    "calendarButton": "Calendrier",
+    "recommendedLabel": "Recommandé",
+    "backToSettings": "Retour aux paramètres",
+    "backToGuide": "Retour au guide",
+    "howToSetUp": "Comment le configurer",
+    "whatToExpect": "À quoi s’attendre",
+    "openFullSizePicture": "Ouvrir l’image en taille réelle",
+    "illustrativeExample": "Exemple illustratif",
+    "enlargePicture": "Agrandir l’image d’exemple",
+    "fullSizePicture": "Image d’exemple en taille réelle ; faites défiler pour voir tous les paramètres",
+    "towerGuideTitle": "Guide des Attaques automatiques de tours",
+    "birdGuideTitle": "Guide de la Mise à l’abri automatique des troupes",
+    "towerGuideIntro": "Suivez ces étapes pour configurer les Attaques automatiques de tours ; sélectionnez une image d’exemple pour l’agrandir.",
+    "birdGuideIntro": "Suivez ces étapes pour configurer la Mise à l’abri automatique des troupes ; sélectionnez une image d’exemple pour l’agrandir.",
+    "towerPreviewTitle": "Exemple de configuration des Attaques automatiques de tours",
+    "birdPreviewTitle": "Exemple de configuration de la Mise à l’abri automatique des troupes"
+  },
+  "autoTower": {
+    "recommendationIntro": "Ces recommandations concernent une utilisation régulière ; vérifiez-les avant d’enregistrer.",
+    "steps": {
+      "commanders": {
+        "title": "Choisissez vos commandants",
+        "items": {
+          "commander_assignment": {
+            "label": "Affectation des commandants",
+            "description": "Dans Commandants, autorisez les Attaques automatiques de tours pour les commandants voulus, puis sélectionnez Enregistrer les affectations.",
+            "recommendation": "20 commandants affectés aux Attaques automatiques de tours."
+          }
+        }
+      },
+      "general": {
+        "title": "Réglez les analyses, les limites quotidiennes et le déplacement",
+        "items": {
+          "open_settings": {
+            "label": "Ouvrir les paramètres",
+            "description": "Ouvrez Automatisation, puis sélectionnez le bouton des paramètres sur la carte Attaques automatiques de tours."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Analyse de la carte de référence · Fréquence",
+            "description": "Choisissez la fréquence d’actualisation de la liste des tours de chaque château, entre 1 800 et 3 600 secondes ; des attaques peuvent partir entre deux analyses.",
+            "recommendation": "1 800 secondes (30 minutes)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Limite quotidienne des attaques normales",
+            "description": "L’exécution s’interrompt à la limite quotidienne d’attaques du compte jusqu’à sa réinitialisation par le jeu ; 0 supprime cette limite.",
+            "recommendation": "3 500 attaques par jour pour l’ensemble du compte."
+          },
+          "horse_travel_boost": {
+            "label": "Accélération du déplacement à cheval",
+            "description": "Utilise l’option de déplacement choisie pour chaque attaque, y compris chaque frappe d’une série du conseiller ; la vitesse dépend des bâtiments de déplacement du château de départ.",
+            "recommendation": "Palier en pièces, s’il est disponible, avec suffisamment de pièces."
+          },
+          "travel_feather": {
+            "label": "Plume de voyage",
+            "description": "Utilise la plume de voyage au lieu d’un palier équestre en pièces ou en rubis."
+          },
+          "horse_ship_tier_coins": {
+            "label": "Cheval / navire · pièces",
+            "description": "Dépense des pièces pour le palier de déplacement en pièces."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Cheval de guerre / navire rapide · rubis",
+            "description": "Dépense des rubis pour le premier palier en rubis lorsqu’il est sélectionné."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Coursier / navire le plus rapide · rubis",
+            "description": "Dépense des rubis pour le palier de déplacement en rubis plus rapide lorsqu’il est sélectionné."
+          }
+        },
+        "image": {
+          "alt": "Paramètres généraux des Attaques automatiques de tours avec des données fictives du château Synthetic Castle",
+          "caption": "Réglez l’intervalle d’analyse, la limite quotidienne d’attaques et l’option de déplacement ; les commandes du conseiller apparaissent si elles sont disponibles."
+        }
+      },
+      "castle": {
+        "title": "Configurez chaque château",
+        "items": {
+          "castle_switch": {
+            "label": "Interrupteur du château",
+            "description": "Activez chaque château depuis lequel les Attaques automatiques de tours doivent analyser et attaquer.",
+            "recommendation": "Activez les châteaux que vous souhaitez utiliser régulièrement."
+          },
+          "radius": {
+            "label": "Rayon",
+            "description": "Choisissez la distance de recherche autour de ce château, entre 1 et 50 cases.",
+            "recommendation": "35 cases."
+          },
+          "choose_troop": {
+            "label": "Choisir une troupe",
+            "description": "Choisissez la troupe stationnée qui remplira les deux flancs d’attaque ; les attaques attendent si les unités sont insuffisantes.",
+            "recommendation": "Une troupe d’attaque stationnée avec assez d’unités pour les deux flancs."
+          },
+          "maiden_supported_only": {
+            "label": "Relique de demoiselle uniquement",
+            "description": "Limite ce château aux commandants disponibles possédant la relique de demoiselle prise en charge.",
+            "recommendation": "Désactivé, sauf si le commandant choisi possède la relique de demoiselle prise en charge."
+          }
+        },
+        "image": {
+          "alt": "Paramètres du château pour les Attaques automatiques de tours avec des données fictives du château Synthetic Castle",
+          "caption": "Activez un château et choisissez son rayon, sa troupe et l’exigence de relique de demoiselle."
+        }
+      },
+      "advisor": {
+        "title": "Utilisez le conseiller si vous le souhaitez · selon disponibilité",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Utiliser le conseiller avec des accélérateurs",
+            "description": "Répète les frappes sur une même tour, avec d’abord une attaque quotidienne puis un accélérateur d’au moins trois heures pour chaque frappe supplémentaire.",
+            "recommendation": "Désactivé."
+          },
+          "auto_activate_with_token": {
+            "label": "Activation automatique avec un jeton",
+            "description": "Utilise un jeton disponible du conseiller des fieffés coquins quand celui-ci est inactif, sans acheter de jeton ni dépenser de rubis.",
+            "recommendation": "Désactivé tant que le conseiller est désactivé."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Nombre maximal d’accélérateurs quotidiens",
+            "description": "Limite les accélérateurs utilisés par les séries confirmées du conseiller jusqu’à la réinitialisation du compteur quotidien d’attaques du jeu ; 0 suspend les départs du conseiller.",
+            "recommendation": "0 tant que le conseiller est désactivé."
+          }
+        }
+      },
+      "finish": {
+        "title": "Définissez le calendrier, enregistrez et activez",
+        "items": {
+          "calendar": {
+            "label": "Calendrier",
+            "description": "Utilisez le calendrier pour choisir quand les Attaques automatiques de tours peuvent fonctionner ; la disponibilité des troupes et les autres limites s’appliquent toujours.",
+            "recommendation": "Vos heures habituelles d’exécution."
+          },
+          "save_changes": {
+            "label": "Enregistrer les modifications",
+            "description": "Sélectionnez Enregistrer les modifications pour appliquer vos paramètres ; lire ce guide ne les enregistre pas."
+          },
+          "auto_towers_switch": {
+            "label": "Interrupteur des Attaques automatiques de tours",
+            "description": "Après avoir enregistré vos paramètres, activez les Attaques automatiques de tours sur la page Automatisation pour autoriser leur exécution.",
+            "recommendation": "Activé après l’enregistrement des paramètres souhaités."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Attaques automatiques de tours",
+      "summary": "Répéter les attaques sur les tours proches",
+      "description": "Envoie des attaques contre les tours des fieffés coquins et des royaumes depuis les châteaux choisis.",
+      "expectation": "Il faut suffisamment de troupes, un commandant disponible et une tour prête à être attaquée. L’exécution peut attendre le retour des troupes ou la fin du décompte d’une tour."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "Les valeurs recommandées décrivent l’utilisation régulière de la Mise à l’abri automatique des troupes ; elles servent de conseil et ne modifient pas les paramètres enregistrés.",
+    "steps": {
+      "open": {
+        "title": "Ouvrez les paramètres de la Mise à l’abri automatique des troupes",
+        "items": {
+          "open_settings": {
+            "label": "Ouvrir les paramètres",
+            "description": "En haut du centre de commandement, sélectionnez le bouton des paramètres à côté de la Mise à l’abri automatique des troupes."
+          }
+        }
+      },
+      "general": {
+        "title": "Réglez la durée de stationnement et les règles d’envoi",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Plage de durée aléatoire · Min",
+            "description": "Définissez le nombre minimal d’heures pendant lesquelles les troupes restent à la destination de l’alliance après la fin du trajet.",
+            "recommendation": "6 heures de stationnement à la cible de l’alliance après l’arrivée."
+          },
+          "random_delay_range_max": {
+            "label": "Plage de durée aléatoire · Max",
+            "description": "Définissez la durée maximale sur place ; la Mise à l’abri automatique des troupes choisit une durée aléatoire entre Min et Max.",
+            "recommendation": "12 heures de stationnement à la cible de l’alliance après l’arrivée."
+          },
+          "minimum_to_send": {
+            "label": "Minimum à envoyer",
+            "description": "Définissez le nombre total minimal de troupes admissibles après conservation des réserves du château ; c’est un seuil, pas le nombre exact envoyé.",
+            "recommendation": "1 000 troupes admissibles au total après conservation des réserves du château ; c’est un seuil, pas une quantité exacte à envoyer."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "RPT minimal (temps de protection restant)",
+            "description": "Utilisez des cibles ayant plus que ce nombre de jours de protection restants ; 0 supprime cette vérification.",
+            "recommendation": "3 jours ; une cible doit avoir strictement plus de 3 jours de protection restants."
+          }
+        },
+        "image": {
+          "alt": "Durée de stationnement, envoi minimal, RPT minimal et commandes des préréglages de la Mise à l’abri automatique des troupes",
+          "caption": "Réglez la durée de stationnement et les critères d’admissibilité, puis vérifiez le préréglage de réserve Quotidien avant d’enregistrer."
+        }
+      },
+      "reserves": {
+        "title": "Choisissez les troupes à garder dans chaque château",
+        "items": {
+          "add_unit": {
+            "label": "Ajouter une unité",
+            "description": "Pour chaque château, choisissez les types de troupes à garder sur place au lieu de les envoyer ; une réserve manuelle vide laisse toutes les troupes admissibles disponibles après les réserves automatiques.",
+            "recommendation": "Choisissez les types de troupes nécessaires à la défense ou aux autres tâches régulières de chaque château."
+          },
+          "quantity": {
+            "label": "Quantité",
+            "description": "Définissez une quantité positive de chaque troupe choisie à garder dans ce château ; 0 ne réserve pas tout le type.",
+            "recommendation": "Gardez dans ce château le nombre de troupes de chaque type nécessaire à la défense ou aux autres tâches ; vérifiez les effectifs réels."
+          },
+          "remove_unit": {
+            "label": "Retirer une unité",
+            "description": "Retirez une vignette d’unité pour cesser de réserver ce type dans le château sélectionné."
+          },
+          "auto_fortress_reserve": {
+            "label": "Réserve de l’Automatisation des forteresses",
+            "description": "Quand l’Automatisation des forteresses bloque ici tous les loups féroces, cette réserve automatique n’est pas enregistrée dans les préréglages de la Mise à l’abri automatique des troupes ; l’ancienne quantité manuelle de loups féroces revient à la fin du blocage."
+          }
+        },
+        "image": {
+          "alt": "Vignettes de réserve de la Mise à l’abri automatique des troupes du château fictif Example Castle",
+          "caption": "Ne réservez que les unités nécessaires dans ce château ; Unité 101 et Unité 102 sont des exemples fictifs de troupes."
+        }
+      },
+      "presets": {
+        "title": "Enregistrez et sélectionnez un préréglage",
+        "items": {
+          "preset_name": {
+            "label": "Nom du préréglage",
+            "description": "Saisissez le nom d’un nouveau préréglage ou modifiez celui du préréglage appliqué avant d’enregistrer les modifications.",
+            "recommendation": "Utilisez un nom reconnaissable comme Quotidien."
+          },
+          "load_preset": {
+            "label": "Charger un préréglage",
+            "description": "Choisissez un préréglage enregistré dans la liste, ou Configuration enregistrée pour utiliser les paramètres stockés sans préréglage nommé.",
+            "recommendation": "Utilisez le préréglage quotidien voulu comme valeur par défaut à l’exécution : sélectionnez-le, cliquez sur Appliquer, puis sur Enregistrer les modifications."
+          },
+          "apply": {
+            "label": "Appliquer",
+            "description": "Charge le préréglage sélectionné dans ce brouillon de paramètres ; sélectionnez Enregistrer les modifications pour l’adopter comme valeur par défaut à l’exécution."
+          },
+          "save_as_new": {
+            "label": "Enregistrer comme nouveau",
+            "description": "Enregistre immédiatement les paramètres actuels comme nouveau préréglage nommé et le sélectionne comme valeur par défaut à l’exécution."
+          },
+          "delete": {
+            "label": "Supprimer",
+            "description": "Après confirmation, supprime immédiatement le préréglage sélectionné et efface la valeur par défaut à l’exécution s’il était sélectionné."
+          },
+          "runtime_default": {
+            "label": "Valeur par défaut à l’exécution",
+            "description": "La valeur par défaut à l’exécution est le préréglage actif enregistré ou, si aucun préréglage n’est actif, la configuration enregistrée."
+          }
+        }
+      },
+      "finish": {
+        "title": "Définissez le calendrier, enregistrez et activez",
+        "items": {
+          "calendar": {
+            "label": "Calendrier",
+            "description": "Choisissez quand la Mise à l’abri automatique des troupes peut fonctionner et sélectionnez Enregistrer le calendrier pour conserver vos modifications.",
+            "recommendation": "Laissez le calendrier désactivé pour un fonctionnement continu, ou définissez vos heures hebdomadaires habituelles et enregistrez-le."
+          },
+          "specify_preset_per_period": {
+            "label": "Définir un préréglage par période",
+            "description": "Choisissez un préréglage enregistré pour une période du calendrier si elle doit remplacer la valeur par défaut à l’exécution.",
+            "recommendation": "Désactivé, sauf si différentes périodes nécessitent des réserves différentes."
+          },
+          "save_changes": {
+            "label": "Enregistrer les modifications",
+            "description": "Enregistrez le brouillon des paramètres et les modifications des préréglages appliqués ; lire ce guide ne les enregistre pas."
+          },
+          "auto_bird_switch": {
+            "label": "Interrupteur de la Mise à l’abri automatique des troupes",
+            "description": "Après l’enregistrement, activez la Mise à l’abri automatique des troupes en haut du centre de commandement pour permettre les cycles normaux des châteaux.",
+            "recommendation": "Activez la Mise à l’abri automatique des troupes après l’enregistrement ; l’état dans l’en-tête indique le cycle de chaque château."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Mise à l’abri automatique des troupes",
+      "summary": "Stationner ailleurs les troupes choisies selon un calendrier",
+      "description": "Stationne régulièrement les troupes disponibles dans des châteaux d’alliance admissibles et répète le cycle à leur retour.",
+      "expectation": "Attend lorsqu’aucune destination convenable ou aucune troupe disponible n’est présente. Déplacer les troupes ne rend pas votre château invulnérable."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "Paramètres généraux",
+      "scan": "Intervalle d’analyse : 1 800 secondes",
+      "daily": "Limite quotidienne d’attaques : 3 500",
+      "travel": "Accélération du déplacement : palier en pièces",
+      "advisor": "Conseiller : désactivé"
+    },
+    "towerCastle": {
+      "title": "Château d’exemple",
+      "enabled": "Attaques automatiques de tours : activées",
+      "radius": "Rayon : 35 cases",
+      "troop": "Troupe choisie : unité d’attaque fictive",
+      "maiden": "Relique de demoiselle uniquement : désactivé"
+    },
+    "birdGeneral": {
+      "title": "Paramètres généraux",
+      "min": "Séjour minimal : 6 heures",
+      "max": "Séjour maximal : 12 heures",
+      "send": "Total minimal admissible après réserves : 1 000 troupes",
+      "rpt": "Protection restante minimale : plus de 3 jours",
+      "preset": "Préréglage : réserve Quotidien"
+    },
+    "birdCastle": {
+      "title": "Château d’exemple",
+      "unitOne": "Unité fictive 101 réservée : 80",
+      "unitTwo": "Unité fictive 102 réservée : 40",
+      "add": "Ajouter une unité"
+    }
+  }
+}
