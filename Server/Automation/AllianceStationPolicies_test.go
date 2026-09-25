@@ -2,6 +2,7 @@ package Automation
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -827,6 +828,42 @@ func TestAutoStationRefreshesStaleAllianceRosterBeforeEvacuating(t *testing.T) {
 	}
 }
 
+func TestAutoStationStaleRosterFallbackExcludesOnlyBerimond(t *testing.T) {
+	now := time.Now().UTC()
+	for _, kingdom := range []State.KingdomID{0, 2, 10} {
+		t.Run(fmt.Sprintf("kingdom-%d", kingdom), func(t *testing.T) {
+			state := State.NewGameState()
+			state.Player.ID = 7
+			state.Player.AllianceObservedAt = now
+			state.Player.ProtectionMode.ObservedAt = now
+			state.Alliance.ID = 9
+			state.Castles[1] = State.CastleState{ID: 1, KingdomID: 0, SlotType: 1}
+			state.Castles[42] = State.CastleState{ID: 42, KingdomID: kingdom, SlotType: 4}
+			arrives := now.Add(30 * time.Second)
+			state.Movements[1] = State.MovementState{ID: 1, TypeID: 0, Direction: 0, OwnerPlayerID: 8, TargetPlayerID: 7, SourceTypeID: 1, SourceCastleID: 200, TargetTypeID: 4, TargetCastleID: 42, ArrivesAt: &arrives}
+			decision, err := NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{State: state, Now: now})
+			if err != nil || decision.Request == nil || decision.Request.Name != "alliance.refresh" {
+				t.Fatalf("roster refresh=%#v err=%v", decision, err)
+			}
+			if kingdom == 10 {
+				if decision.FailureFallback != nil {
+					t.Fatalf("Berimond fallback=%#v", decision.FailureFallback)
+				}
+				return
+			}
+			if decision.FailureFallback == nil || decision.FailureFallback.Name != "defense.open_gate" {
+				t.Fatalf("roster fallback=%#v", decision.FailureFallback)
+			}
+			var request struct {
+				CastleID State.CastleID `json:"castleId"`
+			}
+			if err := json.Unmarshal(decision.FailureFallback.Arguments, &request); err != nil || request.CastleID != 42 {
+				t.Fatalf("roster fallback target=%+v err=%v", request, err)
+			}
+		})
+	}
+}
+
 func TestAutoStationUsesOptInOpenGateFallbackAfterStationFailure(t *testing.T) {
 	now := time.Date(2026, 7, 29, 17, 0, 0, 0, time.UTC)
 	arrives := now.Add(30 * time.Second)
@@ -926,6 +963,89 @@ func TestAutoStationUsesOnlyOpenGatesDuringPurchasedProtectionMode(t *testing.T)
 			}
 			if request.CastleID != 100 || !request.RequireIncomingAttack || !request.RequireProtectionMode {
 				t.Fatalf("Open Gate request = %+v", request)
+			}
+		})
+	}
+}
+
+func TestAutoStationGateFallbackTargetsAttackedCastleOutsideBerimond(t *testing.T) {
+	now := time.Date(2026, 7, 22, 9, 0, 0, 0, time.UTC)
+	for _, kingdom := range []State.KingdomID{0, 2, 10} {
+		for _, protection := range []bool{false, true} {
+			t.Run(fmt.Sprintf("kingdom-%d/protection-%v", kingdom, protection), func(t *testing.T) {
+				state := State.NewGameState()
+				state.Player.ID = 7
+				state.Player.AllianceObservedAt = now
+				state.Player.ProtectionMode.ObservedAt = now
+				if protection {
+					state.Player.ProtectionMode = State.PlayerProtectionModeState{ModeState: 1, RemainingSec: 3600, ObservedAt: now}
+				}
+				state.Castles[1] = State.CastleState{ID: 1, KingdomID: 0, SlotType: 1}
+				state.Castles[42] = State.CastleState{ID: 42, KingdomID: kingdom, SlotType: 4}
+				arrives := now.Add(30 * time.Second)
+				state.Movements[1] = State.MovementState{ID: 1, TypeID: 0, Direction: 0, OwnerPlayerID: 8, TargetPlayerID: 7, SourceTypeID: 1, SourceCastleID: 200, TargetTypeID: 4, TargetCastleID: 42, ArrivesAt: &arrives}
+				settings := Configuration.Snapshot{Sections: map[string]json.RawMessage{"automation.autoStation": json.RawMessage(`{"openGateFallback":true}`)}}
+				decision, err := NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{State: state, Configuration: settings, Now: now})
+				if err != nil {
+					t.Fatal(err)
+				}
+				if kingdom == 10 {
+					if decision.Request != nil && decision.Request.Name == "defense.open_gate" {
+						t.Fatalf("Berimond gate request: %#v", decision.Request)
+					}
+					return
+				}
+				if decision.Request == nil || decision.Request.Name != "defense.open_gate" {
+					t.Fatalf("gate decision: %#v", decision)
+				}
+				var request struct {
+					CastleID              State.CastleID `json:"castleId"`
+					RequireProtectionMode bool           `json:"requireProtectionMode"`
+				}
+				if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil || request.CastleID != 42 || request.RequireProtectionMode != protection {
+					t.Fatalf("gate target: %+v err=%v", request, err)
+				}
+			})
+		}
+	}
+}
+
+func TestAutoStationFailureFallbackUsesAttackedKingdomCastle(t *testing.T) {
+	now := time.Date(2026, 7, 29, 17, 0, 0, 0, time.UTC)
+	data, err := GameData.DecodeStore([]byte(`{"versionInfo":[],"buildings":[],"units":[{"wodID":489}]}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, kingdom := range []State.KingdomID{0, 2, 10} {
+		t.Run(fmt.Sprintf("kingdom-%d", kingdom), func(t *testing.T) {
+			state := State.NewGameState()
+			state.Player.ID = 7
+			state.Player.AllianceObservedAt = now
+			state.Player.ProtectionMode.ObservedAt = now
+			state.Alliance = State.AllianceState{ID: 9, ObservedAt: now, Members: []State.AllianceMember{{PlayerID: 1, ReturnProtectionSec: 4 * 86_400}}, Holdings: []State.AllianceHolding{{CastleID: 20, PlayerID: 1, KingdomID: kingdom, X: 20, Y: 20, SlotType: 1}}}
+			state.Castles[1] = State.CastleState{ID: 1, KingdomID: 0, SlotType: 1}
+			state.Castles[42] = State.CastleState{ID: 42, KingdomID: kingdom, SlotType: 4, X: 10, Y: 10, Units: State.CastleUnits{Stationed: map[State.UnitID]int64{489: 100}}}
+			arrives := now.Add(30 * time.Second)
+			state.Movements[1] = State.MovementState{ID: 1, TypeID: 0, Direction: 0, OwnerPlayerID: 8, TargetPlayerID: 7, SourceTypeID: 1, SourceCastleID: 200, TargetTypeID: 4, TargetCastleID: 42, ArrivesAt: &arrives}
+			config := Configuration.Snapshot{Sections: map[string]json.RawMessage{"automation.autoStation": json.RawMessage(`{"openGateFallback":true}`)}}
+			decision, err := NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{State: state, GameData: data, Configuration: config, Now: now})
+			if err != nil || decision.Request == nil || decision.Request.Name != "troops.station" {
+				t.Fatalf("station decision=%#v err=%v", decision, err)
+			}
+			if kingdom == 10 {
+				if decision.FailureFallback != nil {
+					t.Fatalf("Berimond fallback=%#v", decision.FailureFallback)
+				}
+				return
+			}
+			if decision.FailureFallback == nil || decision.FailureFallback.Name != "defense.open_gate" {
+				t.Fatalf("fallback=%#v", decision.FailureFallback)
+			}
+			var request struct {
+				CastleID State.CastleID `json:"castleId"`
+			}
+			if err := json.Unmarshal(decision.FailureFallback.Arguments, &request); err != nil || request.CastleID != 42 {
+				t.Fatalf("fallback target=%+v err=%v", request, err)
 			}
 		})
 	}

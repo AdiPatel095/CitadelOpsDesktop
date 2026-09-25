@@ -513,7 +513,7 @@ func (*AutoStationPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decisi
 			if decision.Request != nil {
 				for _, id := range sortedThreatCastleIDs(threats) {
 					castle := snapshot.State.Castles[id]
-					if castle.KingdomID == 0 && threats[id].Earliest.Sub(snapshot.Now) <= time.Duration(settings.LeadTimeSec)*time.Second {
+					if castle.KingdomID != 10 && threats[id].Earliest.Sub(snapshot.Now) <= time.Duration(settings.LeadTimeSec)*time.Second {
 						args, _ := json.Marshal(map[string]any{"castleId": id, "requireIncomingAttack": true, "autoStation": true})
 						decision.FailureFallback = &Intent.Request{Name: "defense.open_gate", Arguments: args}
 						break
@@ -582,7 +582,7 @@ func (*AutoStationPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decisi
 				Request:             &Intent.Request{Name: "troops.station", Arguments: arguments},
 				ReevaluateOnSuccess: true,
 			}
-			if castle.KingdomID == 0 {
+			if castle.KingdomID != 10 {
 				fallbackArguments, _ := json.Marshal(map[string]any{
 					"castleId": castle.ID, "requireIncomingAttack": true, "autoStation": true,
 				})
@@ -725,7 +725,7 @@ func protectionModeOpenGateDecision(
 			nextGateExpiry = minTime(nextGateExpiry, window.Earliest.Add(-leadTime))
 			continue
 		}
-		if castle.KingdomID != 0 {
+		if castle.KingdomID == 10 {
 			if unsupportedCastle == 0 {
 				unsupportedCastle = castleID
 			}

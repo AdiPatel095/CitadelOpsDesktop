@@ -33,7 +33,16 @@ func TestAutoStationGateFinalAuthority(t *testing.T) {
 			c.Defense.OpenGateUntil = &until
 			s.Castles[10] = c
 		}, false},
-		{"other kingdom", true, func(s *State.GameState) { c := s.Castles[10]; c.KingdomID = 2; s.Castles[10] = c }, false},
+		{"other kingdom", true, func(s *State.GameState) { c := s.Castles[10]; c.KingdomID = 2; s.Castles[10] = c }, true},
+		{"Berimond", true, func(s *State.GameState) { c := s.Castles[10]; c.KingdomID = 10; s.Castles[10] = c }, false},
+		{"attack targets another castle", true, func(s *State.GameState) {
+			c := s.Castles[10]
+			c.KingdomID = 2
+			s.Castles[10] = c
+			m := s.Movements[1]
+			m.TargetCastleID = 11
+			s.Movements[1] = m
+		}, false},
 		{"outside castle window", true, func(s *State.GameState) {
 			m := s.Movements[1]
 			later := now.Add(3 * time.Minute)

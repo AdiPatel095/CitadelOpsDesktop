@@ -110,6 +110,9 @@ func planDefenseOpenGate(_ context.Context, input Intent.PlanningContext, argume
 		return Intent.Plan{}, err
 	}
 	castle, err := defenseCastle(input, request.CastleID)
+	if request.AutoStation {
+		castle, err = defenseOpenGateCastle(input, request.CastleID)
+	}
 	if err != nil {
 		return Intent.Plan{}, err
 	}
@@ -458,6 +461,19 @@ func defenseCastle(input Intent.PlanningContext, castleID State.CastleID) (State
 	}
 	if castle.KingdomID != 0 {
 		return State.CastleState{}, Localization.WithError(fmt.Errorf("defense interaction is only capture-confirmed for primary-kingdom castles"), Localization.New("server.app.defense_interaction_is_only.85f0cb5c", "defense interaction is only capture-confirmed for primary-kingdom castles", nil))
+	}
+	return castle, nil
+}
+
+// Opening gates uses the targeted owned castle; other defense interactions retain
+// their separately confirmed primary-kingdom restriction.
+func defenseOpenGateCastle(input Intent.PlanningContext, castleID State.CastleID) (State.CastleState, error) {
+	castle, found := input.State.Castles[castleID]
+	if castleID <= 0 || !found {
+		return State.CastleState{}, fmt.Errorf("castle %d is not in the current player state", castleID)
+	}
+	if castle.KingdomID == 10 {
+		return State.CastleState{}, fmt.Errorf("Open Gate is unavailable in Berimond")
 	}
 	return castle, nil
 }
