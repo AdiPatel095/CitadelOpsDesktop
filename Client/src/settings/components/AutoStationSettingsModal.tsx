@@ -166,7 +166,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
             />
           </div>
           <p className="mt-4 text-xs leading-relaxed text-text-muted">
-            Station targets are the nearest protected alliance castle in the same kingdom. Sends use a one-hour station timer as a fallback even when recall is enabled. If an attack is already inside the configured window when detected, evacuation starts immediately. Open Gate Fallback covers failed stationing, no alliance, no eligible target, or no sendable troops. Purchased Protection Mode preparing or active always uses gates instead of stationing, even with this fallback off. Gates require an incoming attack within the configured window and are supported only in the primary kingdom.
+            Station targets are the nearest protected alliance castle in the same kingdom. Sends use a one-hour station timer as a fallback even when recall is enabled. If an attack is already inside the configured window when detected, evacuation starts immediately. Open Gate Fallback covers failed stationing, no alliance, no eligible target, or no sendable troops. Purchased Protection Mode preparing or active always uses gates instead of stationing, even with this fallback off. Gates target the attacked castle in any kingdom except Berimond and require an incoming attack within the configured window.
           </p>
         </Card>
 

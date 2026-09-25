@@ -25,7 +25,7 @@ outranks every economic and farming feature for claims and dispatch slots.
 | `leadTimeSec` | 60 | How long before impact the evacuation window opens. Clamped to 60–3600. |
 | `recallWhenClear` | true | Recall troops once no attack remains |
 | `minRPTDays` | 3 | Minimum remaining protection days for an alliance castle to count as a safe target |
-| `openGateFallback` | false | Open gates when Protection Mode blocks stationing |
+| `openGateFallback` | false | Opt in to opening gates at the attacked owned castle when ordinary stationing fails; preparing or active purchased Protection Mode uses gates regardless of this toggle. Available in every kingdom except Berimond (KID 10). |
 | `settings` | — | Per-castle unit reserves that stay home |
 
 ## Wake triggers
