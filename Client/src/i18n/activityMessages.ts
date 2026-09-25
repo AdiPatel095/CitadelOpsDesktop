@@ -20,4 +20,3 @@ export function activityError(error:unknown,key:MessageKey) {
   const descriptor=describeMessage(key);
   return {message:descriptor.fallback,messageDescriptor:descriptor,detail:error instanceof Error?error.message:undefined};
 }
-
