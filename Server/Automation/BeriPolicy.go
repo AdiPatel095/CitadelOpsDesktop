@@ -21,6 +21,11 @@ const (
 )
 
 type BeriPolicy struct {
+	refillConfigSignature              string
+	refillScope                        string
+	refillRemaining                    int64
+	refillActive                       bool
+	refillCandidate                    beriRefillCandidate
 	pendingTransportSignature          string
 	nextTransportFallbackAt            time.Time
 	transportFallbackRefreshPending    bool
@@ -32,6 +37,33 @@ type BeriPolicy struct {
 	skipChainTimeSkipID                string
 	skipChainObservedAt                time.Time
 	skipChainRemainingSec              int
+}
+
+// A refill may use several one-unit shipments. The minimum free-capacity
+// threshold starts a batch; only a confirmed shipment can unlock its bounded
+// remainder when the next refreshed capacity falls below that threshold.
+type beriRefillCandidate struct {
+	unitID            State.UnitID
+	amount            int64
+	capacityBefore    int64
+	campStockBefore   int64
+	donorStockBefore  int64
+	proposedAt        time.Time
+	pendingObservedAt time.Time
+}
+
+func (policy *BeriPolicy) resetBeriRefill() {
+	policy.refillConfigSignature = ""
+	policy.refillScope = ""
+	policy.refillRemaining = 0
+	policy.refillActive = false
+	policy.refillCandidate = beriRefillCandidate{}
+}
+
+func beriRefillConfigurationSignature(snapshot Snapshot) string {
+	return fmt.Sprintf("%d:%s:%s", snapshot.Configuration.Revision,
+		snapshot.Configuration.Sections[autoBeriWorldSection],
+		snapshot.Configuration.Sections[AttackPresets.ConfigurationSection])
 }
 
 type beriSettings struct {
@@ -69,12 +101,18 @@ func (policy *BeriPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 		TroopTransportTimeSkipID:   defaultBeriTroopTransportTimeSkipID,
 	}
 	decodeSection(snapshot.Configuration, autoBeriWorldSection, &settings)
+	configSignature := beriRefillConfigurationSignature(snapshot)
+	if policy.refillScope != "" && policy.refillConfigSignature != configSignature {
+		policy.resetBeriRefill()
+	}
 	if decision, locked := limitedEventGate(
 		snapshot.State, snapshot.Now, []int64{GameData.BerimondEventID}, "Battle for Berimond",
 	); locked {
+		policy.resetBeriRefill()
 		return decision, nil
 	}
 	if decision := beriGallantryBoosterGate(snapshot, settings); decision != nil {
+		policy.resetBeriRefill()
 		return *decision, nil
 	}
 	checkSeconds := settings.TroopSpaceCheckIntervalSec
@@ -88,12 +126,14 @@ func (policy *BeriPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 		return *decision, nil
 	}
 	if strings.TrimSpace(settings.PresetID) == "" {
+		policy.resetBeriRefill()
 		return Decision{
 			Status: "waiting", Detail: "Choose a Berimond attack preset before transferring troops",
 			NextCheckAt: snapshot.Now.Add(interval),
 		}, nil
 	}
 	if snapshot.GameData == nil {
+		policy.resetBeriRefill()
 		return Decision{
 			Status: "waiting", Detail: "Official unit provision data is unavailable",
 			NextCheckAt: snapshot.Now.Add(interval),
@@ -101,6 +141,7 @@ func (policy *BeriPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 	}
 	beriCamp, found := beriCastle(snapshot.State)
 	if !found {
+		policy.resetBeriRefill()
 		return Decision{
 			Status: "waiting", Detail: "Waiting for an owned Berimond camp",
 			NextCheckAt: snapshot.Now.Add(interval),
@@ -108,20 +149,27 @@ func (policy *BeriPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 	}
 	beriCastleID := beriCamp.ID
 	if unlock, observed := snapshot.State.KingdomTransport.Unlocks[State.KingdomID(10)]; observed && !unlock.Unlocked {
+		policy.resetBeriRefill()
 		return Decision{
 			Status: "complete", Detail: "The Battle for Berimond is not currently unlocked",
 			NextCheckAt: snapshot.Now.Add(interval),
 		}, nil
 	}
 	sourceID := beriSourceCastle(snapshot.State, settings.SourceCastleID)
+	refillScope := fmt.Sprintf("%s|%d|%d", configSignature, beriCastleID, sourceID)
+	if policy.refillScope != "" && policy.refillScope != refillScope {
+		policy.resetBeriRefill()
+	}
 	source, exists := snapshot.State.Castles[sourceID]
 	if !exists {
+		policy.resetBeriRefill()
 		return Decision{
 			Status: "waiting", Detail: "Waiting for the Berimond source castle to be observed",
 			NextCheckAt: snapshot.Now.Add(interval),
 		}, nil
 	}
 	if source.KingdomID != 0 {
+		policy.resetBeriRefill()
 		return Decision{
 			Status: "waiting", Detail: "The Berimond troop source must be a Great Empire castle",
 			NextCheckAt: snapshot.Now.Add(interval),
@@ -158,6 +206,35 @@ func (policy *BeriPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 			ReevaluateOnSuccess: true, ReevaluateOnStale: true,
 		}, nil
 	}
+	if pendingAt := policy.refillCandidate.pendingObservedAt; !pendingAt.IsZero() {
+		if !snapshot.State.KingdomTransport.ObservedAt.After(pendingAt) {
+			arguments, _ := json.Marshal(map[string]any{})
+			return Decision{
+				Status: "ready", Detail: "Confirm the Berimond troop transport has arrived",
+				NextCheckAt:         snapshot.Now.Add(time.Second),
+				Request:             &Intent.Request{Name: "troops.kingdom.refresh", Arguments: arguments},
+				ReevaluateOnSuccess: true, ReevaluateOnStale: true,
+			}, nil
+		}
+		if !beriCamp.UnitsObservedAt.After(pendingAt) {
+			arguments, _ := json.Marshal(map[string]any{"castleId": beriCastleID, "refresh": true})
+			return Decision{
+				Status: "ready", Detail: "Refresh Berimond camp troops after the confirmed transfer",
+				NextCheckAt:         snapshot.Now.Add(time.Second),
+				Request:             &Intent.Request{Name: "game.focus_castle", Arguments: arguments},
+				ReevaluateOnSuccess: true, ReevaluateOnStale: true,
+			}, nil
+		}
+		if !source.UnitsObservedAt.After(pendingAt) || !snapshot.State.Beri.ObservedAt.After(pendingAt) {
+			arguments, _ := json.Marshal(map[string]any{"beriCastleId": beriCastleID, "sourceCastleId": sourceID})
+			return Decision{
+				Status: "ready", Detail: "Refresh donor troops and capacity after the confirmed Berimond transfer",
+				NextCheckAt:         snapshot.Now.Add(time.Second),
+				Request:             &Intent.Request{Name: "beri.capacity.refresh", Arguments: arguments},
+				ReevaluateOnSuccess: true, ReevaluateOnStale: true,
+			}, nil
+		}
+	}
 	available := snapshot.State.Beri.AvailableTroops
 	minimum := settings.MinTroopsToTransfer
 	if minimum < 1 {
@@ -167,19 +244,30 @@ func (policy *BeriPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 	if !nextCheck.After(snapshot.Now) {
 		nextCheck = snapshot.Now.Add(interval)
 	}
-	if available < minimum {
+	policy.confirmBeriRefillArrival(snapshot, source, beriCamp)
+	if policy.refillActive && policy.refillRemaining <= 0 {
+		policy.resetBeriRefill()
+	}
+	if available < minimum && !policy.refillActive {
 		return Decision{
 			Status: "idle", Detail: fmt.Sprintf("Berimond capacity %d is below the configured minimum %d", available, minimum),
 			NextCheckAt: nextCheck, Metrics: map[string]float64{"availableTroops": float64(available)},
 		}, nil
 	}
+	transferCapacity := snapshot.State.Beri
+	if policy.refillActive {
+		if transferCapacity.AvailableTroops > policy.refillRemaining {
+			transferCapacity.AvailableTroops = policy.refillRemaining
+		}
+	}
 	preset, err := beriAttackPreset(snapshot, settings)
 	if err != nil {
+		policy.resetBeriRefill()
 		return Decision{Status: "waiting", Detail: err.Error(), NextCheckAt: nextCheck}, nil
 	}
 	unitID, amount, reason := beriProportionalTransfer(
 		preset, source.Units.Stationed, beriCamp.Units.Stationed,
-		snapshot.State.Beri, snapshot.GameData,
+		transferCapacity, snapshot.GameData,
 	)
 	if reason != "" {
 		return Decision{
@@ -216,6 +304,16 @@ func (policy *BeriPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 		"donorUnitsObservedAt":  source.UnitsObservedAt, "campUnitsObservedAt": beriCamp.UnitsObservedAt,
 		"useTimeSkip": settings.UseTroopTransportTimeSkips, "timeSkipId": timeSkipID,
 	})
+	policy.refillScope = refillScope
+	policy.refillConfigSignature = configSignature
+	if !policy.refillActive {
+		policy.refillRemaining = available
+	}
+	policy.refillCandidate = beriRefillCandidate{
+		unitID: unitID, amount: amount,
+		capacityBefore: available, campStockBefore: beriCamp.Units.Stationed[unitID],
+		donorStockBefore: source.Units.Stationed[unitID], proposedAt: snapshot.Now,
+	}
 	policy.skipChainArmed = settings.UseTroopTransportTimeSkips
 	if policy.skipChainArmed {
 		policy.skipChainArmedTimeSkipID = timeSkipID
@@ -228,10 +326,46 @@ func (policy *BeriPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 	}, nil
 }
 
+func (policy *BeriPolicy) confirmBeriRefillArrival(snapshot Snapshot, source, camp State.CastleState) {
+	candidate := policy.refillCandidate
+	if candidate.pendingObservedAt.IsZero() {
+		return
+	}
+	// A pending KUT alone cannot authorize another shipment. The refreshed
+	// inventories and capacity must account for its exact proposed amount.
+	campStock := camp.Units.Stationed[candidate.unitID]
+	donorStock := source.Units.Stationed[candidate.unitID]
+	if campStock < candidate.campStockBefore || campStock-candidate.campStockBefore < candidate.amount ||
+		donorStock < 0 || donorStock > candidate.donorStockBefore || candidate.donorStockBefore-donorStock < candidate.amount ||
+		snapshot.State.Beri.AvailableTroops > candidate.capacityBefore-candidate.amount {
+		policy.resetBeriRefill()
+		return
+	}
+	policy.refillRemaining -= candidate.amount
+	policy.refillCandidate = beriRefillCandidate{}
+	if policy.refillRemaining <= 0 {
+		policy.resetBeriRefill()
+		return
+	}
+	policy.refillActive = true
+}
+
 func (policy *BeriPolicy) beriPendingTroopTransportDecision(snapshot Snapshot, settings beriSettings) (*Decision, bool) {
 	for _, transport := range snapshot.State.KingdomTransport.PendingUnits {
 		if transport.KingdomID != State.KingdomID(10) {
 			continue
+		}
+		candidate := &policy.refillCandidate
+		matchingCandidate := candidate.amount > 0 &&
+			snapshot.State.KingdomTransport.ObservedAt.After(candidate.proposedAt) &&
+			len(transport.Units) == 1 && transport.Units[0].UnitID == candidate.unitID &&
+			transport.Units[0].Amount == candidate.amount
+		if matchingCandidate {
+			if candidate.pendingObservedAt.IsZero() {
+				candidate.pendingObservedAt = snapshot.State.KingdomTransport.ObservedAt
+			}
+		} else {
+			policy.resetBeriRefill()
 		}
 		signature := beriTroopTransportSignature(transport)
 		startArmedChain := false
