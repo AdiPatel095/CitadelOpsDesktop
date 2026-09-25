@@ -23,6 +23,7 @@ const (
 	autoFortressDefaultMapRefreshSec    = 1800
 	autoFortressAttackDialogFreshness   = 30 * time.Second
 	autoFortressUnitFreshness           = 5 * time.Minute
+	autoFortressCooldownRefreshBackoff  = 5 * time.Minute
 	autoFortressPurchaseHistoryAge      = 5 * time.Minute
 )
 
@@ -30,6 +31,8 @@ type AutoFortressPolicy struct {
 	mu                         sync.Mutex
 	lastFullScanRequested      map[State.KingdomID]time.Time
 	lastSupplyRefreshRequested map[State.KingdomID]time.Time
+	cooldownRefreshRetryAt     map[string]time.Time
+	yieldAfterCooldownRefresh  bool
 }
 
 type autoFortressSettings struct {
@@ -137,15 +140,14 @@ func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot)
 		}
 	}
 
-	if cooldown, found := pendingFortressCooldownRefresh(snapshot.State); found {
-		source, sourceFound := sourceForKingdom(sources, cooldown.KingdomID)
-		if sourceFound {
-			decision := autoFortressRequest(snapshot, metrics, fmt.Sprintf("Refresh five-day fortress cooldown at %d:%d", cooldown.X, cooldown.Y), "fortress.target.refresh", map[string]any{
-				"sourceCastleId": source.ID, "kingdomId": cooldown.KingdomID, "targetX": cooldown.X, "targetY": cooldown.Y,
-			}, Localization.New("server.automation.fortress_refresh_cooldown", "Refresh five-day fortress cooldown at {x}:{y}", Localization.Params{"x": fmt.Sprint(cooldown.X), "y": fmt.Sprint(cooldown.Y)}))
-			decision.Details = details
-			return decision, nil
-		}
+	cooldown, found, nextRefresh := policy.pendingFortressCooldownRefresh(snapshot, sources, details, time.Duration(settings.CheckIntervalSec)*time.Second)
+	if found {
+		source, _ := sourceForKingdom(sources, cooldown.KingdomID)
+		decision := autoFortressRequest(snapshot, metrics, fmt.Sprintf("Refresh five-day fortress cooldown at %d:%d", cooldown.X, cooldown.Y), "fortress.target.refresh", map[string]any{
+			"sourceCastleId": source.ID, "kingdomId": cooldown.KingdomID, "targetX": cooldown.X, "targetY": cooldown.Y,
+		}, Localization.New("server.automation.fortress_refresh_cooldown", "Refresh five-day fortress cooldown at {x}:{y}", Localization.Params{"x": fmt.Sprint(cooldown.X), "y": fmt.Sprint(cooldown.Y)}))
+		decision.Details = details
+		return decision, nil
 	}
 
 	candidates, nextCooldown, kingdomStats := autoFortressTargets(snapshot, sources)
@@ -189,8 +191,8 @@ func (policy *AutoFortressPolicy) Evaluate(_ context.Context, snapshot Snapshot)
 			detail += "; supply: " + purchaseBlocked
 			detailLocalizationMessage = nil
 		}
-		next := time.Time{}
-		if !nextCooldown.IsZero() {
+		next := nextRefresh
+		if !nextCooldown.IsZero() && (next.IsZero() || nextCooldown.Before(next)) {
 			next = nextCooldown
 		}
 		for _, source := range sources {
@@ -366,6 +368,11 @@ func autoFortressTargets(snapshot Snapshot, sources []State.CastleState) ([]auto
 			}
 			stats := statsByKingdom[source.KingdomID]
 			stats.Known++
+			if cooldown, found := snapshot.State.LookupTowerCooldown(towerTargetKey(target.KingdomID, target.X, target.Y)); found &&
+				cooldown.TargetTypeID == State.MapTypeKingdomFortress && cooldown.PendingCooldownRefresh {
+				statsByKingdom[source.KingdomID] = stats
+				return true
+			}
 			remaining := autoFortressCooldownRemaining(snapshot.State, target, snapshot.Now)
 			if remaining > 0 {
 				readyAt := snapshot.Now.Add(time.Duration(remaining) * time.Second)
@@ -441,18 +448,68 @@ func autoFortressCooldownRemaining(gameState State.GameState, target State.MapOb
 	return remaining
 }
 
-func pendingFortressCooldownRefresh(gameState State.GameState) (State.TowerCooldownState, bool) {
+// Attempt-scoped backoff also covers planner failures and read timeouts, which do
+// not have policy callbacks. Pending state is only cleared by committed game data.
+func (policy *AutoFortressPolicy) pendingFortressCooldownRefresh(snapshot Snapshot, sources []State.CastleState, details map[string]string, checkInterval time.Duration) (State.TowerCooldownState, bool, time.Time) {
+	policy.mu.Lock()
+	defer policy.mu.Unlock()
+	if policy.cooldownRefreshRetryAt == nil {
+		policy.cooldownRefreshRetryAt = map[string]time.Time{}
+	}
+	for key, retryAt := range policy.cooldownRefreshRetryAt {
+		if !retryAt.After(snapshot.Now) {
+			delete(policy.cooldownRefreshRetryAt, key)
+		} else if retryAt.After(snapshot.Now.Add(autoFortressCooldownRefreshBackoff)) {
+			// Bound deferral if the clock moves backwards.
+			policy.cooldownRefreshRetryAt[key] = snapshot.Now.Add(autoFortressCooldownRefreshBackoff)
+		}
+	}
 	var selected State.TowerCooldownState
-	gameState.RangeTowerCooldowns(func(_ string, cooldown State.TowerCooldownState) bool {
+	var nextRefresh time.Time
+	selectedKey := ""
+	snapshot.State.RangeTowerCooldowns(func(_ string, cooldown State.TowerCooldownState) bool {
 		if cooldown.TargetTypeID != State.MapTypeKingdomFortress || !cooldown.PendingCooldownRefresh {
 			return true
 		}
-		if selected.LastSuccessfulBattleAt.IsZero() || cooldown.LastSuccessfulBattleAt.Before(selected.LastSuccessfulBattleAt) {
-			selected = cooldown
+		if _, found := sourceForKingdom(sources, cooldown.KingdomID); !found {
+			return true
+		}
+		key := towerTargetKey(cooldown.KingdomID, cooldown.X, cooldown.Y)
+		target, exists := snapshot.State.LookupMapObservation(cooldown.KingdomID, fmt.Sprintf("%d:%d", cooldown.X, cooldown.Y))
+		if !exists || target.TypeID != State.MapTypeKingdomFortress || target.KingdomID != cooldown.KingdomID || target.X != cooldown.X || target.Y != cooldown.Y {
+			details["cooldownRefresh:"+key] = "Deferred: fortress missing from current map; discovery required"
+			return true
+		}
+		if retryAt := policy.cooldownRefreshRetryAt[key]; retryAt.After(snapshot.Now) {
+			details["cooldownRefresh:"+key] = "Deferred: refresh attempted; retry after " + retryAt.UTC().Format(time.RFC3339)
+			if nextRefresh.IsZero() || retryAt.Before(nextRefresh) {
+				nextRefresh = retryAt
+			}
+			return true
+		}
+		if selectedKey == "" || cooldown.LastSuccessfulBattleAt.Before(selected.LastSuccessfulBattleAt) ||
+			cooldown.LastSuccessfulBattleAt.Equal(selected.LastSuccessfulBattleAt) && key < selectedKey {
+			selected, selectedKey = cooldown, key
 		}
 		return true
 	})
-	return selected, !selected.LastSuccessfulBattleAt.IsZero()
+	yield := policy.yieldAfterCooldownRefresh
+	policy.yieldAfterCooldownRefresh = false
+	if selectedKey != "" && yield {
+		// A large set of failing reads must not monopolize every evaluation.
+		// Give discovery/candidates one pass, then promptly revisit pending work.
+		details["cooldownRefresh"] = "Deferred: allowing discovery and verified targets to progress"
+		retryAt := snapshot.Now.Add(checkInterval)
+		if nextRefresh.IsZero() || retryAt.Before(nextRefresh) {
+			nextRefresh = retryAt
+		}
+		return State.TowerCooldownState{}, false, nextRefresh
+	}
+	if selectedKey != "" {
+		policy.yieldAfterCooldownRefresh = true
+		policy.cooldownRefreshRetryAt[selectedKey] = snapshot.Now.Add(autoFortressCooldownRefreshBackoff)
+	}
+	return selected, selectedKey != "", nextRefresh
 }
 
 func fastestFortressCommander(

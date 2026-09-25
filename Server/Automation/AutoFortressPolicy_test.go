@@ -2,6 +2,7 @@ package Automation
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -612,4 +613,165 @@ func autoFortressTestGameData(t *testing.T) *GameData.Store {
 		t.Fatal(err)
 	}
 	return store
+}
+
+func fortressCooldownSnapshot(t *testing.T) Snapshot {
+	t.Helper()
+	now := time.Date(2026, time.September, 21, 12, 0, 0, 0, time.UTC)
+	state := State.NewGameState()
+	state.Castles[10] = State.CastleState{ID: 10, KingdomID: 3, SlotType: 12}
+	state.Map[3] = map[string]State.MapObservation{
+		"100:100": {KingdomID: 3, X: 100, Y: 100, TypeID: State.MapTypeKingdomFortress, ObservedAt: now},
+		"101:100": {KingdomID: 3, X: 101, Y: 100, TypeID: State.MapTypeKingdomFortress, ObservedAt: now},
+	}
+	return Snapshot{State: state, Now: now, GameData: autoFortressTestGameData(t), Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{
+		autoFortressSection: json.RawMessage(`{"version":1,"checkIntervalSec":5,"horseTravelBoostId":-1,"minimumCommanderSpeedBonus":100,"direwolfPurchaseLimit":0,"kingdoms":{"3":{"enabled":true}}}`),
+	}}}
+}
+
+func setPendingFortress(snapshot *Snapshot, kingdom State.KingdomID, x, y int, age time.Duration) {
+	snapshot.State.SetTowerCooldown(towerTargetKey(kingdom, x, y), State.TowerCooldownState{
+		KingdomID: kingdom, X: x, Y: y, TargetTypeID: State.MapTypeKingdomFortress,
+		LastSuccessfulBattleAt: snapshot.Now.Add(-age), PendingCooldownRefresh: true,
+	})
+}
+
+func TestAutoFortressMissingPendingTargetDoesNotBlockDiscoveryOrCandidates(t *testing.T) {
+	for _, ready := range []bool{false, true} {
+		t.Run(map[bool]string{false: "discovery with other map rows", true: "other candidate"}[ready], func(t *testing.T) {
+			snapshot := fortressCooldownSnapshot(t)
+			setPendingFortress(&snapshot, 3, 516, 360, 6*24*time.Hour)
+			if !ready {
+				for key, target := range snapshot.State.Map[3] {
+					target.TowerCooldownRemaining = 600
+					snapshot.State.Map[3][key] = target
+				}
+			}
+			decision, err := NewAutoFortressPolicy().Evaluate(t.Context(), snapshot)
+			if err != nil || decision.Details["cooldownRefresh:"+towerTargetKey(3, 516, 360)] == "" {
+				t.Fatalf("missing target diagnostics: %#v, %v", decision, err)
+			}
+			if ready {
+				if decision.Metrics["readyFortresses"] != 2 || decision.Request != nil || !strings.Contains(decision.Detail, "commander") {
+					t.Fatalf("other candidates blocked: %#v", decision)
+				}
+			} else if decision.Request == nil || decision.Request.Name != "fortress.map.scan" {
+				t.Fatalf("discovery blocked: %#v", decision)
+			}
+		})
+	}
+}
+
+func TestAutoFortressPendingRefreshRotatesBacksOffAndExpires(t *testing.T) {
+	snapshot := fortressCooldownSnapshot(t)
+	setPendingFortress(&snapshot, 1, 99, 99, 8*24*time.Hour) // Disabled and older than every enabled record.
+	setPendingFortress(&snapshot, 3, 100, 100, 7*24*time.Hour)
+	setPendingFortress(&snapshot, 3, 101, 100, 6*24*time.Hour)
+	policy := NewAutoFortressPolicy()
+	checkRefresh := func(x int) {
+		t.Helper()
+		decision, err := policy.Evaluate(t.Context(), snapshot)
+		if err != nil || decision.Request == nil || decision.Request.Name != "fortress.target.refresh" {
+			t.Fatalf("refresh: %#v, %v", decision, err)
+		}
+		var args struct {
+			TargetX   int `json:"targetX"`
+			KingdomID int `json:"kingdomId"`
+		}
+		if err := json.Unmarshal(decision.Request.Arguments, &args); err != nil || args.TargetX != x || args.KingdomID != 3 {
+			t.Fatalf("wrong refresh: %#v, %v", args, err)
+		}
+	}
+	checkRefresh(100)
+	// Failed reads leave game state unchanged, as do timeouts and planner errors.
+	snapshot.Now = snapshot.Now.Add(30 * time.Second)
+	if decision, err := policy.Evaluate(t.Context(), snapshot); err != nil || decision.Request == nil || decision.Request.Name != "fortress.map.scan" {
+		t.Fatalf("refresh fairness did not reach discovery: %#v, %v", decision, err)
+	}
+	snapshot.Now = snapshot.Now.Add(5 * time.Second)
+	checkRefresh(101)
+	snapshot.Now = snapshot.Now.Add(30 * time.Second)
+	policy.markFullScanRequested(3, snapshot.Now)
+	decision, err := policy.Evaluate(t.Context(), snapshot)
+	wantRetry := snapshot.Now.Add(3*time.Minute + 55*time.Second)
+	if err != nil || decision.Request != nil || decision.Metrics["readyFortresses"] != 0 || !decision.NextCheckAt.Equal(wantRetry) {
+		t.Fatalf("pending targets escaped backoff or retry schedule: %#v, %v", decision, err)
+	}
+	snapshot.Now = wantRetry
+	checkRefresh(100)
+	// A successful committed refresh releases pending eligibility; the personal
+	// five-day lockout remains independently enforced by the existing selector.
+	key := towerTargetKey(3, 100, 100)
+	cooldown, _ := snapshot.State.LookupTowerCooldown(key)
+	cooldown.PendingCooldownRefresh = false
+	snapshot.State.SetTowerCooldown(key, cooldown)
+	candidates, _, _ := autoFortressTargets(snapshot, []State.CastleState{snapshot.State.Castles[10]})
+	if len(candidates) != 1 || candidates[0].Target.X != 100 {
+		t.Fatalf("successful refresh did not release only verified target: %#v", candidates)
+	}
+	cooldown.LastSuccessfulBattleAt = snapshot.Now.Add(-time.Hour)
+	snapshot.State.SetTowerCooldown(key, cooldown)
+	candidates, _, _ = autoFortressTargets(snapshot, []State.CastleState{snapshot.State.Castles[10]})
+	if len(candidates) != 0 {
+		t.Fatalf("personal lockout bypassed: %#v", candidates)
+	}
+}
+
+func TestAutoFortressRefreshBackoffSurvivesConfigAndBoundsClockRollback(t *testing.T) {
+	snapshot := fortressCooldownSnapshot(t)
+	setPendingFortress(&snapshot, 3, 100, 100, 7*24*time.Hour)
+	policy := NewAutoFortressPolicy()
+	if decision, err := policy.Evaluate(t.Context(), snapshot); err != nil || decision.Request == nil || decision.Request.Name != "fortress.target.refresh" {
+		t.Fatalf("initial refresh = %#v, %v", decision, err)
+	}
+	snapshot.PolicyConfigurationChanged = true
+	snapshot.Now = snapshot.Now.Add(-time.Hour)
+	if decision, err := policy.Evaluate(t.Context(), snapshot); err != nil || decision.Request != nil && decision.Request.Name == "fortress.target.refresh" {
+		t.Fatalf("configuration reset bypassed refresh backoff = %#v, %v", decision, err)
+	}
+	snapshot.PolicyConfigurationChanged = false
+	snapshot.Now = snapshot.Now.Add(autoFortressCooldownRefreshBackoff)
+	if decision, err := policy.Evaluate(t.Context(), snapshot); err != nil || decision.Request == nil || decision.Request.Name != "fortress.target.refresh" {
+		t.Fatalf("clock rollback extended backoff = %#v, %v", decision, err)
+	}
+}
+
+func TestAutoFortressManyFailingPendingTargetsYieldToNormalWork(t *testing.T) {
+	for _, ready := range []bool{false, true} {
+		t.Run(map[bool]string{false: "discovery", true: "verified candidate"}[ready], func(t *testing.T) {
+			snapshot := fortressCooldownSnapshot(t)
+			snapshot.State.Map[3] = map[string]State.MapObservation{}
+			for x := 100; x < 122; x++ {
+				snapshot.State.Map[3][fmt.Sprintf("%d:100", x)] = State.MapObservation{KingdomID: 3, X: x, Y: 100, TypeID: State.MapTypeKingdomFortress, ObservedAt: snapshot.Now}
+				setPendingFortress(&snapshot, 3, x, 100, 7*24*time.Hour)
+			}
+			if ready {
+				snapshot.State.Map[3]["200:100"] = State.MapObservation{KingdomID: 3, X: 200, Y: 100, TypeID: State.MapTypeKingdomFortress, ObservedAt: snapshot.Now}
+			}
+			policy := NewAutoFortressPolicy()
+			for attempt := 0; attempt < 12; attempt++ {
+				decision, err := policy.Evaluate(t.Context(), snapshot)
+				if err != nil || decision.Request == nil || decision.Request.Name != "fortress.target.refresh" {
+					t.Fatalf("attempt %d: %#v, %v", attempt, decision, err)
+				}
+				snapshot.Now = snapshot.Now.Add(30 * time.Second)
+				decision, err = policy.Evaluate(t.Context(), snapshot)
+				if err != nil || decision.Request != nil && decision.Request.Name == "fortress.target.refresh" {
+					t.Fatalf("attempt %d monopolized policy: %#v, %v", attempt, decision, err)
+				}
+				if ready {
+					if decision.Metrics["readyFortresses"] != 1 || !strings.Contains(decision.Detail, "commander") {
+						t.Fatalf("verified candidate starved: %#v", decision)
+					}
+				} else if attempt == 0 {
+					if decision.Request == nil || decision.Request.Name != "fortress.map.scan" {
+						t.Fatalf("discovery starved: %#v", decision)
+					}
+				} else if decision.Request != nil || !decision.NextCheckAt.Equal(snapshot.Now.Add(5*time.Second)) {
+					t.Fatalf("pending work not promptly revisited: %#v", decision)
+				}
+				snapshot.Now = snapshot.Now.Add(5 * time.Second)
+			}
+		})
+	}
 }
