@@ -37,7 +37,10 @@
     "khanPreviewTitle": "Przykład ustawień Automatycznego Chana",
     "beriGuideIntro": "Wykonaj te kroki, aby ustawić Automatyczny Berimond; wybierz przykładowy panel, by go powiększyć.",
     "beriGuideTitle": "Poradnik Automatycznego Berimondu",
-    "beriPreviewTitle": "Przykładowa konfiguracja Automatycznego Berimondu"
+    "beriPreviewTitle": "Przykładowa konfiguracja Automatycznego Berimondu",
+    "stormGuideIntro": "Wykonaj te kroki, aby ustawić Auto Storm; wybierz panel przykładu, by go powiększyć.",
+    "stormGuideTitle": "Przewodnik po Auto Storm",
+    "stormPreviewTitle": "Przykład konfiguracji Auto Storm"
   },
   "autoTower": {
     "recommendationIntro": "Te zalecenia dotyczą regularnego korzystania; sprawdź je przed zapisaniem.",
@@ -533,6 +536,48 @@
       "next": "Następna wysyłka: do 1 B ze źródła",
       "stock": "Stan obozu: 2 A i 0 B",
       "title": "Przykład proporcjonalnych transportów"
+    },
+    "stormCastle": {
+      "blueprint": "Zapisany cel aktywny; pauza go zachowuje",
+      "capture": "Bieżący zamek: cel Funkcjonalny",
+      "decorations": "Schemat dekoracji: opcjonalny",
+      "title": "Przykład dostępu do zamku Sztormu",
+      "unlock": "Automatyczne otwarcie: włączone po kontroli ceny"
+    },
+    "stormCombat": {
+      "defenders": "Obrońcy okupacyjni: wybrani lub jeden ocalały",
+      "forts": "Forty: wybrane poziomy 40–80",
+      "islands": "Wyspy akwamarynu: duże i małe",
+      "priority": "Duże, małe, potem forty od 80 do 40",
+      "title": "Przykład ataków na forty i wyspy"
+    },
+    "stormConstruction": {
+      "harbor": "Port: włączony, poziom 1",
+      "resources": "Drewno Sztormu 0; kamień 0; akwamaryn planowany",
+      "spending": "Premium i wyburzanie: wyłączone",
+      "title": "Przykład budowy i rezerw",
+      "transport": "Transport zasobów: włączony"
+    },
+    "stormLuna": {
+      "cost": "Cena i limit zakupów: tylko do odczytu",
+      "limited": "Ograniczone cele przed nieograniczonymi nagrodami",
+      "priority": "Priorytet 1, 2, 3; niższy numer najpierw",
+      "reserve": "Zachowaj akwamaryn: 0 przy użyciu nadwyżki",
+      "title": "Przykład nagród Luny"
+    },
+    "stormSave": {
+      "check": "Sprawdzanie zasad: 30 sekund",
+      "daily": "Dzienne zwykłe ataki: 0 dodatkowego limitu",
+      "map": "Odświeżanie mapy: 2 godziny, tylko do odczytu",
+      "switch": "Zapisz, potem włącz Auto Storm",
+      "title": "Przykład zapisu i włączenia"
+    },
+    "stormTroops": {
+      "averages": "Średnie ataków i schematów: tylko do odczytu",
+      "cap": "Limit zaangażowanych wojsk: tylko do odczytu",
+      "donors": "Dawcy: pokazana kolejność, częściowe zapasy dozwolone",
+      "minimum": "Minimum zachowane: 1000 wojsk",
+      "title": "Przykład importu wojsk"
     }
   },
   "autoStation": {
@@ -1682,6 +1727,309 @@
           }
         },
         "title": "Ustaw proporcjonalny transport wojsk"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "Auto Storm może otworzyć i rozbudować zamek Sztormu, atakować forty i wyspy zasobów, sprowadzać wojska oraz kupować wybrane nagrody Luny.",
+      "expectation": "Każda funkcja korzysta z aktualnych danych gry i zapisanych uprawnień; budowa premium, ataki i zakupy pozostają ograniczone włączonymi wyborami.",
+      "name": "Auto Storm",
+      "summary": "Zarządzaj zamkiem Sztormu, atakami i nagrodami"
+    },
+    "recommendationIntro": "Zalecenia opisują zwykłe korzystanie z Auto Storm; są wskazówkami i nie zmieniają zapisanych ustawień.",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "Ilustracja dostępu do zamku Sztormu i przechwytywania celu",
+          "caption": "Wybór zamku startowego, tryby przechwytywania i opcjonalna aktywacja celu; bez prawdziwego zakupu i konta."
+        },
+        "items": {
+          "automatic_open": {
+            "description": "Gdy Sztorm jest zablokowany, wybierz dostępny oficjalny zamek startowy i sprawdź widoczną cenę przed zezwoleniem na odblokowanie.",
+            "label": "Automatycznie otwórz zamek Sztormu",
+            "recommendation": "Włącz, jeśli Auto Storm ma otwierać zwykły zamek startowy po sprawdzeniu ceny."
+          },
+          "blueprint": {
+            "description": "Przechwycony cel jest od razu zapisywany i aktywowany; Wstrzymaj cel zatrzymuje uzgadnianie, ale zachowuje zapisane cele.",
+            "label": "Zapisany cel",
+            "recommendation": "Pozostaw sprawdzony cel Funkcjonalny aktywny przy zwykłej rozbudowie."
+          },
+          "capture_castle": {
+            "description": "Wybierz obecny zamek Sztormu przed przechwyceniem celu budowy.",
+            "label": "Zamek Sztormu",
+            "recommendation": "Przechwyć zamek, którym zamierzasz zarządzać."
+          },
+          "combat_only": {
+            "description": "Walka z fortami i wyspami nie wymaga przechwyconego celu budowy.",
+            "label": "Walka bez celu"
+          },
+          "decoration_preset": {
+            "description": "Po budowie możesz zastosować wybrany schemat dekoracji.",
+            "label": "Schemat dekoracji po budowie",
+            "recommendation": "Pozostaw puste, chyba że chcesz osobnego układu dekoracji."
+          },
+          "exact": {
+            "description": "Zapisz wszystkie obsługiwane szczegóły celu, aby uzyskać dokładną kopię.",
+            "label": "Dokładne przechwycenie",
+            "recommendation": "Używaj dopiero po sprawdzeniu całego celu."
+          },
+          "functional": {
+            "description": "Zapisz cel dla podstawowych funkcji Sztormu bez kopiowania każdego położenia budynku.",
+            "label": "Funkcjonalne przechwycenie",
+            "recommendation": "Funkcjonalny do zwykłego utrzymania."
+          },
+          "layout": {
+            "description": "Zapisz typy i położenie budynków bez dekoracji.",
+            "label": "Przechwycenie układu",
+            "recommendation": "Używaj tylko wtedy, gdy położenie budynków ma znaczenie."
+          },
+          "open_settings": {
+            "description": "Otwórz ustawienia Auto Storm z jego karty Automatyzacja.",
+            "label": "Otwórz ustawienia"
+          },
+          "starter_castle": {
+            "description": "Wybierz aktualnie dostępny oficjalny zamek startowy Sztormu na następny zablokowany sezon.",
+            "label": "Zamek do otwarcia",
+            "recommendation": "Po sprawdzeniu ceny wybierz zwykły zamek startowy, na który cię stać."
+          }
+        },
+        "title": "Otwórz i przechwyć zamek Sztormu"
+      },
+      "combat": {
+        "image": {
+          "alt": "Ilustracja ustawień ataków na forty i wyspy",
+          "caption": "Przykładowe wyspy z akwamarynem, poziomy fortów, kolejność celów i obrońcy okupacyjni."
+        },
+        "items": {
+          "defenders": {
+            "description": "Wybierz rodzaje i liczbę obrońców pozostawionych na zdobytej wyspie; pusta lista pozostawia jednego ocalałego po potwierdzonym zwycięstwie.",
+            "label": "Jednostki obrony wyspy",
+            "recommendation": "Wybierz obrońców, jeśli jeden ocalały nie wystarcza do twojego planu."
+          },
+          "fort_preset": {
+            "description": "Wybierz zapisany układ wojsk i narzędzi do ataku na forty.",
+            "label": "Schemat ataku na forty",
+            "recommendation": "Użyj zwykłego schematu fortowego."
+          },
+          "forts": {
+            "description": "Włącz ataki na wybrane oficjalne poziomy fortów od 40 do 80.",
+            "label": "Forty Sztormu",
+            "recommendation": "Włącz dla poziomów, z którymi wybrany schemat radzi sobie niezawodnie."
+          },
+          "horse": {
+            "description": "Wybierz podróż za pióra, monety lub rubiny dla ataków w Sztormie.",
+            "label": "Przyspieszenie podróży konnej",
+            "recommendation": "Pióro Podróży zapewnia szybki ruch bez wybierania podróży za rubiny."
+          },
+          "island_preset": {
+            "description": "Wybierz zapisany układ wojsk i narzędzi do ataku na wyspy.",
+            "label": "Schemat ataku na wyspy",
+            "recommendation": "Użyj zwykłego schematu wyspowego."
+          },
+          "island_resources": {
+            "description": "Wybierz wyspy z drewnem, kamieniem lub akwamarynem, które można atakować.",
+            "label": "Zasoby wysp",
+            "recommendation": "Wybierz akwamaryn, jeśli chcesz go zbierać."
+          },
+          "island_sizes": {
+            "description": "Wybierz duże, małe lub oba rozmiary wysp z wybranymi zasobami.",
+            "label": "Rozmiary wysp",
+            "recommendation": "Duże i małe do zwykłego zbierania akwamarynu."
+          },
+          "islands": {
+            "description": "Włącz zdobywanie wysp odpowiadających wybranym zasobom i rozmiarom.",
+            "label": "Wyspy zasobów",
+            "recommendation": "Włącz, jeśli chcesz akwamaryn z dużych i małych wysp."
+          },
+          "minimum_attacks": {
+            "description": "Atakuj tylko forty z co najmniej taką liczbą pozostałych ataków.",
+            "label": "Minimalna liczba pozostałych ataków",
+            "recommendation": "0 pozwala zaatakować każdy kwalifikujący się fort."
+          },
+          "priority": {
+            "description": "Ustaw kolejność aktywnych celów wysp i fortów; priorytet rozstrzyga w obrębie rzędu, a odległość remisy.",
+            "label": "Priorytet celów ataku",
+            "recommendation": "Duże wyspy, małe wyspy, następnie forty od poziomu 80 do 40 przy zbieraniu akwamarynu."
+          }
+        },
+        "title": "Wybierz forty i wyspy zasobów"
+      },
+      "construction": {
+        "image": {
+          "alt": "Ilustracja ustawień budowy i rezerw",
+          "caption": "Transport zasobów, pozwolenia na wydatki, rezerwy i poziom portu jako przykładowe elementy."
+        },
+        "items": {
+          "demolition": {
+            "description": "Pozwól na usuwanie w dokładnym celu budynków, których nie można przenieść ani przechować.",
+            "label": "Zezwól na wyburzanie",
+            "recommendation": "Wyłącz, chyba że odbudowujesz sprawdzony układ."
+          },
+          "donor_reserves": {
+            "description": "Zachowaj wybrane ilości drewna, kamienia i akwamarynu u każdego dawcy przed transportem zasobów.",
+            "label": "Chronione rezerwy dawców",
+            "recommendation": "Chroń zwykły budżet drewna i kamienia na budowę; akwamaryn 0, gdy niewykorzystywany."
+          },
+          "harbor_level": {
+            "description": "Wybierz docelowy poziom portu 1, 2 lub 3; poziomy 2 i 3 wymagają budowy premium.",
+            "label": "Docelowy poziom portu",
+            "recommendation": "Poziom 1, chyba że planujesz ulepszenia premium."
+          },
+          "harbor": {
+            "description": "Utrzymuj port na wybranym poziomie, nawet gdy przechwycony cel jest inny.",
+            "label": "Ulepsz port",
+            "recommendation": "Włącz z poziomem 1 do zwykłego korzystania."
+          },
+          "premium": {
+            "description": "Zezwól na kwalifikujące się kroki budowy wydające walutę premium.",
+            "label": "Zezwól na koszty premium",
+            "recommendation": "Wyłącz, chyba że planujesz budowę premium."
+          },
+          "resource_transport": {
+            "description": "Zezwól na potwierdzone dostawy brakujących zasobów budowlanych z zamków dawców.",
+            "label": "Transportuj brakujące zasoby",
+            "recommendation": "Włącz do zwykłej budowy."
+          },
+          "skip_reserves": {
+            "description": "Zachowaj wybraną liczbę każdego przedmiotu skracającego czas o 1 min, 5 min, 10 min, 30 min, 1 godz., 5 godz. i 24 godz.",
+            "label": "Skracacze czasu w rezerwie",
+            "recommendation": "Zachowaj 0 krótkich skracaczy, chyba że potrzebujesz ich gdzie indziej; zarezerwuj zapas 1-, 5- i 24-godzinny na inne wydarzenia."
+          },
+          "storm_reserves": {
+            "description": "Chroń wybrane ilości drewna Sztormu, kamienia i akwamarynu przed zużyciem w budowie.",
+            "label": "Rezerwy wydatków zamku Sztormu",
+            "recommendation": "Drewno Sztormu 0 i kamień 0 przy wydawaniu nadwyżek; akwamaryn według budżetu na nagrody."
+          },
+          "time_skips": {
+            "description": "Stosuj kwalifikujące się skracacze czasu, zachowując wybrane rezerwy przedmiotów.",
+            "label": "Użyj skracaczy czasu budowy",
+            "recommendation": "Włącz, jeśli chcesz przyspieszyć zwykłą budowę."
+          }
+        },
+        "title": "Ustaw budowę i ochronę zasobów"
+      },
+      "luna": {
+        "image": {
+          "alt": "Ilustracja ustawień nagród Luny",
+          "caption": "Rezerwa akwamarynu, ograniczone cele zakupowe, powtarzalne nagrody i priorytety."
+        },
+        "items": {
+          "cost_cap": {
+            "description": "Odczytaj cenę i limit zakupów każdej nagrody podane przez grę.",
+            "label": "Cena i limit zakupów",
+            "recommendation": "Sprawdź obie wartości tylko do odczytu przed włączeniem."
+          },
+          "keep_aqua": {
+            "description": "Chroń tę ilość akwamarynu przed zakupami Luny.",
+            "label": "Zachowaj akwamaryn",
+            "recommendation": "0, jeśli cała nadwyżka może iść na nagrody; w przeciwnym razie zarezerwuj planowaną ilość."
+          },
+          "priority": {
+            "description": "Kupuj najpierw cele o niższych numerach i zakończ ograniczone przed nieograniczonymi.",
+            "label": "Priorytet",
+            "recommendation": "Użyj 1, 2 i 3 w preferowanej kolejności."
+          },
+          "search": {
+            "description": "Wyszukaj oficjalne nagrody Luny według nazwy przed skonfigurowaniem zakupu.",
+            "label": "Znajdź nagrodę Luny",
+            "recommendation": "Wyszukaj nagrodę, której naprawdę chcesz."
+          },
+          "target_total": {
+            "description": "Ustaw pożądaną łączną liczbę zakupów ograniczonej nagrody.",
+            "label": "Docelowa łączna liczba",
+            "recommendation": "Ustaw tylko liczbę, którą zamierzasz kupić."
+          },
+          "unlimited": {
+            "description": "Kupuj dalej kwalifikującą się powtarzalną nagrodę, dopóki rezerwa i limit sklepu na to pozwalają.",
+            "label": "Bez ograniczeń",
+            "recommendation": "Włącz tylko dla powtarzalnych nagród, których regularnie chcesz."
+          },
+          "use": {
+            "description": "Wybierz nagrodę, aby dopuścić automatyczny zakup.",
+            "label": "Użyj nagrody",
+            "recommendation": "Włącz tylko pożądane nagrody."
+          }
+        },
+        "title": "Wybierz nagrody Luny za akwamaryn"
+      },
+      "save": {
+        "image": {
+          "alt": "Ilustracja zapisu i włączenia Auto Storm",
+          "caption": "Dzienny limit ataków, kontrola zasad, odświeżanie mapy tylko do odczytu i przełącznik automatyzacji."
+        },
+        "items": {
+          "daily_limit": {
+            "description": "Zatrzymaj nowe ataki Auto Storm po osiągnięciu dziennej liczby zwykłych ataków na koncie; 0 usuwa ten dodatkowy limit.",
+            "label": "Dzienny limit zwykłych ataków",
+            "recommendation": "0, chyba że używasz limitu dla całego konta."
+          },
+          "enable": {
+            "description": "Włącz Auto Storm na karcie Automatyzacja, gdy zapisane wybory będą gotowe.",
+            "label": "Przełącznik automatyzacji",
+            "recommendation": "Włącz po konfiguracji."
+          },
+          "map_refresh": {
+            "description": "Odczytaj oficjalny interwał odświeżania mapy Sztormu.",
+            "label": "Interwał odświeżania mapy",
+            "recommendation": "Interwał tylko do odczytu wynosi 2 godziny; po zmianach poczekaj na świeże skanowanie."
+          },
+          "policy_check": {
+            "description": "Ustaw, jak często Auto Storm sprawdza ustawienia i dostępne zadania.",
+            "label": "Interwał sprawdzania zasad",
+            "recommendation": "Zachowaj zwykły interwał 30 sekund."
+          },
+          "save": {
+            "description": "Zapisz wybory zamku, budowy, walki, importu wojsk i Luny przed włączeniem automatyzacji.",
+            "label": "Zapisz ustawienia",
+            "recommendation": "Zapisz po sprawdzeniu wszystkich pozwoleń na wydatki."
+          }
+        },
+        "title": "Zapisz i włącz Auto Storm"
+      },
+      "troops": {
+        "image": {
+          "alt": "Ilustracja importu wojsk i szacunków tylko do odczytu",
+          "caption": "Kolejność dawców, 1000 zachowanych wojsk i szacunki pojemności tylko do odczytu."
+        },
+        "items": {
+          "attack_history": {
+            "description": "Odczytaj średnią liczbę ataków Sztormu zgłoszonych od resetu w ciągu ostatnich 24 godzin.",
+            "label": "Średnia ataków od resetu",
+            "recommendation": "Sprawdź ten szacunek tylko do odczytu przed zmianą zapotrzebowania na import."
+          },
+          "committed_cap": {
+            "description": "Odczytaj automatycznie obliczony limit uwzględniający stacjonujące wojska, ruchy, transport i powroty.",
+            "label": "Limit zaangażowanych wojsk Sztormu",
+            "recommendation": "Sprawdź ten limit tylko do odczytu przed zwiększeniem importu."
+          },
+          "donors": {
+            "description": "Wybierz zamki dawców w pokazanej kolejności; częściowy zapas może dostarczyć mniejszą przesyłkę.",
+            "label": "Zamki dawców",
+            "recommendation": "Wybierz zwykłych dostawców wojsk w preferowanej kolejności."
+          },
+          "import": {
+            "description": "Importuj do Sztormu brakujące wojska ataku lub wybrane wojska obrony z zamków dawców.",
+            "label": "Importuj brakujące wojska",
+            "recommendation": "Włącz, jeśli twój zamek Sztormu potrzebuje regularnych dostaw wojsk."
+          },
+          "map_coverage": {
+            "description": "Sprawdź pokrycie mapy, zanim zaufasz pokazanym celom.",
+            "label": "Pokrycie mapy",
+            "recommendation": "Poczekaj na aktualne pokrycie, jeśli brakuje celów."
+          },
+          "minimum_kept": {
+            "description": "Po wysłaniu ataku pozostaw w Sztormie co najmniej tyle wojsk, zachowując skład aktywnych schematów.",
+            "label": "Minimalna liczba wojsk po wysłaniu",
+            "recommendation": "1000 wojsk jako zwykła rezerwa, dopasowana do twojej armii."
+          },
+          "preset_average": {
+            "description": "Odczytaj średnie zapotrzebowanie na wojska aktywnych schematów ataku, w tym wybranych obrońców wysp.",
+            "label": "Średni aktywny schemat",
+            "recommendation": "Porównaj ten szacunek tylko do odczytu ze swoją armią."
+          }
+        },
+        "title": "Importuj i monitoruj wojska Sztormu"
       }
     }
   }

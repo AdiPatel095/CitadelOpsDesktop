@@ -37,7 +37,10 @@
     "khanPreviewTitle": "自動カーンの設定例",
     "beriGuideIntro": "以下の手順で自動ベリモンドワールドを設定し、例のパネルを選択して拡大できます。",
     "beriGuideTitle": "自動ベリモンドワールドのガイド",
-    "beriPreviewTitle": "自動ベリモンドワールドの設定例"
+    "beriPreviewTitle": "自動ベリモンドワールドの設定例",
+    "stormGuideIntro": "この手順で自動ストームを設定し、例のパネルを選んで拡大できます。",
+    "stormGuideTitle": "自動ストームのガイド",
+    "stormPreviewTitle": "自動ストーム設定例"
   },
   "autoTower": {
     "recommendationIntro": "通常利用時の推奨値です。保存前に確認してください。",
@@ -533,6 +536,48 @@
       "next": "次の輸送：送り元からBを最大1",
       "stock": "野営地在庫：Aが2、Bが0",
       "title": "比例移送の例"
+    },
+    "stormCastle": {
+      "blueprint": "保存した目標は有効、一時停止しても残る",
+      "capture": "現在の城：機能目標",
+      "decorations": "装飾プリセット：任意",
+      "title": "ストーム城の利用例",
+      "unlock": "自動開放：価格確認後にオン"
+    },
+    "stormCombat": {
+      "defenders": "占領防衛兵：選択済みまたは生存兵1人",
+      "forts": "砦：選んだレベル40～80",
+      "islands": "アクアマリン島：大と小",
+      "priority": "大、小、砦80から40の順",
+      "title": "砦と島の攻撃例"
+    },
+    "stormConstruction": {
+      "harbor": "港：オン、レベル1",
+      "resources": "ストーム木材0、石材0、アクアマリンは予定量",
+      "spending": "プレミアムと解体：オフ",
+      "title": "建設と予備量の例",
+      "transport": "資源輸送：オン"
+    },
+    "stormLuna": {
+      "cost": "価格と購入上限：読み取り専用",
+      "limited": "制限付き目標を無制限報酬より先に",
+      "priority": "優先順位1、2、3、小さい番号から",
+      "reserve": "アクアマリンを残す：余剰を使う場合0",
+      "title": "ルナ報酬の例"
+    },
+    "stormSave": {
+      "check": "ポリシー確認：30秒",
+      "daily": "日次通常攻撃：追加上限0",
+      "map": "地図更新：2時間、読み取り専用",
+      "switch": "保存してから自動ストームをオン",
+      "title": "保存と有効化の例"
+    },
+    "stormTroops": {
+      "averages": "攻撃とプリセットの平均：読み取り専用",
+      "cap": "投入中の兵数上限：読み取り専用",
+      "donors": "供給城：表示順、一部在庫も利用可能",
+      "minimum": "最低残す兵：1,000人",
+      "title": "兵の輸入例"
     }
   },
   "autoStation": {
@@ -1682,6 +1727,309 @@
           }
         },
         "title": "兵を比例配分して移送"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "自動ストームはストーム城を開放・建設し、砦や資源島を攻撃し、兵を補充し、選んだルナの報酬を購入できます。",
+      "expectation": "各処理は最新のゲーム情報と保存済みの許可を使い、プレミアム建設、攻撃、購入は有効にした選択で制限されます。",
+      "name": "自動ストーム",
+      "summary": "ストーム城、攻撃、報酬を管理"
+    },
+    "recommendationIntro": "推奨値は自動ストームの通常利用の目安であり、保存済み設定は変更しません。",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "ストーム城の利用と目標取得の説明図",
+          "caption": "開始城の選択、取得方式、任意の目標有効化を示し、実際の購入やアカウントは表示しません。"
+        },
+        "items": {
+          "automatic_open": {
+            "description": "ストームが未開放なら、利用可能な公式開始城を選び、開放を許可する前に表示価格を確認します。",
+            "label": "ストーム城を自動で開放",
+            "recommendation": "価格を確認してから普段使う開始城を自動ストームに開かせる場合はオン。"
+          },
+          "blueprint": {
+            "description": "取得した目標は直ちに保存・有効化され、目標を一時停止すると調整が止まりますが保存済み目標は残ります。",
+            "label": "保存済み目標",
+            "recommendation": "通常の建設には確認済みの機能目標を有効にしておきます。"
+          },
+          "capture_castle": {
+            "description": "建設目標を取得する前に現在のストーム城を選びます。",
+            "label": "ストーム城",
+            "recommendation": "管理したい城を取得してください。"
+          },
+          "combat_only": {
+            "description": "砦や島での戦闘には取得済みの建設目標は不要です。",
+            "label": "目標なしの戦闘"
+          },
+          "decoration_preset": {
+            "description": "建設後に選択した装飾プリセットを任意で適用します。",
+            "label": "建設後の装飾プリセット",
+            "recommendation": "別の装飾配置が不要なら空欄のままにします。"
+          },
+          "exact": {
+            "description": "完全な複製のために対応するすべての目標情報を保存します。",
+            "label": "完全取得",
+            "recommendation": "目標全体を確認してから使います。"
+          },
+          "functional": {
+            "description": "各建物の位置を複写せず、ストームの基本機能に必要な目標を保存します。",
+            "label": "機能取得",
+            "recommendation": "普段の維持には機能を選びます。"
+          },
+          "layout": {
+            "description": "装飾を除いた建物の種類と位置を保存します。",
+            "label": "配置取得",
+            "recommendation": "建物の配置が重要な場合のみ使います。"
+          },
+          "open_settings": {
+            "description": "自動化カードから自動ストームの設定を開きます。",
+            "label": "設定を開く"
+          },
+          "starter_castle": {
+            "description": "次の未開放シーズンに使用する、現在利用可能な公式ストーム開始城を選びます。",
+            "label": "開く城",
+            "recommendation": "価格を確認してから手持ち資源で購入できる普段の開始城を選びます。"
+          }
+        },
+        "title": "ストーム城を開いて取得"
+      },
+      "combat": {
+        "image": {
+          "alt": "砦と島の攻撃設定の説明図",
+          "caption": "架空のアクアマリン島、砦レベル、目標順、占領防衛兵の例です。"
+        },
+        "items": {
+          "defenders": {
+            "description": "占領した島に残す防衛兵の種類と数を選び、一覧が空なら勝利確認後に生存兵を1人残します。",
+            "label": "島の防衛兵",
+            "recommendation": "生存兵1人では計画に足りない場合は防衛兵を指定します。"
+          },
+          "fort_preset": {
+            "description": "砦用に保存済みの兵と道具の編成を選びます。",
+            "label": "砦攻撃プリセット",
+            "recommendation": "普段の砦用プリセットを使います。"
+          },
+          "forts": {
+            "description": "公式の砦レベル40から80のうち選んだレベルへの攻撃を有効にします。",
+            "label": "ストームの砦",
+            "recommendation": "選んだ編成で安定して勝てるレベルだけオンにします。"
+          },
+          "horse": {
+            "description": "ストーム攻撃の移動に羽、コイン、ルビーのいずれかを選びます。",
+            "label": "馬の移動ブースト",
+            "recommendation": "ルビー移動を選ばず速く移動するなら移動の羽。"
+          },
+          "island_preset": {
+            "description": "島用に保存済みの兵と道具の編成を選びます。",
+            "label": "島攻撃プリセット",
+            "recommendation": "普段の島用プリセットを使います。"
+          },
+          "island_resources": {
+            "description": "攻撃してよい木材、石材、アクアマリンの島を選びます。",
+            "label": "島の資源",
+            "recommendation": "アクアマリンの収集にはアクアマリンを選びます。"
+          },
+          "island_sizes": {
+            "description": "選んだ資源について大きい島、小さい島、または両方を指定します。",
+            "label": "島の大きさ",
+            "recommendation": "通常のアクアマリン収集には大と小の両方。"
+          },
+          "islands": {
+            "description": "指定した資源と大きさに合う島の占領を有効にします。",
+            "label": "資源島",
+            "recommendation": "大小両方の島からアクアマリンを得たい場合はオン。"
+          },
+          "minimum_attacks": {
+            "description": "残り攻撃回数がこの値以上の砦だけを攻撃します。",
+            "label": "残り攻撃回数の下限",
+            "recommendation": "0で適格な砦をすべて許可します。"
+          },
+          "priority": {
+            "description": "有効な島と砦の目標順を決め、同じ列では優先順位、同順位では距離で選びます。",
+            "label": "攻撃目標の優先順位",
+            "recommendation": "アクアマリン収集には大きい島、小さい島、砦レベル80から40の順。"
+          }
+        },
+        "title": "砦と資源島を選択"
+      },
+      "construction": {
+        "image": {
+          "alt": "建設と予備量の設定の説明図",
+          "caption": "資源輸送、支出許可、予備量、港レベルを示す架空の操作例。"
+        },
+        "items": {
+          "demolition": {
+            "description": "移動も保管もできない建物を正確な目標位置から除去することを許可します。",
+            "label": "解体を許可",
+            "recommendation": "確認済みの配置を建て直す場合を除きオフ。"
+          },
+          "donor_reserves": {
+            "description": "資源輸送前に各供給城へ残す木材、石材、アクアマリンの量を指定します。",
+            "label": "供給城の保護予備量",
+            "recommendation": "普段の木材・石材の建設予算を守り、使わないアクアマリンは0。"
+          },
+          "harbor_level": {
+            "description": "港の目標レベルを1、2、3から選び、レベル2と3はプレミアム建設を使います。",
+            "label": "港の目標レベル",
+            "recommendation": "プレミアム改良を計画していない場合はレベル1。"
+          },
+          "harbor": {
+            "description": "取得した目標と異なっても港を選んだレベルに維持します。",
+            "label": "港を改良",
+            "recommendation": "通常利用ではオン、レベル1。"
+          },
+          "premium": {
+            "description": "プレミアム通貨を使う適格な建設手順を許可します。",
+            "label": "プレミアム費用を許可",
+            "recommendation": "プレミアム建設を予定していなければオフ。"
+          },
+          "resource_transport": {
+            "description": "不足する建設資源の確認済み輸送を供給城から許可します。",
+            "label": "不足資源を輸送",
+            "recommendation": "普段の建設にはオン。"
+          },
+          "skip_reserves": {
+            "description": "1分、5分、10分、30分、1時間、5時間、24時間の各短縮道具を指定個数残します。",
+            "label": "時間短縮道具の予備量",
+            "recommendation": "短時間の道具は他で使わなければ0、1時間、5時間、24時間の在庫は他のイベント用に残します。"
+          },
+          "storm_reserves": {
+            "description": "指定したストーム木材、石材、アクアマリンを建設に使わず残します。",
+            "label": "ストーム城の支出予備量",
+            "recommendation": "余剰を使うならストーム木材0、石材0、アクアマリンは予定した報酬予算分。"
+          },
+          "time_skips": {
+            "description": "選択した道具の予備量を残しつつ、利用可能な時間短縮を使います。",
+            "label": "建設時間短縮を使用",
+            "recommendation": "普段の建設を早めたい場合はオン。"
+          }
+        },
+        "title": "建設と資源保護を設定"
+      },
+      "luna": {
+        "image": {
+          "alt": "ルナの報酬設定の説明図",
+          "caption": "アクアマリンの予備量、回数制限付きの購入目標、繰り返し報酬、優先順位。"
+        },
+        "items": {
+          "cost_cap": {
+            "description": "各報酬についてゲームが示す価格と購入上限を確認します。",
+            "label": "価格と購入上限",
+            "recommendation": "有効化前に両方の読み取り専用の値を確認します。"
+          },
+          "keep_aqua": {
+            "description": "この量のアクアマリンをルナの購入に使わず残します。",
+            "label": "アクアマリンを残す",
+            "recommendation": "余剰をすべて報酬に使うなら0、そうでなければ予定量を確保します。"
+          },
+          "priority": {
+            "description": "番号が小さい目標を先に購入し、回数制限付きの目標を無制限より先に完了します。",
+            "label": "優先順位",
+            "recommendation": "希望する順番で1、2、3を使います。"
+          },
+          "search": {
+            "description": "購入を設定する前に公式のルナ報酬を名前で検索します。",
+            "label": "ルナの報酬を探す",
+            "recommendation": "本当に欲しい報酬を探します。"
+          },
+          "target_total": {
+            "description": "回数制限付き報酬の希望する総購入回数を設定します。",
+            "label": "目標の合計数",
+            "recommendation": "購入する予定の数だけ設定します。"
+          },
+          "unlimited": {
+            "description": "予備量と店の上限が許す間、適格な繰り返し報酬を購入し続けます。",
+            "label": "無制限",
+            "recommendation": "普段から欲しい繰り返し報酬にだけオン。"
+          },
+          "use": {
+            "description": "自動購入を許可する報酬を選びます。",
+            "label": "報酬を使う",
+            "recommendation": "欲しい報酬だけ有効にします。"
+          }
+        },
+        "title": "ルナのアクアマリン報酬を選択"
+      },
+      "save": {
+        "image": {
+          "alt": "自動ストームの保存と有効化の説明図",
+          "caption": "日次攻撃制限、ポリシー確認、読み取り専用の地図更新、自動化スイッチ。"
+        },
+        "items": {
+          "daily_limit": {
+            "description": "アカウント全体の日次通常攻撃数で新しい自動ストーム攻撃を止め、0ならこの追加制限を解除します。",
+            "label": "日次通常攻撃制限",
+            "recommendation": "アカウント全体の上限を使わなければ0。"
+          },
+          "enable": {
+            "description": "保存した選択の準備ができたら自動化カードで自動ストームをオンにします。",
+            "label": "自動化スイッチ",
+            "recommendation": "設定後にオン。"
+          },
+          "map_refresh": {
+            "description": "ストーム地図の正式な更新間隔を確認します。",
+            "label": "地図更新間隔",
+            "recommendation": "読み取り専用の間隔は2時間で、変更後は新しい走査を待ちます。"
+          },
+          "policy_check": {
+            "description": "自動ストームが設定と適格な作業を確認する間隔を指定します。",
+            "label": "ポリシー確認間隔",
+            "recommendation": "普段の30秒間隔を維持します。"
+          },
+          "save": {
+            "description": "自動化を有効にする前に城、建設、戦闘、兵の輸入、ルナの選択を保存します。",
+            "label": "設定を保存",
+            "recommendation": "すべての支出許可を確認してから保存します。"
+          }
+        },
+        "title": "自動ストームを保存して有効化"
+      },
+      "troops": {
+        "image": {
+          "alt": "兵の輸入と読み取り専用の推定値の説明図",
+          "caption": "供給城の順序、残す兵1,000人、読み取り専用の容量推定値。"
+        },
+        "items": {
+          "attack_history": {
+            "description": "直近24時間でリセット以降に報告されたストーム攻撃の平均回数を確認します。",
+            "label": "リセット以降の平均攻撃数",
+            "recommendation": "輸入量を変更する前にこの読み取り専用の推定値を確認します。"
+          },
+          "committed_cap": {
+            "description": "駐留兵、移動、輸送中、帰還中を含めて自動計算した上限を確認します。",
+            "label": "ストームに投入中の兵数上限",
+            "recommendation": "輸入を増やす前にこの読み取り専用の上限を確認します。"
+          },
+          "donors": {
+            "description": "供給城を表示順に選び、一部の在庫があれば少量の輸送に利用できます。",
+            "label": "供給城",
+            "recommendation": "普段使う兵の供給元を希望順に選びます。"
+          },
+          "import": {
+            "description": "供給城から不足する攻撃兵または選んだ防衛兵をストームへ輸入します。",
+            "label": "不足兵を輸入",
+            "recommendation": "ストーム城に定期的な補給が必要ならオン。"
+          },
+          "map_coverage": {
+            "description": "表示された目標を頼りにする前に地図の調査範囲を確認します。",
+            "label": "地図の調査範囲",
+            "recommendation": "目標が見えないときは新しい調査を待ちます。"
+          },
+          "minimum_kept": {
+            "description": "攻撃開始後もストームに最低この人数の兵を残し、有効なプリセットの構成比率を維持します。",
+            "label": "出撃後に残す最低兵数",
+            "recommendation": "実際の軍に合わせた通常の予備として1,000人。"
+          },
+          "preset_average": {
+            "description": "有効な攻撃プリセットが必要とする平均兵数を、選んだ島の防衛兵を含めて確認します。",
+            "label": "有効なプリセットの平均",
+            "recommendation": "この読み取り専用の推定値を自分の軍と比べます。"
+          }
+        },
+        "title": "ストームの兵を輸入して確認"
       }
     }
   }

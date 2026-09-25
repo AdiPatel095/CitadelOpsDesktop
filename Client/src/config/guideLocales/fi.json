@@ -37,7 +37,10 @@
     "khanPreviewTitle": "Esimerkki Automaattisen Khanin määrityksestä",
     "beriGuideIntro": "Määritä Auto Beri seuraamalla näitä vaiheita; suurenna esimerkkipaneeli valitsemalla se.",
     "beriGuideTitle": "Auto Berin opas",
-    "beriPreviewTitle": "Esimerkki Auto Berin asetuksista"
+    "beriPreviewTitle": "Esimerkki Auto Berin asetuksista",
+    "stormGuideIntro": "Aseta Auto Storm näiden vaiheiden avulla; valitse esimerkkipaneeli suurentaaksesi sen.",
+    "stormGuideTitle": "Auto Storm -opas",
+    "stormPreviewTitle": "Esimerkki Auto Stormin asetuksista"
   },
   "autoTower": {
     "recommendationIntro": "Nämä suositukset koskevat säännöllistä käyttöä; tarkista ne ennen tallentamista.",
@@ -533,6 +536,48 @@
       "next": "Seuraava lähetys: enintään 1 B luovuttajan varastosta",
       "stock": "Leirivarasto: 2 A ja 0 B",
       "title": "Esimerkki suhteellisista siirroista"
+    },
+    "stormCastle": {
+      "blueprint": "Tallennettu kohde aktiivinen; keskeytys säilyttää sen",
+      "capture": "Nykyinen linna: Toiminnallinen kohde",
+      "decorations": "Koriste-esiasetus: valinnainen",
+      "title": "Esimerkki Myrskylinnan käytöstä",
+      "unlock": "Automaattinen avaaminen: päällä hinnan tarkistamisen jälkeen"
+    },
+    "stormCombat": {
+      "defenders": "Miehityspuolustajat: valitut tai yksi eloonjäänyt",
+      "forts": "Linnoitukset: valitut tasot 40–80",
+      "islands": "Akvamariinisaaret: suuret ja pienet",
+      "priority": "Suuret, pienet, sitten linnoitukset 80–40",
+      "title": "Esimerkki linnoitus- ja saaristohyökkäyksistä"
+    },
+    "stormConstruction": {
+      "harbor": "Satama: päällä, taso 1",
+      "resources": "Myrskypuu 0; kivi 0; akvamariini suunniteltu",
+      "spending": "Premium ja purkaminen: pois",
+      "title": "Esimerkki rakentamisesta ja varannoista",
+      "transport": "Resurssikuljetus: päällä"
+    },
+    "stormLuna": {
+      "cost": "Hinta ja ostoraja: vain luettavat",
+      "limited": "Rajatut tavoitteet ennen rajattomia palkintoja",
+      "priority": "Etusija 1, 2, 3; pienin ensin",
+      "reserve": "Säilytä akvamariinia: 0 ylijäämää käytettäessä",
+      "title": "Esimerkki Lunan palkinnoista"
+    },
+    "stormSave": {
+      "check": "Toimintatavan tarkistus: 30 sekuntia",
+      "daily": "Päivittäiset tavalliset hyökkäykset: 0 lisärajaa",
+      "map": "Kartan päivitys: 2 tuntia, vain luettava",
+      "switch": "Tallenna ja käynnistä sitten Auto Storm",
+      "title": "Esimerkki tallennuksen ja käyttöönoton kulusta"
+    },
+    "stormTroops": {
+      "averages": "Hyökkäys- ja esiasetuskeskiarvot: vain luettavat",
+      "cap": "Sidottujen joukkojen raja: vain luettava",
+      "donors": "Luovuttajat: näytetty järjestys, osittainen varasto sallittu",
+      "minimum": "Jäljelle vähintään: 1 000 joukkoa",
+      "title": "Esimerkki joukkojen tuonnista"
     }
   },
   "autoStation": {
@@ -1682,6 +1727,309 @@
           }
         },
         "title": "Määritä suhteelliset joukkojen siirrot"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "Auto Storm voi avata ja rakentaa Myrskylinnan, hyökätä linnoituksiin ja resurssisaarille, tuoda joukkoja ja ostaa valittuja Lunan palkintoja.",
+      "expectation": "Jokainen toiminto käyttää tuoreita pelitietoja ja tallennettuja lupiasi; premium-rakentaminen, hyökkäykset ja ostot rajoittuvat valintoihisi.",
+      "name": "Auto Storm",
+      "summary": "Hallitse Myrskylinnaa, hyökkäyksiä ja palkintoja"
+    },
+    "recommendationIntro": "Suositukset kuvaavat Auto Stormin tavallista käyttöä; ne ovat neuvoja eivätkä muuta tallennettuja asetuksia.",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "Esimerkkikuva Myrskylinnan avaamisesta ja kohteen tallentamisesta",
+          "caption": "Aloituslinnan valinta, tallennustavat ja vapaaehtoinen kohteen aktivointi ilman oikeaa ostoa tai asiakastiliä."
+        },
+        "items": {
+          "automatic_open": {
+            "description": "Kun Myrsky on lukittu, valitse saatavilla oleva virallinen aloituslinna ja tarkista sen näytetty hinta ennen avaamisen sallimista.",
+            "label": "Avaa Myrskylinna automaattisesti",
+            "recommendation": "Päällä, jos haluat Auto Stormin avaavan tavallisen aloituslinnan hinnan tarkistamisen jälkeen."
+          },
+          "blueprint": {
+            "description": "Tallennettu kohde otetaan heti käyttöön; Keskeytä kohde pysäyttää sovituksen mutta säilyttää tallennetut kohteet.",
+            "label": "Tallennettu kohde",
+            "recommendation": "Pidä tarkistettu Toiminnallinen kohde käytössä tavallista rakentamista varten."
+          },
+          "capture_castle": {
+            "description": "Valitse nykyinen Myrskylinnasi ennen rakennuskohteen tallentamista.",
+            "label": "Myrskylinna",
+            "recommendation": "Tallenna linna, jota aiot hallita."
+          },
+          "combat_only": {
+            "description": "Linnoituksia ja saaria voi vastaan taistella ilman tallennettua rakennuskohdetta.",
+            "label": "Taistelu ilman kohdetta"
+          },
+          "decoration_preset": {
+            "description": "Käytä halutessasi valittua koriste-esiasetusta rakentamisen jälkeen.",
+            "label": "Koriste-esiasetus rakentamisen jälkeen",
+            "recommendation": "Jätä tyhjäksi, ellet halua erillistä koristeasettelua."
+          },
+          "exact": {
+            "description": "Tallenna kaikki tuetut kohdetiedot tarkkaa kopiota varten.",
+            "label": "Tarkka tallennus",
+            "recommendation": "Käytä vasta koko kohteen tarkistamisen jälkeen."
+          },
+          "functional": {
+            "description": "Tallenna kohde Myrskyn tärkeimmille toiminnoille kopioimatta rakennusten jokaista sijaintia.",
+            "label": "Toiminnallinen tallennus",
+            "recommendation": "Toiminnallinen sopii tavalliseen ylläpitoon."
+          },
+          "layout": {
+            "description": "Tallenna rakennustyypit ja sijainnit ilman koristeita.",
+            "label": "Asettelun tallennus",
+            "recommendation": "Käytä vain, jos rakennusten sijainnilla on väliä."
+          },
+          "open_settings": {
+            "description": "Avaa Auto Stormin asetukset Automaatio-kortista.",
+            "label": "Avaa asetukset"
+          },
+          "starter_castle": {
+            "description": "Valitse seuraavaa lukittua kautta varten tällä hetkellä saatavilla oleva virallinen Myrskyn aloituslinna.",
+            "label": "Avattava linna",
+            "recommendation": "Valitse tavallinen kohtuuhintainen aloituslinna hinnan tarkistamisen jälkeen."
+          }
+        },
+        "title": "Avaa ja tallenna Myrskylinnasi"
+      },
+      "combat": {
+        "image": {
+          "alt": "Esimerkkikuva linnoitus- ja saaristohyökkäysten asetuksista",
+          "caption": "Esimerkin akvamariinisaaret, linnoitustasot, kohdejärjestys ja miehityspuolustajat."
+        },
+        "items": {
+          "defenders": {
+            "description": "Valitse vallatulle saarelle jäävien puolustajien lajit ja määrät; tyhjä lista jättää yhden eloonjääneen vahvistetun voiton jälkeen.",
+            "label": "Saaren puolustusyksiköt",
+            "recommendation": "Valitse puolustajia, jos yksi eloonjäänyt ei riitä suunnitelmaasi."
+          },
+          "fort_preset": {
+            "description": "Valitse linnoituksia varten tallennettu joukko- ja työkalumuodostelma.",
+            "label": "Linnoitushyökkäyksen esiasetus",
+            "recommendation": "Käytä tavallista linnoitusesiasetustasi."
+          },
+          "forts": {
+            "description": "Ota hyökkäykset käyttöön valituille virallisille linnoitustasoille 40–80.",
+            "label": "Myrskyn linnoitukset",
+            "recommendation": "Päällä tasoille, jotka valittu esiasetus päihittää luotettavasti."
+          },
+          "horse": {
+            "description": "Valitse Myrskyhyökkäysten matkustustavaksi höyhen, kolikot tai rubiinit.",
+            "label": "Hevosmatkan tehostus",
+            "recommendation": "Matkahöyhen nopeaan matkaan ilman rubiinimatkaa."
+          },
+          "island_preset": {
+            "description": "Valitse saaria varten tallennettu joukko- ja työkalumuodostelma.",
+            "label": "Saaren hyökkäysesiasetus",
+            "recommendation": "Käytä tavallista saariesiasetustasi."
+          },
+          "island_resources": {
+            "description": "Valitse, mille puu-, kivi- tai akvamariinisaarille voidaan hyökätä.",
+            "label": "Saaren resurssit",
+            "recommendation": "Valitse akvamariini sen keräämistä varten."
+          },
+          "island_sizes": {
+            "description": "Valitse suuria, pieniä tai kummankin kokoisia saaria valituille resursseille.",
+            "label": "Saaren koot",
+            "recommendation": "Suuret ja pienet tavalliseen akvamariinin keräämiseen."
+          },
+          "islands": {
+            "description": "Ota käyttöön valittujen resurssien ja kokojen saarten valloitus.",
+            "label": "Resurssisaaret",
+            "recommendation": "Päällä, jos haluat akvamariinia suurilta ja pieniltä saarilta."
+          },
+          "minimum_attacks": {
+            "description": "Hyökkää vain linnoituksiin, joissa on vähintään näin monta hyökkäystä jäljellä.",
+            "label": "Hyökkäyksiä jäljellä vähintään",
+            "recommendation": "0 sallii kaikki sopivat linnoitukset."
+          },
+          "priority": {
+            "description": "Järjestä käytössä olevat saari- ja linnoituskohteet; etusija ratkaisee rivillä ja etäisyys tasatilanteessa.",
+            "label": "Hyökkäyskohteiden etusija",
+            "recommendation": "Suuret saaret, pienet saaret ja sitten tasojen 80–40 linnoitukset akvamariinin keräämiseen."
+          }
+        },
+        "title": "Valitse linnoitukset ja resurssisaaret"
+      },
+      "construction": {
+        "image": {
+          "alt": "Esimerkkikuva rakentamisen ja varantojen asetuksista",
+          "caption": "Resurssikuljetus, kulutusluvat, varannot ja sataman taso ovat esimerkkejä."
+        },
+        "items": {
+          "demolition": {
+            "description": "Salli sellaisten rakennusten poistaminen täsmällisestä kohteesta, joita ei voi siirtää tai varastoida.",
+            "label": "Salli purkaminen",
+            "recommendation": "Pois, ellet rakenna uudelleen tarkistettua asettelua."
+          },
+          "donor_reserves": {
+            "description": "Jätä valitut puu-, kivi- ja akvamariinimäärät jokaiselle luovuttajalle ennen resurssikuljetusta.",
+            "label": "Luovuttajien suojatut varannot",
+            "recommendation": "Suojaa tavallinen puu- ja kivirakennusbudjettisi; akvamariini 0, jos sitä ei käytetä."
+          },
+          "harbor_level": {
+            "description": "Valitse sataman tavoitetaso 1, 2 tai 3; tasot 2 ja 3 vaativat premium-rakennuspolkuja.",
+            "label": "Sataman tavoitetaso",
+            "recommendation": "Taso 1, ellei premium-parannuksia ole suunniteltu."
+          },
+          "harbor": {
+            "description": "Pidä satama valitulla tasolla, vaikka tallennettu kohde olisi erilainen.",
+            "label": "Paranna satamaa",
+            "recommendation": "Päällä tasolla 1 tavallisessa käytössä."
+          },
+          "premium": {
+            "description": "Salli kelvolliset rakennusvaiheet, jotka käyttävät premium-valuuttaa.",
+            "label": "Salli premium-kulut",
+            "recommendation": "Pois, ellei premium-rakentamista ole suunniteltu."
+          },
+          "resource_transport": {
+            "description": "Salli puuttuvien rakennusresurssien vahvistetut toimitukset luovuttajalinnoista.",
+            "label": "Kuljeta puuttuvat resurssit",
+            "recommendation": "Päällä tavallista rakentamista varten."
+          },
+          "skip_reserves": {
+            "description": "Jätä varalle valittu määrä kutakin 1 min, 5 min, 10 min, 30 min, 1 h, 5 h ja 24 h aikaohitusta.",
+            "label": "Aikaohitukset varalla",
+            "recommendation": "Lyhyitä ohituksia 0, ellei niitä tarvita muualla; säästä 1 h, 5 h ja 24 h varastoa muihin tapahtumiin."
+          },
+          "storm_reserves": {
+            "description": "Estä valittujen Myrskypuun, kiven ja akvamariinin määrien käyttö rakentamisessa.",
+            "label": "Myrskylinnan kulutusvarannot",
+            "recommendation": "Myrskypuu 0 ja kivi 0, jos käytät ylijäämää; akvamariini suunnitellun palkintobudjetin mukaan."
+          },
+          "time_skips": {
+            "description": "Käytä sopivia aikaohituksia säilyttäen valitut esinevarannot.",
+            "label": "Käytä rakentamisen aikaohituksia",
+            "recommendation": "Päällä, jos haluat nopeuttaa tavallista rakentamista."
+          }
+        },
+        "title": "Aseta rakentaminen ja resurssisuoja"
+      },
+      "luna": {
+        "image": {
+          "alt": "Esimerkkikuva Lunan palkintojen asetuksista",
+          "caption": "Akvamariinivaranto, rajatut ostotavoitteet, toistettavat palkinnot ja etusija."
+        },
+        "items": {
+          "cost_cap": {
+            "description": "Lue pelin ilmoittama kunkin palkinnon hinta ja ostoraja.",
+            "label": "Hinta ja ostoraja",
+            "recommendation": "Tarkista molemmat vain luettavat arvot ennen käyttöönottoa."
+          },
+          "keep_aqua": {
+            "description": "Jätä tämä akvamariinimäärä Lunan ostojen ulkopuolelle.",
+            "label": "Säilytä akvamariinia",
+            "recommendation": "0, jos kaikki ylijäämä voidaan käyttää palkintoihin; muuten varaa suunnittelemasi määrä."
+          },
+          "priority": {
+            "description": "Osta pienemmän numeron tavoitteet ensin ja täytä rajatut tavoitteet ennen rajoittamattomia.",
+            "label": "Etusija",
+            "recommendation": "Käytä 1, 2 ja 3 haluamassasi järjestyksessä."
+          },
+          "search": {
+            "description": "Etsi virallisia Lunan palkintoja nimellä ennen oston määrittämistä.",
+            "label": "Etsi Lunan palkinto",
+            "recommendation": "Etsi palkinto, jonka todella haluat."
+          },
+          "target_total": {
+            "description": "Aseta rajatulle palkinnolle haluttu ostojen kokonaismäärä.",
+            "label": "Tavoiteltu kokonaismäärä",
+            "recommendation": "Aseta vain määrä, jonka aiot ostaa."
+          },
+          "unlimited": {
+            "description": "Jatka sopivan toistettavan palkinnon ostamista niin kauan kuin varanto ja kaupan raja sallivat.",
+            "label": "Rajaton",
+            "recommendation": "Päällä vain säännöllisesti haluamillesi toistettaville palkinnoille."
+          },
+          "use": {
+            "description": "Valitse palkinto sen automaattista ostoa varten.",
+            "label": "Käytä palkintoa",
+            "recommendation": "Ota käyttöön vain halutut palkinnot."
+          }
+        },
+        "title": "Valitse Lunan akvamariinipalkinnot"
+      },
+      "save": {
+        "image": {
+          "alt": "Esimerkkikuva Auto Stormin tallennuksesta ja käyttöönotosta",
+          "caption": "Päivittäinen hyökkäysraja, toimintatavan tarkistus, vain luettava kartan päivitys ja automaation kytkin."
+        },
+        "items": {
+          "daily_limit": {
+            "description": "Pysäytä uudet Auto Storm -hyökkäykset koko tilin päivittäisessä tavallisten hyökkäysten määrässä; 0 poistaa lisärajan.",
+            "label": "Päivittäinen tavallisten hyökkäysten raja",
+            "recommendation": "0, ellet käytä tilin yhteistä rajaa."
+          },
+          "enable": {
+            "description": "Ota Auto Storm käyttöön Automaatio-kortissa, kun tallennetut valinnat ovat valmiit.",
+            "label": "Automaation kytkin",
+            "recommendation": "Päälle asetusten jälkeen."
+          },
+          "map_refresh": {
+            "description": "Lue Myrskykartan virallinen päivitysväli.",
+            "label": "Kartan päivitysväli",
+            "recommendation": "Vain luettava väli on 2 tuntia; odota muutosten jälkeen uutta kartoitusta."
+          },
+          "policy_check": {
+            "description": "Aseta, kuinka usein Auto Storm tarkistaa asetukset ja mahdolliset tehtävät.",
+            "label": "Toimintatavan tarkistusväli",
+            "recommendation": "Pidä tavallinen 30 sekunnin väli."
+          },
+          "save": {
+            "description": "Tallenna linna-, rakentamis-, taistelu-, joukkojen tuonti- ja Luna-valinnat ennen automaation käynnistämistä.",
+            "label": "Tallenna asetukset",
+            "recommendation": "Tallenna kaikkien kulutuslupien tarkistamisen jälkeen."
+          }
+        },
+        "title": "Tallenna Auto Storm ja ota se käyttöön"
+      },
+      "troops": {
+        "image": {
+          "alt": "Esimerkkikuva joukkojen tuonnista ja vain luettavista arvioista",
+          "caption": "Luovuttajien järjestys, 1 000 jäljelle jätettävää joukkoa ja vain luettavat kapasiteettiarviot."
+        },
+        "items": {
+          "attack_history": {
+            "description": "Lue Myrskyhyökkäysten keskimääräinen määrä nollauksen jälkeen viimeisten 24 tunnin ajalta.",
+            "label": "Hyökkäysten keskiarvo nollauksen jälkeen",
+            "recommendation": "Tarkista tämä vain luettava arvio ennen tuontitarpeen muuttamista."
+          },
+          "committed_cap": {
+            "description": "Lue automaattinen raja, joka sisältää sijoitetut joukot, liikkeet, kuljetukset ja palaavat joukot.",
+            "label": "Myrskyyn sidottujen joukkojen raja",
+            "recommendation": "Tarkista tämä vain luettava raja ennen tuonnin lisäämistä."
+          },
+          "donors": {
+            "description": "Valitse luovuttajalinnat näytetyssä järjestyksessä; osittainen varasto voi toimittaa pienemmän erän.",
+            "label": "Luovuttajalinnat",
+            "recommendation": "Valitse tavalliset joukkotoimittajasi haluamassasi järjestyksessä."
+          },
+          "import": {
+            "description": "Tuo puuttuvat hyökkäys- tai valitut puolustusjoukot Myrskyyn luovuttajalinnoista.",
+            "label": "Tuo puuttuvat joukot",
+            "recommendation": "Päällä, jos Myrskylinnasi tarvitsee säännöllistä joukkotäydennystä."
+          },
+          "map_coverage": {
+            "description": "Tarkista kartan kattavuus ennen kuin luotat näytettyihin kohteisiin.",
+            "label": "Kartan kattavuus",
+            "recommendation": "Odota ajantasaista kattavuutta, jos kohteita puuttuu."
+          },
+          "minimum_kept": {
+            "description": "Pidä Myrskyssä vähintään näin monta joukkoa hyökkäyksen lähettämisen jälkeen ja säilytä käytössä olevien esiasetusten sekoitus.",
+            "label": "Joukkoja jäljellä vähintään lähetyksen jälkeen",
+            "recommendation": "1 000 joukkoa tavalliseksi varannoksi, mukautettuna omaan armeijaasi."
+          },
+          "preset_average": {
+            "description": "Lue aktiivisten hyökkäysesiasetusten keskimääräinen joukkojen tarve, mukaan lukien valitut saaren puolustajat.",
+            "label": "Keskimääräinen aktiivinen esiasetus",
+            "recommendation": "Vertaa tätä vain luettavaa arviota armeijaasi."
+          }
+        },
+        "title": "Tuo ja seuraa Myrskyn joukkoja"
       }
     }
   }

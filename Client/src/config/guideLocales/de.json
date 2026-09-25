@@ -37,7 +37,10 @@
     "khanPreviewTitle": "Beispiel für Auto-Khan-Einstellungen",
     "beriGuideIntro": "Befolge diese Schritte für Auto Beri World; wähle ein Beispielpanel zum Vergrößern.",
     "beriGuideTitle": "Anleitung für Auto Beri World",
-    "beriPreviewTitle": "Beispiel für die Einrichtung von Auto Beri World"
+    "beriPreviewTitle": "Beispiel für die Einrichtung von Auto Beri World",
+    "stormGuideIntro": "Folgen Sie diesen Schritten zur Einrichtung von Auto Storm; wählen Sie ein Beispielbild zum Vergrößern.",
+    "stormGuideTitle": "Auto-Storm-Anleitung",
+    "stormPreviewTitle": "Einrichtungsbeispiel für Auto Storm"
   },
   "autoTower": {
     "recommendationIntro": "Diese Empfehlungen gelten für den regelmäßigen Betrieb; prüfe sie vor dem Speichern.",
@@ -533,6 +536,48 @@
       "next": "Nächste Sendung: bis zu 1 B aus dem Spenderbestand",
       "stock": "Lagerbestand: 2 A und 0 B",
       "title": "Beispiel für verhältnismäßige Transfers"
+    },
+    "stormCastle": {
+      "blueprint": "Gespeichertes Ziel aktiv; Pausieren behält es",
+      "capture": "Aktuelle Burg: funktionales Ziel",
+      "decorations": "Dekorationsvorlage: optional",
+      "title": "Beispiel für Sturm-Burg-Zugang",
+      "unlock": "Automatische Freischaltung: ein nach Preisprüfung"
+    },
+    "stormCombat": {
+      "defenders": "Besatzungsverteidiger: ausgewählt oder ein Überlebender",
+      "forts": "Festungen: ausgewählte Stufen 40–80",
+      "islands": "Aquamarin-Inseln: groß und klein",
+      "priority": "Groß, klein, dann Festungen von 80 bis 40",
+      "title": "Beispiel für Festungs- und Inselangriffe"
+    },
+    "stormConstruction": {
+      "harbor": "Hafen: ein, Stufe 1",
+      "resources": "Sturmholz 0; Stein 0; Aquamarin nach Plan",
+      "spending": "Premium und Abriss: aus",
+      "title": "Beispiel für Bau und Reserven",
+      "transport": "Rohstofftransport: ein"
+    },
+    "stormLuna": {
+      "cost": "Kosten und Kaufobergrenze: schreibgeschützt",
+      "limited": "Begrenzte Ziele vor unbegrenzten Belohnungen",
+      "priority": "Priorität 1, 2, 3; niedriger zuerst",
+      "reserve": "Aquamarin behalten: 0 bei Nutzung des Überschusses",
+      "title": "Beispiel für Luna-Belohnungen"
+    },
+    "stormSave": {
+      "check": "Richtlinienprüfung: 30 Sekunden",
+      "daily": "Tägliche normale Angriffe: 0 zusätzliche Grenze",
+      "map": "Kartenaktualisierung: 2 Stunden, schreibgeschützt",
+      "switch": "Speichern, dann Auto Storm aktivieren",
+      "title": "Beispiel für Speichern und Aktivieren"
+    },
+    "stormTroops": {
+      "averages": "Angriffs- und Vorlagendurchschnitt: schreibgeschützt",
+      "cap": "Gebundene Truppengrenze: schreibgeschützt",
+      "donors": "Spender: angezeigte Reihenfolge, Teilbestand erlaubt",
+      "minimum": "Mindestens behalten: 1.000 Truppen",
+      "title": "Beispiel für Truppenimport"
     }
   },
   "autoStation": {
@@ -1682,6 +1727,309 @@
           }
         },
         "title": "Verhältnismäßige Truppentransfers einstellen"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "Auto Storm kann eine Sturm-Burg öffnen und ausbauen, Festungen und Rohstoffinseln angreifen, Truppen importieren und ausgewählte Luna-Belohnungen kaufen.",
+      "expectation": "Jeder Bereich nutzt aktuelle Spieldaten und Ihre gespeicherten Berechtigungen; Premium-Bau, Angriffe und Käufe bleiben auf Ihre aktivierten Entscheidungen begrenzt.",
+      "name": "Auto Storm",
+      "summary": "Sturm-Burg, Angriffe und Belohnungen verwalten"
+    },
+    "recommendationIntro": "Empfohlene Werte beschreiben den regelmäßigen Einsatz von Auto Storm; sie dienen nur als Orientierung und ändern keine gespeicherten Einstellungen.",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "Beispiel für den Zugang zur Sturm-Burg und die Zielerfassung",
+          "caption": "Starter-Auswahl, Erfassungsmodi und optionale Zielaktivierung; kein echter Kauf und kein Konto werden gezeigt."
+        },
+        "items": {
+          "automatic_open": {
+            "description": "Wenn Sturm gesperrt ist, wählen Sie eine verfügbare offizielle Starter-Burg und prüfen den angezeigten Preis, bevor Sie die Freischaltung zulassen.",
+            "label": "Sturm-Burg automatisch öffnen",
+            "recommendation": "Ein, wenn Auto Storm nach Prüfung des Preises eine übliche Starter-Burg öffnen soll."
+          },
+          "blueprint": {
+            "description": "Ein erfasstes Ziel wird sofort gespeichert und aktiviert; Ziel pausieren stoppt den Abgleich, behält gespeicherte Ziele jedoch bei.",
+            "label": "Gespeichertes Ziel",
+            "recommendation": "Für den normalen Bau ein geprüftes funktionales Ziel aktiv lassen."
+          },
+          "capture_castle": {
+            "description": "Wählen Sie Ihre aktuelle Sturm-Burg, bevor Sie ein Bauziel erfassen.",
+            "label": "Sturm-Burg",
+            "recommendation": "Erfassen Sie die Burg, die Sie verwalten möchten."
+          },
+          "combat_only": {
+            "description": "Kämpfe gegen Festungen und Inseln benötigen kein erfasstes Bauziel.",
+            "label": "Kampf ohne Ziel"
+          },
+          "decoration_preset": {
+            "description": "Wenden Sie nach dem Bau optional eine ausgewählte Dekorationsvorlage an.",
+            "label": "Dekorationsvorlage nach dem Bau",
+            "recommendation": "Leer lassen, sofern Sie keine eigene Dekorationsanordnung möchten."
+          },
+          "exact": {
+            "description": "Speichern Sie alle unterstützten Zieldetails für eine genaue Kopie.",
+            "label": "Exakte Erfassung",
+            "recommendation": "Nur nach Prüfung des gesamten Ziels verwenden."
+          },
+          "functional": {
+            "description": "Speichern Sie ein Ziel für grundlegende Sturm-Funktionen, ohne jede Gebäudeposition zu kopieren.",
+            "label": "Funktionale Erfassung",
+            "recommendation": "Funktional für die normale Instandhaltung."
+          },
+          "layout": {
+            "description": "Speichern Sie Gebäudetypen und Positionen ohne Dekorationen.",
+            "label": "Layout-Erfassung",
+            "recommendation": "Nur verwenden, wenn die Gebäudeplatzierung wichtig ist."
+          },
+          "open_settings": {
+            "description": "Öffnen Sie die Auto-Storm-Einstellungen über die Automatisierungskarte.",
+            "label": "Einstellungen öffnen"
+          },
+          "starter_castle": {
+            "description": "Wählen Sie die derzeit verfügbare offizielle Sturm-Starter-Burg für die nächste gesperrte Saison.",
+            "label": "Zu öffnende Burg",
+            "recommendation": "Wählen Sie nach Preisprüfung einen erschwinglichen üblichen Starter."
+          }
+        },
+        "title": "Sturm-Burg öffnen und erfassen"
+      },
+      "combat": {
+        "image": {
+          "alt": "Beispiel für Einstellungen zu Festungs- und Inselangriffen",
+          "caption": "Beispielhafte Aquamarin-Inseln, Festungsstufen, Zielreihenfolge und Besatzungsverteidiger."
+        },
+        "items": {
+          "defenders": {
+            "description": "Wählen Sie Art und Anzahl der Verteidiger einer eroberten Insel; eine leere Liste lässt nach bestätigtem Sieg einen Überlebenden zurück.",
+            "label": "Insel-Verteidigungseinheiten",
+            "recommendation": "Wählen Sie Verteidiger, wenn ein Überlebender für Ihren Plan nicht reicht."
+          },
+          "fort_preset": {
+            "description": "Wählen Sie eine gespeicherte Truppen- und Werkzeugformation für Festungen.",
+            "label": "Festungs-Angriffsvorlage",
+            "recommendation": "Verwenden Sie Ihre übliche Festungsvorlage."
+          },
+          "forts": {
+            "description": "Aktivieren Sie Angriffe auf ausgewählte offizielle Festungsstufen von 40 bis 80.",
+            "label": "Sturm-Festungen",
+            "recommendation": "Ein für Stufen, die Ihre ausgewählte Vorlage zuverlässig bewältigt."
+          },
+          "horse": {
+            "description": "Wählen Sie für Sturm-Angriffe die Reise mit Feder, Münzen oder Rubinen.",
+            "label": "Pferde-Reisebonus",
+            "recommendation": "Reisefeder für schnelle Reisen ohne Rubin-Reise."
+          },
+          "island_preset": {
+            "description": "Wählen Sie eine gespeicherte Truppen- und Werkzeugformation für Inseln.",
+            "label": "Insel-Angriffsvorlage",
+            "recommendation": "Verwenden Sie Ihre übliche Inselvorlage."
+          },
+          "island_resources": {
+            "description": "Wählen Sie, welche Holz-, Stein- oder Aquamarin-Inseln angegriffen werden dürfen.",
+            "label": "Insel-Rohstoffe",
+            "recommendation": "Aquamarin zum Sammeln von Aquamarin auswählen."
+          },
+          "island_sizes": {
+            "description": "Wählen Sie große oder kleine Inseln der ausgewählten Rohstoffe oder beide Größen.",
+            "label": "Inselgrößen",
+            "recommendation": "Groß und klein für regelmäßiges Aquamarin-Sammeln."
+          },
+          "islands": {
+            "description": "Aktivieren Sie die Eroberung von Inseln mit ausgewählten Rohstoffen und Größen.",
+            "label": "Rohstoffinseln",
+            "recommendation": "Ein, wenn Sie Aquamarin von großen und kleinen Inseln möchten."
+          },
+          "minimum_attacks": {
+            "description": "Greifen Sie nur Festungen mit mindestens dieser Anzahl verbleibender Angriffe an.",
+            "label": "Mindestens verbleibende Angriffe",
+            "recommendation": "0 erlaubt jede geeignete Festung."
+          },
+          "priority": {
+            "description": "Ordnen Sie aktivierte Insel- und Festungsziele; die Priorität entscheidet innerhalb einer Reihe, bei Gleichstand die Entfernung.",
+            "label": "Angriffsziel-Priorität",
+            "recommendation": "Große Inseln, kleine Inseln, dann Festungen von Stufe 80 bis 40 zum Aquamarin-Sammeln."
+          }
+        },
+        "title": "Festungen und Rohstoffinseln auswählen"
+      },
+      "construction": {
+        "image": {
+          "alt": "Beispiel für Bau- und Reserveeinstellungen",
+          "caption": "Rohstofftransport, Ausgabenberechtigungen, Reserven und Hafenstufe als Beispielbedienelemente."
+        },
+        "items": {
+          "demolition": {
+            "description": "Erlauben Sie die zielgenaue Entfernung von Gebäuden, die weder verschoben noch gelagert werden können.",
+            "label": "Abriss erlauben",
+            "recommendation": "Aus, sofern Sie kein geprüftes Layout neu aufbauen."
+          },
+          "donor_reserves": {
+            "description": "Behalten Sie ausgewählte Mengen an Holz, Stein und Aquamarin bei jedem Spender vor dem Rohstofftransport zurück.",
+            "label": "Geschützte Spenderreserven",
+            "recommendation": "Schützen Sie Ihr übliches Bau-Budget für Holz und Stein; Aquamarin 0, wenn ungenutzt."
+          },
+          "harbor_level": {
+            "description": "Wählen Sie die Hafen-Zielstufe 1, 2 oder 3; Stufen 2 und 3 nutzen Premium-Bauwege.",
+            "label": "Hafen-Zielstufe",
+            "recommendation": "Stufe 1, sofern keine Premium-Aufwertung geplant ist."
+          },
+          "harbor": {
+            "description": "Halten Sie den Hafen auf der gewählten Stufe, auch wenn das erfasste Ziel abweicht.",
+            "label": "Hafen ausbauen",
+            "recommendation": "Ein mit Stufe 1 für den normalen Einsatz."
+          },
+          "premium": {
+            "description": "Erlauben Sie geeignete Bauschritte, die Premium-Währung kosten.",
+            "label": "Premium-Kosten erlauben",
+            "recommendation": "Aus, sofern Premium-Bau nicht geplant ist."
+          },
+          "resource_transport": {
+            "description": "Erlauben Sie bestätigte Lieferungen fehlender Baurohstoffe aus Spenderburgen.",
+            "label": "Fehlende Rohstoffe transportieren",
+            "recommendation": "Ein für den regelmäßigen Bau."
+          },
+          "skip_reserves": {
+            "description": "Behalten Sie die gewählte Anzahl jedes 1-Minuten-, 5-Minuten-, 10-Minuten-, 30-Minuten-, 1-Stunden-, 5-Stunden- und 24-Stunden-Gegenstands zurück.",
+            "label": "Zeitverkürzungen in Reserve",
+            "recommendation": "Kurze Zeitverkürzungen auf 0, sofern nicht anderweitig benötigt; 1-Stunden-, 5-Stunden- und 24-Stunden-Vorräte für andere Events zurückhalten."
+          },
+          "storm_reserves": {
+            "description": "Halten Sie die gewählten Sturmholz-, Stein- und Aquamarinmengen für den Bau gesperrt.",
+            "label": "Ausgabenreserven der Sturm-Burg",
+            "recommendation": "Sturmholz 0 und Stein 0, wenn Überschüsse genutzt werden; Aquamarin nach Ihrem geplanten Belohnungsbudget."
+          },
+          "time_skips": {
+            "description": "Setzen Sie geeignete Zeitverkürzungen ein und behalten Sie die gewählten Gegenstandsreserven zurück.",
+            "label": "Bau-Zeitverkürzungen verwenden",
+            "recommendation": "Ein, wenn Sie den Routinebau beschleunigen möchten."
+          }
+        },
+        "title": "Bau und Rohstoffschutz einstellen"
+      },
+      "luna": {
+        "image": {
+          "alt": "Beispiel für Luna-Belohnungseinstellungen",
+          "caption": "Aquamarinreserve, begrenzte Kaufziele, wiederholbare Belohnungen und Priorität."
+        },
+        "items": {
+          "cost_cap": {
+            "description": "Lesen Sie die vom Spiel gemeldeten Kosten und die Kaufobergrenze jeder Belohnung.",
+            "label": "Kosten und Kaufobergrenze",
+            "recommendation": "Prüfen Sie beide schreibgeschützten Werte vor dem Aktivieren."
+          },
+          "keep_aqua": {
+            "description": "Halten Sie diese Aquamarinmenge von Luna-Käufen zurück.",
+            "label": "Aquamarin behalten",
+            "recommendation": "0, wenn alle Überschüsse für Belohnungen verfügbar sein sollen; andernfalls die geplante Menge reservieren."
+          },
+          "priority": {
+            "description": "Kaufen Sie Ziele mit niedrigerer Nummer zuerst und schließen begrenzte Ziele vor unbegrenzten ab.",
+            "label": "Priorität",
+            "recommendation": "Nutzen Sie 1, 2 und 3 in Ihrer gewünschten Reihenfolge."
+          },
+          "search": {
+            "description": "Suchen Sie offizielle Luna-Belohnungen vor dem Einrichten eines Kaufs nach Namen.",
+            "label": "Luna-Belohnung suchen",
+            "recommendation": "Suchen Sie nach der Belohnung, die Sie wirklich möchten."
+          },
+          "target_total": {
+            "description": "Legen Sie die gewünschte gesamte Kaufanzahl für eine begrenzte Belohnung fest.",
+            "label": "Ziel gesamt",
+            "recommendation": "Legen Sie nur die Anzahl fest, die Sie kaufen wollen."
+          },
+          "unlimited": {
+            "description": "Kaufen Sie eine geeignete wiederholbare Belohnung weiter, solange Reserve und Shop-Grenze es zulassen.",
+            "label": "Unbegrenzt",
+            "recommendation": "Ein nur für regelmäßig gewünschte wiederholbare Belohnungen."
+          },
+          "use": {
+            "description": "Wählen Sie eine Belohnung aus, damit sie automatisch gekauft werden kann.",
+            "label": "Belohnung verwenden",
+            "recommendation": "Nur gewünschte Belohnungen aktivieren."
+          }
+        },
+        "title": "Luna-Aquamarin-Belohnungen auswählen"
+      },
+      "save": {
+        "image": {
+          "alt": "Beispiel für das Speichern und Aktivieren von Auto Storm",
+          "caption": "Tägliches Angriffslimit, Richtlinienprüfung, schreibgeschützte Kartenaktualisierung und Automatisierungsschalter."
+        },
+        "items": {
+          "daily_limit": {
+            "description": "Stoppen Sie neue Auto-Storm-Angriffe beim kontoübergreifenden täglichen normalen Angriffszähler; 0 entfernt diese zusätzliche Grenze.",
+            "label": "Tägliches Limit normaler Angriffe",
+            "recommendation": "0, sofern Sie keine kontoübergreifende Grenze verwenden."
+          },
+          "enable": {
+            "description": "Aktivieren Sie Auto Storm auf der Automatisierungskarte, sobald die gespeicherten Entscheidungen bereit sind.",
+            "label": "Automatisierungsschalter",
+            "recommendation": "Nach der Einrichtung einschalten."
+          },
+          "map_refresh": {
+            "description": "Lesen Sie das maßgebliche Aktualisierungsintervall der Sturm-Karte.",
+            "label": "Karten-Aktualisierungsintervall",
+            "recommendation": "Das schreibgeschützte Intervall beträgt 2 Stunden; warten Sie nach Änderungen auf einen aktuellen Scan."
+          },
+          "policy_check": {
+            "description": "Legen Sie fest, wie oft Auto Storm Einstellungen und geeignete Aufgaben prüft.",
+            "label": "Richtlinien-Prüfintervall",
+            "recommendation": "Behalten Sie das übliche 30-Sekunden-Intervall bei."
+          },
+          "save": {
+            "description": "Speichern Sie Burg-, Bau-, Kampf-, Truppenimport- und Luna-Einstellungen, bevor Sie die Automatisierung aktivieren.",
+            "label": "Einstellungen speichern",
+            "recommendation": "Speichern Sie nach Prüfung aller Ausgabenberechtigungen."
+          }
+        },
+        "title": "Auto Storm speichern und aktivieren"
+      },
+      "troops": {
+        "image": {
+          "alt": "Beispiel für Truppenimport und schreibgeschützte Schätzwerte",
+          "caption": "Spenderreihenfolge, 1.000 verbleibende Truppen und schreibgeschützte Kapazitätsschätzwerte."
+        },
+        "items": {
+          "attack_history": {
+            "description": "Lesen Sie die durchschnittliche Anzahl der seit dem Zurücksetzen in den letzten 24 Stunden gemeldeten Sturm-Angriffe.",
+            "label": "Durchschnittliche Angriffe seit Zurücksetzen",
+            "recommendation": "Prüfen Sie diese schreibgeschützte Schätzung, bevor Sie den Importbedarf ändern."
+          },
+          "committed_cap": {
+            "description": "Lesen Sie die automatisch berechnete Grenze samt stationierten Truppen, Bewegungen, Transporten und Rückkehrern.",
+            "label": "Grenze gebundener Sturm-Truppen",
+            "recommendation": "Prüfen Sie diese schreibgeschützte Grenze vor höheren Importen."
+          },
+          "donors": {
+            "description": "Wählen Sie Spenderburgen in angezeigter Reihenfolge; Teilbestand kann eine kleinere Lieferung bereitstellen.",
+            "label": "Spenderburgen",
+            "recommendation": "Wählen Sie Ihre üblichen Truppenlieferanten in bevorzugter Reihenfolge."
+          },
+          "import": {
+            "description": "Importieren Sie fehlende Angriffs- oder ausgewählte Verteidigungstruppen aus gewählten Spenderburgen nach Sturm.",
+            "label": "Fehlende Truppen importieren",
+            "recommendation": "Ein, wenn Ihre Sturm-Burg regelmäßig Truppen braucht."
+          },
+          "map_coverage": {
+            "description": "Prüfen Sie die Kartenabdeckung, bevor Sie sich auf angezeigte Ziele verlassen.",
+            "label": "Kartenabdeckung",
+            "recommendation": "Warten Sie bei fehlenden Zielen auf aktuelle Abdeckung."
+          },
+          "minimum_kept": {
+            "description": "Halten Sie nach dem Start eines Angriffs mindestens so viele Truppen in Sturm und bewahren die aktivierte Vorlagenmischung.",
+            "label": "Mindestens verbleibende Truppen nach Start",
+            "recommendation": "1.000 Truppen als regelmäßige Reserve, angepasst an Ihre tatsächliche Armee."
+          },
+          "preset_average": {
+            "description": "Lesen Sie den durchschnittlichen Truppenbedarf aktivierter Angriffsvorlagen einschließlich ausgewählter Inselverteidiger.",
+            "label": "Durchschnittliche aktivierte Vorlage",
+            "recommendation": "Vergleichen Sie diese schreibgeschützte Schätzung mit Ihrer Armee."
+          }
+        },
+        "title": "Sturm-Truppen importieren und überwachen"
       }
     }
   }

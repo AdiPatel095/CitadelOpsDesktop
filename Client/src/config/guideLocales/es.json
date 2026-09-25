@@ -37,7 +37,10 @@
     "khanPreviewTitle": "Ejemplo de configuración de Kan automático",
     "beriGuideIntro": "Sigue estos pasos para configurar Auto Beri World; amplía un panel de ejemplo si lo necesitas.",
     "beriGuideTitle": "Guía de Auto Beri World",
-    "beriPreviewTitle": "Ejemplo de configuración de Auto Beri World"
+    "beriPreviewTitle": "Ejemplo de configuración de Auto Beri World",
+    "stormGuideIntro": "Sigue estos pasos para configurar Auto Storm; selecciona un panel de ejemplo para ampliarlo.",
+    "stormGuideTitle": "Guía de Auto Storm",
+    "stormPreviewTitle": "Ejemplo de configuración de Auto Storm"
   },
   "autoTower": {
     "recommendationIntro": "Estas recomendaciones son para el uso habitual; revísalas antes de guardar.",
@@ -533,6 +536,48 @@
       "next": "Próximo envío: hasta 1 B del inventario donante",
       "stock": "Campamento: 2 A y 0 B",
       "title": "Ejemplo de traslados proporcionales"
+    },
+    "stormCastle": {
+      "blueprint": "Objetivo guardado activo; pausarlo lo conserva",
+      "capture": "Castillo actual: objetivo Funcional",
+      "decorations": "Configuración de adornos: opcional",
+      "title": "Ejemplo de acceso al castillo de la Tormenta",
+      "unlock": "Apertura automática: activada tras revisar el precio"
+    },
+    "stormCombat": {
+      "defenders": "Defensores de ocupación: elegidos o un superviviente",
+      "forts": "Fuertes: niveles seleccionados 40–80",
+      "islands": "Islas de aguamarina: grandes y pequeñas",
+      "priority": "Grandes, pequeñas y después fuertes del 80 al 40",
+      "title": "Ejemplo de ataques a fuertes e islas"
+    },
+    "stormConstruction": {
+      "harbor": "Puerto: activado, nivel 1",
+      "resources": "Madera de la Tormenta 0; piedra 0; aguamarina según plan",
+      "spending": "Prémium y demolición: desactivados",
+      "title": "Ejemplo de construcción y reservas",
+      "transport": "Transporte de recursos: activado"
+    },
+    "stormLuna": {
+      "cost": "Coste y límite de compras: solo lectura",
+      "limited": "Metas limitadas antes que recompensas ilimitadas",
+      "priority": "Prioridad 1, 2, 3; primero el número menor",
+      "reserve": "Conservar aguamarina: 0 si se usa el excedente",
+      "title": "Ejemplo de recompensas de Luna"
+    },
+    "stormSave": {
+      "check": "Comprobación de política: 30 segundos",
+      "daily": "Ataques normales diarios: 0 de límite adicional",
+      "map": "Actualización del mapa: 2 horas, solo lectura",
+      "switch": "Guarda y luego activa Auto Storm",
+      "title": "Ejemplo del proceso de guardar y activar"
+    },
+    "stormTroops": {
+      "averages": "Medias de ataques y formaciones: solo lectura",
+      "cap": "Límite de tropas comprometidas: solo lectura",
+      "donors": "Donantes: orden mostrado, existencias parciales permitidas",
+      "minimum": "Mínimo conservado: 1000 tropas",
+      "title": "Ejemplo de importación de tropas"
     }
   },
   "autoStation": {
@@ -1682,6 +1727,309 @@
           }
         },
         "title": "Configurar traslados proporcionales de tropas"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "Auto Storm puede abrir y construir un castillo de la Tormenta, atacar fuertes e islas de recursos, importar tropas y comprar las recompensas de Luna seleccionadas.",
+      "expectation": "Cada función usa datos recientes del juego y tus permisos guardados; la construcción prémium, los ataques y las compras quedan limitados por las opciones que actives.",
+      "name": "Auto Storm",
+      "summary": "Gestiona tu castillo de la Tormenta, ataques y recompensas"
+    },
+    "recommendationIntro": "Las recomendaciones describen el uso habitual de Auto Storm; son orientativas y no cambian la configuración guardada.",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "Ejemplo del acceso al castillo de la Tormenta y la captura de objetivos",
+          "caption": "Elección del castillo inicial, modos de captura y activación opcional del objetivo; no se muestran compras ni cuentas reales."
+        },
+        "items": {
+          "automatic_open": {
+            "description": "Si la Tormenta está bloqueada, elige un castillo inicial oficial disponible y revisa el precio indicado antes de permitir el desbloqueo.",
+            "label": "Abrir automáticamente el castillo de la Tormenta",
+            "recommendation": "Activado si quieres que Auto Storm abra un castillo inicial habitual después de revisar su precio."
+          },
+          "blueprint": {
+            "description": "Un objetivo capturado se guarda y activa de inmediato; Pausar objetivo detiene la reconciliación, pero conserva los objetivos guardados.",
+            "label": "Objetivo guardado",
+            "recommendation": "Mantén activo un objetivo Funcional revisado para la construcción habitual."
+          },
+          "capture_castle": {
+            "description": "Selecciona tu castillo actual de la Tormenta antes de capturar un objetivo de construcción.",
+            "label": "Castillo de la Tormenta",
+            "recommendation": "Captura el castillo que quieres gestionar."
+          },
+          "combat_only": {
+            "description": "El combate contra fuertes e islas no requiere un objetivo de construcción capturado.",
+            "label": "Combate sin objetivo"
+          },
+          "decoration_preset": {
+            "description": "Aplica opcionalmente una configuración de adornos seleccionada después de construir.",
+            "label": "Configuración de adornos tras la construcción",
+            "recommendation": "Déjalo vacío salvo que quieras una distribución de adornos aparte."
+          },
+          "exact": {
+            "description": "Guarda todos los detalles de objetivo admitidos para obtener una copia exacta.",
+            "label": "Captura exacta",
+            "recommendation": "Úsala solo después de revisar el objetivo completo."
+          },
+          "functional": {
+            "description": "Guarda un objetivo para las funciones esenciales de la Tormenta sin copiar todas las posiciones de edificios.",
+            "label": "Captura funcional",
+            "recommendation": "Funcional para el mantenimiento normal."
+          },
+          "layout": {
+            "description": "Guarda los tipos y las posiciones de los edificios sin los adornos.",
+            "label": "Captura de distribución",
+            "recommendation": "Úsala solo cuando importe la colocación de los edificios."
+          },
+          "open_settings": {
+            "description": "Abre la configuración de Auto Storm desde su tarjeta de Automatización.",
+            "label": "Abrir configuración"
+          },
+          "starter_castle": {
+            "description": "Elige el castillo inicial oficial disponible actualmente para la próxima temporada bloqueada de la Tormenta.",
+            "label": "Castillo que se abrirá",
+            "recommendation": "Elige un castillo inicial asequible y habitual tras comprobar el precio."
+          }
+        },
+        "title": "Abre y captura tu castillo de la Tormenta"
+      },
+      "combat": {
+        "image": {
+          "alt": "Ejemplo de configuración de ataques a fuertes e islas",
+          "caption": "Islas de aguamarina, niveles de fuertes, orden de objetivos y defensores de ocupación de ejemplo."
+        },
+        "items": {
+          "defenders": {
+            "description": "Elige los tipos y las cantidades de defensores que quedarán en una isla capturada; una lista vacía deja un superviviente tras una victoria confirmada.",
+            "label": "Unidades de defensa de islas",
+            "recommendation": "Elige defensores si un superviviente no basta para tu plan."
+          },
+          "fort_preset": {
+            "description": "Elige una formación guardada de tropas y herramientas para los fuertes.",
+            "label": "Configuración de ataque a fuertes",
+            "recommendation": "Usa tu formación habitual para fuertes."
+          },
+          "forts": {
+            "description": "Activa ataques a los niveles oficiales de fuerte seleccionados entre 40 y 80.",
+            "label": "Fuertes de la Tormenta",
+            "recommendation": "Activado para los niveles que tu formación pueda vencer con fiabilidad."
+          },
+          "horse": {
+            "description": "Elige viajar con pluma, monedas o rubíes en los ataques de la Tormenta.",
+            "label": "Impulso de viaje a caballo",
+            "recommendation": "Pluma de viaje para desplazarte rápido sin elegir viaje con rubíes."
+          },
+          "island_preset": {
+            "description": "Elige una formación guardada de tropas y herramientas para las islas.",
+            "label": "Configuración de ataque a islas",
+            "recommendation": "Usa tu formación habitual para islas."
+          },
+          "island_resources": {
+            "description": "Elige qué islas de madera, piedra o aguamarina pueden atacarse.",
+            "label": "Recursos de las islas",
+            "recommendation": "Selecciona aguamarina para obtener aguamarina."
+          },
+          "island_sizes": {
+            "description": "Elige islas grandes, pequeñas o ambas de los recursos seleccionados.",
+            "label": "Tamaños de isla",
+            "recommendation": "Grandes y pequeñas para obtener aguamarina habitualmente."
+          },
+          "islands": {
+            "description": "Activa la captura de islas que coincidan con los recursos y tamaños elegidos.",
+            "label": "Islas de recursos",
+            "recommendation": "Activado si quieres aguamarina de islas grandes y pequeñas."
+          },
+          "minimum_attacks": {
+            "description": "Ataca solo los fuertes que tengan al menos este número de ataques restantes.",
+            "label": "Mínimo de ataques restantes",
+            "recommendation": "0 para permitir cualquier fuerte elegible."
+          },
+          "priority": {
+            "description": "Ordena los objetivos de islas y fuertes activados; la prioridad decide dentro de una fila y la distancia resuelve los empates.",
+            "label": "Prioridad de objetivos de ataque",
+            "recommendation": "Islas grandes, islas pequeñas y después fuertes del nivel 80 al 40 para obtener aguamarina."
+          }
+        },
+        "title": "Elige fuertes e islas de recursos"
+      },
+      "construction": {
+        "image": {
+          "alt": "Ejemplo de configuración de construcción y reservas",
+          "caption": "Transporte de recursos, permisos de gasto, reservas y nivel del puerto como controles ilustrativos."
+        },
+        "items": {
+          "demolition": {
+            "description": "Permite eliminar edificios del objetivo exacto que no pueden moverse ni almacenarse.",
+            "label": "Permitir demolición",
+            "recommendation": "Desactivado salvo que reconstruyas una distribución revisada."
+          },
+          "donor_reserves": {
+            "description": "Conserva las cantidades elegidas de madera, piedra y aguamarina en cada donante antes del transporte de recursos.",
+            "label": "Reservas protegidas de los donantes",
+            "recommendation": "Protege tu presupuesto habitual de madera y piedra para construir; aguamarina 0 cuando no se use."
+          },
+          "harbor_level": {
+            "description": "Elige el nivel objetivo del puerto entre 1, 2 o 3; los niveles 2 y 3 usan opciones de construcción prémium.",
+            "label": "Nivel objetivo del puerto",
+            "recommendation": "Nivel 1 salvo que hayas previsto mejoras prémium."
+          },
+          "harbor": {
+            "description": "Mantén el puerto en el nivel elegido aunque el objetivo capturado sea diferente.",
+            "label": "Mejorar puerto",
+            "recommendation": "Activado con nivel 1 para uso habitual."
+          },
+          "premium": {
+            "description": "Permite los pasos de construcción elegibles que gastan moneda prémium.",
+            "label": "Permitir costes prémium",
+            "recommendation": "Desactivado salvo que hayas previsto construir con moneda prémium."
+          },
+          "resource_transport": {
+            "description": "Permite envíos confirmados de recursos de construcción faltantes desde castillos donantes.",
+            "label": "Transportar recursos faltantes",
+            "recommendation": "Activado para la construcción habitual."
+          },
+          "skip_reserves": {
+            "description": "Reserva el número elegido de cada objeto de 1 min, 5 min, 10 min, 30 min, 1 h, 5 h y 24 h.",
+            "label": "Aceleradores reservados",
+            "recommendation": "Mantén 0 aceleradores cortos salvo que los necesites en otra actividad; reserva tus existencias de 1 h, 5 h y 24 h para otros eventos."
+          },
+          "storm_reserves": {
+            "description": "Impide que la construcción use las cantidades elegidas de madera de la Tormenta, piedra y aguamarina.",
+            "label": "Reservas de gasto del castillo de la Tormenta",
+            "recommendation": "Madera de la Tormenta 0 y piedra 0 si usas excedentes; fija la aguamarina según tu presupuesto de recompensas."
+          },
+          "time_skips": {
+            "description": "Aplica aceleradores elegibles mientras conservas las reservas de objetos seleccionadas.",
+            "label": "Usar aceleradores de construcción",
+            "recommendation": "Activado si quieres acelerar la construcción habitual."
+          }
+        },
+        "title": "Configura la construcción y protección de recursos"
+      },
+      "luna": {
+        "image": {
+          "alt": "Ejemplo de configuración de recompensas de Luna",
+          "caption": "Reserva de aguamarina, metas de compra limitadas, recompensas repetibles y prioridad."
+        },
+        "items": {
+          "cost_cap": {
+            "description": "Consulta el coste y el límite de compras de cada recompensa comunicados por el juego.",
+            "label": "Coste y límite de compras",
+            "recommendation": "Comprueba ambos valores de solo lectura antes de activar."
+          },
+          "keep_aqua": {
+            "description": "Mantén esta cantidad de aguamarina fuera de las compras de Luna.",
+            "label": "Conservar aguamarina",
+            "recommendation": "0 si todo el excedente puede financiar recompensas; si no, reserva la cantidad prevista."
+          },
+          "priority": {
+            "description": "Compra antes las metas de número menor y completa las limitadas antes que las ilimitadas.",
+            "label": "Prioridad",
+            "recommendation": "Usa 1, 2 y 3 en el orden que prefieras."
+          },
+          "search": {
+            "description": "Busca por nombre las recompensas oficiales de Luna antes de configurar una compra.",
+            "label": "Buscar recompensa de Luna",
+            "recommendation": "Busca la recompensa que realmente quieres."
+          },
+          "target_total": {
+            "description": "Fija la cantidad total de compras deseada para una recompensa limitada.",
+            "label": "Total objetivo",
+            "recommendation": "Fija solo la cantidad que pretendes comprar."
+          },
+          "unlimited": {
+            "description": "Sigue comprando una recompensa repetible elegible mientras la reserva y el límite de la tienda lo permitan.",
+            "label": "Ilimitado",
+            "recommendation": "Activado solo para recompensas repetibles que quieras habitualmente."
+          },
+          "use": {
+            "description": "Selecciona una recompensa para permitir su compra automática.",
+            "label": "Usar recompensa",
+            "recommendation": "Activa solo las recompensas deseadas."
+          }
+        },
+        "title": "Elige las recompensas de Luna por aguamarina"
+      },
+      "save": {
+        "image": {
+          "alt": "Ejemplo de guardar y activar Auto Storm",
+          "caption": "Límite diario de ataques, comprobación de política, actualización de mapa de solo lectura e interruptor de automatización."
+        },
+        "items": {
+          "daily_limit": {
+            "description": "Detén nuevos ataques de Auto Storm al alcanzar el recuento diario de ataques normales de toda la cuenta; 0 elimina este límite adicional.",
+            "label": "Límite diario de ataques normales",
+            "recommendation": "0 salvo que uses un límite para toda la cuenta."
+          },
+          "enable": {
+            "description": "Activa Auto Storm desde su tarjeta de Automatización cuando las opciones guardadas estén listas.",
+            "label": "Interruptor de automatización",
+            "recommendation": "Actívalo después de configurar."
+          },
+          "map_refresh": {
+            "description": "Consulta el intervalo oficial de actualización del mapa de la Tormenta.",
+            "label": "Intervalo de actualización del mapa",
+            "recommendation": "El intervalo de solo lectura es de 2 horas; espera un escaneo reciente después de los cambios."
+          },
+          "policy_check": {
+            "description": "Fija la frecuencia con que Auto Storm revisa su configuración y el trabajo elegible.",
+            "label": "Intervalo de comprobación de política",
+            "recommendation": "Mantén el intervalo habitual de 30 segundos."
+          },
+          "save": {
+            "description": "Guarda las opciones de castillo, construcción, combate, importación de tropas y Luna antes de activar la automatización.",
+            "label": "Guardar configuración",
+            "recommendation": "Guarda tras revisar todos los permisos de gasto."
+          }
+        },
+        "title": "Guarda y activa Auto Storm"
+      },
+      "troops": {
+        "image": {
+          "alt": "Ejemplo de importación de tropas y estimaciones de solo lectura",
+          "caption": "Orden de donantes, 1000 tropas conservadas y estimaciones de capacidad de solo lectura."
+        },
+        "items": {
+          "attack_history": {
+            "description": "Consulta la media de ataques de la Tormenta comunicados desde el reinicio durante las últimas 24 horas.",
+            "label": "Media de ataques desde el reinicio",
+            "recommendation": "Consulta esta estimación de solo lectura antes de cambiar las necesidades de importación."
+          },
+          "committed_cap": {
+            "description": "Consulta el límite calculado automáticamente, que incluye tropas estacionadas, movimientos, tránsito y retornos.",
+            "label": "Límite de tropas comprometidas en la Tormenta",
+            "recommendation": "Consulta este límite de solo lectura antes de aumentar las importaciones."
+          },
+          "donors": {
+            "description": "Elige castillos donantes en el orden mostrado; las existencias parciales pueden proporcionar un envío menor.",
+            "label": "Castillos donantes",
+            "recommendation": "Selecciona tus proveedores habituales de tropas en el orden preferido."
+          },
+          "import": {
+            "description": "Importa a la Tormenta tropas de ataque o de defensa elegidas que falten desde castillos donantes.",
+            "label": "Importar tropas faltantes",
+            "recommendation": "Activado si tu castillo de la Tormenta necesita suministros de tropas habituales."
+          },
+          "map_coverage": {
+            "description": "Comprueba la cobertura del mapa antes de fiarte de los objetivos mostrados.",
+            "label": "Cobertura del mapa",
+            "recommendation": "Espera una cobertura reciente si faltan objetivos."
+          },
+          "minimum_kept": {
+            "description": "Conserva al menos esta cantidad de tropas en la Tormenta después de lanzar un ataque sin perder la mezcla de formaciones activadas.",
+            "label": "Mínimo de tropas conservadas tras lanzar",
+            "recommendation": "1000 tropas como reserva habitual, ajustadas a tu ejército real."
+          },
+          "preset_average": {
+            "description": "Consulta la necesidad media de tropas de las formaciones de ataque activadas, incluidos los defensores de isla elegidos.",
+            "label": "Media de formaciones activadas",
+            "recommendation": "Compara esta estimación de solo lectura con tu ejército."
+          }
+        },
+        "title": "Importa y supervisa tropas de la Tormenta"
       }
     }
   }

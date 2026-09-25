@@ -37,7 +37,10 @@
     "khanPreviewTitle": "Příklad nastavení Automatického chána",
     "beriGuideIntro": "Podle těchto kroků nastavte Automatický Berimond; výběrem příkladového panelu jej zvětšíte.",
     "beriGuideTitle": "Průvodce Automatickým Berimondem",
-    "beriPreviewTitle": "Příklad nastavení Automatického Berimondu"
+    "beriPreviewTitle": "Příklad nastavení Automatického Berimondu",
+    "stormGuideIntro": "Podle těchto kroků nastavte Auto Storm; vyberte ukázkový panel a zvětšete jej.",
+    "stormGuideTitle": "Průvodce Auto Storm",
+    "stormPreviewTitle": "Příklad nastavení Auto Storm"
   },
   "autoTower": {
     "recommendationIntro": "Tato doporučení platí pro pravidelné používání; před uložením je zkontrolujte.",
@@ -533,6 +536,48 @@
       "next": "Další zásilka: až 1 B ze zásob dárce",
       "stock": "Stav tábora: 2 A a 0 B",
       "title": "Příklad poměrných přesunů"
+    },
+    "stormCastle": {
+      "blueprint": "Uložený cíl aktivní; pozastavení jej zachová",
+      "capture": "Současný hrad: Funkční cíl",
+      "decorations": "Předvolba dekorací: volitelná",
+      "title": "Příklad přístupu k Bouřnému hradu",
+      "unlock": "Automatické otevření: zapnuto po kontrole ceny"
+    },
+    "stormCombat": {
+      "defenders": "Okupační obránci: vybraní nebo jeden přeživší",
+      "forts": "Pevnosti: vybrané úrovně 40–80",
+      "islands": "Akvamarínové ostrovy: velké a malé",
+      "priority": "Velké, malé, pak pevnosti od 80 do 40",
+      "title": "Příklad útoků na pevnosti a ostrovy"
+    },
+    "stormConstruction": {
+      "harbor": "Přístav: zapnuto, úroveň 1",
+      "resources": "Bouřné dřevo 0; kámen 0; akvamarín podle plánu",
+      "spending": "Premium a demolice: vypnuto",
+      "title": "Příklad výstavby a rezerv",
+      "transport": "Přeprava surovin: zapnuto"
+    },
+    "stormLuna": {
+      "cost": "Cena a nákupní limit: jen pro čtení",
+      "limited": "Omezené cíle před neomezenými odměnami",
+      "priority": "Priorita 1, 2, 3; nižší číslo první",
+      "reserve": "Ponechat akvamarín: 0 při použití přebytku",
+      "title": "Příklad Luniných odměn"
+    },
+    "stormSave": {
+      "check": "Kontrola pravidel: 30 sekund",
+      "daily": "Denní běžné útoky: 0 dalšího limitu",
+      "map": "Aktualizace mapy: 2 hodiny, jen pro čtení",
+      "switch": "Uložte a potom zapněte Auto Storm",
+      "title": "Příklad uložení a zapnutí"
+    },
+    "stormTroops": {
+      "averages": "Průměr útoků a předvoleb: jen pro čtení",
+      "cap": "Limit vázaných vojáků: jen pro čtení",
+      "donors": "Dárci: zobrazené pořadí, částečné zásoby povoleny",
+      "minimum": "Ponechat nejméně: 1 000 vojáků",
+      "title": "Příklad dovozu vojáků"
     }
   },
   "autoStation": {
@@ -1682,6 +1727,309 @@
           }
         },
         "title": "Nastavte poměrné přesuny jednotek"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "Auto Storm může otevřít a vybudovat Bouřný hrad, útočit na pevnosti a ostrovy se surovinami, dovážet vojáky a kupovat vybrané Luniny odměny.",
+      "expectation": "Každá činnost používá aktuální herní údaje a vaše uložená oprávnění; prémiová výstavba, útoky a nákupy se řídí zapnutými volbami.",
+      "name": "Auto Storm",
+      "summary": "Spravujte Bouřný hrad, útoky a odměny"
+    },
+    "recommendationIntro": "Doporučení popisují běžné používání Auto Storm; slouží jako rada a nemění uložená nastavení.",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "Ukázka přístupu k Bouřnému hradu a zachycení cíle",
+          "caption": "Výběr počátečního hradu, režimy zachycení a volitelné aktivování cíle bez skutečného nákupu nebo účtu."
+        },
+        "items": {
+          "automatic_open": {
+            "description": "Když je Bouře zamčená, zvolte dostupný oficiální počáteční hrad a před povolením odemčení zkontrolujte zobrazenou cenu.",
+            "label": "Automaticky otevřít Bouřný hrad",
+            "recommendation": "Zapnuto, pokud má Auto Storm po kontrole ceny otevřít obvyklý počáteční hrad."
+          },
+          "blueprint": {
+            "description": "Zachycený cíl se ihned uloží a aktivuje; Pozastavit cíl zastaví sjednocování, ale uložené cíle zachová.",
+            "label": "Uložený cíl",
+            "recommendation": "Ponechte ověřený Funkční cíl aktivní pro běžnou výstavbu."
+          },
+          "capture_castle": {
+            "description": "Před zachycením stavebního cíle vyberte svůj současný Bouřný hrad.",
+            "label": "Bouřný hrad",
+            "recommendation": "Zachyťte hrad, který chcete spravovat."
+          },
+          "combat_only": {
+            "description": "Boj s pevnostmi a ostrovy nevyžaduje zachycený stavební cíl.",
+            "label": "Boj bez cíle"
+          },
+          "decoration_preset": {
+            "description": "Po výstavbě můžete použít vybranou předvolbu dekorací.",
+            "label": "Předvolba dekorací po výstavbě",
+            "recommendation": "Nechte prázdné, pokud nechcete samostatné rozvržení dekorací."
+          },
+          "exact": {
+            "description": "Uložte všechny podporované podrobnosti cíle pro přesnou kopii.",
+            "label": "Přesné zachycení",
+            "recommendation": "Použijte až po kontrole celého cíle."
+          },
+          "functional": {
+            "description": "Uložte cíl pro základní funkce Bouře bez kopírování každé polohy budovy.",
+            "label": "Funkční zachycení",
+            "recommendation": "Funkční pro běžnou údržbu."
+          },
+          "layout": {
+            "description": "Uložte typy a polohy budov bez dekorací.",
+            "label": "Zachycení rozvržení",
+            "recommendation": "Použijte, jen když záleží na rozmístění budov."
+          },
+          "open_settings": {
+            "description": "Otevřete nastavení Auto Storm z karty Automatizace.",
+            "label": "Otevřít nastavení"
+          },
+          "starter_castle": {
+            "description": "Vyberte oficiální počáteční hrad Bouře, který je právě dostupný pro příští zamčenou sezónu.",
+            "label": "Hrad k otevření",
+            "recommendation": "Po kontrole ceny vyberte cenově dostupný obvyklý počáteční hrad."
+          }
+        },
+        "title": "Otevřete a zachyťte svůj Bouřný hrad"
+      },
+      "combat": {
+        "image": {
+          "alt": "Ukázka nastavení útoků na pevnosti a ostrovy",
+          "caption": "Příklad akvamarínových ostrovů, úrovní pevností, pořadí cílů a okupačních obránců."
+        },
+        "items": {
+          "defenders": {
+            "description": "Zvolte druhy a počty obránců ponechaných na dobytém ostrově; prázdný seznam ponechá jednoho přeživšího po potvrzeném vítězství.",
+            "label": "Obranné jednotky ostrova",
+            "recommendation": "Vyberte obránce, pokud jeden přeživší nestačí vašemu plánu."
+          },
+          "fort_preset": {
+            "description": "Vyberte uloženou sestavu vojáků a nástrojů pro pevnosti.",
+            "label": "Předvolba útoku na pevnosti",
+            "recommendation": "Použijte obvyklou předvolbu pro pevnosti."
+          },
+          "forts": {
+            "description": "Zapněte útoky na vybrané oficiální úrovně pevností od 40 do 80.",
+            "label": "Pevnosti Bouře",
+            "recommendation": "Zapnuto pro úrovně, které vybraná sestava spolehlivě zvládne."
+          },
+          "horse": {
+            "description": "Vyberte pro útoky v Bouři cestování za pírko, mince nebo rubíny.",
+            "label": "Posílení jízdy na koni",
+            "recommendation": "Cestovní pírko pro rychlý přesun bez rubínového cestování."
+          },
+          "island_preset": {
+            "description": "Vyberte uloženou sestavu vojáků a nástrojů pro ostrovy.",
+            "label": "Předvolba útoku na ostrovy",
+            "recommendation": "Použijte obvyklou ostrovní předvolbu."
+          },
+          "island_resources": {
+            "description": "Zvolte, na které ostrovy se dřevem, kamenem nebo akvamarínem se smí útočit.",
+            "label": "Suroviny ostrovů",
+            "recommendation": "Vyberte akvamarín, pokud jej chcete získávat."
+          },
+          "island_sizes": {
+            "description": "Vyberte velké, malé nebo obě velikosti ostrovů s vybranými surovinami.",
+            "label": "Velikosti ostrovů",
+            "recommendation": "Velké a malé pro běžný sběr akvamarínu."
+          },
+          "islands": {
+            "description": "Zapněte dobývání ostrovů odpovídajících vybraným surovinám a velikostem.",
+            "label": "Ostrovy se surovinami",
+            "recommendation": "Zapnuto, pokud chcete akvamarín z velkých i malých ostrovů."
+          },
+          "minimum_attacks": {
+            "description": "Útočte jen na pevnosti s alespoň tímto počtem zbývajících útoků.",
+            "label": "Minimální počet zbývajících útoků",
+            "recommendation": "0 umožní každou vhodnou pevnost."
+          },
+          "priority": {
+            "description": "Seřaďte povolené cíle ostrovů a pevností; priorita rozhoduje v rámci řádku, vzdálenost při shodě.",
+            "label": "Priorita útočných cílů",
+            "recommendation": "Velké ostrovy, malé ostrovy, pak pevnosti od úrovně 80 do 40 pro získávání akvamarínu."
+          }
+        },
+        "title": "Vyberte pevnosti a ostrovy se surovinami"
+      },
+      "construction": {
+        "image": {
+          "alt": "Ukázka nastavení výstavby a rezerv",
+          "caption": "Přeprava surovin, povolení výdajů, rezervy a úroveň přístavu jako příklad ovládacích prvků."
+        },
+        "items": {
+          "demolition": {
+            "description": "Povolte přesné odstranění budov, které nelze přesunout ani uskladnit.",
+            "label": "Povolit demolici",
+            "recommendation": "Vypnuto, pokud nepřestavujete zkontrolované rozvržení."
+          },
+          "donor_reserves": {
+            "description": "Ponechte vybraná množství dřeva, kamene a akvamarínu u každého dárce před přepravou surovin.",
+            "label": "Chráněné rezervy dárců",
+            "recommendation": "Chraňte svůj běžný stavební rozpočet dřeva a kamene; akvamarín 0, pokud se nepoužívá."
+          },
+          "harbor_level": {
+            "description": "Vyberte cílovou úroveň přístavu 1, 2 nebo 3; úrovně 2 a 3 používají prémiovou výstavbu.",
+            "label": "Cílová úroveň přístavu",
+            "recommendation": "Úroveň 1, pokud neplánujete prémiové vylepšení."
+          },
+          "harbor": {
+            "description": "Udržujte přístav na zvolené úrovni i při odlišném zachyceném cíli.",
+            "label": "Vylepšit přístav",
+            "recommendation": "Zapnuto s úrovní 1 pro běžné použití."
+          },
+          "premium": {
+            "description": "Povolte vhodné stavební kroky, které utrácejí prémiovou měnu.",
+            "label": "Povolit prémiové náklady",
+            "recommendation": "Vypnuto, pokud prémiová výstavba není plánovaná."
+          },
+          "resource_transport": {
+            "description": "Povolte potvrzené zásilky chybějících stavebních surovin z dárcovských hradů.",
+            "label": "Přepravit chybějící suroviny",
+            "recommendation": "Zapnuto pro běžnou výstavbu."
+          },
+          "skip_reserves": {
+            "description": "Ponechte v rezervě vybraný počet každé položky na 1 min, 5 min, 10 min, 30 min, 1 h, 5 h a 24 h.",
+            "label": "Rezerva časových přeskočení",
+            "recommendation": "Krátká přeskočení na 0, pokud je nepotřebujete jinde; zásoby 1 h, 5 h a 24 h chraňte pro jiné události."
+          },
+          "storm_reserves": {
+            "description": "Zabraňte použití vybraných množství Bouřného dřeva, kamene a akvamarínu při výstavbě.",
+            "label": "Stavební rezervy Bouřného hradu",
+            "recommendation": "Bouřné dřevo 0 a kámen 0, pokud používáte přebytek; akvamarín podle plánovaného rozpočtu na odměny."
+          },
+          "time_skips": {
+            "description": "Použijte vhodná časová přeskočení při zachování zvolených rezerv předmětů.",
+            "label": "Použít časová přeskočení stavby",
+            "recommendation": "Zapnuto, pokud chcete běžnou výstavbu urychlit."
+          }
+        },
+        "title": "Nastavte výstavbu a ochranu surovin"
+      },
+      "luna": {
+        "image": {
+          "alt": "Ukázka nastavení Luniných odměn",
+          "caption": "Rezerva akvamarínu, omezené nákupní cíle, opakovatelné odměny a priorita."
+        },
+        "items": {
+          "cost_cap": {
+            "description": "Přečtěte si cenu a nákupní limit každé odměny nahlášené hrou.",
+            "label": "Cena a nákupní limit",
+            "recommendation": "Obě hodnoty jen pro čtení zkontrolujte před zapnutím."
+          },
+          "keep_aqua": {
+            "description": "Ponechte toto množství akvamarínu mimo Luniny nákupy.",
+            "label": "Ponechat akvamarín",
+            "recommendation": "0, pokud všechen přebytek smí financovat odměny; jinak vyhraďte plánované množství."
+          },
+          "priority": {
+            "description": "Kupujte nejprve cíle s nižším číslem a omezené cíle dokončete před neomezenými.",
+            "label": "Priorita",
+            "recommendation": "Použijte 1, 2 a 3 v preferovaném pořadí."
+          },
+          "search": {
+            "description": "Před nastavením nákupu vyhledejte oficiální Luniny odměny podle názvu.",
+            "label": "Najít Luninu odměnu",
+            "recommendation": "Hledejte odměnu, kterou skutečně chcete."
+          },
+          "target_total": {
+            "description": "Nastavte požadovaný celkový počet nákupů omezené odměny.",
+            "label": "Cílový celkový počet",
+            "recommendation": "Nastavte pouze počet, který chcete koupit."
+          },
+          "unlimited": {
+            "description": "Kupujte vhodnou opakovatelnou odměnu dál, dokud to dovolují rezerva a limit obchodu.",
+            "label": "Neomezeně",
+            "recommendation": "Zapnuto jen pro pravidelně požadované opakovatelné odměny."
+          },
+          "use": {
+            "description": "Vyberte odměnu, která se smí automaticky kupovat.",
+            "label": "Použít odměnu",
+            "recommendation": "Zapněte jen chtěné odměny."
+          }
+        },
+        "title": "Vyberte Luniny odměny za akvamarín"
+      },
+      "save": {
+        "image": {
+          "alt": "Ukázka uložení a zapnutí Auto Storm",
+          "caption": "Denní limit útoků, kontrola pravidel, aktualizace mapy jen pro čtení a přepínač automatizace."
+        },
+        "items": {
+          "daily_limit": {
+            "description": "Zastavte nové útoky Auto Storm při denním počtu běžných útoků celého účtu; 0 tento další limit ruší.",
+            "label": "Denní limit běžných útoků",
+            "recommendation": "0, pokud nepoužíváte limit pro celý účet."
+          },
+          "enable": {
+            "description": "Zapněte Auto Storm na kartě Automatizace, až budou uložené volby připravené.",
+            "label": "Přepínač automatizace",
+            "recommendation": "Zapněte po nastavení."
+          },
+          "map_refresh": {
+            "description": "Přečtěte si oficiální interval aktualizace mapy Bouře.",
+            "label": "Interval aktualizace mapy",
+            "recommendation": "Interval jen pro čtení je 2 hodiny; po změnách počkejte na nové skenování."
+          },
+          "policy_check": {
+            "description": "Určete, jak často Auto Storm kontroluje nastavení a vhodné úkoly.",
+            "label": "Interval kontroly pravidel",
+            "recommendation": "Ponechte běžný interval 30 sekund."
+          },
+          "save": {
+            "description": "Uložte volby hradu, výstavby, boje, dovozu vojáků a Luny před zapnutím automatizace.",
+            "label": "Uložit nastavení",
+            "recommendation": "Uložte po kontrole všech povolení výdajů."
+          }
+        },
+        "title": "Uložte a zapněte Auto Storm"
+      },
+      "troops": {
+        "image": {
+          "alt": "Ukázka dovozu vojáků a odhadů jen pro čtení",
+          "caption": "Pořadí dárců, 1 000 ponechaných vojáků a odhady kapacity jen pro čtení."
+        },
+        "items": {
+          "attack_history": {
+            "description": "Přečtěte si průměrný počet útoků Bouře nahlášených od resetu za posledních 24 hodin.",
+            "label": "Průměr útoků od resetu",
+            "recommendation": "Tento odhad jen pro čtení zkontrolujte před změnou potřeby dovozu."
+          },
+          "committed_cap": {
+            "description": "Přečtěte si automaticky vypočtený limit včetně umístěných vojáků, přesunů, přepravy a návratů.",
+            "label": "Limit vázaných vojáků Bouře",
+            "recommendation": "Tento limit jen pro čtení zkontrolujte před zvýšením dovozu."
+          },
+          "donors": {
+            "description": "Vyberte dárcovské hrady v zobrazeném pořadí; částečná zásoba může zajistit menší zásilku.",
+            "label": "Dárcovské hrady",
+            "recommendation": "Vyberte běžné dodavatele vojáků v preferovaném pořadí."
+          },
+          "import": {
+            "description": "Dovážejte chybějící útočné nebo vybrané obranné vojáky do Bouře z dárcovských hradů.",
+            "label": "Dovážet chybějící vojáky",
+            "recommendation": "Zapnuto, pokud váš Bouřný hrad potřebuje pravidelný přísun vojáků."
+          },
+          "map_coverage": {
+            "description": "Než se spolehnete na zobrazené cíle, zkontrolujte pokrytí mapy.",
+            "label": "Pokrytí mapy",
+            "recommendation": "Při chybějících cílech počkejte na aktuální pokrytí."
+          },
+          "minimum_kept": {
+            "description": "Po zahájení útoku ponechte v Bouři alespoň tolik vojáků a zachovejte složení aktivních předvoleb.",
+            "label": "Minimum vojáků ponechaných po zahájení",
+            "recommendation": "1 000 vojáků jako běžná rezerva upravená podle skutečné armády."
+          },
+          "preset_average": {
+            "description": "Přečtěte si průměrnou potřebu vojáků aktivních útočných předvoleb včetně zvolených obránců ostrovů.",
+            "label": "Průměr aktivní předvolby",
+            "recommendation": "Porovnejte tento odhad jen pro čtení se svou armádou."
+          }
+        },
+        "title": "Dovážejte a sledujte vojáky Bouře"
       }
     }
   }

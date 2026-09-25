@@ -37,7 +37,10 @@
     "khanPreviewTitle": "Voorbeeld van Automatische Khan-instelling",
     "beriGuideIntro": "Volg deze stappen om Auto Beri in te stellen; selecteer een voorbeeldpaneel om het te vergroten.",
     "beriGuideTitle": "Handleiding Auto Beri",
-    "beriPreviewTitle": "Voorbeeldinstellingen Auto Beri"
+    "beriPreviewTitle": "Voorbeeldinstellingen Auto Beri",
+    "stormGuideIntro": "Volg deze stappen om Auto Storm in te stellen; selecteer een voorbeeldpaneel om het te vergroten.",
+    "stormGuideTitle": "Auto Storm-handleiding",
+    "stormPreviewTitle": "Voorbeeldinstellingen voor Auto Storm"
   },
   "autoTower": {
     "recommendationIntro": "Dit zijn aanbevelingen voor regelmatig gebruik; controleer ze voordat je opslaat.",
@@ -533,6 +536,48 @@
       "next": "Volgende zending: maximaal 1 B uit donorvoorraad",
       "stock": "Kampvoorraad: 2 A en 0 B",
       "title": "Voorbeeld van evenredig transport"
+    },
+    "stormCastle": {
+      "blueprint": "Opgeslagen doel actief; pauzeren bewaart het",
+      "capture": "Huidig kasteel: Functioneel doel",
+      "decorations": "Decoratiepreset: optioneel",
+      "title": "Voorbeeld van Stormkasteeltoegang",
+      "unlock": "Automatische opening: aan na prijscontrole"
+    },
+    "stormCombat": {
+      "defenders": "Bezettingsverdedigers: gekozen of één overlevende",
+      "forts": "Forten: gekozen niveaus 40–80",
+      "islands": "Aquamarijneilanden: groot en klein",
+      "priority": "Groot, klein, dan forten van 80 tot 40",
+      "title": "Voorbeeld van fort- en eilandaanvallen"
+    },
+    "stormConstruction": {
+      "harbor": "Haven: aan, niveau 1",
+      "resources": "Stormhout 0; steen 0; aquamarijn gepland",
+      "spending": "Premium en sloop: uit",
+      "title": "Voorbeeld van bouw en reserves",
+      "transport": "Grondstoftransport: aan"
+    },
+    "stormLuna": {
+      "cost": "Kosten en aankooplimiet: alleen lezen",
+      "limited": "Beperkte doelen vóór onbeperkte beloningen",
+      "priority": "Prioriteit 1, 2, 3; lager eerst",
+      "reserve": "Aquamarijn bewaren: 0 bij gebruik van overschot",
+      "title": "Voorbeeld van Luna-beloningen"
+    },
+    "stormSave": {
+      "check": "Beleidscontrole: 30 seconden",
+      "daily": "Dagelijkse gewone aanvallen: 0 extra limiet",
+      "map": "Kaartvernieuwing: 2 uur, alleen lezen",
+      "switch": "Opslaan en dan Auto Storm inschakelen",
+      "title": "Voorbeeld van opslaan en inschakelen"
+    },
+    "stormTroops": {
+      "averages": "Aanvals- en presetgemiddelden: alleen lezen",
+      "cap": "Limiet gebonden troepen: alleen lezen",
+      "donors": "Donors: getoonde volgorde, deelvoorraad toegestaan",
+      "minimum": "Minimum bewaard: 1.000 troepen",
+      "title": "Voorbeeld van troepenimport"
     }
   },
   "autoStation": {
@@ -1682,6 +1727,309 @@
           }
         },
         "title": "Stel evenredig troepentransport in"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "Auto Storm kan een Stormkasteel openen en bouwen, forten en grondstofeilanden aanvallen, troepen importeren en gekozen Luna-beloningen kopen.",
+      "expectation": "Elke taak gebruikt actuele spelgegevens en je opgeslagen toestemmingen; premium bouw, aanvallen en aankopen blijven beperkt tot de keuzes die je inschakelt.",
+      "name": "Auto Storm",
+      "summary": "Beheer je Stormkasteel, aanvallen en beloningen"
+    },
+    "recommendationIntro": "Aanbevolen keuzes beschrijven normaal gebruik van Auto Storm; ze zijn advies en veranderen opgeslagen instellingen niet.",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "Voorbeeld van toegang tot het Stormkasteel en doelvastlegging",
+          "caption": "Startkasteel, vastlegmodi en optionele doelactivering; geen echte aankoop of accountgegevens worden getoond."
+        },
+        "items": {
+          "automatic_open": {
+            "description": "Als Storm vergrendeld is, kies je een beschikbaar officieel startkasteel en controleer je de getoonde prijs voordat je ontgrendeling toestaat.",
+            "label": "Stormkasteel automatisch openen",
+            "recommendation": "Aan als Auto Storm na prijscontrole een gebruikelijk startkasteel mag openen."
+          },
+          "blueprint": {
+            "description": "Een vastgelegd doel wordt meteen opgeslagen en geactiveerd; Doel pauzeren stopt de afstemming maar bewaart opgeslagen doelen.",
+            "label": "Opgeslagen doel",
+            "recommendation": "Houd een gecontroleerd Functioneel doel actief voor gewoon bouwwerk."
+          },
+          "capture_castle": {
+            "description": "Selecteer je huidige Stormkasteel voordat je een bouwdoel vastlegt.",
+            "label": "Stormkasteel",
+            "recommendation": "Leg het kasteel vast dat je wilt beheren."
+          },
+          "combat_only": {
+            "description": "Gevechten tegen forten en eilanden vereisen geen vastgelegd bouwdoel.",
+            "label": "Gevecht zonder doel"
+          },
+          "decoration_preset": {
+            "description": "Pas na de bouw eventueel een gekozen decoratiepreset toe.",
+            "label": "Decoratiepreset na de bouw",
+            "recommendation": "Laat leeg tenzij je een aparte decoratie-indeling wilt."
+          },
+          "exact": {
+            "description": "Sla alle ondersteunde doeldetails op voor een exacte kopie.",
+            "label": "Exact vastleggen",
+            "recommendation": "Alleen gebruiken nadat je het hele doel hebt bekeken."
+          },
+          "functional": {
+            "description": "Sla een doel op voor essentiële Stormfuncties zonder elke gebouwpositie te kopiëren.",
+            "label": "Functioneel vastleggen",
+            "recommendation": "Functioneel voor gewoon onderhoud."
+          },
+          "layout": {
+            "description": "Sla gebouwtypen en posities op zonder decoraties.",
+            "label": "Indeling vastleggen",
+            "recommendation": "Alleen gebruiken als de plaatsing van gebouwen belangrijk is."
+          },
+          "open_settings": {
+            "description": "Open de Auto Storm-instellingen via de Automatiseringskaart.",
+            "label": "Instellingen openen"
+          },
+          "starter_castle": {
+            "description": "Kies het momenteel beschikbare officiële Storm-startkasteel voor het volgende vergrendelde seizoen.",
+            "label": "Te openen kasteel",
+            "recommendation": "Kies na prijscontrole een betaalbaar gebruikelijk startkasteel."
+          }
+        },
+        "title": "Open en leg je Stormkasteel vast"
+      },
+      "combat": {
+        "image": {
+          "alt": "Voorbeeld van fort- en eilandaanvalinstellingen",
+          "caption": "Voorbeeld van aquamarijneilanden, fortniveaus, doelvolgorde en bezettingsverdedigers."
+        },
+        "items": {
+          "defenders": {
+            "description": "Kies soorten en aantallen verdedigers voor een veroverd eiland; een lege lijst laat na een bevestigde overwinning één overlevende achter.",
+            "label": "Eilandverdedigingseenheden",
+            "recommendation": "Kies verdedigers als één overlevende niet genoeg is voor je plan."
+          },
+          "fort_preset": {
+            "description": "Kies een opgeslagen troepen- en werktuigformatie voor forten.",
+            "label": "Fortaanvalpreset",
+            "recommendation": "Gebruik je gebruikelijke fortpreset."
+          },
+          "forts": {
+            "description": "Schakel aanvallen op geselecteerde officiële fortniveaus van 40 tot 80 in.",
+            "label": "Stormforten",
+            "recommendation": "Aan voor niveaus die je gekozen preset betrouwbaar aankan."
+          },
+          "horse": {
+            "description": "Kies veer-, munt- of robijnreizen voor Stormaanvallen.",
+            "label": "Reisboost voor paarden",
+            "recommendation": "Reisveer voor snel reizen zonder robijnreizen te kiezen."
+          },
+          "island_preset": {
+            "description": "Kies een opgeslagen troepen- en werktuigformatie voor eilanden.",
+            "label": "Eilandaanvalpreset",
+            "recommendation": "Gebruik je gebruikelijke eilandpreset."
+          },
+          "island_resources": {
+            "description": "Kies welke hout-, steen- of aquamarijneilanden aangevallen mogen worden.",
+            "label": "Eilandgrondstoffen",
+            "recommendation": "Selecteer aquamarijn om die te verzamelen."
+          },
+          "island_sizes": {
+            "description": "Kies grote, kleine of beide eilandgroottes voor de gekozen grondstoffen.",
+            "label": "Eilandgroottes",
+            "recommendation": "Groot en klein voor gewone aquamarijnverzameling."
+          },
+          "islands": {
+            "description": "Schakel de verovering in van eilanden met de gekozen grondstoffen en groottes.",
+            "label": "Grondstofeilanden",
+            "recommendation": "Aan als je aquamarijn van grote en kleine eilanden wilt."
+          },
+          "minimum_attacks": {
+            "description": "Val alleen forten aan met minstens dit aantal resterende aanvallen.",
+            "label": "Minimaal resterende aanvallen",
+            "recommendation": "0 staat elk geschikt fort toe."
+          },
+          "priority": {
+            "description": "Rangschik ingeschakelde eiland- en fortdoelen; prioriteit beslist binnen een rij en afstand verbreekt gelijke standen.",
+            "label": "Aanvalsdoelprioriteit",
+            "recommendation": "Grote eilanden, kleine eilanden en dan forten van niveau 80 tot 40 voor aquamarijn."
+          }
+        },
+        "title": "Kies forten en grondstofeilanden"
+      },
+      "construction": {
+        "image": {
+          "alt": "Voorbeeld van bouw- en reserve-instellingen",
+          "caption": "Grondstoftransport, uitgaverechten, reserves en havenniveau als voorbeeldbediening."
+        },
+        "items": {
+          "demolition": {
+            "description": "Sta nauwkeurige verwijdering toe van gebouwen die niet verplaatst of opgeslagen kunnen worden.",
+            "label": "Sloop toestaan",
+            "recommendation": "Uit tenzij je een gecontroleerde indeling opnieuw opbouwt."
+          },
+          "donor_reserves": {
+            "description": "Bewaar gekozen hoeveelheden hout, steen en aquamarijn bij elke donor vóór grondstoftransport.",
+            "label": "Beschermde donorreserves",
+            "recommendation": "Bescherm je gewone bouwbudget voor hout en steen; aquamarijn 0 als ongebruikt."
+          },
+          "harbor_level": {
+            "description": "Kies havendoelniveau 1, 2 of 3; niveaus 2 en 3 gebruiken premium bouwpaden.",
+            "label": "Havendoelniveau",
+            "recommendation": "Niveau 1 tenzij premium upgrades gepland zijn."
+          },
+          "harbor": {
+            "description": "Houd de haven op het gekozen niveau, ook als het vastgelegde doel afwijkt.",
+            "label": "Haven upgraden",
+            "recommendation": "Aan met niveau 1 voor normaal gebruik."
+          },
+          "premium": {
+            "description": "Sta geschikte bouwstappen toe die premium valuta kosten.",
+            "label": "Premium kosten toestaan",
+            "recommendation": "Uit tenzij premium bouw gepland is."
+          },
+          "resource_transport": {
+            "description": "Sta bevestigde leveringen van ontbrekende bouwgrondstoffen uit donorkastelen toe.",
+            "label": "Ontbrekende grondstoffen vervoeren",
+            "recommendation": "Aan voor gewone bouw."
+          },
+          "skip_reserves": {
+            "description": "Bewaar het gekozen aantal van elk tijdsprongitem van 1 min, 5 min, 10 min, 30 min, 1 uur, 5 uur en 24 uur.",
+            "label": "Tijdsprongen in reserve",
+            "recommendation": "Houd korte sprongen op 0 tenzij elders nodig; reserveer je voorraad van 1, 5 en 24 uur voor andere evenementen."
+          },
+          "storm_reserves": {
+            "description": "Houd gekozen hoeveelheden Stormhout, steen en aquamarijn buiten bereik van de bouw.",
+            "label": "Bouwuitgavenreserves van Stormkasteel",
+            "recommendation": "Stormhout 0 en steen 0 bij gebruik van overschotten; reserveer aquamarijn volgens je geplande beloningsbudget."
+          },
+          "time_skips": {
+            "description": "Pas geschikte tijdsprongen toe terwijl je gekozen itemreserves bewaart.",
+            "label": "Bouwtijdsprongen gebruiken",
+            "recommendation": "Aan als je gewone bouw wilt versnellen."
+          }
+        },
+        "title": "Stel bouw en grondstofbescherming in"
+      },
+      "luna": {
+        "image": {
+          "alt": "Voorbeeld van Luna-beloningsinstellingen",
+          "caption": "Aquamarijnreserve, beperkte aankoopdoelen, herhaalbare beloningen en prioriteit."
+        },
+        "items": {
+          "cost_cap": {
+            "description": "Lees de spelkosten en aankooplimiet van elke beloning.",
+            "label": "Kosten en aankooplimiet",
+            "recommendation": "Controleer beide alleen-lezenwaarden voordat je inschakelt."
+          },
+          "keep_aqua": {
+            "description": "Houd deze hoeveelheid aquamarijn buiten Luna-aankopen.",
+            "label": "Aquamarijn bewaren",
+            "recommendation": "0 als alle overschotten naar beloningen mogen; reserveer anders je geplande hoeveelheid."
+          },
+          "priority": {
+            "description": "Koop eerst doelen met een lager nummer en voltooi beperkte doelen vóór onbeperkte.",
+            "label": "Prioriteit",
+            "recommendation": "Gebruik 1, 2 en 3 in de gewenste volgorde."
+          },
+          "search": {
+            "description": "Zoek officiële Luna-beloningen op naam voordat je een aankoop instelt.",
+            "label": "Luna-beloning zoeken",
+            "recommendation": "Zoek de beloning die je echt wilt."
+          },
+          "target_total": {
+            "description": "Stel het gewenste totale aantal aankopen voor een beperkte beloning in.",
+            "label": "Gewenst totaal",
+            "recommendation": "Stel alleen het aantal in dat je wilt kopen."
+          },
+          "unlimited": {
+            "description": "Blijf een geschikte herhaalbare beloning kopen zolang reserve en winkellimiet het toelaten.",
+            "label": "Onbeperkt",
+            "recommendation": "Aan alleen voor herhaalbare beloningen die je regelmatig wilt."
+          },
+          "use": {
+            "description": "Selecteer een beloning om automatisch kopen toe te staan.",
+            "label": "Beloning gebruiken",
+            "recommendation": "Schakel alleen gewenste beloningen in."
+          }
+        },
+        "title": "Kies Luna-beloningen voor aquamarijn"
+      },
+      "save": {
+        "image": {
+          "alt": "Voorbeeld van Auto Storm opslaan en inschakelen",
+          "caption": "Dagelijkse aanvalslimiet, beleidscontrole, alleen-lezen kaartvernieuwing en automatiseringsschakelaar."
+        },
+        "items": {
+          "daily_limit": {
+            "description": "Stop nieuwe Auto Storm-aanvallen bij het accountbrede dagelijkse aantal gewone aanvallen; 0 verwijdert deze extra limiet.",
+            "label": "Dagelijkse limiet gewone aanvallen",
+            "recommendation": "0 tenzij je een accountbrede limiet gebruikt."
+          },
+          "enable": {
+            "description": "Schakel Auto Storm in op de Automatiseringskaart zodra opgeslagen keuzes klaar zijn.",
+            "label": "Automatiseringsschakelaar",
+            "recommendation": "Aan na instellen."
+          },
+          "map_refresh": {
+            "description": "Lees het gezaghebbende interval voor vernieuwing van de Stormkaart.",
+            "label": "Kaartvernieuwingsinterval",
+            "recommendation": "Het alleen-lezeninterval is 2 uur; wacht na wijzigingen op een nieuwe scan."
+          },
+          "policy_check": {
+            "description": "Stel in hoe vaak Auto Storm instellingen en geschikte taken controleert.",
+            "label": "Beleidscontrole-interval",
+            "recommendation": "Houd het gebruikelijke interval van 30 seconden."
+          },
+          "save": {
+            "description": "Sla kasteel-, bouw-, gevechts-, troepenimport- en Luna-keuzes op voordat je automatisering inschakelt.",
+            "label": "Instellingen opslaan",
+            "recommendation": "Sla op na controle van alle uitgaverechten."
+          }
+        },
+        "title": "Sla Auto Storm op en schakel het in"
+      },
+      "troops": {
+        "image": {
+          "alt": "Voorbeeld van troepenimport en alleen-lezen schattingen",
+          "caption": "Donorvolgorde, 1.000 bewaarde troepen en alleen-lezen capaciteitsschattingen."
+        },
+        "items": {
+          "attack_history": {
+            "description": "Lees het gemiddelde aantal gemelde Stormaanvallen sinds de reset in de afgelopen 24 uur.",
+            "label": "Gemiddelde aanvallen sinds reset",
+            "recommendation": "Bekijk deze alleen-lezen schatting voordat je importbehoeften wijzigt."
+          },
+          "committed_cap": {
+            "description": "Lees de automatisch berekende limiet inclusief gestationeerde troepen, bewegingen, onderweg zijnde en terugkerende troepen.",
+            "label": "Limiet gebonden Stormtroepen",
+            "recommendation": "Bekijk deze alleen-lezen limiet voordat je meer importeert."
+          },
+          "donors": {
+            "description": "Kies donorkastelen in getoonde volgorde; een gedeeltelijke voorraad kan een kleinere levering geven.",
+            "label": "Donorkastelen",
+            "recommendation": "Selecteer je gewone troepenleveranciers in gewenste volgorde."
+          },
+          "import": {
+            "description": "Importeer ontbrekende aanvals- of gekozen verdedigingstroepen uit donorkastelen naar Storm.",
+            "label": "Ontbrekende troepen importeren",
+            "recommendation": "Aan als je Stormkasteel regelmatig troepen nodig heeft."
+          },
+          "map_coverage": {
+            "description": "Bekijk kaartdekking voordat je op weergegeven doelen vertrouwt.",
+            "label": "Kaartdekking",
+            "recommendation": "Wacht op actuele dekking als doelen ontbreken."
+          },
+          "minimum_kept": {
+            "description": "Houd na lancering van een aanval minstens zoveel troepen in Storm en behoud de mix van ingeschakelde presets.",
+            "label": "Minimum troepen over na lancering",
+            "recommendation": "1.000 troepen als normale reserve, aangepast aan je werkelijke leger."
+          },
+          "preset_average": {
+            "description": "Lees de gemiddelde troepenbehoefte van ingeschakelde aanvalspresets, inclusief gekozen eilandverdedigers.",
+            "label": "Gemiddelde ingeschakelde preset",
+            "recommendation": "Vergelijk deze alleen-lezen schatting met je leger."
+          }
+        },
+        "title": "Importeer en bewaak Stormtroepen"
       }
     }
   }

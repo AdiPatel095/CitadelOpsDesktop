@@ -37,7 +37,10 @@
     "khanPreviewTitle": "Exempel på inställningar för Automatiska Khan",
     "beriGuideIntro": "Följ dessa steg för att ställa in Auto Beri; välj en exempelpanel för att förstora den.",
     "beriGuideTitle": "Guide för Auto Beri",
-    "beriPreviewTitle": "Exempel på Auto-Beri-inställning"
+    "beriPreviewTitle": "Exempel på Auto-Beri-inställning",
+    "stormGuideIntro": "Följ stegen för att ställa in Auto Storm; välj en exempelpanel för att förstora den.",
+    "stormGuideTitle": "Guide till Auto Storm",
+    "stormPreviewTitle": "Exempel på Auto Storm-inställning"
   },
   "autoTower": {
     "recommendationIntro": "Det här är rekommendationer för regelbunden användning; granska dem innan du sparar.",
@@ -533,6 +536,48 @@
       "next": "Nästa sändning: upp till 1 B från givarförrådet",
       "stock": "Lägerförråd: 2 A och 0 B",
       "title": "Exempel på proportionella överföringar"
+    },
+    "stormCastle": {
+      "blueprint": "Sparat mål aktivt; paus bevarar det",
+      "capture": "Nuvarande slott: Funktionellt mål",
+      "decorations": "Dekorationsförval: valfritt",
+      "title": "Exempel på Stormslottets tillträde",
+      "unlock": "Automatisk öppning: på efter prisgranskning"
+    },
+    "stormCombat": {
+      "defenders": "Ockupationsförsvarare: valda eller en överlevande",
+      "forts": "Fort: valda nivåer 40–80",
+      "islands": "Akvamarinöar: stora och små",
+      "priority": "Stora, små, sedan fort från 80 till 40",
+      "title": "Exempel på fort- och öanfall"
+    },
+    "stormConstruction": {
+      "harbor": "Hamn: på, nivå 1",
+      "resources": "Stormträ 0; sten 0; akvamarin planerad",
+      "spending": "Premium och rivning: av",
+      "title": "Exempel på bygge och reserver",
+      "transport": "Resurstransport: på"
+    },
+    "stormLuna": {
+      "cost": "Kostnad och köpgräns: skrivskyddade",
+      "limited": "Begränsade mål före obegränsade belöningar",
+      "priority": "Prioritet 1, 2, 3; lägre först",
+      "reserve": "Behåll akvamarin: 0 vid användning av överskott",
+      "title": "Exempel på Luna-belöningar"
+    },
+    "stormSave": {
+      "check": "Policykontroll: 30 sekunder",
+      "daily": "Dagliga normala anfall: 0 extra gräns",
+      "map": "Kartuppdatering: 2 timmar, skrivskyddad",
+      "switch": "Spara och aktivera sedan Auto Storm",
+      "title": "Exempel på sparande och aktivering"
+    },
+    "stormTroops": {
+      "averages": "Anfalls- och förvalssnitt: skrivskyddade",
+      "cap": "Gräns för bundna trupper: skrivskyddad",
+      "donors": "Givare: visad ordning, delvis lager tillåtet",
+      "minimum": "Minst kvar: 1 000 trupper",
+      "title": "Exempel på truppimport"
     }
   },
   "autoStation": {
@@ -1682,6 +1727,309 @@
           }
         },
         "title": "Ställ in proportionella truppöverföringar"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "Auto Storm kan öppna och bygga ett Stormslott, anfalla fort och resursöar, importera trupper och köpa utvalda Luna-belöningar.",
+      "expectation": "Varje del använder färska speluppgifter och dina sparade tillstånd; premiumbygge, anfall och köp begränsas av de val du aktiverar.",
+      "name": "Auto Storm",
+      "summary": "Hantera ditt Stormslott, anfall och belöningar"
+    },
+    "recommendationIntro": "Rekommendationerna gäller normal användning av Auto Storm; de är vägledning och ändrar inte sparade inställningar.",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "Exempel på tillträde till Stormslott och infångning av mål",
+          "caption": "Val av startslott, lägen för målfångst och frivillig aktivering; inget verkligt köp eller konto visas."
+        },
+        "items": {
+          "automatic_open": {
+            "description": "När Storm är låst väljer du ett tillgängligt officiellt startslott och granskar det visade priset innan du tillåter upplåsning.",
+            "label": "Öppna Stormslottet automatiskt",
+            "recommendation": "På om Auto Storm ska öppna ett vanligt startslott efter att du granskat priset."
+          },
+          "blueprint": {
+            "description": "Ett infångat mål sparas och aktiveras direkt; Pausa mål stoppar avstämningen men behåller sparade mål.",
+            "label": "Sparat mål",
+            "recommendation": "Låt ett granskat Funktionellt mål vara aktivt för normalt bygge."
+          },
+          "capture_castle": {
+            "description": "Välj ditt nuvarande Stormslott innan du fångar ett byggmål.",
+            "label": "Stormslott",
+            "recommendation": "Fånga slottet som du vill hantera."
+          },
+          "combat_only": {
+            "description": "Strid mot fort och öar kräver inget infångat byggmål.",
+            "label": "Strid utan mål"
+          },
+          "decoration_preset": {
+            "description": "Använd valfritt ett valt dekorationsförval efter bygget.",
+            "label": "Dekorationsförval efter bygge",
+            "recommendation": "Lämna tomt om du inte vill ha en separat dekorationslayout."
+          },
+          "exact": {
+            "description": "Spara alla måldetaljer som stöds för en exakt kopia.",
+            "label": "Exakt infångning",
+            "recommendation": "Använd bara efter att ha granskat hela målet."
+          },
+          "functional": {
+            "description": "Spara ett mål för viktiga Stormfunktioner utan att kopiera varje byggnadsplats.",
+            "label": "Funktionell infångning",
+            "recommendation": "Funktionell för normalt underhåll."
+          },
+          "layout": {
+            "description": "Spara byggnadstyper och placeringar utan dekorationer.",
+            "label": "Infångning av layout",
+            "recommendation": "Använd bara när byggnadernas placering spelar roll."
+          },
+          "open_settings": {
+            "description": "Öppna Auto Storm-inställningar från kortet Automatisering.",
+            "label": "Öppna inställningar"
+          },
+          "starter_castle": {
+            "description": "Välj det officiella Stormstartslott som för närvarande är tillgängligt för nästa låsta säsong.",
+            "label": "Slott som ska öppnas",
+            "recommendation": "Välj ett prisvärt vanligt startslott efter prisgranskning."
+          }
+        },
+        "title": "Öppna och fånga ditt Stormslott"
+      },
+      "combat": {
+        "image": {
+          "alt": "Exempel på inställningar för fort- och öanfall",
+          "caption": "Exempel på akvamarinöar, fortnivåer, målordning och ockupationsförsvarare."
+        },
+        "items": {
+          "defenders": {
+            "description": "Välj typer och antal försvarare som stannar på en erövrad ö; en tom lista lämnar en överlevande efter bekräftad seger.",
+            "label": "Öförsvarsenheter",
+            "recommendation": "Välj försvarare om en överlevande inte räcker för din plan."
+          },
+          "fort_preset": {
+            "description": "Välj en sparad formation av trupper och verktyg för fort.",
+            "label": "Anfallsförval för fort",
+            "recommendation": "Använd ditt vanliga fortförval."
+          },
+          "forts": {
+            "description": "Aktivera anfall mot valda officiella fortnivåer från 40 till 80.",
+            "label": "Stormfort",
+            "recommendation": "På för nivåer som ditt valda förval klarar pålitligt."
+          },
+          "horse": {
+            "description": "Välj resor med fjäder, mynt eller rubiner för Stormanfall.",
+            "label": "Hästresans bonus",
+            "recommendation": "Resefjäder ger snabb resa utan att välja rubinresa."
+          },
+          "island_preset": {
+            "description": "Välj en sparad formation av trupper och verktyg för öar.",
+            "label": "Anfallsförval för öar",
+            "recommendation": "Använd ditt vanliga öförval."
+          },
+          "island_resources": {
+            "description": "Välj vilka öar med trä, sten eller akvamarin som får anfallas.",
+            "label": "Öarnas resurser",
+            "recommendation": "Välj akvamarin om du vill samla akvamarin."
+          },
+          "island_sizes": {
+            "description": "Välj stora, små eller båda storlekarna av öar med valda resurser.",
+            "label": "Östorlekar",
+            "recommendation": "Stora och små för normal insamling av akvamarin."
+          },
+          "islands": {
+            "description": "Aktivera erövring av öar med valda resurser och storlekar.",
+            "label": "Resursöar",
+            "recommendation": "På om du vill få akvamarin från stora och små öar."
+          },
+          "minimum_attacks": {
+            "description": "Anfall bara fort som har minst så många anfall kvar.",
+            "label": "Minst återstående anfall",
+            "recommendation": "0 tillåter alla lämpliga fort."
+          },
+          "priority": {
+            "description": "Ordna aktiva ö- och fortmål; prioritet avgör inom en rad, sedan avgör avstånd vid lika läge.",
+            "label": "Prioritet för anfallsmål",
+            "recommendation": "Stora öar, små öar och därefter fort från nivå 80 till 40 vid akvamarinsamling."
+          }
+        },
+        "title": "Välj fort och resursöar"
+      },
+      "construction": {
+        "image": {
+          "alt": "Exempel på inställningar för bygge och reserver",
+          "caption": "Resurstransport, utgiftstillstånd, reserver och hamnnivå visas som exempelreglage."
+        },
+        "items": {
+          "demolition": {
+            "description": "Tillåt exakt borttagning av byggnader som inte kan flyttas eller lagras.",
+            "label": "Tillåt rivning",
+            "recommendation": "Av om du inte återuppbygger en granskad layout."
+          },
+          "donor_reserves": {
+            "description": "Låt valda mängder trä, sten och akvamarin stanna hos varje givare före resurstransport.",
+            "label": "Skyddade givarreserver",
+            "recommendation": "Skydda din vanliga byggbudget för trä och sten; akvamarin 0 när den inte används."
+          },
+          "harbor_level": {
+            "description": "Välj målnivå 1, 2 eller 3 för hamnen; nivå 2 och 3 använder premiumbyggvägar.",
+            "label": "Hamnmålnivå",
+            "recommendation": "Nivå 1 om inga premiumuppgraderingar planeras."
+          },
+          "harbor": {
+            "description": "Håll hamnen på vald nivå även om det infångade målet skiljer sig.",
+            "label": "Uppgradera hamn",
+            "recommendation": "På med nivå 1 för normal användning."
+          },
+          "premium": {
+            "description": "Tillåt lämpliga byggsteg som kostar premiumvaluta.",
+            "label": "Tillåt premiumkostnader",
+            "recommendation": "Av om premiumbygge inte är planerat."
+          },
+          "resource_transport": {
+            "description": "Tillåt bekräftade leveranser av saknade byggresurser från givarslott.",
+            "label": "Transportera saknade resurser",
+            "recommendation": "På för normalt bygge."
+          },
+          "skip_reserves": {
+            "description": "Behåll valt antal av varje tidsförkortning på 1 min, 5 min, 10 min, 30 min, 1 tim, 5 tim och 24 tim.",
+            "label": "Tidsförkortningar i reserv",
+            "recommendation": "Behåll 0 korta förkortningar om de inte behövs på annat håll; spara dina 1-, 5- och 24-timmarsförråd till andra evenemang."
+          },
+          "storm_reserves": {
+            "description": "Håll valda mängder Stormträ, sten och akvamarin utanför byggets förbrukning.",
+            "label": "Stormslottets utgiftsreserver",
+            "recommendation": "Stormträ 0 och sten 0 om överskott används; avsätt akvamarin enligt din planerade belöningsbudget."
+          },
+          "time_skips": {
+            "description": "Använd lämpliga tidsförkortningar och behåll valda föremålsreserver.",
+            "label": "Använd byggtidsförkortningar",
+            "recommendation": "På om du vill skynda på normalt bygge."
+          }
+        },
+        "title": "Ställ in bygge och resursskydd"
+      },
+      "luna": {
+        "image": {
+          "alt": "Exempel på inställningar för Luna-belöningar",
+          "caption": "Akvamarinreserv, begränsade köpmål, upprepningsbara belöningar och prioritet."
+        },
+        "items": {
+          "cost_cap": {
+            "description": "Läs kostnaden och köpgränsen som spelet anger för varje belöning.",
+            "label": "Kostnad och köpgräns",
+            "recommendation": "Kontrollera båda skrivskyddade värdena innan du aktiverar."
+          },
+          "keep_aqua": {
+            "description": "Håll denna mängd akvamarin utanför Luna-köp.",
+            "label": "Behåll akvamarin",
+            "recommendation": "0 om hela överskottet får gå till belöningar; annars reserverar du den planerade mängden."
+          },
+          "priority": {
+            "description": "Köp mål med lägre nummer först och slutför begränsade mål före obegränsade.",
+            "label": "Prioritet",
+            "recommendation": "Använd 1, 2 och 3 i önskad ordning."
+          },
+          "search": {
+            "description": "Sök efter officiella Luna-belöningar med namn innan du ställer in ett köp.",
+            "label": "Hitta Luna-belöning",
+            "recommendation": "Sök efter belöningen du faktiskt vill ha."
+          },
+          "target_total": {
+            "description": "Ange önskat totalt antal köp av en begränsad belöning.",
+            "label": "Önskat totalt antal",
+            "recommendation": "Ange bara antalet du tänker köpa."
+          },
+          "unlimited": {
+            "description": "Fortsätt köpa en lämplig upprepningsbar belöning så länge reserven och butiksgränsen tillåter.",
+            "label": "Obegränsat",
+            "recommendation": "På enbart för upprepningsbara belöningar du vill ha regelbundet."
+          },
+          "use": {
+            "description": "Välj en belöning så att den får köpas automatiskt.",
+            "label": "Använd belöning",
+            "recommendation": "Aktivera bara önskade belöningar."
+          }
+        },
+        "title": "Välj Luna-belöningar för akvamarin"
+      },
+      "save": {
+        "image": {
+          "alt": "Exempel på att spara och aktivera Auto Storm",
+          "caption": "Daglig anfallsgräns, policykontroll, skrivskyddad kartuppdatering och automatiseringsreglage."
+        },
+        "items": {
+          "daily_limit": {
+            "description": "Stoppa nya Auto Storm-anfall vid kontots dagliga antal normala anfall; 0 tar bort denna extra gräns.",
+            "label": "Daglig gräns för normala anfall",
+            "recommendation": "0 om du inte använder en gräns för hela kontot."
+          },
+          "enable": {
+            "description": "Aktivera Auto Storm på kortet Automatisering när dina sparade val är klara.",
+            "label": "Automatiseringsreglage",
+            "recommendation": "På efter inställning."
+          },
+          "map_refresh": {
+            "description": "Läs det officiella uppdateringsintervallet för Stormkartan.",
+            "label": "Kartans uppdateringsintervall",
+            "recommendation": "Det skrivskyddade intervallet är 2 timmar; vänta på en ny skanning efter ändringar."
+          },
+          "policy_check": {
+            "description": "Ange hur ofta Auto Storm kontrollerar inställningar och möjliga uppgifter.",
+            "label": "Intervall för policykontroll",
+            "recommendation": "Behåll det vanliga intervallet på 30 sekunder."
+          },
+          "save": {
+            "description": "Spara val för slott, bygge, strid, truppimport och Luna innan du aktiverar automatiseringen.",
+            "label": "Spara inställningar",
+            "recommendation": "Spara efter granskning av alla utgiftstillstånd."
+          }
+        },
+        "title": "Spara och aktivera Auto Storm"
+      },
+      "troops": {
+        "image": {
+          "alt": "Exempel på truppimport och skrivskyddade uppskattningar",
+          "caption": "Givarordning, 1 000 kvarhållna trupper och skrivskyddade kapacitetsuppskattningar."
+        },
+        "items": {
+          "attack_history": {
+            "description": "Läs det genomsnittliga antalet Stormanfall som rapporterats sedan återställning under de senaste 24 timmarna.",
+            "label": "Genomsnittliga anfall sedan återställning",
+            "recommendation": "Granska denna skrivskyddade uppskattning innan du ändrar importbehovet."
+          },
+          "committed_cap": {
+            "description": "Läs den automatiskt beräknade gränsen som omfattar stationerade trupper, förflyttningar, transit och återvändande.",
+            "label": "Gräns för bundna Stormtrupper",
+            "recommendation": "Granska denna skrivskyddade gräns innan du ökar importen."
+          },
+          "donors": {
+            "description": "Välj givarslott i den ordning som visas; delvis lager kan ge en mindre leverans.",
+            "label": "Givarslott",
+            "recommendation": "Välj dina vanliga truppleverantörer i önskad ordning."
+          },
+          "import": {
+            "description": "Importera saknade anfalls- eller valda försvarstrupper till Storm från givarslott.",
+            "label": "Importera saknade trupper",
+            "recommendation": "På om ditt Stormslott regelbundet behöver trupper."
+          },
+          "map_coverage": {
+            "description": "Granska karttäckningen innan du litar på målen som visas.",
+            "label": "Karttäckning",
+            "recommendation": "Vänta på aktuell täckning om mål saknas."
+          },
+          "minimum_kept": {
+            "description": "Behåll minst så många trupper i Storm efter att ett anfall skickats och bevara blandningen av aktiva förval.",
+            "label": "Minst kvarhållna trupper efter start",
+            "recommendation": "1 000 trupper som normal reserv, anpassat till din verkliga armé."
+          },
+          "preset_average": {
+            "description": "Läs det genomsnittliga truppbehovet för aktiva anfallsförval, inklusive valda öförsvarare.",
+            "label": "Genomsnittligt aktivt förval",
+            "recommendation": "Jämför denna skrivskyddade uppskattning med din armé."
+          }
+        },
+        "title": "Importera och övervaka Stormtrupper"
       }
     }
   }

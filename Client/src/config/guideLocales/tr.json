@@ -37,7 +37,10 @@
     "khanPreviewTitle": "Otomatik Han kurulum örneği",
     "beriGuideIntro": "Auto Beri Dünyası'nı kurmak için bu adımları izleyin; büyütmek istediğiniz örnek panoyu seçin.",
     "beriGuideTitle": "Auto Beri Dünyası rehberi",
-    "beriPreviewTitle": "Auto Beri Dünyası kurulum örneği"
+    "beriPreviewTitle": "Auto Beri Dünyası kurulum örneği",
+    "stormGuideIntro": "Auto Storm'u ayarlamak için bu adımları izleyin; büyütmek üzere örnek panoyu seçin.",
+    "stormGuideTitle": "Auto Storm rehberi",
+    "stormPreviewTitle": "Auto Storm kurulum örneği"
   },
   "autoTower": {
     "recommendationIntro": "Bunlar düzenli kullanım önerileridir; kaydetmeden önce gözden geçirin.",
@@ -533,6 +536,48 @@
       "next": "Sonraki sevkiyat: kaynak stokundan en çok 1 B",
       "stock": "Kamp stoku: 2 A ve 0 B",
       "title": "Örnek oranlı transferler"
+    },
+    "stormCastle": {
+      "blueprint": "Kayıtlı hedef etkin; duraklatma onu tutar",
+      "capture": "Mevcut kale: İşlevsel hedef",
+      "decorations": "Dekorasyon ön ayarı: isteğe bağlı",
+      "title": "Örnek Fırtına kalesi erişimi",
+      "unlock": "Otomatik açma: fiyat kontrolünden sonra açık"
+    },
+    "stormCombat": {
+      "defenders": "İşgal savunucuları: seçili veya bir sağ kalan",
+      "forts": "Hisarlar: seçili 40–80 seviyeleri",
+      "islands": "Akuamarin adaları: büyük ve küçük",
+      "priority": "Büyük, küçük, sonra 80'den 40'a hisarlar",
+      "title": "Örnek hisar ve ada saldırıları"
+    },
+    "stormConstruction": {
+      "harbor": "Liman: açık, seviye 1",
+      "resources": "Fırtına odunu 0; taş 0; Akuamarin planlı",
+      "spending": "Premium ve yıkım: kapalı",
+      "title": "Örnek inşaat ve rezervler",
+      "transport": "Kaynak taşımacılığı: açık"
+    },
+    "stormLuna": {
+      "cost": "Maliyet ve alış sınırı: salt okunur",
+      "limited": "Sınırlı hedefler sınırsız ödüllerden önce",
+      "priority": "Öncelik 1, 2, 3; küçük numara önce",
+      "reserve": "Akuamarin sakla: fazlalık kullanılırken 0",
+      "title": "Örnek Luna ödülleri"
+    },
+    "stormSave": {
+      "check": "Politika kontrolü: 30 saniye",
+      "daily": "Günlük normal saldırılar: 0 ek sınır",
+      "map": "Harita yenileme: 2 saat, salt okunur",
+      "switch": "Kaydedin, sonra Auto Storm'u açın",
+      "title": "Örnek kaydetme ve açma akışı"
+    },
+    "stormTroops": {
+      "averages": "Saldırı ve ön ayar ortalamaları: salt okunur",
+      "cap": "Bağlı asker sınırı: salt okunur",
+      "donors": "Kaynak kaleler: gösterilen sıra, kısmi stok uygun",
+      "minimum": "Asgari tutulan: 1.000 asker",
+      "title": "Örnek asker ithali"
     }
   },
   "autoStation": {
@@ -1682,6 +1727,309 @@
           }
         },
         "title": "Oranlı asker transferlerini ayarlayın"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "Auto Storm, Fırtına kalesi açıp inşa edebilir, kalelere ve kaynak adalarına saldırabilir, asker getirebilir ve seçili Luna ödüllerini satın alabilir.",
+      "expectation": "Her işlem güncel oyun verilerini ve kayıtlı izinlerinizi kullanır; premium inşaat, saldırılar ve alımlar açtığınız seçimlerle sınırlıdır.",
+      "name": "Auto Storm",
+      "summary": "Fırtına kalenizi, saldırıları ve ödülleri yönetin"
+    },
+    "recommendationIntro": "Öneriler Auto Storm'un olağan kullanımı içindir; yalnızca yol gösterir ve kayıtlı ayarları değiştirmez.",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "Fırtına kalesine erişim ve hedef kaydı için örnek görüntü",
+          "caption": "Başlangıç kalesi seçimi, kayıt modları ve isteğe bağlı hedef etkinleştirme; gerçek satın alma veya hesap gösterilmez."
+        },
+        "items": {
+          "automatic_open": {
+            "description": "Fırtına kilitliyken mevcut resmî başlangıç kalesini seçin ve açmaya izin vermeden önce gösterilen fiyatı kontrol edin.",
+            "label": "Fırtına kalesini otomatik aç",
+            "recommendation": "Auto Storm'un fiyatı kontrol ettikten sonra olağan başlangıç kalesini açmasını istiyorsanız açık."
+          },
+          "blueprint": {
+            "description": "Kaydedilen hedef hemen saklanıp etkinleşir; Hedefi duraklat uzlaştırmayı durdurur ama saklanan hedefleri tutar.",
+            "label": "Kayıtlı hedef",
+            "recommendation": "Normal inşaat için incelenmiş İşlevsel hedefi etkin tutun."
+          },
+          "capture_castle": {
+            "description": "Bir inşaat hedefi kaydetmeden önce mevcut Fırtına kalenizi seçin.",
+            "label": "Fırtına kalesi",
+            "recommendation": "Yönetmek istediğiniz kaleyi kaydedin."
+          },
+          "combat_only": {
+            "description": "Hisar ve ada çatışmaları için kayıtlı bir inşaat hedefi gerekmez.",
+            "label": "Hedef olmadan savaş"
+          },
+          "decoration_preset": {
+            "description": "İnşaattan sonra isterseniz seçili bir dekorasyon ön ayarı uygulayın.",
+            "label": "İnşaat sonrası dekorasyon ön ayarı",
+            "recommendation": "Ayrı bir dekorasyon düzeni istemiyorsanız boş bırakın."
+          },
+          "exact": {
+            "description": "Tam kopya için desteklenen tüm hedef ayrıntılarını kaydedin.",
+            "label": "Tam kayıt",
+            "recommendation": "Yalnızca tüm hedefi inceledikten sonra kullanın."
+          },
+          "functional": {
+            "description": "Her bina konumunu kopyalamadan temel Fırtına işlevleri için bir hedef kaydedin.",
+            "label": "İşlevsel kayıt",
+            "recommendation": "Olağan bakım için İşlevsel."
+          },
+          "layout": {
+            "description": "Dekorasyonlar olmadan bina türlerini ve konumlarını kaydedin.",
+            "label": "Düzen kaydı",
+            "recommendation": "Yalnızca bina yerleşimi önemliyse kullanın."
+          },
+          "open_settings": {
+            "description": "Auto Storm ayarlarını Otomasyon kartından açın.",
+            "label": "Ayarları aç"
+          },
+          "starter_castle": {
+            "description": "Sonraki kilitli sezon için şu anda mevcut resmî Fırtına başlangıç kalesini seçin.",
+            "label": "Açılacak kale",
+            "recommendation": "Fiyatı kontrol edip karşılayabildiğiniz olağan başlangıç kalesini seçin."
+          }
+        },
+        "title": "Fırtına kalenizi açıp kaydedin"
+      },
+      "combat": {
+        "image": {
+          "alt": "Hisar ve ada saldırısı ayarlarının örnek görüntüsü",
+          "caption": "Örnek Akuamarin adaları, hisar seviyeleri, hedef sırası ve işgal savunucuları."
+        },
+        "items": {
+          "defenders": {
+            "description": "Ele geçirilen adada kalacak savunucu türlerini ve sayılarını seçin; boş liste doğrulanmış zaferden sonra bir sağ kalan bırakır.",
+            "label": "Ada savunma birimleri",
+            "recommendation": "Bir sağ kalan planınıza yetmiyorsa savunucu seçin."
+          },
+          "fort_preset": {
+            "description": "Hisarlar için kayıtlı asker ve araç düzeni seçin.",
+            "label": "Hisar saldırı ön ayarı",
+            "recommendation": "Olağan hisar ön ayarınızı kullanın."
+          },
+          "forts": {
+            "description": "Seçilen 40–80 arası resmî hisar seviyelerine saldırıları açın.",
+            "label": "Fırtına hisarları",
+            "recommendation": "Seçili ön ayarınızın güvenilir biçimde yenebildiği seviyelerde açık."
+          },
+          "horse": {
+            "description": "Fırtına saldırıları için tüy, sikke veya yakut seyahatini seçin.",
+            "label": "At seyahati güçlendirmesi",
+            "recommendation": "Yakut seyahati seçmeden hızlı gitmek için Seyahat Tüyü."
+          },
+          "island_preset": {
+            "description": "Adalar için kayıtlı asker ve araç düzeni seçin.",
+            "label": "Ada saldırı ön ayarı",
+            "recommendation": "Olağan ada ön ayarınızı kullanın."
+          },
+          "island_resources": {
+            "description": "Hangi odun, taş veya Akuamarin adalarına saldırılabileceğini seçin.",
+            "label": "Ada kaynakları",
+            "recommendation": "Akuamarin toplamak için Akuamarin'i seçin."
+          },
+          "island_sizes": {
+            "description": "Seçili kaynakların büyük, küçük veya her iki ada boyutunu seçin.",
+            "label": "Ada boyutları",
+            "recommendation": "Olağan Akuamarin toplama için büyük ve küçük."
+          },
+          "islands": {
+            "description": "Seçili kaynak ve boyutlardaki adaların ele geçirilmesini açın.",
+            "label": "Kaynak adaları",
+            "recommendation": "Büyük ve küçük adalardan Akuamarin istiyorsanız açık."
+          },
+          "minimum_attacks": {
+            "description": "Yalnızca en az bu kadar saldırı hakkı kalan hisarlara saldırın.",
+            "label": "Asgari kalan saldırı",
+            "recommendation": "0 her uygun hisara izin verir."
+          },
+          "priority": {
+            "description": "Etkin ada ve hisar hedeflerini sıralayın; aynı satırda öncelik, eşitlikte mesafe belirler.",
+            "label": "Saldırı hedefi önceliği",
+            "recommendation": "Akuamarin için büyük adalar, küçük adalar, sonra seviye 80'den 40'a hisarlar."
+          }
+        },
+        "title": "Hisarları ve kaynak adalarını seçin"
+      },
+      "construction": {
+        "image": {
+          "alt": "İnşaat ve rezerv ayarlarının örnek görüntüsü",
+          "caption": "Kaynak taşımacılığı, harcama izinleri, rezervler ve liman seviyesi örnek kontrollerdir."
+        },
+        "items": {
+          "demolition": {
+            "description": "Taşınamayan veya depolanamayan binaların tam hedefte kaldırılmasına izin verin.",
+            "label": "Yıkıma izin ver",
+            "recommendation": "İncelenmiş düzeni yeniden kurmuyorsanız kapalı."
+          },
+          "donor_reserves": {
+            "description": "Kaynak taşınmadan önce her kaynak kalede seçilen odun, taş ve Akuamarin miktarını koruyun.",
+            "label": "Korunan kaynak kale rezervleri",
+            "recommendation": "Olağan odun ve taş inşaat bütçenizi koruyun; kullanılmıyorsa Akuamarin 0."
+          },
+          "harbor_level": {
+            "description": "Liman hedef seviyesini 1, 2 veya 3 seçin; 2 ve 3 premium inşaat yolu kullanır.",
+            "label": "Liman hedef seviyesi",
+            "recommendation": "Premium yükseltme planlamıyorsanız seviye 1."
+          },
+          "harbor": {
+            "description": "Kaydedilen hedef farklı olsa bile limanı seçili seviyede tutun.",
+            "label": "Limanı yükselt",
+            "recommendation": "Olağan kullanım için seviye 1 ile açık."
+          },
+          "premium": {
+            "description": "Premium para harcayan uygun inşaat adımlarına izin verin.",
+            "label": "Premium harcamalara izin ver",
+            "recommendation": "Premium inşaat planlamıyorsanız kapalı."
+          },
+          "resource_transport": {
+            "description": "Kaynak kalelerden eksik inşaat kaynaklarının doğrulanmış sevkiyatlarına izin verin.",
+            "label": "Eksik kaynakları taşı",
+            "recommendation": "Olağan inşaat için açık."
+          },
+          "skip_reserves": {
+            "description": "1 dk, 5 dk, 10 dk, 30 dk, 1 sa, 5 sa ve 24 sa öğelerinin her birinden seçili miktarı ayırın.",
+            "label": "Rezervde tutulan zaman hızlandırmaları",
+            "recommendation": "Başka yerde gerekmiyorsa kısa hızlandırmalar 0; 1, 5 ve 24 saatlik stoğunuzu diğer etkinlikler için ayırın."
+          },
+          "storm_reserves": {
+            "description": "Seçilen Fırtına odunu, taş ve Akuamarin miktarını inşaat için kullanılamaz tutun.",
+            "label": "Fırtına kalesi harcama rezervleri",
+            "recommendation": "Fazlalığı harcıyorsanız Fırtına odunu 0 ve taş 0; Akuamarin planlı ödül bütçenize göre."
+          },
+          "time_skips": {
+            "description": "Seçili öğe rezervlerini koruyarak uygun zaman hızlandırmalarını kullanın.",
+            "label": "İnşaat zaman hızlandırmalarını kullan",
+            "recommendation": "Olağan inşaatı hızlandırmak istiyorsanız açık."
+          }
+        },
+        "title": "İnşaatı ve kaynak korumasını ayarlayın"
+      },
+      "luna": {
+        "image": {
+          "alt": "Luna ödül ayarlarının örnek görüntüsü",
+          "caption": "Akuamarin rezervi, sınırlı alış hedefleri, yinelenebilir ödüller ve öncelik."
+        },
+        "items": {
+          "cost_cap": {
+            "description": "Her ödül için oyunun bildirdiği maliyeti ve satın alma sınırını okuyun.",
+            "label": "Maliyet ve satın alma sınırı",
+            "recommendation": "Açmadan önce iki salt okunur değeri de kontrol edin."
+          },
+          "keep_aqua": {
+            "description": "Bu kadar Akuamarin'i Luna alımları dışında tutun.",
+            "label": "Akuamarin sakla",
+            "recommendation": "Tüm fazla miktar ödüllere gidebiliyorsa 0; değilse planladığınız miktarı ayırın."
+          },
+          "priority": {
+            "description": "Düşük numaralı hedefleri önce satın alın ve sınırlı hedefleri sınırsızlardan önce tamamlayın.",
+            "label": "Öncelik",
+            "recommendation": "1, 2 ve 3'ü istediğiniz sırada kullanın."
+          },
+          "search": {
+            "description": "Bir alış ayarlamadan önce resmî Luna ödüllerini adına göre arayın.",
+            "label": "Luna ödülü bul",
+            "recommendation": "Gerçekten istediğiniz ödülü arayın."
+          },
+          "target_total": {
+            "description": "Sınırlı ödül için istenen toplam satın alma sayısını ayarlayın.",
+            "label": "Hedef toplam",
+            "recommendation": "Yalnızca almak istediğiniz sayıyı ayarlayın."
+          },
+          "unlimited": {
+            "description": "Rezerv ve mağaza sınırı izin verdikçe uygun yinelenebilir ödülü satın almaya devam edin.",
+            "label": "Sınırsız",
+            "recommendation": "Yalnızca düzenli istediğiniz yinelenebilir ödüllerde açık."
+          },
+          "use": {
+            "description": "Otomatik alıma uygun hale getirmek için bir ödül seçin.",
+            "label": "Ödülü kullan",
+            "recommendation": "Yalnızca istediğiniz ödülleri açın."
+          }
+        },
+        "title": "Luna Akuamarin ödüllerini seçin"
+      },
+      "save": {
+        "image": {
+          "alt": "Auto Storm kaydetme ve açma örneği",
+          "caption": "Günlük saldırı sınırı, politika kontrolü, salt okunur harita yenileme ve otomasyon anahtarı."
+        },
+        "items": {
+          "daily_limit": {
+            "description": "Hesap genelindeki günlük normal saldırı sayısına ulaşınca yeni Auto Storm saldırılarını durdurun; 0 bu ek sınırı kaldırır.",
+            "label": "Günlük normal saldırı sınırı",
+            "recommendation": "Hesap genelinde sınır kullanmıyorsanız 0."
+          },
+          "enable": {
+            "description": "Kayıtlı seçimler hazırken Otomasyon kartından Auto Storm'u açın.",
+            "label": "Otomasyon anahtarı",
+            "recommendation": "Kurulumdan sonra açın."
+          },
+          "map_refresh": {
+            "description": "Fırtına haritasının resmî yenileme aralığını okuyun.",
+            "label": "Harita yenileme aralığı",
+            "recommendation": "Salt okunur aralık 2 saattir; değişikliklerden sonra yeni taramayı bekleyin."
+          },
+          "policy_check": {
+            "description": "Auto Storm'un ayarları ve uygun işleri ne sıklıkla kontrol edeceğini belirleyin.",
+            "label": "Politika kontrol aralığı",
+            "recommendation": "Olağan 30 saniyelik aralığı koruyun."
+          },
+          "save": {
+            "description": "Otomasyonu açmadan önce kale, inşaat, savaş, asker ithali ve Luna seçimlerini kaydedin.",
+            "label": "Ayarları kaydet",
+            "recommendation": "Tüm harcama izinlerini inceleyip kaydedin."
+          }
+        },
+        "title": "Auto Storm'u kaydedip açın"
+      },
+      "troops": {
+        "image": {
+          "alt": "Asker ithali ve salt okunur tahminlerin örnek görüntüsü",
+          "caption": "Kaynak kale sırası, saklanan 1.000 asker ve salt okunur kapasite tahminleri."
+        },
+        "items": {
+          "attack_history": {
+            "description": "Son 24 saatte sıfırlamadan beri bildirilen ortalama Fırtına saldırısı sayısını okuyun.",
+            "label": "Sıfırlamadan beri ortalama saldırılar",
+            "recommendation": "İthalat ihtiyacını değiştirmeden önce bu salt okunur tahmini inceleyin."
+          },
+          "committed_cap": {
+            "description": "Konuşlanmış askerleri, hareketleri, sevkiyatları ve dönüşleri içeren otomatik hesaplanan sınırı okuyun.",
+            "label": "Fırtına için bağlı asker sınırı",
+            "recommendation": "İthali artırmadan önce bu salt okunur sınırı inceleyin."
+          },
+          "donors": {
+            "description": "Kaynak kaleleri gösterilen sırada seçin; kısmi stok daha küçük sevkiyat sağlayabilir.",
+            "label": "Kaynak kaleler",
+            "recommendation": "Olağan asker kaynaklarınızı tercih sıranızda seçin."
+          },
+          "import": {
+            "description": "Eksik saldırı veya seçili savunma askerlerini kaynak kalelerden Fırtına'ya getirin.",
+            "label": "Eksik askerleri ithal et",
+            "recommendation": "Fırtına kaleniz düzenli asker desteği gerektiriyorsa açık."
+          },
+          "map_coverage": {
+            "description": "Görüntülenen hedeflere güvenmeden önce harita kapsamını inceleyin.",
+            "label": "Harita kapsamı",
+            "recommendation": "Hedef yoksa güncel kapsamı bekleyin."
+          },
+          "minimum_kept": {
+            "description": "Saldırı başlatıldıktan sonra Fırtına'da en az bu kadar asker tutup etkin ön ayar karışımını koruyun.",
+            "label": "Gönderim sonrası tutulan asgari asker",
+            "recommendation": "Gerçek ordunuza göre ayarlanmış olağan rezerv olarak 1.000 asker."
+          },
+          "preset_average": {
+            "description": "Ada savunucuları dahil etkin saldırı ön ayarlarının ortalama asker gereksinimini okuyun.",
+            "label": "Ortalama etkin ön ayar",
+            "recommendation": "Bu salt okunur tahmini ordunuzla karşılaştırın."
+          }
+        },
+        "title": "Fırtına askerlerini getirin ve izleyin"
       }
     }
   }

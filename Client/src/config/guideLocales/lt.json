@@ -37,7 +37,10 @@
     "khanPreviewTitle": "Auto Chano nustatymo pavyzdys",
     "beriGuideIntro": "Norėdami nustatyti Automatinį Berimondą, atlikite šiuos veiksmus; pasirinkite pavyzdinį skydelį jam padidinti.",
     "beriGuideTitle": "Automatinio Berimondo vadovas",
-    "beriPreviewTitle": "Automatinio Berimondo nustatymo pavyzdys"
+    "beriPreviewTitle": "Automatinio Berimondo nustatymo pavyzdys",
+    "stormGuideIntro": "Vadovaudamiesi šiais žingsniais nustatykite Auto Storm; pasirinkite pavyzdžio skydelį, kad jį padidintumėte.",
+    "stormGuideTitle": "Auto Storm vadovas",
+    "stormPreviewTitle": "Auto Storm nustatymo pavyzdys"
   },
   "autoTower": {
     "recommendationIntro": "Tai rekomendacijos įprastam naudojimui; peržiūrėkite jas prieš išsaugodami.",
@@ -533,6 +536,48 @@
       "next": "Kita siunta: iki 1 B iš tiekėjo atsargų",
       "stock": "Stovyklos atsargos: 2 A ir 0 B",
       "title": "Proporcingų perkėlimų pavyzdys"
+    },
+    "stormCastle": {
+      "blueprint": "Išsaugotas tikslas aktyvus; pauzė jį išlaiko",
+      "capture": "Dabartinė pilis: Funkcinis tikslas",
+      "decorations": "Puošybos ruošinys: pasirenkamas",
+      "title": "Audros pilies prieigos pavyzdys",
+      "unlock": "Automatinis atvėrimas: įjungtas po kainos patikrinimo"
+    },
+    "stormCombat": {
+      "defenders": "Užėmimo gynėjai: pasirinkti arba vienas išgyvenęs",
+      "forts": "Fortai: pasirinkti 40–80 lygiai",
+      "islands": "Akvamarino salos: didelės ir mažos",
+      "priority": "Didelės, mažos, po to 80–40 lygio fortai",
+      "title": "Fortų ir salų puolimų pavyzdys"
+    },
+    "stormConstruction": {
+      "harbor": "Uostas: įjungtas, 1 lygis",
+      "resources": "Audros mediena 0; akmuo 0; akvamarinas pagal planą",
+      "spending": "Mokamos išlaidos ir griovimas: išjungti",
+      "title": "Statybos ir atsargų pavyzdys",
+      "transport": "Išteklių gabenimas: įjungtas"
+    },
+    "stormLuna": {
+      "cost": "Kaina ir pirkimo riba: tik skaitoma",
+      "limited": "Riboti tikslai prieš neribotas dovanas",
+      "priority": "Pirmenybė 1, 2, 3; mažesnis pirmas",
+      "reserve": "Palikti akvamarino: 0 naudojant perteklių",
+      "title": "Lunos dovanų pavyzdys"
+    },
+    "stormSave": {
+      "check": "Taisyklių tikrinimas: 30 sekundžių",
+      "daily": "Dienos įprasti puolimai: 0 papildomos ribos",
+      "map": "Žemėlapio atnaujinimas: 2 valandos, tik skaitoma",
+      "switch": "Išsaugokite, tada įjunkite Auto Storm",
+      "title": "Išsaugojimo ir įjungimo pavyzdys"
+    },
+    "stormTroops": {
+      "averages": "Puolimų ir ruošinių vidurkiai: tik skaitomi",
+      "cap": "Įsipareigojusių karių riba: tik skaitoma",
+      "donors": "Tiekėjai: rodoma tvarka, dalinės atsargos leidžiamos",
+      "minimum": "Palikti mažiausiai: 1 000 karių",
+      "title": "Karių importo pavyzdys"
     }
   },
   "autoStation": {
@@ -1682,6 +1727,309 @@
           }
         },
         "title": "Nustatykite proporcingus karių perkėlimus"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "Auto Storm gali atverti ir statyti Audros pilį, pulti fortus bei išteklių salas, importuoti karius ir pirkti pasirinktas Lunos dovanas.",
+      "expectation": "Kiekviena veikla naudoja naujausius žaidimo duomenis ir jūsų išsaugotus leidimus; mokami statybos veiksmai, puolimai bei pirkimai priklauso nuo įjungtų pasirinkimų.",
+      "name": "Auto Storm",
+      "summary": "Tvarkykite Audros pilį, puolimus ir dovanas"
+    },
+    "recommendationIntro": "Rekomendacijos apibūdina įprastą Auto Storm naudojimą; jos yra patarimai ir nekeičia išsaugotų nustatymų.",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "Iliustracinis Audros pilies atvėrimo ir tikslo užfiksavimo pavyzdys",
+          "caption": "Pradinės pilies pasirinkimas, fiksavimo režimai ir pasirenkamas tikslo įjungimas; tikras pirkinys ar paskyra nerodomi."
+        },
+        "items": {
+          "automatic_open": {
+            "description": "Jei Audra užrakinta, pasirinkite prieinamą oficialią pradinę pilį ir prieš leisdami atrakinti patikrinkite rodomą kainą.",
+            "label": "Automatiškai atverti Audros pilį",
+            "recommendation": "Įjungta, jei norite, kad Auto Storm atvertų įprastą pradinę pilį po kainos patikrinimo."
+          },
+          "blueprint": {
+            "description": "Užfiksuotas tikslas išsaugomas ir įjungiamas iš karto; Tikslo pristabdymas sustabdo derinimą, bet išsaugotus tikslus palieka.",
+            "label": "Išsaugotas tikslas",
+            "recommendation": "Įprastai statybai palikite įjungtą patikrintą Funkcinį tikslą."
+          },
+          "capture_castle": {
+            "description": "Prieš fiksuodami statybos tikslą pasirinkite dabartinę Audros pilį.",
+            "label": "Audros pilis",
+            "recommendation": "Užfiksuokite pilį, kurią norite tvarkyti."
+          },
+          "combat_only": {
+            "description": "Kovai su fortais ir salomis užfiksuoto statybos tikslo nereikia.",
+            "label": "Kova be tikslo"
+          },
+          "decoration_preset": {
+            "description": "Pasirinktinai pritaikykite pasirinktą puošybos ruošinį po statybos.",
+            "label": "Puošybos ruošinys po statybos",
+            "recommendation": "Palikite tuščią, jei nereikia atskiro puošybos išdėstymo."
+          },
+          "exact": {
+            "description": "Išsaugokite visus palaikomus tikslo duomenis tiksliai kopijai.",
+            "label": "Tikslus fiksavimas",
+            "recommendation": "Naudokite tik peržiūrėję visą tikslą."
+          },
+          "functional": {
+            "description": "Išsaugokite tikslą svarbiausioms Audros funkcijoms nekopijuodami kiekvienos pastato vietos.",
+            "label": "Funkcinis fiksavimas",
+            "recommendation": "Funkcinis įprastai priežiūrai."
+          },
+          "layout": {
+            "description": "Išsaugokite pastatų tipus ir vietas be dekoracijų.",
+            "label": "Išdėstymo fiksavimas",
+            "recommendation": "Naudokite tik kai pastatų padėtis svarbi."
+          },
+          "open_settings": {
+            "description": "Atverkite Auto Storm nustatymus Automatikos kortelėje.",
+            "label": "Atverti nustatymus"
+          },
+          "starter_castle": {
+            "description": "Pasirinkite šiuo metu prieinamą oficialią Audros pradinę pilį kitam užrakintam sezonui.",
+            "label": "Atveriama pilis",
+            "recommendation": "Patikrinę kainą pasirinkite įperkamą įprastą pradinę pilį."
+          }
+        },
+        "title": "Atverkite ir užfiksuokite Audros pilį"
+      },
+      "combat": {
+        "image": {
+          "alt": "Iliustraciniai fortų ir salų puolimo nustatymai",
+          "caption": "Pavyzdinės akvamarino salos, fortų lygiai, tikslų tvarka ir užimtų salų gynėjai."
+        },
+        "items": {
+          "defenders": {
+            "description": "Pasirinkite užimtoje saloje paliekamų gynėjų tipus ir skaičius; tuščias sąrašas po patvirtintos pergalės palieka vieną išgyvenusį.",
+            "label": "Salos gynybos vienetai",
+            "recommendation": "Pasirinkite gynėjus, jei vieno išgyvenusio jūsų planui nepakanka."
+          },
+          "fort_preset": {
+            "description": "Fortams pasirinkite išsaugotą karių ir įrankių rikiuotę.",
+            "label": "Fortų puolimo ruošinys",
+            "recommendation": "Naudokite įprastą fortų ruošinį."
+          },
+          "forts": {
+            "description": "Įjunkite puolimus prieš pasirinkto 40–80 lygio oficialius fortus.",
+            "label": "Audros fortai",
+            "recommendation": "Įjunkite lygius, kuriuos pasirinkta rikiuotė patikimai įveikia."
+          },
+          "horse": {
+            "description": "Audros puolimams pasirinkite kelionę su plunksna, monetomis ar rubinais.",
+            "label": "Kelionės žirgu paspartinimas",
+            "recommendation": "Kelionės plunksna greitam judėjimui nesirenkant kelionės už rubinus."
+          },
+          "island_preset": {
+            "description": "Saloms pasirinkite išsaugotą karių ir įrankių rikiuotę.",
+            "label": "Salų puolimo ruošinys",
+            "recommendation": "Naudokite įprastą salų ruošinį."
+          },
+          "island_resources": {
+            "description": "Pasirinkite, kurias medienos, akmens ar akvamarino salas galima pulti.",
+            "label": "Salų ištekliai",
+            "recommendation": "Akvamarino rinkimui pasirinkite akvamariną."
+          },
+          "island_sizes": {
+            "description": "Pasirinkite dideles, mažas ar abiejų dydžių pasirinktų išteklių salas.",
+            "label": "Salų dydžiai",
+            "recommendation": "Dideles ir mažas įprastam akvamarino rinkimui."
+          },
+          "islands": {
+            "description": "Įjunkite pasirinktų išteklių ir dydžių salų užėmimą.",
+            "label": "Išteklių salos",
+            "recommendation": "Įjunkite, jei norite akvamarino iš didelių ir mažų salų."
+          },
+          "minimum_attacks": {
+            "description": "Pulkite tik fortus, kuriuose likę bent tiek puolimų.",
+            "label": "Mažiausiai likusių puolimų",
+            "recommendation": "0 leidžia bet kurį tinkamą fortą."
+          },
+          "priority": {
+            "description": "Išrikiuokite įjungtus salų ir fortų tikslus; toje pačioje eilėje lemia pirmenybė, o lygybę išsprendžia atstumas.",
+            "label": "Puolimo tikslų pirmenybė",
+            "recommendation": "Didelės salos, mažos salos, tada 80–40 lygių fortai akvamarinui rinkti."
+          }
+        },
+        "title": "Pasirinkite fortus ir išteklių salas"
+      },
+      "construction": {
+        "image": {
+          "alt": "Iliustraciniai statybos ir atsargų nustatymai",
+          "caption": "Išteklių gabenimas, išlaidų leidimai, atsargos ir uosto lygis parodyti kaip pavyzdys."
+        },
+        "items": {
+          "demolition": {
+            "description": "Leiskite iš tikslios vietos šalinti pastatus, kurių negalima perkelti ar padėti į saugyklą.",
+            "label": "Leisti griauti",
+            "recommendation": "Išjungta, nebent atstatote peržiūrėtą išdėstymą."
+          },
+          "donor_reserves": {
+            "description": "Prieš išteklių gabenimą palikite kiekviename tiekėjų pasirinktus medienos, akmens ir akvamarino kiekius.",
+            "label": "Saugomos tiekėjų atsargos",
+            "recommendation": "Saugokite įprastą medienos ir akmens statybos biudžetą; akvamarino 0, jei nenaudojate."
+          },
+          "harbor_level": {
+            "description": "Pasirinkite norimą 1, 2 arba 3 uosto lygį; 2 ir 3 lygiai naudoja mokamos statybos kelius.",
+            "label": "Norimas uosto lygis",
+            "recommendation": "1 lygis, jei neplanuojate mokamų patobulinimų."
+          },
+          "harbor": {
+            "description": "Išlaikykite uostą pasirinkto lygio, net jei užfiksuotas tikslas skiriasi.",
+            "label": "Patobulinti uostą",
+            "recommendation": "Įjungta su 1 lygiu įprastam naudojimui."
+          },
+          "premium": {
+            "description": "Leiskite tinkamus statybos veiksmus, kurie eikvoja mokamą valiutą.",
+            "label": "Leisti mokamas išlaidas",
+            "recommendation": "Išjungta, jei mokama statyba neplanuota."
+          },
+          "resource_transport": {
+            "description": "Leiskite patvirtintas trūkstamų statybos išteklių siuntas iš tiekėjų pilių.",
+            "label": "Gabenti trūkstamus išteklius",
+            "recommendation": "Įjungta įprastai statybai."
+          },
+          "skip_reserves": {
+            "description": "Atidėkite pasirinktą kiekį kiekvieno 1 min, 5 min, 10 min, 30 min, 1 val, 5 val ir 24 val laiko praleidimo daikto.",
+            "label": "Laiko praleidimo atsargos",
+            "recommendation": "Trumpų praleidimų 0, jei jų nereikia kitur; 1, 5 ir 24 valandų atsargas pasilikite kitiems įvykiams."
+          },
+          "storm_reserves": {
+            "description": "Neleiskite statyboms naudoti pasirinktų Audros medienos, akmens ir akvamarino kiekių.",
+            "label": "Audros pilies išlaidų atsargos",
+            "recommendation": "Audros mediena 0 ir akmuo 0, jei leidžiate perteklių; akvamarinas pagal numatytą dovanų biudžetą."
+          },
+          "time_skips": {
+            "description": "Naudokite tinkamus laiko praleidimus, išsaugodami pasirinktas daiktų atsargas.",
+            "label": "Naudoti statybos laiko praleidimus",
+            "recommendation": "Įjungta, jei norite greitesnės įprastos statybos."
+          }
+        },
+        "title": "Nustatykite statybą ir išteklių apsaugą"
+      },
+      "luna": {
+        "image": {
+          "alt": "Iliustraciniai Lunos dovanų nustatymai",
+          "caption": "Akvamarino atsargos, riboti pirkimo tikslai, kartojamos dovanos ir pirmenybė."
+        },
+        "items": {
+          "cost_cap": {
+            "description": "Perskaitykite žaidimo nurodytą kiekvienos dovanos kainą ir pirkimo ribą.",
+            "label": "Kaina ir pirkimo riba",
+            "recommendation": "Prieš įjungdami patikrinkite abi tik skaitomas reikšmes."
+          },
+          "keep_aqua": {
+            "description": "Šio akvamarino kiekio nenaudokite Lunos pirkiniams.",
+            "label": "Palikti akvamarino",
+            "recommendation": "0, jei visas perteklius gali būti naudojamas dovanoms; kitu atveju pasilikite suplanuotą kiekį."
+          },
+          "priority": {
+            "description": "Pirma pirkite mažesnio numerio tikslus, o ribotus baikite prieš neribotus.",
+            "label": "Pirmenybė",
+            "recommendation": "Naudokite 1, 2 ir 3 norima tvarka."
+          },
+          "search": {
+            "description": "Prieš nustatydami pirkimą pagal pavadinimą raskite oficialias Lunos dovanas.",
+            "label": "Rasti Lunos dovaną",
+            "recommendation": "Ieškokite dovanos, kurios iš tikrųjų norite."
+          },
+          "target_total": {
+            "description": "Nustatykite pageidaujamą bendrą ribotos dovanos pirkimų skaičių.",
+            "label": "Norimas bendras skaičius",
+            "recommendation": "Nurodykite tik tiek, kiek norite pirkti."
+          },
+          "unlimited": {
+            "description": "Tęskite tinkamos kartojamos dovanos pirkimą, kol leidžia atsargos ir parduotuvės riba.",
+            "label": "Neribota",
+            "recommendation": "Įjungta tik reguliariai norimoms kartojamoms dovanoms."
+          },
+          "use": {
+            "description": "Pasirinkite dovaną, kad ją būtų galima pirkti automatiškai.",
+            "label": "Naudoti dovaną",
+            "recommendation": "Įjunkite tik norimas dovanas."
+          }
+        },
+        "title": "Pasirinkite Lunos dovanas už akvamariną"
+      },
+      "save": {
+        "image": {
+          "alt": "Iliustracinis Auto Storm išsaugojimas ir įjungimas",
+          "caption": "Dienos puolimų riba, taisyklių tikrinimas, tik skaitomas žemėlapio atnaujinimas ir automatikos jungiklis."
+        },
+        "items": {
+          "daily_limit": {
+            "description": "Sustabdykite naujus Auto Storm puolimus pasiekus visos paskyros dienos įprastų puolimų skaičių; 0 pašalina šią papildomą ribą.",
+            "label": "Dienos įprastų puolimų riba",
+            "recommendation": "0, jei nenaudojate visos paskyros ribos."
+          },
+          "enable": {
+            "description": "Įjunkite Auto Storm Automatikos kortelėje, kai išsaugoti pasirinkimai parengti.",
+            "label": "Automatikos jungiklis",
+            "recommendation": "Įjunkite po nustatymo."
+          },
+          "map_refresh": {
+            "description": "Perskaitykite oficialų Audros žemėlapio atnaujinimo intervalą.",
+            "label": "Žemėlapio atnaujinimo intervalas",
+            "recommendation": "Tik skaitomas intervalas yra 2 valandos; po pakeitimų palaukite naujo skenavimo."
+          },
+          "policy_check": {
+            "description": "Nustatykite, kaip dažnai Auto Storm tikrina nustatymus ir tinkamas užduotis.",
+            "label": "Taisyklių tikrinimo intervalas",
+            "recommendation": "Palikite įprastą 30 sekundžių intervalą."
+          },
+          "save": {
+            "description": "Prieš įjungdami automatiką išsaugokite pilies, statybos, kovos, karių importo ir Lunos pasirinkimus.",
+            "label": "Išsaugoti nustatymus",
+            "recommendation": "Išsaugokite patikrinę visus išlaidų leidimus."
+          }
+        },
+        "title": "Išsaugokite ir įjunkite Auto Storm"
+      },
+      "troops": {
+        "image": {
+          "alt": "Iliustracinis karių importas ir tik skaitomi įverčiai",
+          "caption": "Tiekėjų tvarka, 1 000 paliekamų karių ir tik skaitomi talpos įverčiai."
+        },
+        "items": {
+          "attack_history": {
+            "description": "Perskaitykite vidutinį Audros puolimų, praneštų po atkūrimo per paskutines 24 valandas, skaičių.",
+            "label": "Vidutinis puolimų skaičius po atkūrimo",
+            "recommendation": "Prieš keisdami importo poreikį peržiūrėkite šį tik skaitomą įvertį."
+          },
+          "committed_cap": {
+            "description": "Perskaitykite automatiškai apskaičiuotą ribą, apimančią dislokuotus karius, judėjimą, gabenimą ir grįžimą.",
+            "label": "Įsipareigojusių Audros karių riba",
+            "recommendation": "Prieš didindami importą peržiūrėkite šią tik skaitomą ribą."
+          },
+          "donors": {
+            "description": "Pasirinkite tiekėjų pilis rodoma tvarka; dalinės atsargos gali suteikti mažesnę siuntą.",
+            "label": "Tiekėjų pilys",
+            "recommendation": "Pasirinkite įprastus karių tiekėjus pageidaujama tvarka."
+          },
+          "import": {
+            "description": "Importuokite į Audrą trūkstamus puolančius arba pasirinktus ginančius karius iš tiekėjų pilių.",
+            "label": "Importuoti trūkstamus karius",
+            "recommendation": "Įjungta, jei Audros piliai reguliariai reikia karių tiekimo."
+          },
+          "map_coverage": {
+            "description": "Prieš pasikliaudami rodomais tikslais patikrinkite žemėlapio aprėptį.",
+            "label": "Žemėlapio aprėptis",
+            "recommendation": "Jei tikslų trūksta, palaukite naujos aprėpties."
+          },
+          "minimum_kept": {
+            "description": "Po puolimo paleidimo Audroje palikite bent tiek karių ir išsaugokite įjungtų ruošinių sudėtį.",
+            "label": "Mažiausiai karių po paleidimo",
+            "recommendation": "1 000 karių kaip įprasta atsarga, priderinta prie tikros jūsų armijos."
+          },
+          "preset_average": {
+            "description": "Perskaitykite vidutinį įjungtų puolimo ruošinių karių poreikį, įskaitant pasirinktus salų gynėjus.",
+            "label": "Vidutinis įjungtas ruošinys",
+            "recommendation": "Palyginkite šį tik skaitomą įvertį su savo armija."
+          }
+        },
+        "title": "Importuokite ir stebėkite Audros karius"
       }
     }
   }

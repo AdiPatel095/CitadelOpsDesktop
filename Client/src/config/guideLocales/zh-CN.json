@@ -37,7 +37,10 @@
     "khanPreviewTitle": "自动可汗设置示例",
     "beriGuideIntro": "按照这些步骤设置自动贝里蒙德世界；选择示例面板可放大查看。",
     "beriGuideTitle": "自动贝里蒙德世界指南",
-    "beriPreviewTitle": "自动贝里蒙德世界设置示例"
+    "beriPreviewTitle": "自动贝里蒙德世界设置示例",
+    "stormGuideIntro": "按照这些步骤设置自动风暴；选择示例面板可放大查看。",
+    "stormGuideTitle": "自动风暴指南",
+    "stormPreviewTitle": "自动风暴设置示例"
   },
   "autoTower": {
     "recommendationIntro": "以下是日常使用的建议；保存前请检查。",
@@ -533,6 +536,48 @@
       "next": "下一批：从来源库存最多运输1个B",
       "stock": "营地库存：2个A、0个B",
       "title": "按比例运输示例"
+    },
+    "stormCastle": {
+      "blueprint": "已保存目标启用；暂停仍会保留",
+      "capture": "当前城堡：功能目标",
+      "decorations": "装饰预设：可选",
+      "title": "风暴城堡访问示例",
+      "unlock": "自动开启：检查价格后开启"
+    },
+    "stormCombat": {
+      "defenders": "占领守军：所选部队或一名幸存者",
+      "forts": "要塞：选定等级40至80",
+      "islands": "海蓝宝石岛：大岛和小岛",
+      "priority": "大岛、小岛，然后是80至40级要塞",
+      "title": "要塞和岛屿攻击示例"
+    },
+    "stormConstruction": {
+      "harbor": "港口：开启，等级1",
+      "resources": "风暴木材0；石料0；海蓝宝石按计划",
+      "spending": "高级费用与拆除：关闭",
+      "title": "建造与预留示例",
+      "transport": "资源运输：开启"
+    },
+    "stormLuna": {
+      "cost": "价格与购买上限：只读",
+      "limited": "限量目标先于无限奖励",
+      "priority": "优先级1、2、3；编号小的先执行",
+      "reserve": "保留海蓝宝石：使用余量时为0",
+      "title": "露娜奖励示例"
+    },
+    "stormSave": {
+      "check": "策略检查：30秒",
+      "daily": "每日普通攻击：额外上限0",
+      "map": "地图刷新：2小时，只读",
+      "switch": "保存，然后开启自动风暴",
+      "title": "保存与启用流程示例"
+    },
+    "stormTroops": {
+      "averages": "攻击和预设平均值：只读",
+      "cap": "已占用部队上限：只读",
+      "donors": "供给城堡：显示顺序，允许部分库存",
+      "minimum": "最低保留：1,000名士兵",
+      "title": "部队输入示例"
     }
   },
   "autoStation": {
@@ -1682,6 +1727,309 @@
           }
         },
         "title": "设置按比例运输部队"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "自动风暴可以开启并建设风暴城堡、攻击要塞与资源岛、输入部队，并购买所选的露娜奖励。",
+      "expectation": "每项功能都使用最新游戏数据和你保存的权限；高级建造、攻击与购买都受你启用的选项约束。",
+      "name": "自动风暴",
+      "summary": "管理风暴城堡、攻击和奖励"
+    },
+    "recommendationIntro": "推荐选项用于自动风暴的日常使用，仅供参考，不会更改已保存的设置。",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "风暴城堡开启与目标采集示意图",
+          "caption": "展示初始城堡选择、采集模式和可选的目标启用；不展示真实购买或账号。"
+        },
+        "items": {
+          "automatic_open": {
+            "description": "风暴尚未解锁时，请选择当前可用的官方初始城堡，并在允许解锁前核对显示的价格。",
+            "label": "自动开启风暴城堡",
+            "recommendation": "如希望自动风暴在核对价格后开启常用初始城堡，请开启。"
+          },
+          "blueprint": {
+            "description": "采集的目标会立即保存并启用；暂停目标会停止协调，但保留已保存的目标。",
+            "label": "已保存的目标",
+            "recommendation": "日常建设建议启用已检查的功能目标。"
+          },
+          "capture_castle": {
+            "description": "采集建造目标前，先选择当前的风暴城堡。",
+            "label": "风暴城堡",
+            "recommendation": "采集你打算管理的城堡。"
+          },
+          "combat_only": {
+            "description": "要塞和岛屿战斗不需要已采集的建造目标。",
+            "label": "无建造目标的战斗"
+          },
+          "decoration_preset": {
+            "description": "建造后可选择应用已选的装饰预设。",
+            "label": "建造后的装饰预设",
+            "recommendation": "除非需要单独的装饰布局，否则留空。"
+          },
+          "exact": {
+            "description": "保存支持的所有目标细节以制作精确副本。",
+            "label": "精确采集",
+            "recommendation": "仅在检查完整目标后使用。"
+          },
+          "functional": {
+            "description": "保存风暴基础功能所需的目标，不复制每个建筑的位置。",
+            "label": "功能采集",
+            "recommendation": "日常维护建议使用功能模式。"
+          },
+          "layout": {
+            "description": "保存建筑类型和位置，不包含装饰。",
+            "label": "布局采集",
+            "recommendation": "仅在建筑位置重要时使用。"
+          },
+          "open_settings": {
+            "description": "从自动化卡片打开自动风暴设置。",
+            "label": "打开设置"
+          },
+          "starter_castle": {
+            "description": "选择目前可用于下一次未解锁赛季的官方风暴初始城堡。",
+            "label": "要开启的城堡",
+            "recommendation": "核对价格后选择能负担的常用初始城堡。"
+          }
+        },
+        "title": "开启并采集你的风暴城堡"
+      },
+      "combat": {
+        "image": {
+          "alt": "要塞与岛屿攻击设置示意图",
+          "caption": "示例海蓝宝石岛、要塞等级、目标顺序及占领守军。"
+        },
+        "items": {
+          "defenders": {
+            "description": "选择留在已占领岛屿上的守军类型和数量；空列表会在确认胜利后留下一个幸存者。",
+            "label": "岛屿守军",
+            "recommendation": "如果一个幸存者不足以满足计划，请选定守军。"
+          },
+          "fort_preset": {
+            "description": "为要塞选择已保存的部队与工具阵型。",
+            "label": "要塞攻击预设",
+            "recommendation": "使用常用的要塞预设。"
+          },
+          "forts": {
+            "description": "启用对选定官方要塞等级40至80的攻击。",
+            "label": "风暴要塞",
+            "recommendation": "只启用所选预设能够稳定击败的等级。"
+          },
+          "horse": {
+            "description": "为风暴攻击选择羽毛、金币或红宝石旅行方式。",
+            "label": "骑马旅行加速",
+            "recommendation": "旅行羽毛可快速移动，无需选择红宝石旅行。"
+          },
+          "island_preset": {
+            "description": "为岛屿选择已保存的部队与工具阵型。",
+            "label": "岛屿攻击预设",
+            "recommendation": "使用常用的岛屿预设。"
+          },
+          "island_resources": {
+            "description": "选择可攻击的木材、石料或海蓝宝石岛。",
+            "label": "岛屿资源",
+            "recommendation": "要采集海蓝宝石，请选择海蓝宝石。"
+          },
+          "island_sizes": {
+            "description": "为所选资源指定大岛、小岛或两种尺寸。",
+            "label": "岛屿尺寸",
+            "recommendation": "日常采集海蓝宝石建议同时选择大岛和小岛。"
+          },
+          "islands": {
+            "description": "启用占领与所选资源和尺寸匹配的岛屿。",
+            "label": "资源岛",
+            "recommendation": "希望从大岛和小岛获取海蓝宝石时开启。"
+          },
+          "minimum_attacks": {
+            "description": "只攻击剩余攻击次数至少达到该值的要塞。",
+            "label": "最低剩余攻击次数",
+            "recommendation": "0允许所有符合条件的要塞。"
+          },
+          "priority": {
+            "description": "排列启用的岛屿和要塞目标；同一行由优先级决定，同级则由距离决定。",
+            "label": "攻击目标优先级",
+            "recommendation": "采集海蓝宝石时，优先大岛、小岛，然后是80至40级要塞。"
+          }
+        },
+        "title": "选择要塞与资源岛"
+      },
+      "construction": {
+        "image": {
+          "alt": "建造与预留设置示意图",
+          "caption": "以示例控件展示资源运输、花费权限、预留量和港口等级。"
+        },
+        "items": {
+          "demolition": {
+            "description": "允许移除精确目标中无法移动或存储的建筑。",
+            "label": "允许拆除",
+            "recommendation": "除非正在重建检查过的布局，否则关闭。"
+          },
+          "donor_reserves": {
+            "description": "在运输资源前，为每座供给城堡保留所选的木材、石料与海蓝宝石数量。",
+            "label": "供给城堡受保护预留量",
+            "recommendation": "保留常用的木材与石料建造预算；不使用海蓝宝石时设为0。"
+          },
+          "harbor_level": {
+            "description": "为港口选择目标等级1、2或3；等级2和3采用高级建造途径。",
+            "label": "港口目标等级",
+            "recommendation": "除非计划高级升级，否则选等级1。"
+          },
+          "harbor": {
+            "description": "即使采集目标不同，也将港口维持在所选等级。",
+            "label": "升级港口",
+            "recommendation": "日常使用建议开启并设为等级1。"
+          },
+          "premium": {
+            "description": "允许符合条件、会消耗高级货币的建造步骤。",
+            "label": "允许高级费用",
+            "recommendation": "除非计划高级建造，否则关闭。"
+          },
+          "resource_transport": {
+            "description": "允许从供给城堡运送确认的建造资源缺口。",
+            "label": "运输缺少的资源",
+            "recommendation": "日常建造建议开启。"
+          },
+          "skip_reserves": {
+            "description": "分别保留所选数量的1分钟、5分钟、10分钟、30分钟、1小时、5小时和24小时跳时道具。",
+            "label": "跳时道具预留量",
+            "recommendation": "短时跳时道具如无其他用途设为0；将1、5和24小时的库存留给其他活动。"
+          },
+          "storm_reserves": {
+            "description": "保留所选的风暴木材、石料与海蓝宝石，不供建造使用。",
+            "label": "风暴城堡花费预留量",
+            "recommendation": "若使用余量，风暴木材和石料均为0；海蓝宝石按计划的奖励预算保留。"
+          },
+          "time_skips": {
+            "description": "在保留所选道具预留量的同时使用符合条件的跳时道具。",
+            "label": "使用建造跳时道具",
+            "recommendation": "若希望加快日常建造，请开启。"
+          }
+        },
+        "title": "设置建造与资源保护"
+      },
+      "luna": {
+        "image": {
+          "alt": "露娜奖励设置示意图",
+          "caption": "海蓝宝石预留量、限量购买目标、可重复奖励及优先级。"
+        },
+        "items": {
+          "cost_cap": {
+            "description": "查看游戏报告的每项奖励价格与购买上限。",
+            "label": "价格和购买上限",
+            "recommendation": "启用前检查这两项只读数值。"
+          },
+          "keep_aqua": {
+            "description": "保留这部分海蓝宝石，不用于露娜购买。",
+            "label": "保留海蓝宝石",
+            "recommendation": "如果全部余量可用于奖励，则设为0；否则保留计划数量。"
+          },
+          "priority": {
+            "description": "先购买编号较小的目标，并在无限目标前完成限量目标。",
+            "label": "优先级",
+            "recommendation": "按你希望的顺序使用1、2和3。"
+          },
+          "search": {
+            "description": "设置购买前，按名称搜索官方露娜奖励。",
+            "label": "查找露娜奖励",
+            "recommendation": "搜索你真正想要的奖励。"
+          },
+          "target_total": {
+            "description": "设置限量奖励的目标总购买次数。",
+            "label": "目标总数",
+            "recommendation": "只设置你计划购买的次数。"
+          },
+          "unlimited": {
+            "description": "只要预留量和商店上限允许，就继续购买符合条件的可重复奖励。",
+            "label": "无限购买",
+            "recommendation": "仅对日常需要的可重复奖励开启。"
+          },
+          "use": {
+            "description": "选择奖励以允许自动购买。",
+            "label": "使用奖励",
+            "recommendation": "只启用想要的奖励。"
+          }
+        },
+        "title": "选择露娜海蓝宝石奖励"
+      },
+      "save": {
+        "image": {
+          "alt": "自动风暴保存与启用示意图",
+          "caption": "每日攻击限制、策略检查、只读地图刷新和自动化开关。"
+        },
+        "items": {
+          "daily_limit": {
+            "description": "达到账号范围的每日普通攻击次数后停止新的自动风暴攻击；0取消此额外限制。",
+            "label": "每日普通攻击上限",
+            "recommendation": "不使用账号范围上限时设为0。"
+          },
+          "enable": {
+            "description": "保存的选择准备妥当后，从自动化卡片开启自动风暴。",
+            "label": "自动化开关",
+            "recommendation": "设置完成后开启。"
+          },
+          "map_refresh": {
+            "description": "查看风暴地图的官方刷新间隔。",
+            "label": "地图刷新间隔",
+            "recommendation": "只读间隔为2小时；更改后等待新的扫描。"
+          },
+          "policy_check": {
+            "description": "设置自动风暴检查设置与可执行任务的频率。",
+            "label": "策略检查间隔",
+            "recommendation": "保留通常的30秒间隔。"
+          },
+          "save": {
+            "description": "启用自动化前，保存城堡、建造、战斗、部队输入和露娜选择。",
+            "label": "保存设置",
+            "recommendation": "检查所有花费权限后再保存。"
+          }
+        },
+        "title": "保存并启用自动风暴"
+      },
+      "troops": {
+        "image": {
+          "alt": "部队输入与只读估算示意图",
+          "caption": "供给城堡顺序、保留1,000名士兵和只读容量估算。"
+        },
+        "items": {
+          "attack_history": {
+            "description": "查看过去24小时内重置后报告的风暴攻击平均次数。",
+            "label": "重置后平均攻击次数",
+            "recommendation": "改变输入需求前检查这项只读估算。"
+          },
+          "committed_cap": {
+            "description": "查看自动计算的上限，其中包括驻扎部队、行军、运输中和返程部队。",
+            "label": "风暴已占用部队上限",
+            "recommendation": "增加输入前检查这项只读上限。"
+          },
+          "donors": {
+            "description": "按显示顺序选择供给城堡；部分库存可提供较小批次。",
+            "label": "供给城堡",
+            "recommendation": "按偏好顺序选择常用的部队供应城堡。"
+          },
+          "import": {
+            "description": "从供给城堡向风暴输入缺少的攻击部队或所选防御部队。",
+            "label": "输入缺少的部队",
+            "recommendation": "风暴城堡需要定期补充部队时开启。"
+          },
+          "map_coverage": {
+            "description": "依赖显示的目标前，先检查地图覆盖情况。",
+            "label": "地图覆盖情况",
+            "recommendation": "目标缺失时等待新的覆盖数据。"
+          },
+          "minimum_kept": {
+            "description": "发起攻击后仍在风暴保留至少该数量的部队，同时维持启用预设的兵种组合。",
+            "label": "发起后最低保留部队",
+            "recommendation": "按实际军队调整的日常预留建议为1,000名士兵。"
+          },
+          "preset_average": {
+            "description": "查看启用的攻击预设所需平均兵数，包括所选的岛屿守军。",
+            "label": "启用预设的平均值",
+            "recommendation": "将这项只读估算与你的军队比较。"
+          }
+        },
+        "title": "输入并监控风暴部队"
       }
     }
   }

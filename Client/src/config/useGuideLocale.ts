@@ -12,6 +12,7 @@ delete (translatedSource as Partial<GuidePack>).autoNomad;
 delete (translatedSource as Partial<GuidePack>).autoAdvisor;
 delete (translatedSource as Partial<GuidePack>).autoKhan;
 delete (translatedSource as Partial<GuidePack>).autoBeri;
+delete (translatedSource as Partial<GuidePack>).autoStorm;
 delete (translatedSource.ui as Record<string, string>).fortressGuideTitle;
 delete (translatedSource.ui as Record<string, string>).fortressGuideIntro;
 delete (translatedSource.ui as Record<string, string>).fortressPreviewTitle;

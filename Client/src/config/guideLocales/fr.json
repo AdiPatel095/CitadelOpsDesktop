@@ -37,7 +37,10 @@
     "khanPreviewTitle": "Exemple de configuration de Khan automatique",
     "beriGuideIntro": "Suivez ces étapes pour configurer Auto Beri World ; agrandissez un panneau d’exemple au besoin.",
     "beriGuideTitle": "Guide Auto Beri World",
-    "beriPreviewTitle": "Exemple de configuration Auto Beri World"
+    "beriPreviewTitle": "Exemple de configuration Auto Beri World",
+    "stormGuideIntro": "Suivez ces étapes pour configurer Auto Storm ; sélectionnez un panneau d'exemple pour l'agrandir.",
+    "stormGuideTitle": "Guide Auto Storm",
+    "stormPreviewTitle": "Exemple de configuration d'Auto Storm"
   },
   "autoTower": {
     "recommendationIntro": "Ces recommandations concernent une utilisation régulière ; vérifiez-les avant d’enregistrer.",
@@ -533,6 +536,48 @@
       "next": "Prochain envoi : jusqu’à 1 B du stock donneur",
       "stock": "Stock du camp : 2 A et 0 B",
       "title": "Exemple de transferts proportionnels"
+    },
+    "stormCastle": {
+      "blueprint": "Cible enregistrée active ; la pause la conserve",
+      "capture": "Château actuel : cible Fonctionnelle",
+      "decorations": "Préréglage de décorations : facultatif",
+      "title": "Exemple d'accès au château de l'Orage",
+      "unlock": "Ouverture automatique : activée après examen du prix"
+    },
+    "stormCombat": {
+      "defenders": "Défenseurs d'occupation : choisis ou un survivant",
+      "forts": "Forts : niveaux sélectionnés 40 à 80",
+      "islands": "Îles à aigue-marine : grandes et petites",
+      "priority": "Grandes, petites, puis forts de 80 à 40",
+      "title": "Exemple d'attaques de forts et d'îles"
+    },
+    "stormConstruction": {
+      "harbor": "Port : activé, niveau 1",
+      "resources": "Bois de l'Orage 0 ; pierre 0 ; aigue-marine selon le plan",
+      "spending": "Premium et démolition : désactivés",
+      "title": "Exemple de construction et de réserves",
+      "transport": "Transport de ressources : activé"
+    },
+    "stormLuna": {
+      "cost": "Coût et plafond d'achat : lecture seule",
+      "limited": "Objectifs limités avant récompenses illimitées",
+      "priority": "Priorité 1, 2, 3 ; numéro le plus bas d'abord",
+      "reserve": "Garder de l'aigue-marine : 0 si surplus utilisé",
+      "title": "Exemple de récompenses de Luna"
+    },
+    "stormSave": {
+      "check": "Vérification de la politique : 30 secondes",
+      "daily": "Attaques normales quotidiennes : plafond supplémentaire 0",
+      "map": "Actualisation de carte : 2 heures, lecture seule",
+      "switch": "Enregistrer puis activer Auto Storm",
+      "title": "Exemple du parcours d'enregistrement et d'activation"
+    },
+    "stormTroops": {
+      "averages": "Moyennes d'attaques et de préréglages : lecture seule",
+      "cap": "Plafond des troupes engagées : lecture seule",
+      "donors": "Donneurs : ordre affiché, stock partiel autorisé",
+      "minimum": "Minimum gardé : 1 000 troupes",
+      "title": "Exemple d'import de troupes"
     }
   },
   "autoStation": {
@@ -1682,6 +1727,309 @@
           }
         },
         "title": "Régler les transferts proportionnels de troupes"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "Auto Storm peut ouvrir et construire un château de l'Orage, attaquer les forts et les îles à ressources, importer des troupes et acheter les récompenses de Luna choisies.",
+      "expectation": "Chaque volet utilise des données de jeu récentes et vos autorisations enregistrées ; les constructions premium, les attaques et les achats restent limités aux choix que vous activez.",
+      "name": "Auto Storm",
+      "summary": "Gérer votre château de l'Orage, vos attaques et vos récompenses"
+    },
+    "recommendationIntro": "Les choix recommandés décrivent un usage régulier d'Auto Storm ; ils servent de guide et ne modifient pas les paramètres enregistrés.",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "Illustration de l'accès au château de l'Orage et de la capture d'objectif",
+          "caption": "Choix du château initial, modes de capture et activation facultative de l'objectif ; aucun achat ni compte réel n'est montré."
+        },
+        "items": {
+          "automatic_open": {
+            "description": "Si l'Orage est verrouillé, choisissez un château initial officiel disponible et vérifiez son prix affiché avant d'autoriser le déverrouillage.",
+            "label": "Ouvrir automatiquement le château de l'Orage",
+            "recommendation": "Activé si vous voulez qu'Auto Storm ouvre un château initial habituel après vérification de son prix."
+          },
+          "blueprint": {
+            "description": "Un objectif capturé est enregistré et activé immédiatement ; Suspendre l'objectif arrête la réconciliation tout en conservant les objectifs enregistrés.",
+            "label": "Objectif enregistré",
+            "recommendation": "Gardez un objectif Fonctionnel vérifié actif pour les constructions courantes."
+          },
+          "capture_castle": {
+            "description": "Sélectionnez votre château de l'Orage actuel avant de capturer un objectif de construction.",
+            "label": "Château de l'Orage",
+            "recommendation": "Capturez le château que vous souhaitez gérer."
+          },
+          "combat_only": {
+            "description": "Les combats contre les forts et les îles ne nécessitent pas d'objectif de construction capturé.",
+            "label": "Combattre sans objectif"
+          },
+          "decoration_preset": {
+            "description": "Appliquez éventuellement un préréglage de décorations après la construction.",
+            "label": "Préréglage de décorations après construction",
+            "recommendation": "Laissez vide sauf si vous souhaitez un agencement de décorations distinct."
+          },
+          "exact": {
+            "description": "Enregistrez tous les détails d'objectif pris en charge pour une copie exacte.",
+            "label": "Capture exacte",
+            "recommendation": "À utiliser uniquement après examen de tout l'objectif."
+          },
+          "functional": {
+            "description": "Enregistrez un objectif pour les fonctions essentielles de l'Orage sans copier chaque position de bâtiment.",
+            "label": "Capture fonctionnelle",
+            "recommendation": "Fonctionnel pour l'entretien habituel."
+          },
+          "layout": {
+            "description": "Enregistrez les types de bâtiments et leurs positions sans les décorations.",
+            "label": "Capture de disposition",
+            "recommendation": "À utiliser seulement si l'emplacement des bâtiments compte."
+          },
+          "open_settings": {
+            "description": "Ouvrez les paramètres d'Auto Storm depuis sa carte Automatisation.",
+            "label": "Ouvrir les paramètres"
+          },
+          "starter_castle": {
+            "description": "Choisissez le château initial officiel actuellement disponible pour la prochaine saison verrouillée de l'Orage.",
+            "label": "Château à ouvrir",
+            "recommendation": "Choisissez un château initial habituel dont vous pouvez payer le prix après vérification."
+          }
+        },
+        "title": "Ouvrir et capturer votre château de l'Orage"
+      },
+      "combat": {
+        "image": {
+          "alt": "Illustration des paramètres d'attaque des forts et des îles",
+          "caption": "Exemples d'îles à aigue-marine, de niveaux de forts, d'ordre des cibles et de défenseurs d'occupation."
+        },
+        "items": {
+          "defenders": {
+            "description": "Choisissez les types et les nombres de défenseurs laissés sur une île capturée ; une liste vide laisse un survivant après une victoire confirmée.",
+            "label": "Unités de défense des îles",
+            "recommendation": "Choisissez des défenseurs si un survivant ne suffit pas pour votre plan."
+          },
+          "fort_preset": {
+            "description": "Choisissez une formation enregistrée de troupes et d'outils pour les forts.",
+            "label": "Préréglage d'attaque des forts",
+            "recommendation": "Utilisez votre préréglage habituel pour les forts."
+          },
+          "forts": {
+            "description": "Activez les attaques contre les niveaux de forts officiels choisis, de 40 à 80.",
+            "label": "Forts de l'Orage",
+            "recommendation": "Activé pour les niveaux que votre préréglage peut battre de façon fiable."
+          },
+          "horse": {
+            "description": "Choisissez le voyage par plume, pièces ou rubis pour les attaques dans l'Orage.",
+            "label": "Accélération du cheval",
+            "recommendation": "Plume de voyage pour aller vite sans choisir le voyage en rubis."
+          },
+          "island_preset": {
+            "description": "Choisissez une formation enregistrée de troupes et d'outils pour les îles.",
+            "label": "Préréglage d'attaque des îles",
+            "recommendation": "Utilisez votre préréglage habituel pour les îles."
+          },
+          "island_resources": {
+            "description": "Choisissez quelles îles de bois, de pierre ou d'aigue-marine peuvent être attaquées.",
+            "label": "Ressources des îles",
+            "recommendation": "Sélectionnez l'aigue-marine pour en récolter."
+          },
+          "island_sizes": {
+            "description": "Choisissez les grandes îles, les petites ou les deux parmi les ressources sélectionnées.",
+            "label": "Tailles des îles",
+            "recommendation": "Grandes et petites pour la récolte régulière d'aigue-marine."
+          },
+          "islands": {
+            "description": "Activez la capture des îles correspondant aux ressources et aux tailles choisies.",
+            "label": "Îles à ressources",
+            "recommendation": "Activé si vous voulez de l'aigue-marine des grandes et petites îles."
+          },
+          "minimum_attacks": {
+            "description": "N'attaquez que les forts ayant au moins ce nombre d'attaques restantes.",
+            "label": "Minimum d'attaques restantes",
+            "recommendation": "0 pour autoriser tout fort admissible."
+          },
+          "priority": {
+            "description": "Classez les cibles actives parmi les îles et les forts ; la priorité décide dans une ligne, puis la distance départage les égalités.",
+            "label": "Priorité des cibles d'attaque",
+            "recommendation": "Grandes îles, petites îles, puis forts du niveau 80 au 40 pour récolter l'aigue-marine."
+          }
+        },
+        "title": "Choisir les forts et les îles à ressources"
+      },
+      "construction": {
+        "image": {
+          "alt": "Illustration des paramètres de construction et de réserve",
+          "caption": "Transport de ressources, autorisations de dépense, réserves et niveau du port sous forme de commandes d'exemple."
+        },
+        "items": {
+          "demolition": {
+            "description": "Autorisez la suppression exacte des bâtiments impossibles à déplacer ou à stocker.",
+            "label": "Autoriser la démolition",
+            "recommendation": "Désactivé sauf si vous reconstruisez une disposition examinée."
+          },
+          "donor_reserves": {
+            "description": "Conservez les quantités choisies de bois, de pierre et d'aigue-marine chez chaque donneur avant le transport de ressources.",
+            "label": "Réserves protégées des donneurs",
+            "recommendation": "Protégez votre budget habituel de bois et de pierre pour la construction ; aigue-marine 0 si inutilisée."
+          },
+          "harbor_level": {
+            "description": "Choisissez le niveau visé du port parmi 1, 2 ou 3 ; les niveaux 2 et 3 utilisent des voies de construction premium.",
+            "label": "Niveau visé du port",
+            "recommendation": "Niveau 1 sauf si des améliorations premium sont prévues."
+          },
+          "harbor": {
+            "description": "Maintenez le port au niveau choisi même si l'objectif capturé diffère.",
+            "label": "Améliorer le port",
+            "recommendation": "Activé au niveau 1 pour un usage régulier."
+          },
+          "premium": {
+            "description": "Autorisez les étapes de construction admissibles qui dépensent une monnaie premium.",
+            "label": "Autoriser les coûts premium",
+            "recommendation": "Désactivé sauf si une construction premium est prévue."
+          },
+          "resource_transport": {
+            "description": "Autorisez des livraisons confirmées des ressources de construction manquantes depuis les châteaux donneurs.",
+            "label": "Transporter les ressources manquantes",
+            "recommendation": "Activé pour les constructions régulières."
+          },
+          "skip_reserves": {
+            "description": "Conservez le nombre choisi d'objets de réduction de temps de 1 min, 5 min, 10 min, 30 min, 1 h, 5 h et 24 h.",
+            "label": "Réductions de temps gardées en réserve",
+            "recommendation": "Gardez 0 réduction courte sauf besoin ailleurs ; réservez vos stocks de 1 h, 5 h et 24 h pour les autres événements."
+          },
+          "storm_reserves": {
+            "description": "Rendez indisponibles à la construction les quantités choisies de bois de l'Orage, de pierre et d'aigue-marine.",
+            "label": "Réserves de dépenses du château de l'Orage",
+            "recommendation": "Bois de l'Orage 0 et pierre 0 si vous dépensez le surplus ; réservez l'aigue-marine prévue pour les récompenses."
+          },
+          "time_skips": {
+            "description": "Appliquez les réductions de temps admissibles en conservant les réserves d'objets choisies.",
+            "label": "Utiliser les réductions de temps de construction",
+            "recommendation": "Activé si vous voulez accélérer les constructions courantes."
+          }
+        },
+        "title": "Régler la construction et la protection des ressources"
+      },
+      "luna": {
+        "image": {
+          "alt": "Illustration des paramètres de récompenses de Luna",
+          "caption": "Réserve d'aigue-marine, objectifs d'achat limités, récompenses renouvelables et priorité."
+        },
+        "items": {
+          "cost_cap": {
+            "description": "Lisez le coût et le plafond d'achat de chaque récompense indiqués par le jeu.",
+            "label": "Coût et plafond d'achat",
+            "recommendation": "Vérifiez ces deux valeurs en lecture seule avant l'activation."
+          },
+          "keep_aqua": {
+            "description": "Gardez cette quantité d'aigue-marine indisponible pour les achats de Luna.",
+            "label": "Garder de l'aigue-marine",
+            "recommendation": "0 si tout le surplus peut financer des récompenses ; sinon réservez la quantité prévue."
+          },
+          "priority": {
+            "description": "Achetez d'abord les objectifs aux numéros les plus bas et terminez les objectifs limités avant les illimités.",
+            "label": "Priorité",
+            "recommendation": "Utilisez 1, 2 et 3 dans l'ordre souhaité."
+          },
+          "search": {
+            "description": "Recherchez les récompenses officielles de Luna par nom avant de configurer un achat.",
+            "label": "Trouver une récompense de Luna",
+            "recommendation": "Cherchez la récompense que vous voulez réellement."
+          },
+          "target_total": {
+            "description": "Fixez le nombre total d'achats souhaité pour une récompense limitée.",
+            "label": "Total visé",
+            "recommendation": "Ne fixez que le nombre que vous comptez acheter."
+          },
+          "unlimited": {
+            "description": "Continuez d'acheter une récompense renouvelable admissible tant que la réserve et le plafond de la boutique le permettent.",
+            "label": "Illimité",
+            "recommendation": "Activé seulement pour les récompenses renouvelables voulues régulièrement."
+          },
+          "use": {
+            "description": "Sélectionnez une récompense pour permettre son achat automatique.",
+            "label": "Utiliser la récompense",
+            "recommendation": "N'activez que les récompenses souhaitées."
+          }
+        },
+        "title": "Choisir les récompenses de Luna en aigue-marine"
+      },
+      "save": {
+        "image": {
+          "alt": "Illustration de l'enregistrement et de l'activation d'Auto Storm",
+          "caption": "Limite quotidienne d'attaques, vérification de la politique, actualisation de carte en lecture seule et interrupteur d'automatisation."
+        },
+        "items": {
+          "daily_limit": {
+            "description": "Arrêtez les nouvelles attaques d'Auto Storm au nombre quotidien d'attaques normales de tout le compte ; 0 retire cette limite supplémentaire.",
+            "label": "Limite quotidienne d'attaques normales",
+            "recommendation": "0 sauf si vous utilisez un plafond pour tout le compte."
+          },
+          "enable": {
+            "description": "Activez Auto Storm sur sa carte Automatisation une fois les choix enregistrés prêts.",
+            "label": "Interrupteur d'automatisation",
+            "recommendation": "Activez après la configuration."
+          },
+          "map_refresh": {
+            "description": "Consultez l'intervalle officiel d'actualisation de la carte de l'Orage.",
+            "label": "Intervalle d'actualisation de la carte",
+            "recommendation": "L'intervalle en lecture seule est de 2 heures ; attendez un nouveau relevé après les changements."
+          },
+          "policy_check": {
+            "description": "Définissez la fréquence à laquelle Auto Storm vérifie ses paramètres et les tâches admissibles.",
+            "label": "Intervalle de vérification de la politique",
+            "recommendation": "Gardez l'intervalle habituel de 30 secondes."
+          },
+          "save": {
+            "description": "Enregistrez les choix de château, construction, combat, import de troupes et Luna avant d'activer l'automatisation.",
+            "label": "Enregistrer les paramètres",
+            "recommendation": "Enregistrez après avoir vérifié toutes les autorisations de dépense."
+          }
+        },
+        "title": "Enregistrer et activer Auto Storm"
+      },
+      "troops": {
+        "image": {
+          "alt": "Illustration de l'import de troupes et des estimations en lecture seule",
+          "caption": "Ordre des donneurs, 1 000 troupes gardées et estimations de capacité en lecture seule."
+        },
+        "items": {
+          "attack_history": {
+            "description": "Lisez le nombre moyen d'attaques de l'Orage signalées depuis la réinitialisation au cours des dernières 24 heures.",
+            "label": "Moyenne des attaques depuis réinitialisation",
+            "recommendation": "Consultez cette estimation en lecture seule avant de modifier l'import nécessaire."
+          },
+          "committed_cap": {
+            "description": "Lisez le plafond calculé automatiquement, comprenant troupes stationnées, mouvements, transit et retours.",
+            "label": "Plafond des troupes engagées dans l'Orage",
+            "recommendation": "Consultez ce plafond en lecture seule avant d'augmenter les imports."
+          },
+          "donors": {
+            "description": "Choisissez les châteaux donneurs dans l'ordre affiché ; un stock partiel peut fournir une livraison plus petite.",
+            "label": "Châteaux donneurs",
+            "recommendation": "Sélectionnez vos fournisseurs de troupes habituels dans l'ordre préféré."
+          },
+          "import": {
+            "description": "Importez vers l'Orage les troupes d'attaque ou de défense choisies qui manquent depuis les châteaux donneurs.",
+            "label": "Importer les troupes manquantes",
+            "recommendation": "Activé si votre château de l'Orage a besoin d'un ravitaillement régulier."
+          },
+          "map_coverage": {
+            "description": "Consultez la couverture de la carte avant de vous fier aux cibles affichées.",
+            "label": "Couverture de la carte",
+            "recommendation": "Attendez une couverture récente quand des cibles manquent."
+          },
+          "minimum_kept": {
+            "description": "Gardez au moins ce nombre de troupes dans l'Orage après le lancement d'une attaque en préservant le mélange des préréglages activés.",
+            "label": "Minimum de troupes gardées après lancement",
+            "recommendation": "1 000 troupes pour une réserve régulière, à adapter à votre armée réelle."
+          },
+          "preset_average": {
+            "description": "Lisez le besoin moyen en troupes des préréglages d'attaque activés, y compris les défenseurs d'île choisis.",
+            "label": "Moyenne des préréglages activés",
+            "recommendation": "Comparez cette estimation en lecture seule avec votre armée."
+          }
+        },
+        "title": "Importer et surveiller les troupes de l'Orage"
       }
     }
   }

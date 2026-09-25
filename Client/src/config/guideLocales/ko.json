@@ -37,7 +37,10 @@
     "khanPreviewTitle": "자동 칸 설정 예시",
     "beriGuideIntro": "다음 단계에 따라 자동 베리몬드 월드를 설정하고 예시 패널을 선택해 확대하세요.",
     "beriGuideTitle": "자동 베리몬드 월드 안내서",
-    "beriPreviewTitle": "자동 베리몬드 월드 설정 예시"
+    "beriPreviewTitle": "자동 베리몬드 월드 설정 예시",
+    "stormGuideIntro": "다음 단계에 따라 자동 스톰을 설정하고 예시 패널을 선택해 확대하세요.",
+    "stormGuideTitle": "자동 스톰 안내서",
+    "stormPreviewTitle": "자동 스톰 설정 예시"
   },
   "autoTower": {
     "recommendationIntro": "일반적인 사용을 위한 권장값입니다. 저장하기 전에 검토하세요.",
@@ -533,6 +536,48 @@
       "next": "다음 수송: 공급 재고에서 B 최대 1유닛",
       "stock": "진영 재고: A 2, B 0",
       "title": "병력 비례 수송 예시"
+    },
+    "stormCastle": {
+      "blueprint": "저장한 목표 활성; 일시 중지해도 보존",
+      "capture": "현재 성: 기능 목표",
+      "decorations": "장식 프리셋: 선택 사항",
+      "title": "스톰 성 접근 예시",
+      "unlock": "자동 열기: 가격 확인 후 켬"
+    },
+    "stormCombat": {
+      "defenders": "점령 방어병: 선택하거나 생존자 한 명",
+      "forts": "요새: 선택한 레벨 40~80",
+      "islands": "아쿠아마린 섬: 큰 섬과 작은 섬",
+      "priority": "큰 섬, 작은 섬, 요새 80부터 40 순",
+      "title": "요새와 섬 공격 예시"
+    },
+    "stormConstruction": {
+      "harbor": "항구: 켬, 레벨 1",
+      "resources": "스톰 나무 0; 돌 0; 아쿠아마린 계획량",
+      "spending": "프리미엄과 철거: 끔",
+      "title": "건설과 비축 예시",
+      "transport": "자원 운송: 켬"
+    },
+    "stormLuna": {
+      "cost": "가격과 구매 한도: 읽기 전용",
+      "limited": "한정 목표를 무제한 보상보다 먼저",
+      "priority": "우선순위 1, 2, 3; 작은 번호부터",
+      "reserve": "아쿠아마린 남기기: 잉여분 사용 시 0",
+      "title": "루나 보상 예시"
+    },
+    "stormSave": {
+      "check": "정책 확인: 30초",
+      "daily": "일일 일반 공격: 추가 제한 0",
+      "map": "지도 갱신: 2시간, 읽기 전용",
+      "switch": "저장한 뒤 자동 스톰 켜기",
+      "title": "저장 및 활성화 흐름 예시"
+    },
+    "stormTroops": {
+      "averages": "공격 및 프리셋 평균: 읽기 전용",
+      "cap": "투입 병력 상한: 읽기 전용",
+      "donors": "공급 성: 표시 순서, 일부 재고도 허용",
+      "minimum": "최소 남길 병력: 1,000명",
+      "title": "병력 수입 예시"
     }
   },
   "autoStation": {
@@ -1682,6 +1727,309 @@
           }
         },
         "title": "병력 비례 수송 설정"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "자동 스톰은 스톰 성을 열고 건설하며 요새와 자원 섬을 공격하고 병력을 수입하며 선택한 루나 보상을 구매할 수 있습니다.",
+      "expectation": "각 작업은 최신 게임 데이터와 저장된 허가를 사용하며 프리미엄 건설, 공격, 구매는 켠 선택지에 따라 제한됩니다.",
+      "name": "자동 스톰",
+      "summary": "스톰 성과 공격 및 보상 관리"
+    },
+    "recommendationIntro": "권장값은 자동 스톰의 일반적인 사용을 설명하는 안내이며 저장된 설정을 바꾸지 않습니다.",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "스톰 성 접근 및 목표 캡처 예시 화면",
+          "caption": "시작 성 선택, 캡처 방식, 선택적 목표 활성화를 보여 주며 실제 구매나 계정은 표시하지 않습니다."
+        },
+        "items": {
+          "automatic_open": {
+            "description": "스톰이 잠겨 있으면 이용 가능한 공식 시작 성을 선택하고 잠금 해제를 허용하기 전에 표시된 가격을 확인합니다.",
+            "label": "스톰 성 자동 열기",
+            "recommendation": "가격을 확인한 뒤 자동 스톰이 평소 시작 성을 열게 하려면 켜세요."
+          },
+          "blueprint": {
+            "description": "캡처한 목표는 즉시 저장되고 활성화되며 목표 일시 중지는 동기화를 멈추지만 저장된 목표는 유지합니다.",
+            "label": "저장된 목표",
+            "recommendation": "일반 건설에는 검토한 기능 목표를 활성화해 두세요."
+          },
+          "capture_castle": {
+            "description": "건설 목표를 캡처하기 전에 현재 스톰 성을 선택합니다.",
+            "label": "스톰 성",
+            "recommendation": "관리하려는 성을 캡처하세요."
+          },
+          "combat_only": {
+            "description": "요새와 섬 전투에는 캡처한 건설 목표가 필요하지 않습니다.",
+            "label": "목표 없는 전투"
+          },
+          "decoration_preset": {
+            "description": "건설이 끝난 뒤 선택한 장식 프리셋을 선택적으로 적용합니다.",
+            "label": "건설 후 장식 프리셋",
+            "recommendation": "별도의 장식 배치가 필요 없다면 비워 두세요."
+          },
+          "exact": {
+            "description": "정확한 복제를 위해 지원되는 모든 목표 세부 정보를 저장합니다.",
+            "label": "정확한 캡처",
+            "recommendation": "목표 전체를 검토한 뒤에만 사용하세요."
+          },
+          "functional": {
+            "description": "각 건물 위치를 복사하지 않고 스톰의 필수 기능에 대한 목표를 저장합니다.",
+            "label": "기능 캡처",
+            "recommendation": "일반적인 유지 관리에는 기능을 권장합니다."
+          },
+          "layout": {
+            "description": "장식을 제외한 건물 종류와 위치를 저장합니다.",
+            "label": "배치 캡처",
+            "recommendation": "건물 위치가 중요할 때만 사용하세요."
+          },
+          "open_settings": {
+            "description": "자동화 카드에서 자동 스톰 설정을 엽니다.",
+            "label": "설정 열기"
+          },
+          "starter_castle": {
+            "description": "다음 잠긴 시즌에 쓸 현재 이용 가능한 공식 스톰 시작 성을 선택합니다.",
+            "label": "열 성",
+            "recommendation": "가격을 확인하고 감당할 수 있는 평소 시작 성을 선택하세요."
+          }
+        },
+        "title": "스톰 성 열기 및 캡처"
+      },
+      "combat": {
+        "image": {
+          "alt": "요새와 섬 공격 설정 예시 화면",
+          "caption": "가상의 아쿠아마린 섬, 요새 레벨, 목표 순서와 점령 방어병을 보여 줍니다."
+        },
+        "items": {
+          "defenders": {
+            "description": "점령한 섬에 남길 방어병의 종류와 수를 선택하며 목록이 비면 확인된 승리 뒤 생존자 한 명을 남깁니다.",
+            "label": "섬 방어 유닛",
+            "recommendation": "생존자 한 명으로 부족하다면 방어병을 선택하세요."
+          },
+          "fort_preset": {
+            "description": "요새에 사용할 저장된 병력과 도구 편성을 선택합니다.",
+            "label": "요새 공격 프리셋",
+            "recommendation": "평소 요새 프리셋을 사용하세요."
+          },
+          "forts": {
+            "description": "공식 요새 레벨 40부터 80 중 선택한 레벨에 대한 공격을 켭니다.",
+            "label": "스톰 요새",
+            "recommendation": "선택한 프리셋으로 안정적으로 이길 수 있는 레벨만 켜세요."
+          },
+          "horse": {
+            "description": "스톰 공격의 이동 방식으로 깃털, 동전 또는 루비를 선택합니다.",
+            "label": "말 이동 강화",
+            "recommendation": "루비 이동을 선택하지 않고 빨리 가려면 여행 깃털을 권장합니다."
+          },
+          "island_preset": {
+            "description": "섬에 사용할 저장된 병력과 도구 편성을 선택합니다.",
+            "label": "섬 공격 프리셋",
+            "recommendation": "평소 섬 프리셋을 사용하세요."
+          },
+          "island_resources": {
+            "description": "공격할 수 있는 나무, 돌 또는 아쿠아마린 섬을 선택합니다.",
+            "label": "섬 자원",
+            "recommendation": "아쿠아마린을 모으려면 아쿠아마린을 선택하세요."
+          },
+          "island_sizes": {
+            "description": "선택한 자원의 큰 섬, 작은 섬 또는 둘 다를 지정합니다.",
+            "label": "섬 크기",
+            "recommendation": "일반적인 아쿠아마린 수집에는 큰 섬과 작은 섬을 모두 선택하세요."
+          },
+          "islands": {
+            "description": "선택한 자원 및 크기에 해당하는 섬 점령을 켭니다.",
+            "label": "자원 섬",
+            "recommendation": "크고 작은 섬에서 아쿠아마린을 얻으려면 켜세요."
+          },
+          "minimum_attacks": {
+            "description": "남은 공격 횟수가 이 수 이상인 요새만 공격합니다.",
+            "label": "최소 남은 공격 횟수",
+            "recommendation": "0이면 모든 적격 요새가 허용됩니다."
+          },
+          "priority": {
+            "description": "활성화한 섬과 요새 목표의 순서를 정하며 같은 행에서는 우선순위, 동률이면 거리가 결정합니다.",
+            "label": "공격 목표 우선순위",
+            "recommendation": "아쿠아마린 수집에는 큰 섬, 작은 섬, 요새 레벨 80부터 40 순서를 권장합니다."
+          }
+        },
+        "title": "요새와 자원 섬 선택"
+      },
+      "construction": {
+        "image": {
+          "alt": "건설과 비축 설정 예시 화면",
+          "caption": "자원 운송, 지출 허가, 비축량과 항구 레벨을 보여 주는 가상 조작 예시입니다."
+        },
+        "items": {
+          "demolition": {
+            "description": "이동하거나 보관할 수 없는 건물을 정확한 목표 위치에서 제거하도록 허용합니다.",
+            "label": "철거 허용",
+            "recommendation": "검토한 배치를 다시 짓는 경우가 아니면 끄세요."
+          },
+          "donor_reserves": {
+            "description": "자원 운송 전에 각 공급 성에 선택한 나무, 돌, 아쿠아마린 수량을 남깁니다.",
+            "label": "공급 성 보호 비축량",
+            "recommendation": "평소 나무와 돌 건설 예산을 보호하고 사용하지 않는 아쿠아마린은 0으로 하세요."
+          },
+          "harbor_level": {
+            "description": "항구 목표 레벨을 1, 2 또는 3으로 선택하며 레벨 2와 3은 프리미엄 건설 경로를 사용합니다.",
+            "label": "항구 목표 레벨",
+            "recommendation": "프리미엄 업그레이드 계획이 없다면 레벨 1을 권장합니다."
+          },
+          "harbor": {
+            "description": "캡처한 목표와 달라도 항구를 선택한 레벨로 유지합니다.",
+            "label": "항구 업그레이드",
+            "recommendation": "일반 사용에는 켜고 레벨 1로 하세요."
+          },
+          "premium": {
+            "description": "프리미엄 화폐를 쓰는 적격 건설 단계를 허용합니다.",
+            "label": "프리미엄 비용 허용",
+            "recommendation": "프리미엄 건설을 계획하지 않았다면 끄세요."
+          },
+          "resource_transport": {
+            "description": "공급 성에서 부족한 건설 자원을 확인된 수송으로 가져오도록 허용합니다.",
+            "label": "부족한 자원 운송",
+            "recommendation": "일반 건설에는 켜세요."
+          },
+          "skip_reserves": {
+            "description": "1분, 5분, 10분, 30분, 1시간, 5시간, 24시간의 각 시간 단축 아이템을 선택한 수만큼 남깁니다.",
+            "label": "시간 단축 아이템 비축량",
+            "recommendation": "짧은 단축 아이템은 다른 곳에 필요하지 않으면 0으로 하고 1시간, 5시간, 24시간 재고는 다른 이벤트에 남기세요."
+          },
+          "storm_reserves": {
+            "description": "선택한 스톰 나무, 돌과 아쿠아마린을 건설에 쓰지 않고 남깁니다.",
+            "label": "스톰 성 지출 비축량",
+            "recommendation": "잉여분을 쓴다면 스톰 나무 0과 돌 0, 아쿠아마린은 계획한 보상 예산만큼 두세요."
+          },
+          "time_skips": {
+            "description": "선택한 아이템 비축량을 유지하며 적격한 시간 단축을 사용합니다.",
+            "label": "건설 시간 단축 사용",
+            "recommendation": "평소 건설을 빠르게 하고 싶다면 켜세요."
+          }
+        },
+        "title": "건설과 자원 보호 설정"
+      },
+      "luna": {
+        "image": {
+          "alt": "루나 보상 설정 예시 화면",
+          "caption": "아쿠아마린 비축량, 한정 구매 목표, 반복 보상과 우선순위."
+        },
+        "items": {
+          "cost_cap": {
+            "description": "각 보상의 게임 보고 가격과 구매 한도를 확인합니다.",
+            "label": "가격과 구매 한도",
+            "recommendation": "활성화 전에 읽기 전용 값 두 가지를 모두 확인하세요."
+          },
+          "keep_aqua": {
+            "description": "이만큼의 아쿠아마린을 루나 구매에 쓰지 않고 남깁니다.",
+            "label": "아쿠아마린 남기기",
+            "recommendation": "잉여분을 모두 보상에 쓸 수 있으면 0, 그렇지 않으면 계획한 수량을 남기세요."
+          },
+          "priority": {
+            "description": "번호가 작은 목표를 먼저 구매하고 한정 목표를 무제한 목표보다 먼저 완료합니다.",
+            "label": "우선순위",
+            "recommendation": "원하는 순서로 1, 2, 3을 사용하세요."
+          },
+          "search": {
+            "description": "구매를 설정하기 전에 공식 루나 보상을 이름으로 찾습니다.",
+            "label": "루나 보상 찾기",
+            "recommendation": "정말 원하는 보상을 검색하세요."
+          },
+          "target_total": {
+            "description": "한정 보상에 대해 원하는 총 구매 횟수를 정합니다.",
+            "label": "목표 총수",
+            "recommendation": "구매할 계획인 횟수만 입력하세요."
+          },
+          "unlimited": {
+            "description": "비축량과 상점 한도가 허용하는 동안 적격한 반복 보상을 계속 구매합니다.",
+            "label": "무제한",
+            "recommendation": "정기적으로 원하는 반복 보상에만 켜세요."
+          },
+          "use": {
+            "description": "자동 구매를 허용할 보상을 선택합니다.",
+            "label": "보상 사용",
+            "recommendation": "원하는 보상만 활성화하세요."
+          }
+        },
+        "title": "루나 아쿠아마린 보상 선택"
+      },
+      "save": {
+        "image": {
+          "alt": "자동 스톰 저장 및 활성화 예시 화면",
+          "caption": "일일 공격 제한, 정책 확인, 읽기 전용 지도 갱신과 자동화 스위치."
+        },
+        "items": {
+          "daily_limit": {
+            "description": "계정 전체의 일일 일반 공격 횟수에 도달하면 새 자동 스톰 공격을 중단하며 0은 추가 제한을 없앱니다.",
+            "label": "일일 일반 공격 제한",
+            "recommendation": "계정 전체 한도를 쓰지 않는다면 0을 권장합니다."
+          },
+          "enable": {
+            "description": "저장한 선택이 준비되면 자동화 카드에서 자동 스톰을 켭니다.",
+            "label": "자동화 스위치",
+            "recommendation": "설정을 마친 뒤 켜세요."
+          },
+          "map_refresh": {
+            "description": "스톰 지도의 공식 갱신 간격을 확인합니다.",
+            "label": "지도 갱신 간격",
+            "recommendation": "읽기 전용 간격은 2시간이며 변경 후에는 새로운 스캔을 기다리세요."
+          },
+          "policy_check": {
+            "description": "자동 스톰이 설정과 적격한 작업을 확인하는 간격을 정합니다.",
+            "label": "정책 확인 간격",
+            "recommendation": "평소 30초 간격을 유지하세요."
+          },
+          "save": {
+            "description": "자동화를 켜기 전에 성, 건설, 전투, 병력 수입 및 루나 선택을 저장합니다.",
+            "label": "설정 저장",
+            "recommendation": "모든 지출 허가를 검토한 뒤 저장하세요."
+          }
+        },
+        "title": "자동 스톰 저장 후 켜기"
+      },
+      "troops": {
+        "image": {
+          "alt": "병력 수입 및 읽기 전용 추정치 예시 화면",
+          "caption": "공급 성 순서, 남길 병력 1,000명과 읽기 전용 용량 추정치."
+        },
+        "items": {
+          "attack_history": {
+            "description": "최근 24시간의 초기화 이후 보고된 스톰 공격 평균 횟수를 확인합니다.",
+            "label": "초기화 이후 평균 공격 횟수",
+            "recommendation": "수입량을 변경하기 전에 이 읽기 전용 추정치를 확인하세요."
+          },
+          "committed_cap": {
+            "description": "주둔 병력, 이동, 운송 중, 귀환 중인 병력을 포함해 자동 계산한 상한을 확인합니다.",
+            "label": "스톰에 투입된 병력 상한",
+            "recommendation": "수입을 늘리기 전에 이 읽기 전용 상한을 확인하세요."
+          },
+          "donors": {
+            "description": "공급 성을 표시된 순서대로 선택하며 일부 재고가 있으면 더 적은 수송이 가능합니다.",
+            "label": "공급 성",
+            "recommendation": "평소 병력 공급처를 원하는 순서로 선택하세요."
+          },
+          "import": {
+            "description": "공급 성에서 부족한 공격병 또는 선택한 방어병을 스톰으로 수입합니다.",
+            "label": "부족한 병력 수입",
+            "recommendation": "스톰 성에 정기적인 병력 공급이 필요하면 켜세요."
+          },
+          "map_coverage": {
+            "description": "보이는 목표를 믿기 전에 지도 탐색 범위를 확인합니다.",
+            "label": "지도 탐색 범위",
+            "recommendation": "목표가 보이지 않는다면 최근 스캔을 기다리세요."
+          },
+          "minimum_kept": {
+            "description": "공격을 시작한 뒤에도 스톰에 최소 이 수의 병력을 남기고 활성 프리셋 구성을 유지합니다.",
+            "label": "출정 후 남길 최소 병력",
+            "recommendation": "실제 군대에 맞춰 조정한 일반 비축으로 1,000명."
+          },
+          "preset_average": {
+            "description": "선택한 섬 방어병을 포함한 활성 공격 프리셋의 평균 병력 수요를 확인합니다.",
+            "label": "활성 프리셋 평균",
+            "recommendation": "이 읽기 전용 추정치를 자신의 군대와 비교하세요."
+          }
+        },
+        "title": "스톰 병력 수입 및 확인"
       }
     }
   }

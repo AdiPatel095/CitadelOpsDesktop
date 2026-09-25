@@ -14,6 +14,7 @@ const nomad = await load('src/config/autoNomadGuide.json');
 const advisor = await load('src/config/autoAdvisorGuide.json');
 const khan = await load('src/config/autoKhanGuide.json');
 const beri = await load('src/config/autoBeriGuide.json');
+const storm = await load('src/config/autoStormGuide.json');
 const countLeaves = value => typeof value === 'string' ? 1 : Object.values(value).reduce((sum, child) => sum + countLeaves(child), 0);
 function leaves(candidate, expected, path='') {
   if (typeof expected === 'string') { assert.equal(typeof candidate,'string',path); assert.ok(candidate.trim(),path); return 1; }
@@ -26,7 +27,7 @@ test('all 25 non-English guide packs have complete stable-ID content', async () 
     const pack=await load(`src/config/guideLocales/${locale}.json`);
     const expected = source;
     assert.equal(leaves(pack,expected,locale),countLeaves(expected));
-    for (const [key,guide] of [['autoTower',tower],['autoBird',bird],['autoStation',station],['autoFortress',fortress],['autoInvasion',invasion],['autoNomad',nomad],['autoAdvisor',advisor],['autoKhan',khan],['autoBeri',beri]].filter(([key]) => pack[key])) {
+    for (const [key,guide] of [['autoTower',tower],['autoBird',bird],['autoStation',station],['autoFortress',fortress],['autoInvasion',invasion],['autoNomad',nomad],['autoAdvisor',advisor],['autoKhan',khan],['autoBeri',beri],['autoStorm',storm]].filter(([key]) => pack[key])) {
       assert.deepEqual(Object.keys(pack[key].steps).sort(),guide.steps.map(step=>step.id).sort());
       for (const step of guide.steps) assert.deepEqual(Object.keys(pack[key].steps[step.id].items).sort(),step.items.map(item=>item.id).sort());
     }
@@ -47,7 +48,7 @@ test('guide translation provenance pins the exact 26 locale pack bytes', async (
 
 
 test('canonical English guides match the rendered source pack', () => {
-  for (const [key, guide] of [['autoTower', tower], ['autoBird', bird], ['autoStation', station], ['autoFortress', fortress], ['autoInvasion', invasion], ['autoNomad', nomad], ['autoAdvisor', advisor], ['autoKhan', khan], ['autoBeri', beri]]) {
+  for (const [key, guide] of [['autoTower', tower], ['autoBird', bird], ['autoStation', station], ['autoFortress', fortress], ['autoInvasion', invasion], ['autoNomad', nomad], ['autoAdvisor', advisor], ['autoKhan', khan], ['autoBeri', beri], ['autoStorm', storm]]) {
     assert.equal(source[key].recommendationIntro, guide.recommendationIntro);
     for (const step of guide.steps) {
       const translated = source[key].steps[step.id];
@@ -89,4 +90,12 @@ test('Beri English guide explains proportional transfers and threshold', () => {
   assert.match(source.autoBeri.steps.transfers.items.minimum_free_capacity.description, /individual proportional shipment can be smaller/);
   assert.match(source.autoBeri.steps.transfers.items.partial_donor.description, /waits instead of sending another type/);
   assert.equal(beri.steps.length, 6);
+});
+
+
+test('Storm English guide keeps premium and Luna spending choices explicit', () => {
+  assert.match(source.autoStorm.steps.construction.items.premium.recommendation, /Off unless/);
+  assert.match(source.autoStorm.steps.luna.items.unlimited.description, /reserve and shop cap/);
+  assert.match(source.autoStorm.steps.troops.items.minimum_kept.recommendation, /1,000/);
+  assert.equal(storm.steps.length, 6);
 });

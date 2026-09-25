@@ -37,7 +37,10 @@
     "khanPreviewTitle": "Automatikus kán beállításának példája",
     "beriGuideIntro": "Kövesd ezeket a lépéseket az Automatikus Berimond beállításához; válassz ki egy példapanelt a nagyításhoz.",
     "beriGuideTitle": "Az Automatikus Berimond útmutatója",
-    "beriPreviewTitle": "Példa az Automatikus Berimond beállítására"
+    "beriPreviewTitle": "Példa az Automatikus Berimond beállítására",
+    "stormGuideIntro": "E lépésekkel állítsd be az Auto Stormot; nagyításhoz válassz egy példapanelt.",
+    "stormGuideTitle": "Auto Storm útmutató",
+    "stormPreviewTitle": "Példa az Auto Storm beállítására"
   },
   "autoTower": {
     "recommendationIntro": "Ezek a szokásos használatra vonatkozó ajánlások; mentés előtt nézd át őket.",
@@ -533,6 +536,48 @@
       "next": "Következő szállítmány: legfeljebb 1 B a küldő készletéből",
       "stock": "Tábori készlet: 2 A és 0 B",
       "title": "Példa arányos szállításra"
+    },
+    "stormCastle": {
+      "blueprint": "Mentett cél aktív; szüneteltetés megtartja",
+      "capture": "Jelenlegi vár: Funkcionális cél",
+      "decorations": "Díszítési előbeállítás: opcionális",
+      "title": "Példa a Viharvár hozzáférésére",
+      "unlock": "Automatikus nyitás: be árellenőrzés után"
+    },
+    "stormCombat": {
+      "defenders": "Megszálló védők: kiválasztottak vagy egy túlélő",
+      "forts": "Erődök: kiválasztott 40–80-as szintek",
+      "islands": "Akvamarinszigetek: nagyok és kicsik",
+      "priority": "Nagyok, kicsik, majd erődök 80-tól 40-ig",
+      "title": "Példa erőd- és szigettámadásokra"
+    },
+    "stormConstruction": {
+      "harbor": "Kikötő: be, 1-es szint",
+      "resources": "Viharfa 0; kő 0; akvamarin tervezett",
+      "spending": "Prémium és bontás: ki",
+      "title": "Példa építésre és tartalékokra",
+      "transport": "Nyersanyagszállítás: be"
+    },
+    "stormLuna": {
+      "cost": "Ár és vásárlási korlát: csak olvasható",
+      "limited": "Korlátozott célok a korlátlan jutalmak előtt",
+      "priority": "Elsőbbség 1, 2, 3; kisebb először",
+      "reserve": "Akvamarin megtartása: 0 a többlet használatakor",
+      "title": "Példa Luna-jutalmakra"
+    },
+    "stormSave": {
+      "check": "Szabályellenőrzés: 30 másodperc",
+      "daily": "Napi normál támadások: 0 plusz korlát",
+      "map": "Térképfrissítés: 2 óra, csak olvasható",
+      "switch": "Mentsd, majd kapcsold be az Auto Stormot",
+      "title": "Példa mentésre és bekapcsolásra"
+    },
+    "stormTroops": {
+      "averages": "Támadási és előbeállítási átlag: csak olvasható",
+      "cap": "Lekötött csapatkorlát: csak olvasható",
+      "donors": "Adományozók: megjelenített sorrend, részleges készlet megengedett",
+      "minimum": "Legalább megtartva: 1000 katona",
+      "title": "Példa csapatimportálásra"
     }
   },
   "autoStation": {
@@ -1682,6 +1727,309 @@
           }
         },
         "title": "Állítsd be az arányos csapatszállítást"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "Az Auto Storm megnyithat és építhet egy Viharvárat, megtámadhat erődöket és nyersanyagszigeteket, csapatokat importálhat, valamint megvásárolhat kiválasztott Luna-jutalmakat.",
+      "expectation": "Minden terület friss játékadatokat és mentett engedélyeket használ; a prémium építés, támadások és vásárlások a bekapcsolt választásokhoz kötöttek.",
+      "name": "Auto Storm",
+      "summary": "Kezeld a Viharvárat, a támadásokat és a jutalmakat"
+    },
+    "recommendationIntro": "Az ajánlások az Auto Storm rendszeres használatát írják le; útmutatók, és nem módosítják a mentett beállításokat.",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "Példa a Viharvár megnyitására és cél mentésére",
+          "caption": "Kezdővár, rögzítési módok és opcionális célaktiválás; nem mutat valós vásárlást vagy fiókot."
+        },
+        "items": {
+          "automatic_open": {
+            "description": "Ha a Vihar zárva van, válassz elérhető hivatalos kezdővárat, és ellenőrizd a feltüntetett árat a feloldás engedélyezése előtt.",
+            "label": "Viharvár automatikus megnyitása",
+            "recommendation": "Be, ha az Auto Storm a szokásos kezdővárat az ár ellenőrzése után nyithatja meg."
+          },
+          "blueprint": {
+            "description": "A rögzített cél azonnal mentődik és aktiválódik; a Cél szüneteltetése leállítja az egyeztetést, de a mentett célok megmaradnak.",
+            "label": "Mentett cél",
+            "recommendation": "A mindennapi építéshez hagyj aktívan egy ellenőrzött Funkcionális célt."
+          },
+          "capture_castle": {
+            "description": "Építési cél rögzítése előtt válaszd ki a jelenlegi Viharváradat.",
+            "label": "Viharvár",
+            "recommendation": "Azt a várat rögzítsd, amelyet kezelni akarsz."
+          },
+          "combat_only": {
+            "description": "Erődök és szigetek elleni harchoz nem kell rögzített építési cél.",
+            "label": "Harc cél nélkül"
+          },
+          "decoration_preset": {
+            "description": "Építés után opcionálisan alkalmazz kiválasztott díszítési előbeállítást.",
+            "label": "Díszítési előbeállítás építés után",
+            "recommendation": "Hagyd üresen, ha nem akarsz külön díszítési elrendezést."
+          },
+          "exact": {
+            "description": "A pontos másolathoz mentsd az összes támogatott célrészletet.",
+            "label": "Pontos rögzítés",
+            "recommendation": "Csak a teljes cél átnézése után használd."
+          },
+          "functional": {
+            "description": "Ments célt a Vihar alapvető funkcióihoz az összes épülethely lemásolása nélkül.",
+            "label": "Funkcionális rögzítés",
+            "recommendation": "Funkcionális a szokásos karbantartáshoz."
+          },
+          "layout": {
+            "description": "Mentsd az épülettípusokat és helyeket díszítések nélkül.",
+            "label": "Elrendezés rögzítése",
+            "recommendation": "Csak akkor használd, ha az épületek helye számít."
+          },
+          "open_settings": {
+            "description": "Nyisd meg az Auto Storm beállításait az Automatizálás kártyáján.",
+            "label": "Beállítások megnyitása"
+          },
+          "starter_castle": {
+            "description": "Válaszd ki a következő lezárt évadra jelenleg elérhető hivatalos Vihar-kezdővárat.",
+            "label": "Megnyitandó vár",
+            "recommendation": "Az ár ellenőrzése után válassz megfizethető, szokásos kezdővárat."
+          }
+        },
+        "title": "Nyisd meg és rögzítsd a Viharváradat"
+      },
+      "combat": {
+        "image": {
+          "alt": "Példa az erőd- és szigettámadások beállításaira",
+          "caption": "Példa akvamarinszigetekre, erődszintekre, célsorrendre és megszálló védőkre."
+        },
+        "items": {
+          "defenders": {
+            "description": "Válaszd ki a meghódított szigeten maradó védők fajtáit és számát; üres lista megerősített győzelem után egy túlélőt hagy hátra.",
+            "label": "Szigetvédő egységek",
+            "recommendation": "Válassz védőket, ha egy túlélő nem elég a tervedhez."
+          },
+          "fort_preset": {
+            "description": "Válassz mentett csapat- és eszközfelállást az erődökhöz.",
+            "label": "Erődtámadási előbeállítás",
+            "recommendation": "Használd a szokásos erőd-előbeállításodat."
+          },
+          "forts": {
+            "description": "Kapcsold be a támadásokat a kiválasztott hivatalos 40–80-as erődszinteken.",
+            "label": "Viharerődök",
+            "recommendation": "Be azokon a szinteken, amelyeket a választott felállás megbízhatóan legyőz."
+          },
+          "horse": {
+            "description": "Válassz tollas, érmés vagy rubinos utazást a Vihar támadásaihoz.",
+            "label": "Lovas utazási gyorsítás",
+            "recommendation": "Utazótoll a gyors haladáshoz rubinos utazás kiválasztása nélkül."
+          },
+          "island_preset": {
+            "description": "Válassz mentett csapat- és eszközfelállást a szigetekhez.",
+            "label": "Szigettámadási előbeállítás",
+            "recommendation": "Használd a szokásos sziget-előbeállításodat."
+          },
+          "island_resources": {
+            "description": "Válaszd ki, mely fa-, kő- vagy akvamarinszigetek támadhatók.",
+            "label": "Szigetnyersanyagok",
+            "recommendation": "Az akvamarin gyűjtéséhez válaszd az akvamarint."
+          },
+          "island_sizes": {
+            "description": "Válassz nagy, kis vagy mindkét méretű szigeteket a választott nyersanyagokból.",
+            "label": "Szigetméretek",
+            "recommendation": "Nagy és kicsi a rendszeres akvamaringyűjtéshez."
+          },
+          "islands": {
+            "description": "Engedélyezd a választott nyersanyagú és méretű szigetek meghódítását.",
+            "label": "Nyersanyagszigetek",
+            "recommendation": "Be, ha nagy és kis szigetekről is szeretnél akvamarint."
+          },
+          "minimum_attacks": {
+            "description": "Csak olyan erődöt támadj, ahol legalább ennyi támadás maradt.",
+            "label": "Minimum hátralévő támadás",
+            "recommendation": "0 minden megfelelő erődöt engedélyez."
+          },
+          "priority": {
+            "description": "Rendezd az aktív sziget- és erődcélokat; soron belül az elsőbbség, holtversenyben a távolság dönt.",
+            "label": "Támadási cél elsőbbsége",
+            "recommendation": "Nagy szigetek, kis szigetek, majd 80-tól 40-ig az erődök akvamaringyűjtéskor."
+          }
+        },
+        "title": "Válassz erődöket és nyersanyagszigeteket"
+      },
+      "construction": {
+        "image": {
+          "alt": "Példa építési és tartalékbeállításokra",
+          "caption": "Nyersanyagszállítás, költési engedélyek, tartalékok és kikötőszint szemléltető vezérlőkkel."
+        },
+        "items": {
+          "demolition": {
+            "description": "Engedélyezd a pontos célban lévő, nem mozgatható és nem tárolható épületek eltávolítását.",
+            "label": "Bontás engedélyezése",
+            "recommendation": "Ki, hacsak nem ellenőrzött elrendezést építesz újjá."
+          },
+          "donor_reserves": {
+            "description": "Szállítás előtt tarts meg a kiválasztott fa-, kő- és akvamarinmennyiséget minden adományozónál.",
+            "label": "Védett adományozói tartalékok",
+            "recommendation": "Védd a szokásos fa- és kőépítési keretedet; akvamarin 0, ha nem használod."
+          },
+          "harbor_level": {
+            "description": "Válassz 1-es, 2-es vagy 3-as kikötő-célszintet; a 2-es és 3-as szint prémium építési utat használ.",
+            "label": "Kikötő célszintje",
+            "recommendation": "1-es szint, ha nem tervezel prémium fejlesztést."
+          },
+          "harbor": {
+            "description": "Tartsd a kikötőt a választott szinten akkor is, ha a rögzített cél eltér.",
+            "label": "Kikötő fejlesztése",
+            "recommendation": "Be, 1-es szinttel a szokásos használathoz."
+          },
+          "premium": {
+            "description": "Engedélyezd a prémium valutát költő megfelelő építési lépéseket.",
+            "label": "Prémium költségek engedélyezése",
+            "recommendation": "Ki, ha nem tervezel prémium építést."
+          },
+          "resource_transport": {
+            "description": "Engedélyezd a hiányzó építési nyersanyagok megerősített szállítmányait adományozó várakból.",
+            "label": "Hiányzó nyersanyagok szállítása",
+            "recommendation": "Be a szokásos építéshez."
+          },
+          "skip_reserves": {
+            "description": "Tarts meg választott darabszámot az 1 p, 5 p, 10 p, 30 p, 1 ó, 5 ó és 24 ó időugró tárgyakból.",
+            "label": "Időugrások tartalékban",
+            "recommendation": "A rövid ugrásokból 0, ha máshol nem kellenek; az 1, 5 és 24 órás készletet más eseményekre tartsd fenn."
+          },
+          "storm_reserves": {
+            "description": "Az építés számára tedd elérhetetlenné a választott Viharfa-, kő- és akvamarinmennyiséget.",
+            "label": "Viharvár költési tartalékai",
+            "recommendation": "Viharfa 0 és kő 0, ha a többletet költöd; akvamarin a tervezett jutalomkeret szerint."
+          },
+          "time_skips": {
+            "description": "Alkalmazz megfelelő időugrásokat, miközben a választott tárgytartalékot megtartod.",
+            "label": "Építési időugrások használata",
+            "recommendation": "Be, ha szeretnéd gyorsítani a szokásos építést."
+          }
+        },
+        "title": "Állítsd be az építést és a nyersanyagvédelmet"
+      },
+      "luna": {
+        "image": {
+          "alt": "Példa Luna-jutalom beállításaira",
+          "caption": "Akvamarintartalék, korlátozott vásárlási célok, ismételhető jutalmak és elsőbbség."
+        },
+        "items": {
+          "cost_cap": {
+            "description": "Olvasd el a játék által közölt árat és vásárlási korlátot minden jutalomnál.",
+            "label": "Ár és vásárlási korlát",
+            "recommendation": "Bekapcsolás előtt ellenőrizd mindkét csak olvasható értéket."
+          },
+          "keep_aqua": {
+            "description": "Ezt az akvamarinmennyiséget hagyd ki Luna vásárlásaiból.",
+            "label": "Akvamarin megtartása",
+            "recommendation": "0, ha minden többlet jutalmakra fordítható; különben tartalékold a tervezett mennyiséget."
+          },
+          "priority": {
+            "description": "Előbb az alacsonyabb számú célokat vásárold, és a korlátozottakat teljesítsd a korlátlanok előtt.",
+            "label": "Elsőbbség",
+            "recommendation": "Használd az 1, 2 és 3 számot a kívánt sorrendben."
+          },
+          "search": {
+            "description": "Vásárlás beállítása előtt keress rá név szerint a hivatalos Luna-jutalmakra.",
+            "label": "Luna-jutalom keresése",
+            "recommendation": "A tényleg kívánt jutalmat keresd."
+          },
+          "target_total": {
+            "description": "Állítsd be egy korlátozott jutalom kívánt összes vásárlásszámát.",
+            "label": "Célösszesen",
+            "recommendation": "Csak annyit állíts be, amennyit meg akarsz venni."
+          },
+          "unlimited": {
+            "description": "Vásárolj tovább megfelelő ismételhető jutalmat, amíg a tartalék és a bolti korlát engedi.",
+            "label": "Korlátlan",
+            "recommendation": "Be csak rendszeresen kívánt ismételhető jutalomnál."
+          },
+          "use": {
+            "description": "Válassz jutalmat az automatikus vásárlás engedélyezéséhez.",
+            "label": "Jutalom használata",
+            "recommendation": "Csak kívánt jutalmakat kapcsolj be."
+          }
+        },
+        "title": "Válassz Luna akvamarinos jutalmakat"
+      },
+      "save": {
+        "image": {
+          "alt": "Példa az Auto Storm mentésére és bekapcsolására",
+          "caption": "Napi támadási korlát, szabályellenőrzés, csak olvasható térképfrissítés és automatizálási kapcsoló."
+        },
+        "items": {
+          "daily_limit": {
+            "description": "Állítsd le az új Auto Storm-támadásokat a fiók napi normál támadásszámánál; 0 eltávolítja ezt a plusz korlátot.",
+            "label": "Normál támadások napi korlátja",
+            "recommendation": "0, ha nem használsz fiókszintű korlátot."
+          },
+          "enable": {
+            "description": "Kapcsold be az Auto Stormot az Automatizálás kártyáján, amikor a mentett választások készen állnak.",
+            "label": "Automatizálási kapcsoló",
+            "recommendation": "Be a beállítás után."
+          },
+          "map_refresh": {
+            "description": "Olvasd el a Vihartérkép hivatalos frissítési időközét.",
+            "label": "Térképfrissítési időköz",
+            "recommendation": "A csak olvasható időköz 2 óra; változtatások után várj friss felmérésre."
+          },
+          "policy_check": {
+            "description": "Állítsd be, milyen gyakran nézze át az Auto Storm a beállításokat és a lehetséges feladatokat.",
+            "label": "Szabályellenőrzési időköz",
+            "recommendation": "Tartsd meg a szokásos 30 másodperces időközt."
+          },
+          "save": {
+            "description": "Az automatizálás bekapcsolása előtt mentsd a vár, építés, harc, csapatimport és Luna választásait.",
+            "label": "Beállítások mentése",
+            "recommendation": "Ments az összes költési engedély ellenőrzése után."
+          }
+        },
+        "title": "Mentsd és kapcsold be az Auto Stormot"
+      },
+      "troops": {
+        "image": {
+          "alt": "Példa csapatimportálásra és csak olvasható becslésekre",
+          "caption": "Adományozók sorrendje, 1000 megtartott katona és csak olvasható kapacitásbecslések."
+        },
+        "items": {
+          "attack_history": {
+            "description": "Olvasd el a nullázás óta az elmúlt 24 órában jelentett Vihartámadások átlagos számát.",
+            "label": "Támadások átlaga nullázás óta",
+            "recommendation": "Ezt a csak olvasható becslést nézd meg, mielőtt változtatod az importigényt."
+          },
+          "committed_cap": {
+            "description": "Olvasd el az automatikusan számított korlátot, amely magában foglalja az állomásozó csapatokat, mozgásokat, szállítást és visszatéréseket.",
+            "label": "Lekötött Viharcsapatok korlátja",
+            "recommendation": "Nézd meg ezt a csak olvasható korlátot az import növelése előtt."
+          },
+          "donors": {
+            "description": "Válaszd ki az adományozó várakat a megjelenített sorrendben; részleges készlet kisebb szállítmányt adhat.",
+            "label": "Adományozó várak",
+            "recommendation": "Válaszd ki szokásos csapatszállítóidat az általad kívánt sorrendben."
+          },
+          "import": {
+            "description": "Importáld a hiányzó támadó vagy kiválasztott védő csapatokat a Viharba az adományozó várakból.",
+            "label": "Hiányzó csapatok importálása",
+            "recommendation": "Be, ha Viharvárad rendszeresen csapatutánpótlást igényel."
+          },
+          "map_coverage": {
+            "description": "Ellenőrizd a térkép lefedettségét, mielőtt a látható célokra támaszkodsz.",
+            "label": "Térkép lefedettsége",
+            "recommendation": "Hiányzó céloknál várj friss lefedettségre."
+          },
+          "minimum_kept": {
+            "description": "Támadás indítása után legalább ennyi csapat maradjon a Viharban, az aktív előbeállítások összetételét megtartva.",
+            "label": "Minimum megtartott csapat indítás után",
+            "recommendation": "1000 katona rendszeres tartaléknak, a tényleges seregedhez igazítva."
+          },
+          "preset_average": {
+            "description": "Olvasd el az aktív támadási előbeállítások átlagos csapatigényét, a kiválasztott szigetvédőkkel együtt.",
+            "label": "Aktív előbeállítások átlaga",
+            "recommendation": "Hasonlítsd össze ezt a csak olvasható becslést a seregeddel."
+          }
+        },
+        "title": "Importáld és figyeld a Viharcsapatokat"
       }
     }
   }

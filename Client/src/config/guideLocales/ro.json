@@ -37,7 +37,10 @@
     "khanPreviewTitle": "Exemplu de configurare a Khanului automat",
     "beriGuideIntro": "Urmează acești pași pentru a configura Berimond automat; selectează un panou de exemplu ca să îl mărești.",
     "beriGuideTitle": "Ghidul Berimond automat",
-    "beriPreviewTitle": "Exemplu de configurare a Berimondului automat"
+    "beriPreviewTitle": "Exemplu de configurare a Berimondului automat",
+    "stormGuideIntro": "Urmează acești pași ca să configurezi Auto Storm; selectează un panou de exemplu pentru a-l mări.",
+    "stormGuideTitle": "Ghid Auto Storm",
+    "stormPreviewTitle": "Exemplu de configurare Auto Storm"
   },
   "autoTower": {
     "recommendationIntro": "Acestea sunt recomandări pentru utilizarea obișnuită; verifică-le înainte de salvare.",
@@ -533,6 +536,48 @@
       "next": "Următorul transport: până la 1 B din stocul donatorului",
       "stock": "Stocul taberei: 2 A și 0 B",
       "title": "Exemplu de transferuri proporționale"
+    },
+    "stormCastle": {
+      "blueprint": "Țintă salvată activă; pauza o păstrează",
+      "capture": "Castel actual: țintă Funcțională",
+      "decorations": "Presetare de decorațiuni: opțională",
+      "title": "Exemplu de acces la castelul din Furtună",
+      "unlock": "Deschidere automată: pornită după verificarea prețului"
+    },
+    "stormCombat": {
+      "defenders": "Apărători de ocupație: aleși sau un supraviețuitor",
+      "forts": "Forturi: niveluri selectate 40–80",
+      "islands": "Insule de acvamarin: mari și mici",
+      "priority": "Mari, mici, apoi forturi de la 80 la 40",
+      "title": "Exemplu de atacuri asupra forturilor și insulelor"
+    },
+    "stormConstruction": {
+      "harbor": "Port: pornit, nivelul 1",
+      "resources": "Lemn din Furtună 0; piatră 0; acvamarin planificat",
+      "spending": "Premium și demolare: oprite",
+      "title": "Exemplu de construcție și rezerve",
+      "transport": "Transport de resurse: pornit"
+    },
+    "stormLuna": {
+      "cost": "Cost și limită de cumpărări: doar pentru citire",
+      "limited": "Obiective limitate înaintea recompenselor nelimitate",
+      "priority": "Prioritate 1, 2, 3; numărul mai mic primul",
+      "reserve": "Păstrează acvamarin: 0 când folosești surplusul",
+      "title": "Exemplu de recompense Luna"
+    },
+    "stormSave": {
+      "check": "Verificare de politică: 30 de secunde",
+      "daily": "Atacuri normale zilnice: 0 limită suplimentară",
+      "map": "Actualizare hartă: 2 ore, doar pentru citire",
+      "switch": "Salvează, apoi activează Auto Storm",
+      "title": "Exemplu de salvare și activare"
+    },
+    "stormTroops": {
+      "averages": "Medii de atacuri și presetări: doar pentru citire",
+      "cap": "Limita trupelor angajate: doar pentru citire",
+      "donors": "Donatori: ordinea afișată, stoc parțial permis",
+      "minimum": "Minim păstrat: 1.000 de trupe",
+      "title": "Exemplu de import de trupe"
     }
   },
   "autoStation": {
@@ -1682,6 +1727,309 @@
           }
         },
         "title": "Configurează transferurile proporționale"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "Auto Storm poate deschide și construi un castel din Furtună, ataca forturi și insule cu resurse, importa trupe și cumpăra recompense Luna selectate.",
+      "expectation": "Fiecare activitate folosește date recente din joc și permisiunile salvate; construcțiile premium, atacurile și cumpărăturile sunt limitate de alegerile activate.",
+      "name": "Auto Storm",
+      "summary": "Gestionează castelul din Furtună, atacurile și recompensele"
+    },
+    "recommendationIntro": "Recomandările descriu folosirea obișnuită a Auto Storm; ele sunt orientative și nu schimbă setările salvate.",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "Exemplu ilustrativ pentru accesul la castelul din Furtună și capturarea țintei",
+          "caption": "Alegerea castelului inițial, moduri de capturare și activarea opțională a țintei; nu arată o achiziție sau un cont real."
+        },
+        "items": {
+          "automatic_open": {
+            "description": "Când Furtuna este blocată, alege un castel inițial oficial disponibil și verifică prețul afișat înainte de a permite deblocarea.",
+            "label": "Deschide automat castelul din Furtună",
+            "recommendation": "Pornit dacă vrei ca Auto Storm să deschidă un castel inițial obișnuit după verificarea prețului."
+          },
+          "blueprint": {
+            "description": "O țintă capturată este salvată și activată imediat; Pauză țintă oprește reconcilierea, dar păstrează țintele salvate.",
+            "label": "Țintă salvată",
+            "recommendation": "Păstrează activă o țintă Funcțională verificată pentru construcțiile obișnuite."
+          },
+          "capture_castle": {
+            "description": "Selectează castelul actual din Furtună înainte să capturezi o țintă de construcție.",
+            "label": "Castelul din Furtună",
+            "recommendation": "Capturează castelul pe care vrei să-l gestionezi."
+          },
+          "combat_only": {
+            "description": "Lupta contra forturilor și insulelor nu cere o țintă de construcție capturată.",
+            "label": "Luptă fără țintă"
+          },
+          "decoration_preset": {
+            "description": "Aplică opțional o presetare de decorațiuni după construcție.",
+            "label": "Presetare de decorațiuni după construcție",
+            "recommendation": "Lasă necompletat dacă nu dorești un aranjament separat al decorațiunilor."
+          },
+          "exact": {
+            "description": "Salvează toate detaliile acceptate ale țintei pentru o copie exactă.",
+            "label": "Capturare exactă",
+            "recommendation": "Folosește numai după ce verifici întreaga țintă."
+          },
+          "functional": {
+            "description": "Salvează o țintă pentru funcțiile esențiale ale Furtunii fără să copiezi fiecare poziție a clădirilor.",
+            "label": "Capturare funcțională",
+            "recommendation": "Funcțională pentru întreținerea obișnuită."
+          },
+          "layout": {
+            "description": "Salvează tipurile și pozițiile clădirilor fără decorațiuni.",
+            "label": "Capturare aranjament",
+            "recommendation": "Folosește numai dacă poziționarea clădirilor contează."
+          },
+          "open_settings": {
+            "description": "Deschide setările Auto Storm din cardul Automatizare.",
+            "label": "Deschide setările"
+          },
+          "starter_castle": {
+            "description": "Alege castelul inițial oficial disponibil acum pentru următorul sezon blocat al Furtunii.",
+            "label": "Castel de deschis",
+            "recommendation": "Alege un castel inițial obișnuit accesibil după verificarea prețului."
+          }
+        },
+        "title": "Deschide și capturează castelul din Furtună"
+      },
+      "combat": {
+        "image": {
+          "alt": "Exemplu pentru setările de atac ale forturilor și insulelor",
+          "caption": "Insule cu acvamarin, niveluri de fort, ordine a țintelor și apărători de ocupație exemplificative."
+        },
+        "items": {
+          "defenders": {
+            "description": "Alege tipurile și numerele apărătorilor lăsați pe o insulă capturată; o listă goală lasă un supraviețuitor după o victorie confirmată.",
+            "label": "Unități de apărare pentru insule",
+            "recommendation": "Alege apărători dacă un supraviețuitor nu este suficient pentru planul tău."
+          },
+          "fort_preset": {
+            "description": "Alege o formație salvată de trupe și unelte pentru forturi.",
+            "label": "Presetare de atac pentru forturi",
+            "recommendation": "Folosește presetarea obișnuită pentru forturi."
+          },
+          "forts": {
+            "description": "Activează atacurile asupra nivelurilor de fort oficiale alese, între 40 și 80.",
+            "label": "Forturi din Furtună",
+            "recommendation": "Pornit pentru niveluri pe care presetarea aleasă le învinge sigur în mod obișnuit."
+          },
+          "horse": {
+            "description": "Alege deplasarea cu pană, monede sau rubine pentru atacurile din Furtună.",
+            "label": "Accelerare pentru călătoria călare",
+            "recommendation": "Pană de călătorie pentru viteză fără a selecta călătoria cu rubine."
+          },
+          "island_preset": {
+            "description": "Alege o formație salvată de trupe și unelte pentru insule.",
+            "label": "Presetare de atac pentru insule",
+            "recommendation": "Folosește presetarea obișnuită pentru insule."
+          },
+          "island_resources": {
+            "description": "Alege insulele cu lemn, piatră sau acvamarin care pot fi atacate.",
+            "label": "Resursele insulelor",
+            "recommendation": "Selectează acvamarin pentru a-l colecta."
+          },
+          "island_sizes": {
+            "description": "Alege insulele mari, mici sau ambele dimensiuni pentru resursele selectate.",
+            "label": "Dimensiunea insulelor",
+            "recommendation": "Mari și mici pentru colectarea obișnuită a acvamarinului."
+          },
+          "islands": {
+            "description": "Activează capturarea insulelor cu resursele și dimensiunile selectate.",
+            "label": "Insule de resurse",
+            "recommendation": "Pornit dacă vrei acvamarin de pe insule mari și mici."
+          },
+          "minimum_attacks": {
+            "description": "Atacă doar forturi cu cel puțin acest număr de atacuri rămase.",
+            "label": "Minim de atacuri rămase",
+            "recommendation": "0 permite orice fort eligibil."
+          },
+          "priority": {
+            "description": "Ordonează țintele de insule și forturi activate; prioritatea decide într-un rând, iar distanța departajează.",
+            "label": "Prioritatea țintelor de atac",
+            "recommendation": "Insule mari, insule mici, apoi forturi de la nivelul 80 la 40 pentru acvamarin."
+          }
+        },
+        "title": "Alege forturi și insule de resurse"
+      },
+      "construction": {
+        "image": {
+          "alt": "Exemplu pentru setările de construcție și rezerve",
+          "caption": "Transport de resurse, permisiuni de cheltuieli, rezerve și nivelul portului ca opțiuni ilustrative."
+        },
+        "items": {
+          "demolition": {
+            "description": "Permite eliminarea exactă a clădirilor care nu pot fi mutate sau depozitate.",
+            "label": "Permite demolarea",
+            "recommendation": "Oprit dacă nu reconstruiești un aranjament verificat."
+          },
+          "donor_reserves": {
+            "description": "Păstrează cantitățile alese de lemn, piatră și acvamarin la fiecare donator înainte de transport.",
+            "label": "Rezerve protejate ale donatorilor",
+            "recommendation": "Protejează bugetul obișnuit de lemn și piatră pentru construcție; acvamarin 0 dacă nu este folosit."
+          },
+          "harbor_level": {
+            "description": "Alege nivelul țintă al portului 1, 2 sau 3; nivelurile 2 și 3 folosesc trasee de construcție premium.",
+            "label": "Nivelul țintă al portului",
+            "recommendation": "Nivelul 1 dacă nu sunt planificate îmbunătățiri premium."
+          },
+          "harbor": {
+            "description": "Menține portul la nivelul ales chiar dacă ținta capturată este diferită.",
+            "label": "Îmbunătățește portul",
+            "recommendation": "Pornit cu nivelul 1 pentru folosire obișnuită."
+          },
+          "premium": {
+            "description": "Permite etapele eligibile de construcție care cheltuie monedă premium.",
+            "label": "Permite costuri premium",
+            "recommendation": "Oprit dacă nu planifici construcții premium."
+          },
+          "resource_transport": {
+            "description": "Permite transporturi confirmate de resurse de construcție lipsă de la castelele donatoare.",
+            "label": "Transportă resurse lipsă",
+            "recommendation": "Pornit pentru construcții obișnuite."
+          },
+          "skip_reserves": {
+            "description": "Păstrează numărul ales din fiecare obiect de reducere a timpului de 1 min, 5 min, 10 min, 30 min, 1 h, 5 h și 24 h.",
+            "label": "Reduceri de timp păstrate în rezervă",
+            "recommendation": "Păstrează 0 reduceri scurte dacă nu ai nevoie de ele în altă parte; rezervă stocul de 1 h, 5 h și 24 h pentru alte evenimente."
+          },
+          "storm_reserves": {
+            "description": "Fă indisponibile pentru construcție cantitățile alese de lemn din Furtună, piatră și acvamarin.",
+            "label": "Rezerve pentru cheltuielile castelului din Furtună",
+            "recommendation": "Lemn din Furtună 0 și piatră 0 dacă folosești surplusul; acvamarin conform bugetului planificat pentru recompense."
+          },
+          "time_skips": {
+            "description": "Aplică reduceri de timp eligibile și păstrează rezervele alese de obiecte.",
+            "label": "Folosește reduceri de timp pentru construcție",
+            "recommendation": "Pornit dacă vrei să grăbești construcțiile obișnuite."
+          }
+        },
+        "title": "Configurează construcția și protecția resurselor"
+      },
+      "luna": {
+        "image": {
+          "alt": "Exemplu pentru setările recompenselor Luna",
+          "caption": "Rezervă de acvamarin, obiective limitate de cumpărare, recompense repetabile și prioritate."
+        },
+        "items": {
+          "cost_cap": {
+            "description": "Citește costul și limita de cumpărări raportate de joc pentru fiecare recompensă.",
+            "label": "Cost și limită de cumpărări",
+            "recommendation": "Verifică ambele valori doar pentru citire înainte de activare."
+          },
+          "keep_aqua": {
+            "description": "Păstrează această cantitate de acvamarin pentru a nu fi folosită la cumpărăturile Luna.",
+            "label": "Păstrează acvamarin",
+            "recommendation": "0 dacă tot surplusul poate finanța recompense; altfel rezervă cantitatea planificată."
+          },
+          "priority": {
+            "description": "Cumpără întâi obiectivele cu număr mai mic și termină obiectivele limitate înaintea celor nelimitate.",
+            "label": "Prioritate",
+            "recommendation": "Folosește 1, 2 și 3 în ordinea dorită."
+          },
+          "search": {
+            "description": "Caută recompensele oficiale Luna după nume înainte de configurarea unei cumpărări.",
+            "label": "Găsește o recompensă Luna",
+            "recommendation": "Caută recompensa pe care o dorești cu adevărat."
+          },
+          "target_total": {
+            "description": "Stabilește numărul total dorit de cumpărări pentru o recompensă limitată.",
+            "label": "Total țintă",
+            "recommendation": "Stabilește doar numărul pe care vrei să îl cumperi."
+          },
+          "unlimited": {
+            "description": "Continuă să cumperi o recompensă repetabilă eligibilă cât timp rezerva și limita magazinului permit.",
+            "label": "Nelimitat",
+            "recommendation": "Pornit doar pentru recompense repetabile dorite în mod regulat."
+          },
+          "use": {
+            "description": "Selectează o recompensă pentru a permite cumpărarea ei automată.",
+            "label": "Folosește recompensa",
+            "recommendation": "Activează doar recompensele dorite."
+          }
+        },
+        "title": "Alege recompensele Luna cu acvamarin"
+      },
+      "save": {
+        "image": {
+          "alt": "Exemplu de salvare și activare Auto Storm",
+          "caption": "Limită zilnică de atacuri, verificare de politică, actualizare de hartă doar pentru citire și comutator de automatizare."
+        },
+        "items": {
+          "daily_limit": {
+            "description": "Oprește atacurile noi Auto Storm la numărul zilnic de atacuri normale al întregului cont; 0 elimină această limită suplimentară.",
+            "label": "Limită zilnică de atacuri normale",
+            "recommendation": "0 dacă nu folosești o limită pentru întregul cont."
+          },
+          "enable": {
+            "description": "Activează Auto Storm din cardul Automatizare după ce alegerile salvate sunt pregătite.",
+            "label": "Comutator de automatizare",
+            "recommendation": "Pornește după configurare."
+          },
+          "map_refresh": {
+            "description": "Citește intervalul oficial de actualizare a hărții Furtunii.",
+            "label": "Interval de actualizare a hărții",
+            "recommendation": "Intervalul doar pentru citire este de 2 ore; așteaptă o scanare nouă după modificări."
+          },
+          "policy_check": {
+            "description": "Stabilește cât de des Auto Storm verifică setările și sarcinile eligibile.",
+            "label": "Interval de verificare a politicii",
+            "recommendation": "Păstrează intervalul obișnuit de 30 de secunde."
+          },
+          "save": {
+            "description": "Salvează alegerile pentru castel, construcții, lupte, import de trupe și Luna înainte să pornești automatizarea.",
+            "label": "Salvează setările",
+            "recommendation": "Salvează după verificarea tuturor permisiunilor de cheltuieli."
+          }
+        },
+        "title": "Salvează și activează Auto Storm"
+      },
+      "troops": {
+        "image": {
+          "alt": "Exemplu pentru importul de trupe și estimările doar pentru citire",
+          "caption": "Ordinea donatorilor, 1.000 de trupe păstrate și estimări de capacitate doar pentru citire."
+        },
+        "items": {
+          "attack_history": {
+            "description": "Citește numărul mediu de atacuri din Furtună raportate de la resetare în ultimele 24 de ore.",
+            "label": "Media atacurilor de la resetare",
+            "recommendation": "Verifică această estimare doar pentru citire înainte să schimbi necesarul de import."
+          },
+          "committed_cap": {
+            "description": "Citește limita calculată automat, care include trupele staționate, deplasările, tranzitul și întoarcerile.",
+            "label": "Limita trupelor angajate în Furtună",
+            "recommendation": "Verifică această limită doar pentru citire înainte să crești importurile."
+          },
+          "donors": {
+            "description": "Alege castele donatoare în ordinea afișată; stocul parțial poate oferi un transport mai mic.",
+            "label": "Castele donatoare",
+            "recommendation": "Selectează furnizorii obișnuiți de trupe în ordinea preferată."
+          },
+          "import": {
+            "description": "Importă în Furtună trupele de atac sau apărare alese care lipsesc, de la castele donatoare.",
+            "label": "Importă trupele lipsă",
+            "recommendation": "Pornit dacă castelul din Furtună are nevoie de trupe în mod regulat."
+          },
+          "map_coverage": {
+            "description": "Verifică acoperirea hărții înainte de a te baza pe țintele afișate.",
+            "label": "Acoperirea hărții",
+            "recommendation": "Așteaptă acoperire recentă dacă lipsesc ținte."
+          },
+          "minimum_kept": {
+            "description": "Păstrează cel puțin acest număr de trupe în Furtună după lansarea unui atac și menține compoziția presetărilor activate.",
+            "label": "Minim de trupe păstrate după lansare",
+            "recommendation": "1.000 de trupe ca rezervă obișnuită, ajustată după armata ta reală."
+          },
+          "preset_average": {
+            "description": "Citește necesarul mediu de trupe al presetărilor de atac activate, inclusiv apărătorii selectați pentru insule.",
+            "label": "Media presetărilor activate",
+            "recommendation": "Compară această estimare doar pentru citire cu armata ta."
+          }
+        },
+        "title": "Importă și urmărește trupele din Furtună"
       }
     }
   }

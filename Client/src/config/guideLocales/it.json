@@ -37,7 +37,10 @@
     "khanPreviewTitle": "Esempio di configurazione di Khan automatico",
     "beriGuideIntro": "Segui questi passaggi per impostare Auto Beri World; seleziona un pannello d’esempio per ingrandirlo.",
     "beriGuideTitle": "Guida Auto Beri World",
-    "beriPreviewTitle": "Esempio di configurazione Auto Beri World"
+    "beriPreviewTitle": "Esempio di configurazione Auto Beri World",
+    "stormGuideIntro": "Segui questi passaggi per configurare Auto Storm; seleziona un pannello di esempio per ingrandirlo.",
+    "stormGuideTitle": "Guida di Auto Storm",
+    "stormPreviewTitle": "Esempio di configurazione di Auto Storm"
   },
   "autoTower": {
     "recommendationIntro": "Questi consigli riguardano l’uso regolare; controllali prima di salvare.",
@@ -533,6 +536,48 @@
       "next": "Prossima spedizione: fino a 1 B dalle scorte del donatore",
       "stock": "Scorte dell’accampamento: 2 A e 0 B",
       "title": "Esempio di trasferimenti proporzionali"
+    },
+    "stormCastle": {
+      "blueprint": "Obiettivo salvato attivo; la pausa lo conserva",
+      "capture": "Castello attuale: obiettivo Funzionale",
+      "decorations": "Preset decorazioni: facoltativo",
+      "title": "Esempio di accesso al castello della Tempesta",
+      "unlock": "Apertura automatica: attiva dopo la verifica del prezzo"
+    },
+    "stormCombat": {
+      "defenders": "Difensori di occupazione: scelti o un superstite",
+      "forts": "Forti: livelli selezionati 40–80",
+      "islands": "Isole di acquamarina: grandi e piccole",
+      "priority": "Grandi, piccole, poi forti da 80 a 40",
+      "title": "Esempio di attacchi a forti e isole"
+    },
+    "stormConstruction": {
+      "harbor": "Porto: attivo, livello 1",
+      "resources": "Legno della Tempesta 0; pietra 0; acquamarina pianificata",
+      "spending": "Premium e demolizione: disattivati",
+      "title": "Esempio di costruzione e riserve",
+      "transport": "Trasporto risorse: attivo"
+    },
+    "stormLuna": {
+      "cost": "Costo e limite di acquisti: sola lettura",
+      "limited": "Obiettivi limitati prima delle ricompense illimitate",
+      "priority": "Priorità 1, 2, 3; prima il numero minore",
+      "reserve": "Conserva acquamarina: 0 se usi le eccedenze",
+      "title": "Esempio di ricompense di Luna"
+    },
+    "stormSave": {
+      "check": "Controllo dei criteri: 30 secondi",
+      "daily": "Attacchi normali giornalieri: 0 di limite aggiuntivo",
+      "map": "Aggiornamento mappa: 2 ore, sola lettura",
+      "switch": "Salva, poi attiva Auto Storm",
+      "title": "Esempio del percorso di salvataggio e attivazione"
+    },
+    "stormTroops": {
+      "averages": "Medie attacchi e preset: sola lettura",
+      "cap": "Limite truppe impegnate: sola lettura",
+      "donors": "Donatori: ordine mostrato, scorte parziali consentite",
+      "minimum": "Minimo conservato: 1.000 truppe",
+      "title": "Esempio di importazione truppe"
     }
   },
   "autoStation": {
@@ -1682,6 +1727,309 @@
           }
         },
         "title": "Imposta trasferimenti proporzionali di truppe"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "Auto Storm può aprire e costruire un castello della Tempesta, attaccare forti e isole di risorse, importare truppe e acquistare le ricompense di Luna selezionate.",
+      "expectation": "Ogni attività usa dati di gioco recenti e le autorizzazioni salvate; costruzioni premium, attacchi e acquisti restano limitati dalle opzioni che abiliti.",
+      "name": "Auto Storm",
+      "summary": "Gestisci il castello della Tempesta, gli attacchi e le ricompense"
+    },
+    "recommendationIntro": "Le scelte consigliate descrivono l'uso regolare di Auto Storm; sono indicative e non modificano le impostazioni salvate.",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "Esempio illustrativo di accesso al castello della Tempesta e acquisizione dell'obiettivo",
+          "caption": "Scelta del castello iniziale, modalità di acquisizione e attivazione facoltativa dell'obiettivo; non mostra acquisti o account reali."
+        },
+        "items": {
+          "automatic_open": {
+            "description": "Se la Tempesta è bloccata, scegli un castello iniziale ufficiale disponibile e controlla il prezzo indicato prima di consentirne lo sblocco.",
+            "label": "Apri automaticamente il castello della Tempesta",
+            "recommendation": "Attivo se vuoi che Auto Storm apra un castello iniziale abituale dopo averne controllato il prezzo."
+          },
+          "blueprint": {
+            "description": "Un obiettivo acquisito viene salvato e attivato subito; Sospendi obiettivo interrompe la riconciliazione ma conserva gli obiettivi salvati.",
+            "label": "Obiettivo salvato",
+            "recommendation": "Mantieni attivo un obiettivo Funzionale verificato per l'edilizia ordinaria."
+          },
+          "capture_castle": {
+            "description": "Seleziona il tuo attuale castello della Tempesta prima di acquisire un obiettivo di costruzione.",
+            "label": "Castello della Tempesta",
+            "recommendation": "Acquisisci il castello che intendi gestire."
+          },
+          "combat_only": {
+            "description": "Il combattimento contro forti e isole non richiede un obiettivo di costruzione acquisito.",
+            "label": "Combattimento senza obiettivo"
+          },
+          "decoration_preset": {
+            "description": "Applica facoltativamente un preset di decorazioni dopo la costruzione.",
+            "label": "Preset di decorazioni dopo la costruzione",
+            "recommendation": "Lascia vuoto a meno che tu non voglia una disposizione delle decorazioni separata."
+          },
+          "exact": {
+            "description": "Salva tutti i dettagli dell'obiettivo supportati per una copia esatta.",
+            "label": "Acquisizione esatta",
+            "recommendation": "Usala solo dopo aver esaminato l'intero obiettivo."
+          },
+          "functional": {
+            "description": "Salva un obiettivo per le funzioni essenziali della Tempesta senza copiare ogni posizione degli edifici.",
+            "label": "Acquisizione funzionale",
+            "recommendation": "Funzionale per la manutenzione ordinaria."
+          },
+          "layout": {
+            "description": "Salva tipi e posizioni degli edifici senza decorazioni.",
+            "label": "Acquisizione della disposizione",
+            "recommendation": "Usala solo quando conta la posizione degli edifici."
+          },
+          "open_settings": {
+            "description": "Apri le impostazioni di Auto Storm dalla sua scheda Automazione.",
+            "label": "Apri impostazioni"
+          },
+          "starter_castle": {
+            "description": "Scegli il castello iniziale ufficiale attualmente disponibile per la prossima stagione bloccata della Tempesta.",
+            "label": "Castello da aprire",
+            "recommendation": "Scegli un castello iniziale abituale e sostenibile dopo aver verificato il prezzo."
+          }
+        },
+        "title": "Apri e acquisisci il castello della Tempesta"
+      },
+      "combat": {
+        "image": {
+          "alt": "Esempio delle impostazioni per gli attacchi a forti e isole",
+          "caption": "Isole di acquamarina, livelli dei forti, ordine dei bersagli e difensori di occupazione di esempio."
+        },
+        "items": {
+          "defenders": {
+            "description": "Scegli tipi e quantità dei difensori da lasciare su un'isola conquistata; una lista vuota lascia un superstite dopo una vittoria confermata.",
+            "label": "Unità difensive delle isole",
+            "recommendation": "Scegli difensori se un solo superstite non basta per il tuo piano."
+          },
+          "fort_preset": {
+            "description": "Scegli una formazione salvata di truppe e strumenti per i forti.",
+            "label": "Preset di attacco ai forti",
+            "recommendation": "Usa il tuo preset abituale per i forti."
+          },
+          "forts": {
+            "description": "Attiva gli attacchi ai livelli ufficiali dei forti selezionati da 40 a 80.",
+            "label": "Forti della Tempesta",
+            "recommendation": "Attivo per i livelli che il preset selezionato supera in modo affidabile."
+          },
+          "horse": {
+            "description": "Scegli il viaggio con piume, monete o rubini per gli attacchi nella Tempesta.",
+            "label": "Potenziamento del viaggio a cavallo",
+            "recommendation": "Piuma da viaggio per muoverti rapidamente senza selezionare il viaggio con rubini."
+          },
+          "island_preset": {
+            "description": "Scegli una formazione salvata di truppe e strumenti per le isole.",
+            "label": "Preset di attacco alle isole",
+            "recommendation": "Usa il tuo preset abituale per le isole."
+          },
+          "island_resources": {
+            "description": "Scegli quali isole di legno, pietra o acquamarina possono essere attaccate.",
+            "label": "Risorse delle isole",
+            "recommendation": "Seleziona acquamarina per raccoglierla."
+          },
+          "island_sizes": {
+            "description": "Scegli isole grandi, piccole o entrambe per le risorse selezionate.",
+            "label": "Dimensioni delle isole",
+            "recommendation": "Grandi e piccole per raccogliere regolarmente acquamarina."
+          },
+          "islands": {
+            "description": "Attiva la conquista delle isole che corrispondono alle risorse e dimensioni scelte.",
+            "label": "Isole di risorse",
+            "recommendation": "Attivo se vuoi acquamarina da isole grandi e piccole."
+          },
+          "minimum_attacks": {
+            "description": "Attacca solo forti con almeno questo numero di attacchi rimanenti.",
+            "label": "Attacchi rimanenti minimi",
+            "recommendation": "0 per consentire qualsiasi forte idoneo."
+          },
+          "priority": {
+            "description": "Ordina i bersagli abilitati di isole e forti; la priorità decide all'interno di una riga e la distanza risolve la parità.",
+            "label": "Priorità dei bersagli di attacco",
+            "recommendation": "Isole grandi, isole piccole, poi forti dal livello 80 al 40 per raccogliere acquamarina."
+          }
+        },
+        "title": "Scegli forti e isole di risorse"
+      },
+      "construction": {
+        "image": {
+          "alt": "Esempio delle impostazioni di costruzione e riserva",
+          "caption": "Trasporto di risorse, autorizzazioni di spesa, riserve e livello del porto come comandi esemplificativi."
+        },
+        "items": {
+          "demolition": {
+            "description": "Consenti la rimozione esatta di edifici che non possono essere spostati o immagazzinati.",
+            "label": "Consenti demolizione",
+            "recommendation": "Disattivato a meno che tu non stia ricostruendo una disposizione verificata."
+          },
+          "donor_reserves": {
+            "description": "Conserva le quantità scelte di legno, pietra e acquamarina presso ogni donatore prima del trasporto di risorse.",
+            "label": "Riserve protette dei donatori",
+            "recommendation": "Proteggi il normale budget edilizio di legno e pietra; acquamarina 0 se non usata."
+          },
+          "harbor_level": {
+            "description": "Scegli il livello obiettivo del porto tra 1, 2 o 3; i livelli 2 e 3 seguono percorsi di costruzione premium.",
+            "label": "Livello obiettivo del porto",
+            "recommendation": "Livello 1 salvo che tu abbia pianificato potenziamenti premium."
+          },
+          "harbor": {
+            "description": "Mantieni il porto al livello scelto anche quando l'obiettivo acquisito è diverso.",
+            "label": "Potenzia porto",
+            "recommendation": "Attivo con livello 1 per l'uso regolare."
+          },
+          "premium": {
+            "description": "Consenti i passaggi di costruzione idonei che consumano valuta premium.",
+            "label": "Consenti costi premium",
+            "recommendation": "Disattivato salvo che la costruzione premium sia pianificata."
+          },
+          "resource_transport": {
+            "description": "Consenti spedizioni confermate di risorse edilizie mancanti dai castelli donatori.",
+            "label": "Trasporta risorse mancanti",
+            "recommendation": "Attivo per le costruzioni regolari."
+          },
+          "skip_reserves": {
+            "description": "Conserva il numero scelto di oggetti per saltare 1 min, 5 min, 10 min, 30 min, 1 ora, 5 ore e 24 ore.",
+            "label": "Salti temporali tenuti in riserva",
+            "recommendation": "Tieni 0 dei salti brevi se non servono altrove; riserva le scorte di 1, 5 e 24 ore per altri eventi."
+          },
+          "storm_reserves": {
+            "description": "Rendi indisponibili alla costruzione le quantità scelte di legno della Tempesta, pietra e acquamarina.",
+            "label": "Riserve di spesa del castello della Tempesta",
+            "recommendation": "Legno della Tempesta 0 e pietra 0 se spendi le eccedenze; imposta l'acquamarina sul budget previsto per le ricompense."
+          },
+          "time_skips": {
+            "description": "Applica i salti temporali idonei mantenendo le riserve degli oggetti selezionate.",
+            "label": "Usa salti temporali di costruzione",
+            "recommendation": "Attivo se vuoi accelerare la costruzione ordinaria."
+          }
+        },
+        "title": "Imposta costruzione e protezione delle risorse"
+      },
+      "luna": {
+        "image": {
+          "alt": "Esempio delle impostazioni delle ricompense di Luna",
+          "caption": "Riserva di acquamarina, obiettivi di acquisto limitati, ricompense ripetibili e priorità."
+        },
+        "items": {
+          "cost_cap": {
+            "description": "Leggi il costo e il limite di acquisti comunicati dal gioco per ogni ricompensa.",
+            "label": "Costo e limite di acquisti",
+            "recommendation": "Controlla entrambi i valori di sola lettura prima di attivare."
+          },
+          "keep_aqua": {
+            "description": "Tieni questa quantità di acquamarina fuori dagli acquisti di Luna.",
+            "label": "Conserva acquamarina",
+            "recommendation": "0 se tutte le eccedenze possono finanziare le ricompense; altrimenti riserva la quantità prevista."
+          },
+          "priority": {
+            "description": "Acquista prima gli obiettivi con numero inferiore e completa quelli limitati prima degli illimitati.",
+            "label": "Priorità",
+            "recommendation": "Usa 1, 2 e 3 nell'ordine che preferisci."
+          },
+          "search": {
+            "description": "Cerca per nome le ricompense ufficiali di Luna prima di configurare un acquisto.",
+            "label": "Trova una ricompensa di Luna",
+            "recommendation": "Cerca la ricompensa che desideri davvero."
+          },
+          "target_total": {
+            "description": "Imposta il numero totale di acquisti desiderato per una ricompensa limitata.",
+            "label": "Totale obiettivo",
+            "recommendation": "Imposta solo il numero che intendi acquistare."
+          },
+          "unlimited": {
+            "description": "Continua ad acquistare una ricompensa ripetibile idonea finché la riserva e il limite del negozio lo permettono.",
+            "label": "Illimitato",
+            "recommendation": "Attivo solo per ricompense ripetibili desiderate regolarmente."
+          },
+          "use": {
+            "description": "Seleziona una ricompensa per renderla idonea all'acquisto automatico.",
+            "label": "Usa ricompensa",
+            "recommendation": "Attiva solo le ricompense desiderate."
+          }
+        },
+        "title": "Scegli le ricompense di Luna in acquamarina"
+      },
+      "save": {
+        "image": {
+          "alt": "Esempio di salvataggio e attivazione di Auto Storm",
+          "caption": "Limite di attacchi giornalieri, controllo dei criteri, aggiornamento mappa di sola lettura e interruttore dell'automazione."
+        },
+        "items": {
+          "daily_limit": {
+            "description": "Ferma i nuovi attacchi di Auto Storm al conteggio giornaliero degli attacchi normali dell'intero account; 0 rimuove questo limite aggiuntivo.",
+            "label": "Limite giornaliero di attacchi normali",
+            "recommendation": "0 salvo che tu usi un limite per l'intero account."
+          },
+          "enable": {
+            "description": "Attiva Auto Storm dalla sua scheda Automazione quando le scelte salvate sono pronte.",
+            "label": "Interruttore dell'automazione",
+            "recommendation": "Attivalo dopo la configurazione."
+          },
+          "map_refresh": {
+            "description": "Leggi l'intervallo ufficiale di aggiornamento della mappa della Tempesta.",
+            "label": "Intervallo di aggiornamento mappa",
+            "recommendation": "L'intervallo di sola lettura è 2 ore; aspetta una nuova scansione dopo le modifiche."
+          },
+          "policy_check": {
+            "description": "Imposta quanto spesso Auto Storm controlla impostazioni e attività idonee.",
+            "label": "Intervallo di controllo dei criteri",
+            "recommendation": "Mantieni il normale intervallo di 30 secondi."
+          },
+          "save": {
+            "description": "Salva le scelte per castello, costruzione, combattimento, importazione truppe e Luna prima di attivare l'automazione.",
+            "label": "Salva impostazioni",
+            "recommendation": "Salva dopo aver controllato tutte le autorizzazioni di spesa."
+          }
+        },
+        "title": "Salva e attiva Auto Storm"
+      },
+      "troops": {
+        "image": {
+          "alt": "Esempio di importazione truppe e stime di sola lettura",
+          "caption": "Ordine dei donatori, 1.000 truppe conservate e stime di capacità di sola lettura."
+        },
+        "items": {
+          "attack_history": {
+            "description": "Leggi il numero medio di attacchi della Tempesta registrati dal ripristino nelle ultime 24 ore.",
+            "label": "Media attacchi dal ripristino",
+            "recommendation": "Controlla questa stima di sola lettura prima di cambiare il fabbisogno di importazione."
+          },
+          "committed_cap": {
+            "description": "Leggi il limite calcolato automaticamente che include truppe di stanza, movimenti, transito e ritorni.",
+            "label": "Limite di truppe impegnate nella Tempesta",
+            "recommendation": "Controlla questo limite di sola lettura prima di aumentare le importazioni."
+          },
+          "donors": {
+            "description": "Scegli i castelli donatori nell'ordine mostrato; le scorte parziali possono fornire una spedizione minore.",
+            "label": "Castelli donatori",
+            "recommendation": "Seleziona i normali fornitori di truppe nell'ordine preferito."
+          },
+          "import": {
+            "description": "Importa nella Tempesta le truppe di attacco o di difesa selezionate che mancano dai castelli donatori.",
+            "label": "Importa truppe mancanti",
+            "recommendation": "Attivo se il tuo castello della Tempesta necessita regolarmente di truppe."
+          },
+          "map_coverage": {
+            "description": "Controlla la copertura della mappa prima di fare affidamento sui bersagli visualizzati.",
+            "label": "Copertura mappa",
+            "recommendation": "Aspetta una copertura recente quando mancano bersagli."
+          },
+          "minimum_kept": {
+            "description": "Conserva almeno questo numero di truppe nella Tempesta dopo aver lanciato un attacco, mantenendo il mix dei preset abilitati.",
+            "label": "Truppe minime conservate dopo il lancio",
+            "recommendation": "1.000 truppe come riserva regolare, adattata al tuo esercito effettivo."
+          },
+          "preset_average": {
+            "description": "Leggi il fabbisogno medio di truppe dei preset di attacco abilitati, inclusi i difensori delle isole selezionati.",
+            "label": "Media dei preset abilitati",
+            "recommendation": "Confronta questa stima di sola lettura con il tuo esercito."
+          }
+        },
+        "title": "Importa e monitora le truppe della Tempesta"
       }
     }
   }
