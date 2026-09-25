@@ -613,6 +613,222 @@ func beriPolicyWithFreshCamp(gameState State.GameState, now time.Time) State.Gam
 	return gameState
 }
 
+func beriMixedRefillSnapshot(t *testing.T) Snapshot {
+	t.Helper()
+	now := time.Date(2026, 9, 24, 12, 0, 0, 0, time.UTC)
+	state := State.NewGameState()
+	state.Castles[100] = State.CastleState{ID: 100, KingdomID: 0, SlotType: 1,
+		UnitsObservedAt: now, Units: State.CastleUnits{Stationed: map[State.UnitID]int64{10: 2000, 11: 2000}}}
+	state.Castles[900] = State.CastleState{ID: 900, KingdomID: 10,
+		UnitsObservedAt: now, Units: State.CastleUnits{Stationed: map[State.UnitID]int64{}}}
+	state.Beri = State.BeriState{AvailableTroops: 1000, ObservedAt: now}
+	configuration := Configuration.Snapshot{Revision: 7, Sections: map[string]json.RawMessage{
+		autoBeriWorldSection:               json.RawMessage(`{"presetId":"mixed","sourceCastleId":100,"minTroopsToTransfer":1000}`),
+		AttackPresets.ConfigurationSection: json.RawMessage(`{"version":1,"presets":[{"id":"mixed","name":"Mixed","waves":[{"M":{"troops":[{"itemId":10,"quantity":2}]},"R":{"troops":[{"itemId":11,"quantity":1}]}}]}]}`),
+	}}
+	return Snapshot{State: state, Configuration: configuration, GameData: beriCompositionGameData(t), Now: now.Add(time.Second)}
+}
+
+func beriMixedRefillArrival(t *testing.T, policy *BeriPolicy, snapshot *Snapshot) {
+	t.Helper()
+	first, err := policy.Evaluate(t.Context(), *snapshot)
+	if err != nil || first.Request == nil || first.Request.Name != "beri.transfer" {
+		t.Fatalf("first transfer: %#v err=%v", first, err)
+	}
+	var args struct {
+		UnitID State.UnitID `json:"unitId"`
+		Amount int64        `json:"amount"`
+	}
+	if json.Unmarshal(first.Request.Arguments, &args) != nil || args.UnitID != 10 || args.Amount != 667 {
+		t.Fatalf("first request = %s", first.Request.Arguments)
+	}
+	now := snapshot.Now
+	snapshot.State.KingdomTransport.ObservedAt = now.Add(time.Second)
+	snapshot.State.KingdomTransport.PendingUnits = []State.KingdomUnitTransport{{KingdomID: 10,
+		RemainingSec: 3, Units: []State.KingdomTransportUnit{{UnitID: 10, Amount: 667}}}}
+	snapshot.Now = now.Add(time.Second)
+	pending, err := policy.Evaluate(t.Context(), *snapshot)
+	if err != nil || pending.Request != nil || pending.Status != "waiting" {
+		t.Fatalf("matching pending shipment: %#v err=%v", pending, err)
+	}
+	snapshot.State.KingdomTransport.PendingUnits = nil
+	snapshot.State.KingdomTransport.ObservedAt = now.Add(4 * time.Second)
+	camp := snapshot.State.Castles[900]
+	camp.Units.Stationed[10] = 667
+	camp.UnitsObservedAt = now.Add(4 * time.Second)
+	snapshot.State.Castles[900] = camp
+	donor := snapshot.State.Castles[100]
+	donor.Units.Stationed[10] -= 667
+	donor.UnitsObservedAt = now.Add(4 * time.Second)
+	snapshot.State.Castles[100] = donor
+	snapshot.State.Beri = State.BeriState{AvailableTroops: 333, ObservedAt: now.Add(4 * time.Second)}
+	snapshot.Now = now.Add(5 * time.Second)
+}
+
+func TestBeriPolicyContinuesConfirmedMixedRefillBelowStartThreshold(t *testing.T) {
+	snapshot := beriMixedRefillSnapshot(t)
+	policy := NewBeriPolicy()
+	beriMixedRefillArrival(t, policy, &snapshot)
+	next, err := policy.Evaluate(t.Context(), snapshot)
+	if err != nil || next.Request == nil || next.Request.Name != "beri.transfer" {
+		t.Fatalf("confirmed refill must continue below start threshold: %#v err=%v", next, err)
+	}
+	var args struct {
+		UnitID State.UnitID `json:"unitId"`
+		Amount int64        `json:"amount"`
+	}
+	if json.Unmarshal(next.Request.Arguments, &args) != nil || args.UnitID != 11 || args.Amount != 333 {
+		t.Fatalf("second request = %s", next.Request.Arguments)
+	}
+	// Confirm the second leg. Its 333 troops exhaust this batch; later free
+	// capacity below 1,000 cannot start a third shipment.
+	snapshot.Now = snapshot.Now.Add(time.Second)
+	snapshot.State.KingdomTransport.ObservedAt = snapshot.Now
+	snapshot.State.KingdomTransport.PendingUnits = []State.KingdomUnitTransport{{KingdomID: 10,
+		RemainingSec: 2, Units: []State.KingdomTransportUnit{{UnitID: 11, Amount: 333}}}}
+	if pending, err := policy.Evaluate(t.Context(), snapshot); err != nil || pending.Request != nil {
+		t.Fatalf("second pending shipment: %#v err=%v", pending, err)
+	}
+	snapshot.Now = snapshot.Now.Add(3 * time.Second)
+	snapshot.State.KingdomTransport.PendingUnits = nil
+	snapshot.State.KingdomTransport.ObservedAt = snapshot.Now
+	camp := snapshot.State.Castles[900]
+	camp.Units.Stationed[11] = 333
+	camp.UnitsObservedAt = snapshot.Now
+	snapshot.State.Castles[900] = camp
+	donor := snapshot.State.Castles[100]
+	donor.Units.Stationed[11] -= 333
+	donor.UnitsObservedAt = snapshot.Now
+	snapshot.State.Castles[100] = donor
+	snapshot.State.Beri = State.BeriState{AvailableTroops: 0, ObservedAt: snapshot.Now}
+	snapshot.Now = snapshot.Now.Add(time.Second)
+	if complete, err := policy.Evaluate(t.Context(), snapshot); err != nil || complete.Request != nil {
+		t.Fatalf("completed batch issued another request: %#v err=%v", complete, err)
+	}
+	snapshot.State.Beri = State.BeriState{AvailableTroops: 333, ObservedAt: snapshot.Now}
+	for id, castle := range snapshot.State.Castles {
+		castle.UnitsObservedAt = snapshot.Now
+		snapshot.State.Castles[id] = castle
+	}
+	below, err := policy.Evaluate(t.Context(), snapshot)
+	if err != nil || below.Request != nil || below.Status != "idle" {
+		t.Fatalf("completed batch bypassed new-start threshold: %#v err=%v", below, err)
+	}
+	// A new policy instance has no verified batch history and must enforce the
+	// configured starting threshold rather than trusting the current ratio.
+	restarted, err := NewBeriPolicy().Evaluate(t.Context(), snapshot)
+	if err != nil || restarted.Request != nil || restarted.Status != "idle" {
+		t.Fatalf("restart bypassed starting threshold: %#v err=%v", restarted, err)
+	}
+}
+
+func TestBeriPolicyDoesNotArmRefillFromRejectedRequest(t *testing.T) {
+	snapshot := beriMixedRefillSnapshot(t)
+	policy := NewBeriPolicy()
+	first, err := policy.Evaluate(t.Context(), snapshot)
+	if err != nil || first.Request == nil {
+		t.Fatalf("first proposal: %#v err=%v", first, err)
+	}
+	// No matching pending shipment or arrived troops were observed.
+	snapshot.Now = snapshot.Now.Add(time.Second)
+	snapshot.State.Beri = State.BeriState{AvailableTroops: 333, ObservedAt: snapshot.Now}
+	for id, castle := range snapshot.State.Castles {
+		castle.UnitsObservedAt = snapshot.Now
+		snapshot.State.Castles[id] = castle
+	}
+	decision, err := policy.Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request != nil || decision.Status != "idle" {
+		t.Fatalf("proposed-only shipment bypassed threshold: %#v err=%v", decision, err)
+	}
+}
+
+func TestBeriPolicyDoesNotArmRefillWithoutConfirmedArrival(t *testing.T) {
+	snapshot := beriMixedRefillSnapshot(t)
+	policy := NewBeriPolicy()
+	first, err := policy.Evaluate(t.Context(), snapshot)
+	if err != nil || first.Request == nil {
+		t.Fatalf("first proposal: %#v err=%v", first, err)
+	}
+	snapshot.Now = snapshot.Now.Add(time.Second)
+	snapshot.State.KingdomTransport.ObservedAt = snapshot.Now
+	snapshot.State.KingdomTransport.PendingUnits = []State.KingdomUnitTransport{{KingdomID: 10,
+		RemainingSec: 2, Units: []State.KingdomTransportUnit{{UnitID: 10, Amount: 667}}}}
+	if pending, err := policy.Evaluate(t.Context(), snapshot); err != nil || pending.Request != nil {
+		t.Fatalf("pending shipment: %#v err=%v", pending, err)
+	}
+	snapshot.Now = snapshot.Now.Add(3 * time.Second)
+	snapshot.State.KingdomTransport.PendingUnits = nil
+	snapshot.State.KingdomTransport.ObservedAt = snapshot.Now
+	snapshot.State.Beri = State.BeriState{AvailableTroops: 333, ObservedAt: snapshot.Now}
+	for id, castle := range snapshot.State.Castles {
+		castle.UnitsObservedAt = snapshot.Now
+		snapshot.State.Castles[id] = castle
+	}
+	decision, err := policy.Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request != nil || decision.Status != "idle" {
+		t.Fatalf("unconfirmed arrival bypassed threshold: %#v err=%v", decision, err)
+	}
+}
+
+func TestBeriPolicyRefreshesCampAfterPendingTransferDisappears(t *testing.T) {
+	snapshot := beriMixedRefillSnapshot(t)
+	policy := NewBeriPolicy()
+	first, err := policy.Evaluate(t.Context(), snapshot)
+	if err != nil || first.Request == nil {
+		t.Fatalf("first proposal: %#v err=%v", first, err)
+	}
+	snapshot.Now = snapshot.Now.Add(time.Second)
+	snapshot.State.KingdomTransport.ObservedAt = snapshot.Now
+	snapshot.State.KingdomTransport.PendingUnits = []State.KingdomUnitTransport{{KingdomID: 10,
+		RemainingSec: 2, Units: []State.KingdomTransportUnit{{UnitID: 10, Amount: 667}}}}
+	if pending, err := policy.Evaluate(t.Context(), snapshot); err != nil || pending.Request != nil {
+		t.Fatalf("pending shipment: %#v err=%v", pending, err)
+	}
+	snapshot.Now = snapshot.Now.Add(3 * time.Second)
+	snapshot.State.KingdomTransport.PendingUnits = nil
+	snapshot.State.KingdomTransport.ObservedAt = snapshot.Now
+	// The camp observation is still recent enough to pass the normal interval
+	// check, but it predates the shipment and cannot prove arrival.
+	decision, err := policy.Evaluate(t.Context(), snapshot)
+	if err != nil || decision.Request == nil || decision.Request.Name != "game.focus_castle" {
+		t.Fatalf("camp must refresh directly after arrival: %#v err=%v", decision, err)
+	}
+	var args struct {
+		CastleID State.CastleID `json:"castleId"`
+		Refresh  bool           `json:"refresh"`
+	}
+	if json.Unmarshal(decision.Request.Arguments, &args) != nil || args.CastleID != 900 || !args.Refresh {
+		t.Fatalf("camp refresh arguments = %s", decision.Request.Arguments)
+	}
+}
+
+func TestBeriPolicyRefillResetsOnConfigurationOrSourceChange(t *testing.T) {
+	for _, changed := range []string{"configuration", "source", "camp"} {
+		t.Run(changed, func(t *testing.T) {
+			snapshot := beriMixedRefillSnapshot(t)
+			policy := NewBeriPolicy()
+			beriMixedRefillArrival(t, policy, &snapshot)
+			switch changed {
+			case "configuration":
+				snapshot.Configuration.Revision++
+			case "source":
+				snapshot.Configuration.Sections[autoBeriWorldSection] = json.RawMessage(`{"presetId":"mixed","sourceCastleId":101,"minTroopsToTransfer":1000}`)
+				snapshot.State.Castles[101] = State.CastleState{ID: 101, KingdomID: 0, SlotType: 1,
+					UnitsObservedAt: snapshot.Now, Units: State.CastleUnits{Stationed: map[State.UnitID]int64{10: 2000, 11: 2000}}}
+			case "camp":
+				camp := snapshot.State.Castles[900]
+				delete(snapshot.State.Castles, 900)
+				camp.ID = 901
+				snapshot.State.Castles[901] = camp
+			}
+			decision, err := policy.Evaluate(t.Context(), snapshot)
+			if err != nil || decision.Request != nil || decision.Status != "idle" {
+				t.Fatalf("%s change bypassed threshold: %#v err=%v", changed, decision, err)
+			}
+		})
+	}
+}
+
 func beriPolicyGameData(t *testing.T) *GameData.Store {
 	t.Helper()
 	gameData, err := GameData.DecodeStore([]byte(`{
