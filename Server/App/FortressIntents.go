@@ -1,17 +1,18 @@
 package App
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
 
 	"CitadelDesktop/Server/AttackCapacity"
-	EquipmentDomain "CitadelDesktop/Server/Equipment"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/Outbound"
@@ -22,7 +23,6 @@ import (
 const (
 	fortressAttackDialogFreshness = 30 * time.Second
 	fortressPersonalCooldown      = 120 * time.Hour
-	fortressMaximumSpeedPercent   = 100
 	fortressMapChunkSize          = 90
 	fortressMapMaximumChunk       = 20
 	fortressMapBoundaryPadding    = 2
@@ -53,14 +53,15 @@ type fortressFullMapScanResult struct {
 type fortressMapWindowScanner func(context.Context, towerMapWindow) (bool, error)
 
 type fortressAttackRequest struct {
-	SourceCastleID        State.CastleID      `json:"sourceCastleId"`
-	KingdomID             State.KingdomID     `json:"kingdomId"`
-	TargetX               int                 `json:"targetX"`
-	TargetY               int                 `json:"targetY"`
-	CommanderIDs          []State.CommanderID `json:"commanderIds"`
-	HorseTravelBoostID    int                 `json:"horseTravelBoostId"`
-	DailyAttackLimit      int64               `json:"dailyAttackLimit"`
-	MinimumCommanderSpeed float64             `json:"minimumCommanderSpeedBonus"`
+	SourceCastleID     State.CastleID      `json:"sourceCastleId"`
+	KingdomID          State.KingdomID     `json:"kingdomId"`
+	TargetX            int                 `json:"targetX"`
+	TargetY            int                 `json:"targetY"`
+	CommanderIDs       []State.CommanderID `json:"commanderIds"`
+	HorseTravelBoostID int                 `json:"horseTravelBoostId"`
+	DailyAttackLimit   int64               `json:"dailyAttackLimit"`
+	// Deprecated: accept in-flight legacy requests, but never enforce this threshold.
+	MinimumCommanderSpeed float64 `json:"minimumCommanderSpeedBonus,omitempty"`
 }
 
 type fortressResolvedAttackRequest struct {
@@ -90,11 +91,11 @@ func planFortressMapScan(_ context.Context, input Intent.PlanningContext, argume
 		steps = append(steps, focus)
 	}
 	steps = append(steps, Intent.RebuildOnResume(Intent.Step{
-		Name: "Discover the full fortress map", Action: "fortress.scan.full", ActionArguments: normalizedArguments,
+		Name: "Discover the full fortress map", NameDescriptor: Localization.New("server.app.discover_the_full_fortress.96e1c545", "Discover the full fortress map", nil), Action: "fortress.scan.full", ActionArguments: normalizedArguments,
 	}))
 	return Intent.Plan{
 		Claims:  []string{"castle-focus", "castle:" + strconv.FormatInt(int64(source.ID), 10), "map:" + strconv.Itoa(int(request.KingdomID))},
-		Summary: fmt.Sprintf("Discover every fortress across %s", castleLabel(source)), Steps: steps,
+		Summary: fmt.Sprintf("Discover every fortress across %s", castleLabel(source)), SummaryDescriptor: Localization.New("server.app.discover_every_fortress_across.7acb24af", "Discover every fortress across {p0}", Localization.Params{"p0": fmt.Sprintf("%s", castleLabel(source))}), Steps: steps,
 	}, nil
 }
 
@@ -111,10 +112,10 @@ func planFortressTargetRefresh(_ context.Context, input Intent.PlanningContext, 
 	if !source.Focused {
 		steps = append(steps, castleFocusStep(source))
 	}
-	steps = append(steps, commandStep("Refresh fortress cooldown", "gaa", payload, "gaa"))
+	steps = append(steps, commandStep("Refresh fortress cooldown", "gaa", payload, "gaa", Localization.New("server.app.refresh_fortress_cooldown.454352d1", "Refresh fortress cooldown", nil)))
 	return Intent.Plan{
 		Claims:  []string{"castle-focus", "map:" + strconv.Itoa(int(request.KingdomID))},
-		Summary: fmt.Sprintf("Refresh fortress at %d:%d", request.TargetX, request.TargetY), Steps: steps,
+		Summary: fmt.Sprintf("Refresh fortress at %d:%d", request.TargetX, request.TargetY), SummaryDescriptor: Localization.New("server.app.refresh_fortress_at_p.34a49543", "Refresh fortress at {p0}:{p1}", Localization.Params{"p0": request.TargetX, "p1": request.TargetY}), Steps: steps,
 	}, nil
 }
 
@@ -125,12 +126,12 @@ func fortressMapContext(input Intent.PlanningContext, arguments json.RawMessage,
 	}
 	source, found := input.State.Castles[request.SourceCastleID]
 	if !found || source.ID <= 0 || source.KingdomID != request.KingdomID || source.SlotType != 12 || request.KingdomID < 1 || request.KingdomID > 3 {
-		return request, State.CastleState{}, fmt.Errorf("fortress source must be the owned main castle in kingdom %d", request.KingdomID)
+		return request, State.CastleState{}, Localization.WithError(fmt.Errorf("fortress source must be the owned main castle in kingdom %d", request.KingdomID), Localization.New("server.app.fortress_source_must_be.2f94f62d", "fortress source must be the owned main castle in kingdom {p0}", Localization.Params{"p0": fmt.Sprintf("%d", request.KingdomID)}))
 	}
 	if targeted {
 		target, exists := input.State.LookupMapObservation(request.KingdomID, fmt.Sprintf("%d:%d", request.TargetX, request.TargetY))
 		if !exists || target.TypeID != State.MapTypeKingdomFortress {
-			return request, State.CastleState{}, fmt.Errorf("fortress at %d:%d is not in the current map state", request.TargetX, request.TargetY)
+			return request, State.CastleState{}, Localization.WithError(fmt.Errorf("fortress at %d:%d is not in the current map state", request.TargetX, request.TargetY), Localization.New("server.app.fortress_at_p_p.e5f83a4b", "fortress at {p0}:{p1} is not in the current map state", Localization.Params{"p0": request.TargetX, "p1": request.TargetY}))
 		}
 	}
 	return request, source, nil
@@ -138,14 +139,14 @@ func fortressMapContext(input Intent.PlanningContext, arguments json.RawMessage,
 
 func (application *Application) scanFullFortressMap(ctx context.Context, arguments json.RawMessage) error {
 	if application == nil || application.State == nil || application.Session == nil || application.Ingest == nil {
-		return fmt.Errorf("Fortress full-map scan dependencies are unavailable")
+		return Localization.WithError(fmt.Errorf("Fortress full-map scan dependencies are unavailable"), Localization.New("server.app.fortress_full_map_scan.2d1e4b8b", "Fortress full-map scan dependencies are unavailable", nil))
 	}
 	request, source, err := fortressMapContext(Intent.PlanningContext{State: application.State.ReadOnlyView()}, arguments, false)
 	if err != nil {
 		return err
 	}
 	if request.ScanStartedAt.IsZero() {
-		return fmt.Errorf("Fortress full-map scan is missing its start timestamp")
+		return Localization.WithError(fmt.Errorf("Fortress full-map scan is missing its start timestamp"), Localization.New("server.app.fortress_full_map_scan.cd73a84b", "Fortress full-map scan is missing its start timestamp", nil))
 	}
 	if ctx == nil {
 		ctx = context.Background()
@@ -197,17 +198,17 @@ func discoverFullFortressMap(
 ) (fortressFullMapScanResult, error) {
 	result := fortressFullMapScanResult{}
 	if scan == nil {
-		return result, fmt.Errorf("Fortress full-map scanner is required")
+		return result, Localization.WithError(fmt.Errorf("Fortress full-map scanner is required"), Localization.New("server.app.fortress_full_map_scanner.e916c958", "Fortress full-map scanner is required", nil))
 	}
 	if source.X < 0 || source.Y < 0 {
-		return result, fmt.Errorf("Fortress source coordinates are invalid")
+		return result, Localization.WithError(fmt.Errorf("Fortress source coordinates are invalid"), Localization.New("server.app.fortress_source_coordinates_are.e9139a9f", "Fortress source coordinates are invalid", nil))
 	}
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	start := fortressMapChunk{X: source.X / fortressMapChunkSize, Y: source.Y / fortressMapChunkSize}
 	if start.X > fortressMapMaximumChunk || start.Y > fortressMapMaximumChunk {
-		return result, fmt.Errorf("Fortress source lies beyond the full-map scan safety envelope")
+		return result, Localization.WithError(fmt.Errorf("Fortress source lies beyond the full-map scan safety envelope"), Localization.New("server.app.fortress_source_lies_beyond.53ef0e98", "Fortress source lies beyond the full-map scan safety envelope", nil))
 	}
 	queue := []fortressMapChunk{start}
 	enqueued := map[fortressMapChunk]struct{}{start: {}}
@@ -234,7 +235,7 @@ func discoverFullFortressMap(
 		hasContent, err := scan(ctx, window)
 		if err != nil {
 			result.FailedChunks = append(result.FailedChunks, chunk)
-			failed = append(failed, fmt.Errorf("chunk %d:%d: %w", chunk.X, chunk.Y, err))
+			failed = append(failed, Localization.WithError(fmt.Errorf("chunk %d:%d: %w", chunk.X, chunk.Y, err), Localization.ErrorContext(Localization.New("server.app.chunk_p_p.f2982535", "chunk {p0}:{p1}", Localization.Params{"p0": chunk.X, "p1": chunk.Y}), err)))
 			hasContent = true
 		} else if hasContent {
 			result.ContentWindows = append(result.ContentWindows, window)
@@ -273,7 +274,7 @@ func discoverFullFortressMap(
 		}
 	}
 	if touchedMaximumBoundary {
-		failed = append(failed, fmt.Errorf("map content reached the %d-coordinate chunk safety boundary", fortressMapMaximumChunk))
+		failed = append(failed, Localization.WithError(fmt.Errorf("map content reached the %d-coordinate chunk safety boundary", fortressMapMaximumChunk), Localization.New("server.app.map_content_reached_the.2e7d0523", "map content reached the {p0}-coordinate chunk safety boundary", Localization.Params{"p0": fortressMapMaximumChunk})))
 	}
 	if len(failed) > 0 {
 		return result, fmt.Errorf("Fortress full-map scan is incomplete: %w", errors.Join(failed...))
@@ -296,10 +297,10 @@ func runFortressMapGAAWindow(
 	responseToken string,
 ) (bool, error) {
 	if sender == nil || observer == nil {
-		return false, fmt.Errorf("Fortress map sender and response observer are required")
+		return false, Localization.WithError(fmt.Errorf("Fortress map sender and response observer are required"), Localization.New("server.app.fortress_map_sender_and.c914eef4", "Fortress map sender and response observer are required", nil))
 	}
 	if !sender.CorrelatesResponses() {
-		return false, fmt.Errorf("Fortress full-map scan requires correlated websocket responses")
+		return false, Localization.WithError(fmt.Errorf("Fortress full-map scan requires correlated websocket responses"), Localization.New("server.app.fortress_full_map_scan.c1fa7b38", "Fortress full-map scan requires correlated websocket responses", nil))
 	}
 	requestContext, cancelRequest := context.WithTimeout(ctx, fortressMapResponseTimeout)
 	defer cancelRequest()
@@ -311,11 +312,11 @@ func runFortressMapGAAWindow(
 		Y2        int             `json:"AY2"`
 	}{kingdomID, window.X1, window.Y1, window.X2, window.Y2})
 	if err != nil {
-		return false, fmt.Errorf("encode Fortress map window: %w", err)
+		return false, Localization.WithError(fmt.Errorf("encode Fortress map window: %w", err), Localization.ErrorContext(Localization.New("server.app.encode_fortress_map_window.d904f92d", "encode Fortress map window", nil), err))
 	}
 	wire, err := Protocol.Encode(Protocol.Command{Namespace: sender.Namespace(), Opcode: "gaa", Payload: payload})
 	if err != nil {
-		return false, fmt.Errorf("build Fortress map window: %w", err)
+		return false, Localization.WithError(fmt.Errorf("build Fortress map window: %w", err), Localization.ErrorContext(Localization.New("server.app.build_fortress_map_window.f182be52", "build Fortress map window", nil), err))
 	}
 	frames, cancelWatch := observer.WatchWireResponse("gaa", responseToken)
 	defer cancelWatch()
@@ -330,24 +331,24 @@ func runFortressMapGAAWindow(
 			break
 		}
 		if !errors.Is(err, Outbound.ErrAutomationLocked) || Outbound.IsIndeterminate(err) {
-			return false, fmt.Errorf("send Fortress map window: %w", err)
+			return false, Localization.WithError(fmt.Errorf("send Fortress map window: %w", err), Localization.ErrorContext(Localization.New("server.app.send_fortress_map_window.4a1f5e23", "send Fortress map window", nil), err))
 		}
 		if err := sender.WaitForAutomationUnlocked(requestContext); err != nil {
-			return false, fmt.Errorf("Fortress map scan timed out while paused: %w", err)
+			return false, Localization.WithError(fmt.Errorf("Fortress map scan timed out while paused: %w", err), Localization.ErrorContext(Localization.New("server.app.fortress_map_scan_timed.22888a7e", "Fortress map scan timed out while paused", nil), err))
 		}
 	}
 	var response Protocol.CommittedFrame
 	select {
 	case received, open := <-frames:
 		if !open {
-			return false, fmt.Errorf("Fortress map response watcher closed")
+			return false, Localization.WithError(fmt.Errorf("Fortress map response watcher closed"), Localization.New("server.app.fortress_map_response_watcher.cfc2ff89", "Fortress map response watcher closed", nil))
 		}
 		response = received
 	case <-requestContext.Done():
 		return false, fmt.Errorf("Fortress map response timed out: %w", requestContext.Err())
 	}
 	if response.Frame.ResponseToken != responseToken {
-		return false, fmt.Errorf("Fortress map response token changed")
+		return false, Localization.WithError(fmt.Errorf("Fortress map response token changed"), Localization.New("server.app.fortress_map_response_token.b85c49ef", "Fortress map response token changed", nil))
 	}
 	forgetCommit := true
 	defer func() {
@@ -357,42 +358,42 @@ func runFortressMapGAAWindow(
 	}()
 	committed, err := observer.WaitCommitted(requestContext, response.IngressID)
 	if err != nil {
-		return false, fmt.Errorf("commit Fortress map response: %w", err)
+		return false, Localization.WithError(fmt.Errorf("commit Fortress map response: %w", err), Localization.ErrorContext(Localization.New("server.app.commit_fortress_map_response.4f9a2a87", "commit Fortress map response", nil), err))
 	}
 	forgetCommit = false
 	if committed.Frame.ResponseCode == nil {
-		return false, fmt.Errorf("Fortress map response did not include a result code")
+		return false, Localization.WithError(fmt.Errorf("Fortress map response did not include a result code"), Localization.New("server.app.fortress_map_response_did.ddb71dd0", "Fortress map response did not include a result code", nil))
 	}
 	if *committed.Frame.ResponseCode != 0 {
 		return false, Intent.NewResponseCodeError(language, committed.Frame.Opcode, *committed.Frame.ResponseCode)
 	}
 	if committed.ReduceError != "" {
-		return false, fmt.Errorf("Fortress map response state reduction failed: %s", committed.ReduceError)
+		return false, Localization.WithError(fmt.Errorf("Fortress map response state reduction failed: %s", committed.ReduceError), Localization.New("server.app.fortress_map_response_state.6eb5e569", "Fortress map response state reduction failed: {p0}", Localization.Params{"p0": fmt.Sprintf("%s", committed.ReduceError)}))
 	}
 	var decoded struct {
 		KingdomID State.KingdomID   `json:"KID"`
 		Nodes     []json.RawMessage `json:"AI"`
 	}
 	if err := json.Unmarshal(committed.Frame.Payload, &decoded); err != nil {
-		return false, fmt.Errorf("decode Fortress map response: %w", err)
+		return false, Localization.WithError(fmt.Errorf("decode Fortress map response: %w", err), Localization.ErrorContext(Localization.New("server.app.decode_fortress_map_response.cd09bb42", "decode Fortress map response", nil), err))
 	}
 	if decoded.KingdomID != kingdomID {
-		return false, fmt.Errorf("Fortress map response changed kingdoms from %d to %d", kingdomID, decoded.KingdomID)
+		return false, Localization.WithError(fmt.Errorf("Fortress map response changed kingdoms from %d to %d", kingdomID, decoded.KingdomID), Localization.New("server.app.fortress_map_response_changed.b0ad1d24", "Fortress map response changed kingdoms from {p0} to {p1}", Localization.Params{"p0": fmt.Sprintf("%d", kingdomID), "p1": fmt.Sprintf("%d", decoded.KingdomID)}))
 	}
 	return len(decoded.Nodes) > 0, nil
 }
 
 func (application *Application) captureFullFortressMap(request fortressMapRequest, windows []towerMapWindow) error {
 	if application == nil || application.State == nil {
-		return fmt.Errorf("Fortress map state is unavailable")
+		return Localization.WithError(fmt.Errorf("Fortress map state is unavailable"), Localization.New("server.app.fortress_map_state_is.138aefe6", "Fortress map state is unavailable", nil))
 	}
 	if request.ScanStartedAt.IsZero() || len(windows) == 0 {
-		return fmt.Errorf("Fortress full-map capture requires a completed scan")
+		return Localization.WithError(fmt.Errorf("Fortress full-map capture requires a completed scan"), Localization.New("server.app.fortress_full_map_capture.d81ab9ff", "Fortress full-map capture requires a completed scan", nil))
 	}
 	_, err := application.State.ApplyComponents(State.Components(State.ComponentWorldMap), func(gameState *State.GameState) ([]string, bool, error) {
 		source, exists := gameState.Castles[request.SourceCastleID]
 		if !exists || source.KingdomID != request.KingdomID || source.SlotType != 12 {
-			return nil, false, fmt.Errorf("Fortress source castle changed before full-map capture")
+			return nil, false, Localization.WithError(fmt.Errorf("Fortress source castle changed before full-map capture"), Localization.New("server.app.fortress_source_castle_changed.fda58850", "Fortress source castle changed before full-map capture", nil))
 		}
 		stale := make([]string, 0)
 		gameState.RangeMapObservationsByKind(request.KingdomID, State.MapProjectionFortress, func(key string, target State.MapObservation) bool {
@@ -445,7 +446,7 @@ func planFortressAttack(_ context.Context, input Intent.PlanningContext, argumen
 		"KID": target.KingdomID, "AX1": target.X, "AY1": target.Y,
 		"AX2": target.X, "AY2": target.Y,
 	})
-	targetRefreshStep := contextCommandStep("Verify fortress cooldown immediately before launch", "gaa", targetRefreshPayload, "gaa")
+	targetRefreshStep := contextCommandStep("Verify fortress cooldown immediately before launch", "gaa", targetRefreshPayload, "gaa").WithNameDescriptor(Localization.New("server.app.verify_fortress_cooldown_immediately.9702b64b", "Verify fortress cooldown immediately before launch", nil))
 	targetRefreshStep.ResponseBarrier = Intent.ResponseBarrierCommitted
 	targetRefreshStep.FinalDispatchAction = "fortress.target.verification.arm"
 	targetRefreshStep.FinalDispatchArguments = verificationArguments
@@ -455,8 +456,8 @@ func planFortressAttack(_ context.Context, input Intent.PlanningContext, argumen
 	steps = appendDailyAttackLimitGuard(steps, request.DailyAttackLimit)
 	steps = append(steps,
 		targetRefreshStep,
-		Intent.Step{Name: "Require exact fortress availability", Action: "fortress.target.verification.guard", ActionArguments: verificationArguments},
-		deferredCRACommandStep("Build and launch fastest fortress attack", "fortress.attack.build", resolvedArguments, contextPayload),
+		Intent.Step{Name: "Require exact fortress availability", NameDescriptor: Localization.New("server.app.require_exact_fortress_availability.08220fab", "Require exact fortress availability", nil), Action: "fortress.target.verification.guard", ActionArguments: verificationArguments},
+		deferredCRACommandStep("Build and launch fastest fortress attack", "fortress.attack.build", resolvedArguments, contextPayload, Localization.New("server.app.build_and_launch_fastest.37cd6d3f", "Build and launch fastest fortress attack", nil)),
 		attackFeatureCaptureStep(attackFeatureCaptureRequest{
 			FeatureID: State.AttackFeatureAutoFortress, SourceCastleID: source.ID, CommanderID: commander,
 			KingdomID: target.KingdomID, TargetTypeID: target.TypeID, TargetX: target.X, TargetY: target.Y,
@@ -465,8 +466,8 @@ func planFortressAttack(_ context.Context, input Intent.PlanningContext, argumen
 	return Intent.Plan{
 		Claims:    fortressAttackClaims(source, target, commander),
 		Admission: &Intent.Admission{Class: Intent.AdmissionAttackLaunch, Module: "autoFortress", Affinity: "kingdom:" + strconv.Itoa(int(target.KingdomID))},
-		Summary:   fmt.Sprintf("Attack kingdom fortress at %d:%d from %s", target.X, target.Y, castleLabel(source)),
-		Steps:     steps,
+		Summary:   fmt.Sprintf("Attack kingdom fortress at %d:%d from %s", target.X, target.Y, castleLabel(source)), SummaryDescriptor: Localization.New("server.app.attack_kingdom_fortress_at.af41f7d5", "Attack kingdom fortress at {p0}:{p1} from {p2}", Localization.Params{"p0": target.X, "p1": target.Y, "p2": fmt.Sprintf("%s", castleLabel(source))}),
+		Steps: steps,
 	}, nil
 }
 
@@ -480,16 +481,19 @@ func (application *Application) resolveFortressAttackStep(_ context.Context, inp
 
 func buildFortressAttackStep(input Intent.PlanningContext, request fortressResolvedAttackRequest) (Intent.Step, error) {
 	now := time.Now().UTC()
-	_, source, target, _, err := fortressAttackContext(input, mustMarshalFortressAttackRequest(request.fortressAttackRequest), now, true)
+	_, source, target, currentCommander, err := fortressAttackContext(input, mustMarshalFortressAttackRequest(request.fortressAttackRequest), now, true)
 	if err != nil {
 		return Intent.Step{}, err
 	}
+	if currentCommander != request.CommanderID {
+		return Intent.Step{}, fmt.Errorf("%w: fastest available fortress commander changed before launch", Intent.ErrPlanStale)
+	}
 	dialog := input.State.AttackDialog
 	if !fortressAttackDialogFreshForTarget(dialog, source, target, now) {
-		return Intent.Step{}, fmt.Errorf("%w: current attack-dialog context does not match fortress %d:%d", Intent.ErrPlanStale, target.X, target.Y)
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("%w: current attack-dialog context does not match fortress %d:%d", Intent.ErrPlanStale, target.X, target.Y), Localization.New("server.app.intent_plan_became_stale.0d8fd6b3", "intent plan became stale before dispatch: current attack-dialog context does not match fortress {p1}:{p2}", Localization.Params{"p1": fmt.Sprintf("%d", target.X), "p2": fmt.Sprintf("%d", target.Y)}))
 	}
 	if dialog.Target.TowerCooldownRemaining > 0 {
-		return Intent.Step{}, fmt.Errorf("%w: fortress at %d:%d is on cooldown", Intent.ErrPlanStale, target.X, target.Y)
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("%w: fortress at %d:%d is on cooldown", Intent.ErrPlanStale, target.X, target.Y), Localization.New("server.app.intent_plan_became_stale.d34da5cd", "intent plan became stale before dispatch: fortress at {p1}:{p2} is on cooldown", Localization.Params{"p1": fmt.Sprintf("%d", target.X), "p2": fmt.Sprintf("%d", target.Y)}))
 	}
 	capacity, err := resolveFortressAttackCapacity(input, source, target, request.CommanderID, true)
 	if err != nil {
@@ -501,13 +505,13 @@ func buildFortressAttackStep(input Intent.PlanningContext, request fortressResol
 	}
 	attack := towerAttackBody(source, target, request.CommanderID, State.UnitID(GameData.DirewolfUnitID), capacity.Capacity.Left, capacity.Capacity.Right)
 	if err := applyCastleHorseTravelBoost(&attack, input.GameData, source, request.HorseTravelBoostID); err != nil {
-		return Intent.Step{}, fmt.Errorf("resolve fortress horse travel boost: %w", err)
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("resolve fortress horse travel boost: %w", err), Localization.ErrorContext(Localization.New("server.app.resolve_fortress_horse_travel.7e4df96c", "resolve fortress horse travel boost", nil), err))
 	}
 	body, err := json.Marshal(attack)
 	if err != nil {
-		return Intent.Step{}, fmt.Errorf("build fortress CRA payload: %w", err)
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("build fortress CRA payload: %w", err), Localization.ErrorContext(Localization.New("server.app.build_fortress_cra_payload.015a5cbb", "build fortress CRA payload", nil), err))
 	}
-	step := commandStep(fmt.Sprintf("Attack fortress at %d:%d", target.X, target.Y), "cra", body, "cra")
+	step := commandStep(fmt.Sprintf("Attack fortress at %d:%d", target.X, target.Y), "cra", body, "cra", Localization.New("server.app.attack_fortress_at_p.a8ac22d1", "Attack fortress at {p0}:{p1}", Localization.Params{"p0": target.X, "p1": target.Y}))
 	step.FinalDispatchAction = "fortress.target.verification.guard"
 	step.FinalDispatchArguments, _ = json.Marshal(fortressTargetVerificationRequest{
 		SourceCastleID: source.ID, KingdomID: target.KingdomID, TargetX: target.X, TargetY: target.Y,
@@ -518,7 +522,7 @@ func buildFortressAttackStep(input Intent.PlanningContext, request fortressResol
 
 func (application *Application) armFortressTargetVerification(ctx context.Context, arguments json.RawMessage) error {
 	if application == nil || application.State == nil {
-		return fmt.Errorf("fortress target verification state is unavailable")
+		return Localization.WithError(fmt.Errorf("fortress target verification state is unavailable"), Localization.New("server.app.fortress_target_verification_state.970a9399", "fortress target verification state is unavailable", nil))
 	}
 	var request fortressTargetVerificationRequest
 	if err := decodeIntentArguments(arguments, &request); err != nil {
@@ -528,7 +532,7 @@ func (application *Application) armFortressTargetVerification(ctx context.Contex
 	operationID := strings.TrimSpace(metadata.OperationID)
 	responseToken := strings.TrimSpace(metadata.ResponseToken)
 	if operationID == "" || responseToken == "" || metadata.ConnectionGeneration == 0 {
-		return fmt.Errorf("fortress target verification requires correlated current-session transport metadata")
+		return Localization.WithError(fmt.Errorf("fortress target verification requires correlated current-session transport metadata"), Localization.New("server.app.fortress_target_verification_requires.e7b6141e", "fortress target verification requires correlated current-session transport metadata", nil))
 	}
 	protocol := application.State.ProtocolContext()
 	_, err := application.State.ApplyComponents(State.Components(State.ComponentSession), func(gameState *State.GameState) ([]string, bool, error) {
@@ -536,7 +540,7 @@ func (application *Application) armFortressTargetVerification(ctx context.Contex
 		if !found || !source.Focused || source.KingdomID != request.KingdomID || source.SlotType != 12 ||
 			protocol.FocusedCastleID != source.ID || protocol.ConnectionGeneration != gameState.Session.ConnectionGeneration ||
 			metadata.ConnectionGeneration != gameState.Session.ConnectionGeneration {
-			return nil, false, fmt.Errorf("%w: fortress source focus or session changed before exact target refresh", Intent.ErrPlanStale)
+			return nil, false, Localization.WithError(fmt.Errorf("%w: fortress source focus or session changed before exact target refresh", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.b649d479", "intent plan became stale before dispatch: fortress source focus or session changed before exact target refresh", nil))
 		}
 		verification := State.FortressTargetVerification{
 			SourceCastleID: request.SourceCastleID, KingdomID: request.KingdomID,
@@ -555,7 +559,7 @@ func (application *Application) armFortressTargetVerification(ctx context.Contex
 
 func (application *Application) guardFortressTargetVerification(ctx context.Context, arguments json.RawMessage) error {
 	if application == nil || application.State == nil {
-		return fmt.Errorf("fortress target verification state is unavailable")
+		return Localization.WithError(fmt.Errorf("fortress target verification state is unavailable"), Localization.New("server.app.fortress_target_verification_state.970a9399", "fortress target verification state is unavailable", nil))
 	}
 	var request fortressTargetVerificationRequest
 	if err := decodeIntentArguments(arguments, &request); err != nil {
@@ -567,7 +571,7 @@ func (application *Application) guardFortressTargetVerification(ctx context.Cont
 	protocol := application.State.ProtocolContext()
 	operationID := strings.TrimSpace(Outbound.MetadataFromContext(ctx).OperationID)
 	fail := func(reason string) error {
-		return fmt.Errorf("%w: fortress at %d:%d needs a new exact availability check: %s", Intent.ErrPlanStale, request.TargetX, request.TargetY, reason)
+		return Localization.WithError(fmt.Errorf("%w: fortress at %d:%d needs a new exact availability check: %s", Intent.ErrPlanStale, request.TargetX, request.TargetY, reason), Localization.New("server.app.intent_plan_became_stale.a3ae7a65", "intent plan became stale before dispatch: fortress at {p1}:{p2} needs a new exact availability check: {p3}", Localization.Params{"p1": fmt.Sprintf("%d", request.TargetX), "p2": fmt.Sprintf("%d", request.TargetY), "p3": fmt.Sprintf("%s", reason)}))
 	}
 	if operationID == "" || proof.OperationID != operationID || proof.ResponseToken == "" ||
 		proof.SourceCastleID != request.SourceCastleID || proof.KingdomID != request.KingdomID ||
@@ -618,43 +622,34 @@ func fortressAttackContext(input Intent.PlanningContext, arguments json.RawMessa
 	if err := decodeIntentArguments(arguments, &request); err != nil {
 		return request, State.CastleState{}, State.MapObservation{}, 0, err
 	}
+	request.MinimumCommanderSpeed = 0 // Legacy field is accepted, then omitted from new steps.
 	if input.GameData == nil {
-		return request, State.CastleState{}, State.MapObservation{}, 0, fmt.Errorf("official game data is unavailable")
+		return request, State.CastleState{}, State.MapObservation{}, 0, Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	if _, err := input.GameData.FortressDirewolf(); err != nil {
 		return request, State.CastleState{}, State.MapObservation{}, 0, err
 	}
-	speedContract, err := input.GameData.FortressRelicSpeed()
-	if err != nil {
-		return request, State.CastleState{}, State.MapObservation{}, 0, err
-	}
-	if speedContract.RelicMaximumPercent != fortressMaximumSpeedPercent {
-		return request, State.CastleState{}, State.MapObservation{}, 0, fmt.Errorf("official fortress commander speed contract changed; refusing to launch")
-	}
 	if err := validateHorseTravelBoostID(request.HorseTravelBoostID); err != nil {
 		return request, State.CastleState{}, State.MapObservation{}, 0, err
 	}
-	if request.MinimumCommanderSpeed != speedContract.RelicMaximumPercent {
-		return request, State.CastleState{}, State.MapObservation{}, 0, fmt.Errorf("fortress commander speed requirement must remain at the 100%% catalog cap")
-	}
 	source, found := input.State.Castles[request.SourceCastleID]
 	if !found || source.KingdomID != request.KingdomID || source.SlotType != 12 {
-		return request, State.CastleState{}, State.MapObservation{}, 0, fmt.Errorf("fortress source must be the owned main castle in kingdom %d", request.KingdomID)
+		return request, State.CastleState{}, State.MapObservation{}, 0, Localization.WithError(fmt.Errorf("fortress source must be the owned main castle in kingdom %d", request.KingdomID), Localization.New("server.app.fortress_source_must_be.2f94f62d", "fortress source must be the owned main castle in kingdom {p0}", Localization.Params{"p0": fmt.Sprintf("%d", request.KingdomID)}))
 	}
 	target, found := input.State.LookupMapObservation(request.KingdomID, fmt.Sprintf("%d:%d", request.TargetX, request.TargetY))
 	if !found || target.TypeID != State.MapTypeKingdomFortress {
-		return request, State.CastleState{}, State.MapObservation{}, 0, fmt.Errorf("fortress at %d:%d is not in the current map state", request.TargetX, request.TargetY)
+		return request, State.CastleState{}, State.MapObservation{}, 0, Localization.WithError(fmt.Errorf("fortress at %d:%d is not in the current map state", request.TargetX, request.TargetY), Localization.New("server.app.fortress_at_p_p.e5f83a4b", "fortress at {p0}:{p1} is not in the current map state", Localization.Params{"p0": request.TargetX, "p1": request.TargetY}))
 	}
 	if requireFreshObservation && (target.ObservedAt.IsZero() || now.Before(target.ObservedAt) || now.Sub(target.ObservedAt) > fortressAttackDialogFreshness) {
-		return request, State.CastleState{}, State.MapObservation{}, 0, fmt.Errorf("%w: fortress at %d:%d needs a fresh map observation", Intent.ErrPlanStale, target.X, target.Y)
+		return request, State.CastleState{}, State.MapObservation{}, 0, Localization.WithError(fmt.Errorf("%w: fortress at %d:%d needs a fresh map observation", Intent.ErrPlanStale, target.X, target.Y), Localization.New("server.app.intent_plan_became_stale.5fdc0f10", "intent plan became stale before dispatch: fortress at {p1}:{p2} needs a fresh map observation", Localization.Params{"p1": fmt.Sprintf("%d", target.X), "p2": fmt.Sprintf("%d", target.Y)}))
 	}
 	if remaining := fortressCooldownRemaining(input.State, target, now); remaining > 0 {
 		return request, State.CastleState{}, State.MapObservation{}, 0, fmt.Errorf("%w: fortress at %d:%d is unavailable for %s", Intent.ErrPlanStale, target.X, target.Y, (time.Duration(remaining) * time.Second).Round(time.Second))
 	}
 	if State.AttackFeatureTargetPendingAt(input.State, State.AttackFeatureAutoFortress, target.KingdomID, target.TypeID, target.X, target.Y, now) {
-		return request, State.CastleState{}, State.MapObservation{}, 0, fmt.Errorf("%w: fortress at %d:%d already has an unsettled attack", Intent.ErrPlanStale, target.X, target.Y)
+		return request, State.CastleState{}, State.MapObservation{}, 0, Localization.WithError(fmt.Errorf("%w: fortress at %d:%d already has an unsettled attack", Intent.ErrPlanStale, target.X, target.Y), Localization.New("server.app.intent_plan_became_stale.57437f4b", "intent plan became stale before dispatch: fortress at {p1}:{p2} already has an unsettled attack", Localization.Params{"p1": fmt.Sprintf("%d", target.X), "p2": fmt.Sprintf("%d", target.Y)}))
 	}
-	commander, err := fortressCommander(input, request.CommanderIDs, source, target, speedContract)
+	commander, err := fortressCommander(input, request.CommanderIDs, source, target)
 	if err != nil {
 		return request, State.CastleState{}, State.MapObservation{}, 0, err
 	}
@@ -666,30 +661,36 @@ func fortressCommander(
 	configured []State.CommanderID,
 	source State.CastleState,
 	target State.MapObservation,
-	speedContract GameData.FortressRelicSpeedContract,
 ) (State.CommanderID, error) {
 	if len(configured) == 0 {
-		return 0, fmt.Errorf("no commander is assigned to Auto Fortress")
+		return 0, Localization.WithError(fmt.Errorf("no commander is assigned to Auto Fortress"), Localization.New("server.app.no_commander_is_assigned.76aaf2ee", "no commander is assigned to Auto Fortress", nil))
 	}
-	resolution, err := resolveCRACommanders(input.State, &craCommanderSelectionRequest{Candidates: configured, Count: 1, Strategy: "lowest_id"}, craCommanderSelectionOptions{
-		Holds: input.CommanderHolds, DefaultCount: 1, RequireAvailable: true,
-	})
-	if err != nil || len(resolution.Selected) == 0 {
-		return 0, fmt.Errorf("%w: no assigned Auto Fortress commander is available", Intent.ErrPlanStale)
-	}
-	commanderID := resolution.Selected[0]
-	relicSpeed, found := EquipmentDomain.CommanderRelic2EffectTotal(input.State, commanderID, speedContract.RelicEffectID)
-	if !found || relicSpeed+0.0001 < speedContract.RelicMaximumPercent {
-		return 0, fmt.Errorf("%w: commander %d has %.0f%% of the required %.0f%% Relic 2.0 fortress speed bonus", Intent.ErrPlanStale, commanderID, relicSpeed, speedContract.RelicMaximumPercent)
-	}
-	speed, err := resolveFortressCommanderSpeed(input.State, input.GameData, source, target, commanderID)
+	candidates, err := validatedCommanderCandidates(input.State, configured)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("%w: %v", Intent.ErrPlanStale, err)
 	}
-	if speed+0.0001 < speedContract.RelicMaximumPercent {
-		return 0, fmt.Errorf("%w: commander %d has %.0f%% of the required %.0f%% fortress speed bonus", Intent.ErrPlanStale, commanderID, speed, speedContract.RelicMaximumPercent)
+	sort.Slice(candidates, func(left, right int) bool { return candidates[left] < candidates[right] })
+	now := time.Now().UTC()
+	var selected State.CommanderID
+	best, found := 0.0, false
+	for _, id := range candidates {
+		commander := input.State.Commanders[id]
+		if !commander.Available || State.CommanderHasActiveMovementAt(input.State, id, now) ||
+			State.InvasionCommanderReserved(input.State, id) || input.CommanderHolds != nil && input.CommanderHolds.CommanderHeldAt(id, now) {
+			continue
+		}
+		speed, err := resolveFortressCommanderSpeed(input.State, input.GameData, source, target, id)
+		if err != nil {
+			continue
+		}
+		if !found || speed > best {
+			selected, best, found = id, speed, true
+		}
 	}
-	return commanderID, nil
+	if !found {
+		return 0, fmt.Errorf("%w: no assigned Auto Fortress commander is available with resolvable travel speed", Intent.ErrPlanStale)
+	}
+	return selected, nil
 }
 
 func resolveFortressCommanderSpeed(gameState State.GameState, gameData *GameData.Store, source State.CastleState, target State.MapObservation, commanderID State.CommanderID) (float64, error) {
@@ -701,7 +702,7 @@ func resolveFortressCommanderSpeed(gameState State.GameState, gameData *GameData
 		},
 	})
 	if err != nil {
-		return 0, fmt.Errorf("resolve fortress commander speed: %w", err)
+		return 0, Localization.WithError(fmt.Errorf("resolve fortress commander speed: %w", err), Localization.ErrorContext(Localization.New("server.app.resolve_fortress_commander_speed.1e908252", "resolve fortress commander speed", nil), err))
 	}
 	return result.AppliedPercent, nil
 }
@@ -716,7 +717,7 @@ func resolveFortressAttackCapacity(input Intent.PlanningContext, source State.Ca
 		},
 	})
 	if err != nil {
-		return AttackCapacity.Result{}, fmt.Errorf("resolve fortress attack capacity: %w", err)
+		return AttackCapacity.Result{}, Localization.WithError(fmt.Errorf("resolve fortress attack capacity: %w", err), Localization.ErrorContext(Localization.New("server.app.resolve_fortress_attack_capacity.2a017c60", "resolve fortress attack capacity", nil), err))
 	}
 	return capacity, nil
 }

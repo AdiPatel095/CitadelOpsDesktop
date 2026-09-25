@@ -1,0 +1,2080 @@
+{
+  "ui": {
+    "guideButton": "Vadovas",
+    "calendarButton": "Kalendorius",
+    "recommendedLabel": "Rekomenduojama",
+    "backToSettings": "Grįžti į nustatymus",
+    "backToGuide": "Grįžti į vadovą",
+    "howToSetUp": "Kaip nustatyti",
+    "whatToExpect": "Ko tikėtis",
+    "openFullSizePicture": "Atidaryti viso dydžio paveikslėlį",
+    "illustrativeExample": "Iliustracinis pavyzdys",
+    "enlargePicture": "Padidinti pavyzdžio paveikslėlį",
+    "fullSizePicture": "Viso dydžio pavyzdžio paveikslėlis; slinkite, kad matytumėte visus nustatymus",
+    "towerGuideTitle": "Automatinės bokštų atakos · vadovas",
+    "birdGuideTitle": "Automatinis karių slėpimas · vadovas",
+    "towerGuideIntro": "Atlikite šiuos veiksmus, kad nustatytumėte automatinius bokštus; pasirinkite pavyzdžio paveikslėlį jam padidinti.",
+    "birdGuideIntro": "Atlikite šiuos veiksmus, kad nustatytumėte automatinį karių slėpimą; pasirinkite pavyzdžio paveikslėlį jam padidinti.",
+    "towerPreviewTitle": "Automatinės bokštų atakos · nustatymo pavyzdys",
+    "birdPreviewTitle": "Automatinis karių slėpimas · nustatymo pavyzdys",
+    "stationGuideTitle": "Automatinio karių prieglobsčio vadovas",
+    "stationGuideIntro": "Atlikite šiuos veiksmus automatiniam karių prieglobsčiui nustatyti; pasirinkite pavyzdžio paveikslą, kad jį padidintumėte.",
+    "stationPreviewTitle": "Automatinio karių prieglobsčio nustatymo pavyzdys",
+    "fortressGuideIntro": "Atlikite šiuos veiksmus automatinėms tvirtovių atakoms nustatyti; pasirinkite pavyzdinį skydelį, kad jį padidintumėte.",
+    "fortressGuideTitle": "Automatinių tvirtovių atakų gidas",
+    "fortressPreviewTitle": "Automatinių tvirtovių atakų sąrankos pavyzdys",
+    "invasionGuideIntro": "Atlikite šiuos veiksmus automatinėms invazijos atakoms nustatyti; pasirinkite pavyzdinį skydelį, kad jį padidintumėte.",
+    "invasionGuideTitle": "Automatinių invazijos atakų gidas",
+    "invasionPreviewTitle": "Automatinių invazijos atakų sąrankos pavyzdys",
+    "nomadGuideIntro": "Vadovaukis šiais žingsniais nustatydamas automatinius klajoklius/samurajus; pasirink pavyzdžio skydelį jį padidinti.",
+    "nomadGuideTitle": "Automatinių klajoklių/samurajų gidas",
+    "nomadPreviewTitle": "Automatinių klajoklių/samurajų nustatymo pavyzdys",
+    "advisorGuideIntro": "Atlikite šiuos veiksmus, kad nustatytumėte Automatinį patarėją; pasirinkite pavyzdžio skydelį jį padidinti.",
+    "advisorGuideTitle": "Automatinio patarėjo vadovas",
+    "advisorPreviewTitle": "Automatinio patarėjo nustatymo pavyzdys",
+    "khanGuideIntro": "Atlikite šiuos veiksmus, kad nustatytumėte Auto Chaną; pasirinkite pavyzdžio skydelį, kad jį padidintumėte.",
+    "khanGuideTitle": "Auto Chano vadovas",
+    "khanPreviewTitle": "Auto Chano nustatymo pavyzdys",
+    "beriGuideIntro": "Norėdami nustatyti Automatinį Berimondą, atlikite šiuos veiksmus; pasirinkite pavyzdinį skydelį jam padidinti.",
+    "beriGuideTitle": "Automatinio Berimondo vadovas",
+    "beriPreviewTitle": "Automatinio Berimondo nustatymo pavyzdys",
+    "stormGuideIntro": "Vadovaudamiesi šiais žingsniais nustatykite Auto Storm; pasirinkite pavyzdžio skydelį, kad jį padidintumėte.",
+    "stormGuideTitle": "Auto Storm vadovas",
+    "stormPreviewTitle": "Auto Storm nustatymo pavyzdys"
+  },
+  "autoTower": {
+    "recommendationIntro": "Tai rekomendacijos įprastam naudojimui; peržiūrėkite jas prieš išsaugodami.",
+    "steps": {
+      "commanders": {
+        "title": "Pasirinkite vadus",
+        "items": {
+          "commander_assignment": {
+            "label": "Vadų priskyrimas",
+            "description": "Vadų skiltyje leiskite automatinius bokštus norimiems vadams ir pasirinkite Išsaugoti priskyrimus.",
+            "recommendation": "Automatiniams bokštams priskirkite 20 vadų."
+          }
+        }
+      },
+      "general": {
+        "title": "Nustatykite skenavimą, dienos ribas ir kelionę",
+        "items": {
+          "open_settings": {
+            "label": "Atidarykite nustatymus",
+            "description": "Atidarykite Automatizavimą, tada pasirinkite nustatymų mygtuką automatinių bokštų kortelėje."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Patikimo žemėlapio skenavimas · Kas",
+            "description": "Pasirinkite, kaip dažnai atnaujinti kiekvienos pilies bokštų sąrašą, nuo 1800 iki 3600 sekundžių; atakos gali prasidėti tarp skenavimų.",
+            "recommendation": "1800 sekundžių (30 minučių)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Įprastų atakų dienos riba",
+            "description": "Pasiekus visos paskyros dienos atakų ribą, sustabdoma, kol žaidimas ją atstato; 0 ribą panaikina.",
+            "recommendation": "3500 atakų per dieną visoje paskyroje."
+          },
+          "horse_travel_boost": {
+            "label": "Kelionės žirgu pagreitinimas",
+            "description": "Kiekvienai atakai, įskaitant kiekvieną Patarėjo grandinės smūgį, naudoja pasirinktą kelionės būdą; greitis priklauso nuo išvykimo pilies kelionės pastatų.",
+            "recommendation": "Monetų lygis, kur jis palaikomas, turint pakankamai monetų."
+          },
+          "travel_feather": {
+            "label": "Kelionės plunksna",
+            "description": "Naudoja kelionės plunksną, o ne žirgo lygį už monetas ar rubinus."
+          },
+          "horse_ship_tier_coins": {
+            "label": "Žirgo / laivo lygis · monetos",
+            "description": "Monetų kelionės lygiui išleidžia monetas."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Karo žirgo / greito laivo lygis · rubinai",
+            "description": "Pasirinkus išleidžia rubinus pirmajam kelionės už rubinus lygiui."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Greituolio / greičiausio laivo lygis · rubinai",
+            "description": "Pasirinkus išleidžia rubinus greitesniam kelionės už rubinus lygiui."
+          }
+        },
+        "image": {
+          "alt": "Bendrieji automatinių bokštų nustatymai su išgalvotais Sintetinės pilies duomenimis",
+          "caption": "Nustatykite skenavimo intervalą, dienos atakų ribą ir kelionės būdą; Patarėjo valdikliai rodomi, kai pasiekiami."
+        }
+      },
+      "castle": {
+        "title": "Nustatykite kiekvieną pilį",
+        "items": {
+          "castle_switch": {
+            "label": "Pilies jungiklis",
+            "description": "Įjunkite kiekvieną pilį, iš kurios automatiniai bokštai turi skenuoti ir pulti.",
+            "recommendation": "Įjunkite pilis, kurias norite naudoti reguliariai."
+          },
+          "radius": {
+            "label": "Spindulys",
+            "description": "Pasirinkite paieškos atstumą aplink pilį nuo 1 iki 50 langelių.",
+            "recommendation": "35 langeliai."
+          },
+          "choose_troop": {
+            "label": "Pasirinkite karius",
+            "description": "Pasirinkite pilyje esančių karių rūšį abiem atakos sparnams užpildyti; jei karių per mažai, atakos laukia.",
+            "recommendation": "Pilyje esantys puolimo kariai, kurių pakanka abiem sparnams."
+          },
+          "maiden_supported_only": {
+            "label": "Tik su Mergelės parama",
+            "description": "Apriboja šią pilį iki pasiekiamų vadų su palaikoma Mergelės relikvija.",
+            "recommendation": "Išjungta, nebent pasirinktas vadas turi palaikomą Mergelės relikviją."
+          }
+        },
+        "image": {
+          "alt": "Automatinių bokštų pilies nustatymai su išgalvotais Sintetinės pilies duomenimis",
+          "caption": "Įjunkite pilį ir pasirinkite jos spindulį, karius bei Mergelės sąlygą."
+        }
+      },
+      "advisor": {
+        "title": "Jei norite, naudokite Patarėją · kai pasiekiamas",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Naudoti Patarėją su laiko praleidimais",
+            "description": "Kartoja smūgius vienam bokštui: pirmiausia sunaudoja vieną dienos ataką, o kiekvienam papildomam smūgiui – vieną bent trijų valandų laiko praleidimą.",
+            "recommendation": "Išjungta."
+          },
+          "auto_activate_with_token": {
+            "label": "Automatiškai aktyvinti žetonu",
+            "description": "Kai Patarėjas neaktyvus, naudoja turimą Barono Patarėjo žetoną, nepirkdamas žetono ir neleisdamas rubinų.",
+            "recommendation": "Išjungta, kol Patarėjas išjungtas."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Didžiausias dienos laiko praleidimų skaičius",
+            "description": "Riboja patvirtintų Patarėjo grandinių naudojamus laiko praleidimus, kol žaidimas atstato dienos atakų skaitiklį; 0 sustabdo Patarėjo atakų paleidimą.",
+            "recommendation": "0, kol Patarėjas išjungtas."
+          }
+        }
+      },
+      "finish": {
+        "title": "Nustatykite tvarkaraštį, išsaugokite ir įjunkite",
+        "items": {
+          "calendar": {
+            "label": "Kalendorius",
+            "description": "Kalendoriuje pasirinkite, kada automatiniai bokštai gali veikti; karių prieinamumas ir kiti apribojimai tebegalioja.",
+            "recommendation": "Jūsų įprastos veikimo valandos."
+          },
+          "save_changes": {
+            "label": "Išsaugoti pakeitimus",
+            "description": "Pasirinkite Išsaugoti pakeitimus, kad pritaikytumėte nustatymus; šio vadovo skaitymas jų neišsaugo."
+          },
+          "auto_towers_switch": {
+            "label": "Automatinės bokštų atakos · jungiklis",
+            "description": "Išsaugoję nustatymus Automatizavimo puslapyje įjunkite automatinius bokštus, kad užduotis galėtų veikti.",
+            "recommendation": "Įjungta po norimų nustatymų išsaugojimo."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatinės bokštų atakos",
+      "summary": "Kartotinės atakos prieš netoliese esančius bokštus",
+      "description": "Siunčia atakas prieš plėšikų baronų ir karalysčių bokštus iš pasirinktų pilių.",
+      "expectation": "Reikia pakankamai karių, laisvo vado ir atakai parengto bokšto. Gali tekti laukti karių sugrįžimo arba bokšto laikmačio pabaigos."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "Rekomenduojamos vertės apibūdina įprastą automatinio karių slėpimo naudojimą; tai patarimai, nekeičiantys išsaugotų nustatymų.",
+    "steps": {
+      "open": {
+        "title": "Atidarykite automatinio karių slėpimo nustatymus",
+        "items": {
+          "open_settings": {
+            "label": "Atidarykite nustatymus",
+            "description": "Komandų centro viršuje pasirinkite nustatymų mygtuką šalia automatinio karių slėpimo."
+          }
+        }
+      },
+      "general": {
+        "title": "Nustatykite įgulos laiką ir siuntimo taisykles",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Atsitiktinės delsos intervalas · Minimumas",
+            "description": "Nustatykite trumpiausią valandų skaičių, kurį kariai liks sąjungos vietoje pasibaigus kelionei.",
+            "recommendation": "6 valandos sąjungos tiksle po atvykimo."
+          },
+          "random_delay_range_max": {
+            "label": "Atsitiktinės delsos intervalas · Maksimumas",
+            "description": "Nustatykite ilgiausią buvimo vietoje trukmę; automatinis karių slėpimas atsitiktinai parenka laiką tarp minimumo ir maksimumo.",
+            "recommendation": "12 valandų sąjungos tiksle po atvykimo."
+          },
+          "minimum_to_send": {
+            "label": "Mažiausias siunčiamas kiekis",
+            "description": "Nustatykite mažiausią tinkamų karių bendrą skaičių, kuris turi likti atskaičius pilies rezervus; tai slenkstis, o ne tikslus siunčiamų karių skaičius.",
+            "recommendation": "Iš viso 1000 tinkamų karių po pilies rezervų atidėjimo; tai slenkstis, ne tikslus siuntos dydis."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "Mažiausias RPT (likęs apsaugos laikas)",
+            "description": "Naudokite taikinius, kuriems liko daugiau apsaugos dienų nei ši vertė; 0 patikrą pašalina.",
+            "recommendation": "3 dienos; taikiniui turi likti daugiau kaip 3 apsaugos dienos."
+          }
+        },
+        "image": {
+          "alt": "Automatinio karių slėpimo įgulos delsa, mažiausias siunčiamas kiekis, mažiausias RPT ir išankstinių rinkinių valdikliai",
+          "caption": "Nustatykite buvimo laiką ir tinkamumo sąlygas, tada prieš išsaugodami peržiūrėkite Kasdienio rezervo rinkinį."
+        }
+      },
+      "reserves": {
+        "title": "Pasirinkite kiekvienoje pilyje paliekamus karius",
+        "items": {
+          "add_unit": {
+            "label": "Pridėti dalinį",
+            "description": "Kiekvienai piliai pasirinkite karių rūšis, kurias laikysite namuose, o ne siųsite; tuščias rezervas palieka visus tinkamus karius po automatinių rezervų.",
+            "recommendation": "Pasirinkite karių rūšis, kurių kiekvienai piliai reikia gynybai ar kitoms įprastoms užduotims."
+          },
+          "quantity": {
+            "label": "Kiekis",
+            "description": "Nurodykite teigiamą kiekvienos pasirinktos karių rūšies skaičių, kuris liks pilyje; 0 nerezervuoja visos rūšies.",
+            "recommendation": "Palikite pilyje tiek kiekvienos rūšies karių, kiek reikia gynybai ar kitoms užduotims; patikrinkite tikrąjį karių skaičių."
+          },
+          "remove_unit": {
+            "label": "Pašalinti dalinį",
+            "description": "Pašalinkite dalinio plytelę, kad pasirinktoje pilyje ši rūšis nebebūtų rezervuojama."
+          },
+          "auto_fortress_reserve": {
+            "label": "Tvirtovių automatizavimas · rezervas",
+            "description": "Kai automatinė tvirtovė čia užrakina visus baisiuosius vilkus, šis automatinis rezervas neišsaugomas automatinio karių slėpimo rinkiniuose; pasibaigus užraktui, grįžta anksčiau rankiniu būdu nustatytas baisiųjų vilkų kiekis."
+          }
+        },
+        "image": {
+          "alt": "Automatinio karių slėpimo rezervo plytelės išgalvotai Pavyzdinei piliai",
+          "caption": "Rezervuokite tik šiai piliai reikalingus dalinius; Dalinys 101 ir Dalinys 102 yra išgalvoti karių pavadinimai."
+        }
+      },
+      "presets": {
+        "title": "Išsaugokite ir pasirinkite rinkinį",
+        "items": {
+          "preset_name": {
+            "label": "Rinkinio pavadinimas",
+            "description": "Įveskite naujo rinkinio pavadinimą arba prieš išsaugodami pakeitimus redaguokite pritaikyto rinkinio pavadinimą.",
+            "recommendation": "Naudokite atpažįstamą pavadinimą, pvz., Kasdienis."
+          },
+          "load_preset": {
+            "label": "Įkelti rinkinį",
+            "description": "Pasirinkite išsaugotą rinkinį iš sąrašo arba Išsaugotą konfigūraciją, jei norite naudoti nustatymus be pavadinto rinkinio.",
+            "recommendation": "Numatytajam veikimui naudokite norimą kasdienį rinkinį: pasirinkite jį, spauskite Pritaikyti, tada Išsaugoti pakeitimus."
+          },
+          "apply": {
+            "label": "Pritaikyti",
+            "description": "Įkelkite pasirinktą rinkinį į šį nustatymų juodraštį; pasirinkite Išsaugoti pakeitimus, kad jis taptų numatytuoju veikimo rinkiniu."
+          },
+          "save_as_new": {
+            "label": "Išsaugoti kaip naują",
+            "description": "Iškart išsaugo dabartinius nustatymus kaip naują pavadintą rinkinį ir parenka jį numatytuoju veikimui."
+          },
+          "delete": {
+            "label": "Ištrinti",
+            "description": "Patvirtinus iškart ištrina pasirinktą rinkinį ir panaikina numatytąjį veikimo rinkinį, jei jis buvo pasirinktas."
+          },
+          "runtime_default": {
+            "label": "Numatytasis veikimo rinkinys",
+            "description": "Numatytasis veikimo rinkinys yra išsaugotas aktyvus rinkinys arba išsaugota konfigūracija, jei nėra aktyvaus rinkinio."
+          }
+        }
+      },
+      "finish": {
+        "title": "Nustatykite tvarkaraštį, išsaugokite ir aktyvinkite",
+        "items": {
+          "calendar": {
+            "label": "Kalendorius",
+            "description": "Pasirinkite, kada gali veikti automatinis karių slėpimas, ir pasirinkite Išsaugoti tvarkaraštį pakeitimams išsaugoti.",
+            "recommendation": "Nuolatiniam veikimui palikite tvarkaraštį išjungtą arba nustatykite įprastas savaitės valandas ir išsaugokite tvarkaraštį."
+          },
+          "specify_preset_per_period": {
+            "label": "Nurodyti rinkinį kiekvienam laikotarpiui",
+            "description": "Pasirinkite išsaugotą rinkinį kalendoriaus laikotarpiui, jei tuo metu jis turi pakeisti numatytąjį veikimo rinkinį.",
+            "recommendation": "Išjungta, nebent skirtingiems laikotarpiams reikia skirtingų rezervų."
+          },
+          "save_changes": {
+            "label": "Išsaugoti pakeitimus",
+            "description": "Išsaugokite nustatymų juodraštį ir visus pritaikyto rinkinio pakeitimus; šio vadovo skaitymas jų neišsaugo."
+          },
+          "auto_bird_switch": {
+            "label": "Automatinis karių slėpimas · jungiklis",
+            "description": "Išsaugoję komandų centro viršuje įjunkite automatinį karių slėpimą, kad vyktų įprasti pilių ciklai.",
+            "recommendation": "Išsaugoję įjunkite automatinį karių slėpimą; antraštės būsena rodo kiekvienos pilies ciklą."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatinis karių slėpimas",
+      "summary": "Laikykite pasirinktus karius svetur pagal tvarkaraštį",
+      "description": "Reguliariai dislokuoja perteklinius karius tinkamose sąjungos pilyse ir jiems sugrįžus kartoja ciklą.",
+      "expectation": "Laukia, jei nėra tinkamos vietos ar laisvų karių siuntimui. Karių išsiuntimas nepadaro pilies nepažeidžiamos."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "Bendrieji nustatymai",
+      "scan": "Skenavimo intervalas: 1800 sekundžių",
+      "daily": "Dienos atakų riba: 3500",
+      "travel": "Kelionės pagreitinimas: monetų lygis",
+      "advisor": "Patarėjas: išjungtas"
+    },
+    "towerCastle": {
+      "title": "Pavyzdinė pilis",
+      "enabled": "Automatinės bokštų atakos · įjungti",
+      "radius": "Spindulys: 35 langeliai",
+      "troop": "Pasirinkti kariai: išgalvotas puolimo dalinys",
+      "maiden": "Tik su Mergelės parama: išjungta"
+    },
+    "birdGeneral": {
+      "title": "Bendrieji nustatymai",
+      "min": "Trumpiausias buvimas: 6 valandos",
+      "max": "Ilgiausias buvimas: 12 valandų",
+      "send": "Mažiausias tinkamų karių skaičius po rezervų: 1000 karių",
+      "rpt": "Mažiausia likusi apsauga: daugiau kaip 3 dienos",
+      "preset": "Rinkinys: Kasdienis rezervas"
+    },
+    "birdCastle": {
+      "title": "Pavyzdinė pilis",
+      "unitOne": "Išgalvotas Dalinys 101 rezerve: 80",
+      "unitTwo": "Išgalvotas Dalinys 102 rezerve: 40",
+      "add": "Pridėti dalinį"
+    },
+    "stationGeneral": {
+      "title": "Prieglobsčio nustatymų pavyzdys",
+      "evacuate": "Evakuoti: likus 1 minutei iki smūgio",
+      "protection": "Taikinio apsauga: daugiau nei 3 dienos",
+      "recall": "Grąžinti pavojui praėjus: įjungta",
+      "gate": "Atsarginis vartų atidarymas: išjungta",
+      "castle": "Išgalvota pilis: rezervuota 80 gynybinių karių",
+      "save": "Išsaugokite pakeitimus ir įjunkite prieglobstį"
+    },
+    "fortressAttack": {
+      "commander": "Vadas: greičiausias tinkamas priskirtas",
+      "daily": "Įprastų atakų paros riba: 0",
+      "title": "Atakų nustatymų pavyzdys",
+      "travel": "Kelionės pagreitis: Kelionės plunksna",
+      "wave": "Viena pilna siaubo vilkų banga abiejuose sparnuose"
+    },
+    "fortressKingdoms": {
+      "everwinter": "Amžinosios žiemos ledynas: įjungta atrakinus",
+      "peaks": "Ugnies viršūnės: įjungta atrakinus",
+      "sands": "Degantys smėlynai: įjungta atrakinus",
+      "title": "Karalysčių nustatymų pavyzdys"
+    },
+    "fortressSupply": {
+      "purchase": "Siaubo vilkų per sesiją: 5 000",
+      "reserve": "Palikti chano lentelių: 25 000",
+      "route": "Tiekimas: iš Didžiosios imperijos pagrindinės pilies į įjungtas karalystes",
+      "skips": "Laiko trumpinimai patvirtintiems perkėlimams: įjungta",
+      "title": "Siaubo vilkų tiekimo pavyzdys"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Kraujo varnai: tinkamas atrakintas sunkumas",
+      "current": "Aktyvaus renginio sunkumas lieka nepakeistas",
+      "foreign": "Svetimi valdovai: tinkamas atrakintas sunkumas",
+      "title": "Renginių sunkumų pavyzdys"
+    },
+    "invasionFortify": {
+      "currency": "Jei įjungta: renginio valiuta, kai siūloma",
+      "enabled": "Stiprinti kiekvieną taikinį: išjungta",
+      "rubies": "Rubinai tik aiškiai pasirinkus",
+      "title": "Taikinių stiprinimo pavyzdys"
+    },
+    "invasionLimits": {
+      "before": "Stabdyti likus 30 minučių iki renginio pabaigos",
+      "daily": "Įprastų atakų dienos riba: 0",
+      "score": "Taškai: įprastas paskutinis asmeninis atlygis virš 0",
+      "title": "Taškų ir stabdymo ribų pavyzdys"
+    },
+    "invasionSetup": {
+      "castle": "Pradžia: įprasta renginio pilis Didžiojoje imperijoje",
+      "preset": "Atakos šablonas: išsaugota renginio rikiuotė",
+      "title": "Renginio atakos sąrankos pavyzdys",
+      "travel": "Kelionės pagreitis: Kelionės plunksna"
+    },
+    "nomadDifficulty": {
+      "title": "Renginių sunkumų pavyzdys",
+      "active": "Aktyvus renginys: atitik dabartinį sudėtingumą",
+      "nomad": "Klajokliai: atrakintas patikimas sudėtingumas",
+      "samurai": "Samurajai: atrakintas patikimas sudėtingumas"
+    },
+    "nomadSetup": {
+      "castle": "Pradžia: įprasta renginio pilis Didžiojoje imperijoje",
+      "travel": "Kelionės pagreitis: Kelionės plunksna",
+      "nomadPreset": "Klajoklių schema: išsaugota stovyklos rikiuotė",
+      "samuraiPreset": "Samurajų schema: išsaugota stovyklos rikiuotė",
+      "title": "Renginio stovyklų nustatymų pavyzdys"
+    },
+    "nomadCooldowns": {
+      "clear": "Pašalinti laukimą po patvirtintos pergalės: įjungta",
+      "long": "Palikti 5 val. / 24 val.: atsarga kitai veiklai",
+      "short": "Palikti 1 / 5 / 10 / 30 / 60 min.: po 0 daiktų",
+      "title": "Laukimo pasirinkimų pavyzdys"
+    },
+    "nomadLimits": {
+      "daily": "Papildoma dienos riba: 0",
+      "score": "Taškų tikslas: paskutinis asmeninio atlygio etapas",
+      "time": "Sustabdyti prieš pabaigą: 30 minučių",
+      "title": "Sustabdymo taisyklių pavyzdys"
+    },
+    "nomadTrial": {
+      "coordinates": "Taikinys X / Y: nenaudojama įprastai",
+      "effect": "Įjungtas bandymas pakeičia renginį tikru puolimu",
+      "title": "Bandymo valdiklių pavyzdys",
+      "trial": "Laikinas plėšikų barono bandymas: išjungta"
+    },
+    "advisorDifficulty": {
+      "active": "Aktyvus renginys: atitik dabartinį sudėtingumą",
+      "nomad": "Klajokliai: atrakintas patikimas sudėtingumas",
+      "samurai": "Samurajai: atrakintas patikimas sudėtingumas",
+      "title": "Renginių sunkumų pavyzdys"
+    },
+    "advisorSetup": {
+      "castle": "Pradžia: įprasta renginio pilis Didžiojoje imperijoje",
+      "travel": "Kelionės pagreitis: Kelionės plunksna",
+      "preset": "Šablonas: išsaugota aktyvaus renginio rikiuotė",
+      "title": "Patarėjo atakos nustatymo pavyzdys"
+    },
+    "advisorActivation": {
+      "locked": "Jei užrakinta: atverkite patarėjo aktyvinimo patvirtinimą",
+      "paid": "Patvirtinkite žetono naudojimą arba žaidimo nurodytą nemokamą aktyvinimą",
+      "save": "Išsaugokite nustatymus, tada įjunkite Automatizavimo kortelę",
+      "title": "Aktyvinimo eigos pavyzdys"
+    },
+    "advisorOverview": {
+      "progress": "Dabartinės atakos / prašomos atakos",
+      "refresh": "Atnaujinkite apžvalgą naujausioms sumoms",
+      "results": "Pergalės, pralaimėjimai, prarasti kariai ir įrankiai",
+      "title": "Vykstančios apžvalgos pavyzdys"
+    },
+    "advisorResources": {
+      "coins": "Visos monetos vienai atakai: 500 tik jei pakanka",
+      "feathers": "Palikti plunksnas: 0, jei nereikia kitur",
+      "rubies": "Rubinai vienai atakai: 0 su Kelionės plunksna",
+      "skips": "Palikti 60 min.: 0 daiktų; pagal poreikį saugokite 5 val. ir 24 val.",
+      "title": "Išteklių biudžetų pavyzdys"
+    },
+    "advisorSizing": {
+      "actual": "Tikra serija: riboja ištekliai ir laikas",
+      "maximum": "Didžiausias atakų skaičius: 9 999",
+      "time": "Nepanaudotas renginio laikas: 30 minučių",
+      "title": "Serijos dydžio pavyzdys"
+    },
+    "khanCooldowns": {
+      "long": "Rezervuokite 5 val. / 24 val. spartinimus kitoms užduotims",
+      "pause": "Nepakankami tinkami spartinimai pristabdo naujus puolimus",
+      "short": "Palikti 1 min. / 5 min. / 10 min. / 30 min. / 1 val.: po 0 daiktų",
+      "skip": "Praleisti kiekvieną stovyklos atvėsimą: įjungta",
+      "title": "Atvėsimo rezervų pavyzdys"
+    },
+    "khanLimits": {
+      "daily": "Įprasti dienos puolimai: 0, be papildomos ribos",
+      "end": "Stabdyti naujus puolimus likus 5 minutėms iki renginio pabaigos",
+      "points": "Stabdyti ties klajoklių taškais: 0, išjungta",
+      "title": "Sustabdymo ribų pavyzdys",
+      "tools": "Gynybos įrankių papildymas: įjungti pagal poreikį"
+    },
+    "khanProtection": {
+      "gate": "Atidaryti pagrindinius vartus ir pristabdyti Chaną ties riba",
+      "outpost": "Šaltinis – forpostas: apsauga išjungta",
+      "source": "Taikoma puolant iš pagrindinės pilies",
+      "threshold": "Puolantys daliniai ant sienos: 1 000",
+      "title": "Pagrindinės sienos apsaugos pavyzdys"
+    },
+    "khanRage": {
+      "attacks": "Automatiniai stovyklos puolimai: atrakinti",
+      "booster": "Laikinas įniršio taškų stiprintuvas privalomas: ne",
+      "chain": "Didžiausia įniršio grandinė: 0, be papildomos ribos",
+      "title": "Įniršio nustatymų pavyzdys",
+      "trigger": "Atsakomasis puolimas esant pilnam įniršiui: įjungta"
+    },
+    "khanSave": {
+      "defense": "Prieš atsakomąjį puolimą patikrinkite pagrindinės pilies gynybą",
+      "enable": "Įjunkite Auto Chaną automatikos kortelėje",
+      "priority": "Automatinis prieglobstis atskirai tvarko žaidėjų puolimus",
+      "save": "Paruošę abu šablonus išsaugokite nustatymus",
+      "title": "Išsaugojimo ir įjungimo pavyzdys"
+    },
+    "khanSetup": {
+      "defense": "Gintis ties: Didžiosios imperijos pagrindine pilimi",
+      "presets": "Išsaugoti Chano puolimo ir pagrindinės gynybos šablonai",
+      "source": "Pulti iš: Didžiosios imperijos forposto",
+      "title": "Chano nustatymo pavyzdys",
+      "travel": "Kelionės plunksna greitai kelionei"
+    },
+    "beriBuilder": {
+      "permissions": "Premium ir griovimas: išjungta iki patikrinimo",
+      "reserves": "Rezervuokite Berimondo išteklius ir pagreitinimus",
+      "stable": "Frakcijos arklidė: pasirinktas lygis 1–5",
+      "target": "Integruotas tikslus tikslas arba patikrintas nuosavas planas",
+      "title": "Neprivalomos stovyklos statybos pavyzdys"
+    },
+    "beriReadiness": {
+      "booster": "Narsos stiprintuvo reikalavimas: neprivalomas",
+      "food": "Perkėlimams reikia Maistą naudojančių šablono karių",
+      "preset": "Patikrinkite išsaugotas karių ir įrankių vietas",
+      "title": "Pasirengimo bokštams pavyzdys"
+    },
+    "beriSave": {
+      "calendar": "Kalendorius išjungtas nuolatiniam veikimui",
+      "enable": "Įjunkite Automatinį Berimondą Automatikos kortelėje",
+      "save": "Išsaugokite nustatymus patikrinę karių proporcijas",
+      "title": "Išsaugojimo ir įjungimo pavyzdys"
+    },
+    "beriSetup": {
+      "donor": "Tiekėjas Didžiojoje imperijoje su reikalingais kariais",
+      "limit": "Įprasti puolimai per dieną: 0 papildomų ribų",
+      "preset": "Išsaugotas Berimondo puolimo šablonas",
+      "title": "Puolimo ir aprūpinimo pavyzdys",
+      "travel": "Kelionės plunksna bokštų puolimams"
+    },
+    "beriTools": {
+      "ladders": "Kopėčios: pagal įprastus puolimus",
+      "mantlets": "Skydai: pagal įprastus puolimus",
+      "rams": "Taranai: pagal įprastus puolimus",
+      "title": "Minimalių įrankių atsargų pavyzdys"
+    },
+    "beriTransfers": {
+      "capacity": "Laisva talpa: 1; slenkstis: 1",
+      "mix": "Šablono santykis: 2 A vienetai vienam B vienetui",
+      "next": "Kita siunta: iki 1 B iš tiekėjo atsargų",
+      "stock": "Stovyklos atsargos: 2 A ir 0 B",
+      "title": "Proporcingų perkėlimų pavyzdys"
+    },
+    "stormCastle": {
+      "blueprint": "Išsaugotas tikslas aktyvus; pauzė jį išlaiko",
+      "capture": "Dabartinė pilis: Funkcinis tikslas",
+      "decorations": "Puošybos ruošinys: pasirenkamas",
+      "title": "Audros pilies prieigos pavyzdys",
+      "unlock": "Automatinis atvėrimas: įjungtas po kainos patikrinimo"
+    },
+    "stormCombat": {
+      "defenders": "Užėmimo gynėjai: pasirinkti arba vienas išgyvenęs",
+      "forts": "Fortai: pasirinkti 40–80 lygiai",
+      "islands": "Akvamarino salos: didelės ir mažos",
+      "priority": "Didelės, mažos, po to 80–40 lygio fortai",
+      "title": "Fortų ir salų puolimų pavyzdys"
+    },
+    "stormConstruction": {
+      "harbor": "Uostas: įjungtas, 1 lygis",
+      "resources": "Mediena 0; akmuo 0; akvamarinas suplanuotas",
+      "spending": "Mokamos išlaidos ir griovimas: išjungti",
+      "title": "Statybos ir atsargų pavyzdys",
+      "transport": "Išteklių gabenimas: įjungtas"
+    },
+    "stormLuna": {
+      "cost": "Kaina ir pirkimo riba: tik skaitoma",
+      "limited": "Riboti tikslai prieš neribotas dovanas",
+      "priority": "Pirmenybė 1, 2, 3; mažesnis pirmas",
+      "reserve": "Palikti akvamarino: 0 naudojant perteklių",
+      "title": "Lunos dovanų pavyzdys"
+    },
+    "stormSave": {
+      "check": "Taisyklių tikrinimas: 30 sekundžių",
+      "daily": "Dienos įprasti puolimai: 0 papildomos ribos",
+      "map": "Žemėlapio atnaujinimas: 2 valandos, tik skaitoma",
+      "switch": "Išsaugokite, tada įjunkite Auto Storm",
+      "title": "Išsaugojimo ir įjungimo pavyzdys"
+    },
+    "stormTroops": {
+      "averages": "Patvirtintos atakos nuo atkūrimo / 24; presetų vidurkis tik skaitymui",
+      "cap": "Įsipareigojusių karių riba: tik skaitoma",
+      "donors": "Tiekėjai: rodoma tvarka, dalinės atsargos leidžiamos",
+      "minimum": "Palikti mažiausiai: 1 000 karių",
+      "title": "Karių importo pavyzdys"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Rekomendacijos skirtos įprastam naudojimui ir nekeičia išsaugotų nustatymų.",
+    "steps": {
+      "open": {
+        "title": "Atverkite automatinio karių prieglobsčio nustatymus",
+        "items": {
+          "open_settings": {
+            "label": "Atverti nustatymus",
+            "description": "Komandų centro viršuje pasirinkite nustatymų mygtuką šalia automatinio karių prieglobsčio."
+          }
+        }
+      },
+      "general": {
+        "title": "Nustatykite atsaką į puolimą",
+        "items": {
+          "evacuate_at": {
+            "label": "Evakuoti likus",
+            "description": "Pradėkite evakuaciją tiek minučių prieš smūgį arba iš karto, jei puolimas aptiktas jau per šį laikotarpį.",
+            "recommendation": "Likus 1 minutei iki smūgio."
+          },
+          "minimum_bird_days": {
+            "label": "Mažiausias taikinio apsaugos dienų skaičius",
+            "description": "Pasirinkite sąjungininko pilį, kuriai liko daugiau apsaugos dienų už šią ribą; 0 panaikina minimumą.",
+            "recommendation": "3 dienos, taigi taikiniui turi likti daugiau nei 3 dienos."
+          },
+          "recall_when_clear": {
+            "label": "Grąžinti pavojui praėjus",
+            "description": "Grąžinkite dislokuotus karius, kai baigiasi paskutinis aptiktas puolimas ir nebėra kitų artėjančių puolimų.",
+            "recommendation": "Įjungta įprastam naudojimui."
+          },
+          "open_gate_fallback": {
+            "label": "Atsarginis vartų atidarymas",
+            "description": "Jei karių negalima evakuoti, ši parinktis šešioms valandoms atidaro puolamos nuosavos pilies vartus, išskyrus Berimondą.",
+            "recommendation": "Išjungta, nebent norite automatinio vartų atidarymo nepavykus evakuacijai."
+          },
+          "protection_mode": {
+            "label": "Įsigytas apsaugos režimas",
+            "description": "Kai įsigytas apsaugos režimas ruošiamas arba aktyvus, automatinis prieglobstis naudoja vartus net išjungus atsarginę parinktį, išskyrus Berimondą."
+          }
+        },
+        "image": {
+          "alt": "Išgalvoti nustatymai su evakuacijos laiku, apsauga, grąžinimu, vartais ir pilies rezervais",
+          "caption": "Prieš išsaugodami patikrinkite keturis atsako valdiklius ir kiekvienos pilies gynybinius rezervus."
+        }
+      },
+      "reserves": {
+        "title": "Pasirinkite kiekvienoje pilyje liekančius karius",
+        "items": {
+          "add_troops": {
+            "label": "Pridėti karių",
+            "description": "Pasirinkite pilyje liekančių karių tipus; be rezervo galima evakuoti visus tinkamus karius, išskyrus įrankius.",
+            "recommendation": "Palikite įprastą gynybinę įgulą ir leiskite išvykti pertekliniams puolimo kariams."
+          },
+          "quantity": {
+            "label": "Kiekis",
+            "description": "Nurodykite, kiek kiekvieno pasirinkto tipo karių lieka šioje pilyje; 0 nieko nerezervuoja.",
+            "recommendation": "Naudokite įprastai šios pilies gynybai reikalingą skaičių."
+          },
+          "edit_defense_troops": {
+            "label": "Redaguoti gynybinius karius",
+            "description": "Dar kartą atverkite karių pasirinkimą, kad pakeistumėte pilies rezervo tipus ar kiekius."
+          },
+          "remove_defense_troop": {
+            "label": "Pašalinti gynybinį karį",
+            "description": "Pašalinkite rezervo laukelį, kad šio tipo kariai nebebūtų laikomi pilyje."
+          }
+        }
+      },
+      "finish": {
+        "title": "Išsaugokite ir įjunkite automatinį prieglobstį",
+        "items": {
+          "save_changes": {
+            "label": "Išsaugoti pakeitimus",
+            "description": "Prieš išeidami iš nustatymų išsaugokite laiką, jungiklius ir kiekvienos pilies rezervus."
+          },
+          "auto_station_switch": {
+            "label": "Automatinio prieglobsčio jungiklis",
+            "description": "Išsaugoję įjunkite automatinį prieglobstį komandų centro viršuje, kad būtų stebimi artėjantys žaidėjų puolimai.",
+            "recommendation": "Įjungta įprastai apsaugai patikrinus rezervus."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatinis karių prieglobstis",
+      "summary": "Perkelkite tinkamus karius prieš artėjantį puolimą",
+      "description": "Artėjant žaidėjo puolimui automatinis prieglobstis perkelia tinkamus karius į artimiausią tinkamą sąjungininko pilį toje pačioje karalystėje.",
+      "expectation": "Įjungus grąžinimą kariai sugrįžta po paskutinio aptikto puolimo, kai nebelieka grėsmės; kitu atveju jie lieka valandą po atvykimo ir tada grįžta. Nesant taikinio ar karių ir dėl žaidimo apribojimų evakuacija gali nepavykti.",
+      "helper": "Kariai keliauja į artimiausią tinkamą sąjungininko pilį toje pačioje karalystėje; jei evakuacija nepavyksta, puolamos nuosavos pilies vartai gali apsaugoti ne Berimonde."
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "Greičiausias prieinamas vadas",
+      "commanderHelp": "Automatinės tvirtovių atakos kiekvienai tikslinei tvirtovei lygina pritaikomus įrangos, brangakmenių, rinkinių ir generolų kelionės greičio efektus; Relikvija 2.0 ar 100 % minimumas nereikalingi.",
+      "description": "Automatinės tvirtovių atakos perka siaubo vilkus pagal išsaugotas ribas, aprūpina įjungtas išorines karalystes ir puola paruoštas tvirtoves iš jų pagrindinių pilių.",
+      "expectation": "Kiekvienai atakai reikia paruoštos tvirtovės, pakankamai siaubo vilkų abiem sparnams ir tinkamo priskirto vado; laukimo laikotarpiai ar tiekimo vėlavimai gali ją pristabdyti.",
+      "name": "Automatinės tvirtovių atakos",
+      "settingsSummary": "Automatinės tvirtovių atakos paruošia siaubo vilkus ir kiekvienai tikslinei tvirtovei parenka greičiausią tinkamą priskirtą vadą.",
+      "summary": "Tiekite siaubo vilkus ir pulkite paruoštas tvirtoves",
+      "travelHelp": "Kelionės plunksna yra numatytoji; jūsų išsaugotas kelionės pasirinkimas išlieka. Konkrečios pilies pagreitis prieš išsiuntimą apskaičiuojamas dar kartą."
+    },
+    "recommendationIntro": "Rekomenduojamos vertės apibūdina įprastą automatinių tvirtovių atakų naudojimą; jos yra patarimai ir nekeičia išsaugotų nustatymų.",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "Iliustracinis automatinių tvirtovių atakų ir kelionės nustatymų pavyzdys",
+          "caption": "Automatinės tvirtovių atakos rikiuoja tinkamus priskirtus vadus kiekvienam taikiniui ir naudoja išsaugotą kelionės pasirinkimą."
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "Vadų skiltyje priskirkite vadus, kuriuos gali naudoti automatinės tvirtovių atakos, ir išsaugokite priskyrimus.",
+            "label": "Vadų priskyrimas",
+            "recommendation": "Priskirkite vadus, kuriuos paprastai norite turėti tvirtovių atakoms."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Sustabdykite automatines tvirtovių atakas pasiekus paskyros paros įprastų atakų skaičių, kol žaidimas jį atnaujins; 0 neprideda ribos.",
+            "label": "Įprastų atakų paros riba",
+            "recommendation": "0, nebent norite papildomos paros ribos."
+          },
+          "fastest_commander": {
+            "description": "Kiekvienai tvirtovei automatika parenka greičiausią dabar prieinamą priskirtą vadą pagal pritaikomus įrangos, brangakmenių, rinkinių ir generolų efektus, pritaikius ribas.",
+            "label": "Greičiausias tinkamas vadas",
+            "recommendation": "Relikvijos 2.0 daiktas ar 100 % greičio premija nereikalingi."
+          },
+          "full_flank_wave": {
+            "description": "Kiekviena ataka laukia pakankamai siaubo vilkų, kad vienoje pilnoje bangoje užpildytų abu sparnus.",
+            "label": "Siaubo vilkų banga abiejuose sparnuose"
+          },
+          "horse_travel_boost": {
+            "description": "Pasirinkite kelionės parinktį tvirtovių atakoms; aiškiai išsaugotas monetų ar rubinų lygis lieka pasirinktas.",
+            "label": "Žirgo kelionės pagreitis",
+            "recommendation": "Kelionės plunksna greičiausiai kelionei."
+          }
+        },
+        "title": "Nustatykite atakas ir kelionę"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "Išsaugoję įjunkite automatines tvirtovių atakas Automatizavimo kortelėje, kad prasidėtų įprasti ciklai.",
+            "label": "Automatinių tvirtovių atakų jungiklis",
+            "recommendation": "Įjungta patikrinus ir išsaugojus norimus nustatymus."
+          },
+          "calendar": {
+            "description": "Naudokite Kalendorių automatinių tvirtovių atakų laikui apriboti ir pakeitę pasirinkite Išsaugoti tvarkaraštį.",
+            "label": "Kalendorius",
+            "recommendation": "Išjungta nuolatiniam įprastam veikimui."
+          },
+          "save_fortress_plan": {
+            "description": "Prieš uždarydami šį langą išsaugokite karalysčių, tiekimo ir atakų nustatymus.",
+            "label": "Išsaugoti tvirtovių planą"
+          }
+        },
+        "title": "Nustatykite tvarkaraštį, išsaugokite ir įjunkite"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "Iliustracinis trijų išorinių karalysčių automatinių tvirtovių atakų valdiklių pavyzdys",
+          "caption": "Įjunkite kiekvieną atrakintą karalystę, kurios pagrindinė pilis turi gauti siaubo vilkų ir pulti tvirtoves."
+        },
+        "items": {
+          "burning_sands": {
+            "description": "Įjunkite atakas ir siaubo vilkų tiekimą iš savo pagrindinės pilies Degančiuose smėlynuose, kai karalystė atrakinta.",
+            "label": "Degantys smėlynai",
+            "recommendation": "Įjungta, kai atrakinta ir paruošta naudoti."
+          },
+          "everwinter_glacier": {
+            "description": "Įjunkite atakas ir siaubo vilkų tiekimą iš savo pagrindinės pilies Amžinosios žiemos ledyne, kai karalystė atrakinta.",
+            "label": "Amžinosios žiemos ledynas",
+            "recommendation": "Įjungta, kai atrakinta ir paruošta naudoti."
+          },
+          "fire_peaks": {
+            "description": "Įjunkite atakas ir siaubo vilkų tiekimą iš savo pagrindinės pilies Ugnies viršūnėse, kai karalystė atrakinta.",
+            "label": "Ugnies viršūnės",
+            "recommendation": "Įjungta, kai atrakinta ir paruošta naudoti."
+          }
+        },
+        "title": "Pasirinkite tvirtovių karalystes"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "Automatizavimo puslapyje pasirinkite nustatymų mygtuką automatinių tvirtovių atakų kortelėje.",
+            "label": "Atverti nustatymus"
+          }
+        },
+        "title": "Atverkite automatinių tvirtovių atakų nustatymus"
+      },
+      "supply": {
+        "image": {
+          "alt": "Iliustracinis siaubo vilkų pirkimo ir perkėlimo nustatymų pavyzdys",
+          "caption": "Peržiūrėkite pirkimo ribą per sesiją, chano lentelių rezervą ir laiko trumpinimo pasirinkimą patvirtintiems perkėlimams."
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "Ribokite siaubo vilkų pirkimus klajoklių parduotuvėje po 100 vienetų per sesiją; 0 išjungia pirkimą.",
+            "label": "Siaubo vilkų per sesiją",
+            "recommendation": "5 000 siaubo vilkų per sesiją pigiausioje kainų pakopoje."
+          },
+          "keep_khan_tablets": {
+            "description": "Nutraukite siaubo vilkų pirkimą, kol chano lentelių kiekis nenukrito žemiau šio rezervo.",
+            "label": "Palikti chano lentelių",
+            "recommendation": "Palikite 25 000 chano lentelių."
+          },
+          "supply_route": {
+            "description": "Nupirkti siaubo vilkai atvyksta į Didžiosios imperijos pagrindinę pilį ir paskirstomi įjungtoms karalystėms.",
+            "label": "Siaubo vilkų tiekimo kelias"
+          },
+          "use_time_skips": {
+            "description": "Naudokite tinkamus laiko trumpinimus tik patvirtintoms automatinių tvirtovių atakų siuntoms ir laikykitės išsaugotų atsargų rezervų.",
+            "label": "Naudoti laiko trumpinimus siaubo vilkų perkėlimams",
+            "recommendation": "Įjungta greitesniam tiekimui, jei tai leidžia išsaugoti laiko trumpinimų rezervai."
+          }
+        },
+        "title": "Nustatykite siaubo vilkų tiekimą"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "Automatinės invazijos atakos puola Svetimus valdovus arba Kraujo varnus pagal išsaugotą atakos šabloną, kol pasiekiamas taškų tikslas ar kita stabdymo riba.",
+      "expectation": "Jos laukia aktyvaus renginio, tinkamų vadų ir pakankamai karių bei įrankių; jau keliaujančios atakos gali pasibaigti sustabdžius naujas.",
+      "name": "Automatinės invazijos atakos",
+      "summary": "Pulkite Svetimus valdovus ir Kraujo varnus iki taškų tikslo"
+    },
+    "recommendationIntro": "Rekomenduojamos vertės apibūdina įprastą automatinių invazijos atakų naudojimą; jos yra patarimai ir nekeičia išsaugotų nustatymų.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Iliustraciniai Svetimų valdovų ir Kraujo varnų sunkumo pasirinkimai",
+          "caption": "Kiekvienam renginiui pasirinkite atskirą atrakintą atsarginį sunkumą."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Pasirinkite atrakintą Kraujo varnų sunkumą, naudojamą, kai dabartiniam renginiui joks sunkumas nepasirinktas.",
+            "label": "Kraujo varnų sunkumas",
+            "recommendation": "Rinkitės aukščiausią atrakintą sunkumą, kurį įprasta jūsų sudėtis patikimai įveikia."
+          },
+          "difficulty_note": {
+            "description": "Išsaugokite abu renginių pasirinkimus; išsaugotos vertės pakeitimas nepakeičia aktyvaus renginio sunkumo.",
+            "label": "Dabartinis sunkumas"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Pasirinkite atrakintą Svetimų valdovų sunkumą, naudojamą, kai dabartiniam renginiui joks sunkumas nepasirinktas.",
+            "label": "Svetimų valdovų sunkumas",
+            "recommendation": "Rinkitės aukščiausią atrakintą sunkumą, kurį įprasta jūsų sudėtis patikimai įveikia."
+          }
+        },
+        "title": "Pasirinkite abiejų renginių sunkumus"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "Išsaugoję įjunkite automatines invazijos atakas Automatizavimo kortelėje, kad jos veiktų esant renginiui ir tinkamiems ištekliams.",
+            "label": "Automatinių invazijos atakų jungiklis",
+            "recommendation": "Įjungta patikrinus ir išsaugojus norimus nustatymus."
+          },
+          "readiness": {
+            "description": "Automatinės invazijos atakos laukia aktyvaus renginio, tinkamų vadų ir pakankamai karių bei įrankių.",
+            "label": "Pasirengimas atakai"
+          },
+          "save_settings": {
+            "description": "Prieš uždarydami langą išsaugokite pradinę pilį, šabloną, sunkumus, stabdymo ribas ir stiprinimo pasirinkimą.",
+            "label": "Išsaugoti nustatymus"
+          }
+        },
+        "title": "Išsaugokite ir įjunkite automatines invazijos atakas"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Iliustraciniai automatinių invazijos atakų stiprinimo nustatymai",
+          "caption": "Palikite stiprinimą išjungtą, nebent ketinate leisti turimą renginio valiutą arba aiškiai pasirinktus rubinus."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Pasirinkite aktyvaus renginio palaikomą parinktį; žaidimas nustato kiekvieną kainą, o aiškus rubinų pasirinkimas leidžia juos išleisti.",
+            "label": "Stiprinimo valiuta",
+            "recommendation": "Renginio valiuta, kai ji siūloma ir stiprinimas įjungtas."
+          },
+          "fortify_each_target": {
+            "description": "Jei įjungta, prieš ataką sustiprinkite kiekvieną sugeneruotą priešo pilį pasirinkta valiuta.",
+            "label": "Stiprinti kiekvieną taikinį",
+            "recommendation": "Išjungta, nebent stiprinimas yra įprastos jūsų renginio strategijos dalis."
+          }
+        },
+        "title": "Pasirinkite neprivalomą taikinių stiprinimą"
+      },
+      "limits": {
+        "image": {
+          "alt": "Iliustracinės automatinių invazijos atakų taškų ir stabdymo ribos",
+          "caption": "Taškų tikslas sustabdo naujus išsiuntimus, bet jau keliaujančios atakos gali baigtis."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Sustabdykite automatizavimą pasiekus visos paskyros dienos įprastų atakų skaičių, kol žaidimas jį atnaujins; 0 neprideda ribos.",
+            "label": "Įprastų atakų dienos riba",
+            "recommendation": "0, kad renginio taškų tikslas valdytų eigą."
+          },
+          "minimum_remaining": {
+            "description": "Nebesiųskite naujų atakų likus tiek minučių iki renginio pabaigos.",
+            "label": "Stabdyti prieš renginio pabaigą",
+            "recommendation": "30 minučių."
+          },
+          "score_target": {
+            "description": "Nebesiųskite naujų atakų, kai pranešti renginio taškai pasiekia arba viršija šį tikslą.",
+            "label": "Stabdyti ties renginio taškais",
+            "recommendation": "Naudokite įprastą paskutinį asmeninio atlygio etapą virš 0."
+          },
+          "travelling_attacks": {
+            "description": "Jau keliaujančios atakos gali baigtis po stabdymo sąlygos ir pakelti galutinius taškus virš tikslo.",
+            "label": "Keliaujančios atakos"
+          }
+        },
+        "title": "Nustatykite taškų ir stabdymo ribas"
+      },
+      "open": {
+        "image": {
+          "alt": "Iliustraciniai pradinės pilies, šablono ir kelionės nustatymai automatinėms invazijos atakoms",
+          "caption": "Pasirinkite pradinę pilį Didžiojoje imperijoje ir išsaugotą renginio šabloną prieš nustatydami kelionę."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Pasirinkite išsaugotą atakos šabloną su kariais, įrankiais ir rikiuote prieš Svetimus valdovus arba Kraujo varnus.",
+            "label": "Atakos šablonas",
+            "recommendation": "Pirma sukurkite įprastą šabloną Svetimiems valdovams arba Kraujo varnams, tada pasirinkite jį čia."
+          },
+          "capacity_note": {
+            "description": "Šablono karių ir įrankių kiekiai prisitaiko prie pasirinkto vado ir taikinio talpos.",
+            "label": "Atakos talpa"
+          },
+          "horse_travel_boost": {
+            "description": "Šioms atakoms pasirinkite plunksnos, monetų arba rubinų kelionės variantą.",
+            "label": "Žirgo kelionės pagreitis",
+            "recommendation": "Kelionės plunksna greitai kelionei."
+          },
+          "open_settings": {
+            "description": "Automatizavimo puslapyje pasirinkite automatinių invazijos atakų kortelės nustatymų mygtuką.",
+            "label": "Atverti nustatymus"
+          },
+          "source_castle": {
+            "description": "Pasirinkite Didžiosios imperijos pilį, tiekiančią karius ir įrankius renginio atakoms.",
+            "label": "Pradinė pilis",
+            "recommendation": "Naudokite įprastą renginio pilį su pakankamai karių ir įrankių."
+          }
+        },
+        "title": "Atverkite automatinių invazijos atakų nustatymus"
+      }
+    }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "Rinkitės aukščiausią atrakintą sunkumą, kurį įprasta jūsų sudėtis patikimai įveikia.",
+            "description": "Renginio pradžiai pasirink atrakintą klajoklių sudėtingumą.",
+            "label": "Klajoklių sudėtingumas"
+          },
+          "samurai_difficulty": {
+            "recommendation": "Rinkitės aukščiausią atrakintą sunkumą, kurį įprasta jūsų sudėtis patikimai įveikia.",
+            "description": "Renginio pradžiai pasirink atrakintą samurajų sudėtingumą.",
+            "label": "Samurajų sudėtingumas"
+          },
+          "active_difficulty": {
+            "description": "Aktyviam renginiui parink dabartinį sudėtingumą, nes kitoks išsaugotas pasirinkimas verčia automatizavimą laukti, o ne keičia lygį.",
+            "label": "Jau aktyvus renginys"
+          }
+        },
+        "title": "Pasirinkite abiejų renginių sunkumus",
+        "image": {
+          "alt": "Klajoklių ir samurajų sudėtingumo pavyzdys",
+          "caption": "Kiekvienam renginiui pasirink atskirą atrakintą sudėtingumą ir atitik aktyvaus renginio lygį."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "Įjungta patikrinus ir išsaugojus norimus nustatymus.",
+            "description": "Išsaugojęs įjunk automatinius klajoklius/samurajus Automatizavimo kortelėje, kad funkcija veiktų esant renginiui ir tinkamiems ištekliams.",
+            "label": "Automatinių klajoklių/samurajų jungiklis"
+          },
+          "save_settings": {
+            "label": "Išsaugoti nustatymus",
+            "description": "Prieš uždarydamas langą išsaugok šaltinį, schemas, sudėtingumus, sustabdymo ribas, laiko šuolių pasirinkimą ir bandymo būseną."
+          },
+          "readiness": {
+            "description": "Automatizavimas tobulina renginio stovyklas ir laukia tinkamų vadų, karių, įrankių bei, jei įjungti, naudojamų laiko šuolių.",
+            "label": "Pasirengimas stovyklų puolimui"
+          }
+        },
+        "title": "Išsaugoti ir įjungti automatinius klajoklius/samurajus"
+      },
+      "limits": {
+        "image": {
+          "caption": "Taškų tikslas sustabdo naujus išsiuntimus, bet jau keliaujančios atakos gali baigtis.",
+          "alt": "Automatinių klajoklių/samurajų taškų ir sustabdymo ribų pavyzdys"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Sustabdykite automatizavimą pasiekus visos paskyros dienos įprastų atakų skaičių, kol žaidimas jį atnaujins; 0 neprideda ribos.",
+            "label": "Įprastų atakų dienos riba",
+            "recommendation": "0, kad renginio taškų tikslas valdytų eigą."
+          },
+          "minimum_remaining": {
+            "description": "Nebesiųskite naujų atakų likus tiek minučių iki renginio pabaigos.",
+            "label": "Stabdyti prieš renginio pabaigą",
+            "recommendation": "30 minučių."
+          },
+          "score_target": {
+            "description": "Nebesiųskite naujų atakų, kai pranešti renginio taškai pasiekia arba viršija šį tikslą.",
+            "label": "Stabdyti ties renginio taškais",
+            "recommendation": "Naudokite įprastą paskutinį asmeninio atlygio etapą virš 0."
+          },
+          "travelling_attacks": {
+            "description": "Jau keliaujančios atakos gali baigtis po stabdymo sąlygos ir pakelti galutinius taškus virš tikslo.",
+            "label": "Keliaujančios atakos"
+          }
+        },
+        "title": "Nustatykite taškų ir stabdymo ribas"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Kelionės žirgu pagreitinimas",
+            "recommendation": "Kelionės plunksna greitai kelionei.",
+            "description": "Stovyklų puolimui pasirink kelionę su plunksna, monetomis arba rubinais."
+          },
+          "open_settings": {
+            "label": "Atidarykite nustatymus",
+            "description": "Automatizavimo puslapyje pasirink automatinių klajoklių/samurajų kortelės nustatymų mygtuką."
+          },
+          "source_castle": {
+            "label": "Pradinė pilis",
+            "recommendation": "Naudokite įprastą renginio pilį su pakankamai karių ir įrankių.",
+            "description": "Pasirink Didžiosios imperijos pilį, kuri tiekia karius ir įrankius stovyklų puolimui."
+          },
+          "nomad_preset": {
+            "description": "Pasirink išsaugotą puolimo schemą su kariais, įrankiais ir rikiuote klajoklių stovykloms.",
+            "label": "Klajoklių puolimo schema",
+            "recommendation": "Sukurk ir pasirink įprastą klajoklių schemą."
+          },
+          "samurai_preset": {
+            "description": "Pasirink išsaugotą puolimo schemą su kariais, įrankiais ir rikiuote samurajų stovykloms.",
+            "label": "Samurajų puolimo schema",
+            "recommendation": "Sukurk ir pasirink įprastą samurajų schemą."
+          }
+        },
+        "image": {
+          "alt": "Automatinių klajoklių/samurajų šaltinio, schemų ir kelionės pavyzdys",
+          "caption": "Sukurk abi renginių schemas prieš pasirinkdamas šaltinio pilį ir kelionės variantą."
+        },
+        "title": "Atidaryti automatinių klajoklių/samurajų nustatymus"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "Stovyklų laukimo ir laiko šuolių atsargų pavyzdys",
+          "caption": "Kiekviena paliekama reikšmė skaičiuoja laiko šuolių daiktus, o ne laukimo minutes."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "Palik šį 10 min. laiko šuolių kiekį nepanaudotą kaip atsargą.",
+            "label": "Palikti 10 min.",
+            "recommendation": "0 įprastiems stovyklų puolimams."
+          },
+          "keep_1m": {
+            "description": "Palik šį 1 min. laiko šuolių kiekį nepanaudotą kaip atsargą.",
+            "label": "Palikti 1 min.",
+            "recommendation": "0 įprastiems stovyklų puolimams."
+          },
+          "keep_24h": {
+            "description": "Palik šį 24 val. laiko šuolių kiekį nepanaudotą kaip atsargą.",
+            "label": "Palikti 24 val.",
+            "recommendation": "Atidėk statyboms ar kitai veiklai reikalingą kiekį."
+          },
+          "keep_30m": {
+            "description": "Palik šį 30 min. laiko šuolių kiekį nepanaudotą kaip atsargą.",
+            "label": "Palikti 30 min.",
+            "recommendation": "0 įprastiems stovyklų puolimams."
+          },
+          "keep_5h": {
+            "description": "Palik šį 5 val. laiko šuolių kiekį nepanaudotą kaip atsargą.",
+            "label": "Palikti 5 val.",
+            "recommendation": "Atidėk statyboms ar kitai veiklai reikalingą kiekį."
+          },
+          "keep_5m": {
+            "description": "Palik šį 5 min. laiko šuolių kiekį nepanaudotą kaip atsargą.",
+            "label": "Palikti 5 min.",
+            "recommendation": "0 įprastiems stovyklų puolimams."
+          },
+          "keep_60m": {
+            "description": "Palik šį 60 min. laiko šuolių kiekį nepanaudotą kaip atsargą.",
+            "label": "Palikti 60 min.",
+            "recommendation": "0 įprastiems stovyklų puolimams."
+          },
+          "skip_cooldowns": {
+            "description": "Po patvirtintos pergalės prieš stovyklą naudok turimą laiko šuolį šio taikinio laukimui pašalinti.",
+            "label": "Pašalinti laukimą po kiekvieno sėkmingo puolimo",
+            "recommendation": "Įjungta įprastiems pasikartojantiems stovyklų puolimams; išjungta natūraliam laukimui."
+          }
+        },
+        "title": "Pasirink laiko šuolius ir atsargas"
+      },
+      "trial": {
+        "image": {
+          "alt": "Laikino bandymo prieš plėšikų barono pilį valdiklių pavyzdys",
+          "caption": "Bandymas pradeda tikrą puolimą ir, kol įjungtas, pakeičia įprastą renginio veikimą."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "Pakeisk įprastą renginio veikimą tikru bandomuoju puolimu prieš vieną plėšikų barono pilį, naudodamas klajoklių schemą ir laiko šuolius.",
+            "label": "Laikinas visas bandymas prieš plėšikų barono pilį",
+            "recommendation": "Išjungta įprastiems klajoklių ar samurajų puolimams."
+          },
+          "target_x": {
+            "description": "Plėšikų barono pilies horizontalią koordinatę įvesk tik laikinam bandymui.",
+            "label": "Taikinys X",
+            "recommendation": "Palik nenaudojamą, kol bandymas išjungtas."
+          },
+          "target_y": {
+            "description": "Plėšikų barono pilies vertikalią koordinatę įvesk tik laikinam bandymui.",
+            "label": "Taikinys Y",
+            "recommendation": "Palik nenaudojamą, kol bandymas išjungtas."
+          },
+          "trial_skips": {
+            "description": "Įjungus bandymą jam įjungiami ir laiko šuoliai.",
+            "label": "Bandymo laiko šuoliai"
+          }
+        },
+        "title": "Įprastiems puolimams laikiną bandymą palik išjungtą"
+      }
+    },
+    "feature": {
+      "description": "Automatiniai klajokliai/samurajai tobulina tinkamas renginio stovyklas, pasirenka silpniausią visiškai patobulintą stovyklą ir pakartotinai ją puola išsaugota renginiui skirta puolimo schema, kol pasiekiama sustabdymo riba.",
+      "expectation": "Sistema laukia aktyvaus renginio, tinkamų vadų, karių, įrankių ir naudojamų laiko šuolių, jei įjungtas laukimo šalinimas; keliaujantys puolimai gali baigtis po naujų išsiuntimų sustabdymo.",
+      "name": "Automatiniai klajokliai/samurajai",
+      "summary": "Tobulink ir pulk klajoklių arba samurajų stovyklas"
+    },
+    "recommendationIntro": "Rekomenduojamos reikšmės apibūdina įprastą automatinių klajoklių/samurajų naudojimą; jos yra patarimas ir nekeičia išsaugotų nustatymų."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "Įjungta patikrinus ir išsaugojus norimus nustatymus.",
+            "description": "Patikrinę nustatymus įjunkite Automatinį patarėją Automatizavimo kortelėje; jau atrakintas patarėjas gali iškart pradėti seriją.",
+            "label": "Automatinio patarėjo jungiklis"
+          },
+          "save_settings": {
+            "label": "Išsaugoti nustatymus",
+            "description": "Prieš uždarydami langą išsaugokite pradinę pilį, šabloną, sudėtingumus, serijos dydį ir išteklių biudžetus."
+          },
+          "activate_advisor": {
+            "description": "Jei patarėjas užrakintas, pasirinkite Aktyvinti patarėją, kad atvertumėte dabartinio renginio patvirtinimą.",
+            "label": "Aktyvinti patarėją"
+          },
+          "activate_and_spend": {
+            "description": "Pateikite patvirtintą aktyvinimą tinkamu renginio arba universaliu patarėjo žetonu; nemokamas renginys rodo aktyvinimą be žetono.",
+            "label": "Aktyvinti ir panaudoti žetoną"
+          },
+          "cancel_activation": {
+            "description": "Uždarykite patvirtinimą nepateikę aktyvinimo ir nepanaudoję žetono.",
+            "label": "Atšaukti aktyvinimą"
+          },
+          "confirm_paid_activation": {
+            "description": "Patvirtinkite, kad patarėjo aktyvinimas gali sunaudoti renginio arba universalų žetoną, nebent žaidimas nurodo, jog šis renginys nemokamas.",
+            "label": "Patvirtinti mokamą aktyvinimą"
+          }
+        },
+        "image": {
+          "alt": "Iliustraciniai Automatinio patarėjo išsaugojimo ir aktyvinimo žetonu valdikliai",
+          "caption": "Išsaugojimas ar įjungimas žetono nenaudoja; atskirai patvirtintas aktyvinimas gali jį panaudoti."
+        },
+        "title": "Išsaugokite, įjunkite ir aktyvinkite patarėjo prieigą"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "Klajoklių sudėtingumas",
+            "recommendation": "Rinkitės aukščiausią atrakintą sunkumą, kurį įprasta jūsų sudėtis patikimai įveikia.",
+            "description": "Pasirinkite atrakintą klajoklių sudėtingumą, kuris bus nustatytas renginiui prasidėjus."
+          },
+          "samurai_difficulty": {
+            "label": "Samurajų sudėtingumas",
+            "recommendation": "Rinkitės aukščiausią atrakintą sunkumą, kurį įprasta jūsų sudėtis patikimai įveikia.",
+            "description": "Pasirinkite atrakintą samurajų sudėtingumą, kuris bus nustatytas renginiui prasidėjus."
+          },
+          "active_difficulty": {
+            "description": "Pasirinkite jau aktyvaus renginio dabartinį sudėtingumą, kitaip automatizavimas lauks, užuot jį pakeitęs.",
+            "label": "Aktyvaus renginio sudėtingumas"
+          }
+        },
+        "title": "Pasirinkite abiejų renginių sunkumus",
+        "image": {
+          "alt": "Iliustraciniai klajoklių ir samurajų patarėjo sudėtingumo pasirinkimai",
+          "caption": "Išsaugokite abiejų renginių sudėtingumus ir suderinkite jau vykstančio renginio sudėtingumą."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Kelionės žirgu pagreitinimas",
+            "recommendation": "Kelionės plunksna greitai kelionei.",
+            "description": "Serijai pasirinkite kelionę už plunksnas, monetas arba rubinus."
+          },
+          "open_settings": {
+            "label": "Atidarykite nustatymus",
+            "description": "Automatizavimo puslapyje pasirinkite Automatinio patarėjo kortelės nustatymų mygtuką."
+          },
+          "source_castle": {
+            "label": "Pradinė pilis",
+            "recommendation": "Naudokite įprastą renginio pilį su pakankamai karių ir įrankių.",
+            "description": "Pasirinkite Didžiosios imperijos pilį, kuri serijai tiekia karius ir įrankius."
+          },
+          "attack_preset": {
+            "description": "Pasirinkite išsaugotą atakos šabloną, kurio kariai, įrankiai ir rikiuotė kopijuojami kiekvienai prašomai atakai.",
+            "label": "Patarėjo atakos šablonas",
+            "recommendation": "Pirmiausia sukurkite įprastą aktyvaus klajoklių ar samurajų renginio šabloną ir jį pasirinkite."
+          },
+          "complete_copies": {
+            "description": "Turimi ištekliai ir pilnos šablono kopijos gali sumažinti seriją žemiau didžiausio atakų skaičiaus.",
+            "label": "Pilnos šablono kopijos"
+          }
+        },
+        "image": {
+          "alt": "Iliustracinė Automatinio patarėjo pradinė pilis, šablonas ir kelionės nustatymai",
+          "caption": "Prieš nustatydami kelionę pasirinkite pradinę pilį Didžiojoje imperijoje ir išsaugotą renginio šabloną."
+        },
+        "title": "Atverkite Automatinio patarėjo nustatymus"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "Palik šį 24 val. laiko šuolių kiekį nepanaudotą kaip atsargą.",
+            "label": "Palikti 24 val.",
+            "recommendation": "Atidėk statyboms ar kitai veiklai reikalingą kiekį."
+          },
+          "keep_5h": {
+            "description": "Palik šį 5 val. laiko šuolių kiekį nepanaudotą kaip atsargą.",
+            "label": "Palikti 5 val.",
+            "recommendation": "Atidėk statyboms ar kitai veiklai reikalingą kiekį."
+          },
+          "keep_60m": {
+            "description": "Palik šį 60 min. laiko šuolių kiekį nepanaudotą kaip atsargą.",
+            "label": "Palikti 60 min.",
+            "recommendation": "0 įprastoms patarėjo serijoms."
+          },
+          "coin_cost": {
+            "description": "Įvertinkite visą vienos atakos monetų kainą biudžeto skaičiavimui prieš paleidimą, nekeisdami žaidimo kainų.",
+            "label": "Visos monetos vienai atakai",
+            "recommendation": "500 tik jei padengia tikrą visą kainą; kitu atveju naudokite didesnę išmatuotą sumą."
+          },
+          "keep_coins": {
+            "description": "Neįtraukite tokio monetų kiekio į serijos biudžetą.",
+            "label": "Palikti monetas",
+            "recommendation": "Palikite įprastą verbavimo ir statybų biudžetą."
+          },
+          "keep_feathers": {
+            "description": "Neįtraukite tokio kelionės plunksnų kiekio į serijos biudžetą.",
+            "label": "Palikti plunksnas",
+            "recommendation": "0, nebent saugote plunksnas kitoms funkcijoms."
+          },
+          "keep_rubies": {
+            "description": "Neįtraukite tokio rubinų kiekio į serijos biudžetą.",
+            "label": "Palikti rubinus",
+            "recommendation": "Palikite kitoms veikloms reikalingą likutį."
+          },
+          "ruby_cost": {
+            "description": "Įvertinkite rubinų kelionės kainą vienai atakai; pasirinkus kelionę už rubinus būtina teigiama reikšmė.",
+            "label": "Rubinai vienai atakai",
+            "recommendation": "0 su Kelionės plunksna; kelionei už rubinus naudokite tikrą teigiamą kainą."
+          }
+        },
+        "image": {
+          "alt": "Iliustracinės Automatinio patarėjo monetų, rubinų, plunksnų ir laiko praleidimų atsargos",
+          "caption": "Kainos laukai yra planavimo įverčiai; paliekamos reikšmės reiškia nepanaudotus išteklius ar laiko praleidimus."
+        },
+        "title": "Nustatykite išteklių biudžetus ir atsargas"
+      },
+      "overview": {
+        "image": {
+          "alt": "Iliustracinė Automatinio patarėjo eigos ir nuostolių apžvalga",
+          "caption": "Apžvalga rodo serijos eigą ir nuostolius nepradėdama naujos serijos."
+        },
+        "items": {
+          "live_progress": {
+            "description": "Apžvalgoje skaitykite dabartinį ir prašomą atakų skaičių, pergales, pralaimėjimus, prarastus karius ir įrankius.",
+            "label": "Vykstanti patarėjo serija"
+          },
+          "no_relaunch": {
+            "description": "Užbaigta arba atšaukta to paties renginio serija automatiškai neprasideda iš naujo.",
+            "label": "Užbaigta arba atšaukta serija"
+          },
+          "refresh_overview": {
+            "description": "Paprašykite naujausių patarėjo serijos eigos, pergalių, pralaimėjimų ir nuostolių duomenų.",
+            "label": "Atnaujinti apžvalgą"
+          }
+        },
+        "title": "Peržiūrėkite vykstančią patarėjo seriją"
+      },
+      "sizing": {
+        "image": {
+          "alt": "Iliustraciniai Automatinio patarėjo atakų skaičiaus ir renginio laiko nustatymai",
+          "caption": "Prašomą skaičių prieš paleidimą riboja turimi ištekliai ir renginio laikas."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "Nustatykite viršutinę šios vienos patarėjo serijos atakų ribą; ištekliai ir likęs laikas gali sumažinti tikrą skaičių.",
+            "label": "Didžiausias atakų skaičius",
+            "recommendation": "9 999, kad serijos dydį nulemtų turimi ištekliai ir renginio laikas."
+          },
+          "minimum_remaining": {
+            "description": "Palikite tiek minučių nepanaudotų skaičiuojant renginio laiką prieš paleidimą.",
+            "label": "Sustabdyti prieš renginio pabaigą",
+            "recommendation": "30 minučių; tai nėra nuolatinis serijos atšaukimo laikmatis."
+          }
+        },
+        "title": "Nustatykite serijos dydį ir renginio laiką"
+      }
+    },
+    "feature": {
+      "description": "Automatinis patarėjas pradeda vieną klajoklių arba samurajų patarėjo atakų seriją pagal turimus išteklius ir likusį renginio laiką.",
+      "expectation": "Serija laukia tinkamo aktyvaus renginio sudėtingumo ir atrakintos patarėjo prieigos; išsaugojimas ar įjungimas žetono nenaudoja, bet patvirtintas aktyvinimas gali jį panaudoti.",
+      "name": "Automatinis patarėjas",
+      "summary": "Pradėkite vieną pagal išteklius apskaičiuotą klajoklių arba samurajų patarėjo seriją"
+    },
+    "recommendationIntro": "Rekomenduojamos reikšmės skirtos įprastam Automatinio patarėjo naudojimui; jos yra gairės ir nekeičia išsaugotų nustatymų."
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "Palikti 10 min.",
+            "description": "Palikite nepanaudotą tiek 10 min. laiko spartinimo daiktų.",
+            "recommendation": "0 įprastoms Chano puolimų grandinėms."
+          },
+          "keep_1m": {
+            "label": "Palikti 1 min.",
+            "description": "Palikite nepanaudotą tiek 1 min. laiko spartinimo daiktų.",
+            "recommendation": "0 įprastoms Chano puolimų grandinėms."
+          },
+          "keep_24h": {
+            "label": "Palikti 24 val.",
+            "recommendation": "Atidėk statyboms ar kitai veiklai reikalingą kiekį.",
+            "description": "Palikite nepanaudotą tiek 24 val. laiko spartinimo daiktų."
+          },
+          "keep_30m": {
+            "label": "Palikti 30 min.",
+            "description": "Palikite nepanaudotą tiek 30 min. laiko spartinimo daiktų.",
+            "recommendation": "0 įprastoms Chano puolimų grandinėms."
+          },
+          "keep_5h": {
+            "label": "Palikti 5 val.",
+            "recommendation": "Atidėk statyboms ar kitai veiklai reikalingą kiekį.",
+            "description": "Palikite nepanaudotą tiek 5 val. laiko spartinimo daiktų."
+          },
+          "keep_5m": {
+            "label": "Palikti 5 min.",
+            "description": "Palikite nepanaudotą tiek 5 min. laiko spartinimo daiktų.",
+            "recommendation": "0 įprastoms Chano puolimų grandinėms."
+          },
+          "keep_1h": {
+            "description": "Palikite nepanaudotą tiek 1 val. laiko spartinimo daiktų.",
+            "label": "Palikti 1 val.",
+            "recommendation": "0 įprastoms Chano puolimų grandinėms."
+          },
+          "skip_cooldowns": {
+            "description": "Rezervuokite ir naudokite pakankamai laiko spartinimo daiktų, kad po puolimų panaikintumėte stovyklos atvėsimą.",
+            "label": "Praleisti kiekvieną Chano stovyklos atvėsimą",
+            "recommendation": "Įjungta; dabartinis nustatymų langas reikalauja šios parinkties norint išsaugoti."
+          },
+          "skip_shortage": {
+            "description": "Nauji stovyklos puolimai pristabdomi, kai turimų laiko spartinimo daiktų nepakanka privalomam atvėsimui panaikinti.",
+            "label": "Nepakanka tinkamų spartinimų"
+          }
+        },
+        "image": {
+          "alt": "Iliustraciniai Auto Chano atvėsimo praleidimo ir laiko spartinimų rezervų nustatymai",
+          "caption": "Rezervai nurodo daiktų, o ne laiko minučių skaičių."
+        },
+        "title": "Nustatykite atvėsimo praleidimą ir rezervus"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "Įprastų atakų dienos riba",
+            "description": "Sustabdykite šios automatikos naujus stovyklos puolimus pasiekus visos paskyros įprastų dienos puolimų skaičių; 0 išjungia šią ribą.",
+            "recommendation": "0, jei visos paskyros riba nereikalinga."
+          },
+          "event_end": {
+            "label": "Sustabdyti prieš renginio pabaigą",
+            "description": "Sustabdykite naujus stovyklos puolimus tiek minučių prieš renginio pabaigą.",
+            "recommendation": "5 minutės."
+          },
+          "nomad_points": {
+            "description": "Pasiekus šį praneštą taškų skaičių, sustabdykite naujus Chano puolimus, atšaukite išsiųstus puolimus ir atidarykite pagrindinius vartus; 0 išjungia sustabdymą.",
+            "label": "Sustabdyti ties klajoklių taškais",
+            "recommendation": "0, nebent norite sustoti ir apsisaugoti ties pasirinktu taškų skaičiumi."
+          },
+          "replenish_tools": {
+            "description": "Papildykite gynybos šablono trūkstamus įrankius iš tinkamų pasiūlymų, atmesdami už rubinus siūlomus rinkinius.",
+            "label": "Papildyti gynybos įrankius",
+            "recommendation": "Įjungta, jei norite tinkamų automatinių pirkimų."
+          }
+        },
+        "image": {
+          "alt": "Iliustraciniai Auto Chano taškų, įrankių ir dienos ribos nustatymai",
+          "caption": "Teigiama klajoklių taškų sustabdymo riba taip pat atšaukia išsiųstus Chano puolimus ir atidaro pagrindinius vartus."
+        },
+        "title": "Nustatykite taškų, atsargų ir dienos ribas"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "Išsaugoti nustatymus",
+            "description": "Išsaugokite pasirinktus pilių, šablonų, įniršio, ribų, atvėsimo rezervų ir apsaugos nustatymus."
+          },
+          "enable_switch": {
+            "description": "Patikrinę pagrindinės pilies gynybą, įjunkite Auto Chaną jo automatikos kortelėje.",
+            "label": "Auto Chano jungiklis",
+            "recommendation": "Įjungta išsaugojus ir paruošus gynybą."
+          },
+          "station_priority": {
+            "description": "Automatinis prieglobstis atskirai tvarko įeinančius žaidėjų puolimus ir Chano atsakomuosius puolimus.",
+            "label": "Automatinio prieglobsčio pirmenybė"
+          }
+        },
+        "image": {
+          "alt": "Iliustracinė Auto Chano išsaugojimo ir įjungimo eiga",
+          "caption": "Prieš įjungdami Chano atsakomuosius puolimus patikrinkite pagrindinės pilies gynybą."
+        },
+        "title": "Išsaugokite ir įjunkite Auto Chaną"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Kelionės žirgu pagreitinimas",
+            "recommendation": "Kelionės plunksna greitai kelionei.",
+            "description": "Stovyklos puolimams pasirinkite kelionę su plunksnomis, monetomis arba rubinais."
+          },
+          "open_settings": {
+            "label": "Atidarykite nustatymus",
+            "description": "Automatikos puslapyje pasirinkite Auto Chano kortelės nustatymų mygtuką."
+          },
+          "attack_from": {
+            "description": "Pasirinkite Didžiosios imperijos pagrindinę pilį arba forpostą, iš kurio bus siunčiami Chano stovyklos puolimai.",
+            "label": "Pulti iš",
+            "recommendation": "Jei įmanoma, naudokite forpostą su savo puolančiąja kariuomene."
+          },
+          "camp_attack_preset": {
+            "description": "Pasirinkite išsaugotą puolimo šabloną įprastiems Chano stovyklos puolimams.",
+            "label": "Stovyklos puolimo šablonas",
+            "recommendation": "Pirmiausia sukurkite savo įprastą Chano puolimo šabloną."
+          },
+          "defend_at": {
+            "description": "Chano atsakomieji puolimai ginami čia rodomoje Didžiosios imperijos pagrindinėje pilyje; šis laukas yra tik skaitymui.",
+            "label": "Gintis ties"
+          },
+          "main_defense_preset": {
+            "description": "Pasirinkite išsaugotą gynybos šabloną, kuris prieš atsakomuosius puolimus vėl pritaikomas pagrindinėje pilyje.",
+            "label": "Pagrindinės gynybos šablonas",
+            "recommendation": "Sukurkite įprastą Chano gynybos šabloną ir paruoškite jo dalinius bei įrankius."
+          }
+        },
+        "image": {
+          "alt": "Iliustraciniai Auto Chano pilies, šablonų ir kelionės nustatymai",
+          "caption": "Prieš įjungdami puolimų grandinę, paruoškite abu šablonus ir pagrindinės pilies gynybą."
+        },
+        "title": "Pasirinkite pilis, šablonus ir kelionę"
+      },
+      "protection": {
+        "image": {
+          "alt": "Iliustracinė Auto Chano pagrindinės pilies sienos apsauga",
+          "caption": "Sienos apsauga taikoma tik tada, kai puolimai siunčiami iš pagrindinės pilies."
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "Įjunkite pagrindinės pilies apsaugą, kai puolančių dalinių ant sienos skaičius pasiekia šią ribą.",
+            "label": "Puolančių sienos dalinių riba",
+            "recommendation": "1 000 puolančių dalinių ant sienos."
+          },
+          "outpost_source": {
+            "description": "Ši sienos apsauga išjungta, kai puolimai siunčiami iš forposto, o pagrindinė pilis ginasi atskirai.",
+            "label": "Šaltinis – forpostas"
+          },
+          "protect_offense": {
+            "description": "Puolant iš pagrindinės pilies, atidarykite jos vartus ir pristabdykite Chaną, jei ant sienos gintųsi per daug puolančių dalinių.",
+            "label": "Apsaugoti puolančius dalinius ant pagrindinės pilies sienos",
+            "recommendation": "Įjungta, kai puolimai siunčiami iš pagrindinės pilies."
+          }
+        },
+        "title": "Apsaugokite pagrindinės pilies sieną"
+      },
+      "rage": {
+        "image": {
+          "alt": "Iliustraciniai Auto Chano įniršio ir puolimų leidimo nustatymai",
+          "caption": "Laikinas įniršio taškų stiprintuvas skiriasi nuo įniršio vėliavų."
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "Sustabdykite naujus stovyklos puolimus, kol toliau tvarkomas įniršis, atvėsimas ir gynyba.",
+            "label": "Užrakinti automatinius Chano puolimus",
+            "recommendation": "Išjungta įprastiems stovyklos puolimams."
+          },
+          "max_rage_chain": {
+            "description": "Apribokite priimtų atsakomųjų puolimų skaičių dabartiniame renginyje, po kurio nauji stovyklos puolimai sustoja; 0 pašalina ribą.",
+            "label": "Didžiausia įniršio grandinė",
+            "recommendation": "0, jei atsakomųjų puolimų riba nereikalinga."
+          },
+          "rage_booster": {
+            "description": "Leiskite naujus automatinius stovyklos puolimus tik kol aktyvus laikinas įniršio taškų stiprintuvas.",
+            "label": "Reikalauti įniršio taškų stiprintuvo",
+            "recommendation": "Išjungta, jei nenorite puolimų tik su stiprintuvu."
+          },
+          "rage_continues": {
+            "description": "Įniršio grandinės riba nesustabdo atsakomojo puolimo iššaukimo esant pilnam įniršiui, atvėsimo tvarkymo ar gynybos atkūrimo.",
+            "label": "Įniršio veiksmai tęsiami"
+          },
+          "trigger_full_rage": {
+            "description": "Iššaukite Chano atsakomąjį puolimą, kai įniršis pilnas.",
+            "label": "Iššaukti Chaną esant pilnam įniršiui",
+            "recommendation": "Įjungta, kai pagrindinė pilis pasirengusi gintis."
+          }
+        },
+        "title": "Nustatykite įniršį ir puolimų leidimus"
+      }
+    },
+    "feature": {
+      "description": "Auto Chanas puola Chano stovyklą, panaikina atvėsimo laikotarpius, iššaukia atsakomuosius puolimus esant pilnam įniršiui ir palaiko pagrindinės pilies gynybą.",
+      "expectation": "Nauji stovyklos puolimai sustabdomi pasiekus nustatytas ribas arba pritrūkus išteklių, o pagrindinė pilis saugoma; įeinančiais žaidėjų puolimais rūpinasi Automatinis prieglobstis.",
+      "name": "Auto Chanas",
+      "summary": "Grandine pulkite Chano stovyklą ir ginkite pagrindinę pilį nuo atsakomųjų puolimų"
+    },
+    "recommendationIntro": "Rekomenduojamos reikšmės skirtos įprastam Auto Chano naudojimui; jos nekeičia išsaugotų nustatymų."
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "Automatinis Berimondas sustiprina jums priklausančią stovyklą pagal pasirinkto puolimo šablono karių proporcijas, o tada gali pulti bokštus, papildyti įrankius ir statyti iš patvirtinto grobio.",
+      "expectation": "Perkėlimai laukia naujų stovyklos ir tiekėjo pilies atsargų, nurodytos talpos ir ankstesnės siuntos užbaigimo; dalinės atsargos leidžia mažesnę siuntą, o trūkstamas būtinas tipas sustabdo papildymą.",
+      "name": "Automatinis Berimondas",
+      "summary": "Aprūpinkite ir valdykite savo Berimondo stovyklą"
+    },
+    "recommendationIntro": "Rekomendacijos skirtos įprastam Automatinio Berimondo naudojimui ir nekeičia išsaugotų nustatymų.",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "Pavyzdiniai neprivalomos stovyklos statybos nustatymai",
+          "caption": "Įtaisytasis ir išsaugotas tikslas, fiksavimo režimai, 5 lygio arklidė, medienos ir akmens atsargos bei septynios laiko praleidimo trukmės."
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "Leiskite pašalinti nevaldomus pastatus, kurių negalima perkelti ar sandėliuoti, kad būtų tiksliai pasiektas tikslas.",
+            "label": "Leisti griovimą",
+            "recommendation": "Išjungta, kol neperžiūrėjote numatytų pašalinimų."
+          },
+          "allow_premium_costs": {
+            "description": "Leiskite tinkamus statybos veiksmus, kurie išleidžia aukščiausios klasės valiutą.",
+            "label": "Leisti aukščiausios klasės išlaidas",
+            "recommendation": "Išjungta, nebent aiškiai norite mokamos statybos."
+          },
+          "auto_beri_builder_lane": {
+            "description": "Statykite arba gerinkite aktyvų Berimondo stovyklos tikslą už patvirtintą grįžusį grobį, neįveždami išteklių iš kitos karalystės.",
+            "label": "Automatinio Berimondo statytojas",
+            "recommendation": "Įjunkite įprastoms stovyklos statyboms peržiūrėję išlaidų leidimus."
+          },
+          "camp_resource_reserves": {
+            "description": "Pasirinktus medienos ir akmens kiekius saugokite nuo stovyklos statybų.",
+            "label": "Stovyklos išteklių atsargos",
+            "recommendation": "Mediena 0 ir akmuo 0, jei perteklių galima naudoti."
+          },
+          "construction_time_skip_reserves": {
+            "description": "Atskirai nustatykite, kiek 1 min, 5 min, 10 min, 30 min, 1 val., 5 val. ir 24 val. laiko praleidimų išsaugoti.",
+            "label": "Statybos laiko praleidimo atsargos",
+            "recommendation": "Trumpų praleidimų palikite po 0; 1, 5 ir 24 val. atsargas rezervuokite kitai veiklai."
+          },
+          "optional_custom_camp_target": {
+            "description": "Fiksuokite Funkcinį pagrindiniams pastatams, Išdėstymą pastatų vietoms be dekoracijų arba Tikslų visoms palaikomoms detalėms.",
+            "label": "Neprivalomas nuosavas stovyklos tikslas",
+            "recommendation": "Naudokite įtaisytąjį tikslą, nebent reikia peržiūrėto savo tikslo."
+          },
+          "stable_target": {
+            "description": "Įtaisytajam tikslui pasirinkite frakcijos arklidės 1–5 lygį.",
+            "label": "Arklidės tikslinis lygis",
+            "recommendation": "5 lygis įprastoms renginio statyboms, jei užtenka išteklių."
+          },
+          "use_construction_time_skips": {
+            "description": "Spartinkite patvirtintą stovyklos statybą, išsaugodami pasirinktas statybų praleidimų atsargas.",
+            "label": "Naudoti statybos pagreitinimus",
+            "recommendation": "Įjunkite įprastoms statyboms, jei užtenka laiko praleidimų."
+          },
+          "keep_skip_10m": {
+            "description": "Šį 10m statybų praleidimų skaičių atidėkite; įprastam naudojimui nustatykite atsargą 0.",
+            "label": "Saugoti 10m praleidimus"
+          },
+          "keep_skip_1h": {
+            "description": "Šį 1h statybų praleidimų skaičių rezervuokite kitai veiklai.",
+            "label": "Saugoti 1h praleidimus"
+          },
+          "keep_skip_1m": {
+            "description": "Šį 1m statybų praleidimų skaičių atidėkite; įprastam naudojimui nustatykite atsargą 0.",
+            "label": "Saugoti 1m praleidimus"
+          },
+          "keep_skip_24h": {
+            "description": "Šį 24h statybų praleidimų skaičių rezervuokite kitai veiklai.",
+            "label": "Saugoti 24h praleidimus"
+          },
+          "keep_skip_30m": {
+            "description": "Šį 30m statybų praleidimų skaičių atidėkite; įprastam naudojimui nustatykite atsargą 0.",
+            "label": "Saugoti 30m praleidimus"
+          },
+          "keep_skip_5h": {
+            "description": "Šį 5h statybų praleidimų skaičių rezervuokite kitai veiklai.",
+            "label": "Saugoti 5h praleidimus"
+          },
+          "keep_skip_5m": {
+            "description": "Šį 5m statybų praleidimų skaičių atidėkite; įprastam naudojimui nustatykite atsargą 0.",
+            "label": "Saugoti 5m praleidimus"
+          },
+          "saved_targets": {
+            "description": "Fiksavimas iškart išsaugo ir aktyvuoja peržiūrėtą savo tikslą; kito išsaugoto tikslo pasirinkimas taip pat jį iškart aktyvuoja.",
+            "label": "Išsaugoti savi tikslai"
+          },
+          "stone_reserve": {
+            "description": "Šio stovyklos akmens kiekio neišleiskite statyboms; nustatykite 0, jei perteklių galima išleisti.",
+            "label": "Akmens atsarga"
+          },
+          "use_built_in_default": {
+            "description": "Iškart grįžkite prie įtaisytojo tikslo, išsaugodami savo tikslus.",
+            "label": "Naudoti įtaisytąjį numatytąjį tikslą"
+          },
+          "wood_reserve": {
+            "description": "Šio stovyklos medienos kiekio neišleiskite statyboms; nustatykite 0, jei perteklių galima išleisti.",
+            "label": "Medienos atsarga"
+          }
+        },
+        "title": "Pasirinkite neprivalomą stovyklos statybą"
+      },
+      "readiness": {
+        "image": {
+          "alt": "Pavyzdiniai pasirengimo bokštų puolimui nustatymai",
+          "caption": "Stiprintuvo sąlyga ir šablono sudėtis be tikro aktyvaus stiprintuvo ar klientų duomenų."
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "Prieš įjungdami puolimus patikrinkite pasirinkto šablono bangas, karius ir įrankius.",
+            "label": "Puolimo šablono sudėtis",
+            "recommendation": "Laikykite pakankamai kiekvienos pasirinktos karių ir įrankių rūšies tiekėjo pilyje ir stovykloje įprastam puolimo tempui."
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "Reikalaukite aktyvaus narsos stiprintuvo, kad tęstųsi perkėlimai, įrankių pirkimai, stovyklos rengimas, bokštų puolimas ar statyba.",
+            "label": "Vykdyti tik su narsos stiprintuvu",
+            "recommendation": "Įjungta, jei visos Automatinio Berimondo dalys turi priklausyti nuo stiprintuvo."
+          }
+        },
+        "title": "Paruoškite bokštų puolimus"
+      },
+      "save": {
+        "image": {
+          "alt": "Pavyzdiniai išsaugojimo ir įjungimo nustatymai",
+          "caption": "Pasirengimo sąrašas, jungiklis ir neprivalomas kalendorius be tikros paskyros."
+        },
+        "items": {
+          "automation_switch": {
+            "description": "Įjunkite Automatinį Berimondą Automatikos kortelėje, patikrinę stovyklą, tiekėjo karius, šabloną ir neprivalomas išlaidas.",
+            "label": "Automatikos jungiklis",
+            "recommendation": "Įjungta po paruošimo."
+          },
+          "calendar": {
+            "description": "Palikite kalendorių išjungtą nuolatiniam veikimui arba nustatykite įprastas valandas ir išsaugokite tvarkaraštį, jei reikia laiko lango.",
+            "label": "Kalendorius",
+            "recommendation": "Išjungta nuolatiniam renginio veikimui."
+          },
+          "save_settings": {
+            "description": "Prieš įjungdami automatiką išsaugokite šabloną, tiekėją, perkėlimų ritmą, puolimų ribas, įrankius ir neprivalomus statybos sprendimus.",
+            "label": "Išsaugoti nustatymus"
+          }
+        },
+        "title": "Išsaugoti ir įjungti"
+      },
+      "setup": {
+        "image": {
+          "alt": "Pavyzdiniai puolimo ir aprūpinimo nustatymai",
+          "caption": "Išsaugotas puolimo šablonas, tiekėjo pilis Didžiojoje imperijoje, Kelionės plunksna, puolimų tikrinimas ir dienos riba."
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "Nustatykite, kaip dažnai automatika ieško kito bokšto puolimo.",
+            "label": "Puolimų tikrinimo intervalas",
+            "recommendation": "Palikite įprastą 30 sekundžių intervalą, nebent norite tikrinti rečiau."
+          },
+          "attack_preset": {
+            "description": "Pasirinkite išsaugotą Berimondo puolimo sudėtį; automatika jos karių proporcijas naudoja perkėlimams ir bokštų puolimams.",
+            "label": "Puolimo šablonas",
+            "recommendation": "Pirmiausia sukurkite ir pasirinkite įprastą Berimondo šabloną."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Sustabdykite naujus bokštų puolimus, kai visos paskyros įprastų puolimų dienos skaičius pasiekia šią ribą; 0 ją panaikina.",
+            "label": "Dienos įprastų puolimų riba",
+            "recommendation": "0, nebent naudojate visos paskyros ribą."
+          },
+          "horse_travel_boost": {
+            "description": "Bokštų puolimams pasirinkite kelionę su plunksna, monetomis ar rubinais.",
+            "label": "Kelionės pagreitinimas",
+            "recommendation": "Kelionės plunksna greitai kelionei be rubinų pasirinkimo."
+          },
+          "open_settings": {
+            "description": "Automatikos puslapyje atidarykite Auto Beri World kortelės nustatymus.",
+            "label": "Atidaryti nustatymus"
+          },
+          "source_castle": {
+            "description": "Pasirinkite pilį arba forpostą Didžiojoje imperijoje, kuri tiekia šiuos karius.",
+            "label": "Tiekėjo pilis",
+            "recommendation": "Pasirinkite pilį, kurioje yra jūsų puolanti armija."
+          }
+        },
+        "title": "Pasirinkite puolimą ir tiekimo šaltinį"
+      },
+      "tools": {
+        "image": {
+          "alt": "Pavyzdiniai stovyklos įrankių nustatymai",
+          "caption": "Trys minimalios įrankių atsargos ir aiškiai išgalvotas stovyklos inventorius."
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "Papildykite šį dislokuotų taranų skaičių pagal tą pačią taisyklę.",
+            "label": "Minimalus taranų kiekis",
+            "recommendation": "Derinkite prie įprasto šablono naudojimo."
+          },
+          "mantlets_minimum": {
+            "description": "Papildykite šį dislokuotų skydų skaičių pagal tą pačią taisyklę.",
+            "label": "Minimalus skydų kiekis",
+            "recommendation": "Derinkite prie įprasto šablono naudojimo."
+          },
+          "scaling_ladders_minimum": {
+            "description": "Papildykite šį dislokuotų kopėčių skaičių stovykloje iš tinkamų pasiūlymų už monetas; 0 palieka jas nevaldomas.",
+            "label": "Minimalus kopėčių kiekis",
+            "recommendation": "Derinkite prie įprasto šablono ir puolimų tempo."
+          }
+        },
+        "title": "Prižiūrėkite stovyklos įrankius"
+      },
+      "transfers": {
+        "image": {
+          "alt": "Pavyzdiniai proporcingų karių perkėlimų nustatymai",
+          "caption": "Išgalvotas santykis 2:1, stovyklos atsargos, laisva talpa ir dalinė vieno tipo siunta; skaičiai yra pavyzdžiai, ne išsaugoti numatytieji nustatymai."
+        },
+        "items": {
+          "check_interval": {
+            "description": "Nustatykite, kaip dažnai automatika atnaujina laisvą perkėlimo talpą ir abiejų pilių atsargas.",
+            "label": "Tikrinimo intervalas",
+            "recommendation": "Palikite įprastą 30 sekundžių intervalą."
+          },
+          "food_only": {
+            "description": "Perkelti galima tik Maistą naudojančius šablono karius; nepalaikomi vienetai ar neišspręstos karių šeimos sustabdo veiksmą su paaiškinimu.",
+            "label": "Tik Maistą naudojantys kariai"
+          },
+          "minimum_free_capacity": {
+            "description": "Pradėkite perkėlimus tik kai nurodyta laisva talpa pasiekia šį slenkstį; pavienė proporcinga siunta gali būti mažesnė.",
+            "label": "Minimali laisva talpa",
+            "recommendation": "1 laisva vieta kariams įprastam proporcingam papildymui."
+          },
+          "owned_berimond_camp": {
+            "description": "Automatika pati randa jums priklausančią Berimondo stovyklą, todėl stovyklos ID įvesti nereikia.",
+            "label": "Jums priklausanti Berimondo stovykla"
+          },
+          "partial_donor": {
+            "description": "Jei tiekėjas turi dalį reikiamos karių rūšies, automatika išsiunčia mažesnį kiekį; jei visai neturi, laukia, o ne siunčia kitą rūšį.",
+            "label": "Dalinės tiekėjo atsargos"
+          },
+          "pending_transfer": {
+            "description": "Automatika laukia kiekvienos siuntos atvykimo ir atnaujina stovyklos atsargas prieš iš naujo skaičiuodama santykį.",
+            "label": "Laukiamas perkėlimas"
+          },
+          "preset_troop_mix": {
+            "description": "Automatika susumuoja pasirinkto šablono bangose ir kieme pasikartojančias karių vietas, tada po vieną papildo nepakankamai atstovaujamą rūšį.",
+            "label": "Šablono karių proporcijos"
+          },
+          "troop_transport_skip": {
+            "description": "Pasirinkite daikto trukmę, naudojamą įjungus transporto pagreitinimą.",
+            "label": "Transporto pagreitinimas",
+            "recommendation": "Patvirtintiems įprastiems pervedimams naudokite 1 valandos praleidimą."
+          },
+          "use_troop_transport_time_skips": {
+            "description": "Pritaikykite pasirinktą pagreitinimą patvirtintam perkėlimui, kol jis dar kelyje.",
+            "label": "Naudoti transporto pagreitinimus",
+            "recommendation": "Įjunkite įprastam stovyklos aprūpinimui, jei laiko praleidimų atsargos leidžia."
+          }
+        },
+        "title": "Nustatykite proporcingus karių perkėlimus"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "Auto Storm gali atverti ir statyti Audros pilį, pulti fortus bei išteklių salas, importuoti karius ir pirkti pasirinktas Lunos dovanas.",
+      "expectation": "Kiekviena veikla naudoja naujausius žaidimo duomenis ir jūsų išsaugotus leidimus; mokami statybos veiksmai, puolimai bei pirkimai priklauso nuo įjungtų pasirinkimų.",
+      "name": "Auto Storm",
+      "summary": "Tvarkykite Audros pilį, puolimus ir dovanas"
+    },
+    "recommendationIntro": "Rekomendacijos apibūdina įprastą Auto Storm naudojimą; jos yra patarimai ir nekeičia išsaugotų nustatymų.",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "Iliustracinis Audros pilies atvėrimo ir tikslo užfiksavimo pavyzdys",
+          "caption": "Pradinės pilies pasirinkimas, fiksavimo režimai ir pasirenkamas tikslo įjungimas; tikras pirkinys ar paskyra nerodomi."
+        },
+        "items": {
+          "automatic_open": {
+            "description": "Jei Audra užrakinta, pasirinkite prieinamą oficialią pradinę pilį ir prieš leisdami atrakinti patikrinkite rodomą kainą.",
+            "label": "Automatiškai atverti Audros pilį",
+            "recommendation": "Įjungta, jei norite, kad Auto Storm atvertų įprastą pradinę pilį po kainos patikrinimo."
+          },
+          "blueprint": {
+            "description": "Užfiksuotas tikslas išsaugomas ir įjungiamas iš karto; Tikslo pristabdymas sustabdo derinimą, bet išsaugotus tikslus palieka.",
+            "label": "Išsaugotas tikslas",
+            "recommendation": "Įprastai statybai palikite įjungtą patikrintą Funkcinį tikslą."
+          },
+          "capture_castle": {
+            "description": "Prieš fiksuodami statybos tikslą pasirinkite dabartinę Audros pilį.",
+            "label": "Audros pilis",
+            "recommendation": "Užfiksuokite pilį, kurią norite tvarkyti."
+          },
+          "combat_only": {
+            "description": "Kovai su fortais ir salomis užfiksuoto statybos tikslo nereikia.",
+            "label": "Kova be tikslo"
+          },
+          "decoration_preset": {
+            "description": "Pasirinktinai pritaikykite pasirinktą puošybos ruošinį po statybos.",
+            "label": "Puošybos ruošinys po statybos",
+            "recommendation": "Palikite tuščią, jei nereikia atskiro puošybos išdėstymo."
+          },
+          "exact": {
+            "description": "Išsaugokite visus palaikomus tikslo duomenis tiksliai kopijai.",
+            "label": "Tikslus fiksavimas",
+            "recommendation": "Naudokite tik peržiūrėję visą tikslą."
+          },
+          "functional": {
+            "description": "Išsaugokite tikslą svarbiausioms Audros funkcijoms nekopijuodami kiekvienos pastato vietos.",
+            "label": "Funkcinis fiksavimas",
+            "recommendation": "Funkcinis įprastai priežiūrai."
+          },
+          "layout": {
+            "description": "Išsaugokite pastatų tipus ir vietas be dekoracijų.",
+            "label": "Išdėstymo fiksavimas",
+            "recommendation": "Naudokite tik kai pastatų padėtis svarbi."
+          },
+          "open_settings": {
+            "description": "Atverkite Auto Storm nustatymus Automatikos kortelėje.",
+            "label": "Atverti nustatymus"
+          },
+          "starter_castle": {
+            "description": "Pasirinkite šiuo metu prieinamą oficialią Audros pradinę pilį kitam užrakintam sezonui.",
+            "label": "Atveriama pilis",
+            "recommendation": "Patikrinę kainą pasirinkite įperkamą įprastą pradinę pilį."
+          }
+        },
+        "title": "Atverkite ir užfiksuokite Audros pilį"
+      },
+      "combat": {
+        "image": {
+          "alt": "Iliustraciniai fortų ir salų puolimo nustatymai",
+          "caption": "Pavyzdinės akvamarino salos, fortų lygiai, tikslų tvarka ir užimtų salų gynėjai."
+        },
+        "items": {
+          "defenders": {
+            "description": "Pasirinkite užimtoje saloje paliekamų gynėjų tipus ir skaičius; tuščias sąrašas po patvirtintos pergalės palieka vieną išgyvenusį.",
+            "label": "Salos gynybos vienetai",
+            "recommendation": "Pasirinkite gynėjus, jei vieno išgyvenusio jūsų planui nepakanka."
+          },
+          "fort_preset": {
+            "description": "Fortams pasirinkite išsaugotą karių ir įrankių rikiuotę.",
+            "label": "Fortų puolimo ruošinys",
+            "recommendation": "Naudokite įprastą fortų ruošinį."
+          },
+          "forts": {
+            "description": "Įjunkite puolimus prieš pasirinkto 40–80 lygio oficialius fortus.",
+            "label": "Audros fortai",
+            "recommendation": "Įjunkite lygius, kuriuos pasirinkta rikiuotė patikimai įveikia."
+          },
+          "horse": {
+            "description": "Audros puolimams pasirinkite kelionę su plunksna, monetomis ar rubinais.",
+            "label": "Kelionės žirgu paspartinimas",
+            "recommendation": "Kelionės plunksna greitam judėjimui nesirenkant kelionės už rubinus."
+          },
+          "island_preset": {
+            "description": "Saloms pasirinkite išsaugotą karių ir įrankių rikiuotę.",
+            "label": "Salų puolimo ruošinys",
+            "recommendation": "Naudokite įprastą salų ruošinį."
+          },
+          "island_resources": {
+            "description": "Pasirinkite, kurias medienos, akmens ar akvamarino salas galima pulti.",
+            "label": "Salų ištekliai",
+            "recommendation": "Akvamarino rinkimui pasirinkite akvamariną."
+          },
+          "island_sizes": {
+            "description": "Pasirinkite dideles, mažas ar abiejų dydžių pasirinktų išteklių salas.",
+            "label": "Salų dydžiai",
+            "recommendation": "Dideles ir mažas įprastam akvamarino rinkimui."
+          },
+          "islands": {
+            "description": "Įjunkite pasirinktų išteklių ir dydžių salų užėmimą.",
+            "label": "Išteklių salos",
+            "recommendation": "Įjunkite, jei norite akvamarino iš didelių ir mažų salų."
+          },
+          "minimum_attacks": {
+            "description": "Pulkite tik fortus, kuriuose likę bent tiek puolimų.",
+            "label": "Mažiausiai likusių puolimų",
+            "recommendation": "0 leidžia bet kurį tinkamą fortą."
+          },
+          "priority": {
+            "description": "Surikiuokite įjungtas salų ir fortų tikslų grupes; kiekvienoje grupėje pirmiausia puolamas artimiausias tinkamas tikslas.",
+            "label": "Puolimo tikslų pirmenybė",
+            "recommendation": "Didelės salos, mažos salos, tada 80–40 lygių fortai akvamarinui rinkti."
+          }
+        },
+        "title": "Pasirinkite fortus ir išteklių salas"
+      },
+      "construction": {
+        "image": {
+          "alt": "Iliustraciniai statybos ir atsargų nustatymai",
+          "caption": "Išteklių gabenimas, išlaidų leidimai, atsargos ir uosto lygis parodyti kaip pavyzdys."
+        },
+        "items": {
+          "demolition": {
+            "description": "Leiskite iš tikslios vietos šalinti pastatus, kurių negalima perkelti ar padėti į saugyklą.",
+            "label": "Leisti griauti",
+            "recommendation": "Išjungta, nebent atstatote peržiūrėtą išdėstymą."
+          },
+          "donor_reserves": {
+            "description": "Prieš išteklių gabenimą palikite kiekviename tiekėjų pasirinktus medienos, akmens ir akvamarino kiekius.",
+            "label": "Saugomos tiekėjų atsargos",
+            "recommendation": "Saugokite įprastą medienos ir akmens statybos biudžetą; akvamarino 0, jei nenaudojate."
+          },
+          "harbor_level": {
+            "description": "Pasirinkite norimą 1, 2 arba 3 uosto lygį; 2 ir 3 lygiai naudoja mokamos statybos kelius.",
+            "label": "Norimas uosto lygis",
+            "recommendation": "1 lygis, jei neplanuojate mokamų patobulinimų."
+          },
+          "harbor": {
+            "description": "Išlaikykite uostą pasirinkto lygio, net jei užfiksuotas tikslas skiriasi.",
+            "label": "Patobulinti uostą",
+            "recommendation": "Įjungta su 1 lygiu įprastam naudojimui."
+          },
+          "premium": {
+            "description": "Leiskite tinkamus statybos veiksmus, kurie eikvoja mokamą valiutą.",
+            "label": "Leisti mokamas išlaidas",
+            "recommendation": "Išjungta, jei mokama statyba neplanuota."
+          },
+          "resource_transport": {
+            "description": "Leiskite patvirtintas trūkstamų statybos išteklių siuntas iš tiekėjų pilių.",
+            "label": "Gabenti trūkstamus išteklius",
+            "recommendation": "Įjungta įprastai statybai."
+          },
+          "skip_reserves": {
+            "description": "Saugokite pasirinktą 1 min, 5 min, 10 min, 30 min, 1 val., 5 val. ir 24 val. daiktų skaičių statyboms ir pervežimams.",
+            "label": "Laiko praleidimo atsargos",
+            "recommendation": "Trumpų praleidimų 0, jei jų nereikia kitur; 1, 5 ir 24 valandų atsargas pasilikite kitiems įvykiams."
+          },
+          "storm_reserves": {
+            "description": "Pasirinktus medienos, akmens ir akvamarino kiekius saugokite nuo statybų.",
+            "label": "Audros pilies išlaidų atsargos",
+            "recommendation": "Mediena 0 ir akmuo 0, jei perteklių galima išleisti; akvamariną nustatykite pagal planuojamą atlygių biudžetą."
+          },
+          "time_skips": {
+            "description": "Tinkamus laiko praleidimus taikykite statyboms, išteklių ir karių pervežimams, išsaugodami pasirinktas atsargas.",
+            "label": "Naudoti statybų ir pervežimų praleidimus",
+            "recommendation": "Įjungta, jei norite greitesnės įprastos statybos."
+          }
+        },
+        "title": "Nustatykite statybą ir išteklių apsaugą"
+      },
+      "luna": {
+        "image": {
+          "alt": "Iliustraciniai Lunos dovanų nustatymai",
+          "caption": "Akvamarino atsargos, riboti pirkimo tikslai, kartojamos dovanos ir pirmenybė."
+        },
+        "items": {
+          "cost_cap": {
+            "description": "Perskaitykite žaidimo nurodytą kiekvienos dovanos kainą ir pirkimo ribą.",
+            "label": "Kaina ir pirkimo riba",
+            "recommendation": "Prieš įjungdami patikrinkite abi tik skaitomas reikšmes."
+          },
+          "keep_aqua": {
+            "description": "Šio akvamarino kiekio nenaudokite Lunos pirkiniams.",
+            "label": "Palikti akvamarino",
+            "recommendation": "0, jei visas perteklius gali būti naudojamas dovanoms; kitu atveju pasilikite suplanuotą kiekį."
+          },
+          "priority": {
+            "description": "Parduotuvė pirmiausia vertina mažesniais numeriais pažymėtus pirkimo tikslus.",
+            "label": "Pirmenybė",
+            "recommendation": "Priskirkite 1, 2 ir 3 norima tvarka, ribotus tikslus išdėstydami prieš neribotus atlygius."
+          },
+          "search": {
+            "description": "Prieš nustatydami pirkimą pagal pavadinimą raskite oficialias Lunos dovanas.",
+            "label": "Rasti Lunos dovaną",
+            "recommendation": "Ieškokite dovanos, kurios iš tikrųjų norite."
+          },
+          "target_total": {
+            "description": "Nustatykite pageidaujamą bendrą ribotos dovanos pirkimų skaičių.",
+            "label": "Norimas bendras skaičius",
+            "recommendation": "Nurodykite tik tiek, kiek norite pirkti."
+          },
+          "unlimited": {
+            "description": "Tęskite tinkamos kartojamos dovanos pirkimą, kol leidžia atsargos ir parduotuvės riba.",
+            "label": "Neribota",
+            "recommendation": "Įjungta tik reguliariai norimoms kartojamoms dovanoms."
+          },
+          "use": {
+            "description": "Pasirinkite dovaną, kad ją būtų galima pirkti automatiškai.",
+            "label": "Naudoti dovaną",
+            "recommendation": "Įjunkite tik norimas dovanas."
+          }
+        },
+        "title": "Pasirinkite Lunos dovanas už akvamariną"
+      },
+      "save": {
+        "image": {
+          "alt": "Iliustracinis Auto Storm išsaugojimas ir įjungimas",
+          "caption": "Dienos puolimų riba, taisyklių tikrinimas, tik skaitomas žemėlapio atnaujinimas ir automatikos jungiklis."
+        },
+        "items": {
+          "daily_limit": {
+            "description": "Sustabdykite naujus Auto Storm puolimus pasiekus visos paskyros dienos įprastų puolimų skaičių; 0 pašalina šią papildomą ribą.",
+            "label": "Dienos įprastų puolimų riba",
+            "recommendation": "0, jei nenaudojate visos paskyros ribos."
+          },
+          "enable": {
+            "description": "Įjunkite Auto Storm Automatikos kortelėje, kai išsaugoti pasirinkimai parengti.",
+            "label": "Automatikos jungiklis",
+            "recommendation": "Įjunkite po nustatymo."
+          },
+          "map_refresh": {
+            "description": "Perskaitykite oficialų Audros žemėlapio atnaujinimo intervalą.",
+            "label": "Žemėlapio atnaujinimo intervalas",
+            "recommendation": "Tik skaitomas intervalas yra 2 valandos; po pakeitimų palaukite naujo skenavimo."
+          },
+          "policy_check": {
+            "description": "Nustatykite, kaip dažnai Auto Storm tikrina nustatymus ir tinkamas užduotis.",
+            "label": "Taisyklių tikrinimo intervalas",
+            "recommendation": "Palikite įprastą 30 sekundžių intervalą."
+          },
+          "save": {
+            "description": "Prieš įjungdami automatiką išsaugokite pilies, statybos, kovos, karių importo ir Lunos pasirinkimus.",
+            "label": "Išsaugoti nustatymus",
+            "recommendation": "Išsaugokite patikrinę visus išlaidų leidimus."
+          }
+        },
+        "title": "Išsaugokite ir įjunkite Auto Storm"
+      },
+      "troops": {
+        "image": {
+          "alt": "Iliustracinis karių importas ir tik skaitomi įverčiai",
+          "caption": "Tiekėjų tvarka, 1 000 paliekamų karių ir tik skaitomi talpos įverčiai."
+        },
+        "items": {
+          "attack_history": {
+            "description": "Skaitykite patvirtintų Audros atakų nuo serverio atkūrimo skaičių, padalytą iš 24, o ne slenkantį 24 valandų vidurkį.",
+            "label": "Vidutinis puolimų skaičius po atkūrimo",
+            "recommendation": "Prieš keisdami importo poreikį peržiūrėkite šį tik skaitomą įvertį."
+          },
+          "committed_cap": {
+            "description": "Perskaitykite automatiškai apskaičiuotą ribą, apimančią dislokuotus karius, judėjimą, gabenimą ir grįžimą.",
+            "label": "Įsipareigojusių Audros karių riba",
+            "recommendation": "Prieš didindami importą peržiūrėkite šią tik skaitomą ribą."
+          },
+          "donors": {
+            "description": "Pasirinkite tiekėjų pilis rodoma tvarka; dalinės atsargos gali suteikti mažesnę siuntą.",
+            "label": "Tiekėjų pilys",
+            "recommendation": "Pasirinkite įprastus karių tiekėjus pageidaujama tvarka."
+          },
+          "import": {
+            "description": "Importuokite į Audrą trūkstamus puolančius arba pasirinktus ginančius karius iš tiekėjų pilių.",
+            "label": "Importuoti trūkstamus karius",
+            "recommendation": "Įjungta, jei Audros piliai reguliariai reikia karių tiekimo."
+          },
+          "map_coverage": {
+            "description": "Prieš pasikliaudami rodomais tikslais patikrinkite žemėlapio aprėptį.",
+            "label": "Žemėlapio aprėptis",
+            "recommendation": "Jei tikslų trūksta, palaukite naujos aprėpties."
+          },
+          "minimum_kept": {
+            "description": "Po puolimo paleidimo Audroje palikite bent tiek karių ir išsaugokite įjungtų ruošinių sudėtį.",
+            "label": "Mažiausiai karių po paleidimo",
+            "recommendation": "1 000 karių kaip įprasta atsarga, priderinta prie tikros jūsų armijos."
+          },
+          "preset_average": {
+            "description": "Perskaitykite vidutinį įjungtų puolimo ruošinių karių poreikį, įskaitant pasirinktus salų gynėjus.",
+            "label": "Vidutinis įjungtas ruošinys",
+            "recommendation": "Palyginkite šį tik skaitomą įvertį su savo armija."
+          }
+        },
+        "title": "Importuokite ir stebėkite Audros karius"
+      }
+    }
+  }
+}

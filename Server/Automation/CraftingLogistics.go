@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -54,8 +55,8 @@ func craftingRentalDecision(
 	}
 	arguments, _ := json.Marshal(requestArguments)
 	return Decision{
-		Status:              "ready",
-		Detail:              fmt.Sprintf("Rent %s crafting slot %d at %s", slotType, slot, castleName(castle)),
+		Status: "ready",
+		Detail: fmt.Sprintf("Rent %s crafting slot %d at %s", slotType, slot, castleName(castle)), DetailDescriptor: Localization.New("server.automation.rent_p_crafting_slot.6b1f6293", "Rent {p0} crafting slot {p1} at {p2}", Localization.Params{"p0": fmt.Sprintf("%s", slotType), "p1": slot, "p2": fmt.Sprintf("%s", castleName(castle))}),
 		NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 		Metrics:             map[string]float64{"coinCost": cost},
 		Request:             &Intent.Request{Name: "crafting.rent_slot", Arguments: arguments},
@@ -160,7 +161,7 @@ func craftingTransportDecision(
 		incoming := incomingMarketResource(snapshot, target, resourceID)
 		if incoming >= shortfall {
 			return Decision{
-				Status: "waiting", Detail: fmt.Sprintf("An in-flight market shipment covers resource %d at %s", resourceID, castleName(target)),
+				Status: "waiting", Detail: fmt.Sprintf("An in-flight market shipment covers resource %d at %s", resourceID, castleName(target)), DetailDescriptor: Localization.New("server.automation.an_in_flight_market.b9eff71c", "An in-flight market shipment covers resource {p0} at {p1}", Localization.Params{"p0": fmt.Sprintf("%d", resourceID), "p1": fmt.Sprintf("%s", castleName(target))}),
 				NextCheckAt: nextMarketArrival(snapshot, target, resourceID, interval),
 			}, true
 		}
@@ -250,7 +251,7 @@ func craftingLootDrainDecision(settings craftingSettings, snapshot Snapshot) (De
 		Detail: fmt.Sprintf(
 			"Drain %.0f resource %d from %s into %s's configured crafting buffer",
 			best.amount, best.resource, castleName(best.source), castleName(best.target),
-		),
+		), DetailDescriptor: Localization.New("server.automation.drain_p_resource_p.aabf5564", "Drain {p0} resource {p1} from {p2} into {p3}'s configured crafting buffer", Localization.Params{"p0": best.amount, "p1": best.resource, "p2": fmt.Sprintf("%s", castleName(best.source)), "p3": fmt.Sprintf("%s", castleName(best.target))}),
 		NextCheckAt: snapshot.Now.Add(2 * time.Second),
 		Metrics: map[string]float64{
 			"shipmentAmount": best.amount, "projectedDelivery": best.delivered,
@@ -482,8 +483,8 @@ func sameKingdomShipmentDecision(
 		"resourceId": resourceID, "amount": int64(amount), "minimumCoinReserve": settings.MinimumCoinReserve,
 	})
 	return Decision{
-		Status:              "ready",
-		Detail:              fmt.Sprintf("Ship %.0f resource %d from %s to %s", amount, resourceID, castleName(best), castleName(target)),
+		Status: "ready",
+		Detail: fmt.Sprintf("Ship %.0f resource %d from %s to %s", amount, resourceID, castleName(best), castleName(target)), DetailDescriptor: Localization.New("server.automation.ship_p_resource_p.af0eeeb0", "Ship {p0} resource {p1} from {p2} to {p3}", Localization.Params{"p0": amount, "p1": fmt.Sprintf("%d", resourceID), "p2": fmt.Sprintf("%s", castleName(best)), "p3": fmt.Sprintf("%s", castleName(target))}),
 		NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 		Metrics:             map[string]float64{"shipmentAmount": amount},
 		Request:             &Intent.Request{Name: "resource.ship", Arguments: arguments},
@@ -501,18 +502,20 @@ func crossKingdomShipmentDecision(
 ) (Decision, bool) {
 	if pending, found := pendingKingdomResourceTransport(snapshot.State, target.KingdomID); found {
 		detail := fmt.Sprintf("Kingdom %d already has a resource shipment in flight", target.KingdomID)
+		var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.kingdom_p_already_has.ff03a00e", "Kingdom {p0} already has a resource shipment in flight", Localization.Params{"p0": fmt.Sprintf("%d", target.KingdomID)})
 		nextCheck := snapshot.Now.Add(coordinatorTick)
 		if pending.RemainingSec > 0 {
 			nextCheck = snapshot.Now.Add(time.Duration(pending.RemainingSec) * time.Second)
 		} else {
 			detail = fmt.Sprintf("Waiting for the kingdom %d resource shipment to settle", target.KingdomID)
+			detailLocalizationMessage = Localization.New("server.automation.waiting_for_the_kingdom.a568c707", "Waiting for the kingdom {p0} resource shipment to settle", Localization.Params{"p0": fmt.Sprintf("%d", target.KingdomID)})
 		}
-		return Decision{Status: "waiting", Detail: detail, NextCheckAt: nextCheck}, true
+		return Decision{Status: "waiting", Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage), NextCheckAt: nextCheck}, true
 	}
 	if workflow, found := kingdomResourceTransportWorkflow(snapshot.State, target.KingdomID); found {
 		return Decision{
-			Status:      "waiting",
-			Detail:      fmt.Sprintf("Waiting for %s to refresh the kingdom %d resource destination", workflow.Owner, workflow.KingdomID),
+			Status: "waiting",
+			Detail: fmt.Sprintf("Waiting for %s to refresh the kingdom %d resource destination", workflow.Owner, workflow.KingdomID), DetailDescriptor: Localization.New("server.automation.waiting_for_p_to.3a604b59", "Waiting for {p0} to refresh the kingdom {p1} resource destination", Localization.Params{"p0": fmt.Sprintf("%s", workflow.Owner), "p1": fmt.Sprintf("%d", workflow.KingdomID)}),
 			NextCheckAt: snapshot.Now.Add(coordinatorTick),
 		}, true
 	}
@@ -563,8 +566,8 @@ func crossKingdomShipmentDecision(
 	}
 	arguments, _ := json.Marshal(shipmentArguments)
 	return Decision{
-		Status:              "ready",
-		Detail:              fmt.Sprintf("Ship %.0f resource %d from kingdom %d to %d", amount, resourceID, best.KingdomID, target.KingdomID),
+		Status: "ready",
+		Detail: fmt.Sprintf("Ship %.0f resource %d from kingdom %d to %d", amount, resourceID, best.KingdomID, target.KingdomID), DetailDescriptor: Localization.New("server.automation.ship_p_resource_p.9c797b66", "Ship {p0} resource {p1} from kingdom {p2} to {p3}", Localization.Params{"p0": amount, "p1": fmt.Sprintf("%d", resourceID), "p2": fmt.Sprintf("%d", best.KingdomID), "p3": fmt.Sprintf("%d", target.KingdomID)}),
 		NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 		Metrics:             map[string]float64{"shipmentAmount": amount},
 		Request:             &Intent.Request{Name: "resource.ship", Arguments: arguments},

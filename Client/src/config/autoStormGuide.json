@@ -1,0 +1,369 @@
+{
+  "recommendationIntro": "Recommended choices describe regular Auto Storm use; they are guidance and do not change saved settings.",
+  "steps": [
+    {
+      "id": "castle",
+      "title": "Open and capture your Storm castle",
+      "items": [
+        {
+          "id": "open_settings",
+          "label": "Open settings",
+          "description": "Open Auto Storm settings from its Automation card."
+        },
+        {
+          "id": "automatic_open",
+          "label": "Automatically open Storm castle",
+          "description": "When Storm is locked, choose an available official starter castle and review its displayed price before allowing an unlock.",
+          "recommendation": "On if you want Auto Storm to open a usual starter castle after reviewing its price."
+        },
+        {
+          "id": "starter_castle",
+          "label": "Castle to open",
+          "description": "Choose the currently available official Storm starter castle used for the next locked season.",
+          "recommendation": "Choose an affordable usual starter after checking the price."
+        },
+        {
+          "id": "capture_castle",
+          "label": "Storm castle",
+          "description": "Select your current Storm castle before capturing a construction target.",
+          "recommendation": "Capture the castle you intend to manage."
+        },
+        {
+          "id": "functional",
+          "label": "Functional capture",
+          "description": "Save a target for essential Storm functions without copying every building position.",
+          "recommendation": "Functional for normal upkeep."
+        },
+        {
+          "id": "layout",
+          "label": "Layout capture",
+          "description": "Save building types and positions without decorations.",
+          "recommendation": "Use only when building placement matters."
+        },
+        {
+          "id": "exact",
+          "label": "Exact capture",
+          "description": "Save all supported target details for an exact clone.",
+          "recommendation": "Use only after reviewing the full target."
+        },
+        {
+          "id": "blueprint",
+          "label": "Saved target",
+          "description": "A captured target is saved and activated immediately, while Pause target stops reconciliation but keeps saved targets.",
+          "recommendation": "Keep a reviewed Functional target active for normal building."
+        },
+        {
+          "id": "decoration_preset",
+          "label": "Decoration preset after construction",
+          "description": "Optionally apply a selected decoration preset after construction.",
+          "recommendation": "Leave empty unless you want a separate decoration layout."
+        },
+        {
+          "id": "combat_only",
+          "label": "Combat without a target",
+          "description": "Fort and island combat does not require a captured construction target."
+        }
+      ],
+      "image": {
+        "src": "",
+        "alt": "Illustrative Auto Storm castle access and target capture",
+        "caption": "Starter choice, capture modes and optional target activation; no live purchase or account shown.",
+        "width": 680,
+        "height": 360
+      }
+    },
+    {
+      "id": "construction",
+      "title": "Set construction and resource protection",
+      "items": [
+        {
+          "id": "resource_transport",
+          "label": "Transport missing resources",
+          "description": "Allow confirmed shipments of missing building resources from donor castles.",
+          "recommendation": "On for regular construction."
+        },
+        {
+          "id": "time_skips",
+          "label": "Use construction and transport time skips",
+          "description": "Apply eligible time skips to construction, resource transport, and troop transport while keeping selected item reserves.",
+          "recommendation": "On if you want faster routine construction."
+        },
+        {
+          "id": "premium",
+          "label": "Allow premium costs",
+          "description": "Allow eligible construction steps that spend premium currency.",
+          "recommendation": "Off unless premium building is planned."
+        },
+        {
+          "id": "demolition",
+          "label": "Allow demolition",
+          "description": "Allow exact-target removal of buildings that cannot be moved or stored.",
+          "recommendation": "Off unless you are rebuilding a reviewed layout."
+        },
+        {
+          "id": "storm_reserves",
+          "label": "Storm castle spending reserves",
+          "description": "Keep the chosen Wood, Stone, and Aquamarine amounts unavailable to construction.",
+          "recommendation": "Wood 0 and Stone 0 if spending surplus; set Aquamarine to your planned reward budget."
+        },
+        {
+          "id": "donor_reserves",
+          "label": "Protected donor reserves",
+          "description": "Keep chosen wood, stone and Aquamarine amounts at each donor before resource transport.",
+          "recommendation": "Protect your usual wood and stone building budget; Aquamarine 0 when unused."
+        },
+        {
+          "id": "skip_reserves",
+          "label": "Time skips kept in reserve",
+          "description": "Keep the selected number of each 1m, 5m, 10m, 30m, 1h, 5h, and 24h item from construction and transport.",
+          "recommendation": "Keep 0 of the short skips unless needed elsewhere; reserve your other-event stock of 1h, 5h and 24h skips."
+        },
+        {
+          "id": "harbor",
+          "label": "Upgrade Harbor",
+          "description": "Maintain the Harbor at your selected level even when the captured target differs.",
+          "recommendation": "On with level 1 for regular use."
+        },
+        {
+          "id": "harbor_level",
+          "label": "Harbor target level",
+          "description": "Choose Harbor level 1, 2 or 3; levels 2 and 3 use premium construction paths.",
+          "recommendation": "Level 1 unless premium upgrades are planned."
+        }
+      ],
+      "image": {
+        "src": "",
+        "alt": "Illustrative Auto Storm construction and reserve settings",
+        "caption": "Resource transport, spending permissions, reserves and Harbor level are example controls.",
+        "width": 680,
+        "height": 360
+      }
+    },
+    {
+      "id": "combat",
+      "title": "Choose forts and resource islands",
+      "items": [
+        {
+          "id": "horse",
+          "label": "Horse travel boost",
+          "description": "Choose feather, coin or ruby travel for Storm attacks.",
+          "recommendation": "Travel Feather for fast travel without choosing ruby travel."
+        },
+        {
+          "id": "forts",
+          "label": "Storm forts",
+          "description": "Enable attacks on the selected official fort levels from 40 through 80.",
+          "recommendation": "On for levels your selected preset can beat reliably."
+        },
+        {
+          "id": "fort_preset",
+          "label": "Fort attack preset",
+          "description": "Choose a saved troop and tool formation for forts.",
+          "recommendation": "Use your regular fort preset."
+        },
+        {
+          "id": "minimum_attacks",
+          "label": "Minimum attacks remaining",
+          "description": "Only attack forts with at least this many attacks remaining.",
+          "recommendation": "0 to allow any eligible fort."
+        },
+        {
+          "id": "islands",
+          "label": "Resource islands",
+          "description": "Enable capture of islands matching the chosen resources and sizes.",
+          "recommendation": "On when you want Aquamarine from large and small islands."
+        },
+        {
+          "id": "island_resources",
+          "label": "Island resources",
+          "description": "Choose which wood, stone or Aquamarine islands may be attacked.",
+          "recommendation": "Select Aquamarine for Aquamarine farming."
+        },
+        {
+          "id": "island_sizes",
+          "label": "Island sizes",
+          "description": "Choose large, small or both sizes of selected resource islands.",
+          "recommendation": "Large and small for regular Aquamarine farming."
+        },
+        {
+          "id": "island_preset",
+          "label": "Island attack preset",
+          "description": "Choose a saved troop and tool formation for islands.",
+          "recommendation": "Use your regular island preset."
+        },
+        {
+          "id": "defenders",
+          "label": "Island defense units",
+          "description": "Choose the types and amounts left to defend a captured island; an empty list leaves one survivor after a confirmed victory.",
+          "recommendation": "Choose defenders if one survivor is insufficient for your plan."
+        },
+        {
+          "id": "priority",
+          "label": "Attack target priority",
+          "description": "Order enabled island and fort target rows; within each row, attack the nearest eligible target first.",
+          "recommendation": "Large islands, small islands, then level 80 through 40 forts for Aquamarine farming."
+        }
+      ],
+      "image": {
+        "src": "",
+        "alt": "Illustrative Auto Storm fort and island attack settings",
+        "caption": "Example Aquamarine islands, fort levels, target order and occupation defenders.",
+        "width": 680,
+        "height": 360
+      }
+    },
+    {
+      "id": "troops",
+      "title": "Import and monitor Storm troops",
+      "items": [
+        {
+          "id": "import",
+          "label": "Import missing troops",
+          "description": "Import missing attack or selected defense troops into Storm from chosen donor castles.",
+          "recommendation": "On if your Storm castle needs regular troop supply."
+        },
+        {
+          "id": "donors",
+          "label": "Donor castles",
+          "description": "Choose donor castles in the displayed order; partial stock can supply a smaller shipment.",
+          "recommendation": "Select your usual troop suppliers in preferred order."
+        },
+        {
+          "id": "minimum_kept",
+          "label": "Minimum troops kept after launch",
+          "description": "Keep at least this many troops in Storm after launching an attack while preserving the enabled preset mix.",
+          "recommendation": "1,000 troops for a regular reserve, adjusted to your actual army."
+        },
+        {
+          "id": "attack_history",
+          "label": "Average attacks since reset",
+          "description": "Read confirmed Storm attacks since the server reset divided by 24, rather than a rolling 24-hour average.",
+          "recommendation": "Review this read-only estimate before changing import needs."
+        },
+        {
+          "id": "preset_average",
+          "label": "Average enabled preset",
+          "description": "Read the average troops required by enabled attack presets, including chosen island defenders.",
+          "recommendation": "Review this read-only estimate against your army."
+        },
+        {
+          "id": "committed_cap",
+          "label": "Storm committed troop cap",
+          "description": "Read the automatically calculated cap including stationed troops, movements, transit and returns.",
+          "recommendation": "Review this read-only cap before increasing imports."
+        },
+        {
+          "id": "map_coverage",
+          "label": "Map coverage",
+          "description": "Review map scan coverage before relying on displayed targets.",
+          "recommendation": "Wait for fresh coverage when targets are missing."
+        }
+      ],
+      "image": {
+        "src": "",
+        "alt": "Illustrative Auto Storm troop import and read-only estimates",
+        "caption": "Donor order, 1,000 kept troops and read-only capacity estimates.",
+        "width": 680,
+        "height": 360
+      }
+    },
+    {
+      "id": "luna",
+      "title": "Choose Luna Aquamarine rewards",
+      "items": [
+        {
+          "id": "keep_aqua",
+          "label": "Keep Aquamarine",
+          "description": "Keep this amount of Aquamarine unavailable to Luna purchases.",
+          "recommendation": "0 if all surplus may fund rewards; otherwise reserve your planned amount."
+        },
+        {
+          "id": "search",
+          "label": "Find a Luna reward",
+          "description": "Search the official Luna rewards by name before configuring a purchase.",
+          "recommendation": "Search for the reward you actually want."
+        },
+        {
+          "id": "use",
+          "label": "Use reward",
+          "description": "Select a reward to make it eligible for automatic purchasing.",
+          "recommendation": "Use only wanted rewards."
+        },
+        {
+          "id": "cost_cap",
+          "label": "Cost and purchased cap",
+          "description": "Read the game-reported cost and purchased cap for each reward.",
+          "recommendation": "Check both read-only values before enabling."
+        },
+        {
+          "id": "target_total",
+          "label": "Target total",
+          "description": "Set the desired total purchased count for a limited reward.",
+          "recommendation": "Set only the count you intend to buy."
+        },
+        {
+          "id": "unlimited",
+          "label": "Unlimited",
+          "description": "Keep buying an eligible repeatable reward while the reserve and shop cap permit.",
+          "recommendation": "On for regular repeatable rewards only."
+        },
+        {
+          "id": "priority",
+          "label": "Priority",
+          "description": "The shop considers lower-numbered purchase goals first.",
+          "recommendation": "Assign 1, 2, and 3 in your preferred order, placing limited goals before unlimited rewards."
+        }
+      ],
+      "image": {
+        "src": "",
+        "alt": "Illustrative Auto Storm Luna reward settings",
+        "caption": "Aquamarine reserve, limited purchase goals, repeatable rewards and priority.",
+        "width": 680,
+        "height": 360
+      }
+    },
+    {
+      "id": "save",
+      "title": "Save and enable Auto Storm",
+      "items": [
+        {
+          "id": "daily_limit",
+          "label": "Daily normal attack limit",
+          "description": "Stop new Auto Storm attacks at the account-wide daily normal-attack count; 0 removes this added limit.",
+          "recommendation": "0 unless you use an account-wide cap."
+        },
+        {
+          "id": "policy_check",
+          "label": "Policy check interval",
+          "description": "Set how often Auto Storm checks its settings and eligible work.",
+          "recommendation": "Keep the usual 30-second interval."
+        },
+        {
+          "id": "map_refresh",
+          "label": "Map refresh interval",
+          "description": "Read the authoritative Storm map refresh interval.",
+          "recommendation": "The read-only interval is 2 hours; wait for a fresh scan after changes."
+        },
+        {
+          "id": "save",
+          "label": "Save settings",
+          "description": "Save your castle, construction, combat, troop import and Luna selections before enabling automation.",
+          "recommendation": "Save after reviewing all spending permissions."
+        },
+        {
+          "id": "enable",
+          "label": "Automation switch",
+          "description": "Enable Auto Storm on its Automation card after the saved choices are ready.",
+          "recommendation": "On after setup."
+        }
+      ],
+      "image": {
+        "src": "",
+        "alt": "Illustrative Auto Storm save and enable settings",
+        "caption": "Daily attack limit, policy check, read-only map refresh and automation switch.",
+        "width": 680,
+        "height": 360
+      }
+    }
+  ]
+}

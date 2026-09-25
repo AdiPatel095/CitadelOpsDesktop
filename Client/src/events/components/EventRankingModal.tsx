@@ -1,3 +1,5 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useMemo } from 'react';
 import { RefreshCw, Trophy } from 'lucide-react';
 import type { EventRankingStateV2 } from '../../api/Contracts';
@@ -24,6 +26,7 @@ const EventRankingModal: React.FC<EventRankingModalProps> = ({
 	onRefresh,
 	onClose,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
 	const entries = useMemo(() => [...(ranking?.entries ?? [])].sort((left, right) => left.rank - right.rank), [ranking?.entries]);
 	const loading = isRefreshing || ranking?.pending === true;
 
@@ -35,24 +38,24 @@ const EventRankingModal: React.FC<EventRankingModalProps> = ({
 			title={`${eventName} alliance ranking`}
 			footer={(
 				<div className="flex w-full items-center justify-between gap-3">
-					<p className="text-xs text-text-muted">Live data returned directly by the GGE event leaderboard.</p>
+					<p className="text-xs text-text-muted"><LocalizedText messageKey="ui.events.components.eventRankingModal.live.data.returned.directly.by.the.gge.3b72fd0a" /></p>
 					<div className="flex gap-2">
-						<Button type="button" variant="ghost" onClick={onClose}>Close</Button>
-						<Button type="button" variant="primary" leftIcon={<RefreshCw className="h-4 w-4" />} isLoading={loading} onClick={onRefresh}>Refresh</Button>
+						<Button type="button" variant="ghost" onClick={onClose}><LocalizedText messageKey="common.close" /></Button>
+						<Button type="button" variant="primary" leftIcon={<RefreshCw className="h-4 w-4" />} isLoading={loading} onClick={onRefresh}><LocalizedText messageKey="common.refresh" /></Button>
 					</div>
 				</div>
 			)}
 		>
 			<div className="flex flex-col gap-4">
 				<div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-					<MetricTile label="Rows returned" value={entries.length} tone="brand" />
-					<MetricTile label="Alliances" value={ranking?.totalAlliances ?? 0} />
-					<MetricTile label="League ID" value={ranking?.leagueId ?? '—'} />
-					<MetricTile label="List type" value={ranking?.listType ?? '—'} />
-					<MetricTile label="First rank" value={formatOptionalNumber(ranking?.firstRank)} />
-					<MetricTile label="Search value" value={ranking?.searchValue || '—'} />
-					<MetricTile label="Global flag" value={ranking?.globalFlag ?? '—'} />
-					<MetricTile label="Refreshed" value={formatObservedAt(ranking?.observedAt)} monospace={false} />
+					<MetricTile label={localizeStatic("ui.events.components.eventRankingModal.label.rows.returned.cd6fbedd")} value={entries.length} tone="brand" />
+					<MetricTile label={localizeStatic("ui.events.components.eventRankingModal.label.alliances.29af085c")} value={ranking?.totalAlliances ?? 0} />
+					<MetricTile label={localizeStatic("ui.events.components.eventRankingModal.label.league.id.b267bb7a")} value={ranking?.leagueId ?? '—'} />
+					<MetricTile label={localizeStatic("ui.events.components.eventRankingModal.label.list.type.2e7efe94")} value={ranking?.listType ?? '—'} />
+					<MetricTile label={localizeStatic("ui.events.components.eventRankingModal.label.first.rank.058a2d7d")} value={formatOptionalNumber(ranking?.firstRank)} />
+					<MetricTile label={localizeStatic("ui.events.components.eventRankingModal.label.search.value.3dfeb184")} value={ranking?.searchValue || '—'} />
+					<MetricTile label={localizeStatic("ui.events.components.eventRankingModal.label.global.flag.d1c1da11")} value={ranking?.globalFlag ?? '—'} />
+					<MetricTile label={localizeStatic("ui.events.components.eventRankingModal.label.refreshed.62b59354")} value={formatObservedAt(ranking?.observedAt)} monospace={false} />
 				</div>
 
 				{error && (
@@ -71,12 +74,12 @@ const EventRankingModal: React.FC<EventRankingModalProps> = ({
 						<table className="w-full min-w-[780px] text-left text-sm">
 							<thead className="border-b border-border-base bg-bg-card/80 text-[10px] font-bold uppercase tracking-wider text-text-muted">
 								<tr>
-									<th className="px-4 py-3 text-right">Rank</th>
-									<th className="px-4 py-3">Alliance</th>
-									<th className="px-4 py-3 text-right">Score</th>
-									<th className="px-4 py-3 text-right">Members</th>
-									<th className="px-4 py-3 text-right">Alliance fame</th>
-									<th className="px-4 py-3 text-right">Alliance ID</th>
+									<th className="px-4 py-3 text-right"><LocalizedText messageKey="ui.events.components.eventRankingModal.rank.a4130d7d" /></th>
+									<th className="px-4 py-3"><LocalizedText messageKey="ui.events.components.eventRankingModal.alliance.afe3c194" /></th>
+									<th className="px-4 py-3 text-right"><LocalizedText messageKey="ui.events.components.eventRankingModal.score.38e5a46c" /></th>
+									<th className="px-4 py-3 text-right"><LocalizedText messageKey="ui.events.components.eventRankingModal.members.1044a4c0" /></th>
+									<th className="px-4 py-3 text-right"><LocalizedText messageKey="ui.events.components.eventRankingModal.alliance.fame.14bd930e" /></th>
+									<th className="px-4 py-3 text-right"><LocalizedText messageKey="ui.events.components.eventRankingModal.alliance.id.cc8a9e08" /></th>
 								</tr>
 							</thead>
 							<tbody className="divide-y divide-border-base/60">
@@ -89,7 +92,7 @@ const EventRankingModal: React.FC<EventRankingModalProps> = ({
 										<tr key={entry.allianceId || `${entry.rank}-${entry.alliance}`} className={ownRow ? 'bg-primary/10' : 'hover:bg-bg-card-hover/45'}>
 											<td className="px-4 py-3 text-right font-mono font-black tabular-nums text-primary">#{entry.rank.toLocaleString()}</td>
 											<td className="px-4 py-3 font-semibold text-text-main">
-												<div className="flex items-center gap-2">{entry.alliance || 'Unknown'}{ownRow && <Badge variant="primary">Your alliance</Badge>}</div>
+												<div className="flex items-center gap-2">{entry.alliance || 'Unknown'}{ownRow && <Badge variant="primary"><LocalizedText messageKey="ui.events.components.eventRankingModal.your.alliance.02932b31" /></Badge>}</div>
 											</td>
 											<td className="px-4 py-3 text-right font-mono font-bold tabular-nums text-text-main">{entry.score.toLocaleString()}</td>
 											<td className="px-4 py-3 text-right font-mono tabular-nums text-text-muted">{formatOptionalNumber(entry.memberCount)}</td>
@@ -104,8 +107,7 @@ const EventRankingModal: React.FC<EventRankingModalProps> = ({
 				)}
 
 				<p className="text-xs text-text-muted">
-					GGE returns a window around the current alliance. The total reflects the full leaderboard, and every top-level and row field returned by the Nomad ranking endpoint is shown above.
-				</p>
+					<LocalizedText messageKey="ui.events.components.eventRankingModal.gge.returns.a.window.around.the.current.30d1fc49" /></p>
 			</div>
 		</Modal>
 	);

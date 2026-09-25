@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"fmt"
 	"strings"
 
@@ -39,7 +40,7 @@ func evaluateBeriEventBuild(
 	if layoutStale || queueStale {
 		return autoStormIntentDecision(snapshot.Now, metrics, "Refresh the Berimond castle building state", "building.refresh", map[string]any{
 			"castleId": castle.ID,
-		}), false, "", nil
+		}, Localization.New("server.automation.refresh_the_berimond_castle.d477db72", "Refresh the Berimond castle building state", nil)), false, "", nil
 	}
 	catalog, err := snapshot.GameData.BuildingCatalog()
 	if err != nil {
@@ -48,7 +49,7 @@ func evaluateBeriEventBuild(
 	if giftID, found := autoStormExpansionGift(castle, catalog); found {
 		return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Collect expansion gift %d before reconciling the Berimond layout", giftID), "building.collect_expansion_gift", map[string]any{
 			"castleId": castle.ID, "buildingInstanceId": giftID,
-		}), false, "", nil
+		}, Localization.New("server.automation.collect_expansion_gift_p.28c34463", "Collect expansion gift {p0} before reconciling the Berimond layout", Localization.Params{"p0": fmt.Sprintf("%d", giftID)})), false, "", nil
 	}
 	queueDecision, queueBlocked := autoStormQueueDecision(snapshot, settings, castle, catalog, metrics, profile)
 	if queueDecision != nil {
@@ -64,7 +65,8 @@ func evaluateBeriEventBuild(
 	if err != nil {
 		return nil, false, "", err
 	}
-	if !stableDiff.Satisfied {
+	stableRubyBlocked := rubyPolicyOnlyBlocked(stableDiff)
+	if !stableDiff.Satisfied && !stableRubyBlocked {
 		if queueBlocked {
 			return nil, false, "The Berimond construction queue is occupied while the selected Stable level is pending", nil
 		}
@@ -74,10 +76,27 @@ func evaluateBeriEventBuild(
 
 	metrics["beriBuildPhase"] = beriBuildPhaseGround
 	missingGround := autoStormMissingGround(castle, normalized.Ground)
+	if metrics["builtInTarget"] == 1 {
+		missingGround = Buildings.MissingGroundCoverage(castle, normalized.Ground, catalog)
+	}
 	metrics["targetGroundRemaining"] = float64(len(missingGround))
 	if len(missingGround) > 0 {
 		if queueBlocked {
 			return nil, false, "The Berimond construction queue is occupied while target expansions are pending", nil
+		}
+		if metrics["builtInTarget"] == 1 && beriTargetStorageCountReached(castle, normalized, catalog) {
+			preview, previewErr := Buildings.PreviewExpansion(snapshot.State, snapshot.GameData, Buildings.ExpansionPreviewRequest{
+				CastleID: castle.ID, Payment: Buildings.ExpansionPaymentResources,
+				ResourceReserves: settings.Build.ResourceReserves,
+			})
+			if previewErr != nil {
+				return nil, false, "", previewErr
+			}
+			for _, cost := range preview.Costs {
+				if cost.CapacityKnown && !cost.CapacitySufficient {
+					return nil, false, "The built-in Berimond target already has all seven stores; expansion cost plus configured reserves exceeds storage capacity", nil
+				}
+			}
 		}
 		decision, detail, expansionErr := autoStormExpansionDecision(snapshot, settings, castle, missingGround, metrics, profile)
 		if expansionErr != nil {
@@ -132,7 +151,7 @@ func evaluateBeriEventBuild(
 		if autoStormDecorationDefinition(definition) && definition.Storeable != nil && *definition.Storeable {
 			return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Store unmanaged %s before arranging the target layout", definition.DisplayName), "building.store", map[string]any{
 				"castleId": castle.ID, "buildingInstanceId": extra.BuildingInstanceID,
-			}), false, "", nil
+			}, Localization.New("server.automation.store_unmanaged_p_before.64960dea", "Store unmanaged {p0} before arranging the target layout", Localization.Params{"p0": fmt.Sprintf("%s", definition.DisplayName)})), false, "", nil
 		}
 		if !settings.Build.AllowDemolition {
 			return nil, false, fmt.Sprintf("Unmanaged %s must be removed before layout moves; enable demolition to allow this action", definition.DisplayName), nil
@@ -142,7 +161,7 @@ func evaluateBeriEventBuild(
 		}
 		return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Demolish unmanaged %s before arranging the target layout", definition.DisplayName), "building.demolish", map[string]any{
 			"castleId": castle.ID, "buildingInstanceId": extra.BuildingInstanceID,
-		}), false, "", nil
+		}, Localization.New("server.automation.demolish_unmanaged_p_before.47b57709", "Demolish unmanaged {p0} before arranging the target layout", Localization.Params{"p0": fmt.Sprintf("%s", definition.DisplayName)})), false, "", nil
 	}
 
 	metrics["beriBuildPhase"] = beriBuildPhaseMove
@@ -176,6 +195,9 @@ func evaluateBeriEventBuild(
 	metrics["targetBuildingsTotal"] = float64(stableDiff.Summary.TargetCount + decorationDiff.Summary.TargetCount + finalDiff.Summary.TargetCount + fixedDiff.Summary.TargetCount)
 	metrics["targetActionsRemaining"] = float64(finalDiff.Summary.ActionCount + fixedDiff.Summary.ActionCount)
 	if finalDiff.Satisfied && fixedDiff.Satisfied {
+		if stableRubyBlocked {
+			return nil, false, rubyPolicyDetail(stableDiff), nil
+		}
 		return nil, true, "Captured Berimond target state satisfied", nil
 	}
 	if queueBlocked {
@@ -266,7 +288,7 @@ func beriUnsafeTargetDiff(diff Buildings.TargetDiffResult) (string, bool) {
 			continue
 		}
 		switch issue.Code {
-		case "premium_disallowed", "no_space", "kingdom", "area_type", "event_context", "event", "map_context", "map":
+		case "premium_disallowed", "ruby_confirmation_unknown", "ruby_confirmation_required", "no_space", "kingdom", "area_type", "event_context", "event", "map_context", "map":
 			continue
 		default:
 			return issue.Message, true
@@ -345,7 +367,7 @@ func beriPhaseAction(
 			continue
 		}
 		storage, err := Buildings.PreviewStorageDependency(snapshot.State, snapshot.GameData, Buildings.StorageDependencyRequest{
-			CastleID: castle.ID, Costs: action.Costs,
+			CastleID: castle.ID, EventID: optionalAutoEventBuildID(profile.EventID), Costs: action.Costs,
 			ResourceReserves: settings.Build.ResourceReserves,
 			AllowPremium:     settings.Build.AllowPremium, AllowResourceTransport: false,
 			AllowTimeSkips:               settings.Build.AllowTimeSkips,
@@ -400,4 +422,24 @@ func beriPhaseStorageDefinitions(diff Buildings.TargetDiffResult) []State.Buildi
 		}
 	}
 	return result
+}
+
+// The fixed built-in layout must never build an eighth prerequisite store and
+// subsequently classify it as unmanaged. Custom targets keep their own policy.
+func beriTargetStorageCountReached(castle State.CastleState, target Buildings.TargetCaptureResult, catalog *GameData.BuildingCatalog) bool {
+	required := 0
+	for _, building := range target.Buildings {
+		definition, found := catalog.DefinitionView(int64(building.DefinitionID))
+		if found && strings.EqualFold(definition.InternalName, "FactionStorage") {
+			required++
+		}
+	}
+	existing := 0
+	for _, building := range castle.Layout.Objects {
+		definition, found := catalog.DefinitionView(int64(building.DefinitionID))
+		if building.Placed && found && strings.EqualFold(definition.InternalName, "FactionStorage") {
+			existing++
+		}
+	}
+	return required > 0 && existing >= required
 }

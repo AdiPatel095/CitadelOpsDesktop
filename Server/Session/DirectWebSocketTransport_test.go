@@ -770,6 +770,9 @@ func TestDirectTransportClassifiesFailedLogins(t *testing.T) {
 			status.CooldownUntil == nil || status.RetryAt == nil || status.LoggedIn {
 			t.Fatalf("cooldown status = %+v failure = %+v", status, status.LoginFailure)
 		}
+		if status.RetryAt.Sub(*status.CooldownUntil) != loginCooldownSafetyMargin {
+			t.Fatalf("cooldown margin = %s", status.RetryAt.Sub(*status.CooldownUntil))
+		}
 		if strings.Contains(status.Detail, "test-password") {
 			t.Fatal("status detail exposed the password")
 		}

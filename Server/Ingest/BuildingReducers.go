@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"math"
 	"reflect"
 	"time"
 
@@ -229,6 +230,10 @@ func applyBuildingMutationRow(
 		InstanceID: instanceID, DefinitionID: State.BuildingID(definitionID),
 		GridX: int(rowInt(row, 2)), GridY: int(rowInt(row, 3)), Rotation: int(rowInt(row, 4)),
 		ProgressSec: rowInt(row, 5), ConstructionState: constructionState, Level: level, Layer: layer,
+		ConstructionBoostPercent: buildingConstructionBoost(row),
+	}
+	if len(row) <= 8 && found && existing.DefinitionID == building.DefinitionID && existing.ConstructionState == building.ConstructionState && building.ProgressSec >= existing.ProgressSec {
+		building.ConstructionBoostPercent = existing.ConstructionBoostPercent
 	}
 	building.Placed = building.GridX >= 0 && building.GridY >= 0
 	unchanged := found && reflect.DeepEqual(existing, building)
@@ -324,4 +329,17 @@ func cloneBuildingProduction(source map[State.BuildingInstanceID]State.BuildingP
 		result[id] = production
 	}
 	return result
+}
+
+// Row 8 is the construction speed percentage captured by the server when the
+// operation starts. A present malformed value invalidates earlier knowledge.
+func buildingConstructionBoost(row []json.RawMessage) float64 {
+	if len(row) <= 8 {
+		return 0
+	}
+	value, ok := rawFloat64(row[8])
+	if !ok || math.IsNaN(value) || math.IsInf(value, 0) {
+		return 0
+	}
+	return value
 }

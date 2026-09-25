@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -45,7 +46,7 @@ func (*AutoEquipmentCleanupPolicy) Evaluate(_ context.Context, snapshot Snapshot
 
 	if !Equipment.CleanupStorageFresh(snapshot.State, snapshot.Now) {
 		return Decision{
-			Status: "ready", Detail: "Refresh equipment and gem storage before automatic cleanup",
+			Status: "ready", Detail: "Refresh equipment and gem storage before automatic cleanup", DetailDescriptor: Localization.New("server.automation.refresh_equipment_and_gem.1c84e3c0", "Refresh equipment and gem storage before automatic cleanup", nil),
 			NextCheckAt:         nextCheck,
 			Request:             &Intent.Request{Name: "equipment.refresh", Arguments: json.RawMessage(`{}`)},
 			ReevaluateOnSuccess: true,
@@ -63,7 +64,7 @@ func (*AutoEquipmentCleanupPolicy) Evaluate(_ context.Context, snapshot Snapshot
 			"category": "non_relic_equipment", "sellLookItems": false, "sellPost2026": false,
 		})
 		return Decision{
-			Status: "ready", Detail: fmt.Sprintf("Sell %d eligible non-relic equipment item(s)", counts.Equipment),
+			Status: "ready", Detail: fmt.Sprintf("Sell %d eligible non-relic equipment item(s)", counts.Equipment), DetailDescriptor: Localization.New("server.automation.sell_p_eligible_non.3d6653dd", "Sell {p0} eligible non-relic equipment item(s)", Localization.Params{"p0": counts.Equipment}),
 			NextCheckAt: nextCheck, Metrics: metrics,
 			Request:             &Intent.Request{Name: "equipment.sell", Arguments: arguments},
 			ReevaluateOnSuccess: true,
@@ -75,7 +76,7 @@ func (*AutoEquipmentCleanupPolicy) Evaluate(_ context.Context, snapshot Snapshot
 			"category": "non_relic_gems", "sellPost2026": false,
 		})
 		return Decision{
-			Status: "ready", Detail: fmt.Sprintf("Sell %d eligible non-relic gem(s)", counts.Gems),
+			Status: "ready", Detail: fmt.Sprintf("Sell %d eligible non-relic gem(s)", counts.Gems), DetailDescriptor: Localization.New("server.automation.sell_p_eligible_non.99deaea8", "Sell {p0} eligible non-relic gem(s)", Localization.Params{"p0": counts.Gems}),
 			NextCheckAt: nextCheck, Metrics: metrics,
 			Request:             &Intent.Request{Name: "equipment.sell", Arguments: arguments},
 			ReevaluateOnSuccess: true,
@@ -83,7 +84,7 @@ func (*AutoEquipmentCleanupPolicy) Evaluate(_ context.Context, snapshot Snapshot
 		}, nil
 	}
 	return Decision{
-		Status: "idle", Detail: "Equipment and gem storage are clean",
+		Status: "idle", Detail: "Equipment and gem storage are clean", DetailDescriptor: Localization.New("server.automation.equipment_and_gem_storage.866351ca", "Equipment and gem storage are clean", nil),
 		NextCheckAt: nextCheck, Metrics: metrics,
 	}, nil
 }

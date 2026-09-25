@@ -1,6 +1,7 @@
 package API
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"net/http"
 	"strconv"
 	"time"
@@ -11,7 +12,7 @@ import (
 
 func (server *Server) handleTelemetryChannels(writer http.ResponseWriter, _ *http.Request) {
 	if server.config.Telemetry == nil {
-		writeError(writer, http.StatusServiceUnavailable, "telemetry_unavailable", "Telemetry is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "telemetry_unavailable", "Telemetry is unavailable", Localization.New("server.api.telemetry_is_unavailable.3daba4e0", "Telemetry is unavailable", nil))
 		return
 	}
 	writeJSON(writer, http.StatusOK, map[string]any{"channels": server.config.Telemetry.Channels()})
@@ -19,7 +20,7 @@ func (server *Server) handleTelemetryChannels(writer http.ResponseWriter, _ *htt
 
 func (server *Server) handleAttackLaunchRates(writer http.ResponseWriter, _ *http.Request) {
 	if server.config.Telemetry == nil {
-		writeError(writer, http.StatusServiceUnavailable, "telemetry_unavailable", "Telemetry is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "telemetry_unavailable", "Telemetry is unavailable", Localization.New("server.api.telemetry_is_unavailable.3daba4e0", "Telemetry is unavailable", nil))
 		return
 	}
 	observedAt := time.Now()
@@ -62,7 +63,7 @@ func attackLaunchCountsByFeature(counts map[string]int) map[string]int {
 
 func (server *Server) handleTelemetryTail(writer http.ResponseWriter, request *http.Request) {
 	if server.config.Telemetry == nil {
-		writeError(writer, http.StatusServiceUnavailable, "telemetry_unavailable", "Telemetry is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "telemetry_unavailable", "Telemetry is unavailable", Localization.New("server.api.telemetry_is_unavailable.3daba4e0", "Telemetry is unavailable", nil))
 		return
 	}
 	limit := 800
@@ -71,10 +72,14 @@ func (server *Server) handleTelemetryTail(writer http.ResponseWriter, request *h
 			limit = min(parsed, 5000)
 		}
 	}
-	lines, available := server.config.Telemetry.UserFacingTail(request.PathValue("channel"), limit)
+	entries, available := server.config.Telemetry.UserFacingEntries(request.PathValue("channel"), limit)
 	if !available {
-		writeError(writer, http.StatusNotFound, "activity_channel_not_found", "Activity channel was not found")
+		writeError(writer, http.StatusNotFound, "activity_channel_not_found", "Activity channel was not found", Localization.New("server.api.activity_channel_was_not.ff46c116", "Activity channel was not found", nil))
 		return
 	}
-	writeJSON(writer, http.StatusOK, map[string]any{"lines": lines})
+	lines := make([]string, len(entries))
+	for i, entry := range entries {
+		lines[i] = entry.Line
+	}
+	writeJSON(writer, http.StatusOK, map[string]any{"lines": lines, "entries": entries})
 }

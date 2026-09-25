@@ -7,12 +7,18 @@ import (
 
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
+	"CitadelDesktop/Server/Localization"
 	"CitadelDesktop/Server/State"
 )
 
 func TestPlanAutoBirdRunsAINBeforeJAAForOneCastle(t *testing.T) {
 	now := time.Now().UTC()
 	gameState := State.NewGameState()
+	gameState.Session.LoggedIn = true
+	gameState.Session.SocketReady = true
+	gameState.Player.ID = 99
+	gameState.Player.AllianceID = 9
+	gameState.Player.AllianceObservedAt = now
 	gameState.Player.ProtectionMode.ObservedAt = now
 	gameState.Alliance.ID = 9
 	gameState.Castles[10] = State.CastleState{
@@ -286,16 +292,16 @@ func TestPlanAutoBirdDispatchGuardsPreparedContextAndRecordsMovement(t *testing.
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 7 ||
+	if len(plan.Steps) != 8 ||
 		plan.Steps[0].Opcode != "jaa" ||
 		plan.Steps[0].ResponseBarrier != Intent.ResponseBarrierCommitted ||
 		plan.Steps[1].Action != "auto_bird.dispatch.guard" ||
-		plan.Steps[2].Opcode != "sdi" ||
-		plan.Steps[3].Resolver != "auto_bird.dispatch.build" ||
-		plan.Steps[4].Action != "auto_bird.movement.capture" ||
-		plan.Steps[5].Opcode != "gam" ||
-		plan.Steps[5].ResponseBarrier != Intent.ResponseBarrierCommitted ||
-		plan.Steps[6].Action != "auto_bird.movement.capture" {
+		plan.Steps[2].Resolver != "station.alliance.refresh" || plan.Steps[3].Opcode != "sdi" ||
+		plan.Steps[4].Resolver != "auto_bird.dispatch.build" ||
+		plan.Steps[5].Action != "auto_bird.movement.capture" ||
+		plan.Steps[6].Opcode != "gam" ||
+		plan.Steps[6].ResponseBarrier != Intent.ResponseBarrierCommitted ||
+		plan.Steps[7].Action != "auto_bird.movement.capture" {
 		t.Fatalf("Auto Bird dispatch steps = %#v", plan.Steps)
 	}
 }
@@ -461,13 +467,45 @@ func autoBirdIntentTestState(t *testing.T, now time.Time) (State.GameState, *Gam
 		t.Fatal(err)
 	}
 	gameState := State.NewGameState()
+	gameState.Session.LoggedIn = true
+	gameState.Session.SocketReady = true
+	gameState.Player.ID = 99
+	gameState.Player.AllianceID = 9
+	gameState.Player.AllianceObservedAt = now
 	gameState.Player.ProtectionMode.ObservedAt = now
 	gameState.Alliance = State.AllianceState{
 		ID: 9, ObservedAt: now,
-		Members: []State.AllianceMember{{PlayerID: 1, ReturnProtectionSec: 4 * 86_400}},
+		Members: []State.AllianceMember{{PlayerID: 99}, {PlayerID: 1, ReturnProtectionSec: 4 * 86_400}},
 		Holdings: []State.AllianceHolding{{
 			CastleID: 20, PlayerID: 1, KingdomID: 0, X: 20, Y: 20, SlotType: 1,
 		}},
 	}
 	return gameState, gameData
+}
+
+func TestDeferredBirdDispatchBindsOrClearsStatusDescriptor(t *testing.T) {
+	for _, descriptor := range []*Localization.Message{nil, Localization.New("test.bird_hold", "Hold castle {castle}", Localization.Params{"castle": "17"})} {
+		state := State.NewGameState()
+		state.Stationing["bird"] = State.StationingOperation{ID: "bird", Purpose: "autoBird", SourceCastleID: 17, Phase: State.StationingPhaseDispatchReady, StatusDetail: "old", StatusDetailDescriptor: Localization.New("old", "Old reason", nil)}
+		application := &Application{State: State.NewStore(state)}
+		retry := time.Now().UTC().Add(time.Minute)
+		application.deferAutoBirdDispatch(autoBirdCycleRequest{TrackingID: "bird", SourceCastleID: 17}, "Hold castle 17", retry, descriptor)
+		current := application.State.ReadOnlyView().Stationing["bird"]
+		if current.StatusDetail != "Hold castle 17" || current.Phase != State.StationingPhaseWaiting || current.NextAttemptAt == nil || !current.NextAttemptAt.Equal(retry) {
+			t.Fatalf("dispatch hold changed: %+v", current)
+		}
+		if descriptor == nil {
+			if current.StatusDetailDescriptor != nil {
+				t.Fatal("old descriptor survived opaque replacement")
+			}
+			continue
+		}
+		if current.StatusDetailDescriptor == nil || current.StatusDetailDescriptor.FallbackText != current.StatusDetail {
+			t.Fatalf("new descriptor not bound: %+v", current.StatusDetailDescriptor)
+		}
+		descriptor.Params["castle"] = "mutated"
+		if application.State.ReadOnlyView().Stationing["bird"].StatusDetailDescriptor.Params["castle"] != "17" {
+			t.Fatal("caller mutated stored descriptor")
+		}
+	}
 }

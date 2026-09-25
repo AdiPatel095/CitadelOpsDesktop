@@ -1,4 +1,7 @@
+import { sourceMessages } from '../src/i18n/sourceMessages.ts';
 import assert from 'node:assert/strict';
+import { createElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { readFile } from 'node:fs/promises';
 import { after, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -44,17 +47,14 @@ test('switches expose native disabled behavior through the shared component', ()
 });
 
 test('settings rows delegate their binary state to the shared switch', () => {
-  const row = SettingsToggleRow({
+  const markup = renderToStaticMarkup(createElement(SettingsToggleRow, {
     title: 'Retry failed enchantments',
     checked: true,
     onChange: () => {},
-  });
-  const children = Array.isArray(row.props.children) ? row.props.children : [row.props.children];
-  const switchElement = children.find((child) => child?.type === Switch);
-
-  assert.ok(switchElement);
-  assert.equal(switchElement.props.checked, true);
-  assert.equal(switchElement.props.ariaLabel, 'Retry failed enchantments');
+  }));
+  assert.match(markup, /role="switch"/);
+  assert.match(markup, /aria-checked="true"/);
+  assert.match(markup, /aria-label="Retry failed enchantments"/);
 });
 
 test('defense courtyard inclusion uses the shared binary switch', async () => {
@@ -64,7 +64,7 @@ test('defense courtyard inclusion uses the shared binary switch', async () => {
   assert.match(editor, /<label className="flex cursor-pointer items-start gap-3">[\s\S]*?<Switch/);
   assert.match(editor, /checked=\{draft\.keep != null\}/);
   assert.match(editor, /onChange=\{\(includeCourtyard\) => setDraft/);
-  assert.match(editor, /ariaLabel="Include courtyard setup in this defense preset"/);
+  assert.ok(Object.entries(sourceMessages).some(([key,text]) => text === 'Include courtyard setup in this defense preset' && editor.includes(`ariaLabel={localizeStatic("${key}")}`)));
 });
 
 test('the final palette gives every switch distinct danger and success colors', async () => {

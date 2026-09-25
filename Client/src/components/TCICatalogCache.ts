@@ -1,3 +1,5 @@
+import { runtimeBasePath } from '../api/RuntimeURL';
+import { loadOfficialMessages, officialCatalogGeneration } from '../i18n/officialMessages';
 import { CitadelAPI } from '../api/CitadelClient';
 
 /** One wire CID tier in a TCI design group (same name/effect line, different in-game level). */
@@ -19,6 +21,10 @@ export interface ConstructionItemCatalogEntry {
   minLevel: number;
   maxLevel: number;
   label: string;
+  requestedLocale?: string;
+  nameLocale?: string;
+  labelSource?: 'official' | 'fallback';
+  fallbackKeys?: readonly string[];
   internal: string;
   /** Human level range, e.g. "1-4" (same as min–max for display). */
   level: string;
@@ -27,6 +33,7 @@ export interface ConstructionItemCatalogEntry {
   effects: string;
   imageUrl: string;
   buildingName: string;
+  buildingNameLocale?: string;
   durationSecondsMin: number;
   durationSecondsMax: number;
   premium: boolean;
@@ -147,33 +154,30 @@ export function durationRangeLabel(entry: ConstructionItemCatalogEntry): string 
   return `${formatDuration(entry.durationSecondsMin)} → ${formatDuration(entry.durationSecondsMax)}`;
 }
 
-let cache: ConstructionItemCatalogEntry[] | null = null;
-let inFlight: Promise<ConstructionItemCatalogEntry[]> | null = null;
-
-/** Loads the construction items catalog from the backend (cached). */
-export function fetchConstructionItemsCatalog(): Promise<ConstructionItemCatalogEntry[]> {
-  if (cache) {
-    return Promise.resolve(cache);
-  }
-  if (inFlight) {
-    return inFlight;
-  }
-  inFlight = loadOfficialConstructionItems()
-    .then((items) => {
-      cache = items;
-      return items;
-    })
-    .finally(() => {
-      inFlight = null;
-    });
-  return inFlight;
+const cache = new Map<string, ConstructionItemCatalogEntry[]>();
+const inFlight = new Map<string, Promise<ConstructionItemCatalogEntry[]>>();
+const catalogKey = (locale: string) => JSON.stringify([runtimeBasePath(),locale,officialCatalogGeneration()]);
+/** Cache entries are scoped to the viewer locale and current official metadata generation. */
+export function fetchConstructionItemsCatalog(locale = 'en'): Promise<ConstructionItemCatalogEntry[]> {
+  const key = catalogKey(locale);
+  if (cache.has(key)) return Promise.resolve(cache.get(key)!);
+  if (inFlight.has(key)) return inFlight.get(key)!;
+  const promise = loadOfficialConstructionItems(locale).then(items=>{
+    if (key === catalogKey(locale) && !items.some(item=>item.labelSource === 'fallback' || item.fallbackKeys?.length)) {
+      cache.set(key,items);
+      while (cache.size > 8) cache.delete(cache.keys().next().value!);
+    }
+    return items;
+  }).finally(()=>inFlight.delete(key));
+  inFlight.set(key,promise);
+  return promise;
 }
 
-async function loadOfficialConstructionItems(): Promise<ConstructionItemCatalogEntry[]> {
+async function loadOfficialConstructionItems(locale: string): Promise<ConstructionItemCatalogEntry[]> {
   const [response, effectsResponse, buildingAssetRows] = await Promise.all([
-    CitadelAPI.getCatalog<Record<string, unknown>>('constructionItems'),
-    CitadelAPI.getCatalog<Record<string, unknown>>('effects'),
-    CitadelAPI.getCatalog<Record<string, unknown>>('construction-item-building-icons')
+    CitadelAPI.getCatalog<Record<string, unknown>>('constructionItems',locale),
+    CitadelAPI.getCatalog<Record<string, unknown>>('effects',locale),
+    CitadelAPI.getCatalog<Record<string, unknown>>('construction-item-building-icons',locale)
       .then((assetResponse) => assetResponse.items)
       .catch(() => []),
   ]);
@@ -182,8 +186,9 @@ async function loadOfficialConstructionItems(): Promise<ConstructionItemCatalogE
   const localizationKeys = Array.from(new Set(response.items.flatMap((row) => {
     const internal = typeof row.name === 'string' ? row.name.trim() : '';
     return internal ? tciDisplayNameLocalizationKeys(internal) : [];
-  }).concat(effectLocalizationKeys(response.items, effectNames)))).slice(0, 5000);
-  const translations = await CitadelAPI.localize(localizationKeys);
+  }).concat(effectLocalizationKeys(response.items, effectNames),buildingAssetRows.flatMap(row=>Array.isArray(row.buildingLocalizationKeys) ? row.buildingLocalizationKeys.filter((key):key is string=>typeof key==='string') : []))));
+  const official = await loadOfficialMessages(localizationKeys,locale);
+  const translations = official.values;
   const groups = new Map<string, Record<string, unknown>[]>();
   for (const row of response.items) {
     const id = positiveInteger(row.constructionItemID);
@@ -197,7 +202,7 @@ async function loadOfficialConstructionItems(): Promise<ConstructionItemCatalogE
     const groupTiers = rows.map((tierRow) => ({
       wireCid: positiveInteger(tierRow.constructionItemID),
       level: positiveInteger(tierRow.level) || 1,
-      effects: formatOfficialEffects(tierRow, effectNames, translations),
+      effects: formatOfficialEffects(tierRow, effectNames, translations, locale),
       durationSeconds: positiveInteger(tierRow.duration),
       rarity: positiveInteger(tierRow.rarenessID),
       removalCost: positiveInteger(tierRow.removalCostC1),
@@ -205,8 +210,11 @@ async function loadOfficialConstructionItems(): Promise<ConstructionItemCatalogE
     })).sort((left, right) => left.level - right.level || left.wireCid - right.wireCid);
     const internal = typeof row.name === 'string' ? row.name : `constructionItem${groupTiers[0]?.wireCid ?? ''}`;
     const label = tciDisplayName(row, internal, translations);
+    const labelKey = tciDisplayNameLocalizationKeys(internal).find(key=>translations[key]?.trim());
+    const officialLabel = !!labelKey && !(official.fallbackKeys ?? []).includes(labelKey);
     const constructionItemGroupID = positiveInteger(row.constructionItemGroupID);
     const buildingAsset = buildingAssets.get(constructionItemBuildingAssetKey(constructionItemGroupID, internal));
+    const buildingKey = buildingAsset?.localizationKeys.find(key=>translations[key]?.trim());
     const minLevel = groupTiers[0]?.level ?? 1;
     const maxLevel = groupTiers[groupTiers.length - 1]?.level ?? minLevel;
     const durations = groupTiers.map((tier) => tier.durationSeconds).filter((duration) => duration > 0);
@@ -219,17 +227,22 @@ async function loadOfficialConstructionItems(): Promise<ConstructionItemCatalogE
       minLevel,
       maxLevel,
       label,
+      requestedLocale: locale,
+      nameLocale: officialLabel ? locale : 'en',
+      labelSource: officialLabel ? 'official' as const : 'fallback' as const,
+      fallbackKeys: official.fallbackKeys,
       internal,
       level: minLevel === maxLevel ? String(minLevel) : `${minLevel}-${maxLevel}`,
       category: typeof row.comment1 === 'string' ? row.comment1 : `Slot ${row.slotTypeID ?? ''}`.trim(),
       effects: groupTiers[0]?.effects ?? '',
       imageUrl: buildingAsset?.url ?? '',
-      buildingName: buildingAsset?.buildingName ?? '',
+      buildingName: buildingKey ? translations[buildingKey] : buildingAsset?.buildingName ?? '',
+      buildingNameLocale: buildingKey && !(official.fallbackKeys ?? []).includes(buildingKey) ? locale : 'en',
       durationSecondsMin,
       durationSecondsMax,
       premium: groupTiers.some((tier) => tier.premium),
     };
-  }).sort((left, right) => left.label.localeCompare(right.label) || left.effects.localeCompare(right.effects) || left.id - right.id);
+  }).sort((left, right) => left.label.localeCompare(right.label,locale) || left.effects.localeCompare(right.effects,locale) || left.id - right.id);
 }
 
 function isSelectableConstructionItem(row: Record<string, unknown>): boolean {
@@ -240,15 +253,15 @@ function isSelectableConstructionItem(row: Record<string, unknown>): boolean {
   return comment1 !== 'appearance' && !comment1.includes('testing') && !comment2.includes('testing');
 }
 
-function constructionItemBuildingAssets(rows: Record<string, unknown>[]): Map<string, { buildingName: string; url: string }> {
-  const assets = new Map<string, { buildingName: string; url: string }>();
+function constructionItemBuildingAssets(rows: Record<string, unknown>[]): Map<string, { buildingName: string; url: string; localizationKeys: string[] }> {
+  const assets = new Map<string, { buildingName: string; url: string; localizationKeys: string[] }>();
   for (const row of rows) {
     const constructionItemGroupID = positiveInteger(row.constructionItemGroupId);
     const constructionItemName = typeof row.constructionItemName === 'string' ? row.constructionItemName.trim() : '';
     const buildingName = typeof row.buildingName === 'string' ? row.buildingName.trim() : '';
     const url = typeof row.url === 'string' ? row.url.trim() : '';
     if (constructionItemGroupID > 0 && constructionItemName && url) {
-      assets.set(constructionItemBuildingAssetKey(constructionItemGroupID, constructionItemName), { buildingName, url });
+      assets.set(constructionItemBuildingAssetKey(constructionItemGroupID, constructionItemName), { buildingName, url, localizationKeys: Array.isArray(row.buildingLocalizationKeys) ? row.buildingLocalizationKeys.filter((key):key is string=>typeof key==='string') : [] });
     }
   }
   return assets;
@@ -366,6 +379,7 @@ function formatOfficialEffects(
   row: Record<string, unknown>,
   effectNames: Map<number, string>,
   translations: Record<string, string>,
+  locale: string,
 ): string {
   const effects: string[] = [];
   const wireEffects = typeof row.effects === 'string' ? row.effects : '';
@@ -375,12 +389,12 @@ function formatOfficialEffects(
     const amount = effectAmount(rawValue);
     if (!id || amount === null) continue;
     const internal = effectNames.get(id) ?? `Effect #${id}`;
-    addEffectLine(effects, formatEffectLine(internal, amount, translations));
+    addEffectLine(effects, formatEffectLine(internal, amount, translations, locale));
   }
   for (const internal of legacyEffectFields) {
     const amount = numericValue(row[internal]);
     if (amount === null || amount === 0) continue;
-    addEffectLine(effects, formatEffectLine(internal, amount, translations));
+    addEffectLine(effects, formatEffectLine(internal, amount, translations, locale));
   }
   return effects.join(' • ');
 }
@@ -396,7 +410,7 @@ function numericValue(value: unknown): number | null {
   return Number.isFinite(amount) ? amount : null;
 }
 
-function formatEffectLine(internal: string, amount: number, translations: Record<string, string>): string {
+function formatEffectLine(internal: string, amount: number, translations: Record<string, string>, locale = 'en'): string {
   const name = internal.toLowerCase();
   const template = [
     `ci_effect_${name}_tt`,
@@ -404,12 +418,12 @@ function formatEffectLine(internal: string, amount: number, translations: Record
     `ci_effect_${name}`,
     `subscription_effect_description_${name}`,
   ].map((key) => translations[key]).find((value) => value?.trim()) ?? humanize(internal);
-  const formattedAmount = Math.abs(amount).toLocaleString();
+  const formattedAmount = Math.abs(amount).toLocaleString(locale);
   if (template.includes('{0}')) {
     const value = amount < 0 ? `-${formattedAmount}` : formattedAmount;
     return template.replaceAll('{0}', value);
   }
-  return `${template}${template.includes(':') ? ' ' : ': '}${amount.toLocaleString()}`;
+  return `${template}${template.includes(':') ? ' ' : ': '}${amount.toLocaleString(locale)}`;
 }
 
 function addEffectLine(effects: string[], line: string): void {
@@ -439,6 +453,6 @@ function humanize(value: string): string {
     .replace(/^./, (character) => character.toUpperCase());
 }
 
-export function getCachedConstructionCatalog(): ConstructionItemCatalogEntry[] | null {
-  return cache;
+export function getCachedConstructionCatalog(locale = 'en'): ConstructionItemCatalogEntry[] | null {
+  return cache.get(catalogKey(locale)) ?? null;
 }

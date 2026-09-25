@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -46,7 +47,7 @@ func (*BeriToolPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 	minimums := beriConfiguredToolMinimums(settings.ToolMinimums)
 	if len(minimums) == 0 {
 		return Decision{
-			Status: "idle", Detail: "No Berimond armorer tool minimums are configured",
+			Status: "idle", Detail: "No Berimond armorer tool minimums are configured", DetailDescriptor: Localization.New("server.automation.no_berimond_armorer_tool.4d6b721e", "No Berimond armorer tool minimums are configured", nil),
 			NextCheckAt: snapshot.Now.Add(beriToolCheckInterval),
 		}, nil
 	}
@@ -56,16 +57,16 @@ func (*BeriToolPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 		return decision, nil
 	}
 	if snapshot.GameData == nil {
-		return beriToolWaiting(snapshot.Now, "Official game data is unavailable"), nil
+		return beriToolWaiting(snapshot.Now, "Official game data is unavailable", Localization.New("server.automation.official_game_data_is.c5e55e7e", "Official game data is unavailable", nil)), nil
 	}
-	castle, found := beriToolCastle(snapshot.State, settings.BeriCastleID)
+	castle, found := beriCastle(snapshot.State)
 	if !found {
-		return beriToolWaiting(snapshot.Now, "Waiting for an owned Berimond camp"), nil
+		return beriToolWaiting(snapshot.Now, "Waiting for an owned Berimond camp", Localization.New("server.automation.waiting_for_an_owned.deab064e", "Waiting for an owned Berimond camp", nil)), nil
 	}
 	if unlock, observed := snapshot.State.KingdomTransport.Unlocks[State.KingdomID(GameData.BerimondKingdomID)]; observed &&
 		!unlock.Unlocked {
 		return Decision{
-			Status: "complete", Detail: "The Battle for Berimond is not currently unlocked",
+			Status: "complete", Detail: "The Battle for Berimond is not currently unlocked", DetailDescriptor: Localization.New("server.automation.the_battle_for_berimond.a9f4b97a", "The Battle for Berimond is not currently unlocked", nil),
 			NextCheckAt: snapshot.Now.Add(beriToolCheckInterval),
 		}, nil
 	}
@@ -73,7 +74,7 @@ func (*BeriToolPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 		snapshot.Now.Sub(castle.UnitsObservedAt) >= beriToolInventoryRefreshAge {
 		arguments, _ := json.Marshal(map[string]any{"castleId": castle.ID})
 		return Decision{
-			Status: "ready", Detail: "Refresh Berimond armorer tool inventory",
+			Status: "ready", Detail: "Refresh Berimond armorer tool inventory", DetailDescriptor: Localization.New("server.automation.refresh_berimond_armorer_tool.f242463a", "Refresh Berimond armorer tool inventory", nil),
 			NextCheckAt:         snapshot.Now.Add(time.Second),
 			Request:             &Intent.Request{Name: "beri.tools.refresh", Arguments: arguments},
 			ReevaluateOnSuccess: true, ReevaluateOnStale: true,
@@ -97,13 +98,13 @@ func (*BeriToolPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 		if !supported {
 			return beriToolWaiting(
 				snapshot.Now,
-				fmt.Sprintf("Official Berimond armorer package for tool %d is unavailable", toolID),
+				fmt.Sprintf("Official Berimond armorer package for tool %d is unavailable", toolID), Localization.New("server.automation.official_berimond_armorer_package.b3330c09", "Official Berimond armorer package for tool {p0} is unavailable", Localization.Params{"p0": fmt.Sprintf("%d", toolID)}),
 			), nil
 		}
 		if item.MinLevel > snapshot.State.Player.Level {
 			return beriToolWaiting(
 				snapshot.Now,
-				fmt.Sprintf("%s unlocks at level %d", item.Name, item.MinLevel),
+				fmt.Sprintf("%s unlocks at level %d", item.Name, item.MinLevel), Localization.New("server.automation.p_unlocks_at_level.3596b4ec", "{p0} unlocks at level {p1, number}", Localization.Params{"p0": fmt.Sprintf("%s", item.Name), "p1": item.MinLevel}).WithGameParam("p0", snapshot.GameData.DefinitionNameKey(snapshot.Language, "units", item.ToolID), item.Name),
 			), nil
 		}
 		deficit := minimum - available
@@ -113,7 +114,7 @@ func (*BeriToolPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 		}
 		purchases = min(purchases, int64(GameData.BerimondArmorerMaxPurchaseAmount))
 		if purchases <= 0 || item.CoinPrice <= 0 || purchases > math.MaxInt64/item.CoinPrice {
-			return beriToolWaiting(snapshot.Now, "The configured Berimond tool minimum is too large"), nil
+			return beriToolWaiting(snapshot.Now, "The configured Berimond tool minimum is too large", Localization.New("server.automation.the_configured_berimond_tool.1b397b96", "The configured Berimond tool minimum is too large", nil)), nil
 		}
 		cost := purchases * item.CoinPrice
 		coins := int64(math.Floor(snapshot.State.Player.Resources[State.ResourceID(1)]))
@@ -123,7 +124,7 @@ func (*BeriToolPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 				Detail: fmt.Sprintf(
 					"Waiting for %d coins to buy %d %s; %d coins available",
 					cost, purchases*item.ToolAmount, strings.ToLower(item.Name), coins,
-				),
+				), DetailDescriptor: Localization.New("server.automation.waiting_for_p_coins.ba3e6ce9", "Waiting for {p0} coins to buy {p1} {p2}; {p3} coins available", Localization.Params{"p0": cost, "p1": purchases * item.ToolAmount, "p2": fmt.Sprintf("%s", strings.ToLower(item.Name)), "p3": coins}).WithGameParam("p2", snapshot.GameData.DefinitionNameKey(snapshot.Language, "units", item.ToolID), strings.ToLower(item.Name)),
 				NextCheckAt: snapshot.Now.Add(beriToolCheckInterval), Metrics: metrics,
 			}, nil
 		}
@@ -136,14 +137,14 @@ func (*BeriToolPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision,
 			Detail: fmt.Sprintf(
 				"Buy a batch of %d %s for %d coins; %d stocked, minimum %d",
 				purchases*item.ToolAmount, strings.ToLower(item.Name), cost, available, minimum,
-			),
+			), DetailDescriptor: Localization.New("server.automation.buy_a_batch_of.74d1d3f8", "Buy a batch of {p0} {p1} for {p2} coins; {p3} stocked, minimum {p4}", Localization.Params{"p0": purchases * item.ToolAmount, "p1": fmt.Sprintf("%s", strings.ToLower(item.Name)), "p2": cost, "p3": available, "p4": minimum}).WithGameParam("p1", snapshot.GameData.DefinitionNameKey(snapshot.Language, "units", item.ToolID), strings.ToLower(item.Name)),
 			NextCheckAt: snapshot.Now.Add(beriToolCheckInterval), Metrics: metrics,
 			Request:             &Intent.Request{Name: "beri.tools.purchase", Arguments: arguments},
 			ReevaluateOnSuccess: true, ReevaluateOnStale: true,
 		}, nil
 	}
 	return Decision{
-		Status: "idle", Detail: "Berimond coin attack tools meet their configured minimums",
+		Status: "idle", Detail: "Berimond coin attack tools meet their configured minimums", DetailDescriptor: Localization.New("server.automation.berimond_coin_attack_tools.5ffe8202", "Berimond coin attack tools meet their configured minimums", nil),
 		NextCheckAt: snapshot.Now.Add(beriToolCheckInterval), Metrics: metrics,
 	}, nil
 }
@@ -170,9 +171,9 @@ func beriToolCastle(gameState State.GameState, requested State.CastleID) (State.
 	return beriCastle(gameState)
 }
 
-func beriToolWaiting(now time.Time, detail string) Decision {
+func beriToolWaiting(now time.Time, detail string, descriptors ...*Localization.Message) Decision {
 	return Decision{
-		Status: "waiting", Detail: detail,
+		Status: "waiting", Detail: detail, DetailDescriptor: Localization.First(descriptors),
 		NextCheckAt: now.Add(beriToolCheckInterval),
 	}
 }

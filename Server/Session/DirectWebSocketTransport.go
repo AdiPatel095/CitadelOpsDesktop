@@ -167,7 +167,8 @@ func loginParkNeedsUserAction(class State.LoginFailureClass) bool {
 
 type directLoginError struct {
 	code                  int
-	cooldownSec           int
+	cooldownPayload       json.RawMessage
+	cooldownObservedAt    time.Time
 	suspendedSec          int
 	accountDeleted        bool
 	detail                string
@@ -444,7 +445,7 @@ func (transport *DirectWebSocketTransport) PrepareBackgroundMode() error {
 // relog delay, except the login outcomes that retrying cannot fix:
 //
 //   - transient drops and rejected client builds: relog delay;
-//   - LOGIN_COOLDOWN_ACTIVE (453): the game's cooldown, then the relog delay;
+//   - LOGIN_COOLDOWN_ACTIVE (453): the game's cooldown, then a two-second safety margin;
 //   - a temporary suspension (27 with a remaining time): resume automatically
 //     when the suspension ends, plus the relog delay;
 //   - a code without an established meaning: retry with the relog delay
@@ -498,10 +499,9 @@ func (transport *DirectWebSocketTransport) run(ctx context.Context, generation u
 		}
 		switch {
 		case isLoginErr && loginErr.code == 453:
-			cooldownUntil := now.Add(time.Duration(max(0, loginErr.cooldownSec)) * time.Second)
-			retryAt := cooldownUntil.Add(delay)
+			cooldownUntil, retryAt := loginCooldownDeadlines(loginErr.cooldownPayload, loginErr.cooldownObservedAt, delay)
 			status.State = "cooldown"
-			status.CooldownUntil = &cooldownUntil
+			status.CooldownUntil = cooldownUntil
 			status.RetryAt = &retryAt
 			delay = time.Until(retryAt)
 		case isLoginErr && loginErr.fatal && status.LoginFailure.Class == State.LoginFailureSuspended &&
@@ -556,7 +556,7 @@ func (transport *DirectWebSocketTransport) run(ctx context.Context, generation u
 // release publishes the "released" state for the given interruption and parks
 // the run so Start refuses to reconnect before the retry time (unless the login
 // changes or a reconnect is forced). RetryAt is the earliest sensible retry:
-// the game's cooldown or suspension end, never sooner than the relog delay.
+// the game's cooldown plus safety margin, or suspension/relog delay otherwise.
 func (transport *DirectWebSocketTransport) release(
 	generation uint64,
 	status Status,
@@ -569,11 +569,9 @@ func (transport *DirectWebSocketTransport) release(
 	retryAt := now.Add(relogDelay)
 	switch {
 	case isLoginErr && loginErr.code == 453:
-		cooldownUntil := now.Add(time.Duration(max(0, loginErr.cooldownSec)) * time.Second)
-		status.CooldownUntil = &cooldownUntil
-		if cooldownUntil.After(retryAt) {
-			retryAt = cooldownUntil
-		}
+		cooldownUntil, cooldownRetryAt := loginCooldownDeadlines(loginErr.cooldownPayload, loginErr.cooldownObservedAt, relogDelay)
+		status.CooldownUntil = cooldownUntil
+		retryAt = cooldownRetryAt
 	case isLoginErr && loginErr.fatal && status.LoginFailure != nil && status.LoginFailure.SuspendedUntil != nil:
 		if status.LoginFailure.SuspendedUntil.After(retryAt) {
 			retryAt = *status.LoginFailure.SuspendedUntil
@@ -870,11 +868,8 @@ func (transport *DirectWebSocketTransport) authenticate(
 						switch *frame.ResponseCode {
 						case 453:
 							// LOGIN_COOLDOWN_ACTIVE carries the remaining lockout.
-							var payload struct {
-								Seconds int `json:"CD"`
-							}
-							_ = json.Unmarshal(frame.Payload, &payload)
-							loginErr.cooldownSec = max(0, payload.Seconds)
+							loginErr.cooldownPayload = frame.Payload
+							loginErr.cooldownObservedAt = time.Now().UTC()
 						case 27:
 							// IS_BANNED carries the remaining suspension and, for a
 							// deactivated account, the GDPR deletion flag.

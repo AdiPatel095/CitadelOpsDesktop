@@ -1,6 +1,7 @@
 package Buildings
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"fmt"
 	"math"
 
@@ -9,6 +10,7 @@ import (
 )
 
 type StorageDependencyRequest struct {
+	EventID                      *int64             `json:"eventId,omitempty"`
 	ExpectedRevision             *uint64            `json:"expectedRevision,omitempty"`
 	CastleID                     State.CastleID     `json:"castleId"`
 	Costs                        []CostStatus       `json:"costs"`
@@ -43,11 +45,11 @@ func PreviewStorageDependency(
 		return StorageDependencyResult{}, RevisionMismatchError{Expected: *request.ExpectedRevision, Actual: state.Revision}
 	}
 	if gameData == nil {
-		return StorageDependencyResult{}, fmt.Errorf("official game data is unavailable")
+		return StorageDependencyResult{}, Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.buildings.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	castle, found := state.Castles[request.CastleID]
 	if !found || request.CastleID <= 0 {
-		return StorageDependencyResult{}, fmt.Errorf("castle %d was not found", request.CastleID)
+		return StorageDependencyResult{}, Localization.WithError(fmt.Errorf("castle %d was not found", request.CastleID), Localization.New("server.buildings.castle_p_was_not.b5cc85b5", "castle {p0} was not found", Localization.Params{"p0": fmt.Sprintf("%d", request.CastleID)}))
 	}
 	result := StorageDependencyResult{
 		Revision: state.Revision, CastleID: castle.ID, CapacityNeeds: map[string]float64{},
@@ -98,7 +100,7 @@ func PreviewStorageDependency(
 	}
 
 	expansionRequest := ExpansionPreviewRequest{
-		CastleID: castle.ID, Payment: ExpansionPaymentResources,
+		CastleID: castle.ID, EventID: request.EventID, Payment: ExpansionPaymentResources,
 		ResourceReserves: request.ResourceReserves, AllowPremium: request.AllowPremium,
 		AllowTimeSkips: request.AllowTimeSkips,
 	}

@@ -702,10 +702,10 @@ func TestPlanHospitalHealAlwaysRefreshesFocusedCastle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(plan.Steps) != 2 || plan.Steps[0].Opcode != "jaa" || plan.Steps[1].Opcode != "hru" {
-		t.Fatalf("hospital heal steps = %#v, want fresh jaa then hru", plan.Steps)
+	if len(plan.Steps) != 4 || plan.Steps[0].Opcode != "jaa" || plan.Steps[1].Opcode != "rei" || plan.Steps[2].Opcode != "sie" || plan.Steps[3].Resolver != "hospital.heal.build" {
+		t.Fatalf("hospital heal steps = %#v, want committed jaa, rei, sie then resolved hru", plan.Steps)
 	}
-	for _, step := range plan.Steps {
+	for _, step := range []Intent.Step{plan.Steps[0], plan.Steps[3]} {
 		if len(step.StaleCodes) != 1 || step.StaleCodes[0] != 175 {
 			t.Fatalf("hospital focus-sensitive step does not classify code 175 as stale: %#v", step)
 		}

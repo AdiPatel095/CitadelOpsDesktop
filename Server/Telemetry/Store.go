@@ -15,6 +15,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"CitadelDesktop/Server/Localization"
 	"CitadelDesktop/Server/Protocol"
 )
 
@@ -56,9 +57,11 @@ const (
 
 // Channel identifies one persistent logger view in the dashboard.
 type Channel struct {
-	ID          string `json:"id"`
-	Label       string `json:"label"`
-	Description string `json:"description"`
+	LabelDescriptor       *Localization.Message `json:"labelDescriptor,omitempty"`
+	DescriptionDescriptor *Localization.Message `json:"descriptionDescriptor,omitempty"`
+	ID                    string                `json:"id"`
+	Label                 string                `json:"label"`
+	Description           string                `json:"description"`
 }
 
 var knownChannels = []Channel{
@@ -342,6 +345,10 @@ func (store *Store) RecordFeature(channel string, event string, detail string) {
 
 // RecordFeatureActivity adds one user-facing completed action or issue to an automation or Rift channel.
 func (store *Store) RecordFeatureActivity(actor string, intent string, severity string, event string, detail string) {
+	store.RecordFeatureActivityMessage(actor, intent, severity, event, detail, nil)
+}
+
+func (store *Store) RecordFeatureActivityMessage(actor string, intent string, severity string, event string, detail string, descriptor *Localization.Message) {
 	channel := featureChannelForActor(actor)
 	if channel == "" && strings.HasPrefix(strings.ToLower(strings.TrimSpace(intent)), "rift.") {
 		channel = ChannelRift
@@ -354,9 +361,13 @@ func (store *Store) RecordFeatureActivity(actor string, intent string, severity 
 	if _, exists := featureActivityEvents[event]; !exists {
 		event = "ACTION"
 	}
-	detail = storedFeatureActivityDetail(severity, event, detail)
+	cleaned := storedFeatureActivityDetail(severity, event, detail)
+	if cleaned != detail {
+		descriptor = nil
+	}
+	detail = cleaned
 	observedAt := time.Now()
-	line := formatLine(observedAt, severity, event, detail)
+	line := encodeActivityRecord(formatLine(observedAt, severity, event, detail), Localization.Bind(descriptor, detail))
 	store.append(ChannelActivity, line)
 	if channel != "" {
 		store.append(channel, line)
@@ -366,9 +377,11 @@ func (store *Store) RecordFeatureActivity(actor string, intent string, severity 
 	}
 }
 
+var safetyPairActivity = regexp.MustCompile(`Safety lock after [A-Z][A-Z0-9_]{1,15} [0-9]+`)
+
 func storedFeatureActivityDetail(severity string, event string, detail string) string {
 	detail = strings.Join(strings.Fields(strings.TrimSpace(detail)), " ")
-	if detail != "" && !unsafeFeatureActivityDetail.MatchString(detail) {
+	if detail != "" && !unsafeFeatureActivityDetail.MatchString(safetyPairActivity.ReplaceAllString(detail, "Safety lock after game rejection")) {
 		return detail
 	}
 	if severity == "INFO" {
@@ -408,6 +421,8 @@ func (store *Store) Channels() []Channel {
 	channels := make([]Channel, 0, len(knownChannels)-2)
 	for _, channel := range knownChannels {
 		if !isDiagnosticChannel(channel.ID) {
+			channel.LabelDescriptor = Localization.New("server.telemetry.channel."+channel.ID+".label", channel.Label, nil)
+			channel.DescriptionDescriptor = Localization.New("server.telemetry.channel."+channel.ID+".description", channel.Description, nil)
 			channels = append(channels, channel)
 		}
 	}
@@ -467,6 +482,15 @@ func (store *Store) attackLaunchCountsSince(since time.Time, now time.Time) map[
 }
 
 func (store *Store) Tail(channel string, limit int) []string {
+	records := store.tailRecords(channel, limit)
+	lines := make([]string, 0, len(records))
+	for _, record := range records {
+		lines = append(lines, decodeActivityRecord(record).Line)
+	}
+	return lines
+}
+
+func (store *Store) tailRecords(channel string, limit int) []string {
 	if store == nil || !isKnownChannel(channel) {
 		return []string{}
 	}
@@ -884,6 +908,7 @@ func isFeatureActivityLine(line string) bool {
 }
 
 func parseFeatureActivityLine(line string) (time.Time, string, string, bool) {
+	line = decodeActivityRecord(line).Line
 	firstOpen := strings.IndexByte(line, '[')
 	if firstOpen < 0 {
 		return time.Time{}, "", "", false
@@ -901,6 +926,7 @@ func parseFeatureActivityLine(line string) (time.Time, string, string, bool) {
 }
 
 func featureActivityLineTokens(line string) (string, string, bool) {
+	line = decodeActivityRecord(line).Line
 	firstOpen := strings.IndexByte(line, '[')
 	if firstOpen < 0 {
 		return "", "", false

@@ -1,6 +1,7 @@
 package Buildings
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"fmt"
 	"math"
 	"sort"
@@ -19,6 +20,7 @@ const (
 )
 
 type ExpansionPreviewRequest struct {
+	EventID                *int64             `json:"eventId,omitempty"`
 	ExpectedRevision       *uint64            `json:"expectedRevision,omitempty"`
 	CastleID               State.CastleID     `json:"castleId"`
 	Payment                string             `json:"payment,omitempty"`
@@ -126,11 +128,11 @@ func PreviewExpansion(state State.GameState, gameData *GameData.Store, request E
 		return ExpansionPreviewResult{}, RevisionMismatchError{Expected: *request.ExpectedRevision, Actual: state.Revision}
 	}
 	if gameData == nil {
-		return ExpansionPreviewResult{}, fmt.Errorf("official game data is unavailable")
+		return ExpansionPreviewResult{}, Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.buildings.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	castle, found := state.Castles[request.CastleID]
 	if !found || request.CastleID <= 0 {
-		return ExpansionPreviewResult{}, fmt.Errorf("castle %d was not found", request.CastleID)
+		return ExpansionPreviewResult{}, Localization.WithError(fmt.Errorf("castle %d was not found", request.CastleID), Localization.New("server.buildings.castle_p_was_not.b5cc85b5", "castle {p0} was not found", Localization.Params{"p0": fmt.Sprintf("%d", request.CastleID)}))
 	}
 	payment, err := normalizeExpansionPayment(request.Payment)
 	if err != nil {
@@ -275,7 +277,7 @@ func normalizeExpansionPayment(payment string) (string, error) {
 		payment = ExpansionPaymentResources
 	}
 	if payment != ExpansionPaymentResources && payment != ExpansionPaymentPremium {
-		return "", fmt.Errorf("payment must be %q or %q", ExpansionPaymentResources, ExpansionPaymentPremium)
+		return "", Localization.WithError(fmt.Errorf("payment must be %q or %q", ExpansionPaymentResources, ExpansionPaymentPremium), Localization.New("server.buildings.payment_must_be_p.384c137b", "payment must be {p0} or {p1}", Localization.Params{"p0": fmt.Sprintf("%q", ExpansionPaymentResources), "p1": fmt.Sprintf("%q", ExpansionPaymentPremium)}))
 	}
 	return payment, nil
 }
@@ -288,10 +290,10 @@ func validateExpansionPosition(request ExpansionPreviewRequest) error {
 		}
 	}
 	if provided != 0 && provided != 3 {
-		return fmt.Errorf("x, y, and direction must be provided together")
+		return Localization.WithError(fmt.Errorf("x, y, and direction must be provided together"), Localization.New("server.buildings.x_y_and_direction.009f7126", "x, y, and direction must be provided together", nil))
 	}
 	if provided == 3 && (*request.X < 0 || *request.Y < 0 || *request.Direction < 0 || *request.Direction > 3) {
-		return fmt.Errorf("expansion coordinates must be non-negative and direction must be 0 through 3")
+		return Localization.WithError(fmt.Errorf("expansion coordinates must be non-negative and direction must be 0 through 3"), Localization.New("server.buildings.expansion_coordinates_must_be.581fed95", "expansion coordinates must be non-negative and direction must be 0 through 3", nil))
 	}
 	return nil
 }
@@ -388,7 +390,7 @@ func expansionStorageBuildingCandidates(
 	}
 	sort.Slice(objectives, func(left, right int) bool { return objectives[left].Metric < objectives[right].Metric })
 	preview, err := Preview(state, gameData, PreviewRequest{
-		CastleID: castle.ID, Profile: "custom", Objectives: objectives,
+		CastleID: castle.ID, Profile: "custom", EventID: request.EventID, Objectives: objectives,
 		Constraints: Constraints{
 			AllowPremium: request.AllowPremium, MinimumValues: minimums,
 			ResourceReserves: cloneFloatMap(request.ResourceReserves),
@@ -659,6 +661,9 @@ func recommendExpansionCapacityAction(
 		}
 		arguments := map[string]any{
 			"castleId": castleID, "resourceReserves": cloneFloatMap(request.ResourceReserves), "allowPremium": request.AllowPremium,
+		}
+		if request.EventID != nil {
+			arguments["eventId"] = *request.EventID
 		}
 		intent := "building.upgrade"
 		kind := "upgrade_storage"

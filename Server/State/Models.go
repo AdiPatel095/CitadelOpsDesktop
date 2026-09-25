@@ -1,6 +1,7 @@
 package State
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"encoding/json"
 	"math"
 	"sort"
@@ -207,22 +208,25 @@ type AccountBindingState struct {
 }
 
 type PlayerState struct {
-	ID                PlayerID               `json:"id"`
-	Name              string                 `json:"name,omitempty"`
-	AllianceID        AllianceID             `json:"allianceId,omitempty"`
-	Level             int                    `json:"level,omitempty"`
-	LegendLevel       int                    `json:"legendLevel,omitempty"`
-	Might             float64                `json:"might,omitempty"`
-	Glory             float64                `json:"glory,omitempty"`
-	GloryTitleID      int64                  `json:"gloryTitleId,omitempty"`
-	GloryTitleTopX    int                    `json:"gloryTitleTopX,omitempty"`
-	GloryTitleAt      time.Time              `json:"gloryTitleObservedAt,omitempty"`
-	GloryTitleGen     uint64                 `json:"gloryTitleGeneration,omitempty"`
-	Gallantry         float64                `json:"gallantry,omitempty"`
-	GallantryTitleID  int64                  `json:"gallantryTitleId,omitempty"`
-	GallantryTitleAt  time.Time              `json:"gallantryTitleObservedAt,omitempty"`
-	GallantryTitleGen uint64                 `json:"gallantryTitleGeneration,omitempty"`
-	Resources         map[ResourceID]float64 `json:"resources"`
+	// Process-local game setting authority; never restored from a saved profile.
+	RubyConfirmation   RubyConfirmationState  `json:"-"`
+	ID                 PlayerID               `json:"id"`
+	Name               string                 `json:"name,omitempty"`
+	AllianceID         AllianceID             `json:"allianceId,omitempty"`
+	AllianceObservedAt time.Time              `json:"-"`
+	Level              int                    `json:"level,omitempty"`
+	LegendLevel        int                    `json:"legendLevel,omitempty"`
+	Might              float64                `json:"might,omitempty"`
+	Glory              float64                `json:"glory,omitempty"`
+	GloryTitleID       int64                  `json:"gloryTitleId,omitempty"`
+	GloryTitleTopX     int                    `json:"gloryTitleTopX,omitempty"`
+	GloryTitleAt       time.Time              `json:"gloryTitleObservedAt,omitempty"`
+	GloryTitleGen      uint64                 `json:"gloryTitleGeneration,omitempty"`
+	Gallantry          float64                `json:"gallantry,omitempty"`
+	GallantryTitleID   int64                  `json:"gallantryTitleId,omitempty"`
+	GallantryTitleAt   time.Time              `json:"gallantryTitleObservedAt,omitempty"`
+	GallantryTitleGen  uint64                 `json:"gallantryTitleGeneration,omitempty"`
+	Resources          map[ResourceID]float64 `json:"resources"`
 	// ResourceObservations are live dispatch authority and are intentionally
 	// not persisted. A restart must observe a new current-session GCU snapshot
 	// before unattended premium spending resumes.
@@ -441,16 +445,17 @@ type DefenseToolSlot struct {
 }
 
 type Building struct {
-	InstanceID        BuildingInstanceID `json:"instanceId"`
-	DefinitionID      BuildingID         `json:"definitionId"`
-	GridX             int                `json:"gridX,omitempty"`
-	GridY             int                `json:"gridY,omitempty"`
-	Rotation          int                `json:"rotation,omitempty"`
-	ProgressSec       int64              `json:"progressSec,omitempty"`
-	ConstructionState int                `json:"constructionState,omitempty"`
-	Level             int                `json:"level,omitempty"`
-	Layer             BuildingLayer      `json:"layer,omitempty"`
-	Placed            bool               `json:"placed"`
+	InstanceID               BuildingInstanceID `json:"instanceId"`
+	DefinitionID             BuildingID         `json:"definitionId"`
+	GridX                    int                `json:"gridX,omitempty"`
+	GridY                    int                `json:"gridY,omitempty"`
+	Rotation                 int                `json:"rotation,omitempty"`
+	ProgressSec              int64              `json:"progressSec,omitempty"`
+	ConstructionBoostPercent float64            `json:"constructionBoostPercent,omitempty"`
+	ConstructionState        int                `json:"constructionState,omitempty"`
+	Level                    int                `json:"level,omitempty"`
+	Layer                    BuildingLayer      `json:"layer,omitempty"`
+	Placed                   bool               `json:"placed"`
 }
 
 type BuildingProduction struct {
@@ -1043,6 +1048,12 @@ type InventoryState struct {
 	ItemsObservedAt                 map[string]time.Time                      `json:"itemsObservedAt,omitempty"`
 }
 
+type ResearchState struct {
+	CompletedIDs map[int64]bool `json:"completedIds"`
+	ObservedAt   time.Time      `json:"observedAt,omitempty"`
+	Generation   uint64         `json:"generation,omitempty"`
+}
+
 type SubscriptionState struct {
 	TypeID         int `json:"typeId"`
 	RemainingSec   int `json:"remainingSec,omitempty"`
@@ -1366,6 +1377,7 @@ const (
 )
 
 type StationingOperation struct {
+	StatusDetailDescriptor *Localization.Message `json:"statusDetailDescriptor,omitempty"`
 	// Runtime castle controls use a separate autoBirdControl record so clearing
 	// cycle tracking cannot accidentally remove a user's pause.
 	Paused          bool       `json:"paused,omitempty"`
@@ -1794,21 +1806,22 @@ type NomadRBCTestLaunch struct {
 }
 
 type NomadRBCTestState struct {
-	RunID                 string               `json:"runId"`
-	SourceCastleID        CastleID             `json:"sourceCastleId"`
-	KingdomID             KingdomID            `json:"kingdomId"`
-	TargetX               int                  `json:"targetX"`
-	TargetY               int                  `json:"targetY"`
-	ExpectedAttacks       int                  `json:"expectedAttacks"`
-	AttacksLaunched       int                  `json:"attacksLaunched"`
-	VictoriesConfirmed    int                  `json:"victoriesConfirmed"`
-	CooldownsSkipped      int                  `json:"cooldownsSkipped"`
-	Launches              []NomadRBCTestLaunch `json:"launches"`
-	LastReportID          int64                `json:"lastReportId,omitempty"`
-	SafetyError           string               `json:"safetyError,omitempty"`
-	StartedAt             time.Time            `json:"startedAt"`
-	LastChainLaunchedAt   time.Time            `json:"lastChainLaunchedAt,omitempty"`
-	LastCooldownSkippedAt time.Time            `json:"lastCooldownSkippedAt,omitempty"`
+	RunID                 string                `json:"runId"`
+	SourceCastleID        CastleID              `json:"sourceCastleId"`
+	KingdomID             KingdomID             `json:"kingdomId"`
+	TargetX               int                   `json:"targetX"`
+	TargetY               int                   `json:"targetY"`
+	ExpectedAttacks       int                   `json:"expectedAttacks"`
+	AttacksLaunched       int                   `json:"attacksLaunched"`
+	VictoriesConfirmed    int                   `json:"victoriesConfirmed"`
+	CooldownsSkipped      int                   `json:"cooldownsSkipped"`
+	Launches              []NomadRBCTestLaunch  `json:"launches"`
+	LastReportID          int64                 `json:"lastReportId,omitempty"`
+	SafetyError           string                `json:"safetyError,omitempty"`
+	SafetyErrorDescriptor *Localization.Message `json:"safetyErrorDescriptor,omitempty"`
+	StartedAt             time.Time             `json:"startedAt"`
+	LastChainLaunchedAt   time.Time             `json:"lastChainLaunchedAt,omitempty"`
+	LastCooldownSkippedAt time.Time             `json:"lastCooldownSkippedAt,omitempty"`
 }
 
 type NomadCampState struct {
@@ -1883,13 +1896,14 @@ type KhanTauntState struct {
 }
 
 type KhanProtectionState struct {
-	Active                 bool      `json:"active"`
-	CastleID               CastleID  `json:"castleId,omitempty"`
-	OffensiveWallUnits     int64     `json:"offensiveWallUnits,omitempty"`
-	OffensiveUnitThreshold int64     `json:"offensiveUnitThreshold,omitempty"`
-	TriggeredAt            time.Time `json:"triggeredAt,omitempty"`
-	GateOpenUntil          time.Time `json:"gateOpenUntil,omitempty"`
-	Reason                 string    `json:"reason,omitempty"`
+	Active                 bool                  `json:"active"`
+	CastleID               CastleID              `json:"castleId,omitempty"`
+	OffensiveWallUnits     int64                 `json:"offensiveWallUnits,omitempty"`
+	OffensiveUnitThreshold int64                 `json:"offensiveUnitThreshold,omitempty"`
+	TriggeredAt            time.Time             `json:"triggeredAt,omitempty"`
+	GateOpenUntil          time.Time             `json:"gateOpenUntil,omitempty"`
+	Reason                 string                `json:"reason,omitempty"`
+	ReasonDescriptor       *Localization.Message `json:"reasonDescriptor,omitempty"`
 }
 
 type KhanCooldownMSDState struct {
@@ -1947,6 +1961,7 @@ type KhanState struct {
 	LastCooldownSkippedAt         time.Time                         `json:"lastCooldownSkippedAt,omitempty"`
 	LastDefenseToolPurchaseAt     time.Time                         `json:"lastDefenseToolPurchaseAt,omitempty"`
 	SafetyError                   string                            `json:"safetyError,omitempty"`
+	SafetyErrorDescriptor         *Localization.Message             `json:"safetyErrorDescriptor,omitempty"`
 	Protection                    KhanProtectionState               `json:"protection"`
 	CooldownReports               map[int64]KhanCooldownReportState `json:"cooldownReports"`
 	CooldownReportVersion         int                               `json:"cooldownReportVersion"`
@@ -2104,65 +2119,72 @@ type DailyAttackState struct {
 }
 
 type AutomationState struct {
-	SafetyLock         AutomationSafetyLock `json:"safetyLock,omitempty"`
-	ID                 string               `json:"id"`
-	Enabled            bool                 `json:"enabled"`
-	Status             string               `json:"status"`
-	Detail             string               `json:"detail,omitempty"`
-	NextCheckAt        *time.Time           `json:"nextCheckAt,omitempty"`
-	LastRunAt          *time.Time           `json:"lastRunAt,omitempty"`
-	LastOperationID    string               `json:"lastOperationId,omitempty"`
-	LastError          string               `json:"lastError,omitempty"`
-	Metrics            map[string]float64   `json:"metrics,omitempty"`
-	Details            map[string]string    `json:"details,omitempty"`
-	OperationalCursors map[string]int       `json:"operationalCursors,omitempty"`
-	UpdatedAt          time.Time            `json:"updatedAt"`
+	DetailTranslationStatus string                           `json:"detailTranslationStatus"`
+	DetailDescriptor        *Localization.Message            `json:"detailDescriptor,omitempty"`
+	LastErrorDescriptor     *Localization.Message            `json:"lastErrorDescriptor,omitempty"`
+	SafetyLock              AutomationSafetyLock             `json:"safetyLock,omitempty"`
+	ID                      string                           `json:"id"`
+	Enabled                 bool                             `json:"enabled"`
+	Status                  string                           `json:"status"`
+	Detail                  string                           `json:"detail,omitempty"`
+	NextCheckAt             *time.Time                       `json:"nextCheckAt,omitempty"`
+	LastRunAt               *time.Time                       `json:"lastRunAt,omitempty"`
+	LastOperationID         string                           `json:"lastOperationId,omitempty"`
+	LastError               string                           `json:"lastError,omitempty"`
+	Metrics                 map[string]float64               `json:"metrics,omitempty"`
+	Details                 map[string]string                `json:"details,omitempty"`
+	DetailsDescriptors      map[string]*Localization.Message `json:"detailsDescriptors,omitempty"`
+	OperationalCursors      map[string]int                   `json:"operationalCursors,omitempty"`
+	UpdatedAt               time.Time                        `json:"updatedAt"`
 }
 
 type GameState struct {
-	SchemaVersion        int                                     `json:"schemaVersion"`
-	Revision             uint64                                  `json:"revision"`
-	UpdatedAt            time.Time                               `json:"updatedAt"`
-	CatalogVersion       string                                  `json:"catalogVersion,omitempty"`
-	LanguageVersion      string                                  `json:"languageVersion,omitempty"`
-	Session              SessionState                            `json:"session"`
-	Account              AccountBindingState                     `json:"account"`
-	Player               PlayerState                             `json:"player"`
-	Castles              map[CastleID]CastleState                `json:"castles"`
-	Commanders           map[CommanderID]CommanderState          `json:"commanders"`
-	Generals             map[int64]GeneralState                  `json:"generals"`
-	Castellans           map[CastellanID]CastellanState          `json:"castellans"`
-	Movements            map[MovementID]MovementState            `json:"movements"`
-	MovementSnapshot     MovementSnapshot                        `json:"movementSnapshot"`
-	Stationing           map[string]StationingOperation          `json:"stationing"`
-	Scheduled            map[string]ScheduledOperation           `json:"scheduled"`
-	Rift                 RiftState                               `json:"rift"`
-	Inventory            InventoryState                          `json:"inventory"`
-	Subscriptions        map[int]SubscriptionState               `json:"subscriptions"`
-	Market               MarketState                             `json:"market"`
-	KingdomTransport     KingdomTransportState                   `json:"kingdomTransport"`
-	Beri                 BeriState                               `json:"beri"`
-	Alliance             AllianceState                           `json:"alliance"`
-	Alliances            map[AllianceID]AllianceState            `json:"alliances"`
-	AllianceHelpRequests AllianceHelpRequestState                `json:"allianceHelpRequests"`
-	Map                  map[KingdomID]map[string]MapObservation `json:"-"`
-	TowerCooldowns       map[string]TowerCooldownState           `json:"towerCooldowns"`
-	TowerQueue           TowerQueueState                         `json:"towerQueue"`
-	Invasion             InvasionState                           `json:"invasion"`
-	Storm                StormState                              `json:"storm"`
-	NomadCamps           NomadCampState                          `json:"nomadCamps"`
-	Advisor              AdvisorState                            `json:"advisor"`
-	Khan                 KhanState                               `json:"khan"`
-	DailyAttacks         DailyAttackState                        `json:"dailyAttacks"`
-	AttackDialog         AttackDialogState                       `json:"attackDialog"`
-	CombatCooldown       CombatCooldownState                     `json:"combatCooldown"`
-	AttackPresets        []AttackPreset                          `json:"attackPresets"`
-	AttackAnalytics      AttackAnalyticsState                    `json:"attackAnalytics"`
-	EventScores          EventScoreState                         `json:"eventScores"`
-	CommandContext       CommandContextState                     `json:"commandContext"`
-	Automations          map[string]AutomationState              `json:"automations"`
-	Reports              ReportState                             `json:"reports"`
-	Observations         map[string]ProtocolObservation          `json:"observations"`
+	SchemaVersion           int                                     `json:"schemaVersion"`
+	Revision                uint64                                  `json:"revision"`
+	UpdatedAt               time.Time                               `json:"updatedAt"`
+	CatalogVersion          string                                  `json:"catalogVersion,omitempty"`
+	LanguageVersion         string                                  `json:"languageVersion,omitempty"`
+	Session                 SessionState                            `json:"session"`
+	Account                 AccountBindingState                     `json:"account"`
+	Player                  PlayerState                             `json:"player"`
+	Castles                 map[CastleID]CastleState                `json:"castles"`
+	Commanders              map[CommanderID]CommanderState          `json:"commanders"`
+	Generals                map[int64]GeneralState                  `json:"generals"`
+	Castellans              map[CastellanID]CastellanState          `json:"castellans"`
+	Movements               map[MovementID]MovementState            `json:"movements"`
+	MovementSnapshot        MovementSnapshot                        `json:"movementSnapshot"`
+	Stationing              map[string]StationingOperation          `json:"stationing"`
+	Scheduled               map[string]ScheduledOperation           `json:"scheduled"`
+	Rift                    RiftState                               `json:"rift"`
+	Inventory               InventoryState                          `json:"inventory"`
+	Subscriptions           map[int]SubscriptionState               `json:"subscriptions"`
+	SubscriptionsObservedAt time.Time                               `json:"subscriptionsObservedAt,omitempty"`
+	SubscriptionsGeneration uint64                                  `json:"subscriptionsGeneration,omitempty"`
+	Research                ResearchState                           `json:"research"`
+	Market                  MarketState                             `json:"market"`
+	KingdomTransport        KingdomTransportState                   `json:"kingdomTransport"`
+	Beri                    BeriState                               `json:"beri"`
+	Alliance                AllianceState                           `json:"alliance"`
+	Alliances               map[AllianceID]AllianceState            `json:"alliances"`
+	AllianceHelpRequests    AllianceHelpRequestState                `json:"allianceHelpRequests"`
+	Map                     map[KingdomID]map[string]MapObservation `json:"-"`
+	TowerCooldowns          map[string]TowerCooldownState           `json:"towerCooldowns"`
+	TowerQueue              TowerQueueState                         `json:"towerQueue"`
+	Invasion                InvasionState                           `json:"invasion"`
+	Storm                   StormState                              `json:"storm"`
+	NomadCamps              NomadCampState                          `json:"nomadCamps"`
+	Advisor                 AdvisorState                            `json:"advisor"`
+	Khan                    KhanState                               `json:"khan"`
+	DailyAttacks            DailyAttackState                        `json:"dailyAttacks"`
+	AttackDialog            AttackDialogState                       `json:"attackDialog"`
+	CombatCooldown          CombatCooldownState                     `json:"combatCooldown"`
+	AttackPresets           []AttackPreset                          `json:"attackPresets"`
+	AttackAnalytics         AttackAnalyticsState                    `json:"attackAnalytics"`
+	EventScores             EventScoreState                         `json:"eventScores"`
+	CommandContext          CommandContextState                     `json:"commandContext"`
+	Automations             map[string]AutomationState              `json:"automations"`
+	Reports                 ReportState                             `json:"reports"`
+	Observations            map[string]ProtocolObservation          `json:"observations"`
 
 	sharedMap                   *worldMapGeneration
 	mapOverlay                  *accountMapGeneration
@@ -2251,6 +2273,7 @@ func NewGameState() GameState {
 			ItemsObservedAt:            map[string]time.Time{},
 		},
 		Subscriptions: map[int]SubscriptionState{},
+		Research:      ResearchState{CompletedIDs: map[int64]bool{}},
 		Market: MarketState{
 			Castles: map[CastleID]MarketCastleState{}, Boosters: map[int]MarketBoosterState{},
 		},

@@ -1,6 +1,7 @@
 package API
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"bufio"
 	"bytes"
 	"crypto/sha256"
@@ -12,7 +13,7 @@ import (
 
 func (server *Server) handleWorldIntelligenceStatus(writer http.ResponseWriter, request *http.Request) {
 	if server.config.WorldIntel == nil {
-		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable", Localization.New("server.api.world_intelligence_is_unavailable.8bd6d197", "World Intelligence is unavailable", nil))
 		return
 	}
 	writeJSON(writer, http.StatusOK, server.config.WorldIntel.Status(request.Context()))
@@ -20,12 +21,12 @@ func (server *Server) handleWorldIntelligenceStatus(writer http.ResponseWriter, 
 
 func (server *Server) handleWorldIntelligenceSearch(writer http.ResponseWriter, request *http.Request) {
 	if server.config.WorldIntel == nil {
-		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable", Localization.New("server.api.world_intelligence_is_unavailable.8bd6d197", "World Intelligence is unavailable", nil))
 		return
 	}
 	entityType := strings.TrimSpace(request.URL.Query().Get("type"))
 	if entityType != "" && entityType != "player" && entityType != "alliance" {
-		writeError(writer, http.StatusBadRequest, "invalid_entity_type", "type must be player or alliance")
+		writeError(writer, http.StatusBadRequest, "invalid_entity_type", "type must be player or alliance", Localization.New("server.api.type_must_be_player.6c2ff66b", "type must be player or alliance", nil))
 		return
 	}
 	result, err := server.config.WorldIntel.Search(
@@ -33,7 +34,7 @@ func (server *Server) handleWorldIntelligenceSearch(writer http.ResponseWriter, 
 		entityType, queryLimit(request, 50, 100),
 	)
 	if err != nil {
-		writeError(writer, http.StatusBadGateway, "world_intelligence_query_failed", err.Error())
+		writeErrorFromError(writer, http.StatusBadGateway, "world_intelligence_query_failed", err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, result)
@@ -41,19 +42,19 @@ func (server *Server) handleWorldIntelligenceSearch(writer http.ResponseWriter, 
 
 func (server *Server) handleWorldIntelligencePlayer(writer http.ResponseWriter, request *http.Request) {
 	if server.config.WorldIntel == nil {
-		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable", Localization.New("server.api.world_intelligence_is_unavailable.8bd6d197", "World Intelligence is unavailable", nil))
 		return
 	}
 	playerID, err := positivePathID(request.PathValue("id"))
 	if err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid_player_id", "player id must be positive")
+		writeError(writer, http.StatusBadRequest, "invalid_player_id", "player id must be positive", Localization.New("server.api.player_id_must_be.1cf49a4b", "player id must be positive", nil))
 		return
 	}
 	result, err := server.config.WorldIntel.Player(
 		request.Context(), request.URL.Query().Get("worldId"), playerID, queryLimit(request, 2_000, 2_500),
 	)
 	if err != nil {
-		writeError(writer, http.StatusBadGateway, "world_intelligence_query_failed", err.Error())
+		writeErrorFromError(writer, http.StatusBadGateway, "world_intelligence_query_failed", err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, result)
@@ -61,19 +62,19 @@ func (server *Server) handleWorldIntelligencePlayer(writer http.ResponseWriter, 
 
 func (server *Server) handleWorldIntelligenceAlliance(writer http.ResponseWriter, request *http.Request) {
 	if server.config.WorldIntel == nil {
-		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable", Localization.New("server.api.world_intelligence_is_unavailable.8bd6d197", "World Intelligence is unavailable", nil))
 		return
 	}
 	allianceID, err := positivePathID(request.PathValue("id"))
 	if err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid_alliance_id", "alliance id must be positive")
+		writeError(writer, http.StatusBadRequest, "invalid_alliance_id", "alliance id must be positive", Localization.New("server.api.alliance_id_must_be.de566f1b", "alliance id must be positive", nil))
 		return
 	}
 	result, err := server.config.WorldIntel.Alliance(
 		request.Context(), request.URL.Query().Get("worldId"), allianceID, queryLimit(request, 2_000, 2_500),
 	)
 	if err != nil {
-		writeError(writer, http.StatusBadGateway, "world_intelligence_query_failed", err.Error())
+		writeErrorFromError(writer, http.StatusBadGateway, "world_intelligence_query_failed", err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, result)
@@ -81,19 +82,19 @@ func (server *Server) handleWorldIntelligenceAlliance(writer http.ResponseWriter
 
 func (server *Server) handleWorldIntelligenceEventRuns(writer http.ResponseWriter, request *http.Request) {
 	if server.config.WorldIntel == nil {
-		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable", Localization.New("server.api.world_intelligence_is_unavailable.8bd6d197", "World Intelligence is unavailable", nil))
 		return
 	}
 	eventKey := strings.ToLower(strings.TrimSpace(request.URL.Query().Get("eventKey")))
 	if eventKey != "" && !validWorldIntelligenceEventKey(eventKey) {
-		writeError(writer, http.StatusBadRequest, "invalid_event_key", "eventKey is invalid")
+		writeError(writer, http.StatusBadRequest, "invalid_event_key", "eventKey is invalid", Localization.New("server.api.eventkey_is_invalid.5fa0f899", "eventKey is invalid", nil))
 		return
 	}
 	result, err := server.config.WorldIntel.EventRuns(
 		request.Context(), request.URL.Query().Get("worldId"), eventKey, queryLimit(request, 50, 250),
 	)
 	if err != nil {
-		writeError(writer, http.StatusBadGateway, "world_intelligence_query_failed", err.Error())
+		writeErrorFromError(writer, http.StatusBadGateway, "world_intelligence_query_failed", err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, result)
@@ -101,22 +102,22 @@ func (server *Server) handleWorldIntelligenceEventRuns(writer http.ResponseWrite
 
 func (server *Server) handleWorldIntelligenceEventRunRankings(writer http.ResponseWriter, request *http.Request) {
 	if server.config.WorldIntel == nil {
-		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable", Localization.New("server.api.world_intelligence_is_unavailable.8bd6d197", "World Intelligence is unavailable", nil))
 		return
 	}
 	occurrenceID := strings.ToLower(strings.TrimSpace(request.PathValue("id")))
 	if !validWorldIntelligenceOccurrenceID(occurrenceID) {
-		writeError(writer, http.StatusBadRequest, "invalid_occurrence_id", "event occurrence id is invalid")
+		writeError(writer, http.StatusBadRequest, "invalid_occurrence_id", "event occurrence id is invalid", Localization.New("server.api.event_occurrence_id_is.3c0ae253", "event occurrence id is invalid", nil))
 		return
 	}
 	listType, err := optionalIntegerQuery(request, "listType", 0, 0, 1_000_000)
 	if err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid_list_type", err.Error())
+		writeErrorFromError(writer, http.StatusBadRequest, "invalid_list_type", err)
 		return
 	}
 	leagueID, err := optionalIntegerQuery(request, "leagueId", -2, -1, 1_000_000)
 	if err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid_league_id", err.Error())
+		writeErrorFromError(writer, http.StatusBadRequest, "invalid_league_id", err)
 		return
 	}
 	result, err := server.config.WorldIntel.EventRunRankings(
@@ -124,7 +125,7 @@ func (server *Server) handleWorldIntelligenceEventRunRankings(writer http.Respon
 		listType, leagueID, queryLimit(request, 250, 5_000),
 	)
 	if err != nil {
-		writeError(writer, http.StatusBadGateway, "world_intelligence_query_failed", err.Error())
+		writeErrorFromError(writer, http.StatusBadGateway, "world_intelligence_query_failed", err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, result)
@@ -132,22 +133,22 @@ func (server *Server) handleWorldIntelligenceEventRunRankings(writer http.Respon
 
 func (server *Server) handleWorldIntelligencePlayerEventScores(writer http.ResponseWriter, request *http.Request) {
 	if server.config.WorldIntel == nil {
-		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable", Localization.New("server.api.world_intelligence_is_unavailable.8bd6d197", "World Intelligence is unavailable", nil))
 		return
 	}
 	playerID, err := positivePathID(request.PathValue("id"))
 	if err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid_player_id", "player id must be positive")
+		writeError(writer, http.StatusBadRequest, "invalid_player_id", "player id must be positive", Localization.New("server.api.player_id_must_be.1cf49a4b", "player id must be positive", nil))
 		return
 	}
 	eventKey := strings.ToLower(strings.TrimSpace(request.URL.Query().Get("eventKey")))
 	if eventKey != "" && !validWorldIntelligenceEventKey(eventKey) {
-		writeError(writer, http.StatusBadRequest, "invalid_event_key", "eventKey is invalid")
+		writeError(writer, http.StatusBadRequest, "invalid_event_key", "eventKey is invalid", Localization.New("server.api.eventkey_is_invalid.5fa0f899", "eventKey is invalid", nil))
 		return
 	}
 	occurrenceID := strings.ToLower(strings.TrimSpace(request.URL.Query().Get("occurrenceId")))
 	if occurrenceID != "" && !validWorldIntelligenceOccurrenceID(occurrenceID) {
-		writeError(writer, http.StatusBadRequest, "invalid_occurrence_id", "event occurrence id is invalid")
+		writeError(writer, http.StatusBadRequest, "invalid_occurrence_id", "event occurrence id is invalid", Localization.New("server.api.event_occurrence_id_is.3c0ae253", "event occurrence id is invalid", nil))
 		return
 	}
 	result, err := server.config.WorldIntel.PlayerEventScores(
@@ -155,7 +156,7 @@ func (server *Server) handleWorldIntelligencePlayerEventScores(writer http.Respo
 		eventKey, occurrenceID, queryLimit(request, 1_000, 5_000),
 	)
 	if err != nil {
-		writeError(writer, http.StatusBadGateway, "world_intelligence_query_failed", err.Error())
+		writeErrorFromError(writer, http.StatusBadGateway, "world_intelligence_query_failed", err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, result)
@@ -163,12 +164,12 @@ func (server *Server) handleWorldIntelligencePlayerEventScores(writer http.Respo
 
 func (server *Server) handleWorldIntelligenceRankings(writer http.ResponseWriter, request *http.Request) {
 	if server.config.WorldIntel == nil {
-		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable", Localization.New("server.api.world_intelligence_is_unavailable.8bd6d197", "World Intelligence is unavailable", nil))
 		return
 	}
 	entityType := strings.TrimSpace(request.PathValue("type"))
 	if entityType != "players" && entityType != "alliances" {
-		writeError(writer, http.StatusBadRequest, "invalid_ranking_type", "ranking type must be players or alliances")
+		writeError(writer, http.StatusBadRequest, "invalid_ranking_type", "ranking type must be players or alliances", Localization.New("server.api.ranking_type_must_be.ae1d21f5", "ranking type must be players or alliances", nil))
 		return
 	}
 	metric := strings.TrimSpace(request.URL.Query().Get("metric"))
@@ -181,7 +182,7 @@ func (server *Server) handleWorldIntelligenceRankings(writer http.ResponseWriter
 		queryLimit(request, 100, maximum),
 	)
 	if err != nil {
-		writeError(writer, http.StatusBadGateway, "world_intelligence_query_failed", err.Error())
+		writeErrorFromError(writer, http.StatusBadGateway, "world_intelligence_query_failed", err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, result)
@@ -189,19 +190,19 @@ func (server *Server) handleWorldIntelligenceRankings(writer http.ResponseWriter
 
 func (server *Server) handleWorldIntelligenceRankingMetrics(writer http.ResponseWriter, request *http.Request) {
 	if server.config.WorldIntel == nil {
-		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable", Localization.New("server.api.world_intelligence_is_unavailable.8bd6d197", "World Intelligence is unavailable", nil))
 		return
 	}
 	entityType := strings.TrimSpace(request.PathValue("type"))
 	if entityType != "players" && entityType != "alliances" {
-		writeError(writer, http.StatusBadRequest, "invalid_ranking_type", "ranking metric type must be players or alliances")
+		writeError(writer, http.StatusBadRequest, "invalid_ranking_type", "ranking metric type must be players or alliances", Localization.New("server.api.ranking_metric_type_must.179bda7e", "ranking metric type must be players or alliances", nil))
 		return
 	}
 	result, err := server.config.WorldIntel.RankingMetrics(
 		request.Context(), request.URL.Query().Get("worldId"), entityType,
 	)
 	if err != nil {
-		writeError(writer, http.StatusBadGateway, "world_intelligence_query_failed", err.Error())
+		writeErrorFromError(writer, http.StatusBadGateway, "world_intelligence_query_failed", err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, result)
@@ -209,12 +210,12 @@ func (server *Server) handleWorldIntelligenceRankingMetrics(writer http.Response
 
 func (server *Server) handleWorldIntelligenceCoverage(writer http.ResponseWriter, request *http.Request) {
 	if server.config.WorldIntel == nil {
-		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable", Localization.New("server.api.world_intelligence_is_unavailable.8bd6d197", "World Intelligence is unavailable", nil))
 		return
 	}
 	result, err := server.config.WorldIntel.Coverage(request.Context(), request.URL.Query().Get("worldId"))
 	if err != nil {
-		writeError(writer, http.StatusBadGateway, "world_intelligence_query_failed", err.Error())
+		writeErrorFromError(writer, http.StatusBadGateway, "world_intelligence_query_failed", err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, result)
@@ -222,14 +223,14 @@ func (server *Server) handleWorldIntelligenceCoverage(writer http.ResponseWriter
 
 func (server *Server) handleWorldIntelligenceSubscribe(writer http.ResponseWriter, request *http.Request) {
 	if server.config.WorldIntel == nil {
-		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable", Localization.New("server.api.world_intelligence_is_unavailable.8bd6d197", "World Intelligence is unavailable", nil))
 		return
 	}
 	response, err := server.config.WorldIntel.Subscribe(
 		request.Context(), request.URL.Query().Get("worldId"), request.Header.Get("Last-Event-ID"),
 	)
 	if err != nil {
-		writeError(writer, http.StatusBadGateway, "world_intelligence_subscription_failed", err.Error())
+		writeErrorFromError(writer, http.StatusBadGateway, "world_intelligence_subscription_failed", err)
 		return
 	}
 	proxyWorldIntelligenceEventStream(writer, response)
@@ -237,22 +238,22 @@ func (server *Server) handleWorldIntelligenceSubscribe(writer http.ResponseWrite
 
 func (server *Server) handleWorldIntelligenceEventRunSubscribe(writer http.ResponseWriter, request *http.Request) {
 	if server.config.WorldIntel == nil {
-		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable", Localization.New("server.api.world_intelligence_is_unavailable.8bd6d197", "World Intelligence is unavailable", nil))
 		return
 	}
 	occurrenceID := strings.ToLower(strings.TrimSpace(request.PathValue("id")))
 	if !validWorldIntelligenceOccurrenceID(occurrenceID) {
-		writeError(writer, http.StatusBadRequest, "invalid_occurrence_id", "event occurrence id is invalid")
+		writeError(writer, http.StatusBadRequest, "invalid_occurrence_id", "event occurrence id is invalid", Localization.New("server.api.event_occurrence_id_is.3c0ae253", "event occurrence id is invalid", nil))
 		return
 	}
 	listType, err := optionalIntegerQuery(request, "listType", 0, 0, 1_000_000)
 	if err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid_list_type", err.Error())
+		writeErrorFromError(writer, http.StatusBadRequest, "invalid_list_type", err)
 		return
 	}
 	leagueID, err := optionalIntegerQuery(request, "leagueId", -2, -1, 1_000_000)
 	if err != nil {
-		writeError(writer, http.StatusBadRequest, "invalid_league_id", err.Error())
+		writeErrorFromError(writer, http.StatusBadRequest, "invalid_league_id", err)
 		return
 	}
 	response, err := server.config.WorldIntel.SubscribeEventRun(
@@ -260,7 +261,7 @@ func (server *Server) handleWorldIntelligenceEventRunSubscribe(writer http.Respo
 		request.Header.Get("Last-Event-ID"),
 	)
 	if err != nil {
-		writeError(writer, http.StatusBadGateway, "world_intelligence_subscription_failed", err.Error())
+		writeErrorFromError(writer, http.StatusBadGateway, "world_intelligence_subscription_failed", err)
 		return
 	}
 	proxyWorldIntelligenceEventStream(writer, response)
@@ -270,7 +271,7 @@ func proxyWorldIntelligenceEventStream(writer http.ResponseWriter, response *htt
 	defer response.Body.Close()
 	flusher, ok := writer.(http.Flusher)
 	if !ok {
-		writeError(writer, http.StatusInternalServerError, "stream_unsupported", "Streaming responses are unavailable")
+		writeError(writer, http.StatusInternalServerError, "stream_unsupported", "Streaming responses are unavailable", Localization.New("server.api.streaming_responses_are_unavailable.dbad8099", "Streaming responses are unavailable", nil))
 		return
 	}
 	writer.Header().Set("Content-Type", "text/event-stream")
@@ -296,12 +297,12 @@ func proxyWorldIntelligenceEventStream(writer http.ResponseWriter, response *htt
 
 func (server *Server) handleWorldIntelligenceCatalogDatasets(writer http.ResponseWriter, request *http.Request) {
 	if server.config.WorldIntel == nil {
-		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable", Localization.New("server.api.world_intelligence_is_unavailable.8bd6d197", "World Intelligence is unavailable", nil))
 		return
 	}
 	result, err := server.config.WorldIntel.CatalogDatasets(request.Context())
 	if err != nil {
-		writeError(writer, http.StatusBadGateway, "world_intelligence_query_failed", err.Error())
+		writeErrorFromError(writer, http.StatusBadGateway, "world_intelligence_query_failed", err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, result)
@@ -309,19 +310,19 @@ func (server *Server) handleWorldIntelligenceCatalogDatasets(writer http.Respons
 
 func (server *Server) handleWorldIntelligenceCatalogDataset(writer http.ResponseWriter, request *http.Request) {
 	if server.config.WorldIntel == nil {
-		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable")
+		writeError(writer, http.StatusServiceUnavailable, "world_intelligence_unavailable", "World Intelligence is unavailable", Localization.New("server.api.world_intelligence_is_unavailable.8bd6d197", "World Intelligence is unavailable", nil))
 		return
 	}
 	datasetKey := strings.TrimSpace(request.PathValue("key"))
 	if datasetKey == "" || len(datasetKey) > 80 {
-		writeError(writer, http.StatusBadRequest, "invalid_dataset_key", "catalog dataset key is invalid")
+		writeError(writer, http.StatusBadRequest, "invalid_dataset_key", "catalog dataset key is invalid", Localization.New("server.api.catalog_dataset_key_is.4fc934b8", "catalog dataset key is invalid", nil))
 		return
 	}
 	result, err := server.config.WorldIntel.CatalogDataset(
 		request.Context(), datasetKey, queryLimitNamed(request, "historyLimit", 25, 100),
 	)
 	if err != nil {
-		writeError(writer, http.StatusBadGateway, "world_intelligence_query_failed", err.Error())
+		writeErrorFromError(writer, http.StatusBadGateway, "world_intelligence_query_failed", err)
 		return
 	}
 	writeJSON(writer, http.StatusOK, result)

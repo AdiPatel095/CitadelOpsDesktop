@@ -1,5 +1,7 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, Bot, Castle, Clock3, Coins, RefreshCw, ShieldCheck, Swords } from 'lucide-react';
+import { AlertTriangle, BookOpen, Bot, Castle, Clock3, Coins, RefreshCw, ShieldCheck, Swords } from 'lucide-react';
 import { useCitadelAPI } from '../../api/ApiContext';
 import type { GameStateV2, ScalableEventScoreV2 } from '../../api/Contracts';
 import { castleOptionsFromState } from '../../api/Selectors';
@@ -20,6 +22,8 @@ import {
 } from '../AutoAdvisorClientState';
 import { eventDifficultyName, useEventDifficultyOptions } from '../EventDifficultyOptions';
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
+import { FeatureGuideModal } from './FeatureGuideModal';
+import { englishGuidePack, useGuideLocale } from '../../config/useGuideLocale';
 
 interface AutoAdvisorSettingsModalProps {
   isOpen: boolean;
@@ -27,6 +31,7 @@ interface AutoAdvisorSettingsModalProps {
 }
 
 export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> = ({ isOpen, onClose }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { state, configuration, submitIntent, updateConfiguration } = useCitadelAPI();
   const [draft, setDraft] = useState<AutoAdvisorClientStateV1>(defaultAutoAdvisorClientState);
   const [saving, setSaving] = useState(false);
@@ -34,6 +39,11 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
   const [activating, setActivating] = useState(false);
   const [activationOpen, setActivationOpen] = useState(false);
   const [activationAcknowledged, setActivationAcknowledged] = useState(false);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+  const { locale: guideLocale, pack: guidePack } = useGuideLocale();
+  const advisorGuidePack = guidePack.autoAdvisor ? guidePack : englishGuidePack;
+  const advisorGuideLocale = advisorGuidePack === englishGuidePack ? 'en' : guideLocale;
+  useEffect(() => { if (!isOpen) setIsGuideOpen(false); }, [isOpen]);
 
   const castles = useMemo(() => castleOptionsFromState(state).filter((castle) => castle.kingdomId === 0), [state]);
   const presetDocument = useMemo(
@@ -152,9 +162,10 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
         isOpen={isOpen}
         onClose={() => { if (!saving && !activating) onClose(); }}
         maxWidth="3xl"
-        title="Auto Advisor"
+        titleTrailing={<Button variant="outline" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={advisorGuideLocale}>{advisorGuidePack.ui.guideButton}</span></Button>}
+        title={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.title.auto.advisor.3c6f5be4")}
         icon={<Bot className="h-5 w-5" />}
-        description="One guarded Nomad or Samurai advisor run per event"
+        description={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.description.one.guarded.nomad.or.samurai.advisor.run.350d2486")}
         onSave={() => void save()}
         isSaving={saving}
         saveDisabled={!canSave}
@@ -170,8 +181,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
                   </Badge>
                 </div>
                 <p className="mt-1 text-xs text-text-muted">
-                  Saving or enabling automation never consumes a token. Activation is a separate confirmed command.
-                </p>
+                  <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.saving.or.enabling.automation.never.consumes.a.efe08b01" /></p>
               </div>
               <div className="flex flex-wrap gap-2">
                 {advisorActive ? (
@@ -182,42 +192,40 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
                     onClick={() => void refreshOverview()}
                     leftIcon={<RefreshCw className="h-3.5 w-3.5" />}
                   >
-                    Refresh overview
-                  </Button>
+                    <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.refresh.overview.10ffdcf1" /></Button>
                 ) : (
                   <Button variant="danger" size="sm" disabled={!canActivate} onClick={openActivation}>
-                    Activate advisor
-                  </Button>
+                    <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.activate.advisor.4259f0af" /></Button>
                 )}
               </div>
             </div>
             {activeEvent ? (
               <div className="mt-3 grid gap-2 border-t border-border-base pt-3 sm:grid-cols-3">
-                <LiveValue label="Event difficulty" value={activeEvent.difficultyId ? String(activeEvent.difficultyId) : 'Not selected'} />
+                <LiveValue label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.event.difficulty.88766fcf")} value={activeEvent.difficultyId ? String(activeEvent.difficultyId) : 'Not selected'} />
                 <LiveValue label={`${eventLabel} tokens`} value={eventTokens.toLocaleString()} />
-                <LiveValue label="Universal tokens" value={universalTokens.toLocaleString()} />
+                <LiveValue label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.universal.tokens.2aa0cdfa")} value={universalTokens.toLocaleString()} />
               </div>
             ) : (
-              <p className="mt-3 border-t border-border-base pt-3 text-xs text-warning">A running Nomad or Samurai event is required.</p>
+              <p className="mt-3 border-t border-border-base pt-3 text-xs text-warning"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.a.running.nomad.or.samurai.event.is.9842edd2" /></p>
             )}
           </Card>
 
           {run || summaryObserved ? (
             <Card variant="solid" className="p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="text-sm font-black text-text-main">Live advisor run</div>
+                <div className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.live.advisor.run.94f3f4a1" /></div>
                 <Badge variant={run?.status === 'running' ? 'primary' : run?.status === 'completed' ? 'success' : run?.status === 'cancelled' ? 'warning' : 'secondary'}>
                   {run?.status ?? 'Overview only'}
                 </Badge>
               </div>
               <div className="mt-3 grid gap-2 sm:grid-cols-4">
-                <LiveValue label="Current attack" value={run ? `${run.currentAttack.toLocaleString()} / ${run.requestedAttacks.toLocaleString()}` : '—'} />
-                <LiveValue label="Wins / defeats" value={`${(summary?.wins ?? 0).toLocaleString()} / ${(summary?.defeats ?? 0).toLocaleString()}`} />
-                <LiveValue label="Units lost" value={(summary?.unitsLost ?? 0).toLocaleString()} />
-                <LiveValue label="Tools lost" value={(summary?.toolsLost ?? 0).toLocaleString()} />
+                <LiveValue label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.current.attack.7b2e3009")} value={run ? `${run.currentAttack.toLocaleString()} / ${run.requestedAttacks.toLocaleString()}` : '—'} />
+                <LiveValue label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.wins.defeats.7ec82de3")} value={`${(summary?.wins ?? 0).toLocaleString()} / ${(summary?.defeats ?? 0).toLocaleString()}`} />
+                <LiveValue label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.units.lost.69a183a6")} value={(summary?.unitsLost ?? 0).toLocaleString()} />
+                <LiveValue label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.tools.lost.69310ec8")} value={(summary?.toolsLost ?? 0).toLocaleString()} />
               </div>
               {run?.status === 'cancelled' ? (
-                <p className="mt-3 text-xs text-warning">The game accepted MCM for this chain. Its remaining advisor attacks are cancelled, and CitadelOps will not restart it automatically.</p>
+                <p className="mt-3 text-xs text-warning"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.the.game.accepted.mcm.for.this.chain.d4ba7807" /></p>
               ) : null}
             </Card>
           ) : null}
@@ -225,17 +233,17 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
           <Card variant="solid" className="p-4">
             <div className="grid gap-4 md:grid-cols-2">
               <label className="block">
-                <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Castle className="h-3.5 w-3.5" /> Source castle</span>
+                <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Castle className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.source.castle.86d5a48e" /></span>
                 <Select
                   value={draft.sourceCastleId > 0 ? String(draft.sourceCastleId) : ''}
                   onChange={(value) => setDraft((current) => ({ ...current, sourceCastleId: Number(value) || 0 }))}
                   options={castles.map((castle) => ({ value: String(castle.id), label: `${castle.name} · ${castle.x}:${castle.y}` }))}
-                  placeholder="Choose a Great Empire castle"
+                  placeholder={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.placeholder.choose.a.great.empire.castle.8a81fec1")}
                   menuGrowToViewport
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Swords className="h-3.5 w-3.5" /> Advisor attack preset</span>
+                <span className="mb-1.5 flex items-center gap-2 text-[10px] font-black uppercase tracking-wider text-text-muted"><Swords className="h-3.5 w-3.5" /> <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.advisor.attack.preset.275e72e7" /></span>
                 <Select
                   value={draft.presetId}
                   onChange={(presetId) => setDraft((current) => ({ ...current, presetId }))}
@@ -253,7 +261,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
             </div>
             {presetSummary ? (
               <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border-base pt-3">
-                <span className="mr-1 text-xs text-text-muted">Reserved for every requested attack</span>
+                <span className="mr-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.reserved.for.every.requested.attack.97e17b4a" /></span>
                 <Badge variant="outline">{presetSummary.waves} waves</Badge>
                 <Badge variant="outline">{presetSummary.troops.toLocaleString()} troops</Badge>
                 <Badge variant="outline">{presetSummary.tools.toLocaleString()} tools</Badge>
@@ -264,36 +272,36 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
           <Card variant="solid" className="p-4">
             <div className="mb-3 flex items-start justify-between gap-3">
               <div>
-                <div className="text-sm font-black text-text-main">Automated event difficulty</div>
-                <p className="mt-1 text-xs text-text-muted">If the event has not started, Auto Advisor selects the configured unlocked difficulty first.</p>
+                <div className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.automated.event.difficulty.51db43ea" /></div>
+                <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.if.the.event.has.not.started.auto.6ef8b422" /></p>
               </div>
               <Badge variant="outline">{achievementsObserved ? 'Achievements synced' : 'Syncing achievements'}</Badge>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <DifficultySelect
-                label="Nomad"
+                label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.nomad.b156d00c")}
                 value={nomadSelectionAvailable ? draft.nomadDifficultyId : 0}
                 options={nomadDifficulties}
                 through={eventDifficultyName(nomadDifficulties, Number(nomadDifficulties.at(-1)?.value))}
                 onChange={(nomadDifficultyId) => setDraft((current) => ({ ...current, nomadDifficultyId }))}
               />
               <DifficultySelect
-                label="Samurai"
+                label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.samurai.031cfd72")}
                 value={samuraiSelectionAvailable ? draft.samuraiDifficultyId : 0}
                 options={samuraiDifficulties}
                 through={eventDifficultyName(samuraiDifficulties, Number(samuraiDifficulties.at(-1)?.value))}
                 onChange={(samuraiDifficultyId) => setDraft((current) => ({ ...current, samuraiDifficultyId }))}
               />
             </div>
-            {difficultyCatalog.loading ? <p className="mt-3 text-xs text-text-muted">Loading official event difficulties…</p> : null}
+            {difficultyCatalog.loading ? <p className="mt-3 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.loading.official.event.difficulties.8ddbd72d" /></p> : null}
             {difficultyCatalog.error ? <p className="mt-3 text-xs text-danger">{difficultyCatalog.error}</p> : null}
           </Card>
 
           <Card variant="solid" className="p-4">
-            <div className="mb-3 flex items-center gap-2 text-sm font-black text-text-main"><Clock3 className="h-4 w-4 text-primary" /> Run sizing</div>
+            <div className="mb-3 flex items-center gap-2 text-sm font-black text-text-main"><Clock3 className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.run.sizing.878bd208" /></div>
             <div className="grid gap-4 sm:grid-cols-2">
               <NumberField
-                label="Maximum attacks"
+                label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.maximum.attacks.950045b9")}
                 value={draft.maxAttackCount}
                 min={1}
                 max={AUTO_ADVISOR_MAX_ATTACKS}
@@ -301,7 +309,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
                 onChange={(value) => setInteger('maxAttackCount', value, 1, AUTO_ADVISOR_MAX_ATTACKS, AUTO_ADVISOR_MAX_ATTACKS)}
               />
               <NumberField
-                label="Stop before event end"
+                label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.stop.before.event.end.ef90dd74")}
                 value={Math.round(draft.minimumRemainingSec / 60)}
                 min={0}
                 max={1440}
@@ -309,17 +317,17 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
                 onChange={(value) => setInteger('minimumRemainingSec', Number(value) * 60, 0, 86400, 1800)}
               />
             </div>
-            <p className="mt-3 text-[11px] text-text-muted">The emitted AAC is the smallest safe count allowed by this limit, event time, complete preset copies, coins, rubies, feathers, and one-command cooldown skips. It never exceeds 9,999.</p>
+            <p className="mt-3 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.the.emitted.aac.is.the.smallest.safe.d2c50f19" /></p>
           </Card>
 
           <Card variant="solid" className="p-4">
-            <div className="mb-3 flex items-center gap-2 text-sm font-black text-text-main"><Coins className="h-4 w-4 text-primary" /> Resource gates</div>
+            <div className="mb-3 flex items-center gap-2 text-sm font-black text-text-main"><Coins className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.resource.gates.05c86e14" /></div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-              <NumberField label="All-in coins / attack" value={draft.coinCostPerAttack} min={1} suffix="coins" onChange={(value) => setInteger('coinCostPerAttack', value, 1, Number.MAX_SAFE_INTEGER, 500)} />
-              <NumberField label="Keep coins" value={draft.minimumCoinReserve} min={0} suffix="reserve" onChange={(value) => setInteger('minimumCoinReserve', value, 0, Number.MAX_SAFE_INTEGER, 0)} />
-              <NumberField label="Rubies / attack" value={draft.rubyCostPerAttack} min={0} suffix="rubies" onChange={(value) => setInteger('rubyCostPerAttack', value, 0, Number.MAX_SAFE_INTEGER, 0)} />
-              <NumberField label="Keep rubies" value={draft.minimumRubyReserve} min={0} suffix="reserve" onChange={(value) => setInteger('minimumRubyReserve', value, 0, Number.MAX_SAFE_INTEGER, 0)} />
-              <NumberField label="Keep feathers" value={draft.minimumFeatherReserve} min={0} suffix="PTT" onChange={(value) => setInteger('minimumFeatherReserve', value, 0, Number.MAX_SAFE_INTEGER, 0)} />
+              <NumberField label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.all.in.coins.attack.5e43c9f3")} value={draft.coinCostPerAttack} min={1} suffix="coins" onChange={(value) => setInteger('coinCostPerAttack', value, 1, Number.MAX_SAFE_INTEGER, 500)} />
+              <NumberField label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.keep.coins.0f999c56")} value={draft.minimumCoinReserve} min={0} suffix="reserve" onChange={(value) => setInteger('minimumCoinReserve', value, 0, Number.MAX_SAFE_INTEGER, 0)} />
+              <NumberField label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.rubies.attack.0c13391a")} value={draft.rubyCostPerAttack} min={0} suffix="rubies" onChange={(value) => setInteger('rubyCostPerAttack', value, 0, Number.MAX_SAFE_INTEGER, 0)} />
+              <NumberField label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.keep.rubies.4d468923")} value={draft.minimumRubyReserve} min={0} suffix="reserve" onChange={(value) => setInteger('minimumRubyReserve', value, 0, Number.MAX_SAFE_INTEGER, 0)} />
+              <NumberField label={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.label.keep.feathers.567fc87d")} value={draft.minimumFeatherReserve} min={0} suffix="PTT" onChange={(value) => setInteger('minimumFeatherReserve', value, 0, Number.MAX_SAFE_INTEGER, 0)} />
             </div>
             <div className="mt-4 grid grid-cols-3 gap-2 border-t border-border-base pt-3">
               {([['MS5', '60m'], ['MS6', '5h'], ['MS7', '24h']] as const).map(([key, label]) => (
@@ -339,12 +347,11 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
                 />
               ))}
             </div>
-            <p className="mt-3 text-[11px] text-text-muted">The coin value is the conservative total per attack, including a coin horse when selected. Ruby horses require a positive observed ruby cost per attack; travel-feather runs use one PTT per attack instead.</p>
+            <p className="mt-3 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.the.coin.value.is.the.conservative.total.b41f8b67" /></p>
           </Card>
 
           <p className="rounded-global border border-border-base bg-bg-app/40 px-4 py-3 text-xs text-text-muted">
-            Auto Advisor launches only after the game reports the advisor unlocked. It never buys or activates a token on its own. A failed, completed, or MCM-cancelled run is terminal for that event and is not silently replaced.
-          </p>
+            <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.auto.advisor.launches.only.after.the.game.17ba6105" /></p>
         </div>
       </SettingsModal>
 
@@ -355,7 +362,7 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
         title={<ModalTitle icon={<AlertTriangle className="h-5 w-5" />}>Activate {eventLabel} advisor</ModalTitle>}
         footer={(
           <>
-            <Button variant="ghost" disabled={activating} onClick={() => setActivationOpen(false)}>Cancel</Button>
+            <Button variant="ghost" disabled={activating} onClick={() => setActivationOpen(false)}><LocalizedText messageKey="game.cancel" /></Button>
             <Button
               variant="danger"
               isLoading={activating}
@@ -374,21 +381,21 @@ export const AutoAdvisorSettingsModal: React.FC<AutoAdvisorSettingsModalProps> =
               : `This command can consume one paid ${eventLabel} advisor token or one universal advisor token. The game chooses the eligible token.`}
           </p>
           <div className="rounded-global border border-warning/30 bg-warning/10 p-4 text-xs leading-relaxed text-warning">
-            Activation unlocks advisor attacks for the rest of this event. If Auto Advisor is enabled and its settings are valid, it may launch the single resource-sized run immediately afterward.
-          </div>
+            <LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.activation.unlocks.advisor.attacks.for.the.rest.a0dbc075" /></div>
           <div className="flex items-start justify-between gap-4 rounded-global border border-border-base p-4">
             <div>
-              <div className="text-sm font-bold text-text-main">Confirm paid-feature activation</div>
+              <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoAdvisorSettingsModal.confirm.paid.feature.activation.d59424f4" /></div>
               <p className="mt-1 text-xs text-text-muted">
                 {activeEvent?.advisorFree
                   ? 'I understand this unlock may allow enabled automation to launch immediately.'
                   : 'I understand this action may consume an advisor token acquired through a real-money purchase.'}
               </p>
             </div>
-            <Switch checked={activationAcknowledged} onChange={setActivationAcknowledged} ariaLabel="Confirm advisor token spend" />
+            <Switch checked={activationAcknowledged} onChange={setActivationAcknowledged} ariaLabel={localizeStatic("ui.settings.components.autoAdvisorSettingsModal.ariaLabel.confirm.advisor.token.spend.18cfcc11")} />
           </div>
         </div>
       </Modal>
+      <FeatureGuideModal feature="autoAdvisor" isOpen={isOpen && isGuideOpen} onClose={() => setIsGuideOpen(false)} />
     </>
   );
 };

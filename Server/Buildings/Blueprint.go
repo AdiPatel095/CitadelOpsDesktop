@@ -1,6 +1,7 @@
 package Buildings
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"encoding/json"
 	"fmt"
 	"sort"
@@ -83,13 +84,13 @@ func decodeEventBlueprintDocument(
 		return document, nil
 	}
 	if err := json.Unmarshal(raw, &document); err != nil {
-		return StormBlueprintDocument{}, fmt.Errorf("decode %s blueprint document: %w", featureLabel, err)
+		return StormBlueprintDocument{}, Localization.WithError(fmt.Errorf("decode %s blueprint document: %w", featureLabel, err), Localization.ErrorContext(Localization.New("server.buildings.decode_p_blueprint_document.14fff938", "decode {p0} blueprint document", Localization.Params{"p0": fmt.Sprintf("%s", featureLabel)}), err))
 	}
 	if document.Version == 0 {
 		document.Version = 1
 	}
 	if document.Version != 1 {
-		return StormBlueprintDocument{}, fmt.Errorf("unsupported %s blueprint document version %d", featureLabel, document.Version)
+		return StormBlueprintDocument{}, Localization.WithError(fmt.Errorf("unsupported %s blueprint document version %d", featureLabel, document.Version), Localization.New("server.buildings.unsupported_p_blueprint_document.975fe42b", "unsupported {p0} blueprint document version {p1}", Localization.Params{"p0": fmt.Sprintf("%s", featureLabel), "p1": document.Version}))
 	}
 	if document.Blueprints == nil {
 		document.Blueprints = map[string]StormBlueprint{}
@@ -117,9 +118,9 @@ func decodeEventBlueprintDocument(
 		if blueprint.Target.Mode != TargetCaptureModeFunctional &&
 			blueprint.Target.Mode != TargetCaptureModeLayout &&
 			blueprint.Target.Mode != TargetCaptureModeExact {
-			return StormBlueprintDocument{}, fmt.Errorf(
+			return StormBlueprintDocument{}, Localization.WithError(fmt.Errorf(
 				"%s blueprint %q has unsupported mode %q", featureLabel, id, blueprint.Target.Mode,
-			)
+			), Localization.New("server.buildings.p_blueprint_p_has.65335914", "{p0} blueprint {p1} has unsupported mode {p2}", Localization.Params{"p0": fmt.Sprintf("%s", featureLabel), "p1": fmt.Sprintf("%q", id), "p2": fmt.Sprintf("%q", blueprint.Target.Mode)}))
 		}
 		normalized[id] = blueprint
 	}
@@ -237,7 +238,7 @@ func CompileBlueprintDiff(
 		return BlueprintDiffResult{}, RevisionMismatchError{Expected: *request.ExpectedRevision, Actual: state.Revision}
 	}
 	if gameData == nil {
-		return BlueprintDiffResult{}, fmt.Errorf("official game data is unavailable")
+		return BlueprintDiffResult{}, Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.buildings.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	catalog, err := gameData.BuildingCatalog()
 	if err != nil {
@@ -245,20 +246,20 @@ func CompileBlueprintDiff(
 	}
 	target := NormalizeTargetCapture(request.Target, catalog)
 	if target.Mode != TargetCaptureModeFunctional && target.Mode != TargetCaptureModeLayout && target.Mode != TargetCaptureModeExact {
-		return BlueprintDiffResult{}, fmt.Errorf("unsupported blueprint mode %q", target.Mode)
+		return BlueprintDiffResult{}, Localization.WithError(fmt.Errorf("unsupported blueprint mode %q", target.Mode), Localization.New("server.buildings.unsupported_blueprint_mode_p.8174aa83", "unsupported blueprint mode {p0}", Localization.Params{"p0": fmt.Sprintf("%q", target.Mode)}))
 	}
 	if target.CastleID <= 0 {
-		return BlueprintDiffResult{}, fmt.Errorf("blueprint castleId is required")
+		return BlueprintDiffResult{}, Localization.WithError(fmt.Errorf("blueprint castleId is required"), Localization.New("server.buildings.blueprint_castleid_is_required.e7f6d69a", "blueprint castleId is required", nil))
 	}
 	castle, exists := state.Castles[target.CastleID]
 	if !exists {
-		return BlueprintDiffResult{}, fmt.Errorf("castle %d was not found", target.CastleID)
+		return BlueprintDiffResult{}, Localization.WithError(fmt.Errorf("castle %d was not found", target.CastleID), Localization.New("server.buildings.castle_p_was_not.b5cc85b5", "castle {p0} was not found", Localization.Params{"p0": fmt.Sprintf("%d", target.CastleID)}))
 	}
 	if target.KingdomID != castle.KingdomID {
-		return BlueprintDiffResult{}, fmt.Errorf(
+		return BlueprintDiffResult{}, Localization.WithError(fmt.Errorf(
 			"blueprint kingdom %d does not match castle %d kingdom %d",
 			target.KingdomID, target.CastleID, castle.KingdomID,
-		)
+		), Localization.New("server.buildings.blueprint_kingdom_p_does.412d86c7", "blueprint kingdom {p0} does not match castle {p1} kingdom {p2}", Localization.Params{"p0": fmt.Sprintf("%d", target.KingdomID), "p1": fmt.Sprintf("%d", target.CastleID), "p2": fmt.Sprintf("%d", castle.KingdomID)}))
 	}
 	if request.EventID == nil && target.KingdomID == State.KingdomID(GameData.BerimondKingdomID) {
 		// An owned kingdom-10 camp is authoritative event context for the

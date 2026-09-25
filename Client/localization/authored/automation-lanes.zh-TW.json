@@ -1,0 +1,13 @@
+{
+  "automation.status": "{status, select, complete {完成} completed {已完成} success {成功} failed {失敗} error {錯誤} blocked {已阻擋} gated {受限} retrying {重試中} warning {警告} running {執行中} enabled {已啟用} scheduled {已排程} ready {就緒} waiting {等待中} disabled {已停用} idle {閒置} armed {待命} cooldown {冷卻中} defending {防守中} discovering {探索中} evacuating {撤離中} preparing {準備中} protected {已受保護} protecting {保護中} recalling {召回中} reconciling {核對中} refreshing {重新整理中} replenishing {補充中} resolving {處理中} taunting {挑釁中} threat {威脅} yielding {讓出優先權} other {未知}}",
+  "automation.lane": "{lane, select, overall {整體} crafting {製作} logistics {物流} attacks {攻擊} cooldowns {冷卻} rage {怒氣} defense {防禦} transfers {轉移} tools {工具} combat {戰鬥} aquamarine_shop {海藍寶石商店} builder {建造} builder_missing_decorations {建造警告} other {分項}}",
+  "automation.accessibleStatus": "{feature}狀態",
+  "automation.waitingLane": "等待策略狀態：{lane, select, crafting {製作} logistics {物流} khan_attacks {可汗 · 攻擊} khan_cooldowns {可汗 · 冷卻} khan_rage {可汗 · 怒氣} khan_defense {可汗 · 防禦} beri_transfers {貝里蒙德 · 轉移} beri_attacks {貝里蒙德 · 攻擊} beri_tools {貝里蒙德 · 工具} beri_builder {貝里蒙德 · 建造} storm_combat {風暴群島 · 戰鬥} storm_shop {海藍寶石商店} storm_builder {風暴群島 · 建造} other {分項}}",
+  "automation.missingDecorations": "倉庫中無法使用的目標裝飾數量：{count, number}。這些裝飾將被略過，其餘目標繼續執行。",
+  "automation.nextCheck": "{state, select, waiting {等待下一次排程檢查} due {已到下一次檢查時間} other {{duration}後進行下一次檢查}}",
+  "automation.timeLeft": "剩餘{duration}",
+  "automation.rate": "{state, select, loading {正在載入頻率} unavailable {頻率無法使用} other {每小時攻擊數：{count, number}}}",
+  "automation.rateTitle": "{state, select, loading {正在載入{feature}目前的攻擊頻率。} unavailable {{feature}目前的攻擊頻率無法使用。} other {過去60分鐘內由{feature}發起的攻擊數：{count, number}。}}",
+  "automation.daily": "{state, select, loading {正在載入每日計數} unavailable {每日計數無法使用} other {重設後{count, number}次}}",
+  "automation.dailyTitle": "{state, select, loading {正在載入{feature}在目前每日工作階段中的攻擊數。} unavailable {在觀察到伺服器重設之前，{feature}的每日攻擊數無法使用。} dated {自伺服器每日計數工作階段於{date}開始以來，由{feature}發起的已確認攻擊數：{count, number}。} other {目前伺服器每日計數工作階段中由{feature}發起的已確認攻擊數：{count, number}。}}"
+}

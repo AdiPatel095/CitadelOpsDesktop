@@ -1,0 +1,2080 @@
+{
+  "ui": {
+    "guideButton": "Útmutató",
+    "calendarButton": "Naptár",
+    "recommendedLabel": "Ajánlott",
+    "backToSettings": "Vissza a beállításokhoz",
+    "backToGuide": "Vissza az útmutatóhoz",
+    "howToSetUp": "A beállítás menete",
+    "whatToExpect": "Mire számíthatsz",
+    "openFullSizePicture": "Kép megnyitása teljes méretben",
+    "illustrativeExample": "Szemléltető példa",
+    "enlargePicture": "Példakép nagyítása",
+    "fullSizePicture": "Teljes méretű példakép; görgess az összes beállítás megtekintéséhez",
+    "towerGuideTitle": "Automatikus toronytámadások · útmutató",
+    "birdGuideTitle": "Csapatok automatikus menedékbe helyezése · útmutató",
+    "towerGuideIntro": "Ezekkel a lépésekkel állítsd be az Automatikus tornyokat; nagyításhoz válassz ki egy példaképet.",
+    "birdGuideIntro": "Ezekkel a lépésekkel állítsd be az Automatikus csapatmenedéket; nagyításhoz válassz ki egy példaképet.",
+    "towerPreviewTitle": "Automatikus toronytámadások · beállítási példa",
+    "birdPreviewTitle": "Csapatok automatikus menedékbe helyezése · beállítási példa",
+    "stationGuideTitle": "Az automatikus csapatvédelem útmutatója",
+    "stationGuideIntro": "Az automatikus csapatvédelmet ezekkel a lépésekkel állíthatod be; a példaképre kattintva nagyíthatod fel.",
+    "stationPreviewTitle": "Példa az automatikus csapatvédelem beállítására",
+    "fortressGuideIntro": "Kövesd a lépéseket az automatikus erődtámadás beállításához; nagyításhoz válassz egy példapanelt.",
+    "fortressGuideTitle": "Útmutató az automatikus erődtámadáshoz",
+    "fortressPreviewTitle": "Példa az automatikus erődtámadás beállítására",
+    "invasionGuideIntro": "Kövesd ezeket a lépéseket az automatikus inváziós támadás beállításához; nagyításhoz válassz példapanelt.",
+    "invasionGuideTitle": "Útmutató az automatikus inváziós támadáshoz",
+    "invasionPreviewTitle": "Példa az automatikus inváziós támadás beállítására",
+    "nomadGuideIntro": "Kövesd ezeket a lépéseket az Automatikus nomádok/szamurájok beállításához; nagyításhoz válassz egy példapanelt.",
+    "nomadGuideTitle": "Útmutató az Automatikus nomádokhoz/szamurájokhoz",
+    "nomadPreviewTitle": "Példa az Automatikus nomádok/szamurájok beállítására",
+    "advisorGuideIntro": "Az Automatikus tanácsadó beállításához kövesd ezeket a lépéseket; a mintapanelt kiválasztva nagyíthatod ki.",
+    "advisorGuideTitle": "Automatikus tanácsadó útmutató",
+    "advisorPreviewTitle": "Példa az Automatikus tanácsadó beállítására",
+    "khanGuideIntro": "Kövesd ezeket a lépéseket az Automatikus kán beállításához; válassz példapanelt a nagyításhoz.",
+    "khanGuideTitle": "Automatikus kán útmutató",
+    "khanPreviewTitle": "Automatikus kán beállításának példája",
+    "beriGuideIntro": "Kövesd ezeket a lépéseket az Automatikus Berimond beállításához; válassz ki egy példapanelt a nagyításhoz.",
+    "beriGuideTitle": "Az Automatikus Berimond útmutatója",
+    "beriPreviewTitle": "Példa az Automatikus Berimond beállítására",
+    "stormGuideIntro": "E lépésekkel állítsd be az Auto Stormot; nagyításhoz válassz egy példapanelt.",
+    "stormGuideTitle": "Auto Storm útmutató",
+    "stormPreviewTitle": "Példa az Auto Storm beállítására"
+  },
+  "autoTower": {
+    "recommendationIntro": "Ezek a szokásos használatra vonatkozó ajánlások; mentés előtt nézd át őket.",
+    "steps": {
+      "commanders": {
+        "title": "Válaszd ki a parancsnokaidat",
+        "items": {
+          "commander_assignment": {
+            "label": "Parancsnokok hozzárendelése",
+            "description": "A Parancsnokok résznél engedélyezd az Automatikus tornyokat a kívánt parancsnokoknak, majd válaszd a Hozzárendelések mentése lehetőséget.",
+            "recommendation": "Rendelj 20 parancsnokot az Automatikus tornyokhoz."
+          }
+        }
+      },
+      "general": {
+        "title": "Állítsd be a felderítést, a napi korlátokat és az utazást",
+        "items": {
+          "open_settings": {
+            "label": "Beállítások megnyitása",
+            "description": "Nyisd meg az Automatizálást, majd válaszd az Automatikus tornyok kártyájának beállítások gombját."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Hiteles térkép felderítése · Ennyi időnként",
+            "description": "Válaszd ki, milyen gyakran frissüljön az egyes várak toronylistája, 1800 és 3600 másodperc között; a felderítések között is indulhatnak támadások.",
+            "recommendation": "1800 másodperc (30 perc)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Normál támadások napi korlátja",
+            "description": "A teljes fiókra vonatkozó napi támadási korlátnál szünetel, amíg a játék vissza nem állítja azt; a 0 megszünteti a korlátot.",
+            "recommendation": "Napi 3500 támadás a teljes fiókban."
+          },
+          "horse_travel_boost": {
+            "label": "Lovas utazás gyorsítása",
+            "description": "A kiválasztott utazási módot használja minden támadáshoz, a Tanácsadó láncának minden ütéséhez is; a sebesség a kiinduló vár utazási épületeitől függ.",
+            "recommendation": "Érmés fokozat, ahol elérhető, elegendő érmével."
+          },
+          "travel_feather": {
+            "label": "Utazótoll",
+            "description": "Az utazótollat használja az érmés vagy rubinos lófokozat helyett."
+          },
+          "horse_ship_tier_coins": {
+            "label": "Ló / hajó fokozat · érmék",
+            "description": "Érmét költ az érmés utazási fokozatra."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Harci ló / gyors hajó fokozat · rubinok",
+            "description": "Kiválasztásakor rubint költ az első rubinos utazási fokozatra."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Gyors ló / leggyorsabb hajó fokozat · rubinok",
+            "description": "Kiválasztásakor rubint költ a gyorsabb rubinos utazási fokozatra."
+          }
+        },
+        "image": {
+          "alt": "Az Automatikus tornyok általános beállításai a kitalált Szintetikus vár adataival",
+          "caption": "Állítsd be a felderítési időközt, a napi támadási korlátot és az utazási módot; a Tanácsadó vezérlői akkor jelennek meg, ha elérhetők."
+        }
+      },
+      "castle": {
+        "title": "Állítsd be az egyes várakat",
+        "items": {
+          "castle_switch": {
+            "label": "Várkapcsoló",
+            "description": "Kapcsold be azokat a várakat, amelyekből az Automatikus tornyok felderítsen és támadjon.",
+            "recommendation": "Engedélyezd a rendszeresen használni kívánt várakat."
+          },
+          "radius": {
+            "label": "Sugár",
+            "description": "Válaszd ki a vár körüli keresés távolságát 1 és 50 mező között.",
+            "recommendation": "35 mező."
+          },
+          "choose_troop": {
+            "label": "Csapat kiválasztása",
+            "description": "Válaszd ki a két támadó szárny feltöltésére szolgáló állomásozó csapatot; ha kevés van belőle, a támadások várnak.",
+            "recommendation": "Mindkét szárnyra elegendő állomásozó támadó csapat."
+          },
+          "maiden_supported_only": {
+            "label": "Csak a Leány ereklyéjével támogatott",
+            "description": "A várat azokra az elérhető parancsnokokra korlátozza, akik rendelkeznek a támogatott Leány-ereklyével.",
+            "recommendation": "Kikapcsolva, hacsak a választott parancsnok nem rendelkezik a támogatott Leány-ereklyével."
+          }
+        },
+        "image": {
+          "alt": "Az Automatikus tornyok várbeállításai a kitalált Szintetikus vár adataival",
+          "caption": "Engedélyezd a várat, és válaszd ki a sugarát, a csapatát és a Leány-ereklyére vonatkozó feltételt."
+        }
+      },
+      "advisor": {
+        "title": "Használd a Tanácsadót, ha szeretnéd · amikor elérhető",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Tanácsadó használata Időugrásokkal",
+            "description": "Egy tornyot többször támad: először egy napi támadást, majd minden további ütéshez egy legalább háromórás Időugrást használ.",
+            "recommendation": "Kikapcsolva."
+          },
+          "auto_activate_with_token": {
+            "label": "Automatikus aktiválás tokennel",
+            "description": "Ha a Tanácsadó nem aktív, felhasznál egy rendelkezésre álló Bárói Tanácsadó tokent, anélkül hogy tokent vásárolna vagy rubint költene.",
+            "recommendation": "Kikapcsolva, amíg a Tanácsadó ki van kapcsolva."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Napi Időugrások legnagyobb száma",
+            "description": "Korlátozza a megerősített Tanácsadó-láncok Időugrásait, amíg a játék napi támadásszámlálója vissza nem áll; a 0 szünetelteti a Tanácsadó támadásainak indítását.",
+            "recommendation": "0, amíg a Tanácsadó ki van kapcsolva."
+          }
+        }
+      },
+      "finish": {
+        "title": "Állítsd be az ütemezést, ments és kapcsold be",
+        "items": {
+          "calendar": {
+            "label": "Naptár",
+            "description": "A Naptárban válaszd ki, mikor működhetnek az Automatikus tornyok; a csapatok elérhetősége és a többi korlát továbbra is érvényes.",
+            "recommendation": "A szokásos működési óráid."
+          },
+          "save_changes": {
+            "label": "Változások mentése",
+            "description": "A beállítások alkalmazásához válaszd a Változások mentése lehetőséget; az útmutató olvasása nem menti el őket."
+          },
+          "auto_towers_switch": {
+            "label": "Automatikus toronytámadások · kapcsoló",
+            "description": "A beállítások mentése után az Automatizálás oldalon kapcsold be az Automatikus tornyokat, hogy a feladat futhasson.",
+            "recommendation": "A kívánt beállítások mentése után bekapcsolva."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatikus toronytámadások",
+      "summary": "Közeli tornyok ismételt támadása",
+      "description": "A kiválasztott várakból támadásokat indít rablóbárók és királyságok tornyai ellen.",
+      "expectation": "Elegendő csapat, szabad parancsnok és támadható torony kell hozzá. Várhat a csapatok visszaérkezésére vagy a torony időzítőjének lejártára."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "Az ajánlott értékek az Automatikus csapatmenedék szokásos használatát írják le; útmutatásul szolgálnak, és nem módosítják a mentett beállításokat.",
+    "steps": {
+      "open": {
+        "title": "Nyisd meg az Automatikus csapatmenedék beállításait",
+        "items": {
+          "open_settings": {
+            "label": "Beállítások megnyitása",
+            "description": "A parancsnoki központ tetején válaszd az Automatikus csapatmenedék melletti beállítások gombot."
+          }
+        }
+      },
+      "general": {
+        "title": "Állítsd be az állomásozási időt és a küldési szabályokat",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Véletlen késleltetés tartománya · Minimum",
+            "description": "Add meg, hány órát töltsenek legalább a csapatok a szövetségi célpontnál az utazás befejezése után.",
+            "recommendation": "Érkezés után 6 óra állomásozás a szövetségi célpontnál."
+          },
+          "random_delay_range_max": {
+            "label": "Véletlen késleltetés tartománya · Maximum",
+            "description": "Add meg a leghosszabb ott-tartózkodást; az Automatikus csapatmenedék véletlenszerű időt választ a minimum és maximum között.",
+            "recommendation": "Érkezés után 12 óra állomásozás a szövetségi célpontnál."
+          },
+          "minimum_to_send": {
+            "label": "Küldési minimum",
+            "description": "Add meg a várban tartandó tartalék levonása után szükséges, küldhető csapatok minimális összlétszámát; ez küszöb, nem a pontosan elküldött létszám.",
+            "recommendation": "A vár tartalékainak megtartása után összesen 1000 küldhető katona; ez küszöb, nem a pontosan elküldött létszám."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "Minimális RPT (hátralévő védelmi idő)",
+            "description": "Olyan célpontokat használj, amelyek védelméből ennél több nap van hátra; a 0 kikapcsolja az ellenőrzést.",
+            "recommendation": "3 nap; a célpont védelméből több mint 3 napnak kell hátralennie."
+          }
+        },
+        "image": {
+          "alt": "Az Automatikus csapatmenedék állomásozási késleltetése, küldési minimuma, minimális RPT-je és sablonvezérlői",
+          "caption": "Állítsd be az állomásozási időt és a jogosultságot, majd mentés előtt nézd át a Mindennapi tartalék sablont."
+        }
+      },
+      "reserves": {
+        "title": "Válaszd ki az egyes várakban tartandó csapatokat",
+        "items": {
+          "add_unit": {
+            "label": "Egység hozzáadása",
+            "description": "Váranként válaszd ki az otthon tartandó csapattípusokat; üres tartalék esetén az automatikus tartalékok levonása után minden küldhető csapat rendelkezésre áll.",
+            "recommendation": "Válaszd ki az egyes várak védelméhez vagy más szokásos feladataihoz szükséges csapattípusokat."
+          },
+          "quantity": {
+            "label": "Mennyiség",
+            "description": "Adj meg pozitív mennyiséget minden kiválasztott csapattípusból, amely a várban marad; a 0 nem tartalékolja a teljes típust.",
+            "recommendation": "Tarts otthon minden csapattípusból annyit, amennyi a védelemhez vagy más feladatokhoz kell; ellenőrizd a tényleges létszámot."
+          },
+          "remove_unit": {
+            "label": "Egység eltávolítása",
+            "description": "Távolítsd el az egység csempéjét, hogy a kiválasztott várban többé ne tartalékold ezt a típust."
+          },
+          "auto_fortress_reserve": {
+            "label": "Erődök automatizálása · tartalék",
+            "description": "Amikor az Automatikus erőd itt az összes rémfarkast leköti, ez az automatikus tartalék nem kerül az Automatikus csapatmenedék sablonjaiba; a lekötés végén visszaáll a korábban kézzel megadott rémfarkas-mennyiség."
+          }
+        },
+        "image": {
+          "alt": "Az Automatikus csapatmenedék tartalékcsempéi a kitalált Példavárban",
+          "caption": "Csak az itt szükséges egységeket tartalékold; a 101-es és 102-es egység kitalált csapatjelölés."
+        }
+      },
+      "presets": {
+        "title": "Sablon mentése és kiválasztása",
+        "items": {
+          "preset_name": {
+            "label": "Sablon neve",
+            "description": "Adj nevet egy új sablonnak, vagy a módosítások mentése előtt szerkeszd az alkalmazott sablon nevét.",
+            "recommendation": "Használj felismerhető nevet, például Mindennapi."
+          },
+          "load_preset": {
+            "label": "Sablon betöltése",
+            "description": "Válassz mentett sablont a listából, vagy a Mentett konfigurációt, ha névvel ellátott sablon nélkül szeretnéd használni a mentett beállításokat.",
+            "recommendation": "A kívánt mindennapi sablont állítsd be futásidejű alapértelmezésként: válaszd ki, kattints az Alkalmazásra, majd a Változások mentésére."
+          },
+          "apply": {
+            "label": "Alkalmazás",
+            "description": "Töltsd be a kiválasztott sablont ebbe a beállítási piszkozatba; a Változások mentésével véglegesítheted futásidejű alapértelmezésként."
+          },
+          "save_as_new": {
+            "label": "Mentés újként",
+            "description": "Az aktuális beállításokat azonnal új, névvel ellátott sablonként menti, és futásidejű alapértelmezésként választja ki."
+          },
+          "delete": {
+            "label": "Törlés",
+            "description": "Megerősítés után azonnal törli a kiválasztott sablont, és ha az volt kiválasztva, törli a futásidejű alapértelmezést is."
+          },
+          "runtime_default": {
+            "label": "Futásidejű alapértelmezés",
+            "description": "A futásidejű alapértelmezés az aktív mentett sablon, vagy ha nincs aktív sablon, a mentett konfiguráció."
+          }
+        }
+      },
+      "finish": {
+        "title": "Állítsd be az ütemezést, ments és engedélyezd",
+        "items": {
+          "calendar": {
+            "label": "Naptár",
+            "description": "Válaszd ki, mikor működhet az Automatikus csapatmenedék, majd a változásokhoz válaszd az Ütemezés mentése lehetőséget.",
+            "recommendation": "Folyamatos működéshez hagyd kikapcsolva az ütemezést, vagy add meg a szokásos heti órákat, és mentsd az ütemezést."
+          },
+          "specify_preset_per_period": {
+            "label": "Sablon megadása időszakonként",
+            "description": "Egy naptári időszakhoz válassz mentett sablont, ha annak felül kell írnia a futásidejű alapértelmezést.",
+            "recommendation": "Kikapcsolva, hacsak a különböző időszakokhoz nem kellenek eltérő tartalékok."
+          },
+          "save_changes": {
+            "label": "Változások mentése",
+            "description": "Mentsd a beállítási piszkozatot és az alkalmazott sablon módosításait; az útmutató olvasása nem menti el őket."
+          },
+          "auto_bird_switch": {
+            "label": "Csapatok automatikus menedékbe helyezése · kapcsoló",
+            "description": "Mentés után a parancsnoki központ tetején kapcsold be az Automatikus csapatmenedéket a várak szokásos ciklusaihoz.",
+            "recommendation": "Mentés után kapcsold be az Automatikus csapatmenedéket; a fejléc állapota mutatja az egyes várak ciklusát."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Csapatok automatikus menedékbe helyezése",
+      "summary": "A kiválasztott csapatok távol tartása ütemezés szerint",
+      "description": "A fölösleges csapatokat rendszeresen megfelelő szövetségi várakba állomásoztatja, és visszatérésük után megismétli a ciklust.",
+      "expectation": "Megfelelő célpont vagy küldhető fölösleges csapat nélkül vár. A csapatok mozgatása nem teszi sebezhetetlenné a várat."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "Általános beállítások",
+      "scan": "Felderítési időköz: 1800 másodperc",
+      "daily": "Napi támadási korlát: 3500",
+      "travel": "Utazási gyorsítás: érmés fokozat",
+      "advisor": "Tanácsadó: kikapcsolva"
+    },
+    "towerCastle": {
+      "title": "Példavár",
+      "enabled": "Automatikus toronytámadások · bekapcsolva",
+      "radius": "Sugár: 35 mező",
+      "troop": "Választott csapat: kitalált támadó egység",
+      "maiden": "Csak a Leány ereklyéjével támogatott: kikapcsolva"
+    },
+    "birdGeneral": {
+      "title": "Általános beállítások",
+      "min": "Legrövidebb tartózkodás: 6 óra",
+      "max": "Leghosszabb tartózkodás: 12 óra",
+      "send": "Tartalékok után a küldhetők minimális összlétszáma: 1000 katona",
+      "rpt": "Minimális hátralévő védelem: több mint 3 nap",
+      "preset": "Sablon: Mindennapi tartalék"
+    },
+    "birdCastle": {
+      "title": "Példavár",
+      "unitOne": "Kitalált 101-es egység tartalékban: 80",
+      "unitTwo": "Kitalált 102-es egység tartalékban: 40",
+      "add": "Egység hozzáadása"
+    },
+    "stationGeneral": {
+      "title": "Példa csapatvédelmi beállításokra",
+      "evacuate": "Kiürítés: 1 perccel az ütközés előtt",
+      "protection": "Cél védelme: több mint 3 nap",
+      "recall": "Visszahívás veszély után: bekapcsolva",
+      "gate": "Kapunyitás tartalékként: kikapcsolva",
+      "castle": "Kitalált vár: 80 védőcsapat tartalékban",
+      "save": "Mentsd a változásokat, majd kapcsold be a csapatvédelmet"
+    },
+    "fortressAttack": {
+      "commander": "Parancsnok: leggyorsabb alkalmas kijelölt",
+      "daily": "Normál támadások napi korlátja: 0",
+      "title": "Példa a támadási beállításokra",
+      "travel": "Utazási gyorsítás: Utazótoll",
+      "wave": "Egy teljes rémfarkashullám mindkét szárnyon"
+    },
+    "fortressKingdoms": {
+      "everwinter": "Örök tél gleccsere: bekapcsolva feloldás után",
+      "peaks": "Tűzcsúcsok: bekapcsolva feloldás után",
+      "sands": "Égő homok: bekapcsolva feloldás után",
+      "title": "Példa a királysági beállításokra"
+    },
+    "fortressSupply": {
+      "purchase": "Rémfarkasok munkamenetenként: 5 000",
+      "reserve": "Kán tábláinak megtartása: 25 000",
+      "route": "Ellátás: a Nagy Birodalom fővárából az engedélyezett királyságokba",
+      "skips": "Időgyorsítás megerősített szállításokhoz: bekapcsolva",
+      "title": "Példa a rémfarkas-ellátásra"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Vérvarjak: megfelelő feloldott nehézség",
+      "current": "Az aktív esemény nehézsége változatlan marad",
+      "foreign": "Idegen urak: megfelelő feloldott nehézség",
+      "title": "Példa az események nehézségeire"
+    },
+    "invasionFortify": {
+      "currency": "Ha bekapcsolva: eseménypénz, amikor elérhető",
+      "enabled": "Minden cél erősítése: kikapcsolva",
+      "rubies": "Rubin csak kifejezett választással",
+      "title": "Példa a célerősítésre"
+    },
+    "invasionLimits": {
+      "before": "Leállítás 30 perccel az esemény vége előtt",
+      "daily": "Normál támadások napi korlátja: 0",
+      "score": "Pont: szokásos utolsó személyes jutalom 0 felett",
+      "title": "Példa pont- és leállítási korlátokra"
+    },
+    "invasionSetup": {
+      "castle": "Kiindulás: szokásos Nagy Birodalom eseményvár",
+      "preset": "Támadási sablon: mentett eseményalakzat",
+      "title": "Példa az eseménytámadás beállítására",
+      "travel": "Utazási gyorsítás: Utazótoll"
+    },
+    "nomadDifficulty": {
+      "title": "Példa az események nehézségeire",
+      "active": "Aktív esemény: jelenlegi nehézség használata",
+      "nomad": "Nomádok: feloldott megbízható nehézség",
+      "samurai": "Szamurájok: feloldott megbízható nehézség"
+    },
+    "nomadSetup": {
+      "castle": "Kiindulás: szokásos Nagy Birodalom eseményvár",
+      "travel": "Utazási gyorsítás: Utazótoll",
+      "nomadPreset": "Nomád beállítás: mentett tábori felállás",
+      "samuraiPreset": "Szamuráj beállítás: mentett tábori felállás",
+      "title": "Példa az eseménytáborok beállításaira"
+    },
+    "nomadCooldowns": {
+      "clear": "Várakozás törlése megerősített győzelem után: be",
+      "long": "5 óra / 24 óra megtartása: készlet más tevékenységekhez",
+      "short": "1 / 5 / 10 / 30 / 60 perc megtartása: mindegyikből 0 tárgy",
+      "title": "Példa a várakozási idő beállításaira"
+    },
+    "nomadLimits": {
+      "daily": "További napi korlát: 0",
+      "score": "Pontcél: utolsó személyes jutalomhatár",
+      "time": "Leállás vége előtt: 30 perc",
+      "title": "Példa a leállítási szabályokra"
+    },
+    "nomadTrial": {
+      "coordinates": "Cél X / Y: normál működésben nem használatos",
+      "effect": "Bekapcsolt próba az eseményt valódi támadással váltja fel",
+      "title": "Példa a próba vezérlőire",
+      "trial": "Ideiglenes rablólovag-próba: ki"
+    },
+    "advisorDifficulty": {
+      "active": "Aktív esemény: jelenlegi nehézség használata",
+      "nomad": "Nomádok: feloldott megbízható nehézség",
+      "samurai": "Szamurájok: feloldott megbízható nehézség",
+      "title": "Példa az események nehézségeire"
+    },
+    "advisorSetup": {
+      "castle": "Kiindulás: szokásos Nagy Birodalom eseményvár",
+      "travel": "Utazási gyorsítás: Utazótoll",
+      "preset": "Beállítás: az aktív esemény mentett alakzata",
+      "title": "Példa a tanácsadói támadás beállítására"
+    },
+    "advisorActivation": {
+      "locked": "Zárolás esetén: nyisd meg a tanácsadó aktiválásának megerősítését",
+      "paid": "Erősítsd meg a zsetonhasználatot vagy a játék által jelzett ingyenes aktiválást",
+      "save": "Mentsd a beállításokat, majd kapcsold be az Automatizálás kártyát",
+      "title": "Példa az aktiválás menetére"
+    },
+    "advisorOverview": {
+      "progress": "Aktuális támadások / kért támadások",
+      "refresh": "Frissítsd az áttekintést az aktuális összesítésekhez",
+      "results": "Győzelmek, vereségek, elveszett egységek és eszközök",
+      "title": "Példa az élő áttekintésre"
+    },
+    "advisorResources": {
+      "coins": "Teljes érmeköltség támadásonként: 500 csak ha elég",
+      "feathers": "Tollak megtartása: 0, ha máshol nincs rájuk szükség",
+      "rubies": "Rubin támadásonként: 0 Utazótollal",
+      "skips": "60 perces időugrás megtartása: 0 darab; 5 és 24 órásból szükség szerint tartalékolj",
+      "title": "Példa erőforrás-keretekre"
+    },
+    "advisorSizing": {
+      "actual": "Tényleges sorozat: erőforrások és idő korlátozzák",
+      "maximum": "Maximális támadások: 9 999",
+      "time": "Fel nem használt eseményidő: 30 perc",
+      "title": "Példa a sorozat méretére"
+    },
+    "khanCooldowns": {
+      "long": "Foglalj le 5 és 24 órás időugrásokat más feladatokra",
+      "pause": "Az új támadások szünetelnek, ha nincs elég használható időugrás",
+      "short": "1 perc / 5 perc / 10 perc / 30 perc / 1 óra megtartása: mindegyikből 0 tárgy",
+      "skip": "Minden tábori várakozás átugrása: be",
+      "title": "Időugrás-tartalékok példája"
+    },
+    "khanLimits": {
+      "daily": "Napi normál támadások: 0, nincs további korlát",
+      "end": "Új támadások leállítása 5 perccel a vég előtt",
+      "points": "Leállítás nomádpontnál: 0, kikapcsolva",
+      "title": "Megállítási korlátok példája",
+      "tools": "Védelmi eszközök pótlása: be, ha szeretnéd"
+    },
+    "khanProtection": {
+      "gate": "Nyisd ki a főkapukat és szüneteltesd a kánt a küszöbnél",
+      "outpost": "Előőrs mint forrás: védelem kikapcsolva",
+      "source": "Fővárból induló támadásokra érvényes",
+      "threshold": "Támadó falegységek: 1 000",
+      "title": "Fővárfal-védelem példája"
+    },
+    "khanRage": {
+      "attacks": "Automatikus tábori támadások: nincs zárolás",
+      "booster": "Időzített dühpont-erősítő szükséges: ki",
+      "chain": "Maximális düh-lánc: 0, nincs további korlát",
+      "title": "Dühvezérlés példája",
+      "trigger": "Megtorlás teljes dühnél: be"
+    },
+    "khanSave": {
+      "defense": "Ellenőrizd a fővédelmet a megtorlás előtt",
+      "enable": "Kapcsold be az Automatikus kánt az Automatizálás kártyán",
+      "priority": "Az Automatikus állomásoztatás külön kezeli a játékostámadásokat",
+      "save": "Mentsd a beállításokat a két beállítás előkészítése után",
+      "title": "Mentési és bekapcsolási folyamat példája"
+    },
+    "khanSetup": {
+      "defense": "Védelem itt: a Nagy Birodalom fővára",
+      "presets": "Mentett kántámadási és fővédelmi beállítások",
+      "source": "Támadás innen: nagy birodalmi előőrs",
+      "title": "Kánbeállítások példája",
+      "travel": "Utazótoll gyors utazáshoz"
+    },
+    "beriBuilder": {
+      "permissions": "Prémium és bontás: kikapcsolva ellenőrzésig",
+      "reserves": "Tartalékold a berimondi erőforrásokat és időugrásokat",
+      "stable": "Frakcióistálló: választott szint 1–5",
+      "target": "Beépített pontos cél vagy ellenőrzött egyéni terv",
+      "title": "Példa opcionális táborépítésre"
+    },
+    "beriReadiness": {
+      "booster": "Vitézségi erősítő követelménye: opcionális",
+      "food": "A szállításhoz a sablon Élelmet fogyasztó csapatai kellenek",
+      "preset": "Ellenőrizd a mentett csapat- és eszközhelyeket",
+      "title": "Példa a toronytámadási készenlétre"
+    },
+    "beriSave": {
+      "calendar": "Naptár kikapcsolva a folyamatos működéshez",
+      "enable": "Kapcsold be az Automatikus Berimondot az Automatizálás kártyán",
+      "save": "A csapatarány ellenőrzése után mentsd a beállításokat",
+      "title": "Példa mentésre és bekapcsolásra"
+    },
+    "beriSetup": {
+      "donor": "Küldő a Nagy Birodalomban a szükséges csapatokkal",
+      "limit": "Napi normál támadások: 0 további korlát",
+      "preset": "Mentett berimondi támadási sablon",
+      "title": "Példa támadásra és ellátásra",
+      "travel": "Utazótoll a toronytámadásokhoz"
+    },
+    "beriTools": {
+      "ladders": "Létrák: a szokásos támadásokhoz igazítva",
+      "mantlets": "Pajzsok: a szokásos támadásokhoz igazítva",
+      "rams": "Faltörő kosok: a szokásos támadásokhoz igazítva",
+      "title": "Példa minimális eszközkészletre"
+    },
+    "beriTransfers": {
+      "capacity": "Szabad kapacitás: 1; küszöb: 1",
+      "mix": "Sablonarány: 2 A egység 1 B egységhez",
+      "next": "Következő szállítmány: legfeljebb 1 B a küldő készletéből",
+      "stock": "Tábori készlet: 2 A és 0 B",
+      "title": "Példa arányos szállításra"
+    },
+    "stormCastle": {
+      "blueprint": "Mentett cél aktív; szüneteltetés megtartja",
+      "capture": "Jelenlegi vár: Funkcionális cél",
+      "decorations": "Díszítési előbeállítás: opcionális",
+      "title": "Példa a Viharvár hozzáférésére",
+      "unlock": "Automatikus nyitás: be árellenőrzés után"
+    },
+    "stormCombat": {
+      "defenders": "Megszálló védők: kiválasztottak vagy egy túlélő",
+      "forts": "Erődök: kiválasztott 40–80-as szintek",
+      "islands": "Akvamarinszigetek: nagyok és kicsik",
+      "priority": "Nagyok, kicsik, majd erődök 80-tól 40-ig",
+      "title": "Példa erőd- és szigettámadásokra"
+    },
+    "stormConstruction": {
+      "harbor": "Kikötő: be, 1-es szint",
+      "resources": "Fa 0; kő 0; tervezett akvamarin",
+      "spending": "Prémium és bontás: ki",
+      "title": "Példa építésre és tartalékokra",
+      "transport": "Nyersanyagszállítás: be"
+    },
+    "stormLuna": {
+      "cost": "Ár és vásárlási korlát: csak olvasható",
+      "limited": "Korlátozott célok a korlátlan jutalmak előtt",
+      "priority": "Elsőbbség 1, 2, 3; kisebb először",
+      "reserve": "Akvamarin megtartása: 0 a többlet használatakor",
+      "title": "Példa Luna-jutalmakra"
+    },
+    "stormSave": {
+      "check": "Szabályellenőrzés: 30 másodperc",
+      "daily": "Napi normál támadások: 0 plusz korlát",
+      "map": "Térképfrissítés: 2 óra, csak olvasható",
+      "switch": "Mentsd, majd kapcsold be az Auto Stormot",
+      "title": "Példa mentésre és bekapcsolásra"
+    },
+    "stormTroops": {
+      "averages": "Megerősített támadások visszaállítás óta / 24; előbeállítási átlag csak olvasható",
+      "cap": "Lekötött csapatkorlát: csak olvasható",
+      "donors": "Adományozók: megjelenített sorrend, részleges készlet megengedett",
+      "minimum": "Legalább megtartva: 1000 katona",
+      "title": "Példa csapatimportálásra"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Az ajánlások a rendszeres használatra vonatkoznak, és nem módosítják a mentett beállításokat.",
+    "steps": {
+      "open": {
+        "title": "Nyisd meg az automatikus csapatvédelem beállításait",
+        "items": {
+          "open_settings": {
+            "label": "Beállítások megnyitása",
+            "description": "A parancsnoki központ tetején válaszd az automatikus csapatvédelem melletti beállításgombot."
+          }
+        }
+      },
+      "general": {
+        "title": "Állítsd be a támadásra adott választ",
+        "items": {
+          "evacuate_at": {
+            "label": "Kiürítés ekkor",
+            "description": "Az ütközés előtt ennyi perccel kezdd meg a kiürítést, vagy azonnal, ha a támadást csak az időablakon belül észlelik.",
+            "recommendation": "1 perccel az ütközés előtt."
+          },
+          "minimum_bird_days": {
+            "label": "A cél minimális védelmi napjai",
+            "description": "Olyan szövetséges várat válassz, amelynek ennél több védelmi napja maradt; a 0 megszünteti a minimumot.",
+            "recommendation": "3 nap, tehát a cél védelméből több mint 3 nap maradjon."
+          },
+          "recall_when_clear": {
+            "label": "Visszahívás veszély után",
+            "description": "Hívd haza az állomásozó csapatokat, amikor az utolsó észlelt támadás elmúlt, és nincs további bejövő támadás.",
+            "recommendation": "Bekapcsolva a szokásos használathoz."
+          },
+          "open_gate_fallback": {
+            "label": "Kapunyitás tartalékként",
+            "description": "Ha a csapatok nem evakuálhatók, ez a lehetőség hat órára kinyitja a megtámadott saját vár kapuit, Berimond kivételével.",
+            "recommendation": "Kikapcsolva, hacsak nem szeretnél automatikus kapunyitást a sikertelen kiürítés után."
+          },
+          "protection_mode": {
+            "label": "Vásárolt védelmi mód",
+            "description": "Amikor a vásárolt védelmi mód előkészítés alatt áll vagy aktív, a csapatvédelem kikapcsolt tartalék mellett is kapukat használ, Berimond kivételével."
+          }
+        },
+        "image": {
+          "alt": "Kitalált beállítások kiürítési idővel, védelemmel, visszahívással, kapukkal és várbeli tartalékokkal",
+          "caption": "Mentés előtt ellenőrizd a négy válaszbeállítást és minden vár védelmi tartalékát."
+        }
+      },
+      "reserves": {
+        "title": "Válaszd ki a várban maradó csapatokat",
+        "items": {
+          "add_troops": {
+            "label": "Csapatok hozzáadása",
+            "description": "Válaszd ki a várban maradó csapattípusokat; tartalék nélkül az összes alkalmas, nem eszköz típusú csapat evakuálható.",
+            "recommendation": "Tartsd otthon a szokásos védő helyőrséget, és engedd távozni a felesleges támadó csapatokat."
+          },
+          "quantity": {
+            "label": "Mennyiség",
+            "description": "Add meg, hány csapat marad minden kiválasztott típusból a várban; a 0 egyet sem tartalékol.",
+            "recommendation": "A vár szokásos védelméhez szükséges mennyiséget használd."
+          },
+          "edit_defense_troops": {
+            "label": "Védőcsapatok szerkesztése",
+            "description": "Nyisd meg újra a csapatválasztót a vár tartalék típusainak vagy mennyiségeinek módosításához."
+          },
+          "remove_defense_troop": {
+            "label": "Védőcsapat eltávolítása",
+            "description": "Távolíts el egy tartaléklapkát, hogy az adott csapattípus ne maradjon tovább a várban."
+          }
+        }
+      },
+      "finish": {
+        "title": "Mentsd és kapcsold be a csapatvédelmet",
+        "items": {
+          "save_changes": {
+            "label": "Változtatások mentése",
+            "description": "A beállítások elhagyása előtt mentsd az időzítést, a kapcsolókat és a várankénti tartalékokat."
+          },
+          "auto_station_switch": {
+            "label": "Csapatvédelmi kapcsoló",
+            "description": "Mentés után kapcsold be az automatikus csapatvédelmet a parancsnoki központ tetején a bejövő játékostámadások figyeléséhez.",
+            "recommendation": "Bekapcsolva a rendszeres védelemhez, a tartalékok ellenőrzése után."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatikus csapatvédelem",
+      "summary": "Mozgasd el az alkalmas csapatokat a bejövő támadás előtt",
+      "description": "Közeledő játékostámadáskor az automatikus csapatvédelem az alkalmas csapatokat az azonos királyság legközelebbi megfelelő szövetséges várába küldi.",
+      "expectation": "Bekapcsolt visszahívással a csapatok az utolsó észlelt támadás után térnek vissza, amikor már nincs fenyegetés; különben érkezés után egy órát maradnak, majd hazatérnek. A cél vagy a csapatok hiánya és a játék korlátai megakadályozhatják a kiürítést.",
+      "helper": "A csapatok az azonos királyság legközelebbi megfelelő szövetséges várába mennek; sikertelen kiürítéskor a megtámadott saját vár kapui Berimondon kívül védelmet adhatnak."
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "Leggyorsabb elérhető parancsnok",
+      "commanderHelp": "Az automatikus erődtámadás minden célzott erődnél összeveti a felszerelés, drágakövek, készletek és tábornokok alkalmazható utazási sebességhatásait; Relikvia 2.0 vagy legalább 100% nem szükséges.",
+      "description": "Az automatikus erődtámadás a mentett korlátokon belül rémfarkasokat vásárol, ellátja az engedélyezett külső királyságokat, és azok főváraiból támadja a kész erődöket.",
+      "expectation": "Minden támadáshoz kész erőd, mindkét szárnyra elegendő rémfarkas és alkalmas kijelölt parancsnok szükséges; a várakozási idők vagy ellátási késések szüneteltethetik.",
+      "name": "Automatikus erődtámadás",
+      "settingsSummary": "Az automatikus erődtámadás előkészíti a rémfarkasokat, és minden célzott erődhöz a leggyorsabb alkalmas kijelölt parancsnokot választja.",
+      "summary": "Lásd el rémfarkasokkal és támadd a kész erődöket",
+      "travelHelp": "Az Utazótoll az alapértelmezett; a mentett utazási választás megmarad. A várhoz tartozó gyorsítás indulás előtt újra kiszámításra kerül."
+    },
+    "recommendationIntro": "Az ajánlott értékek az automatikus erődtámadás szokásos használatát írják le; útmutatók, és nem módosítják a mentett beállításokat.",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "Szemléltető példa az automatikus erődtámadás támadási és utazási beállításaira",
+          "caption": "Az automatikus erődtámadás célonként rangsorolja az alkalmas kijelölt parancsnokokat, és a mentett utazási választást használja."
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "A Parancsnokok résznél jelöld ki az automatikus erődtámadás számára használható parancsnokokat, majd mentsd a kijelöléseket.",
+            "label": "Parancsnokok kijelölése",
+            "recommendation": "Azokat a parancsnokokat jelöld ki, akiket rendszerint erődtámadáshoz elérhetővé szeretnél tenni."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Állítsd le az automatikus erődtámadást a fiók napi normál támadásszámánál, amíg a játék vissza nem állítja azt; a 0 nem ad hozzá korlátot.",
+            "label": "Normál támadások napi korlátja",
+            "recommendation": "0, hacsak nem szeretnél további napi korlátot."
+          },
+          "fastest_commander": {
+            "description": "Minden erődhöz a jelenleg elérhető leggyorsabb kijelölt parancsnokot választja az alkalmazható felszerelés-, drágakő-, készlet- és tábornoki hatások alapján, a felső korlátok után.",
+            "label": "Leggyorsabb alkalmas parancsnok",
+            "recommendation": "Relikvia 2.0 tárgy vagy 100%-os sebességbónusz nem szükséges."
+          },
+          "full_flank_wave": {
+            "description": "Minden támadás megvárja, hogy egy teljes hullámhoz mindkét szárnyon elegendő rémfarkas legyen.",
+            "label": "Rémfarkashullám mindkét szárnyon"
+          },
+          "horse_travel_boost": {
+            "description": "Válaszd ki az erődtámadások utazási módját; a kifejezetten mentett érmés vagy rubinos fokozat kiválasztva marad.",
+            "label": "Lovas utazási gyorsítás",
+            "recommendation": "Utazótoll a leggyorsabb úthoz."
+          }
+        },
+        "title": "Állítsd be a támadásokat és az utazást"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "Mentés után kapcsold be az automatikus erődtámadást az Automatizálás kártyán a normál ciklusok indításához.",
+            "label": "Automatikus erődtámadás kapcsolója",
+            "recommendation": "Bekapcsolva a kívánt beállítások ellenőrzése és mentése után."
+          },
+          "calendar": {
+            "description": "A Naptárral korlátozd az automatikus erődtámadás működési idejét, majd változtatás esetén válaszd a Menetrend mentése lehetőséget.",
+            "label": "Naptár",
+            "recommendation": "Kikapcsolva a folyamatos szokásos működéshez."
+          },
+          "save_fortress_plan": {
+            "description": "A párbeszédablak elhagyása előtt mentsd a királyság-, ellátási és támadási beállításokat.",
+            "label": "Erődterv mentése"
+          }
+        },
+        "title": "Állítsd be az ütemezést, mentsd, és kapcsold be"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "Szemléltető példa az automatikus erődtámadás három külső királysági vezérlőjére",
+          "caption": "Engedélyezd azokat a feloldott királyságokat, amelyek fővárába rémfarkasokat szeretnél küldeni és amelyekből erődöket támadnál."
+        },
+        "items": {
+          "burning_sands": {
+            "description": "Engedélyezd a támadásokat és a rémfarkas-ellátást az Égő homok fővárából, ha ezt a királyságot feloldottad.",
+            "label": "Égő homok",
+            "recommendation": "Bekapcsolva, ha feloldottad és használatra kész."
+          },
+          "everwinter_glacier": {
+            "description": "Engedélyezd a támadásokat és a rémfarkas-ellátást az Örök tél gleccsere fővárából, ha ezt a királyságot feloldottad.",
+            "label": "Örök tél gleccsere",
+            "recommendation": "Bekapcsolva, ha feloldottad és használatra kész."
+          },
+          "fire_peaks": {
+            "description": "Engedélyezd a támadásokat és a rémfarkas-ellátást a Tűzcsúcsok fővárából, ha ezt a királyságot feloldottad.",
+            "label": "Tűzcsúcsok",
+            "recommendation": "Bekapcsolva, ha feloldottad és használatra kész."
+          }
+        },
+        "title": "Válaszd ki az erődkirályságokat"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "Az Automatizálás oldalon válaszd az automatikus erődtámadás kártyáján a beállítások gombot.",
+            "label": "Beállítások megnyitása"
+          }
+        },
+        "title": "Nyisd meg az automatikus erődtámadás beállításait"
+      },
+      "supply": {
+        "image": {
+          "alt": "Szemléltető példa az automatikus erődtámadás rémfarkas-vásárlási és -szállítási beállításaira",
+          "caption": "Tekintsd át a munkamenetenkénti vásárlási plafont, a kán tábláinak tartalékát és a megerősített szállítások időgyorsítását."
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "A nomád boltban munkamenetenként 100-as csomagokra korlátozd a rémfarkas-vásárlást; a 0 kikapcsolja a vásárlást.",
+            "label": "Rémfarkasok munkamenetenként",
+            "recommendation": "5 000 rémfarkas munkamenetenként a legolcsóbb áron."
+          },
+          "keep_khan_tablets": {
+            "description": "Állítsd le a rémfarkas-vásárlást, mielőtt a kán tábláinak száma e tartalék alá esne.",
+            "label": "Kán tábláinak megtartása",
+            "recommendation": "Tarts meg 25 000 kántáblát."
+          },
+          "supply_route": {
+            "description": "A vásárolt rémfarkasok a Nagy Birodalom fővárába érkeznek, majd az engedélyezett királyságokba kerülnek.",
+            "label": "Rémfarkas-ellátási útvonal"
+          },
+          "use_time_skips": {
+            "description": "Csak megerősített automatikus erődtámadási szállításokhoz használj alkalmas időgyorsításokat, és tartsd be a mentett készlettartalékokat.",
+            "label": "Időgyorsítás használata rémfarkas-szállításhoz",
+            "recommendation": "Bekapcsolva a gyorsabb ellátáshoz, ha a mentett időgyorsítási tartalékok engedik."
+          }
+        },
+        "title": "Állítsd be a rémfarkas-ellátást"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "Az automatikus inváziós támadás az Idegen urakat vagy Vérvarjakat támadja mentett támadási sablonnal, amíg el nem éri a pontcélt vagy más leállítási korlátot.",
+      "expectation": "Aktív eseményre, alkalmas parancsnokokra, valamint elegendő katonára és eszközre vár; a már úton lévő támadások az új támadások leállítása után is befejeződhetnek.",
+      "name": "Automatikus inváziós támadás",
+      "summary": "Támadd az Idegen urakat és Vérvarjakat a pontcélodig"
+    },
+    "recommendationIntro": "Az ajánlott értékek az automatikus inváziós támadás szokásos használatát írják le; útmutatók, és nem módosítják a mentett beállításokat.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Szemléltető nehézségi választások az Idegen urakhoz és Vérvarjakhoz",
+          "caption": "Minden eseményhez külön feloldott tartalék nehézséget válassz."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Válassz feloldott Vérvarjak nehézséget arra az esetre, ha a jelenlegi eseményben még nincs kiválasztva nehézség.",
+            "label": "Vérvarjak nehézsége",
+            "recommendation": "A legmagasabb feloldott nehézséget használd, amelyet a szokásos felállásod megbízhatóan kezel."
+          },
+          "difficulty_note": {
+            "description": "Mentsd mindkét esemény választását; a mentett érték módosítása nem cseréli le az aktív esemény nehézségét.",
+            "label": "Jelenlegi nehézség"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Válassz feloldott Idegen urak nehézséget arra az esetre, ha a jelenlegi eseményben még nincs kiválasztva nehézség.",
+            "label": "Idegen urak nehézsége",
+            "recommendation": "A legmagasabb feloldott nehézséget használd, amelyet a szokásos felállásod megbízhatóan kezel."
+          }
+        },
+        "title": "Válaszd ki mindkét esemény nehézségét"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "Mentés után kapcsold be az automatikus inváziós támadást az Automatizálás kártyán, hogy esemény és alkalmas erőforrások esetén működjön.",
+            "label": "Automatikus inváziós támadás kapcsolója",
+            "recommendation": "Bekapcsolva a kívánt beállítások ellenőrzése és mentése után."
+          },
+          "readiness": {
+            "description": "Az automatikus inváziós támadás aktív eseményre, alkalmas parancsnokokra és elegendő katonára és eszközre vár.",
+            "label": "Támadási készenlét"
+          },
+          "save_settings": {
+            "description": "A párbeszédablak bezárása előtt mentsd a kiinduló várat, sablont, nehézségeket, leállítási korlátokat és erősítési választást.",
+            "label": "Beállítások mentése"
+          }
+        },
+        "title": "Mentsd és kapcsold be az automatikus inváziós támadást"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Szemléltető erősítési beállítások az automatikus inváziós támadáshoz",
+          "caption": "Hagyd kikapcsolva az erősítést, hacsak nem akarsz elérhető eseménypénzt vagy kifejezetten kiválasztott rubint költeni."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Válassz az aktív esemény által támogatott lehetőséget; minden árat a játék szab meg, és a rubin kifejezett választása engedélyezi a rubinköltést.",
+            "label": "Erősítés pénzneme",
+            "recommendation": "Eseménypénz, ha rendelkezésre áll és az erősítés be van kapcsolva."
+          },
+          "fortify_each_target": {
+            "description": "Ha bekapcsolod, a kiválasztott pénznemmel erősíts meg minden létrehozott ellenséges várat a támadás előtt.",
+            "label": "Minden cél erősítése",
+            "recommendation": "Kikapcsolva, kivéve ha az erősítés a szokásos eseménystratégiád része."
+          }
+        },
+        "title": "Válaszd az opcionális célerősítést"
+      },
+      "limits": {
+        "image": {
+          "alt": "Szemléltető pont- és leállítási korlátok az automatikus inváziós támadáshoz",
+          "caption": "A pontcél leállítja az új indításokat, de a már úton lévő támadások befejeződhetnek."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Állítsd le ezt az automatizálást a fiók napi normál támadásszámánál, amíg a játék vissza nem állítja; a 0 nem ad hozzá korlátot.",
+            "label": "Normál támadások napi korlátja",
+            "recommendation": "0, hogy az esemény pontcélja irányítsa a futást."
+          },
+          "minimum_remaining": {
+            "description": "Az esemény vége előtt ennyi perccel ne indíts több új támadást.",
+            "label": "Leállítás az esemény vége előtt",
+            "recommendation": "30 perc."
+          },
+          "score_target": {
+            "description": "Ne indíts új támadást, amikor a jelentett eseménypontszám eléri vagy meghaladja ezt a célt.",
+            "label": "Leállítás eseménypontszámnál",
+            "recommendation": "A szokásos utolsó személyes jutalmi mérföldkövedet használd, amely nagyobb 0-nál."
+          },
+          "travelling_attacks": {
+            "description": "A már úton lévő támadások a leállítási feltétel után befejeződhetnek, és a végső pontszámot a cél fölé emelhetik.",
+            "label": "Úton lévő támadások"
+          }
+        },
+        "title": "Állítsd be a pont- és leállítási korlátokat"
+      },
+      "open": {
+        "image": {
+          "alt": "Szemléltető kiinduló vár-, sablon- és utazási beállítások az automatikus inváziós támadáshoz",
+          "caption": "Válassz kiinduló várat a Nagy Birodalomban és mentett eseménysablont az utazási lehetőség beállítása előtt."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Válassz mentett támadási sablont katonákkal, eszközökkel és alakzattal az Idegen urak vagy Vérvarjak ellen.",
+            "label": "Támadási sablon",
+            "recommendation": "Előbb hozz létre szokásos Idegen urak vagy Vérvarjak sablont, majd válaszd ki itt."
+          },
+          "capacity_note": {
+            "description": "A sablon katona- és eszközmennyisége a kiválasztott parancsnok és cél kapacitásához igazodik.",
+            "label": "Támadási kapacitás"
+          },
+          "horse_travel_boost": {
+            "description": "Válassz tollas, érmés vagy rubinos utazási lehetőséget ezekhez a támadásokhoz.",
+            "label": "Lovas utazási gyorsítás",
+            "recommendation": "Utazótoll a gyors úthoz."
+          },
+          "open_settings": {
+            "description": "Az Automatizálás oldalon válaszd az automatikus inváziós támadás kártyájának beállításgombját.",
+            "label": "Beállítások megnyitása"
+          },
+          "source_castle": {
+            "description": "Válaszd ki a Nagy Birodalom várát, amely katonákat és eszközöket ad az eseménytámadásokhoz.",
+            "label": "Kiinduló vár",
+            "recommendation": "Használd a szokásos eseményváradat elegendő katonával és eszközzel."
+          }
+        },
+        "title": "Nyisd meg az automatikus inváziós támadás beállításait"
+      }
+    }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "A legmagasabb feloldott nehézséget használd, amelyet a szokásos felállásod megbízhatóan kezel.",
+            "description": "Válassz feloldott nomád nehézséget az esemény kezdetéhez.",
+            "label": "Nomád nehézség"
+          },
+          "samurai_difficulty": {
+            "recommendation": "A legmagasabb feloldott nehézséget használd, amelyet a szokásos felállásod megbízhatóan kezel.",
+            "description": "Válassz feloldott szamuráj nehézséget az esemény kezdetéhez.",
+            "label": "Szamuráj nehézség"
+          },
+          "active_difficulty": {
+            "description": "Aktív eseménynél egyezzen a jelenlegi nehézség, mert eltérő mentett választás esetén az automatizálás vár, nem változtatja meg.",
+            "label": "Már aktív esemény"
+          }
+        },
+        "title": "Válaszd ki mindkét esemény nehézségét",
+        "image": {
+          "alt": "Példa a nomád és szamuráj nehézségi fokokra",
+          "caption": "Minden eseményhez külön feloldott nehézséget válassz, aktív eseménynél pedig annak jelenlegi nehézségét használd."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "Bekapcsolva a kívánt beállítások ellenőrzése és mentése után.",
+            "description": "Mentés után kapcsold be az Automatikus nomádok/szamurájok funkciót az Automatizálás kártyán, hogy esemény és megfelelő erőforrások esetén fusson.",
+            "label": "Automatikus nomádok/szamurájok kapcsoló"
+          },
+          "save_settings": {
+            "label": "Beállítások mentése",
+            "description": "Az ablak bezárása előtt mentsd a forrást, támadási beállításokat, nehézségeket, leállítási határokat, időugrás-választást és próbaállapotot."
+          },
+          "readiness": {
+            "description": "Az automatizálás fejleszti az eseménytáborokat, és alkalmas parancsnokokra, katonákra, eszközökre, valamint bekapcsolás esetén használható időugrásokra vár.",
+            "label": "Tábori támadások készenléte"
+          }
+        },
+        "title": "Automatikus nomádok/szamurájok mentése és bekapcsolása"
+      },
+      "limits": {
+        "image": {
+          "caption": "A pontcél leállítja az új indításokat, de a már úton lévő támadások befejeződhetnek.",
+          "alt": "Példa az Automatikus nomádok/szamurájok pont- és leállítási határaira"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Állítsd le ezt az automatizálást a fiók napi normál támadásszámánál, amíg a játék vissza nem állítja; a 0 nem ad hozzá korlátot.",
+            "label": "Normál támadások napi korlátja",
+            "recommendation": "0, hogy az esemény pontcélja irányítsa a futást."
+          },
+          "minimum_remaining": {
+            "description": "Az esemény vége előtt ennyi perccel ne indíts több új támadást.",
+            "label": "Leállítás az esemény vége előtt",
+            "recommendation": "30 perc."
+          },
+          "score_target": {
+            "description": "Ne indíts új támadást, amikor a jelentett eseménypontszám eléri vagy meghaladja ezt a célt.",
+            "label": "Leállítás eseménypontszámnál",
+            "recommendation": "A szokásos utolsó személyes jutalmi mérföldkövedet használd, amely nagyobb 0-nál."
+          },
+          "travelling_attacks": {
+            "description": "A már úton lévő támadások a leállítási feltétel után befejeződhetnek, és a végső pontszámot a cél fölé emelhetik.",
+            "label": "Úton lévő támadások"
+          }
+        },
+        "title": "Állítsd be a pont- és leállítási korlátokat"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Lovas utazás gyorsítása",
+            "recommendation": "Utazótoll a gyors úthoz.",
+            "description": "A tábori támadásokhoz válaszd a tollas, érmés vagy rubinos utazási opciót."
+          },
+          "open_settings": {
+            "label": "Beállítások megnyitása",
+            "description": "Az Automatizálás oldalon válaszd az Automatikus nomádok/szamurájok kártya beállításgombját."
+          },
+          "source_castle": {
+            "label": "Kiinduló vár",
+            "recommendation": "Használd a szokásos eseményváradat elegendő katonával és eszközzel.",
+            "description": "Válaszd a Nagy Birodalom várát, amely katonákat és eszközöket biztosít a tábori támadásokhoz."
+          },
+          "nomad_preset": {
+            "description": "Válassz mentett támadási beállítást katonákkal, eszközökkel és felállással a nomád táborokhoz.",
+            "label": "Nomád támadási beállítás",
+            "recommendation": "Hozd létre és válaszd ki a szokásos nomád beállításodat."
+          },
+          "samurai_preset": {
+            "description": "Válassz mentett támadási beállítást katonákkal, eszközökkel és felállással a szamuráj táborokhoz.",
+            "label": "Szamuráj támadási beállítás",
+            "recommendation": "Hozd létre és válaszd ki a szokásos szamuráj beállításodat."
+          }
+        },
+        "image": {
+          "alt": "Példa az Automatikus nomádok/szamurájok forrására, beállításaira és útjára",
+          "caption": "Hozd létre mindkét esemény támadási beállítását a forrásvár és az utazási opció kiválasztása előtt."
+        },
+        "title": "Automatikus nomádok/szamurájok beállításainak megnyitása"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "Példa a táborok várakozási idejére és az időugrás-tartalékokra",
+          "caption": "Minden megtartandó érték időugrás-tárgyakat számol, nem várakozási perceket."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "Ennyi 10 perces időugrást hagyj érintetlenül tartalékként.",
+            "label": "10 perc megtartása",
+            "recommendation": "0 a szokásos tábori körökhöz."
+          },
+          "keep_1m": {
+            "description": "Ennyi 1 perces időugrást hagyj érintetlenül tartalékként.",
+            "label": "1 perc megtartása",
+            "recommendation": "0 a szokásos tábori körökhöz."
+          },
+          "keep_24h": {
+            "description": "Ennyi 24 órás időugrást hagyj érintetlenül tartalékként.",
+            "label": "24 óra megtartása",
+            "recommendation": "Tartsd meg az építéshez vagy más tevékenységhez szükséges készletet."
+          },
+          "keep_30m": {
+            "description": "Ennyi 30 perces időugrást hagyj érintetlenül tartalékként.",
+            "label": "30 perc megtartása",
+            "recommendation": "0 a szokásos tábori körökhöz."
+          },
+          "keep_5h": {
+            "description": "Ennyi 5 órás időugrást hagyj érintetlenül tartalékként.",
+            "label": "5 óra megtartása",
+            "recommendation": "Tartsd meg az építéshez vagy más tevékenységhez szükséges készletet."
+          },
+          "keep_5m": {
+            "description": "Ennyi 5 perces időugrást hagyj érintetlenül tartalékként.",
+            "label": "5 perc megtartása",
+            "recommendation": "0 a szokásos tábori körökhöz."
+          },
+          "keep_60m": {
+            "description": "Ennyi 60 perces időugrást hagyj érintetlenül tartalékként.",
+            "label": "60 perc megtartása",
+            "recommendation": "0 a szokásos tábori körökhöz."
+          },
+          "skip_cooldowns": {
+            "description": "Egy tábor elleni megerősített győzelem után használj elérhető időugrást a célpont várakozási idejének törlésére.",
+            "label": "Várakozás törlése minden sikeres támadás után",
+            "recommendation": "Bekapcsolva a szokásos ismételt tábori támadásokhoz; kikapcsolva a természetes várakozáshoz."
+          }
+        },
+        "title": "Időugrások és tartalékok kiválasztása"
+      },
+      "trial": {
+        "image": {
+          "alt": "Példa az ideiglenes rablólovag-vár próba vezérlőire",
+          "caption": "A próba valódi támadást indít, és bekapcsolva felváltja a normál eseményműködést."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "Váltsd fel a normál eseményműködést egy rablólovag vára elleni valódi próbatámadással, nomád beállítással és időugrásokkal.",
+            "label": "Ideiglenes teljes próba rablólovag vára ellen",
+            "recommendation": "Kikapcsolva a szokásos nomád vagy szamuráj körökhöz."
+          },
+          "target_x": {
+            "description": "A rablólovag-vár vízszintes koordinátáját csak az ideiglenes próbához add meg.",
+            "label": "Cél X",
+            "recommendation": "Hagyd használaton kívül, amíg a próba ki van kapcsolva."
+          },
+          "target_y": {
+            "description": "A rablólovag-vár függőleges koordinátáját csak az ideiglenes próbához add meg.",
+            "label": "Cél Y",
+            "recommendation": "Hagyd használaton kívül, amíg a próba ki van kapcsolva."
+          },
+          "trial_skips": {
+            "description": "A próba bekapcsolása a próba időugrásait is bekapcsolja.",
+            "label": "Próba időugrásai"
+          }
+        },
+        "title": "Az ideiglenes próbát hagyd kikapcsolva a szokásos körökhöz"
+      }
+    },
+    "feature": {
+      "description": "Az Automatikus nomádok/szamurájok fejleszti a megfelelő eseménytáborokat, kiválasztja a leggyengébb teljesen fejlesztett tábort, és az eseményhez mentett támadási beállítással ismételten támadja, amíg el nem ér egy leállítási határt.",
+      "expectation": "Aktív eseményre, alkalmas parancsnokokra, katonákra, eszközökre és használható időugrásokra vár, ha a várakozás törlése be van kapcsolva; az úton lévő támadások az új indítások leállítása után is befejeződhetnek.",
+      "name": "Automatikus nomádok/szamurájok",
+      "summary": "Nomád vagy szamuráj táborok fejlesztése és támadása"
+    },
+    "recommendationIntro": "Az ajánlott értékek az Automatikus nomádok/szamurájok rendszeres használatát írják le; útmutatók, és nem módosítják a mentett beállításokat."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "Bekapcsolva a kívánt beállítások ellenőrzése és mentése után.",
+            "description": "A beállítások ellenőrzése után kapcsold be az Automatikus tanácsadót az Automatizálás kártyán; a már feloldott tanácsadó azonnal indíthat sorozatot.",
+            "label": "Automatikus tanácsadó kapcsoló"
+          },
+          "save_settings": {
+            "label": "Beállítások mentése",
+            "description": "Az ablak bezárása előtt mentsd a forrásvárat, az előre beállított támadást, a nehézségeket, a sorozat méretét és az erőforrás-kereteket."
+          },
+          "activate_advisor": {
+            "description": "Ha a tanácsadó zárolt, válaszd a Tanácsadó aktiválása lehetőséget az aktuális esemény megerősítéséhez.",
+            "label": "Tanácsadó aktiválása"
+          },
+          "activate_and_spend": {
+            "description": "Küldd el a megerősített aktiválást megfelelő eseményzsetonnal vagy általános tanácsadózsetonnal; ingyenes eseménynél a tanácsadó aktiválása jelenik meg.",
+            "label": "Aktiválás és zseton elköltése"
+          },
+          "cancel_activation": {
+            "description": "Zárd be a megerősítést aktiválás és zsetonköltés nélkül.",
+            "label": "Aktiválás megszakítása"
+          },
+          "confirm_paid_activation": {
+            "description": "Erősítsd meg, hogy a tanácsadó aktiválása eseményzsetont vagy általános zsetont használhat el, hacsak a játék nem jelzi ingyenesnek az eseményt.",
+            "label": "Fizetős aktiválás megerősítése"
+          }
+        },
+        "image": {
+          "alt": "Az Automatikus tanácsadó mentésének és zsetonos aktiválásának szemléltető vezérlői",
+          "caption": "A mentés vagy bekapcsolás nem költ zsetont; a külön megerősített aktiválás költhet."
+        },
+        "title": "Mentsd, kapcsold be és aktiváld a tanácsadói hozzáférést"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "Nomád nehézség",
+            "recommendation": "A legmagasabb feloldott nehézséget használd, amelyet a szokásos felállásod megbízhatóan kezel.",
+            "description": "Válassz feloldott nomád nehézséget, amelyet az esemény kezdetén állít be."
+          },
+          "samurai_difficulty": {
+            "label": "Szamuráj nehézség",
+            "recommendation": "A legmagasabb feloldott nehézséget használd, amelyet a szokásos felállásod megbízhatóan kezel.",
+            "description": "Válassz feloldott szamuráj nehézséget, amelyet az esemény kezdetén állít be."
+          },
+          "active_difficulty": {
+            "description": "A már aktív esemény aktuális nehézségét add meg, különben az automatizálás várakozik ahelyett, hogy megváltoztatná.",
+            "label": "Aktív esemény nehézsége"
+          }
+        },
+        "title": "Válaszd ki mindkét esemény nehézségét",
+        "image": {
+          "alt": "Nomád és szamuráj tanácsadói nehézségek szemléltető választása",
+          "caption": "Mentsd mindkét esemény nehézségét, és a már futó esemény nehézségét állítsd be."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Lovas utazás gyorsítása",
+            "recommendation": "Utazótoll a gyors úthoz.",
+            "description": "Válassz tollas, érmés vagy rubinos utazási lehetőséget a sorozathoz."
+          },
+          "open_settings": {
+            "label": "Beállítások megnyitása",
+            "description": "Az Automatizálás oldalon válaszd az Automatikus tanácsadó kártya beállítások gombját."
+          },
+          "source_castle": {
+            "label": "Kiinduló vár",
+            "recommendation": "Használd a szokásos eseményváradat elegendő katonával és eszközzel.",
+            "description": "Válaszd ki a Nagy Birodalomban azt a várat, amely katonákat és eszközöket ad a tanácsadói sorozathoz."
+          },
+          "attack_preset": {
+            "description": "Válassz mentett támadási beállítást, amelynek katonáit, eszközeit és alakzatát minden kért támadáshoz lemásolja.",
+            "label": "Tanácsadói támadási beállítás",
+            "recommendation": "Előbb készíts szokásos beállítást az aktív nomád vagy szamuráj eseményhez, majd válaszd ki."
+          },
+          "complete_copies": {
+            "description": "A rendelkezésre álló erőforrások és a beállítás teljes másolatai a maximális támadásszám alá csökkenthetik a sorozatot.",
+            "label": "Teljes beállításmásolatok"
+          }
+        },
+        "image": {
+          "alt": "Az Automatikus tanácsadó szemléltető forrásvára, támadási beállítása és utazási opciói",
+          "caption": "Az utazás beállítása előtt válassz forrásvárat a Nagy Birodalomban és mentett eseménybeállítást."
+        },
+        "title": "Nyisd meg az Automatikus tanácsadó beállításait"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "Ennyi 24 órás időugrást hagyj érintetlenül tartalékként.",
+            "label": "24 óra megtartása",
+            "recommendation": "Tartsd meg az építéshez vagy más tevékenységhez szükséges készletet."
+          },
+          "keep_5h": {
+            "description": "Ennyi 5 órás időugrást hagyj érintetlenül tartalékként.",
+            "label": "5 óra megtartása",
+            "recommendation": "Tartsd meg az építéshez vagy más tevékenységhez szükséges készletet."
+          },
+          "keep_60m": {
+            "description": "Ennyi 60 perces időugrást hagyj érintetlenül tartalékként.",
+            "label": "60 perc megtartása",
+            "recommendation": "0 a szokásos tanácsadói sorozatokhoz."
+          },
+          "coin_cost": {
+            "description": "Becsüld meg a támadásonkénti teljes érmeköltséget az indítás előtti megfizethetőségi számításhoz a játékárak megváltoztatása nélkül.",
+            "label": "Teljes érmeköltség támadásonként",
+            "recommendation": "500 csak akkor, ha fedezi a tényleges teljes költséget; egyébként használj nagyobb, mért összeget."
+          },
+          "keep_coins": {
+            "description": "Ennyi érmét zárj ki a sorozat keretéből.",
+            "label": "Érmék megtartása",
+            "recommendation": "Tartsd meg a szokásos toborzási és építési keretedet."
+          },
+          "keep_feathers": {
+            "description": "Ennyi utazótollat zárj ki a sorozat keretéből.",
+            "label": "Tollak megtartása",
+            "recommendation": "0, hacsak más funkciókhoz nem tartalékolsz tollakat."
+          },
+          "keep_rubies": {
+            "description": "Ennyi rubint zárj ki a sorozat keretéből.",
+            "label": "Rubinok megtartása",
+            "recommendation": "Tartsd meg a más tevékenységekhez szükséges egyenleget."
+          },
+          "ruby_cost": {
+            "description": "Becsüld meg a támadásonkénti rubinos utazási költséget; rubinos utazásnál pozitív érték szükséges.",
+            "label": "Rubin támadásonként",
+            "recommendation": "0 Utazótoll esetén; rubinos utazáshoz a tényleges pozitív költséget add meg."
+          }
+        },
+        "image": {
+          "alt": "Az Automatikus tanácsadó szemléltető érme-, rubin-, toll- és időugrás-tartalékai",
+          "caption": "A költségmezők tervezési becslések; a megtartási értékek fel nem használt erőforrásokat vagy időugrásokat jelentenek."
+        },
+        "title": "Erőforrás-keretek és tartalékok beállítása"
+      },
+      "overview": {
+        "image": {
+          "alt": "Az Automatikus tanácsadó előrehaladásának és veszteségeinek szemléltető áttekintése",
+          "caption": "Az áttekintés új sorozat indítása nélkül mutatja az előrehaladást és a veszteségeket."
+        },
+        "items": {
+          "live_progress": {
+            "description": "Olvasd le az aktuális és kért támadásszámot, a győzelmeket, vereségeket, elveszett egységeket és eszközöket.",
+            "label": "Futó tanácsadói sorozat"
+          },
+          "no_relaunch": {
+            "description": "Az ugyanazon eseményben befejezett vagy megszakított sorozat nem indul újra automatikusan.",
+            "label": "Befejezett vagy megszakított sorozat"
+          },
+          "refresh_overview": {
+            "description": "Kérd le a tanácsadói sorozat friss előrehaladását, győzelmeit, vereségeit és veszteségeit.",
+            "label": "Áttekintés frissítése"
+          }
+        },
+        "title": "Tekintsd át a futó tanácsadói sorozatot"
+      },
+      "sizing": {
+        "image": {
+          "alt": "Az Automatikus tanácsadó támadásszámának és eseményidejének szemléltető beállításai",
+          "caption": "A kért számot indítás előtt a rendelkezésre álló erőforrások és az esemény ideje korlátozza."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "Állítsd be az egyetlen tanácsadói sorozat támadásainak felső határát; az erőforrások és a hátralévő idő csökkenthetik a tényleges számot.",
+            "label": "Maximális támadások",
+            "recommendation": "9 999, hogy a rendelkezésre álló erőforrások és az esemény ideje határozza meg a sorozat méretét."
+          },
+          "minimum_remaining": {
+            "description": "Ennyi percet hagyj felhasználatlanul az indítás előtti eseményidő-számításban.",
+            "label": "Leállítás az esemény vége előtt",
+            "recommendation": "30 perc; ez nem folyamatos sorozatmegszakító időzítő."
+          }
+        },
+        "title": "Sorozatméret és eseményidő beállítása"
+      }
+    },
+    "feature": {
+      "description": "Az Automatikus tanácsadó egy nomád vagy szamuráj tanácsadói támadássorozatot indít a rendelkezésre álló erőforrások és a hátralévő eseményidő alapján.",
+      "expectation": "A sorozat megvárja az aktív esemény megfelelő nehézségét és a feloldott tanácsadói hozzáférést; a mentés vagy bekapcsolás nem költ zsetont, a megerősített aktiválás viszont költhet.",
+      "name": "Automatikus tanácsadó",
+      "summary": "Indíts egy erőforrásokhoz igazított nomád vagy szamuráj tanácsadói sorozatot"
+    },
+    "recommendationIntro": "Az ajánlott értékek az Automatikus tanácsadó szokásos használatát írják le; útmutatók, és nem módosítják a mentett beállításokat."
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "10 perc megtartása",
+            "description": "Ennyi 10 perces időugrás-tárgyat hagyj felhasználatlanul.",
+            "recommendation": "0 a szokásos kánláncokhoz."
+          },
+          "keep_1m": {
+            "label": "1 perc megtartása",
+            "description": "Ennyi 1 perces időugrás-tárgyat hagyj felhasználatlanul.",
+            "recommendation": "0 a szokásos kánláncokhoz."
+          },
+          "keep_24h": {
+            "label": "24 óra megtartása",
+            "recommendation": "Tartsd meg az építéshez vagy más tevékenységhez szükséges készletet.",
+            "description": "Ennyi 24 órás időugrás-tárgyat hagyj felhasználatlanul."
+          },
+          "keep_30m": {
+            "label": "30 perc megtartása",
+            "description": "Ennyi 30 perces időugrás-tárgyat hagyj felhasználatlanul.",
+            "recommendation": "0 a szokásos kánláncokhoz."
+          },
+          "keep_5h": {
+            "label": "5 óra megtartása",
+            "recommendation": "Tartsd meg az építéshez vagy más tevékenységhez szükséges készletet.",
+            "description": "Ennyi 5 órás időugrás-tárgyat hagyj felhasználatlanul."
+          },
+          "keep_5m": {
+            "label": "5 perc megtartása",
+            "description": "Ennyi 5 perces időugrás-tárgyat hagyj felhasználatlanul.",
+            "recommendation": "0 a szokásos kánláncokhoz."
+          },
+          "keep_1h": {
+            "description": "Ennyi 1 órás időugrás-tárgyat hagyj felhasználatlanul.",
+            "label": "1 óra megtartása",
+            "recommendation": "0 a szokásos kánláncokhoz."
+          },
+          "skip_cooldowns": {
+            "description": "Foglalj le és használj elég időugrás-tárgyat a tábori várakozások törléséhez a támadások után.",
+            "label": "Minden kántábori várakozás átugrása",
+            "recommendation": "Be; a jelenlegi beállítási ablak ezt megköveteli a mentéshez."
+          },
+          "skip_shortage": {
+            "description": "Az új tábori támadások szünetelnek, ha a felhasználható időugrások nem fedezik a szükséges várakozást.",
+            "label": "Nincs elég használható időugrás"
+          }
+        },
+        "image": {
+          "alt": "Az Automatikus kán várakozási időinek és időugrás-tartalékainak szemléltetése",
+          "caption": "A tartalékok tárgyakat számolnak, nem perceket."
+        },
+        "title": "Várakozás és tartalékok beállítása"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "Normál támadások napi korlátja",
+            "description": "Állítsd le az automatizálás új tábori támadásait a fiók napi normál támadási számlálójánál; a 0 kikapcsolja a korlátot.",
+            "recommendation": "0, ha nincs szükséged a teljes fiókra vonatkozó korlátra."
+          },
+          "event_end": {
+            "label": "Leállítás az esemény vége előtt",
+            "description": "Az esemény vége előtt ennyi perccel állítsd le az új tábori támadásokat.",
+            "recommendation": "5 perc."
+          },
+          "nomad_points": {
+            "description": "A jelzett pontszámnál állítsd le az új kántámadásokat, hívd vissza az úton lévőket, és nyisd ki a főkapukat; a 0 kikapcsolja ezt.",
+            "label": "Leállítás nomádpontnál",
+            "recommendation": "0, hacsak nem szeretnél megállni és védekezni egy kiválasztott pontszámnál."
+          },
+          "replenish_tools": {
+            "description": "Pótold a védelmi beállítás hiányzó eszközeit megfelelő ajánlatokból, a rubinos csomagokat elutasítva.",
+            "label": "Védelmi eszközök pótlása",
+            "recommendation": "Be, ha megfelelő automatikus vásárlást szeretnél."
+          }
+        },
+        "image": {
+          "alt": "Az Automatikus kán pont-, eszköz- és napi korlátainak szemléltetése",
+          "caption": "A pozitív nomádpont-megállítás visszahívja az úton lévő kántámadásokat és kinyitja a fővár kapuit is."
+        },
+        "title": "Pont-, készlet- és napi korlátok beállítása"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "Beállítások mentése",
+            "description": "Mentsd a kiválasztott várakat, beállításokat, dühvezérlést, korlátokat, időugrás-tartalékokat és védelmet."
+          },
+          "enable_switch": {
+            "description": "Kapcsold be az Automatikus kánt az Automatizálás kártyán a fővédelem ellenőrzése után.",
+            "label": "Automatikus kán kapcsoló",
+            "recommendation": "Be a beállítások mentése és a védelem előkészítése után."
+          },
+          "station_priority": {
+            "description": "Az Automatikus állomásoztatás a bejövő játékostámadásokat a kánmegtorlásoktól külön kezeli.",
+            "label": "Az Automatikus állomásoztatás elsőbbsége"
+          }
+        },
+        "image": {
+          "alt": "Az Automatikus kán mentésének és bekapcsolásának szemléltetése",
+          "caption": "Ellenőrizd a fővár védelmét a kánmegtorlások aktiválása előtt."
+        },
+        "title": "Automatikus kán mentése és bekapcsolása"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Lovas utazás gyorsítása",
+            "recommendation": "Utazótoll a gyors úthoz.",
+            "description": "Válassz tollas, érmés vagy rubinos utazást a tábori támadásokhoz."
+          },
+          "open_settings": {
+            "label": "Beállítások megnyitása",
+            "description": "Az Automatizálás oldalon válaszd az Automatikus kán kártya beállításgombját."
+          },
+          "attack_from": {
+            "description": "Válassz fővárat vagy előőrsöt a Nagy Birodalomban a kántábori támadásokhoz.",
+            "label": "Támadás innen",
+            "recommendation": "Ha van rá lehetőség, használd az előőrsöt a támadó seregeddel."
+          },
+          "camp_attack_preset": {
+            "description": "Válassz mentett támadási beállítást a szokásos kántábori támadásokhoz.",
+            "label": "Tábori támadás beállítása",
+            "recommendation": "Előbb hozd létre a szokásos kántámadási beállításodat."
+          },
+          "defend_at": {
+            "description": "A kánmegtorlásokat az itt látható nagy birodalmi fővárban véded; a mező csak olvasható.",
+            "label": "Védelem itt"
+          },
+          "main_defense_preset": {
+            "description": "Válassz mentett védelmi beállítást, amelyet a megtorlások előtt újra alkalmaz a fővárban.",
+            "label": "Fővári védelmi beállítás",
+            "recommendation": "Hozd létre a szokásos kánvédelmi beállításodat, és készítsd elő a katonákat és eszközöket."
+          }
+        },
+        "image": {
+          "alt": "Az Automatikus kán várának, beállításainak és utazásának szemléltetése",
+          "caption": "Készítsd elő mindkét beállítást és a fővár védelmét a támadási lánc bekapcsolása előtt."
+        },
+        "title": "Várak, beállítások és utazás kiválasztása"
+      },
+      "protection": {
+        "image": {
+          "alt": "Az Automatikus kán fővárfal-védelmének szemléltetése",
+          "caption": "A fal védelme csak akkor érvényes, ha a fővárból indulnak a támadások."
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "Indítsd el a fővár védelmét, ha ennyi támadó egység kerülne a falra.",
+            "label": "Támadó falegységek küszöbe",
+            "recommendation": "1 000 támadó falegység."
+          },
+          "outpost_source": {
+            "description": "A védelem kikapcsol, ha az előőrs indít támadásokat, és a fővár külön védekezik.",
+            "label": "Előőrs mint forrás"
+          },
+          "protect_offense": {
+            "description": "Ha a fővárból támadsz, nyisd ki a kapuit és szüneteltesd a kánt, ha túl sok támadó katona védené a falat.",
+            "label": "Támadó katonák védelme a fővár falán",
+            "recommendation": "Be, ha a fővár indítja a támadásokat."
+          }
+        },
+        "title": "A fővár falának védelme"
+      },
+      "rage": {
+        "image": {
+          "alt": "Az Automatikus kán dühének és támadási engedélyeinek szemléltetése",
+          "caption": "Az időzített dühpont-erősítő különbözik a dühzászlóktól."
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "Állítsd le az új tábori támadásokat, miközben a dühkezelés, várakozások és védelem folytatódnak.",
+            "label": "Automatikus kántámadások zárolása",
+            "recommendation": "Ki a szokásos tábori támadásokhoz."
+          },
+          "max_rage_chain": {
+            "description": "Korlátozd az aktuális eseményben elfogadott megtorlásokat, mielőtt az új tábori támadások leállnak; a 0 eltávolítja a korlátot.",
+            "label": "Maximális düh-lánc",
+            "recommendation": "0, ha nincs szükséged megtorlási korlátra."
+          },
+          "rage_booster": {
+            "description": "Csak aktív időzített dühpont-erősítővel engedélyezd az új automatikus tábori támadásokat.",
+            "label": "Dühpont-erősítő megkövetelése",
+            "recommendation": "Ki, hacsak nem akarsz csak erősítővel támadni."
+          },
+          "rage_continues": {
+            "description": "A düh-lánc korlátja nem állítja le a teljes dühnél történő kiváltást, várakozásokat vagy a védelem helyreállítását.",
+            "label": "A dühkezelés folytatódik"
+          },
+          "trigger_full_rage": {
+            "description": "Válts ki kánmegtorlást teljes düh esetén.",
+            "label": "Kán kiváltása teljes dühnél",
+            "recommendation": "Be, amikor a fővár készen áll a védelemre."
+          }
+        },
+        "title": "Düh és támadási engedélyek beállítása"
+      }
+    },
+    "feature": {
+      "description": "Az Automatikus kán megtámadja a kán táborát, feloldja a várakozási időket, teljes düh esetén megtorlást vált ki, és fenntartja a fővár védelmét.",
+      "expectation": "Az új tábori támadások megállnak a beállított korlátoknál vagy erőforráshiányban, miközben a fővár védelem alatt marad; a bejövő játékostámadásokat az Automatikus állomásoztatás kezeli.",
+      "name": "Automatikus kán",
+      "summary": "Láncold össze a kántábor támadásait, és védd meg a fővárat a megtorlástól"
+    },
+    "recommendationIntro": "Az ajánlott értékek az Automatikus kán szokásos használatát írják le; útmutatók, és nem módosítják a mentett beállításokat."
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "Az Automatikus Berimond a választott támadási sablon csapatarányai szerint erősíti a saját berimondi táborodat, majd tornyokat támadhat, eszközöket pótolhat és igazolt zsákmányból építkezhet.",
+      "expectation": "Az átszállítás friss tábori és küldővári készletre, jelentett kapacitásra és az előző szállítmány lezárására vár; a részleges készlet kisebb szállítmányt tesz lehetővé, a szükséges típus hiánya pedig szünetelteti a pótlást.",
+      "name": "Automatikus Berimond",
+      "summary": "Lásd el és működtesd berimondi táborodat"
+    },
+    "recommendationIntro": "Az ajánlások az Automatikus Berimond szokásos használatára vonatkoznak, és nem módosítják a mentett beállításokat.",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "Szemléltető beállítások az opcionális táborépítéshez",
+          "caption": "Beépített és mentett cél, rögzítési módok, 5. szintű istálló, fa- és kőtartalék, valamint hét időugrási időtartam."
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "Engedélyezd azoknak a nem kezelt épületeknek az eltávolítását, amelyek a pontos cél érdekében nem mozgathatók vagy tárolhatók.",
+            "label": "Bontás engedélyezése",
+            "recommendation": "Kikapcsolva, amíg át nem nézted a tervezett eltávolításokat."
+          },
+          "allow_premium_costs": {
+            "description": "Engedélyezd a megfelelő, prémium pénznemet felhasználó építési lépéseket.",
+            "label": "Prémium költségek engedélyezése",
+            "recommendation": "Kikapcsolva, hacsak nem akarsz kifejezetten prémium építkezést."
+          },
+          "auto_beri_builder_lane": {
+            "description": "Építsd vagy fejleszd az aktív berimondi táborcélt a megerősítetten visszaért zsákmányból, más királyságból származó erőforrások nélkül.",
+            "label": "Automatikus Berimond-építő",
+            "recommendation": "Kapcsold be a szokásos táborépítéshez a költési engedélyek ellenőrzése után."
+          },
+          "camp_resource_reserves": {
+            "description": "Tartsd távol a kiválasztott fa- és kőmennyiséget a táborépítéstől.",
+            "label": "Tábori erőforrás-tartalékok",
+            "recommendation": "Fa 0 és kő 0, ha a többlet felhasználható."
+          },
+          "construction_time_skip_reserves": {
+            "description": "Külön állítsd be, hány 1 perces, 5 perces, 10 perces, 30 perces, 1 órás, 5 órás és 24 órás időugrást tartasz meg.",
+            "label": "Építési időugrások tartaléka",
+            "recommendation": "Minden rövid időugrásból 0 maradjon; az 1, 5 és 24 órás készletet tartsd fenn más tevékenységekre."
+          },
+          "optional_custom_camp_target": {
+            "description": "Rögzíts Funkcionális célt az alapvető épületekhez, Elrendezést a díszítések nélküli helyekhez vagy Pontos célt minden támogatott részlethez.",
+            "label": "Opcionális egyéni táborcél",
+            "recommendation": "Használd a beépített célt, hacsak nincs szükséged átnézett saját célra."
+          },
+          "stable_target": {
+            "description": "Válassz 1–5. szintet a frakcióistállónak a beépített célban.",
+            "label": "Istálló célszintje",
+            "recommendation": "Az 5. szintet válaszd a szokásos eseményépítéshez, ha elegendő az erőforrás."
+          },
+          "use_construction_time_skips": {
+            "description": "Gyorsítsd a megerősített táborépítést a kiválasztott építési időugrás-tartalék megtartásával.",
+            "label": "Építési időugrások használata",
+            "recommendation": "Kapcsold be a szokásos építéshez, ha elegendő időugrásod van."
+          },
+          "keep_skip_10m": {
+            "description": "Ennyi 10m építési időugrást tarts meg; szokásos használatnál állítsd a tartalékot 0-ra.",
+            "label": "10m időugrás megtartása"
+          },
+          "keep_skip_1h": {
+            "description": "Ennyi 1h építési időugrást tarts fenn más tevékenységekhez.",
+            "label": "1h időugrás megtartása"
+          },
+          "keep_skip_1m": {
+            "description": "Ennyi 1m építési időugrást tarts meg; szokásos használatnál állítsd a tartalékot 0-ra.",
+            "label": "1m időugrás megtartása"
+          },
+          "keep_skip_24h": {
+            "description": "Ennyi 24h építési időugrást tarts fenn más tevékenységekhez.",
+            "label": "24h időugrás megtartása"
+          },
+          "keep_skip_30m": {
+            "description": "Ennyi 30m építési időugrást tarts meg; szokásos használatnál állítsd a tartalékot 0-ra.",
+            "label": "30m időugrás megtartása"
+          },
+          "keep_skip_5h": {
+            "description": "Ennyi 5h építési időugrást tarts fenn más tevékenységekhez.",
+            "label": "5h időugrás megtartása"
+          },
+          "keep_skip_5m": {
+            "description": "Ennyi 5m építési időugrást tarts meg; szokásos használatnál állítsd a tartalékot 0-ra.",
+            "label": "5m időugrás megtartása"
+          },
+          "saved_targets": {
+            "description": "A rögzítés azonnal menti és aktiválja az átnézett saját célt; másik mentett cél kiválasztása is azonnal aktiválja azt.",
+            "label": "Mentett saját célok"
+          },
+          "stone_reserve": {
+            "description": "Ezt a tábori kőmennyiséget ne költsd építésre; 0-t állíts be, ha a többlet elkölthető.",
+            "label": "Kőtartalék"
+          },
+          "use_built_in_default": {
+            "description": "Azonnal térj vissza a beépített célhoz a mentett saját célok megtartásával.",
+            "label": "Beépített alapértelmezett használata"
+          },
+          "wood_reserve": {
+            "description": "Ezt a tábori famennyiséget ne költsd építésre; 0-t állíts be, ha a többlet elkölthető.",
+            "label": "Fatartalék"
+          }
+        },
+        "title": "Válaszd ki az opcionális táborépítést"
+      },
+      "readiness": {
+        "image": {
+          "alt": "Szemléltető beállítások a toronytámadások előkészítéséhez",
+          "caption": "Az erősítő feltétel állapota és a sablon összeállítása valódi erősítő vagy ügyféladat nélkül."
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "A támadások bekapcsolása előtt ellenőrizd a kiválasztott sablon hullámait, csapatait és eszközeit.",
+            "label": "Támadási sablon összeállítása",
+            "recommendation": "Tarts elegendő kiválasztott csapatot és eszközt a küldő várban és a táborban a szokásos támadási ütemedhez."
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "Követelj meg aktív vitézségi erősítőt a szállítások, eszközvásárlások, tábori előkészületek, toronytámadások vagy építkezés folytatásához.",
+            "label": "Csak vitézségi erősítővel fusson",
+            "recommendation": "Bekapcsolva, ha minden Automatikus Berimond-feladatot az erősítőtől akarsz függővé tenni."
+          }
+        },
+        "title": "Készítsd elő a toronytámadásokat"
+      },
+      "save": {
+        "image": {
+          "alt": "Szemléltető beállítások a mentéshez és bekapcsoláshoz",
+          "caption": "Előkészítési lista, kapcsoló és opcionális naptár valódi fiók nélkül."
+        },
+        "items": {
+          "automation_switch": {
+            "description": "Kapcsold be az Automatikus Berimondot az Automatizálás kártyán, miután ellenőrizted a tábort, a küldő csapatait, a sablont és az opcionális költést.",
+            "label": "Automatizálási kapcsoló",
+            "recommendation": "Be a beállítás után."
+          },
+          "calendar": {
+            "description": "Folyamatos működéshez hagyd kikapcsolva a naptárt, vagy szükség esetén állítsd be és mentsd a szokásos órákat.",
+            "label": "Naptár",
+            "recommendation": "Kikapcsolva az esemény folyamatos futtatásához."
+          },
+          "save_settings": {
+            "description": "Az automatizálás bekapcsolása előtt mentsd a sablont, a küldőt, a szállítási ütemet, a támadási korlátokat, az eszközöket és az opcionális építési döntéseket.",
+            "label": "Beállítások mentése"
+          }
+        },
+        "title": "Mentés és bekapcsolás"
+      },
+      "setup": {
+        "image": {
+          "alt": "Szemléltető támadási és ellátási beállítások",
+          "caption": "Mentett támadási sablon, küldő vár a Nagy Birodalomban, Utazótoll, támadásellenőrzés és napi korlát."
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "Állítsd be, milyen gyakran keres újabb toronytámadást az automatizálás.",
+            "label": "Támadásellenőrzési időköz",
+            "recommendation": "Tartsd meg a szokásos 30 másodperces időközt, hacsak nem akarsz ritkább ellenőrzést."
+          },
+          "attack_preset": {
+            "description": "Válassz mentett berimondi támadási alakzatot; az automatizálás a csapatarányait használja szállításhoz és toronytámadáshoz.",
+            "label": "Támadási sablon",
+            "recommendation": "Előbb készítsd el és válaszd ki a szokásos berimondi sablonodat."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Állítsd le az új toronytámadásokat, ha a fiók normál támadásainak napi száma eléri ezt a korlátot; a 0 megszünteti a további korlátot.",
+            "label": "Normál támadások napi korlátja",
+            "recommendation": "0, hacsak nem használsz fiókszintű korlátot."
+          },
+          "horse_travel_boost": {
+            "description": "A toronytámadáshoz válassz tollas, érmés vagy rubinos utazást.",
+            "label": "Utazási gyorsítás",
+            "recommendation": "Utazótoll a gyors haladáshoz rubinos út választása nélkül."
+          },
+          "open_settings": {
+            "description": "Az Automatizálás oldalon nyisd meg az Auto Beri World kártya beállításait.",
+            "label": "Beállítások megnyitása"
+          },
+          "source_castle": {
+            "description": "Válaszd ki a Nagy Birodalom várát vagy előőrsét, amely a csapatokat adja.",
+            "label": "Küldő vár",
+            "recommendation": "Azt a várat válaszd, ahol a támadó sereged áll."
+          }
+        },
+        "title": "Válaszd ki a támadást és az ellátási forrást"
+      },
+      "tools": {
+        "image": {
+          "alt": "Szemléltető tábori eszközbeállítások",
+          "caption": "Három eszközminimum és egy egyértelműen kitalált tábori készlet."
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "Ugyanezzel a szabállyal pótold ennyi állomásozó faltörő kost.",
+            "label": "Faltörő kosok minimuma",
+            "recommendation": "Igazítsd a szokásos sablonod felhasználásához."
+          },
+          "mantlets_minimum": {
+            "description": "Ugyanezzel a szabállyal pótold ennyi állomásozó pajzsot.",
+            "label": "Pajzsok minimuma",
+            "recommendation": "Igazítsd a szokásos sablonod felhasználásához."
+          },
+          "scaling_ladders_minimum": {
+            "description": "Megfelelő érmés ajánlatokból pótold ennyi állomásozó létrát a táborban; a 0 nem kezeli őket.",
+            "label": "Létrák minimuma",
+            "recommendation": "Igazítsd a szokásos sablonodhoz és támadási ütemedhez."
+          }
+        },
+        "title": "Tartsd fenn a tábori eszközöket"
+      },
+      "transfers": {
+        "image": {
+          "alt": "Szemléltető beállítások az arányos csapatszállításhoz",
+          "caption": "Kitalált 2:1 arány, tábori készlet, szabad kapacitás és egyetlen típus részleges szállítmánya; az értékek példák, nem mentett alapértékek."
+        },
+        "items": {
+          "check_interval": {
+            "description": "Állítsd be, milyen gyakran frissíti az automatizálás a szabad szállítási kapacitást és mindkét vár készletét.",
+            "label": "Ellenőrzési időköz",
+            "recommendation": "Tartsd meg a szokásos 30 másodperces időközt."
+          },
+          "food_only": {
+            "description": "Csak az Élelmet fogyasztó sabloncsapatok szállíthatók; a nem támogatott egységek vagy fel nem oldott csapatcsaládok indoklással megállítják a műveletet.",
+            "label": "Csak Élelmet fogyasztó csapatok"
+          },
+          "minimum_free_capacity": {
+            "description": "Csak akkor kezdj szállítást, ha a jelentett szabad kapacitás eléri ezt a küszöböt; egyetlen arányos szállítmány kisebb is lehet.",
+            "label": "Minimális szabad kapacitás",
+            "recommendation": "1 szabad katonai férőhely a szokásos arányos utánpótláshoz."
+          },
+          "owned_berimond_camp": {
+            "description": "Az automatizálás magától megtalálja a saját berimondi táborodat, ezért nem kell táborazonosítót beírnod.",
+            "label": "Saját berimondi tábor"
+          },
+          "partial_donor": {
+            "description": "Ha a küldőnél van valamennyi a szükséges csapattípusból, az automatizálás ezt a kisebb mennyiséget küldi; ha nincs, más típus küldése helyett vár.",
+            "label": "Részleges készlet a küldőnél"
+          },
+          "pending_transfer": {
+            "description": "Az automatizálás megvárja minden szállítmány érkezését, és frissíti a tábor készletét, mielőtt újraszámolná a sablon arányát.",
+            "label": "Folyamatban lévő szállítás"
+          },
+          "preset_troop_mix": {
+            "description": "Az automatizálás összeadja a kiválasztott sablon hullámainak és udvarának ismétlődő csapathelyeit, majd egyszerre egy alulreprezentált típust pótol.",
+            "label": "A sablon csapataránya"
+          },
+          "troop_transport_skip": {
+            "description": "Válaszd ki a bekapcsolt szállításgyorsításkor használt tárgy időtartamát.",
+            "label": "Szállítási időugrás",
+            "recommendation": "Használj 1 órás időugrást a szokásos megerősített átszállításokhoz."
+          },
+          "use_troop_transport_time_skips": {
+            "description": "Használd a kiválasztott időugrást egy igazolt szállításon, amíg az úton van.",
+            "label": "Szállítási időugrások használata",
+            "recommendation": "Kapcsold be a szokásos tábori utánpótláshoz, ha az időugráskészlet engedi."
+          }
+        },
+        "title": "Állítsd be az arányos csapatszállítást"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "Az Auto Storm megnyithat és építhet egy Viharvárat, megtámadhat erődöket és nyersanyagszigeteket, csapatokat importálhat, valamint megvásárolhat kiválasztott Luna-jutalmakat.",
+      "expectation": "Minden terület friss játékadatokat és mentett engedélyeket használ; a prémium építés, támadások és vásárlások a bekapcsolt választásokhoz kötöttek.",
+      "name": "Auto Storm",
+      "summary": "Kezeld a Viharvárat, a támadásokat és a jutalmakat"
+    },
+    "recommendationIntro": "Az ajánlások az Auto Storm rendszeres használatát írják le; útmutatók, és nem módosítják a mentett beállításokat.",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "Példa a Viharvár megnyitására és cél mentésére",
+          "caption": "Kezdővár, rögzítési módok és opcionális célaktiválás; nem mutat valós vásárlást vagy fiókot."
+        },
+        "items": {
+          "automatic_open": {
+            "description": "Ha a Vihar zárva van, válassz elérhető hivatalos kezdővárat, és ellenőrizd a feltüntetett árat a feloldás engedélyezése előtt.",
+            "label": "Viharvár automatikus megnyitása",
+            "recommendation": "Be, ha az Auto Storm a szokásos kezdővárat az ár ellenőrzése után nyithatja meg."
+          },
+          "blueprint": {
+            "description": "A rögzített cél azonnal mentődik és aktiválódik; a Cél szüneteltetése leállítja az egyeztetést, de a mentett célok megmaradnak.",
+            "label": "Mentett cél",
+            "recommendation": "A mindennapi építéshez hagyj aktívan egy ellenőrzött Funkcionális célt."
+          },
+          "capture_castle": {
+            "description": "Építési cél rögzítése előtt válaszd ki a jelenlegi Viharváradat.",
+            "label": "Viharvár",
+            "recommendation": "Azt a várat rögzítsd, amelyet kezelni akarsz."
+          },
+          "combat_only": {
+            "description": "Erődök és szigetek elleni harchoz nem kell rögzített építési cél.",
+            "label": "Harc cél nélkül"
+          },
+          "decoration_preset": {
+            "description": "Építés után opcionálisan alkalmazz kiválasztott díszítési előbeállítást.",
+            "label": "Díszítési előbeállítás építés után",
+            "recommendation": "Hagyd üresen, ha nem akarsz külön díszítési elrendezést."
+          },
+          "exact": {
+            "description": "A pontos másolathoz mentsd az összes támogatott célrészletet.",
+            "label": "Pontos rögzítés",
+            "recommendation": "Csak a teljes cél átnézése után használd."
+          },
+          "functional": {
+            "description": "Ments célt a Vihar alapvető funkcióihoz az összes épülethely lemásolása nélkül.",
+            "label": "Funkcionális rögzítés",
+            "recommendation": "Funkcionális a szokásos karbantartáshoz."
+          },
+          "layout": {
+            "description": "Mentsd az épülettípusokat és helyeket díszítések nélkül.",
+            "label": "Elrendezés rögzítése",
+            "recommendation": "Csak akkor használd, ha az épületek helye számít."
+          },
+          "open_settings": {
+            "description": "Nyisd meg az Auto Storm beállításait az Automatizálás kártyáján.",
+            "label": "Beállítások megnyitása"
+          },
+          "starter_castle": {
+            "description": "Válaszd ki a következő lezárt évadra jelenleg elérhető hivatalos Vihar-kezdővárat.",
+            "label": "Megnyitandó vár",
+            "recommendation": "Az ár ellenőrzése után válassz megfizethető, szokásos kezdővárat."
+          }
+        },
+        "title": "Nyisd meg és rögzítsd a Viharváradat"
+      },
+      "combat": {
+        "image": {
+          "alt": "Példa az erőd- és szigettámadások beállításaira",
+          "caption": "Példa akvamarinszigetekre, erődszintekre, célsorrendre és megszálló védőkre."
+        },
+        "items": {
+          "defenders": {
+            "description": "Válaszd ki a meghódított szigeten maradó védők fajtáit és számát; üres lista megerősített győzelem után egy túlélőt hagy hátra.",
+            "label": "Szigetvédő egységek",
+            "recommendation": "Válassz védőket, ha egy túlélő nem elég a tervedhez."
+          },
+          "fort_preset": {
+            "description": "Válassz mentett csapat- és eszközfelállást az erődökhöz.",
+            "label": "Erődtámadási előbeállítás",
+            "recommendation": "Használd a szokásos erőd-előbeállításodat."
+          },
+          "forts": {
+            "description": "Kapcsold be a támadásokat a kiválasztott hivatalos 40–80-as erődszinteken.",
+            "label": "Viharerődök",
+            "recommendation": "Be azokon a szinteken, amelyeket a választott felállás megbízhatóan legyőz."
+          },
+          "horse": {
+            "description": "Válassz tollas, érmés vagy rubinos utazást a Vihar támadásaihoz.",
+            "label": "Lovas utazási gyorsítás",
+            "recommendation": "Utazótoll a gyors haladáshoz rubinos utazás kiválasztása nélkül."
+          },
+          "island_preset": {
+            "description": "Válassz mentett csapat- és eszközfelállást a szigetekhez.",
+            "label": "Szigettámadási előbeállítás",
+            "recommendation": "Használd a szokásos sziget-előbeállításodat."
+          },
+          "island_resources": {
+            "description": "Válaszd ki, mely fa-, kő- vagy akvamarinszigetek támadhatók.",
+            "label": "Szigetnyersanyagok",
+            "recommendation": "Az akvamarin gyűjtéséhez válaszd az akvamarint."
+          },
+          "island_sizes": {
+            "description": "Válassz nagy, kis vagy mindkét méretű szigeteket a választott nyersanyagokból.",
+            "label": "Szigetméretek",
+            "recommendation": "Nagy és kicsi a rendszeres akvamaringyűjtéshez."
+          },
+          "islands": {
+            "description": "Engedélyezd a választott nyersanyagú és méretű szigetek meghódítását.",
+            "label": "Nyersanyagszigetek",
+            "recommendation": "Be, ha nagy és kis szigetekről is szeretnél akvamarint."
+          },
+          "minimum_attacks": {
+            "description": "Csak olyan erődöt támadj, ahol legalább ennyi támadás maradt.",
+            "label": "Minimum hátralévő támadás",
+            "recommendation": "0 minden megfelelő erődöt engedélyez."
+          },
+          "priority": {
+            "description": "Rendezd az engedélyezett sziget- és erődcélcsoportokat; csoporton belül a legközelebbi megfelelő cél következik először.",
+            "label": "Támadási cél elsőbbsége",
+            "recommendation": "Nagy szigetek, kis szigetek, majd 80-tól 40-ig az erődök akvamaringyűjtéskor."
+          }
+        },
+        "title": "Válassz erődöket és nyersanyagszigeteket"
+      },
+      "construction": {
+        "image": {
+          "alt": "Példa építési és tartalékbeállításokra",
+          "caption": "Nyersanyagszállítás, költési engedélyek, tartalékok és kikötőszint szemléltető vezérlőkkel."
+        },
+        "items": {
+          "demolition": {
+            "description": "Engedélyezd a pontos célban lévő, nem mozgatható és nem tárolható épületek eltávolítását.",
+            "label": "Bontás engedélyezése",
+            "recommendation": "Ki, hacsak nem ellenőrzött elrendezést építesz újjá."
+          },
+          "donor_reserves": {
+            "description": "Szállítás előtt tarts meg a kiválasztott fa-, kő- és akvamarinmennyiséget minden adományozónál.",
+            "label": "Védett adományozói tartalékok",
+            "recommendation": "Védd a szokásos fa- és kőépítési keretedet; akvamarin 0, ha nem használod."
+          },
+          "harbor_level": {
+            "description": "Válassz 1-es, 2-es vagy 3-as kikötő-célszintet; a 2-es és 3-as szint prémium építési utat használ.",
+            "label": "Kikötő célszintje",
+            "recommendation": "1-es szint, ha nem tervezel prémium fejlesztést."
+          },
+          "harbor": {
+            "description": "Tartsd a kikötőt a választott szinten akkor is, ha a rögzített cél eltér.",
+            "label": "Kikötő fejlesztése",
+            "recommendation": "Be, 1-es szinttel a szokásos használathoz."
+          },
+          "premium": {
+            "description": "Engedélyezd a prémium valutát költő megfelelő építési lépéseket.",
+            "label": "Prémium költségek engedélyezése",
+            "recommendation": "Ki, ha nem tervezel prémium építést."
+          },
+          "resource_transport": {
+            "description": "Engedélyezd a hiányzó építési nyersanyagok megerősített szállítmányait adományozó várakból.",
+            "label": "Hiányzó nyersanyagok szállítása",
+            "recommendation": "Be a szokásos építéshez."
+          },
+          "skip_reserves": {
+            "description": "Az 1 perces, 5 perces, 10 perces, 30 perces, 1 órás, 5 órás és 24 órás tárgyakból tartsd meg a kiválasztott mennyiséget építésre és szállításra.",
+            "label": "Időugrások tartalékban",
+            "recommendation": "A rövid ugrásokból 0, ha máshol nem kellenek; az 1, 5 és 24 órás készletet más eseményekre tartsd fenn."
+          },
+          "storm_reserves": {
+            "description": "A kiválasztott fa-, kő- és akvamarinmennyiséget ne használd építésre.",
+            "label": "Viharvár költési tartalékai",
+            "recommendation": "Fa 0 és kő 0, ha a többlet elkölthető; az akvamarint a tervezett jutalomkerethez igazítsd."
+          },
+          "time_skips": {
+            "description": "Az alkalmas időugrásokat építésre, erőforrás- és katonaszállításra használd a kiválasztott tartalék megtartásával.",
+            "label": "Építési és szállítási időugrások használata",
+            "recommendation": "Be, ha szeretnéd gyorsítani a szokásos építést."
+          }
+        },
+        "title": "Állítsd be az építést és a nyersanyagvédelmet"
+      },
+      "luna": {
+        "image": {
+          "alt": "Példa Luna-jutalom beállításaira",
+          "caption": "Akvamarintartalék, korlátozott vásárlási célok, ismételhető jutalmak és elsőbbség."
+        },
+        "items": {
+          "cost_cap": {
+            "description": "Olvasd el a játék által közölt árat és vásárlási korlátot minden jutalomnál.",
+            "label": "Ár és vásárlási korlát",
+            "recommendation": "Bekapcsolás előtt ellenőrizd mindkét csak olvasható értéket."
+          },
+          "keep_aqua": {
+            "description": "Ezt az akvamarinmennyiséget hagyd ki Luna vásárlásaiból.",
+            "label": "Akvamarin megtartása",
+            "recommendation": "0, ha minden többlet jutalmakra fordítható; különben tartalékold a tervezett mennyiséget."
+          },
+          "priority": {
+            "description": "A bolt először az alacsonyabb számmal jelölt vásárlási célokat veszi figyelembe.",
+            "label": "Elsőbbség",
+            "recommendation": "Az 1, 2 és 3 sorrendjét tetszésed szerint állítsd be, a korlátozott célokat a korlátlan jutalmak elé helyezve."
+          },
+          "search": {
+            "description": "Vásárlás beállítása előtt keress rá név szerint a hivatalos Luna-jutalmakra.",
+            "label": "Luna-jutalom keresése",
+            "recommendation": "A tényleg kívánt jutalmat keresd."
+          },
+          "target_total": {
+            "description": "Állítsd be egy korlátozott jutalom kívánt összes vásárlásszámát.",
+            "label": "Célösszesen",
+            "recommendation": "Csak annyit állíts be, amennyit meg akarsz venni."
+          },
+          "unlimited": {
+            "description": "Vásárolj tovább megfelelő ismételhető jutalmat, amíg a tartalék és a bolti korlát engedi.",
+            "label": "Korlátlan",
+            "recommendation": "Be csak rendszeresen kívánt ismételhető jutalomnál."
+          },
+          "use": {
+            "description": "Válassz jutalmat az automatikus vásárlás engedélyezéséhez.",
+            "label": "Jutalom használata",
+            "recommendation": "Csak kívánt jutalmakat kapcsolj be."
+          }
+        },
+        "title": "Válassz Luna akvamarinos jutalmakat"
+      },
+      "save": {
+        "image": {
+          "alt": "Példa az Auto Storm mentésére és bekapcsolására",
+          "caption": "Napi támadási korlát, szabályellenőrzés, csak olvasható térképfrissítés és automatizálási kapcsoló."
+        },
+        "items": {
+          "daily_limit": {
+            "description": "Állítsd le az új Auto Storm-támadásokat a fiók napi normál támadásszámánál; 0 eltávolítja ezt a plusz korlátot.",
+            "label": "Normál támadások napi korlátja",
+            "recommendation": "0, ha nem használsz fiókszintű korlátot."
+          },
+          "enable": {
+            "description": "Kapcsold be az Auto Stormot az Automatizálás kártyáján, amikor a mentett választások készen állnak.",
+            "label": "Automatizálási kapcsoló",
+            "recommendation": "Be a beállítás után."
+          },
+          "map_refresh": {
+            "description": "Olvasd el a Vihartérkép hivatalos frissítési időközét.",
+            "label": "Térképfrissítési időköz",
+            "recommendation": "A csak olvasható időköz 2 óra; változtatások után várj friss felmérésre."
+          },
+          "policy_check": {
+            "description": "Állítsd be, milyen gyakran nézze át az Auto Storm a beállításokat és a lehetséges feladatokat.",
+            "label": "Szabályellenőrzési időköz",
+            "recommendation": "Tartsd meg a szokásos 30 másodperces időközt."
+          },
+          "save": {
+            "description": "Az automatizálás bekapcsolása előtt mentsd a vár, építés, harc, csapatimport és Luna választásait.",
+            "label": "Beállítások mentése",
+            "recommendation": "Ments az összes költési engedély ellenőrzése után."
+          }
+        },
+        "title": "Mentsd és kapcsold be az Auto Stormot"
+      },
+      "troops": {
+        "image": {
+          "alt": "Példa csapatimportálásra és csak olvasható becslésekre",
+          "caption": "Adományozók sorrendje, 1000 megtartott katona és csak olvasható kapacitásbecslések."
+        },
+        "items": {
+          "attack_history": {
+            "description": "A szerver visszaállítása óta megerősített Vihar-támadások számát oszd el 24-gyel; ez nem gördülő 24 órás átlag.",
+            "label": "Támadások átlaga nullázás óta",
+            "recommendation": "Ezt a csak olvasható becslést nézd meg, mielőtt változtatod az importigényt."
+          },
+          "committed_cap": {
+            "description": "Olvasd el az automatikusan számított korlátot, amely magában foglalja az állomásozó csapatokat, mozgásokat, szállítást és visszatéréseket.",
+            "label": "Lekötött Viharcsapatok korlátja",
+            "recommendation": "Nézd meg ezt a csak olvasható korlátot az import növelése előtt."
+          },
+          "donors": {
+            "description": "Válaszd ki az adományozó várakat a megjelenített sorrendben; részleges készlet kisebb szállítmányt adhat.",
+            "label": "Adományozó várak",
+            "recommendation": "Válaszd ki szokásos csapatszállítóidat az általad kívánt sorrendben."
+          },
+          "import": {
+            "description": "Importáld a hiányzó támadó vagy kiválasztott védő csapatokat a Viharba az adományozó várakból.",
+            "label": "Hiányzó csapatok importálása",
+            "recommendation": "Be, ha Viharvárad rendszeresen csapatutánpótlást igényel."
+          },
+          "map_coverage": {
+            "description": "Ellenőrizd a térkép lefedettségét, mielőtt a látható célokra támaszkodsz.",
+            "label": "Térkép lefedettsége",
+            "recommendation": "Hiányzó céloknál várj friss lefedettségre."
+          },
+          "minimum_kept": {
+            "description": "Támadás indítása után legalább ennyi csapat maradjon a Viharban, az aktív előbeállítások összetételét megtartva.",
+            "label": "Minimum megtartott csapat indítás után",
+            "recommendation": "1000 katona rendszeres tartaléknak, a tényleges seregedhez igazítva."
+          },
+          "preset_average": {
+            "description": "Olvasd el az aktív támadási előbeállítások átlagos csapatigényét, a kiválasztott szigetvédőkkel együtt.",
+            "label": "Aktív előbeállítások átlaga",
+            "recommendation": "Hasonlítsd össze ezt a csak olvasható becslést a seregeddel."
+          }
+        },
+        "title": "Importáld és figyeld a Viharcsapatokat"
+      }
+    }
+  }
+}

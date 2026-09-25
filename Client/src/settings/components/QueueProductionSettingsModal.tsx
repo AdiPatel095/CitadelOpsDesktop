@@ -1,3 +1,5 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useState, useEffect, useRef } from 'react';
 import { CalendarDays, Castle, Clock3, Copy, Trash2, Plus, Settings } from 'lucide-react';
 import { showTroopPicker } from '../../components/TroopPickerModal';
@@ -154,6 +156,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
   onOpenFeatureSchedule,
   kind,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const definition = DEFINITIONS[kind];
   const { configuration, state } = useCitadelAPI();
   const { getTroop, getTool, buildings, troops, tools, isLoading: metadataLoading } = useMetadata();
@@ -539,13 +542,12 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
           title={addLabel}
         >
           <Plus className="h-5 w-5" />
-          Select
+          <LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.select.2a78025d" />
         </button>
         </div>
         {showsRecruitRotation && (
           <p className="text-[11px] font-semibold leading-relaxed text-text-muted">
-            Queues one stack at a time in numbered order, then repeats. The next unit advances only after a successful recruit.
-          </p>
+            <LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.queues.one.stack.at.a.time.in.bc10852a" /></p>
         )}
       </div>
     );
@@ -596,8 +598,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
               title={options.editTitle}
               leftIcon={<CalendarDays className="h-4 w-4" />}
             >
-              Edit
-            </Button>
+              <LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.edit.464c4ffd" /></Button>
           )}
         </div>
 
@@ -675,8 +676,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
               onClick={() => onOpenFeatureSchedule(definition.featureID, definition.featureLabel)}
               leftIcon={<CalendarDays className="h-4 w-4" />}
             >
-              Calendar
-            </Button>
+              <LocalizedText messageKey="common.calendar" /></Button>
           </div>
         )}
       >
@@ -717,7 +717,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
 
   const renderGlobalSchedulePanel = (schedule: WeeklySchedule, className = '') => (
     <SectionCard
-      title="Shared Schedule"
+      title={localizeStatic("ui.settings.components.queueProductionSettingsModal.title.shared.schedule.27b35dc8")}
       description={`Scheduled ${definition.itemLabelPlural} replace the shared ${definition.itemLabel} picker.`}
       icon={<CalendarDays className="h-4 w-4" />}
       titleClassName="text-base"
@@ -734,8 +734,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
             onClick={() => onOpenFeatureSchedule(definition.featureID, definition.featureLabel)}
             leftIcon={<CalendarDays className="h-4 w-4" />}
           >
-            Calendar
-          </Button>
+            <LocalizedText messageKey="common.calendar" /></Button>
         </div>
       )}
     >
@@ -761,10 +760,10 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
 
   const renderNoCastlesPanel = (className = '') => (
     <SectionCard
-      title="Castle Coverage"
-      description="Enabled castles will appear here after game data refresh."
+      title={localizeStatic("ui.settings.components.queueProductionSettingsModal.title.castle.coverage.c3a38be0")}
+      description={localizeStatic("ui.settings.components.queueProductionSettingsModal.description.enabled.castles.will.appear.here.after.game.d402602c")}
       icon={<Castle className="h-4 w-4" />}
-      actions={<Badge variant="secondary" className="shrink-0">No data</Badge>}
+      actions={<Badge variant="secondary" className="shrink-0"><LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.no.data.3b41ba9c" /></Badge>}
       titleClassName="text-base"
       className={`flex flex-col ${className}`}
       contentClassName="flex flex-1 p-4"
@@ -774,7 +773,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
             <Castle className="h-5 w-5" />
           </div>
           <div className="min-w-0">
-            <div className="text-xs font-bold uppercase tracking-wider text-text-muted">No castles available</div>
+            <div className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.no.castles.available.7a5d589a" /></div>
             <p className="mt-2 max-w-sm text-sm leading-relaxed text-text-muted">
               {definition.noCastlesHelp}
             </p>
@@ -785,7 +784,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
 
   const renderGlobalCastleTogglePanel = (className = '') => (
     <SectionCard
-      title="Castle Toggles"
+      title={localizeStatic("ui.settings.components.queueProductionSettingsModal.title.castle.toggles.d3d8f9c5")}
       description={`Enable ${definition.featureLabel} coverage for each castle.`}
       icon={<Castle className="h-4 w-4" />}
       titleClassName="text-base"
@@ -840,7 +839,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
         maxWidth={isGlobalMode ? '6xl' : 'full'}
         title={definition.settingsTitle}
         icon={<Settings className="h-5 w-5" />}
-        description="Queue slots, schedules, and castle coverage"
+        description={localizeStatic("ui.settings.components.queueProductionSettingsModal.description.queue.slots.schedules.and.castle.coverage.f3307f74")}
         onSave={handleSave}
         isSaving={isSaving}
       >
@@ -852,8 +851,8 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
           )}
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(17rem,0.8fr)_minmax(22rem,1.15fr)_minmax(11rem,0.5fr)]">
             <SectionCard
-              title="Queue Check"
-              description="Minutes between castle cycles."
+              title={localizeStatic("ui.settings.components.queueProductionSettingsModal.title.queue.check.39bf2207")}
+              description={localizeStatic("ui.settings.components.queueProductionSettingsModal.description.minutes.between.castle.cycles.18f97935")}
               icon={<Clock3 className="h-4 w-4" />}
               titleClassName="text-base"
             >
@@ -862,7 +861,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
                   value={definition.checkIntervalSecToMinutes(settings.checkIntervalSec).toLocaleString()}
                   onChange={(e) => updateCheckIntervalMinutes(e.target.value)}
                   className="font-mono text-lg font-black tabular-nums"
-                  rightIcon={<span className="text-xs font-bold uppercase text-text-muted">min</span>}
+                  rightIcon={<span className="text-xs font-bold uppercase text-text-muted"><LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.min.1f6fa6f6" /></span>}
                 />
                 <p className="mt-2 text-[11px] font-medium text-text-muted">
                   Minimum {definition.minCheckIntervalMin.toLocaleString()} minute. Default is {definition.defaultCheckIntervalMin.toLocaleString()} minutes.
@@ -898,7 +897,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
             </SectionCard>
 
             <SectionCard
-              title="Enabled"
+              title={localizeStatic("ui.settings.components.queueProductionSettingsModal.title.enabled.92c1cdfd")}
               description={`Castles selected for ${definition.featureLabel}.`}
               titleClassName="text-base"
               contentClassName="flex flex-wrap items-center justify-between gap-4 p-5"
@@ -912,16 +911,15 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
 
           {kind === 'recruit' && (
             <SectionCard
-              title="Glory-title fallback"
-              description="Controls level-11 Protector of the North and Valkyrie Sniper slots when your current glory title no longer unlocks them."
+              title={localizeStatic("ui.settings.components.queueProductionSettingsModal.title.glory.title.fallback.1349f3ee")}
+              description={localizeStatic("ui.settings.components.queueProductionSettingsModal.description.controls.level.11.protector.of.the.north.b2c8cf98")}
               titleClassName="text-base"
               contentClassName="flex flex-wrap items-center justify-between gap-4 p-5"
             >
               <div className="min-w-0 flex-1">
-                <div className="text-sm font-bold text-text-main">Recruit level 10 if glory title is lost</div>
+                <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.recruit.level.10.if.glory.title.is.d718bd94" /></div>
                 <p className="mt-1 text-xs font-semibold leading-relaxed text-text-muted">
-                  Off by default. When off, affected recruit slots stay softly paused until the required title returns.
-                </p>
+                  <LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.off.by.default.when.off.affected.recruit.acc10691" /></p>
               </div>
               <div className="flex shrink-0 items-center gap-3">
                 <Badge variant={settings.recruitLevel10OnTitleLoss ? 'success' : 'outline'}>
@@ -933,7 +931,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
                     ...previous,
                     recruitLevel10OnTitleLoss: checked,
                   }))}
-                  ariaLabel="Recruit level 10 if glory title is lost"
+                  ariaLabel={localizeStatic("ui.settings.components.queueProductionSettingsModal.ariaLabel.recruit.level.10.if.glory.title.is.d718bd94")}
                 />
               </div>
             </SectionCard>
@@ -1059,8 +1057,8 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
         title={editingItem ? itemName(editingItem.item.id) : definition.itemFallbackLabel}
         footer={
           <>
-            <Button variant="danger" onClick={deleteFromEditModal} leftIcon={<Trash2 className="w-4 h-4" />}>Remove</Button>
-            <Button variant="primary" onClick={saveEditModal} className="flex-[2]">Done</Button>
+            <Button variant="danger" onClick={deleteFromEditModal} leftIcon={<Trash2 className="w-4 h-4" />}><LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.remove.c3812fc4" /></Button>
+            <Button variant="primary" onClick={saveEditModal} className="flex-[2]"><LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.done.11a6767d" /></Button>
           </>
         }
       >
@@ -1075,8 +1073,7 @@ export const QueueProductionSettingsModal: React.FC<QueueProductionSettingsModal
                 {unitRangeLabel(editingItem.item)}
               </div>
               <p className="mt-1 text-xs font-semibold text-text-muted">
-                Auto Recruit queues the highest currently available upgrade in this unit family.
-              </p>
+                <LocalizedText messageKey="ui.settings.components.queueProductionSettingsModal.auto.recruit.queues.the.highest.currently.available.1599b926" /></p>
             </div>
           )}
 

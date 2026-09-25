@@ -15,6 +15,8 @@ import (
 func TestStrictStormBuildRunsHarborBeforeStorehouseAndLayoutWork(t *testing.T) {
 	now := time.Now().UTC()
 	state, castle := strictStormState(now)
+	state.Session = State.SessionState{Generation: 1, LoggedIn: true, SocketReady: true}
+	state.Player.RubyConfirmation = State.RubyConfirmationState{Amount: -1, Known: true, Generation: 1}
 	harbor := strictStormBuilding(50, 45, 0, 0)
 	castle.Layout.Fixed[50], castle.Buildings[50] = harbor, harbor
 	storehouse := strictStormBuilding(60, 132, 20, 0)
@@ -415,4 +417,36 @@ func strictStormGameData(t *testing.T) *GameData.Store {
 		t.Fatal(err)
 	}
 	return store
+}
+
+func TestStormRubyBlockedHarborContinuesStorehouseAndNotifies(t *testing.T) {
+	now := time.Now().UTC()
+	state, castle := strictStormState(now)
+	harbor := strictStormBuilding(50, 45, 0, 0)
+	castle.Layout.Fixed[50], castle.Buildings[50] = harbor, harbor
+	storehouse := strictStormBuilding(60, 132, 20, 0)
+	castle.Layout.Objects[60], castle.Buildings[60] = storehouse, storehouse
+	state.Castles[castle.ID] = castle
+	state.Player.Resources[2] = 50000
+	state.Session = State.SessionState{Generation: 1, LoggedIn: true, SocketReady: true}
+	state.Player.RubyConfirmation = State.RubyConfirmationState{Amount: 1, Known: true, Generation: 1}
+	settings := strictStormSettings(Buildings.TargetCaptureResult{Version: 1, KingdomID: autoStormKingdomID, Fixed: []Buildings.TargetFixedBuilding{{TargetID: "harbor", DefinitionID: 46}}, Buildings: []Buildings.TargetBuilding{{TargetID: "store", DefinitionID: 232}}})
+	settings.Build.AllowPremium = true
+	snapshot := Snapshot{State: state, GameData: strictStormGameData(t), Now: now}
+	decision, complete, detail, err := evaluateStrictAutoStormBuild(snapshot, settings, castle, map[string]float64{})
+	if err != nil || complete || decision == nil || decision.Request == nil {
+		t.Fatalf("decision=%+v detail=%s err=%v", decision, detail, err)
+	}
+	var args struct {
+		BuildingID State.BuildingInstanceID `json:"buildingInstanceId"`
+	}
+	_ = json.Unmarshal(decision.Request.Arguments, &args)
+	if args.BuildingID != 60 {
+		t.Fatalf("args=%s", decision.Request.Arguments)
+	}
+	attachStormRubyUpgradeNotices(decision, snapshot, castle, settings)
+	notice := decision.Details["rubyUpgradeNotice/harbor"]
+	if !strings.Contains(notice, "Harbor") || !strings.Contains(notice, "12,300") {
+		t.Fatalf("notice=%s", notice)
+	}
 }

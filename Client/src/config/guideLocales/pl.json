@@ -1,0 +1,2080 @@
+{
+  "ui": {
+    "guideButton": "Przewodnik",
+    "calendarButton": "Kalendarz",
+    "recommendedLabel": "Zalecane",
+    "backToSettings": "Wróć do ustawień",
+    "backToGuide": "Wróć do przewodnika",
+    "howToSetUp": "Jak to skonfigurować",
+    "whatToExpect": "Czego się spodziewać",
+    "openFullSizePicture": "Otwórz obraz w pełnym rozmiarze",
+    "illustrativeExample": "Przykład poglądowy",
+    "enlargePicture": "Powiększ obraz przykładowy",
+    "fullSizePicture": "Obraz przykładowy w pełnym rozmiarze; przewiń, aby zobaczyć wszystkie ustawienia",
+    "towerGuideTitle": "Przewodnik po Automatycznych atakach na wieże",
+    "birdGuideTitle": "Przewodnik po Automatycznym ukrywaniu wojsk",
+    "towerGuideIntro": "Wykonaj te kroki, aby skonfigurować Automatyczne ataki na wieże; wybierz obraz przykładowy, aby go powiększyć.",
+    "birdGuideIntro": "Wykonaj te kroki, aby skonfigurować Automatyczne ukrywanie wojsk; wybierz obraz przykładowy, aby go powiększyć.",
+    "towerPreviewTitle": "Przykład konfiguracji Automatycznych ataków na wieże",
+    "birdPreviewTitle": "Przykład konfiguracji Automatycznego ukrywania wojsk",
+    "stationGuideTitle": "Poradnik automatycznej ochrony wojsk",
+    "stationGuideIntro": "Skonfiguruj automatyczną ochronę wojsk według tych kroków; wybierz obraz przykładowy, aby go powiększyć.",
+    "stationPreviewTitle": "Przykład konfiguracji automatycznej ochrony wojsk",
+    "fortressGuideIntro": "Wykonaj te kroki, aby skonfigurować automatyczne ataki na fortece; wybierz przykładowy panel, aby go powiększyć.",
+    "fortressGuideTitle": "Przewodnik po automatycznych atakach na fortece",
+    "fortressPreviewTitle": "Przykład konfiguracji automatycznych ataków na fortece",
+    "invasionGuideIntro": "Wykonaj te kroki, aby ustawić automatyczne ataki inwazyjne; wybierz panel przykładu, aby go powiększyć.",
+    "invasionGuideTitle": "Przewodnik po automatycznych atakach inwazyjnych",
+    "invasionPreviewTitle": "Przykład konfiguracji automatycznych ataków inwazyjnych",
+    "nomadGuideIntro": "Wykonaj te kroki, aby skonfigurować Auto Nomadzi/Samurajowie; wybierz przykładowy panel, aby go powiększyć.",
+    "nomadGuideTitle": "Przewodnik Auto Nomadzi/Samurajowie",
+    "nomadPreviewTitle": "Przykład konfiguracji Auto Nomadzi/Samurajowie",
+    "advisorGuideIntro": "Wykonaj te kroki, aby skonfigurować Automatycznego Doradcę; wybierz przykładowy panel, aby go powiększyć.",
+    "advisorGuideTitle": "Przewodnik Automatycznego Doradcy",
+    "advisorPreviewTitle": "Przykład konfiguracji Automatycznego Doradcy",
+    "khanGuideIntro": "Wykonaj te kroki, aby ustawić Automatycznego Chana; wybierz przykładowy panel, aby go powiększyć.",
+    "khanGuideTitle": "Przewodnik Automatycznego Chana",
+    "khanPreviewTitle": "Przykład ustawień Automatycznego Chana",
+    "beriGuideIntro": "Wykonaj te kroki, aby ustawić Automatyczny Berimond; wybierz przykładowy panel, by go powiększyć.",
+    "beriGuideTitle": "Poradnik Automatycznego Berimondu",
+    "beriPreviewTitle": "Przykładowa konfiguracja Automatycznego Berimondu",
+    "stormGuideIntro": "Wykonaj te kroki, aby ustawić Auto Storm; wybierz panel przykładu, by go powiększyć.",
+    "stormGuideTitle": "Przewodnik po Auto Storm",
+    "stormPreviewTitle": "Przykład konfiguracji Auto Storm"
+  },
+  "autoTower": {
+    "recommendationIntro": "Te zalecenia dotyczą regularnego korzystania; sprawdź je przed zapisaniem.",
+    "steps": {
+      "commanders": {
+        "title": "Wybierz dowódców",
+        "items": {
+          "commander_assignment": {
+            "label": "Przypisanie dowódców",
+            "description": "W sekcji Dowódcy zezwól na Automatyczne ataki na wieże wybranym dowódcom, a następnie wybierz Zapisz przypisania.",
+            "recommendation": "20 dowódców przypisanych do Automatycznych ataków na wieże."
+          }
+        }
+      },
+      "general": {
+        "title": "Ustaw skanowanie, dzienne limity i podróż",
+        "items": {
+          "open_settings": {
+            "label": "Otwórz ustawienia",
+            "description": "Otwórz Automatyzację, a następnie wybierz przycisk ustawień na karcie Automatyczne ataki na wieże."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Skanowanie wiarygodnej mapy · Co ile",
+            "description": "Wybierz częstotliwość odświeżania listy wież każdego zamku, od 1800 do 3600 sekund; ataki mogą wyruszać między skanami.",
+            "recommendation": "1800 sekund (30 minut)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Dzienny limit zwykłych ataków",
+            "description": "Wstrzymuje działanie po osiągnięciu dziennego limitu ataków dla całego konta, aż gra go zresetuje; 0 usuwa limit.",
+            "recommendation": "3500 ataków dziennie dla całego konta."
+          },
+          "horse_travel_boost": {
+            "label": "Przyspieszenie podróży konnej",
+            "description": "Używa wybranej opcji podróży dla każdego ataku, także każdego uderzenia w serii doradcy; prędkość zależy od budynków podróżnych zamku początkowego.",
+            "recommendation": "Poziom za monety, jeśli dostępny i masz dość monet."
+          },
+          "travel_feather": {
+            "label": "Pióro podróżne",
+            "description": "Używa pióra podróżnego zamiast poziomu konia za monety lub rubiny."
+          },
+          "horse_ship_tier_coins": {
+            "label": "Koń / statek · monety",
+            "description": "Wydaje monety na poziom podróży za monety."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Koń bojowy / szybki statek · rubiny",
+            "description": "Po wybraniu wydaje rubiny na pierwszy poziom podróży za rubiny."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Rumak / najszybszy statek · rubiny",
+            "description": "Po wybraniu wydaje rubiny na szybszy poziom podróży za rubiny."
+          }
+        },
+        "image": {
+          "alt": "Ogólne ustawienia Automatycznych ataków na wieże z fikcyjnymi danymi zamku Synthetic Castle",
+          "caption": "Ustaw odstęp skanowania, dzienny limit ataków i opcję podróży; elementy doradcy pojawią się, jeśli są dostępne."
+        }
+      },
+      "castle": {
+        "title": "Skonfiguruj każdy zamek",
+        "items": {
+          "castle_switch": {
+            "label": "Przełącznik zamku",
+            "description": "Włącz każdy zamek, z którego Automatyczne ataki na wieże mają skanować i atakować.",
+            "recommendation": "Włącz zamki, których chcesz regularnie używać."
+          },
+          "radius": {
+            "label": "Promień",
+            "description": "Wybierz zasięg poszukiwania wokół zamku, od 1 do 50 pól.",
+            "recommendation": "35 pól."
+          },
+          "choose_troop": {
+            "label": "Wybierz wojsko",
+            "description": "Wybierz stacjonujące wojsko, które wypełni oba skrzydła ataku; ataki czekają, jeśli jednostek jest za mało.",
+            "recommendation": "Stacjonujące wojsko ofensywne z wystarczającą liczbą jednostek na oba skrzydła."
+          },
+          "maiden_supported_only": {
+            "label": "Tylko z relikwią dziewicy",
+            "description": "Ogranicza ten zamek do dostępnych dowódców z obsługiwaną relikwią dziewicy.",
+            "recommendation": "Wyłączone, chyba że wybrany dowódca ma obsługiwaną relikwię dziewicy."
+          }
+        },
+        "image": {
+          "alt": "Ustawienia zamku Automatycznych ataków na wieże z fikcyjnymi danymi Synthetic Castle",
+          "caption": "Włącz zamek i wybierz jego promień, wojsko oraz wymaganie relikwii dziewicy."
+        }
+      },
+      "advisor": {
+        "title": "Użyj doradcy, jeśli chcesz · gdy dostępny",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Użyj doradcy ze skrótami czasu",
+            "description": "Powtarza uderzenia w jedną wieżę: najpierw używa jednego dziennego ataku, a potem jednego skrótu czasu o co najmniej trzy godziny na każde dodatkowe uderzenie.",
+            "recommendation": "Wyłączone."
+          },
+          "auto_activate_with_token": {
+            "label": "Aktywuj automatycznie żetonem",
+            "description": "Używa dostępnego żetonu doradcy baronów, gdy doradca jest nieaktywny, bez kupowania żetonu ani wydawania rubinów.",
+            "recommendation": "Wyłączone, gdy doradca jest wyłączony."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Maksymalna dzienna liczba skrótów czasu",
+            "description": "Ogranicza skróty czasu używane przez potwierdzone serie doradcy do zresetowania dziennego licznika ataków gry; 0 wstrzymuje ataki doradcy.",
+            "recommendation": "0, gdy doradca jest wyłączony."
+          }
+        }
+      },
+      "finish": {
+        "title": "Ustaw harmonogram, zapisz i włącz",
+        "items": {
+          "calendar": {
+            "label": "Kalendarz",
+            "description": "Użyj kalendarza, aby wybrać, kiedy Automatyczne ataki na wieże mogą działać; dostępność wojsk i inne limity nadal obowiązują.",
+            "recommendation": "Twoje zwykłe godziny działania."
+          },
+          "save_changes": {
+            "label": "Zapisz zmiany",
+            "description": "Wybierz Zapisz zmiany, aby zastosować ustawienia; samo czytanie tego przewodnika ich nie zapisuje."
+          },
+          "auto_towers_switch": {
+            "label": "Przełącznik Automatycznych ataków na wieże",
+            "description": "Włącz Automatyczne ataki na wieże na stronie Automatyzacja po zapisaniu ustawień, aby zadanie mogło działać.",
+            "recommendation": "Włączone po zapisaniu wybranych ustawień."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatyczne ataki na wieże",
+      "summary": "Powtarzaj ataki na pobliskie wieże",
+      "description": "Wysyła ataki na wieże baronów rozbójników i królestw z wybranych zamków.",
+      "expectation": "Potrzebuje wystarczającej liczby wojsk, dostępnego dowódcy i wieży gotowej do ataku. Może czekać na powrót wojsk lub upływ czasu na wieży."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "Zalecane wartości opisują regularne używanie Automatycznego ukrywania wojsk; są wskazówką i nie zmieniają zapisanych ustawień.",
+    "steps": {
+      "open": {
+        "title": "Otwórz ustawienia Automatycznego ukrywania wojsk",
+        "items": {
+          "open_settings": {
+            "label": "Otwórz ustawienia",
+            "description": "U góry centrum dowodzenia wybierz przycisk ustawień obok Automatycznego ukrywania wojsk."
+          }
+        }
+      },
+      "general": {
+        "title": "Ustaw czas stacjonowania i zasady wysyłania",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Losowy zakres czasu · Min",
+            "description": "Ustaw minimalną liczbę godzin, przez które wojska zostaną u celu sojuszu po zakończeniu podróży.",
+            "recommendation": "6 godzin stacjonowania u celu sojuszu po przybyciu."
+          },
+          "random_delay_range_max": {
+            "label": "Losowy zakres czasu · Maks",
+            "description": "Ustaw najdłuższy pobyt u celu; Automatyczne ukrywanie wojsk losuje czas między Min i Maks.",
+            "recommendation": "12 godzin stacjonowania u celu sojuszu po przybyciu."
+          },
+          "minimum_to_send": {
+            "label": "Minimalna liczba do wysłania",
+            "description": "Ustaw minimalną łączną liczbę kwalifikujących się wojsk po pozostawieniu rezerw w zamku; to próg, a nie dokładna liczba wysyłanych wojsk.",
+            "recommendation": "Łącznie 1000 kwalifikujących się wojsk po pozostawieniu rezerw w zamku; to próg, a nie dokładna wielkość wysyłki."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "Minimalny RPT (pozostały czas ochrony)",
+            "description": "Używaj celów z ochroną dłuższą niż podana liczba dni; 0 wyłącza sprawdzanie.",
+            "recommendation": "3 dni; cel musi mieć ściśle więcej niż 3 dni pozostałej ochrony."
+          }
+        },
+        "image": {
+          "alt": "Ustawienia czasu stacjonowania, minimum wysyłki, minimalnego RPT i zestawów Automatycznego ukrywania wojsk",
+          "caption": "Ustaw czas stacjonowania i kwalifikację, a przed zapisaniem sprawdź zestaw rezerw Codzienny."
+        }
+      },
+      "reserves": {
+        "title": "Wybierz wojska pozostające w każdym zamku",
+        "items": {
+          "add_unit": {
+            "label": "Dodaj jednostkę",
+            "description": "Dla każdego zamku wybierz typy wojsk, które mają zostać na miejscu zamiast być wysłane; pusta rezerwa ręczna pozostawia wszystkie kwalifikujące się wojska dostępne po rezerwach automatycznych.",
+            "recommendation": "Wybierz typy wojsk potrzebne zamkowi do obrony lub innych regularnych zadań."
+          },
+          "quantity": {
+            "label": "Liczba",
+            "description": "Ustaw dodatnią liczbę każdego wybranego typu wojsk, które mają pozostać w zamku; 0 nie rezerwuje całego typu.",
+            "recommendation": "Pozostaw w zamku liczbę wojsk każdego typu potrzebną do obrony lub innych zadań; sprawdź rzeczywiste stany."
+          },
+          "remove_unit": {
+            "label": "Usuń jednostkę",
+            "description": "Usuń kafelek jednostki, aby przestać rezerwować ten typ w wybranym zamku."
+          },
+          "auto_fortress_reserve": {
+            "label": "Rezerwa Automatyzacji fortec",
+            "description": "Gdy Automatyzacja fortec blokuje tutaj wszystkie straszliwe wilki, ta automatyczna rezerwa nie zapisuje się w zestawach Automatycznego ukrywania wojsk, a wcześniejsza ręczna liczba straszliwych wilków wraca po zakończeniu blokady."
+          }
+        },
+        "image": {
+          "alt": "Kafelki rezerw Automatycznego ukrywania wojsk dla fikcyjnego zamku Example Castle",
+          "caption": "Rezerwuj tylko jednostki potrzebne w tym zamku; Jednostka 101 i Jednostka 102 są fikcyjnymi przykładami wojsk."
+        }
+      },
+      "presets": {
+        "title": "Zapisz i wybierz zestaw",
+        "items": {
+          "preset_name": {
+            "label": "Nazwa zestawu",
+            "description": "Wpisz nazwę nowego zestawu lub zmień nazwę zastosowanego zestawu przed zapisaniem zmian.",
+            "recommendation": "Użyj łatwej do rozpoznania nazwy, takiej jak Codzienny."
+          },
+          "load_preset": {
+            "label": "Wczytaj zestaw",
+            "description": "Wybierz zapisany zestaw z listy lub Zapisana konfiguracja, aby użyć zapisanych ustawień bez nazwanego zestawu.",
+            "recommendation": "Użyj wybranego codziennego zestawu jako domyślnego podczas działania: wybierz go, kliknij Zastosuj, a następnie Zapisz zmiany."
+          },
+          "apply": {
+            "label": "Zastosuj",
+            "description": "Wczytuje wybrany zestaw do tej wersji roboczej ustawień; wybierz Zapisz zmiany, aby zatwierdzić go jako domyślny podczas działania."
+          },
+          "save_as_new": {
+            "label": "Zapisz jako nowy",
+            "description": "Natychmiast zapisuje bieżące ustawienia jako nowy nazwany zestaw i wybiera go jako domyślny podczas działania."
+          },
+          "delete": {
+            "label": "Usuń",
+            "description": "Po potwierdzeniu natychmiast usuwa wybrany zestaw i czyści ustawienie domyślne podczas działania, jeśli był wybrany."
+          },
+          "runtime_default": {
+            "label": "Domyślny podczas działania",
+            "description": "Domyślny podczas działania jest zapisany aktywny zestaw albo zapisana konfiguracja, gdy żaden zestaw nie jest aktywny."
+          }
+        }
+      },
+      "finish": {
+        "title": "Ustaw harmonogram, zapisz i włącz",
+        "items": {
+          "calendar": {
+            "label": "Kalendarz",
+            "description": "Wybierz, kiedy Automatyczne ukrywanie wojsk może działać, i wybierz Zapisz harmonogram, aby zachować zmiany.",
+            "recommendation": "Pozostaw harmonogram wyłączony dla ciągłej pracy albo ustaw zwykłe godziny tygodniowe i zapisz harmonogram."
+          },
+          "specify_preset_per_period": {
+            "label": "Określ zestaw dla okresu",
+            "description": "Wybierz zapisany zestaw dla okresu kalendarza, jeśli ma on zastąpić domyślny zestaw podczas działania.",
+            "recommendation": "Wyłączone, chyba że różne okresy wymagają różnych rezerw."
+          },
+          "save_changes": {
+            "label": "Zapisz zmiany",
+            "description": "Zapisz wersję roboczą ustawień i zastosowane zmiany zestawów; samo czytanie tego przewodnika ich nie zapisuje."
+          },
+          "auto_bird_switch": {
+            "label": "Przełącznik Automatycznego ukrywania wojsk",
+            "description": "Po zapisaniu włącz Automatyczne ukrywanie wojsk u góry centrum dowodzenia, aby umożliwić normalne cykle zamków.",
+            "recommendation": "Po zapisaniu włącz Automatyczne ukrywanie wojsk; stan w nagłówku pokazuje cykl każdego zamku."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatyczne ukrywanie wojsk",
+      "summary": "Stacjonuje wybrane wojska poza zamkiem zgodnie z harmonogramem",
+      "description": "Regularnie stacjonuje wolne wojska w kwalifikujących się zamkach sojuszu i powtarza cykl po ich powrocie.",
+      "expectation": "Czeka, jeśli nie ma odpowiedniego celu lub wolnych wojsk do wysłania. Przeniesienie wojsk nie czyni zamku niezniszczalnym."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "Ustawienia ogólne",
+      "scan": "Odstęp skanowania: 1800 sekund",
+      "daily": "Dzienny limit ataków: 3500",
+      "travel": "Przyspieszenie podróży: poziom za monety",
+      "advisor": "Doradca: wyłączony"
+    },
+    "towerCastle": {
+      "title": "Przykładowy zamek",
+      "enabled": "Automatyczne ataki na wieże: włączone",
+      "radius": "Promień: 35 pól",
+      "troop": "Wybrane wojsko: fikcyjna jednostka ofensywna",
+      "maiden": "Tylko z relikwią dziewicy: wyłączone"
+    },
+    "birdGeneral": {
+      "title": "Ustawienia ogólne",
+      "min": "Minimalny pobyt: 6 godzin",
+      "max": "Maksymalny pobyt: 12 godzin",
+      "send": "Minimalna liczba kwalifikujących się wojsk po rezerwach: 1000",
+      "rpt": "Minimalna pozostała ochrona: ponad 3 dni",
+      "preset": "Zestaw: rezerwa Codzienny"
+    },
+    "birdCastle": {
+      "title": "Przykładowy zamek",
+      "unitOne": "Fikcyjna jednostka 101 zarezerwowana: 80",
+      "unitTwo": "Fikcyjna jednostka 102 zarezerwowana: 40",
+      "add": "Dodaj jednostkę"
+    },
+    "stationGeneral": {
+      "title": "Przykładowe ustawienia ochrony wojsk",
+      "evacuate": "Ewakuuj: 1 minuta przed uderzeniem",
+      "protection": "Ochrona celu: ponad 3 dni",
+      "recall": "Przywołaj po ustaniu zagrożenia: włączone",
+      "gate": "Awaryjne otwarcie bram: wyłączone",
+      "castle": "Fikcyjny zamek: 80 wojsk obronnych w rezerwie",
+      "save": "Zapisz zmiany i włącz ochronę wojsk"
+    },
+    "fortressAttack": {
+      "commander": "Dowódca: najszybszy kwalifikujący się przydzielony",
+      "daily": "Dzienny limit zwykłych ataków: 0",
+      "title": "Przykładowe ustawienia ataków",
+      "travel": "Premia do podróży: Pióro podróżne",
+      "wave": "Jedna pełna fala wilków grozy na obu skrzydłach"
+    },
+    "fortressKingdoms": {
+      "everwinter": "Lodowiec Wiecznej Zimy: włączony po odblokowaniu",
+      "peaks": "Ogniste Szczyty: włączone po odblokowaniu",
+      "sands": "Płonące Piaski: włączone po odblokowaniu",
+      "title": "Przykładowe ustawienia królestw"
+    },
+    "fortressSupply": {
+      "purchase": "Wilki grozy na sesję: 5 000",
+      "reserve": "Zachowaj tabliczki chana: 25 000",
+      "route": "Zaopatrzenie: z zamku głównego w Wielkim Cesarstwie do włączonych królestw",
+      "skips": "Przyspieszenia dla potwierdzonych transferów: włączone",
+      "title": "Przykład zaopatrzenia w wilki grozy"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Krwawe Kruki: odpowiedni odblokowany poziom",
+      "current": "Trudność aktywnego wydarzenia pozostaje bez zmian",
+      "foreign": "Obcy Władcy: odpowiedni odblokowany poziom",
+      "title": "Przykład poziomów trudności wydarzenia"
+    },
+    "invasionFortify": {
+      "currency": "Jeśli włączone: waluta wydarzenia, gdy dostępna",
+      "enabled": "Umocnij każdy cel: wyłączone",
+      "rubies": "Rubiny tylko po wyraźnym wyborze",
+      "title": "Przykład umocnienia celów"
+    },
+    "invasionLimits": {
+      "before": "Zatrzymaj 30 minut przed końcem wydarzenia",
+      "daily": "Dzienny limit zwykłych ataków: 0",
+      "score": "Punkty: zwykły ostatni próg nagrody osobistej powyżej 0",
+      "title": "Przykład punktów i limitów zatrzymania"
+    },
+    "invasionSetup": {
+      "castle": "Źródło: zwykły zamek wydarzenia w Wielkim Cesarstwie",
+      "preset": "Schemat ataku: zapisana formacja wydarzenia",
+      "title": "Przykład ustawienia ataku wydarzenia",
+      "travel": "Premia do podróży: Pióro podróżne"
+    },
+    "nomadDifficulty": {
+      "title": "Przykład poziomów trudności wydarzenia",
+      "active": "Aktywne wydarzenie: dopasuj obecną trudność",
+      "nomad": "Nomadzi: odblokowany niezawodny poziom",
+      "samurai": "Samurajowie: odblokowany niezawodny poziom"
+    },
+    "nomadSetup": {
+      "castle": "Źródło: zwykły zamek wydarzenia w Wielkim Cesarstwie",
+      "travel": "Premia do podróży: Pióro podróżne",
+      "nomadPreset": "Schemat nomadów: zapisany układ na obozy",
+      "samuraiPreset": "Schemat samurajów: zapisany układ na obozy",
+      "title": "Przykład ustawień obozów wydarzenia"
+    },
+    "nomadCooldowns": {
+      "clear": "Usuń przerwę po potwierdzonym zwycięstwie: włączone",
+      "long": "Zachowaj 5 godz. / 24 godz.: zapas na inne działania",
+      "short": "Zachowaj 1 / 5 / 10 / 30 / 60 min: po 0 przedmiotów",
+      "title": "Przykład wyboru przerw"
+    },
+    "nomadLimits": {
+      "daily": "Dodatkowy limit dzienny: 0",
+      "score": "Cel punktowy: ostatni próg nagrody osobistej",
+      "time": "Zatrzymaj przed końcem: 30 minut",
+      "title": "Przykład zasad zatrzymania"
+    },
+    "nomadTrial": {
+      "coordinates": "Cel X / Y: nieużywany w zwykłym działaniu",
+      "effect": "Włączony test zastępuje wydarzenie prawdziwym atakiem",
+      "title": "Przykład sterowania testem",
+      "trial": "Tymczasowy test barona rozbójnika: wyłączony"
+    },
+    "advisorDifficulty": {
+      "active": "Aktywne wydarzenie: dopasuj obecną trudność",
+      "nomad": "Nomadzi: odblokowany niezawodny poziom",
+      "samurai": "Samurajowie: odblokowany niezawodny poziom",
+      "title": "Przykład poziomów trudności wydarzenia"
+    },
+    "advisorSetup": {
+      "castle": "Źródło: zwykły zamek wydarzenia w Wielkim Cesarstwie",
+      "travel": "Premia do podróży: Pióro podróżne",
+      "preset": "Schemat: zapisana formacja aktywnego wydarzenia",
+      "title": "Przykładowe ustawienia ataku Doradcy"
+    },
+    "advisorActivation": {
+      "locked": "Jeśli zablokowany: otwórz potwierdzenie aktywacji Doradcy",
+      "paid": "Potwierdź użycie żetonu albo darmową aktywację wskazaną przez grę",
+      "save": "Zapisz ustawienia, a następnie włącz kartę Automatyzacja",
+      "title": "Przykładowy przebieg aktywacji"
+    },
+    "advisorOverview": {
+      "progress": "Bieżące ataki / żądane ataki",
+      "refresh": "Odśwież podgląd, aby odczytać bieżące sumy",
+      "results": "Zwycięstwa, porażki, utraceni żołnierze i narzędzia",
+      "title": "Przykładowy bieżący podgląd"
+    },
+    "advisorResources": {
+      "coins": "Łączny koszt monet na atak: 500 tylko jeśli wystarcza",
+      "feathers": "Zachowaj pióra: 0, chyba że potrzebne gdzie indziej",
+      "rubies": "Rubiny na atak: 0 przy Piórze Podróży",
+      "skips": "Zachowaj 60 min: 0 przedmiotów; rezerwuj 5 godz. i 24 godz. według potrzeb",
+      "title": "Przykładowe budżety zasobów"
+    },
+    "advisorSizing": {
+      "actual": "Rzeczywista seria: ograniczona zasobami i czasem",
+      "maximum": "Maksymalna liczba ataków: 9 999",
+      "time": "Niewykorzystany czas wydarzenia: 30 minut",
+      "title": "Przykładowy rozmiar serii"
+    },
+    "khanCooldowns": {
+      "long": "Zarezerwuj przyspieszenia 5- i 24-godzinne do innych zadań",
+      "pause": "Nowe ataki wstrzymują się przy braku dostępnych przyspieszeń",
+      "short": "Zachowaj 1 min / 5 min / 10 min / 30 min / 1 godz.: po 0 przedmiotów",
+      "skip": "Pomiń każde odnowienie obozu: włączone",
+      "title": "Przykład rezerw przyspieszeń"
+    },
+    "khanLimits": {
+      "daily": "Zwykłe ataki dziennie: 0, bez dodatkowego limitu",
+      "end": "Zatrzymaj nowe ataki 5 minut przed końcem",
+      "points": "Zatrzymaj przy punktach Nomadów: 0, wyłączone",
+      "title": "Przykład limitów zatrzymania",
+      "tools": "Uzupełnianie narzędzi obronnych: włączone, jeśli chcesz"
+    },
+    "khanProtection": {
+      "gate": "Otwórz główne bramy i wstrzymaj Chana przy progu",
+      "outpost": "Posterunek jako źródło: ochrona wyłączona",
+      "source": "Dotyczy ataków z głównego zamku",
+      "threshold": "Jednostki ofensywne na murze: 1 000",
+      "title": "Przykład ochrony głównego muru"
+    },
+    "khanRage": {
+      "attacks": "Automatyczne ataki na obóz: odblokowane",
+      "booster": "Wymagany czasowy wzmacniacz gniewu: nie",
+      "chain": "Maksymalna seria gniewu: 0, bez dodatkowego limitu",
+      "title": "Przykład sterowania gniewem",
+      "trigger": "Kontratak przy pełnym gniewie: włączony"
+    },
+    "khanSave": {
+      "defense": "Sprawdź obronę główną przed kontratakiem",
+      "enable": "Włącz Automatycznego Chana na karcie Automatyzacja",
+      "priority": "Automatyczne Stacjonowanie obsługuje ataki graczy osobno",
+      "save": "Zapisz ustawienia po przygotowaniu obu szablonów",
+      "title": "Przykład zapisu i włączenia"
+    },
+    "khanSetup": {
+      "defense": "Broń w: główny zamek Wielkiego Cesarstwa",
+      "presets": "Zapisane szablony ataku Chana i obrony głównej",
+      "source": "Atakuj z: posterunek w Wielkim Cesarstwie",
+      "title": "Przykład ustawień Chana",
+      "travel": "Pióro Podróży do szybkiej podróży"
+    },
+    "beriBuilder": {
+      "permissions": "Premium i wyburzanie: wyłączone do przeglądu",
+      "reserves": "Rezerwuj zasoby Berimondu i przyspieszenia",
+      "stable": "Stajnia frakcji: wybrany poziom 1–5",
+      "target": "Wbudowany dokładny cel lub sprawdzony własny układ",
+      "title": "Przykład opcjonalnej rozbudowy obozu"
+    },
+    "beriReadiness": {
+      "booster": "Wymagane wzmocnienie waleczności: opcjonalne",
+      "food": "Transport wymaga wojsk schematu zużywających Żywność",
+      "preset": "Sprawdź zapisane miejsca na wojska i narzędzia",
+      "title": "Przykład gotowości do ataków na wieże"
+    },
+    "beriSave": {
+      "calendar": "Kalendarz wyłączony do ciągłej pracy",
+      "enable": "Włącz Automatyczny Berimond na karcie Automatyzacja",
+      "save": "Zapisz ustawienia po sprawdzeniu proporcji wojsk",
+      "title": "Przykład zapisu i włączenia"
+    },
+    "beriSetup": {
+      "donor": "Źródło w Wielkim Cesarstwie z wymaganymi wojskami",
+      "limit": "Dziennie zwykłe ataki: 0 dodatkowego limitu",
+      "preset": "Zapisany schemat ataku na Berimond",
+      "title": "Przykład ataku i zaopatrzenia",
+      "travel": "Pióro podróżne dla ataków na wieże"
+    },
+    "beriTools": {
+      "ladders": "Drabiny: według zwykłych ataków",
+      "mantlets": "Osłony: według zwykłych ataków",
+      "rams": "Tarany: według zwykłych ataków",
+      "title": "Przykład minimalnych zapasów narzędzi"
+    },
+    "beriTransfers": {
+      "capacity": "Wolna pojemność: 1; próg: 1",
+      "mix": "Proporcje schematu: 2 jednostki A na 1 jednostkę B",
+      "next": "Następna wysyłka: do 1 B ze źródła",
+      "stock": "Stan obozu: 2 A i 0 B",
+      "title": "Przykład proporcjonalnych transportów"
+    },
+    "stormCastle": {
+      "blueprint": "Zapisany cel aktywny; pauza go zachowuje",
+      "capture": "Bieżący zamek: cel Funkcjonalny",
+      "decorations": "Schemat dekoracji: opcjonalny",
+      "title": "Przykład dostępu do zamku Sztormu",
+      "unlock": "Automatyczne otwarcie: włączone po kontroli ceny"
+    },
+    "stormCombat": {
+      "defenders": "Obrońcy okupacyjni: wybrani lub jeden ocalały",
+      "forts": "Forty: wybrane poziomy 40–80",
+      "islands": "Wyspy akwamarynu: duże i małe",
+      "priority": "Duże, małe, potem forty od 80 do 40",
+      "title": "Przykład ataków na forty i wyspy"
+    },
+    "stormConstruction": {
+      "harbor": "Port: włączony, poziom 1",
+      "resources": "Drewno 0; kamień 0; akwamaryn zaplanowany",
+      "spending": "Premium i wyburzanie: wyłączone",
+      "title": "Przykład budowy i rezerw",
+      "transport": "Transport zasobów: włączony"
+    },
+    "stormLuna": {
+      "cost": "Cena i limit zakupów: tylko do odczytu",
+      "limited": "Ograniczone cele przed nieograniczonymi nagrodami",
+      "priority": "Priorytet 1, 2, 3; niższy numer najpierw",
+      "reserve": "Zachowaj akwamaryn: 0 przy użyciu nadwyżki",
+      "title": "Przykład nagród Luny"
+    },
+    "stormSave": {
+      "check": "Sprawdzanie zasad: 30 sekund",
+      "daily": "Dzienne zwykłe ataki: 0 dodatkowego limitu",
+      "map": "Odświeżanie mapy: 2 godziny, tylko do odczytu",
+      "switch": "Zapisz, potem włącz Auto Storm",
+      "title": "Przykład zapisu i włączenia"
+    },
+    "stormTroops": {
+      "averages": "Ataki potwierdzone od resetu / 24; średnia ustawienia tylko do odczytu",
+      "cap": "Limit zaangażowanych wojsk: tylko do odczytu",
+      "donors": "Dawcy: pokazana kolejność, częściowe zapasy dozwolone",
+      "minimum": "Minimum zachowane: 1000 wojsk",
+      "title": "Przykład importu wojsk"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Zalecenia dotyczą codziennego korzystania i nie zmieniają zapisanych ustawień.",
+    "steps": {
+      "open": {
+        "title": "Otwórz ustawienia automatycznej ochrony wojsk",
+        "items": {
+          "open_settings": {
+            "label": "Otwórz ustawienia",
+            "description": "W górnej części centrum dowodzenia wybierz przycisk ustawień obok automatycznej ochrony wojsk."
+          }
+        }
+      },
+      "general": {
+        "title": "Ustaw reakcję na atak",
+        "items": {
+          "evacuate_at": {
+            "label": "Ewakuuj przy",
+            "description": "Rozpocznij ewakuację tyle minut przed uderzeniem albo natychmiast, jeśli atak wykryto już w tym przedziale.",
+            "recommendation": "1 minuta przed uderzeniem."
+          },
+          "minimum_bird_days": {
+            "label": "Minimalne dni ochrony celu",
+            "description": "Wybierz zamek sojusznika z większą liczbą dni ochrony niż podany próg; 0 usuwa ten wymóg.",
+            "recommendation": "3 dni, więc cel musi mieć ponad 3 dni ochrony."
+          },
+          "recall_when_clear": {
+            "label": "Przywołaj po ustaniu zagrożenia",
+            "description": "Sprowadź stacjonujące wojska, gdy minie ostatni wykryty atak i nie będzie kolejnego nadchodzącego ataku.",
+            "recommendation": "Włączone przy zwykłym korzystaniu."
+          },
+          "open_gate_fallback": {
+            "label": "Awaryjne otwarcie bram",
+            "description": "Jeśli wojsk nie da się ewakuować, ta opcja otwiera bramy atakowanego własnego zamku na sześć godzin, z wyjątkiem Berimondu.",
+            "recommendation": "Wyłączone, chyba że chcesz automatycznie otwierać bramy po nieudanej ewakuacji."
+          },
+          "protection_mode": {
+            "label": "Zakupiony tryb ochrony",
+            "description": "Gdy zakupiony tryb ochrony jest przygotowywany lub aktywny, ochrona wojsk korzysta z bram nawet przy wyłączonej opcji awaryjnej, z wyjątkiem Berimondu."
+          }
+        },
+        "image": {
+          "alt": "Fikcyjne ustawienia z czasem ewakuacji, ochroną, przywołaniem, bramami i rezerwami zamkowymi",
+          "caption": "Przed zapisem sprawdź cztery ustawienia reakcji i rezerwy obronne każdego zamku."
+        }
+      },
+      "reserves": {
+        "title": "Wybierz wojska pozostające w zamku",
+        "items": {
+          "add_troops": {
+            "label": "Dodaj wojska",
+            "description": "Wybierz rodzaje wojsk pozostające w zamku; bez rezerw można ewakuować wszystkie kwalifikujące się jednostki poza narzędziami.",
+            "recommendation": "Zachowaj zwykły garnizon obronny i pozwól przenieść nadwyżkę wojsk ofensywnych."
+          },
+          "quantity": {
+            "label": "Liczba",
+            "description": "Ustal, ile wojsk każdego wybranego rodzaju pozostaje w zamku; 0 niczego nie rezerwuje.",
+            "recommendation": "Użyj liczby potrzebnej do zwykłej obrony zamku."
+          },
+          "edit_defense_troops": {
+            "label": "Edytuj wojska obronne",
+            "description": "Ponownie otwórz wybór wojsk, aby zmienić rodzaje lub liczby w rezerwie zamku."
+          },
+          "remove_defense_troop": {
+            "label": "Usuń wojsko obronne",
+            "description": "Usuń kafelek rezerwy, aby przestać zatrzymywać ten rodzaj wojska w zamku."
+          }
+        }
+      },
+      "finish": {
+        "title": "Zapisz i włącz ochronę wojsk",
+        "items": {
+          "save_changes": {
+            "label": "Zapisz zmiany",
+            "description": "Zapisz czas, przełączniki i rezerwy każdego zamku przed opuszczeniem ustawień."
+          },
+          "auto_station_switch": {
+            "label": "Przełącznik ochrony wojsk",
+            "description": "Po zapisie włącz automatyczną ochronę wojsk u góry centrum dowodzenia, aby obserwować nadchodzące ataki graczy.",
+            "recommendation": "Włączone dla codziennej ochrony po sprawdzeniu rezerw."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatyczna ochrona wojsk",
+      "summary": "Przenieś kwalifikujące się wojska przed nadchodzącym atakiem",
+      "description": "Gdy nadchodzi atak gracza, automatyczna ochrona przenosi kwalifikujące się wojska do najbliższego odpowiedniego zamku sojusznika w tym samym królestwie.",
+      "expectation": "Przy włączonym przywołaniu wojska wracają po ostatnim wykrytym ataku, gdy nie ma dalszego zagrożenia; w przeciwnym razie pozostają godzinę po przybyciu i wracają. Brak celu lub wojsk oraz ograniczenia gry mogą uniemożliwić ewakuację.",
+      "helper": "Wojska trafiają do najbliższego odpowiedniego zamku sojusznika w tym samym królestwie; jeśli ewakuacja się nie uda, bramy atakowanego własnego zamku mogą chronić poza Berimondem."
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "Najszybszy dostępny dowódca",
+      "commanderHelp": "Automatyczne ataki na fortece porównują właściwe dla każdej fortecy docelowej efekty prędkości podróży z wyposażenia, klejnotów, zestawów i generałów; Relikt 2.0 ani minimum 100% nie są wymagane.",
+      "description": "Automatyczne ataki na fortece kupują wilki grozy w zapisanych limitach, zaopatrują włączone zewnętrzne królestwa i atakują gotowe fortece z ich zamków głównych.",
+      "expectation": "Każdy atak wymaga gotowej fortecy, dostatecznej liczby wilków grozy na oba skrzydła i kwalifikującego się przydzielonego dowódcy; czas odnowienia lub opóźnienia zaopatrzenia mogą go wstrzymać.",
+      "name": "Automatyczne ataki na fortece",
+      "settingsSummary": "Automatyczne ataki na fortece przygotowują wilki grozy i wybierają najszybszego kwalifikującego się przydzielonego dowódcę dla każdej fortecy docelowej.",
+      "summary": "Zaopatruj w wilki grozy i atakuj gotowe fortece",
+      "travelHelp": "Pióro podróżne jest opcją domyślną; zapisany wybór podróży pozostaje bez zmian. Premia właściwa dla zamku jest obliczana ponownie przed wysłaniem ataku."
+    },
+    "recommendationIntro": "Zalecane wartości opisują zwykłe korzystanie z automatycznych ataków na fortece; są wskazówkami i nie zmieniają zapisanych ustawień.",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "Przykładowe ustawienia ataku i podróży dla automatycznych ataków na fortece",
+          "caption": "Automatyczne ataki na fortece szeregują kwalifikujących się przydzielonych dowódców dla każdego celu i korzystają z zapisanego wyboru podróży."
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "W sekcji Dowódcy przydziel dowódców dostępnych dla automatycznych ataków na fortece i zapisz przydziały.",
+            "label": "Przydział dowódców",
+            "recommendation": "Przydziel dowódców, których zwykle chcesz mieć dostępnych do ataków na fortece."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Zatrzymaj automatyczne ataki na fortece po osiągnięciu dziennej liczby zwykłych ataków na całym koncie do czasu jej wyzerowania przez grę; 0 nie dodaje limitu.",
+            "label": "Dzienny limit zwykłych ataków",
+            "recommendation": "0, chyba że chcesz dodać dzienny limit."
+          },
+          "fastest_commander": {
+            "description": "Dla każdej fortecy automatyzacja wybiera najszybszego aktualnie dostępnego przydzielonego dowódcę według właściwych efektów wyposażenia, klejnotów, zestawów i generałów po uwzględnieniu limitów.",
+            "label": "Najszybszy kwalifikujący się dowódca",
+            "recommendation": "Przedmiot Relikt 2.0 ani premia prędkości 100% nie są wymagane."
+          },
+          "full_flank_wave": {
+            "description": "Każdy atak czeka na dostateczną liczbę wilków grozy, by wypełnić oba skrzydła jedną pełną falą.",
+            "label": "Fala wilków grozy na obu skrzydłach"
+          },
+          "horse_travel_boost": {
+            "description": "Wybierz opcję podróży dla ataków na fortece; wyraźnie zapisana opcja za monety lub rubiny pozostanie wybrana.",
+            "label": "Premia do podróży konnej",
+            "recommendation": "Pióro podróżne zapewniające najszybszą podróż."
+          }
+        },
+        "title": "Ustaw ataki i podróż"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "Po zapisaniu włącz automatyczne ataki na fortece na karcie Automatyzacja, aby rozpocząć zwykłe cykle.",
+            "label": "Przełącznik automatycznych ataków na fortece",
+            "recommendation": "Włączony po sprawdzeniu i zapisaniu zamierzonych ustawień."
+          },
+          "calendar": {
+            "description": "Użyj Kalendarza, aby ograniczyć godziny działania automatycznych ataków na fortece, i wybierz Zapisz harmonogram po zmianach.",
+            "label": "Kalendarz",
+            "recommendation": "Wyłączony dla nieprzerwanego zwykłego działania."
+          },
+          "save_fortress_plan": {
+            "description": "Przed zamknięciem tego okna zapisz ustawienia królestw, zaopatrzenia i ataków.",
+            "label": "Zapisz plan fortec"
+          }
+        },
+        "title": "Ustaw harmonogram, zapisz i włącz"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "Przykładowe ustawienia trzech zewnętrznych królestw dla automatycznych ataków na fortece",
+          "caption": "Włącz każde odblokowane królestwo, którego zamek główny ma otrzymywać wilki grozy i atakować fortece."
+        },
+        "items": {
+          "burning_sands": {
+            "description": "Włącz ataki i dostawy wilków grozy z zamku głównego na Płonących Piaskach, gdy to królestwo zostanie odblokowane.",
+            "label": "Płonące Piaski",
+            "recommendation": "Włączone po odblokowaniu i przygotowaniu do użycia."
+          },
+          "everwinter_glacier": {
+            "description": "Włącz ataki i dostawy wilków grozy z zamku głównego na Lodowcu Wiecznej Zimy, gdy to królestwo zostanie odblokowane.",
+            "label": "Lodowiec Wiecznej Zimy",
+            "recommendation": "Włączone po odblokowaniu i przygotowaniu do użycia."
+          },
+          "fire_peaks": {
+            "description": "Włącz ataki i dostawy wilków grozy z zamku głównego na Ognistych Szczytach, gdy to królestwo zostanie odblokowane.",
+            "label": "Ogniste Szczyty",
+            "recommendation": "Włączone po odblokowaniu i przygotowaniu do użycia."
+          }
+        },
+        "title": "Wybierz królestwa fortec"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "Na stronie Automatyzacja wybierz przycisk ustawień na karcie automatycznych ataków na fortece.",
+            "label": "Otwórz ustawienia"
+          }
+        },
+        "title": "Otwórz ustawienia automatycznych ataków na fortece"
+      },
+      "supply": {
+        "image": {
+          "alt": "Przykładowe ustawienia zakupu i transferu wilków grozy dla automatycznych ataków na fortece",
+          "caption": "Sprawdź limit zakupów na sesję, rezerwę tabliczek chana i użycie przyspieszeń dla potwierdzonych transferów."
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "Ogranicz zakupy wilków grozy w sklepie nomadów do partii po 100 w każdej sesji sklepu; 0 wyłącza kupowanie.",
+            "label": "Wilki grozy na sesję",
+            "recommendation": "5 000 wilków grozy na sesję w najtańszej kategorii cenowej."
+          },
+          "keep_khan_tablets": {
+            "description": "Zatrzymaj zakupy wilków grozy, zanim liczba tabliczek chana spadnie poniżej tej rezerwy.",
+            "label": "Zachowaj tabliczki chana",
+            "recommendation": "Zachowaj 25 000 tabliczek chana."
+          },
+          "supply_route": {
+            "description": "Kupione wilki grozy trafiają do zamku głównego w Wielkim Cesarstwie i są rozdzielane między włączone królestwa.",
+            "label": "Trasa zaopatrzenia wilków grozy"
+          },
+          "use_time_skips": {
+            "description": "Używaj odpowiednich przyspieszeń tylko dla potwierdzonych transportów automatycznych ataków na fortece, zachowując zapisane rezerwy zasobów.",
+            "label": "Użyj przyspieszeń do transferu wilków grozy",
+            "recommendation": "Włączone dla szybszych dostaw, jeśli pozwalają na to zapisane rezerwy przyspieszeń."
+          }
+        },
+        "title": "Ustaw zaopatrzenie w wilki grozy"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "Automatyczne ataki inwazyjne atakują Obcych Władców lub Krwawe Kruki przy użyciu zapisanego schematu ataku do osiągnięcia celu punktowego lub innego limitu zatrzymania.",
+      "expectation": "Czekają na aktywne wydarzenie, odpowiednich dowódców i wystarczającą liczbę wojsk i narzędzi; ataki już w drodze mogą zakończyć się po zatrzymaniu nowych ataków.",
+      "name": "Automatyczne ataki inwazyjne",
+      "summary": "Atakuj Obcych Władców i Krwawe Kruki do swojego celu punktowego"
+    },
+    "recommendationIntro": "Zalecane wartości opisują zwykłe korzystanie z automatycznych ataków inwazyjnych; są wskazówkami i nie zmieniają zapisanych ustawień.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Przykładowe wybory trudności Obcych Władców i Krwawych Kruków",
+          "caption": "Wybierz osobny odblokowany zapasowy poziom trudności dla każdego wydarzenia."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Wybierz odblokowany poziom trudności Krwawych Kruków do użycia, gdy w bieżącym wydarzeniu nie wybrano poziomu.",
+            "label": "Poziom trudności Krwawych Kruków",
+            "recommendation": "Użyj najwyższego odblokowanego poziomu, z którym zwykły skład radzi sobie niezawodnie."
+          },
+          "difficulty_note": {
+            "description": "Zapisz oba wybory wydarzeń; zmiana zapisanej wartości nie zastępuje trudności aktywnego wydarzenia.",
+            "label": "Bieżący poziom trudności"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Wybierz odblokowany poziom trudności Obcych Władców do użycia, gdy w bieżącym wydarzeniu nie wybrano poziomu.",
+            "label": "Poziom trudności Obcych Władców",
+            "recommendation": "Użyj najwyższego odblokowanego poziomu, z którym zwykły skład radzi sobie niezawodnie."
+          }
+        },
+        "title": "Wybierz poziomy trudności obu wydarzeń"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "Po zapisaniu włącz automatyczne ataki inwazyjne na karcie Automatyzacja, aby działały przy aktywnym wydarzeniu i odpowiednich zasobach.",
+            "label": "Przełącznik automatycznych ataków inwazyjnych",
+            "recommendation": "Włączony po sprawdzeniu i zapisaniu zamierzonych ustawień."
+          },
+          "readiness": {
+            "description": "Automatyczne ataki inwazyjne czekają na aktywne wydarzenie, odpowiednich dowódców oraz wystarczającą liczbę wojsk i narzędzi.",
+            "label": "Gotowość do ataku"
+          },
+          "save_settings": {
+            "description": "Przed zamknięciem okna zapisz zamek źródłowy, schemat, trudności, limity zatrzymania i wybór umocnień.",
+            "label": "Zapisz ustawienia"
+          }
+        },
+        "title": "Zapisz i włącz automatyczne ataki inwazyjne"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Przykładowe ustawienia umocnień automatycznych ataków inwazyjnych",
+          "caption": "Pozostaw umocnienia wyłączone, chyba że zamierzasz wydawać dostępną walutę wydarzenia lub wyraźnie wybrane rubiny."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Wybierz opcję obsługiwaną przez aktywne wydarzenie; gra ustala każdą cenę, a wyraźny wybór rubinów pozwala je wydawać.",
+            "label": "Waluta umocnień",
+            "recommendation": "Waluta wydarzenia, jeśli jest dostępna i umocnienia są włączone."
+          },
+          "fortify_each_target": {
+            "description": "Jeśli funkcja jest włączona, wzmocnij każdy wygenerowany zamek wroga przed atakiem wybraną walutą.",
+            "label": "Umocnij każdy cel",
+            "recommendation": "Wyłączone, chyba że umocnienia należą do twojej zwykłej strategii wydarzenia."
+          }
+        },
+        "title": "Wybierz opcjonalne umocnienia celów"
+      },
+      "limits": {
+        "image": {
+          "alt": "Przykładowe punkty i limity zatrzymania automatycznych ataków inwazyjnych",
+          "caption": "Cel punktowy zatrzymuje nowe wysłania, ale ataki już w drodze mogą się zakończyć."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Zatrzymaj tę automatyzację przy dziennej liczbie zwykłych ataków na całym koncie do wyzerowania jej przez grę; 0 nie dodaje limitu.",
+            "label": "Dzienny limit zwykłych ataków",
+            "recommendation": "0, aby cel punktowy wydarzenia sterował serią."
+          },
+          "minimum_remaining": {
+            "description": "Przestań rozpoczynać nowe ataki tyle minut przed końcem wydarzenia.",
+            "label": "Zatrzymaj przed końcem wydarzenia",
+            "recommendation": "30 minut."
+          },
+          "score_target": {
+            "description": "Przestań rozpoczynać nowe ataki, gdy zgłoszone punkty wydarzenia osiągną lub przekroczą ten cel.",
+            "label": "Zatrzymaj przy punktach wydarzenia",
+            "recommendation": "Użyj swojego zwykłego ostatniego progu nagrody osobistej powyżej 0."
+          },
+          "travelling_attacks": {
+            "description": "Ataki już w drodze mogą zakończyć się po spełnieniu warunku zatrzymania i podnieść wynik końcowy ponad cel.",
+            "label": "Ataki w drodze"
+          }
+        },
+        "title": "Ustaw punkty i limity zatrzymania"
+      },
+      "open": {
+        "image": {
+          "alt": "Przykładowe ustawienia zamku źródłowego, schematu i podróży dla automatycznych ataków inwazyjnych",
+          "caption": "Wybierz zamek źródłowy w Wielkim Cesarstwie i zapisany schemat wydarzenia przed ustawieniem podróży."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Wybierz zapisany schemat ataku z wojskami, narzędziami i formacją dla Obcych Władców lub Krwawych Kruków.",
+            "label": "Schemat ataku",
+            "recommendation": "Najpierw utwórz zwykły schemat dla Obcych Władców lub Krwawych Kruków, a potem wybierz go tutaj."
+          },
+          "capacity_note": {
+            "description": "Liczby wojsk i narzędzi ze schematu dostosowują się do pojemności wybranego dowódcy i celu.",
+            "label": "Pojemność ataku"
+          },
+          "horse_travel_boost": {
+            "description": "Wybierz dla tych ataków opcję podróży za pióro, monety lub rubiny.",
+            "label": "Premia do podróży konnej",
+            "recommendation": "Pióro podróżne dla szybkiej podróży."
+          },
+          "open_settings": {
+            "description": "Na stronie Automatyzacja wybierz przycisk ustawień na karcie automatycznych ataków inwazyjnych.",
+            "label": "Otwórz ustawienia"
+          },
+          "source_castle": {
+            "description": "Wybierz zamek w Wielkim Cesarstwie, który dostarcza wojska i narzędzia do ataków wydarzenia.",
+            "label": "Zamek źródłowy",
+            "recommendation": "Użyj zwykłego zamku wydarzenia z wystarczającą liczbą wojsk i narzędzi."
+          }
+        },
+        "title": "Otwórz ustawienia automatycznych ataków inwazyjnych"
+      }
+    }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "Użyj najwyższego odblokowanego poziomu, z którym zwykły skład radzi sobie niezawodnie.",
+            "description": "Wybierz odblokowany poziom trudności nomadów na start wydarzenia.",
+            "label": "Trudność nomadów"
+          },
+          "samurai_difficulty": {
+            "recommendation": "Użyj najwyższego odblokowanego poziomu, z którym zwykły skład radzi sobie niezawodnie.",
+            "description": "Wybierz odblokowany poziom trudności samurajów na start wydarzenia.",
+            "label": "Trudność samurajów"
+          },
+          "active_difficulty": {
+            "description": "Przy aktywnym wydarzeniu dopasuj jego obecny poziom, ponieważ inny zapisany wybór wstrzymuje automat zamiast zmieniać trudność.",
+            "label": "Już aktywne wydarzenie"
+          }
+        },
+        "title": "Wybierz poziomy trudności obu wydarzeń",
+        "image": {
+          "alt": "Przykład poziomów trudności nomadów i samurajów",
+          "caption": "Wybierz osobny odblokowany poziom trudności dla każdego wydarzenia i dopasuj poziom aktywnego wydarzenia."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "Włączony po sprawdzeniu i zapisaniu zamierzonych ustawień.",
+            "description": "Po zapisaniu włącz Auto Nomadzi/Samurajowie na karcie Automatyzacja, aby działało przy dostępnym wydarzeniu i odpowiednich zasobach.",
+            "label": "Przełącznik Auto Nomadzi/Samurajowie"
+          },
+          "save_settings": {
+            "label": "Zapisz ustawienia",
+            "description": "Przed zamknięciem okna zapisz źródło, schematy, trudności, limity zatrzymania, wybór skoków czasu i stan testu."
+          },
+          "readiness": {
+            "description": "Automatyzacja rozwija obozy wydarzenia i czeka na dostępnych dowódców, wojsko, narzędzia i użyteczne skoki czasu, gdy są włączone.",
+            "label": "Gotowość do ataków na obozy"
+          }
+        },
+        "title": "Zapisz i włącz Auto Nomadzi/Samurajowie"
+      },
+      "limits": {
+        "image": {
+          "caption": "Cel punktowy zatrzymuje nowe wysłania, ale ataki już w drodze mogą się zakończyć.",
+          "alt": "Przykład limitów punktowych i zatrzymania Auto Nomadzi/Samurajowie"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Zatrzymaj tę automatyzację przy dziennej liczbie zwykłych ataków na całym koncie do wyzerowania jej przez grę; 0 nie dodaje limitu.",
+            "label": "Dzienny limit zwykłych ataków",
+            "recommendation": "0, aby cel punktowy wydarzenia sterował serią."
+          },
+          "minimum_remaining": {
+            "description": "Przestań rozpoczynać nowe ataki tyle minut przed końcem wydarzenia.",
+            "label": "Zatrzymaj przed końcem wydarzenia",
+            "recommendation": "30 minut."
+          },
+          "score_target": {
+            "description": "Przestań rozpoczynać nowe ataki, gdy zgłoszone punkty wydarzenia osiągną lub przekroczą ten cel.",
+            "label": "Zatrzymaj przy punktach wydarzenia",
+            "recommendation": "Użyj swojego zwykłego ostatniego progu nagrody osobistej powyżej 0."
+          },
+          "travelling_attacks": {
+            "description": "Ataki już w drodze mogą zakończyć się po spełnieniu warunku zatrzymania i podnieść wynik końcowy ponad cel.",
+            "label": "Ataki w drodze"
+          }
+        },
+        "title": "Ustaw punkty i limity zatrzymania"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Przyspieszenie podróży konnej",
+            "recommendation": "Pióro podróżne dla szybkiej podróży.",
+            "description": "Wybierz opcję podróży z piórem, monetami lub rubinami dla ataków na obozy."
+          },
+          "open_settings": {
+            "label": "Otwórz ustawienia",
+            "description": "Na stronie Automatyzacja wybierz przycisk ustawień na karcie Auto Nomadzi/Samurajowie."
+          },
+          "source_castle": {
+            "label": "Zamek źródłowy",
+            "recommendation": "Użyj zwykłego zamku wydarzenia z wystarczającą liczbą wojsk i narzędzi.",
+            "description": "Wybierz zamek w Wielkim Cesarstwie dostarczający wojsko i narzędzia do ataków na obozy."
+          },
+          "nomad_preset": {
+            "description": "Wybierz zapisany schemat ataku z wojskiem, narzędziami i ustawieniem dla obozów nomadów.",
+            "label": "Schemat ataku na nomadów",
+            "recommendation": "Utwórz i wybierz swój zwykły schemat nomadów."
+          },
+          "samurai_preset": {
+            "description": "Wybierz zapisany schemat ataku z wojskiem, narzędziami i ustawieniem dla obozów samurajów.",
+            "label": "Schemat ataku na samurajów",
+            "recommendation": "Utwórz i wybierz swój zwykły schemat samurajów."
+          }
+        },
+        "image": {
+          "alt": "Przykład źródła, schematów i podróży Auto Nomadzi/Samurajowie",
+          "caption": "Utwórz oba schematy wydarzenia przed wybraniem zamku źródłowego i opcji podróży."
+        },
+        "title": "Otwórz ustawienia Auto Nomadzi/Samurajowie"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "Przykład przerw obozowych i zapasów skoków czasu",
+          "caption": "Każda wartość zachowania oznacza liczbę przedmiotów skoku czasu, a nie minuty przerwy."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "Zachowaj tę liczbę 10-minutowych skoków czasu jako niewykorzystaną rezerwę.",
+            "label": "Zachowaj 10 min",
+            "recommendation": "0 dla zwykłych serii ataków na obozy."
+          },
+          "keep_1m": {
+            "description": "Zachowaj tę liczbę 1-minutowych skoków czasu jako niewykorzystaną rezerwę.",
+            "label": "Zachowaj 1 min",
+            "recommendation": "0 dla zwykłych serii ataków na obozy."
+          },
+          "keep_24h": {
+            "description": "Zachowaj tę liczbę 24-godzinnych skoków czasu jako niewykorzystaną rezerwę.",
+            "label": "Zachowaj 24 godz.",
+            "recommendation": "Odłóż zapas potrzebny do budowy lub innych działań."
+          },
+          "keep_30m": {
+            "description": "Zachowaj tę liczbę 30-minutowych skoków czasu jako niewykorzystaną rezerwę.",
+            "label": "Zachowaj 30 min",
+            "recommendation": "0 dla zwykłych serii ataków na obozy."
+          },
+          "keep_5h": {
+            "description": "Zachowaj tę liczbę 5-godzinnych skoków czasu jako niewykorzystaną rezerwę.",
+            "label": "Zachowaj 5 godz.",
+            "recommendation": "Odłóż zapas potrzebny do budowy lub innych działań."
+          },
+          "keep_5m": {
+            "description": "Zachowaj tę liczbę 5-minutowych skoków czasu jako niewykorzystaną rezerwę.",
+            "label": "Zachowaj 5 min",
+            "recommendation": "0 dla zwykłych serii ataków na obozy."
+          },
+          "keep_60m": {
+            "description": "Zachowaj tę liczbę 60-minutowych skoków czasu jako niewykorzystaną rezerwę.",
+            "label": "Zachowaj 60 min",
+            "recommendation": "0 dla zwykłych serii ataków na obozy."
+          },
+          "skip_cooldowns": {
+            "description": "Po potwierdzonym zwycięstwie nad obozem użyj dostępnego skoku czasu, aby usunąć przerwę dla tego celu.",
+            "label": "Usuń przerwę po każdym udanym ataku",
+            "recommendation": "Włącz dla zwykłych powtarzanych ataków na obozy; wyłącz, aby czekać na naturalne przerwy."
+          }
+        },
+        "title": "Wybierz skoki czasu i rezerwy"
+      },
+      "trial": {
+        "image": {
+          "alt": "Przykład sterowania tymczasowym testem przeciw zamkowi barona rozbójnika",
+          "caption": "Test uruchamia prawdziwy atak i zastępuje zwykłe działanie wydarzenia, gdy jest włączony."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "Zastąp zwykłe działanie wydarzenia rzeczywistym testowym atakiem na jeden zamek barona rozbójnika z użyciem schematu nomadów i skoków czasu.",
+            "label": "Tymczasowy pełny test przeciw zamkowi barona rozbójnika",
+            "recommendation": "Wyłączony przy zwykłych seriach nomadów lub samurajów."
+          },
+          "target_x": {
+            "description": "Wpisz poziomą współrzędną zamku barona rozbójnika tylko na potrzeby tymczasowego testu.",
+            "label": "Cel X",
+            "recommendation": "Pozostaw nieużywane, gdy test jest wyłączony."
+          },
+          "target_y": {
+            "description": "Wpisz pionową współrzędną zamku barona rozbójnika tylko na potrzeby tymczasowego testu.",
+            "label": "Cel Y",
+            "recommendation": "Pozostaw nieużywane, gdy test jest wyłączony."
+          },
+          "trial_skips": {
+            "description": "Włączenie testu włącza także skoki czasu dla tego testu.",
+            "label": "Skoki czasu w teście"
+          }
+        },
+        "title": "Pozostaw tymczasowy test wyłączony podczas zwykłych serii"
+      }
+    },
+    "feature": {
+      "description": "Auto Nomadzi/Samurajowie rozwija kwalifikujące się obozy wydarzenia, wybiera najsłabszy w pełni rozwinięty obóz i wielokrotnie go atakuje zapisanym schematem właściwym dla wydarzenia aż do osiągnięcia limitu zatrzymania.",
+      "expectation": "Czeka na aktywne wydarzenie, dostępnych dowódców, wojsko, narzędzia i skoki czasu, gdy włączono usuwanie przerw; ataki w drodze mogą zakończyć się po wstrzymaniu nowych wypraw.",
+      "name": "Auto Nomadzi/Samurajowie",
+      "summary": "Rozwijaj i atakuj obozy nomadów lub samurajów"
+    },
+    "recommendationIntro": "Zalecane wartości opisują zwykłe użycie Auto Nomadzi/Samurajowie; są wskazówką i nie zmieniają zapisanych ustawień."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "Włączony po sprawdzeniu i zapisaniu zamierzonych ustawień.",
+            "description": "Po sprawdzeniu ustawień włącz Automatycznego Doradcę na karcie Automatyzacja; już odblokowany Doradca może natychmiast rozpocząć serię.",
+            "label": "Przełącznik Automatycznego Doradcy"
+          },
+          "save_settings": {
+            "label": "Zapisz ustawienia",
+            "description": "Przed zamknięciem okna zapisz zamek źródłowy, schemat, poziomy trudności, rozmiar serii i budżety zasobów."
+          },
+          "activate_advisor": {
+            "description": "Jeśli Doradca jest zablokowany, wybierz Aktywuj Doradcę, aby otworzyć potwierdzenie dla bieżącego wydarzenia.",
+            "label": "Aktywuj Doradcę"
+          },
+          "activate_and_spend": {
+            "description": "Wyślij potwierdzoną aktywację przy użyciu odpowiedniego żetonu wydarzenia lub uniwersalnego żetonu Doradcy; darmowe wydarzenie pokazuje przycisk aktywacji Doradcy.",
+            "label": "Aktywuj i wydaj żeton"
+          },
+          "cancel_activation": {
+            "description": "Zamknij potwierdzenie bez wysyłania aktywacji ani wydawania żetonu.",
+            "label": "Anuluj aktywację"
+          },
+          "confirm_paid_activation": {
+            "description": "Potwierdź, że aktywacja Doradcy może zużyć żeton wydarzenia lub żeton uniwersalny, chyba że gra wskazuje, że to wydarzenie jest darmowe.",
+            "label": "Potwierdź płatną aktywację"
+          }
+        },
+        "image": {
+          "alt": "Ilustracyjny przykład zapisu ustawień Automatycznego Doradcy i aktywacji żetonem",
+          "caption": "Zapisanie lub włączenie nie zużywa żetonu; osobno potwierdzona aktywacja może go zużyć."
+        },
+        "title": "Zapisz, włącz i aktywuj dostęp do Doradcy"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "Trudność nomadów",
+            "recommendation": "Użyj najwyższego odblokowanego poziomu, z którym zwykły skład radzi sobie niezawodnie.",
+            "description": "Wybierz odblokowany poziom trudności Nomadów, który będzie ustawiany przy rozpoczęciu wydarzenia."
+          },
+          "samurai_difficulty": {
+            "label": "Trudność samurajów",
+            "recommendation": "Użyj najwyższego odblokowanego poziomu, z którym zwykły skład radzi sobie niezawodnie.",
+            "description": "Wybierz odblokowany poziom trudności Samurajów, który będzie ustawiany przy rozpoczęciu wydarzenia."
+          },
+          "active_difficulty": {
+            "description": "Dopasuj bieżący poziom trudności aktywnego wydarzenia, inaczej automatyzacja zaczeka zamiast go zmieniać.",
+            "label": "Poziom trudności aktywnego wydarzenia"
+          }
+        },
+        "title": "Wybierz poziomy trudności obu wydarzeń",
+        "image": {
+          "alt": "Ilustracyjne poziomy trudności Doradcy Nomadów i Samurajów",
+          "caption": "Zapisz poziomy trudności obu wydarzeń i dopasuj poziom do już trwającego wydarzenia."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Przyspieszenie podróży konnej",
+            "recommendation": "Pióro podróżne dla szybkiej podróży.",
+            "description": "Wybierz dla serii podróż za pióra, monety lub rubiny."
+          },
+          "open_settings": {
+            "label": "Otwórz ustawienia",
+            "description": "Na stronie Automatyzacja wybierz przycisk ustawień na karcie Automatyczny Doradca."
+          },
+          "source_castle": {
+            "label": "Zamek źródłowy",
+            "recommendation": "Użyj zwykłego zamku wydarzenia z wystarczającą liczbą wojsk i narzędzi.",
+            "description": "Wybierz zamek w Wielkim Cesarstwie, który dostarcza żołnierzy i narzędzia do serii Doradcy."
+          },
+          "attack_preset": {
+            "description": "Wybierz zapisany schemat ataku, którego żołnierze, narzędzia i formacja są kopiowane dla każdego żądanego ataku.",
+            "label": "Schemat ataku Doradcy",
+            "recommendation": "Najpierw utwórz regularny schemat dla aktywnego wydarzenia Nomadów lub Samurajów, a następnie go wybierz."
+          },
+          "complete_copies": {
+            "description": "Dostępne zasoby i pełne kopie schematu mogą zmniejszyć serię poniżej maksymalnej liczby ataków.",
+            "label": "Pełne kopie schematu"
+          }
+        },
+        "image": {
+          "alt": "Ilustracyjny zamek źródłowy, schemat ataku i ustawienia podróży Automatycznego Doradcy",
+          "caption": "Przed ustawieniem podróży wybierz zamek źródłowy w Wielkim Cesarstwie i zapisany schemat wydarzenia."
+        },
+        "title": "Otwórz ustawienia Automatycznego Doradcy"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "Zachowaj tę liczbę 24-godzinnych skoków czasu jako niewykorzystaną rezerwę.",
+            "label": "Zachowaj 24 godz.",
+            "recommendation": "Odłóż zapas potrzebny do budowy lub innych działań."
+          },
+          "keep_5h": {
+            "description": "Zachowaj tę liczbę 5-godzinnych skoków czasu jako niewykorzystaną rezerwę.",
+            "label": "Zachowaj 5 godz.",
+            "recommendation": "Odłóż zapas potrzebny do budowy lub innych działań."
+          },
+          "keep_60m": {
+            "description": "Zachowaj tę liczbę 60-minutowych skoków czasu jako niewykorzystaną rezerwę.",
+            "label": "Zachowaj 60 min",
+            "recommendation": "0 przy regularnych seriach Doradcy."
+          },
+          "coin_cost": {
+            "description": "Oszacuj pełny koszt monet na atak do obliczenia dostępnego budżetu przed rozpoczęciem, bez zmiany cen w grze.",
+            "label": "Łączny koszt monet na atak",
+            "recommendation": "500 tylko jeśli pokrywa rzeczywisty pełny koszt; w przeciwnym razie użyj wyższej zmierzonej sumy."
+          },
+          "keep_coins": {
+            "description": "Wyłącz tyle monet z budżetu serii.",
+            "label": "Zachowaj monety",
+            "recommendation": "Zachowaj zwykły budżet na rekrutację i budowę."
+          },
+          "keep_feathers": {
+            "description": "Wyłącz tyle piór podróży z budżetu serii.",
+            "label": "Zachowaj pióra",
+            "recommendation": "0, chyba że rezerwujesz pióra dla innych funkcji."
+          },
+          "keep_rubies": {
+            "description": "Wyłącz tyle rubinów z budżetu serii.",
+            "label": "Zachowaj rubiny",
+            "recommendation": "Zachowaj saldo potrzebne na inne działania."
+          },
+          "ruby_cost": {
+            "description": "Oszacuj koszt podróży w rubinach na atak; przy wyborze podróży za rubiny wymagana jest wartość dodatnia.",
+            "label": "Rubiny na atak",
+            "recommendation": "0 przy Piórze Podróży; dla podróży za rubiny użyj rzeczywistego dodatniego kosztu."
+          }
+        },
+        "image": {
+          "alt": "Ilustracyjne rezerwy monet, rubinów, piór i przeskoków czasowych Automatycznego Doradcy",
+          "caption": "Pola kosztów są szacunkami planowania; wartości „zachowaj” oznaczają zasoby lub przeskoki czasowe pozostawione bez użycia."
+        },
+        "title": "Ustaw budżety zasobów i rezerwy"
+      },
+      "overview": {
+        "image": {
+          "alt": "Ilustracyjny podgląd postępu i strat Automatycznego Doradcy",
+          "caption": "Podgląd pokazuje postęp serii i straty bez rozpoczynania kolejnej serii."
+        },
+        "items": {
+          "live_progress": {
+            "description": "Odczytaj w podglądzie bieżącą liczbę ataków, żądaną liczbę, zwycięstwa, porażki, utraconych żołnierzy i narzędzia.",
+            "label": "Bieżąca seria Doradcy"
+          },
+          "no_relaunch": {
+            "description": "Zakończona lub anulowana seria tego samego wydarzenia nie rozpoczyna się automatycznie ponownie.",
+            "label": "Zakończona lub anulowana seria"
+          },
+          "refresh_overview": {
+            "description": "Poproś o aktualny postęp serii Doradcy, zwycięstwa, porażki i straty.",
+            "label": "Odśwież podgląd"
+          }
+        },
+        "title": "Sprawdź bieżącą serię Doradcy"
+      },
+      "sizing": {
+        "image": {
+          "alt": "Ilustracyjna liczba ataków Automatycznego Doradcy i ustawienia czasu wydarzenia",
+          "caption": "Żądana liczba ataków jest przed rozpoczęciem ograniczana przez dostępne zasoby i czas wydarzenia."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "Ustaw górny limit ataków w tej jednej serii Doradcy; zasoby i czas pozostały do końca wydarzenia mogą zmniejszyć rzeczywistą liczbę.",
+            "label": "Maksymalna liczba ataków",
+            "recommendation": "9 999, aby dostępne zasoby i czas wydarzenia wyznaczyły rozmiar serii."
+          },
+          "minimum_remaining": {
+            "description": "Pozostaw tyle minut niewykorzystanych w obliczeniu czasu wydarzenia przed rozpoczęciem.",
+            "label": "Zakończ przed końcem wydarzenia",
+            "recommendation": "30 minut; to nie jest ciągły licznik anulujący serię."
+          }
+        },
+        "title": "Ustaw rozmiar serii i czas wydarzenia"
+      }
+    },
+    "feature": {
+      "description": "Auto Doradca rozpoczyna jedną serię ataków Doradcy Nomadów lub Samurajów, której rozmiar zależy od dostępnych zasobów i czasu pozostałego do końca wydarzenia.",
+      "expectation": "Seria czeka na zgodny poziom trudności aktywnego wydarzenia i odblokowany dostęp do Doradcy; zapisanie lub włączenie nie zużywa żetonu, lecz potwierdzona aktywacja może go zużyć.",
+      "name": "Automatyczny Doradca",
+      "summary": "Rozpocznij jedną serię Doradcy Nomadów lub Samurajów dostosowaną do zasobów"
+    },
+    "recommendationIntro": "Zalecane wartości dotyczą regularnego używania Automatycznego Doradcy; są wskazówkami i nie zmieniają zapisanych ustawień."
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "Zachowaj 10 min",
+            "description": "Zachowaj bez użycia tyle przyspieszeń 10-minutowych.",
+            "recommendation": "0 przy zwykłych seriach Chana."
+          },
+          "keep_1m": {
+            "label": "Zachowaj 1 min",
+            "description": "Zachowaj bez użycia tyle przyspieszeń 1-minutowych.",
+            "recommendation": "0 przy zwykłych seriach Chana."
+          },
+          "keep_24h": {
+            "label": "Zachowaj 24 godz.",
+            "recommendation": "Odłóż zapas potrzebny do budowy lub innych działań.",
+            "description": "Zachowaj bez użycia tyle przyspieszeń 24-godzinnych."
+          },
+          "keep_30m": {
+            "label": "Zachowaj 30 min",
+            "description": "Zachowaj bez użycia tyle przyspieszeń 30-minutowych.",
+            "recommendation": "0 przy zwykłych seriach Chana."
+          },
+          "keep_5h": {
+            "label": "Zachowaj 5 godz.",
+            "recommendation": "Odłóż zapas potrzebny do budowy lub innych działań.",
+            "description": "Zachowaj bez użycia tyle przyspieszeń 5-godzinnych."
+          },
+          "keep_5m": {
+            "label": "Zachowaj 5 min",
+            "description": "Zachowaj bez użycia tyle przyspieszeń 5-minutowych.",
+            "recommendation": "0 przy zwykłych seriach Chana."
+          },
+          "keep_1h": {
+            "description": "Zachowaj bez użycia tyle przyspieszeń 1-godzinnych.",
+            "label": "Zachowaj 1 godz.",
+            "recommendation": "0 przy zwykłych seriach Chana."
+          },
+          "skip_cooldowns": {
+            "description": "Rezerwuj i używaj dość przyspieszeń, aby usuwać odnowienia obozu po atakach.",
+            "label": "Pomiń każde odnowienie obozu Chana",
+            "recommendation": "Włączone; obecne okno ustawień wymaga tego do zapisania."
+          },
+          "skip_shortage": {
+            "description": "Nowe ataki na obóz są wstrzymane, gdy dostępne przyspieszenia nie wystarczają na wymagane odnowienie.",
+            "label": "Za mało dostępnych przyspieszeń"
+          }
+        },
+        "image": {
+          "alt": "Ilustracja pomijania odnowień i rezerw przyspieszeń Automatycznego Chana",
+          "caption": "Rezerwy liczą przedmioty, a nie minuty."
+        },
+        "title": "Ustaw pomijanie odnowień i rezerwy"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "Dzienny limit zwykłych ataków",
+            "description": "Zatrzymaj nowe ataki tej automatyzacji po osiągnięciu wspólnego dla konta dziennego licznika zwykłych ataków; 0 wyłącza limit.",
+            "recommendation": "0, jeśli nie potrzebujesz limitu dla całego konta."
+          },
+          "event_end": {
+            "label": "Zakończ przed końcem wydarzenia",
+            "description": "Zatrzymaj nowe ataki na obóz tyle minut przed końcem wydarzenia.",
+            "recommendation": "5 minut."
+          },
+          "nomad_points": {
+            "description": "Przy tej zgłoszonej punktacji zatrzymaj nowe ataki Chana, odwołaj ataki w drodze i otwórz główne bramy; 0 wyłącza zatrzymanie.",
+            "label": "Zatrzymaj przy punktach Nomadów",
+            "recommendation": "0, chyba że chcesz zatrzymać się i chronić przy wybranej punktacji."
+          },
+          "replenish_tools": {
+            "description": "Uzupełnij brakujące narzędzia z szablonu obrony z dostępnych ofert, odrzucając pakiety za rubiny.",
+            "label": "Uzupełniaj narzędzia obronne",
+            "recommendation": "Włączone, jeśli chcesz odpowiednich automatycznych zakupów."
+          }
+        },
+        "image": {
+          "alt": "Ilustracja punktów, narzędzi i limitu dziennego Automatycznego Chana",
+          "caption": "Dodatni próg punktów Nomadów odwołuje także wysłane ataki Chana i otwiera bramy głównego zamku."
+        },
+        "title": "Ustaw limity punktów, zapasów i dziennych ataków"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "Zapisz ustawienia",
+            "description": "Zapisz wybrane zamki, szablony, sterowanie gniewem, limity, rezerwy przyspieszeń i ochronę."
+          },
+          "enable_switch": {
+            "description": "Włącz Automatycznego Chana na karcie Automatyzacja po sprawdzeniu obrony głównej.",
+            "label": "Przełącznik Automatycznego Chana",
+            "recommendation": "Włączone po zapisaniu ustawień i przygotowaniu obrony."
+          },
+          "station_priority": {
+            "description": "Automatyczne Stacjonowanie obsługuje nadchodzące ataki graczy osobno od kontrataków Chana.",
+            "label": "Priorytet Automatycznego Stacjonowania"
+          }
+        },
+        "image": {
+          "alt": "Ilustracja zapisu i włączenia Automatycznego Chana",
+          "caption": "Sprawdź obronę głównego zamku przed uruchomieniem kontrataków Chana."
+        },
+        "title": "Zapisz i włącz Automatycznego Chana"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Przyspieszenie podróży konnej",
+            "recommendation": "Pióro podróżne dla szybkiej podróży.",
+            "description": "Wybierz podróż za pióra, monety lub rubiny dla ataków na obóz."
+          },
+          "open_settings": {
+            "label": "Otwórz ustawienia",
+            "description": "Na stronie Automatyzacja wybierz przycisk ustawień na karcie Automatyczny Chan."
+          },
+          "attack_from": {
+            "description": "Wybierz główny zamek lub posterunek w Wielkim Cesarstwie jako źródło ataków na obóz Chana.",
+            "label": "Atakuj z",
+            "recommendation": "Użyj posterunku ze swoją armią ofensywną, gdy jest dostępny."
+          },
+          "camp_attack_preset": {
+            "description": "Wybierz zapisany szablon ataku do zwykłych ataków na obóz Chana.",
+            "label": "Szablon ataku na obóz",
+            "recommendation": "Najpierw utwórz zwykły szablon ataku na Chana."
+          },
+          "defend_at": {
+            "description": "Kontrataki Chana bronią się w pokazanym tu głównym zamku Wielkiego Cesarstwa; tego pola nie można edytować.",
+            "label": "Broń w"
+          },
+          "main_defense_preset": {
+            "description": "Wybierz zapisany szablon obrony ponownie stosowany w głównym zamku przed kontratakami.",
+            "label": "Szablon obrony głównej",
+            "recommendation": "Utwórz zwykły szablon obrony przed Chanem oraz przygotuj jego wojska i narzędzia."
+          }
+        },
+        "image": {
+          "alt": "Ilustracja zamku, szablonów i podróży Automatycznego Chana",
+          "caption": "Przygotuj oba szablony i obronę głównego zamku przed włączeniem serii ataków."
+        },
+        "title": "Wybierz zamki, szablony i podróż"
+      },
+      "protection": {
+        "image": {
+          "alt": "Ilustracja ochrony muru głównego zamku w Automatycznym Chanie",
+          "caption": "Ochrona muru działa tylko przy atakowaniu z głównego zamku."
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "Uruchom ochronę, gdy liczba jednostek ofensywnych na murze osiągnie tę wartość.",
+            "label": "Próg jednostek ofensywnych na murze",
+            "recommendation": "1 000 jednostek ofensywnych na murze."
+          },
+          "outpost_source": {
+            "description": "Ochrona jest wyłączona, gdy ataki wychodzą z posterunku, a główny zamek broni się osobno.",
+            "label": "Posterunek jako źródło"
+          },
+          "protect_offense": {
+            "description": "Przy atakach z głównego zamku otwórz jego bramy i wstrzymaj Chana, jeśli zbyt wiele jednostek ofensywnych broniłoby muru.",
+            "label": "Chroń wojska ofensywne na murze głównym",
+            "recommendation": "Włączone, gdy ataki wychodzą z głównego zamku."
+          }
+        },
+        "title": "Chroń mur głównego zamku"
+      },
+      "rage": {
+        "image": {
+          "alt": "Ilustracja gniewu i zezwoleń na ataki Automatycznego Chana",
+          "caption": "Czasowy wzmacniacz punktów gniewu różni się od chorągwi gniewu."
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "Zatrzymaj nowe ataki na obóz, zachowując obsługę gniewu, odnowień i obrony.",
+            "label": "Zablokuj automatyczne ataki Chana",
+            "recommendation": "Wyłączone przy zwykłych atakach na obóz."
+          },
+          "max_rage_chain": {
+            "description": "Ogranicz przyjęte kontrataki w bieżącym wydarzeniu, po czym zatrzymaj nowe ataki na obóz; 0 usuwa limit.",
+            "label": "Maksymalna seria gniewu",
+            "recommendation": "0, jeśli nie potrzebujesz limitu kontrataków."
+          },
+          "rage_booster": {
+            "description": "Zezwalaj na nowe automatyczne ataki na obóz tylko przy aktywnym czasowym wzmacniaczu punktów gniewu.",
+            "label": "Wymagaj wzmacniacza punktów gniewu",
+            "recommendation": "Wyłączone, chyba że chcesz atakować tylko ze wzmacniaczem."
+          },
+          "rage_continues": {
+            "description": "Limit serii gniewu nie zatrzymuje wywołania przy pełnym gniewie, odnowień ani przywracania obrony.",
+            "label": "Obsługa gniewu trwa dalej"
+          },
+          "trigger_full_rage": {
+            "description": "Wywołaj kontratak Chana, gdy gniew jest pełny.",
+            "label": "Wywołaj Chana przy pełnym gniewie",
+            "recommendation": "Włączone, gdy główny zamek jest gotowy do obrony."
+          }
+        },
+        "title": "Ustaw gniew i zezwolenia na ataki"
+      }
+    },
+    "feature": {
+      "description": "Automatyczny Chan atakuje obóz Chana, usuwa odnowienia, wywołuje kontrataki przy pełnym gniewie i utrzymuje obronę głównego zamku.",
+      "expectation": "Nowe ataki na obóz wstrzymują się po osiągnięciu ustawionych limitów lub przy braku zasobów, a główny zamek jest chroniony; nadchodzące ataki graczy obsługuje Automatyczne Stacjonowanie.",
+      "name": "Automatyczny Chan",
+      "summary": "Łącz ataki na obóz Chana i broń głównego zamku przed kontratakami"
+    },
+    "recommendationIntro": "Zalecane wartości opisują zwykłe używanie Automatycznego Chana; są wskazówkami i nie zmieniają zapisanych ustawień."
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "Automatyczny Berimond wzmacnia posiadany obóz według proporcji wojsk z wybranego schematu ataku, a następnie może atakować wieże, uzupełniać narzędzia i budować z potwierdzonego łupu.",
+      "expectation": "Transporty czekają na aktualny stan obozu i zamku źródłowego, zgłoszoną pojemność oraz zakończenie poprzedniej wysyłki; częściowy zapas pozwala wysłać mniej wojsk, a brak wymaganego typu wstrzymuje uzupełnianie.",
+      "name": "Automatyczny Berimond",
+      "summary": "Zaopatruj i prowadź obóz w Berimondzie"
+    },
+    "recommendationIntro": "Zalecenia dotyczą zwykłego korzystania z Automatycznego Berimondu i nie zmieniają zapisanych ustawień.",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "Przykładowe ustawienia opcjonalnej rozbudowy obozu w Automatycznym Berimondzie",
+          "caption": "Cel wbudowany i zapisany, tryby przechwytywania, stajnia poziom 5, rezerwy drewna i kamienia oraz siedem czasów pominięć."
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "Zezwól na usunięcie niezarządzanych budynków, których nie można przenieść ani schować, aby osiągnąć dokładny cel.",
+            "label": "Zezwól na wyburzanie",
+            "recommendation": "Wyłączone, chyba że sprawdzisz planowane usunięcia."
+          },
+          "allow_premium_costs": {
+            "description": "Zezwól na kwalifikujące się etapy budowy wymagające waluty premium.",
+            "label": "Zezwól na koszty premium",
+            "recommendation": "Wyłączone, chyba że świadomie chcesz budowy za walutę premium."
+          },
+          "auto_beri_builder_lane": {
+            "description": "Buduj lub ulepszaj aktywny cel obozu Berimond za potwierdzone łupy, które wróciły, bez sprowadzania zasobów z innego królestwa.",
+            "label": "Budowniczy Automatycznego Berimondu",
+            "recommendation": "Włącz dla zwykłej rozbudowy obozu po sprawdzeniu zezwoleń na wydatki."
+          },
+          "camp_resource_reserves": {
+            "description": "Nie wydawaj wybranych ilości drewna i kamienia na budowę obozu.",
+            "label": "Rezerwy surowców obozu",
+            "recommendation": "Drewno 0 i kamień 0, jeśli można używać nadwyżek."
+          },
+          "construction_time_skip_reserves": {
+            "description": "Osobno określ liczbę zachowanych pominięć 1 min, 5 min, 10 min, 30 min, 1 godz., 5 godz. i 24 godz.",
+            "label": "Rezerwy przyspieszeń budowy",
+            "recommendation": "Zachowaj po 0 krótkich pominięć; zapas 1, 5 i 24 godz. przeznacz na inne czynności."
+          },
+          "optional_custom_camp_target": {
+            "description": "Przechwyć tryb Funkcjonalny dla niezbędnych budynków, Układ dla położeń bez dekoracji lub Dokładny dla wszystkich obsługiwanych szczegółów.",
+            "label": "Opcjonalny własny cel obozu",
+            "recommendation": "Używaj celu wbudowanego, chyba że potrzebujesz sprawdzonego celu własnego."
+          },
+          "stable_target": {
+            "description": "Wybierz poziom stajni frakcji od 1 do 5 dla celu wbudowanego.",
+            "label": "Docelowy poziom stajni",
+            "recommendation": "Poziom 5 do zwykłej rozbudowy wydarzenia, jeśli wystarczy zasobów."
+          },
+          "use_construction_time_skips": {
+            "description": "Przyspiesz potwierdzoną budowę obozową, zachowując wybrane rezerwy pominięć budowy.",
+            "label": "Używaj przyspieszeń budowy",
+            "recommendation": "Włącz dla zwykłej rozbudowy, jeśli zapas pominięć na to pozwala."
+          },
+          "keep_skip_10m": {
+            "description": "Zachowaj tę liczbę pominięć budowy 10m; przy zwykłym użyciu ustaw rezerwę na 0.",
+            "label": "Zachowaj pominięcia 10m"
+          },
+          "keep_skip_1h": {
+            "description": "Zarezerwuj tę liczbę pominięć budowy 1h do innych czynności.",
+            "label": "Zachowaj pominięcia 1h"
+          },
+          "keep_skip_1m": {
+            "description": "Zachowaj tę liczbę pominięć budowy 1m; przy zwykłym użyciu ustaw rezerwę na 0.",
+            "label": "Zachowaj pominięcia 1m"
+          },
+          "keep_skip_24h": {
+            "description": "Zarezerwuj tę liczbę pominięć budowy 24h do innych czynności.",
+            "label": "Zachowaj pominięcia 24h"
+          },
+          "keep_skip_30m": {
+            "description": "Zachowaj tę liczbę pominięć budowy 30m; przy zwykłym użyciu ustaw rezerwę na 0.",
+            "label": "Zachowaj pominięcia 30m"
+          },
+          "keep_skip_5h": {
+            "description": "Zarezerwuj tę liczbę pominięć budowy 5h do innych czynności.",
+            "label": "Zachowaj pominięcia 5h"
+          },
+          "keep_skip_5m": {
+            "description": "Zachowaj tę liczbę pominięć budowy 5m; przy zwykłym użyciu ustaw rezerwę na 0.",
+            "label": "Zachowaj pominięcia 5m"
+          },
+          "saved_targets": {
+            "description": "Przechwycenie od razu zapisuje i aktywuje sprawdzony cel własny; wybór innego zapisanego celu również go od razu aktywuje.",
+            "label": "Zapisane cele własne"
+          },
+          "stone_reserve": {
+            "description": "Wyłącz tę ilość kamienia obozowego z wydatków na budowę; ustaw 0, jeśli można wydać nadwyżkę.",
+            "label": "Rezerwa kamienia"
+          },
+          "use_built_in_default": {
+            "description": "Natychmiast wróć do celu wbudowanego, zachowując zapisane cele własne.",
+            "label": "Użyj wbudowanego celu"
+          },
+          "wood_reserve": {
+            "description": "Wyłącz tę ilość drewna obozowego z wydatków na budowę; ustaw 0, jeśli można wydać nadwyżkę.",
+            "label": "Rezerwa drewna"
+          }
+        },
+        "title": "Wybierz opcjonalną rozbudowę obozu"
+      },
+      "readiness": {
+        "image": {
+          "alt": "Przykładowe ustawienia gotowości do ataków na wieże",
+          "caption": "Stan warunku wzmocnienia i układ schematu bez aktywnego wzmocnienia ani prawdziwych danych klienta."
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "Sprawdź fale, wojska i narzędzia wybranego schematu przed włączeniem ataków.",
+            "label": "Obsada schematu ataku",
+            "recommendation": "Zachowaj dość każdego wybranego rodzaju wojsk i narzędzi w zamku źródłowym oraz obozie na zwykłe tempo ataków."
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "Wymagaj aktywnego wzmocnienia waleczności, zanim ruszą transporty, zakupy narzędzi, przygotowania obozu, ataki na wieże lub budowa.",
+            "label": "Działaj tylko ze wzmocnieniem waleczności",
+            "recommendation": "Włączone, jeśli każda część automatyzacji ma wymagać wzmocnienia."
+          }
+        },
+        "title": "Przygotuj ataki na wieże"
+      },
+      "save": {
+        "image": {
+          "alt": "Przykładowe ustawienia zapisywania i włączania Automatycznego Berimondu",
+          "caption": "Lista przygotowań, przełącznik i opcjonalny harmonogram bez prawdziwego konta."
+        },
+        "items": {
+          "automation_switch": {
+            "description": "Włącz Automatyczny Berimond na karcie Automatyzacja po sprawdzeniu obozu, wojsk źródłowych, schematu i opcjonalnych wydatków.",
+            "label": "Przełącznik automatyzacji",
+            "recommendation": "Włączony po konfiguracji."
+          },
+          "calendar": {
+            "description": "Pozostaw harmonogram wyłączony do pracy ciągłej albo ustaw zwykłe godziny i zapisz go, gdy potrzebujesz okna czasowego.",
+            "label": "Kalendarz",
+            "recommendation": "Wyłączony podczas ciągłego prowadzenia wydarzenia."
+          },
+          "save_settings": {
+            "description": "Zapisz schemat, źródło, tempo transportów, limity ataków, narzędzia i opcje budowy przed włączeniem automatyzacji.",
+            "label": "Zapisz ustawienia"
+          }
+        },
+        "title": "Zapisz i włącz"
+      },
+      "setup": {
+        "image": {
+          "alt": "Przykładowe ustawienia ataku i zaopatrzenia Automatycznego Berimondu",
+          "caption": "Zapisany schemat ataku, zamek źródłowy w Wielkim Cesarstwie, Pióro podróżne, sprawdzanie ataków i limit dzienny."
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "Ustaw, jak często automatyzacja szuka następnego ataku na wieżę.",
+            "label": "Odstęp między sprawdzaniem ataków",
+            "recommendation": "Zachowaj zwykłe 30 sekund, chyba że chcesz rzadszego sprawdzania."
+          },
+          "attack_preset": {
+            "description": "Wybierz zapisany schemat ataku na Berimond; automatyzacja wykorzysta jego proporcje wojsk do transportów i ataków na wieże.",
+            "label": "Schemat ataku",
+            "recommendation": "Najpierw utwórz i wybierz swój zwykły schemat na Berimond."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Zatrzymaj nowe ataki na wieże, gdy ogólny licznik dziennych zwykłych ataków konta osiągnie ten limit; 0 usuwa dodatkowe ograniczenie.",
+            "label": "Dzienny limit zwykłych ataków",
+            "recommendation": "0, chyba że używasz limitu dla całego konta."
+          },
+          "horse_travel_boost": {
+            "description": "Wybierz podróż z piórem, monetami lub rubinami dla ataków na wieże.",
+            "label": "Przyspieszenie podróży",
+            "recommendation": "Pióro podróżne dla szybkiej podróży bez wyboru rubinów."
+          },
+          "open_settings": {
+            "description": "Na stronie Automatyzacja otwórz ustawienia karty Auto Beri World.",
+            "label": "Otwórz ustawienia"
+          },
+          "source_castle": {
+            "description": "Wybierz zamek lub posterunek w Wielkim Cesarstwie dostarczający te wojska.",
+            "label": "Zamek źródłowy",
+            "recommendation": "Wybierz zamek, w którym stoi twoja armia atakująca."
+          }
+        },
+        "title": "Wybierz atak i źródło zaopatrzenia"
+      },
+      "tools": {
+        "image": {
+          "alt": "Przykładowe ustawienia narzędzi w obozie Automatycznego Berimondu",
+          "caption": "Trzy minima narzędzi i wyraźnie fikcyjny stan obozu."
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "Uzupełniaj tę liczbę stacjonujących taranów według tej samej zasady.",
+            "label": "Minimum taranów",
+            "recommendation": "Dostosuj do zużycia w zwykłym schemacie."
+          },
+          "mantlets_minimum": {
+            "description": "Uzupełniaj tę liczbę stacjonujących osłon według tej samej zasady.",
+            "label": "Minimum osłon",
+            "recommendation": "Dostosuj do zużycia w zwykłym schemacie."
+          },
+          "scaling_ladders_minimum": {
+            "description": "Uzupełniaj tę liczbę stacjonujących drabin w obozie z odpowiednich ofert za monety; 0 pozostawia je bez zarządzania.",
+            "label": "Minimum drabin",
+            "recommendation": "Dostosuj do zwykłego schematu i tempa ataków."
+          }
+        },
+        "title": "Utrzymuj narzędzia obozu"
+      },
+      "transfers": {
+        "image": {
+          "alt": "Przykładowe ustawienia proporcjonalnego transportu wojsk",
+          "caption": "Fikcyjne proporcje 2:1, stan obozu, wolna pojemność i częściowa wysyłka jednego typu; wartości są przykładami, a nie zapisanymi domyślnymi ustawieniami."
+        },
+        "items": {
+          "check_interval": {
+            "description": "Ustaw, jak często automatyzacja odświeża wolną pojemność i stan obu zamków.",
+            "label": "Odstęp między sprawdzeniami",
+            "recommendation": "Zachowaj zwykłe 30 sekund."
+          },
+          "food_only": {
+            "description": "Można wysłać tylko wojska schematu zużywające Żywność; nieobsługiwane jednostki lub nierozpoznane rodziny wojsk wstrzymują działanie z wyjaśnieniem.",
+            "label": "Tylko wojska zużywające Żywność"
+          },
+          "minimum_free_capacity": {
+            "description": "Rozpoczynaj transport dopiero po osiągnięciu podanego progu wolnej pojemności; pojedyncza proporcjonalna wysyłka może być mniejsza.",
+            "label": "Minimalna wolna pojemność",
+            "recommendation": "1 wolne miejsce na wojsko do zwykłego proporcjonalnego uzupełniania."
+          },
+          "owned_berimond_camp": {
+            "description": "Automatyzacja sama znajduje twój obóz w Berimondzie, więc nie wpisujesz identyfikatora obozu.",
+            "label": "Własny obóz w Berimondzie"
+          },
+          "partial_donor": {
+            "description": "Jeśli źródło ma część wymaganego typu wojsk, automatyzacja wysyła tę mniejszą liczbę; bez tego typu czeka zamiast wysyłać inny.",
+            "label": "Częściowy zapas źródła"
+          },
+          "pending_transfer": {
+            "description": "Automatyzacja czeka na dotarcie każdej wysyłki i odświeża stan obozu przed ponownym obliczeniem proporcji.",
+            "label": "Transport w toku"
+          },
+          "preset_troop_mix": {
+            "description": "Automatyzacja sumuje powtarzające się miejsca na wojska w falach i na dziedzińcu wybranego schematu, po czym uzupełnia po jednym niedoreprezentowanym typie.",
+            "label": "Proporcje wojsk schematu"
+          },
+          "troop_transport_skip": {
+            "description": "Wybierz czas trwania przedmiotu używanego przy włączonym przyspieszeniu transportu.",
+            "label": "Przyspieszenie transportu",
+            "recommendation": "Używaj pominięcia 1 godz. dla zwykłych potwierdzonych transportów."
+          },
+          "use_troop_transport_time_skips": {
+            "description": "Zastosuj wybrane przyspieszenie do potwierdzonego transportu, gdy ten wciąż podróżuje.",
+            "label": "Używaj przyspieszeń transportu",
+            "recommendation": "Włącz dla zwykłego uzupełniania obozu, jeśli wystarczy pominięć."
+          }
+        },
+        "title": "Ustaw proporcjonalny transport wojsk"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "Auto Storm może otworzyć i rozbudować zamek Sztormu, atakować forty i wyspy zasobów, sprowadzać wojska oraz kupować wybrane nagrody Luny.",
+      "expectation": "Każda funkcja korzysta z aktualnych danych gry i zapisanych uprawnień; budowa premium, ataki i zakupy pozostają ograniczone włączonymi wyborami.",
+      "name": "Auto Storm",
+      "summary": "Zarządzaj zamkiem Sztormu, atakami i nagrodami"
+    },
+    "recommendationIntro": "Zalecenia opisują zwykłe korzystanie z Auto Storm; są wskazówkami i nie zmieniają zapisanych ustawień.",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "Ilustracja dostępu do zamku Sztormu i przechwytywania celu",
+          "caption": "Wybór zamku startowego, tryby przechwytywania i opcjonalna aktywacja celu; bez prawdziwego zakupu i konta."
+        },
+        "items": {
+          "automatic_open": {
+            "description": "Gdy Sztorm jest zablokowany, wybierz dostępny oficjalny zamek startowy i sprawdź widoczną cenę przed zezwoleniem na odblokowanie.",
+            "label": "Automatycznie otwórz zamek Sztormu",
+            "recommendation": "Włącz, jeśli Auto Storm ma otwierać zwykły zamek startowy po sprawdzeniu ceny."
+          },
+          "blueprint": {
+            "description": "Przechwycony cel jest od razu zapisywany i aktywowany; Wstrzymaj cel zatrzymuje uzgadnianie, ale zachowuje zapisane cele.",
+            "label": "Zapisany cel",
+            "recommendation": "Pozostaw sprawdzony cel Funkcjonalny aktywny przy zwykłej rozbudowie."
+          },
+          "capture_castle": {
+            "description": "Wybierz obecny zamek Sztormu przed przechwyceniem celu budowy.",
+            "label": "Zamek Sztormu",
+            "recommendation": "Przechwyć zamek, którym zamierzasz zarządzać."
+          },
+          "combat_only": {
+            "description": "Walka z fortami i wyspami nie wymaga przechwyconego celu budowy.",
+            "label": "Walka bez celu"
+          },
+          "decoration_preset": {
+            "description": "Po budowie możesz zastosować wybrany schemat dekoracji.",
+            "label": "Schemat dekoracji po budowie",
+            "recommendation": "Pozostaw puste, chyba że chcesz osobnego układu dekoracji."
+          },
+          "exact": {
+            "description": "Zapisz wszystkie obsługiwane szczegóły celu, aby uzyskać dokładną kopię.",
+            "label": "Dokładne przechwycenie",
+            "recommendation": "Używaj dopiero po sprawdzeniu całego celu."
+          },
+          "functional": {
+            "description": "Zapisz cel dla podstawowych funkcji Sztormu bez kopiowania każdego położenia budynku.",
+            "label": "Funkcjonalne przechwycenie",
+            "recommendation": "Funkcjonalny do zwykłego utrzymania."
+          },
+          "layout": {
+            "description": "Zapisz typy i położenie budynków bez dekoracji.",
+            "label": "Przechwycenie układu",
+            "recommendation": "Używaj tylko wtedy, gdy położenie budynków ma znaczenie."
+          },
+          "open_settings": {
+            "description": "Otwórz ustawienia Auto Storm z jego karty Automatyzacja.",
+            "label": "Otwórz ustawienia"
+          },
+          "starter_castle": {
+            "description": "Wybierz aktualnie dostępny oficjalny zamek startowy Sztormu na następny zablokowany sezon.",
+            "label": "Zamek do otwarcia",
+            "recommendation": "Po sprawdzeniu ceny wybierz zwykły zamek startowy, na który cię stać."
+          }
+        },
+        "title": "Otwórz i przechwyć zamek Sztormu"
+      },
+      "combat": {
+        "image": {
+          "alt": "Ilustracja ustawień ataków na forty i wyspy",
+          "caption": "Przykładowe wyspy z akwamarynem, poziomy fortów, kolejność celów i obrońcy okupacyjni."
+        },
+        "items": {
+          "defenders": {
+            "description": "Wybierz rodzaje i liczbę obrońców pozostawionych na zdobytej wyspie; pusta lista pozostawia jednego ocalałego po potwierdzonym zwycięstwie.",
+            "label": "Jednostki obrony wyspy",
+            "recommendation": "Wybierz obrońców, jeśli jeden ocalały nie wystarcza do twojego planu."
+          },
+          "fort_preset": {
+            "description": "Wybierz zapisany układ wojsk i narzędzi do ataku na forty.",
+            "label": "Schemat ataku na forty",
+            "recommendation": "Użyj zwykłego schematu fortowego."
+          },
+          "forts": {
+            "description": "Włącz ataki na wybrane oficjalne poziomy fortów od 40 do 80.",
+            "label": "Forty Sztormu",
+            "recommendation": "Włącz dla poziomów, z którymi wybrany schemat radzi sobie niezawodnie."
+          },
+          "horse": {
+            "description": "Wybierz podróż za pióra, monety lub rubiny dla ataków w Sztormie.",
+            "label": "Przyspieszenie podróży konnej",
+            "recommendation": "Pióro Podróży zapewnia szybki ruch bez wybierania podróży za rubiny."
+          },
+          "island_preset": {
+            "description": "Wybierz zapisany układ wojsk i narzędzi do ataku na wyspy.",
+            "label": "Schemat ataku na wyspy",
+            "recommendation": "Użyj zwykłego schematu wyspowego."
+          },
+          "island_resources": {
+            "description": "Wybierz wyspy z drewnem, kamieniem lub akwamarynem, które można atakować.",
+            "label": "Zasoby wysp",
+            "recommendation": "Wybierz akwamaryn, jeśli chcesz go zbierać."
+          },
+          "island_sizes": {
+            "description": "Wybierz duże, małe lub oba rozmiary wysp z wybranymi zasobami.",
+            "label": "Rozmiary wysp",
+            "recommendation": "Duże i małe do zwykłego zbierania akwamarynu."
+          },
+          "islands": {
+            "description": "Włącz zdobywanie wysp odpowiadających wybranym zasobom i rozmiarom.",
+            "label": "Wyspy zasobów",
+            "recommendation": "Włącz, jeśli chcesz akwamaryn z dużych i małych wysp."
+          },
+          "minimum_attacks": {
+            "description": "Atakuj tylko forty z co najmniej taką liczbą pozostałych ataków.",
+            "label": "Minimalna liczba pozostałych ataków",
+            "recommendation": "0 pozwala zaatakować każdy kwalifikujący się fort."
+          },
+          "priority": {
+            "description": "Uporządkuj włączone grupy celów wysp i fortów; w każdej grupie najbliższy kwalifikujący się cel atakowany jest jako pierwszy.",
+            "label": "Priorytet celów ataku",
+            "recommendation": "Duże wyspy, małe wyspy, następnie forty od poziomu 80 do 40 przy zbieraniu akwamarynu."
+          }
+        },
+        "title": "Wybierz forty i wyspy zasobów"
+      },
+      "construction": {
+        "image": {
+          "alt": "Ilustracja ustawień budowy i rezerw",
+          "caption": "Transport zasobów, pozwolenia na wydatki, rezerwy i poziom portu jako przykładowe elementy."
+        },
+        "items": {
+          "demolition": {
+            "description": "Pozwól na usuwanie w dokładnym celu budynków, których nie można przenieść ani przechować.",
+            "label": "Zezwól na wyburzanie",
+            "recommendation": "Wyłącz, chyba że odbudowujesz sprawdzony układ."
+          },
+          "donor_reserves": {
+            "description": "Zachowaj wybrane ilości drewna, kamienia i akwamarynu u każdego dawcy przed transportem zasobów.",
+            "label": "Chronione rezerwy dawców",
+            "recommendation": "Chroń zwykły budżet drewna i kamienia na budowę; akwamaryn 0, gdy niewykorzystywany."
+          },
+          "harbor_level": {
+            "description": "Wybierz docelowy poziom portu 1, 2 lub 3; poziomy 2 i 3 wymagają budowy premium.",
+            "label": "Docelowy poziom portu",
+            "recommendation": "Poziom 1, chyba że planujesz ulepszenia premium."
+          },
+          "harbor": {
+            "description": "Utrzymuj port na wybranym poziomie, nawet gdy przechwycony cel jest inny.",
+            "label": "Ulepsz port",
+            "recommendation": "Włącz z poziomem 1 do zwykłego korzystania."
+          },
+          "premium": {
+            "description": "Zezwól na kwalifikujące się kroki budowy wydające walutę premium.",
+            "label": "Zezwól na koszty premium",
+            "recommendation": "Wyłącz, chyba że planujesz budowę premium."
+          },
+          "resource_transport": {
+            "description": "Zezwól na potwierdzone dostawy brakujących zasobów budowlanych z zamków dawców.",
+            "label": "Transportuj brakujące zasoby",
+            "recommendation": "Włącz do zwykłej budowy."
+          },
+          "skip_reserves": {
+            "description": "Zachowaj wybrane ilości przedmiotów 1 min, 5 min, 10 min, 30 min, 1 godz., 5 godz. i 24 godz. dla budowy i transportu.",
+            "label": "Skracacze czasu w rezerwie",
+            "recommendation": "Zachowaj 0 krótkich skracaczy, chyba że potrzebujesz ich gdzie indziej; zarezerwuj zapas 1-, 5- i 24-godzinny na inne wydarzenia."
+          },
+          "storm_reserves": {
+            "description": "Wyłącz z budowy wybrane ilości drewna, kamienia i akwamarynu.",
+            "label": "Rezerwy wydatków zamku Sztormu",
+            "recommendation": "Drewno 0 i kamień 0 przy dostępnym nadmiarze; akwamaryn ustaw według planowanego budżetu nagród."
+          },
+          "time_skips": {
+            "description": "Stosuj dostępne pominięcia do budowy, transportu zasobów i wojsk przy zachowaniu wybranych rezerw.",
+            "label": "Użyj pominięć dla budowy i transportu",
+            "recommendation": "Włącz, jeśli chcesz przyspieszyć zwykłą budowę."
+          }
+        },
+        "title": "Ustaw budowę i ochronę zasobów"
+      },
+      "luna": {
+        "image": {
+          "alt": "Ilustracja ustawień nagród Luny",
+          "caption": "Rezerwa akwamarynu, ograniczone cele zakupowe, powtarzalne nagrody i priorytety."
+        },
+        "items": {
+          "cost_cap": {
+            "description": "Odczytaj cenę i limit zakupów każdej nagrody podane przez grę.",
+            "label": "Cena i limit zakupów",
+            "recommendation": "Sprawdź obie wartości tylko do odczytu przed włączeniem."
+          },
+          "keep_aqua": {
+            "description": "Chroń tę ilość akwamarynu przed zakupami Luny.",
+            "label": "Zachowaj akwamaryn",
+            "recommendation": "0, jeśli cała nadwyżka może iść na nagrody; w przeciwnym razie zarezerwuj planowaną ilość."
+          },
+          "priority": {
+            "description": "Sklep najpierw rozpatruje cele zakupowe o niższych numerach.",
+            "label": "Priorytet",
+            "recommendation": "Przypisz 1, 2 i 3 w wybranej kolejności, ustawiając cele ograniczone przed nagrodami nieograniczonymi."
+          },
+          "search": {
+            "description": "Wyszukaj oficjalne nagrody Luny według nazwy przed skonfigurowaniem zakupu.",
+            "label": "Znajdź nagrodę Luny",
+            "recommendation": "Wyszukaj nagrodę, której naprawdę chcesz."
+          },
+          "target_total": {
+            "description": "Ustaw pożądaną łączną liczbę zakupów ograniczonej nagrody.",
+            "label": "Docelowa łączna liczba",
+            "recommendation": "Ustaw tylko liczbę, którą zamierzasz kupić."
+          },
+          "unlimited": {
+            "description": "Kupuj dalej kwalifikującą się powtarzalną nagrodę, dopóki rezerwa i limit sklepu na to pozwalają.",
+            "label": "Bez ograniczeń",
+            "recommendation": "Włącz tylko dla powtarzalnych nagród, których regularnie chcesz."
+          },
+          "use": {
+            "description": "Wybierz nagrodę, aby dopuścić automatyczny zakup.",
+            "label": "Użyj nagrody",
+            "recommendation": "Włącz tylko pożądane nagrody."
+          }
+        },
+        "title": "Wybierz nagrody Luny za akwamaryn"
+      },
+      "save": {
+        "image": {
+          "alt": "Ilustracja zapisu i włączenia Auto Storm",
+          "caption": "Dzienny limit ataków, kontrola zasad, odświeżanie mapy tylko do odczytu i przełącznik automatyzacji."
+        },
+        "items": {
+          "daily_limit": {
+            "description": "Zatrzymaj nowe ataki Auto Storm po osiągnięciu dziennej liczby zwykłych ataków na koncie; 0 usuwa ten dodatkowy limit.",
+            "label": "Dzienny limit zwykłych ataków",
+            "recommendation": "0, chyba że używasz limitu dla całego konta."
+          },
+          "enable": {
+            "description": "Włącz Auto Storm na karcie Automatyzacja, gdy zapisane wybory będą gotowe.",
+            "label": "Przełącznik automatyzacji",
+            "recommendation": "Włącz po konfiguracji."
+          },
+          "map_refresh": {
+            "description": "Odczytaj oficjalny interwał odświeżania mapy Sztormu.",
+            "label": "Interwał odświeżania mapy",
+            "recommendation": "Interwał tylko do odczytu wynosi 2 godziny; po zmianach poczekaj na świeże skanowanie."
+          },
+          "policy_check": {
+            "description": "Ustaw, jak często Auto Storm sprawdza ustawienia i dostępne zadania.",
+            "label": "Interwał sprawdzania zasad",
+            "recommendation": "Zachowaj zwykły interwał 30 sekund."
+          },
+          "save": {
+            "description": "Zapisz wybory zamku, budowy, walki, importu wojsk i Luny przed włączeniem automatyzacji.",
+            "label": "Zapisz ustawienia",
+            "recommendation": "Zapisz po sprawdzeniu wszystkich pozwoleń na wydatki."
+          }
+        },
+        "title": "Zapisz i włącz Auto Storm"
+      },
+      "troops": {
+        "image": {
+          "alt": "Ilustracja importu wojsk i szacunków tylko do odczytu",
+          "caption": "Kolejność dawców, 1000 zachowanych wojsk i szacunki pojemności tylko do odczytu."
+        },
+        "items": {
+          "attack_history": {
+            "description": "Odczytaj potwierdzone ataki w Burzy od resetu serwera podzielone przez 24, a nie średnią kroczącą z 24 godzin.",
+            "label": "Średnia ataków od resetu",
+            "recommendation": "Sprawdź ten szacunek tylko do odczytu przed zmianą zapotrzebowania na import."
+          },
+          "committed_cap": {
+            "description": "Odczytaj automatycznie obliczony limit uwzględniający stacjonujące wojska, ruchy, transport i powroty.",
+            "label": "Limit zaangażowanych wojsk Sztormu",
+            "recommendation": "Sprawdź ten limit tylko do odczytu przed zwiększeniem importu."
+          },
+          "donors": {
+            "description": "Wybierz zamki dawców w pokazanej kolejności; częściowy zapas może dostarczyć mniejszą przesyłkę.",
+            "label": "Zamki dawców",
+            "recommendation": "Wybierz zwykłych dostawców wojsk w preferowanej kolejności."
+          },
+          "import": {
+            "description": "Importuj do Sztormu brakujące wojska ataku lub wybrane wojska obrony z zamków dawców.",
+            "label": "Importuj brakujące wojska",
+            "recommendation": "Włącz, jeśli twój zamek Sztormu potrzebuje regularnych dostaw wojsk."
+          },
+          "map_coverage": {
+            "description": "Sprawdź pokrycie mapy, zanim zaufasz pokazanym celom.",
+            "label": "Pokrycie mapy",
+            "recommendation": "Poczekaj na aktualne pokrycie, jeśli brakuje celów."
+          },
+          "minimum_kept": {
+            "description": "Po wysłaniu ataku pozostaw w Sztormie co najmniej tyle wojsk, zachowując skład aktywnych schematów.",
+            "label": "Minimalna liczba wojsk po wysłaniu",
+            "recommendation": "1000 wojsk jako zwykła rezerwa, dopasowana do twojej armii."
+          },
+          "preset_average": {
+            "description": "Odczytaj średnie zapotrzebowanie na wojska aktywnych schematów ataku, w tym wybranych obrońców wysp.",
+            "label": "Średni aktywny schemat",
+            "recommendation": "Porównaj ten szacunek tylko do odczytu ze swoją armią."
+          }
+        },
+        "title": "Importuj i monitoruj wojska Sztormu"
+      }
+    }
+  }
+}

@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"errors"
@@ -87,13 +88,13 @@ func (*FoodBalancePolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 	}
 	if !decodeSection(snapshot.Configuration, "automation.autoFoodBalance", &settings) {
 		return Decision{
-			Status: "waiting", Detail: "No automatic food-balancing settings are configured",
+			Status: "waiting", Detail: "No automatic food-balancing settings are configured", DetailDescriptor: Localization.New("server.automation.no_automatic_food_balancing.2691eb33", "No automatic food-balancing settings are configured", nil),
 			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 60)),
 		}, nil
 	}
 	if !validHorseTravelBoostID(settings.HorseTravelBoostID) {
 		return Decision{
-			Status: "waiting", Detail: "Choose a supported market-barrow horse travel boost",
+			Status: "waiting", Detail: "Choose a supported market-barrow horse travel boost", DetailDescriptor: Localization.New("server.automation.choose_a_supported_market.ec5e52dd", "Choose a supported market-barrow horse travel boost", nil),
 			NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 60)),
 		}, nil
 	}
@@ -101,7 +102,7 @@ func (*FoodBalancePolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 	stateRefreshInterval := policyInterval(settings.StateRefreshIntervalSec, 900)
 	logisticsRefreshInterval := policyInterval(settings.LogisticsRefreshInterval, 300)
 	if snapshot.GameData == nil {
-		return Decision{Status: "waiting", Detail: "Waiting for official game data", NextCheckAt: snapshot.Now.Add(interval)}, nil
+		return Decision{Status: "waiting", Detail: "Waiting for official game data", DetailDescriptor: Localization.New("server.automation.waiting_for_official_game.fc6f1cc7", "Waiting for official game data", nil), NextCheckAt: snapshot.Now.Add(interval)}, nil
 	}
 	snapshot = foodBalanceSnapshotWithoutBerimond(snapshot)
 	waitingDecision := Decision{}
@@ -125,14 +126,14 @@ func (*FoodBalancePolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 	}
 	if !marketLeaseUntil.IsZero() {
 		rememberWaiting(Decision{
-			Status: "waiting", Detail: "Waiting for leased market barrows to return before refreshing logistics",
+			Status: "waiting", Detail: "Waiting for leased market barrows to return before refreshing logistics", DetailDescriptor: Localization.New("server.automation.waiting_for_leased_market.d1cafa3e", "Waiting for leased market barrows to return before refreshing logistics", nil),
 			NextCheckAt: marketLeaseUntil.Add(time.Second),
 		})
 	}
 	if logisticsStale {
 		return Decision{
-			Status:              "ready",
-			Detail:              "Refresh market and kingdom-resource logistics",
+			Status: "ready",
+			Detail: "Refresh market and kingdom-resource logistics", DetailDescriptor: Localization.New("server.automation.refresh_market_and_kingdom.08cd4e1a", "Refresh market and kingdom-resource logistics", nil),
 			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 			Request:             &Intent.Request{Name: "resource.logistics.refresh", Arguments: json.RawMessage(`{}`)},
 			ReevaluateOnSuccess: true,
@@ -156,8 +157,8 @@ func (*FoodBalancePolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 		}
 		arguments, _ := json.Marshal(map[string]any{"castleId": projection.castle.ID})
 		return Decision{
-			Status:              "waiting",
-			Detail:              fmt.Sprintf("Waiting for current food production and storage at %s", castleName(projection.castle)),
+			Status: "waiting",
+			Detail: fmt.Sprintf("Waiting for current food production and storage at %s", castleName(projection.castle)), DetailDescriptor: Localization.New("server.automation.waiting_for_current_food.9d1b6ec1", "Waiting for current food production and storage at {p0}", Localization.Params{"p0": fmt.Sprintf("%s", castleName(projection.castle))}),
 			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 			Request:             &Intent.Request{Name: "game.focus_castle", Arguments: arguments},
 			ReevaluateOnSuccess: true,
@@ -169,7 +170,7 @@ func (*FoodBalancePolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 			return waitingDecision, nil
 		}
 		return Decision{
-			Status: "idle", Detail: "All observed castles have their configured food reserve",
+			Status: "idle", Detail: "All observed castles have their configured food reserve", DetailDescriptor: Localization.New("server.automation.all_observed_castles_have.d18ff580", "All observed castles have their configured food reserve", nil),
 			NextCheckAt: snapshot.Now.Add(interval), Metrics: map[string]float64{"castles": float64(len(projections))},
 		}, nil
 	}
@@ -177,8 +178,8 @@ func (*FoodBalancePolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 		incoming := incomingMarketResource(snapshot, risk.target.castle, risk.resourceID)
 		if incoming >= risk.shortfall {
 			rememberWaiting(Decision{
-				Status:      "waiting",
-				Detail:      fmt.Sprintf("An in-flight %s shipment protects %s", risk.rate.ResourceJSONKey, castleName(risk.target.castle)),
+				Status: "waiting",
+				Detail: fmt.Sprintf("An in-flight %s shipment protects %s", risk.rate.ResourceJSONKey, castleName(risk.target.castle)), DetailDescriptor: Localization.New("server.automation.an_in_flight_p.d633ca09", "An in-flight {p0} shipment protects {p1}", Localization.Params{"p0": fmt.Sprintf("%s", risk.rate.ResourceJSONKey), "p1": fmt.Sprintf("%s", castleName(risk.target.castle))}),
 				NextCheckAt: nextMarketArrival(snapshot, risk.target.castle, risk.resourceID, interval),
 			})
 			continue
@@ -187,8 +188,8 @@ func (*FoodBalancePolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 		if !storageKnown {
 			arguments, _ := json.Marshal(map[string]any{"castleId": risk.target.castle.ID})
 			return Decision{
-				Status:              "waiting",
-				Detail:              fmt.Sprintf("Waiting for current %s storage at %s", risk.rate.ResourceJSONKey, castleName(risk.target.castle)),
+				Status: "waiting",
+				Detail: fmt.Sprintf("Waiting for current %s storage at %s", risk.rate.ResourceJSONKey, castleName(risk.target.castle)), DetailDescriptor: Localization.New("server.automation.waiting_for_current_p.55f3a78c", "Waiting for current {p0} storage at {p1}", Localization.Params{"p0": fmt.Sprintf("%s", risk.rate.ResourceJSONKey), "p1": fmt.Sprintf("%s", castleName(risk.target.castle))}),
 				NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 				Request:             &Intent.Request{Name: "game.focus_castle", Arguments: arguments},
 				ReevaluateOnSuccess: true,
@@ -213,8 +214,8 @@ func (*FoodBalancePolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decisi
 	}
 	mostUrgent := risks[0]
 	return Decision{
-		Status:      "waiting",
-		Detail:      fmt.Sprintf("No safe %s source is currently available for %s", mostUrgent.rate.ResourceJSONKey, castleName(mostUrgent.target.castle)),
+		Status: "waiting",
+		Detail: fmt.Sprintf("No safe %s source is currently available for %s", mostUrgent.rate.ResourceJSONKey, castleName(mostUrgent.target.castle)), DetailDescriptor: Localization.New("server.automation.no_safe_p_source.a0193130", "No safe {p0} source is currently available for {p1}", Localization.Params{"p0": fmt.Sprintf("%s", mostUrgent.rate.ResourceJSONKey), "p1": fmt.Sprintf("%s", castleName(mostUrgent.target.castle))}),
 		NextCheckAt: snapshot.Now.Add(interval),
 		Metrics: map[string]float64{
 			"shortfall": mostUrgent.shortfall, "hoursUntilDepleted": mostUrgent.urgencyHours,
@@ -255,8 +256,8 @@ func foodBalanceStateRefreshDecision(snapshot Snapshot, interval time.Duration) 
 		}
 		arguments, _ := json.Marshal(map[string]any{"castleId": castle.ID})
 		return Decision{
-			Status:              "ready",
-			Detail:              fmt.Sprintf("Refresh food state at %s", castleName(castle)),
+			Status: "ready",
+			Detail: fmt.Sprintf("Refresh food state at %s", castleName(castle)), DetailDescriptor: Localization.New("server.automation.refresh_food_state_at.9ab2e8aa", "Refresh food state at {p0}", Localization.Params{"p0": fmt.Sprintf("%s", castleName(castle))}),
 			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 			Request:             &Intent.Request{Name: "game.focus_castle", Arguments: arguments},
 			ReevaluateOnSuccess: true,
@@ -312,7 +313,7 @@ func foodBalanceProjections(snapshot Snapshot) (map[State.CastleID]foodBalancePr
 				var err error
 				stormResourceIDs, err = snapshot.GameData.FoodResourceIDs()
 				if err != nil {
-					return nil, fmt.Errorf("resolve Storm food resources: %w", err)
+					return nil, Localization.WithError(fmt.Errorf("resolve Storm food resources: %w", err), Localization.ErrorContext(Localization.New("server.automation.resolve_storm_food_resources.1e18cfc4", "resolve Storm food resources", nil), err))
 				}
 			}
 			fillToCapacity := make(map[State.ResourceID]GameData.FoodConsumptionRate, 2)
@@ -531,8 +532,8 @@ func foodBalanceMarketShipmentFromDonor(
 		) {
 		arguments, _ := json.Marshal(map[string]any{"castleId": donor.projection.castle.ID, "refresh": true})
 		return Decision{
-			Status:              "ready",
-			Detail:              fmt.Sprintf("Refresh travel-building state at %s", castleName(donor.projection.castle)),
+			Status: "ready",
+			Detail: fmt.Sprintf("Refresh travel-building state at %s", castleName(donor.projection.castle)), DetailDescriptor: Localization.New("server.automation.refresh_travel_building_state.7d626275", "Refresh travel-building state at {p0}", Localization.Params{"p0": fmt.Sprintf("%s", castleName(donor.projection.castle))}),
 			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 			Request:             &Intent.Request{Name: "game.focus_castle", Arguments: arguments},
 			ReevaluateOnSuccess: true,
@@ -545,8 +546,8 @@ func foodBalanceMarketShipmentFromDonor(
 		case errors.Is(err, GameData.ErrHorseTravelBoostLayoutUnobserved):
 			arguments, _ := json.Marshal(map[string]any{"castleId": donor.projection.castle.ID, "refresh": true})
 			return Decision{
-				Status:              "ready",
-				Detail:              fmt.Sprintf("Refresh travel-building state at %s", castleName(donor.projection.castle)),
+				Status: "ready",
+				Detail: fmt.Sprintf("Refresh travel-building state at %s", castleName(donor.projection.castle)), DetailDescriptor: Localization.New("server.automation.refresh_travel_building_state.7d626275", "Refresh travel-building state at {p0}", Localization.Params{"p0": fmt.Sprintf("%s", castleName(donor.projection.castle))}),
 				NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 				Request:             &Intent.Request{Name: "game.focus_castle", Arguments: arguments},
 				ReevaluateOnSuccess: true,
@@ -557,7 +558,7 @@ func foodBalanceMarketShipmentFromDonor(
 				Detail: fmt.Sprintf(
 					"%s cannot use the selected horse travel boost; trying other safe resource donors",
 					castleName(donor.projection.castle),
-				),
+				), DetailDescriptor: Localization.New("server.automation.p_cannot_use_the.37bfa452", "{p0} cannot use the selected horse travel boost; trying other safe resource donors", Localization.Params{"p0": fmt.Sprintf("%s", castleName(donor.projection.castle))}),
 				NextCheckAt: snapshot.Now.Add(policyInterval(settings.CheckIntervalSec, 60)),
 			}, false, nil
 		default:
@@ -599,8 +600,8 @@ func foodBalanceMarketShipmentFromDonor(
 		"horseTravelBoostId": settings.HorseTravelBoostID, "minimumCoinReserve": settings.MinimumCoinReserve,
 	})
 	return Decision{
-		Status:              "ready",
-		Detail:              fmt.Sprintf("Send %.0f %s from %s to %s", amount, risk.rate.ResourceJSONKey, castleName(donor.projection.castle), castleName(risk.target.castle)),
+		Status: "ready",
+		Detail: fmt.Sprintf("Send %.0f %s from %s to %s", amount, risk.rate.ResourceJSONKey, castleName(donor.projection.castle), castleName(risk.target.castle)), DetailDescriptor: Localization.New("server.automation.send_p_p_from.e1cd0f20", "Send {p0} {p1} from {p2} to {p3}", Localization.Params{"p0": amount, "p1": fmt.Sprintf("%s", risk.rate.ResourceJSONKey), "p2": fmt.Sprintf("%s", castleName(donor.projection.castle)), "p3": fmt.Sprintf("%s", castleName(risk.target.castle))}),
 		NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 		Metrics:             map[string]float64{"shipmentAmount": amount, "targetNeed": targetNeed, "coinCost": coinCost, "hoursUntilDepleted": risk.urgencyHours},
 		Request:             &Intent.Request{Name: "resource.ship", Arguments: arguments},
@@ -662,18 +663,20 @@ func foodBalanceKingdomShipmentFromDonor(
 ) (Decision, bool) {
 	if pending, found := pendingKingdomResourceTransport(snapshot.State, risk.target.castle.KingdomID); found {
 		detail := fmt.Sprintf("Kingdom %d already has a resource shipment in flight", pending.KingdomID)
+		var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.kingdom_p_already_has.ff03a00e", "Kingdom {p0} already has a resource shipment in flight", Localization.Params{"p0": fmt.Sprintf("%d", pending.KingdomID)})
 		nextCheck := snapshot.Now.Add(coordinatorTick)
 		if pending.RemainingSec > 0 {
 			nextCheck = snapshot.Now.Add(time.Duration(pending.RemainingSec) * time.Second)
 		} else {
 			detail = fmt.Sprintf("Waiting for the kingdom %d resource shipment to settle", pending.KingdomID)
+			detailLocalizationMessage = Localization.New("server.automation.waiting_for_the_kingdom.a568c707", "Waiting for the kingdom {p0} resource shipment to settle", Localization.Params{"p0": fmt.Sprintf("%d", pending.KingdomID)})
 		}
-		return Decision{Status: "waiting", Detail: detail, NextCheckAt: nextCheck}, true
+		return Decision{Status: "waiting", Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage), NextCheckAt: nextCheck}, true
 	}
 	if workflow, found := kingdomResourceTransportWorkflow(snapshot.State, risk.target.castle.KingdomID); found {
 		return Decision{
-			Status:      "waiting",
-			Detail:      fmt.Sprintf("Waiting for %s to refresh the kingdom %d resource destination", workflow.Owner, workflow.KingdomID),
+			Status: "waiting",
+			Detail: fmt.Sprintf("Waiting for %s to refresh the kingdom %d resource destination", workflow.Owner, workflow.KingdomID), DetailDescriptor: Localization.New("server.automation.waiting_for_p_to.3a604b59", "Waiting for {p0} to refresh the kingdom {p1} resource destination", Localization.Params{"p0": fmt.Sprintf("%s", workflow.Owner), "p1": fmt.Sprintf("%d", workflow.KingdomID)}),
 			NextCheckAt: snapshot.Now.Add(coordinatorTick),
 		}, true
 	}
@@ -688,8 +691,8 @@ func foodBalanceKingdomShipmentFromDonor(
 	}
 	arguments, _ := json.Marshal(shipmentArguments)
 	return Decision{
-		Status:              "ready",
-		Detail:              fmt.Sprintf("Send %.0f %s from %s to %s by kingdom transport", amount, risk.rate.ResourceJSONKey, castleName(donor.projection.castle), castleName(risk.target.castle)),
+		Status: "ready",
+		Detail: fmt.Sprintf("Send %.0f %s from %s to %s by kingdom transport", amount, risk.rate.ResourceJSONKey, castleName(donor.projection.castle), castleName(risk.target.castle)), DetailDescriptor: Localization.New("server.automation.send_p_p_from.5650d753", "Send {p0} {p1} from {p2} to {p3} by kingdom transport", Localization.Params{"p0": amount, "p1": fmt.Sprintf("%s", risk.rate.ResourceJSONKey), "p2": fmt.Sprintf("%s", castleName(donor.projection.castle)), "p3": fmt.Sprintf("%s", castleName(risk.target.castle))}),
 		NextCheckAt:         snapshot.Now.Add(interval),
 		Metrics:             map[string]float64{"shipmentAmount": amount, "hoursUntilDepleted": risk.urgencyHours},
 		Request:             &Intent.Request{Name: "resource.ship", Arguments: arguments},

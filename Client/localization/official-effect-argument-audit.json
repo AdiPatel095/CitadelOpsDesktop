@@ -1,0 +1,12 @@
+{
+  "status": "not-currently-rendered",
+  "itemVersion": "786.03",
+  "languageVersion": "4357",
+  "keys": ["equip_effect_description_mutateReserveUnit", "equip_effect_description_mutateReserveUnitLegendaryDragon"],
+  "effectIDs": [466, 488],
+  "effectTypeID": 214,
+  "authoritativeSources": ["effects: areaTypeID43, raidBossID2/3", "raidBossStages.defenderStageEffects:466&594+100,466&597+100"],
+  "currentReachability": "No Client consumer of raidBossStages or defenderStageEffects; no references to466/488 in equipment_effects or relicEffects in audited items. These are raid-boss stage effects, not currently displayed equipment effects.",
+  "unresolvedCompatibility": "The destination unit for positional argument2 requires official runtime mapping before a future consumer is implemented. A downgradeWodID relation alone is insufficient proof.",
+  "genericRendererBehavior": "Unknown positional arguments remain visible tokens and are never stripped or interpreted as completion. Tests retain unknown slots and prevent rescanning user values."
+}

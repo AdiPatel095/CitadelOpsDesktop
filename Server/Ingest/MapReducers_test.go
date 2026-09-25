@@ -251,7 +251,7 @@ func TestNestedMapReducersOwnMapAndPlayerIndependently(t *testing.T) {
 			registered.steps[0].writes.Has(State.ComponentPlayer) {
 			t.Fatalf("%s map writes = %v", opcode, registered.steps[0].writes.List())
 		}
-		if registered.steps[1].writes != State.Components(State.ComponentPlayer) {
+		if registered.steps[1].writes != State.Components(State.ComponentPlayer, State.ComponentAlliance, State.ComponentAlliances) {
 			t.Fatalf("%s player writes = %v", opcode, registered.steps[1].writes.List())
 		}
 	}

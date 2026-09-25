@@ -47,6 +47,11 @@ type UpdaterConfig struct {
 type Manager struct {
 	config UpdaterConfig
 
+	localeMu    sync.Mutex
+	localeCache map[string]*localeCacheEntry
+	localeLoads map[string]*localeLoad
+	localeSlots chan struct{}
+
 	refreshMu sync.Mutex
 	mu        sync.RWMutex
 	store     *Store
@@ -312,8 +317,8 @@ func (manager *Manager) refreshLanguage(ctx context.Context) (*LanguageStore, er
 		return nil, nil, fmt.Errorf("decode official language metadata: %w", err)
 	}
 	version := strings.TrimSpace(metadataDocument.Metadata.Version)
-	if version == "" {
-		return nil, nil, fmt.Errorf("official language metadata has no version")
+	if !safeLanguageVersion(version) {
+		return nil, nil, fmt.Errorf("official language metadata has unsafe or missing version")
 	}
 	languageURL := strings.NewReplacer(
 		"{version}", version,

@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -53,12 +54,12 @@ func (*ConstructionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 	settings := constructionSettings{Targets: map[string][]constructionTarget{}}
 	if !decodeSection(snapshot.Configuration, "automation.constructionItems", &settings) || len(settings.Targets) == 0 {
 		return Decision{
-			Status: "waiting", Detail: "No construction-item targets are configured",
+			Status: "waiting", Detail: "No construction-item targets are configured", DetailDescriptor: Localization.New("server.automation.no_construction_item_targets.ab44deec", "No construction-item targets are configured", nil),
 			NextCheckAt: snapshot.Now.Add(constructionCheckInterval),
 		}, nil
 	}
 	if snapshot.GameData == nil {
-		return Decision{}, fmt.Errorf("official game data is unavailable")
+		return Decision{}, Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.automation.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	metadata, err := snapshot.GameData.ConstructionItemCatalog()
 	if err != nil {
@@ -67,8 +68,8 @@ func (*ConstructionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 	if snapshot.State.Inventory.ConstructionItemsObservedAt.IsZero() ||
 		snapshot.Now.Sub(snapshot.State.Inventory.ConstructionItemsObservedAt) >= constructionCheckInterval {
 		return Decision{
-			Status:              "ready",
-			Detail:              "Refresh construction-item inventory",
+			Status: "ready",
+			Detail: "Refresh construction-item inventory", DetailDescriptor: Localization.New("server.automation.refresh_construction_item_inventory.5cd0c24e", "Refresh construction-item inventory", nil),
 			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 			Request:             &Intent.Request{Name: "construction.inventory.refresh", Arguments: json.RawMessage(`{}`)},
 			ReevaluateOnSuccess: true,
@@ -92,8 +93,8 @@ func (*ConstructionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 			snapshot.Now.Sub(castle.ConstructionSlotsObservedAt) >= constructionCheckInterval {
 			arguments, _ := json.Marshal(map[string]any{"castleId": castle.ID})
 			return Decision{
-				Status:              "ready",
-				Detail:              fmt.Sprintf("Refresh construction-item slots at %s", castleName(castle)),
+				Status: "ready",
+				Detail: fmt.Sprintf("Refresh construction-item slots at %s", castleName(castle)), DetailDescriptor: Localization.New("server.automation.refresh_construction_item_slots.e7899b20", "Refresh construction-item slots at {p0}", Localization.Params{"p0": fmt.Sprintf("%s", castleName(castle))}),
 				NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 				Request:             &Intent.Request{Name: "game.focus_castle", Arguments: arguments},
 				ReevaluateOnSuccess: true,
@@ -130,8 +131,8 @@ func (*ConstructionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 								"constructionItemId": equipped.item.ID, "slot": equipped.slot.Slot, "offerCode": offerCode,
 							})
 							return Decision{
-								Status:              "ready",
-								Detail:              fmt.Sprintf("Upgrade construction item %d to level %d at %s", equipped.item.ID, nextTier.Level, castleName(castle)),
+								Status: "ready",
+								Detail: fmt.Sprintf("Upgrade construction item %d to level %d at %s", equipped.item.ID, nextTier.Level, castleName(castle)), DetailDescriptor: Localization.New("server.automation.upgrade_construction_item_p.f8050e4c", "Upgrade construction item {p0} to level {p1} at {p2}", Localization.Params{"p0": fmt.Sprintf("%d", equipped.item.ID), "p1": nextTier.Level, "p2": fmt.Sprintf("%s", castleName(castle))}),
 								NextCheckAt:         snapshot.Now.Add(10 * time.Second),
 								Request:             &Intent.Request{Name: "construction.upgrade", Arguments: arguments},
 								ReevaluateOnSuccess: true,
@@ -199,8 +200,8 @@ func (*ConstructionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 				"constructionItemId": tier.ID, "slot": representative.Slot, "mode": 0,
 			})
 			return Decision{
-				Status:              "ready",
-				Detail:              fmt.Sprintf("Equip construction item %d at %s", tier.ID, castleName(castle)),
+				Status: "ready",
+				Detail: fmt.Sprintf("Equip construction item %d at %s", tier.ID, castleName(castle)), DetailDescriptor: Localization.New("server.automation.equip_construction_item_p.5f854063", "Equip construction item {p0} at {p1}", Localization.Params{"p0": fmt.Sprintf("%d", tier.ID), "p1": fmt.Sprintf("%s", castleName(castle))}),
 				NextCheckAt:         snapshot.Now.Add(30 * time.Second),
 				Request:             &Intent.Request{Name: "construction.equip", Arguments: arguments},
 				FollowUp:            &Intent.Request{Name: "construction.inventory.refresh", Arguments: json.RawMessage(`{}`)},
@@ -209,24 +210,31 @@ func (*ConstructionPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decis
 		}
 	}
 	detail := "All configured construction-item targets are equipped"
+	var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.all_configured_construction_item.1f951d18", "All configured construction-item targets are equipped", nil)
 	if targets == 0 {
 		detail = "No valid official construction-item targets are configured"
+		detailLocalizationMessage = Localization.New("server.automation.no_valid_official_construction.634f17c2", "No valid official construction-item targets are configured", nil)
 	} else if occupiedHost > 0 {
 		detail = fmt.Sprintf(
 			"%d construction-item target(s) are waiting for an occupied construction slot; a refreshed slot snapshot must confirm removal before replacement",
 			occupiedHost,
 		)
+		detailLocalizationMessage = Localization.New("server.automation.p_construction_item_target.5e66a184", "{p0, number} construction-item target(s) are waiting for an occupied construction slot; a refreshed slot snapshot must confirm removal before replacement", Localization.Params{"p0": occupiedHost})
 	} else if outOfRange > 0 {
 		detail = fmt.Sprintf("%d equipped construction-item target(s) are outside the configured level range", outOfRange)
+		detailLocalizationMessage = Localization.New("server.automation.p_equipped_construction_item.9fac8579", "{p0, number} equipped construction-item target(s) are outside the configured level range", Localization.Params{"p0": outOfRange})
 	} else if missingInventory > 0 {
 		detail = fmt.Sprintf("%d construction-item target(s) are waiting for matching inventory", missingInventory)
+		detailLocalizationMessage = Localization.New("server.automation.p_construction_item_target.7287a6c9", "{p0, number} construction-item target(s) are waiting for matching inventory", Localization.Params{"p0": missingInventory})
 		if blockedShop > 0 {
 			detail = fmt.Sprintf("%d construction-item target(s) have no matching live official shop offer", blockedShop)
+			detailLocalizationMessage = Localization.New("server.automation.p_construction_item_target.84811bfe", "{p0, number} construction-item target(s) have no matching live official shop offer", Localization.Params{"p0": blockedShop})
 		}
 	} else if missingHost > 0 {
 		detail = fmt.Sprintf("%d construction-item target(s) have no compatible observed building", missingHost)
+		detailLocalizationMessage = Localization.New("server.automation.p_construction_item_target.b040dddf", "{p0, number} construction-item target(s) have no compatible observed building", Localization.Params{"p0": missingHost})
 	}
-	return Decision{Status: "idle", Detail: detail, NextCheckAt: nextCheck}, nil
+	return Decision{Status: "idle", Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage), NextCheckAt: nextCheck}, nil
 }
 
 func equippedConstructionForVariant(
@@ -319,7 +327,7 @@ func constructionPurchaseDecision(
 				"Construction-item inventory is full (%d/%d)",
 				inventoryCount,
 				State.ConstructionItemInventoryLimit,
-			),
+			), DetailDescriptor: Localization.New("server.automation.construction_item_inventory_is.931b8391", "Construction-item inventory is full ({p0}/{p1})", Localization.Params{"p0": inventoryCount, "p1": State.ConstructionItemInventoryLimit}),
 			NextCheckAt: snapshot.Now.Add(constructionCheckInterval),
 		}, "inventory-full"
 	}
@@ -332,8 +340,8 @@ func constructionPurchaseDecision(
 		snapshot.Now.Sub(offersObservedAt) >= constructionCheckInterval {
 		arguments, _ := json.Marshal(map[string]any{"castleId": mainCastle.ID})
 		return Decision{
-			Status:              "ready",
-			Detail:              "Refresh live construction-item shop offers",
+			Status: "ready",
+			Detail: "Refresh live construction-item shop offers", DetailDescriptor: Localization.New("server.automation.refresh_live_construction_item.c2231963", "Refresh live construction-item shop offers", nil),
 			NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 			Request:             &Intent.Request{Name: "construction.shop", Arguments: arguments},
 			ReevaluateOnSuccess: true,
@@ -381,15 +389,15 @@ func constructionPurchaseDecision(
 			"castleId": mainCastle.ID, "productId": selected.PackageID, "amount": amount,
 		})
 		return Decision{
-			Status:              "ready",
-			Detail:              fmt.Sprintf("Buy construction item %d for configured targets", tier.ID),
+			Status: "ready",
+			Detail: fmt.Sprintf("Buy construction item %d for configured targets", tier.ID), DetailDescriptor: Localization.New("server.automation.buy_construction_item_p.4a91a283", "Buy construction item {p0} for configured targets", Localization.Params{"p0": fmt.Sprintf("%d", tier.ID)}),
 			NextCheckAt:         snapshot.Now.Add(10 * time.Second),
 			Request:             &Intent.Request{Name: "construction.purchase", Arguments: arguments},
 			FollowUp:            &Intent.Request{Name: "construction.inventory.refresh", Arguments: json.RawMessage(`{}`)},
 			ReevaluateOnSuccess: true,
 		}, "purchase"
 	}
-	return Decision{Status: "blocked", Detail: "No matching live or official trivial construction-item shop offer", NextCheckAt: snapshot.Now.Add(constructionCheckInterval)}, "no-offer"
+	return Decision{Status: "blocked", Detail: "No matching live or official trivial construction-item shop offer", DetailDescriptor: Localization.New("server.automation.no_matching_live_or.c7c2e496", "No matching live or official trivial construction-item shop offer", nil), NextCheckAt: snapshot.Now.Add(constructionCheckInterval)}, "no-offer"
 }
 
 func constructionShopCastle(gameState State.GameState) (State.CastleState, bool) {

@@ -1,0 +1,2080 @@
+{
+  "ui": {
+    "guideButton": "指南",
+    "calendarButton": "日历",
+    "recommendedLabel": "推荐",
+    "backToSettings": "返回设置",
+    "backToGuide": "返回指南",
+    "howToSetUp": "设置方法",
+    "whatToExpect": "预期效果",
+    "openFullSizePicture": "打开原尺寸图片",
+    "illustrativeExample": "示意示例",
+    "enlargePicture": "放大示例图片",
+    "fullSizePicture": "原尺寸示例图片；滚动查看所有设置",
+    "towerGuideTitle": "自动攻击高塔指南",
+    "birdGuideTitle": "部队自动庇护指南",
+    "towerGuideIntro": "按以下步骤设置自动攻塔；点击示例图片可放大查看。",
+    "birdGuideIntro": "按以下步骤设置自动驻军避险；点击示例图片可放大查看。",
+    "towerPreviewTitle": "自动攻击高塔设置示例",
+    "birdPreviewTitle": "部队自动庇护设置示例",
+    "stationGuideTitle": "自动驻军避险指南",
+    "stationGuideIntro": "按以下步骤设置自动驻军避险；选择示例图片可放大查看。",
+    "stationPreviewTitle": "自动驻军避险设置示例",
+    "fortressGuideIntro": "按照这些步骤设置要塞自动攻击；选择示例面板可放大查看。",
+    "fortressGuideTitle": "要塞自动攻击指南",
+    "fortressPreviewTitle": "要塞自动攻击设置示例",
+    "invasionGuideIntro": "按照这些步骤设置入侵自动攻击；选择示例面板可放大查看。",
+    "invasionGuideTitle": "入侵自动攻击指南",
+    "invasionPreviewTitle": "入侵自动攻击设置示例",
+    "nomadGuideIntro": "按照这些步骤设置自动游牧武士；选择示例面板即可放大。",
+    "nomadGuideTitle": "自动游牧武士指南",
+    "nomadPreviewTitle": "自动游牧武士设置示例",
+    "advisorGuideIntro": "按照以下步骤设置自动顾问；选择示例面板可将其放大。",
+    "advisorGuideTitle": "自动顾问指南",
+    "advisorPreviewTitle": "自动顾问设置示例",
+    "khanGuideIntro": "按照以下步骤设置自动可汗；选择示例面板可放大查看。",
+    "khanGuideTitle": "自动可汗指南",
+    "khanPreviewTitle": "自动可汗设置示例",
+    "beriGuideIntro": "按照这些步骤设置自动贝里蒙德世界；选择示例面板可放大查看。",
+    "beriGuideTitle": "自动贝里蒙德世界指南",
+    "beriPreviewTitle": "自动贝里蒙德世界设置示例",
+    "stormGuideIntro": "按照这些步骤设置自动风暴；选择示例面板可放大查看。",
+    "stormGuideTitle": "自动风暴指南",
+    "stormPreviewTitle": "自动风暴设置示例"
+  },
+  "autoTower": {
+    "recommendationIntro": "以下是日常使用的建议；保存前请检查。",
+    "steps": {
+      "commanders": {
+        "title": "选择指挥官",
+        "items": {
+          "commander_assignment": {
+            "label": "指挥官分配",
+            "description": "在“指挥官”中，允许希望使用的指挥官参与自动攻塔，然后选择“保存分配”。",
+            "recommendation": "为自动攻塔分配20名指挥官。"
+          }
+        }
+      },
+      "general": {
+        "title": "设置扫描、每日上限和行军",
+        "items": {
+          "open_settings": {
+            "label": "打开设置",
+            "description": "打开“自动化”，然后点击自动攻塔卡片上的设置按钮。"
+          },
+          "authoritative_map_scan_every": {
+            "label": "权威地图扫描 · 每隔",
+            "description": "选择每座城堡的塔楼列表刷新频率，范围为1,800至3,600秒；两次扫描之间仍可发起攻击。",
+            "recommendation": "1,800秒（30分钟）。"
+          },
+          "daily_normal_attack_limit": {
+            "label": "每日普通攻击上限",
+            "description": "达到整个账号的每日攻击上限后暂停，直到游戏重置计数；设为0则取消上限。",
+            "recommendation": "整个账号每天3,500次攻击。"
+          },
+          "horse_travel_boost": {
+            "label": "骑乘行军加速",
+            "description": "每次攻击都使用所选行军方式，包括顾问连击中的每次攻击；速度取决于出发城堡的行军建筑。",
+            "recommendation": "在支持的地区选择金币档，并确保金币充足。"
+          },
+          "travel_feather": {
+            "label": "行军羽毛",
+            "description": "使用行军羽毛，而非消耗金币或红宝石的坐骑档位。"
+          },
+          "horse_ship_tier_coins": {
+            "label": "坐骑／船只档 · 金币",
+            "description": "使用金币档行军时消耗金币。"
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "战马／快船档 · 红宝石",
+            "description": "选用第一个红宝石行军档时消耗红宝石。"
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "骏马／最快船档 · 红宝石",
+            "description": "选用更快的红宝石行军档时消耗红宝石。"
+          }
+        },
+        "image": {
+          "alt": "使用虚构“合成城堡”数据的自动攻塔常规设置",
+          "caption": "设置扫描间隔、每日攻击上限和行军方式；顾问控制项会在可用时出现。"
+        }
+      },
+      "castle": {
+        "title": "逐座设置城堡",
+        "items": {
+          "castle_switch": {
+            "label": "城堡开关",
+            "description": "启用希望自动攻塔进行扫描和发起攻击的每座城堡。",
+            "recommendation": "启用平时要使用的城堡。"
+          },
+          "radius": {
+            "label": "半径",
+            "description": "选择这座城堡周围的搜索范围，1至50格。",
+            "recommendation": "35格。"
+          },
+          "choose_troop": {
+            "label": "选择兵种",
+            "description": "选择驻扎兵种填满攻击两翼；数量不足时攻击会等待。",
+            "recommendation": "数量足以填满两翼的驻扎攻击兵种。"
+          },
+          "maiden_supported_only": {
+            "label": "仅限受少女遗物支持",
+            "description": "将这座城堡限制为使用拥有受支持少女遗物的可用指挥官。",
+            "recommendation": "除非所选指挥官拥有受支持的少女遗物，否则关闭。"
+          }
+        },
+        "image": {
+          "alt": "使用虚构“合成城堡”数据的自动攻塔城堡设置",
+          "caption": "启用城堡，并选择半径、兵种和少女遗物要求。"
+        }
+      },
+      "advisor": {
+        "title": "按需使用顾问 · 可用时",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "配合时间跳跃使用顾问",
+            "description": "反复攻击同一座塔：首先消耗一次每日攻击，此后每次额外攻击消耗一个至少三小时的时间跳跃。",
+            "recommendation": "关闭。"
+          },
+          "auto_activate_with_token": {
+            "label": "使用令牌自动激活",
+            "description": "顾问未激活时使用现有的男爵顾问令牌；不会购买令牌或消耗红宝石。",
+            "recommendation": "顾问关闭时保持关闭。"
+          },
+          "maximum_daily_time_skips": {
+            "label": "每日时间跳跃上限",
+            "description": "限制已确认的顾问连击所使用的时间跳跃数量，直至游戏重置每日攻击计数；设为0会暂停顾问发起攻击。",
+            "recommendation": "顾问关闭时设为0。"
+          }
+        }
+      },
+      "finish": {
+        "title": "设置日程、保存并开启",
+        "items": {
+          "calendar": {
+            "label": "日历",
+            "description": "使用日历选择自动攻塔的运行时间；兵力是否可用以及其他限制仍然适用。",
+            "recommendation": "平时的运行时间。"
+          },
+          "save_changes": {
+            "label": "保存更改",
+            "description": "选择“保存更改”以应用设置；阅读本指南不会保存设置。"
+          },
+          "auto_towers_switch": {
+            "label": "自动攻击高塔开关",
+            "description": "保存设置后，在“自动化”页面开启自动攻塔，任务才能运行。",
+            "recommendation": "保存所需设置后开启。"
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "自动攻击高塔",
+      "summary": "反复攻击附近塔楼",
+      "description": "从所选城堡向强盗男爵塔和王国塔发起攻击。",
+      "expectation": "需要足够兵力、可用的指挥官以及可攻击的塔楼。兵力尚未返回或塔楼计时未结束时可能需要等待。"
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "推荐值说明自动驻军避险的日常用法；这些建议不会更改已保存的设置。",
+    "steps": {
+      "open": {
+        "title": "打开自动驻军避险设置",
+        "items": {
+          "open_settings": {
+            "label": "打开设置",
+            "description": "在指挥中心顶部，选择自动驻军避险旁的设置按钮。"
+          }
+        }
+      },
+      "general": {
+        "title": "设置驻扎时间和派遣规则",
+        "items": {
+          "random_delay_range_min": {
+            "label": "随机延时范围 · 最小值",
+            "description": "设置行军结束后，部队在联盟目的地驻扎的最短小时数。",
+            "recommendation": "抵达后在联盟目标驻扎6小时。"
+          },
+          "random_delay_range_max": {
+            "label": "随机延时范围 · 最大值",
+            "description": "设置在目的地驻扎的最长时间；自动驻军避险会在最小值和最大值之间随机选择时长。",
+            "recommendation": "抵达后在联盟目标驻扎12小时。"
+          },
+          "minimum_to_send": {
+            "label": "最低派遣门槛",
+            "description": "设置城堡留足预备兵后，符合条件的兵力总数必须达到的最低值；这是门槛，不是实际派遣人数。",
+            "recommendation": "城堡留足预备兵后，符合条件的兵力共计1,000人；这是门槛，不是准确的派遣人数。"
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "最低剩余保护时间（RPT）",
+            "description": "仅使用剩余保护天数超过此值的目标；设为0则跳过检查。",
+            "recommendation": "3天；目标的剩余保护时间必须超过3天。"
+          }
+        },
+        "image": {
+          "alt": "自动驻军避险的驻扎延时、最低派遣人数、最低RPT和预设控制项",
+          "caption": "设置驻扎时间和使用条件，保存前检查“日常预备兵”预设。"
+        }
+      },
+      "reserves": {
+        "title": "选择各城堡留守的部队",
+        "items": {
+          "add_unit": {
+            "label": "添加兵种",
+            "description": "为每座城堡选择留守而不派遣的兵种；预备兵列表为空时，扣除自动保留兵力后，所有符合条件的部队均可派遣。",
+            "recommendation": "选择每座城堡用于防御或其他日常任务的兵种。"
+          },
+          "quantity": {
+            "label": "数量",
+            "description": "为选定的各兵种设置要留守的正数数量；设为0不会保留该兵种的全部部队。",
+            "recommendation": "按防御或其他任务需求，留守各兵种所需数量；请核对实际兵力。"
+          },
+          "remove_unit": {
+            "label": "移除兵种",
+            "description": "移除兵种卡片，即停止在所选城堡保留该兵种。"
+          },
+          "auto_fortress_reserve": {
+            "label": "要塞自动化预备兵",
+            "description": "自动要塞锁定这里的全部恐狼时，这部分自动保留兵力不会保存到自动驻军避险预设中；锁定结束后，之前手动设置的恐狼数量会恢复。"
+          }
+        },
+        "image": {
+          "alt": "虚构“示例城堡”的自动驻军避险预备兵卡片",
+          "caption": "只保留这座城堡需要的部队；兵种101和兵种102是虚构的占位名称。"
+        }
+      },
+      "presets": {
+        "title": "保存并选择预设",
+        "items": {
+          "preset_name": {
+            "label": "预设名称",
+            "description": "输入新预设的名称，或在保存更改前编辑已应用预设的名称。",
+            "recommendation": "使用“日常”等易于识别的名称。"
+          },
+          "load_preset": {
+            "label": "加载预设",
+            "description": "从列表中选择已保存的预设，或选择“已保存的配置”，以使用不带名称的已保存设置。",
+            "recommendation": "要将日常预设设为运行默认值：选择该预设，点击“应用”，再点击“保存更改”。"
+          },
+          "apply": {
+            "label": "应用",
+            "description": "将所选预设加载到当前设置草稿；选择“保存更改”才会将其设为运行默认值。"
+          },
+          "save_as_new": {
+            "label": "另存为新预设",
+            "description": "立即将当前设置保存为新的命名预设，并选为运行默认值。"
+          },
+          "delete": {
+            "label": "删除",
+            "description": "确认后立即删除所选预设；如果它是运行默认值，也会清除默认选择。"
+          },
+          "runtime_default": {
+            "label": "运行默认值",
+            "description": "运行默认值是已保存的当前预设；没有启用预设时，则是已保存的配置。"
+          }
+        }
+      },
+      "finish": {
+        "title": "设置日程、保存并启用",
+        "items": {
+          "calendar": {
+            "label": "日历",
+            "description": "选择自动驻军避险的运行时间，然后点击“保存日程”以保存更改。",
+            "recommendation": "持续运行时可关闭日程；也可设置常用的每周时段并保存日程。"
+          },
+          "specify_preset_per_period": {
+            "label": "按时段指定预设",
+            "description": "若某个日历时段需要覆盖运行默认值，请为该时段选择已保存的预设。",
+            "recommendation": "除非不同时段需要不同预备兵，否则关闭。"
+          },
+          "save_changes": {
+            "label": "保存更改",
+            "description": "保存设置草稿及已应用预设的更改；阅读本指南不会保存这些更改。"
+          },
+          "auto_bird_switch": {
+            "label": "部队自动庇护开关",
+            "description": "保存后，在指挥中心顶部开启自动驻军避险，以运行各城堡的正常循环。",
+            "recommendation": "保存后开启自动驻军避险；顶部状态会显示各城堡的循环。"
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "部队自动庇护",
+      "summary": "按日程将选定部队驻扎在外",
+      "description": "定期将富余部队驻扎到符合条件的联盟城堡，待部队返回后重复循环。",
+      "expectation": "没有合适目的地或可派遣的富余部队时会等待。调走部队不会让城堡无敌。"
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "常规设置",
+      "scan": "扫描间隔：1,800秒",
+      "daily": "每日攻击上限：3,500",
+      "travel": "行军加速：金币档",
+      "advisor": "顾问：关闭"
+    },
+    "towerCastle": {
+      "title": "示例城堡",
+      "enabled": "自动攻击高塔：开启",
+      "radius": "半径：35格",
+      "troop": "所选兵种：虚构的攻击部队",
+      "maiden": "仅限受少女遗物支持：关闭"
+    },
+    "birdGeneral": {
+      "title": "常规设置",
+      "min": "最短驻扎：6小时",
+      "max": "最长驻扎：12小时",
+      "send": "保留预备兵后的最低符合条件人数：1,000人",
+      "rpt": "最低剩余保护时间：超过3天",
+      "preset": "预设：日常预备兵"
+    },
+    "birdCastle": {
+      "title": "示例城堡",
+      "unitOne": "虚构兵种101保留：80",
+      "unitTwo": "虚构兵种102保留：40",
+      "add": "添加兵种"
+    },
+    "stationGeneral": {
+      "title": "自动驻军避险设置示例",
+      "evacuate": "开始撤离：攻击到达前1分钟",
+      "protection": "目标保护期：超过3天",
+      "recall": "危险解除后召回：开启",
+      "gate": "后备开门：关闭",
+      "castle": "虚构城堡：预留80名防御部队",
+      "save": "保存更改并启用自动驻军避险"
+    },
+    "fortressAttack": {
+      "commander": "指挥官：最快的合格已分配指挥官",
+      "daily": "每日普通攻击上限：0",
+      "title": "攻击设置示例",
+      "travel": "行军加速：旅行羽毛",
+      "wave": "一个完整波次的恐狼填满两翼"
+    },
+    "fortressKingdoms": {
+      "everwinter": "永冬冰川：解锁后开启",
+      "peaks": "火焰山峰：解锁后开启",
+      "sands": "烈焰沙漠：解锁后开启",
+      "title": "王国设置示例"
+    },
+    "fortressSupply": {
+      "purchase": "每次会话的恐狼数量：5,000",
+      "reserve": "保留可汗石板：25,000",
+      "route": "补给：从大帝国主城堡到已启用王国",
+      "skips": "确认转移使用时间加速：开启",
+      "title": "恐狼补给示例"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "血鸦：适合的已解锁难度",
+      "current": "当前活动难度保持不变",
+      "foreign": "异国领主：适合的已解锁难度",
+      "title": "活动难度示例"
+    },
+    "invasionFortify": {
+      "currency": "开启时：活动提供的活动货币",
+      "enabled": "强化每个目标：关闭",
+      "rubies": "仅在明确选择时使用红宝石",
+      "title": "目标强化示例"
+    },
+    "invasionLimits": {
+      "before": "活动结束前30分钟停止",
+      "daily": "每日普通攻击上限：0",
+      "score": "分数：平时高于0的最后个人奖励",
+      "title": "分数和停止限制示例"
+    },
+    "invasionSetup": {
+      "castle": "出发地：大帝国常用活动城堡",
+      "preset": "攻击预设：已保存的活动阵型",
+      "title": "活动攻击设置示例",
+      "travel": "行军加速：旅行羽毛"
+    },
+    "nomadDifficulty": {
+      "title": "活动难度示例",
+      "active": "活动进行中：匹配当前难度",
+      "nomad": "游牧：已解锁且能稳定完成的难度",
+      "samurai": "武士：已解锁且能稳定完成的难度"
+    },
+    "nomadSetup": {
+      "castle": "出发地：大帝国常用活动城堡",
+      "travel": "行军加速：旅行羽毛",
+      "nomadPreset": "游牧预设：已保存的营地阵型",
+      "samuraiPreset": "武士预设：已保存的营地阵型",
+      "title": "活动营地设置示例"
+    },
+    "nomadCooldowns": {
+      "clear": "确认获胜后清除冷却：开",
+      "long": "保留5小时/24小时：用于其他活动的库存",
+      "short": "保留1/5/10/30/60分钟：每种0个",
+      "title": "冷却选项示例"
+    },
+    "nomadLimits": {
+      "daily": "额外每日限制：0",
+      "score": "积分目标：最后一个个人奖励里程碑",
+      "time": "结束前停止：30分钟",
+      "title": "停止规则示例"
+    },
+    "nomadTrial": {
+      "coordinates": "目标X/Y：日常运行不使用",
+      "effect": "开启试验会以真实攻击取代活动运行",
+      "title": "试验控件示例",
+      "trial": "临时强盗男爵试验：关"
+    },
+    "advisorDifficulty": {
+      "active": "活动进行中：匹配当前难度",
+      "nomad": "游牧：已解锁且能稳定完成的难度",
+      "samurai": "武士：已解锁且能稳定完成的难度",
+      "title": "活动难度示例"
+    },
+    "advisorSetup": {
+      "castle": "出发地：大帝国常用活动城堡",
+      "travel": "行军加速：旅行羽毛",
+      "preset": "预设：为当前活动保存的阵型",
+      "title": "顾问攻击设置示例"
+    },
+    "advisorActivation": {
+      "locked": "如果尚未解锁：打开顾问激活确认窗口",
+      "paid": "确认使用代币或游戏显示的免费激活",
+      "save": "保存设置，然后开启自动化卡片",
+      "title": "激活流程示例"
+    },
+    "advisorOverview": {
+      "progress": "当前攻击数 / 请求的攻击数",
+      "refresh": "刷新概览以查看当前总数",
+      "results": "胜场、败场、损失的单位和工具",
+      "title": "实时概览示例"
+    },
+    "advisorResources": {
+      "coins": "每次攻击的全部金币：仅在足够时使用500",
+      "feathers": "保留羽毛：其他地方不需要时设为0",
+      "rubies": "每次攻击的红宝石：使用行军羽毛时设为0",
+      "skips": "保留60分钟道具：0件；按需保留5小时和24小时道具",
+      "title": "资源预算示例"
+    },
+    "advisorSizing": {
+      "actual": "实际批次：受资源和时间限制",
+      "maximum": "最大攻击数：9,999",
+      "time": "未使用的活动时间：30分钟",
+      "title": "批次规模示例"
+    },
+    "khanCooldowns": {
+      "long": "为其他任务保留5小时／24小时加速道具",
+      "pause": "可用加速道具不足会暂停新攻击",
+      "short": "保留1分／5分／10分／30分／1小时：每种0件",
+      "skip": "跳过每次营地冷却：开启",
+      "title": "加速道具保留量示例"
+    },
+    "khanLimits": {
+      "daily": "每日普通攻击：0，无额外限制",
+      "end": "活动结束前5分钟停止新攻击",
+      "points": "达到游牧者积分时停止：0，关闭",
+      "title": "停止限制示例",
+      "tools": "防御工具补充：按需开启"
+    },
+    "khanProtection": {
+      "gate": "达到阈值时打开主城城门并暂停可汗",
+      "outpost": "出兵点为前哨站：保护停用",
+      "source": "从主城出兵时适用",
+      "threshold": "城墙进攻兵力：1,000",
+      "title": "主城城墙保护示例"
+    },
+    "khanRage": {
+      "attacks": "自动营地攻击：未锁定",
+      "booster": "要求限时怒气积分增益：关闭",
+      "chain": "最大怒气连击数：0，无额外上限",
+      "title": "怒气控制示例",
+      "trigger": "满怒反击：开启"
+    },
+    "khanSave": {
+      "defense": "反击前检查主城防御",
+      "enable": "在自动化卡片上启用自动可汗",
+      "priority": "自动避兵单独处理玩家攻击",
+      "save": "准备好两套预设后保存设置",
+      "title": "保存与启用流程示例"
+    },
+    "khanSetup": {
+      "defense": "防守地点：大帝国主城",
+      "presets": "已保存的可汗攻击和主城防御预设",
+      "source": "出兵点：大帝国前哨站",
+      "title": "可汗设置示例",
+      "travel": "使用行军羽毛加快行军"
+    },
+    "beriBuilder": {
+      "permissions": "高级货币与拆除：检查前关闭",
+      "reserves": "预留贝里蒙德资源与跳过道具",
+      "stable": "派系马厩：所选等级1至5",
+      "target": "内置指定目标或已检查的自定义布局",
+      "title": "可选营地建造示例"
+    },
+    "beriReadiness": {
+      "booster": "勇气增益条件：可选",
+      "food": "运输要求预设部队消耗食物",
+      "preset": "检查已保存的部队和工具栏位",
+      "title": "塔楼攻击准备示例"
+    },
+    "beriSave": {
+      "calendar": "持续运行时关闭日历",
+      "enable": "从自动化卡片开启自动贝里蒙德世界",
+      "save": "检查兵种比例后保存设置",
+      "title": "保存与启用流程示例"
+    },
+    "beriSetup": {
+      "donor": "拥有所需部队的大帝国来源城堡",
+      "limit": "每日普通攻击：额外上限0",
+      "preset": "已保存的贝里蒙德攻击预设",
+      "title": "攻击与补给设置示例",
+      "travel": "塔楼攻击使用旅行羽毛"
+    },
+    "beriTools": {
+      "ladders": "攀墙梯：根据常规攻击配置",
+      "mantlets": "护盾：根据常规攻击配置",
+      "rams": "攻城锤：根据常规攻击配置",
+      "title": "营地工具最低数量示例"
+    },
+    "beriTransfers": {
+      "capacity": "空余容量：1；门槛：1",
+      "mix": "预设比例：2个A单位对1个B单位",
+      "next": "下一批：从来源库存最多运输1个B",
+      "stock": "营地库存：2个A、0个B",
+      "title": "按比例运输示例"
+    },
+    "stormCastle": {
+      "blueprint": "已保存目标启用；暂停仍会保留",
+      "capture": "当前城堡：功能目标",
+      "decorations": "装饰预设：可选",
+      "title": "风暴城堡访问示例",
+      "unlock": "自动开启：检查价格后开启"
+    },
+    "stormCombat": {
+      "defenders": "占领守军：所选部队或一名幸存者",
+      "forts": "要塞：选定等级40至80",
+      "islands": "海蓝宝石岛：大岛和小岛",
+      "priority": "大岛、小岛，然后是80至40级要塞",
+      "title": "要塞和岛屿攻击示例"
+    },
+    "stormConstruction": {
+      "harbor": "港口：开启，等级1",
+      "resources": "木材0；石材0；计划的海蓝宝石",
+      "spending": "高级费用与拆除：关闭",
+      "title": "建造与预留示例",
+      "transport": "资源运输：开启"
+    },
+    "stormLuna": {
+      "cost": "价格与购买上限：只读",
+      "limited": "限量目标先于无限奖励",
+      "priority": "优先级1、2、3；编号小的先执行",
+      "reserve": "保留海蓝宝石：使用余量时为0",
+      "title": "露娜奖励示例"
+    },
+    "stormSave": {
+      "check": "策略检查：30秒",
+      "daily": "每日普通攻击：额外上限0",
+      "map": "地图刷新：2小时，只读",
+      "switch": "保存，然后开启自动风暴",
+      "title": "保存与启用流程示例"
+    },
+    "stormTroops": {
+      "averages": "重置后已确认攻击数÷24；预设平均值只读",
+      "cap": "已占用部队上限：只读",
+      "donors": "供给城堡：显示顺序，允许部分库存",
+      "minimum": "最低保留：1,000名士兵",
+      "title": "部队输入示例"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "推荐值适用于日常使用，仅供参考，不会更改已保存的设置。",
+    "steps": {
+      "open": {
+        "title": "打开自动驻军避险设置",
+        "items": {
+          "open_settings": {
+            "label": "打开设置",
+            "description": "在指挥中心顶部选择自动驻军避险旁的设置按钮。"
+          }
+        }
+      },
+      "general": {
+        "title": "设置攻击应对方式",
+        "items": {
+          "evacuate_at": {
+            "label": "开始撤离",
+            "description": "在攻击到达前指定分钟数开始撤离；如果首次发现攻击时已进入该时间窗口，就立即开始。",
+            "recommendation": "攻击到达前1分钟。"
+          },
+          "minimum_bird_days": {
+            "label": "目标最低保护天数",
+            "description": "选择剩余保护时间严格多于此天数的盟友城堡；设为0则取消此要求。",
+            "recommendation": "3天，因此目标必须剩余超过3天的保护时间。"
+          },
+          "recall_when_clear": {
+            "label": "危险解除后召回",
+            "description": "最后一次发现的攻击结束且没有其他来袭攻击时，召回驻扎的部队。",
+            "recommendation": "日常使用时开启。"
+          },
+          "open_gate_fallback": {
+            "label": "开门作为后备方案",
+            "description": "部队无法撤离时，此选项会在除贝里蒙德外的所有王国为遭攻击的己方城堡开门6小时。",
+            "recommendation": "除非希望撤离失败时自动开门，否则保持关闭。"
+          },
+          "protection_mode": {
+            "label": "已购买的保护模式",
+            "description": "已购买的保护模式处于准备或生效状态时，即使后备选项关闭，自动驻军避险仍会在贝里蒙德以外使用城门。"
+          }
+        },
+        "image": {
+          "alt": "展示撤离时间、保护期、召回、城门和城堡预留部队的虚构设置",
+          "caption": "保存前检查四项应对设置以及每座城堡的防御预留部队。"
+        }
+      },
+      "reserves": {
+        "title": "选择每座城堡留守的部队",
+        "items": {
+          "add_troops": {
+            "label": "添加部队",
+            "description": "选择留在城堡的部队类型；预留列表为空时，除工具外的所有合格部队都可撤离。",
+            "recommendation": "保留日常防御驻军，让多余的攻击部队可以转移。"
+          },
+          "quantity": {
+            "label": "数量",
+            "description": "设置每种选定部队在此城堡留守的数量；0表示不预留该类型。",
+            "recommendation": "使用此城堡日常防御所需的数量。"
+          },
+          "edit_defense_troops": {
+            "label": "编辑防御部队",
+            "description": "重新打开部队选择器，修改此城堡预留部队的类型或数量。"
+          },
+          "remove_defense_troop": {
+            "label": "移除防御部队",
+            "description": "移除预留卡片后，不再将该类型部队留在城堡。"
+          }
+        }
+      },
+      "finish": {
+        "title": "保存并启用自动驻军避险",
+        "items": {
+          "save_changes": {
+            "label": "保存更改",
+            "description": "离开设置前保存时间、开关和每座城堡的预留部队。"
+          },
+          "auto_station_switch": {
+            "label": "自动驻军避险开关",
+            "description": "保存后在指挥中心顶部启用自动驻军避险，以监测来袭的玩家攻击。",
+            "recommendation": "检查预留部队后，为日常防护开启。"
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "自动驻军避险",
+      "summary": "在来袭攻击前转移合格部队",
+      "description": "玩家攻击临近时，自动驻军避险会将合格部队转移至同一王国中最近的合适盟友城堡。",
+      "expectation": "开启召回时，部队会在最后一次发现的攻击结束且没有剩余威胁后返回；否则会在抵达后停留一小时再返回。没有合适目标或部队，以及游戏限制，都可能导致无法撤离。",
+      "helper": "部队前往同一王国中最近的合格盟友城堡；撤离失败时，贝里蒙德以外遭攻击的己方城堡可通过开门获得保护。"
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "当前可用的最快指挥官",
+      "commanderHelp": "要塞自动攻击会针对每座目标要塞比较装备、宝石、套装和将军适用的行军速度效果；无需遗物2.0，也没有100%的最低要求。",
+      "description": "要塞自动攻击会按已保存的限制购买恐狼、补给已启用的外围王国，并从各王国的主城堡攻击已准备就绪的要塞。",
+      "expectation": "每次攻击都需要已准备就绪的要塞、足够填满两翼的恐狼和符合条件的已分配指挥官；冷却时间或补给延误可能使攻击暂停。",
+      "name": "要塞自动攻击",
+      "settingsSummary": "要塞自动攻击会准备恐狼，并为每座目标要塞选择当前可用且符合条件的最快已分配指挥官。",
+      "summary": "补给恐狼并攻击已准备就绪的要塞",
+      "travelHelp": "旅行羽毛是默认选项；你保存的行军选项会保留。出发前会重新计算特定城堡的加速效果。"
+    },
+    "recommendationIntro": "推荐值说明要塞自动攻击的日常用法；仅供参考，不会更改已保存的设置。",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "要塞自动攻击和行军设置的示意图",
+          "caption": "要塞自动攻击会按目标对符合条件的已分配指挥官排序，并使用已保存的行军选项。"
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "在“指挥官”中分配要塞自动攻击可以使用的指挥官，然后保存分配。",
+            "label": "指挥官分配",
+            "recommendation": "分配你平时希望用于要塞攻击的指挥官。"
+          },
+          "daily_normal_attack_limit": {
+            "description": "当整个账号达到每日普通攻击次数时暂停要塞自动攻击，直到游戏重置次数；0表示不增加限制。",
+            "label": "每日普通攻击上限",
+            "recommendation": "除非你需要额外的每日上限，否则设为0。"
+          },
+          "fastest_commander": {
+            "description": "针对每座要塞，系统会在应用上限后，根据装备、宝石、套装和将军的适用效果，选择当前可用的最快已分配指挥官。",
+            "label": "最快的合格指挥官",
+            "recommendation": "无需遗物2.0物品或100%速度加成。"
+          },
+          "full_flank_wave": {
+            "description": "每次攻击都会等待恐狼数量足以用一个完整波次填满两翼。",
+            "label": "两翼恐狼波次"
+          },
+          "horse_travel_boost": {
+            "description": "选择要塞攻击的行军选项；明确保存的金币或红宝石档位会继续保持选中。",
+            "label": "战马行军加速",
+            "recommendation": "选择旅行羽毛以获得最快行军速度。"
+          }
+        },
+        "title": "设置攻击和行军"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "保存后在“自动化”卡片上开启要塞自动攻击，以启动正常循环。",
+            "label": "要塞自动攻击开关",
+            "recommendation": "检查并保存预期设置后开启。"
+          },
+          "calendar": {
+            "description": "用“日历”限制要塞自动攻击的运行时间，修改后选择“保存日程”。",
+            "label": "日历",
+            "recommendation": "持续正常运行时关闭。"
+          },
+          "save_fortress_plan": {
+            "description": "离开此窗口前保存王国、补给和攻击设置。",
+            "label": "保存要塞计划"
+          }
+        },
+        "title": "设置日程、保存并开启"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "要塞自动攻击三个外围王国控制项的示意图",
+          "caption": "启用每个已解锁且需要从其主城堡接收恐狼并攻击要塞的王国。"
+        },
+        "items": {
+          "burning_sands": {
+            "description": "解锁烈焰沙漠后，从你在该王国的主城堡启用攻击和恐狼补给。",
+            "label": "烈焰沙漠",
+            "recommendation": "解锁并准备好使用时开启。"
+          },
+          "everwinter_glacier": {
+            "description": "解锁永冬冰川后，从你在该王国的主城堡启用攻击和恐狼补给。",
+            "label": "永冬冰川",
+            "recommendation": "解锁并准备好使用时开启。"
+          },
+          "fire_peaks": {
+            "description": "解锁火焰山峰后，从你在该王国的主城堡启用攻击和恐狼补给。",
+            "label": "火焰山峰",
+            "recommendation": "解锁并准备好使用时开启。"
+          }
+        },
+        "title": "选择要塞王国"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "在“自动化”页面，选择要塞自动攻击卡片上的设置按钮。",
+            "label": "打开设置"
+          }
+        },
+        "title": "打开要塞自动攻击设置"
+      },
+      "supply": {
+        "image": {
+          "alt": "要塞自动攻击恐狼购买和转移设置的示意图",
+          "caption": "查看每次会话的购买上限、可汗石板保留量和确认转移使用的时间加速选项。"
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "将游牧商店每次会话购买的恐狼限制为每批100只；0表示关闭购买。",
+            "label": "每次会话的恐狼数量",
+            "recommendation": "以最低价格档位每次会话购买5,000只恐狼。"
+          },
+          "keep_khan_tablets": {
+            "description": "在可汗石板余额低于此保留量之前停止购买恐狼。",
+            "label": "保留可汗石板",
+            "recommendation": "保留25,000块可汗石板。"
+          },
+          "supply_route": {
+            "description": "购买的恐狼先抵达大帝国主城堡，再分配到已启用的王国。",
+            "label": "恐狼补给路线"
+          },
+          "use_time_skips": {
+            "description": "仅对已确认的要塞自动攻击运输使用符合条件的时间加速道具，并遵守已保存的库存保留量。",
+            "label": "恐狼转移使用时间加速",
+            "recommendation": "如果已保存的时间加速道具保留量允许，则开启以加快补给。"
+          }
+        },
+        "title": "设置恐狼补给"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "入侵自动攻击会使用已保存的攻击预设攻打异国领主或血鸦，直到达到分数目标或其他停止限制。",
+      "expectation": "它会等待进行中的活动、符合条件的指挥官以及足够的士兵和工具；已在行军的攻击可能在停止发起新攻击后才结束。",
+      "name": "入侵自动攻击",
+      "summary": "攻打异国领主和血鸦，直到达到你的分数目标"
+    },
+    "recommendationIntro": "推荐值说明入侵自动攻击的日常用法；仅供参考，不会更改已保存的设置。",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "异国领主和血鸦难度选择的示意图",
+          "caption": "为每种活动分别选择一个已解锁的备用难度。"
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "选择一个已解锁的血鸦难度，以便在当前活动未选择难度时使用。",
+            "label": "血鸦难度",
+            "recommendation": "使用平时的配置能够稳定应对的最高已解锁难度。"
+          },
+          "difficulty_note": {
+            "description": "保存两种活动的选择；修改保存值不会替换进行中活动的难度。",
+            "label": "当前难度"
+          },
+          "foreign_lords_difficulty": {
+            "description": "选择一个已解锁的异国领主难度，以便在当前活动未选择难度时使用。",
+            "label": "异国领主难度",
+            "recommendation": "使用平时的配置能够稳定应对的最高已解锁难度。"
+          }
+        },
+        "title": "选择两种活动的难度"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "保存后在自动化卡片上开启入侵自动攻击，以便在活动和合格资源可用时运行。",
+            "label": "入侵自动攻击开关",
+            "recommendation": "检查并保存预期设置后开启。"
+          },
+          "readiness": {
+            "description": "入侵自动攻击会等待进行中的活动、合格的指挥官以及足够的士兵和工具。",
+            "label": "攻击准备状态"
+          },
+          "save_settings": {
+            "description": "关闭此窗口前保存出发城堡、预设、难度、停止限制和强化选项。",
+            "label": "保存设置"
+          }
+        },
+        "title": "保存并开启入侵自动攻击"
+      },
+      "fortify": {
+        "image": {
+          "alt": "入侵自动攻击强化设置的示意图",
+          "caption": "除非打算使用可用的活动货币或明确选择的红宝石，否则保持强化关闭。"
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "选择当前活动支持的选项；每项价格由游戏设定，明确选择红宝石即允许消耗红宝石。",
+            "label": "强化货币",
+            "recommendation": "强化已开启且活动提供时使用活动货币。"
+          },
+          "fortify_each_target": {
+            "description": "开启后，在攻击前使用所选货币强化每座生成的敌方城堡。",
+            "label": "强化每个目标",
+            "recommendation": "除非强化属于你平时的活动策略，否则关闭。"
+          }
+        },
+        "title": "选择可选的目标强化"
+      },
+      "limits": {
+        "image": {
+          "alt": "入侵自动攻击分数和停止限制的示意图",
+          "caption": "分数目标会停止新的出击，但已经在行军的攻击可能结束。"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "当整个账号达到每日普通攻击次数时停止此自动化，直到游戏重置次数；0表示不增加限制。",
+            "label": "每日普通攻击上限",
+            "recommendation": "设为0，让活动分数目标控制进程。"
+          },
+          "minimum_remaining": {
+            "description": "在活动结束前指定的分钟数停止发起新攻击。",
+            "label": "在活动结束前停止",
+            "recommendation": "30分钟。"
+          },
+          "score_target": {
+            "description": "当报告的活动分数达到或超过此目标时停止发起新攻击。",
+            "label": "达到活动分数后停止",
+            "recommendation": "使用你平时最后一个高于0的个人奖励阶段。"
+          },
+          "travelling_attacks": {
+            "description": "已在行军的攻击可能在满足停止条件后结束，使最终分数超过目标。",
+            "label": "行军中的攻击"
+          }
+        },
+        "title": "设置分数和停止限制"
+      },
+      "open": {
+        "image": {
+          "alt": "入侵自动攻击的出发城堡、预设和行军设置示意图",
+          "caption": "设置行军选项前，选择大帝国的出发城堡和已保存的活动预设。"
+        },
+        "items": {
+          "attack_preset": {
+            "description": "选择包含攻打异国领主或血鸦的士兵、工具和阵型的已保存攻击预设。",
+            "label": "攻击预设",
+            "recommendation": "先创建平时使用的异国领主或血鸦预设，然后在此处选择。"
+          },
+          "capacity_note": {
+            "description": "预设中的士兵和工具数量会根据所选指挥官和目标的容量调整。",
+            "label": "攻击容量"
+          },
+          "horse_travel_boost": {
+            "description": "为这些攻击选择羽毛、金币或红宝石行军选项。",
+            "label": "战马行军加速",
+            "recommendation": "快速行军推荐旅行羽毛。"
+          },
+          "open_settings": {
+            "description": "在自动化页面选择入侵自动攻击卡片上的设置按钮。",
+            "label": "打开设置"
+          },
+          "source_castle": {
+            "description": "选择为活动攻击提供士兵和工具的大帝国城堡。",
+            "label": "出发城堡",
+            "recommendation": "使用士兵和工具充足的常用活动城堡。"
+          }
+        },
+        "title": "打开入侵自动攻击设置"
+      }
+    }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "使用平时的配置能够稳定应对的最高已解锁难度。",
+            "description": "选择活动开始时使用的已解锁游牧难度。",
+            "label": "游牧难度"
+          },
+          "samurai_difficulty": {
+            "recommendation": "使用平时的配置能够稳定应对的最高已解锁难度。",
+            "description": "选择活动开始时使用的已解锁武士难度。",
+            "label": "武士难度"
+          },
+          "active_difficulty": {
+            "description": "如果活动已经开始，请与当前难度一致；不同的已保存选择会让自动化等待，而不会更改活动难度。",
+            "label": "活动已开始"
+          }
+        },
+        "title": "选择两种活动的难度",
+        "image": {
+          "alt": "游牧与武士难度选择示例",
+          "caption": "为两个活动分别选择已解锁难度，并与当前活动的难度保持一致。"
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "检查并保存预期设置后开启。",
+            "description": "保存后，在自动化卡片上开启自动游牧武士，以便在活动和合格资源可用时运行。",
+            "label": "自动游牧武士开关"
+          },
+          "save_settings": {
+            "label": "保存设置",
+            "description": "关闭对话框前，保存来源、预设、难度、停止限制、时间跳跃选择和试验状态。"
+          },
+          "readiness": {
+            "description": "自动化会升级活动营地，并等待合格的指挥官、士兵、工具，以及开启时间跳跃时可用的道具。",
+            "label": "营地攻击准备情况"
+          }
+        },
+        "title": "保存并开启自动游牧武士"
+      },
+      "limits": {
+        "image": {
+          "caption": "分数目标会停止新的出击，但已经在行军的攻击可能结束。",
+          "alt": "自动游牧武士积分及停止限制示例"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "当整个账号达到每日普通攻击次数时停止此自动化，直到游戏重置次数；0表示不增加限制。",
+            "label": "每日普通攻击上限",
+            "recommendation": "设为0，让活动分数目标控制进程。"
+          },
+          "minimum_remaining": {
+            "description": "在活动结束前指定的分钟数停止发起新攻击。",
+            "label": "在活动结束前停止",
+            "recommendation": "30分钟。"
+          },
+          "score_target": {
+            "description": "当报告的活动分数达到或超过此目标时停止发起新攻击。",
+            "label": "达到活动分数后停止",
+            "recommendation": "使用你平时最后一个高于0的个人奖励阶段。"
+          },
+          "travelling_attacks": {
+            "description": "已在行军的攻击可能在满足停止条件后结束，使最终分数超过目标。",
+            "label": "行军中的攻击"
+          }
+        },
+        "title": "设置分数和停止限制"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "骑乘行军加速",
+            "recommendation": "快速行军推荐旅行羽毛。",
+            "description": "为营地攻击选择羽毛、金币或红宝石行程选项。"
+          },
+          "open_settings": {
+            "label": "打开设置",
+            "description": "在自动化页面选择自动游牧武士卡片上的设置按钮。"
+          },
+          "source_castle": {
+            "label": "出发城堡",
+            "recommendation": "使用士兵和工具充足的常用活动城堡。",
+            "description": "选择在大帝国中为营地攻击提供士兵和工具的城堡。"
+          },
+          "nomad_preset": {
+            "description": "为游牧营地选择已保存的攻击预设，其中包含士兵、工具和阵型。",
+            "label": "游牧攻击预设",
+            "recommendation": "创建并选择日常使用的游牧预设。"
+          },
+          "samurai_preset": {
+            "description": "为武士营地选择已保存的攻击预设，其中包含士兵、工具和阵型。",
+            "label": "武士攻击预设",
+            "recommendation": "创建并选择日常使用的武士预设。"
+          }
+        },
+        "image": {
+          "alt": "自动游牧武士来源、预设及行程示例",
+          "caption": "选择来源城堡和行程选项前，先创建两个活动的攻击预设。"
+        },
+        "title": "打开自动游牧武士设置"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "营地冷却和时间跳跃保留量示例",
+          "caption": "每个“保留”数值表示时间跳跃道具的数量，不是冷却分钟数。"
+        },
+        "items": {
+          "keep_10m": {
+            "description": "将这么多10分钟时间跳跃道具保留不用。",
+            "label": "保留10分钟",
+            "recommendation": "日常营地轮刷设为0。"
+          },
+          "keep_1m": {
+            "description": "将这么多1分钟时间跳跃道具保留不用。",
+            "label": "保留1分钟",
+            "recommendation": "日常营地轮刷设为0。"
+          },
+          "keep_24h": {
+            "description": "将这么多24小时时间跳跃道具保留不用。",
+            "label": "保留24小时",
+            "recommendation": "保留建造或其他活动需要的库存。"
+          },
+          "keep_30m": {
+            "description": "将这么多30分钟时间跳跃道具保留不用。",
+            "label": "保留30分钟",
+            "recommendation": "日常营地轮刷设为0。"
+          },
+          "keep_5h": {
+            "description": "将这么多5小时时间跳跃道具保留不用。",
+            "label": "保留5小时",
+            "recommendation": "保留建造或其他活动需要的库存。"
+          },
+          "keep_5m": {
+            "description": "将这么多5分钟时间跳跃道具保留不用。",
+            "label": "保留5分钟",
+            "recommendation": "日常营地轮刷设为0。"
+          },
+          "keep_60m": {
+            "description": "将这么多60分钟时间跳跃道具保留不用。",
+            "label": "保留60分钟",
+            "recommendation": "日常营地轮刷设为0。"
+          },
+          "skip_cooldowns": {
+            "description": "确认战胜营地后，使用可用的时间跳跃消除该目标的冷却。",
+            "label": "每次成功攻击后清除冷却",
+            "recommendation": "日常重复攻击营地时开启；关闭则等待自然冷却。"
+          }
+        },
+        "title": "选择时间跳跃及保留量"
+      },
+      "trial": {
+        "image": {
+          "alt": "针对强盗男爵城堡的临时试验控件示例",
+          "caption": "试验会发起真实攻击，开启期间会取代正常的活动运行。"
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "使用游牧预设和时间跳跃，向一座强盗男爵城堡发起真实试验攻击，以取代正常活动运行。",
+            "label": "针对强盗男爵城堡的临时端到端试验",
+            "recommendation": "日常游牧或武士轮刷时关闭。"
+          },
+          "target_x": {
+            "description": "仅在临时试验中输入强盗男爵城堡的横坐标。",
+            "label": "目标X",
+            "recommendation": "试验关闭时保持不用。"
+          },
+          "target_y": {
+            "description": "仅在临时试验中输入强盗男爵城堡的纵坐标。",
+            "label": "目标Y",
+            "recommendation": "试验关闭时保持不用。"
+          },
+          "trial_skips": {
+            "description": "开启试验时也会为试验开启时间跳跃。",
+            "label": "试验时间跳跃"
+          }
+        },
+        "title": "日常轮刷时关闭临时试验"
+      }
+    },
+    "feature": {
+      "description": "自动游牧武士会升级符合条件的活动营地，选择已完全升级的最弱营地，并用该活动保存的攻击预设反复攻击，直到达到停止限制。",
+      "expectation": "它会等待进行中的活动、合格的指挥官、士兵、工具，以及启用清除冷却时可用的时间跳跃；停止发起新攻击后，行进中的攻击仍可能完成。",
+      "name": "自动游牧武士",
+      "summary": "升级并攻击游牧或武士活动营地"
+    },
+    "recommendationIntro": "推荐值适用于自动游牧武士的日常使用，仅供参考，不会更改已保存的设置。"
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "检查并保存预期设置后开启。",
+            "description": "检查设置后在自动化卡片上开启自动顾问；已解锁的顾问可能立即开始批次。",
+            "label": "自动顾问开关"
+          },
+          "save_settings": {
+            "label": "保存设置",
+            "description": "关闭对话框之前，保存出发城堡、预设、难度、批次规模和资源预算。"
+          },
+          "activate_advisor": {
+            "description": "如果顾问尚未解锁，请选择激活顾问，打开当前活动的确认窗口。",
+            "label": "激活顾问"
+          },
+          "activate_and_spend": {
+            "description": "使用符合条件的活动代币或通用顾问代币提交已确认的激活；免费活动会显示无需代币的激活。",
+            "label": "激活并消耗代币"
+          },
+          "cancel_activation": {
+            "description": "关闭确认窗口，不提交激活或消耗代币。",
+            "label": "取消激活"
+          },
+          "confirm_paid_activation": {
+            "description": "确认激活顾问可能消耗活动代币或通用代币，除非游戏显示本次活动免费。",
+            "label": "确认付费激活"
+          }
+        },
+        "image": {
+          "alt": "自动顾问保存和代币激活控件的示意图",
+          "caption": "保存或开启不会消耗代币；单独确认的激活可能消耗代币。"
+        },
+        "title": "保存、开启并激活顾问权限"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "游牧难度",
+            "recommendation": "使用平时的配置能够稳定应对的最高已解锁难度。",
+            "description": "选择活动开始时要设置的已解锁游牧难度。"
+          },
+          "samurai_difficulty": {
+            "label": "武士难度",
+            "recommendation": "使用平时的配置能够稳定应对的最高已解锁难度。",
+            "description": "选择活动开始时要设置的已解锁武士难度。"
+          },
+          "active_difficulty": {
+            "description": "匹配已经进行中的活动当前难度，否则自动化会等待而不会修改难度。",
+            "label": "进行中活动的难度"
+          }
+        },
+        "title": "选择两种活动的难度",
+        "image": {
+          "alt": "游牧和武士顾问难度选择示意图",
+          "caption": "保存两种活动的难度，并与已经进行中的活动难度保持一致。"
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "骑乘行军加速",
+            "recommendation": "快速行军推荐旅行羽毛。",
+            "description": "为批次选择羽毛、金币或红宝石行军方式。"
+          },
+          "open_settings": {
+            "label": "打开设置",
+            "description": "在自动化页面选择自动顾问卡片上的设置按钮。"
+          },
+          "source_castle": {
+            "label": "出发城堡",
+            "recommendation": "使用士兵和工具充足的常用活动城堡。",
+            "description": "选择为顾问批次提供士兵和工具的大帝国城堡。"
+          },
+          "attack_preset": {
+            "description": "选择已保存的攻击预设，系统会为每次请求的攻击复制其士兵、工具和阵型。",
+            "label": "顾问攻击预设",
+            "recommendation": "先为当前游牧或武士活动创建日常使用的预设，再选择它。"
+          },
+          "complete_copies": {
+            "description": "可用资源和完整预设副本数可能使批次数量低于最大攻击数。",
+            "label": "完整预设副本"
+          }
+        },
+        "image": {
+          "alt": "自动顾问出发城堡、预设和行军设置示意图",
+          "caption": "设置行军前，选择大帝国的出发城堡和已保存的活动预设。"
+        },
+        "title": "打开自动顾问设置"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "将这么多24小时时间跳跃道具保留不用。",
+            "label": "保留24小时",
+            "recommendation": "保留建造或其他活动需要的库存。"
+          },
+          "keep_5h": {
+            "description": "将这么多5小时时间跳跃道具保留不用。",
+            "label": "保留5小时",
+            "recommendation": "保留建造或其他活动需要的库存。"
+          },
+          "keep_60m": {
+            "description": "将这么多60分钟时间跳跃道具保留不用。",
+            "label": "保留60分钟",
+            "recommendation": "日常顾问批次设为0。"
+          },
+          "coin_cost": {
+            "description": "估算每次攻击的全部金币费用，用于启动前的负担能力计算，而不会更改游戏价格。",
+            "label": "每次攻击的全部金币",
+            "recommendation": "只有500足以支付实际全部费用时才使用；否则输入测得的更高总额。"
+          },
+          "keep_coins": {
+            "description": "从批次预算中排除相应数量的金币。",
+            "label": "保留金币",
+            "recommendation": "保留日常招募和建造所需的预算。"
+          },
+          "keep_feathers": {
+            "description": "从批次预算中排除相应数量的行军羽毛。",
+            "label": "保留羽毛",
+            "recommendation": "除非需要为其他功能预留羽毛，否则设为0。"
+          },
+          "keep_rubies": {
+            "description": "从批次预算中排除相应数量的红宝石。",
+            "label": "保留红宝石",
+            "recommendation": "保留其他活动所需的余额。"
+          },
+          "ruby_cost": {
+            "description": "估算每次攻击的红宝石行军费用；选择红宝石行军时必须填写正数。",
+            "label": "每次攻击的红宝石",
+            "recommendation": "使用行军羽毛时设为0；红宝石行军时填写实际的正数费用。"
+          }
+        },
+        "image": {
+          "alt": "自动顾问金币、红宝石、羽毛和时间跳跃道具保留量示意图",
+          "caption": "费用字段是规划估算值；保留数值表示不会使用的资源或时间跳跃道具。"
+        },
+        "title": "设置资源预算和保留量"
+      },
+      "overview": {
+        "image": {
+          "alt": "自动顾问进度和损失概览示意图",
+          "caption": "概览显示批次进度和损失，不会开始另一个批次。"
+        },
+        "items": {
+          "live_progress": {
+            "description": "在概览中查看当前和请求的攻击数、胜场、败场、损失的单位和工具。",
+            "label": "正在进行的顾问批次"
+          },
+          "no_relaunch": {
+            "description": "同一活动中完成或取消的批次不会自动重新开始。",
+            "label": "完成或取消的批次"
+          },
+          "refresh_overview": {
+            "description": "请求更新顾问批次进度、胜场、败场和损失。",
+            "label": "刷新概览"
+          }
+        },
+        "title": "查看正在进行的顾问批次"
+      },
+      "sizing": {
+        "image": {
+          "alt": "自动顾问攻击数和活动时间设置示意图",
+          "caption": "请求的攻击数会在启动前受到可用资源和活动时间限制。"
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "设置此次顾问批次的攻击数上限；资源和剩余活动时间可能进一步降低实际攻击数。",
+            "label": "最大攻击数",
+            "recommendation": "设为9,999，让可用资源和活动时间决定批次规模。"
+          },
+          "minimum_remaining": {
+            "description": "在启动前的活动时间计算中，预留相应分钟数不使用。",
+            "label": "活动结束前停止",
+            "recommendation": "30分钟；这不是运行期间持续取消批次的计时器。"
+          }
+        },
+        "title": "设置批次规模和活动时间"
+      }
+    },
+    "feature": {
+      "description": "自动顾问根据可用资源和活动剩余时间，发起一次游牧或武士顾问攻击批次。",
+      "expectation": "批次会等待当前活动难度匹配且顾问已解锁；保存或开启不会消耗代币，但确认激活可能消耗代币。",
+      "name": "自动顾问",
+      "summary": "按资源规模发起一次游牧或武士顾问攻击批次"
+    },
+    "recommendationIntro": "推荐数值适用于自动顾问的日常使用，仅供参考，不会更改已保存的设置。"
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "保留10分钟",
+            "description": "保留这么多件10分钟加速道具不用。",
+            "recommendation": "日常可汗连击建议设为0。"
+          },
+          "keep_1m": {
+            "label": "保留1分钟",
+            "description": "保留这么多件1分钟加速道具不用。",
+            "recommendation": "日常可汗连击建议设为0。"
+          },
+          "keep_24h": {
+            "label": "保留24小时",
+            "recommendation": "保留建造或其他活动需要的库存。",
+            "description": "保留这么多件24小时加速道具不用。"
+          },
+          "keep_30m": {
+            "label": "保留30分钟",
+            "description": "保留这么多件30分钟加速道具不用。",
+            "recommendation": "日常可汗连击建议设为0。"
+          },
+          "keep_5h": {
+            "label": "保留5小时",
+            "recommendation": "保留建造或其他活动需要的库存。",
+            "description": "保留这么多件5小时加速道具不用。"
+          },
+          "keep_5m": {
+            "label": "保留5分钟",
+            "description": "保留这么多件5分钟加速道具不用。",
+            "recommendation": "日常可汗连击建议设为0。"
+          },
+          "keep_1h": {
+            "description": "保留这么多件1小时加速道具不用。",
+            "label": "保留1小时道具",
+            "recommendation": "日常可汗连击建议设为0。"
+          },
+          "skip_cooldowns": {
+            "description": "保留并使用足够的加速道具，在攻击后清除营地冷却。",
+            "label": "跳过每次可汗营地冷却",
+            "recommendation": "开启；当前设置窗口要求启用此项才能保存。"
+          },
+          "skip_shortage": {
+            "description": "可用加速道具不足以清除所需冷却时，会暂停新的营地攻击。",
+            "label": "可用加速道具不足"
+          }
+        },
+        "image": {
+          "alt": "自动可汗冷却跳过和加速道具保留量示意",
+          "caption": "保留量是道具件数，不是时间分钟数。"
+        },
+        "title": "设置冷却跳过和保留量"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "每日普通攻击上限",
+            "description": "账号范围内的每日普通攻击次数达到此值时，停止本自动化发起新的营地攻击；0表示禁用此上限。",
+            "recommendation": "不需要账号范围上限时设为0。"
+          },
+          "event_end": {
+            "label": "活动结束前停止",
+            "description": "在活动结束前这么多分钟停止新的营地攻击。",
+            "recommendation": "5分钟。"
+          },
+          "nomad_points": {
+            "description": "当已报告积分达到此值时，停止新的可汗攻击、召回在途攻击并打开主城城门；0表示禁用此停止条件。",
+            "label": "达到游牧者积分时停止",
+            "recommendation": "除非希望在指定积分停止并开启保护，否则设为0。"
+          },
+          "replenish_tools": {
+            "description": "从符合条件的商品补充防御预设短缺的工具，同时排除红宝石定价的礼包。",
+            "label": "补充防御工具",
+            "recommendation": "希望进行符合条件的自动购买时开启。"
+          }
+        },
+        "image": {
+          "alt": "自动可汗积分、工具及每日上限示意",
+          "caption": "游牧者积分停止值大于0时，还会召回在途可汗攻击并打开主城城门。"
+        },
+        "title": "设置积分、补给和每日限制"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "保存设置",
+            "description": "保存所选城堡、预设、怒气控制、限制、加速道具保留量和保护设置。"
+          },
+          "enable_switch": {
+            "description": "检查主城防御后，在自动化卡片上启用自动可汗。",
+            "label": "自动可汗开关",
+            "recommendation": "保存并准备好防御后开启。"
+          },
+          "station_priority": {
+            "description": "自动避兵独立处理来袭的玩家攻击，不与可汗反击混用。",
+            "label": "自动避兵优先处理"
+          }
+        },
+        "image": {
+          "alt": "自动可汗保存与启用流程示意",
+          "caption": "启用可汗反击前，先检查主城防御。"
+        },
+        "title": "保存并启用自动可汗"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "骑乘行军加速",
+            "recommendation": "快速行军推荐旅行羽毛。",
+            "description": "为营地攻击选择羽毛、金币或红宝石行军加速。"
+          },
+          "open_settings": {
+            "label": "打开设置",
+            "description": "在自动化页面，选择自动可汗卡片上的设置按钮。"
+          },
+          "attack_from": {
+            "description": "选择大帝国的主城或前哨站，作为可汗营地攻击的出兵点。",
+            "label": "从何处出兵",
+            "recommendation": "有进攻军队时，优先使用所在前哨站。"
+          },
+          "camp_attack_preset": {
+            "description": "选择已保存的攻击预设，用于日常可汗营地攻击。",
+            "label": "营地攻击预设",
+            "recommendation": "先创建日常可汗攻击预设。"
+          },
+          "defend_at": {
+            "description": "可汗反击在此处显示的大帝国主城防御；此字段为只读。",
+            "label": "防守地点"
+          },
+          "main_defense_preset": {
+            "description": "选择已保存的防御预设，在反击前重新应用到主城。",
+            "label": "主城防御预设",
+            "recommendation": "创建日常可汗防御预设，并准备相应兵力和工具。"
+          }
+        },
+        "image": {
+          "alt": "自动可汗城堡、预设和行军设置示意",
+          "caption": "启用连续攻击前，准备好两套预设和主城防御。"
+        },
+        "title": "选择城堡、预设和行军方式"
+      },
+      "protection": {
+        "image": {
+          "alt": "自动可汗主城城墙保护示意",
+          "caption": "仅当从主城出兵攻击时，城墙保护才适用。"
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "城墙上的进攻兵种达到此数量时，触发主城保护。",
+            "label": "城墙进攻兵力阈值",
+            "recommendation": "城墙上的进攻兵力1,000。"
+          },
+          "outpost_source": {
+            "description": "从前哨站出兵且主城单独防御时，此城墙保护会停用。",
+            "label": "出兵点为前哨站"
+          },
+          "protect_offense": {
+            "description": "从主城出兵时，如果过多进攻兵力将被用于守墙，就打开城门并暂停可汗。",
+            "label": "保护主城城墙上的进攻兵力",
+            "recommendation": "从主城出兵时开启。"
+          }
+        },
+        "title": "保护主城城墙"
+      },
+      "rage": {
+        "image": {
+          "alt": "自动可汗怒气和攻击许可示意",
+          "caption": "限时怒气积分增益与怒气旗帜是不同效果。"
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "停止新的营地攻击，同时继续处理怒气、冷却和防御。",
+            "label": "锁定自动可汗攻击",
+            "recommendation": "日常营地攻击建议关闭。"
+          },
+          "max_rage_chain": {
+            "description": "限制当前活动可接受的反击次数，达到上限后停止新的营地攻击；0表示取消上限。",
+            "label": "最大怒气连击数",
+            "recommendation": "不需要反击次数上限时设为0。"
+          },
+          "rage_booster": {
+            "description": "只有限时怒气积分增益生效时，才允许新的自动营地攻击。",
+            "label": "要求怒气积分增益",
+            "recommendation": "除非只想在增益期间攻击，否则关闭。"
+          },
+          "rage_continues": {
+            "description": "怒气连击上限不会停止满怒反击触发、冷却处理或防御恢复。",
+            "label": "怒气处理继续"
+          },
+          "trigger_full_rage": {
+            "description": "怒气满时触发可汗反击。",
+            "label": "满怒时触发可汗",
+            "recommendation": "主城已准备好防御时开启。"
+          }
+        },
+        "title": "设置怒气和攻击许可"
+      }
+    },
+    "feature": {
+      "description": "自动可汗会攻击可汗营地、清除冷却、在怒气满时触发反击，并维持主城防御。",
+      "expectation": "达到设定限制或资源不足时会暂停新的营地攻击并保护主城；来袭的玩家攻击由自动避兵处理。",
+      "name": "自动可汗",
+      "summary": "连续攻击可汗营地，并在主城抵御反击"
+    },
+    "recommendationIntro": "推荐值适用于自动可汗的日常使用，仅供参考，不会更改已保存的设置。"
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "自动贝里蒙德按所选进攻预设的兵种比例向你拥有的贝里蒙德营地补充部队，然后可以攻击塔楼、补充工具并用已确认的战利品建造。",
+      "expectation": "运输会等待营地和来源城堡的最新库存、已报告的容量以及上一批运兵完成；来源库存不足时可少量运送，缺少所需兵种时则暂停补充。",
+      "name": "自动贝里蒙德世界",
+      "summary": "补给并管理你的贝里蒙德营地"
+    },
+    "recommendationIntro": "推荐选项用于日常使用自动贝里蒙德，仅供参考，不会更改已保存的设置。",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "可选营地建造设置示意图",
+          "caption": "内置与已保存目标、采集模式、5级马厩、木材和石材储备，以及七种加速时长示例。"
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "允许清除位于指定目标且无法移动或存储的未托管建筑。",
+            "label": "允许拆除",
+            "recommendation": "检查目标中的清除项目之前，建议关闭。"
+          },
+          "allow_premium_costs": {
+            "description": "允许符合条件且消耗高级货币的建造步骤。",
+            "label": "允许高级货币花费",
+            "recommendation": "除非你有意使用高级货币建造，否则建议关闭。"
+          },
+          "auto_beri_builder_lane": {
+            "description": "使用确认已返回的战利品建造或升级当前贝里蒙德营地目标，不从其他王国运入资源。",
+            "label": "自动贝里蒙德建造流程",
+            "recommendation": "检查支出许可后，为日常营地建造开启此项。"
+          },
+          "camp_resource_reserves": {
+            "description": "让选定数量的木材和石材不用于营地建造。",
+            "label": "营地资源储备",
+            "recommendation": "如果可以使用盈余，木材设为0，石材设为0。"
+          },
+          "construction_time_skip_reserves": {
+            "description": "分别设置要保留的1分钟、5分钟、10分钟、30分钟、1小时、5小时和24小时加速道具数量。",
+            "label": "建造时间跳过储备",
+            "recommendation": "短时加速各保留0个；将1、5和24小时的库存留给其他活动。"
+          },
+          "optional_custom_camp_target": {
+            "description": "为必要建筑采集“功能”，为无装饰的建筑位置采集“布局”，为所有支持的细节采集“精确”。",
+            "label": "可选自定义营地目标",
+            "recommendation": "除非需要已检查的自定义目标，否则使用内置目标。"
+          },
+          "stable_target": {
+            "description": "为内置目标选择1至5级的阵营马厩。",
+            "label": "马厩目标",
+            "recommendation": "资源充足时，日常活动建造建议5级。"
+          },
+          "use_construction_time_skips": {
+            "description": "保留选定的建造加速道具储备，同时加快已确认的营地建造。",
+            "label": "使用建造时间跳过道具",
+            "recommendation": "加速道具充足时，日常建造建议开启。"
+          },
+          "keep_skip_10m": {
+            "description": "保留这一数量的10m建造加速道具；日常使用将储备设为0。",
+            "label": "保留10m加速道具"
+          },
+          "keep_skip_1h": {
+            "description": "为其他活动保留这一数量的1h建造加速道具。",
+            "label": "保留1h加速道具"
+          },
+          "keep_skip_1m": {
+            "description": "保留这一数量的1m建造加速道具；日常使用将储备设为0。",
+            "label": "保留1m加速道具"
+          },
+          "keep_skip_24h": {
+            "description": "为其他活动保留这一数量的24h建造加速道具。",
+            "label": "保留24h加速道具"
+          },
+          "keep_skip_30m": {
+            "description": "保留这一数量的30m建造加速道具；日常使用将储备设为0。",
+            "label": "保留30m加速道具"
+          },
+          "keep_skip_5h": {
+            "description": "为其他活动保留这一数量的5h建造加速道具。",
+            "label": "保留5h加速道具"
+          },
+          "keep_skip_5m": {
+            "description": "保留这一数量的5m建造加速道具；日常使用将储备设为0。",
+            "label": "保留5m加速道具"
+          },
+          "saved_targets": {
+            "description": "采集会立即保存并启用已检查的自定义目标；选择另一已保存目标也会立即启用它。",
+            "label": "已保存的自定义目标"
+          },
+          "stone_reserve": {
+            "description": "这部分营地石材不会用于建造；可使用盈余时设为0。",
+            "label": "石材储备"
+          },
+          "use_built_in_default": {
+            "description": "立即切换回内置目标，同时保留已保存的自定义目标。",
+            "label": "使用内置默认目标"
+          },
+          "wood_reserve": {
+            "description": "这部分营地木材不会用于建造；可使用盈余时设为0。",
+            "label": "木材储备"
+          }
+        },
+        "title": "选择可选的营地建造设置"
+      },
+      "readiness": {
+        "image": {
+          "alt": "塔楼攻击准备设置示意图",
+          "caption": "不表示真实增益或客户数据的增益条件状态与预设编队。"
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "启用攻击前，检查所选预设的波次、部队和工具。",
+            "label": "攻击预设编队",
+            "recommendation": "在来源城堡和营地保留足够的所选部队与工具，以支持日常攻击节奏。"
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "在运输、购买工具、准备营地、攻击塔楼或建造之前，要求勇气增益处于生效状态。",
+            "label": "仅在勇气增益生效时运行",
+            "recommendation": "如果想让自动贝里蒙德的所有流程都受增益条件限制，建议开启。"
+          }
+        },
+        "title": "设置塔楼攻击准备条件"
+      },
+      "save": {
+        "image": {
+          "alt": "保存和启用设置示意图",
+          "caption": "不展示真实账号的已保存设置清单、开关和可选日历。"
+        },
+        "items": {
+          "automation_switch": {
+            "description": "确认营地、来源部队、预设和可选花费设置后，从自动化卡片开启自动贝里蒙德世界。",
+            "label": "自动化开关",
+            "recommendation": "完成设置后开启。"
+          },
+          "calendar": {
+            "description": "持续运行时关闭日历；如需时间窗口，请设置日常时段并保存日程。",
+            "label": "日历",
+            "recommendation": "活动期间持续运行时，建议关闭。"
+          },
+          "save_settings": {
+            "description": "启用自动化之前，保存预设、来源城堡、运输节奏、攻击限制、工具及可选建造设置。",
+            "label": "保存设置"
+          }
+        },
+        "title": "保存并启用"
+      },
+      "setup": {
+        "image": {
+          "alt": "攻击和补给来源设置示意图",
+          "caption": "已保存的攻击预设、大帝国来源城堡、旅行羽毛、攻击检查和每日限制。"
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "设置自动贝里蒙德检查是否能够再次攻击塔楼的频率。",
+            "label": "攻击检查间隔",
+            "recommendation": "除非需要减少检查次数，否则保留通常的30秒间隔。"
+          },
+          "attack_preset": {
+            "description": "选择已保存的贝里蒙德进攻编队；自动贝里蒙德会将其兵种比例用于运输和塔楼攻击。",
+            "label": "攻击预设",
+            "recommendation": "先创建并选择你常用的贝里蒙德预设。"
+          },
+          "daily_normal_attack_limit": {
+            "description": "当账号范围内的每日普通攻击次数达到上限时，停止新的自动贝里蒙德塔楼攻击；0表示不设此额外限制。",
+            "label": "每日普通攻击上限",
+            "recommendation": "除非使用账号范围内的上限，否则建议设为0。"
+          },
+          "horse_travel_boost": {
+            "description": "为塔楼攻击选择羽毛、金币或红宝石旅行方式。",
+            "label": "马匹旅行加速",
+            "recommendation": "选择旅行羽毛，快速移动且无需选择红宝石旅行。"
+          },
+          "open_settings": {
+            "description": "在自动化页面打开自动贝里蒙德世界卡片的设置。",
+            "label": "打开设置"
+          },
+          "source_castle": {
+            "description": "选择提供这些部队的大帝国城堡或前哨站。",
+            "label": "来源城堡",
+            "recommendation": "选择驻有你进攻部队的城堡。"
+          }
+        },
+        "title": "选择攻击与补给来源"
+      },
+      "tools": {
+        "image": {
+          "alt": "营地工具设置示意图",
+          "caption": "三种工具的最低数量和明确为虚构的营地库存。"
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "按相同规则将驻营攻城锤补充至这个数量。",
+            "label": "攻城锤最低数量",
+            "recommendation": "根据常用预设的消耗量设置。"
+          },
+          "mantlets_minimum": {
+            "description": "按相同规则将驻营护盾补充至这个数量。",
+            "label": "护盾最低数量",
+            "recommendation": "根据常用预设的消耗量设置。"
+          },
+          "scaling_ladders_minimum": {
+            "description": "通过符合条件的金币报价将营地云梯补充至这个数量；0表示不管理。",
+            "label": "攀墙梯最低数量",
+            "recommendation": "根据常用预设和攻击节奏的需要设置。"
+          }
+        },
+        "title": "维持营地工具"
+      },
+      "transfers": {
+        "image": {
+          "alt": "按比例运输部队设置示意图",
+          "caption": "虚构的2比1预设比例、营地库存、空余容量和单一兵种的部分运输；数字仅是示例，并非已保存的默认值。"
+        },
+        "items": {
+          "check_interval": {
+            "description": "设置自动贝里蒙德刷新运输空余容量及两座城堡库存的频率。",
+            "label": "检查间隔",
+            "recommendation": "保留通常的30秒间隔。"
+          },
+          "food_only": {
+            "description": "只可运输消耗食物的预设部队；不支持的单位或无法确定的兵种类别会给出原因并暂停。",
+            "label": "仅运输消耗食物的部队"
+          },
+          "minimum_free_capacity": {
+            "description": "只有已报告的空余容量达到此门槛时才开始运输；单次按比例计算的运量可以更小。",
+            "label": "最低空余容量",
+            "recommendation": "日常按比例补充时，建议预留1个部队空位。"
+          },
+          "owned_berimond_camp": {
+            "description": "自动贝里蒙德会自动找到你拥有的贝里蒙德营地，因此无需输入营地ID。",
+            "label": "拥有的贝里蒙德营地"
+          },
+          "partial_donor": {
+            "description": "如果来源城堡有部分所需兵种，自动贝里蒙德会少量运送；若该兵种完全没有，则等待而不会改送其他兵种。",
+            "label": "来源库存不足"
+          },
+          "pending_transfer": {
+            "description": "自动贝里蒙德等待每批运兵到达并刷新营地库存后，才重新计算预设比例。",
+            "label": "待完成的运输"
+          },
+          "preset_troop_mix": {
+            "description": "自动贝里蒙德汇总所选预设各波次和庭院中重复的兵力栏位，然后每次补充一种不足的兵种。",
+            "label": "预设兵种比例"
+          },
+          "troop_transport_skip": {
+            "description": "启用运输时间跳过时，选择所用道具的时长。",
+            "label": "部队运输跳过道具",
+            "recommendation": "日常已确认的运输建议使用1小时加速道具。"
+          },
+          "use_troop_transport_time_skips": {
+            "description": "将所选跳过道具用于仍在途中的已确认运输。",
+            "label": "使用部队运输时间跳过道具",
+            "recommendation": "加速道具库存允许时，日常营地补给建议开启。"
+          }
+        },
+        "title": "设置按比例运输部队"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "自动风暴可以开启并建设风暴城堡、攻击要塞与资源岛、输入部队，并购买所选的露娜奖励。",
+      "expectation": "每项功能都使用最新游戏数据和你保存的权限；高级建造、攻击与购买都受你启用的选项约束。",
+      "name": "自动风暴",
+      "summary": "管理风暴城堡、攻击和奖励"
+    },
+    "recommendationIntro": "推荐选项用于自动风暴的日常使用，仅供参考，不会更改已保存的设置。",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "风暴城堡开启与目标采集示意图",
+          "caption": "展示初始城堡选择、采集模式和可选的目标启用；不展示真实购买或账号。"
+        },
+        "items": {
+          "automatic_open": {
+            "description": "风暴尚未解锁时，请选择当前可用的官方初始城堡，并在允许解锁前核对显示的价格。",
+            "label": "自动开启风暴城堡",
+            "recommendation": "如希望自动风暴在核对价格后开启常用初始城堡，请开启。"
+          },
+          "blueprint": {
+            "description": "采集的目标会立即保存并启用；暂停目标会停止协调，但保留已保存的目标。",
+            "label": "已保存的目标",
+            "recommendation": "日常建设建议启用已检查的功能目标。"
+          },
+          "capture_castle": {
+            "description": "采集建造目标前，先选择当前的风暴城堡。",
+            "label": "风暴城堡",
+            "recommendation": "采集你打算管理的城堡。"
+          },
+          "combat_only": {
+            "description": "要塞和岛屿战斗不需要已采集的建造目标。",
+            "label": "无建造目标的战斗"
+          },
+          "decoration_preset": {
+            "description": "建造后可选择应用已选的装饰预设。",
+            "label": "建造后的装饰预设",
+            "recommendation": "除非需要单独的装饰布局，否则留空。"
+          },
+          "exact": {
+            "description": "保存支持的所有目标细节以制作精确副本。",
+            "label": "精确采集",
+            "recommendation": "仅在检查完整目标后使用。"
+          },
+          "functional": {
+            "description": "保存风暴基础功能所需的目标，不复制每个建筑的位置。",
+            "label": "功能采集",
+            "recommendation": "日常维护建议使用功能模式。"
+          },
+          "layout": {
+            "description": "保存建筑类型和位置，不包含装饰。",
+            "label": "布局采集",
+            "recommendation": "仅在建筑位置重要时使用。"
+          },
+          "open_settings": {
+            "description": "从自动化卡片打开自动风暴设置。",
+            "label": "打开设置"
+          },
+          "starter_castle": {
+            "description": "选择目前可用于下一次未解锁赛季的官方风暴初始城堡。",
+            "label": "要开启的城堡",
+            "recommendation": "核对价格后选择能负担的常用初始城堡。"
+          }
+        },
+        "title": "开启并采集你的风暴城堡"
+      },
+      "combat": {
+        "image": {
+          "alt": "要塞与岛屿攻击设置示意图",
+          "caption": "示例海蓝宝石岛、要塞等级、目标顺序及占领守军。"
+        },
+        "items": {
+          "defenders": {
+            "description": "选择留在已占领岛屿上的守军类型和数量；空列表会在确认胜利后留下一个幸存者。",
+            "label": "岛屿守军",
+            "recommendation": "如果一个幸存者不足以满足计划，请选定守军。"
+          },
+          "fort_preset": {
+            "description": "为要塞选择已保存的部队与工具阵型。",
+            "label": "要塞攻击预设",
+            "recommendation": "使用常用的要塞预设。"
+          },
+          "forts": {
+            "description": "启用对选定官方要塞等级40至80的攻击。",
+            "label": "风暴要塞",
+            "recommendation": "只启用所选预设能够稳定击败的等级。"
+          },
+          "horse": {
+            "description": "为风暴攻击选择羽毛、金币或红宝石旅行方式。",
+            "label": "骑马旅行加速",
+            "recommendation": "旅行羽毛可快速移动，无需选择红宝石旅行。"
+          },
+          "island_preset": {
+            "description": "为岛屿选择已保存的部队与工具阵型。",
+            "label": "岛屿攻击预设",
+            "recommendation": "使用常用的岛屿预设。"
+          },
+          "island_resources": {
+            "description": "选择可攻击的木材、石料或海蓝宝石岛。",
+            "label": "岛屿资源",
+            "recommendation": "要采集海蓝宝石，请选择海蓝宝石。"
+          },
+          "island_sizes": {
+            "description": "为所选资源指定大岛、小岛或两种尺寸。",
+            "label": "岛屿尺寸",
+            "recommendation": "日常采集海蓝宝石建议同时选择大岛和小岛。"
+          },
+          "islands": {
+            "description": "启用占领与所选资源和尺寸匹配的岛屿。",
+            "label": "资源岛",
+            "recommendation": "希望从大岛和小岛获取海蓝宝石时开启。"
+          },
+          "minimum_attacks": {
+            "description": "只攻击剩余攻击次数至少达到该值的要塞。",
+            "label": "最低剩余攻击次数",
+            "recommendation": "0允许所有符合条件的要塞。"
+          },
+          "priority": {
+            "description": "排列已启用的岛屿和堡垒目标组；每组内先攻击最近的合格目标。",
+            "label": "攻击目标优先级",
+            "recommendation": "采集海蓝宝石时，优先大岛、小岛，然后是80至40级要塞。"
+          }
+        },
+        "title": "选择要塞与资源岛"
+      },
+      "construction": {
+        "image": {
+          "alt": "建造与预留设置示意图",
+          "caption": "以示例控件展示资源运输、花费权限、预留量和港口等级。"
+        },
+        "items": {
+          "demolition": {
+            "description": "允许移除精确目标中无法移动或存储的建筑。",
+            "label": "允许拆除",
+            "recommendation": "除非正在重建检查过的布局，否则关闭。"
+          },
+          "donor_reserves": {
+            "description": "在运输资源前，为每座供给城堡保留所选的木材、石料与海蓝宝石数量。",
+            "label": "供给城堡受保护预留量",
+            "recommendation": "保留常用的木材与石料建造预算；不使用海蓝宝石时设为0。"
+          },
+          "harbor_level": {
+            "description": "为港口选择目标等级1、2或3；等级2和3采用高级建造途径。",
+            "label": "港口目标等级",
+            "recommendation": "除非计划高级升级，否则选等级1。"
+          },
+          "harbor": {
+            "description": "即使采集目标不同，也将港口维持在所选等级。",
+            "label": "升级港口",
+            "recommendation": "日常使用建议开启并设为等级1。"
+          },
+          "premium": {
+            "description": "允许符合条件、会消耗高级货币的建造步骤。",
+            "label": "允许高级费用",
+            "recommendation": "除非计划高级建造，否则关闭。"
+          },
+          "resource_transport": {
+            "description": "允许从供给城堡运送确认的建造资源缺口。",
+            "label": "运输缺少的资源",
+            "recommendation": "日常建造建议开启。"
+          },
+          "skip_reserves": {
+            "description": "为建造与运输保留选定数量的1分钟、5分钟、10分钟、30分钟、1小时、5小时和24小时道具。",
+            "label": "跳时道具预留量",
+            "recommendation": "短时跳时道具如无其他用途设为0；将1、5和24小时的库存留给其他活动。"
+          },
+          "storm_reserves": {
+            "description": "选定数量的木材、石材和海蓝宝石不会用于建造。",
+            "label": "风暴城堡花费预留量",
+            "recommendation": "若可使用盈余，木材0、石材0；海蓝宝石按计划的奖励预算设置。"
+          },
+          "time_skips": {
+            "description": "在保留选定库存的同时，将合格加速道具用于建造、资源运输和部队运输。",
+            "label": "使用建造与运输加速道具",
+            "recommendation": "若希望加快日常建造，请开启。"
+          }
+        },
+        "title": "设置建造与资源保护"
+      },
+      "luna": {
+        "image": {
+          "alt": "露娜奖励设置示意图",
+          "caption": "海蓝宝石预留量、限量购买目标、可重复奖励及优先级。"
+        },
+        "items": {
+          "cost_cap": {
+            "description": "查看游戏报告的每项奖励价格与购买上限。",
+            "label": "价格和购买上限",
+            "recommendation": "启用前检查这两项只读数值。"
+          },
+          "keep_aqua": {
+            "description": "保留这部分海蓝宝石，不用于露娜购买。",
+            "label": "保留海蓝宝石",
+            "recommendation": "如果全部余量可用于奖励，则设为0；否则保留计划数量。"
+          },
+          "priority": {
+            "description": "商店会先考虑数字较小的购买目标。",
+            "label": "优先级",
+            "recommendation": "按偏好排列1、2和3，将限量目标放在无限奖励之前。"
+          },
+          "search": {
+            "description": "设置购买前，按名称搜索官方露娜奖励。",
+            "label": "查找露娜奖励",
+            "recommendation": "搜索你真正想要的奖励。"
+          },
+          "target_total": {
+            "description": "设置限量奖励的目标总购买次数。",
+            "label": "目标总数",
+            "recommendation": "只设置你计划购买的次数。"
+          },
+          "unlimited": {
+            "description": "只要预留量和商店上限允许，就继续购买符合条件的可重复奖励。",
+            "label": "无限购买",
+            "recommendation": "仅对日常需要的可重复奖励开启。"
+          },
+          "use": {
+            "description": "选择奖励以允许自动购买。",
+            "label": "使用奖励",
+            "recommendation": "只启用想要的奖励。"
+          }
+        },
+        "title": "选择露娜海蓝宝石奖励"
+      },
+      "save": {
+        "image": {
+          "alt": "自动风暴保存与启用示意图",
+          "caption": "每日攻击限制、策略检查、只读地图刷新和自动化开关。"
+        },
+        "items": {
+          "daily_limit": {
+            "description": "达到账号范围的每日普通攻击次数后停止新的自动风暴攻击；0取消此额外限制。",
+            "label": "每日普通攻击上限",
+            "recommendation": "不使用账号范围上限时设为0。"
+          },
+          "enable": {
+            "description": "保存的选择准备妥当后，从自动化卡片开启自动风暴。",
+            "label": "自动化开关",
+            "recommendation": "设置完成后开启。"
+          },
+          "map_refresh": {
+            "description": "查看风暴地图的官方刷新间隔。",
+            "label": "地图刷新间隔",
+            "recommendation": "只读间隔为2小时；更改后等待新的扫描。"
+          },
+          "policy_check": {
+            "description": "设置自动风暴检查设置与可执行任务的频率。",
+            "label": "策略检查间隔",
+            "recommendation": "保留通常的30秒间隔。"
+          },
+          "save": {
+            "description": "启用自动化前，保存城堡、建造、战斗、部队输入和露娜选择。",
+            "label": "保存设置",
+            "recommendation": "检查所有花费权限后再保存。"
+          }
+        },
+        "title": "保存并启用自动风暴"
+      },
+      "troops": {
+        "image": {
+          "alt": "部队输入与只读估算示意图",
+          "caption": "供给城堡顺序、保留1,000名士兵和只读容量估算。"
+        },
+        "items": {
+          "attack_history": {
+            "description": "查看服务器重置以来已确认的风暴攻击数除以24的结果，而非滚动24小时平均值。",
+            "label": "重置后平均攻击次数",
+            "recommendation": "改变输入需求前检查这项只读估算。"
+          },
+          "committed_cap": {
+            "description": "查看自动计算的上限，其中包括驻扎部队、行军、运输中和返程部队。",
+            "label": "风暴已占用部队上限",
+            "recommendation": "增加输入前检查这项只读上限。"
+          },
+          "donors": {
+            "description": "按显示顺序选择供给城堡；部分库存可提供较小批次。",
+            "label": "供给城堡",
+            "recommendation": "按偏好顺序选择常用的部队供应城堡。"
+          },
+          "import": {
+            "description": "从供给城堡向风暴输入缺少的攻击部队或所选防御部队。",
+            "label": "输入缺少的部队",
+            "recommendation": "风暴城堡需要定期补充部队时开启。"
+          },
+          "map_coverage": {
+            "description": "依赖显示的目标前，先检查地图覆盖情况。",
+            "label": "地图覆盖情况",
+            "recommendation": "目标缺失时等待新的覆盖数据。"
+          },
+          "minimum_kept": {
+            "description": "发起攻击后仍在风暴保留至少该数量的部队，同时维持启用预设的兵种组合。",
+            "label": "发起后最低保留部队",
+            "recommendation": "按实际军队调整的日常预留建议为1,000名士兵。"
+          },
+          "preset_average": {
+            "description": "查看启用的攻击预设所需平均兵数，包括所选的岛屿守军。",
+            "label": "启用预设的平均值",
+            "recommendation": "将这项只读估算与你的军队比较。"
+          }
+        },
+        "title": "输入并监控风暴部队"
+      }
+    }
+  }
+}

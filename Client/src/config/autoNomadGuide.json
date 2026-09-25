@@ -1,0 +1,232 @@
+{
+  "recommendationIntro": "Recommended values describe regular Auto Nomad/Samurai use; they are guidance and do not change saved settings.",
+  "steps": [
+    {
+      "id": "open",
+      "title": "Open Auto Nomad/Samurai settings",
+      "items": [
+        {
+          "id": "open_settings",
+          "label": "Open settings",
+          "description": "On the Automation page, select the settings button on the Auto Nomad/Samurai card."
+        },
+        {
+          "id": "source_castle",
+          "label": "Source castle",
+          "description": "Choose the Great Empire castle that supplies troops and tools for camp attacks.",
+          "recommendation": "Use your usual event castle with enough troops and tools."
+        },
+        {
+          "id": "nomad_preset",
+          "label": "Nomad attack preset",
+          "description": "Select a saved Attack Preset with the troops, tools and formation for Nomad camps.",
+          "recommendation": "Create and select your regular Nomad preset."
+        },
+        {
+          "id": "samurai_preset",
+          "label": "Samurai attack preset",
+          "description": "Select a saved Attack Preset with the troops, tools and formation for Samurai camps.",
+          "recommendation": "Create and select your regular Samurai preset."
+        },
+        {
+          "id": "horse_travel_boost",
+          "label": "Horse travel boost",
+          "description": "Choose the feather, coin or ruby travel option for camp attacks.",
+          "recommendation": "Travel Feather for fast travel."
+        }
+      ],
+      "image": {
+        "src": "",
+        "alt": "Illustrative Auto Nomad/Samurai source, presets and travel settings",
+        "caption": "Create both event presets before selecting their source castle and travel option.",
+        "width": 680,
+        "height": 360
+      }
+    },
+    {
+      "id": "difficulty",
+      "title": "Choose both event difficulties",
+      "items": [
+        {
+          "id": "nomad_difficulty",
+          "label": "Nomad difficulty",
+          "description": "Choose an unlocked Nomad difficulty for event start.",
+          "recommendation": "Use the highest unlocked difficulty your usual setup handles reliably."
+        },
+        {
+          "id": "samurai_difficulty",
+          "label": "Samurai difficulty",
+          "description": "Choose an unlocked Samurai difficulty for event start.",
+          "recommendation": "Use the highest unlocked difficulty your usual setup handles reliably."
+        },
+        {
+          "id": "active_difficulty",
+          "label": "Already active event",
+          "description": "For an active event, match its current difficulty because a different saved choice makes this automation wait rather than change it."
+        }
+      ],
+      "image": {
+        "src": "",
+        "alt": "Illustrative Nomad and Samurai difficulty choices",
+        "caption": "Select a separate unlocked difficulty for each event and match the active one.",
+        "width": 680,
+        "height": 360
+      }
+    },
+    {
+      "id": "limits",
+      "title": "Set score and stopping limits",
+      "items": [
+        {
+          "id": "score_target",
+          "label": "Stop at event score",
+          "description": "Stop starting new attacks when the reported event score reaches or exceeds this target.",
+          "recommendation": "Use your usual final personal-reward milestone above 0."
+        },
+        {
+          "id": "minimum_remaining",
+          "label": "Stop before event ends",
+          "description": "Stop starting new attacks this many minutes before the event ends.",
+          "recommendation": "30 minutes."
+        },
+        {
+          "id": "daily_attack_limit",
+          "label": "Daily normal-attack limit",
+          "description": "Stop this automation at the account-wide daily normal-attack count until the game resets it; 0 adds no limit.",
+          "recommendation": "0 so the event score target controls the run."
+        },
+        {
+          "id": "travelling_attacks",
+          "label": "Travelling attacks",
+          "description": "Attacks already travelling may finish after a stop condition and push the final score above the target."
+        }
+      ],
+      "image": {
+        "src": "",
+        "alt": "Illustrative Auto Nomad/Samurai score and stopping limits",
+        "caption": "The score target stops new launches while already travelling attacks may finish.",
+        "width": 680,
+        "height": 360
+      }
+    },
+    {
+      "id": "cooldowns",
+      "title": "Choose cooldown skips and reserves",
+      "items": [
+        {
+          "id": "skip_cooldowns",
+          "label": "Clear each landed hit cooldown",
+          "description": "After a confirmed camp victory, use an available time skip to clear that target cooldown.",
+          "recommendation": "On for regular repeated camp attacks; leave off to wait for natural cooldowns."
+        },
+        {
+          "id": "keep_1m",
+          "label": "Keep 1m",
+          "description": "Keep this many 1m time-skip items untouched as a reserve.",
+          "recommendation": "0 for regular camp runs."
+        },
+        {
+          "id": "keep_5m",
+          "label": "Keep 5m",
+          "description": "Keep this many 5m time-skip items untouched as a reserve.",
+          "recommendation": "0 for regular camp runs."
+        },
+        {
+          "id": "keep_10m",
+          "label": "Keep 10m",
+          "description": "Keep this many 10m time-skip items untouched as a reserve.",
+          "recommendation": "0 for regular camp runs."
+        },
+        {
+          "id": "keep_30m",
+          "label": "Keep 30m",
+          "description": "Keep this many 30m time-skip items untouched as a reserve.",
+          "recommendation": "0 for regular camp runs."
+        },
+        {
+          "id": "keep_60m",
+          "label": "Keep 60m",
+          "description": "Keep this many 60m time-skip items untouched as a reserve.",
+          "recommendation": "0 for regular camp runs."
+        },
+        {
+          "id": "keep_5h",
+          "label": "Keep 5h",
+          "description": "Keep this many 5h time-skip items untouched as a reserve.",
+          "recommendation": "Reserve the stock you need for building or other activities."
+        },
+        {
+          "id": "keep_24h",
+          "label": "Keep 24h",
+          "description": "Keep this many 24h time-skip items untouched as a reserve.",
+          "recommendation": "Reserve the stock you need for building or other activities."
+        }
+      ],
+      "image": {
+        "src": "",
+        "alt": "Illustrative camp cooldown and time-skip reserve settings",
+        "caption": "Each keep value counts time-skip items, not minutes of cooldown.",
+        "width": 680,
+        "height": 360
+      }
+    },
+    {
+      "id": "trial",
+      "title": "Leave the temporary trial off for routine runs",
+      "items": [
+        {
+          "id": "rbc_trial",
+          "label": "Temporary RBC end-to-end trial",
+          "description": "Replace normal event operation with a real attack trial on one Robber Baron Castle using the Nomad preset and cooldown skips.",
+          "recommendation": "Off for regular Nomad or Samurai runs."
+        },
+        {
+          "id": "target_x",
+          "label": "Target X",
+          "description": "Enter the Robber Baron Castle horizontal coordinate only for the temporary trial.",
+          "recommendation": "Leave unused while the trial is off."
+        },
+        {
+          "id": "target_y",
+          "label": "Target Y",
+          "description": "Enter the Robber Baron Castle vertical coordinate only for the temporary trial.",
+          "recommendation": "Leave unused while the trial is off."
+        },
+        {
+          "id": "trial_skips",
+          "label": "Trial cooldown skips",
+          "description": "Enabling the trial also turns on cooldown skips for that trial."
+        }
+      ],
+      "image": {
+        "src": "",
+        "alt": "Illustrative temporary Robber Baron Castle trial controls",
+        "caption": "The trial makes a real attack and replaces normal event operation while enabled.",
+        "width": 680,
+        "height": 360
+      }
+    },
+    {
+      "id": "finish",
+      "title": "Save and enable Auto Nomad/Samurai",
+      "items": [
+        {
+          "id": "save_settings",
+          "label": "Save settings",
+          "description": "Save the source, presets, difficulties, stopping limits, skip choices and trial state before closing this dialog."
+        },
+        {
+          "id": "auto_nomad_switch",
+          "label": "Auto Nomad/Samurai switch",
+          "description": "Turn on Auto Nomad/Samurai on the Automation card after saving to run when an event and eligible resources are available.",
+          "recommendation": "On after reviewing and saving your intended settings."
+        },
+        {
+          "id": "readiness",
+          "label": "Camp readiness",
+          "description": "The automation levels event camps and waits for eligible commanders, troops, tools and usable skips when skips are enabled."
+        }
+      ]
+    }
+  ]
+}

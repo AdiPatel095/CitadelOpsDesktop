@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import { useMemo } from 'react';
 import { useCitadelAPI } from '../../api/ApiContext';
 import StaleSessionBanner from '../../components/StaleSessionBanner';
@@ -42,7 +43,7 @@ export default function CurrencyView() {
 		return (
 			<div className="flex flex-col gap-6 h-full items-center justify-center">
 				<StaleSessionBanner />
-				<div className="text-primary animate-pulse">Loading official resource definitions…</div>
+				<div className="text-primary animate-pulse"><LocalizedText messageKey="ui.currency.components.currencyView.loading.official.resource.definitions.91aefa2a" /></div>
 			</div>
 		);
 	}

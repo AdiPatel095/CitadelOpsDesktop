@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -10,6 +11,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -34,6 +36,8 @@ type Coordinator struct {
 	configuration                  *Configuration.Store
 	gameData                       GameDataProvider
 	telemetry                      AttackLaunchCountsProvider
+	traceMu                        sync.Mutex
+	lastAutoStationTrace           string
 	intents                        IntentSubmitter
 	policies                       []Policy
 	stateWakeByDomain              map[string][]string
@@ -107,16 +111,18 @@ type coinAvailabilityGate struct {
 }
 
 type operationResult struct {
-	policyID            string
-	receipt             Intent.Receipt
-	followUp            *Intent.Receipt
-	failureFallback     *Intent.Receipt
-	nextCheck           time.Time
-	detail              string
-	failureDetail       string
-	reevaluateOnSuccess bool
-	reevaluateOnStale   bool
-	operationalCursor   *OperationalCursorUpdate
+	detailDescriptor        *Localization.Message
+	failureDetailDescriptor *Localization.Message
+	policyID                string
+	receipt                 Intent.Receipt
+	followUp                *Intent.Receipt
+	failureFallback         *Intent.Receipt
+	nextCheck               time.Time
+	detail                  string
+	failureDetail           string
+	reevaluateOnSuccess     bool
+	reevaluateOnStale       bool
+	operationalCursor       *OperationalCursorUpdate
 }
 
 func NewCoordinator(
@@ -407,6 +413,12 @@ func (coordinator *Coordinator) evaluate(
 	coordinator.cancelRunsDisallowedByConfiguration(runtime, configuration, now)
 	coordinator.cancelRunsForUnavailableSession(runtime, state)
 	var gameDataStore = coordinator.currentGameData()
+	var language *GameData.LanguageStore
+	if provider, ok := coordinator.gameData.(interface {
+		Language() (*GameData.LanguageStore, bool)
+	}); ok {
+		language, _ = provider.Language()
+	}
 	enabled := enabledFeatures(configuration, now)
 	sessionReady := automationSessionReady(state.Session)
 	for _, policy := range coordinator.policies {
@@ -420,7 +432,7 @@ func (coordinator *Coordinator) evaluate(
 			current.evaluatedSessionKnown = true
 			current.eventOnly = lock.ExpiresAt().IsZero()
 			current.nextCheck = lock.ExpiresAt()
-			coordinator.recordDecision(policy.ID(), policyEnabled(policy, enabled, state), Decision{Status: "gated", Detail: lock.Detail(), NextCheckAt: lock.ExpiresAt()})
+			coordinator.recordDecision(policy.ID(), policyEnabled(policy, enabled, state), Decision{Status: "gated", Detail: lock.Detail(), DetailDescriptor: lock.DetailDescriptor(), NextCheckAt: lock.ExpiresAt()}, "safety_lock")
 			continue
 		}
 		if !policyEvaluationDue(current, configuration.Revision, sessionReady, state.Session.Generation, now) {
@@ -454,7 +466,7 @@ func (coordinator *Coordinator) evaluate(
 				if err != nil {
 					current.nextCheck = now.Add(defaultRetry)
 					coordinator.recordDecision(policy.ID(), true, Decision{
-						Status: "blocked", Detail: "Could not rebuild settings-derived work: " + err.Error(),
+						Status: "blocked", Detail: "Could not rebuild settings-derived work: " + err.Error(), DetailDescriptor: Localization.ErrorContext(Localization.New("server.automation.could_not_rebuild_settings.aaa09f6b", "Could not rebuild settings-derived work", nil), err),
 						NextCheckAt: current.nextCheck,
 					})
 					continue
@@ -479,7 +491,7 @@ func (coordinator *Coordinator) evaluate(
 			current.nextCheck = time.Time{}
 			current.eventOnly = true
 			current.controlExpiryPending = false
-			coordinator.recordDecision(policy.ID(), false, Decision{Status: "disabled", Detail: "Automation is disabled"})
+			coordinator.recordDecision(policy.ID(), false, Decision{Status: "disabled", Detail: "Automation is disabled", DetailDescriptor: Localization.New("server.automation.automation_is_disabled.7345284f", "Automation is disabled", nil)})
 			continue
 		}
 		configurationChanged := current.evaluatedConfiguration != configurationFingerprint ||
@@ -512,12 +524,14 @@ func (coordinator *Coordinator) evaluate(
 			resetContinuation(current)
 			current.nextCheck = now.Add(defaultRetry)
 			detail := "Waiting for the game connection to finish loading"
+			var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.waiting_for_the_game.6748f891", "Waiting for the game connection to finish loading", nil)
 			if state.Session.SocketReady && state.Session.LoggedIn {
 				detail = "Waiting for the latest game state to finish loading"
+				detailLocalizationMessage = Localization.New("server.automation.waiting_for_the_latest.02641565", "Waiting for the latest game state to finish loading", nil)
 			}
 			coordinator.recordDecision(policy.ID(), true, Decision{
-				Status: "waiting", Detail: detail, NextCheckAt: current.nextCheck,
-			})
+				Status: "waiting", Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage), NextCheckAt: current.nextCheck,
+			}, "session")
 			continue
 		}
 		if allowed, next := scheduleAllows(configuration, policyScheduleKey(policy), now); !allowed {
@@ -527,32 +541,34 @@ func (coordinator *Coordinator) evaluate(
 			}
 			current.nextCheck = next
 			coordinator.recordDecision(policy.ID(), true, Decision{
-				Status: "scheduled", Detail: "Outside the configured weekly schedule", NextCheckAt: next,
-			})
+				Status: "scheduled", Detail: "Outside the configured weekly schedule", DetailDescriptor: Localization.New("server.automation.outside_the_configured_weekly.e8fa033d", "Outside the configured weekly schedule", nil), NextCheckAt: next,
+			}, "schedule")
 			continue
 		}
 		if current.troopAvailabilityGate != nil {
 			current.nextCheck = time.Time{}
 			current.eventOnly = true
 			coordinator.recordTroopAvailabilityGate(policy.ID(), *current.troopAvailabilityGate)
+			coordinator.traceAutoStationDecision(policy.ID(), true, Decision{Status: "gated"}, "troop_gate")
 			continue
 		}
 		if current.coinAvailabilityGate != nil {
 			if coinAvailabilityGateWaiting(current, now) {
 				coordinator.recordCoinAvailabilityGate(policy.ID(), *current.coinAvailabilityGate)
+				coordinator.traceAutoStationDecision(policy.ID(), true, Decision{Status: "gated"}, "coin_gate")
 				continue
 			}
 		}
 		if current.failureBlockedUntil.After(now) {
 			current.nextCheck = current.failureBlockedUntil
 			coordinator.recordDecision(policy.ID(), true, Decision{
-				Status: "waiting", Detail: "Safety pause after an automation action failed", NextCheckAt: current.nextCheck,
-			})
+				Status: "waiting", Detail: "Safety pause after an automation action failed", DetailDescriptor: Localization.New("server.automation.safety_pause_after_an.67451716", "Safety pause after an automation action failed", nil), NextCheckAt: current.nextCheck,
+			}, "failure_pause")
 			continue
 		}
 		current.failureBlockedUntil = time.Time{}
 		snapshot := Snapshot{
-			State: state, Configuration: configuration, GameData: gameDataStore, Telemetry: coordinator.telemetry, Now: now,
+			State: state, Configuration: configuration, GameData: gameDataStore, Language: language, Telemetry: coordinator.telemetry, Now: now,
 			PolicyConfigurationChanged:   previouslyEvaluated && configurationChanged,
 			ConfigurationExternallyOwned: coordinator.externalConfigurationAuthority.Load(),
 		}
@@ -568,7 +584,7 @@ func (coordinator *Coordinator) evaluate(
 			resetContinuation(current)
 			current.nextCheck = now.Add(defaultRetry)
 			coordinator.recordDecision(policy.ID(), true, Decision{
-				Status: "blocked", Detail: err.Error(), NextCheckAt: current.nextCheck,
+				Status: "blocked", Detail: err.Error(), DetailDescriptor: Localization.FromError(err), NextCheckAt: current.nextCheck,
 			})
 			continue
 		}
@@ -612,10 +628,11 @@ func (coordinator *Coordinator) evaluate(
 			current.immediateRuns = 0
 			current.nextCheck = current.submissionBlockedUntil
 			coordinator.recordDecision(policy.ID(), true, Decision{
-				Status:      "waiting",
-				Detail:      "Safety pause after a continuous command chain: " + decision.Detail,
-				NextCheckAt: current.nextCheck,
-				Metrics:     decision.Metrics,
+				Status:           "waiting",
+				Detail:           "Safety pause after a continuous command chain: " + decision.Detail,
+				DetailDescriptor: Localization.Join(Localization.New("server.automation.continuous_chain.safety_pause", "Safety pause after a continuous command chain", nil), decision.DetailDescriptor),
+				NextCheckAt:      current.nextCheck,
+				Metrics:          decision.Metrics,
 			})
 			continue
 		}
@@ -647,7 +664,7 @@ func (coordinator *Coordinator) evaluate(
 		operationContext, cancelOperation := policyOperationContext(ctx, policy.ID())
 		current.cancelRun = cancelOperation
 		coordinator.recordDecision(policy.ID(), true, Decision{
-			Status: "running", Detail: decision.Detail, NextCheckAt: decision.NextCheckAt, Metrics: decision.Metrics,
+			Status: "running", Detail: decision.Detail, DetailDescriptor: Localization.Clone(decision.DetailDescriptor), NextCheckAt: decision.NextCheckAt, Metrics: decision.Metrics, Request: &request,
 		})
 		go func(
 			policyID string,
@@ -659,7 +676,9 @@ func (coordinator *Coordinator) evaluate(
 			failureFallbackIndeterminateOnly bool,
 			nextCheck time.Time,
 			detail string,
+			detailDescriptor *Localization.Message,
 			failureDetail string,
+			failureDetailDescriptor *Localization.Message,
 			reevaluateOnSuccess bool,
 			reevaluateOnStale bool,
 			operationalCursor *OperationalCursorUpdate,
@@ -671,7 +690,7 @@ func (coordinator *Coordinator) evaluate(
 			if !receiptLocksLane(receipt) && receipt.Status == Intent.StatusSucceeded && followUp != nil {
 				result := coordinator.intents.Submit(operationContext, *followUp)
 				followUpReceipt = &result
-			} else if !receiptLocksLane(receipt) && failureFallback != nil && shouldRunFailureFallback(receipt.Status, failureFallbackIndeterminateOnly) {
+			} else if operationContext.Err() == nil && !receiptLocksLane(receipt) && failureFallback != nil && shouldRunFailureFallback(receipt.Status, failureFallbackIndeterminateOnly) {
 				result := coordinator.intents.Submit(operationContext, *failureFallback)
 				failureFallbackReceipt = &result
 			}
@@ -680,7 +699,7 @@ func (coordinator *Coordinator) evaluate(
 			case results <- operationResult{
 				policyID: policyID, receipt: receipt, followUp: followUpReceipt,
 				failureFallback: failureFallbackReceipt,
-				nextCheck:       nextCheck, detail: detail, failureDetail: failureDetail,
+				nextCheck:       nextCheck, detail: detail, detailDescriptor: detailDescriptor, failureDetail: failureDetail, failureDetailDescriptor: failureDetailDescriptor,
 				reevaluateOnSuccess: reevaluateOnSuccess,
 				reevaluateOnStale:   reevaluateOnStale,
 				operationalCursor:   operationalCursor,
@@ -689,7 +708,7 @@ func (coordinator *Coordinator) evaluate(
 		}(
 			policy.ID(), operationContext, cancelOperation, request, followUp, failureFallback,
 			decision.FailureFallbackIndeterminateOnly,
-			decision.NextCheckAt, decision.Detail, decision.FailureDetail, decision.ReevaluateOnSuccess,
+			decision.NextCheckAt, decision.Detail, Localization.Clone(decision.DetailDescriptor), decision.FailureDetail, Localization.Clone(decision.FailureDetailDescriptor), decision.ReevaluateOnSuccess,
 			decision.ReevaluateOnStale, decision.OperationalCursor,
 		)
 	}
@@ -888,7 +907,7 @@ func (coordinator *Coordinator) cancelRunsForUnavailableSession(
 	}
 }
 
-func (coordinator *Coordinator) recordDecision(id string, enabled bool, decision Decision) {
+func (coordinator *Coordinator) recordDecision(id string, enabled bool, decision Decision, traceReason ...string) {
 	coordinator.updateAutomation(id, func(current State.AutomationState) State.AutomationState {
 		current.ID = id
 		current.Enabled = enabled
@@ -897,14 +916,17 @@ func (coordinator *Coordinator) recordDecision(id string, enabled bool, decision
 			current.Status = "idle"
 		}
 		current.Detail = decision.Detail
+		current.DetailDescriptor = Localization.Clone(decision.DetailDescriptor)
 		current.NextCheckAt = timePointer(decision.NextCheckAt)
 		current.Metrics = copyMetrics(decision.Metrics)
 		current.Details = copyDetails(decision.Details)
+		current.DetailsDescriptors = Localization.CloneMap(decision.DetailsDescriptors)
 		if current.Status != "blocked" {
 			current.LastError = ""
 		}
 		return current
 	})
+	coordinator.traceAutoStationDecision(id, enabled, decision, traceReason...)
 }
 
 func (coordinator *Coordinator) recordReceipt(result operationResult) {
@@ -929,8 +951,10 @@ func (coordinator *Coordinator) recordReceipt(result operationResult) {
 		if operationResultSucceeded(result) {
 			current.Status = "idle"
 			current.Detail = result.detail
+			current.DetailDescriptor = Localization.Clone(result.detailDescriptor)
 			if result.failureFallback != nil && strings.TrimSpace(result.failureDetail) != "" {
 				current.Detail = result.failureDetail
+				current.DetailDescriptor = Localization.Clone(result.failureDetailDescriptor)
 			}
 			current.LastError = ""
 		} else if gate, gated := operationResultTroopAvailabilityGate(result); gated {
@@ -943,9 +967,11 @@ func (coordinator *Coordinator) recordReceipt(result operationResult) {
 				current.Status = "gated"
 			}
 			current.Detail = strings.TrimSpace(failure.Explanation)
+			current.DetailDescriptor = Localization.Clone(failure.ExplanationDescriptor)
 			if recovery := strings.TrimSpace(failure.Recovery); recovery != "" &&
 				!strings.EqualFold(recovery, current.Detail) {
 				current.Detail = strings.TrimSpace(current.Detail + " " + recovery)
+				current.DetailDescriptor = Localization.Join(current.DetailDescriptor, failure.RecoveryDescriptor)
 			}
 			current.LastError = ""
 		} else {
@@ -965,6 +991,98 @@ func (coordinator *Coordinator) recordReceipt(result operationResult) {
 		}
 		return current
 	})
+	coordinator.traceAutoStationReceipt(result)
+}
+
+// Auto Station diagnostics use fixed fields only. Decision detail, request
+// arguments, operation identifiers and receipt errors can contain game data.
+func (coordinator *Coordinator) traceAutoStationDecision(id string, enabled bool, decision Decision, traceReason ...string) {
+	if id != "autoStation" {
+		return
+	}
+	logger, ok := coordinator.telemetry.(interface{ RecordFeature(string, string, string) })
+	if !ok {
+		return
+	}
+	status := safeAutoStationStatus(decision.Status)
+	reason := "policy"
+	if len(traceReason) > 0 {
+		switch traceReason[0] {
+		case "safety_lock", "session", "schedule", "troop_gate", "coin_gate", "failure_pause":
+			reason = traceReason[0]
+		}
+	}
+	intent := "none"
+	if decision.Request != nil {
+		intent = safeAutoStationIntent(decision.Request.Name)
+	}
+	threats := int(decision.Metrics["threatCount"])
+	if threats < 0 || threats > 10000 {
+		threats = 0
+	}
+	impact := int64(decision.Metrics["nextImpactUnixMs"])
+	if impact < 0 || impact > 100000000000000 {
+		impact = 0
+	}
+	// The impact belongs in the signature; rolling retry timestamps do not.
+	key := fmt.Sprintf("enabled=%t status=%s reason=%s threats=%d intent=%s impactUnixMs=%d", enabled, status, reason, threats, intent, impact)
+	coordinator.traceMu.Lock()
+	if key == coordinator.lastAutoStationTrace {
+		coordinator.traceMu.Unlock()
+		return
+	}
+	coordinator.lastAutoStationTrace = key
+	coordinator.traceMu.Unlock()
+	nextCheck := "none"
+	if !decision.NextCheckAt.IsZero() {
+		nextCheck = decision.NextCheckAt.UTC().Format(time.RFC3339)
+	}
+	logger.RecordFeature("autostation", "DECISION", key+" nextCheckAt="+nextCheck)
+}
+
+func (coordinator *Coordinator) traceAutoStationReceipt(result operationResult) {
+	if result.policyID != "autoStation" {
+		return
+	}
+	logger, ok := coordinator.telemetry.(interface{ RecordFeature(string, string, string) })
+	if !ok {
+		return
+	}
+	detail := fmt.Sprintf("intent=%s status=%s", safeAutoStationIntent(result.receipt.Intent), safeAutoStationReceiptStatus(result.receipt.Status))
+	if result.followUp != nil {
+		detail += fmt.Sprintf(" followUp=%s status=%s", safeAutoStationIntent(result.followUp.Intent), safeAutoStationReceiptStatus(result.followUp.Status))
+	}
+	if result.failureFallback != nil {
+		detail += fmt.Sprintf(" fallback=%s status=%s", safeAutoStationIntent(result.failureFallback.Intent), safeAutoStationReceiptStatus(result.failureFallback.Status))
+	}
+	logger.RecordFeature("autostation", "RECEIPT", detail)
+}
+
+func safeAutoStationStatus(status string) string {
+	switch status {
+	case "armed", "blocked", "disabled", "error", "evacuating", "gated", "idle", "protected", "recalling", "refreshing", "running", "scheduled", "threat", "waiting":
+		return status
+	default:
+		return "other"
+	}
+}
+
+func safeAutoStationIntent(name string) string {
+	switch name {
+	case "alliance.refresh", "castle.focus", "defense.open_gate", "game.refresh_movements", "map.query", "movement.recall", "troops.station":
+		return name
+	default:
+		return "other"
+	}
+}
+
+func safeAutoStationReceiptStatus(status Intent.Status) string {
+	switch status {
+	case Intent.StatusSucceeded, Intent.StatusFailed, Intent.StatusPartiallySucceeded, Intent.StatusIndeterminate, Intent.StatusCancelled:
+		return string(status)
+	default:
+		return "other"
+	}
 }
 
 func (coordinator *Coordinator) recordTroopAvailabilityGate(id string, gate troopAvailabilityGate) {
@@ -1286,17 +1404,58 @@ func (coordinator *Coordinator) updateAutomation(id string, update func(State.Au
 			gameState.Automations = map[string]State.AutomationState{}
 		}
 		current := gameState.Automations[id]
-		next := update(current)
+		updateInput := current
+		updateInput.Details = copyDetails(current.Details)
+		updateInput.DetailsDescriptors = Localization.CloneMap(current.DetailsDescriptors)
+		next := update(updateInput)
 		if lock := current.SafetyLock; lock.Active(time.Now().UTC()) {
 			next.Status = "gated"
 			next.Detail = lock.Detail()
+			next.DetailDescriptor = lock.DetailDescriptor()
+			next.LastErrorDescriptor = lock.DetailDescriptor()
 			next.LastError = next.Detail
 			next.LastOperationID = lock.OperationID
 			next.NextCheckAt = timePointer(lock.ExpiresAt())
 		}
+		if next.DetailDescriptor == current.DetailDescriptor && next.Detail != current.Detail {
+			next.DetailDescriptor = nil
+		}
+		if next.LastErrorDescriptor == current.LastErrorDescriptor && next.LastError != current.LastError {
+			next.LastErrorDescriptor = nil
+		}
 		labels := GameData.NewIdentifierLabels(*gameState, gameData, language)
+		beforeDetail := next.Detail
 		next.Detail = labels.Humanize(next.Detail)
+		if beforeDetail != next.Detail {
+			next.DetailDescriptor = nil
+		}
+		beforeLastError := next.LastError
 		next.LastError = labels.Humanize(next.LastError)
+		if beforeLastError != next.LastError {
+			next.LastErrorDescriptor = nil
+		}
+		next.DetailDescriptor = Localization.Bind(next.DetailDescriptor, next.Detail)
+		next.LastErrorDescriptor = Localization.Bind(next.LastErrorDescriptor, next.LastError)
+		boundDetails := map[string]*Localization.Message{}
+		for key, descriptor := range next.DetailsDescriptors {
+			raw, exists := next.Details[key]
+			if !exists || descriptor == nil {
+				continue
+			}
+			if reflect.DeepEqual(descriptor, current.DetailsDescriptors[key]) && raw != current.Details[key] {
+				continue
+			}
+			if labels.Humanize(raw) != raw {
+				continue
+			}
+			boundDetails[key] = Localization.Bind(descriptor, raw)
+		}
+		if len(boundDetails) == 0 {
+			next.DetailsDescriptors = nil
+		} else {
+			next.DetailsDescriptors = boundDetails
+		}
+		next.DetailTranslationStatus = Localization.Status(next.DetailDescriptor)
 		next.UpdatedAt = current.UpdatedAt
 		if reflect.DeepEqual(current, next) {
 			return nil, false, nil

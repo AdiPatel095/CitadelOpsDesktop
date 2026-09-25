@@ -1,6 +1,7 @@
 package App
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -65,7 +66,7 @@ func planEquipmentEventApply(_ context.Context, input Intent.PlanningContext, ar
 		return Intent.Plan{}, err
 	}
 	if !leader.available {
-		return Intent.Plan{}, fmt.Errorf("commander %d is busy", leader.id)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("commander %d is busy", leader.id), Localization.New("server.app.commander_p_is_busy.94a46299", "commander {p0} is busy", Localization.Params{"p0": fmt.Sprintf("%d", leader.id)}))
 	}
 	config, err := resolveEquipmentEventConfig(request.Event)
 	if err != nil {
@@ -76,7 +77,7 @@ func planEquipmentEventApply(_ context.Context, input Intent.PlanningContext, ar
 		return Intent.Plan{}, err
 	}
 	if input.GameData == nil {
-		return Intent.Plan{}, fmt.Errorf("official game data is unavailable")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	setIDs := make([]int64, 0, len(tiers))
 	for _, tier := range tiers {
@@ -91,7 +92,7 @@ func planEquipmentEventApply(_ context.Context, input Intent.PlanningContext, ar
 	for _, tier := range tiers {
 		officialSet, found := officialSets[tier.setID]
 		if !found || len(officialSet.equipmentBySlot) < len(baseEquipmentSlots) || len(officialSet.gemDefinitions) < 4 {
-			return Intent.Plan{}, fmt.Errorf("%s set %d is incomplete in the current official game data", config.label, tier.setID)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("%s set %d is incomplete in the current official game data", config.label, tier.setID), Localization.New("server.app.p_set_p_is.afbbf0bf", "{p0} set {p1} is incomplete in the current official game data", Localization.Params{"p0": fmt.Sprintf("%s", config.label), "p1": fmt.Sprintf("%d", tier.setID)}))
 		}
 		candidates = append(candidates, resolveEquipmentEventCandidate(input.State, leader, config, tier, officialSet))
 	}
@@ -104,7 +105,7 @@ func planEquipmentEventApply(_ context.Context, input Intent.PlanningContext, ar
 		if selected.tier.label != "" {
 			label = selected.tier.label + " " + label
 		}
-		return Intent.Plan{}, fmt.Errorf("no available %s equipment is in storage or already on commander %d", label, leader.id)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("no available %s equipment is in storage or already on commander %d", label, leader.id), Localization.New("server.app.no_available_p_equipment.7d897c9d", "no available {p0} equipment is in storage or already on commander {p1}", Localization.Params{"p0": fmt.Sprintf("%s", label), "p1": fmt.Sprintf("%d", leader.id)}))
 	}
 	return buildEquipmentEventPlan(input.State, leader, selected)
 }
@@ -121,10 +122,10 @@ func selectEquipmentEventTiers(config equipmentEventConfig, raw string) ([]equip
 	}
 	for _, tier := range config.tiers {
 		if tier.label != "" {
-			return nil, fmt.Errorf("unknown %s equipment tier %q; expected Bronze, Silver, or Gold", config.label, requested)
+			return nil, Localization.WithError(fmt.Errorf("unknown %s equipment tier %q; expected Bronze, Silver, or Gold", config.label, requested), Localization.New("server.app.unknown_p_equipment_tier.ac2cdcdb", "unknown {p0} equipment tier {p1}; expected Bronze, Silver, or Gold", Localization.Params{"p0": fmt.Sprintf("%s", config.label), "p1": fmt.Sprintf("%q", requested)}))
 		}
 	}
-	return nil, fmt.Errorf("%s does not support equipment tier selection", config.label)
+	return nil, Localization.WithError(fmt.Errorf("%s does not support equipment tier selection", config.label), Localization.New("server.app.p_does_not_support.3abdea10", "{p0} does not support equipment tier selection", Localization.Params{"p0": fmt.Sprintf("%s", config.label)}))
 }
 
 func resolveEquipmentEventConfig(raw string) (equipmentEventConfig, error) {
@@ -161,7 +162,7 @@ func resolveEquipmentEventConfig(raw string) (equipmentEventConfig, error) {
 			},
 		}, nil
 	default:
-		return equipmentEventConfig{}, fmt.Errorf("unknown commander equipment event %q", strings.TrimSpace(raw))
+		return equipmentEventConfig{}, Localization.WithError(fmt.Errorf("unknown commander equipment event %q", strings.TrimSpace(raw)), Localization.New("server.app.unknown_commander_equipment_event.672965bc", "unknown commander equipment event {p0}", Localization.Params{"p0": fmt.Sprintf("%q", strings.TrimSpace(raw))}))
 	}
 }
 
@@ -445,14 +446,14 @@ func buildEquipmentEventPlan(
 		}
 		item, found := gameState.Inventory.Equipment[id]
 		if !found || item.WearerKind != leader.kind || item.WearerID != leader.id {
-			return Intent.Plan{}, fmt.Errorf("equipment slot %d is inconsistent with current commander state", slot)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("equipment slot %d is inconsistent with current commander state", slot), Localization.New("server.app.equipment_slot_p_is.207279a1", "equipment slot {p0} is inconsistent with current commander state", Localization.Params{"p0": slot}))
 		}
 		payload, _ := json.Marshal(struct {
 			EquipmentID State.EquipmentInstanceID `json:"EID"`
 			LeaderID    int64                     `json:"LID"`
 			Equip       int                       `json:"E"`
 		}{item.ID, leader.id, 0})
-		steps = append(steps, commandStep(fmt.Sprintf("Clear commander equipment slot %d", slot), "eeq", payload, "eeq"))
+		steps = append(steps, commandStep(fmt.Sprintf("Clear commander equipment slot %d", slot), "eeq", payload, "eeq", Localization.New("server.app.clear_commander_equipment_slot.593c29b7", "Clear commander equipment slot {p0, number}", Localization.Params{"p0": slot})))
 	}
 
 	gemsByEquipment := make(map[State.EquipmentInstanceID]State.GemInstance, len(gameState.Inventory.Gems))
@@ -471,7 +472,7 @@ func buildEquipmentEventPlan(
 		if assignment.source.carrierID > 0 {
 			parent, found := gameState.Inventory.Equipment[assignment.source.carrierID]
 			if !found || !equipmentEventItemAvailable(parent, leader) || parent.Slot < 1 || parent.Slot > 4 {
-				return Intent.Plan{}, fmt.Errorf("event gem carrier %d is unavailable", assignment.source.carrierID)
+				return Intent.Plan{}, Localization.WithError(fmt.Errorf("event gem carrier %d is unavailable", assignment.source.carrierID), Localization.New("server.app.event_gem_carrier_p.3cc12382", "event gem carrier {p0} is unavailable", Localization.Params{"p0": fmt.Sprintf("%d", assignment.source.carrierID)}))
 			}
 			detachCarriers[parent.ID] = parent
 		}
@@ -505,18 +506,18 @@ func buildEquipmentEventPlan(
 			LeaderID    int64                     `json:"LID"`
 			Equip       int                       `json:"E"`
 		}{carrier.ID, leader.id, 1})
-		steps = append(steps, commandStep(fmt.Sprintf("Mount event gem carrier %d", carrier.ID), "eeq", equipPayload, "eeq"))
+		steps = append(steps, commandStep(fmt.Sprintf("Mount event gem carrier %d", carrier.ID), "eeq", equipPayload, "eeq", Localization.New("server.app.mount_event_gem_carrier.47d1556b", "Mount event gem carrier {p0}", Localization.Params{"p0": fmt.Sprintf("%d", carrier.ID)})))
 		detachPayload, _ := json.Marshal(struct {
 			EquipmentID State.EquipmentInstanceID `json:"EID"`
 			LeaderID    int64                     `json:"LID"`
 		}{carrier.ID, leader.id})
-		steps = append(steps, commandStep(fmt.Sprintf("Detach gem from carrier %d", carrier.ID), "ege", detachPayload, "ege"))
+		steps = append(steps, commandStep(fmt.Sprintf("Detach gem from carrier %d", carrier.ID), "ege", detachPayload, "ege", Localization.New("server.app.detach_gem_from_carrier.f0b3dbfd", "Detach gem from carrier {p0}", Localization.Params{"p0": fmt.Sprintf("%d", carrier.ID)})))
 		unequipPayload, _ := json.Marshal(struct {
 			EquipmentID State.EquipmentInstanceID `json:"EID"`
 			LeaderID    int64                     `json:"LID"`
 			Equip       int                       `json:"E"`
 		}{carrier.ID, leader.id, 0})
-		steps = append(steps, commandStep(fmt.Sprintf("Return event gem carrier %d", carrier.ID), "eeq", unequipPayload, "eeq"))
+		steps = append(steps, commandStep(fmt.Sprintf("Return event gem carrier %d", carrier.ID), "eeq", unequipPayload, "eeq", Localization.New("server.app.return_event_gem_carrier.ff41efce", "Return event gem carrier {p0}", Localization.Params{"p0": fmt.Sprintf("%d", carrier.ID)})))
 	}
 
 	for _, slot := range baseEquipmentSlots {
@@ -529,7 +530,7 @@ func buildEquipmentEventPlan(
 			LeaderID    int64                     `json:"LID"`
 			Equip       int                       `json:"E"`
 		}{item.ID, leader.id, 1})
-		steps = append(steps, commandStep(fmt.Sprintf("Equip %s slot %d", candidate.config.label, slot), "eeq", payload, "eeq"))
+		steps = append(steps, commandStep(fmt.Sprintf("Equip %s slot %d", candidate.config.label, slot), "eeq", payload, "eeq", Localization.New("server.app.equip_p_slot_p.33bf1148", "Equip {p0} slot {p1, number}", Localization.Params{"p0": fmt.Sprintf("%s", candidate.config.label), "p1": slot})))
 	}
 	for slot := 1; slot <= 4; slot++ {
 		assignment, found := candidate.gems[slot]
@@ -549,7 +550,7 @@ func buildEquipmentEventPlan(
 			Mode        int                       `json:"M"`
 			RelicGem    int                       `json:"RGEM"`
 		}{commandGemID, candidate.equipment[slot].ID, leader.id, 0, relicGem})
-		steps = append(steps, commandStep(fmt.Sprintf("Socket %s gem in slot %d", candidate.config.label, slot), "bge", payload, "bge"))
+		steps = append(steps, commandStep(fmt.Sprintf("Socket %s gem in slot %d", candidate.config.label, slot), "bge", payload, "bge", Localization.New("server.app.socket_p_gem_in.3fc48b47", "Socket {p0} gem in slot {p1, number}", Localization.Params{"p0": fmt.Sprintf("%s", candidate.config.label), "p1": slot})))
 	}
 	steps = append(steps, equipmentRefreshSteps()...)
 	tierLabel := ""
@@ -561,7 +562,7 @@ func buildEquipmentEventPlan(
 		Summary: fmt.Sprintf(
 			"Apply%s %s loadout to commander %d with %d equipment and %d gems",
 			tierLabel, candidate.config.label, leader.id, candidate.gearCount, candidate.gemCount,
-		),
+		), SummaryDescriptor: Localization.New("server.app.apply_p_p_loadout.9d881d3c", "Apply{p0} {p1} loadout to commander {p2} with {p3} equipment and {p4} gems", Localization.Params{"p0": fmt.Sprintf("%s", tierLabel), "p1": fmt.Sprintf("%s", candidate.config.label), "p2": fmt.Sprintf("%d", leader.id), "p3": fmt.Sprintf("%d", candidate.gearCount), "p4": fmt.Sprintf("%d", candidate.gemCount)}),
 		Steps: steps,
 	}, nil
 }

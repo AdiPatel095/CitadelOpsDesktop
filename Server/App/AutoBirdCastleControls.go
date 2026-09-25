@@ -1,11 +1,13 @@
 package App
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
 	"time"
 
+	"CitadelDesktop/Server/Automation"
 	"CitadelDesktop/Server/GameData"
 	"CitadelDesktop/Server/Intent"
 	"CitadelDesktop/Server/State"
@@ -23,13 +25,13 @@ func decodeAutoBirdCastleControl(arguments json.RawMessage) (autoBirdCastleContr
 		return request, err
 	}
 	if request.SourceCastleID <= 0 {
-		return request, fmt.Errorf("an owned castle is required")
+		return request, Localization.WithError(fmt.Errorf("an owned castle is required"), Localization.New("server.app.an_owned_castle_is.266fdc86", "an owned castle is required", nil))
 	}
 	if request.Action != "pause" && request.Action != "resume" && request.Action != "resend" {
-		return request, fmt.Errorf("choose pause, resume, or resend")
+		return request, Localization.WithError(fmt.Errorf("choose pause, resume, or resend"), Localization.New("server.app.choose_pause_resume_or.ef523e3e", "choose pause, resume, or resend", nil))
 	}
 	if request.DurationMinutes < 0 || request.DurationMinutes > 10080 || request.Action != "pause" && request.DurationMinutes != 0 {
-		return request, fmt.Errorf("pause duration must be 1 minute through 7 days, or zero for an indefinite pause")
+		return request, Localization.WithError(fmt.Errorf("pause duration must be 1 minute through 7 days, or zero for an indefinite pause"), Localization.New("server.app.pause_duration_must_be.52abf45a", "pause duration must be 1 minute through 7 days, or zero for an indefinite pause", nil))
 	}
 	return request, nil
 }
@@ -40,14 +42,14 @@ func planAutoBirdCastleControl(_ context.Context, input Intent.PlanningContext, 
 		return Intent.Plan{}, err
 	}
 	if _, ok := input.State.Castles[request.SourceCastleID]; !ok {
-		return Intent.Plan{}, fmt.Errorf("castle %d is not owned", request.SourceCastleID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("castle %d is not owned", request.SourceCastleID), Localization.New("server.app.castle_p_is_not.b7f65b1d", "castle {p0} is not owned", Localization.Params{"p0": fmt.Sprintf("%d", request.SourceCastleID)}))
 	}
 	return Intent.Plan{
 		// Controls can interrupt a cycle between commands; every dispatch rechecks
 		// the control revision. They must not wait for that cycle's claim.
 		Claims:  []string{fmt.Sprintf("auto-bird-control:%d", request.SourceCastleID)},
-		Summary: fmt.Sprintf("%s Auto Bird for castle %d", request.Action, request.SourceCastleID),
-		Steps:   []Intent.Step{{Name: "Update castle Auto Bird control", Action: "auto_bird.castle.control", ActionArguments: arguments}},
+		Summary: fmt.Sprintf("%s Auto Bird for castle %d", request.Action, request.SourceCastleID), SummaryDescriptor: Localization.New("server.app.p_auto_bird_for.3128212d", "{p0} Auto Bird for castle {p1}", Localization.Params{"p0": fmt.Sprintf("%s", request.Action), "p1": fmt.Sprintf("%d", request.SourceCastleID)}),
+		Steps: []Intent.Step{{Name: "Update castle Auto Bird control", NameDescriptor: Localization.New("server.app.update_castle_auto_bird.419c9665", "Update castle Auto Bird control", nil), Action: "auto_bird.castle.control", ActionArguments: arguments}},
 	}, nil
 }
 
@@ -58,7 +60,7 @@ func (application *Application) controlAutoBirdCastle(_ context.Context, argumen
 	}
 	_, err = application.State.ApplyComponents(State.Components(State.ComponentStationing), func(state *State.GameState) ([]string, bool, error) {
 		if _, ok := state.Castles[request.SourceCastleID]; !ok {
-			return nil, false, fmt.Errorf("castle %d is not owned", request.SourceCastleID)
+			return nil, false, Localization.WithError(fmt.Errorf("castle %d is not owned", request.SourceCastleID), Localization.New("server.app.castle_p_is_not.b7f65b1d", "castle {p0} is not owned", Localization.Params{"p0": fmt.Sprintf("%d", request.SourceCastleID)}))
 		}
 		id := State.AutoBirdControlID(request.SourceCastleID)
 		control := state.AutoBirdControl(request.SourceCastleID)
@@ -92,26 +94,51 @@ func (application *Application) controlAutoBirdCastle(_ context.Context, argumen
 
 func validateAutoBirdControl(state State.GameState, request autoBirdCycleRequest, now time.Time) error {
 	if autoBirdPresetWindowExpired(request, now) {
-		return fmt.Errorf("%w: the selected Auto Bird preset period has ended", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: the selected Auto Bird preset period has ended", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.574a3499", "intent plan became stale before dispatch: the selected Auto Bird preset period has ended", nil))
 	}
 
 	if state.AutoBirdPaused(request.SourceCastleID, now) {
-		return fmt.Errorf("%w: Auto Bird is paused for castle %d", Intent.ErrPlanStale, request.SourceCastleID)
+		return Localization.WithError(fmt.Errorf("%w: Auto Bird is paused for castle %d", Intent.ErrPlanStale, request.SourceCastleID), Localization.New("server.app.intent_plan_became_stale.8a2b22ad", "intent plan became stale before dispatch: Auto Bird is paused for castle {p1}", Localization.Params{"p1": fmt.Sprintf("%d", request.SourceCastleID)}))
 	}
 	if !state.AutoBirdControl(request.SourceCastleID).UpdatedAt.Equal(request.ControlRevision) {
-		return fmt.Errorf("%w: Auto Bird castle control changed; prepare a fresh cycle", Intent.ErrPlanStale)
+		return Localization.WithError(fmt.Errorf("%w: Auto Bird castle control changed; prepare a fresh cycle", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.5317f17d", "intent plan became stale before dispatch: Auto Bird castle control changed; prepare a fresh cycle", nil))
 	}
 	return nil
 }
 
 type autoBirdBatchGuardRequest struct {
-	Cycle   autoBirdCycleRequest `json:"cycle"`
-	Payload json.RawMessage      `json:"payload"`
+	TargetOwner State.PlayerID       `json:"targetOwner"`
+	Cycle       autoBirdCycleRequest `json:"cycle"`
+	Payload     json.RawMessage      `json:"payload"`
 }
 
 func (application *Application) guardAutoBirdBatch(ctx context.Context, arguments json.RawMessage) error {
 	var request autoBirdBatchGuardRequest
 	if err := json.Unmarshal(arguments, &request); err != nil {
+		return err
+	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if application.Configuration == nil || !Automation.AutoBirdDispatchAllowed(application.Configuration.Snapshot(), request.Cycle.PresetID, time.Now()) {
+		return fmt.Errorf("%w: Auto Bird is disabled", Intent.ErrPlanStale)
+	}
+	state := application.State.Snapshot()
+	if err := validateStationSession(state, "autoBird", request.Cycle.ConnectionGeneration, time.Now()); err != nil {
+		return err
+	}
+	op, ok := state.Stationing[request.Cycle.TrackingID]
+	if !ok || op.Purpose != "autoBird" || op.SourceCastleID != request.Cycle.SourceCastleID || op.TargetCastleID != request.Cycle.ExpectedTargetCastle || op.PresetID != request.Cycle.PresetID {
+		return fmt.Errorf("%w: Auto Bird cycle changed before dispatch", Intent.ErrPlanStale)
+	}
+	target, _ := allianceHolding(state.Alliance, request.Cycle.ExpectedTargetCastle)
+	if request.TargetOwner <= 0 || target.PlayerID != request.TargetOwner {
+		return fmt.Errorf("%w: station target owner changed", Intent.ErrPlanStale)
+	}
+	if err := validateStationAuthority(state, request.Cycle.SourceCastleID, request.Cycle.ExpectedTargetCastle, request.Cycle.DispatchStartedAt, request.Cycle.MinimumRPTDays, time.Now()); err != nil {
+		return err
+	}
+	if err := validateStationPayload(state, request.Cycle.ExpectedTargetCastle, request.Payload); err != nil {
 		return err
 	}
 	if err := validateAutoBirdControl(application.State.Snapshot(), request.Cycle, time.Now().UTC()); err != nil {
@@ -127,7 +154,7 @@ func (application *Application) guardAutoBirdBatch(ctx context.Context, argument
 	if application.autoBirdDirewolvesProtected(application.State.Snapshot(), payload.SID, time.Now().UTC()) {
 		for _, unit := range payload.A {
 			if State.UnitID(unit[0]) == GameData.DirewolfUnitID {
-				return fmt.Errorf("%w: Auto Fortress now reserves every Direwolf at castle %d; rebuild the Auto Bird manifest", Intent.ErrPlanStale, payload.SID)
+				return Localization.WithError(fmt.Errorf("%w: Auto Fortress now reserves every Direwolf at castle %d; rebuild the Auto Bird manifest", Intent.ErrPlanStale, payload.SID), Localization.New("server.app.intent_plan_became_stale.e3ba5725", "intent plan became stale before dispatch: Auto Fortress now reserves every Direwolf at castle {p1}; rebuild the Auto Bird manifest", Localization.Params{"p1": fmt.Sprintf("%d", payload.SID)}))
 			}
 		}
 	}

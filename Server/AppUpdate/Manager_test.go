@@ -209,3 +209,135 @@ type roundTripFunc func(*http.Request) (*http.Response, error)
 func (function roundTripFunc) RoundTrip(request *http.Request) (*http.Response, error) {
 	return function(request)
 }
+
+func TestCheckResolvesVersionOnlyResponseFromManifest(t *testing.T) {
+	checksum := strings.Repeat("a", 64)
+	revision := strings.Repeat("b", 40)
+	var server *httptest.Server
+	server = httptest.NewTLSServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		switch request.URL.Path {
+		case "/version":
+			_, _ = writer.Write([]byte(`{"version":"2.1.0"}`))
+		case "/downloads/releases/latest.json":
+			_, _ = fmt.Fprintf(writer, `{
+				"schemaVersion":2,
+				"version":"2.1.0",
+				"sourceRevision":%q,
+				"desktopArtifacts":{
+					"windows":{"object":"windows.exe","sha256":%q},
+					"macosArm64":{"object":"macos-arm64","sha256":%q},
+					"macosAmd64":{"object":"macos-amd64","sha256":%q},
+					"linuxAmd64":{"object":"linux-amd64","sha256":%q}
+				}
+			}`, revision, checksum, checksum, checksum, checksum)
+		default:
+			http.NotFound(writer, request)
+		}
+	}))
+	defer server.Close()
+
+	manager := NewManager(Config{
+		CurrentVersion:  "2.0.0",
+		Endpoint:        server.URL + "/version",
+		DownloadBaseURL: server.URL + "/downloads",
+		Client:          server.Client(),
+	})
+	if err := manager.Check(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	snapshot := manager.Snapshot()
+	if !snapshot.Available || snapshot.ExpectedSHA256 != checksum {
+		t.Fatalf("unexpected update snapshot: %+v", snapshot)
+	}
+	if !strings.HasPrefix(snapshot.DownloadURL, server.URL+"/downloads/") {
+		t.Fatalf("manifest resolved outside the trusted base: %s", snapshot.DownloadURL)
+	}
+}
+
+func TestReleaseManifestValidation(t *testing.T) {
+	checksum := strings.Repeat("a", 64)
+	revision := strings.Repeat("b", 40)
+	tests := []struct {
+		name     string
+		manifest string
+		wantOK   bool
+	}{
+		{name: "schema one compatibility", manifest: manifestDocument(1, "2.1.0", revision, "update.bin", checksum), wantOK: true},
+		{name: "unsupported schema", manifest: manifestDocument(3, "2.1.0", revision, "update.bin", checksum)},
+		{name: "version mismatch", manifest: manifestDocument(2, "2.2.0", revision, "update.bin", checksum)},
+		{name: "invalid source revision", manifest: manifestDocument(2, "2.1.0", "not-a-revision", "update.bin", checksum)},
+		{name: "missing platform artifact", manifest: manifestDocument(2, "2.1.0", revision, "", checksum)},
+		{name: "unsafe artifact object", manifest: manifestDocument(2, "2.1.0", revision, "../update.bin", checksum)},
+		{name: "missing checksum", manifest: manifestDocument(2, "2.1.0", revision, "update.bin", "")},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			server := httptest.NewTLSServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+				switch request.URL.Path {
+				case "/version":
+					_, _ = writer.Write([]byte(`{"version":"2.1.0"}`))
+				case "/downloads/releases/latest.json":
+					_, _ = writer.Write([]byte(test.manifest))
+				default:
+					http.NotFound(writer, request)
+				}
+			}))
+			defer server.Close()
+			manager := NewManager(Config{
+				CurrentVersion: "2.0.0", Endpoint: server.URL + "/version",
+				DownloadBaseURL: server.URL + "/downloads", Client: server.Client(),
+			})
+			err := manager.Check(context.Background())
+			if test.wantOK && err != nil {
+				t.Fatal(err)
+			}
+			if !test.wantOK && err == nil {
+				t.Fatal("expected invalid release manifest to be rejected")
+			}
+		})
+	}
+}
+
+func TestManifestRedirectOutsideTrustedBaseIsRejectedBeforeRequest(t *testing.T) {
+	outsideRequested := false
+	var server *httptest.Server
+	server = httptest.NewTLSServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		switch request.URL.Path {
+		case "/version":
+			_, _ = writer.Write([]byte(`{"version":"2.1.0"}`))
+		case "/downloads/releases/latest.json":
+			http.Redirect(writer, request, server.URL+"/outside", http.StatusFound)
+		case "/outside":
+			outsideRequested = true
+			_, _ = writer.Write([]byte(`{}`))
+		default:
+			http.NotFound(writer, request)
+		}
+	}))
+	defer server.Close()
+
+	manager := NewManager(Config{
+		CurrentVersion: "2.0.0", Endpoint: server.URL + "/version",
+		DownloadBaseURL: server.URL + "/downloads", Client: server.Client(),
+	})
+	if err := manager.Check(context.Background()); err == nil {
+		t.Fatal("expected an off-base manifest redirect to be rejected")
+	}
+	if outsideRequested {
+		t.Fatal("client requested the off-base manifest redirect target")
+	}
+}
+
+func manifestDocument(schema int, version string, revision string, object string, checksum string) string {
+	return fmt.Sprintf(`{
+		"schemaVersion":%d,
+		"version":%q,
+		"sourceRevision":%q,
+		"desktopArtifacts":{
+			"windows":{"object":%q,"sha256":%q},
+			"macosArm64":{"object":%q,"sha256":%q},
+			"macosAmd64":{"object":%q,"sha256":%q},
+			"linuxAmd64":{"object":%q,"sha256":%q}
+		}
+	}`, schema, version, revision, object, checksum, object, checksum, object, checksum, object, checksum)
+}

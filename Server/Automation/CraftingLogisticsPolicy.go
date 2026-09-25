@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"strconv"
@@ -39,7 +40,7 @@ func (*CraftingLogisticsPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 	interval := policyInterval(settings.CheckIntervalSec, 300)
 	if !configured {
 		return Decision{
-			Status: "waiting", Detail: "No sovereign crafting logistics plan is configured",
+			Status: "waiting", Detail: "No sovereign crafting logistics plan is configured", DetailDescriptor: Localization.New("server.automation.no_sovereign_crafting_logistics.a7dd7f6d", "No sovereign crafting logistics plan is configured", nil),
 			NextCheckAt: snapshot.Now.Add(interval),
 		}, nil
 	}
@@ -50,14 +51,14 @@ func (*CraftingLogisticsPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 		}
 		if !marketLeaseUntil.IsZero() {
 			return Decision{
-				Status: "waiting", Detail: "Waiting for leased market barrows to return before refreshing logistics",
+				Status: "waiting", Detail: "Waiting for leased market barrows to return before refreshing logistics", DetailDescriptor: Localization.New("server.automation.waiting_for_leased_market.d1cafa3e", "Waiting for leased market barrows to return before refreshing logistics", nil),
 				NextCheckAt: marketLeaseUntil.Add(time.Second),
 			}, nil
 		}
 		if logisticsStale {
 			return Decision{
-				Status:              "ready",
-				Detail:              "Refresh market and kingdom-resource logistics",
+				Status: "ready",
+				Detail: "Refresh market and kingdom-resource logistics", DetailDescriptor: Localization.New("server.automation.refresh_market_and_kingdom.08cd4e1a", "Refresh market and kingdom-resource logistics", nil),
 				NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 				Request:             &Intent.Request{Name: "resource.logistics.refresh", Arguments: json.RawMessage(`{}`)},
 				ReevaluateOnSuccess: true,
@@ -73,7 +74,7 @@ func (*CraftingLogisticsPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 	}
 	if !settings.AutoKingdomTransport {
 		return Decision{
-			Status: "idle", Detail: "Automatic resource logistics are disabled in Auto Sceat settings",
+			Status: "idle", Detail: "Automatic resource logistics are disabled in Auto Sceat settings", DetailDescriptor: Localization.New("server.automation.automatic_resource_logistics_are.0fe5fcbb", "Automatic resource logistics are disabled in Auto Sceat settings", nil),
 			NextCheckAt: snapshot.Now.Add(interval),
 		}, nil
 	}
@@ -143,7 +144,7 @@ func (*CraftingLogisticsPolicy) Evaluate(_ context.Context, snapshot Snapshot) (
 		return *deferredTransportWait, nil
 	}
 	return Decision{
-		Status: "idle", Detail: "No Auto Sceat resource move is currently needed",
+		Status: "idle", Detail: "No Auto Sceat resource move is currently needed", DetailDescriptor: Localization.New("server.automation.no_auto_sceat_resource.c6e6fb05", "No Auto Sceat resource move is currently needed", nil),
 		NextCheckAt: snapshot.Now.Add(interval),
 	}, nil
 }

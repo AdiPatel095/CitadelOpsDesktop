@@ -1,3 +1,5 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { Clock3, Coins, PackageSearch, ShieldCheck, ShoppingCart, Sparkles, Store, Users } from 'lucide-react';
 import { CitadelAPI } from '../../api/CitadelClient';
@@ -38,6 +40,7 @@ const ALL_AUTO_BUYER_CURRENCIES = 'all';
 const AUTO_BUYER_PROJECTION_REFRESH_MS = 15_000;
 
 export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ isOpen, onClose }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { state, configuration, updateConfiguration } = useCitadelAPI();
   const { autoBuyerEnabled, setAutomationEnabled } = useAuth();
   const autoBuyerConfiguration = configuration?.sections[AUTO_BUYER_SECTION];
@@ -314,9 +317,9 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
       isOpen={isOpen}
       onClose={() => { if (!saving) onClose(); }}
       maxWidth="6xl"
-      title="Auto Buyer"
+      title={localizeStatic("ui.settings.components.autoBuyerSettingsModal.title.auto.buyer.04362090")}
       icon={<ShoppingCart className="h-5 w-5" />}
-      description="Stock resets, specialist floors, and feast upkeep with hard spending guards"
+      description={localizeStatic("ui.settings.components.autoBuyerSettingsModal.description.stock.resets.specialist.floors.and.feast.upkeep.a1fe045b")}
       onSave={() => void save()}
       isSaving={saving}
       saveDisabled={!configurationValid || Boolean(loadError)}
@@ -325,7 +328,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
         <Card variant="solid" className="p-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h3 className="text-sm font-black text-text-main">Run Auto Buyer</h3>
+              <h3 className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.run.auto.buyer.d3b546dd" /></h3>
               <p className="mt-1 text-xs text-text-muted">
                 {autoBuyerEnabled
                   ? 'Auto Buyer is running and can act on the saved shop, specialist, and feast goals below.'
@@ -337,7 +340,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
               onChange={(enabled) => { void updateMasterSwitch(enabled); }}
               disabled={updatingMasterSwitch}
               size="md"
-              ariaLabel="Run Auto Buyer"
+              ariaLabel={localizeStatic("ui.settings.components.autoBuyerSettingsModal.ariaLabel.run.auto.buyer.d3b546dd")}
             />
           </div>
         </Card>
@@ -346,31 +349,31 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
           <div className="mb-4 flex items-start gap-3">
             <span className="rounded-xl bg-primary/10 p-2 text-primary"><ShieldCheck className="h-5 w-5" /></span>
             <div>
-              <h3 className="text-sm font-black text-text-main">Account-wide safety limits</h3>
-              <p className="mt-1 text-xs text-text-muted">Auto Buyer sends one bounded operation at a time, rechecks live state before spending, and verifies the server counter or timer afterward.</p>
-              <p className="mt-1 text-xs text-text-muted">Invalid saved shop or specialist goals are skipped individually and do not block feast upkeep. Unresolved feast purchases are checked without spending again until the outcome is reconciled.</p>
+              <h3 className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.account.wide.safety.limits.f0306444" /></h3>
+              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.auto.buyer.sends.one.bounded.operation.at.161e8417" /></p>
+              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.invalid.saved.shop.or.specialist.goals.are.de1b733a" /></p>
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <label className="block xl:col-span-2">
-              <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">Great Empire main castle</span>
+              <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.great.empire.main.castle.12ea8b60" /></span>
               <Select
                 value={draft.sourceCastleId > 0 ? String(draft.sourceCastleId) : ''}
                 onChange={(value) => setDraft((current) => ({ ...current, sourceCastleId: Number(value) || 0 }))}
                 options={castles.map((castle) => ({ value: String(castle.id), label: `${castle.name} · ${castle.x}:${castle.y}` }))}
-                placeholder="Choose the main castle"
+                placeholder={localizeStatic("ui.settings.components.autoBuyerSettingsModal.placeholder.choose.the.main.castle.62e2884c")}
                 menuGrowToViewport
               />
             </label>
             <NumberField
-              label="Check every (minutes)"
+              label={localizeStatic("ui.settings.components.autoBuyerSettingsModal.label.check.every.minutes.c9fb0897")}
               value={Math.round(draft.checkIntervalSec / 60)}
               minimum={30}
               maximum={60}
               onChange={(minutes) => setDraft((current) => ({ ...current, checkIntervalSec: minutes * 60 }))}
             />
             <NumberField
-              label="Keep at least rubies"
+              label={localizeStatic("ui.settings.components.autoBuyerSettingsModal.label.keep.at.least.rubies.1abbd768")}
               value={draft.minimumRubyReserve}
               minimum={0}
               onChange={(minimumRubyReserve) => setDraft((current) => ({ ...current, minimumRubyReserve }))}
@@ -378,13 +381,13 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
           </div>
           <div className="mt-4 flex items-center justify-between gap-4 border-t border-border-base pt-4">
             <div>
-              <div className="text-sm font-bold text-text-main">Allow ruby-priced shop packages</div>
-              <p className="mt-0.5 text-xs text-text-muted">Each package still needs its own per-reset ruby ceiling. Specialists and ruby feasts use separate ceilings.</p>
+              <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.allow.ruby.priced.shop.packages.5285ebed" /></div>
+              <p className="mt-0.5 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.each.package.still.needs.its.own.per.23f9dcc5" /></p>
             </div>
             <Switch
               checked={draft.allowRubyPackages}
               onChange={(allowRubyPackages) => setDraft((current) => ({ ...current, allowRubyPackages }))}
-              ariaLabel="Allow ruby-priced shop packages"
+              ariaLabel={localizeStatic("ui.settings.components.autoBuyerSettingsModal.ariaLabel.allow.ruby.priced.shop.packages.5285ebed")}
             />
           </div>
         </Card>
@@ -397,21 +400,21 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
             Specialists <Badge variant="outline">{enabledSpecialists.length}</Badge>
           </SectionButton>
           <SectionButton active={section === 'feast'} onClick={() => setSection('feast')} icon={<Sparkles className="h-4 w-4" />}>
-            Feast {draft.feast.enabled ? <Badge variant="success">On</Badge> : null}
+            Feast {draft.feast.enabled ? <Badge variant="success"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.on.13001175" /></Badge> : null}
           </SectionButton>
         </div>
 
         {loadError ? (
           <Card variant="solid" className="border-error/40 p-4 text-sm text-error">{loadError}</Card>
         ) : !projection ? (
-          <Card variant="solid" className="p-8 text-center text-sm text-text-muted">Loading the current official purchase catalog…</Card>
+          <Card variant="solid" className="p-8 text-center text-sm text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.loading.the.current.official.purchase.catalog.853de6af" /></Card>
         ) : null}
 
         {projection && section === 'shops' ? (
           <div className="space-y-3">
             <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,18rem)_minmax(0,18rem)_minmax(0,1fr)]">
               <label className="block">
-                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">Shop</span>
+                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.shop.d00aae6b" /></span>
                 <Select
                   value={selectedShopId}
                   onChange={(value) => {
@@ -426,14 +429,14 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                       label: `${shop.name} · ${shop.packageCount} item${shop.packageCount === 1 ? '' : 's'}${selectedCount > 0 ? ` · ${selectedCount} selected` : ''}`,
                     };
                   })}
-                  placeholder="Choose a supported shop"
+                  placeholder={localizeStatic("ui.settings.components.autoBuyerSettingsModal.placeholder.choose.a.supported.shop.1c8c85ac")}
                   icon={<Store className="h-4 w-4" />}
-                  ariaLabel="Auto Buyer shop"
+                  ariaLabel={localizeStatic("ui.settings.components.autoBuyerSettingsModal.ariaLabel.auto.buyer.shop.062cb8c5")}
                   menuGrowToViewport
                 />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">Currency</span>
+                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.currency.3ac1a9ec" /></span>
                 <Select
                   value={selectedCurrencyKey}
                   onChange={setSelectedCurrencyKey}
@@ -447,14 +450,14 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                       label: `${currency.name} · ${currency.count} item${currency.count === 1 ? '' : 's'}`,
                     })),
                   ]}
-                  placeholder="Choose a currency"
+                  placeholder={localizeStatic("ui.settings.components.autoBuyerSettingsModal.placeholder.choose.a.currency.fc3e3a36")}
                   icon={<Coins className="h-4 w-4" />}
-                  ariaLabel="Auto Buyer currency"
+                  ariaLabel={localizeStatic("ui.settings.components.autoBuyerSettingsModal.ariaLabel.auto.buyer.currency.e62c8ed9")}
                   menuGrowToViewport
                 />
               </label>
               <label className="block md:col-span-2 xl:col-span-1">
-                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">Search selected shop</span>
+                <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.search.selected.shop.8efc054e" /></span>
                 <Input
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
@@ -497,7 +500,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                           <div className="flex shrink-0 items-end gap-3">
                             <div className="w-44">
                               <NumberField
-                                label="Purchase limit / reset"
+                                label={localizeStatic("ui.settings.components.autoBuyerSettingsModal.label.purchase.limit.reset.1eedeafa")}
                                 value={rule?.targetPurchasesPerReset ?? 1}
                                 minimum={1}
                                 maximum={product.stock}
@@ -526,15 +529,14 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                             />
                             {product.price.premium ? (
                               <NumberField
-                                label="Max rubies per stock reset"
+                                label={localizeStatic("ui.settings.components.autoBuyerSettingsModal.label.max.rubies.per.stock.reset.7ba34f56")}
                                 value={rule?.maximumRubySpendPerReset ?? product.price.amount}
                                 minimum={product.price.amount}
                                 onChange={(maximumRubySpendPerReset) => updatePackage(product, { maximumRubySpendPerReset })}
                               />
                             ) : (
                               <div className="rounded-xl border border-border-base bg-surface-base/40 px-3 py-2 text-xs text-text-muted">
-                                Auto Buyer stops at the purchase limit, then waits for the server stock counter to reset.
-                              </div>
+                                <LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.auto.buyer.stops.at.the.purchase.limit.d36cb70d" /></div>
                             )}
                           </div>
                         ) : null}
@@ -542,12 +544,12 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                     );
                   })}
                   {filteredPackages.length === 0 ? (
-                    <div className="p-8 text-center text-sm text-text-muted">No supported stock-limited items match these filters.</div>
+                    <div className="p-8 text-center text-sm text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.no.supported.stock.limited.items.match.these.4d46bd61" /></div>
                   ) : null}
                 </div>
               </Card>
             ) : (
-              <Card variant="solid" className="p-8 text-center text-sm text-text-muted">No supported shops are available in the current official catalog.</Card>
+              <Card variant="solid" className="p-8 text-center text-sm text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.no.supported.shops.are.available.in.the.0dc94162" /></Card>
             )}
           </div>
         ) : null}
@@ -556,13 +558,13 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
           <Card variant="solid" className="overflow-hidden">
             <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border-base p-4">
               <div>
-                <h3 className="text-sm font-black text-text-main">Specialist renewal floors</h3>
-				<p className="mt-1 text-xs text-text-muted">Enabled floors stay between 14 and 365 days. Auto Buyer purchases one 7-day activation at a time and rechecks the authoritative timer and ruby balance.</p>
+                <h3 className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.specialist.renewal.floors.c3cb9aea" /></h3>
+				<p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.enabled.floors.stay.between.14.and.365.55fa81de" /></p>
 				{!specialistUpkeepSupported ? <p className="mt-2 text-xs text-amber-300">{projection.specialistUpkeep?.reason || 'This runtime cannot safely automate specialist purchases yet. Saved goals can be disabled.'}</p> : null}
               </div>
               <div className="flex gap-2">
-                <Button variant="ghost" onClick={() => setAllSpecialists(false)}>Disable all</Button>
-				<Button variant="secondary" disabled={!specialistUpkeepSupported} onClick={() => setAllSpecialists(true)}>Enable all at 14 days</Button>
+                <Button variant="ghost" onClick={() => setAllSpecialists(false)}><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.disable.all.6cb2279d" /></Button>
+				<Button variant="secondary" disabled={!specialistUpkeepSupported} onClick={() => setAllSpecialists(true)}><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.enable.all.at.14.days.b602eb89" /></Button>
               </div>
             </div>
             <div className="divide-y divide-border-base">
@@ -610,7 +612,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
 					{enabled && specialistUpkeepSupported ? (
                       <div className="mt-3 grid gap-3 border-t border-border-base pt-3 md:grid-cols-2">
                         <NumberField
-                          label="Minimum remaining days"
+                          label={localizeStatic("ui.settings.components.autoBuyerSettingsModal.label.minimum.remaining.days.84cd5e8a")}
                           value={rule?.minimumDays ?? AUTO_BUYER_MINIMUM_SPECIALIST_DAYS}
                           minimum={AUTO_BUYER_MINIMUM_SPECIALIST_DAYS}
                           maximum={AUTO_BUYER_MAXIMUM_SPECIALIST_DAYS}
@@ -619,7 +621,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                           onChange={(minimumDays) => updateSpecialist(specialist, { minimumDays })}
                         />
                         <NumberField
-                          label="Max rubies per 7-day renewal"
+                          label={localizeStatic("ui.settings.components.autoBuyerSettingsModal.label.max.rubies.per.7.day.renewal.d22b7a8b")}
                           value={rule?.maximumRubyCostPerPurchase ?? safeMaximum}
                           minimum={0}
                           error={rubyCeilingError}
@@ -640,7 +642,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
             <Card variant="solid" className="p-4">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h3 className="text-sm font-black text-text-main">Maintain a food production feast</h3>
+                  <h3 className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.maintain.a.food.production.feast.44cda31f" /></h3>
                   <p className="mt-1 text-xs text-text-muted">
                     {automaticFeastSourceSupported
                       ? 'The selected feast is started or extended one purchase at a time. Auto Buyer chooses the owned positive-net castle with the most food stored.'
@@ -654,13 +656,13 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                     setDraft((current) => ({ ...current, feast: { ...current.feast, enabled } }));
                   }}
                   disabled={!draft.feast.enabled && (!automaticFeastSourceSupported || !selectedFeastSupported) && !preservingEnabledUnsupportedFeast}
-                  ariaLabel="Maintain a feast"
+                  ariaLabel={localizeStatic("ui.settings.components.autoBuyerSettingsModal.ariaLabel.maintain.a.feast.8470a1b8")}
                 />
               </div>
               {draft.feast.enabled || !selectedFeastSupported ? (
                 <div className="mt-4 grid gap-4 border-t border-border-base pt-4 md:grid-cols-2">
                   <label className="block md:col-span-2">
-                    <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">Feast</span>
+                    <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.feast.e0c5a33c" /></span>
                     <Select
                       value={String(draft.feast.feastId)}
                       onChange={(value) => {
@@ -683,13 +685,13 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                         label: `${feast.name} · +${feast.productionBoostPercent}% · ${formatFeastPrice(feast)}${feast.automaticPurchase?.supported === false ? ' · Automatic purchase unavailable' : ''}`,
                         disabled: feast.automaticPurchase?.supported === false,
                       }))}
-                      placeholder="Choose an official feast"
+                      placeholder={localizeStatic("ui.settings.components.autoBuyerSettingsModal.placeholder.choose.an.official.feast.42a38bc2")}
                       disabled={!automaticFeastSourceSupported}
                       menuGrowToViewport
                     />
                   </label>
                   <label className="block">
-                    <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">Minimum remaining hours</span>
+                    <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.minimum.remaining.hours.7abcfe8a" /></span>
                     <Input
                       type="number"
                       min={1}
@@ -702,7 +704,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                     />
                   </label>
                   <div className="rounded-xl border border-border-base bg-bg-subtle p-3">
-                    <div className="text-[10px] font-black uppercase tracking-wider text-text-muted">Automatic food source</div>
+                    <div className="text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.automatic.food.source.14482610" /></div>
                     {automaticFeastSourceSupported ? (
                       <>
                         <div className="mt-1 text-sm font-bold text-text-main">
@@ -714,11 +716,11 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                             : 'Selection waits for fresh stored-food and economy data from every usable owned castle; only positive-net castles qualify.'}
                         </p>
                       </>
-                    ) : <p className="mt-1 text-xs text-warning">Update the account runtime before changing or enabling feast upkeep. You can still disable the saved feast goal.</p>}
+                    ) : <p className="mt-1 text-xs text-warning"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.update.the.account.runtime.before.changing.or.f6cf7d7a" /></p>}
                   </div>
                   {!selectedFeastSupported ? (
                     <div className="rounded-xl border border-warning/30 bg-warning/5 p-3 md:col-span-2">
-                      <div className="text-sm font-bold text-text-main">Automatic purchase unavailable</div>
+                      <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.automatic.purchase.unavailable.d44392f5" /></div>
                       <p className="mt-0.5 text-xs text-text-muted">
                         {selectedFeast?.automaticPurchase?.reason ?? 'This feast cannot be purchased safely by Auto Buyer.'}
                         {preservingEnabledUnsupportedFeast
@@ -730,17 +732,17 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                     <>
                       <div className="flex items-center justify-between gap-3 rounded-xl border border-warning/30 bg-warning/5 p-3">
                         <div>
-                          <div className="text-sm font-bold text-text-main">Allow rubies for this feast</div>
-                          <p className="mt-0.5 text-xs text-text-muted">Still preserves the global ruby reserve.</p>
+                          <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.allow.rubies.for.this.feast.c169ac60" /></div>
+                          <p className="mt-0.5 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.still.preserves.the.global.ruby.reserve.c2bfbc23" /></p>
                         </div>
                         <Switch
                           checked={draft.feast.allowRubies}
                           onChange={(allowRubies) => setDraft((current) => ({ ...current, feast: { ...current.feast, allowRubies } }))}
-                          ariaLabel="Allow ruby feast"
+                          ariaLabel={localizeStatic("ui.settings.components.autoBuyerSettingsModal.ariaLabel.allow.ruby.feast.90aa50c4")}
                         />
                       </div>
                       <NumberField
-                        label="Max rubies per feast purchase"
+                        label={localizeStatic("ui.settings.components.autoBuyerSettingsModal.label.max.rubies.per.feast.purchase.8774b3c7")}
                         value={draft.feast.maximumRubyCostPerPurchase}
                         minimum={selectedFeast.price.amount}
                         onChange={(maximumRubyCostPerPurchase) => setDraft((current) => ({ ...current, feast: { ...current.feast, maximumRubyCostPerPurchase } }))}
@@ -760,7 +762,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
                 <div className="flex items-center gap-2">
                   <Clock3 className="h-3.5 w-3.5" /> Current feast: {formatRemaining(state?.market.feast?.expiresAt)} · configured minimum {feastHoursValid ? `${feastHours}h` : 'invalid'}
                 </div>
-                {autoBuyerRuntime?.detail ? <div><span className="font-bold text-text-main">Status:</span> {autoBuyerRuntime.detail}</div> : null}
+                {autoBuyerRuntime?.detail ? <div><span className="font-bold text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.status.755c8b2a" /></span> {autoBuyerRuntime.detail}</div> : null}
                 {latestFeastPurchase?.attemptedAt ? (
                   <div className="rounded-xl border border-border-base bg-bg-subtle p-3">
                     <div className="font-bold text-text-main">Latest purchase: {formatEvidenceOutcome(latestFeastPurchase.outcome)}</div>
@@ -783,7 +785,7 @@ export const AutoBuyerSettingsModal: React.FC<AutoBuyerSettingsModalProps> = ({ 
               <div className="flex items-start gap-3">
                 <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-text-muted" />
                 <div>
-                  <h3 className="text-sm font-black text-text-main">Timed ruby offers are staged for a later release</h3>
+                  <h3 className="text-sm font-black text-text-main"><LocalizedText messageKey="ui.settings.components.autoBuyerSettingsModal.timed.ruby.offers.are.staged.for.a.4ada9052" /></h3>
                   <p className="mt-1 text-xs text-text-muted">{projection.timedOffers.reason ?? 'Unattended timed-offer purchases are disabled.'} The future flow will require an item match, a user ceiling, and the server-confirmed quote before purchase.</p>
                 </div>
               </div>

@@ -14,6 +14,7 @@ import (
 	"CitadelDesktop/Server/Ingest"
 	"CitadelDesktop/Server/Intent"
 	KhanDomain "CitadelDesktop/Server/Khan"
+	"CitadelDesktop/Server/Localization"
 	"CitadelDesktop/Server/Outbound"
 	"CitadelDesktop/Server/Protocol"
 	"CitadelDesktop/Server/State"
@@ -680,7 +681,7 @@ func TestCaptureKhanLaunchAcceptsSubsecondArrivalProjectionJitter(t *testing.T) 
 		t.Fatalf("subsecond projection jitter was rejected: %v", err)
 	}
 	khan := application.State.Snapshot().Khan
-	if khan.SafetyError != "" || khan.AttacksLaunched != 2 || len(khan.Launches) != 2 {
+	if khan.SafetyError != "" || khan.SafetyErrorDescriptor != nil || khan.AttacksLaunched != 2 || len(khan.Launches) != 2 {
 		t.Fatalf("captured Khan state = %#v", khan)
 	}
 }
@@ -714,6 +715,12 @@ func TestCaptureKhanLaunchRecordsAndBlocksMaterialOvertake(t *testing.T) {
 	if khan.SafetyError == "" || khan.AttacksLaunched != 2 || len(khan.Launches) != 2 {
 		t.Fatalf("captured Khan state = %#v", khan)
 	}
+	if khan.SafetyErrorDescriptor == nil || khan.SafetyErrorDescriptor.FallbackText != khan.SafetyError || khan.SafetyErrorDescriptor.Params["commander"] != "2" || khan.SafetyErrorDescriptor.Params["arrival"] != currentArrival.Format(time.RFC3339Nano) {
+		t.Fatal("captured inversion lost exact presentation evidence")
+	}
+	if message := Localization.FromError(err); message == nil || message.FallbackText != err.Error() || len(message.Context) != 1 {
+		t.Fatal("arrival receipt lost structured context")
+	}
 }
 
 func TestCaptureKhanLaunchClearsFinishedArrivalErrorAfterOrderedLaunch(t *testing.T) {
@@ -727,7 +734,7 @@ func TestCaptureKhanLaunchClearsFinishedArrivalErrorAfterOrderedLaunch(t *testin
 		AttacksLaunched: 1,
 		Launches:        []State.KhanLaunchState{{CommanderID: 1, MovementID: 10, ArrivesAt: previousArrival}},
 		Taunts:          map[State.MovementID]State.KhanTauntState{},
-		SafetyError:     "finished historical inversion",
+		SafetyError:     "finished historical inversion", SafetyErrorDescriptor: Localization.New("old", "finished historical inversion", nil),
 	}
 	gameState.Movements[11] = State.MovementState{
 		ID: 11, Direction: 0, SourceCastleID: 2, KingdomID: 0, TargetX: 210, TargetY: 942,
@@ -764,5 +771,19 @@ func TestPlanKhanPointLimitProtectionRecallsKhanLaunchAndOpensGates(t *testing.T
 	}
 	if len(plan.Steps) != 2 || plan.Steps[0].Opcode != "mcm" || plan.Steps[1].Opcode != "mos" {
 		t.Fatalf("point-limit steps = %#v", plan.Steps)
+	}
+}
+
+func TestKhanLaneGuardOpenGatesKeepsExactTimestampDescriptor(t *testing.T) {
+	now := time.Date(2026, 9, 20, 12, 0, 0, 0, time.UTC)
+	until := now.Add(6 * time.Hour)
+	state := State.GameState{Castles: map[State.CastleID]State.CastleState{1: {ID: 1, KingdomID: 0, SlotType: 1, Defense: State.CastleDefenseState{OpenGateUntil: &until}}}}
+	err := validateKhanLaneGuard(state, nil, khanLaneGuardRequest{MainCastleID: 1}, now)
+	if err == nil {
+		t.Fatal("open gates accepted")
+	}
+	descriptor := Localization.FromError(err)
+	if descriptor == nil || descriptor.Params["until"] != until.Format(time.RFC3339) || descriptor.FallbackText != err.Error() {
+		t.Fatalf("timestamp provenance lost: %+v", descriptor)
 	}
 }

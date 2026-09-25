@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 )
 
 type Snapshot struct {
+	Language                     *GameData.LanguageStore
 	State                        State.GameState
 	Configuration                Configuration.Snapshot
 	GameData                     *GameData.Store
@@ -29,19 +31,22 @@ type OperationalCursorUpdate struct {
 }
 
 type Decision struct {
-	Status      string
-	Detail      string
-	NextCheckAt time.Time
+	DetailDescriptor        *Localization.Message `json:"detailDescriptor,omitempty"`
+	FailureDetailDescriptor *Localization.Message `json:"failureDetailDescriptor,omitempty"`
+	Status                  string
+	Detail                  string
+	NextCheckAt             time.Time
 	// EventDriven leaves a passive decision asleep when NextCheckAt is zero.
 	// Only a declared state/configuration/session wake will reevaluate it. This
 	// is used for authoritative blockers whose state cannot change merely
 	// because another polling interval elapsed.
-	EventDriven       bool
-	Metrics           map[string]float64
-	Details           map[string]string
-	Request           *Intent.Request
-	FollowUp          *Intent.Request
-	OperationalCursor *OperationalCursorUpdate
+	EventDriven        bool
+	Metrics            map[string]float64
+	DetailsDescriptors map[string]*Localization.Message
+	Details            map[string]string
+	Request            *Intent.Request
+	FollowUp           *Intent.Request
+	OperationalCursor  *OperationalCursorUpdate
 	// FailureFallback runs only when Request reaches a terminal failed,
 	// partially-succeeded, or indeterminate status. Cancellation never triggers it.
 	FailureFallback *Intent.Request

@@ -44,6 +44,7 @@ func RegisterCoreReducers(registry *Registry) error {
 	}{
 		{"gbd", State.AllComponents, reduceInitialState},
 		{"gpi", player, reducePlayerInfo},
+		{"opt", player, reduceRubyConfirmation},
 		{"gcl", castles, reduceCastleList},
 		{"ksc", castles, reduceCastleList},
 		{"gcu", player, reduceGlobalResources},
@@ -84,6 +85,7 @@ func RegisterCoreReducers(registry *Registry) error {
 		{"kgt", components(State.ComponentKingdomTransport), reduceKingdomTransport},
 		{"kut", components(State.ComponentKingdomTransport), reduceKingdomTransport},
 		{"msk", components(State.ComponentKingdomTransport), reduceKingdomTransport},
+		{"rei", components(State.ComponentResearch), reduceResearch},
 		{"sie", components(State.ComponentSubscriptions), reduceSubscriptions},
 		{"upc", components(State.ComponentSubscriptions), reduceSubscriptions},
 		{"fuc", components(State.ComponentBeri), reduceBeriCapacity},
@@ -155,18 +157,18 @@ func RegisterCoreReducers(registry *Registry) error {
 		}},
 		{[]string{"ain"}, []reducerStep{
 			{writes: alliance, reducer: reduceAllianceInfo},
-			{writes: player, reducer: reducePlayerProtectionMode},
+			{writes: alliance, reducer: reducePlayerProtectionMode},
 		}},
 		{[]string{"jaa"}, []reducerStep{
 			{writes: castleSnapshot, reducer: reduceCastleSnapshot},
 			{writes: production, reducer: reduceEmbeddedProductionSnapshots},
 			{writes: components(State.ComponentInventory), reducer: reduceEmbeddedStorageInventory},
 			{writes: resources, reducer: reduceResponseResources},
-			{writes: player, reducer: reducePlayerProtectionMode},
+			{writes: alliance, reducer: reducePlayerProtectionMode},
 		}},
 		{[]string{"jca"}, []reducerStep{
 			{writes: castleSnapshot, reducer: reduceCastleSnapshot},
-			{writes: player, reducer: reducePlayerProtectionMode},
+			{writes: alliance, reducer: reducePlayerProtectionMode},
 		}},
 		{[]string{"hru", "hdu"}, []reducerStep{
 			{writes: castles, reducer: reduceFocusedUnits},
@@ -229,7 +231,7 @@ func RegisterCoreReducers(registry *Registry) error {
 	for _, opcode := range []string{"fnm", "fnt", "ssi"} {
 		if err := registry.registerComponentSequence(opcode,
 			reducerStep{writes: worldMap, reducer: reduceNestedMapSnapshot},
-			reducerStep{writes: player, reducer: reduceNestedMapPlayerProtection},
+			reducerStep{writes: alliance, reducer: reduceNestedMapPlayerProtection},
 		); err != nil {
 			return err
 		}
@@ -269,7 +271,7 @@ func RegisterCoreReducers(registry *Registry) error {
 	}
 	if err := registry.registerComponentSequence("gaa",
 		reducerStep{writes: worldMap.Union(components(State.ComponentSession)), reducer: reduceMapSnapshot},
-		reducerStep{writes: player, reducer: reducePlayerProtectionMode},
+		reducerStep{writes: alliance, reducer: reducePlayerProtectionMode},
 	); err != nil {
 		return err
 	}

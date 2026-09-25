@@ -1,3 +1,4 @@
+import { LocalizedText } from "../i18n/LocalizedText";
 import React from 'react';
 import { useCitadelAPI } from '../api/ApiContext';
 import { useAuth } from '../context/AuthContext';
@@ -19,7 +20,7 @@ const StaleSessionBanner: React.FC = () => {
       role="status"
       className="m3-status-banner m3-status-banner-warning rounded-global px-4 py-3 text-sm text-text-main"
     >
-      <p className="font-medium text-warning">Disconnected — last known data</p>
+      <p className="font-medium text-warning"><LocalizedText messageKey="ui.components.staleSessionBanner.disconnected.last.known.data.166a8c99" /></p>
       <p className="mt-1 text-xs text-text-muted">
         Figures below may be out of date.{' '}
         <button
@@ -27,8 +28,7 @@ const StaleSessionBanner: React.FC = () => {
           onClick={() => startGame()}
           className="font-semibold text-primary underline underline-offset-2 hover:text-primary/90"
         >
-          Start Bot
-        </button>{' '}
+          <LocalizedText messageKey="bot.start" /></button>{' '}
 		{backgroundConnection
 			? 'to reconnect directly and refresh live data.'
 			: 'to reload the game tab and refresh live data.'}

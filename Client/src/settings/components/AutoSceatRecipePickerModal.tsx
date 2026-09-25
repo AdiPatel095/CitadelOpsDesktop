@@ -1,3 +1,5 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { Clock3, Search } from 'lucide-react';
 import { Badge, Button, Input, Modal } from '../../components/ui';
@@ -60,6 +62,7 @@ export const AutoSceatRecipePickerModal: React.FC<AutoSceatRecipePickerModalProp
   onClose,
   onSelect,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const [search, setSearch] = useState('');
 
   useEffect(() => {
@@ -101,8 +104,7 @@ export const AutoSceatRecipePickerModal: React.FC<AutoSceatRecipePickerModalProp
         <span className="flex min-w-0 flex-col">
           <span className="text-lg font-black">Choose {building?.name ?? 'Crafting'} Recipe</span>
           <span className="mt-1 text-xs font-semibold text-text-muted">
-            Only the highest unlocked level for each recipe type is shown.
-          </span>
+            <LocalizedText messageKey="ui.settings.components.autoSceatRecipePickerModal.only.the.highest.unlocked.level.for.each.e3cfcede" /></span>
         </span>
       }
     >
@@ -110,14 +112,13 @@ export const AutoSceatRecipePickerModal: React.FC<AutoSceatRecipePickerModalProp
         <Input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search output or type"
+          placeholder={localizeStatic("ui.settings.components.autoSceatRecipePickerModal.placeholder.search.output.or.type.f14eb97f")}
           leftIcon={<Search className="h-4 w-4" />}
         />
 
         {!catalog.researchLoaded && (
           <div className="rounded-global border border-warning/30 bg-warning/10 px-4 py-3 text-sm font-semibold text-warning">
-            Research unlocks have not been loaded yet. Refresh after the game is connected.
-          </div>
+            <LocalizedText messageKey="ui.settings.components.autoSceatRecipePickerModal.research.unlocks.have.not.been.loaded.yet.cc854ae1" /></div>
         )}
 
         <div className="grid max-h-[62vh] grid-cols-1 gap-3 overflow-y-auto pr-1 custom-scrollbar md:grid-cols-2">
@@ -167,20 +168,18 @@ export const AutoSceatRecipePickerModal: React.FC<AutoSceatRecipePickerModalProp
                     onClose();
                   }}
                 >
-                  Add to cycle
-                </Button>
+                  <LocalizedText messageKey="ui.settings.components.autoSceatRecipePickerModal.add.to.cycle.84fed941" /></Button>
               </div>
             );
           })}
           {recipeGroups.length === 0 && (
             <div className="col-span-full rounded-global border border-dashed border-border-base bg-bg-card/40 px-5 py-12 text-center text-sm font-semibold text-text-muted">
-              No available recipes match this search.
-            </div>
+              <LocalizedText messageKey="ui.settings.components.autoSceatRecipePickerModal.no.available.recipes.match.this.search.24d55c33" /></div>
           )}
         </div>
 
         <div className="flex justify-end">
-          <Button variant="ghost" onClick={onClose}>Close</Button>
+          <Button variant="ghost" onClick={onClose}><LocalizedText messageKey="common.close" /></Button>
         </div>
       </div>
     </Modal>

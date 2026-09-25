@@ -1,6 +1,7 @@
 package App
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -44,7 +45,7 @@ func supportDispatchStep(name string, source State.CastleState, target State.All
 			SD  int            `json:"SD"`
 			A   [][2]int64     `json:"A"`
 		}{source.ID, target.X, target.Y, stationLeaderID, wait, -1, 1, 1, 0, army})
-		step := commandStep(fmt.Sprintf("%s (types %d–%d)", name, start+1, end), "cds", payload, "cds")
+		step := commandStep(fmt.Sprintf("%s (types %d–%d)", name, start+1, end), "cds", payload, "cds", Localization.New("server.app.p_types_p_p.39a761e5", "{p0} (types {p1}\u2013{p2})", Localization.Params{"p0": fmt.Sprintf("%s", name), "p1": start + 1, "p2": end}))
 		step.ResponseBarrier = Intent.ResponseBarrierCommitted
 		step.ResponseProjectionFailureIndeterminate = true
 		step.CaptureResponse = true
@@ -75,20 +76,20 @@ func (application *Application) guardSupportBatch(_ context.Context, arguments j
 		return err
 	}
 	if len(payload.A) == 0 || len(payload.A) > supportUnitTypeLimit {
-		return fmt.Errorf("support requires 1 to %d troop types per command", supportUnitTypeLimit)
+		return Localization.WithError(fmt.Errorf("support requires 1 to %d troop types per command", supportUnitTypeLimit), Localization.New("server.app.support_requires_to_p.63ead59c", "support requires 1 to {p0} troop types per command", Localization.Params{"p0": supportUnitTypeLimit}))
 	}
 	state := application.State.Snapshot()
 	source, ok := state.Castles[payload.SID]
 	if !ok || !source.Focused {
-		return fmt.Errorf("support source %d is no longer focused", payload.SID)
+		return Localization.WithError(fmt.Errorf("support source %d is no longer focused", payload.SID), Localization.New("server.app.support_source_p_is.b2153b5b", "support source {p0} is no longer focused", Localization.Params{"p0": fmt.Sprintf("%d", payload.SID)}))
 	}
 	if state.Player.ProtectionMode.PreparingOrActive(time.Now().UTC()) {
-		return fmt.Errorf("Protection Mode became active before support batch")
+		return Localization.WithError(fmt.Errorf("Protection Mode became active before support batch"), Localization.New("server.app.protection_mode_became_active.734f9b3d", "Protection Mode became active before support batch", nil))
 	}
 	seen := map[int64]bool{}
 	for _, unit := range payload.A {
 		if unit[0] <= 0 || unit[1] <= 0 || seen[unit[0]] || source.Units.Stationed[State.UnitID(unit[0])] < unit[1] {
-			return fmt.Errorf("support batch troop %d is invalid or no longer available", unit[0])
+			return Localization.WithError(fmt.Errorf("support batch troop %d is invalid or no longer available", unit[0]), Localization.New("server.app.support_batch_troop_p.85621240", "support batch troop {p0} is invalid or no longer available", Localization.Params{"p0": unit[0]}))
 		}
 		seen[unit[0]] = true
 	}

@@ -186,3 +186,41 @@ func TestBuildingMutationReducerRemovesCollectedExpansionGift(t *testing.T) {
 		t.Fatalf("collected expansion gift remains in layout: %#v", castle.Layout.Objects[46])
 	}
 }
+
+func TestBuildingConstructionBoostFullAndSparseRows(t *testing.T) {
+	raw := json.RawMessage(`[[249,15,1,2,0,3622,6,100,100,-1,0,0,0,0,1,-1]]`)
+	buildings, layout := parseCastleLayout(nil, raw, nil)
+	if buildings[15].ConstructionBoostPercent != 100 || layout.Objects[15].ConstructionBoostPercent != 100 {
+		t.Fatal("full JAA lost row8 construction boost")
+	}
+	castle := State.CastleState{Buildings: buildings, Layout: layout}
+	var row []json.RawMessage
+	_ = json.Unmarshal([]byte(`[249,15,1,2,0,4500,6,100]`), &row)
+	applyBuildingMutationRow(&castle, row, nil)
+	if castle.Layout.Objects[15].ConstructionBoostPercent != 100 {
+		t.Fatal("sparse mutation cleared known construction boost")
+	}
+	_ = json.Unmarshal([]byte(`[249,15,1,2,0,100,6,100,200]`), &row)
+	applyBuildingMutationRow(&castle, row, nil)
+	if castle.Layout.Objects[15].ConstructionBoostPercent != 200 {
+		t.Fatal("mutation did not update construction boost")
+	}
+	_ = json.Unmarshal([]byte(`[249,15,1,2,0,100,6,100,"invalid"]`), &row)
+	applyBuildingMutationRow(&castle, row, nil)
+	if castle.Layout.Objects[15].ConstructionBoostPercent != 0 {
+		t.Fatal("malformed present boost retained stale value")
+	}
+	previous := castle.Layout.Objects[15]
+	previous.ConstructionBoostPercent = 100
+	previous.ConstructionState = State.BuildingStateBuildCompleted
+	castle.Layout.Objects[15], castle.Buildings[15] = previous, previous
+	_ = json.Unmarshal([]byte(`[249,15,1,2,0,0,6,100]`), &row)
+	applyBuildingMutationRow(&castle, row, nil)
+	if castle.Layout.Objects[15].ConstructionBoostPercent != 0 {
+		t.Fatal("new demolition inherited earlier operation boost")
+	}
+	buildings, _ = parseCastleLayout(nil, json.RawMessage(`[[249,15,1,2,0,100,6,100]]`), nil)
+	if buildings[15].ConstructionBoostPercent != 0 {
+		t.Fatal("full snapshot fabricated missing boost")
+	}
+}

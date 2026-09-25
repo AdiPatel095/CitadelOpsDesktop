@@ -273,6 +273,7 @@ func logRetentionOffset(path string, cutoff time.Time) (int64, bool, error) {
 }
 
 func persistentLogTimestamp(line string) (time.Time, bool) {
+	line = decodeActivityRecord(line).Line
 	const timestampLength = len("2006-01-02 15:04:05.000000")
 	if len(line) < timestampLength {
 		return time.Time{}, false

@@ -2,6 +2,7 @@ package Automation
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -36,12 +37,17 @@ func TestProtectedHoldingsUseMemberProtectionAndKingdomDistance(t *testing.T) {
 func TestAutoBirdStartsEachCastleWithAINAndFreshJAAPreparation(t *testing.T) {
 	now := time.Now().UTC()
 	gameState := State.NewGameState()
+	gameState.Player.AllianceObservedAt = now
+	gameState.Player.ProtectionMode.ObservedAt = now
 	gameState.Alliance.ID = 9
 	gameState.Player.ProtectionMode.ObservedAt = now
 	gameState.Castles[10] = State.CastleState{ID: 10, KingdomID: 0, X: 10, Y: 10}
 	decision, err := NewAutoBirdPolicy().Evaluate(t.Context(), Snapshot{State: gameState, Now: now})
 	if err != nil || decision.Request == nil || decision.Request.Name != "auto_bird.discover" {
 		t.Fatalf("castle preparation = %#v, err=%v", decision, err)
+	}
+	if decision.DetailDescriptor == nil || decision.DetailDescriptor.Key != "server.automation.castle_message.bird_discover.id" || decision.DetailDescriptor.Params["castleID"] != "10" {
+		t.Fatalf("castle descriptor missing: %+v", decision.DetailDescriptor)
 	}
 	if !decision.ReevaluateOnSuccess {
 		t.Fatal("castle preparation should continue the current bird cycle after success")
@@ -54,6 +60,8 @@ func TestAutoBirdStartsEachCastleWithAINAndFreshJAAPreparation(t *testing.T) {
 func TestAutoBirdStillRunsCastlePreparationWhenCachedAllianceRosterIsEmpty(t *testing.T) {
 	now := time.Now().UTC()
 	gameState := State.NewGameState()
+	gameState.Player.AllianceObservedAt = now
+	gameState.Player.ProtectionMode.ObservedAt = now
 	gameState.Alliance.ID = 9
 	gameState.Alliance.ObservedAt = now
 	gameState.Player.ProtectionMode.ObservedAt = now
@@ -124,6 +132,8 @@ func TestStationPoliciesRefreshProtectionFromGameAfterToggleOrStaleObservation(t
 		} {
 			t.Run(policy.ID()+"/"+test.name, func(t *testing.T) {
 				gameState := State.NewGameState()
+				gameState.Player.AllianceObservedAt = now
+				gameState.Player.ProtectionMode.ObservedAt = now
 				gameState.Player.ProtectionMode = State.PlayerProtectionModeState{
 					ModeState: -1, ObservedAt: test.observedAt,
 				}
@@ -159,6 +169,8 @@ func TestStationPoliciesRefreshProtectionFromGameAfterToggleOrStaleObservation(t
 func TestAutoBirdSuppressesStationingDuringPurchasedProtectionMode(t *testing.T) {
 	now := time.Date(2026, 7, 22, 9, 0, 0, 0, time.UTC)
 	gameState := State.NewGameState()
+	gameState.Player.AllianceObservedAt = now
+	gameState.Player.ProtectionMode.ObservedAt = now
 	gameState.Alliance.ID = 9
 	gameState.Player.ProtectionMode = State.PlayerProtectionModeState{
 		ModeState: 1, RemainingSec: 3600, ObservedAt: now,
@@ -382,6 +394,9 @@ func TestAutoBirdDispatchesOnlyAfterCastlePreparationIsFresh(t *testing.T) {
 	})
 	if err != nil || decision.Request == nil || decision.Request.Name != "auto_bird.dispatch" {
 		t.Fatalf("prepared Auto Bird decision = %#v err=%v", decision, err)
+	}
+	if decision.DetailDescriptor == nil || decision.DetailDescriptor.Key != "server.automation.castle_message.bird_dispatch.id" || decision.DetailDescriptor.Params["castleID"] != "10" {
+		t.Fatalf("castle descriptor missing: %+v", decision.DetailDescriptor)
 	}
 }
 
@@ -631,6 +646,8 @@ func TestAutoBirdScheduleKeepsActualReturnWhenPolicyWakeIsLater(t *testing.T) {
 	returnsAt := now.Add(20 * time.Minute)
 	notBefore := now.Add(time.Hour)
 	gameState := State.NewGameState()
+	gameState.Player.AllianceObservedAt = now
+	gameState.Player.ProtectionMode.ObservedAt = now
 	gameState.Movements[50] = State.MovementState{
 		ID: 50, Direction: 1, SourceCastleID: 20, TargetCastleID: 10, ReturnsAt: &returnsAt,
 	}
@@ -716,6 +733,8 @@ func TestAutoStationDoesNotRecallAutoBirdAfterItsTrackedEvacuationEnded(t *testi
 	now := time.Date(2026, 7, 25, 13, 30, 0, 0, time.UTC)
 	arrivesAt := now.Add(time.Minute)
 	gameState := State.NewGameState()
+	gameState.Player.AllianceObservedAt = now
+	gameState.Player.ProtectionMode.ObservedAt = now
 	gameState.Player.ProtectionMode.ObservedAt = now
 	gameState.Stationing["autoStation:10"] = State.StationingOperation{
 		ID: "autoStation:10", Purpose: "autoStation", SourceCastleID: 10, TargetCastleID: 20,
@@ -741,6 +760,8 @@ func TestAutoStationDoesNotRecallSameRouteBirdWithoutTrackedMovementID(t *testin
 	arrivesAt := now.Add(time.Minute)
 	safeAfter := now.Add(-time.Minute)
 	gameState := State.NewGameState()
+	gameState.Player.AllianceObservedAt = now
+	gameState.Player.ProtectionMode.ObservedAt = now
 	gameState.Player.ProtectionMode.ObservedAt = now
 	gameState.MovementSnapshot.ObservedAt = now
 	gameState.Stationing["autoStation:10"] = State.StationingOperation{
@@ -771,6 +792,8 @@ func autoBirdEligibleTestState(t *testing.T, now time.Time) (State.GameState, *G
 		t.Fatal(err)
 	}
 	gameState := State.NewGameState()
+	gameState.Player.AllianceObservedAt = now
+	gameState.Player.ProtectionMode.ObservedAt = now
 	gameState.Player.ProtectionMode.ObservedAt = now
 	gameState.Castles[10] = State.CastleState{
 		ID: 10, KingdomID: 0, X: 10, Y: 10,
@@ -790,6 +813,8 @@ func TestAutoStationRefreshesStaleAllianceRosterBeforeEvacuating(t *testing.T) {
 	now := time.Now().UTC()
 	arrives := now.Add(30 * time.Second)
 	gameState := State.NewGameState()
+	gameState.Player.AllianceObservedAt = now
+	gameState.Player.ProtectionMode.ObservedAt = now
 	gameState.Player.ID = 7
 	gameState.Alliance.ID = 9
 	gameState.Castles[100] = State.CastleState{ID: 100, SlotType: 4}
@@ -800,6 +825,59 @@ func TestAutoStationRefreshesStaleAllianceRosterBeforeEvacuating(t *testing.T) {
 	decision, err := NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{State: gameState, Now: now})
 	if err != nil || decision.Status != "threat" || decision.Request == nil || decision.Request.Name != "alliance.refresh" {
 		t.Fatalf("stale alliance refresh = %#v, err=%v", decision, err)
+	}
+	if decision.FailureFallback != nil {
+		t.Fatalf("stale alliance refresh without opt-in attached gate fallback: %#v", decision.FailureFallback)
+	}
+	decision, err = NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, Now: now,
+		Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{
+			"automation.autoStation": json.RawMessage(`{"openGateFallback":true}`),
+		}},
+	})
+	if err != nil || decision.Request == nil || decision.Request.Name != "alliance.refresh" || decision.FailureFallback == nil || decision.FailureFallback.Name != "defense.open_gate" {
+		t.Fatalf("stale alliance refresh with opt-in = %#v, err=%v", decision, err)
+	}
+}
+
+func TestAutoStationStaleRosterFallbackExcludesOnlyBerimond(t *testing.T) {
+	now := time.Now().UTC()
+	for _, kingdom := range []State.KingdomID{0, 2, 10} {
+		t.Run(fmt.Sprintf("kingdom-%d", kingdom), func(t *testing.T) {
+			state := State.NewGameState()
+			state.Player.ID = 7
+			state.Player.AllianceObservedAt = now
+			state.Player.ProtectionMode.ObservedAt = now
+			state.Alliance.ID = 9
+			state.Castles[1] = State.CastleState{ID: 1, KingdomID: 0, SlotType: 1}
+			state.Castles[42] = State.CastleState{ID: 42, KingdomID: kingdom, SlotType: 4}
+			arrives := now.Add(30 * time.Second)
+			state.Movements[1] = State.MovementState{ID: 1, TypeID: 0, Direction: 0, OwnerPlayerID: 8, TargetPlayerID: 7, SourceTypeID: 1, SourceCastleID: 200, TargetTypeID: 4, TargetCastleID: 42, ArrivesAt: &arrives}
+			decision, err := NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{
+				State: state, Now: now,
+				Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{
+					"automation.autoStation": json.RawMessage(`{"openGateFallback":true}`),
+				}},
+			})
+			if err != nil || decision.Request == nil || decision.Request.Name != "alliance.refresh" {
+				t.Fatalf("roster refresh=%#v err=%v", decision, err)
+			}
+			if kingdom == 10 {
+				if decision.FailureFallback != nil {
+					t.Fatalf("Berimond fallback=%#v", decision.FailureFallback)
+				}
+				return
+			}
+			if decision.FailureFallback == nil || decision.FailureFallback.Name != "defense.open_gate" {
+				t.Fatalf("roster fallback=%#v", decision.FailureFallback)
+			}
+			var request struct {
+				CastleID State.CastleID `json:"castleId"`
+			}
+			if err := json.Unmarshal(decision.FailureFallback.Arguments, &request); err != nil || request.CastleID != 42 {
+				t.Fatalf("roster fallback target=%+v err=%v", request, err)
+			}
+		})
 	}
 }
 
@@ -813,6 +891,8 @@ func TestAutoStationUsesOptInOpenGateFallbackAfterStationFailure(t *testing.T) {
 		t.Fatal(err)
 	}
 	gameState := State.NewGameState()
+	gameState.Player.AllianceObservedAt = now
+	gameState.Player.ProtectionMode.ObservedAt = now
 	gameState.Player.ID = 7
 	gameState.Player.ProtectionMode = State.PlayerProtectionModeState{ModeState: -1, ObservedAt: now}
 	gameState.Alliance = State.AllianceState{
@@ -858,8 +938,17 @@ func TestAutoStationUsesOptInOpenGateFallbackAfterStationFailure(t *testing.T) {
 	decision, err = NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{
 		State: gameState, GameData: gameData, Now: now,
 	})
-	if err != nil || decision.Request == nil || decision.FailureFallback != nil {
+	if err != nil || decision.Request == nil || decision.Request.Name != "troops.station" || decision.FailureFallback != nil {
 		t.Fatalf("non-opt-in Auto Station failure fallback = %#v err=%v", decision, err)
+	}
+	for _, raw := range []json.RawMessage{json.RawMessage(`{}`), json.RawMessage(`{"openGateFallback":false}`)} {
+		decision, err = NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{
+			State: gameState, GameData: gameData, Now: now,
+			Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{"automation.autoStation": raw}},
+		})
+		if err != nil || decision.Request == nil || decision.Request.Name != "troops.station" || decision.FailureFallback != nil {
+			t.Fatalf("non-opt-in settings %s: decision = %#v err=%v", raw, decision, err)
+		}
 	}
 }
 
@@ -869,6 +958,8 @@ func TestAutoStationUsesOnlyOpenGatesDuringPurchasedProtectionMode(t *testing.T)
 		t.Run(string(rune('0'+modeState)), func(t *testing.T) {
 			arrives := now.Add(30 * time.Second)
 			gameState := State.NewGameState()
+			gameState.Player.AllianceObservedAt = now
+			gameState.Player.ProtectionMode.ObservedAt = now
 			gameState.Player.ID = 7
 			gameState.Player.ProtectionMode = State.PlayerProtectionModeState{
 				ModeState: modeState, RemainingSec: 3600, ObservedAt: now,
@@ -903,22 +994,109 @@ func TestAutoStationUsesOnlyOpenGatesDuringPurchasedProtectionMode(t *testing.T)
 	}
 }
 
+func TestAutoStationGateFallbackTargetsAttackedCastleOutsideBerimond(t *testing.T) {
+	now := time.Date(2026, 7, 22, 9, 0, 0, 0, time.UTC)
+	for _, kingdom := range []State.KingdomID{0, 2, 10} {
+		for _, protection := range []bool{false, true} {
+			t.Run(fmt.Sprintf("kingdom-%d/protection-%v", kingdom, protection), func(t *testing.T) {
+				state := State.NewGameState()
+				state.Player.ID = 7
+				state.Player.AllianceObservedAt = now
+				state.Player.ProtectionMode.ObservedAt = now
+				if protection {
+					state.Player.ProtectionMode = State.PlayerProtectionModeState{ModeState: 1, RemainingSec: 3600, ObservedAt: now}
+				}
+				state.Castles[1] = State.CastleState{ID: 1, KingdomID: 0, SlotType: 1}
+				state.Castles[42] = State.CastleState{ID: 42, KingdomID: kingdom, SlotType: 4}
+				arrives := now.Add(30 * time.Second)
+				state.Movements[1] = State.MovementState{ID: 1, TypeID: 0, Direction: 0, OwnerPlayerID: 8, TargetPlayerID: 7, SourceTypeID: 1, SourceCastleID: 200, TargetTypeID: 4, TargetCastleID: 42, ArrivesAt: &arrives}
+				settings := Configuration.Snapshot{Sections: map[string]json.RawMessage{"automation.autoStation": json.RawMessage(`{"openGateFallback":true}`)}}
+				decision, err := NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{State: state, Configuration: settings, Now: now})
+				if err != nil {
+					t.Fatal(err)
+				}
+				if kingdom == 10 {
+					if decision.Request != nil && decision.Request.Name == "defense.open_gate" {
+						t.Fatalf("Berimond gate request: %#v", decision.Request)
+					}
+					return
+				}
+				if decision.Request == nil || decision.Request.Name != "defense.open_gate" {
+					t.Fatalf("gate decision: %#v", decision)
+				}
+				var request struct {
+					CastleID              State.CastleID `json:"castleId"`
+					RequireProtectionMode bool           `json:"requireProtectionMode"`
+				}
+				if err := json.Unmarshal(decision.Request.Arguments, &request); err != nil || request.CastleID != 42 || request.RequireProtectionMode != protection {
+					t.Fatalf("gate target: %+v err=%v", request, err)
+				}
+			})
+		}
+	}
+}
+
+func TestAutoStationFailureFallbackUsesAttackedKingdomCastle(t *testing.T) {
+	now := time.Date(2026, 7, 29, 17, 0, 0, 0, time.UTC)
+	data, err := GameData.DecodeStore([]byte(`{"versionInfo":[],"buildings":[],"units":[{"wodID":489}]}`), GameData.SourceMetadata{ItemVersion: "test"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, kingdom := range []State.KingdomID{0, 2, 10} {
+		t.Run(fmt.Sprintf("kingdom-%d", kingdom), func(t *testing.T) {
+			state := State.NewGameState()
+			state.Player.ID = 7
+			state.Player.AllianceObservedAt = now
+			state.Player.ProtectionMode.ObservedAt = now
+			state.Alliance = State.AllianceState{ID: 9, ObservedAt: now, Members: []State.AllianceMember{{PlayerID: 1, ReturnProtectionSec: 4 * 86_400}}, Holdings: []State.AllianceHolding{{CastleID: 20, PlayerID: 1, KingdomID: kingdom, X: 20, Y: 20, SlotType: 1}}}
+			state.Castles[1] = State.CastleState{ID: 1, KingdomID: 0, SlotType: 1}
+			state.Castles[42] = State.CastleState{ID: 42, KingdomID: kingdom, SlotType: 4, X: 10, Y: 10, Units: State.CastleUnits{Stationed: map[State.UnitID]int64{489: 100}}}
+			arrives := now.Add(30 * time.Second)
+			state.Movements[1] = State.MovementState{ID: 1, TypeID: 0, Direction: 0, OwnerPlayerID: 8, TargetPlayerID: 7, SourceTypeID: 1, SourceCastleID: 200, TargetTypeID: 4, TargetCastleID: 42, ArrivesAt: &arrives}
+			config := Configuration.Snapshot{Sections: map[string]json.RawMessage{"automation.autoStation": json.RawMessage(`{"openGateFallback":true}`)}}
+			decision, err := NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{State: state, GameData: data, Configuration: config, Now: now})
+			if err != nil || decision.Request == nil || decision.Request.Name != "troops.station" {
+				t.Fatalf("station decision=%#v err=%v", decision, err)
+			}
+			if kingdom == 10 {
+				if decision.FailureFallback != nil {
+					t.Fatalf("Berimond fallback=%#v", decision.FailureFallback)
+				}
+				return
+			}
+			if decision.FailureFallback == nil || decision.FailureFallback.Name != "defense.open_gate" {
+				t.Fatalf("fallback=%#v", decision.FailureFallback)
+			}
+			var request struct {
+				CastleID State.CastleID `json:"castleId"`
+			}
+			if err := json.Unmarshal(decision.FailureFallback.Arguments, &request); err != nil || request.CastleID != 42 {
+				t.Fatalf("fallback target=%+v err=%v", request, err)
+			}
+		})
+	}
+}
+
 func TestAutoStationArmedStateWaitsForTargetedStateWake(t *testing.T) {
 	now := time.Date(2026, 8, 14, 12, 0, 0, 0, time.UTC)
 	gameState := State.NewGameState()
+	gameState.Player.AllianceObservedAt = now
+	gameState.Player.ProtectionMode.ObservedAt = now
 	decision, err := NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{State: gameState, Now: now})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if decision.Status != "armed" || !decision.EventDriven || !decision.NextCheckAt.IsZero() {
+	if decision.Status != "armed" || !decision.EventDriven || !decision.NextCheckAt.Equal(now.Add(playerProtectionRefreshInterval)) {
 		t.Fatalf("passive Auto Station decision = %#v", decision)
 	}
 }
 
-func TestAutoStationNeverFallsBackToStationingWithoutOpenGateOptIn(t *testing.T) {
+func TestAutoStationPurchasedProtectionUsesGatesWithoutOrdinaryFallbackOptIn(t *testing.T) {
 	now := time.Date(2026, 7, 22, 9, 0, 0, 0, time.UTC)
 	arrives := now.Add(30 * time.Second)
 	gameState := State.NewGameState()
+	gameState.Player.AllianceObservedAt = now
+	gameState.Player.ProtectionMode.ObservedAt = now
 	gameState.Player.ID = 7
 	gameState.Player.ProtectionMode = State.PlayerProtectionModeState{
 		ModeState: 1, RemainingSec: 3600, ObservedAt: now,
@@ -929,7 +1107,7 @@ func TestAutoStationNeverFallsBackToStationingWithoutOpenGateOptIn(t *testing.T)
 		SourceTypeID: 1, SourceCastleID: 200, TargetTypeID: 4, TargetCastleID: 100, ArrivesAt: &arrives,
 	}
 	decision, err := NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{State: gameState, Now: now})
-	if err != nil || decision.Request != nil || decision.Status != "threat" {
+	if err != nil || (decision.Request == nil || decision.Request.Name != "defense.open_gate") || decision.Status != "threat" {
 		t.Fatalf("Open Gate opt-in decision = %#v err=%v", decision, err)
 	}
 }
@@ -948,6 +1126,8 @@ func TestAutoStationCountsOnlyGameReportedGateDurationBeyondDefense(t *testing.T
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			gameState := State.NewGameState()
+			gameState.Player.AllianceObservedAt = now
+			gameState.Player.ProtectionMode.ObservedAt = now
 			gameState.Player.ID = 7
 			gameState.Player.ProtectionMode = State.PlayerProtectionModeState{
 				ModeState: 1, RemainingSec: 3600, ObservedAt: now,
@@ -972,6 +1152,8 @@ func TestIncomingThreatsOnlyIncludeHostileAttacksOnOwnedCastles(t *testing.T) {
 	now := time.Now().UTC()
 	arrives := now.Add(90 * time.Second)
 	gameState := State.NewGameState()
+	gameState.Player.AllianceObservedAt = now
+	gameState.Player.ProtectionMode.ObservedAt = now
 	gameState.Player.ID = 7
 	gameState.Castles[100] = State.CastleState{ID: 100, SlotType: 4}
 	gameState.Movements[1] = State.MovementState{
@@ -1016,6 +1198,8 @@ func TestAutoBirdCastlePauseSkipsEveryPhaseAndResumesAtExpiry(t *testing.T) {
 	until := now.Add(time.Minute)
 	for _, phase := range []State.StationingPhase{"", State.StationingPhaseTargetReady, State.StationingPhaseDispatchReady, State.StationingPhaseAway, State.StationingPhaseWaiting} {
 		game := State.NewGameState()
+		game.Player.AllianceObservedAt = now
+		game.Player.ProtectionMode.ObservedAt = now
 		game.Player.ProtectionMode.ObservedAt = now
 		game.Alliance.ID = 9
 		game.Castles[10] = State.CastleState{ID: 10}
@@ -1032,6 +1216,8 @@ func TestAutoBirdCastlePauseSkipsEveryPhaseAndResumesAtExpiry(t *testing.T) {
 		}
 	}
 	game := State.NewGameState()
+	game.Player.AllianceObservedAt = now
+	game.Player.ProtectionMode.ObservedAt = now
 	game.Alliance.ID = 9
 	game.Player.ProtectionMode.ObservedAt = until
 	game.Castles[10] = State.CastleState{ID: 10}
@@ -1051,6 +1237,8 @@ func TestAutoBirdCastlePauseSkipsEveryPhaseAndResumesAtExpiry(t *testing.T) {
 func TestAutoBirdIgnoresExpiredManualSupportAndRescanBypassesActiveSupport(t *testing.T) {
 	now := time.Now().UTC()
 	game := State.NewGameState()
+	game.Player.AllianceObservedAt = now
+	game.Player.ProtectionMode.ObservedAt = now
 	game.Player.ID = 1
 	game.Player.ProtectionMode.ObservedAt = now
 	game.Alliance.ID = 9

@@ -1,3 +1,5 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import { CheckCircle2, Filter, Search, Trash2, UsersRound } from 'lucide-react';
 import UnitImage from '../../components/UnitImage';
@@ -48,6 +50,7 @@ const CommanderRequirementModal: React.FC<CommanderRequirementModalProps> = ({
   onApply,
   onClear,
 }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { state } = useCitadelAPI();
   const { effects, troops } = useMetadata();
   const stats = useMemo(
@@ -120,18 +123,16 @@ const CommanderRequirementModal: React.FC<CommanderRequirementModalProps> = ({
             onClick={onClear}
             leftIcon={<Trash2 className="h-4 w-4" />}
           >
-            Clear requirement
-          </Button>
+            <LocalizedText messageKey="ui.movement.components.commanderRequirementModal.clear.requirement.b811adea" /></Button>
           <div className="ml-auto flex gap-2">
-            <Button variant="ghost" onClick={onClose}>Cancel</Button>
+            <Button variant="ghost" onClick={onClose}><LocalizedText messageKey="game.cancel" /></Button>
             <Button
               variant="primary"
               disabled={validationError != null}
               onClick={apply}
               leftIcon={<CheckCircle2 className="h-4 w-4" />}
             >
-              Apply requirement
-            </Button>
+              <LocalizedText messageKey="ui.movement.components.commanderRequirementModal.apply.requirement.33b88b96" /></Button>
           </div>
         </>
       )}
@@ -140,28 +141,24 @@ const CommanderRequirementModal: React.FC<CommanderRequirementModalProps> = ({
         <div className="rounded-global border border-border-light bg-bg-card/45 px-4 py-3">
           <div className="flex items-center gap-2 text-sm font-semibold text-text-main">
             <Filter className="h-4 w-4 text-primary" />
-            Require an equipped bonus-troop stat
+            <LocalizedText messageKey="ui.movement.components.commanderRequirementModal.require.an.equipped.bonus.troop.stat.5289cf33" />
           </div>
           <p className="mt-1 text-xs leading-relaxed text-text-muted">
-            Only commanders whose currently equipped gear meets this limit can launch this function.
-            Stats are discovered from live commander equipment and resolved by official effect and unit IDs.
-            Event-scoped effects remain distinct and show their official target areas.
-          </p>
+            <LocalizedText messageKey="ui.movement.components.commanderRequirementModal.only.commanders.whose.currently.equipped.gear.meets.d44315cf" /></p>
         </div>
 
         <Input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search bonus troops, effects, unit IDs, or target areas…"
-          aria-label="Search commander bonus troop stats"
+          placeholder={localizeStatic("ui.movement.components.commanderRequirementModal.placeholder.search.bonus.troops.effects.unit.ids.or.0a660cc1")}
+          aria-label={localizeStatic("ui.movement.components.commanderRequirementModal.aria-label.search.commander.bonus.troop.stats.df5201df")}
           leftIcon={<Search className="h-4 w-4" />}
         />
 
         <div className="max-h-80 overflow-y-auto rounded-global border border-border-base bg-bg-app/55 p-2 custom-scrollbar">
           {filteredStats.length === 0 ? (
             <p className="px-3 py-8 text-center text-sm text-text-muted">
-              No matching bonus-troop stats were found on the current commander equipment.
-            </p>
+              <LocalizedText messageKey="ui.movement.components.commanderRequirementModal.no.matching.bonus.troop.stats.were.found.f382bf1c" /></p>
           ) : (
             <div className="grid gap-2 sm:grid-cols-2">
               {filteredStats.map((stat) => {
@@ -220,26 +217,26 @@ const CommanderRequirementModal: React.FC<CommanderRequirementModalProps> = ({
 
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1.5">
-            <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">Minimum bonus troops</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.movement.components.commanderRequirementModal.minimum.bonus.troops.642d8e1d" /></span>
             <Input
               type="number"
               min={0}
               step={1}
               value={minimumValue}
               onChange={(event) => setMinimumValue(event.target.value)}
-              aria-label="Minimum bonus troops"
+              aria-label={localizeStatic("ui.movement.components.commanderRequirementModal.aria-label.minimum.bonus.troops.642d8e1d")}
             />
           </label>
           <label className="flex flex-col gap-1.5">
-            <span className="text-xs font-semibold uppercase tracking-wider text-text-muted">Maximum bonus troops · optional</span>
+            <span className="text-xs font-semibold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.movement.components.commanderRequirementModal.maximum.bonus.troops.optional.e891c2de" /></span>
             <Input
               type="number"
               min={0}
               step={1}
               value={maximumValue}
               onChange={(event) => setMaximumValue(event.target.value)}
-              aria-label="Maximum bonus troops"
-              placeholder="No maximum"
+              aria-label={localizeStatic("ui.movement.components.commanderRequirementModal.aria-label.maximum.bonus.troops.fcde0321")}
+              placeholder={localizeStatic("ui.movement.components.commanderRequirementModal.placeholder.no.maximum.b5cfdf25")}
             />
           </label>
         </div>

@@ -1,0 +1,2080 @@
+{
+  "ui": {
+    "guideButton": "Guide",
+    "calendarButton": "Calendrier",
+    "recommendedLabel": "Recommandé",
+    "backToSettings": "Retour aux paramètres",
+    "backToGuide": "Retour au guide",
+    "howToSetUp": "Comment le configurer",
+    "whatToExpect": "À quoi s’attendre",
+    "openFullSizePicture": "Ouvrir l’image en taille réelle",
+    "illustrativeExample": "Exemple illustratif",
+    "enlargePicture": "Agrandir l’image d’exemple",
+    "fullSizePicture": "Image d’exemple en taille réelle ; faites défiler pour voir tous les paramètres",
+    "towerGuideTitle": "Guide des Attaques automatiques de tours",
+    "birdGuideTitle": "Guide de la Mise à l’abri automatique des troupes",
+    "towerGuideIntro": "Suivez ces étapes pour configurer les Attaques automatiques de tours ; sélectionnez une image d’exemple pour l’agrandir.",
+    "birdGuideIntro": "Suivez ces étapes pour configurer la Mise à l’abri automatique des troupes ; sélectionnez une image d’exemple pour l’agrandir.",
+    "towerPreviewTitle": "Exemple de configuration des Attaques automatiques de tours",
+    "birdPreviewTitle": "Exemple de configuration de la Mise à l’abri automatique des troupes",
+    "stationGuideTitle": "Guide de stationnement automatique",
+    "stationGuideIntro": "Suivez ces étapes pour configurer le stationnement automatique ; sélectionnez l’image d’exemple pour l’agrandir.",
+    "stationPreviewTitle": "Exemple de configuration du stationnement automatique",
+    "fortressGuideIntro": "Suivez ces étapes pour régler l’Automatisation des forteresses ; sélectionnez un panneau d’exemple pour l’agrandir.",
+    "fortressGuideTitle": "Guide de l’Automatisation des forteresses",
+    "fortressPreviewTitle": "Exemple de configuration de l’Automatisation des forteresses",
+    "invasionGuideIntro": "Suivez ces étapes pour configurer l'automatisation des invasions; sélectionnez un panneau d'exemple pour l'agrandir.",
+    "invasionGuideTitle": "Guide de l'automatisation des invasions",
+    "invasionPreviewTitle": "Exemple de configuration de l'automatisation des invasions",
+    "nomadGuideIntro": "Suivez ces étapes pour configurer Auto Nomades/Samouraïs ; sélectionnez un panneau d'exemple pour l'agrandir.",
+    "nomadGuideTitle": "Guide Auto Nomades/Samouraïs",
+    "nomadPreviewTitle": "Exemple de configuration d'Auto Nomades/Samouraïs",
+    "advisorGuideIntro": "Suivez ces étapes pour configurer Auto Conseiller ; sélectionnez un panneau d'exemple pour l'agrandir.",
+    "advisorGuideTitle": "Guide Auto Conseiller",
+    "advisorPreviewTitle": "Exemple de configuration d'Auto Conseiller",
+    "khanGuideIntro": "Suivez ces étapes pour configurer Khan automatique ; sélectionnez un panneau d'exemple pour l'agrandir.",
+    "khanGuideTitle": "Guide de Khan automatique",
+    "khanPreviewTitle": "Exemple de configuration de Khan automatique",
+    "beriGuideIntro": "Suivez ces étapes pour configurer Auto Beri World ; agrandissez un panneau d’exemple au besoin.",
+    "beriGuideTitle": "Guide Auto Beri World",
+    "beriPreviewTitle": "Exemple de configuration Auto Beri World",
+    "stormGuideIntro": "Suivez ces étapes pour configurer Auto Storm ; sélectionnez un panneau d'exemple pour l'agrandir.",
+    "stormGuideTitle": "Guide Auto Storm",
+    "stormPreviewTitle": "Exemple de configuration d'Auto Storm"
+  },
+  "autoTower": {
+    "recommendationIntro": "Ces recommandations concernent une utilisation régulière ; vérifiez-les avant d’enregistrer.",
+    "steps": {
+      "commanders": {
+        "title": "Choisissez vos commandants",
+        "items": {
+          "commander_assignment": {
+            "label": "Affectation des commandants",
+            "description": "Dans Commandants, autorisez les Attaques automatiques de tours pour les commandants voulus, puis sélectionnez Enregistrer les affectations.",
+            "recommendation": "20 commandants affectés aux Attaques automatiques de tours."
+          }
+        }
+      },
+      "general": {
+        "title": "Réglez les analyses, les limites quotidiennes et le déplacement",
+        "items": {
+          "open_settings": {
+            "label": "Ouvrir les paramètres",
+            "description": "Ouvrez Automatisation, puis sélectionnez le bouton des paramètres sur la carte Attaques automatiques de tours."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Analyse de la carte de référence · Fréquence",
+            "description": "Choisissez la fréquence d’actualisation de la liste des tours de chaque château, entre 1 800 et 3 600 secondes ; des attaques peuvent partir entre deux analyses.",
+            "recommendation": "1 800 secondes (30 minutes)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Limite quotidienne des attaques normales",
+            "description": "L’exécution s’interrompt à la limite quotidienne d’attaques du compte jusqu’à sa réinitialisation par le jeu ; 0 supprime cette limite.",
+            "recommendation": "3 500 attaques par jour pour l’ensemble du compte."
+          },
+          "horse_travel_boost": {
+            "label": "Accélération du déplacement à cheval",
+            "description": "Utilise l’option de déplacement choisie pour chaque attaque, y compris chaque frappe d’une série du conseiller ; la vitesse dépend des bâtiments de déplacement du château de départ.",
+            "recommendation": "Palier en pièces, s’il est disponible, avec suffisamment de pièces."
+          },
+          "travel_feather": {
+            "label": "Plume de voyage",
+            "description": "Utilise la plume de voyage au lieu d’un palier équestre en pièces ou en rubis."
+          },
+          "horse_ship_tier_coins": {
+            "label": "Cheval / navire · pièces",
+            "description": "Dépense des pièces pour le palier de déplacement en pièces."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Cheval de guerre / navire rapide · rubis",
+            "description": "Dépense des rubis pour le premier palier en rubis lorsqu’il est sélectionné."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Coursier / navire le plus rapide · rubis",
+            "description": "Dépense des rubis pour le palier de déplacement en rubis plus rapide lorsqu’il est sélectionné."
+          }
+        },
+        "image": {
+          "alt": "Paramètres généraux des Attaques automatiques de tours avec des données fictives du château Synthetic Castle",
+          "caption": "Réglez l’intervalle d’analyse, la limite quotidienne d’attaques et l’option de déplacement ; les commandes du conseiller apparaissent si elles sont disponibles."
+        }
+      },
+      "castle": {
+        "title": "Configurez chaque château",
+        "items": {
+          "castle_switch": {
+            "label": "Interrupteur du château",
+            "description": "Activez chaque château depuis lequel les Attaques automatiques de tours doivent analyser et attaquer.",
+            "recommendation": "Activez les châteaux que vous souhaitez utiliser régulièrement."
+          },
+          "radius": {
+            "label": "Rayon",
+            "description": "Choisissez la distance de recherche autour de ce château, entre 1 et 50 cases.",
+            "recommendation": "35 cases."
+          },
+          "choose_troop": {
+            "label": "Choisir une troupe",
+            "description": "Choisissez la troupe stationnée qui remplira les deux flancs d’attaque ; les attaques attendent si les unités sont insuffisantes.",
+            "recommendation": "Une troupe d’attaque stationnée avec assez d’unités pour les deux flancs."
+          },
+          "maiden_supported_only": {
+            "label": "Relique de demoiselle uniquement",
+            "description": "Limite ce château aux commandants disponibles possédant la relique de demoiselle prise en charge.",
+            "recommendation": "Désactivé, sauf si le commandant choisi possède la relique de demoiselle prise en charge."
+          }
+        },
+        "image": {
+          "alt": "Paramètres du château pour les Attaques automatiques de tours avec des données fictives du château Synthetic Castle",
+          "caption": "Activez un château et choisissez son rayon, sa troupe et l’exigence de relique de demoiselle."
+        }
+      },
+      "advisor": {
+        "title": "Utilisez le conseiller si vous le souhaitez · selon disponibilité",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Utiliser le conseiller avec des accélérateurs",
+            "description": "Répète les frappes sur une même tour, avec d’abord une attaque quotidienne puis un accélérateur d’au moins trois heures pour chaque frappe supplémentaire.",
+            "recommendation": "Désactivé."
+          },
+          "auto_activate_with_token": {
+            "label": "Activation automatique avec un jeton",
+            "description": "Utilise un jeton disponible du conseiller des fieffés coquins quand celui-ci est inactif, sans acheter de jeton ni dépenser de rubis.",
+            "recommendation": "Désactivé tant que le conseiller est désactivé."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Nombre maximal d’accélérateurs quotidiens",
+            "description": "Limite les accélérateurs utilisés par les séries confirmées du conseiller jusqu’à la réinitialisation du compteur quotidien d’attaques du jeu ; 0 suspend les départs du conseiller.",
+            "recommendation": "0 tant que le conseiller est désactivé."
+          }
+        }
+      },
+      "finish": {
+        "title": "Définissez le calendrier, enregistrez et activez",
+        "items": {
+          "calendar": {
+            "label": "Calendrier",
+            "description": "Utilisez le calendrier pour choisir quand les Attaques automatiques de tours peuvent fonctionner ; la disponibilité des troupes et les autres limites s’appliquent toujours.",
+            "recommendation": "Vos heures habituelles d’exécution."
+          },
+          "save_changes": {
+            "label": "Enregistrer les modifications",
+            "description": "Sélectionnez Enregistrer les modifications pour appliquer vos paramètres ; lire ce guide ne les enregistre pas."
+          },
+          "auto_towers_switch": {
+            "label": "Interrupteur des Attaques automatiques de tours",
+            "description": "Après avoir enregistré vos paramètres, activez les Attaques automatiques de tours sur la page Automatisation pour autoriser leur exécution.",
+            "recommendation": "Activé après l’enregistrement des paramètres souhaités."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Attaques automatiques de tours",
+      "summary": "Répéter les attaques sur les tours proches",
+      "description": "Envoie des attaques contre les tours des fieffés coquins et des royaumes depuis les châteaux choisis.",
+      "expectation": "Il faut suffisamment de troupes, un commandant disponible et une tour prête à être attaquée. L’exécution peut attendre le retour des troupes ou la fin du décompte d’une tour."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "Les valeurs recommandées décrivent l’utilisation régulière de la Mise à l’abri automatique des troupes ; elles servent de conseil et ne modifient pas les paramètres enregistrés.",
+    "steps": {
+      "open": {
+        "title": "Ouvrez les paramètres de la Mise à l’abri automatique des troupes",
+        "items": {
+          "open_settings": {
+            "label": "Ouvrir les paramètres",
+            "description": "En haut du centre de commandement, sélectionnez le bouton des paramètres à côté de la Mise à l’abri automatique des troupes."
+          }
+        }
+      },
+      "general": {
+        "title": "Réglez la durée de stationnement et les règles d’envoi",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Plage de durée aléatoire · Min",
+            "description": "Définissez le nombre minimal d’heures pendant lesquelles les troupes restent à la destination de l’alliance après la fin du trajet.",
+            "recommendation": "6 heures de stationnement à la cible de l’alliance après l’arrivée."
+          },
+          "random_delay_range_max": {
+            "label": "Plage de durée aléatoire · Max",
+            "description": "Définissez la durée maximale sur place ; la Mise à l’abri automatique des troupes choisit une durée aléatoire entre Min et Max.",
+            "recommendation": "12 heures de stationnement à la cible de l’alliance après l’arrivée."
+          },
+          "minimum_to_send": {
+            "label": "Minimum à envoyer",
+            "description": "Définissez le nombre total minimal de troupes admissibles après conservation des réserves du château ; c’est un seuil, pas le nombre exact envoyé.",
+            "recommendation": "1 000 troupes admissibles au total après conservation des réserves du château ; c’est un seuil, pas une quantité exacte à envoyer."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "RPT minimal (temps de protection restant)",
+            "description": "Utilisez des cibles ayant plus que ce nombre de jours de protection restants ; 0 supprime cette vérification.",
+            "recommendation": "3 jours ; une cible doit avoir strictement plus de 3 jours de protection restants."
+          }
+        },
+        "image": {
+          "alt": "Durée de stationnement, envoi minimal, RPT minimal et commandes des préréglages de la Mise à l’abri automatique des troupes",
+          "caption": "Réglez la durée de stationnement et les critères d’admissibilité, puis vérifiez le préréglage de réserve Quotidien avant d’enregistrer."
+        }
+      },
+      "reserves": {
+        "title": "Choisissez les troupes à garder dans chaque château",
+        "items": {
+          "add_unit": {
+            "label": "Ajouter une unité",
+            "description": "Pour chaque château, choisissez les types de troupes à garder sur place au lieu de les envoyer ; une réserve manuelle vide laisse toutes les troupes admissibles disponibles après les réserves automatiques.",
+            "recommendation": "Choisissez les types de troupes nécessaires à la défense ou aux autres tâches régulières de chaque château."
+          },
+          "quantity": {
+            "label": "Quantité",
+            "description": "Définissez une quantité positive de chaque troupe choisie à garder dans ce château ; 0 ne réserve pas tout le type.",
+            "recommendation": "Gardez dans ce château le nombre de troupes de chaque type nécessaire à la défense ou aux autres tâches ; vérifiez les effectifs réels."
+          },
+          "remove_unit": {
+            "label": "Retirer une unité",
+            "description": "Retirez une vignette d’unité pour cesser de réserver ce type dans le château sélectionné."
+          },
+          "auto_fortress_reserve": {
+            "label": "Réserve de l’Automatisation des forteresses",
+            "description": "Quand l’Automatisation des forteresses bloque ici tous les loups féroces, cette réserve automatique n’est pas enregistrée dans les préréglages de la Mise à l’abri automatique des troupes ; l’ancienne quantité manuelle de loups féroces revient à la fin du blocage."
+          }
+        },
+        "image": {
+          "alt": "Vignettes de réserve de la Mise à l’abri automatique des troupes du château fictif Example Castle",
+          "caption": "Ne réservez que les unités nécessaires dans ce château ; Unité 101 et Unité 102 sont des exemples fictifs de troupes."
+        }
+      },
+      "presets": {
+        "title": "Enregistrez et sélectionnez un préréglage",
+        "items": {
+          "preset_name": {
+            "label": "Nom du préréglage",
+            "description": "Saisissez le nom d’un nouveau préréglage ou modifiez celui du préréglage appliqué avant d’enregistrer les modifications.",
+            "recommendation": "Utilisez un nom reconnaissable comme Quotidien."
+          },
+          "load_preset": {
+            "label": "Charger un préréglage",
+            "description": "Choisissez un préréglage enregistré dans la liste, ou Configuration enregistrée pour utiliser les paramètres stockés sans préréglage nommé.",
+            "recommendation": "Utilisez le préréglage quotidien voulu comme valeur par défaut à l’exécution : sélectionnez-le, cliquez sur Appliquer, puis sur Enregistrer les modifications."
+          },
+          "apply": {
+            "label": "Appliquer",
+            "description": "Charge le préréglage sélectionné dans ce brouillon de paramètres ; sélectionnez Enregistrer les modifications pour l’adopter comme valeur par défaut à l’exécution."
+          },
+          "save_as_new": {
+            "label": "Enregistrer comme nouveau",
+            "description": "Enregistre immédiatement les paramètres actuels comme nouveau préréglage nommé et le sélectionne comme valeur par défaut à l’exécution."
+          },
+          "delete": {
+            "label": "Supprimer",
+            "description": "Après confirmation, supprime immédiatement le préréglage sélectionné et efface la valeur par défaut à l’exécution s’il était sélectionné."
+          },
+          "runtime_default": {
+            "label": "Valeur par défaut à l’exécution",
+            "description": "La valeur par défaut à l’exécution est le préréglage actif enregistré ou, si aucun préréglage n’est actif, la configuration enregistrée."
+          }
+        }
+      },
+      "finish": {
+        "title": "Définissez le calendrier, enregistrez et activez",
+        "items": {
+          "calendar": {
+            "label": "Calendrier",
+            "description": "Choisissez quand la Mise à l’abri automatique des troupes peut fonctionner et sélectionnez Enregistrer le calendrier pour conserver vos modifications.",
+            "recommendation": "Laissez le calendrier désactivé pour un fonctionnement continu, ou définissez vos heures hebdomadaires habituelles et enregistrez-le."
+          },
+          "specify_preset_per_period": {
+            "label": "Définir un préréglage par période",
+            "description": "Choisissez un préréglage enregistré pour une période du calendrier si elle doit remplacer la valeur par défaut à l’exécution.",
+            "recommendation": "Désactivé, sauf si différentes périodes nécessitent des réserves différentes."
+          },
+          "save_changes": {
+            "label": "Enregistrer les modifications",
+            "description": "Enregistrez le brouillon des paramètres et les modifications des préréglages appliqués ; lire ce guide ne les enregistre pas."
+          },
+          "auto_bird_switch": {
+            "label": "Interrupteur de la Mise à l’abri automatique des troupes",
+            "description": "Après l’enregistrement, activez la Mise à l’abri automatique des troupes en haut du centre de commandement pour permettre les cycles normaux des châteaux.",
+            "recommendation": "Activez la Mise à l’abri automatique des troupes après l’enregistrement ; l’état dans l’en-tête indique le cycle de chaque château."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Mise à l’abri automatique des troupes",
+      "summary": "Stationner ailleurs les troupes choisies selon un calendrier",
+      "description": "Stationne régulièrement les troupes disponibles dans des châteaux d’alliance admissibles et répète le cycle à leur retour.",
+      "expectation": "Attend lorsqu’aucune destination convenable ou aucune troupe disponible n’est présente. Déplacer les troupes ne rend pas votre château invulnérable."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "Paramètres généraux",
+      "scan": "Intervalle d’analyse : 1 800 secondes",
+      "daily": "Limite quotidienne d’attaques : 3 500",
+      "travel": "Accélération du déplacement : palier en pièces",
+      "advisor": "Conseiller : désactivé"
+    },
+    "towerCastle": {
+      "title": "Château d’exemple",
+      "enabled": "Attaques automatiques de tours : activées",
+      "radius": "Rayon : 35 cases",
+      "troop": "Troupe choisie : unité d’attaque fictive",
+      "maiden": "Relique de demoiselle uniquement : désactivé"
+    },
+    "birdGeneral": {
+      "title": "Paramètres généraux",
+      "min": "Séjour minimal : 6 heures",
+      "max": "Séjour maximal : 12 heures",
+      "send": "Total minimal admissible après réserves : 1 000 troupes",
+      "rpt": "Protection restante minimale : plus de 3 jours",
+      "preset": "Préréglage : réserve Quotidien"
+    },
+    "birdCastle": {
+      "title": "Château d’exemple",
+      "unitOne": "Unité fictive 101 réservée : 80",
+      "unitTwo": "Unité fictive 102 réservée : 40",
+      "add": "Ajouter une unité"
+    },
+    "stationGeneral": {
+      "title": "Exemple de réglages du stationnement automatique",
+      "evacuate": "Évacuer à : 1 minute avant l’impact",
+      "protection": "Protection de la cible : plus de 3 jours",
+      "recall": "Rappeler quand le danger est passé : activé",
+      "gate": "Ouverture des portes en secours : désactivée",
+      "castle": "Château fictif : 80 troupes défensives réservées",
+      "save": "Enregistrer, puis activer le stationnement automatique"
+    },
+    "fortressAttack": {
+      "commander": "Commandant : le plus rapide parmi les affectés admissibles",
+      "daily": "Limite quotidienne d’attaques normales : 0",
+      "title": "Exemple de réglages d’attaque",
+      "travel": "Accélération du déplacement : plume de voyage",
+      "wave": "Une vague complète de loups féroces sur les deux flancs"
+    },
+    "fortressKingdoms": {
+      "everwinter": "Glacier éternel : activé une fois débloqué",
+      "peaks": "Pics de feu : activé une fois débloqué",
+      "sands": "Sables brûlants : activé une fois débloqué",
+      "title": "Exemple de réglages des royaumes"
+    },
+    "fortressSupply": {
+      "purchase": "Loups féroces par session : 5 000",
+      "reserve": "Conserver des tablettes du Khan : 25 000",
+      "route": "Approvisionnement : du Grand Empire vers les royaumes activés",
+      "skips": "Accélérateurs pour les transferts confirmés : activés",
+      "title": "Exemple d’approvisionnement en loups féroces"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Corbeaux de sang : difficulté débloquée adaptée",
+      "current": "La difficulté de l'événement actif reste en place",
+      "foreign": "Seigneurs étrangers : difficulté débloquée adaptée",
+      "title": "Exemple de difficultés d'événement"
+    },
+    "invasionFortify": {
+      "currency": "Si activé : monnaie d'événement lorsqu'elle est proposée",
+      "enabled": "Fortifier chaque cible : désactivé",
+      "rubies": "Rubis uniquement après sélection explicite",
+      "title": "Exemple de fortification des cibles"
+    },
+    "invasionLimits": {
+      "before": "Arrêt 30 minutes avant la fin de l'événement",
+      "daily": "Limite quotidienne d'attaques normales : 0",
+      "score": "Score : dernier palier habituel de récompense personnelle au-dessus de 0",
+      "title": "Exemple de score et de limites d'arrêt"
+    },
+    "invasionSetup": {
+      "castle": "Source : château d'événement habituel du Grand Empire",
+      "preset": "Préréglage d'attaque : formation d'événement enregistrée",
+      "title": "Exemple de préparation d'attaque d'événement",
+      "travel": "Bonus de voyage : Plume de voyage"
+    },
+    "nomadDifficulty": {
+      "title": "Exemple de difficultés d'événement",
+      "active": "Événement actif : reprendre sa difficulté actuelle",
+      "nomad": "Nomades : difficulté débloquée et fiable",
+      "samurai": "Samouraïs : difficulté débloquée et fiable"
+    },
+    "nomadSetup": {
+      "castle": "Source : château d'événement habituel du Grand Empire",
+      "travel": "Accélération du déplacement : plume de voyage",
+      "nomadPreset": "Préréglage nomade : formation de camp enregistrée",
+      "samuraiPreset": "Préréglage samouraï : formation de camp enregistrée",
+      "title": "Exemple de configuration des camps d'événement"
+    },
+    "nomadCooldowns": {
+      "clear": "Supprimer le délai après une victoire confirmée : activé",
+      "long": "Conserver 5 h / 24 h : stock réservé à d'autres activités",
+      "short": "Conserver 1 / 5 / 10 / 30 / 60 min : 0 objet chacun",
+      "title": "Exemple de choix des délais"
+    },
+    "nomadLimits": {
+      "daily": "Limite quotidienne ajoutée : 0",
+      "score": "Objectif de score : dernier palier de récompense personnelle",
+      "time": "Arrêter avant la fin : 30 minutes",
+      "title": "Exemple des règles d'arrêt"
+    },
+    "nomadTrial": {
+      "coordinates": "Cible X / Y : inutilisée en fonctionnement normal",
+      "effect": "Test activé : remplace l'événement par une véritable attaque",
+      "title": "Exemple des commandes du test",
+      "trial": "Test temporaire sur château de fieffé coquin : désactivé"
+    },
+    "advisorDifficulty": {
+      "active": "Événement actif : reprendre sa difficulté actuelle",
+      "nomad": "Nomades : difficulté débloquée et fiable",
+      "samurai": "Samouraïs : difficulté débloquée et fiable",
+      "title": "Exemple de difficultés d'événement"
+    },
+    "advisorSetup": {
+      "castle": "Source : château d'événement habituel du Grand Empire",
+      "travel": "Accélération du déplacement : plume de voyage",
+      "preset": "Préréglage : formation enregistrée pour l'événement actif",
+      "title": "Exemple des réglages d'attaque du Conseiller"
+    },
+    "advisorActivation": {
+      "locked": "Si verrouillé : ouvrir la confirmation Activer le Conseiller",
+      "paid": "Confirmer l'utilisation payante d'un jeton ou l'activation gratuite signalée par le jeu",
+      "save": "Enregistrer les réglages puis activer la carte Automatisation",
+      "title": "Exemple du parcours d'activation"
+    },
+    "advisorOverview": {
+      "progress": "Attaque actuelle / attaques demandées",
+      "refresh": "Actualiser l'aperçu pour lire les totaux actuels",
+      "results": "Victoires, défaites, unités et outils perdus",
+      "title": "Exemple de l'aperçu en direct"
+    },
+    "advisorResources": {
+      "coins": "Coût total en pièces par attaque : 500 seulement si suffisant",
+      "feathers": "Garder des plumes : 0 sauf besoin ailleurs",
+      "rubies": "Rubis par attaque : 0 avec la Plume de voyage",
+      "skips": "Garder 60 min : 0 objet ; réserver 5 h et 24 h selon les besoins",
+      "title": "Exemple des budgets de ressources"
+    },
+    "advisorSizing": {
+      "actual": "Série réelle : limitée par les ressources et le temps",
+      "maximum": "Nombre maximal d'attaques : 9 999",
+      "time": "Temps d'événement inutilisé : 30 minutes",
+      "title": "Exemple de taille de série"
+    },
+    "khanCooldowns": {
+      "long": "Réserver des accélérateurs de 5 h et 24 h pour d'autres tâches",
+      "pause": "Les attaques s'arrêtent si les accélérateurs utilisables manquent",
+      "short": "Conserver 1 min / 5 min / 10 min / 30 min / 1 h : 0 objet chacun",
+      "skip": "Passer chaque délai du camp : activé",
+      "title": "Exemple de réserves d'accélérateurs"
+    },
+    "khanLimits": {
+      "daily": "Attaques normales quotidiennes : 0, aucune limite ajoutée",
+      "end": "Arrêter les nouvelles attaques 5 min avant la fin",
+      "points": "Arrêt aux points nomades : 0, désactivé",
+      "title": "Exemple de limites d'arrêt",
+      "tools": "Réapprovisionnement des outils : activé si souhaité"
+    },
+    "khanProtection": {
+      "gate": "Ouvrir les portes principales et suspendre Khan au seuil",
+      "outpost": "Avant-poste comme source : protection désactivée",
+      "source": "S'applique aux attaques lancées du château principal",
+      "threshold": "Unités offensives sur le mur : 1 000",
+      "title": "Exemple de protection du mur principal"
+    },
+    "khanRage": {
+      "attacks": "Attaques automatiques de camp : déverrouillées",
+      "booster": "Bonus temporaire de points de rage requis : désactivé",
+      "chain": "Limite de chaîne de rage : 0, aucune limite ajoutée",
+      "title": "Exemple de contrôles de rage",
+      "trigger": "Représailles à rage maximale : activées"
+    },
+    "khanSave": {
+      "defense": "Vérifier la défense du château principal avant les représailles",
+      "enable": "Activer Khan automatique sur la carte Automatisation",
+      "priority": "Station automatique gère séparément les attaques de joueurs",
+      "save": "Enregistrer après préparation des deux modèles",
+      "title": "Exemple de parcours d'enregistrement et d'activation"
+    },
+    "khanSetup": {
+      "defense": "Défendre à : château principal du Grand Empire",
+      "presets": "Modèles enregistrés d'attaque du Khan et de défense principale",
+      "source": "Attaquer depuis : avant-poste du Grand Empire",
+      "title": "Exemple de configuration du Khan",
+      "travel": "Plume de voyage pour aller vite"
+    },
+    "beriBuilder": {
+      "permissions": "Coûts premium et démolition : désactivés sauf vérification",
+      "reserves": "Réserver les ressources de Bérimond et les accélérateurs",
+      "stable": "Écurie de faction : niveau choisi de 1 à 5",
+      "target": "Objectif intégré exact ou disposition personnalisée vérifiée",
+      "title": "Exemple de construction facultative du camp"
+    },
+    "beriReadiness": {
+      "booster": "Condition de booster de bravoure : facultative",
+      "food": "Les transferts exigent des troupes du modèle nourries",
+      "preset": "Vérifier les troupes et outils du modèle enregistré",
+      "title": "Exemple de préparation des tours"
+    },
+    "beriSave": {
+      "calendar": "Calendrier désactivé pour un fonctionnement continu",
+      "enable": "Activer Auto Beri sur la carte Automatisation",
+      "save": "Enregistrer après vérification des proportions de troupes",
+      "title": "Exemple d’enregistrement et d’activation"
+    },
+    "beriSetup": {
+      "donor": "Château donneur du Grand Empire avec les troupes nécessaires",
+      "limit": "Attaques normales quotidiennes : 0 limite ajoutée",
+      "preset": "Modèle d’attaque de Bérimond enregistré",
+      "title": "Exemple d’attaque et d’approvisionnement",
+      "travel": "Plume de voyage pour les attaques de tours"
+    },
+    "beriTools": {
+      "ladders": "Échelles : adaptées aux attaques habituelles",
+      "mantlets": "Mantelets : adaptés aux attaques habituelles",
+      "rams": "Béliers : adaptés aux attaques habituelles",
+      "title": "Exemple de stocks minimaux d’outils"
+    },
+    "beriTransfers": {
+      "capacity": "Capacité libre : 1 ; seuil : 1",
+      "mix": "Proportions du modèle : 2 unités A pour 1 unité B",
+      "next": "Prochain envoi : jusqu’à 1 B du stock donneur",
+      "stock": "Stock du camp : 2 A et 0 B",
+      "title": "Exemple de transferts proportionnels"
+    },
+    "stormCastle": {
+      "blueprint": "Cible enregistrée active ; la pause la conserve",
+      "capture": "Château actuel : cible Fonctionnelle",
+      "decorations": "Préréglage de décorations : facultatif",
+      "title": "Exemple d'accès au château de l'Orage",
+      "unlock": "Ouverture automatique : activée après examen du prix"
+    },
+    "stormCombat": {
+      "defenders": "Défenseurs d'occupation : choisis ou un survivant",
+      "forts": "Forts : niveaux sélectionnés 40 à 80",
+      "islands": "Îles à aigue-marine : grandes et petites",
+      "priority": "Grandes, petites, puis forts de 80 à 40",
+      "title": "Exemple d'attaques de forts et d'îles"
+    },
+    "stormConstruction": {
+      "harbor": "Port : activé, niveau 1",
+      "resources": "Bois 0 ; pierre 0 ; aigue-marine prévue",
+      "spending": "Premium et démolition : désactivés",
+      "title": "Exemple de construction et de réserves",
+      "transport": "Transport de ressources : activé"
+    },
+    "stormLuna": {
+      "cost": "Coût et plafond d'achat : lecture seule",
+      "limited": "Objectifs limités avant récompenses illimitées",
+      "priority": "Priorité 1, 2, 3 ; numéro le plus bas d'abord",
+      "reserve": "Garder de l'aigue-marine : 0 si surplus utilisé",
+      "title": "Exemple de récompenses de Luna"
+    },
+    "stormSave": {
+      "check": "Vérification de la politique : 30 secondes",
+      "daily": "Attaques normales quotidiennes : plafond supplémentaire 0",
+      "map": "Actualisation de carte : 2 heures, lecture seule",
+      "switch": "Enregistrer puis activer Auto Storm",
+      "title": "Exemple du parcours d'enregistrement et d'activation"
+    },
+    "stormTroops": {
+      "averages": "Attaques confirmées depuis la remise à zéro / 24 ; moyenne du préréglage en lecture seule",
+      "cap": "Plafond des troupes engagées : lecture seule",
+      "donors": "Donneurs : ordre affiché, stock partiel autorisé",
+      "minimum": "Minimum gardé : 1 000 troupes",
+      "title": "Exemple d'import de troupes"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Ces recommandations concernent l’usage régulier du stationnement automatique et ne modifient aucun réglage enregistré.",
+    "steps": {
+      "open": {
+        "title": "Ouvrir les réglages du stationnement automatique",
+        "items": {
+          "open_settings": {
+            "label": "Ouvrir les réglages",
+            "description": "En haut du centre de commande, sélectionnez le bouton de réglages à côté du stationnement automatique."
+          }
+        }
+      },
+      "general": {
+        "title": "Définir la réaction aux attaques",
+        "items": {
+          "evacuate_at": {
+            "label": "Évacuer à",
+            "description": "Commencez l’évacuation ce nombre de minutes avant l’impact, ou immédiatement si une attaque est détectée dans ce délai.",
+            "recommendation": "1 minute avant l’impact."
+          },
+          "minimum_bird_days": {
+            "label": "Jours de protection minimum de la cible",
+            "description": "Choisissez un château allié ayant plus que ce nombre de jours de protection restants ; 0 supprime ce minimum.",
+            "recommendation": "3 jours, donc la cible doit disposer de plus de 3 jours restants."
+          },
+          "recall_when_clear": {
+            "label": "Rappeler quand le danger est passé",
+            "description": "Rapatriez les troupes stationnées après la dernière attaque détectée lorsqu’aucune autre attaque n’arrive.",
+            "recommendation": "Activé pour l’usage habituel."
+          },
+          "open_gate_fallback": {
+            "label": "Ouverture des portes en secours",
+            "description": "Si les troupes ne peuvent pas être évacuées, cette option ouvre pendant six heures les portes du château possédé attaqué, sauf au Bérimond.",
+            "recommendation": "Désactivé sauf si vous souhaitez ouvrir automatiquement les portes après un échec d’évacuation."
+          },
+          "protection_mode": {
+            "label": "Mode Protection acheté",
+            "description": "Quand le mode Protection acheté se prépare ou est actif, le stationnement automatique utilise les portes même si l’option de secours est désactivée, sauf au Bérimond."
+          }
+        },
+        "image": {
+          "alt": "Réglages fictifs du stationnement automatique avec délai d’évacuation, protection, rappel, portes et réserves du château",
+          "caption": "Vérifiez les quatre commandes de réaction et les réserves défensives de chaque château avant d’enregistrer."
+        }
+      },
+      "reserves": {
+        "title": "Choisir les troupes à garder dans chaque château",
+        "items": {
+          "add_troops": {
+            "label": "Ajouter des troupes",
+            "description": "Choisissez les types de troupes à garder au château ; sans réserve, toutes les troupes admissibles hors outils peuvent être évacuées.",
+            "recommendation": "Gardez la garnison défensive habituelle tout en laissant partir les troupes d’attaque disponibles."
+          },
+          "quantity": {
+            "label": "Quantité",
+            "description": "Indiquez combien de troupes de chaque type choisi restent dans ce château ; 0 n’en garde aucune.",
+            "recommendation": "Utilisez le nombre requis pour la défense habituelle de ce château."
+          },
+          "edit_defense_troops": {
+            "label": "Modifier les troupes défensives",
+            "description": "Rouvrez le sélecteur de troupes pour modifier les types ou les quantités réservés à ce château."
+          },
+          "remove_defense_troop": {
+            "label": "Retirer une troupe défensive",
+            "description": "Retirez une vignette de réserve pour ne plus garder ce type de troupe au château."
+          }
+        }
+      },
+      "finish": {
+        "title": "Enregistrer et activer le stationnement automatique",
+        "items": {
+          "save_changes": {
+            "label": "Enregistrer les modifications",
+            "description": "Enregistrez le délai, les interrupteurs et les réserves de chaque château avant de quitter les réglages."
+          },
+          "auto_station_switch": {
+            "label": "Interrupteur du stationnement automatique",
+            "description": "Activez le stationnement automatique en haut du centre de commande après l’enregistrement pour surveiller les attaques de joueurs entrantes.",
+            "recommendation": "Activé pour une protection régulière après vérification de vos réserves."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Stationnement automatique",
+      "summary": "Déplacer les troupes admissibles avant une attaque entrante",
+      "description": "Lorsqu’une attaque de joueur approche, le stationnement automatique déplace les troupes admissibles vers le château allié adapté le plus proche du même royaume.",
+      "expectation": "Si le rappel est activé, les troupes reviennent après la dernière attaque détectée lorsqu’aucune menace ne subsiste ; sinon, elles restent une heure après leur arrivée avant de revenir. Une cible absente, des troupes indisponibles ou les règles du jeu peuvent empêcher l’évacuation.",
+      "helper": "Les troupes vont au château allié admissible le plus proche du même royaume ; si l’évacuation échoue, les portes du château possédé attaqué peuvent protéger hors du Bérimond."
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "Commandant disponible le plus rapide",
+      "commanderHelp": "L’Automatisation des forteresses compare, pour chaque forteresse visée, les effets de vitesse de déplacement applicables de l’équipement, des gemmes, des ensembles et des généraux ; ni relique 2.0 ni bonus de 100 % ne sont requis.",
+      "description": "L’Automatisation des forteresses achète des loups féroces dans les limites enregistrées, approvisionne les royaumes extérieurs activés et attaque les forteresses prêtes depuis leurs châteaux principaux.",
+      "expectation": "Chaque attaque exige une forteresse prête, assez de loups féroces pour les deux flancs et un commandant affecté admissible ; les délais de réutilisation ou d’approvisionnement peuvent la retarder.",
+      "name": "Automatisation des forteresses",
+      "settingsSummary": "L’Automatisation des forteresses prépare des loups féroces et choisit pour chaque forteresse visée le commandant affecté admissible le plus rapide.",
+      "summary": "Approvisionner en loups féroces et attaquer les forteresses prêtes",
+      "travelHelp": "La plume de voyage est sélectionnée par défaut ; votre choix de déplacement enregistré est conservé. Le bonus propre au château est recalculé avant le départ."
+    },
+    "recommendationIntro": "Les valeurs recommandées décrivent l’usage régulier de l’Automatisation des forteresses ; elles servent de guide et ne modifient aucun réglage enregistré.",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "Exemple illustratif des réglages d’attaque et de déplacement de l’Automatisation des forteresses",
+          "caption": "L’Automatisation des forteresses classe les commandants affectés admissibles selon leur vitesse pour chaque cible et utilise le choix de déplacement enregistré."
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "Dans Commandants, affectez les commandants autorisés pour l’Automatisation des forteresses, puis enregistrez ces affectations.",
+            "label": "Affectation des commandants",
+            "recommendation": "Affectez les commandants que vous souhaitez normalement garder disponibles pour attaquer les forteresses."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Arrêtez l’Automatisation des forteresses lorsque le compteur quotidien de toutes vos attaques normales atteint cette limite, jusqu’à sa remise à zéro par le jeu ; 0 n’ajoute aucune limite.",
+            "label": "Limite quotidienne d’attaques normales",
+            "recommendation": "0, sauf si vous souhaitez un plafond quotidien supplémentaire."
+          },
+          "fastest_commander": {
+            "description": "Pour chaque forteresse, l’Automatisation des forteresses choisit le commandant affecté actuellement disponible le plus rapide selon les effets applicables d’équipement, de gemmes, d’ensembles et de généraux après plafonnement.",
+            "label": "Commandant admissible le plus rapide",
+            "recommendation": "Aucun objet relique 2.0 ni bonus de vitesse de 100 % n’est requis."
+          },
+          "full_flank_wave": {
+            "description": "Chaque attaque attend assez de loups féroces pour remplir les deux flancs en une seule vague complète.",
+            "label": "Vague de loups féroces sur les flancs"
+          },
+          "horse_travel_boost": {
+            "description": "Choisissez l’option de déplacement pour les attaques de forteresses ; un palier en pièces ou en rubis explicitement enregistré reste sélectionné.",
+            "label": "Accélération du déplacement à cheval",
+            "recommendation": "Plume de voyage pour le déplacement le plus rapide."
+          }
+        },
+        "title": "Régler les attaques et le déplacement"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "Après l’enregistrement, activez l’Automatisation des forteresses sur sa carte dans Automatisation pour lancer ses cycles habituels.",
+            "label": "Interrupteur de l’Automatisation des forteresses",
+            "recommendation": "Activé après avoir vérifié et enregistré les réglages voulus."
+          },
+          "calendar": {
+            "description": "Utilisez le calendrier pour limiter les périodes de fonctionnement de l’Automatisation des forteresses, puis sélectionnez Enregistrer le calendrier pour toute modification.",
+            "label": "Calendrier",
+            "recommendation": "Désactivé pour un fonctionnement régulier continu."
+          },
+          "save_fortress_plan": {
+            "description": "Enregistrez les réglages des royaumes, de l’approvisionnement et des attaques avant de fermer cette fenêtre.",
+            "label": "Enregistrer le plan des forteresses"
+          }
+        },
+        "title": "Définir le calendrier, enregistrer et activer"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "Exemple illustratif des commandes des trois royaumes extérieurs de l’Automatisation des forteresses",
+          "caption": "Activez chaque royaume débloqué dont le château principal doit recevoir des loups féroces et attaquer des forteresses."
+        },
+        "items": {
+          "burning_sands": {
+            "description": "Activez les attaques et l’approvisionnement en loups féroces depuis votre château principal dans les Sables brûlants une fois ce royaume débloqué.",
+            "label": "Sables brûlants",
+            "recommendation": "Activé une fois débloqué et prêt à être utilisé."
+          },
+          "everwinter_glacier": {
+            "description": "Activez les attaques et l’approvisionnement en loups féroces depuis votre château principal dans le Glacier éternel une fois ce royaume débloqué.",
+            "label": "Glacier éternel",
+            "recommendation": "Activé une fois débloqué et prêt à être utilisé."
+          },
+          "fire_peaks": {
+            "description": "Activez les attaques et l’approvisionnement en loups féroces depuis votre château principal dans les Pics de feu une fois ce royaume débloqué.",
+            "label": "Pics de feu",
+            "recommendation": "Activé une fois débloqué et prêt à être utilisé."
+          }
+        },
+        "title": "Choisir les royaumes des forteresses"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "Sur la page Automatisation, sélectionnez le bouton des réglages sur la carte de l’Automatisation des forteresses.",
+            "label": "Ouvrir les réglages"
+          }
+        },
+        "title": "Ouvrir les réglages de l’Automatisation des forteresses"
+      },
+      "supply": {
+        "image": {
+          "alt": "Exemple illustratif des achats et transferts de loups féroces de l’Automatisation des forteresses",
+          "caption": "Vérifiez le plafond d’achat par session, la réserve de tablettes du Khan et le choix des accélérateurs pour les transferts confirmés."
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "Limitez les achats de loups féroces dans la boutique des Nomades à des lots de 100 par session de boutique ; 0 désactive les achats.",
+            "label": "Loups féroces par session",
+            "recommendation": "5 000 loups féroces par session au palier le moins cher."
+          },
+          "keep_khan_tablets": {
+            "description": "Arrêtez les achats de loups féroces avant que votre solde de tablettes du Khan ne passe sous cette réserve.",
+            "label": "Conserver des tablettes du Khan",
+            "recommendation": "Conservez 25 000 tablettes du Khan."
+          },
+          "supply_route": {
+            "description": "Les loups féroces achetés arrivent au château principal du Grand Empire, puis sont répartis entre les royaumes activés.",
+            "label": "Circuit d’approvisionnement des loups féroces"
+          },
+          "use_time_skips": {
+            "description": "Utilisez des accélérateurs admissibles uniquement pour les envois confirmés de l’Automatisation des forteresses, en respectant les réserves de stock enregistrées.",
+            "label": "Utiliser des accélérateurs pour transférer les loups féroces",
+            "recommendation": "Activé pour accélérer le réapprovisionnement si vos réserves d’accélérateurs enregistrées le permettent."
+          }
+        },
+        "title": "Régler l’approvisionnement en loups féroces"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "L'automatisation des invasions attaque les Seigneurs étrangers ou les Corbeaux de sang avec un préréglage d'attaque enregistré jusqu'à atteindre le score cible ou une autre limite d'arrêt.",
+      "expectation": "Elle attend un événement actif, des commandants admissibles et assez de troupes et d'outils; les attaques déjà en route peuvent se terminer après l'arrêt des nouveaux départs.",
+      "name": "Automatisation des invasions",
+      "summary": "Attaquez les Seigneurs étrangers et les Corbeaux de sang jusqu'à votre score cible"
+    },
+    "recommendationIntro": "Les valeurs recommandées décrivent l'usage habituel de l'automatisation des invasions; elles servent de conseils et ne modifient pas les paramètres enregistrés.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Exemple illustratif des difficultés des Seigneurs étrangers et des Corbeaux de sang",
+          "caption": "Choisissez une difficulté de secours débloquée distincte pour chaque événement."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Choisissez une difficulté des Corbeaux de sang débloquée si aucune difficulté n'est sélectionnée pour l'événement en cours.",
+            "label": "Difficulté des Corbeaux de sang",
+            "recommendation": "Utilisez la difficulté débloquée la plus élevée que votre composition habituelle maîtrise de façon fiable."
+          },
+          "difficulty_note": {
+            "description": "Enregistrez les deux choix d'événement; changer une valeur enregistrée ne remplace pas la difficulté de l'événement actif.",
+            "label": "Difficulté actuelle"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Choisissez une difficulté des Seigneurs étrangers débloquée si aucune difficulté n'est sélectionnée pour l'événement en cours.",
+            "label": "Difficulté des Seigneurs étrangers",
+            "recommendation": "Utilisez la difficulté débloquée la plus élevée que votre composition habituelle maîtrise de façon fiable."
+          }
+        },
+        "title": "Choisissez les deux difficultés d'événement"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "Après l'enregistrement, activez l'automatisation des invasions sur la carte Automatisation pour fonctionner lorsqu'un événement et des ressources admissibles sont disponibles.",
+            "label": "Interrupteur de l'automatisation des invasions",
+            "recommendation": "Activé après avoir vérifié et enregistré les paramètres souhaités."
+          },
+          "readiness": {
+            "description": "L'automatisation des invasions attend un événement actif, des commandants admissibles et assez de troupes et d'outils.",
+            "label": "Préparation de l'attaque"
+          },
+          "save_settings": {
+            "description": "Enregistrez le château source, le préréglage, les difficultés, les limites d'arrêt et le choix de fortification avant de fermer cette fenêtre.",
+            "label": "Enregistrer les paramètres"
+          }
+        },
+        "title": "Enregistrez et activez l'automatisation des invasions"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Exemple illustratif des paramètres de fortification de l'automatisation des invasions",
+          "caption": "Laissez la fortification désactivée sauf si vous voulez dépenser une monnaie d'événement disponible ou des rubis choisis explicitement."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Choisissez une option prise en charge par l'événement actif; le jeu fixe chaque prix et la sélection explicite des rubis autorise leur dépense.",
+            "label": "Monnaie de fortification",
+            "recommendation": "La monnaie d'événement lorsqu'elle est proposée et que la fortification est activée."
+          },
+          "fortify_each_target": {
+            "description": "Si cette option est activée, renforcez chaque château ennemi généré avant de l'attaquer avec la monnaie sélectionnée.",
+            "label": "Fortifier chaque cible",
+            "recommendation": "Désactivé sauf si la fortification fait partie de votre stratégie habituelle pour cet événement."
+          }
+        },
+        "title": "Choisissez la fortification facultative des cibles"
+      },
+      "limits": {
+        "image": {
+          "alt": "Exemple illustratif du score et des limites d'arrêt de l'automatisation des invasions",
+          "caption": "Le score cible arrête les nouveaux départs, mais les attaques déjà en route peuvent se terminer."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Arrêtez cette automatisation au nombre quotidien d'attaques normales du compte jusqu'à la remise à zéro par le jeu; 0 n'ajoute aucune limite.",
+            "label": "Limite quotidienne d'attaques normales",
+            "recommendation": "0 pour que le score cible de l'événement pilote la série."
+          },
+          "minimum_remaining": {
+            "description": "Arrêtez de lancer de nouvelles attaques ce nombre de minutes avant la fin de l'événement.",
+            "label": "Arrêter avant la fin de l'événement",
+            "recommendation": "30 minutes."
+          },
+          "score_target": {
+            "description": "Arrêtez de lancer de nouvelles attaques lorsque le score d'événement indiqué atteint ou dépasse cette cible.",
+            "label": "Arrêter au score d'événement",
+            "recommendation": "Utilisez votre dernier palier habituel de récompense personnelle, supérieur à 0."
+          },
+          "travelling_attacks": {
+            "description": "Les attaques déjà en route peuvent se terminer après une condition d'arrêt et faire dépasser la cible au score final.",
+            "label": "Attaques en route"
+          }
+        },
+        "title": "Fixez le score et les limites d'arrêt"
+      },
+      "open": {
+        "image": {
+          "alt": "Exemple illustratif des paramètres de château source, de préréglage et de voyage pour l'automatisation des invasions",
+          "caption": "Choisissez un château source dans le Grand Empire et un préréglage d'événement enregistré avant de régler le voyage."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Sélectionnez un préréglage d'attaque enregistré contenant les troupes, les outils et la formation pour les Seigneurs étrangers ou les Corbeaux de sang.",
+            "label": "Préréglage d'attaque",
+            "recommendation": "Créez d'abord un préréglage habituel pour les Seigneurs étrangers ou les Corbeaux de sang, puis sélectionnez-le ici."
+          },
+          "capacity_note": {
+            "description": "Les quantités de troupes et d'outils du préréglage s'adaptent à la capacité du commandant et de la cible sélectionnés.",
+            "label": "Capacité d'attaque"
+          },
+          "horse_travel_boost": {
+            "description": "Choisissez une option de voyage à plume, pièces ou rubis pour ces attaques.",
+            "label": "Bonus de voyage du cheval",
+            "recommendation": "Plume de voyage pour un déplacement rapide."
+          },
+          "open_settings": {
+            "description": "Sur la page Automatisation, sélectionnez le bouton des paramètres de la carte de l'automatisation des invasions.",
+            "label": "Ouvrir les paramètres"
+          },
+          "source_castle": {
+            "description": "Choisissez le château du Grand Empire qui fournit les troupes et les outils pour les attaques d'événement.",
+            "label": "Château source",
+            "recommendation": "Utilisez votre château d'événement habituel avec suffisamment de troupes et d'outils."
+          }
+        },
+        "title": "Ouvrez les paramètres de l'automatisation des invasions"
+      }
+    }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "Utilisez la difficulté débloquée la plus élevée que votre composition habituelle maîtrise de façon fiable.",
+            "description": "Choisir une difficulté nomade débloquée pour le début de l'événement.",
+            "label": "Difficulté nomade"
+          },
+          "samurai_difficulty": {
+            "recommendation": "Utilisez la difficulté débloquée la plus élevée que votre composition habituelle maîtrise de façon fiable.",
+            "description": "Choisir une difficulté samouraï débloquée pour le début de l'événement.",
+            "label": "Difficulté samouraï"
+          },
+          "active_difficulty": {
+            "description": "Pour un événement déjà actif, reprendre sa difficulté actuelle, car un autre choix enregistré met l'automatisation en attente au lieu de la modifier.",
+            "label": "Événement déjà actif"
+          }
+        },
+        "title": "Choisissez les deux difficultés d'événement",
+        "image": {
+          "alt": "Exemple des difficultés nomades et samouraïs",
+          "caption": "Choisir une difficulté débloquée distincte pour chaque événement et reprendre celle de l'événement actif."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "Activé après avoir vérifié et enregistré les réglages voulus.",
+            "description": "Après l'enregistrement, activer Auto Nomades/Samouraïs sur sa carte Automatisation pour fonctionner lorsqu'un événement et les ressources nécessaires sont disponibles.",
+            "label": "Interrupteur Auto Nomades/Samouraïs"
+          },
+          "save_settings": {
+            "label": "Enregistrer les paramètres",
+            "description": "Enregistrer la source, les préréglages, les difficultés, les limites d'arrêt, le choix d'accélérations et l'état du test avant de fermer cette fenêtre."
+          },
+          "readiness": {
+            "description": "L'automatisation améliore les camps d'événement et attend des commandants, troupes, outils et, si les accélérations sont activées, des accélérations utilisables.",
+            "label": "Préparation des attaques de camp"
+          }
+        },
+        "title": "Enregistrer et activer Auto Nomades/Samouraïs"
+      },
+      "limits": {
+        "image": {
+          "caption": "Le score cible arrête les nouveaux départs, mais les attaques déjà en route peuvent se terminer.",
+          "alt": "Exemple des limites de score et d'arrêt d'Auto Nomades/Samouraïs"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Arrêtez cette automatisation au nombre quotidien d'attaques normales du compte jusqu'à la remise à zéro par le jeu; 0 n'ajoute aucune limite.",
+            "label": "Limite quotidienne des attaques normales",
+            "recommendation": "0 pour que le score cible de l'événement pilote la série."
+          },
+          "minimum_remaining": {
+            "description": "Arrêtez de lancer de nouvelles attaques ce nombre de minutes avant la fin de l'événement.",
+            "label": "Arrêter avant la fin de l'événement",
+            "recommendation": "30 minutes."
+          },
+          "score_target": {
+            "description": "Arrêtez de lancer de nouvelles attaques lorsque le score d'événement indiqué atteint ou dépasse cette cible.",
+            "label": "Arrêter au score d'événement",
+            "recommendation": "Utilisez votre dernier palier habituel de récompense personnelle, supérieur à 0."
+          },
+          "travelling_attacks": {
+            "description": "Les attaques déjà en route peuvent se terminer après une condition d'arrêt et faire dépasser la cible au score final.",
+            "label": "Attaques en route"
+          }
+        },
+        "title": "Fixez le score et les limites d'arrêt"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Accélération du déplacement à cheval",
+            "recommendation": "Plume de voyage pour un déplacement rapide.",
+            "description": "Choisir l'option de voyage par plume, pièces ou rubis pour les attaques de camp."
+          },
+          "open_settings": {
+            "label": "Ouvrir les paramètres",
+            "description": "Sur la page Automatisation, choisir le bouton des paramètres de la carte Auto Nomades/Samouraïs."
+          },
+          "source_castle": {
+            "label": "Château source",
+            "recommendation": "Utilisez votre château d'événement habituel avec suffisamment de troupes et d'outils.",
+            "description": "Choisir le château du Grand Empire qui fournit les troupes et outils pour les attaques de camp."
+          },
+          "nomad_preset": {
+            "description": "Choisir un préréglage d'attaque enregistré avec troupes, outils et formation pour les camps nomades.",
+            "label": "Préréglage d'attaque nomade",
+            "recommendation": "Créer et choisir votre préréglage nomade habituel."
+          },
+          "samurai_preset": {
+            "description": "Choisir un préréglage d'attaque enregistré avec troupes, outils et formation pour les camps samouraïs.",
+            "label": "Préréglage d'attaque samouraï",
+            "recommendation": "Créer et choisir votre préréglage samouraï habituel."
+          }
+        },
+        "image": {
+          "alt": "Exemple de la source, des préréglages et du voyage d'Auto Nomades/Samouraïs",
+          "caption": "Créer les deux préréglages d'événement avant de choisir le château source et l'option de voyage."
+        },
+        "title": "Ouvrir les paramètres d'Auto Nomades/Samouraïs"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "Exemple des délais des camps et des réserves d'accélérations",
+          "caption": "Chaque valeur à conserver compte des objets d'accélération et non des minutes de délai."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "Conserver ce nombre d'accélérations de 10 min en réserve sans les utiliser.",
+            "label": "Conserver 10 min",
+            "recommendation": "0 pour les attaques de camp régulières."
+          },
+          "keep_1m": {
+            "description": "Conserver ce nombre d'accélérations de 1 min en réserve sans les utiliser.",
+            "label": "Conserver 1 min",
+            "recommendation": "0 pour les attaques de camp régulières."
+          },
+          "keep_24h": {
+            "description": "Conserver ce nombre d'accélérations de 24 h en réserve sans les utiliser.",
+            "label": "Conserver 24 h",
+            "recommendation": "Réserver le stock nécessaire aux constructions ou à d'autres activités."
+          },
+          "keep_30m": {
+            "description": "Conserver ce nombre d'accélérations de 30 min en réserve sans les utiliser.",
+            "label": "Conserver 30 min",
+            "recommendation": "0 pour les attaques de camp régulières."
+          },
+          "keep_5h": {
+            "description": "Conserver ce nombre d'accélérations de 5 h en réserve sans les utiliser.",
+            "label": "Conserver 5 h",
+            "recommendation": "Réserver le stock nécessaire aux constructions ou à d'autres activités."
+          },
+          "keep_5m": {
+            "description": "Conserver ce nombre d'accélérations de 5 min en réserve sans les utiliser.",
+            "label": "Conserver 5 min",
+            "recommendation": "0 pour les attaques de camp régulières."
+          },
+          "keep_60m": {
+            "description": "Conserver ce nombre d'accélérations de 60 min en réserve sans les utiliser.",
+            "label": "Conserver 60 min",
+            "recommendation": "0 pour les attaques de camp régulières."
+          },
+          "skip_cooldowns": {
+            "description": "Après une victoire confirmée contre un camp, utiliser une accélération disponible pour supprimer le délai de cette cible.",
+            "label": "Supprimer le délai après chaque attaque réussie",
+            "recommendation": "Activer pour les attaques répétées régulières contre les camps ; désactiver pour attendre la fin naturelle des délais."
+          }
+        },
+        "title": "Choisir les accélérations et les réserves"
+      },
+      "trial": {
+        "image": {
+          "alt": "Exemple des commandes du test temporaire sur château de fieffé coquin",
+          "caption": "Le test lance une véritable attaque et remplace le fonctionnement normal de l'événement tant qu'il est actif."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "Remplacer le fonctionnement normal de l'événement par un véritable test d'attaque contre un château de fieffé coquin avec le préréglage nomade et des accélérations.",
+            "label": "Test temporaire complet sur château de fieffé coquin",
+            "recommendation": "Désactivé pour les attaques nomades ou samouraïs régulières."
+          },
+          "target_x": {
+            "description": "Saisir la coordonnée horizontale du château de fieffé coquin uniquement pour le test temporaire.",
+            "label": "Cible X",
+            "recommendation": "Laisser inutilisé tant que le test est désactivé."
+          },
+          "target_y": {
+            "description": "Saisir la coordonnée verticale du château de fieffé coquin uniquement pour le test temporaire.",
+            "label": "Cible Y",
+            "recommendation": "Laisser inutilisé tant que le test est désactivé."
+          },
+          "trial_skips": {
+            "description": "L'activation du test active aussi les accélérations de délai pour ce test.",
+            "label": "Accélérations du test"
+          }
+        },
+        "title": "Laisser le test temporaire désactivé pour les attaques régulières"
+      }
+    },
+    "feature": {
+      "description": "Auto Nomades/Samouraïs améliore les camps admissibles, choisit le camp entièrement amélioré le plus faible et l'attaque à répétition avec le préréglage enregistré propre à l'événement jusqu'à une limite d'arrêt.",
+      "expectation": "L'automatisation attend un événement actif, des commandants, troupes, outils et accélérations utilisables si la suppression des délais est activée ; les attaques en route peuvent se terminer après l'arrêt des nouveaux départs.",
+      "name": "Auto Nomades/Samouraïs",
+      "summary": "Améliorer et attaquer les camps nomades ou samouraïs"
+    },
+    "recommendationIntro": "Les valeurs recommandées décrivent l'usage régulier d'Auto Nomades/Samouraïs ; elles servent de conseil et ne modifient pas les paramètres enregistrés."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "Activé après avoir vérifié et enregistré les réglages voulus.",
+            "description": "Après vérification des réglages, activez Auto Conseiller sur sa carte Automatisation ; si le Conseiller est déjà débloqué, une série peut démarrer immédiatement.",
+            "label": "Interrupteur Auto Conseiller"
+          },
+          "save_settings": {
+            "label": "Enregistrer les paramètres",
+            "description": "Enregistrez le château source, le préréglage, les difficultés, la taille de série et les budgets avant de fermer cette fenêtre."
+          },
+          "activate_advisor": {
+            "description": "Si le Conseiller est verrouillé, choisissez Activer le Conseiller pour ouvrir la confirmation de l'événement actuel.",
+            "label": "Activer le Conseiller"
+          },
+          "activate_and_spend": {
+            "description": "Envoyez l'activation confirmée avec un jeton d'événement ou de Conseiller universel admissible ; si l'événement est gratuit, le bouton indique plutôt Activer le Conseiller.",
+            "label": "Activer et dépenser un jeton"
+          },
+          "cancel_activation": {
+            "description": "Fermez la confirmation sans soumettre d'activation ni dépenser de jeton.",
+            "label": "Annuler l'activation"
+          },
+          "confirm_paid_activation": {
+            "description": "Reconnaissez que l'activation du Conseiller peut consommer un jeton d'événement ou universel, sauf si le jeu indique que cet événement est gratuit.",
+            "label": "Confirmer l'activation payante"
+          }
+        },
+        "image": {
+          "alt": "Exemple des commandes d'enregistrement et d'activation par jeton d'Auto Conseiller",
+          "caption": "Enregistrer ou activer l'automatisation ne dépense aucun jeton ; l'activation confirmée séparément peut en dépenser un."
+        },
+        "title": "Enregistrer, activer et débloquer l'accès au Conseiller"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "Difficulté nomade",
+            "recommendation": "Utilisez la difficulté débloquée la plus élevée que votre composition habituelle maîtrise de façon fiable.",
+            "description": "Choisissez une difficulté nomade débloquée à sélectionner au début de cet événement."
+          },
+          "samurai_difficulty": {
+            "label": "Difficulté samouraï",
+            "recommendation": "Utilisez la difficulté débloquée la plus élevée que votre composition habituelle maîtrise de façon fiable.",
+            "description": "Choisissez une difficulté samouraï débloquée à sélectionner au début de cet événement."
+          },
+          "active_difficulty": {
+            "description": "Utilisez la difficulté actuelle d'un événement déjà actif, sinon l'automatisation attend au lieu de la changer.",
+            "label": "Difficulté de l'événement actif"
+          }
+        },
+        "title": "Choisissez les deux difficultés d'événement",
+        "image": {
+          "alt": "Exemple des difficultés du Conseiller nomade et samouraï",
+          "caption": "Enregistrez les deux difficultés d'événement et reprenez celle de l'événement déjà en cours."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Accélération du déplacement à cheval",
+            "recommendation": "Plume de voyage pour un déplacement rapide.",
+            "description": "Choisissez l'option de voyage par plume, pièces ou rubis pour la série."
+          },
+          "open_settings": {
+            "label": "Ouvrir les paramètres",
+            "description": "Sur la page Automatisation, choisissez le bouton des paramètres de la carte Auto Conseiller."
+          },
+          "source_castle": {
+            "label": "Château source",
+            "recommendation": "Utilisez votre château d'événement habituel avec suffisamment de troupes et d'outils.",
+            "description": "Choisissez le château du Grand Empire qui fournit troupes et outils pour la série du Conseiller."
+          },
+          "attack_preset": {
+            "description": "Sélectionnez un préréglage d'attaque enregistré dont les troupes, outils et formations sont copiés pour chaque attaque demandée.",
+            "label": "Préréglage d'attaque du Conseiller",
+            "recommendation": "Créez d'abord un préréglage régulier pour l'événement nomade ou samouraï actif, puis sélectionnez-le."
+          },
+          "complete_copies": {
+            "description": "Les ressources disponibles et les copies complètes du préréglage peuvent réduire la série sous le nombre maximal d'attaques.",
+            "label": "Copies complètes du préréglage"
+          }
+        },
+        "image": {
+          "alt": "Exemple du château source, du préréglage et du voyage d'Auto Conseiller",
+          "caption": "Choisissez un château source du Grand Empire et un préréglage d'événement enregistré avant l'option de voyage."
+        },
+        "title": "Ouvrir les paramètres d'Auto Conseiller"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "Conserver ce nombre d'accélérations de 24 h en réserve sans les utiliser.",
+            "label": "Conserver 24 h",
+            "recommendation": "Réserver le stock nécessaire aux constructions ou à d'autres activités."
+          },
+          "keep_5h": {
+            "description": "Conserver ce nombre d'accélérations de 5 h en réserve sans les utiliser.",
+            "label": "Conserver 5 h",
+            "recommendation": "Réserver le stock nécessaire aux constructions ou à d'autres activités."
+          },
+          "keep_60m": {
+            "description": "Conserver ce nombre d'accélérations de 60 min en réserve sans les utiliser.",
+            "label": "Conserver 60 min",
+            "recommendation": "0 pour les séries régulières du Conseiller."
+          },
+          "coin_cost": {
+            "description": "Estimez le coût total en pièces par attaque pour le calcul de capacité avant lancement sans changer les prix du jeu.",
+            "label": "Coût total en pièces par attaque",
+            "recommendation": "500 seulement si cela couvre votre coût réel complet ; sinon utilisez un total mesuré plus élevé."
+          },
+          "keep_coins": {
+            "description": "Excluez ce nombre de pièces du budget de la série.",
+            "label": "Garder des pièces",
+            "recommendation": "Gardez votre budget habituel pour le recrutement et la construction."
+          },
+          "keep_feathers": {
+            "description": "Excluez ce nombre de plumes de voyage du budget de la série.",
+            "label": "Garder des plumes",
+            "recommendation": "0 sauf si vous réservez des plumes pour d'autres fonctions."
+          },
+          "keep_rubies": {
+            "description": "Excluez ce nombre de rubis du budget de la série.",
+            "label": "Garder des rubis",
+            "recommendation": "Gardez le solde nécessaire aux autres activités."
+          },
+          "ruby_cost": {
+            "description": "Estimez le coût en rubis du voyage par attaque ; une valeur positive est obligatoire avec le voyage en rubis.",
+            "label": "Rubis par attaque",
+            "recommendation": "0 avec la Plume de voyage ; indiquez le coût positif réel avec le voyage en rubis."
+          }
+        },
+        "image": {
+          "alt": "Exemple des réserves de pièces, rubis, plumes et accélérations d'Auto Conseiller",
+          "caption": "Les champs de coût sont des estimations de planification ; les valeurs « garder » comptent les ressources ou objets d'accélération non utilisés."
+        },
+        "title": "Fixer les budgets et les réserves"
+      },
+      "overview": {
+        "image": {
+          "alt": "Exemple de la progression et des pertes du Conseiller",
+          "caption": "L'aperçu affiche la progression et les pertes sans lancer une autre série."
+        },
+        "items": {
+          "live_progress": {
+            "description": "Lisez dans l'aperçu l'attaque actuelle, le nombre demandé, les victoires, défaites, unités et outils perdus.",
+            "label": "Série du Conseiller en cours"
+          },
+          "no_relaunch": {
+            "description": "Une série terminée ou annulée pour le même événement n'est pas relancée automatiquement.",
+            "label": "Série terminée ou annulée"
+          },
+          "refresh_overview": {
+            "description": "Demandez les données actualisées sur la progression, les victoires, les défaites et les pertes.",
+            "label": "Actualiser l'aperçu"
+          }
+        },
+        "title": "Examiner la série du Conseiller en cours"
+      },
+      "sizing": {
+        "image": {
+          "alt": "Exemple du nombre d'attaques et du temps d'événement d'Auto Conseiller",
+          "caption": "Le nombre demandé est limité avant le lancement par les ressources et le temps d'événement."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "Fixez une limite supérieure d'attaques pour cette seule série du Conseiller ; les ressources et le temps restant peuvent réduire le nombre réel.",
+            "label": "Nombre maximal d'attaques",
+            "recommendation": "9 999 pour laisser les ressources disponibles et le temps d'événement déterminer la taille de la série."
+          },
+          "minimum_remaining": {
+            "description": "Laissez ce nombre de minutes inutilisées dans le calcul du temps d'événement avant lancement.",
+            "label": "Arrêter avant la fin de l'événement",
+            "recommendation": "30 minutes ; ce n'est pas un minuteur d'annulation permanent."
+          }
+        },
+        "title": "Fixer la taille de la série et le temps d'événement"
+      }
+    },
+    "feature": {
+      "description": "Auto Conseiller lance une série d'attaques nomades ou samouraïs dont le nombre dépend des ressources disponibles et du temps restant dans l'événement.",
+      "expectation": "La série attend une difficulté active correspondante et l'accès débloqué au Conseiller ; enregistrer ou activer l'automatisation ne dépense pas de jeton, mais une activation confirmée peut le faire.",
+      "name": "Auto Conseiller",
+      "summary": "Lancer une série de Conseiller nomade ou samouraï adaptée aux ressources"
+    },
+    "recommendationIntro": "Les valeurs recommandées décrivent l'usage régulier d'Auto Conseiller ; elles servent de conseil et ne changent pas les paramètres enregistrés."
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "Conserver 10 min",
+            "description": "Conservez ce nombre d'accélérateurs de 10 min sans les utiliser.",
+            "recommendation": "0 pour les enchaînements habituels du Khan."
+          },
+          "keep_1m": {
+            "label": "Conserver 1 min",
+            "description": "Conservez ce nombre d'accélérateurs de 1 min sans les utiliser.",
+            "recommendation": "0 pour les enchaînements habituels du Khan."
+          },
+          "keep_24h": {
+            "label": "Conserver 24 h",
+            "recommendation": "Réserver le stock nécessaire aux constructions ou à d'autres activités.",
+            "description": "Conservez ce nombre d'accélérateurs de 24 h sans les utiliser."
+          },
+          "keep_30m": {
+            "label": "Conserver 30 min",
+            "description": "Conservez ce nombre d'accélérateurs de 30 min sans les utiliser.",
+            "recommendation": "0 pour les enchaînements habituels du Khan."
+          },
+          "keep_5h": {
+            "label": "Conserver 5 h",
+            "recommendation": "Réserver le stock nécessaire aux constructions ou à d'autres activités.",
+            "description": "Conservez ce nombre d'accélérateurs de 5 h sans les utiliser."
+          },
+          "keep_5m": {
+            "label": "Conserver 5 min",
+            "description": "Conservez ce nombre d'accélérateurs de 5 min sans les utiliser.",
+            "recommendation": "0 pour les enchaînements habituels du Khan."
+          },
+          "keep_1h": {
+            "description": "Conservez ce nombre d'accélérateurs de 1 h sans les utiliser.",
+            "label": "Conserver 1 h",
+            "recommendation": "0 pour les enchaînements habituels du Khan."
+          },
+          "skip_cooldowns": {
+            "description": "Réservez et utilisez assez d'accélérateurs pour effacer les délais du camp après les attaques.",
+            "label": "Passer chaque délai du camp du Khan",
+            "recommendation": "Activé ; la fenêtre de réglages actuelle l'exige pour enregistrer."
+          },
+          "skip_shortage": {
+            "description": "Les nouvelles attaques de camp s'arrêtent si les accélérateurs utilisables ne couvrent pas le délai requis.",
+            "label": "Accélérateurs utilisables insuffisants"
+          }
+        },
+        "image": {
+          "alt": "Illustration des délais et réserves d'accélérateurs de Khan automatique",
+          "caption": "Les réserves comptent des objets, et non des minutes."
+        },
+        "title": "Régler les délais et les réserves"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "Limite quotidienne des attaques normales",
+            "description": "Arrêtez les nouvelles attaques de camp de cette automatisation au compteur quotidien de combats normaux du compte ; 0 désactive cette limite.",
+            "recommendation": "0 sauf si vous avez besoin d'une limite pour tout le compte."
+          },
+          "event_end": {
+            "label": "Arrêter avant la fin de l'événement",
+            "description": "Arrêtez les nouvelles attaques de camp autant de minutes avant la fin de l'événement.",
+            "recommendation": "5 minutes."
+          },
+          "nomad_points": {
+            "description": "À ce score annoncé, arrêtez les nouvelles attaques du Khan, rappelez celles en route et ouvrez les portes principales ; 0 désactive cet arrêt.",
+            "label": "Arrêter aux points nomades",
+            "recommendation": "0 sauf si vous voulez arrêter et protéger à un score choisi."
+          },
+          "replenish_tools": {
+            "description": "Remplacez les outils manquants du modèle de défense par des offres admissibles en refusant les lots payés en rubis.",
+            "label": "Réapprovisionner les outils de défense",
+            "recommendation": "Activé si vous souhaitez des achats automatiques admissibles."
+          }
+        },
+        "image": {
+          "alt": "Illustration des points, outils et limites quotidiennes de Khan automatique",
+          "caption": "Un seuil positif de points nomades rappelle aussi les attaques du Khan en route et ouvre les portes du château principal."
+        },
+        "title": "Définir les limites de points, de stock et quotidiennes"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "Enregistrer les paramètres",
+            "description": "Enregistrez les châteaux, modèles, contrôles de rage, limites, réserves d'accélérateurs et protections sélectionnés."
+          },
+          "enable_switch": {
+            "description": "Activez Khan automatique depuis sa carte d'automatisation après avoir vérifié la défense du château principal.",
+            "label": "Interrupteur Khan automatique",
+            "recommendation": "Activé après avoir enregistré les réglages et préparé la défense."
+          },
+          "station_priority": {
+            "description": "Station automatique gère les attaques de joueurs entrantes séparément des représailles du Khan.",
+            "label": "Priorité de Station automatique"
+          }
+        },
+        "image": {
+          "alt": "Illustration de l'enregistrement et de l'activation de Khan automatique",
+          "caption": "Vérifiez la défense du château principal avant d'activer les représailles du Khan."
+        },
+        "title": "Enregistrer et activer Khan automatique"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Accélération du déplacement à cheval",
+            "recommendation": "Plume de voyage pour un déplacement rapide.",
+            "description": "Choisissez le trajet par plume, pièces ou rubis pour les attaques de camp."
+          },
+          "open_settings": {
+            "label": "Ouvrir les paramètres",
+            "description": "Sur la page Automatisation, choisissez le bouton de réglages de la carte Khan automatique."
+          },
+          "attack_from": {
+            "description": "Choisissez un château principal ou un avant-poste du Grand Empire qui fournit les attaques du camp du Khan.",
+            "label": "Attaquer depuis",
+            "recommendation": "Utilisez un avant-poste avec votre armée offensive quand c'est possible."
+          },
+          "camp_attack_preset": {
+            "description": "Choisissez un modèle d'attaque enregistré pour les attaques habituelles du camp du Khan.",
+            "label": "Modèle d'attaque du camp",
+            "recommendation": "Créez d'abord votre modèle d'attaque habituel contre le Khan."
+          },
+          "defend_at": {
+            "description": "Les représailles du Khan visent le château principal du Grand Empire affiché ici, en lecture seule.",
+            "label": "Défendre à"
+          },
+          "main_defense_preset": {
+            "description": "Choisissez un modèle de défense enregistré, réappliqué au château principal avant les représailles.",
+            "label": "Modèle de défense principal",
+            "recommendation": "Créez votre modèle de défense habituel contre le Khan et préparez troupes et outils."
+          }
+        },
+        "image": {
+          "alt": "Illustration du château, des modèles et du trajet de Khan automatique",
+          "caption": "Préparez les deux modèles et la défense principale avant d'activer l'enchaînement d'attaques."
+        },
+        "title": "Choisir les châteaux, modèles et trajets"
+      },
+      "protection": {
+        "image": {
+          "alt": "Illustration de la protection du mur du château principal pour Khan automatique",
+          "caption": "Cette protection du mur ne s'applique que lorsque le château principal lance les attaques."
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "Déclenchez cette protection lorsque les unités offensives sur le mur atteignent ce nombre.",
+            "label": "Seuil d'unités offensives sur le mur",
+            "recommendation": "1 000 unités offensives sur le mur."
+          },
+          "outpost_source": {
+            "description": "Cette protection est désactivée lorsqu'un avant-poste lance les attaques et que le château principal défend séparément.",
+            "label": "Avant-poste comme source"
+          },
+          "protect_offense": {
+            "description": "Lorsque vous attaquez depuis le château principal, ouvrez ses portes et suspendez Khan si trop de troupes offensives défendraient le mur.",
+            "label": "Protéger les troupes offensives sur le mur principal",
+            "recommendation": "Activé si le château principal lance les attaques."
+          }
+        },
+        "title": "Protéger le mur du château principal"
+      },
+      "rage": {
+        "image": {
+          "alt": "Illustration de la rage et des autorisations d'attaque de Khan automatique",
+          "caption": "Le bonus de points de rage temporaire est distinct des bannières de rage."
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "Arrêtez les nouvelles attaques de camp pendant que la rage, les délais et la défense continuent.",
+            "label": "Verrouiller les attaques automatiques du Khan",
+            "recommendation": "Désactivé pour les attaques de camp habituelles."
+          },
+          "max_rage_chain": {
+            "description": "Limitez les représailles acceptées durant l'événement avant l'arrêt des nouvelles attaques de camp ; 0 supprime cette limite.",
+            "label": "Limite de chaîne de rage",
+            "recommendation": "0 sauf si vous avez besoin d'une limite de représailles."
+          },
+          "rage_booster": {
+            "description": "Autorisez les nouvelles attaques automatiques de camp uniquement pendant que le bonus de points de rage temporaire est actif.",
+            "label": "Exiger le bonus de points de rage",
+            "recommendation": "Désactivé sauf si vous voulez attaquer uniquement avec le bonus."
+          },
+          "rage_continues": {
+            "description": "La limite de chaîne de rage n'arrête ni le déclenchement à rage maximale, ni les délais, ni la récupération de la défense.",
+            "label": "La gestion de la rage continue"
+          },
+          "trigger_full_rage": {
+            "description": "Provoquez des représailles du Khan lorsque la rage est maximale.",
+            "label": "Déclencher le Khan à rage maximale",
+            "recommendation": "Activé lorsque le château principal est prêt à défendre."
+          }
+        },
+        "title": "Régler la rage et les autorisations d'attaque"
+      }
+    },
+    "feature": {
+      "description": "Khan automatique attaque le camp du Khan, efface les délais, déclenche les représailles à rage maximale et maintient la défense du château principal.",
+      "expectation": "Il suspend les nouvelles attaques de camp aux limites définies ou en cas de ressources insuffisantes tout en protégeant le château principal ; les attaques de joueurs restent du ressort de Station automatique.",
+      "name": "Khan automatique",
+      "summary": "Enchaînez les attaques du camp du Khan et défendez les représailles au château principal"
+    },
+    "recommendationIntro": "Les valeurs recommandées décrivent l'utilisation habituelle de Khan automatique ; elles servent de guide et ne modifient pas les réglages enregistrés."
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "Auto Beri renforce votre camp de Bérimond selon les proportions de troupes du modèle d’attaque choisi, puis peut attaquer les tours, réapprovisionner les outils et construire grâce au butin confirmé.",
+      "expectation": "Les transferts attendent des inventaires récents au camp et au château donneur, la capacité déclarée et la fin de tout envoi précédent ; un stock partiel permet un envoi réduit, tandis que l’absence du type requis suspend le réapprovisionnement.",
+      "name": "Auto Beri World",
+      "summary": "Approvisionnez et gérez votre camp de Bérimond"
+    },
+    "recommendationIntro": "Les choix recommandés concernent l’usage régulier d’Auto Beri ; ils ne modifient aucun réglage enregistré.",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "Réglages illustratifs de construction facultative du camp Auto Beri",
+          "caption": "Cible intégrée et cibles enregistrées, modes de capture, écurie niveau 5, réserves de bois et de pierre et sept durées de raccourcis."
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "Autorisez la suppression des bâtiments non gérés qui ne peuvent être déplacés ni stockés pour atteindre exactement l’objectif.",
+            "label": "Autoriser la démolition",
+            "recommendation": "Désactivé, sauf après vérification des suppressions prévues."
+          },
+          "allow_premium_costs": {
+            "description": "Autorisez les étapes de construction admissibles qui dépensent une monnaie premium.",
+            "label": "Autoriser les coûts premium",
+            "recommendation": "Désactivé, sauf si vous souhaitez explicitement des constructions premium."
+          },
+          "auto_beri_builder_lane": {
+            "description": "Construisez ou améliorez la cible active du camp de Bérimond avec le butin revenu et confirmé, sans importer de ressources d'un autre royaume.",
+            "label": "Construction Auto Beri",
+            "recommendation": "Activez pour la construction régulière du camp après avoir vérifié les permissions de dépense."
+          },
+          "camp_resource_reserves": {
+            "description": "Écartez de la construction du camp les quantités choisies de bois et de pierre.",
+            "label": "Réserves de ressources du camp",
+            "recommendation": "Bois 0 et pierre 0 si les surplus peuvent être utilisés."
+          },
+          "construction_time_skip_reserves": {
+            "description": "Définissez séparément les raccourcis à conserver pour 1 min, 5 min, 10 min, 30 min, 1 h, 5 h et 24 h.",
+            "label": "Réserves d’accélérateurs de construction",
+            "recommendation": "Gardez 0 de chaque raccourci court ; réservez le stock destiné aux autres activités pour 1 h, 5 h et 24 h."
+          },
+          "optional_custom_camp_target": {
+            "description": "Capturez en mode Fonctionnel pour les bâtiments essentiels, Disposition pour leurs emplacements sans décorations ou Exact pour tous les détails pris en charge.",
+            "label": "Objectif personnalisé facultatif",
+            "recommendation": "Gardez la cible intégrée sauf si une cible personnalisée vérifiée est nécessaire."
+          },
+          "stable_target": {
+            "description": "Choisissez le niveau de l'écurie de faction de 1 à 5 pour la cible intégrée.",
+            "label": "Niveau cible de l’écurie",
+            "recommendation": "Niveau 5 pour la construction régulière de l'événement si les ressources le permettent."
+          },
+          "use_construction_time_skips": {
+            "description": "Avancez un chantier confirmé du camp tout en respectant les réserves de raccourcis de construction choisies.",
+            "label": "Utiliser des accélérateurs de construction",
+            "recommendation": "Activez pour la construction régulière si le stock de raccourcis le permet."
+          },
+          "keep_skip_10m": {
+            "description": "Écartez ce nombre de raccourcis de construction de 10m ; mettez la réserve à 0 pour l'usage régulier.",
+            "label": "Garder les raccourcis de 10m"
+          },
+          "keep_skip_1h": {
+            "description": "Réservez ce nombre de raccourcis de construction de 1h pour d'autres activités.",
+            "label": "Garder les raccourcis de 1h"
+          },
+          "keep_skip_1m": {
+            "description": "Écartez ce nombre de raccourcis de construction de 1m ; mettez la réserve à 0 pour l'usage régulier.",
+            "label": "Garder les raccourcis de 1m"
+          },
+          "keep_skip_24h": {
+            "description": "Réservez ce nombre de raccourcis de construction de 24h pour d'autres activités.",
+            "label": "Garder les raccourcis de 24h"
+          },
+          "keep_skip_30m": {
+            "description": "Écartez ce nombre de raccourcis de construction de 30m ; mettez la réserve à 0 pour l'usage régulier.",
+            "label": "Garder les raccourcis de 30m"
+          },
+          "keep_skip_5h": {
+            "description": "Réservez ce nombre de raccourcis de construction de 5h pour d'autres activités.",
+            "label": "Garder les raccourcis de 5h"
+          },
+          "keep_skip_5m": {
+            "description": "Écartez ce nombre de raccourcis de construction de 5m ; mettez la réserve à 0 pour l'usage régulier.",
+            "label": "Garder les raccourcis de 5m"
+          },
+          "saved_targets": {
+            "description": "La capture enregistre et active aussitôt une cible personnalisée vérifiée ; choisir une autre cible enregistrée l'active aussi aussitôt.",
+            "label": "Cibles personnalisées enregistrées"
+          },
+          "stone_reserve": {
+            "description": "Écartez cette quantité de pierre du camp des dépenses de construction ; mettez 0 si le surplus peut être utilisé.",
+            "label": "Réserve de pierre"
+          },
+          "use_built_in_default": {
+            "description": "Revenez aussitôt à la cible intégrée tout en conservant les cibles personnalisées enregistrées.",
+            "label": "Utiliser la cible intégrée"
+          },
+          "wood_reserve": {
+            "description": "Écartez cette quantité de bois du camp des dépenses de construction ; mettez 0 si le surplus peut être utilisé.",
+            "label": "Réserve de bois"
+          }
+        },
+        "title": "Choisir la construction facultative du camp"
+      },
+      "readiness": {
+        "image": {
+          "alt": "Réglages illustratifs de préparation des attaques de tours Auto Beri",
+          "caption": "État de la condition de booster et composition du modèle, sans booster actif ni données client réelles."
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "Vérifiez les vagues, les troupes et les outils du modèle choisi avant d’activer les attaques.",
+            "label": "Composition du modèle d’attaque",
+            "recommendation": "Gardez assez de chaque troupe et outil choisis au château donneur et au camp pour votre rythme habituel."
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "Exigez un booster de bravoure actif avant les transferts, achats d’outils, préparatifs du camp, attaques de tours et constructions.",
+            "label": "Exécuter seulement avec un booster de bravoure",
+            "recommendation": "Activé si tous les volets d’Auto Beri doivent dépendre du booster."
+          }
+        },
+        "title": "Préparer les attaques de tours"
+      },
+      "save": {
+        "image": {
+          "alt": "Réglages illustratifs d’enregistrement et d’activation d’Auto Beri",
+          "caption": "Liste de préparation, interrupteur et calendrier facultatif, sans compte réel."
+        },
+        "items": {
+          "automation_switch": {
+            "description": "Activez Auto Beri depuis sa carte Automatisation après avoir vérifié le camp, les troupes du donneur, le modèle et les dépenses facultatives.",
+            "label": "Interrupteur d’automatisation",
+            "recommendation": "Activé après la préparation."
+          },
+          "calendar": {
+            "description": "Laissez le calendrier désactivé pour un fonctionnement continu, ou définissez vos heures habituelles puis enregistrez-le si nécessaire.",
+            "label": "Calendrier",
+            "recommendation": "Désactivé pour un événement suivi en continu."
+          },
+          "save_settings": {
+            "description": "Enregistrez le modèle, le donneur, le rythme des transferts, les limites d’attaque, les outils et les choix de construction avant d’activer l’automatisation.",
+            "label": "Enregistrer les réglages"
+          }
+        },
+        "title": "Enregistrer et activer"
+      },
+      "setup": {
+        "image": {
+          "alt": "Réglages illustratifs d’attaque et d’approvisionnement Auto Beri",
+          "caption": "Modèle d’attaque enregistré, château donneur du Grand Empire, Plume de voyage, contrôle des attaques et limite quotidienne."
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "Définissez la fréquence à laquelle Auto Beri cherche une autre attaque de tour.",
+            "label": "Intervalle de contrôle des attaques",
+            "recommendation": "Gardez l’intervalle habituel de 30 secondes, sauf si vous souhaitez moins de contrôles."
+          },
+          "attack_preset": {
+            "description": "Choisissez une formation d’attaque de Bérimond enregistrée ; Auto Beri utilise ses proportions de troupes pour les transferts et les attaques de tours.",
+            "label": "Modèle d’attaque",
+            "recommendation": "Créez et choisissez d’abord votre modèle habituel de Bérimond."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Arrêtez les nouvelles attaques de tours Auto Beri quand le compteur quotidien de toutes les attaques normales du compte atteint cette limite ; 0 supprime cette limite ajoutée.",
+            "label": "Limite quotidienne d’attaques normales",
+            "recommendation": "0, sauf si vous utilisez une limite pour tout le compte."
+          },
+          "horse_travel_boost": {
+            "description": "Choisissez pour les attaques de tours un déplacement par plume, pièces ou rubis.",
+            "label": "Accélération du voyage",
+            "recommendation": "Plume de voyage pour aller vite sans choisir un trajet en rubis."
+          },
+          "open_settings": {
+            "description": "Sur la page Automatisation, ouvrez les réglages de la carte Auto Beri World.",
+            "label": "Ouvrir les réglages"
+          },
+          "source_castle": {
+            "description": "Choisissez le château ou l’avant-poste du Grand Empire qui fournit ces troupes.",
+            "label": "Château donneur",
+            "recommendation": "Choisissez le château où se trouve votre armée d’attaque."
+          }
+        },
+        "title": "Choisir l’attaque et la source d’approvisionnement"
+      },
+      "tools": {
+        "image": {
+          "alt": "Réglages illustratifs des outils du camp Auto Beri",
+          "caption": "Les trois stocks minimaux d’outils et un inventaire de camp clairement fictif."
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "Réapprovisionnez ce nombre de béliers stationnés selon la même règle.",
+            "label": "Stock minimal de béliers",
+            "recommendation": "Adaptez-le à l’usage de votre modèle habituel."
+          },
+          "mantlets_minimum": {
+            "description": "Réapprovisionnez ce nombre de mantelets stationnés selon la même règle.",
+            "label": "Stock minimal de mantelets",
+            "recommendation": "Adaptez-le à l’usage de votre modèle habituel."
+          },
+          "scaling_ladders_minimum": {
+            "description": "Réapprovisionnez ce nombre d’échelles stationnées au camp avec des offres admissibles en pièces ; 0 les laisse sans gestion.",
+            "label": "Stock minimal d’échelles",
+            "recommendation": "Adaptez-le au modèle et au rythme d’attaque habituels."
+          }
+        },
+        "title": "Entretenir les outils du camp"
+      },
+      "transfers": {
+        "image": {
+          "alt": "Réglages illustratifs des transferts proportionnels de troupes Auto Beri",
+          "caption": "Proportions fictives 2:1, stock du camp, capacité libre et envoi partiel d’un seul type ; ces valeurs sont des exemples, pas des défauts enregistrés."
+        },
+        "items": {
+          "check_interval": {
+            "description": "Définissez la fréquence d’actualisation de la capacité libre et des inventaires des deux châteaux.",
+            "label": "Intervalle de contrôle",
+            "recommendation": "Gardez l’intervalle habituel de 30 secondes."
+          },
+          "food_only": {
+            "description": "Seules les troupes du modèle consommant de la nourriture sont transférables ; les unités non prises en charge ou les familles non résolues suspendent l’opération avec une raison.",
+            "label": "Transferts réservés aux troupes nourries"
+          },
+          "minimum_free_capacity": {
+            "description": "Commencez les transferts seulement lorsque la capacité libre déclarée atteint ce seuil ; un envoi proportionnel individuel peut être plus petit.",
+            "label": "Capacité libre minimale",
+            "recommendation": "1 place libre pour les troupes lors du ravitaillement proportionnel régulier."
+          },
+          "owned_berimond_camp": {
+            "description": "Auto Beri trouve automatiquement votre propre camp de Bérimond ; aucun identifiant de camp n’est à saisir.",
+            "label": "Camp de Bérimond possédé"
+          },
+          "partial_donor": {
+            "description": "Si le donneur possède une partie du type nécessaire, Auto Beri envoie cette quantité réduite ; s’il n’en possède aucune, il attend plutôt que d’envoyer un autre type.",
+            "label": "Stock partiel du donneur"
+          },
+          "pending_transfer": {
+            "description": "Auto Beri attend l’arrivée de chaque envoi et actualise le stock du camp avant de recalculer les proportions du modèle.",
+            "label": "Transfert en cours"
+          },
+          "preset_troop_mix": {
+            "description": "Auto Beri additionne les emplacements de troupes répétés des vagues et de la cour du modèle choisi, puis réapprovisionne un type sous-représenté à la fois.",
+            "label": "Proportions des troupes du modèle"
+          },
+          "troop_transport_skip": {
+            "description": "Choisissez la durée de l’objet utilisé quand l’accélération du transport est active.",
+            "label": "Accélérateur de transport",
+            "recommendation": "Utilisez le raccourci de 1 heure pour les transferts réguliers confirmés."
+          },
+          "use_troop_transport_time_skips": {
+            "description": "Appliquez l’accélérateur choisi à un transfert confirmé pendant son trajet.",
+            "label": "Utiliser des accélérateurs de transport",
+            "recommendation": "Activez pour le ravitaillement régulier du camp si votre stock de raccourcis le permet."
+          }
+        },
+        "title": "Régler les transferts proportionnels de troupes"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "Auto Storm peut ouvrir et construire un château de l'Orage, attaquer les forts et les îles à ressources, importer des troupes et acheter les récompenses de Luna choisies.",
+      "expectation": "Chaque volet utilise des données de jeu récentes et vos autorisations enregistrées ; les constructions premium, les attaques et les achats restent limités aux choix que vous activez.",
+      "name": "Auto Storm",
+      "summary": "Gérer votre château de l'Orage, vos attaques et vos récompenses"
+    },
+    "recommendationIntro": "Les choix recommandés décrivent un usage régulier d'Auto Storm ; ils servent de guide et ne modifient pas les paramètres enregistrés.",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "Illustration de l'accès au château de l'Orage et de la capture d'objectif",
+          "caption": "Choix du château initial, modes de capture et activation facultative de l'objectif ; aucun achat ni compte réel n'est montré."
+        },
+        "items": {
+          "automatic_open": {
+            "description": "Si l'Orage est verrouillé, choisissez un château initial officiel disponible et vérifiez son prix affiché avant d'autoriser le déverrouillage.",
+            "label": "Ouvrir automatiquement le château de l'Orage",
+            "recommendation": "Activé si vous voulez qu'Auto Storm ouvre un château initial habituel après vérification de son prix."
+          },
+          "blueprint": {
+            "description": "Un objectif capturé est enregistré et activé immédiatement ; Suspendre l'objectif arrête la réconciliation tout en conservant les objectifs enregistrés.",
+            "label": "Objectif enregistré",
+            "recommendation": "Gardez un objectif Fonctionnel vérifié actif pour les constructions courantes."
+          },
+          "capture_castle": {
+            "description": "Sélectionnez votre château de l'Orage actuel avant de capturer un objectif de construction.",
+            "label": "Château de l'Orage",
+            "recommendation": "Capturez le château que vous souhaitez gérer."
+          },
+          "combat_only": {
+            "description": "Les combats contre les forts et les îles ne nécessitent pas d'objectif de construction capturé.",
+            "label": "Combattre sans objectif"
+          },
+          "decoration_preset": {
+            "description": "Appliquez éventuellement un préréglage de décorations après la construction.",
+            "label": "Préréglage de décorations après construction",
+            "recommendation": "Laissez vide sauf si vous souhaitez un agencement de décorations distinct."
+          },
+          "exact": {
+            "description": "Enregistrez tous les détails d'objectif pris en charge pour une copie exacte.",
+            "label": "Capture exacte",
+            "recommendation": "À utiliser uniquement après examen de tout l'objectif."
+          },
+          "functional": {
+            "description": "Enregistrez un objectif pour les fonctions essentielles de l'Orage sans copier chaque position de bâtiment.",
+            "label": "Capture fonctionnelle",
+            "recommendation": "Fonctionnel pour l'entretien habituel."
+          },
+          "layout": {
+            "description": "Enregistrez les types de bâtiments et leurs positions sans les décorations.",
+            "label": "Capture de disposition",
+            "recommendation": "À utiliser seulement si l'emplacement des bâtiments compte."
+          },
+          "open_settings": {
+            "description": "Ouvrez les paramètres d'Auto Storm depuis sa carte Automatisation.",
+            "label": "Ouvrir les paramètres"
+          },
+          "starter_castle": {
+            "description": "Choisissez le château initial officiel actuellement disponible pour la prochaine saison verrouillée de l'Orage.",
+            "label": "Château à ouvrir",
+            "recommendation": "Choisissez un château initial habituel dont vous pouvez payer le prix après vérification."
+          }
+        },
+        "title": "Ouvrir et capturer votre château de l'Orage"
+      },
+      "combat": {
+        "image": {
+          "alt": "Illustration des paramètres d'attaque des forts et des îles",
+          "caption": "Exemples d'îles à aigue-marine, de niveaux de forts, d'ordre des cibles et de défenseurs d'occupation."
+        },
+        "items": {
+          "defenders": {
+            "description": "Choisissez les types et les nombres de défenseurs laissés sur une île capturée ; une liste vide laisse un survivant après une victoire confirmée.",
+            "label": "Unités de défense des îles",
+            "recommendation": "Choisissez des défenseurs si un survivant ne suffit pas pour votre plan."
+          },
+          "fort_preset": {
+            "description": "Choisissez une formation enregistrée de troupes et d'outils pour les forts.",
+            "label": "Préréglage d'attaque des forts",
+            "recommendation": "Utilisez votre préréglage habituel pour les forts."
+          },
+          "forts": {
+            "description": "Activez les attaques contre les niveaux de forts officiels choisis, de 40 à 80.",
+            "label": "Forts de l'Orage",
+            "recommendation": "Activé pour les niveaux que votre préréglage peut battre de façon fiable."
+          },
+          "horse": {
+            "description": "Choisissez le voyage par plume, pièces ou rubis pour les attaques dans l'Orage.",
+            "label": "Accélération du cheval",
+            "recommendation": "Plume de voyage pour aller vite sans choisir le voyage en rubis."
+          },
+          "island_preset": {
+            "description": "Choisissez une formation enregistrée de troupes et d'outils pour les îles.",
+            "label": "Préréglage d'attaque des îles",
+            "recommendation": "Utilisez votre préréglage habituel pour les îles."
+          },
+          "island_resources": {
+            "description": "Choisissez quelles îles de bois, de pierre ou d'aigue-marine peuvent être attaquées.",
+            "label": "Ressources des îles",
+            "recommendation": "Sélectionnez l'aigue-marine pour en récolter."
+          },
+          "island_sizes": {
+            "description": "Choisissez les grandes îles, les petites ou les deux parmi les ressources sélectionnées.",
+            "label": "Tailles des îles",
+            "recommendation": "Grandes et petites pour la récolte régulière d'aigue-marine."
+          },
+          "islands": {
+            "description": "Activez la capture des îles correspondant aux ressources et aux tailles choisies.",
+            "label": "Îles à ressources",
+            "recommendation": "Activé si vous voulez de l'aigue-marine des grandes et petites îles."
+          },
+          "minimum_attacks": {
+            "description": "N'attaquez que les forts ayant au moins ce nombre d'attaques restantes.",
+            "label": "Minimum d'attaques restantes",
+            "recommendation": "0 pour autoriser tout fort admissible."
+          },
+          "priority": {
+            "description": "Classez les groupes de cibles insulaires et fortifiées activés ; dans chaque groupe, la cible admissible la plus proche passe d'abord.",
+            "label": "Priorité des cibles d'attaque",
+            "recommendation": "Grandes îles, petites îles, puis forts du niveau 80 au 40 pour récolter l'aigue-marine."
+          }
+        },
+        "title": "Choisir les forts et les îles à ressources"
+      },
+      "construction": {
+        "image": {
+          "alt": "Illustration des paramètres de construction et de réserve",
+          "caption": "Transport de ressources, autorisations de dépense, réserves et niveau du port sous forme de commandes d'exemple."
+        },
+        "items": {
+          "demolition": {
+            "description": "Autorisez la suppression exacte des bâtiments impossibles à déplacer ou à stocker.",
+            "label": "Autoriser la démolition",
+            "recommendation": "Désactivé sauf si vous reconstruisez une disposition examinée."
+          },
+          "donor_reserves": {
+            "description": "Conservez les quantités choisies de bois, de pierre et d'aigue-marine chez chaque donneur avant le transport de ressources.",
+            "label": "Réserves protégées des donneurs",
+            "recommendation": "Protégez votre budget habituel de bois et de pierre pour la construction ; aigue-marine 0 si inutilisée."
+          },
+          "harbor_level": {
+            "description": "Choisissez le niveau visé du port parmi 1, 2 ou 3 ; les niveaux 2 et 3 utilisent des voies de construction premium.",
+            "label": "Niveau visé du port",
+            "recommendation": "Niveau 1 sauf si des améliorations premium sont prévues."
+          },
+          "harbor": {
+            "description": "Maintenez le port au niveau choisi même si l'objectif capturé diffère.",
+            "label": "Améliorer le port",
+            "recommendation": "Activé au niveau 1 pour un usage régulier."
+          },
+          "premium": {
+            "description": "Autorisez les étapes de construction admissibles qui dépensent une monnaie premium.",
+            "label": "Autoriser les coûts premium",
+            "recommendation": "Désactivé sauf si une construction premium est prévue."
+          },
+          "resource_transport": {
+            "description": "Autorisez des livraisons confirmées des ressources de construction manquantes depuis les châteaux donneurs.",
+            "label": "Transporter les ressources manquantes",
+            "recommendation": "Activé pour les constructions régulières."
+          },
+          "skip_reserves": {
+            "description": "Conservez le nombre choisi d'objets de 1 min, 5 min, 10 min, 30 min, 1 h, 5 h et 24 h pour la construction et les transports.",
+            "label": "Réductions de temps gardées en réserve",
+            "recommendation": "Gardez 0 réduction courte sauf besoin ailleurs ; réservez vos stocks de 1 h, 5 h et 24 h pour les autres événements."
+          },
+          "storm_reserves": {
+            "description": "Écartez de la construction les quantités choisies de bois, pierre et aigue-marine.",
+            "label": "Réserves de dépenses du château de l'Orage",
+            "recommendation": "Bois 0 et pierre 0 si les surplus sont utilisables ; fixez l'aigue-marine selon votre budget de récompenses."
+          },
+          "time_skips": {
+            "description": "Appliquez les raccourcis admissibles à la construction et aux transports de ressources et de troupes en respectant les réserves choisies.",
+            "label": "Utiliser les raccourcis de construction et de transport",
+            "recommendation": "Activé si vous voulez accélérer les constructions courantes."
+          }
+        },
+        "title": "Régler la construction et la protection des ressources"
+      },
+      "luna": {
+        "image": {
+          "alt": "Illustration des paramètres de récompenses de Luna",
+          "caption": "Réserve d'aigue-marine, objectifs d'achat limités, récompenses renouvelables et priorité."
+        },
+        "items": {
+          "cost_cap": {
+            "description": "Lisez le coût et le plafond d'achat de chaque récompense indiqués par le jeu.",
+            "label": "Coût et plafond d'achat",
+            "recommendation": "Vérifiez ces deux valeurs en lecture seule avant l'activation."
+          },
+          "keep_aqua": {
+            "description": "Gardez cette quantité d'aigue-marine indisponible pour les achats de Luna.",
+            "label": "Garder de l'aigue-marine",
+            "recommendation": "0 si tout le surplus peut financer des récompenses ; sinon réservez la quantité prévue."
+          },
+          "priority": {
+            "description": "La boutique traite d'abord les objectifs d'achat de plus faible numéro.",
+            "label": "Priorité",
+            "recommendation": "Attribuez 1, 2 et 3 selon votre préférence, en plaçant les objectifs limités avant les récompenses illimitées."
+          },
+          "search": {
+            "description": "Recherchez les récompenses officielles de Luna par nom avant de configurer un achat.",
+            "label": "Trouver une récompense de Luna",
+            "recommendation": "Cherchez la récompense que vous voulez réellement."
+          },
+          "target_total": {
+            "description": "Fixez le nombre total d'achats souhaité pour une récompense limitée.",
+            "label": "Total visé",
+            "recommendation": "Ne fixez que le nombre que vous comptez acheter."
+          },
+          "unlimited": {
+            "description": "Continuez d'acheter une récompense renouvelable admissible tant que la réserve et le plafond de la boutique le permettent.",
+            "label": "Illimité",
+            "recommendation": "Activé seulement pour les récompenses renouvelables voulues régulièrement."
+          },
+          "use": {
+            "description": "Sélectionnez une récompense pour permettre son achat automatique.",
+            "label": "Utiliser la récompense",
+            "recommendation": "N'activez que les récompenses souhaitées."
+          }
+        },
+        "title": "Choisir les récompenses de Luna en aigue-marine"
+      },
+      "save": {
+        "image": {
+          "alt": "Illustration de l'enregistrement et de l'activation d'Auto Storm",
+          "caption": "Limite quotidienne d'attaques, vérification de la politique, actualisation de carte en lecture seule et interrupteur d'automatisation."
+        },
+        "items": {
+          "daily_limit": {
+            "description": "Arrêtez les nouvelles attaques d'Auto Storm au nombre quotidien d'attaques normales de tout le compte ; 0 retire cette limite supplémentaire.",
+            "label": "Limite quotidienne d'attaques normales",
+            "recommendation": "0 sauf si vous utilisez un plafond pour tout le compte."
+          },
+          "enable": {
+            "description": "Activez Auto Storm sur sa carte Automatisation une fois les choix enregistrés prêts.",
+            "label": "Interrupteur d'automatisation",
+            "recommendation": "Activez après la configuration."
+          },
+          "map_refresh": {
+            "description": "Consultez l'intervalle officiel d'actualisation de la carte de l'Orage.",
+            "label": "Intervalle d'actualisation de la carte",
+            "recommendation": "L'intervalle en lecture seule est de 2 heures ; attendez un nouveau relevé après les changements."
+          },
+          "policy_check": {
+            "description": "Définissez la fréquence à laquelle Auto Storm vérifie ses paramètres et les tâches admissibles.",
+            "label": "Intervalle de vérification de la politique",
+            "recommendation": "Gardez l'intervalle habituel de 30 secondes."
+          },
+          "save": {
+            "description": "Enregistrez les choix de château, construction, combat, import de troupes et Luna avant d'activer l'automatisation.",
+            "label": "Enregistrer les paramètres",
+            "recommendation": "Enregistrez après avoir vérifié toutes les autorisations de dépense."
+          }
+        },
+        "title": "Enregistrer et activer Auto Storm"
+      },
+      "troops": {
+        "image": {
+          "alt": "Illustration de l'import de troupes et des estimations en lecture seule",
+          "caption": "Ordre des donneurs, 1 000 troupes gardées et estimations de capacité en lecture seule."
+        },
+        "items": {
+          "attack_history": {
+            "description": "Consultez les attaques Tempête confirmées depuis la remise à zéro du serveur divisées par 24, et non une moyenne glissante sur 24 heures.",
+            "label": "Moyenne des attaques depuis réinitialisation",
+            "recommendation": "Consultez cette estimation en lecture seule avant de modifier l'import nécessaire."
+          },
+          "committed_cap": {
+            "description": "Lisez le plafond calculé automatiquement, comprenant troupes stationnées, mouvements, transit et retours.",
+            "label": "Plafond des troupes engagées dans l'Orage",
+            "recommendation": "Consultez ce plafond en lecture seule avant d'augmenter les imports."
+          },
+          "donors": {
+            "description": "Choisissez les châteaux donneurs dans l'ordre affiché ; un stock partiel peut fournir une livraison plus petite.",
+            "label": "Châteaux donneurs",
+            "recommendation": "Sélectionnez vos fournisseurs de troupes habituels dans l'ordre préféré."
+          },
+          "import": {
+            "description": "Importez vers l'Orage les troupes d'attaque ou de défense choisies qui manquent depuis les châteaux donneurs.",
+            "label": "Importer les troupes manquantes",
+            "recommendation": "Activé si votre château de l'Orage a besoin d'un ravitaillement régulier."
+          },
+          "map_coverage": {
+            "description": "Consultez la couverture de la carte avant de vous fier aux cibles affichées.",
+            "label": "Couverture de la carte",
+            "recommendation": "Attendez une couverture récente quand des cibles manquent."
+          },
+          "minimum_kept": {
+            "description": "Gardez au moins ce nombre de troupes dans l'Orage après le lancement d'une attaque en préservant le mélange des préréglages activés.",
+            "label": "Minimum de troupes gardées après lancement",
+            "recommendation": "1 000 troupes pour une réserve régulière, à adapter à votre armée réelle."
+          },
+          "preset_average": {
+            "description": "Lisez le besoin moyen en troupes des préréglages d'attaque activés, y compris les défenseurs d'île choisis.",
+            "label": "Moyenne des préréglages activés",
+            "recommendation": "Comparez cette estimation en lecture seule avec votre armée."
+          }
+        },
+        "title": "Importer et surveiller les troupes de l'Orage"
+      }
+    }
+  }
+}

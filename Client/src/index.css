@@ -4524,3 +4524,9 @@
         transition-duration: 0.01ms !important;
     }
 }
+
+/* Viewer-local controls use logical spacing and inherit document direction. */
+.viewer-language { display: flex; align-items: center; gap: .4rem; margin-inline: .4rem; font-size: .75rem; min-width: 0; color: #eee9da; }
+.viewer-language select { max-width: 9rem; background: var(--surface, #172033); color: inherit; border-radius: .35rem; padding-block: .3rem; padding-inline: .4rem; }
+html[dir="rtl"] input[type="number"], html[dir="rtl"] code { direction: ltr; unicode-bidi: isolate; }
+@media (max-width: 640px) { .viewer-language > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); } .viewer-language select { max-width: 6rem; } }

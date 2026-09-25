@@ -1,3 +1,4 @@
+import { LocalizedText } from "../i18n/LocalizedText";
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CheckCircle2, Download, RefreshCw } from 'lucide-react';
@@ -30,15 +31,15 @@ const UpdateModal = () => {
 							<CheckCircle2 className="h-12 w-12" />
 						</span>
 					</div>
-					<h1 className="mb-4 text-3xl font-bold">Update complete</h1>
+					<h1 className="mb-4 text-3xl font-bold"><LocalizedText messageKey="ui.components.updateModal.update.complete.2ca13025" /></h1>
 					<p className="mb-8 text-lg leading-relaxed text-text-muted">
 						Version <span className="font-semibold text-primary">{latestVersion}</span> is installed.
 					</p>
 					<Card variant="solid" className="mb-8 border-primary/30 p-6 shadow-lg">
 						<div className="flex items-center justify-center gap-3 text-xl font-bold text-primary">
-							<RefreshCw className="h-6 w-6" /> Restart CitadelOps
+							<RefreshCw className="h-6 w-6" /> <LocalizedText messageKey="ui.components.updateModal.restart.citadelops.8b96fc52" />
 						</div>
-						<p className="mt-3 text-sm text-text-muted">Close this window and reopen the application to run the new binary.</p>
+						<p className="mt-3 text-sm text-text-muted"><LocalizedText messageKey="ui.components.updateModal.close.this.window.and.reopen.the.application.18c4d2b5" /></p>
 					</Card>
 				</div>
 			</div>,
@@ -93,8 +94,8 @@ const UpdateModal = () => {
 			)}
 			footer={!activelyInstalling ? (
 				<div className="flex w-full gap-3">
-					<Button variant="ghost" onClick={dismiss} className="flex-1">Later</Button>
-					<Button variant="outline" onClick={ignore} className="flex-1">Ignore</Button>
+					<Button variant="ghost" onClick={dismiss} className="flex-1"><LocalizedText messageKey="ui.components.updateModal.later.73b6e48a" /></Button>
+					<Button variant="outline" onClick={ignore} className="flex-1"><LocalizedText messageKey="ui.components.updateModal.ignore.fce77c34" /></Button>
 					<Button variant="primary" onClick={install} className="flex-[2]" leftIcon={<Download className="h-4 w-4" />}>
 						{applicationUpdate.installSupported ? 'Update now' : 'Download'}
 					</Button>
@@ -119,8 +120,7 @@ const UpdateModal = () => {
 					</div>
 				)}
 				<a href="https://citadelops.app/" target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-primary hover:text-primary-hover">
-					View patch notes
-				</a>
+					<LocalizedText messageKey="ui.components.updateModal.view.patch.notes.47b32ed8" /></a>
 			</div>
 		</Modal>
 	);

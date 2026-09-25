@@ -1,27 +1,29 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React from 'react';
 import { Gauge } from 'lucide-react';
 import type { DailyAttackStateV2 } from '../../api/Contracts';
 import { Card, Input } from '../../components/ui';
 
 interface DailyAttackLimitFieldProps {
+  zeroLabel?: string;
   value: number;
   onChange: (value: number) => void;
   serverState?: DailyAttackStateV2;
   description?: React.ReactNode;
 }
 
-export const DailyAttackLimitField: React.FC<DailyAttackLimitFieldProps> = ({ value, onChange, serverState, description }) => {
+export const DailyAttackLimitField: React.FC<DailyAttackLimitFieldProps> = ({ value, onChange, serverState, description, zeroLabel = 'Attack count · 0 disables' }) => {
   const synced = Boolean(serverState?.observedAt && !serverState.observedAt.startsWith('0001-01-01'));
   return (
     <Card variant="solid" className="p-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-sm font-black text-text-main">
-            <Gauge className="h-4 w-4 text-primary" /> Daily normal-attack limit
+            <Gauge className="h-4 w-4 text-primary" /> <LocalizedText messageKey="ui.settings.components.dailyAttackLimitField.daily.normal.attack.limit.503daf3e" />
           </div>
           <p className="mt-1 text-xs text-text-muted">
             {description ?? (
-              <>Stop this automation when the server&apos;s account-wide daily attack count reaches this value. It resumes automatically when the server count resets. Advisor attacks are exempt.</>
+              <><LocalizedText messageKey="ui.settings.components.dailyAttackLimitField.stop.this.automation.when.the.server.s.e625b85e" /></>
             )}
           </p>
           <p className="mt-2 text-[11px] text-text-muted">
@@ -31,7 +33,7 @@ export const DailyAttackLimitField: React.FC<DailyAttackLimitFieldProps> = ({ va
           </p>
         </div>
         <label className="block w-full shrink-0 sm:w-48">
-          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">Attack count · 0 disables</span>
+          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">{zeroLabel}</span>
           <Input
             type="text"
             inputMode="numeric"

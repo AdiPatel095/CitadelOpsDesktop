@@ -1,6 +1,7 @@
 package Buildings
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"fmt"
 	"sort"
 	"strings"
@@ -71,12 +72,13 @@ type TargetSource struct {
 }
 
 type TargetIssue struct {
-	Severity     string                     `json:"severity"`
-	Code         string                     `json:"code"`
-	Message      string                     `json:"message"`
-	TargetID     string                     `json:"targetId,omitempty"`
-	DefinitionID State.BuildingID           `json:"definitionId,omitempty"`
-	BuildingIDs  []State.BuildingInstanceID `json:"buildingIds,omitempty"`
+	MessageDescriptor *Localization.Message      `json:"messageDescriptor,omitempty"`
+	Severity          string                     `json:"severity"`
+	Code              string                     `json:"code"`
+	Message           string                     `json:"message"`
+	TargetID          string                     `json:"targetId,omitempty"`
+	DefinitionID      State.BuildingID           `json:"definitionId,omitempty"`
+	BuildingIDs       []State.BuildingInstanceID `json:"buildingIds,omitempty"`
 }
 
 type TargetAction struct {
@@ -166,7 +168,7 @@ func CompileTargetDiff(state State.GameState, gameData *GameData.Store, request 
 		return TargetDiffResult{}, RevisionMismatchError{Expected: *request.ExpectedRevision, Actual: state.Revision}
 	}
 	if gameData == nil {
-		return TargetDiffResult{}, fmt.Errorf("official game data is unavailable")
+		return TargetDiffResult{}, Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.buildings.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	catalog, err := gameData.BuildingCatalog()
 	if err != nil {
@@ -175,9 +177,9 @@ func CompileTargetDiff(state State.GameState, gameData *GameData.Store, request 
 	castleID, castle, found := previewCastle(state, request.CastleID)
 	if !found {
 		if request.CastleID > 0 {
-			return TargetDiffResult{}, fmt.Errorf("castle %d was not found", request.CastleID)
+			return TargetDiffResult{}, Localization.WithError(fmt.Errorf("castle %d was not found", request.CastleID), Localization.New("server.buildings.castle_p_was_not.b5cc85b5", "castle {p0} was not found", Localization.Params{"p0": fmt.Sprintf("%d", request.CastleID)}))
 		}
-		return TargetDiffResult{}, fmt.Errorf("no focused castle is available")
+		return TargetDiffResult{}, Localization.WithError(fmt.Errorf("no focused castle is available"), Localization.New("server.buildings.no_focused_castle_is.52a6af14", "no focused castle is available", nil))
 	}
 	castle = normalizePreviewLayout(castle, catalog)
 	request.Policy.ResourceReserves = cloneFloatMap(request.Policy.ResourceReserves)
@@ -557,7 +559,7 @@ func addTargetActionIssues(
 		if blocker.Code == "player_level" || blocker.Code == "legend_level" {
 			severity = TargetIssueWaiting
 		}
-		addTargetIssue(result, targetIndex, severity, blocker.Code, blocker.Message, nil)
+		addTargetIssue(result, targetIndex, severity, blocker.Code, blocker.Message, nil, blocker.MessageDescriptor)
 	}
 	if !action.AffordableNow {
 		addTargetIssue(result, targetIndex, TargetIssueWaiting, "resources_pending", "observed balances do not yet cover every compiled action cost and configured reserve", nil)
@@ -566,6 +568,11 @@ func addTargetActionIssues(
 		if cost.Premium && !request.Policy.AllowPremium {
 			addTargetIssue(result, targetIndex, TargetIssueError, "premium_disallowed", "the compiled path includes premium cost while premium spending is disabled", nil)
 			break
+		}
+	}
+	if action.Kind == ActionUpgrade && request.Policy.AllowPremium && currentTargetUpgrade(castle, action) {
+		if blocker := RubyUpgradeBlocker(state, action.Costs); blocker != nil {
+			addTargetIssue(result, targetIndex, TargetIssueWaiting, blocker.Code, blocker.Message, nil, blocker.MessageDescriptor)
 		}
 	}
 	if (action.Kind == ActionConstruct || action.Kind == ActionUpgrade) && buildingQueueObserved(castle.BuildingQueue) && !buildingQueueAvailable(castle.BuildingQueue) {
@@ -771,8 +778,9 @@ func addTargetIssue(
 	code string,
 	message string,
 	buildingIDs []State.BuildingInstanceID,
+	descriptors ...*Localization.Message,
 ) {
-	issue := TargetIssue{Severity: severity, Code: code, Message: message, BuildingIDs: append([]State.BuildingInstanceID(nil), buildingIDs...)}
+	issue := TargetIssue{MessageDescriptor: Localization.First(descriptors), Severity: severity, Code: code, Message: message, BuildingIDs: append([]State.BuildingInstanceID(nil), buildingIDs...)}
 	if targetIndex >= 0 && targetIndex < len(result.Targets) {
 		issue.TargetID = result.Targets[targetIndex].TargetID
 		issue.DefinitionID = result.Targets[targetIndex].Desired.ID
@@ -931,4 +939,15 @@ func minimumCostTargetAssignments(
 		}
 	}
 	return assignments
+}
+
+// Compiled paths include future upgrades. Only the observed building's next
+// upgrade may be gated by today's confirmation setting; earlier affordable
+// upgrades and resource-only construction remain eligible.
+func currentTargetUpgrade(castle State.CastleState, action TargetAction) bool {
+	building, found := castle.Layout.Objects[action.BuildingInstanceID]
+	if !found {
+		building, found = castle.Layout.Fixed[action.BuildingInstanceID]
+	}
+	return found && building.DefinitionID == action.FromDefinitionID
 }
