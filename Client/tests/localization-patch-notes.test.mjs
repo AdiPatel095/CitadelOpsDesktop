@@ -22,5 +22,5 @@ test('every release subtitle and note has an exact source-preserving typed catal
    count++;
   }
  }
- assert.equal(count,263);
+ assert.equal(count,271);
 });
