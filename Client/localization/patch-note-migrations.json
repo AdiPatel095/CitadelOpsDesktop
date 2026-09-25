@@ -38,8 +38,8 @@
   {
     "version": "2.4.1",
     "field": "text",
-    "key": "patchNotes.release.2.4.1.text.cd3d616048e3",
-    "source": "Application updates resolve signed artifact details from a version-matched release manifest when the version endpoint provides no artifact URL."
+    "key": "patchNotes.release.2.4.1.text.cfc6ff71cd23",
+    "source": "Application updates resolve checksum-verified artifact details from a version-matched release manifest when the version endpoint provides no artifact URL."
   },
   {
     "version": "2.4.1",
