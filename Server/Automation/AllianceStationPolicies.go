@@ -510,7 +510,7 @@ func (*AutoStationPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decisi
 		if decision, refresh := allianceRosterRefreshDecision(snapshot, "Incoming attack detected; refreshing alliance roster before evacuation", Localization.New("server.automation.incoming_attack_detected_refreshing.143eccd4", "Incoming attack detected; refreshing alliance roster before evacuation", nil)); refresh && needsRoster {
 			decision.Status = "threat"
 			decision.Metrics = metrics
-			if decision.Request != nil {
+			if settings.OpenGateFallback && decision.Request != nil {
 				for _, id := range sortedThreatCastleIDs(threats) {
 					castle := snapshot.State.Castles[id]
 					if castle.KingdomID != 10 && threats[id].Earliest.Sub(snapshot.Now) <= time.Duration(settings.LeadTimeSec)*time.Second {
@@ -582,7 +582,7 @@ func (*AutoStationPolicy) Evaluate(_ context.Context, snapshot Snapshot) (decisi
 				Request:             &Intent.Request{Name: "troops.station", Arguments: arguments},
 				ReevaluateOnSuccess: true,
 			}
-			if castle.KingdomID != 10 {
+			if settings.OpenGateFallback && castle.KingdomID != 10 {
 				fallbackArguments, _ := json.Marshal(map[string]any{
 					"castleId": castle.ID, "requireIncomingAttack": true, "autoStation": true,
 				})

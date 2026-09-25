@@ -826,6 +826,18 @@ func TestAutoStationRefreshesStaleAllianceRosterBeforeEvacuating(t *testing.T) {
 	if err != nil || decision.Status != "threat" || decision.Request == nil || decision.Request.Name != "alliance.refresh" {
 		t.Fatalf("stale alliance refresh = %#v, err=%v", decision, err)
 	}
+	if decision.FailureFallback != nil {
+		t.Fatalf("stale alliance refresh without opt-in attached gate fallback: %#v", decision.FailureFallback)
+	}
+	decision, err = NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{
+		State: gameState, Now: now,
+		Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{
+			"automation.autoStation": json.RawMessage(`{"openGateFallback":true}`),
+		}},
+	})
+	if err != nil || decision.Request == nil || decision.Request.Name != "alliance.refresh" || decision.FailureFallback == nil || decision.FailureFallback.Name != "defense.open_gate" {
+		t.Fatalf("stale alliance refresh with opt-in = %#v, err=%v", decision, err)
+	}
 }
 
 func TestAutoStationStaleRosterFallbackExcludesOnlyBerimond(t *testing.T) {
@@ -921,8 +933,17 @@ func TestAutoStationUsesOptInOpenGateFallbackAfterStationFailure(t *testing.T) {
 	decision, err = NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{
 		State: gameState, GameData: gameData, Now: now,
 	})
-	if err != nil || decision.Request == nil || decision.FailureFallback == nil {
+	if err != nil || decision.Request == nil || decision.Request.Name != "troops.station" || decision.FailureFallback != nil {
 		t.Fatalf("non-opt-in Auto Station failure fallback = %#v err=%v", decision, err)
+	}
+	for _, raw := range []json.RawMessage{json.RawMessage(`{}`), json.RawMessage(`{"openGateFallback":false}`)} {
+		decision, err = NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{
+			State: gameState, GameData: gameData, Now: now,
+			Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{"automation.autoStation": raw}},
+		})
+		if err != nil || decision.Request == nil || decision.Request.Name != "troops.station" || decision.FailureFallback != nil {
+			t.Fatalf("non-opt-in settings %s: decision = %#v err=%v", raw, decision, err)
+		}
 	}
 }
 
