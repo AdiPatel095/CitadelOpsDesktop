@@ -553,7 +553,7 @@
     },
     "stormConstruction": {
       "harbor": "Port: włączony, poziom 1",
-      "resources": "Drewno Sztormu 0; kamień 0; akwamaryn planowany",
+      "resources": "Drewno 0; kamień 0; akwamaryn zaplanowany",
       "spending": "Premium i wyburzanie: wyłączone",
       "title": "Przykład budowy i rezerw",
       "transport": "Transport zasobów: włączony"
@@ -573,7 +573,7 @@
       "title": "Przykład zapisu i włączenia"
     },
     "stormTroops": {
-      "averages": "Średnie ataków i schematów: tylko do odczytu",
+      "averages": "Ataki potwierdzone od resetu / 24; średnia ustawienia tylko do odczytu",
       "cap": "Limit zaangażowanych wojsk: tylko do odczytu",
       "donors": "Dawcy: pokazana kolejność, częściowe zapasy dozwolone",
       "minimum": "Minimum zachowane: 1000 wojsk",
@@ -1529,7 +1529,7 @@
       "builder": {
         "image": {
           "alt": "Przykładowe ustawienia opcjonalnej rozbudowy obozu w Automatycznym Berimondzie",
-          "caption": "Wbudowany cel, poziom stajni, zgody na budowę i rezerwy."
+          "caption": "Cel wbudowany i zapisany, tryby przechwytywania, stajnia poziom 5, rezerwy drewna i kamienia oraz siedem czasów pominięć."
         },
         "items": {
           "allow_demolition": {
@@ -1543,34 +1543,78 @@
             "recommendation": "Wyłączone, chyba że świadomie chcesz budowy za walutę premium."
           },
           "auto_beri_builder_lane": {
-            "description": "Buduj lub ulepszaj dokładny cel obozu za potwierdzony łup po powrocie ataku, bez transportu surowców z innego królestwa.",
+            "description": "Buduj lub ulepszaj aktywny cel obozu Berimond za potwierdzone łupy, które wróciły, bez sprowadzania zasobów z innego królestwa.",
             "label": "Budowniczy Automatycznego Berimondu",
-            "recommendation": "Wyłączony do sprawdzenia celu i zezwoleń na wydatki."
+            "recommendation": "Włącz dla zwykłej rozbudowy obozu po sprawdzeniu zezwoleń na wydatki."
           },
           "camp_resource_reserves": {
-            "description": "Zachowaj wybrane ilości drewna i kamienia Berimondu poza zasięgiem budowniczego.",
+            "description": "Nie wydawaj wybranych ilości drewna i kamienia na budowę obozu.",
             "label": "Rezerwy surowców obozu",
-            "recommendation": "Zarezerwuj to, czego potrzebujesz do innych prac w obozie."
+            "recommendation": "Drewno 0 i kamień 0, jeśli można używać nadwyżek."
           },
           "construction_time_skip_reserves": {
-            "description": "Zachowaj wybraną liczbę każdego przedmiotu skracającego czas poza zasięgiem budowniczego.",
+            "description": "Osobno określ liczbę zachowanych pominięć 1 min, 5 min, 10 min, 30 min, 1 godz., 5 godz. i 24 godz.",
             "label": "Rezerwy przyspieszeń budowy",
-            "recommendation": "Zarezerwuj to, czego potrzebujesz do innych działań."
+            "recommendation": "Zachowaj po 0 krótkich pominięć; zapas 1, 5 i 24 godz. przeznacz na inne czynności."
           },
           "optional_custom_camp_target": {
-            "description": "Przechwyć, obejrzyj, zapisz i aktywuj układ tylko wtedy, gdy ma zastąpić wbudowany cel.",
+            "description": "Przechwyć tryb Funkcjonalny dla niezbędnych budynków, Układ dla położeń bez dekoracji lub Dokładny dla wszystkich obsługiwanych szczegółów.",
             "label": "Opcjonalny własny cel obozu",
-            "recommendation": "Pozostaw wbudowany cel, dopóki nie sprawdzisz własnego układu."
+            "recommendation": "Używaj celu wbudowanego, chyba że potrzebujesz sprawdzonego celu własnego."
           },
           "stable_target": {
-            "description": "Wybierz dla wbudowanego celu poziom stajni frakcji od 1 do 5.",
+            "description": "Wybierz poziom stajni frakcji od 1 do 5 dla celu wbudowanego.",
             "label": "Docelowy poziom stajni",
-            "recommendation": "Wybierz poziom, na który wystarczą zasoby bieżącego wydarzenia."
+            "recommendation": "Poziom 5 do zwykłej rozbudowy wydarzenia, jeśli wystarczy zasobów."
           },
           "use_construction_time_skips": {
-            "description": "Przyspiesz potwierdzony licznik budowy, zachowując wybrane rezerwy przyspieszeń.",
+            "description": "Przyspiesz potwierdzoną budowę obozową, zachowując wybrane rezerwy pominięć budowy.",
             "label": "Używaj przyspieszeń budowy",
-            "recommendation": "Wyłączone, chyba że szybsza budowa jest warta tych przedmiotów."
+            "recommendation": "Włącz dla zwykłej rozbudowy, jeśli zapas pominięć na to pozwala."
+          },
+          "keep_skip_10m": {
+            "description": "Zachowaj tę liczbę pominięć budowy 10m; przy zwykłym użyciu ustaw rezerwę na 0.",
+            "label": "Zachowaj pominięcia 10m"
+          },
+          "keep_skip_1h": {
+            "description": "Zarezerwuj tę liczbę pominięć budowy 1h do innych czynności.",
+            "label": "Zachowaj pominięcia 1h"
+          },
+          "keep_skip_1m": {
+            "description": "Zachowaj tę liczbę pominięć budowy 1m; przy zwykłym użyciu ustaw rezerwę na 0.",
+            "label": "Zachowaj pominięcia 1m"
+          },
+          "keep_skip_24h": {
+            "description": "Zarezerwuj tę liczbę pominięć budowy 24h do innych czynności.",
+            "label": "Zachowaj pominięcia 24h"
+          },
+          "keep_skip_30m": {
+            "description": "Zachowaj tę liczbę pominięć budowy 30m; przy zwykłym użyciu ustaw rezerwę na 0.",
+            "label": "Zachowaj pominięcia 30m"
+          },
+          "keep_skip_5h": {
+            "description": "Zarezerwuj tę liczbę pominięć budowy 5h do innych czynności.",
+            "label": "Zachowaj pominięcia 5h"
+          },
+          "keep_skip_5m": {
+            "description": "Zachowaj tę liczbę pominięć budowy 5m; przy zwykłym użyciu ustaw rezerwę na 0.",
+            "label": "Zachowaj pominięcia 5m"
+          },
+          "saved_targets": {
+            "description": "Przechwycenie od razu zapisuje i aktywuje sprawdzony cel własny; wybór innego zapisanego celu również go od razu aktywuje.",
+            "label": "Zapisane cele własne"
+          },
+          "stone_reserve": {
+            "description": "Wyłącz tę ilość kamienia obozowego z wydatków na budowę; ustaw 0, jeśli można wydać nadwyżkę.",
+            "label": "Rezerwa kamienia"
+          },
+          "use_built_in_default": {
+            "description": "Natychmiast wróć do celu wbudowanego, zachowując zapisane cele własne.",
+            "label": "Użyj wbudowanego celu"
+          },
+          "wood_reserve": {
+            "description": "Wyłącz tę ilość drewna obozowego z wydatków na budowę; ustaw 0, jeśli można wydać nadwyżkę.",
+            "label": "Rezerwa drewna"
           }
         },
         "title": "Wybierz opcjonalną rozbudowę obozu"
@@ -1697,7 +1741,7 @@
           "minimum_free_capacity": {
             "description": "Rozpoczynaj transport dopiero po osiągnięciu podanego progu wolnej pojemności; pojedyncza proporcjonalna wysyłka może być mniejsza.",
             "label": "Minimalna wolna pojemność",
-            "recommendation": "Wybierz najniższy próg pasujący do zwykłego tempa transportów."
+            "recommendation": "1 wolne miejsce na wojsko do zwykłego proporcjonalnego uzupełniania."
           },
           "owned_berimond_camp": {
             "description": "Automatyzacja sama znajduje twój obóz w Berimondzie, więc nie wpisujesz identyfikatora obozu.",
@@ -1718,12 +1762,12 @@
           "troop_transport_skip": {
             "description": "Wybierz czas trwania przedmiotu używanego przy włączonym przyspieszeniu transportu.",
             "label": "Przyspieszenie transportu",
-            "recommendation": "Rezerwuj dłuższe przyspieszenia do innych zadań, jeśli ich potrzebujesz."
+            "recommendation": "Używaj pominięcia 1 godz. dla zwykłych potwierdzonych transportów."
           },
           "use_troop_transport_time_skips": {
             "description": "Zastosuj wybrane przyspieszenie do potwierdzonego transportu, gdy ten wciąż podróżuje.",
             "label": "Używaj przyspieszeń transportu",
-            "recommendation": "Wyłączone, chyba że szybsze zaopatrzenie obozu jest warte zużycia tych przedmiotów."
+            "recommendation": "Włącz dla zwykłego uzupełniania obozu, jeśli wystarczy pominięć."
           }
         },
         "title": "Ustaw proporcjonalny transport wojsk"
@@ -1848,7 +1892,7 @@
             "recommendation": "0 pozwala zaatakować każdy kwalifikujący się fort."
           },
           "priority": {
-            "description": "Ustaw kolejność aktywnych celów wysp i fortów; priorytet rozstrzyga w obrębie rzędu, a odległość remisy.",
+            "description": "Uporządkuj włączone grupy celów wysp i fortów; w każdej grupie najbliższy kwalifikujący się cel atakowany jest jako pierwszy.",
             "label": "Priorytet celów ataku",
             "recommendation": "Duże wyspy, małe wyspy, następnie forty od poziomu 80 do 40 przy zbieraniu akwamarynu."
           }
@@ -1892,18 +1936,18 @@
             "recommendation": "Włącz do zwykłej budowy."
           },
           "skip_reserves": {
-            "description": "Zachowaj wybraną liczbę każdego przedmiotu skracającego czas o 1 min, 5 min, 10 min, 30 min, 1 godz., 5 godz. i 24 godz.",
+            "description": "Zachowaj wybrane ilości przedmiotów 1 min, 5 min, 10 min, 30 min, 1 godz., 5 godz. i 24 godz. dla budowy i transportu.",
             "label": "Skracacze czasu w rezerwie",
             "recommendation": "Zachowaj 0 krótkich skracaczy, chyba że potrzebujesz ich gdzie indziej; zarezerwuj zapas 1-, 5- i 24-godzinny na inne wydarzenia."
           },
           "storm_reserves": {
-            "description": "Chroń wybrane ilości drewna Sztormu, kamienia i akwamarynu przed zużyciem w budowie.",
+            "description": "Wyłącz z budowy wybrane ilości drewna, kamienia i akwamarynu.",
             "label": "Rezerwy wydatków zamku Sztormu",
-            "recommendation": "Drewno Sztormu 0 i kamień 0 przy wydawaniu nadwyżek; akwamaryn według budżetu na nagrody."
+            "recommendation": "Drewno 0 i kamień 0 przy dostępnym nadmiarze; akwamaryn ustaw według planowanego budżetu nagród."
           },
           "time_skips": {
-            "description": "Stosuj kwalifikujące się skracacze czasu, zachowując wybrane rezerwy przedmiotów.",
-            "label": "Użyj skracaczy czasu budowy",
+            "description": "Stosuj dostępne pominięcia do budowy, transportu zasobów i wojsk przy zachowaniu wybranych rezerw.",
+            "label": "Użyj pominięć dla budowy i transportu",
             "recommendation": "Włącz, jeśli chcesz przyspieszyć zwykłą budowę."
           }
         },
@@ -1926,9 +1970,9 @@
             "recommendation": "0, jeśli cała nadwyżka może iść na nagrody; w przeciwnym razie zarezerwuj planowaną ilość."
           },
           "priority": {
-            "description": "Kupuj najpierw cele o niższych numerach i zakończ ograniczone przed nieograniczonymi.",
+            "description": "Sklep najpierw rozpatruje cele zakupowe o niższych numerach.",
             "label": "Priorytet",
-            "recommendation": "Użyj 1, 2 i 3 w preferowanej kolejności."
+            "recommendation": "Przypisz 1, 2 i 3 w wybranej kolejności, ustawiając cele ograniczone przed nagrodami nieograniczonymi."
           },
           "search": {
             "description": "Wyszukaj oficjalne nagrody Luny według nazwy przed skonfigurowaniem zakupu.",
@@ -1994,7 +2038,7 @@
         },
         "items": {
           "attack_history": {
-            "description": "Odczytaj średnią liczbę ataków Sztormu zgłoszonych od resetu w ciągu ostatnich 24 godzin.",
+            "description": "Odczytaj potwierdzone ataki w Burzy od resetu serwera podzielone przez 24, a nie średnią kroczącą z 24 godzin.",
             "label": "Średnia ataków od resetu",
             "recommendation": "Sprawdź ten szacunek tylko do odczytu przed zmianą zapotrzebowania na import."
           },

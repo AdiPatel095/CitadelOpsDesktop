@@ -553,7 +553,7 @@
     },
     "stormConstruction": {
       "harbor": "Satama: päällä, taso 1",
-      "resources": "Myrskypuu 0; kivi 0; akvamariini suunniteltu",
+      "resources": "Puu 0; kivi 0; akvamariini suunniteltu",
       "spending": "Premium ja purkaminen: pois",
       "title": "Esimerkki rakentamisesta ja varannoista",
       "transport": "Resurssikuljetus: päällä"
@@ -573,7 +573,7 @@
       "title": "Esimerkki tallennuksen ja käyttöönoton kulusta"
     },
     "stormTroops": {
-      "averages": "Hyökkäys- ja esiasetuskeskiarvot: vain luettavat",
+      "averages": "Vahvistetut hyökkäykset nollauksesta / 24; presetin keskiarvo vain luettavissa",
       "cap": "Sidottujen joukkojen raja: vain luettava",
       "donors": "Luovuttajat: näytetty järjestys, osittainen varasto sallittu",
       "minimum": "Jäljelle vähintään: 1 000 joukkoa",
@@ -1529,7 +1529,7 @@
       "builder": {
         "image": {
           "alt": "Havainnolliset Auto Berin valinnaisen leirirakentamisen asetukset",
-          "caption": "Sisäinen tavoite, tallin taso, rakentamisluvat ja varaukset."
+          "caption": "Sisäänrakennettu ja tallennettu kohde, tallennustilat, talli taso 5, puu- ja kivivaraukset sekä seitsemän aikahyppyä."
         },
         "items": {
           "allow_demolition": {
@@ -1543,34 +1543,78 @@
             "recommendation": "Pois, ellet nimenomaisesti halua premium-rakentamista."
           },
           "auto_beri_builder_lane": {
-            "description": "Rakenna tai paranna tarkkaa leiritavoitetta vahvistetulla palanneella saaliilla siirtämättä resursseja toisesta valtakunnasta.",
+            "description": "Rakenna tai paranna aktiivista Berimond-leirikohdetta vahvistetulla palanneella saaliilla tuomatta resursseja toisesta valtakunnasta.",
             "label": "Auto Berin rakentaja",
-            "recommendation": "Pois, kunnes olet tarkistanut tavoitteen ja kulutusluvat."
+            "recommendation": "Päällä tavallista leirirakentamista varten, kun kulutusluvat on tarkistettu."
           },
           "camp_resource_reserves": {
-            "description": "Pidä valitut Berimondin puu- ja kivimäärät rakentajan käytön ulkopuolella.",
+            "description": "Pidä valitut puu- ja kivimäärät pois leirirakentamisesta.",
             "label": "Leirin resurssivaraukset",
-            "recommendation": "Varaa muihin leiritöihin tarvitsemasi määrä."
+            "recommendation": "Puu 0 ja kivi 0, jos ylijäämää saa käyttää."
           },
           "construction_time_skip_reserves": {
-            "description": "Pidä valittu määrä kutakin ajansäästöesinettä rakentajan käytön ulkopuolella.",
+            "description": "Aseta erikseen säilytettävien 1 min, 5 min, 10 min, 30 min, 1 h, 5 h ja 24 h aikahyppyjen määrät.",
             "label": "Rakentamisen ajansäästövaraukset",
-            "recommendation": "Varaa muihin toimintoihin tarvitsemasi määrä."
+            "recommendation": "Säilytä 0 kutakin lyhyttä aikahyppyä; varaa 1 h, 5 h ja 24 h varasto muihin toimiin."
           },
           "optional_custom_camp_target": {
-            "description": "Tallenna, esikatsele ja aktivoi pohja vain, jos sen on tarkoitus korvata sisäinen tavoite.",
+            "description": "Tallenna Toiminnallinen tärkeille rakennuksille, Asettelu rakennusten paikoille ilman koristeita tai Tarkka kaikille tuetuille yksityiskohdille.",
             "label": "Valinnainen oma leiritavoite",
-            "recommendation": "Pidä sisäinen tavoite, ellet ole tarkistanut omaa pohjaa."
+            "recommendation": "Käytä sisäänrakennettua kohdetta, ellei tarkistettua omaa kohdetta tarvita."
           },
           "stable_target": {
-            "description": "Valitse sisäisen tavoitteen ryhmätallille haluttu taso väliltä 1–5.",
+            "description": "Valitse sisäänrakennetun kohteen ryhmätallin tasoksi 1–5.",
             "label": "Tallin tavoitetaso",
-            "recommendation": "Valitse taso, jonka nykyisen tapahtuman resurssit riittävät kattamaan."
+            "recommendation": "Taso 5 tavalliseen tapahtumarakentamiseen, jos resurssit riittävät."
           },
           "use_construction_time_skips": {
-            "description": "Nopeuta vahvistettua rakennusajastinta säilyttäen valitut ajansäästövaraukset.",
+            "description": "Nopeuta vahvistettua leirirakentamista ja säilytä valitut rakennuksen aikahyppyvaraukset.",
             "label": "Käytä rakentamisen ajansäästöjä",
-            "recommendation": "Pois, ellei nopeampi rakentaminen ole näiden esineiden arvoista."
+            "recommendation": "Päällä tavallista rakentamista varten, jos aikahyppyjä on riittävästi."
+          },
+          "keep_skip_10m": {
+            "description": "Pidä tämä määrä 10m rakennusaikahyppyjä erillään; aseta varaus arvoon 0 tavallisessa käytössä.",
+            "label": "Säilytä 10m aikahyppyjä"
+          },
+          "keep_skip_1h": {
+            "description": "Varaa tämä määrä 1h rakennusaikahyppyjä muihin toimintoihin.",
+            "label": "Säilytä 1h aikahyppyjä"
+          },
+          "keep_skip_1m": {
+            "description": "Pidä tämä määrä 1m rakennusaikahyppyjä erillään; aseta varaus arvoon 0 tavallisessa käytössä.",
+            "label": "Säilytä 1m aikahyppyjä"
+          },
+          "keep_skip_24h": {
+            "description": "Varaa tämä määrä 24h rakennusaikahyppyjä muihin toimintoihin.",
+            "label": "Säilytä 24h aikahyppyjä"
+          },
+          "keep_skip_30m": {
+            "description": "Pidä tämä määrä 30m rakennusaikahyppyjä erillään; aseta varaus arvoon 0 tavallisessa käytössä.",
+            "label": "Säilytä 30m aikahyppyjä"
+          },
+          "keep_skip_5h": {
+            "description": "Varaa tämä määrä 5h rakennusaikahyppyjä muihin toimintoihin.",
+            "label": "Säilytä 5h aikahyppyjä"
+          },
+          "keep_skip_5m": {
+            "description": "Pidä tämä määrä 5m rakennusaikahyppyjä erillään; aseta varaus arvoon 0 tavallisessa käytössä.",
+            "label": "Säilytä 5m aikahyppyjä"
+          },
+          "saved_targets": {
+            "description": "Tallennus säilyttää ja aktivoi tarkistetun oman kohteen heti; toisen tallennetun kohteen valinta aktivoi senkin heti.",
+            "label": "Tallennetut omat kohteet"
+          },
+          "stone_reserve": {
+            "description": "Pidä tämä määrä leirikiveä pois rakennuskuluista; käytä arvoa 0, jos ylijäämä voidaan käyttää.",
+            "label": "Kivivaraus"
+          },
+          "use_built_in_default": {
+            "description": "Palaa heti sisäänrakennettuun kohteeseen säilyttäen tallennetut omat kohteet.",
+            "label": "Käytä sisäänrakennettua oletusta"
+          },
+          "wood_reserve": {
+            "description": "Pidä tämä määrä leiripuuta pois rakennuskuluista; käytä arvoa 0, jos ylijäämä voidaan käyttää.",
+            "label": "Puuvaraus"
           }
         },
         "title": "Valitse valinnainen leirirakentaminen"
@@ -1697,7 +1741,7 @@
           "minimum_free_capacity": {
             "description": "Aloita siirrot vasta, kun ilmoitettu vapaa kapasiteetti saavuttaa tämän rajan; yksittäinen suhteellinen lähetys voi olla pienempi.",
             "label": "Vapaan kapasiteetin vähimmäismäärä",
-            "recommendation": "Valitse pienin vapaa raja, joka sopii tavalliseen siirtotahtiisi."
+            "recommendation": "1 vapaa joukkojen paikka tavalliseen suhteelliseen täydennykseen."
           },
           "owned_berimond_camp": {
             "description": "Auto Beri löytää omistamasi Berimond-leirin automaattisesti, joten leirin tunnusta ei tarvitse syöttää.",
@@ -1718,12 +1762,12 @@
           "troop_transport_skip": {
             "description": "Valitse käytettävän esineen kesto, kun kuljetuksen ajansäästö on käytössä.",
             "label": "Kuljetuksen ajansäästö",
-            "recommendation": "Varaa pidemmät säästöt muihin tehtäviin tarpeen mukaan."
+            "recommendation": "Käytä 1 tunnin aikahyppyä tavallisiin vahvistettuihin siirtoihin."
           },
           "use_troop_transport_time_skips": {
             "description": "Käytä valittua ajansäästöä vahvistettuun siirtoon sen ollessa matkalla.",
             "label": "Käytä kuljetuksen ajansäästöjä",
-            "recommendation": "Pois, ellei nopeampi leirihuolto ole säästettyjen esineiden arvoista."
+            "recommendation": "Päällä tavalliseen leirin täydennykseen, jos aikahyppyvarasto riittää."
           }
         },
         "title": "Määritä suhteelliset joukkojen siirrot"
@@ -1848,7 +1892,7 @@
             "recommendation": "0 sallii kaikki sopivat linnoitukset."
           },
           "priority": {
-            "description": "Järjestä käytössä olevat saari- ja linnoituskohteet; etusija ratkaisee rivillä ja etäisyys tasatilanteessa.",
+            "description": "Järjestä käytössä olevat saari- ja linnoituskohteiden ryhmät; kussakin ryhmässä lähin kelvollinen kohde hyökätään ensin.",
             "label": "Hyökkäyskohteiden etusija",
             "recommendation": "Suuret saaret, pienet saaret ja sitten tasojen 80–40 linnoitukset akvamariinin keräämiseen."
           }
@@ -1892,18 +1936,18 @@
             "recommendation": "Päällä tavallista rakentamista varten."
           },
           "skip_reserves": {
-            "description": "Jätä varalle valittu määrä kutakin 1 min, 5 min, 10 min, 30 min, 1 h, 5 h ja 24 h aikaohitusta.",
+            "description": "Säilytä valittu määrä 1 min, 5 min, 10 min, 30 min, 1 h, 5 h ja 24 h esineitä rakentamiseen ja kuljetuksiin.",
             "label": "Aikaohitukset varalla",
             "recommendation": "Lyhyitä ohituksia 0, ellei niitä tarvita muualla; säästä 1 h, 5 h ja 24 h varastoa muihin tapahtumiin."
           },
           "storm_reserves": {
-            "description": "Estä valittujen Myrskypuun, kiven ja akvamariinin määrien käyttö rakentamisessa.",
+            "description": "Pidä valitut puu-, kivi- ja akvamariinimäärät pois rakentamisesta.",
             "label": "Myrskylinnan kulutusvarannot",
-            "recommendation": "Myrskypuu 0 ja kivi 0, jos käytät ylijäämää; akvamariini suunnitellun palkintobudjetin mukaan."
+            "recommendation": "Puu 0 ja kivi 0, jos ylijäämää saa käyttää; määritä akvamariini palkintobudjettisi mukaan."
           },
           "time_skips": {
-            "description": "Käytä sopivia aikaohituksia säilyttäen valitut esinevarannot.",
-            "label": "Käytä rakentamisen aikaohituksia",
+            "description": "Käytä kelvollisia aikahyppyjä rakentamiseen sekä resurssi- ja joukkokuljetuksiin säilyttäen valitut varaukset.",
+            "label": "Käytä rakentamisen ja kuljetusten aikahyppyjä",
             "recommendation": "Päällä, jos haluat nopeuttaa tavallista rakentamista."
           }
         },
@@ -1926,9 +1970,9 @@
             "recommendation": "0, jos kaikki ylijäämä voidaan käyttää palkintoihin; muuten varaa suunnittelemasi määrä."
           },
           "priority": {
-            "description": "Osta pienemmän numeron tavoitteet ensin ja täytä rajatut tavoitteet ennen rajoittamattomia.",
+            "description": "Kauppa käsittelee ensin pienemmän numeron ostotavoitteet.",
             "label": "Etusija",
-            "recommendation": "Käytä 1, 2 ja 3 haluamassasi järjestyksessä."
+            "recommendation": "Määritä 1, 2 ja 3 haluamaasi järjestykseen ja sijoita rajalliset tavoitteet ennen rajattomia palkintoja."
           },
           "search": {
             "description": "Etsi virallisia Lunan palkintoja nimellä ennen oston määrittämistä.",
@@ -1994,7 +2038,7 @@
         },
         "items": {
           "attack_history": {
-            "description": "Lue Myrskyhyökkäysten keskimääräinen määrä nollauksen jälkeen viimeisten 24 tunnin ajalta.",
+            "description": "Lue palvelimen nollauksesta vahvistetut Storm-hyökkäykset jaettuna 24:llä, ei liukuvaa 24 tunnin keskiarvoa.",
             "label": "Hyökkäysten keskiarvo nollauksen jälkeen",
             "recommendation": "Tarkista tämä vain luettava arvio ennen tuontitarpeen muuttamista."
           },

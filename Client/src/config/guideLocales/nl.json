@@ -553,7 +553,7 @@
     },
     "stormConstruction": {
       "harbor": "Haven: aan, niveau 1",
-      "resources": "Stormhout 0; steen 0; aquamarijn gepland",
+      "resources": "Hout 0; steen 0; aquamarijn gepland",
       "spending": "Premium en sloop: uit",
       "title": "Voorbeeld van bouw en reserves",
       "transport": "Grondstoftransport: aan"
@@ -573,7 +573,7 @@
       "title": "Voorbeeld van opslaan en inschakelen"
     },
     "stormTroops": {
-      "averages": "Aanvals- en presetgemiddelden: alleen lezen",
+      "averages": "Bevestigde aanvallen sinds reset / 24; presetgemiddelde alleen lezen",
       "cap": "Limiet gebonden troepen: alleen lezen",
       "donors": "Donors: getoonde volgorde, deelvoorraad toegestaan",
       "minimum": "Minimum bewaard: 1.000 troepen",
@@ -1529,7 +1529,7 @@
       "builder": {
         "image": {
           "alt": "Illustratieve instellingen voor optionele kampbouw in Auto Beri",
-          "caption": "Ingebouwd doel, stalniveau, bouwrechten en reserves."
+          "caption": "Ingebouwd en opgeslagen doel, vastlegmodi, stal niveau 5, hout- en steenreserves en zeven versnellingstijden."
         },
         "items": {
           "allow_demolition": {
@@ -1543,34 +1543,78 @@
             "recommendation": "Uit, tenzij je uitdrukkelijk premiumbouw wilt."
           },
           "auto_beri_builder_lane": {
-            "description": "Bouw of verbeter een exact kampdoel met bevestigde teruggekeerde buit, zonder grondstoffen uit een ander koninkrijk te vervoeren.",
+            "description": "Bouw of verbeter het actieve Berimond-kampdoel met bevestigde teruggebrachte buit, zonder grondstoffen uit een ander koninkrijk aan te voeren.",
             "label": "Auto-Beri-bouwbeheer",
-            "recommendation": "Uit totdat je doel en uitgavenrechten hebt nagekeken."
+            "recommendation": "Aan voor gewone kampbouw nadat je de uitgaverechten hebt nagekeken."
           },
           "camp_resource_reserves": {
-            "description": "Houd de gekozen hoeveelheden Berimond-hout en -steen buiten bereik van de bouwer.",
+            "description": "Houd de gekozen hoeveelheden hout en steen buiten de kampbouw.",
             "label": "Kampgrondstoffen reserveren",
-            "recommendation": "Reserveer wat je voor ander kampwerk nodig hebt."
+            "recommendation": "Hout 0 en steen 0 als overschotten gebruikt mogen worden."
           },
           "construction_time_skip_reserves": {
-            "description": "Houd het gekozen aantal van elk tijdoverslagitem buiten bereik van de bouwer.",
+            "description": "Stel afzonderlijk in hoeveel versnellers van 1 min, 5 min, 10 min, 30 min, 1 uur, 5 uur en 24 uur je bewaart.",
             "label": "Bouwtijdoverslagen reserveren",
-            "recommendation": "Reserveer wat je voor andere activiteiten nodig hebt."
+            "recommendation": "Bewaar 0 van elke korte versneller; reserveer je voorraad van 1, 5 en 24 uur voor andere activiteiten."
           },
           "optional_custom_camp_target": {
-            "description": "Leg een indeling vast, bekijk die, sla die op en activeer die alleen als ze het ingebouwde doel moet vervangen.",
+            "description": "Leg Functioneel vast voor essentiële gebouwen, Indeling voor gebouwposities zonder decoraties of Exact voor alle ondersteunde details.",
             "label": "Optioneel eigen kampdoel",
-            "recommendation": "Behoud het ingebouwde doel tenzij je een eigen indeling hebt gecontroleerd."
+            "recommendation": "Gebruik het ingebouwde doel tenzij je een nagekeken eigen doel nodig hebt."
           },
           "stable_target": {
-            "description": "Kies voor het ingebouwde doel het gewenste niveau van de factiestal van 1 tot 5.",
+            "description": "Kies stalniveau 1 tot en met 5 voor het ingebouwde doel.",
             "label": "Doelniveau stal",
-            "recommendation": "Kies een niveau dat je huidige evenementmiddelen aankunnen."
+            "recommendation": "Niveau 5 voor gewone evenementbouw als je genoeg grondstoffen hebt."
           },
           "use_construction_time_skips": {
-            "description": "Versnel een bevestigde bouwtimer met behoud van de gekozen tijdoverslagreserves.",
+            "description": "Versnel een bevestigde kampbouwtimer terwijl je de gekozen bouwversnellingsreserves behoudt.",
             "label": "Bouwtijdoverslagen gebruiken",
-            "recommendation": "Uit, tenzij sneller bouwen die items waard is."
+            "recommendation": "Aan voor gewone bouw als je voorraad versnellers dit toelaat."
+          },
+          "keep_skip_10m": {
+            "description": "Houd dit aantal bouwversnellers van 10m apart; zet de reserve op 0 voor gewoon gebruik.",
+            "label": "10m-versnellers bewaren"
+          },
+          "keep_skip_1h": {
+            "description": "Reserveer dit aantal bouwversnellers van 1h voor andere activiteiten.",
+            "label": "1h-versnellers bewaren"
+          },
+          "keep_skip_1m": {
+            "description": "Houd dit aantal bouwversnellers van 1m apart; zet de reserve op 0 voor gewoon gebruik.",
+            "label": "1m-versnellers bewaren"
+          },
+          "keep_skip_24h": {
+            "description": "Reserveer dit aantal bouwversnellers van 24h voor andere activiteiten.",
+            "label": "24h-versnellers bewaren"
+          },
+          "keep_skip_30m": {
+            "description": "Houd dit aantal bouwversnellers van 30m apart; zet de reserve op 0 voor gewoon gebruik.",
+            "label": "30m-versnellers bewaren"
+          },
+          "keep_skip_5h": {
+            "description": "Reserveer dit aantal bouwversnellers van 5h voor andere activiteiten.",
+            "label": "5h-versnellers bewaren"
+          },
+          "keep_skip_5m": {
+            "description": "Houd dit aantal bouwversnellers van 5m apart; zet de reserve op 0 voor gewoon gebruik.",
+            "label": "5m-versnellers bewaren"
+          },
+          "saved_targets": {
+            "description": "Vastleggen slaat een nagekeken eigen doel meteen op en activeert het; een ander opgeslagen doel kiezen activeert ook meteen.",
+            "label": "Opgeslagen eigen doelen"
+          },
+          "stone_reserve": {
+            "description": "Houd deze hoeveelheid kampsteen buiten bouwuitgaven; gebruik 0 als het overschot besteed mag worden.",
+            "label": "Steenreserve"
+          },
+          "use_built_in_default": {
+            "description": "Schakel meteen terug naar het ingebouwde doel en behoud opgeslagen eigen doelen.",
+            "label": "Ingebouwde standaard gebruiken"
+          },
+          "wood_reserve": {
+            "description": "Houd deze hoeveelheid kamphout buiten bouwuitgaven; gebruik 0 als het overschot besteed mag worden.",
+            "label": "Houtreserve"
           }
         },
         "title": "Kies optionele kampbouw"
@@ -1697,7 +1741,7 @@
           "minimum_free_capacity": {
             "description": "Begin transport pas wanneer de gemelde vrije capaciteit deze drempel bereikt; een enkele evenredige zending mag kleiner zijn.",
             "label": "Minimale vrije capaciteit",
-            "recommendation": "Kies de laagste vrije drempel die bij je gewone transportschema past."
+            "recommendation": "1 vrije troepenplaats voor gewone evenredige bevoorrading."
           },
           "owned_berimond_camp": {
             "description": "Auto Beri vindt je eigen Berimond-kamp automatisch, dus je hoeft geen kamp-ID in te voeren.",
@@ -1718,12 +1762,12 @@
           "troop_transport_skip": {
             "description": "Kies de duur van het item dat wordt gebruikt wanneer transportversnelling aanstaat.",
             "label": "Transporttijdoverslag",
-            "recommendation": "Bewaar langere overslagen voor andere taken als je ze nodig hebt."
+            "recommendation": "Gebruik de versneller van 1 uur voor gewone bevestigde transporten."
           },
           "use_troop_transport_time_skips": {
             "description": "Pas de gekozen tijdoverslag toe op een bevestigd transport terwijl het onderweg is.",
             "label": "Transporttijdoverslagen gebruiken",
-            "recommendation": "Uit, tenzij snellere kampbevoorrading die bewaarde items waard is."
+            "recommendation": "Aan voor gewone kampbevoorrading als je voorraad versnellers dit toelaat."
           }
         },
         "title": "Stel evenredig troepentransport in"
@@ -1848,7 +1892,7 @@
             "recommendation": "0 staat elk geschikt fort toe."
           },
           "priority": {
-            "description": "Rangschik ingeschakelde eiland- en fortdoelen; prioriteit beslist binnen een rij en afstand verbreekt gelijke standen.",
+            "description": "Rangschik ingeschakelde eiland- en fortdoelgroepen; binnen elke groep gaat het dichtstbijzijnde geschikte doel eerst.",
             "label": "Aanvalsdoelprioriteit",
             "recommendation": "Grote eilanden, kleine eilanden en dan forten van niveau 80 tot 40 voor aquamarijn."
           }
@@ -1892,18 +1936,18 @@
             "recommendation": "Aan voor gewone bouw."
           },
           "skip_reserves": {
-            "description": "Bewaar het gekozen aantal van elk tijdsprongitem van 1 min, 5 min, 10 min, 30 min, 1 uur, 5 uur en 24 uur.",
+            "description": "Bewaar het gekozen aantal voorwerpen van 1 min, 5 min, 10 min, 30 min, 1 uur, 5 uur en 24 uur voor bouw en transport.",
             "label": "Tijdsprongen in reserve",
             "recommendation": "Houd korte sprongen op 0 tenzij elders nodig; reserveer je voorraad van 1, 5 en 24 uur voor andere evenementen."
           },
           "storm_reserves": {
-            "description": "Houd gekozen hoeveelheden Stormhout, steen en aquamarijn buiten bereik van de bouw.",
+            "description": "Houd de gekozen hoeveelheden hout, steen en aquamarijn buiten de bouw.",
             "label": "Bouwuitgavenreserves van Stormkasteel",
-            "recommendation": "Stormhout 0 en steen 0 bij gebruik van overschotten; reserveer aquamarijn volgens je geplande beloningsbudget."
+            "recommendation": "Hout 0 en steen 0 als overschotten besteed mogen worden; stel aquamarijn in op je geplande beloningsbudget."
           },
           "time_skips": {
-            "description": "Pas geschikte tijdsprongen toe terwijl je gekozen itemreserves bewaart.",
-            "label": "Bouwtijdsprongen gebruiken",
+            "description": "Gebruik geschikte versnellers voor bouw, grondstoffentransport en troepentransport met behoud van de gekozen reserves.",
+            "label": "Versnellers voor bouw en transport gebruiken",
             "recommendation": "Aan als je gewone bouw wilt versnellen."
           }
         },
@@ -1926,9 +1970,9 @@
             "recommendation": "0 als alle overschotten naar beloningen mogen; reserveer anders je geplande hoeveelheid."
           },
           "priority": {
-            "description": "Koop eerst doelen met een lager nummer en voltooi beperkte doelen vóór onbeperkte.",
+            "description": "De winkel behandelt aankoopdoelen met lagere nummers eerst.",
             "label": "Prioriteit",
-            "recommendation": "Gebruik 1, 2 en 3 in de gewenste volgorde."
+            "recommendation": "Geef 1, 2 en 3 in de gewenste volgorde en plaats beperkte doelen vóór onbeperkte beloningen."
           },
           "search": {
             "description": "Zoek officiële Luna-beloningen op naam voordat je een aankoop instelt.",
@@ -1994,7 +2038,7 @@
         },
         "items": {
           "attack_history": {
-            "description": "Lees het gemiddelde aantal gemelde Stormaanvallen sinds de reset in de afgelopen 24 uur.",
+            "description": "Lees bevestigde Storm-aanvallen sinds de serverreset gedeeld door 24, niet een voortschrijdend gemiddelde over 24 uur.",
             "label": "Gemiddelde aanvallen sinds reset",
             "recommendation": "Bekijk deze alleen-lezen schatting voordat je importbehoeften wijzigt."
           },

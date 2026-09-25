@@ -553,7 +553,7 @@
     },
     "stormConstruction": {
       "harbor": "Uostas: įjungtas, 1 lygis",
-      "resources": "Audros mediena 0; akmuo 0; akvamarinas pagal planą",
+      "resources": "Mediena 0; akmuo 0; akvamarinas suplanuotas",
       "spending": "Mokamos išlaidos ir griovimas: išjungti",
       "title": "Statybos ir atsargų pavyzdys",
       "transport": "Išteklių gabenimas: įjungtas"
@@ -573,7 +573,7 @@
       "title": "Išsaugojimo ir įjungimo pavyzdys"
     },
     "stormTroops": {
-      "averages": "Puolimų ir ruošinių vidurkiai: tik skaitomi",
+      "averages": "Patvirtintos atakos nuo atkūrimo / 24; presetų vidurkis tik skaitymui",
       "cap": "Įsipareigojusių karių riba: tik skaitoma",
       "donors": "Tiekėjai: rodoma tvarka, dalinės atsargos leidžiamos",
       "minimum": "Palikti mažiausiai: 1 000 karių",
@@ -1529,7 +1529,7 @@
       "builder": {
         "image": {
           "alt": "Pavyzdiniai neprivalomos stovyklos statybos nustatymai",
-          "caption": "Integruotas tikslas, arklidės lygis, statybos leidimai ir atsargos."
+          "caption": "Įtaisytasis ir išsaugotas tikslas, fiksavimo režimai, 5 lygio arklidė, medienos ir akmens atsargos bei septynios laiko praleidimo trukmės."
         },
         "items": {
           "allow_demolition": {
@@ -1543,34 +1543,78 @@
             "recommendation": "Išjungta, nebent aiškiai norite mokamos statybos."
           },
           "auto_beri_builder_lane": {
-            "description": "Statykite arba gerinkite tikslų stovyklos tikslą iš patvirtinto grįžusio grobio, neperveždami išteklių iš kitos karalystės.",
+            "description": "Statykite arba gerinkite aktyvų Berimondo stovyklos tikslą už patvirtintą grįžusį grobį, neįveždami išteklių iš kitos karalystės.",
             "label": "Automatinio Berimondo statytojas",
-            "recommendation": "Išjungta, kol peržiūrėsite tikslą ir leidimus išlaidoms."
+            "recommendation": "Įjunkite įprastoms stovyklos statyboms peržiūrėję išlaidų leidimus."
           },
           "camp_resource_reserves": {
-            "description": "Laikykite pasirinktus Berimondo medienos ir akmens kiekius neprieinamus statytojui.",
+            "description": "Pasirinktus medienos ir akmens kiekius saugokite nuo stovyklos statybų.",
             "label": "Stovyklos išteklių atsargos",
-            "recommendation": "Rezervuokite tai, ko reikia kitoms stovyklos užduotims."
+            "recommendation": "Mediena 0 ir akmuo 0, jei perteklių galima naudoti."
           },
           "construction_time_skip_reserves": {
-            "description": "Laikykite pasirinktą kiekvieno laiko praleidimo daikto kiekį neprieinamą statytojui.",
+            "description": "Atskirai nustatykite, kiek 1 min, 5 min, 10 min, 30 min, 1 val., 5 val. ir 24 val. laiko praleidimų išsaugoti.",
             "label": "Statybos laiko praleidimo atsargos",
-            "recommendation": "Rezervuokite tai, ko reikia kitai veiklai."
+            "recommendation": "Trumpų praleidimų palikite po 0; 1, 5 ir 24 val. atsargas rezervuokite kitai veiklai."
           },
           "optional_custom_camp_target": {
-            "description": "Užfiksuokite, peržiūrėkite, išsaugokite ir įjunkite planą tik jei jis turi pakeisti integruotą tikslą.",
+            "description": "Fiksuokite Funkcinį pagrindiniams pastatams, Išdėstymą pastatų vietoms be dekoracijų arba Tikslų visoms palaikomoms detalėms.",
             "label": "Neprivalomas nuosavas stovyklos tikslas",
-            "recommendation": "Palikite integruotą tikslą, kol neperžiūrėjote nuosavo plano."
+            "recommendation": "Naudokite įtaisytąjį tikslą, nebent reikia peržiūrėto savo tikslo."
           },
           "stable_target": {
-            "description": "Integruotam tikslui pasirinkite norimą frakcijos arklidės lygį nuo 1 iki 5.",
+            "description": "Įtaisytajam tikslui pasirinkite frakcijos arklidės 1–5 lygį.",
             "label": "Arklidės tikslinis lygis",
-            "recommendation": "Pasirinkite lygį, kurį leidžia dabartinio renginio ištekliai."
+            "recommendation": "5 lygis įprastoms renginio statyboms, jei užtenka išteklių."
           },
           "use_construction_time_skips": {
-            "description": "Pagreitinkite patvirtintą statybos laikmatį išsaugodami pasirinktas laiko praleidimo atsargas.",
+            "description": "Spartinkite patvirtintą stovyklos statybą, išsaugodami pasirinktas statybų praleidimų atsargas.",
             "label": "Naudoti statybos pagreitinimus",
-            "recommendation": "Išjungta, nebent greitesnė statyba verta šių daiktų."
+            "recommendation": "Įjunkite įprastoms statyboms, jei užtenka laiko praleidimų."
+          },
+          "keep_skip_10m": {
+            "description": "Šį 10m statybų praleidimų skaičių atidėkite; įprastam naudojimui nustatykite atsargą 0.",
+            "label": "Saugoti 10m praleidimus"
+          },
+          "keep_skip_1h": {
+            "description": "Šį 1h statybų praleidimų skaičių rezervuokite kitai veiklai.",
+            "label": "Saugoti 1h praleidimus"
+          },
+          "keep_skip_1m": {
+            "description": "Šį 1m statybų praleidimų skaičių atidėkite; įprastam naudojimui nustatykite atsargą 0.",
+            "label": "Saugoti 1m praleidimus"
+          },
+          "keep_skip_24h": {
+            "description": "Šį 24h statybų praleidimų skaičių rezervuokite kitai veiklai.",
+            "label": "Saugoti 24h praleidimus"
+          },
+          "keep_skip_30m": {
+            "description": "Šį 30m statybų praleidimų skaičių atidėkite; įprastam naudojimui nustatykite atsargą 0.",
+            "label": "Saugoti 30m praleidimus"
+          },
+          "keep_skip_5h": {
+            "description": "Šį 5h statybų praleidimų skaičių rezervuokite kitai veiklai.",
+            "label": "Saugoti 5h praleidimus"
+          },
+          "keep_skip_5m": {
+            "description": "Šį 5m statybų praleidimų skaičių atidėkite; įprastam naudojimui nustatykite atsargą 0.",
+            "label": "Saugoti 5m praleidimus"
+          },
+          "saved_targets": {
+            "description": "Fiksavimas iškart išsaugo ir aktyvuoja peržiūrėtą savo tikslą; kito išsaugoto tikslo pasirinkimas taip pat jį iškart aktyvuoja.",
+            "label": "Išsaugoti savi tikslai"
+          },
+          "stone_reserve": {
+            "description": "Šio stovyklos akmens kiekio neišleiskite statyboms; nustatykite 0, jei perteklių galima išleisti.",
+            "label": "Akmens atsarga"
+          },
+          "use_built_in_default": {
+            "description": "Iškart grįžkite prie įtaisytojo tikslo, išsaugodami savo tikslus.",
+            "label": "Naudoti įtaisytąjį numatytąjį tikslą"
+          },
+          "wood_reserve": {
+            "description": "Šio stovyklos medienos kiekio neišleiskite statyboms; nustatykite 0, jei perteklių galima išleisti.",
+            "label": "Medienos atsarga"
           }
         },
         "title": "Pasirinkite neprivalomą stovyklos statybą"
@@ -1697,7 +1741,7 @@
           "minimum_free_capacity": {
             "description": "Pradėkite perkėlimus tik kai nurodyta laisva talpa pasiekia šį slenkstį; pavienė proporcinga siunta gali būti mažesnė.",
             "label": "Minimali laisva talpa",
-            "recommendation": "Pasirinkite mažiausią laisvos talpos slenkstį, tinkantį įprastam perkėlimų tempui."
+            "recommendation": "1 laisva vieta kariams įprastam proporcingam papildymui."
           },
           "owned_berimond_camp": {
             "description": "Automatika pati randa jums priklausančią Berimondo stovyklą, todėl stovyklos ID įvesti nereikia.",
@@ -1718,12 +1762,12 @@
           "troop_transport_skip": {
             "description": "Pasirinkite daikto trukmę, naudojamą įjungus transporto pagreitinimą.",
             "label": "Transporto pagreitinimas",
-            "recommendation": "Ilgesnius pagreitinimus pasilikite kitoms užduotims, jei jų reikia."
+            "recommendation": "Patvirtintiems įprastiems pervedimams naudokite 1 valandos praleidimą."
           },
           "use_troop_transport_time_skips": {
             "description": "Pritaikykite pasirinktą pagreitinimą patvirtintam perkėlimui, kol jis dar kelyje.",
             "label": "Naudoti transporto pagreitinimus",
-            "recommendation": "Išjungta, nebent greitesnis stovyklos aprūpinimas vertas išsaugotų daiktų."
+            "recommendation": "Įjunkite įprastam stovyklos aprūpinimui, jei laiko praleidimų atsargos leidžia."
           }
         },
         "title": "Nustatykite proporcingus karių perkėlimus"
@@ -1848,7 +1892,7 @@
             "recommendation": "0 leidžia bet kurį tinkamą fortą."
           },
           "priority": {
-            "description": "Išrikiuokite įjungtus salų ir fortų tikslus; toje pačioje eilėje lemia pirmenybė, o lygybę išsprendžia atstumas.",
+            "description": "Surikiuokite įjungtas salų ir fortų tikslų grupes; kiekvienoje grupėje pirmiausia puolamas artimiausias tinkamas tikslas.",
             "label": "Puolimo tikslų pirmenybė",
             "recommendation": "Didelės salos, mažos salos, tada 80–40 lygių fortai akvamarinui rinkti."
           }
@@ -1892,18 +1936,18 @@
             "recommendation": "Įjungta įprastai statybai."
           },
           "skip_reserves": {
-            "description": "Atidėkite pasirinktą kiekį kiekvieno 1 min, 5 min, 10 min, 30 min, 1 val, 5 val ir 24 val laiko praleidimo daikto.",
+            "description": "Saugokite pasirinktą 1 min, 5 min, 10 min, 30 min, 1 val., 5 val. ir 24 val. daiktų skaičių statyboms ir pervežimams.",
             "label": "Laiko praleidimo atsargos",
             "recommendation": "Trumpų praleidimų 0, jei jų nereikia kitur; 1, 5 ir 24 valandų atsargas pasilikite kitiems įvykiams."
           },
           "storm_reserves": {
-            "description": "Neleiskite statyboms naudoti pasirinktų Audros medienos, akmens ir akvamarino kiekių.",
+            "description": "Pasirinktus medienos, akmens ir akvamarino kiekius saugokite nuo statybų.",
             "label": "Audros pilies išlaidų atsargos",
-            "recommendation": "Audros mediena 0 ir akmuo 0, jei leidžiate perteklių; akvamarinas pagal numatytą dovanų biudžetą."
+            "recommendation": "Mediena 0 ir akmuo 0, jei perteklių galima išleisti; akvamariną nustatykite pagal planuojamą atlygių biudžetą."
           },
           "time_skips": {
-            "description": "Naudokite tinkamus laiko praleidimus, išsaugodami pasirinktas daiktų atsargas.",
-            "label": "Naudoti statybos laiko praleidimus",
+            "description": "Tinkamus laiko praleidimus taikykite statyboms, išteklių ir karių pervežimams, išsaugodami pasirinktas atsargas.",
+            "label": "Naudoti statybų ir pervežimų praleidimus",
             "recommendation": "Įjungta, jei norite greitesnės įprastos statybos."
           }
         },
@@ -1926,9 +1970,9 @@
             "recommendation": "0, jei visas perteklius gali būti naudojamas dovanoms; kitu atveju pasilikite suplanuotą kiekį."
           },
           "priority": {
-            "description": "Pirma pirkite mažesnio numerio tikslus, o ribotus baikite prieš neribotus.",
+            "description": "Parduotuvė pirmiausia vertina mažesniais numeriais pažymėtus pirkimo tikslus.",
             "label": "Pirmenybė",
-            "recommendation": "Naudokite 1, 2 ir 3 norima tvarka."
+            "recommendation": "Priskirkite 1, 2 ir 3 norima tvarka, ribotus tikslus išdėstydami prieš neribotus atlygius."
           },
           "search": {
             "description": "Prieš nustatydami pirkimą pagal pavadinimą raskite oficialias Lunos dovanas.",
@@ -1994,7 +2038,7 @@
         },
         "items": {
           "attack_history": {
-            "description": "Perskaitykite vidutinį Audros puolimų, praneštų po atkūrimo per paskutines 24 valandas, skaičių.",
+            "description": "Skaitykite patvirtintų Audros atakų nuo serverio atkūrimo skaičių, padalytą iš 24, o ne slenkantį 24 valandų vidurkį.",
             "label": "Vidutinis puolimų skaičius po atkūrimo",
             "recommendation": "Prieš keisdami importo poreikį peržiūrėkite šį tik skaitomą įvertį."
           },

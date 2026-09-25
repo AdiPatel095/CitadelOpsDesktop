@@ -553,7 +553,7 @@
     },
     "stormConstruction": {
       "harbor": "港口：開啟，等級 1",
-      "resources": "風暴木材 0；石材 0；海藍寶石依計畫",
+      "resources": "木材0；石材0；計畫的海藍寶石",
       "spending": "高級建造與拆除：關閉",
       "title": "建造與保留量範例",
       "transport": "資源運輸：開啟"
@@ -573,7 +573,7 @@
       "title": "儲存與啟用流程範例"
     },
     "stormTroops": {
-      "averages": "攻擊及預設平均值：唯讀",
+      "averages": "重置後已確認攻擊數÷24；預設平均值唯讀",
       "cap": "已占用部隊上限：唯讀",
       "donors": "供應城堡：依顯示順序，可部分供應",
       "minimum": "最低保留：1,000 名部隊",
@@ -1529,7 +1529,7 @@
       "builder": {
         "image": {
           "alt": "可選營地建造設定示意圖",
-          "caption": "內建目標、馬廄目標、建造權限與預留項目。"
+          "caption": "內建與已儲存目標、擷取模式、5級馬廄、木材和石材保留量，以及七種加速時長的範例。"
         },
         "items": {
           "allow_demolition": {
@@ -1543,34 +1543,78 @@
             "recommendation": "除非你有意以高級貨幣建造，否則建議關閉。"
           },
           "auto_beri_builder_lane": {
-            "description": "以已確認的戰利品建造或升級營地的指定目標，不從其他王國運送資源。",
+            "description": "使用確認已返回的戰利品建造或升級目前的貝里蒙德營地目標，不從其他王國運入資源。",
             "label": "自動貝里蒙德建造流程",
-            "recommendation": "檢查目標和花費權限以前，建議關閉。"
+            "recommendation": "檢查支出許可後，為日常營地建造開啟此選項。"
           },
           "camp_resource_reserves": {
-            "description": "保留指定數量的貝里蒙德木材和石材，不讓建造流程使用。",
+            "description": "讓所選數量的木材與石材不投入營地建造。",
             "label": "營地資源預留量",
-            "recommendation": "保留其他營地工作需要的數量。"
+            "recommendation": "若可使用剩餘資源，木材設為0，石材設為0。"
           },
           "construction_time_skip_reserves": {
-            "description": "保留指定數量的各種時間跳過道具，不讓建造流程使用。",
+            "description": "分別設定要保留的1分鐘、5分鐘、10分鐘、30分鐘、1小時、5小時及24小時加速道具數量。",
             "label": "建造時間跳過道具預留量",
-            "recommendation": "保留其他活動需要的道具。"
+            "recommendation": "短時間加速各保留0個；將1、5及24小時的庫存留給其他活動。"
           },
           "optional_custom_camp_target": {
-            "description": "只有想取代內建目標時，才擷取、預覽、儲存並啟用自訂布局。",
+            "description": "為必要建築擷取「功能」，為不含裝飾的建築位置擷取「配置」，為所有支援細節擷取「精確」。",
             "label": "可選的自訂營地目標",
-            "recommendation": "檢查自訂布局以前，建議沿用內建目標。"
+            "recommendation": "除非需要已檢查的自訂目標，否則使用內建目標。"
           },
           "stable_target": {
-            "description": "為內建目標選擇1至5級的派系馬廄目標等級。",
+            "description": "為內建目標選擇1至5級的陣營馬廄。",
             "label": "馬廄目標",
-            "recommendation": "選擇目前活動資源能支持的等級。"
+            "recommendation": "資源充足時，日常活動建造建議5級。"
           },
           "use_construction_time_skips": {
-            "description": "在保留所選跳過道具預留量的情況下推進已確認的建造計時器。",
+            "description": "保留所選的建造加速道具存量，同時加快已確認的營地建造。",
             "label": "使用建造時間跳過道具",
-            "recommendation": "除非加快建造值得消耗這些道具，否則建議關閉。"
+            "recommendation": "加速道具充足時，日常建造建議開啟。"
+          },
+          "keep_skip_10m": {
+            "description": "保留此數量的10m建造加速道具；日常使用將保留量設為0。",
+            "label": "保留10m加速道具"
+          },
+          "keep_skip_1h": {
+            "description": "為其他活動保留此數量的1h建造加速道具。",
+            "label": "保留1h加速道具"
+          },
+          "keep_skip_1m": {
+            "description": "保留此數量的1m建造加速道具；日常使用將保留量設為0。",
+            "label": "保留1m加速道具"
+          },
+          "keep_skip_24h": {
+            "description": "為其他活動保留此數量的24h建造加速道具。",
+            "label": "保留24h加速道具"
+          },
+          "keep_skip_30m": {
+            "description": "保留此數量的30m建造加速道具；日常使用將保留量設為0。",
+            "label": "保留30m加速道具"
+          },
+          "keep_skip_5h": {
+            "description": "為其他活動保留此數量的5h建造加速道具。",
+            "label": "保留5h加速道具"
+          },
+          "keep_skip_5m": {
+            "description": "保留此數量的5m建造加速道具；日常使用將保留量設為0。",
+            "label": "保留5m加速道具"
+          },
+          "saved_targets": {
+            "description": "擷取會立即儲存並啟用已檢查的自訂目標；選擇另一個已儲存目標也會立即啟用。",
+            "label": "已儲存的自訂目標"
+          },
+          "stone_reserve": {
+            "description": "這部分營地石材不會用於建造；可使用剩餘資源時設為0。",
+            "label": "石材保留量"
+          },
+          "use_built_in_default": {
+            "description": "立即切換回內建目標，同時保留已儲存的自訂目標。",
+            "label": "使用內建預設目標"
+          },
+          "wood_reserve": {
+            "description": "這部分營地木材不會用於建造；可使用剩餘資源時設為0。",
+            "label": "木材保留量"
           }
         },
         "title": "選擇可選的營地建造設定"
@@ -1697,7 +1741,7 @@
           "minimum_free_capacity": {
             "description": "只有已回報的剩餘容量達到此門檻時才開始運輸；單次按比例計算的運量可以更少。",
             "label": "最低剩餘容量",
-            "recommendation": "使用符合你一般運輸頻率的最小剩餘容量門檻。"
+            "recommendation": "日常依比例補充時，建議保留1個部隊空位。"
           },
           "owned_berimond_camp": {
             "description": "自動貝里蒙德會自動找到你擁有的貝里蒙德營地，因此無須輸入營地ID。",
@@ -1718,12 +1762,12 @@
           "troop_transport_skip": {
             "description": "啟用運輸時間跳過時，選擇使用道具的時長。",
             "label": "部隊運輸跳過道具",
-            "recommendation": "如有需要，將較長的跳過道具留給其他工作。"
+            "recommendation": "日常已確認的運輸建議使用1小時加速道具。"
           },
           "use_troop_transport_time_skips": {
             "description": "將所選跳過道具套用到仍在途中的已確認運輸。",
             "label": "使用部隊運輸時間跳過道具",
-            "recommendation": "除非加快營地補給值得消耗已存的跳過道具，否則建議關閉。"
+            "recommendation": "加速道具庫存允許時，日常營地補給建議開啟。"
           }
         },
         "title": "設定按比例運輸部隊"
@@ -1848,7 +1892,7 @@
             "recommendation": "設為 0 可允許攻打任何符合條件的堡壘。"
           },
           "priority": {
-            "description": "排序已啟用的資源島和堡壘目標；同一列先依優先順序，再以距離決定次序。",
+            "description": "排列已啟用的資源島與堡壘目標群組；每組內先攻擊最近的合格目標。",
             "label": "攻擊目標優先順序",
             "recommendation": "採集海藍寶石時，建議依大型資源島、小型資源島，再依堡壘等級 80 至 40 排序。"
           }
@@ -1892,18 +1936,18 @@
             "recommendation": "日常建造建議開啟。"
           },
           "skip_reserves": {
-            "description": "保留各種 1 分鐘、5 分鐘、10 分鐘、30 分鐘、1 小時、5 小時及 24 小時加速道具的所選數量。",
+            "description": "為建造與運輸保留所選數量的1分鐘、5分鐘、10分鐘、30分鐘、1小時、5小時及24小時道具。",
             "label": "保留的時間加速道具",
             "recommendation": "短時間加速若無其他用途可各留 0 個；1 小時、5 小時及 24 小時則保留供其他活動使用的存量。"
           },
           "storm_reserves": {
-            "description": "將所選數量的風暴木材、石材與海藍寶石排除於建造支出之外。",
+            "description": "所選數量的木材、石材及海藍寶石不會用於建造。",
             "label": "風暴城堡支出保留量",
-            "recommendation": "若可使用剩餘資源，風暴木材與石材皆設為 0；海藍寶石則依預計購買獎勵的預算設定。"
+            "recommendation": "若可使用剩餘資源，木材0、石材0；海藍寶石依計畫的獎勵預算設定。"
           },
           "time_skips": {
-            "description": "使用符合條件的時間加速道具，同時保留所選的道具數量。",
-            "label": "使用建造時間加速",
+            "description": "在保留所選存量的同時，將合格加速道具用於建造、資源運輸及部隊運輸。",
+            "label": "使用建造與運輸加速道具",
             "recommendation": "若想加快日常建造，建議開啟。"
           }
         },
@@ -1926,9 +1970,9 @@
             "recommendation": "若可用所有剩餘海藍寶石購買獎勵，設為 0；否則保留計畫所需數量。"
           },
           "priority": {
-            "description": "先購買數字較小的目標，並在無限量獎勵前完成限量目標。",
+            "description": "商店會先考慮數字較小的購買目標。",
             "label": "優先順序",
-            "recommendation": "依您偏好的順序設定 1、2、3。"
+            "recommendation": "依偏好排列1、2、3，並將限量目標放在無限量獎勵之前。"
           },
           "search": {
             "description": "設定購買前，先依名稱搜尋官方露娜獎勵。",
@@ -1994,7 +2038,7 @@
         },
         "items": {
           "attack_history": {
-            "description": "查看過去 24 小時內，自重置以來遊戲回報的風暴攻擊平均次數。",
+            "description": "查看伺服器重置以來已確認的風暴攻擊數除以24的結果，而非滾動24小時平均值。",
             "label": "重置後平均攻擊次數",
             "recommendation": "變更調入需求前，請查看這項唯讀估算。"
           },

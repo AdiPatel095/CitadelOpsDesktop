@@ -553,7 +553,7 @@
     },
     "stormConstruction": {
       "harbor": "Havn: på, nivå 1",
-      "resources": "Storm-tre 0; stein 0; akvamarin etter plan",
+      "resources": "Tre 0; stein 0; akvamarin planlagt",
       "spending": "Premium og riving: av",
       "title": "Eksempel på bygging og reserver",
       "transport": "Ressurstransport: på"
@@ -573,7 +573,7 @@
       "title": "Eksempel på lagring og aktivering"
     },
     "stormTroops": {
-      "averages": "Gjennomsnitt for angrep og oppsett: skrivebeskyttet",
+      "averages": "Bekreftede angrep siden tilbakestilling / 24; forhåndsinnstilt gjennomsnitt skrivebeskyttet",
       "cap": "Grense for bundne tropper: skrivebeskyttet",
       "donors": "Givere: vist rekkefølge, delvis beholdning tillatt",
       "minimum": "Minst beholdt: 1 000 tropper",
@@ -1529,7 +1529,7 @@
       "builder": {
         "image": {
           "alt": "Illustrerte innstillinger for valgfri leirbygging i Auto Beri",
-          "caption": "Innebygd mål, stallnivå, byggetillatelser og reserver."
+          "caption": "Innebygd og lagret mål, fangstmoduser, stall nivå 5, tre- og steinreserver og sju tidsforkortelser."
         },
         "items": {
           "allow_demolition": {
@@ -1543,34 +1543,78 @@
             "recommendation": "Av, med mindre du uttrykkelig ønsker premiumbygging."
           },
           "auto_beri_builder_lane": {
-            "description": "Bygg eller oppgrader et nøyaktig leirmål med bekreftet bytte som har kommet tilbake, uten å flytte ressurser fra et annet kongerike.",
+            "description": "Bygg eller oppgrader det aktive Berimond-leirmålet med bekreftet hjemvendt bytte uten å hente ressurser fra et annet kongerike.",
             "label": "Auto-Beri-bygger",
-            "recommendation": "Av til du har gjennomgått målet og tillatelsene for forbruk."
+            "recommendation": "På for vanlig leirbygging etter at du har gjennomgått tillatelser til bruk."
           },
           "camp_resource_reserves": {
-            "description": "Hold de valgte mengdene Berimond-tre og -stein utenfor byggerens tilgjengelige ressurser.",
+            "description": "Hold valgte mengder tre og stein utenfor leirbyggingen.",
             "label": "Ressursreserver i leiren",
-            "recommendation": "Reserver det du trenger til annet arbeid i leiren."
+            "recommendation": "Tre 0 og stein 0 hvis overskuddet kan brukes."
           },
           "construction_time_skip_reserves": {
-            "description": "Hold det valgte antallet av hver tidshoppgjenstand utenfor byggerens tilgjengelige ressurser.",
+            "description": "Angi separat hvor mange tidsforkortelser på 1 min, 5 min, 10 min, 30 min, 1 time, 5 timer og 24 timer du vil beholde.",
             "label": "Reserver for byggetidshopp",
-            "recommendation": "Reserver det du trenger til andre aktiviteter."
+            "recommendation": "Behold 0 av hver kort tidsforkortelse; reserver beholdningen på 1, 5 og 24 timer til andre aktiviteter."
           },
           "optional_custom_camp_target": {
-            "description": "Registrer, forhåndsvis, lagre og aktiver en plan bare hvis den skal erstatte det innebygde målet.",
+            "description": "Fang Funksjonell for viktige bygninger, Oppsett for bygningers plassering uten dekorasjoner eller Eksakt for alle støttede detaljer.",
             "label": "Valgfritt tilpasset leirmål",
-            "recommendation": "Behold det innebygde målet med mindre du har gjennomgått en tilpasset plan."
+            "recommendation": "Bruk det innebygde målet med mindre du trenger et gjennomgått egendefinert mål."
           },
           "stable_target": {
-            "description": "Velg ønsket nivå fra 1 til 5 for fraksjonsstallen i det innebygde målet.",
+            "description": "Velg nivå 1 til 5 for fraksjonsstallen i det innebygde målet.",
             "label": "Målnivå for stallen",
-            "recommendation": "Velg et nivå som ressursene i den aktuelle hendelsen kan dekke."
+            "recommendation": "Nivå 5 for vanlig arrangementbygging hvis ressursene rekker."
           },
           "use_construction_time_skips": {
-            "description": "Fremskynd en bekreftet byggetimer samtidig som de valgte tidshoppreservene beholdes.",
+            "description": "Få fortgang i en bekreftet leirbygging mens de valgte reservene av byggetidsforkortelser beholdes.",
             "label": "Bruk byggetidshopp",
-            "recommendation": "Av med mindre raskere bygging er verdt disse gjenstandene."
+            "recommendation": "På for vanlig bygging hvis du har nok tidsforkortelser."
+          },
+          "keep_skip_10m": {
+            "description": "Hold dette antallet byggetidsforkortelser på 10m tilbake; sett reserven til 0 ved vanlig bruk.",
+            "label": "Behold tidsforkortelser på 10m"
+          },
+          "keep_skip_1h": {
+            "description": "Reserver dette antallet byggetidsforkortelser på 1h til andre aktiviteter.",
+            "label": "Behold tidsforkortelser på 1h"
+          },
+          "keep_skip_1m": {
+            "description": "Hold dette antallet byggetidsforkortelser på 1m tilbake; sett reserven til 0 ved vanlig bruk.",
+            "label": "Behold tidsforkortelser på 1m"
+          },
+          "keep_skip_24h": {
+            "description": "Reserver dette antallet byggetidsforkortelser på 24h til andre aktiviteter.",
+            "label": "Behold tidsforkortelser på 24h"
+          },
+          "keep_skip_30m": {
+            "description": "Hold dette antallet byggetidsforkortelser på 30m tilbake; sett reserven til 0 ved vanlig bruk.",
+            "label": "Behold tidsforkortelser på 30m"
+          },
+          "keep_skip_5h": {
+            "description": "Reserver dette antallet byggetidsforkortelser på 5h til andre aktiviteter.",
+            "label": "Behold tidsforkortelser på 5h"
+          },
+          "keep_skip_5m": {
+            "description": "Hold dette antallet byggetidsforkortelser på 5m tilbake; sett reserven til 0 ved vanlig bruk.",
+            "label": "Behold tidsforkortelser på 5m"
+          },
+          "saved_targets": {
+            "description": "Fangst lagrer og aktiverer straks et gjennomgått egendefinert mål; valg av et annet lagret mål aktiverer det også straks.",
+            "label": "Lagrede egendefinerte mål"
+          },
+          "stone_reserve": {
+            "description": "Hold denne mengden leirstein utenfor byggebruken; bruk 0 hvis overskuddet kan brukes.",
+            "label": "Steinreserve"
+          },
+          "use_built_in_default": {
+            "description": "Bytt straks tilbake til det innebygde målet og behold lagrede egendefinerte mål.",
+            "label": "Bruk innebygd standard"
+          },
+          "wood_reserve": {
+            "description": "Hold denne mengden leirtre utenfor byggebruken; bruk 0 hvis overskuddet kan brukes.",
+            "label": "Trereserve"
           }
         },
         "title": "Velg valgfri leirbygging"
@@ -1697,7 +1741,7 @@
           "minimum_free_capacity": {
             "description": "Start overføringer først når den oppgitte ledige kapasiteten når denne terskelen; en enkelt forholdsmessig sending kan være mindre.",
             "label": "Minste ledige kapasitet",
-            "recommendation": "Velg den laveste ledige terskelen som passer den vanlige overføringsrytmen din."
+            "recommendation": "1 ledig troppeplass for vanlig forholdsmessig forsyning."
           },
           "owned_berimond_camp": {
             "description": "Auto Beri finner den eide Berimond-leiren din automatisk, så du trenger ikke å skrive inn en leir-ID.",
@@ -1718,12 +1762,12 @@
           "troop_transport_skip": {
             "description": "Velg varigheten på gjenstanden som brukes når transporttidshopp er på.",
             "label": "Transporttidshopp",
-            "recommendation": "Reserver lengre hopp til andre oppgaver hvis du trenger dem."
+            "recommendation": "Bruk tidsforkortelsen på 1 time til vanlige bekreftede overføringer."
           },
           "use_troop_transport_time_skips": {
             "description": "Bruk det valgte tidshoppet på en bekreftet overføring mens den fortsatt er underveis.",
             "label": "Bruk transporttidshopp",
-            "recommendation": "Av med mindre raskere leirforsyning er verdt å bruke de lagrede gjenstandene."
+            "recommendation": "På for vanlig leirforsyning hvis beholdningen av tidsforkortelser tillater det."
           }
         },
         "title": "Still inn forholdsmessige troppeoverføringer"
@@ -1848,7 +1892,7 @@
             "recommendation": "0 lar deg angripe enhver egnet festning."
           },
           "priority": {
-            "description": "Sorter aktiverte øy- og festningsmål; prioriteten bestemmer innen samme rad, og avstanden avgjør ved likhet.",
+            "description": "Ranger aktive øy- og fortmålgrupper; innenfor hver gruppe angripes det nærmeste kvalifiserte målet først.",
             "label": "Prioritet for angrepsmål",
             "recommendation": "Store øyer, små øyer og deretter festninger fra nivå 80 til 40 når du samler akvamarin."
           }
@@ -1892,18 +1936,18 @@
             "recommendation": "På ved vanlig bygging."
           },
           "skip_reserves": {
-            "description": "Hold tilbake valgt antall av tidsforkortelsene på 1 min, 5 min, 10 min, 30 min, 1 t, 5 t og 24 t.",
+            "description": "Behold valgt antall gjenstander på 1 min, 5 min, 10 min, 30 min, 1 time, 5 timer og 24 timer til bygging og transport.",
             "label": "Tidsforkortelser i reserve",
             "recommendation": "Sett korte tidsforkortelser til 0 hvis de ikke trengs ellers; spar beholdningen på 1, 5 og 24 timer til andre arrangementer."
           },
           "storm_reserves": {
-            "description": "La valgte mengder Storm-tre, stein og akvamarin være utilgjengelige for bygging.",
+            "description": "Hold valgte mengder tre, stein og akvamarin utenfor byggingen.",
             "label": "Utgiftsreserver for Storm-slottet",
-            "recommendation": "Storm-tre 0 og stein 0 hvis overskudd kan brukes; sett akvamarin etter budsjettet ditt for belønninger."
+            "recommendation": "Tre 0 og stein 0 hvis overskuddet kan brukes; sett akvamarin etter planlagt belønningsbudsjett."
           },
           "time_skips": {
-            "description": "Bruk egnede tidsforkortelser mens de valgte reservene beholdes.",
-            "label": "Bruk tidsforkortelser til bygging",
+            "description": "Bruk kvalifiserte tidsforkortelser til bygging og transport av ressurser og tropper mens valgte reserver beholdes.",
+            "label": "Bruk tidsforkortelser til bygging og transport",
             "recommendation": "På hvis du vil at vanlig bygging skal gå raskere."
           }
         },
@@ -1926,9 +1970,9 @@
             "recommendation": "0 hvis hele overskuddet kan brukes til belønninger; ellers holder du tilbake beløpet du har planlagt."
           },
           "priority": {
-            "description": "Kjøp mål med lavere nummer først, og fullfør begrensede mål før ubegrensede.",
+            "description": "Butikken vurderer kjøpsmål med lavere nummer først.",
             "label": "Prioritet",
-            "recommendation": "Bruk 1, 2 og 3 i den rekkefølgen du ønsker."
+            "recommendation": "Gi 1, 2 og 3 ønsket rekkefølge, med begrensede mål før ubegrensede belønninger."
           },
           "search": {
             "description": "Søk etter offisielle Luna-belønninger med navn før du setter opp et kjøp.",
@@ -1994,7 +2038,7 @@
         },
         "items": {
           "attack_history": {
-            "description": "Les gjennomsnittlig antall Storm-angrep registrert siden nullstilling i løpet av de siste 24 timene.",
+            "description": "Les bekreftede Storm-angrep siden servertilbakestillingen delt på 24, ikke et rullerende gjennomsnitt over 24 timer.",
             "label": "Gjennomsnittlige angrep siden nullstilling",
             "recommendation": "Se på dette skrivebeskyttede anslaget før du endrer behovet for import."
           },

@@ -553,7 +553,7 @@
     },
     "stormConstruction": {
       "harbor": "Kikötő: be, 1-es szint",
-      "resources": "Viharfa 0; kő 0; akvamarin tervezett",
+      "resources": "Fa 0; kő 0; tervezett akvamarin",
       "spending": "Prémium és bontás: ki",
       "title": "Példa építésre és tartalékokra",
       "transport": "Nyersanyagszállítás: be"
@@ -573,7 +573,7 @@
       "title": "Példa mentésre és bekapcsolásra"
     },
     "stormTroops": {
-      "averages": "Támadási és előbeállítási átlag: csak olvasható",
+      "averages": "Megerősített támadások visszaállítás óta / 24; előbeállítási átlag csak olvasható",
       "cap": "Lekötött csapatkorlát: csak olvasható",
       "donors": "Adományozók: megjelenített sorrend, részleges készlet megengedett",
       "minimum": "Legalább megtartva: 1000 katona",
@@ -1529,7 +1529,7 @@
       "builder": {
         "image": {
           "alt": "Szemléltető beállítások az opcionális táborépítéshez",
-          "caption": "Beépített cél, istállószint, építési engedélyek és tartalékok."
+          "caption": "Beépített és mentett cél, rögzítési módok, 5. szintű istálló, fa- és kőtartalék, valamint hét időugrási időtartam."
         },
         "items": {
           "allow_demolition": {
@@ -1543,34 +1543,78 @@
             "recommendation": "Kikapcsolva, hacsak nem akarsz kifejezetten prémium építkezést."
           },
           "auto_beri_builder_lane": {
-            "description": "Építs vagy fejlessz pontos tábori célt igazoltan visszaérkezett zsákmányból anélkül, hogy másik királyságból erőforrást szállítanál.",
+            "description": "Építsd vagy fejleszd az aktív berimondi táborcélt a megerősítetten visszaért zsákmányból, más királyságból származó erőforrások nélkül.",
             "label": "Automatikus Berimond-építő",
-            "recommendation": "Kikapcsolva, amíg át nem nézted a célt és a költési engedélyeket."
+            "recommendation": "Kapcsold be a szokásos táborépítéshez a költési engedélyek ellenőrzése után."
           },
           "camp_resource_reserves": {
-            "description": "Tartsd távol az építőtől a berimondi fa és kő kiválasztott mennyiségét.",
+            "description": "Tartsd távol a kiválasztott fa- és kőmennyiséget a táborépítéstől.",
             "label": "Tábori erőforrás-tartalékok",
-            "recommendation": "Tartalékold, amire a tábor más feladataihoz szükséged van."
+            "recommendation": "Fa 0 és kő 0, ha a többlet felhasználható."
           },
           "construction_time_skip_reserves": {
-            "description": "Tartsd távol az építőtől minden időugró tárgy kiválasztott darabszámát.",
+            "description": "Külön állítsd be, hány 1 perces, 5 perces, 10 perces, 30 perces, 1 órás, 5 órás és 24 órás időugrást tartasz meg.",
             "label": "Építési időugrások tartaléka",
-            "recommendation": "Tartalékold, amire más tevékenységekhez szükséged van."
+            "recommendation": "Minden rövid időugrásból 0 maradjon; az 1, 5 és 24 órás készletet tartsd fenn más tevékenységekre."
           },
           "optional_custom_camp_target": {
-            "description": "Csak akkor rögzíts, tekints meg, ments és aktiválj elrendezést, ha az a beépített célt helyettesíti.",
+            "description": "Rögzíts Funkcionális célt az alapvető épületekhez, Elrendezést a díszítések nélküli helyekhez vagy Pontos célt minden támogatott részlethez.",
             "label": "Opcionális egyéni táborcél",
-            "recommendation": "Tartsd meg a beépített célt, amíg nem vizsgáltál meg egyéni elrendezést."
+            "recommendation": "Használd a beépített célt, hacsak nincs szükséged átnézett saját célra."
           },
           "stable_target": {
-            "description": "Válaszd ki a beépített cél frakcióistállójának kívánt szintjét 1 és 5 között.",
+            "description": "Válassz 1–5. szintet a frakcióistállónak a beépített célban.",
             "label": "Istálló célszintje",
-            "recommendation": "Olyan szintet válassz, amelyet az aktuális esemény erőforrásai fedeznek."
+            "recommendation": "Az 5. szintet válaszd a szokásos eseményépítéshez, ha elegendő az erőforrás."
           },
           "use_construction_time_skips": {
-            "description": "Gyorsíts meg egy igazolt építési időzítőt a kijelölt időugrás-tartalékok megtartásával.",
+            "description": "Gyorsítsd a megerősített táborépítést a kiválasztott építési időugrás-tartalék megtartásával.",
             "label": "Építési időugrások használata",
-            "recommendation": "Kikapcsolva, hacsak a gyorsabb építés meg nem éri ezeket a tárgyakat."
+            "recommendation": "Kapcsold be a szokásos építéshez, ha elegendő időugrásod van."
+          },
+          "keep_skip_10m": {
+            "description": "Ennyi 10m építési időugrást tarts meg; szokásos használatnál állítsd a tartalékot 0-ra.",
+            "label": "10m időugrás megtartása"
+          },
+          "keep_skip_1h": {
+            "description": "Ennyi 1h építési időugrást tarts fenn más tevékenységekhez.",
+            "label": "1h időugrás megtartása"
+          },
+          "keep_skip_1m": {
+            "description": "Ennyi 1m építési időugrást tarts meg; szokásos használatnál állítsd a tartalékot 0-ra.",
+            "label": "1m időugrás megtartása"
+          },
+          "keep_skip_24h": {
+            "description": "Ennyi 24h építési időugrást tarts fenn más tevékenységekhez.",
+            "label": "24h időugrás megtartása"
+          },
+          "keep_skip_30m": {
+            "description": "Ennyi 30m építési időugrást tarts meg; szokásos használatnál állítsd a tartalékot 0-ra.",
+            "label": "30m időugrás megtartása"
+          },
+          "keep_skip_5h": {
+            "description": "Ennyi 5h építési időugrást tarts fenn más tevékenységekhez.",
+            "label": "5h időugrás megtartása"
+          },
+          "keep_skip_5m": {
+            "description": "Ennyi 5m építési időugrást tarts meg; szokásos használatnál állítsd a tartalékot 0-ra.",
+            "label": "5m időugrás megtartása"
+          },
+          "saved_targets": {
+            "description": "A rögzítés azonnal menti és aktiválja az átnézett saját célt; másik mentett cél kiválasztása is azonnal aktiválja azt.",
+            "label": "Mentett saját célok"
+          },
+          "stone_reserve": {
+            "description": "Ezt a tábori kőmennyiséget ne költsd építésre; 0-t állíts be, ha a többlet elkölthető.",
+            "label": "Kőtartalék"
+          },
+          "use_built_in_default": {
+            "description": "Azonnal térj vissza a beépített célhoz a mentett saját célok megtartásával.",
+            "label": "Beépített alapértelmezett használata"
+          },
+          "wood_reserve": {
+            "description": "Ezt a tábori famennyiséget ne költsd építésre; 0-t állíts be, ha a többlet elkölthető.",
+            "label": "Fatartalék"
           }
         },
         "title": "Válaszd ki az opcionális táborépítést"
@@ -1697,7 +1741,7 @@
           "minimum_free_capacity": {
             "description": "Csak akkor kezdj szállítást, ha a jelentett szabad kapacitás eléri ezt a küszöböt; egyetlen arányos szállítmány kisebb is lehet.",
             "label": "Minimális szabad kapacitás",
-            "recommendation": "A szokásos szállítási ütemedhez illő legkisebb szabad küszöböt válaszd."
+            "recommendation": "1 szabad katonai férőhely a szokásos arányos utánpótláshoz."
           },
           "owned_berimond_camp": {
             "description": "Az automatizálás magától megtalálja a saját berimondi táborodat, ezért nem kell táborazonosítót beírnod.",
@@ -1718,12 +1762,12 @@
           "troop_transport_skip": {
             "description": "Válaszd ki a bekapcsolt szállításgyorsításkor használt tárgy időtartamát.",
             "label": "Szállítási időugrás",
-            "recommendation": "Szükség esetén tartalékold a hosszabb időugrásokat más feladatokra."
+            "recommendation": "Használj 1 órás időugrást a szokásos megerősített átszállításokhoz."
           },
           "use_troop_transport_time_skips": {
             "description": "Használd a kiválasztott időugrást egy igazolt szállításon, amíg az úton van.",
             "label": "Szállítási időugrások használata",
-            "recommendation": "Kikapcsolva, hacsak a gyorsabb tábori ellátás meg nem éri az eltett tárgyakat."
+            "recommendation": "Kapcsold be a szokásos tábori utánpótláshoz, ha az időugráskészlet engedi."
           }
         },
         "title": "Állítsd be az arányos csapatszállítást"
@@ -1848,7 +1892,7 @@
             "recommendation": "0 minden megfelelő erődöt engedélyez."
           },
           "priority": {
-            "description": "Rendezd az aktív sziget- és erődcélokat; soron belül az elsőbbség, holtversenyben a távolság dönt.",
+            "description": "Rendezd az engedélyezett sziget- és erődcélcsoportokat; csoporton belül a legközelebbi megfelelő cél következik először.",
             "label": "Támadási cél elsőbbsége",
             "recommendation": "Nagy szigetek, kis szigetek, majd 80-tól 40-ig az erődök akvamaringyűjtéskor."
           }
@@ -1892,18 +1936,18 @@
             "recommendation": "Be a szokásos építéshez."
           },
           "skip_reserves": {
-            "description": "Tarts meg választott darabszámot az 1 p, 5 p, 10 p, 30 p, 1 ó, 5 ó és 24 ó időugró tárgyakból.",
+            "description": "Az 1 perces, 5 perces, 10 perces, 30 perces, 1 órás, 5 órás és 24 órás tárgyakból tartsd meg a kiválasztott mennyiséget építésre és szállításra.",
             "label": "Időugrások tartalékban",
             "recommendation": "A rövid ugrásokból 0, ha máshol nem kellenek; az 1, 5 és 24 órás készletet más eseményekre tartsd fenn."
           },
           "storm_reserves": {
-            "description": "Az építés számára tedd elérhetetlenné a választott Viharfa-, kő- és akvamarinmennyiséget.",
+            "description": "A kiválasztott fa-, kő- és akvamarinmennyiséget ne használd építésre.",
             "label": "Viharvár költési tartalékai",
-            "recommendation": "Viharfa 0 és kő 0, ha a többletet költöd; akvamarin a tervezett jutalomkeret szerint."
+            "recommendation": "Fa 0 és kő 0, ha a többlet elkölthető; az akvamarint a tervezett jutalomkerethez igazítsd."
           },
           "time_skips": {
-            "description": "Alkalmazz megfelelő időugrásokat, miközben a választott tárgytartalékot megtartod.",
-            "label": "Építési időugrások használata",
+            "description": "Az alkalmas időugrásokat építésre, erőforrás- és katonaszállításra használd a kiválasztott tartalék megtartásával.",
+            "label": "Építési és szállítási időugrások használata",
             "recommendation": "Be, ha szeretnéd gyorsítani a szokásos építést."
           }
         },
@@ -1926,9 +1970,9 @@
             "recommendation": "0, ha minden többlet jutalmakra fordítható; különben tartalékold a tervezett mennyiséget."
           },
           "priority": {
-            "description": "Előbb az alacsonyabb számú célokat vásárold, és a korlátozottakat teljesítsd a korlátlanok előtt.",
+            "description": "A bolt először az alacsonyabb számmal jelölt vásárlási célokat veszi figyelembe.",
             "label": "Elsőbbség",
-            "recommendation": "Használd az 1, 2 és 3 számot a kívánt sorrendben."
+            "recommendation": "Az 1, 2 és 3 sorrendjét tetszésed szerint állítsd be, a korlátozott célokat a korlátlan jutalmak elé helyezve."
           },
           "search": {
             "description": "Vásárlás beállítása előtt keress rá név szerint a hivatalos Luna-jutalmakra.",
@@ -1994,7 +2038,7 @@
         },
         "items": {
           "attack_history": {
-            "description": "Olvasd el a nullázás óta az elmúlt 24 órában jelentett Vihartámadások átlagos számát.",
+            "description": "A szerver visszaállítása óta megerősített Vihar-támadások számát oszd el 24-gyel; ez nem gördülő 24 órás átlag.",
             "label": "Támadások átlaga nullázás óta",
             "recommendation": "Ezt a csak olvasható becslést nézd meg, mielőtt változtatod az importigényt."
           },

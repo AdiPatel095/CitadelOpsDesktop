@@ -553,7 +553,7 @@
     },
     "stormConstruction": {
       "harbor": "Hafen: ein, Stufe 1",
-      "resources": "Sturmholz 0; Stein 0; Aquamarin nach Plan",
+      "resources": "Holz 0; Stein 0; Aquamarin geplant",
       "spending": "Premium und Abriss: aus",
       "title": "Beispiel für Bau und Reserven",
       "transport": "Rohstofftransport: ein"
@@ -573,7 +573,7 @@
       "title": "Beispiel für Speichern und Aktivieren"
     },
     "stormTroops": {
-      "averages": "Angriffs- und Vorlagendurchschnitt: schreibgeschützt",
+      "averages": "Bestätigte Angriffe seit Reset / 24; Voreinstellungsdurchschnitt nur lesbar",
       "cap": "Gebundene Truppengrenze: schreibgeschützt",
       "donors": "Spender: angezeigte Reihenfolge, Teilbestand erlaubt",
       "minimum": "Mindestens behalten: 1.000 Truppen",
@@ -1529,7 +1529,7 @@
       "builder": {
         "image": {
           "alt": "Illustrative Einstellungen für den optionalen Lagerausbau in Auto Beri",
-          "caption": "Eingebautes Ziel, Stallziel, Bauberechtigungen und Reserven."
+          "caption": "Eingebautes und gespeichertes Ziel, Erfassungsarten, Stall Stufe 5, Holz- und Steinreserven sowie sieben Zeitverkürzungen."
         },
         "items": {
           "allow_demolition": {
@@ -1543,34 +1543,78 @@
             "recommendation": "Aus, sofern du Premiumbau nicht ausdrücklich möchtest."
           },
           "auto_beri_builder_lane": {
-            "description": "Baue oder verbessere ein exaktes Lagerziel mit bestätigter zurückgekehrter Beute, ohne Ressourcen aus einem anderen Königreich zu transportieren.",
+            "description": "Baue oder verbessere das aktive Berimond-Lagerziel mit bestätigter zurückgebrachter Beute, ohne Ressourcen aus einem anderen Königreich zu holen.",
             "label": "Auto-Beri-Bauverwaltung",
-            "recommendation": "Aus, bis du Ziel und Ausgabeberechtigungen geprüft hast."
+            "recommendation": "Für den regelmäßigen Lagerausbau einschalten, nachdem du die Ausgabeberechtigungen geprüft hast."
           },
           "camp_resource_reserves": {
-            "description": "Halte die gewählten Mengen Berimond-Holz und -Stein für die Bauverwaltung zurück.",
+            "description": "Halte die gewählten Holz- und Steinmengen vom Lagerbau zurück.",
             "label": "Ressourcenreserven im Lager",
-            "recommendation": "Reserviere, was du für andere Arbeiten im Lager brauchst."
+            "recommendation": "Holz 0 und Stein 0, wenn Überschüsse verwendet werden dürfen."
           },
           "construction_time_skip_reserves": {
-            "description": "Halte die gewählte Anzahl jedes Zeitverkürzers für die Bauverwaltung zurück.",
+            "description": "Lege für 1 Min., 5 Min., 10 Min., 30 Min., 1 Std., 5 Std. und 24 Std. jeweils einzeln fest, wie viele Zeitverkürzungen bleiben sollen.",
             "label": "Reserven für Bauzeitverkürzer",
-            "recommendation": "Reserviere, was du für andere Aktivitäten brauchst."
+            "recommendation": "Von kurzen Zeitverkürzungen jeweils 0 behalten; den Vorrat für andere Aktivitäten bei 1, 5 und 24 Stunden schützen."
           },
           "optional_custom_camp_target": {
-            "description": "Erfasse, prüfe, speichere und aktiviere ein Layout nur dann, wenn es das eingebaute Ziel ersetzen soll.",
+            "description": "Erfasse „Funktional“ für wesentliche Gebäude, „Layout“ für Gebäudeplätze ohne Dekoration oder „Exakt“ für alle unterstützten Details.",
             "label": "Optionales eigenes Lagerziel",
-            "recommendation": "Behalte das eingebaute Ziel, sofern du kein eigenes Layout geprüft hast."
+            "recommendation": "Verwende das eingebaute Ziel, solange kein geprüftes eigenes Ziel nötig ist."
           },
           "stable_target": {
-            "description": "Wähle für das eingebaute Ziel die gewünschte Stufe des Fraktionsstalls von 1 bis 5.",
+            "description": "Wähle für das eingebaute Ziel die Stufe des Fraktionsstalls von 1 bis 5.",
             "label": "Stallziel",
-            "recommendation": "Wähle eine Stufe, die deine aktuellen Eventressourcen tragen können."
+            "recommendation": "Stufe 5 für den regelmäßigen Eventausbau, sofern Ressourcen reichen."
           },
           "use_construction_time_skips": {
-            "description": "Beschleunige einen bestätigten Bautimer unter Einhaltung der gewählten Zeitverkürzerreserven.",
+            "description": "Beschleunige einen bestätigten Lagerbau und beachte dabei die gewählten Bauzeitverkürzungsreserven.",
             "label": "Bauzeitverkürzer verwenden",
-            "recommendation": "Aus, sofern dir schnelleres Bauen diese Gegenstände wert ist."
+            "recommendation": "Für den regelmäßigen Ausbau einschalten, wenn genügend Zeitverkürzungen vorhanden sind."
+          },
+          "keep_skip_10m": {
+            "description": "Halte so viele 10m-Bauzeitverkürzungen vom Bauen zurück; für den regelmäßigen Gebrauch 0 einstellen.",
+            "label": "10m-Zeitverkürzungen behalten"
+          },
+          "keep_skip_1h": {
+            "description": "Halte so viele 1h-Bauzeitverkürzungen für andere Aktivitäten zurück.",
+            "label": "1h-Zeitverkürzungen behalten"
+          },
+          "keep_skip_1m": {
+            "description": "Halte so viele 1m-Bauzeitverkürzungen vom Bauen zurück; für den regelmäßigen Gebrauch 0 einstellen.",
+            "label": "1m-Zeitverkürzungen behalten"
+          },
+          "keep_skip_24h": {
+            "description": "Halte so viele 24h-Bauzeitverkürzungen für andere Aktivitäten zurück.",
+            "label": "24h-Zeitverkürzungen behalten"
+          },
+          "keep_skip_30m": {
+            "description": "Halte so viele 30m-Bauzeitverkürzungen vom Bauen zurück; für den regelmäßigen Gebrauch 0 einstellen.",
+            "label": "30m-Zeitverkürzungen behalten"
+          },
+          "keep_skip_5h": {
+            "description": "Halte so viele 5h-Bauzeitverkürzungen für andere Aktivitäten zurück.",
+            "label": "5h-Zeitverkürzungen behalten"
+          },
+          "keep_skip_5m": {
+            "description": "Halte so viele 5m-Bauzeitverkürzungen vom Bauen zurück; für den regelmäßigen Gebrauch 0 einstellen.",
+            "label": "5m-Zeitverkürzungen behalten"
+          },
+          "saved_targets": {
+            "description": "Beim Erfassen wird ein geprüftes eigenes Ziel sofort gespeichert und aktiviert; die Auswahl eines anderen gespeicherten Ziels aktiviert es ebenfalls sofort.",
+            "label": "Gespeicherte eigene Ziele"
+          },
+          "stone_reserve": {
+            "description": "Halte diese Menge Lagerstein vom Baubudget zurück; bei verwendbarem Überschuss 0 einstellen.",
+            "label": "Steinreserve"
+          },
+          "use_built_in_default": {
+            "description": "Wechsle sofort zum eingebauten Ziel zurück und behalte gespeicherte eigene Ziele.",
+            "label": "Eingebauten Standard verwenden"
+          },
+          "wood_reserve": {
+            "description": "Halte diese Menge Lagerholz vom Baubudget zurück; bei verwendbarem Überschuss 0 einstellen.",
+            "label": "Holzreserve"
           }
         },
         "title": "Optionalen Lagerausbau wählen"
@@ -1697,7 +1741,7 @@
           "minimum_free_capacity": {
             "description": "Beginne Transfers erst ab diesem gemeldeten freien Platz; eine einzelne anteilige Sendung darf kleiner sein.",
             "label": "Mindestkapazität frei",
-            "recommendation": "Wähle die kleinste freie Kapazität, die zu deinem üblichen Transfertakt passt."
+            "recommendation": "1 freier Truppenplatz für die regelmäßige proportionale Versorgung."
           },
           "owned_berimond_camp": {
             "description": "Auto Beri erkennt dein eigenes Berimond-Lager automatisch; du musst keine Lager-ID eingeben.",
@@ -1718,12 +1762,12 @@
           "troop_transport_skip": {
             "description": "Wähle die Dauer des Gegenstands, der bei eingeschalteter Transportbeschleunigung verwendet wird.",
             "label": "Transportzeitverkürzer",
-            "recommendation": "Reserviere längere Verkürzer für andere Aufgaben, wenn du sie brauchst."
+            "recommendation": "Für bestätigte reguläre Transporte eine Zeitverkürzung von 1 Stunde verwenden."
           },
           "use_troop_transport_time_skips": {
             "description": "Wende den gewählten Zeitverkürzer auf einen bestätigten Transfer an, solange er unterwegs ist.",
             "label": "Transportzeitverkürzer verwenden",
-            "recommendation": "Aus, sofern dir schnellere Lagerversorgung die gespeicherten Zeitverkürzer wert ist."
+            "recommendation": "Für die regelmäßige Lagerversorgung einschalten, wenn dein Vorrat an Zeitverkürzungen es erlaubt."
           }
         },
         "title": "Verhältnismäßige Truppentransfers einstellen"
@@ -1848,7 +1892,7 @@
             "recommendation": "0 erlaubt jede geeignete Festung."
           },
           "priority": {
-            "description": "Ordnen Sie aktivierte Insel- und Festungsziele; die Priorität entscheidet innerhalb einer Reihe, bei Gleichstand die Entfernung.",
+            "description": "Ordne aktivierte Insel- und Festungszielgruppen; innerhalb einer Gruppe wird das nächste geeignete Ziel zuerst angegriffen.",
             "label": "Angriffsziel-Priorität",
             "recommendation": "Große Inseln, kleine Inseln, dann Festungen von Stufe 80 bis 40 zum Aquamarin-Sammeln."
           }
@@ -1892,18 +1936,18 @@
             "recommendation": "Ein für den regelmäßigen Bau."
           },
           "skip_reserves": {
-            "description": "Behalten Sie die gewählte Anzahl jedes 1-Minuten-, 5-Minuten-, 10-Minuten-, 30-Minuten-, 1-Stunden-, 5-Stunden- und 24-Stunden-Gegenstands zurück.",
+            "description": "Behalte die gewählte Anzahl von 1-Min.-, 5-Min.-, 10-Min.-, 30-Min.-, 1-Std.-, 5-Std.- und 24-Std.-Gegenständen für Bau und Transporte zurück.",
             "label": "Zeitverkürzungen in Reserve",
             "recommendation": "Kurze Zeitverkürzungen auf 0, sofern nicht anderweitig benötigt; 1-Stunden-, 5-Stunden- und 24-Stunden-Vorräte für andere Events zurückhalten."
           },
           "storm_reserves": {
-            "description": "Halten Sie die gewählten Sturmholz-, Stein- und Aquamarinmengen für den Bau gesperrt.",
+            "description": "Halte die gewählten Mengen Holz, Stein und Aquamarin vom Bauen zurück.",
             "label": "Ausgabenreserven der Sturm-Burg",
-            "recommendation": "Sturmholz 0 und Stein 0, wenn Überschüsse genutzt werden; Aquamarin nach Ihrem geplanten Belohnungsbudget."
+            "recommendation": "Holz 0 und Stein 0 bei verwendbaren Überschüssen; Aquamarin nach deinem geplanten Belohnungsbudget festlegen."
           },
           "time_skips": {
-            "description": "Setzen Sie geeignete Zeitverkürzungen ein und behalten Sie die gewählten Gegenstandsreserven zurück.",
-            "label": "Bau-Zeitverkürzungen verwenden",
+            "description": "Setze geeignete Zeitverkürzungen für Bau, Ressourcentransporte und Truppentransporte ein und beachte die gewählten Reserven.",
+            "label": "Zeitverkürzungen für Bau und Transporte verwenden",
             "recommendation": "Ein, wenn Sie den Routinebau beschleunigen möchten."
           }
         },
@@ -1926,9 +1970,9 @@
             "recommendation": "0, wenn alle Überschüsse für Belohnungen verfügbar sein sollen; andernfalls die geplante Menge reservieren."
           },
           "priority": {
-            "description": "Kaufen Sie Ziele mit niedrigerer Nummer zuerst und schließen begrenzte Ziele vor unbegrenzten ab.",
+            "description": "Der Laden berücksichtigt Kaufziele mit niedrigeren Nummern zuerst.",
             "label": "Priorität",
-            "recommendation": "Nutzen Sie 1, 2 und 3 in Ihrer gewünschten Reihenfolge."
+            "recommendation": "Vergib 1, 2 und 3 in deiner Wunschreihenfolge und setze begrenzte Ziele vor unbegrenzte Belohnungen."
           },
           "search": {
             "description": "Suchen Sie offizielle Luna-Belohnungen vor dem Einrichten eines Kaufs nach Namen.",
@@ -1994,7 +2038,7 @@
         },
         "items": {
           "attack_history": {
-            "description": "Lesen Sie die durchschnittliche Anzahl der seit dem Zurücksetzen in den letzten 24 Stunden gemeldeten Sturm-Angriffe.",
+            "description": "Lies bestätigte Sturmangriffe seit dem Server-Reset geteilt durch 24, nicht einen gleitenden 24-Stunden-Durchschnitt.",
             "label": "Durchschnittliche Angriffe seit Zurücksetzen",
             "recommendation": "Prüfen Sie diese schreibgeschützte Schätzung, bevor Sie den Importbedarf ändern."
           },

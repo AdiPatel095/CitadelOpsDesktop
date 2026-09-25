@@ -553,7 +553,7 @@
     },
     "stormConstruction": {
       "harbor": "Porto: attivo, livello 1",
-      "resources": "Legno della Tempesta 0; pietra 0; acquamarina pianificata",
+      "resources": "Legno 0; pietra 0; acquamarina prevista",
       "spending": "Premium e demolizione: disattivati",
       "title": "Esempio di costruzione e riserve",
       "transport": "Trasporto risorse: attivo"
@@ -573,7 +573,7 @@
       "title": "Esempio del percorso di salvataggio e attivazione"
     },
     "stormTroops": {
-      "averages": "Medie attacchi e preset: sola lettura",
+      "averages": "Attacchi confermati dal reset / 24; media preset di sola lettura",
       "cap": "Limite truppe impegnate: sola lettura",
       "donors": "Donatori: ordine mostrato, scorte parziali consentite",
       "minimum": "Minimo conservato: 1.000 truppe",
@@ -1529,7 +1529,7 @@
       "builder": {
         "image": {
           "alt": "Impostazioni illustrative per la costruzione facoltativa dell’accampamento Auto Beri",
-          "caption": "Obiettivo integrato, livello delle scuderie, permessi di costruzione e riserve."
+          "caption": "Obiettivo integrato e salvato, modalità di cattura, scuderia livello 5, riserve di legno e pietra e sette durate dei salti temporali."
         },
         "items": {
           "allow_demolition": {
@@ -1543,34 +1543,78 @@
             "recommendation": "Disattivato se non desideri esplicitamente costruzioni premium."
           },
           "auto_beri_builder_lane": {
-            "description": "Costruisci o migliora un obiettivo preciso dell’accampamento usando il bottino rientrato e confermato, senza trasferire risorse da un altro regno.",
+            "description": "Costruisci o migliora l'obiettivo attivo dell'accampamento di Berimond con il bottino rientrato e confermato, senza importare risorse da un altro regno.",
             "label": "Costruzione Auto Beri",
-            "recommendation": "Disattivata finché non hai esaminato l’obiettivo e i permessi di spesa."
+            "recommendation": "Attiva per la costruzione abituale dell'accampamento dopo aver controllato i permessi di spesa."
           },
           "camp_resource_reserves": {
-            "description": "Tieni le quantità scelte di legno e pietra di Berimond fuori dalla disponibilità del costruttore.",
+            "description": "Tieni fuori dalla costruzione le quantità scelte di legno e pietra dell'accampamento.",
             "label": "Riserve di risorse dell’accampamento",
-            "recommendation": "Conserva quanto serve per gli altri lavori dell’accampamento."
+            "recommendation": "Legno 0 e pietra 0 se puoi usare le eccedenze."
           },
           "construction_time_skip_reserves": {
-            "description": "Tieni il numero scelto di ogni acceleratore fuori dalla disponibilità del costruttore.",
+            "description": "Imposta separatamente quanti salti da 1 min, 5 min, 10 min, 30 min, 1 h, 5 h e 24 h conservare.",
             "label": "Riserve di acceleratori di costruzione",
-            "recommendation": "Conserva quanto serve per le altre attività."
+            "recommendation": "Conserva 0 di ogni salto breve; proteggi la scorta per altre attività dei salti da 1 h, 5 h e 24 h."
           },
           "optional_custom_camp_target": {
-            "description": "Acquisisci, visualizza in anteprima, salva e attiva una disposizione solo se deve sostituire l’obiettivo integrato.",
+            "description": "Cattura Funzionale per gli edifici essenziali, Disposizione per le posizioni senza decorazioni o Esatto per tutti i dettagli supportati.",
             "label": "Obiettivo personalizzato facoltativo",
-            "recommendation": "Mantieni l’obiettivo integrato finché non hai esaminato una disposizione personalizzata."
+            "recommendation": "Usa l'obiettivo integrato a meno che non serva uno personalizzato già verificato."
           },
           "stable_target": {
-            "description": "Scegli per l’obiettivo integrato il livello desiderato delle scuderie di fazione da 1 a 5.",
+            "description": "Scegli il livello della scuderia di fazione da 1 a 5 per l'obiettivo integrato.",
             "label": "Livello obiettivo delle scuderie",
-            "recommendation": "Scegli un livello sostenibile con le risorse dell’evento corrente."
+            "recommendation": "Livello 5 per la costruzione abituale dell'evento se le risorse bastano."
           },
           "use_construction_time_skips": {
-            "description": "Accelera un timer di costruzione confermato rispettando le riserve di acceleratori scelte.",
+            "description": "Accelera una costruzione confermata dell'accampamento rispettando le riserve scelte di salti per costruzione.",
             "label": "Usa acceleratori di costruzione",
-            "recommendation": "Disattivato se la costruzione più rapida non giustifica quegli oggetti."
+            "recommendation": "Attiva per la costruzione abituale se hai abbastanza salti."
+          },
+          "keep_skip_10m": {
+            "description": "Tieni da parte questi salti per costruzione da 10m; imposta la riserva a 0 per l'uso abituale.",
+            "label": "Conserva salti da 10m"
+          },
+          "keep_skip_1h": {
+            "description": "Riserva questi salti per costruzione da 1h per altre attività.",
+            "label": "Conserva salti da 1h"
+          },
+          "keep_skip_1m": {
+            "description": "Tieni da parte questi salti per costruzione da 1m; imposta la riserva a 0 per l'uso abituale.",
+            "label": "Conserva salti da 1m"
+          },
+          "keep_skip_24h": {
+            "description": "Riserva questi salti per costruzione da 24h per altre attività.",
+            "label": "Conserva salti da 24h"
+          },
+          "keep_skip_30m": {
+            "description": "Tieni da parte questi salti per costruzione da 30m; imposta la riserva a 0 per l'uso abituale.",
+            "label": "Conserva salti da 30m"
+          },
+          "keep_skip_5h": {
+            "description": "Riserva questi salti per costruzione da 5h per altre attività.",
+            "label": "Conserva salti da 5h"
+          },
+          "keep_skip_5m": {
+            "description": "Tieni da parte questi salti per costruzione da 5m; imposta la riserva a 0 per l'uso abituale.",
+            "label": "Conserva salti da 5m"
+          },
+          "saved_targets": {
+            "description": "La cattura salva e attiva subito un obiettivo personalizzato verificato; selezionarne un altro salvato lo attiva subito.",
+            "label": "Obiettivi personalizzati salvati"
+          },
+          "stone_reserve": {
+            "description": "Tieni questa quantità di pietra dell'accampamento fuori dalle spese di costruzione; usa 0 se puoi spendere l'eccedenza.",
+            "label": "Riserva di pietra"
+          },
+          "use_built_in_default": {
+            "description": "Torna subito all'obiettivo integrato conservando gli obiettivi personalizzati salvati.",
+            "label": "Usa l'obiettivo integrato"
+          },
+          "wood_reserve": {
+            "description": "Tieni questa quantità di legno dell'accampamento fuori dalle spese di costruzione; usa 0 se puoi spendere l'eccedenza.",
+            "label": "Riserva di legno"
           }
         },
         "title": "Scegli la costruzione facoltativa dell’accampamento"
@@ -1697,7 +1741,7 @@
           "minimum_free_capacity": {
             "description": "Avvia i trasferimenti solo quando la capacità libera segnalata raggiunge questa soglia; un singolo invio proporzionale può essere più piccolo.",
             "label": "Capacità libera minima",
-            "recommendation": "Scegli la soglia libera più bassa adatta al normale ritmo di trasferimento."
+            "recommendation": "1 posto libero per truppe per il rifornimento proporzionale abituale."
           },
           "owned_berimond_camp": {
             "description": "Auto Beri trova automaticamente il tuo accampamento di Berimond, quindi non serve inserire un ID.",
@@ -1718,12 +1762,12 @@
           "troop_transport_skip": {
             "description": "Scegli la durata dell’oggetto usato quando l’accelerazione del trasporto è attiva.",
             "label": "Acceleratore del trasporto",
-            "recommendation": "Conserva gli acceleratori più lunghi per altre attività quando servono."
+            "recommendation": "Usa il salto da 1 ora per i trasferimenti abituali confermati."
           },
           "use_troop_transport_time_skips": {
             "description": "Applica l’acceleratore scelto a un trasferimento confermato ancora in viaggio.",
             "label": "Usa acceleratori di trasporto",
-            "recommendation": "Disattivato se il rifornimento più veloce non giustifica quegli oggetti conservati."
+            "recommendation": "Attiva per il rifornimento abituale dell'accampamento se la scorta di salti lo consente."
           }
         },
         "title": "Imposta trasferimenti proporzionali di truppe"
@@ -1848,7 +1892,7 @@
             "recommendation": "0 per consentire qualsiasi forte idoneo."
           },
           "priority": {
-            "description": "Ordina i bersagli abilitati di isole e forti; la priorità decide all'interno di una riga e la distanza risolve la parità.",
+            "description": "Ordina le categorie attive di isole e forti; in ciascuna categoria attacca prima l'obiettivo idoneo più vicino.",
             "label": "Priorità dei bersagli di attacco",
             "recommendation": "Isole grandi, isole piccole, poi forti dal livello 80 al 40 per raccogliere acquamarina."
           }
@@ -1892,18 +1936,18 @@
             "recommendation": "Attivo per le costruzioni regolari."
           },
           "skip_reserves": {
-            "description": "Conserva il numero scelto di oggetti per saltare 1 min, 5 min, 10 min, 30 min, 1 ora, 5 ore e 24 ore.",
+            "description": "Conserva le quantità scelte di oggetti da 1 min, 5 min, 10 min, 30 min, 1 h, 5 h e 24 h per costruzione e trasporti.",
             "label": "Salti temporali tenuti in riserva",
             "recommendation": "Tieni 0 dei salti brevi se non servono altrove; riserva le scorte di 1, 5 e 24 ore per altri eventi."
           },
           "storm_reserves": {
-            "description": "Rendi indisponibili alla costruzione le quantità scelte di legno della Tempesta, pietra e acquamarina.",
+            "description": "Tieni fuori dalla costruzione le quantità scelte di legno, pietra e acquamarina.",
             "label": "Riserve di spesa del castello della Tempesta",
-            "recommendation": "Legno della Tempesta 0 e pietra 0 se spendi le eccedenze; imposta l'acquamarina sul budget previsto per le ricompense."
+            "recommendation": "Legno 0 e pietra 0 se puoi usarne l'eccedenza; imposta l'acquamarina secondo il budget per i premi."
           },
           "time_skips": {
-            "description": "Applica i salti temporali idonei mantenendo le riserve degli oggetti selezionate.",
-            "label": "Usa salti temporali di costruzione",
+            "description": "Applica i salti idonei a costruzione, trasporto risorse e trasporto truppe rispettando le riserve scelte.",
+            "label": "Usa salti temporali per costruzione e trasporti",
             "recommendation": "Attivo se vuoi accelerare la costruzione ordinaria."
           }
         },
@@ -1926,9 +1970,9 @@
             "recommendation": "0 se tutte le eccedenze possono finanziare le ricompense; altrimenti riserva la quantità prevista."
           },
           "priority": {
-            "description": "Acquista prima gli obiettivi con numero inferiore e completa quelli limitati prima degli illimitati.",
+            "description": "Il negozio considera prima gli obiettivi di acquisto con numero più basso.",
             "label": "Priorità",
-            "recommendation": "Usa 1, 2 e 3 nell'ordine che preferisci."
+            "recommendation": "Assegna 1, 2 e 3 nell'ordine preferito, mettendo gli obiettivi limitati prima dei premi illimitati."
           },
           "search": {
             "description": "Cerca per nome le ricompense ufficiali di Luna prima di configurare un acquisto.",
@@ -1994,7 +2038,7 @@
         },
         "items": {
           "attack_history": {
-            "description": "Leggi il numero medio di attacchi della Tempesta registrati dal ripristino nelle ultime 24 ore.",
+            "description": "Leggi gli attacchi Tempesta confermati dal reset del server divisi per 24, non una media mobile di 24 ore.",
             "label": "Media attacchi dal ripristino",
             "recommendation": "Controlla questa stima di sola lettura prima di cambiare il fabbisogno di importazione."
           },

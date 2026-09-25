@@ -553,7 +553,7 @@
     },
     "stormConstruction": {
       "harbor": "Puerto: activado, nivel 1",
-      "resources": "Madera de la Tormenta 0; piedra 0; aguamarina según plan",
+      "resources": "Madera 0; piedra 0; aguamarina prevista",
       "spending": "Prémium y demolición: desactivados",
       "title": "Ejemplo de construcción y reservas",
       "transport": "Transporte de recursos: activado"
@@ -573,7 +573,7 @@
       "title": "Ejemplo del proceso de guardar y activar"
     },
     "stormTroops": {
-      "averages": "Medias de ataques y formaciones: solo lectura",
+      "averages": "Ataques confirmados desde reinicio / 24; promedio del preset solo lectura",
       "cap": "Límite de tropas comprometidas: solo lectura",
       "donors": "Donantes: orden mostrado, existencias parciales permitidas",
       "minimum": "Mínimo conservado: 1000 tropas",
@@ -1529,7 +1529,7 @@
       "builder": {
         "image": {
           "alt": "Ajustes ilustrativos de construcción opcional del campamento de Auto Beri",
-          "caption": "Objetivo integrado, nivel de establo, permisos de construcción y reservas."
+          "caption": "Objetivo integrado y guardado, modos de captura, establo de nivel 5, reservas de madera y piedra y siete duraciones de aceleradores."
         },
         "items": {
           "allow_demolition": {
@@ -1543,34 +1543,78 @@
             "recommendation": "Desactivado salvo que quieras expresamente construcción prémium."
           },
           "auto_beri_builder_lane": {
-            "description": "Construye o mejora un objetivo exacto del campamento con botín devuelto y confirmado, sin trasladar recursos desde otro reino.",
+            "description": "Construye o mejora el objetivo activo del campamento de Berimond con botín de regreso confirmado, sin importar recursos de otro reino.",
             "label": "Constructor de Auto Beri",
-            "recommendation": "Desactivado hasta revisar el objetivo y los permisos de gasto."
+            "recommendation": "Actívalo para la construcción habitual del campamento tras revisar los permisos de gasto."
           },
           "camp_resource_reserves": {
-            "description": "Reserva las cantidades elegidas de madera y piedra de Berimond para que el constructor no las use.",
+            "description": "Aparta de la construcción del campamento las cantidades elegidas de madera y piedra.",
             "label": "Reservas de recursos del campamento",
-            "recommendation": "Reserva lo necesario para otras tareas del campamento."
+            "recommendation": "Madera 0 y piedra 0 si se puede usar el excedente."
           },
           "construction_time_skip_reserves": {
-            "description": "Reserva la cantidad elegida de cada acelerador para que el constructor no lo use.",
+            "description": "Define por separado cuántos aceleradores de 1 min, 5 min, 10 min, 30 min, 1 h, 5 h y 24 h conservar.",
             "label": "Reservas de aceleradores de construcción",
-            "recommendation": "Reserva lo necesario para otras actividades."
+            "recommendation": "Guarda 0 de cada acelerador corto; reserva tus existencias para otras actividades de 1 h, 5 h y 24 h."
           },
           "optional_custom_camp_target": {
-            "description": "Captura, previsualiza, guarda y activa un diseño solo si debe sustituir al objetivo integrado.",
+            "description": "Captura Funcional para edificios esenciales, Diseño para posiciones sin decoraciones o Exacto para todos los detalles admitidos.",
             "label": "Objetivo de campamento personalizado opcional",
-            "recommendation": "Conserva el objetivo integrado salvo que hayas revisado un diseño propio."
+            "recommendation": "Usa el objetivo integrado salvo que necesites uno personalizado y revisado."
           },
           "stable_target": {
-            "description": "Elige para el objetivo integrado el nivel deseado del establo de facción entre 1 y 5.",
+            "description": "Elige el nivel del establo de facción del 1 al 5 para el objetivo integrado.",
             "label": "Nivel objetivo del establo",
-            "recommendation": "Elige un nivel que permitan los recursos de tu evento actual."
+            "recommendation": "Nivel 5 para la construcción habitual del evento si hay recursos suficientes."
           },
           "use_construction_time_skips": {
-            "description": "Adelanta un temporizador de construcción confirmado respetando las reservas de aceleradores elegidas.",
+            "description": "Adelanta una construcción confirmada del campamento respetando las reservas de aceleradores de construcción elegidas.",
             "label": "Usar aceleradores de construcción",
-            "recommendation": "Desactivado salvo que la construcción más rápida justifique esos objetos."
+            "recommendation": "Actívalo para la construcción habitual cuando tengas suficientes aceleradores."
+          },
+          "keep_skip_10m": {
+            "description": "Aparta esta cantidad de aceleradores de construcción de 10m; fija la reserva en 0 para uso habitual.",
+            "label": "Guardar aceleradores de 10m"
+          },
+          "keep_skip_1h": {
+            "description": "Reserva esta cantidad de aceleradores de construcción de 1h para otras actividades.",
+            "label": "Guardar aceleradores de 1h"
+          },
+          "keep_skip_1m": {
+            "description": "Aparta esta cantidad de aceleradores de construcción de 1m; fija la reserva en 0 para uso habitual.",
+            "label": "Guardar aceleradores de 1m"
+          },
+          "keep_skip_24h": {
+            "description": "Reserva esta cantidad de aceleradores de construcción de 24h para otras actividades.",
+            "label": "Guardar aceleradores de 24h"
+          },
+          "keep_skip_30m": {
+            "description": "Aparta esta cantidad de aceleradores de construcción de 30m; fija la reserva en 0 para uso habitual.",
+            "label": "Guardar aceleradores de 30m"
+          },
+          "keep_skip_5h": {
+            "description": "Reserva esta cantidad de aceleradores de construcción de 5h para otras actividades.",
+            "label": "Guardar aceleradores de 5h"
+          },
+          "keep_skip_5m": {
+            "description": "Aparta esta cantidad de aceleradores de construcción de 5m; fija la reserva en 0 para uso habitual.",
+            "label": "Guardar aceleradores de 5m"
+          },
+          "saved_targets": {
+            "description": "La captura guarda y activa de inmediato un objetivo personalizado revisado; elegir otro objetivo guardado también lo activa al instante.",
+            "label": "Objetivos personalizados guardados"
+          },
+          "stone_reserve": {
+            "description": "Aparta esta cantidad de piedra del campamento del gasto de construcción; usa 0 si se puede gastar el excedente.",
+            "label": "Reserva de piedra"
+          },
+          "use_built_in_default": {
+            "description": "Vuelve al objetivo integrado de inmediato sin borrar los objetivos personalizados guardados.",
+            "label": "Usar objetivo integrado"
+          },
+          "wood_reserve": {
+            "description": "Aparta esta cantidad de madera del campamento del gasto de construcción; usa 0 si se puede gastar el excedente.",
+            "label": "Reserva de madera"
           }
         },
         "title": "Elegir la construcción opcional del campamento"
@@ -1697,7 +1741,7 @@
           "minimum_free_capacity": {
             "description": "Inicia traslados solo cuando la capacidad libre declarada alcance este umbral; un envío proporcional individual puede ser menor.",
             "label": "Capacidad libre mínima",
-            "recommendation": "Elige el umbral libre más pequeño adecuado para tu ritmo habitual de traslados."
+            "recommendation": "1 plaza libre de tropas para el abastecimiento proporcional habitual."
           },
           "owned_berimond_camp": {
             "description": "Auto Beri encuentra automáticamente tu campamento propio de Berimond, por lo que no debes indicar un ID de campamento.",
@@ -1718,12 +1762,12 @@
           "troop_transport_skip": {
             "description": "Elige la duración del objeto utilizado cuando está activada la aceleración del traslado.",
             "label": "Acelerador de traslado",
-            "recommendation": "Reserva los aceleradores largos para otras tareas si los necesitas."
+            "recommendation": "Usa el acelerador de 1 hora para los traslados habituales confirmados."
           },
           "use_troop_transport_time_skips": {
             "description": "Aplica el acelerador elegido a un traslado confirmado mientras sigue en camino.",
             "label": "Usar aceleradores de traslado",
-            "recommendation": "Desactivado salvo que el abastecimiento más rápido justifique gastar esos objetos guardados."
+            "recommendation": "Actívalo para el abastecimiento habitual del campamento si tienes suficientes aceleradores."
           }
         },
         "title": "Configurar traslados proporcionales de tropas"
@@ -1848,7 +1892,7 @@
             "recommendation": "0 para permitir cualquier fuerte elegible."
           },
           "priority": {
-            "description": "Ordena los objetivos de islas y fuertes activados; la prioridad decide dentro de una fila y la distancia resuelve los empates.",
+            "description": "Ordena los grupos de objetivos de islas y fuertes activos; dentro de cada grupo se ataca primero el objetivo apto más cercano.",
             "label": "Prioridad de objetivos de ataque",
             "recommendation": "Islas grandes, islas pequeñas y después fuertes del nivel 80 al 40 para obtener aguamarina."
           }
@@ -1892,18 +1936,18 @@
             "recommendation": "Activado para la construcción habitual."
           },
           "skip_reserves": {
-            "description": "Reserva el número elegido de cada objeto de 1 min, 5 min, 10 min, 30 min, 1 h, 5 h y 24 h.",
+            "description": "Conserva la cantidad elegida de objetos de 1 min, 5 min, 10 min, 30 min, 1 h, 5 h y 24 h para construcción y traslados.",
             "label": "Aceleradores reservados",
             "recommendation": "Mantén 0 aceleradores cortos salvo que los necesites en otra actividad; reserva tus existencias de 1 h, 5 h y 24 h para otros eventos."
           },
           "storm_reserves": {
-            "description": "Impide que la construcción use las cantidades elegidas de madera de la Tormenta, piedra y aguamarina.",
+            "description": "Aparta de la construcción las cantidades elegidas de madera, piedra y aguamarina.",
             "label": "Reservas de gasto del castillo de la Tormenta",
-            "recommendation": "Madera de la Tormenta 0 y piedra 0 si usas excedentes; fija la aguamarina según tu presupuesto de recompensas."
+            "recommendation": "Madera 0 y piedra 0 si se pueden gastar los excedentes; fija la aguamarina según tu presupuesto de recompensas."
           },
           "time_skips": {
-            "description": "Aplica aceleradores elegibles mientras conservas las reservas de objetos seleccionadas.",
-            "label": "Usar aceleradores de construcción",
+            "description": "Usa aceleradores aptos en la construcción y los traslados de recursos y tropas respetando las reservas elegidas.",
+            "label": "Usar aceleradores de construcción y traslados",
             "recommendation": "Activado si quieres acelerar la construcción habitual."
           }
         },
@@ -1926,9 +1970,9 @@
             "recommendation": "0 si todo el excedente puede financiar recompensas; si no, reserva la cantidad prevista."
           },
           "priority": {
-            "description": "Compra antes las metas de número menor y completa las limitadas antes que las ilimitadas.",
+            "description": "La tienda considera primero los objetivos de compra con números más bajos.",
             "label": "Prioridad",
-            "recommendation": "Usa 1, 2 y 3 en el orden que prefieras."
+            "recommendation": "Asigna 1, 2 y 3 en el orden que prefieras, con objetivos limitados antes de recompensas ilimitadas."
           },
           "search": {
             "description": "Busca por nombre las recompensas oficiales de Luna antes de configurar una compra.",
@@ -1994,7 +2038,7 @@
         },
         "items": {
           "attack_history": {
-            "description": "Consulta la media de ataques de la Tormenta comunicados desde el reinicio durante las últimas 24 horas.",
+            "description": "Consulta los ataques de Tormenta confirmados desde el reinicio del servidor divididos entre 24, no un promedio móvil de 24 horas.",
             "label": "Media de ataques desde el reinicio",
             "recommendation": "Consulta esta estimación de solo lectura antes de cambiar las necesidades de importación."
           },

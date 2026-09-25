@@ -5,6 +5,7 @@ import {
   Anchor,
   ArrowDown,
   ArrowUp,
+  BookOpen,
   Camera,
   Castle,
   Clock3,

@@ -553,7 +553,7 @@
     },
     "stormConstruction": {
       "harbor": "Přístav: zapnuto, úroveň 1",
-      "resources": "Bouřné dřevo 0; kámen 0; akvamarín podle plánu",
+      "resources": "Dřevo 0; kámen 0; akvamarín plánovaný",
       "spending": "Premium a demolice: vypnuto",
       "title": "Příklad výstavby a rezerv",
       "transport": "Přeprava surovin: zapnuto"
@@ -573,7 +573,7 @@
       "title": "Příklad uložení a zapnutí"
     },
     "stormTroops": {
-      "averages": "Průměr útoků a předvoleb: jen pro čtení",
+      "averages": "Potvrzené útoky od resetu / 24; průměr předvolby pouze ke čtení",
       "cap": "Limit vázaných vojáků: jen pro čtení",
       "donors": "Dárci: zobrazené pořadí, částečné zásoby povoleny",
       "minimum": "Ponechat nejméně: 1 000 vojáků",
@@ -1529,7 +1529,7 @@
       "builder": {
         "image": {
           "alt": "Ilustrační nastavení volitelné výstavby tábora v Automatickém Berimondu",
-          "caption": "Vestavěný cíl, úroveň stáje, stavební oprávnění a rezervy."
+          "caption": "Vestavěný a uložený cíl, režimy zachycení, stáj úroveň 5, zásoby dřeva a kamene a sedm délek časových přeskočení."
         },
         "items": {
           "allow_demolition": {
@@ -1543,34 +1543,78 @@
             "recommendation": "Vypnuto, pokud prémiovou výstavbu výslovně nechcete."
           },
           "auto_beri_builder_lane": {
-            "description": "Stavějte nebo vylepšujte přesný cíl tábora z potvrzené vrácené kořisti bez přepravy surovin z jiného království.",
+            "description": "Stavějte nebo vylepšujte aktivní cíl tábora Berimond z potvrzené vrácené kořisti bez dovozu surovin z jiného království.",
             "label": "Stavitel Automatického Berimondu",
-            "recommendation": "Vypnuto do prověření cíle a oprávnění k útratám."
+            "recommendation": "Zapněte pro běžnou výstavbu tábora po kontrole oprávnění k útratám."
           },
           "camp_resource_reserves": {
-            "description": "Vyhraďte zvolené množství berimondského dřeva a kamene mimo dosah stavitele.",
+            "description": "Vybrané množství dřeva a kamene nepoužívejte na výstavbu tábora.",
             "label": "Rezervy surovin tábora",
-            "recommendation": "Vyhraďte, co potřebujete pro jiné práce v táboře."
+            "recommendation": "Dřevo 0 a kámen 0, pokud lze využít přebytek."
           },
           "construction_time_skip_reserves": {
-            "description": "Vyhraďte zvolený počet každého předmětu zkracujícího čas mimo dosah stavitele.",
+            "description": "Nastavte zvlášť počet uchovávaných přeskočení 1 min, 5 min, 10 min, 30 min, 1 h, 5 h a 24 h.",
             "label": "Rezervy zkrácení doby stavby",
-            "recommendation": "Vyhraďte, co potřebujete pro další činnosti."
+            "recommendation": "Krátkých přeskočení ponechte po 0; zásobu 1 h, 5 h a 24 h chraňte pro jiné činnosti."
           },
           "optional_custom_camp_target": {
-            "description": "Zachyťte, prohlédněte, uložte a aktivujte rozložení pouze tehdy, má-li nahradit vestavěný cíl.",
+            "description": "Zachyťte Funkční pro nezbytné budovy, Rozložení pro umístění bez dekorací nebo Přesný pro všechny podporované podrobnosti.",
             "label": "Volitelný vlastní cíl tábora",
-            "recommendation": "Ponechte vestavěný cíl, dokud neprověříte vlastní rozložení."
+            "recommendation": "Používejte vestavěný cíl, pokud nepotřebujete zkontrolovaný vlastní cíl."
           },
           "stable_target": {
-            "description": "Pro vestavěný cíl vyberte požadovanou úroveň frakční stáje od 1 do 5.",
+            "description": "Pro vestavěný cíl vyberte úroveň frakční stáje 1 až 5.",
             "label": "Cílová úroveň stáje",
-            "recommendation": "Vyberte úroveň, kterou unesou zdroje aktuální události."
+            "recommendation": "Úroveň 5 pro běžnou výstavbu během události, pokud stačí suroviny."
           },
           "use_construction_time_skips": {
-            "description": "Urychlete potvrzený stavební časovač a přitom zachovejte zvolené rezervy urychlení.",
+            "description": "Urychlete potvrzenou stavbu v táboře při zachování vybraných zásob stavebních přeskočení.",
             "label": "Používat urychlení stavby",
-            "recommendation": "Vypnuto, pokud rychlejší stavba nestojí za tyto předměty."
+            "recommendation": "Zapněte pro běžnou výstavbu, pokud je dost přeskočení."
+          },
+          "keep_skip_10m": {
+            "description": "Ponechte tento počet stavebních přeskočení 10m; pro běžné použití nastavte zásobu na 0.",
+            "label": "Ponechat přeskočení 10m"
+          },
+          "keep_skip_1h": {
+            "description": "Rezervujte tento počet stavebních přeskočení 1h pro jiné činnosti.",
+            "label": "Ponechat přeskočení 1h"
+          },
+          "keep_skip_1m": {
+            "description": "Ponechte tento počet stavebních přeskočení 1m; pro běžné použití nastavte zásobu na 0.",
+            "label": "Ponechat přeskočení 1m"
+          },
+          "keep_skip_24h": {
+            "description": "Rezervujte tento počet stavebních přeskočení 24h pro jiné činnosti.",
+            "label": "Ponechat přeskočení 24h"
+          },
+          "keep_skip_30m": {
+            "description": "Ponechte tento počet stavebních přeskočení 30m; pro běžné použití nastavte zásobu na 0.",
+            "label": "Ponechat přeskočení 30m"
+          },
+          "keep_skip_5h": {
+            "description": "Rezervujte tento počet stavebních přeskočení 5h pro jiné činnosti.",
+            "label": "Ponechat přeskočení 5h"
+          },
+          "keep_skip_5m": {
+            "description": "Ponechte tento počet stavebních přeskočení 5m; pro běžné použití nastavte zásobu na 0.",
+            "label": "Ponechat přeskočení 5m"
+          },
+          "saved_targets": {
+            "description": "Zachycení okamžitě uloží a aktivuje zkontrolovaný vlastní cíl; výběr jiného uloženého cíle jej také ihned aktivuje.",
+            "label": "Uložené vlastní cíle"
+          },
+          "stone_reserve": {
+            "description": "Toto množství táborového kamene chraňte před stavebními výdaji; při použitelném přebytku nastavte 0.",
+            "label": "Zásoba kamene"
+          },
+          "use_built_in_default": {
+            "description": "Okamžitě přepněte zpět na vestavěný cíl a ponechte uložené vlastní cíle.",
+            "label": "Použít vestavěný výchozí cíl"
+          },
+          "wood_reserve": {
+            "description": "Toto množství táborového dřeva chraňte před stavebními výdaji; při použitelném přebytku nastavte 0.",
+            "label": "Zásoba dřeva"
           }
         },
         "title": "Vyberte volitelnou výstavbu tábora"
@@ -1697,7 +1741,7 @@
           "minimum_free_capacity": {
             "description": "Zahajte přesuny až při dosažení tohoto prahu hlášené volné kapacity; jednotlivá poměrná zásilka může být menší.",
             "label": "Minimální volná kapacita",
-            "recommendation": "Vyberte nejnižší volný práh odpovídající běžnému tempu přesunů."
+            "recommendation": "1 volné místo pro vojáky při běžném poměrném doplňování."
           },
           "owned_berimond_camp": {
             "description": "Automatizace sama najde váš vlastněný berimondský tábor, takže není třeba zadávat ID tábora.",
@@ -1718,12 +1762,12 @@
           "troop_transport_skip": {
             "description": "Vyberte trvání předmětu použitého při zapnutém urychlení přepravy.",
             "label": "Urychlení přepravy",
-            "recommendation": "Delší urychlení si podle potřeby vyhraďte pro jiné úkoly."
+            "recommendation": "Pro běžné potvrzené přesuny používejte přeskočení 1 h."
           },
           "use_troop_transport_time_skips": {
             "description": "Použijte zvolené urychlení na potvrzený přesun, dokud je na cestě.",
             "label": "Používat urychlení přepravy",
-            "recommendation": "Vypnuto, pokud rychlejší zásobování tábora nestojí za uložené předměty."
+            "recommendation": "Zapněte pro běžné zásobování tábora, pokud máte dost přeskočení."
           }
         },
         "title": "Nastavte poměrné přesuny jednotek"
@@ -1848,7 +1892,7 @@
             "recommendation": "0 umožní každou vhodnou pevnost."
           },
           "priority": {
-            "description": "Seřaďte povolené cíle ostrovů a pevností; priorita rozhoduje v rámci řádku, vzdálenost při shodě.",
+            "description": "Seřaďte aktivní skupiny cílů ostrovů a pevností; v každé skupině se nejdříve napadá nejbližší vhodný cíl.",
             "label": "Priorita útočných cílů",
             "recommendation": "Velké ostrovy, malé ostrovy, pak pevnosti od úrovně 80 do 40 pro získávání akvamarínu."
           }
@@ -1892,18 +1936,18 @@
             "recommendation": "Zapnuto pro běžnou výstavbu."
           },
           "skip_reserves": {
-            "description": "Ponechte v rezervě vybraný počet každé položky na 1 min, 5 min, 10 min, 30 min, 1 h, 5 h a 24 h.",
+            "description": "Ponechte vybraný počet předmětů 1 min, 5 min, 10 min, 30 min, 1 h, 5 h a 24 h pro stavby a přepravu.",
             "label": "Rezerva časových přeskočení",
             "recommendation": "Krátká přeskočení na 0, pokud je nepotřebujete jinde; zásoby 1 h, 5 h a 24 h chraňte pro jiné události."
           },
           "storm_reserves": {
-            "description": "Zabraňte použití vybraných množství Bouřného dřeva, kamene a akvamarínu při výstavbě.",
+            "description": "Vybrané množství dřeva, kamene a akvamarínu chraňte před výstavbou.",
             "label": "Stavební rezervy Bouřného hradu",
-            "recommendation": "Bouřné dřevo 0 a kámen 0, pokud používáte přebytek; akvamarín podle plánovaného rozpočtu na odměny."
+            "recommendation": "Dřevo 0 a kámen 0, pokud lze utratit přebytky; akvamarín určete podle plánovaného rozpočtu na odměny."
           },
           "time_skips": {
-            "description": "Použijte vhodná časová přeskočení při zachování zvolených rezerv předmětů.",
-            "label": "Použít časová přeskočení stavby",
+            "description": "Používejte vhodná přeskočení pro stavby, přepravu surovin a vojáků při zachování vybraných zásob.",
+            "label": "Použít přeskočení pro stavby a přepravu",
             "recommendation": "Zapnuto, pokud chcete běžnou výstavbu urychlit."
           }
         },
@@ -1926,9 +1970,9 @@
             "recommendation": "0, pokud všechen přebytek smí financovat odměny; jinak vyhraďte plánované množství."
           },
           "priority": {
-            "description": "Kupujte nejprve cíle s nižším číslem a omezené cíle dokončete před neomezenými.",
+            "description": "Obchod nejprve posuzuje nákupní cíle s nižšími čísly.",
             "label": "Priorita",
-            "recommendation": "Použijte 1, 2 a 3 v preferovaném pořadí."
+            "recommendation": "Přiřaďte 1, 2 a 3 v požadovaném pořadí a omezené cíle dejte před neomezené odměny."
           },
           "search": {
             "description": "Před nastavením nákupu vyhledejte oficiální Luniny odměny podle názvu.",
@@ -1994,7 +2038,7 @@
         },
         "items": {
           "attack_history": {
-            "description": "Přečtěte si průměrný počet útoků Bouře nahlášených od resetu za posledních 24 hodin.",
+            "description": "Čtěte potvrzené útoky v Bouři od resetu serveru dělené 24, nikoli klouzavý průměr za 24 hodin.",
             "label": "Průměr útoků od resetu",
             "recommendation": "Tento odhad jen pro čtení zkontrolujte před změnou potřeby dovozu."
           },

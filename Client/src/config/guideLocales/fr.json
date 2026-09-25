@@ -553,7 +553,7 @@
     },
     "stormConstruction": {
       "harbor": "Port : activé, niveau 1",
-      "resources": "Bois de l'Orage 0 ; pierre 0 ; aigue-marine selon le plan",
+      "resources": "Bois 0 ; pierre 0 ; aigue-marine prévue",
       "spending": "Premium et démolition : désactivés",
       "title": "Exemple de construction et de réserves",
       "transport": "Transport de ressources : activé"
@@ -573,7 +573,7 @@
       "title": "Exemple du parcours d'enregistrement et d'activation"
     },
     "stormTroops": {
-      "averages": "Moyennes d'attaques et de préréglages : lecture seule",
+      "averages": "Attaques confirmées depuis la remise à zéro / 24 ; moyenne du préréglage en lecture seule",
       "cap": "Plafond des troupes engagées : lecture seule",
       "donors": "Donneurs : ordre affiché, stock partiel autorisé",
       "minimum": "Minimum gardé : 1 000 troupes",
@@ -1529,7 +1529,7 @@
       "builder": {
         "image": {
           "alt": "Réglages illustratifs de construction facultative du camp Auto Beri",
-          "caption": "Objectif intégré, niveau d’écurie, autorisations de construction et réserves."
+          "caption": "Cible intégrée et cibles enregistrées, modes de capture, écurie niveau 5, réserves de bois et de pierre et sept durées de raccourcis."
         },
         "items": {
           "allow_demolition": {
@@ -1543,34 +1543,78 @@
             "recommendation": "Désactivé, sauf si vous souhaitez explicitement des constructions premium."
           },
           "auto_beri_builder_lane": {
-            "description": "Construisez ou améliorez l’objectif exact du camp avec le butin revenu et confirmé, sans transporter de ressources d’un autre royaume.",
+            "description": "Construisez ou améliorez la cible active du camp de Bérimond avec le butin revenu et confirmé, sans importer de ressources d'un autre royaume.",
             "label": "Construction Auto Beri",
-            "recommendation": "Désactivée jusqu’à la vérification de l’objectif et des autorisations de dépense."
+            "recommendation": "Activez pour la construction régulière du camp après avoir vérifié les permissions de dépense."
           },
           "camp_resource_reserves": {
-            "description": "Réservez les quantités choisies de bois et de pierre de Bérimond hors de la construction automatique.",
+            "description": "Écartez de la construction du camp les quantités choisies de bois et de pierre.",
             "label": "Réserves de ressources du camp",
-            "recommendation": "Réservez ce qu’exigent les autres travaux du camp."
+            "recommendation": "Bois 0 et pierre 0 si les surplus peuvent être utilisés."
           },
           "construction_time_skip_reserves": {
-            "description": "Réservez le nombre choisi de chaque accélérateur hors de la construction automatique.",
+            "description": "Définissez séparément les raccourcis à conserver pour 1 min, 5 min, 10 min, 30 min, 1 h, 5 h et 24 h.",
             "label": "Réserves d’accélérateurs de construction",
-            "recommendation": "Réservez ce qu’exigent vos autres activités."
+            "recommendation": "Gardez 0 de chaque raccourci court ; réservez le stock destiné aux autres activités pour 1 h, 5 h et 24 h."
           },
           "optional_custom_camp_target": {
-            "description": "Capturez, prévisualisez, enregistrez et activez une disposition seulement si elle doit remplacer l’objectif intégré.",
+            "description": "Capturez en mode Fonctionnel pour les bâtiments essentiels, Disposition pour leurs emplacements sans décorations ou Exact pour tous les détails pris en charge.",
             "label": "Objectif personnalisé facultatif",
-            "recommendation": "Conservez l’objectif intégré tant que vous n’avez pas examiné une disposition personnalisée."
+            "recommendation": "Gardez la cible intégrée sauf si une cible personnalisée vérifiée est nécessaire."
           },
           "stable_target": {
-            "description": "Choisissez pour l’objectif intégré le niveau souhaité de l’écurie de faction, de 1 à 5.",
+            "description": "Choisissez le niveau de l'écurie de faction de 1 à 5 pour la cible intégrée.",
             "label": "Niveau cible de l’écurie",
-            "recommendation": "Choisissez un niveau adapté aux ressources de votre événement actuel."
+            "recommendation": "Niveau 5 pour la construction régulière de l'événement si les ressources le permettent."
           },
           "use_construction_time_skips": {
-            "description": "Accélérez un chantier confirmé tout en conservant les accélérateurs réservés.",
+            "description": "Avancez un chantier confirmé du camp tout en respectant les réserves de raccourcis de construction choisies.",
             "label": "Utiliser des accélérateurs de construction",
-            "recommendation": "Désactivé, sauf si une construction plus rapide justifie ces objets."
+            "recommendation": "Activez pour la construction régulière si le stock de raccourcis le permet."
+          },
+          "keep_skip_10m": {
+            "description": "Écartez ce nombre de raccourcis de construction de 10m ; mettez la réserve à 0 pour l'usage régulier.",
+            "label": "Garder les raccourcis de 10m"
+          },
+          "keep_skip_1h": {
+            "description": "Réservez ce nombre de raccourcis de construction de 1h pour d'autres activités.",
+            "label": "Garder les raccourcis de 1h"
+          },
+          "keep_skip_1m": {
+            "description": "Écartez ce nombre de raccourcis de construction de 1m ; mettez la réserve à 0 pour l'usage régulier.",
+            "label": "Garder les raccourcis de 1m"
+          },
+          "keep_skip_24h": {
+            "description": "Réservez ce nombre de raccourcis de construction de 24h pour d'autres activités.",
+            "label": "Garder les raccourcis de 24h"
+          },
+          "keep_skip_30m": {
+            "description": "Écartez ce nombre de raccourcis de construction de 30m ; mettez la réserve à 0 pour l'usage régulier.",
+            "label": "Garder les raccourcis de 30m"
+          },
+          "keep_skip_5h": {
+            "description": "Réservez ce nombre de raccourcis de construction de 5h pour d'autres activités.",
+            "label": "Garder les raccourcis de 5h"
+          },
+          "keep_skip_5m": {
+            "description": "Écartez ce nombre de raccourcis de construction de 5m ; mettez la réserve à 0 pour l'usage régulier.",
+            "label": "Garder les raccourcis de 5m"
+          },
+          "saved_targets": {
+            "description": "La capture enregistre et active aussitôt une cible personnalisée vérifiée ; choisir une autre cible enregistrée l'active aussi aussitôt.",
+            "label": "Cibles personnalisées enregistrées"
+          },
+          "stone_reserve": {
+            "description": "Écartez cette quantité de pierre du camp des dépenses de construction ; mettez 0 si le surplus peut être utilisé.",
+            "label": "Réserve de pierre"
+          },
+          "use_built_in_default": {
+            "description": "Revenez aussitôt à la cible intégrée tout en conservant les cibles personnalisées enregistrées.",
+            "label": "Utiliser la cible intégrée"
+          },
+          "wood_reserve": {
+            "description": "Écartez cette quantité de bois du camp des dépenses de construction ; mettez 0 si le surplus peut être utilisé.",
+            "label": "Réserve de bois"
           }
         },
         "title": "Choisir la construction facultative du camp"
@@ -1697,7 +1741,7 @@
           "minimum_free_capacity": {
             "description": "Commencez les transferts seulement lorsque la capacité libre déclarée atteint ce seuil ; un envoi proportionnel individuel peut être plus petit.",
             "label": "Capacité libre minimale",
-            "recommendation": "Choisissez le plus petit seuil libre adapté à votre rythme de transfert habituel."
+            "recommendation": "1 place libre pour les troupes lors du ravitaillement proportionnel régulier."
           },
           "owned_berimond_camp": {
             "description": "Auto Beri trouve automatiquement votre propre camp de Bérimond ; aucun identifiant de camp n’est à saisir.",
@@ -1718,12 +1762,12 @@
           "troop_transport_skip": {
             "description": "Choisissez la durée de l’objet utilisé quand l’accélération du transport est active.",
             "label": "Accélérateur de transport",
-            "recommendation": "Réservez les accélérateurs longs pour d’autres tâches si nécessaire."
+            "recommendation": "Utilisez le raccourci de 1 heure pour les transferts réguliers confirmés."
           },
           "use_troop_transport_time_skips": {
             "description": "Appliquez l’accélérateur choisi à un transfert confirmé pendant son trajet.",
             "label": "Utiliser des accélérateurs de transport",
-            "recommendation": "Désactivé, sauf si un approvisionnement plus rapide justifie les objets économisés."
+            "recommendation": "Activez pour le ravitaillement régulier du camp si votre stock de raccourcis le permet."
           }
         },
         "title": "Régler les transferts proportionnels de troupes"
@@ -1848,7 +1892,7 @@
             "recommendation": "0 pour autoriser tout fort admissible."
           },
           "priority": {
-            "description": "Classez les cibles actives parmi les îles et les forts ; la priorité décide dans une ligne, puis la distance départage les égalités.",
+            "description": "Classez les groupes de cibles insulaires et fortifiées activés ; dans chaque groupe, la cible admissible la plus proche passe d'abord.",
             "label": "Priorité des cibles d'attaque",
             "recommendation": "Grandes îles, petites îles, puis forts du niveau 80 au 40 pour récolter l'aigue-marine."
           }
@@ -1892,18 +1936,18 @@
             "recommendation": "Activé pour les constructions régulières."
           },
           "skip_reserves": {
-            "description": "Conservez le nombre choisi d'objets de réduction de temps de 1 min, 5 min, 10 min, 30 min, 1 h, 5 h et 24 h.",
+            "description": "Conservez le nombre choisi d'objets de 1 min, 5 min, 10 min, 30 min, 1 h, 5 h et 24 h pour la construction et les transports.",
             "label": "Réductions de temps gardées en réserve",
             "recommendation": "Gardez 0 réduction courte sauf besoin ailleurs ; réservez vos stocks de 1 h, 5 h et 24 h pour les autres événements."
           },
           "storm_reserves": {
-            "description": "Rendez indisponibles à la construction les quantités choisies de bois de l'Orage, de pierre et d'aigue-marine.",
+            "description": "Écartez de la construction les quantités choisies de bois, pierre et aigue-marine.",
             "label": "Réserves de dépenses du château de l'Orage",
-            "recommendation": "Bois de l'Orage 0 et pierre 0 si vous dépensez le surplus ; réservez l'aigue-marine prévue pour les récompenses."
+            "recommendation": "Bois 0 et pierre 0 si les surplus sont utilisables ; fixez l'aigue-marine selon votre budget de récompenses."
           },
           "time_skips": {
-            "description": "Appliquez les réductions de temps admissibles en conservant les réserves d'objets choisies.",
-            "label": "Utiliser les réductions de temps de construction",
+            "description": "Appliquez les raccourcis admissibles à la construction et aux transports de ressources et de troupes en respectant les réserves choisies.",
+            "label": "Utiliser les raccourcis de construction et de transport",
             "recommendation": "Activé si vous voulez accélérer les constructions courantes."
           }
         },
@@ -1926,9 +1970,9 @@
             "recommendation": "0 si tout le surplus peut financer des récompenses ; sinon réservez la quantité prévue."
           },
           "priority": {
-            "description": "Achetez d'abord les objectifs aux numéros les plus bas et terminez les objectifs limités avant les illimités.",
+            "description": "La boutique traite d'abord les objectifs d'achat de plus faible numéro.",
             "label": "Priorité",
-            "recommendation": "Utilisez 1, 2 et 3 dans l'ordre souhaité."
+            "recommendation": "Attribuez 1, 2 et 3 selon votre préférence, en plaçant les objectifs limités avant les récompenses illimitées."
           },
           "search": {
             "description": "Recherchez les récompenses officielles de Luna par nom avant de configurer un achat.",
@@ -1994,7 +2038,7 @@
         },
         "items": {
           "attack_history": {
-            "description": "Lisez le nombre moyen d'attaques de l'Orage signalées depuis la réinitialisation au cours des dernières 24 heures.",
+            "description": "Consultez les attaques Tempête confirmées depuis la remise à zéro du serveur divisées par 24, et non une moyenne glissante sur 24 heures.",
             "label": "Moyenne des attaques depuis réinitialisation",
             "recommendation": "Consultez cette estimation en lecture seule avant de modifier l'import nécessaire."
           },

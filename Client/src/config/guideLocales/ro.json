@@ -553,7 +553,7 @@
     },
     "stormConstruction": {
       "harbor": "Port: pornit, nivelul 1",
-      "resources": "Lemn din Furtună 0; piatră 0; acvamarin planificat",
+      "resources": "Lemn 0; piatră 0; acvamarin planificat",
       "spending": "Premium și demolare: oprite",
       "title": "Exemplu de construcție și rezerve",
       "transport": "Transport de resurse: pornit"
@@ -573,7 +573,7 @@
       "title": "Exemplu de salvare și activare"
     },
     "stormTroops": {
-      "averages": "Medii de atacuri și presetări: doar pentru citire",
+      "averages": "Atacuri confirmate de la resetare / 24; media presetului doar pentru citire",
       "cap": "Limita trupelor angajate: doar pentru citire",
       "donors": "Donatori: ordinea afișată, stoc parțial permis",
       "minimum": "Minim păstrat: 1.000 de trupe",
@@ -1529,7 +1529,7 @@
       "builder": {
         "image": {
           "alt": "Setări ilustrative pentru construcția opțională a taberei",
-          "caption": "Țintă încorporată, nivelul grajdului, permisiuni de construcție și rezerve."
+          "caption": "Țintă inclusă și salvată, moduri de captură, grajd nivelul 5, rezerve de lemn și piatră și șapte durate de accelerare."
         },
         "items": {
           "allow_demolition": {
@@ -1543,34 +1543,78 @@
             "recommendation": "Dezactivat dacă nu dorești explicit construcții premium."
           },
           "auto_beri_builder_lane": {
-            "description": "Construiește sau îmbunătățește ținta exactă a taberei cu pradă întoarsă și confirmată, fără transport de resurse din alt regat.",
+            "description": "Construiește sau îmbunătățește ținta activă a taberei Berimond din prada întoarsă și confirmată, fără resurse aduse din alt regat.",
             "label": "Constructorul Berimond automat",
-            "recommendation": "Dezactivat până verifici ținta și permisiunile de cheltuire."
+            "recommendation": "Pornește pentru construcția obișnuită a taberei după verificarea permisiunilor de cheltuire."
           },
           "camp_resource_reserves": {
-            "description": "Păstrează cantitățile alese de lemn și piatră din Berimond în afara resurselor disponibile constructorului.",
+            "description": "Păstrează cantitățile alese de lemn și piatră în afara construcției taberei.",
             "label": "Rezerve de resurse ale taberei",
-            "recommendation": "Rezervă ce îți trebuie pentru alte lucrări în tabără."
+            "recommendation": "Lemn 0 și piatră 0 dacă surplusul poate fi folosit."
           },
           "construction_time_skip_reserves": {
-            "description": "Păstrează numărul ales din fiecare obiect de reducere a timpului în afara resurselor constructorului.",
+            "description": "Stabilește separat câte accelerări de 1 min, 5 min, 10 min, 30 min, 1 h, 5 h și 24 h păstrezi.",
             "label": "Rezerve de accelerări pentru construcție",
-            "recommendation": "Rezervă ce îți trebuie pentru alte activități."
+            "recommendation": "Păstrează 0 din fiecare accelerare scurtă; rezervă stocul de 1 h, 5 h și 24 h pentru alte activități."
           },
           "optional_custom_camp_target": {
-            "description": "Capturează, previzualizează, salvează și activează un plan doar dacă trebuie să înlocuiască ținta încorporată.",
+            "description": "Capturează Funcțional pentru clădirile esențiale, Plan pentru pozițiile fără decorațiuni sau Exact pentru toate detaliile acceptate.",
             "label": "Țintă personalizată opțională",
-            "recommendation": "Păstrează ținta încorporată până verifici un plan personalizat."
+            "recommendation": "Folosește ținta inclusă dacă nu ai nevoie de o țintă personalizată verificată."
           },
           "stable_target": {
-            "description": "Alege pentru ținta încorporată nivelul dorit al grajdului facțiunii, între 1 și 5.",
+            "description": "Alege nivelul grajdului facțiunii între 1 și 5 pentru ținta inclusă.",
             "label": "Nivelul țintă al grajdului",
-            "recommendation": "Alege un nivel pe care îl susțin resursele evenimentului curent."
+            "recommendation": "Nivelul 5 pentru construcția obișnuită de eveniment dacă resursele ajung."
           },
           "use_construction_time_skips": {
-            "description": "Accelerează un cronometru de construcție confirmat, păstrând rezervele alese de accelerări.",
+            "description": "Accelerează o construcție confirmată a taberei păstrând rezervele alese de accelerări de construcție.",
             "label": "Folosește accelerări pentru construcție",
-            "recommendation": "Dezactivat dacă grăbirea construcției nu merită acele obiecte."
+            "recommendation": "Pornește pentru construcția obișnuită dacă stocul de accelerări permite."
+          },
+          "keep_skip_10m": {
+            "description": "Ține deoparte acest număr de accelerări de construcție de 10m; setează rezerva la 0 pentru folosirea obișnuită.",
+            "label": "Păstrează accelerări de 10m"
+          },
+          "keep_skip_1h": {
+            "description": "Rezervă acest număr de accelerări de construcție de 1h pentru alte activități.",
+            "label": "Păstrează accelerări de 1h"
+          },
+          "keep_skip_1m": {
+            "description": "Ține deoparte acest număr de accelerări de construcție de 1m; setează rezerva la 0 pentru folosirea obișnuită.",
+            "label": "Păstrează accelerări de 1m"
+          },
+          "keep_skip_24h": {
+            "description": "Rezervă acest număr de accelerări de construcție de 24h pentru alte activități.",
+            "label": "Păstrează accelerări de 24h"
+          },
+          "keep_skip_30m": {
+            "description": "Ține deoparte acest număr de accelerări de construcție de 30m; setează rezerva la 0 pentru folosirea obișnuită.",
+            "label": "Păstrează accelerări de 30m"
+          },
+          "keep_skip_5h": {
+            "description": "Rezervă acest număr de accelerări de construcție de 5h pentru alte activități.",
+            "label": "Păstrează accelerări de 5h"
+          },
+          "keep_skip_5m": {
+            "description": "Ține deoparte acest număr de accelerări de construcție de 5m; setează rezerva la 0 pentru folosirea obișnuită.",
+            "label": "Păstrează accelerări de 5m"
+          },
+          "saved_targets": {
+            "description": "Capturarea salvează și activează imediat o țintă personalizată verificată; alegerea alteia salvate o activează tot imediat.",
+            "label": "Ținte personalizate salvate"
+          },
+          "stone_reserve": {
+            "description": "Nu cheltui această cantitate de piatră a taberei la construcție; setează 0 dacă surplusul poate fi cheltuit.",
+            "label": "Rezervă de piatră"
+          },
+          "use_built_in_default": {
+            "description": "Revino imediat la ținta inclusă, păstrând țintele personalizate salvate.",
+            "label": "Folosește ținta inclusă"
+          },
+          "wood_reserve": {
+            "description": "Nu cheltui această cantitate de lemn a taberei la construcție; setează 0 dacă surplusul poate fi cheltuit.",
+            "label": "Rezervă de lemn"
           }
         },
         "title": "Alege construcția opțională a taberei"
@@ -1697,7 +1741,7 @@
           "minimum_free_capacity": {
             "description": "Începe transferurile numai când capacitatea liberă raportată atinge pragul; un transport proporțional individual poate fi mai mic.",
             "label": "Capacitate liberă minimă",
-            "recommendation": "Alege cel mai mic prag potrivit ritmului tău obișnuit de transfer."
+            "recommendation": "1 loc liber pentru trupe la aprovizionarea proporțională obișnuită."
           },
           "owned_berimond_camp": {
             "description": "Automatizarea găsește singură tabăra deținută în Berimond, deci nu trebuie introdus niciun ID de tabără.",
@@ -1718,12 +1762,12 @@
           "troop_transport_skip": {
             "description": "Alege durata obiectului folosit când accelerarea transportului este activă.",
             "label": "Accelerarea transportului",
-            "recommendation": "Păstrează accelerările mai lungi pentru alte activități, dacă ai nevoie de ele."
+            "recommendation": "Folosește accelerarea de 1 oră pentru transferurile obișnuite confirmate."
           },
           "use_troop_transport_time_skips": {
             "description": "Aplică accelerarea aleasă unui transfer confirmat cât timp este pe drum.",
             "label": "Folosește accelerări de transport",
-            "recommendation": "Dezactivat dacă aprovizionarea mai rapidă nu merită obiectele economisite."
+            "recommendation": "Pornește pentru aprovizionarea obișnuită a taberei dacă stocul de accelerări permite."
           }
         },
         "title": "Configurează transferurile proporționale"
@@ -1848,7 +1892,7 @@
             "recommendation": "0 permite orice fort eligibil."
           },
           "priority": {
-            "description": "Ordonează țintele de insule și forturi activate; prioritatea decide într-un rând, iar distanța departajează.",
+            "description": "Ordonează grupurile active de ținte de insule și forturi; în fiecare grup este atacată mai întâi cea mai apropiată țintă eligibilă.",
             "label": "Prioritatea țintelor de atac",
             "recommendation": "Insule mari, insule mici, apoi forturi de la nivelul 80 la 40 pentru acvamarin."
           }
@@ -1892,18 +1936,18 @@
             "recommendation": "Pornit pentru construcții obișnuite."
           },
           "skip_reserves": {
-            "description": "Păstrează numărul ales din fiecare obiect de reducere a timpului de 1 min, 5 min, 10 min, 30 min, 1 h, 5 h și 24 h.",
+            "description": "Păstrează numărul ales de obiecte de 1 min, 5 min, 10 min, 30 min, 1 h, 5 h și 24 h pentru construcție și transport.",
             "label": "Reduceri de timp păstrate în rezervă",
             "recommendation": "Păstrează 0 reduceri scurte dacă nu ai nevoie de ele în altă parte; rezervă stocul de 1 h, 5 h și 24 h pentru alte evenimente."
           },
           "storm_reserves": {
-            "description": "Fă indisponibile pentru construcție cantitățile alese de lemn din Furtună, piatră și acvamarin.",
+            "description": "Nu folosi la construcție cantitățile alese de lemn, piatră și acvamarin.",
             "label": "Rezerve pentru cheltuielile castelului din Furtună",
-            "recommendation": "Lemn din Furtună 0 și piatră 0 dacă folosești surplusul; acvamarin conform bugetului planificat pentru recompense."
+            "recommendation": "Lemn 0 și piatră 0 dacă surplusul poate fi cheltuit; setează acvamarinul după bugetul de recompense planificat."
           },
           "time_skips": {
-            "description": "Aplică reduceri de timp eligibile și păstrează rezervele alese de obiecte.",
-            "label": "Folosește reduceri de timp pentru construcție",
+            "description": "Aplică accelerări eligibile la construcție, transportul resurselor și al trupelor, păstrând rezervele alese.",
+            "label": "Folosește accelerări pentru construcție și transport",
             "recommendation": "Pornit dacă vrei să grăbești construcțiile obișnuite."
           }
         },
@@ -1926,9 +1970,9 @@
             "recommendation": "0 dacă tot surplusul poate finanța recompense; altfel rezervă cantitatea planificată."
           },
           "priority": {
-            "description": "Cumpără întâi obiectivele cu număr mai mic și termină obiectivele limitate înaintea celor nelimitate.",
+            "description": "Magazinul ia în considerare mai întâi obiectivele de cumpărare cu numere mai mici.",
             "label": "Prioritate",
-            "recommendation": "Folosește 1, 2 și 3 în ordinea dorită."
+            "recommendation": "Atribuie 1, 2 și 3 în ordinea dorită, punând obiectivele limitate înaintea recompenselor nelimitate."
           },
           "search": {
             "description": "Caută recompensele oficiale Luna după nume înainte de configurarea unei cumpărări.",
@@ -1994,7 +2038,7 @@
         },
         "items": {
           "attack_history": {
-            "description": "Citește numărul mediu de atacuri din Furtună raportate de la resetare în ultimele 24 de ore.",
+            "description": "Citește atacurile Furtună confirmate de la resetarea serverului împărțite la 24, nu o medie mobilă pe 24 de ore.",
             "label": "Media atacurilor de la resetare",
             "recommendation": "Verifică această estimare doar pentru citire înainte să schimbi necesarul de import."
           },

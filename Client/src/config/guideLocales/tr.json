@@ -553,7 +553,7 @@
     },
     "stormConstruction": {
       "harbor": "Liman: açık, seviye 1",
-      "resources": "Fırtına odunu 0; taş 0; Akuamarin planlı",
+      "resources": "Odun 0; taş 0; akuamarin planlı",
       "spending": "Premium ve yıkım: kapalı",
       "title": "Örnek inşaat ve rezervler",
       "transport": "Kaynak taşımacılığı: açık"
@@ -573,7 +573,7 @@
       "title": "Örnek kaydetme ve açma akışı"
     },
     "stormTroops": {
-      "averages": "Saldırı ve ön ayar ortalamaları: salt okunur",
+      "averages": "Sıfırlamadan beri doğrulanan saldırılar / 24; preset ortalaması salt okunur",
       "cap": "Bağlı asker sınırı: salt okunur",
       "donors": "Kaynak kaleler: gösterilen sıra, kısmi stok uygun",
       "minimum": "Asgari tutulan: 1.000 asker",
@@ -1529,7 +1529,7 @@
       "builder": {
         "image": {
           "alt": "Auto Beri isteğe bağlı kamp inşaatı ayarlarının temsili görünümü",
-          "caption": "Yerleşik hedef, ahır hedefi, inşaat izinleri ve rezerv grupları."
+          "caption": "Yerleşik ve kayıtlı hedef, yakalama modları, 5. seviye ahır, odun ve taş yedekleri ile yedi zaman atlama süresi."
         },
         "items": {
           "allow_demolition": {
@@ -1543,34 +1543,78 @@
             "recommendation": "Premium inşaatı bilerek istiyorsanız açın; aksi halde kapalı tutun."
           },
           "auto_beri_builder_lane": {
-            "description": "Başka bir krallıktan kaynak taşımadan, doğrulanmış ganimetle kamptaki kesin hedefi inşa edin veya yükseltin.",
+            "description": "Başka krallıktan kaynak taşımadan, doğrulanmış geri dönen ganimetle etkin Berimond kampı hedefini inşa edin veya yükseltin.",
             "label": "Auto Beri inşa hattı",
-            "recommendation": "Hedefi ve harcama izinlerini inceleyene kadar kapalı tutun."
+            "recommendation": "Harcama izinlerini gözden geçirdikten sonra olağan kamp inşası için açın."
           },
           "camp_resource_reserves": {
-            "description": "Seçilen Berimond odunu ve taşını inşaatçı için kullanılamaz tutun.",
+            "description": "Seçilen odun ve taş miktarlarını kamp inşasında harcamayın.",
             "label": "Kamp kaynak rezervleri",
-            "recommendation": "Diğer kamp işleri için gereken miktarı ayırın."
+            "recommendation": "Fazlalık kullanılabiliyorsa odun 0 ve taş 0."
           },
           "construction_time_skip_reserves": {
-            "description": "Seçilen sayıda hızlandırma öğesini inşaatçı için kullanılamaz tutun.",
+            "description": "1 dk, 5 dk, 10 dk, 30 dk, 1 sa, 5 sa ve 24 sa atlamalarından kaç tane saklanacağını ayrı ayrı belirleyin.",
             "label": "İnşaat hızlandırma rezervleri",
-            "recommendation": "Diğer işler için gerekenleri ayırın."
+            "recommendation": "Kısa atlamaların her birinden 0 saklayın; 1, 5 ve 24 saatlik stoğu başka işler için ayırın."
           },
           "optional_custom_camp_target": {
-            "description": "Yalnızca yerleşik hedefin yerine geçmesini istiyorsanız bir yerleşimi yakalayın, önizleyin, kaydedin ve etkinleştirin.",
+            "description": "Temel binalar için İşlevsel, süssüz bina konumları için Düzen veya desteklenen tüm ayrıntılar için Tam yakalayın.",
             "label": "İsteğe bağlı özel kamp hedefi",
-            "recommendation": "Özel yerleşimi incelemediyseniz yerleşik hedefi kullanın."
+            "recommendation": "İncelenmiş özel bir hedef gerekmedikçe yerleşik hedefi kullanın."
           },
           "stable_target": {
-            "description": "Yerleşik hedef için istediğiniz Grup Ahırı seviyesini 1 ile 5 arasında seçin.",
+            "description": "Yerleşik hedef için fraksiyon ahırının 1 ile 5 arasındaki seviyesini seçin.",
             "label": "Ahır hedefi",
-            "recommendation": "Mevcut etkinlik kaynaklarınızın karşılayabildiği seviyeyi seçin."
+            "recommendation": "Kaynaklar yeterliyse olağan etkinlik inşası için seviye 5."
           },
           "use_construction_time_skips": {
-            "description": "Seçilen hızlandırma rezervlerini koruyarak doğrulanmış inşaat süresini ilerletin.",
+            "description": "Seçilen inşa atlama yedeklerini koruyarak doğrulanmış kamp inşasını hızlandırın.",
             "label": "İnşaat hızlandırmalarını kullan",
-            "recommendation": "Öğeleri harcamaya değecek kadar hızlı inşaat istemiyorsanız kapalı tutun."
+            "recommendation": "Atlama stoku yeterliyse olağan inşa için açın."
+          },
+          "keep_skip_10m": {
+            "description": "Bu sayıda 10m inşa atlamasını ayrı tutun; olağan kullanım için yedeği 0 yapın.",
+            "label": "10m atlamalarını sakla"
+          },
+          "keep_skip_1h": {
+            "description": "Bu sayıda 1h inşa atlamasını başka etkinlikler için ayırın.",
+            "label": "1h atlamalarını sakla"
+          },
+          "keep_skip_1m": {
+            "description": "Bu sayıda 1m inşa atlamasını ayrı tutun; olağan kullanım için yedeği 0 yapın.",
+            "label": "1m atlamalarını sakla"
+          },
+          "keep_skip_24h": {
+            "description": "Bu sayıda 24h inşa atlamasını başka etkinlikler için ayırın.",
+            "label": "24h atlamalarını sakla"
+          },
+          "keep_skip_30m": {
+            "description": "Bu sayıda 30m inşa atlamasını ayrı tutun; olağan kullanım için yedeği 0 yapın.",
+            "label": "30m atlamalarını sakla"
+          },
+          "keep_skip_5h": {
+            "description": "Bu sayıda 5h inşa atlamasını başka etkinlikler için ayırın.",
+            "label": "5h atlamalarını sakla"
+          },
+          "keep_skip_5m": {
+            "description": "Bu sayıda 5m inşa atlamasını ayrı tutun; olağan kullanım için yedeği 0 yapın.",
+            "label": "5m atlamalarını sakla"
+          },
+          "saved_targets": {
+            "description": "Yakalama, incelenmiş özel hedefi hemen kaydedip etkinleştirir; başka bir kayıtlı hedefi seçmek de onu hemen etkinleştirir.",
+            "label": "Kayıtlı özel hedefler"
+          },
+          "stone_reserve": {
+            "description": "Bu kamp taşı miktarını inşa harcamalarından ayrı tutun; fazlalık harcanabiliyorsa 0 kullanın.",
+            "label": "Taş yedeği"
+          },
+          "use_built_in_default": {
+            "description": "Kayıtlı özel hedefleri koruyarak hemen yerleşik hedefe dönün.",
+            "label": "Yerleşik varsayılanı kullan"
+          },
+          "wood_reserve": {
+            "description": "Bu kamp odunu miktarını inşa harcamalarından ayrı tutun; fazlalık harcanabiliyorsa 0 kullanın.",
+            "label": "Odun yedeği"
           }
         },
         "title": "İsteğe bağlı kamp inşaatını seçin"
@@ -1697,7 +1741,7 @@
           "minimum_free_capacity": {
             "description": "Transferleri yalnızca bildirilen boş kapasite bu eşiğe ulaştığında başlatın; tek bir oranlı sevkiyat daha küçük olabilir.",
             "label": "Asgari boş kapasite",
-            "recommendation": "Olağan transfer hızınıza uygun en küçük boş kapasite eşiğini kullanın."
+            "recommendation": "Olağan orantılı ikmal için 1 boş asker yeri."
           },
           "owned_berimond_camp": {
             "description": "Auto Beri size ait Berimond kampını otomatik bulur, bu yüzden kamp kimliği girilmez.",
@@ -1718,12 +1762,12 @@
           "troop_transport_skip": {
             "description": "Transfer hızlandırması açıkken kullanılacak öğenin süresini seçin.",
             "label": "Asker transferi hızlandırması",
-            "recommendation": "Gerekiyorsa daha uzun hızlandırmaları diğer işler için ayırın."
+            "recommendation": "Olağan doğrulanmış aktarımlar için 1 saatlik atlamayı kullanın."
           },
           "use_troop_transport_time_skips": {
             "description": "Seçilen hızlandırmayı hâlâ yolda olan doğrulanmış transfere uygulayın.",
             "label": "Asker transferinde hızlandırma kullan",
-            "recommendation": "Kamptaki askerleri daha hızlı yenilemek biriktirilmiş hızlandırmalara değmiyorsa kapalı tutun."
+            "recommendation": "Atlama stoğunuz izin veriyorsa olağan kamp ikmali için açın."
           }
         },
         "title": "Oranlı asker transferlerini ayarlayın"
@@ -1848,7 +1892,7 @@
             "recommendation": "0 her uygun hisara izin verir."
           },
           "priority": {
-            "description": "Etkin ada ve hisar hedeflerini sıralayın; aynı satırda öncelik, eşitlikte mesafe belirler.",
+            "description": "Etkin ada ve kale hedef gruplarını sıralayın; her grupta önce en yakın uygun hedefe saldırılır.",
             "label": "Saldırı hedefi önceliği",
             "recommendation": "Akuamarin için büyük adalar, küçük adalar, sonra seviye 80'den 40'a hisarlar."
           }
@@ -1892,18 +1936,18 @@
             "recommendation": "Olağan inşaat için açık."
           },
           "skip_reserves": {
-            "description": "1 dk, 5 dk, 10 dk, 30 dk, 1 sa, 5 sa ve 24 sa öğelerinin her birinden seçili miktarı ayırın.",
+            "description": "İnşa ve taşımalar için 1 dk, 5 dk, 10 dk, 30 dk, 1 sa, 5 sa ve 24 sa öğelerinden seçilen sayıyı saklayın.",
             "label": "Rezervde tutulan zaman hızlandırmaları",
             "recommendation": "Başka yerde gerekmiyorsa kısa hızlandırmalar 0; 1, 5 ve 24 saatlik stoğunuzu diğer etkinlikler için ayırın."
           },
           "storm_reserves": {
-            "description": "Seçilen Fırtına odunu, taş ve Akuamarin miktarını inşaat için kullanılamaz tutun.",
+            "description": "Seçilen odun, taş ve akuamarin miktarlarını inşadan ayrı tutun.",
             "label": "Fırtına kalesi harcama rezervleri",
-            "recommendation": "Fazlalığı harcıyorsanız Fırtına odunu 0 ve taş 0; Akuamarin planlı ödül bütçenize göre."
+            "recommendation": "Fazlalık harcanabiliyorsa odun 0 ve taş 0; akuamarini planlanan ödül bütçenize göre belirleyin."
           },
           "time_skips": {
-            "description": "Seçili öğe rezervlerini koruyarak uygun zaman hızlandırmalarını kullanın.",
-            "label": "İnşaat zaman hızlandırmalarını kullan",
+            "description": "Seçilen yedekleri koruyarak uygun atlamaları inşa, kaynak taşıma ve asker taşıma için uygulayın.",
+            "label": "İnşa ve taşıma atlamalarını kullan",
             "recommendation": "Olağan inşaatı hızlandırmak istiyorsanız açık."
           }
         },
@@ -1926,9 +1970,9 @@
             "recommendation": "Tüm fazla miktar ödüllere gidebiliyorsa 0; değilse planladığınız miktarı ayırın."
           },
           "priority": {
-            "description": "Düşük numaralı hedefleri önce satın alın ve sınırlı hedefleri sınırsızlardan önce tamamlayın.",
+            "description": "Mağaza önce düşük numaralı satın alma hedeflerini değerlendirir.",
             "label": "Öncelik",
-            "recommendation": "1, 2 ve 3'ü istediğiniz sırada kullanın."
+            "recommendation": "1, 2 ve 3'ü istediğiniz sıraya koyup sınırlı hedefleri sınırsız ödüllerden önce yerleştirin."
           },
           "search": {
             "description": "Bir alış ayarlamadan önce resmî Luna ödüllerini adına göre arayın.",
@@ -1994,7 +2038,7 @@
         },
         "items": {
           "attack_history": {
-            "description": "Son 24 saatte sıfırlamadan beri bildirilen ortalama Fırtına saldırısı sayısını okuyun.",
+            "description": "Sunucu sıfırlamasından beri doğrulanan Fırtına saldırılarını 24'e bölün; bu kayan 24 saatlik ortalama değildir.",
             "label": "Sıfırlamadan beri ortalama saldırılar",
             "recommendation": "İthalat ihtiyacını değiştirmeden önce bu salt okunur tahmini inceleyin."
           },

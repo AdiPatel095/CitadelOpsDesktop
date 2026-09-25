@@ -553,7 +553,7 @@
     },
     "stormConstruction": {
       "harbor": "Hamn: på, nivå 1",
-      "resources": "Stormträ 0; sten 0; akvamarin planerad",
+      "resources": "Trä 0; sten 0; akvamarin planerad",
       "spending": "Premium och rivning: av",
       "title": "Exempel på bygge och reserver",
       "transport": "Resurstransport: på"
@@ -573,7 +573,7 @@
       "title": "Exempel på sparande och aktivering"
     },
     "stormTroops": {
-      "averages": "Anfalls- och förvalssnitt: skrivskyddade",
+      "averages": "Bekräftade anfall sedan återställning / 24; förinställningens medelvärde skrivskyddat",
       "cap": "Gräns för bundna trupper: skrivskyddad",
       "donors": "Givare: visad ordning, delvis lager tillåtet",
       "minimum": "Minst kvar: 1 000 trupper",
@@ -1529,7 +1529,7 @@
       "builder": {
         "image": {
           "alt": "Illustrerade inställningar för valfritt lägerbygge i Auto Beri",
-          "caption": "Inbyggt mål, stallnivå, byggtillstånd och reserver."
+          "caption": "Inbyggt och sparat mål, fångstlägen, stall nivå 5, trä- och stenreserver samt sju tidsförkortningar."
         },
         "items": {
           "allow_demolition": {
@@ -1543,34 +1543,78 @@
             "recommendation": "Av om du inte uttryckligen vill ha premiumbyggen."
           },
           "auto_beri_builder_lane": {
-            "description": "Bygg eller uppgradera ett exakt lägermål med bekräftat återvänt byte utan att flytta resurser från ett annat rike.",
+            "description": "Bygg eller uppgradera det aktiva Berimond-lägermålet med bekräftat hemkommet byte utan att hämta resurser från ett annat kungarike.",
             "label": "Auto-Beri-byggare",
-            "recommendation": "Av tills du har granskat målet och utgiftsbehörigheterna."
+            "recommendation": "På för vanlig lägerbyggnad efter att du har granskat utgiftstillstånden."
           },
           "camp_resource_reserves": {
-            "description": "Håll valda mängder Berimond-trä och -sten utanför byggarens tillgängliga resurser.",
+            "description": "Håll valda mängder trä och sten utanför lägerbygget.",
             "label": "Resursreserver i lägret",
-            "recommendation": "Reservera det du behöver för annat arbete i lägret."
+            "recommendation": "Trä 0 och sten 0 om överskottet får användas."
           },
           "construction_time_skip_reserves": {
-            "description": "Håll det valda antalet av varje tidshopp utanför byggarens tillgängliga resurser.",
+            "description": "Ange separat hur många tidsförkortningar på 1 min, 5 min, 10 min, 30 min, 1 tim, 5 tim och 24 tim som ska sparas.",
             "label": "Reserver för byggtidshopp",
-            "recommendation": "Reservera det du behöver för andra aktiviteter."
+            "recommendation": "Spara 0 av varje kort tidsförkortning; reservera förrådet på 1, 5 och 24 timmar för andra aktiviteter."
           },
           "optional_custom_camp_target": {
-            "description": "Fånga, förhandsgranska, spara och aktivera en layout bara om den ska ersätta det inbyggda målet.",
+            "description": "Fånga Funktionell för nödvändiga byggnader, Layout för placering utan dekorationer eller Exakt för alla stödda detaljer.",
             "label": "Valfritt eget lägermål",
-            "recommendation": "Behåll det inbyggda målet om du inte har granskat en egen layout."
+            "recommendation": "Använd det inbyggda målet om du inte behöver ett granskat eget mål."
           },
           "stable_target": {
-            "description": "Välj önskad nivå 1–5 för fraktionsstallet i det inbyggda målet.",
+            "description": "Välj fraktionsstallets nivå från 1 till 5 för det inbyggda målet.",
             "label": "Målnivå för stallet",
-            "recommendation": "Välj en nivå som resurserna i det pågående evenemanget räcker till."
+            "recommendation": "Nivå 5 för vanlig evenemangsbyggnad om resurserna räcker."
           },
           "use_construction_time_skips": {
-            "description": "Snabba upp en bekräftad byggtimer och behåll de valda reserverna av tidshopp.",
+            "description": "Påskynda ett bekräftat lägerbygge och behåll valda reserver av byggtidsförkortningar.",
             "label": "Använd byggtidshopp",
-            "recommendation": "Av om snabbare byggande inte är värt föremålen."
+            "recommendation": "På för vanlig byggnad om förrådet av tidsförkortningar räcker."
+          },
+          "keep_skip_10m": {
+            "description": "Håll detta antal byggtidsförkortningar på 10m undan; sätt reserven till 0 för vanlig användning.",
+            "label": "Spara tidsförkortningar på 10m"
+          },
+          "keep_skip_1h": {
+            "description": "Reservera detta antal byggtidsförkortningar på 1h för andra aktiviteter.",
+            "label": "Spara tidsförkortningar på 1h"
+          },
+          "keep_skip_1m": {
+            "description": "Håll detta antal byggtidsförkortningar på 1m undan; sätt reserven till 0 för vanlig användning.",
+            "label": "Spara tidsförkortningar på 1m"
+          },
+          "keep_skip_24h": {
+            "description": "Reservera detta antal byggtidsförkortningar på 24h för andra aktiviteter.",
+            "label": "Spara tidsförkortningar på 24h"
+          },
+          "keep_skip_30m": {
+            "description": "Håll detta antal byggtidsförkortningar på 30m undan; sätt reserven till 0 för vanlig användning.",
+            "label": "Spara tidsförkortningar på 30m"
+          },
+          "keep_skip_5h": {
+            "description": "Reservera detta antal byggtidsförkortningar på 5h för andra aktiviteter.",
+            "label": "Spara tidsförkortningar på 5h"
+          },
+          "keep_skip_5m": {
+            "description": "Håll detta antal byggtidsförkortningar på 5m undan; sätt reserven till 0 för vanlig användning.",
+            "label": "Spara tidsförkortningar på 5m"
+          },
+          "saved_targets": {
+            "description": "En fångst sparar och aktiverar genast ett granskat eget mål; val av ett annat sparat mål aktiverar även det genast.",
+            "label": "Sparade egna mål"
+          },
+          "stone_reserve": {
+            "description": "Håll denna mängd lägersten utanför byggutgifterna; använd 0 om överskottet får spenderas.",
+            "label": "Stenreserv"
+          },
+          "use_built_in_default": {
+            "description": "Återgå genast till det inbyggda målet och behåll sparade egna mål.",
+            "label": "Använd inbyggd standard"
+          },
+          "wood_reserve": {
+            "description": "Håll denna mängd lägerträ utanför byggutgifterna; använd 0 om överskottet får spenderas.",
+            "label": "Träreserv"
           }
         },
         "title": "Välj valfritt lägerbygge"
@@ -1697,7 +1741,7 @@
           "minimum_free_capacity": {
             "description": "Starta överföringar först när den rapporterade lediga kapaciteten når tröskeln; en enskild proportionell sändning kan vara mindre.",
             "label": "Minsta lediga kapacitet",
-            "recommendation": "Välj den lägsta lediga tröskeln som passar din vanliga överföringstakt."
+            "recommendation": "1 ledig truppplats för vanlig proportionell försörjning."
           },
           "owned_berimond_camp": {
             "description": "Auto Beri hittar automatiskt ditt ägda Berimond-läger, så du behöver inte ange något läger-ID.",
@@ -1718,12 +1762,12 @@
           "troop_transport_skip": {
             "description": "Välj varaktigheten för föremålet som används när transporttidshopp är på.",
             "label": "Transporttidshopp",
-            "recommendation": "Reservera längre hopp för andra uppgifter om du behöver dem."
+            "recommendation": "Använd tidsförkortningen på 1 timme för vanliga bekräftade överföringar."
           },
           "use_troop_transport_time_skips": {
             "description": "Använd det valda tidshoppet på en bekräftad överföring medan den fortfarande är på väg.",
             "label": "Använd transporttidshopp",
-            "recommendation": "Av om snabbare lägerförsörjning inte är värd de sparade föremålen."
+            "recommendation": "På för vanlig lägerförsörjning om förrådet av tidsförkortningar räcker."
           }
         },
         "title": "Ställ in proportionella truppöverföringar"
@@ -1848,7 +1892,7 @@
             "recommendation": "0 tillåter alla lämpliga fort."
           },
           "priority": {
-            "description": "Ordna aktiva ö- och fortmål; prioritet avgör inom en rad, sedan avgör avstånd vid lika läge.",
+            "description": "Ordna aktiverade ö- och fortmålsgrupper; inom varje grupp angrips närmaste lämpliga mål först.",
             "label": "Prioritet för anfallsmål",
             "recommendation": "Stora öar, små öar och därefter fort från nivå 80 till 40 vid akvamarinsamling."
           }
@@ -1892,18 +1936,18 @@
             "recommendation": "På för normalt bygge."
           },
           "skip_reserves": {
-            "description": "Behåll valt antal av varje tidsförkortning på 1 min, 5 min, 10 min, 30 min, 1 tim, 5 tim och 24 tim.",
+            "description": "Behåll valt antal föremål på 1 min, 5 min, 10 min, 30 min, 1 tim, 5 tim och 24 tim för byggnad och transporter.",
             "label": "Tidsförkortningar i reserv",
             "recommendation": "Behåll 0 korta förkortningar om de inte behövs på annat håll; spara dina 1-, 5- och 24-timmarsförråd till andra evenemang."
           },
           "storm_reserves": {
-            "description": "Håll valda mängder Stormträ, sten och akvamarin utanför byggets förbrukning.",
+            "description": "Håll valda mängder trä, sten och akvamarin utanför byggandet.",
             "label": "Stormslottets utgiftsreserver",
-            "recommendation": "Stormträ 0 och sten 0 om överskott används; avsätt akvamarin enligt din planerade belöningsbudget."
+            "recommendation": "Trä 0 och sten 0 om överskott får användas; sätt akvamarin efter din planerade belöningsbudget."
           },
           "time_skips": {
-            "description": "Använd lämpliga tidsförkortningar och behåll valda föremålsreserver.",
-            "label": "Använd byggtidsförkortningar",
+            "description": "Använd lämpliga tidsförkortningar för byggnad, resurs- och trupptransporter med valda reserver kvar.",
+            "label": "Använd tidsförkortningar för byggnad och transporter",
             "recommendation": "På om du vill skynda på normalt bygge."
           }
         },
@@ -1926,9 +1970,9 @@
             "recommendation": "0 om hela överskottet får gå till belöningar; annars reserverar du den planerade mängden."
           },
           "priority": {
-            "description": "Köp mål med lägre nummer först och slutför begränsade mål före obegränsade.",
+            "description": "Butiken behandlar köpmål med lägre nummer först.",
             "label": "Prioritet",
-            "recommendation": "Använd 1, 2 och 3 i önskad ordning."
+            "recommendation": "Ge 1, 2 och 3 önskad ordning och placera begränsade mål före obegränsade belöningar."
           },
           "search": {
             "description": "Sök efter officiella Luna-belöningar med namn innan du ställer in ett köp.",
@@ -1994,7 +2038,7 @@
         },
         "items": {
           "attack_history": {
-            "description": "Läs det genomsnittliga antalet Stormanfall som rapporterats sedan återställning under de senaste 24 timmarna.",
+            "description": "Läs bekräftade Storm-anfall sedan serverns återställning delat med 24, inte ett rullande 24-timmarsmedelvärde.",
             "label": "Genomsnittliga anfall sedan återställning",
             "recommendation": "Granska denna skrivskyddade uppskattning innan du ändrar importbehovet."
           },

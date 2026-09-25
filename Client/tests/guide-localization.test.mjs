@@ -90,6 +90,13 @@ test('Beri English guide explains proportional transfers and threshold', () => {
   assert.match(source.autoBeri.steps.transfers.items.minimum_free_capacity.description, /individual proportional shipment can be smaller/);
   assert.match(source.autoBeri.steps.transfers.items.partial_donor.description, /waits instead of sending another type/);
   assert.equal(beri.steps.length, 6);
+  const builder = source.autoBeri.steps.builder.items;
+  assert.match(builder.saved_targets.description, /saves and activates/);
+  assert.match(builder.optional_custom_camp_target.description, /Functional.*Layout.*Exact/);
+  assert.equal(builder.minimum_free_capacity, undefined);
+  assert.equal(source.autoBeri.steps.transfers.items.minimum_free_capacity.recommendation, '1 free troop slot for regular proportional resupply.');
+  for (const unit of ['1m','5m','10m','30m','1h','5h','24h']) assert.ok(builder[`keep_skip_${unit}`], unit);
+  assert.match(builder.camp_resource_reserves.recommendation, /Wood 0 and Stone 0/);
 });
 
 
@@ -98,4 +105,17 @@ test('Storm English guide keeps premium and Luna spending choices explicit', () 
   assert.match(source.autoStorm.steps.luna.items.unlimited.description, /reserve and shop cap/);
   assert.match(source.autoStorm.steps.troops.items.minimum_kept.recommendation, /1,000/);
   assert.equal(storm.steps.length, 6);
+  assert.match(source.autoStorm.steps.luna.items.priority.recommendation, /limited goals before unlimited/);
+  assert.match(source.autoStorm.steps.troops.items.attack_history.description, /since the server reset divided by 24/);
+  assert.match(source.autoStorm.steps.construction.items.time_skips.description, /resource transport, and troop transport/);
+});
+
+test('Auto Storm settings guide controls resolve their imported symbols', async () => {
+  const ts = await import('typescript');
+  const path = 'src/settings/components/AutoStormSettingsModal.tsx';
+  const config = ts.readConfigFile('tsconfig.app.json', ts.sys.readFile);
+  const parsed = ts.parseJsonConfigFileContent(config.config, ts.sys, '.');
+  const program = ts.createProgram([path], { ...parsed.options, tsBuildInfoFile: undefined, incremental: false });
+  const unresolved = ts.getPreEmitDiagnostics(program).filter(diagnostic => diagnostic.file?.fileName.endsWith('AutoStormSettingsModal.tsx') && diagnostic.code === 2304);
+  assert.deepEqual(unresolved.map(diagnostic => ts.flattenDiagnosticMessageText(diagnostic.messageText, ' ')), []);
 });

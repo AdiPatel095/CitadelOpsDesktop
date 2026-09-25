@@ -553,7 +553,7 @@
     },
     "stormConstruction": {
       "harbor": "Porto: ativado, nível 1",
-      "resources": "Madeira da Tempestade 0; pedra 0; água-marinha planejada",
+      "resources": "Madeira 0; pedra 0; água-marinha planejada",
       "spending": "Premium e demolição: desativados",
       "title": "Exemplo de construção e reservas",
       "transport": "Transporte de recursos: ativado"
@@ -573,7 +573,7 @@
       "title": "Exemplo de salvar e ativar"
     },
     "stormTroops": {
-      "averages": "Médias de ataques e predefinições: somente para leitura",
+      "averages": "Ataques confirmados desde o reinício / 24; média do preset somente leitura",
       "cap": "Limite de tropas comprometidas: somente para leitura",
       "donors": "Doadores: ordem exibida, estoque parcial permitido",
       "minimum": "Mínimo mantido: 1.000 tropas",
@@ -1529,7 +1529,7 @@
       "builder": {
         "image": {
           "alt": "Configurações ilustrativas da construção opcional do acampamento no Auto Beri",
-          "caption": "Objetivo integrado, nível do estábulo, permissões de construção e reservas."
+          "caption": "Alvo integrado e salvo, modos de captura, estábulo nível 5, reservas de madeira e pedra e sete durações de aceleradores."
         },
         "items": {
           "allow_demolition": {
@@ -1543,34 +1543,78 @@
             "recommendation": "Desligado, a menos que você queira explicitamente construções premium."
           },
           "auto_beri_builder_lane": {
-            "description": "Construa ou melhore um objetivo exato no acampamento com saque retornado e confirmado, sem transportar recursos de outro reino.",
+            "description": "Construa ou melhore o alvo ativo do acampamento de Berimond com saque de retorno confirmado, sem importar recursos de outro reino.",
             "label": "Construtor do Auto Beri",
-            "recommendation": "Desligado até revisar o objetivo e as permissões de gasto."
+            "recommendation": "Ative para a construção habitual do acampamento após revisar as permissões de gasto."
           },
           "camp_resource_reserves": {
-            "description": "Reserve as quantidades escolhidas de madeira e pedra de Berimond fora do alcance do construtor.",
+            "description": "Separe da construção do acampamento as quantidades escolhidas de madeira e pedra.",
             "label": "Reservas de recursos do acampamento",
-            "recommendation": "Reserve o necessário para outras tarefas do acampamento."
+            "recommendation": "Madeira 0 e pedra 0 se o excedente puder ser usado."
           },
           "construction_time_skip_reserves": {
-            "description": "Reserve a quantidade escolhida de cada acelerador fora do alcance do construtor.",
+            "description": "Defina separadamente quantos aceleradores de 1 min, 5 min, 10 min, 30 min, 1 h, 5 h e 24 h manter.",
             "label": "Reservas de aceleradores de construção",
-            "recommendation": "Reserve o necessário para outras atividades."
+            "recommendation": "Mantenha 0 de cada acelerador curto; reserve o estoque de 1 h, 5 h e 24 h para outras atividades."
           },
           "optional_custom_camp_target": {
-            "description": "Capture, visualize, salve e ative um layout apenas se ele for substituir o objetivo integrado.",
+            "description": "Capture Funcional para construções essenciais, Layout para posições sem decorações ou Exato para todos os detalhes compatíveis.",
             "label": "Objetivo personalizado opcional",
-            "recommendation": "Mantenha o objetivo integrado até revisar um layout personalizado."
+            "recommendation": "Use o alvo integrado, exceto se precisar de um alvo personalizado revisado."
           },
           "stable_target": {
-            "description": "Escolha para o objetivo integrado o nível desejado do estábulo de facção, de 1 a 5.",
+            "description": "Escolha o nível do estábulo da facção de 1 a 5 para o alvo integrado.",
             "label": "Nível desejado do estábulo",
-            "recommendation": "Escolha um nível compatível com os recursos do evento atual."
+            "recommendation": "Nível 5 para a construção habitual do evento quando houver recursos suficientes."
           },
           "use_construction_time_skips": {
-            "description": "Acelere um cronômetro de construção confirmado respeitando as reservas escolhidas de aceleradores.",
+            "description": "Acelere uma construção confirmada do acampamento respeitando as reservas escolhidas de aceleradores de construção.",
             "label": "Usar aceleradores de construção",
-            "recommendation": "Desligado, a menos que construir mais rápido compense esses itens."
+            "recommendation": "Ative para a construção habitual quando houver aceleradores suficientes."
+          },
+          "keep_skip_10m": {
+            "description": "Separe esta quantidade de aceleradores de construção de 10m; deixe a reserva em 0 para uso habitual.",
+            "label": "Manter aceleradores de 10m"
+          },
+          "keep_skip_1h": {
+            "description": "Reserve esta quantidade de aceleradores de construção de 1h para outras atividades.",
+            "label": "Manter aceleradores de 1h"
+          },
+          "keep_skip_1m": {
+            "description": "Separe esta quantidade de aceleradores de construção de 1m; deixe a reserva em 0 para uso habitual.",
+            "label": "Manter aceleradores de 1m"
+          },
+          "keep_skip_24h": {
+            "description": "Reserve esta quantidade de aceleradores de construção de 24h para outras atividades.",
+            "label": "Manter aceleradores de 24h"
+          },
+          "keep_skip_30m": {
+            "description": "Separe esta quantidade de aceleradores de construção de 30m; deixe a reserva em 0 para uso habitual.",
+            "label": "Manter aceleradores de 30m"
+          },
+          "keep_skip_5h": {
+            "description": "Reserve esta quantidade de aceleradores de construção de 5h para outras atividades.",
+            "label": "Manter aceleradores de 5h"
+          },
+          "keep_skip_5m": {
+            "description": "Separe esta quantidade de aceleradores de construção de 5m; deixe a reserva em 0 para uso habitual.",
+            "label": "Manter aceleradores de 5m"
+          },
+          "saved_targets": {
+            "description": "A captura salva e ativa imediatamente um alvo personalizado revisado; selecionar outro alvo salvo também o ativa de imediato.",
+            "label": "Alvos personalizados salvos"
+          },
+          "stone_reserve": {
+            "description": "Separe esta quantidade de pedra do acampamento dos gastos de construção; use 0 se puder gastar o excedente.",
+            "label": "Reserva de pedra"
+          },
+          "use_built_in_default": {
+            "description": "Volte imediatamente ao alvo integrado sem apagar os alvos personalizados salvos.",
+            "label": "Usar alvo integrado"
+          },
+          "wood_reserve": {
+            "description": "Separe esta quantidade de madeira do acampamento dos gastos de construção; use 0 se puder gastar o excedente.",
+            "label": "Reserva de madeira"
           }
         },
         "title": "Escolha a construção opcional do acampamento"
@@ -1697,7 +1741,7 @@
           "minimum_free_capacity": {
             "description": "Inicie transferências apenas quando a capacidade livre informada atingir este limiar; um envio proporcional individual pode ser menor.",
             "label": "Capacidade livre mínima",
-            "recommendation": "Escolha o menor limiar livre adequado ao seu ritmo habitual de transferências."
+            "recommendation": "1 vaga livre para tropas no reabastecimento proporcional habitual."
           },
           "owned_berimond_camp": {
             "description": "O Auto Beri encontra automaticamente seu acampamento em Berimond, sem precisar informar um ID.",
@@ -1718,12 +1762,12 @@
           "troop_transport_skip": {
             "description": "Escolha a duração do item usado quando a aceleração de transporte estiver ligada.",
             "label": "Acelerador de transporte",
-            "recommendation": "Reserve aceleradores mais longos para outras tarefas, se necessário."
+            "recommendation": "Use o acelerador de 1 hora para transferências habituais confirmadas."
           },
           "use_troop_transport_time_skips": {
             "description": "Aplique o acelerador escolhido a uma transferência confirmada enquanto ela ainda estiver em trânsito.",
             "label": "Usar aceleradores de transporte",
-            "recommendation": "Desligado, a menos que abastecer mais rápido compense gastar esses itens guardados."
+            "recommendation": "Ative para o reabastecimento habitual do acampamento se seu estoque de aceleradores permitir."
           }
         },
         "title": "Configure transferências proporcionais de tropas"
@@ -1848,7 +1892,7 @@
             "recommendation": "0 permite qualquer forte elegível."
           },
           "priority": {
-            "description": "Ordene os alvos ativos de ilhas e fortes; a prioridade decide dentro da mesma linha e a distância desfaz empates.",
+            "description": "Ordene as categorias ativas de ilhas e fortes; em cada categoria, ataque primeiro o alvo elegível mais próximo.",
             "label": "Prioridade de alvos de ataque",
             "recommendation": "Ilhas grandes, ilhas pequenas e depois fortes do nível 80 ao 40 para coletar água-marinha."
           }
@@ -1892,18 +1936,18 @@
             "recommendation": "Ativado para construção regular."
           },
           "skip_reserves": {
-            "description": "Mantenha reservada a quantidade escolhida de cada item de 1 min, 5 min, 10 min, 30 min, 1 h, 5 h e 24 h.",
+            "description": "Mantenha a quantidade escolhida de itens de 1 min, 5 min, 10 min, 30 min, 1 h, 5 h e 24 h para construção e transportes.",
             "label": "Aceleradores mantidos em reserva",
             "recommendation": "Mantenha 0 dos aceleradores curtos, salvo necessidade em outra atividade; reserve o estoque de 1 h, 5 h e 24 h para outros eventos."
           },
           "storm_reserves": {
-            "description": "Deixe as quantidades escolhidas de madeira da Tempestade, pedra e água-marinha indisponíveis para construções.",
+            "description": "Separe da construção as quantidades escolhidas de madeira, pedra e água-marinha.",
             "label": "Reservas de gastos do castelo da Tempestade",
-            "recommendation": "Madeira da Tempestade 0 e pedra 0 se gastar excedentes; defina água-marinha conforme seu orçamento planejado de recompensas."
+            "recommendation": "Madeira 0 e pedra 0 se puder gastar o excedente; defina a água-marinha conforme o orçamento planejado de recompensas."
           },
           "time_skips": {
-            "description": "Aplique aceleradores elegíveis mantendo as reservas de itens selecionadas.",
-            "label": "Usar aceleradores de construção",
+            "description": "Aplique aceleradores elegíveis à construção e aos transportes de recursos e tropas respeitando as reservas escolhidas.",
+            "label": "Usar aceleradores de construção e transporte",
             "recommendation": "Ativado se quiser acelerar construções de rotina."
           }
         },
@@ -1926,9 +1970,9 @@
             "recommendation": "0 se todo o excedente puder financiar recompensas; caso contrário, reserve a quantia planejada."
           },
           "priority": {
-            "description": "Compre primeiro metas com números menores e conclua as limitadas antes das ilimitadas.",
+            "description": "A loja considera primeiro as metas de compra com números menores.",
             "label": "Prioridade",
-            "recommendation": "Use 1, 2 e 3 na ordem desejada."
+            "recommendation": "Atribua 1, 2 e 3 na ordem desejada, colocando metas limitadas antes das recompensas ilimitadas."
           },
           "search": {
             "description": "Pesquise pelo nome as recompensas oficiais da Luna antes de configurar uma compra.",
@@ -1994,7 +2038,7 @@
         },
         "items": {
           "attack_history": {
-            "description": "Veja a média de ataques da Tempestade informados desde a redefinição nas últimas 24 horas.",
+            "description": "Consulte os ataques de Tempestade confirmados desde o reinício do servidor divididos por 24, não uma média móvel de 24 horas.",
             "label": "Média de ataques desde a redefinição",
             "recommendation": "Consulte esta estimativa somente para leitura antes de mudar a necessidade de importação."
           },

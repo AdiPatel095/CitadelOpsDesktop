@@ -548,7 +548,7 @@
       "title": "Example construction and reserves",
       "transport": "Resource transport: on",
       "spending": "Premium and demolition: off",
-      "resources": "Stormwood 0; stone 0; Aquamarine planned",
+      "resources": "Wood 0; Stone 0; Aquamarine planned",
       "harbor": "Harbor: on, level 1"
     },
     "stormCombat": {
@@ -562,7 +562,7 @@
       "title": "Example troop import",
       "donors": "Donors: displayed order, partial stock allowed",
       "minimum": "Minimum kept: 1,000 troops",
-      "averages": "Attack and preset averages: read-only",
+      "averages": "Confirmed attacks since reset / 24; preset average read-only",
       "cap": "Committed troop cap: read-only"
     },
     "stormLuna": {
@@ -1589,17 +1589,17 @@
           "minimum_free_capacity": {
             "label": "Minimum free capacity",
             "description": "Begin transfers only when reported free capacity reaches this threshold; an individual proportional shipment can be smaller.",
-            "recommendation": "Use the smallest free-capacity threshold that suits your usual transfer pace."
+            "recommendation": "1 free troop slot for regular proportional resupply."
           },
           "use_troop_transport_time_skips": {
             "label": "Use troop transport time skips",
             "description": "Apply the selected skip to a confirmed transfer while it is still travelling.",
-            "recommendation": "Off unless faster camp resupply is worth the saved skip items."
+            "recommendation": "On for regular camp resupply when your skip stock allows it."
           },
           "troop_transport_skip": {
             "label": "Troop transport skip",
             "description": "Choose the duration of the item used when transport skipping is on.",
-            "recommendation": "Reserve longer skips for other tasks if you need them."
+            "recommendation": "Use the 1-hour skip for regular confirmed transfers."
           }
         },
         "image": {
@@ -1655,23 +1655,23 @@
         "items": {
           "auto_beri_builder_lane": {
             "label": "Auto Beri Builder lane",
-            "description": "Build or upgrade an exact camp target using confirmed returned loot, without transporting resources from another kingdom.",
-            "recommendation": "Off until you have reviewed the target and spending permissions."
+            "description": "Build or upgrade the active Berimond camp target using confirmed returned loot without importing resources from another kingdom.",
+            "recommendation": "On for regular camp construction after reviewing spending permissions."
           },
           "stable_target": {
             "label": "Stable target",
-            "description": "Choose the desired Faction Stable level from 1 through 5 for the built-in target.",
-            "recommendation": "Choose the level your current event resources can support."
+            "description": "Choose the Faction Stable level from 1 through 5 for the built-in target.",
+            "recommendation": "Level 5 for regular event construction when resources permit."
           },
           "optional_custom_camp_target": {
             "label": "Optional custom camp target",
-            "description": "Capture, preview, save, and activate a layout only if you want it to replace the built-in target.",
-            "recommendation": "Keep the built-in target unless you have inspected a custom layout."
+            "description": "Capture Functional for essential buildings, Layout for building positions without decorations, or Exact for all supported details.",
+            "recommendation": "Use the built-in target unless a reviewed custom target is needed."
           },
           "use_construction_time_skips": {
             "label": "Use construction time skips",
-            "description": "Advance a confirmed build timer while keeping the selected skip reserves.",
-            "recommendation": "Off unless faster construction is worth those items."
+            "description": "Advance a confirmed camp build timer while keeping selected construction skip reserves.",
+            "recommendation": "On for regular construction and transport when skip stock allows it."
           },
           "allow_premium_costs": {
             "label": "Allow premium costs",
@@ -1685,18 +1685,62 @@
           },
           "camp_resource_reserves": {
             "label": "Camp resource reserves",
-            "description": "Keep the chosen amounts of Berimond wood and stone unavailable to the builder.",
-            "recommendation": "Reserve what you need for other camp work."
+            "description": "Keep the chosen Wood and Stone amounts unavailable to camp construction.",
+            "recommendation": "Wood 0 and Stone 0 if their surplus may be used."
           },
           "construction_time_skip_reserves": {
             "label": "Construction time-skip reserves",
-            "description": "Keep the chosen number of each skip item unavailable to the builder.",
-            "recommendation": "Reserve what you need for other activities."
+            "description": "Set separately how many 1m, 5m, 10m, 30m, 1h, 5h, and 24h skip items to keep.",
+            "recommendation": "Keep 0 of each short skip; reserve your other-activity stock of 1h, 5h, and 24h skips."
+          },
+          "saved_targets": {
+            "label": "Saved custom targets",
+            "description": "Capturing saves and activates a reviewed custom target immediately; selecting another saved target activates it immediately."
+          },
+          "use_built_in_default": {
+            "label": "Use built-in default",
+            "description": "Switch back to the built-in target immediately while retaining saved custom targets."
+          },
+          "wood_reserve": {
+            "label": "Wood reserve",
+            "description": "Keep this amount of camp Wood out of construction spending; use 0 when surplus Wood may be spent."
+          },
+          "stone_reserve": {
+            "label": "Stone reserve",
+            "description": "Keep this amount of camp Stone out of construction spending; use 0 when surplus Stone may be spent."
+          },
+          "keep_skip_1m": {
+            "label": "Keep 1-minute skips",
+            "description": "Keep this many 1-minute construction skip items unavailable to the builder; set the reserve to 0 for regular use."
+          },
+          "keep_skip_5m": {
+            "label": "Keep 5-minute skips",
+            "description": "Keep this many 5-minute construction skip items unavailable to the builder; set the reserve to 0 for regular use."
+          },
+          "keep_skip_10m": {
+            "label": "Keep 10-minute skips",
+            "description": "Keep this many 10-minute construction skip items unavailable to the builder; set the reserve to 0 for regular use."
+          },
+          "keep_skip_30m": {
+            "label": "Keep 30-minute skips",
+            "description": "Keep this many 30-minute construction skip items unavailable to the builder; set the reserve to 0 for regular use."
+          },
+          "keep_skip_1h": {
+            "label": "Keep 1-hour skips",
+            "description": "Keep this many 1-hour construction skip items unavailable to the builder; reserve your other-activity stock."
+          },
+          "keep_skip_5h": {
+            "label": "Keep 5-hour skips",
+            "description": "Keep this many 5-hour construction skip items unavailable to the builder; reserve your other-activity stock."
+          },
+          "keep_skip_24h": {
+            "label": "Keep 24-hour skips",
+            "description": "Keep this many 24-hour construction skip items unavailable to the builder; reserve your other-activity stock."
           }
         },
         "image": {
           "alt": "Illustrative Auto Beri choose optional camp construction settings",
-          "caption": "Built-in target, stable target, construction permissions, and reserve groups."
+          "caption": "Built-in and saved targets, capture modes, stable level 5, Wood and Stone reserves, and seven skip durations."
         }
       },
       "save": {
@@ -1805,8 +1849,8 @@
             "recommendation": "On for regular construction."
           },
           "time_skips": {
-            "label": "Use construction time skips",
-            "description": "Apply eligible time skips while keeping the selected item reserves.",
+            "label": "Use construction and transport time skips",
+            "description": "Apply eligible time skips to construction, resource transport, and troop transport while keeping selected item reserves.",
             "recommendation": "On if you want faster routine construction."
           },
           "premium": {
@@ -1821,8 +1865,8 @@
           },
           "storm_reserves": {
             "label": "Storm castle spending reserves",
-            "description": "Keep the chosen Stormwood, stone and Aquamarine amounts unavailable to construction.",
-            "recommendation": "Stormwood 0 and stone 0 if spending surplus; set Aquamarine to your planned reward budget."
+            "description": "Keep the chosen Wood, Stone, and Aquamarine amounts unavailable to construction.",
+            "recommendation": "Wood 0 and Stone 0 if spending surplus; set Aquamarine to your planned reward budget."
           },
           "donor_reserves": {
             "label": "Protected donor reserves",
@@ -1831,7 +1875,7 @@
           },
           "skip_reserves": {
             "label": "Time skips kept in reserve",
-            "description": "Keep the selected number of each 1m, 5m, 10m, 30m, 1h, 5h and 24h item.",
+            "description": "Keep the selected number of each 1m, 5m, 10m, 30m, 1h, 5h, and 24h item from construction and transport.",
             "recommendation": "Keep 0 of the short skips unless needed elsewhere; reserve your other-event stock of 1h, 5h and 24h skips."
           },
           "harbor": {
@@ -1900,7 +1944,7 @@
           },
           "priority": {
             "label": "Attack target priority",
-            "description": "Order enabled island and fort targets; priority wins within a row and distance breaks ties.",
+            "description": "Order enabled island and fort target rows; within each row, attack the nearest eligible target first.",
             "recommendation": "Large islands, small islands, then level 80 through 40 forts for Aquamarine farming."
           }
         },
@@ -1929,7 +1973,7 @@
           },
           "attack_history": {
             "label": "Average attacks since reset",
-            "description": "Read the average number of Storm attacks reported since reset over the past 24 hours.",
+            "description": "Read confirmed Storm attacks since the server reset divided by 24, rather than a rolling 24-hour average.",
             "recommendation": "Review this read-only estimate before changing import needs."
           },
           "preset_average": {
@@ -1988,8 +2032,8 @@
           },
           "priority": {
             "label": "Priority",
-            "description": "Buy lower-numbered goals first, completing limited goals before unlimited ones.",
-            "recommendation": "Use 1, 2 and 3 in your preferred order."
+            "description": "The shop considers lower-numbered purchase goals first.",
+            "recommendation": "Assign 1, 2, and 3 in your preferred order, placing limited goals before unlimited rewards."
           }
         },
         "image": {
