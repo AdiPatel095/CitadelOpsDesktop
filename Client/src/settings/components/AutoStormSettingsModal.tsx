@@ -5,6 +5,7 @@ import {
   Anchor,
   ArrowDown,
   ArrowUp,
+  BookOpen,
   Camera,
   Castle,
   Clock3,
@@ -58,6 +59,8 @@ import {
 import { presentAutoStormTroopCap } from '../AutoStormTroopCapPresentation';
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
 import { DailyAttackLimitField } from './DailyAttackLimitField';
+import { FeatureGuideModal } from './FeatureGuideModal';
+import { englishGuidePack, useGuideLocale } from '../../config/useGuideLocale';
 
 interface AutoStormSettingsModalProps {
   isOpen: boolean;
@@ -138,6 +141,10 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
   const [draft, setDraft] = useState<AutoStormClientStateV1>(defaultAutoStormClientState);
   const [captureCastleId, setCaptureCastleId] = useState(0);
   const [capturing, setCapturing] = useState<BuildingTargetCaptureMode | null>(null);
+  const { locale: stormGuideLocale, pack: stormGuidePack } = useGuideLocale();
+  const stormPack = stormGuidePack.autoStorm ? stormGuidePack : englishGuidePack;
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+  useEffect(() => { if (!isOpen) setIsGuideOpen(false); }, [isOpen]);
   const [blueprintPreview, setBlueprintPreview] = useState<BuildingBlueprintDiffResponse | null>(null);
   const [saving, setSaving] = useState(false);
   const [stormCastleOptions, setStormCastleOptions] = useState<StormCastleOption[]>([]);
@@ -540,6 +547,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
   const aquamarineBalance = stormCastle?.resources['9']?.amount ?? 0;
 
   return (
+    <>
     <SettingsModal
       isOpen={isOpen}
       onClose={() => { if (!saving && !capturing) onClose(); }}
@@ -553,6 +561,7 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
       cancelDisabled={capturing != null}
     >
       <div className="space-y-4">
+        <div className="flex justify-end"><Button variant="outline" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={stormPack === englishGuidePack ? "en" : stormGuideLocale}>{stormPack.ui.guideButton}</span></Button></div>
         <Card variant="solid" className="p-4">
           <SectionHeading
             icon={Castle}
@@ -1459,6 +1468,8 @@ export const AutoStormSettingsModal: React.FC<AutoStormSettingsModalProps> = ({ 
         </Card>
       </div>
     </SettingsModal>
+    <FeatureGuideModal feature="autoStorm" isOpen={isOpen && isGuideOpen} onClose={() => setIsGuideOpen(false)} />
+    </>
   );
 };
 

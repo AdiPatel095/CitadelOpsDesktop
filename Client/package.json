@@ -8,6 +8,7 @@
     "build": "tsc && vite build",
     "test": "node --test tests/*.test.mjs",
     "test:world-intel": "node --test tests/storm-ranking.test.mjs",
+    "guide:locales": "node scripts/localization/guide-packs.mjs",
     "preview": "tsc && vite preview",
     "check:localization": "node scripts/inventory-localization.mjs && node scripts/check-localization-coverage.mjs",
     "typecheck:app": "tsc -p tsconfig.app.json --noEmit",

@@ -18,6 +18,9 @@ export interface ModalProps {
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | 'full';
   hideCloseButton?: boolean;
   ariaLabel?: string;
+  closeLabel?: string;
+  contentLang?: string;
+  contentDir?: 'ltr' | 'rtl';
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -29,6 +32,9 @@ export const Modal: React.FC<ModalProps> = ({
   maxWidth = 'lg',
   hideCloseButton = false,
   ariaLabel,
+  closeLabel,
+  contentLang,
+  contentDir,
 }) => {
   const { t: localizeStatic } = useStaticLocale();
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -113,6 +119,8 @@ export const Modal: React.FC<ModalProps> = ({
         ref={dialogRef}
         className={`liquid-modal-surface ${maxWidthClasses[maxWidth]}`}
         role="dialog"
+        lang={contentLang}
+        dir={contentDir}
         aria-modal="true"
         aria-labelledby={title ? titleID : undefined}
         aria-label={!title ? ariaLabel ?? 'Dialog' : undefined}
@@ -127,7 +135,7 @@ export const Modal: React.FC<ModalProps> = ({
                 size="icon"
                 onClick={onClose}
                 className="liquid-modal-close"
-                aria-label={localizeStatic("ui.components.ui.modal.aria-label.close.modal.207bd886")}
+                aria-label={closeLabel ?? localizeStatic("ui.components.ui.modal.aria-label.close.modal.207bd886")}
               >
                 <X className="h-5 w-5" />
               </Button>

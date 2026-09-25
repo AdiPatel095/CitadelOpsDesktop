@@ -1,7 +1,7 @@
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useCallback, useEffect, useState } from 'react';
-import { Bot, CalendarDays, Crosshair, FastForward, TicketCheck } from 'lucide-react';
+import { BookOpen, Bot, CalendarDays, Crosshair, FastForward, TicketCheck } from 'lucide-react';
 import UnitImage from '../../components/UnitImage';
 import { showTroopPicker } from '../../components/TroopPickerModal';
 import { Button, Card, Input, SettingsModal, SettingsToggleRow, Switch } from '../../components/ui';
@@ -18,6 +18,8 @@ import {
   persistAutoTowerClientState,
   type AutoTowerCastleSettings,
 } from '../AutoTowerClientState';
+import { AutoTowerGuideModal } from './AutoTowerGuideModal';
+import { useGuideLocale } from '../../config/useGuideLocale';
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
 import { DailyAttackLimitField } from './DailyAttackLimitField';
 import type { HorseTravelBoostID } from '../HorseTravelBoost';
@@ -29,6 +31,7 @@ interface AutoTowerSettingsModalProps {
 }
 
 export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ isOpen, onClose, onOpenFeatureSchedule }) => {
+  const { locale: guideLocale, pack: guidePack } = useGuideLocale();
   const { t: localizeStatic } = useStaticLocale();
   const { state, configuration } = useCitadelAPI();
   const castles = castleOptionsFromState(state);
@@ -39,11 +42,13 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
   const [useAdvisor, setUseAdvisor] = useState(false);
   const [autoActivateAdvisor, setAutoActivateAdvisor] = useState(false);
   const [maximumDailyTimeSkips, setMaximumDailyTimeSkips] = useState(0);
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) {
+      setIsGuideOpen(false);
       setSaveError(null);
       return;
     }
@@ -110,6 +115,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
   };
 
   return (
+    <>
     <SettingsModal
       isOpen={isOpen}
       onClose={handleClose}
@@ -118,6 +124,8 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
       icon={<Crosshair className="h-5 w-5" />}
       description={localizeStatic("ui.settings.components.autoTowerSettingsModal.description.each.scan.saves.every.tower.observed.in.00c98e17")}
       titleTrailing={(
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={guideLocale}>{guidePack.ui.guideButton}</span></Button>
             <Button
               variant="outline"
               size="sm"
@@ -125,7 +133,9 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
               onClick={() => onOpenFeatureSchedule('autoTowers', 'Auto Towers')}
               leftIcon={<CalendarDays className="h-4 w-4" />}
             >
-              <LocalizedText messageKey="common.calendar" /></Button>
+              <LocalizedText messageKey="common.calendar" />
+            </Button>
+        </div>
       )}
       onSave={save}
       saveLabel="Save changes"
@@ -217,6 +227,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
 
       <div className="mb-4">
         <DailyAttackLimitField
+          zeroLabel="Attack count · 0 removes limit"
           value={dailyAttackLimit}
           onChange={setDailyAttackLimit}
           serverState={state?.dailyAttacks}
@@ -300,5 +311,7 @@ export const AutoTowerSettingsModal: React.FC<AutoTowerSettingsModalProps> = ({ 
         })}
       </div>
     </SettingsModal>
+    <AutoTowerGuideModal isOpen={isOpen && isGuideOpen} onClose={() => setIsGuideOpen(false)} />
+    </>
   );
 };

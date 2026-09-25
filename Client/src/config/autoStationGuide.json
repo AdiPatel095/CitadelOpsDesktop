@@ -1,0 +1,103 @@
+{
+  "recommendationIntro": "Recommended values describe regular Auto Station use; they are guidance and do not change saved settings.",
+  "steps": [
+    {
+      "id": "open",
+      "title": "Open Auto Station settings",
+      "items": [
+        {
+          "id": "open_settings",
+          "label": "Open settings",
+          "description": "At the top of the command center, select the settings button beside Auto Station."
+        }
+      ]
+    },
+    {
+      "id": "general",
+      "title": "Set the attack response",
+      "items": [
+        {
+          "id": "evacuate_at",
+          "label": "Evacuate at",
+          "description": "Start evacuation this many minutes before impact, or immediately when an attack is first detected inside that window.",
+          "recommendation": "1 minute before impact."
+        },
+        {
+          "id": "minimum_bird_days",
+          "label": "Minimum Bird Days on Target",
+          "description": "Choose an alliance destination with more than this many days of remaining protection; 0 removes the minimum.",
+          "recommendation": "3 days, so the destination must have more than 3 days remaining."
+        },
+        {
+          "id": "recall_when_clear",
+          "label": "Recall when clear",
+          "description": "Return stationed troops when the last detected attack has passed and no incoming attack remains.",
+          "recommendation": "On for normal operation."
+        },
+        {
+          "id": "open_gate_fallback",
+          "label": "Open Gate Fallback",
+          "description": "When troops cannot evacuate, this opt-in opens six-hour gates at the attacked owned castle in any kingdom except Berimond.",
+          "recommendation": "Off unless you want automatic gate opening when evacuation fails."
+        },
+        {
+          "id": "protection_mode",
+          "label": "Purchased Protection Mode",
+          "description": "When purchased Protection Mode is preparing or active, Auto Station uses gates even with the fallback off, except in Berimond."
+        }
+      ],
+      "image": {
+        "src": "/guide-auto-station-settings.jpg",
+        "alt": "Fictional Auto Station settings with evacuation timing, protection days, recall, gate fallback and castle reserves",
+        "caption": "Review the four response controls and each castle's defense reserves before saving.",
+        "width": 1920,
+        "height": 842
+      }
+    },
+    {
+      "id": "reserves",
+      "title": "Choose troops to keep at each castle",
+      "items": [
+        {
+          "id": "add_troops",
+          "label": "Add troops",
+          "description": "Choose troop types to keep at the selected castle; an empty reserve leaves all eligible non-tool troops available to evacuate.",
+          "recommendation": "Keep the usual defensive garrison at home while allowing spare attacking troops to move."
+        },
+        {
+          "id": "quantity",
+          "label": "Quantity",
+          "description": "Set how many of each chosen troop stay at this castle; 0 keeps none of that type.",
+          "recommendation": "Use the number this castle needs for its normal defense."
+        },
+        {
+          "id": "edit_defense_troops",
+          "label": "Edit defense troops",
+          "description": "Open the troop picker again to change the reserve types or quantities for this castle."
+        },
+        {
+          "id": "remove_defense_troop",
+          "label": "Remove defense troop",
+          "description": "Remove a reserve tile to stop keeping that troop type at this castle."
+        }
+      ]
+    },
+    {
+      "id": "finish",
+      "title": "Save and enable Auto Station",
+      "items": [
+        {
+          "id": "save_changes",
+          "label": "Save changes",
+          "description": "Save the timing, toggles and per-castle reserves before leaving settings."
+        },
+        {
+          "id": "auto_station_switch",
+          "label": "Auto Station switch",
+          "description": "Turn on Auto Station at the top of the command center after saving to watch for incoming player attacks.",
+          "recommendation": "On for regular protection after reviewing your reserves."
+        }
+      ]
+    }
+  ]
+}

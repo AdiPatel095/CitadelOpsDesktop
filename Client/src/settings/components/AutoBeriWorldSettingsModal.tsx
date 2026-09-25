@@ -1,16 +1,13 @@
-import { LocalizedRichText } from "../../i18n/LocalizedRichText";
 import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
 import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
-import { CalendarDays, Camera, Castle, Crosshair, FastForward, Hammer, Shield, Swords, Trash2, Users, Zap } from 'lucide-react';
+import { BookOpen, CalendarDays, Camera, Castle, Crosshair, FastForward, Hammer, Shield, Swords, Trash2, Zap } from 'lucide-react';
 import type { BuildingBlueprintDiffResponse, BuildingTargetCaptureMode } from '../../api/Contracts';
 import { CitadelAPI } from '../../api/CitadelClient';
-import { showTroopPicker } from '../../components/TroopPickerModal';
 import { ATTACK_PRESETS_SECTION, parseAttackPresetDocument, summarizeAttackPreset } from '../../attackPresets/AttackPresetTypes';
 import { Notifications } from '../../components/Notifications';
 import { Badge, Button, Input, Select, SettingsModal, SettingsToggleRow } from '../../components/ui';
 import { useCitadelAPI } from '../../api/ApiContext';
-import { useMetadata } from '../../context/MetadataContext';
 import { configurationSection } from '../Configuration';
 import {
 	AUTO_BERI_COIN_ATTACK_TOOLS,
@@ -26,6 +23,8 @@ import {
 	saveAutoBeriBlueprint,
 	type AutoBeriWorldSettings,
 } from '../AutoBeriWorldClientState';
+import { FeatureGuideModal } from './FeatureGuideModal';
+import { englishGuidePack, useGuideLocale } from '../../config/useGuideLocale';
 import HorseTravelBoostSelect from './HorseTravelBoostSelect';
 import { DailyAttackLimitField } from './DailyAttackLimitField';
 
@@ -41,8 +40,12 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 	onOpenFeatureSchedule,
 }) => {
   const { t: localizeStatic } = useStaticLocale();
+  const { locale: guideLocale, pack: guidePack } = useGuideLocale();
+  const beriGuidePack = guidePack.autoBeri ? guidePack : englishGuidePack;
+  const beriGuideLocale = beriGuidePack === englishGuidePack ? 'en' : guideLocale;
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+  useEffect(() => { if (!isOpen) setIsGuideOpen(false); }, [isOpen]);
 	const { state, configuration, updateConfiguration, captureBuildingTarget } = useCitadelAPI();
-	const { troops } = useMetadata();
 	const saved = useMemo(
 		() => parseAutoBeriWorldSettings(configurationSection(configuration, 'automation.autoBeriWorld')),
 		[configuration?.sections['automation.autoBeriWorld']],
@@ -70,15 +73,6 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 		: state?.market?.boostersObservedAt
 			? 'No active boi ID 24 booster detected'
 			: 'Waiting for the first authoritative boi booster snapshot';
-	const foodTroopIDs = useMemo(() => Object.entries(troops).flatMap(([rawID, unit]) => {
-		const unitID = Number(rawID);
-		const foodSupply = metadataNumber(unit.foodSupply);
-		const meadSupply = metadataNumber(unit.meadSupply);
-		const beefSupply = metadataNumber(unit.beefSupply);
-		return Number.isInteger(unitID) && unitID > 0 && foodSupply > 0 && meadSupply <= 0 && beefSupply <= 0
-			? [unitID]
-			: [];
-	}), [troops]);
 	const beriCastles = useMemo(() => Object.values(state?.castles ?? {})
 		.filter((castle) => castle.kingdomId === 10)
 		.sort((left, right) => left.id - right.id), [state?.castles]);
@@ -117,8 +111,8 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 	const effectiveSourceID = settings.sourceCastleId || castles.find((castle) => castle.slotType === 1)?.id || 0;
 
 	const updateNumber = (
-		field: 'minTroopsToTransfer' | 'beriCastleId' | 'transferTroopId' | 'sourceCastleId' |
-			'wireCastleId' | 'troopSpaceCheckIntervalSec' | 'attackCheckIntervalSec',
+		field: 'minTroopsToTransfer' | 'sourceCastleId' |
+			'troopSpaceCheckIntervalSec' | 'attackCheckIntervalSec',
 		value: string,
 	) => {
 		setSettings((current) => ({ ...current, [field]: Number.parseInt(value, 10) || 0 }));
@@ -219,17 +213,6 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 		}
 	};
 
-	const pickTroop = async () => {
-		const result = await showTroopPicker({
-			mode: 'single',
-			title: 'Troop type to transfer to Berimond',
-			preselected: foodTroopIDs.includes(settings.transferTroopId) ? [settings.transferTroopId] : [],
-			allowedUnitIds: foodTroopIDs,
-		});
-		if (typeof result === 'number' && result > 0) {
-			setSettings((current) => ({ ...current, transferTroopId: result }));
-		}
-	};
 
 	const save = () => {
 		const normalized = parseAutoBeriWorldSettings({ ...settings, sourceCastleId: effectiveSourceID });
@@ -240,6 +223,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 	};
 
 	return (
+    <>
 		<SettingsModal
 			isOpen={isOpen}
 			onClose={onClose}
@@ -247,6 +231,8 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 			icon={<Swords className="h-5 w-5" />}
 			description={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.description.attack.berimond.towers.bring.the.loot.home.ff1b05e8")}
 			titleTrailing={(
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" className="shrink-0" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={beriGuideLocale}>{beriGuidePack.ui.guideButton}</span></Button>
 					<Button
 						variant="outline"
 						size="sm"
@@ -255,6 +241,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 						leftIcon={<CalendarDays className="h-4 w-4" />}
 					>
 						<LocalizedText messageKey="common.calendar" /></Button>
+        </div>
 			)}
 			maxWidth="4xl"
 			onSave={save}
@@ -559,6 +546,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							description={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.description.the.exact.berimond.hbw.id.and.speed.6618c35f")}
 						/>
 					</div>
+					<p className="text-xs text-text-muted">{beriGuidePack.autoBeri.steps.transfers.items.preset_troop_mix.description} {beriGuidePack.autoBeri.steps.transfers.items.food_only.description}</p>
 					{presetSummary ? (
 						<div className="flex flex-wrap items-center gap-2 border-t border-border-base pt-3">
 							<span className="mr-1 text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.preset.loadout.4c1e2d30" /></span>
@@ -627,20 +615,9 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 							menuGrowToViewport
 						/>
 					</label>
-					<p className="text-xs text-text-muted"><LocalizedRichText messageKey="ui.rich.settings.components.autoBeriWorldSettingsModal.citadelops.sends.the.exact.codetext0.capacity.with.9d6cf133" params={{"codeText0":"fuc","codeText1":"kut","codeText2":"msk"}} tags={{span0: children => <span className="font-mono">{children}</span>, span1: children => <span className="font-mono">{children}</span>, span2: children => <span className="font-mono">{children}</span>}} /></p>
+					<p className="text-xs text-text-muted">{beriGuidePack.autoBeri.steps.transfers.items.pending_transfer.description} {beriGuidePack.autoBeri.steps.transfers.items.partial_donor.description}</p>
 				</div>
 
-				<div className="space-y-1.5">
-					<label className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.berimond.castle.id.a5595160" /></label>
-					<Input
-						type="number"
-						min={0}
-						value={settings.beriCastleId || ''}
-						onChange={(event) => updateNumber('beriCastleId', event.target.value)}
-						placeholder={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.placeholder.auto.detect.owned.kingdom.10.camp.cabbe880")}
-					/>
-					<p className="text-xs text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.leave.blank.to.use.the.owned.berimond.31b2b0ae" /></p>
-				</div>
 
 				<div className="grid gap-4 sm:grid-cols-2">
 					<div className="space-y-1.5">
@@ -655,7 +632,7 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 						/>
 					</div>
 					<div className="space-y-1.5">
-						<label className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.minimum.transfer.ef38f61d" /></label>
+						<label className="text-xs font-bold uppercase tracking-wider text-text-muted" lang={beriGuideLocale}>{beriGuidePack.autoBeri.steps.transfers.items.minimum_free_capacity.label}</label>
 						<Input
 							type="number"
 							min={1}
@@ -665,15 +642,6 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 					</div>
 				</div>
 
-				<div className="space-y-2">
-					<label className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.transfer.troop.2a96547d" /></label>
-					<div className="flex gap-2">
-						<Input readOnly value={settings.transferTroopId || ''} placeholder={localizeStatic("ui.settings.components.autoBeriWorldSettingsModal.placeholder.official.unit.id.60e3619e")} />
-						<Button variant="outline" leftIcon={<Users className="h-4 w-4" />} onClick={pickTroop}><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.pick.unit.8ff02f40" /></Button>
-					</div>
-					<p className="text-xs text-text-muted">
-						<LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.only.troops.whose.official.upkeep.is.food.29743507" /></p>
-				</div>
 
 				<div className="space-y-1.5">
 					<label className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.source.castle.86d5a48e" /></label>
@@ -685,29 +653,14 @@ export const AutoBeriWorldSettingsModal: React.FC<AutoBeriWorldSettingsModalProp
 					/>
 				</div>
 
-				<div className="space-y-1.5">
-					<label className="text-xs font-bold uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoBeriWorldSettingsModal.kut.cid.field.580caaae" /></label>
-					<Input
-						type="number"
-						value={settings.wireCastleId}
-						onChange={(event) => setSettings((current) => ({
-							...current,
-							wireCastleId: Number.isFinite(Number(event.target.value)) ? Math.trunc(Number(event.target.value)) : -1,
-						}))}
-					/>
-					<p className="text-xs text-text-muted"><LocalizedRichText messageKey="ui.rich.settings.components.autoBeriWorldSettingsModal.the.game.normally.expects.codetext0.c76ffaa1" params={{"codeText0":"-1"}} tags={{span0: children => <span className="font-mono">{children}</span>}} /></p>
-				</div>
 
 				{saveError && <p className="text-xs text-error">{saveError}</p>}
 			</div>
 		</SettingsModal>
+    <FeatureGuideModal feature="autoBeri" isOpen={isOpen && isGuideOpen} onClose={() => setIsGuideOpen(false)} />
+    </>
 	);
 };
-
-function metadataNumber(value: unknown): number {
-	const parsed = Number(value);
-	return Number.isFinite(parsed) ? parsed : 0;
-}
 
 function formatBoosterRemaining(milliseconds: number): string {
 	const totalMinutes = Math.max(1, Math.ceil(milliseconds / 60_000));

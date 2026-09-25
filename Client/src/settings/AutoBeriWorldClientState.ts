@@ -37,10 +37,7 @@ export interface AutoBeriBuildSettings {
 
 export interface AutoBeriWorldSettings {
 	minTroopsToTransfer: number;
-	beriCastleId: number;
-	transferTroopId: number;
 	sourceCastleId: number;
-	wireCastleId: number;
 	troopSpaceCheckIntervalSec: number;
 	presetId: string;
 	attackCheckIntervalSec: number;
@@ -55,10 +52,7 @@ export interface AutoBeriWorldSettings {
 
 export const DEFAULT_AUTO_BERI_WORLD_SETTINGS: AutoBeriWorldSettings = {
 	minTroopsToTransfer: 1,
-	beriCastleId: 0,
-	transferTroopId: 0,
 	sourceCastleId: 0,
-	wireCastleId: -1,
 	troopSpaceCheckIntervalSec: 30,
 	presetId: '',
 	attackCheckIntervalSec: 30,
@@ -77,10 +71,7 @@ export function parseAutoBeriWorldSettings(payload: unknown): AutoBeriWorldSetti
 	const rawBuild = isRecord(value.build) ? value.build : {};
 	return {
 		minTroopsToTransfer: nonNegativeInteger(value.minTroopsToTransfer, 1),
-		beriCastleId: nonNegativeInteger(value.beriCastleId ?? value.beriCastleCID, 0),
-		transferTroopId: nonNegativeInteger(value.transferTroopId ?? value.transferTroopWID, 0),
 		sourceCastleId: nonNegativeInteger(value.sourceCastleId ?? value.kutSourceCastleSCID, 0),
-		wireCastleId: integer(value.wireCastleId ?? value.kutCastleCID, -1),
 		troopSpaceCheckIntervalSec: clamp(integer(value.troopSpaceCheckIntervalSec, 30), 5, 3600),
 		presetId: typeof value.presetId === 'string' ? value.presetId.trim() : '',
 		attackCheckIntervalSec: clamp(integer(value.attackCheckIntervalSec, 30), 30, 3600),

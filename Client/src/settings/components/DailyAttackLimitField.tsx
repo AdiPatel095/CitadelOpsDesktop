@@ -5,13 +5,14 @@ import type { DailyAttackStateV2 } from '../../api/Contracts';
 import { Card, Input } from '../../components/ui';
 
 interface DailyAttackLimitFieldProps {
+  zeroLabel?: string;
   value: number;
   onChange: (value: number) => void;
   serverState?: DailyAttackStateV2;
   description?: React.ReactNode;
 }
 
-export const DailyAttackLimitField: React.FC<DailyAttackLimitFieldProps> = ({ value, onChange, serverState, description }) => {
+export const DailyAttackLimitField: React.FC<DailyAttackLimitFieldProps> = ({ value, onChange, serverState, description, zeroLabel = 'Attack count · 0 disables' }) => {
   const synced = Boolean(serverState?.observedAt && !serverState.observedAt.startsWith('0001-01-01'));
   return (
     <Card variant="solid" className="p-4">
@@ -32,7 +33,7 @@ export const DailyAttackLimitField: React.FC<DailyAttackLimitFieldProps> = ({ va
           </p>
         </div>
         <label className="block w-full shrink-0 sm:w-48">
-          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.dailyAttackLimitField.attack.count.0.disables.a9fe9489" /></span>
+          <span className="mb-1.5 block text-[10px] font-black uppercase tracking-wider text-text-muted">{zeroLabel}</span>
           <Input
             type="text"
             inputMode="numeric"
