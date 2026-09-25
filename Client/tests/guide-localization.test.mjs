@@ -97,6 +97,7 @@ test('Beri English guide explains proportional transfers and threshold', () => {
   assert.equal(source.autoBeri.steps.transfers.items.minimum_free_capacity.recommendation, '1 free troop slot for regular proportional resupply.');
   for (const unit of ['1m','5m','10m','30m','1h','5h','24h']) assert.ok(builder[`keep_skip_${unit}`], unit);
   assert.match(builder.camp_resource_reserves.recommendation, /Wood 0 and Stone 0/);
+  assert.equal(source.panels.beriTransfers.capacity, 'Free capacity: 1; threshold: 1');
 });
 
 

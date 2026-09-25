@@ -531,7 +531,7 @@
       "title": "Minimalių įrankių atsargų pavyzdys"
     },
     "beriTransfers": {
-      "capacity": "Laisva talpa: 3; slenkstis: 3",
+      "capacity": "Laisva talpa: 1; slenkstis: 1",
       "mix": "Šablono santykis: 2 A vienetai vienam B vienetui",
       "next": "Kita siunta: iki 1 B iš tiekėjo atsargų",
       "stock": "Stovyklos atsargos: 2 A ir 0 B",

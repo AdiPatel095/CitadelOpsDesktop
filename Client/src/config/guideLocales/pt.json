@@ -531,7 +531,7 @@
       "title": "Exemplo de mínimos de ferramentas"
     },
     "beriTransfers": {
-      "capacity": "Capacidade livre: 3; limiar: 3",
+      "capacity": "Capacidade livre: 1; limiar: 1",
       "mix": "Proporção da predefinição: 2 unidades A para 1 unidade B",
       "next": "Próximo envio: até 1 B do estoque fornecedor",
       "stock": "Estoque do acampamento: 2 A e 0 B",

@@ -531,7 +531,7 @@
       "title": "Örnek kamp araçları alt sınırları"
     },
     "beriTransfers": {
-      "capacity": "Boş kapasite: 3; eşik: 3",
+      "capacity": "Boş kapasite: 1; eşik: 1",
       "mix": "Şablon karışımı: 2 A birimi ve 1 B birimi",
       "next": "Sonraki sevkiyat: kaynak stokundan en çok 1 B",
       "stock": "Kamp stoku: 2 A ve 0 B",

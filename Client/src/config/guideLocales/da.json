@@ -531,7 +531,7 @@
       "title": "Eksempel på mindstelager for værktøjer"
     },
     "beriTransfers": {
-      "capacity": "Fri kapacitet: 3; grænse: 3",
+      "capacity": "Fri kapacitet: 1; grænse: 1",
       "mix": "Forudindstillingsforhold: 2 enheder A til 1 enhed B",
       "next": "Næste forsendelse: op til 1 B fra donorlagret",
       "stock": "Lejrlager: 2 A og 0 B",

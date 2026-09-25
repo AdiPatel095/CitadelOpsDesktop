@@ -531,7 +531,7 @@
       "title": "Exemplu de stocuri minime de unelte"
     },
     "beriTransfers": {
-      "capacity": "Capacitate liberă: 3; prag: 3",
+      "capacity": "Capacitate liberă: 1; prag: 1",
       "mix": "Raportul șablonului: 2 unități A la 1 unitate B",
       "next": "Următorul transport: până la 1 B din stocul donatorului",
       "stock": "Stocul taberei: 2 A și 0 B",

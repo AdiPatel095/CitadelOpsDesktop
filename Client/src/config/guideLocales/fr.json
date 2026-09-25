@@ -531,7 +531,7 @@
       "title": "Exemple de stocks minimaux d’outils"
     },
     "beriTransfers": {
-      "capacity": "Capacité libre : 3 ; seuil : 3",
+      "capacity": "Capacité libre : 1 ; seuil : 1",
       "mix": "Proportions du modèle : 2 unités A pour 1 unité B",
       "next": "Prochain envoi : jusqu’à 1 B du stock donneur",
       "stock": "Stock du camp : 2 A et 0 B",

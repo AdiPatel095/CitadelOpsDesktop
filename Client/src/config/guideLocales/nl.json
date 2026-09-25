@@ -531,7 +531,7 @@
       "title": "Voorbeeld van minimale gereedschapsvoorraad"
     },
     "beriTransfers": {
-      "capacity": "Vrije capaciteit: 3; drempel: 3",
+      "capacity": "Vrije capaciteit: 1; drempel: 1",
       "mix": "Voorinstellingsverhouding: 2 eenheden A per 1 eenheid B",
       "next": "Volgende zending: maximaal 1 B uit donorvoorraad",
       "stock": "Kampvoorraad: 2 A en 0 B",

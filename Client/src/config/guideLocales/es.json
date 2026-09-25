@@ -531,7 +531,7 @@
       "title": "Ejemplo de mínimos de herramientas"
     },
     "beriTransfers": {
-      "capacity": "Capacidad libre: 3; umbral: 3",
+      "capacity": "Capacidad libre: 1; umbral: 1",
       "mix": "Proporción del modelo: 2 unidades A por 1 unidad B",
       "next": "Próximo envío: hasta 1 B del inventario donante",
       "stock": "Campamento: 2 A y 0 B",

@@ -531,7 +531,7 @@
       "title": "Példa minimális eszközkészletre"
     },
     "beriTransfers": {
-      "capacity": "Szabad kapacitás: 3; küszöb: 3",
+      "capacity": "Szabad kapacitás: 1; küszöb: 1",
       "mix": "Sablonarány: 2 A egység 1 B egységhez",
       "next": "Következő szállítmány: legfeljebb 1 B a küldő készletéből",
       "stock": "Tábori készlet: 2 A és 0 B",

@@ -531,7 +531,7 @@
       "title": "Príklad minimálnych zásob nástrojov"
     },
     "beriTransfers": {
-      "capacity": "Voľná kapacita: 3; prah: 3",
+      "capacity": "Voľná kapacita: 1; prah: 1",
       "mix": "Pomer predlohy: 2 jednotky A na 1 jednotku B",
       "next": "Ďalšia zásielka: až 1 B zo zásob darcu",
       "stock": "Stav tábora: 2 A a 0 B",

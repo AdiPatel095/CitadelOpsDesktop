@@ -531,7 +531,7 @@
       "title": "Beispiel für Werkzeugmindestbestände"
     },
     "beriTransfers": {
-      "capacity": "Freie Kapazität: 3; Schwelle: 3",
+      "capacity": "Freie Kapazität: 1; Schwelle: 1",
       "mix": "Vorlagenverhältnis: 2 Einheiten A zu 1 Einheit B",
       "next": "Nächste Sendung: bis zu 1 B aus dem Spenderbestand",
       "stock": "Lagerbestand: 2 A und 0 B",

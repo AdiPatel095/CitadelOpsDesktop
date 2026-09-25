@@ -531,7 +531,7 @@
       "title": "Esimerkki työkalujen vähimmäisvarastosta"
     },
     "beriTransfers": {
-      "capacity": "Vapaa kapasiteetti: 3; raja: 3",
+      "capacity": "Vapaa kapasiteetti: 1; raja: 1",
       "mix": "Mallin suhde: 2 yksikköä A yhtä B-yksikköä kohti",
       "next": "Seuraava lähetys: enintään 1 B luovuttajan varastosta",
       "stock": "Leirivarasto: 2 A ja 0 B",

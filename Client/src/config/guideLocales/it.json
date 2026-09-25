@@ -531,7 +531,7 @@
       "title": "Esempio di minimi degli strumenti"
     },
     "beriTransfers": {
-      "capacity": "Capacità libera: 3; soglia: 3",
+      "capacity": "Capacità libera: 1; soglia: 1",
       "mix": "Proporzione del modello: 2 unità A per 1 unità B",
       "next": "Prossima spedizione: fino a 1 B dalle scorte del donatore",
       "stock": "Scorte dell’accampamento: 2 A e 0 B",

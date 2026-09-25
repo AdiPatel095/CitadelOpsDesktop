@@ -531,7 +531,7 @@
       "title": "Exempel på minsta verktygsförråd"
     },
     "beriTransfers": {
-      "capacity": "Ledig kapacitet: 3; tröskel: 3",
+      "capacity": "Ledig kapacitet: 1; tröskel: 1",
       "mix": "Mallförhållande: 2 enheter A per 1 enhet B",
       "next": "Nästa sändning: upp till 1 B från givarförrådet",
       "stock": "Lägerförråd: 2 A och 0 B",

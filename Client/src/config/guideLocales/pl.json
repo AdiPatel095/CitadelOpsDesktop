@@ -531,7 +531,7 @@
       "title": "Przykład minimalnych zapasów narzędzi"
     },
     "beriTransfers": {
-      "capacity": "Wolna pojemność: 3; próg: 3",
+      "capacity": "Wolna pojemność: 1; próg: 1",
       "mix": "Proporcje schematu: 2 jednostki A na 1 jednostkę B",
       "next": "Następna wysyłka: do 1 B ze źródła",
       "stock": "Stan obozu: 2 A i 0 B",

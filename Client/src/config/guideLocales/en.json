@@ -509,7 +509,7 @@
       "title": "Example proportional transfers",
       "mix": "Preset mix: 2 units A to 1 unit B",
       "stock": "Camp stock: 2 A and 0 B",
-      "capacity": "Free capacity: 3; threshold: 3",
+      "capacity": "Free capacity: 1; threshold: 1",
       "next": "Next shipment: up to 1 B from donor stock"
     },
     "beriReadiness": {

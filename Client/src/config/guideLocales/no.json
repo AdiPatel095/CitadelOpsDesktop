@@ -531,7 +531,7 @@
       "title": "Eksempel på minste verktøylager"
     },
     "beriTransfers": {
-      "capacity": "Ledig kapasitet: 3; terskel: 3",
+      "capacity": "Ledig kapasitet: 1; terskel: 1",
       "mix": "Malforhold: 2 enheter A mot 1 enhet B",
       "next": "Neste sending: opptil 1 B fra giverlageret",
       "stock": "Leirlager: 2 A og 0 B",
