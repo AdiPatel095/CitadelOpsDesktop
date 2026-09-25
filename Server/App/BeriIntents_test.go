@@ -35,7 +35,7 @@ func TestPlanBeriTransferUsesRefreshedAmountSelectedTimeSkipAndCanonicalWireShap
 		ParsedSourceID: 100, ObservedAt: observedAt,
 	}
 	plan, err := planBeriTransfer(t.Context(), Intent.PlanningContext{State: gameState, GameData: gameData}, json.RawMessage(`{
-		"sourceCastleId":100,"wireCastleId":-1,"unitId":10,"useTimeSkip":true,"timeSkipId":"MS3"
+		"sourceCastleId":100,"wireCastleId":12345,"unitId":10,"useTimeSkip":true,"timeSkipId":"MS3"
 	}`))
 	if err != nil {
 		t.Fatal(err)
@@ -94,11 +94,22 @@ func TestPlanBeriTransferUsesRefreshedAmountSelectedTimeSkipAndCanonicalWireShap
 		t.Fatal("Beri transfer accepted insufficient donor inventory")
 	}
 	castle.Units.Stationed[10] = 50
+	castle.UnitsObservedAt = observedAt
 	gameState.Castles[castle.ID] = castle
+	target := gameState.Castles[900]
+	target.UnitsObservedAt = observedAt
+	gameState.Castles[target.ID] = target
+	guard.DonorUnitsObserved = observedAt
+	guard.CampUnitsObserved = observedAt
 	if err := validateBeriTransferState(
 		Intent.PlanningContext{State: gameState, GameData: gameData}, guard,
 	); err != nil {
 		t.Fatalf("Beri transfer rejected available donor inventory: %v", err)
+	}
+	target.UnitsObservedAt = observedAt.Add(time.Second)
+	gameState.Castles[target.ID] = target
+	if err := validateBeriTransferState(Intent.PlanningContext{State: gameState, GameData: gameData}, guard); err == nil {
+		t.Fatal("Beri transfer accepted changed camp inventory")
 	}
 }
 
@@ -196,7 +207,7 @@ func TestBeriTransferPlannerAndGuardRejectMeadAndBeefTroops(t *testing.T) {
 			}
 			input := Intent.PlanningContext{State: gameState, GameData: gameData}
 			arguments, _ := json.Marshal(beriTransferRequest{
-				SourceCastleID: source.ID, TargetCastleID: 900, WireCastleID: -1,
+				SourceCastleID: source.ID, TargetCastleID: 900,
 				UnitID: unitID, Amount: 25,
 			})
 

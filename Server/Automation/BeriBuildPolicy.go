@@ -90,7 +90,7 @@ func (*BeriBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 		}
 	} else {
 		var found bool
-		castle, found = beriToolCastle(snapshot.State, settings.BeriCastleID)
+		castle, found = beriCastle(snapshot.State)
 		if !found {
 			return beriBuildWaiting(snapshot.Now, "Waiting for an owned Berimond camp", nil), nil
 		}
