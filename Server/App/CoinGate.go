@@ -654,8 +654,10 @@ func attackCoinCost(input Intent.PlanningContext, payload json.RawMessage) (reso
 	var request struct {
 		attackBody
 		AttackCount int `json:"AAC"`
+		// Commander zero is valid; a pointer distinguishes it from missing or null LID.
+		Leader *State.CommanderID `json:"LID"`
 	}
-	if err := json.Unmarshal(payload, &request); err != nil || request.Leader == 0 || len(request.Waves) == 0 {
+	if err := json.Unmarshal(payload, &request); err != nil || request.Leader == nil || *request.Leader < 0 || len(request.Waves) == 0 {
 		return resolvedCoinCost{}, Localization.WithError(fmt.Errorf("resolved attack command is malformed"), Localization.New("server.app.resolved_attack_command_is.6f3a11d8", "resolved attack command is malformed", nil))
 	}
 	body := request.attackBody
