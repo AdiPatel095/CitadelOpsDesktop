@@ -85,4 +85,3 @@ export function responseMessageDescriptor(payload: unknown): LocalizedMessage | 
     if (!body) return undefined;
     return parseMessageDescriptor(record(body.error)?.messageDescriptor) ?? parseMessageDescriptor(body.messageDescriptor);
 }
-

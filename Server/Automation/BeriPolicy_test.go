@@ -469,7 +469,7 @@ func TestBeriPolicyRefreshesStaleInsufficientSelectedDonor(t *testing.T) {
 				State: beriPolicyWithFreshCamp(gameState, now), Configuration: beriPolicyWithPreset(configuration), GameData: beriPolicyGameData(t), Now: now,
 			})
 			if err != nil || decision.Request == nil || decision.Request.Name != "beri.capacity.refresh" ||
-				decision.Status != "ready" || !strings.Contains(decision.Detail, "donor troops") {
+				decision.Status != "ready" || !strings.Contains(decision.Detail, "donor") {
 				t.Fatalf("stale donor decision: %#v err=%v", decision, err)
 			}
 		})
@@ -507,7 +507,7 @@ func TestBeriPolicyRefreshesUncurrentSelectedDonorWithCachedCapacity(t *testing.
 				State: beriPolicyWithFreshCamp(gameState, now), Configuration: beriPolicyWithPreset(configuration), GameData: beriPolicyGameData(t), Now: now,
 			})
 			if err != nil || decision.Request == nil || decision.Request.Name != "beri.capacity.refresh" ||
-				decision.Status != "ready" || !strings.Contains(decision.Detail, "donor troops") {
+				decision.Status != "ready" || !strings.Contains(decision.Detail, "donor") {
 				t.Fatalf("uncurrent donor decision: %#v err=%v", decision, err)
 			}
 		})

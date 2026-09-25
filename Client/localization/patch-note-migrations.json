@@ -1,5 +1,53 @@
 [
   {
+    "version": "2.4.1",
+    "field": "subtitle",
+    "key": "patchNotes.release.2.4.1.subtitle.f2d7de3ceed6",
+    "source": "Automation guides and safer event transfers"
+  },
+  {
+    "version": "2.4.1",
+    "field": "text",
+    "key": "patchNotes.release.2.4.1.text.f843fe862bef",
+    "source": "Localized setup guides for ten automations."
+  },
+  {
+    "version": "2.4.1",
+    "field": "text",
+    "key": "patchNotes.release.2.4.1.text.078bc6d68bcc",
+    "source": "Auto Station opens gates across eligible kingdoms outside Berimond and keeps its saved fallback opt-in."
+  },
+  {
+    "version": "2.4.1",
+    "field": "text",
+    "key": "patchNotes.release.2.4.1.text.579152b31a02",
+    "source": "Auto Fortress retries fresh cooldown state without starving other castles and chooses the fastest eligible commander."
+  },
+  {
+    "version": "2.4.1",
+    "field": "text",
+    "key": "patchNotes.release.2.4.1.text.ae32eef57a70",
+    "source": "Auto Beri checks the selected donor inventory before transfers and retains safe troop and tool limits."
+  },
+  {
+    "version": "2.4.1",
+    "field": "text",
+    "key": "patchNotes.release.2.4.1.text.be40aeaee10f",
+    "source": "Coin spending accepts commander ID zero when the request otherwise meets its guarded validation."
+  },
+  {
+    "version": "2.4.1",
+    "field": "text",
+    "key": "patchNotes.release.2.4.1.text.cd3d616048e3",
+    "source": "Application updates resolve signed artifact details from a version-matched release manifest when the version endpoint provides no artifact URL."
+  },
+  {
+    "version": "2.4.1",
+    "field": "text",
+    "key": "patchNotes.release.2.4.1.text.80782d7923a5",
+    "source": "Auto Beri troop transfers now follow the selected attack preset instead of transfer ratios."
+  },
+  {
     "version": "2.4.0",
     "field": "subtitle",
     "key": "patchNotes.release.2.4.0.subtitle.fd3fec582d3e",
@@ -507,7 +555,7 @@
     "version": "2.3.0",
     "field": "text",
     "key": "patchNotes.release.2.3.0.text.695a40948411",
-    "source": "Hosted runtimes publish dashboard checkpoints — the exact client state document the dashboard renders, the configuration snapshot, the last hundred operation receipts, and the sanitized session situation — every five minutes while the state changes, promptly after a session transition, and once more before the runtime is drained, so the frontend can keep serving the dashboard with stale-but-complete data while no runtime exists; cells can allowlist the frontend's browser origins for live shard access with credentialed CORS"
+    "source": "Hosted runtimes publish dashboard checkpoints \u2014 the exact client state document the dashboard renders, the configuration snapshot, the last hundred operation receipts, and the sanitized session situation \u2014 every five minutes while the state changes, promptly after a session transition, and once more before the runtime is drained, so the frontend can keep serving the dashboard with stale-but-complete data while no runtime exists; cells can allowlist the frontend's browser origins for live shard access with credentialed CORS"
   },
   {
     "version": "2.3.0",
@@ -519,7 +567,7 @@
     "version": "2.3.0",
     "field": "text",
     "key": "patchNotes.release.2.3.0.text.651bf876cb36",
-    "source": "Hosted assignments carry an on-disconnect policy: release, the hosted default, makes the runtime's lifetime follow the game connection, while hold (explicit) keeps the runtime reconnecting on its own like the desktop — after a short immediate retry window it reports the session as released with the earliest retry time (cooldown or suspension end, never sooner than the relog delay) and stops, so the control plane can drain it, give the slot to another account, and create a fresh runtime when the wait elapses or the user presses Reconnect; the control plane can also force a reconnect on a running runtime"
+    "source": "Hosted assignments carry an on-disconnect policy: release, the hosted default, makes the runtime's lifetime follow the game connection, while hold (explicit) keeps the runtime reconnecting on its own like the desktop \u2014 after a short immediate retry window it reports the session as released with the earliest retry time (cooldown or suspension end, never sooner than the relog delay) and stops, so the control plane can drain it, give the slot to another account, and create a fresh runtime when the wait elapses or the user presses Reconnect; the control plane can also force a reconnect on a running runtime"
   },
   {
     "version": "2.3.0",
@@ -537,7 +585,7 @@
     "version": "2.3.0",
     "field": "text",
     "key": "patchNotes.release.2.3.0.text.e743624c86f6",
-    "source": "A game server directory now maps every official world code to its real connection address and zone — including worlds that share one multi-zone host, such as GB1, INT1, and SK1, which previously could not connect at all — sourced from the game's own network config, embedded as a snapshot, refreshable at runtime, and served to login forms at GET /api/v2/session/game-servers; the Settings server field suggests the official worlds by name"
+    "source": "A game server directory now maps every official world code to its real connection address and zone \u2014 including worlds that share one multi-zone host, such as GB1, INT1, and SK1, which previously could not connect at all \u2014 sourced from the game's own network config, embedded as a snapshot, refreshable at runtime, and served to login forms at GET /api/v2/session/game-servers; the Settings server field suggests the official worlds by name"
   },
   {
     "version": "2.3.0",
@@ -1119,7 +1167,7 @@
     "version": "2.0.1",
     "field": "text",
     "key": "patchNotes.release.2.0.1.text.57bf956eeb2b",
-    "source": "Auto Food Balance uses one-way, storage-aware routing, excludes Berimond from ordinary food logistics, tries alternate safe donors, and resolves selected market travel boosts from each castle’s placed Stable, Faction Stable, or Harbor"
+    "source": "Auto Food Balance uses one-way, storage-aware routing, excludes Berimond from ordinary food logistics, tries alternate safe donors, and resolves selected market travel boosts from each castle\u2019s placed Stable, Faction Stable, or Harbor"
   },
   {
     "version": "2.0.1",
@@ -1131,7 +1179,7 @@
     "version": "2.0.1",
     "field": "text",
     "key": "patchNotes.release.2.0.1.text.00518e32a610",
-    "source": "Auto Bird uses fresh per-castle troop inventory, cycle-scoped claims, and explicit stale-tracking cleanup so one castle’s recovery does not block unrelated automation"
+    "source": "Auto Bird uses fresh per-castle troop inventory, cycle-scoped claims, and explicit stale-tracking cleanup so one castle\u2019s recovery does not block unrelated automation"
   },
   {
     "version": "2.0.1",
@@ -1521,7 +1569,7 @@
     "version": "1.3.3",
     "field": "text",
     "key": "patchNotes.release.1.3.3.text.7c337b490855",
-    "source": "Offline dashboard: last local snapshot — castles, resources, focus"
+    "source": "Offline dashboard: last local snapshot \u2014 castles, resources, focus"
   },
   {
     "version": "1.3.3",
@@ -1557,13 +1605,13 @@
     "version": "1.3.3",
     "field": "text",
     "key": "patchNotes.release.1.3.3.text.56d57fea65df",
-    "source": "Decoration preset Apply: SOB/EBU step lines no longer show in the decorations panel — status is only in the global Alerts stack"
+    "source": "Decoration preset Apply: SOB/EBU step lines no longer show in the decorations panel \u2014 status is only in the global Alerts stack"
   },
   {
     "version": "1.3.3",
     "field": "text",
     "key": "patchNotes.release.1.3.3.text.8212919afe6c",
-    "source": "Decoration preset apply: persistent “apply started” alert with Cancel apply; cleared when the run finishes, fails, is cancelled, or hits a storage shortfall"
+    "source": "Decoration preset apply: persistent \u201capply started\u201d alert with Cancel apply; cleared when the run finishes, fails, is cancelled, or hits a storage shortfall"
   },
   {
     "version": "1.3.3",

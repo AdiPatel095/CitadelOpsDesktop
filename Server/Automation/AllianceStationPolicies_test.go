@@ -853,7 +853,12 @@ func TestAutoStationStaleRosterFallbackExcludesOnlyBerimond(t *testing.T) {
 			state.Castles[42] = State.CastleState{ID: 42, KingdomID: kingdom, SlotType: 4}
 			arrives := now.Add(30 * time.Second)
 			state.Movements[1] = State.MovementState{ID: 1, TypeID: 0, Direction: 0, OwnerPlayerID: 8, TargetPlayerID: 7, SourceTypeID: 1, SourceCastleID: 200, TargetTypeID: 4, TargetCastleID: 42, ArrivesAt: &arrives}
-			decision, err := NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{State: state, Now: now})
+			decision, err := NewAutoStationPolicy().Evaluate(t.Context(), Snapshot{
+				State: state, Now: now,
+				Configuration: Configuration.Snapshot{Sections: map[string]json.RawMessage{
+					"automation.autoStation": json.RawMessage(`{"openGateFallback":true}`),
+				}},
+			})
 			if err != nil || decision.Request == nil || decision.Request.Name != "alliance.refresh" {
 				t.Fatalf("roster refresh=%#v err=%v", decision, err)
 			}

@@ -60,6 +60,20 @@ export function sortPatchNoteItems(items: readonly PatchNoteItem[]): PatchNoteIt
 
 const PATCH_NOTES_RELEASES_UNSORTED: PatchNotesRelease[] = [
   {
+    version: '2.4.1',
+    subtitleKey: "patchNotes.release.2.4.1.subtitle.f2d7de3ceed6",
+    subtitle: "Automation guides and safer event transfers",
+    items: [
+      { kind: 'added', textKey: "patchNotes.release.2.4.1.text.f843fe862bef", text: "Localized setup guides for ten automations." },
+      { kind: 'fixed', textKey: "patchNotes.release.2.4.1.text.078bc6d68bcc", text: "Auto Station opens gates across eligible kingdoms outside Berimond and keeps its saved fallback opt-in." },
+      { kind: 'fixed', textKey: "patchNotes.release.2.4.1.text.579152b31a02", text: "Auto Fortress retries fresh cooldown state without starving other castles and chooses the fastest eligible commander." },
+      { kind: 'fixed', textKey: "patchNotes.release.2.4.1.text.ae32eef57a70", text: "Auto Beri checks the selected donor inventory before transfers and retains safe troop and tool limits." },
+      { kind: 'fixed', textKey: "patchNotes.release.2.4.1.text.be40aeaee10f", text: "Coin spending accepts commander ID zero when the request otherwise meets its guarded validation." },
+      { kind: 'fixed', textKey: "patchNotes.release.2.4.1.text.cd3d616048e3", text: "Application updates resolve signed artifact details from a version-matched release manifest when the version endpoint provides no artifact URL." },
+      { kind: 'changed', textKey: "patchNotes.release.2.4.1.text.80782d7923a5", text: "Auto Beri troop transfers now follow the selected attack preset instead of transfer ratios." },
+    ],
+  },
+  {
     version: '2.4.0',
     subtitleKey: "patchNotes.release.2.4.0.subtitle.fd3fec582d3e",
         subtitle: 'Fortress automation, castle controls, and clearer equipment choices',
