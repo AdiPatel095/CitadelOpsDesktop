@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -117,7 +118,7 @@ func craftingOverflowRedistributionDecision(settings craftingSettings, snapshot 
 		Detail: fmt.Sprintf(
 			"Redistribute %d kingdom resources from %s to %s up to target storage capacity",
 			len(best.goods), castleName(best.source), castleName(best.target),
-		),
+		), DetailDescriptor: Localization.New("server.automation.redistribute_p_kingdom_resources.6ec7310d", "Redistribute {p0} kingdom resources from {p1} to {p2} up to target storage capacity", Localization.Params{"p0": len(best.goods), "p1": fmt.Sprintf("%s", castleName(best.source)), "p2": fmt.Sprintf("%s", castleName(best.target))}),
 		NextCheckAt: snapshot.Now.Add(2 * time.Second),
 		Metrics: map[string]float64{
 			"shipmentAmount": best.totalAmount, "shipmentGoods": float64(len(best.goods)),
@@ -210,8 +211,8 @@ func marketOverflowDecision(settings craftingSettings, snapshot Snapshot, interv
 		"resourceId": best.resource, "amount": int64(best.amount),
 	})
 	return Decision{
-		Status:              "ready",
-		Detail:              fmt.Sprintf("Move %.0f overflow resource %d from %s to %s", best.amount, best.resource, castleName(best.source), castleName(best.target)),
+		Status: "ready",
+		Detail: fmt.Sprintf("Move %.0f overflow resource %d from %s to %s", best.amount, best.resource, castleName(best.source), castleName(best.target)), DetailDescriptor: Localization.New("server.automation.move_p_overflow_resource.ca2836b1", "Move {p0} overflow resource {p1} from {p2} to {p3}", Localization.Params{"p0": best.amount, "p1": best.resource, "p2": fmt.Sprintf("%s", castleName(best.source)), "p3": fmt.Sprintf("%s", castleName(best.target))}),
 		NextCheckAt:         snapshot.Now.Add(interval),
 		Metrics:             map[string]float64{"shipmentAmount": best.amount},
 		Request:             &Intent.Request{Name: "resource.ship", Arguments: arguments},
@@ -281,8 +282,8 @@ func stormOverflowDecision(settings craftingSettings, snapshot Snapshot, interva
 	}
 	arguments, _ := json.Marshal(shipmentArguments)
 	return Decision{
-		Status:      "ready",
-		Detail:      fmt.Sprintf("Move %.0f overflow resource %d from kingdom %d to Storm", best.amount, best.resource, best.source.KingdomID),
+		Status: "ready",
+		Detail: fmt.Sprintf("Move %.0f overflow resource %d from kingdom %d to Storm", best.amount, best.resource, best.source.KingdomID), DetailDescriptor: Localization.New("server.automation.move_p_overflow_resource.c883d985", "Move {p0} overflow resource {p1} from kingdom {p2} to Storm", Localization.Params{"p0": best.amount, "p1": best.resource, "p2": fmt.Sprintf("%d", best.source.KingdomID)}),
 		NextCheckAt: snapshot.Now.Add(interval),
 		Metrics:     map[string]float64{"shipmentAmount": best.amount},
 		Request:     &Intent.Request{Name: "resource.ship", Arguments: arguments},
@@ -372,8 +373,8 @@ func rubyOverflowSkipDecision(settings craftingSettings, snapshot Snapshot) (Dec
 		"slot": best.slot,
 	})
 	return Decision{
-		Status:              "ready",
-		Detail:              fmt.Sprintf("Complete crafting recipe %d for %d rubies so recipe %d can consume overflow resource %d", best.activeID, best.price, best.nextID, best.resource),
+		Status: "ready",
+		Detail: fmt.Sprintf("Complete crafting recipe %d for %d rubies so recipe %d can consume overflow resource %d", best.activeID, best.price, best.nextID, best.resource), DetailDescriptor: Localization.New("server.automation.complete_crafting_recipe_p.e8c4b2b9", "Complete crafting recipe {p0} for {p1} rubies so recipe {p2} can consume overflow resource {p3}", Localization.Params{"p0": fmt.Sprintf("%d", best.activeID), "p1": best.price, "p2": fmt.Sprintf("%d", best.nextID), "p3": best.resource}),
 		NextCheckAt:         snapshot.Now.Add(2 * time.Second),
 		Metrics:             map[string]float64{"rubyCost": float64(best.price), "remainingSec": float64(best.remaining)},
 		Request:             &Intent.Request{Name: "crafting.skip", Arguments: arguments},

@@ -1,3 +1,6 @@
+import { LocalizedRichText } from "../i18n/LocalizedRichText";
+import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
+import { LocalizedText } from "../i18n/LocalizedText";
 import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ClipboardCopy,
@@ -65,6 +68,7 @@ interface HallFlankToolBonus {
 }
 
 const AttackPresetsView: React.FC = () => {
+  const { t: localizeStatic } = useStaticLocale();
   const { configuration, getCatalog, state, updateConfiguration } = useCitadelAPI();
   const [query, setQuery] = useState('');
   const [editor, setEditor] = useState<EditorState | null>(null);
@@ -264,22 +268,20 @@ const AttackPresetsView: React.FC = () => {
           <Badge variant={document.presets.length > 0 ? 'primary' : 'secondary'}>
             {document.presets.length} preset{document.presets.length === 1 ? '' : 's'}
           </Badge>
-          <Badge variant="outline" className="normal-case tracking-normal">Stored by CitadelOps</Badge>
+          <Badge variant="outline" className="normal-case tracking-normal"><LocalizedText messageKey="ui.views.attackPresetsView.stored.by.citadelops.9f046c26" /></Badge>
           </>
         )}
         actions={(
           <>
             <Button variant="secondary" leftIcon={<ClipboardPaste className="h-4 w-4" />} onClick={openImport}>
-              Import CRA
-            </Button>
+              <LocalizedText messageKey="ui.views.attackPresetsView.import.cra.1371371b" /></Button>
             <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => openPresetCreation()}>
-              New preset
-            </Button>
+              <LocalizedText messageKey="ui.views.attackPresetsView.new.preset.75be83ad" /></Button>
           </>
         )}
         searchValue={query}
         onSearchChange={setQuery}
-        searchPlaceholder="Search presets"
+        searchPlaceholder={localizeStatic("ui.views.attackPresetsView.searchPlaceholder.search.presets.b2e5d6ff")}
       />
 
       {filteredPresets.length > 0 ? (
@@ -307,8 +309,7 @@ const AttackPresetsView: React.FC = () => {
             : 'Presets are independent from the game’s saved slots and can contain up to 30 complete attack waves.'}
           action={!query.trim() ? (
             <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => openPresetCreation()}>
-              Create preset
-            </Button>
+              <LocalizedText messageKey="ui.views.attackPresetsView.create.preset.6d72507d" /></Button>
           ) : undefined}
         />
       )}
@@ -336,30 +337,27 @@ const AttackPresetsView: React.FC = () => {
         title={(
           <ModalTitle
             icon={<Swords className="h-5 w-5" />}
-            description="This determines the maximum tools allowed in each section of every wave."
+            description={localizeStatic("ui.views.attackPresetsView.description.this.determines.the.maximum.tools.allowed.in.889b970f")}
           >
-            Choose preset target type
-          </ModalTitle>
+            <LocalizedText messageKey="ui.views.attackPresetsView.choose.preset.target.type.4d782ea3" /></ModalTitle>
         )}
       >
         <div className="space-y-4">
           <p className="text-sm leading-relaxed text-text-muted">
-            Select the targets this preset is designed for. CitadelOps will show these limits in the builder
-            and will check the real target again immediately before sending CRA.
-          </p>
+            <LocalizedText messageKey="ui.views.attackPresetsView.select.the.targets.this.preset.is.designed.386a2831" /></p>
           <div className="grid gap-3 md:grid-cols-2">
             <PresetTargetTypeChoice
               type="pve"
-              title="PvE preset"
-              description="For Berimond towers, event camps, NPC towers, and other non-player targets using the fixed PvE limits."
+              title={localizeStatic("ui.views.attackPresetsView.title.pve.preset.77cf9554")}
+              description={localizeStatic("ui.views.attackPresetsView.description.for.berimond.towers.event.camps.npc.towers.817de106")}
               limits={pveToolLimits}
               bonusLabel="Fixed game limits"
               onSelect={() => choosePresetTargetType('pve')}
             />
             <PresetTargetTypeChoice
               type="pvp"
-              title="PvP preset"
-              description="For legendary player and Glory targets. Uses this account's active Hall of Legends flank-tool skill."
+              title={localizeStatic("ui.views.attackPresetsView.title.pvp.preset.382dc223")}
+              description={localizeStatic("ui.views.attackPresetsView.description.for.legendary.player.and.glory.targets.uses.627e1d05")}
               limits={pvpToolLimits}
               bonusLabel={!playerLegendary
                 ? 'Legendary PvP tools unavailable'
@@ -372,9 +370,7 @@ const AttackPresetsView: React.FC = () => {
             />
           </div>
           <div className="rounded-global border border-border-base bg-bg-app/35 px-4 py-3 text-xs leading-relaxed text-text-muted">
-            PvE uses 30 / 40 / 30. Legendary PvP uses 40 / 50 / 40, then the active official
-            Hall flank-tool skill adds up to +10 on the left and right. The real target is checked again before sending.
-          </div>
+            <LocalizedText messageKey="ui.views.attackPresetsView.pve.uses.30.40.30.legendary.pvp.79b5a683" /></div>
         </div>
       </Modal>
 
@@ -385,31 +381,24 @@ const AttackPresetsView: React.FC = () => {
         title={(
           <ModalTitle
             icon={<ClipboardPaste className="h-5 w-5" />}
-            description="Accepts a full %xt% CRA wire command or its JSON payload."
+            description={localizeStatic("ui.views.attackPresetsView.description.accepts.a.full.xt.cra.wire.command.c91bf0cf")}
           >
-            Import CRA formation
-          </ModalTitle>
+            <LocalizedText messageKey="ui.views.attackPresetsView.import.cra.formation.aca74fc9" /></ModalTitle>
         )}
         footer={(
           <div className="flex w-full items-center justify-end gap-2">
-            <Button variant="ghost" onClick={() => setImportOpen(false)}>Cancel</Button>
+            <Button variant="ghost" onClick={() => setImportOpen(false)}><LocalizedText messageKey="game.cancel" /></Button>
             <Button
               onClick={handleImport}
               disabled={!importValue.trim()}
               leftIcon={<ClipboardPaste className="h-4 w-4" />}
             >
-              Load formation
-            </Button>
+              <LocalizedText messageKey="ui.views.attackPresetsView.load.formation.6d45b3ee" /></Button>
           </div>
         )}
       >
         <div className="space-y-4">
-          <p className="text-sm leading-relaxed text-text-muted">
-            The CRA <span className="font-mono text-text-main">A</span> formation,
-            <span className="font-mono text-text-main"> RW</span> courtyard troops, and
-            <span className="font-mono text-text-main"> AST</span> Sceat tools are imported.
-            Commander, source, target, travel, and other account-specific fields are ignored.
-          </p>
+          <p className="text-sm leading-relaxed text-text-muted"><LocalizedRichText messageKey="ui.rich.views.attackPresetsView.the.cra.codetext0.formation.codetext1.courtyard.troops.96c662c9" params={{"protocolCode":"CRA","codeText0":"A","codeText1":"RW","codeText2":"AST"}} tags={{span0: children => <span className="font-mono text-text-main">{children}</span>, span1: children => <span className="font-mono text-text-main">{children}</span>, span2: children => <span className="font-mono text-text-main">{children}</span>}} /></p>
           <label className="grid gap-2 text-xs font-bold text-text-muted">
             CRA command or JSON payload
             <textarea
@@ -444,6 +433,7 @@ const PresetCard: React.FC<{
   onDuplicate: () => void;
   onDelete: () => void;
 }> = ({ preset, toolProfile, busy, onEdit, onCopyShare, onDuplicate, onDelete }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const summary = summarizeAttackPreset(preset);
   const toolLimits = attackPresetToolLimits(preset.targetType, toolProfile);
   return (
@@ -462,7 +452,7 @@ const PresetCard: React.FC<{
               {preset.targetType === 'pvp' ? 'PvP' : 'PvE'}
             </Badge>
             {preset.useTroopFamilies ? (
-              <Badge variant="primary" className="normal-case tracking-normal">Family fill</Badge>
+              <Badge variant="primary" className="normal-case tracking-normal"><LocalizedText messageKey="ui.views.attackPresetsView.family.fill.30bc122b" /></Badge>
             ) : null}
             <span className="text-xs text-text-muted">
               Tool max · L {toolLimits.L} · C {toolLimits.M} · R {toolLimits.R}
@@ -471,17 +461,17 @@ const PresetCard: React.FC<{
           </div>
         </div>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" disabled={busy} onClick={onEdit} title="Edit preset"><Edit3 className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="icon" disabled={busy} onClick={onCopyShare} title="Copy CRA share string"><ClipboardCopy className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="icon" disabled={busy} onClick={onDuplicate} title="Duplicate preset"><Files className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="icon" disabled={busy} onClick={onDelete} title="Delete preset" className="hover:!text-error"><Trash2 className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" disabled={busy} onClick={onEdit} title={localizeStatic("ui.views.attackPresetsView.title.edit.preset.d36585b9")}><Edit3 className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" disabled={busy} onClick={onCopyShare} title={localizeStatic("ui.views.attackPresetsView.title.copy.cra.share.string.57e61e52")}><ClipboardCopy className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" disabled={busy} onClick={onDuplicate} title={localizeStatic("ui.views.attackPresetsView.title.duplicate.preset.a5c8c827")}><Files className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" disabled={busy} onClick={onDelete} title={localizeStatic("ui.views.attackPresetsView.title.delete.preset.f307af85")} className="hover:!text-error"><Trash2 className="h-4 w-4" /></Button>
         </div>
       </div>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-3 gap-2">
-          <MetricTile label="Waves" value={summary.waves.toLocaleString()} />
-          <MetricTile label="Troops" value={summary.troops.toLocaleString()} />
-          <MetricTile label="Tools" value={summary.tools.toLocaleString()} />
+          <MetricTile label={localizeStatic("ui.views.attackPresetsView.label.waves.ad5b8321")} value={summary.waves.toLocaleString()} />
+          <MetricTile label={localizeStatic("ui.views.attackPresetsView.label.troops.5d47e163")} value={summary.troops.toLocaleString()} />
+          <MetricTile label={localizeStatic("game.tools")} value={summary.tools.toLocaleString()} />
         </div>
         {summary.courtyardTroops > 0 || summary.courtyardTools > 0 ? (
           <Badge variant="warning" className="w-fit normal-case tracking-normal">
@@ -489,12 +479,11 @@ const PresetCard: React.FC<{
           </Badge>
         ) : null}
         <div className="grid gap-3 sm:grid-cols-2">
-          <FormationPreview label="Unit types" ids={summary.troopTypes} emptyIcon={<Shield className="h-4 w-4" />} render={(id) => <UnitImage unitId={id} size={34} />} />
-          <FormationPreview label="Tool types" ids={summary.toolTypes} emptyIcon={<Shield className="h-4 w-4" />} render={(id) => <ToolImage toolId={id} size={34} showLevel={false} />} />
+          <FormationPreview label={localizeStatic("ui.views.attackPresetsView.label.unit.types.572fabcd")} ids={summary.troopTypes} emptyIcon={<Shield className="h-4 w-4" />} render={(id) => <UnitImage unitId={id} size={34} />} />
+          <FormationPreview label={localizeStatic("ui.views.attackPresetsView.label.tool.types.dd756e8c")} ids={summary.toolTypes} emptyIcon={<Shield className="h-4 w-4" />} render={(id) => <ToolImage toolId={id} size={34} showLevel={false} />} />
         </div>
         <Button variant="secondary" className="w-full" onClick={onEdit} disabled={busy} leftIcon={<Edit3 className="h-4 w-4" />}>
-          Edit formation
-        </Button>
+          <LocalizedText messageKey="ui.views.attackPresetsView.edit.formation.7bc1c041" /></Button>
       </CardContent>
     </Card>
   );

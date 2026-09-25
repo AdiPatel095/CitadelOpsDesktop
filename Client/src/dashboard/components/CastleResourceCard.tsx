@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import type { ResourceBalanceV2 } from '../../api/Contracts';
 import { SectionCard } from '../../components/ui';
@@ -58,7 +59,7 @@ function ResourceDepletionTimer({ amount, netPerHour }: { amount: number; netPer
     return () => window.clearInterval(id);
   }, [deadlineMs]);
 
-  if (extremeLong) return <p className="w-full text-right text-[10px] leading-tight text-text-muted tabular-nums">&gt;10y</p>;
+  if (extremeLong) return <p className="w-full text-right text-[10px] leading-tight text-text-muted tabular-nums"><LocalizedText messageKey="ui.dashboard.components.castleResourceCard.10y.9bc33c08" /></p>;
   if (deadlineMs == null || deadlineMs <= now) return null;
   return <p className="w-full text-right text-[10px] leading-tight text-text-muted tabular-nums">{formatRemainingMs(deadlineMs - now)}</p>;
 }

@@ -1,6 +1,7 @@
 package Buildings
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"fmt"
 	"sort"
 	"strings"
@@ -65,7 +66,7 @@ func CaptureTarget(state State.GameState, gameData *GameData.Store, request Targ
 		return TargetCaptureResult{}, RevisionMismatchError{Expected: *request.ExpectedRevision, Actual: state.Revision}
 	}
 	if gameData == nil {
-		return TargetCaptureResult{}, fmt.Errorf("official game data is unavailable")
+		return TargetCaptureResult{}, Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.buildings.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	mode := strings.ToLower(strings.TrimSpace(request.Mode))
 	if mode == "" {
@@ -78,17 +79,17 @@ func CaptureTarget(state State.GameState, gameData *GameData.Store, request Targ
 		mode = TargetCaptureModeExact
 	}
 	if mode != TargetCaptureModeFunctional && mode != TargetCaptureModeLayout && mode != TargetCaptureModeExact {
-		return TargetCaptureResult{}, fmt.Errorf(
+		return TargetCaptureResult{}, Localization.WithError(fmt.Errorf(
 			"mode must be %q, %q, or %q",
 			TargetCaptureModeFunctional, TargetCaptureModeLayout, TargetCaptureModeExact,
-		)
+		), Localization.New("server.buildings.mode_must_be_p.e3a43e6a", "mode must be {p0}, {p1}, or {p2}", Localization.Params{"p0": fmt.Sprintf("%q", TargetCaptureModeFunctional), "p1": fmt.Sprintf("%q", TargetCaptureModeLayout), "p2": fmt.Sprintf("%q", TargetCaptureModeExact)}))
 	}
 	castle, found := state.Castles[request.CastleID]
 	if !found || request.CastleID <= 0 {
-		return TargetCaptureResult{}, fmt.Errorf("castle %d was not found", request.CastleID)
+		return TargetCaptureResult{}, Localization.WithError(fmt.Errorf("castle %d was not found", request.CastleID), Localization.New("server.buildings.castle_p_was_not.b5cc85b5", "castle {p0} was not found", Localization.Params{"p0": fmt.Sprintf("%d", request.CastleID)}))
 	}
 	if castle.Layout.ObservedAt.IsZero() {
-		return TargetCaptureResult{}, fmt.Errorf("castle %d has no observed layout", request.CastleID)
+		return TargetCaptureResult{}, Localization.WithError(fmt.Errorf("castle %d has no observed layout", request.CastleID), Localization.New("server.buildings.castle_p_has_no.5f5489c2", "castle {p0} has no observed layout", Localization.Params{"p0": fmt.Sprintf("%d", request.CastleID)}))
 	}
 	catalog, err := gameData.BuildingCatalog()
 	if err != nil {

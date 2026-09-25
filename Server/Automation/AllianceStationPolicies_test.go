@@ -45,6 +45,9 @@ func TestAutoBirdStartsEachCastleWithAINAndFreshJAAPreparation(t *testing.T) {
 	if err != nil || decision.Request == nil || decision.Request.Name != "auto_bird.discover" {
 		t.Fatalf("castle preparation = %#v, err=%v", decision, err)
 	}
+	if decision.DetailDescriptor == nil || decision.DetailDescriptor.Key != "server.automation.castle_message.bird_discover.id" || decision.DetailDescriptor.Params["castleID"] != "10" {
+		t.Fatalf("castle descriptor missing: %+v", decision.DetailDescriptor)
+	}
 	if !decision.ReevaluateOnSuccess {
 		t.Fatal("castle preparation should continue the current bird cycle after success")
 	}
@@ -390,6 +393,9 @@ func TestAutoBirdDispatchesOnlyAfterCastlePreparationIsFresh(t *testing.T) {
 	})
 	if err != nil || decision.Request == nil || decision.Request.Name != "auto_bird.dispatch" {
 		t.Fatalf("prepared Auto Bird decision = %#v err=%v", decision, err)
+	}
+	if decision.DetailDescriptor == nil || decision.DetailDescriptor.Key != "server.automation.castle_message.bird_dispatch.id" || decision.DetailDescriptor.Params["castleID"] != "10" {
+		t.Fatalf("castle descriptor missing: %+v", decision.DetailDescriptor)
 	}
 }
 

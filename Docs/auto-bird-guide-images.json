@@ -1,0 +1,23 @@
+{
+  "sourceRevision": "bcd6240055c04757913341858a6fbea37c199198 (base plus Auto Bird guide working changes captured before commit)",
+  "captured": "2026-09-24",
+  "provenance": "Sophie localhost-only synthetic Vite harness using actual Desktop Auto Bird settings component and CSS; handwritten Example Castle (id 1, kingdom 0, x 10, y 20, fictional Unit 101/102 reserves), Example Outpost (id 2), Everyday reserve preset, both with minimum send 1,000, no MockRuntime snapshots, no non-local network, configuration writes throw. General controls/presets crop and castle card crop. Capture script and fixture: /tmp/cit-bird-guide-qa/.",
+  "images": [
+    {
+      "src": "/guide-auto-bird-general.png",
+      "sha256": "7e4397a792f72a17bcd2ab2f70460312c695facb14b8f7025e0f05a2581b5fa3",
+      "width": 1405,
+      "height": 475,
+      "caption": "Set stationing time and eligibility, then review the Everyday reserve preset before saving.",
+      "alt": "Auto Bird stationing delay, minimum send, minimum RPT, and preset controls"
+    },
+    {
+      "src": "/guide-auto-bird-castle.png",
+      "sha256": "2d24af92eb05872349188387025572dc6d2dcbaf99bd122d89c8cf828a1ffe39",
+      "width": 275,
+      "height": 244,
+      "caption": "Reserve only the units needed at this castle; Unit 101 and Unit 102 are fictional troop placeholders.",
+      "alt": "Auto Bird castle reserve tiles for fictional Example Castle"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "authoring": "direct-model-authored",
+  "linguisticReview": "pending",
+  "scope": "Eight reviewed common UI controls; no external translation provider. Brazilian Portuguese register.",
+  "keys": {
+    "common.refresh": "0e91610117029a62a478b7fa7df0b8598bebe3ab1e192d4b1882e310719c9671",
+    "common.clearSelection": "cea4d2e010b8fd52bc28a66eca24ff0d616b2c7d982545757780c196c5cc04c7",
+    "common.presetName": "e534a6662ac8394409ca1927b83569d2aa7b87fbaec11df92c87e8347c0a393b",
+    "common.savePreset": "362a1376e64153c9c61e05747623902bbfd604f6cfa0f5d2b9d6ef3c4b3869f9",
+    "common.apply": "31e392d1c0378beca611de66c0f4c71cba29159905cc54242d9bddee5b23d851",
+    "common.close": "7d9eb7acb13e24625c404401d8e88b2350e32162455885f18276cf802f7701ed",
+    "common.calendar": "d5d0a30b517e3beab07609d7e54c378db5e15066f22280af453f587f7eec7474",
+    "common.saveChanges": "dd0ae7a5cbcf233968657563dce34639e681861e2df6d3f845c08d49981c0999"
+  },
+  "locales": [
+    "de",
+    "fr",
+    "pl",
+    "ru",
+    "it",
+    "nl",
+    "pt",
+    "es",
+    "ar",
+    "da",
+    "no",
+    "fi",
+    "sv",
+    "ja",
+    "ko",
+    "el",
+    "tr",
+    "zh-CN",
+    "zh-TW",
+    "cs",
+    "ro",
+    "sk",
+    "hu",
+    "bg",
+    "lt"
+  ]
+}

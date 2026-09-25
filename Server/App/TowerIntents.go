@@ -1,6 +1,7 @@
 package App
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -53,20 +54,20 @@ func planTowerAdvisorActivation(_ context.Context, input Intent.PlanningContext,
 		return Intent.Plan{}, err
 	}
 	if !request.ConfirmedTokenSpend {
-		return Intent.Plan{}, fmt.Errorf("Baron Advisor activation consumes one dedicated token; confirmedTokenSpend=true is required")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("Baron Advisor activation consumes one dedicated token; confirmedTokenSpend=true is required"), Localization.New("server.app.baron_advisor_activation_consumes.6c2d27b2", "Baron Advisor activation consumes one dedicated token; confirmedTokenSpend=true is required", nil))
 	}
 	if baronAdvisorActive(input.State) {
-		return Intent.Plan{}, fmt.Errorf("the Baron Advisor is already active")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("the Baron Advisor is already active"), Localization.New("server.app.the_baron_advisor_is.7f8f22ee", "the Baron Advisor is already active", nil))
 	}
 	if input.State.Player.Currencies[baronAdvisorTokenCurrencyID] < 1 {
-		return Intent.Plan{}, fmt.Errorf("Baron Advisor activation requires one token (currency %d)", baronAdvisorTokenCurrencyID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("Baron Advisor activation requires one token (currency %d)", baronAdvisorTokenCurrencyID), Localization.New("server.app.baron_advisor_activation_requires.ae64d21e", "Baron Advisor activation requires one token (currency {p0})", Localization.Params{"p0": fmt.Sprintf("%d", baronAdvisorTokenCurrencyID)}))
 	}
 	return Intent.Plan{
 		Claims:  []string{"advisor:baron:activation", "account-resources", "subscriptions"},
-		Summary: "Activate the Baron Advisor with one dedicated token",
+		Summary: "Activate the Baron Advisor with one dedicated token", SummaryDescriptor: Localization.New("server.app.activate_the_baron_advisor.ca848745", "Activate the Baron Advisor with one dedicated token", nil),
 		Steps: []Intent.Step{
-			commandStep("Consume one Baron Advisor token", "aa", json.RawMessage(`{"AAT":4}`), "aa"),
-			commandStep("Refresh Baron Advisor subscription", "sie", json.RawMessage(`{}`), "sie"),
+			commandStep("Consume one Baron Advisor token", "aa", json.RawMessage(`{"AAT":4}`), "aa", Localization.New("server.app.consume_one_baron_advisor.2c9505cf", "Consume one Baron Advisor token", nil)),
+			commandStep("Refresh Baron Advisor subscription", "sie", json.RawMessage(`{}`), "sie", Localization.New("server.app.refresh_baron_advisor_subscription.ea7577ab", "Refresh Baron Advisor subscription", nil)),
 		},
 	}, nil
 }
@@ -97,8 +98,8 @@ func planTowerContext(_ context.Context, input Intent.PlanningContext, arguments
 			"castle-focus", "castle:" + strconv.FormatInt(int64(source.ID), 10),
 			towerTargetClaim(target),
 		},
-		Summary: fmt.Sprintf("Refresh tower attack context at %d:%d", target.X, target.Y),
-		Steps:   steps,
+		Summary: fmt.Sprintf("Refresh tower attack context at %d:%d", target.X, target.Y), SummaryDescriptor: Localization.New("server.app.refresh_tower_attack_context.fa29ccaa", "Refresh tower attack context at {p0}:{p1}", Localization.Params{"p0": target.X, "p1": target.Y}),
+		Steps: steps,
 	}, nil
 }
 
@@ -112,7 +113,7 @@ func planTowerAttack(_ context.Context, input Intent.PlanningContext, arguments 
 		SourceCastleID: source.ID, KingdomID: target.KingdomID, TargetX: target.X, TargetY: target.Y,
 	})
 	deferTargetStep := Intent.Step{
-		Name: "Rotate tower target behind ready targets", Action: "tower.queue.defer", ActionArguments: queueEntry,
+		Name: "Rotate tower target behind ready targets", NameDescriptor: Localization.New("server.app.rotate_tower_target_behind.fb928a7d", "Rotate tower target behind ready targets", nil), Action: "tower.queue.defer", ActionArguments: queueEntry,
 	}
 	deferredSkipPlan := func(summary string) Intent.Plan {
 		return Intent.Plan{
@@ -138,7 +139,7 @@ func planTowerAttack(_ context.Context, input Intent.PlanningContext, arguments 
 		)), nil
 	}
 	if request.AdvisorMode && !baronAdvisorActive(input.State) {
-		return Intent.Plan{}, fmt.Errorf("%w: the Baron Advisor is not active", Intent.ErrPlanStale)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("%w: the Baron Advisor is not active", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.c60d6837", "intent plan became stale before dispatch: the Baron Advisor is not active", nil))
 	}
 	if blockedPlan, blocked, err := dailyAttackLimitPlan(input.State, request.DailyAttackLimit); err != nil {
 		return Intent.Plan{}, err
@@ -155,7 +156,7 @@ func planTowerAttack(_ context.Context, input Intent.PlanningContext, arguments 
 		}
 	}
 	if input.GameData == nil {
-		return Intent.Plan{}, fmt.Errorf("official game data is unavailable")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	commander, err := towerCommander(input.State, input.CommanderHolds, request.MaidenOnly, request.CommanderIDs)
 	if err != nil {
@@ -189,14 +190,14 @@ func planTowerAttack(_ context.Context, input Intent.PlanningContext, arguments 
 	steps = append(steps, attackCastleContextStep(source))
 	steps = appendDailyAttackLimitGuard(steps, request.DailyAttackLimit)
 	steps = append(steps,
-		deferredCRACommandStep("Build and launch tower attack", "tower.attack.build", resolvedArguments, contextPayload),
+		deferredCRACommandStep("Build and launch tower attack", "tower.attack.build", resolvedArguments, contextPayload, Localization.New("server.app.build_and_launch_tower.99d8d615", "Build and launch tower attack", nil)),
 		attackFeatureCaptureStep(attackFeatureCaptureRequest{
 			FeatureID: State.AttackFeatureAutoTowers, SourceCastleID: source.ID, CommanderID: commander,
 			KingdomID: target.KingdomID, TargetTypeID: target.TypeID, TargetX: target.X, TargetY: target.Y,
 			AdvisorTimeSkipsUsed: int64(max(0, request.AdvisorAttackCount-1)),
 		}),
 	)
-	steps = append(steps, Intent.Step{Name: "Consume tower queue target", Action: "tower.queue.consume", ActionArguments: queueEntry})
+	steps = append(steps, Intent.Step{Name: "Consume tower queue target", NameDescriptor: Localization.New("server.app.consume_tower_queue_target.80b6e3d7", "Consume tower queue target", nil), Action: "tower.queue.consume", ActionArguments: queueEntry})
 	claims := towerAttackClaims(source, target, commander, true)
 	if request.AdvisorMode {
 		claims = append(claims, "tower-advisor-time-skips")
@@ -231,7 +232,7 @@ func (application *Application) guardTowerAttackInventory(_ context.Context, arg
 	}
 	gameData, ready := application.GameData.Current()
 	if !ready {
-		return fmt.Errorf("official game data is unavailable")
+		return Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	input := Intent.PlanningContext{State: application.State.ReadOnlyView(), GameData: gameData}
 	capacity, source, _, err := resolveTowerAttackCapacity(input, request.towerLaunchRequest, request.CommanderID, false)
@@ -252,7 +253,7 @@ func (application *Application) captureTowerCapacity(_ context.Context, argument
 	}
 	gameData, ready := application.GameData.Current()
 	if !ready {
-		return fmt.Errorf("official game data is unavailable")
+		return Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	now := time.Now().UTC()
 	input := Intent.PlanningContext{State: application.State.ReadOnlyView(), GameData: gameData}
@@ -261,17 +262,17 @@ func (application *Application) captureTowerCapacity(_ context.Context, argument
 		return err
 	}
 	if !towerAttackDialogFreshForTarget(input.State.AttackDialog, source, target, now) {
-		return fmt.Errorf(
+		return Localization.WithError(fmt.Errorf(
 			"%w: current attack-dialog context does not match tower %d:%d",
 			Intent.ErrPlanStale, target.X, target.Y,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.4f404336", "intent plan became stale before dispatch: current attack-dialog context does not match tower {p1}:{p2}", Localization.Params{"p1": fmt.Sprintf("%d", target.X), "p2": fmt.Sprintf("%d", target.Y)}))
 	}
 	if towerCooldownRemaining(target, input.State.UpdatedAt, now) > 0 ||
 		input.State.AttackDialog.Target.TowerCooldownRemaining > 0 {
-		return fmt.Errorf(
+		return Localization.WithError(fmt.Errorf(
 			"%w: kingdom tower at %d:%d is on cooldown",
 			Intent.ErrPlanStale, target.X, target.Y,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.483b6d63", "intent plan became stale before dispatch: kingdom tower at {p1}:{p2} is on cooldown", Localization.Params{"p1": fmt.Sprintf("%d", target.X), "p2": fmt.Sprintf("%d", target.Y)}))
 	}
 	observation, err := towerCapacityObservation(input, request.towerLaunchRequest, request.CommanderID)
 	if err != nil {
@@ -282,10 +283,10 @@ func (application *Application) captureTowerCapacity(_ context.Context, argument
 		currentTarget, targetExists := gameState.LookupMapObservation(target.KingdomID, fmt.Sprintf("%d:%d", target.X, target.Y))
 		if !sourceExists || !targetExists ||
 			!towerAttackDialogFreshForTarget(gameState.AttackDialog, currentSource, currentTarget, now) {
-			return nil, false, fmt.Errorf(
+			return nil, false, Localization.WithError(fmt.Errorf(
 				"%w: current attack-dialog context does not match tower %d:%d",
 				Intent.ErrPlanStale, target.X, target.Y,
-			)
+			), Localization.New("server.app.intent_plan_became_stale.4f404336", "intent plan became stale before dispatch: current attack-dialog context does not match tower {p1}:{p2}", Localization.Params{"p1": fmt.Sprintf("%d", target.X), "p2": fmt.Sprintf("%d", target.Y)}))
 		}
 		if !gameState.SetTowerQueueCapacity(source.ID, observation) {
 			return nil, false, nil
@@ -323,24 +324,24 @@ func buildTowerAttackStep(input Intent.PlanningContext, request towerLaunchReque
 		return Intent.Step{}, err
 	}
 	if towerCooldownRemaining(target, input.State.UpdatedAt, time.Now().UTC()) > 0 {
-		return Intent.Step{}, fmt.Errorf(
+		return Intent.Step{}, Localization.WithError(fmt.Errorf(
 			"%w: kingdom tower at %d:%d is on cooldown", Intent.ErrPlanStale, target.X, target.Y,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.483b6d63", "intent plan became stale before dispatch: kingdom tower at {p1}:{p2} is on cooldown", Localization.Params{"p1": fmt.Sprintf("%d", target.X), "p2": fmt.Sprintf("%d", target.Y)}))
 	}
 	dialog := input.State.AttackDialog
 	if dialog.SourceCastleID != source.ID || dialog.KingdomID != target.KingdomID ||
 		dialog.Target.TypeID != kingdomTowerMapTypeID || dialog.Target.X != target.X || dialog.Target.Y != target.Y {
-		return Intent.Step{}, fmt.Errorf(
+		return Intent.Step{}, Localization.WithError(fmt.Errorf(
 			"%w: current attack-dialog context does not match tower %d:%d",
 			Intent.ErrPlanStale, target.X, target.Y,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.4f404336", "intent plan became stale before dispatch: current attack-dialog context does not match tower {p1}:{p2}", Localization.Params{"p1": fmt.Sprintf("%d", target.X), "p2": fmt.Sprintf("%d", target.Y)}))
 	}
 	capacity, source, target, err := resolveTowerAttackCapacity(input, request, commander, true)
 	if err != nil {
 		return Intent.Step{}, err
 	}
 	if request.AdvisorMode && !baronAdvisorActive(input.State) {
-		return Intent.Step{}, fmt.Errorf("%w: the Baron Advisor is no longer active", Intent.ErrPlanStale)
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("%w: the Baron Advisor is no longer active", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.4a29a9ab", "intent plan became stale before dispatch: the Baron Advisor is no longer active", nil))
 	}
 	if request.AdvisorMode {
 		if _, detail, blocked, err := towerAdvisorTimeSkipLimitStatus(
@@ -348,7 +349,7 @@ func buildTowerAttackStep(input Intent.PlanningContext, request towerLaunchReque
 		); err != nil {
 			return Intent.Step{}, err
 		} else if blocked {
-			return Intent.Step{}, fmt.Errorf("%w: %s", Intent.ErrPlanStale, detail)
+			return Intent.Step{}, Localization.WithError(fmt.Errorf("%w: %s", Intent.ErrPlanStale, detail), Localization.New("server.app.intent_plan_became_stale.9e9732a4", "intent plan became stale before dispatch: {p1}", Localization.Params{"p1": fmt.Sprintf("%s", detail)}))
 		}
 	}
 	required, err := towerTotalRequiredUnits(capacity.Capacity.Left+capacity.Capacity.Right, request)
@@ -362,7 +363,7 @@ func buildTowerAttackStep(input Intent.PlanningContext, request towerLaunchReque
 		source, target, commander, request.UnitID, capacity.Capacity.Left, capacity.Capacity.Right,
 	)
 	if err := applyCastleHorseTravelBoost(&attack, input.GameData, source, request.HorseTravelBoostID); err != nil {
-		return Intent.Step{}, fmt.Errorf("resolve tower horse travel boost: %w", err)
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("resolve tower horse travel boost: %w", err), Localization.ErrorContext(Localization.New("server.app.resolve_tower_horse_travel.61847d73", "resolve tower horse travel boost", nil), err))
 	}
 	var wireBody any = attack
 	if request.AdvisorMode {
@@ -372,9 +373,9 @@ func buildTowerAttackStep(input Intent.PlanningContext, request towerLaunchReque
 	}
 	body, err := json.Marshal(wireBody)
 	if err != nil {
-		return Intent.Step{}, fmt.Errorf("build tower CRA payload: %w", err)
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("build tower CRA payload: %w", err), Localization.ErrorContext(Localization.New("server.app.build_tower_cra_payload.de81c069", "build tower CRA payload", nil), err))
 	}
-	return commandStep(fmt.Sprintf("Attack tower at %d:%d", target.X, target.Y), "cra", body, "cra"), nil
+	return commandStep(fmt.Sprintf("Attack tower at %d:%d", target.X, target.Y), "cra", body, "cra", Localization.New("server.app.attack_tower_at_p.0545c4a6", "Attack tower at {p0}:{p1}", Localization.Params{"p0": target.X, "p1": target.Y})), nil
 }
 
 func resolveTowerAttackCapacity(
@@ -389,12 +390,12 @@ func resolveTowerAttackCapacity(
 	}
 	commanderState, exists := input.State.Commanders[commander]
 	if !exists || !commanderState.Available {
-		return AttackCapacity.Result{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf(
+		return AttackCapacity.Result{}, State.CastleState{}, State.MapObservation{}, Localization.WithError(fmt.Errorf(
 			"%w: commander %d is no longer available", Intent.ErrPlanStale, commander,
-		)
+		), Localization.New("server.app.intent_plan_became_stale.e3879423", "intent plan became stale before dispatch: commander {p1, number} is no longer available", Localization.Params{"p1": commander}))
 	}
 	if input.GameData == nil {
-		return AttackCapacity.Result{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("official game data is unavailable")
+		return AttackCapacity.Result{}, State.CastleState{}, State.MapObservation{}, Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	capacity, err := (AttackCapacity.Resolver{}).Resolve(input.State, input.GameData, AttackCapacity.Request{
 		SourceCastleID: source.ID, CommanderID: commander,
@@ -409,7 +410,7 @@ func resolveTowerAttackCapacity(
 		},
 	})
 	if err != nil {
-		return AttackCapacity.Result{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("resolve tower attack capacity: %w", err)
+		return AttackCapacity.Result{}, State.CastleState{}, State.MapObservation{}, Localization.WithError(fmt.Errorf("resolve tower attack capacity: %w", err), Localization.ErrorContext(Localization.New("server.app.resolve_tower_attack_capacity.070a7787", "resolve tower attack capacity", nil), err))
 	}
 	return capacity, source, target, nil
 }
@@ -454,32 +455,32 @@ func towerLaunchContext(input Intent.PlanningContext, arguments json.RawMessage)
 	}
 	if request.AdvisorMode {
 		if request.AdvisorAttackCount < baronAdvisorMinimumAttackCount || request.AdvisorAttackCount > baronAdvisorMaximumAttackCount {
-			return towerLaunchRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf(
+			return towerLaunchRequest{}, State.CastleState{}, State.MapObservation{}, Localization.WithError(fmt.Errorf(
 				"Baron Advisor attackCount must be between %d and %d",
 				baronAdvisorMinimumAttackCount, baronAdvisorMaximumAttackCount,
-			)
+			), Localization.New("server.app.baron_advisor_attackcount_must.b4925ab3", "Baron Advisor attackCount must be between {p0} and {p1}", Localization.Params{"p0": baronAdvisorMinimumAttackCount, "p1": baronAdvisorMaximumAttackCount}))
 		}
 		if request.MaximumDailyTimeSkips <= 0 || int64(request.AdvisorAttackCount-1) > request.MaximumDailyTimeSkips {
-			return towerLaunchRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf(
+			return towerLaunchRequest{}, State.CastleState{}, State.MapObservation{}, Localization.WithError(fmt.Errorf(
 				"Baron Advisor attack count exceeds the configured daily Time Skip limit",
-			)
+			), Localization.New("server.app.baron_advisor_attack_count.22b05372", "Baron Advisor attack count exceeds the configured daily Time Skip limit", nil))
 		}
 	} else if request.AdvisorAttackCount != 0 || request.MaximumDailyTimeSkips != 0 {
-		return towerLaunchRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("Advisor attack options require advisorMode=true")
+		return towerLaunchRequest{}, State.CastleState{}, State.MapObservation{}, Localization.WithError(fmt.Errorf("Advisor attack options require advisorMode=true"), Localization.New("server.app.advisor_attack_options_require.41b42a15", "Advisor attack options require advisorMode=true", nil))
 	}
 	if request.SourceCastleID <= 0 || request.UnitID <= 0 {
-		return towerLaunchRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("tower source castle and unit are required")
+		return towerLaunchRequest{}, State.CastleState{}, State.MapObservation{}, Localization.WithError(fmt.Errorf("tower source castle and unit are required"), Localization.New("server.app.tower_source_castle_and.49183710", "tower source castle and unit are required", nil))
 	}
 	source, exists := input.State.Castles[request.SourceCastleID]
 	if !exists {
-		return towerLaunchRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("tower source castle %d is not in the current player state", request.SourceCastleID)
+		return towerLaunchRequest{}, State.CastleState{}, State.MapObservation{}, Localization.WithError(fmt.Errorf("tower source castle %d is not in the current player state", request.SourceCastleID), Localization.New("server.app.tower_source_castle_p.5df4eaf1", "tower source castle {p0} is not in the current player state", Localization.Params{"p0": fmt.Sprintf("%d", request.SourceCastleID)}))
 	}
 	if request.KingdomID != source.KingdomID {
-		return towerLaunchRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("tower target must be in source castle kingdom %d", source.KingdomID)
+		return towerLaunchRequest{}, State.CastleState{}, State.MapObservation{}, Localization.WithError(fmt.Errorf("tower target must be in source castle kingdom %d", source.KingdomID), Localization.New("server.app.tower_target_must_be.81b1a340", "tower target must be in source castle kingdom {p0}", Localization.Params{"p0": fmt.Sprintf("%d", source.KingdomID)}))
 	}
 	target, exists := input.State.LookupMapObservation(request.KingdomID, fmt.Sprintf("%d:%d", request.TargetX, request.TargetY))
 	if !exists || target.TypeID != kingdomTowerMapTypeID {
-		return towerLaunchRequest{}, State.CastleState{}, State.MapObservation{}, fmt.Errorf("kingdom tower at %d:%d is not in the current map state", request.TargetX, request.TargetY)
+		return towerLaunchRequest{}, State.CastleState{}, State.MapObservation{}, Localization.WithError(fmt.Errorf("kingdom tower at %d:%d is not in the current map state", request.TargetX, request.TargetY), Localization.New("server.app.kingdom_tower_at_p.78b21994", "kingdom tower at {p0}:{p1} is not in the current map state", Localization.Params{"p0": request.TargetX, "p1": request.TargetY}))
 	}
 	return request, source, target, nil
 }
@@ -490,7 +491,7 @@ func towerTotalRequiredUnits(perAttack int64, request towerLaunchRequest) (int64
 		count = int64(request.AdvisorAttackCount)
 	}
 	if perAttack <= 0 || count <= 0 || perAttack > math.MaxInt64/count {
-		return 0, fmt.Errorf("tower attack troop requirement is invalid")
+		return 0, Localization.WithError(fmt.Errorf("tower attack troop requirement is invalid"), Localization.New("server.app.tower_attack_troop_requirement.3eec3870", "tower attack troop requirement is invalid", nil))
 	}
 	return perAttack * count, nil
 }
@@ -512,10 +513,10 @@ func towerAdvisorTimeSkipLimitStatus(
 	now time.Time,
 ) (int64, string, bool, error) {
 	if maximum <= 0 {
-		return 0, "", false, fmt.Errorf("maximumDailyTimeSkips must be positive for Advisor mode")
+		return 0, "", false, Localization.WithError(fmt.Errorf("maximumDailyTimeSkips must be positive for Advisor mode"), Localization.New("server.app.maximumdailytimeskips_must_be_positive.fc10e544", "maximumDailyTimeSkips must be positive for Advisor mode", nil))
 	}
 	if planned <= 0 || planned >= int64(baronAdvisorMaximumAttackCount) {
-		return 0, "", false, fmt.Errorf("planned Baron Advisor Time Skip usage is invalid")
+		return 0, "", false, Localization.WithError(fmt.Errorf("planned Baron Advisor Time Skip usage is invalid"), Localization.New("server.app.planned_baron_advisor_time.3ecf610c", "planned Baron Advisor Time Skip usage is invalid", nil))
 	}
 	attacks := gameState.DailyAttacks
 	if attacks.ObservedAt.IsZero() || attacks.SessionStartedAt.IsZero() {
@@ -552,7 +553,7 @@ func towerCommander(
 	configured []State.CommanderID,
 ) (State.CommanderID, error) {
 	if configured != nil && len(configured) == 0 {
-		return 0, fmt.Errorf("no commanders are assigned to Auto Towers")
+		return 0, Localization.WithError(fmt.Errorf("no commanders are assigned to Auto Towers"), Localization.New("server.app.no_commanders_are_assigned.eacda54e", "no commanders are assigned to Auto Towers", nil))
 	}
 	candidates := allCommanderIDs(gameState)
 	if configured != nil {
@@ -574,15 +575,15 @@ func towerCommander(
 	}
 	if len(candidates) == 0 {
 		if maidenOnly && configured != nil {
-			return 0, fmt.Errorf("no assigned commander supports the required maiden relic")
+			return 0, Localization.WithError(fmt.Errorf("no assigned commander supports the required maiden relic"), Localization.New("server.app.no_assigned_commander_supports.e36fa973", "no assigned commander supports the required maiden relic", nil))
 		}
 		if maidenOnly {
-			return 0, fmt.Errorf("no commander supports the required maiden relic")
+			return 0, Localization.WithError(fmt.Errorf("no commander supports the required maiden relic"), Localization.New("server.app.no_commander_supports_the.0ea54c02", "no commander supports the required maiden relic", nil))
 		}
 		if configured != nil {
-			return 0, fmt.Errorf("no assigned Auto Towers commander is in the current roster")
+			return 0, Localization.WithError(fmt.Errorf("no assigned Auto Towers commander is in the current roster"), Localization.New("server.app.no_assigned_auto_towers.4dd7e92d", "no assigned Auto Towers commander is in the current roster", nil))
 		}
-		return 0, fmt.Errorf("no commander is in the current roster")
+		return 0, Localization.WithError(fmt.Errorf("no commander is in the current roster"), Localization.New("server.app.no_commander_is_in.dc103653", "no commander is in the current roster", nil))
 	}
 	resolution, err := resolveCRACommanders(gameState, &craCommanderSelectionRequest{Candidates: candidates, Count: 1, Strategy: "lowest_id"}, craCommanderSelectionOptions{
 		Holds:        holds,
@@ -591,14 +592,14 @@ func towerCommander(
 	if err != nil {
 		if maidenOnly {
 			if configured != nil {
-				return 0, fmt.Errorf("no available assigned maiden-supported commander: %w", err)
+				return 0, Localization.WithError(fmt.Errorf("no available assigned maiden-supported commander: %w", err), Localization.ErrorContext(Localization.New("server.app.no_available_assigned_maiden.11a97110", "no available assigned maiden-supported commander", nil), err))
 			}
-			return 0, fmt.Errorf("no available maiden-supported commander: %w", err)
+			return 0, Localization.WithError(fmt.Errorf("no available maiden-supported commander: %w", err), Localization.ErrorContext(Localization.New("server.app.no_available_maiden_supported.1e0afba5", "no available maiden-supported commander", nil), err))
 		}
 		if configured != nil {
-			return 0, fmt.Errorf("no available assigned Auto Towers commander: %w", err)
+			return 0, Localization.WithError(fmt.Errorf("no available assigned Auto Towers commander: %w", err), Localization.ErrorContext(Localization.New("server.app.no_available_assigned_auto.e384b7e9", "no available assigned Auto Towers commander", nil), err))
 		}
-		return 0, fmt.Errorf("no available commander: %w", err)
+		return 0, Localization.WithError(fmt.Errorf("no available commander: %w", err), Localization.ErrorContext(Localization.New("server.app.no_available_commander.09af8daf", "no available commander", nil), err))
 	}
 	return resolution.Selected[0], nil
 }

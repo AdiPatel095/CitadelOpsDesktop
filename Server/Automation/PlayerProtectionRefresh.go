@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"encoding/json"
 	"time"
 
@@ -32,7 +33,7 @@ func playerProtectionRefreshDecision(snapshot Snapshot) (Decision, bool) {
 	}
 	if selected.ID <= 0 {
 		return Decision{
-			Status: "waiting", Detail: "Waiting for an owned castle before refreshing Protection Mode",
+			Status: "waiting", Detail: "Waiting for an owned castle before refreshing Protection Mode", DetailDescriptor: Localization.New("server.automation.waiting_for_an_owned.dee41472", "Waiting for an owned castle before refreshing Protection Mode", nil),
 			NextCheckAt: snapshot.Now.Add(10 * time.Second),
 		}, true
 	}
@@ -43,8 +44,8 @@ func playerProtectionRefreshDecision(snapshot Snapshot) (Decision, bool) {
 		"x2": selected.X, "y2": selected.Y,
 	})
 	return Decision{
-		Status:              "refreshing",
-		Detail:              "Refreshing Protection Mode from the game",
+		Status: "refreshing",
+		Detail: "Refreshing Protection Mode from the game", DetailDescriptor: Localization.New("server.automation.refreshing_protection_mode_from.3022673f", "Refreshing Protection Mode from the game", nil),
 		NextCheckAt:         snapshot.Now.Add(playerProtectionRefreshInterval),
 		Request:             &Intent.Request{Name: "map.query", Arguments: arguments},
 		ReevaluateOnSuccess: true,

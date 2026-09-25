@@ -1,3 +1,5 @@
+import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
+import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Camera,
@@ -51,6 +53,7 @@ interface Compatibility {
 }
 
 const DefensePresetsView: React.FC = () => {
+  const { t: localizeStatic } = useStaticLocale();
   const {
     state,
     configuration,
@@ -245,7 +248,7 @@ const DefensePresetsView: React.FC = () => {
             <Badge variant={document.presets.length > 0 ? 'primary' : 'secondary'}>
               {document.presets.length} preset{document.presets.length === 1 ? '' : 's'}
             </Badge>
-            <Badge variant="outline" className="normal-case tracking-normal">Stored by CitadelOps</Badge>
+            <Badge variant="outline" className="normal-case tracking-normal"><LocalizedText messageKey="ui.views.defensePresetsView.stored.by.citadelops.9f046c26" /></Badge>
           </>
         )}
         actions={(
@@ -262,7 +265,7 @@ const DefensePresetsView: React.FC = () => {
               searchable
               disabled={castles.length === 0}
               icon={<Shield className="h-4 w-4" />}
-              ariaLabel="Apply target castle"
+              ariaLabel={localizeStatic("ui.views.defensePresetsView.ariaLabel.apply.target.castle.36cb9188")}
               className="w-44 2xl:w-52"
             />
             <Button
@@ -270,35 +273,35 @@ const DefensePresetsView: React.FC = () => {
               isLoading={refreshing}
               disabled={!selectedCastle || applyingID != null}
               leftIcon={<RefreshCw className="h-4 w-4" />}
-              title="Refresh the selected castle's defense"
-              aria-label="Refresh defense"
+              title={localizeStatic("ui.views.defensePresetsView.title.refresh.the.selected.castle.s.defense.de6d25da")}
+              aria-label={localizeStatic("ui.views.defensePresetsView.aria-label.refresh.defense.369d88c7")}
               onClick={() => void handleRefresh()}
             >
-              <span className="hidden 2xl:inline">Refresh defense</span>
+              <span className="hidden 2xl:inline"><LocalizedText messageKey="ui.views.defensePresetsView.refresh.defense.369d88c7" /></span>
             </Button>
             <Button
               variant="secondary"
               disabled={!selectedCastle || !hasDefenseObservation(selectedCastle)}
               leftIcon={<Camera className="h-4 w-4" />}
               title={!selectedCastle || !hasDefenseObservation(selectedCastle) ? 'Refresh the selected castle before capturing it' : 'Capture the currently observed setup'}
-              aria-label="Capture current defense"
+              aria-label={localizeStatic("ui.views.defensePresetsView.aria-label.capture.current.defense.b4f1c250")}
               onClick={() => selectedCastle && setEditor({ presetID: null, draft: defensePresetDraftFromCastle(selectedCastle) })}
             >
-              <span className="hidden 2xl:inline">Capture current</span>
+              <span className="hidden 2xl:inline"><LocalizedText messageKey="ui.views.defensePresetsView.capture.current.135de533" /></span>
             </Button>
             <Button
               leftIcon={<Plus className="h-4 w-4" />}
-              title="Create a defense preset"
-              aria-label="New defense preset"
+              title={localizeStatic("ui.views.defensePresetsView.title.create.a.defense.preset.974c17bd")}
+              aria-label={localizeStatic("ui.views.defensePresetsView.aria-label.new.defense.preset.9f767a74")}
               onClick={() => setEditor({ presetID: null, draft: emptyDefensePresetDraft() })}
             >
-              <span className="hidden 2xl:inline">New preset</span>
+              <span className="hidden 2xl:inline"><LocalizedText messageKey="ui.views.defensePresetsView.new.preset.75be83ad" /></span>
             </Button>
           </>
         )}
         searchValue={query}
         onSearchChange={setQuery}
-        searchPlaceholder="Search defense presets"
+        searchPlaceholder={localizeStatic("ui.views.defensePresetsView.searchPlaceholder.search.defense.presets.49751390")}
       />
 
       {filteredPresets.length > 0 ? (
@@ -328,8 +331,7 @@ const DefensePresetsView: React.FC = () => {
             : 'Build one manually without live defense state, or refresh a castle and capture its current setup as a starting point.'}
           action={!query.trim() ? (
             <Button leftIcon={<Plus className="h-4 w-4" />} onClick={() => setEditor({ presetID: null, draft: emptyDefensePresetDraft() })}>
-              Create preset
-            </Button>
+              <LocalizedText messageKey="ui.views.defensePresetsView.create.preset.6d72507d" /></Button>
           ) : undefined}
         />
       )}
@@ -364,6 +366,7 @@ const PresetCard: React.FC<{
   onDuplicate: () => void;
   onDelete: () => void;
 }> = ({ preset, target, compatibility, busy, applying, onApply, onEdit, onDuplicate, onDelete }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const summary = summarizeDefensePreset(preset);
   return (
     <Card variant="solid" className="liquid-prominent-header-card overflow-hidden">
@@ -379,32 +382,32 @@ const PresetCard: React.FC<{
           </p>
         </div>
         <div className="flex items-center gap-1">
-          <Button variant="ghost" size="icon" disabled={busy} onClick={onEdit} title="Edit preset"><Edit3 className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="icon" disabled={busy} onClick={onDuplicate} title="Duplicate preset"><Copy className="h-4 w-4" /></Button>
-          <Button variant="ghost" size="icon" disabled={busy} onClick={onDelete} title="Delete preset" className="hover:!text-error"><Trash2 className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" disabled={busy} onClick={onEdit} title={localizeStatic("ui.views.defensePresetsView.title.edit.preset.d36585b9")}><Edit3 className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" disabled={busy} onClick={onDuplicate} title={localizeStatic("ui.views.defensePresetsView.title.duplicate.preset.a5c8c827")}><Copy className="h-4 w-4" /></Button>
+          <Button variant="ghost" size="icon" disabled={busy} onClick={onDelete} title={localizeStatic("ui.views.defensePresetsView.title.delete.preset.f307af85")} className="hover:!text-error"><Trash2 className="h-4 w-4" /></Button>
         </div>
       </div>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-          <MetricTile label="Left" value={`${preset.wall.left.unitPercent}%`} />
-          <MetricTile label="Front" value={`${preset.wall.middle.unitPercent}%`} />
-          <MetricTile label="Right" value={`${preset.wall.right.unitPercent}%`} />
-          <MetricTile label="Tools" value={summary.toolAmount.toLocaleString()} />
+          <MetricTile label={localizeStatic("ui.views.defensePresetsView.label.left.58eb9032")} value={`${preset.wall.left.unitPercent}%`} />
+          <MetricTile label={localizeStatic("ui.views.defensePresetsView.label.front.a6175902")} value={`${preset.wall.middle.unitPercent}%`} />
+          <MetricTile label={localizeStatic("ui.views.defensePresetsView.label.right.883361d5")} value={`${preset.wall.right.unitPercent}%`} />
+          <MetricTile label={localizeStatic("game.tools")} value={summary.toolAmount.toLocaleString()} />
         </div>
         <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
           <div className="rounded-global border border-border-base bg-bg-app/35 p-3">
-            <div className="mb-2 text-[9px] font-black uppercase tracking-wider text-text-muted">Tool types</div>
+            <div className="mb-2 text-[9px] font-black uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.views.defensePresetsView.tool.types.dd756e8c" /></div>
             <div className="flex min-h-[2.125rem] items-center gap-1.5 overflow-hidden">
               {summary.toolTypes.length > 0 ? summary.toolTypes.slice(0, 8).map((id) => (
                 <ToolImage key={id} toolId={id} size={34} showLevel={false} />
-              )) : <span className="text-xs text-text-muted">No tools assigned</span>}
+              )) : <span className="text-xs text-text-muted"><LocalizedText messageKey="ui.views.defensePresetsView.no.tools.assigned.e628edf3" /></span>}
               {summary.toolTypes.length > 8 ? <Badge variant="secondary">+{summary.toolTypes.length - 8}</Badge> : null}
             </div>
           </div>
           <div className="flex flex-wrap content-start items-start gap-1.5 sm:max-w-48">
-            <Badge variant="outline">Left · 4 wall</Badge>
-            <Badge variant="warning">Front · 4 wall + 2 gate</Badge>
-            <Badge variant="outline">Right · 4 wall</Badge>
+            <Badge variant="outline"><LocalizedText messageKey="ui.views.defensePresetsView.left.4.wall.0b829422" /></Badge>
+            <Badge variant="warning"><LocalizedText messageKey="ui.views.defensePresetsView.front.4.wall.2.gate.f7988e8b" /></Badge>
+            <Badge variant="outline"><LocalizedText messageKey="ui.views.defensePresetsView.right.4.wall.de6cefdf" /></Badge>
             <Badge variant="outline">{summary.moatSlots} moat slots</Badge>
             <Badge variant={preset.keep ? 'primary' : 'secondary'}>
               {summary.courtyardSlots > 0

@@ -1,3 +1,5 @@
+import type { LocalizedMessage } from '../i18n/formatMessage';
+import { responseMessageDescriptor, parseMessageDescriptor } from '../i18n/messageDescriptor';
 import { configurationBaseURL, configurationFetch, runtimeBasePath, runtimeFetch, runtimeURL } from './RuntimeURL';
 import { isOperationFailureStatus, operationFailureText } from './OperationNotifications';
 import { operationFailureReceiptFromHTTP } from './OperationHTTPFailure';
@@ -66,12 +68,14 @@ type WorldIntelligenceUpdateListener = (manifest: WorldIntelligenceUpdateManifes
 export class APIError extends Error {
   readonly status: number;
   readonly code?: string;
+  readonly messageDescriptor?: LocalizedMessage;
 
-  constructor(message: string, status: number, code?: string) {
+  constructor(message: string, status: number, code?: string, messageDescriptor?: LocalizedMessage) {
     super(message);
     this.name = 'APIError';
     this.status = status;
     this.code = code;
+    this.messageDescriptor = messageDescriptor;
   }
 }
 
@@ -79,7 +83,7 @@ export class OperationError extends APIError {
 	readonly receipt: IntentReceipt;
 
 	constructor(receipt: IntentReceipt) {
-		super(operationFailureText(receipt), 422, 'operation_failed');
+		super(operationFailureText(receipt), 422, 'operation_failed', parseMessageDescriptor(receipt.failure?.messageDescriptor));
 		this.name = 'OperationError';
 		this.receipt = receipt;
 	}
@@ -272,16 +276,20 @@ class CitadelClient {
     return this.submitIntent('session.select_browser', { browser }, options);
   }
 
+  getLocales(): Promise<{schemaVersion: number; defaultLocale: string; locales: {code: string; gameCode: string; nativeName: string; name: string; direction: 'ltr' | 'rtl'}[]}> {
+    return this.request('/api/v2/locales');
+  }
+
   getCatalogManifest(): Promise<CatalogManifest> {
     return this.request<CatalogManifest>('/api/v2/game-data');
   }
 
-  getCatalog<T extends Record<string, unknown>>(name: string): Promise<CatalogResponse<T>> {
-    return this.request<CatalogResponse<T>>(`/api/v2/game-data/${encodeURIComponent(name)}`);
+  getCatalog<T extends Record<string, unknown>>(name: string, locale?: string): Promise<CatalogResponse<T>> {
+    return this.request<CatalogResponse<T>>(`/api/v2/game-data/${encodeURIComponent(name)}${locale ? `?locale=${encodeURIComponent(locale)}` : ''}`);
   }
 
-  getProjection<T>(name: string): Promise<T> {
-    return this.request<T>(`/api/v2/projections/${encodeURIComponent(name)}`);
+  getProjection<T>(name: string, locale?: string): Promise<T> {
+    return this.request<T>(`/api/v2/projections/${encodeURIComponent(name)}${locale ? `?locale=${encodeURIComponent(locale)}` : ''}`);
   }
 
 	getAllianceTargets(input: AllianceTargetQueryV2 = {}): Promise<AllianceTargetViewV2> {
@@ -536,12 +544,14 @@ class CitadelClient {
 		});
 	}
 
-  async localize(keys: string[]): Promise<Record<string, string>> {
-    const response = await this.request<{ values: Record<string, string> }>('/api/v2/game-data/localize', {
-      method: 'POST',
-      body: JSON.stringify({ keys }),
-    });
-    return response.values;
+  async localize(keys: string[], locale?: string): Promise<Record<string, string>> {
+    return (await this.localizeCatalog(keys,locale)).values;
+  }
+
+  localizeCatalog(keys: string[], locale?: string, scope?: string): Promise<{values: Record<string,string>; locale?: {requestedLocale: string; resolvedLocale: string; fallback: boolean; fallbackKeys?: string[]}}> {
+    return this.request(`/api/v2/game-data/localize${locale ? `?locale=${encodeURIComponent(locale)}` : ''}`, {
+      method: 'POST', body: JSON.stringify({keys}),
+    }, scope);
   }
 
   getIntentDefinitions(): Promise<IntentDefinition[]> {
@@ -722,6 +732,7 @@ class CitadelClient {
         message,
         response.status,
         structuredError && typeof structuredError.code === 'string' ? structuredError.code : undefined,
+        responseMessageDescriptor(payload) ?? ((structuredError && typeof structuredError.message === 'string') || receiptError ? undefined : {key:'api.httpError',fallback:'CitadelOps API returned HTTP {status}',params:{status:String(response.status)}}),
       );
     }
     return payload as T;

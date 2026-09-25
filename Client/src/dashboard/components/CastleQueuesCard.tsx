@@ -1,3 +1,5 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useMemo } from 'react';
 import { SectionCard } from '../../components/ui';
 import { useCastleFocus } from '../../context/CastleFocusContext';
@@ -40,6 +42,7 @@ function craftingOutputAmount(baseAmount: number | undefined, outputBoostPercent
 }
 
 const CastleQueuesCard: React.FC<CastleQueuesCardProps> = ({ title = 'Queues' }) => {
+  const { t: localizeStatic } = useStaticLocale();
   const { castle } = useCastleFocus();
   const { buildings, getCraftingRecipe } = useMetadata();
   const visible = useMemo(
@@ -52,7 +55,7 @@ const CastleQueuesCard: React.FC<CastleQueuesCardProps> = ({ title = 'Queues' })
     <SectionCard
       variant="solid"
       title={title}
-      description="Canonical game queues"
+      description={localizeStatic("ui.dashboard.components.castleQueuesCard.description.canonical.game.queues.e2552ff6")}
       titleClassName="text-primary"
       descriptionClassName="font-bold uppercase tracking-wider"
       className="flex min-h-0 flex-col"
@@ -60,8 +63,8 @@ const CastleQueuesCard: React.FC<CastleQueuesCardProps> = ({ title = 'Queues' })
     >
         {!castle || queues.length === 0 ? (
           <div className="rounded-global border border-dashed border-border-light bg-bg-card/35 px-4 py-8 text-center">
-            <p className="text-sm font-medium text-text-main">No production queues observed for this castle.</p>
-            <p className="mx-auto mt-2 max-w-sm text-xs text-text-muted">Open the castle in-game to refresh its buildings and queues.</p>
+            <p className="text-sm font-medium text-text-main"><LocalizedText messageKey="ui.dashboard.components.castleQueuesCard.no.production.queues.observed.for.this.castle.0155ec18" /></p>
+            <p className="mx-auto mt-2 max-w-sm text-xs text-text-muted"><LocalizedText messageKey="ui.dashboard.components.castleQueuesCard.open.the.castle.in.game.to.refresh.76f08363" /></p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 pb-2 xl:grid-cols-2">

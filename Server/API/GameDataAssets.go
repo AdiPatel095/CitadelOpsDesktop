@@ -19,12 +19,13 @@ type constructionItemIconItem struct {
 }
 
 type constructionItemBuildingIconItem struct {
-	ConstructionItemGroupID int64  `json:"constructionItemGroupId"`
-	ConstructionItemName    string `json:"constructionItemName"`
-	BuildingID              int64  `json:"buildingId"`
-	BuildingName            string `json:"buildingName"`
-	AssetName               string `json:"assetName"`
-	URL                     string `json:"url"`
+	BuildingLocalizationKeys []string `json:"buildingLocalizationKeys,omitempty"`
+	ConstructionItemGroupID  int64    `json:"constructionItemGroupId"`
+	ConstructionItemName     string   `json:"constructionItemName"`
+	BuildingID               int64    `json:"buildingId"`
+	BuildingName             string   `json:"buildingName"`
+	AssetName                string   `json:"assetName"`
+	URL                      string   `json:"url"`
 }
 
 type constructionItemBuildingIdentity struct {
@@ -39,7 +40,7 @@ func (server *Server) handleCurrencyIcons(writer http.ResponseWriter, request *h
 	}
 	manifest, err := server.config.GameData.CurrencyAssets(request.Context())
 	if err != nil {
-		writeError(writer, http.StatusServiceUnavailable, "currency_icons_unavailable", err.Error())
+		writeErrorFromError(writer, http.StatusServiceUnavailable, "currency_icons_unavailable", err)
 		return
 	}
 	assetNames := make([]string, 0, len(manifest.Icons))
@@ -74,7 +75,7 @@ func (server *Server) handleConstructionItemIcons(writer http.ResponseWriter, re
 	}
 	manifest, err := server.config.GameData.ConstructionItemAssets(request.Context())
 	if err != nil {
-		writeError(writer, http.StatusServiceUnavailable, "construction_item_icons_unavailable", err.Error())
+		writeErrorFromError(writer, http.StatusServiceUnavailable, "construction_item_icons_unavailable", err)
 		return
 	}
 	assetNames := make([]string, 0, len(manifest.Icons))
@@ -109,17 +110,17 @@ func (server *Server) handleConstructionItemBuildingIcons(writer http.ResponseWr
 	}
 	manifest, err := server.config.GameData.ConstructionItemAssets(request.Context())
 	if err != nil {
-		writeError(writer, http.StatusServiceUnavailable, "construction_item_building_icons_unavailable", err.Error())
+		writeErrorFromError(writer, http.StatusServiceUnavailable, "construction_item_building_icons_unavailable", err)
 		return
 	}
 	buildingCatalog, err := store.BuildingCatalog()
 	if err != nil {
-		writeError(writer, http.StatusServiceUnavailable, "building_catalog_unavailable", err.Error())
+		writeErrorFromError(writer, http.StatusServiceUnavailable, "building_catalog_unavailable", err)
 		return
 	}
 	constructionItems, err := store.Catalog("constructionItems")
 	if err != nil {
-		writeError(writer, http.StatusServiceUnavailable, "construction_item_catalog_unavailable", err.Error())
+		writeErrorFromError(writer, http.StatusServiceUnavailable, "construction_item_catalog_unavailable", err)
 		return
 	}
 	items := constructionItemBuildingIcons(
@@ -235,12 +236,13 @@ func constructionItemBuildingIcon(
 			continue
 		}
 		return constructionItemBuildingIconItem{
-			ConstructionItemGroupID: identity.groupID,
-			ConstructionItemName:    identity.name,
-			BuildingID:              definition.ID,
-			BuildingName:            definition.DisplayName,
-			AssetName:               icon.AssetName,
-			URL:                     icon.URL,
+			ConstructionItemGroupID:  identity.groupID,
+			ConstructionItemName:     identity.name,
+			BuildingID:               definition.ID,
+			BuildingName:             definition.DisplayName,
+			BuildingLocalizationKeys: append([]string(nil), definition.LocalizationKeys...),
+			AssetName:                icon.AssetName,
+			URL:                      icon.URL,
 		}, true
 	}
 	return constructionItemBuildingIconItem{}, false

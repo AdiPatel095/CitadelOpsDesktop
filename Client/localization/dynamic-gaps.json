@@ -1,0 +1,38 @@
+[
+  {
+    "id": "activity-tail",
+    "source": "components/LoggerDock.tsx",
+    "status": "uncovered",
+    "reason": "Aligned structured descriptors integrated with batched official keys and visible untranslated history. Server catalogs, surrounding status/empty prose, event/direction labels remain."
+  },
+  {
+    "id": "operation-notifications",
+    "source": "api/OperationNotifications.ts",
+    "status": "uncovered",
+    "reason": "Structured failure descriptors, aligned recovery/code lines and reactive Alerts are integrated. Legacy classifiers, unconverted producer strings and missing catalogs remain."
+  },
+  {
+    "id": "api-errors",
+    "source": "api/CitadelClient.ts",
+    "status": "uncovered",
+    "reason": "Preserve and render additive API message descriptors; legacy strings remain fallback."
+  },
+  {
+    "id": "event-history-names",
+    "source": "views/EventsView.tsx",
+    "status": "uncovered",
+    "reason": "Event/history batch replaces EventsView English ID overrides with explicit official event keys, preserves exact historical fallback, and localizes league/date/number/pager presentation. Other event consumers, retained-name provenance in option/title consumers, and older source-assigned labels remain unverified; gap remains open."
+  },
+  {
+    "id": "automation-status",
+    "source": "context/AuthContext.tsx",
+    "status": "uncovered",
+    "reason": "Lane/overall details and ruby policy-skip notices accept exact-bound reactive descriptors. Known producer statuses, lane labels, counts, accessible labels and countdowns have all25 authored packs. Reviewed runtime source/packs are integrated; synthetic English/German/Arabic CRA90/EUP440 browser verification passed. Broader feature descriptions, scheduler prose, safety-panel consumers and missing runtime translations remain open."
+  },
+  {
+    "id": "exported-activity",
+    "source": "components/LoggerDock.tsx",
+    "status": "uncovered",
+    "reason": "Copied message text shares locale rendering with display/search. Event/direction labels and server catalogs remain untranslated."
+  }
+]

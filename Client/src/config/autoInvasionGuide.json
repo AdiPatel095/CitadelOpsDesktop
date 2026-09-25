@@ -1,0 +1,159 @@
+{
+  "recommendationIntro": "Recommended values describe regular Auto Invasion use; they are guidance and do not change saved settings.",
+  "steps": [
+    {
+      "id": "open",
+      "title": "Open Auto Invasion settings",
+      "items": [
+        {
+          "id": "open_settings",
+          "label": "Open settings",
+          "description": "On the Automation page, select the settings button on the Auto Invasion card."
+        },
+        {
+          "id": "source_castle",
+          "label": "Source castle",
+          "description": "Choose the Great Empire castle that supplies troops and tools for event attacks.",
+          "recommendation": "Use your usual event castle with enough troops and tools."
+        },
+        {
+          "id": "attack_preset",
+          "label": "Attack preset",
+          "description": "Select a saved Attack Preset with the troops, tools and formation for Foreign Lords or Bloodcrow.",
+          "recommendation": "Create a regular Foreign Lords or Bloodcrow preset first, then select it here."
+        },
+        {
+          "id": "horse_travel_boost",
+          "label": "Horse travel boost",
+          "description": "Choose the feather, coin or ruby travel option for these attacks.",
+          "recommendation": "Travel Feather for fast travel."
+        },
+        {
+          "id": "capacity_note",
+          "label": "Attack capacity",
+          "description": "Preset troop and tool quantities adapt to the selected commander and target capacity."
+        }
+      ],
+      "image": {
+        "src": "",
+        "alt": "Illustrative Auto Invasion source, preset and travel settings",
+        "caption": "Choose a Great Empire source castle and a saved event preset before setting the travel option.",
+        "width": 680,
+        "height": 360
+      }
+    },
+    {
+      "id": "difficulty",
+      "title": "Choose both event difficulties",
+      "items": [
+        {
+          "id": "foreign_lords_difficulty",
+          "label": "Foreign Lords difficulty",
+          "description": "Choose an unlocked Foreign Lords difficulty to select when the current event has no difficulty chosen.",
+          "recommendation": "Use the highest unlocked difficulty your usual setup handles reliably."
+        },
+        {
+          "id": "bloodcrow_difficulty",
+          "label": "Bloodcrow difficulty",
+          "description": "Choose an unlocked Bloodcrow difficulty to select when the current event has no difficulty chosen.",
+          "recommendation": "Use the highest unlocked difficulty your usual setup handles reliably."
+        },
+        {
+          "id": "difficulty_note",
+          "label": "Current difficulty",
+          "description": "Save both event choices; changing either saved value does not replace an active event difficulty."
+        }
+      ],
+      "image": {
+        "src": "",
+        "alt": "Illustrative Foreign Lords and Bloodcrow difficulty choices",
+        "caption": "Choose a separate unlocked fallback difficulty for each event.",
+        "width": 680,
+        "height": 360
+      }
+    },
+    {
+      "id": "limits",
+      "title": "Set score and stopping limits",
+      "items": [
+        {
+          "id": "score_target",
+          "label": "Stop at event score",
+          "description": "Stop starting new attacks when the reported event score reaches or exceeds this target.",
+          "recommendation": "Use your usual final personal-reward milestone above 0."
+        },
+        {
+          "id": "minimum_remaining",
+          "label": "Stop before event ends",
+          "description": "Stop starting new attacks this many minutes before the event ends.",
+          "recommendation": "30 minutes."
+        },
+        {
+          "id": "daily_attack_limit",
+          "label": "Daily normal-attack limit",
+          "description": "Stop this automation at the account-wide daily normal-attack count until the game resets it; 0 adds no limit.",
+          "recommendation": "0 so the event score target controls the run."
+        },
+        {
+          "id": "travelling_attacks",
+          "label": "Travelling attacks",
+          "description": "Attacks already travelling may finish after a stop condition and push the final score above the target."
+        }
+      ],
+      "image": {
+        "src": "",
+        "alt": "Illustrative Auto Invasion score and stopping limits",
+        "caption": "The score target stops new launches while already travelling attacks may finish.",
+        "width": 680,
+        "height": 360
+      }
+    },
+    {
+      "id": "fortify",
+      "title": "Choose optional target fortification",
+      "items": [
+        {
+          "id": "fortify_each_target",
+          "label": "Fortify each target",
+          "description": "If enabled, strengthen each generated enemy castle before attacking it using the selected currency.",
+          "recommendation": "Off unless fortification is part of your regular event strategy."
+        },
+        {
+          "id": "fortification_currency",
+          "label": "Fortification currency",
+          "description": "Choose an option supported by the active event; the game sets each price and selecting rubies explicitly permits ruby spending.",
+          "recommendation": "Event currency when offered and fortification is enabled."
+        }
+      ],
+      "image": {
+        "src": "",
+        "alt": "Illustrative Auto Invasion fortification settings",
+        "caption": "Leave fortification off unless you intend to spend an available event currency or explicitly selected rubies.",
+        "width": 680,
+        "height": 360
+      }
+    },
+    {
+      "id": "finish",
+      "title": "Save and enable Auto Invasion",
+      "items": [
+        {
+          "id": "save_settings",
+          "label": "Save settings",
+          "description": "Save the source, preset, difficulties, stopping limits and fortification choice before closing this dialog."
+        },
+        {
+          "id": "auto_invasion_switch",
+          "label": "Auto Invasion switch",
+          "description": "Turn on Auto Invasion on the Automation card after saving to run when an event and eligible resources are available.",
+          "recommendation": "On after reviewing and saving your intended settings."
+        },
+        {
+          "id": "readiness",
+          "label": "Attack readiness",
+          "description": "Auto Invasion waits for an active event, eligible commanders and sufficient troops and tools."
+        }
+      ]
+    }
+  ]
+}

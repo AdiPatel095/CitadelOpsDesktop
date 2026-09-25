@@ -16,6 +16,7 @@ export interface FixtureMetadata {
 
 interface FixtureMetadataValue extends FixtureMetadata {
 	isLoading: boolean;
+	effectsStatus: 'ready';
 	getEffect: (id: number) => MetadataItem | undefined;
 	getEquipment: (id: number) => MetadataItem | undefined;
 	getGem: (id: number) => MetadataItem | undefined;
@@ -27,6 +28,7 @@ export function FixtureMetadataProvider({ children, metadata }: { children: Reac
 	const value = useMemo<FixtureMetadataValue>(() => ({
 		...metadata,
 		isLoading: false,
+		effectsStatus: 'ready',
 		getEffect: (id) => metadata.effects[id],
 		getEquipment: (id) => metadata.equipments[id],
 		getGem: (id) => metadata.gems[id],

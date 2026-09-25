@@ -1,0 +1,2080 @@
+{
+  "ui": {
+    "guideButton": "Kılavuz",
+    "calendarButton": "Takvim",
+    "recommendedLabel": "Önerilen",
+    "backToSettings": "Ayarlara dön",
+    "backToGuide": "Kılavuza dön",
+    "howToSetUp": "Nasıl kurulur",
+    "whatToExpect": "Neler beklenir",
+    "openFullSizePicture": "Resmi tam boyutta aç",
+    "illustrativeExample": "Açıklayıcı örnek",
+    "enlargePicture": "Örnek resmi büyüt",
+    "fullSizePicture": "Tam boyutlu örnek resim; tüm ayarları görmek için kaydırın",
+    "towerGuideTitle": "Otomatik kule saldırıları · kılavuz",
+    "birdGuideTitle": "Birlikleri otomatik korunaklı alana taşıma · kılavuz",
+    "towerGuideIntro": "Otomatik Kuleler'i kurmak için bu adımları izleyin; örnek resmi seçerek büyütün.",
+    "birdGuideIntro": "Otomatik Asker Koruma'yı kurmak için bu adımları izleyin; örnek resmi seçerek büyütün.",
+    "towerPreviewTitle": "Otomatik kule saldırıları · kurulum örneği",
+    "birdPreviewTitle": "Birlikleri otomatik korunaklı alana taşıma · kurulum örneği",
+    "stationGuideTitle": "Otomatik birlik koruma rehberi",
+    "stationGuideIntro": "Otomatik birlik korumasını ayarlamak için bu adımları izleyin; örnek resmi büyütmek için seçin.",
+    "stationPreviewTitle": "Otomatik birlik koruma ayarı örneği",
+    "fortressGuideIntro": "Otomatik kale saldırılarını ayarlamak için bu adımları izleyin; büyütmek için bir örnek panel seçin.",
+    "fortressGuideTitle": "Otomatik kale saldırıları rehberi",
+    "fortressPreviewTitle": "Otomatik kale saldırıları kurulum örneği",
+    "invasionGuideIntro": "Otomatik istila saldırılarını ayarlamak için bu adımları izleyin; büyütmek için örnek panel seçin.",
+    "invasionGuideTitle": "Otomatik istila saldırıları rehberi",
+    "invasionPreviewTitle": "Otomatik istila saldırıları kurulum örneği",
+    "nomadGuideIntro": "Otomatik Göçebeler/Samuraylar kurmak için bu adımları izle; büyütmek için örnek paneli seç.",
+    "nomadGuideTitle": "Otomatik Göçebeler/Samuraylar rehberi",
+    "nomadPreviewTitle": "Otomatik Göçebeler/Samuraylar kurulum örneği",
+    "advisorGuideIntro": "Otomatik Danışman'ı ayarlamak için bu adımları izleyin; büyütmek için örnek paneli seçin.",
+    "advisorGuideTitle": "Otomatik Danışman kılavuzu",
+    "advisorPreviewTitle": "Otomatik Danışman ayarları örneği",
+    "khanGuideIntro": "Otomatik Han'ı kurmak için bu adımları izleyin; büyütmek için bir örnek panel seçin.",
+    "khanGuideTitle": "Otomatik Han rehberi",
+    "khanPreviewTitle": "Otomatik Han kurulum örneği",
+    "beriGuideIntro": "Auto Beri Dünyası'nı kurmak için bu adımları izleyin; büyütmek istediğiniz örnek panoyu seçin.",
+    "beriGuideTitle": "Auto Beri Dünyası rehberi",
+    "beriPreviewTitle": "Auto Beri Dünyası kurulum örneği",
+    "stormGuideIntro": "Auto Storm'u ayarlamak için bu adımları izleyin; büyütmek üzere örnek panoyu seçin.",
+    "stormGuideTitle": "Auto Storm rehberi",
+    "stormPreviewTitle": "Auto Storm kurulum örneği"
+  },
+  "autoTower": {
+    "recommendationIntro": "Bunlar düzenli kullanım önerileridir; kaydetmeden önce gözden geçirin.",
+    "steps": {
+      "commanders": {
+        "title": "Komutanlarınızı seçin",
+        "items": {
+          "commander_assignment": {
+            "label": "Komutan ataması",
+            "description": "Komutanlar bölümünde kullanmak istediğiniz komutanlar için Otomatik Kuleler'e izin verin ve Atamaları kaydet'i seçin.",
+            "recommendation": "Otomatik Kuleler'e 20 komutan atayın."
+          }
+        }
+      },
+      "general": {
+        "title": "Tarama, günlük sınırlar ve yolculuğu ayarlayın",
+        "items": {
+          "open_settings": {
+            "label": "Ayarları açın",
+            "description": "Otomasyon'u açın, ardından Otomatik Kuleler kartındaki ayarlar düğmesini seçin."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Yetkili harita taraması · Her",
+            "description": "Her kalenin kule listesinin yenilenme sıklığını 1.800–3.600 saniye arasında seçin; taramalar arasında saldırılar başlatılabilir.",
+            "recommendation": "1.800 saniye (30 dakika)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Günlük normal saldırı sınırı",
+            "description": "Hesap genelindeki günlük saldırı sınırına ulaşılınca oyun sınırı sıfırlayana kadar duraklar; 0 sınırı kaldırır.",
+            "recommendation": "Hesap genelinde günde 3.500 saldırı."
+          },
+          "horse_travel_boost": {
+            "label": "Atla yolculuk hızlandırması",
+            "description": "Danışman zincirindeki her vuruş dahil her saldırıda seçtiğiniz yolculuk seçeneğini kullanır; hız, çıkış kalesinin yolculuk binalarına bağlıdır.",
+            "recommendation": "Desteklenen yerlerde, yeterli sikke varsa sikke kademesi."
+          },
+          "travel_feather": {
+            "label": "Yolculuk tüyü",
+            "description": "Sikke veya yakut kullanılan at kademesi yerine yolculuk tüyünü kullanır."
+          },
+          "horse_ship_tier_coins": {
+            "label": "At / gemi kademesi · sikke",
+            "description": "Sikke yolculuk kademesinde sikke harcar."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Savaş atı / hızlı gemi kademesi · yakut",
+            "description": "Seçildiğinde ilk yakut yolculuk kademesinde yakut harcar."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Koşucu at / en hızlı gemi kademesi · yakut",
+            "description": "Seçildiğinde daha hızlı yakut yolculuk kademesinde yakut harcar."
+          }
+        },
+        "image": {
+          "alt": "Kurgusal Sentetik Kale verileriyle Otomatik Kuleler genel ayarları",
+          "caption": "Tarama aralığını, günlük saldırı sınırını ve yolculuk seçeneğini ayarlayın; Danışman kontrolleri kullanılabildiğinde görünür."
+        }
+      },
+      "castle": {
+        "title": "Her kaleyi yapılandırın",
+        "items": {
+          "castle_switch": {
+            "label": "Kale anahtarı",
+            "description": "Otomatik Kuleler'in tarama ve saldırı yapmasını istediğiniz her kaleyi açın.",
+            "recommendation": "Düzenli kullanmak istediğiniz kaleleri etkinleştirin."
+          },
+          "radius": {
+            "label": "Yarıçap",
+            "description": "Bu kalenin çevresinde aranacak mesafeyi 1–50 kare arasında seçin.",
+            "recommendation": "35 kare."
+          },
+          "choose_troop": {
+            "label": "Asker seçin",
+            "description": "Saldırının iki kanadını dolduracak konuşlu asker türünü seçin; sayı yetersizse saldırılar bekler.",
+            "recommendation": "İki kanada yetecek sayıda konuşlu saldırı askeri."
+          },
+          "maiden_supported_only": {
+            "label": "Yalnızca Bakire destekli",
+            "description": "Bu kaleyi, desteklenen Bakire yadigârına sahip uygun komutanlarla sınırlar.",
+            "recommendation": "Seçtiğiniz komutanda desteklenen Bakire yadigârı yoksa kapalı."
+          }
+        },
+        "image": {
+          "alt": "Kurgusal Sentetik Kale verileriyle Otomatik Kuleler kale ayarları",
+          "caption": "Kaleyi etkinleştirip yarıçapını, askerini ve Bakire koşulunu seçin."
+        }
+      },
+      "advisor": {
+        "title": "İsterseniz Danışman'ı kullanın · mevcut olduğunda",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Danışman'ı Zaman Atlamaları ile kullan",
+            "description": "Bir kuleye saldırıları tekrarlar; önce bir günlük saldırı, her ek vuruş için de en az üç saatlik bir Zaman Atlaması kullanır.",
+            "recommendation": "Kapalı."
+          },
+          "auto_activate_with_token": {
+            "label": "Jetonla otomatik etkinleştir",
+            "description": "Danışman devre dışıyken mevcut bir Baron Danışman jetonunu kullanır; jeton satın almaz veya yakut harcamaz.",
+            "recommendation": "Danışman kapalıyken kapalı."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Günlük en fazla Zaman Atlaması",
+            "description": "Onaylanmış Danışman zincirlerinin kullandığı Zaman Atlamalarını, oyunun günlük saldırı sayacı sıfırlanana kadar sınırlar; 0 Danışman saldırılarının başlatılmasını duraklatır.",
+            "recommendation": "Danışman kapalıyken 0."
+          }
+        }
+      },
+      "finish": {
+        "title": "Takvimi ayarlayın, kaydedin ve açın",
+        "items": {
+          "calendar": {
+            "label": "Takvim",
+            "description": "Asker uygunluğu ve diğer sınırlar geçerli olmaya devam ederken, Otomatik Kuleler'in ne zaman çalışabileceğini Takvim'den seçin.",
+            "recommendation": "Her zamanki çalışma saatleriniz."
+          },
+          "save_changes": {
+            "label": "Değişiklikleri kaydet",
+            "description": "Ayarlarınızı uygulamak için Değişiklikleri kaydet'i seçin; bu kılavuzu okumak onları kaydetmez."
+          },
+          "auto_towers_switch": {
+            "label": "Otomatik kule saldırıları · anahtar",
+            "description": "Görevin çalışabilmesi için ayarlarınızı kaydettikten sonra Otomasyon sayfasında Otomatik Kuleler'i açın.",
+            "recommendation": "İstediğiniz ayarları kaydettikten sonra açık."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Otomatik kule saldırıları",
+      "summary": "Yakındaki kulelere saldırıları tekrarla",
+      "description": "Seçtiğiniz kalelerden haydut baron ve krallık kulelerine saldırılar gönderir.",
+      "expectation": "Yeterli asker, uygun bir komutan ve saldırıya hazır bir kule gerekir. Askerler dönene veya kulenin sayacı dolana kadar bekleyebilir."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "Önerilen değerler Otomatik Asker Koruma'nın düzenli kullanımını anlatır; bunlar yol gösterir ve kayıtlı ayarları değiştirmez.",
+    "steps": {
+      "open": {
+        "title": "Otomatik Asker Koruma ayarlarını açın",
+        "items": {
+          "open_settings": {
+            "label": "Ayarları açın",
+            "description": "Komuta merkezinin üstünde Otomatik Asker Koruma'nın yanındaki ayarlar düğmesini seçin."
+          }
+        }
+      },
+      "general": {
+        "title": "Konuşlanma süresini ve gönderim kurallarını ayarlayın",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Rastgele gecikme aralığı · En az",
+            "description": "Yolculuk bittikten sonra askerlerin ittifak hedefinde kalacağı en kısa süreyi saat olarak belirleyin.",
+            "recommendation": "Varıştan sonra ittifak hedefinde 6 saat konuşlanma."
+          },
+          "random_delay_range_max": {
+            "label": "Rastgele gecikme aralığı · En çok",
+            "description": "Hedefteki en uzun kalış süresini belirleyin; Otomatik Asker Koruma en az ve en çok değerleri arasında rastgele bir süre seçer.",
+            "recommendation": "Varıştan sonra ittifak hedefinde 12 saat konuşlanma."
+          },
+          "minimum_to_send": {
+            "label": "Gönderim için en az",
+            "description": "Kale yedekleri tutulduktan sonra gerekli toplam uygun asker sayısının alt sınırını belirleyin; bu, gönderilecek kesin sayı değil, bir eşiktir.",
+            "recommendation": "Kale yedekleri tutulduktan sonra toplam 1.000 uygun asker; bu, kesin gönderim miktarı değil, bir eşiktir."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "Asgari RPT (kalan koruma süresi)",
+            "description": "Kalan koruması bu gün sayısından fazla olan hedefleri kullanın; 0 denetimi kaldırır.",
+            "recommendation": "3 gün; hedefin kalan koruma süresi 3 günden fazla olmalıdır."
+          }
+        },
+        "image": {
+          "alt": "Otomatik Asker Koruma konuşlanma gecikmesi, asgari gönderim, asgari RPT ve ön ayar kontrolleri",
+          "caption": "Konuşlanma süresini ve uygunluğu ayarlayın, ardından kaydetmeden önce Günlük yedek ön ayarını gözden geçirin."
+        }
+      },
+      "reserves": {
+        "title": "Her kalede tutulacak askerleri seçin",
+        "items": {
+          "add_unit": {
+            "label": "Birim ekle",
+            "description": "Her kale için gönderilmeyip evde tutulacak asker türlerini seçin; boş yedek listesi, otomatik yedekler ayrıldıktan sonra tüm uygun askerleri kullanılabilir bırakır.",
+            "recommendation": "Her kalenin savunma veya diğer düzenli işler için ihtiyaç duyduğu asker türlerini seçin."
+          },
+          "quantity": {
+            "label": "Miktar",
+            "description": "Seçilen her asker türünden kalede tutulacak pozitif bir sayı belirleyin; 0 bütün türü yedekte tutmaz.",
+            "recommendation": "Savunma veya diğer işler için bu kalede gereken her asker türünün sayısını tutun; gerçek asker sayılarını kontrol edin."
+          },
+          "remove_unit": {
+            "label": "Birim kaldır",
+            "description": "Seçilen kalede bu türü yedekte tutmayı bırakmak için birim kutucuğunu kaldırın."
+          },
+          "auto_fortress_reserve": {
+            "label": "Hisar otomasyonu · yedek",
+            "description": "Otomatik Kale buradaki tüm Korkunç Kurtları kilitlediğinde, bu otomatik yedek Otomatik Asker Koruma ön ayarlarına kaydedilmez; kilit bitince önceki manuel Korkunç Kurt miktarı geri gelir."
+          }
+        },
+        "image": {
+          "alt": "Kurgusal Örnek Kale için Otomatik Asker Koruma yedek kutucukları",
+          "caption": "Bu kalede yalnızca gerekli birimleri yedekte tutun; Birim 101 ve Birim 102 kurgusal asker yer tutucularıdır."
+        }
+      },
+      "presets": {
+        "title": "Ön ayarı kaydedin ve seçin",
+        "items": {
+          "preset_name": {
+            "label": "Ön ayar adı",
+            "description": "Yeni bir ön ayar için ad girin veya değişiklikleri kaydetmeden önce uygulanmış ön ayarın adını düzenleyin.",
+            "recommendation": "Günlük gibi kolay tanınan bir ad kullanın."
+          },
+          "load_preset": {
+            "label": "Ön ayarı yükle",
+            "description": "Listeden kayıtlı bir ön ayar seçin veya adlı bir ön ayar olmadan saklanan ayarları kullanmak için Kayıtlı yapılandırma'yı seçin.",
+            "recommendation": "Amaçlanan günlük ön ayarı çalışma varsayılanı yapın: onu seçin, Uygula'ya, ardından Değişiklikleri kaydet'e basın."
+          },
+          "apply": {
+            "label": "Uygula",
+            "description": "Seçilen ön ayarı bu ayar taslağına yükleyin; çalışma varsayılanı olarak kesinleştirmek için Değişiklikleri kaydet'i seçin."
+          },
+          "save_as_new": {
+            "label": "Yeni olarak kaydet",
+            "description": "Geçerli ayarları hemen yeni adlı bir ön ayar olarak kaydeder ve çalışma varsayılanı olarak seçer."
+          },
+          "delete": {
+            "label": "Sil",
+            "description": "Onaydan sonra seçilen ön ayarı hemen siler ve seçiliyse çalışma varsayılanını temizler."
+          },
+          "runtime_default": {
+            "label": "Çalışma varsayılanı",
+            "description": "Çalışma varsayılanı kaydedilmiş etkin ön ayardır; etkin ön ayar yoksa kayıtlı yapılandırmadır."
+          }
+        }
+      },
+      "finish": {
+        "title": "Takvimi ayarlayın, kaydedin ve etkinleştirin",
+        "items": {
+          "calendar": {
+            "label": "Takvim",
+            "description": "Otomatik Asker Koruma'nın ne zaman çalışabileceğini seçin ve değişiklikleriniz için Takvimi kaydet'i seçin.",
+            "recommendation": "Sürekli çalışma için takvimi kapalı bırakın veya olağan haftalık saatleri ayarlayıp Takvimi kaydet'i seçin."
+          },
+          "specify_preset_per_period": {
+            "label": "Dönem başına ön ayar belirt",
+            "description": "Bir takvim dönemi çalışma varsayılanını geçersiz kılacaksa o dönem için kayıtlı bir ön ayar seçin.",
+            "recommendation": "Farklı dönemlerde farklı yedekler gerekmiyorsa kapalı."
+          },
+          "save_changes": {
+            "label": "Değişiklikleri kaydet",
+            "description": "Ayar taslağını ve uygulanmış ön ayar değişikliklerini kaydedin; bu kılavuzu okumak onları kaydetmez."
+          },
+          "auto_bird_switch": {
+            "label": "Birlikleri otomatik korunaklı alana taşıma · anahtar",
+            "description": "Normal kale döngülerinin çalışması için kaydettikten sonra komuta merkezinin üstünde Otomatik Asker Koruma'yı açın.",
+            "recommendation": "Kaydettikten sonra Otomatik Asker Koruma'yı açın; üstteki durum her kalenin döngüsünü gösterir."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Birlikleri otomatik korunaklı alana taşıma",
+      "summary": "Seçilen askerleri programa göre uzakta tutun",
+      "description": "Fazla askerleri uygun ittifak kalelerinde düzenli olarak konuşlandırır ve geri döndüklerinde döngüyü tekrarlar.",
+      "expectation": "Uygun hedef veya gönderilecek fazla asker yoksa bekler. Askerleri taşımak kalenizi yenilmez yapmaz."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "Genel ayarlar",
+      "scan": "Tarama aralığı: 1.800 saniye",
+      "daily": "Günlük saldırı sınırı: 3.500",
+      "travel": "Yolculuk hızlandırması: sikke kademesi",
+      "advisor": "Danışman: kapalı"
+    },
+    "towerCastle": {
+      "title": "Örnek Kale",
+      "enabled": "Otomatik kule saldırıları: açık",
+      "radius": "Yarıçap: 35 kare",
+      "troop": "Seçilen asker: kurgusal saldırı birimi",
+      "maiden": "Yalnızca Bakire destekli: kapalı"
+    },
+    "birdGeneral": {
+      "title": "Genel ayarlar",
+      "min": "En kısa kalış: 6 saat",
+      "max": "En uzun kalış: 12 saat",
+      "send": "Yedeklerden sonra en az uygun toplam: 1.000 asker",
+      "rpt": "Asgari kalan koruma: 3 günden fazla",
+      "preset": "Ön ayar: Günlük yedek"
+    },
+    "birdCastle": {
+      "title": "Örnek Kale",
+      "unitOne": "Kurgusal Birim 101 yedekte: 80",
+      "unitTwo": "Kurgusal Birim 102 yedekte: 40",
+      "add": "Birim ekle"
+    },
+    "stationGeneral": {
+      "title": "Otomatik koruma ayarları örneği",
+      "evacuate": "Tahliye: darbeden 1 dakika önce",
+      "protection": "Hedef koruması: 3 günden fazla",
+      "recall": "Tehlike geçince geri çağır: açık",
+      "gate": "Yedek kapı açma: kapalı",
+      "castle": "Kurgusal kale: 80 savunma birliği ayrıldı",
+      "save": "Değişiklikleri kaydedip otomatik korumayı açın"
+    },
+    "fortressAttack": {
+      "commander": "Komutan: en hızlı uygun atanmış",
+      "daily": "Günlük normal saldırı sınırı: 0",
+      "title": "Örnek saldırı ayarları",
+      "travel": "Yolculuk hızlandırması: Yolculuk Tüyü",
+      "wave": "İki kanatta tek tam korkunç kurt dalgası"
+    },
+    "fortressKingdoms": {
+      "everwinter": "Sonsuz Kış Buzulu: açıldığında açık",
+      "peaks": "Ateş Zirveleri: açıldığında açık",
+      "sands": "Yanan Kumlar: açıldığında açık",
+      "title": "Örnek krallık ayarları"
+    },
+    "fortressSupply": {
+      "purchase": "Oturum başına korkunç kurt: 5.000",
+      "reserve": "Han tabletlerini sakla: 25.000",
+      "route": "İkmal: Büyük İmparatorluk ana kalesinden etkin krallıklara",
+      "skips": "Onaylı aktarımlar için zaman atlamaları: açık",
+      "title": "Örnek korkunç kurt ikmali"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Kan Kargaları: uygun açık zorluk",
+      "current": "Etkin etkinliğin zorluğu aynı kalır",
+      "foreign": "Yabancı Lordlar: uygun açık zorluk",
+      "title": "Örnek etkinlik zorlukları"
+    },
+    "invasionFortify": {
+      "currency": "Açıksa: sunulduğunda etkinlik parası",
+      "enabled": "Her hedefi güçlendir: kapalı",
+      "rubies": "Yakutlar yalnızca açıkça seçilirse",
+      "title": "Örnek hedef güçlendirme"
+    },
+    "invasionLimits": {
+      "before": "Etkinlik bitmeden 30 dakika önce durdur",
+      "daily": "Günlük normal saldırı sınırı: 0",
+      "score": "Puan: 0'ın üzerindeki olağan son kişisel ödül",
+      "title": "Örnek puan ve durma sınırları"
+    },
+    "invasionSetup": {
+      "castle": "Kaynak: Büyük İmparatorluk'taki olağan etkinlik kalesi",
+      "preset": "Saldırı düzeni: kaydedilmiş etkinlik dizilimi",
+      "title": "Örnek etkinlik saldırısı hazırlığı",
+      "travel": "Yolculuk hızlandırması: Yolculuk Tüyü"
+    },
+    "nomadDifficulty": {
+      "title": "Örnek etkinlik zorlukları",
+      "active": "Etkin olay: mevcut zorlukla eşleştir",
+      "nomad": "Göçebeler: açık ve güvenilir zorluk",
+      "samurai": "Samuraylar: açık ve güvenilir zorluk"
+    },
+    "nomadSetup": {
+      "castle": "Kaynak: Büyük İmparatorluk'taki olağan etkinlik kalesi",
+      "travel": "Yolculuk hızlandırması: Yolculuk Tüyü",
+      "nomadPreset": "Göçebe düzeni: kayıtlı kamp dizilişi",
+      "samuraiPreset": "Samuray düzeni: kayıtlı kamp dizilişi",
+      "title": "Etkinlik kampı ayarları örneği"
+    },
+    "nomadCooldowns": {
+      "clear": "Onaylanmış zaferden sonra beklemeyi kaldır: açık",
+      "long": "5 sa / 24 sa sakla: diğer işler için stok",
+      "short": "1 / 5 / 10 / 30 / 60 dk sakla: her birinden 0 öğe",
+      "title": "Bekleme seçenekleri örneği"
+    },
+    "nomadLimits": {
+      "daily": "Ek günlük sınır: 0",
+      "score": "Puan hedefi: son kişisel ödül eşiği",
+      "time": "Bitişten önce dur: 30 dakika",
+      "title": "Durma kuralları örneği"
+    },
+    "nomadTrial": {
+      "coordinates": "Hedef X / Y: normal çalışmada kullanılmaz",
+      "effect": "Deneme açıkken etkinliğin yerini gerçek saldırı alır",
+      "title": "Deneme denetimleri örneği",
+      "trial": "Geçici Haydut Baron denemesi: kapalı"
+    },
+    "advisorDifficulty": {
+      "active": "Etkin olay: mevcut zorlukla eşleştir",
+      "nomad": "Göçebeler: açık ve güvenilir zorluk",
+      "samurai": "Samuraylar: açık ve güvenilir zorluk",
+      "title": "Örnek etkinlik zorlukları"
+    },
+    "advisorSetup": {
+      "castle": "Kaynak: Büyük İmparatorluk'taki olağan etkinlik kalesi",
+      "travel": "Yolculuk hızlandırması: Yolculuk Tüyü",
+      "preset": "Şablon: etkin etkinliğin kayıtlı düzeni",
+      "title": "Danışman saldırı ayarları örneği"
+    },
+    "advisorActivation": {
+      "locked": "Kilitliyse: Danışman etkinleştirme onayını açın",
+      "paid": "Jeton kullanımını veya oyunun bildirdiği ücretsiz etkinleştirmeyi onaylayın",
+      "save": "Ayarları kaydedin, sonra Otomasyon kartını açın",
+      "title": "Etkinleştirme akışı örneği"
+    },
+    "advisorOverview": {
+      "progress": "Mevcut saldırılar / istenen saldırılar",
+      "refresh": "Güncel toplamları görmek için görünümü yenileyin",
+      "results": "Galibiyetler, yenilgiler, kayıp birlikler ve araçlar",
+      "title": "Canlı görünüm örneği"
+    },
+    "advisorResources": {
+      "coins": "Saldırı başına toplam sikke: 500 yalnızca yeterliyse",
+      "feathers": "Tüy sakla: başka yerde gerekmiyorsa 0",
+      "rubies": "Saldırı başına yakut: Yolculuk Tüyü ile 0",
+      "skips": "60 dk sakla: 0 öğe; gerektiği kadar 5 sa ve 24 sa saklayın",
+      "title": "Kaynak bütçesi örneği"
+    },
+    "advisorSizing": {
+      "actual": "Gerçek dizi: kaynaklar ve süreyle sınırlı",
+      "maximum": "Azami saldırı: 9.999",
+      "time": "Kullanılmayan etkinlik süresi: 30 dakika",
+      "title": "Dizi boyutu örneği"
+    },
+    "khanCooldowns": {
+      "long": "5 saatlik / 24 saatlik hızlandırmaları başka işler için ayırın",
+      "pause": "Kullanılabilir hızlandırma yetersizse yeni saldırılar duraklar",
+      "short": "1 dk / 5 dk / 10 dk / 30 dk / 1 sa sakla: her biri 0 eşya",
+      "skip": "Her kamp beklemesini atla: açık",
+      "title": "Örnek hızlandırma rezervleri"
+    },
+    "khanLimits": {
+      "daily": "Günlük normal saldırılar: 0, ek sınır yok",
+      "end": "Etkinlik bitmeden 5 dakika önce yeni saldırıları durdur",
+      "points": "Göçebe puanında durdur: 0, kapalı",
+      "title": "Örnek durdurma sınırları",
+      "tools": "Savunma aracı tamamlama: istenirse açık"
+    },
+    "khanProtection": {
+      "gate": "Eşikte ana kapıları aç ve Han'ı duraklat",
+      "outpost": "Kaynak ileri karakol: koruma kapalı",
+      "source": "Ana kaleden saldırırken uygulanır",
+      "threshold": "Duvar hücum birlikleri: 1.000",
+      "title": "Örnek ana duvar koruması"
+    },
+    "khanRage": {
+      "attacks": "Otomatik kamp saldırıları: kilitli değil",
+      "booster": "Süreli Öfke puanı güçlendiricisi zorunlu: kapalı",
+      "chain": "Azami öfke zinciri: 0, ek sınır yok",
+      "title": "Örnek öfke denetimleri",
+      "trigger": "Tam öfkede misilleme: açık"
+    },
+    "khanSave": {
+      "defense": "Misillemeden önce ana kale savunmasını kontrol et",
+      "enable": "Otomasyon kartında Otomatik Han'ı etkinleştir",
+      "priority": "Otomatik Sığınma oyuncu saldırılarını ayrı yönetir",
+      "save": "İki düzeni hazırladıktan sonra ayarları kaydet",
+      "title": "Örnek kaydetme ve etkinleştirme akışı"
+    },
+    "khanSetup": {
+      "defense": "Savunma konumu: Büyük İmparatorluk ana kalesi",
+      "presets": "Kayıtlı Han saldırısı ve ana savunma düzenleri",
+      "source": "Saldırı kaynağı: Büyük İmparatorluk ileri karakolu",
+      "title": "Örnek Han kurulumu",
+      "travel": "Hızlı yolculuk için Yolculuk Tüyü"
+    },
+    "beriBuilder": {
+      "permissions": "Premium ve yıkım: incelemeden kapalı",
+      "reserves": "Berimond kaynaklarını ve hızlandırmaları ayırın",
+      "stable": "Grup Ahırı: seçilen seviye 1–5",
+      "target": "Yerleşik kesin hedef veya incelenmiş özel yerleşim",
+      "title": "Örnek isteğe bağlı kamp inşaatçısı"
+    },
+    "beriReadiness": {
+      "booster": "Cesaret güçlendiricisi koşulu: isteğe bağlı",
+      "food": "Transferler yiyecekle beslenen şablon askerlerini gerektirir",
+      "preset": "Kayıtlı asker ve araç yuvalarını inceleyin",
+      "title": "Örnek kule hazırlığı"
+    },
+    "beriSave": {
+      "calendar": "Sürekli çalışma için takvim kapalı",
+      "enable": "Otomasyon kartında Auto Beri Dünyası'nı açın",
+      "save": "Asker karışımını inceleyip ayarları kaydedin",
+      "title": "Örnek kaydetme ve etkinleştirme akışı"
+    },
+    "beriSetup": {
+      "donor": "Gereken askerlere sahip Büyük İmparatorluk kaynak kalesi",
+      "limit": "Günlük normal saldırılar: 0 ek sınır",
+      "preset": "Kayıtlı Berimond saldırı şablonu",
+      "title": "Örnek saldırı ve kaynak kurulumu",
+      "travel": "Kule saldırıları için Seyahat Tüyü"
+    },
+    "beriTools": {
+      "ladders": "Tırmanma merdivenleri: olağan saldırılara göre",
+      "mantlets": "Siperler: olağan saldırılara göre",
+      "rams": "Koçbaşları: olağan saldırılara göre",
+      "title": "Örnek kamp araçları alt sınırları"
+    },
+    "beriTransfers": {
+      "capacity": "Boş kapasite: 1; eşik: 1",
+      "mix": "Şablon karışımı: 2 A birimi ve 1 B birimi",
+      "next": "Sonraki sevkiyat: kaynak stokundan en çok 1 B",
+      "stock": "Kamp stoku: 2 A ve 0 B",
+      "title": "Örnek oranlı transferler"
+    },
+    "stormCastle": {
+      "blueprint": "Kayıtlı hedef etkin; duraklatma onu tutar",
+      "capture": "Mevcut kale: İşlevsel hedef",
+      "decorations": "Dekorasyon ön ayarı: isteğe bağlı",
+      "title": "Örnek Fırtına kalesi erişimi",
+      "unlock": "Otomatik açma: fiyat kontrolünden sonra açık"
+    },
+    "stormCombat": {
+      "defenders": "İşgal savunucuları: seçili veya bir sağ kalan",
+      "forts": "Hisarlar: seçili 40–80 seviyeleri",
+      "islands": "Akuamarin adaları: büyük ve küçük",
+      "priority": "Büyük, küçük, sonra 80'den 40'a hisarlar",
+      "title": "Örnek hisar ve ada saldırıları"
+    },
+    "stormConstruction": {
+      "harbor": "Liman: açık, seviye 1",
+      "resources": "Odun 0; taş 0; akuamarin planlı",
+      "spending": "Premium ve yıkım: kapalı",
+      "title": "Örnek inşaat ve rezervler",
+      "transport": "Kaynak taşımacılığı: açık"
+    },
+    "stormLuna": {
+      "cost": "Maliyet ve alış sınırı: salt okunur",
+      "limited": "Sınırlı hedefler sınırsız ödüllerden önce",
+      "priority": "Öncelik 1, 2, 3; küçük numara önce",
+      "reserve": "Akuamarin sakla: fazlalık kullanılırken 0",
+      "title": "Örnek Luna ödülleri"
+    },
+    "stormSave": {
+      "check": "Politika kontrolü: 30 saniye",
+      "daily": "Günlük normal saldırılar: 0 ek sınır",
+      "map": "Harita yenileme: 2 saat, salt okunur",
+      "switch": "Kaydedin, sonra Auto Storm'u açın",
+      "title": "Örnek kaydetme ve açma akışı"
+    },
+    "stormTroops": {
+      "averages": "Sıfırlamadan beri doğrulanan saldırılar / 24; preset ortalaması salt okunur",
+      "cap": "Bağlı asker sınırı: salt okunur",
+      "donors": "Kaynak kaleler: gösterilen sıra, kısmi stok uygun",
+      "minimum": "Asgari tutulan: 1.000 asker",
+      "title": "Örnek asker ithali"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Öneriler düzenli kullanım içindir ve kayıtlı ayarları değiştirmez.",
+    "steps": {
+      "open": {
+        "title": "Otomatik birlik koruma ayarlarını açın",
+        "items": {
+          "open_settings": {
+            "label": "Ayarları aç",
+            "description": "Komuta merkezinin üst kısmında otomatik birlik korumasının yanındaki ayarlar düğmesini seçin."
+          }
+        }
+      },
+      "general": {
+        "title": "Saldırıya yanıtı ayarlayın",
+        "items": {
+          "evacuate_at": {
+            "label": "Şu sürede tahliye et",
+            "description": "Darbe gelmeden bu kadar dakika önce tahliyeyi başlatın veya saldırı bu aralıkta tespit edilirse hemen başlatın.",
+            "recommendation": "Darbeden 1 dakika önce."
+          },
+          "minimum_bird_days": {
+            "label": "Hedefte en az koruma günü",
+            "description": "Bu değerden daha fazla koruma günü kalan bir ittifak kalesi seçin; 0 alt sınırı kaldırır.",
+            "recommendation": "3 gün; hedefin 3 günden fazla koruması kalmalıdır."
+          },
+          "recall_when_clear": {
+            "label": "Tehlike geçince geri çağır",
+            "description": "Son tespit edilen saldırı geçtikten ve başka gelen saldırı kalmadıktan sonra konuşlanmış birlikleri geri getirin.",
+            "recommendation": "Normal kullanım için açık."
+          },
+          "open_gate_fallback": {
+            "label": "Yedek olarak kapıları aç",
+            "description": "Birlikler tahliye edilemiyorsa bu seçenek Berimond dışında saldırıya uğrayan kendi kalenizin kapılarını altı saat açar.",
+            "recommendation": "Tahliye başarısız olduğunda otomatik kapı açılmasını istemiyorsanız kapalı."
+          },
+          "protection_mode": {
+            "label": "Satın alınan Koruma Modu",
+            "description": "Satın alınan Koruma Modu hazırlanırken veya etkinken otomatik koruma, yedek seçenek kapalı olsa bile Berimond dışında kapıları kullanır."
+          }
+        },
+        "image": {
+          "alt": "Tahliye süresi, koruma, geri çağırma, kapılar ve kale yedeklerini gösteren kurgusal ayarlar",
+          "caption": "Kaydetmeden önce dört yanıt ayarını ve her kalenin savunma yedeğini gözden geçirin."
+        }
+      },
+      "reserves": {
+        "title": "Her kalede kalacak birlikleri seçin",
+        "items": {
+          "add_troops": {
+            "label": "Birlik ekle",
+            "description": "Kalede kalacak birlik türlerini seçin; yedek yoksa araçlar dışındaki tüm uygun birlikler tahliye edilebilir.",
+            "recommendation": "Normal savunma garnizonunu kalede tutun ve fazla saldırı birliklerinin ayrılmasına izin verin."
+          },
+          "quantity": {
+            "label": "Miktar",
+            "description": "Seçilen her türden kaç birliğin bu kalede kalacağını belirleyin; 0 hiç birlik ayırmaz.",
+            "recommendation": "Kalenin normal savunması için gereken sayıyı kullanın."
+          },
+          "edit_defense_troops": {
+            "label": "Savunma birliklerini düzenle",
+            "description": "Kale yedeğinin türlerini veya miktarlarını değiştirmek için birlik seçiciyi yeniden açın."
+          },
+          "remove_defense_troop": {
+            "label": "Savunma birliğini kaldır",
+            "description": "Bu birlik türünü kalede tutmayı bırakmak için yedek kutusunu kaldırın."
+          }
+        }
+      },
+      "finish": {
+        "title": "Otomatik korumayı kaydedin ve açın",
+        "items": {
+          "save_changes": {
+            "label": "Değişiklikleri kaydet",
+            "description": "Ayarlardan ayrılmadan önce süreyi, anahtarları ve kale başına yedekleri kaydedin."
+          },
+          "auto_station_switch": {
+            "label": "Otomatik koruma anahtarı",
+            "description": "Kaydettikten sonra gelen oyuncu saldırılarını izlemek için komuta merkezinin üstündeki otomatik korumayı açın.",
+            "recommendation": "Yedekleri gözden geçirdikten sonra düzenli koruma için açık."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Otomatik birlik koruması",
+      "summary": "Gelen saldırıdan önce uygun birlikleri taşıyın",
+      "description": "Bir oyuncu saldırısı yaklaşırken otomatik birlik koruması uygun birlikleri aynı krallıktaki en yakın uygun ittifak kalesine taşır.",
+      "expectation": "Geri çağırma açıksa birlikler son tespit edilen saldırıdan sonra tehdit kalmadığında döner; değilse varıştan sonra bir saat kalıp döner. Hedef veya birlik bulunmaması ve oyun kısıtlamaları tahliyeyi engelleyebilir.",
+      "helper": "Birlikler aynı krallıktaki en yakın uygun ittifak kalesine gider; tahliye başarısız olursa saldırıya uğrayan kendi kalenizin kapıları Berimond dışında koruma sağlayabilir."
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "En hızlı uygun komutan",
+      "commanderHelp": "Otomatik kale saldırıları, her hedef kale için ekipman, mücevher, set ve generallerin geçerli yolculuk hızı etkilerini karşılaştırır; Relik 2.0 veya en az %100 şartı yoktur.",
+      "description": "Otomatik kale saldırıları kayıtlı sınırlar içinde korkunç kurt satın alır, etkin dış krallıkları besler ve ana kalelerinden hazır kalelere saldırır.",
+      "expectation": "Her saldırı için hazır bir hedef kale, iki kanada yetecek korkunç kurt ve uygun atanmış komutan gerekir; bekleme süreleri veya ikmal gecikmeleri saldırıyı duraklatabilir.",
+      "name": "Otomatik kale saldırıları",
+      "settingsSummary": "Otomatik kale saldırıları korkunç kurtları hazırlar ve her hedef kale için en hızlı uygun atanmış komutanı seçer.",
+      "summary": "Korkunç kurtları ikmal edin ve hazır kalelere saldırın",
+      "travelHelp": "Yolculuk Tüyü varsayılandır; kayıtlı yolculuk seçiminiz korunur. Kaleye özgü hızlandırma, gönderimden önce yeniden hesaplanır."
+    },
+    "recommendationIntro": "Önerilen değerler otomatik kale saldırılarının düzenli kullanımını anlatır; yol göstericidir ve kayıtlı ayarları değiştirmez.",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "Otomatik kale saldırıları için örnek saldırı ve yolculuk ayarları",
+          "caption": "Otomatik kale saldırıları her hedef için uygun atanmış komutanları sıralar ve kayıtlı yolculuk seçimini kullanır."
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "Komutanlar bölümünde otomatik kale saldırılarının kullanabileceği komutanları atayın ve bu atamaları kaydedin.",
+            "label": "Komutan ataması",
+            "recommendation": "Kale saldırıları için genellikle uygun olmasını istediğiniz komutanları atayın."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Oyun sıfırlayana kadar hesap genelindeki günlük normal saldırı sayısında otomatik kale saldırılarını durdurun; 0 ek sınır koymaz.",
+            "label": "Günlük normal saldırı sınırı",
+            "recommendation": "Ek bir günlük sınır istemiyorsanız 0."
+          },
+          "fastest_commander": {
+            "description": "Otomasyon, her kale için sınırlar uygulandıktan sonra geçerli ekipman, mücevher, set ve general etkilerine göre o anda uygun olan en hızlı atanmış komutanı seçer.",
+            "label": "En hızlı uygun komutan",
+            "recommendation": "Relik 2.0 eşyası veya %100 hız bonusu gerekmez."
+          },
+          "full_flank_wave": {
+            "description": "Her saldırı, iki kanadı tek bir tam dalgayla doldurmaya yetecek korkunç kurt bekler.",
+            "label": "İki kanatta korkunç kurt dalgası"
+          },
+          "horse_travel_boost": {
+            "description": "Kale saldırıları için yolculuk seçeneğini belirleyin; açıkça kaydedilmiş para veya yakut kademesi seçili kalır.",
+            "label": "At yolculuğu hızlandırması",
+            "recommendation": "En hızlı yolculuk için Yolculuk Tüyü."
+          }
+        },
+        "title": "Saldırıları ve yolculuğu ayarlayın"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "Kaydettikten sonra normal döngüleri başlatmak için Otomasyon kartındaki otomatik kale saldırılarını açın.",
+            "label": "Otomatik kale saldırıları anahtarı",
+            "recommendation": "İstediğiniz ayarları inceleyip kaydettikten sonra açık."
+          },
+          "calendar": {
+            "description": "Otomatik kale saldırılarının çalışacağı zamanları Takvim ile sınırlayın ve değişikliklerden sonra Programı Kaydet'i seçin.",
+            "label": "Takvim",
+            "recommendation": "Kesintisiz düzenli kullanım için kapalı."
+          },
+          "save_fortress_plan": {
+            "description": "Bu pencereden çıkmadan önce krallık, ikmal ve saldırı ayarlarını kaydedin.",
+            "label": "Kale planını kaydet"
+          }
+        },
+        "title": "Programı ayarlayın, kaydedin ve açın"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "Otomatik kale saldırılarının üç dış krallık kontrolünü gösteren örnek",
+          "caption": "Ana kalesinin korkunç kurt alıp kalelere saldırmasını istediğiniz her açık krallığı etkinleştirin."
+        },
+        "items": {
+          "burning_sands": {
+            "description": "Krallık açıldığında Yanan Kumlar'daki ana kalenizden saldırıları ve korkunç kurt ikmalini etkinleştirin.",
+            "label": "Yanan Kumlar",
+            "recommendation": "Açılıp kullanıma hazır olduğunda açık."
+          },
+          "everwinter_glacier": {
+            "description": "Krallık açıldığında Sonsuz Kış Buzulu'ndaki ana kalenizden saldırıları ve korkunç kurt ikmalini etkinleştirin.",
+            "label": "Sonsuz Kış Buzulu",
+            "recommendation": "Açılıp kullanıma hazır olduğunda açık."
+          },
+          "fire_peaks": {
+            "description": "Krallık açıldığında Ateş Zirveleri'ndeki ana kalenizden saldırıları ve korkunç kurt ikmalini etkinleştirin.",
+            "label": "Ateş Zirveleri",
+            "recommendation": "Açılıp kullanıma hazır olduğunda açık."
+          }
+        },
+        "title": "Kale krallıklarını seçin"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "Otomasyon sayfasında otomatik kale saldırıları kartındaki ayarlar düğmesini seçin.",
+            "label": "Ayarları aç"
+          }
+        },
+        "title": "Otomatik kale saldırıları ayarlarını açın"
+      },
+      "supply": {
+        "image": {
+          "alt": "Otomatik kale saldırılarının korkunç kurt satın alma ve aktarım ayarlarını gösteren örnek",
+          "caption": "Oturum başına satın alma sınırını, Han tabletleri rezervini ve onaylı aktarımlar için zaman atlama seçimini inceleyin."
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "Göçebe mağazasında korkunç kurt alımını her mağaza oturumunda 100'lük gruplarla sınırlandırın; 0 alımı kapatır.",
+            "label": "Oturum başına korkunç kurt",
+            "recommendation": "En ucuz kademeden oturum başına 5.000 korkunç kurt."
+          },
+          "keep_khan_tablets": {
+            "description": "Han tabletleri bakiyeniz bu rezervin altına düşmeden korkunç kurt alımını durdurun.",
+            "label": "Han tabletlerini sakla",
+            "recommendation": "25.000 Han tableti saklayın."
+          },
+          "supply_route": {
+            "description": "Satın alınan korkunç kurtlar Büyük İmparatorluk ana kalesine ulaşır ve etkin krallıklara dağıtılır.",
+            "label": "Korkunç kurt ikmal yolu"
+          },
+          "use_time_skips": {
+            "description": "Uygun zaman atlamalarını yalnızca onaylı otomatik kale saldırısı sevkiyatlarında kullanın ve kayıtlı envanter rezervlerine uyun.",
+            "label": "Korkunç kurt aktarımlarında zaman atlaması kullan",
+            "recommendation": "Kayıtlı zaman atlama rezervleriniz izin verdiğinde daha hızlı ikmal için açık."
+          }
+        },
+        "title": "Korkunç kurt ikmalini ayarlayın"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "Otomatik istila saldırıları, kaydedilmiş bir saldırı düzeniyle Yabancı Lordlara veya Kan Kargalarına puan hedefine ya da başka bir durma sınırına ulaşana kadar saldırır.",
+      "expectation": "Etkin bir etkinlik, uygun komutanlar ve yeterli asker ile araç bekler; yoldaki saldırılar yeni saldırılar durduktan sonra bitebilir.",
+      "name": "Otomatik istila saldırıları",
+      "summary": "Yabancı Lordlara ve Kan Kargalarına puan hedefine kadar saldır"
+    },
+    "recommendationIntro": "Önerilen değerler otomatik istila saldırılarının düzenli kullanımını anlatır; yol göstericidir ve kayıtlı ayarları değiştirmez.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Yabancı Lordlar ve Kan Kargaları için örnek zorluk seçimleri",
+          "caption": "Her etkinlik için ayrı bir açık yedek zorluk seçin."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Güncel etkinlikte seçili zorluk yoksa kullanılacak açık Kan Kargaları zorluğunu seçin.",
+            "label": "Kan Kargaları zorluğu",
+            "recommendation": "Olağan düzeninizin güvenilir biçimde üstesinden geldiği en yüksek açık zorluğu kullanın."
+          },
+          "difficulty_note": {
+            "description": "İki etkinlik seçimini de kaydedin; kayıtlı değeri değiştirmek etkin bir etkinliğin zorluğunu değiştirmez.",
+            "label": "Güncel zorluk"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Güncel etkinlikte seçili zorluk yoksa kullanılacak açık Yabancı Lordlar zorluğunu seçin.",
+            "label": "Yabancı Lordlar zorluğu",
+            "recommendation": "Olağan düzeninizin güvenilir biçimde üstesinden geldiği en yüksek açık zorluğu kullanın."
+          }
+        },
+        "title": "İki etkinliğin zorluğunu seçin"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "Kaydettikten sonra etkinlik ve uygun kaynaklar varken çalışması için Otomasyon kartından otomatik istila saldırılarını açın.",
+            "label": "Otomatik istila saldırıları anahtarı",
+            "recommendation": "İstediğiniz ayarları gözden geçirip kaydettikten sonra açık."
+          },
+          "readiness": {
+            "description": "Otomatik istila saldırıları etkin bir etkinlik, uygun komutanlar ve yeterli asker ile araç bekler.",
+            "label": "Saldırı hazırlığı"
+          },
+          "save_settings": {
+            "description": "Bu pencereyi kapatmadan önce kaynak kaleyi, düzeni, zorlukları, durma sınırlarını ve güçlendirme seçimini kaydedin.",
+            "label": "Ayarları kaydet"
+          }
+        },
+        "title": "Otomatik istila saldırılarını kaydedip açın"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Otomatik istila saldırıları için örnek güçlendirme ayarları",
+          "caption": "Kullanılabilir etkinlik parasını veya açıkça seçtiğiniz yakutları harcamak istemiyorsanız güçlendirmeyi kapalı tutun."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Etkin etkinliğin desteklediği bir seçenek seçin; her fiyatı oyun belirler ve yakutları açıkça seçmek harcanmalarına izin verir.",
+            "label": "Güçlendirme parası",
+            "recommendation": "Sunuluyorsa ve güçlendirme açıksa etkinlik parası."
+          },
+          "fortify_each_target": {
+            "description": "Açıksa oluşturulan her düşman kalesini saldırıdan önce seçilen parayla güçlendirin.",
+            "label": "Her hedefi güçlendir",
+            "recommendation": "Güçlendirme olağan etkinlik stratejinizin bir parçası değilse kapalı."
+          }
+        },
+        "title": "İsteğe bağlı hedef güçlendirmeyi seçin"
+      },
+      "limits": {
+        "image": {
+          "alt": "Otomatik istila saldırıları için örnek puan ve durma sınırları",
+          "caption": "Puan hedefi yeni çıkışları durdurur ancak yoldaki saldırılar bitebilir."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Oyun sıfırlayana kadar hesap genelindeki günlük normal saldırı sayısında bu otomasyonu durdurun; 0 sınır eklemez.",
+            "label": "Günlük normal saldırı sınırı",
+            "recommendation": "Etkinlik puan hedefinin seriyi yönetmesi için 0."
+          },
+          "minimum_remaining": {
+            "description": "Etkinlik bitmeden bu kadar dakika önce yeni saldırı başlatmayı bırakın.",
+            "label": "Etkinlik bitmeden durdur",
+            "recommendation": "30 dakika."
+          },
+          "score_target": {
+            "description": "Bildirilen etkinlik puanı bu hedefe ulaştığında veya onu geçtiğinde yeni saldırı başlatmayı bırakın.",
+            "label": "Etkinlik puanında durdur",
+            "recommendation": "0'ın üzerindeki olağan son kişisel ödül aşamanızı kullanın."
+          },
+          "travelling_attacks": {
+            "description": "Yoldaki saldırılar durma koşulundan sonra bitebilir ve son puanı hedefin üzerine çıkarabilir.",
+            "label": "Yoldaki saldırılar"
+          }
+        },
+        "title": "Puanı ve durma sınırlarını ayarlayın"
+      },
+      "open": {
+        "image": {
+          "alt": "Otomatik istila saldırıları için örnek kaynak kale, düzen ve yolculuk ayarları",
+          "caption": "Yolculuğu ayarlamadan önce Büyük İmparatorluk'ta bir kaynak kale ve kaydedilmiş etkinlik düzeni seçin."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Yabancı Lordlar veya Kan Kargaları için asker, araç ve dizilim içeren kayıtlı saldırı düzeni seçin.",
+            "label": "Saldırı düzeni",
+            "recommendation": "Önce olağan bir Yabancı Lordlar veya Kan Kargaları düzeni oluşturup sonra burada seçin."
+          },
+          "capacity_note": {
+            "description": "Düzendeki asker ve araç sayıları seçilen komutanın ve hedefin kapasitesine uyarlanır.",
+            "label": "Saldırı kapasitesi"
+          },
+          "horse_travel_boost": {
+            "description": "Bu saldırılar için tüy, para veya yakut yolculuk seçeneğini belirleyin.",
+            "label": "At yolculuğu hızlandırması",
+            "recommendation": "Hızlı yolculuk için Yolculuk Tüyü."
+          },
+          "open_settings": {
+            "description": "Otomasyon sayfasında otomatik istila saldırıları kartının ayarlar düğmesini seçin.",
+            "label": "Ayarları aç"
+          },
+          "source_castle": {
+            "description": "Etkinlik saldırılarına asker ve araç sağlayan Büyük İmparatorluk kalesini seçin.",
+            "label": "Kaynak kale",
+            "recommendation": "Yeterli asker ve aracı olan olağan etkinlik kalenizi kullanın."
+          }
+        },
+        "title": "Otomatik istila saldırıları ayarlarını açın"
+      }
+    }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "Olağan düzeninizin güvenilir biçimde üstesinden geldiği en yüksek açık zorluğu kullanın.",
+            "description": "Etkinlik başlangıcı için açık bir Göçebe zorluğu seç.",
+            "label": "Göçebe zorluğu"
+          },
+          "samurai_difficulty": {
+            "recommendation": "Olağan düzeninizin güvenilir biçimde üstesinden geldiği en yüksek açık zorluğu kullanın.",
+            "description": "Etkinlik başlangıcı için açık bir Samuray zorluğu seç.",
+            "label": "Samuray zorluğu"
+          },
+          "active_difficulty": {
+            "description": "Etkin bir etkinlikte mevcut zorluğuyla eşleştir; farklı kayıtlı seçim zorluğu değiştirmek yerine otomasyonu bekletir.",
+            "label": "Zaten etkin olan etkinlik"
+          }
+        },
+        "title": "İki etkinliğin zorluğunu seçin",
+        "image": {
+          "alt": "Göçebe ve samuray zorlukları örneği",
+          "caption": "Her etkinlik için ayrı bir açık zorluk seç ve etkin olanın mevcut zorluğuyla eşleştir."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "İstediğiniz ayarları inceleyip kaydettikten sonra açık.",
+            "description": "Kaydettikten sonra etkinlik ve uygun kaynaklar olduğunda çalışması için Otomatik Göçebeler/Samuraylar seçeneğini Otomasyon kartından aç.",
+            "label": "Otomatik Göçebeler/Samuraylar anahtarı"
+          },
+          "save_settings": {
+            "label": "Ayarları kaydet",
+            "description": "Bu pencereyi kapatmadan önce kaynak kaleyi, düzenleri, zorlukları, durma sınırlarını, zaman atlama tercihlerini ve deneme durumunu kaydet."
+          },
+          "readiness": {
+            "description": "Otomasyon etkinlik kamplarını geliştirir ve uygun komutanları, askerleri, araçları ve açıksa kullanılabilir zaman atlamalarını bekler.",
+            "label": "Kamp saldırısı hazırlığı"
+          }
+        },
+        "title": "Otomatik Göçebeler/Samuraylar seçeneğini kaydet ve aç"
+      },
+      "limits": {
+        "image": {
+          "caption": "Puan hedefi yeni çıkışları durdurur ancak yoldaki saldırılar bitebilir.",
+          "alt": "Otomatik Göçebeler/Samuraylar puan ve durma sınırları örneği"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Oyun sıfırlayana kadar hesap genelindeki günlük normal saldırı sayısında bu otomasyonu durdurun; 0 sınır eklemez.",
+            "label": "Günlük normal saldırı sınırı",
+            "recommendation": "Etkinlik puan hedefinin seriyi yönetmesi için 0."
+          },
+          "minimum_remaining": {
+            "description": "Etkinlik bitmeden bu kadar dakika önce yeni saldırı başlatmayı bırakın.",
+            "label": "Etkinlik bitmeden durdur",
+            "recommendation": "30 dakika."
+          },
+          "score_target": {
+            "description": "Bildirilen etkinlik puanı bu hedefe ulaştığında veya onu geçtiğinde yeni saldırı başlatmayı bırakın.",
+            "label": "Etkinlik puanında durdur",
+            "recommendation": "0'ın üzerindeki olağan son kişisel ödül aşamanızı kullanın."
+          },
+          "travelling_attacks": {
+            "description": "Yoldaki saldırılar durma koşulundan sonra bitebilir ve son puanı hedefin üzerine çıkarabilir.",
+            "label": "Yoldaki saldırılar"
+          }
+        },
+        "title": "Puanı ve durma sınırlarını ayarlayın"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Atla yolculuk hızlandırması",
+            "recommendation": "Hızlı yolculuk için Yolculuk Tüyü.",
+            "description": "Kamp saldırıları için tüy, altın veya yakutla yolculuk seçeneğini seç."
+          },
+          "open_settings": {
+            "label": "Ayarları açın",
+            "description": "Otomasyon sayfasında Otomatik Göçebeler/Samuraylar kartının ayarlar düğmesini seç."
+          },
+          "source_castle": {
+            "label": "Kaynak kale",
+            "recommendation": "Yeterli asker ve aracı olan olağan etkinlik kalenizi kullanın.",
+            "description": "Kamp saldırılarına asker ve araç sağlayan Büyük İmparatorluk kalesini seç."
+          },
+          "nomad_preset": {
+            "description": "Göçebe kampları için askerleri, araçları ve dizilişi olan kayıtlı saldırı düzenini seç.",
+            "label": "Göçebe saldırı düzeni",
+            "recommendation": "Düzenli Göçebe düzenini oluştur ve seç."
+          },
+          "samurai_preset": {
+            "description": "Samuray kampları için askerleri, araçları ve dizilişi olan kayıtlı saldırı düzenini seç.",
+            "label": "Samuray saldırı düzeni",
+            "recommendation": "Düzenli Samuray düzenini oluştur ve seç."
+          }
+        },
+        "image": {
+          "alt": "Otomatik Göçebeler/Samuraylar kaynak, düzen ve yolculuk örneği",
+          "caption": "Kaynak kaleyi ve yolculuk seçeneğini belirlemeden önce iki etkinlik düzenini de oluştur."
+        },
+        "title": "Otomatik Göçebeler/Samuraylar ayarlarını aç"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "Kamp beklemeleri ve zaman atlama rezervleri örneği",
+          "caption": "Her saklama değeri bekleme dakikalarını değil, zaman atlama öğelerini sayar."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "Bu sayıdaki 10 dakikalık zaman atlamasını rezerv olarak kullanmadan sakla.",
+            "label": "10 dk sakla",
+            "recommendation": "Düzenli kamp turları için 0."
+          },
+          "keep_1m": {
+            "description": "Bu sayıdaki 1 dakikalık zaman atlamasını rezerv olarak kullanmadan sakla.",
+            "label": "1 dk sakla",
+            "recommendation": "Düzenli kamp turları için 0."
+          },
+          "keep_24h": {
+            "description": "Bu sayıdaki 24 saatlik zaman atlamasını rezerv olarak kullanmadan sakla.",
+            "label": "24 sa sakla",
+            "recommendation": "İnşaat veya başka işler için gerekli stoğu ayır."
+          },
+          "keep_30m": {
+            "description": "Bu sayıdaki 30 dakikalık zaman atlamasını rezerv olarak kullanmadan sakla.",
+            "label": "30 dk sakla",
+            "recommendation": "Düzenli kamp turları için 0."
+          },
+          "keep_5h": {
+            "description": "Bu sayıdaki 5 saatlik zaman atlamasını rezerv olarak kullanmadan sakla.",
+            "label": "5 sa sakla",
+            "recommendation": "İnşaat veya başka işler için gerekli stoğu ayır."
+          },
+          "keep_5m": {
+            "description": "Bu sayıdaki 5 dakikalık zaman atlamasını rezerv olarak kullanmadan sakla.",
+            "label": "5 dk sakla",
+            "recommendation": "Düzenli kamp turları için 0."
+          },
+          "keep_60m": {
+            "description": "Bu sayıdaki 60 dakikalık zaman atlamasını rezerv olarak kullanmadan sakla.",
+            "label": "60 dk sakla",
+            "recommendation": "Düzenli kamp turları için 0."
+          },
+          "skip_cooldowns": {
+            "description": "Onaylanmış bir kamp zaferinden sonra hedefin beklemesini kaldırmak için mevcut bir zaman atlaması kullan.",
+            "label": "Her başarılı saldırıdan sonra beklemeyi kaldır",
+            "recommendation": "Düzenli tekrarlanan kamp saldırıları için açık; doğal bekleme için kapalı."
+          }
+        },
+        "title": "Zaman atlamalarını ve rezervleri seç"
+      },
+      "trial": {
+        "image": {
+          "alt": "Geçici Haydut Baron kalesi deneme denetimleri örneği",
+          "caption": "Deneme gerçek bir saldırı başlatır ve açıkken normal etkinlik çalışmasının yerini alır."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "Normal etkinlik çalışmasını Göçebe düzeni ve zaman atlamalarıyla bir Haydut Baron kalesine yapılan gerçek deneme saldırısıyla değiştir.",
+            "label": "Haydut Baron kalesine geçici uçtan uca deneme",
+            "recommendation": "Düzenli Göçebe veya Samuray turlarında kapalı."
+          },
+          "target_x": {
+            "description": "Haydut Baron kalesinin yatay koordinatını yalnızca geçici deneme için gir.",
+            "label": "Hedef X",
+            "recommendation": "Deneme kapalıyken kullanma."
+          },
+          "target_y": {
+            "description": "Haydut Baron kalesinin dikey koordinatını yalnızca geçici deneme için gir.",
+            "label": "Hedef Y",
+            "recommendation": "Deneme kapalıyken kullanma."
+          },
+          "trial_skips": {
+            "description": "Denemeyi açmak onun için zaman atlamalarını da açar.",
+            "label": "Deneme zaman atlamaları"
+          }
+        },
+        "title": "Düzenli turlar için geçici denemeyi kapalı tut"
+      }
+    },
+    "feature": {
+      "description": "Otomatik Göçebeler/Samuraylar uygun etkinlik kamplarını geliştirir, tamamen geliştirilmiş en zayıf kampı seçer ve bir durma sınırına ulaşana kadar etkinliğe özgü kayıtlı düzenle tekrar tekrar saldırır.",
+      "expectation": "Etkin bir etkinliği, uygun komutanları, askerleri, araçları ve bekleme süresi temizleme açıksa kullanılabilir zaman atlamalarını bekler; yoldaki saldırılar yeni çıkışlar durduktan sonra tamamlanabilir.",
+      "name": "Otomatik Göçebeler/Samuraylar",
+      "summary": "Göçebe veya samuray kamplarını geliştir ve saldır"
+    },
+    "recommendationIntro": "Önerilen değerler Otomatik Göçebeler/Samuraylar için düzenli kullanımı açıklar; yol gösterir ve kayıtlı ayarları değiştirmez."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "İstediğiniz ayarları inceleyip kaydettikten sonra açık.",
+            "description": "Ayarları gözden geçirdikten sonra Otomasyon kartından Otomatik Danışman'ı açın; zaten açılmış Danışman hemen dizi başlatabilir.",
+            "label": "Otomatik Danışman anahtarı"
+          },
+          "save_settings": {
+            "label": "Ayarları kaydet",
+            "description": "Pencereyi kapatmadan önce kaynak kaleyi, şablonu, zorlukları, dizi boyutunu ve kaynak bütçelerini kaydedin."
+          },
+          "activate_advisor": {
+            "description": "Danışman kilitliyse mevcut etkinlik için onay penceresini açmak üzere Danışmanı Etkinleştir'i seçin.",
+            "label": "Danışmanı Etkinleştir"
+          },
+          "activate_and_spend": {
+            "description": "Onaylanan etkinleştirmeyi uygun etkinlik jetonu veya evrensel Danışman jetonuyla gönderin; ücretsiz etkinlik jetonsuz etkinleştirme gösterir.",
+            "label": "Etkinleştir ve jeton harca"
+          },
+          "cancel_activation": {
+            "description": "Etkinleştirme göndermeden veya jeton harcamadan onay penceresini kapatın.",
+            "label": "Etkinleştirmeyi iptal et"
+          },
+          "confirm_paid_activation": {
+            "description": "Oyun bu etkinliği ücretsiz göstermiyorsa Danışman etkinleştirmesinin etkinlik veya evrensel jeton tüketebileceğini kabul edin.",
+            "label": "Ücretli etkinleştirmeyi onayla"
+          }
+        },
+        "image": {
+          "alt": "Otomatik Danışman kaydetme ve jetonla etkinleştirme denetimlerinin örneği",
+          "caption": "Kaydetmek veya açmak jeton harcamaz; ayrı olarak onaylanan etkinleştirme harcayabilir."
+        },
+        "title": "Danışman erişimini kaydedin, açın ve etkinleştirin"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "Göçebe zorluğu",
+            "recommendation": "Olağan düzeninizin güvenilir biçimde üstesinden geldiği en yüksek açık zorluğu kullanın.",
+            "description": "Etkinlik başladığında seçilecek açılmış bir Göçebe zorluğu seçin."
+          },
+          "samurai_difficulty": {
+            "label": "Samuray zorluğu",
+            "recommendation": "Olağan düzeninizin güvenilir biçimde üstesinden geldiği en yüksek açık zorluğu kullanın.",
+            "description": "Etkinlik başladığında seçilecek açılmış bir Samuray zorluğu seçin."
+          },
+          "active_difficulty": {
+            "description": "Zaten etkin olan etkinliğin mevcut zorluğunu eşleştirin, aksi halde otomasyon onu değiştirmek yerine bekler.",
+            "label": "Etkin etkinlik zorluğu"
+          }
+        },
+        "title": "İki etkinliğin zorluğunu seçin",
+        "image": {
+          "alt": "Göçebe ve Samuray Danışmanı zorluk seçimlerinin örneği",
+          "caption": "İki etkinliğin zorluğunu kaydedin ve zaten süren etkinliğin zorluğuyla eşleştirin."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Atla yolculuk hızlandırması",
+            "recommendation": "Hızlı yolculuk için Yolculuk Tüyü.",
+            "description": "Dizi için tüy, sikke veya yakutla yolculuk seçin."
+          },
+          "open_settings": {
+            "label": "Ayarları açın",
+            "description": "Otomasyon sayfasında Otomatik Danışman kartındaki ayarlar düğmesini seçin."
+          },
+          "source_castle": {
+            "label": "Kaynak kale",
+            "recommendation": "Yeterli asker ve aracı olan olağan etkinlik kalenizi kullanın.",
+            "description": "Danışman dizisine asker ve araç sağlayacak Büyük İmparatorluk kalesini seçin."
+          },
+          "attack_preset": {
+            "description": "Askerleri, araçları ve düzeni istenen her saldırıya kopyalanan kayıtlı bir saldırı şablonu seçin.",
+            "label": "Danışman saldırı şablonu",
+            "recommendation": "Önce etkin Göçebe veya Samuray etkinliği için olağan şablon oluşturup ardından seçin."
+          },
+          "complete_copies": {
+            "description": "Mevcut kaynaklar ve eksiksiz şablon kopyaları diziyi azami saldırı sayısının altına indirebilir.",
+            "label": "Eksiksiz şablon kopyaları"
+          }
+        },
+        "image": {
+          "alt": "Otomatik Danışman kaynak kalesi, şablonu ve yolculuk ayarlarının örneği",
+          "caption": "Yolculuğu ayarlamadan önce Büyük İmparatorluk'ta kaynak kale ve kayıtlı etkinlik şablonu seçin."
+        },
+        "title": "Otomatik Danışman ayarlarını açın"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "Bu sayıdaki 24 saatlik zaman atlamasını rezerv olarak kullanmadan sakla.",
+            "label": "24 sa sakla",
+            "recommendation": "İnşaat veya başka işler için gerekli stoğu ayır."
+          },
+          "keep_5h": {
+            "description": "Bu sayıdaki 5 saatlik zaman atlamasını rezerv olarak kullanmadan sakla.",
+            "label": "5 sa sakla",
+            "recommendation": "İnşaat veya başka işler için gerekli stoğu ayır."
+          },
+          "keep_60m": {
+            "description": "Bu sayıdaki 60 dakikalık zaman atlamasını rezerv olarak kullanmadan sakla.",
+            "label": "60 dk sakla",
+            "recommendation": "Olağan Danışman dizileri için 0."
+          },
+          "coin_cost": {
+            "description": "Oyun fiyatlarını değiştirmeden başlatma öncesi bütçe hesabı için saldırı başına tam sikke maliyetini tahmin edin.",
+            "label": "Saldırı başına toplam sikke",
+            "recommendation": "500 yalnızca gerçek tam maliyeti karşılıyorsa; değilse ölçtüğünüz daha yüksek toplamı kullanın."
+          },
+          "keep_coins": {
+            "description": "Bu kadar sikkeyi dizinin bütçesinden çıkarın.",
+            "label": "Sikke sakla",
+            "recommendation": "Olağan asker toplama ve inşaat bütçenizi koruyun."
+          },
+          "keep_feathers": {
+            "description": "Bu kadar yolculuk tüyünü dizinin bütçesinden çıkarın.",
+            "label": "Tüy sakla",
+            "recommendation": "Başka özelliklere tüy ayırmıyorsanız 0."
+          },
+          "keep_rubies": {
+            "description": "Bu kadar yakutu dizinin bütçesinden çıkarın.",
+            "label": "Yakut sakla",
+            "recommendation": "Diğer etkinlikler için gereken bakiyeyi koruyun."
+          },
+          "ruby_cost": {
+            "description": "Saldırı başına yakutlu yolculuk maliyetini tahmin edin; yakutlu yolculuk seçilirse pozitif değer gerekir.",
+            "label": "Saldırı başına yakut",
+            "recommendation": "Yolculuk Tüyü ile 0; yakutlu yolculukta gerçek pozitif maliyeti kullanın."
+          }
+        },
+        "image": {
+          "alt": "Otomatik Danışman sikke, yakut, tüy ve zaman atlama rezervlerinin örneği",
+          "caption": "Maliyet alanları planlama tahminidir; saklama değerleri kullanılmayan kaynak veya zaman atlama öğelerini gösterir."
+        },
+        "title": "Kaynak bütçelerini ve rezervleri ayarlayın"
+      },
+      "overview": {
+        "image": {
+          "alt": "Otomatik Danışman ilerleme ve kayıp görünümünün örneği",
+          "caption": "Görünüm, yeni dizi başlatmadan ilerlemeyi ve kayıpları gösterir."
+        },
+        "items": {
+          "live_progress": {
+            "description": "Görünümde mevcut ve istenen saldırı sayısını, galibiyetleri, yenilgileri, kayıp birlikleri ve araçları okuyun.",
+            "label": "Canlı Danışman dizisi"
+          },
+          "no_relaunch": {
+            "description": "Aynı etkinlikte tamamlanmış veya iptal edilmiş bir dizi otomatik olarak yeniden başlamaz.",
+            "label": "Tamamlanan veya iptal edilen dizi"
+          },
+          "refresh_overview": {
+            "description": "Danışman dizisinin güncel ilerleme, galibiyet, yenilgi ve kayıplarını isteyin.",
+            "label": "Görünümü yenile"
+          }
+        },
+        "title": "Canlı Danışman dizisini inceleyin"
+      },
+      "sizing": {
+        "image": {
+          "alt": "Otomatik Danışman saldırı sayısı ve etkinlik süresi ayarlarının örneği",
+          "caption": "İstenen sayı başlatılmadan önce mevcut kaynaklar ve etkinlik süresiyle sınırlandırılır."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "Bu tek Danışman dizisindeki saldırıların üst sınırını ayarlayın; kaynaklar ve kalan süre gerçek sayıyı azaltabilir.",
+            "label": "Azami saldırı",
+            "recommendation": "Kaynaklar ve etkinlik süresi dizi boyutunu belirlesin diye 9.999."
+          },
+          "minimum_remaining": {
+            "description": "Başlatma öncesi etkinlik süresi hesabında bu kadar dakikayı kullanılmadan bırakın.",
+            "label": "Etkinlik bitmeden dur",
+            "recommendation": "30 dakika; bu, devam eden bir dizi iptal zamanlayıcısı değildir."
+          }
+        },
+        "title": "Dizi boyutunu ve etkinlik süresini ayarlayın"
+      }
+    },
+    "feature": {
+      "description": "Otomatik Danışman, mevcut kaynaklara ve etkinlikte kalan süreye göre boyutlandırılmış tek bir Göçebe veya Samuray Danışmanı saldırı dizisi başlatır.",
+      "expectation": "Dizi, etkinliğin uygun zorluğunu ve açılmış Danışman erişimini bekler; kaydetmek veya açmak jeton harcamaz, ancak onaylanan etkinleştirme harcayabilir.",
+      "name": "Otomatik Danışman",
+      "summary": "Kaynaklara göre boyutlandırılmış tek bir Göçebe veya Samuray Danışmanı dizisi başlatın"
+    },
+    "recommendationIntro": "Önerilen değerler Otomatik Danışman'ın olağan kullanımını açıklar; bunlar yol gösterir ve kayıtlı ayarları değiştirmez."
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "10 dk sakla",
+            "description": "Bu kadar 10 dakikalık hızlandırma eşyasını kullanmadan saklayın.",
+            "recommendation": "Normal Han saldırı zincirleri için 0."
+          },
+          "keep_1m": {
+            "label": "1 dk sakla",
+            "description": "Bu kadar 1 dakikalık hızlandırma eşyasını kullanmadan saklayın.",
+            "recommendation": "Normal Han saldırı zincirleri için 0."
+          },
+          "keep_24h": {
+            "label": "24 sa sakla",
+            "recommendation": "İnşaat veya başka işler için gerekli stoğu ayır.",
+            "description": "Bu kadar 24 saatlik hızlandırma eşyasını kullanmadan saklayın."
+          },
+          "keep_30m": {
+            "label": "30 dk sakla",
+            "description": "Bu kadar 30 dakikalık hızlandırma eşyasını kullanmadan saklayın.",
+            "recommendation": "Normal Han saldırı zincirleri için 0."
+          },
+          "keep_5h": {
+            "label": "5 sa sakla",
+            "recommendation": "İnşaat veya başka işler için gerekli stoğu ayır.",
+            "description": "Bu kadar 5 saatlik hızlandırma eşyasını kullanmadan saklayın."
+          },
+          "keep_5m": {
+            "label": "5 dk sakla",
+            "description": "Bu kadar 5 dakikalık hızlandırma eşyasını kullanmadan saklayın.",
+            "recommendation": "Normal Han saldırı zincirleri için 0."
+          },
+          "keep_1h": {
+            "description": "Bu kadar 1 saatlik hızlandırma eşyasını kullanmadan saklayın.",
+            "label": "1 saat sakla",
+            "recommendation": "Normal Han saldırı zincirleri için 0."
+          },
+          "skip_cooldowns": {
+            "description": "Saldırılardan sonra kampın bekleme süresini kaldırmak için yeterli hızlandırma eşyası ayırıp kullanın.",
+            "label": "Her Han kampı beklemesini atla",
+            "recommendation": "Açık; mevcut ayarlar penceresi kaydetmek için bunu gerektirir."
+          },
+          "skip_shortage": {
+            "description": "Kullanılabilir hızlandırmalar gereken bekleme süresini kaldıramadığında yeni kamp saldırıları duraklar.",
+            "label": "Yeterli kullanılabilir hızlandırma yok"
+          }
+        },
+        "image": {
+          "alt": "Otomatik Han bekleme atlama ve hızlandırma rezervlerinin temsili görünümü",
+          "caption": "Rezervler dakika değil, eşya sayısıdır."
+        },
+        "title": "Bekleme atlamayı ve rezervleri ayarlayın"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "Günlük normal saldırı sınırı",
+            "description": "Hesap genelindeki günlük normal saldırı sayısına ulaşıldığında bu otomasyonun yeni kamp saldırılarını durdurun; 0 bu sınırı kapatır.",
+            "recommendation": "Hesap genelinde sınır gerekmiyorsa 0."
+          },
+          "event_end": {
+            "label": "Etkinlik bitmeden dur",
+            "description": "Etkinlik bitmeden bu kadar dakika önce yeni kamp saldırılarını durdurun.",
+            "recommendation": "5 dakika."
+          },
+          "nomad_points": {
+            "description": "Bildirilen bu puana ulaşıldığında yeni Han saldırılarını durdurun, yoldaki saldırıları geri çağırın ve ana kapıları açın; 0 bu durdurmayı kapatır.",
+            "label": "Göçebe puanında durdur",
+            "recommendation": "Seçilen puanda durup korunmak istemiyorsanız 0."
+          },
+          "replenish_tools": {
+            "description": "Yakutla fiyatlandırılan paketleri reddederek Savunma Düzeni eksiklerini uygun tekliflerden tamamlayın.",
+            "label": "Savunma araçlarını tamamla",
+            "recommendation": "Uygun otomatik satın almaları istiyorsanız açık."
+          }
+        },
+        "image": {
+          "alt": "Otomatik Han puan, araç ve günlük sınır ayarlarının temsili görünümü",
+          "caption": "Pozitif Göçebe puanı sınırı, yoldaki Han saldırılarını geri çağırır ve ana kapıları açar."
+        },
+        "title": "Puan, tedarik ve günlük sınırları ayarlayın"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "Ayarları kaydet",
+            "description": "Seçilen kaleleri, düzenleri, öfke denetimlerini, sınırları, hızlandırma rezervlerini ve koruma ayarlarını kaydedin."
+          },
+          "enable_switch": {
+            "description": "Ana kale savunmasını kontrol ettikten sonra Otomatik Han'ı Otomasyon kartından etkinleştirin.",
+            "label": "Otomatik Han anahtarı",
+            "recommendation": "Kaydettikten ve savunmayı hazırladıktan sonra açık."
+          },
+          "station_priority": {
+            "description": "Otomatik Sığınma, gelen oyuncu saldırılarını Han misillemelerinden ayrı yönetir.",
+            "label": "Otomatik Sığınma önceliği"
+          }
+        },
+        "image": {
+          "alt": "Otomatik Han kaydetme ve etkinleştirme akışının temsili görünümü",
+          "caption": "Han misillemelerini açmadan önce ana kalenin savunmasını kontrol edin."
+        },
+        "title": "Otomatik Han'ı kaydedip etkinleştirin"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Atla yolculuk hızlandırması",
+            "recommendation": "Hızlı yolculuk için Yolculuk Tüyü.",
+            "description": "Kamp saldırıları için tüy, sikke veya yakut yolculuğunu seçin."
+          },
+          "open_settings": {
+            "label": "Ayarları açın",
+            "description": "Otomasyon sayfasında Otomatik Han kartının ayarlar düğmesini seçin."
+          },
+          "attack_from": {
+            "description": "Han kampı saldırılarını sağlayacak Büyük İmparatorluk ana kalesini veya ileri karakolunu seçin.",
+            "label": "Saldırı kaynağı",
+            "recommendation": "Varsa hücum ordunuzun bulunduğu ileri karakolu kullanın."
+          },
+          "camp_attack_preset": {
+            "description": "Normal Han kampı saldırıları için kayıtlı bir Saldırı Düzeni seçin.",
+            "label": "Kamp saldırısı düzeni",
+            "recommendation": "Önce normal Han saldırı düzeninizi oluşturun."
+          },
+          "defend_at": {
+            "description": "Han misillemeleri burada gösterilen Büyük İmparatorluk ana kalesinde savunulur; bu alan salt okunurdur.",
+            "label": "Savunma konumu"
+          },
+          "main_defense_preset": {
+            "description": "Misillemelerden önce ana kaleye yeniden uygulanan kayıtlı bir Savunma Düzeni seçin.",
+            "label": "Ana savunma düzeni",
+            "recommendation": "Normal Han savunma düzeninizi oluşturup birliklerini ve araçlarını hazırlayın."
+          }
+        },
+        "image": {
+          "alt": "Otomatik Han kale, düzen ve yolculuk ayarlarının temsili görünümü",
+          "caption": "Saldırı zincirini açmadan önce iki düzeni de ve ana kale savunmasını hazırlayın."
+        },
+        "title": "Kaleleri, düzenleri ve yolculuğu seçin"
+      },
+      "protection": {
+        "image": {
+          "alt": "Otomatik Han ana kale duvarı korumasının temsili görünümü",
+          "caption": "Duvar koruması yalnızca saldırı kaynağı ana kaleyse uygulanır."
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "Duvar üzerindeki hücum birlikleri bu sayıya ulaştığında ana kale korumasını başlatın.",
+            "label": "Hücum duvar birliği eşiği",
+            "recommendation": "1.000 hücum duvar birliği."
+          },
+          "outpost_source": {
+            "description": "Saldırılar ileri karakoldan gönderildiğinde ve ana kale ayrı savunulduğunda bu duvar koruması devre dışıdır.",
+            "label": "Kaynak ileri karakol"
+          },
+          "protect_offense": {
+            "description": "Ana kaleden saldırırken, duvarda çok fazla hücum birliği savunacaksa kapıları açın ve Han'ı duraklatın.",
+            "label": "Ana kale duvarındaki hücum birliklerini koru",
+            "recommendation": "Ana kale saldırı kaynağıysa açık."
+          }
+        },
+        "title": "Ana kale duvarını koruyun"
+      },
+      "rage": {
+        "image": {
+          "alt": "Otomatik Han öfke ve saldırı izni ayarlarının temsili görünümü",
+          "caption": "Süreli Öfke puanı güçlendiricisi, öfke sancaklarından ayrıdır."
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "Öfke işlemleri, bekleme ve savunma sürerken yeni kamp saldırılarını durdurun.",
+            "label": "Otomatik Han saldırılarını kilitle",
+            "recommendation": "Normal kamp saldırıları için kapalı."
+          },
+          "max_rage_chain": {
+            "description": "Bu etkinlikte kabul edilen misillemeleri sınırlayın; sınıra ulaşınca yeni kamp saldırıları durur ve 0 sınırı kaldırır.",
+            "label": "Azami öfke zinciri",
+            "recommendation": "Misilleme sınırı gerekmiyorsa 0."
+          },
+          "rage_booster": {
+            "description": "Yeni otomatik kamp saldırılarına yalnızca süreli Öfke puanı güçlendiricisi etkinken izin verin.",
+            "label": "Öfke puanı güçlendiricisi gerektir",
+            "recommendation": "Yalnızca güçlendiricili saldırılar istemiyorsanız kapalı."
+          },
+          "rage_continues": {
+            "description": "Öfke zinciri sınırı, tam öfkede misilleme başlatmayı, bekleme işlemlerini veya savunmanın yenilenmesini durdurmaz.",
+            "label": "Öfke işlemleri sürer"
+          },
+          "trigger_full_rage": {
+            "description": "Öfke dolduğunda Han misillemesini başlatın.",
+            "label": "Tam öfkede Han'ı tetikle",
+            "recommendation": "Ana kale savunmaya hazırsa açık."
+          }
+        },
+        "title": "Öfke ve saldırı izinlerini ayarlayın"
+      }
+    },
+    "feature": {
+      "description": "Otomatik Han, Han kampına saldırır, bekleme sürelerini kaldırır, tam öfkede misilleme başlatır ve ana kalenin savunmasını sürdürür.",
+      "expectation": "Belirlenen sınırlara ulaşıldığında veya kaynaklar azaldığında yeni kamp saldırıları duraklar ve ana kale korunur; gelen oyuncu saldırılarını Otomatik Sığınma yönetir.",
+      "name": "Otomatik Han",
+      "summary": "Han kampına art arda saldırın ve ana kalenizi misillemelere karşı savunun"
+    },
+    "recommendationIntro": "Önerilen değerler Otomatik Han'ın normal kullanımına yöneliktir; kaydedilmiş ayarları değiştirmez."
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "Auto Beri, seçtiğiniz saldırı şablonunu kullanarak size ait Berimond kampına askerleri oranlı biçimde takviye eder; ardından kulelere saldırabilir, araçları yenileyebilir ve doğrulanmış ganimetle inşa yapabilir.",
+      "expectation": "Transferler, kamp ve kaynak kalenin güncel envanterini, bildirilen kapasiteyi ve önceki sevkiyatın tamamlanmasını bekler; kısmi stok daha küçük sevkiyata izin verirken gerekli bir türün yokluğu takviyeyi durdurur.",
+      "name": "Auto Beri Dünyası",
+      "summary": "Berimond kampınızı besleyin ve yönetin"
+    },
+    "recommendationIntro": "Önerilen seçimler Auto Beri'nin olağan kullanımı içindir; yalnızca yol gösterir ve kayıtlı ayarları değiştirmez.",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "Auto Beri isteğe bağlı kamp inşaatı ayarlarının temsili görünümü",
+          "caption": "Yerleşik ve kayıtlı hedef, yakalama modları, 5. seviye ahır, odun ve taş yedekleri ile yedi zaman atlama süresi."
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "Taşınamayan veya depolanamayan yönetilmeyen yapıların tam hedefte kaldırılmasına izin verin.",
+            "label": "Yıkıma izin ver",
+            "recommendation": "Hedefte nelerin kaldırılacağını incelemediyseniz kapalı tutun."
+          },
+          "allow_premium_costs": {
+            "description": "Premium para harcayan uygun inşaat adımlarına izin verin.",
+            "label": "Premium harcamalara izin ver",
+            "recommendation": "Premium inşaatı bilerek istiyorsanız açın; aksi halde kapalı tutun."
+          },
+          "auto_beri_builder_lane": {
+            "description": "Başka krallıktan kaynak taşımadan, doğrulanmış geri dönen ganimetle etkin Berimond kampı hedefini inşa edin veya yükseltin.",
+            "label": "Auto Beri inşa hattı",
+            "recommendation": "Harcama izinlerini gözden geçirdikten sonra olağan kamp inşası için açın."
+          },
+          "camp_resource_reserves": {
+            "description": "Seçilen odun ve taş miktarlarını kamp inşasında harcamayın.",
+            "label": "Kamp kaynak rezervleri",
+            "recommendation": "Fazlalık kullanılabiliyorsa odun 0 ve taş 0."
+          },
+          "construction_time_skip_reserves": {
+            "description": "1 dk, 5 dk, 10 dk, 30 dk, 1 sa, 5 sa ve 24 sa atlamalarından kaç tane saklanacağını ayrı ayrı belirleyin.",
+            "label": "İnşaat hızlandırma rezervleri",
+            "recommendation": "Kısa atlamaların her birinden 0 saklayın; 1, 5 ve 24 saatlik stoğu başka işler için ayırın."
+          },
+          "optional_custom_camp_target": {
+            "description": "Temel binalar için İşlevsel, süssüz bina konumları için Düzen veya desteklenen tüm ayrıntılar için Tam yakalayın.",
+            "label": "İsteğe bağlı özel kamp hedefi",
+            "recommendation": "İncelenmiş özel bir hedef gerekmedikçe yerleşik hedefi kullanın."
+          },
+          "stable_target": {
+            "description": "Yerleşik hedef için fraksiyon ahırının 1 ile 5 arasındaki seviyesini seçin.",
+            "label": "Ahır hedefi",
+            "recommendation": "Kaynaklar yeterliyse olağan etkinlik inşası için seviye 5."
+          },
+          "use_construction_time_skips": {
+            "description": "Seçilen inşa atlama yedeklerini koruyarak doğrulanmış kamp inşasını hızlandırın.",
+            "label": "İnşaat hızlandırmalarını kullan",
+            "recommendation": "Atlama stoku yeterliyse olağan inşa için açın."
+          },
+          "keep_skip_10m": {
+            "description": "Bu sayıda 10m inşa atlamasını ayrı tutun; olağan kullanım için yedeği 0 yapın.",
+            "label": "10m atlamalarını sakla"
+          },
+          "keep_skip_1h": {
+            "description": "Bu sayıda 1h inşa atlamasını başka etkinlikler için ayırın.",
+            "label": "1h atlamalarını sakla"
+          },
+          "keep_skip_1m": {
+            "description": "Bu sayıda 1m inşa atlamasını ayrı tutun; olağan kullanım için yedeği 0 yapın.",
+            "label": "1m atlamalarını sakla"
+          },
+          "keep_skip_24h": {
+            "description": "Bu sayıda 24h inşa atlamasını başka etkinlikler için ayırın.",
+            "label": "24h atlamalarını sakla"
+          },
+          "keep_skip_30m": {
+            "description": "Bu sayıda 30m inşa atlamasını ayrı tutun; olağan kullanım için yedeği 0 yapın.",
+            "label": "30m atlamalarını sakla"
+          },
+          "keep_skip_5h": {
+            "description": "Bu sayıda 5h inşa atlamasını başka etkinlikler için ayırın.",
+            "label": "5h atlamalarını sakla"
+          },
+          "keep_skip_5m": {
+            "description": "Bu sayıda 5m inşa atlamasını ayrı tutun; olağan kullanım için yedeği 0 yapın.",
+            "label": "5m atlamalarını sakla"
+          },
+          "saved_targets": {
+            "description": "Yakalama, incelenmiş özel hedefi hemen kaydedip etkinleştirir; başka bir kayıtlı hedefi seçmek de onu hemen etkinleştirir.",
+            "label": "Kayıtlı özel hedefler"
+          },
+          "stone_reserve": {
+            "description": "Bu kamp taşı miktarını inşa harcamalarından ayrı tutun; fazlalık harcanabiliyorsa 0 kullanın.",
+            "label": "Taş yedeği"
+          },
+          "use_built_in_default": {
+            "description": "Kayıtlı özel hedefleri koruyarak hemen yerleşik hedefe dönün.",
+            "label": "Yerleşik varsayılanı kullan"
+          },
+          "wood_reserve": {
+            "description": "Bu kamp odunu miktarını inşa harcamalarından ayrı tutun; fazlalık harcanabiliyorsa 0 kullanın.",
+            "label": "Odun yedeği"
+          }
+        },
+        "title": "İsteğe bağlı kamp inşaatını seçin"
+      },
+      "readiness": {
+        "image": {
+          "alt": "Auto Beri kule saldırısı hazırlık ayarlarının temsili görünümü",
+          "caption": "Canlı güçlendirici veya müşteri verisi izlenimi vermeyen güçlendirici durumu ve şablon donanımı."
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "Saldırıları açmadan önce seçilen şablonun dalgalarını, askerlerini ve araçlarını inceleyin.",
+            "label": "Saldırı şablonu donanımı",
+            "recommendation": "Normal saldırı hızınız için kaynak kalede ve kampta yeterli sayıda seçili asker ve araç bulundurun."
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "Transferler, araç alımları, kamp kurulumu, kule saldırıları veya inşaat için etkin Cesaret güçlendiricisi zorunlu olsun.",
+            "label": "Yalnızca Cesaret güçlendiricisiyle çalıştır",
+            "recommendation": "Tüm Auto Beri hatlarını güçlendiriciye bağlamak istiyorsanız açın."
+          }
+        },
+        "title": "Kule saldırısı hazırlığını ayarlayın"
+      },
+      "save": {
+        "image": {
+          "alt": "Auto Beri kaydetme ve etkinleştirme ayarlarının temsili görünümü",
+          "caption": "Canlı hesap göstermeyen kayıtlı kurulum listesi, anahtar ve isteğe bağlı takvim."
+        },
+        "items": {
+          "automation_switch": {
+            "description": "Kampı, kaynak askerlerini, şablonu ve isteğe bağlı harcama ayarlarını doğruladıktan sonra Otomasyon kartından Auto Beri Dünyası'nı açın.",
+            "label": "Otomasyon anahtarı",
+            "recommendation": "Kurulumdan sonra açın."
+          },
+          "calendar": {
+            "description": "Sürekli çalışma için takvimi kapalı bırakın veya zaman aralığı gerekiyorsa olağan saatlerinizi ayarlayıp takvimi kaydedin.",
+            "label": "Takvim",
+            "recommendation": "Sürekli etkinlik çalışması için kapalı tutun."
+          },
+          "save_settings": {
+            "description": "Otomasyonu açmadan önce şablonu, kaynak kaleyi, transfer sıklığını, saldırı sınırlarını, araçları ve isteğe bağlı inşaat seçimlerini kaydedin.",
+            "label": "Ayarları kaydet"
+          }
+        },
+        "title": "Kaydedin ve etkinleştirin"
+      },
+      "setup": {
+        "image": {
+          "alt": "Auto Beri saldırı ve kaynak ayarlarının temsili görünümü",
+          "caption": "Kayıtlı saldırı şablonu, Büyük İmparatorluk kaynak kalesi, Seyahat Tüyü, saldırı denetimi ve günlük sınır."
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "Auto Beri'nin yeni bir kule saldırısı için ne sıklıkla denetim yapacağını ayarlayın.",
+            "label": "Saldırı denetim aralığı",
+            "recommendation": "Daha az denetim istemiyorsanız olağan 30 saniyelik aralığı koruyun."
+          },
+          "attack_preset": {
+            "description": "Kayıtlı bir Berimond saldırı dizilişi seçin; Auto Beri bunun asker karışımını hem transferlerde hem de kule saldırılarında kullanır.",
+            "label": "Saldırı şablonu",
+            "recommendation": "Önce olağan Berimond şablonunuzu oluşturup seçin."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Hesap genelindeki günlük normal saldırı sayısına ulaşıldığında yeni Auto Beri kule saldırılarını durdurun; 0 bu ek sınırı kaldırır.",
+            "label": "Günlük normal saldırı sınırı",
+            "recommendation": "Hesap genelinde sınır kullanmıyorsanız 0."
+          },
+          "horse_travel_boost": {
+            "description": "Kule saldırılarında tüy, sikke veya yakut seyahatini seçin.",
+            "label": "At seyahat güçlendirmesi",
+            "recommendation": "Yakutlu seyahati seçmeden hızlı yolculuk için Seyahat Tüyü."
+          },
+          "open_settings": {
+            "description": "Otomasyon sayfasında Auto Beri Dünyası kartının ayarlarını açın.",
+            "label": "Ayarları aç"
+          },
+          "source_castle": {
+            "description": "Bu askerleri sağlayan Büyük İmparatorluk kalesini veya ileri karakolunu seçin.",
+            "label": "Kaynak kale",
+            "recommendation": "Saldırı ordunuzun bulunduğu kaleyi seçin."
+          }
+        },
+        "title": "Saldırı ve kaynak seçiminizi yapın"
+      },
+      "tools": {
+        "image": {
+          "alt": "Auto Beri kamp araçları ayarlarının temsili görünümü",
+          "caption": "Üç araç alt sınırı ve açıkça kurgusal bir kamp envanteri."
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "Aynı kurala göre kampta bu sayıda koçbaşı bulundurun.",
+            "label": "Koçbaşı alt sınırı",
+            "recommendation": "Olağan şablonunuzun kullanımına göre ayarlayın."
+          },
+          "mantlets_minimum": {
+            "description": "Aynı kurala göre kampta bu sayıda siper bulundurun.",
+            "label": "Siper alt sınırı",
+            "recommendation": "Olağan şablonunuzun kullanımına göre ayarlayın."
+          },
+          "scaling_ladders_minimum": {
+            "description": "Uygun sikke teklifleriyle kampta bu sayıda merdiven bulundurun; 0 bunları yönetmez.",
+            "label": "Tırmanma merdiveni alt sınırı",
+            "recommendation": "Olağan şablonunuzun ve saldırı hızınızın gerektirdiği sayıyı seçin."
+          }
+        },
+        "title": "Kamp araçlarını koruyun"
+      },
+      "transfers": {
+        "image": {
+          "alt": "Auto Beri oranlı asker transferi ayarlarının temsili görünümü",
+          "caption": "Kurgusal 2:1 şablon karışımı, kamp stoku, boş kapasite ve tek türden kısmi sevkiyat; değerler örnektir, kayıtlı varsayılanlar değildir."
+        },
+        "items": {
+          "check_interval": {
+            "description": "Auto Beri'nin boş transfer kapasitesini ve iki kalenin envanterini ne sıklıkla yenileyeceğini ayarlayın.",
+            "label": "Denetim aralığı",
+            "recommendation": "Olağan 30 saniyelik aralığı koruyun."
+          },
+          "food_only": {
+            "description": "Yalnızca yiyecekle beslenen şablon askerleri transfer edilebilir; desteklenmeyen birimler veya çözümlenemeyen asker aileleri açıklamayla beklemeye alınır.",
+            "label": "Yalnızca yiyecekli transferler"
+          },
+          "minimum_free_capacity": {
+            "description": "Transferleri yalnızca bildirilen boş kapasite bu eşiğe ulaştığında başlatın; tek bir oranlı sevkiyat daha küçük olabilir.",
+            "label": "Asgari boş kapasite",
+            "recommendation": "Olağan orantılı ikmal için 1 boş asker yeri."
+          },
+          "owned_berimond_camp": {
+            "description": "Auto Beri size ait Berimond kampını otomatik bulur, bu yüzden kamp kimliği girilmez.",
+            "label": "Size ait Berimond kampı"
+          },
+          "partial_donor": {
+            "description": "Kaynak kalede gereken asker türünden bir miktar varsa Auto Beri daha azını gönderir; hiç yoksa başka tür göndermek yerine bekler.",
+            "label": "Kısmi kaynak stoku"
+          },
+          "pending_transfer": {
+            "description": "Auto Beri şablon karışımını yeniden hesaplamadan önce her sevkiyatın varmasını ve kamp stokunun yenilenmesini bekler.",
+            "label": "Bekleyen transfer"
+          },
+          "preset_troop_mix": {
+            "description": "Auto Beri, seçili şablonun dalgaları ve avlusundaki tekrarlanan asker yuvalarını toplar, sonra en eksik türü sırayla takviye eder.",
+            "label": "Şablon asker karışımı"
+          },
+          "troop_transport_skip": {
+            "description": "Transfer hızlandırması açıkken kullanılacak öğenin süresini seçin.",
+            "label": "Asker transferi hızlandırması",
+            "recommendation": "Olağan doğrulanmış aktarımlar için 1 saatlik atlamayı kullanın."
+          },
+          "use_troop_transport_time_skips": {
+            "description": "Seçilen hızlandırmayı hâlâ yolda olan doğrulanmış transfere uygulayın.",
+            "label": "Asker transferinde hızlandırma kullan",
+            "recommendation": "Atlama stoğunuz izin veriyorsa olağan kamp ikmali için açın."
+          }
+        },
+        "title": "Oranlı asker transferlerini ayarlayın"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "Auto Storm, Fırtına kalesi açıp inşa edebilir, kalelere ve kaynak adalarına saldırabilir, asker getirebilir ve seçili Luna ödüllerini satın alabilir.",
+      "expectation": "Her işlem güncel oyun verilerini ve kayıtlı izinlerinizi kullanır; premium inşaat, saldırılar ve alımlar açtığınız seçimlerle sınırlıdır.",
+      "name": "Auto Storm",
+      "summary": "Fırtına kalenizi, saldırıları ve ödülleri yönetin"
+    },
+    "recommendationIntro": "Öneriler Auto Storm'un olağan kullanımı içindir; yalnızca yol gösterir ve kayıtlı ayarları değiştirmez.",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "Fırtına kalesine erişim ve hedef kaydı için örnek görüntü",
+          "caption": "Başlangıç kalesi seçimi, kayıt modları ve isteğe bağlı hedef etkinleştirme; gerçek satın alma veya hesap gösterilmez."
+        },
+        "items": {
+          "automatic_open": {
+            "description": "Fırtına kilitliyken mevcut resmî başlangıç kalesini seçin ve açmaya izin vermeden önce gösterilen fiyatı kontrol edin.",
+            "label": "Fırtına kalesini otomatik aç",
+            "recommendation": "Auto Storm'un fiyatı kontrol ettikten sonra olağan başlangıç kalesini açmasını istiyorsanız açık."
+          },
+          "blueprint": {
+            "description": "Kaydedilen hedef hemen saklanıp etkinleşir; Hedefi duraklat uzlaştırmayı durdurur ama saklanan hedefleri tutar.",
+            "label": "Kayıtlı hedef",
+            "recommendation": "Normal inşaat için incelenmiş İşlevsel hedefi etkin tutun."
+          },
+          "capture_castle": {
+            "description": "Bir inşaat hedefi kaydetmeden önce mevcut Fırtına kalenizi seçin.",
+            "label": "Fırtına kalesi",
+            "recommendation": "Yönetmek istediğiniz kaleyi kaydedin."
+          },
+          "combat_only": {
+            "description": "Hisar ve ada çatışmaları için kayıtlı bir inşaat hedefi gerekmez.",
+            "label": "Hedef olmadan savaş"
+          },
+          "decoration_preset": {
+            "description": "İnşaattan sonra isterseniz seçili bir dekorasyon ön ayarı uygulayın.",
+            "label": "İnşaat sonrası dekorasyon ön ayarı",
+            "recommendation": "Ayrı bir dekorasyon düzeni istemiyorsanız boş bırakın."
+          },
+          "exact": {
+            "description": "Tam kopya için desteklenen tüm hedef ayrıntılarını kaydedin.",
+            "label": "Tam kayıt",
+            "recommendation": "Yalnızca tüm hedefi inceledikten sonra kullanın."
+          },
+          "functional": {
+            "description": "Her bina konumunu kopyalamadan temel Fırtına işlevleri için bir hedef kaydedin.",
+            "label": "İşlevsel kayıt",
+            "recommendation": "Olağan bakım için İşlevsel."
+          },
+          "layout": {
+            "description": "Dekorasyonlar olmadan bina türlerini ve konumlarını kaydedin.",
+            "label": "Düzen kaydı",
+            "recommendation": "Yalnızca bina yerleşimi önemliyse kullanın."
+          },
+          "open_settings": {
+            "description": "Auto Storm ayarlarını Otomasyon kartından açın.",
+            "label": "Ayarları aç"
+          },
+          "starter_castle": {
+            "description": "Sonraki kilitli sezon için şu anda mevcut resmî Fırtına başlangıç kalesini seçin.",
+            "label": "Açılacak kale",
+            "recommendation": "Fiyatı kontrol edip karşılayabildiğiniz olağan başlangıç kalesini seçin."
+          }
+        },
+        "title": "Fırtına kalenizi açıp kaydedin"
+      },
+      "combat": {
+        "image": {
+          "alt": "Hisar ve ada saldırısı ayarlarının örnek görüntüsü",
+          "caption": "Örnek Akuamarin adaları, hisar seviyeleri, hedef sırası ve işgal savunucuları."
+        },
+        "items": {
+          "defenders": {
+            "description": "Ele geçirilen adada kalacak savunucu türlerini ve sayılarını seçin; boş liste doğrulanmış zaferden sonra bir sağ kalan bırakır.",
+            "label": "Ada savunma birimleri",
+            "recommendation": "Bir sağ kalan planınıza yetmiyorsa savunucu seçin."
+          },
+          "fort_preset": {
+            "description": "Hisarlar için kayıtlı asker ve araç düzeni seçin.",
+            "label": "Hisar saldırı ön ayarı",
+            "recommendation": "Olağan hisar ön ayarınızı kullanın."
+          },
+          "forts": {
+            "description": "Seçilen 40–80 arası resmî hisar seviyelerine saldırıları açın.",
+            "label": "Fırtına hisarları",
+            "recommendation": "Seçili ön ayarınızın güvenilir biçimde yenebildiği seviyelerde açık."
+          },
+          "horse": {
+            "description": "Fırtına saldırıları için tüy, sikke veya yakut seyahatini seçin.",
+            "label": "At seyahati güçlendirmesi",
+            "recommendation": "Yakut seyahati seçmeden hızlı gitmek için Seyahat Tüyü."
+          },
+          "island_preset": {
+            "description": "Adalar için kayıtlı asker ve araç düzeni seçin.",
+            "label": "Ada saldırı ön ayarı",
+            "recommendation": "Olağan ada ön ayarınızı kullanın."
+          },
+          "island_resources": {
+            "description": "Hangi odun, taş veya Akuamarin adalarına saldırılabileceğini seçin.",
+            "label": "Ada kaynakları",
+            "recommendation": "Akuamarin toplamak için Akuamarin'i seçin."
+          },
+          "island_sizes": {
+            "description": "Seçili kaynakların büyük, küçük veya her iki ada boyutunu seçin.",
+            "label": "Ada boyutları",
+            "recommendation": "Olağan Akuamarin toplama için büyük ve küçük."
+          },
+          "islands": {
+            "description": "Seçili kaynak ve boyutlardaki adaların ele geçirilmesini açın.",
+            "label": "Kaynak adaları",
+            "recommendation": "Büyük ve küçük adalardan Akuamarin istiyorsanız açık."
+          },
+          "minimum_attacks": {
+            "description": "Yalnızca en az bu kadar saldırı hakkı kalan hisarlara saldırın.",
+            "label": "Asgari kalan saldırı",
+            "recommendation": "0 her uygun hisara izin verir."
+          },
+          "priority": {
+            "description": "Etkin ada ve kale hedef gruplarını sıralayın; her grupta önce en yakın uygun hedefe saldırılır.",
+            "label": "Saldırı hedefi önceliği",
+            "recommendation": "Akuamarin için büyük adalar, küçük adalar, sonra seviye 80'den 40'a hisarlar."
+          }
+        },
+        "title": "Hisarları ve kaynak adalarını seçin"
+      },
+      "construction": {
+        "image": {
+          "alt": "İnşaat ve rezerv ayarlarının örnek görüntüsü",
+          "caption": "Kaynak taşımacılığı, harcama izinleri, rezervler ve liman seviyesi örnek kontrollerdir."
+        },
+        "items": {
+          "demolition": {
+            "description": "Taşınamayan veya depolanamayan binaların tam hedefte kaldırılmasına izin verin.",
+            "label": "Yıkıma izin ver",
+            "recommendation": "İncelenmiş düzeni yeniden kurmuyorsanız kapalı."
+          },
+          "donor_reserves": {
+            "description": "Kaynak taşınmadan önce her kaynak kalede seçilen odun, taş ve Akuamarin miktarını koruyun.",
+            "label": "Korunan kaynak kale rezervleri",
+            "recommendation": "Olağan odun ve taş inşaat bütçenizi koruyun; kullanılmıyorsa Akuamarin 0."
+          },
+          "harbor_level": {
+            "description": "Liman hedef seviyesini 1, 2 veya 3 seçin; 2 ve 3 premium inşaat yolu kullanır.",
+            "label": "Liman hedef seviyesi",
+            "recommendation": "Premium yükseltme planlamıyorsanız seviye 1."
+          },
+          "harbor": {
+            "description": "Kaydedilen hedef farklı olsa bile limanı seçili seviyede tutun.",
+            "label": "Limanı yükselt",
+            "recommendation": "Olağan kullanım için seviye 1 ile açık."
+          },
+          "premium": {
+            "description": "Premium para harcayan uygun inşaat adımlarına izin verin.",
+            "label": "Premium harcamalara izin ver",
+            "recommendation": "Premium inşaat planlamıyorsanız kapalı."
+          },
+          "resource_transport": {
+            "description": "Kaynak kalelerden eksik inşaat kaynaklarının doğrulanmış sevkiyatlarına izin verin.",
+            "label": "Eksik kaynakları taşı",
+            "recommendation": "Olağan inşaat için açık."
+          },
+          "skip_reserves": {
+            "description": "İnşa ve taşımalar için 1 dk, 5 dk, 10 dk, 30 dk, 1 sa, 5 sa ve 24 sa öğelerinden seçilen sayıyı saklayın.",
+            "label": "Rezervde tutulan zaman hızlandırmaları",
+            "recommendation": "Başka yerde gerekmiyorsa kısa hızlandırmalar 0; 1, 5 ve 24 saatlik stoğunuzu diğer etkinlikler için ayırın."
+          },
+          "storm_reserves": {
+            "description": "Seçilen odun, taş ve akuamarin miktarlarını inşadan ayrı tutun.",
+            "label": "Fırtına kalesi harcama rezervleri",
+            "recommendation": "Fazlalık harcanabiliyorsa odun 0 ve taş 0; akuamarini planlanan ödül bütçenize göre belirleyin."
+          },
+          "time_skips": {
+            "description": "Seçilen yedekleri koruyarak uygun atlamaları inşa, kaynak taşıma ve asker taşıma için uygulayın.",
+            "label": "İnşa ve taşıma atlamalarını kullan",
+            "recommendation": "Olağan inşaatı hızlandırmak istiyorsanız açık."
+          }
+        },
+        "title": "İnşaatı ve kaynak korumasını ayarlayın"
+      },
+      "luna": {
+        "image": {
+          "alt": "Luna ödül ayarlarının örnek görüntüsü",
+          "caption": "Akuamarin rezervi, sınırlı alış hedefleri, yinelenebilir ödüller ve öncelik."
+        },
+        "items": {
+          "cost_cap": {
+            "description": "Her ödül için oyunun bildirdiği maliyeti ve satın alma sınırını okuyun.",
+            "label": "Maliyet ve satın alma sınırı",
+            "recommendation": "Açmadan önce iki salt okunur değeri de kontrol edin."
+          },
+          "keep_aqua": {
+            "description": "Bu kadar Akuamarin'i Luna alımları dışında tutun.",
+            "label": "Akuamarin sakla",
+            "recommendation": "Tüm fazla miktar ödüllere gidebiliyorsa 0; değilse planladığınız miktarı ayırın."
+          },
+          "priority": {
+            "description": "Mağaza önce düşük numaralı satın alma hedeflerini değerlendirir.",
+            "label": "Öncelik",
+            "recommendation": "1, 2 ve 3'ü istediğiniz sıraya koyup sınırlı hedefleri sınırsız ödüllerden önce yerleştirin."
+          },
+          "search": {
+            "description": "Bir alış ayarlamadan önce resmî Luna ödüllerini adına göre arayın.",
+            "label": "Luna ödülü bul",
+            "recommendation": "Gerçekten istediğiniz ödülü arayın."
+          },
+          "target_total": {
+            "description": "Sınırlı ödül için istenen toplam satın alma sayısını ayarlayın.",
+            "label": "Hedef toplam",
+            "recommendation": "Yalnızca almak istediğiniz sayıyı ayarlayın."
+          },
+          "unlimited": {
+            "description": "Rezerv ve mağaza sınırı izin verdikçe uygun yinelenebilir ödülü satın almaya devam edin.",
+            "label": "Sınırsız",
+            "recommendation": "Yalnızca düzenli istediğiniz yinelenebilir ödüllerde açık."
+          },
+          "use": {
+            "description": "Otomatik alıma uygun hale getirmek için bir ödül seçin.",
+            "label": "Ödülü kullan",
+            "recommendation": "Yalnızca istediğiniz ödülleri açın."
+          }
+        },
+        "title": "Luna Akuamarin ödüllerini seçin"
+      },
+      "save": {
+        "image": {
+          "alt": "Auto Storm kaydetme ve açma örneği",
+          "caption": "Günlük saldırı sınırı, politika kontrolü, salt okunur harita yenileme ve otomasyon anahtarı."
+        },
+        "items": {
+          "daily_limit": {
+            "description": "Hesap genelindeki günlük normal saldırı sayısına ulaşınca yeni Auto Storm saldırılarını durdurun; 0 bu ek sınırı kaldırır.",
+            "label": "Günlük normal saldırı sınırı",
+            "recommendation": "Hesap genelinde sınır kullanmıyorsanız 0."
+          },
+          "enable": {
+            "description": "Kayıtlı seçimler hazırken Otomasyon kartından Auto Storm'u açın.",
+            "label": "Otomasyon anahtarı",
+            "recommendation": "Kurulumdan sonra açın."
+          },
+          "map_refresh": {
+            "description": "Fırtına haritasının resmî yenileme aralığını okuyun.",
+            "label": "Harita yenileme aralığı",
+            "recommendation": "Salt okunur aralık 2 saattir; değişikliklerden sonra yeni taramayı bekleyin."
+          },
+          "policy_check": {
+            "description": "Auto Storm'un ayarları ve uygun işleri ne sıklıkla kontrol edeceğini belirleyin.",
+            "label": "Politika kontrol aralığı",
+            "recommendation": "Olağan 30 saniyelik aralığı koruyun."
+          },
+          "save": {
+            "description": "Otomasyonu açmadan önce kale, inşaat, savaş, asker ithali ve Luna seçimlerini kaydedin.",
+            "label": "Ayarları kaydet",
+            "recommendation": "Tüm harcama izinlerini inceleyip kaydedin."
+          }
+        },
+        "title": "Auto Storm'u kaydedip açın"
+      },
+      "troops": {
+        "image": {
+          "alt": "Asker ithali ve salt okunur tahminlerin örnek görüntüsü",
+          "caption": "Kaynak kale sırası, saklanan 1.000 asker ve salt okunur kapasite tahminleri."
+        },
+        "items": {
+          "attack_history": {
+            "description": "Sunucu sıfırlamasından beri doğrulanan Fırtına saldırılarını 24'e bölün; bu kayan 24 saatlik ortalama değildir.",
+            "label": "Sıfırlamadan beri ortalama saldırılar",
+            "recommendation": "İthalat ihtiyacını değiştirmeden önce bu salt okunur tahmini inceleyin."
+          },
+          "committed_cap": {
+            "description": "Konuşlanmış askerleri, hareketleri, sevkiyatları ve dönüşleri içeren otomatik hesaplanan sınırı okuyun.",
+            "label": "Fırtına için bağlı asker sınırı",
+            "recommendation": "İthali artırmadan önce bu salt okunur sınırı inceleyin."
+          },
+          "donors": {
+            "description": "Kaynak kaleleri gösterilen sırada seçin; kısmi stok daha küçük sevkiyat sağlayabilir.",
+            "label": "Kaynak kaleler",
+            "recommendation": "Olağan asker kaynaklarınızı tercih sıranızda seçin."
+          },
+          "import": {
+            "description": "Eksik saldırı veya seçili savunma askerlerini kaynak kalelerden Fırtına'ya getirin.",
+            "label": "Eksik askerleri ithal et",
+            "recommendation": "Fırtına kaleniz düzenli asker desteği gerektiriyorsa açık."
+          },
+          "map_coverage": {
+            "description": "Görüntülenen hedeflere güvenmeden önce harita kapsamını inceleyin.",
+            "label": "Harita kapsamı",
+            "recommendation": "Hedef yoksa güncel kapsamı bekleyin."
+          },
+          "minimum_kept": {
+            "description": "Saldırı başlatıldıktan sonra Fırtına'da en az bu kadar asker tutup etkin ön ayar karışımını koruyun.",
+            "label": "Gönderim sonrası tutulan asgari asker",
+            "recommendation": "Gerçek ordunuza göre ayarlanmış olağan rezerv olarak 1.000 asker."
+          },
+          "preset_average": {
+            "description": "Ada savunucuları dahil etkin saldırı ön ayarlarının ortalama asker gereksinimini okuyun.",
+            "label": "Ortalama etkin ön ayar",
+            "recommendation": "Bu salt okunur tahmini ordunuzla karşılaştırın."
+          }
+        },
+        "title": "Fırtına askerlerini getirin ve izleyin"
+      }
+    }
+  }
+}

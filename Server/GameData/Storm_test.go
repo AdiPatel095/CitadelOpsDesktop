@@ -94,3 +94,21 @@ func TestStormCastleOptionsUseOfficialKingdomAndLevel(t *testing.T) {
 		t.Fatal("level-locked Storm castle was accepted")
 	}
 }
+
+// Every supported shop plan must fit one descriptor list, including future
+// catalog additions. Planning deduplicates IDs before producing list leaves.
+func TestStormShopSupportedProductsFitPresentationList(t *testing.T) {
+	if len(stormShopProductIDs) != 17 {
+		t.Fatalf("review shop cardinality after catalog change: %d", len(stormShopProductIDs))
+	}
+	if len(stormShopProductIDs) > 32 {
+		t.Fatal("supported shop exceeds presentation leaf bound")
+	}
+	seen := map[int64]bool{}
+	for _, id := range stormShopProductIDs {
+		if seen[id] {
+			t.Fatalf("duplicate supported product %d", id)
+		}
+		seen[id] = true
+	}
+}

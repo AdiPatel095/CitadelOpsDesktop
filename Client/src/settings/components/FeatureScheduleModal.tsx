@@ -1,3 +1,4 @@
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useState } from 'react';
 import { CalendarDays } from 'lucide-react';
 import { Badge, SettingsModal } from '../../components/ui';
@@ -256,7 +257,7 @@ export const FeatureScheduleModal: React.FC<FeatureScheduleModalProps> = ({
       maxWidth="full"
       title={`${featureLabel} Schedule`}
       icon={<CalendarDays className="h-5 w-5" />}
-      titleTrailing={isDirty ? <Badge variant="warning">Unsaved</Badge> : undefined}
+      titleTrailing={isDirty ? <Badge variant="warning"><LocalizedText messageKey="ui.settings.components.featureScheduleModal.unsaved.6250d572" /></Badge> : undefined}
       onSave={handleSave}
       saveLabel="Save Schedule"
       saveDisabled={!isDirty}

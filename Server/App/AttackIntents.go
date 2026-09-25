@@ -1,6 +1,7 @@
 package App
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -40,7 +41,7 @@ func planSpyLaunch(_ context.Context, input Intent.PlanningContext, arguments js
 		return Intent.Plan{}, err
 	}
 	if request.TargetX < 0 || request.TargetY < 0 {
-		return Intent.Plan{}, fmt.Errorf("target coordinates must be non-negative")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("target coordinates must be non-negative"), Localization.New("server.app.target_coordinates_must_be.0f93b493", "target coordinates must be non-negative", nil))
 	}
 	source, err := sourceCastle(input.State, request.SourceCastleID)
 	if err != nil {
@@ -50,7 +51,7 @@ func planSpyLaunch(_ context.Context, input Intent.PlanningContext, arguments js
 		request.SpyCount = 1
 	}
 	if request.SpyCount < 1 || request.SpyCount > 100 {
-		return Intent.Plan{}, fmt.Errorf("spyCount must be between 1 and 100")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("spyCount must be between 1 and 100"), Localization.New("server.app.spycount_must_be_between.4ccdd7dd", "spyCount must be between 1 and 100", nil))
 	}
 	payload, _ := json.Marshal(struct {
 		SourceID State.CastleID  `json:"SID"`
@@ -69,8 +70,8 @@ func planSpyLaunch(_ context.Context, input Intent.PlanningContext, arguments js
 			"castle:" + strconv.FormatInt(int64(source.ID), 10),
 			fmt.Sprintf("spy-target:%d:%d:%d", request.KingdomID, request.TargetX, request.TargetY),
 		},
-		Summary: fmt.Sprintf("Spy on %d:%d with %d agent(s)", request.TargetX, request.TargetY, request.SpyCount),
-		Steps:   []Intent.Step{commandStep("Launch spy mission", "csm", payload, "csm")},
+		Summary: fmt.Sprintf("Spy on %d:%d with %d agent(s)", request.TargetX, request.TargetY, request.SpyCount), SummaryDescriptor: Localization.New("server.app.spy_on_p_p.2b36db0f", "Spy on {p0}:{p1} with {p2} agent(s)", Localization.Params{"p0": request.TargetX, "p1": request.TargetY, "p2": request.SpyCount}),
+		Steps: []Intent.Step{commandStep("Launch spy mission", "csm", payload, "csm", Localization.New("server.app.launch_spy_mission.05b23221", "Launch spy mission", nil))},
 	}, nil
 }
 
@@ -101,7 +102,7 @@ func planMaidenCommsWave(_ context.Context, input Intent.PlanningContext, argume
 	if request.RunID != "" {
 		current := input.State.Rift.MaidenRun
 		if current == nil || current.Status != "running" || current.ID != request.RunID {
-			return Intent.Plan{}, fmt.Errorf("Rift Maiden run %s is no longer active", request.RunID)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("Rift Maiden run %s is no longer active", request.RunID), Localization.New("server.app.rift_maiden_run_p.ece8e8ac", "Rift Maiden run {p0} is no longer active", Localization.Params{"p0": fmt.Sprintf("%s", request.RunID)}))
 		}
 		maidenRun = current
 		source, err = sourceCastle(input.State, current.SourceCastleID)
@@ -109,10 +110,10 @@ func planMaidenCommsWave(_ context.Context, input Intent.PlanningContext, argume
 			return Intent.Plan{}, err
 		}
 		if source.X != current.SourceX || source.Y != current.SourceY || source.KingdomID != current.KingdomID {
-			return Intent.Plan{}, fmt.Errorf("%w: the Rift Maiden run's source castle changed", Intent.ErrPlanStale)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("%w: the Rift Maiden run's source castle changed", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.b0293027", "intent plan became stale before dispatch: the Rift Maiden run's source castle changed", nil))
 		}
 		if request.UnitID != current.UnitID || request.HorseTravelBoostID != current.HorseTravelBoostID {
-			return Intent.Plan{}, fmt.Errorf("%w: the Rift Maiden run's probe settings changed", Intent.ErrPlanStale)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("%w: the Rift Maiden run's probe settings changed", Intent.ErrPlanStale), Localization.New("server.app.intent_plan_became_stale.22a7e04c", "intent plan became stale before dispatch: the Rift Maiden run's probe settings changed", nil))
 		}
 		allowed := make(map[State.CommanderID]struct{}, len(current.CommanderIDs))
 		for _, commanderID := range current.CommanderIDs {
@@ -121,33 +122,33 @@ func planMaidenCommsWave(_ context.Context, input Intent.PlanningContext, argume
 		if request.CommanderSelection != nil {
 			for _, commanderID := range request.CommanderSelection.Candidates {
 				if _, ok := allowed[commanderID]; !ok {
-					return Intent.Plan{}, fmt.Errorf("commander %d is not assigned to Rift Maiden run %s", commanderID, current.ID)
+					return Intent.Plan{}, Localization.WithError(fmt.Errorf("commander %d is not assigned to Rift Maiden run %s", commanderID, current.ID), Localization.New("server.app.commander_p_is_not.e57130d9", "commander {p0} is not assigned to Rift Maiden run {p1}", Localization.Params{"p0": fmt.Sprintf("%d", commanderID), "p1": fmt.Sprintf("%s", current.ID)}))
 				}
 			}
 		}
 	}
 	if request.UnitID <= 0 {
-		return Intent.Plan{}, fmt.Errorf("unitWodID must identify a probe unit in the main castle")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("unitWodID must identify a probe unit in the main castle"), Localization.New("server.app.unitwodid_must_identify_a.a810416b", "unitWodID must identify a probe unit in the main castle", nil))
 	}
 	if input.GameData == nil {
-		return Intent.Plan{}, fmt.Errorf("official game data is unavailable")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	units, err := input.GameData.Catalog("units")
 	if err != nil {
 		return Intent.Plan{}, err
 	}
 	if _, exists := units.Find(strconv.FormatInt(int64(request.UnitID), 10)); !exists {
-		return Intent.Plan{}, fmt.Errorf("unit %d is not in the official catalog", request.UnitID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("unit %d is not in the official catalog", request.UnitID), Localization.New("server.app.unit_p_is_not.3618fe57", "unit {p0} is not in the official catalog", Localization.Params{"p0": fmt.Sprintf("%d", request.UnitID)}))
 	}
 	booster, premiumTravel, err := resolveCastleHorseTravelBoostFields(
 		input.GameData, source, request.HorseTravelBoostID,
 	)
 	if err != nil {
-		return Intent.Plan{}, fmt.Errorf("resolve Rift probe horse travel boost: %w", err)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("resolve Rift probe horse travel boost: %w", err), Localization.ErrorContext(Localization.New("server.app.resolve_rift_probe_horse.e8670ea8", "resolve Rift probe horse travel boost", nil), err))
 	}
 	availableUnits := source.Units.Stationed[request.UnitID]
 	if availableUnits < maidenProbeCountPerFlank*3 {
-		return Intent.Plan{}, fmt.Errorf("main castle has %d of unit %d; at least %d are required", availableUnits, request.UnitID, maidenProbeCountPerFlank*3)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("main castle has %d of unit %d; at least %d are required", availableUnits, request.UnitID, maidenProbeCountPerFlank*3), Localization.New("server.app.main_castle_has_p.2a5228f9", "main castle has {p0} of unit {p1}; at least {p2} are required", Localization.Params{"p0": availableUnits, "p1": fmt.Sprintf("%d", request.UnitID), "p2": fmt.Sprintf("%d", maidenProbeCountPerFlank*3)}))
 	}
 	target, ok := riftTargetForKingdom(input.State, source.KingdomID)
 	if maidenRun != nil {
@@ -155,7 +156,7 @@ func planMaidenCommsWave(_ context.Context, input Intent.PlanningContext, argume
 		ok = ok && target.TypeID == riftMapTypeID
 	}
 	if !ok {
-		return Intent.Plan{}, fmt.Errorf("the Rift map tile is unknown; refresh the surrounding map first")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("the Rift map tile is unknown; refresh the surrounding map first"), Localization.New("server.app.the_rift_map_tile.5b5a905b", "the Rift map tile is unknown; refresh the surrounding map first", nil))
 	}
 	eligibleCommanders := maidenCandidateCommanders(input.State)
 	if request.CommanderIDs != nil {
@@ -176,7 +177,7 @@ func planMaidenCommsWave(_ context.Context, input Intent.PlanningContext, argume
 	}
 	defaultCount := min(availableEligible, maximumByStock)
 	if request.CommanderSelection == nil && defaultCount == 0 {
-		return Intent.Plan{}, fmt.Errorf("no free commander has a shield-maiden relic in the supported effect range")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("no free commander has a shield-maiden relic in the supported effect range"), Localization.New("server.app.no_free_commander_has.16da28dd", "no free commander has a shield-maiden relic in the supported effect range", nil))
 	}
 	if request.CommanderSelection != nil {
 		requestedCount := request.CommanderSelection.Count
@@ -184,7 +185,7 @@ func planMaidenCommsWave(_ context.Context, input Intent.PlanningContext, argume
 			requestedCount = 1
 		}
 		if requestedCount > maximumByStock {
-			return Intent.Plan{}, fmt.Errorf("main castle probe stock supports %d commander(s), not %d", maximumByStock, requestedCount)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("main castle probe stock supports %d commander(s), not %d", maximumByStock, requestedCount), Localization.New("server.app.main_castle_probe_stock.1ae52fc6", "main castle probe stock supports {p0} commander(s), not {p1}", Localization.Params{"p0": maximumByStock, "p1": requestedCount}))
 		}
 		if maidenRun != nil && requestedCount > maidenRun.RequestedAttacks-maidenRun.AttacksLaunched {
 			return Intent.Plan{}, fmt.Errorf(
@@ -239,8 +240,8 @@ func planMaidenCommsWave(_ context.Context, input Intent.PlanningContext, argume
 			Class: Intent.AdmissionAttackLaunch, Module: "riftMaiden",
 			Affinity: "castle:" + strconv.FormatInt(int64(source.ID), 10),
 		},
-		Summary: fmt.Sprintf("Launch %d shield-maiden Rift probe(s)", len(resolution.Selected)),
-		Steps:   steps,
+		Summary: fmt.Sprintf("Launch %d shield-maiden Rift probe(s)", len(resolution.Selected)), SummaryDescriptor: Localization.New("server.app.launch_p_shield_maiden.4174b767", "Launch {p0} shield-maiden Rift probe(s)", Localization.Params{"p0": len(resolution.Selected)}),
+		Steps: steps,
 	}, nil
 }
 
@@ -309,7 +310,7 @@ func planAllianceTargetAttack(_ context.Context, input Intent.PlanningContext, a
 		return Intent.Plan{}, err
 	}
 	if input.GameData == nil {
-		return Intent.Plan{}, fmt.Errorf("official game data is unavailable")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	var commanderSelection *craCommanderSelectionRequest
 	if request.PreviewCommanderID != nil {
@@ -322,7 +323,7 @@ func planAllianceTargetAttack(_ context.Context, input Intent.PlanningContext, a
 		DefaultCount: 1, RequireAvailable: true,
 	})
 	if err != nil {
-		return Intent.Plan{}, fmt.Errorf("select a free commander: %w", err)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("select a free commander: %w", err), Localization.ErrorContext(Localization.New("server.app.select_a_free_commander.76a6223a", "select a free commander", nil), err))
 	}
 	commanderID := resolution.Selected[0]
 	capacity, err := resolveAllianceTargetAttackCapacity(input, request, commanderID, false)
@@ -331,7 +332,7 @@ func planAllianceTargetAttack(_ context.Context, input Intent.PlanningContext, a
 	}
 	limitedPreset := AttackPresets.LimitToCapacity(request.Preset, capacity)
 	if _, err := buildAttackSetup(invasionAttackSetup(limitedPreset), source, input.GameData); err != nil {
-		return Intent.Plan{}, fmt.Errorf("validate CRA-capped attack preset %q: %w", request.Preset.Name, err)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("validate CRA-capped attack preset %q: %w", request.Preset.Name, err), Localization.ErrorContext(Localization.New("server.app.validate_cra_capped_attack.988edd48", "validate CRA-capped attack preset {p0}", Localization.Params{"p0": fmt.Sprintf("%q", request.Preset.Name)}), err))
 	}
 	resolved := resolvedAllianceTargetAttackRequest{
 		allianceTargetAttackRequest: request,
@@ -353,12 +354,12 @@ func planAllianceTargetAttack(_ context.Context, input Intent.PlanningContext, a
 			time.Since(input.State.Player.LegendSkills.ObservedAt) >= 5*time.Minute) {
 		steps = append(steps, contextCommandStep(
 			"Refresh Hall of Legends attack limits", "skl", json.RawMessage(`{}`), "skl",
-		))
+		).WithNameDescriptor(Localization.New("server.app.refresh_hall_of_legends.2b74581a", "Refresh Hall of Legends attack limits", nil)))
 	}
 	steps = append(steps, generalSkillsContextSteps(input.State, commanderID, time.Now().UTC())...)
 	steps = append(steps, attackCastleContextStep(source))
 	steps = append(steps, deferredCRACommandStep(
-		"Build and launch alliance target attack", "alliance.target.attack.build", resolvedArguments, contextPayload,
+		"Build and launch alliance target attack", "alliance.target.attack.build", resolvedArguments, contextPayload, Localization.New("server.app.build_and_launch_alliance.2600bd7f", "Build and launch alliance target attack", nil),
 	))
 	castleID := strconv.FormatInt(int64(source.ID), 10)
 	claims := []string{
@@ -371,8 +372,8 @@ func planAllianceTargetAttack(_ context.Context, input Intent.PlanningContext, a
 		Admission: &Intent.Admission{
 			Class: Intent.AdmissionAttackLaunch, Module: manualAllianceAttackModuleID, Affinity: "castle:" + castleID,
 		},
-		Summary: fmt.Sprintf("Attack player castle at %d:%d with %s", request.TargetX, request.TargetY, request.Preset.Name),
-		Steps:   steps,
+		Summary: fmt.Sprintf("Attack player castle at %d:%d with %s", request.TargetX, request.TargetY, request.Preset.Name), SummaryDescriptor: Localization.New("server.app.attack_player_castle_at.d5d2ca05", "Attack player castle at {p0}:{p1} with {p2}", Localization.Params{"p0": request.TargetX, "p1": request.TargetY, "p2": fmt.Sprintf("%s", request.Preset.Name)}),
+		Steps: steps,
 	}, nil
 }
 
@@ -386,42 +387,42 @@ func allianceTargetAttackContext(
 	}
 	if input.State.Player.ProtectionMode.PreparingOrActive(time.Now().UTC()) {
 		return allianceTargetAttackRequest{}, State.CastleState{},
-			fmt.Errorf("player attacks are disabled while Protection Mode is preparing or active")
+			Localization.WithError(fmt.Errorf("player attacks are disabled while Protection Mode is preparing or active"), Localization.New("server.app.player_attacks_are_disabled.fb31aec6", "player attacks are disabled while Protection Mode is preparing or active", nil))
 	}
 	if request.SourceCastleID <= 0 || request.KingdomID != 0 || request.TargetX < 0 || request.TargetY < 0 {
 		return allianceTargetAttackRequest{}, State.CastleState{},
-			fmt.Errorf("alliance target attack requires a Great Empire source and valid target coordinates")
+			Localization.WithError(fmt.Errorf("alliance target attack requires a Great Empire source and valid target coordinates"), Localization.New("server.app.alliance_target_attack_requires.606b5ad1", "alliance target attack requires a Great Empire source and valid target coordinates", nil))
 	}
 	source, exists := input.State.Castles[request.SourceCastleID]
 	if !exists || source.KingdomID != request.KingdomID {
 		return allianceTargetAttackRequest{}, State.CastleState{},
-			fmt.Errorf("source castle %d is not an owned Great Empire castle", request.SourceCastleID)
+			Localization.WithError(fmt.Errorf("source castle %d is not an owned Great Empire castle", request.SourceCastleID), Localization.New("server.app.source_castle_p_is.d2605c80", "source castle {p0} is not an owned Great Empire castle", Localization.Params{"p0": fmt.Sprintf("%d", request.SourceCastleID)}))
 	}
 	if source.X == request.TargetX && source.Y == request.TargetY {
-		return allianceTargetAttackRequest{}, State.CastleState{}, fmt.Errorf("source and target castle cannot be the same")
+		return allianceTargetAttackRequest{}, State.CastleState{}, Localization.WithError(fmt.Errorf("source and target castle cannot be the same"), Localization.New("server.app.source_and_target_castle.79947ddf", "source and target castle cannot be the same", nil))
 	}
 	if source.UnitsObservedAt.IsZero() {
 		return allianceTargetAttackRequest{}, State.CastleState{},
-			fmt.Errorf("source castle %d troop and tool inventory has not been observed", source.ID)
+			Localization.WithError(fmt.Errorf("source castle %d troop and tool inventory has not been observed", source.ID), Localization.New("server.app.source_castle_p_troop.0e32fbca", "source castle {p0} troop and tool inventory has not been observed", Localization.Params{"p0": fmt.Sprintf("%d", source.ID)}))
 	}
 	if strings.TrimSpace(request.Preset.Name) == "" {
-		return allianceTargetAttackRequest{}, State.CastleState{}, fmt.Errorf("attack preset name is required")
+		return allianceTargetAttackRequest{}, State.CastleState{}, Localization.WithError(fmt.Errorf("attack preset name is required"), Localization.New("server.app.attack_preset_name_is.448b98c6", "attack preset name is required", nil))
 	}
 	if request.TargetTypeID <= 0 || request.TargetLevel <= 0 {
-		return allianceTargetAttackRequest{}, State.CastleState{}, fmt.Errorf("target castle type and player level are required")
+		return allianceTargetAttackRequest{}, State.CastleState{}, Localization.WithError(fmt.Errorf("target castle type and player level are required"), Localization.New("server.app.target_castle_type_and.f7d4200d", "target castle type and player level are required", nil))
 	}
 	if request.TargetPlayerID > 0 {
 		if request.TargetPlayerID == input.State.Player.ID {
-			return allianceTargetAttackRequest{}, State.CastleState{}, fmt.Errorf("the target belongs to the current player")
+			return allianceTargetAttackRequest{}, State.CastleState{}, Localization.WithError(fmt.Errorf("the target belongs to the current player"), Localization.New("server.app.the_target_belongs_to.f2e72084", "the target belongs to the current player", nil))
 		}
 		for _, member := range input.State.Alliance.Members {
 			if member.PlayerID == request.TargetPlayerID {
-				return allianceTargetAttackRequest{}, State.CastleState{}, fmt.Errorf("the target is a current alliance member")
+				return allianceTargetAttackRequest{}, State.CastleState{}, Localization.WithError(fmt.Errorf("the target is a current alliance member"), Localization.New("server.app.the_target_is_a.57603de6", "the target is a current alliance member", nil))
 			}
 		}
 		if remaining := targetReturnProtectionSeconds(input.State, request.TargetPlayerID, time.Now().UTC()); remaining > 0 {
 			return allianceTargetAttackRequest{}, State.CastleState{},
-				fmt.Errorf("the target has %d seconds of return protection remaining", remaining)
+				Localization.WithError(fmt.Errorf("the target has %d seconds of return protection remaining", remaining), Localization.New("server.app.the_target_has_p.dcebde58", "the target has {p0} seconds of return protection remaining", Localization.Params{"p0": remaining}))
 		}
 	}
 	return request, source, nil
@@ -458,21 +459,21 @@ func (application *Application) resolveAllianceTargetAttackStep(
 	}
 	commander, exists := input.State.Commanders[resolved.CommanderID]
 	if !exists || !commander.Available || State.CommanderHasActiveMovementAt(input.State, resolved.CommanderID, time.Now().UTC()) {
-		return Intent.Step{}, fmt.Errorf("%w: commander %d is no longer available", Intent.ErrPlanStale, resolved.CommanderID)
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("%w: commander %d is no longer available", Intent.ErrPlanStale, resolved.CommanderID), Localization.New("server.app.intent_plan_became_stale.f815ae9b", "intent plan became stale before dispatch: commander {p1} is no longer available", Localization.Params{"p1": fmt.Sprintf("%d", resolved.CommanderID)}))
 	}
 	dialog := input.State.AttackDialog
 	if dialog.SourceCastleID != source.ID || dialog.KingdomID != request.KingdomID ||
 		dialog.Target.X != request.TargetX || dialog.Target.Y != request.TargetY || dialog.Target.TypeID <= 0 {
-		return Intent.Step{}, fmt.Errorf("current attack dialog does not match player target %d:%d", request.TargetX, request.TargetY)
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("current attack dialog does not match player target %d:%d", request.TargetX, request.TargetY), Localization.New("server.app.current_attack_dialog_does.3d489a2a", "current attack dialog does not match player target {p0}:{p1}", Localization.Params{"p0": request.TargetX, "p1": request.TargetY}))
 	}
 	if request.TargetTypeID > 0 && dialog.Target.TypeID != request.TargetTypeID {
-		return Intent.Step{}, fmt.Errorf("%w: target %d:%d changed castle type", Intent.ErrPlanStale, request.TargetX, request.TargetY)
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("%w: target %d:%d changed castle type", Intent.ErrPlanStale, request.TargetX, request.TargetY), Localization.New("server.app.intent_plan_became_stale.37c55b55", "intent plan became stale before dispatch: target {p1}:{p2} changed castle type", Localization.Params{"p1": fmt.Sprintf("%d", request.TargetX), "p2": fmt.Sprintf("%d", request.TargetY)}))
 	}
 	if request.TargetCastleID > 0 && dialog.Target.ObjectID > 0 && dialog.Target.ObjectID != request.TargetCastleID {
-		return Intent.Step{}, fmt.Errorf("%w: target %d:%d changed castle identity", Intent.ErrPlanStale, request.TargetX, request.TargetY)
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("%w: target %d:%d changed castle identity", Intent.ErrPlanStale, request.TargetX, request.TargetY), Localization.New("server.app.intent_plan_became_stale.ed3b7efd", "intent plan became stale before dispatch: target {p1}:{p2} changed castle identity", Localization.Params{"p1": fmt.Sprintf("%d", request.TargetX), "p2": fmt.Sprintf("%d", request.TargetY)}))
 	}
 	if request.TargetPlayerID > 0 && dialog.Target.OwnerID > 0 && dialog.Target.OwnerID != request.TargetPlayerID {
-		return Intent.Step{}, fmt.Errorf("%w: target %d:%d changed owner", Intent.ErrPlanStale, request.TargetX, request.TargetY)
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("%w: target %d:%d changed owner", Intent.ErrPlanStale, request.TargetX, request.TargetY), Localization.New("server.app.intent_plan_became_stale.c0eb37ca", "intent plan became stale before dispatch: target {p1}:{p2} changed owner", Localization.Params{"p1": fmt.Sprintf("%d", request.TargetX), "p2": fmt.Sprintf("%d", request.TargetY)}))
 	}
 	capacity, err := resolveAllianceTargetAttackCapacity(input, request, resolved.CommanderID, true)
 	if err != nil {
@@ -481,7 +482,7 @@ func (application *Application) resolveAllianceTargetAttackStep(
 	limitedPreset := AttackPresets.LimitToCapacity(request.Preset, capacity)
 	built, err := buildAttackSetup(invasionAttackSetup(limitedPreset), source, input.GameData)
 	if err != nil {
-		return Intent.Step{}, fmt.Errorf("build attack preset %q: %w", request.Preset.Name, err)
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("build attack preset %q: %w", request.Preset.Name, err), Localization.ErrorContext(Localization.New("server.app.build_attack_preset_p.5e695b86", "build attack preset {p0}", Localization.Params{"p0": fmt.Sprintf("%q", request.Preset.Name)}), err))
 	}
 	target := State.MapObservation{
 		KingdomID: request.KingdomID, X: request.TargetX, Y: request.TargetY,
@@ -489,9 +490,9 @@ func (application *Application) resolveAllianceTargetAttackStep(
 	}
 	body, err := json.Marshal(invasionAttackBody(source, target, resolved.CommanderID, built))
 	if err != nil {
-		return Intent.Step{}, fmt.Errorf("build player attack payload: %w", err)
+		return Intent.Step{}, Localization.WithError(fmt.Errorf("build player attack payload: %w", err), Localization.ErrorContext(Localization.New("server.app.build_player_attack_payload.205b53d5", "build player attack payload", nil), err))
 	}
-	return commandStep(fmt.Sprintf("Attack player castle at %d:%d", target.X, target.Y), "cra", body, "cra"), nil
+	return commandStep(fmt.Sprintf("Attack player castle at %d:%d", target.X, target.Y), "cra", body, "cra", Localization.New("server.app.attack_player_castle_at.6334a4ea", "Attack player castle at {p0}:{p1}", Localization.Params{"p0": target.X, "p1": target.Y})), nil
 }
 
 func resolveAllianceTargetAttackCapacity(
@@ -515,7 +516,7 @@ func resolveAllianceTargetAttackCapacity(
 		},
 	})
 	if err != nil {
-		return AttackCapacity.Result{}, fmt.Errorf("resolve player attack capacity: %w", err)
+		return AttackCapacity.Result{}, Localization.WithError(fmt.Errorf("resolve player attack capacity: %w", err), Localization.ErrorContext(Localization.New("server.app.resolve_player_attack_capacity.6e109f99", "resolve player attack capacity", nil), err))
 	}
 	return capacity, nil
 }
@@ -531,7 +532,7 @@ func (application *Application) planRiftReplay(_ context.Context, input Intent.P
 		return Intent.Plan{}, err
 	}
 	if request.CommanderID != nil && request.CommanderSelection != nil {
-		return Intent.Plan{}, fmt.Errorf("commanderID and commanderSelection are mutually exclusive")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("commanderID and commanderSelection are mutually exclusive"), Localization.New("server.app.commanderid_and_commanderselection_are.5cb57f03", "commanderID and commanderSelection are mutually exclusive", nil))
 	}
 	if request.HorseTravelBoostID != nil {
 		if err := validateHorseTravelBoostID(*request.HorseTravelBoostID); err != nil {
@@ -540,7 +541,7 @@ func (application *Application) planRiftReplay(_ context.Context, input Intent.P
 	}
 	request.LaunchID = strings.TrimSpace(request.LaunchID)
 	if request.LaunchID == "" {
-		return Intent.Plan{}, fmt.Errorf("launchId is required")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("launchId is required"), Localization.New("server.app.launchid_is_required.b10a5cbb", "launchId is required", nil))
 	}
 	launch, configured, err := application.riftReplayLaunch(input.State, request.LaunchID)
 	if err != nil {
@@ -548,7 +549,7 @@ func (application *Application) planRiftReplay(_ context.Context, input Intent.P
 	}
 	var fields map[string]json.RawMessage
 	if json.Unmarshal(launch.Body, &fields) != nil {
-		return Intent.Plan{}, fmt.Errorf("Rift launch %q has an invalid command body", request.LaunchID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("Rift launch %q has an invalid command body", request.LaunchID), Localization.New("server.app.rift_launch_p_has.b09d26bb", "Rift launch {p0} has an invalid command body", Localization.Params{"p0": fmt.Sprintf("%q", request.LaunchID)}))
 	}
 	if request.CommanderID != nil {
 		fields["LID"], _ = json.Marshal(*request.CommanderID)
@@ -623,7 +624,7 @@ func (application *Application) planRiftReplay(_ context.Context, input Intent.P
 	}
 	if configured && !scheduled {
 		if err := validateRepeatedAttackInventory(fields, source, len(resolution.Selected)); err != nil {
-			return Intent.Plan{}, fmt.Errorf("configured Rift launch %q inventory: %w", request.LaunchID, err)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("configured Rift launch %q inventory: %w", request.LaunchID, err), Localization.ErrorContext(Localization.New("server.app.configured_rift_launch_p.afef4c45", "configured Rift launch {p0} inventory", Localization.Params{"p0": fmt.Sprintf("%q", request.LaunchID)}), err))
 		}
 	}
 	if scheduled {
@@ -636,8 +637,8 @@ func (application *Application) planRiftReplay(_ context.Context, input Intent.P
 		})
 		return Intent.Plan{
 			Claims:  []string{"scheduled-operation:rift:" + request.LaunchID},
-			Summary: fmt.Sprintf("Schedule Rift launch %s for %s", request.LaunchID, time.Unix(normalizedArrival, 0).Format(time.RFC3339)),
-			Steps:   []Intent.Step{{Name: "Schedule Rift replay", Action: "operation.schedule", ActionArguments: schedule}},
+			Summary: fmt.Sprintf("Schedule Rift launch %s for %s", request.LaunchID, time.Unix(normalizedArrival, 0).Format(time.RFC3339)), SummaryDescriptor: Localization.New("server.app.schedule_rift_launch_p.3e3e36f7", "Schedule Rift launch {p0} for {p1}", Localization.Params{"p0": fmt.Sprintf("%s", request.LaunchID), "p1": fmt.Sprintf("%s", time.Unix(normalizedArrival, 0).Format(time.RFC3339))}),
+			Steps: []Intent.Step{{Name: "Schedule Rift replay", NameDescriptor: Localization.New("server.app.schedule_rift_replay.06415917", "Schedule Rift replay", nil), Action: "operation.schedule", ActionArguments: schedule}},
 		}, nil
 	}
 	if request.HorseTravelBoostID != nil {
@@ -645,7 +646,7 @@ func (application *Application) planRiftReplay(_ context.Context, input Intent.P
 			input.GameData, source, *request.HorseTravelBoostID,
 		)
 		if err != nil {
-			return Intent.Plan{}, fmt.Errorf("resolve Rift replay horse travel boost: %w", err)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("resolve Rift replay horse travel boost: %w", err), Localization.ErrorContext(Localization.New("server.app.resolve_rift_replay_horse.a4873101", "resolve Rift replay horse travel boost", nil), err))
 		}
 		fields["HBW"], _ = json.Marshal(booster)
 		fields["PTT"], _ = json.Marshal(premiumTravel)
@@ -671,8 +672,10 @@ func (application *Application) planRiftReplay(_ context.Context, input Intent.P
 	claims = append(claims, "attack-context")
 	claims = append(claims, craCommanderClaims(resolution.Candidates)...)
 	summary := fmt.Sprintf("Replay Rift launch %s with commander %d", request.LaunchID, resolution.Selected[0])
+	var summaryLocalizationMessage *Localization.Message = Localization.New("server.app.replay_rift_launch_p.f052376f", "Replay Rift launch {p0} with commander {p1, number}", Localization.Params{"p0": fmt.Sprintf("%s", request.LaunchID), "p1": resolution.Selected[0]})
 	if len(resolution.Selected) > 1 {
 		summary = fmt.Sprintf("Replay Rift launch %s with %d commanders", request.LaunchID, len(resolution.Selected))
+		summaryLocalizationMessage = Localization.New("server.app.replay_rift_launch_p.b707aa32", "Replay Rift launch {p0} with {p1, number} commanders", Localization.Params{"p0": fmt.Sprintf("%s", request.LaunchID), "p1": len(resolution.Selected)})
 	}
 	return Intent.Plan{
 		Claims: claims,
@@ -680,8 +683,8 @@ func (application *Application) planRiftReplay(_ context.Context, input Intent.P
 			Class: Intent.AdmissionAttackLaunch, Module: "riftReplay",
 			Affinity: "castle:" + castleID,
 		},
-		Summary: summary,
-		Steps:   steps,
+		Summary: summary, SummaryDescriptor: Localization.Clone(summaryLocalizationMessage),
+		Steps: steps,
 	}, nil
 }
 
@@ -690,7 +693,7 @@ func riftReplayTiming(launch State.RiftLaunch, arriveAt int64, now time.Time) (i
 		return 0, 0, false, nil
 	}
 	if launch.OneWayTTSeconds <= 0 {
-		return 0, 0, false, fmt.Errorf("Rift launch %q has no observed one-way travel time", launch.ID)
+		return 0, 0, false, Localization.WithError(fmt.Errorf("Rift launch %q has no observed one-way travel time", launch.ID), Localization.New("server.app.rift_launch_p_has.4211ad84", "Rift launch {p0} has no observed one-way travel time", Localization.Params{"p0": fmt.Sprintf("%q", launch.ID)}))
 	}
 	minimumArrival := roundUpUnixMinute(now.Unix() + int64(launch.OneWayTTSeconds))
 	normalizedArrival := roundUpUnixMinute(arriveAt)
@@ -717,19 +720,19 @@ func buildAttackSetupForCommanders(
 	copies int,
 ) (builtAttackSetup, error) {
 	if copies < 1 {
-		return builtAttackSetup{}, fmt.Errorf("attack setup requires at least one commander")
+		return builtAttackSetup{}, Localization.WithError(fmt.Errorf("attack setup requires at least one commander"), Localization.New("server.app.attack_setup_requires_at.53bfcc84", "attack setup requires at least one commander", nil))
 	}
 	if setup.UseTroopFamilies {
 		resolved, err := AttackPresets.ResolveTroopFamilies(
 			attackPresetFromSetup(setup), source.Units.Stationed, gameData, copies,
 		)
 		if err != nil {
-			return builtAttackSetup{}, fmt.Errorf("resolve attack troop families: %w", err)
+			return builtAttackSetup{}, Localization.WithError(fmt.Errorf("resolve attack troop families: %w", err), Localization.ErrorContext(Localization.New("server.app.resolve_attack_troop_families.b612d38c", "resolve attack troop families", nil), err))
 		}
 		setup = invasionAttackSetup(resolved)
 	}
 	if len(setup.Waves) < 1 || len(setup.Waves) > AttackPresets.MaximumWaves {
-		return builtAttackSetup{}, fmt.Errorf("attack setup must contain between 1 and %d waves", AttackPresets.MaximumWaves)
+		return builtAttackSetup{}, Localization.WithError(fmt.Errorf("attack setup must contain between 1 and %d waves", AttackPresets.MaximumWaves), Localization.New("server.app.attack_setup_must_contain.684dd56c", "attack setup must contain between 1 and {p0} waves", Localization.Params{"p0": AttackPresets.MaximumWaves}))
 	}
 	requested := map[State.UnitID]int64{}
 	unitTotal := int64(0)
@@ -737,23 +740,23 @@ func buildAttackSetupForCommanders(
 	for waveIndex, wave := range setup.Waves {
 		left, units, err := buildAttackSetupLane(wave.Left, 2, 2, gameData, requested)
 		if err != nil {
-			return builtAttackSetup{}, fmt.Errorf("wave %d left flank: %w", waveIndex+1, err)
+			return builtAttackSetup{}, Localization.WithError(fmt.Errorf("wave %d left flank: %w", waveIndex+1, err), Localization.ErrorContext(Localization.New("server.app.wave_p_left_flank.d94b672b", "wave {p0} left flank", Localization.Params{"p0": waveIndex + 1}), err))
 		}
 		unitTotal += units
 		middle, units, err := buildAttackSetupLane(wave.Middle, 6, 3, gameData, requested)
 		if err != nil {
-			return builtAttackSetup{}, fmt.Errorf("wave %d middle flank: %w", waveIndex+1, err)
+			return builtAttackSetup{}, Localization.WithError(fmt.Errorf("wave %d middle flank: %w", waveIndex+1, err), Localization.ErrorContext(Localization.New("server.app.wave_p_middle_flank.279d128f", "wave {p0} middle flank", Localization.Params{"p0": waveIndex + 1}), err))
 		}
 		unitTotal += units
 		right, units, err := buildAttackSetupLane(wave.Right, 2, 2, gameData, requested)
 		if err != nil {
-			return builtAttackSetup{}, fmt.Errorf("wave %d right flank: %w", waveIndex+1, err)
+			return builtAttackSetup{}, Localization.WithError(fmt.Errorf("wave %d right flank: %w", waveIndex+1, err), Localization.ErrorContext(Localization.New("server.app.wave_p_right_flank.eaa7fbf1", "wave {p0} right flank", Localization.Params{"p0": waveIndex + 1}), err))
 		}
 		unitTotal += units
 		waves = append(waves, attackWave{Left: left, Middle: middle, Right: right})
 	}
 	if unitTotal <= 0 {
-		return builtAttackSetup{}, fmt.Errorf("attack setup must allocate at least one troop")
+		return builtAttackSetup{}, Localization.WithError(fmt.Errorf("attack setup must allocate at least one troop"), Localization.New("server.app.attack_setup_must_allocate.9bb9c58e", "attack setup must allocate at least one troop", nil))
 	}
 	supportTroops, _, err := buildAttackSetupPairs(
 		setup.CourtyardSupport.Troops,
@@ -763,20 +766,20 @@ func buildAttackSetupForCommanders(
 		requested,
 	)
 	if err != nil {
-		return builtAttackSetup{}, fmt.Errorf("courtyard support troops: %w", err)
+		return builtAttackSetup{}, Localization.WithError(fmt.Errorf("courtyard support troops: %w", err), Localization.ErrorContext(Localization.New("server.app.courtyard_support_troops.2e5158e9", "courtyard support troops", nil), err))
 	}
 	supportTools, err := buildAttackSupportTools(setup.CourtyardSupport.Tools, gameData, requested)
 	if err != nil {
-		return builtAttackSetup{}, fmt.Errorf("courtyard support tools: %w", err)
+		return builtAttackSetup{}, Localization.WithError(fmt.Errorf("courtyard support tools: %w", err), Localization.ErrorContext(Localization.New("server.app.courtyard_support_tools.5004e58f", "courtyard support tools", nil), err))
 	}
 	for id, amount := range requested {
 		if amount > math.MaxInt64/int64(copies) {
-			return builtAttackSetup{}, fmt.Errorf("attack setup quantity for item %d is too large", id)
+			return builtAttackSetup{}, Localization.WithError(fmt.Errorf("attack setup quantity for item %d is too large", id), Localization.New("server.app.attack_setup_quantity_for.7083f89f", "attack setup quantity for item {p0} is too large", Localization.Params{"p0": fmt.Sprintf("%d", id)}))
 		}
 		required := amount * int64(copies)
 		available := source.Units.Stationed[id]
 		if required > available {
-			return builtAttackSetup{}, fmt.Errorf("castle %d has %d of item %d; %d commander(s) require %d", source.ID, available, id, copies, required)
+			return builtAttackSetup{}, Localization.WithError(fmt.Errorf("castle %d has %d of item %d; %d commander(s) require %d", source.ID, available, id, copies, required), Localization.New("server.app.castle_p_has_p.310da036", "castle {p0} has {p1} of item {p2}; {p3} commander(s) require {p4}", Localization.Params{"p0": fmt.Sprintf("%d", source.ID), "p1": available, "p2": fmt.Sprintf("%d", id), "p3": copies, "p4": required}))
 		}
 	}
 	return builtAttackSetup{Waves: waves, SupportTroops: supportTroops, SupportTools: supportTools}, nil
@@ -834,7 +837,7 @@ func buildAttackSetupPairs(
 	requested map[State.UnitID]int64,
 ) ([]attackPair, int64, error) {
 	if len(slots) > capacity {
-		return nil, 0, fmt.Errorf("%s has %d slots; at most %d are supported", collection, len(slots), capacity)
+		return nil, 0, Localization.WithError(fmt.Errorf("%s has %d slots; at most %d are supported", collection, len(slots), capacity), Localization.New("server.app.p_has_p_slots.e2290b41", "{p0} has {p1} slots; at most {p2} are supported", Localization.Params{"p0": fmt.Sprintf("%s", collection), "p1": len(slots), "p2": capacity}))
 	}
 	empty := attackPair{-1, 0}
 	result := make([]attackPair, capacity)
@@ -844,11 +847,11 @@ func buildAttackSetupPairs(
 	total := int64(0)
 	for index, slot := range slots {
 		if slot.Quantity < 0 {
-			return nil, 0, fmt.Errorf("%s slot %d has a negative quantity", collection, index+1)
+			return nil, 0, Localization.WithError(fmt.Errorf("%s slot %d has a negative quantity", collection, index+1), Localization.New("server.app.p_slot_p_has.06cfe83f", "{p0} slot {p1} has a negative quantity", Localization.Params{"p0": fmt.Sprintf("%s", collection), "p1": index + 1}))
 		}
 		if slot.ItemID == nil {
 			if slot.Quantity > 0 {
-				return nil, 0, fmt.Errorf("%s slot %d has a quantity without an item", collection, index+1)
+				return nil, 0, Localization.WithError(fmt.Errorf("%s slot %d has a quantity without an item", collection, index+1), Localization.New("server.app.p_slot_p_has.758b1073", "{p0} slot {p1} has a quantity without an item", Localization.Params{"p0": fmt.Sprintf("%s", collection), "p1": index + 1}))
 			}
 			continue
 		}
@@ -856,7 +859,7 @@ func buildAttackSetupPairs(
 			continue
 		}
 		if *slot.ItemID <= 0 {
-			return nil, 0, fmt.Errorf("%s slot %d has an invalid item", collection, index+1)
+			return nil, 0, Localization.WithError(fmt.Errorf("%s slot %d has an invalid item", collection, index+1), Localization.New("server.app.p_slot_p_has.4c56e9a7", "{p0} slot {p1} has an invalid item", Localization.Params{"p0": fmt.Sprintf("%s", collection), "p1": index + 1}))
 		}
 		if err := requireOfficialDefinition(gameData, collection, *slot.ItemID); err != nil {
 			return nil, 0, err
@@ -867,7 +870,7 @@ func buildAttackSetupPairs(
 				return nil, 0, err
 			}
 			if supportTool {
-				return nil, 0, fmt.Errorf("tool definition %d belongs in a courtyard Sceat support slot", *slot.ItemID)
+				return nil, 0, Localization.WithError(fmt.Errorf("tool definition %d belongs in a courtyard Sceat support slot", *slot.ItemID), Localization.New("server.app.tool_definition_p_belongs.c90f0ce3", "tool definition {p0} belongs in a courtyard Sceat support slot", Localization.Params{"p0": fmt.Sprintf("%d", *slot.ItemID)}))
 			}
 		}
 		id := State.UnitID(*slot.ItemID)
@@ -884,7 +887,7 @@ func buildAttackSupportTools(
 	requested map[State.UnitID]int64,
 ) ([]int64, error) {
 	if len(slots) > AttackPresets.CourtyardToolSlots {
-		return nil, fmt.Errorf("tools has %d slots; at most %d are supported", len(slots), AttackPresets.CourtyardToolSlots)
+		return nil, Localization.WithError(fmt.Errorf("tools has %d slots; at most %d are supported", len(slots), AttackPresets.CourtyardToolSlots), Localization.New("server.app.tools_has_p_slots.41c4f36a", "tools has {p0} slots; at most {p1} are supported", Localization.Params{"p0": len(slots), "p1": AttackPresets.CourtyardToolSlots}))
 	}
 	result := make([]int64, AttackPresets.CourtyardToolSlots)
 	for index := range result {
@@ -893,12 +896,12 @@ func buildAttackSupportTools(
 	for index, slot := range slots {
 		if slot.ItemID == nil {
 			if slot.Quantity != 0 {
-				return nil, fmt.Errorf("tool slot %d has a quantity without an item", index+1)
+				return nil, Localization.WithError(fmt.Errorf("tool slot %d has a quantity without an item", index+1), Localization.New("server.app.tool_slot_p_has.842f12f6", "tool slot {p0} has a quantity without an item", Localization.Params{"p0": index + 1}))
 			}
 			continue
 		}
 		if *slot.ItemID <= 0 || slot.Quantity != 1 {
-			return nil, fmt.Errorf("tool slot %d must contain exactly one valid item", index+1)
+			return nil, Localization.WithError(fmt.Errorf("tool slot %d must contain exactly one valid item", index+1), Localization.New("server.app.tool_slot_p_must.406d6bd2", "tool slot {p0} must contain exactly one valid item", Localization.Params{"p0": index + 1}))
 		}
 		if err := requireSceatAttackSupportTool(gameData, *slot.ItemID); err != nil {
 			return nil, err
@@ -919,7 +922,7 @@ func requireSceatAttackSupportTool(gameData *GameData.Store, id int64) error {
 		return err
 	}
 	if !supportTool {
-		return fmt.Errorf("tool definition %d is not an official Sceat attack support tool", id)
+		return Localization.WithError(fmt.Errorf("tool definition %d is not an official Sceat attack support tool", id), Localization.New("server.app.tool_definition_p_is.45259bd2", "tool definition {p0} is not an official Sceat attack support tool", Localization.Params{"p0": fmt.Sprintf("%d", id)}))
 	}
 	return nil
 }
@@ -931,11 +934,11 @@ func isSceatAttackSupportTool(gameData *GameData.Store, id int64) (bool, error) 
 	}
 	raw, exists := catalog.Find(strconv.FormatInt(id, 10))
 	if !exists {
-		return false, fmt.Errorf("tool definition %d is not in the current official catalog", id)
+		return false, Localization.WithError(fmt.Errorf("tool definition %d is not in the current official catalog", id), Localization.New("server.app.tool_definition_p_is.e6323455", "tool definition {p0} is not in the current official catalog", Localization.Params{"p0": fmt.Sprintf("%d", id)}))
 	}
 	record, err := GameData.DecodeRecord(raw)
 	if err != nil {
-		return false, fmt.Errorf("decode tool definition %d: %w", id, err)
+		return false, Localization.WithError(fmt.Errorf("decode tool definition %d: %w", id, err), Localization.ErrorContext(Localization.New("server.app.decode_tool_definition_p.69cf8148", "decode tool definition {p0}", Localization.Params{"p0": fmt.Sprintf("%d", id)}), err))
 	}
 	itemType, _ := record.String("type")
 	return strings.HasPrefix(itemType, "SceatSuppAtt"), nil
@@ -952,15 +955,15 @@ func planRiftTemplateRename(_ context.Context, input Intent.PlanningContext, arg
 	request.LaunchID = strings.TrimSpace(request.LaunchID)
 	request.DisplayName = strings.TrimSpace(request.DisplayName)
 	if _, exists := input.State.Rift.Launches[request.LaunchID]; !exists {
-		return Intent.Plan{}, fmt.Errorf("Rift launch %q was not found", request.LaunchID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("Rift launch %q was not found", request.LaunchID), Localization.New("server.app.rift_launch_p_was.41bd7b2a", "Rift launch {p0} was not found", Localization.Params{"p0": fmt.Sprintf("%q", request.LaunchID)}))
 	}
 	if len(request.DisplayName) > 80 {
-		return Intent.Plan{}, fmt.Errorf("Rift template names may contain at most 80 characters")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("Rift template names may contain at most 80 characters"), Localization.New("server.app.rift_template_names_may.2166d38e", "Rift template names may contain at most 80 characters", nil))
 	}
 	canonical, _ := json.Marshal(request)
 	return Intent.Plan{
-		Claims: []string{"rift-launch:" + request.LaunchID}, Summary: "Rename Rift launch " + request.LaunchID,
-		Steps: []Intent.Step{{Name: "Rename Rift template", Action: "rift.template.rename", ActionArguments: canonical}},
+		Claims: []string{"rift-launch:" + request.LaunchID}, Summary: "Rename Rift launch " + request.LaunchID, SummaryDescriptor: Localization.New("server.app.rename_rift_launch.summary", "Rename Rift launch {launch}", Localization.Params{"launch": request.LaunchID}),
+		Steps: []Intent.Step{{Name: "Rename Rift template", NameDescriptor: Localization.New("server.app.rename_rift_template.1c813c57", "Rename Rift template", nil), Action: "rift.template.rename", ActionArguments: canonical}},
 	}, nil
 }
 
@@ -973,16 +976,16 @@ func planRiftTemplateDelete(_ context.Context, input Intent.PlanningContext, arg
 	}
 	request.LaunchID = strings.TrimSpace(request.LaunchID)
 	if _, exists := input.State.Rift.Launches[request.LaunchID]; !exists {
-		return Intent.Plan{}, fmt.Errorf("Rift launch %q was not found", request.LaunchID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("Rift launch %q was not found", request.LaunchID), Localization.New("server.app.rift_launch_p_was.41bd7b2a", "Rift launch {p0} was not found", Localization.Params{"p0": fmt.Sprintf("%q", request.LaunchID)}))
 	}
 	canonical, _ := json.Marshal(request)
 	cancel, _ := json.Marshal(map[string]string{"id": "rift:" + request.LaunchID})
 	return Intent.Plan{
 		Claims:  []string{"rift-launch:" + request.LaunchID, "scheduled-operation:rift:" + request.LaunchID},
-		Summary: "Delete Rift launch " + request.LaunchID,
+		Summary: "Delete Rift launch " + request.LaunchID, SummaryDescriptor: Localization.New("server.app.delete_rift_launch.summary", "Delete Rift launch {launch}", Localization.Params{"launch": request.LaunchID}),
 		Steps: []Intent.Step{
-			{Name: "Delete Rift template", Action: "rift.template.delete", ActionArguments: canonical},
-			{Name: "Cancel scheduled replay", Action: "operation.cancel", ActionArguments: cancel},
+			{Name: "Delete Rift template", NameDescriptor: Localization.New("server.app.delete_rift_template.1df7956d", "Delete Rift template", nil), Action: "rift.template.delete", ActionArguments: canonical},
+			{Name: "Cancel scheduled replay", NameDescriptor: Localization.New("server.app.cancel_scheduled_replay.67621819", "Cancel scheduled replay", nil), Action: "operation.cancel", ActionArguments: cancel},
 		},
 	}, nil
 }
@@ -998,7 +1001,7 @@ func (application *Application) renameRiftTemplate(ctx context.Context, argument
 	event, err := application.State.ApplyComponents(State.Components(State.ComponentRift), func(gameState *State.GameState) ([]string, bool, error) {
 		launch, exists := gameState.Rift.Launches[request.LaunchID]
 		if !exists {
-			return nil, false, fmt.Errorf("Rift launch %q was not found", request.LaunchID)
+			return nil, false, Localization.WithError(fmt.Errorf("Rift launch %q was not found", request.LaunchID), Localization.New("server.app.rift_launch_p_was.41bd7b2a", "Rift launch {p0} was not found", Localization.Params{"p0": fmt.Sprintf("%q", request.LaunchID)}))
 		}
 		name := strings.TrimSpace(request.DisplayName)
 		if launch.DisplayName == name {
@@ -1066,13 +1069,13 @@ func planDecorationPreset(_ context.Context, input Intent.PlanningContext, argum
 	}
 	castle, ok := input.State.Castles[request.CastleID]
 	if !ok || request.CastleID <= 0 {
-		return Intent.Plan{}, fmt.Errorf("castle %d is not in the current player state", request.CastleID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("castle %d is not in the current player state", request.CastleID), Localization.New("server.app.castle_p_is_not.47524bcb", "castle {p0} is not in the current player state", Localization.Params{"p0": fmt.Sprintf("%d", request.CastleID)}))
 	}
 	if len(request.Items) > 500 {
-		return Intent.Plan{}, fmt.Errorf("decoration presets may contain at most 500 placements")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("decoration presets may contain at most 500 placements"), Localization.New("server.app.decoration_presets_may_contain.27d200a4", "decoration presets may contain at most 500 placements", nil))
 	}
 	if input.GameData == nil {
-		return Intent.Plan{}, fmt.Errorf("official game data is unavailable")
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("official game data is unavailable"), Localization.New("server.app.official_game_data_is.ff6f65a7", "official game data is unavailable", nil))
 	}
 	buildings, err := input.GameData.Catalog("buildings")
 	if err != nil {
@@ -1080,15 +1083,15 @@ func planDecorationPreset(_ context.Context, input Intent.PlanningContext, argum
 	}
 	for _, item := range request.Items {
 		if item.WID <= 0 || item.X < 0 || item.Y < 0 || item.R < 0 || item.R > 3 {
-			return Intent.Plan{}, fmt.Errorf("preset %q contains an invalid placement", request.PresetID)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("preset %q contains an invalid placement", request.PresetID), Localization.New("server.app.preset_p_contains_an.196db00f", "preset {p0} contains an invalid placement", Localization.Params{"p0": fmt.Sprintf("%q", request.PresetID)}))
 		}
 		raw, found := buildings.Find(strconv.FormatInt(int64(item.WID), 10))
 		if !found {
-			return Intent.Plan{}, fmt.Errorf("building definition %d is not in the official catalog", item.WID)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("building definition %d is not in the official catalog", item.WID), Localization.New("server.app.building_definition_p_is.fb62e47f", "building definition {p0} is not in the official catalog", Localization.Params{"p0": fmt.Sprintf("%d", item.WID)}))
 		}
 		record, _ := GameData.DecodeRecord(raw)
 		if !officialDecoration(record) {
-			return Intent.Plan{}, fmt.Errorf("building definition %d is not an official decoration", item.WID)
+			return Intent.Plan{}, Localization.WithError(fmt.Errorf("building definition %d is not an official decoration", item.WID), Localization.New("server.app.building_definition_p_is.e197bb1c", "building definition {p0} is not an official decoration", Localization.Params{"p0": fmt.Sprintf("%d", item.WID)}))
 		}
 	}
 	matched := make([]bool, len(request.Items))
@@ -1119,7 +1122,7 @@ func planDecorationPreset(_ context.Context, input Intent.PlanningContext, argum
 	steps := castleContextSteps(input, castle)
 	if len(remove) > 0 || unmatchedCount(matched) > 0 {
 		steps = append(steps, Intent.RebuildOnResume(Intent.Step{
-			Name: "Refresh decoration storage", Opcode: "sin", AwaitOpcode: "sin", TimeoutMillis: 10_000,
+			Name: "Refresh decoration storage", NameDescriptor: Localization.New("server.app.refresh_decoration_storage.0518abd6", "Refresh decoration storage", nil), Opcode: "sin", AwaitOpcode: "sin", TimeoutMillis: 10_000,
 			SuccessCodes: []int{0}, Command: Protocol.Command{Opcode: "sin", Bare: true},
 		}))
 	}
@@ -1128,7 +1131,7 @@ func planDecorationPreset(_ context.Context, input Intent.PlanningContext, argum
 			CastleID   State.CastleID           `json:"CID"`
 			InstanceID State.BuildingInstanceID `json:"OID"`
 		}{castle.ID, instanceID})
-		steps = append(steps, commandStep(fmt.Sprintf("Store decoration %d", instanceID), "sob", payload, "sob"))
+		steps = append(steps, commandStep(fmt.Sprintf("Store decoration %d", instanceID), "sob", payload, "sob", Localization.New("server.app.store_decoration_p.d7e8519c", "Store decoration {p0}", Localization.Params{"p0": fmt.Sprintf("%d", instanceID)})))
 	}
 	for index, item := range request.Items {
 		if matched[index] {
@@ -1143,12 +1146,12 @@ func planDecorationPreset(_ context.Context, input Intent.PlanningContext, argum
 			Order int              `json:"PO"`
 			Owner int              `json:"DOID"`
 		}{item.WID, item.X, item.Y, item.R, 0, -1, -1})
-		steps = append(steps, commandStep(fmt.Sprintf("Place decoration %d", item.WID), "ebu", payload, "ebu"))
+		steps = append(steps, commandStep(fmt.Sprintf("Place decoration %d", item.WID), "ebu", payload, "ebu", Localization.New("server.app.place_decoration_p.660e60ec", "Place decoration {p0}", Localization.Params{"p0": fmt.Sprintf("%d", item.WID)})))
 	}
 	return Intent.Plan{
 		Claims:  []string{"castle-focus", "castle:" + strconv.FormatInt(int64(castle.ID), 10), "decoration-layout"},
-		Summary: fmt.Sprintf("Apply decoration preset %s to %s (%d removals, %d placements)", request.PresetID, castleLabel(castle), len(remove), unmatchedCount(matched)),
-		Steps:   steps,
+		Summary: fmt.Sprintf("Apply decoration preset %s to %s (%d removals, %d placements)", request.PresetID, castleLabel(castle), len(remove), unmatchedCount(matched)), SummaryDescriptor: Localization.New("server.app.apply_decoration_preset_p.fa297770", "Apply decoration preset {p0} to {p1} ({p2} removals, {p3} placements)", Localization.Params{"p0": fmt.Sprintf("%s", request.PresetID), "p1": fmt.Sprintf("%s", castleLabel(castle)), "p2": len(remove), "p3": unmatchedCount(matched)}),
+		Steps: steps,
 	}, nil
 }
 
@@ -1156,7 +1159,7 @@ func sourceCastle(state State.GameState, requested State.CastleID) (State.Castle
 	if requested > 0 {
 		castle, ok := state.Castles[requested]
 		if !ok {
-			return State.CastleState{}, fmt.Errorf("source castle %d is not owned by the current player", requested)
+			return State.CastleState{}, Localization.WithError(fmt.Errorf("source castle %d is not owned by the current player", requested), Localization.New("server.app.source_castle_p_is.5c42ab21", "source castle {p0} is not owned by the current player", Localization.Params{"p0": requested}))
 		}
 		return castle, nil
 	}
@@ -1165,7 +1168,7 @@ func sourceCastle(state State.GameState, requested State.CastleID) (State.Castle
 			return castle, nil
 		}
 	}
-	return State.CastleState{}, fmt.Errorf("the main castle is not known")
+	return State.CastleState{}, Localization.WithError(fmt.Errorf("the main castle is not known"), Localization.New("server.app.the_main_castle_is.0e1a4da3", "the main castle is not known", nil))
 }
 
 func riftTargetForKingdom(state State.GameState, kingdomID State.KingdomID) (State.MapObservation, bool) {

@@ -1,3 +1,12 @@
+import {nextWakeParameters,timedRemainingParameters} from '../i18n/automationDuration';
+import {automationDetailMessage, automationStatusMessage, automationLaneMessage} from '../i18n/automationMessages';
+import {useLocalizedMessage} from '../i18n/useLocalizedMessage';
+import {messageLanguageAttributes} from '../i18n/messageLanguage';
+import {describeMessage, type MessageKey, type MessageParameters} from '../i18n/messages';
+import type {LocalizedMessage} from '../i18n/formatMessage';
+import { LocalizedRichText } from "../i18n/LocalizedRichText";
+import { useLocale as useStaticLocale } from "../i18n/LocaleContext";
+import { LocalizedText } from "../i18n/LocalizedText";
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Bot,
@@ -69,6 +78,7 @@ interface AutomationFeature {
   description: string;
   enabled: boolean;
   detail?: string;
+  detailDescriptor?: LocalizedMessage;
   status: string;
   statusLanes?: AutomationStatusLane[];
   icon: React.ComponentType<{ className?: string }>;
@@ -77,11 +87,12 @@ interface AutomationFeature {
   disabled?: boolean;
 }
 
-interface AutomationStatusLane {
+export interface AutomationStatusLane {
   id: string;
   label: string;
   status: string;
   detail?: string;
+  detailDescriptor?: LocalizedMessage;
   toggle?: {
     checked: boolean;
     onChange: (checked: boolean) => void;
@@ -103,27 +114,12 @@ const automationGroups: Array<{
   { id: 'support', name: 'Recovery & Support', icon: HeartPulse },
 ];
 
-function formatNextWake(timestamp: number, now: number): string {
-  if (timestamp <= 0) return 'Waiting for the next scheduled check';
-  const msLeft = timestamp - now;
-  if (msLeft <= 0) return 'Next check is due now';
-  const totalMinutes = Math.ceil(msLeft / 60000);
-  const days = Math.floor(totalMinutes / 1440);
-  const hours = Math.floor((totalMinutes % 1440) / 60);
-  const minutes = totalMinutes % 60;
-  if (days > 0) return `Next check in ${days}d${hours > 0 ? ` ${hours}h` : ''}`;
-  if (hours > 0) return `Next check in ${hours}h${minutes > 0 ? ` ${minutes}m` : ''}`;
-  return `Next check in ${Math.max(1, minutes)}m`;
+type DisplayTranslator = (key:MessageKey,params?:MessageParameters)=>string;
+function formatNextWake(timestamp:number,now:number,locale:string,t:DisplayTranslator):string {
+  return t('automation.nextCheck',nextWakeParameters(timestamp,now,locale));
 }
-
-function formatTimedRemaining(expiresAt: number, now: number): string {
-  const totalMinutes = Math.max(1, Math.ceil((expiresAt - now) / 60_000));
-  const days = Math.floor(totalMinutes / 1440);
-  const hours = Math.floor((totalMinutes % 1440) / 60);
-  const minutes = totalMinutes % 60;
-  if (days > 0) return `${days}d${hours > 0 ? ` ${hours}h` : ''} left`;
-  if (hours > 0) return `${hours}h${minutes > 0 ? ` ${minutes}m` : ''} left`;
-  return `${minutes}m left`;
+function formatTimedRemaining(expiresAt:number,now:number,locale:string,t:DisplayTranslator):string {
+  return t('automation.timeLeft',timedRemainingParameters(expiresAt,now,locale));
 }
 
 function modeLabel(mode: 'global' | 'perCastle'): string {
@@ -153,12 +149,19 @@ function automationStatusLane(
   runtime: AutomationStateV2 | undefined,
   enabled: boolean,
   fallbackDetail: string,
+  fallbackLane: string,
 ): AutomationStatusLane {
+  const hasRuntimeDetail = typeof runtime?.detail === 'string';
+  const detail = enabled ? hasRuntimeDetail ? runtime.detail : fallbackDetail : undefined;
+  const detailDescriptor = !enabled ? undefined
+    : hasRuntimeDetail ? automationDetailMessage(detail, runtime.detailDescriptor)
+    : describeMessage('automation.waitingLane', {lane: fallbackLane.replaceAll('-', '_')});
   return {
     id,
     label,
     status: enabled ? runtime?.status ?? 'waiting' : 'disabled',
-    detail: enabled ? runtime?.detail ?? fallbackDetail : undefined,
+    detail,
+    detailDescriptor,
   };
 }
 
@@ -174,6 +177,7 @@ function stormMissingDecorationWarningLanes(
     label: 'Builder warning',
     status: 'warning',
     detail: `${missingDecorations.toLocaleString()} target decoration${missingDecorations === 1 ? '' : 's'} unavailable in storage; skipped while the rest of the target continues.`,
+    detailDescriptor: describeMessage('automation.missingDecorations',{count:missingDecorations}),
   }];
 }
 
@@ -201,61 +205,52 @@ function automationStatusTone(status: string): StatusTone {
   }
 }
 
-function AutomationStatusLines({
+export function AutomationStatusLines({
   featureName,
   status,
   detail,
+  detailDescriptor,
   lanes,
 }: {
   featureName: string;
   status: string;
   detail?: string;
+  detailDescriptor?: LocalizedMessage;
   lanes?: AutomationStatusLane[];
 }) {
+  const {t,locale,direction} = useStaticLocale();
   const hasLanes = Boolean(lanes?.length);
   const lines: AutomationStatusLane[] = hasLanes
     ? [{ id: 'overall', label: 'Overall', status }, ...(lanes ?? [])]
-    : [{ id: 'overall', label: '', status, detail }];
+    : [{ id: 'overall', label: '', status, detail, detailDescriptor }];
 
   return (
     <div
       className={`automation-function-status-list ${hasLanes ? 'automation-function-status-list-multi' : ''}`}
-      aria-label={`${featureName} status`}
+      aria-label={t('automation.accessibleStatus',{feature:featureName})}
+      lang={locale}
+      dir={direction}
     >
-      {lines.map((line) => (
-        <div
-          key={line.id}
-          className={`ui-status ui-status-${automationStatusTone(line.status)} automation-function-status-line ${line.label ? 'automation-function-status-line-lane' : ''} ${line.toggle ? 'automation-function-status-line-toggle' : ''}`}
-        >
-          <span className="ui-status-symbol" aria-hidden="true" />
-          {line.label ? <span className="automation-function-status-lane">{line.label}</span> : null}
-          <span className="ui-status-label">{automationStatusLabel(line.status)}</span>
-          {line.detail || line.toggle ? <span className="ui-status-detail">{line.detail}</span> : null}
-          {line.toggle ? (
-            <Switch
-              checked={line.toggle.checked}
-              onChange={line.toggle.onChange}
-              size="sm"
-              ariaLabel={line.toggle.ariaLabel}
-              disabled={line.toggle.disabled}
-              className="automation-function-status-toggle"
-            />
-          ) : null}
-        </div>
-      ))}
+      {lines.map((line) => <AutomationStatusLine key={line.id} line={line} />)}
     </div>
   );
 }
 
-function automationStatusLabel(status: string): string {
-  if (!status) return 'Unknown';
-  return status.charAt(0).toUpperCase() + status.slice(1).replaceAll('_', ' ');
+function AutomationStatusLine({line}:{line:AutomationStatusLane}) {
+  const label=useLocalizedMessage(automationLaneMessage(line.id),line.label);
+  const status=useLocalizedMessage(automationStatusMessage(line.status),line.status);
+  const detail=useLocalizedMessage(line.detailDescriptor,line.detail ?? '');
+  return <div className={`ui-status ui-status-${automationStatusTone(line.status)} automation-function-status-line ${line.label ? 'automation-function-status-line-lane' : ''} ${line.toggle ? 'automation-function-status-line-toggle' : ''}`}>
+    <span className="ui-status-symbol" aria-hidden="true" />
+    {line.label ? <span className="automation-function-status-lane" {...messageLanguageAttributes(label)}>{label.text}</span> : null}
+    <span className="ui-status-label" {...messageLanguageAttributes(status)}>{status.text}</span>
+    {line.detail || line.toggle ? <span className="ui-status-detail" {...messageLanguageAttributes(detail)}>{detail.text}</span> : null}
+    {line.toggle ? <Switch checked={line.toggle.checked} onChange={line.toggle.onChange} size="sm" ariaLabel={line.toggle.ariaLabel} disabled={line.toggle.disabled} className="automation-function-status-toggle" /> : null}
+  </div>;
 }
 
-function attackRateLabel(count: number | null | undefined): string {
-  if (count === undefined) return 'Loading rate';
-  if (count === null) return 'Rate unavailable';
-  return `${count.toLocaleString()} ${count === 1 ? 'attack' : 'attacks'} / hr`;
+function attackRateLabel(count:number|null|undefined,t:DisplayTranslator):string {
+  return t('automation.rate',{state:count===undefined?'loading':count===null?'unavailable':'known',count:count??0});
 }
 
 function attackRateCount(
@@ -267,10 +262,8 @@ function attackRateCount(
   return launchesByFeature[featureID] ?? 0;
 }
 
-function attackRateTitle(featureName: string, count: number | null | undefined): string {
-  if (count === undefined) return `Loading the current ${featureName} attack rate.`;
-  if (count === null) return `The current ${featureName} attack rate is unavailable.`;
-  return `${count.toLocaleString()} ${count === 1 ? 'attack was' : 'attacks were'} launched by ${featureName} in the past 60 minutes.`;
+function attackRateTitle(featureName:string,count:number|null|undefined,t:DisplayTranslator):string {
+  return t('automation.rateTitle',{state:count===undefined?'loading':count===null?'unavailable':'known',feature:featureName,count:count??0});
 }
 
 function dailyAttackSessionCount(
@@ -282,24 +275,13 @@ function dailyAttackSessionCount(
   return session.launchesByFeature[featureID] ?? 0;
 }
 
-function dailyAttackCountLabel(count: number | null | undefined): string {
-  if (count === undefined) return 'Loading daily';
-  if (count === null) return 'Daily unavailable';
-  return `${count.toLocaleString()} since reset`;
+function dailyAttackCountLabel(count:number|null|undefined,t:DisplayTranslator):string {
+  return t('automation.daily',{state:count===undefined?'loading':count===null?'unavailable':'known',count:count??0});
 }
-
-function dailyAttackCountTitle(
-  featureName: string,
-  count: number | null | undefined,
-  sessionStartedAt?: string,
-): string {
-  if (count === undefined) return `Loading the current ${featureName} daily attack session count.`;
-  if (count === null) return `The ${featureName} daily attack session count is unavailable until a server reset boundary is observed.`;
-  const startedAt = sessionStartedAt ? new Date(sessionStartedAt) : null;
-  const boundary = startedAt && !Number.isNaN(startedAt.getTime())
-    ? ` since the server daily attack-count session began at ${startedAt.toLocaleString()}`
-    : ' in the current server daily attack-count session';
-  return `${count.toLocaleString()} confirmed ${count === 1 ? 'attack was' : 'attacks were'} launched by ${featureName}${boundary}.`;
+function dailyAttackCountTitle(featureName:string,count:number|null|undefined,sessionStartedAt:string|undefined,locale:string,t:DisplayTranslator):string {
+  const timestamp=sessionStartedAt?Date.parse(sessionStartedAt):NaN;
+  const date=Number.isFinite(timestamp)?new Intl.DateTimeFormat(locale,{dateStyle:'medium',timeStyle:'short'}).format(timestamp):'';
+  return t('automation.dailyTitle',{state:count===undefined?'loading':count===null?'unavailable':date?'dated':'known',feature:featureName,count:count??0,date});
 }
 
 export const AutomationView: React.FC<AutomationViewProps> = ({
@@ -323,6 +305,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
   onOpenFeatureSchedule,
   onOpenAutomationDuration,
 }) => {
+  const { t: localizeStatic,locale } = useStaticLocale();
   const { configuration } = useCitadelAPI();
   const {
     gameLoggedIn,
@@ -497,8 +480,9 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       description: 'Equips and renews temporary construction items automatically.',
       enabled: autoTCIEnabled,
       detail: autoTCIEnabled
-			? automationStates.autoTCI?.detail ?? formatNextWake(autoTCINextWakeUp, now)
+			? automationStates.autoTCI?.detail ?? formatNextWake(autoTCINextWakeUp, now,locale,localizeStatic)
 			: 'Construction-item automation is paused',
+      detailDescriptor: autoTCIEnabled && automationStates.autoTCI?.detail===undefined ? describeMessage('automation.nextCheck',nextWakeParameters(autoTCINextWakeUp,now,locale)) : undefined,
       status: automationStates.autoTCI?.status ?? (autoTCIEnabled ? 'waiting' : 'disabled'),
       icon: Hammer,
       onToggle: toggleAutoTCI,
@@ -516,8 +500,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 			: 'Crafting and logistics are paused',
       status: autoSceatStatus,
       statusLanes: [
-        automationStatusLane('crafting', 'Crafting', autoSceatRuntime, autoSceatResEnabled, 'Waiting for crafting policy status'),
-        automationStatusLane('logistics', 'Logistics', autoSceatLogisticsRuntime, autoSceatResEnabled, 'Waiting for logistics policy status'),
+        automationStatusLane('crafting', 'Crafting', autoSceatRuntime, autoSceatResEnabled, 'Waiting for crafting policy status', 'crafting'),
+        automationStatusLane('logistics', 'Logistics', autoSceatLogisticsRuntime, autoSceatResEnabled, 'Waiting for logistics policy status', 'logistics'),
       ],
       icon: Coins,
       onToggle: toggleAutoSceatRes,
@@ -669,10 +653,10 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 			: 'Khan camp attacks and taunts are paused',
 		status: autoKhanStatus,
 		statusLanes: [
-			automationStatusLane('attacks', 'Attacks', autoKhanAttackRuntime, autoKhanEnabled, 'Waiting for the Khan attack policy'),
-			automationStatusLane('cooldowns', 'Cooldowns', autoKhanCooldownRuntime, autoKhanEnabled, 'Waiting for the Khan cooldown policy'),
-			automationStatusLane('rage', 'Rage', autoKhanRageRuntime, autoKhanEnabled, 'Waiting for the Khan rage policy'),
-			automationStatusLane('defense', 'Defense', autoKhanDefenseRuntime, autoKhanEnabled, 'Waiting for the Khan defense policy'),
+			automationStatusLane('attacks', 'Attacks', autoKhanAttackRuntime, autoKhanEnabled, 'Waiting for the Khan attack policy', 'khan-attacks'),
+			automationStatusLane('cooldowns', 'Cooldowns', autoKhanCooldownRuntime, autoKhanEnabled, 'Waiting for the Khan cooldown policy', 'khan-cooldowns'),
+			automationStatusLane('rage', 'Rage', autoKhanRageRuntime, autoKhanEnabled, 'Waiting for the Khan rage policy', 'khan-rage'),
+			automationStatusLane('defense', 'Defense', autoKhanDefenseRuntime, autoKhanEnabled, 'Waiting for the Khan defense policy', 'khan-defense'),
 		],
 		icon: Crosshair,
 		onToggle: toggleAutoKhan,
@@ -690,15 +674,16 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
 			: 'Berimond transfers, tool purchases, tower attacks, and construction are paused',
 		status: autoBeriWorldStatus,
 		statusLanes: [
-			automationStatusLane('transfers', 'Transfers', autoBeriTransferRuntime, autoBeriWorldEnabled, 'Waiting for the Berimond transfer policy'),
-			automationStatusLane('attacks', 'Attacks', autoBeriAttackRuntime, autoBeriWorldEnabled, 'Waiting for the Berimond attack policy'),
-			automationStatusLane('tools', 'Tools', autoBeriToolRuntime, autoBeriWorldEnabled, 'Waiting for the Berimond tool policy'),
+			automationStatusLane('transfers', 'Transfers', autoBeriTransferRuntime, autoBeriWorldEnabled, 'Waiting for the Berimond transfer policy', 'beri-transfers'),
+			automationStatusLane('attacks', 'Attacks', autoBeriAttackRuntime, autoBeriWorldEnabled, 'Waiting for the Berimond attack policy', 'beri-attacks'),
+			automationStatusLane('tools', 'Tools', autoBeriToolRuntime, autoBeriWorldEnabled, 'Waiting for the Berimond tool policy', 'beri-tools'),
 			automationStatusLane(
 				'builder',
 				'Builder',
 				autoBeriBuildRuntime,
 				autoBeriWorldEnabled && autoBeriBuildEnabled,
 				'Waiting for the Berimond builder policy',
+                'beri-builder',
 			),
 		],
 		icon: Crosshair,
@@ -717,9 +702,9 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
         : 'Storm construction and attacks are paused',
       status: autoStormStatus,
       statusLanes: [
-        automationStatusLane('combat', 'Combat', autoStormRuntime, autoStormEnabled, 'Waiting for the Storm combat policy'),
-        automationStatusLane('aquamarine-shop', 'Aquamarine shop', autoStormShopRuntime, autoStormEnabled, 'Waiting for the Aquamarine shop policy'),
-        automationStatusLane('builder', 'Builder', autoStormBuildRuntime, autoStormEnabled, 'Waiting for the Storm builder policy'),
+        automationStatusLane('combat', 'Combat', autoStormRuntime, autoStormEnabled, 'Waiting for the Storm combat policy', 'storm-combat'),
+        automationStatusLane('aquamarine-shop', 'Aquamarine shop', autoStormShopRuntime, autoStormEnabled, 'Waiting for the Aquamarine shop policy', 'storm-shop'),
+        automationStatusLane('builder', 'Builder', autoStormBuildRuntime, autoStormEnabled, 'Waiting for the Storm builder policy', 'storm-builder'),
         ...stormMissingDecorationWarningLanes(autoStormBuildRuntime, autoStormEnabled),
       ],
       icon: Crosshair,
@@ -727,6 +712,8 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
       onOpenSettings: onOpenAutoStormSettings,
     },
   ], [
+    locale,
+    localizeStatic,
     autoHospitalEnabled,
     autoEquipmentCleanup,
     autoRecruitMode,
@@ -822,7 +809,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                 <span className="automation-function-group-rule" aria-hidden="true" />
                 <div className="automation-right-click-banner automation-right-click-inline" role="note">
                   <MousePointerClick aria-hidden="true" />
-                  <span><strong className="text-text-main">Right-click</strong> a toggle for temporary activation</span>
+                  <span><LocalizedRichText messageKey="ui.rich.views.automationView.right.click.a.toggle.for.temporary.activation.c34579ee" params={{}} tags={{strong0: children => <strong className="text-text-main">{children}</strong>}} /></span>
                 </div>
               </div>
               <div className="automation-function-grid">
@@ -865,26 +852,27 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                               <Badge
                                 variant="outline"
                                 className="shrink-0 whitespace-nowrap"
-                                title={attackRateTitle(feature.name, attackLaunchCount)}
+                                title={attackRateTitle(feature.name, attackLaunchCount,localizeStatic)}
                               >
-                                {attackRateLabel(attackLaunchCount)}
+                                {attackRateLabel(attackLaunchCount,localizeStatic)}
                               </Badge>
                               <Badge
                                 variant="outline"
                                 className="shrink-0 whitespace-nowrap"
-                                title={dailyAttackCountTitle(feature.name, dailyAttackLaunchCount, dailyAttackSession?.startedAt)}
+                                title={dailyAttackCountTitle(feature.name, dailyAttackLaunchCount, dailyAttackSession?.startedAt,locale,localizeStatic)}
                               >
-                                {dailyAttackCountLabel(dailyAttackLaunchCount)}
+                                {dailyAttackCountLabel(dailyAttackLaunchCount,localizeStatic)}
                               </Badge>
                             </>
                           ) : null}
-                          {timedUntil ? <Badge variant="outline">{formatTimedRemaining(timedUntil, now)}</Badge> : null}
+                          {timedUntil ? <Badge variant="outline">{formatTimedRemaining(timedUntil, now,locale,localizeStatic)}</Badge> : null}
                         </div>
                         <p>{feature.description}</p>
                         <AutomationStatusLines
                           featureName={feature.name}
                           status={feature.status}
                           detail={feature.detail}
+                          detailDescriptor={feature.detailDescriptor ?? automationDetailMessage(feature.detail,automationStates[feature.id]?.detailDescriptor)}
                           lanes={feature.statusLanes}
                         />
                       </div>
@@ -912,15 +900,15 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
         onClose={() => setIsEquipmentCleanupSettingsOpen(false)}
         maxWidth="md"
         title={
-          <ModalTitle icon={<Trash2 className="h-5 w-5" />}>Auto Equipment Cleanup</ModalTitle>
+          <ModalTitle icon={<Trash2 className="h-5 w-5" />}><LocalizedText messageKey="ui.views.automationView.auto.equipment.cleanup.4116a164" /></ModalTitle>
         }
-        footer={<Button variant="ghost" onClick={() => setIsEquipmentCleanupSettingsOpen(false)}>Close</Button>}
+        footer={<Button variant="ghost" onClick={() => setIsEquipmentCleanupSettingsOpen(false)}><LocalizedText messageKey="common.close" /></Button>}
       >
         <div className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center justify-between gap-4 rounded-global border border-primary/20 bg-primary/5 p-4">
             <div className="min-w-0">
-              <div className="text-sm font-bold text-text-main">Poll interval</div>
-              <p className="mt-1 text-xs text-text-muted">Checks equipment storage at this interval while cleanup is allowed to run.</p>
+              <div className="text-sm font-bold text-text-main"><LocalizedText messageKey="ui.views.automationView.poll.interval.47ea8f5d" /></div>
+              <p className="mt-1 text-xs text-text-muted"><LocalizedText messageKey="ui.views.automationView.checks.equipment.storage.at.this.interval.while.1ed68fd4" /></p>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-20">
@@ -931,10 +919,10 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
                   value={autoEquipmentCleanup.intervalMinutes}
                   onChange={(event) => autoEquipmentCleanup.setIntervalMinutes(Number(event.target.value))}
                   className="h-9 px-2 py-1 text-center"
-                  aria-label="Equipment cleanup poll interval in minutes"
+                  aria-label={localizeStatic("ui.views.automationView.aria-label.equipment.cleanup.poll.interval.in.minutes.a1c6845c")}
                 />
               </div>
-              <span className="text-xs font-semibold text-text-muted">min</span>
+              <span className="text-xs font-semibold text-text-muted"><LocalizedText messageKey="ui.views.automationView.min.1f6fa6f6" /></span>
             </div>
           </div>
 
@@ -949,8 +937,7 @@ export const AutomationView: React.FC<AutomationViewProps> = ({
           />
 
           <p className="text-xs leading-relaxed text-text-muted">
-            The schedule decides when cleanup may run. The poll interval decides how often it checks while the schedule is active.
-          </p>
+            <LocalizedText messageKey="ui.views.automationView.the.schedule.decides.when.cleanup.may.run.ec3b83b8" /></p>
         </div>
       </Modal>
     </div>

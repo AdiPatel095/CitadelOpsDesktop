@@ -2585,7 +2585,7 @@ select {
         padding-top: 0;
     }
 
-    [data-view="world-intelligence"] nav[aria-label="World Intelligence detail navigation"] {
+    [data-view="world-intelligence"] .world-intelligence-detail-nav {
         position: static;
     }
 

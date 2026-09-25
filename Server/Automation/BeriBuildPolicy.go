@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"fmt"
 	"strings"
@@ -43,12 +44,12 @@ func (*BeriBuildPolicy) WakeSections() []string {
 func (*BeriBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result Decision, resultErr error) {
 	var settings beriSettings
 	if !decodeSection(snapshot.Configuration, autoBeriWorldSection, &settings) {
-		return beriBuildWaiting(snapshot.Now, "Auto Beri World settings have not been saved", nil), nil
+		return beriBuildWaiting(snapshot.Now, "Auto Beri World settings have not been saved", nil, Localization.New("server.automation.auto_beri_world_settings.a9d19bc3", "Auto Beri World settings have not been saved", nil)), nil
 	}
 	normalizeBeriBuildSettings(&settings.Build)
 	if !settings.Build.Enabled {
 		return Decision{
-			Status: "disabled", Detail: "Auto Beri Builder is disabled by the user",
+			Status: "disabled", Detail: "Auto Beri Builder is disabled by the user", DetailDescriptor: Localization.New("server.automation.auto_beri_builder_is.1ddcde0a", "Auto Beri Builder is disabled by the user", nil),
 			EventDriven: true,
 		}, nil
 	}
@@ -61,12 +62,12 @@ func (*BeriBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 		return decision, nil
 	}
 	if snapshot.GameData == nil {
-		return beriBuildWaiting(snapshot.Now, "Official game data is unavailable", nil), nil
+		return beriBuildWaiting(snapshot.Now, "Official game data is unavailable", nil, Localization.New("server.automation.official_game_data_is.c5e55e7e", "Official game data is unavailable", nil)), nil
 	}
 	raw := snapshot.Configuration.Sections[Buildings.BerimondBlueprintConfigurationSection]
 	document, err := Buildings.DecodeBerimondBlueprintDocument(raw, snapshot.GameData)
 	if err != nil {
-		return beriBuildWaiting(snapshot.Now, err.Error(), nil), nil
+		return beriBuildWaiting(snapshot.Now, err.Error(), nil, Localization.FromError(err)), nil
 	}
 	blueprint, customTarget := document.Active()
 	var target Buildings.TargetCaptureResult
@@ -77,32 +78,32 @@ func (*BeriBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 			return beriBuildWaiting(
 				snapshot.Now,
 				fmt.Sprintf("The active blueprint is not from Berimond kingdom %d", GameData.BerimondKingdomID),
-				nil,
+				nil, Localization.New("server.automation.the_active_blueprint_is.d94fabdc", "The active blueprint is not from Berimond kingdom {p0}", Localization.Params{"p0": fmt.Sprintf("%d", GameData.BerimondKingdomID)}),
 			), nil
 		}
 		var found bool
 		castle, found = snapshot.State.Castles[target.CastleID]
 		if !found {
-			return beriBuildWaiting(snapshot.Now, "Waiting for the captured Berimond camp; recapture the target if the season changed", nil), nil
+			return beriBuildWaiting(snapshot.Now, "Waiting for the captured Berimond camp; recapture the target if the season changed", nil, Localization.New("server.automation.waiting_for_the_captured.5c83f032", "Waiting for the captured Berimond camp; recapture the target if the season changed", nil)), nil
 		}
 		if castle.KingdomID != State.KingdomID(GameData.BerimondKingdomID) {
-			return beriBuildWaiting(snapshot.Now, "The captured target no longer resolves to an owned Berimond camp", nil), nil
+			return beriBuildWaiting(snapshot.Now, "The captured target no longer resolves to an owned Berimond camp", nil, Localization.New("server.automation.the_captured_target_no.88c2ef51", "The captured target no longer resolves to an owned Berimond camp", nil)), nil
 		}
 	} else {
 		var found bool
 		castle, found = beriToolCastle(snapshot.State, settings.BeriCastleID)
 		if !found {
-			return beriBuildWaiting(snapshot.Now, "Waiting for an owned Berimond camp", nil), nil
+			return beriBuildWaiting(snapshot.Now, "Waiting for an owned Berimond camp", nil, Localization.New("server.automation.waiting_for_an_owned.deab064e", "Waiting for an owned Berimond camp", nil)), nil
 		}
 		target, err = Buildings.DefaultBerimondTarget(castle.ID, settings.Build.StableLevel, snapshot.GameData)
 		if err != nil {
-			return beriBuildWaiting(snapshot.Now, err.Error(), nil), nil
+			return beriBuildWaiting(snapshot.Now, err.Error(), nil, Localization.FromError(err)), nil
 		}
 	}
 	if unlock, observed := snapshot.State.KingdomTransport.Unlocks[State.KingdomID(GameData.BerimondKingdomID)]; observed &&
 		!unlock.Unlocked {
 		return Decision{
-			Status: "complete", Detail: "The Battle for Berimond is not currently unlocked",
+			Status: "complete", Detail: "The Battle for Berimond is not currently unlocked", DetailDescriptor: Localization.New("server.automation.the_battle_for_berimond.a9f4b97a", "The Battle for Berimond is not currently unlocked", nil),
 			NextCheckAt: snapshot.Now.Add(30 * time.Second),
 		}, nil
 	}
@@ -148,6 +149,7 @@ func (*BeriBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 			IgnoreDemolitionCandidate: isBeriStableDefinition,
 		},
 	)
+	var detailLocalizationMessage *Localization.Message = nil
 	if err != nil {
 		return Decision{}, err
 	}
@@ -160,9 +162,10 @@ func (*BeriBuildPolicy) Evaluate(_ context.Context, snapshot Snapshot) (result D
 	}
 	if detail == "" {
 		detail = "Berimond construction is waiting for returned attack loot or a building-state change"
+		detailLocalizationMessage = Localization.New("server.automation.berimond_construction_is_waiting.10e060c2", "Berimond construction is waiting for returned attack loot or a building-state change", nil)
 	}
 	return Decision{
-		Status: status, Detail: detail, Metrics: metrics,
+		Status: status, Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage), Metrics: metrics,
 		NextCheckAt: snapshot.Now.Add(30 * time.Second),
 	}, nil
 }
@@ -237,9 +240,9 @@ func isBeriStableDefinition(definition GameData.BuildingDefinition) bool {
 	return strings.EqualFold(name, "FactionStable") || strings.EqualFold(name, "Stable")
 }
 
-func beriBuildWaiting(now time.Time, detail string, metrics map[string]float64) Decision {
+func beriBuildWaiting(now time.Time, detail string, metrics map[string]float64, descriptors ...*Localization.Message) Decision {
 	return Decision{
-		Status: "waiting", Detail: detail, Metrics: metrics,
+		Status: "waiting", Detail: detail, DetailDescriptor: Localization.First(descriptors), Metrics: metrics,
 		NextCheckAt: now.Add(30 * time.Second),
 	}
 }

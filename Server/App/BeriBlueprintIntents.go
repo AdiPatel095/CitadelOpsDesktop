@@ -1,6 +1,7 @@
 package App
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -37,12 +38,12 @@ func (application *Application) registerBeriBlueprintIntents() error {
 	}
 	for _, definition := range []Intent.Definition{
 		{
-			Name: "beri.blueprint.save", Description: "Preflight and save one durable Berimond camp blueprint without replacing other capture modes", Effect: Intent.EffectWrite,
+			Name: "beri.blueprint.save", Description: "Preflight and save one durable Berimond camp blueprint without replacing other capture modes", DescriptionDescriptor: Localization.New("server.intent.description.d47ee3f3", "Preflight and save one durable Berimond camp blueprint without replacing other capture modes", nil), Effect: Intent.EffectWrite,
 			ArgumentsExample: json.RawMessage(`{"target":{"version":1,"castleId":901,"kingdomId":10,"mode":"functional","ground":[],"buildings":[],"fixed":[],"summary":{}},"policy":{"allowPremium":false,"resourceReserves":{}}}`),
 			Planner:          planBeriBlueprintSave,
 		},
 		{
-			Name: "beri.blueprint.activate", Description: "Activate a saved Berimond blueprint or pause blueprint reconciliation without deleting it", Effect: Intent.EffectWrite,
+			Name: "beri.blueprint.activate", Description: "Activate a saved Berimond blueprint or pause blueprint reconciliation without deleting it", DescriptionDescriptor: Localization.New("server.intent.description.7e1b773a", "Activate a saved Berimond blueprint or pause blueprint reconciliation without deleting it", nil), Effect: Intent.EffectWrite,
 			ArgumentsExample: json.RawMessage(`{"id":"beri-functional"}`), Planner: planBeriBlueprintActivate,
 		},
 	} {
@@ -63,7 +64,7 @@ func planBeriBlueprintSave(
 		return Intent.Plan{}, err
 	}
 	if request.Target.KingdomID != State.KingdomID(GameData.BerimondKingdomID) {
-		return Intent.Plan{}, fmt.Errorf("Berimond blueprint must target kingdom %d", GameData.BerimondKingdomID)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("Berimond blueprint must target kingdom %d", GameData.BerimondKingdomID), Localization.New("server.app.berimond_blueprint_must_target.7ed1f194", "Berimond blueprint must target kingdom {p0}", Localization.Params{"p0": fmt.Sprintf("%d", GameData.BerimondKingdomID)}))
 	}
 	diff, err := Buildings.CompileBlueprintDiff(input.State, input.GameData, Buildings.BlueprintDiffRequest{
 		Target: request.Target, Policy: request.Policy,
@@ -79,7 +80,7 @@ func planBeriBlueprintSave(
 				break
 			}
 		}
-		return Intent.Plan{}, fmt.Errorf("%s", message)
+		return Intent.Plan{}, Localization.WithError(fmt.Errorf("%s", message), Localization.New("server.app.p.8af35f19", "{p0}", Localization.Params{"p0": fmt.Sprintf("%s", message)}))
 	}
 	now := time.Now().UTC()
 	blueprint := Buildings.BerimondBlueprint{
@@ -92,9 +93,9 @@ func planBeriBlueprintSave(
 		Summary: fmt.Sprintf(
 			"Save and activate %s for Berimond camp %d (%d targets, %d planned actions)",
 			blueprint.Name, blueprint.Target.CastleID, diff.TargetCount, diff.ActionCount,
-		),
+		), SummaryDescriptor: Localization.New("server.app.save_and_activate_p.a0f583c2", "Save and activate {p0} for Berimond camp {p1} ({p2} targets, {p3} planned actions)", Localization.Params{"p0": fmt.Sprintf("%s", blueprint.Name), "p1": fmt.Sprintf("%d", blueprint.Target.CastleID), "p2": diff.TargetCount, "p3": diff.ActionCount}),
 		Steps: []Intent.Step{{
-			Name: "Save Berimond blueprint", Action: "beri.blueprint.save", ActionArguments: canonical,
+			Name: "Save Berimond blueprint", NameDescriptor: Localization.New("server.app.save_berimond_blueprint.30e35467", "Save Berimond blueprint", nil), Action: "beri.blueprint.save", ActionArguments: canonical,
 		}},
 	}, nil
 }
@@ -106,7 +107,7 @@ func (application *Application) saveBeriBlueprint(_ context.Context, arguments j
 	}
 	input.Blueprint.ID = strings.TrimSpace(input.Blueprint.ID)
 	if input.Blueprint.ID == "" {
-		return fmt.Errorf("Berimond blueprint id is required")
+		return Localization.WithError(fmt.Errorf("Berimond blueprint id is required"), Localization.New("server.app.berimond_blueprint_id_is.e7de48f0", "Berimond blueprint id is required", nil))
 	}
 	raw, _ := application.Configuration.Section(Buildings.BerimondBlueprintConfigurationSection)
 	document, err := Buildings.DecodeBerimondBlueprintDocument(raw, nil)
@@ -142,14 +143,16 @@ func planBeriBlueprintActivate(
 	request.ID = strings.TrimSpace(request.ID)
 	canonical, _ := json.Marshal(request)
 	summary := "Pause Berimond blueprint reconciliation"
+	var summaryLocalizationMessage *Localization.Message = Localization.New("server.app.pause_berimond_blueprint_reconciliation.02fc8be0", "Pause Berimond blueprint reconciliation", nil)
 	if request.ID != "" {
 		summary = fmt.Sprintf("Activate Berimond blueprint %s", request.ID)
+		summaryLocalizationMessage = Localization.New("server.app.activate_berimond_blueprint_p.498827f1", "Activate Berimond blueprint {p0}", Localization.Params{"p0": fmt.Sprintf("%s", request.ID)})
 	}
 	return Intent.Plan{
 		Claims:  []string{"configuration:" + Buildings.BerimondBlueprintConfigurationSection},
-		Summary: summary,
+		Summary: summary, SummaryDescriptor: Localization.Clone(summaryLocalizationMessage),
 		Steps: []Intent.Step{{
-			Name: "Select Berimond blueprint", Action: "beri.blueprint.activate", ActionArguments: canonical,
+			Name: "Select Berimond blueprint", NameDescriptor: Localization.New("server.app.select_berimond_blueprint.e4248875", "Select Berimond blueprint", nil), Action: "beri.blueprint.activate", ActionArguments: canonical,
 		}},
 	}, nil
 }
@@ -167,7 +170,7 @@ func (application *Application) activateBeriBlueprint(_ context.Context, argumen
 	}
 	if request.ID != "" {
 		if _, exists := document.Blueprints[request.ID]; !exists {
-			return fmt.Errorf("Berimond blueprint %q does not exist", request.ID)
+			return Localization.WithError(fmt.Errorf("Berimond blueprint %q does not exist", request.ID), Localization.New("server.app.berimond_blueprint_p_does.8cf4d4b9", "Berimond blueprint {p0} does not exist", Localization.Params{"p0": fmt.Sprintf("%q", request.ID)}))
 		}
 	}
 	document.ActiveID = request.ID

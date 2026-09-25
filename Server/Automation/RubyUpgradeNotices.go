@@ -2,7 +2,9 @@ package Automation
 
 import (
 	"CitadelDesktop/Server/Buildings"
+	"CitadelDesktop/Server/Localization"
 	"CitadelDesktop/Server/State"
+	"strconv"
 )
 
 // Only the premium policy permits phase fall-through. Queue, placement and
@@ -62,6 +64,17 @@ func attachRubyDiffNotices(decision *Decision, diff Buildings.TargetDiffResult) 
 				decision.Details = map[string]string{}
 			}
 			decision.Details["rubyUpgradeNotice/"+item.TargetID] = item.Desired.DisplayName + ": " + issue.Message
+			if issue.MessageDescriptor != nil && issue.MessageDescriptor.FallbackText == issue.Message {
+				if decision.Detail == issue.Message {
+					decision.DetailDescriptor = Localization.Clone(issue.MessageDescriptor)
+				}
+				if decision.DetailsDescriptors == nil {
+					decision.DetailsDescriptors = map[string]*Localization.Message{}
+				}
+				raw := decision.Details["rubyUpgradeNotice/"+item.TargetID]
+				decision.DetailsDescriptors["rubyUpgradeNotice/"+item.TargetID] = Localization.WithLists(Localization.New("server.automation.ruby_upgrade_notice", "Building {definitionID}: {reason}", Localization.Params{"definitionID": strconv.FormatInt(int64(item.Desired.ID), 10)}), raw, map[string][]*Localization.Message{"reason": {issue.MessageDescriptor}})
+			}
+
 			break
 		}
 	}

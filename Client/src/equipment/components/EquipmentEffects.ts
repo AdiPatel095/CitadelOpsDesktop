@@ -1,3 +1,4 @@
+import { formatGameMessage } from '../../i18n/gameMessage';
 import type { EquipmentEffectV2 } from '../../api/Contracts';
 import type { MetadataItem } from '../../context/MetadataContext';
 import {
@@ -207,11 +208,13 @@ export function buildEquipmentEffectProfile(
 		const internalName = metadataString(definition?.internalName);
 		const effectTypeName = metadataString(definition?.effectTypeName) || internalName;
 		const template = metadataString(definition?.effectTemplate);
+		// Runtime metadata always supplies this field. Legacy standalone fixtures default to English.
+		const semanticTemplate = definition && Object.hasOwn(definition,'semanticTemplate') ? metadataString(definition.semanticTemplate) : template;
 		const identity = officialEquipmentEffectGroupIdentity(effect.definitionId, definition);
 		const effectTypeId = identity.effectTypeId;
 		const areaTypeIds = metadataIntegerList(definition?.areaTypeIds ?? definition?.areaTypeID);
 		return resolveEffectValues(effect.values, units).flatMap((resolved) => {
-			const value = normalizeSemanticValue(template, resolved.value);
+			const value = normalizeSemanticValue(semanticTemplate, resolved.value);
 			if (!Number.isFinite(value) || value === 0) return [];
 			const isUnitReplacement = effectTypeId === 118 || effectTypeName.toLowerCase() === 'strongerpeasant';
 			const replacementUnitID = isUnitReplacement ? Math.trunc(resolved.value) : 0;
@@ -226,7 +229,7 @@ export function buildEquipmentEffectProfile(
 				value,
 				polarityValue: resolved.value,
 				displayValue: replacementUnitName || undefined,
-				unit: isUnitReplacement ? 'number' : effectUnit(effectTypeName, template),
+				unit: isUnitReplacement ? 'number' : effectUnit(effectTypeName, semanticTemplate),
 					scope: officialEquipmentEffectScope(definition),
 				areaTypeIds,
 				category: identity.category,
@@ -283,47 +286,40 @@ export function buildEquipmentEffectProfile(
 export function formatEquipmentEffectValue(
 	effect: Pick<MappedEquipmentEffect | EquipmentEffectGroup | EquipmentEffectShowcase, 'unit' | 'displayValue'>,
 	value: number,
+	locale = 'en',
 ): string {
 	if (effect.displayValue) return effect.displayValue;
-	const sign = value > 0 ? '+' : value < 0 ? '-' : '';
-	return `${sign}${formatUnsignedNumber(value)}${effect.unit === 'percent' ? '%' : ''}`;
+	return new Intl.NumberFormat(locale, { style: effect.unit === 'percent' ? 'percent' : 'decimal', signDisplay: 'exceptZero', minimumFractionDigits: Number.isInteger(value) ? 0 : 1, maximumFractionDigits: 1 }).format(effect.unit === 'percent' ? value / 100 : value);
 }
 
-export function formatEquipmentEffectText(effect: MappedEquipmentEffect, includeCap = true): string {
+export function formatEquipmentEffectText(effect: MappedEquipmentEffect, includeCap = true, locale = 'en'): string {
 	const argument = effect.argumentLabel || (effect.argumentId ? `Unit ${effect.argumentId}` : '');
 	let text = effect.template.includes('{0}')
-		? effect.template
-			.replace(/\{0\}/g, formatUnsignedNumber(effect.rawValue))
-			.replace(/\{1\}/g, argument)
-		: `${effect.label}: ${formatEquipmentEffectValue(effect, effect.rawValue)}`;
-	text = cleanTemplate(text.replace(/\{\d+\}/g, ''));
+		? formatGameMessage(cleanTemplate(effect.template), [formatUnsignedNumber(effect.rawValue, locale), argument || undefined], locale)
+		: `${effect.label}: ${formatEquipmentEffectValue(effect, effect.rawValue, locale)}`;
 	if (includeCap && effect.cap && effect.cap > 0) {
-		text += ` (Max: ${formatLimit(effect.cap, effect.unit)})`;
+		text += ` (Max: ${formatLimit(effect.cap, effect.unit, locale)})`;
 	}
 	return text;
 }
 
-export function formatEquipmentEffectLabel(effect: MappedEquipmentEffect): string {
+export function formatEquipmentEffectLabel(effect: MappedEquipmentEffect, locale = 'en'): string {
 	const argument = effect.argumentLabel || (effect.argumentId ? `Unit ${effect.argumentId}` : '');
 	if (!effect.template) return effect.label;
-	const label = cleanTemplate(effect.template
-		.replace(/\{0\}/g, '')
-		.replace(/\{1\}/g, argument)
-		.replace(/\{\d+\}/g, '')
-		.replace(/^[+\-%\s:]+/, '')
-		.replace(/\+\s+(?=[A-Za-z])/g, ''));
-	return label ? label.charAt(0).toUpperCase() + label.slice(1) : effect.label;
+	// Value {0} is displayed in its adjacent numeric column; other unknown arguments remain visible.
+	const template = cleanTemplate(effect.template.replace(/[+\-]?\s*\{0\}\s*%?/g, '').replace(/^[+\-%\s:]+/, ''));
+	return formatGameMessage(template, ['', argument || undefined], locale).trim() || effect.label;
 }
 
-export function formatEquipmentEffectGroupTitle(group: EquipmentEffectGroup): string {
+export function formatEquipmentEffectGroupTitle(group: EquipmentEffectGroup, locale = 'en'): string {
 	const template = group.polarityValue < 0 && group.malusTemplate ? group.malusTemplate : group.activeTemplate;
-	if (!template.includes('{0}')) return `${formatEquipmentEffectValue(group, group.value)} ${group.label}`.trim();
-	return cleanTemplate(template.replace(/\{0\}/g, formatUnsignedNumber(group.value)).replace(/\{\d+\}/g, ''));
+	if (!template.includes('{0}')) return `${formatEquipmentEffectValue(group, group.value, locale)} ${group.label}`.trim();
+	return formatGameMessage(cleanTemplate(template), [formatUnsignedNumber(group.value, locale)], locale);
 }
 
-export function formatEquipmentCommonCap(group: EquipmentEffectGroup, cap: number): string {
+export function formatEquipmentCommonCap(group: EquipmentEffectGroup, cap: number, locale = 'en'): string {
 	const template = group.commonCapTemplate || 'Common effect group cap: max {0}%';
-	return cleanTemplate(template.replace(/\{0\}/g, formatUnsignedNumber(cap)).replace(/\{\d+\}/g, ''));
+	return formatGameMessage(cleanTemplate(template), [formatUnsignedNumber(cap, locale)], locale);
 }
 
 function aggregateDetail(key: string, rows: EffectContribution[]): MappedEquipmentEffect {
@@ -470,29 +466,29 @@ function groupKey(effect: MappedEquipmentEffect): string {
 }
 
 function compareEffectGroups(left: EquipmentEffectGroup, right: EquipmentEffectGroup): number {
-	return left.category - right.category || left.group - right.group || left.label.localeCompare(right.label);
+	return left.category - right.category || left.group - right.group || left.key.localeCompare(right.key);
 }
 
 function renderedDetailKey(effect: MappedEquipmentEffect): string {
-	return `${effect.definitionId}:${effect.scope}:${formatEquipmentEffectLabel(effect).toLowerCase()}:${effect.rawValue}`;
+	return `${effect.definitionId}:${effect.scope}:${effect.argumentId ?? 0}:${effect.rawValue}`;
 }
 
 function compareShowcase(left: EquipmentEffectShowcase, right: EquipmentEffectShowcase): number {
-	return left.category - right.category || left.group - right.group || left.label.localeCompare(right.label);
+	return left.category - right.category || left.group - right.group || left.key.localeCompare(right.key);
 }
 
 function compareMappedEffects(left: MappedEquipmentEffect, right: MappedEquipmentEffect): number {
 	return left.category - right.category
 		|| left.group - right.group
 		|| compareSortOrder(left.sortOrder, right.sortOrder)
-		|| left.label.localeCompare(right.label);
+		|| left.key.localeCompare(right.key);
 }
 
 function compareContributions(left: EffectContribution, right: EffectContribution): number {
 	return left.category - right.category
 		|| left.group - right.group
 		|| compareSortOrder(left.sortOrder, right.sortOrder)
-		|| left.label.localeCompare(right.label);
+		|| left.definitionId - right.definitionId || (left.argumentId ?? 0) - (right.argumentId ?? 0) || left.scope.localeCompare(right.scope);
 }
 
 function compareSortOrder(left: string, right: string): number {
@@ -525,16 +521,16 @@ function cleanTemplate(value: string): string {
 		.trim();
 }
 
-function formatUnsignedNumber(value: number): string {
+function formatUnsignedNumber(value: number, locale = 'en'): string {
 	const absolute = Math.abs(value);
-	return absolute.toLocaleString(undefined, {
+	return absolute.toLocaleString(locale, {
 		minimumFractionDigits: Number.isInteger(absolute) ? 0 : 1,
 		maximumFractionDigits: 1,
 	});
 }
 
-function formatLimit(value: number, unit: 'percent' | 'number'): string {
-	return `${formatUnsignedNumber(value)}${unit === 'percent' ? '%' : ''}`;
+function formatLimit(value: number, unit: 'percent' | 'number', locale: string): string {
+	return new Intl.NumberFormat(locale, {style:unit === 'percent' ? 'percent' : 'decimal', minimumFractionDigits:Number.isInteger(value) ? 0 : 1, maximumFractionDigits:1}).format(unit === 'percent' ? Math.abs(value) / 100 : Math.abs(value));
 }
 
 function clampSigned(value: number, cap: number): number {
@@ -560,7 +556,7 @@ function cleanOfficialGroupingLabel(value: unknown): string {
 	const polarity = /^\s*-/.test(raw) ? 'penalty' : /^\s*\+/.test(raw) ? 'bonus' : '';
 	const context = /pvp/i.test(raw) ? 'PvP' : /pve/i.test(raw) ? 'PvE' : '';
 	const label = raw
-		.replace(/\{\d+\}/g, '')
+		.replace(/\{0\}/g, '')
 		.replace(/(?:PVP|PVE)/gi, '')
 		.replace(/^[+\-%\s:]+/, '')
 		.replace(/[+\-%\s:]+$/, '')

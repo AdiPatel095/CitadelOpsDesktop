@@ -337,6 +337,9 @@ func TestAutoNomadPolicyStagesSequentialArrivalRecovery(t *testing.T) {
 	if err != nil || decision.Request == nil || decision.Request.Name != "map.query" || !decision.ReevaluateOnSuccess {
 		t.Fatalf("due unsettled arrival did not request one exact GAA: %#v err=%v", decision, err)
 	}
+	if decision.DetailDescriptor == nil || decision.DetailDescriptor.Params["x"] != 99 || decision.DetailDescriptor.Params["y"] != 100 {
+		t.Fatalf("arrival refresh descriptor missing: %+v", decision.DetailDescriptor)
+	}
 
 	target.ObservedAt = now.Add(time.Second)
 	snapshot.State.Map[0]["99:100"] = target

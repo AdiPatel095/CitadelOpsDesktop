@@ -1,5 +1,9 @@
+import { useLocale as useStaticLocale } from "../../i18n/LocaleContext";
+import { LocalizedText } from "../../i18n/LocalizedText";
 import React, { useEffect, useState } from 'react';
-import { Plus, Shield } from 'lucide-react';
+import { BookOpen, Plus, Shield } from 'lucide-react';
+import { useGuideLocale } from '../../config/useGuideLocale';
+import { FeatureGuideModal } from './FeatureGuideModal';
 import { showTroopPicker, type UnitWithQuantity } from '../../components/TroopPickerModal';
 import UnitImage from '../../components/UnitImage';
 import {
@@ -35,6 +39,10 @@ function clampDays(value: number): number {
 }
 
 export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> = ({ isOpen, onClose }) => {
+  const { locale: guideLocale, pack: guidePack } = useGuideLocale();
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
+  useEffect(() => { if (!isOpen) setIsGuideOpen(false); }, [isOpen]);
+  const { t: localizeStatic } = useStaticLocale();
   const { state: gameState, configuration } = useCitadelAPI();
   const castles = castleOptionsFromState(gameState);
   const [state, setState] = useState<AutoStationClientStateV1>(() => parseAutoStationClientState(null));
@@ -105,13 +113,15 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
   };
 
   return (
+    <>
     <SettingsModal
       isOpen={isOpen}
       onClose={handleClose}
       maxWidth="full"
-      title="Auto Station Settings"
+      title={localizeStatic("ui.settings.components.autoStationSettingsModal.title.auto.station.settings.eb56c8a6")}
       icon={<Shield className="h-5 w-5" />}
-      description="Choose the exact troops that stay behind to defend. Every other troop currently in the threatened castle is temporarily stationed away."
+      description={localizeStatic("ui.settings.components.autoStationSettingsModal.description.choose.the.exact.troops.that.stay.behind.a5d0c68a")}
+      titleTrailing={<Button variant="outline" size="sm" onClick={() => setIsGuideOpen(true)} leftIcon={<BookOpen className="h-4 w-4" />}><span lang={guideLocale}>{guidePack.ui.guideButton}</span></Button>}
       onSave={save}
       saveLabel="Save changes"
       isSaving={isSaving}
@@ -125,7 +135,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
         <Card variant="solid" className="bg-bg-app p-4">
           <div className="grid gap-4 md:grid-cols-4">
             <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-bold uppercase tracking-wider text-primary">Evacuate at</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-primary"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.evacuate.at.621aebd7" /></span>
               <Input
                 type="number"
                 min={1}
@@ -136,11 +146,11 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
                   leadTimeSec: clampMinutes(Number(event.target.value)) * 60,
                 }))}
                 className="font-mono"
-                rightIcon={<span className="text-xs font-medium uppercase text-text-muted">Minutes left</span>}
+                rightIcon={<span className="text-xs font-medium uppercase text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.minutes.left.4703188b" /></span>}
               />
             </label>
             <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-bold uppercase tracking-wider text-primary">Minimum Bird Days on Target</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-primary"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.minimum.bird.days.on.target.71cbcd1f" /></span>
               <Input
                 type="number"
                 min={0}
@@ -151,28 +161,28 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
                   minRPTDays: clampDays(Number(event.target.value)),
                 }))}
                 className="font-mono"
-                rightIcon={<span className="text-xs font-medium uppercase text-text-muted">Days</span>}
+                rightIcon={<span className="text-xs font-medium uppercase text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.days.e08c0aa8" /></span>}
               />
             </label>
             <SettingsToggleRow
-              title="Recall when clear"
+              title={localizeStatic("ui.settings.components.autoStationSettingsModal.title.recall.when.clear.553ed7f0")}
               checked={state.recallWhenClear}
               onChange={(checked) => setState((previous) => ({ ...previous, recallWhenClear: checked }))}
             />
             <SettingsToggleRow
-              title="Open Gate Fallback"
+              title={localizeStatic("ui.settings.components.autoStationSettingsModal.title.open.gate.fallback.739eb349")}
               checked={state.openGateFallback}
               onChange={(checked) => setState((previous) => ({ ...previous, openGateFallback: checked }))}
             />
           </div>
           <p className="mt-4 text-xs leading-relaxed text-text-muted">
-            Station targets are the nearest protected alliance castle in the same kingdom. Sends use a one-hour station timer as a fallback even when recall is enabled. If an attack is already inside the configured window when detected, evacuation starts immediately. Open Gate Fallback covers failed stationing, no alliance, no eligible target, or no sendable troops. Purchased Protection Mode preparing or active always uses gates instead of stationing, even with this fallback off. Gates require an incoming attack within the configured window and are supported only in the primary kingdom.
+            <span lang={guideLocale} dir={guideLocale === 'ar' ? 'rtl' : 'ltr'}>{guidePack.autoStation.feature.helper}</span>
           </p>
         </Card>
 
         <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto pr-1">
           {castles.length === 0 && (
-            <p className="py-8 text-center text-sm text-text-muted">Loading castles…</p>
+            <p className="py-8 text-center text-sm text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.loading.castles.37f1e3a3" /></p>
           )}
           <div className="grid grid-cols-1 gap-4 pb-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {castles.map((castle) => {
@@ -182,14 +192,13 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
                 <Card key={castle.id} variant="solid" className="flex flex-col bg-bg-card-hover/40 p-4 shadow-inner">
                   <div className="mb-3 border-b border-border-base pb-2">
                     <h3 className="text-sm font-bold text-primary">{castle.name || `${castle.type} castle`}</h3>
-                    <p className="mt-1 text-[11px] text-text-muted">These amounts remain in the castle.</p>
+                    <p className="mt-1 text-[11px] text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.these.amounts.remain.in.the.castle.e33daec5" /></p>
                   </div>
                   {reserves.length === 0 ? (
                     <div className="flex flex-1 flex-col items-center justify-center gap-3 py-6">
-                      <p className="text-center text-xs font-medium uppercase tracking-wider text-text-muted">No defense reserve</p>
+                      <p className="text-center text-xs font-medium uppercase tracking-wider text-text-muted"><LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.no.defense.reserve.b4ce10ce" /></p>
                       <Button variant="outline" size="sm" onClick={() => selectReserve(castle)} leftIcon={<Plus className="h-4 w-4" />}>
-                        Add troops
-                      </Button>
+                        <LocalizedText messageKey="ui.settings.components.autoStationSettingsModal.add.troops.5264f439" /></Button>
                     </div>
                   ) : (
                     <div className="flex flex-wrap justify-center gap-4">
@@ -203,7 +212,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
                         />
                       ))}
                       <AddSlot
-                        label="Edit defense troops"
+                        label={localizeStatic("ui.settings.components.autoStationSettingsModal.label.edit.defense.troops.f3c64913")}
                         layout="icon"
                         onClick={() => selectReserve(castle)}
                         className="h-[76px] w-[76px]"
@@ -218,5 +227,7 @@ export const AutoStationSettingsModal: React.FC<AutoStationSettingsModalProps> =
         </div>
       </div>
     </SettingsModal>
+    <FeatureGuideModal feature="autoStation" isOpen={isOpen && isGuideOpen} onClose={() => setIsGuideOpen(false)} />
+    </>
   );
 };

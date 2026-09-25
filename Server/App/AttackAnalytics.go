@@ -1,6 +1,7 @@
 package App
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -28,7 +29,7 @@ type attackFeatureCaptureRequest struct {
 func attackFeatureCaptureStep(request attackFeatureCaptureRequest) Intent.Step {
 	arguments, _ := json.Marshal(request)
 	return Intent.Step{
-		Name: "Attribute confirmed attack movement", Action: "attack.analytics.capture", ActionArguments: arguments,
+		Name: "Attribute confirmed attack movement", NameDescriptor: Localization.New("server.app.attribute_confirmed_attack_movement.19cd5723", "Attribute confirmed attack movement", nil), Action: "attack.analytics.capture", ActionArguments: arguments,
 	}
 }
 
@@ -130,18 +131,18 @@ func (application *Application) captureAttackFeatureLaunch(_ context.Context, ar
 		return err
 	}
 	if !State.IsReportAnalyticsFeature(request.FeatureID) {
-		return fmt.Errorf("attack feature %q is not eligible for report analytics", request.FeatureID)
+		return Localization.WithError(fmt.Errorf("attack feature %q is not eligible for report analytics", request.FeatureID), Localization.New("server.app.attack_feature_p_is.d1a4ed5d", "attack feature {p0} is not eligible for report analytics", Localization.Params{"p0": fmt.Sprintf("%q", request.FeatureID)}))
 	}
 	if request.SourceCastleID <= 0 || request.CommanderID < 0 {
-		return fmt.Errorf("attack analytics capture requires a source castle and commander")
+		return Localization.WithError(fmt.Errorf("attack analytics capture requires a source castle and commander"), Localization.New("server.app.attack_analytics_capture_requires.f5c589d1", "attack analytics capture requires a source castle and commander", nil))
 	}
 	if request.AdvisorTimeSkipsUsed < 0 {
-		return fmt.Errorf("Advisor Time Skip usage cannot be negative")
+		return Localization.WithError(fmt.Errorf("Advisor Time Skip usage cannot be negative"), Localization.New("server.app.advisor_time_skip_usage.3527775d", "Advisor Time Skip usage cannot be negative", nil))
 	}
 	if request.AdvisorTimeSkipsUsed > 0 &&
 		(request.FeatureID != State.AttackFeatureAutoTowers || request.TargetTypeID != kingdomTowerMapTypeID ||
 			request.AdvisorTimeSkipsUsed >= int64(baronAdvisorMaximumAttackCount)) {
-		return fmt.Errorf("Advisor Time Skip usage is only valid for a bounded Auto Towers launch")
+		return Localization.WithError(fmt.Errorf("Advisor Time Skip usage is only valid for a bounded Auto Towers launch"), Localization.New("server.app.advisor_time_skip_usage.9a1ee6ff", "Advisor Time Skip usage is only valid for a bounded Auto Towers launch", nil))
 	}
 	var gameData *GameData.Store
 	if application.GameData != nil {
@@ -170,10 +171,10 @@ func (application *Application) captureAttackFeatureLaunch(_ context.Context, ar
 			return true
 		})
 		if selected.ID == 0 {
-			return nil, false, fmt.Errorf(
+			return nil, false, Localization.WithError(fmt.Errorf(
 				"CRA response did not return commander %d's %s movement to %d:%d",
 				request.CommanderID, request.FeatureID, request.TargetX, request.TargetY,
-			)
+			), Localization.New("server.app.cra_response_did_not.4cf97d97", "CRA response did not return commander {p0}'s {p1} movement to {p2}:{p3}", Localization.Params{"p0": fmt.Sprintf("%d", request.CommanderID), "p1": fmt.Sprintf("%s", request.FeatureID), "p2": request.TargetX, "p3": request.TargetY}))
 		}
 		if source, found := gameState.MutableCastleParts(request.SourceCastleID, State.CastlePartUnits); found && !source.UnitsObservedAt.IsZero() {
 			source.UnitsObservedAt = time.Time{}

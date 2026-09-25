@@ -1,0 +1,2080 @@
+{
+  "ui": {
+    "guideButton": "Ghid",
+    "calendarButton": "Calendar",
+    "recommendedLabel": "Recomandat",
+    "backToSettings": "Înapoi la setări",
+    "backToGuide": "Înapoi la ghid",
+    "howToSetUp": "Cum se configurează",
+    "whatToExpect": "La ce să te aștepți",
+    "openFullSizePicture": "Deschide imaginea la dimensiune maximă",
+    "illustrativeExample": "Exemplu ilustrativ",
+    "enlargePicture": "Mărește imaginea exemplului",
+    "fullSizePicture": "Imaginea exemplului la dimensiune maximă; derulează pentru toate setările",
+    "towerGuideTitle": "Atacuri automate asupra turnurilor · ghid",
+    "birdGuideTitle": "Adăpostirea automată a trupelor · ghid",
+    "towerGuideIntro": "Urmează acești pași pentru a configura Turnurile automate; selectează o imagine exemplu pentru a o mări.",
+    "birdGuideIntro": "Urmează acești pași pentru a configura Adăpostirea automată a trupelor; selectează o imagine exemplu pentru a o mări.",
+    "towerPreviewTitle": "Atacuri automate asupra turnurilor · exemplu de configurare",
+    "birdPreviewTitle": "Adăpostirea automată a trupelor · exemplu de configurare",
+    "stationGuideTitle": "Ghid pentru adăpostirea automată a trupelor",
+    "stationGuideIntro": "Urmează acești pași pentru a configura adăpostirea automată a trupelor; selectează imaginea exemplu pentru a o mări.",
+    "stationPreviewTitle": "Exemplu de configurare a adăpostirii automate",
+    "fortressGuideIntro": "Urmează acești pași pentru a configura atacurile automate asupra fortărețelor; selectează un panou exemplu pentru a-l mări.",
+    "fortressGuideTitle": "Ghid pentru atacurile automate asupra fortărețelor",
+    "fortressPreviewTitle": "Exemplu de configurare a atacurilor automate asupra fortărețelor",
+    "invasionGuideIntro": "Urmează acești pași pentru a seta atacurile automate de invazie; selectează un panou exemplu pentru a-l mări.",
+    "invasionGuideTitle": "Ghid pentru atacurile automate de invazie",
+    "invasionPreviewTitle": "Exemplu de configurare a atacurilor automate de invazie",
+    "nomadGuideIntro": "Urmează acești pași pentru a configura Auto Nomazi/Samurai; selectează un panou de exemplu pentru mărire.",
+    "nomadGuideTitle": "Ghid Auto Nomazi/Samurai",
+    "nomadPreviewTitle": "Exemplu de configurare Auto Nomazi/Samurai",
+    "advisorGuideIntro": "Urmează acești pași pentru a configura Consilierul automat; selectează un panou exemplu pentru mărire.",
+    "advisorGuideTitle": "Ghidul Consilierului automat",
+    "advisorPreviewTitle": "Exemplu de configurare a Consilierului automat",
+    "khanGuideIntro": "Urmează acești pași pentru configurarea Khanului automat; selectează un panou exemplu pentru mărire.",
+    "khanGuideTitle": "Ghidul Khanului automat",
+    "khanPreviewTitle": "Exemplu de configurare a Khanului automat",
+    "beriGuideIntro": "Urmează acești pași pentru a configura Berimond automat; selectează un panou de exemplu ca să îl mărești.",
+    "beriGuideTitle": "Ghidul Berimond automat",
+    "beriPreviewTitle": "Exemplu de configurare a Berimondului automat",
+    "stormGuideIntro": "Urmează acești pași ca să configurezi Auto Storm; selectează un panou de exemplu pentru a-l mări.",
+    "stormGuideTitle": "Ghid Auto Storm",
+    "stormPreviewTitle": "Exemplu de configurare Auto Storm"
+  },
+  "autoTower": {
+    "recommendationIntro": "Acestea sunt recomandări pentru utilizarea obișnuită; verifică-le înainte de salvare.",
+    "steps": {
+      "commanders": {
+        "title": "Alege comandanții",
+        "items": {
+          "commander_assignment": {
+            "label": "Atribuirea comandanților",
+            "description": "În Comandanți, permite Turnurile automate pentru comandanții doriți și selectează Salvează atribuirile.",
+            "recommendation": "Atribuie 20 de comandanți Turnurilor automate."
+          }
+        }
+      },
+      "general": {
+        "title": "Configurează scanarea, limitele zilnice și deplasarea",
+        "items": {
+          "open_settings": {
+            "label": "Deschide setările",
+            "description": "Deschide Automatizare, apoi selectează butonul de setări de pe cardul Turnuri automate."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Scanarea hărții autorizate · La fiecare",
+            "description": "Alege cât de des se actualizează lista turnurilor fiecărui castel, între 1.800 și 3.600 de secunde; atacurile pot porni între scanări.",
+            "recommendation": "1.800 de secunde (30 de minute)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Limita zilnică a atacurilor obișnuite",
+            "description": "Se oprește la limita zilnică de atacuri a întregului cont până când jocul o resetează; 0 elimină limita.",
+            "recommendation": "3.500 de atacuri pe zi pentru întregul cont."
+          },
+          "horse_travel_boost": {
+            "label": "Accelerarea deplasării cu cai",
+            "description": "Folosește opțiunea de deplasare selectată pentru fiecare atac, inclusiv fiecare lovitură dintr-un lanț al Consilierului; viteza depinde de clădirile de deplasare ale castelului de plecare.",
+            "recommendation": "Nivelul cu monede, unde este disponibil, cu suficiente monede."
+          },
+          "travel_feather": {
+            "label": "Pană de călătorie",
+            "description": "Folosește pana de călătorie în locul unui nivel de cai cu monede sau rubine."
+          },
+          "horse_ship_tier_coins": {
+            "label": "Nivel cal / navă · monede",
+            "description": "Cheltuiește monede pentru nivelul de deplasare cu monede."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Nivel cal de război / navă rapidă · rubine",
+            "description": "Cheltuiește rubine pentru primul nivel de deplasare cu rubine, când este selectat."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Nivel cal iute / cea mai rapidă navă · rubine",
+            "description": "Cheltuiește rubine pentru nivelul mai rapid de deplasare cu rubine, când este selectat."
+          }
+        },
+        "image": {
+          "alt": "Setările generale ale Turnurilor automate cu date fictive ale Castelului Sintetic",
+          "caption": "Configurează intervalul de scanare, limita zilnică de atacuri și deplasarea; comenzile Consilierului apar când sunt disponibile."
+        }
+      },
+      "castle": {
+        "title": "Configurează fiecare castel",
+        "items": {
+          "castle_switch": {
+            "label": "Comutatorul castelului",
+            "description": "Activează fiecare castel din care Turnurile automate trebuie să scaneze și să atace.",
+            "recommendation": "Activează castelele pe care vrei să le folosești regulat."
+          },
+          "radius": {
+            "label": "Rază",
+            "description": "Alege distanța de căutare în jurul acestui castel, între 1 și 50 de căsuțe.",
+            "recommendation": "35 de căsuțe."
+          },
+          "choose_troop": {
+            "label": "Alege trupele",
+            "description": "Alege tipul de trupe staționate care să umple ambele flancuri ale atacului; atacurile așteaptă dacă nu sunt suficiente.",
+            "recommendation": "Trupe de atac staționate suficiente pentru ambele flancuri."
+          },
+          "maiden_supported_only": {
+            "label": "Numai cu sprijinul Fecioarei",
+            "description": "Limitează castelul la comandanții disponibili cu relicva Fecioarei acceptată.",
+            "recommendation": "Dezactivat, dacă acel comandant ales nu are relicva Fecioarei acceptată."
+          }
+        },
+        "image": {
+          "alt": "Setările castelului pentru Turnuri automate cu date fictive ale Castelului Sintetic",
+          "caption": "Activează castelul și alege raza, trupele și condiția pentru Fecioară."
+        }
+      },
+      "advisor": {
+        "title": "Folosește Consilierul dacă dorești · când este disponibil",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Folosește Consilierul cu Salturi în timp",
+            "description": "Repetă loviturile asupra unui turn, folosind mai întâi un atac zilnic și apoi câte un Salt în timp de cel puțin trei ore pentru fiecare lovitură suplimentară.",
+            "recommendation": "Dezactivat."
+          },
+          "auto_activate_with_token": {
+            "label": "Activare automată cu jeton",
+            "description": "Folosește un jeton disponibil al Consilierului baronului când Consilierul este inactiv, fără să cumpere un jeton sau să cheltuiască rubine.",
+            "recommendation": "Dezactivat cât timp Consilierul este oprit."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Numărul maxim zilnic de Salturi în timp",
+            "description": "Limitează Salturile în timp folosite de lanțurile confirmate ale Consilierului până la resetarea contorului zilnic de atacuri din joc; 0 oprește lansările Consilierului.",
+            "recommendation": "0 cât timp Consilierul este oprit."
+          }
+        }
+      },
+      "finish": {
+        "title": "Configurează programul, salvează și pornește",
+        "items": {
+          "calendar": {
+            "label": "Calendar",
+            "description": "Folosește Calendarul pentru a alege când pot rula Turnurile automate; disponibilitatea trupelor și celelalte limite se aplică în continuare.",
+            "recommendation": "Orele tale obișnuite de funcționare."
+          },
+          "save_changes": {
+            "label": "Salvează modificările",
+            "description": "Selectează Salvează modificările pentru a aplica setările; citirea acestui ghid nu le salvează."
+          },
+          "auto_towers_switch": {
+            "label": "Atacuri automate asupra turnurilor · comutator",
+            "description": "După salvarea setărilor, pornește Turnurile automate din pagina Automatizare pentru a permite rularea activității.",
+            "recommendation": "Pornit după salvarea setărilor dorite."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Atacuri automate asupra turnurilor",
+      "summary": "Repetă atacurile asupra turnurilor din apropiere",
+      "description": "Trimite atacuri asupra turnurilor baronilor tâlhari și ale regatelor din castelele alese.",
+      "expectation": "Are nevoie de suficiente trupe, un comandant disponibil și un turn pregătit pentru atac. Poate aștepta întoarcerea trupelor sau expirarea cronometrului turnului."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "Valorile recomandate descriu utilizarea obișnuită a Adăpostirii automate a trupelor; sunt orientative și nu modifică setările salvate.",
+    "steps": {
+      "open": {
+        "title": "Deschide setările Adăpostirii automate a trupelor",
+        "items": {
+          "open_settings": {
+            "label": "Deschide setările",
+            "description": "În partea de sus a centrului de comandă, selectează butonul de setări de lângă Adăpostirea automată a trupelor."
+          }
+        }
+      },
+      "general": {
+        "title": "Configurează durata staționării și regulile de trimitere",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Interval de întârziere aleatorie · Minim",
+            "description": "Stabilește numărul minim de ore în care trupele rămân la destinația alianței după încheierea deplasării.",
+            "recommendation": "6 ore de staționare la ținta alianței după sosire."
+          },
+          "random_delay_range_max": {
+            "label": "Interval de întârziere aleatorie · Maxim",
+            "description": "Stabilește șederea maximă la destinație; Adăpostirea automată a trupelor alege o durată aleatorie între minim și maxim.",
+            "recommendation": "12 ore de staționare la ținta alianței după sosire."
+          },
+          "minimum_to_send": {
+            "label": "Minim pentru trimitere",
+            "description": "Stabilește numărul total minim de trupe eligibile necesare după păstrarea rezervelor castelului; acesta este un prag, nu numărul exact trimis.",
+            "recommendation": "1.000 de trupe eligibile în total după păstrarea rezervelor castelului; acesta este un prag, nu dimensiunea exactă a trimiterii."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "RPT minim (timp de protecție rămas)",
+            "description": "Folosește ținte cu mai multe zile de protecție rămase decât această valoare; 0 elimină verificarea.",
+            "recommendation": "3 zile; ținta trebuie să aibă mai mult de 3 zile de protecție rămase."
+          }
+        },
+        "image": {
+          "alt": "Durata de staționare, minimul de trimis, RPT minim și comenzile presetărilor pentru Adăpostirea automată a trupelor",
+          "caption": "Configurează durata staționării și eligibilitatea, apoi verifică presetarea rezervelor Zilnice înainte de salvare."
+        }
+      },
+      "reserves": {
+        "title": "Alege trupele de păstrat în fiecare castel",
+        "items": {
+          "add_unit": {
+            "label": "Adaugă unitate",
+            "description": "Pentru fiecare castel, alege tipurile de trupe care rămân acasă în loc să fie trimise; o rezervă goală lasă disponibile toate trupele eligibile după rezervele automate.",
+            "recommendation": "Alege tipurile de trupe necesare fiecărui castel pentru apărare sau alte activități obișnuite."
+          },
+          "quantity": {
+            "label": "Cantitate",
+            "description": "Stabilește o cantitate pozitivă din fiecare tip de trupă ales care să rămână în castel; 0 nu rezervă întregul tip.",
+            "recommendation": "Păstrează acasă numărul necesar din fiecare tip de trupă pentru apărare sau alte activități; verifică efectivele reale."
+          },
+          "remove_unit": {
+            "label": "Elimină unitatea",
+            "description": "Elimină cardul unității pentru a nu mai rezerva acel tip în castelul selectat."
+          },
+          "auto_fortress_reserve": {
+            "label": "Automatizarea fortărețelor · rezervă",
+            "description": "Când Fortăreața automată blochează aici toți Lupii cumpliți, această rezervă automată nu este salvată în presetările Adăpostirii automate a trupelor; cantitatea manuală anterioară revine după încetarea blocării."
+          }
+        },
+        "image": {
+          "alt": "Carduri de rezervă ale Adăpostirii automate a trupelor pentru Castelul Exemplu fictiv",
+          "caption": "Păstrează doar unitățile necesare în acest castel; Unitatea 101 și Unitatea 102 sunt nume fictive de trupe."
+        }
+      },
+      "presets": {
+        "title": "Salvează și selectează o presetare",
+        "items": {
+          "preset_name": {
+            "label": "Numele presetării",
+            "description": "Introdu un nume pentru o presetare nouă sau editează numele presetării aplicate înainte de a salva modificările.",
+            "recommendation": "Folosește un nume ușor de recunoscut, precum Zilnic."
+          },
+          "load_preset": {
+            "label": "Încarcă presetarea",
+            "description": "Alege o presetare salvată din listă sau Configurație salvată pentru a folosi setările stocate fără o presetare numită.",
+            "recommendation": "Folosește presetarea zilnică dorită ca implicită la rulare: selecteaz-o, apasă Aplică, apoi Salvează modificările."
+          },
+          "apply": {
+            "label": "Aplică",
+            "description": "Încarcă presetarea selectată în această ciornă de setări; selectează Salvează modificările pentru a o confirma ca implicită la rulare."
+          },
+          "save_as_new": {
+            "label": "Salvează ca nouă",
+            "description": "Salvează imediat setările curente ca presetare nouă cu nume și o selectează ca implicită la rulare."
+          },
+          "delete": {
+            "label": "Șterge",
+            "description": "După confirmare, șterge imediat presetarea selectată și elimină valoarea implicită la rulare dacă aceasta era selectată."
+          },
+          "runtime_default": {
+            "label": "Implicit la rulare",
+            "description": "Valoarea implicită la rulare este presetarea activă salvată sau configurația salvată când nu este activă nicio presetare."
+          }
+        }
+      },
+      "finish": {
+        "title": "Configurează programul, salvează și activează",
+        "items": {
+          "calendar": {
+            "label": "Calendar",
+            "description": "Alege când poate rula Adăpostirea automată a trupelor și selectează Salvează programul pentru modificările tale.",
+            "recommendation": "Lasă programul dezactivat pentru funcționare continuă sau stabilește ore săptămânale obișnuite și salvează programul."
+          },
+          "specify_preset_per_period": {
+            "label": "Specifică o presetare pentru fiecare interval",
+            "description": "Alege o presetare salvată pentru un interval din calendar dacă acel interval trebuie să înlocuiască valoarea implicită la rulare.",
+            "recommendation": "Dezactivat dacă intervalele diferite nu au nevoie de rezerve diferite."
+          },
+          "save_changes": {
+            "label": "Salvează modificările",
+            "description": "Salvează ciorna de setări și modificările presetării aplicate; citirea acestui ghid nu le salvează."
+          },
+          "auto_bird_switch": {
+            "label": "Adăpostirea automată a trupelor · comutator",
+            "description": "După salvare, pornește Adăpostirea automată a trupelor în partea de sus a centrului de comandă pentru a permite ciclurile normale ale castelelor.",
+            "recommendation": "Pornește Adăpostirea automată a trupelor după salvare; starea din antet arată ciclul fiecărui castel."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Adăpostirea automată a trupelor",
+      "summary": "Ține trupele selectate plecate conform programului",
+      "description": "Staționează regulat trupele disponibile la castelele eligibile ale alianței și repetă ciclul când acestea se întorc.",
+      "expectation": "Așteaptă dacă nu există o destinație potrivită sau trupe libere de trimis. Mutarea trupelor nu face castelul invulnerabil."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "Setări generale",
+      "scan": "Interval de scanare: 1.800 de secunde",
+      "daily": "Limită zilnică de atacuri: 3.500",
+      "travel": "Accelerarea deplasării: nivelul cu monede",
+      "advisor": "Consilier: dezactivat"
+    },
+    "towerCastle": {
+      "title": "Castelul Exemplu",
+      "enabled": "Atacuri automate asupra turnurilor · pornite",
+      "radius": "Rază: 35 de căsuțe",
+      "troop": "Trupă aleasă: unitate de atac fictivă",
+      "maiden": "Numai cu sprijinul Fecioarei: dezactivat"
+    },
+    "birdGeneral": {
+      "title": "Setări generale",
+      "min": "Ședere minimă: 6 ore",
+      "max": "Ședere maximă: 12 ore",
+      "send": "Total minim eligibil după rezerve: 1.000 de trupe",
+      "rpt": "Protecție rămasă minimă: mai mult de 3 zile",
+      "preset": "Presetare: rezervă Zilnică"
+    },
+    "birdCastle": {
+      "title": "Castelul Exemplu",
+      "unitOne": "Unitatea fictivă 101 în rezervă: 80",
+      "unitTwo": "Unitatea fictivă 102 în rezervă: 40",
+      "add": "Adaugă unitate"
+    },
+    "stationGeneral": {
+      "title": "Exemplu de setări ale adăpostirii automate",
+      "evacuate": "Evacuează la: cu 1 minut înainte de impact",
+      "protection": "Protecția destinației: mai mult de 3 zile",
+      "recall": "Retrage când pericolul trece: activat",
+      "gate": "Deschiderea porților ca rezervă: dezactivată",
+      "castle": "Castel fictiv: 80 de trupe defensive rezervate",
+      "save": "Salvează modificările și activează adăpostirea automată"
+    },
+    "fortressAttack": {
+      "commander": "Comandant: cel mai rapid eligibil atribuit",
+      "daily": "Limita zilnică de atacuri normale: 0",
+      "title": "Exemplu de setări de atac",
+      "travel": "Spor de deplasare: Pana de călătorie",
+      "wave": "Un val complet de lupi înfricoșători pe ambele flancuri"
+    },
+    "fortressKingdoms": {
+      "everwinter": "Ghețarul Iernii Veșnice: activat când este deblocat",
+      "peaks": "Vârfurile de Foc: activat când este deblocat",
+      "sands": "Nisipurile Arzătoare: activat când este deblocat",
+      "title": "Exemplu de setări de regat"
+    },
+    "fortressSupply": {
+      "purchase": "Lupi înfricoșători pe sesiune: 5.000",
+      "reserve": "Păstrează tăblițele Hanului: 25.000",
+      "route": "Aprovizionare: din castelul principal al Marelui Imperiu către regatele activate",
+      "skips": "Acceleratoare pentru transferurile confirmate: activate",
+      "title": "Exemplu de aprovizionare cu lupi înfricoșători"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Corbi Sângeroși: dificultate deblocată potrivită",
+      "current": "Dificultatea evenimentului activ rămâne neschimbată",
+      "foreign": "Lorzi Străini: dificultate deblocată potrivită",
+      "title": "Exemplu de dificultăți ale evenimentelor"
+    },
+    "invasionFortify": {
+      "currency": "Dacă este activat: monedă de eveniment când este disponibilă",
+      "enabled": "Fortifică fiecare țintă: dezactivat",
+      "rubies": "Rubine numai după alegerea explicită",
+      "title": "Exemplu de fortificare a țintelor"
+    },
+    "invasionLimits": {
+      "before": "Oprire cu 30 de minute înainte de finalul evenimentului",
+      "daily": "Limita zilnică de atacuri normale: 0",
+      "score": "Scor: ultimul prag obișnuit de recompensă personală peste 0",
+      "title": "Exemplu de scor și limite de oprire"
+    },
+    "invasionSetup": {
+      "castle": "Sursă: castelul obișnuit de eveniment din Marele Imperiu",
+      "preset": "Preset de atac: formație de eveniment salvată",
+      "title": "Exemplu de pregătire a atacului de eveniment",
+      "travel": "Spor de deplasare: Pana de călătorie"
+    },
+    "nomadDifficulty": {
+      "title": "Exemplu de dificultăți ale evenimentelor",
+      "active": "Eveniment activ: potrivește dificultatea curentă",
+      "nomad": "Nomazi: dificultate deblocată și fiabilă",
+      "samurai": "Samurai: dificultate deblocată și fiabilă"
+    },
+    "nomadSetup": {
+      "castle": "Sursă: castelul obișnuit de eveniment din Marele Imperiu",
+      "travel": "Spor de deplasare: Pana de călătorie",
+      "nomadPreset": "Configurație nomadă: formație de tabără salvată",
+      "samuraiPreset": "Configurație samurai: formație de tabără salvată",
+      "title": "Exemplu de setări pentru taberele evenimentului"
+    },
+    "nomadCooldowns": {
+      "clear": "Elimină pauza după victorie confirmată: pornit",
+      "long": "Păstrează 5 h / 24 h: stoc rezervat altor activități",
+      "short": "Păstrează 1 / 5 / 10 / 30 / 60 min: câte 0 obiecte",
+      "title": "Exemplu de opțiuni pentru pauze"
+    },
+    "nomadLimits": {
+      "daily": "Limită zilnică suplimentară: 0",
+      "score": "Obiectiv de puncte: ultimul prag de recompensă personală",
+      "time": "Oprește înainte de sfârșit: 30 de minute",
+      "title": "Exemplu de reguli de oprire"
+    },
+    "nomadTrial": {
+      "coordinates": "Ținta X / Y: nefolosită în funcționarea obișnuită",
+      "effect": "Testul pornit înlocuiește evenimentul cu un atac real",
+      "title": "Exemplu de controale ale testului",
+      "trial": "Test temporar contra baronului tâlhar: oprit"
+    },
+    "advisorDifficulty": {
+      "active": "Eveniment activ: potrivește dificultatea curentă",
+      "nomad": "Nomazi: dificultate deblocată și fiabilă",
+      "samurai": "Samurai: dificultate deblocată și fiabilă",
+      "title": "Exemplu de dificultăți ale evenimentelor"
+    },
+    "advisorSetup": {
+      "castle": "Sursă: castelul obișnuit de eveniment din Marele Imperiu",
+      "travel": "Spor de deplasare: Pana de călătorie",
+      "preset": "Presetare: formație salvată pentru evenimentul activ",
+      "title": "Exemplu de configurare a atacului Consilierului"
+    },
+    "advisorActivation": {
+      "locked": "Dacă este blocat: deschide confirmarea activării Consilierului",
+      "paid": "Confirmă folosirea jetonului sau activarea gratuită indicată de joc",
+      "save": "Salvează setările, apoi activează cardul Automatizare",
+      "title": "Exemplu de flux de activare"
+    },
+    "advisorOverview": {
+      "progress": "Atacuri curente / atacuri cerute",
+      "refresh": "Actualizează panoul pentru totalurile curente",
+      "results": "Victorii, înfrângeri, unități și unelte pierdute",
+      "title": "Exemplu de panou activ"
+    },
+    "advisorResources": {
+      "coins": "Cost total în monede pe atac: 500 doar dacă este suficient",
+      "feathers": "Păstrează pene: 0 dacă nu sunt necesare în altă parte",
+      "rubies": "Rubine pe atac: 0 cu Pană de călătorie",
+      "skips": "Păstrează 60 min: 0 obiecte; rezervă 5 h și 24 h după nevoie",
+      "title": "Exemplu de bugete de resurse"
+    },
+    "advisorSizing": {
+      "actual": "Serie reală: limitată de resurse și timp",
+      "maximum": "Atacuri maxime: 9.999",
+      "time": "Timp nefolosit din eveniment: 30 de minute",
+      "title": "Exemplu de dimensiune a seriei"
+    },
+    "khanCooldowns": {
+      "long": "Rezervă acceleratoare de 5 h și 24 h pentru alte activități",
+      "pause": "Atacurile noi se întrerup când lipsesc acceleratoare utilizabile",
+      "short": "Păstrează 1 min / 5 min / 10 min / 30 min / 1 h: 0 obiecte din fiecare",
+      "skip": "Elimină fiecare așteptare a taberei: pornit",
+      "title": "Exemplu de rezerve de acceleratoare"
+    },
+    "khanLimits": {
+      "daily": "Atacuri normale zilnice: 0, fără limită suplimentară",
+      "end": "Oprește atacurile noi cu 5 minute înainte de final",
+      "points": "Oprește la puncte nomade: 0, dezactivat",
+      "title": "Exemplu de limite de oprire",
+      "tools": "Reaprovizionare unelte de apărare: pornită dacă dorești"
+    },
+    "khanProtection": {
+      "gate": "Deschide porțile principale și întrerupe Khan la prag",
+      "outpost": "Avanpost ca sursă: protecție dezactivată",
+      "source": "Se aplică atacurilor din castelul principal",
+      "threshold": "Unități ofensive pe zid: 1.000",
+      "title": "Exemplu de protecție a zidului principal"
+    },
+    "khanRage": {
+      "attacks": "Atacuri automate asupra taberei: deblocate",
+      "booster": "Amplificator temporar de puncte de furie necesar: oprit",
+      "chain": "Lanț maxim de furie: 0, fără limită suplimentară",
+      "title": "Exemplu de controale de furie",
+      "trigger": "Represalii la furie maximă: pornite"
+    },
+    "khanSave": {
+      "defense": "Verifică apărarea principală înainte de represalii",
+      "enable": "Activează Khan automat pe cardul Automatizare",
+      "priority": "Staționarea automată gestionează atacurile jucătorilor separat",
+      "save": "Salvează setările după pregătirea ambelor presetări",
+      "title": "Exemplu de salvare și activare"
+    },
+    "khanSetup": {
+      "defense": "Apără la: castelul principal din Marele Imperiu",
+      "presets": "Presetări salvate de atac asupra Khanului și apărare principală",
+      "source": "Atacă din: avanpost din Marele Imperiu",
+      "title": "Exemplu de configurare a Khanului",
+      "travel": "Pană de călătorie pentru deplasare rapidă"
+    },
+    "beriBuilder": {
+      "permissions": "Premium și demolare: dezactivate până la verificare",
+      "reserves": "Păstrează rezerve de resurse Berimond și accelerări",
+      "stable": "Grajdul facțiunii: nivel ales între 1 și 5",
+      "target": "Țintă exactă încorporată sau plan propriu verificat",
+      "title": "Exemplu de construcție opțională a taberei"
+    },
+    "beriReadiness": {
+      "booster": "Amplificator de Vitejie necesar: opțional",
+      "food": "Transferurile necesită trupe din șablon care consumă Hrană",
+      "preset": "Verifică pozițiile de trupe și unelte salvate",
+      "title": "Exemplu de pregătire a turnurilor"
+    },
+    "beriSave": {
+      "calendar": "Calendar dezactivat pentru funcționare continuă",
+      "enable": "Activează Berimond automat pe cardul Automatizare",
+      "save": "Salvează setările după verificarea proporției trupelor",
+      "title": "Exemplu de salvare și activare"
+    },
+    "beriSetup": {
+      "donor": "Donator în Marele Imperiu cu trupele necesare",
+      "limit": "Atacuri normale zilnice: 0 limită suplimentară",
+      "preset": "Șablon de atac Berimond salvat",
+      "title": "Exemplu de atac și aprovizionare",
+      "travel": "Pană de călătorie pentru atacurile asupra turnurilor"
+    },
+    "beriTools": {
+      "ladders": "Scări: potrivite atacurilor obișnuite",
+      "mantlets": "Scuturi: potrivite atacurilor obișnuite",
+      "rams": "Berbeci: potriviți atacurilor obișnuite",
+      "title": "Exemplu de stocuri minime de unelte"
+    },
+    "beriTransfers": {
+      "capacity": "Capacitate liberă: 1; prag: 1",
+      "mix": "Raportul șablonului: 2 unități A la 1 unitate B",
+      "next": "Următorul transport: până la 1 B din stocul donatorului",
+      "stock": "Stocul taberei: 2 A și 0 B",
+      "title": "Exemplu de transferuri proporționale"
+    },
+    "stormCastle": {
+      "blueprint": "Țintă salvată activă; pauza o păstrează",
+      "capture": "Castel actual: țintă Funcțională",
+      "decorations": "Presetare de decorațiuni: opțională",
+      "title": "Exemplu de acces la castelul din Furtună",
+      "unlock": "Deschidere automată: pornită după verificarea prețului"
+    },
+    "stormCombat": {
+      "defenders": "Apărători de ocupație: aleși sau un supraviețuitor",
+      "forts": "Forturi: niveluri selectate 40–80",
+      "islands": "Insule de acvamarin: mari și mici",
+      "priority": "Mari, mici, apoi forturi de la 80 la 40",
+      "title": "Exemplu de atacuri asupra forturilor și insulelor"
+    },
+    "stormConstruction": {
+      "harbor": "Port: pornit, nivelul 1",
+      "resources": "Lemn 0; piatră 0; acvamarin planificat",
+      "spending": "Premium și demolare: oprite",
+      "title": "Exemplu de construcție și rezerve",
+      "transport": "Transport de resurse: pornit"
+    },
+    "stormLuna": {
+      "cost": "Cost și limită de cumpărări: doar pentru citire",
+      "limited": "Obiective limitate înaintea recompenselor nelimitate",
+      "priority": "Prioritate 1, 2, 3; numărul mai mic primul",
+      "reserve": "Păstrează acvamarin: 0 când folosești surplusul",
+      "title": "Exemplu de recompense Luna"
+    },
+    "stormSave": {
+      "check": "Verificare de politică: 30 de secunde",
+      "daily": "Atacuri normale zilnice: 0 limită suplimentară",
+      "map": "Actualizare hartă: 2 ore, doar pentru citire",
+      "switch": "Salvează, apoi activează Auto Storm",
+      "title": "Exemplu de salvare și activare"
+    },
+    "stormTroops": {
+      "averages": "Atacuri confirmate de la resetare / 24; media presetului doar pentru citire",
+      "cap": "Limita trupelor angajate: doar pentru citire",
+      "donors": "Donatori: ordinea afișată, stoc parțial permis",
+      "minimum": "Minim păstrat: 1.000 de trupe",
+      "title": "Exemplu de import de trupe"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Recomandările privesc utilizarea obișnuită și nu modifică setările salvate.",
+    "steps": {
+      "open": {
+        "title": "Deschide setările adăpostirii automate",
+        "items": {
+          "open_settings": {
+            "label": "Deschide setările",
+            "description": "În partea de sus a centrului de comandă, selectează butonul de setări de lângă adăpostirea automată a trupelor."
+          }
+        }
+      },
+      "general": {
+        "title": "Configurează răspunsul la atac",
+        "items": {
+          "evacuate_at": {
+            "label": "Evacuează la",
+            "description": "Începe evacuarea cu acest număr de minute înainte de impact sau imediat dacă atacul este detectat în acest interval.",
+            "recommendation": "Cu 1 minut înainte de impact."
+          },
+          "minimum_bird_days": {
+            "label": "Zile minime de protecție la destinație",
+            "description": "Alege un castel aliat cu mai mult decât acest număr de zile de protecție rămase; 0 elimină minimul.",
+            "recommendation": "3 zile, astfel încât destinația să aibă mai mult de 3 zile rămase."
+          },
+          "recall_when_clear": {
+            "label": "Retrage când pericolul trece",
+            "description": "Adu înapoi trupele staționate când ultimul atac detectat a trecut și nu mai există atacuri incoming.",
+            "recommendation": "Activat pentru utilizarea obișnuită."
+          },
+          "open_gate_fallback": {
+            "label": "Deschiderea porților ca rezervă",
+            "description": "Dacă trupele nu pot fi evacuate, această opțiune deschide pentru șase ore porțile castelului propriu atacat, cu excepția Berimondului.",
+            "recommendation": "Dezactivat, dacă nu dorești deschiderea automată a porților când evacuarea eșuează."
+          },
+          "protection_mode": {
+            "label": "Mod de protecție cumpărat",
+            "description": "Când modul de protecție cumpărat se pregătește sau este activ, adăpostirea automată folosește porțile chiar și cu opțiunea de rezervă oprită, cu excepția Berimondului."
+          }
+        },
+        "image": {
+          "alt": "Setări fictive cu timpul evacuării, protecția, retragerea, porțile și rezervele castelului",
+          "caption": "Verifică cele patru controale de răspuns și rezervele defensive ale fiecărui castel înainte de salvare."
+        }
+      },
+      "reserves": {
+        "title": "Alege trupele păstrate în fiecare castel",
+        "items": {
+          "add_troops": {
+            "label": "Adaugă trupe",
+            "description": "Alege tipurile de trupe care rămân în castel; fără rezervă, toate trupele eligibile care nu sunt unelte pot fi evacuate.",
+            "recommendation": "Păstrează garnizoana defensivă obișnuită și lasă surplusul de trupe de atac să plece."
+          },
+          "quantity": {
+            "label": "Cantitate",
+            "description": "Stabilește câte trupe din fiecare tip ales rămân în acest castel; 0 nu rezervă niciuna.",
+            "recommendation": "Folosește numărul necesar pentru apărarea obișnuită a castelului."
+          },
+          "edit_defense_troops": {
+            "label": "Editează trupele defensive",
+            "description": "Deschide din nou selectorul de trupe pentru a modifica tipurile sau cantitățile rezervate castelului."
+          },
+          "remove_defense_troop": {
+            "label": "Elimină o trupă defensivă",
+            "description": "Elimină un bloc de rezervă pentru a nu mai păstra acel tip de trupă în castel."
+          }
+        }
+      },
+      "finish": {
+        "title": "Salvează și activează adăpostirea automată",
+        "items": {
+          "save_changes": {
+            "label": "Salvează modificările",
+            "description": "Salvează timpul, comutatoarele și rezervele fiecărui castel înainte de a ieși din setări."
+          },
+          "auto_station_switch": {
+            "label": "Comutatorul adăpostirii automate",
+            "description": "Activează adăpostirea automată în partea de sus a centrului de comandă după salvare pentru a monitoriza atacurile jucătorilor care se apropie.",
+            "recommendation": "Activat pentru protecție obișnuită după verificarea rezervelor."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Adăpostirea automată a trupelor",
+      "summary": "Mută trupele eligibile înaintea unui atac care se apropie",
+      "description": "Când se apropie un atac al unui jucător, adăpostirea automată mută trupele eligibile la cel mai apropiat castel aliat potrivit din același regat.",
+      "expectation": "Cu retragerea activată, trupele revin după ultimul atac detectat când nu mai există amenințări; altfel, rămân o oră după sosire și apoi se întorc. Lipsa unei destinații sau a trupelor și restricțiile jocului pot împiedica evacuarea.",
+      "helper": "Trupele merg la cel mai apropiat castel aliat eligibil din același regat; dacă evacuarea eșuează, porțile castelului propriu atacat pot proteja în afara Berimondului."
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "Cel mai rapid comandant disponibil",
+      "commanderHelp": "Atacurile automate asupra fortărețelor compară efectele aplicabile asupra vitezei de deplasare din echipamente, pietre prețioase, seturi și generali pentru fiecare fortăreață vizată; nu este necesară o Relicvă 2.0 sau un minim de 100%.",
+      "description": "Atacurile automate asupra fortărețelor cumpără lupi înfricoșători în limitele salvate, aprovizionează regatele exterioare activate și atacă fortărețele pregătite din castelele lor principale.",
+      "expectation": "Fiecare atac necesită o fortăreață pregătită, destui lupi înfricoșători pentru ambele flancuri și un comandant atribuit eligibil; perioadele de așteptare sau întârzierile de aprovizionare îl pot suspenda.",
+      "name": "Atacuri automate asupra fortărețelor",
+      "settingsSummary": "Atacurile automate asupra fortărețelor pregătesc lupi înfricoșători și aleg cel mai rapid comandant atribuit eligibil pentru fiecare fortăreață vizată.",
+      "summary": "Aprovizionează lupii înfricoșători și atacă fortărețele pregătite",
+      "travelHelp": "Pana de călătorie este opțiunea implicită; alegerea de deplasare salvată este păstrată. Sporul specific castelului este calculat din nou înainte de plecare."
+    },
+    "recommendationIntro": "Valorile recomandate descriu utilizarea obișnuită a atacurilor automate asupra fortărețelor; sunt orientative și nu schimbă setările salvate.",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "Exemplu ilustrativ al setărilor de atac și deplasare pentru atacurile automate asupra fortărețelor",
+          "caption": "Atacurile automate asupra fortărețelor clasifică comandanții atribuiți eligibili pentru fiecare țintă și folosesc opțiunea de deplasare salvată."
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "În Comandanți, atribuie comandanții pe care îi pot folosi atacurile automate asupra fortărețelor, apoi salvează atribuirile.",
+            "label": "Atribuirea comandanților",
+            "recommendation": "Atribuie comandanții pe care vrei de obicei să îi ai disponibili pentru atacurile asupra fortărețelor."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Oprește atacurile automate asupra fortărețelor la numărul zilnic de atacuri normale al contului până când jocul îl resetează; 0 nu adaugă o limită.",
+            "label": "Limita zilnică de atacuri normale",
+            "recommendation": "0, dacă nu dorești o limită zilnică suplimentară."
+          },
+          "fastest_commander": {
+            "description": "Pentru fiecare fortăreață, automatizarea alege cel mai rapid comandant atribuit disponibil în prezent după efectele aplicabile ale echipamentelor, pietrelor prețioase, seturilor și generalilor, cu limitele aplicate.",
+            "label": "Cel mai rapid comandant eligibil",
+            "recommendation": "Nu este necesar un obiect Relicvă 2.0 sau un bonus de viteză de 100%."
+          },
+          "full_flank_wave": {
+            "description": "Fiecare atac așteaptă suficienți lupi înfricoșători pentru a umple ambele flancuri într-un singur val complet.",
+            "label": "Val de lupi înfricoșători pe ambele flancuri"
+          },
+          "horse_travel_boost": {
+            "description": "Alege opțiunea de deplasare pentru atacurile asupra fortărețelor; o opțiune cu monede sau rubine salvată explicit rămâne selectată.",
+            "label": "Spor de deplasare pentru cal",
+            "recommendation": "Pana de călătorie pentru deplasarea cea mai rapidă."
+          }
+        },
+        "title": "Setează atacurile și deplasarea"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "Activează atacurile automate asupra fortărețelor pe cardul Automatizare după salvare pentru a porni ciclurile obișnuite.",
+            "label": "Comutatorul atacurilor automate asupra fortărețelor",
+            "recommendation": "Activat după verificarea și salvarea setărilor dorite."
+          },
+          "calendar": {
+            "description": "Folosește Calendarul pentru a limita perioadele de funcționare ale atacurilor automate asupra fortărețelor și selectează Salvează programul după modificări.",
+            "label": "Calendar",
+            "recommendation": "Dezactivat pentru funcționare obișnuită continuă."
+          },
+          "save_fortress_plan": {
+            "description": "Salvează setările de regat, aprovizionare și atac înainte de a închide această fereastră.",
+            "label": "Salvează planul fortărețelor"
+          }
+        },
+        "title": "Setează programul, salvează și activează"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "Exemplu ilustrativ al comenzilor pentru cele trei regate exterioare ale atacurilor automate asupra fortărețelor",
+          "caption": "Activează fiecare regat deblocat al cărui castel principal trebuie să primească lupi înfricoșători și să atace fortărețe."
+        },
+        "items": {
+          "burning_sands": {
+            "description": "Activează atacurile și aprovizionarea cu lupi înfricoșători din castelul tău principal din Nisipurile Arzătoare când acel regat este deblocat.",
+            "label": "Nisipurile Arzătoare",
+            "recommendation": "Activat când este deblocat și pregătit pentru utilizare."
+          },
+          "everwinter_glacier": {
+            "description": "Activează atacurile și aprovizionarea cu lupi înfricoșători din castelul tău principal din Ghețarul Iernii Veșnice când acel regat este deblocat.",
+            "label": "Ghețarul Iernii Veșnice",
+            "recommendation": "Activat când este deblocat și pregătit pentru utilizare."
+          },
+          "fire_peaks": {
+            "description": "Activează atacurile și aprovizionarea cu lupi înfricoșători din castelul tău principal din Vârfurile de Foc când acel regat este deblocat.",
+            "label": "Vârfurile de Foc",
+            "recommendation": "Activat când este deblocat și pregătit pentru utilizare."
+          }
+        },
+        "title": "Alege regatele pentru fortărețe"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "Pe pagina Automatizare, selectează butonul de setări de pe cardul atacurilor automate asupra fortărețelor.",
+            "label": "Deschide setările"
+          }
+        },
+        "title": "Deschide setările atacurilor automate asupra fortărețelor"
+      },
+      "supply": {
+        "image": {
+          "alt": "Exemplu ilustrativ al setărilor de cumpărare și transfer ale lupilor înfricoșători",
+          "caption": "Verifică plafonul de cumpărare pe sesiune, rezerva de tăblițe ale Hanului și folosirea acceleratoarelor pentru transferurile confirmate."
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "Limitează cumpărarea de lupi înfricoșători din magazinul nomad la loturi de câte 100 pe sesiune; 0 dezactivează cumpărarea.",
+            "label": "Lupi înfricoșători pe sesiune",
+            "recommendation": "5.000 de lupi înfricoșători pe sesiune la cel mai mic preț."
+          },
+          "keep_khan_tablets": {
+            "description": "Oprește cumpărarea lupilor înfricoșători înainte ca numărul tăblițelor Hanului să scadă sub această rezervă.",
+            "label": "Păstrează tăblițele Hanului",
+            "recommendation": "Păstrează 25.000 de tăblițe ale Hanului."
+          },
+          "supply_route": {
+            "description": "Lupii înfricoșători cumpărați sosesc la castelul principal din Marele Imperiu și sunt distribuiți regatelor activate.",
+            "label": "Ruta de aprovizionare cu lupi înfricoșători"
+          },
+          "use_time_skips": {
+            "description": "Folosește acceleratoare eligibile numai pentru transporturile confirmate ale atacurilor automate asupra fortărețelor, respectând rezervele de inventar salvate.",
+            "label": "Folosește acceleratoare pentru transferurile lupilor înfricoșători",
+            "recommendation": "Activat pentru aprovizionare mai rapidă dacă rezervele salvate de acceleratoare permit acest lucru."
+          }
+        },
+        "title": "Setează aprovizionarea cu lupi înfricoșători"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "Atacurile automate de invazie atacă Lorzi Străini sau Corbi Sângeroși cu un preset de atac salvat până la atingerea scorului țintă sau a altei limite de oprire.",
+      "expectation": "Așteaptă un eveniment activ, comandanți eligibili și suficiente trupe și unelte; atacurile deja în deplasare se pot încheia după oprirea noilor atacuri.",
+      "name": "Atacuri automate de invazie",
+      "summary": "Atacă Lorzi Străini și Corbi Sângeroși până la scorul țintă"
+    },
+    "recommendationIntro": "Valorile recomandate descriu utilizarea obișnuită a atacurilor automate de invazie; sunt orientative și nu schimbă setările salvate.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Exemplu ilustrativ de dificultăți pentru Lorzi Străini și Corbi Sângeroși",
+          "caption": "Alege o dificultate de rezervă deblocată distinctă pentru fiecare eveniment."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Alege o dificultate deblocată pentru Corbi Sângeroși care va fi selectată dacă evenimentul actual nu are niciuna aleasă.",
+            "label": "Dificultatea pentru Corbi Sângeroși",
+            "recommendation": "Folosește cea mai mare dificultate deblocată pe care configurația ta obișnuită o gestionează sigur."
+          },
+          "difficulty_note": {
+            "description": "Salvează ambele alegeri de eveniment; schimbarea unei valori salvate nu înlocuiește dificultatea unui eveniment activ.",
+            "label": "Dificultatea actuală"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Alege o dificultate deblocată pentru Lorzi Străini care va fi selectată dacă evenimentul actual nu are niciuna aleasă.",
+            "label": "Dificultatea pentru Lorzi Străini",
+            "recommendation": "Folosește cea mai mare dificultate deblocată pe care configurația ta obișnuită o gestionează sigur."
+          }
+        },
+        "title": "Alege dificultățile ambelor evenimente"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "După salvare, activează atacurile automate de invazie pe cardul Automatizare pentru a funcționa când există un eveniment și resurse eligibile.",
+            "label": "Comutatorul atacurilor automate de invazie",
+            "recommendation": "Activat după verificarea și salvarea setărilor dorite."
+          },
+          "readiness": {
+            "description": "Atacurile automate de invazie așteaptă un eveniment activ, comandanți eligibili și suficiente trupe și unelte.",
+            "label": "Pregătirea atacului"
+          },
+          "save_settings": {
+            "description": "Salvează castelul sursă, presetul, dificultățile, limitele de oprire și alegerea de fortificare înainte de închiderea ferestrei.",
+            "label": "Salvează setările"
+          }
+        },
+        "title": "Salvează și activează atacurile automate de invazie"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Exemplu ilustrativ al setărilor de fortificare pentru atacurile automate de invazie",
+          "caption": "Lasă fortificarea oprită, dacă nu dorești să cheltuiești monedă disponibilă a evenimentului sau rubine alese explicit."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Alege o opțiune acceptată de evenimentul activ; jocul stabilește fiecare preț, iar alegerea explicită a rubinelor permite cheltuirea lor.",
+            "label": "Moneda pentru fortificare",
+            "recommendation": "Moneda evenimentului când este disponibilă și fortificarea este activată."
+          },
+          "fortify_each_target": {
+            "description": "Dacă este activată, întărește fiecare castel inamic generat înainte de atac cu moneda selectată.",
+            "label": "Fortifică fiecare țintă",
+            "recommendation": "Dezactivat, dacă fortificarea nu face parte din strategia ta obișnuită de eveniment."
+          }
+        },
+        "title": "Alege fortificarea opțională a țintelor"
+      },
+      "limits": {
+        "image": {
+          "alt": "Exemplu ilustrativ de scor și limite de oprire pentru atacurile automate de invazie",
+          "caption": "Scorul țintă oprește noile lansări, însă atacurile deja în deplasare se pot încheia."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Oprește această automatizare la numărul zilnic de atacuri normale al întregului cont până la resetarea lui de către joc; 0 nu adaugă o limită.",
+            "label": "Limita zilnică de atacuri normale",
+            "recommendation": "0 pentru ca scorul țintă al evenimentului să controleze seria."
+          },
+          "minimum_remaining": {
+            "description": "Nu mai lansa atacuri noi cu acest număr de minute înainte de sfârșitul evenimentului.",
+            "label": "Oprește înainte de sfârșitul evenimentului",
+            "recommendation": "30 de minute."
+          },
+          "score_target": {
+            "description": "Nu mai lansa atacuri noi când scorul evenimentului raportat atinge sau depășește această țintă.",
+            "label": "Oprește la scorul evenimentului",
+            "recommendation": "Folosește ultimul tău prag obișnuit de recompensă personală, peste 0."
+          },
+          "travelling_attacks": {
+            "description": "Atacurile deja în deplasare se pot încheia după îndeplinirea unei condiții de oprire și pot ridica scorul final peste țintă.",
+            "label": "Atacuri în deplasare"
+          }
+        },
+        "title": "Setează scorul și limitele de oprire"
+      },
+      "open": {
+        "image": {
+          "alt": "Exemplu ilustrativ pentru castelul sursă, preset și deplasare la atacurile automate de invazie",
+          "caption": "Alege un castel sursă din Marele Imperiu și un preset de eveniment salvat înainte de a seta deplasarea."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Selectează un preset de atac salvat cu trupe, unelte și formație pentru Lorzi Străini sau Corbi Sângeroși.",
+            "label": "Preset de atac",
+            "recommendation": "Creează mai întâi un preset obișnuit pentru Lorzi Străini sau Corbi Sângeroși, apoi selectează-l aici."
+          },
+          "capacity_note": {
+            "description": "Cantitățile de trupe și unelte din preset se adaptează la capacitatea comandantului și a țintei selectate.",
+            "label": "Capacitatea de atac"
+          },
+          "horse_travel_boost": {
+            "description": "Alege opțiunea de deplasare cu pană, monede sau rubine pentru aceste atacuri.",
+            "label": "Spor de deplasare pentru cal",
+            "recommendation": "Pana de călătorie pentru deplasare rapidă."
+          },
+          "open_settings": {
+            "description": "Pe pagina Automatizare, selectează butonul de setări de pe cardul atacurilor automate de invazie.",
+            "label": "Deschide setările"
+          },
+          "source_castle": {
+            "description": "Alege castelul din Marele Imperiu care oferă trupe și unelte pentru atacurile evenimentului.",
+            "label": "Castel sursă",
+            "recommendation": "Folosește castelul tău obișnuit pentru eveniment, cu trupe și unelte suficiente."
+          }
+        },
+        "title": "Deschide setările atacurilor automate de invazie"
+      }
+    }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "Folosește cea mai mare dificultate deblocată pe care configurația ta obișnuită o gestionează sigur.",
+            "description": "Alege o dificultate nomadă deblocată pentru începutul evenimentului.",
+            "label": "Dificultate nomadă"
+          },
+          "samurai_difficulty": {
+            "recommendation": "Folosește cea mai mare dificultate deblocată pe care configurația ta obișnuită o gestionează sigur.",
+            "description": "Alege o dificultate samurai deblocată pentru începutul evenimentului.",
+            "label": "Dificultate samurai"
+          },
+          "active_difficulty": {
+            "description": "Pentru un eveniment activ, potrivește dificultatea curentă, deoarece o alegere salvată diferită face automatizarea să aștepte în loc să o schimbe.",
+            "label": "Eveniment deja activ"
+          }
+        },
+        "title": "Alege dificultățile ambelor evenimente",
+        "image": {
+          "alt": "Exemplu de dificultăți nomade și samurai",
+          "caption": "Alege o dificultate deblocată separată pentru fiecare eveniment și potrivește dificultatea celui activ."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "Activat după verificarea și salvarea setărilor dorite.",
+            "description": "După salvare, pornește Auto Nomazi/Samurai pe cardul Automatizare pentru a rula când există un eveniment și resurse eligibile.",
+            "label": "Comutator Auto Nomazi/Samurai"
+          },
+          "save_settings": {
+            "label": "Salvează setările",
+            "description": "Salvează sursa, configurațiile, dificultățile, limitele de oprire, alegerile de salturi și starea testului înainte de a închide dialogul."
+          },
+          "readiness": {
+            "description": "Automatizarea dezvoltă taberele evenimentului și așteaptă comandanți, trupe, unelte și salturi de timp utilizabile când acestea sunt activate.",
+            "label": "Pregătirea pentru atacurile asupra taberelor"
+          }
+        },
+        "title": "Salvează și pornește Auto Nomazi/Samurai"
+      },
+      "limits": {
+        "image": {
+          "caption": "Scorul țintă oprește noile lansări, însă atacurile deja în deplasare se pot încheia.",
+          "alt": "Exemplu de limite de puncte și oprire pentru Auto Nomazi/Samurai"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Oprește această automatizare la numărul zilnic de atacuri normale al întregului cont până la resetarea lui de către joc; 0 nu adaugă o limită.",
+            "label": "Limita zilnică a atacurilor obișnuite",
+            "recommendation": "0 pentru ca scorul țintă al evenimentului să controleze seria."
+          },
+          "minimum_remaining": {
+            "description": "Nu mai lansa atacuri noi cu acest număr de minute înainte de sfârșitul evenimentului.",
+            "label": "Oprește înainte de sfârșitul evenimentului",
+            "recommendation": "30 de minute."
+          },
+          "score_target": {
+            "description": "Nu mai lansa atacuri noi când scorul evenimentului raportat atinge sau depășește această țintă.",
+            "label": "Oprește la scorul evenimentului",
+            "recommendation": "Folosește ultimul tău prag obișnuit de recompensă personală, peste 0."
+          },
+          "travelling_attacks": {
+            "description": "Atacurile deja în deplasare se pot încheia după îndeplinirea unei condiții de oprire și pot ridica scorul final peste țintă.",
+            "label": "Atacuri în deplasare"
+          }
+        },
+        "title": "Setează scorul și limitele de oprire"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Accelerarea deplasării cu cai",
+            "recommendation": "Pana de călătorie pentru deplasare rapidă.",
+            "description": "Alege opțiunea de călătorie cu pană, monede sau rubine pentru atacurile asupra taberelor."
+          },
+          "open_settings": {
+            "label": "Deschide setările",
+            "description": "Pe pagina Automatizare, selectează butonul de setări al cardului Auto Nomazi/Samurai."
+          },
+          "source_castle": {
+            "label": "Castel sursă",
+            "recommendation": "Folosește castelul tău obișnuit pentru eveniment, cu trupe și unelte suficiente.",
+            "description": "Alege castelul din Marele Imperiu care furnizează trupe și unelte pentru atacurile asupra taberelor."
+          },
+          "nomad_preset": {
+            "description": "Selectează o configurație de atac salvată cu trupe, unelte și formație pentru taberele nomade.",
+            "label": "Configurație de atac nomadă",
+            "recommendation": "Creează și selectează configurația ta nomadă obișnuită."
+          },
+          "samurai_preset": {
+            "description": "Selectează o configurație de atac salvată cu trupe, unelte și formație pentru taberele samurai.",
+            "label": "Configurație de atac samurai",
+            "recommendation": "Creează și selectează configurația ta samurai obișnuită."
+          }
+        },
+        "image": {
+          "alt": "Exemplu de sursă, configurații și călătorie pentru Auto Nomazi/Samurai",
+          "caption": "Creează ambele configurații de eveniment înainte să alegi castelul sursă și opțiunea de călătorie."
+        },
+        "title": "Deschide setările Auto Nomazi/Samurai"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "Exemplu de pauze ale taberelor și rezerve de salturi de timp",
+          "caption": "Fiecare valoare Păstrează numără obiecte de salt de timp, nu minute de pauză."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "Păstrează nefolosit acest număr de salturi de timp de 10 min ca rezervă.",
+            "label": "Păstrează 10 min",
+            "recommendation": "0 pentru seriile obișnuite de tabere."
+          },
+          "keep_1m": {
+            "description": "Păstrează nefolosit acest număr de salturi de timp de 1 min ca rezervă.",
+            "label": "Păstrează 1 min",
+            "recommendation": "0 pentru seriile obișnuite de tabere."
+          },
+          "keep_24h": {
+            "description": "Păstrează nefolosit acest număr de salturi de timp de 24 h ca rezervă.",
+            "label": "Păstrează 24 h",
+            "recommendation": "Rezervă stocul necesar pentru construcții sau alte activități."
+          },
+          "keep_30m": {
+            "description": "Păstrează nefolosit acest număr de salturi de timp de 30 min ca rezervă.",
+            "label": "Păstrează 30 min",
+            "recommendation": "0 pentru seriile obișnuite de tabere."
+          },
+          "keep_5h": {
+            "description": "Păstrează nefolosit acest număr de salturi de timp de 5 h ca rezervă.",
+            "label": "Păstrează 5 h",
+            "recommendation": "Rezervă stocul necesar pentru construcții sau alte activități."
+          },
+          "keep_5m": {
+            "description": "Păstrează nefolosit acest număr de salturi de timp de 5 min ca rezervă.",
+            "label": "Păstrează 5 min",
+            "recommendation": "0 pentru seriile obișnuite de tabere."
+          },
+          "keep_60m": {
+            "description": "Păstrează nefolosit acest număr de salturi de timp de 60 min ca rezervă.",
+            "label": "Păstrează 60 min",
+            "recommendation": "0 pentru seriile obișnuite de tabere."
+          },
+          "skip_cooldowns": {
+            "description": "După o victorie confirmată împotriva taberei, folosește un salt de timp disponibil pentru a elimina pauza acelei ținte.",
+            "label": "Elimină pauza după fiecare atac reușit",
+            "recommendation": "Pornit pentru atacurile repetate obișnuite asupra taberelor; oprit pentru a aștepta pauzele naturale."
+          }
+        },
+        "title": "Alege salturi de timp și rezerve"
+      },
+      "trial": {
+        "image": {
+          "alt": "Exemplu de controale pentru testul temporar contra castelului baronului tâlhar",
+          "caption": "Testul lansează un atac real și înlocuiește funcționarea normală a evenimentului cât timp este pornit."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "Înlocuiește funcționarea normală a evenimentului cu un test de atac real asupra unui castel de baron tâlhar folosind configurația nomadă și salturi de timp.",
+            "label": "Test temporar complet contra castelului baronului tâlhar",
+            "recommendation": "Oprit pentru seriile obișnuite de nomazi sau samurai."
+          },
+          "target_x": {
+            "description": "Introdu coordonata orizontală a castelului baronului tâlhar numai pentru testul temporar.",
+            "label": "Ținta X",
+            "recommendation": "Lasă nefolosit cât timp testul este oprit."
+          },
+          "target_y": {
+            "description": "Introdu coordonata verticală a castelului baronului tâlhar numai pentru testul temporar.",
+            "label": "Ținta Y",
+            "recommendation": "Lasă nefolosit cât timp testul este oprit."
+          },
+          "trial_skips": {
+            "description": "Pornirea testului activează și salturile de timp pentru acest test.",
+            "label": "Salturi de timp pentru test"
+          }
+        },
+        "title": "Lasă testul temporar oprit pentru seriile obișnuite"
+      }
+    },
+    "feature": {
+      "description": "Auto Nomazi/Samurai dezvoltă taberele eligibile ale evenimentului, alege cea mai slabă tabără dezvoltată complet și o atacă repetat cu configurația salvată pentru eveniment până când atinge o limită de oprire.",
+      "expectation": "Așteaptă un eveniment activ, comandanți, trupe, unelte și salturi de timp utilizabile când eliminarea pauzei este activă; atacurile aflate în drum se pot încheia după oprirea lansărilor noi.",
+      "name": "Auto Nomazi/Samurai",
+      "summary": "Dezvoltă și atacă tabere nomade sau samurai"
+    },
+    "recommendationIntro": "Valorile recomandate descriu folosirea obișnuită a Auto Nomazi/Samurai; sunt îndrumări și nu schimbă setările salvate."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "Activat după verificarea și salvarea setărilor dorite.",
+            "description": "Activează Consilierul automat pe cardul Automatizare după verificarea setărilor; un Consilier deja deblocat poate porni imediat o serie.",
+            "label": "Comutator Consilier automat"
+          },
+          "save_settings": {
+            "label": "Salvează setările",
+            "description": "Salvează castelul sursă, presetarea, dificultățile, dimensiunea seriei și bugetele înainte să închizi dialogul."
+          },
+          "activate_advisor": {
+            "description": "Dacă Consilierul este blocat, alege Activează Consilierul pentru a deschide confirmarea evenimentului curent.",
+            "label": "Activează Consilierul"
+          },
+          "activate_and_spend": {
+            "description": "Trimite activarea confirmată folosind un jeton eligibil de eveniment sau un jeton universal de Consilier; un eveniment gratuit afișează activarea Consilierului.",
+            "label": "Activează și consumă jetonul"
+          },
+          "cancel_activation": {
+            "description": "Închide confirmarea fără să trimiți activarea sau să consumi un jeton.",
+            "label": "Anulează activarea"
+          },
+          "confirm_paid_activation": {
+            "description": "Confirmă că activarea Consilierului poate consuma un jeton de eveniment sau universal, dacă jocul nu indică faptul că evenimentul este gratuit.",
+            "label": "Confirmă activarea cu plată"
+          }
+        },
+        "image": {
+          "alt": "Comenzi ilustrative pentru salvarea Consilierului automat și activarea cu jeton",
+          "caption": "Salvarea sau activarea comutatorului nu consumă un jeton; activarea confirmată separat îl poate consuma."
+        },
+        "title": "Salvează, activează și deblochează accesul la Consilier"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "Dificultate nomadă",
+            "recommendation": "Folosește cea mai mare dificultate deblocată pe care configurația ta obișnuită o gestionează sigur.",
+            "description": "Alege o dificultate Nomazi deblocată pentru selectare la începutul evenimentului."
+          },
+          "samurai_difficulty": {
+            "label": "Dificultate samurai",
+            "recommendation": "Folosește cea mai mare dificultate deblocată pe care configurația ta obișnuită o gestionează sigur.",
+            "description": "Alege o dificultate Samurai deblocată pentru selectare la începutul evenimentului."
+          },
+          "active_difficulty": {
+            "description": "Potrivește dificultatea curentă a evenimentului deja activ, altfel automatizarea așteaptă în loc să o schimbe.",
+            "label": "Dificultatea evenimentului activ"
+          }
+        },
+        "title": "Alege dificultățile ambelor evenimente",
+        "image": {
+          "alt": "Opțiuni ilustrative de dificultate pentru Consilierul Nomazi și Samurai",
+          "caption": "Salvează dificultățile ambelor evenimente și potrivește-o pe cea a evenimentului deja activ."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Accelerarea deplasării cu cai",
+            "recommendation": "Pana de călătorie pentru deplasare rapidă.",
+            "description": "Alege pentru serie deplasarea cu pene, monede sau rubine."
+          },
+          "open_settings": {
+            "label": "Deschide setările",
+            "description": "Pe pagina Automatizare, selectează butonul de setări al cardului Consilier automat."
+          },
+          "source_castle": {
+            "label": "Castel sursă",
+            "recommendation": "Folosește castelul tău obișnuit pentru eveniment, cu trupe și unelte suficiente.",
+            "description": "Alege castelul din Marele Imperiu care furnizează trupele și uneltele seriei Consilierului."
+          },
+          "attack_preset": {
+            "description": "Alege o presetare de atac salvată ale cărei trupe, unelte și formație sunt copiate pentru fiecare atac cerut.",
+            "label": "Presetare de atac a Consilierului",
+            "recommendation": "Creează mai întâi o presetare obișnuită pentru evenimentul activ Nomazi sau Samurai, apoi selecteaz-o."
+          },
+          "complete_copies": {
+            "description": "Resursele disponibile și copiile complete ale presetării pot reduce seria sub numărul maxim de atacuri.",
+            "label": "Copii complete ale presetării"
+          }
+        },
+        "image": {
+          "alt": "Castel sursă, presetare și setări de deplasare ilustrative ale Consilierului automat",
+          "caption": "Alege un castel sursă din Marele Imperiu și o presetare salvată pentru eveniment înainte de a seta deplasarea."
+        },
+        "title": "Deschide setările Consilierului automat"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "Păstrează nefolosit acest număr de salturi de timp de 24 h ca rezervă.",
+            "label": "Păstrează 24 h",
+            "recommendation": "Rezervă stocul necesar pentru construcții sau alte activități."
+          },
+          "keep_5h": {
+            "description": "Păstrează nefolosit acest număr de salturi de timp de 5 h ca rezervă.",
+            "label": "Păstrează 5 h",
+            "recommendation": "Rezervă stocul necesar pentru construcții sau alte activități."
+          },
+          "keep_60m": {
+            "description": "Păstrează nefolosit acest număr de salturi de timp de 60 min ca rezervă.",
+            "label": "Păstrează 60 min",
+            "recommendation": "0 pentru seriile obișnuite ale Consilierului."
+          },
+          "coin_cost": {
+            "description": "Estimează costul total în monede pentru fiecare atac pentru calculul accesibilității înainte de lansare, fără să schimbi prețurile jocului.",
+            "label": "Cost total în monede pe atac",
+            "recommendation": "500 doar dacă acoperă costul total real; altfel folosește un total măsurat mai mare."
+          },
+          "keep_coins": {
+            "description": "Exclude acest număr de monede din bugetul seriei.",
+            "label": "Păstrează monede",
+            "recommendation": "Păstrează bugetul obișnuit pentru recrutare și construcții."
+          },
+          "keep_feathers": {
+            "description": "Exclude acest număr de pene de deplasare din bugetul seriei.",
+            "label": "Păstrează pene",
+            "recommendation": "0, dacă nu rezervi pene pentru alte funcții."
+          },
+          "keep_rubies": {
+            "description": "Exclude acest număr de rubine din bugetul seriei.",
+            "label": "Păstrează rubine",
+            "recommendation": "Păstrează soldul necesar altor activități."
+          },
+          "ruby_cost": {
+            "description": "Estimează costul de deplasare în rubine pe atac; o valoare pozitivă este necesară dacă alegi deplasarea cu rubine.",
+            "label": "Rubine pe atac",
+            "recommendation": "0 cu Pană de călătorie; folosește costul real pozitiv pentru deplasarea cu rubine."
+          }
+        },
+        "image": {
+          "alt": "Rezerve ilustrative de monede, rubine, pene și salturi de timp ale Consilierului automat",
+          "caption": "Câmpurile de cost sunt estimări pentru planificare; valorile păstrate sunt resurse sau salturi de timp nefolosite."
+        },
+        "title": "Setează bugetele și rezervele de resurse"
+      },
+      "overview": {
+        "image": {
+          "alt": "Panou ilustrativ cu progresul și pierderile Consilierului automat",
+          "caption": "Panoul arată progresul seriei și pierderile fără să pornească o altă serie."
+        },
+        "items": {
+          "live_progress": {
+            "description": "Citește în panou atacurile curente și cerute, victoriile, înfrângerile, unitățile și uneltele pierdute.",
+            "label": "Serie activă a Consilierului"
+          },
+          "no_relaunch": {
+            "description": "O serie încheiată sau anulată pentru același eveniment nu repornește automat.",
+            "label": "Serie încheiată sau anulată"
+          },
+          "refresh_overview": {
+            "description": "Cere date actualizate despre progresul seriei Consilierului, victorii, înfrângeri și pierderi.",
+            "label": "Actualizează panoul"
+          }
+        },
+        "title": "Verifică seria activă a Consilierului"
+      },
+      "sizing": {
+        "image": {
+          "alt": "Număr de atacuri și timp de eveniment ilustrative pentru Consilierul automat",
+          "caption": "Numărul cerut este limitat înainte de lansare de resursele disponibile și timpul evenimentului."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "Setează limita superioară de atacuri pentru această singură serie a Consilierului; resursele și timpul rămas pot reduce numărul real.",
+            "label": "Atacuri maxime",
+            "recommendation": "9.999 pentru ca resursele disponibile și timpul evenimentului să determine dimensiunea seriei."
+          },
+          "minimum_remaining": {
+            "description": "Lasă nefolosite aceste minute în calculul timpului evenimentului înainte de lansare.",
+            "label": "Oprește înainte de sfârșitul evenimentului",
+            "recommendation": "30 de minute; nu este un cronometru continuu care anulează seria."
+          }
+        },
+        "title": "Setează dimensiunea seriei și timpul evenimentului"
+      }
+    },
+    "feature": {
+      "description": "Consilierul automat pornește o singură serie de atacuri Nomazi sau Samurai, dimensionată după resursele disponibile și timpul rămas din eveniment.",
+      "expectation": "Seria așteaptă dificultatea potrivită a evenimentului activ și accesul deblocat la Consilier; salvarea sau activarea comutatorului nu consumă un jeton, dar activarea confirmată poate face asta.",
+      "name": "Consilier automat",
+      "summary": "Pornește o serie Consilier Nomazi sau Samurai dimensionată după resurse"
+    },
+    "recommendationIntro": "Valorile recomandate descriu utilizarea obișnuită a Consilierului automat; sunt îndrumări și nu modifică setările salvate."
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "Păstrează 10 min",
+            "description": "Păstrează nefolosite atâtea acceleratoare de 10 min.",
+            "recommendation": "0 pentru lanțurile obișnuite ale Khanului."
+          },
+          "keep_1m": {
+            "label": "Păstrează 1 min",
+            "description": "Păstrează nefolosite atâtea acceleratoare de 1 min.",
+            "recommendation": "0 pentru lanțurile obișnuite ale Khanului."
+          },
+          "keep_24h": {
+            "label": "Păstrează 24 h",
+            "recommendation": "Rezervă stocul necesar pentru construcții sau alte activități.",
+            "description": "Păstrează nefolosite atâtea acceleratoare de 24 h."
+          },
+          "keep_30m": {
+            "label": "Păstrează 30 min",
+            "description": "Păstrează nefolosite atâtea acceleratoare de 30 min.",
+            "recommendation": "0 pentru lanțurile obișnuite ale Khanului."
+          },
+          "keep_5h": {
+            "label": "Păstrează 5 h",
+            "recommendation": "Rezervă stocul necesar pentru construcții sau alte activități.",
+            "description": "Păstrează nefolosite atâtea acceleratoare de 5 h."
+          },
+          "keep_5m": {
+            "label": "Păstrează 5 min",
+            "description": "Păstrează nefolosite atâtea acceleratoare de 5 min.",
+            "recommendation": "0 pentru lanțurile obișnuite ale Khanului."
+          },
+          "keep_1h": {
+            "description": "Păstrează nefolosite atâtea acceleratoare de 1 h.",
+            "label": "Păstrează 1 h",
+            "recommendation": "0 pentru lanțurile obișnuite ale Khanului."
+          },
+          "skip_cooldowns": {
+            "description": "Rezervă și folosește suficiente acceleratoare pentru a elimina așteptările taberei după atacuri.",
+            "label": "Elimină fiecare așteptare a taberei Khanului",
+            "recommendation": "Pornit; fereastra actuală de setări cere acest lucru pentru salvare."
+          },
+          "skip_shortage": {
+            "description": "Atacurile noi asupra taberei se întrerup dacă acceleratoarele utilizabile nu acoperă așteptarea necesară.",
+            "label": "Acceleratoare utilizabile insuficiente"
+          }
+        },
+        "image": {
+          "alt": "Exemplu de eliminare a așteptărilor și rezerve de acceleratoare ale Khanului automat",
+          "caption": "Rezervele numără obiecte, nu minute."
+        },
+        "title": "Setează eliminarea așteptărilor și rezervele"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "Limita zilnică a atacurilor obișnuite",
+            "description": "Oprește atacurile noi ale acestei automatizări la contorul zilnic de atacuri normale al întregului cont; 0 dezactivează limita.",
+            "recommendation": "0 dacă nu ai nevoie de o limită pentru întregul cont."
+          },
+          "event_end": {
+            "label": "Oprește înainte de sfârșitul evenimentului",
+            "description": "Oprește atacurile noi asupra taberei cu atâtea minute înainte de sfârșitul evenimentului.",
+            "recommendation": "5 minute."
+          },
+          "nomad_points": {
+            "description": "La acest scor raportat, oprește atacuri noi ale Khanului, recheamă atacurile în drum și deschide porțile principale; 0 dezactivează oprirea.",
+            "label": "Oprește la puncte nomade",
+            "recommendation": "0 dacă nu dorești oprire și protecție la un scor ales."
+          },
+          "replenish_tools": {
+            "description": "Înlocuiește uneltele lipsă din presetarea de apărare prin oferte eligibile și respinge pachetele cu preț în rubine.",
+            "label": "Reaprovizionează uneltele de apărare",
+            "recommendation": "Pornit dacă dorești achiziții automate eligibile."
+          }
+        },
+        "image": {
+          "alt": "Exemplu de puncte, unelte și limită zilnică pentru Khan automat",
+          "caption": "O oprire la puncte nomade mai mare decât zero recheamă și atacurile Khanului în drum și deschide porțile principale."
+        },
+        "title": "Setează limitele de puncte, provizii și atacuri zilnice"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "Salvează setările",
+            "description": "Salvează castelele, presetările, controalele de furie, limitele, rezervele de acceleratoare și protecțiile alese."
+          },
+          "enable_switch": {
+            "description": "Activează Khan automat din cardul Automatizare după verificarea apărării principale.",
+            "label": "Comutator Khan automat",
+            "recommendation": "Pornit după salvarea setărilor și pregătirea apărării."
+          },
+          "station_priority": {
+            "description": "Staționarea automată gestionează atacurile primite de la jucători separat de represaliile Khanului.",
+            "label": "Prioritatea Staționării automate"
+          }
+        },
+        "image": {
+          "alt": "Exemplu de salvare și activare a Khanului automat",
+          "caption": "Verifică apărarea castelului principal înainte să activezi represaliile Khanului."
+        },
+        "title": "Salvează și activează Khan automat"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Accelerarea deplasării cu cai",
+            "recommendation": "Pana de călătorie pentru deplasare rapidă.",
+            "description": "Alege deplasarea cu pene, monede sau rubine pentru atacuri asupra taberei."
+          },
+          "open_settings": {
+            "label": "Deschide setările",
+            "description": "Pe pagina Automatizare alege butonul de setări al cardului Khan automat."
+          },
+          "attack_from": {
+            "description": "Alege castelul principal sau un avanpost din Marele Imperiu care furnizează atacurile asupra taberei Khanului.",
+            "label": "Atacă din",
+            "recommendation": "Folosește un avanpost cu armata ta ofensivă dacă există."
+          },
+          "camp_attack_preset": {
+            "description": "Alege o presetare de atac salvată pentru atacurile obișnuite asupra taberei Khanului.",
+            "label": "Presetare de atac asupra taberei",
+            "recommendation": "Creează mai întâi presetarea ta obișnuită de atac asupra Khanului."
+          },
+          "defend_at": {
+            "description": "Represaliile Khanului se apără la castelul principal din Marele Imperiu afișat aici; câmpul nu poate fi editat.",
+            "label": "Apără la"
+          },
+          "main_defense_preset": {
+            "description": "Alege o presetare de apărare salvată, reaplicată la castelul principal înainte de represalii.",
+            "label": "Presetare de apărare principală",
+            "recommendation": "Creează presetarea ta obișnuită de apărare împotriva Khanului și pregătește trupe și unelte."
+          }
+        },
+        "image": {
+          "alt": "Exemplu de castel, presetări și deplasare pentru Khan automat",
+          "caption": "Pregătește ambele presetări și apărarea principală înainte de activarea lanțului de atacuri."
+        },
+        "title": "Alege castele, presetări și deplasare"
+      },
+      "protection": {
+        "image": {
+          "alt": "Exemplu de protecție a zidului castelului principal pentru Khan automat",
+          "caption": "Protecția zidului se aplică numai când atacurile pleacă din castelul principal."
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "Declanșează protecția când unitățile ofensive de pe zid ating acest număr.",
+            "label": "Prag de unități ofensive pe zid",
+            "recommendation": "1.000 de unități ofensive pe zid."
+          },
+          "outpost_source": {
+            "description": "Protecția este dezactivată dacă un avanpost furnizează atacurile și castelul principal apără separat.",
+            "label": "Avanpost ca sursă"
+          },
+          "protect_offense": {
+            "description": "Când ataci din castelul principal, deschide porțile și întrerupe Khan dacă prea multe trupe ofensive ar apăra zidul.",
+            "label": "Protejează trupele ofensive pe zidul principal",
+            "recommendation": "Pornit când castelul principal furnizează atacurile."
+          }
+        },
+        "title": "Protejează zidul castelului principal"
+      },
+      "rage": {
+        "image": {
+          "alt": "Exemplu de furie și permisiuni de atac pentru Khan automat",
+          "caption": "Amplificatorul temporar de puncte de furie este diferit de steagurile de furie."
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "Oprește atacurile noi asupra taberei în timp ce gestionarea furiei, așteptările și apărarea continuă.",
+            "label": "Blochează atacurile automate ale Khanului",
+            "recommendation": "Oprit pentru atacuri obișnuite asupra taberei."
+          },
+          "max_rage_chain": {
+            "description": "Limitează represaliile acceptate în evenimentul curent înainte de oprirea atacurilor noi asupra taberei; 0 elimină limita.",
+            "label": "Lanț maxim de furie",
+            "recommendation": "0 dacă nu ai nevoie de o limită de represalii."
+          },
+          "rage_booster": {
+            "description": "Permite atacurile automate noi asupra taberei numai când amplificatorul temporar de puncte de furie este activ.",
+            "label": "Cere amplificatorul de puncte de furie",
+            "recommendation": "Oprit dacă nu dorești atacuri numai cu amplificator."
+          },
+          "rage_continues": {
+            "description": "Limita lanțului de furie nu oprește declanșarea la furie maximă, așteptările sau refacerea apărării.",
+            "label": "Gestionarea furiei continuă"
+          },
+          "trigger_full_rage": {
+            "description": "Provoacă represalii ale Khanului când furia este maximă.",
+            "label": "Provoacă Khanul la furie maximă",
+            "recommendation": "Pornit când castelul principal este pregătit să apere."
+          }
+        },
+        "title": "Setează furia și permisiunile de atac"
+      }
+    },
+    "feature": {
+      "description": "Khan automat atacă tabăra Khanului, elimină timpii de așteptare, declanșează represalii la furie maximă și menține apărarea castelului principal.",
+      "expectation": "Atacurile noi asupra taberei se opresc la limitele alese sau când lipsesc resurse, protejând castelul principal; atacurile jucătorilor sunt gestionate de Staționarea automată.",
+      "name": "Khan automat",
+      "summary": "Leagă atacurile asupra taberei Khanului și apără represaliile la castelul principal"
+    },
+    "recommendationIntro": "Valorile recomandate descriu folosirea obișnuită a Khanului automat; sunt îndrumări și nu modifică setările salvate."
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "Berimond automat întărește tabăra deținută în proporția trupelor din șablonul de atac ales și apoi poate ataca turnuri, reaproviziona unelte și construi din pradă confirmată.",
+      "expectation": "Transferurile așteaptă stocuri recente în tabără și la castelul donator, capacitatea raportată și încheierea transportului precedent; un stoc parțial permite un transport mai mic, iar lipsa tipului necesar oprește reaprovizionarea.",
+      "name": "Berimond automat",
+      "summary": "Aprovizionează și administrează tabăra din Berimond"
+    },
+    "recommendationIntro": "Recomandările descriu utilizarea obișnuită a Berimondului automat și nu modifică setările salvate.",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "Setări ilustrative pentru construcția opțională a taberei",
+          "caption": "Țintă inclusă și salvată, moduri de captură, grajd nivelul 5, rezerve de lemn și piatră și șapte durate de accelerare."
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "Permite eliminarea clădirilor negestionate care nu pot fi mutate ori depozitate pentru atingerea exactă a țintei.",
+            "label": "Permite demolarea",
+            "recommendation": "Dezactivat dacă nu ai verificat eliminările planificate."
+          },
+          "allow_premium_costs": {
+            "description": "Permite etape eligibile de construcție care consumă monedă premium.",
+            "label": "Permite costuri premium",
+            "recommendation": "Dezactivat dacă nu dorești explicit construcții premium."
+          },
+          "auto_beri_builder_lane": {
+            "description": "Construiește sau îmbunătățește ținta activă a taberei Berimond din prada întoarsă și confirmată, fără resurse aduse din alt regat.",
+            "label": "Constructorul Berimond automat",
+            "recommendation": "Pornește pentru construcția obișnuită a taberei după verificarea permisiunilor de cheltuire."
+          },
+          "camp_resource_reserves": {
+            "description": "Păstrează cantitățile alese de lemn și piatră în afara construcției taberei.",
+            "label": "Rezerve de resurse ale taberei",
+            "recommendation": "Lemn 0 și piatră 0 dacă surplusul poate fi folosit."
+          },
+          "construction_time_skip_reserves": {
+            "description": "Stabilește separat câte accelerări de 1 min, 5 min, 10 min, 30 min, 1 h, 5 h și 24 h păstrezi.",
+            "label": "Rezerve de accelerări pentru construcție",
+            "recommendation": "Păstrează 0 din fiecare accelerare scurtă; rezervă stocul de 1 h, 5 h și 24 h pentru alte activități."
+          },
+          "optional_custom_camp_target": {
+            "description": "Capturează Funcțional pentru clădirile esențiale, Plan pentru pozițiile fără decorațiuni sau Exact pentru toate detaliile acceptate.",
+            "label": "Țintă personalizată opțională",
+            "recommendation": "Folosește ținta inclusă dacă nu ai nevoie de o țintă personalizată verificată."
+          },
+          "stable_target": {
+            "description": "Alege nivelul grajdului facțiunii între 1 și 5 pentru ținta inclusă.",
+            "label": "Nivelul țintă al grajdului",
+            "recommendation": "Nivelul 5 pentru construcția obișnuită de eveniment dacă resursele ajung."
+          },
+          "use_construction_time_skips": {
+            "description": "Accelerează o construcție confirmată a taberei păstrând rezervele alese de accelerări de construcție.",
+            "label": "Folosește accelerări pentru construcție",
+            "recommendation": "Pornește pentru construcția obișnuită dacă stocul de accelerări permite."
+          },
+          "keep_skip_10m": {
+            "description": "Ține deoparte acest număr de accelerări de construcție de 10m; setează rezerva la 0 pentru folosirea obișnuită.",
+            "label": "Păstrează accelerări de 10m"
+          },
+          "keep_skip_1h": {
+            "description": "Rezervă acest număr de accelerări de construcție de 1h pentru alte activități.",
+            "label": "Păstrează accelerări de 1h"
+          },
+          "keep_skip_1m": {
+            "description": "Ține deoparte acest număr de accelerări de construcție de 1m; setează rezerva la 0 pentru folosirea obișnuită.",
+            "label": "Păstrează accelerări de 1m"
+          },
+          "keep_skip_24h": {
+            "description": "Rezervă acest număr de accelerări de construcție de 24h pentru alte activități.",
+            "label": "Păstrează accelerări de 24h"
+          },
+          "keep_skip_30m": {
+            "description": "Ține deoparte acest număr de accelerări de construcție de 30m; setează rezerva la 0 pentru folosirea obișnuită.",
+            "label": "Păstrează accelerări de 30m"
+          },
+          "keep_skip_5h": {
+            "description": "Rezervă acest număr de accelerări de construcție de 5h pentru alte activități.",
+            "label": "Păstrează accelerări de 5h"
+          },
+          "keep_skip_5m": {
+            "description": "Ține deoparte acest număr de accelerări de construcție de 5m; setează rezerva la 0 pentru folosirea obișnuită.",
+            "label": "Păstrează accelerări de 5m"
+          },
+          "saved_targets": {
+            "description": "Capturarea salvează și activează imediat o țintă personalizată verificată; alegerea alteia salvate o activează tot imediat.",
+            "label": "Ținte personalizate salvate"
+          },
+          "stone_reserve": {
+            "description": "Nu cheltui această cantitate de piatră a taberei la construcție; setează 0 dacă surplusul poate fi cheltuit.",
+            "label": "Rezervă de piatră"
+          },
+          "use_built_in_default": {
+            "description": "Revino imediat la ținta inclusă, păstrând țintele personalizate salvate.",
+            "label": "Folosește ținta inclusă"
+          },
+          "wood_reserve": {
+            "description": "Nu cheltui această cantitate de lemn a taberei la construcție; setează 0 dacă surplusul poate fi cheltuit.",
+            "label": "Rezervă de lemn"
+          }
+        },
+        "title": "Alege construcția opțională a taberei"
+      },
+      "readiness": {
+        "image": {
+          "alt": "Setări ilustrative pentru pregătirea atacurilor asupra turnurilor",
+          "caption": "Starea condiției de amplificator și alcătuirea șablonului, fără amplificator activ sau date reale ale clienților."
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "Verifică valurile, trupele și uneltele șablonului ales înainte de activarea atacurilor.",
+            "label": "Alcătuirea șablonului de atac",
+            "recommendation": "Păstrează suficiente trupe și unelte din fiecare tip ales la donator și în tabără pentru ritmul obișnuit al atacurilor."
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "Solicită un amplificator de Vitejie activ înainte de continuarea transferurilor, cumpărării de unelte, pregătirii taberei, atacurilor asupra turnurilor sau construcției.",
+            "label": "Rulează doar cu amplificator de Vitejie",
+            "recommendation": "Activat dacă toate funcțiile Berimond automat trebuie să depindă de amplificator."
+          }
+        },
+        "title": "Pregătește atacurile asupra turnurilor"
+      },
+      "save": {
+        "image": {
+          "alt": "Setări ilustrative pentru salvarea și activarea Berimondului automat",
+          "caption": "Listă de pregătire, comutator și calendar opțional fără a arăta un cont real."
+        },
+        "items": {
+          "automation_switch": {
+            "description": "Activează Berimond automat din cardul Automatizare după verificarea taberei, trupelor donatorului, șablonului și cheltuielilor opționale.",
+            "label": "Comutator de automatizare",
+            "recommendation": "Activat după configurare."
+          },
+          "calendar": {
+            "description": "Lasă calendarul dezactivat pentru funcționare continuă sau setează orele obișnuite și salvează programul dacă ai nevoie de un interval.",
+            "label": "Calendar",
+            "recommendation": "Dezactivat pentru funcționarea continuă a evenimentului."
+          },
+          "save_settings": {
+            "description": "Salvează șablonul, donatorul, ritmul transferurilor, limitele de atac, uneltele și opțiunile de construcție înainte de activarea automatizării.",
+            "label": "Salvează setările"
+          }
+        },
+        "title": "Salvează și activează"
+      },
+      "setup": {
+        "image": {
+          "alt": "Setări ilustrative pentru atac și aprovizionare",
+          "caption": "Șablon de atac salvat, castel donator în Marele Imperiu, Pană de călătorie, verificarea atacurilor și limită zilnică."
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "Stabilește cât de des caută automatizarea următorul atac asupra unui turn.",
+            "label": "Interval de verificare a atacurilor",
+            "recommendation": "Păstrează intervalul obișnuit de 30 de secunde dacă nu dorești verificări mai rare."
+          },
+          "attack_preset": {
+            "description": "Alege o formație de atac din Berimond salvată; automatizarea folosește proporția trupelor ei pentru transferuri și atacuri asupra turnurilor.",
+            "label": "Șablon de atac",
+            "recommendation": "Creează și alege mai întâi șablonul obișnuit pentru Berimond."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Oprește atacurile noi asupra turnurilor când numărul zilnic de atacuri normale al întregului cont atinge limita; 0 elimină această limită suplimentară.",
+            "label": "Limită zilnică de atacuri normale",
+            "recommendation": "0 dacă nu folosești o limită pentru întregul cont."
+          },
+          "horse_travel_boost": {
+            "description": "Alege călătorie cu pană, monede sau rubine pentru atacurile asupra turnurilor.",
+            "label": "Accelerarea călătoriei",
+            "recommendation": "Pană de călătorie pentru viteză fără a alege călătoria cu rubine."
+          },
+          "open_settings": {
+            "description": "Pe pagina Automatizare, deschide setările cardului Auto Beri World.",
+            "label": "Deschide setările"
+          },
+          "source_castle": {
+            "description": "Alege castelul sau avanpostul din Marele Imperiu care furnizează trupele.",
+            "label": "Castel donator",
+            "recommendation": "Alege castelul unde se află armata ta de atac."
+          }
+        },
+        "title": "Alege atacul și sursa de aprovizionare"
+      },
+      "tools": {
+        "image": {
+          "alt": "Setări ilustrative pentru uneltele taberei",
+          "caption": "Cele trei stocuri minime de unelte și un inventar de tabără evident fictiv."
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "Completează acest număr de berbeci staționați după aceeași regulă.",
+            "label": "Minim de berbeci",
+            "recommendation": "Adaptează la consumul șablonului tău obișnuit."
+          },
+          "mantlets_minimum": {
+            "description": "Completează acest număr de scuturi staționate după aceeași regulă.",
+            "label": "Minim de scuturi",
+            "recommendation": "Adaptează la consumul șablonului tău obișnuit."
+          },
+          "scaling_ladders_minimum": {
+            "description": "Completează acest număr de scări staționate în tabără prin oferte eligibile în monede; 0 le lasă negestionate.",
+            "label": "Minim de scări",
+            "recommendation": "Adaptează la șablonul și ritmul tău obișnuit de atac."
+          }
+        },
+        "title": "Întreține uneltele taberei"
+      },
+      "transfers": {
+        "image": {
+          "alt": "Setări ilustrative pentru transferuri proporționale de trupe",
+          "caption": "Raport fictiv 2:1, stocul taberei, capacitate liberă și un transport parțial al unui singur tip; valorile sunt exemple, nu setări implicite salvate."
+        },
+        "items": {
+          "check_interval": {
+            "description": "Stabilește cât de des actualizează automatizarea capacitatea liberă de transfer și stocurile ambelor castele.",
+            "label": "Interval de verificare",
+            "recommendation": "Păstrează intervalul obișnuit de 30 de secunde."
+          },
+          "food_only": {
+            "description": "Se pot transfera doar trupele șablonului care consumă Hrană; unitățile incompatibile sau familiile nerezolvate suspendă operația cu o explicație.",
+            "label": "Doar trupe care consumă Hrană"
+          },
+          "minimum_free_capacity": {
+            "description": "Începe transferurile numai când capacitatea liberă raportată atinge pragul; un transport proporțional individual poate fi mai mic.",
+            "label": "Capacitate liberă minimă",
+            "recommendation": "1 loc liber pentru trupe la aprovizionarea proporțională obișnuită."
+          },
+          "owned_berimond_camp": {
+            "description": "Automatizarea găsește singură tabăra deținută în Berimond, deci nu trebuie introdus niciun ID de tabără.",
+            "label": "Tabără deținută în Berimond"
+          },
+          "partial_donor": {
+            "description": "Dacă donatorul are o parte din tipul necesar, automatizarea trimite cantitatea mai mică; dacă nu are deloc, așteaptă în loc să trimită alt tip.",
+            "label": "Stoc parțial la donator"
+          },
+          "pending_transfer": {
+            "description": "Automatizarea așteaptă sosirea fiecărui transport și actualizează stocul taberei înainte de recalcularea raportului.",
+            "label": "Transfer în curs"
+          },
+          "preset_troop_mix": {
+            "description": "Automatizarea adună pozițiile repetate de trupe din valurile și curtea șablonului ales și completează câte un tip subreprezentat.",
+            "label": "Proporția trupelor din șablon"
+          },
+          "troop_transport_skip": {
+            "description": "Alege durata obiectului folosit când accelerarea transportului este activă.",
+            "label": "Accelerarea transportului",
+            "recommendation": "Folosește accelerarea de 1 oră pentru transferurile obișnuite confirmate."
+          },
+          "use_troop_transport_time_skips": {
+            "description": "Aplică accelerarea aleasă unui transfer confirmat cât timp este pe drum.",
+            "label": "Folosește accelerări de transport",
+            "recommendation": "Pornește pentru aprovizionarea obișnuită a taberei dacă stocul de accelerări permite."
+          }
+        },
+        "title": "Configurează transferurile proporționale"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "Auto Storm poate deschide și construi un castel din Furtună, ataca forturi și insule cu resurse, importa trupe și cumpăra recompense Luna selectate.",
+      "expectation": "Fiecare activitate folosește date recente din joc și permisiunile salvate; construcțiile premium, atacurile și cumpărăturile sunt limitate de alegerile activate.",
+      "name": "Auto Storm",
+      "summary": "Gestionează castelul din Furtună, atacurile și recompensele"
+    },
+    "recommendationIntro": "Recomandările descriu folosirea obișnuită a Auto Storm; ele sunt orientative și nu schimbă setările salvate.",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "Exemplu ilustrativ pentru accesul la castelul din Furtună și capturarea țintei",
+          "caption": "Alegerea castelului inițial, moduri de capturare și activarea opțională a țintei; nu arată o achiziție sau un cont real."
+        },
+        "items": {
+          "automatic_open": {
+            "description": "Când Furtuna este blocată, alege un castel inițial oficial disponibil și verifică prețul afișat înainte de a permite deblocarea.",
+            "label": "Deschide automat castelul din Furtună",
+            "recommendation": "Pornit dacă vrei ca Auto Storm să deschidă un castel inițial obișnuit după verificarea prețului."
+          },
+          "blueprint": {
+            "description": "O țintă capturată este salvată și activată imediat; Pauză țintă oprește reconcilierea, dar păstrează țintele salvate.",
+            "label": "Țintă salvată",
+            "recommendation": "Păstrează activă o țintă Funcțională verificată pentru construcțiile obișnuite."
+          },
+          "capture_castle": {
+            "description": "Selectează castelul actual din Furtună înainte să capturezi o țintă de construcție.",
+            "label": "Castelul din Furtună",
+            "recommendation": "Capturează castelul pe care vrei să-l gestionezi."
+          },
+          "combat_only": {
+            "description": "Lupta contra forturilor și insulelor nu cere o țintă de construcție capturată.",
+            "label": "Luptă fără țintă"
+          },
+          "decoration_preset": {
+            "description": "Aplică opțional o presetare de decorațiuni după construcție.",
+            "label": "Presetare de decorațiuni după construcție",
+            "recommendation": "Lasă necompletat dacă nu dorești un aranjament separat al decorațiunilor."
+          },
+          "exact": {
+            "description": "Salvează toate detaliile acceptate ale țintei pentru o copie exactă.",
+            "label": "Capturare exactă",
+            "recommendation": "Folosește numai după ce verifici întreaga țintă."
+          },
+          "functional": {
+            "description": "Salvează o țintă pentru funcțiile esențiale ale Furtunii fără să copiezi fiecare poziție a clădirilor.",
+            "label": "Capturare funcțională",
+            "recommendation": "Funcțională pentru întreținerea obișnuită."
+          },
+          "layout": {
+            "description": "Salvează tipurile și pozițiile clădirilor fără decorațiuni.",
+            "label": "Capturare aranjament",
+            "recommendation": "Folosește numai dacă poziționarea clădirilor contează."
+          },
+          "open_settings": {
+            "description": "Deschide setările Auto Storm din cardul Automatizare.",
+            "label": "Deschide setările"
+          },
+          "starter_castle": {
+            "description": "Alege castelul inițial oficial disponibil acum pentru următorul sezon blocat al Furtunii.",
+            "label": "Castel de deschis",
+            "recommendation": "Alege un castel inițial obișnuit accesibil după verificarea prețului."
+          }
+        },
+        "title": "Deschide și capturează castelul din Furtună"
+      },
+      "combat": {
+        "image": {
+          "alt": "Exemplu pentru setările de atac ale forturilor și insulelor",
+          "caption": "Insule cu acvamarin, niveluri de fort, ordine a țintelor și apărători de ocupație exemplificative."
+        },
+        "items": {
+          "defenders": {
+            "description": "Alege tipurile și numerele apărătorilor lăsați pe o insulă capturată; o listă goală lasă un supraviețuitor după o victorie confirmată.",
+            "label": "Unități de apărare pentru insule",
+            "recommendation": "Alege apărători dacă un supraviețuitor nu este suficient pentru planul tău."
+          },
+          "fort_preset": {
+            "description": "Alege o formație salvată de trupe și unelte pentru forturi.",
+            "label": "Presetare de atac pentru forturi",
+            "recommendation": "Folosește presetarea obișnuită pentru forturi."
+          },
+          "forts": {
+            "description": "Activează atacurile asupra nivelurilor de fort oficiale alese, între 40 și 80.",
+            "label": "Forturi din Furtună",
+            "recommendation": "Pornit pentru niveluri pe care presetarea aleasă le învinge sigur în mod obișnuit."
+          },
+          "horse": {
+            "description": "Alege deplasarea cu pană, monede sau rubine pentru atacurile din Furtună.",
+            "label": "Accelerare pentru călătoria călare",
+            "recommendation": "Pană de călătorie pentru viteză fără a selecta călătoria cu rubine."
+          },
+          "island_preset": {
+            "description": "Alege o formație salvată de trupe și unelte pentru insule.",
+            "label": "Presetare de atac pentru insule",
+            "recommendation": "Folosește presetarea obișnuită pentru insule."
+          },
+          "island_resources": {
+            "description": "Alege insulele cu lemn, piatră sau acvamarin care pot fi atacate.",
+            "label": "Resursele insulelor",
+            "recommendation": "Selectează acvamarin pentru a-l colecta."
+          },
+          "island_sizes": {
+            "description": "Alege insulele mari, mici sau ambele dimensiuni pentru resursele selectate.",
+            "label": "Dimensiunea insulelor",
+            "recommendation": "Mari și mici pentru colectarea obișnuită a acvamarinului."
+          },
+          "islands": {
+            "description": "Activează capturarea insulelor cu resursele și dimensiunile selectate.",
+            "label": "Insule de resurse",
+            "recommendation": "Pornit dacă vrei acvamarin de pe insule mari și mici."
+          },
+          "minimum_attacks": {
+            "description": "Atacă doar forturi cu cel puțin acest număr de atacuri rămase.",
+            "label": "Minim de atacuri rămase",
+            "recommendation": "0 permite orice fort eligibil."
+          },
+          "priority": {
+            "description": "Ordonează grupurile active de ținte de insule și forturi; în fiecare grup este atacată mai întâi cea mai apropiată țintă eligibilă.",
+            "label": "Prioritatea țintelor de atac",
+            "recommendation": "Insule mari, insule mici, apoi forturi de la nivelul 80 la 40 pentru acvamarin."
+          }
+        },
+        "title": "Alege forturi și insule de resurse"
+      },
+      "construction": {
+        "image": {
+          "alt": "Exemplu pentru setările de construcție și rezerve",
+          "caption": "Transport de resurse, permisiuni de cheltuieli, rezerve și nivelul portului ca opțiuni ilustrative."
+        },
+        "items": {
+          "demolition": {
+            "description": "Permite eliminarea exactă a clădirilor care nu pot fi mutate sau depozitate.",
+            "label": "Permite demolarea",
+            "recommendation": "Oprit dacă nu reconstruiești un aranjament verificat."
+          },
+          "donor_reserves": {
+            "description": "Păstrează cantitățile alese de lemn, piatră și acvamarin la fiecare donator înainte de transport.",
+            "label": "Rezerve protejate ale donatorilor",
+            "recommendation": "Protejează bugetul obișnuit de lemn și piatră pentru construcție; acvamarin 0 dacă nu este folosit."
+          },
+          "harbor_level": {
+            "description": "Alege nivelul țintă al portului 1, 2 sau 3; nivelurile 2 și 3 folosesc trasee de construcție premium.",
+            "label": "Nivelul țintă al portului",
+            "recommendation": "Nivelul 1 dacă nu sunt planificate îmbunătățiri premium."
+          },
+          "harbor": {
+            "description": "Menține portul la nivelul ales chiar dacă ținta capturată este diferită.",
+            "label": "Îmbunătățește portul",
+            "recommendation": "Pornit cu nivelul 1 pentru folosire obișnuită."
+          },
+          "premium": {
+            "description": "Permite etapele eligibile de construcție care cheltuie monedă premium.",
+            "label": "Permite costuri premium",
+            "recommendation": "Oprit dacă nu planifici construcții premium."
+          },
+          "resource_transport": {
+            "description": "Permite transporturi confirmate de resurse de construcție lipsă de la castelele donatoare.",
+            "label": "Transportă resurse lipsă",
+            "recommendation": "Pornit pentru construcții obișnuite."
+          },
+          "skip_reserves": {
+            "description": "Păstrează numărul ales de obiecte de 1 min, 5 min, 10 min, 30 min, 1 h, 5 h și 24 h pentru construcție și transport.",
+            "label": "Reduceri de timp păstrate în rezervă",
+            "recommendation": "Păstrează 0 reduceri scurte dacă nu ai nevoie de ele în altă parte; rezervă stocul de 1 h, 5 h și 24 h pentru alte evenimente."
+          },
+          "storm_reserves": {
+            "description": "Nu folosi la construcție cantitățile alese de lemn, piatră și acvamarin.",
+            "label": "Rezerve pentru cheltuielile castelului din Furtună",
+            "recommendation": "Lemn 0 și piatră 0 dacă surplusul poate fi cheltuit; setează acvamarinul după bugetul de recompense planificat."
+          },
+          "time_skips": {
+            "description": "Aplică accelerări eligibile la construcție, transportul resurselor și al trupelor, păstrând rezervele alese.",
+            "label": "Folosește accelerări pentru construcție și transport",
+            "recommendation": "Pornit dacă vrei să grăbești construcțiile obișnuite."
+          }
+        },
+        "title": "Configurează construcția și protecția resurselor"
+      },
+      "luna": {
+        "image": {
+          "alt": "Exemplu pentru setările recompenselor Luna",
+          "caption": "Rezervă de acvamarin, obiective limitate de cumpărare, recompense repetabile și prioritate."
+        },
+        "items": {
+          "cost_cap": {
+            "description": "Citește costul și limita de cumpărări raportate de joc pentru fiecare recompensă.",
+            "label": "Cost și limită de cumpărări",
+            "recommendation": "Verifică ambele valori doar pentru citire înainte de activare."
+          },
+          "keep_aqua": {
+            "description": "Păstrează această cantitate de acvamarin pentru a nu fi folosită la cumpărăturile Luna.",
+            "label": "Păstrează acvamarin",
+            "recommendation": "0 dacă tot surplusul poate finanța recompense; altfel rezervă cantitatea planificată."
+          },
+          "priority": {
+            "description": "Magazinul ia în considerare mai întâi obiectivele de cumpărare cu numere mai mici.",
+            "label": "Prioritate",
+            "recommendation": "Atribuie 1, 2 și 3 în ordinea dorită, punând obiectivele limitate înaintea recompenselor nelimitate."
+          },
+          "search": {
+            "description": "Caută recompensele oficiale Luna după nume înainte de configurarea unei cumpărări.",
+            "label": "Găsește o recompensă Luna",
+            "recommendation": "Caută recompensa pe care o dorești cu adevărat."
+          },
+          "target_total": {
+            "description": "Stabilește numărul total dorit de cumpărări pentru o recompensă limitată.",
+            "label": "Total țintă",
+            "recommendation": "Stabilește doar numărul pe care vrei să îl cumperi."
+          },
+          "unlimited": {
+            "description": "Continuă să cumperi o recompensă repetabilă eligibilă cât timp rezerva și limita magazinului permit.",
+            "label": "Nelimitat",
+            "recommendation": "Pornit doar pentru recompense repetabile dorite în mod regulat."
+          },
+          "use": {
+            "description": "Selectează o recompensă pentru a permite cumpărarea ei automată.",
+            "label": "Folosește recompensa",
+            "recommendation": "Activează doar recompensele dorite."
+          }
+        },
+        "title": "Alege recompensele Luna cu acvamarin"
+      },
+      "save": {
+        "image": {
+          "alt": "Exemplu de salvare și activare Auto Storm",
+          "caption": "Limită zilnică de atacuri, verificare de politică, actualizare de hartă doar pentru citire și comutator de automatizare."
+        },
+        "items": {
+          "daily_limit": {
+            "description": "Oprește atacurile noi Auto Storm la numărul zilnic de atacuri normale al întregului cont; 0 elimină această limită suplimentară.",
+            "label": "Limită zilnică de atacuri normale",
+            "recommendation": "0 dacă nu folosești o limită pentru întregul cont."
+          },
+          "enable": {
+            "description": "Activează Auto Storm din cardul Automatizare după ce alegerile salvate sunt pregătite.",
+            "label": "Comutator de automatizare",
+            "recommendation": "Pornește după configurare."
+          },
+          "map_refresh": {
+            "description": "Citește intervalul oficial de actualizare a hărții Furtunii.",
+            "label": "Interval de actualizare a hărții",
+            "recommendation": "Intervalul doar pentru citire este de 2 ore; așteaptă o scanare nouă după modificări."
+          },
+          "policy_check": {
+            "description": "Stabilește cât de des Auto Storm verifică setările și sarcinile eligibile.",
+            "label": "Interval de verificare a politicii",
+            "recommendation": "Păstrează intervalul obișnuit de 30 de secunde."
+          },
+          "save": {
+            "description": "Salvează alegerile pentru castel, construcții, lupte, import de trupe și Luna înainte să pornești automatizarea.",
+            "label": "Salvează setările",
+            "recommendation": "Salvează după verificarea tuturor permisiunilor de cheltuieli."
+          }
+        },
+        "title": "Salvează și activează Auto Storm"
+      },
+      "troops": {
+        "image": {
+          "alt": "Exemplu pentru importul de trupe și estimările doar pentru citire",
+          "caption": "Ordinea donatorilor, 1.000 de trupe păstrate și estimări de capacitate doar pentru citire."
+        },
+        "items": {
+          "attack_history": {
+            "description": "Citește atacurile Furtună confirmate de la resetarea serverului împărțite la 24, nu o medie mobilă pe 24 de ore.",
+            "label": "Media atacurilor de la resetare",
+            "recommendation": "Verifică această estimare doar pentru citire înainte să schimbi necesarul de import."
+          },
+          "committed_cap": {
+            "description": "Citește limita calculată automat, care include trupele staționate, deplasările, tranzitul și întoarcerile.",
+            "label": "Limita trupelor angajate în Furtună",
+            "recommendation": "Verifică această limită doar pentru citire înainte să crești importurile."
+          },
+          "donors": {
+            "description": "Alege castele donatoare în ordinea afișată; stocul parțial poate oferi un transport mai mic.",
+            "label": "Castele donatoare",
+            "recommendation": "Selectează furnizorii obișnuiți de trupe în ordinea preferată."
+          },
+          "import": {
+            "description": "Importă în Furtună trupele de atac sau apărare alese care lipsesc, de la castele donatoare.",
+            "label": "Importă trupele lipsă",
+            "recommendation": "Pornit dacă castelul din Furtună are nevoie de trupe în mod regulat."
+          },
+          "map_coverage": {
+            "description": "Verifică acoperirea hărții înainte de a te baza pe țintele afișate.",
+            "label": "Acoperirea hărții",
+            "recommendation": "Așteaptă acoperire recentă dacă lipsesc ținte."
+          },
+          "minimum_kept": {
+            "description": "Păstrează cel puțin acest număr de trupe în Furtună după lansarea unui atac și menține compoziția presetărilor activate.",
+            "label": "Minim de trupe păstrate după lansare",
+            "recommendation": "1.000 de trupe ca rezervă obișnuită, ajustată după armata ta reală."
+          },
+          "preset_average": {
+            "description": "Citește necesarul mediu de trupe al presetărilor de atac activate, inclusiv apărătorii selectați pentru insule.",
+            "label": "Media presetărilor activate",
+            "recommendation": "Compară această estimare doar pentru citire cu armata ta."
+          }
+        },
+        "title": "Importă și urmărește trupele din Furtună"
+      }
+    }
+  }
+}

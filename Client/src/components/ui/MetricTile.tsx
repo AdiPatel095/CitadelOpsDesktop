@@ -1,3 +1,4 @@
+import {useLocale} from '../../i18n/LocaleContext';
 import React, { type HTMLAttributes, type ReactNode } from 'react';
 
 export interface MetricTileProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title'> {
@@ -19,6 +20,7 @@ export const MetricTile: React.FC<MetricTileProps> = ({
   className = '',
   ...props
 }) => {
+  const {number,locale} = useLocale();
   const toneClass = {
     default: 'text-text-main',
     brand: 'text-primary',
@@ -45,7 +47,7 @@ export const MetricTile: React.FC<MetricTileProps> = ({
     <div className={`m3-metric-tile rounded-global border ${borderClass} ${sizeClass} ${className}`} {...props}>
       <div className="text-[10px] font-bold uppercase tracking-wider text-text-muted">{label}</div>
       <div className={`ui-metric-value mt-1 font-bold tabular-nums ${monospace ? 'font-mono' : ''} ${toneClass}`}>
-        {typeof value === 'number' ? value.toLocaleString() : value}
+        {typeof value === 'number' ? <span lang={locale}>{number(value,{maximumSignificantDigits:21})}</span> : value}
       </div>
       {caption && <div className="mt-1 text-[11px] text-text-muted">{caption}</div>}
     </div>

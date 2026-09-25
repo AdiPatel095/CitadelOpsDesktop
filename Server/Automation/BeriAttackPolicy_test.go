@@ -61,6 +61,9 @@ func TestBeriAttackPolicyOpensCheapestNonPremiumCamp(t *testing.T) {
 	if err != nil || decision.Request == nil || decision.Request.Name != "beri.camp.open" {
 		t.Fatalf("camp decision: %#v err=%v", decision, err)
 	}
+	if decision.DetailDescriptor == nil || decision.DetailDescriptor.Params["id"] != "1" {
+		t.Fatalf("camp descriptor: %+v", decision.DetailDescriptor)
+	}
 	var arguments struct {
 		CampID int64 `json:"campId"`
 	}

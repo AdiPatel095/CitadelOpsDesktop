@@ -1,0 +1,2080 @@
+{
+  "ui": {
+    "guideButton": "Guide",
+    "calendarButton": "Calendar",
+    "recommendedLabel": "Recommended",
+    "backToSettings": "Back to settings",
+    "backToGuide": "Back to guide",
+    "howToSetUp": "How to set it up",
+    "whatToExpect": "What to expect",
+    "openFullSizePicture": "Open full-size picture",
+    "illustrativeExample": "Illustrative example",
+    "enlargePicture": "Enlarge example picture",
+    "fullSizePicture": "Full-size example picture; scroll to view all settings",
+    "towerGuideTitle": "Auto Towers guide",
+    "birdGuideTitle": "Auto Bird guide",
+    "towerGuideIntro": "Follow these steps to set up Auto Towers; select an example picture to enlarge it.",
+    "birdGuideIntro": "Follow these steps to set up Auto Bird; select an example picture to enlarge it.",
+    "towerPreviewTitle": "Auto Towers setup example",
+    "birdPreviewTitle": "Auto Bird setup example",
+    "stationGuideTitle": "Auto Station guide",
+    "stationGuideIntro": "Follow these steps to set up Auto Station; select the example picture to enlarge it.",
+    "stationPreviewTitle": "Auto Station setup example",
+    "fortressGuideTitle": "Auto Fortress guide",
+    "fortressGuideIntro": "Follow these steps to set up Auto Fortress; select an example panel to enlarge it.",
+    "fortressPreviewTitle": "Auto Fortress setup example",
+    "invasionGuideTitle": "Auto Invasion guide",
+    "invasionGuideIntro": "Follow these steps to set up Auto Invasion; select an example panel to enlarge it.",
+    "invasionPreviewTitle": "Auto Invasion setup example",
+    "nomadGuideTitle": "Auto Nomad/Samurai guide",
+    "nomadGuideIntro": "Follow these steps to set up Auto Nomad/Samurai; select an example panel to enlarge it.",
+    "nomadPreviewTitle": "Auto Nomad/Samurai setup example",
+    "advisorGuideTitle": "Auto Advisor guide",
+    "advisorGuideIntro": "Follow these steps to set up Auto Advisor; select an example panel to enlarge it.",
+    "advisorPreviewTitle": "Auto Advisor setup example",
+    "khanGuideTitle": "Auto Khan guide",
+    "khanGuideIntro": "Follow these steps to set up Auto Khan; select an example panel to enlarge it.",
+    "khanPreviewTitle": "Auto Khan setup example",
+    "beriGuideTitle": "Auto Beri World guide",
+    "beriGuideIntro": "Follow these steps to set up Auto Beri World; select an example panel to enlarge it.",
+    "beriPreviewTitle": "Auto Beri World setup example",
+    "stormGuideTitle": "Auto Storm guide",
+    "stormGuideIntro": "Follow these steps to set up Auto Storm; select an example panel to enlarge it.",
+    "stormPreviewTitle": "Auto Storm setup example"
+  },
+  "autoTower": {
+    "recommendationIntro": "These are recommendations for regular use; review them before saving.",
+    "steps": {
+      "commanders": {
+        "title": "Choose your commanders",
+        "items": {
+          "commander_assignment": {
+            "label": "Commander assignment",
+            "description": "In Commanders, allow Auto Towers for the commanders you want to use and select Save assignments.",
+            "recommendation": "20 commanders assigned to Auto Towers."
+          }
+        }
+      },
+      "general": {
+        "title": "Set scanning, daily limits and travel",
+        "items": {
+          "open_settings": {
+            "label": "Open settings",
+            "description": "Open Automation, then select the settings button on the Auto Towers card."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Authoritative map scan · Every",
+            "description": "Choose how often to refresh each castle’s tower list, from 1,800–3,600 seconds; attacks can launch between scans.",
+            "recommendation": "1,800 seconds (30 minutes)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Daily normal-attack limit",
+            "description": "Pauses at your account-wide daily attack limit until the game resets it; 0 removes the limit.",
+            "recommendation": "3,500 account-wide attacks per day."
+          },
+          "horse_travel_boost": {
+            "label": "Horse travel boost",
+            "description": "Uses your selected travel option for each attack, including every hit in an Advisor chain, with speed based on the source castle’s travel buildings.",
+            "recommendation": "Coin tier where supported, with enough coins."
+          },
+          "travel_feather": {
+            "label": "Travel feather",
+            "description": "Uses the travel feather option rather than a coin or ruby horse tier."
+          },
+          "horse_ship_tier_coins": {
+            "label": "Horse / ship tier · coins",
+            "description": "Spends coins on the coin travel tier."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Warhorse / fast ship tier · rubies",
+            "description": "Spends rubies on the first ruby travel tier when selected."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Courser / fastest ship tier · rubies",
+            "description": "Spends rubies on the faster ruby travel tier when selected."
+          }
+        },
+        "image": {
+          "alt": "Auto Towers general settings with fictional Synthetic Castle data",
+          "caption": "Set the scan interval, daily attack limit and travel option; Advisor controls appear when available."
+        }
+      },
+      "castle": {
+        "title": "Configure each castle",
+        "items": {
+          "castle_switch": {
+            "label": "Castle switch",
+            "description": "Turn on each castle you want Auto Towers to scan and attack from.",
+            "recommendation": "Enable the castles you want to use regularly."
+          },
+          "radius": {
+            "label": "Radius",
+            "description": "Choose how far to search around this castle, from 1–50 tiles.",
+            "recommendation": "35 tiles."
+          },
+          "choose_troop": {
+            "label": "Choose troop",
+            "description": "Choose the stationed troop to fill both attack flanks; attacks wait if there are too few.",
+            "recommendation": "A stationed attack troop with enough units for both flanks."
+          },
+          "maiden_supported_only": {
+            "label": "Maiden-supported only",
+            "description": "Limits this castle to available commanders with the supported maiden relic.",
+            "recommendation": "Off unless your chosen commander has the supported maiden relic."
+          }
+        },
+        "image": {
+          "alt": "Auto Towers castle settings with fictional Synthetic Castle data",
+          "caption": "Enable a castle and choose its radius, troop and maiden requirement."
+        }
+      },
+      "advisor": {
+        "title": "Use Advisor if wanted · when available",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Use Advisor with Time Skips",
+            "description": "Repeats hits on one tower, using one daily attack first and one Time Skip of at least three hours per extra hit.",
+            "recommendation": "Off."
+          },
+          "auto_activate_with_token": {
+            "label": "Auto-activate with token",
+            "description": "Uses an available Baron Advisor token when the Advisor is inactive, without buying a token or spending rubies.",
+            "recommendation": "Off while Advisor is off."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Maximum daily Time Skips",
+            "description": "Caps Time Skips used by confirmed Advisor chains until the game’s daily attack counter resets; 0 pauses Advisor launches.",
+            "recommendation": "0 while Advisor is off."
+          }
+        }
+      },
+      "finish": {
+        "title": "Set the schedule, save and switch on",
+        "items": {
+          "calendar": {
+            "label": "Calendar",
+            "description": "Use Calendar to choose when Auto Towers may run, while troop availability and other limits still apply.",
+            "recommendation": "Your usual running hours."
+          },
+          "save_changes": {
+            "label": "Save changes",
+            "description": "Select Save changes to apply your settings; reading this guide does not save them."
+          },
+          "auto_towers_switch": {
+            "label": "Auto Towers switch",
+            "description": "Turn on Auto Towers on the Automation page after saving your settings to allow the task to run.",
+            "recommendation": "On after saving your intended settings."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Auto Towers",
+      "summary": "Repeat nearby tower attacks",
+      "description": "Sends attacks against robber-baron and kingdom towers from the castles you choose.",
+      "expectation": "It needs enough troops, an available commander and a tower that is ready to attack. It may wait while troops return or a tower's timer runs down."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "Recommended values describe regular Auto Bird use; they are guidance and do not change saved settings.",
+    "steps": {
+      "open": {
+        "title": "Open Auto Bird settings",
+        "items": {
+          "open_settings": {
+            "label": "Open settings",
+            "description": "At the top of the command center, select the settings button beside Auto Bird."
+          }
+        }
+      },
+      "general": {
+        "title": "Set stationing time and sending rules",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Random delay range · Min",
+            "description": "Set the shortest number of hours troops will stay at the alliance destination after travel completes.",
+            "recommendation": "6 hours stationed at the alliance target after arrival."
+          },
+          "random_delay_range_max": {
+            "label": "Random delay range · Max",
+            "description": "Set the longest stay at the destination; Auto Bird chooses a random duration between Min and Max.",
+            "recommendation": "12 hours stationed at the alliance target after arrival."
+          },
+          "minimum_to_send": {
+            "label": "Minimum to send",
+            "description": "Set the minimum total number of eligible troops needed after castle reserves are kept; this is a threshold, not the exact number sent.",
+            "recommendation": "1,000 eligible troops in total after castle reserves are kept; this is a threshold, not an exact send size."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "Minimum RPT (remaining protection time)",
+            "description": "Use targets with more than this many days of protection remaining; 0 removes the check.",
+            "recommendation": "3 days; a target must have more than 3 days of remaining protection time."
+          }
+        },
+        "image": {
+          "alt": "Auto Bird stationing delay, minimum send, minimum RPT, and preset controls",
+          "caption": "Set stationing time and eligibility, then review the Everyday reserve preset before saving."
+        }
+      },
+      "reserves": {
+        "title": "Choose troops to keep in each castle",
+        "items": {
+          "add_unit": {
+            "label": "Add unit",
+            "description": "For each castle, choose troop types to keep at home instead of sending; an empty reserve leaves all eligible troops available after automatic reserves.",
+            "recommendation": "Choose the troop types each castle needs for defense or other regular jobs."
+          },
+          "quantity": {
+            "label": "Quantity",
+            "description": "Set a positive quantity of each chosen troop to keep in that castle; 0 does not reserve the whole type.",
+            "recommendation": "Keep the number of each troop type this castle needs at home for defense or other jobs; review actual troop counts."
+          },
+          "remove_unit": {
+            "label": "Remove unit",
+            "description": "Remove a unit tile to stop reserving that type in the selected castle."
+          },
+          "auto_fortress_reserve": {
+            "label": "Auto Fortress reserve",
+            "description": "When Auto Fortress locks all Direwolves here, this automatic reserve is not saved in Auto Bird presets and any earlier manual Direwolf amount returns when the lock ends."
+          }
+        },
+        "image": {
+          "alt": "Auto Bird castle reserve tiles for fictional Example Castle",
+          "caption": "Reserve only the units needed at this castle; Unit 101 and Unit 102 are fictional troop placeholders."
+        }
+      },
+      "presets": {
+        "title": "Save and select a preset",
+        "items": {
+          "preset_name": {
+            "label": "Preset name",
+            "description": "Enter a name for a new preset or edit the applied preset’s name before saving changes.",
+            "recommendation": "Use a recognizable name such as Everyday."
+          },
+          "load_preset": {
+            "label": "Load preset",
+            "description": "Choose a saved preset in the list, or choose Saved configuration to use the stored settings without a named preset.",
+            "recommendation": "Use the intended everyday preset as the runtime default: select it, Apply, then Save changes."
+          },
+          "apply": {
+            "label": "Apply",
+            "description": "Load the selected preset into this settings draft; select Save changes to commit it as the runtime default."
+          },
+          "save_as_new": {
+            "label": "Save as new",
+            "description": "Immediately save the current settings as a new named preset and select it as the runtime default."
+          },
+          "delete": {
+            "label": "Delete",
+            "description": "After confirmation, immediately delete the selected preset and clear the runtime default if it was selected."
+          },
+          "runtime_default": {
+            "label": "Runtime default",
+            "description": "The runtime default is the saved active preset, or the saved configuration when no preset is active."
+          }
+        }
+      },
+      "finish": {
+        "title": "Set the schedule, save and enable",
+        "items": {
+          "calendar": {
+            "label": "Calendar",
+            "description": "Choose when Auto Bird may run and select Save Schedule for your changes.",
+            "recommendation": "Leave the schedule off for ongoing operation, or set usual weekly hours and Save Schedule."
+          },
+          "specify_preset_per_period": {
+            "label": "Specify Preset Per Period",
+            "description": "Choose a saved preset for a calendar period when that period should override the runtime default.",
+            "recommendation": "Off unless different periods need different reserves."
+          },
+          "save_changes": {
+            "label": "Save changes",
+            "description": "Save the settings draft and any applied preset changes; reading this guide does not save them."
+          },
+          "auto_bird_switch": {
+            "label": "Auto Bird switch",
+            "description": "Turn on Auto Bird at the top of the command center after saving to allow its normal castle cycles.",
+            "recommendation": "Turn Auto Bird on after saving; the header status shows each castle’s cycle."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Auto Bird",
+      "summary": "Keep selected troops away on a schedule",
+      "description": "Routinely stations spare troops at eligible alliance castles and repeats the cycle when they return.",
+      "expectation": "It waits if there is no suitable destination or no spare troops to send. Moving troops does not make your castle invulnerable."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "General settings",
+      "scan": "Scan interval: 1,800 seconds",
+      "daily": "Daily attack limit: 3,500",
+      "travel": "Travel boost: coin tier",
+      "advisor": "Advisor: off"
+    },
+    "towerCastle": {
+      "title": "Example Castle",
+      "enabled": "Auto Towers: on",
+      "radius": "Radius: 35 tiles",
+      "troop": "Chosen troop: fictional attack unit",
+      "maiden": "Maiden-supported only: off"
+    },
+    "birdGeneral": {
+      "title": "General settings",
+      "min": "Minimum stay: 6 hours",
+      "max": "Maximum stay: 12 hours",
+      "send": "Minimum eligible total after reserves: 1,000 troops",
+      "rpt": "Minimum protection remaining: more than 3 days",
+      "preset": "Preset: Everyday reserve"
+    },
+    "birdCastle": {
+      "title": "Example Castle",
+      "unitOne": "Fictional Unit 101 reserved: 80",
+      "unitTwo": "Fictional Unit 102 reserved: 40",
+      "add": "Add unit"
+    },
+    "stationGeneral": {
+      "title": "Example Auto Station settings",
+      "evacuate": "Evacuate at: 1 minute before impact",
+      "protection": "Target protection: more than 3 days",
+      "recall": "Recall when clear: on",
+      "gate": "Open Gate Fallback: off",
+      "castle": "Fictional Example Castle: 80 defense troops reserved",
+      "save": "Save changes, then enable Auto Station"
+    },
+    "fortressKingdoms": {
+      "title": "Example kingdom settings",
+      "everwinter": "Everwinter Glacier: on when unlocked",
+      "sands": "Burning Sands: on when unlocked",
+      "peaks": "Fire Peaks: on when unlocked"
+    },
+    "fortressSupply": {
+      "title": "Example Direwolf supply",
+      "purchase": "Direwolves per session: 5,000",
+      "reserve": "Keep Khan tablets: 25,000",
+      "skips": "Time Skips for confirmed transfers: on",
+      "route": "Supply: Great Empire main to enabled kingdoms"
+    },
+    "fortressAttack": {
+      "title": "Example attack settings",
+      "commander": "Commander: fastest eligible assigned",
+      "travel": "Travel boost: Travel Feather",
+      "daily": "Daily normal-attack limit: 0",
+      "wave": "One full Direwolf wave across both flanks"
+    },
+    "invasionSetup": {
+      "title": "Example event attack setup",
+      "castle": "Source: usual Great Empire event castle",
+      "preset": "Attack preset: saved event formation",
+      "travel": "Travel boost: Travel Feather"
+    },
+    "invasionDifficulty": {
+      "title": "Example event difficulties",
+      "foreign": "Foreign Lords: unlocked suitable difficulty",
+      "bloodcrow": "Bloodcrow: unlocked suitable difficulty",
+      "current": "Current event difficulty stays in place"
+    },
+    "invasionLimits": {
+      "title": "Example score and stopping limits",
+      "score": "Score: usual final personal reward above 0",
+      "before": "Stop 30 minutes before event end",
+      "daily": "Daily normal-attack limit: 0"
+    },
+    "invasionFortify": {
+      "title": "Example target fortification",
+      "enabled": "Fortify each target: off",
+      "currency": "If enabled: event currency when offered",
+      "rubies": "Rubies only when explicitly selected"
+    },
+    "nomadSetup": {
+      "title": "Example event camp setup",
+      "castle": "Source: usual Great Empire event castle",
+      "nomadPreset": "Nomad preset: saved camp formation",
+      "samuraiPreset": "Samurai preset: saved camp formation",
+      "travel": "Travel boost: Travel Feather"
+    },
+    "nomadDifficulty": {
+      "title": "Example event difficulties",
+      "nomad": "Nomad: unlocked reliable difficulty",
+      "samurai": "Samurai: unlocked reliable difficulty",
+      "active": "Active event: match its current difficulty"
+    },
+    "nomadLimits": {
+      "title": "Example stopping rules",
+      "score": "Score target: final personal reward milestone",
+      "time": "Stop before end: 30 minutes",
+      "daily": "Daily added limit: 0"
+    },
+    "nomadCooldowns": {
+      "title": "Example cooldown choices",
+      "clear": "Clear cooldown after confirmed victory: On",
+      "short": "Keep 1m / 5m / 10m / 30m / 60m: 0 items each",
+      "long": "Keep 5h / 24h: stock reserved for other activities"
+    },
+    "nomadTrial": {
+      "title": "Example trial controls",
+      "trial": "Temporary RBC trial: Off",
+      "coordinates": "Target X / Y: unused during routine operation",
+      "effect": "Trial On replaces event operation with a real attack"
+    },
+    "advisorSetup": {
+      "title": "Example Advisor attack setup",
+      "castle": "Source: usual Great Empire event castle",
+      "preset": "Preset: saved active-event formation",
+      "travel": "Travel boost: Travel Feather"
+    },
+    "advisorDifficulty": {
+      "title": "Example event difficulties",
+      "nomad": "Nomad: unlocked reliable difficulty",
+      "samurai": "Samurai: unlocked reliable difficulty",
+      "active": "Active event: match its current difficulty"
+    },
+    "advisorSizing": {
+      "title": "Example run size",
+      "maximum": "Maximum attacks: 9,999",
+      "time": "Unused event time: 30 minutes",
+      "actual": "Actual run: limited by resources and time"
+    },
+    "advisorResources": {
+      "title": "Example resource budgets",
+      "coins": "All-in coins per attack: 500 only if sufficient",
+      "rubies": "Rubies per attack: 0 with Travel Feather",
+      "feathers": "Keep feathers: 0 unless needed elsewhere",
+      "skips": "Keep 60m: 0 items; reserve 5h and 24h as needed"
+    },
+    "advisorActivation": {
+      "title": "Example activation flow",
+      "save": "Save settings, then enable the Automation card",
+      "locked": "If locked: open Activate Advisor confirmation",
+      "paid": "Confirm paid token use or the game-reported free activation"
+    },
+    "advisorOverview": {
+      "title": "Example live overview",
+      "progress": "Current attack / requested attacks",
+      "results": "Wins, defeats, units lost and tools lost",
+      "refresh": "Refresh overview to read current totals"
+    },
+    "khanSetup": {
+      "title": "Example Khan setup",
+      "source": "Attack from: Great Empire outpost",
+      "defense": "Defend at: Great Empire main castle",
+      "presets": "Saved Khan attack and main-defense presets",
+      "travel": "Travel Feather for fast travel"
+    },
+    "khanRage": {
+      "title": "Example rage controls",
+      "attacks": "Automatic camp attacks: unlocked",
+      "trigger": "Full-rage retaliation: on",
+      "chain": "Max rage chain: 0, no added cap",
+      "booster": "Timed Rage points booster required: off"
+    },
+    "khanLimits": {
+      "title": "Example stopping limits",
+      "points": "Stop at Nomad points: 0, disabled",
+      "tools": "Defense-tool replenishment: on if desired",
+      "daily": "Daily normal attacks: 0, no added limit",
+      "end": "Stop new attacks 5 minutes before event end"
+    },
+    "khanCooldowns": {
+      "title": "Example cooldown reserves",
+      "skip": "Skip every camp cooldown: on",
+      "short": "Keep 1m / 5m / 10m / 30m / 1h: 0 items each",
+      "long": "Reserve 5h / 24h for other jobs",
+      "pause": "Insufficient usable skips pause new attacks"
+    },
+    "khanProtection": {
+      "title": "Example main-wall safeguard",
+      "source": "Applies when attacking from main castle",
+      "gate": "Open main gates and pause Khan at threshold",
+      "threshold": "Offensive wall units: 1,000",
+      "outpost": "Outpost source: safeguard disabled"
+    },
+    "khanSave": {
+      "title": "Example save and enable flow",
+      "save": "Save settings after preparing both presets",
+      "enable": "Enable Auto Khan on Automation card",
+      "defense": "Check main-castle defense before retaliation",
+      "priority": "Auto Station handles player attacks separately"
+    },
+    "beriSetup": {
+      "title": "Example attack and supply setup",
+      "preset": "Saved Berimond attack preset",
+      "donor": "Great Empire donor with needed troops",
+      "travel": "Travel Feather for tower attacks",
+      "limit": "Daily normal attacks: 0 added cap"
+    },
+    "beriTransfers": {
+      "title": "Example proportional transfers",
+      "mix": "Preset mix: 2 units A to 1 unit B",
+      "stock": "Camp stock: 2 A and 0 B",
+      "capacity": "Free capacity: 1; threshold: 1",
+      "next": "Next shipment: up to 1 B from donor stock"
+    },
+    "beriReadiness": {
+      "title": "Example tower readiness",
+      "booster": "Gallantry booster gate: optional",
+      "preset": "Review saved troop and tool slots",
+      "food": "Transfers require Food-fed preset troops"
+    },
+    "beriTools": {
+      "title": "Example camp tool minimums",
+      "ladders": "Scaling ladders: match usual attacks",
+      "rams": "Battering rams: match usual attacks",
+      "mantlets": "Mantlets: match usual attacks"
+    },
+    "beriBuilder": {
+      "title": "Example optional camp builder",
+      "target": "Built-in exact target or reviewed custom layout",
+      "stable": "Faction Stable: selected level 1–5",
+      "permissions": "Premium and demolition: off unless reviewed",
+      "reserves": "Reserve Berimond resources and skips"
+    },
+    "beriSave": {
+      "title": "Example save and enable flow",
+      "save": "Save settings after reviewing troop mix",
+      "enable": "Enable Auto Beri World on Automation card",
+      "calendar": "Calendar off for continuous operation"
+    },
+    "stormCastle": {
+      "title": "Example Storm castle access",
+      "unlock": "Automatic unlock: on after price review",
+      "capture": "Current castle: Functional target",
+      "blueprint": "Saved target active; Pause retains it",
+      "decorations": "Decoration preset: optional"
+    },
+    "stormConstruction": {
+      "title": "Example construction and reserves",
+      "transport": "Resource transport: on",
+      "spending": "Premium and demolition: off",
+      "resources": "Wood 0; Stone 0; Aquamarine planned",
+      "harbor": "Harbor: on, level 1"
+    },
+    "stormCombat": {
+      "title": "Example fort and island attacks",
+      "forts": "Forts: selected levels 40–80",
+      "islands": "Aquamarine islands: large and small",
+      "priority": "Large, small, then forts 80 to 40",
+      "defenders": "Occupation defenders: chosen or one survivor"
+    },
+    "stormTroops": {
+      "title": "Example troop import",
+      "donors": "Donors: displayed order, partial stock allowed",
+      "minimum": "Minimum kept: 1,000 troops",
+      "averages": "Confirmed attacks since reset / 24; preset average read-only",
+      "cap": "Committed troop cap: read-only"
+    },
+    "stormLuna": {
+      "title": "Example Luna rewards",
+      "reserve": "Keep Aquamarine: 0 when using surplus",
+      "limited": "Limited goals before unlimited rewards",
+      "priority": "Priority 1, 2, 3; lower first",
+      "cost": "Cost and purchased cap: read-only"
+    },
+    "stormSave": {
+      "title": "Example save and enable flow",
+      "daily": "Daily normal attacks: 0 added cap",
+      "check": "Policy check: 30 seconds",
+      "map": "Map refresh: 2 hours, read-only",
+      "switch": "Save, then enable Auto Storm"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Recommended values describe regular Auto Station use; they are guidance and do not change saved settings.",
+    "steps": {
+      "open": {
+        "title": "Open Auto Station settings",
+        "items": {
+          "open_settings": {
+            "label": "Open settings",
+            "description": "At the top of the command center, select the settings button beside Auto Station."
+          }
+        }
+      },
+      "general": {
+        "title": "Set the attack response",
+        "items": {
+          "evacuate_at": {
+            "label": "Evacuate at",
+            "description": "Start evacuation this many minutes before impact, or immediately when an attack is first detected inside that window.",
+            "recommendation": "1 minute before impact."
+          },
+          "minimum_bird_days": {
+            "label": "Minimum Bird Days on Target",
+            "description": "Choose an alliance destination with more than this many days of remaining protection; 0 removes the minimum.",
+            "recommendation": "3 days, so the destination must have more than 3 days remaining."
+          },
+          "recall_when_clear": {
+            "label": "Recall when clear",
+            "description": "Return stationed troops when the last detected attack has passed and no incoming attack remains.",
+            "recommendation": "On for normal operation."
+          },
+          "open_gate_fallback": {
+            "label": "Open Gate Fallback",
+            "description": "When troops cannot evacuate, this opt-in opens six-hour gates at the attacked owned castle in any kingdom except Berimond.",
+            "recommendation": "Off unless you want automatic gate opening when evacuation fails."
+          },
+          "protection_mode": {
+            "label": "Purchased Protection Mode",
+            "description": "When purchased Protection Mode is preparing or active, Auto Station uses gates even with the fallback off, except in Berimond."
+          }
+        },
+        "image": {
+          "alt": "Fictional Auto Station settings with evacuation timing, protection days, recall, gate fallback and castle reserves",
+          "caption": "Review the four response controls and each castle's defense reserves before saving."
+        }
+      },
+      "reserves": {
+        "title": "Choose troops to keep at each castle",
+        "items": {
+          "add_troops": {
+            "label": "Add troops",
+            "description": "Choose troop types to keep at the selected castle; an empty reserve leaves all eligible non-tool troops available to evacuate.",
+            "recommendation": "Keep the usual defensive garrison at home while allowing spare attacking troops to move."
+          },
+          "quantity": {
+            "label": "Quantity",
+            "description": "Set how many of each chosen troop stay at this castle; 0 keeps none of that type.",
+            "recommendation": "Use the number this castle needs for its normal defense."
+          },
+          "edit_defense_troops": {
+            "label": "Edit defense troops",
+            "description": "Open the troop picker again to change the reserve types or quantities for this castle."
+          },
+          "remove_defense_troop": {
+            "label": "Remove defense troop",
+            "description": "Remove a reserve tile to stop keeping that troop type at this castle."
+          }
+        }
+      },
+      "finish": {
+        "title": "Save and enable Auto Station",
+        "items": {
+          "save_changes": {
+            "label": "Save changes",
+            "description": "Save the timing, toggles and per-castle reserves before leaving settings."
+          },
+          "auto_station_switch": {
+            "label": "Auto Station switch",
+            "description": "Turn on Auto Station at the top of the command center after saving to watch for incoming player attacks.",
+            "recommendation": "On for regular protection after reviewing your reserves."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Auto Station",
+      "summary": "Move eligible troops before an incoming attack",
+      "description": "Auto Station moves eligible troops to the nearest suitable alliance castle in the same kingdom when an incoming player attack approaches.",
+      "expectation": "If recall is on, troops return after the last detected attack passes and no threat remains; otherwise they stay for one hour after arrival, then return. A missing target, unavailable troops, or game restrictions can prevent evacuation.",
+      "helper": "Station troops at the nearest eligible alliance castle in the same kingdom; when evacuation fails, Open Gate may protect the attacked owned castle outside Berimond."
+    }
+  },
+  "autoFortress": {
+    "recommendationIntro": "Recommended values describe regular Auto Fortress use; they are guidance and do not change saved settings.",
+    "steps": {
+      "open": {
+        "title": "Open Auto Fortress settings",
+        "items": {
+          "open_settings": {
+            "label": "Open settings",
+            "description": "On the Automation page, select the settings button on the Auto Fortress card."
+          }
+        }
+      },
+      "kingdoms": {
+        "title": "Choose fortress kingdoms",
+        "items": {
+          "everwinter_glacier": {
+            "label": "Everwinter Glacier",
+            "description": "Enable attacks and Direwolf supply from your owned Everwinter Glacier main castle when that kingdom is unlocked.",
+            "recommendation": "On when unlocked and ready to use."
+          },
+          "burning_sands": {
+            "label": "Burning Sands",
+            "description": "Enable attacks and Direwolf supply from your owned Burning Sands main castle when that kingdom is unlocked.",
+            "recommendation": "On when unlocked and ready to use."
+          },
+          "fire_peaks": {
+            "label": "Fire Peaks",
+            "description": "Enable attacks and Direwolf supply from your owned Fire Peaks main castle when that kingdom is unlocked.",
+            "recommendation": "On when unlocked and ready to use."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Fortress kingdom controls for the three outer kingdoms",
+          "caption": "Enable each unlocked kingdom whose main castle should receive Direwolves and attack fortresses."
+        }
+      },
+      "supply": {
+        "title": "Set Direwolf supply",
+        "items": {
+          "direwolves_per_session": {
+            "label": "Direwolves per session",
+            "description": "Limit Nomad-shop Direwolf purchases in batches of 100 for each shop session; 0 disables buying.",
+            "recommendation": "5,000 Direwolves per session at the cheapest tier."
+          },
+          "keep_khan_tablets": {
+            "label": "Keep Khan tablets",
+            "description": "Stop Direwolf purchases before your Khan-tablet balance falls below this reserve.",
+            "recommendation": "Keep 25,000 Khan tablets."
+          },
+          "use_time_skips": {
+            "label": "Use time skips for Direwolf transfers",
+            "description": "Use eligible Time Skips only for confirmed Auto Fortress shipments while respecting saved inventory reserves.",
+            "recommendation": "On for faster resupply when your saved Time Skip reserves allow it."
+          },
+          "supply_route": {
+            "label": "Direwolf supply route",
+            "description": "Purchased Direwolves arrive at the Great Empire main castle and are distributed to enabled kingdoms."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Fortress Direwolf purchase and transfer settings",
+          "caption": "Review the per-session purchase ceiling, Khan-tablet reserve and confirmed-transfer Time Skip choice."
+        }
+      },
+      "attack": {
+        "title": "Set attacks and travel",
+        "items": {
+          "commander_assignment": {
+            "label": "Commander assignment",
+            "description": "In Commanders, assign the commanders Auto Fortress may use, then save those assignments.",
+            "recommendation": "Assign the commanders you normally want available for fortress attacks."
+          },
+          "fastest_commander": {
+            "label": "Fastest eligible commander",
+            "description": "For each fortress, Auto Fortress chooses the fastest currently available assigned commander using applicable equipment, gem, set and general speed effects after caps.",
+            "recommendation": "No Relic 2.0 item or 100% speed bonus is required."
+          },
+          "horse_travel_boost": {
+            "label": "Horse travel boost",
+            "description": "Choose the travel option for fortress attacks; an explicitly saved coin or ruby tier stays selected.",
+            "recommendation": "Travel Feather for the fastest travel."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Daily normal-attack limit",
+            "description": "Stop Auto Fortress at your account-wide daily normal-attack count until the game resets it; 0 adds no limit.",
+            "recommendation": "0 unless you want an additional daily cap."
+          },
+          "full_flank_wave": {
+            "label": "Direwolf flank wave",
+            "description": "Each attack waits for enough Direwolves to fill both flanks in one full wave."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Fortress attack and travel settings",
+          "caption": "Auto Fortress ranks eligible assigned commanders for each target and uses the saved travel choice."
+        }
+      },
+      "finish": {
+        "title": "Set the schedule, save and enable",
+        "items": {
+          "calendar": {
+            "label": "Calendar",
+            "description": "Use Calendar to restrict when Auto Fortress may run, then select Save Schedule for any schedule changes.",
+            "recommendation": "Off for continuous regular operation."
+          },
+          "save_fortress_plan": {
+            "label": "Save fortress plan",
+            "description": "Save the kingdom, supply and attack settings before leaving this dialog."
+          },
+          "auto_fortress_switch": {
+            "label": "Auto Fortress switch",
+            "description": "Turn on Auto Fortress on the Automation card after saving to start its normal cycles.",
+            "recommendation": "On after reviewing and saving your intended settings."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Auto Fortress",
+      "summary": "Supply Direwolves and attack ready fortresses",
+      "description": "Auto Fortress buys Direwolves within saved limits, supplies enabled outer kingdoms and attacks ready fortresses from their main castles.",
+      "expectation": "Each attack needs a ready fortress, enough Direwolves for both flanks and an eligible assigned commander; cooldowns or supply delays can pause it.",
+      "settingsSummary": "Auto Fortress prepares Direwolves and chooses the fastest eligible assigned commander for each target fortress.",
+      "commanderBadge": "Fastest available commander",
+      "commanderHelp": "Auto Fortress compares applicable equipment, gem, set and general travel-speed effects for each target fortress; no Relic 2.0 or 100% minimum is required.",
+      "travelHelp": "Travel Feather is the default; your saved travel choice is preserved. The castle-specific boost is resolved again before launch."
+    }
+  },
+  "autoInvasion": {
+    "recommendationIntro": "Recommended values describe regular Auto Invasion use; they are guidance and do not change saved settings.",
+    "steps": {
+      "open": {
+        "title": "Open Auto Invasion settings",
+        "items": {
+          "open_settings": {
+            "label": "Open settings",
+            "description": "On the Automation page, select the settings button on the Auto Invasion card."
+          },
+          "source_castle": {
+            "label": "Source castle",
+            "description": "Choose the Great Empire castle that supplies troops and tools for event attacks.",
+            "recommendation": "Use your usual event castle with enough troops and tools."
+          },
+          "attack_preset": {
+            "label": "Attack preset",
+            "description": "Select a saved Attack Preset with the troops, tools and formation for Foreign Lords or Bloodcrow.",
+            "recommendation": "Create a regular Foreign Lords or Bloodcrow preset first, then select it here."
+          },
+          "horse_travel_boost": {
+            "label": "Horse travel boost",
+            "description": "Choose the feather, coin or ruby travel option for these attacks.",
+            "recommendation": "Travel Feather for fast travel."
+          },
+          "capacity_note": {
+            "label": "Attack capacity",
+            "description": "Preset troop and tool quantities adapt to the selected commander and target capacity."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Invasion source, preset and travel settings",
+          "caption": "Choose a Great Empire source castle and a saved event preset before setting the travel option."
+        }
+      },
+      "difficulty": {
+        "title": "Choose both event difficulties",
+        "items": {
+          "foreign_lords_difficulty": {
+            "label": "Foreign Lords difficulty",
+            "description": "Choose an unlocked Foreign Lords difficulty to select when the current event has no difficulty chosen.",
+            "recommendation": "Use the highest unlocked difficulty your usual setup handles reliably."
+          },
+          "bloodcrow_difficulty": {
+            "label": "Bloodcrow difficulty",
+            "description": "Choose an unlocked Bloodcrow difficulty to select when the current event has no difficulty chosen.",
+            "recommendation": "Use the highest unlocked difficulty your usual setup handles reliably."
+          },
+          "difficulty_note": {
+            "label": "Current difficulty",
+            "description": "Save both event choices; changing either saved value does not replace an active event difficulty."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Foreign Lords and Bloodcrow difficulty choices",
+          "caption": "Choose a separate unlocked fallback difficulty for each event."
+        }
+      },
+      "limits": {
+        "title": "Set score and stopping limits",
+        "items": {
+          "score_target": {
+            "label": "Stop at event score",
+            "description": "Stop starting new attacks when the reported event score reaches or exceeds this target.",
+            "recommendation": "Use your usual final personal-reward milestone above 0."
+          },
+          "minimum_remaining": {
+            "label": "Stop before event ends",
+            "description": "Stop starting new attacks this many minutes before the event ends.",
+            "recommendation": "30 minutes."
+          },
+          "daily_attack_limit": {
+            "label": "Daily normal-attack limit",
+            "description": "Stop this automation at the account-wide daily normal-attack count until the game resets it; 0 adds no limit.",
+            "recommendation": "0 so the event score target controls the run."
+          },
+          "travelling_attacks": {
+            "label": "Travelling attacks",
+            "description": "Attacks already travelling may finish after a stop condition and push the final score above the target."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Invasion score and stopping limits",
+          "caption": "The score target stops new launches while already travelling attacks may finish."
+        }
+      },
+      "fortify": {
+        "title": "Choose optional target fortification",
+        "items": {
+          "fortify_each_target": {
+            "label": "Fortify each target",
+            "description": "If enabled, strengthen each generated enemy castle before attacking it using the selected currency.",
+            "recommendation": "Off unless fortification is part of your regular event strategy."
+          },
+          "fortification_currency": {
+            "label": "Fortification currency",
+            "description": "Choose an option supported by the active event; the game sets each price and selecting rubies explicitly permits ruby spending.",
+            "recommendation": "Event currency when offered and fortification is enabled."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Invasion fortification settings",
+          "caption": "Leave fortification off unless you intend to spend an available event currency or explicitly selected rubies."
+        }
+      },
+      "finish": {
+        "title": "Save and enable Auto Invasion",
+        "items": {
+          "save_settings": {
+            "label": "Save settings",
+            "description": "Save the source, preset, difficulties, stopping limits and fortification choice before closing this dialog."
+          },
+          "auto_invasion_switch": {
+            "label": "Auto Invasion switch",
+            "description": "Turn on Auto Invasion on the Automation card after saving to run when an event and eligible resources are available.",
+            "recommendation": "On after reviewing and saving your intended settings."
+          },
+          "readiness": {
+            "label": "Attack readiness",
+            "description": "Auto Invasion waits for an active event, eligible commanders and sufficient troops and tools."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Auto Invasion",
+      "summary": "Attack Foreign Lords and Bloodcrow toward your score target",
+      "description": "Auto Invasion uses a saved attack preset to attack Foreign Lords or Bloodcrow until the score target or another stopping limit is reached.",
+      "expectation": "It waits for an active event, eligible commanders and enough troops and tools; travelling attacks may finish after new attacks stop."
+    }
+  },
+  "autoNomad": {
+    "recommendationIntro": "Recommended values describe regular Auto Nomad/Samurai use; they are guidance and do not change saved settings.",
+    "steps": {
+      "open": {
+        "title": "Open Auto Nomad/Samurai settings",
+        "items": {
+          "open_settings": {
+            "label": "Open settings",
+            "description": "On the Automation page, select the settings button on the Auto Nomad/Samurai card."
+          },
+          "source_castle": {
+            "label": "Source castle",
+            "description": "Choose the Great Empire castle that supplies troops and tools for camp attacks.",
+            "recommendation": "Use your usual event castle with enough troops and tools."
+          },
+          "nomad_preset": {
+            "label": "Nomad attack preset",
+            "description": "Select a saved Attack Preset with the troops, tools and formation for Nomad camps.",
+            "recommendation": "Create and select your regular Nomad preset."
+          },
+          "samurai_preset": {
+            "label": "Samurai attack preset",
+            "description": "Select a saved Attack Preset with the troops, tools and formation for Samurai camps.",
+            "recommendation": "Create and select your regular Samurai preset."
+          },
+          "horse_travel_boost": {
+            "label": "Horse travel boost",
+            "description": "Choose the feather, coin or ruby travel option for camp attacks.",
+            "recommendation": "Travel Feather for fast travel."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Nomad/Samurai source, presets and travel settings",
+          "caption": "Create both event presets before selecting their source castle and travel option."
+        }
+      },
+      "difficulty": {
+        "title": "Choose both event difficulties",
+        "items": {
+          "nomad_difficulty": {
+            "label": "Nomad difficulty",
+            "description": "Choose an unlocked Nomad difficulty for event start.",
+            "recommendation": "Use the highest unlocked difficulty your usual setup handles reliably."
+          },
+          "samurai_difficulty": {
+            "label": "Samurai difficulty",
+            "description": "Choose an unlocked Samurai difficulty for event start.",
+            "recommendation": "Use the highest unlocked difficulty your usual setup handles reliably."
+          },
+          "active_difficulty": {
+            "label": "Already active event",
+            "description": "For an active event, match its current difficulty because a different saved choice makes this automation wait rather than change it."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Nomad and Samurai difficulty choices",
+          "caption": "Select a separate unlocked difficulty for each event and match the active one."
+        }
+      },
+      "limits": {
+        "title": "Set score and stopping limits",
+        "items": {
+          "score_target": {
+            "label": "Stop at event score",
+            "description": "Stop starting new attacks when the reported event score reaches or exceeds this target.",
+            "recommendation": "Use your usual final personal-reward milestone above 0."
+          },
+          "minimum_remaining": {
+            "label": "Stop before event ends",
+            "description": "Stop starting new attacks this many minutes before the event ends.",
+            "recommendation": "30 minutes."
+          },
+          "daily_attack_limit": {
+            "label": "Daily normal-attack limit",
+            "description": "Stop this automation at the account-wide daily normal-attack count until the game resets it; 0 adds no limit.",
+            "recommendation": "0 so the event score target controls the run."
+          },
+          "travelling_attacks": {
+            "label": "Travelling attacks",
+            "description": "Attacks already travelling may finish after a stop condition and push the final score above the target."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Nomad/Samurai score and stopping limits",
+          "caption": "The score target stops new launches while already travelling attacks may finish."
+        }
+      },
+      "cooldowns": {
+        "title": "Choose cooldown skips and reserves",
+        "items": {
+          "skip_cooldowns": {
+            "label": "Clear each landed hit cooldown",
+            "description": "After a confirmed camp victory, use an available time skip to clear that target cooldown.",
+            "recommendation": "On for regular repeated camp attacks; leave off to wait for natural cooldowns."
+          },
+          "keep_1m": {
+            "label": "Keep 1m",
+            "description": "Keep this many 1m time-skip items untouched as a reserve.",
+            "recommendation": "0 for regular camp runs."
+          },
+          "keep_5m": {
+            "label": "Keep 5m",
+            "description": "Keep this many 5m time-skip items untouched as a reserve.",
+            "recommendation": "0 for regular camp runs."
+          },
+          "keep_10m": {
+            "label": "Keep 10m",
+            "description": "Keep this many 10m time-skip items untouched as a reserve.",
+            "recommendation": "0 for regular camp runs."
+          },
+          "keep_30m": {
+            "label": "Keep 30m",
+            "description": "Keep this many 30m time-skip items untouched as a reserve.",
+            "recommendation": "0 for regular camp runs."
+          },
+          "keep_60m": {
+            "label": "Keep 60m",
+            "description": "Keep this many 60m time-skip items untouched as a reserve.",
+            "recommendation": "0 for regular camp runs."
+          },
+          "keep_5h": {
+            "label": "Keep 5h",
+            "description": "Keep this many 5h time-skip items untouched as a reserve.",
+            "recommendation": "Reserve the stock you need for building or other activities."
+          },
+          "keep_24h": {
+            "label": "Keep 24h",
+            "description": "Keep this many 24h time-skip items untouched as a reserve.",
+            "recommendation": "Reserve the stock you need for building or other activities."
+          }
+        },
+        "image": {
+          "alt": "Illustrative camp cooldown and time-skip reserve settings",
+          "caption": "Each keep value counts time-skip items, not minutes of cooldown."
+        }
+      },
+      "trial": {
+        "title": "Leave the temporary trial off for routine runs",
+        "items": {
+          "rbc_trial": {
+            "label": "Temporary RBC end-to-end trial",
+            "description": "Replace normal event operation with a real attack trial on one Robber Baron Castle using the Nomad preset and cooldown skips.",
+            "recommendation": "Off for regular Nomad or Samurai runs."
+          },
+          "target_x": {
+            "label": "Target X",
+            "description": "Enter the Robber Baron Castle horizontal coordinate only for the temporary trial.",
+            "recommendation": "Leave unused while the trial is off."
+          },
+          "target_y": {
+            "label": "Target Y",
+            "description": "Enter the Robber Baron Castle vertical coordinate only for the temporary trial.",
+            "recommendation": "Leave unused while the trial is off."
+          },
+          "trial_skips": {
+            "label": "Trial cooldown skips",
+            "description": "Enabling the trial also turns on cooldown skips for that trial."
+          }
+        },
+        "image": {
+          "alt": "Illustrative temporary Robber Baron Castle trial controls",
+          "caption": "The trial makes a real attack and replaces normal event operation while enabled."
+        }
+      },
+      "finish": {
+        "title": "Save and enable Auto Nomad/Samurai",
+        "items": {
+          "save_settings": {
+            "label": "Save settings",
+            "description": "Save the source, presets, difficulties, stopping limits, skip choices and trial state before closing this dialog."
+          },
+          "auto_nomad_switch": {
+            "label": "Auto Nomad/Samurai switch",
+            "description": "Turn on Auto Nomad/Samurai on the Automation card after saving to run when an event and eligible resources are available.",
+            "recommendation": "On after reviewing and saving your intended settings."
+          },
+          "readiness": {
+            "label": "Camp readiness",
+            "description": "The automation levels event camps and waits for eligible commanders, troops, tools and usable skips when skips are enabled."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Auto Nomad/Samurai",
+      "summary": "Level and attack Nomad or Samurai event camps",
+      "description": "Auto Nomad/Samurai levels eligible event camps, selects the weakest fully levelled camp and repeatedly attacks it with the event-specific saved preset until a stopping limit is reached.",
+      "expectation": "It waits for an active event, eligible commanders, troops, tools and usable time skips when cooldown clearing is enabled; travelling attacks may finish after new launches stop."
+    }
+  },
+  "autoAdvisor": {
+    "recommendationIntro": "Recommended values describe regular Auto Advisor use; they are guidance and do not change saved settings.",
+    "steps": {
+      "open": {
+        "title": "Open Auto Advisor settings",
+        "items": {
+          "open_settings": {
+            "label": "Open settings",
+            "description": "On the Automation page, select the settings button on the Auto Advisor card."
+          },
+          "source_castle": {
+            "label": "Source castle",
+            "description": "Choose the Great Empire castle that supplies troops and tools for the Advisor run.",
+            "recommendation": "Use your usual event castle with enough troops and tools."
+          },
+          "attack_preset": {
+            "label": "Advisor attack preset",
+            "description": "Select a saved Attack Preset whose troops, tools and formation are copied for every requested attack.",
+            "recommendation": "Create a regular preset for the active Nomad or Samurai event first, then select it."
+          },
+          "horse_travel_boost": {
+            "label": "Horse travel boost",
+            "description": "Choose the feather, coin or ruby travel option for the run.",
+            "recommendation": "Travel Feather for fast travel."
+          },
+          "complete_copies": {
+            "label": "Complete preset copies",
+            "description": "Available resources and complete preset copies can reduce the run below the maximum attack count."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Advisor source, preset and travel settings",
+          "caption": "Choose a Great Empire source castle and a saved event preset before setting travel."
+        }
+      },
+      "difficulty": {
+        "title": "Choose both event difficulties",
+        "items": {
+          "nomad_difficulty": {
+            "label": "Nomad difficulty",
+            "description": "Choose an unlocked Nomad difficulty to select when that event starts.",
+            "recommendation": "Use the highest unlocked difficulty your usual setup handles reliably."
+          },
+          "samurai_difficulty": {
+            "label": "Samurai difficulty",
+            "description": "Choose an unlocked Samurai difficulty to select when that event starts.",
+            "recommendation": "Use the highest unlocked difficulty your usual setup handles reliably."
+          },
+          "active_difficulty": {
+            "label": "Active event difficulty",
+            "description": "Match the current difficulty of an already active event or this automation waits rather than changing it."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Nomad and Samurai Advisor difficulty choices",
+          "caption": "Save both event difficulties and match the one already running."
+        }
+      },
+      "sizing": {
+        "title": "Set the run size and event time",
+        "items": {
+          "maximum_attacks": {
+            "label": "Maximum attacks",
+            "description": "Set an upper bound on attacks in this single Advisor run; resources and remaining event time may lower the actual count.",
+            "recommendation": "9,999 to let available resources and event time determine the run size."
+          },
+          "minimum_remaining": {
+            "label": "Stop before event end",
+            "description": "Leave this many minutes unused in the pre-launch event-time calculation.",
+            "recommendation": "30 minutes; this is not an ongoing cancellation timer."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Advisor attack-count and event-time settings",
+          "caption": "The requested count is limited before launch by available resources and event time."
+        }
+      },
+      "resources": {
+        "title": "Set resource budgets and reserves",
+        "items": {
+          "coin_cost": {
+            "label": "All-in coins per attack",
+            "description": "Estimate the full coin cost per attack for the pre-launch affordability calculation without changing game prices.",
+            "recommendation": "500 only if it covers your actual full cost; otherwise use a higher measured total."
+          },
+          "keep_coins": {
+            "label": "Keep coins",
+            "description": "Exclude this many coins from the run budget.",
+            "recommendation": "Keep your usual recruitment and building budget."
+          },
+          "ruby_cost": {
+            "label": "Rubies per attack",
+            "description": "Estimate ruby travel cost per attack, with a positive value required when ruby travel is selected.",
+            "recommendation": "0 with Travel Feather; use the actual positive cost for ruby travel."
+          },
+          "keep_rubies": {
+            "label": "Keep rubies",
+            "description": "Exclude this many rubies from the run budget.",
+            "recommendation": "Keep the balance needed for other activities."
+          },
+          "keep_feathers": {
+            "label": "Keep feathers",
+            "description": "Exclude this many travel feathers from the run budget.",
+            "recommendation": "0 unless you reserve feathers for other features."
+          },
+          "keep_60m": {
+            "label": "Keep 60m",
+            "description": "Keep this many 60m time-skip items untouched as a reserve.",
+            "recommendation": "0 for regular Advisor runs."
+          },
+          "keep_5h": {
+            "label": "Keep 5h",
+            "description": "Keep this many 5h time-skip items untouched as a reserve.",
+            "recommendation": "Reserve the stock you need for building or other activities."
+          },
+          "keep_24h": {
+            "label": "Keep 24h",
+            "description": "Keep this many 24h time-skip items untouched as a reserve.",
+            "recommendation": "Reserve the stock you need for building or other activities."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Advisor coin, ruby, feather and time-skip reserves",
+          "caption": "Cost fields are planning estimates; keep values count resources or time-skip items left unused."
+        }
+      },
+      "activation": {
+        "title": "Save, enable and activate Advisor access",
+        "items": {
+          "save_settings": {
+            "label": "Save settings",
+            "description": "Save the source, preset, difficulties, run size and resource budgets before closing this dialog."
+          },
+          "auto_advisor_switch": {
+            "label": "Auto Advisor switch",
+            "description": "Enable Auto Advisor on its Automation card after reviewing the settings; an already unlocked Advisor may launch a run immediately.",
+            "recommendation": "On after reviewing and saving your intended settings."
+          },
+          "activate_advisor": {
+            "label": "Activate Advisor",
+            "description": "If Advisor is locked, choose Activate Advisor to open confirmation for the current event."
+          },
+          "confirm_paid_activation": {
+            "label": "Confirm paid activation",
+            "description": "Acknowledge that activating Advisor may consume an event or universal token unless the game reports this event as free."
+          },
+          "activate_and_spend": {
+            "label": "Activate and spend token",
+            "description": "Submit the confirmed activation using an eligible event token or universal Advisor token; a free event shows Activate advisor instead."
+          },
+          "cancel_activation": {
+            "label": "Cancel activation",
+            "description": "Close the confirmation without submitting an activation or spending a token."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Advisor save and token activation controls",
+          "caption": "Saving or enabling does not spend a token; the separate confirmed activation may do so."
+        }
+      },
+      "overview": {
+        "title": "Review the live Advisor run",
+        "items": {
+          "refresh_overview": {
+            "label": "Refresh overview",
+            "description": "Request updated Advisor run progress, wins, defeats and losses."
+          },
+          "live_progress": {
+            "label": "Live Advisor run",
+            "description": "Read the current attack count, requested count, wins, defeats, lost units and lost tools in the overview."
+          },
+          "no_relaunch": {
+            "label": "Completed or cancelled run",
+            "description": "A completed or cancelled run for the same event is not automatically started again."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Advisor progress and loss overview",
+          "caption": "The overview shows run progress and losses without starting another run."
+        }
+      }
+    },
+    "feature": {
+      "name": "Auto Advisor",
+      "summary": "Start one resource-sized Nomad or Samurai Advisor run",
+      "description": "Auto Advisor starts one Nomad or Samurai Advisor attack run sized by available resources and remaining event time.",
+      "expectation": "The run waits for active matching difficulty and unlocked Advisor access; saving or enabling does not spend a token, while a confirmed activation may do so."
+    }
+  },
+  "autoKhan": {
+    "feature": {
+      "name": "Auto Khan",
+      "summary": "Chain Khan camp attacks and defend retaliation at your main castle",
+      "description": "Auto Khan attacks the Khan camp, clears cooldowns, triggers full-rage retaliations and maintains the main-castle defense.",
+      "expectation": "It pauses new camp attacks at configured limits or resource shortages while protecting the main castle; incoming player attacks remain Auto Station’s concern."
+    },
+    "recommendationIntro": "Recommended values describe regular Auto Khan use; they are guidance and do not change saved settings.",
+    "steps": {
+      "setup": {
+        "title": "Choose castles, presets and travel",
+        "items": {
+          "open_settings": {
+            "label": "Open settings",
+            "description": "On the Automation page, select the settings button on the Auto Khan card."
+          },
+          "attack_from": {
+            "label": "Attack from",
+            "description": "Choose a Great Empire main castle or outpost that supplies the Khan camp attacks.",
+            "recommendation": "Use an outpost with your attacking army when available."
+          },
+          "defend_at": {
+            "label": "Defend at",
+            "description": "Khan retaliations defend at the Great Empire main castle shown here, which is read-only."
+          },
+          "camp_attack_preset": {
+            "label": "Camp attack preset",
+            "description": "Choose a saved Attack Preset for regular Khan camp attacks.",
+            "recommendation": "Create your regular Khan attack preset first."
+          },
+          "main_defense_preset": {
+            "label": "Main defense preset",
+            "description": "Choose a saved Defense Preset reapplied at the main castle before retaliations.",
+            "recommendation": "Create your regular Khan defense preset and prepare its troops and tools."
+          },
+          "horse_travel_boost": {
+            "label": "Horse travel boost",
+            "description": "Choose feather, coin or ruby travel for camp attacks.",
+            "recommendation": "Travel Feather for fast travel."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Khan castle, preset and travel settings",
+          "caption": "Prepare both presets and main-castle defense before enabling the attack chain."
+        }
+      },
+      "rage": {
+        "title": "Set rage and attack permissions",
+        "items": {
+          "lock_automatic_attacks": {
+            "label": "Lock automatic Khan attacks",
+            "description": "Stop new camp attacks while rage handling, cooldown work and defense continue.",
+            "recommendation": "Off for regular camp attacks."
+          },
+          "trigger_full_rage": {
+            "label": "Trigger Khan at full rage",
+            "description": "Provoke a Khan retaliation when rage is full.",
+            "recommendation": "On when the main castle is ready to defend."
+          },
+          "max_rage_chain": {
+            "label": "Max rage chain",
+            "description": "Limit accepted retaliations in the current event before new camp attacks stop; 0 removes this limit.",
+            "recommendation": "0 unless you need a retaliation cap."
+          },
+          "rage_booster": {
+            "label": "Require Rage points booster",
+            "description": "Allow new automatic camp attacks only while the timed Rage points booster is active.",
+            "recommendation": "Off unless you want booster-only attacks."
+          },
+          "rage_continues": {
+            "label": "Rage work continues",
+            "description": "A rage-chain cap does not stop full-rage triggering, cooldown work or defense recovery."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Khan rage and attack-permission settings",
+          "caption": "The timed Rage points booster is separate from rage banners."
+        }
+      },
+      "limits": {
+        "title": "Set score, supply and daily limits",
+        "items": {
+          "nomad_points": {
+            "label": "Stop at Nomad points",
+            "description": "At this reported score, stop new Khan attacks, recall outgoing Khan attacks and open the main gates; 0 disables this stop.",
+            "recommendation": "0 unless you want to stop and protect at a chosen score."
+          },
+          "replenish_tools": {
+            "label": "Replenish defense tools",
+            "description": "Replace Defense Preset shortages from eligible offers while rejecting ruby-priced packages.",
+            "recommendation": "On if you want eligible automatic purchases."
+          },
+          "daily_limit": {
+            "label": "Daily normal-attack limit",
+            "description": "Stop this automation’s new camp attacks at the account-wide daily normal-attack count; 0 disables this limit.",
+            "recommendation": "0 unless you need an account-wide limit."
+          },
+          "event_end": {
+            "label": "Stop before event end",
+            "description": "Stop new camp attacks this many minutes before the event ends.",
+            "recommendation": "5 minutes."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Khan score, tool and daily-limit settings",
+          "caption": "A positive Nomad-point stop also recalls outgoing Khan attacks and opens main gates."
+        }
+      },
+      "cooldowns": {
+        "title": "Set cooldown skipping and reserves",
+        "items": {
+          "skip_cooldowns": {
+            "label": "Skip every Khan camp cooldown",
+            "description": "Reserve and use enough time-skip items to clear camp cooldowns after attacks.",
+            "recommendation": "On; the current settings dialog requires this to save."
+          },
+          "keep_1m": {
+            "label": "Keep 1m",
+            "description": "Keep this many 1m time-skip items untouched.",
+            "recommendation": "0 for regular Khan chains."
+          },
+          "keep_5m": {
+            "label": "Keep 5m",
+            "description": "Keep this many 5m time-skip items untouched.",
+            "recommendation": "0 for regular Khan chains."
+          },
+          "keep_10m": {
+            "label": "Keep 10m",
+            "description": "Keep this many 10m time-skip items untouched.",
+            "recommendation": "0 for regular Khan chains."
+          },
+          "keep_30m": {
+            "label": "Keep 30m",
+            "description": "Keep this many 30m time-skip items untouched.",
+            "recommendation": "0 for regular Khan chains."
+          },
+          "keep_1h": {
+            "label": "Keep 1h",
+            "description": "Keep this many 1h time-skip items untouched.",
+            "recommendation": "0 for regular Khan chains."
+          },
+          "keep_5h": {
+            "label": "Keep 5h",
+            "description": "Keep this many 5h time-skip items untouched.",
+            "recommendation": "Reserve the stock you need for building or other activities."
+          },
+          "keep_24h": {
+            "label": "Keep 24h",
+            "description": "Keep this many 24h time-skip items untouched.",
+            "recommendation": "Reserve the stock you need for building or other activities."
+          },
+          "skip_shortage": {
+            "label": "Insufficient usable skips",
+            "description": "New camp attacks pause when available time-skip items cannot clear the required cooldown."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Khan cooldown skipping and time-skip reserves",
+          "caption": "Reserve counts are numbers of items, not minutes of time."
+        }
+      },
+      "protection": {
+        "title": "Protect the main-castle wall",
+        "items": {
+          "protect_offense": {
+            "label": "Protect offense on the main-castle wall",
+            "description": "When attacking from the main castle, open its gates and pause Khan if too many offensive troops would defend the wall.",
+            "recommendation": "On when the main castle supplies attacks."
+          },
+          "offensive_threshold": {
+            "label": "Offensive wall-unit threshold",
+            "description": "Trigger that main-castle protection when offensive wall units reach this count.",
+            "recommendation": "1,000 offensive wall units."
+          },
+          "outpost_source": {
+            "label": "Outpost source",
+            "description": "This wall safeguard is disabled when an outpost supplies attacks and the main castle defends separately."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Khan main-castle wall protection",
+          "caption": "The wall safeguard applies only when the main castle is the attack source."
+        }
+      },
+      "save": {
+        "title": "Save and enable Auto Khan",
+        "items": {
+          "save_settings": {
+            "label": "Save settings",
+            "description": "Save the selected castles, presets, rage controls, limits, cooldown reserves and protection settings."
+          },
+          "enable_switch": {
+            "label": "Auto Khan switch",
+            "description": "Enable Auto Khan from its Automation card after checking the main-castle defense.",
+            "recommendation": "On after saving and preparing the defense."
+          },
+          "station_priority": {
+            "label": "Auto Station priority",
+            "description": "Auto Station handles incoming player attacks separately from Khan retaliations."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Khan save and enable flow",
+          "caption": "Check the main-castle defense before enabling Khan retaliations."
+        }
+      }
+    }
+  },
+  "autoBeri": {
+    "recommendationIntro": "Recommended choices describe regular Auto Beri use; they are guidance and do not change saved settings.",
+    "steps": {
+      "setup": {
+        "title": "Choose your attack and supply source",
+        "items": {
+          "open_settings": {
+            "label": "Open settings",
+            "description": "On the Automation page, open the Auto Beri World card settings."
+          },
+          "attack_preset": {
+            "label": "Attack preset",
+            "description": "Choose a saved Berimond attack formation; Auto Beri uses its troop mix for transfers as well as tower attacks.",
+            "recommendation": "Create and select your usual Berimond preset first."
+          },
+          "source_castle": {
+            "label": "Source castle",
+            "description": "Choose the Great Empire castle or outpost supplying those troops.",
+            "recommendation": "Select the castle that holds your attack army."
+          },
+          "horse_travel_boost": {
+            "label": "Horse travel boost",
+            "description": "Choose feather, coin, or ruby travel for tower attacks.",
+            "recommendation": "Travel Feather for fast travel without selecting ruby travel."
+          },
+          "attack_check_interval": {
+            "label": "Attack check interval",
+            "description": "Set how often Auto Beri checks for another tower attack.",
+            "recommendation": "Keep the usual 30-second interval unless you need fewer checks."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Daily normal attack limit",
+            "description": "Stop new Auto Beri tower attacks at the account-wide daily normal-attack count; 0 removes this added limit.",
+            "recommendation": "0 unless you use an account-wide cap."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Beri choose your attack and supply source settings",
+          "caption": "Saved attack preset, Great Empire donor castle, Travel Feather, attack check, and daily limit."
+        }
+      },
+      "transfers": {
+        "title": "Set proportional troop transfers",
+        "items": {
+          "owned_berimond_camp": {
+            "label": "Owned Berimond camp",
+            "description": "Auto Beri finds your owned Berimond camp automatically, so there is no camp ID to enter."
+          },
+          "preset_troop_mix": {
+            "label": "Preset troop mix",
+            "description": "Auto Beri totals repeated troop slots across the selected preset’s waves and courtyard, then replenishes one underrepresented type at a time."
+          },
+          "food_only": {
+            "label": "Food-only transfers",
+            "description": "Only Food-fed preset troops can transfer; unsupported units or unresolved troop families pause with a reason."
+          },
+          "partial_donor": {
+            "label": "Partial donor stock",
+            "description": "When the donor has some of the needed troop type, Auto Beri sends that smaller amount; with none, it waits instead of sending another type."
+          },
+          "pending_transfer": {
+            "label": "Pending transfer",
+            "description": "Auto Beri waits for each shipment to arrive and refreshes camp stock before recalculating the preset mix."
+          },
+          "check_interval": {
+            "label": "Check interval",
+            "description": "Set how often Auto Beri refreshes free transfer capacity and both castle inventories.",
+            "recommendation": "Keep the usual 30-second interval."
+          },
+          "minimum_free_capacity": {
+            "label": "Minimum free capacity",
+            "description": "Begin transfers only when reported free capacity reaches this threshold; an individual proportional shipment can be smaller.",
+            "recommendation": "1 free troop slot for regular proportional resupply."
+          },
+          "use_troop_transport_time_skips": {
+            "label": "Use troop transport time skips",
+            "description": "Apply the selected skip to a confirmed transfer while it is still travelling.",
+            "recommendation": "On for regular camp resupply when your skip stock allows it."
+          },
+          "troop_transport_skip": {
+            "label": "Troop transport skip",
+            "description": "Choose the duration of the item used when transport skipping is on.",
+            "recommendation": "Use the 1-hour skip for regular confirmed transfers."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Beri set proportional troop transfers settings",
+          "caption": "A fictional 2:1 preset mix, camp stock, free capacity, and one partial single-type shipment; values are examples, not saved defaults."
+        }
+      },
+      "readiness": {
+        "title": "Set tower attack readiness",
+        "items": {
+          "only_run_with_a_gallantry_booster": {
+            "label": "Only run with a Gallantry booster",
+            "description": "Require an active Gallantry booster before transfers, tool purchases, camp setup, tower attacks, or construction proceed.",
+            "recommendation": "On if you want every Auto Beri lane gated by the booster."
+          },
+          "attack_preset_loadout": {
+            "label": "Attack preset loadout",
+            "description": "Review the selected preset's waves, troops, and tools before enabling attacks.",
+            "recommendation": "Keep enough of each selected troop and tool at the donor and camp for your normal attack pace."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Beri set tower attack readiness settings",
+          "caption": "Booster gate status and preset loadout, with no implied live booster or customer data."
+        }
+      },
+      "tools": {
+        "title": "Maintain camp tools",
+        "items": {
+          "scaling_ladders_minimum": {
+            "label": "Scaling ladders minimum",
+            "description": "Replenish this many stationed ladders at the camp using eligible coin offers; 0 leaves them unmanaged.",
+            "recommendation": "Match the number your usual preset and attack pace need."
+          },
+          "battering_rams_minimum": {
+            "label": "Battering rams minimum",
+            "description": "Replenish this many stationed rams under the same rule.",
+            "recommendation": "Match your usual preset's use."
+          },
+          "mantlets_minimum": {
+            "label": "Mantlets minimum",
+            "description": "Replenish this many stationed mantlets under the same rule.",
+            "recommendation": "Match your usual preset's use."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Beri maintain camp tools settings",
+          "caption": "The three tool minimums and a clearly fictional camp inventory."
+        }
+      },
+      "builder": {
+        "title": "Choose optional camp construction",
+        "items": {
+          "auto_beri_builder_lane": {
+            "label": "Auto Beri Builder lane",
+            "description": "Build or upgrade the active Berimond camp target using confirmed returned loot without importing resources from another kingdom.",
+            "recommendation": "On for regular camp construction after reviewing spending permissions."
+          },
+          "stable_target": {
+            "label": "Stable target",
+            "description": "Choose the Faction Stable level from 1 through 5 for the built-in target.",
+            "recommendation": "Level 5 for regular event construction when resources permit."
+          },
+          "optional_custom_camp_target": {
+            "label": "Optional custom camp target",
+            "description": "Capture Functional for essential buildings, Layout for building positions without decorations, or Exact for all supported details.",
+            "recommendation": "Use the built-in target unless a reviewed custom target is needed."
+          },
+          "use_construction_time_skips": {
+            "label": "Use construction time skips",
+            "description": "Advance a confirmed camp build timer while keeping selected construction skip reserves.",
+            "recommendation": "On for regular construction and transport when skip stock allows it."
+          },
+          "allow_premium_costs": {
+            "label": "Allow premium costs",
+            "description": "Permit eligible construction steps that spend premium currency.",
+            "recommendation": "Off unless you intentionally want premium construction."
+          },
+          "allow_demolition": {
+            "label": "Allow demolition",
+            "description": "Permit exact-target cleanup of unmanaged buildings that cannot be moved or stored.",
+            "recommendation": "Off unless you have reviewed the target's removals."
+          },
+          "camp_resource_reserves": {
+            "label": "Camp resource reserves",
+            "description": "Keep the chosen Wood and Stone amounts unavailable to camp construction.",
+            "recommendation": "Wood 0 and Stone 0 if their surplus may be used."
+          },
+          "construction_time_skip_reserves": {
+            "label": "Construction time-skip reserves",
+            "description": "Set separately how many 1m, 5m, 10m, 30m, 1h, 5h, and 24h skip items to keep.",
+            "recommendation": "Keep 0 of each short skip; reserve your other-activity stock of 1h, 5h, and 24h skips."
+          },
+          "saved_targets": {
+            "label": "Saved custom targets",
+            "description": "Capturing saves and activates a reviewed custom target immediately; selecting another saved target activates it immediately."
+          },
+          "use_built_in_default": {
+            "label": "Use built-in default",
+            "description": "Switch back to the built-in target immediately while retaining saved custom targets."
+          },
+          "wood_reserve": {
+            "label": "Wood reserve",
+            "description": "Keep this amount of camp Wood out of construction spending; use 0 when surplus Wood may be spent."
+          },
+          "stone_reserve": {
+            "label": "Stone reserve",
+            "description": "Keep this amount of camp Stone out of construction spending; use 0 when surplus Stone may be spent."
+          },
+          "keep_skip_1m": {
+            "label": "Keep 1-minute skips",
+            "description": "Keep this many 1-minute construction skip items unavailable to the builder; set the reserve to 0 for regular use."
+          },
+          "keep_skip_5m": {
+            "label": "Keep 5-minute skips",
+            "description": "Keep this many 5-minute construction skip items unavailable to the builder; set the reserve to 0 for regular use."
+          },
+          "keep_skip_10m": {
+            "label": "Keep 10-minute skips",
+            "description": "Keep this many 10-minute construction skip items unavailable to the builder; set the reserve to 0 for regular use."
+          },
+          "keep_skip_30m": {
+            "label": "Keep 30-minute skips",
+            "description": "Keep this many 30-minute construction skip items unavailable to the builder; set the reserve to 0 for regular use."
+          },
+          "keep_skip_1h": {
+            "label": "Keep 1-hour skips",
+            "description": "Keep this many 1-hour construction skip items unavailable to the builder; reserve your other-activity stock."
+          },
+          "keep_skip_5h": {
+            "label": "Keep 5-hour skips",
+            "description": "Keep this many 5-hour construction skip items unavailable to the builder; reserve your other-activity stock."
+          },
+          "keep_skip_24h": {
+            "label": "Keep 24-hour skips",
+            "description": "Keep this many 24-hour construction skip items unavailable to the builder; reserve your other-activity stock."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Beri choose optional camp construction settings",
+          "caption": "Built-in and saved targets, capture modes, stable level 5, Wood and Stone reserves, and seven skip durations."
+        }
+      },
+      "save": {
+        "title": "Save and enable",
+        "items": {
+          "save_settings": {
+            "label": "Save settings",
+            "description": "Save the preset, donor, transfer pacing, attack limits, tools, and optional build choices before enabling the automation."
+          },
+          "automation_switch": {
+            "label": "Automation switch",
+            "description": "Turn on Auto Beri World from its Automation card after confirming your camp, donor troops, preset, and optional spending settings.",
+            "recommendation": "On after setup."
+          },
+          "calendar": {
+            "label": "Calendar",
+            "description": "Leave the schedule off for continuous operation, or set your usual hours and save the schedule if you need a time window.",
+            "recommendation": "Off for ongoing event operation."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Beri save and enable settings",
+          "caption": "Saved setup checklist, switch, and optional schedule, without showing a live account."
+        }
+      }
+    },
+    "feature": {
+      "name": "Auto Beri World",
+      "summary": "Supply and run your Berimond camp",
+      "description": "Auto Beri uses your selected attack preset to reinforce an owned Berimond camp in proportion, then can attack towers, replenish tools and build from confirmed loot.",
+      "expectation": "Transfers wait for a fresh camp and donor inventory, reported capacity and any prior shipment to settle; partial donor stock can send a smaller shipment, while a missing needed type pauses replenishment."
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "name": "Auto Storm",
+      "summary": "Manage your Storm castle, attacks and rewards",
+      "description": "Auto Storm can open and build a Storm castle, attack forts and resource islands, import troops and buy selected Luna rewards.",
+      "expectation": "Each lane uses fresh game data and your saved permissions; premium construction, attacks and purchases remain bounded by the choices you enable."
+    },
+    "recommendationIntro": "Recommended choices describe regular Auto Storm use; they are guidance and do not change saved settings.",
+    "steps": {
+      "castle": {
+        "title": "Open and capture your Storm castle",
+        "items": {
+          "open_settings": {
+            "label": "Open settings",
+            "description": "Open Auto Storm settings from its Automation card."
+          },
+          "automatic_open": {
+            "label": "Automatically open Storm castle",
+            "description": "When Storm is locked, choose an available official starter castle and review its displayed price before allowing an unlock.",
+            "recommendation": "On if you want Auto Storm to open a usual starter castle after reviewing its price."
+          },
+          "starter_castle": {
+            "label": "Castle to open",
+            "description": "Choose the currently available official Storm starter castle used for the next locked season.",
+            "recommendation": "Choose an affordable usual starter after checking the price."
+          },
+          "capture_castle": {
+            "label": "Storm castle",
+            "description": "Select your current Storm castle before capturing a construction target.",
+            "recommendation": "Capture the castle you intend to manage."
+          },
+          "functional": {
+            "label": "Functional capture",
+            "description": "Save a target for essential Storm functions without copying every building position.",
+            "recommendation": "Functional for normal upkeep."
+          },
+          "layout": {
+            "label": "Layout capture",
+            "description": "Save building types and positions without decorations.",
+            "recommendation": "Use only when building placement matters."
+          },
+          "exact": {
+            "label": "Exact capture",
+            "description": "Save all supported target details for an exact clone.",
+            "recommendation": "Use only after reviewing the full target."
+          },
+          "blueprint": {
+            "label": "Saved target",
+            "description": "A captured target is saved and activated immediately, while Pause target stops reconciliation but keeps saved targets.",
+            "recommendation": "Keep a reviewed Functional target active for normal building."
+          },
+          "decoration_preset": {
+            "label": "Decoration preset after construction",
+            "description": "Optionally apply a selected decoration preset after construction.",
+            "recommendation": "Leave empty unless you want a separate decoration layout."
+          },
+          "combat_only": {
+            "label": "Combat without a target",
+            "description": "Fort and island combat does not require a captured construction target."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Storm castle access and target capture",
+          "caption": "Starter choice, capture modes and optional target activation; no live purchase or account shown."
+        }
+      },
+      "construction": {
+        "title": "Set construction and resource protection",
+        "items": {
+          "resource_transport": {
+            "label": "Transport missing resources",
+            "description": "Allow confirmed shipments of missing building resources from donor castles.",
+            "recommendation": "On for regular construction."
+          },
+          "time_skips": {
+            "label": "Use construction and transport time skips",
+            "description": "Apply eligible time skips to construction, resource transport, and troop transport while keeping selected item reserves.",
+            "recommendation": "On if you want faster routine construction."
+          },
+          "premium": {
+            "label": "Allow premium costs",
+            "description": "Allow eligible construction steps that spend premium currency.",
+            "recommendation": "Off unless premium building is planned."
+          },
+          "demolition": {
+            "label": "Allow demolition",
+            "description": "Allow exact-target removal of buildings that cannot be moved or stored.",
+            "recommendation": "Off unless you are rebuilding a reviewed layout."
+          },
+          "storm_reserves": {
+            "label": "Storm castle spending reserves",
+            "description": "Keep the chosen Wood, Stone, and Aquamarine amounts unavailable to construction.",
+            "recommendation": "Wood 0 and Stone 0 if spending surplus; set Aquamarine to your planned reward budget."
+          },
+          "donor_reserves": {
+            "label": "Protected donor reserves",
+            "description": "Keep chosen wood, stone and Aquamarine amounts at each donor before resource transport.",
+            "recommendation": "Protect your usual wood and stone building budget; Aquamarine 0 when unused."
+          },
+          "skip_reserves": {
+            "label": "Time skips kept in reserve",
+            "description": "Keep the selected number of each 1m, 5m, 10m, 30m, 1h, 5h, and 24h item from construction and transport.",
+            "recommendation": "Keep 0 of the short skips unless needed elsewhere; reserve your other-event stock of 1h, 5h and 24h skips."
+          },
+          "harbor": {
+            "label": "Upgrade Harbor",
+            "description": "Maintain the Harbor at your selected level even when the captured target differs.",
+            "recommendation": "On with level 1 for regular use."
+          },
+          "harbor_level": {
+            "label": "Harbor target level",
+            "description": "Choose Harbor level 1, 2 or 3; levels 2 and 3 use premium construction paths.",
+            "recommendation": "Level 1 unless premium upgrades are planned."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Storm construction and reserve settings",
+          "caption": "Resource transport, spending permissions, reserves and Harbor level are example controls."
+        }
+      },
+      "combat": {
+        "title": "Choose forts and resource islands",
+        "items": {
+          "horse": {
+            "label": "Horse travel boost",
+            "description": "Choose feather, coin or ruby travel for Storm attacks.",
+            "recommendation": "Travel Feather for fast travel without choosing ruby travel."
+          },
+          "forts": {
+            "label": "Storm forts",
+            "description": "Enable attacks on the selected official fort levels from 40 through 80.",
+            "recommendation": "On for levels your selected preset can beat reliably."
+          },
+          "fort_preset": {
+            "label": "Fort attack preset",
+            "description": "Choose a saved troop and tool formation for forts.",
+            "recommendation": "Use your regular fort preset."
+          },
+          "minimum_attacks": {
+            "label": "Minimum attacks remaining",
+            "description": "Only attack forts with at least this many attacks remaining.",
+            "recommendation": "0 to allow any eligible fort."
+          },
+          "islands": {
+            "label": "Resource islands",
+            "description": "Enable capture of islands matching the chosen resources and sizes.",
+            "recommendation": "On when you want Aquamarine from large and small islands."
+          },
+          "island_resources": {
+            "label": "Island resources",
+            "description": "Choose which wood, stone or Aquamarine islands may be attacked.",
+            "recommendation": "Select Aquamarine for Aquamarine farming."
+          },
+          "island_sizes": {
+            "label": "Island sizes",
+            "description": "Choose large, small or both sizes of selected resource islands.",
+            "recommendation": "Large and small for regular Aquamarine farming."
+          },
+          "island_preset": {
+            "label": "Island attack preset",
+            "description": "Choose a saved troop and tool formation for islands.",
+            "recommendation": "Use your regular island preset."
+          },
+          "defenders": {
+            "label": "Island defense units",
+            "description": "Choose the types and amounts left to defend a captured island; an empty list leaves one survivor after a confirmed victory.",
+            "recommendation": "Choose defenders if one survivor is insufficient for your plan."
+          },
+          "priority": {
+            "label": "Attack target priority",
+            "description": "Order enabled island and fort target rows; within each row, attack the nearest eligible target first.",
+            "recommendation": "Large islands, small islands, then level 80 through 40 forts for Aquamarine farming."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Storm fort and island attack settings",
+          "caption": "Example Aquamarine islands, fort levels, target order and occupation defenders."
+        }
+      },
+      "troops": {
+        "title": "Import and monitor Storm troops",
+        "items": {
+          "import": {
+            "label": "Import missing troops",
+            "description": "Import missing attack or selected defense troops into Storm from chosen donor castles.",
+            "recommendation": "On if your Storm castle needs regular troop supply."
+          },
+          "donors": {
+            "label": "Donor castles",
+            "description": "Choose donor castles in the displayed order; partial stock can supply a smaller shipment.",
+            "recommendation": "Select your usual troop suppliers in preferred order."
+          },
+          "minimum_kept": {
+            "label": "Minimum troops kept after launch",
+            "description": "Keep at least this many troops in Storm after launching an attack while preserving the enabled preset mix.",
+            "recommendation": "1,000 troops for a regular reserve, adjusted to your actual army."
+          },
+          "attack_history": {
+            "label": "Average attacks since reset",
+            "description": "Read confirmed Storm attacks since the server reset divided by 24, rather than a rolling 24-hour average.",
+            "recommendation": "Review this read-only estimate before changing import needs."
+          },
+          "preset_average": {
+            "label": "Average enabled preset",
+            "description": "Read the average troops required by enabled attack presets, including chosen island defenders.",
+            "recommendation": "Review this read-only estimate against your army."
+          },
+          "committed_cap": {
+            "label": "Storm committed troop cap",
+            "description": "Read the automatically calculated cap including stationed troops, movements, transit and returns.",
+            "recommendation": "Review this read-only cap before increasing imports."
+          },
+          "map_coverage": {
+            "label": "Map coverage",
+            "description": "Review map scan coverage before relying on displayed targets.",
+            "recommendation": "Wait for fresh coverage when targets are missing."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Storm troop import and read-only estimates",
+          "caption": "Donor order, 1,000 kept troops and read-only capacity estimates."
+        }
+      },
+      "luna": {
+        "title": "Choose Luna Aquamarine rewards",
+        "items": {
+          "keep_aqua": {
+            "label": "Keep Aquamarine",
+            "description": "Keep this amount of Aquamarine unavailable to Luna purchases.",
+            "recommendation": "0 if all surplus may fund rewards; otherwise reserve your planned amount."
+          },
+          "search": {
+            "label": "Find a Luna reward",
+            "description": "Search the official Luna rewards by name before configuring a purchase.",
+            "recommendation": "Search for the reward you actually want."
+          },
+          "use": {
+            "label": "Use reward",
+            "description": "Select a reward to make it eligible for automatic purchasing.",
+            "recommendation": "Use only wanted rewards."
+          },
+          "cost_cap": {
+            "label": "Cost and purchased cap",
+            "description": "Read the game-reported cost and purchased cap for each reward.",
+            "recommendation": "Check both read-only values before enabling."
+          },
+          "target_total": {
+            "label": "Target total",
+            "description": "Set the desired total purchased count for a limited reward.",
+            "recommendation": "Set only the count you intend to buy."
+          },
+          "unlimited": {
+            "label": "Unlimited",
+            "description": "Keep buying an eligible repeatable reward while the reserve and shop cap permit.",
+            "recommendation": "On for regular repeatable rewards only."
+          },
+          "priority": {
+            "label": "Priority",
+            "description": "The shop considers lower-numbered purchase goals first.",
+            "recommendation": "Assign 1, 2, and 3 in your preferred order, placing limited goals before unlimited rewards."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Storm Luna reward settings",
+          "caption": "Aquamarine reserve, limited purchase goals, repeatable rewards and priority."
+        }
+      },
+      "save": {
+        "title": "Save and enable Auto Storm",
+        "items": {
+          "daily_limit": {
+            "label": "Daily normal attack limit",
+            "description": "Stop new Auto Storm attacks at the account-wide daily normal-attack count; 0 removes this added limit.",
+            "recommendation": "0 unless you use an account-wide cap."
+          },
+          "policy_check": {
+            "label": "Policy check interval",
+            "description": "Set how often Auto Storm checks its settings and eligible work.",
+            "recommendation": "Keep the usual 30-second interval."
+          },
+          "map_refresh": {
+            "label": "Map refresh interval",
+            "description": "Read the authoritative Storm map refresh interval.",
+            "recommendation": "The read-only interval is 2 hours; wait for a fresh scan after changes."
+          },
+          "save": {
+            "label": "Save settings",
+            "description": "Save your castle, construction, combat, troop import and Luna selections before enabling automation.",
+            "recommendation": "Save after reviewing all spending permissions."
+          },
+          "enable": {
+            "label": "Automation switch",
+            "description": "Enable Auto Storm on its Automation card after the saved choices are ready.",
+            "recommendation": "On after setup."
+          }
+        },
+        "image": {
+          "alt": "Illustrative Auto Storm save and enable settings",
+          "caption": "Daily attack limit, policy check, read-only map refresh and automation switch."
+        }
+      }
+    }
+  }
+}

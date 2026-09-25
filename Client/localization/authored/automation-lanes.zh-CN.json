@@ -1,0 +1,13 @@
+{
+  "automation.status": "{status, select, complete {完成} completed {已完成} success {成功} failed {失败} error {错误} blocked {已阻止} gated {受限} retrying {重试中} warning {警告} running {运行中} enabled {已启用} scheduled {已计划} ready {就绪} waiting {等待中} disabled {已禁用} idle {空闲} armed {待命} cooldown {冷却中} defending {防守中} discovering {探索中} evacuating {撤离中} preparing {准备中} protected {已受保护} protecting {保护中} recalling {召回中} reconciling {核对中} refreshing {刷新中} replenishing {补充中} resolving {处理中} taunting {挑衅中} threat {威胁} yielding {让出优先权} other {未知}}",
+  "automation.lane": "{lane, select, overall {总体} crafting {制作} logistics {物流} attacks {攻击} cooldowns {冷却} rage {怒气} defense {防御} transfers {转移} tools {工具} combat {战斗} aquamarine_shop {海蓝宝石商店} builder {建造} builder_missing_decorations {建造警告} other {分项}}",
+  "automation.accessibleStatus": "{feature}状态",
+  "automation.waitingLane": "等待策略状态：{lane, select, crafting {制作} logistics {物流} khan_attacks {可汗 · 攻击} khan_cooldowns {可汗 · 冷却} khan_rage {可汗 · 怒气} khan_defense {可汗 · 防御} beri_transfers {贝里蒙德 · 转移} beri_attacks {贝里蒙德 · 攻击} beri_tools {贝里蒙德 · 工具} beri_builder {贝里蒙德 · 建造} storm_combat {风暴群岛 · 战斗} storm_shop {海蓝宝石商店} storm_builder {风暴群岛 · 建造} other {分项}}",
+  "automation.missingDecorations": "仓库中不可用的目标装饰数量：{count, number}。这些装饰将被跳过，其余目标继续执行。",
+  "automation.nextCheck": "{state, select, waiting {等待下一次计划检查} due {已到下一次检查时间} other {{duration}后进行下一次检查}}",
+  "automation.timeLeft": "剩余{duration}",
+  "automation.rate": "{state, select, loading {正在加载频率} unavailable {频率不可用} other {每小时攻击数：{count, number}}}",
+  "automation.rateTitle": "{state, select, loading {正在加载{feature}的当前攻击频率。} unavailable {{feature}的当前攻击频率不可用。} other {过去60分钟内由{feature}发起的攻击数：{count, number}。}}",
+  "automation.daily": "{state, select, loading {正在加载每日计数} unavailable {每日计数不可用} other {重置后{count, number}次}}",
+  "automation.dailyTitle": "{state, select, loading {正在加载{feature}在当前每日会话中的攻击数。} unavailable {在观察到服务器重置之前，{feature}的每日攻击数不可用。} dated {自服务器每日计数会话于{date}开始以来，由{feature}发起的已确认攻击数：{count, number}。} other {当前服务器每日计数会话中由{feature}发起的已确认攻击数：{count, number}。}}"
+}

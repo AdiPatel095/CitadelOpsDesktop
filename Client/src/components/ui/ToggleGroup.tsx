@@ -1,3 +1,4 @@
+import {useLocale} from '../../i18n/LocaleContext';
 import React, { useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 
 export interface ToggleGroupOption {
@@ -29,6 +30,7 @@ export const ToggleGroup: React.FC<ToggleGroupProps> = ({
   fullWidth = false,
   variant = 'primary',
 }) => {
+  const {direction} = useLocale();
   const groupRef = useRef<HTMLDivElement | null>(null);
   const indicatorRef = useRef<HTMLSpanElement | null>(null);
   const buttonRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -38,10 +40,14 @@ export const ToggleGroup: React.FC<ToggleGroupProps> = ({
 
     switch (event.key) {
       case 'ArrowLeft':
+        nextIndex = (currentIndex + (direction === 'rtl' ? 1 : -1) + options.length) % options.length;
+        break;
       case 'ArrowUp':
         nextIndex = (currentIndex - 1 + options.length) % options.length;
         break;
       case 'ArrowRight':
+        nextIndex = (currentIndex + (direction === 'rtl' ? -1 : 1) + options.length) % options.length;
+        break;
       case 'ArrowDown':
         nextIndex = (currentIndex + 1) % options.length;
         break;
@@ -78,7 +84,7 @@ export const ToggleGroup: React.FC<ToggleGroupProps> = ({
     indicator.style.setProperty('--liquid-toggle-indicator-x', `${activeButton.offsetLeft}px`);
     indicator.style.setProperty('--liquid-toggle-indicator-width', `${activeButton.offsetWidth}px`);
     indicator.classList.add('liquid-toggle-indicator-ready');
-  }, [activeIndex]);
+  }, [activeIndex, direction]);
 
   useLayoutEffect(() => {
     syncIndicator();
@@ -95,6 +101,7 @@ export const ToggleGroup: React.FC<ToggleGroupProps> = ({
   return (
     <div
       ref={groupRef}
+      dir={direction}
       className={`liquid-toggle-group liquid-toggle-group-${size} ${fullWidth ? 'liquid-toggle-group-full' : ''} ${className}`}
       role="radiogroup"
       aria-label={ariaLabel}

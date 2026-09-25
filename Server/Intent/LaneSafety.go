@@ -11,6 +11,7 @@ import (
 
 	"CitadelDesktop/Server/Buildings"
 	"CitadelDesktop/Server/GameData"
+	"CitadelDesktop/Server/Localization"
 	"CitadelDesktop/Server/State"
 	"encoding/json"
 )
@@ -73,6 +74,7 @@ func (engine *Engine) RefreshAutomationLaneLocks() error {
 			meaning := engine.unsuccessfulResponseCode(lock.Opcode, lock.Code).(*ResponseCodeError).Meaning
 			if meaning.Source != GameData.ResponseCodeUnknown && (lock.Meaning == "" || meaning.Source == GameData.ResponseCodeOfficial) {
 				lock.Meaning, lock.MeaningSource = meaning.Message, string(meaning.Source)
+				lock.MeaningDescriptor = Localization.Bind(meaning.MessageDescriptor, meaning.Message)
 			}
 			lock.Until = lock.ExpiresAt()
 			if State.AutomationRejectionWhitelisted(lock.Opcode, lock.Code) {
@@ -81,14 +83,18 @@ func (engine *Engine) RefreshAutomationLaneLocks() error {
 				lock.ClearedAt, lock.ReviewedBy, lock.Review = lock.Until, "policy:expiry", "Original rejection is at least 30 minutes old."
 			}
 			next := current
-			next.SafetyLock = lock
+			next.SafetyLock = lock.Clone()
 			if lock.Active(now) {
 				next.Status, next.Detail, next.LastError = "gated", lock.Detail(), lock.Detail()
+				next.DetailDescriptor, next.LastErrorDescriptor = lock.DetailDescriptor(), lock.DetailDescriptor()
 				next.NextCheckAt = &lock.Until
 			} else if current.Status == "gated" && strings.HasPrefix(current.Detail, "Safety lock after ") {
 				next.Status, next.Detail, next.LastError = "waiting", "Safety lock released by policy; waiting for normal prerequisites", ""
 				next.NextCheckAt = nil
+				next.DetailDescriptor = Localization.Bind(Localization.New("server.intent.safety_lock_released", "Safety lock released by policy; waiting for normal prerequisites", nil), next.Detail)
+				next.LastErrorDescriptor = nil
 			}
+			next.DetailTranslationStatus = Localization.Status(next.DetailDescriptor)
 			if !reflect.DeepEqual(current, next) {
 				next.UpdatedAt = now
 				state.Automations[lane] = next
@@ -120,7 +126,7 @@ func (engine *Engine) AutomationLaneLock(lane string) State.AutomationSafetyLock
 	if engine.state == nil || lane == "" {
 		return State.AutomationSafetyLock{}
 	}
-	return engine.state.ReadOnlyView().Automations[lane].SafetyLock
+	return engine.state.ReadOnlyView().Automations[lane].SafetyLock.Clone()
 }
 
 func (engine *Engine) checkLaneSafety(request Request) error {
@@ -155,8 +161,9 @@ func (engine *Engine) guardRejection(ctx context.Context, err error) error {
 	lock := State.AutomationSafetyLock{Lane: lane, Opcode: strings.ToLower(strings.TrimSpace(response.Opcode)), Code: response.Meaning.Code, OperationID: request.ID, Intent: request.Name, ObservedAt: time.Now().UTC(), Reason: "unclassified_rejection"}
 	if response.Meaning.Source != GameData.ResponseCodeUnknown {
 		lock.Meaning, lock.MeaningSource = response.Meaning.Message, string(response.Meaning.Source)
+		lock.MeaningDescriptor = Localization.Bind(response.Meaning.MessageDescriptor, response.Meaning.Message)
 	}
-	lock.Context = engine.rubyRejectionContext(request, lock)
+	lock.Context, lock.ContextDescriptor = engine.rubyRejectionPresentation(request, lock)
 	lock.Until = lock.ObservedAt.Add(State.AutomationSafetyLockDuration)
 	// Classification is diagnostic; every non-whitelisted rejection has one TTL.
 	if lock.Opcode == "msd" {
@@ -184,19 +191,23 @@ func (engine *Engine) writeLaneLock(lock State.AutomationSafetyLock) error {
 		}
 		current := state.Automations[lock.Lane]
 		current.ID = lock.Lane
-		current.SafetyLock = lock
+		current.SafetyLock = lock.Clone()
 		current.UpdatedAt = time.Now().UTC()
 		if lock.Active(current.UpdatedAt) {
 			current.Status = "gated"
 			current.Detail = lock.Detail()
 			current.LastError = current.Detail
+			current.DetailDescriptor, current.LastErrorDescriptor = lock.DetailDescriptor(), lock.DetailDescriptor()
 			current.LastOperationID = lock.OperationID
 			current.NextCheckAt = nil
 		} else {
 			current.Status = "waiting"
 			current.Detail = "Safety lock reviewed and cleared"
 			current.LastError = ""
+			current.DetailDescriptor = Localization.Bind(Localization.New("server.intent.safety_lock_cleared", "Safety lock reviewed and cleared", nil), current.Detail)
+			current.LastErrorDescriptor = nil
 		}
+		current.DetailTranslationStatus = Localization.Status(current.DetailDescriptor)
 		state.Automations[lock.Lane] = current
 		return []string{"automation-safety"}, true, nil
 	})
@@ -241,28 +252,33 @@ func (engine *Engine) ClearAutomationLaneLock(lane, operationID, review, actor s
 // Context comes from the upgrade target and current game setting. EUP.CC2T is
 // a quoted purchase price and must never be treated as the confirmation setting.
 func (engine *Engine) rubyRejectionContext(request Request, lock State.AutomationSafetyLock) string {
+	text, _ := engine.rubyRejectionPresentation(request, lock)
+	return text
+}
+
+func (engine *Engine) rubyRejectionPresentation(request Request, lock State.AutomationSafetyLock) (string, *Localization.Message) {
 	if lock.Opcode != "eup" || lock.Code != 440 || request.Name != "building.upgrade" || engine.gameData == nil {
-		return ""
+		return "", nil
 	}
 	var args struct {
 		CastleID   State.CastleID           `json:"castleId"`
 		BuildingID State.BuildingInstanceID `json:"buildingInstanceId"`
 	}
 	if json.Unmarshal(request.Arguments, &args) != nil {
-		return ""
+		return "", nil
 	}
 	state := engine.state.ReadOnlyView()
 	setting := state.Player.RubyConfirmation
 	if !setting.Current(state.Session) {
-		return ""
+		return "", nil
 	}
 	data, ok := engine.gameData.Current()
 	if !ok || data == nil {
-		return ""
+		return "", nil
 	}
 	catalog, err := data.BuildingCatalog()
 	if err != nil {
-		return ""
+		return "", nil
 	}
 	castle := state.Castles[args.CastleID]
 	building, ok := castle.Layout.Objects[args.BuildingID]
@@ -270,22 +286,22 @@ func (engine *Engine) rubyRejectionContext(request Request, lock State.Automatio
 		building, ok = castle.Layout.Fixed[args.BuildingID]
 	}
 	if !ok {
-		return ""
+		return "", nil
 	}
 	current, ok := catalog.Definition(int64(building.DefinitionID))
 	if !ok {
-		return ""
+		return "", nil
 	}
 	next, ok := catalog.Definition(current.UpgradeDefinitionID)
 	if !ok {
-		return ""
+		return "", nil
 	}
 	var costs []Buildings.CostStatus
 	for _, cost := range next.Costs {
 		costs = append(costs, Buildings.CostStatus{Required: cost.Amount, Premium: cost.Premium})
 	}
 	if blocker := Buildings.RubyUpgradeBlocker(state, costs); blocker != nil && blocker.Code == "ruby_confirmation_required" {
-		return blocker.Message
+		return blocker.Message, Localization.Clone(blocker.MessageDescriptor)
 	}
-	return ""
+	return "", nil
 }

@@ -1,0 +1,161 @@
+{
+  "schemaVersion": 1,
+  "validated": 5700,
+  "coverage": {
+    "de": {
+      "translated": 228,
+      "source": 3181,
+      "missing": 2953
+    },
+    "fr": {
+      "translated": 228,
+      "source": 3181,
+      "missing": 2953
+    },
+    "pl": {
+      "translated": 228,
+      "source": 3181,
+      "missing": 2953
+    },
+    "ru": {
+      "translated": 228,
+      "source": 3181,
+      "missing": 2953
+    },
+    "it": {
+      "translated": 228,
+      "source": 3181,
+      "missing": 2953
+    },
+    "nl": {
+      "translated": 228,
+      "source": 3181,
+      "missing": 2953
+    },
+    "pt": {
+      "translated": 228,
+      "source": 3181,
+      "missing": 2953
+    },
+    "es": {
+      "translated": 228,
+      "source": 3181,
+      "missing": 2953
+    },
+    "ar": {
+      "translated": 228,
+      "source": 3181,
+      "missing": 2953
+    },
+    "da": {
+      "translated": 228,
+      "source": 3181,
+      "missing": 2953
+    },
+    "no": {
+      "translated": 228,
+      "source": 3181,
+      "missing": 2953
+    },
+    "fi": {
+      "translated": 228,
+      "source": 3181,
+      "missing": 2953
+    },
+    "sv": {
+      "translated": 228,
+      "source": 3181,
+      "missing": 2953
+    },
+    "ja": {
+      "translated": 228,
+      "source": 3181,
+      "missing": 2953
+    },
+    "ko": {
+      "translated": 228,
+      "source": 3181,
+      "missing": 2953
+    },
+    "el": {
+      "translated": 228,
+      "source": 3181,
+      "missing": 2953
+    },
+    "tr": {
+      "translated": 228,
+      "source": 3181,
+      "missing": 2953
+    },
+    "zh-CN": {
+      "translated": 228,
+      "source": 3181,
+      "missing": 2953
+    },
+    "zh-TW": {
+      "translated": 228,
+      "source": 3181,
+      "missing": 2953
+    },
+    "cs": {
+      "translated": 228,
+      "source": 3181,
+      "missing": 2953
+    },
+    "ro": {
+      "translated": 228,
+      "source": 3181,
+      "missing": 2953
+    },
+    "sk": {
+      "translated": 228,
+      "source": 3181,
+      "missing": 2953
+    },
+    "hu": {
+      "translated": 228,
+      "source": 3181,
+      "missing": 2953
+    },
+    "bg": {
+      "translated": 228,
+      "source": 3181,
+      "missing": 2953
+    },
+    "lt": {
+      "translated": 228,
+      "source": 3181,
+      "missing": 2953
+    }
+  },
+  "sourceHashes": {
+    "en.json": "a060931953e8328db6ddc3763c8b744fd7e8564bf515562aace05fbbf5bd275f",
+    "feature-names.json": "3e5e8c970e3cfbb704719636d99733d3ef830e036fca4866bcc2bdeb04b003e2",
+    "ar.json": "fcd267d000952ce24f88a775ae594a0e0288c438417bd7ba569eab2b1ed0f323",
+    "bg.json": "382bc86ea65a203d40ba04d563712e1600ef82080fc8de788f02a8b1932a351f",
+    "cs.json": "97d7f1d7897ceb86e8aed138f23b3d4abef0dc027cfadb9e1e936f3dcd316739",
+    "da.json": "cf681d775f2fe4b11e7666d91778e5eae69d2232492ce1df26bc8b5fbcf11ab7",
+    "de.json": "2bd1cc4d16c6f2587c060c7b3bbdbf247ff97ef6d52605aaeb3c3302493c4350",
+    "el.json": "06d43cb645efc24fdace3fce0ecaf131c6e3777a9b4e3a9de802444cd96d4105",
+    "es.json": "06bbea7b816d433b9e7fa9915dc8c2bbf7c16da58b3f156b607f25a0e5f2a35d",
+    "fi.json": "f417dccc3b396c5b0e3428ed455686b587d908d6c2657c5eb3884b6af5100c5a",
+    "fr.json": "286841346fe8dfc45b393857e06b70e82e7a3d2915fc32338d9e87941c4e9194",
+    "hu.json": "337998b0f6919f227490096ab44d73df2fcc95c9e493e20177fbcc83a0a4b472",
+    "it.json": "bfe1f0c34782e31c39e908bf4588a1b1b64051de3308c5a0618b520a8aa8a11c",
+    "ja.json": "9fbc9194c079dfc90e15dacb67bbac0c72ca623d1ad40562de1996711af5d159",
+    "ko.json": "4005743c1977a07d31d6cb0bf9c00a93cc250cfe1acca8bcdedd180930a52f76",
+    "lt.json": "996d7bd0225fcc9ffc34b8feee90f176f0c6685323b79f2253029dcb734a5bd2",
+    "nl.json": "ee131803f2f70687503926131784e1e776bed0114eb8122fe4eb3881ac7f4834",
+    "no.json": "3debe03ad8788ca332d09c102eb516c768877c7f5fb78695e9ce3898c58e969f",
+    "pl.json": "e26f3478f85478e75a2c5cb7360fb8f9cf7b010844f8e1ca1abb7bd9f4b9c094",
+    "provenance.json": "74b405b59a622204686f046174d42cef811aca254cfd7188e3610448af986463",
+    "pt.json": "722f6847ca623ab07329a8ebf2104705bbe4b171d7acfae02371fad51eff9456",
+    "ro.json": "be43d853e025d16a894a495cf67cc33d661c15665b2436a9972ee77f4a797d5e",
+    "ru.json": "6bcc576cf453b2a6232463f949144b0b87ef96fe1d5fb449bf4f7bd9a983f16b",
+    "sk.json": "779a86d7dc3bd909f5bb2e43b3a93c3e09552fadd7aa83d55e81e6a8826accec",
+    "sv.json": "def187be659dea044097f1f82219d576eec88e5e509e1b61319b4ff29b0edf56",
+    "tr.json": "237e55dba8a4b40d7450e0e94af18c139b14ee6147bd6a546a5e64178ea62b3d",
+    "zh-CN.json": "38830271f8f06172ff8ce1d0239b85631ada69f5d2ce5816b361e457e882313e",
+    "zh-TW.json": "3beccabc99f9614a0fd0c326b9f42b785e54025a9ce2ea53264ad4a6a44e40e0"
+  }
+}

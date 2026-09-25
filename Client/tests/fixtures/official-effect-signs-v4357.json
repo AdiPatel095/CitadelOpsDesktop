@@ -1,0 +1,21 @@
+{
+  "version": "4357",
+  "source": "Official game language catalogs; captured for verified sign regression on 2026-09-20",
+  "values": {
+    "en": {
+      "ci_effect_Meadreduction": "-{0}% mead consumption per hour",
+      "equip_effect_description_wallReductionCharge": "-{0}% wall protection of a Monolith of Corruption",
+      "equip_effect_description_gateReductionCharge": "-{0}% gate protection of a Monolith of Corruption"
+    },
+    "ar": {
+      "ci_effect_Meadreduction": "تخفيض بنسبة {0}% لاستهلاك الشراب في الساعة",
+      "equip_effect_description_wallReductionCharge": "-{0}% من حماية الجدار لصخرة فساد ضخمة",
+      "equip_effect_description_gateReductionCharge": "-{0}% من حماية البوابة لصخرة فساد ضخمة"
+    },
+    "ja": {
+      "ci_effect_Meadreduction": "1時間あたりの蜂蜜酒の消費量 -{0}%",
+      "equip_effect_description_wallReductionCharge": "腐敗のモノリスの城壁の防御 +{0}%",
+      "equip_effect_description_gateReductionCharge": "腐敗のモノリスの城門の防御 +{0}%"
+    }
+  }
+}

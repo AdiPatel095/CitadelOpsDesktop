@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -31,7 +32,7 @@ func generalSkillsRefreshDecision(err error, now time.Time, metrics map[string]f
 		Detail: fmt.Sprintf(
 			"Refresh general %d skills for commander %d before calculating attack capacity",
 			unobserved.GeneralID, unobserved.CommanderID,
-		),
+		), DetailDescriptor: Localization.New("server.automation.refresh_general_p_skills.b54626b4", "Refresh general {p0} skills for commander {p1} before calculating attack capacity", Localization.Params{"p0": fmt.Sprintf("%d", unobserved.GeneralID), "p1": fmt.Sprintf("%d", unobserved.CommanderID)}),
 		NextCheckAt:         now.Add(2 * time.Second),
 		Metrics:             metrics,
 		Request:             &Intent.Request{Name: "general.skills.refresh", Arguments: json.RawMessage(`{}`)},

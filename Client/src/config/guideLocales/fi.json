@@ -1,0 +1,2080 @@
+{
+  "ui": {
+    "guideButton": "Opas",
+    "calendarButton": "Kalenteri",
+    "recommendedLabel": "Suositus",
+    "backToSettings": "Takaisin asetuksiin",
+    "backToGuide": "Takaisin oppaaseen",
+    "howToSetUp": "Näin teet asetukset",
+    "whatToExpect": "Mitä on odotettavissa",
+    "openFullSizePicture": "Avaa kuva täysikokoisena",
+    "illustrativeExample": "Havainnollinen esimerkki",
+    "enlargePicture": "Suurenna esimerkkikuva",
+    "fullSizePicture": "Täysikokoinen esimerkkikuva; vieritä nähdäksesi kaikki asetukset",
+    "towerGuideTitle": "Automaattiset tornihyökkäykset -opas",
+    "birdGuideTitle": "Joukkojen automaattinen suojaan siirtäminen -opas",
+    "towerGuideIntro": "Määritä Automaattiset tornihyökkäykset näiden vaiheiden avulla; suurenna esimerkkikuva valitsemalla se.",
+    "birdGuideIntro": "Määritä Joukkojen automaattinen suojaan siirtäminen näiden vaiheiden avulla; suurenna esimerkkikuva valitsemalla se.",
+    "towerPreviewTitle": "Esimerkki automaattisten tornihyökkäysten asetuksista",
+    "birdPreviewTitle": "Esimerkki joukkojen automaattisen suojaan siirtämisen asetuksista",
+    "stationGuideTitle": "Automaattisen joukkojen suojauksen opas",
+    "stationGuideIntro": "Määritä automaattinen joukkojen suojaus näillä ohjeilla; suurenna esimerkkikuva valitsemalla se.",
+    "stationPreviewTitle": "Esimerkki automaattisen joukkojen suojauksen asetuksista",
+    "fortressGuideIntro": "Määritä automaattiset linnakehyökkäykset näiden vaiheiden avulla; suurenna esimerkkipaneeli valitsemalla se.",
+    "fortressGuideTitle": "Automaattisten linnakehyökkäysten opas",
+    "fortressPreviewTitle": "Esimerkki automaattisten linnakehyökkäysten määrittämisestä",
+    "invasionGuideIntro": "Noudata näitä vaiheita automaattisten maahantunkeutumishyökkäysten määrittämiseksi; suurenna esimerkkipaneeli valitsemalla se.",
+    "invasionGuideTitle": "Automaattisten maahantunkeutumishyökkäysten opas",
+    "invasionPreviewTitle": "Esimerkki automaattisten maahantunkeutumishyökkäysten asetuksista",
+    "nomadGuideIntro": "Määritä automaattiset nomadit/samurait näiden vaiheiden avulla; suurenna esimerkkipaneeli valitsemalla se.",
+    "nomadGuideTitle": "Automaattisten nomadien/samuraiden opas",
+    "nomadPreviewTitle": "Esimerkki automaattisten nomadien/samuraiden asetuksista",
+    "advisorGuideIntro": "Määritä Automaattinen Neuvonantaja näiden vaiheiden avulla; suurenna esimerkkipaneeli valitsemalla se.",
+    "advisorGuideTitle": "Automaattisen Neuvonantajan opas",
+    "advisorPreviewTitle": "Automaattisen Neuvonantajan asennusesimerkki",
+    "khanGuideIntro": "Määritä Automaattinen Khan näiden vaiheiden avulla; suurenna esimerkkipaneeli valitsemalla se.",
+    "khanGuideTitle": "Automaattisen Khanin opas",
+    "khanPreviewTitle": "Esimerkki Automaattisen Khanin määrityksestä",
+    "beriGuideIntro": "Määritä Auto Beri seuraamalla näitä vaiheita; suurenna esimerkkipaneeli valitsemalla se.",
+    "beriGuideTitle": "Auto Berin opas",
+    "beriPreviewTitle": "Esimerkki Auto Berin asetuksista",
+    "stormGuideIntro": "Aseta Auto Storm näiden vaiheiden avulla; valitse esimerkkipaneeli suurentaaksesi sen.",
+    "stormGuideTitle": "Auto Storm -opas",
+    "stormPreviewTitle": "Esimerkki Auto Stormin asetuksista"
+  },
+  "autoTower": {
+    "recommendationIntro": "Nämä suositukset koskevat säännöllistä käyttöä; tarkista ne ennen tallentamista.",
+    "steps": {
+      "commanders": {
+        "title": "Valitse komentajasi",
+        "items": {
+          "commander_assignment": {
+            "label": "Komentajien määritys",
+            "description": "Salli automaattiset tornihyökkäykset haluamillesi komentajille Komentajat-osiossa ja valitse Tallenna määritykset.",
+            "recommendation": "20 komentajaa määritetty automaattisiin tornihyökkäyksiin."
+          }
+        }
+      },
+      "general": {
+        "title": "Määritä skannaus, päivärajat ja matkustus",
+        "items": {
+          "open_settings": {
+            "label": "Avaa asetukset",
+            "description": "Avaa Automaatio ja valitse Automaattiset tornihyökkäykset -kortin asetuspainike."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Virallisen kartan skannaus · Väli",
+            "description": "Valitse, kuinka usein kunkin linnan torniluettelo päivitetään, 1 800–3 600 sekunnin välein; hyökkäykset voivat alkaa skannausten välillä.",
+            "recommendation": "1 800 sekuntia (30 minuuttia)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Tavallisten hyökkäysten päiväraja",
+            "description": "Toiminta keskeytyy koko tilin päivittäisen hyökkäysrajan täytyttyä, kunnes peli nollaa sen; 0 poistaa rajan.",
+            "recommendation": "3 500 hyökkäystä päivässä koko tilillä."
+          },
+          "horse_travel_boost": {
+            "label": "Hevosmatkan nopeutus",
+            "description": "Käyttää valittua matkustusvaihtoehtoa jokaisessa hyökkäyksessä, myös jokaisessa neuvonantajan ketjun osumassa; nopeus riippuu lähtölinnan matkustusrakennuksista.",
+            "recommendation": "Kolikoilla maksettava taso, jos tuettu ja kolikoita on riittävästi."
+          },
+          "travel_feather": {
+            "label": "Matkahöyhen",
+            "description": "Käyttää matkahöyhentä kolikoilla tai rubiineilla maksettavan hevostason sijaan."
+          },
+          "horse_ship_tier_coins": {
+            "label": "Hevonen / laiva · kolikot",
+            "description": "Kuluttaa kolikoita kolikoilla maksettavaan matkustustasoon."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Sotaratsu / nopea laiva · rubiinit",
+            "description": "Kuluttaa valittaessa rubiineja ensimmäiseen rubiineilla maksettavaan matkustustasoon."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Juoksuratsu / nopein laiva · rubiinit",
+            "description": "Kuluttaa valittaessa rubiineja nopeampaan rubiineilla maksettavaan matkustustasoon."
+          }
+        },
+        "image": {
+          "alt": "Automaattisten tornihyökkäysten yleisasetukset kuvitteellisilla Synthetic Castle -linnan tiedoilla",
+          "caption": "Määritä skannausväli, päivittäinen hyökkäysraja ja matkustusvaihtoehto; neuvonantajan asetukset näkyvät, kun ne ovat käytettävissä."
+        }
+      },
+      "castle": {
+        "title": "Määritä jokainen linna",
+        "items": {
+          "castle_switch": {
+            "label": "Linnan kytkin",
+            "description": "Ota käyttöön jokainen linna, josta automaattisten tornihyökkäysten halutaan skannaavan ja hyökkäävän.",
+            "recommendation": "Ota käyttöön linnat, joita haluat käyttää säännöllisesti."
+          },
+          "radius": {
+            "label": "Säde",
+            "description": "Valitse haun etäisyys tästä linnasta, 1–50 ruutua.",
+            "recommendation": "35 ruutua."
+          },
+          "choose_troop": {
+            "label": "Valitse joukko",
+            "description": "Valitse paikalla oleva joukko täyttämään hyökkäyksen molemmat sivustat; hyökkäykset odottavat, jos yksiköitä on liian vähän.",
+            "recommendation": "Paikalla oleva hyökkäysjoukko, jossa on riittävästi yksiköitä molemmille sivustoille."
+          },
+          "maiden_supported_only": {
+            "label": "Vain neitoreliikin kanssa",
+            "description": "Rajaa tämän linnan käytettävissä oleviin komentajiin, joilla on tuettu neitoreliikki.",
+            "recommendation": "Pois käytöstä, ellei valitulla komentajalla ole tuettua neitoreliikkiä."
+          }
+        },
+        "image": {
+          "alt": "Automaattisten tornihyökkäysten linna-asetukset kuvitteellisilla Synthetic Castle -linnan tiedoilla",
+          "caption": "Ota linna käyttöön ja valitse sen säde, joukko ja neitoreliikin vaatimus."
+        }
+      },
+      "advisor": {
+        "title": "Käytä neuvonantajaa halutessasi · jos saatavilla",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Käytä neuvonantajaa aikahyppyjen kanssa",
+            "description": "Toistaa osumia samaan torniin: ensin yksi päivittäinen hyökkäys ja sitten vähintään kolmen tunnin aikahyppy jokaista lisäosumaa varten.",
+            "recommendation": "Pois käytöstä."
+          },
+          "auto_activate_with_token": {
+            "label": "Aktivoi automaattisesti poletilla",
+            "description": "Käyttää saatavilla olevan paronineuvonantajan poletin, kun neuvonantaja ei ole aktiivinen, ostamatta polettia tai kuluttamatta rubiineja.",
+            "recommendation": "Pois käytöstä, kun neuvonantaja on pois käytöstä."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Aikahyppyjen päivittäinen enimmäismäärä",
+            "description": "Rajoittaa vahvistettujen neuvonantajaketjujen käyttämiä aikahyppyjä, kunnes pelin päivittäinen hyökkäyslaskuri nollautuu; 0 keskeyttää neuvonantajan hyökkäykset.",
+            "recommendation": "0, kun neuvonantaja on pois käytöstä."
+          }
+        }
+      },
+      "finish": {
+        "title": "Määritä aikataulu, tallenna ja ota käyttöön",
+        "items": {
+          "calendar": {
+            "label": "Kalenteri",
+            "description": "Valitse kalenterista, milloin automaattiset tornihyökkäykset saavat toimia; joukkojen saatavuus ja muut rajat ovat silti voimassa.",
+            "recommendation": "Tavalliset toiminta-aikasi."
+          },
+          "save_changes": {
+            "label": "Tallenna muutokset",
+            "description": "Ota asetukset käyttöön valitsemalla Tallenna muutokset; tämän oppaan lukeminen ei tallenna niitä."
+          },
+          "auto_towers_switch": {
+            "label": "Automaattisten tornihyökkäysten kytkin",
+            "description": "Ota automaattiset tornihyökkäykset käyttöön Automaatio-sivulla asetusten tallentamisen jälkeen, jotta tehtävä voi toimia.",
+            "recommendation": "Käytössä, kun halutut asetukset on tallennettu."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automaattiset tornihyökkäykset",
+      "summary": "Toista hyökkäyksiä lähellä oleviin torneihin",
+      "description": "Lähettää hyökkäyksiä ryöstöparonien ja kuningaskuntien torneihin valitsemistasi linnoista.",
+      "expectation": "Tarvitaan riittävästi joukkoja, käytettävissä oleva komentaja ja hyökkäysvalmis torni. Toiminto voi odottaa joukkojen paluuta tai tornin ajastimen päättymistä."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "Suositellut arvot kuvaavat joukkojen automaattisen suojaan siirtämisen säännöllistä käyttöä; ne ovat ohjeita eivätkä muuta tallennettuja asetuksia.",
+    "steps": {
+      "open": {
+        "title": "Avaa joukkojen automaattisen suojaan siirtämisen asetukset",
+        "items": {
+          "open_settings": {
+            "label": "Avaa asetukset",
+            "description": "Valitse komentokeskuksen yläosassa joukkojen automaattisen suojaan siirtämisen vieressä oleva asetuspainike."
+          }
+        }
+      },
+      "general": {
+        "title": "Määritä sijoitusaika ja lähetyssäännöt",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Satunnainen kesto · Min",
+            "description": "Määritä lyhin tuntimäärä, jonka joukot pysyvät liittouman kohteessa matkan päättymisen jälkeen.",
+            "recommendation": "6 tuntia sijoitettuna liittouman kohteeseen saapumisen jälkeen."
+          },
+          "random_delay_range_max": {
+            "label": "Satunnainen kesto · Maks",
+            "description": "Määritä pisin viipymä kohteessa; joukkojen automaattinen suojaan siirtäminen valitsee satunnaisen keston Min- ja Maks-arvojen väliltä.",
+            "recommendation": "12 tuntia sijoitettuna liittouman kohteeseen saapumisen jälkeen."
+          },
+          "minimum_to_send": {
+            "label": "Lähetyksen vähimmäismäärä",
+            "description": "Määritä kelvollisten joukkojen vähimmäiskokonaismäärä sen jälkeen, kun linnan reservit on jätetty kotiin; tämä on kynnysarvo, ei tarkka lähetettävä määrä.",
+            "recommendation": "Yhteensä 1 000 kelvollista joukkoa linnan reservien kotiin jättämisen jälkeen; tämä on kynnysarvo, ei tarkka lähetettävä määrä."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "RPT:n vähimmäisarvo (jäljellä oleva suoja-aika)",
+            "description": "Käytä kohteita, joiden suojaa on jäljellä enemmän kuin tämä määrä päiviä; 0 poistaa tarkistuksen.",
+            "recommendation": "3 päivää; kohteella on oltava suojaa jäljellä ehdottomasti yli 3 päivää."
+          }
+        },
+        "image": {
+          "alt": "Joukkojen automaattisen suojaan siirtämisen sijoitusajan, lähetyksen vähimmäismäärän, RPT:n vähimmäisarvon ja esiasetusten säätimet",
+          "caption": "Määritä sijoitusaika ja kelpoisuus, ja tarkista Arki-reserviesiasetus ennen tallentamista."
+        }
+      },
+      "reserves": {
+        "title": "Valitse jokaiseen linnaan jätettävät joukot",
+        "items": {
+          "add_unit": {
+            "label": "Lisää yksikkö",
+            "description": "Valitse kullekin linnalle kotiin jätettävät joukkotyypit lähettämisen sijaan; tyhjä manuaalinen reservi jättää kaikki kelvolliset joukot käytettäviksi automaattisten reservien jälkeen.",
+            "recommendation": "Valitse joukkotyypit, joita kukin linna tarvitsee puolustukseen tai muihin säännöllisiin tehtäviin."
+          },
+          "quantity": {
+            "label": "Määrä",
+            "description": "Määritä kustakin valitusta joukosta positiivinen määrä, joka jää linnaan; 0 ei varaa koko tyyppiä.",
+            "recommendation": "Jätä linnaan kutakin joukkotyyppiä puolustukseen tai muihin tehtäviin tarvittava määrä; tarkista todelliset joukkomäärät."
+          },
+          "remove_unit": {
+            "label": "Poista yksikkö",
+            "description": "Poista yksikön ruutu, jotta kyseistä tyyppiä ei enää varata valittuun linnaan."
+          },
+          "auto_fortress_reserve": {
+            "label": "Linnoitusten automatisoinnin reservi",
+            "description": "Kun linnoitusten automatisointi lukitsee täällä kaikki suursudet, tätä automaattista reserviä ei tallenneta joukkojen automaattisen suojaan siirtämisen esiasetuksiin, ja aiempi käsin asetettu suursuden määrä palautuu lukituksen päätyttyä."
+          }
+        },
+        "image": {
+          "alt": "Joukkojen automaattisen suojaan siirtämisen reserviruudut kuvitteellisessa Example Castle -linnassa",
+          "caption": "Varaa vain tässä linnassa tarvittavat yksiköt; Yksikkö 101 ja Yksikkö 102 ovat kuvitteellisia joukkoesimerkkejä."
+        }
+      },
+      "presets": {
+        "title": "Tallenna ja valitse esiasetus",
+        "items": {
+          "preset_name": {
+            "label": "Esiasetuksen nimi",
+            "description": "Kirjoita uudelle esiasetukselle nimi tai muokkaa käytössä olevan esiasetuksen nimeä ennen muutosten tallentamista.",
+            "recommendation": "Käytä helposti tunnistettavaa nimeä, kuten Arki."
+          },
+          "load_preset": {
+            "label": "Lataa esiasetus",
+            "description": "Valitse luettelosta tallennettu esiasetus tai valitse Tallennettu kokoonpano, jos haluat käyttää tallennettuja asetuksia ilman nimettyä esiasetusta.",
+            "recommendation": "Käytä haluamaasi arkiesiasetusta ajonaikaisena oletuksena: valitse se, paina Käytä ja sitten Tallenna muutokset."
+          },
+          "apply": {
+            "label": "Käytä",
+            "description": "Lataa valitun esiasetuksen tähän asetusluonnokseen; valitse Tallenna muutokset vahvistaaksesi sen ajonaikaiseksi oletukseksi."
+          },
+          "save_as_new": {
+            "label": "Tallenna uutena",
+            "description": "Tallentaa nykyiset asetukset heti uutena nimettynä esiasetuksena ja valitsee sen ajonaikaiseksi oletukseksi."
+          },
+          "delete": {
+            "label": "Poista",
+            "description": "Poistaa vahvistuksen jälkeen valitun esiasetuksen heti ja tyhjentää ajonaikaisen oletuksen, jos se oli valittuna."
+          },
+          "runtime_default": {
+            "label": "Ajonaikainen oletus",
+            "description": "Ajonaikainen oletus on tallennettu aktiivinen esiasetus tai tallennettu kokoonpano, kun esiasetusta ei ole aktiivisena."
+          }
+        }
+      },
+      "finish": {
+        "title": "Määritä aikataulu, tallenna ja ota käyttöön",
+        "items": {
+          "calendar": {
+            "label": "Kalenteri",
+            "description": "Valitse, milloin joukkojen automaattinen suojaan siirtäminen saa toimia, ja tallenna muutokset valitsemalla Tallenna aikataulu.",
+            "recommendation": "Jätä aikataulu pois käytöstä jatkuvaa toimintaa varten tai määritä tavalliset viikkotunnit ja tallenna aikataulu."
+          },
+          "specify_preset_per_period": {
+            "label": "Määritä esiasetus jaksolle",
+            "description": "Valitse tallennettu esiasetus kalenterijaksolle, jos sen tulee ohittaa ajonaikainen oletus kyseisenä aikana.",
+            "recommendation": "Pois käytöstä, elleivät eri jaksot tarvitse erilaisia reservejä."
+          },
+          "save_changes": {
+            "label": "Tallenna muutokset",
+            "description": "Tallenna asetusluonnos ja käytössä olevien esiasetusten muutokset; tämän oppaan lukeminen ei tallenna niitä."
+          },
+          "auto_bird_switch": {
+            "label": "Joukkojen automaattisen suojaan siirtämisen kytkin",
+            "description": "Ota joukkojen automaattinen suojaan siirtäminen käyttöön komentokeskuksen yläosassa tallentamisen jälkeen, jotta linnojen tavalliset kierrot voivat toimia.",
+            "recommendation": "Ota joukkojen automaattinen suojaan siirtäminen käyttöön tallentamisen jälkeen; otsakkeen tila näyttää kunkin linnan kierron."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Joukkojen automaattinen suojaan siirtäminen",
+      "summary": "Sijoittaa valitut joukot muualle aikataulun mukaan",
+      "description": "Sijoittaa säännöllisesti vapaita joukkoja kelvollisiin liittouman linnoihin ja toistaa kierron niiden palattua.",
+      "expectation": "Odottaa, jos sopivaa kohdetta tai lähetettäviä vapaita joukkoja ei ole. Joukkojen siirtäminen ei tee linnastasi haavoittumatonta."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "Yleisasetukset",
+      "scan": "Skannausväli: 1 800 sekuntia",
+      "daily": "Päivittäinen hyökkäysraja: 3 500",
+      "travel": "Matkanopeutus: kolikkotaso",
+      "advisor": "Neuvonantaja: pois"
+    },
+    "towerCastle": {
+      "title": "Esimerkkilinna",
+      "enabled": "Automaattiset tornihyökkäykset: päällä",
+      "radius": "Säde: 35 ruutua",
+      "troop": "Valittu joukko: kuvitteellinen hyökkäysyksikkö",
+      "maiden": "Vain neitoreliikin kanssa: pois"
+    },
+    "birdGeneral": {
+      "title": "Yleisasetukset",
+      "min": "Lyhin viipymä: 6 tuntia",
+      "max": "Pisin viipymä: 12 tuntia",
+      "send": "Kelvollisten joukkojen vähimmäismäärä reservien jälkeen: 1 000",
+      "rpt": "Jäljellä oleva vähimmäissuoja: yli 3 päivää",
+      "preset": "Esiasetus: Arki-reservi"
+    },
+    "birdCastle": {
+      "title": "Esimerkkilinna",
+      "unitOne": "Kuvitteellinen yksikkö 101 varattu: 80",
+      "unitTwo": "Kuvitteellinen yksikkö 102 varattu: 40",
+      "add": "Lisää yksikkö"
+    },
+    "stationGeneral": {
+      "title": "Esimerkki suojauksen asetuksista",
+      "evacuate": "Evakuoi: 1 minuutti ennen osumaa",
+      "protection": "Kohteen suoja: yli 3 päivää",
+      "recall": "Kutsu takaisin vaaran mentyä: päällä",
+      "gate": "Avaa portit varatoimena: pois",
+      "castle": "Kuvitteellinen linna: 80 puolustusjoukkoa varattu",
+      "save": "Tallenna muutokset ja ota suojaus käyttöön"
+    },
+    "fortressAttack": {
+      "commander": "Komentaja: nopein kelvollinen nimetty",
+      "daily": "Tavallisten hyökkäysten päiväraja: 0",
+      "title": "Esimerkki hyökkäysasetuksista",
+      "travel": "Matkustusnopeutus: Matkahöyhen",
+      "wave": "Yksi täysi hirviösusiaalto molemmilla sivustoilla"
+    },
+    "fortressKingdoms": {
+      "everwinter": "Ikuisen talven jäätikkö: päällä avattuna",
+      "peaks": "Tulihuiput: päällä avattuna",
+      "sands": "Palavat hiekat: päällä avattuna",
+      "title": "Esimerkki valtakunta-asetuksista"
+    },
+    "fortressSupply": {
+      "purchase": "Hirviösusia istuntoa kohti: 5 000",
+      "reserve": "Säästä Khan-tauluja: 25 000",
+      "route": "Toimitus: Suuren valtakunnan päälinnasta käyttöön otettuihin valtakuntiin",
+      "skips": "Aikahypyt vahvistettuihin siirtoihin: päällä",
+      "title": "Esimerkki hirviösusien toimituksesta"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Verivarikset: sopiva avattu vaikeusaste",
+      "current": "Aktiivisen tapahtuman vaikeusaste pysyy voimassa",
+      "foreign": "Ulkomaalaiset lordit: sopiva avattu vaikeusaste",
+      "title": "Esimerkki tapahtumien vaikeusasteista"
+    },
+    "invasionFortify": {
+      "currency": "Jos käytössä: tapahtumavaluutta, kun tarjolla",
+      "enabled": "Linnoita jokainen kohde: pois",
+      "rubies": "Rubiinit vain nimenomaisella valinnalla",
+      "title": "Esimerkki kohteen linnoituksesta"
+    },
+    "invasionLimits": {
+      "before": "Pysäytä 30 minuuttia ennen tapahtuman loppua",
+      "daily": "Tavallisten hyökkäysten päiväraja: 0",
+      "score": "Pisteet: tavallinen viimeinen henkilökohtainen palkinto yli 0",
+      "title": "Esimerkki piste- ja pysäytysrajoista"
+    },
+    "invasionSetup": {
+      "castle": "Lähtö: tavallinen Suuren valtakunnan tapahtumalinna",
+      "preset": "Hyökkäysmalli: tallennettu tapahtumamuodostelma",
+      "title": "Esimerkki tapahtumahyökkäyksen asetuksista",
+      "travel": "Matkustusnopeutus: Matkahöyhen"
+    },
+    "nomadDifficulty": {
+      "title": "Esimerkki tapahtumien vaikeusasteista",
+      "active": "Aktiivinen tapahtuma: vastaa nykyistä vaikeustasoa",
+      "nomad": "Nomadit: avattu ja luotettava vaikeustaso",
+      "samurai": "Samurait: avattu ja luotettava vaikeustaso"
+    },
+    "nomadSetup": {
+      "castle": "Lähtö: tavallinen Suuren valtakunnan tapahtumalinna",
+      "travel": "Matkustusnopeutus: Matkahöyhen",
+      "nomadPreset": "Nomadikokoonpano: tallennettu leirimuodostelma",
+      "samuraiPreset": "Samuraikokoonpano: tallennettu leirimuodostelma",
+      "title": "Esimerkki tapahtumaleirien asetuksista"
+    },
+    "nomadCooldowns": {
+      "clear": "Poista odotusaika vahvistetun voiton jälkeen: päällä",
+      "long": "Säilytä 5 h / 24 h: varasto muuhun toimintaan",
+      "short": "Säilytä 1 / 5 / 10 / 30 / 60 min: 0 esinettä kutakin",
+      "title": "Esimerkki odotusaikavalinnoista"
+    },
+    "nomadLimits": {
+      "daily": "Päivittäinen lisäraja: 0",
+      "score": "Pistetavoite: viimeinen henkilökohtainen palkintoraja",
+      "time": "Lopeta ennen päättymistä: 30 minuuttia",
+      "title": "Esimerkki pysäytyssäännöistä"
+    },
+    "nomadTrial": {
+      "coordinates": "Kohde X / Y: ei käytössä tavallisessa toiminnassa",
+      "effect": "Koe päällä korvaa tapahtuman oikealla hyökkäyksellä",
+      "title": "Esimerkki kokeen hallinnasta",
+      "trial": "Väliaikainen ryöstöparonikoe: pois"
+    },
+    "advisorDifficulty": {
+      "active": "Aktiivinen tapahtuma: vastaa nykyistä vaikeustasoa",
+      "nomad": "Nomadit: avattu ja luotettava vaikeustaso",
+      "samurai": "Samurait: avattu ja luotettava vaikeustaso",
+      "title": "Esimerkki tapahtumien vaikeusasteista"
+    },
+    "advisorSetup": {
+      "castle": "Lähtö: tavallinen Suuren valtakunnan tapahtumalinna",
+      "travel": "Matkustusnopeutus: Matkahöyhen",
+      "preset": "Kokoonpano: aktiivisen tapahtuman tallennettu muodostelma",
+      "title": "Esimerkki Neuvonantajan hyökkäysasetuksista"
+    },
+    "advisorActivation": {
+      "locked": "Jos lukittu: avaa Aktivoi Neuvonantaja -vahvistus",
+      "paid": "Vahvista maksullisen merkin käyttö tai pelin ilmoittama maksuton aktivointi",
+      "save": "Tallenna asetukset ja kytke sitten Automaatio-kortti päälle",
+      "title": "Esimerkki aktivoinnin vaiheista"
+    },
+    "advisorOverview": {
+      "progress": "Nykyinen hyökkäys / pyydetyt hyökkäykset",
+      "refresh": "Päivitä yhteenveto nähdäksesi nykyiset kokonaismäärät",
+      "results": "Voitot, tappiot, menetetyt yksiköt ja työkalut",
+      "title": "Esimerkki reaaliaikaisesta yhteenvedosta"
+    },
+    "advisorResources": {
+      "coins": "Kolikot yhteensä hyökkäystä kohti: 500 vain, jos riittää",
+      "feathers": "Säilytä höyheniä: 0, ellei niitä tarvita muualla",
+      "rubies": "Rubiinit hyökkäystä kohti: 0 Matkustushöyhenellä",
+      "skips": "Säilytä 60 min: 0 esinettä; varaa 5 h ja 24 h tarpeen mukaan",
+      "title": "Esimerkki resurssibudjeteista"
+    },
+    "advisorSizing": {
+      "actual": "Todellinen sarja: rajattu resursseilla ja ajalla",
+      "maximum": "Enimmäishyökkäykset: 9 999",
+      "time": "Käyttämätön tapahtuma-aika: 30 minuuttia",
+      "title": "Esimerkki sarjan koosta"
+    },
+    "khanCooldowns": {
+      "long": "Varaa 5 ja 24 tunnin aikahyppäykset muihin tehtäviin",
+      "pause": "Uudet hyökkäykset keskeytyvät, jos käytettäviä aikahyppäyksiä ei ole tarpeeksi",
+      "short": "Säilytä 1 min / 5 min / 10 min / 30 min / 1 h: jokaista 0 esinettä",
+      "skip": "Ohita jokainen leirin odotusaika: päällä",
+      "title": "Esimerkki aikahyppäysvarannoista"
+    },
+    "khanLimits": {
+      "daily": "Tavalliset hyökkäykset päivässä: 0, ei lisärajaa",
+      "end": "Pysäytä uudet hyökkäykset 5 minuuttia ennen loppua",
+      "points": "Pysäytä nomadipisteisiin: 0, pois",
+      "title": "Esimerkki pysäytysrajoista",
+      "tools": "Puolustustyökalujen täydennys: päällä haluttaessa"
+    },
+    "khanProtection": {
+      "gate": "Avaa pääportit ja keskeytä Khan rajalla",
+      "outpost": "Etuvartio lähteenä: suojaus pois",
+      "source": "Koskee päälinnasta lähteviä hyökkäyksiä",
+      "threshold": "Hyökkäysyksiköitä muurilla: 1 000",
+      "title": "Esimerkki päälinnan muurin suojauksesta"
+    },
+    "khanRage": {
+      "attacks": "Automaattiset leirihyökkäykset: lukitsematta",
+      "booster": "Ajastettu raivopistetehostin vaaditaan: pois",
+      "chain": "Raivoketjun enimmäismäärä: 0, ei lisärajaa",
+      "title": "Esimerkki raivoasetuksista",
+      "trigger": "Vastaisku täydellä raivolla: päällä"
+    },
+    "khanSave": {
+      "defense": "Tarkista päälinnan puolustus ennen vastaiskua",
+      "enable": "Ota Automaattinen Khan käyttöön Automaatio-kortissa",
+      "priority": "Automaattinen asemointi käsittelee pelaajien hyökkäykset erikseen",
+      "save": "Tallenna asetukset, kun molemmat mallit on valmisteltu",
+      "title": "Esimerkki tallentamisesta ja käyttöönotosta"
+    },
+    "khanSetup": {
+      "defense": "Puolusta kohteessa: Suuren valtakunnan päälinna",
+      "presets": "Tallennetut Khan-hyökkäys- ja pääpuolustusmallit",
+      "source": "Hyökkää kohteesta: Suuren valtakunnan etuvartio",
+      "title": "Esimerkki Khanin asetuksista",
+      "travel": "Matkahöyhen nopeaan matkustukseen"
+    },
+    "beriBuilder": {
+      "permissions": "Premium ja purku: pois, ellei tarkistettu",
+      "reserves": "Varaa Berimondin resurssit ja ajansäästöt",
+      "stable": "Ryhmätalli: valittu taso 1–5",
+      "target": "Sisäinen tarkka tavoite tai tarkistettu oma pohja",
+      "title": "Esimerkki valinnaisesta leirirakentamisesta"
+    },
+    "beriReadiness": {
+      "booster": "Urhoollisuustehostin vaatimuksena: valinnainen",
+      "food": "Siirrot vaativat mallin Ruokaa käyttäviä joukkoja",
+      "preset": "Tarkista tallennetut joukko- ja työkalupaikat",
+      "title": "Esimerkki tornihyökkäysvalmiudesta"
+    },
+    "beriSave": {
+      "calendar": "Kalenteri pois jatkuvaa toimintaa varten",
+      "enable": "Käynnistä Auto Beri Automaatio-kortista",
+      "save": "Tallenna asetukset joukko-osuuksien tarkistuksen jälkeen",
+      "title": "Esimerkki tallennuksesta ja käyttöönotosta"
+    },
+    "beriSetup": {
+      "donor": "Luovuttaja Suuressa valtakunnassa tarvittavien joukkojen kanssa",
+      "limit": "Normaaleja hyökkäyksiä päivässä: 0 lisärajaa",
+      "preset": "Tallennettu Berimond-hyökkäysmalli",
+      "title": "Esimerkki hyökkäyksestä ja huollosta",
+      "travel": "Matkahöyhen tornihyökkäyksiin"
+    },
+    "beriTools": {
+      "ladders": "Tikkaat: sovita tavallisiin hyökkäyksiin",
+      "mantlets": "Suojakilvet: sovita tavallisiin hyökkäyksiin",
+      "rams": "Muurinmurtajat: sovita tavallisiin hyökkäyksiin",
+      "title": "Esimerkki työkalujen vähimmäisvarastosta"
+    },
+    "beriTransfers": {
+      "capacity": "Vapaa kapasiteetti: 1; raja: 1",
+      "mix": "Mallin suhde: 2 yksikköä A yhtä B-yksikköä kohti",
+      "next": "Seuraava lähetys: enintään 1 B luovuttajan varastosta",
+      "stock": "Leirivarasto: 2 A ja 0 B",
+      "title": "Esimerkki suhteellisista siirroista"
+    },
+    "stormCastle": {
+      "blueprint": "Tallennettu kohde aktiivinen; keskeytys säilyttää sen",
+      "capture": "Nykyinen linna: Toiminnallinen kohde",
+      "decorations": "Koriste-esiasetus: valinnainen",
+      "title": "Esimerkki Myrskylinnan käytöstä",
+      "unlock": "Automaattinen avaaminen: päällä hinnan tarkistamisen jälkeen"
+    },
+    "stormCombat": {
+      "defenders": "Miehityspuolustajat: valitut tai yksi eloonjäänyt",
+      "forts": "Linnoitukset: valitut tasot 40–80",
+      "islands": "Akvamariinisaaret: suuret ja pienet",
+      "priority": "Suuret, pienet, sitten linnoitukset 80–40",
+      "title": "Esimerkki linnoitus- ja saaristohyökkäyksistä"
+    },
+    "stormConstruction": {
+      "harbor": "Satama: päällä, taso 1",
+      "resources": "Puu 0; kivi 0; akvamariini suunniteltu",
+      "spending": "Premium ja purkaminen: pois",
+      "title": "Esimerkki rakentamisesta ja varannoista",
+      "transport": "Resurssikuljetus: päällä"
+    },
+    "stormLuna": {
+      "cost": "Hinta ja ostoraja: vain luettavat",
+      "limited": "Rajatut tavoitteet ennen rajattomia palkintoja",
+      "priority": "Etusija 1, 2, 3; pienin ensin",
+      "reserve": "Säilytä akvamariinia: 0 ylijäämää käytettäessä",
+      "title": "Esimerkki Lunan palkinnoista"
+    },
+    "stormSave": {
+      "check": "Toimintatavan tarkistus: 30 sekuntia",
+      "daily": "Päivittäiset tavalliset hyökkäykset: 0 lisärajaa",
+      "map": "Kartan päivitys: 2 tuntia, vain luettava",
+      "switch": "Tallenna ja käynnistä sitten Auto Storm",
+      "title": "Esimerkki tallennuksen ja käyttöönoton kulusta"
+    },
+    "stormTroops": {
+      "averages": "Vahvistetut hyökkäykset nollauksesta / 24; presetin keskiarvo vain luettavissa",
+      "cap": "Sidottujen joukkojen raja: vain luettava",
+      "donors": "Luovuttajat: näytetty järjestys, osittainen varasto sallittu",
+      "minimum": "Jäljelle vähintään: 1 000 joukkoa",
+      "title": "Esimerkki joukkojen tuonnista"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Suositukset koskevat tavallista käyttöä eivätkä muuta tallennettuja asetuksia.",
+    "steps": {
+      "open": {
+        "title": "Avaa automaattisen joukkojen suojauksen asetukset",
+        "items": {
+          "open_settings": {
+            "label": "Avaa asetukset",
+            "description": "Valitse komentokeskuksen yläosassa automaattisen joukkojen suojauksen vieressä oleva asetusnäppäin."
+          }
+        }
+      },
+      "general": {
+        "title": "Määritä vastaus hyökkäykseen",
+        "items": {
+          "evacuate_at": {
+            "label": "Evakuoi",
+            "description": "Aloita evakuointi näin monta minuuttia ennen osumaa tai heti, jos hyökkäys havaitaan vasta aikarajan sisällä.",
+            "recommendation": "1 minuutti ennen osumaa."
+          },
+          "minimum_bird_days": {
+            "label": "Kohteen suojapäivien vähimmäismäärä",
+            "description": "Valitse liittolaisen linna, jolla on jäljellä enemmän kuin tämä määrä suojapäiviä; 0 poistaa vaatimuksen.",
+            "recommendation": "3 päivää, joten kohteella on oltava yli 3 päivää jäljellä."
+          },
+          "recall_when_clear": {
+            "label": "Kutsu takaisin vaaran mentyä",
+            "description": "Palauta sijoitetut joukot, kun viimeinen havaittu hyökkäys on ohi eikä uusia hyökkäyksiä ole tulossa.",
+            "recommendation": "Päällä tavallisessa käytössä."
+          },
+          "open_gate_fallback": {
+            "label": "Avaa portit varatoimena",
+            "description": "Jos joukkoja ei voida evakuoida, tämä valinta avaa hyökätyn oman linnan portit kuudeksi tunniksi muualla kuin Berimondissa.",
+            "recommendation": "Pois, ellet halua porttien avautuvan automaattisesti evakuoinnin epäonnistuessa."
+          },
+          "protection_mode": {
+            "label": "Ostettu suojaustila",
+            "description": "Kun ostettu suojaustila valmistuu tai on aktiivinen, joukkojen suojaus käyttää portteja varavalinnan ollessa pois päältäkin muualla kuin Berimondissa."
+          }
+        },
+        "image": {
+          "alt": "Kuvitteelliset asetukset evakuointiajalle, suojalle, palautukselle, porteille ja linnan varauksille",
+          "caption": "Tarkista neljä vastausasetusta ja jokaisen linnan puolustusvaraukset ennen tallennusta."
+        }
+      },
+      "reserves": {
+        "title": "Valitse jokaiseen linnaan jäävät joukot",
+        "items": {
+          "add_troops": {
+            "label": "Lisää joukkoja",
+            "description": "Valitse linnaan jätettävät joukkotyypit; ilman varausta kaikki kelvolliset muut kuin työkalujoukot voidaan evakuoida.",
+            "recommendation": "Pidä tavallinen puolustusvaruskunta kotona ja anna ylimääräisten hyökkäysjoukkojen lähteä."
+          },
+          "quantity": {
+            "label": "Määrä",
+            "description": "Määritä, kuinka monta kunkin valitun tyypin joukkoa jää linnaan; 0 ei varaa yhtään.",
+            "recommendation": "Käytä linnan tavalliseen puolustukseen tarvittavaa määrää."
+          },
+          "edit_defense_troops": {
+            "label": "Muokkaa puolustusjoukkoja",
+            "description": "Avaa joukkojen valitsin uudelleen muuttaaksesi linnan varattuja tyyppejä tai määriä."
+          },
+          "remove_defense_troop": {
+            "label": "Poista puolustusjoukko",
+            "description": "Poista varausruutu, jotta kyseistä joukkotyyppiä ei enää pidetä linnassa."
+          }
+        }
+      },
+      "finish": {
+        "title": "Tallenna ja ota suojaus käyttöön",
+        "items": {
+          "save_changes": {
+            "label": "Tallenna muutokset",
+            "description": "Tallenna ajoitus, kytkimet ja linnakohtaiset varaukset ennen asetuksista poistumista."
+          },
+          "auto_station_switch": {
+            "label": "Joukkojen suojauksen kytkin",
+            "description": "Ota automaattinen joukkojen suojaus käyttöön komentokeskuksen yläosassa tallennuksen jälkeen seurataksesi saapuvia pelaajahyökkäyksiä.",
+            "recommendation": "Päällä tavallista suojausta varten varausten tarkistamisen jälkeen."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automaattinen joukkojen suojaus",
+      "summary": "Siirrä kelvolliset joukot ennen saapuvaa hyökkäystä",
+      "description": "Pelaajahyökkäyksen lähestyessä automaattinen suojaus siirtää kelvolliset joukot saman valtakunnan lähimpään sopivaan liittolaislinnaan.",
+      "expectation": "Kun palautus on päällä, joukot palaavat viimeisen havaitun hyökkäyksen jälkeen ilman jäljellä olevaa uhkaa; muuten ne viipyvät tunnin saapumisen jälkeen ja palaavat sitten. Kohteen tai joukkojen puute ja pelin rajoitukset voivat estää evakuoinnin.",
+      "helper": "Joukot siirtyvät saman valtakunnan lähimpään sopivaan liittolaislinnaan; jos evakuointi epäonnistuu, hyökätyn oman linnan portit voivat suojata Berimondin ulkopuolella."
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "Nopein käytettävissä oleva komentaja",
+      "commanderHelp": "Automaattiset linnakehyökkäykset vertaavat kuhunkin kohdelinnakkeeseen soveltuvia varusteiden, jalokivien, settien ja kenraalien matkanopeusvaikutuksia; Relic 2.0 -esinettä tai 100 prosentin vähimmäistasoa ei vaadita.",
+      "description": "Automaattiset linnakehyökkäykset ostavat hirviösusia tallennetuissa rajoissa, toimittavat niitä käyttöön otettuihin ulompiin valtakuntiin ja hyökkäävät valmiisiin linnakkeisiin niiden päälinnoista.",
+      "expectation": "Jokainen hyökkäys vaatii valmiin linnakkeen, riittävästi hirviösusia molemmille sivustoille ja kelvollisen tehtävään nimetyn komentajan; odotusajat tai toimitusviiveet voivat keskeyttää sen.",
+      "name": "Automaattiset linnakehyökkäykset",
+      "settingsSummary": "Automaattiset linnakehyökkäykset valmistavat hirviösusia ja valitsevat nopeimman kelvollisen tehtävään nimetyn komentajan jokaiseen kohdelinnakkeeseen.",
+      "summary": "Toimita hirviösusia ja hyökkää valmiisiin linnakkeisiin",
+      "travelHelp": "Matkahöyhen on oletusvalinta; tallennettu matkustusvalintasi säilyy. Linnakohtainen nopeutus lasketaan uudelleen ennen lähtöä."
+    },
+    "recommendationIntro": "Suositusarvot kuvaavat automaattisten linnakehyökkäysten tavanomaista käyttöä; ne ovat ohjeita eivätkä muuta tallennettuja asetuksia.",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "Havainnollistava esimerkki automaattisten linnakehyökkäysten hyökkäys- ja matkustusasetuksista",
+          "caption": "Automaattiset linnakehyökkäykset asettavat kelvolliset tehtävään nimetyt komentajat paremmuusjärjestykseen kullekin kohteelle ja käyttävät tallennettua matkustusvalintaa."
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "Nimeä Komentajat-kohdassa automaattisten linnakehyökkäysten käytettävissä olevat komentajat ja tallenna valinnat.",
+            "label": "Komentajien nimeäminen",
+            "recommendation": "Nimeä komentajat, joita tavallisesti haluat käyttää linnakehyökkäyksiin."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Pysäytä automaattiset linnakehyökkäykset tilin päivittäisen tavallisten hyökkäysten määrän täyttyessä, kunnes peli nollaa määrän; 0 ei lisää rajaa.",
+            "label": "Tavallisten hyökkäysten päiväraja",
+            "recommendation": "0, ellet halua lisätä päivittäistä rajaa."
+          },
+          "fastest_commander": {
+            "description": "Jokaiseen linnakkeeseen valitaan nopein tällä hetkellä käytettävissä oleva nimetty komentaja soveltuvien varuste-, jalokivi-, setti- ja kenraalivaikutusten perusteella rajojen jälkeen.",
+            "label": "Nopein kelvollinen komentaja",
+            "recommendation": "Relic 2.0 -esinettä tai 100 prosentin nopeusbonusta ei vaadita."
+          },
+          "full_flank_wave": {
+            "description": "Jokainen hyökkäys odottaa, kunnes hirviösusia riittää täyttämään molemmat sivustat yhdellä täydellä aallolla.",
+            "label": "Hirviösusiaalto molemmilla sivustoilla"
+          },
+          "horse_travel_boost": {
+            "description": "Valitse linnakehyökkäysten matkustusvaihtoehto; erikseen tallennettu kolikko- tai rubiinitaso säilyy valittuna.",
+            "label": "Hevosen matkustusnopeutus",
+            "recommendation": "Matkahöyhen nopeimpaan matkustukseen."
+          }
+        },
+        "title": "Määritä hyökkäykset ja matkustus"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "Käynnistä tavalliset syklit ottamalla automaattiset linnakehyökkäykset käyttöön Automaatio-kortissa tallentamisen jälkeen.",
+            "label": "Automaattisten linnakehyökkäysten kytkin",
+            "recommendation": "Päällä, kun olet tarkistanut ja tallentanut haluamasi asetukset."
+          },
+          "calendar": {
+            "description": "Rajoita automaattisten linnakehyökkäysten käyttöaikaa Kalenterissa ja valitse Tallenna aikataulu muutosten jälkeen.",
+            "label": "Kalenteri",
+            "recommendation": "Pois päältä jatkuvaa tavanomaista käyttöä varten."
+          },
+          "save_fortress_plan": {
+            "description": "Tallenna valtakunta-, toimitus- ja hyökkäysasetukset ennen tämän ikkunan sulkemista.",
+            "label": "Tallenna linnakesuunnitelma"
+          }
+        },
+        "title": "Määritä aikataulu, tallenna ja ota käyttöön"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "Havainnollistava esimerkki automaattisten linnakehyökkäysten kolmen ulomman valtakunnan valinnoista",
+          "caption": "Ota käyttöön jokainen avattu valtakunta, jonka päälinnaan toimitetaan hirviösusia ja josta hyökätään linnakkeisiin."
+        },
+        "items": {
+          "burning_sands": {
+            "description": "Ota hyökkäykset ja hirviösusien toimitus käyttöön Palavien hiekkojen päälinnaasi, kun valtakunta on avattu.",
+            "label": "Palavat hiekat",
+            "recommendation": "Päällä, kun valtakunta on avattu ja käyttövalmis."
+          },
+          "everwinter_glacier": {
+            "description": "Ota hyökkäykset ja hirviösusien toimitus käyttöön Ikuisen talven jäätikön päälinnaasi, kun valtakunta on avattu.",
+            "label": "Ikuisen talven jäätikkö",
+            "recommendation": "Päällä, kun valtakunta on avattu ja käyttövalmis."
+          },
+          "fire_peaks": {
+            "description": "Ota hyökkäykset ja hirviösusien toimitus käyttöön Tulihuippujen päälinnaasi, kun valtakunta on avattu.",
+            "label": "Tulihuiput",
+            "recommendation": "Päällä, kun valtakunta on avattu ja käyttövalmis."
+          }
+        },
+        "title": "Valitse linnakevaltakunnat"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "Valitse Automaatio-sivulla automaattisten linnakehyökkäysten kortin asetuspainike.",
+            "label": "Avaa asetukset"
+          }
+        },
+        "title": "Avaa automaattisten linnakehyökkäysten asetukset"
+      },
+      "supply": {
+        "image": {
+          "alt": "Havainnollistava esimerkki hirviösusien osto- ja siirtoasetuksista",
+          "caption": "Tarkista oston yläraja istuntoa kohti, Khan-taulujen varanto ja aikahyppyjen käyttö vahvistettuihin siirtoihin."
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "Rajoita hirviösusien ostot nomadikaupasta 100 yksikön eriin kauppaistuntoa kohti; 0 poistaa ostot käytöstä.",
+            "label": "Hirviösusia istuntoa kohti",
+            "recommendation": "5 000 hirviösutta istuntoa kohti halvimmalla hintatasolla."
+          },
+          "keep_khan_tablets": {
+            "description": "Lopeta hirviösusien ostot ennen kuin Khan-taulujen määrä alittaa tämän varannon.",
+            "label": "Säästä Khan-tauluja",
+            "recommendation": "Säästä 25 000 Khan-taulua."
+          },
+          "supply_route": {
+            "description": "Ostetut hirviösudet saapuvat Suuren valtakunnan päälinnaan, josta ne jaetaan käyttöön otettuihin valtakuntiin.",
+            "label": "Hirviösusien toimitusreitti"
+          },
+          "use_time_skips": {
+            "description": "Käytä soveltuvia aikahyppyjä vain automaattisten linnakehyökkäysten vahvistettuihin lähetyksiin tallennettuja varantoja noudattaen.",
+            "label": "Käytä aikahyppyjä hirviösusien siirtoon",
+            "recommendation": "Päällä nopeampaa täydennystä varten, jos tallennetut aikahyppyvarannot sallivat sen."
+          }
+        },
+        "title": "Määritä hirviösusien toimitus"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "Automaattiset maahantunkeutumishyökkäykset hyökkäävät ulkomaalaisia lordeja tai verivariksia vastaan tallennetulla hyökkäysmallilla, kunnes pistetavoite tai muu pysäytysraja saavutetaan.",
+      "expectation": "Ne odottavat aktiivista tapahtumaa, kelvollisia komentajia sekä riittävästi joukkoja ja työkaluja; jo matkalla olevat hyökkäykset voivat päättyä uusien hyökkäysten loputtua.",
+      "name": "Automaattiset maahantunkeutumishyökkäykset",
+      "summary": "Hyökkää ulkomaalaisia lordeja ja verivariksia vastaan pistetavoitteeseen asti"
+    },
+    "recommendationIntro": "Suositusarvot kuvaavat automaattisten maahantunkeutumishyökkäysten tavanomaista käyttöä; ne ovat ohjeita eivätkä muuta tallennettuja asetuksia.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Havainnollistavat vaikeusastevalinnat ulkomaalaisille lordeille ja verivariksille",
+          "caption": "Valitse kullekin tapahtumalle oma avattu varavaikeusaste."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Valitse avattu verivaristen vaikeusaste käytettäväksi, jos nykyisessä tapahtumassa ei ole vielä valittua vaikeusastetta.",
+            "label": "Verivaristen vaikeusaste",
+            "recommendation": "Käytä korkeinta avattua vaikeusastetta, josta tavallinen kokoonpanosi selviää luotettavasti."
+          },
+          "difficulty_note": {
+            "description": "Tallenna molemmat tapahtumavalinnat; tallennetun arvon muuttaminen ei korvaa aktiivisen tapahtuman vaikeusastetta.",
+            "label": "Nykyinen vaikeusaste"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Valitse avattu ulkomaalaisten lordien vaikeusaste käytettäväksi, jos nykyisessä tapahtumassa ei ole vielä valittua vaikeusastetta.",
+            "label": "Ulkomaalaisten lordien vaikeusaste",
+            "recommendation": "Käytä korkeinta avattua vaikeusastetta, josta tavallinen kokoonpanosi selviää luotettavasti."
+          }
+        },
+        "title": "Valitse molempien tapahtumien vaikeusasteet"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "Ota automaattiset maahantunkeutumishyökkäykset käyttöön Automaatio-kortissa tallentamisen jälkeen, jotta ne toimivat tapahtuman ja kelvollisten resurssien ollessa saatavilla.",
+            "label": "Automaattisten maahantunkeutumishyökkäysten kytkin",
+            "recommendation": "Päällä, kun olet tarkistanut ja tallentanut haluamasi asetukset."
+          },
+          "readiness": {
+            "description": "Automaattiset maahantunkeutumishyökkäykset odottavat aktiivista tapahtumaa, kelvollisia komentajia ja riittävästi joukkoja sekä työkaluja.",
+            "label": "Hyökkäysvalmius"
+          },
+          "save_settings": {
+            "description": "Tallenna lähtölinna, malli, vaikeusasteet, pysäytysrajat ja linnoitusvalinta ennen tämän ikkunan sulkemista.",
+            "label": "Tallenna asetukset"
+          }
+        },
+        "title": "Tallenna ja ota automaattiset maahantunkeutumishyökkäykset käyttöön"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Havainnollistavat linnoitusasetukset automaattisille maahantunkeutumishyökkäyksille",
+          "caption": "Pidä linnoitus pois päältä, ellet aio käyttää saatavilla olevaa tapahtumavaluuttaa tai nimenomaisesti valittuja rubiineja."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Valitse aktiivisen tapahtuman tukema vaihtoehto; peli määrittää hinnat, ja rubiinien nimenomainen valinta sallii niiden käytön.",
+            "label": "Linnoituksen valuutta",
+            "recommendation": "Tapahtumavaluutta, kun sitä on tarjolla ja linnoitus on käytössä."
+          },
+          "fortify_each_target": {
+            "description": "Jos toiminto on käytössä, vahvista jokainen luotu vihollislinna valitulla valuutalla ennen hyökkäystä.",
+            "label": "Linnoita jokainen kohde",
+            "recommendation": "Pois, ellei linnoitus kuulu tavalliseen tapahtumastrategiaasi."
+          }
+        },
+        "title": "Valitse valinnainen kohteiden linnoitus"
+      },
+      "limits": {
+        "image": {
+          "alt": "Havainnollistavat piste- ja pysäytysrajat automaattisille maahantunkeutumishyökkäyksille",
+          "caption": "Pistetavoite pysäyttää uudet lähdöt, mutta jo matkalla olevat hyökkäykset voivat päättyä."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Pysäytä tämä automaatio tilin päivittäisen tavallisten hyökkäysten määrän täyttyessä, kunnes peli nollaa sen; 0 ei lisää rajaa.",
+            "label": "Tavallisten hyökkäysten päiväraja",
+            "recommendation": "0, jotta tapahtuman pistetavoite ohjaa sarjaa."
+          },
+          "minimum_remaining": {
+            "description": "Lopeta uusien hyökkäysten aloittaminen näin monta minuuttia ennen tapahtuman loppua.",
+            "label": "Pysäytä ennen tapahtuman loppua",
+            "recommendation": "30 minuuttia."
+          },
+          "score_target": {
+            "description": "Lopeta uusien hyökkäysten aloittaminen, kun ilmoitettu tapahtumapistemäärä saavuttaa tai ylittää tämän tavoitteen.",
+            "label": "Pysäytä tapahtumapistemäärässä",
+            "recommendation": "Käytä tavanomaista viimeistä henkilökohtaisen palkinnon rajapyykkiäsi, joka ylittää 0."
+          },
+          "travelling_attacks": {
+            "description": "Jo matkalla olevat hyökkäykset voivat päättyä pysäytysehdon jälkeen ja nostaa lopulliset pisteet tavoitteen yli.",
+            "label": "Matkalla olevat hyökkäykset"
+          }
+        },
+        "title": "Määritä piste- ja pysäytysrajat"
+      },
+      "open": {
+        "image": {
+          "alt": "Havainnollistavat lähtölinnan, mallin ja matkan asetukset automaattisille maahantunkeutumishyökkäyksille",
+          "caption": "Valitse lähtölinna Suuresta valtakunnasta ja tallennettu tapahtumamalli ennen matkustusvaihtoehtoa."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Valitse tallennettu hyökkäysmalli, jossa on joukot, työkalut ja muodostelma ulkomaalaisia lordeja tai verivariksia vastaan.",
+            "label": "Hyökkäysmalli",
+            "recommendation": "Luo ensin tavallinen malli ulkomaalaisia lordeja tai verivariksia vastaan ja valitse se tässä."
+          },
+          "capacity_note": {
+            "description": "Mallin joukko- ja työkalumäärät mukautuvat valitun komentajan ja kohteen kapasiteettiin.",
+            "label": "Hyökkäyskapasiteetti"
+          },
+          "horse_travel_boost": {
+            "description": "Valitse näille hyökkäyksille höyhen-, kolikko- tai rubiinimatkustusvaihtoehto.",
+            "label": "Hevosen matkustusnopeutus",
+            "recommendation": "Matkahöyhen nopeaan matkustukseen."
+          },
+          "open_settings": {
+            "description": "Valitse Automaatio-sivulla automaattisten maahantunkeutumishyökkäysten kortin asetuspainike.",
+            "label": "Avaa asetukset"
+          },
+          "source_castle": {
+            "description": "Valitse Suuren valtakunnan linna, joka antaa joukot ja työkalut tapahtumahyökkäyksiin.",
+            "label": "Lähtölinna",
+            "recommendation": "Käytä tavallista tapahtumalinnaasi, jossa on tarpeeksi joukkoja ja työkaluja."
+          }
+        },
+        "title": "Avaa automaattisten maahantunkeutumishyökkäysten asetukset"
+      }
+    }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "Käytä korkeinta avattua vaikeusastetta, josta tavallinen kokoonpanosi selviää luotettavasti.",
+            "description": "Valitse avattu nomadivaikeustaso tapahtuman alkuun.",
+            "label": "Nomadivaikeustaso"
+          },
+          "samurai_difficulty": {
+            "recommendation": "Käytä korkeinta avattua vaikeusastetta, josta tavallinen kokoonpanosi selviää luotettavasti.",
+            "description": "Valitse avattu samuraivaikeustaso tapahtuman alkuun.",
+            "label": "Samuraivaikeustaso"
+          },
+          "active_difficulty": {
+            "description": "Aktiivisessa tapahtumassa käytä sen nykyistä vaikeustasoa, sillä poikkeava tallennettu valinta saa automaation odottamaan eikä muuta tasoa.",
+            "label": "Jo aktiivinen tapahtuma"
+          }
+        },
+        "title": "Valitse molempien tapahtumien vaikeusasteet",
+        "image": {
+          "alt": "Esimerkki nomadi- ja samuraivaikeustasoista",
+          "caption": "Valitse kummallekin tapahtumalle erillinen avattu vaikeustaso ja vastaa aktiivisen tapahtuman tasoa."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "Päällä, kun olet tarkistanut ja tallentanut haluamasi asetukset.",
+            "description": "Kytke automaattiset nomadit/samurait päälle Automaatio-kortista tallennuksen jälkeen, jotta toiminto käynnistyy tapahtuman ja kelvollisten resurssien ollessa käytettävissä.",
+            "label": "Automaattisten nomadien/samuraiden kytkin"
+          },
+          "save_settings": {
+            "label": "Tallenna asetukset",
+            "description": "Tallenna lähtölinna, kokoonpanot, vaikeustasot, pysäytysrajat, aikahyppyvalinnat ja kokeen tila ennen ikkunan sulkemista."
+          },
+          "readiness": {
+            "description": "Automaatio kehittää tapahtumaleirejä ja odottaa kelvollisia komentajia, joukkoja, työkaluja ja käytettäviä aikahyppyjä, jos ne ovat käytössä.",
+            "label": "Valmius leirihyökkäykseen"
+          }
+        },
+        "title": "Tallenna ja käynnistä automaattiset nomadit/samurait"
+      },
+      "limits": {
+        "image": {
+          "caption": "Pistetavoite pysäyttää uudet lähdöt, mutta jo matkalla olevat hyökkäykset voivat päättyä.",
+          "alt": "Esimerkki automaattisten nomadien/samuraiden piste- ja pysäytysrajoista"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Pysäytä tämä automaatio tilin päivittäisen tavallisten hyökkäysten määrän täyttyessä, kunnes peli nollaa sen; 0 ei lisää rajaa.",
+            "label": "Tavallisten hyökkäysten päiväraja",
+            "recommendation": "0, jotta tapahtuman pistetavoite ohjaa sarjaa."
+          },
+          "minimum_remaining": {
+            "description": "Lopeta uusien hyökkäysten aloittaminen näin monta minuuttia ennen tapahtuman loppua.",
+            "label": "Pysäytä ennen tapahtuman loppua",
+            "recommendation": "30 minuuttia."
+          },
+          "score_target": {
+            "description": "Lopeta uusien hyökkäysten aloittaminen, kun ilmoitettu tapahtumapistemäärä saavuttaa tai ylittää tämän tavoitteen.",
+            "label": "Pysäytä tapahtumapistemäärässä",
+            "recommendation": "Käytä tavanomaista viimeistä henkilökohtaisen palkinnon rajapyykkiäsi, joka ylittää 0."
+          },
+          "travelling_attacks": {
+            "description": "Jo matkalla olevat hyökkäykset voivat päättyä pysäytysehdon jälkeen ja nostaa lopulliset pisteet tavoitteen yli.",
+            "label": "Matkalla olevat hyökkäykset"
+          }
+        },
+        "title": "Määritä piste- ja pysäytysrajat"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Hevosmatkan nopeutus",
+            "recommendation": "Matkahöyhen nopeaan matkustukseen.",
+            "description": "Valitse leirihyökkäyksiin sulalla, kolikoilla tai rubiineilla maksettava matkustusvaihtoehto."
+          },
+          "open_settings": {
+            "label": "Avaa asetukset",
+            "description": "Valitse Automaatio-sivulla automaattisten nomadien/samuraiden kortin asetuspainike."
+          },
+          "source_castle": {
+            "label": "Lähtölinna",
+            "recommendation": "Käytä tavallista tapahtumalinnaasi, jossa on tarpeeksi joukkoja ja työkaluja.",
+            "description": "Valitse Suuren valtakunnan linna, joka tarjoaa joukot ja työkalut leirihyökkäyksiin."
+          },
+          "nomad_preset": {
+            "description": "Valitse tallennettu hyökkäyskokoonpano nomadileirien joukoille, työkaluille ja muodostelmalle.",
+            "label": "Nomadihyökkäyksen kokoonpano",
+            "recommendation": "Luo ja valitse tavallinen nomadikokoonpanosi."
+          },
+          "samurai_preset": {
+            "description": "Valitse tallennettu hyökkäyskokoonpano samuraileirien joukoille, työkaluille ja muodostelmalle.",
+            "label": "Samuraihyökkäyksen kokoonpano",
+            "recommendation": "Luo ja valitse tavallinen samuraikokoonpanosi."
+          }
+        },
+        "image": {
+          "alt": "Esimerkki automaattisten nomadien/samuraiden lähteestä, kokoonpanoista ja matkasta",
+          "caption": "Luo molemmat tapahtumakokoonpanot ennen lähtölinnan ja matkustusvaihtoehdon valintaa."
+        },
+        "title": "Avaa automaattisten nomadien/samuraiden asetukset"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "Esimerkki leirien odotusajoista ja aikahyppyvarastoista",
+          "caption": "Jokainen säilytettävä määrä laskee aikahyppyesineitä, ei odotusajan minuutteja."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "Säilytä näin monta 10 minuutin aikahyppyä käyttämättömänä varalla.",
+            "label": "Säilytä 10 min",
+            "recommendation": "0 tavallisiin leirikierroksiin."
+          },
+          "keep_1m": {
+            "description": "Säilytä näin monta 1 minuutin aikahyppyä käyttämättömänä varalla.",
+            "label": "Säilytä 1 min",
+            "recommendation": "0 tavallisiin leirikierroksiin."
+          },
+          "keep_24h": {
+            "description": "Säilytä näin monta 24 tunnin aikahyppyä käyttämättömänä varalla.",
+            "label": "Säilytä 24 h",
+            "recommendation": "Varaa rakentamiseen tai muihin toimintoihin tarvitsemasi määrä."
+          },
+          "keep_30m": {
+            "description": "Säilytä näin monta 30 minuutin aikahyppyä käyttämättömänä varalla.",
+            "label": "Säilytä 30 min",
+            "recommendation": "0 tavallisiin leirikierroksiin."
+          },
+          "keep_5h": {
+            "description": "Säilytä näin monta 5 tunnin aikahyppyä käyttämättömänä varalla.",
+            "label": "Säilytä 5 h",
+            "recommendation": "Varaa rakentamiseen tai muihin toimintoihin tarvitsemasi määrä."
+          },
+          "keep_5m": {
+            "description": "Säilytä näin monta 5 minuutin aikahyppyä käyttämättömänä varalla.",
+            "label": "Säilytä 5 min",
+            "recommendation": "0 tavallisiin leirikierroksiin."
+          },
+          "keep_60m": {
+            "description": "Säilytä näin monta 60 minuutin aikahyppyä käyttämättömänä varalla.",
+            "label": "Säilytä 60 min",
+            "recommendation": "0 tavallisiin leirikierroksiin."
+          },
+          "skip_cooldowns": {
+            "description": "Käytä vahvistetun leirivoiton jälkeen saatavilla olevaa aikahyppyä kohteen odotusajan poistamiseen.",
+            "label": "Poista odotusaika jokaisen onnistuneen hyökkäyksen jälkeen",
+            "recommendation": "Päällä tavallisissa toistuvissa leirihyökkäyksissä; pois, kun haluat odottaa luonnollista odotusaikaa."
+          }
+        },
+        "title": "Valitse aikahypyt ja varastot"
+      },
+      "trial": {
+        "image": {
+          "alt": "Esimerkki väliaikaisesta ryöstöparonin linnan kokeesta",
+          "caption": "Koe käynnistää oikean hyökkäyksen ja korvaa tavallisen tapahtumatoiminnan ollessaan päällä."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "Korvaa tavallinen tapahtumatoiminta oikealla hyökkäyskokeella yhtä ryöstöparonin linnaa vastaan käyttäen nomadikokoonpanoa ja aikahyppyjä.",
+            "label": "Väliaikainen kattava ryöstöparonin linnan koe",
+            "recommendation": "Pois tavallisilta nomadi- tai samuraikierroksilta."
+          },
+          "target_x": {
+            "description": "Anna ryöstöparonin linnan vaakakoordinaatti vain väliaikaista koetta varten.",
+            "label": "Kohde X",
+            "recommendation": "Jätä käyttämättä, kun koe on pois päältä."
+          },
+          "target_y": {
+            "description": "Anna ryöstöparonin linnan pystykoordinaatti vain väliaikaista koetta varten.",
+            "label": "Kohde Y",
+            "recommendation": "Jätä käyttämättä, kun koe on pois päältä."
+          },
+          "trial_skips": {
+            "description": "Kokeen kytkeminen päälle ottaa myös aikahypyt käyttöön kokeessa.",
+            "label": "Kokeen aikahypyt"
+          }
+        },
+        "title": "Pidä väliaikainen koe pois päältä tavallisissa kierroksissa"
+      }
+    },
+    "feature": {
+      "description": "Automaattiset nomadit/samurait kehittää kelvollisia tapahtumaleirejä, valitsee heikoimman täysin kehitetyn leirin ja hyökkää siihen toistuvasti tapahtumalle tallennetulla hyökkäyskokoonpanolla, kunnes pysäytysraja täyttyy.",
+      "expectation": "Se odottaa aktiivista tapahtumaa, kelvollisia komentajia, joukkoja, työkaluja ja käytettäviä aikahyppyjä, jos odotusajan poisto on käytössä; matkalla olevat hyökkäykset voivat päättyä uusien lähtöjen pysähdyttyä.",
+      "name": "Automaattiset nomadit/samurait",
+      "summary": "Kehitä ja hyökkää nomadi- tai samuraileireihin"
+    },
+    "recommendationIntro": "Suositellut arvot kuvaavat automaattisten nomadien/samuraiden tavallista käyttöä; ne ovat ohjeita eivätkä muuta tallennettuja asetuksia."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "Päällä, kun olet tarkistanut ja tallentanut haluamasi asetukset.",
+            "description": "Ota Automaattinen Neuvonantaja käyttöön Automaatio-kortissa asetusten tarkistuksen jälkeen; jos Neuvonantaja on jo avattu, sarja voi alkaa heti.",
+            "label": "Automaattisen Neuvonantajan kytkin"
+          },
+          "save_settings": {
+            "label": "Tallenna asetukset",
+            "description": "Tallenna lähdelinna, kokoonpano, vaikeustasot, sarjan koko ja resurssibudjetit ennen tämän ikkunan sulkemista."
+          },
+          "activate_advisor": {
+            "description": "Jos Neuvonantaja on lukittu, avaa nykyisen tapahtuman vahvistus valitsemalla Aktivoi Neuvonantaja.",
+            "label": "Aktivoi Neuvonantaja"
+          },
+          "activate_and_spend": {
+            "description": "Lähetä vahvistettu aktivointi kelvollisella tapahtumamerkillä tai yleisellä Neuvonantajamerkillä; maksuttomassa tapahtumassa painike on Aktivoi Neuvonantaja.",
+            "label": "Aktivoi ja käytä merkki"
+          },
+          "cancel_activation": {
+            "description": "Sulje vahvistus lähettämättä aktivointia tai käyttämättä merkkiä.",
+            "label": "Peru aktivointi"
+          },
+          "confirm_paid_activation": {
+            "description": "Hyväksy, että Neuvonantajan aktivointi voi kuluttaa tapahtuma- tai yleismerkin, ellei peli ilmoita tapahtumaa maksuttomaksi.",
+            "label": "Vahvista maksullinen aktivointi"
+          }
+        },
+        "image": {
+          "alt": "Esimerkki Automaattisen Neuvonantajan tallennuksesta ja merkkien aktivoinnista",
+          "caption": "Tallennus tai käyttöönotto ei kuluta merkkiä; erikseen vahvistettu aktivointi voi kuluttaa yhden."
+        },
+        "title": "Tallenna, ota käyttöön ja aktivoi Neuvonantajan käyttöoikeus"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "Nomadivaikeustaso",
+            "recommendation": "Käytä korkeinta avattua vaikeusastetta, josta tavallinen kokoonpanosi selviää luotettavasti.",
+            "description": "Valitse avattu nomadivaikeustaso tapahtuman alkuun."
+          },
+          "samurai_difficulty": {
+            "label": "Samuraivaikeustaso",
+            "recommendation": "Käytä korkeinta avattua vaikeusastetta, josta tavallinen kokoonpanosi selviää luotettavasti.",
+            "description": "Valitse avattu samuraivaikeustaso tapahtuman alkuun."
+          },
+          "active_difficulty": {
+            "description": "Käytä aktiivisen tapahtuman nykyistä vaikeustasoa, tai automaatio odottaa sen muuttamisen sijaan.",
+            "label": "Aktiivisen tapahtuman vaikeustaso"
+          }
+        },
+        "title": "Valitse molempien tapahtumien vaikeusasteet",
+        "image": {
+          "alt": "Esimerkki nomadi- ja samurainneuvonantajan vaikeustasoista",
+          "caption": "Tallenna molempien tapahtumien vaikeustasot ja käytä jo käynnissä olevan tapahtuman tasoa."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Hevosmatkan nopeutus",
+            "recommendation": "Matkahöyhen nopeaan matkustukseen.",
+            "description": "Valitse sarjan matkustusvaihtoehto höyhenillä, kolikoilla tai rubiineilla."
+          },
+          "open_settings": {
+            "label": "Avaa asetukset",
+            "description": "Valitse Automaatio-sivulla Automaattisen Neuvonantajan kortin asetuspainike."
+          },
+          "source_castle": {
+            "label": "Lähtölinna",
+            "recommendation": "Käytä tavallista tapahtumalinnaasi, jossa on tarpeeksi joukkoja ja työkaluja.",
+            "description": "Valitse Suuren valtakunnan linna, joka antaa joukot ja työkalut Neuvonantajan sarjaan."
+          },
+          "attack_preset": {
+            "description": "Valitse tallennettu hyökkäyskokoonpano, jonka joukot, työkalut ja muodostelma kopioidaan jokaiseen pyydettyyn hyökkäykseen.",
+            "label": "Neuvonantajan hyökkäyskokoonpano",
+            "recommendation": "Luo ensin tavallinen kokoonpano aktiiviseen nomadi- tai samuraitapahtumaan ja valitse se."
+          },
+          "complete_copies": {
+            "description": "Käytettävissä olevat resurssit ja täydet kokoonpanokopiot voivat pienentää sarjaa enimmäishyökkäysmäärän alle.",
+            "label": "Täydet kokoonpanokopiot"
+          }
+        },
+        "image": {
+          "alt": "Esimerkki Automaattisen Neuvonantajan lähteestä, kokoonpanosta ja matkasta",
+          "caption": "Valitse Suuren valtakunnan lähdelinna ja tallennettu tapahtumakokoonpano ennen matkustusasetusta."
+        },
+        "title": "Avaa Automaattisen Neuvonantajan asetukset"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "Säilytä näin monta 24 tunnin aikahyppyä käyttämättömänä varalla.",
+            "label": "Säilytä 24 h",
+            "recommendation": "Varaa rakentamiseen tai muihin toimintoihin tarvitsemasi määrä."
+          },
+          "keep_5h": {
+            "description": "Säilytä näin monta 5 tunnin aikahyppyä käyttämättömänä varalla.",
+            "label": "Säilytä 5 h",
+            "recommendation": "Varaa rakentamiseen tai muihin toimintoihin tarvitsemasi määrä."
+          },
+          "keep_60m": {
+            "description": "Säilytä näin monta 60 minuutin aikahyppyä käyttämättömänä varalla.",
+            "label": "Säilytä 60 min",
+            "recommendation": "0 tavallisiin Neuvonantajan sarjoihin."
+          },
+          "coin_cost": {
+            "description": "Arvioi koko kolikkokustannus hyökkäystä kohti ennen aloitusta tehtävää varallisuustarkistusta varten muuttamatta pelin hintoja.",
+            "label": "Kolikot yhteensä hyökkäystä kohti",
+            "recommendation": "500 vain, jos se kattaa todelliset kokonaiskulut; muuten käytä suurempaa mitattua summaa."
+          },
+          "keep_coins": {
+            "description": "Jätä tämä määrä kolikoita sarjan budjetin ulkopuolelle.",
+            "label": "Säilytä kolikoita",
+            "recommendation": "Säilytä tavallinen rekrytointi- ja rakennusbudjettisi."
+          },
+          "keep_feathers": {
+            "description": "Jätä tämä määrä matkustushöyheniä sarjan budjetin ulkopuolelle.",
+            "label": "Säilytä höyheniä",
+            "recommendation": "0, ellet varaa höyheniä muihin toimintoihin."
+          },
+          "keep_rubies": {
+            "description": "Jätä tämä määrä rubiineja sarjan budjetin ulkopuolelle.",
+            "label": "Säilytä rubiineja",
+            "recommendation": "Säilytä muihin toimintoihin tarvittava saldo."
+          },
+          "ruby_cost": {
+            "description": "Arvioi matkustuksen rubiinikustannus hyökkäystä kohti; rubiinimatkalle vaaditaan positiivinen arvo.",
+            "label": "Rubiinit hyökkäystä kohti",
+            "recommendation": "0 Matkustushöyhenellä; rubiinimatkalle todellinen positiivinen hinta."
+          }
+        },
+        "image": {
+          "alt": "Esimerkki Automaattisen Neuvonantajan kolikko-, rubiini-, höyhen- ja aikahyppyvaroista",
+          "caption": "Kustannuskentät ovat suunnitteluarvioita; säilytettävät arvot laskevat käyttämättömiä resursseja tai aikahyppyesineitä."
+        },
+        "title": "Aseta resurssibudjetit ja varaukset"
+      },
+      "overview": {
+        "image": {
+          "alt": "Esimerkki Neuvonantajan edistymisestä ja tappioista",
+          "caption": "Yhteenveto näyttää edistymisen ja tappiot aloittamatta uutta sarjaa."
+        },
+        "items": {
+          "live_progress": {
+            "description": "Katso yhteenvedosta nykyinen ja pyydetty hyökkäysmäärä, voitot, tappiot sekä menetetyt yksiköt ja työkalut.",
+            "label": "Käynnissä oleva Neuvonantajan sarja"
+          },
+          "no_relaunch": {
+            "description": "Valmistunutta tai peruttua saman tapahtuman sarjaa ei käynnistetä automaattisesti uudelleen.",
+            "label": "Valmistunut tai peruttu sarja"
+          },
+          "refresh_overview": {
+            "description": "Pyydä päivitetyt tiedot sarjan edistymisestä, voitoista, tappioista ja menetyksistä.",
+            "label": "Päivitä yhteenveto"
+          }
+        },
+        "title": "Tarkastele käynnissä olevaa Neuvonantajan sarjaa"
+      },
+      "sizing": {
+        "image": {
+          "alt": "Esimerkki Automaattisen Neuvonantajan hyökkäysmäärästä ja tapahtuma-ajasta",
+          "caption": "Pyydetty määrä rajataan ennen aloitusta resurssien ja tapahtuma-ajan mukaan."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "Aseta tämän yhden Neuvonantajan sarjan hyökkäysten yläraja; resurssit ja jäljellä oleva aika voivat pienentää todellista määrää.",
+            "label": "Enimmäishyökkäykset",
+            "recommendation": "9 999, jotta resurssit ja tapahtuma-aika määräävät sarjan koon."
+          },
+          "minimum_remaining": {
+            "description": "Jätä tämä määrä minuutteja käyttämättä tapahtuma-ajan laskelmassa ennen aloitusta.",
+            "label": "Lopeta ennen tapahtuman päättymistä",
+            "recommendation": "30 minuuttia; tämä ei ole sarjan aikainen peruutusajastin."
+          }
+        },
+        "title": "Aseta sarjan koko ja tapahtuma-aika"
+      }
+    },
+    "feature": {
+      "description": "Automaattinen Neuvonantaja käynnistää yhden nomadi- tai samurainneuvonantajan hyökkäyssarjan, jonka koko määräytyy käytettävissä olevien resurssien ja jäljellä olevan tapahtuma-ajan mukaan.",
+      "expectation": "Sarja odottaa vastaavaa aktiivista vaikeustasoa ja avattua Neuvonantajaa; tallennus tai käyttöönotto ei kuluta merkkiä, mutta vahvistettu aktivointi voi kuluttaa.",
+      "name": "Automaattinen Neuvonantaja",
+      "summary": "Aloita yksi resurssien mukainen nomadi- tai samurainneuvonantajan sarja"
+    },
+    "recommendationIntro": "Suositellut arvot kuvaavat Automaattisen Neuvonantajan tavallista käyttöä; ne ovat ohjeita eivätkä muuta tallennettuja asetuksia."
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "Säilytä 10 min",
+            "description": "Jätä näin monta 10 minuutin aikahyppäysesinettä käyttämättä.",
+            "recommendation": "0 tavallisiin Khan-ketjuihin."
+          },
+          "keep_1m": {
+            "label": "Säilytä 1 min",
+            "description": "Jätä näin monta 1 minuutin aikahyppäysesinettä käyttämättä.",
+            "recommendation": "0 tavallisiin Khan-ketjuihin."
+          },
+          "keep_24h": {
+            "label": "Säilytä 24 h",
+            "recommendation": "Varaa rakentamiseen tai muihin toimintoihin tarvitsemasi määrä.",
+            "description": "Jätä näin monta 24 tunnin aikahyppäysesinettä käyttämättä."
+          },
+          "keep_30m": {
+            "label": "Säilytä 30 min",
+            "description": "Jätä näin monta 30 minuutin aikahyppäysesinettä käyttämättä.",
+            "recommendation": "0 tavallisiin Khan-ketjuihin."
+          },
+          "keep_5h": {
+            "label": "Säilytä 5 h",
+            "recommendation": "Varaa rakentamiseen tai muihin toimintoihin tarvitsemasi määrä.",
+            "description": "Jätä näin monta 5 tunnin aikahyppäysesinettä käyttämättä."
+          },
+          "keep_5m": {
+            "label": "Säilytä 5 min",
+            "description": "Jätä näin monta 5 minuutin aikahyppäysesinettä käyttämättä.",
+            "recommendation": "0 tavallisiin Khan-ketjuihin."
+          },
+          "keep_1h": {
+            "description": "Jätä näin monta 1 tunnin aikahyppäysesinettä käyttämättä.",
+            "label": "Säilytä 1 h",
+            "recommendation": "0 tavallisiin Khan-ketjuihin."
+          },
+          "skip_cooldowns": {
+            "description": "Varaa ja käytä riittävästi aikahyppäysesineitä leirin odotusaikojen poistamiseen hyökkäysten jälkeen.",
+            "label": "Ohita jokainen Khanin leirin odotusaika",
+            "recommendation": "Päällä; nykyinen asetusikkuna edellyttää tätä tallentamiseen."
+          },
+          "skip_shortage": {
+            "description": "Uudet leirihyökkäykset keskeytyvät, jos käytettävät aikahyppäysesineet eivät riitä vaadittuun odotusaikaan.",
+            "label": "Liian vähän käytettäviä aikahyppäyksiä"
+          }
+        },
+        "image": {
+          "alt": "Havainnekuva Automaattisen Khanin odotusaikojen ohituksesta ja aikahyppäysvarannoista",
+          "caption": "Varannot ovat esinemääriä, eivät minuutteja."
+        },
+        "title": "Aseta odotusajat ja varannot"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "Tavallisten hyökkäysten päiväraja",
+            "description": "Pysäytä tämän automaation uudet leirihyökkäykset tilin yhteisellä päivittäisellä tavallisten hyökkäysten laskurilla; 0 poistaa rajan.",
+            "recommendation": "0, ellei tarvitse koko tilin rajaa."
+          },
+          "event_end": {
+            "label": "Lopeta ennen tapahtuman päättymistä",
+            "description": "Pysäytä uudet leirihyökkäykset näin monta minuuttia ennen tapahtuman loppua.",
+            "recommendation": "5 minuuttia."
+          },
+          "nomad_points": {
+            "description": "Pysäytä ilmoitetulla pistemäärällä uudet Khan-hyökkäykset, palauta matkalla olevat hyökkäykset ja avaa pääportit; 0 poistaa pysäytyksen.",
+            "label": "Pysäytä nomadipisteisiin",
+            "recommendation": "0, ellet halua pysäyttää ja suojata valitulla pistemäärällä."
+          },
+          "replenish_tools": {
+            "description": "Korvaa puolustusmallista puuttuvat työkalut kelvollisista tarjouksista ja hylkää rubiineilla hinnoitellut paketit.",
+            "label": "Täydennä puolustustyökaluja",
+            "recommendation": "Päällä, jos haluat kelvollisia automaattiostoja."
+          }
+        },
+        "image": {
+          "alt": "Havainnekuva Automaattisen Khanin pisteistä, työkaluista ja päivärajasta",
+          "caption": "Positiivinen nomadipisteiden pysäytys myös palauttaa matkalla olevat Khan-hyökkäykset ja avaa päälinnan portit."
+        },
+        "title": "Aseta piste-, tarvike- ja päivärajat"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "Tallenna asetukset",
+            "description": "Tallenna valitut linnat, mallit, raivoasetukset, rajat, aikahyppäysvarannot ja suojaukset."
+          },
+          "enable_switch": {
+            "description": "Ota Automaattinen Khan käyttöön Automaatio-kortissa päälinnan puolustuksen tarkistamisen jälkeen.",
+            "label": "Automaattisen Khanin kytkin",
+            "recommendation": "Päällä tallennuksen ja puolustuksen valmistelun jälkeen."
+          },
+          "station_priority": {
+            "description": "Automaattinen asemointi käsittelee pelaajien saapuvat hyökkäykset erillään Khanin vastaiskuista.",
+            "label": "Automaattisen asemoinnin etusija"
+          }
+        },
+        "image": {
+          "alt": "Havainnekuva Automaattisen Khanin tallentamisesta ja käyttöönotosta",
+          "caption": "Tarkista päälinnan puolustus ennen Khanin vastaiskujen käynnistämistä."
+        },
+        "title": "Tallenna ja käynnistä Automaattinen Khan"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Hevosmatkan nopeutus",
+            "recommendation": "Matkahöyhen nopeaan matkustukseen.",
+            "description": "Valitse leirihyökkäyksiin matkustus höyhenillä, kolikoilla tai rubiineilla."
+          },
+          "open_settings": {
+            "label": "Avaa asetukset",
+            "description": "Valitse Automaatio-sivun Automaattinen Khan -kortin asetuspainike."
+          },
+          "attack_from": {
+            "description": "Valitse Suuren valtakunnan päälinna tai etuvartio Khanin leirihyökkäysten lähteeksi.",
+            "label": "Hyökkää kohteesta",
+            "recommendation": "Käytä etuvartiota, jossa hyökkäysarmeijasi on, jos mahdollista."
+          },
+          "camp_attack_preset": {
+            "description": "Valitse tallennettu hyökkäysmalli tavallisiin Khanin leirihyökkäyksiin.",
+            "label": "Leirin hyökkäysmalli",
+            "recommendation": "Luo ensin tavallinen Khan-hyökkäysmallisi."
+          },
+          "defend_at": {
+            "description": "Khanin vastaiskut puolustetaan tässä näkyvässä Suuren valtakunnan päälinnassa; kenttää ei voi muokata.",
+            "label": "Puolusta kohteessa"
+          },
+          "main_defense_preset": {
+            "description": "Valitse tallennettu puolustusmalli, joka otetaan uudelleen käyttöön päälinnassa ennen vastaiskuja.",
+            "label": "Päälinnan puolustusmalli",
+            "recommendation": "Luo tavallinen Khan-puolustusmallisi ja valmistele joukot ja työkalut."
+          }
+        },
+        "image": {
+          "alt": "Havainnekuva Automaattisen Khanin linnasta, malleista ja matkasta",
+          "caption": "Valmistele molemmat mallit ja päälinnan puolustus ennen hyökkäysketjun käynnistämistä."
+        },
+        "title": "Valitse linnat, mallit ja matka"
+      },
+      "protection": {
+        "image": {
+          "alt": "Havainnekuva Automaattisen Khanin päälinnan muurin suojauksesta",
+          "caption": "Muurisuojaus toimii vain, kun hyökkäykset lähtevät päälinnasta."
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "Käynnistä päälinnan suojaus, kun hyökkäysyksiköitä muurilla on näin monta.",
+            "label": "Muurin hyökkäysyksiköiden raja",
+            "recommendation": "1 000 hyökkäysyksikköä muurilla."
+          },
+          "outpost_source": {
+            "description": "Suojaus on pois käytöstä, kun etuvartio lähettää hyökkäykset ja päälinna puolustaa erikseen.",
+            "label": "Etuvartio lähteenä"
+          },
+          "protect_offense": {
+            "description": "Kun hyökkäät päälinnasta, avaa portit ja keskeytä Khan, jos liian moni hyökkäysjoukko puolustaisi muuria.",
+            "label": "Suojaa hyökkäysjoukot päälinnan muurilla",
+            "recommendation": "Päällä, kun hyökkäykset lähtevät päälinnasta."
+          }
+        },
+        "title": "Suojaa päälinnan muuri"
+      },
+      "rage": {
+        "image": {
+          "alt": "Havainnekuva Automaattisen Khanin raivosta ja hyökkäysluvista",
+          "caption": "Ajastettu raivopisteiden tehostin on eri asia kuin raivoliput."
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "Pysäytä uudet leirihyökkäykset, mutta jatka raivon käsittelyä, odotusaikoja ja puolustusta.",
+            "label": "Lukitse automaattiset Khan-hyökkäykset",
+            "recommendation": "Pois tavallisia leirihyökkäyksiä varten."
+          },
+          "max_rage_chain": {
+            "description": "Rajoita nykyisen tapahtuman hyväksyttyjä vastaiskuja ennen uusien leirihyökkäysten pysähtymistä; 0 poistaa rajan.",
+            "label": "Raivoketjun enimmäismäärä",
+            "recommendation": "0, ellet tarvitse rajaa vastaiskuille."
+          },
+          "rage_booster": {
+            "description": "Salli uudet automaattiset leirihyökkäykset vain ajastetun raivopistetehostimen ollessa aktiivinen.",
+            "label": "Vaadi raivopistetehostin",
+            "recommendation": "Pois, ellet halua hyökätä vain tehostimen kanssa."
+          },
+          "rage_continues": {
+            "description": "Raivoketjun raja ei pysäytä täyden raivon laukaisua, odotusaikoja eikä puolustuksen palautumista.",
+            "label": "Raivon käsittely jatkuu"
+          },
+          "trigger_full_rage": {
+            "description": "Provosoituu Khanin vastaisku, kun raivo on täysi.",
+            "label": "Laukaise Khan täydellä raivolla",
+            "recommendation": "Päällä, kun päälinna on valmis puolustamaan."
+          }
+        },
+        "title": "Aseta raivo ja hyökkäysluvat"
+      }
+    },
+    "feature": {
+      "description": "Automaattinen Khan hyökkää Khanin leiriin, poistaa odotusajat, käynnistää vastaiskut täydellä raivolla ja ylläpitää päälinnan puolustusta.",
+      "expectation": "Uudet leirihyökkäykset keskeytyvät asetetuilla rajoilla tai resurssipulassa samalla kun päälinnaa suojataan; pelaajien saapuvat hyökkäykset kuuluvat Automaattiselle asemoinnille.",
+      "name": "Automaattinen Khan",
+      "summary": "Ketjuta Khanin leirihyökkäyksiä ja puolusta vastaiskut päälinnassa"
+    },
+    "recommendationIntro": "Suositellut arvot kuvaavat Automaattisen Khanin tavallista käyttöä; ne ovat ohjeita eivätkä muuta tallennettuja asetuksia."
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "Automaattinen Berimond vahvistaa omistamaasi Berimond-leiriä valitun hyökkäysmallin joukko-osuuksien mukaan ja voi sen jälkeen hyökätä torneihin, täydentää työkaluja ja rakentaa vahvistetulla saaliilla.",
+      "expectation": "Siirrot odottavat tuoreita leirin ja luovuttajalinnan joukkomääriä, ilmoitettua kapasiteettia ja edellisen lähetyksen päättymistä; osittainen luovuttajavarasto voi tuottaa pienemmän lähetyksen, mutta tarvittavan lajin puute keskeyttää täydennyksen.",
+      "name": "Automaattinen Berimond",
+      "summary": "Huolla ja käytä Berimond-leiriäsi"
+    },
+    "recommendationIntro": "Suositukset koskevat Auto Berin tavanomaista käyttöä eivätkä muuta tallennettuja asetuksia.",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "Havainnolliset Auto Berin valinnaisen leirirakentamisen asetukset",
+          "caption": "Sisäänrakennettu ja tallennettu kohde, tallennustilat, talli taso 5, puu- ja kivivaraukset sekä seitsemän aikahyppyä."
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "Salli sellaisten hallitsemattomien rakennusten poistaminen, joita ei voi siirtää tai varastoida tarkan tavoitteen saavuttamiseksi.",
+            "label": "Salli purkaminen",
+            "recommendation": "Pois, ellet ole tarkistanut suunniteltuja poistoja."
+          },
+          "allow_premium_costs": {
+            "description": "Salli kelvolliset rakentamisvaiheet, jotka kuluttavat premium-valuuttaa.",
+            "label": "Salli premium-kustannukset",
+            "recommendation": "Pois, ellet nimenomaisesti halua premium-rakentamista."
+          },
+          "auto_beri_builder_lane": {
+            "description": "Rakenna tai paranna aktiivista Berimond-leirikohdetta vahvistetulla palanneella saaliilla tuomatta resursseja toisesta valtakunnasta.",
+            "label": "Auto Berin rakentaja",
+            "recommendation": "Päällä tavallista leirirakentamista varten, kun kulutusluvat on tarkistettu."
+          },
+          "camp_resource_reserves": {
+            "description": "Pidä valitut puu- ja kivimäärät pois leirirakentamisesta.",
+            "label": "Leirin resurssivaraukset",
+            "recommendation": "Puu 0 ja kivi 0, jos ylijäämää saa käyttää."
+          },
+          "construction_time_skip_reserves": {
+            "description": "Aseta erikseen säilytettävien 1 min, 5 min, 10 min, 30 min, 1 h, 5 h ja 24 h aikahyppyjen määrät.",
+            "label": "Rakentamisen ajansäästövaraukset",
+            "recommendation": "Säilytä 0 kutakin lyhyttä aikahyppyä; varaa 1 h, 5 h ja 24 h varasto muihin toimiin."
+          },
+          "optional_custom_camp_target": {
+            "description": "Tallenna Toiminnallinen tärkeille rakennuksille, Asettelu rakennusten paikoille ilman koristeita tai Tarkka kaikille tuetuille yksityiskohdille.",
+            "label": "Valinnainen oma leiritavoite",
+            "recommendation": "Käytä sisäänrakennettua kohdetta, ellei tarkistettua omaa kohdetta tarvita."
+          },
+          "stable_target": {
+            "description": "Valitse sisäänrakennetun kohteen ryhmätallin tasoksi 1–5.",
+            "label": "Tallin tavoitetaso",
+            "recommendation": "Taso 5 tavalliseen tapahtumarakentamiseen, jos resurssit riittävät."
+          },
+          "use_construction_time_skips": {
+            "description": "Nopeuta vahvistettua leirirakentamista ja säilytä valitut rakennuksen aikahyppyvaraukset.",
+            "label": "Käytä rakentamisen ajansäästöjä",
+            "recommendation": "Päällä tavallista rakentamista varten, jos aikahyppyjä on riittävästi."
+          },
+          "keep_skip_10m": {
+            "description": "Pidä tämä määrä 10m rakennusaikahyppyjä erillään; aseta varaus arvoon 0 tavallisessa käytössä.",
+            "label": "Säilytä 10m aikahyppyjä"
+          },
+          "keep_skip_1h": {
+            "description": "Varaa tämä määrä 1h rakennusaikahyppyjä muihin toimintoihin.",
+            "label": "Säilytä 1h aikahyppyjä"
+          },
+          "keep_skip_1m": {
+            "description": "Pidä tämä määrä 1m rakennusaikahyppyjä erillään; aseta varaus arvoon 0 tavallisessa käytössä.",
+            "label": "Säilytä 1m aikahyppyjä"
+          },
+          "keep_skip_24h": {
+            "description": "Varaa tämä määrä 24h rakennusaikahyppyjä muihin toimintoihin.",
+            "label": "Säilytä 24h aikahyppyjä"
+          },
+          "keep_skip_30m": {
+            "description": "Pidä tämä määrä 30m rakennusaikahyppyjä erillään; aseta varaus arvoon 0 tavallisessa käytössä.",
+            "label": "Säilytä 30m aikahyppyjä"
+          },
+          "keep_skip_5h": {
+            "description": "Varaa tämä määrä 5h rakennusaikahyppyjä muihin toimintoihin.",
+            "label": "Säilytä 5h aikahyppyjä"
+          },
+          "keep_skip_5m": {
+            "description": "Pidä tämä määrä 5m rakennusaikahyppyjä erillään; aseta varaus arvoon 0 tavallisessa käytössä.",
+            "label": "Säilytä 5m aikahyppyjä"
+          },
+          "saved_targets": {
+            "description": "Tallennus säilyttää ja aktivoi tarkistetun oman kohteen heti; toisen tallennetun kohteen valinta aktivoi senkin heti.",
+            "label": "Tallennetut omat kohteet"
+          },
+          "stone_reserve": {
+            "description": "Pidä tämä määrä leirikiveä pois rakennuskuluista; käytä arvoa 0, jos ylijäämä voidaan käyttää.",
+            "label": "Kivivaraus"
+          },
+          "use_built_in_default": {
+            "description": "Palaa heti sisäänrakennettuun kohteeseen säilyttäen tallennetut omat kohteet.",
+            "label": "Käytä sisäänrakennettua oletusta"
+          },
+          "wood_reserve": {
+            "description": "Pidä tämä määrä leiripuuta pois rakennuskuluista; käytä arvoa 0, jos ylijäämä voidaan käyttää.",
+            "label": "Puuvaraus"
+          }
+        },
+        "title": "Valitse valinnainen leirirakentaminen"
+      },
+      "readiness": {
+        "image": {
+          "alt": "Havainnolliset Auto Berin tornihyökkäysvalmiuden asetukset",
+          "caption": "Tehostinvaatimuksen tila ja mallin kokoonpano ilman todellista tehostinta tai asiakastietoja."
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "Tarkista valitun mallin aallot, joukot ja työkalut ennen hyökkäysten käynnistämistä.",
+            "label": "Hyökkäysmallin kokoonpano",
+            "recommendation": "Pidä jokaista valittua joukkotyyppiä ja työkalua riittävästi luovuttajalla ja leirissä tavanomaista hyökkäystahtiasi varten."
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "Vaadi aktiivinen urhoollisuustehostin ennen siirtojen, työkaluostojen, leirin valmistelun, tornihyökkäysten tai rakentamisen jatkamista.",
+            "label": "Suorita vain urhoollisuustehostimella",
+            "recommendation": "Päällä, jos kaikkien Auto Berin osien tulee riippua tehostimesta."
+          }
+        },
+        "title": "Valmistele tornihyökkäykset"
+      },
+      "save": {
+        "image": {
+          "alt": "Havainnolliset Auto Berin tallennus- ja käyttöönottoasetukset",
+          "caption": "Valmistelulista, kytkin ja valinnainen kalenteri ilman oikeaa tiliä."
+        },
+        "items": {
+          "automation_switch": {
+            "description": "Käynnistä Auto Beri Automaatio-kortista tarkistettuasi leirin, luovuttajan joukot, mallin ja valinnaiset kulut.",
+            "label": "Automaation kytkin",
+            "recommendation": "Päällä asetusten jälkeen."
+          },
+          "calendar": {
+            "description": "Jätä kalenteri pois jatkuvaa toimintaa varten tai määritä tavalliset tuntisi ja tallenna aikataulu, jos tarvitset aikaikkunan.",
+            "label": "Kalenteri",
+            "recommendation": "Pois jatkuvassa tapahtumakäytössä."
+          },
+          "save_settings": {
+            "description": "Tallenna malli, luovuttaja, siirtotahti, hyökkäysrajat, työkalut ja valinnaiset rakennusvalinnat ennen automaation käynnistämistä.",
+            "label": "Tallenna asetukset"
+          }
+        },
+        "title": "Tallenna ja käynnistä"
+      },
+      "setup": {
+        "image": {
+          "alt": "Havainnolliset Auto Berin hyökkäys- ja huoltoasetukset",
+          "caption": "Tallennettu hyökkäysmalli, Suuren valtakunnan luovuttajalinna, Matkahöyhen, hyökkäystarkistus ja päiväkohtainen raja."
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "Määritä, kuinka usein Auto Beri etsii seuraavaa tornihyökkäystä.",
+            "label": "Hyökkäysten tarkistusväli",
+            "recommendation": "Pidä tavallinen 30 sekunnin väli, ellet halua harvempia tarkistuksia."
+          },
+          "attack_preset": {
+            "description": "Valitse tallennettu Berimond-hyökkäyskokoonpano; Auto Beri käyttää sen joukko-osuuksia siirtoihin ja tornihyökkäyksiin.",
+            "label": "Hyökkäysmalli",
+            "recommendation": "Luo ja valitse ensin tavallinen Berimond-mallisi."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Lopeta uudet Auto Berin tornihyökkäykset, kun koko tilin normaalien hyökkäysten päivittäinen määrä saavuttaa tämän rajan; 0 poistaa lisärajan.",
+            "label": "Normaalien hyökkäysten päiväraja",
+            "recommendation": "0, ellet käytä koko tilin rajaa."
+          },
+          "horse_travel_boost": {
+            "description": "Valitse tornihyökkäyksiin höyhen-, kolikko- tai rubiinimatka.",
+            "label": "Matkanopeutus",
+            "recommendation": "Matkahöyhen nopeaan matkaan ilman rubiinimatkaa."
+          },
+          "open_settings": {
+            "description": "Avaa Auto Beri -kortin asetukset Automaatio-sivulla.",
+            "label": "Avaa asetukset"
+          },
+          "source_castle": {
+            "description": "Valitse nämä joukot lähettävä Suuren valtakunnan linna tai etuvartio.",
+            "label": "Luovuttajalinna",
+            "recommendation": "Valitse linna, jossa hyökkäysarmeijasi on."
+          }
+        },
+        "title": "Valitse hyökkäys ja huoltolähde"
+      },
+      "tools": {
+        "image": {
+          "alt": "Havainnolliset Auto Berin leirityökalujen asetukset",
+          "caption": "Kolme työkalujen vähimmäisvarastoa ja selvästi kuvitteellinen leirivarasto."
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "Täydennä näin monta leiriin sijoitettua muurinmurtajaa samalla säännöllä.",
+            "label": "Muurinmurtajien vähimmäismäärä",
+            "recommendation": "Sovita määrä tavallisen mallisi käyttöön."
+          },
+          "mantlets_minimum": {
+            "description": "Täydennä näin monta leiriin sijoitettua suojakilpeä samalla säännöllä.",
+            "label": "Suojakilpien vähimmäismäärä",
+            "recommendation": "Sovita määrä tavallisen mallisi käyttöön."
+          },
+          "scaling_ladders_minimum": {
+            "description": "Täydennä näin monta leiriin sijoitettua tikasta kelvollisilla kolikkotarjouksilla; 0 jättää ne hallitsematta.",
+            "label": "Tikkaiden vähimmäismäärä",
+            "recommendation": "Sovita määrä tavalliseen malliisi ja hyökkäystahtiisi."
+          }
+        },
+        "title": "Ylläpidä leirin työkaluja"
+      },
+      "transfers": {
+        "image": {
+          "alt": "Havainnolliset Auto Berin suhteellisten joukkojen siirtoasetukset",
+          "caption": "Kuvitteellinen suhde 2:1, leirivarasto, vapaa kapasiteetti ja yhden tyypin osittainen lähetys; luvut ovat esimerkkejä eivätkä tallennettuja oletuksia."
+        },
+        "items": {
+          "check_interval": {
+            "description": "Määritä, kuinka usein Auto Beri päivittää vapaan siirtokapasiteetin ja molempien linnojen joukkomäärät.",
+            "label": "Tarkistusväli",
+            "recommendation": "Pidä tavallinen 30 sekunnin väli."
+          },
+          "food_only": {
+            "description": "Vain mallin Ruokaa kuluttavia joukkoja voidaan siirtää; tukemattomat yksiköt tai ratkaisemattomat joukkoperheet keskeyttävät toiminnan perustelun kanssa.",
+            "label": "Vain Ruokaa käyttävät joukot"
+          },
+          "minimum_free_capacity": {
+            "description": "Aloita siirrot vasta, kun ilmoitettu vapaa kapasiteetti saavuttaa tämän rajan; yksittäinen suhteellinen lähetys voi olla pienempi.",
+            "label": "Vapaan kapasiteetin vähimmäismäärä",
+            "recommendation": "1 vapaa joukkojen paikka tavalliseen suhteelliseen täydennykseen."
+          },
+          "owned_berimond_camp": {
+            "description": "Auto Beri löytää omistamasi Berimond-leirin automaattisesti, joten leirin tunnusta ei tarvitse syöttää.",
+            "label": "Oma Berimond-leiri"
+          },
+          "partial_donor": {
+            "description": "Jos luovuttajalla on osa tarvittavasta joukkotyypistä, Auto Beri lähettää pienemmän määrän; jos tyyppiä ei ole lainkaan, se odottaa toisen tyypin lähettämisen sijaan.",
+            "label": "Luovuttajan osittainen varasto"
+          },
+          "pending_transfer": {
+            "description": "Auto Beri odottaa jokaisen lähetyksen saapumista ja päivittää leirivaraston ennen mallin suhteen laskemista uudelleen.",
+            "label": "Odottava siirto"
+          },
+          "preset_troop_mix": {
+            "description": "Auto Beri laskee yhteen valitun mallin aaltojen ja sisäpihan toistuvat joukkopaikat ja täydentää yhtä aliedustettua tyyppiä kerrallaan.",
+            "label": "Mallin joukko-osuudet"
+          },
+          "troop_transport_skip": {
+            "description": "Valitse käytettävän esineen kesto, kun kuljetuksen ajansäästö on käytössä.",
+            "label": "Kuljetuksen ajansäästö",
+            "recommendation": "Käytä 1 tunnin aikahyppyä tavallisiin vahvistettuihin siirtoihin."
+          },
+          "use_troop_transport_time_skips": {
+            "description": "Käytä valittua ajansäästöä vahvistettuun siirtoon sen ollessa matkalla.",
+            "label": "Käytä kuljetuksen ajansäästöjä",
+            "recommendation": "Päällä tavalliseen leirin täydennykseen, jos aikahyppyvarasto riittää."
+          }
+        },
+        "title": "Määritä suhteelliset joukkojen siirrot"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "Auto Storm voi avata ja rakentaa Myrskylinnan, hyökätä linnoituksiin ja resurssisaarille, tuoda joukkoja ja ostaa valittuja Lunan palkintoja.",
+      "expectation": "Jokainen toiminto käyttää tuoreita pelitietoja ja tallennettuja lupiasi; premium-rakentaminen, hyökkäykset ja ostot rajoittuvat valintoihisi.",
+      "name": "Auto Storm",
+      "summary": "Hallitse Myrskylinnaa, hyökkäyksiä ja palkintoja"
+    },
+    "recommendationIntro": "Suositukset kuvaavat Auto Stormin tavallista käyttöä; ne ovat neuvoja eivätkä muuta tallennettuja asetuksia.",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "Esimerkkikuva Myrskylinnan avaamisesta ja kohteen tallentamisesta",
+          "caption": "Aloituslinnan valinta, tallennustavat ja vapaaehtoinen kohteen aktivointi ilman oikeaa ostoa tai asiakastiliä."
+        },
+        "items": {
+          "automatic_open": {
+            "description": "Kun Myrsky on lukittu, valitse saatavilla oleva virallinen aloituslinna ja tarkista sen näytetty hinta ennen avaamisen sallimista.",
+            "label": "Avaa Myrskylinna automaattisesti",
+            "recommendation": "Päällä, jos haluat Auto Stormin avaavan tavallisen aloituslinnan hinnan tarkistamisen jälkeen."
+          },
+          "blueprint": {
+            "description": "Tallennettu kohde otetaan heti käyttöön; Keskeytä kohde pysäyttää sovituksen mutta säilyttää tallennetut kohteet.",
+            "label": "Tallennettu kohde",
+            "recommendation": "Pidä tarkistettu Toiminnallinen kohde käytössä tavallista rakentamista varten."
+          },
+          "capture_castle": {
+            "description": "Valitse nykyinen Myrskylinnasi ennen rakennuskohteen tallentamista.",
+            "label": "Myrskylinna",
+            "recommendation": "Tallenna linna, jota aiot hallita."
+          },
+          "combat_only": {
+            "description": "Linnoituksia ja saaria voi vastaan taistella ilman tallennettua rakennuskohdetta.",
+            "label": "Taistelu ilman kohdetta"
+          },
+          "decoration_preset": {
+            "description": "Käytä halutessasi valittua koriste-esiasetusta rakentamisen jälkeen.",
+            "label": "Koriste-esiasetus rakentamisen jälkeen",
+            "recommendation": "Jätä tyhjäksi, ellet halua erillistä koristeasettelua."
+          },
+          "exact": {
+            "description": "Tallenna kaikki tuetut kohdetiedot tarkkaa kopiota varten.",
+            "label": "Tarkka tallennus",
+            "recommendation": "Käytä vasta koko kohteen tarkistamisen jälkeen."
+          },
+          "functional": {
+            "description": "Tallenna kohde Myrskyn tärkeimmille toiminnoille kopioimatta rakennusten jokaista sijaintia.",
+            "label": "Toiminnallinen tallennus",
+            "recommendation": "Toiminnallinen sopii tavalliseen ylläpitoon."
+          },
+          "layout": {
+            "description": "Tallenna rakennustyypit ja sijainnit ilman koristeita.",
+            "label": "Asettelun tallennus",
+            "recommendation": "Käytä vain, jos rakennusten sijainnilla on väliä."
+          },
+          "open_settings": {
+            "description": "Avaa Auto Stormin asetukset Automaatio-kortista.",
+            "label": "Avaa asetukset"
+          },
+          "starter_castle": {
+            "description": "Valitse seuraavaa lukittua kautta varten tällä hetkellä saatavilla oleva virallinen Myrskyn aloituslinna.",
+            "label": "Avattava linna",
+            "recommendation": "Valitse tavallinen kohtuuhintainen aloituslinna hinnan tarkistamisen jälkeen."
+          }
+        },
+        "title": "Avaa ja tallenna Myrskylinnasi"
+      },
+      "combat": {
+        "image": {
+          "alt": "Esimerkkikuva linnoitus- ja saaristohyökkäysten asetuksista",
+          "caption": "Esimerkin akvamariinisaaret, linnoitustasot, kohdejärjestys ja miehityspuolustajat."
+        },
+        "items": {
+          "defenders": {
+            "description": "Valitse vallatulle saarelle jäävien puolustajien lajit ja määrät; tyhjä lista jättää yhden eloonjääneen vahvistetun voiton jälkeen.",
+            "label": "Saaren puolustusyksiköt",
+            "recommendation": "Valitse puolustajia, jos yksi eloonjäänyt ei riitä suunnitelmaasi."
+          },
+          "fort_preset": {
+            "description": "Valitse linnoituksia varten tallennettu joukko- ja työkalumuodostelma.",
+            "label": "Linnoitushyökkäyksen esiasetus",
+            "recommendation": "Käytä tavallista linnoitusesiasetustasi."
+          },
+          "forts": {
+            "description": "Ota hyökkäykset käyttöön valituille virallisille linnoitustasoille 40–80.",
+            "label": "Myrskyn linnoitukset",
+            "recommendation": "Päällä tasoille, jotka valittu esiasetus päihittää luotettavasti."
+          },
+          "horse": {
+            "description": "Valitse Myrskyhyökkäysten matkustustavaksi höyhen, kolikot tai rubiinit.",
+            "label": "Hevosmatkan tehostus",
+            "recommendation": "Matkahöyhen nopeaan matkaan ilman rubiinimatkaa."
+          },
+          "island_preset": {
+            "description": "Valitse saaria varten tallennettu joukko- ja työkalumuodostelma.",
+            "label": "Saaren hyökkäysesiasetus",
+            "recommendation": "Käytä tavallista saariesiasetustasi."
+          },
+          "island_resources": {
+            "description": "Valitse, mille puu-, kivi- tai akvamariinisaarille voidaan hyökätä.",
+            "label": "Saaren resurssit",
+            "recommendation": "Valitse akvamariini sen keräämistä varten."
+          },
+          "island_sizes": {
+            "description": "Valitse suuria, pieniä tai kummankin kokoisia saaria valituille resursseille.",
+            "label": "Saaren koot",
+            "recommendation": "Suuret ja pienet tavalliseen akvamariinin keräämiseen."
+          },
+          "islands": {
+            "description": "Ota käyttöön valittujen resurssien ja kokojen saarten valloitus.",
+            "label": "Resurssisaaret",
+            "recommendation": "Päällä, jos haluat akvamariinia suurilta ja pieniltä saarilta."
+          },
+          "minimum_attacks": {
+            "description": "Hyökkää vain linnoituksiin, joissa on vähintään näin monta hyökkäystä jäljellä.",
+            "label": "Hyökkäyksiä jäljellä vähintään",
+            "recommendation": "0 sallii kaikki sopivat linnoitukset."
+          },
+          "priority": {
+            "description": "Järjestä käytössä olevat saari- ja linnoituskohteiden ryhmät; kussakin ryhmässä lähin kelvollinen kohde hyökätään ensin.",
+            "label": "Hyökkäyskohteiden etusija",
+            "recommendation": "Suuret saaret, pienet saaret ja sitten tasojen 80–40 linnoitukset akvamariinin keräämiseen."
+          }
+        },
+        "title": "Valitse linnoitukset ja resurssisaaret"
+      },
+      "construction": {
+        "image": {
+          "alt": "Esimerkkikuva rakentamisen ja varantojen asetuksista",
+          "caption": "Resurssikuljetus, kulutusluvat, varannot ja sataman taso ovat esimerkkejä."
+        },
+        "items": {
+          "demolition": {
+            "description": "Salli sellaisten rakennusten poistaminen täsmällisestä kohteesta, joita ei voi siirtää tai varastoida.",
+            "label": "Salli purkaminen",
+            "recommendation": "Pois, ellet rakenna uudelleen tarkistettua asettelua."
+          },
+          "donor_reserves": {
+            "description": "Jätä valitut puu-, kivi- ja akvamariinimäärät jokaiselle luovuttajalle ennen resurssikuljetusta.",
+            "label": "Luovuttajien suojatut varannot",
+            "recommendation": "Suojaa tavallinen puu- ja kivirakennusbudjettisi; akvamariini 0, jos sitä ei käytetä."
+          },
+          "harbor_level": {
+            "description": "Valitse sataman tavoitetaso 1, 2 tai 3; tasot 2 ja 3 vaativat premium-rakennuspolkuja.",
+            "label": "Sataman tavoitetaso",
+            "recommendation": "Taso 1, ellei premium-parannuksia ole suunniteltu."
+          },
+          "harbor": {
+            "description": "Pidä satama valitulla tasolla, vaikka tallennettu kohde olisi erilainen.",
+            "label": "Paranna satamaa",
+            "recommendation": "Päällä tasolla 1 tavallisessa käytössä."
+          },
+          "premium": {
+            "description": "Salli kelvolliset rakennusvaiheet, jotka käyttävät premium-valuuttaa.",
+            "label": "Salli premium-kulut",
+            "recommendation": "Pois, ellei premium-rakentamista ole suunniteltu."
+          },
+          "resource_transport": {
+            "description": "Salli puuttuvien rakennusresurssien vahvistetut toimitukset luovuttajalinnoista.",
+            "label": "Kuljeta puuttuvat resurssit",
+            "recommendation": "Päällä tavallista rakentamista varten."
+          },
+          "skip_reserves": {
+            "description": "Säilytä valittu määrä 1 min, 5 min, 10 min, 30 min, 1 h, 5 h ja 24 h esineitä rakentamiseen ja kuljetuksiin.",
+            "label": "Aikaohitukset varalla",
+            "recommendation": "Lyhyitä ohituksia 0, ellei niitä tarvita muualla; säästä 1 h, 5 h ja 24 h varastoa muihin tapahtumiin."
+          },
+          "storm_reserves": {
+            "description": "Pidä valitut puu-, kivi- ja akvamariinimäärät pois rakentamisesta.",
+            "label": "Myrskylinnan kulutusvarannot",
+            "recommendation": "Puu 0 ja kivi 0, jos ylijäämää saa käyttää; määritä akvamariini palkintobudjettisi mukaan."
+          },
+          "time_skips": {
+            "description": "Käytä kelvollisia aikahyppyjä rakentamiseen sekä resurssi- ja joukkokuljetuksiin säilyttäen valitut varaukset.",
+            "label": "Käytä rakentamisen ja kuljetusten aikahyppyjä",
+            "recommendation": "Päällä, jos haluat nopeuttaa tavallista rakentamista."
+          }
+        },
+        "title": "Aseta rakentaminen ja resurssisuoja"
+      },
+      "luna": {
+        "image": {
+          "alt": "Esimerkkikuva Lunan palkintojen asetuksista",
+          "caption": "Akvamariinivaranto, rajatut ostotavoitteet, toistettavat palkinnot ja etusija."
+        },
+        "items": {
+          "cost_cap": {
+            "description": "Lue pelin ilmoittama kunkin palkinnon hinta ja ostoraja.",
+            "label": "Hinta ja ostoraja",
+            "recommendation": "Tarkista molemmat vain luettavat arvot ennen käyttöönottoa."
+          },
+          "keep_aqua": {
+            "description": "Jätä tämä akvamariinimäärä Lunan ostojen ulkopuolelle.",
+            "label": "Säilytä akvamariinia",
+            "recommendation": "0, jos kaikki ylijäämä voidaan käyttää palkintoihin; muuten varaa suunnittelemasi määrä."
+          },
+          "priority": {
+            "description": "Kauppa käsittelee ensin pienemmän numeron ostotavoitteet.",
+            "label": "Etusija",
+            "recommendation": "Määritä 1, 2 ja 3 haluamaasi järjestykseen ja sijoita rajalliset tavoitteet ennen rajattomia palkintoja."
+          },
+          "search": {
+            "description": "Etsi virallisia Lunan palkintoja nimellä ennen oston määrittämistä.",
+            "label": "Etsi Lunan palkinto",
+            "recommendation": "Etsi palkinto, jonka todella haluat."
+          },
+          "target_total": {
+            "description": "Aseta rajatulle palkinnolle haluttu ostojen kokonaismäärä.",
+            "label": "Tavoiteltu kokonaismäärä",
+            "recommendation": "Aseta vain määrä, jonka aiot ostaa."
+          },
+          "unlimited": {
+            "description": "Jatka sopivan toistettavan palkinnon ostamista niin kauan kuin varanto ja kaupan raja sallivat.",
+            "label": "Rajaton",
+            "recommendation": "Päällä vain säännöllisesti haluamillesi toistettaville palkinnoille."
+          },
+          "use": {
+            "description": "Valitse palkinto sen automaattista ostoa varten.",
+            "label": "Käytä palkintoa",
+            "recommendation": "Ota käyttöön vain halutut palkinnot."
+          }
+        },
+        "title": "Valitse Lunan akvamariinipalkinnot"
+      },
+      "save": {
+        "image": {
+          "alt": "Esimerkkikuva Auto Stormin tallennuksesta ja käyttöönotosta",
+          "caption": "Päivittäinen hyökkäysraja, toimintatavan tarkistus, vain luettava kartan päivitys ja automaation kytkin."
+        },
+        "items": {
+          "daily_limit": {
+            "description": "Pysäytä uudet Auto Storm -hyökkäykset koko tilin päivittäisessä tavallisten hyökkäysten määrässä; 0 poistaa lisärajan.",
+            "label": "Päivittäinen tavallisten hyökkäysten raja",
+            "recommendation": "0, ellet käytä tilin yhteistä rajaa."
+          },
+          "enable": {
+            "description": "Ota Auto Storm käyttöön Automaatio-kortissa, kun tallennetut valinnat ovat valmiit.",
+            "label": "Automaation kytkin",
+            "recommendation": "Päälle asetusten jälkeen."
+          },
+          "map_refresh": {
+            "description": "Lue Myrskykartan virallinen päivitysväli.",
+            "label": "Kartan päivitysväli",
+            "recommendation": "Vain luettava väli on 2 tuntia; odota muutosten jälkeen uutta kartoitusta."
+          },
+          "policy_check": {
+            "description": "Aseta, kuinka usein Auto Storm tarkistaa asetukset ja mahdolliset tehtävät.",
+            "label": "Toimintatavan tarkistusväli",
+            "recommendation": "Pidä tavallinen 30 sekunnin väli."
+          },
+          "save": {
+            "description": "Tallenna linna-, rakentamis-, taistelu-, joukkojen tuonti- ja Luna-valinnat ennen automaation käynnistämistä.",
+            "label": "Tallenna asetukset",
+            "recommendation": "Tallenna kaikkien kulutuslupien tarkistamisen jälkeen."
+          }
+        },
+        "title": "Tallenna Auto Storm ja ota se käyttöön"
+      },
+      "troops": {
+        "image": {
+          "alt": "Esimerkkikuva joukkojen tuonnista ja vain luettavista arvioista",
+          "caption": "Luovuttajien järjestys, 1 000 jäljelle jätettävää joukkoa ja vain luettavat kapasiteettiarviot."
+        },
+        "items": {
+          "attack_history": {
+            "description": "Lue palvelimen nollauksesta vahvistetut Storm-hyökkäykset jaettuna 24:llä, ei liukuvaa 24 tunnin keskiarvoa.",
+            "label": "Hyökkäysten keskiarvo nollauksen jälkeen",
+            "recommendation": "Tarkista tämä vain luettava arvio ennen tuontitarpeen muuttamista."
+          },
+          "committed_cap": {
+            "description": "Lue automaattinen raja, joka sisältää sijoitetut joukot, liikkeet, kuljetukset ja palaavat joukot.",
+            "label": "Myrskyyn sidottujen joukkojen raja",
+            "recommendation": "Tarkista tämä vain luettava raja ennen tuonnin lisäämistä."
+          },
+          "donors": {
+            "description": "Valitse luovuttajalinnat näytetyssä järjestyksessä; osittainen varasto voi toimittaa pienemmän erän.",
+            "label": "Luovuttajalinnat",
+            "recommendation": "Valitse tavalliset joukkotoimittajasi haluamassasi järjestyksessä."
+          },
+          "import": {
+            "description": "Tuo puuttuvat hyökkäys- tai valitut puolustusjoukot Myrskyyn luovuttajalinnoista.",
+            "label": "Tuo puuttuvat joukot",
+            "recommendation": "Päällä, jos Myrskylinnasi tarvitsee säännöllistä joukkotäydennystä."
+          },
+          "map_coverage": {
+            "description": "Tarkista kartan kattavuus ennen kuin luotat näytettyihin kohteisiin.",
+            "label": "Kartan kattavuus",
+            "recommendation": "Odota ajantasaista kattavuutta, jos kohteita puuttuu."
+          },
+          "minimum_kept": {
+            "description": "Pidä Myrskyssä vähintään näin monta joukkoa hyökkäyksen lähettämisen jälkeen ja säilytä käytössä olevien esiasetusten sekoitus.",
+            "label": "Joukkoja jäljellä vähintään lähetyksen jälkeen",
+            "recommendation": "1 000 joukkoa tavalliseksi varannoksi, mukautettuna omaan armeijaasi."
+          },
+          "preset_average": {
+            "description": "Lue aktiivisten hyökkäysesiasetusten keskimääräinen joukkojen tarve, mukaan lukien valitut saaren puolustajat.",
+            "label": "Keskimääräinen aktiivinen esiasetus",
+            "recommendation": "Vertaa tätä vain luettavaa arviota armeijaasi."
+          }
+        },
+        "title": "Tuo ja seuraa Myrskyn joukkoja"
+      }
+    }
+  }
+}

@@ -33,6 +33,7 @@ export interface EquipmentPriorityProfile {
 export interface EquipmentPriorityGroup {
 	key: string;
 	label: string;
+	semanticLabel?: string;
 	category: number;
 	categoryLabel: string;
 	group: number;
@@ -51,6 +52,11 @@ export interface EquipmentTargetProfile {
 }
 
 export interface EquipmentEffectMetadata extends OfficialEquipmentEffectGroupingMetadata {
+	semanticName?: unknown;
+	semanticTemplate?: unknown;
+	semanticCategoryName?: unknown;
+	semanticEffectGroupPassive?: unknown;
+	semanticEffectGroupActive?: unknown;
 	scope?: unknown;
 	isPvPFight?: unknown;
 	isPvEFight?: unknown;
@@ -218,6 +224,14 @@ export function groupEquipmentPriorityEffects(
 	candidateEffectIDs: readonly number[],
 	effects: Record<number, EquipmentEffectMetadata>,
 ): EquipmentPriorityGroup[] {
+	const canonicalEffects: Record<number, EquipmentEffectMetadata> = Object.fromEntries(Object.entries(effects).map(([id,effect]) => [id, Object.hasOwn(effect,'semanticTemplate') ? {
+		...effect,
+		name:effect.semanticName,
+		effectTemplate:effect.semanticTemplate,
+		categoryName:effect.semanticCategoryName,
+		effectGroupPassive:effect.semanticEffectGroupPassive,
+		effectGroupActive:effect.semanticEffectGroupActive,
+	} : effect]));
 	const groups = new Map<string, EquipmentPriorityGroup>();
 	for (const id of candidateEffectIDs) {
 		const effect = effects[id];
@@ -233,6 +247,7 @@ export function groupEquipmentPriorityEffects(
 		.map((group) => ({
 			key: group.key,
 			label: descriptivePriorityGroupLabel(group, effects),
+			semanticLabel: descriptivePriorityGroupLabel({...group,...officialPriorityGroup(group.effectIDs[0],canonicalEffects[group.effectIDs[0]])}, canonicalEffects),
 			category: group.category,
 			categoryLabel: group.categoryLabel,
 			group: group.group,
@@ -241,7 +256,6 @@ export function groupEquipmentPriorityEffects(
 		.sort((left, right) => (
 			left.category - right.category
 			|| left.group - right.group
-			|| left.label.localeCompare(right.label)
 			|| left.key.localeCompare(right.key)
 		));
 }
@@ -317,15 +331,15 @@ export function inferredEquipmentPriorityProfile(
 	leaderKind: EquipmentLeader['kind'] | undefined,
 ): EquipmentPriorityProfile {
 	const combatStrengthGroups = groups.filter((group) => (
-		/combat strength/i.test(group.label) && /melee|range|ranged/i.test(group.label)
+		/combat strength/i.test((group.semanticLabel ?? group.label)) && /melee|range|ranged/i.test((group.semanticLabel ?? group.label))
 	));
 	let tier2 = combatStrengthGroups
-		.filter((group) => leaderKind === 'castellan' ? /defensive/i.test(group.label) : !/defensive/i.test(group.label))
+		.filter((group) => leaderKind === 'castellan' ? /defensive/i.test((group.semanticLabel ?? group.label)) : !/defensive/i.test((group.semanticLabel ?? group.label)))
 		.slice(0, 2)
 		.map((group) => group.key);
 	if (tier2.length === 0) {
 		tier2 = groups
-			.filter((group) => /melee|range|ranged/i.test(group.label))
+			.filter((group) => /melee|range|ranged/i.test((group.semanticLabel ?? group.label)))
 			.slice(0, 2)
 			.map((group) => group.key);
 	}

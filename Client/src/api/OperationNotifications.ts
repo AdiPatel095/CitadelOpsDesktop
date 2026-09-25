@@ -1,8 +1,12 @@
+import { parseMessageDescriptor } from '../i18n/messageDescriptor';
+import type { LocalizedMessage } from '../i18n/formatMessage';
 import type { IntentFailurePresentation, IntentReceipt, IntentStatus } from './Contracts';
 
 export interface OperationFailureNotification {
 	category: 'yellow' | 'red';
 	message: string;
+	messageDescriptor?: LocalizedMessage;
+	lineDescriptors?: Array<LocalizedMessage | undefined>;
 	lines?: string[];
 }
 
@@ -171,14 +175,24 @@ export function operationFailureText(receipt: IntentReceipt): string {
 
 function notificationFromStructuredFailure(failure: IntentFailurePresentation): OperationFailureNotification {
 	const explanation = cleanText(failure.explanation) || 'The action did not complete.';
-	const lines = [knowledgeExplanation(explanation, failure.knowledge)];
+	const explanationText=knowledgeExplanation(explanation,failure.knowledge);
+	let explanationDescriptor=parseMessageDescriptor(failure.explanationDescriptor);
+	if(explanationDescriptor && (failure.knowledge === 'official' || failure.knowledge === 'observed')) {
+		const prefix=failure.knowledge==='official' ? {key:'notification.gameSays',fallback:'The game says'} : {key:'notification.observedBehavior',fallback:'Based on observed game behavior'};
+		// Preserve bounded context. If already full, retain the complete legacy line.
+		explanationDescriptor=(explanationDescriptor.context?.length ?? 0)<4 ? {...explanationDescriptor,fallbackText:explanationText,context:[prefix,...(explanationDescriptor.context ?? [])]} : undefined;
+	}
+	const entries:Array<{text:string;descriptor?:LocalizedMessage}>=[{text:explanationText,descriptor:explanationDescriptor}];
 	const recovery = cleanText(failure.recovery);
-	if (recovery && recovery.toLowerCase() !== explanation.toLowerCase()) lines.push(recovery);
-	if (Number.isSafeInteger(failure.gameCode)) lines.push(`Game error ${failure.gameCode}.`);
+	if (recovery && recovery.toLowerCase() !== explanation.toLowerCase()) entries.push({text:recovery,descriptor:parseMessageDescriptor(failure.recoveryDescriptor)});
+	if (Number.isSafeInteger(failure.gameCode)) entries.push({text:`Game error ${failure.gameCode}.`,descriptor:{key:'notification.gameErrorCode',fallback:'Game error {code}.',params:{code:String(failure.gameCode)}}});
+	const unique=entries.filter((entry,index)=>entries.findIndex(candidate=>candidate.text.toLowerCase()===entry.text.toLowerCase())===index);
 	return {
 		category: failure.severity === 'warning' ? 'yellow' : 'red',
 		message: cleanText(failure.message) || 'This action could not be completed.',
-		lines: uniqueLines(lines),
+		messageDescriptor:parseMessageDescriptor(failure.messageDescriptor),
+		lines:unique.map(entry=>entry.text),
+		lineDescriptors:unique.map(entry=>entry.descriptor),
 	};
 }
 
@@ -401,7 +415,7 @@ function cleanText(value: unknown): string {
 // same UI publisher, once per lane/target/message change rather than per poll.
 export class RubyUpgradeNotificationCoordinator {
  private readonly previous = new Map<string, string>();
- next(automations: Record<string, { details?: Record<string, string> }>): RoutedOperationFailureNotification[] {
+ next(automations: Record<string, { details?: Record<string, string>; detailsDescriptors?: Record<string, LocalizedMessage> }>): RoutedOperationFailureNotification[] {
   const notifications: RoutedOperationFailureNotification[] = [];
   const active = new Set<string>();
   for (const [lane, state] of Object.entries(automations)) {
@@ -411,7 +425,9 @@ export class RubyUpgradeNotificationCoordinator {
     active.add(id);
     if (this.previous.get(id) !== message) {
      this.previous.set(id, message);
-     notifications.push({ id, category: 'yellow', message });
+     const descriptor = parseMessageDescriptor(state.detailsDescriptors?.[key]);
+     const messageDescriptor = descriptor?.fallbackText === message ? descriptor : undefined;
+     notifications.push({ id, category: 'yellow', message, ...(messageDescriptor ? {messageDescriptor} : {}) });
     }
    }
   }

@@ -1,0 +1,2080 @@
+{
+  "ui": {
+    "guideButton": "Sprievodca",
+    "calendarButton": "Kalendár",
+    "recommendedLabel": "Odporúčané",
+    "backToSettings": "Späť na nastavenia",
+    "backToGuide": "Späť na sprievodcu",
+    "howToSetUp": "Ako to nastaviť",
+    "whatToExpect": "Čo očakávať",
+    "openFullSizePicture": "Otvoriť obrázok v plnej veľkosti",
+    "illustrativeExample": "Ilustračný príklad",
+    "enlargePicture": "Zväčšiť obrázok príkladu",
+    "fullSizePicture": "Obrázok príkladu v plnej veľkosti; posúvaním zobrazíte všetky nastavenia",
+    "towerGuideTitle": "Automatické útoky na veže · sprievodca",
+    "birdGuideTitle": "Automatické ukrývanie vojska · sprievodca",
+    "towerGuideIntro": "Podľa týchto krokov nastavte automatické veže; výberom obrázka príkladu ho zväčšíte.",
+    "birdGuideIntro": "Podľa týchto krokov nastavte automatické ukrytie vojska; výberom obrázka príkladu ho zväčšíte.",
+    "towerPreviewTitle": "Automatické útoky na veže · príklad nastavenia",
+    "birdPreviewTitle": "Automatické ukrývanie vojska · príklad nastavenia",
+    "stationGuideTitle": "Sprievodca automatickou ochranou jednotiek",
+    "stationGuideIntro": "Nastavte automatickú ochranu jednotiek podľa týchto krokov; výberom ukážkového obrázka ho zväčšíte.",
+    "stationPreviewTitle": "Ukážka nastavenia automatickej ochrany jednotiek",
+    "fortressGuideIntro": "Postupujte podľa krokov na nastavenie automatických útokov na pevnosti; výberom ukážkového panelu ho zväčšíte.",
+    "fortressGuideTitle": "Sprievodca automatickými útokmi na pevnosti",
+    "fortressPreviewTitle": "Príklad nastavenia automatických útokov na pevnosti",
+    "invasionGuideIntro": "Postupujte podľa krokov na nastavenie automatických inváznych útokov; výberom ukážkového panelu ho zväčšíte.",
+    "invasionGuideTitle": "Sprievodca automatickými inváznymi útokmi",
+    "invasionPreviewTitle": "Príklad nastavenia automatických inváznych útokov",
+    "nomadGuideIntro": "Podľa týchto krokov nastavte Automatických Nomádov/Samurajov; výberom zväčšíte ukážkový panel.",
+    "nomadGuideTitle": "Sprievodca Automatickými Nomádmi/Samurajmi",
+    "nomadPreviewTitle": "Ukážka nastavenia Automatických Nomádov/Samurajov",
+    "advisorGuideIntro": "Pomocou týchto krokov nastavte Automatického poradcu; výberom ukážkového panelu ho zväčšíte.",
+    "advisorGuideTitle": "Sprievodca Automatickým poradcom",
+    "advisorPreviewTitle": "Príklad nastavenia Automatického poradcu",
+    "khanGuideIntro": "Podľa týchto krokov nastavte Automatického chána; výberom ukážkového panelu ho zväčšíte.",
+    "khanGuideTitle": "Sprievodca Automatickým chánom",
+    "khanPreviewTitle": "Príklad nastavenia Automatického chána",
+    "beriGuideIntro": "Podľa týchto krokov nastavte Automatický Berimond; výberom príkladového panela ho zväčšíte.",
+    "beriGuideTitle": "Sprievodca Automatickým Berimondom",
+    "beriPreviewTitle": "Príklad nastavenia Automatického Berimondu",
+    "stormGuideIntro": "Podľa týchto krokov nastavte Auto Storm; výberom ukážkového panela ho zväčšíte.",
+    "stormGuideTitle": "Sprievodca Auto Storm",
+    "stormPreviewTitle": "Príklad nastavenia Auto Storm"
+  },
+  "autoTower": {
+    "recommendationIntro": "Toto sú odporúčania na bežné používanie; pred uložením ich skontrolujte.",
+    "steps": {
+      "commanders": {
+        "title": "Vyberte veliteľov",
+        "items": {
+          "commander_assignment": {
+            "label": "Priradenie veliteľov",
+            "description": "V časti Velitelia povoľte automatické veže pre veliteľov, ktorých chcete používať, a vyberte Uložiť priradenia.",
+            "recommendation": "Priraďte automatickým vežiam 20 veliteľov."
+          }
+        }
+      },
+      "general": {
+        "title": "Nastavte skenovanie, denné limity a cestovanie",
+        "items": {
+          "open_settings": {
+            "label": "Otvorte nastavenia",
+            "description": "Otvorte Automatizáciu a potom vyberte tlačidlo nastavení na karte automatických veží."
+          },
+          "authoritative_map_scan_every": {
+            "label": "Skenovanie autoritatívnej mapy · Každých",
+            "description": "Vyberte, ako často sa obnoví zoznam veží každého hradu, od 1 800 do 3 600 sekúnd; útoky sa môžu začať medzi skenovaniami.",
+            "recommendation": "1 800 sekúnd (30 minút)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "Denný limit bežných útokov",
+            "description": "Pozastaví sa pri dennom limite útokov celého účtu, kým ho hra nevynuluje; 0 limit odstráni.",
+            "recommendation": "3 500 útokov denne pre celý účet."
+          },
+          "horse_travel_boost": {
+            "label": "Zrýchlenie cesty koňom",
+            "description": "Pri každom útoku vrátane každého zásahu v sérii Poradcu použije zvolený spôsob cestovania; rýchlosť závisí od cestovných budov v zdrojovom hrade.",
+            "recommendation": "Úroveň za mince tam, kde je podporovaná, s dostatkom mincí."
+          },
+          "travel_feather": {
+            "label": "Cestovné pierko",
+            "description": "Použije cestovné pierko namiesto úrovne koňa za mince alebo rubíny."
+          },
+          "horse_ship_tier_coins": {
+            "label": "Úroveň kôň / loď · mince",
+            "description": "Na cestovanie na úrovni za mince míňa mince."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "Úroveň bojový kôň / rýchla loď · rubíny",
+            "description": "Pri výbere míňa rubíny na prvú úroveň cestovania za rubíny."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "Úroveň rýchly kôň / najrýchlejšia loď · rubíny",
+            "description": "Pri výbere míňa rubíny na rýchlejšiu úroveň cestovania za rubíny."
+          }
+        },
+        "image": {
+          "alt": "Všeobecné nastavenia automatických veží s fiktívnymi údajmi Syntetického hradu",
+          "caption": "Nastavte interval skenovania, denný limit útokov a spôsob cestovania; ovládanie Poradcu sa zobrazí, keď je dostupné."
+        }
+      },
+      "castle": {
+        "title": "Nastavte každý hrad",
+        "items": {
+          "castle_switch": {
+            "label": "Prepínač hradu",
+            "description": "Zapnite každý hrad, z ktorého majú automatické veže skenovať a útočiť.",
+            "recommendation": "Aktivujte hrady, ktoré chcete pravidelne používať."
+          },
+          "radius": {
+            "label": "Polomer",
+            "description": "Vyberte vzdialenosť vyhľadávania okolo hradu od 1 do 50 políčok.",
+            "recommendation": "35 políčok."
+          },
+          "choose_troop": {
+            "label": "Vyberte vojsko",
+            "description": "Vyberte umiestnený druh vojska na obsadenie oboch krídel útoku; pri nedostatku vojska útoky čakajú.",
+            "recommendation": "Umiestnené útočné vojsko v počte dostatočnom na obe krídla."
+          },
+          "maiden_supported_only": {
+            "label": "Len s podporou Panny",
+            "description": "Obmedzí hrad na dostupných veliteľov s podporovanou relikviou Panny.",
+            "recommendation": "Vypnuté, ak zvolený veliteľ nemá podporovanú relikviu Panny."
+          }
+        },
+        "image": {
+          "alt": "Nastavenia hradu automatických veží s fiktívnymi údajmi Syntetického hradu",
+          "caption": "Aktivujte hrad a vyberte jeho polomer, vojsko a požiadavku na Pannu."
+        }
+      },
+      "advisor": {
+        "title": "Použite Poradcu podľa potreby · ak je dostupný",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "Použiť Poradcu s preskočením času",
+            "description": "Opakuje zásahy do jednej veže; najprv použije jeden denný útok a na každý ďalší zásah jedno preskočenie času v dĺžke aspoň troch hodín.",
+            "recommendation": "Vypnuté."
+          },
+          "auto_activate_with_token": {
+            "label": "Automaticky aktivovať žetónom",
+            "description": "Keď je Poradca neaktívny, použije dostupný žetón Barónovho poradcu bez kúpy žetónu či míňania rubínov.",
+            "recommendation": "Vypnuté, kým je Poradca vypnutý."
+          },
+          "maximum_daily_time_skips": {
+            "label": "Maximálny denný počet preskočení času",
+            "description": "Obmedzuje preskočenia času použité potvrdenými sériami Poradcu až do vynulovania denného počítadla útokov v hre; 0 pozastaví spúšťanie útokov Poradcu.",
+            "recommendation": "0, kým je Poradca vypnutý."
+          }
+        }
+      },
+      "finish": {
+        "title": "Nastavte plán, uložte a zapnite",
+        "items": {
+          "calendar": {
+            "label": "Kalendár",
+            "description": "V Kalendári vyberte, kedy môžu automatické veže bežať; dostupnosť vojska a ostatné limity naďalej platia.",
+            "recommendation": "Vaše obvyklé hodiny prevádzky."
+          },
+          "save_changes": {
+            "label": "Uložiť zmeny",
+            "description": "Výberom Uložiť zmeny použijete nastavenia; čítanie tohto sprievodcu ich neuloží."
+          },
+          "auto_towers_switch": {
+            "label": "Automatické útoky na veže · prepínač",
+            "description": "Po uložení nastavení zapnite automatické veže na stránke Automatizácia, aby sa úloha mohla spustiť.",
+            "recommendation": "Zapnuté po uložení zamýšľaných nastavení."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatické útoky na veže",
+      "summary": "Opakované útoky na blízke veže",
+      "description": "Posiela útoky na veže lúpežných barónov a kráľovstiev z vybraných hradov.",
+      "expectation": "Potrebuje dostatok vojska, dostupného veliteľa a vežu pripravenú na útok. Môže čakať na návrat vojska alebo uplynutie časovača veže."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "Odporúčané hodnoty opisujú bežné používanie automatického ukrytia vojska; sú to rady a nemenia uložené nastavenia.",
+    "steps": {
+      "open": {
+        "title": "Otvorte nastavenia automatického ukrytia vojska",
+        "items": {
+          "open_settings": {
+            "label": "Otvorte nastavenia",
+            "description": "V hornej časti veliteľského centra vyberte tlačidlo nastavení vedľa automatického ukrytia vojska."
+          }
+        }
+      },
+      "general": {
+        "title": "Nastavte čas umiestnenia a pravidlá odosielania",
+        "items": {
+          "random_delay_range_min": {
+            "label": "Rozsah náhodného zdržania · Minimum",
+            "description": "Nastavte najkratší počet hodín, počas ktorých vojsko zostane v cieli aliancie po dokončení cesty.",
+            "recommendation": "6 hodín umiestnenia v cieli aliancie po príchode."
+          },
+          "random_delay_range_max": {
+            "label": "Rozsah náhodného zdržania · Maximum",
+            "description": "Nastavte najdlhší pobyt v cieli; automatické ukrytie vojska náhodne vyberie trvanie medzi minimom a maximom.",
+            "recommendation": "12 hodín umiestnenia v cieli aliancie po príchode."
+          },
+          "minimum_to_send": {
+            "label": "Minimum na odoslanie",
+            "description": "Nastavte minimálny celkový počet vhodného vojska po ponechaní hradných rezerv; ide o prah, nie presný počet odoslaných vojakov.",
+            "recommendation": "Spolu 1 000 vhodných vojakov po ponechaní hradných rezerv; ide o prah, nie presný počet odoslaných."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "Minimálne RPT (zostávajúci čas ochrany)",
+            "description": "Používajte ciele, ktorým zostáva viac dní ochrany, než je táto hodnota; 0 kontrolu zruší.",
+            "recommendation": "3 dni; cieľu musí zostávať viac ako 3 dni ochrany."
+          }
+        },
+        "image": {
+          "alt": "Čas umiestnenia, minimum na odoslanie, minimálne RPT a ovládanie predvolieb automatického ukrytia vojska",
+          "caption": "Nastavte čas umiestnenia a podmienky, potom pred uložením skontrolujte predvoľbu Každodennej rezervy."
+        }
+      },
+      "reserves": {
+        "title": "Vyberte vojsko, ktoré zostane v každom hrade",
+        "items": {
+          "add_unit": {
+            "label": "Pridať jednotku",
+            "description": "Pre každý hrad vyberte druhy vojska, ktoré zostanú doma namiesto odoslania; prázdna rezerva nechá po automatických rezervách dostupné všetko vhodné vojsko.",
+            "recommendation": "Vyberte druhy vojska potrebné pre obranu alebo iné bežné úlohy každého hradu."
+          },
+          "quantity": {
+            "label": "Množstvo",
+            "description": "Zadajte kladný počet každého vybraného druhu vojska, ktorý má zostať v hrade; 0 nerezervuje celý druh.",
+            "recommendation": "Ponechajte doma počet každého druhu potrebný na obranu alebo iné úlohy; skontrolujte skutočné počty vojakov."
+          },
+          "remove_unit": {
+            "label": "Odstrániť jednotku",
+            "description": "Odstráňte dlaždicu jednotky, aby sa tento druh vo vybranom hrade prestal rezervovať."
+          },
+          "auto_fortress_reserve": {
+            "label": "Automatizácia pevností · rezerva",
+            "description": "Keď automatická pevnosť zablokuje všetkých tunajších hrozných vlkov, táto automatická rezerva sa neuloží do predvolieb automatického ukrytia vojska a po skončení blokovania sa obnoví predchádzajúci ručne zadaný počet hrozných vlkov."
+          }
+        },
+        "image": {
+          "alt": "Dlaždice rezerv automatického ukrytia vojska pre fiktívny Vzorový hrad",
+          "caption": "Rezervujte iba jednotky potrebné v tomto hrade; Jednotka 101 a Jednotka 102 sú fiktívne označenia vojska."
+        }
+      },
+      "presets": {
+        "title": "Uložte a vyberte predvoľbu",
+        "items": {
+          "preset_name": {
+            "label": "Názov predvoľby",
+            "description": "Zadajte názov novej predvoľby alebo pred uložením zmien upravte názov použitej predvoľby.",
+            "recommendation": "Použite rozpoznateľný názov, napríklad Každodenná."
+          },
+          "load_preset": {
+            "label": "Načítať predvoľbu",
+            "description": "Vyberte uloženú predvoľbu zo zoznamu alebo Uloženú konfiguráciu, ak chcete použiť uložené nastavenia bez pomenovanej predvoľby.",
+            "recommendation": "Použite zamýšľanú každodennú predvoľbu ako predvolenú pri behu: vyberte ju, kliknite na Použiť a potom na Uložiť zmeny."
+          },
+          "apply": {
+            "label": "Použiť",
+            "description": "Načítajte vybranú predvoľbu do tohto konceptu nastavení; výberom Uložiť zmeny ju potvrdíte ako predvolenú pri behu."
+          },
+          "save_as_new": {
+            "label": "Uložiť ako novú",
+            "description": "Okamžite uloží aktuálne nastavenia ako novú pomenovanú predvoľbu a vyberie ju ako predvolenú pri behu."
+          },
+          "delete": {
+            "label": "Odstrániť",
+            "description": "Po potvrdení okamžite odstráni vybranú predvoľbu a vymaže predvolenú pri behu, ak bola vybraná."
+          },
+          "runtime_default": {
+            "label": "Predvolená pri behu",
+            "description": "Predvolená pri behu je uložená aktívna predvoľba alebo uložená konfigurácia, ak nie je aktívna žiadna predvoľba."
+          }
+        }
+      },
+      "finish": {
+        "title": "Nastavte plán, uložte a aktivujte",
+        "items": {
+          "calendar": {
+            "label": "Kalendár",
+            "description": "Vyberte, kedy môže automatické ukrytie vojska bežať, a zmeny uložte výberom Uložiť plán.",
+            "recommendation": "Pri nepretržitej prevádzke nechajte plán vypnutý alebo nastavte obvyklé týždenné hodiny a uložte plán."
+          },
+          "specify_preset_per_period": {
+            "label": "Určiť predvoľbu pre každé obdobie",
+            "description": "Vyberte uloženú predvoľbu pre obdobie v kalendári, ak má toto obdobie nahradiť predvolenú pri behu.",
+            "recommendation": "Vypnuté, ak rôzne obdobia nepotrebujú rôzne rezervy."
+          },
+          "save_changes": {
+            "label": "Uložiť zmeny",
+            "description": "Uložte koncept nastavení aj zmeny použitej predvoľby; čítanie tohto sprievodcu ich neuloží."
+          },
+          "auto_bird_switch": {
+            "label": "Automatické ukrývanie vojska · prepínač",
+            "description": "Po uložení zapnite automatické ukrytie vojska v hornej časti veliteľského centra, aby prebiehali bežné cykly hradov.",
+            "recommendation": "Po uložení zapnite automatické ukrytie vojska; stav v záhlaví ukazuje cyklus každého hradu."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatické ukrývanie vojska",
+      "summary": "Udržiavajte vybrané vojsko mimo hradu podľa plánu",
+      "description": "Pravidelne umiestňuje nadbytočné vojsko do vhodných aliančných hradov a po návrate opakuje cyklus.",
+      "expectation": "Čaká, ak niet vhodného cieľa alebo nadbytočného vojska. Presun vojska nerobí hrad nezraniteľným."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "Všeobecné nastavenia",
+      "scan": "Interval skenovania: 1 800 sekúnd",
+      "daily": "Denný limit útokov: 3 500",
+      "travel": "Zrýchlenie cesty: úroveň za mince",
+      "advisor": "Poradca: vypnutý"
+    },
+    "towerCastle": {
+      "title": "Vzorový hrad",
+      "enabled": "Automatické útoky na veže · zapnuté",
+      "radius": "Polomer: 35 políčok",
+      "troop": "Vybrané vojsko: fiktívna útočná jednotka",
+      "maiden": "Len s podporou Panny: vypnuté"
+    },
+    "birdGeneral": {
+      "title": "Všeobecné nastavenia",
+      "min": "Najkratší pobyt: 6 hodín",
+      "max": "Najdlhší pobyt: 12 hodín",
+      "send": "Minimálny vhodný súčet po rezervách: 1 000 vojakov",
+      "rpt": "Minimálna zostávajúca ochrana: viac ako 3 dni",
+      "preset": "Predvoľba: Každodenná rezerva"
+    },
+    "birdCastle": {
+      "title": "Vzorový hrad",
+      "unitOne": "Fiktívna jednotka 101 v rezerve: 80",
+      "unitTwo": "Fiktívna jednotka 102 v rezerve: 40",
+      "add": "Pridať jednotku"
+    },
+    "stationGeneral": {
+      "title": "Ukážka nastavení ochrany jednotiek",
+      "evacuate": "Evakuovať: 1 minúta pred dopadom",
+      "protection": "Ochrana cieľa: viac ako 3 dni",
+      "recall": "Stiahnuť po pominutí nebezpečenstva: zapnuté",
+      "gate": "Záložné otvorenie brán: vypnuté",
+      "castle": "Vymyslený hrad: 80 obranných jednotiek v rezerve",
+      "save": "Uložte zmeny a zapnite ochranu jednotiek"
+    },
+    "fortressAttack": {
+      "commander": "Veliteľ: najrýchlejší spôsobilý pridelený",
+      "daily": "Denný limit bežných útokov: 0",
+      "title": "Príklad nastavení útoku",
+      "travel": "Posilnenie presunu: Cestovné pierko",
+      "wave": "Jedna plná vlna hrozivých vlkov na oboch krídlach"
+    },
+    "fortressKingdoms": {
+      "everwinter": "Ľadovec večnej zimy: zapnuté po odomknutí",
+      "peaks": "Ohnivé vrcholy: zapnuté po odomknutí",
+      "sands": "Horiace piesky: zapnuté po odomknutí",
+      "title": "Príklad nastavení kráľovstiev"
+    },
+    "fortressSupply": {
+      "purchase": "Hroziví vlci za reláciu: 5 000",
+      "reserve": "Ponechať chánove tabuľky: 25 000",
+      "route": "Zásobovanie: z hlavného hradu Veľkej ríše do povolených kráľovstiev",
+      "skips": "Skrátenia času na potvrdené presuny: zapnuté",
+      "title": "Príklad zásobovania hrozivými vlkmi"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "Krvavé vrany: vhodná odomknutá obtiažnosť",
+      "current": "Obtiažnosť aktívnej udalosti zostáva",
+      "foreign": "Cudzí páni: vhodná odomknutá obtiažnosť",
+      "title": "Príklad obtiažností udalostí"
+    },
+    "invasionFortify": {
+      "currency": "Pri zapnutí: mena udalosti, ak je dostupná",
+      "enabled": "Opevniť každý cieľ: vypnuté",
+      "rubies": "Rubíny iba pri výslovnom výbere",
+      "title": "Príklad opevnenia cieľov"
+    },
+    "invasionLimits": {
+      "before": "Zastaviť 30 minút pred koncom udalosti",
+      "daily": "Denný limit bežných útokov: 0",
+      "score": "Body: bežná posledná osobná odmena nad 0",
+      "title": "Príklad bodov a hraníc zastavenia"
+    },
+    "invasionSetup": {
+      "castle": "Východiskový: bežný hrad udalosti vo Veľkej ríši",
+      "preset": "Útočná predvoľba: uložená formácia udalosti",
+      "title": "Príklad nastavenia útoku udalosti",
+      "travel": "Posilnenie presunu: Cestovné pierko"
+    },
+    "nomadDifficulty": {
+      "title": "Príklad obtiažností udalostí",
+      "active": "Aktívna udalosť: zvoliť aktuálnu obtiažnosť",
+      "nomad": "Nomádi: odomknutá spoľahlivá obtiažnosť",
+      "samurai": "Samuraji: odomknutá spoľahlivá obtiažnosť"
+    },
+    "nomadSetup": {
+      "castle": "Východiskový: bežný hrad udalosti vo Veľkej ríši",
+      "travel": "Posilnenie presunu: Cestovné pierko",
+      "nomadPreset": "Nomádska zostava: uložené rozmiestnenie na tábory",
+      "samuraiPreset": "Samurajská zostava: uložené rozmiestnenie na tábory",
+      "title": "Príklad nastavení táborov udalosti"
+    },
+    "nomadCooldowns": {
+      "clear": "Odstrániť čakanie po potvrdenom víťazstve: zapnuté",
+      "long": "Ponechať 5 h / 24 h: zásoba na iné činnosti",
+      "short": "Ponechať 1 / 5 / 10 / 30 / 60 min: po 0 predmetov",
+      "title": "Príklad nastavenia čakania"
+    },
+    "nomadLimits": {
+      "daily": "Dodatočný denný limit: 0",
+      "score": "Bodový cieľ: posledný míľnik osobnej odmeny",
+      "time": "Zastaviť pred koncom: 30 minút",
+      "title": "Príklad pravidiel zastavenia"
+    },
+    "nomadTrial": {
+      "coordinates": "Cieľ X / Y: pri bežnej prevádzke sa nepoužíva",
+      "effect": "Zapnutý test nahradí udalosť skutočným útokom",
+      "title": "Príklad ovládania testu",
+      "trial": "Dočasný test lúpežného baróna: vypnutý"
+    },
+    "advisorDifficulty": {
+      "active": "Aktívna udalosť: zvoliť aktuálnu obtiažnosť",
+      "nomad": "Nomádi: odomknutá spoľahlivá obtiažnosť",
+      "samurai": "Samuraji: odomknutá spoľahlivá obtiažnosť",
+      "title": "Príklad obtiažností udalostí"
+    },
+    "advisorSetup": {
+      "castle": "Východiskový: bežný hrad udalosti vo Veľkej ríši",
+      "travel": "Posilnenie presunu: Cestovné pierko",
+      "preset": "Predvoľba: uložená formácia aktívnej udalosti",
+      "title": "Príklad nastavenia útoku poradcu"
+    },
+    "advisorActivation": {
+      "locked": "Ak je zamknutý: otvorte potvrdenie aktivácie poradcu",
+      "paid": "Potvrďte použitie žetónu alebo bezplatnú aktiváciu oznámenú hrou",
+      "save": "Uložte nastavenia a zapnite kartu Automatizácia",
+      "title": "Príklad priebehu aktivácie"
+    },
+    "advisorOverview": {
+      "progress": "Aktuálne útoky / požadované útoky",
+      "refresh": "Obnovte prehľad pre aktuálne súčty",
+      "results": "Víťazstvá, porážky, stratené jednotky a nástroje",
+      "title": "Príklad aktuálneho prehľadu"
+    },
+    "advisorResources": {
+      "coins": "Celkové mince za útok: 500 len ak stačia",
+      "feathers": "Ponechať pierka: 0, ak nie sú potrebné inde",
+      "rubies": "Rubíny za útok: 0 s cestovným pierkom",
+      "skips": "Ponechať 60 min: 0 predmetov; podľa potreby rezervujte 5 h a 24 h",
+      "title": "Príklad rozpočtu zdrojov"
+    },
+    "advisorSizing": {
+      "actual": "Skutočná séria: obmedzená zdrojmi a časom",
+      "maximum": "Maximum útokov: 9 999",
+      "time": "Nevyužitý čas udalosti: 30 minút",
+      "title": "Príklad veľkosti série"
+    },
+    "khanCooldowns": {
+      "long": "Ponechajte 5-hodinové a 24-hodinové preskočenia na iné úlohy",
+      "pause": "Nové útoky sa pozastavia pri nedostatku použiteľných preskočení",
+      "short": "Ponechať 1 min / 5 min / 10 min / 30 min / 1 h: z každého 0 kusov",
+      "skip": "Preskočiť každé čakanie tábora: zapnuté",
+      "title": "Príklad rezerv časových preskočení"
+    },
+    "khanLimits": {
+      "daily": "Bežné útoky za deň: 0, bez dodatočnej hranice",
+      "end": "Zastaviť nové útoky 5 minút pred koncom",
+      "points": "Zastaviť pri nomádskych bodoch: 0, vypnuté",
+      "title": "Príklad hraníc zastavenia",
+      "tools": "Dopĺňať obranné nástroje: zapnuté podľa priania"
+    },
+    "khanProtection": {
+      "gate": "Otvoriť hlavné brány a pozastaviť chána pri dosiahnutí hranice",
+      "outpost": "Základňa ako zdroj: ochrana vypnutá",
+      "source": "Platí pre útoky z hlavného hradu",
+      "threshold": "Útočné jednotky na múre: 1 000",
+      "title": "Príklad ochrany hlavného múru"
+    },
+    "khanRage": {
+      "attacks": "Automatické útoky na tábor: odomknuté",
+      "booster": "Požadované časové posilnenie bodov hnevu: vypnuté",
+      "chain": "Maximálny reťazec hnevu: 0, bez dodatočnej hranice",
+      "title": "Príklad ovládania hnevu",
+      "trigger": "Odveta pri plnom hneve: zapnutá"
+    },
+    "khanSave": {
+      "defense": "Pred odvetou skontrolovať hlavnú obranu",
+      "enable": "Zapnúť Automatického chána na karte Automatizácia",
+      "priority": "Automatické stacionovanie rieši hráčske útoky zvlášť",
+      "save": "Po príprave oboch predvolieb uložiť nastavenia",
+      "title": "Príklad uloženia a zapnutia"
+    },
+    "khanSetup": {
+      "defense": "Obrana v: hlavný hrad vo Veľkej ríši",
+      "presets": "Uložené predvoľby chánskeho útoku a hlavnej obrany",
+      "source": "Útok z: základňa vo Veľkej ríši",
+      "title": "Príklad nastavenia chána",
+      "travel": "Cestovné pierko na rýchlu cestu"
+    },
+    "beriBuilder": {
+      "permissions": "Premium a búranie: vypnuté do kontroly",
+      "reserves": "Vyhraďte berimondské suroviny a urýchlenia",
+      "stable": "Frakčná stajňa: zvolená úroveň 1–5",
+      "target": "Vstavaný presný cieľ alebo preverené vlastné rozloženie",
+      "title": "Príklad voliteľnej výstavby tábora"
+    },
+    "beriReadiness": {
+      "booster": "Posilnenie statočnosti ako podmienka: voliteľné",
+      "food": "Presuny vyžadujú jednotky predlohy spotrebúvajúce Jedlo",
+      "preset": "Skontrolujte uložené miesta jednotiek a nástrojov",
+      "title": "Príklad pripravenosti na veže"
+    },
+    "beriSave": {
+      "calendar": "Kalendár vypnutý pre nepretržitú prevádzku",
+      "enable": "Zapnite Automatický Berimond na karte Automatizácia",
+      "save": "Po kontrole pomeru jednotiek uložte nastavenia",
+      "title": "Príklad uloženia a zapnutia"
+    },
+    "beriSetup": {
+      "donor": "Darca vo Veľkej ríši s potrebnými jednotkami",
+      "limit": "Denné bežné útoky: 0 dodatočných limitov",
+      "preset": "Uložená berimondská útočná predloha",
+      "title": "Príklad útoku a zásobovania",
+      "travel": "Cestovné pierko na útoky na veže"
+    },
+    "beriTools": {
+      "ladders": "Rebríky: podľa obvyklých útokov",
+      "mantlets": "Štíty: podľa obvyklých útokov",
+      "rams": "Baranidlá: podľa obvyklých útokov",
+      "title": "Príklad minimálnych zásob nástrojov"
+    },
+    "beriTransfers": {
+      "capacity": "Voľná kapacita: 1; prah: 1",
+      "mix": "Pomer predlohy: 2 jednotky A na 1 jednotku B",
+      "next": "Ďalšia zásielka: až 1 B zo zásob darcu",
+      "stock": "Stav tábora: 2 A a 0 B",
+      "title": "Príklad pomerných presunov"
+    },
+    "stormCastle": {
+      "blueprint": "Uložený cieľ aktívny; pauza ho zachová",
+      "capture": "Aktuálny hrad: Funkčný cieľ",
+      "decorations": "Predvoľba dekorácií: voliteľná",
+      "title": "Príklad prístupu k Búrkovému hradu",
+      "unlock": "Automatické otvorenie: zapnuté po kontrole ceny"
+    },
+    "stormCombat": {
+      "defenders": "Okupační obrancovia: vybraní alebo jeden preživší",
+      "forts": "Pevnosti: vybrané úrovne 40–80",
+      "islands": "Akvamarínové ostrovy: veľké aj malé",
+      "priority": "Veľké, malé, potom pevnosti od 80 po 40",
+      "title": "Príklad útokov na pevnosti a ostrovy"
+    },
+    "stormConstruction": {
+      "harbor": "Prístav: zapnutý, úroveň 1",
+      "resources": "Drevo 0; kameň 0; akvamarín plánovaný",
+      "spending": "Premium a demolácia: vypnuté",
+      "title": "Príklad výstavby a rezerv",
+      "transport": "Prevoz surovín: zapnutý"
+    },
+    "stormLuna": {
+      "cost": "Cena a nákupný limit: len na čítanie",
+      "limited": "Obmedzené ciele pred neobmedzenými odmenami",
+      "priority": "Priorita 1, 2, 3; nižšie číslo prvé",
+      "reserve": "Ponechať akvamarín: 0 pri použití prebytku",
+      "title": "Príklad Luniných odmien"
+    },
+    "stormSave": {
+      "check": "Kontrola pravidiel: 30 sekúnd",
+      "daily": "Denné bežné útoky: 0 ďalšieho limitu",
+      "map": "Obnova mapy: 2 hodiny, len na čítanie",
+      "switch": "Uložte a potom zapnite Auto Storm",
+      "title": "Príklad ukladania a zapnutia"
+    },
+    "stormTroops": {
+      "averages": "Potvrdené útoky od resetu / 24; priemer predvoľby iba na čítanie",
+      "cap": "Limit viazaných vojakov: len na čítanie",
+      "donors": "Darcovia: zobrazené poradie, čiastočné zásoby povolené",
+      "minimum": "Ponechať najmenej: 1 000 vojakov",
+      "title": "Príklad dovozu vojakov"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "Odporúčania platia pre bežné používanie a nemenia uložené nastavenia.",
+    "steps": {
+      "open": {
+        "title": "Otvorte nastavenia automatickej ochrany jednotiek",
+        "items": {
+          "open_settings": {
+            "label": "Otvoriť nastavenia",
+            "description": "V hornej časti veliteľského centra vyberte tlačidlo nastavení vedľa automatickej ochrany jednotiek."
+          }
+        }
+      },
+      "general": {
+        "title": "Nastavte reakciu na útok",
+        "items": {
+          "evacuate_at": {
+            "label": "Evakuovať pri",
+            "description": "Začnite evakuáciu toľko minút pred dopadom, alebo ihneď, ak útok zistíte až v tomto časovom okne.",
+            "recommendation": "1 minúta pred dopadom."
+          },
+          "minimum_bird_days": {
+            "label": "Minimálne dni ochrany cieľa",
+            "description": "Vyberte spojenecký hrad s viac zostávajúcimi dňami ochrany, ako udáva táto hodnota; 0 minimum ruší.",
+            "recommendation": "3 dni, takže cieľ musí mať viac ako 3 dni ochrany."
+          },
+          "recall_when_clear": {
+            "label": "Stiahnuť po pominutí nebezpečenstva",
+            "description": "Vráťte umiestnené jednotky, keď sa skončí posledný zistený útok a neprichádza ďalší útok.",
+            "recommendation": "Zapnuté pri bežnom používaní."
+          },
+          "open_gate_fallback": {
+            "label": "Záložné otvorenie brán",
+            "description": "Ak jednotky nemožno evakuovať, táto možnosť otvorí brány napadnutého vlastného hradu na šesť hodín okrem Berimondu.",
+            "recommendation": "Vypnuté, ak nechcete automaticky otvárať brány pri neúspešnej evakuácii."
+          },
+          "protection_mode": {
+            "label": "Zakúpený režim ochrany",
+            "description": "Keď sa zakúpený režim ochrany pripravuje alebo je aktívny, ochrana jednotiek používa brány aj pri vypnutej záložnej možnosti, okrem Berimondu."
+          }
+        },
+        "image": {
+          "alt": "Vymyslené nastavenia s časom evakuácie, ochranou, návratom, bránami a hradnými rezervami",
+          "caption": "Pred uložením skontrolujte štyri nastavenia reakcie a obranné rezervy každého hradu."
+        }
+      },
+      "reserves": {
+        "title": "Vyberte jednotky ponechané na každom hrade",
+        "items": {
+          "add_troops": {
+            "label": "Pridať jednotky",
+            "description": "Vyberte druhy jednotiek, ktoré zostanú na hrade; bez rezerv možno evakuovať všetky spôsobilé jednotky okrem nástrojov.",
+            "recommendation": "Ponechajte bežnú obrannú posádku doma a nadbytočné útočné jednotky nechajte odísť."
+          },
+          "quantity": {
+            "label": "Počet",
+            "description": "Určte počet jednotiek každého vybraného druhu, ktoré zostanú na tomto hrade; 0 nič nerezervuje.",
+            "recommendation": "Použite počet potrebný na bežnú obranu tohto hradu."
+          },
+          "edit_defense_troops": {
+            "label": "Upraviť obranné jednotky",
+            "description": "Znova otvorte výber jednotiek a zmeňte druhy alebo počty v hradnej rezerve."
+          },
+          "remove_defense_troop": {
+            "label": "Odstrániť obrannú jednotku",
+            "description": "Odstráňte dlaždicu rezervy, aby sa tento druh jednotiek už na hrade nezadržiaval."
+          }
+        }
+      },
+      "finish": {
+        "title": "Uložte a zapnite ochranu jednotiek",
+        "items": {
+          "save_changes": {
+            "label": "Uložiť zmeny",
+            "description": "Pred odchodom z nastavení uložte časovanie, prepínače a rezervy jednotlivých hradov."
+          },
+          "auto_station_switch": {
+            "label": "Prepínač ochrany jednotiek",
+            "description": "Po uložení zapnite automatickú ochranu jednotiek v hornej časti veliteľského centra na sledovanie prichádzajúcich útokov hráčov.",
+            "recommendation": "Zapnuté pre bežnú ochranu po kontrole rezerv."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "Automatická ochrana jednotiek",
+      "summary": "Presuňte spôsobilé jednotky pred prichádzajúcim útokom",
+      "description": "Keď sa blíži útok hráča, automatická ochrana presúva spôsobilé jednotky na najbližší vhodný spojenecký hrad v tom istom kráľovstve.",
+      "expectation": "Pri zapnutom stiahnutí sa jednotky vrátia po poslednom zistenom útoku, keď už nehrozí nebezpečenstvo; inak zostanú hodinu po príchode a potom sa vrátia. Chýbajúci cieľ alebo jednotky a obmedzenia hry môžu evakuácii zabrániť.",
+      "helper": "Jednotky idú na najbližší vhodný spojenecký hrad v tom istom kráľovstve; ak evakuácia zlyhá, brány napadnutého vlastného hradu môžu chrániť mimo Berimondu."
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "Najrýchlejší dostupný veliteľ",
+      "commanderHelp": "Automatické útoky na pevnosti porovnávajú použiteľné účinky výstroja, drahokamov, súprav a generálov na rýchlosť presunu pre každú cieľovú pevnosť; Relikvia 2.0 ani minimum 100 % nie sú potrebné.",
+      "description": "Automatické útoky na pevnosti nakupujú hrozivé vlky v uložených medziach, zásobujú povolené vonkajšie kráľovstvá a útočia na pripravené pevnosti z ich hlavných hradov.",
+      "expectation": "Každý útok vyžaduje pripravenú pevnosť, dosť hrozivých vlkov na obe krídla a spôsobilého prideleného veliteľa; čakacie doby či zdržanie zásobovania ho môžu pozastaviť.",
+      "name": "Automatické útoky na pevnosti",
+      "settingsSummary": "Automatické útoky na pevnosti pripravujú hrozivých vlkov a pre každú cieľovú pevnosť vyberajú najrýchlejšieho spôsobilého prideleného veliteľa.",
+      "summary": "Zásobujte hrozivých vlkov a útočte na pripravené pevnosti",
+      "travelHelp": "Cestovné pierko je predvolená voľba; vaša uložená voľba presunu zostáva zachovaná. Posilnenie pre konkrétny hrad sa pred vyslaním znovu vypočíta."
+    },
+    "recommendationIntro": "Odporúčané hodnoty opisujú bežné používanie automatických útokov na pevnosti; sú návodom a nemenia uložené nastavenia.",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "Ilustračný príklad nastavení útoku a presunu pre automatické útoky na pevnosti",
+          "caption": "Automatické útoky na pevnosti zoraďujú spôsobilých pridelených veliteľov pre každý cieľ a používajú uloženú voľbu presunu."
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "V časti Velitelia prideľte veliteľov, ktorých môžu automatické útoky na pevnosti použiť, a pridelenia uložte.",
+            "label": "Pridelenie veliteľov",
+            "recommendation": "Prideľte veliteľov, ktorých zvyčajne chcete mať dostupných na útoky na pevnosti."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Zastavte automatické útoky na pevnosti pri dennom počte bežných útokov celého účtu až do jeho obnovenia hrou; 0 nepridáva hranicu.",
+            "label": "Denný limit bežných útokov",
+            "recommendation": "0, ak nechcete ďalší denný limit."
+          },
+          "fastest_commander": {
+            "description": "Pre každú pevnosť automatika vyberá najrýchlejšieho momentálne dostupného prideleného veliteľa podľa použiteľných účinkov výstroja, drahokamov, súprav a generálov po uplatnení stropov.",
+            "label": "Najrýchlejší spôsobilý veliteľ",
+            "recommendation": "Predmet Relikvia 2.0 ani 100 % bonus rýchlosti sa nevyžadujú."
+          },
+          "full_flank_wave": {
+            "description": "Každý útok čaká na dosť hrozivých vlkov na zaplnenie oboch krídel jedinou plnou vlnou.",
+            "label": "Vlna hrozivých vlkov na oboch krídlach"
+          },
+          "horse_travel_boost": {
+            "description": "Vyberte možnosť presunu pre útoky na pevnosti; výslovne uložená voľba za mince alebo rubíny zostane zvolená.",
+            "label": "Posilnenie presunu koňa",
+            "recommendation": "Cestovné pierko pre najrýchlejší presun."
+          }
+        },
+        "title": "Nastavte útoky a presun"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "Po uložení zapnite automatické útoky na pevnosti na karte Automatizácia a spustite bežné cykly.",
+            "label": "Prepínač automatických útokov na pevnosti",
+            "recommendation": "Zapnuté po kontrole a uložení zamýšľaných nastavení."
+          },
+          "calendar": {
+            "description": "Pomocou Kalendára obmedzte čas chodu automatických útokov na pevnosti a po zmenách vyberte Uložiť rozvrh.",
+            "label": "Kalendár",
+            "recommendation": "Vypnuté pre nepretržitú bežnú prevádzku."
+          },
+          "save_fortress_plan": {
+            "description": "Pred zatvorením tohto okna uložte nastavenia kráľovstiev, zásobovania a útokov.",
+            "label": "Uložiť plán pevností"
+          }
+        },
+        "title": "Nastavte rozvrh, uložte a zapnite"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "Ilustračný príklad ovládania troch vonkajších kráľovstiev pre automatické útoky na pevnosti",
+          "caption": "Zapnite každé odomknuté kráľovstvo, ktorého hlavný hrad má prijímať hrozivých vlkov a útočiť na pevnosti."
+        },
+        "items": {
+          "burning_sands": {
+            "description": "Po odomknutí Horiacich pieskov zapnite útoky a zásobovanie hrozivými vlkmi z vášho tamojšieho hlavného hradu.",
+            "label": "Horiace piesky",
+            "recommendation": "Zapnuté po odomknutí a pripravenosti na použitie."
+          },
+          "everwinter_glacier": {
+            "description": "Po odomknutí Ľadovca večnej zimy zapnite útoky a zásobovanie hrozivými vlkmi z vášho tamojšieho hlavného hradu.",
+            "label": "Ľadovec večnej zimy",
+            "recommendation": "Zapnuté po odomknutí a pripravenosti na použitie."
+          },
+          "fire_peaks": {
+            "description": "Po odomknutí Ohnivých vrcholov zapnite útoky a zásobovanie hrozivými vlkmi z vášho tamojšieho hlavného hradu.",
+            "label": "Ohnivé vrcholy",
+            "recommendation": "Zapnuté po odomknutí a pripravenosti na použitie."
+          }
+        },
+        "title": "Vyberte kráľovstvá pre pevnosti"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "Na stránke Automatizácia vyberte tlačidlo nastavení na karte automatických útokov na pevnosti.",
+            "label": "Otvoriť nastavenia"
+          }
+        },
+        "title": "Otvorte nastavenia automatických útokov na pevnosti"
+      },
+      "supply": {
+        "image": {
+          "alt": "Ilustračný príklad nastavení nákupu a presunu hrozivých vlkov",
+          "caption": "Skontrolujte strop nákupov za reláciu, rezervu chánových tabuliek a voľbu skrátenia času pri potvrdených presunoch."
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "Obmedzte nákupy hrozivých vlkov v obchode nomádov na dávky po 100 za každú reláciu; 0 nákupy vypína.",
+            "label": "Hroziví vlci za reláciu",
+            "recommendation": "5 000 hrozivých vlkov za reláciu za najnižšiu cenu."
+          },
+          "keep_khan_tablets": {
+            "description": "Zastavte nákupy hrozivých vlkov skôr, než počet chánových tabuliek klesne pod túto rezervu.",
+            "label": "Ponechať chánove tabuľky",
+            "recommendation": "Ponechajte 25 000 chánových tabuliek."
+          },
+          "supply_route": {
+            "description": "Kúpení hroziví vlci prídu do hlavného hradu Veľkej ríše a potom sa rozdelia do povolených kráľovstiev.",
+            "label": "Trasa zásobovania hrozivými vlkmi"
+          },
+          "use_time_skips": {
+            "description": "Používajte vhodné skrátenia času iba na potvrdené zásielky automatických útokov na pevnosti a dodržujte uložené rezervy zásob.",
+            "label": "Použiť skrátenia času na presun hrozivých vlkov",
+            "recommendation": "Zapnuté na rýchlejšie doplnenie, ak to umožňujú uložené rezervy skrátenia času."
+          }
+        },
+        "title": "Nastavte zásobovanie hrozivými vlkmi"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "Automatické invázne útoky útočia na Cudzích pánov alebo Krvavé vrany s uloženou útočnou predvoľbou, kým nedosiahnu bodový cieľ alebo inú hranicu zastavenia.",
+      "expectation": "Čakajú na aktívnu udalosť, vhodných veliteľov a dosť vojakov a nástrojov; útoky na ceste sa môžu skončiť aj po zastavení nových útokov.",
+      "name": "Automatické invázne útoky",
+      "summary": "Útočte na Cudzích pánov a Krvavé vrany až k bodovému cieľu"
+    },
+    "recommendationIntro": "Odporúčané hodnoty opisujú bežné používanie automatických inváznych útokov; sú návodom a nemenia uložené nastavenia.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "Ilustračný výber obtiažnosti Cudzích pánov a Krvavých vrán",
+          "caption": "Pre každú udalosť vyberte samostatnú odomknutú záložnú obtiažnosť."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "Vyberte odomknutú obtiažnosť Krvavých vrán pre prípad, že v aktuálnej udalosti nie je žiadna zvolená.",
+            "label": "Obtiažnosť Krvavých vrán",
+            "recommendation": "Použite najvyššiu odomknutú obtiažnosť, ktorú vaša bežná zostava spoľahlivo zvládne."
+          },
+          "difficulty_note": {
+            "description": "Uložte obe voľby udalostí; zmena uloženej hodnoty nenahradí obtiažnosť aktívnej udalosti.",
+            "label": "Aktuálna obtiažnosť"
+          },
+          "foreign_lords_difficulty": {
+            "description": "Vyberte odomknutú obtiažnosť Cudzích pánov pre prípad, že v aktuálnej udalosti nie je žiadna zvolená.",
+            "label": "Obtiažnosť Cudzích pánov",
+            "recommendation": "Použite najvyššiu odomknutú obtiažnosť, ktorú vaša bežná zostava spoľahlivo zvládne."
+          }
+        },
+        "title": "Vyberte obtiažnosti oboch udalostí"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "Po uložení zapnite automatické invázne útoky na karte Automatizácia, aby fungovali pri dostupnej udalosti a vhodných zdrojoch.",
+            "label": "Prepínač automatických inváznych útokov",
+            "recommendation": "Zapnuté po kontrole a uložení zamýšľaných nastavení."
+          },
+          "readiness": {
+            "description": "Automatické invázne útoky čakajú na aktívnu udalosť, vhodných veliteľov a dosť vojakov a nástrojov.",
+            "label": "Pripravenosť na útok"
+          },
+          "save_settings": {
+            "description": "Pred zatvorením okna uložte východiskový hrad, predvoľbu, obtiažnosti, hranice zastavenia a voľbu opevnenia.",
+            "label": "Uložiť nastavenia"
+          }
+        },
+        "title": "Uložte a zapnite automatické invázne útoky"
+      },
+      "fortify": {
+        "image": {
+          "alt": "Ilustračné nastavenia opevnenia automatických inváznych útokov",
+          "caption": "Nechajte opevnenie vypnuté, ak nechcete míňať dostupnú menu udalosti alebo výslovne zvolené rubíny."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "Vyberte možnosť podporovanú aktívnou udalosťou; hra určuje každú cenu a výslovná voľba rubínov povoľuje ich míňanie.",
+            "label": "Mena na opevnenie",
+            "recommendation": "Mena udalosti, ak je dostupná a opevnenie je zapnuté."
+          },
+          "fortify_each_target": {
+            "description": "Ak je zapnuté, posilnite každý vytvorený nepriateľský hrad pred útokom zvolenou menou.",
+            "label": "Opevniť každý cieľ",
+            "recommendation": "Vypnuté, ak opevnenie nepatrí do vašej bežnej stratégie udalostí."
+          }
+        },
+        "title": "Vyberte voliteľné opevnenie cieľov"
+      },
+      "limits": {
+        "image": {
+          "alt": "Ilustračné bodové a časové hranice automatických inváznych útokov",
+          "caption": "Bodový cieľ zastaví nové vyslania, ale útoky už na ceste môžu dobehnúť."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Zastavte automatizáciu pri dennom počte bežných útokov celého účtu až do obnovenia hrou; 0 nepridáva obmedzenie.",
+            "label": "Denný limit bežných útokov",
+            "recommendation": "0, aby beh riadil bodový cieľ udalosti."
+          },
+          "minimum_remaining": {
+            "description": "Prestaňte začínať nové útoky tento počet minút pred koncom udalosti.",
+            "label": "Zastaviť pred koncom udalosti",
+            "recommendation": "30 minút."
+          },
+          "score_target": {
+            "description": "Prestaňte začínať nové útoky, keď hlásené body udalosti dosiahnu alebo prekročia cieľ.",
+            "label": "Zastaviť pri bodoch udalosti",
+            "recommendation": "Použite svoju bežnú poslednú hranicu osobnej odmeny vyššiu ako 0."
+          },
+          "travelling_attacks": {
+            "description": "Útoky už na ceste môžu dobehnúť po splnení podmienky zastavenia a zvýšiť konečné body nad cieľ.",
+            "label": "Útoky na ceste"
+          }
+        },
+        "title": "Nastavte body a hranice zastavenia"
+      },
+      "open": {
+        "image": {
+          "alt": "Ilustračné nastavenia východiskového hradu, predvoľby a presunu automatických inváznych útokov",
+          "caption": "Vyberte východiskový hrad vo Veľkej ríši a uloženú predvoľbu udalosti pred nastavením presunu."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "Vyberte uloženú útočnú predvoľbu s vojakmi, nástrojmi a formáciou proti Cudzím pánom alebo Krvavým vranám.",
+            "label": "Útočná predvoľba",
+            "recommendation": "Najprv vytvorte bežnú predvoľbu proti Cudzím pánom alebo Krvavým vranám a potom ju tu vyberte."
+          },
+          "capacity_note": {
+            "description": "Počty vojakov a nástrojov z predvoľby sa prispôsobia kapacite zvoleného veliteľa a cieľa.",
+            "label": "Kapacita útoku"
+          },
+          "horse_travel_boost": {
+            "description": "Pre tieto útoky vyberte presun s pierkom, mincami alebo rubínmi.",
+            "label": "Posilnenie presunu koňa",
+            "recommendation": "Cestovné pierko na rýchly presun."
+          },
+          "open_settings": {
+            "description": "Na stránke Automatizácia vyberte tlačidlo nastavení na karte automatických inváznych útokov.",
+            "label": "Otvoriť nastavenia"
+          },
+          "source_castle": {
+            "description": "Vyberte hrad vo Veľkej ríši, ktorý dodáva vojakov a nástroje pre útoky udalosti.",
+            "label": "Východiskový hrad",
+            "recommendation": "Použite svoj bežný hrad pre udalosti s dosť vojakmi a nástrojmi."
+          }
+        },
+        "title": "Otvorte nastavenia automatických inváznych útokov"
+      }
+    }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "Použite najvyššiu odomknutú obtiažnosť, ktorú vaša bežná zostava spoľahlivo zvládne.",
+            "description": "Vyberte odomknutú nomádsku obtiažnosť na začiatok udalosti.",
+            "label": "Nomádska obtiažnosť"
+          },
+          "samurai_difficulty": {
+            "recommendation": "Použite najvyššiu odomknutú obtiažnosť, ktorú vaša bežná zostava spoľahlivo zvládne.",
+            "description": "Vyberte odomknutú samurajskú obtiažnosť na začiatok udalosti.",
+            "label": "Samurajská obtiažnosť"
+          },
+          "active_difficulty": {
+            "description": "Pri aktívnej udalosti zvoľte jej aktuálnu obtiažnosť, pretože iná uložená voľba nechá automatizáciu čakať namiesto zmeny úrovne.",
+            "label": "Už aktívna udalosť"
+          }
+        },
+        "title": "Vyberte obtiažnosti oboch udalostí",
+        "image": {
+          "alt": "Príklad nomádskej a samurajskej obtiažnosti",
+          "caption": "Pre každú udalosť vyberte samostatnú odomknutú obtiažnosť a pri aktívnej udalosti zvoľte jej aktuálnu úroveň."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "Zapnuté po kontrole a uložení zamýšľaných nastavení.",
+            "description": "Po uložení zapnite Automatických Nomádov/Samurajov na karte Automatizácia, aby bežali pri dostupnej udalosti a vhodných zdrojoch.",
+            "label": "Prepínač Automatickí Nomádi/Samuraji"
+          },
+          "save_settings": {
+            "label": "Uložiť nastavenia",
+            "description": "Pred zatvorením okna uložte zdroj, zostavy, obtiažnosti, hranice zastavenia, voľby časových skokov a stav testu."
+          },
+          "readiness": {
+            "description": "Automatizácia vylepšuje tábory udalosti a čaká na vhodných veliteľov, vojakov, nástroje a pri zapnutí aj použiteľné časové skoky.",
+            "label": "Pripravenosť na útoky na tábory"
+          }
+        },
+        "title": "Uložiť a zapnúť Automatických Nomádov/Samurajov"
+      },
+      "limits": {
+        "image": {
+          "caption": "Bodový cieľ zastaví nové vyslania, ale útoky už na ceste môžu dobehnúť.",
+          "alt": "Príklad bodových a zastavovacích hraníc Automatických Nomádov/Samurajov"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "Zastavte automatizáciu pri dennom počte bežných útokov celého účtu až do obnovenia hrou; 0 nepridáva obmedzenie.",
+            "label": "Denný limit bežných útokov",
+            "recommendation": "0, aby beh riadil bodový cieľ udalosti."
+          },
+          "minimum_remaining": {
+            "description": "Prestaňte začínať nové útoky tento počet minút pred koncom udalosti.",
+            "label": "Zastaviť pred koncom udalosti",
+            "recommendation": "30 minút."
+          },
+          "score_target": {
+            "description": "Prestaňte začínať nové útoky, keď hlásené body udalosti dosiahnu alebo prekročia cieľ.",
+            "label": "Zastaviť pri bodoch udalosti",
+            "recommendation": "Použite svoju bežnú poslednú hranicu osobnej odmeny vyššiu ako 0."
+          },
+          "travelling_attacks": {
+            "description": "Útoky už na ceste môžu dobehnúť po splnení podmienky zastavenia a zvýšiť konečné body nad cieľ.",
+            "label": "Útoky na ceste"
+          }
+        },
+        "title": "Nastavte body a hranice zastavenia"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Zrýchlenie cesty koňom",
+            "recommendation": "Cestovné pierko na rýchly presun.",
+            "description": "Pre útoky na tábory zvoľte cestu s pierkom, mincami alebo rubínmi."
+          },
+          "open_settings": {
+            "label": "Otvorte nastavenia",
+            "description": "Na stránke Automatizácia vyberte tlačidlo nastavení na karte Automatickí Nomádi/Samuraji."
+          },
+          "source_castle": {
+            "label": "Východiskový hrad",
+            "recommendation": "Použite svoj bežný hrad pre udalosti s dosť vojakmi a nástrojmi.",
+            "description": "Vyberte hrad vo Veľkej ríši, ktorý dodá vojakov a nástroje na útoky na tábory."
+          },
+          "nomad_preset": {
+            "description": "Vyberte uloženú útočnú zostavu s vojakmi, nástrojmi a rozmiestnením pre nomádske tábory.",
+            "label": "Nomádska útočná zostava",
+            "recommendation": "Vytvorte a vyberte svoju bežnú nomádsku zostavu."
+          },
+          "samurai_preset": {
+            "description": "Vyberte uloženú útočnú zostavu s vojakmi, nástrojmi a rozmiestnením pre samurajské tábory.",
+            "label": "Samurajská útočná zostava",
+            "recommendation": "Vytvorte a vyberte svoju bežnú samurajskú zostavu."
+          }
+        },
+        "image": {
+          "alt": "Príklad zdroja, zostáv a cesty Automatických Nomádov/Samurajov",
+          "caption": "Pred výberom zdrojového hradu a cesty vytvorte obe zostavy udalosti."
+        },
+        "title": "Otvoriť nastavenia Automatických Nomádov/Samurajov"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "Príklad čakania táborov a rezerv časových skokov",
+          "caption": "Každá hodnota Ponechať počíta predmety časových skokov, nie minúty čakania."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "Ponechajte tento počet 10-minútových časových skokov nedotknutý ako rezervu.",
+            "label": "Ponechať 10 min",
+            "recommendation": "0 pre bežné série útokov na tábory."
+          },
+          "keep_1m": {
+            "description": "Ponechajte tento počet 1-minútových časových skokov nedotknutý ako rezervu.",
+            "label": "Ponechať 1 min",
+            "recommendation": "0 pre bežné série útokov na tábory."
+          },
+          "keep_24h": {
+            "description": "Ponechajte tento počet 24-hodinových časových skokov nedotknutý ako rezervu.",
+            "label": "Ponechať 24 h",
+            "recommendation": "Odložte zásobu potrebnú na stavby alebo iné činnosti."
+          },
+          "keep_30m": {
+            "description": "Ponechajte tento počet 30-minútových časových skokov nedotknutý ako rezervu.",
+            "label": "Ponechať 30 min",
+            "recommendation": "0 pre bežné série útokov na tábory."
+          },
+          "keep_5h": {
+            "description": "Ponechajte tento počet 5-hodinových časových skokov nedotknutý ako rezervu.",
+            "label": "Ponechať 5 h",
+            "recommendation": "Odložte zásobu potrebnú na stavby alebo iné činnosti."
+          },
+          "keep_5m": {
+            "description": "Ponechajte tento počet 5-minútových časových skokov nedotknutý ako rezervu.",
+            "label": "Ponechať 5 min",
+            "recommendation": "0 pre bežné série útokov na tábory."
+          },
+          "keep_60m": {
+            "description": "Ponechajte tento počet 60-minútových časových skokov nedotknutý ako rezervu.",
+            "label": "Ponechať 60 min",
+            "recommendation": "0 pre bežné série útokov na tábory."
+          },
+          "skip_cooldowns": {
+            "description": "Po potvrdenom víťazstve nad táborom použite dostupný časový skok na odstránenie čakania tohto cieľa.",
+            "label": "Odstrániť čakanie po každom úspešnom útoku",
+            "recommendation": "Zapnúť pre bežné opakované útoky na tábory; vypnúť pre prirodzené čakanie."
+          }
+        },
+        "title": "Vybrať časové skoky a rezervy"
+      },
+      "trial": {
+        "image": {
+          "alt": "Príklad dočasného testu proti hradu lúpežného baróna",
+          "caption": "Test spustí skutočný útok a po zapnutí nahradí bežnú prevádzku udalosti."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "Nahraďte bežnú prevádzku udalosti skutočným skúšobným útokom na jeden hrad lúpežného baróna s nomádskou zostavou a časovými skokmi.",
+            "label": "Dočasný úplný test proti hradu lúpežného baróna",
+            "recommendation": "Vypnúť pre bežné nomádske či samurajské série."
+          },
+          "target_x": {
+            "description": "Vodorovnú súradnicu hradu lúpežného baróna zadajte iba pre dočasný test.",
+            "label": "Cieľ X",
+            "recommendation": "Pri vypnutom teste nepoužívať."
+          },
+          "target_y": {
+            "description": "Zvislú súradnicu hradu lúpežného baróna zadajte iba pre dočasný test.",
+            "label": "Cieľ Y",
+            "recommendation": "Pri vypnutom teste nepoužívať."
+          },
+          "trial_skips": {
+            "description": "Zapnutie testu zapne aj časové skoky pre tento test.",
+            "label": "Časové skoky pri teste"
+          }
+        },
+        "title": "Pri bežných sériách nechať dočasný test vypnutý"
+      }
+    },
+    "feature": {
+      "description": "Automatickí Nomádi/Samuraji vylepšujú vhodné tábory udalosti, vyberú najslabší plne vylepšený tábor a opakovane naň útočia uloženou zostavou danej udalosti, kým sa nedosiahne hranica zastavenia.",
+      "expectation": "Čakajú na aktívnu udalosť, vhodných veliteľov, vojakov, nástroje a použiteľné časové skoky pri zapnutom rušení čakania; útoky na ceste sa môžu dokončiť po zastavení nových výprav.",
+      "name": "Automatickí Nomádi/Samuraji",
+      "summary": "Vylepšovať a napádať nomádske či samurajské tábory"
+    },
+    "recommendationIntro": "Odporúčané hodnoty opisujú bežné používanie Automatických Nomádov/Samurajov; sú radou a nemenia uložené nastavenia."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "Zapnuté po kontrole a uložení zamýšľaných nastavení.",
+            "description": "Po kontrole nastavení zapnite Automatického poradcu na karte Automatizácia; už odomknutý poradca môže sériu spustiť ihneď.",
+            "label": "Prepínač Automatického poradcu"
+          },
+          "save_settings": {
+            "label": "Uložiť nastavenia",
+            "description": "Pred zatvorením okna uložte zdrojový hrad, predvoľbu, náročnosti, veľkosť série a rozpočty zdrojov."
+          },
+          "activate_advisor": {
+            "description": "Ak je poradca zamknutý, vyberte Aktivovať poradcu a otvorte potvrdenie pre aktuálnu udalosť.",
+            "label": "Aktivovať poradcu"
+          },
+          "activate_and_spend": {
+            "description": "Odošlite potvrdenú aktiváciu vhodným žetónom udalosti alebo univerzálnym žetónom poradcu; bezplatná udalosť ukáže aktiváciu poradcu.",
+            "label": "Aktivovať a minúť žetón"
+          },
+          "cancel_activation": {
+            "description": "Zatvorte potvrdenie bez odoslania aktivácie alebo minutia žetónu.",
+            "label": "Zrušiť aktiváciu"
+          },
+          "confirm_paid_activation": {
+            "description": "Potvrďte, že aktivácia poradcu môže spotrebovať žetón udalosti alebo univerzálny žetón, ak hra túto udalosť neoznačuje za bezplatnú.",
+            "label": "Potvrdiť platenú aktiváciu"
+          }
+        },
+        "image": {
+          "alt": "Ilustračné ovládacie prvky uloženia a aktivácie Automatického poradcu žetónom",
+          "caption": "Uloženie ani zapnutie žetón neminie; samostatne potvrdená aktivácia ho môže minúť."
+        },
+        "title": "Uložte, zapnite a aktivujte prístup k poradcovi"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "Nomádska obtiažnosť",
+            "recommendation": "Použite najvyššiu odomknutú obtiažnosť, ktorú vaša bežná zostava spoľahlivo zvládne.",
+            "description": "Vyberte odomknutú náročnosť Nomádov, ktorá sa nastaví pri začiatku udalosti."
+          },
+          "samurai_difficulty": {
+            "label": "Samurajská obtiažnosť",
+            "recommendation": "Použite najvyššiu odomknutú obtiažnosť, ktorú vaša bežná zostava spoľahlivo zvládne.",
+            "description": "Vyberte odomknutú náročnosť Samurajov, ktorá sa nastaví pri začiatku udalosti."
+          },
+          "active_difficulty": {
+            "description": "Zvoľte aktuálnu náročnosť už aktívnej udalosti, inak automatizácia počká namiesto jej zmeny.",
+            "label": "Náročnosť aktívnej udalosti"
+          }
+        },
+        "title": "Vyberte obtiažnosti oboch udalostí",
+        "image": {
+          "alt": "Ilustračné voľby náročnosti poradcu Nomádov a Samurajov",
+          "caption": "Uložte náročnosti oboch udalostí a zvoľte náročnosť zodpovedajúcu už prebiehajúcej udalosti."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Zrýchlenie cesty koňom",
+            "recommendation": "Cestovné pierko na rýchly presun.",
+            "description": "Pre sériu vyberte cestu za pierka, mince alebo rubíny."
+          },
+          "open_settings": {
+            "label": "Otvorte nastavenia",
+            "description": "Na stránke Automatizácia vyberte tlačidlo nastavení na karte Automatický poradca."
+          },
+          "source_castle": {
+            "label": "Východiskový hrad",
+            "recommendation": "Použite svoj bežný hrad pre udalosti s dosť vojakmi a nástrojmi.",
+            "description": "Vyberte hrad vo Veľkej ríši, ktorý dodá vojakov a nástroje pre sériu poradcu."
+          },
+          "attack_preset": {
+            "description": "Vyberte uloženú predvoľbu útoku, ktorej vojaci, nástroje a formácia sa skopírujú pre každý požadovaný útok.",
+            "label": "Útočná predvoľba poradcu",
+            "recommendation": "Najprv vytvorte bežnú predvoľbu pre aktívnu udalosť Nomádov alebo Samurajov a potom ju vyberte."
+          },
+          "complete_copies": {
+            "description": "Dostupné zdroje a úplné kópie predvoľby môžu znížiť sériu pod maximálny počet útokov.",
+            "label": "Úplné kópie predvoľby"
+          }
+        },
+        "image": {
+          "alt": "Ilustračný zdrojový hrad, predvoľba a cestovné nastavenia Automatického poradcu",
+          "caption": "Pred nastavením cesty vyberte zdrojový hrad vo Veľkej ríši a uloženú predvoľbu udalosti."
+        },
+        "title": "Otvorte nastavenia Automatického poradcu"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "Ponechajte tento počet 24-hodinových časových skokov nedotknutý ako rezervu.",
+            "label": "Ponechať 24 h",
+            "recommendation": "Odložte zásobu potrebnú na stavby alebo iné činnosti."
+          },
+          "keep_5h": {
+            "description": "Ponechajte tento počet 5-hodinových časových skokov nedotknutý ako rezervu.",
+            "label": "Ponechať 5 h",
+            "recommendation": "Odložte zásobu potrebnú na stavby alebo iné činnosti."
+          },
+          "keep_60m": {
+            "description": "Ponechajte tento počet 60-minútových časových skokov nedotknutý ako rezervu.",
+            "label": "Ponechať 60 min",
+            "recommendation": "0 pre bežné série poradcu."
+          },
+          "coin_cost": {
+            "description": "Odhadnite úplnú cenu v minciach za útok pre výpočet dostupnosti pred spustením bez zmeny cien v hre.",
+            "label": "Celkové mince za útok",
+            "recommendation": "500 len ak pokryjú skutočné úplné náklady; inak použite vyššiu zistenú sumu."
+          },
+          "keep_coins": {
+            "description": "Vyraďte tento počet mincí z rozpočtu série.",
+            "label": "Ponechať mince",
+            "recommendation": "Ponechajte si bežný rozpočet na nábor a stavby."
+          },
+          "keep_feathers": {
+            "description": "Vyraďte tento počet cestovných pierok z rozpočtu série.",
+            "label": "Ponechať pierka",
+            "recommendation": "0, ak si pierka nerezervujete pre iné funkcie."
+          },
+          "keep_rubies": {
+            "description": "Vyraďte tento počet rubínov z rozpočtu série.",
+            "label": "Ponechať rubíny",
+            "recommendation": "Ponechajte si zostatok potrebný na iné činnosti."
+          },
+          "ruby_cost": {
+            "description": "Odhadnite cenu rubínovej cesty za útok; pri voľbe cesty za rubíny je potrebná kladná hodnota.",
+            "label": "Rubíny za útok",
+            "recommendation": "0 s cestovným pierkom; pre rubínovú cestu použite skutočnú kladnú cenu."
+          }
+        },
+        "image": {
+          "alt": "Ilustračné rezervy mincí, rubínov, pierok a časových preskočení Automatického poradcu",
+          "caption": "Údaje o cene sú odhadmi pre plánovanie; hodnoty ponechania označujú zdroje alebo časové preskočenia, ktoré sa nevyužijú."
+        },
+        "title": "Nastavte rozpočty zdrojov a rezervy"
+      },
+      "overview": {
+        "image": {
+          "alt": "Ilustračný prehľad postupu a strát Automatického poradcu",
+          "caption": "Prehľad ukazuje postup série a straty bez začatia ďalšej série."
+        },
+        "items": {
+          "live_progress": {
+            "description": "V prehľade sledujte aktuálny a požadovaný počet útokov, víťazstvá, porážky, stratené jednotky a nástroje.",
+            "label": "Prebiehajúca séria poradcu"
+          },
+          "no_relaunch": {
+            "description": "Dokončená alebo zrušená séria tej istej udalosti sa automaticky znova nespustí.",
+            "label": "Dokončená alebo zrušená séria"
+          },
+          "refresh_overview": {
+            "description": "Vyžiadajte si aktuálny postup série poradcu, víťazstvá, porážky a straty.",
+            "label": "Obnoviť prehľad"
+          }
+        },
+        "title": "Skontrolujte prebiehajúcu sériu poradcu"
+      },
+      "sizing": {
+        "image": {
+          "alt": "Ilustračné nastavenia počtu útokov a času udalosti Automatického poradcu",
+          "caption": "Požadovaný počet je pred spustením obmedzený dostupnými zdrojmi a časom udalosti."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "Nastavte hornú hranicu útokov tejto jedinej série poradcu; zdroje a zostávajúci čas udalosti môžu skutočný počet znížiť.",
+            "label": "Maximum útokov",
+            "recommendation": "9 999, aby veľkosť série určili dostupné zdroje a čas udalosti."
+          },
+          "minimum_remaining": {
+            "description": "Tento počet minút ponechajte nevyužitý pri výpočte času udalosti pred spustením.",
+            "label": "Zastaviť pred koncom udalosti",
+            "recommendation": "30 minút; nejde o priebežný časovač rušenia série."
+          }
+        },
+        "title": "Nastavte veľkosť série a čas udalosti"
+      }
+    },
+    "feature": {
+      "description": "Automatický poradca spustí jednu sériu útokov poradcu Nomádov alebo Samurajov podľa dostupných zdrojov a zostávajúceho času udalosti.",
+      "expectation": "Séria čaká na zodpovedajúcu náročnosť aktívnej udalosti a odomknutého poradcu; uloženie ani zapnutie žetón neminie, potvrdená aktivácia ho však môže minúť.",
+      "name": "Automatický poradca",
+      "summary": "Spustite jednu sériu poradcu Nomádov alebo Samurajov podľa dostupných zdrojov"
+    },
+    "recommendationIntro": "Odporúčané hodnoty opisujú bežné používanie Automatického poradcu; sú len usmernením a nemenia uložené nastavenia."
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "Ponechať 10 min",
+            "description": "Nechajte toľko 10-minútových preskočení nepoužitých.",
+            "recommendation": "0 pre bežné chánske reťazce."
+          },
+          "keep_1m": {
+            "label": "Ponechať 1 min",
+            "description": "Nechajte toľko 1-minútových preskočení nepoužitých.",
+            "recommendation": "0 pre bežné chánske reťazce."
+          },
+          "keep_24h": {
+            "label": "Ponechať 24 h",
+            "recommendation": "Odložte zásobu potrebnú na stavby alebo iné činnosti.",
+            "description": "Nechajte toľko 24-hodinových preskočení nepoužitých."
+          },
+          "keep_30m": {
+            "label": "Ponechať 30 min",
+            "description": "Nechajte toľko 30-minútových preskočení nepoužitých.",
+            "recommendation": "0 pre bežné chánske reťazce."
+          },
+          "keep_5h": {
+            "label": "Ponechať 5 h",
+            "recommendation": "Odložte zásobu potrebnú na stavby alebo iné činnosti.",
+            "description": "Nechajte toľko 5-hodinových preskočení nepoužitých."
+          },
+          "keep_5m": {
+            "label": "Ponechať 5 min",
+            "description": "Nechajte toľko 5-minútových preskočení nepoužitých.",
+            "recommendation": "0 pre bežné chánske reťazce."
+          },
+          "keep_1h": {
+            "description": "Nechajte toľko 1-hodinových preskočení nepoužitých.",
+            "label": "Ponechať 1 h",
+            "recommendation": "0 pre bežné chánske reťazce."
+          },
+          "skip_cooldowns": {
+            "description": "Rezervujte a použite dosť preskočení na odstránenie čakania tábora po útokoch.",
+            "label": "Preskočiť každé čakanie chánskeho tábora",
+            "recommendation": "Zapnuté; aktuálne okno nastavení to vyžaduje na uloženie."
+          },
+          "skip_shortage": {
+            "description": "Nové útoky na tábor sa pozastavia, ak použiteľné preskočenia nepokryjú potrebné čakanie.",
+            "label": "Nedostatok použiteľných preskočení"
+          }
+        },
+        "image": {
+          "alt": "Ilustračné preskakovanie čakania a rezervy časových preskočení Automatického chána",
+          "caption": "Rezervy počítajú predmety, nie minúty."
+        },
+        "title": "Nastavte preskakovanie a rezervy"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "Denný limit bežných útokov",
+            "description": "Zastavte nové útoky na tábor tejto automatizácie pri dennom počítadle bežných útokov účtu; 0 limit vypne.",
+            "recommendation": "0, ak nepotrebujete limit pre celý účet."
+          },
+          "event_end": {
+            "label": "Zastaviť pred koncom udalosti",
+            "description": "Zastavte nové útoky na tábor toľko minút pred koncom udalosti.",
+            "recommendation": "5 minút."
+          },
+          "nomad_points": {
+            "description": "Pri tomto oznámenom skóre zastavte nové chánske útoky, stiahnite tie na ceste a otvorte hlavné brány; 0 zastavenie vypne.",
+            "label": "Zastaviť pri nomádskych bodoch",
+            "recommendation": "0, ak nechcete zastaviť a chrániť pri zvolenom skóre."
+          },
+          "replenish_tools": {
+            "description": "Doplňte chýbajúce nástroje z obrannej predvoľby vhodnými ponukami a odmietnite balíčky za rubíny.",
+            "label": "Dopĺňať obranné nástroje",
+            "recommendation": "Zapnuté, ak chcete vhodné automatické nákupy."
+          }
+        },
+        "image": {
+          "alt": "Ilustračné body, nástroje a denný limit Automatického chána",
+          "caption": "Kladná hranica nomádskych bodov tiež stiahne odchádzajúce chánske útoky a otvorí brány hlavného hradu."
+        },
+        "title": "Nastavte body, zásoby a denné limity"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "Uložiť nastavenia",
+            "description": "Uložte vybrané hrady, predvoľby, ovládanie hnevu, limity, rezervy preskočení a ochranu."
+          },
+          "enable_switch": {
+            "description": "Po kontrole hlavnej obrany zapnite Automatického chána na karte Automatizácia.",
+            "label": "Prepínač Automatického chána",
+            "recommendation": "Zapnuté po uložení nastavení a príprave obrany."
+          },
+          "station_priority": {
+            "description": "Automatické stacionovanie rieši prichádzajúce útoky hráčov oddelene od chánskych odviet.",
+            "label": "Prednosť Automatického stacionovania"
+          }
+        },
+        "image": {
+          "alt": "Ilustračné uloženie a zapnutie Automatického chána",
+          "caption": "Pred zapnutím chánskych odviet skontrolujte obranu hlavného hradu."
+        },
+        "title": "Uložte a zapnite Automatického chána"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "Zrýchlenie cesty koňom",
+            "recommendation": "Cestovné pierko na rýchly presun.",
+            "description": "Pre útoky na tábor vyberte cestu za pierka, mince alebo rubíny."
+          },
+          "open_settings": {
+            "label": "Otvorte nastavenia",
+            "description": "Na stránke Automatizácia vyberte tlačidlo nastavení karty Automatický chán."
+          },
+          "attack_from": {
+            "description": "Vyberte hlavný hrad alebo základňu vo Veľkej ríši ako zdroj útokov na chánsky tábor.",
+            "label": "Útok z",
+            "recommendation": "Ak môžete, použite základňu so svojou útočnou armádou."
+          },
+          "camp_attack_preset": {
+            "description": "Vyberte uloženú útočnú predvoľbu pre bežné útoky na chánsky tábor.",
+            "label": "Predvoľba útoku na tábor",
+            "recommendation": "Najprv vytvorte bežnú predvoľbu útoku na chána."
+          },
+          "defend_at": {
+            "description": "Chánske odvety mieria na tu zobrazený hlavný hrad vo Veľkej ríši; pole je len na čítanie.",
+            "label": "Obrana v"
+          },
+          "main_defense_preset": {
+            "description": "Vyberte uloženú obrannú predvoľbu znovu použitú v hlavnom hrade pred odvetou.",
+            "label": "Predvoľba hlavnej obrany",
+            "recommendation": "Vytvorte bežnú obrannú predvoľbu proti chánovi a pripravte vojakov a nástroje."
+          }
+        },
+        "image": {
+          "alt": "Ilustračný hrad, predvoľby a cesta Automatického chána",
+          "caption": "Pred zapnutím útočného reťazca pripravte obe predvoľby a obranu hlavného hradu."
+        },
+        "title": "Zvoľte hrady, predvoľby a cestu"
+      },
+      "protection": {
+        "image": {
+          "alt": "Ilustračná ochrana múru hlavného hradu pre Automatického chána",
+          "caption": "Ochrana múru platí len pri útokoch z hlavného hradu."
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "Spustite ochranu, keď počet útočných jednotiek na múre dosiahne túto hodnotu.",
+            "label": "Hranica útočných jednotiek na múre",
+            "recommendation": "1 000 útočných jednotiek na múre."
+          },
+          "outpost_source": {
+            "description": "Ochrana je vypnutá, ak útočí základňa a hlavný hrad sa bráni oddelene.",
+            "label": "Základňa ako zdroj"
+          },
+          "protect_offense": {
+            "description": "Pri útokoch z hlavného hradu otvorte jeho brány a pozastavte chána, ak by múr bránilo priveľa útočných vojakov.",
+            "label": "Chrániť útočných vojakov na múre hlavného hradu",
+            "recommendation": "Zapnuté, keď útoky pochádzajú z hlavného hradu."
+          }
+        },
+        "title": "Chráňte múr hlavného hradu"
+      },
+      "rage": {
+        "image": {
+          "alt": "Ilustračný hnev a povolenia útokov Automatického chána",
+          "caption": "Časovo obmedzené posilnenie bodov hnevu je iné než zástavy hnevu."
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "Zastavte nové útoky na tábor, zatiaľ čo hnev, čakania a obrana pokračujú.",
+            "label": "Uzamknúť automatické chánske útoky",
+            "recommendation": "Vypnuté pre bežné útoky na tábor."
+          },
+          "max_rage_chain": {
+            "description": "Obmedzte prijaté odvety v aktuálnej udalosti pred zastavením nových útokov na tábor; 0 hranicu odstráni.",
+            "label": "Maximálny reťazec hnevu",
+            "recommendation": "0, ak nepotrebujete hranicu odviet."
+          },
+          "rage_booster": {
+            "description": "Povoľte nové automatické útoky na tábor len počas aktívneho časového posilnenia bodov hnevu.",
+            "label": "Vyžadovať posilnenie bodov hnevu",
+            "recommendation": "Vypnuté, ak nechcete útočiť len s posilnením."
+          },
+          "rage_continues": {
+            "description": "Hranica reťazca hnevu nezastaví spúšťanie pri plnom hneve, čakania ani obnovenie obrany.",
+            "label": "Spracovanie hnevu pokračuje"
+          },
+          "trigger_full_rage": {
+            "description": "Vyvolajte chánsku odvetu pri plnom hneve.",
+            "label": "Vyvolať chána pri plnom hneve",
+            "recommendation": "Zapnuté, keď je hlavný hrad pripravený brániť sa."
+          }
+        },
+        "title": "Nastavte hnev a povolenia útokov"
+      }
+    },
+    "feature": {
+      "description": "Automatický chán útočí na chánsky tábor, ruší čakania, vyvoláva odvetu pri plnom hneve a udržiava obranu hlavného hradu.",
+      "expectation": "Nové útoky na tábor sa pozastavia pri nastavených medziach alebo nedostatku zdrojov, zatiaľ čo hlavný hrad ostáva chránený; prichádzajúce útoky hráčov rieši Automatické stacionovanie.",
+      "name": "Automatický chán",
+      "summary": "Reťazte útoky na chánsky tábor a bráňte odvetu pri hlavnom hrade"
+    },
+    "recommendationIntro": "Odporúčané hodnoty opisujú bežné používanie Automatického chána; sú usmernením a nemenia uložené nastavenia."
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "Automatický Berimond posilňuje vlastnený tábor podľa pomeru jednotiek vo vybranej útočnej predlohe a potom môže útočiť na veže, dopĺňať nástroje a stavať z potvrdenej koristi.",
+      "expectation": "Presuny čakajú na aktuálne stavy tábora a darcovského hradu, hlásenú kapacitu a dokončenie predošlej zásielky; čiastočné zásoby umožňujú menšiu zásielku, kým chýbajúci potrebný typ dopĺňanie pozastaví.",
+      "name": "Automatický Berimond",
+      "summary": "Zásobujte a spravujte svoj tábor v Berimonde"
+    },
+    "recommendationIntro": "Odporúčania opisujú bežné používanie Automatického Berimondu a nemenia uložené nastavenia.",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "Ilustračné nastavenia voliteľnej výstavby tábora v Automatickom Berimonde",
+          "caption": "Vstavaný a uložený cieľ, režimy zachytenia, stajňa úroveň 5, zásoby dreva a kameňa a sedem dĺžok časových preskočení."
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "Povoľte odstránenie nespravovaných budov, ktoré nemožno presunúť ani uložiť, aby sa dosiahol presný cieľ.",
+            "label": "Povoliť búranie",
+            "recommendation": "Vypnuté, kým nepreveríte plánované odstránenia."
+          },
+          "allow_premium_costs": {
+            "description": "Povoľte vhodné stavebné kroky, ktoré míňajú prémiovú menu.",
+            "label": "Povoliť prémiové náklady",
+            "recommendation": "Vypnuté, ak prémiovú výstavbu vyslovene nechcete."
+          },
+          "auto_beri_builder_lane": {
+            "description": "Stavajte alebo vylepšujte aktívny cieľ tábora Berimond z potvrdenej vrátenej koristi bez dovozu surovín z iného kráľovstva.",
+            "label": "Staviteľ Automatického Berimondu",
+            "recommendation": "Zapnite na bežnú výstavbu tábora po kontrole povolení na výdavky."
+          },
+          "camp_resource_reserves": {
+            "description": "Vybrané množstvá dreva a kameňa nepoužívajte na stavbu tábora.",
+            "label": "Rezervy surovín tábora",
+            "recommendation": "Drevo 0 a kameň 0, ak možno využiť prebytok."
+          },
+          "construction_time_skip_reserves": {
+            "description": "Nastavte zvlášť počet uchovaných preskočení 1 min, 5 min, 10 min, 30 min, 1 h, 5 h a 24 h.",
+            "label": "Rezervy skrátenia času stavby",
+            "recommendation": "Krátkych preskočení ponechajte po 0; zásobu 1 h, 5 h a 24 h chráňte pre iné činnosti."
+          },
+          "optional_custom_camp_target": {
+            "description": "Zachyťte Funkčný pre nevyhnutné budovy, Rozloženie pre umiestnenie bez dekorácií alebo Presný pre všetky podporované podrobnosti.",
+            "label": "Voliteľný vlastný cieľ tábora",
+            "recommendation": "Používajte vstavaný cieľ, ak nepotrebujete skontrolovaný vlastný cieľ."
+          },
+          "stable_target": {
+            "description": "Pre vstavaný cieľ vyberte úroveň frakčnej stajne od 1 do 5.",
+            "label": "Cieľová úroveň stajne",
+            "recommendation": "Úroveň 5 na bežnú výstavbu počas udalosti, ak stačia suroviny."
+          },
+          "use_construction_time_skips": {
+            "description": "Urýchlite potvrdenú stavbu v tábore pri zachovaní vybraných zásob stavebných preskočení.",
+            "label": "Používať urýchlenia stavby",
+            "recommendation": "Zapnite na bežnú výstavbu, ak máte dosť preskočení."
+          },
+          "keep_skip_10m": {
+            "description": "Ponechajte tento počet stavebných preskočení 10m; na bežné použitie nastavte zásobu na 0.",
+            "label": "Ponechať preskočenia 10m"
+          },
+          "keep_skip_1h": {
+            "description": "Rezervujte tento počet stavebných preskočení 1h pre iné činnosti.",
+            "label": "Ponechať preskočenia 1h"
+          },
+          "keep_skip_1m": {
+            "description": "Ponechajte tento počet stavebných preskočení 1m; na bežné použitie nastavte zásobu na 0.",
+            "label": "Ponechať preskočenia 1m"
+          },
+          "keep_skip_24h": {
+            "description": "Rezervujte tento počet stavebných preskočení 24h pre iné činnosti.",
+            "label": "Ponechať preskočenia 24h"
+          },
+          "keep_skip_30m": {
+            "description": "Ponechajte tento počet stavebných preskočení 30m; na bežné použitie nastavte zásobu na 0.",
+            "label": "Ponechať preskočenia 30m"
+          },
+          "keep_skip_5h": {
+            "description": "Rezervujte tento počet stavebných preskočení 5h pre iné činnosti.",
+            "label": "Ponechať preskočenia 5h"
+          },
+          "keep_skip_5m": {
+            "description": "Ponechajte tento počet stavebných preskočení 5m; na bežné použitie nastavte zásobu na 0.",
+            "label": "Ponechať preskočenia 5m"
+          },
+          "saved_targets": {
+            "description": "Zachytenie okamžite uloží a aktivuje skontrolovaný vlastný cieľ; výber iného uloženého cieľa ho tiež hneď aktivuje.",
+            "label": "Uložené vlastné ciele"
+          },
+          "stone_reserve": {
+            "description": "Toto množstvo táborového kameňa chráňte pred stavebnými výdavkami; pri použiteľnom prebytku nastavte 0.",
+            "label": "Zásoba kameňa"
+          },
+          "use_built_in_default": {
+            "description": "Okamžite prepnite späť na vstavaný cieľ a ponechajte uložené vlastné ciele.",
+            "label": "Použiť vstavaný predvolený cieľ"
+          },
+          "wood_reserve": {
+            "description": "Toto množstvo táborového dreva chráňte pred stavebnými výdavkami; pri použiteľnom prebytku nastavte 0.",
+            "label": "Zásoba dreva"
+          }
+        },
+        "title": "Vyberte voliteľnú výstavbu tábora"
+      },
+      "readiness": {
+        "image": {
+          "alt": "Ilustračné nastavenia pripravenosti na útoky na veže",
+          "caption": "Stav podmienky posilnenia a zostava predlohy bez skutočne aktívneho posilnenia či údajov zákazníka."
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "Pred zapnutím útokov skontrolujte vlny, jednotky a nástroje vybranej predlohy.",
+            "label": "Zostava útočnej predlohy",
+            "recommendation": "Udržujte u darcu aj v tábore dosť všetkých vybraných jednotiek a nástrojov pre bežné tempo útokov."
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "Vyžadujte aktívne posilnenie statočnosti pred pokračovaním presunov, nákupov nástrojov, prípravy tábora, útokov na veže alebo stavby.",
+            "label": "Spúšťať iba s posilnením statočnosti",
+            "recommendation": "Zapnuté, ak má každá časť automatizácie vyžadovať posilnenie."
+          }
+        },
+        "title": "Pripravte útoky na veže"
+      },
+      "save": {
+        "image": {
+          "alt": "Ilustračné nastavenia uloženia a zapnutia Automatického Berimondu",
+          "caption": "Kontrolný zoznam, prepínač a voliteľný kalendár bez skutočného účtu."
+        },
+        "items": {
+          "automation_switch": {
+            "description": "Zapnite Automatický Berimond na karte Automatizácia po kontrole tábora, darcových jednotiek, predlohy a voliteľných výdavkov.",
+            "label": "Prepínač automatizácie",
+            "recommendation": "Zapnuté po nastavení."
+          },
+          "calendar": {
+            "description": "Pre nepretržitú prevádzku nechajte kalendár vypnutý alebo nastavte obvyklé hodiny a uložte rozvrh, ak potrebujete časové okno.",
+            "label": "Kalendár",
+            "recommendation": "Vypnuté pre priebežnú prevádzku udalosti."
+          },
+          "save_settings": {
+            "description": "Pred zapnutím automatizácie uložte predlohu, darcu, tempo presunov, limity útokov, nástroje a voľby výstavby.",
+            "label": "Uložiť nastavenia"
+          }
+        },
+        "title": "Uložiť a zapnúť"
+      },
+      "setup": {
+        "image": {
+          "alt": "Ilustračné nastavenia útokov a zásobovania Automatického Berimondu",
+          "caption": "Uložená útočná predloha, darcovský hrad vo Veľkej ríši, Cestovné pierko, kontrola útokov a denný limit."
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "Nastavte, ako často automatizácia hľadá ďalší útok na vežu.",
+            "label": "Interval kontroly útokov",
+            "recommendation": "Ponechajte obvyklý interval 30 sekúnd, ak nechcete menej kontrol."
+          },
+          "attack_preset": {
+            "description": "Vyberte uloženú berimondskú útočnú zostavu; automatizácia použije jej pomer jednotiek pri presunoch aj útokoch na veže.",
+            "label": "Útočná predloha",
+            "recommendation": "Najskôr vytvorte a vyberte svoju obvyklú berimondskú predlohu."
+          },
+          "daily_normal_attack_limit": {
+            "description": "Zastavte nové útoky na veže, keď celkový denný počet bežných útokov účtu dosiahne tento limit; 0 odstraňuje dodatočné obmedzenie.",
+            "label": "Denný limit bežných útokov",
+            "recommendation": "0, ak nepoužívate limit pre celý účet."
+          },
+          "horse_travel_boost": {
+            "description": "Pre útoky na veže zvoľte cestu za pierko, mince alebo rubíny.",
+            "label": "Zrýchlenie cesty",
+            "recommendation": "Cestovné pierko na rýchly presun bez voľby rubínovej cesty."
+          },
+          "open_settings": {
+            "description": "Na stránke Automatizácia otvorte nastavenia karty Auto Beri World.",
+            "label": "Otvoriť nastavenia"
+          },
+          "source_castle": {
+            "description": "Vyberte hrad alebo základňu vo Veľkej ríši, odkiaľ pochádzajú jednotky.",
+            "label": "Darcovský hrad",
+            "recommendation": "Vyberte hrad so svojou útočnou armádou."
+          }
+        },
+        "title": "Zvoľte útok a zdroj zásobovania"
+      },
+      "tools": {
+        "image": {
+          "alt": "Ilustračné nastavenia táborových nástrojov Automatického Berimondu",
+          "caption": "Tri minimálne zásoby nástrojov a zjavne vymyslený inventár tábora."
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "Dopĺňajte tento počet umiestnených baranidiel podľa rovnakého pravidla.",
+            "label": "Minimum baranidiel",
+            "recommendation": "Prispôsobte spotrebe vo svojej obvyklej predlohe."
+          },
+          "mantlets_minimum": {
+            "description": "Dopĺňajte tento počet umiestnených štítov podľa rovnakého pravidla.",
+            "label": "Minimum štítov",
+            "recommendation": "Prispôsobte spotrebe vo svojej obvyklej predlohe."
+          },
+          "scaling_ladders_minimum": {
+            "description": "Dopĺňajte tento počet umiestnených rebríkov v tábore z vhodných ponúk za mince; 0 ich ponechá bez správy.",
+            "label": "Minimum rebríkov",
+            "recommendation": "Prispôsobte svojej obvyklej predlohe a tempu útokov."
+          }
+        },
+        "title": "Udržujte nástroje tábora"
+      },
+      "transfers": {
+        "image": {
+          "alt": "Ilustračné nastavenia pomerných presunov jednotiek",
+          "caption": "Vymyslený pomer 2:1, stav tábora, voľná kapacita a čiastočná zásielka jediného typu; hodnoty sú príklady, nie uložené predvolené nastavenia."
+        },
+        "items": {
+          "check_interval": {
+            "description": "Nastavte, ako často automatizácia obnovuje voľnú prepravnú kapacitu a zásoby v oboch hradoch.",
+            "label": "Interval kontroly",
+            "recommendation": "Ponechajte obvyklý interval 30 sekúnd."
+          },
+          "food_only": {
+            "description": "Presúvať možno iba jednotky predlohy spotrebúvajúce Jedlo; nepodporované jednotky alebo nevyriešené rodiny sa pozastavia s vysvetlením.",
+            "label": "Iba presuny jednotiek spotrebúvajúcich Jedlo"
+          },
+          "minimum_free_capacity": {
+            "description": "Začnite presuny až po dosiahnutí tohto prahu hlásenej voľnej kapacity; jednotlivá pomerná zásielka môže byť menšia.",
+            "label": "Minimálna voľná kapacita",
+            "recommendation": "1 voľné miesto pre vojakov pri bežnom pomernom dopĺňaní."
+          },
+          "owned_berimond_camp": {
+            "description": "Automatizácia sama nájde váš vlastnený berimondský tábor, preto netreba zadávať ID tábora.",
+            "label": "Vlastnený tábor v Berimonde"
+          },
+          "partial_donor": {
+            "description": "Ak má darca časť potrebného typu jednotiek, automatizácia odošle menšie množstvo; ak nemá žiadne, čaká namiesto odoslania iného typu.",
+            "label": "Čiastočné zásoby u darcu"
+          },
+          "pending_transfer": {
+            "description": "Automatizácia čaká na príchod každej zásielky a pred novým výpočtom pomeru aktualizuje stav tábora.",
+            "label": "Prebiehajúci presun"
+          },
+          "preset_troop_mix": {
+            "description": "Automatizácia spočíta opakované miesta jednotiek vo vlnách a na nádvorí vybranej predlohy a dopĺňa vždy jeden nedostatočne zastúpený typ.",
+            "label": "Pomer jednotiek predlohy"
+          },
+          "troop_transport_skip": {
+            "description": "Vyberte trvanie predmetu použitého pri zapnutom urýchlení prepravy.",
+            "label": "Urýchlenie prepravy",
+            "recommendation": "Na bežné potvrdené presuny používajte preskočenie 1 h."
+          },
+          "use_troop_transport_time_skips": {
+            "description": "Použite zvolené urýchlenie na potvrdený presun, kým je na ceste.",
+            "label": "Používať urýchlenie prepravy",
+            "recommendation": "Zapnite na bežné zásobovanie tábora, ak máte dosť preskočení."
+          }
+        },
+        "title": "Nastavte pomerné presuny jednotiek"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "Auto Storm dokáže otvoriť a stavať Búrkový hrad, útočiť na pevnosti a surovinové ostrovy, dovážať vojsko a kupovať vybrané Lunine odmeny.",
+      "expectation": "Každá vetva pracuje s čerstvými údajmi z hry a uloženými povoleniami; prémiová výstavba, útoky a nákupy závisia od vašich zapnutých volieb.",
+      "name": "Auto Storm",
+      "summary": "Spravujte Búrkový hrad, útoky a odmeny"
+    },
+    "recommendationIntro": "Odporúčania opisujú bežné používanie Auto Storm; sú to rady a nemenia uložené nastavenia.",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "Názorná ukážka prístupu k Búrkovému hradu a uloženia cieľa",
+          "caption": "Výber úvodného hradu, spôsoby uloženia a voliteľné zapnutie cieľa; nezobrazuje skutočný nákup ani účet."
+        },
+        "items": {
+          "automatic_open": {
+            "description": "Keď je Búrka zamknutá, vyberte dostupný oficiálny úvodný hrad a pred povolením odomknutia skontrolujte zobrazenú cenu.",
+            "label": "Automaticky otvoriť Búrkový hrad",
+            "recommendation": "Zapnite, ak má Auto Storm otvoriť obvyklý úvodný hrad po overení ceny."
+          },
+          "blueprint": {
+            "description": "Zachytený cieľ sa hneď uloží a zapne; Pozastaviť cieľ preruší zosúlaďovanie, ale uložené ciele ponechá.",
+            "label": "Uložený cieľ",
+            "recommendation": "Pri bežnej výstavbe nechajte zapnutý skontrolovaný Funkčný cieľ."
+          },
+          "capture_castle": {
+            "description": "Pred uložením stavebného cieľa zvoľte svoj súčasný Búrkový hrad.",
+            "label": "Búrkový hrad",
+            "recommendation": "Zachyťte hrad, ktorý chcete spravovať."
+          },
+          "combat_only": {
+            "description": "Na boj s pevnosťami a ostrovmi netreba uložený stavebný cieľ.",
+            "label": "Boj bez cieľa"
+          },
+          "decoration_preset": {
+            "description": "Po skončení výstavby môžete použiť vybratú predvoľbu dekorácií.",
+            "label": "Predvoľba dekorácií po výstavbe",
+            "recommendation": "Nechajte prázdne, ak nechcete osobitné rozloženie dekorácií."
+          },
+          "exact": {
+            "description": "Uložte všetky podporované podrobnosti cieľa pre presnú kópiu.",
+            "label": "Presné zachytenie",
+            "recommendation": "Použite až po preskúmaní celého cieľa."
+          },
+          "functional": {
+            "description": "Uložte cieľ základných funkcií Búrky bez kopírovania každej polohy budovy.",
+            "label": "Funkčné zachytenie",
+            "recommendation": "Funkčný režim pri bežnej údržbe."
+          },
+          "layout": {
+            "description": "Uložte druhy a polohy budov bez dekorácií.",
+            "label": "Zachytenie rozloženia",
+            "recommendation": "Použite, iba keď záleží na umiestnení budov."
+          },
+          "open_settings": {
+            "description": "Otvorte nastavenia Auto Storm na karte Automatizácia.",
+            "label": "Otvoriť nastavenia"
+          },
+          "starter_castle": {
+            "description": "Vyberte práve dostupný oficiálny úvodný hrad Búrky na nasledujúcu zamknutú sezónu.",
+            "label": "Hrad na otvorenie",
+            "recommendation": "Po kontrole ceny vyberte dostupný obvyklý úvodný hrad."
+          }
+        },
+        "title": "Otvorte a uložte svoj Búrkový hrad"
+      },
+      "combat": {
+        "image": {
+          "alt": "Ukážka nastavení útokov na pevnosti a ostrovy",
+          "caption": "Príklad akvamarínových ostrovov, úrovní pevností, poradia cieľov a obrancov posádky."
+        },
+        "items": {
+          "defenders": {
+            "description": "Vyberte druhy a počty obrancov ponechaných na dobytom ostrove; prázdny zoznam nechá po potvrdenom víťazstve jedného preživšieho.",
+            "label": "Obranné jednotky ostrova",
+            "recommendation": "Zvoľte obrancov, ak vášmu plánu jeden preživší nestačí."
+          },
+          "fort_preset": {
+            "description": "Vyberte uloženú zostavu vojakov a nástrojov pre pevnosti.",
+            "label": "Predvoľba útoku na pevnosti",
+            "recommendation": "Použite svoju obvyklú zostavu proti pevnostiam."
+          },
+          "forts": {
+            "description": "Zapnite útoky na vybrané oficiálne úrovne pevností od 40 do 80.",
+            "label": "Búrkové pevnosti",
+            "recommendation": "Zapnite úrovne, ktoré vaša zostava dokáže spoľahlivo zdolať."
+          },
+          "horse": {
+            "description": "Na Búrkové útoky zvoľte cestovanie s pierkom, mincami alebo rubínmi.",
+            "label": "Zrýchlenie jazdy na koni",
+            "recommendation": "Cestovné pierko na rýchlu cestu bez voľby rubínovej jazdy."
+          },
+          "island_preset": {
+            "description": "Vyberte uloženú zostavu vojakov a nástrojov pre ostrovy.",
+            "label": "Predvoľba útoku na ostrovy",
+            "recommendation": "Použite svoju obvyklú ostrovnú zostavu."
+          },
+          "island_resources": {
+            "description": "Zvoľte, na ktoré ostrovy s drevom, kameňom alebo akvamarínom sa smie útočiť.",
+            "label": "Suroviny ostrovov",
+            "recommendation": "Pri zbieraní akvamarínu vyberte akvamarín."
+          },
+          "island_sizes": {
+            "description": "Vyberte veľké, malé alebo obidve veľkosti ostrovov s vybranou surovinou.",
+            "label": "Veľkosti ostrovov",
+            "recommendation": "Veľké aj malé pri bežnom získavaní akvamarínu."
+          },
+          "islands": {
+            "description": "Zapnite dobývanie ostrovov vybranej suroviny a veľkosti.",
+            "label": "Surovinové ostrovy",
+            "recommendation": "Zapnite, ak chcete akvamarín z veľkých aj malých ostrovov."
+          },
+          "minimum_attacks": {
+            "description": "Útočte iba na pevnosti s aspoň takýmto počtom zostávajúcich útokov.",
+            "label": "Minimum zostávajúcich útokov",
+            "recommendation": "0 umožní každú vhodnú pevnosť."
+          },
+          "priority": {
+            "description": "Zoraďte aktívne skupiny cieľov ostrovov a pevností; v každej skupine sa ako prvý napáda najbližší vhodný cieľ.",
+            "label": "Priorita útočných cieľov",
+            "recommendation": "Veľké ostrovy, malé ostrovy, potom pevnosti od úrovne 80 po 40 na získavanie akvamarínu."
+          }
+        },
+        "title": "Vyberte pevnosti a surovinové ostrovy"
+      },
+      "construction": {
+        "image": {
+          "alt": "Ukážka nastavení výstavby a rezerv",
+          "caption": "Prevoz surovín, povolenia výdavkov, rezervy a úroveň prístavu ako názorné prvky."
+        },
+        "items": {
+          "demolition": {
+            "description": "Povoľte odstránenie budov z presného cieľa, ktoré nemožno presunúť ani uskladniť.",
+            "label": "Povoliť demoláciu",
+            "recommendation": "Vypnuté, ak neobnovujete skontrolované rozloženie."
+          },
+          "donor_reserves": {
+            "description": "Pred prevozom surovín ponechajte u každého darcu vybrané množstvo dreva, kameňa a akvamarínu.",
+            "label": "Chránené rezervy darcov",
+            "recommendation": "Chráňte bežnú zásobu dreva a kameňa na stavby; akvamarín 0, keď ho nepoužívate."
+          },
+          "harbor_level": {
+            "description": "Vyberte cieľovú úroveň prístavu 1, 2 alebo 3; úrovne 2 a 3 vedú cez prémiovú výstavbu.",
+            "label": "Cieľová úroveň prístavu",
+            "recommendation": "Úroveň 1, ak neplánujete prémiové vylepšenia."
+          },
+          "harbor": {
+            "description": "Udržujte prístav na zvolenej úrovni, aj keď sa zachytený cieľ odlišuje.",
+            "label": "Vylepšiť prístav",
+            "recommendation": "Zapnuté s úrovňou 1 pri bežnom používaní."
+          },
+          "premium": {
+            "description": "Povoľte vhodné stavebné kroky, ktoré míňajú prémiovú menu.",
+            "label": "Povoliť prémiové náklady",
+            "recommendation": "Vypnuté, ak prémiovú výstavbu neplánujete."
+          },
+          "resource_transport": {
+            "description": "Povoľte potvrdené dodávky chýbajúcich stavebných surovín z darcovských hradov.",
+            "label": "Previezť chýbajúce suroviny",
+            "recommendation": "Zapnuté pri bežnej výstavbe."
+          },
+          "skip_reserves": {
+            "description": "Ponechajte vybraný počet predmetov 1 min, 5 min, 10 min, 30 min, 1 h, 5 h a 24 h na stavby a dopravu.",
+            "label": "Rezerva časových skrátení",
+            "recommendation": "Krátke skrátenia nechajte na 0, ak ich nepotrebujete inde; zásoby 1 h, 5 h a 24 h si nechajte na iné udalosti."
+          },
+          "storm_reserves": {
+            "description": "Vybrané množstvá dreva, kameňa a akvamarínu chráňte pred výstavbou.",
+            "label": "Výdavkové rezervy Búrkového hradu",
+            "recommendation": "Drevo 0 a kameň 0, ak možno minúť prebytky; akvamarín určte podľa plánovaného rozpočtu odmien."
+          },
+          "time_skips": {
+            "description": "Používajte vhodné preskočenia na stavby, dopravu surovín a vojakov pri zachovaní vybraných zásob.",
+            "label": "Použiť preskočenia na stavby a dopravu",
+            "recommendation": "Zapnuté, ak chcete rýchlejšiu bežnú výstavbu."
+          }
+        },
+        "title": "Nastavte výstavbu a ochranu surovín"
+      },
+      "luna": {
+        "image": {
+          "alt": "Ukážka nastavení Luniných odmien",
+          "caption": "Rezerva akvamarínu, obmedzené nákupné ciele, opakovateľné odmeny a priorita."
+        },
+        "items": {
+          "cost_cap": {
+            "description": "Prečítajte si cenu a nákupný limit každej odmeny podľa hry.",
+            "label": "Cena a nákupný limit",
+            "recommendation": "Pred zapnutím overte obidve hodnoty určené len na čítanie."
+          },
+          "keep_aqua": {
+            "description": "Toto množstvo akvamarínu neponúkajte na Lunine nákupy.",
+            "label": "Ponechať akvamarín",
+            "recommendation": "0, ak sa všetok prebytok môže minúť na odmeny; inak odložte plánované množstvo."
+          },
+          "priority": {
+            "description": "Obchod najprv posudzuje nákupné ciele s nižšími číslami.",
+            "label": "Priorita",
+            "recommendation": "Priraďte 1, 2 a 3 v požadovanom poradí a obmedzené ciele dajte pred neobmedzené odmeny."
+          },
+          "search": {
+            "description": "Pred nastavením nákupu vyhľadajte oficiálne Lunine odmeny podľa názvu.",
+            "label": "Nájsť Luninu odmenu",
+            "recommendation": "Vyhľadajte odmenu, ktorú naozaj chcete."
+          },
+          "target_total": {
+            "description": "Nastavte želaný celkový počet nákupov obmedzenej odmeny.",
+            "label": "Cieľový celkový počet",
+            "recommendation": "Nastavte iba počet, ktorý chcete kúpiť."
+          },
+          "unlimited": {
+            "description": "Pokračujte v nákupe vhodnej opakovateľnej odmeny, kým to umožňujú rezerva a limit obchodu.",
+            "label": "Neobmedzene",
+            "recommendation": "Zapnuté len pri opakovateľných odmenách, ktoré bežne chcete."
+          },
+          "use": {
+            "description": "Vyberte odmenu, aby sa mohla automaticky kupovať.",
+            "label": "Použiť odmenu",
+            "recommendation": "Zapnite iba požadované odmeny."
+          }
+        },
+        "title": "Vyberte Lunine odmeny za akvamarín"
+      },
+      "save": {
+        "image": {
+          "alt": "Ukážka uloženia a zapnutia Auto Storm",
+          "caption": "Denný limit útokov, kontrola pravidiel, aktualizácia mapy len na čítanie a prepínač automatizácie."
+        },
+        "items": {
+          "daily_limit": {
+            "description": "Zastavte nové útoky Auto Storm po dosiahnutí denného počtu bežných útokov účtu; 0 tento ďalší limit ruší.",
+            "label": "Denný limit bežných útokov",
+            "recommendation": "0, ak nepoužívate limit celého účtu."
+          },
+          "enable": {
+            "description": "Zapnite Auto Storm na karte Automatizácia, keď sú uložené voľby pripravené.",
+            "label": "Prepínač automatizácie",
+            "recommendation": "Zapnite po nastavení."
+          },
+          "map_refresh": {
+            "description": "Prečítajte si oficiálny interval obnovy mapy Búrky.",
+            "label": "Interval obnovy mapy",
+            "recommendation": "Hodnota len na čítanie je 2 hodiny; po zmenách počkajte na nové skenovanie."
+          },
+          "policy_check": {
+            "description": "Určte, ako často Auto Storm kontroluje nastavenia a dostupné činnosti.",
+            "label": "Interval kontroly pravidiel",
+            "recommendation": "Ponechajte bežný interval 30 sekúnd."
+          },
+          "save": {
+            "description": "Uložte výber hradu, výstavby, boja, dovozu vojakov a Luny pred zapnutím automatizácie.",
+            "label": "Uložiť nastavenia",
+            "recommendation": "Uložte po kontrole všetkých povolení výdavkov."
+          }
+        },
+        "title": "Uložte a zapnite Auto Storm"
+      },
+      "troops": {
+        "image": {
+          "alt": "Ukážka dovozu vojakov a odhadov len na čítanie",
+          "caption": "Poradie darcov, 1 000 ponechaných vojakov a odhady kapacity len na čítanie."
+        },
+        "items": {
+          "attack_history": {
+            "description": "Čítajte potvrdené útoky v Búrke od resetu servera delené 24, nie kĺzavý priemer za 24 hodín.",
+            "label": "Priemer útokov od resetu",
+            "recommendation": "Pred zmenou potreby dovozu si pozrite tento odhad len na čítanie."
+          },
+          "committed_cap": {
+            "description": "Prečítajte si automaticky vypočítaný limit vrátane umiestnených vojakov, pohybov, prevozu a návratov.",
+            "label": "Limit viazaných vojakov Búrky",
+            "recommendation": "Pred zvýšením dovozu si pozrite tento limit len na čítanie."
+          },
+          "donors": {
+            "description": "Vyberte darcovské hrady v zobrazenom poradí; čiastočné zásoby môžu poskytnúť menšiu zásielku.",
+            "label": "Darcovské hrady",
+            "recommendation": "Vyberte bežných dodávateľov vojakov v preferovanom poradí."
+          },
+          "import": {
+            "description": "Dovážajte chýbajúcich útočných alebo vybraných obranných vojakov do Búrky z darcovských hradov.",
+            "label": "Dovážať chýbajúcich vojakov",
+            "recommendation": "Zapnuté, ak váš Búrkový hrad potrebuje pravidelný prísun vojakov."
+          },
+          "map_coverage": {
+            "description": "Skôr než sa spoľahnete na zobrazené ciele, skontrolujte pokrytie mapy.",
+            "label": "Pokrytie mapy",
+            "recommendation": "Ak chýbajú ciele, počkajte na aktuálne pokrytie."
+          },
+          "minimum_kept": {
+            "description": "Po vyslaní útoku ponechajte v Búrke aspoň toľko vojakov a zachovajte zmes zapnutých predvolieb.",
+            "label": "Minimum vojakov po vyslaní",
+            "recommendation": "1 000 vojakov ako bežná rezerva prispôsobená vašej skutočnej armáde."
+          },
+          "preset_average": {
+            "description": "Prečítajte si priemernú potrebu vojakov zapnutých útočných predvolieb vrátane vybraných obrancov ostrovov.",
+            "label": "Priemer zapnutých predvolieb",
+            "recommendation": "Porovnajte tento odhad len na čítanie so svojou armádou."
+          }
+        },
+        "title": "Dovážajte a sledujte vojakov Búrky"
+      }
+    }
+  }
+}

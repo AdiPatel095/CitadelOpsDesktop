@@ -44,10 +44,10 @@ export function nextEventScoreEnd(
 }
 
 /** Formats the authoritative UTC end instant in the viewer's local zone. */
-export function formatEventEndLocal(value: string, locales?: Intl.LocalesArgument): string {
+export function formatEventEndLocal(value: string, locales?: Intl.LocalesArgument,unknownLabel = 'Unknown'): string {
 	const date = new Date(value);
 	return Number.isNaN(date.getTime())
-		? 'Unknown'
+		? unknownLabel
 		: date.toLocaleString(locales, { dateStyle: 'medium', timeStyle: 'short' });
 }
 

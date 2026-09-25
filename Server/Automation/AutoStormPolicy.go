@@ -1,6 +1,7 @@
 package Automation
 
 import (
+	"CitadelDesktop/Server/Localization"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -206,52 +207,52 @@ func (*AutoStormPolicy) Evaluate(_ context.Context, snapshot Snapshot) (Decision
 
 	settings := defaultAutoStormSettings()
 	if !decodeSection(snapshot.Configuration, autoStormSection, &settings) {
-		return autoStormWaiting(snapshot.Now, "Auto Storm settings have not been saved"), nil
+		return autoStormWaiting(snapshot.Now, "Auto Storm settings have not been saved", Localization.New("server.automation.auto_storm_settings_have.7747d389", "Auto Storm settings have not been saved", nil)), nil
 	}
 	normalizeAutoStormSettings(&settings)
 	if settings.Version != 1 {
-		return autoStormWaiting(snapshot.Now, fmt.Sprintf("Unsupported Auto Storm settings version %d", settings.Version)), nil
+		return autoStormWaiting(snapshot.Now, fmt.Sprintf("Unsupported Auto Storm settings version %d", settings.Version), Localization.New("server.automation.unsupported_auto_storm_settings.354f0544", "Unsupported Auto Storm settings version {p0, number}", Localization.Params{"p0": settings.Version})), nil
 	}
 	if !validHorseTravelBoostID(settings.HorseTravelBoostID) {
-		return autoStormWaiting(snapshot.Now, "Choose a supported horse travel boost"), nil
+		return autoStormWaiting(snapshot.Now, "Choose a supported horse travel boost", Localization.New("server.automation.choose_a_supported_horse.0d7016a8", "Choose a supported horse travel boost", nil)), nil
 	}
 	if snapshot.GameData == nil {
-		return autoStormWaiting(snapshot.Now, "Official game data is unavailable"), nil
+		return autoStormWaiting(snapshot.Now, "Official game data is unavailable", Localization.New("server.automation.official_game_data_is.c5e55e7e", "Official game data is unavailable", nil)), nil
 	}
 	if err := autoStormApplyActiveBlueprint(snapshot, &settings); err != nil {
-		return autoStormWaiting(snapshot.Now, err.Error()), nil
+		return autoStormWaiting(snapshot.Now, err.Error(), Localization.FromError(err)), nil
 	}
 	castle, found := autoStormCastle(snapshot.State, settings.Target)
 	if !found {
 		if snapshot.State.KingdomTransport.ObservedAt.IsZero() ||
 			snapshot.Now.Sub(snapshot.State.KingdomTransport.ObservedAt) >= autoStormKingdomRefreshAge {
 			decision := autoStormIntentDecision(
-				snapshot.Now, nil, "Refresh Storm kingdom availability", "troops.kingdom.refresh", nil,
+				snapshot.Now, nil, "Refresh Storm kingdom availability", "troops.kingdom.refresh", nil, Localization.New("server.automation.refresh_storm_kingdom_availability.448349e7", "Refresh Storm kingdom availability", nil),
 			)
 			return *decision, nil
 		}
 		unlock, observed := snapshot.State.KingdomTransport.Unlocks[autoStormKingdomID]
 		if observed && (unlock.Unlocked || unlock.Created) {
 			decision := autoStormIntentDecision(
-				snapshot.Now, nil, "Reconcile the unlocked Storm castle", "storm.castle.refresh", nil,
+				snapshot.Now, nil, "Reconcile the unlocked Storm castle", "storm.castle.refresh", nil, Localization.New("server.automation.reconcile_the_unlocked_storm.0e38d9b5", "Reconcile the unlocked Storm castle", nil),
 			)
 			return *decision, nil
 		}
 		if !observed {
-			return autoStormWaiting(snapshot.Now, "Storm kingdom availability is missing from the latest game state"), nil
+			return autoStormWaiting(snapshot.Now, "Storm kingdom availability is missing from the latest game state", Localization.New("server.automation.storm_kingdom_availability_is.9be31bb9", "Storm kingdom availability is missing from the latest game state", nil)), nil
 		}
 		if !settings.Unlock.Enabled {
-			return autoStormWaiting(snapshot.Now, "No Storm castle is present; enable automatic Storm castle unlock and choose an official castle option"), nil
+			return autoStormWaiting(snapshot.Now, "No Storm castle is present; enable automatic Storm castle unlock and choose an official castle option", Localization.New("server.automation.no_storm_castle_is.80e936a9", "No Storm castle is present; enable automatic Storm castle unlock and choose an official castle option", nil)), nil
 		}
 		option, available := snapshot.GameData.StormCastleOption(
 			settings.Unlock.PrebuiltCastleID, snapshot.State.Player.Level,
 		)
 		if !available {
-			return autoStormWaiting(snapshot.Now, "Choose an official Storm castle option available at the current player level"), nil
+			return autoStormWaiting(snapshot.Now, "Choose an official Storm castle option available at the current player level", Localization.New("server.automation.choose_an_official_storm.858f0302", "Choose an official Storm castle option available at the current player level", nil)), nil
 		}
 		decision := autoStormIntentDecision(
 			snapshot.Now, nil, fmt.Sprintf("Open official Storm castle %d", option.ID),
-			"storm.castle.unlock", map[string]any{"prebuiltCastleId": option.ID},
+			"storm.castle.unlock", map[string]any{"prebuiltCastleId": option.ID}, Localization.New("server.automation.open_official_storm_castle.a8395737", "Open official Storm castle {p0}", Localization.Params{"p0": fmt.Sprintf("%d", option.ID)}),
 		)
 		return *decision, nil
 	}
@@ -465,7 +466,7 @@ func autoStormFullMapScanDecisionWithCoverage(
 			"fullMap":        true,
 			"bounds":         bounds,
 			"scanStartedAt":  snapshot.Now,
-		},
+		}, stormCastleActionDescriptor("map", castle, 0),
 	)
 	decision.NextCheckAt = snapshot.Now.Add(autoStormMapRefreshInterval)
 	return decision
@@ -498,7 +499,7 @@ func evaluateAutoEventBuild(
 	if layoutStale || queueStale {
 		return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Refresh the %s castle building state", profile.FeatureLabel), "building.refresh", map[string]any{
 			"castleId": castle.ID,
-		}), false, "", nil
+		}, Localization.New("server.automation.refresh_the_p_castle.4876bebd", "Refresh the {p0} castle building state", Localization.Params{"p0": fmt.Sprintf("%s", profile.FeatureLabel)})), false, "", nil
 	}
 	catalog, err := snapshot.GameData.BuildingCatalog()
 	if err != nil {
@@ -508,7 +509,7 @@ func evaluateAutoEventBuild(
 	if giftID, found := autoStormExpansionGift(castle, catalog); found {
 		return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Collect expansion gift %d before reconciling the layout", giftID), "building.collect_expansion_gift", map[string]any{
 			"castleId": castle.ID, "buildingInstanceId": giftID,
-		}), false, "", nil
+		}, Localization.New("server.automation.collect_expansion_gift_p.0235c3cc", "Collect expansion gift {p0} before reconciling the layout", Localization.Params{"p0": fmt.Sprintf("%d", giftID)})), false, "", nil
 	}
 
 	queueDecision, queueBlocked := autoStormQueueDecision(snapshot, settings, castle, catalog, metrics, profile)
@@ -743,13 +744,13 @@ func autoStormQueueDecision(
 		if remaining <= 60 {
 			return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Finish %s building %d through the free path", profile.FeatureLabel, buildingID), "building.finish_free", map[string]any{
 				"castleId": castle.ID, "buildingInstanceId": buildingID,
-			}), false
+			}, Localization.New("server.automation.finish_p_building_p.f7a63dda", "Finish {p0} building {p1} through the free path", Localization.Params{"p0": fmt.Sprintf("%s", profile.FeatureLabel), "p1": fmt.Sprintf("%d", buildingID)})), false
 		}
 		if settings.Build.AllowTimeSkips {
 			if minutes, reserve, found := autoStormBuildingTimeSkip(snapshot.State, settings.Build.TimeSkipReserve, remaining); found {
 				return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Apply a %d-minute skip to %s building %d", minutes, profile.FeatureLabel, buildingID), "building.skip_time", map[string]any{
 					"castleId": castle.ID, "buildingInstanceId": buildingID, "minutes": minutes, "minimumRemaining": reserve,
-				}), false
+				}, Localization.New("server.automation.apply_a_p_minute.67443a3c", "Apply a {p0, number}-minute skip to {p1} building {p2}", Localization.Params{"p0": minutes, "p1": fmt.Sprintf("%s", profile.FeatureLabel), "p2": fmt.Sprintf("%d", buildingID)})), false
 			}
 		}
 	}
@@ -978,7 +979,7 @@ func autoStormFixedTargets(
 		return result, nil
 	}
 	if settings.Harbor.TargetLevel < 1 || settings.Harbor.TargetLevel > 3 {
-		return nil, fmt.Errorf("Harbor target level must be between 1 and 3")
+		return nil, Localization.WithError(fmt.Errorf("Harbor target level must be between 1 and 3"), Localization.New("server.automation.harbor_target_level_must.397e72a0", "Harbor target level must be between 1 and 3", nil))
 	}
 	filtered := result[:0]
 	for _, target := range result {
@@ -991,7 +992,7 @@ func autoStormFixedTargets(
 	result = filtered
 	harbor, found := autoStormHarborDefinition(catalog, settings.Harbor.TargetLevel)
 	if !found {
-		return nil, fmt.Errorf("Official data has no Storm Harbor level %d", settings.Harbor.TargetLevel)
+		return nil, Localization.WithError(fmt.Errorf("Official data has no Storm Harbor level %d", settings.Harbor.TargetLevel), Localization.New("server.automation.official_data_has_no.936768e5", "Official data has no Storm Harbor level {p0}", Localization.Params{"p0": settings.Harbor.TargetLevel}))
 	}
 	result = append(result, Buildings.TargetFixedBuilding{TargetID: "storm-harbor", DefinitionID: State.BuildingID(harbor.ID)})
 	return result, nil
@@ -1080,7 +1081,7 @@ func autoStormBuildingRemovalDecision(
 	if definition.Storeable != nil && *definition.Storeable {
 		return autoStormIntentDecision(now, metrics, fmt.Sprintf("Store layout blocker %s", definition.DisplayName), "building.store", map[string]any{
 			"castleId": castle.ID, "buildingInstanceId": buildingID,
-		})
+		}, Localization.New("server.automation.store_layout_blocker_p.9f4f73dd", "Store layout blocker {p0}", Localization.Params{"p0": fmt.Sprintf("%s", definition.DisplayName)}))
 	}
 	demolitionAllowed := settings.Build.AllowDemolition &&
 		autoStormBuildingOfficiallyDestructible(definition) &&
@@ -1088,7 +1089,7 @@ func autoStormBuildingRemovalDecision(
 	if exactExtra && demolitionAllowed {
 		return autoStormIntentDecision(now, metrics, fmt.Sprintf("Demolish unmanaged %s", definition.DisplayName), "building.demolish", map[string]any{
 			"castleId": castle.ID, "buildingInstanceId": buildingID,
-		})
+		}, Localization.New("server.automation.demolish_unmanaged_p.a80087cf", "Demolish unmanaged {p0}", Localization.Params{"p0": fmt.Sprintf("%s", definition.DisplayName)}))
 	}
 	if definition.Movable == nil || *definition.Movable {
 		if placement, found := Buildings.FindPlacement(castle, definition, catalog, buildingID); found &&
@@ -1096,13 +1097,13 @@ func autoStormBuildingRemovalDecision(
 			return autoStormIntentDecision(now, metrics, fmt.Sprintf("Stage layout blocker %s in free space", definition.DisplayName), "building.move", map[string]any{
 				"castleId": castle.ID, "buildingInstanceId": buildingID,
 				"x": placement.GridX, "y": placement.GridY, "rotation": placement.Rotation,
-			})
+			}, Localization.New("server.automation.stage_layout_blocker_p.02a77307", "Stage layout blocker {p0} in free space", Localization.Params{"p0": fmt.Sprintf("%s", definition.DisplayName)}))
 		}
 	}
 	if demolitionAllowed {
 		return autoStormIntentDecision(now, metrics, fmt.Sprintf("Demolish unmanaged %s", definition.DisplayName), "building.demolish", map[string]any{
 			"castleId": castle.ID, "buildingInstanceId": buildingID,
-		})
+		}, Localization.New("server.automation.demolish_unmanaged_p.a80087cf", "Demolish unmanaged {p0}", Localization.Params{"p0": fmt.Sprintf("%s", definition.DisplayName)}))
 	}
 	return nil
 }
@@ -1159,7 +1160,7 @@ func autoStormTargetActionDecision(
 		metrics,
 		fmt.Sprintf("%s %s toward the captured %s target", actionLabel, action.Definition.DisplayName, profile.FeatureLabel),
 		action.Intent,
-		arguments,
+		arguments, Localization.New("server.automation.p_p_toward_the.970455ab", "{p0} {p1} toward the captured {p2} target", Localization.Params{"p0": fmt.Sprintf("%s", actionLabel), "p1": fmt.Sprintf("%s", action.Definition.DisplayName), "p2": fmt.Sprintf("%s", profile.FeatureLabel)}),
 	)
 }
 
@@ -1171,7 +1172,7 @@ func autoStormTargetTransportDecision(
 	metrics map[string]float64,
 ) (*Decision, string) {
 	if snapshot.State.KingdomTransport.ObservedAt.IsZero() {
-		return autoStormIntentDecision(snapshot.Now, metrics, "Refresh resource logistics for the Storm target", "resource.logistics.refresh", map[string]any{}), ""
+		return autoStormIntentDecision(snapshot.Now, metrics, "Refresh resource logistics for the Storm target", "resource.logistics.refresh", map[string]any{}, Localization.New("server.automation.refresh_resource_logistics_for.a2c7f1c1", "Refresh resource logistics for the Storm target", nil)), ""
 	}
 	unlock, observed := snapshot.State.KingdomTransport.Unlocks[castle.KingdomID]
 	if !observed || !unlock.Unlocked {
@@ -1182,7 +1183,7 @@ func autoStormTargetTransportDecision(
 			if key, _, reserve, found := autoStormTransportTimeSkip(snapshot.State, settings.Build.TimeSkipReserve, pending.RemainingSec); found {
 				return autoStormIntentDecision(snapshot.Now, metrics, "Advance the pending Storm resource shipment", "resource.kingdom.skip", map[string]any{
 					"targetKingdomId": castle.KingdomID, "timeSkipId": key, "minimumRemaining": reserve,
-				}), ""
+				}, Localization.New("server.automation.advance_the_pending_storm.808a8398", "Advance the pending Storm resource shipment", nil)), ""
 			}
 		}
 		if pending.RemainingSec <= 0 {
@@ -1240,7 +1241,7 @@ func autoStormTargetTransportDecision(
 		return autoStormIntentDecision(
 			snapshot.Now, metrics,
 			fmt.Sprintf("Transport resources from %s toward the Storm target", autoStormCastleName(source)),
-			"resource.ship", arguments,
+			"resource.ship", arguments, stormCastleActionDescriptor("transport", source, 0),
 		), ""
 	}
 	return nil, "No owned castle can currently supply the missing Storm building resources"
@@ -1347,7 +1348,7 @@ func autoStormDecorationDecision(
 	}
 	return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Apply decoration preset %s to the completed %s layout", preset.Name, profile.FeatureLabel), "decoration.apply_preset", map[string]any{
 		"castleId": castle.ID, "kingdomId": castle.KingdomID, "presetId": preset.ID, "items": items,
-	}), false, "", nil
+	}, Localization.New("server.automation.apply_decoration_preset_p.d86eba70", "Apply decoration preset {p0} to the completed {p1} layout", Localization.Params{"p0": fmt.Sprintf("%s", preset.Name), "p1": fmt.Sprintf("%s", profile.FeatureLabel)})), false, "", nil
 }
 
 func autoStormDecorationPresetFromConfiguration(
@@ -1416,7 +1417,7 @@ func evaluateAutoStormShop(
 	if !found || observedAt.IsZero() || snapshot.Now.Sub(observedAt) >= 5*time.Minute {
 		return autoStormIntentDecision(snapshot.Now, metrics, "Refresh Luna package purchase counters", "shop.package.history", map[string]any{
 			"castleId": castle.ID, "kingdomId": castle.KingdomID,
-		}), false, "", nil
+		}, Localization.New("server.automation.refresh_luna_package_purchase.858325f5", "Refresh Luna package purchase counters", nil)), false, "", nil
 	}
 	rules := append([]autoStormShopPurchase(nil), settings.Aquamarine.Purchases...)
 	sort.SliceStable(rules, func(left, right int) bool {
@@ -1433,6 +1434,7 @@ func evaluateAutoStormShop(
 	spendable := aquamarine - settings.Aquamarine.Reserve
 	purchases := make([]autoStormShopPurchaseLine, 0, len(rules))
 	purchaseLabels := make([]string, 0, len(rules))
+	purchaseMessages := make([]*Localization.Message, 0, len(rules))
 	totalCost := int64(0)
 	includesUnlimited := false
 	seenPackages := map[State.PackageID]struct{}{}
@@ -1490,6 +1492,7 @@ func evaluateAutoStormShop(
 		cost := amount * item.AquamarinePrice
 		purchases = append(purchases, autoStormShopPurchaseLine{ProductID: rule.PackageID, Amount: amount})
 		purchaseLabels = append(purchaseLabels, fmt.Sprintf("%d x %s", amount, item.Name))
+		purchaseMessages = append(purchaseMessages, Localization.New("server.storm.purchase_list_item", "{amount, number} x Luna package {packageID}", Localization.Params{"amount": amount, "packageID": strconv.FormatInt(int64(rule.PackageID), 10)}))
 		totalCost += cost
 		spendable -= cost
 		if rule.Unlimited {
@@ -1507,11 +1510,14 @@ func evaluateAutoStormShop(
 	})
 	followUp, _ := json.Marshal(map[string]any{"castleId": castle.ID, "kingdomId": castle.KingdomID})
 	detail := fmt.Sprintf("Buy %s from Luna for %d Aquamarine", autoStormShopFriendlyList(purchaseLabels), totalCost)
+	detailLocalizationMessage := Localization.New("server.storm.purchase_ready", "Buy {purchases} from Luna for {cost, number} Aquamarine", Localization.Params{"cost": totalCost})
 	if includesUnlimited {
 		detail += " (unlimited goal)"
+		detailLocalizationMessage = Localization.New("server.storm.purchase_ready_unlimited", "Buy {purchases} from Luna for {cost, number} Aquamarine (unlimited goal)", Localization.Params{"cost": totalCost})
 	}
+	detailLocalizationMessage = Localization.WithLists(detailLocalizationMessage, detail, map[string][]*Localization.Message{"purchases": purchaseMessages})
 	return &Decision{
-		Status: "ready", Detail: detail,
+		Status: "ready", Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage),
 		NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
 		Request:  &Intent.Request{Name: "storm.shop.purchase", Arguments: arguments},
 		FollowUp: &Intent.Request{Name: "shop.package.history", Arguments: followUp}, ReevaluateOnSuccess: true,
@@ -1589,8 +1595,10 @@ func autoStormIslandReturnDecision(
 		return nil, fmt.Sprintf("Storm island %d:%d has no report-confirmed surplus troop to return", selected.TargetX, selected.TargetY)
 	}
 	detail := fmt.Sprintf("Return %d report-confirmed surviving troops from Storm island %d:%d", returnTotal, selected.TargetX, selected.TargetY)
+	var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.return_p_report_confirmed.2fd4a005", "Return {p0, number} report-confirmed surviving troops from Storm island {p1}:{p2}", Localization.Params{"p0": returnTotal, "p1": selected.TargetX, "p2": selected.TargetY})
 	if selected.LeaveBehind > 0 {
 		detail += fmt.Sprintf(", leaving %d occupier", selected.LeaveBehind)
+		detailLocalizationMessage = nil
 	}
 	return autoStormIntentDecision(snapshot.Now, metrics, detail, "storm.island.return", map[string]any{
 		"sourceCastleId": selected.SourceCastleID,
@@ -1600,7 +1608,7 @@ func autoStormIslandReturnDecision(
 		"islandObjectId": selected.IslandObjectID,
 		"reportId":       selected.ReportID,
 		"units":          units,
-	}), ""
+	}, Localization.Clone(detailLocalizationMessage)), ""
 }
 
 func evaluateAutoStormCombat(
@@ -1686,7 +1694,7 @@ func evaluateAutoStormCombat(
 						X1: candidate.Observation.X, Y1: candidate.Observation.Y,
 						X2: candidate.Observation.X, Y2: candidate.Observation.Y,
 					},
-				},
+				}, Localization.New("server.automation.refresh_storm_target_p.e732594a", "Refresh Storm target {p0}:{p1} before attack", Localization.Params{"p0": fmt.Sprintf("%d", candidate.Observation.X), "p1": fmt.Sprintf("%d", candidate.Observation.Y)}),
 			), "", nil
 		}
 		limitedPreset, err := autoStormCapacityLimitedPreset(
@@ -1753,15 +1761,18 @@ func evaluateAutoStormCombat(
 			label = fmt.Sprintf("%s %s island", candidate.Definition.Size, candidate.Definition.Resource)
 		}
 		detail := fmt.Sprintf("Attack %s at %d:%d with %s", label, candidate.Observation.X, candidate.Observation.Y, preset.Name)
+		var detailLocalizationMessage *Localization.Message = Localization.New("server.automation.attack_p_at_p.0250c4a3", "Attack {p0} at {p1}:{p2} with {p3}", Localization.Params{"p0": fmt.Sprintf("%s", label), "p1": fmt.Sprintf("%d", candidate.Observation.X), "p2": fmt.Sprintf("%d", candidate.Observation.Y), "p3": fmt.Sprintf("%s", preset.Name)})
 		if candidate.Definition.Kind == GameData.StormIsleKindIsland {
 			if len(defense) == 0 {
 				detail += "; after the victory report, return the surviving army except one occupier"
+				detailLocalizationMessage = nil
 			} else {
 				detail += "; after the victory report, return the surviving attack army"
+				detailLocalizationMessage = nil
 			}
 		}
 		return &Decision{
-			Status: "ready", Detail: detail,
+			Status: "ready", Detail: detail, DetailDescriptor: Localization.Clone(detailLocalizationMessage),
 			NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
 			Request:             &Intent.Request{Name: "storm.attack", Arguments: payload},
 			ReevaluateOnSuccess: true, ReevaluateOnStale: true,
@@ -2017,7 +2028,7 @@ func autoStormCapacityLimitedPreset(
 		},
 	})
 	if err != nil {
-		return AttackPresets.Preset{}, fmt.Errorf("resolve Storm attack capacity: %w", err)
+		return AttackPresets.Preset{}, Localization.WithError(fmt.Errorf("resolve Storm attack capacity: %w", err), Localization.ErrorContext(Localization.New("server.automation.resolve_storm_attack_capacity.b9731e82", "resolve Storm attack capacity", nil), err))
 	}
 	return AttackPresets.LimitToCapacity(preset, capacity), nil
 }
@@ -2085,7 +2096,7 @@ func autoStormPendingTroopTransportDecision(
 		if remaining <= 0 {
 			refreshArguments, _ := json.Marshal(map[string]any{})
 			return &Decision{
-				Status: "ready", Detail: "Confirm the arriving Storm troop transfer and refresh the castle inventory",
+				Status: "ready", Detail: "Confirm the arriving Storm troop transfer and refresh the castle inventory", DetailDescriptor: Localization.New("server.automation.confirm_the_arriving_storm.844fb48d", "Confirm the arriving Storm troop transfer and refresh the castle inventory", nil),
 				NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
 				Request:  &Intent.Request{Name: "troops.kingdom.refresh", Arguments: refreshArguments},
 				FollowUp: &Intent.Request{Name: "game.focus_castle", Arguments: focusArguments}, ReevaluateOnSuccess: true,
@@ -2097,7 +2108,7 @@ func autoStormPendingTroopTransportDecision(
 					"targetKingdomId": castle.KingdomID, "timeSkipId": key, "minimumRemaining": reserve,
 				})
 				return &Decision{
-					Status: "ready", Detail: fmt.Sprintf("Apply %s to the pending Storm troop transfer", key),
+					Status: "ready", Detail: fmt.Sprintf("Apply %s to the pending Storm troop transfer", key), DetailDescriptor: Localization.New("server.automation.apply_p_to_the.ef08e3c1", "Apply {p0} to the pending Storm troop transfer", Localization.Params{"p0": fmt.Sprintf("%s", key)}),
 					NextCheckAt: snapshot.Now.Add(2 * time.Second), Metrics: metrics,
 					Request:  &Intent.Request{Name: "troops.kingdom.skip", Arguments: skipArguments},
 					FollowUp: &Intent.Request{Name: "game.focus_castle", Arguments: focusArguments}, ReevaluateOnSuccess: true,
@@ -2110,7 +2121,7 @@ func autoStormPendingTroopTransportDecision(
 			wait = interval
 		}
 		return &Decision{
-			Status: "waiting", Detail: fmt.Sprintf("Waiting for the Storm troop transfer (%d seconds)", remaining),
+			Status: "waiting", Detail: fmt.Sprintf("Waiting for the Storm troop transfer (%d seconds)", remaining), DetailDescriptor: Localization.New("server.automation.waiting_for_the_storm.20f91c73", "Waiting for the Storm troop transfer ({p0} seconds)", Localization.Params{"p0": remaining}),
 			NextCheckAt: snapshot.Now.Add(wait), Metrics: metrics,
 		}, true
 	}
@@ -2242,7 +2253,7 @@ func autoStormTroopImportDecision(
 	}
 	unlock, observed := snapshot.State.KingdomTransport.Unlocks[castle.KingdomID]
 	if snapshot.State.KingdomTransport.ObservedAt.IsZero() || !observed {
-		return autoStormIntentDecision(snapshot.Now, metrics, "Refresh kingdom troop-transfer availability", "troops.kingdom.refresh", map[string]any{}), ""
+		return autoStormIntentDecision(snapshot.Now, metrics, "Refresh kingdom troop-transfer availability", "troops.kingdom.refresh", map[string]any{}, Localization.New("server.automation.refresh_kingdom_troop_transfer.9324b4de", "Refresh kingdom troop-transfer availability", nil)), ""
 	}
 	if !unlock.Unlocked {
 		return nil, "Kingdom troop transfer to Storm is not unlocked"
@@ -2284,7 +2295,7 @@ func autoStormTroopImportDecision(
 		if capPreview.ResetSessionStartedAt != nil {
 			arguments["expectedDailyAttackSessionStartedAt"] = *capPreview.ResetSessionStartedAt
 		}
-		return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Import %d guarded troops from %s", transferTotal, autoStormCastleName(donor)), "troops.kingdom.ship", arguments), ""
+		return autoStormIntentDecision(snapshot.Now, metrics, fmt.Sprintf("Import %d guarded troops from %s", transferTotal, autoStormCastleName(donor)), "troops.kingdom.ship", arguments, stormCastleActionDescriptor("import", donor, transferTotal)), ""
 	}
 	if missingTools > 0 {
 		return nil, fmt.Sprintf("Selected donor castles cannot supply the missing Storm troops; %d preset tool stack(s) are also missing", missingTools)
@@ -2506,17 +2517,17 @@ func autoStormIntentDecision(
 	detail string,
 	intentName string,
 	argumentsValue map[string]any,
-) *Decision {
+	descriptors ...*Localization.Message) *Decision {
 	arguments, _ := json.Marshal(argumentsValue)
 	return &Decision{
-		Status: "ready", Detail: detail, NextCheckAt: now.Add(2 * time.Second), Metrics: metrics,
+		Status: "ready", Detail: detail, DetailDescriptor: Localization.First(descriptors), NextCheckAt: now.Add(2 * time.Second), Metrics: metrics,
 		Request:             &Intent.Request{Name: intentName, Arguments: arguments},
 		ReevaluateOnSuccess: true, ReevaluateOnStale: true,
 	}
 }
 
-func autoStormWaiting(now time.Time, detail string) Decision {
-	return Decision{Status: "waiting", Detail: detail, NextCheckAt: now.Add(30 * time.Second)}
+func autoStormWaiting(now time.Time, detail string, descriptors ...*Localization.Message) Decision {
+	return Decision{Status: "waiting", Detail: detail, DetailDescriptor: Localization.First(descriptors), NextCheckAt: now.Add(30 * time.Second)}
 }
 
 func autoStormCastleName(castle State.CastleState) string {
@@ -2524,4 +2535,27 @@ func autoStormCastleName(castle State.CastleState) string {
 		return name
 	}
 	return fmt.Sprintf("castle %d", castle.ID)
+}
+
+func stormCastleActionDescriptor(kind string, castle State.CastleState, amount int64) *Localization.Message {
+	named := strings.TrimSpace(castle.Name) != ""
+	params := Localization.Params{"castle": castle.Name, "amount": amount, "id": strconv.FormatInt(int64(castle.ID), 10)}
+	switch kind {
+	case "map":
+		if named {
+			return Localization.New("server.storm.refresh_map", "Refresh the complete Storm map for {castle}", params)
+		}
+		return Localization.New("server.storm.refresh_map_id", "Refresh the complete Storm map for castle {id}", params)
+	case "transport":
+		if named {
+			return Localization.New("server.storm.transport_resources", "Transport resources from {castle} toward the Storm target", params)
+		}
+		return Localization.New("server.storm.transport_resources_id", "Transport resources from castle {id} toward the Storm target", params)
+	case "import":
+		if named {
+			return Localization.New("server.storm.import_troops", "Import {amount, number} guarded troops from {castle}", params)
+		}
+		return Localization.New("server.storm.import_troops_id", "Import {amount, number} guarded troops from castle {id}", params)
+	}
+	return nil
 }

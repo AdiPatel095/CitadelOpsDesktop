@@ -1,0 +1,2080 @@
+{
+  "ui": {
+    "guideButton": "가이드",
+    "calendarButton": "달력",
+    "recommendedLabel": "권장",
+    "backToSettings": "설정으로 돌아가기",
+    "backToGuide": "가이드로 돌아가기",
+    "howToSetUp": "설정 방법",
+    "whatToExpect": "예상 동작",
+    "openFullSizePicture": "전체 크기 사진 열기",
+    "illustrativeExample": "설명용 예시",
+    "enlargePicture": "예시 사진 확대",
+    "fullSizePicture": "전체 크기 예시 사진입니다. 스크롤하여 모든 설정을 확인하세요",
+    "towerGuideTitle": "탑 자동 공격 가이드",
+    "birdGuideTitle": "병력 자동 대피 보호 가이드",
+    "towerGuideIntro": "다음 단계에 따라 자동 탑을 설정하세요. 예시 사진을 선택하면 확대됩니다.",
+    "birdGuideIntro": "다음 단계에 따라 자동 병력 대피를 설정하세요. 예시 사진을 선택하면 확대됩니다.",
+    "towerPreviewTitle": "탑 자동 공격 설정 예시",
+    "birdPreviewTitle": "병력 자동 대피 보호 설정 예시",
+    "stationGuideTitle": "자동 병력 대피 안내",
+    "stationGuideIntro": "다음 단계에 따라 자동 병력 대피를 설정하세요. 예시 그림을 선택하면 크게 볼 수 있습니다.",
+    "stationPreviewTitle": "자동 병력 대피 설정 예시",
+    "fortressGuideIntro": "이 단계에 따라 요새 자동 공격을 설정하고 예시 패널을 선택해 확대하세요.",
+    "fortressGuideTitle": "요새 자동 공격 가이드",
+    "fortressPreviewTitle": "요새 자동 공격 설정 예시",
+    "invasionGuideIntro": "이 단계에 따라 침공 자동 공격을 설정하고 예시 패널을 선택해 확대하세요.",
+    "invasionGuideTitle": "침공 자동 공격 가이드",
+    "invasionPreviewTitle": "침공 자동 공격 설정 예시",
+    "nomadGuideIntro": "이 단계에 따라 자동 유목민/사무라이를 설정하고 예시 패널을 선택해 확대하세요.",
+    "nomadGuideTitle": "자동 유목민/사무라이 안내",
+    "nomadPreviewTitle": "자동 유목민/사무라이 설정 예시",
+    "advisorGuideIntro": "자동 고문을 설정하려면 다음 단계를 따르고 예시 패널을 선택하면 확대할 수 있습니다.",
+    "advisorGuideTitle": "자동 고문 안내",
+    "advisorPreviewTitle": "자동 고문 설정 예시",
+    "khanGuideIntro": "이 단계에 따라 자동 칸을 설정하세요. 예시 패널을 선택하면 확대할 수 있습니다.",
+    "khanGuideTitle": "자동 칸 가이드",
+    "khanPreviewTitle": "자동 칸 설정 예시",
+    "beriGuideIntro": "다음 단계에 따라 자동 베리몬드 월드를 설정하고 예시 패널을 선택해 확대하세요.",
+    "beriGuideTitle": "자동 베리몬드 월드 안내서",
+    "beriPreviewTitle": "자동 베리몬드 월드 설정 예시",
+    "stormGuideIntro": "다음 단계에 따라 자동 스톰을 설정하고 예시 패널을 선택해 확대하세요.",
+    "stormGuideTitle": "자동 스톰 안내서",
+    "stormPreviewTitle": "자동 스톰 설정 예시"
+  },
+  "autoTower": {
+    "recommendationIntro": "일반적인 사용을 위한 권장값입니다. 저장하기 전에 검토하세요.",
+    "steps": {
+      "commanders": {
+        "title": "지휘관 선택",
+        "items": {
+          "commander_assignment": {
+            "label": "지휘관 배정",
+            "description": "지휘관 메뉴에서 사용할 지휘관에게 자동 탑을 허용하고 배정 저장을 선택하세요.",
+            "recommendation": "자동 탑에 지휘관 20명을 배정하세요."
+          }
+        }
+      },
+      "general": {
+        "title": "스캔, 일일 한도 및 이동 설정",
+        "items": {
+          "open_settings": {
+            "label": "설정 열기",
+            "description": "자동화 메뉴를 연 다음 자동 탑 카드의 설정 버튼을 선택하세요."
+          },
+          "authoritative_map_scan_every": {
+            "label": "기준 지도 스캔 · 간격",
+            "description": "각 성의 탑 목록을 1,800~3,600초마다 새로 고치도록 정하며, 스캔 사이에도 공격이 시작될 수 있습니다.",
+            "recommendation": "1,800초(30분)."
+          },
+          "daily_normal_attack_limit": {
+            "label": "일반 공격 일일 한도",
+            "description": "계정 전체의 일일 공격 한도에 도달하면 게임에서 초기화할 때까지 중지하며, 0은 한도를 없앱니다.",
+            "recommendation": "계정 전체에서 하루 3,500회 공격."
+          },
+          "horse_travel_boost": {
+            "label": "말 이동 가속",
+            "description": "조언자의 연속 공격에 포함된 각 공격에도 선택한 이동 수단을 사용하며, 속도는 출발 성의 이동 건물에 따라 달라집니다.",
+            "recommendation": "지원되는 곳에서는 코인 단계를 사용하고 코인을 충분히 확보하세요."
+          },
+          "travel_feather": {
+            "label": "이동 깃털",
+            "description": "코인 또는 루비를 쓰는 말 단계 대신 이동 깃털을 사용합니다."
+          },
+          "horse_ship_tier_coins": {
+            "label": "말 / 배 단계 · 코인",
+            "description": "코인 이동 단계에 코인을 사용합니다."
+          },
+          "warhorse_fast_ship_tier_rubies": {
+            "label": "군마 / 빠른 배 단계 · 루비",
+            "description": "선택하면 첫 번째 루비 이동 단계에 루비를 사용합니다."
+          },
+          "courser_fastest_ship_tier_rubies": {
+            "label": "준마 / 가장 빠른 배 단계 · 루비",
+            "description": "선택하면 더 빠른 루비 이동 단계에 루비를 사용합니다."
+          }
+        },
+        "image": {
+          "alt": "가상의 합성 성 데이터를 사용한 자동 탑 일반 설정",
+          "caption": "스캔 간격, 일일 공격 한도 및 이동 수단을 설정하세요. 조언자 설정은 사용 가능한 경우 표시됩니다."
+        }
+      },
+      "castle": {
+        "title": "각 성 설정",
+        "items": {
+          "castle_switch": {
+            "label": "성 스위치",
+            "description": "자동 탑이 스캔하고 공격할 각 성을 켜세요.",
+            "recommendation": "평소 사용할 성을 활성화하세요."
+          },
+          "radius": {
+            "label": "반경",
+            "description": "이 성 주변의 탐색 거리를 1~50칸에서 선택하세요.",
+            "recommendation": "35칸."
+          },
+          "choose_troop": {
+            "label": "병력 선택",
+            "description": "공격의 양쪽 측면을 채울 주둔 병력을 선택하며, 병력이 부족하면 공격이 대기합니다.",
+            "recommendation": "양쪽 측면에 충분한 수의 주둔 공격 병력."
+          },
+          "maiden_supported_only": {
+            "label": "지원되는 처녀 유물만",
+            "description": "이 성에서 사용할 지휘관을 지원되는 처녀 유물을 가진 지휘관으로 제한합니다.",
+            "recommendation": "선택한 지휘관에게 지원되는 처녀 유물이 없다면 끄세요."
+          }
+        },
+        "image": {
+          "alt": "가상의 합성 성 데이터를 사용한 자동 탑 성 설정",
+          "caption": "성을 켜고 반경, 병력 및 처녀 유물 조건을 선택하세요."
+        }
+      },
+      "advisor": {
+        "title": "원하면 조언자 사용 · 사용 가능한 경우",
+        "items": {
+          "use_advisor_with_time_skips": {
+            "label": "시간 건너뛰기와 조언자 사용",
+            "description": "한 탑을 반복 공격할 때 먼저 일일 공격 1회를 사용하고 추가 공격마다 최소 3시간짜리 시간 건너뛰기 1개를 사용합니다.",
+            "recommendation": "꺼짐."
+          },
+          "auto_activate_with_token": {
+            "label": "토큰으로 자동 활성화",
+            "description": "조언자가 비활성일 때 사용 가능한 남작 조언자 토큰을 사용하며, 토큰을 구매하거나 루비를 소비하지 않습니다.",
+            "recommendation": "조언자를 끄는 동안 꺼짐."
+          },
+          "maximum_daily_time_skips": {
+            "label": "하루 최대 시간 건너뛰기",
+            "description": "게임의 일일 공격 횟수가 초기화될 때까지 확인된 조언자 연속 공격에 사용되는 시간 건너뛰기를 제한하며, 0은 조언자의 공격 시작을 중지합니다.",
+            "recommendation": "조언자를 끄는 동안 0."
+          }
+        }
+      },
+      "finish": {
+        "title": "일정을 설정하고 저장한 뒤 켜기",
+        "items": {
+          "calendar": {
+            "label": "달력",
+            "description": "달력에서 탑 자동 공격의 실행 시간을 선택하되, 병력 가용성과 다른 제한도 계속 적용됩니다.",
+            "recommendation": "평소 실행 시간."
+          },
+          "save_changes": {
+            "label": "변경 사항 저장",
+            "description": "변경 사항 저장을 선택하면 설정이 적용되지만, 이 가이드를 읽는 것만으로는 저장되지 않습니다."
+          },
+          "auto_towers_switch": {
+            "label": "탑 자동 공격 스위치",
+            "description": "설정을 저장한 다음 자동화 페이지에서 자동 탑을 켜야 작업을 실행할 수 있습니다.",
+            "recommendation": "원하는 설정을 저장한 후 켜세요."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "탑 자동 공격",
+      "summary": "주변 탑 반복 공격",
+      "description": "선택한 성에서 도적 남작과 왕국의 탑을 공격합니다.",
+      "expectation": "충분한 병력, 사용 가능한 지휘관, 공격 준비가 된 탑이 필요합니다. 병력이 돌아오거나 탑의 타이머가 끝날 때까지 기다릴 수 있습니다."
+    }
+  },
+  "autoBird": {
+    "recommendationIntro": "권장값은 자동 병력 대피의 일반적인 사용을 설명하는 지침이며 저장된 설정을 변경하지 않습니다.",
+    "steps": {
+      "open": {
+        "title": "자동 병력 대피 설정 열기",
+        "items": {
+          "open_settings": {
+            "label": "설정 열기",
+            "description": "지휘 센터 상단에서 자동 병력 대피 옆의 설정 버튼을 선택하세요."
+          }
+        }
+      },
+      "general": {
+        "title": "주둔 시간과 파견 규칙 설정",
+        "items": {
+          "random_delay_range_min": {
+            "label": "무작위 지연 범위 · 최소",
+            "description": "이동이 완료된 후 병력이 동맹 목적지에 머무를 최소 시간을 지정하세요.",
+            "recommendation": "도착 후 동맹 대상지에 6시간 주둔."
+          },
+          "random_delay_range_max": {
+            "label": "무작위 지연 범위 · 최대",
+            "description": "목적지에서의 최대 체류 시간을 정하면 병력 자동 대피 보호가 최소값과 최대값 사이에서 무작위로 시간을 선택합니다.",
+            "recommendation": "도착 후 동맹 대상지에 12시간 주둔."
+          },
+          "minimum_to_send": {
+            "label": "파견 최소 병력",
+            "description": "성에 남길 예비 병력을 확보한 뒤 파견 가능한 병력의 최소 총수를 정하며, 이는 실제 파견 수가 아닌 자격 기준입니다.",
+            "recommendation": "성의 예비 병력을 남긴 후 파견 가능한 병력 총 1,000명. 실제 파견 인원이 아닌 기준값입니다."
+          },
+          "minimum_rpt_remaining_protection_time": {
+            "label": "최소 잔여 보호 시간(RPT)",
+            "description": "보호 기간이 이 일수보다 더 많이 남은 대상지를 사용하며, 0은 검사를 해제합니다.",
+            "recommendation": "3일. 대상지의 잔여 보호 시간이 3일을 초과해야 합니다."
+          }
+        },
+        "image": {
+          "alt": "자동 병력 대피의 주둔 지연, 최소 파견 병력, 최소 RPT 및 사전 설정 관리",
+          "caption": "주둔 시간과 자격 조건을 설정하고 저장하기 전에 평상시 예비 병력 사전 설정을 검토하세요."
+        }
+      },
+      "reserves": {
+        "title": "각 성에 남길 병력 선택",
+        "items": {
+          "add_unit": {
+            "label": "유닛 추가",
+            "description": "각 성에서 보내지 않고 남길 병력 유형을 선택하며, 예비 병력 설정을 비워 두면 자동 예비 병력을 제외한 모든 적격 병력을 사용할 수 있습니다.",
+            "recommendation": "방어 또는 평소 다른 임무에 각 성이 필요한 병력 유형을 선택하세요."
+          },
+          "quantity": {
+            "label": "수량",
+            "description": "선택한 병력 유형마다 성에 남길 수량을 양수로 지정하며, 0으로 설정해도 해당 유형 전체가 예비로 남지는 않습니다.",
+            "recommendation": "방어나 다른 임무에 필요한 각 병력 유형의 수량을 성에 남기고 실제 병력 수를 확인하세요."
+          },
+          "remove_unit": {
+            "label": "유닛 제거",
+            "description": "유닛 타일을 제거하면 선택한 성에서 해당 유형을 더는 예비로 남기지 않습니다."
+          },
+          "auto_fortress_reserve": {
+            "label": "요새 자동화 예비 병력",
+            "description": "요새 자동화가 여기의 모든 다이어울프를 고정하면 이 자동 예비 병력은 병력 자동 대피 보호 사전 설정에 저장되지 않고, 고정이 끝나면 이전에 수동으로 지정한 수량이 돌아옵니다."
+          }
+        },
+        "image": {
+          "alt": "가상의 예시 성에 대한 자동 병력 대피 예비 병력 타일",
+          "caption": "이 성에 필요한 유닛만 남기세요. 유닛 101과 유닛 102는 가상의 병력 표시입니다."
+        }
+      },
+      "presets": {
+        "title": "사전 설정 저장 및 선택",
+        "items": {
+          "preset_name": {
+            "label": "사전 설정 이름",
+            "description": "새 사전 설정의 이름을 입력하거나 변경 사항을 저장하기 전에 적용된 사전 설정의 이름을 수정하세요.",
+            "recommendation": "평상시처럼 알아보기 쉬운 이름을 사용하세요."
+          },
+          "load_preset": {
+            "label": "사전 설정 불러오기",
+            "description": "목록에서 저장된 사전 설정을 선택하거나 저장된 구성을 선택해 이름 있는 사전 설정 없이 저장된 설정을 사용하세요.",
+            "recommendation": "원하는 평상시 사전 설정을 실행 기본값으로 사용하려면 선택하고 적용을 누른 다음 변경 사항을 저장하세요."
+          },
+          "apply": {
+            "label": "적용",
+            "description": "선택한 사전 설정을 설정 초안에 불러오고 변경 사항 저장을 선택해 실행 기본값으로 확정하세요."
+          },
+          "save_as_new": {
+            "label": "새로 저장",
+            "description": "현재 설정을 새 이름의 사전 설정으로 즉시 저장하고 실행 기본값으로 선택합니다."
+          },
+          "delete": {
+            "label": "삭제",
+            "description": "확인 후 선택한 사전 설정을 즉시 삭제하며, 그것이 선택된 기본값이었다면 실행 기본값도 지웁니다."
+          },
+          "runtime_default": {
+            "label": "실행 기본값",
+            "description": "실행 기본값은 저장된 활성 사전 설정이며, 활성 사전 설정이 없으면 저장된 구성입니다."
+          }
+        }
+      },
+      "finish": {
+        "title": "일정을 설정하고 저장한 뒤 활성화",
+        "items": {
+          "calendar": {
+            "label": "달력",
+            "description": "자동 병력 대피가 실행될 시간을 선택하고 일정 저장을 눌러 변경 사항을 저장하세요.",
+            "recommendation": "계속 실행하려면 일정을 꺼 두거나 평소의 주간 시간을 정하고 일정을 저장하세요."
+          },
+          "specify_preset_per_period": {
+            "label": "기간별 사전 설정 지정",
+            "description": "달력의 특정 기간에 실행 기본값을 덮어써야 한다면 그 기간에 저장된 사전 설정을 선택하세요.",
+            "recommendation": "기간마다 서로 다른 예비 병력이 필요하지 않다면 끄세요."
+          },
+          "save_changes": {
+            "label": "변경 사항 저장",
+            "description": "설정 초안과 적용된 사전 설정의 변경 사항을 저장하지만, 이 가이드를 읽는 것만으로는 저장되지 않습니다."
+          },
+          "auto_bird_switch": {
+            "label": "병력 자동 대피 보호 스위치",
+            "description": "저장한 후 지휘 센터 상단에서 자동 병력 대피를 켜면 정상적인 성별 주기가 실행됩니다.",
+            "recommendation": "저장한 뒤 자동 병력 대피를 켜세요. 헤더 상태에 각 성의 주기가 표시됩니다."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "병력 자동 대피 보호",
+      "summary": "선택한 병력을 일정에 따라 밖에 두기",
+      "description": "남는 병력을 적격한 동맹 성에 정기적으로 주둔시키고 돌아오면 주기를 반복합니다.",
+      "expectation": "적절한 목적지나 보낼 수 있는 남는 병력이 없으면 기다립니다. 병력을 옮겨도 성이 무적이 되지는 않습니다."
+    }
+  },
+  "panels": {
+    "towerGeneral": {
+      "title": "일반 설정",
+      "scan": "스캔 간격: 1,800초",
+      "daily": "일일 공격 한도: 3,500",
+      "travel": "이동 가속: 코인 단계",
+      "advisor": "조언자: 꺼짐"
+    },
+    "towerCastle": {
+      "title": "예시 성",
+      "enabled": "탑 자동 공격: 켜짐",
+      "radius": "반경: 35칸",
+      "troop": "선택한 병력: 가상의 공격 유닛",
+      "maiden": "지원되는 처녀 유물만: 꺼짐"
+    },
+    "birdGeneral": {
+      "title": "일반 설정",
+      "min": "최소 체류: 6시간",
+      "max": "최대 체류: 12시간",
+      "send": "예비 병력을 제외한 적격 병력 최소 합계: 1,000명",
+      "rpt": "최소 잔여 보호 시간: 3일 초과",
+      "preset": "사전 설정: 평상시 예비 병력"
+    },
+    "birdCastle": {
+      "title": "예시 성",
+      "unitOne": "가상 유닛 101 예비: 80",
+      "unitTwo": "가상 유닛 102 예비: 40",
+      "add": "유닛 추가"
+    },
+    "stationGeneral": {
+      "title": "자동 병력 대피 설정 예시",
+      "evacuate": "대피 시작: 공격 도착 1분 전",
+      "protection": "목표 보호: 3일 초과",
+      "recall": "위험이 사라지면 귀환: 켜기",
+      "gate": "예비 성문 개방: 끄기",
+      "castle": "가상 성: 수비 병력 80명 남김",
+      "save": "변경 사항을 저장하고 자동 병력 대피 켜기"
+    },
+    "fortressAttack": {
+      "commander": "지휘관: 가장 빠른 적격 배정 지휘관",
+      "daily": "일일 일반 공격 한도: 0",
+      "title": "공격 설정 예시",
+      "travel": "이동 가속: 여행 깃털",
+      "wave": "양쪽 측면에 완전한 공포의 늑대 공격 대형 하나"
+    },
+    "fortressKingdoms": {
+      "everwinter": "영원한 겨울의 빙하: 잠금 해제 후 켜기",
+      "peaks": "불꽃 봉우리: 잠금 해제 후 켜기",
+      "sands": "불타는 모래: 잠금 해제 후 켜기",
+      "title": "왕국 설정 예시"
+    },
+    "fortressSupply": {
+      "purchase": "세션당 공포의 늑대: 5,000",
+      "reserve": "칸의 서판 남기기: 25,000",
+      "route": "보급: 대제국 본성에서 활성화된 왕국으로",
+      "skips": "확인된 이동의 시간 단축: 켜기",
+      "title": "공포의 늑대 보급 예시"
+    },
+    "invasionDifficulty": {
+      "bloodcrow": "피의 까마귀: 적절한 잠금 해제 난이도",
+      "current": "진행 중인 이벤트 난이도 유지",
+      "foreign": "외국 영주: 적절한 잠금 해제 난이도",
+      "title": "이벤트 난이도 예시"
+    },
+    "invasionFortify": {
+      "currency": "켜면: 제공될 때 이벤트 화폐",
+      "enabled": "각 대상 강화: 끄기",
+      "rubies": "루비는 명시적으로 선택한 경우에만",
+      "title": "대상 강화 예시"
+    },
+    "invasionLimits": {
+      "before": "이벤트 종료 30분 전에 중지",
+      "daily": "일일 일반 공격 한도: 0",
+      "score": "점수: 0보다 높은 평소 마지막 개인 보상",
+      "title": "점수 및 중지 한도 예시"
+    },
+    "invasionSetup": {
+      "castle": "출발: 대제국의 평소 이벤트 성",
+      "preset": "공격 프리셋: 저장된 이벤트 편성",
+      "title": "이벤트 공격 설정 예시",
+      "travel": "이동 가속: 여행 깃털"
+    },
+    "nomadDifficulty": {
+      "title": "이벤트 난이도 예시",
+      "active": "진행 중인 이벤트: 현재 난이도에 맞춤",
+      "nomad": "유목민: 잠금 해제되었고 안정적으로 처리할 난이도",
+      "samurai": "사무라이: 잠금 해제되었고 안정적으로 처리할 난이도"
+    },
+    "nomadSetup": {
+      "castle": "출발: 대제국의 평소 이벤트 성",
+      "travel": "이동 가속: 여행 깃털",
+      "nomadPreset": "유목민 편성: 저장된 진영 배치",
+      "samuraiPreset": "사무라이 편성: 저장된 진영 배치",
+      "title": "이벤트 진영 설정 예시"
+    },
+    "nomadCooldowns": {
+      "clear": "승리 확인 후 대기 시간 해제: 켬",
+      "long": "5시간 / 24시간 보유: 다른 활동을 위한 재고",
+      "short": "1 / 5 / 10 / 30 / 60분 보유: 각각 0개",
+      "title": "대기 시간 선택 예시"
+    },
+    "nomadLimits": {
+      "daily": "추가 일일 제한: 0",
+      "score": "점수 목표: 마지막 개인 보상 단계",
+      "time": "종료 전 중지: 30분",
+      "title": "중지 규칙 예시"
+    },
+    "nomadTrial": {
+      "coordinates": "대상 X / Y: 평상시 사용하지 않음",
+      "effect": "시험 켬: 이벤트 운영을 실제 공격으로 대체",
+      "title": "시험 조작 예시",
+      "trial": "임시 도적 남작 시험: 끔"
+    },
+    "advisorDifficulty": {
+      "active": "진행 중인 이벤트: 현재 난이도에 맞춤",
+      "nomad": "유목민: 잠금 해제되었고 안정적으로 처리할 난이도",
+      "samurai": "사무라이: 잠금 해제되었고 안정적으로 처리할 난이도",
+      "title": "이벤트 난이도 예시"
+    },
+    "advisorSetup": {
+      "castle": "출발: 대제국의 평소 이벤트 성",
+      "travel": "이동 가속: 여행 깃털",
+      "preset": "프리셋: 현재 이벤트를 위해 저장한 배치",
+      "title": "고문 공격 설정 예시"
+    },
+    "advisorActivation": {
+      "locked": "잠겨 있다면 고문 활성화 확인 열기",
+      "paid": "토큰 사용 또는 게임이 표시한 무료 활성화 확인",
+      "save": "설정을 저장한 다음 자동화 카드 켜기",
+      "title": "활성화 흐름 예시"
+    },
+    "advisorOverview": {
+      "progress": "현재 공격 / 요청한 공격",
+      "refresh": "최신 합계를 보려면 개요 새로고침",
+      "results": "승리, 패배, 잃은 병력과 도구",
+      "title": "진행 개요 예시"
+    },
+    "advisorResources": {
+      "coins": "공격당 전체 동전: 충분할 때만 500",
+      "feathers": "남겨 둘 깃털: 다른 곳에 필요 없으면 0",
+      "rubies": "공격당 루비: 이동 깃털 사용 시 0",
+      "skips": "남겨 둘 60분 단축: 0개; 5시간과 24시간은 필요에 따라 예비",
+      "title": "자원 예산 예시"
+    },
+    "advisorSizing": {
+      "actual": "실제 공격: 자원과 시간으로 제한",
+      "maximum": "최대 공격 수: 9,999",
+      "time": "사용하지 않을 이벤트 시간: 30분",
+      "title": "공격 규모 예시"
+    },
+    "khanCooldowns": {
+      "long": "5시간 및 24시간 단축은 다른 작업을 위해 남겨 두기",
+      "pause": "사용 가능한 단축 아이템이 부족하면 새 공격 일시 중지",
+      "short": "1분/5분/10분/30분/1시간 보유: 각각 0개",
+      "skip": "야영지 대기 시간을 매번 건너뛰기: 켜기",
+      "title": "시간 단축 보유량 예시"
+    },
+    "khanLimits": {
+      "daily": "일일 일반 공격: 0, 추가 한도 없음",
+      "end": "이벤트 종료 5분 전 새 공격 중단",
+      "points": "유목민 점수에서 중단: 0, 비활성화",
+      "title": "중지 한도 예시",
+      "tools": "방어 도구 보충: 필요하면 켜기"
+    },
+    "khanProtection": {
+      "gate": "기준에 도달하면 본성 성문을 열고 칸 일시 중지",
+      "outpost": "출발지 전초기지: 보호 비활성화",
+      "source": "본성에서 공격할 때 적용",
+      "threshold": "성벽 공격 병력: 1,000명",
+      "title": "본성 성벽 보호 예시"
+    },
+    "khanRage": {
+      "attacks": "자동 야영지 공격: 잠금 해제",
+      "booster": "시간제 분노 점수 강화 효과 필수: 끄기",
+      "chain": "최대 분노 연쇄: 0, 추가 한도 없음",
+      "title": "분노 제어 예시",
+      "trigger": "분노가 가득 찼을 때 보복: 켜기"
+    },
+    "khanSave": {
+      "defense": "보복 전에 본성 방어 확인",
+      "enable": "자동화 카드에서 자동 칸 활성화",
+      "priority": "자동 대피는 플레이어 공격을 별도로 처리",
+      "save": "두 프리셋을 준비한 뒤 설정 저장",
+      "title": "저장 및 활성화 예시"
+    },
+    "khanSetup": {
+      "defense": "방어 위치: 대제국 본성",
+      "presets": "저장된 칸 공격과 본성 방어 프리셋",
+      "source": "공격 출발지: 대제국 전초기지",
+      "title": "칸 설정 예시",
+      "travel": "빠른 이동을 위한 이동 깃털"
+    },
+    "beriBuilder": {
+      "permissions": "프리미엄과 철거: 검토 전에는 끔",
+      "reserves": "베리몬드 자원과 시간 단축 비축",
+      "stable": "파벌 마구간: 선택한 레벨 1~5",
+      "target": "기본 지정 목표 또는 검토한 사용자 지정 배치",
+      "title": "선택적 진영 건설 예시"
+    },
+    "beriReadiness": {
+      "booster": "용맹 부스터 조건: 선택 사항",
+      "food": "수송에는 식량 소비 프리셋 병력이 필요",
+      "preset": "저장된 병력과 도구 칸 확인",
+      "title": "탑 공격 준비 예시"
+    },
+    "beriSave": {
+      "calendar": "계속 실행하려면 일정 끔",
+      "enable": "자동화 카드에서 자동 베리몬드 월드 켜기",
+      "save": "병력 비율 검토 후 설정 저장",
+      "title": "저장 및 활성화 흐름 예시"
+    },
+    "beriSetup": {
+      "donor": "필요한 병력이 있는 그레이트 엠파이어 공급 성",
+      "limit": "일일 일반 공격: 추가 제한 0",
+      "preset": "저장된 베리몬드 공격 프리셋",
+      "title": "공격과 공급원 설정 예시",
+      "travel": "탑 공격에 여행 깃털"
+    },
+    "beriTools": {
+      "ladders": "공성 사다리: 평소 공격에 맞춤",
+      "mantlets": "방패막: 평소 공격에 맞춤",
+      "rams": "공성 망치: 평소 공격에 맞춤",
+      "title": "진영 도구 최소 수량 예시"
+    },
+    "beriTransfers": {
+      "capacity": "여유 용량: 1; 기준: 1",
+      "mix": "프리셋 비율: A 2유닛 대 B 1유닛",
+      "next": "다음 수송: 공급 재고에서 B 최대 1유닛",
+      "stock": "진영 재고: A 2, B 0",
+      "title": "병력 비례 수송 예시"
+    },
+    "stormCastle": {
+      "blueprint": "저장한 목표 활성; 일시 중지해도 보존",
+      "capture": "현재 성: 기능 목표",
+      "decorations": "장식 프리셋: 선택 사항",
+      "title": "스톰 성 접근 예시",
+      "unlock": "자동 열기: 가격 확인 후 켬"
+    },
+    "stormCombat": {
+      "defenders": "점령 방어병: 선택하거나 생존자 한 명",
+      "forts": "요새: 선택한 레벨 40~80",
+      "islands": "아쿠아마린 섬: 큰 섬과 작은 섬",
+      "priority": "큰 섬, 작은 섬, 요새 80부터 40 순",
+      "title": "요새와 섬 공격 예시"
+    },
+    "stormConstruction": {
+      "harbor": "항구: 켬, 레벨 1",
+      "resources": "목재 0; 석재 0; 계획한 아쿠아마린",
+      "spending": "프리미엄과 철거: 끔",
+      "title": "건설과 비축 예시",
+      "transport": "자원 운송: 켬"
+    },
+    "stormLuna": {
+      "cost": "가격과 구매 한도: 읽기 전용",
+      "limited": "한정 목표를 무제한 보상보다 먼저",
+      "priority": "우선순위 1, 2, 3; 작은 번호부터",
+      "reserve": "아쿠아마린 남기기: 잉여분 사용 시 0",
+      "title": "루나 보상 예시"
+    },
+    "stormSave": {
+      "check": "정책 확인: 30초",
+      "daily": "일일 일반 공격: 추가 제한 0",
+      "map": "지도 갱신: 2시간, 읽기 전용",
+      "switch": "저장한 뒤 자동 스톰 켜기",
+      "title": "저장 및 활성화 흐름 예시"
+    },
+    "stormTroops": {
+      "averages": "초기화 이후 확인된 공격 ÷ 24; 프리셋 평균 읽기 전용",
+      "cap": "투입 병력 상한: 읽기 전용",
+      "donors": "공급 성: 표시 순서, 일부 재고도 허용",
+      "minimum": "최소 남길 병력: 1,000명",
+      "title": "병력 수입 예시"
+    }
+  },
+  "autoStation": {
+    "recommendationIntro": "권장 값은 일상적인 사용을 위한 안내이며 저장된 설정을 변경하지 않습니다.",
+    "steps": {
+      "open": {
+        "title": "자동 병력 대피 설정 열기",
+        "items": {
+          "open_settings": {
+            "label": "설정 열기",
+            "description": "지휘 센터 상단에서 자동 병력 대피 옆의 설정 버튼을 선택하세요."
+          }
+        }
+      },
+      "general": {
+        "title": "공격 대응 설정",
+        "items": {
+          "evacuate_at": {
+            "label": "대피 시작",
+            "description": "공격 도착 전 지정한 분부터 대피를 시작하거나 공격이 그 시간 안에 처음 감지되면 즉시 시작합니다.",
+            "recommendation": "공격 도착 1분 전."
+          },
+          "minimum_bird_days": {
+            "label": "목표의 최소 보호 일수",
+            "description": "남은 보호 기간이 지정 일수보다 긴 동맹 성을 선택하며, 0은 최소 조건을 없앱니다.",
+            "recommendation": "3일로 설정하여 목표에 3일보다 긴 보호 기간이 남도록 합니다."
+          },
+          "recall_when_clear": {
+            "label": "위험이 사라지면 귀환",
+            "description": "마지막으로 감지한 공격이 끝나고 새로운 공격이 없을 때 주둔 병력을 돌려보냅니다.",
+            "recommendation": "일반적인 사용에서는 켜기."
+          },
+          "open_gate_fallback": {
+            "label": "예비 수단으로 성문 개방",
+            "description": "병력을 대피시킬 수 없으면 베리몬드를 제외한 왕국에서 공격받는 소유 성의 성문을 6시간 엽니다.",
+            "recommendation": "대피 실패 시 자동 성문 개방을 원하지 않으면 끄기."
+          },
+          "protection_mode": {
+            "label": "구매한 보호 모드",
+            "description": "구매한 보호 모드가 준비 중이거나 활성 상태이면 예비 수단을 꺼도 베리몬드를 제외하고 성문을 사용합니다."
+          }
+        },
+        "image": {
+          "alt": "대피 시간, 보호 기간, 귀환, 성문, 성 수비 예비 병력을 보여 주는 가상 설정",
+          "caption": "저장하기 전에 네 가지 대응 설정과 각 성의 방어 예비 병력을 확인하세요."
+        }
+      },
+      "reserves": {
+        "title": "각 성에 남길 병력 선택",
+        "items": {
+          "add_troops": {
+            "label": "병력 추가",
+            "description": "성에 남길 병력 종류를 선택하며 예비 병력이 비어 있으면 도구를 제외한 모든 적격 병력을 대피시킬 수 있습니다.",
+            "recommendation": "평소 필요한 수비대를 남기고 여분의 공격 병력이 이동할 수 있게 하세요."
+          },
+          "quantity": {
+            "label": "수량",
+            "description": "선택한 종류별로 이 성에 남길 병력 수를 지정하며, 0은 해당 종류를 남기지 않습니다.",
+            "recommendation": "이 성의 평소 방어에 필요한 수를 사용하세요."
+          },
+          "edit_defense_troops": {
+            "label": "방어 병력 편집",
+            "description": "병력 선택기를 다시 열어 성에 남길 종류나 수량을 변경하세요."
+          },
+          "remove_defense_troop": {
+            "label": "방어 병력 제거",
+            "description": "예비 병력 타일을 제거하면 해당 종류를 성에 더 이상 남기지 않습니다."
+          }
+        }
+      },
+      "finish": {
+        "title": "저장하고 자동 병력 대피 켜기",
+        "items": {
+          "save_changes": {
+            "label": "변경 사항 저장",
+            "description": "설정을 닫기 전에 시간, 스위치, 성별 예비 병력을 저장하세요."
+          },
+          "auto_station_switch": {
+            "label": "자동 병력 대피 스위치",
+            "description": "저장한 뒤 지휘 센터 상단에서 자동 병력 대피를 켜면 들어오는 플레이어 공격을 감시합니다.",
+            "recommendation": "예비 병력을 검토한 후 일상적인 보호용으로 켜기."
+          }
+        }
+      }
+    },
+    "feature": {
+      "name": "자동 병력 대피",
+      "summary": "다가오는 공격 전에 적격 병력 이동",
+      "description": "플레이어 공격이 다가오면 자동 병력 대피가 적격 병력을 같은 왕국에서 가장 가까운 적합한 동맹 성으로 보냅니다.",
+      "expectation": "귀환을 켜면 마지막으로 감지한 공격이 끝나고 위협이 없을 때 병력이 돌아오며, 끄면 도착 후 한 시간 동안 머물다가 돌아옵니다. 목표나 병력이 없거나 게임 제한이 있으면 대피하지 못할 수 있습니다.",
+      "helper": "병력은 같은 왕국에서 가장 가까운 적격 동맹 성으로 이동하며 대피에 실패하면 베리몬드 밖에서는 공격받는 소유 성의 성문이 보호 수단이 될 수 있습니다."
+    }
+  },
+  "autoFortress": {
+    "feature": {
+      "commanderBadge": "가장 빠른 사용 가능한 지휘관",
+      "commanderHelp": "요새 자동 공격은 대상 요새마다 장비, 보석, 세트, 장군의 적용 가능한 이동 속도 효과를 비교하며 유물 2.0이나 최소 100% 조건은 필요하지 않습니다.",
+      "description": "요새 자동 공격은 저장된 한도 안에서 공포의 늑대를 구매하고 활성화된 외곽 왕국에 보급한 뒤 각 왕국의 본성에서 준비된 요새를 공격합니다.",
+      "expectation": "각 공격에는 준비된 요새, 양쪽 측면에 충분한 공포의 늑대, 적격한 배정 지휘관이 필요하며 대기 시간이나 보급 지연으로 잠시 멈출 수 있습니다.",
+      "name": "요새 자동 공격",
+      "settingsSummary": "요새 자동 공격은 공포의 늑대를 준비하고 대상 요새마다 사용 가능한 적격 배정 지휘관 중 가장 빠른 지휘관을 선택합니다.",
+      "summary": "공포의 늑대를 보급하고 준비된 요새 공격",
+      "travelHelp": "여행 깃털이 기본값이며 저장한 이동 선택은 유지됩니다. 성별 이동 가속 효과는 출정 전에 다시 계산됩니다."
+    },
+    "recommendationIntro": "추천 값은 요새 자동 공격의 일반적인 사용 방법을 설명하는 안내이며 저장된 설정을 변경하지 않습니다.",
+    "steps": {
+      "attack": {
+        "image": {
+          "alt": "요새 자동 공격의 공격 및 이동 설정을 보여 주는 예시 그림",
+          "caption": "요새 자동 공격은 대상마다 적격한 배정 지휘관의 순위를 매기고 저장된 이동 선택을 사용합니다."
+        },
+        "items": {
+          "commander_assignment": {
+            "description": "지휘관 메뉴에서 요새 자동 공격이 사용할 지휘관을 배정한 후 배정을 저장합니다.",
+            "label": "지휘관 배정",
+            "recommendation": "보통 요새 공격에 사용하려는 지휘관을 배정하세요."
+          },
+          "daily_normal_attack_limit": {
+            "description": "계정 전체의 일일 일반 공격 횟수에 도달하면 게임에서 초기화할 때까지 요새 자동 공격을 중단하며 0은 추가 한도를 두지 않습니다.",
+            "label": "일일 일반 공격 한도",
+            "recommendation": "추가 일일 한도가 필요하지 않으면 0."
+          },
+          "fastest_commander": {
+            "description": "각 요새에 대해 상한 적용 후 장비, 보석, 세트, 장군의 해당 효과를 기준으로 현재 사용 가능한 배정 지휘관 중 가장 빠른 지휘관을 선택합니다.",
+            "label": "가장 빠른 적격 지휘관",
+            "recommendation": "유물 2.0 아이템이나 100% 속도 보너스는 필요하지 않습니다."
+          },
+          "full_flank_wave": {
+            "description": "각 공격은 한 번의 완전한 공격 대형으로 양쪽 측면을 채울 공포의 늑대가 모일 때까지 기다립니다.",
+            "label": "양쪽 측면의 공포의 늑대 공격 대형"
+          },
+          "horse_travel_boost": {
+            "description": "요새 공격에 사용할 이동 옵션을 선택하며 명시적으로 저장한 동전 또는 루비 단계는 선택 상태로 유지됩니다.",
+            "label": "말 이동 가속",
+            "recommendation": "가장 빠른 이동을 위해 여행 깃털."
+          }
+        },
+        "title": "공격과 이동 설정"
+      },
+      "finish": {
+        "items": {
+          "auto_fortress_switch": {
+            "description": "저장한 뒤 자동화 카드에서 요새 자동 공격을 켜면 일반 주기가 시작됩니다.",
+            "label": "요새 자동 공격 스위치",
+            "recommendation": "원하는 설정을 검토하고 저장한 뒤 켜기."
+          },
+          "calendar": {
+            "description": "달력에서 요새 자동 공격이 작동할 시간을 제한하고 변경한 경우 일정 저장을 선택합니다.",
+            "label": "달력",
+            "recommendation": "지속적인 일반 운영에는 끄기."
+          },
+          "save_fortress_plan": {
+            "description": "이 창을 닫기 전에 왕국, 보급, 공격 설정을 저장합니다.",
+            "label": "요새 계획 저장"
+          }
+        },
+        "title": "일정을 정하고 저장한 뒤 활성화"
+      },
+      "kingdoms": {
+        "image": {
+          "alt": "요새 자동 공격의 외곽 왕국 세 곳 제어를 보여 주는 예시 그림",
+          "caption": "본성이 공포의 늑대를 받아 요새를 공격해야 하는 잠금 해제된 왕국을 각각 활성화합니다."
+        },
+        "items": {
+          "burning_sands": {
+            "description": "불타는 모래 왕국을 잠금 해제했으면 그곳의 본성에서 공격과 공포의 늑대 보급을 활성화합니다.",
+            "label": "불타는 모래",
+            "recommendation": "잠금 해제되고 사용할 준비가 되면 켜기."
+          },
+          "everwinter_glacier": {
+            "description": "영원한 겨울의 빙하 왕국을 잠금 해제했으면 그곳의 본성에서 공격과 공포의 늑대 보급을 활성화합니다.",
+            "label": "영원한 겨울의 빙하",
+            "recommendation": "잠금 해제되고 사용할 준비가 되면 켜기."
+          },
+          "fire_peaks": {
+            "description": "불꽃 봉우리 왕국을 잠금 해제했으면 그곳의 본성에서 공격과 공포의 늑대 보급을 활성화합니다.",
+            "label": "불꽃 봉우리",
+            "recommendation": "잠금 해제되고 사용할 준비가 되면 켜기."
+          }
+        },
+        "title": "요새 왕국 선택"
+      },
+      "open": {
+        "items": {
+          "open_settings": {
+            "description": "자동화 페이지에서 요새 자동 공격 카드의 설정 버튼을 선택합니다.",
+            "label": "설정 열기"
+          }
+        },
+        "title": "요새 자동 공격 설정 열기"
+      },
+      "supply": {
+        "image": {
+          "alt": "요새 자동 공격의 공포의 늑대 구매 및 이동 설정을 보여 주는 예시 그림",
+          "caption": "세션당 구매 상한, 칸의 서판 비축량, 확인된 이동에 사용할 시간 단축 선택을 확인합니다."
+        },
+        "items": {
+          "direwolves_per_session": {
+            "description": "유목민 상점의 공포의 늑대 구매를 상점 세션마다 100마리 단위로 제한하며 0은 구매를 끕니다.",
+            "label": "세션당 공포의 늑대",
+            "recommendation": "가장 저렴한 가격 단계에서 세션당 공포의 늑대 5,000마리."
+          },
+          "keep_khan_tablets": {
+            "description": "칸의 서판 잔액이 이 비축량 아래로 떨어지기 전에 공포의 늑대 구매를 중단합니다.",
+            "label": "칸의 서판 남기기",
+            "recommendation": "칸의 서판 25,000개 남기기."
+          },
+          "supply_route": {
+            "description": "구매한 공포의 늑대는 대제국의 본성에 도착한 뒤 활성화된 왕국으로 분배됩니다.",
+            "label": "공포의 늑대 보급 경로"
+          },
+          "use_time_skips": {
+            "description": "저장된 보유량을 지키면서 확인된 요새 자동 공격 수송에만 사용 가능한 시간 단축을 적용합니다.",
+            "label": "공포의 늑대 이동에 시간 단축 사용",
+            "recommendation": "저장된 시간 단축 비축량이 허용하면 빠른 보급을 위해 켜기."
+          }
+        },
+        "title": "공포의 늑대 보급 설정"
+      }
+    }
+  },
+  "autoInvasion": {
+    "feature": {
+      "description": "침공 자동 공격은 저장된 공격 프리셋으로 외국 영주 또는 피의 까마귀를 공격하며 점수 목표나 다른 중지 한도에 도달하면 멈춥니다.",
+      "expectation": "진행 중인 이벤트, 적격 지휘관, 충분한 병력과 도구를 기다리며 이미 이동 중인 공격은 새 공격이 멈춘 후에도 완료될 수 있습니다.",
+      "name": "침공 자동 공격",
+      "summary": "외국 영주와 피의 까마귀를 점수 목표까지 공격"
+    },
+    "recommendationIntro": "추천 값은 침공 자동 공격의 일반적인 사용법을 설명하는 안내이며 저장된 설정을 변경하지 않습니다.",
+    "steps": {
+      "difficulty": {
+        "image": {
+          "alt": "외국 영주와 피의 까마귀 난이도 선택의 예시 그림",
+          "caption": "각 이벤트에 대해 별도로 잠금 해제된 예비 난이도를 선택합니다."
+        },
+        "items": {
+          "bloodcrow_difficulty": {
+            "description": "현재 이벤트에 선택된 난이도가 없을 때 사용할 잠금 해제된 피의 까마귀 난이도를 선택합니다.",
+            "label": "피의 까마귀 난이도",
+            "recommendation": "평소 편성으로 안정적으로 처리할 수 있는 가장 높은 잠금 해제 난이도를 사용합니다."
+          },
+          "difficulty_note": {
+            "description": "두 이벤트 선택을 모두 저장하며 저장한 값을 바꿔도 진행 중인 이벤트의 난이도는 교체되지 않습니다.",
+            "label": "현재 난이도"
+          },
+          "foreign_lords_difficulty": {
+            "description": "현재 이벤트에 선택된 난이도가 없을 때 사용할 잠금 해제된 외국 영주 난이도를 선택합니다.",
+            "label": "외국 영주 난이도",
+            "recommendation": "평소 편성으로 안정적으로 처리할 수 있는 가장 높은 잠금 해제 난이도를 사용합니다."
+          }
+        },
+        "title": "두 이벤트의 난이도 선택"
+      },
+      "finish": {
+        "items": {
+          "auto_invasion_switch": {
+            "description": "저장 후 자동화 카드에서 침공 자동 공격을 켜면 이벤트와 적격 자원이 있을 때 작동합니다.",
+            "label": "침공 자동 공격 스위치",
+            "recommendation": "원하는 설정을 검토하고 저장한 뒤 켜기."
+          },
+          "readiness": {
+            "description": "침공 자동 공격은 진행 중인 이벤트, 적격 지휘관, 충분한 병력과 도구를 기다립니다.",
+            "label": "공격 준비 상태"
+          },
+          "save_settings": {
+            "description": "이 창을 닫기 전에 출발 성, 프리셋, 난이도, 중지 한도, 강화 선택을 저장합니다.",
+            "label": "설정 저장"
+          }
+        },
+        "title": "침공 자동 공격 저장 및 활성화"
+      },
+      "fortify": {
+        "image": {
+          "alt": "침공 자동 공격 강화 설정의 예시 그림",
+          "caption": "사용 가능한 이벤트 화폐나 명시적으로 선택한 루비를 쓰려는 경우가 아니면 강화를 끕니다."
+        },
+        "items": {
+          "fortification_currency": {
+            "description": "진행 중인 이벤트가 지원하는 옵션을 선택하며 각 가격은 게임이 정하고 루비를 명시적으로 선택하면 지출이 허용됩니다.",
+            "label": "강화 화폐",
+            "recommendation": "강화를 켰고 제공된다면 이벤트 화폐."
+          },
+          "fortify_each_target": {
+            "description": "켜면 생성된 적의 성을 공격하기 전에 선택한 화폐로 매번 강화합니다.",
+            "label": "각 대상 강화",
+            "recommendation": "강화가 평소 이벤트 전략에 포함되지 않으면 끄기."
+          }
+        },
+        "title": "선택적 대상 강화 선택"
+      },
+      "limits": {
+        "image": {
+          "alt": "침공 자동 공격 점수 및 중지 한도의 예시 그림",
+          "caption": "점수 목표는 새 출정을 중단하지만 이미 이동 중인 공격은 완료될 수 있습니다."
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "계정 전체의 일일 일반 공격 횟수에 도달하면 게임에서 초기화할 때까지 자동화를 중단하며 0은 추가 한도를 두지 않습니다.",
+            "label": "일일 일반 공격 한도",
+            "recommendation": "이벤트 점수 목표로 진행을 제어하려면 0."
+          },
+          "minimum_remaining": {
+            "description": "이벤트 종료 전 지정한 분 수만큼 남았을 때부터 새 공격을 시작하지 않습니다.",
+            "label": "이벤트 종료 전에 중지",
+            "recommendation": "30분."
+          },
+          "score_target": {
+            "description": "보고된 이벤트 점수가 이 목표에 도달하거나 초과하면 새 공격을 시작하지 않습니다.",
+            "label": "이벤트 점수에서 중지",
+            "recommendation": "0보다 높은 평소의 마지막 개인 보상 단계를 사용합니다."
+          },
+          "travelling_attacks": {
+            "description": "이미 이동 중인 공격은 중지 조건 이후에 완료되어 최종 점수가 목표를 넘을 수 있습니다.",
+            "label": "이동 중인 공격"
+          }
+        },
+        "title": "점수 및 중지 한도 설정"
+      },
+      "open": {
+        "image": {
+          "alt": "침공 자동 공격 출발 성, 프리셋, 이동 설정의 예시 그림",
+          "caption": "이동 옵션을 설정하기 전에 대제국의 출발 성과 저장된 이벤트 프리셋을 선택합니다."
+        },
+        "items": {
+          "attack_preset": {
+            "description": "외국 영주 또는 피의 까마귀용 병력, 도구, 편성을 포함한 저장된 공격 프리셋을 선택합니다.",
+            "label": "공격 프리셋",
+            "recommendation": "먼저 평소 사용할 외국 영주 또는 피의 까마귀 프리셋을 만들고 여기에서 선택합니다."
+          },
+          "capacity_note": {
+            "description": "프리셋의 병력과 도구 수는 선택한 지휘관과 대상의 수용량에 맞게 조정됩니다.",
+            "label": "공격 수용량"
+          },
+          "horse_travel_boost": {
+            "description": "이 공격에 깃털, 동전 또는 루비 이동 옵션을 선택합니다.",
+            "label": "말 이동 가속",
+            "recommendation": "빠른 이동에는 여행 깃털."
+          },
+          "open_settings": {
+            "description": "자동화 페이지에서 침공 자동 공격 카드의 설정 버튼을 선택합니다.",
+            "label": "설정 열기"
+          },
+          "source_castle": {
+            "description": "이벤트 공격에 병력과 도구를 공급할 대제국의 성을 선택합니다.",
+            "label": "출발 성",
+            "recommendation": "병력과 도구가 충분한 평소의 이벤트 성을 사용합니다."
+          }
+        },
+        "title": "침공 자동 공격 설정 열기"
+      }
+    }
+  },
+  "autoNomad": {
+    "steps": {
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "recommendation": "평소 편성으로 안정적으로 처리할 수 있는 가장 높은 잠금 해제 난이도를 사용합니다.",
+            "description": "이벤트 시작에 사용할 잠금 해제된 유목민 난이도를 선택합니다.",
+            "label": "유목민 난이도"
+          },
+          "samurai_difficulty": {
+            "recommendation": "평소 편성으로 안정적으로 처리할 수 있는 가장 높은 잠금 해제 난이도를 사용합니다.",
+            "description": "이벤트 시작에 사용할 잠금 해제된 사무라이 난이도를 선택합니다.",
+            "label": "사무라이 난이도"
+          },
+          "active_difficulty": {
+            "description": "이미 진행 중인 이벤트에서는 현재 난이도를 선택해야 하며, 저장된 값이 다르면 자동화가 난이도를 바꾸지 않고 기다립니다.",
+            "label": "이미 진행 중인 이벤트"
+          }
+        },
+        "title": "두 이벤트의 난이도 선택",
+        "image": {
+          "alt": "유목민 및 사무라이 난이도 예시",
+          "caption": "각 이벤트에 별도의 잠금 해제된 난이도를 선택하고 진행 중인 이벤트에서는 현재 난이도에 맞춥니다."
+        }
+      },
+      "finish": {
+        "items": {
+          "auto_nomad_switch": {
+            "recommendation": "원하는 설정을 검토하고 저장한 뒤 켜기.",
+            "description": "저장한 뒤 자동화 카드에서 자동 유목민/사무라이를 켜면 이벤트와 필요한 자원이 준비되었을 때 작동합니다.",
+            "label": "자동 유목민/사무라이 스위치"
+          },
+          "save_settings": {
+            "label": "설정 저장",
+            "description": "이 창을 닫기 전에 출발 성, 편성, 난이도, 중지 조건, 시간 건너뛰기 선택과 시험 상태를 저장합니다."
+          },
+          "readiness": {
+            "description": "자동화는 이벤트 진영을 강화하고 사용 가능한 사령관, 병력, 도구와 시간 건너뛰기가 켜져 있다면 사용할 수 있는 아이템을 기다립니다.",
+            "label": "진영 공격 준비 상태"
+          }
+        },
+        "title": "자동 유목민/사무라이 저장 및 활성화"
+      },
+      "limits": {
+        "image": {
+          "caption": "점수 목표는 새 출정을 중단하지만 이미 이동 중인 공격은 완료될 수 있습니다.",
+          "alt": "자동 유목민/사무라이 점수 및 중지 조건 예시"
+        },
+        "items": {
+          "daily_attack_limit": {
+            "description": "계정 전체의 일일 일반 공격 횟수에 도달하면 게임에서 초기화할 때까지 자동화를 중단하며 0은 추가 한도를 두지 않습니다.",
+            "label": "일반 공격 일일 한도",
+            "recommendation": "이벤트 점수 목표로 진행을 제어하려면 0."
+          },
+          "minimum_remaining": {
+            "description": "이벤트 종료 전 지정한 분 수만큼 남았을 때부터 새 공격을 시작하지 않습니다.",
+            "label": "이벤트 종료 전에 중지",
+            "recommendation": "30분."
+          },
+          "score_target": {
+            "description": "보고된 이벤트 점수가 이 목표에 도달하거나 초과하면 새 공격을 시작하지 않습니다.",
+            "label": "이벤트 점수에서 중지",
+            "recommendation": "0보다 높은 평소의 마지막 개인 보상 단계를 사용합니다."
+          },
+          "travelling_attacks": {
+            "description": "이미 이동 중인 공격은 중지 조건 이후에 완료되어 최종 점수가 목표를 넘을 수 있습니다.",
+            "label": "이동 중인 공격"
+          }
+        },
+        "title": "점수 및 중지 한도 설정"
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "말 이동 가속",
+            "recommendation": "빠른 이동에는 여행 깃털.",
+            "description": "진영 공격의 이동 수단으로 깃털, 동전 또는 루비를 선택합니다."
+          },
+          "open_settings": {
+            "label": "설정 열기",
+            "description": "자동화 화면에서 자동 유목민/사무라이 카드의 설정 버튼을 선택합니다."
+          },
+          "source_castle": {
+            "label": "출발 성",
+            "recommendation": "병력과 도구가 충분한 평소의 이벤트 성을 사용합니다.",
+            "description": "진영 공격에 병력과 도구를 공급할 대제국의 성을 선택합니다."
+          },
+          "nomad_preset": {
+            "description": "유목민 진영에 사용할 병력, 도구, 배치가 포함된 저장된 공격 편성을 선택합니다.",
+            "label": "유목민 공격 편성",
+            "recommendation": "평소 쓰는 유목민 편성을 만들어 선택합니다."
+          },
+          "samurai_preset": {
+            "description": "사무라이 진영에 사용할 병력, 도구, 배치가 포함된 저장된 공격 편성을 선택합니다.",
+            "label": "사무라이 공격 편성",
+            "recommendation": "평소 쓰는 사무라이 편성을 만들어 선택합니다."
+          }
+        },
+        "image": {
+          "alt": "자동 유목민/사무라이 출발 성, 편성 및 이동 예시",
+          "caption": "출발 성과 이동 수단을 고르기 전에 두 이벤트의 공격 편성을 모두 만듭니다."
+        },
+        "title": "자동 유목민/사무라이 설정 열기"
+      },
+      "cooldowns": {
+        "image": {
+          "alt": "진영 대기 시간과 시간 건너뛰기 비축량 예시",
+          "caption": "각 보유 값은 대기 시간(분)이 아니라 시간 건너뛰기 아이템의 개수입니다."
+        },
+        "items": {
+          "keep_10m": {
+            "description": "10분 시간 건너뛰기 아이템을 이 수량만큼 사용하지 않고 남깁니다.",
+            "label": "10분 보유",
+            "recommendation": "평상시 진영 반복 공격에는 0개."
+          },
+          "keep_1m": {
+            "description": "1분 시간 건너뛰기 아이템을 이 수량만큼 사용하지 않고 남깁니다.",
+            "label": "1분 보유",
+            "recommendation": "평상시 진영 반복 공격에는 0개."
+          },
+          "keep_24h": {
+            "description": "24시간 시간 건너뛰기 아이템을 이 수량만큼 사용하지 않고 남깁니다.",
+            "label": "24시간 보유",
+            "recommendation": "건설이나 다른 활동에 필요한 재고를 남겨 두세요."
+          },
+          "keep_30m": {
+            "description": "30분 시간 건너뛰기 아이템을 이 수량만큼 사용하지 않고 남깁니다.",
+            "label": "30분 보유",
+            "recommendation": "평상시 진영 반복 공격에는 0개."
+          },
+          "keep_5h": {
+            "description": "5시간 시간 건너뛰기 아이템을 이 수량만큼 사용하지 않고 남깁니다.",
+            "label": "5시간 보유",
+            "recommendation": "건설이나 다른 활동에 필요한 재고를 남겨 두세요."
+          },
+          "keep_5m": {
+            "description": "5분 시간 건너뛰기 아이템을 이 수량만큼 사용하지 않고 남깁니다.",
+            "label": "5분 보유",
+            "recommendation": "평상시 진영 반복 공격에는 0개."
+          },
+          "keep_60m": {
+            "description": "60분 시간 건너뛰기 아이템을 이 수량만큼 사용하지 않고 남깁니다.",
+            "label": "60분 보유",
+            "recommendation": "평상시 진영 반복 공격에는 0개."
+          },
+          "skip_cooldowns": {
+            "description": "진영 승리가 확인되면 사용 가능한 시간 건너뛰기로 해당 대상의 대기 시간을 없앱니다.",
+            "label": "성공한 공격마다 대기 시간 해제",
+            "recommendation": "평상시 반복 진영 공격에는 켜고 자연스러운 대기를 원하면 끕니다."
+          }
+        },
+        "title": "시간 건너뛰기와 비축량 선택"
+      },
+      "trial": {
+        "image": {
+          "alt": "도적 남작 성을 대상으로 한 임시 시험 조작 예시",
+          "caption": "시험은 실제 공격을 시작하고 켜져 있는 동안 평상시 이벤트 운영을 대체합니다."
+        },
+        "items": {
+          "rbc_trial": {
+            "description": "평상시 이벤트 운영을 유목민 편성과 시간 건너뛰기를 사용해 도적 남작 성 한 곳을 실제로 공격하는 시험으로 대체합니다.",
+            "label": "도적 남작 성에 대한 임시 전체 시험",
+            "recommendation": "평상시 유목민 또는 사무라이 공격에서는 끔."
+          },
+          "target_x": {
+            "description": "도적 남작 성의 가로 좌표는 임시 시험에만 입력합니다.",
+            "label": "대상 X",
+            "recommendation": "시험이 꺼져 있는 동안 사용하지 않습니다."
+          },
+          "target_y": {
+            "description": "도적 남작 성의 세로 좌표는 임시 시험에만 입력합니다.",
+            "label": "대상 Y",
+            "recommendation": "시험이 꺼져 있는 동안 사용하지 않습니다."
+          },
+          "trial_skips": {
+            "description": "시험을 켜면 해당 시험의 시간 건너뛰기도 켜집니다.",
+            "label": "시험 시간 건너뛰기"
+          }
+        },
+        "title": "평상시 공격에서는 임시 시험 끄기"
+      }
+    },
+    "feature": {
+      "description": "자동 유목민/사무라이는 조건에 맞는 이벤트 진영을 강화하고 완전히 강화된 진영 중 가장 약한 곳을 골라 중지 조건에 도달할 때까지 해당 이벤트의 저장된 공격 편성으로 반복 공격합니다.",
+      "expectation": "활성 이벤트, 사용 가능한 사령관, 병력, 도구와 대기 해제를 켠 경우 사용 가능한 시간 건너뛰기를 기다리며, 새 공격이 중단된 뒤에도 이동 중인 공격은 완료될 수 있습니다.",
+      "name": "자동 유목민/사무라이",
+      "summary": "유목민 또는 사무라이 진영 강화 및 공격"
+    },
+    "recommendationIntro": "권장값은 자동 유목민/사무라이의 평상시 사용을 위한 안내이며 저장된 설정을 변경하지 않습니다."
+  },
+  "autoAdvisor": {
+    "steps": {
+      "activation": {
+        "items": {
+          "auto_advisor_switch": {
+            "recommendation": "원하는 설정을 검토하고 저장한 뒤 켜기.",
+            "description": "설정을 검토한 뒤 자동화 카드에서 자동 고문을 켜며 이미 잠금 해제된 고문은 즉시 공격을 시작할 수 있습니다.",
+            "label": "자동 고문 스위치"
+          },
+          "save_settings": {
+            "label": "설정 저장",
+            "description": "창을 닫기 전에 출발 성, 프리셋, 난이도, 공격 규모와 자원 예산을 저장합니다."
+          },
+          "activate_advisor": {
+            "description": "고문이 잠겨 있다면 고문 활성화를 선택하여 현재 이벤트의 확인 창을 엽니다.",
+            "label": "고문 활성화"
+          },
+          "activate_and_spend": {
+            "description": "사용 가능한 이벤트 토큰 또는 공용 고문 토큰으로 확인된 활성화를 제출하며 무료 이벤트에는 토큰 없는 활성화가 표시됩니다.",
+            "label": "활성화하고 토큰 사용"
+          },
+          "cancel_activation": {
+            "description": "활성화를 제출하거나 토큰을 사용하지 않고 확인 창을 닫습니다.",
+            "label": "활성화 취소"
+          },
+          "confirm_paid_activation": {
+            "description": "게임에서 이 이벤트를 무료로 표시하지 않는 한 고문 활성화에 이벤트 또는 공용 토큰이 소모될 수 있음을 확인합니다.",
+            "label": "유료 활성화 확인"
+          }
+        },
+        "image": {
+          "alt": "자동 고문 저장 및 토큰 활성화 조작 예시",
+          "caption": "저장이나 켜기는 토큰을 쓰지 않으며 별도로 확인한 활성화는 토큰을 쓸 수 있습니다."
+        },
+        "title": "고문 접근을 저장하고 켜서 활성화"
+      },
+      "difficulty": {
+        "items": {
+          "nomad_difficulty": {
+            "label": "유목민 난이도",
+            "recommendation": "평소 편성으로 안정적으로 처리할 수 있는 가장 높은 잠금 해제 난이도를 사용합니다.",
+            "description": "이벤트 시작 시 선택할 잠금 해제된 유목민 난이도를 고릅니다."
+          },
+          "samurai_difficulty": {
+            "label": "사무라이 난이도",
+            "recommendation": "평소 편성으로 안정적으로 처리할 수 있는 가장 높은 잠금 해제 난이도를 사용합니다.",
+            "description": "이벤트 시작 시 선택할 잠금 해제된 사무라이 난이도를 고릅니다."
+          },
+          "active_difficulty": {
+            "description": "이미 활성화된 이벤트의 현재 난이도에 맞추지 않으면 자동화가 난이도를 바꾸지 않고 기다립니다.",
+            "label": "활성 이벤트 난이도"
+          }
+        },
+        "title": "두 이벤트의 난이도 선택",
+        "image": {
+          "alt": "유목민과 사무라이 고문 난이도 선택 예시",
+          "caption": "두 이벤트의 난이도를 저장하고 이미 진행 중인 이벤트의 난이도에 맞춥니다."
+        }
+      },
+      "open": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "말 이동 가속",
+            "recommendation": "빠른 이동에는 여행 깃털.",
+            "description": "공격에 깃털, 동전 또는 루비 이동을 선택합니다."
+          },
+          "open_settings": {
+            "label": "설정 열기",
+            "description": "자동화 페이지의 자동 고문 카드에서 설정 버튼을 선택합니다."
+          },
+          "source_castle": {
+            "label": "출발 성",
+            "recommendation": "병력과 도구가 충분한 평소의 이벤트 성을 사용합니다.",
+            "description": "고문 공격에 병력과 도구를 제공할 대제국의 성을 선택합니다."
+          },
+          "attack_preset": {
+            "description": "요청한 공격마다 병력, 도구와 배치가 복사되는 저장된 공격 프리셋을 선택합니다.",
+            "label": "고문 공격 프리셋",
+            "recommendation": "현재 유목민 또는 사무라이 이벤트에 평소 쓰는 프리셋을 먼저 만든 다음 선택합니다."
+          },
+          "complete_copies": {
+            "description": "사용 가능한 자원과 완전한 프리셋 복사본 수에 따라 공격 규모가 최대 공격 수보다 줄어들 수 있습니다.",
+            "label": "완전한 프리셋 복사본"
+          }
+        },
+        "image": {
+          "alt": "자동 고문의 출발 성, 프리셋과 이동 설정 예시",
+          "caption": "이동을 설정하기 전에 대제국의 출발 성과 저장된 이벤트 프리셋을 선택합니다."
+        },
+        "title": "자동 고문 설정 열기"
+      },
+      "resources": {
+        "items": {
+          "keep_24h": {
+            "description": "24시간 시간 건너뛰기 아이템을 이 수량만큼 사용하지 않고 남깁니다.",
+            "label": "24시간 보유",
+            "recommendation": "건설이나 다른 활동에 필요한 재고를 남겨 두세요."
+          },
+          "keep_5h": {
+            "description": "5시간 시간 건너뛰기 아이템을 이 수량만큼 사용하지 않고 남깁니다.",
+            "label": "5시간 보유",
+            "recommendation": "건설이나 다른 활동에 필요한 재고를 남겨 두세요."
+          },
+          "keep_60m": {
+            "description": "60분 시간 건너뛰기 아이템을 이 수량만큼 사용하지 않고 남깁니다.",
+            "label": "60분 보유",
+            "recommendation": "일반적인 고문 공격에는 0."
+          },
+          "coin_cost": {
+            "description": "게임 가격을 바꾸지 않고 시작 전 예산 계산에 사용할 공격당 전체 동전 비용을 추정합니다.",
+            "label": "공격당 전체 동전",
+            "recommendation": "실제 전체 비용을 충당할 때만 500을 쓰고 부족하면 측정한 더 높은 합계를 입력합니다."
+          },
+          "keep_coins": {
+            "description": "이 수만큼의 동전을 공격 예산에서 제외합니다.",
+            "label": "남겨 둘 동전",
+            "recommendation": "평소 모집과 건설에 필요한 예산을 남깁니다."
+          },
+          "keep_feathers": {
+            "description": "이 수만큼의 이동 깃털을 공격 예산에서 제외합니다.",
+            "label": "남겨 둘 깃털",
+            "recommendation": "다른 기능에 깃털을 예약하지 않는다면 0."
+          },
+          "keep_rubies": {
+            "description": "이 수만큼의 루비를 공격 예산에서 제외합니다.",
+            "label": "남겨 둘 루비",
+            "recommendation": "다른 활동에 필요한 잔액을 남깁니다."
+          },
+          "ruby_cost": {
+            "description": "공격당 루비 이동 비용을 추정하며 루비 이동을 선택하면 양수 값이 필요합니다.",
+            "label": "공격당 루비",
+            "recommendation": "이동 깃털을 쓰면 0, 루비 이동을 쓰면 실제 양수 비용을 입력합니다."
+          }
+        },
+        "image": {
+          "alt": "자동 고문의 동전, 루비, 깃털과 시간 단축 아이템 예비량 예시",
+          "caption": "비용 항목은 계획용 추정치이며 남겨 둘 값은 사용하지 않을 자원 또는 시간 단축 아이템 수입니다."
+        },
+        "title": "자원 예산과 예비량 설정"
+      },
+      "overview": {
+        "image": {
+          "alt": "자동 고문의 진행과 손실 개요 예시",
+          "caption": "개요는 새 공격을 시작하지 않고 진행과 손실을 보여 줍니다."
+        },
+        "items": {
+          "live_progress": {
+            "description": "개요에서 현재 및 요청한 공격 수, 승리, 패배, 잃은 병력과 도구를 확인합니다.",
+            "label": "진행 중인 고문 공격"
+          },
+          "no_relaunch": {
+            "description": "같은 이벤트에서 완료되거나 취소된 공격은 자동으로 다시 시작되지 않습니다.",
+            "label": "완료 또는 취소된 공격"
+          },
+          "refresh_overview": {
+            "description": "고문 공격의 최신 진행, 승리, 패배와 손실을 요청합니다.",
+            "label": "개요 새로고침"
+          }
+        },
+        "title": "진행 중인 고문 공격 확인"
+      },
+      "sizing": {
+        "image": {
+          "alt": "자동 고문의 공격 수와 이벤트 시간 설정 예시",
+          "caption": "요청한 공격 수는 시작 전에 사용 가능한 자원과 이벤트 시간에 따라 제한됩니다."
+        },
+        "items": {
+          "maximum_attacks": {
+            "description": "이 한 차례 고문 공격의 상한을 설정하며 자원과 남은 시간에 따라 실제 수가 줄 수 있습니다.",
+            "label": "최대 공격 수",
+            "recommendation": "자원과 이벤트 시간으로 공격 규모를 결정하려면 9,999."
+          },
+          "minimum_remaining": {
+            "description": "시작 전 이벤트 시간 계산에서 이만큼의 분을 사용하지 않고 남깁니다.",
+            "label": "이벤트 종료 전 중단",
+            "recommendation": "30분이며 진행 중인 공격을 계속 감시해 취소하는 타이머는 아닙니다."
+          }
+        },
+        "title": "공격 규모와 이벤트 시간 설정"
+      }
+    },
+    "feature": {
+      "description": "자동 고문은 사용 가능한 자원과 남은 이벤트 시간에 맞춰 유목민 또는 사무라이 고문 공격을 한 차례 시작합니다.",
+      "expectation": "진행은 활성 이벤트의 일치하는 난이도와 고문 잠금 해제를 기다리며, 저장이나 켜기는 토큰을 쓰지 않지만 확인된 활성화는 토큰을 쓸 수 있습니다.",
+      "name": "자동 고문",
+      "summary": "자원에 맞는 유목민 또는 사무라이 고문 공격을 한 차례 시작"
+    },
+    "recommendationIntro": "추천 값은 자동 고문의 일반적인 사용을 위한 안내이며 저장된 설정을 변경하지 않습니다."
+  },
+  "autoKhan": {
+    "steps": {
+      "cooldowns": {
+        "items": {
+          "keep_10m": {
+            "label": "10분 보유",
+            "description": "10분 시간 단축 아이템을 이 개수만큼 사용하지 않고 남겨 둡니다.",
+            "recommendation": "일반적인 칸 연속 공격에는 0개."
+          },
+          "keep_1m": {
+            "label": "1분 보유",
+            "description": "1분 시간 단축 아이템을 이 개수만큼 사용하지 않고 남겨 둡니다.",
+            "recommendation": "일반적인 칸 연속 공격에는 0개."
+          },
+          "keep_24h": {
+            "label": "24시간 보유",
+            "recommendation": "건설이나 다른 활동에 필요한 재고를 남겨 두세요.",
+            "description": "24시간 시간 단축 아이템을 이 개수만큼 사용하지 않고 남겨 둡니다."
+          },
+          "keep_30m": {
+            "label": "30분 보유",
+            "description": "30분 시간 단축 아이템을 이 개수만큼 사용하지 않고 남겨 둡니다.",
+            "recommendation": "일반적인 칸 연속 공격에는 0개."
+          },
+          "keep_5h": {
+            "label": "5시간 보유",
+            "recommendation": "건설이나 다른 활동에 필요한 재고를 남겨 두세요.",
+            "description": "5시간 시간 단축 아이템을 이 개수만큼 사용하지 않고 남겨 둡니다."
+          },
+          "keep_5m": {
+            "label": "5분 보유",
+            "description": "5분 시간 단축 아이템을 이 개수만큼 사용하지 않고 남겨 둡니다.",
+            "recommendation": "일반적인 칸 연속 공격에는 0개."
+          },
+          "keep_1h": {
+            "description": "1시간 시간 단축 아이템을 이 개수만큼 사용하지 않고 남겨 둡니다.",
+            "label": "1시간 보유",
+            "recommendation": "일반적인 칸 연속 공격에는 0개."
+          },
+          "skip_cooldowns": {
+            "description": "공격 후 야영지 대기 시간을 해제할 만큼의 시간 단축 아이템을 확보하고 사용합니다.",
+            "label": "칸 야영지의 대기 시간을 매번 건너뛰기",
+            "recommendation": "켜기. 현재 설정 대화상자는 저장할 때 이 옵션을 요구합니다."
+          },
+          "skip_shortage": {
+            "description": "사용 가능한 시간 단축 아이템으로 필요한 대기 시간을 해제할 수 없으면 새로운 야영지 공격을 일시 중지합니다.",
+            "label": "사용 가능한 단축 아이템 부족"
+          }
+        },
+        "image": {
+          "alt": "자동 칸의 대기 시간 건너뛰기와 시간 단축 아이템 보유량을 보여 주는 예시",
+          "caption": "보유량은 시간이 아니라 아이템 개수입니다."
+        },
+        "title": "대기 시간 건너뛰기와 보유량 설정"
+      },
+      "limits": {
+        "items": {
+          "daily_limit": {
+            "label": "일반 공격 일일 한도",
+            "description": "계정 전체의 일일 일반 공격 횟수에 도달하면 이 자동화의 새로운 야영지 공격을 중단합니다. 0은 이 한도를 해제합니다.",
+            "recommendation": "계정 전체 한도가 필요하지 않으면 0."
+          },
+          "event_end": {
+            "label": "이벤트 종료 전 중단",
+            "description": "이벤트 종료 전 지정한 분 수만큼 일찍 새로운 야영지 공격을 중단합니다.",
+            "recommendation": "5분."
+          },
+          "nomad_points": {
+            "description": "보고된 점수가 이 값에 도달하면 새로운 칸 공격을 중단하고 출발한 공격을 회수하며 본성 성문을 엽니다. 0은 이 중지를 해제합니다.",
+            "label": "유목민 점수에서 중단",
+            "recommendation": "선택한 점수에서 멈춰 보호할 필요가 없으면 0."
+          },
+          "replenish_tools": {
+            "description": "루비 가격의 묶음을 제외하고 적합한 제안에서 방어 프리셋에 부족한 도구를 보충합니다.",
+            "label": "방어 도구 보충",
+            "recommendation": "적합한 자동 구매를 원하면 켜기."
+          }
+        },
+        "image": {
+          "alt": "자동 칸 점수, 도구, 일일 한도의 예시 화면",
+          "caption": "유목민 점수 중지 값이 양수이면 출발한 칸 공격도 회수하고 본성 성문을 엽니다."
+        },
+        "title": "점수, 보급, 일일 한도 설정"
+      },
+      "save": {
+        "items": {
+          "save_settings": {
+            "label": "설정 저장",
+            "description": "선택한 성, 프리셋, 분노 제어, 한도, 시간 단축 보유량, 보호 설정을 저장합니다."
+          },
+          "enable_switch": {
+            "description": "본성 방어를 확인한 뒤 자동화 카드에서 자동 칸을 활성화합니다.",
+            "label": "자동 칸 스위치",
+            "recommendation": "저장하고 방어를 준비한 뒤 켜기."
+          },
+          "station_priority": {
+            "description": "자동 대피는 플레이어의 공격을 칸의 보복과 별도로 처리합니다.",
+            "label": "자동 대피 우선순위"
+          }
+        },
+        "image": {
+          "alt": "자동 칸 저장과 활성화의 예시 화면",
+          "caption": "칸의 보복을 활성화하기 전에 본성의 방어를 확인합니다."
+        },
+        "title": "자동 칸 저장 및 활성화"
+      },
+      "setup": {
+        "items": {
+          "horse_travel_boost": {
+            "label": "말 이동 가속",
+            "recommendation": "빠른 이동에는 여행 깃털.",
+            "description": "야영지 공격의 이동 수단으로 깃털, 동전 또는 루비를 선택합니다."
+          },
+          "open_settings": {
+            "label": "설정 열기",
+            "description": "자동화 페이지에서 자동 칸 카드의 설정 버튼을 선택합니다."
+          },
+          "attack_from": {
+            "description": "칸 야영지 공격에 병력을 보낼 대제국 본성 또는 전초기지를 선택합니다.",
+            "label": "공격 출발지",
+            "recommendation": "가능하다면 공격 병력이 있는 전초기지를 사용합니다."
+          },
+          "camp_attack_preset": {
+            "description": "일반적인 칸 야영지 공격에 사용할 저장된 공격 프리셋을 선택합니다.",
+            "label": "야영지 공격 프리셋",
+            "recommendation": "먼저 일반적인 칸 공격 프리셋을 만듭니다."
+          },
+          "defend_at": {
+            "description": "칸의 보복은 여기 표시된 대제국 본성에서 방어합니다. 이 필드는 읽기 전용입니다.",
+            "label": "방어 위치"
+          },
+          "main_defense_preset": {
+            "description": "보복 전에 본성에 다시 적용할 저장된 방어 프리셋을 선택합니다.",
+            "label": "본성 방어 프리셋",
+            "recommendation": "일반적인 칸 방어 프리셋을 만들고 병력과 도구를 준비합니다."
+          }
+        },
+        "image": {
+          "alt": "자동 칸 성, 프리셋, 이동 설정의 예시 화면",
+          "caption": "연속 공격을 활성화하기 전에 두 프리셋과 본성 방어를 준비합니다."
+        },
+        "title": "성, 프리셋, 이동 방법 선택"
+      },
+      "protection": {
+        "image": {
+          "alt": "자동 칸 본성 성벽 보호의 예시 화면",
+          "caption": "성벽 보호는 공격 출발지가 본성일 때만 적용됩니다."
+        },
+        "items": {
+          "offensive_threshold": {
+            "description": "성벽의 공격 병력이 이 수에 도달하면 본성 보호를 작동합니다.",
+            "label": "성벽 공격 병력 기준",
+            "recommendation": "성벽의 공격 병력 1,000명."
+          },
+          "outpost_source": {
+            "description": "전초기지에서 공격하고 본성에서 별도로 방어하면 이 성벽 보호는 비활성화됩니다.",
+            "label": "출발지 전초기지"
+          },
+          "protect_offense": {
+            "description": "본성에서 공격할 때 공격 병력이 너무 많이 성벽에서 방어하게 되면 성문을 열고 칸을 일시 중지합니다.",
+            "label": "본성 성벽의 공격 병력 보호",
+            "recommendation": "본성에서 공격한다면 켜기."
+          }
+        },
+        "title": "본성 성벽 보호"
+      },
+      "rage": {
+        "image": {
+          "alt": "자동 칸 분노와 공격 허가의 예시 화면",
+          "caption": "시간제 분노 점수 강화 효과와 분노 깃발은 서로 다릅니다."
+        },
+        "items": {
+          "lock_automatic_attacks": {
+            "description": "분노 처리, 대기 시간 해제, 방어를 계속하면서 새로운 야영지 공격을 중단합니다.",
+            "label": "자동 칸 공격 잠그기",
+            "recommendation": "일반적인 야영지 공격에는 끄기."
+          },
+          "max_rage_chain": {
+            "description": "현재 이벤트에서 수락할 보복 횟수를 제한하며, 한도에 도달하면 새로운 야영지 공격이 멈춥니다. 0은 한도를 없앱니다.",
+            "label": "최대 분노 연쇄",
+            "recommendation": "보복 한도가 필요하지 않으면 0."
+          },
+          "rage_booster": {
+            "description": "시간제 분노 점수 강화 효과가 활성화된 동안에만 새로운 자동 야영지 공격을 허용합니다.",
+            "label": "분노 점수 강화 효과 필수",
+            "recommendation": "강화 효과 중에만 공격할 필요가 없다면 끄기."
+          },
+          "rage_continues": {
+            "description": "분노 연쇄 한도는 분노가 가득 찼을 때의 보복 유도, 대기 시간 처리, 방어 복구를 중단하지 않습니다.",
+            "label": "분노 처리 계속"
+          },
+          "trigger_full_rage": {
+            "description": "분노가 가득 차면 칸의 보복을 유도합니다.",
+            "label": "분노가 가득 찰 때 칸 유도",
+            "recommendation": "본성의 방어 준비가 끝났다면 켜기."
+          }
+        },
+        "title": "분노와 공격 허가 설정"
+      }
+    },
+    "feature": {
+      "description": "자동 칸은 칸 야영지를 공격하고 대기 시간을 해제하며 분노가 가득 차면 보복을 유도하고 본성 방어를 유지합니다.",
+      "expectation": "설정된 한도에 도달하거나 자원이 부족하면 새로운 야영지 공격을 중단하고 본성을 보호합니다. 들어오는 플레이어 공격은 자동 대피가 처리합니다.",
+      "name": "자동 칸",
+      "summary": "칸 야영지를 연속 공격하고 본성에서 보복을 방어"
+    },
+    "recommendationIntro": "권장 값은 자동 칸의 일반적인 사용을 위한 안내이며 저장된 설정을 바꾸지 않습니다."
+  },
+  "autoBeri": {
+    "feature": {
+      "description": "자동 베리몬드는 선택한 공격 프리셋의 병력 비율에 따라 소유한 베리몬드 진영에 병력을 보충하고, 탑을 공격하거나 도구를 채우고 확인된 전리품으로 건설할 수 있습니다.",
+      "expectation": "수송은 진영과 공급 성의 최신 재고, 보고된 여유 용량, 이전 수송의 완료를 기다리며, 공급 병력이 일부 있으면 더 적게 보내고 필요한 종류가 없으면 보충을 멈춥니다.",
+      "name": "자동 베리몬드 월드",
+      "summary": "베리몬드 진영 보급 및 운영"
+    },
+    "recommendationIntro": "권장 선택은 자동 베리몬드의 일반적인 사용을 위한 안내이며 저장된 설정을 바꾸지 않습니다.",
+    "steps": {
+      "builder": {
+        "image": {
+          "alt": "선택적 진영 건설 설정의 예시 화면",
+          "caption": "기본 및 저장된 목표, 캡처 방식, 5레벨 마구간, 목재와 석재 비축량, 일곱 가지 시간 단축 길이 예시."
+        },
+        "items": {
+          "allow_demolition": {
+            "description": "옮기거나 보관할 수 없는 관리 외 건물이 지정 목표에 있으면 철거하도록 허용합니다.",
+            "label": "철거 허용",
+            "recommendation": "제거 대상을 검토하기 전에는 끄는 것이 좋습니다."
+          },
+          "allow_premium_costs": {
+            "description": "프리미엄 화폐를 쓰는 대상 건설 단계를 허용합니다.",
+            "label": "프리미엄 비용 허용",
+            "recommendation": "프리미엄 건설을 의도한 경우가 아니면 끄는 것이 좋습니다."
+          },
+          "auto_beri_builder_lane": {
+            "description": "다른 왕국에서 자원을 들여오지 않고 귀환이 확인된 전리품으로 활성 베리몬드 진영 목표를 건설하거나 업그레이드합니다.",
+            "label": "자동 베리몬드 건설 작업",
+            "recommendation": "지출 허용 사항을 검토한 뒤 정기적인 진영 건설에 켭니다."
+          },
+          "camp_resource_reserves": {
+            "description": "선택한 목재와 석재는 진영 건설 비용에 사용하지 않습니다.",
+            "label": "진영 자원 비축량",
+            "recommendation": "남는 자원을 사용해도 된다면 목재 0, 석재 0을 권장합니다."
+          },
+          "construction_time_skip_reserves": {
+            "description": "1분, 5분, 10분, 30분, 1시간, 5시간, 24시간 단축 아이템의 보유 수량을 각각 설정합니다.",
+            "label": "건설 시간 단축 비축량",
+            "recommendation": "짧은 단축 아이템은 각각 0개로 하고 1·5·24시간 아이템은 다른 활동에 필요한 재고를 남깁니다."
+          },
+          "optional_custom_camp_target": {
+            "description": "필수 건물은 기능, 장식 없는 건물 배치는 배치, 지원되는 모든 세부 사항은 정확한 복제로 캡처합니다.",
+            "label": "선택적 사용자 지정 진영 목표",
+            "recommendation": "검토한 사용자 정의 목표가 필요하지 않다면 기본 목표를 사용합니다."
+          },
+          "stable_target": {
+            "description": "기본 목표의 진영 마구간 레벨을 1부터 5까지 선택합니다.",
+            "label": "마구간 목표",
+            "recommendation": "자원이 충분하다면 일반적인 이벤트 건설에는 5레벨을 권장합니다."
+          },
+          "use_construction_time_skips": {
+            "description": "선택한 건설 시간 단축 비축량을 유지하면서 확인된 진영 건설을 앞당깁니다.",
+            "label": "건설 시간 단축 사용",
+            "recommendation": "단축 아이템 재고가 충분하면 정기적인 건설에 켭니다."
+          },
+          "keep_skip_10m": {
+            "description": "이 수량의 10m 건설 단축 아이템을 남기고 일반적인 사용에서는 비축량을 0으로 설정합니다.",
+            "label": "10m 단축 아이템 보유"
+          },
+          "keep_skip_1h": {
+            "description": "이 수량의 1h 건설 단축 아이템을 다른 활동을 위해 남깁니다.",
+            "label": "1h 단축 아이템 보유"
+          },
+          "keep_skip_1m": {
+            "description": "이 수량의 1m 건설 단축 아이템을 남기고 일반적인 사용에서는 비축량을 0으로 설정합니다.",
+            "label": "1m 단축 아이템 보유"
+          },
+          "keep_skip_24h": {
+            "description": "이 수량의 24h 건설 단축 아이템을 다른 활동을 위해 남깁니다.",
+            "label": "24h 단축 아이템 보유"
+          },
+          "keep_skip_30m": {
+            "description": "이 수량의 30m 건설 단축 아이템을 남기고 일반적인 사용에서는 비축량을 0으로 설정합니다.",
+            "label": "30m 단축 아이템 보유"
+          },
+          "keep_skip_5h": {
+            "description": "이 수량의 5h 건설 단축 아이템을 다른 활동을 위해 남깁니다.",
+            "label": "5h 단축 아이템 보유"
+          },
+          "keep_skip_5m": {
+            "description": "이 수량의 5m 건설 단축 아이템을 남기고 일반적인 사용에서는 비축량을 0으로 설정합니다.",
+            "label": "5m 단축 아이템 보유"
+          },
+          "saved_targets": {
+            "description": "캡처하면 검토한 사용자 정의 목표가 즉시 저장 및 활성화되며 다른 저장된 목표를 선택해도 즉시 활성화됩니다.",
+            "label": "저장된 사용자 정의 목표"
+          },
+          "stone_reserve": {
+            "description": "이 수량의 진영 석재를 건설 지출에서 제외하고 남는 양을 사용한다면 0으로 설정합니다.",
+            "label": "석재 비축량"
+          },
+          "use_built_in_default": {
+            "description": "저장된 사용자 정의 목표는 유지하면서 즉시 기본 목표로 돌아갑니다.",
+            "label": "기본 목표 사용"
+          },
+          "wood_reserve": {
+            "description": "이 수량의 진영 목재를 건설 지출에서 제외하고 남는 양을 사용한다면 0으로 설정합니다.",
+            "label": "목재 비축량"
+          }
+        },
+        "title": "선택적 진영 건설 선택"
+      },
+      "readiness": {
+        "image": {
+          "alt": "탑 공격 준비 설정의 예시 화면",
+          "caption": "실제 부스터나 고객 데이터를 암시하지 않는 부스터 조건과 프리셋 편성."
+        },
+        "items": {
+          "attack_preset_loadout": {
+            "description": "공격을 켜기 전에 선택한 프리셋의 공격 파동, 병력, 도구를 확인합니다.",
+            "label": "공격 프리셋 편성",
+            "recommendation": "일반적인 공격 속도에 필요한 각 병력과 도구를 공급 성과 진영에 충분히 두세요."
+          },
+          "only_run_with_a_gallantry_booster": {
+            "description": "수송, 도구 구매, 진영 준비, 탑 공격, 건설 전에 활성 용맹 부스터를 요구합니다.",
+            "label": "용맹 부스터가 있을 때만 실행",
+            "recommendation": "모든 자동 베리몬드 작업을 부스터로 제한하려면 켜는 것이 좋습니다."
+          }
+        },
+        "title": "탑 공격 준비 설정"
+      },
+      "save": {
+        "image": {
+          "alt": "저장 및 활성화 설정의 예시 화면",
+          "caption": "실제 계정이 아닌 저장 설정 확인 목록, 스위치, 선택적 일정."
+        },
+        "items": {
+          "automation_switch": {
+            "description": "진영과 공급 병력, 프리셋, 선택적 지출 설정을 확인한 뒤 자동화 카드에서 자동 베리몬드 월드를 켭니다.",
+            "label": "자동화 스위치",
+            "recommendation": "설정을 마친 뒤 켜세요."
+          },
+          "calendar": {
+            "description": "계속 실행하려면 일정을 끄고, 시간대가 필요하면 평소 시간을 정해 일정을 저장합니다.",
+            "label": "일정",
+            "recommendation": "이벤트를 계속 운영하려면 끄는 것이 좋습니다."
+          },
+          "save_settings": {
+            "description": "자동화를 켜기 전에 프리셋, 공급 성, 수송 간격, 공격 제한, 도구, 선택적 건설 설정을 저장합니다.",
+            "label": "설정 저장"
+          }
+        },
+        "title": "저장하고 켜기"
+      },
+      "setup": {
+        "image": {
+          "alt": "공격과 공급원 설정의 예시 화면",
+          "caption": "저장된 공격 프리셋, 그레이트 엠파이어 공급 성, 여행 깃털, 공격 확인, 일일 제한."
+        },
+        "items": {
+          "attack_check_interval": {
+            "description": "자동 베리몬드가 다음 탑 공격을 확인하는 간격을 정합니다.",
+            "label": "공격 확인 간격",
+            "recommendation": "확인을 줄일 필요가 없다면 일반적인 30초 간격을 유지하세요."
+          },
+          "attack_preset": {
+            "description": "저장된 베리몬드 공격 편성을 선택하면 자동 베리몬드가 해당 병력 비율을 수송과 탑 공격에 모두 사용합니다.",
+            "label": "공격 프리셋",
+            "recommendation": "평소 사용할 베리몬드 프리셋을 먼저 만들고 선택하세요."
+          },
+          "daily_normal_attack_limit": {
+            "description": "계정 전체의 일일 일반 공격 횟수에 도달하면 새 자동 베리몬드 탑 공격을 멈추며, 0이면 이 추가 제한이 없어집니다.",
+            "label": "일일 일반 공격 제한",
+            "recommendation": "계정 전체 제한을 쓰지 않는다면 0을 권장합니다."
+          },
+          "horse_travel_boost": {
+            "description": "탑 공격에 깃털, 동전, 루비 이동을 선택합니다.",
+            "label": "말 이동 강화",
+            "recommendation": "루비 이동을 선택하지 않고 빠르게 이동하려면 여행 깃털을 권장합니다."
+          },
+          "open_settings": {
+            "description": "자동화 페이지에서 자동 베리몬드 월드 카드의 설정을 엽니다.",
+            "label": "설정 열기"
+          },
+          "source_castle": {
+            "description": "병력을 공급할 그레이트 엠파이어 성이나 전초기지를 선택합니다.",
+            "label": "공급 성",
+            "recommendation": "공격 병력이 있는 성을 선택하세요."
+          }
+        },
+        "title": "공격과 공급원 선택"
+      },
+      "tools": {
+        "image": {
+          "alt": "진영 도구 설정의 예시 화면",
+          "caption": "세 종류 도구의 최소 수량과 명확히 가상의 진영 재고."
+        },
+        "items": {
+          "battering_rams_minimum": {
+            "description": "같은 규칙으로 주둔 중인 공성 망치를 이 수량까지 보충합니다.",
+            "label": "공성 망치 최소 수량",
+            "recommendation": "평소 프리셋의 사용량에 맞추세요."
+          },
+          "mantlets_minimum": {
+            "description": "같은 규칙으로 주둔 중인 방패막을 이 수량까지 보충합니다.",
+            "label": "방패막 최소 수량",
+            "recommendation": "평소 프리셋의 사용량에 맞추세요."
+          },
+          "scaling_ladders_minimum": {
+            "description": "해당 동전 판매 품목을 이용해 진영의 사다리를 이 수량까지 보충하며, 0이면 관리하지 않습니다.",
+            "label": "공성 사다리 최소 수량",
+            "recommendation": "평소 프리셋과 공격 속도에 필요한 수량에 맞추세요."
+          }
+        },
+        "title": "진영 도구 유지"
+      },
+      "transfers": {
+        "image": {
+          "alt": "병력 비례 수송 설정의 예시 화면",
+          "caption": "가상의 2:1 프리셋 비율, 진영 재고, 여유 용량, 한 병종의 부분 수송을 보여 주며 수치는 저장된 기본값이 아닌 예시입니다."
+        },
+        "items": {
+          "check_interval": {
+            "description": "자동 베리몬드가 수송 여유 용량과 양쪽 성의 재고를 새로 확인하는 간격을 정합니다.",
+            "label": "확인 간격",
+            "recommendation": "일반적인 30초 간격을 유지하세요."
+          },
+          "food_only": {
+            "description": "식량을 소비하는 프리셋 병력만 수송할 수 있으며 지원하지 않는 유닛이나 병종 계열을 판별할 수 없으면 이유를 알려 주고 기다립니다.",
+            "label": "식량 소비 병력만 수송"
+          },
+          "minimum_free_capacity": {
+            "description": "보고된 여유 용량이 이 기준에 도달할 때만 수송을 시작하며 개별 비례 수송량은 더 적을 수 있습니다.",
+            "label": "최소 여유 용량",
+            "recommendation": "정기적인 비율 보충에는 병력 빈 자리 1칸을 권장합니다."
+          },
+          "owned_berimond_camp": {
+            "description": "자동 베리몬드가 소유한 베리몬드 진영을 자동으로 찾으므로 진영 ID를 입력할 필요가 없습니다.",
+            "label": "소유한 베리몬드 진영"
+          },
+          "partial_donor": {
+            "description": "공급 성에 필요한 병종이 일부 있으면 더 적게 보내고 전혀 없으면 다른 병종을 대신 보내지 않고 기다립니다.",
+            "label": "부분 공급 재고"
+          },
+          "pending_transfer": {
+            "description": "자동 베리몬드는 각 수송이 도착하고 진영 재고가 갱신될 때까지 기다린 뒤 프리셋 비율을 다시 계산합니다.",
+            "label": "대기 중인 수송"
+          },
+          "preset_troop_mix": {
+            "description": "자동 베리몬드는 선택한 프리셋의 공격 파동과 안뜰에 반복된 병력 칸을 합산한 다음 부족한 병종 하나씩 보충합니다.",
+            "label": "프리셋 병력 비율"
+          },
+          "troop_transport_skip": {
+            "description": "수송 단축을 켰을 때 사용할 아이템의 시간을 선택합니다.",
+            "label": "병력 수송 단축",
+            "recommendation": "일반적인 확인된 이동에는 1시간 단축 아이템을 사용합니다."
+          },
+          "use_troop_transport_time_skips": {
+            "description": "아직 이동 중인 확인된 수송에 선택한 단축 아이템을 적용합니다.",
+            "label": "병력 수송 시간 단축 사용",
+            "recommendation": "단축 아이템 재고가 허용하면 정기적인 진영 보급에 켭니다."
+          }
+        },
+        "title": "병력 비례 수송 설정"
+      }
+    }
+  },
+  "autoStorm": {
+    "feature": {
+      "description": "자동 스톰은 스톰 성을 열고 건설하며 요새와 자원 섬을 공격하고 병력을 수입하며 선택한 루나 보상을 구매할 수 있습니다.",
+      "expectation": "각 작업은 최신 게임 데이터와 저장된 허가를 사용하며 프리미엄 건설, 공격, 구매는 켠 선택지에 따라 제한됩니다.",
+      "name": "자동 스톰",
+      "summary": "스톰 성과 공격 및 보상 관리"
+    },
+    "recommendationIntro": "권장값은 자동 스톰의 일반적인 사용을 설명하는 안내이며 저장된 설정을 바꾸지 않습니다.",
+    "steps": {
+      "castle": {
+        "image": {
+          "alt": "스톰 성 접근 및 목표 캡처 예시 화면",
+          "caption": "시작 성 선택, 캡처 방식, 선택적 목표 활성화를 보여 주며 실제 구매나 계정은 표시하지 않습니다."
+        },
+        "items": {
+          "automatic_open": {
+            "description": "스톰이 잠겨 있으면 이용 가능한 공식 시작 성을 선택하고 잠금 해제를 허용하기 전에 표시된 가격을 확인합니다.",
+            "label": "스톰 성 자동 열기",
+            "recommendation": "가격을 확인한 뒤 자동 스톰이 평소 시작 성을 열게 하려면 켜세요."
+          },
+          "blueprint": {
+            "description": "캡처한 목표는 즉시 저장되고 활성화되며 목표 일시 중지는 동기화를 멈추지만 저장된 목표는 유지합니다.",
+            "label": "저장된 목표",
+            "recommendation": "일반 건설에는 검토한 기능 목표를 활성화해 두세요."
+          },
+          "capture_castle": {
+            "description": "건설 목표를 캡처하기 전에 현재 스톰 성을 선택합니다.",
+            "label": "스톰 성",
+            "recommendation": "관리하려는 성을 캡처하세요."
+          },
+          "combat_only": {
+            "description": "요새와 섬 전투에는 캡처한 건설 목표가 필요하지 않습니다.",
+            "label": "목표 없는 전투"
+          },
+          "decoration_preset": {
+            "description": "건설이 끝난 뒤 선택한 장식 프리셋을 선택적으로 적용합니다.",
+            "label": "건설 후 장식 프리셋",
+            "recommendation": "별도의 장식 배치가 필요 없다면 비워 두세요."
+          },
+          "exact": {
+            "description": "정확한 복제를 위해 지원되는 모든 목표 세부 정보를 저장합니다.",
+            "label": "정확한 캡처",
+            "recommendation": "목표 전체를 검토한 뒤에만 사용하세요."
+          },
+          "functional": {
+            "description": "각 건물 위치를 복사하지 않고 스톰의 필수 기능에 대한 목표를 저장합니다.",
+            "label": "기능 캡처",
+            "recommendation": "일반적인 유지 관리에는 기능을 권장합니다."
+          },
+          "layout": {
+            "description": "장식을 제외한 건물 종류와 위치를 저장합니다.",
+            "label": "배치 캡처",
+            "recommendation": "건물 위치가 중요할 때만 사용하세요."
+          },
+          "open_settings": {
+            "description": "자동화 카드에서 자동 스톰 설정을 엽니다.",
+            "label": "설정 열기"
+          },
+          "starter_castle": {
+            "description": "다음 잠긴 시즌에 쓸 현재 이용 가능한 공식 스톰 시작 성을 선택합니다.",
+            "label": "열 성",
+            "recommendation": "가격을 확인하고 감당할 수 있는 평소 시작 성을 선택하세요."
+          }
+        },
+        "title": "스톰 성 열기 및 캡처"
+      },
+      "combat": {
+        "image": {
+          "alt": "요새와 섬 공격 설정 예시 화면",
+          "caption": "가상의 아쿠아마린 섬, 요새 레벨, 목표 순서와 점령 방어병을 보여 줍니다."
+        },
+        "items": {
+          "defenders": {
+            "description": "점령한 섬에 남길 방어병의 종류와 수를 선택하며 목록이 비면 확인된 승리 뒤 생존자 한 명을 남깁니다.",
+            "label": "섬 방어 유닛",
+            "recommendation": "생존자 한 명으로 부족하다면 방어병을 선택하세요."
+          },
+          "fort_preset": {
+            "description": "요새에 사용할 저장된 병력과 도구 편성을 선택합니다.",
+            "label": "요새 공격 프리셋",
+            "recommendation": "평소 요새 프리셋을 사용하세요."
+          },
+          "forts": {
+            "description": "공식 요새 레벨 40부터 80 중 선택한 레벨에 대한 공격을 켭니다.",
+            "label": "스톰 요새",
+            "recommendation": "선택한 프리셋으로 안정적으로 이길 수 있는 레벨만 켜세요."
+          },
+          "horse": {
+            "description": "스톰 공격의 이동 방식으로 깃털, 동전 또는 루비를 선택합니다.",
+            "label": "말 이동 강화",
+            "recommendation": "루비 이동을 선택하지 않고 빨리 가려면 여행 깃털을 권장합니다."
+          },
+          "island_preset": {
+            "description": "섬에 사용할 저장된 병력과 도구 편성을 선택합니다.",
+            "label": "섬 공격 프리셋",
+            "recommendation": "평소 섬 프리셋을 사용하세요."
+          },
+          "island_resources": {
+            "description": "공격할 수 있는 나무, 돌 또는 아쿠아마린 섬을 선택합니다.",
+            "label": "섬 자원",
+            "recommendation": "아쿠아마린을 모으려면 아쿠아마린을 선택하세요."
+          },
+          "island_sizes": {
+            "description": "선택한 자원의 큰 섬, 작은 섬 또는 둘 다를 지정합니다.",
+            "label": "섬 크기",
+            "recommendation": "일반적인 아쿠아마린 수집에는 큰 섬과 작은 섬을 모두 선택하세요."
+          },
+          "islands": {
+            "description": "선택한 자원 및 크기에 해당하는 섬 점령을 켭니다.",
+            "label": "자원 섬",
+            "recommendation": "크고 작은 섬에서 아쿠아마린을 얻으려면 켜세요."
+          },
+          "minimum_attacks": {
+            "description": "남은 공격 횟수가 이 수 이상인 요새만 공격합니다.",
+            "label": "최소 남은 공격 횟수",
+            "recommendation": "0이면 모든 적격 요새가 허용됩니다."
+          },
+          "priority": {
+            "description": "활성화된 섬과 요새 목표 그룹을 정렬하고 각 그룹 안에서는 가장 가까운 적격 목표를 먼저 공격합니다.",
+            "label": "공격 목표 우선순위",
+            "recommendation": "아쿠아마린 수집에는 큰 섬, 작은 섬, 요새 레벨 80부터 40 순서를 권장합니다."
+          }
+        },
+        "title": "요새와 자원 섬 선택"
+      },
+      "construction": {
+        "image": {
+          "alt": "건설과 비축 설정 예시 화면",
+          "caption": "자원 운송, 지출 허가, 비축량과 항구 레벨을 보여 주는 가상 조작 예시입니다."
+        },
+        "items": {
+          "demolition": {
+            "description": "이동하거나 보관할 수 없는 건물을 정확한 목표 위치에서 제거하도록 허용합니다.",
+            "label": "철거 허용",
+            "recommendation": "검토한 배치를 다시 짓는 경우가 아니면 끄세요."
+          },
+          "donor_reserves": {
+            "description": "자원 운송 전에 각 공급 성에 선택한 나무, 돌, 아쿠아마린 수량을 남깁니다.",
+            "label": "공급 성 보호 비축량",
+            "recommendation": "평소 나무와 돌 건설 예산을 보호하고 사용하지 않는 아쿠아마린은 0으로 하세요."
+          },
+          "harbor_level": {
+            "description": "항구 목표 레벨을 1, 2 또는 3으로 선택하며 레벨 2와 3은 프리미엄 건설 경로를 사용합니다.",
+            "label": "항구 목표 레벨",
+            "recommendation": "프리미엄 업그레이드 계획이 없다면 레벨 1을 권장합니다."
+          },
+          "harbor": {
+            "description": "캡처한 목표와 달라도 항구를 선택한 레벨로 유지합니다.",
+            "label": "항구 업그레이드",
+            "recommendation": "일반 사용에는 켜고 레벨 1로 하세요."
+          },
+          "premium": {
+            "description": "프리미엄 화폐를 쓰는 적격 건설 단계를 허용합니다.",
+            "label": "프리미엄 비용 허용",
+            "recommendation": "프리미엄 건설을 계획하지 않았다면 끄세요."
+          },
+          "resource_transport": {
+            "description": "공급 성에서 부족한 건설 자원을 확인된 수송으로 가져오도록 허용합니다.",
+            "label": "부족한 자원 운송",
+            "recommendation": "일반 건설에는 켜세요."
+          },
+          "skip_reserves": {
+            "description": "건설과 운송을 위해 1분, 5분, 10분, 30분, 1시간, 5시간, 24시간 아이템을 선택한 수량만큼 남깁니다.",
+            "label": "시간 단축 아이템 비축량",
+            "recommendation": "짧은 단축 아이템은 다른 곳에 필요하지 않으면 0으로 하고 1시간, 5시간, 24시간 재고는 다른 이벤트에 남기세요."
+          },
+          "storm_reserves": {
+            "description": "선택한 목재, 석재, 아쿠아마린을 건설 지출에서 제외합니다.",
+            "label": "스톰 성 지출 비축량",
+            "recommendation": "남는 양을 사용할 경우 목재 0과 석재 0으로 하고 아쿠아마린은 계획한 보상 예산에 맞춥니다."
+          },
+          "time_skips": {
+            "description": "선택한 비축량을 유지하면서 적격 시간 단축 아이템을 건설, 자원 운송, 병력 이동에 적용합니다.",
+            "label": "건설 및 운송 시간 단축 사용",
+            "recommendation": "평소 건설을 빠르게 하고 싶다면 켜세요."
+          }
+        },
+        "title": "건설과 자원 보호 설정"
+      },
+      "luna": {
+        "image": {
+          "alt": "루나 보상 설정 예시 화면",
+          "caption": "아쿠아마린 비축량, 한정 구매 목표, 반복 보상과 우선순위."
+        },
+        "items": {
+          "cost_cap": {
+            "description": "각 보상의 게임 보고 가격과 구매 한도를 확인합니다.",
+            "label": "가격과 구매 한도",
+            "recommendation": "활성화 전에 읽기 전용 값 두 가지를 모두 확인하세요."
+          },
+          "keep_aqua": {
+            "description": "이만큼의 아쿠아마린을 루나 구매에 쓰지 않고 남깁니다.",
+            "label": "아쿠아마린 남기기",
+            "recommendation": "잉여분을 모두 보상에 쓸 수 있으면 0, 그렇지 않으면 계획한 수량을 남기세요."
+          },
+          "priority": {
+            "description": "상점은 숫자가 낮은 구매 목표를 먼저 고려합니다.",
+            "label": "우선순위",
+            "recommendation": "1, 2, 3을 원하는 순서로 배정하고 제한된 목표를 무제한 보상보다 앞에 둡니다."
+          },
+          "search": {
+            "description": "구매를 설정하기 전에 공식 루나 보상을 이름으로 찾습니다.",
+            "label": "루나 보상 찾기",
+            "recommendation": "정말 원하는 보상을 검색하세요."
+          },
+          "target_total": {
+            "description": "한정 보상에 대해 원하는 총 구매 횟수를 정합니다.",
+            "label": "목표 총수",
+            "recommendation": "구매할 계획인 횟수만 입력하세요."
+          },
+          "unlimited": {
+            "description": "비축량과 상점 한도가 허용하는 동안 적격한 반복 보상을 계속 구매합니다.",
+            "label": "무제한",
+            "recommendation": "정기적으로 원하는 반복 보상에만 켜세요."
+          },
+          "use": {
+            "description": "자동 구매를 허용할 보상을 선택합니다.",
+            "label": "보상 사용",
+            "recommendation": "원하는 보상만 활성화하세요."
+          }
+        },
+        "title": "루나 아쿠아마린 보상 선택"
+      },
+      "save": {
+        "image": {
+          "alt": "자동 스톰 저장 및 활성화 예시 화면",
+          "caption": "일일 공격 제한, 정책 확인, 읽기 전용 지도 갱신과 자동화 스위치."
+        },
+        "items": {
+          "daily_limit": {
+            "description": "계정 전체의 일일 일반 공격 횟수에 도달하면 새 자동 스톰 공격을 중단하며 0은 추가 제한을 없앱니다.",
+            "label": "일일 일반 공격 제한",
+            "recommendation": "계정 전체 한도를 쓰지 않는다면 0을 권장합니다."
+          },
+          "enable": {
+            "description": "저장한 선택이 준비되면 자동화 카드에서 자동 스톰을 켭니다.",
+            "label": "자동화 스위치",
+            "recommendation": "설정을 마친 뒤 켜세요."
+          },
+          "map_refresh": {
+            "description": "스톰 지도의 공식 갱신 간격을 확인합니다.",
+            "label": "지도 갱신 간격",
+            "recommendation": "읽기 전용 간격은 2시간이며 변경 후에는 새로운 스캔을 기다리세요."
+          },
+          "policy_check": {
+            "description": "자동 스톰이 설정과 적격한 작업을 확인하는 간격을 정합니다.",
+            "label": "정책 확인 간격",
+            "recommendation": "평소 30초 간격을 유지하세요."
+          },
+          "save": {
+            "description": "자동화를 켜기 전에 성, 건설, 전투, 병력 수입 및 루나 선택을 저장합니다.",
+            "label": "설정 저장",
+            "recommendation": "모든 지출 허가를 검토한 뒤 저장하세요."
+          }
+        },
+        "title": "자동 스톰 저장 후 켜기"
+      },
+      "troops": {
+        "image": {
+          "alt": "병력 수입 및 읽기 전용 추정치 예시 화면",
+          "caption": "공급 성 순서, 남길 병력 1,000명과 읽기 전용 용량 추정치."
+        },
+        "items": {
+          "attack_history": {
+            "description": "최근 24시간 이동 평균이 아닌 서버 초기화 이후 확인된 스톰 공격 수를 24로 나눈 값을 확인합니다.",
+            "label": "초기화 이후 평균 공격 횟수",
+            "recommendation": "수입량을 변경하기 전에 이 읽기 전용 추정치를 확인하세요."
+          },
+          "committed_cap": {
+            "description": "주둔 병력, 이동, 운송 중, 귀환 중인 병력을 포함해 자동 계산한 상한을 확인합니다.",
+            "label": "스톰에 투입된 병력 상한",
+            "recommendation": "수입을 늘리기 전에 이 읽기 전용 상한을 확인하세요."
+          },
+          "donors": {
+            "description": "공급 성을 표시된 순서대로 선택하며 일부 재고가 있으면 더 적은 수송이 가능합니다.",
+            "label": "공급 성",
+            "recommendation": "평소 병력 공급처를 원하는 순서로 선택하세요."
+          },
+          "import": {
+            "description": "공급 성에서 부족한 공격병 또는 선택한 방어병을 스톰으로 수입합니다.",
+            "label": "부족한 병력 수입",
+            "recommendation": "스톰 성에 정기적인 병력 공급이 필요하면 켜세요."
+          },
+          "map_coverage": {
+            "description": "보이는 목표를 믿기 전에 지도 탐색 범위를 확인합니다.",
+            "label": "지도 탐색 범위",
+            "recommendation": "목표가 보이지 않는다면 최근 스캔을 기다리세요."
+          },
+          "minimum_kept": {
+            "description": "공격을 시작한 뒤에도 스톰에 최소 이 수의 병력을 남기고 활성 프리셋 구성을 유지합니다.",
+            "label": "출정 후 남길 최소 병력",
+            "recommendation": "실제 군대에 맞춰 조정한 일반 비축으로 1,000명."
+          },
+          "preset_average": {
+            "description": "선택한 섬 방어병을 포함한 활성 공격 프리셋의 평균 병력 수요를 확인합니다.",
+            "label": "활성 프리셋 평균",
+            "recommendation": "이 읽기 전용 추정치를 자신의 군대와 비교하세요."
+          }
+        },
+        "title": "스톰 병력 수입 및 확인"
+      }
+    }
+  }
+}
